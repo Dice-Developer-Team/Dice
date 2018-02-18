@@ -8,7 +8,7 @@ Welcome to Dice!'s documentation!
 
 .. toctree::
    :maxdepth: 3
-   :caption: 目录:
+   :caption: Contents:
    
    License
    Apply

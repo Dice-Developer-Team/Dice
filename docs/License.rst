@@ -8,7 +8,7 @@
 
 .. toctree::
    :maxdepth: 0
-   :caption: 索引:
+   :caption: Contents:
 
 Dice!云掷骰服务用户协议V1.0.0
 --------------------------------

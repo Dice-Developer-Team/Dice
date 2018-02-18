@@ -161,7 +161,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'Dice', 'Dice! Documentation',
-     author, 'Dice', 'One line description of project.',
+     u"w4123溯洄", 'Dice', 'Dice Robot For QQ',
      'Miscellaneous'),
 ]
 
