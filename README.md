@@ -1,4 +1,4 @@
-一盏大师# Dice!
+# Dice!
 QQ Dice For TRPG Game
 
 Version 2.1.0
