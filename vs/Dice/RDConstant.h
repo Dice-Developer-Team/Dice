@@ -8,9 +8,16 @@
 #define ZeroType_Err -4
 #define DiceTooBig_Err -5
 #define TypeTooBig_Err -6
+#define AddDiceVal_Err -7
 #define Normal_Dice 0
 #define B_Dice 1
 #define P_Dice 2
+#define Fudge_Dice 3
+#define WW_Dice 4
+#define PrivateMsg 0
+#define GroupMsg 1
+#define DiscussMsg 2
+
 typedef int int_errno;
 struct RP {
 	int RPVal;
@@ -40,8 +47,6 @@ static std::string LongInsanity[11]{ "",
 "恐惧：调查员完全陷入恐惧之中。在{1}小时后恢复正常，此时调查员会为避开恐惧源而采取任何措施",
 "狂躁：调查员将完全沉浸于其狂躁症状中，在{1}小时后恢复理智。"
 };
-static std::string strErrChar = "ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ１２３４５６７８９０＋－＃＊！／＝　";
-static std::string strCrtChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890+-#*!/= ";
 static std::string strSetInvalid = "无效的默认骰!请输入1-99999之间的数字!";
 static std::string strSetTooBig = "默认骰过大!请输入1-99999之间的数字!";
 static std::string strSetCannotBeZero = "默认骰不能为零!请输入1-99999之间的数字!";
@@ -58,14 +63,19 @@ static std::string strMEDisabledErr = "管理员已在此群中禁用.me命令!";
 static std::string strNameDelErr = "没有设置名称,无法删除!";
 static std::string strValueErr = "掷骰表达式输入错误!";
 static std::string strInputErr = "命令或掷骰表达式输入错误!";
+static std::string strUnknownErr = "发生了未知错误!";
 static std::string strDiceTooBigErr = "骰娘被你扔出的骰子淹没了";
 static std::string strTypeTooBigErr = "哇!让我数数骰子有多少面先~1...2...";
 static std::string strZeroTypeErr = "这是...！!时空裂(骰娘被骰子产生的时空裂缝卷走了)";
+static std::string strAddDiceValErr = "你这样要让我扔骰子扔到什么时候嘛~(请输入正确的加骰参数:5-10之内的整数)";
 static std::string strZeroDiceErr = "咦?我的骰子呢?";
-static std::string strHlpMsg = R"(Dice! Version 2.0.2
+static std::string strRollTimeExceeded = "掷骰轮数超过了最大限制10次!";
+static std::string strRollTimeErr = "异常的掷骰轮数";
+static std::string strHlpMsg = R"(Dice! Version 2.1.0
 注:[ ]中的命令为可选命令
 <通用命令>
 .r/d/o [掷骰表达式*] [原因]		普通掷骰
+.w/ww XaY						骰池
 .set [1-99999之间的整数]			设置默认骰
 .sc SC表达式** 当前San值			自动Sancheck
 .en [技能或属性名称] 值			增强检定/幕间成长
@@ -74,8 +84,8 @@ static std::string strHlpMsg = R"(Dice! Version 2.0.2
 .dnd [个数]					DND人物作成
 .coc7d					详细版COC7人物作成
 .coc6d					详细版COC6人物作成
-.ti						短暂性疯狂
-.li						不定性疯狂
+.ti						疯狂发作-临时症状
+.li						疯狂发作-总结症状
 .jrrp [on/off]				今日人品检定
 .rules 关键字				COC7规则查询
 .help						显示帮助
@@ -90,8 +100,7 @@ static std::string strHlpMsg = R"(Dice! Version 2.0.2
 *COC7惩罚骰为P+个数,奖励骰为B+个数
  支持使用K来取较大的几个骰子
  支持使用 个数#表达式 进行多轮掷骰
-**SC表达式为 成功扣San/失败扣San
-  如:1/1d6
+**SC表达式为 成功扣San/失败扣San,如:1/1d6
 插件交流/bug反馈/查看源代码请加QQ群624807593)";
 
 
@@ -1169,4 +1178,4 @@ b)被攻击者选择闪避：
 只掷一次骰子，然后将结果与每个技能比较。守秘人将说明是否要求每个技能都成功，或是只要任何一个技能成功。
 [||技能检定||]技能检定 在任何掷骰之前先陈述目标 为掷骰确定难度等级 孤注一骰：玩家如何解释孤注一骰？守秘人可揭示失败的后果（揭示预兆）。 大成功：掷出01 大失败：掷出100总会造成大失败；若检定的成功范围低于50，则掷出96-100造成大失败。 常规难度等级：对手的技能或属性＜50，或任务对胜任者构成挑战的一般情形。玩家掷出的数值≤其技能或属性则成功。 困难难度等级：对手的技能或属性≥50，或任务对专业人士构成挑战。玩家掷出的数值≤其技能或属性的一半才能成功。 极难难度等级：对手的技能或属性≥90，或任务难度已触及人类的可能性的边界。玩家掷出的数值≤其技能或属性的五分之一才能成功。
 )QWQWQ";
-#endif
+#endif /*_RDCONSTANT_*/

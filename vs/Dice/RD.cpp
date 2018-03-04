@@ -8,9 +8,22 @@ using namespace std;
 using namespace CQ;
 
 inline void init(string &msg){
-	for (int i = 0; i != strCrtChar.length(); i++)
-		while (msg.find(strErrChar.substr(i * 2, 2)) != string::npos)
-			msg.replace(msg.find(strErrChar.substr(i * 2, 2)), 2, 1, strCrtChar[i]);
+	for (int i = 0; i != msg.length(); i++) {
+		if (msg[i] < 0) {
+			if ((msg[i] & 0xff) == 0xa1 && (msg[i + 1] & 0xff) == 0xa1) {
+				msg[i] = 0x20;
+				msg.erase(msg.begin() + i + 1);
+			}
+			else if ((msg[i] & 0xff) == 0xa3 && (msg[i + 1] & 0xff) >= 0xa1 && (msg[i + 1] & 0xff) <= 0xfe) {
+				msg[i] = msg[i + 1] - 0x80;
+				msg.erase(msg.begin() + i + 1);
+			}
+			else {
+				i++;
+			}
+		}
+	}
+
 	while (!msg.empty() && isspace(msg[0]))msg.erase(msg.begin());
 	while (!msg.empty() && isspace(msg[msg.length() - 1]))msg.erase(msg.end() - 1);
 	if (msg.find("¡£")==0) {
