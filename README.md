@@ -1,7 +1,7 @@
 # Dice!
 QQ Dice For TRPG Game
 
-Version 2.1.0
+Version 2.1.1Pre-release
 
 作者:w4123溯洄
 
