@@ -102,7 +102,7 @@
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <AdditionalIncludeDirectories>D:\用户目录\桌面\Dice!V2.0\src\CQSDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\src\CQSDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </ClCompile>
     <Link>

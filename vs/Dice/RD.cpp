@@ -1,4 +1,5 @@
 #include "..\..\src\CQSDK\CQEVE_ALL.h"
+#include "..\..\src\CQSDK\CQTools.h"
 #include <cctype>
 #include <random>
 #include <sstream>
@@ -7,32 +8,44 @@
 using namespace std;
 using namespace CQ;
 
-inline void init(string &msg){
-	for (int i = 0; i != msg.length(); i++) {
-		if (msg[i] < 0) {
-			if ((msg[i] & 0xff) == 0xa1 && (msg[i + 1] & 0xff) == 0xa1) {
+inline void init(string &msg)
+{
+	msg_decode(msg);
+	for (int i = 0; i != msg.length(); i++)
+	{
+		if (msg[i] < 0)
+		{
+			if ((msg[i] & 0xff) == 0xa1 && (msg[i + 1] & 0xff) == 0xa1)
+			{
 				msg[i] = 0x20;
 				msg.erase(msg.begin() + i + 1);
 			}
-			else if ((msg[i] & 0xff) == 0xa3 && (msg[i + 1] & 0xff) >= 0xa1 && (msg[i + 1] & 0xff) <= 0xfe) {
+			else if ((msg[i] & 0xff) == 0xa3 && (msg[i + 1] & 0xff) >= 0xa1 && (msg[i + 1] & 0xff) <= 0xfe)
+			{
 				msg[i] = msg[i + 1] - 0x80;
 				msg.erase(msg.begin() + i + 1);
 			}
-			else {
+			else
+			{
 				i++;
 			}
 		}
 	}
 
-	while (!msg.empty() && isspace(msg[0]))msg.erase(msg.begin());
-	while (!msg.empty() && isspace(msg[msg.length() - 1]))msg.erase(msg.end() - 1);
-	if (msg.find("。")==0) {
+	while (!msg.empty() && isspace(msg[0]))
+		msg.erase(msg.begin());
+	while (!msg.empty() && isspace(msg[msg.length() - 1]))
+		msg.erase(msg.end() - 1);
+	if (msg.find("。") == 0)
+	{
 		msg.erase(msg.begin());
 		msg[0] = '.';
 	}
-	if (msg[0] == '!')msg[0] = '.';
+	if (msg[0] == '!')
+		msg[0] = '.';
 }
-inline void COC7D(string &strMAns) {
+inline void COC7D(string &strMAns)
+{
 	RD rd3D6("3D6");
 	RD rd2D6p6("2D6+6");
 	strMAns += "的人物作成:";
@@ -104,38 +117,48 @@ inline void COC7D(string &strMAns) {
 	strMAns += to_string(MP);
 	string DB;
 	int build = 0;
-	if (STR + SIZ >= 2 && STR + SIZ <= 64) {
+	if (STR + SIZ >= 2 && STR + SIZ <= 64)
+	{
 		DB = "-2";
 		build = -2;
 	}
-	else if (STR + SIZ >= 65 && STR + SIZ <= 84) {
+	else if (STR + SIZ >= 65 && STR + SIZ <= 84)
+	{
 		DB = "-1";
 		build = -1;
 	}
-	else if (STR + SIZ >= 85 && STR + SIZ <= 124) {
+	else if (STR + SIZ >= 85 && STR + SIZ <= 124)
+	{
 		DB = "0";
 		build = 0;
 	}
-	else if (STR + SIZ >= 125 && STR + SIZ <= 164) {
+	else if (STR + SIZ >= 125 && STR + SIZ <= 164)
+	{
 		DB = "1D4";
 		build = 1;
 	}
-	else if (STR + SIZ >= 165 && STR + SIZ <= 204) {
+	else if (STR + SIZ >= 165 && STR + SIZ <= 204)
+	{
 		DB = "1d6";
 		build = 2;
 	}
-	else {
+	else
+	{
 		DB = "计算错误!";
 		build = -10;
 	}
 	strMAns += "\n伤害奖励DB=" + DB + "\n体格=" + (build == -10 ? "计算错误" : to_string(build));
 	int MOV = 0;
-	if (DEX < SIZ&&STR < SIZ)MOV = 7;
-	else if (DEX > SIZ && STR > SIZ)MOV = 9;
-	else MOV = 8;
+	if (DEX < SIZ&&STR < SIZ)
+		MOV = 7;
+	else if (DEX > SIZ && STR > SIZ)
+		MOV = 9;
+	else
+		MOV = 8;
 	strMAns += "\n移动力MOV=" + to_string(MOV);
 }
-inline void COC6D(string &strMAns) {
+inline void COC6D(string &strMAns)
+{
 	RD rd3D6("3D6");
 	RD rd2D6p6("2D6+6");
 	RD rd3D6p3("3D6+3");
@@ -200,34 +223,43 @@ inline void COC6D(string &strMAns) {
 	strMAns += "\n生命值HP=(CON+SIZ)/2=" + to_string(HP) + "\n魔法值MP=POW=" + to_string(MP);
 	strMAns += "\n伤害奖励DB=";
 	string DB;
-	if (STR + SIZ >= 2 && STR + SIZ <= 12) {
+	if (STR + SIZ >= 2 && STR + SIZ <= 12)
+	{
 		DB = "-1D6";
 	}
-	else if (STR + SIZ >= 13 && STR + SIZ <= 16) {
+	else if (STR + SIZ >= 13 && STR + SIZ <= 16)
+	{
 		DB = "-1D4";
 	}
-	else if (STR + SIZ >= 17 && STR + SIZ <= 24) {
+	else if (STR + SIZ >= 17 && STR + SIZ <= 24)
+	{
 		DB = "0";
 	}
-	else if (STR + SIZ >= 25 && STR + SIZ <= 32) {
+	else if (STR + SIZ >= 25 && STR + SIZ <= 32)
+	{
 		DB = "1D4";
 	}
-	else if (STR + SIZ >= 33 && STR + SIZ <= 40) {
+	else if (STR + SIZ >= 33 && STR + SIZ <= 40)
+	{
 		DB = "1D6";
 	}
-	else {
+	else
+	{
 		DB = "计算错误!";
 	}
 	strMAns += DB;
 }
-inline void COC7(string &strMAns, int intNum) {
+inline void COC7(string &strMAns, int intNum)
+{
 	strMAns += "的人物作成:";
 	string strProperty[] = { "力量","体质","体型","敏捷","外貌","智力","意志","教育","幸运" };
-	string strRoll[] = { "3D6","3D6","2D6+6","3D6","3D6", "2D6+6" ,"3D6" , "2D6+6" , "3D6" };
+	string strRoll[] = { "3D6","3D6","2D6+6","3D6","3D6", "2D6+6","3D6", "2D6+6", "3D6" };
 	int intAllTotal = 0;
-	while (intNum--) {
+	while (intNum--)
+	{
 		strMAns += '\n';
-		for (int i = 0; i != 9; i++) {
+		for (int i = 0; i != 9; i++)
+		{
 			RD rdCOC(strRoll[i]);
 			rdCOC.Roll();
 			strMAns += strProperty[i] + ":" + to_string(rdCOC.intTotal * 5) + " ";
@@ -237,44 +269,53 @@ inline void COC7(string &strMAns, int intNum) {
 		intAllTotal = 0;
 	}
 }
-inline void COC6(string &strMAns, int intNum) {
+inline void COC6(string &strMAns, int intNum)
+{
 	strMAns += "的人物作成:";
-	string strProperty[] = { "力量","体质","体型","敏捷","外貌","智力","意志","教育"};
-	string strRoll[] = { "3D6","3D6","2D6+6","3D6","3D6", "2D6+6" ,"3D6" , "3D6+3"};
+	string strProperty[] = { "力量","体质","体型","敏捷","外貌","智力","意志","教育" };
+	string strRoll[] = { "3D6","3D6","2D6+6","3D6","3D6", "2D6+6","3D6", "3D6+3" };
 	bool boolAddSpace = intNum == 1 ? false : true;
 	int intAllTotal = 0;
-	while (intNum--) {
+	while (intNum--)
+	{
 		strMAns += '\n';
-		for (int i = 0; i != 8; i++) {
+		for (int i = 0; i != 8; i++)
+		{
 			RD rdCOC(strRoll[i]);
 			rdCOC.Roll();
 			strMAns += strProperty[i] + ":" + to_string(rdCOC.intTotal) + " ";
-			if (boolAddSpace && rdCOC.intTotal < 10)strMAns += "  ";
+			if (boolAddSpace && rdCOC.intTotal < 10)
+				strMAns += "  ";
 			intAllTotal += rdCOC.intTotal;
 		}
 		strMAns += "共计:" + to_string(intAllTotal);
 		intAllTotal = 0;
 	}
 }
-inline void DND(string &strOutput, int intNum) {
+inline void DND(string &strOutput, int intNum)
+{
 	strOutput += "的英雄作成:";
 	RD rdDND("4D6K3");
 	string strDNDName[6] = { "力量","体质","敏捷","智力","感知","魅力" };
 	bool boolAddSpace = intNum == 1 ? false : true;
 	int intAllTotal = 0;
-	while (intNum--) {
+	while (intNum--)
+	{
 		strOutput += "\n";
-		for (int i = 0; i <= 5; i++) {
+		for (int i = 0; i <= 5; i++)
+		{
 			rdDND.Roll();
 			strOutput += strDNDName[i] + ":" + to_string(rdDND.intTotal) + " ";
-			if (rdDND.intTotal < 10 && boolAddSpace)strOutput += "  ";
+			if (rdDND.intTotal < 10 && boolAddSpace)
+				strOutput += "  ";
 			intAllTotal += rdDND.intTotal;
 		}
 		strOutput += "共计:" + to_string(intAllTotal);
 		intAllTotal = 0;
 	}
 }
-inline void TempInsane(string &strAns) {
+inline void TempInsane(string &strAns)
+{
 	RD rdD10("D10");
 	rdD10.Roll();
 	strAns += "1D10=" + to_string(rdD10.intTotal) + "\n症状:" + TempInsanity[rdD10.intTotal];
@@ -283,7 +324,8 @@ inline void TempInsane(string &strAns) {
 	strAns.replace(strAns.find("{1}"), 3, Time);
 }
 
-inline void LongInsane(string &strAns) {
+inline void LongInsane(string &strAns)
+{
 	RD rdD10("D10");
 	rdD10.Roll();
 	strAns += "1D10=" + to_string(rdD10.intTotal) + "\n症状:" + LongInsanity[rdD10.intTotal];

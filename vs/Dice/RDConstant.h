@@ -71,7 +71,13 @@ static std::string strAddDiceValErr = "ÄãÕâÑùÒªÈÃÎÒÈÓ÷»×ÓÈÓµ½Ê²Ã´Ê±ºòÂï~(ÇëÊäÈëÕ
 static std::string strZeroDiceErr = "ß×?ÎÒµÄ÷»×ÓÄØ?";
 static std::string strRollTimeExceeded = "ÖÀ÷»ÂÖÊı³¬¹ıÁË×î´óÏŞÖÆ10´Î!";
 static std::string strRollTimeErr = "Òì³£µÄÖÀ÷»ÂÖÊı";
-static std::string strHlpMsg = R"(Dice! Version 2.1.0
+static std::string strWelcomeMsgClearNotice = "ÒÑÇå³ı±¾ÈºµÄÈëÈº»¶Ó­´Ê";
+static std::string strWelcomeMsgClearErr = "´íÎó:Ã»ÓĞÉèÖÃÈëÈº»¶Ó­´Ê£¬Çå³ıÊ§°Ü";
+static std::string strWelcomeMsgUpdateNotice = "ÒÑ¸üĞÂ±¾ÈºµÄÈëÈº»¶Ó­´Ê";
+static std::string strPermissionDeniedErr = "´íÎó:´Ë²Ù×÷ĞèÒªÈºÖ÷»ò¹ÜÀíÔ±È¨ÏŞ";
+static std::string strNameTooLongErr = "´íÎó:Ãû³Æ¹ı³¤(×î¶àÎª50Ó¢ÎÄ×Ö·û)";
+static std::string strEmptyWWDiceErr = "¸ñÊ½´íÎó:ÕıÈ·¸ñÊ½Îª.w(w) XaY!";
+static std::string strHlpMsg = R"(Dice! Version 2.1.1Pre-release2
 ×¢:[ ]ÖĞµÄÃüÁîÎª¿ÉÑ¡ÃüÁî
 <Í¨ÓÃÃüÁî>
 .r/d/o [ÖÀ÷»±í´ïÊ½*] [Ô­Òò]		ÆÕÍ¨ÖÀ÷»
@@ -95,6 +101,7 @@ static std::string strHlpMsg = R"(Dice! Version 2.1.0
 .bot [on/off] [»úÆ÷ÈËQQºÅ]		»úÆ÷ÈË¿ªÆô»ò¹Ø±Õ
 .ob [exit/list/clr/on/off]			ÅÔ¹ÛÄ£Ê½
 .me on/off/¶¯×÷				ÒÔµÚÈı·½ÊÓ½Ç×ö³ö¶¯×÷
+.welcome »¶Ó­ÏûÏ¢           Èº»¶Ó­ÌáÊ¾
 <½öÏŞË½ÁÄ>
 .me ÈººÅ ¶¯×÷				ÒÔµÚÈı·½ÊÓ½Ç×ö³ö¶¯×÷
 *COC7³Í·£÷»ÎªP+¸öÊı,½±Àø÷»ÎªB+¸öÊı
