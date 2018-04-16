@@ -9,19 +9,6 @@
 #include "RDConstant.h"
 #include "CQTools.h"
 extern std::map<long long, int> DefaultDice;
-//This funtion template is used to convert a type into another type
-//Param:origin->Original Data
-//Usage:Convert<Converted Type> (Original Data)
-
-template<typename typeTo, typename typeFrom>
-typeTo Convert(typeFrom origin)
-{
-	std::stringstream ConvertStream;
-	typeTo converted;
-	ConvertStream << origin;
-	ConvertStream >> converted;
-	return converted;
-}
 
 //This function is used to generate random integer
 inline int Randint(int lowest, int highest)
@@ -52,8 +39,8 @@ private:
 					return Input_Err;
 			if (strAddVal.length() > 2)
 				return AddDiceVal_Err;
-			int intDiceCnt = Convert<int>(strDiceCnt);
-			int AddDiceVal = Convert<int>(strAddVal);
+			int intDiceCnt = stoi(strDiceCnt);
+			int AddDiceVal = stoi(strAddVal);
 			if (intDiceCnt == 0)
 				return ZeroDice_Err;
 			if (AddDiceVal < 5 || AddDiceVal > 10)
@@ -100,7 +87,7 @@ private:
 			}
 			if (strDiceNum.length() > 2)
 				return DiceTooBig_Err;
-			int intDiceNum = Convert<int>(strDiceNum);
+			int intDiceNum = stoi(strDiceNum);
 			if (intDiceNum == 0)
 				return ZeroDice_Err;
 			std::vector<int> vintTmpRes;
@@ -127,7 +114,7 @@ private:
 			for (int i = 1; i != dice.length(); i++)
 				if (!isdigit(dice[i]))
 					return Input_Err;
-			int intPNum = Convert<int>(dice.substr(1));
+			int intPNum = stoi(dice.substr(1).empty() ? "1" : dice.substr(1));
 			if (dice.length() == 1)
 				intPNum = 1;
 			if (intPNum == 0)
@@ -164,7 +151,7 @@ private:
 			for (int i = 1; i != dice.length(); i++)
 				if (!isdigit(dice[i]))
 					return Input_Err;
-			int intBNum = Convert<int>(dice.substr(1));
+			int intBNum = stoi(dice.substr(1).empty() ? "1" : dice.substr(1));
 			if (dice.length() == 1)
 				intBNum = 1;
 			if (intBNum == 0)
@@ -222,7 +209,7 @@ private:
 		{
 			if (dice.length() > 5 || dice.length() == 0)
 				return Value_Err;
-			int intTmpRes = Convert<int>(dice);
+			int intTmpRes = stoi(dice);
 			if (boolNegative)
 				intTotal -= intTmpRes;
 			else
@@ -237,8 +224,8 @@ private:
 				return DiceTooBig_Err;
 			if (dice.substr(dice.find("D") + 1).length() > 5)
 				return TypeTooBig_Err;
-			int intDiceCnt = dice.substr(0, dice.find("D")).length() == 0 ? 1 : Convert<int>(dice.substr(0, dice.find("D")));
-			int intDiceType = Convert<int>(dice.substr(dice.find("D") + 1));
+			int intDiceCnt = dice.substr(0, dice.find("D")).length() == 0 ? 1 : stoi(dice.substr(0, dice.find("D")));
+			int intDiceType = stoi(dice.substr(dice.find("D") + 1));
 			if (intDiceCnt == 0)
 				return ZeroDice_Err;
 			if (intDiceType == 0)
@@ -263,12 +250,12 @@ private:
 		{
 			if (dice.substr(dice.find("K") + 1).length() > 3)
 				return Value_Err;
-			int intKNum = Convert<int>(dice.substr(dice.find("K") + 1));
+			int intKNum = stoi(dice.substr(dice.find("K") + 1));
 			dice = dice.substr(0, dice.find("K"));
 			if (dice.substr(0, dice.find("D")).length() > 3 || dice.substr(dice.find("D") + 1).length() > 5)
 				return Value_Err;
-			int intDiceCnt = dice.substr(0, dice.find("D")).length() == 0 ? 1 : Convert<int>(dice.substr(0, dice.find("D")));
-			int intDiceType = Convert<int>(dice.substr(dice.find("D") + 1));
+			int intDiceCnt = dice.substr(0, dice.find("D")).length() == 0 ? 1 : stoi(dice.substr(0, dice.find("D")));
+			int intDiceType = stoi(dice.substr(dice.find("D") + 1));
 			if (intKNum <= 0 || intDiceCnt == 0)
 				return ZeroDice_Err;
 			if (intKNum > intDiceCnt)

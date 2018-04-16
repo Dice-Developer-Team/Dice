@@ -1,7 +1,9 @@
 #pragma once
+
 #ifndef _RDCONSTANT_
 #define _RDCONSTANT_
 #include <string>
+//Error Handle
 #define Value_Err -1
 #define Input_Err -2
 #define ZeroDice_Err -3
@@ -9,20 +11,26 @@
 #define DiceTooBig_Err -5
 #define TypeTooBig_Err -6
 #define AddDiceVal_Err -7
+//Dice Type
 #define Normal_Dice 0
 #define B_Dice 1
 #define P_Dice 2
 #define Fudge_Dice 3
 #define WW_Dice 4
+//Message Type
 #define PrivateMsg 0
 #define GroupMsg 1
 #define DiscussMsg 2
-
+//Source type
+#define PrivateT 0
+#define GroupT 1
+#define DiscussT 2
 typedef int int_errno;
 struct RP {
 	int RPVal;
 	std::string Date;
 };
+//static std::map<std::string, std::string> SkillNameReplace = {make_pair("str","力量"),make_pair("dex","敏捷")}
 static std::string TempInsanity[11]{ "",
 "失忆：在{1}轮之内，调查员会发现自己只记得最后身处的安全地点，却没有任何来到这里的记忆。",
 "假性残疾：调查员陷入了心理性的失明，失聪以及躯体缺失感中，持续{1}轮。",
@@ -58,7 +66,7 @@ static std::string strSanInvalid = "San值输入不正确,请输入1-99范围内的整数!";
 static std::string strEnValInvalid = "技能值或属性输入不正确,请输入1-99范围内的整数!";
 static std::string strGroupIDInvalid = "无效的群号!";
 static std::string strSendErr = "消息发送失败!"; 
-static std::string strDisabledErr = "在此群中,机器人已被关闭!";
+static std::string strDisabledErr = "命令无法执行: 机器人已在此群中被关闭!";
 static std::string strMEDisabledErr = "管理员已在此群中禁用.me命令!";
 static std::string strNameDelErr = "没有设置名称,无法删除!";
 static std::string strValueErr = "掷骰表达式输入错误!";
@@ -76,15 +84,22 @@ static std::string strWelcomeMsgClearErr = "错误:没有设置入群欢迎词，清除失败";
 static std::string strWelcomeMsgUpdateNotice = "已更新本群的入群欢迎词";
 static std::string strPermissionDeniedErr = "错误:此操作需要群主或管理员权限";
 static std::string strNameTooLongErr = "错误:名称过长(最多为50英文字符)";
+static std::string strUnknownPropErr = "错误:属性不存在";
 static std::string strEmptyWWDiceErr = "格式错误:正确格式为.w(w) XaY!";
-static std::string strHlpMsg = R"(Dice! Version 2.1.1Pre-release2
+static std::string strPropErr = "请认真的输入你的属性哦~";
+static std::string strSetPropSuccess = "属性设置成功";
+static std::string strPropCleared = "已清除所有属性";
+static std::string strPropDeleted = "属性删除成功";
+static std::string strPropNotFound = "错误:属性不存在";
+static std::string strProp = "{0}的{1}属性值为{2}";
+static std::string strHlpMsg = R"(Dice! Version 2.2.0
 注:[ ]中的命令为可选命令
 <通用命令>
 .r/d/o [掷骰表达式*] [原因]		普通掷骰
 .w/ww XaY						骰池
 .set [1-99999之间的整数]			设置默认骰
-.sc SC表达式** 当前San值			自动Sancheck
-.en [技能或属性名称] 值			增强检定/幕间成长
+.sc SC表达式** [理智值]			自动Sancheck
+.en [技能名] [技能值]			增强检定/幕间成长
 .coc7 [个数]					COC7人物作成
 .coc6 [个数]					COC6人物作成
 .dnd [个数]					DND人物作成
@@ -92,6 +107,8 @@ static std::string strHlpMsg = R"(Dice! Version 2.1.1Pre-release2
 .coc6d					详细版COC6人物作成
 .ti						疯狂发作-临时症状
 .li						疯狂发作-总结症状
+.st [del/clr/show] [属性名] [属性值]	人物卡导入
+.rc/ra [技能名] [技能值]	技能检定(规则书/房规)
 .jrrp [on/off]				今日人品检定
 .rules 关键字				COC7规则查询
 .help						显示帮助
@@ -101,7 +118,7 @@ static std::string strHlpMsg = R"(Dice! Version 2.1.1Pre-release2
 .bot [on/off] [机器人QQ号]		机器人开启或关闭
 .ob [exit/list/clr/on/off]			旁观模式
 .me on/off/动作				以第三方视角做出动作
-.welcome 欢迎消息           群欢迎提示
+.welcome 欢迎消息				群欢迎提示
 <仅限私聊>
 .me 群号 动作				以第三方视角做出动作
 *COC7惩罚骰为P+个数,奖励骰为B+个数
