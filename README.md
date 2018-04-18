@@ -1,5 +1,5 @@
 # Dice!
-QQ Dice For TRPG Game Base on CoolQ
+QQ Dice For TRPG Game Based on CoolQ
 
 Doc: dice-for-qq.readthedocs.io
 
