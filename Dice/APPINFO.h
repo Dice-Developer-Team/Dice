@@ -7,6 +7,6 @@
 #pragma comment(lib,"..\\SDK_Release.lib")
 #endif /*_DEBUG*/
 
-#define CQAPPID "com.w4123.Dice" 
+#define CQAPPID "com.w4123.dice" 
 #define CQAPPINFO CQAPIVERTEXT "," CQAPPID
 #endif /*_APPINFO_*/

@@ -7,10 +7,15 @@
 #include "RDConstant.h"
 using namespace std;
 using namespace CQ;
-
 inline void init(string &msg)
 {
 	msg_decode(msg);
+	while (!msg.empty() && isspace(msg[0]))
+		msg.erase(msg.begin());
+}
+
+inline void init2(string &msg)
+{
 	for (int i = 0; i != msg.length(); i++)
 	{
 		if (msg[i] < 0)
@@ -36,7 +41,7 @@ inline void init(string &msg)
 		msg.erase(msg.begin());
 	while (!msg.empty() && isspace(msg[msg.length() - 1]))
 		msg.erase(msg.end() - 1);
-	if (msg.find("¡£") == 0)
+	if (msg.substr(0,2) == "¡£")
 	{
 		msg.erase(msg.begin());
 		msg[0] = '.';

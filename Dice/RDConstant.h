@@ -30,7 +30,35 @@
 #define PrivateT 0
 #define GroupT 1
 #define DiscussT 2
+static std::string format(std::string str, std::initializer_list<std::string> replace_str)
+{
+	int counter = 0;
+	for (auto element : replace_str)
+	{
+		std::string _replace = "{" + std::to_string(counter) + "}";
+		while (str.find(_replace) != std::string::npos)
+		{
+			str.replace(str.find(_replace), _replace.length(), element);
+		}
+		counter++;
+	}
+	return str;
+}
 typedef int int_errno;
+struct Version {
+	Version(int a, int b, int c, int d) :Major(a), Minor(b), Micro(c), Build(d) {};
+	const int Major = 0;
+	const int Minor = 0;
+	const int Micro = 0;
+	const int Build = 0;
+	std::string short_ver() {
+		return format(R"(Dice! by 溯洄 Version {0}.{1}.{2})", { std::to_string(Major),std::to_string(Minor),std::to_string(Micro)});
+	}
+	std::string full_ver() {
+		return format(R"(Dice! by 溯洄 Version {0}.{1}.{2}({3}) [MSVC {4} {5} {6}])", { std::to_string(Major),std::to_string(Minor),std::to_string(Micro),std::to_string(Build),std::to_string(_MSC_FULL_VER),__DATE__,__TIME__ });
+	}
+};
+static Version Dice_ver(2, 2, 1, 412);
 struct RP {
 	int RPVal;
 	std::string Date;
@@ -97,7 +125,9 @@ static std::string strPropCleared = "已清除所有属性";
 static std::string strPropDeleted = "属性删除成功";
 static std::string strPropNotFound = "错误:属性不存在";
 static std::string strProp = "{0}的{1}属性值为{2}";
-static std::string strHlpMsg = R"(Dice! Version 2.2.0
+static std::string strNameInvalidErr = "错误:昵称不能以点，句号或者感叹号开头";
+static std::string strStErr = "格式错误:请参考帮助文档获取.st命令的使用方法";
+static std::string strHlpMsg = Dice_ver.short_ver() + R"(
 注:[ ]中的命令为可选命令
 <通用命令>
 .r/d/o [掷骰表达式*] [原因]		普通掷骰
