@@ -8,7 +8,7 @@
 #error 请使用Win32 Release模式进行编译
 #endif
 //Version
-static const std::string Dice_Ver = "2.2.1(412)";
+static const std::string Dice_Ver = "2.2.1(418)";
 static const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
 static const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
 //Error Handle
@@ -48,20 +48,6 @@ static std::string format(std::string str, std::initializer_list<std::string> re
 	return str;
 }
 typedef int int_errno;
-/*struct version {
-	version(int a, int b, int c, int d) :Major(a), Minor(b), Micro(c), Build(d) {};
-	const int Major = 0;
-	const int Minor = 0;
-	const int Micro = 0;
-	const int Build = 0;
-	std::string short_ver() const {
-		return format(R"(Dice! by 溯洄 Version {0}.{1}.{2})", { std::to_string(Major),std::to_string(Minor),std::to_string(Micro)});
-	}
-	std::string full_ver() const {
-		return format(R"(Dice! by 溯洄 Version {0}.{1}.{2}({3}) [MSVC {4} {5} {6}])", { std::to_string(Major),std::to_string(Minor),std::to_string(Micro),std::to_string(Build),std::to_string(_MSC_FULL_VER),__DATE__,__TIME__ });
-	}
-};
-static version Dice_ver(2, 2, 1, 412);*/
 struct RP {
 	int RPVal;
 	std::string Date;
