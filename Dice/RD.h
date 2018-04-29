@@ -551,6 +551,7 @@ public:
 	}
 };
 extern inline void init(std::string&);
+extern inline void init2(std::string&);
 extern inline void COC6D(std::string&);
 extern inline void COC6(std::string&, int);
 extern inline void COC7D(std::string&);

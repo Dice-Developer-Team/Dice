@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+/.vs/Dice/v15/ipch/AutoPCH/3e2162456b9cc90b/DICE.ipch
+/.vs/Dice/v15/ipch/AutoPCH
+/.vs/Dice/v15
+/Dice/Release
+/Dice/x64/Debug
+/Release
