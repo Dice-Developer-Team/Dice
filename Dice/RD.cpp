@@ -1,7 +1,6 @@
 #include "CQEVE_ALL.h"
 #include "CQTools.h"
 #include <cctype>
-#include <random>
 #include <sstream>
 #include "RD.h"
 #include "RDConstant.h"
@@ -279,7 +278,7 @@ inline void COC6(string &strMAns, int intNum)
 	strMAns += "的人物作成:";
 	string strProperty[] = { "力量","体质","体型","敏捷","外貌","智力","意志","教育" };
 	string strRoll[] = { "3D6","3D6","2D6+6","3D6","3D6", "2D6+6","3D6", "3D6+3" };
-	bool boolAddSpace = intNum == 1 ? false : true;
+	bool boolAddSpace = intNum != 1;
 	int intAllTotal = 0;
 	while (intNum--)
 	{
@@ -302,7 +301,7 @@ inline void DND(string &strOutput, int intNum)
 	strOutput += "的英雄作成:";
 	RD rdDND("4D6K3");
 	string strDNDName[6] = { "力量","体质","敏捷","智力","感知","魅力" };
-	bool boolAddSpace = intNum == 1 ? false : true;
+	bool boolAddSpace = intNum != 1;
 	int intAllTotal = 0;
 	while (intNum--)
 	{
@@ -321,20 +320,42 @@ inline void DND(string &strOutput, int intNum)
 }
 inline void TempInsane(string &strAns)
 {
-	RD rdD10("D10");
-	rdD10.Roll();
-	strAns += "1D10=" + to_string(rdD10.intTotal) + "\n症状:" + TempInsanity[rdD10.intTotal];
-	rdD10.Roll();
-	string Time = "1D10=" + to_string(rdD10.intTotal);
-	strAns.replace(strAns.find("{1}"), 3, Time);
+	int intSymRes = Randint(1, 10);
+	std::string strTI = "1D10=" + to_string(intSymRes) + "\n症状: " + TempInsanity[intSymRes];
+	if (intSymRes == 9)
+	{
+		int intDetailSymRes = Randint(1, 100);
+		strTI = format(strTI, { "1D10=" + to_string(Randint(1,10)),"1D100=" + to_string(intDetailSymRes),strFear[intDetailSymRes] });
+	}
+	else if (intSymRes == 10)
+	{
+		int intDetailSymRes = Randint(1, 100);
+		strTI = format(strTI, { "1D10=" + to_string(Randint(1,10)),"1D100=" + to_string(intDetailSymRes),strPanic[intDetailSymRes] });
+	}
+	else
+	{
+		strTI = format(strTI, { "1D10=" + to_string(Randint(1,10)) });
+	}
+	strAns += strTI;
 }
 
 inline void LongInsane(string &strAns)
 {
-	RD rdD10("D10");
-	rdD10.Roll();
-	strAns += "1D10=" + to_string(rdD10.intTotal) + "\n症状:" + LongInsanity[rdD10.intTotal];
-	rdD10.Roll();
-	string Time = "1D10=" + to_string(rdD10.intTotal);
-	strAns.replace(strAns.find("{1}"), 3, Time);
+	int intSymRes = Randint(1, 10);
+	std::string strLI = "1D10=" + to_string(intSymRes) + "\n症状: " + LongInsanity[intSymRes];
+	if (intSymRes == 9)
+	{
+		int intDetailSymRes = Randint(1, 100);
+		strLI = format(strLI, { "1D10=" + to_string(Randint(1,10)),"1D100=" + to_string(intDetailSymRes),strFear[intDetailSymRes] });
+	}
+	else if (intSymRes == 10)
+	{
+		int intDetailSymRes = Randint(1, 100);
+		strLI = format(strLI, { "1D10=" + to_string(Randint(1,10)),"1D100=" + to_string(intDetailSymRes),strPanic[intDetailSymRes] });
+	}
+	else
+	{
+		strLI = format(strLI, { "1D10=" + to_string(Randint(1,10)) });
+	}
+	strAns += strLI;
 }
