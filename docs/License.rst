@@ -32,10 +32,9 @@ Dice!云掷骰服务用户协议V1.0.2
     11.本协议内容随时有可能改动，恕不另行通知。
 
 
-AGPLv3协议-必须同意此协议才可以使用Dice!机器人源代码
-------------------------------------------------------------------
+**GNU AFFERO GENERAL PUBLIC LICENSE** - 必须同意此协议才可以使用Dice!机器人源代码
+----------------------------------------------------------------------------------------
 
-**GNU AFFERO GENERAL PUBLIC LICENSE**
 *Version 3, 19 November 2007*
 
 Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
