@@ -107,7 +107,7 @@ static std::map<std::string, std::string> SkillNameReplace = {
 	std::make_pair("图书馆","图书馆使用"),
 	std::make_pair("机修","机械维修"),
 	std::make_pair("电器维修","电气维修"),
-	std::make_pair("CM","克苏鲁神话"),
+	std::make_pair("cm","克苏鲁神话"),
 	std::make_pair("克苏鲁","克苏鲁神话"),
 	std::make_pair("唱歌","歌唱"),
 	std::make_pair("做画","作画"),
@@ -121,8 +121,7 @@ static std::map<std::string, std::string> SkillNameReplace = {
 	std::make_pair("飞行器","飞行器驾驶"),
 	std::make_pair("驾驶飞行器","飞行器驾驶"),
 	std::make_pair("驾驶:飞行器","飞行器驾驶"),
-	std::make_pair("驾驶(飞行器)","飞行器驾驶"),
-
+	std::make_pair("驾驶(飞行器)","飞行器驾驶")
 };
 
 static std::map<std::string, int> SkillDefaultVal = {
