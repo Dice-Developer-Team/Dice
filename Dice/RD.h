@@ -46,7 +46,7 @@ private:
 			for (auto i : strDiceCnt)
 				if (!isdigit(i))
 					return Input_Err;
-			if (strDiceCnt.length() > 3)
+			if (strDiceCnt.length() > 3 || (strDiceCnt.length() == 3 && strDiceCnt != "100"))
 				return DiceTooBig_Err;
 			std::string strAddVal = dice.substr(dice.find("a") + 1);
 			for (auto i : strAddVal)
@@ -124,7 +124,7 @@ private:
 		else if (dice[0] == 'P')
 		{
 			vBnP.push_back(P_Dice);
-			if (dice.length() > 4)
+			if (dice.length() > 2)
 				return DiceTooBig_Err;
 			for (int i = 1; i != dice.length(); i++)
 				if (!isdigit(dice[i]))
@@ -161,7 +161,7 @@ private:
 		else if (dice[0] == 'B')
 		{
 			vBnP.push_back(B_Dice);
-			if (dice.length() > 4)
+			if (dice.length() > 2)
 				return DiceTooBig_Err;
 			for (int i = 1; i != dice.length(); i++)
 				if (!isdigit(dice[i]))
@@ -235,9 +235,9 @@ private:
 		}
 		else if (!boolContainK)
 		{
-			if (dice.substr(0, dice.find("D")).length() > 3)
+			if (dice.substr(0, dice.find("D")).length() > 3 || (dice.substr(0, dice.find("D")).length() == 3 && dice.substr(0, dice.find("D")) != "100"))
 				return DiceTooBig_Err;
-			if (dice.substr(dice.find("D") + 1).length() > 5)
+			if (dice.substr(dice.find("D") + 1).length() > 4 || (dice.substr(dice.find("D") + 1).length() == 4 && dice.substr(dice.find("D") + 1) != "1000"))
 				return TypeTooBig_Err;
 			int intDiceCnt = dice.substr(0, dice.find("D")).length() == 0 ? 1 : stoi(dice.substr(0, dice.find("D")));
 			int intDiceType = stoi(dice.substr(dice.find("D") + 1));
@@ -267,8 +267,10 @@ private:
 				return Value_Err;
 			int intKNum = stoi(dice.substr(dice.find("K") + 1));
 			dice = dice.substr(0, dice.find("K"));
-			if (dice.substr(0, dice.find("D")).length() > 3 || dice.substr(dice.find("D") + 1).length() > 5)
-				return Value_Err;
+			if (dice.substr(0, dice.find("D")).length() > 3 || (dice.substr(0, dice.find("D")).length() == 3 && dice.substr(0, dice.find("D")) != "100"))
+				return DiceTooBig_Err;
+			if (dice.substr(dice.find("D") + 1).length() > 4 || (dice.substr(dice.find("D") + 1).length() == 4 && dice.substr(dice.find("D") + 1) != "1000"))
+				return TypeTooBig_Err;
 			int intDiceCnt = dice.substr(0, dice.find("D")).length() == 0 ? 1 : stoi(dice.substr(0, dice.find("D")));
 			int intDiceType = stoi(dice.substr(dice.find("D") + 1));
 			if (intKNum <= 0 || intDiceCnt == 0)
@@ -539,6 +541,10 @@ public:
 	{
 		std::string strReturnString = strDice;
 		strReturnString.append("=");
+		if(FormStringSeparate().length() > 30)
+		{
+			return FormShortString();
+		}
 		strReturnString.append(FormStringSeparate());
 		if (FormStringSeparate() != FormStringCombined())
 		{
@@ -547,7 +553,7 @@ public:
 		}
 		if (FormStringCombined() != std::to_string(intTotal))
 		{
-			strReturnString.append("=");
+				strReturnString.append("=");
 			strReturnString.append(std::to_string(intTotal));
 		}
 		return strReturnString;
