@@ -22,7 +22,7 @@
 #error 请使用Win32 Release模式进行编译
 #endif
 //Version
-static const std::string Dice_Ver = "2.2.1(418)";
+static const std::string Dice_Ver = "2.2.3(425)";
 static const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
 static const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
 //Error Handle
@@ -285,7 +285,7 @@ static std::string strPropNotFound = "错误:属性不存在";
 static std::string strProp = "{0}的{1}属性值为{2}";
 static std::string strStErr = "格式错误:请参考帮助文档获取.st命令的使用方法";
 static std::string strHlpMsg = Dice_Short_Ver + R"(
-注:[ ]中的命令为可选命令
+请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
 <通用命令>
 .r/d/o [掷骰表达式*] [原因]		普通掷骰
 .w/ww XaY						骰池
@@ -299,8 +299,8 @@ static std::string strHlpMsg = Dice_Short_Ver + R"(
 .coc6d					详细版COC6人物作成
 .ti						疯狂发作-临时症状
 .li						疯狂发作-总结症状
-.st [del/clr/show] [属性名] [属性值]	人物卡导入
-.rc/ra [技能名] [技能值]	技能检定(规则书/房规)
+.st [del/clr/show] [属性名] [属性值]		人物卡导入
+.rc/ra [技能名] [技能值]		技能检定(规则书/房规)
 .jrrp [on/off]				今日人品检定
 .rules 关键字				COC7规则查询
 .help						显示帮助
