@@ -24,8 +24,6 @@ using namespace CQ;
 inline void init(string &msg)
 {
 	msg_decode(msg);
-	while (!msg.empty() && isspace(msg[0]))
-		msg.erase(msg.begin());
 }
 
 inline void init2(string &msg)
@@ -51,7 +49,7 @@ inline void init2(string &msg)
 		}
 	}
 
-	while (!msg.empty() && isspace(msg[0]))
+	while (isspace(msg[0]))
 		msg.erase(msg.begin());
 	while (!msg.empty() && isspace(msg[msg.length() - 1]))
 		msg.erase(msg.end() - 1);

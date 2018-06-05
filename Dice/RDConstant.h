@@ -22,7 +22,7 @@
 #error 请使用Win32 Release模式进行编译
 #endif
 //Version
-static const std::string Dice_Ver = "2.2.3(425)";
+static const std::string Dice_Ver = "2.2.4(426)";
 static const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
 static const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
 //Error Handle
