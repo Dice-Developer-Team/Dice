@@ -184,10 +184,12 @@
   <ItemGroup>
     <ClCompile Include="Dice.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="InitList.cpp" />
     <ClCompile Include="RD.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h" />
+    <ClInclude Include="InitList.h" />
     <ClInclude Include="RD.h" />
     <ClInclude Include="RDConstant.h" />
   </ItemGroup>

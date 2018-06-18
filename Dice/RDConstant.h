@@ -22,7 +22,7 @@
 #error 请使用Win32 Release模式进行编译
 #endif
 //Version
-static const std::string Dice_Ver = "2.2.4(426)";
+static const std::string Dice_Ver = "2.2.5(428)";
 static const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
 static const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
 //Error Handle
@@ -287,26 +287,26 @@ static std::string strStErr = "格式错误:请参考帮助文档获取.st命令的使用方法";
 static std::string strHlpMsg = Dice_Short_Ver + R"(
 请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
 <通用命令>
-.r/d/o [掷骰表达式*] [原因]		普通掷骰
+.r [掷骰表达式*] [原因]			普通掷骰
+.rs	[掷骰表达式*] [原因]			简化输出
 .w/ww XaY						骰池
 .set [1-99999之间的整数]			设置默认骰
-.sc SC表达式** [理智值]			自动Sancheck
+.sc SC表达式** [San值]			自动Sancheck
 .en [技能名] [技能值]			增强检定/幕间成长
-.coc7 [个数]					COC7人物作成
-.coc6 [个数]					COC6人物作成
+.coc7/6 [个数]					COC7/6人物作成
 .dnd [个数]					DND人物作成
-.coc7d					详细版COC7人物作成
-.coc6d					详细版COC6人物作成
-.ti						疯狂发作-临时症状
-.li						疯狂发作-总结症状
+.coc7/6d					详细版COC7/6人物作成
+.ti/li					疯狂发作-临时/总结症状
 .st [del/clr/show] [属性名] [属性值]		人物卡导入
 .rc/ra [技能名] [技能值]		技能检定(规则书/房规)
 .jrrp [on/off]				今日人品检定
 .rules 关键字				COC7规则查询
 .help						显示帮助
 <仅限群/多人聊天>
-.nn [名称]					设置及删除昵称
-.h/rh/dh/oh [掷骰表达式] [原因]		暗骰,结果私聊发送
+.ri [加值] [昵称]			DnD先攻掷骰
+.init [clr]					DnD先攻查看/清空
+.nn [名称]					设置/删除昵称
+.rh [掷骰表达式*] [原因]			暗骰,结果私聊发送
 .bot [on/off] [机器人QQ号]		机器人开启或关闭
 .ob [exit/list/clr/on/off]			旁观模式
 .me on/off/动作				以第三方视角做出动作
