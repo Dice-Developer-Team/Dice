@@ -22,7 +22,7 @@
 #error 请使用Win32 Release模式进行编译
 #endif
 //Version
-static const std::string Dice_Ver = "2.2.5(428)";
+static const std::string Dice_Ver = "2.2.5(428) Modified Version";
 static const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
 static const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
 //Error Handle
@@ -285,6 +285,7 @@ static std::string strPropNotFound = "错误:属性不存在";
 static std::string strProp = "{0}的{1}属性值为{2}";
 static std::string strStErr = "格式错误:请参考帮助文档获取.st命令的使用方法";
 static std::string strHlpMsg = Dice_Short_Ver + R"(
+【狼仔魔改版】
 请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
 <通用命令>
 .r [掷骰表达式*] [原因]			普通掷骰
@@ -317,7 +318,10 @@ static std::string strHlpMsg = Dice_Short_Ver + R"(
  支持使用K来取较大的几个骰子
  支持使用 个数#表达式 进行多轮掷骰
 **SC表达式为 成功扣San/失败扣San,如:1/1d6
-插件交流/bug反馈/查看源代码请加QQ群624807593)";
+插件交流/bug反馈/查看源代码请加QQ群624807593
+DND在线规则书：http://trpg.tk/
+备用链接：http://101.132.132.208/
+汪酱的跑团小窝：725116464)";
 
 static std::string strFear[101] = { "",
 "洗澡恐惧症（Ablutophobia）：对于洗涤或洗澡的恐惧。",
@@ -1592,6 +1596,9 @@ b)被攻击者选择闪避：
 当两位调查员互相对抗时使用。双方同时检定同一技能或属性： 大成功胜过极难成功。 极难成功胜过困难成功。 困难成功胜过常规成功。 常规成功胜过失败或大失败。
 若打成平手，技能（或属性）更高的一方获胜。若仍然平手，则达成僵局或者双方都重骰。
 对抗检定不能孤注一骰。
+[||群||]汪酱的跑团小群：725116464
+[||dnd||DND||]DND在线规则速查：http://trpg.tk/
+备用链接：http://101.132.132.208/
 [||组合技能检定||]组合技能检定
 某些情况允许或要求同时使用多个技能。
 只掷一次骰子，然后将结果与每个技能比较。守秘人将说明是否要求每个技能都成功，或是只要任何一个技能成功。

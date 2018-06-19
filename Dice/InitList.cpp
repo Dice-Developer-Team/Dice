@@ -53,7 +53,7 @@ void Initlist::show(long long group, std::string &strMAns)
 	int i = 1;
 	for (auto it = mpInitlist[group].begin(); it != mpInitlist[group].end(); ++it)
 	{
-		strMAns += '\n' + to_string(i) + "." + it->strNickName + " " + to_string(it->intValue);
+		strMAns += '\n' + to_string(i) + "." + it->strNickName + " (" + to_string(it->intValue) + ")";
 		++i;
 	}
 }

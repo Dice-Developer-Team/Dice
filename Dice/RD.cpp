@@ -309,6 +309,73 @@ inline void COC6(string &strMAns, int intNum)
 		intAllTotal = 0;
 	}
 }
+inline void COCR(string &strMAns)
+{
+	RD rd3D6("3D6");
+	RD rd2D6p6("2D6+6");
+	strMAns += "的人物属性投掷:";
+	strMAns += '\n';
+	strMAns += "力量STR、体质CON、敏捷DEX、外貌APP、意志POW的分配值为：";
+	strMAns += '\n';
+	int cocr_n, cocr_t, cocr_c = 0, cocr_inall = 0, EXT = 0;
+	int cocr[6];
+	for (cocr_n = 0; cocr_n <= 5; cocr_n++) {
+		rd3D6.Roll();
+		cocr[cocr_n] = rd3D6.intTotal * 5;
+	}
+	for (cocr_n = 1; cocr_n <= 5; cocr_n++) {
+		if (cocr[0] > cocr[cocr_n]) {
+			cocr_t = cocr[cocr_n];
+			cocr[cocr_n] = cocr[0];
+			cocr[0] = cocr_t;
+		}
+	}
+	for (cocr_n = 1; cocr_n <= 5; cocr_n++) {
+		strMAns += to_string(cocr[cocr_n]) + " ";
+		cocr_inall += cocr[cocr_n];
+		if (cocr[cocr_n] < 50)
+			cocr_c++;
+	}
+	strMAns += '\n';
+	strMAns += "体型SIZ、教育EDU、智力INT的分配值为：";
+	strMAns += '\n';
+	for (cocr_n = 0; cocr_n <= 3; cocr_n++) {
+		rd2D6p6.Roll();
+		cocr[cocr_n] = rd2D6p6.intTotal * 5;
+	}
+	for (cocr_n = 1; cocr_n <= 3; cocr_n++) {
+		if (cocr[0] > cocr[cocr_n]) {
+			cocr_t = cocr[cocr_n];
+			cocr[cocr_n] = cocr[0];
+			cocr[0] = cocr_t;
+		}
+	}
+	for (cocr_n = 1; cocr_n <= 3; cocr_n++) {
+		strMAns += to_string(cocr[cocr_n]) + " ";
+		cocr_inall += cocr[cocr_n];
+		if (cocr[cocr_n] <= 50)
+			cocr_c++;
+	}
+	strMAns += '\n';
+	strMAns += "幸运LUCK=";
+	rd3D6.Roll();
+	int LUCK = rd3D6.intTotal * 5;
+	rd3D6.Roll();
+	if (LUCK < rd3D6.intTotal * 5)
+		LUCK = rd3D6.intTotal * 5;
+	strMAns += to_string(LUCK);
+	strMAns += '\n';
+	if (cocr_c >= 3) {
+		RD rd1D6("1D6");
+		rd1D6.Roll();
+		EXT = rd1D6.intTotal * 5;
+		strMAns += "获得自由分配点：" + to_string(EXT) + "点" + '\n';
+	}
+	strMAns += "共计:" + to_string(cocr_inall + LUCK + EXT);
+	strMAns += '\n';
+	strMAns += "不含幸运:" + to_string(cocr_inall + EXT);
+	strMAns += "（同一组属性无先后顺序，可以自由分配）";
+}
 inline void DND(string &strOutput, int intNum)
 {
 	strOutput += "的英雄作成:";
