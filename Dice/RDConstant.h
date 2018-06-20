@@ -286,20 +286,20 @@ static std::string strProp = "{0}的{1}属性值为{2}";
 static std::string strStErr = "格式错误:请参考帮助文档获取.st命令的使用方法";
 static std::string strHlpMsg = Dice_Short_Ver + R"(
 【狼仔魔改版】
-请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
 <通用命令>
-.r [掷骰表达式*] [原因]			普通掷骰
-.rs	[掷骰表达式*] [原因]			简化输出
-.w/ww XaY						骰池
-.set [1-99999之间的整数]			设置默认骰
-.sc SC表达式** [San值]			自动Sancheck
-.en [技能名] [技能值]			增强检定/幕间成长
-.coc7/6 [个数]					COC7/6人物作成
+.r [掷骰表达式*] [原因]		普通掷骰
+.rs	[掷骰表达式*] [原因]	简化输出
+.w/ww XaY					骰池
+.set [1-99999之间的整数]	设置默认骰
+.sc SC表达式** [San值]		自动Sancheck
+.en [技能名] [技能值]		增强检定/幕间成长
+.coc7/6 [个数]				COC7/6人物作成
+.cocr                       COC村规人物做成
 .dnd [个数]					DND人物作成
 .coc7/6d					详细版COC7/6人物作成
-.ti/li					疯狂发作-临时/总结症状
-.st [del/clr/show] [属性名] [属性值]		人物卡导入
-.rc/ra [技能名] [技能值]		技能检定(规则书/房规)
+.ti/li					    疯狂发作-临时/总结症状
+.st [属性名] [属性值]		人物卡导入
+.rc/ra [技能名] [技能值]	技能检定(规则书/房规)
 .jrrp [on/off]				今日人品检定
 .rules 关键字				COC7规则查询
 .help						显示帮助
@@ -307,11 +307,11 @@ static std::string strHlpMsg = Dice_Short_Ver + R"(
 .ri [加值] [昵称]			DnD先攻掷骰
 .init [clr]					DnD先攻查看/清空
 .nn [名称]					设置/删除昵称
-.rh [掷骰表达式*] [原因]			暗骰,结果私聊发送
-.bot [on/off] [机器人QQ号]		机器人开启或关闭
-.ob [exit/list/clr/on/off]			旁观模式
+.rh [掷骰表达式*] [原因]	暗骰,结果私聊发送
+.bot [on/off] 		        机器人开启或关闭
+.ob [exit/list/clr/on/off]	旁观模式
 .me on/off/动作				以第三方视角做出动作
-.welcome 欢迎消息				群欢迎提示
+.welcome 欢迎消息			群欢迎提示
 <仅限私聊>
 .me 群号 动作				以第三方视角做出动作
 *COC7惩罚骰为P+个数,奖励骰为B+个数
