@@ -22,17 +22,17 @@
 #error «Î π”√Win32 Releaseƒ£ ΩΩ¯––±‡“Î
 #endif
 //Version
-static const std::string Dice_Ver = "2.2.5(428)";
+static const std::string Dice_Ver = "2.2.6(429)";
 static const std::string Dice_Short_Ver = "Dice! by À›‰ß Version " + Dice_Ver;
 static const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
 //Error Handle
-#define Value_Err -1
-#define Input_Err -2
-#define ZeroDice_Err -3
-#define ZeroType_Err -4
-#define DiceTooBig_Err -5
-#define TypeTooBig_Err -6
-#define AddDiceVal_Err -7
+#define Value_Err (-1)
+#define Input_Err (-2)
+#define ZeroDice_Err (-3)
+#define ZeroType_Err (-4)
+#define DiceTooBig_Err (-5)
+#define TypeTooBig_Err (-6)
+#define AddDiceVal_Err (-7)
 //Dice Type
 #define Normal_Dice 0
 #define B_Dice 1
@@ -214,12 +214,13 @@ static std::map<std::string, int> SkillDefaultVal = {
 	std::make_pair("”Œ”æ", 20),
 	std::make_pair("Õ∂÷¿", 20),
 	std::make_pair("◊∑◊Ÿ", 10),
-	std::make_pair("—± ﬁ", 1),
+	std::make_pair("—± ﬁ", 5),
 	std::make_pair("«±ÀÆ", 1),
 	std::make_pair("±¨∆∆", 1),
 	std::make_pair("∂¡¥Ω", 1),
 	std::make_pair("¥ﬂ√ﬂ", 1),
-	std::make_pair("≈⁄ ı", 1)
+	std::make_pair("≈⁄ ı", 1),
+	std::make_pair("∂∑≈π", 25)
 };
 
 static std::string TempInsanity[11]{ "",

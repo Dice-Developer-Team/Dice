@@ -29,16 +29,16 @@ extern std::map<long long, int> DefaultDice;
 inline int Randint(int lowest, int highest)
 {
 	std::mt19937 gen(static_cast<unsigned int> (GetCycleCount()));
-	std::uniform_int_distribution<int> dis(lowest, highest);
+	const std::uniform_int_distribution<int> dis(lowest, highest);
 	return dis(gen);
 }
 class RD
 {
 private:
 
-	int_errno RollDice(std::string dice)
+	int_errno RollDice(std::string dice) const 
 	{
-		bool boolNegative = *(vboolNegative.end() - 1);
+		const bool boolNegative = *(vboolNegative.end() - 1);
 		if (dice.find('a') != std::string::npos)
 		{
 			vBnP.push_back(WW_Dice);
@@ -55,7 +55,7 @@ private:
 			if (strAddVal.length() > 2)
 				return AddDiceVal_Err;
 			int intDiceCnt = stoi(strDiceCnt);
-			int AddDiceVal = stoi(strAddVal);
+			const int AddDiceVal = stoi(strAddVal);
 			if (intDiceCnt == 0)
 				return ZeroDice_Err;
 			if (AddDiceVal < 5 || AddDiceVal > 10)
@@ -224,7 +224,7 @@ private:
 		{
 			if (dice.length() > 5 || dice.length() == 0)
 				return Value_Err;
-			int intTmpRes = stoi(dice);
+			const int intTmpRes = stoi(dice);
 			if (boolNegative)
 				intTotal -= intTmpRes;
 			else
@@ -240,7 +240,7 @@ private:
 			if (dice.substr(dice.find("D") + 1).length() > 4 || (dice.substr(dice.find("D") + 1).length() == 4 && dice.substr(dice.find("D") + 1) != "1000"))
 				return TypeTooBig_Err;
 			int intDiceCnt = dice.substr(0, dice.find("D")).length() == 0 ? 1 : stoi(dice.substr(0, dice.find("D")));
-			int intDiceType = stoi(dice.substr(dice.find("D") + 1));
+			const int intDiceType = stoi(dice.substr(dice.find("D") + 1));
 			if (intDiceCnt == 0)
 				return ZeroDice_Err;
 			if (intDiceType == 0)
@@ -265,14 +265,14 @@ private:
 		{
 			if (dice.substr(dice.find("K") + 1).length() > 3)
 				return Value_Err;
-			int intKNum = stoi(dice.substr(dice.find("K") + 1));
+			const int intKNum = stoi(dice.substr(dice.find("K") + 1));
 			dice = dice.substr(0, dice.find("K"));
 			if (dice.substr(0, dice.find("D")).length() > 3 || (dice.substr(0, dice.find("D")).length() == 3 && dice.substr(0, dice.find("D")) != "100"))
 				return DiceTooBig_Err;
 			if (dice.substr(dice.find("D") + 1).length() > 4 || (dice.substr(dice.find("D") + 1).length() == 4 && dice.substr(dice.find("D") + 1) != "1000"))
 				return TypeTooBig_Err;
 			int intDiceCnt = dice.substr(0, dice.find("D")).length() == 0 ? 1 : stoi(dice.substr(0, dice.find("D")));
-			int intDiceType = stoi(dice.substr(dice.find("D") + 1));
+			const int intDiceType = stoi(dice.substr(dice.find("D") + 1));
 			if (intKNum <= 0 || intDiceCnt == 0)
 				return ZeroDice_Err;
 			if (intKNum > intDiceCnt)
@@ -410,14 +410,14 @@ public:
 			strDice.erase(strDice.begin());
 		if (strDice[strDice.length() - 1] == 'a')strDice.append("10");
 	}
-	mutable std::vector<std::vector<int>> vvintRes;
-	mutable std::vector<int> vintRes;
-	mutable std::vector<bool> vboolNegative;
+	mutable std::vector<std::vector<int>> vvintRes{};
+	mutable std::vector<int> vintRes{};
+	mutable std::vector<bool> vboolNegative{};
 
 	//0-Normal, 1-B, 2-P
-	mutable std::vector<int> vBnP;
+	mutable std::vector<int> vBnP{};
 	mutable int intTotal = 0;
-	int_errno Roll()
+	int_errno Roll() const
 	{
 		intTotal = 0;
 		vvintRes.clear();
@@ -437,8 +437,8 @@ public:
 			return Input_Err;
 		while (dice.find("+", intReadDiceLoc) != std::string::npos || dice.find("-", intReadDiceLoc) != std::string::npos)
 		{
-			int intSymbolPosition = dice.find("+", intReadDiceLoc) < dice.find("-", intReadDiceLoc) ? dice.find("+", intReadDiceLoc) : dice.find("-", intReadDiceLoc);
-			int intRDRes = RollDice(dice.substr(intReadDiceLoc, intSymbolPosition - intReadDiceLoc));
+			const int intSymbolPosition = dice.find("+", intReadDiceLoc) < dice.find("-", intReadDiceLoc) ? dice.find("+", intReadDiceLoc) : dice.find("-", intReadDiceLoc);
+			const int intRDRes = RollDice(dice.substr(intReadDiceLoc, intSymbolPosition - intReadDiceLoc));
 			if (intRDRes != 0)
 				return intRDRes;
 			intReadDiceLoc = intSymbolPosition + 1;
@@ -447,22 +447,22 @@ public:
 			else
 				vboolNegative.push_back(true);
 		}
-		int intFinalRDRes = RollDice(dice.substr(intReadDiceLoc));
+		const int intFinalRDRes = RollDice(dice.substr(intReadDiceLoc));
 		if (intFinalRDRes != 0)
 			return intFinalRDRes;
 		return 0;
 	}
-	std::string FormStringSeparate()
+	std::string FormStringSeparate() const
 	{
 		std::string strReturnString;
-		for (auto i = vvintRes.begin(); i != vvintRes.end(); i++)
+		for (auto i = vvintRes.begin(); i != vvintRes.end(); ++i)
 		{
 			strReturnString.append(vboolNegative[distance(vvintRes.begin(), i)] ? "-" : (i == vvintRes.begin() ? "" : "+"));
 			if (vBnP[distance(vvintRes.begin(), i)] == Normal_Dice)
 			{
 				if (i->size() != 1 && (vvintRes.size() != 1 || vboolNegative[distance(vvintRes.begin(), i)]))
 					strReturnString.append("(");
-				for (auto j = i->begin(); j != i->end(); j++)
+				for (auto j = i->begin(); j != i->end(); ++j)
 				{
 					if (j != i->begin())
 						strReturnString.append("+");
@@ -474,7 +474,7 @@ public:
 			else if (vBnP[distance(vvintRes.begin(), i)] == Fudge_Dice)
 			{
 				strReturnString.append("[");
-				for (auto j = i->begin(); j != i->end(); j++)
+				for (auto j = i->begin(); j != i->end(); ++j)
 				{
 					strReturnString.append(*j == 1 ? "+" : *j == 0 ? "0" : "-");
 					if (j != i->end() - 1)
@@ -487,7 +487,7 @@ public:
 				if (vvintRes.size() != 1 && i->size() != (*i)[0] + 1)
 					strReturnString.append("{ ");
 				int intWWPos = 0;
-				while (1)
+				while (true)
 				{
 					strReturnString.append("(");
 					for (int a = intWWPos + 1; a <= intWWPos + (*i)[intWWPos]; a++)
@@ -514,7 +514,7 @@ public:
 			{
 				strReturnString.append(std::to_string((*i)[0]));
 				strReturnString.append(vBnP[distance(vvintRes.begin(), i)] == B_Dice ? "[½±Àø÷»:" : "[³Í·£÷»:");
-				for (auto it = i->begin() + 1; it != i->end(); it++)
+				for (auto it = i->begin() + 1; it != i->end(); ++it)
 				{
 					strReturnString.append(std::to_string(*it) + ((it == i->end() - 1) ? "" : " "));
 				}
@@ -523,10 +523,10 @@ public:
 		}
 		return strReturnString;
 	}
-	std::string FormStringCombined()
+	std::string FormStringCombined() const
 	{
 		std::string strReturnString;
-		for (auto i = vintRes.begin(); i != vintRes.end(); i++)
+		for (auto i = vintRes.begin(); i != vintRes.end(); ++i)
 		{
 			strReturnString.append(vboolNegative[distance(vintRes.begin(), i)] ? "-" : (i == vintRes.begin() ? "" : "+"));
 			if (*i < 0 && i != vintRes.begin())
@@ -537,7 +537,7 @@ public:
 		}
 		return strReturnString;
 	}
-	std::string FormCompleteString()
+	std::string FormCompleteString() const
 	{
 		std::string strReturnString = strDice;
 		strReturnString.append("=");
@@ -558,7 +558,7 @@ public:
 		}
 		return strReturnString;
 	}
-	std::string FormShortString()
+	std::string FormShortString() const 
 	{
 		std::string strReturnString = strDice;
 		strReturnString.append("=");
@@ -581,3 +581,4 @@ extern inline void DND(std::string&, int);
 extern inline void LongInsane(std::string&);
 extern inline void TempInsane(std::string&);
 #endif /*_RD_*/
+

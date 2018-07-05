@@ -29,11 +29,11 @@ void Initlist::insert(long long group, int value, string nickname)
 	}
 	else
 	{
-		for(auto it = mpInitlist[group].begin();it != mpInitlist[group].end();++it)
+		for (auto& it : mpInitlist[group])
 		{
-			if (it->strNickName == nickname)
+			if (it.strNickName == nickname)
 			{
-				it->intValue = value;
+				it.intValue = value;
 				return;
 			}
 		}
@@ -49,11 +49,11 @@ void Initlist::show(long long group, std::string &strMAns)
 		return;
 	}
 	strMAns = "œ»π•À≥–Ú£∫";
-	sort(mpInitlist[group].begin(), mpInitlist[group].end(), INIT());
+	sort(mpInitlist[group].begin(), mpInitlist[group].end(), greater<>());
 	int i = 1;
-	for (auto it = mpInitlist[group].begin(); it != mpInitlist[group].end(); ++it)
+	for (const auto& it : mpInitlist[group])
 	{
-		strMAns += '\n' + to_string(i) + "." + it->strNickName + " " + to_string(it->intValue);
+		strMAns += '\n' + to_string(i) + "." + it.strNickName + " " + to_string(it.intValue);
 		++i;
 	}
 }

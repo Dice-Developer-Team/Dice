@@ -69,71 +69,71 @@ inline void COC7D(string &strMAns)
 	strMAns += '\n';
 	strMAns += "力量STR=3D6*5=";
 	rd3D6.Roll();
-	int STR = rd3D6.intTotal * 5;
+	const int STR = rd3D6.intTotal * 5;
 
 	strMAns += to_string(STR) + "/" + to_string(STR / 2) + "/" + to_string(STR / 5);
 	strMAns += '\n';
 	strMAns += "体质CON=3D6*5=";
 	rd3D6.Roll();
-	int CON = rd3D6.intTotal * 5;
+	const int CON = rd3D6.intTotal * 5;
 
 	strMAns += to_string(CON) + "/" + to_string(CON / 2) + "/" + to_string(CON / 5);
 	strMAns += '\n';
 	strMAns += "体型SIZ=(2D6+6)*5=";
 	rd2D6p6.Roll();
-	int SIZ = rd2D6p6.intTotal * 5;
+	const int SIZ = rd2D6p6.intTotal * 5;
 
 	strMAns += to_string(SIZ) + "/" + to_string(SIZ / 2) + "/" + to_string(SIZ / 5);
 	strMAns += '\n';
 	strMAns += "敏捷DEX=3D6*5=";
 	rd3D6.Roll();
-	int DEX = rd3D6.intTotal * 5;
+	const int DEX = rd3D6.intTotal * 5;
 
 	strMAns += to_string(DEX) + "/" + to_string(DEX / 2) + "/" + to_string(DEX / 5);
 	strMAns += '\n';
 	strMAns += "外貌APP=3D6*5=";
 	rd3D6.Roll();
-	int APP = rd3D6.intTotal * 5;
+	const int APP = rd3D6.intTotal * 5;
 
 	strMAns += to_string(APP) + "/" + to_string(APP / 2) + "/" + to_string(APP / 5);
 	strMAns += '\n';
 	strMAns += "智力INT=(2D6+6)*5=";
 	rd2D6p6.Roll();
-	int INT = rd2D6p6.intTotal * 5;
+	const int INT = rd2D6p6.intTotal * 5;
 
 	strMAns += to_string(INT) + "/" + to_string(INT / 2) + "/" + to_string(INT / 5);
 	strMAns += '\n';
 	strMAns += "意志POW=3D6*5=";
 	rd3D6.Roll();
-	int POW = rd3D6.intTotal * 5;
+	const int POW = rd3D6.intTotal * 5;
 
 	strMAns += to_string(POW) + "/" + to_string(POW / 2) + "/" + to_string(POW / 5);
 	strMAns += '\n';
 	strMAns += "教育EDU=(2D6+6)*5=";
 	rd2D6p6.Roll();
-	int EDU = rd2D6p6.intTotal * 5;
+	const int EDU = rd2D6p6.intTotal * 5;
 
 	strMAns += to_string(EDU) + "/" + to_string(EDU / 2) + "/" + to_string(EDU / 5);
 	strMAns += '\n';
 	strMAns += "幸运LUCK=3D6*5=";
 	rd3D6.Roll();
-	int LUCK = rd3D6.intTotal * 5;
+	const int LUCK = rd3D6.intTotal * 5;
 	strMAns += to_string(LUCK);
 
 	strMAns += '\n';
 	strMAns += "共计:" + to_string(STR + CON + SIZ + APP + POW + EDU + DEX + INT + LUCK);
 
 	strMAns += "\n理智SAN=POW=";
-	int SAN = POW;
+	const int SAN = POW;
 	strMAns += to_string(SAN);
 	strMAns += "\n生命值HP=(SIZ+CON)/10=";
-	int HP = (SIZ + CON) / 10;
+	const int HP = (SIZ + CON) / 10;
 	strMAns += to_string(HP);
 	strMAns += "\n魔法值MP=POW/5=";
-	int MP = POW / 5;
+	const int MP = POW / 5;
 	strMAns += to_string(MP);
 	string DB;
-	int build = 0;
+	int build;
 	if (STR + SIZ >= 2 && STR + SIZ <= 64)
 	{
 		DB = "-2";
@@ -165,7 +165,7 @@ inline void COC7D(string &strMAns)
 		build = -10;
 	}
 	strMAns += "\n伤害奖励DB=" + DB + "\n体格=" + (build == -10 ? "计算错误" : to_string(build));
-	int MOV = 0;
+	int MOV;
 	if (DEX < SIZ&&STR < SIZ)
 		MOV = 7;
 	else if (DEX > SIZ && STR > SIZ)
@@ -183,59 +183,59 @@ inline void COC6D(string &strMAns)
 	strMAns += '\n';
 	strMAns += "力量STR=3D6=";
 	rd3D6.Roll();
-	int STR = rd3D6.intTotal;
+	const int STR = rd3D6.intTotal;
 
 	strMAns += to_string(STR);
 	strMAns += '\n';
 	strMAns += "体质CON=3D6=";
 	rd3D6.Roll();
-	int CON = rd3D6.intTotal;
+	const int CON = rd3D6.intTotal;
 
 	strMAns += to_string(CON);
 	strMAns += '\n';
 	strMAns += "体型SIZ=2D6+6=";
 	rd2D6p6.Roll();
-	int SIZ = rd2D6p6.intTotal;
+	const int SIZ = rd2D6p6.intTotal;
 
 	strMAns += to_string(SIZ);
 	strMAns += '\n';
 	strMAns += "敏捷DEX=3D6=";
 	rd3D6.Roll();
-	int DEX = rd3D6.intTotal;
+	const int DEX = rd3D6.intTotal;
 
 	strMAns += to_string(DEX);
 	strMAns += '\n';
 	strMAns += "外貌APP=3D6=";
 	rd3D6.Roll();
-	int APP = rd3D6.intTotal;
+	const int APP = rd3D6.intTotal;
 
 	strMAns += to_string(APP);
 	strMAns += '\n';
 	strMAns += "智力INT=2D6+6=";
 	rd2D6p6.Roll();
-	int INT = rd2D6p6.intTotal;
+	const int INT = rd2D6p6.intTotal;
 
 	strMAns += to_string(INT);
 	strMAns += '\n';
 	strMAns += "意志POW=3D6=";
 	rd3D6.Roll();
-	int POW = rd3D6.intTotal;
+	const int POW = rd3D6.intTotal;
 
 	strMAns += to_string(POW);
 	strMAns += '\n';
 	strMAns += "教育EDU=3D6+3=";
 	rd3D6p3.Roll();
-	int EDU = rd3D6p3.intTotal;
+	const int EDU = rd3D6p3.intTotal;
 
 	strMAns += to_string(EDU);
 	strMAns += '\n';
 	strMAns += "共计:" + to_string(STR + CON + SIZ + APP + POW + EDU + DEX + INT);
-	int SAN = POW * 5;
-	int IDEA = INT * 5;
-	int LUCK = POW * 5;
-	int KNOW = EDU * 5;
-	int HP = static_cast<int> (ceil(static_cast<double> (CON + SIZ) / 2.0));
-	int MP = POW;
+	const int SAN = POW * 5;
+	const int IDEA = INT * 5;
+	const int LUCK = POW * 5;
+	const int KNOW = EDU * 5;
+	const int HP = static_cast<int> (ceil(static_cast<double> (CON + SIZ) / 2.0));
+	const int MP = POW;
 	strMAns += "\n理智SAN=POW*5=" + to_string(SAN) + "\n灵感IDEA=INT*5=" + to_string(IDEA) + "\n幸运LUCK=POW*5=" + to_string(LUCK) + "\n知识KNOW=EDU*5=" + to_string(KNOW);
 	strMAns += "\n生命值HP=(CON+SIZ)/2=" + to_string(HP) + "\n魔法值MP=POW=" + to_string(MP);
 	strMAns += "\n伤害奖励DB=";
@@ -291,7 +291,7 @@ inline void COC6(string &strMAns, int intNum)
 	strMAns += "的人物作成:";
 	string strProperty[] = { "力量","体质","体型","敏捷","外貌","智力","意志","教育" };
 	string strRoll[] = { "3D6","3D6","2D6+6","3D6","3D6", "2D6+6","3D6", "3D6+3" };
-	bool boolAddSpace = intNum != 1;
+	const bool boolAddSpace = intNum != 1;
 	int intAllTotal = 0;
 	while (intNum--)
 	{
@@ -314,7 +314,7 @@ inline void DND(string &strOutput, int intNum)
 	strOutput += "的英雄作成:";
 	RD rdDND("4D6K3");
 	string strDNDName[6] = { "力量","体质","敏捷","智力","感知","魅力" };
-	bool boolAddSpace = intNum != 1;
+	const bool boolAddSpace = intNum != 1;
 	int intAllTotal = 0;
 	while (intNum--)
 	{
@@ -333,16 +333,16 @@ inline void DND(string &strOutput, int intNum)
 }
 inline void TempInsane(string &strAns)
 {
-	int intSymRes = Randint(1, 10);
+	const int intSymRes = Randint(1, 10);
 	std::string strTI = "1D10=" + to_string(intSymRes) + "\n症状: " + TempInsanity[intSymRes];
 	if (intSymRes == 9)
 	{
-		int intDetailSymRes = Randint(1, 100);
+		const int intDetailSymRes = Randint(1, 100);
 		strTI = format(strTI, { "1D10=" + to_string(Randint(1,10)),"1D100=" + to_string(intDetailSymRes),strFear[intDetailSymRes] });
 	}
 	else if (intSymRes == 10)
 	{
-		int intDetailSymRes = Randint(1, 100);
+		const int intDetailSymRes = Randint(1, 100);
 		strTI = format(strTI, { "1D10=" + to_string(Randint(1,10)),"1D100=" + to_string(intDetailSymRes),strPanic[intDetailSymRes] });
 	}
 	else
@@ -354,16 +354,16 @@ inline void TempInsane(string &strAns)
 
 inline void LongInsane(string &strAns)
 {
-	int intSymRes = Randint(1, 10);
+	const int intSymRes = Randint(1, 10);
 	std::string strLI = "1D10=" + to_string(intSymRes) + "\n症状: " + LongInsanity[intSymRes];
 	if (intSymRes == 9)
 	{
-		int intDetailSymRes = Randint(1, 100);
+		const int intDetailSymRes = Randint(1, 100);
 		strLI = format(strLI, { "1D10=" + to_string(Randint(1,10)),"1D100=" + to_string(intDetailSymRes),strFear[intDetailSymRes] });
 	}
 	else if (intSymRes == 10)
 	{
-		int intDetailSymRes = Randint(1, 100);
+		const int intDetailSymRes = Randint(1, 100);
 		strLI = format(strLI, { "1D10=" + to_string(Randint(1,10)),"1D100=" + to_string(intDetailSymRes),strPanic[intDetailSymRes] });
 	}
 	else

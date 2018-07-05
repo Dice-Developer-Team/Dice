@@ -22,9 +22,9 @@
 
 struct INIT {
 	std::string strNickName;
-	int intValue;
-	bool operator()(INIT first, INIT second) const {
-		return first.intValue>second.intValue;
+	int intValue = 0;
+	bool operator>(const INIT second) const {
+		return this->intValue>second.intValue;
 	}
 };
 
