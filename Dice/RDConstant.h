@@ -22,7 +22,7 @@
 #error 请使用Win32 Release模式进行编译
 #endif
 //Version
-static const std::string Dice_Ver = "2.2.5c (428) Modified Version";
+static const std::string Dice_Ver = "2.2.6b (429) Modified";
 static const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
 static const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
 //Error Handle
@@ -214,12 +214,13 @@ static std::map<std::string, int> SkillDefaultVal = {
 	std::make_pair("游泳", 20),
 	std::make_pair("投掷", 20),
 	std::make_pair("追踪", 10),
-	std::make_pair("驯兽", 1),
+	std::make_pair("驯兽", 5),
 	std::make_pair("潜水", 1),
 	std::make_pair("爆破", 1),
 	std::make_pair("读唇", 1),
 	std::make_pair("催眠", 1),
-	std::make_pair("炮术", 1)
+	std::make_pair("炮术", 1),
+	std::make_pair("斗殴", 25)
 };
 
 static std::string TempInsanity[11]{ "",
@@ -259,6 +260,7 @@ static std::string strGroupIDInvalid = "无效的群号!";
 static std::string strSendErr = "消息发送失败!"; 
 static std::string strDisabledErr = "命令无法执行: 机器人已在此群中被关闭!";
 static std::string strMEDisabledErr = "管理员已在此群中禁用.me命令!";
+static std::string strHELPDisabledErr = "管理员已在此群中禁用.help命令!";
 static std::string strNameDelErr = "没有设置名称,无法删除!";
 static std::string strValueErr = "掷骰表达式输入错误!";
 static std::string strInputErr = "命令或掷骰表达式输入错误!";
@@ -285,7 +287,7 @@ static std::string strPropNotFound = "错误:属性不存在";
 static std::string strProp = "{0}的{1}属性值为{2}";
 static std::string strStErr = "格式错误:请参考帮助文档获取.st命令的使用方法";
 static std::string strHlpMsg = Dice_Short_Ver + R"(
-【狼仔魔改版】
+请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
 <通用命令>
 .r [掷骰表达式*] [原因]		普通掷骰
 .rs	[掷骰表达式*] [原因]	简化输出
@@ -302,7 +304,7 @@ static std::string strHlpMsg = Dice_Short_Ver + R"(
 .rc/ra [技能名] [技能值]	技能检定(规则书/房规)
 .jrrp [on/off]				今日人品检定
 .rules 关键字				COC7规则查询
-.help						显示帮助
+.help [on/off]			    显示帮助
 <仅限群/多人聊天>
 .ri [加值] [昵称]			DnD先攻掷骰
 .init [clr]					DnD先攻查看/清空
