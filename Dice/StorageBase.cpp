@@ -14,8 +14,9 @@
 * program. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "StorageBase.h"
+#include <utility>
 
-StorageBase::StorageBase(const std::string& FilePath) : FilePath(FilePath)
+StorageBase::StorageBase(std::string FilePath) : FilePath(std::move(FilePath))
 {
 	
 }

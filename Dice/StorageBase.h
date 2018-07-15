@@ -24,7 +24,7 @@ protected:
 public:
 	virtual void read() = 0;
 	virtual void save() const = 0;
-	StorageBase(const std::string& FilePath);
+	StorageBase(std::string FilePath);
 	virtual ~StorageBase();
 };
 #endif /*__STORAGEBASE__*/
