@@ -78,6 +78,8 @@
     <Linkage-AWSSDKCPP-Core>static</Linkage-AWSSDKCPP-Core>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
+    <LinkKeyFile>
+    </LinkKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -185,13 +187,17 @@
     <ClCompile Include="Dice.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="InitList.cpp" />
+    <ClCompile Include="NameStorage.cpp" />
     <ClCompile Include="RD.cpp" />
+    <ClCompile Include="StorageBase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h" />
     <ClInclude Include="InitList.h" />
+    <ClInclude Include="NameStorage.h" />
     <ClInclude Include="RD.h" />
     <ClInclude Include="RDConstant.h" />
+    <ClInclude Include="StorageBase.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

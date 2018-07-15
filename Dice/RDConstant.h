@@ -285,6 +285,7 @@ static std::string strPropDeleted = "属性删除成功";
 static std::string strPropNotFound = "错误:属性不存在";
 static std::string strProp = "{0}的{1}属性值为{2}";
 static std::string strStErr = "格式错误:请参考帮助文档获取.st命令的使用方法";
+static std::string strNickInvalid = "错误:昵称不能以点,句号或感叹号开头";
 static std::string strHlpMsg = Dice_Short_Ver + R"(
 请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
 <通用命令>
