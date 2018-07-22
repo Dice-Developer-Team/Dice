@@ -3,7 +3,7 @@ QQ Dice For TRPG Game Based on CoolQ
 
 Doc: dice-for-qq.readthedocs.io
 
-Version 2.2.6
+Version 2.3.0
 
 贡献者:w4123溯洄 jh123111
 
