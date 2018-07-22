@@ -76,7 +76,7 @@ GetRule::GetRule()
 			}
 			return;
 		}
-		ErrMsg += result.GetError().GetMessage();
+		ErrMsg = result.GetError().GetMessage();
 		Sleep(200);
 	}
 	ShutdownAPI(options);
@@ -97,7 +97,7 @@ bool GetRule::analyse(string & rawstr, string& des)
 {
 	if (failed)
 	{
-		des += strRulesFailedErr;
+		des = strRulesFailedErr;
 		return false;
 	}
 	for (auto &chr : rawstr)chr = toupper(chr);
@@ -107,7 +107,7 @@ bool GetRule::analyse(string & rawstr, string& des)
 		const string name = rawstr.substr(rawstr.find(':') + 1);
 		if(name.empty())
 		{
-			des += strRulesFormatErr;
+			des = strRulesFormatErr;
 			return false;
 		}
 		string rule = rawstr.substr(0, rawstr.find(':'));
@@ -117,12 +117,11 @@ bool GetRule::analyse(string & rawstr, string& des)
 	}
 	if (rawstr.empty())
 	{
-		des += strRulesFormatErr;
+		des = strRulesFormatErr;
 		return false;
 	}
 	for (const auto& rule:rules)
 	{
-		des = "";
 		if (get(rule, rawstr, des))
 		{
 			return true;
@@ -148,21 +147,21 @@ bool GetRule::get(const std::string & rule, const std::string & name, std::strin
 		{
 			if (item.count("Content"))
 			{
-				des += UTF8toGBK(item.at("Content").GetS());
+				des = UTF8toGBK(item.at("Content").GetS());
 				return true;	
 			}
 			if (item.count("Redirect"))
 			{
 				return get(ruleName, item.at("Redirect").GetS(), des, true);
 			}
-			des += strRuleNotFound;
+			des = strRuleNotFound;
 			return false;
 			
 		}
-		des += strRuleNotFound;
+		des = strRuleNotFound;
 		return false;
 	}
 	logger.Warning(("获取规则数据失败! 详细信息:\n" + result.GetError().GetMessage()).data());
-	des += result.GetError().GetMessage();
+	des = result.GetError().GetMessage();
 	return false;
 }
