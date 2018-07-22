@@ -33,6 +33,9 @@
     <ClCompile Include="StorageBase.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="GetRule.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -53,5 +56,11 @@
     <ClInclude Include="StorageBase.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="GetRule.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
