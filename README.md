@@ -3,33 +3,33 @@ QQ Dice For TRPG Game Based on CoolQ
 
 Build&Test Status:  [![Build status](https://ci.appveyor.com/api/projects/status/6qm1l31k07dst0rk?svg=true)](https://ci.appveyor.com/project/w4123/dice)
 
-**简介**
+## 简介
 
 Dice!是一款基于酷Q的QQ跑团掷骰机器人 交流QQ群:624807593
 
-Doc: dice-for-qq.readthedocs.io
+Doc: https://doc.w4123.me/
 
-Latest Version 2.3.0
+Latest Version: 2.3.0
 
-**开发者**
+## 开发者
 
 贡献者:w4123溯洄 jh123111 緋色月下、スイカを食う
 
 感谢:Flandre Cirno 回転 他是王家乐。白いとう 哞哞哞哞哞哞哞哞哞哞哞哞 丸子 黯星 一盏大师 初音py2001 Coxxs orzFly 等(排名不分先后)(如有缺漏请务必联系溯洄:QQ1840686745) 
 
-**编译须知**
+## 编译须知
 
-从github克隆源码时请不要直接从master分支克隆, 因为所有的更改都会提交到此分支, 很有可能包含最新的测试性更改, 未经过测试无法保证稳定 请选择tag中最新的release进行下载
+从GitHub克隆源码时请不要直接从master分支克隆, 因为所有的更改都会提交到此分支, 很有可能包含最新的测试性更改, 未经过测试无法保证稳定 请选择Tag中最新的Release进行下载
 
 请使用最新版Visual Studio **2017** (或其独立编译器)进行编译, 项目主文件为Dice.sln, 编译时务必使用Release Win32模式否则无法编译成功
 
-编译后会得到com.w4123.dice.dll文件, 请勿更改此文件的名称! 请从release中下载对应的json文件(或自己编写), 放至酷Q app文件夹下, 并开启开发模式, 在应用管理中合成cpk文件即可正常使用
+编译后会得到com.w4123.dice.dll文件, 请勿更改此文件的名称! 请从Releases中下载对应的json文件(或自己编写), 放至酷Q app文件夹下, 并开启开发模式, 在应用管理中合成cpk文件即可正常使用
 
-**issue提交**
+## Issue提交
 
-提交issue前请务必确认没有其他人提交过相同的issue, 善用搜索功能 提交bug时最好附有截图以及问题复现方法, 同时也欢迎新功能建议
+提交Issue前请务必确认没有其他人提交过相同的Issue, 善用搜索功能 提交Bug时最好附有截图以及问题复现方法, 同时也欢迎新功能建议
 
-**License**
+## License
 
 Dice! QQ dice robot for TRPG
 Copyright (C) 2018 w4123溯洄
