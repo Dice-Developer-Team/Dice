@@ -9,8 +9,8 @@ class GetRule
 	bool failed = false;
 	Aws::SDKOptions options;
 	std::unique_ptr<Aws::DynamoDB::DynamoDBClient> client{};
-	std::string ACCESS_KEY = "AKIAI5QK6ZFNW62URGFA";
-	std::string SECRET_ACCESS_KEY = "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";
+	const std::string ACCESS_KEY = "AKIAI5QK6ZFNW62URGFA";
+	const std::string SECRET_ACCESS_KEY = "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";
 	std::vector<std::string> rules{};
 	const std::map<std::string, std::string> ruleNameReplace
 	{
