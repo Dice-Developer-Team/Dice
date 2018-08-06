@@ -32,6 +32,7 @@ Latest Version: 2.3.0
 ## License
 
 Dice! QQ dice robot for TRPG
+
 Copyright (C) 2018 w4123溯洄
 
 This program is free software: you can redistribute it and/or modify it under the terms
