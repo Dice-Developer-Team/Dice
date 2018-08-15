@@ -1,4 +1,5 @@
 #pragma once
+/*
 namespace CQ {
 	enum face {
 		¾ªÑÈ = 0,
@@ -142,3 +143,4 @@ namespace CQ {
 		ÇàÍÜ = 170,
 	};
 }
+*/

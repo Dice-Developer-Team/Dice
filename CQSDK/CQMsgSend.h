@@ -4,7 +4,7 @@
 #include <string>
 namespace CQ
 {
-	enum msgtype { 好友, 群, 讨论组 };
+	enum msgtype { Friend, Group, Discuss };
 	class msg : public CQstream
 	{
 		long long ID;

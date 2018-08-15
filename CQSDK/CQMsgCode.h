@@ -93,7 +93,7 @@ namespace CQ {
 		static std::string face(int faceid);
 
 		//[CQ:face,id={1}] - QQ±íÇé
-		static std::string face(CQ::face face);
+		//static std::string face(CQ::face face);
 
 		//[CQ:at,qq={1}] - @Ä³ÈË
 		static std::string at(long long QQ);
