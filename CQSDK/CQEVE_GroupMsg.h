@@ -26,7 +26,6 @@ font 字体
 	EVE_GroupMsg(Name)																		\
 	{																							\
 		CQ::EVEGroupMsg tep(subType, msgId, fromGroup, fromQQ, fromAnonymous, msg, font);	\
-		EVETry Name(tep); EVETryEnd(Name,发生了一个错误)										\
 		return tep._EVEret;																		\
 	}																							\
 	void Name(CQ::EVEGroupMsg & eve)
@@ -77,18 +76,18 @@ namespace CQ{
 		//置群管理员
 		bool setGroupAdmin(bool isAdmin);
 		//置群成员专属头衔
-		bool setGroupSpecialTitle(std::string 专属头衔, long long 过期时间 = -1);
+		bool setGroupSpecialTitle(std::string Title, long long ExpireTime = -1);
 
 		//置全群禁言
-		bool setGroupWholeBan(bool 开启禁言 = true);
+		bool setGroupWholeBan(bool enableBan = true);
 		//置群匿名设置
-		bool setGroupAnonymous(bool 开启匿名);
+		bool setGroupAnonymous(bool enableAnonymous);
 		//置群成员名片
-		bool setGroupCard(std::string 新名片_昵称);
+		bool setGroupCard(std::string NewGroupCardNick);
 		//置群退出
-		bool setGroupLeave(bool 是否解散);
+		bool setGroupLeave(bool isDismiss);
 		//取群成员信息 (支持缓存)
-		GroupMemberInfo getGroupMemberInfo(bool 不使用缓存 = false);
+		GroupMemberInfo getGroupMemberInfo(bool disableCache = false);
 		//取群成员列表
 		std::vector<GroupMemberInfo> getGroupMemberList();
 

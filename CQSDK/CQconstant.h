@@ -19,23 +19,24 @@
 
 // 拦截此条消息，不再传递给其他应用
 //注意：应用优先级设置为最高(10000)时，不得使用本返回值
-#define 消息_拦截 1
+#define Msg_Blocked 1
 // 将此消息继续传递给其他应用
-#define 消息_忽略 0
+#define Msg_Ignored 0
 
-#define 悬浮窗_绿 1 
-#define 悬浮窗_橙 2 
-#define 悬浮窗_红 3 
-#define 悬浮窗_深红 4 
-#define 悬浮窗_黑 5 
-#define 悬浮窗_灰 6 
+#define FloatingWindows_Green 1 
+#define FloatingWindows_Orange 2 
+#define FloatingWindows_Red 3 
+#define FloatingWindows_DeepRed 4 
+#define FloatingWindows_Black 5 
+#define FloatingWindows_Grey 6 
 
-#define 请求_通过 1 
-#define 请求_拒绝 2 
+#define RequestAccepted 1 
+#define RequestRefused 2 
 
-#define 请求_群添加 1 
-#define 请求_群邀请 2 
+#define RequestGroupAdd 1 
+#define RequestGroupInvite 2 
 
+/*
 #define 表情_惊讶 0 
 #define 表情_撇嘴 1 
 #define 表情_色 2 
@@ -175,3 +176,4 @@
 #define 表情_药 168 
 #define 表情_手枪 169 
 #define 表情_青蛙 170 
+*/

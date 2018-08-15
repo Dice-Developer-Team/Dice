@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="头文件\CQHead">
+      <UniqueIdentifier>{264cbd68-17fb-46f0-95a7-e30bd02878ac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dice.cpp">
@@ -58,6 +61,75 @@
     </ClInclude>
     <ClInclude Include="GetRule.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\bufstream.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQAPI.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQAPI_EX.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQconstant.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\cqdefine.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQEVE.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQEVE_ALL.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQEVE_DiscussMsg.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQEVE_FriendAdd.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQEVE_GroupMsg.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQEVE_PrivateMsg.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQEVE_RequestAddFriend.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQEVE_RequestAddGroup.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQEVE_Status.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQEVEBasic.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQEVEMsg.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQEVERequest.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQface.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQLogger.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQMsgCode.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQMsgSend.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\CQTools.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CQSDK\Unpack.h">
+      <Filter>头文件\CQHead</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -76,126 +76,126 @@ namespace CQ{
 	//置群员移除 Auth=120 
 	CQAPI(CQ_setGroupKick, int)(
 		int AuthCode,// 
-		long long 群号,// 目标群 
+		long long GroupID,// 目标群 
 		long long QQID,// 目标QQ 
-		CQBOOL 拒绝再加群// 如果为真，则“不再接收此人加群申请”，请慎用 
+		CQBOOL RefuseForever// 如果为真，则“不再接收此人加群申请”，请慎用 
 		);
 	//置群员禁言 Auth=121 
 	CQAPI(CQ_setGroupBan, int)(
 		int AuthCode,// 
-		long long 群号,// 目标群 
+		long long GroupID,// 目标群 
 		long long QQID,// 目标QQ 
-		long long 禁言时间// 禁言的时间，单位为秒。如果要解禁，这里填写0 
+		long long Time// 禁言的时间，单位为秒。如果要解禁，这里填写0 
 		);
 	//置群管理员 Auth=122 
 	CQAPI(CQ_setGroupAdmin, int)(
 		int AuthCode,// 
-		long long 群号,// 目标群 
+		long long GroupID,// 目标群 
 		long long QQID,// 被设置的QQ 
-		CQBOOL 成为管理员// 真/设置管理员 假/取消管理员 
+		CQBOOL setAdmin// 真/设置管理员 假/取消管理员 
 		);
 	//置群成员专属头衔 Auth=128 需群主权限 
 	CQAPI(CQ_setGroupSpecialTitle, int)(
 		int AuthCode,// 
-		long long 群号,// 目标群 
+		long long GroupID,// 目标群 
 		long long QQID,// 目标QQ 
-		const char * 头衔,// 如果要删除，这里填空 
-		long long 过期时间// 专属头衔有效期，单位为秒。如果永久有效，这里填写-1
+		const char * Title,// 如果要删除，这里填空 
+		long long ExpireTime// 专属头衔有效期，单位为秒。如果永久有效，这里填写-1
 		);
 	//置全群禁言 Auth=123 
 	CQAPI(CQ_setGroupWholeBan, int)(
 		int AuthCode,// 
-		long long 群号,// 目标群 
-		CQBOOL 开启禁言// 真/开启 假/关闭 
+		long long GroupID,// 目标群 
+		CQBOOL EnableWholeBan// 真/开启 假/关闭 
 		);
 	//置匿名群员禁言 Auth=124 
 	CQAPI(CQ_setGroupAnonymousBan, int)(
 		int AuthCode,// 
-		long long 群号,// 目标群 
-		const char * 匿名,// 群消息事件收到的“匿名”参数 
-		long long 禁言时间// 禁言的时间，单位为秒。不支持解禁 
+		long long GroupID,// 目标群 
+		const char * AnonymousID,// 群消息事件收到的“匿名”参数 
+		long long time// 禁言的时间，单位为秒。不支持解禁 
 		);
 	//置群匿名设置 Auth=125 
 	CQAPI(CQ_setGroupAnonymous, int)(
 		int AuthCode,// 
-		long long 群号,// 
-		CQBOOL 开启匿名// 
+		long long GroupID,// 
+		CQBOOL EnableAnonymous// 
 		);
 	//置群成员名片 Auth=126 
 	CQAPI(CQ_setGroupCard, int)(
 		int AuthCode,// 
-		long long 群号,// 目标群 
+		long long GroupID,// 目标群 
 		long long QQID,// 被设置的QQ 
-		const char * 新名片_昵称// 
+		const char * NewGroupCarkNick// 
 		);
 	//置群退出 Auth=127 慎用,此接口需要严格授权 
 	CQAPI(CQ_setGroupLeave, int)(
 		int AuthCode,// 
-		long long 群号,// 目标群 
-		CQBOOL 是否解散// 真/解散本群 (群主) 假/退出本群 (管理、群成员) 
+		long long GroupID,// 目标群 
+		CQBOOL isDismiss// 真/解散本群 (群主) 假/退出本群 (管理、群成员) 
 		);
 	//置讨论组退出 Auth=140 
 	CQAPI(CQ_setDiscussLeave, int)(
 		int AuthCode,// 
-		long long 讨论组号// 目标讨论组 
+		long long DiscussID// 目标讨论组 
 		);
 	//置好友添加请求 Auth=150 
 	CQAPI(CQ_setFriendAddRequest, int)(
 		int AuthCode,// 
-		const char * 请求反馈标识,// 请求事件收到的“反馈标识”参数 
-		int 反馈类型,// #请求_通过 或 #请求_拒绝 
-		const char * 备注// 添加后的好友备注 
+		const char * ResponseToken,// 请求事件收到的“反馈标识”参数 
+		int ResponseType,// #请求_通过 或 #请求_拒绝 
+		const char * Remarks// 添加后的好友备注 
 		);
 	//置群添加请求 Auth=151 
 	CQAPI(CQ_setGroupAddRequest, int)(
 		int AuthCode,// 
-		const char * 请求反馈标识,// 请求事件收到的“反馈标识”参数 
-		int 请求类型,// 根据请求事件的子类型区分 #请求_群添加 或 #请求_群邀请 
-		int 反馈类型// #请求_通过 或 #请求_拒绝 
+		const char * ResponseToken,// 请求事件收到的“反馈标识”参数 
+		int RequestType,// 根据请求事件的子类型区分 #请求_群添加 或 #请求_群邀请 
+		int ResponseType// #请求_通过 或 #请求_拒绝 
 		);
 	//置群添加请求 Auth=151 
 	CQAPI(CQ_setGroupAddRequestV2, int)(
 		int AuthCode,// 
-		const char * 请求反馈标识,// 请求事件收到的“反馈标识”参数 
-		int 请求类型,// 根据请求事件的子类型区分 #请求_群添加 或 #请求_群邀请 
-		int 反馈类型,// #请求_通过 或 #请求_拒绝 
-		const char * 理由// 操作理由，仅 #请求_群添加 且 #请求_拒绝 时可用
+		const char * RequestToken,// 请求事件收到的“反馈标识”参数 
+		int RequestType,// 根据请求事件的子类型区分 #请求_群添加 或 #请求_群邀请 
+		int ResponseType,// #请求_通过 或 #请求_拒绝 
+		const char * Reason// 操作理由，仅 #请求_群添加 且 #请求_拒绝 时可用
 		);
 	//增加运行日志 
 	CQAPI(CQ_addLog, int)(
 		int AuthCode,// 
-		int 优先级,// #Log_ 开头常量 
-		const char * 类型,// 
-		const char * 内容// 
+		int Priorty,// #Log_ 开头常量 
+		const char * Type,// 
+		const char * Content// 
 		);
 	//置致命错误提示 
 	CQAPI(CQ_setFatal, int)(
 		int AuthCode,// 
-		const char * 错误信息// 
+		const char * ErrorMsg// 
 		);
 	//取群成员信息 (旧版,请用CQ_getGroupMemberInfoV2) Auth=130 
 	CQAPI(CQ_getGroupMemberInfo, const char *)(
 		int AuthCode,// 
-		long long 群号,// 目标QQ所在群 
+		long long GroupID,// 目标QQ所在群 
 		long long QQID// 目标QQ 
 		);
 	//取群成员信息 (支持缓存) Auth=130 
 	CQAPI(CQ_getGroupMemberInfoV2, const char *)(
 		int AuthCode,// 
-		long long 群号,// 目标QQ所在群 
+		long long GroupID,// 目标QQ所在群 
 		long long QQID,// 目标QQ 
-		CQBOOL 不使用缓存
+		CQBOOL DisableCache
 		);
 	//取陌生人信息 (支持缓存) Auth=131 
 	CQAPI(CQ_getStrangerInfo, const char *)(
 		int AuthCode,// 
 		long long QQID,// 目标QQ 
-		CQBOOL 不使用缓存
+		CQBOOL DisableCache
         );
     //取群成员列表 Auth=160  
     CQAPI(CQ_getGroupMemberList, const char *)(
         int AuthCode,// 
-        long long 群号// 目标QQ所在群
+        long long GroupID// 目标QQ所在群
         );
 	//取群列表 Auth=161  
 	CQAPI(CQ_getGroupList, const char *)(

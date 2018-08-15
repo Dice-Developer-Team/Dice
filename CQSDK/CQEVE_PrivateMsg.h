@@ -23,7 +23,6 @@ font		字体
 	EVE_PrivateMsg(Name)																		\
 	{																							\
 		CQ::EVEPrivateMsg tep(subType, msgId, fromQQ, msg, font);							\
-		EVETry Name(tep); EVETryEnd(Name,发生了一个错误)										\
 		return tep._EVEret;																		\
 	}																							\
 	void Name(CQ::EVEPrivateMsg & eve)

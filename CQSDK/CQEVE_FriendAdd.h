@@ -18,7 +18,6 @@ fromQQ 来源QQ
 	EVE_Friend_Add(Name)\
 	{\
 		CQ::EVEFriendAdd tep(subType, msgId, fromGroup, fromQQ, msg, responseFlag);\
-		EVETry Name(tep); EVETryEnd(Name,发生了一个错误)										\
 		return tep._EVEret;\
 	}\
 	void Name(CQ::EVEFriendAdd & eve)\

@@ -7,12 +7,12 @@
 namespace CQ {
 	// 字体
 	struct Font {
-		const char * 名称;
-		int 字号,
-			颜色,
+		const char * Name;
+		int Size,
+			Color,
 			/*粗体：1 斜体：2 下划线：4*/
-			样式,
-			气泡;
+			Style,
+			Bubble;
 
 		explicit Font(int);
 	};
