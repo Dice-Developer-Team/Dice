@@ -2,6 +2,7 @@
 QQ Dice For TRPG Game Based on CoolQ 
 
 Build&Test Status:  [![Build status](https://ci.appveyor.com/api/projects/status/6qm1l31k07dst0rk?svg=true)](https://ci.appveyor.com/project/w4123/dice)
+[![Doc Build status](https://readthedocs.org/projects/dice-for-qq/badge/?badge=latest)](https://dice-for-qq.readthedocs.io)
 
 ## 简介
 
