@@ -22,14 +22,14 @@ namespace CQ{
 	//Auth=101 失败返回负值,成功返回消息ID
 	CQAPI(CQ_sendGroupMsg, int)(
 		int AuthCode,// 
-		long long 群号,// 目标群 
+		long long GroupID,// 目标群 
 		const char * msg// 消息内容 
 		);
 	//发送讨论组消息 
 	//Auth=103 失败返回负值,成功返回消息ID
 	CQAPI(CQ_sendDiscussMsg, int)(
 		int AuthCode,// 
-		long long 讨论组号,// 目标讨论组 
+		long long DiscussID,// 目标讨论组 
 		const char * msg// 消息内容 
 		);
 	//发送赞 Auth=110
