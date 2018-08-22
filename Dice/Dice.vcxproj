@@ -83,15 +83,21 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     <Linkage-AWSSDKCPP-Core>static</Linkage-AWSSDKCPP-Core>
     <Linkage-AWSSDKCPP-DynamoDB>static</Linkage-AWSSDKCPP-DynamoDB>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    <Linkage-AWSSDKCPP-Core>static</Linkage-AWSSDKCPP-Core>
+    <Linkage-AWSSDKCPP-DynamoDB>static</Linkage-AWSSDKCPP-DynamoDB>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    <Linkage-AWSSDKCPP-Core>static</Linkage-AWSSDKCPP-Core>
+    <Linkage-AWSSDKCPP-DynamoDB>static</Linkage-AWSSDKCPP-DynamoDB>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -136,6 +142,7 @@
       <ConformanceMode>true</ConformanceMode>
       <ExceptionHandling>Sync</ExceptionHandling>
       <AdditionalIncludeDirectories>..\CQSDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -152,6 +159,7 @@
       <ConformanceMode>true</ConformanceMode>
       <ExceptionHandling>Sync</ExceptionHandling>
       <AdditionalIncludeDirectories>..\CQSDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -18,8 +18,8 @@
 #define _RDCONSTANT_
 #include <string>
 
-#if !defined NDEBUG or !defined WIN32
-#error 请使用Win32 Release模式进行编译
+#if !defined WIN32
+#error 请使用Win32(x86)模式进行编译
 #endif
 //Version
 static const std::string Dice_Ver = "2.3.1(485)";

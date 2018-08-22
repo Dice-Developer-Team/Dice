@@ -34,7 +34,9 @@
 # Directories for temporary file
 /.vs
 /Dice/Release
-/Release
+/Dice/Debug
 /Dice/x64
+/Release
 /packages
+
 
