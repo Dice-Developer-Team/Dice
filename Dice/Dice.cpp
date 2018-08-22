@@ -41,8 +41,9 @@ TODO:
 3. st人物卡绑定
 4. st属性展示，全属性展示以及排序
 5. 完善rules规则数据库
-6. 骰子的最大值和最小值以及对应sc实现
-7. jrrp优化
+6. jrrp优化
+7. help优化
+8. 全局昵称
 */
 
 using namespace std;
