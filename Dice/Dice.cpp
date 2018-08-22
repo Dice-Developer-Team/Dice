@@ -2887,7 +2887,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		if (!name.empty())
 		{
 			Name->set(eve.fromGroup, eve.fromQQ, name);
-			const string strReply = "已将" + strNickName + "的名称更改为" + name;
+			const string strReply = "已将" + strNickName + "的名称更改为" + strip(name);
 			mutexMsg.lock();
 			SendMsgQueue.push(MsgType{ eve.fromGroup, strReply,GroupMsg });
 			mutexMsg.unlock();
@@ -4717,7 +4717,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (!name.empty())
 		{
 			Name->set(eve.fromDiscuss, eve.fromQQ, name);
-			const string strReply = "已将" + strNickName + "的名称更改为" + name;
+			const string strReply = "已将" + strNickName + "的名称更改为" + strip(name);
 			mutexMsg.lock();
 			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
 			mutexMsg.unlock();
