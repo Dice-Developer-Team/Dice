@@ -1,8 +1,10 @@
 # Dice!
 QQ Dice For TRPG Game Based on CoolQ 
 
-Build&Test Status:  [![Build status](https://ci.appveyor.com/api/projects/status/6qm1l31k07dst0rk?svg=true)](https://ci.appveyor.com/project/w4123/dice)
+[![License](https://img.shields.io/badge/license-AGPLv3-blue.svg)](http://www.gnu.org/licenses)
+[![Build status](https://ci.appveyor.com/api/projects/status/6qm1l31k07dst0rk?svg=true)](https://ci.appveyor.com/project/w4123/dice)
 [![Doc Build status](https://readthedocs.org/projects/dice-for-qq/badge/?badge=latest)](https://dice-for-qq.readthedocs.io)
+[![Downloads](https://img.shields.io/github/downloads/w4123/dice/total.svg)](https://github.com/w4123/Dice/releases)
 
 ## 简介
 
@@ -10,7 +12,8 @@ Dice!是一款基于酷Q的QQ跑团掷骰机器人 交流QQ群:624807593
 
 Doc: https://doc.w4123.me/
 
-Latest Version: 2.3.0
+Latest Version: [![GitHub tag](https://img.shields.io/github/tag/w4123/dice.svg)](https://github.com/w4123/Dice/releases)
+
 
 ## 开发者
 
