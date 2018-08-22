@@ -16,6 +16,7 @@
 	EVE_Status(Name)\
 	{\
 		CQ::EVEStatus tep;\
+		Name(tep);\
 		static std::string ret;\
 		ret = CQ::statusEVEreturn(tep);\
 		return ret.c_str();\

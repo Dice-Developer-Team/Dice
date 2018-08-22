@@ -143,13 +143,16 @@ bool Enabled = false;
 bool MsgSendThreadStarted = false;
 EVE_Enable(__eventEnable)
 {
+	::logger.Debug("Event Enable Triggered");
 	while (MsgSendThreadStarted)
 		Sleep(10);//Wait until the thread terminates
+	::logger.Debug("Constructing Thread for sending msg");
 	thread MsgSend
 	{
 		[&] {
 		Enabled = true;
 		MsgSendThreadStarted = true;
+		::logger.Debug("Thread for sending msg constructed");
 		while (Enabled)
 		{
 			MsgType msgMsg;
@@ -167,6 +170,7 @@ EVE_Enable(__eventEnable)
 			else this_thread::sleep_for(chrono::milliseconds(20));
 		}
 		MsgSendThreadStarted = false;
+		::logger.Debug("Thread for sending msg stopped");
 	}
 	};
 	MsgSend.detach();
@@ -349,12 +353,14 @@ EVE_Enable(__eventEnable)
 	ifstreamWelcomeMsg.close();
 	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
 	RuleGetter = make_unique<GetRule>();
+	::logger.Debug("Event Enable Ended");
 	return 0;
 }
 
 
 EVE_PrivateMsg_EX(__eventPrivateMsg)
 {
+	::logger.Debug("Triggered Event Private Msg");
 	if (eve.isSystem())return;
 	init(eve.message);
 	init2(eve.message);

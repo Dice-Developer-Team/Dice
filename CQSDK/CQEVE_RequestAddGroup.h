@@ -27,6 +27,7 @@ responseFlag 反馈标识(处理请求用)
 	EVE_Request_AddGroup(Name)\
 	{\
 		CQ::EVERequestAddGroup tep(subType, sendTime, fromGroup, fromQQ, msg, responseFlag);\
+		Name(tep);\
 		return tep._EVEret;\
 	}\
 	void Name(CQ::EVERequestAddGroup & eve)\

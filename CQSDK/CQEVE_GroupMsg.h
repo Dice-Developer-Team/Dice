@@ -26,6 +26,7 @@ font ×ÖÌå
 	EVE_GroupMsg(Name)																		\
 	{																							\
 		CQ::EVEGroupMsg tep(subType, msgId, fromGroup, fromQQ, fromAnonymous, msg, font);	\
+		Name(tep); \
 		return tep._EVEret;																		\
 	}																							\
 	void Name(CQ::EVEGroupMsg & eve)

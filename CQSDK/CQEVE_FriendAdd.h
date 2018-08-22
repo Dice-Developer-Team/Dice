@@ -18,6 +18,7 @@ fromQQ À´Ô´QQ
 	EVE_Friend_Add(Name)\
 	{\
 		CQ::EVEFriendAdd tep(subType, msgId, fromGroup, fromQQ, msg, responseFlag);\
+		Name(tep);\
 		return tep._EVEret;\
 	}\
 	void Name(CQ::EVEFriendAdd & eve)\

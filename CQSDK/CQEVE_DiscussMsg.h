@@ -22,6 +22,7 @@ font		×ÖÌå
 	EVE_DiscussMsg(Name)																		\
 	{																							\
 		CQ::EVEDiscussMsg tep(subType, msgId, fromDiscuss, fromQQ, msg, font);					\
+		Name(tep);\
 		return tep._EVEret;																		\
 	}																							\
 	void Name(CQ::EVEDiscussMsg & eve)

@@ -22,7 +22,8 @@ font		×ÖÌå
 	void Name(CQ::EVEPrivateMsg & eve);															\
 	EVE_PrivateMsg(Name)																		\
 	{																							\
-		CQ::EVEPrivateMsg tep(subType, msgId, fromQQ, msg, font);							\
+		CQ::EVEPrivateMsg tep(subType, msgId, fromQQ, msg, font); \
+		Name(tep); \
 		return tep._EVEret;																		\
 	}																							\
 	void Name(CQ::EVEPrivateMsg & eve)

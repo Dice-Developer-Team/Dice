@@ -23,6 +23,7 @@ responseFlag 反馈标识(处理请求用)
 	EVE_Request_AddFriend(Name)\
 	{\
 		CQ::EVERequestAddFriend tep(subType, sendTime, fromGroup, fromQQ, msg, responseFlag);\
+		Name(tep);\
 		return tep._EVEret;\
 	}\
 	void Name(CQ::EVERequestAddFriend & eve)\

@@ -234,8 +234,9 @@ std::vector<GroupMemberInfo> CQ::getGroupMemberList(long long GroupID) {
 	auto i = u.getInt();
 	while (--i && u.len()>0)
 	{
-		infovector.push_back(GroupMemberInfo(u.getchars()));
-		//infovector.emplace_back(GroupMemberInfo(u.getUnpack()));
+		//infovector.push_back(GroupMemberInfo(u.getchars()));
+		auto tmp = u.getUnpack();
+		infovector.emplace_back(tmp);
 	}
 
 	return infovector;
