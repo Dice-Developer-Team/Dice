@@ -36,10 +36,6 @@ void NameStorage::read()
 
 bool NameStorage::set(long long GroupID, long long QQ, string name)
 {	
-	if (name[0] == '!' || name[0] == '.' || name.substr(0, 2) == "£¡" || name.substr(0, 2) == "¡£")
-	{
-		return false;
-	}
 	Name[GroupID][QQ] = name;
 	return true;
 }

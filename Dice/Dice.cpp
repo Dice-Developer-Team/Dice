@@ -74,6 +74,26 @@ inline void SendMsg(MsgType msg)
 unique_ptr<NameStorage> Name;
 unique_ptr<GetRule> RuleGetter;
 CQ::logger logger("Dice!");
+std::string strip(std::string origin)
+{
+	bool flag = true;
+	while (flag)
+	{
+		flag = false;
+		if (origin[0]=='!' || origin[0] == '.')
+		{
+			origin.erase(origin.begin());
+			flag = true;
+		}
+		else if (origin.substr(0,2) == "！"||origin.substr(0,2) == "。")
+		{
+			origin.erase(origin.begin());
+			origin.erase(origin.begin());
+			flag = true;
+		}
+	}
+	return origin;
+}
 std::string getName(long long QQ, long long GroupID = 0)
 {
 	if (GroupID)
@@ -81,13 +101,13 @@ std::string getName(long long QQ, long long GroupID = 0)
 		/*群*/
 		if (GroupID<1000000000)
 		{
-			return Name->get(GroupID, QQ).empty() ? (getGroupMemberInfo(GroupID, QQ).GroupNick.empty() ? getStrangerInfo(QQ).nick : getGroupMemberInfo(GroupID, QQ).GroupNick) : Name->get(GroupID, QQ);
+			return strip(Name->get(GroupID, QQ).empty() ? (getGroupMemberInfo(GroupID, QQ).GroupNick.empty() ? getStrangerInfo(QQ).nick : getGroupMemberInfo(GroupID, QQ).GroupNick) : Name->get(GroupID, QQ));
 		}
 		/*讨论组*/
-		return Name->get(GroupID, QQ).empty() ? getStrangerInfo(QQ).nick : Name->get(GroupID, QQ);
+		return strip(Name->get(GroupID, QQ).empty() ? getStrangerInfo(QQ).nick : Name->get(GroupID, QQ));
 	}
 	/*私聊*/
-	return getStrangerInfo(QQ).nick;
+	return strip(getStrangerInfo(QQ).nick);
 }
 map<long long, RP> JRRP;
 map<long long, int> DefaultDice;
@@ -645,6 +665,26 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 
 			return;
 		}
+		for (const auto& character : SanCost.substr(0, SanCost.find("/")))
+		{
+			if(!isdigit(character) && character != 'D' && character!='d' && character != '+' && character != '-')
+			{
+				mutexMsg.lock();
+				SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
+				mutexMsg.unlock();
+				return;
+			}
+		}
+		for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
+		{
+			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			{
+				mutexMsg.lock();
+				SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
+				mutexMsg.unlock();
+				return;
+			}
+		}
 		RD rdSuc(SanCost.substr(0, SanCost.find("/")));
 		RD rdFail(SanCost.substr(SanCost.find("/") + 1));
 		if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
@@ -682,46 +722,35 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		if (intTmpRollRes <= intSan)
 		{
 			strAns += " 成功\n你的San值减少" + SanCost.substr(0, SanCost.find("/"));
-			RD rdSan(SanCost.substr(0, SanCost.find("/")));
-			// 此处返回值无用
-			// ReSharper disable once CppExpressionWithoutSideEffects
-			rdSan.Roll();
 			if (SanCost.substr(0, SanCost.find("/")).find("d") != string::npos)
-				strAns += "=" + to_string(rdSan.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSan.intTotal)) + "点";
+				strAns += "=" + to_string(rdSuc.intTotal);
+			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSuc.intTotal)) + "点";
 			if (San.empty())
 			{
-				CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)]["理智"] = max(0, intSan - rdSan.intTotal);
+				CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)]["理智"] = max(0, intSan - rdSuc.intTotal);
 			}
 		}
-		else if (intTmpRollRes > 95)
+		else if (intTmpRollRes == 100 || (intSan < 50 && intTmpRollRes > 95))
 		{
 			strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-			RD rdSan(SanCost.substr(SanCost.find("/") + 1));
-			// 此处返回值无用
-			// ReSharper disable once CppExpressionWithoutSideEffects
-			rdSan.Max();
+			rdFail.Max();
 			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-				strAns += "=" + to_string(rdSan.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSan.intTotal)) + "点";
+				strAns += "最大值=" + to_string(rdFail.intTotal);
+			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
 			if (San.empty())
 			{
-				CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)]["理智"] = max(0, intSan - rdSan.intTotal);
+				CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)]["理智"] = max(0, intSan - rdFail.intTotal);
 			}
 		}
 		else
 		{
 			strAns += " 失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-			RD rdSan(SanCost.substr(SanCost.find("/") + 1));
-			// 此处返回值无用
-			// ReSharper disable once CppExpressionWithoutSideEffects
-			rdSan.Roll();
 			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-				strAns += "=" + to_string(rdSan.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSan.intTotal)) + "点";
+				strAns += "=" + to_string(rdFail.intTotal);
+			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
 			if (San.empty())
 			{
-				CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)]["理智"] = max(0, intSan - rdSan.intTotal);
+				CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)]["理智"] = max(0, intSan - rdFail.intTotal);
 			}
 		}
 
@@ -819,7 +848,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		char cstrDate[100] = {};
 		time_t time_tTime = 0;
 		time(&time_tTime);
-		tm tmTime;
+		tm tmTime{};
 		localtime_s(&tmTime, &time_tTime);
 		strftime(cstrDate, 100, "%F", &tmTime);
 		if (JRRP.count(eve.fromQQ) && JRRP[eve.fromQQ].Date == cstrDate)
@@ -1993,13 +2022,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		if (strname.empty())
 			strname = strNickName;
 		else
-			while (strname.find(".") == 0 || strname.find("。") == 0 || strname.find("!") == 0 || strname.find("！") == 0)
-			{
-				if (strname.find(".") == 0 || strname.find("!") == 0)
-					strname = strname.substr(1);
-				else
-					strname = strname.substr(2);
-			}
+			strname = strip(strname);
 		RD initdice(strinit);
 		const int intFirstTimeRes = initdice.Roll();
 		if (intFirstTimeRes == Value_Err)
@@ -2585,9 +2608,29 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			mutexMsg.unlock();
 			return;
 		}
-		RD rdTest1(SanCost.substr(0, SanCost.find("/")));
-		RD rdTest2(SanCost.substr(SanCost.find("/") + 1));
-		if (rdTest1.Roll() != 0 || rdTest2.Roll() != 0)
+		for (const auto& character : SanCost.substr(0, SanCost.find("/")))
+		{
+			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			{
+				mutexMsg.lock();
+				SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
+				mutexMsg.unlock();
+				return;
+			}
+		}
+		for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
+		{
+			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			{
+				mutexMsg.lock();
+				SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
+				mutexMsg.unlock();
+				return;
+			}
+		}
+		RD rdSuc(SanCost.substr(0, SanCost.find("/")));
+		RD rdFail(SanCost.substr(SanCost.find("/") + 1));
+		if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
 		{
 			mutexMsg.lock();
 			SendMsgQueue.push(MsgType{ eve.fromGroup,strSCInvalid,GroupMsg });
@@ -2616,46 +2659,35 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		if (intTmpRollRes <= intSan)
 		{
 			strAns += " 成功\n你的San值减少" + SanCost.substr(0, SanCost.find("/"));
-			RD rdSan(SanCost.substr(0, SanCost.find("/")));
-			// 此处返回值无用
-			// ReSharper disable once CppExpressionWithoutSideEffects
-			rdSan.Roll();
 			if (SanCost.substr(0, SanCost.find("/")).find("d") != string::npos)
-				strAns += "=" + to_string(rdSan.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSan.intTotal)) + "点";
+				strAns += "=" + to_string(rdSuc.intTotal);
+			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSuc.intTotal)) + "点";
 			if (San.empty())
 			{
-				CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] = max(0, intSan - rdSan.intTotal);
+				CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] = max(0, intSan - rdSuc.intTotal);
 			}
 		}
-		else if (intTmpRollRes > 95)
+		else if (intTmpRollRes == 100 || (intSan < 50 && intTmpRollRes > 95))
 		{
 			strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-			RD rdSan(SanCost.substr(SanCost.find("/") + 1));
-			// 此处返回值无用
-			// ReSharper disable once CppExpressionWithoutSideEffects
-			rdSan.Max();
+			rdFail.Max();
 			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-				strAns += "=" + to_string(rdSan.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSan.intTotal)) + "点";
+				strAns += "最大值=" + to_string(rdFail.intTotal);
+			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
 			if (San.empty())
 			{
-				CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] = max(0, intSan - rdSan.intTotal);
+				CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
 			}
 		}
 		else
 		{
 			strAns += " 失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-			RD rdSan(SanCost.substr(SanCost.find("/") + 1));
-			// 此处返回值无用
-			// ReSharper disable once CppExpressionWithoutSideEffects
-			rdSan.Roll();
 			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-				strAns += "=" + to_string(rdSan.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSan.intTotal)) + "点";
+				strAns += "=" + to_string(rdFail.intTotal);
+			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
 			if (San.empty())
 			{
-				CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] = max(0, intSan - rdSan.intTotal);
+				CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
 			}
 		}
 		mutexMsg.lock();
@@ -2806,7 +2838,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		char cstrDate[100] = {};
 		time_t time_tTime = 0;
 		time(&time_tTime);
-		tm tmTime;
+		tm tmTime{};
 		localtime_s(&tmTime, &time_tTime);
 		strftime(cstrDate, 100, "%F", &tmTime);
 		if (JRRP.count(eve.fromQQ) && JRRP[eve.fromQQ].Date == cstrDate)
@@ -2848,19 +2880,11 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 		if (!name.empty())
 		{
-			if (Name->set(eve.fromGroup, eve.fromQQ, name))
-			{
-				const string strReply = "已将" + strNickName + "的名称更改为" + name;
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup, strReply,GroupMsg });
-				mutexMsg.unlock();
-			}
-			else
-			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup, strNickInvalid,GroupMsg });
-				mutexMsg.unlock();
-			}
+			Name->set(eve.fromGroup, eve.fromQQ, name);
+			const string strReply = "已将" + strNickName + "的名称更改为" + name;
+			mutexMsg.lock();
+			SendMsgQueue.push(MsgType{ eve.fromGroup, strReply,GroupMsg });
+			mutexMsg.unlock();
 
 		}
 		else
@@ -3869,13 +3893,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (strname.empty())
 			strname = strNickName;
 		else
-			while (strname.find(".") == 0 || strname.find("。") == 0 || strname.find("!") == 0 || strname.find("！") == 0)
-			{
-				if (strname.find(".") == 0 || strname.find("!") == 0)
-					strname = strname.substr(1);
-				else
-					strname = strname.substr(2);
-			}
+			strname = strip(strname);
 		RD initdice(strinit);
 		const int intFirstTimeRes = initdice.Roll();
 		if (intFirstTimeRes == Value_Err)
@@ -4432,9 +4450,29 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 
 			return;
 		}
-		RD rdTest1(SanCost.substr(0, SanCost.find("/")));
-		RD rdTest2(SanCost.substr(SanCost.find("/") + 1));
-		if (rdTest1.Roll() != 0 || rdTest2.Roll() != 0)
+		for (const auto& character : SanCost.substr(0, SanCost.find("/")))
+		{
+			if(!isdigit(character) && character != 'D' && character!='d' && character != '+' && character != '-')
+			{
+				mutexMsg.lock();
+				SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
+				mutexMsg.unlock();
+				return;
+			}
+		}
+		for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
+		{
+			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			{
+				mutexMsg.lock();
+				SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
+				mutexMsg.unlock();
+				return;
+			}
+		}
+		RD rdSuc(SanCost.substr(0, SanCost.find("/")));
+		RD rdFail(SanCost.substr(SanCost.find("/") + 1));
+		if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
 		{
 
 			mutexMsg.lock();
@@ -4469,46 +4507,36 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (intTmpRollRes <= intSan)
 		{
 			strAns += " 成功\n你的San值减少" + SanCost.substr(0, SanCost.find("/"));
-			RD rdSan(SanCost.substr(0, SanCost.find("/")));
-			// 此处返回值无用
-			// ReSharper disable once CppExpressionWithoutSideEffects
-			rdSan.Roll();
 			if (SanCost.substr(0, SanCost.find("/")).find("d") != string::npos)
-				strAns += "=" + to_string(rdSan.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSan.intTotal)) + "点";
+				strAns += "=" + to_string(rdSuc.intTotal);
+			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSuc.intTotal)) + "点";
 			if (San.empty())
 			{
-				CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"] = max(0, intSan - rdSan.intTotal);
+				CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"] = max(0, intSan - rdSuc.intTotal);
 			}
 		}
-		else if (intTmpRollRes > 95)
+		else if (intTmpRollRes == 100 || (intSan < 50 && intTmpRollRes > 95))
+
 		{
 			strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-			RD rdSan(SanCost.substr(SanCost.find("/") + 1));
-			// 此处返回值无用
-			// ReSharper disable once CppExpressionWithoutSideEffects
-			rdSan.Max();
+			rdFail.Max();
 			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-				strAns += "=" + to_string(rdSan.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSan.intTotal)) + "点";
+				strAns += "最大值=" + to_string(rdFail.intTotal);
+			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
 			if (San.empty())
 			{
-				CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"] = max(0, intSan - rdSan.intTotal);
+				CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"] = max(0, intSan - rdFail.intTotal);
 			}
 		}
 		else
 		{
 			strAns += " 失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-			RD rdSan(SanCost.substr(SanCost.find("/") + 1));
-			// 此处返回值无用
-			// ReSharper disable once CppExpressionWithoutSideEffects
-			rdSan.Roll();
 			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-				strAns += "=" + to_string(rdSan.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSan.intTotal)) + "点";
+				strAns += "=" + to_string(rdFail.intTotal);
+			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
 			if (San.empty())
 			{
-				CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"] = max(0, intSan - rdSan.intTotal);
+				CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"] = max(0, intSan - rdFail.intTotal);
 			}
 		}
 		mutexMsg.lock();
@@ -4640,7 +4668,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		char cstrDate[100] = {};
 		time_t time_tTime = 0;
 		time(&time_tTime);
-		tm tmTime;
+		tm tmTime{};
 		localtime_s(&tmTime, &time_tTime);
 		strftime(cstrDate, 100, "%F", &tmTime);
 		if (JRRP.count(eve.fromQQ) && JRRP[eve.fromQQ].Date == cstrDate)
@@ -4682,19 +4710,12 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		}
 		if (!name.empty())
 		{
-			if (Name->set(eve.fromDiscuss, eve.fromQQ, name))
-			{
-				const string strReply = "已将" + strNickName + "的名称更改为" + name;
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-				mutexMsg.unlock();
-			}
-			else
-			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss, strNickInvalid,DiscussMsg });
-				mutexMsg.unlock();
-			}
+			Name->set(eve.fromDiscuss, eve.fromQQ, name);
+			const string strReply = "已将" + strNickName + "的名称更改为" + name;
+			mutexMsg.lock();
+			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
+			mutexMsg.unlock();
+
 
 		}
 		else
@@ -5439,7 +5460,7 @@ EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
 		string strReply = WelcomeMsg[fromGroup];
 		while (strReply.find("{@}") != string::npos)
 		{
-			strReply.replace(strReply.find("{@}"), 3, CQ::code::at(beingOperateQQ));
+			strReply.replace(strReply.find("{@}"), 3, "[CQ:at, qq=" + to_string(beingOperateQQ) + "]");
 		}
 		while (strReply.find("{nick}") != string::npos)
 		{

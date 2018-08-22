@@ -83,6 +83,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    <Linkage-AWSSDKCPP-Core>static</Linkage-AWSSDKCPP-Core>
+    <Linkage-AWSSDKCPP-DynamoDB>static</Linkage-AWSSDKCPP-DynamoDB>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -116,9 +119,11 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <ForceSymbolReferences>%(ForceSymbolReferences)</ForceSymbolReferences>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -184,6 +189,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\CQSDKCPP\CQAPI.cpp" />
+    <ClCompile Include="..\CQSDKCPP\CQAPI_EX.cpp" />
+    <ClCompile Include="..\CQSDKCPP\CQEVE.cpp" />
+    <ClCompile Include="..\CQSDKCPP\CQstream.cpp" />
+    <ClCompile Include="..\CQSDKCPP\CQTools.cpp" />
+    <ClCompile Include="..\CQSDKCPP\debug.cpp" />
+    <ClCompile Include="..\CQSDKCPP\Unpack.cpp" />
     <ClCompile Include="Dice.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GetRule.cpp" />
@@ -210,9 +222,7 @@
     <ClInclude Include="..\CQSDK\CQEVE_RequestAddFriend.h" />
     <ClInclude Include="..\CQSDK\CQEVE_RequestAddGroup.h" />
     <ClInclude Include="..\CQSDK\CQEVE_Status.h" />
-    <ClInclude Include="..\CQSDK\CQface.h" />
     <ClInclude Include="..\CQSDK\CQLogger.h" />
-    <ClInclude Include="..\CQSDK\CQMsgCode.h" />
     <ClInclude Include="..\CQSDK\CQMsgSend.h" />
     <ClInclude Include="..\CQSDK\CQTools.h" />
     <ClInclude Include="..\CQSDK\Unpack.h" />
@@ -226,6 +236,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="CQP.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

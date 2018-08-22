@@ -16,6 +16,9 @@
     <Filter Include="头文件\CQHead">
       <UniqueIdentifier>{264cbd68-17fb-46f0-95a7-e30bd02878ac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\CQCPP">
+      <UniqueIdentifier>{9991a6c1-3689-4b27-a14b-c09c80989141}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dice.cpp">
@@ -38,6 +41,27 @@
     </ClCompile>
     <ClCompile Include="GetRule.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CQSDKCPP\CQAPI.cpp">
+      <Filter>源文件\CQCPP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CQSDKCPP\CQAPI_EX.cpp">
+      <Filter>源文件\CQCPP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CQSDKCPP\CQEVE.cpp">
+      <Filter>源文件\CQCPP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CQSDKCPP\CQstream.cpp">
+      <Filter>源文件\CQCPP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CQSDKCPP\CQTools.cpp">
+      <Filter>源文件\CQCPP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CQSDKCPP\debug.cpp">
+      <Filter>源文件\CQCPP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CQSDKCPP\Unpack.cpp">
+      <Filter>源文件\CQCPP</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -113,13 +137,7 @@
     <ClInclude Include="..\CQSDK\CQEVERequest.h">
       <Filter>头文件\CQHead</Filter>
     </ClInclude>
-    <ClInclude Include="..\CQSDK\CQface.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
     <ClInclude Include="..\CQSDK\CQLogger.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQMsgCode.h">
       <Filter>头文件\CQHead</Filter>
     </ClInclude>
     <ClInclude Include="..\CQSDK\CQMsgSend.h">
@@ -134,5 +152,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="CQP.lib">
+      <Filter>资源文件</Filter>
+    </Library>
   </ItemGroup>
 </Project>

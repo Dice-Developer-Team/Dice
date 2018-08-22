@@ -37,7 +37,7 @@ namespace CQ{
 	struct AnonymousInfo
 	{
 		long long AID;
-		std::string ´úºÅ;
+		std::string AnonymousNick;
 		//std::vector<unsigned char> Token;
 
 		AnonymousInfo(const char* msg);
