@@ -5467,7 +5467,7 @@ EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
 		string strReply = WelcomeMsg[fromGroup];
 		while (strReply.find("{@}") != string::npos)
 		{
-			strReply.replace(strReply.find("{@}"), 3, "[CQ:at, qq=" + to_string(beingOperateQQ) + "]");
+			strReply.replace(strReply.find("{@}"), 3, "[CQ:at,qq=" + to_string(beingOperateQQ) + "]");
 		}
 		while (strReply.find("{nick}") != string::npos)
 		{
