@@ -1,5 +1,5 @@
 # Dice!
-QQ Dice For TRPG Game Based on CoolQ 
+QQ Dice For TRPG Based on CoolQ 
 
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg)](http://www.gnu.org/licenses)
 [![Build status](https://ci.appveyor.com/api/projects/status/6qm1l31k07dst0rk?svg=true)](https://ci.appveyor.com/project/w4123/dice)
