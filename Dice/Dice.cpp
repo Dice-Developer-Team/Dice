@@ -1079,7 +1079,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			mutexMsg.unlock();
 			return;
 		}
-		string strReply = (!Name->get(llGroupID, eve.fromQQ).empty() ? Name->get(llGroupID, eve.fromQQ) : getGroupMemberInfo(llGroupID, eve.fromQQ).GroupNick.empty() ? getStrangerInfo(eve.fromQQ).nick : getGroupMemberInfo(llGroupID, eve.fromQQ).GroupNick) + eve.message.substr(intMsgCnt);
+		string strReply = getName(eve.fromQQ,llGroupID) + eve.message.substr(intMsgCnt);
 		const int intSendRes = sendGroupMsg(llGroupID, strReply);
 		if (intSendRes < 0)
 		{
