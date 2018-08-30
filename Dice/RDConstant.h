@@ -22,7 +22,7 @@
 #error 请使用Win32(x86)模式进行编译
 #endif
 //Version
-static const std::string Dice_Ver = "2.3.1(485)";
+static const std::string Dice_Ver = "2.3.2(488)";
 static const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
 static const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
 //Error Handle
@@ -283,7 +283,7 @@ static std::string strPropErr = "请认真的输入你的属性哦~";
 static std::string strSetPropSuccess = "属性设置成功";
 static std::string strPropCleared = "已清除所有属性";
 static std::string strRuleErr = "规则数据获取失败, 具体信息:\n";
-static std::string strRulesFailedErr = "无法获取规则数据,原因可能是未配置数据库Key, Key无效或数据库异常";
+static std::string strRulesFailedErr = "请求失败, 无法连接数据库";
 static std::string strPropDeleted = "属性删除成功";
 static std::string strPropNotFound = "错误:属性不存在";
 static std::string strRuleNotFound = "未找到对应的规则信息";
@@ -335,7 +335,7 @@ static std::string strFear[101] = { "",
 "乘车恐惧症（Amaxophobia）：对于乘坐地面载具的恐惧。",
 "恐风症（Ancraophobia）：对风的恐惧。",
 "男性恐惧症（Androphobia）：对于成年男性的恐惧。",
-"恐英症（Anglophobia）：对英格兰或英格兰文化的恐惧。"
+"恐英症（Anglophobia）：对英格兰或英格兰文化的恐惧。",
 "恐花症（Anthophobia）：对花的恐惧。",
 "截肢者恐惧症（Apotemnophobia）：对截肢者的恐惧。",
 "蜘蛛恐惧症（Arachnophobia）：对蜘蛛的恐惧。",
