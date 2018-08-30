@@ -14,6 +14,8 @@
 * program. If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
+#ifndef __GETRULE__
+#define __GETRULE__
 #include <string>
 #include <vector>
 #include <aws/dynamodb/DynamoDBClient.h>
@@ -43,4 +45,4 @@ public:
 	static std::string GBKtoUTF8(const std::string& strGBK);
 	static std::string UTF8toGBK(const std::string& strUTF8);
 };
-
+#endif /*__GETRULE__*/
