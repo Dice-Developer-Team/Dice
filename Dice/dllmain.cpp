@@ -1,5 +1,5 @@
 /*
-* Dice! QQ dice robot for TRPG
+* Dice! QQ Dice Robot for TRPG
 * Copyright (C) 2018 w4123ËÝä§
 *
 * This program is free software: you can redistribute it and/or modify it under the terms
