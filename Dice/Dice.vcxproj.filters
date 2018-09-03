@@ -63,6 +63,12 @@
     <ClCompile Include="..\CQSDKCPP\Unpack.cpp">
       <Filter>源文件\CQCPP</Filter>
     </ClCompile>
+    <ClCompile Include="DiceMsgSend.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalVar.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -148,6 +154,12 @@
     </ClInclude>
     <ClInclude Include="..\CQSDK\Unpack.h">
       <Filter>头文件\CQHead</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceMsgSend.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalVar.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

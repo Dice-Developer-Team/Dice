@@ -13,7 +13,7 @@
 * You should have received a copy of the GNU Affero General Public License along with this
 * program. If not, see <http://www.gnu.org/licenses/>.
 */
-#include "GetRule.h"
+
 #include <string>
 #include <aws/core/Aws.h>
 #include <aws/core/utils/Outcome.h> 
@@ -25,7 +25,9 @@
 #include <Windows.h>
 #include <fstream>
 #include "RDConstant.h"
-extern CQ::logger logger;
+#include "GetRule.h"
+#include "GlobalVar.h"
+
 using namespace std;
 using namespace Aws;
 using namespace DynamoDB;
@@ -97,7 +99,7 @@ GetRule::GetRule()
 	ShutdownAPI(options);
 	failed = true;
 	ErrMsg = "尝试连接规则服务器失败!Rules功能将不可用! 具体信息:" + ErrMsg;
-	logger.Warning(ErrMsg);
+	DiceLogger.Warning(ErrMsg);
 
 }
 
@@ -176,7 +178,7 @@ bool GetRule::get(const std::string & rule, const std::string & name, std::strin
 		des = strRuleNotFound;
 		return false;
 	}
-	logger.Warning(("获取规则数据失败! 详细信息:\n" + result.GetError().GetMessage()).data());
+	DiceLogger.Warning(("获取规则数据失败! 详细信息:\n" + result.GetError().GetMessage()).data());
 	des = result.GetError().GetMessage();
 	return false;
 }

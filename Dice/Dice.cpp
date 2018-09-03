@@ -22,18 +22,18 @@
 #include <algorithm>
 #include <ctime>
 #include <thread>
-#include <queue>
 #include <chrono>
 #include <mutex>
+
 #include "APPINFO.h"
 #include "RD.h"
 #include "CQEVE_ALL.h"
 #include "CQTools.h"
-#include "CQMsgCode.h"
 #include "InitList.h"
+#include "GlobalVar.h"
 #include "NameStorage.h"
 #include "GetRule.h"
-#include <CQLogger.h>
+#include "DiceMsgSend.h"
 /*
 TODO:
 1. en可变成长检定
@@ -48,33 +48,9 @@ TODO:
 
 using namespace std;
 using namespace CQ;
-struct MsgType
-{
-	long long target = 0;
-	string msg = "";
-	int type = -1;
-	//0-Private 1-Group 2-Discuss
-};
-queue<MsgType> SendMsgQueue;
-mutex mutexMsg;
-inline void SendMsg(MsgType msg)
-{
-	if (msg.type == PrivateMsg)
-	{
-		sendPrivateMsg(msg.target, msg.msg);
-	}
-	else if (msg.type == GroupMsg)
-	{
-		sendGroupMsg(msg.target, msg.msg);
-	}
-	else if (msg.type == DiscussMsg)
-	{
-		sendDiscussMsg(msg.target, msg.msg);
-	}
-}
+
 unique_ptr<NameStorage> Name;
 unique_ptr<GetRule> RuleGetter;
-CQ::logger logger("Dice!");
 std::string strip(std::string origin)
 {
 	bool flag = true;
@@ -136,45 +112,17 @@ struct SourceType {
 };
 using PropType = map<string, int>;
 map<SourceType, PropType> CharacterProp;
-//CharacterProp Characters;
 multimap<long long, long long> ObserveGroup;
 multimap<long long, long long> ObserveDiscuss;
 string strFileLoc;
-bool Enabled = false;
-bool MsgSendThreadStarted = false;
 EVE_Enable(__eventEnable)
 {
-	::logger.Debug("Event Enable Triggered");
-	while (MsgSendThreadStarted)
-		Sleep(10);//Wait until the thread terminates
-	::logger.Debug("Constructing Thread for sending msg");
-	thread MsgSend
-	{
-		[&] {
-		Enabled = true;
-		MsgSendThreadStarted = true;
-		::logger.Debug("Thread for sending msg constructed");
-		while (Enabled)
-		{
-			MsgType msgMsg;
-			mutexMsg.lock();
-			if (!SendMsgQueue.empty())
-			{
-				msgMsg = SendMsgQueue.front();
-				SendMsgQueue.pop();
-			}
-			mutexMsg.unlock();
-			if (!msgMsg.msg.empty())
-			{
-				SendMsg(msgMsg);
-			}
-			else this_thread::sleep_for(chrono::milliseconds(20));
-		}
-		MsgSendThreadStarted = false;
-		::logger.Debug("Thread for sending msg stopped");
-	}
-	};
-	MsgSend.detach();
+	//Wait until the thread terminates
+	while (msgSendThreadRunning)
+		Sleep(10);
+
+	thread msgSendThread(SendMsg);
+	msgSendThread.detach();
 	strFileLoc = getAppDirectory();
 	/*
 	* 名称存储-创建与读取
@@ -354,14 +302,12 @@ EVE_Enable(__eventEnable)
 	ifstreamWelcomeMsg.close();
 	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
 	RuleGetter = make_unique<GetRule>();
-	::logger.Debug("Event Enable Ended");
 	return 0;
 }
 
 
 EVE_PrivateMsg_EX(__eventPrivateMsg)
 {
-	::logger.Debug("Triggered Event Private Msg");
 	if (eve.isSystem())return;
 	init(eve.message);
 	init2(eve.message);
@@ -376,11 +322,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), tolower);
 	if (strLowerMessage.substr(intMsgCnt, 4) == "help")
 	{
-
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,strHlpMsg,PrivateMsg });
-		mutexMsg.unlock();
-
+		AddMsgToQueue(strHlpMsg, eve.fromQQ);
 	}
 	else if (strLowerMessage[intMsgCnt] == 'w')
 	{
@@ -419,83 +361,59 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			const int intRdTurnCntRes = rdTurnCnt.Roll();
 			if (intRdTurnCntRes == Value_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strValueErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strValueErr, eve.fromQQ);
 				return;
 			}
 			else if (intRdTurnCntRes == Input_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strInputErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strInputErr, eve.fromQQ);
 				return;
 			}
 			else if (intRdTurnCntRes == ZeroDice_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strZeroDiceErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strZeroDiceErr, eve.fromQQ);
 				return;
 			}
 			else if (intRdTurnCntRes == ZeroType_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strZeroTypeErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strZeroTypeErr, eve.fromQQ);
 				return;
 			}
 			else if (intRdTurnCntRes == DiceTooBig_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strDiceTooBigErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strDiceTooBigErr, eve.fromQQ);
 				return;
 			}
 			else if (intRdTurnCntRes == TypeTooBig_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strTypeTooBigErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strTypeTooBigErr, eve.fromQQ);
 				return;
 			}
 			else if (intRdTurnCntRes == AddDiceVal_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strAddDiceValErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAddDiceValErr, eve.fromQQ);
 				return;
 			}
 			else if (intRdTurnCntRes != 0)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strUnknownErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strUnknownErr, eve.fromQQ);
 				return;
 			}
 			if (rdTurnCnt.intTotal > 10)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strRollTimeExceeded,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strRollTimeExceeded, eve.fromQQ);
 				return;
 			}
 			else if (rdTurnCnt.intTotal <= 0)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strRollTimeErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strRollTimeErr, eve.fromQQ);
 				return;
 			}
 			intTurnCnt = rdTurnCnt.intTotal;
 			if (strTurnCnt.find("d") != string::npos)
 			{
 				const string strTurnNotice = strNickName + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
-
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strTurnNotice,PrivateMsg });
-				mutexMsg.unlock();
-
+				AddMsgToQueue(strTurnNotice, eve.fromQQ);
 			}
 		}
 		string strFirstDice = strMainDice.substr(0, strMainDice.find('+') < strMainDice.find('-') ? strMainDice.find('+') : strMainDice.find('-'));
@@ -515,58 +433,42 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		const int intFirstTimeRes = rdMainDice.Roll();
 		if (intFirstTimeRes == Value_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strValueErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strValueErr, eve.fromQQ);
 			return;
 		}
 		else if (intFirstTimeRes == Input_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strInputErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strInputErr, eve.fromQQ);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroDice_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strZeroDiceErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroDiceErr, eve.fromQQ);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroType_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strZeroTypeErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroTypeErr, eve.fromQQ);			
 			return;
 		}
 		else if (intFirstTimeRes == DiceTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strDiceTooBigErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strDiceTooBigErr, eve.fromQQ);			
 			return;
 		}
 		else if (intFirstTimeRes == TypeTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strTypeTooBigErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strTypeTooBigErr, eve.fromQQ);			
 			return;
 		}
 		else if (intFirstTimeRes == AddDiceVal_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strAddDiceValErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strAddDiceValErr, eve.fromQQ);			
 			return;
 		}
 		else if (intFirstTimeRes != 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strUnknownErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strUnknownErr, eve.fromQQ);			
 			return;
 		}
 		if (!boolDetail && intTurnCnt != 1)
@@ -597,9 +499,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 						strAns += ",";
 				}
 			}
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strAns, eve.fromQQ);			
 		}
 		else
 		{
@@ -611,9 +511,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 				string strAns = strNickName + "骰出了: " + (boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString());
 				if (!strReason.empty())
 					strAns.insert(0, "由于" + strReason + " ");
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAns, eve.fromQQ);				
 
 			}
 		}
@@ -625,9 +523,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		string strAns = strNickName + "的疯狂发作-临时症状:\n";
 		TempInsane(strAns);
 
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strAns, eve.fromQQ);		
 
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "li")
@@ -635,9 +531,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		string strAns = strNickName + "的疯狂发作-总结症状:\n";
 		LongInsane(strAns);
 
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strAns, eve.fromQQ);		
 
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "sc")
@@ -657,18 +551,14 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		if (SanCost.empty() || SanCost.find("/") == string::npos)
 		{
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSCInvalid, eve.fromQQ);			
 
 			return;
 		}
 		if (San.empty() && !(CharacterProp.count(SourceType(eve.fromQQ, PrivateT, 0)) && CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)].count("理智")))
 		{
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strSanInvalid,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSanInvalid, eve.fromQQ);			
 
 			return;
 		}
@@ -676,9 +566,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		{
 			if(!isdigit(character) && character != 'D' && character!='d' && character != '+' && character != '-')
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strSCInvalid, eve.fromQQ);				
 				return;
 			}
 		}
@@ -686,9 +574,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		{
 			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strSCInvalid, eve.fromQQ);				
 				return;
 			}
 		}
@@ -697,18 +583,14 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
 		{
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSCInvalid, eve.fromQQ);			
 
 			return;
 		}
 		if (San.length() >= 3)
 		{
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strSanInvalid,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSanInvalid, eve.fromQQ);			
 
 			return;
 		}
@@ -716,9 +598,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		if (intSan == 0)
 		{
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strSanInvalid,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSanInvalid, eve.fromQQ);			
 
 			return;
 		}
@@ -761,16 +641,12 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			}
 		}
 
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strAns, eve.fromQQ);		
 
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
 	{
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,Dice_Full_Ver,PrivateMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(Dice_Full_Ver, eve.fromQQ);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
 	{
@@ -805,9 +681,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strEnValInvalid,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strEnValInvalid, eve.fromQQ);				
 				return;
 			}
 
@@ -817,9 +691,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			if (strCurrentValue.length() > 3)
 			{
 
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strEnValInvalid,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strEnValInvalid, eve.fromQQ);				
 
 				return;
 			}
@@ -845,9 +717,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			}
 		}
 
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strAns, eve.fromQQ);		
 
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
@@ -862,9 +732,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		{
 			const string strReply = strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal);
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strReply,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReply, eve.fromQQ);			
 
 		}
 		else
@@ -880,9 +748,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			JRRP[eve.fromQQ].RPVal = JRRPRes;
 			const string strReply(strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal));
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strReply,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReply, eve.fromQQ);			
 
 		}
 	}
@@ -897,15 +763,11 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		string strReturn;
 		if (RuleGetter->analyse(strSearch, strReturn))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strReturn,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReturn, eve.fromQQ);			
 		}
 		else
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strRuleErr + strReturn,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strRuleErr + strReturn, eve.fromQQ);			
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "st")
@@ -915,9 +777,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			intMsgCnt++;
 		if (intMsgCnt == strLowerMessage.length())
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strStErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strStErr, eve.fromQQ);			
 			return;
 		}
 		if (strLowerMessage.substr(intMsgCnt, 3) == "clr")
@@ -926,9 +786,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			{
 				CharacterProp.erase(SourceType(eve.fromQQ, PrivateT, 0));
 			}
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strPropCleared,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strPropCleared, eve.fromQQ);			
 			return;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 3) == "del") {
@@ -945,15 +803,11 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			if (CharacterProp.count(SourceType(eve.fromQQ, PrivateT, 0)) && CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)].count(strSkillName))
 			{
 				CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)].erase(strSkillName);
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strPropDeleted,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPropDeleted, eve.fromQQ);				
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strPropNotFound,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPropNotFound, eve.fromQQ);				
 			}
 			return;
 		}
@@ -970,21 +824,15 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
 			if (CharacterProp.count(SourceType(eve.fromQQ, PrivateT, 0)) && CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)].count(strSkillName))
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,format(strProp,{ strNickName,strSkillName,to_string(CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)][strSkillName]) }),PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(format(strProp,{ strNickName,strSkillName,to_string(CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)][strSkillName]) }), eve.fromQQ);				
 			}
 			else if (SkillDefaultVal.count(strSkillName))
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,format(strProp,{ strNickName,strSkillName,to_string(SkillDefaultVal[strSkillName]) }),PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(format(strProp,{ strNickName,strSkillName,to_string(SkillDefaultVal[strSkillName]) }), eve.fromQQ);				
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strPropNotFound,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPropNotFound, eve.fromQQ);				
 			}
 			return;
 		}
@@ -1014,15 +862,11 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
 		}
 		if (boolError) {
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strPropErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strPropErr, eve.fromQQ);			
 		}
 		else {
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strSetPropSuccess,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSetPropSuccess, eve.fromQQ);			
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
@@ -1044,54 +888,40 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		{
 			if (!isdigit(i))
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strGroupIDInvalid,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strGroupIDInvalid, eve.fromQQ);				
 				return;
 			}
 		}
 		if (strGroupID.empty())
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,"群号不能为空!",PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue("群号不能为空!", eve.fromQQ);			
 			return;
 		}
 		if (strAction.empty())
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,"动作不能为空!",PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue("动作不能为空!", eve.fromQQ);			
 			return;
 		}
 		const long long llGroupID = stoll(strGroupID);
 		if (DisabledGroup.count(llGroupID))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strDisabledErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strDisabledErr, eve.fromQQ);			
 			return;
 		}
 		if (DisabledMEGroup.count(llGroupID))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strMEDisabledErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strMEDisabledErr, eve.fromQQ);			
 			return;
 		}
 		string strReply = getName(eve.fromQQ,llGroupID) + eve.message.substr(intMsgCnt);
 		const int intSendRes = sendGroupMsg(llGroupID, strReply);
 		if (intSendRes < 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strSendErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSendErr, eve.fromQQ);			
 		}
 		else
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,"命令执行成功!",PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue("命令执行成功!", eve.fromQQ);			
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "set")
@@ -1107,16 +937,12 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		for (auto charNumElement : strDefaultDice)
 			if (!isdigit(charNumElement))
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strSetInvalid,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strSetInvalid, eve.fromQQ);				
 				return;
 			}
 		if (strDefaultDice.length() > 5)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strSetTooBig,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSetTooBig, eve.fromQQ);			
 			return;
 		}
 		const int intDefaultDice = stoi(strDefaultDice);
@@ -1125,17 +951,13 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		else
 			DefaultDice[eve.fromQQ] = intDefaultDice;
 		const string strSetSuccessReply = "已将" + strNickName + "的默认骰类型更改为D" + strDefaultDice;
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,strSetSuccessReply,PrivateMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strSetSuccessReply, eve.fromQQ);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc6d")
 	{
 		string strReply = strNickName;
 		COC6D(strReply);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,strReply,PrivateMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromQQ);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "coc6")
 	{
@@ -1152,31 +974,23 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterTooBig,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromQQ);			
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum > 10)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterTooBig,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromQQ);			
 			return;
 		}
 		if (intNum == 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterCannotBeZero,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterCannotBeZero, eve.fromQQ);			
 			return;
 		}
 		string strReply = strNickName;
 		COC6(strReply, intNum);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,strReply,PrivateMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromQQ);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "dnd")
 	{
@@ -1191,39 +1005,29 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterTooBig,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromQQ);			
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum > 10)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterTooBig,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromQQ);			
 			return;
 		}
 		if (intNum == 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterCannotBeZero,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterCannotBeZero, eve.fromQQ);			
 			return;
 		}
 		string strReply = strNickName;
 		DND(strReply, intNum);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,strReply,PrivateMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromQQ);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd")
 	{
 		string strReply = strNickName;
 		COC7D(strReply);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,strReply,PrivateMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromQQ);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "coc")
 	{
@@ -1242,31 +1046,23 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterTooBig,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromQQ);			
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum > 10)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterTooBig,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromQQ);			
 			return;
 		}
 		if (intNum == 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterCannotBeZero,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterCannotBeZero, eve.fromQQ);			
 			return;
 		}
 		string strReply = strNickName;
 		COC7(strReply, intNum);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,strReply,PrivateMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromQQ);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ra")
 	{
@@ -1304,17 +1100,13 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strUnknownPropErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strUnknownPropErr, eve.fromQQ);				
 				return;
 			}
 		}
 		else if (strSkillVal.length() > 3)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strPropErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strPropErr, eve.fromQQ);			
 			return;
 		}
 		else {
@@ -1332,9 +1124,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		{
 			strReply = "由于" + strReason + " " + strReply;
 		}
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,strReply,PrivateMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromQQ);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "rc")
 	{
@@ -1372,17 +1162,13 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strUnknownPropErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strUnknownPropErr, eve.fromQQ);				
 				return;
 			}
 		}
 		else if (strSkillVal.length() > 3)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strPropErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strPropErr, eve.fromQQ);			
 			return;
 		}
 		else {
@@ -1400,9 +1186,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		{
 			strReply = "由于" + strReason + " " + strReply;
 		}
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromQQ,strReply,PrivateMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromQQ);		
 	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'd')
 	{
@@ -1449,72 +1233,52 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			const int intRdTurnCntRes = rdTurnCnt.Roll();
 			if (intRdTurnCntRes == Value_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strValueErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strValueErr, eve.fromQQ);				
 				return;
 			}
 			else if (intRdTurnCntRes == Input_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strInputErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strInputErr, eve.fromQQ);				
 				return;
 			}
 			else if (intRdTurnCntRes == ZeroDice_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strZeroDiceErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strZeroDiceErr, eve.fromQQ);				
 				return;
 			}
 			else if (intRdTurnCntRes == ZeroType_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strZeroTypeErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strZeroTypeErr, eve.fromQQ);				
 				return;
 			}
 			else if (intRdTurnCntRes == DiceTooBig_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strDiceTooBigErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strDiceTooBigErr, eve.fromQQ);				
 				return;
 			}
 			else if (intRdTurnCntRes == TypeTooBig_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strTypeTooBigErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strTypeTooBigErr, eve.fromQQ);				
 				return;
 			}
 			else if (intRdTurnCntRes == AddDiceVal_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strAddDiceValErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAddDiceValErr, eve.fromQQ);				
 				return;
 			}
 			else if (intRdTurnCntRes != 0)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strUnknownErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strUnknownErr, eve.fromQQ);				
 				return;
 			}
 			if (rdTurnCnt.intTotal > 10)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strRollTimeExceeded,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strRollTimeExceeded, eve.fromQQ);				
 				return;
 			}
 			else if (rdTurnCnt.intTotal <= 0)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strRollTimeErr,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strRollTimeErr, eve.fromQQ);				
 				return;
 			}
 			intTurnCnt = rdTurnCnt.intTotal;
@@ -1522,9 +1286,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			{
 				const string strTurnNotice = strNickName + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
 
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strTurnNotice,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strTurnNotice, eve.fromQQ);				
 
 			}
 		}
@@ -1533,58 +1295,42 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		const int intFirstTimeRes = rdMainDice.Roll();
 		if (intFirstTimeRes == Value_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strValueErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strValueErr, eve.fromQQ);			
 			return;
 		}
 		else if (intFirstTimeRes == Input_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strInputErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strInputErr, eve.fromQQ);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroDice_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strZeroDiceErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroDiceErr, eve.fromQQ);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroType_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strZeroTypeErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroTypeErr, eve.fromQQ);			
 			return;
 		}
 		else if (intFirstTimeRes == DiceTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strDiceTooBigErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strDiceTooBigErr, eve.fromQQ);			
 			return;
 		}
 		else if (intFirstTimeRes == TypeTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strTypeTooBigErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strTypeTooBigErr, eve.fromQQ);			
 			return;
 		}
 		else if (intFirstTimeRes == AddDiceVal_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strAddDiceValErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strAddDiceValErr, eve.fromQQ);			
 			return;
 		}
 		else if (intFirstTimeRes != 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strUnknownErr,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strUnknownErr, eve.fromQQ);			
 			return;
 		}
 		if (!boolDetail&&intTurnCnt != 1)
@@ -1615,9 +1361,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 						strAns += ",";
 				}
 			}
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strAns, eve.fromQQ);			
 		}
 		else
 		{
@@ -1629,9 +1373,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 				string strAns = strNickName + "骰出了: " + (boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString());
 				if (!strReason.empty())
 					strAns.insert(0, "由于" + strReason + " ");
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAns, eve.fromQQ);				
 
 			}
 		}
@@ -1640,9 +1382,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	{
 		if (isalpha(eve.message[intMsgCnt]))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,"命令输入错误!",PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue("命令输入错误!", eve.fromQQ);			
 		}
 	}
 }
@@ -1694,22 +1434,16 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 					if (DisabledGroup.count(eve.fromGroup))
 					{
 						DisabledGroup.erase(eve.fromGroup);
-						mutexMsg.lock();
-						SendMsgQueue.push(MsgType{ eve.fromGroup,"成功开启本机器人!",GroupMsg });
-						mutexMsg.unlock();
+						AddMsgToQueue("成功开启本机器人!", eve.fromGroup, false);
 					}
 					else
 					{
-						mutexMsg.lock();
-						SendMsgQueue.push(MsgType{ eve.fromGroup,"本机器人已经处于开启状态!",GroupMsg });
-						mutexMsg.unlock();
+						AddMsgToQueue("本机器人已经处于开启状态!", eve.fromGroup, false);						
 					}
 				}
 				else
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,strPermissionDeniedErr,GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strPermissionDeniedErr, eve.fromGroup, false);					
 				}
 			}
 		}
@@ -1722,22 +1456,16 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 					if (!DisabledGroup.count(eve.fromGroup))
 					{
 						DisabledGroup.insert(eve.fromGroup);
-						mutexMsg.lock();
-						SendMsgQueue.push(MsgType{ eve.fromGroup,"成功关闭本机器人!",GroupMsg });
-						mutexMsg.unlock();
+						AddMsgToQueue("成功关闭本机器人!", eve.fromGroup, false);						
 					}
 					else
 					{
-						mutexMsg.lock();
-						SendMsgQueue.push(MsgType{ eve.fromGroup,"本机器人已经处于关闭状态!",GroupMsg });
-						mutexMsg.unlock();
+						AddMsgToQueue("本机器人已经处于关闭状态!", eve.fromGroup, false);						
 					}
 				}
 				else
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,strPermissionDeniedErr,GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strPermissionDeniedErr, eve.fromGroup, false);					
 				}
 			}
 		}
@@ -1745,9 +1473,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		{
 			if (QQNum.empty() || QQNum == to_string(getLoginQQ()) || (QQNum.length() == 4 && QQNum == to_string(getLoginQQ() % 10000)))
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,Dice_Full_Ver,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(Dice_Full_Ver, eve.fromGroup, false);				
 			}
 		}
 		return;
@@ -1771,9 +1497,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strPermissionDeniedErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPermissionDeniedErr, eve.fromGroup, false);				
 			}
 		}
 		return;
@@ -1793,22 +1517,16 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				if (DisabledHELPGroup.count(eve.fromGroup))
 				{
 					DisabledHELPGroup.erase(eve.fromGroup);
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,"成功在本群中启用.help命令!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("成功在本群中启用.help命令!", eve.fromGroup, false);					
 				}
 				else
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,"在本群中.help命令没有被禁用!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("在本群中.help命令没有被禁用!", eve.fromGroup, false);					
 				}
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strPermissionDeniedErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPermissionDeniedErr, eve.fromGroup, false);				
 			}
 			return;
 		}
@@ -1819,35 +1537,25 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				if (!DisabledHELPGroup.count(eve.fromGroup))
 				{
 					DisabledHELPGroup.insert(eve.fromGroup);
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,"成功在本群中禁用.help命令!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("成功在本群中禁用.help命令!", eve.fromGroup, false);					
 				}
 				else
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,"在本群中.help命令没有被启用!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("在本群中.help命令没有被启用!", eve.fromGroup, false);					
 				}
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strPermissionDeniedErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPermissionDeniedErr, eve.fromGroup, false);				
 			}
 			return;
 		}
 		if (DisabledHELPGroup.count(eve.fromGroup))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strHELPDisabledErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strHELPDisabledErr, eve.fromGroup, false);			
 			return;
 		}
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strHlpMsg,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strHlpMsg, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 7) == "welcome") {
 		intMsgCnt += 7;
@@ -1861,29 +1569,21 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				if (WelcomeMsg.count(eve.fromGroup))
 				{
 					WelcomeMsg.erase(eve.fromGroup);
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,strWelcomeMsgClearNotice,GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strWelcomeMsgClearNotice, eve.fromGroup, false);					
 				}
 				else
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,strWelcomeMsgClearErr,GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strWelcomeMsgClearErr, eve.fromGroup, false);					
 				}
 			}
 			else {
 				WelcomeMsg[eve.fromGroup] = strWelcomeMsg;
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strWelcomeMsgUpdateNotice,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strWelcomeMsgUpdateNotice, eve.fromGroup, false);				
 			}
 		}
 		else
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strPermissionDeniedErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strPermissionDeniedErr, eve.fromGroup, false);			
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "st")
@@ -1893,9 +1593,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			intMsgCnt++;
 		if (intMsgCnt == strLowerMessage.length())
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strStErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strStErr, eve.fromGroup, false);			
 			return;
 		}
 		if (strLowerMessage.substr(intMsgCnt, 3) == "clr")
@@ -1904,9 +1602,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			{
 				CharacterProp.erase(SourceType(eve.fromQQ, GroupT, eve.fromGroup));
 			}
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strPropCleared,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strPropCleared, eve.fromGroup, false);			
 			return;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 3) == "del") {
@@ -1923,15 +1619,11 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			if (CharacterProp.count(SourceType(eve.fromQQ, GroupT, eve.fromGroup)) && CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)].count(strSkillName))
 			{
 				CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)].erase(strSkillName);
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strPropDeleted,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPropDeleted, eve.fromGroup, false);				
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strPropNotFound,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPropNotFound, eve.fromGroup, false);				
 			}
 			return;
 		}
@@ -1948,21 +1640,15 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
 			if (CharacterProp.count(SourceType(eve.fromQQ, GroupT, eve.fromGroup)) && CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)].count(strSkillName))
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,format(strProp,{ strNickName,strSkillName,to_string(CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)][strSkillName]) }),GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(format(strProp,{ strNickName,strSkillName,to_string(CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)][strSkillName]) }), eve.fromGroup, false);				
 			}
 			else if (SkillDefaultVal.count(strSkillName))
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,format(strProp,{ strNickName,strSkillName,to_string(SkillDefaultVal[strSkillName]) }),GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(format(strProp,{ strNickName,strSkillName,to_string(SkillDefaultVal[strSkillName]) }), eve.fromGroup, false);				
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strPropNotFound,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPropNotFound, eve.fromGroup, false);				
 			}
 			return;
 		}
@@ -1992,15 +1678,11 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
 		}
 		if (boolError) {
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strPropErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strPropErr, eve.fromGroup, false);			
 		}
 		else {
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strSetPropSuccess,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSetPropSuccess, eve.fromGroup, false);			
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ri")
@@ -2034,65 +1716,47 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		const int intFirstTimeRes = initdice.Roll();
 		if (intFirstTimeRes == Value_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strValueErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strValueErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == Input_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strInputErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strInputErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroDice_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strZeroDiceErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroDiceErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroType_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strZeroTypeErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroTypeErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == DiceTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strDiceTooBigErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strDiceTooBigErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == TypeTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strTypeTooBigErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strTypeTooBigErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == AddDiceVal_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strAddDiceValErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strAddDiceValErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes != 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strUnknownErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strUnknownErr, eve.fromGroup, false);			
 			return;
 		}
 		ilInitList->insert(eve.fromGroup, initdice.intTotal, strname);
 		const string strReply = strname + "的先攻骰点：" + strinit + '=' + to_string(initdice.intTotal);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "init")
 	{
@@ -2105,15 +1769,11 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				strReply = "成功清除先攻记录！";
 			else
 				strReply = "列表为空！";
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReply, eve.fromGroup, false);			
 			return;
 		}
 		ilInitList->show(eve.fromGroup, strReply);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage[intMsgCnt] == 'w')
 	{
@@ -2158,72 +1818,52 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			const int intRdTurnCntRes = rdTurnCnt.Roll();
 			if (intRdTurnCntRes == Value_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strValueErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strValueErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == Input_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strInputErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strInputErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == ZeroDice_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strZeroDiceErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strZeroDiceErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == ZeroType_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strZeroTypeErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strZeroTypeErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == DiceTooBig_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strDiceTooBigErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strDiceTooBigErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == TypeTooBig_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strTypeTooBigErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strTypeTooBigErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == AddDiceVal_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strAddDiceValErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAddDiceValErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes != 0)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strUnknownErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strUnknownErr, eve.fromGroup, false);				
 				return;
 			}
 			if (rdTurnCnt.intTotal > 10)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strRollTimeExceeded,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strRollTimeExceeded, eve.fromGroup, false);				
 				return;
 			}
 			else if (rdTurnCnt.intTotal <= 0)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strRollTimeErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strRollTimeErr, eve.fromGroup, false);				
 				return;
 			}
 			intTurnCnt = rdTurnCnt.intTotal;
@@ -2232,24 +1872,18 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				string strTurnNotice = strNickName + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
 				if (!isHidden)
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,strTurnNotice,GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strTurnNotice, eve.fromGroup, false);					
 				}
 				else
 				{
 					strTurnNotice = "在群\"" + getGroupList()[eve.fromGroup] + "\"中 " + strTurnNotice;
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromQQ,strTurnNotice,PrivateMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strTurnNotice, eve.fromQQ);					
 					const auto range = ObserveGroup.equal_range(eve.fromGroup);
 					for (auto it = range.first; it != range.second; ++it)
 					{
 						if (it->second != eve.fromQQ)
 						{
-							mutexMsg.lock();
-							SendMsgQueue.push(MsgType{ it->second,strTurnNotice,PrivateMsg });
-							mutexMsg.unlock();
+							AddMsgToQueue(strTurnNotice, it->second);
 						}
 					}
 				}
@@ -2259,9 +1893,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 		if (strMainDice.empty())
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strEmptyWWDiceErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strEmptyWWDiceErr, eve.fromGroup, false);			
 			return;
 		}
 		string strFirstDice = strMainDice.substr(0, strMainDice.find('+') < strMainDice.find('-') ? strMainDice.find('+') : strMainDice.find('-'));
@@ -2281,58 +1913,42 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		const int intFirstTimeRes = rdMainDice.Roll();
 		if (intFirstTimeRes == Value_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strValueErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strValueErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == Input_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strInputErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strInputErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroDice_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strZeroDiceErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroDiceErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroType_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strZeroTypeErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroTypeErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == DiceTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strDiceTooBigErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strDiceTooBigErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == TypeTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strTypeTooBigErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strTypeTooBigErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == AddDiceVal_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strAddDiceValErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strAddDiceValErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes != 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strUnknownErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strUnknownErr, eve.fromGroup, false);			
 			return;
 		}
 		if (!boolDetail && intTurnCnt != 1)
@@ -2365,24 +1981,18 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			}
 			if (!isHidden)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strAns,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAns, eve.fromGroup, false);				
 			}
 			else
 			{
 				strAns = "在群\"" + getGroupList()[eve.fromGroup] + "\"中 " + strAns;
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAns, eve.fromQQ);				
 				const auto range = ObserveGroup.equal_range(eve.fromGroup);
 				for (auto it = range.first; it != range.second; ++it)
 				{
 					if (it->second != eve.fromQQ)
 					{
-						mutexMsg.lock();
-						SendMsgQueue.push(MsgType{ it->second,strAns,PrivateMsg });
-						mutexMsg.unlock();
+						AddMsgToQueue(strAns, it->second);
 					}
 				}
 			}
@@ -2400,24 +2010,18 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 					strAns.insert(0, "由于" + strReason + " ");
 				if (!isHidden)
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,strAns,GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strAns, eve.fromGroup, false);					
 				}
 				else
 				{
 					strAns = "在群\"" + getGroupList()[eve.fromGroup] + "\"中 " + strAns;
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strAns, eve.fromQQ);					
 					const auto range = ObserveGroup.equal_range(eve.fromGroup);
 					for (auto it = range.first; it != range.second; ++it)
 					{
 						if (it->second != eve.fromQQ)
 						{
-							mutexMsg.lock();
-							SendMsgQueue.push(MsgType{ it->second,strAns,PrivateMsg });
-							mutexMsg.unlock();
+							AddMsgToQueue(strAns, it->second);
 						}
 					}
 				}
@@ -2427,9 +2031,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		if (isHidden)
 		{
 			const string strReply = strNickName + "进行了一次暗骰";
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReply, eve.fromGroup, false);			
 		}
 
 	}
@@ -2446,22 +2048,16 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				if (DisabledOBGroup.count(eve.fromGroup))
 				{
 					DisabledOBGroup.erase(eve.fromGroup);
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,"成功在本群中启用旁观模式!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("成功在本群中启用旁观模式!", eve.fromGroup, false);					
 				}
 				else
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup, "本群中旁观模式没有被禁用!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue( "本群中旁观模式没有被禁用!", eve.fromGroup, false);					
 				}
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup, "你没有权限执行此命令!",GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue( "你没有权限执行此命令!", eve.fromGroup, false);				
 			}
 			return;
 		}
@@ -2473,30 +2069,22 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				{
 					DisabledOBGroup.insert(eve.fromGroup);
 					ObserveGroup.clear();
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,"成功在本群中禁用旁观模式!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("成功在本群中禁用旁观模式!", eve.fromGroup, false);					
 				}
 				else
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup, "本群中旁观模式没有被启用!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue( "本群中旁观模式没有被启用!", eve.fromGroup, false);					
 				}
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup, "你没有权限执行此命令!",GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue( "你没有权限执行此命令!", eve.fromGroup, false);				
 			}
 			return;
 		}
 		if (DisabledOBGroup.count(eve.fromGroup))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup, "在本群中旁观模式已被禁用!",GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue( "在本群中旁观模式已被禁用!", eve.fromGroup, false);			
 			return;
 		}
 		if (Command == "list")
@@ -2508,24 +2096,18 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				Msg += "\n" + getName(it->second, eve.fromGroup) + "(" + to_string(it->second) + ")";
 			}
 			const string strReply = Msg == "当前的旁观者有:" ? "当前暂无旁观者" : Msg;
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReply, eve.fromGroup, false);			
 		}
 		else if (Command == "clr")
 		{
 			if (getGroupMemberInfo(eve.fromGroup, eve.fromQQ).permissions >= 2)
 			{
 				ObserveGroup.erase(eve.fromGroup);
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,"成功删除所有旁观者!",GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue("成功删除所有旁观者!", eve.fromGroup, false);				
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,"你没有权限执行此命令!",GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue("你没有权限执行此命令!", eve.fromGroup, false);				
 			}
 		}
 		else if (Command == "exit")
@@ -2537,17 +2119,13 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				{
 					ObserveGroup.erase(it);
 					const string strReply = strNickName + "成功退出旁观模式!";
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strReply, eve.fromGroup, false);					
 					eve.message_block();
 					return;
 				}
 			}
 			const string strReply = strNickName + "没有加入旁观模式!";
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReply, eve.fromGroup, false);			
 		}
 		else
 		{
@@ -2557,35 +2135,27 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				if (it->second == eve.fromQQ)
 				{
 					const string strReply = strNickName + "已经处于旁观模式!";
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strReply, eve.fromGroup, false);					
 					eve.message_block();
 					return;
 				}
 			}
 			ObserveGroup.insert(make_pair(eve.fromGroup, eve.fromQQ));
 			const string strReply = strNickName + "成功加入旁观模式!";
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReply, eve.fromGroup, false);			
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ti")
 	{
 		string strAns = strNickName + "的疯狂发作-临时症状:\n";
 		TempInsane(strAns);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strAns,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strAns, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "li")
 	{
 		string strAns = strNickName + "的疯狂发作-总结症状:\n";
 		LongInsane(strAns);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strAns,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strAns, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "sc")
 	{
@@ -2603,25 +2173,19 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 		if (SanCost.empty() || SanCost.find("/") == string::npos)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strSCInvalid,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSCInvalid, eve.fromGroup, false);			
 			return;
 		}
 		if (San.empty() && !(CharacterProp.count(SourceType(eve.fromQQ, GroupT, eve.fromGroup)) && CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)].count("理智")))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strSanInvalid,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSanInvalid, eve.fromGroup, false);			
 			return;
 		}
 		for (const auto& character : SanCost.substr(0, SanCost.find("/")))
 		{
 			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strSCInvalid, eve.fromQQ);				
 				return;
 			}
 		}
@@ -2629,9 +2193,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		{
 			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strSCInvalid, eve.fromQQ);				
 				return;
 			}
 		}
@@ -2639,24 +2201,18 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		RD rdFail(SanCost.substr(SanCost.find("/") + 1));
 		if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strSCInvalid,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSCInvalid, eve.fromGroup, false);			
 			return;
 		}
 		if (San.length() >= 3)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strSanInvalid,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSanInvalid, eve.fromGroup, false);			
 			return;
 		}
 		const int intSan = San.empty() ? CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] : stoi(San);
 		if (intSan == 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strSanInvalid,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSanInvalid, eve.fromGroup, false);			
 			return;
 		}
 		string strAns = strNickName + "的Sancheck:\n1D100=";
@@ -2697,9 +2253,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
 			}
 		}
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strAns,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strAns, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
 	{
@@ -2734,9 +2288,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strEnValInvalid,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strEnValInvalid, eve.fromGroup, false);				
 				return;
 			}
 
@@ -2746,9 +2298,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			if (strCurrentValue.length() > 3)
 			{
 
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strEnValInvalid,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strEnValInvalid, eve.fromGroup, false);				
 
 				return;
 			}
@@ -2773,9 +2323,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)][strSkillName] = intCurrentVal + intTmpRollD10;
 			}
 		}
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strAns,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strAns, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
 	{
@@ -2790,22 +2338,16 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				if (DisabledJRRPGroup.count(eve.fromGroup))
 				{
 					DisabledJRRPGroup.erase(eve.fromGroup);
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,"成功在本群中启用JRRP!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("成功在本群中启用JRRP!", eve.fromGroup, false);					
 				}
 				else
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup, "在本群中JRRP没有被禁用!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue( "在本群中JRRP没有被禁用!", eve.fromGroup, false);					
 				}
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup, strPermissionDeniedErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue( strPermissionDeniedErr, eve.fromGroup, false);				
 			}
 			return;
 		}
@@ -2816,30 +2358,22 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				if (!DisabledJRRPGroup.count(eve.fromGroup))
 				{
 					DisabledJRRPGroup.insert(eve.fromGroup);
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,"成功在本群中禁用JRRP!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("成功在本群中禁用JRRP!", eve.fromGroup, false);					
 				}
 				else
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup, "在本群中JRRP没有被启用!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue( "在本群中JRRP没有被启用!", eve.fromGroup, false);					
 				}
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup, strPermissionDeniedErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue( strPermissionDeniedErr, eve.fromGroup, false);				
 			}
 			return;
 		}
 		if (DisabledJRRPGroup.count(eve.fromGroup))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup, "在本群中JRRP功能已被禁用",GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue( "在本群中JRRP功能已被禁用", eve.fromGroup, false);			
 			return;
 		}
 		char cstrDate[100] = {};
@@ -2851,9 +2385,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		if (JRRP.count(eve.fromQQ) && JRRP[eve.fromQQ].Date == cstrDate)
 		{
 			const string strReply = strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal);
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup, strReply,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue( strReply, eve.fromGroup, false);			
 		}
 		else
 		{
@@ -2867,9 +2399,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			JRRP[eve.fromQQ].Date = cstrDate;
 			JRRP[eve.fromQQ].RPVal = JRRPRes;
 			const string strReply(strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal));
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup, strReply,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue( strReply, eve.fromGroup, false);			
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
@@ -2880,18 +2410,14 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		string name = eve.message.substr(intMsgCnt);
 		if (name.length() > 50)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup, strNameTooLongErr, GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strNameTooLongErr, eve.fromGroup, false);
 			return;
 		}
 		if (!name.empty())
 		{
 			Name->set(eve.fromGroup, eve.fromQQ, name);
 			const string strReply = "已将" + strNickName + "的名称更改为" + strip(name);
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup, strReply,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue( strReply, eve.fromGroup, false);			
 
 		}
 		else
@@ -2899,16 +2425,12 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			if (Name->del(eve.fromGroup, eve.fromQQ))
 			{
 				const string strReply = "已将" + strNickName + "的名称删除";
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup, strReply,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue( strReply, eve.fromGroup, false);				
 			}
 			else
 			{
 				const string strReply = strNickName + strNameDelErr;
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup, strReply,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue( strReply, eve.fromGroup, false);				
 			}
 		}
 	}
@@ -2923,15 +2445,11 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		string strReturn;
 		if (RuleGetter->analyse(strSearch, strReturn))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strReturn,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReturn, eve.fromGroup, false);			
 		}
 		else
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strRuleErr + strReturn,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strRuleErr + strReturn, eve.fromGroup, false);			
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
@@ -2947,22 +2465,16 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				if (DisabledMEGroup.count(eve.fromGroup))
 				{
 					DisabledMEGroup.erase(eve.fromGroup);
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,"成功在本群中启用.me命令!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("成功在本群中启用.me命令!", eve.fromGroup, false);					
 				}
 				else
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,"在本群中.me命令没有被禁用!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("在本群中.me命令没有被禁用!", eve.fromGroup, false);					
 				}
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strPermissionDeniedErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPermissionDeniedErr, eve.fromGroup, false);				
 			}
 			return;
 		}
@@ -2973,50 +2485,36 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				if (!DisabledMEGroup.count(eve.fromGroup))
 				{
 					DisabledMEGroup.insert(eve.fromGroup);
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,"成功在本群中禁用.me命令!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("成功在本群中禁用.me命令!", eve.fromGroup, false);					
 				}
 				else
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,"在本群中.me命令没有被启用!",GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("在本群中.me命令没有被启用!", eve.fromGroup, false);					
 				}
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strPermissionDeniedErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPermissionDeniedErr, eve.fromGroup, false);				
 			}
 			return;
 		}
 		if (DisabledMEGroup.count(eve.fromGroup))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,"在本群中.me命令已被禁用!",GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue("在本群中.me命令已被禁用!", eve.fromGroup, false);			
 			return;
 		}
 		if (strAction.empty())
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,"动作不能为空!",GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue("动作不能为空!", eve.fromGroup, false);			
 			return;
 		}
 		if (DisabledMEGroup.count(eve.fromGroup))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strMEDisabledErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strMEDisabledErr, eve.fromGroup, false);			
 			return;
 		}
 		const string strReply = strNickName + eve.message.substr(intMsgCnt);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "set")
 	{
@@ -3031,16 +2529,12 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		for (auto charNumElement : strDefaultDice)
 			if (!isdigit(charNumElement))
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strSetInvalid,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strSetInvalid, eve.fromGroup, false);				
 				return;
 			}
 		if (strDefaultDice.length() > 5)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strSetTooBig,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSetTooBig, eve.fromGroup, false);			
 			return;
 		}
 		const int intDefaultDice = stoi(strDefaultDice);
@@ -3049,17 +2543,13 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		else
 			DefaultDice[eve.fromQQ] = intDefaultDice;
 		const string strSetSuccessReply = "已将" + strNickName + "的默认骰类型更改为D" + strDefaultDice;
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strSetSuccessReply,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strSetSuccessReply, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc6d")
 	{
 		string strReply = strNickName;
 		COC6D(strReply);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "coc6")
 	{
@@ -3076,31 +2566,23 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterTooBig,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromQQ);			
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum > 10)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strCharacterTooBig,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromGroup, false);			
 			return;
 		}
 		if (intNum == 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strCharacterCannotBeZero,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterCannotBeZero, eve.fromGroup, false);			
 			return;
 		}
 		string strReply = strNickName;
 		COC6(strReply, intNum);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "dnd")
 	{
@@ -3115,39 +2597,29 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterTooBig,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromQQ);			
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum > 10)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strCharacterTooBig,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromGroup, false);			
 			return;
 		}
 		if (intNum == 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strCharacterCannotBeZero,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterCannotBeZero, eve.fromGroup, false);			
 			return;
 		}
 		string strReply = strNickName;
 		DND(strReply, intNum);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd")
 	{
 		string strReply = strNickName;
 		COC7D(strReply);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "coc")
 	{
@@ -3166,31 +2638,23 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterTooBig,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromQQ);			
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum > 10)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strCharacterTooBig,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromGroup, false);			
 			return;
 		}
 		if (intNum == 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strCharacterCannotBeZero,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterCannotBeZero, eve.fromGroup, false);			
 			return;
 		}
 		string strReply = strNickName;
 		COC7(strReply, intNum);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ra")
 	{
@@ -3228,17 +2692,13 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strUnknownPropErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strUnknownPropErr, eve.fromGroup, false);				
 				return;
 			}
 		}
 		else if (strSkillVal.length() > 3)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strPropErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strPropErr, eve.fromGroup, false);			
 			return;
 		}
 		else {
@@ -3256,9 +2716,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		{
 			strReply = "由于" + strReason + " " + strReply;
 		}
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "rc")
 	{
@@ -3296,17 +2754,13 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strUnknownPropErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strUnknownPropErr, eve.fromGroup, false);				
 				return;
 			}
 		}
 		else if (strSkillVal.length() > 3)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strPropErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strPropErr, eve.fromGroup, false);			
 			return;
 		}
 		else {
@@ -3324,9 +2778,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		{
 			strReply = "由于" + strReason + " " + strReply;
 		}
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromGroup, false);		
 	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'h' || strLowerMessage[intMsgCnt] == 'd')
 	{
@@ -3381,72 +2833,52 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			const int intRdTurnCntRes = rdTurnCnt.Roll();
 			if (intRdTurnCntRes == Value_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strValueErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strValueErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == Input_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strInputErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strInputErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == ZeroDice_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strZeroDiceErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strZeroDiceErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == ZeroType_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strZeroTypeErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strZeroTypeErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == DiceTooBig_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strDiceTooBigErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strDiceTooBigErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == TypeTooBig_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strTypeTooBigErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strTypeTooBigErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == AddDiceVal_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strAddDiceValErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAddDiceValErr, eve.fromGroup, false);				
 				return;
 			}
 			else if (intRdTurnCntRes != 0)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strUnknownErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strUnknownErr, eve.fromGroup, false);				
 				return;
 			}
 			if (rdTurnCnt.intTotal > 10)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strRollTimeExceeded,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strRollTimeExceeded, eve.fromGroup, false);				
 				return;
 			}
 			else if (rdTurnCnt.intTotal <= 0)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strRollTimeErr,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strRollTimeErr, eve.fromGroup, false);				
 				return;
 			}
 			intTurnCnt = rdTurnCnt.intTotal;
@@ -3455,24 +2887,18 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				string strTurnNotice = strNickName + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
 				if (!isHidden)
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,strTurnNotice,GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strTurnNotice, eve.fromGroup, false);					
 				}
 				else
 				{
 					strTurnNotice = "在群\"" + getGroupList()[eve.fromGroup] + "\"中 " + strTurnNotice;
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromQQ,strTurnNotice,PrivateMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strTurnNotice, eve.fromQQ);					
 					const auto range = ObserveGroup.equal_range(eve.fromGroup);
 					for (auto it = range.first; it != range.second; ++it)
 					{
 						if (it->second != eve.fromQQ)
 						{
-							mutexMsg.lock();
-							SendMsgQueue.push(MsgType{ it->second,strTurnNotice,PrivateMsg });
-							mutexMsg.unlock();
+							AddMsgToQueue(strTurnNotice, it->second);							
 						}
 					}
 				}
@@ -3485,58 +2911,42 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		const int intFirstTimeRes = rdMainDice.Roll();
 		if (intFirstTimeRes == Value_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strValueErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strValueErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == Input_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strInputErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strInputErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroDice_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strZeroDiceErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroDiceErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroType_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strZeroTypeErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroTypeErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == DiceTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strDiceTooBigErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strDiceTooBigErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == TypeTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strTypeTooBigErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strTypeTooBigErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes == AddDiceVal_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strAddDiceValErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strAddDiceValErr, eve.fromGroup, false);			
 			return;
 		}
 		else if (intFirstTimeRes != 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strUnknownErr,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strUnknownErr, eve.fromGroup, false);			
 			return;
 		}
 		if (!boolDetail&&intTurnCnt != 1)
@@ -3569,24 +2979,18 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			}
 			if (!isHidden)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromGroup,strAns,GroupMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAns, eve.fromGroup, false);				
 			}
 			else
 			{
 				strAns = "在群\"" + getGroupList()[eve.fromGroup] + "\"中 " + strAns;
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAns, eve.fromQQ);				
 				const auto range = ObserveGroup.equal_range(eve.fromGroup);
 				for (auto it = range.first; it != range.second; ++it)
 				{
 					if (it->second != eve.fromQQ)
 					{
-						mutexMsg.lock();
-						SendMsgQueue.push(MsgType{ it->second,strAns,PrivateMsg });
-						mutexMsg.unlock();
+						AddMsgToQueue(strAns, it->second);
 					}
 				}
 			}
@@ -3604,24 +3008,18 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 					strAns.insert(0, "由于" + strReason + " ");
 				if (!isHidden)
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromGroup,strAns,GroupMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strAns, eve.fromGroup, false);					
 				}
 				else
 				{
 					strAns = "在群\"" + getGroupList()[eve.fromGroup] + "\"中 " + strAns;
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strAns, eve.fromQQ);					
 					const auto range = ObserveGroup.equal_range(eve.fromGroup);
 					for (auto it = range.first; it != range.second; ++it)
 					{
 						if (it->second != eve.fromQQ)
 						{
-							mutexMsg.lock();
-							SendMsgQueue.push(MsgType{ it->second,strAns,PrivateMsg });
-							mutexMsg.unlock();
+							AddMsgToQueue(strAns, it->second);
 						}
 					}
 				}
@@ -3631,18 +3029,14 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		if (isHidden)
 		{
 			const string strReply = strNickName + "进行了一次暗骰";
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,strReply,GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReply, eve.fromGroup, false);			
 		}
 	}
 	else
 	{
 		if (isalpha(eve.message[intMsgCnt]))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromGroup,"命令输入错误!",GroupMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue("命令输入错误!", eve.fromGroup, false);			
 		}
 	}
 }
@@ -3690,15 +3084,11 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 				if (DisabledDiscuss.count(eve.fromDiscuss))
 				{
 					DisabledDiscuss.erase(eve.fromDiscuss);
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromDiscuss,"成功开启本机器人!",DiscussMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("成功开启本机器人!", eve.fromDiscuss, false);					
 				}
 				else
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromDiscuss,"本机器人已经处于开启状态!",DiscussMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("本机器人已经处于开启状态!", eve.fromDiscuss, false);					
 				}
 			}
 		}
@@ -3709,15 +3099,11 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 				if (!DisabledDiscuss.count(eve.fromDiscuss))
 				{
 					DisabledDiscuss.insert(eve.fromDiscuss);
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromDiscuss,"成功关闭本机器人!",DiscussMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("成功关闭本机器人!", eve.fromDiscuss, false);					
 				}
 				else
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromDiscuss,"本机器人已经处于关闭状态!",DiscussMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue("本机器人已经处于关闭状态!", eve.fromDiscuss, false);					
 				}
 			}
 		}
@@ -3725,9 +3111,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		{
 			if (QQNum.empty() || QQNum == to_string(getLoginQQ()) || (QQNum.length() == 4 && QQNum == to_string(getLoginQQ() % 10000)))
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss, Dice_Full_Ver,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue( Dice_Full_Ver, eve.fromDiscuss, false);				
 			}
 		}
 		return;
@@ -3753,9 +3137,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		return;
 	if (strLowerMessage.substr(intMsgCnt, 4) == "help")
 	{
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss, strHlpMsg,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue( strHlpMsg, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "st")
 	{
@@ -3764,9 +3146,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			intMsgCnt++;
 		if (intMsgCnt == strLowerMessage.length())
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strStErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strStErr, eve.fromDiscuss, false);			
 			return;
 		}
 		if (strLowerMessage.substr(intMsgCnt, 3) == "clr")
@@ -3775,9 +3155,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			{
 				CharacterProp.erase(SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss));
 			}
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strPropCleared,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strPropCleared, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 3) == "del") {
@@ -3794,15 +3172,11 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			if (CharacterProp.count(SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)) && CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)].count(strSkillName))
 			{
 				CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)].erase(strSkillName);
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strPropDeleted,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPropDeleted, eve.fromDiscuss, false);				
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strPropNotFound,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPropNotFound, eve.fromDiscuss, false);				
 			}
 			return;
 		}
@@ -3819,21 +3193,15 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
 			if (CharacterProp.count(SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)) && CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)].count(strSkillName))
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,format(strProp,{ strNickName,strSkillName,to_string(CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)][strSkillName]) }),DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(format(strProp,{ strNickName,strSkillName,to_string(CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)][strSkillName]) }), eve.fromDiscuss, false);				
 			}
 			else if (SkillDefaultVal.count(strSkillName))
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,format(strProp,{ strNickName,strSkillName,to_string(SkillDefaultVal[strSkillName]) }),DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(format(strProp,{ strNickName,strSkillName,to_string(SkillDefaultVal[strSkillName]) }), eve.fromDiscuss, false);				
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strPropNotFound,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strPropNotFound, eve.fromDiscuss, false);				
 			}
 			return;
 		}
@@ -3863,15 +3231,11 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
 		}
 		if (boolError) {
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strPropErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strPropErr, eve.fromDiscuss, false);			
 		}
 		else {
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strSetPropSuccess,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSetPropSuccess, eve.fromDiscuss, false);			
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ri")
@@ -3905,65 +3269,47 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		const int intFirstTimeRes = initdice.Roll();
 		if (intFirstTimeRes == Value_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strValueErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strValueErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == Input_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strInputErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strInputErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroDice_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strZeroDiceErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroDiceErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroType_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strZeroTypeErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroTypeErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == DiceTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strDiceTooBigErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strDiceTooBigErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == TypeTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strTypeTooBigErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strTypeTooBigErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == AddDiceVal_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strAddDiceValErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strAddDiceValErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes != 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strUnknownErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strUnknownErr, eve.fromDiscuss, false);			
 			return;
 		}
 		ilInitList->insert(eve.fromDiscuss, initdice.intTotal, strname);
 		const string strReply = strname + "的先攻骰点：" + strinit + '=' + to_string(initdice.intTotal);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "init")
 	{
@@ -3976,15 +3322,11 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 				strReply = "成功清除先攻记录！";
 			else
 				strReply = "列表为空！";
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReply, eve.fromDiscuss, false);			
 			return;
 		}
 		ilInitList->show(eve.fromDiscuss, strReply);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage[intMsgCnt] == 'w')
 	{
@@ -4029,72 +3371,52 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			const int intRdTurnCntRes = rdTurnCnt.Roll();
 			if (intRdTurnCntRes == Value_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strValueErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strValueErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == Input_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strInputErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strInputErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == ZeroDice_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strZeroDiceErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strZeroDiceErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == ZeroType_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strZeroTypeErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strZeroTypeErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == DiceTooBig_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strDiceTooBigErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strDiceTooBigErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == TypeTooBig_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strTypeTooBigErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strTypeTooBigErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == AddDiceVal_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strAddDiceValErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAddDiceValErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes != 0)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strUnknownErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strUnknownErr, eve.fromDiscuss, false);				
 				return;
 			}
 			if (rdTurnCnt.intTotal > 10)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strRollTimeExceeded,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strRollTimeExceeded, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (rdTurnCnt.intTotal <= 0)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strRollTimeErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strRollTimeErr, eve.fromDiscuss, false);				
 				return;
 			}
 			intTurnCnt = rdTurnCnt.intTotal;
@@ -4103,24 +3425,18 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 				string strTurnNotice = strNickName + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
 				if (!isHidden)
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromDiscuss,strTurnNotice,DiscussMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strTurnNotice, eve.fromDiscuss, false);					
 				}
 				else
 				{
 					strTurnNotice = "在多人聊天中 " + strTurnNotice;
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromQQ,strTurnNotice,PrivateMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strTurnNotice, eve.fromQQ);					
 					const auto range = ObserveDiscuss.equal_range(eve.fromDiscuss);
 					for (auto it = range.first; it != range.second; ++it)
 					{
 						if (it->second != eve.fromQQ)
 						{
-							mutexMsg.lock();
-							SendMsgQueue.push(MsgType{ it->second,strTurnNotice,PrivateMsg });
-							mutexMsg.unlock();
+							AddMsgToQueue(strTurnNotice, it->second);
 						}
 					}
 				}
@@ -4145,58 +3461,42 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		const int intFirstTimeRes = rdMainDice.Roll();
 		if (intFirstTimeRes == Value_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strValueErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strValueErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == Input_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strInputErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strInputErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroDice_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strZeroDiceErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroDiceErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroType_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strZeroTypeErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroTypeErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == DiceTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strDiceTooBigErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strDiceTooBigErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == TypeTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strTypeTooBigErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strTypeTooBigErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == AddDiceVal_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strAddDiceValErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strAddDiceValErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes != 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strUnknownErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strUnknownErr, eve.fromDiscuss, false);			
 			return;
 		}
 		if (!boolDetail && intTurnCnt != 1)
@@ -4229,24 +3529,18 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			}
 			if (!isHidden)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strAns,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAns, eve.fromDiscuss, false);				
 			}
 			else
 			{
 				strAns = "在多人聊天中 " + strAns;
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAns, eve.fromQQ);				
 				const auto range = ObserveDiscuss.equal_range(eve.fromDiscuss);
 				for (auto it = range.first; it != range.second; ++it)
 				{
 					if (it->second != eve.fromQQ)
 					{
-						mutexMsg.lock();
-						SendMsgQueue.push(MsgType{ it->second,strAns,PrivateMsg });
-						mutexMsg.unlock();
+						AddMsgToQueue(strAns, it->second);	
 					}
 				}
 			}
@@ -4264,24 +3558,18 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 					strAns.insert(0, "由于" + strReason + " ");
 				if (!isHidden)
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromDiscuss,strAns,DiscussMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strAns, eve.fromDiscuss, false);					
 				}
 				else
 				{
 					strAns = "在多人聊天中 " + strAns;
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strAns, eve.fromQQ);					
 					const auto range = ObserveDiscuss.equal_range(eve.fromDiscuss);
 					for (auto it = range.first; it != range.second; ++it)
 					{
 						if (it->second != eve.fromQQ)
 						{
-							mutexMsg.lock();
-							SendMsgQueue.push(MsgType{ it->second,strAns,PrivateMsg });
-							mutexMsg.unlock();
+							AddMsgToQueue(strAns, it->second);
 						}
 					}
 				}
@@ -4291,9 +3579,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (isHidden)
 		{
 			const string strReply = strNickName + "进行了一次暗骰";
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReply, eve.fromDiscuss, false);			
 		}
 
 	}
@@ -4308,15 +3594,11 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			if (DisabledOBDiscuss.count(eve.fromDiscuss))
 			{
 				DisabledOBDiscuss.erase(eve.fromDiscuss);
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,  "成功在本多人聊天中启用旁观模式!",DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(  "成功在本多人聊天中启用旁观模式!", eve.fromDiscuss, false);				
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,  "在本多人聊天中旁观模式没有被禁用!",DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(  "在本多人聊天中旁观模式没有被禁用!", eve.fromDiscuss, false);				
 
 			}
 			return;
@@ -4327,23 +3609,17 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			{
 				DisabledOBDiscuss.insert(eve.fromDiscuss);
 				ObserveDiscuss.clear();
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,  "成功在本多人聊天中禁用旁观模式!",DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(  "成功在本多人聊天中禁用旁观模式!", eve.fromDiscuss, false);				
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,  "在本多人聊天中旁观模式没有被启用!",DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(  "在本多人聊天中旁观模式没有被启用!", eve.fromDiscuss, false);				
 			}
 			return;
 		}
 		if (DisabledOBDiscuss.count(eve.fromDiscuss))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,  "在本多人聊天中旁观模式已被禁用!",DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(  "在本多人聊天中旁观模式已被禁用!", eve.fromDiscuss, false);			
 			return;
 		}
 		if (Command == "list")
@@ -4355,16 +3631,12 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 				Msg += "\n" + getName(it->second, eve.fromDiscuss) + "(" + to_string(it->second) + ")";
 			}
 			const string strReply = Msg == "当前的旁观者有:" ? "当前暂无旁观者" : Msg;
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,  strReply,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(  strReply, eve.fromDiscuss, false);			
 		}
 		else if (Command == "clr")
 		{
 			ObserveDiscuss.erase(eve.fromDiscuss);
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,  "成功删除所有旁观者!",DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(  "成功删除所有旁观者!", eve.fromDiscuss, false);			
 		}
 		else if (Command == "exit")
 		{
@@ -4375,17 +3647,13 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 				{
 					ObserveDiscuss.erase(it);
 					const string strReply = strNickName + "成功退出旁观模式!";
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromDiscuss,  strReply,DiscussMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(  strReply, eve.fromDiscuss, false);					
 					eve.message_block();
 					return;
 				}
 			}
 			const string strReply = strNickName + "没有加入旁观模式!";
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,  strReply,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(  strReply, eve.fromDiscuss, false);			
 		}
 		else
 		{
@@ -4395,35 +3663,27 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 				if (it->second == eve.fromQQ)
 				{
 					const string strReply = strNickName + "已经处于旁观模式!";
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromDiscuss,  strReply,DiscussMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(  strReply, eve.fromDiscuss, false);					
 					eve.message_block();
 					return;
 				}
 			}
 			ObserveDiscuss.insert(make_pair(eve.fromDiscuss, eve.fromQQ));
 			const string strReply = strNickName + "成功加入旁观模式!";
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,  strReply,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(  strReply, eve.fromDiscuss, false);			
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ti")
 	{
 		string strAns = strNickName + "的疯狂发作-临时症状:\n";
 		TempInsane(strAns);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,  strAns,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(  strAns, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "li")
 	{
 		string strAns = strNickName + "的疯狂发作-总结症状:\n";
 		LongInsane(strAns);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,  strAns,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(  strAns, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "sc")
 	{
@@ -4442,18 +3702,14 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (SanCost.empty() || SanCost.find("/") == string::npos)
 		{
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strSCInvalid,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSCInvalid, eve.fromDiscuss, false);			
 
 			return;
 		}
 		if (San.empty() && !(CharacterProp.count(SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)) && CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)].count("理智")))
 		{
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strSanInvalid,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSanInvalid, eve.fromDiscuss, false);			
 
 			return;
 		}
@@ -4461,9 +3717,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		{
 			if(!isdigit(character) && character != 'D' && character!='d' && character != '+' && character != '-')
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strSCInvalid, eve.fromQQ);				
 				return;
 			}
 		}
@@ -4471,9 +3725,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		{
 			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strSCInvalid,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strSCInvalid, eve.fromQQ);				
 				return;
 			}
 		}
@@ -4482,18 +3734,14 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
 		{
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strSCInvalid,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSCInvalid, eve.fromDiscuss, false);			
 
 			return;
 		}
 		if (San.length() >= 3)
 		{
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strSanInvalid,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSanInvalid, eve.fromDiscuss, false);			
 
 			return;
 		}
@@ -4501,9 +3749,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (intSan == 0)
 		{
 
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strSanInvalid,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSanInvalid, eve.fromDiscuss, false);			
 
 			return;
 		}
@@ -4546,9 +3792,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 				CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"] = max(0, intSan - rdFail.intTotal);
 			}
 		}
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,strAns,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strAns, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
 	{
@@ -4583,9 +3827,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strEnValInvalid,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strEnValInvalid, eve.fromDiscuss, false);				
 				return;
 			}
 
@@ -4595,9 +3837,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			if (strCurrentValue.length() > 3)
 			{
 
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strEnValInvalid,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strEnValInvalid, eve.fromDiscuss, false);				
 
 				return;
 			}
@@ -4621,9 +3861,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 				CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)][strSkillName] = intCurrentVal + intTmpRollD10;
 			}
 		}
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,strAns,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strAns, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
 	{
@@ -4636,15 +3874,11 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			if (DisabledJRRPDiscuss.count(eve.fromDiscuss))
 			{
 				DisabledJRRPDiscuss.erase(eve.fromDiscuss);
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,"成功在此多人聊天中启用JRRP!",DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue("成功在此多人聊天中启用JRRP!", eve.fromDiscuss, false);				
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,"在此多人聊天中JRRP没有被禁用!",DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue("在此多人聊天中JRRP没有被禁用!", eve.fromDiscuss, false);				
 			}
 			return;
 		}
@@ -4653,23 +3887,17 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			if (!DisabledJRRPDiscuss.count(eve.fromDiscuss))
 			{
 				DisabledJRRPDiscuss.insert(eve.fromDiscuss);
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,"成功在此多人聊天中禁用JRRP!",DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue("成功在此多人聊天中禁用JRRP!", eve.fromDiscuss, false);				
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,"在此多人聊天中JRRP没有被启用!",DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue("在此多人聊天中JRRP没有被启用!", eve.fromDiscuss, false);				
 			}
 			return;
 		}
 		if (DisabledJRRPDiscuss.count(eve.fromDiscuss))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,"在此多人聊天中JRRP已被禁用!",DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue("在此多人聊天中JRRP已被禁用!", eve.fromDiscuss, false);			
 			return;
 		}
 		char cstrDate[100] = {};
@@ -4681,9 +3909,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (JRRP.count(eve.fromQQ) && JRRP[eve.fromQQ].Date == cstrDate)
 		{
 			const string strReply = strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal);
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReply, eve.fromDiscuss, false);			
 		}
 		else
 		{
@@ -4697,9 +3923,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			JRRP[eve.fromQQ].Date = cstrDate;
 			JRRP[eve.fromQQ].RPVal = JRRPRes;
 			const string strReply(strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal));
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReply, eve.fromDiscuss, false);			
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
@@ -4710,36 +3934,26 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		string name = eve.message.substr(intMsgCnt);
 		if (name.length() > 50)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss, strNameTooLongErr, DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strNameTooLongErr, eve.fromDiscuss, false);
 			return;
 		}
 		if (!name.empty())
 		{
 			Name->set(eve.fromDiscuss, eve.fromQQ, name);
 			const string strReply = "已将" + strNickName + "的名称更改为" + strip(name);
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-			mutexMsg.unlock();
-
-
+			AddMsgToQueue(strReply, eve.fromDiscuss, false);
 		}
 		else
 		{
 			if (Name->del(eve.fromDiscuss, eve.fromQQ))
 			{
 				const string strReply = "已将" + strNickName + "的名称删除";
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strReply, eve.fromDiscuss, false);				
 			}
 			else
 			{
 				const string strReply = strNickName + strNameDelErr;
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strReply, eve.fromDiscuss, false);				
 			}
 		}
 	}
@@ -4754,15 +3968,11 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		string strReturn;
 		if (RuleGetter->analyse(strSearch, strReturn))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReturn,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReturn, eve.fromDiscuss, false);			
 		}
 		else
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strRuleErr + strReturn,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strRuleErr + strReturn, eve.fromDiscuss, false);			
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
@@ -4776,15 +3986,11 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			if (DisabledMEDiscuss.count(eve.fromDiscuss))
 			{
 				DisabledMEDiscuss.erase(eve.fromDiscuss);
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,"成功在本多人聊天中启用.me命令!",DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue("成功在本多人聊天中启用.me命令!", eve.fromDiscuss, false);				
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,"在本多人聊天中.me命令没有被禁用!",DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue("在本多人聊天中.me命令没有被禁用!", eve.fromDiscuss, false);				
 			}
 			return;
 		}
@@ -4793,43 +3999,31 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			if (!DisabledMEDiscuss.count(eve.fromDiscuss))
 			{
 				DisabledMEDiscuss.insert(eve.fromDiscuss);
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,"成功在本多人聊天中禁用.me命令!",DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue("成功在本多人聊天中禁用.me命令!", eve.fromDiscuss, false);				
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,"在本多人聊天中.me命令没有被启用!",DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue("在本多人聊天中.me命令没有被启用!", eve.fromDiscuss, false);				
 			}
 			return;
 		}
 		if (DisabledMEDiscuss.count(eve.fromDiscuss))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,"在本多人聊天中.me命令已被禁用!",DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue("在本多人聊天中.me命令已被禁用!", eve.fromDiscuss, false);			
 			return;
 		}
 		if (strAction.empty())
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,"动作不能为空!",DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue("动作不能为空!", eve.fromDiscuss, false);			
 			return;
 		}
 		if (DisabledMEDiscuss.count(eve.fromDiscuss))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strMEDisabledErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strMEDisabledErr, eve.fromDiscuss, false);			
 			return;
 		}
 		const string strReply = strNickName + eve.message.substr(intMsgCnt);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "set")
 	{
@@ -4844,16 +4038,12 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		for (auto charNumElement : strDefaultDice)
 			if (!isdigit(charNumElement))
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strSetInvalid,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strSetInvalid, eve.fromDiscuss, false);				
 				return;
 			}
 		if (strDefaultDice.length() > 5)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strSetTooBig,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strSetTooBig, eve.fromDiscuss, false);			
 			return;
 		}
 		const int intDefaultDice = stoi(strDefaultDice);
@@ -4862,17 +4052,13 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		else
 			DefaultDice[eve.fromQQ] = intDefaultDice;
 		const string strSetSuccessReply = "已将" + strNickName + "的默认骰类型更改为D" + strDefaultDice;
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,strSetSuccessReply,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strSetSuccessReply, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc6d")
 	{
 		string strReply = strNickName;
 		COC6D(strReply);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "coc6")
 	{
@@ -4889,31 +4075,23 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterTooBig,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromQQ);			
 			return;
 		}
 		const	int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum > 10)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strCharacterTooBig,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromDiscuss, false);			
 			return;
 		}
 		if (intNum == 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strCharacterCannotBeZero,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterCannotBeZero, eve.fromDiscuss, false);			
 			return;
 		}
 		string strReply = strNickName;
 		COC6(strReply, intNum);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "dnd")
 	{
@@ -4928,39 +4106,29 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterTooBig,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromQQ);			
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum > 10)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strCharacterTooBig,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromDiscuss, false);			
 			return;
 		}
 		if (intNum == 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strCharacterCannotBeZero,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterCannotBeZero, eve.fromDiscuss, false);			
 			return;
 		}
 		string strReply = strNickName;
 		DND(strReply, intNum);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd")
 	{
 		string strReply = strNickName;
 		COC7D(strReply);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "coc")
 	{
@@ -4979,31 +4147,23 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromQQ,strCharacterTooBig,PrivateMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromQQ);			
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum > 10)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strCharacterTooBig,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterTooBig, eve.fromDiscuss, false);			
 			return;
 		}
 		if (intNum == 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strCharacterCannotBeZero,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strCharacterCannotBeZero, eve.fromDiscuss, false);			
 			return;
 		}
 		string strReply = strNickName;
 		COC7(strReply, intNum);
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ra")
 	{
@@ -5041,17 +4201,13 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strUnknownPropErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strUnknownPropErr, eve.fromDiscuss, false);				
 				return;
 			}
 		}
 		else if (strSkillVal.length() > 3)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strPropErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strPropErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else {
@@ -5069,9 +4225,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		{
 			strReply = "由于" + strReason + " " + strReply;
 		}
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "rc")
 	{
@@ -5109,17 +4263,13 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			}
 			else
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strUnknownPropErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strUnknownPropErr, eve.fromDiscuss, false);				
 				return;
 			}
 		}
 		else if (strSkillVal.length() > 3)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strPropErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strPropErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else {
@@ -5137,9 +4287,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		{
 			strReply = "由于" + strReason + " " + strReply;
 		}
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);		
 	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'h' || strLowerMessage[intMsgCnt] == 'd')
 	{
@@ -5194,72 +4342,52 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			const int intRdTurnCntRes = rdTurnCnt.Roll();
 			if (intRdTurnCntRes == Value_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strValueErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strValueErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == Input_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strInputErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strInputErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == ZeroDice_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strZeroDiceErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strZeroDiceErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == ZeroType_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strZeroTypeErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strZeroTypeErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == DiceTooBig_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strDiceTooBigErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strDiceTooBigErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == TypeTooBig_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strTypeTooBigErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strTypeTooBigErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes == AddDiceVal_Err)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strAddDiceValErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAddDiceValErr, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (intRdTurnCntRes != 0)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strUnknownErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strUnknownErr, eve.fromDiscuss, false);				
 				return;
 			}
 			if (rdTurnCnt.intTotal > 10)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strRollTimeExceeded,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strRollTimeExceeded, eve.fromDiscuss, false);				
 				return;
 			}
 			else if (rdTurnCnt.intTotal <= 0)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strRollTimeErr,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strRollTimeErr, eve.fromDiscuss, false);				
 				return;
 			}
 			intTurnCnt = rdTurnCnt.intTotal;
@@ -5268,29 +4396,21 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 				string strTurnNotice = strNickName + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
 				if (!isHidden)
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromDiscuss,strTurnNotice,DiscussMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strTurnNotice, eve.fromDiscuss, false);					
 				}
 				else
 				{
 					strTurnNotice = "在多人聊天中 " + strTurnNotice;
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromQQ,strTurnNotice,PrivateMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strTurnNotice, eve.fromQQ);					
 					const auto range = ObserveDiscuss.equal_range(eve.fromDiscuss);
 					for (auto it = range.first; it != range.second; ++it)
 					{
 						if (it->second != eve.fromQQ)
 						{
-							mutexMsg.lock();
-							SendMsgQueue.push(MsgType{ it->second,strTurnNotice,PrivateMsg });
-							mutexMsg.unlock();
+							AddMsgToQueue(strTurnNotice, it->second);
 						}
 					}
 				}
-
-
 			}
 		}
 		RD rdMainDice(strMainDice, eve.fromQQ);
@@ -5298,58 +4418,42 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		const int intFirstTimeRes = rdMainDice.Roll();
 		if (intFirstTimeRes == Value_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strValueErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strValueErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == Input_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strInputErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strInputErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroDice_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strZeroDiceErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroDiceErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == ZeroType_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strZeroTypeErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strZeroTypeErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == DiceTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strDiceTooBigErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strDiceTooBigErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == TypeTooBig_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strTypeTooBigErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strTypeTooBigErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes == AddDiceVal_Err)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strAddDiceValErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strAddDiceValErr, eve.fromDiscuss, false);			
 			return;
 		}
 		else if (intFirstTimeRes != 0)
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strUnknownErr,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strUnknownErr, eve.fromDiscuss, false);			
 			return;
 		}
 		if (!boolDetail&&intTurnCnt != 1)
@@ -5382,28 +4486,21 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			}
 			if (!isHidden)
 			{
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromDiscuss,strAns,DiscussMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAns, eve.fromDiscuss, false);				
 			}
 			else
 			{
 				strAns = "在多人聊天中 " + strAns;
-				mutexMsg.lock();
-				SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-				mutexMsg.unlock();
+				AddMsgToQueue(strAns, eve.fromQQ);				
 				const auto range = ObserveDiscuss.equal_range(eve.fromDiscuss);
 				for (auto it = range.first; it != range.second; ++it)
 				{
 					if (it->second != eve.fromQQ)
 					{
-						mutexMsg.lock();
-						SendMsgQueue.push(MsgType{ it->second,strAns,PrivateMsg });
-						mutexMsg.unlock();
+						AddMsgToQueue(strAns, it->second);
 					}
 				}
 			}
-
 		}
 		else
 		{
@@ -5417,24 +4514,18 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 					strAns.insert(0, "由于" + strReason + " ");
 				if (!isHidden)
 				{
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromDiscuss,strAns,DiscussMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strAns, eve.fromDiscuss, false);					
 				}
 				else
 				{
 					strAns = "在多人聊天中 " + strAns;
-					mutexMsg.lock();
-					SendMsgQueue.push(MsgType{ eve.fromQQ,strAns,PrivateMsg });
-					mutexMsg.unlock();
+					AddMsgToQueue(strAns, eve.fromQQ);					
 					const auto range = ObserveDiscuss.equal_range(eve.fromDiscuss);
 					for (auto it = range.first; it != range.second; ++it)
 					{
 						if (it->second != eve.fromQQ)
 						{
-							mutexMsg.lock();
-							SendMsgQueue.push(MsgType{ it->second,strAns,PrivateMsg });
-							mutexMsg.unlock();
+							AddMsgToQueue(strAns, it->second);
 						}
 					}
 				}
@@ -5444,18 +4535,14 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (isHidden)
 		{
 			const string strReply = strNickName + "进行了一次暗骰";
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,strReply,DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue(strReply, eve.fromDiscuss, false);			
 		}
 	}
 	else
 	{
 		if (isalpha(eve.message[intMsgCnt]))
 		{
-			mutexMsg.lock();
-			SendMsgQueue.push(MsgType{ eve.fromDiscuss,"命令输入错误!",DiscussMsg });
-			mutexMsg.unlock();
+			AddMsgToQueue("命令输入错误!", eve.fromDiscuss, false);			
 		}
 	}
 }
@@ -5485,9 +4572,7 @@ EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
 		{
 			strReply.replace(strReply.find("{qq}"), 4, to_string(beingOperateQQ));
 		}
-		mutexMsg.lock();
-		SendMsgQueue.push(MsgType{ fromGroup,strReply,GroupMsg });
-		mutexMsg.unlock();
+		AddMsgToQueue(strReply, fromGroup, false);		
 	}
 	return 0;
 }

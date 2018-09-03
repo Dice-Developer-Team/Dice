@@ -205,8 +205,10 @@
     <ClCompile Include="..\CQSDKCPP\debug.cpp" />
     <ClCompile Include="..\CQSDKCPP\Unpack.cpp" />
     <ClCompile Include="Dice.cpp" />
+    <ClCompile Include="DiceMsgSend.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GetRule.cpp" />
+    <ClCompile Include="GlobalVar.cpp" />
     <ClCompile Include="InitList.cpp" />
     <ClCompile Include="NameStorage.cpp" />
     <ClCompile Include="RD.cpp" />
@@ -235,7 +237,9 @@
     <ClInclude Include="..\CQSDK\CQTools.h" />
     <ClInclude Include="..\CQSDK\Unpack.h" />
     <ClInclude Include="APPINFO.h" />
+    <ClInclude Include="DiceMsgSend.h" />
     <ClInclude Include="GetRule.h" />
+    <ClInclude Include="GlobalVar.h" />
     <ClInclude Include="InitList.h" />
     <ClInclude Include="NameStorage.h" />
     <ClInclude Include="RD.h" />
