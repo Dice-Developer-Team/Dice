@@ -1,4 +1,4 @@
-# Dice!
+﻿# Dice!
 QQ Dice Robot For TRPG Based on CoolQ 
 
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg)](http://www.gnu.org/licenses)
@@ -11,6 +11,7 @@ QQ Dice Robot For TRPG Based on CoolQ
 Dice!是一款基于酷Q的QQ跑团掷骰机器人 交流QQ群:624807593
 
 GitHub Page: <http://kokona.tech>
+
 Doc: <http://docs.kokona.tech/>
 
 Latest Version: [![GitHub tag](https://img.shields.io/github/tag/w4123/dice.svg)](https://github.com/w4123/Dice/releases)
