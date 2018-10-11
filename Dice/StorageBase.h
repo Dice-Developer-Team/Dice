@@ -25,7 +25,7 @@ public:
 	virtual void read() = 0;
 	virtual void save() const = 0;
 	StorageBase(std::string FilePath);
-	virtual ~StorageBase();
+	virtual ~StorageBase() = default;
 };
 #endif /*__STORAGEBASE__*/
 

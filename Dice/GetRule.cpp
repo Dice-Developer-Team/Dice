@@ -110,36 +110,36 @@ GetRule::~GetRule()
 		ShutdownAPI(options);
 }
 
-bool GetRule::analyse(string & rawstr, string& des)
+bool GetRule::analyze(string & rawStr, string& des)
 {
 	if (failed)
 	{
 		des = strRulesFailedErr;
 		return false;
 	}
-	for (auto &chr : rawstr)chr = toupper(chr);
+	for (auto &chr : rawStr)chr = toupper(chr);
 
-	if (rawstr.find(':')!=string::npos)
+	if (rawStr.find(':')!=string::npos)
 	{
-		const string name = rawstr.substr(rawstr.find(':') + 1);
+		const string name = rawStr.substr(rawStr.find(':') + 1);
 		if(name.empty())
 		{
 			des = strRulesFormatErr;
 			return false;
 		}
-		string rule = rawstr.substr(0, rawstr.find(':'));
+		string rule = rawStr.substr(0, rawStr.find(':'));
 		if (ruleNameReplace.count(rule))rule = ruleNameReplace.at(rule);
 		return get(rule, name, des);
 
 	}
-	if (rawstr.empty())
+	if (rawStr.empty())
 	{
 		des = strRulesFormatErr;
 		return false;
 	}
 	for (const auto& rule:rules)
 	{
-		if (get(rule, rawstr, des))
+		if (get(rule, rawStr, des))
 		{
 			return true;
 		}

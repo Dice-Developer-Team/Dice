@@ -40,7 +40,7 @@ class GetRule
 public:
 	GetRule();
 	~GetRule();
-	bool analyse(std::string& rawstr, std::string& des);
+	bool analyze(std::string& rawStr, std::string& des);
 	bool get(const std::string& rule, const std::string& name, std::string& des,bool isUTF8 = false) const;
 	static std::string GBKtoUTF8(const std::string& strGBK);
 	static std::string UTF8toGBK(const std::string& strUTF8);

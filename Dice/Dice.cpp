@@ -620,6 +620,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		else if (intTmpRollRes == 100 || (intSan < 50 && intTmpRollRes > 95))
 		{
 			strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
+			// ReSharper disable once CppExpressionWithoutSideEffects
 			rdFail.Max();
 			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
 				strAns += "最大值=" + to_string(rdFail.intTotal);
@@ -761,7 +762,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		for (auto &n : strSearch)
 			n = toupper(n);
 		string strReturn;
-		if (RuleGetter->analyse(strSearch, strReturn))
+		if (RuleGetter->analyze(strSearch, strReturn))
 		{
 			AddMsgToQueue(strReturn, eve.fromQQ);			
 		}
@@ -2233,6 +2234,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		else if (intTmpRollRes == 100 || (intSan < 50 && intTmpRollRes > 95))
 		{
 			strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
+			// ReSharper disable once CppExpressionWithoutSideEffects
 			rdFail.Max();
 			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
 				strAns += "最大值=" + to_string(rdFail.intTotal);
@@ -2443,7 +2445,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		for (auto &n : strSearch)
 			n = toupper(n);
 		string strReturn;
-		if (RuleGetter->analyse(strSearch, strReturn))
+		if (RuleGetter->analyze(strSearch, strReturn))
 		{
 			AddMsgToQueue(strReturn, eve.fromGroup, false);			
 		}
@@ -3772,6 +3774,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 
 		{
 			strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
+			// ReSharper disable once CppExpressionWithoutSideEffects
 			rdFail.Max();
 			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
 				strAns += "最大值=" + to_string(rdFail.intTotal);
@@ -3966,7 +3969,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		for (auto &n : strSearch)
 			n = toupper(n);
 		string strReturn;
-		if (RuleGetter->analyse(strSearch, strReturn))
+		if (RuleGetter->analyze(strSearch, strReturn))
 		{
 			AddMsgToQueue(strReturn, eve.fromDiscuss, false);			
 		}

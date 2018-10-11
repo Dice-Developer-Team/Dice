@@ -20,9 +20,3 @@ StorageBase::StorageBase(std::string FilePath) : FilePath(std::move(FilePath))
 {
 	
 }
-
-StorageBase::~StorageBase()
-{
-	
-}
-
