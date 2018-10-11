@@ -10,7 +10,7 @@ QQ Dice Robot For TRPG Based on CoolQ
 
 Dice!是一款基于酷Q的QQ跑团掷骰机器人 交流QQ群:624807593
 
-GitHub Page: <http://kokona.tech>
+GitHub Page: <http://kokona.tech/>
 
 Doc: <http://docs.kokona.tech/>
 
