@@ -14,6 +14,7 @@ Welcome to Dice!'s documentation!
    Apply
    About
    DiceList
+   Setup
 
 前言
 -----------
