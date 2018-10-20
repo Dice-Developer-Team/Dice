@@ -18,12 +18,15 @@
 #define __INIT__
 #include <string>
 #include <map>
+#include <utility>
 #include <vector>
 #include "StorageBase.h"
 
 struct INIT {
 	std::string strNickName;
 	int intValue = 0;
+	INIT() = default;
+	INIT(std::string strNickName, const int intValue = 0) : strNickName(std::move(strNickName)), intValue(intValue) {}
 	bool operator>(const INIT second) const {
 		return this->intValue > second.intValue;
 	}

@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <fstream>
 #include "CQTools.h"
+#include <functional>
 using namespace std;
 
 
@@ -27,7 +28,7 @@ void Initlist::insert(long long group, int value, string nickname)
 {
 	if (!mpInitlist.count(group))
 	{
-		mpInitlist[group] = vector<INIT>{ INIT{ nickname,value } };
+		mpInitlist[group] = vector<INIT>{ INIT(nickname,value) };
 	}
 	else
 	{
@@ -39,7 +40,7 @@ void Initlist::insert(long long group, int value, string nickname)
 				return;
 			}
 		}
-		mpInitlist[group].push_back(INIT{ nickname,value });
+		mpInitlist[group].push_back(INIT(nickname, value));
 	}
 }
 
@@ -98,7 +99,7 @@ void Initlist::read()
 	ifINIT.close();
 }
 
-Initlist::Initlist(const std::string & FilePath) :StorageBase(move(FilePath))
+Initlist::Initlist(const std::string & FilePath) :StorageBase(FilePath)
 {
 	Initlist::read();
 }

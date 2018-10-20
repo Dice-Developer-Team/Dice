@@ -27,6 +27,8 @@ struct msg_t
 	string msg;
 	long long target_id = 0;
 	bool is_private = true;
+	msg_t() = default;
+	msg_t(string msg, long long target_id = 0, bool is_private = true) : msg(move(msg)), target_id(target_id), is_private(is_private) {}
 };
 
 // 消息发送队列
@@ -38,7 +40,7 @@ mutex msgQueueMutex;
 void AddMsgToQueue(const string& msg, long long target_id, bool is_private)
 {
 	lock_guard<std::mutex> lock_queue(msgQueueMutex);
-	msgQueue.emplace(msg_t{ msg,target_id,is_private });
+	msgQueue.emplace(msg_t(msg, target_id, is_private));
 }
 
 
