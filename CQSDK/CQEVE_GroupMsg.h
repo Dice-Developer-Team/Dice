@@ -31,7 +31,8 @@ font 字体
 	}																							\
 	void Name(CQ::EVEGroupMsg & eve)
 
-namespace CQ{
+namespace CQ
+{
 	class GroupMemberInfo;
 
 	// 群匿名信息
@@ -46,28 +47,29 @@ namespace CQ{
 	};
 
 	//群事件
-    struct EVEGroupMsg :public EVEMsg
-    {
+	struct EVEGroupMsg : public EVEMsg
+	{
 	private:
 		AnonymousInfo* fromAnonymousInfo;
 	public:
-        //群号
-        long long fromGroup;
-        //禁言用的令牌
-        const char* fromAnonymousToken;
-		EVEGroupMsg(int subType, int msgId, long long fromGroup, long long fromQQ, const char* fromAnonymous, const char* msg, int Font);
+		//群号
+		long long fromGroup;
+		//禁言用的令牌
+		const char* fromAnonymousToken;
+		EVEGroupMsg(int subType, int msgId, long long fromGroup, long long fromQQ, const char* fromAnonymous,
+		            const char* msg, int Font);
 
 		virtual ~EVEGroupMsg();
-		
+
 		bool isAnonymous() const;
 
 		// 通过 EVEMsg 继承
-		 int sendMsg(const char *) const override;
-		 int sendMsg(std::string) const override;
-		 msg sendMsg() const override;
+		int sendMsg(const char*) const override;
+		int sendMsg(std::string) const override;
+		msg sendMsg() const override;
 
 		//获取匿名者信息
-		AnonymousInfo&getFromAnonymousInfo() /*throw(std::exception_ptr)*/;
+		AnonymousInfo& getFromAnonymousInfo() /*throw(std::exception_ptr)*/;
 
 		//置群员移除
 		bool setGroupKick(bool refusedAddAgain = false);
@@ -91,6 +93,5 @@ namespace CQ{
 		GroupMemberInfo getGroupMemberInfo(bool disableCache = false);
 		//取群成员列表
 		std::vector<GroupMemberInfo> getGroupMemberList();
-
 	};
 }

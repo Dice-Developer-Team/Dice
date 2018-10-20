@@ -30,19 +30,20 @@ responseFlag 反馈标识(处理请求用)
 		Name(tep);\
 		return tep._EVEret;\
 	}\
-	void Name(CQ::EVERequestAddGroup & eve)\
+	void Name(CQ::EVERequestAddGroup & eve)
 
 namespace CQ
 {
-    struct EVERequestAddGroup :public EVERequest
-    {
+	struct EVERequestAddGroup : public EVERequest
+	{
 		//子类型
 		//1:他人申请入群
 		//2:自己(即登录号)受邀入群
 		int subType;
 		long long fromGroup; // 来源群号
-        EVERequestAddGroup(int subType, int sendTime, long long fromGroup, long long fromQQ, const char* msg, const char* responseFlag);
-		void pass(std::string msg="")override;//通过此请求
-		void fail(std::string msg="您由于不满足某些要求被拒绝!") override;//拒绝此请求
-    };
+		EVERequestAddGroup(int subType, int sendTime, long long fromGroup, long long fromQQ, const char* msg,
+		                   const char* responseFlag);
+		void pass(std::string msg = "") override; //通过此请求
+		void fail(std::string msg = "您由于不满足某些要求被拒绝!") override; //拒绝此请求
+	};
 }

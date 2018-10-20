@@ -166,5 +166,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="com.w4123.dice.json">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

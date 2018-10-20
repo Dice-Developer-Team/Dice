@@ -4,30 +4,37 @@
 
 #include <string>
 #include <map>
-namespace CQ {
+
+namespace CQ
+{
 	// 字体
-	struct Font {
-		const char * Name{};
+	struct Font
+	{
+		const char* Name{};
 		int Size{},
-			Color{},
-			/*粗体：1 斜体：2 下划线：4*/
-			Style{},
-			Bubble{};
+		    Color{},
+		    /*粗体：1 斜体：2 下划线：4*/
+		    Style{},
+		    Bubble{};
 
 		explicit Font(int);
 	};
+
 	//正则消息
-	class regexMsg{
+	class regexMsg
+	{
 		//消息
 		std::map<std::string, std::string> regexMap{};
 	public:
 		regexMsg(std::string msg);
 		std::string get(std::string);
-		std::string operator [](std::string );
+		std::string operator [](std::string);
 	};
+
 	class msg;
+
 	//消息事件基类
-	struct EVEMsg :public EVE
+	struct EVEMsg : public EVE
 	{
 		//子类型
 		int subType;

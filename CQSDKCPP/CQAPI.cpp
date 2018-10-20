@@ -7,6 +7,7 @@ CQEVENT(int, Initialize, 4)(int AuthCode)
 	::AuthCode = AuthCode;
 	return 0;
 }
+
 int getAuthCode()
 {
 	return AuthCode;

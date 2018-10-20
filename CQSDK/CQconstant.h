@@ -23,15 +23,15 @@
 // 将此消息继续传递给其他应用
 #define Msg_Ignored 0
 
-#define FloatingWindows_Green 1 
-#define FloatingWindows_Orange 2 
-#define FloatingWindows_Red 3 
-#define FloatingWindows_DeepRed 4 
-#define FloatingWindows_Black 5 
-#define FloatingWindows_Grey 6 
+#define FloatingWindows_Green 1
+#define FloatingWindows_Orange 2
+#define FloatingWindows_Red 3
+#define FloatingWindows_DeepRed 4
+#define FloatingWindows_Black 5
+#define FloatingWindows_Grey 6
 
-#define RequestAccepted 1 
-#define RequestRefused 2 
+#define RequestAccepted 1
+#define RequestRefused 2
 
-#define RequestGroupAdd 1 
-#define RequestGroupInvite 2 
+#define RequestGroupAdd 1
+#define RequestGroupInvite 2

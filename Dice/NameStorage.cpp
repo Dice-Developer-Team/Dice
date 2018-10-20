@@ -35,12 +35,12 @@ void NameStorage::read()
 }
 
 bool NameStorage::set(long long GroupID, long long QQ, string name)
-{	
+{
 	Name[GroupID][QQ] = name;
 	return true;
 }
 
-string NameStorage::get(long long GroupID,long long QQ)
+string NameStorage::get(long long GroupID, long long QQ)
 {
 	//Î´ÉèÖÃ·µ»ØÎª¿Õ×Ö·û´®
 	if (Name.count(GroupID) && Name[GroupID].count(QQ))
@@ -79,7 +79,7 @@ bool NameStorage::del(long long GroupID, long long QQ)
 	return false;
 }
 
-NameStorage::NameStorage(const string& FilePath) :StorageBase(move(FilePath))
+NameStorage::NameStorage(const string& FilePath) : StorageBase(FilePath)
 {
 	NameStorage::read();
 }

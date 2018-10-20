@@ -33,4 +33,3 @@ void AddMsgToQueue(const std::string& msg, long long target_id, bool is_private 
  */
 void SendMsg();
 #endif /*__DICEMSGSEND__*/
-

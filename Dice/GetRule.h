@@ -31,17 +31,17 @@ class GetRule
 	std::vector<std::string> rules{};
 	const std::map<std::string, std::string> ruleNameReplace
 	{
-		std::make_pair("5E","DND5E"),
-		std::make_pair("3R","DND3R"),
-		std::make_pair("DND","DND3R"),
-		std::make_pair("D&D","DND3R"),
+		std::make_pair("5E", "DND5E"),
+		std::make_pair("3R", "DND3R"),
+		std::make_pair("DND", "DND3R"),
+		std::make_pair("D&D", "DND3R"),
 		std::make_pair("COC", "COC7")
 	};
 public:
 	GetRule();
 	~GetRule();
 	bool analyze(std::string& rawStr, std::string& des);
-	bool get(const std::string& rule, const std::string& name, std::string& des,bool isUTF8 = false) const;
+	bool get(const std::string& rule, const std::string& name, std::string& des, bool isUTF8 = false) const;
 	static std::string GBKtoUTF8(const std::string& strGBK);
 	static std::string UTF8toGBK(const std::string& strUTF8);
 };

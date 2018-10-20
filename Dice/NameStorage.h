@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 #include "StorageBase.h"
+
 class NameStorage : public StorageBase
 {
 	std::map<long long, std::map<long long, std::string>> Name;
@@ -33,6 +34,5 @@ public:
 	bool set(long long GroupID, long long QQ, std::string name);
 	void clear();
 	bool del(long long GroupID, long long QQ);
-
 };
 #endif /*__NAMESTORAGE__*/

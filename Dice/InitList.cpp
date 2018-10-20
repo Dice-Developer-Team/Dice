@@ -28,7 +28,7 @@ void Initlist::insert(long long group, int value, string nickname)
 {
 	if (!mpInitlist.count(group))
 	{
-		mpInitlist[group] = vector<INIT>{ INIT(nickname,value) };
+		mpInitlist[group] = vector<INIT>{INIT(nickname, value)};
 	}
 	else
 	{
@@ -44,9 +44,9 @@ void Initlist::insert(long long group, int value, string nickname)
 	}
 }
 
-void Initlist::show(long long group, string &strMAns)
+void Initlist::show(long long group, string& strMAns)
 {
-	if (!mpInitlist.count(group)||mpInitlist[group].empty())
+	if (!mpInitlist.count(group) || mpInitlist[group].empty())
 	{
 		strMAns = "错误:请先使用.ri指令投掷先攻值";
 		return;
@@ -74,9 +74,11 @@ bool Initlist::clear(long long group)
 void Initlist::save() const
 {
 	ofstream ofINIT(FilePath, ios::out | ios::trunc);
-	for (auto it = mpInitlist.begin(); it != mpInitlist.end(); ++it) {
-		for (auto it1 = it->second.cbegin(); it1 != it->second.cend(); ++it1) {
-			ofINIT << it->first << " " << base64_encode(it1->strNickName) << " " << it1->intValue << endl;
+	for (const auto& it : mpInitlist)
+	{
+		for (auto it1 : it.second)
+		{
+			ofINIT << it.first << " " << base64_encode(it1.strNickName) << " " << it1.intValue << endl;
 		}
 	}
 	ofINIT.close();
@@ -84,7 +86,6 @@ void Initlist::save() const
 
 void Initlist::read()
 {
-
 	ifstream ifINIT(FilePath);
 	if (ifINIT)
 	{
@@ -93,13 +94,13 @@ void Initlist::read()
 		string nickname;
 		while (ifINIT >> Group >> nickname >> value)
 		{
-			insert(Group,value,base64_decode(nickname));
+			insert(Group, value, base64_decode(nickname));
 		}
 	}
 	ifINIT.close();
 }
 
-Initlist::Initlist(const std::string & FilePath) :StorageBase(FilePath)
+Initlist::Initlist(const std::string& FilePath) : StorageBase(FilePath)
 {
 	Initlist::read();
 }

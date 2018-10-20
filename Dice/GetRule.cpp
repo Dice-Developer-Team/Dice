@@ -16,7 +16,7 @@
 
 #include <string>
 #include <aws/core/Aws.h>
-#include <aws/core/utils/Outcome.h> 
+#include <aws/core/utils/Outcome.h>
 #include <aws/dynamodb/DynamoDBClient.h>
 #include <aws/dynamodb/model/GetItemRequest.h>
 #include <aws/core/auth/AWSAuthSigner.h>
@@ -32,13 +32,13 @@ using namespace std;
 using namespace Aws;
 using namespace DynamoDB;
 
-std::string GetRule::GBKtoUTF8(const std::string & strGBK)
+std::string GetRule::GBKtoUTF8(const std::string& strGBK)
 {
 	int len = MultiByteToWideChar(CP_ACP, 0, strGBK.c_str(), -1, nullptr, 0);
-	wchar_t * str1 = new wchar_t[len + 1];
+	wchar_t* str1 = new wchar_t[len + 1];
 	MultiByteToWideChar(CP_ACP, 0, strGBK.c_str(), -1, str1, len);
 	len = WideCharToMultiByte(CP_UTF8, 0, str1, -1, nullptr, 0, nullptr, nullptr);
-	char * str2 = new char[len + 1];
+	char* str2 = new char[len + 1];
 	WideCharToMultiByte(CP_UTF8, 0, str1, -1, str2, len, nullptr, nullptr);
 	string strOutUTF8(str2);
 	delete[] str1;
@@ -46,13 +46,13 @@ std::string GetRule::GBKtoUTF8(const std::string & strGBK)
 	return strOutUTF8;
 }
 
-std::string GetRule::UTF8toGBK(const std::string & strUTF8)
+std::string GetRule::UTF8toGBK(const std::string& strUTF8)
 {
 	int len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
-	wchar_t * wszGBK = new wchar_t[len + 1];
+	wchar_t* wszGBK = new wchar_t[len + 1];
 	MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, wszGBK, len);
 	len = WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, nullptr, 0, nullptr, nullptr);
-	char *szGBK = new char[len + 1];
+	char* szGBK = new char[len + 1];
 	WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, szGBK, len, nullptr, nullptr);
 	string strTemp(szGBK);
 	delete[] szGBK;
@@ -71,7 +71,7 @@ GetRule::GetRule()
 	Client::ClientConfiguration config;
 	config.region = Region::AP_SOUTHEAST_1;
 	client = make_unique<DynamoDBClient>(Auth::AWSCredentials(ACCESS_KEY, SECRET_ACCESS_KEY), config);
-	
+
 	Model::GetItemRequest req;
 	const Model::AttributeValue haskKey("Rules"), sortKey("List");
 	req.AddKey("Type", haskKey).AddKey("Name", sortKey).SetTableName("DiceDB");
@@ -100,29 +100,28 @@ GetRule::GetRule()
 	failed = true;
 	ErrMsg = "尝试连接规则服务器失败!Rules功能将不可用! 具体信息:" + ErrMsg;
 	DiceLogger.Warning(ErrMsg);
-
 }
 
 
 GetRule::~GetRule()
 {
-	if(!failed)
+	if (!failed)
 		ShutdownAPI(options);
 }
 
-bool GetRule::analyze(string & rawStr, string& des)
+bool GetRule::analyze(string& rawStr, string& des)
 {
 	if (failed)
 	{
 		des = strRulesFailedErr;
 		return false;
 	}
-	for (auto &chr : rawStr)chr = toupper(chr);
+	for (auto& chr : rawStr)chr = toupper(chr);
 
-	if (rawStr.find(':')!=string::npos)
+	if (rawStr.find(':') != string::npos)
 	{
 		const string name = rawStr.substr(rawStr.find(':') + 1);
-		if(name.empty())
+		if (name.empty())
 		{
 			des = strRulesFormatErr;
 			return false;
@@ -130,14 +129,13 @@ bool GetRule::analyze(string & rawStr, string& des)
 		string rule = rawStr.substr(0, rawStr.find(':'));
 		if (ruleNameReplace.count(rule))rule = ruleNameReplace.at(rule);
 		return get(rule, name, des);
-
 	}
 	if (rawStr.empty())
 	{
 		des = strRulesFormatErr;
 		return false;
 	}
-	for (const auto& rule:rules)
+	for (const auto& rule : rules)
 	{
 		if (get(rule, rawStr, des))
 		{
@@ -147,17 +145,17 @@ bool GetRule::analyze(string & rawStr, string& des)
 	return false;
 }
 
-bool GetRule::get(const std::string & rule, const std::string & name, std::string & des,bool isUTF8) const 
+bool GetRule::get(const std::string& rule, const std::string& name, std::string& des, bool isUTF8) const
 {
 	Model::GetItemRequest req;
 	const string ruleName = isUTF8 ? rule : GBKtoUTF8(rule);
 	const string itemName = isUTF8 ? name : GBKtoUTF8(name);
-	const Model::AttributeValue haskKey("Rules-" + ruleName),sortKey(itemName);
+	const Model::AttributeValue haskKey("Rules-" + ruleName), sortKey(itemName);
 	req.AddKey("Type", haskKey).AddKey("Name", sortKey).SetTableName("DiceDB");
 
 	const Model::GetItemOutcome& result = client->GetItem(req);
-	
-	if(result.IsSuccess())
+
+	if (result.IsSuccess())
 	{
 		const auto& item = result.GetResult().GetItem();
 		if (!item.empty())
@@ -165,7 +163,7 @@ bool GetRule::get(const std::string & rule, const std::string & name, std::strin
 			if (item.count("Content"))
 			{
 				des = UTF8toGBK(item.at("Content").GetS());
-				return true;	
+				return true;
 			}
 			if (item.count("Redirect"))
 			{
@@ -173,7 +171,6 @@ bool GetRule::get(const std::string & rule, const std::string & name, std::strin
 			}
 			des = strRuleNotFound;
 			return false;
-			
 		}
 		des = strRuleNotFound;
 		return false;

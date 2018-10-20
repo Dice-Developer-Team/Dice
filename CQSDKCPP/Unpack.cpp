@@ -1,11 +1,11 @@
-﻿#include "..\CQSDK\Unpack.h"
+﻿#include "../CQSDK/Unpack.h"
 
 #include <iostream>
 #include <string>
 
 using namespace std;
 //打印内存数据
-void show(void*t, int len)
+void show(void* t, int len)
 {
 	auto p = static_cast<unsigned char*>(t);
 	cout << "{";
@@ -16,26 +16,32 @@ void show(void*t, int len)
 	}
 	cout << "}" << endl;
 }
+
 //内存翻转
-unsigned char* Flip(unsigned char*str, int len)
+unsigned char* Flip(unsigned char* str, int len)
 {
-	int f = 0; --len; unsigned char p;
-	while (f<len)
+	int f = 0;
+	--len;
+	unsigned char p;
+	while (f < len)
 	{
 		p = str[len];
 		str[len] = str[f];
 		str[f] = p;
-		++f; --len;
+		++f;
+		--len;
 	}
 	return str;
 }
+
 //到字节集...
 //在原有的数据基础上操作
-template<typename ClassType>
-unsigned char * toBin(ClassType & i)
+template <typename ClassType>
+unsigned char* toBin(ClassType& i)
 {
-    return Flip(reinterpret_cast<unsigned char*>(&i), sizeof(ClassType));
+	return Flip(reinterpret_cast<unsigned char*>(&i), sizeof(ClassType));
 }
+
 //unsigned char * Int2Bin(int&i)
 //{
 //	return Flip(reinterpret_cast<unsigned char*>(&i), 4);
@@ -47,7 +53,9 @@ Unpack& Unpack::setData(const char* i, int len)
 	return *this;
 }
 
-Unpack::Unpack(){}
+Unpack::Unpack()
+{
+}
 
 Unpack::Unpack(const char* data)
 {
@@ -56,7 +64,7 @@ Unpack::Unpack(const char* data)
 
 Unpack::Unpack(std::vector<unsigned char> data)
 {
-    buff = data;
+	buff = data;
 }
 
 Unpack::Unpack(std::string data)
@@ -72,7 +80,7 @@ Unpack& Unpack::clear()
 
 int Unpack::len() const
 {
-    return buff.size();
+	return buff.size();
 }
 
 Unpack& Unpack::add(int i)
@@ -94,7 +102,7 @@ int Unpack::getInt()
 
 Unpack& Unpack::add(long long i)
 {
-    auto t = toBin<long long>(i);
+	auto t = toBin<long long>(i);
 	buff.insert(buff.end(), t, t + sizeof(long long));
 	return *this;
 }
@@ -111,7 +119,7 @@ long long Unpack::getLong()
 
 Unpack& Unpack::add(short i)
 {
-    auto t = toBin<short>(i);
+	auto t = toBin<short>(i);
 	buff.insert(buff.end(), t, t + sizeof(short));
 	return *this;
 }
@@ -148,49 +156,55 @@ std::vector<unsigned char> Unpack::getchars()
 
 Unpack& Unpack::add(string i)
 {
-	if (i.size() <= 0)//字符串长度为0,直接放入长度0
+	if (i.size() <= 0) //字符串长度为0,直接放入长度0
 	{
 		add(static_cast<short>(0));
 		return *this;
 	}
-	if (i.size() > 32767)//字符串长度超出限制,
+	if (i.size() > 32767) //字符串长度超出限制,
 	{
 		i = i.substr(0, 32767);
 	}
 
-	add((unsigned char*)i.data(), (short) i.size());
+	add((unsigned char*)i.data(), (short)i.size());
 
 	return *this;
 }
 
 string Unpack::getstring()
 {
-	auto tep = getchars(); 
+	auto tep = getchars();
 	if (tep.size() == 0)return "";
 
 	tep.push_back(static_cast<char>(0));
 	return string(reinterpret_cast<char*>(&tep[0]));
 }
 
-Unpack & Unpack::add(Unpack & i)
+Unpack& Unpack::add(Unpack& i)
 {
 	add(i.getAll());
 	return *this;
 }
 
-Unpack Unpack::getUnpack(){	return Unpack(getchars());}
+Unpack Unpack::getUnpack() { return Unpack(getchars()); }
 
-std::string Unpack::getAll() {
+std::string Unpack::getAll()
+{
 	string ret;
-	for (auto b : buff) 
-		ret += b;	
+	for (auto b : buff)
+		ret += b;
 	return ret;
 }
 
 void Unpack::show()
 {
-	string out;	auto len = 0;
-	for (auto c : buff)	{ out.append(to_string(static_cast<int>(c))).append(", "); ++len; }
+	string out;
+	auto len = 0;
+	for (auto c : buff)
+	{
+		out.append(to_string(static_cast<int>(c))).append(", ");
+		++len;
+	}
 	out = to_string(len).append("{").append(out.substr(0, out.size() - 2)).append("}");
 	cout << out.data() << endl;
 }

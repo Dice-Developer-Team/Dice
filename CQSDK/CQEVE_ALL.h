@@ -12,4 +12,3 @@
 #include "CQEVE_RequestAddFriend.h"
 #include "CQEVE_RequestAddGroup.h"
 #include "CQEVE_FriendAdd.h"
-

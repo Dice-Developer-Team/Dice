@@ -23,7 +23,8 @@
 	}\
 	void Name(CQ::EVEStatus & eve)
 
-namespace CQ {
+namespace CQ
+{
 	struct EVEStatus
 	{
 		std::string
@@ -32,13 +33,13 @@ namespace CQ {
 			//Êý¾Ýµ¥Î»
 			dataf;
 		int
-			// 1 : ÂÌ
-			// 2 : ³È
-			// 3 : ºì
-			// 4 : Éîºì
-			// 5 : ºÚ
-			// 6 : »Ò
-			color;
+		// 1 : ÂÌ
+		// 2 : ³È
+		// 3 : ºì
+		// 4 : Éîºì
+		// 5 : ºÚ
+		// 6 : »Ò
+		color;
 		// 1 : ÂÌ
 		void color_green();
 		// 2 : ³È
@@ -52,5 +53,6 @@ namespace CQ {
 		// 6 : »Ò
 		void color_gray();
 	};
-	std::string statusEVEreturn(EVEStatus & eve);
+
+	std::string statusEVEreturn(EVEStatus& eve);
 }

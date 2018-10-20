@@ -17,6 +17,7 @@
 #ifndef __STORAGEBASE__
 #define __STORAGEBASE__
 #include <string>
+
 class StorageBase
 {
 protected:
@@ -28,4 +29,3 @@ public:
 	virtual ~StorageBase() = default;
 };
 #endif /*__STORAGEBASE__*/
-

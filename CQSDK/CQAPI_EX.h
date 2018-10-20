@@ -9,47 +9,49 @@
 #include <vector>
 
 class Unpack;
-namespace CQ {
+
+namespace CQ
+{
 	//增加运行日志 
-	int addLog(int Priorty, const char * Type, const char * Content);
+	int addLog(int Priorty, const char* Type, const char* Content);
 
 	//发送好友消息
 	//Auth=106 失败返回负值,成功返回消息ID 
-	int sendPrivateMsg(long long QQ, const char * msg);
+	int sendPrivateMsg(long long QQ, const char* msg);
 	//发送好友消息
 	//Auth=106 失败返回负值,成功返回消息ID 
-	int sendPrivateMsg(long long QQ, std::string&msg);
+	int sendPrivateMsg(long long QQ, std::string& msg);
 
 	//发送群消息 
 	//Auth=101 失败返回负值,成功返回消息ID
-	int sendGroupMsg(long long GroupID, const char * msg);
+	int sendGroupMsg(long long GroupID, const char* msg);
 	//发送群消息 
 	//Auth=101 失败返回负值,成功返回消息ID
-	int sendGroupMsg(long long GroupID, std::string&msg);
+	int sendGroupMsg(long long GroupID, std::string& msg);
 
 
 	//发送讨论组消息 
 	//Auth=103 失败返回负值,成功返回消息ID
-	int sendDiscussMsg(long long DiscussID, const char * msg);
+	int sendDiscussMsg(long long DiscussID, const char* msg);
 	//发送讨论组消息 
 	//Auth=103 失败返回负值,成功返回消息ID
-	int sendDiscussMsg(long long DiscussID, std::string&msg);
+	int sendDiscussMsg(long long DiscussID, std::string& msg);
 
 	//发送赞 Auth=110
 	int sendLike(long long QQID, int times);
 
 	//取Cookies (慎用，此接口需要严格授权) 
 	//Auth=20 慎用,此接口需要严格授权 
-	const char * getCookies();
+	const char* getCookies();
 
 	//接收语音 
-	const char * getRecord(
-		const char * file, // 收到消息中的语音文件名 (file) 
-		const char * outformat // 应用所需的格式 mp3,amr,wma,m4a,spx,ogg,wav,flac
+	const char* getRecord(
+		const char* file, // 收到消息中的语音文件名 (file) 
+		const char* outformat // 应用所需的格式 mp3,amr,wma,m4a,spx,ogg,wav,flac
 	);
 	//接收语音 
 	std::string getRecord(
-		std::string&file, // 收到消息中的语音文件名 (file) 
+		std::string& file, // 收到消息中的语音文件名 (file) 
 		std::string outformat // 应用所需的格式 mp3,amr,wma,m4a,spx,ogg,wav,flac
 	);
 
@@ -59,14 +61,14 @@ namespace CQ {
 
 	//取应用目录 
 	//返回的路径末尾带"\" 
-	const char * getAppDirectory();
+	const char* getAppDirectory();
 
 	//取登录QQ 
 	//取登录QQ 
 	long long getLoginQQ();
 
 	//取登录昵称 
-	const char * getLoginNick();
+	const char* getLoginNick();
 
 	//置群员移除 Auth=120 
 	int setGroupKick(
@@ -89,7 +91,7 @@ namespace CQ {
 	//置群成员专属头衔 Auth=128 需群主权限 
 	int setGroupSpecialTitle(
 		long long GroupID, long long QQID,
-		const char * Title, // 如果要删除，这里填空 
+		const char* Title, // 如果要删除，这里填空 
 		long long ExpireTime = -1 // 专属头衔有效期，单位为秒。如果永久有效，这里填写-1
 	);
 	//置群成员专属头衔 Auth=128 需群主权限 
@@ -108,7 +110,7 @@ namespace CQ {
 	//置匿名群员禁言 Auth=124 
 	int setGroupAnonymousBan(
 		long long GroupID,
-		const char * AnonymousToken, // 群消息事件收到的“匿名”参数 
+		const char* AnonymousToken, // 群消息事件收到的“匿名”参数 
 		long long Time = 60 // 禁言的时间，单位为秒。不支持解禁 
 	);
 
@@ -116,7 +118,7 @@ namespace CQ {
 	int setGroupAnonymous(long long GroupID, CQBOOL enableAnonymous = true);
 
 	//置群成员名片 Auth=126 
-	int setGroupCard(long long GroupID, long long QQID, const char * NewGroupCardNick);
+	int setGroupCard(long long GroupID, long long QQID, const char* NewGroupCardNick);
 
 	//置群成员名片 Auth=126 
 	int setGroupCard(long long GroupID, long long QQID, std::string NewGroupCardNick);
@@ -134,21 +136,21 @@ namespace CQ {
 
 	//置好友添加请求 Auth=150 
 	int setFriendAddRequest(
-		const char * ResponseToken, // 请求事件收到的“反馈标识”参数 
+		const char* ResponseToken, // 请求事件收到的“反馈标识”参数 
 		int ResponseType, // #请求_通过 或 #请求_拒绝 
-		const char * Remarks // 添加后的好友备注 
+		const char* Remarks // 添加后的好友备注 
 	);
 
 	//置群添加请求 Auth=151 
 	int setGroupAddRequest(
-		const char * RequestToken, // 请求事件收到的“反馈标识”参数 
+		const char* RequestToken, // 请求事件收到的“反馈标识”参数 
 		int RequestType, // 根据请求事件的子类型区分 #请求_群添加 或 #请求_群邀请 
 		int ResponseType, // #请求_通过 或 #请求_拒绝 
-		const char * Reason // 操作理由，仅 #请求_群添加 且 #请求_拒绝 时可用
+		const char* Reason // 操作理由，仅 #请求_群添加 且 #请求_拒绝 时可用
 	);
 
 	//置致命错误提示,暂时不知道干什么用的
-	int setFatal(const char * ErrorMsg);
+	int setFatal(const char* ErrorMsg);
 
 
 	class GroupMemberInfo;
@@ -168,7 +170,7 @@ namespace CQ {
 	//撤回消息 Auth=180
 	int deleteMsg(long long MsgId);
 
-	const char * getlasterrmsg();
+	const char* getlasterrmsg();
 
 	// 群成员信息
 	class GroupMemberInfo
@@ -193,8 +195,8 @@ namespace CQ {
 		CQBOOL canEditGroupNick{};
 
 		GroupMemberInfo(Unpack& msg);
-		GroupMemberInfo(const char* msg);//从API解码
-		GroupMemberInfo(std::vector<unsigned char> msg);//从Unpack解码
+		GroupMemberInfo(const char* msg); //从API解码
+		GroupMemberInfo(std::vector<unsigned char> msg); //从Unpack解码
 		GroupMemberInfo() = default;
 
 		std::string tostring() const;
@@ -205,9 +207,9 @@ namespace CQ {
 	{
 	public:
 		long long QQID{};
-		std::string nick{};//昵称
-		int sex{};//0/男性 1/女性 255/未知
-		int age{};//年龄
+		std::string nick{}; //昵称
+		int sex{}; //0/男性 1/女性 255/未知
+		int age{}; //年龄
 
 		StrangerInfo(const char* msg);
 		StrangerInfo() = default;

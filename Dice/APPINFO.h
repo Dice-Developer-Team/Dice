@@ -17,6 +17,6 @@
 #ifndef _APPINFO_
 #define _APPINFO_
 
-#define CQAPPID "com.w4123.dice" 
+#define CQAPPID "com.w4123.dice"
 #define CQAPPINFO CQAPIVERTEXT "," CQAPPID
 #endif /*_APPINFO_*/

@@ -2,9 +2,11 @@
 #include "bufstream.h"
 
 #include <string>
+
 namespace CQ
 {
 	enum msgtype { Friend, Group, Discuss };
+
 	class msg : public CQstream
 	{
 		long long ID;
@@ -26,6 +28,6 @@ namespace CQ
 		*/
 		msg(long long GroupID_Or_QQID, int Type);
 
-		virtual void send() override;
+		void send() override;
 	};
 }

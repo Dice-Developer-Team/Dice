@@ -28,7 +28,11 @@ struct msg_t
 	long long target_id = 0;
 	bool is_private = true;
 	msg_t() = default;
-	msg_t(string msg, long long target_id = 0, bool is_private = true) : msg(move(msg)), target_id(target_id), is_private(is_private) {}
+
+	msg_t(string msg, long long target_id = 0, bool is_private = true) : msg(move(msg)), target_id(target_id),
+	                                                                     is_private(is_private)
+	{
+	}
 };
 
 // 消息发送队列
@@ -60,11 +64,11 @@ void SendMsg()
 		msgQueueMutex.unlock();
 		if (!msg.msg.empty())
 		{
-			if(msg.is_private)
+			if (msg.is_private)
 			{
 				CQ::sendPrivateMsg(msg.target_id, msg.msg);
 			}
-			else if(msg.target_id < 1000000000)
+			else if (msg.target_id < 1000000000)
 			{
 				CQ::sendGroupMsg(msg.target_id, msg.msg);
 			}

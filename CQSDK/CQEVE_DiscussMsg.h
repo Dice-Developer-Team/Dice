@@ -28,18 +28,19 @@ font		字体
 	void Name(CQ::EVEDiscussMsg & eve)
 
 
-namespace CQ {
-	struct EVEDiscussMsg :public EVEMsg
+namespace CQ
+{
+	struct EVEDiscussMsg : public EVEMsg
 	{
-		long long fromDiscuss;//讨论组号
+		long long fromDiscuss; //讨论组号
 
 		EVEDiscussMsg(int subType, int msgId, long long fromDiscuss, long long fromQQ, const char* msg, int font);
 
-		bool leave() const;//退出讨论组
+		bool leave() const; //退出讨论组
 
 		// 通过 EVEMsg 继承
-		virtual msg sendMsg() const override;
-		virtual int sendMsg(const char *) const override;
-		virtual int sendMsg(std::string) const override;
+		msg sendMsg() const override;
+		int sendMsg(const char*) const override;
+		int sendMsg(std::string) const override;
 	};
 }

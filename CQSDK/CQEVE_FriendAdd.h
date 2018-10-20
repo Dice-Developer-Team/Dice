@@ -21,12 +21,11 @@ fromQQ À´Ô´QQ
 		Name(tep);\
 		return tep._EVEret;\
 	}\
-	void Name(CQ::EVEFriendAdd & eve)\
+	void Name(CQ::EVEFriendAdd & eve)
 
 namespace CQ
 {
-	struct EVEFriendAdd:public EVE{
-
+	struct EVEFriendAdd : public EVE
+	{
 	};
 }
-
