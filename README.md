@@ -27,7 +27,7 @@ Latest Version: [![GitHub tag](https://img.shields.io/github/tag/w4123/dice.svg)
 
 从GitHub克隆源码时请不要直接从master分支克隆, 因为所有的更改都会提交到此分支, 很有可能包含最新的测试性更改, 未经过测试无法保证稳定 请选择Tag中最新的Release进行下载
 
-请使用最新版Visual Studio **2017** (或其独立编译器)进行编译, 项目主文件为Dice.sln, 编译时务必使用Release Win32模式否则无法编译成功
+请使用最新版Visual Studio **2015或2017** (或其独立编译器)进行编译, 项目主文件为Dice.sln, 编译时务必使用Win32模式否则无法编译成功
 
 编译后会得到com.w4123.dice.dll文件, 请勿更改此文件的名称! 请从Releases中下载对应的json文件(或自己编写), 放至酷Q app文件夹下, 并开启开发模式, 在应用管理中合成cpk文件即可正常使用
 
