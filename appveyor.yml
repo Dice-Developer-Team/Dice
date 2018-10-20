@@ -1,5 +1,7 @@
 version: 2.{build}
-image: Visual Studio 2017
+image:
+- Visual Studio 2017
+- Visual Studio 2015
 configuration: Release
 platform: x86
 before_build:
