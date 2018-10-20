@@ -9,7 +9,7 @@ before_build:
 build:
   verbosity: minimal
 artifacts:
-- path: Releases\com.w4123.dice.dll
+- path: Release\com.w4123.dice.dll
   name: Dice DLL
 deploy:
 - provider: GitHub
@@ -17,6 +17,6 @@ deploy:
   description: This is an automatic release from appveyor
   auth_token:
     secure: WcFZ0HDPW31VBFY2Tr7X6TLCW8FA2B2eO9G2stU7unxcZkSjdWAn5xEJUAswMrj0
-  artifact: Releases\com.w4123.dice.dll
+  artifact: Release\com.w4123.dice.dll
   draft: true
   prerelease: true
