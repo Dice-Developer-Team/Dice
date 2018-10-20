@@ -23,7 +23,7 @@
     <ProjectGuid>{BA051175-B8E8-4104-9DD9-B9E225738C42}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Dice</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
     <ProjectName>com.w4123.dice</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
