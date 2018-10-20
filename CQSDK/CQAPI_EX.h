@@ -174,23 +174,23 @@ namespace CQ {
 	class GroupMemberInfo
 	{
 		void Void();
-		void setdata(Unpack&pack);
+		void setdata(Unpack& u);
 	public:
-		long long Group;
-		long long QQID;
-		std::string Nick;
-		std::string GroupNick;
-		int Gender; // 0/男性 1/女性
-		int Age;
-		std::string Region;
-		int AddGroupTime;
-		int LastMsgTime;
-		std::string LevelName;
-		int permissions; //1/成员 2/管理员 3/群主
-		std::string Title;
-		int ExpireTime; // -1 代表不过期
-		CQBOOL NaughtyRecord;
-		CQBOOL canEditGroupNick;
+		long long Group{};
+		long long QQID{};
+		std::string Nick{};
+		std::string GroupNick{};
+		int Gender{}; // 0/男性 1/女性
+		int Age{};
+		std::string Region{};
+		int AddGroupTime{};
+		int LastMsgTime{};
+		std::string LevelName{};
+		int permissions{}; //1/成员 2/管理员 3/群主
+		std::string Title{};
+		int ExpireTime{}; // -1 代表不过期
+		CQBOOL NaughtyRecord{};
+		CQBOOL canEditGroupNick{};
 
 		GroupMemberInfo(Unpack& msg);
 		GroupMemberInfo(const char* msg);//从API解码
@@ -204,10 +204,10 @@ namespace CQ {
 	class StrangerInfo
 	{
 	public:
-		long long QQID;
-		std::string nick;//昵称
-		int sex;//0/男性 1/女性 255/未知
-		int age;//年龄
+		long long QQID{};
+		std::string nick{};//昵称
+		int sex{};//0/男性 1/女性 255/未知
+		int age{};//年龄
 
 		StrangerInfo(const char* msg);
 		StrangerInfo() = default;

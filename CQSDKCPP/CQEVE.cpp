@@ -36,7 +36,7 @@ bool CQ::EVEMsg::isUser() const {
 CQ::EVEGroupMsg::EVEGroupMsg(int subType, int msgId, long long fromGroup, long long fromQQ, const char * fromAnonymous, const char * msg, int font)
 	:EVEMsg(subType, msgId, fromQQ, msg, font), fromGroup(fromGroup), fromAnonymousToken(fromAnonymous), fromAnonymousInfo() {}
 
-CQ::EVEGroupMsg::~EVEGroupMsg() { if (fromAnonymousInfo != nullptr) delete fromAnonymousInfo; }
+CQ::EVEGroupMsg::~EVEGroupMsg() { delete fromAnonymousInfo; }
 
 
 bool CQ::EVEGroupMsg::isAnonymous() const { return fromQQ == 80000000; }
@@ -81,22 +81,22 @@ bool CQ::EVEGroupMsg::setGroupSpecialTitle(std::string Title, long long ExpireTi
 
 bool CQ::EVEGroupMsg::setGroupWholeBan(bool isBan)
 {
-	return CQ::setGroupWholeBan(fromGroup, isBan);
+	return CQ::setGroupWholeBan(fromGroup, isBan) != 0;
 }
 
 bool CQ::EVEGroupMsg::setGroupAnonymous(bool enableAnonymous)
 {
-	return CQ::setGroupAnonymous(fromGroup, enableAnonymous);
+	return CQ::setGroupAnonymous(fromGroup, enableAnonymous) != 0;
 }
 
 bool CQ::EVEGroupMsg::setGroupCard(std::string newGroupNick)
 {
-	return CQ::setGroupCard(fromGroup, fromQQ, newGroupNick);
+	return CQ::setGroupCard(fromGroup, fromQQ, newGroupNick) != 0;
 }
 
 bool CQ::EVEGroupMsg::setGroupLeave(bool isDismiss)
 {
-	return CQ::setGroupLeave(fromGroup, isDismiss);
+	return CQ::setGroupLeave(fromGroup, isDismiss) != 0;
 }
 
 GroupMemberInfo CQ::EVEGroupMsg::getGroupMemberInfo(bool DisableCache)
@@ -160,8 +160,9 @@ CQ::EVERequest::EVERequest(int sendTime, long long fromQQ, const char * msg, con
 {}
 
 CQ::EVERequestAddFriend::EVERequestAddFriend(int subType, int sendTime, long long fromQQ, const char* msg, const char* responseFlag)
-	: EVERequest(sendTime, fromQQ, msg, responseFlag), subType(subType)
-{}
+	: EVERequest(sendTime, fromQQ, msg, responseFlag), subType(subType), fromGroup(0)
+{
+}
 
 void CQ::EVERequestAddFriend::pass(std::string msg)
 {

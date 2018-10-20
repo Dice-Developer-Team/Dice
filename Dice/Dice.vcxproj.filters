@@ -57,9 +57,6 @@
     <ClCompile Include="..\CQSDKCPP\CQTools.cpp">
       <Filter>源文件\CQCPP</Filter>
     </ClCompile>
-    <ClCompile Include="..\CQSDKCPP\debug.cpp">
-      <Filter>源文件\CQCPP</Filter>
-    </ClCompile>
     <ClCompile Include="..\CQSDKCPP\Unpack.cpp">
       <Filter>源文件\CQCPP</Filter>
     </ClCompile>

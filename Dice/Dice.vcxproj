@@ -202,7 +202,6 @@
     <ClCompile Include="..\CQSDKCPP\CQEVE.cpp" />
     <ClCompile Include="..\CQSDKCPP\CQstream.cpp" />
     <ClCompile Include="..\CQSDKCPP\CQTools.cpp" />
-    <ClCompile Include="..\CQSDKCPP\debug.cpp" />
     <ClCompile Include="..\CQSDKCPP\Unpack.cpp" />
     <ClCompile Include="Dice.cpp" />
     <ClCompile Include="DiceMsgSend.cpp" />

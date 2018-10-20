@@ -7,19 +7,19 @@
 namespace CQ {
 	// 字体
 	struct Font {
-		const char * Name;
-		int Size,
-			Color,
+		const char * Name{};
+		int Size{},
+			Color{},
 			/*粗体：1 斜体：2 下划线：4*/
-			Style,
-			Bubble;
+			Style{},
+			Bubble{};
 
 		explicit Font(int);
 	};
 	//正则消息
 	class regexMsg{
 		//消息
-		std::map<std::string, std::string> regexMap;
+		std::map<std::string, std::string> regexMap{};
 	public:
 		regexMsg(std::string msg);
 		std::string get(std::string);
