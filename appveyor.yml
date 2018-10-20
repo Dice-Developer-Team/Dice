@@ -1,7 +1,10 @@
 version: 2.{build}
+skip_tags: true
 image:
 - Visual Studio 2017
+- Previous Visual Studio 2017
 - Visual Studio 2015
+- Previous Visual Studio 2015
 configuration: Release
 platform: x86
 before_build:
