@@ -16,3 +16,5 @@ deploy:
     secure: WcFZ0HDPW31VBFY2Tr7X6TLCW8FA2B2eO9G2stU7unxcZkSjdWAn5xEJUAswMrj0
   draft: true
   prerelease: true
+  artifact: com.w4123.dice.dll
+
