@@ -23,42 +23,14 @@
 #include <aws/core/auth/AWSCredentialsProvider.h>
 #include <CQLogger.h>
 #include <Windows.h>
-#include <fstream>
-#include "RDConstant.h"
 #include "GetRule.h"
 #include "GlobalVar.h"
-
+#include "EncodingConvert.h"
 using namespace std;
 using namespace Aws;
 using namespace DynamoDB;
 
-std::string GetRule::GBKtoUTF8(const std::string& strGBK)
-{
-	int len = MultiByteToWideChar(CP_ACP, 0, strGBK.c_str(), -1, nullptr, 0);
-	wchar_t* str1 = new wchar_t[len + 1];
-	MultiByteToWideChar(CP_ACP, 0, strGBK.c_str(), -1, str1, len);
-	len = WideCharToMultiByte(CP_UTF8, 0, str1, -1, nullptr, 0, nullptr, nullptr);
-	char* str2 = new char[len + 1];
-	WideCharToMultiByte(CP_UTF8, 0, str1, -1, str2, len, nullptr, nullptr);
-	string strOutUTF8(str2);
-	delete[] str1;
-	delete[] str2;
-	return strOutUTF8;
-}
 
-std::string GetRule::UTF8toGBK(const std::string& strUTF8)
-{
-	int len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
-	wchar_t* wszGBK = new wchar_t[len + 1];
-	MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, wszGBK, len);
-	len = WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, nullptr, 0, nullptr, nullptr);
-	char* szGBK = new char[len + 1];
-	WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, szGBK, len, nullptr, nullptr);
-	string strTemp(szGBK);
-	delete[] szGBK;
-	delete[] wszGBK;
-	return strTemp;
-}
 
 /*
  * 避免Windows.h中的GetMessage宏与Aws SDK中的GetMessage函数冲突
@@ -113,7 +85,7 @@ bool GetRule::analyze(string& rawStr, string& des)
 {
 	if (failed)
 	{
-		des = strRulesFailedErr;
+		des = GlobalMsg["strRulesFailedErr"];
 		return false;
 	}
 	for (auto& chr : rawStr)chr = toupper(chr);
@@ -123,7 +95,7 @@ bool GetRule::analyze(string& rawStr, string& des)
 		const string name = rawStr.substr(rawStr.find(':') + 1);
 		if (name.empty())
 		{
-			des = strRulesFormatErr;
+			des = GlobalMsg["strRulesFormatErr"];
 			return false;
 		}
 		string rule = rawStr.substr(0, rawStr.find(':'));
@@ -132,7 +104,7 @@ bool GetRule::analyze(string& rawStr, string& des)
 	}
 	if (rawStr.empty())
 	{
-		des = strRulesFormatErr;
+		des = GlobalMsg["strRulesFormatErr"];
 		return false;
 	}
 	for (const auto& rule : rules)
@@ -169,10 +141,10 @@ bool GetRule::get(const std::string& rule, const std::string& name, std::string&
 			{
 				return get(ruleName, item.at("Redirect").GetS(), des, true);
 			}
-			des = strRuleNotFound;
+			des = GlobalMsg["strRuleNotFound"];
 			return false;
 		}
-		des = strRuleNotFound;
+		des = GlobalMsg["strRuleNotFound"];
 		return false;
 	}
 	DiceLogger.Warning(("获取规则数据失败! 详细信息:\n" + result.GetError().GetMessage()).data());

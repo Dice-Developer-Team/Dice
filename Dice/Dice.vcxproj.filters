@@ -19,6 +19,9 @@
     <Filter Include="源文件\CQCPP">
       <UniqueIdentifier>{9991a6c1-3689-4b27-a14b-c09c80989141}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\nlohmann">
+      <UniqueIdentifier>{911e9211-0dd0-42ff-82bc-c6ae90928af6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dice.cpp">
@@ -64,6 +67,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="GlobalVar.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomMsg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="EncodingConvert.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -156,6 +165,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="GlobalVar.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="json.hpp">
+      <Filter>头文件\nlohmann</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomMsg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EncodingConvert.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
