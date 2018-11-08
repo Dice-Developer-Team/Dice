@@ -10,11 +10,12 @@ Welcome to Dice!'s documentation!
    :maxdepth: 3
    :caption: Contents:
    
+   Setup
+   DiceUsage
    License
    Apply
-   About
    DiceList
-   Setup
+   About
 
 前言
 -----------
