@@ -2287,7 +2287,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		{
 			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
-				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ);
+				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
 				return;
 			}
 		}
@@ -2295,7 +2295,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		{
 			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
-				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ);
+				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
 				return;
 			}
 		}
@@ -2670,7 +2670,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ);
+			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ, false);
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
@@ -2701,7 +2701,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ);
+			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ, false);
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
@@ -2742,7 +2742,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ);
+			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ, false);
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
@@ -3870,7 +3870,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		{
 			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
-				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ);
+				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
 				return;
 			}
 		}
@@ -3878,7 +3878,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		{
 			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
-				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ);
+				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
 				return;
 			}
 		}
@@ -4233,7 +4233,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ);
+			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ, false);
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
@@ -4264,7 +4264,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ);
+			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ, false);
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
@@ -4305,7 +4305,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		}
 		if (strNum.length() > 2)
 		{
-			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ);
+			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ, false);
 			return;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
