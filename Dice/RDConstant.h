@@ -30,7 +30,7 @@
 #endif
 //Version
 static const std::string Dice_Ver = "2.3.3(493)";
-static const std::string Dice_Short_Ver = "Dice! by ËÝä§ Version " + Dice_Ver;
+static const std::string Dice_Short_Ver = "Dice! by ËÝä§ Version " + Dice_Ver+" ¸Ä¡¤Bakeneko";
 static const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ +
 	" " + __TIME__ + "]";
 //Error Handle

@@ -4,56 +4,77 @@
   "name": "Dice!",
   "version": "2.3.3",
   "version_id": 493,
-  "author": "w4123溯洄",
-  "description": "跑团用骰子 QQ交流群:624807593",
+  "author": "-",
+  "description": "-",
   "event": [
     {
       "id": 1,
       "type": 21,
-      "name": "私聊消息处理",
+      "name": "_eventPrivateMsg",
       "function": "_eventPrivateMsg",
       "priority": 30000
     },
     {
       "id": 2,
       "type": 2,
-      "name": "群消息处理",
+      "name": "_eventGroupMsg",
       "function": "_eventGroupMsg",
       "priority": 30000
     },
     {
       "id": 3,
       "type": 4,
-      "name": "多人聊天消息处理",
+      "name": "_eventDiscussMsg",
       "function": "_eventDiscussMsg",
       "priority": 30000
     },
     {
       "id": 4,
       "type": 1003,
-      "name": "启用事件",
+      "name": "_eventEnable",
       "function": "_eventEnable",
       "priority": 30000
     },
     {
       "id": 5,
       "type": 1002,
-      "name": "退出事件",
+      "name": "_eventExit",
       "function": "_eventExit",
       "priority": 30000
     },
     {
       "id": 6,
       "type": 1004,
-      "name": "禁用事件",
+      "name": "_eventDisable",
       "function": "_eventDisable",
       "priority": 30000
     },
     {
       "id": 7,
       "type": 103,
-      "name": "群成员添加事件",
+      "name": "_eventGroupMemberIncrease",
       "function": "_eventGroupMemberIncrease",
+      "priority": 30000
+    },
+    {
+      "id": 8,
+      "type": 102,
+      "name": "_eventGroupMemberDecrease",
+      "function": "_eventGroupMemberDecrease",
+      "priority": 30000
+    },
+    {
+      "id": 9,
+      "type": 301,
+      "name": "_eventRequestAddFriend",
+      "function": "_eventRequestAddFriend",
+      "priority": 30000
+    },
+    {
+      "id": 10,
+      "type": 302,
+      "name": "_eventRequestAddGroup",
+      "function": "_eventRequestAddGroup",
       "priority": 30000
     }
   ],
@@ -65,6 +86,9 @@
     161,
     103,
     127,
-    140
+    140,
+    102,
+    301,
+    302
   ]
 }

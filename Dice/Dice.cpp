@@ -117,7 +117,11 @@ set<long long> DisabledHELPGroup;
 set<long long> DisabledHELPDiscuss;
 set<long long> DisabledOBGroup;
 set<long long> DisabledOBDiscuss;
+set<long long>AdminList;
+set<long long>BanList;
 unique_ptr<Initlist> ilInitList;
+set<long long>AdminGroup;
+set<long long>DiceList;
 
 struct SourceType
 {
@@ -362,6 +366,46 @@ EVE_Enable(__eventEnable)
 		}
 	}
 	ifstreamWelcomeMsg.close();
+	ifstream ifstreamAdminList(strFileLoc + "AdminList.RDconf");
+	if (ifstreamAdminList)
+	{
+		long long Admin;
+		while (ifstreamAdminList >> Admin)
+		{
+			AdminList.insert(Admin);
+		}
+	}
+	ifstreamAdminList.close();
+	ifstream ifstreamAdminGroup(strFileLoc + "AdminGroup.RDconf");
+	if (ifstreamAdminGroup)
+	{
+		long long Group;
+		while (ifstreamAdminGroup >> Group)
+		{
+			AdminGroup.insert(Group);
+		}
+	}
+	ifstreamAdminGroup.close();
+	ifstream ifstreamBanList(strFileLoc + "BanList.RDconf");
+	if (ifstreamBanList)
+	{
+		long long ban;
+		while (ifstreamBanList >> ban)
+		{
+			BanList.insert(ban);
+		}
+	}
+	ifstreamBanList.close();
+	ifstream ifstreamDiceList(strFileLoc + "DiceList.RDconf");
+	if (ifstreamDiceList)
+	{
+		long long dice;
+		while (ifstreamDiceList >> dice)
+		{
+			DiceList.insert(dice);
+		}
+	}
+	ifstreamDiceList.close();
 	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
 	RuleGetter = make_unique<GetRule>();
 	ifstream ifstreamCustomMsg(strFileLoc + "CustomMsg.json");
@@ -381,6 +425,13 @@ EVE_Enable(__eventEnable)
 EVE_PrivateMsg_EX(__eventPrivateMsg)
 {
 	if (eve.isSystem())return;
+
+	if (BanList.count(eve.fromQQ)&&!AdminList.count(eve.fromQQ)&&!DiceList.count(eve.fromQQ))
+	{
+		AddMsgToQueue(GlobalMsg["strBanned"], eve.fromQQ);
+		return;
+	}
+
 	init(eve.message);
 	init2(eve.message);
 	if (eve.message[0] != '.')
@@ -1317,8 +1368,211 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		}
 		AddMsgToQueue(strReply, eve.fromQQ);
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 9) == "adminlist")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			string reply = "当前管理列表:\n";
+			auto iter = AdminList.begin();
+			while (iter != AdminList.end())
+			{
+				reply += to_string(*iter) + '\n';
+				iter++;
+			}
+			AddMsgToQueue(reply, eve.fromQQ);
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 7) == "banlist")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			string reply = "当前封禁列表:\n";
+			auto iter = BanList.begin();
+			while (iter != BanList.end())
+			{
+				reply += to_string(*iter) + '\n';
+				iter++;
+			}
+			AddMsgToQueue(reply, eve.fromQQ);
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "ban")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			intMsgCnt += 3;
+			while (isspace(strLowerMessage[intMsgCnt]))
+				intMsgCnt++;
+			string strBan;
+			while (isdigit(strLowerMessage[intMsgCnt]))
+			{
+				strBan += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+			const long long ban = stoll(strBan);
+
+			if (AdminList.count(ban))
+			{
+				AddMsgToQueue(GlobalMsg["strBanAdmin"], eve.fromQQ);
+				return;
+			}
+
+			if (BanList.count(ban))
+			{
+				AddMsgToQueue(GlobalMsg["strAlreadyBanned"], eve.fromQQ);
+			}
+			else
+			{
+				BanList.insert(ban);
+				AddMsgToQueue(GlobalMsg["strSuccessfullyBanned"], eve.fromQQ);
+			}
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "isban")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			intMsgCnt += 5;
+
+			while (isspace(strLowerMessage[intMsgCnt]))
+				intMsgCnt++;
+
+			string strBan;
+			while (isdigit(strLowerMessage[intMsgCnt]))
+			{
+				strBan += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+
+			const long long ban = stoll(strBan);
+
+			if (BanList.count(ban))
+			{
+				AddMsgToQueue(GlobalMsg["strAlreadyBanned"], eve.fromQQ);
+			}
+			else
+			{
+				AddMsgToQueue(GlobalMsg["strNotBanned"], eve.fromQQ);
+			}
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "unban")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			intMsgCnt += 5;
+
+			while (isspace(strLowerMessage[intMsgCnt]))
+				intMsgCnt++;
+
+			string strBan;
+			while (isdigit(strLowerMessage[intMsgCnt]))
+			{
+				strBan += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+
+			const long long ban = stoll(strBan);
+
+			if (BanList.count(ban))
+			{
+				BanList.erase(ban);
+				AddMsgToQueue(GlobalMsg["strUnBan"], eve.fromQQ);
+			}
+			else
+			{
+				AddMsgToQueue(GlobalMsg["strNotBanned"], eve.fromQQ);
+			}
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "dice")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			intMsgCnt += 4;
+			while (isspace(strLowerMessage[intMsgCnt]))
+				intMsgCnt++;
+
+			string strDice;
+			while (isdigit(strLowerMessage[intMsgCnt]))
+			{
+				strDice += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+
+			const long long dice = stoll(strDice);
+
+			if (DiceList.count(dice))
+			{
+				DiceList.erase(dice);
+				AddMsgToQueue(GlobalMsg["strDeleteDice"], eve.fromQQ);
+			}
+			else
+			{
+				DiceList.insert(dice);
+				AddMsgToQueue(GlobalMsg["strAddDice"], eve.fromQQ);
+			}
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "group")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			intMsgCnt += 5;
+			while (isspace(strLowerMessage[intMsgCnt]))
+				intMsgCnt++;
+
+			string strGroup;
+			while (isdigit(strLowerMessage[intMsgCnt]))
+			{
+				strGroup += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+
+			const long long group = stoll(strGroup);
+
+			if (AdminGroup.count(group))
+			{
+				AdminGroup.erase(group);
+				AddMsgToQueue(GlobalMsg["strDeleteGroup"], eve.fromQQ);
+			}
+			else
+			{
+				AdminGroup.insert(group);
+				AddMsgToQueue(GlobalMsg["strAddGroup"], eve.fromQQ);
+			}
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
+		}
+	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'd'
-	)
+		)
 	{
 		intMsgCnt += 1;
 		bool boolDetail = true;
@@ -1334,22 +1588,22 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		bool tmpContainD = false;
 		int intTmpMsgCnt;
 		for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != eve.message.length() && eve.message[intTmpMsgCnt] != ' ';
-		     intTmpMsgCnt++)
+			intTmpMsgCnt++)
 		{
 			if (strLowerMessage[intTmpMsgCnt] == 'd' || strLowerMessage[intTmpMsgCnt] == 'p' || strLowerMessage[
-					intTmpMsgCnt] == 'b' || strLowerMessage[intTmpMsgCnt] == '#' || strLowerMessage[intTmpMsgCnt] == 'f'
-				||
-				strLowerMessage[intTmpMsgCnt] == 'a')
+				intTmpMsgCnt] == 'b' || strLowerMessage[intTmpMsgCnt] == '#' || strLowerMessage[intTmpMsgCnt] == 'f'
+					||
+					strLowerMessage[intTmpMsgCnt] == 'a')
 				tmpContainD = true;
-			if (!isdigit(strLowerMessage[intTmpMsgCnt]) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
+				if (!isdigit(strLowerMessage[intTmpMsgCnt]) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
 					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
-				&&
-				strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
-					intTmpMsgCnt
-				] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
-			{
-				break;
-			}
+						&&
+						strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
+							intTmpMsgCnt
+						] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
+				{
+					break;
+				}
 		}
 		if (tmpContainD)
 		{
@@ -1510,8 +1764,8 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				rdMainDice.Roll();
 				string strAns = strNickName + "骰出了: " + (boolDetail
-					                                         ? rdMainDice.FormCompleteString()
-					                                         : rdMainDice.FormShortString());
+					? rdMainDice.FormCompleteString()
+					: rdMainDice.FormShortString());
 				if (!strReason.empty())
 					strAns.insert(0, "由于" + strReason + " ");
 				AddMsgToQueue(strAns, eve.fromQQ);
@@ -1536,6 +1790,11 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 EVE_GroupMsg_EX(__eventGroupMsg)
 {
 	if (eve.isSystem() || eve.isAnonymous())return;
+	if (BanList.count(eve.fromQQ))
+	{
+		AddMsgToQueue(GlobalMsg["strBanned"], eve.fromQQ);
+		return;
+	}
 	init(eve.message);
 	while (isspace(eve.message[0]))
 		eve.message.erase(eve.message.begin());
@@ -3054,6 +3313,227 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 		AddMsgToQueue(strReply, eve.fromGroup, false);
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 7) == "autoban")
+	{
+		if (DiceList.count(eve.fromQQ))
+		{
+			intMsgCnt += 7;
+			while (isspace(strLowerMessage[intMsgCnt]))
+				intMsgCnt++;
+			string strBan;
+			while (isdigit(strLowerMessage[intMsgCnt]))
+			{
+				strBan += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+			const long long ban = stoll(strBan);
+			BanList.insert(ban);
+			AddMsgToQueue(GlobalMsg["strAutoBan"],eve.fromGroup,false);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 9) == "adminlist")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			string reply = "当前管理列表:\n";
+			auto iter = AdminList.begin();
+			while (iter != AdminList.end())
+			{
+				reply += to_string(*iter) + '\n';
+				iter++;
+			}
+			AddMsgToQueue(reply, eve.fromGroup, false);
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromGroup, false);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 7) == "banlist")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			string reply = "当前封禁列表:\n";
+			auto iter = BanList.begin();
+			while (iter != BanList.end())
+			{
+				reply += to_string(*iter) + '\n';
+				iter++;
+			}
+			AddMsgToQueue(reply, eve.fromGroup, false);
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromGroup, false);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "ban")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			intMsgCnt += 3;
+			while (isspace(strLowerMessage[intMsgCnt]))
+				intMsgCnt++;
+			string strBan;
+			while (isdigit(strLowerMessage[intMsgCnt]))
+			{
+				strBan += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+			const long long ban = stoll(strBan);
+
+			if (AdminList.count(ban))
+			{
+				AddMsgToQueue(GlobalMsg["strBanAdmin"], eve.fromGroup, false);
+				return;
+			}
+
+			if (BanList.count(ban))
+			{
+				AddMsgToQueue(GlobalMsg["strAlreadyBanned"], eve.fromGroup, false);
+			}
+			else
+			{
+				BanList.insert(ban);
+				AddMsgToQueue(GlobalMsg["strSuccessfullyBanned"], eve.fromGroup, false);
+			}
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "isban")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			intMsgCnt += 5;
+
+			while (isspace(strLowerMessage[intMsgCnt]))
+				intMsgCnt++;
+
+			string strBan;
+			while (isdigit(strLowerMessage[intMsgCnt]))
+			{
+				strBan += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+
+			const long long ban = stoll(strBan);
+
+			if (BanList.count(ban))
+			{
+				AddMsgToQueue(GlobalMsg["strAlreadyBanned"], eve.fromGroup, false);
+			}
+			else
+			{
+				AddMsgToQueue(GlobalMsg["strNotBanned"], eve.fromGroup, false);
+			}
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "unban")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			intMsgCnt += 5;
+
+			while (isspace(strLowerMessage[intMsgCnt]))
+				intMsgCnt++;
+
+			string strBan;
+			while (isdigit(strLowerMessage[intMsgCnt]))
+			{
+				strBan += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+
+			const long long ban = stoll(strBan);
+
+			if (BanList.count(ban))
+			{
+				BanList.erase(ban);
+				AddMsgToQueue(GlobalMsg["strUnBan"], eve.fromGroup, false);
+			}
+			else
+			{
+				AddMsgToQueue(GlobalMsg["strNotBanned"], eve.fromGroup, false);
+			}
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromGroup, false);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "dice")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			intMsgCnt += 4;
+			while (isspace(strLowerMessage[intMsgCnt]))
+				intMsgCnt++;
+
+			string strDice;
+			while (isdigit(strLowerMessage[intMsgCnt]))
+			{
+				strDice += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+
+			const long long dice = stoll(strDice);
+
+			if (DiceList.count(dice))
+			{
+				DiceList.erase(dice);
+				AddMsgToQueue(GlobalMsg["strDeleteDice"], eve.fromGroup, false);
+			}
+			else
+			{
+				DiceList.insert(dice);
+				AddMsgToQueue(GlobalMsg["strAddDice"], eve.fromGroup, false);
+			}
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromGroup, false);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "group")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			intMsgCnt += 5;
+			while (isspace(strLowerMessage[intMsgCnt]))
+				intMsgCnt++;
+
+			string strGroup;
+			while (isdigit(strLowerMessage[intMsgCnt]))
+			{
+				strGroup += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+
+			const long long group = stoll(strGroup);
+
+			if (AdminGroup.count(group))
+			{
+				AdminGroup.erase(group);
+				AddMsgToQueue(GlobalMsg["strDeleteGroup"], eve.fromGroup, false);
+			}
+			else
+			{
+				AdminGroup.insert(group);
+				AddMsgToQueue(GlobalMsg["strAddGroup"], eve.fromGroup, false);
+			}
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromGroup, false);
+		}
+	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'h'
 		|| strLowerMessage[intMsgCnt] == 'd')
 	{
@@ -3333,6 +3813,11 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 EVE_DiscussMsg_EX(__eventDiscussMsg)
 {
 	if (eve.isSystem())return;
+	if (BanList.count(eve.fromQQ))
+	{
+		AddMsgToQueue(GlobalMsg["strBanned"], eve.fromQQ);
+		return;
+	}
 	init(eve.message);
 	string strAt = "[CQ:at,qq=" + to_string(getLoginQQ()) + "]";
 	if (eve.message.substr(0, 6) == "[CQ:at")
@@ -4957,10 +5442,6 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 }
 
 
-//
-//
-//
-//
 EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
 {
 	if (beingOperateQQ != getLoginQQ() && WelcomeMsg.count(fromGroup))
@@ -4996,12 +5477,56 @@ EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
 	return 0;
 }
 
+EVE_System_GroupMemberDecrease(__eventGroupMemberDecrease)
+{
+	//被踢出
+	if (beingOperateQQ == getLoginQQ())
+	{
+		auto iter = AdminGroup.begin();
+		while (iter != AdminGroup.end())
+		{
+			AddMsgToQueue(".autoban " + to_string(fromQQ), *iter, false);
+			iter++;
+		}
 
+		string strWarn =to_string(fromQQ)+"将本骰子踢出" + to_string(fromGroup);
+		auto p = AdminList.begin();
+		while (p != AdminList.end())
+		{
+			AddMsgToQueue(strWarn,*p);
+			p++;
+		}
+		
+	}
 
-//
-//
-//
-//
+	return 0;
+}
+EVE_Request_AddFriend(__eventRequestAddFriend)
+{
+	string strRep = to_string(fromQQ) + "请求加为好友。\n附言：" + msg;
+	auto iter = AdminList.begin();
+	while (iter != AdminList.end())
+	{
+		AddMsgToQueue(strRep, *iter);
+		iter++;
+	}
+
+	return 0;
+}
+EVE_Request_AddGroup(__eventRequestAddGroup)
+{
+	if (subType == 2) 
+	{
+		string strRep = to_string(fromQQ) + "邀请加入群" + to_string(fromGroup);
+		auto iter = AdminList.begin();
+		while (iter != AdminList.end())
+		{
+			AddMsgToQueue(strRep, *iter);
+			iter++;
+		}
+	}
+	return 0;
+}
 EVE_Disable(__eventDisable)
 {
 	Enabled = false;
@@ -5143,6 +5668,27 @@ EVE_Disable(__eventDisable)
 		ofstreamWelcomeMsg << it->first << " " << it->second << std::endl;
 	}
 	ofstreamWelcomeMsg.close();
+	ofstream ofstreamBanList(strFileLoc + "BanList.RDconf", ios::out | ios::trunc);
+	for (auto it = BanList.begin(); it != BanList.end(); ++it)
+	{
+		ofstreamBanList << *it << std::endl;
+	}
+	ofstreamBanList.close();
+
+	ofstream ofstreamAdminGroup(strFileLoc + "AdminGroup.RDconf", ios::out | ios::trunc);
+	for (auto it = AdminGroup.begin(); it != AdminGroup.end(); ++it)
+	{
+		ofstreamAdminGroup << *it << std::endl;
+	}
+	ofstreamAdminGroup.close();
+
+	ofstream ofstreamDiceList(strFileLoc + "DiceList.RDconf", ios::out | ios::trunc);
+	for (auto it = DiceList.begin(); it != DiceList.end(); ++it)
+	{
+		ofstreamDiceList << *it << std::endl;
+	}
+	ofstreamDiceList.close();
+
 	JRRP.clear();
 	JRFATE.clear();
 	DefaultDice.clear();
@@ -5159,15 +5705,13 @@ EVE_Disable(__eventDisable)
 	ObserveGroup.clear();
 	ObserveDiscuss.clear();
 	strFileLoc.clear();
+	BanList.clear();
+	AdminGroup.clear();
+	AdminList.clear();
+	DiceList.clear();
+
 	return 0;
 }
-
-
-
-//
-//
-//
-//
 EVE_Exit(__eventExit)
 {
 	if (!Enabled)
@@ -5175,6 +5719,28 @@ EVE_Exit(__eventExit)
 	ilInitList.reset();
 	RuleGetter.reset();
 	Name.reset();
+
+	ofstream ofstreamBanList(strFileLoc + "BanList.RDconf", ios::out | ios::trunc);
+	for (auto it = BanList.begin(); it != BanList.end(); ++it)
+	{
+		ofstreamBanList << *it << std::endl;
+	}
+	ofstreamBanList.close();
+
+	ofstream ofstreamAdminGroup(strFileLoc + "AdminGroup.RDconf", ios::out | ios::trunc);
+	for (auto it = AdminGroup.begin(); it != AdminGroup.end(); ++it)
+	{
+		ofstreamAdminGroup << *it << std::endl;
+	}
+	ofstreamAdminGroup.close();
+
+	ofstream ofstreamDiceList(strFileLoc + "DiceList.RDconf", ios::out | ios::trunc);
+	for (auto it = DiceList.begin(); it != DiceList.end(); ++it)
+	{
+		ofstreamDiceList << *it << std::endl;
+	}
+	ofstreamDiceList.close();
+
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
 	{
@@ -5297,7 +5863,6 @@ EVE_Exit(__eventExit)
 		ofstreamDefault << it->first << " " << it->second << std::endl;
 	}
 	ofstreamDefault.close();
-
 	ofstream ofstreamWelcomeMsg(strFileLoc + "WelcomeMsg.RDconf", ios::out | ios::trunc);
 	for (auto it = WelcomeMsg.begin(); it != WelcomeMsg.end(); ++it)
 	{

@@ -80,41 +80,20 @@ std::map<std::string, std::string> GlobalMsg
 	{"strProp", "{0}的{1}属性值为{2}"},
 	{"strStErr", "格式错误:请参考帮助文档获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
+	{ "strBanned", "最后祝您身体健康，再见" },
+	{"strNoAuth","该指令需要骰子的管理权限！"},
+	{ "strAlreadyBanned","该QQ已被封禁！" },
+	{ "strNotBanned","该QQ未被封禁" },
+	{ "strUnBan","该QQ被解除封禁" },
+	{ "strSuccessfullyBanned","该QQ已加入封禁名单！" },
+	{ "strAutoBan","自动同步封禁名单！" },
+	{ "strAddDice","成功将该骰子加入同步列表" },
+	{ "strDeleteDice","成功将该骰子移出同步列表" },
+	{ "strAddGroup","成功将该QQ群加入同步列表" },
+	{ "strDeleteGroup","成功将该QQ群移出同步列表" },
+	{ "strBanAdmin","请不要封禁骰子管理员" },
 	{"strHlpMsg" , Dice_Short_Ver + "\n" +
 	R"(请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
-<通用命令>
-.r [掷骰表达式*] [原因]			普通掷骰
-.rs	[掷骰表达式*] [原因]			简化输出
-.w/ww XaY						骰池
-.set [1-99999之间的整数]			设置默认骰
-.sc SC表达式** [San值]			自动Sancheck
-.en [技能名] [技能值]			增强检定/幕间成长
-.coc7/6 [个数]					COC7/6人物作成
-.dnd [个数]					DND人物作成
-.coc7/6d					详细版COC7/6人物作成
-.ti/li					疯狂发作-临时/总结症状
-.st [del/clr/show] [属性名] [属性值]		人物卡导入
-.rc/ra [技能名] [技能值]		技能检定(规则书/房规)
-.jrrp [on/off]				今日人品检定
-.fate [on/off]             今日命运
-.tarot                        塔罗牌抽卡
-.rules [规则名称:]规则条目		规则查询
-.help						显示帮助
-<仅限群/多人聊天>
-.ri [加值] [昵称]			DnD先攻掷骰
-.init [clr]					DnD先攻查看/清空
-.nn [名称]					设置/删除昵称
-.rh [掷骰表达式*] [原因]			暗骰,结果私聊发送
-.bot [on/off] [机器人QQ号]		机器人开启或关闭
-.ob [exit/list/clr/on/off]			旁观模式
-.me on/off/动作				以第三方视角做出动作
-.welcome 欢迎消息				群欢迎提示
-<仅限私聊>
-.me 群号 动作				以第三方视角做出动作
-*COC7惩罚骰为P+个数,奖励骰为B+个数
- 支持使用K来取较大的几个骰子
- 支持使用 个数#表达式 进行多轮掷骰
-**SC表达式为 成功扣San/失败扣San,如:1/1d6
-插件交流/bug反馈/查看源代码请加QQ群624807593
-拂晓鵺啼：摸鱼这么爽带团不存在的)"}
+掷骰指令请查看文档https://docs.qq.com/doc/DY0VXTUxIR1daa3Fa
+*拂晓鵺啼：摸鱼这么爽带团不存在的)"}
 };
