@@ -96,6 +96,8 @@ std::map<std::string, std::string> GlobalMsg
 .st [del/clr/show] [属性名] [属性值]		人物卡导入
 .rc/ra [技能名] [技能值]		技能检定(规则书/房规)
 .jrrp [on/off]				今日人品检定
+.fate [on/off]             今日命运
+.tarot                        塔罗牌抽卡
 .rules [规则名称:]规则条目		规则查询
 .help						显示帮助
 <仅限群/多人聊天>
@@ -113,5 +115,6 @@ std::map<std::string, std::string> GlobalMsg
  支持使用K来取较大的几个骰子
  支持使用 个数#表达式 进行多轮掷骰
 **SC表达式为 成功扣San/失败扣San,如:1/1d6
-插件交流/bug反馈/查看源代码请加QQ群624807593)"}
+插件交流/bug反馈/查看源代码请加QQ群624807593
+拂晓鵺啼：摸鱼这么爽带团不存在的)"}
 };

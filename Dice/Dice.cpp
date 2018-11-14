@@ -102,12 +102,15 @@ std::string getName(long long QQ, long long GroupID = 0)
 }
 
 map<long long, RP> JRRP;
+map<long long, FATE> JRFATE;
 map<long long, int> DefaultDice;
 map<long long, string> WelcomeMsg;
 set<long long> DisabledGroup;
 set<long long> DisabledDiscuss;
 set<long long> DisabledJRRPGroup;
 set<long long> DisabledJRRPDiscuss;
+set<long long> DisabledJRFATEGroup;
+set<long long> DisabledJRFATEDiscuss;
 set<long long> DisabledMEGroup;
 set<long long> DisabledMEDiscuss;
 set<long long> DisabledHELPGroup;
@@ -136,6 +139,10 @@ map<SourceType, PropType> CharacterProp;
 multimap<long long, long long> ObserveGroup;
 multimap<long long, long long> ObserveDiscuss;
 string strFileLoc;
+//
+//
+//
+//
 EVE_Enable(__eventEnable)
 {
 	//Wait until the thread terminates
@@ -202,6 +209,26 @@ EVE_Enable(__eventEnable)
 		}
 	}
 	ifstreamDisabledJRRPDiscuss.close();
+	ifstream ifstreamDisabledFATEGroup(strFileLoc + "DisabledJRFATEGroup.RDconf");
+	if (ifstreamDisabledFATEGroup)
+	{
+		long long Group;
+		while (ifstreamDisabledFATEGroup >> Group)
+		{
+			DisabledJRFATEGroup.insert(Group);
+		}
+	}
+	ifstreamDisabledFATEGroup.close();
+	ifstream ifstreamDisabledFATEDiscuss(strFileLoc + "DisabledJRFATEDiscuss.RDconf");
+	if (ifstreamDisabledFATEDiscuss)
+	{
+		long long Discuss;
+		while (ifstreamDisabledFATEDiscuss >> Discuss)
+		{
+			DisabledJRFATEDiscuss.insert(Discuss);
+		}
+	}
+	ifstreamDisabledFATEDiscuss.close();
 	ifstream ifstreamDisabledMEGroup(strFileLoc + "DisabledMEGroup.RDconf");
 	if (ifstreamDisabledMEGroup)
 	{
@@ -296,6 +323,19 @@ EVE_Enable(__eventEnable)
 		}
 	}
 	ifstreamJRRP.close();
+	ifstream ifstreamJRFATE(strFileLoc + "JRFATE.RDconf");
+	if (ifstreamJRFATE)
+	{
+		long long QQ;
+		int Val;
+		string strDate;
+		while (ifstreamJRFATE >> QQ >> strDate >> Val)
+		{
+			JRFATE[QQ].Date = strDate;
+			JRFATE[QQ].FATEVal = Val;
+		}
+	}
+	ifstreamJRFATE.close();
 	ifstream ifstreamDefault(strFileLoc + "Default.RDconf");
 	if (ifstreamDefault)
 	{
@@ -334,6 +374,10 @@ EVE_Enable(__eventEnable)
 }
 
 
+//
+//
+//
+//
 EVE_PrivateMsg_EX(__eventPrivateMsg)
 {
 	if (eve.isSystem())return;
@@ -777,6 +821,36 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			JRRP[eve.fromQQ].Date = cstrDate;
 			JRRP[eve.fromQQ].RPVal = JRRPRes;
 			const string strReply(strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal));
+
+			AddMsgToQueue(strReply, eve.fromQQ);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "tarot")
+	{
+		const string strReply = strNickName + "切到的牌是:" + tarotCard[Randint(1,44)];
+		AddMsgToQueue(strReply, eve.fromQQ);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "fate")
+	{
+		char cstrDate[100] = {};
+		time_t time_tTime = 0;
+		time(&time_tTime);
+		tm tmTime{};
+		localtime_s(&tmTime, &time_tTime);
+		strftime(cstrDate, 100, "%F", &tmTime);
+		if (JRFATE.count(eve.fromQQ) && JRFATE[eve.fromQQ].Date == cstrDate)
+		{
+			const string strReply = strNickName + "今天的命运是:" + tarotCard[JRFATE[eve.fromQQ].FATEVal];
+
+			AddMsgToQueue(strReply, eve.fromQQ);
+		}
+		else
+		{
+			
+			int iFATE = Randint(1, 44);
+			JRFATE[eve.fromQQ].Date = cstrDate;
+			JRFATE[eve.fromQQ].FATEVal = iFATE;
+			const string strReply(strNickName + "今天的命运是:" + tarotCard[iFATE]);
 
 			AddMsgToQueue(strReply, eve.fromQQ);
 		}
@@ -1448,11 +1522,17 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	{
 		if (isalpha(eve.message[intMsgCnt]))
 		{
-			AddMsgToQueue("命令输入错误!", eve.fromQQ);
+			//AddMsgToQueue("命令输入错误!", eve.fromQQ);
 		}
 	}
 }
 
+
+
+//
+//
+//
+//
 EVE_GroupMsg_EX(__eventGroupMsg)
 {
 	if (eve.isSystem() || eve.isAnonymous())return;
@@ -1805,6 +1885,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			strname = strip(strname);
 		RD initdice(strinit);
 		const int intFirstTimeRes = initdice.Roll();
+		///
 		if (intFirstTimeRes == Value_Err)
 		{
 			AddMsgToQueue(GlobalMsg["strValueErr"], eve.fromGroup, false);
@@ -1845,6 +1926,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			AddMsgToQueue(GlobalMsg["strUnknownErr"], eve.fromGroup, false);
 			return;
 		}
+		///
 		ilInitList->insert(eve.fromGroup, initdice.intTotal, strname);
 		const string strReply = strname + "的先攻骰点：" + strinit + '=' + to_string(initdice.intTotal);
 		AddMsgToQueue(strReply, eve.fromGroup, false);
@@ -2507,6 +2589,82 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			AddMsgToQueue(strReply, eve.fromGroup, false);
 		}
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "fate")
+	{ 
+		intMsgCnt += 4;
+		while (isspace(strLowerMessage[intMsgCnt]))
+			intMsgCnt++;
+		const string Command = strLowerMessage.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
+		if (Command == "on")
+		{
+			if (getGroupMemberInfo(eve.fromGroup, eve.fromQQ).permissions >= 2)
+			{
+				if (DisabledJRFATEGroup.count(eve.fromGroup))
+				{
+					DisabledJRFATEGroup.erase(eve.fromGroup);
+					AddMsgToQueue("成功在本群中启用FATE!", eve.fromGroup, false);
+				}
+				else
+				{
+					AddMsgToQueue("在本群中FATE没有被禁用!", eve.fromGroup, false);
+				}
+			}
+			else
+			{
+				AddMsgToQueue(GlobalMsg["strPermissionDeniedErr"], eve.fromGroup, false);
+			}
+			return;
+		}
+		if (Command == "off")
+		{
+			if (getGroupMemberInfo(eve.fromGroup, eve.fromQQ).permissions >= 2)
+			{
+				if (!DisabledJRFATEGroup.count(eve.fromGroup))
+				{
+					DisabledJRFATEGroup.insert(eve.fromGroup);
+					AddMsgToQueue("成功在本群中禁用FATE!", eve.fromGroup, false);
+				}
+				else
+				{
+					AddMsgToQueue("在本群中FATE没有被启用!", eve.fromGroup, false);
+				}
+			}
+			else
+			{
+				AddMsgToQueue(GlobalMsg["strPermissionDeniedErr"], eve.fromGroup, false);
+			}
+			return;
+		}
+		if (DisabledJRFATEGroup.count(eve.fromGroup))
+		{
+			AddMsgToQueue("在本群中FATE功能已被禁用", eve.fromGroup, false);
+			return;
+		}
+		char cstrDate[100] = {};
+		time_t time_tTime = 0;
+		time(&time_tTime);
+		tm tmTime{};
+		localtime_s(&tmTime, &time_tTime);
+		strftime(cstrDate, 100, "%F", &tmTime);
+		if (JRFATE.count(eve.fromQQ) && JRFATE[eve.fromQQ].Date == cstrDate)
+		{
+			const string strReply = strNickName + "今天的命运是:" + tarotCard[JRFATE[eve.fromQQ].FATEVal];
+			AddMsgToQueue(strReply, eve.fromGroup, false);
+		}
+		else
+		{
+			int iFATE = Randint(1, 44);
+			JRFATE[eve.fromQQ].Date = cstrDate;
+			JRFATE[eve.fromQQ].FATEVal = iFATE;
+			const string strReply(strNickName + "今天的命运是:" + tarotCard[JRFATE[eve.fromQQ].FATEVal]);
+			AddMsgToQueue(strReply, eve.fromGroup, false);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "tarot")
+	{ 
+		const string strReply(strNickName + "切到的牌是:" + tarotCard[Randint(1,44)]);
+		AddMsgToQueue(strReply, eve.fromGroup, false);
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 	{
 		intMsgCnt += 2;
@@ -3161,11 +3319,17 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	{
 		if (isalpha(eve.message[intMsgCnt]))
 		{
-			AddMsgToQueue("命令输入错误!", eve.fromGroup, false);
+			//AddMsgToQueue("命令输入错误!", eve.fromGroup, false);
 		}
 	}
 }
 
+
+
+//
+//
+//
+//
 EVE_DiscussMsg_EX(__eventDiscussMsg)
 {
 	if (eve.isSystem())return;
@@ -4084,6 +4248,69 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			AddMsgToQueue(strReply, eve.fromDiscuss, false);
 		}
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "fate")
+	{
+		intMsgCnt += 4;
+		while (isspace(strLowerMessage[intMsgCnt]))
+			intMsgCnt++;
+		const string Command = strLowerMessage.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
+		if (Command == "on")
+		{
+			if (DisabledJRFATEDiscuss.count(eve.fromDiscuss))
+			{
+				DisabledJRFATEDiscuss.erase(eve.fromDiscuss);
+				AddMsgToQueue("成功在此多人聊天中启用FATE!", eve.fromDiscuss, false);
+			}
+			else
+			{
+				AddMsgToQueue("在此多人聊天中FATE没有被禁用!", eve.fromDiscuss, false);
+			}
+			return;
+		}
+		if (Command == "off")
+		{
+			if (!DisabledJRFATEDiscuss.count(eve.fromDiscuss))
+			{
+				DisabledJRFATEDiscuss.insert(eve.fromDiscuss);
+				AddMsgToQueue("成功在此多人聊天中禁用FATE!", eve.fromDiscuss, false);
+			}
+			else
+			{
+				AddMsgToQueue("在此多人聊天中FATE没有被启用!", eve.fromDiscuss, false);
+			}
+			return;
+		}
+		if (DisabledJRFATEDiscuss.count(eve.fromDiscuss))
+		{
+			AddMsgToQueue("在此多人聊天中FATE已被禁用!", eve.fromDiscuss, false);
+			return;
+		}
+		char cstrDate[100] = {};
+		time_t time_tTime = 0;
+		time(&time_tTime);
+		tm tmTime{};
+		localtime_s(&tmTime, &time_tTime);
+		strftime(cstrDate, 100, "%F", &tmTime);
+		if (JRFATE.count(eve.fromQQ) && JRFATE[eve.fromQQ].Date == cstrDate)
+		{
+			const string strReply = strNickName + "今天的命运是:" + tarotCard[JRFATE[eve.fromQQ].FATEVal];
+			AddMsgToQueue(strReply, eve.fromDiscuss, false);
+		}
+		else
+		{
+
+			int iFATE=Randint(1,44);
+			JRFATE[eve.fromQQ].Date = cstrDate;
+			JRFATE[eve.fromQQ].FATEVal = iFATE;
+			string strReply(strNickName + "今天的命运是:" + tarotCard[JRFATE[eve.fromQQ].FATEVal]);
+			AddMsgToQueue(strReply, eve.fromDiscuss, false);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "tarot")
+	{
+		const string strReply(strNickName + "切到的牌是:" + tarotCard[Randint(1,44)]);
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 	{
 		intMsgCnt += 2;
@@ -4724,11 +4951,16 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	{
 		if (isalpha(eve.message[intMsgCnt]))
 		{
-			AddMsgToQueue("命令输入错误!", eve.fromDiscuss, false);
+			//AddMsgToQueue("命令输入错误!", eve.fromDiscuss, false);
 		}
 	}
 }
 
+
+//
+//
+//
+//
 EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
 {
 	if (beingOperateQQ != getLoginQQ() && WelcomeMsg.count(fromGroup))
@@ -4764,6 +4996,12 @@ EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
 	return 0;
 }
 
+
+
+//
+//
+//
+//
 EVE_Disable(__eventDisable)
 {
 	Enabled = false;
@@ -4797,6 +5035,20 @@ EVE_Disable(__eventDisable)
 	}
 	ofstreamDisabledJRRPDiscuss.close();
 
+	ofstream ofstreamDisabledFATEGroup(strFileLoc + "DisabledJRFATEGroup.RDconf", ios::out | ios::trunc);
+	for (auto it = DisabledJRFATEGroup.begin(); it != DisabledJRFATEGroup.end(); ++it)
+	{
+		ofstreamDisabledFATEGroup << *it << std::endl;
+	}
+	ofstreamDisabledFATEGroup.close();
+
+	ofstream ofstreamDisabledFATEDiscuss(strFileLoc + "DisabledJRFATEDiscuss.RDconf", ios::out | ios::trunc);
+	for (auto it = DisabledJRFATEDiscuss.begin(); it != DisabledJRFATEDiscuss.end(); ++it)
+	{
+		ofstreamDisabledFATEDiscuss << *it << std::endl;
+	}
+	ofstreamDisabledFATEDiscuss.close();
+
 	ofstream ofstreamDisabledMEGroup(strFileLoc + "DisabledMEGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledMEGroup.begin(); it != DisabledMEGroup.end(); ++it)
 	{
@@ -4858,6 +5110,12 @@ EVE_Disable(__eventDisable)
 		ofstreamJRRP << it->first << " " << it->second.Date << " " << it->second.RPVal << std::endl;
 	}
 	ofstreamJRRP.close();
+	ofstream ofstreamJRFATE(strFileLoc + "JRFATE.RDconf", ios::out | ios::trunc);
+	for (auto it = JRFATE.begin(); it != JRFATE.end(); ++it)
+	{
+		ofstreamJRFATE << it->first << " " << it->second.Date << " " << it->second.FATEVal << std::endl;
+	}
+	ofstreamJRFATE.close();
 	ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
 	for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
 	{
@@ -4886,11 +5144,14 @@ EVE_Disable(__eventDisable)
 	}
 	ofstreamWelcomeMsg.close();
 	JRRP.clear();
+	JRFATE.clear();
 	DefaultDice.clear();
 	DisabledGroup.clear();
 	DisabledDiscuss.clear();
 	DisabledJRRPGroup.clear();
 	DisabledJRRPDiscuss.clear();
+	DisabledJRFATEGroup.clear();
+	DisabledJRFATEDiscuss.clear();
 	DisabledMEGroup.clear();
 	DisabledMEDiscuss.clear();
 	DisabledOBGroup.clear();
@@ -4901,6 +5162,12 @@ EVE_Disable(__eventDisable)
 	return 0;
 }
 
+
+
+//
+//
+//
+//
 EVE_Exit(__eventExit)
 {
 	if (!Enabled)
@@ -4934,7 +5201,19 @@ EVE_Exit(__eventExit)
 		ofstreamDisabledJRRPDiscuss << *it << std::endl;
 	}
 	ofstreamDisabledJRRPDiscuss.close();
+	ofstream ofstreamDisabledFATEGroup(strFileLoc + "DisabledJRFATEGroup.RDconf", ios::out | ios::trunc);
+	for (auto it = DisabledJRFATEGroup.begin(); it != DisabledJRFATEGroup.end(); ++it)
+	{
+		ofstreamDisabledFATEGroup << *it << std::endl;
+	}
+	ofstreamDisabledFATEGroup.close();
 
+	ofstream ofstreamDisabledFATEDiscuss(strFileLoc + "DisabledJRFATEDiscuss.RDconf", ios::out | ios::trunc);
+	for (auto it = DisabledJRFATEDiscuss.begin(); it != DisabledJRFATEDiscuss.end(); ++it)
+	{
+		ofstreamDisabledFATEDiscuss << *it << std::endl;
+	}
+	ofstreamDisabledFATEDiscuss.close();
 	ofstream ofstreamDisabledMEGroup(strFileLoc + "DisabledMEGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledMEGroup.begin(); it != DisabledMEGroup.end(); ++it)
 	{
@@ -4996,6 +5275,12 @@ EVE_Exit(__eventExit)
 		ofstreamJRRP << it->first << " " << it->second.Date << " " << it->second.RPVal << std::endl;
 	}
 	ofstreamJRRP.close();
+	ofstream ofstreamJRFATE(strFileLoc + "JRFATE.RDconf", ios::out | ios::trunc);
+	for (auto it = JRFATE.begin(); it != JRFATE.end(); ++it)
+	{
+		ofstreamJRFATE << it->first << " " << it->second.Date << " " << it->second.FATEVal << std::endl;
+	}
+	ofstreamJRFATE.close();
 	ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
 	for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
 	{
