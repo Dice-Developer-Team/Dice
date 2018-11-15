@@ -105,8 +105,6 @@ map<long long, RP> JRRP;
 map<long long, FATE> JRFATE;
 map<long long, int> DefaultDice;
 map<long long, string> WelcomeMsg;
-map<long long, EVERequestAddFriend*>AddFriendReq;
-map<long long, EVERequestAddGroup*>AddGroupRep;
 set<long long> DisabledGroup;
 set<long long> DisabledDiscuss;
 set<long long> DisabledJRRPGroup;
@@ -145,10 +143,7 @@ map<SourceType, PropType> CharacterProp;
 multimap<long long, long long> ObserveGroup;
 multimap<long long, long long> ObserveDiscuss;
 string strFileLoc;
-//
-//
-//
-//
+
 EVE_Enable(__eventEnable)
 {
 	//Wait until the thread terminates
@@ -1562,58 +1557,6 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 				AdminGroup.insert(group);
 				AddMsgToQueue(GlobalMsg["strAddGroup"], eve.fromQQ);
 			}
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 9) == "passgroup")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			intMsgCnt += 9;
-			while (isspace(strLowerMessage[intMsgCnt]))
-				intMsgCnt++;
-			string strGroup;
-			while (isdigit(strLowerMessage[intMsgCnt]))
-			{
-				strGroup += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			const long long longGroup = stoll(strGroup);
-
-			AddGroupRep[longGroup]->pass();
-			delete AddGroupRep[longGroup];
-			AddGroupRep[longGroup] = nullptr;
-			AddGroupRep.erase(longGroup);
-			AddMsgToQueue(GlobalMsg["strPassGroup"], eve.fromQQ);
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 10) == "passfriend")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			intMsgCnt += 10;
-			while (isspace(strLowerMessage[intMsgCnt]))
-				intMsgCnt++;
-			string strFriend;
-			while (isdigit(strLowerMessage[intMsgCnt]))
-			{
-				strFriend += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			const long long longFriend = stoll(strFriend);
-
-			AddFriendReq[longFriend]->pass();
-			delete AddFriendReq[longFriend];
-			AddFriendReq[longFriend] = nullptr;
-			AddFriendReq.erase(longFriend);
-			AddMsgToQueue(GlobalMsg["strPassFriend"], eve.fromQQ);
 		}
 		else
 		{
@@ -5547,15 +5490,7 @@ EVE_Request_AddFriend(__eventRequestAddFriend)
 	
 	if (BanList.count(fromQQ))
 	{
-		EVERequestAddFriend request(subType, 0, fromQQ, msg, responseFlag);
-		request.fail();
-		
-		strRep += "\n该QQ处于封禁名单内，已拒绝";
-	}
-	else 
-	{
-		EVERequestAddFriend* request=new EVERequestAddFriend(subType, 0, fromQQ, msg, responseFlag);
-		AddFriendReq[fromQQ] = request;
+		strRep += "\n该QQ处于封禁名单内";
 	}
 
 	auto iter = AdminList.begin();
@@ -5574,14 +5509,7 @@ EVE_Request_AddGroup(__eventRequestAddGroup)
 
 		if (BanList.count(fromQQ))
 		{
-			EVERequestAddGroup request(subType,sendTime,fromGroup,fromQQ,msg,responseFlag);
-			strRep += "\n该QQ处于封禁名单内，已拒绝";
-			request.fail();
-		}
-		else
-		{
-			EVERequestAddGroup* request=new EVERequestAddGroup(subType, sendTime, fromGroup, fromQQ, msg, responseFlag);
-			AddGroupRep[fromGroup] = request;
+			strRep += "\n该QQ处于封禁名单内";
 		}
 		
 		auto iter = AdminList.begin();
@@ -5778,21 +5706,6 @@ EVE_Disable(__eventDisable)
 	AdminList.clear();
 	DiceList.clear();
 
-	auto iterFriend = AddFriendReq.begin();
-	while (iterFriend != AddFriendReq.end())
-	{
-		delete iterFriend->second;
-		iterFriend->second = nullptr;
-	}
-	AddFriendReq.clear();
-
-	auto iterGroup = AddGroupRep.begin();
-	while (iterGroup != AddGroupRep.end())
-	{
-		delete iterGroup->second;
-		iterGroup->second = nullptr;
-	}
-	AddGroupRep.clear();
 
 	return 0;
 }
@@ -5803,22 +5716,6 @@ EVE_Exit(__eventExit)
 	ilInitList.reset();
 	RuleGetter.reset();
 	Name.reset();
-
-	auto iterFriend = AddFriendReq.begin();
-	while (iterFriend != AddFriendReq.end())
-	{
-		delete iterFriend->second;
-		iterFriend->second = nullptr;
-	}
-	AddFriendReq.clear();
-
-	auto iterGroup = AddGroupRep.begin();
-	while (iterGroup != AddGroupRep.end())
-	{
-		delete iterGroup->second;
-		iterGroup->second = nullptr;
-	}
-	AddGroupRep.clear();
 
 	ofstream ofstreamBanList(strFileLoc + "BanList.RDconf", ios::out | ios::trunc);
 	for (auto it = BanList.begin(); it != BanList.end(); ++it)
