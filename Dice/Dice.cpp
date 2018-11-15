@@ -105,6 +105,8 @@ map<long long, RP> JRRP;
 map<long long, FATE> JRFATE;
 map<long long, int> DefaultDice;
 map<long long, string> WelcomeMsg;
+map<long long, EVERequestAddFriend*>AddFriendReq;
+map<long long, EVERequestAddGroup*>AddGroupRep;
 set<long long> DisabledGroup;
 set<long long> DisabledDiscuss;
 set<long long> DisabledJRRPGroup;
@@ -417,11 +419,6 @@ EVE_Enable(__eventEnable)
 	return 0;
 }
 
-
-//
-//
-//
-//
 EVE_PrivateMsg_EX(__eventPrivateMsg)
 {
 	if (eve.isSystem())return;
@@ -1571,6 +1568,58 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
 		}
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 9) == "passgroup")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			intMsgCnt += 9;
+			while (isspace(strLowerMessage[intMsgCnt]))
+				intMsgCnt++;
+			string strGroup;
+			while (isdigit(strLowerMessage[intMsgCnt]))
+			{
+				strGroup += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+			const long long longGroup = stoll(strGroup);
+
+			AddGroupRep[longGroup]->pass();
+			delete AddGroupRep[longGroup];
+			AddGroupRep[longGroup] = nullptr;
+			AddGroupRep.erase(longGroup);
+			AddMsgToQueue(GlobalMsg["strPassGroup"], eve.fromQQ);
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 10) == "passfriend")
+	{
+		if (AdminList.count(eve.fromQQ))
+		{
+			intMsgCnt += 10;
+			while (isspace(strLowerMessage[intMsgCnt]))
+				intMsgCnt++;
+			string strFriend;
+			while (isdigit(strLowerMessage[intMsgCnt]))
+			{
+				strFriend += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+			const long long longFriend = stoll(strFriend);
+
+			AddFriendReq[longFriend]->pass();
+			delete AddFriendReq[longFriend];
+			AddFriendReq[longFriend] = nullptr;
+			AddFriendReq.erase(longFriend);
+			AddMsgToQueue(GlobalMsg["strPassFriend"], eve.fromQQ);
+		}
+		else
+		{
+			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
+		}
+	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'd'
 		)
 	{
@@ -1781,18 +1830,26 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	}
 }
 
-
-
-//
-//
-//
-//
 EVE_GroupMsg_EX(__eventGroupMsg)
 {
-	if (eve.isSystem() || eve.isAnonymous())return;
+	if  (eve.isAnonymous())return;
+	if (eve.isSystem())
+	{
+		string target = '(' + to_string(getLoginQQ()) + ") 被管理员禁言";
+		if (eve.message.find(target))
+		{
+			setGroupLeave(eve.fromGroup);
+			auto iter = AdminGroup.begin();
+			while (iter != AdminGroup.end())
+			{
+				AddMsgToQueue("骰子在群" + to_string(eve.fromGroup) + "中被禁言，已自动退群", *iter, false);
+				iter++;
+			}
+		}
+	}
 	if (BanList.count(eve.fromQQ))
 	{
-		AddMsgToQueue(GlobalMsg["strBanned"], eve.fromQQ);
+		AddMsgToQueue(GlobalMsg["strBanned"], eve.fromGroup);
 		return;
 	}
 	init(eve.message);
@@ -3804,18 +3861,12 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	}
 }
 
-
-
-//
-//
-//
-//
 EVE_DiscussMsg_EX(__eventDiscussMsg)
 {
 	if (eve.isSystem())return;
 	if (BanList.count(eve.fromQQ))
 	{
-		AddMsgToQueue(GlobalMsg["strBanned"], eve.fromQQ);
+		AddMsgToQueue(GlobalMsg["strBanned"], eve.fromDiscuss);
 		return;
 	}
 	init(eve.message);
@@ -5440,8 +5491,6 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		}
 	}
 }
-
-
 EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
 {
 	if (beingOperateQQ != getLoginQQ() && WelcomeMsg.count(fromGroup))
@@ -5476,7 +5525,6 @@ EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
 	}
 	return 0;
 }
-
 EVE_System_GroupMemberDecrease(__eventGroupMemberDecrease)
 {
 	//被踢出
@@ -5485,32 +5533,37 @@ EVE_System_GroupMemberDecrease(__eventGroupMemberDecrease)
 		auto iter = AdminGroup.begin();
 		while (iter != AdminGroup.end())
 		{
-			AddMsgToQueue(".autoban " + to_string(fromQQ), *iter, false);
+			AddMsgToQueue(".autoban " + to_string(fromQQ)+" 理由：踢出骰子", *iter, false);
 			iter++;
 		}
-
-		string strWarn =to_string(fromQQ)+"将本骰子踢出" + to_string(fromGroup);
-		auto p = AdminList.begin();
-		while (p != AdminList.end())
-		{
-			AddMsgToQueue(strWarn,*p);
-			p++;
-		}
-		
 	}
 
 	return 0;
 }
 EVE_Request_AddFriend(__eventRequestAddFriend)
 {
-	string strRep = to_string(fromQQ) + "请求加为好友。\n附言：" + msg;
+	string strRep = to_string(fromQQ) + "请求加为好友。\n附言：" + msg+" responseFlag:"+*responseFlag;
+
+	
+	if (BanList.count(fromQQ))
+	{
+		EVERequestAddFriend request(subType, 0, fromQQ, msg, responseFlag);
+		request.fail();
+		
+		strRep += "\n该QQ处于封禁名单内，已拒绝";
+	}
+	else 
+	{
+		EVERequestAddFriend* request=new EVERequestAddFriend(subType, 0, fromQQ, msg, responseFlag);
+		AddFriendReq[fromQQ] = request;
+	}
+
 	auto iter = AdminList.begin();
 	while (iter != AdminList.end())
 	{
 		AddMsgToQueue(strRep, *iter);
 		iter++;
 	}
-
 	return 0;
 }
 EVE_Request_AddGroup(__eventRequestAddGroup)
@@ -5518,6 +5571,19 @@ EVE_Request_AddGroup(__eventRequestAddGroup)
 	if (subType == 2) 
 	{
 		string strRep = to_string(fromQQ) + "邀请加入群" + to_string(fromGroup);
+
+		if (BanList.count(fromQQ))
+		{
+			EVERequestAddGroup request(subType,sendTime,fromGroup,fromQQ,msg,responseFlag);
+			strRep += "\n该QQ处于封禁名单内，已拒绝";
+			request.fail();
+		}
+		else
+		{
+			EVERequestAddGroup* request=new EVERequestAddGroup(subType, sendTime, fromGroup, fromQQ, msg, responseFlag);
+			AddGroupRep[fromGroup] = request;
+		}
+		
 		auto iter = AdminList.begin();
 		while (iter != AdminList.end())
 		{
@@ -5525,6 +5591,7 @@ EVE_Request_AddGroup(__eventRequestAddGroup)
 			iter++;
 		}
 	}
+
 	return 0;
 }
 EVE_Disable(__eventDisable)
@@ -5533,6 +5600,7 @@ EVE_Disable(__eventDisable)
 	ilInitList.reset();
 	RuleGetter.reset();
 	Name.reset();
+
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
 	{
@@ -5710,6 +5778,22 @@ EVE_Disable(__eventDisable)
 	AdminList.clear();
 	DiceList.clear();
 
+	auto iterFriend = AddFriendReq.begin();
+	while (iterFriend != AddFriendReq.end())
+	{
+		delete iterFriend->second;
+		iterFriend->second = nullptr;
+	}
+	AddFriendReq.clear();
+
+	auto iterGroup = AddGroupRep.begin();
+	while (iterGroup != AddGroupRep.end())
+	{
+		delete iterGroup->second;
+		iterGroup->second = nullptr;
+	}
+	AddGroupRep.clear();
+
 	return 0;
 }
 EVE_Exit(__eventExit)
@@ -5719,6 +5803,22 @@ EVE_Exit(__eventExit)
 	ilInitList.reset();
 	RuleGetter.reset();
 	Name.reset();
+
+	auto iterFriend = AddFriendReq.begin();
+	while (iterFriend != AddFriendReq.end())
+	{
+		delete iterFriend->second;
+		iterFriend->second = nullptr;
+	}
+	AddFriendReq.clear();
+
+	auto iterGroup = AddGroupRep.begin();
+	while (iterGroup != AddGroupRep.end())
+	{
+		delete iterGroup->second;
+		iterGroup->second = nullptr;
+	}
+	AddGroupRep.clear();
 
 	ofstream ofstreamBanList(strFileLoc + "BanList.RDconf", ios::out | ios::trunc);
 	for (auto it = BanList.begin(); it != BanList.end(); ++it)

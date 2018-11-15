@@ -92,6 +92,10 @@ std::map<std::string, std::string> GlobalMsg
 	{ "strAddGroup","成功将该QQ群加入同步列表" },
 	{ "strDeleteGroup","成功将该QQ群移出同步列表" },
 	{ "strBanAdmin","请不要封禁骰子管理员" },
+{ "strPassFriend","已同意好友申请" },
+{ "strPassGroup","已同意入群申请" },
+{ "strDenyFriend","已拒绝好友申请" },
+{ "strDenyGroup","已拒绝入群申请" },
 	{"strHlpMsg" , Dice_Short_Ver + "\n" +
 	R"(请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
 掷骰指令请查看文档https://docs.qq.com/doc/DY0VXTUxIR1daa3Fa
