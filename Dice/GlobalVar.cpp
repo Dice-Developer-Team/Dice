@@ -80,18 +80,6 @@ std::map<std::string, std::string> GlobalMsg
 	{"strProp", "{0}的{1}属性值为{2}"},
 	{"strStErr", "格式错误:请参考帮助文档获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
-	{ "strBanned", "最后祝您身体健康，再见" },
-	{"strNoAuth","该指令需要骰子的管理权限！"},
-	{ "strAlreadyBanned","该QQ已被封禁！" },
-	{ "strNotBanned","该QQ未被封禁" },
-	{ "strUnBan","该QQ被解除封禁" },
-	{ "strSuccessfullyBanned","该QQ已加入封禁名单！" },
-	{ "strAutoBan","自动同步封禁名单！" },
-	{ "strAddDice","成功将该骰子加入同步列表" },
-	{ "strDeleteDice","成功将该骰子移出同步列表" },
-	{ "strAddGroup","成功将该QQ群加入同步列表" },
-	{ "strDeleteGroup","成功将该QQ群移出同步列表" },
-	{ "strBanAdmin","请不要封禁骰子管理员" },
 	{"strHlpMsg" , Dice_Short_Ver + "\n" +
 	R"(请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
 掷骰指令请查看文档https://docs.qq.com/doc/DY0VXTUxIR1daa3Fa

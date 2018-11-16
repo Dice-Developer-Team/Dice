@@ -20,7 +20,7 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <Windows.h>
+#include <windows.h>
 #include <string>
 #include <iostream>
 #include <map>
@@ -102,26 +102,19 @@ std::string getName(long long QQ, long long GroupID = 0)
 }
 
 map<long long, RP> JRRP;
-map<long long, FATE> JRFATE;
 map<long long, int> DefaultDice;
 map<long long, string> WelcomeMsg;
 set<long long> DisabledGroup;
 set<long long> DisabledDiscuss;
 set<long long> DisabledJRRPGroup;
 set<long long> DisabledJRRPDiscuss;
-set<long long> DisabledJRFATEGroup;
-set<long long> DisabledJRFATEDiscuss;
 set<long long> DisabledMEGroup;
 set<long long> DisabledMEDiscuss;
 set<long long> DisabledHELPGroup;
 set<long long> DisabledHELPDiscuss;
 set<long long> DisabledOBGroup;
 set<long long> DisabledOBDiscuss;
-set<long long>AdminList;
-set<long long>BanList;
 unique_ptr<Initlist> ilInitList;
-set<long long>AdminGroup;
-set<long long>DiceList;
 
 struct SourceType
 {
@@ -210,26 +203,6 @@ EVE_Enable(__eventEnable)
 		}
 	}
 	ifstreamDisabledJRRPDiscuss.close();
-	ifstream ifstreamDisabledFATEGroup(strFileLoc + "DisabledJRFATEGroup.RDconf");
-	if (ifstreamDisabledFATEGroup)
-	{
-		long long Group;
-		while (ifstreamDisabledFATEGroup >> Group)
-		{
-			DisabledJRFATEGroup.insert(Group);
-		}
-	}
-	ifstreamDisabledFATEGroup.close();
-	ifstream ifstreamDisabledFATEDiscuss(strFileLoc + "DisabledJRFATEDiscuss.RDconf");
-	if (ifstreamDisabledFATEDiscuss)
-	{
-		long long Discuss;
-		while (ifstreamDisabledFATEDiscuss >> Discuss)
-		{
-			DisabledJRFATEDiscuss.insert(Discuss);
-		}
-	}
-	ifstreamDisabledFATEDiscuss.close();
 	ifstream ifstreamDisabledMEGroup(strFileLoc + "DisabledMEGroup.RDconf");
 	if (ifstreamDisabledMEGroup)
 	{
@@ -324,19 +297,6 @@ EVE_Enable(__eventEnable)
 		}
 	}
 	ifstreamJRRP.close();
-	ifstream ifstreamJRFATE(strFileLoc + "JRFATE.RDconf");
-	if (ifstreamJRFATE)
-	{
-		long long QQ;
-		int Val;
-		string strDate;
-		while (ifstreamJRFATE >> QQ >> strDate >> Val)
-		{
-			JRFATE[QQ].Date = strDate;
-			JRFATE[QQ].FATEVal = Val;
-		}
-	}
-	ifstreamJRFATE.close();
 	ifstream ifstreamDefault(strFileLoc + "Default.RDconf");
 	if (ifstreamDefault)
 	{
@@ -363,46 +323,7 @@ EVE_Enable(__eventEnable)
 		}
 	}
 	ifstreamWelcomeMsg.close();
-	ifstream ifstreamAdminList(strFileLoc + "AdminList.RDconf");
-	if (ifstreamAdminList)
-	{
-		long long Admin;
-		while (ifstreamAdminList >> Admin)
-		{
-			AdminList.insert(Admin);
-		}
-	}
-	ifstreamAdminList.close();
-	ifstream ifstreamAdminGroup(strFileLoc + "AdminGroup.RDconf");
-	if (ifstreamAdminGroup)
-	{
-		long long Group;
-		while (ifstreamAdminGroup >> Group)
-		{
-			AdminGroup.insert(Group);
-		}
-	}
-	ifstreamAdminGroup.close();
-	ifstream ifstreamBanList(strFileLoc + "BanList.RDconf");
-	if (ifstreamBanList)
-	{
-		long long ban;
-		while (ifstreamBanList >> ban)
-		{
-			BanList.insert(ban);
-		}
-	}
-	ifstreamBanList.close();
-	ifstream ifstreamDiceList(strFileLoc + "DiceList.RDconf");
-	if (ifstreamDiceList)
-	{
-		long long dice;
-		while (ifstreamDiceList >> dice)
-		{
-			DiceList.insert(dice);
-		}
-	}
-	ifstreamDiceList.close();
+
 	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
 	RuleGetter = make_unique<GetRule>();
 	ifstream ifstreamCustomMsg(strFileLoc + "CustomMsg.json");
@@ -417,12 +338,6 @@ EVE_Enable(__eventEnable)
 EVE_PrivateMsg_EX(__eventPrivateMsg)
 {
 	if (eve.isSystem())return;
-
-	if (BanList.count(eve.fromQQ)&&!AdminList.count(eve.fromQQ)&&!DiceList.count(eve.fromQQ))
-	{
-		AddMsgToQueue(GlobalMsg["strBanned"], eve.fromQQ);
-		return;
-	}
 
 	init(eve.message);
 	init2(eve.message);
@@ -864,36 +779,6 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			JRRP[eve.fromQQ].Date = cstrDate;
 			JRRP[eve.fromQQ].RPVal = JRRPRes;
 			const string strReply(strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal));
-
-			AddMsgToQueue(strReply, eve.fromQQ);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "tarot")
-	{
-		const string strReply = strNickName + "切到的牌是:" + tarotCard[Randint(1,44)];
-		AddMsgToQueue(strReply, eve.fromQQ);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "fate")
-	{
-		char cstrDate[100] = {};
-		time_t time_tTime = 0;
-		time(&time_tTime);
-		tm tmTime{};
-		localtime_s(&tmTime, &time_tTime);
-		strftime(cstrDate, 100, "%F", &tmTime);
-		if (JRFATE.count(eve.fromQQ) && JRFATE[eve.fromQQ].Date == cstrDate)
-		{
-			const string strReply = strNickName + "今天的命运是:" + tarotCard[JRFATE[eve.fromQQ].FATEVal];
-
-			AddMsgToQueue(strReply, eve.fromQQ);
-		}
-		else
-		{
-			
-			int iFATE = Randint(1, 44);
-			JRFATE[eve.fromQQ].Date = cstrDate;
-			JRFATE[eve.fromQQ].FATEVal = iFATE;
-			const string strReply(strNickName + "今天的命运是:" + tarotCard[iFATE]);
 
 			AddMsgToQueue(strReply, eve.fromQQ);
 		}
@@ -1360,209 +1245,6 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		}
 		AddMsgToQueue(strReply, eve.fromQQ);
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 9) == "adminlist")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			string reply = "当前管理列表:\n";
-			auto iter = AdminList.begin();
-			while (iter != AdminList.end())
-			{
-				reply += to_string(*iter) + '\n';
-				iter++;
-			}
-			AddMsgToQueue(reply, eve.fromQQ);
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 7) == "banlist")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			string reply = "当前封禁列表:\n";
-			auto iter = BanList.begin();
-			while (iter != BanList.end())
-			{
-				reply += to_string(*iter) + '\n';
-				iter++;
-			}
-			AddMsgToQueue(reply, eve.fromQQ);
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "ban")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			intMsgCnt += 3;
-			while (isspace(strLowerMessage[intMsgCnt]))
-				intMsgCnt++;
-			string strBan;
-			while (isdigit(strLowerMessage[intMsgCnt]))
-			{
-				strBan += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			const long long ban = stoll(strBan);
-
-			if (AdminList.count(ban))
-			{
-				AddMsgToQueue(GlobalMsg["strBanAdmin"], eve.fromQQ);
-				return;
-			}
-
-			if (BanList.count(ban))
-			{
-				AddMsgToQueue(GlobalMsg["strAlreadyBanned"], eve.fromQQ);
-			}
-			else
-			{
-				BanList.insert(ban);
-				AddMsgToQueue(GlobalMsg["strSuccessfullyBanned"], eve.fromQQ);
-			}
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "isban")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			intMsgCnt += 5;
-
-			while (isspace(strLowerMessage[intMsgCnt]))
-				intMsgCnt++;
-
-			string strBan;
-			while (isdigit(strLowerMessage[intMsgCnt]))
-			{
-				strBan += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-
-			const long long ban = stoll(strBan);
-
-			if (BanList.count(ban))
-			{
-				AddMsgToQueue(GlobalMsg["strAlreadyBanned"], eve.fromQQ);
-			}
-			else
-			{
-				AddMsgToQueue(GlobalMsg["strNotBanned"], eve.fromQQ);
-			}
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "unban")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			intMsgCnt += 5;
-
-			while (isspace(strLowerMessage[intMsgCnt]))
-				intMsgCnt++;
-
-			string strBan;
-			while (isdigit(strLowerMessage[intMsgCnt]))
-			{
-				strBan += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-
-			const long long ban = stoll(strBan);
-
-			if (BanList.count(ban))
-			{
-				BanList.erase(ban);
-				AddMsgToQueue(GlobalMsg["strUnBan"], eve.fromQQ);
-			}
-			else
-			{
-				AddMsgToQueue(GlobalMsg["strNotBanned"], eve.fromQQ);
-			}
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "dice")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			intMsgCnt += 4;
-			while (isspace(strLowerMessage[intMsgCnt]))
-				intMsgCnt++;
-
-			string strDice;
-			while (isdigit(strLowerMessage[intMsgCnt]))
-			{
-				strDice += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-
-			const long long dice = stoll(strDice);
-
-			if (DiceList.count(dice))
-			{
-				DiceList.erase(dice);
-				AddMsgToQueue(GlobalMsg["strDeleteDice"], eve.fromQQ);
-			}
-			else
-			{
-				DiceList.insert(dice);
-				AddMsgToQueue(GlobalMsg["strAddDice"], eve.fromQQ);
-			}
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "group")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			intMsgCnt += 5;
-			while (isspace(strLowerMessage[intMsgCnt]))
-				intMsgCnt++;
-
-			string strGroup;
-			while (isdigit(strLowerMessage[intMsgCnt]))
-			{
-				strGroup += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-
-			const long long group = stoll(strGroup);
-
-			if (AdminGroup.count(group))
-			{
-				AdminGroup.erase(group);
-				AddMsgToQueue(GlobalMsg["strDeleteGroup"], eve.fromQQ);
-			}
-			else
-			{
-				AdminGroup.insert(group);
-				AddMsgToQueue(GlobalMsg["strAddGroup"], eve.fromQQ);
-			}
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
-		}
-	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'd'
 		)
 	{
@@ -1776,25 +1458,6 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 EVE_GroupMsg_EX(__eventGroupMsg)
 {
 	if  (eve.isAnonymous())return;
-	if (eve.isSystem())
-	{
-		string target = '(' + to_string(getLoginQQ()) + ") 被管理员禁言";
-		if (eve.message.find(target))
-		{
-			setGroupLeave(eve.fromGroup);
-			auto iter = AdminGroup.begin();
-			while (iter != AdminGroup.end())
-			{
-				AddMsgToQueue("骰子在群" + to_string(eve.fromGroup) + "中被禁言，已自动退群", *iter, false);
-				iter++;
-			}
-		}
-	}
-	if (BanList.count(eve.fromQQ))
-	{
-		AddMsgToQueue(GlobalMsg["strBanned"], eve.fromGroup);
-		return;
-	}
 	init(eve.message);
 	while (isspace(eve.message[0]))
 		eve.message.erase(eve.message.begin());
@@ -2848,82 +2511,6 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			AddMsgToQueue(strReply, eve.fromGroup, false);
 		}
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "fate")
-	{ 
-		intMsgCnt += 4;
-		while (isspace(strLowerMessage[intMsgCnt]))
-			intMsgCnt++;
-		const string Command = strLowerMessage.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
-		if (Command == "on")
-		{
-			if (getGroupMemberInfo(eve.fromGroup, eve.fromQQ).permissions >= 2)
-			{
-				if (DisabledJRFATEGroup.count(eve.fromGroup))
-				{
-					DisabledJRFATEGroup.erase(eve.fromGroup);
-					AddMsgToQueue("成功在本群中启用FATE!", eve.fromGroup, false);
-				}
-				else
-				{
-					AddMsgToQueue("在本群中FATE没有被禁用!", eve.fromGroup, false);
-				}
-			}
-			else
-			{
-				AddMsgToQueue(GlobalMsg["strPermissionDeniedErr"], eve.fromGroup, false);
-			}
-			return;
-		}
-		if (Command == "off")
-		{
-			if (getGroupMemberInfo(eve.fromGroup, eve.fromQQ).permissions >= 2)
-			{
-				if (!DisabledJRFATEGroup.count(eve.fromGroup))
-				{
-					DisabledJRFATEGroup.insert(eve.fromGroup);
-					AddMsgToQueue("成功在本群中禁用FATE!", eve.fromGroup, false);
-				}
-				else
-				{
-					AddMsgToQueue("在本群中FATE没有被启用!", eve.fromGroup, false);
-				}
-			}
-			else
-			{
-				AddMsgToQueue(GlobalMsg["strPermissionDeniedErr"], eve.fromGroup, false);
-			}
-			return;
-		}
-		if (DisabledJRFATEGroup.count(eve.fromGroup))
-		{
-			AddMsgToQueue("在本群中FATE功能已被禁用", eve.fromGroup, false);
-			return;
-		}
-		char cstrDate[100] = {};
-		time_t time_tTime = 0;
-		time(&time_tTime);
-		tm tmTime{};
-		localtime_s(&tmTime, &time_tTime);
-		strftime(cstrDate, 100, "%F", &tmTime);
-		if (JRFATE.count(eve.fromQQ) && JRFATE[eve.fromQQ].Date == cstrDate)
-		{
-			const string strReply = strNickName + "今天的命运是:" + tarotCard[JRFATE[eve.fromQQ].FATEVal];
-			AddMsgToQueue(strReply, eve.fromGroup, false);
-		}
-		else
-		{
-			int iFATE = Randint(1, 44);
-			JRFATE[eve.fromQQ].Date = cstrDate;
-			JRFATE[eve.fromQQ].FATEVal = iFATE;
-			const string strReply(strNickName + "今天的命运是:" + tarotCard[JRFATE[eve.fromQQ].FATEVal]);
-			AddMsgToQueue(strReply, eve.fromGroup, false);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "tarot")
-	{ 
-		const string strReply(strNickName + "切到的牌是:" + tarotCard[Randint(1,44)]);
-		AddMsgToQueue(strReply, eve.fromGroup, false);
-	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 	{
 		intMsgCnt += 2;
@@ -3313,227 +2900,6 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 		AddMsgToQueue(strReply, eve.fromGroup, false);
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 7) == "autoban")
-	{
-		if (DiceList.count(eve.fromQQ))
-		{
-			intMsgCnt += 7;
-			while (isspace(strLowerMessage[intMsgCnt]))
-				intMsgCnt++;
-			string strBan;
-			while (isdigit(strLowerMessage[intMsgCnt]))
-			{
-				strBan += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			const long long ban = stoll(strBan);
-			BanList.insert(ban);
-			AddMsgToQueue(GlobalMsg["strAutoBan"],eve.fromGroup,false);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 9) == "adminlist")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			string reply = "当前管理列表:\n";
-			auto iter = AdminList.begin();
-			while (iter != AdminList.end())
-			{
-				reply += to_string(*iter) + '\n';
-				iter++;
-			}
-			AddMsgToQueue(reply, eve.fromGroup, false);
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromGroup, false);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 7) == "banlist")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			string reply = "当前封禁列表:\n";
-			auto iter = BanList.begin();
-			while (iter != BanList.end())
-			{
-				reply += to_string(*iter) + '\n';
-				iter++;
-			}
-			AddMsgToQueue(reply, eve.fromGroup, false);
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromGroup, false);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "ban")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			intMsgCnt += 3;
-			while (isspace(strLowerMessage[intMsgCnt]))
-				intMsgCnt++;
-			string strBan;
-			while (isdigit(strLowerMessage[intMsgCnt]))
-			{
-				strBan += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			const long long ban = stoll(strBan);
-
-			if (AdminList.count(ban))
-			{
-				AddMsgToQueue(GlobalMsg["strBanAdmin"], eve.fromGroup, false);
-				return;
-			}
-
-			if (BanList.count(ban))
-			{
-				AddMsgToQueue(GlobalMsg["strAlreadyBanned"], eve.fromGroup, false);
-			}
-			else
-			{
-				BanList.insert(ban);
-				AddMsgToQueue(GlobalMsg["strSuccessfullyBanned"], eve.fromGroup, false);
-			}
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "isban")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			intMsgCnt += 5;
-
-			while (isspace(strLowerMessage[intMsgCnt]))
-				intMsgCnt++;
-
-			string strBan;
-			while (isdigit(strLowerMessage[intMsgCnt]))
-			{
-				strBan += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-
-			const long long ban = stoll(strBan);
-
-			if (BanList.count(ban))
-			{
-				AddMsgToQueue(GlobalMsg["strAlreadyBanned"], eve.fromGroup, false);
-			}
-			else
-			{
-				AddMsgToQueue(GlobalMsg["strNotBanned"], eve.fromGroup, false);
-			}
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromQQ);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "unban")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			intMsgCnt += 5;
-
-			while (isspace(strLowerMessage[intMsgCnt]))
-				intMsgCnt++;
-
-			string strBan;
-			while (isdigit(strLowerMessage[intMsgCnt]))
-			{
-				strBan += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-
-			const long long ban = stoll(strBan);
-
-			if (BanList.count(ban))
-			{
-				BanList.erase(ban);
-				AddMsgToQueue(GlobalMsg["strUnBan"], eve.fromGroup, false);
-			}
-			else
-			{
-				AddMsgToQueue(GlobalMsg["strNotBanned"], eve.fromGroup, false);
-			}
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromGroup, false);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "dice")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			intMsgCnt += 4;
-			while (isspace(strLowerMessage[intMsgCnt]))
-				intMsgCnt++;
-
-			string strDice;
-			while (isdigit(strLowerMessage[intMsgCnt]))
-			{
-				strDice += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-
-			const long long dice = stoll(strDice);
-
-			if (DiceList.count(dice))
-			{
-				DiceList.erase(dice);
-				AddMsgToQueue(GlobalMsg["strDeleteDice"], eve.fromGroup, false);
-			}
-			else
-			{
-				DiceList.insert(dice);
-				AddMsgToQueue(GlobalMsg["strAddDice"], eve.fromGroup, false);
-			}
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromGroup, false);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "group")
-	{
-		if (AdminList.count(eve.fromQQ))
-		{
-			intMsgCnt += 5;
-			while (isspace(strLowerMessage[intMsgCnt]))
-				intMsgCnt++;
-
-			string strGroup;
-			while (isdigit(strLowerMessage[intMsgCnt]))
-			{
-				strGroup += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-
-			const long long group = stoll(strGroup);
-
-			if (AdminGroup.count(group))
-			{
-				AdminGroup.erase(group);
-				AddMsgToQueue(GlobalMsg["strDeleteGroup"], eve.fromGroup, false);
-			}
-			else
-			{
-				AdminGroup.insert(group);
-				AddMsgToQueue(GlobalMsg["strAddGroup"], eve.fromGroup, false);
-			}
-		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strNoAuth"], eve.fromGroup, false);
-		}
-	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'h'
 		|| strLowerMessage[intMsgCnt] == 'd')
 	{
@@ -3807,11 +3173,6 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 EVE_DiscussMsg_EX(__eventDiscussMsg)
 {
 	if (eve.isSystem())return;
-	if (BanList.count(eve.fromQQ))
-	{
-		AddMsgToQueue(GlobalMsg["strBanned"], eve.fromDiscuss);
-		return;
-	}
 	init(eve.message);
 	string strAt = "[CQ:at,qq=" + to_string(getLoginQQ()) + "]";
 	if (eve.message.substr(0, 6) == "[CQ:at")
@@ -4727,69 +4088,6 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			AddMsgToQueue(strReply, eve.fromDiscuss, false);
 		}
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "fate")
-	{
-		intMsgCnt += 4;
-		while (isspace(strLowerMessage[intMsgCnt]))
-			intMsgCnt++;
-		const string Command = strLowerMessage.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
-		if (Command == "on")
-		{
-			if (DisabledJRFATEDiscuss.count(eve.fromDiscuss))
-			{
-				DisabledJRFATEDiscuss.erase(eve.fromDiscuss);
-				AddMsgToQueue("成功在此多人聊天中启用FATE!", eve.fromDiscuss, false);
-			}
-			else
-			{
-				AddMsgToQueue("在此多人聊天中FATE没有被禁用!", eve.fromDiscuss, false);
-			}
-			return;
-		}
-		if (Command == "off")
-		{
-			if (!DisabledJRFATEDiscuss.count(eve.fromDiscuss))
-			{
-				DisabledJRFATEDiscuss.insert(eve.fromDiscuss);
-				AddMsgToQueue("成功在此多人聊天中禁用FATE!", eve.fromDiscuss, false);
-			}
-			else
-			{
-				AddMsgToQueue("在此多人聊天中FATE没有被启用!", eve.fromDiscuss, false);
-			}
-			return;
-		}
-		if (DisabledJRFATEDiscuss.count(eve.fromDiscuss))
-		{
-			AddMsgToQueue("在此多人聊天中FATE已被禁用!", eve.fromDiscuss, false);
-			return;
-		}
-		char cstrDate[100] = {};
-		time_t time_tTime = 0;
-		time(&time_tTime);
-		tm tmTime{};
-		localtime_s(&tmTime, &time_tTime);
-		strftime(cstrDate, 100, "%F", &tmTime);
-		if (JRFATE.count(eve.fromQQ) && JRFATE[eve.fromQQ].Date == cstrDate)
-		{
-			const string strReply = strNickName + "今天的命运是:" + tarotCard[JRFATE[eve.fromQQ].FATEVal];
-			AddMsgToQueue(strReply, eve.fromDiscuss, false);
-		}
-		else
-		{
-
-			int iFATE=Randint(1,44);
-			JRFATE[eve.fromQQ].Date = cstrDate;
-			JRFATE[eve.fromQQ].FATEVal = iFATE;
-			string strReply(strNickName + "今天的命运是:" + tarotCard[JRFATE[eve.fromQQ].FATEVal]);
-			AddMsgToQueue(strReply, eve.fromDiscuss, false);
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "tarot")
-	{
-		const string strReply(strNickName + "切到的牌是:" + tarotCard[Randint(1,44)]);
-		AddMsgToQueue(strReply, eve.fromDiscuss, false);
-	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 	{
 		intMsgCnt += 2;
@@ -5468,60 +4766,8 @@ EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
 	}
 	return 0;
 }
-EVE_System_GroupMemberDecrease(__eventGroupMemberDecrease)
-{
-	//被踢出
-	if (beingOperateQQ == getLoginQQ())
-	{
-		auto iter = AdminGroup.begin();
-		while (iter != AdminGroup.end())
-		{
-			AddMsgToQueue(".autoban " + to_string(fromQQ)+" 理由：踢出骰子", *iter, false);
-			iter++;
-		}
-	}
 
-	return 0;
-}
-EVE_Request_AddFriend(__eventRequestAddFriend)
-{
-	string strRep = to_string(fromQQ) + "请求加为好友。\n附言：" + msg+" responseFlag:"+*responseFlag;
 
-	
-	if (BanList.count(fromQQ))
-	{
-		strRep += "\n该QQ处于封禁名单内";
-	}
-
-	auto iter = AdminList.begin();
-	while (iter != AdminList.end())
-	{
-		AddMsgToQueue(strRep, *iter);
-		iter++;
-	}
-	return 0;
-}
-EVE_Request_AddGroup(__eventRequestAddGroup)
-{
-	if (subType == 2) 
-	{
-		string strRep = to_string(fromQQ) + "邀请加入群" + to_string(fromGroup);
-
-		if (BanList.count(fromQQ))
-		{
-			strRep += "\n该QQ处于封禁名单内";
-		}
-		
-		auto iter = AdminList.begin();
-		while (iter != AdminList.end())
-		{
-			AddMsgToQueue(strRep, *iter);
-			iter++;
-		}
-	}
-
-	return 0;
-}
 EVE_Disable(__eventDisable)
 {
 	Enabled = false;
@@ -5556,19 +4802,6 @@ EVE_Disable(__eventDisable)
 	}
 	ofstreamDisabledJRRPDiscuss.close();
 
-	ofstream ofstreamDisabledFATEGroup(strFileLoc + "DisabledJRFATEGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledJRFATEGroup.begin(); it != DisabledJRFATEGroup.end(); ++it)
-	{
-		ofstreamDisabledFATEGroup << *it << std::endl;
-	}
-	ofstreamDisabledFATEGroup.close();
-
-	ofstream ofstreamDisabledFATEDiscuss(strFileLoc + "DisabledJRFATEDiscuss.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledJRFATEDiscuss.begin(); it != DisabledJRFATEDiscuss.end(); ++it)
-	{
-		ofstreamDisabledFATEDiscuss << *it << std::endl;
-	}
-	ofstreamDisabledFATEDiscuss.close();
 
 	ofstream ofstreamDisabledMEGroup(strFileLoc + "DisabledMEGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledMEGroup.begin(); it != DisabledMEGroup.end(); ++it)
@@ -5631,12 +4864,6 @@ EVE_Disable(__eventDisable)
 		ofstreamJRRP << it->first << " " << it->second.Date << " " << it->second.RPVal << std::endl;
 	}
 	ofstreamJRRP.close();
-	ofstream ofstreamJRFATE(strFileLoc + "JRFATE.RDconf", ios::out | ios::trunc);
-	for (auto it = JRFATE.begin(); it != JRFATE.end(); ++it)
-	{
-		ofstreamJRFATE << it->first << " " << it->second.Date << " " << it->second.FATEVal << std::endl;
-	}
-	ofstreamJRFATE.close();
 	ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
 	for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
 	{
@@ -5664,36 +4891,14 @@ EVE_Disable(__eventDisable)
 		ofstreamWelcomeMsg << it->first << " " << it->second << std::endl;
 	}
 	ofstreamWelcomeMsg.close();
-	ofstream ofstreamBanList(strFileLoc + "BanList.RDconf", ios::out | ios::trunc);
-	for (auto it = BanList.begin(); it != BanList.end(); ++it)
-	{
-		ofstreamBanList << *it << std::endl;
-	}
-	ofstreamBanList.close();
 
-	ofstream ofstreamAdminGroup(strFileLoc + "AdminGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = AdminGroup.begin(); it != AdminGroup.end(); ++it)
-	{
-		ofstreamAdminGroup << *it << std::endl;
-	}
-	ofstreamAdminGroup.close();
-
-	ofstream ofstreamDiceList(strFileLoc + "DiceList.RDconf", ios::out | ios::trunc);
-	for (auto it = DiceList.begin(); it != DiceList.end(); ++it)
-	{
-		ofstreamDiceList << *it << std::endl;
-	}
-	ofstreamDiceList.close();
 
 	JRRP.clear();
-	JRFATE.clear();
 	DefaultDice.clear();
 	DisabledGroup.clear();
 	DisabledDiscuss.clear();
 	DisabledJRRPGroup.clear();
 	DisabledJRRPDiscuss.clear();
-	DisabledJRFATEGroup.clear();
-	DisabledJRFATEDiscuss.clear();
 	DisabledMEGroup.clear();
 	DisabledMEDiscuss.clear();
 	DisabledOBGroup.clear();
@@ -5701,10 +4906,6 @@ EVE_Disable(__eventDisable)
 	ObserveGroup.clear();
 	ObserveDiscuss.clear();
 	strFileLoc.clear();
-	BanList.clear();
-	AdminGroup.clear();
-	AdminList.clear();
-	DiceList.clear();
 
 
 	return 0;
@@ -5716,27 +4917,6 @@ EVE_Exit(__eventExit)
 	ilInitList.reset();
 	RuleGetter.reset();
 	Name.reset();
-
-	ofstream ofstreamBanList(strFileLoc + "BanList.RDconf", ios::out | ios::trunc);
-	for (auto it = BanList.begin(); it != BanList.end(); ++it)
-	{
-		ofstreamBanList << *it << std::endl;
-	}
-	ofstreamBanList.close();
-
-	ofstream ofstreamAdminGroup(strFileLoc + "AdminGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = AdminGroup.begin(); it != AdminGroup.end(); ++it)
-	{
-		ofstreamAdminGroup << *it << std::endl;
-	}
-	ofstreamAdminGroup.close();
-
-	ofstream ofstreamDiceList(strFileLoc + "DiceList.RDconf", ios::out | ios::trunc);
-	for (auto it = DiceList.begin(); it != DiceList.end(); ++it)
-	{
-		ofstreamDiceList << *it << std::endl;
-	}
-	ofstreamDiceList.close();
 
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
@@ -5764,19 +4944,9 @@ EVE_Exit(__eventExit)
 		ofstreamDisabledJRRPDiscuss << *it << std::endl;
 	}
 	ofstreamDisabledJRRPDiscuss.close();
-	ofstream ofstreamDisabledFATEGroup(strFileLoc + "DisabledJRFATEGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledJRFATEGroup.begin(); it != DisabledJRFATEGroup.end(); ++it)
-	{
-		ofstreamDisabledFATEGroup << *it << std::endl;
-	}
-	ofstreamDisabledFATEGroup.close();
+	
 
-	ofstream ofstreamDisabledFATEDiscuss(strFileLoc + "DisabledJRFATEDiscuss.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledJRFATEDiscuss.begin(); it != DisabledJRFATEDiscuss.end(); ++it)
-	{
-		ofstreamDisabledFATEDiscuss << *it << std::endl;
-	}
-	ofstreamDisabledFATEDiscuss.close();
+	
 	ofstream ofstreamDisabledMEGroup(strFileLoc + "DisabledMEGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledMEGroup.begin(); it != DisabledMEGroup.end(); ++it)
 	{
@@ -5838,12 +5008,7 @@ EVE_Exit(__eventExit)
 		ofstreamJRRP << it->first << " " << it->second.Date << " " << it->second.RPVal << std::endl;
 	}
 	ofstreamJRRP.close();
-	ofstream ofstreamJRFATE(strFileLoc + "JRFATE.RDconf", ios::out | ios::trunc);
-	for (auto it = JRFATE.begin(); it != JRFATE.end(); ++it)
-	{
-		ofstreamJRFATE << it->first << " " << it->second.Date << " " << it->second.FATEVal << std::endl;
-	}
-	ofstreamJRFATE.close();
+	
 	ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
 	for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
 	{
