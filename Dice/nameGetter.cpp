@@ -8,20 +8,20 @@
 using namespace std;
 using namespace CQ;
 
-const string NameTable = "NICKNAME";
-const string CreateTable = "create table " + NameTable 
-									+	"(QQ  int  NOT NULL,"
-									+ "GROUP  int  NOT NULL,"
-									+ "NAME text NOT NULL,"
-									+"primary key  (QQ,GROUP));";
+#define NICK_TABLE_NAME "nickname"
+#define NICK_TABLE_DEFINE "create table " NICK_TABLE_NAME \
+				"(qqid      int     NOT NULL," \
+				"groupid    int     NOT NULL," \
+				"name       text    NOT NULL," \
+				"primary    key    (QQID,GROUPID));"
 
 nameGetter * nameGetter::instance = nullptr;
 
 nameGetter::nameGetter()noexcept
 {
 	dbManager *db = dbManager::getInstance();
-	int retCode = db->registerTable(NameTable, CreateTable);
-	is_no_sql_mode = retCode != SQLITE_OK;
+	int retCode = db->registerTable(NICK_TABLE_NAME, NICK_TABLE_DEFINE);
+	noSQL = retCode;
 	nameCache = new map<pair<long long, long long>, string>();
 	if (nameGetter::instance != nullptr)
 	{
@@ -47,13 +47,12 @@ std::string nameGetter::getNickName(const long long fromQQ, const long long from
 	auto iter = nameCache->find(pair<long long,long long>(fromQQ,fromGroup));
 	if (iter != nameCache->end())
 	{
-		sendPrivateMsg(475442458, iter->second.c_str());
 		return iter->second;
 	}
 	else
 	{
 		string name="pink fluffy unicorn";
-		if (is_no_sql_mode)
+		if (noSQL)
 		{
 			name = getDefaultName(fromQQ, fromGroup);
 			nameCache->insert(std::pair<std::pair<long long, long long>, std::string>
@@ -61,19 +60,22 @@ std::string nameGetter::getNickName(const long long fromQQ, const long long from
 		}
 		else
 		{
-			ostringstream searchCmd(std::ostringstream::ate);
-			searchCmd << "SELECT * FROM " << NameTable
-				<< " where QQ =" << fromQQ
-				<< " and GROUP =" << fromGroup;
-			std::string str_nick_endcoded;
-			char * pchar_err_message = nullptr;
-			int ret_code = sqlite3_exec(db, searchCmd.str().c_str(), &sqlite3_callback_query_name, (void*)&str_nick_endcoded, &pchar_err_message);
-			if (ret_code == SQLITE_OK) 
+			ostringstream selectCmd(std::ostringstream::ate);
+			selectCmd << "SELECT * FROM " NICK_TABLE_NAME " where qqid =" << fromQQ << " and groupid =" << fromGroup;
+			std::string nickEncoded;
+			char * errMsg = nullptr;
+			int ret = sqlite3_exec(db, selectCmd.str().c_str(), 
+													&sqlite3_callback_query_name,
+													(void*)&nickEncoded, 
+													&errMsg);
+
+			if (ret == SQLITE_OK) 
 			{
-				if (str_nick_endcoded.length() > 0) 
+				if (nickEncoded.length() > 0) 
 				{
-					name=base64_decode(str_nick_endcoded);
-					nameCache->insert(std::pair<std::pair<int64_t, int64_t>, std::string>(std::pair<int64_t, int64_t>(fromQQ, fromGroup), name));
+					name=base64_decode(nickEncoded);
+					nameCache->insert(std::pair<std::pair<int64_t, int64_t>, std::string>
+						(std::pair<int64_t, int64_t>(fromQQ, fromGroup), name));
 				}
 				else {
 					name = getDefaultName(fromQQ, fromGroup);
@@ -82,7 +84,7 @@ std::string nameGetter::getNickName(const long long fromQQ, const long long from
 			}
 			else 
 			{
-				is_no_sql_mode = true;
+				noSQL = true;
 			}
 
 		}
@@ -115,32 +117,32 @@ bool nameGetter::setNickName( std::string & nickname, const long long fromQQ, co
 	}
 
 	//fresh db
-	if (!is_no_sql_mode) {
+	if (!noSQL) {
 		string enCodeName = base64_encode(nickname);
-		ostringstream command(std::ostringstream::ate);
-		command << "SELECT * FROM " << NameTable << " where QQ = " << fromQQ << " and Group= " << fromGroup;
+		ostringstream selectCmd(std::ostringstream::ate);
+		selectCmd << "SELECT * FROM " NICK_TABLE_NAME " where qqid =" << fromQQ << " and groupid =" << fromGroup;
 	
 		std::string str_nick_endcoded;
 		char * pchar_err_message = nullptr;
-		int ret_code = sqlite3_exec(db, command.str().c_str(), &sqlite3_callback_query_name, (void*)&str_nick_endcoded, &pchar_err_message);
+		int ret_code = sqlite3_exec(db, selectCmd.str().c_str(), &sqlite3_callback_query_name, (void*)&str_nick_endcoded, &pchar_err_message);
 		
 		if (ret_code == SQLITE_OK) {
 			if (str_nick_endcoded.length() > 0) {
-				std::ostringstream ostrs_sql_command_2(std::ostringstream::ate);
-				ostrs_sql_command_2<<"update " << NameTable<< " set "
-												<< " name ='" << enCodeName << "'"
-												<< " where QQ =" << fromQQ << " and Group =" << fromGroup;
-				int ret_code_2 = sqlite3_exec(db, ostrs_sql_command_2.str().c_str(), &dbManager::sqlite3_callback, (void*)&i_data_database_update, &pchar_err_message);
+				std::ostringstream updateCmd(std::ostringstream::ate);
+				updateCmd.str("update " NICK_TABLE_NAME " set ");
+				updateCmd << " name ='" << enCodeName << "'"
+				<< " where qqid =" << fromQQ << " and groupid =" << fromGroup;
+				int ret_code_2 = sqlite3_exec(db, updateCmd.str().c_str(), &dbManager::sqlite3_callback, (void*)&i_data_database_update, &pchar_err_message);
 				if (!ret_code_2)
 					return true;
 				else
 					return false;
 			}
 			else {
-				std::ostringstream ostrs_sql_command_2(std::ostringstream::ate);
-				ostrs_sql_command_2<<"insert into " << NameTable<< " values ( "
-												<< fromQQ << ", " << fromGroup << ", '" << enCodeName << "'" << ");";
-				int ret_code_2 = sqlite3_exec(db, ostrs_sql_command_2.str().c_str(), &dbManager::sqlite3_callback, (void*)&i_data_database_update, &pchar_err_message);
+				std::ostringstream insertCmd(std::ostringstream::ate);
+				insertCmd.str("insert into " NICK_TABLE_NAME " values ( ");
+				insertCmd << fromQQ << ", " << fromGroup << ", '" << enCodeName << "'" << ");";
+				int ret_code_2 = sqlite3_exec(db, insertCmd.str().c_str(), &dbManager::sqlite3_callback, (void*)&i_data_database_update, &pchar_err_message);
 				if (!ret_code_2) 
 					return true;
 				else
@@ -149,7 +151,7 @@ bool nameGetter::setNickName( std::string & nickname, const long long fromQQ, co
 		}
 		else
 		{
-			is_no_sql_mode = true;
+			noSQL = true;
 			return true;
 		}
 	}

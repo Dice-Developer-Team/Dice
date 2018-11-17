@@ -13,7 +13,7 @@ public:
 	bool setNickName( std::string& nickname,const long long fromQQ, const long long fromGroup = 0);
 private:
 	std::map<std::pair<long long, long long>, std::string> * nameCache;
-	bool is_no_sql_mode = false;
+	bool noSQL = false;
 	static int sqlite3_callback_query_name(void * data, int argc, char ** argv, char ** azColName);
 	std::string getDefaultName(const long long fromQQ, const long long fromGroup = 0);
 };
