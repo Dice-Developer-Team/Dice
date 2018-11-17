@@ -51,7 +51,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strDisabledErr", "命令无法执行:机器人已在此群中被关闭!"},
 	{"strMEDisabledErr", "管理员已在此群中禁用.me命令!"},
 	{"strHELPDisabledErr", "管理员已在此群中禁用.help命令!"},
-	{"strNameDelErr", "没有设置名称,无法删除!"},
+	{"strNameDelErr", "出现了奇妙错误，删除名字失败了！"},
 	{"strValueErr", "掷骰表达式输入错误!"},
 	{"strInputErr", "命令或掷骰表达式输入错误!"},
 	{"strUnknownErr", "发生了未知错误!"},

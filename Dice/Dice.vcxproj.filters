@@ -75,6 +75,12 @@
     <ClCompile Include="EncodingConvert.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="dbManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="nameGetter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -176,9 +182,18 @@
     <ClInclude Include="EncodingConvert.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="dbManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="nameGetter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="CQP.lib">
+      <Filter>资源文件</Filter>
+    </Library>
+    <Library Include="lib_Release\sqlite3.lib">
       <Filter>资源文件</Filter>
     </Library>
   </ItemGroup>

@@ -118,7 +118,7 @@
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <AdditionalIncludeDirectories>..\CQSDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Code\Git\Dice\Dice\include;..\CQSDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </ClCompile>
     <Link>
@@ -130,6 +130,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <ForceSymbolReferences>%(ForceSymbolReferences)</ForceSymbolReferences>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/nodefaultlib:"MSVCRT" %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -204,6 +205,7 @@
     <ClCompile Include="..\CQSDKCPP\CQTools.cpp" />
     <ClCompile Include="..\CQSDKCPP\Unpack.cpp" />
     <ClCompile Include="CustomMsg.cpp" />
+    <ClCompile Include="dbManager.cpp" />
     <ClCompile Include="Dice.cpp" />
     <ClCompile Include="DiceMsgSend.cpp" />
     <ClCompile Include="dllmain.cpp" />
@@ -211,6 +213,7 @@
     <ClCompile Include="GetRule.cpp" />
     <ClCompile Include="GlobalVar.cpp" />
     <ClCompile Include="InitList.cpp" />
+    <ClCompile Include="nameGetter.cpp" />
     <ClCompile Include="NameStorage.cpp" />
     <ClCompile Include="RD.cpp" />
     <ClCompile Include="StorageBase.cpp" />
@@ -239,12 +242,14 @@
     <ClInclude Include="..\CQSDK\Unpack.h" />
     <ClInclude Include="APPINFO.h" />
     <ClInclude Include="CustomMsg.h" />
+    <ClInclude Include="dbManager.h" />
     <ClInclude Include="DiceMsgSend.h" />
     <ClInclude Include="EncodingConvert.h" />
     <ClInclude Include="GetRule.h" />
     <ClInclude Include="GlobalVar.h" />
     <ClInclude Include="InitList.h" />
     <ClInclude Include="json.hpp" />
+    <ClInclude Include="nameGetter.h" />
     <ClInclude Include="NameStorage.h" />
     <ClInclude Include="RD.h" />
     <ClInclude Include="RDConstant.h" />
@@ -252,6 +257,7 @@
   </ItemGroup>
   <ItemGroup>
     <Library Include="CQP.lib" />
+    <Library Include="lib_Release\sqlite3.lib" />
   </ItemGroup>
   <ItemGroup>
     <None Include="com.w4123.dice.json" />

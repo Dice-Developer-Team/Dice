@@ -42,6 +42,9 @@
 #include "GetRule.h"
 #include "DiceMsgSend.h"
 #include "CustomMsg.h"
+
+#include"dbManager.h"
+#include"nameGetter.h"
 /*
 TODO:
 1. en可变成长检定
@@ -57,49 +60,9 @@ TODO:
 using namespace std;
 using namespace CQ;
 
-unique_ptr<NameStorage> Name;
 unique_ptr<GetRule> RuleGetter;
-
-std::string strip(std::string origin)
-{
-	bool flag = true;
-	while (flag)
-	{
-		flag = false;
-		if (origin[0] == '!' || origin[0] == '.')
-		{
-			origin.erase(origin.begin());
-			flag = true;
-		}
-		else if (origin.substr(0, 2) == "！" || origin.substr(0, 2) == "。")
-		{
-			origin.erase(origin.begin());
-			origin.erase(origin.begin());
-			flag = true;
-		}
-	}
-	return origin;
-}
-
-std::string getName(long long QQ, long long GroupID = 0)
-{
-	if (GroupID)
-	{
-		/*群*/
-		if (GroupID < 1000000000)
-		{
-			return strip(Name->get(GroupID, QQ).empty()
-				             ? (getGroupMemberInfo(GroupID, QQ).GroupNick.empty()
-					                ? getStrangerInfo(QQ).nick
-					                : getGroupMemberInfo(GroupID, QQ).GroupNick)
-				             : Name->get(GroupID, QQ));
-		}
-		/*讨论组*/
-		return strip(Name->get(GroupID, QQ).empty() ? getStrangerInfo(QQ).nick : Name->get(GroupID, QQ));
-	}
-	/*私聊*/
-	return strip(getStrangerInfo(QQ).nick);
-}
+dbManager* dbCtrl;
+nameGetter* nameCtrl;
 
 map<long long, RP> JRRP;
 map<long long, int> DefaultDice;
@@ -146,23 +109,13 @@ EVE_Enable(__eventEnable)
 	thread msgSendThread(SendMsg);
 	msgSendThread.detach();
 	strFileLoc = getAppDirectory();
+	//db
+	dbCtrl = new dbManager();
+	nameCtrl = new nameGetter();
 	/*
 	* 名称存储-创建与读取
 	*/
-	Name = make_unique<NameStorage>(strFileLoc + "Name.dicedb");
-	ifstream ifstreamCharacterProp(strFileLoc + "CharacterProp.RDconf");
-	if (ifstreamCharacterProp)
-	{
-		long long QQ, GrouporDiscussID;
-		int Type, Value;
-		string SkillName;
-		while (ifstreamCharacterProp >> QQ >> Type >> GrouporDiscussID >> SkillName >> Value)
-		{
-			CharacterProp[SourceType(QQ, Type, GrouporDiscussID)][SkillName] = Value;
-		}
-	}
-	ifstreamCharacterProp.close();
-
+	
 	ifstream ifstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf");
 	if (ifstreamDisabledGroup)
 	{
@@ -347,7 +300,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	while (isspace(eve.message[intMsgCnt]))
 		intMsgCnt++;
 	eve.message_block();
-	const string strNickName = getName(eve.fromQQ);
+	const string strNickName = nameCtrl->getNickName(eve.fromQQ);
 	string strLowerMessage = eve.message;
 	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), tolower);
 	if (strLowerMessage.substr(intMsgCnt, 4) == "help")
@@ -958,7 +911,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			AddMsgToQueue(GlobalMsg["strMEDisabledErr"], eve.fromQQ);
 			return;
 		}
-		string strReply = getName(eve.fromQQ, llGroupID) + eve.message.substr(intMsgCnt);
+		string strReply = nameCtrl->getNickName(eve.fromQQ, llGroupID) + eve.message.substr(intMsgCnt);
 		const int intSendRes = sendGroupMsg(llGroupID, strReply);
 		if (intSendRes < 0)
 		{
@@ -1480,7 +1433,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	while (isspace(eve.message[intMsgCnt]))
 		intMsgCnt++;
 	eve.message_block();
-	const string strNickName = getName(eve.fromQQ, eve.fromGroup);
+	const string strNickName = nameCtrl->getNickName(eve.fromQQ, eve.fromGroup);
 	string strLowerMessage = eve.message;
 	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), tolower);
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
@@ -1804,7 +1757,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		if (strname.empty())
 			strname = strNickName;
 		else
-			strname = strip(strname);
+			strname = nameCtrl->strip(strname);
 		RD initdice(strinit);
 		const int intFirstTimeRes = initdice.Roll();
 		///
@@ -2197,7 +2150,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			const auto Range = ObserveGroup.equal_range(eve.fromGroup);
 			for (auto it = Range.first; it != Range.second; ++it)
 			{
-				Msg += "\n" + getName(it->second, eve.fromGroup) + "(" + to_string(it->second) + ")";
+				Msg += "\n" + nameCtrl->getNickName(it->second, eve.fromGroup) + "(" + to_string(it->second) + ")";
 			}
 			const string strReply = Msg == "当前的旁观者有:" ? "当前暂无旁观者" : Msg;
 			AddMsgToQueue(strReply, eve.fromGroup, false);
@@ -2522,24 +2475,29 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			AddMsgToQueue(GlobalMsg["strNameTooLongErr"], eve.fromGroup, false);
 			return;
 		}
+		string strReply = "err";
 		if (!name.empty())
 		{
-			Name->set(eve.fromGroup, eve.fromQQ, name);
-			const string strReply = "已将" + strNickName + "的名称更改为" + strip(name);
+			//Name->set(eve.fromGroup, eve.fromQQ, name);
+			if (nameCtrl->setNickName(name, eve.fromQQ, eve.fromGroup))
+			{
+				 strReply = "已将" + strNickName + "的名称更改为" + name;
+			}
 			AddMsgToQueue(strReply, eve.fromGroup, false);
 		}
 		else
 		{
-			if (Name->del(eve.fromGroup, eve.fromQQ))
+			name = "";
+
+			if (nameCtrl->setNickName(name,eve.fromQQ, eve.fromGroup))
 			{
-				const string strReply = "已将" + strNickName + "的名称删除";
-				AddMsgToQueue(strReply, eve.fromGroup, false);
+				strReply = "已将" + strNickName + "的名称删除";
 			}
 			else
 			{
-				const string strReply = strNickName + GlobalMsg["strNameDelErr"];
-				AddMsgToQueue(strReply, eve.fromGroup, false);
+				strReply = strNickName + GlobalMsg["strNameDelErr"];
 			}
+			AddMsgToQueue(strReply, eve.fromGroup, false);
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
@@ -3193,7 +3151,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	while (isspace(eve.message[intMsgCnt]))
 		intMsgCnt++;
 	eve.message_block();
-	const string strNickName = getName(eve.fromQQ, eve.fromDiscuss);
+	const string strNickName = nameCtrl->getNickName(eve.fromQQ, eve.fromDiscuss);
 	string strLowerMessage = eve.message;
 	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), tolower);
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
@@ -3416,7 +3374,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (strname.empty())
 			strname = strNickName;
 		else
-			strname = strip(strname);
+			strname = nameCtrl->strip(strname);
 		RD initdice(strinit);
 		const int intFirstTimeRes = initdice.Roll();
 		if (intFirstTimeRes == Value_Err)
@@ -3785,7 +3743,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			const auto Range = ObserveDiscuss.equal_range(eve.fromDiscuss);
 			for (auto it = Range.first; it != Range.second; ++it)
 			{
-				Msg += "\n" + getName(it->second, eve.fromDiscuss) + "(" + to_string(it->second) + ")";
+				Msg += "\n" + nameCtrl->getNickName(it->second, eve.fromDiscuss) + "(" + to_string(it->second) + ")";
 			}
 			const string strReply = Msg == "当前的旁观者有:" ? "当前暂无旁观者" : Msg;
 			AddMsgToQueue(strReply, eve.fromDiscuss, false);
@@ -4101,13 +4059,14 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		}
 		if (!name.empty())
 		{
-			Name->set(eve.fromDiscuss, eve.fromQQ, name);
-			const string strReply = "已将" + strNickName + "的名称更改为" + strip(name);
+			nameCtrl->setNickName(name,eve.fromQQ,eve.fromDiscuss);
+			const string strReply = "已将" + strNickName + "的名称更改为" + nameCtrl->strip(name);
 			AddMsgToQueue(strReply, eve.fromDiscuss, false);
 		}
 		else
 		{
-			if (Name->del(eve.fromDiscuss, eve.fromQQ))
+			name = "";
+			if (nameCtrl->setNickName(name, eve.fromQQ, eve.fromDiscuss))
 			{
 				const string strReply = "已将" + strNickName + "的名称删除";
 				AddMsgToQueue(strReply, eve.fromDiscuss, false);
@@ -4773,8 +4732,9 @@ EVE_Disable(__eventDisable)
 	Enabled = false;
 	ilInitList.reset();
 	RuleGetter.reset();
-	Name.reset();
-
+	//db
+	if (dbCtrl) delete dbCtrl;
+	if (nameCtrl) delete nameCtrl;
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
 	{
@@ -4916,8 +4876,10 @@ EVE_Exit(__eventExit)
 		return 0;
 	ilInitList.reset();
 	RuleGetter.reset();
-	Name.reset();
 
+	//db
+	if (dbCtrl) delete dbCtrl;
+	if (nameCtrl) delete nameCtrl;
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
 	{
