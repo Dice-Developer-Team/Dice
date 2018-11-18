@@ -1,12 +1,11 @@
 #include "dbManager.h"
 #include"sqlite3.h"
+#include "GlobalVar.h"
 #include <iostream>
 #include<string>
 #include"RDConstant.h"
 
 using namespace std;
-
-const string fileLoc = "./app/"+Dice_name+"/dice.db";
 
 dbManager * dbManager::instance = nullptr;
 
@@ -23,7 +22,7 @@ dbManager * dbManager::getInstance()
 dbManager::dbManager()
 {
 	isDatabaseReady = false;
-	int ret = sqlite3_open(fileLoc.c_str(), &database);
+	int ret = sqlite3_open(strFileLoc.c_str(), &database);
 	if (ret == SQLITE_OK) 
 	{
 		if (dbManager::instance != nullptr) 

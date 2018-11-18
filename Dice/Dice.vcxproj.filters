@@ -22,6 +22,12 @@
     <Filter Include="头文件\nlohmann">
       <UniqueIdentifier>{911e9211-0dd0-42ff-82bc-c6ae90928af6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\SQLite">
+      <UniqueIdentifier>{afa0fcd5-4f35-4c75-b7f0-31667aacf6b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\SQLite">
+      <UniqueIdentifier>{5ad448bc-6de3-4538-b612-aece9f820c18}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dice.cpp">
@@ -80,6 +86,9 @@
     </ClCompile>
     <ClCompile Include="nameGetter.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sqlite3.c">
+      <Filter>源文件\SQLite</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -188,12 +197,12 @@
     <ClInclude Include="nameGetter.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="sqlite3.h">
+      <Filter>头文件\SQLite</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="CQP.lib">
-      <Filter>资源文件</Filter>
-    </Library>
-    <Library Include="lib_Release\sqlite3.lib">
       <Filter>资源文件</Filter>
     </Library>
   </ItemGroup>

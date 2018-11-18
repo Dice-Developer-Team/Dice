@@ -30,7 +30,7 @@
 #error 请使用Win32(x86)模式进行编译
 #endif
 //Version
-static const std::string Dice_name = "com.w4123.dice";
+//static const std::string Dice_name = "com.w4123.dice";
 static const std::string Dice_Ver = "2.3.3(492)";
 static const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
 static const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ +

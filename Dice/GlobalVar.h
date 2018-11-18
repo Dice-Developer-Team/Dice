@@ -36,4 +36,6 @@ extern bool msgSendThreadRunning;
 extern CQ::logger DiceLogger;
 
 extern std::map<std::string, std::string> GlobalMsg;
+
+extern std::string strFileLoc;
 #endif /*__GLOBALVAR__*/

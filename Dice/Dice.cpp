@@ -61,8 +61,8 @@ using namespace std;
 using namespace CQ;
 
 unique_ptr<GetRule> RuleGetter;
-dbManager* dbCtrl;
-nameGetter* nameCtrl;
+unique_ptr<dbManager> dbCtrl;
+unique_ptr<nameGetter> nameCtrl;
 
 map<long long, RP> JRRP;
 map<long long, int> DefaultDice;
@@ -98,7 +98,7 @@ using PropType = map<string, int>;
 map<SourceType, PropType> CharacterProp;
 multimap<long long, long long> ObserveGroup;
 multimap<long long, long long> ObserveDiscuss;
-string strFileLoc;
+
 
 EVE_Enable(__eventEnable)
 {
@@ -110,8 +110,8 @@ EVE_Enable(__eventEnable)
 	msgSendThread.detach();
 	strFileLoc = getAppDirectory();
 	//db
-	dbCtrl = new dbManager();
-	nameCtrl = new nameGetter();
+	dbCtrl = make_unique<dbManager>();
+	nameCtrl = make_unique<nameGetter>();
 	/*
 	* 名称存储-创建与读取
 	*/
@@ -4733,8 +4733,8 @@ EVE_Disable(__eventDisable)
 	ilInitList.reset();
 	RuleGetter.reset();
 	//db
-	if (dbCtrl) delete dbCtrl;
-	if (nameCtrl) delete nameCtrl;
+	dbCtrl.reset();
+	nameCtrl.reset();
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
 	{
@@ -4878,8 +4878,8 @@ EVE_Exit(__eventExit)
 	RuleGetter.reset();
 
 	//db
-	if (dbCtrl) delete dbCtrl;
-	if (nameCtrl) delete nameCtrl;
+	dbCtrl.reset();
+	nameCtrl.reset();
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
 	{

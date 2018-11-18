@@ -31,6 +31,8 @@ bool msgSendThreadRunning = false;
 
 CQ::logger DiceLogger("Dice!");
 
+std::string strFileLoc;
+
 std::map<std::string, std::string> GlobalMsg
 {
 	{"strSetInvalid", "无效的默认骰!请输入1-99999之间的数字!"},

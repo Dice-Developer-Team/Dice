@@ -216,6 +216,7 @@
     <ClCompile Include="nameGetter.cpp" />
     <ClCompile Include="NameStorage.cpp" />
     <ClCompile Include="RD.cpp" />
+    <ClCompile Include="sqlite3.c" />
     <ClCompile Include="StorageBase.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -253,11 +254,11 @@
     <ClInclude Include="NameStorage.h" />
     <ClInclude Include="RD.h" />
     <ClInclude Include="RDConstant.h" />
+    <ClInclude Include="sqlite3.h" />
     <ClInclude Include="StorageBase.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="CQP.lib" />
-    <Library Include="lib_Release\sqlite3.lib" />
   </ItemGroup>
   <ItemGroup>
     <None Include="com.w4123.dice.json" />

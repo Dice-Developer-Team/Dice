@@ -10,7 +10,7 @@ class dbManager
 private:
 	static dbManager * instance;
 	bool isDatabaseReady;
-	sqlite3 * database;
+	sqlite3 * database{};
 public:
 	static sqlite3 * getDatabase();
 	static dbManager * getInstance();
