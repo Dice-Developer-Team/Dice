@@ -1,10 +1,12 @@
 ﻿# Dice!
 QQ Dice Robot For TRPG Based on CoolQ 
 
-[![License](https://img.shields.io/badge/license-AGPLv3-blue.svg)](http://www.gnu.org/licenses)
+[![License](https://img.shields.io/github/license/w4123/Dice.svg)](http://www.gnu.org/licenses)
 [![Build status](https://ci.appveyor.com/api/projects/status/6qm1l31k07dst0rk?svg=true)](https://ci.appveyor.com/project/w4123/dice)
 [![Doc Build status](https://readthedocs.org/projects/dice-for-qq/badge/?badge=latest)](http://docs.kokona.tech)
 [![Downloads](https://img.shields.io/github/downloads/w4123/dice/total.svg)](https://github.com/w4123/Dice/releases)
+[![GitHub contributors](https://img.shields.io/github/contributors/w4123/dice.svg)](https://github.com/w4123/Dice/graphs/contributors)
+[![GitHub last commit](https://img.shields.io/github/last-commit/w4123/dice.svg)](https://github.com/w4123/Dice/commits)
 
 ## 简介
 
@@ -14,8 +16,9 @@ GitHub Page: <http://kokona.tech/>
 
 Doc: <http://docs.kokona.tech/>
 
-Latest Version: [![GitHub tag](https://img.shields.io/github/tag/w4123/dice.svg)](https://github.com/w4123/Dice/releases)
+Latest Stable Release: [![GitHub release](https://img.shields.io/github/release/w4123/dice.svg)](https://github.com/w4123/Dice/releases) [![GitHub Release Date](https://img.shields.io/github/release-date/w4123/dice.svg)](https://github.com/w4123/Dice/releases)
 
+Latest Release: [![GitHub release](https://img.shields.io/github/release-pre/w4123/dice.svg)](https://github.com/w4123/Dice/releases) [![GitHub Release Date](https://img.shields.io/github/release-date-pre/w4123/dice.svg)](https://github.com/w4123/Dice/releases)
 
 ## 开发者
 
