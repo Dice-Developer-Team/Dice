@@ -20,7 +20,7 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <windows.h>
+#include <Windows.h>
 #include <string>
 #include <iostream>
 #include <map>
@@ -38,7 +38,6 @@
 #include "CQTools.h"
 #include "InitList.h"
 #include "GlobalVar.h"
-#include "NameStorage.h"
 #include "GetRule.h"
 #include "DiceMsgSend.h"
 #include "CustomMsg.h"
