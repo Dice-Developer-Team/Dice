@@ -22,6 +22,12 @@
     <Filter Include="头文件\nlohmann">
       <UniqueIdentifier>{911e9211-0dd0-42ff-82bc-c6ae90928af6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\database">
+      <UniqueIdentifier>{fc5562c7-7d7f-4d5d-8b15-f825474f1dba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\database">
+      <UniqueIdentifier>{94eb6446-566b-4d95-908f-45f3a6ca5d97}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dice.cpp">
@@ -74,6 +80,18 @@
     </ClCompile>
     <ClCompile Include="EncodingConvert.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="l5rDice.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="l5rDiceManager.cpp">
+      <Filter>源文件\database</Filter>
+    </ClCompile>
+    <ClCompile Include="nameGetter.cpp">
+      <Filter>源文件\database</Filter>
+    </ClCompile>
+    <ClCompile Include="dbManager.cpp">
+      <Filter>源文件\database</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -176,9 +194,24 @@
     <ClInclude Include="EncodingConvert.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="l5rDice.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="dbManager.h">
+      <Filter>头文件\database</Filter>
+    </ClInclude>
+    <ClInclude Include="l5rDiceManager.h">
+      <Filter>头文件\database</Filter>
+    </ClInclude>
+    <ClInclude Include="nameGetter.h">
+      <Filter>头文件\database</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="CQP.lib">
+      <Filter>资源文件</Filter>
+    </Library>
+    <Library Include="sqlite3\sqlite3.lib">
       <Filter>资源文件</Filter>
     </Library>
   </ItemGroup>

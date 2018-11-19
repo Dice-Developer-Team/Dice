@@ -33,6 +33,8 @@ CQ::logger DiceLogger("Dice!");
 
 std::map<std::string, std::string> GlobalMsg
 {
+	{ "strLFRDontExist","还没扔过骰子呢!" },
+	{ "strDBFailToOpen","连接本地数据库失败，无法读取掷骰信息!" },
 	{"strSetInvalid", "无效的默认骰!请输入1-99999之间的数字!"},
 	{"strSetTooBig", "默认骰过大!请输入1-99999之间的数字!"},
 	{"strSetCannotBeZero", "默认骰不能为零!请输入1-99999之间的数字!"},
