@@ -175,7 +175,7 @@ namespace CQ
 	// 群成员信息
 	class GroupMemberInfo
 	{
-		void Void();
+		//void Void();
 		void setdata(Unpack& u);
 	public:
 		long long Group{};

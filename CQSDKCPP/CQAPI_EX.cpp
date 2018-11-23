@@ -39,7 +39,7 @@ string StrangerInfo::tostring() const
 		+ "}";
 }
 
-void GroupMemberInfo::Void()
+/*void GroupMemberInfo::Void()
 {
 	Group = 0;
 	QQID = 0;
@@ -56,7 +56,7 @@ void GroupMemberInfo::Void()
 	Title = "";
 	ExpireTime = 0;
 	canEditGroupNick = 0;
-}
+}*/
 
 void GroupMemberInfo::setdata(Unpack& u)
 {
@@ -81,11 +81,7 @@ GroupMemberInfo::GroupMemberInfo(Unpack& msg) { setdata(msg); }
 
 GroupMemberInfo::GroupMemberInfo(const char* msg)
 {
-	if (msg[0] == '0')
-	{
-		Void();
-	}
-	else
+	if (msg != nullptr && msg[0] != '\0')
 	{
 		Unpack u(base64_decode(msg));
 		setdata(u);
@@ -95,11 +91,7 @@ GroupMemberInfo::GroupMemberInfo(const char* msg)
 
 GroupMemberInfo::GroupMemberInfo(vector<unsigned char> data)
 {
-	if (data.size() <= 0)
-	{
-		Void();
-	}
-	else
+	if (data.size() != 0)
 	{
 		Unpack u(data);
 		setdata(u);
