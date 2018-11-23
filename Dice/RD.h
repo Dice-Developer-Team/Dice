@@ -208,7 +208,7 @@ private:
 		bool boolContainK = false;
 		for (auto& i : dice)
 		{
-			i = toupper(i);
+			i = toupper(static_cast<unsigned char>(i));
 			if (!isdigit(static_cast<unsigned char>(i)))
 			{
 				if (i == 'D')
@@ -388,11 +388,11 @@ public:
 		{
 			if (i != 'a' && i != 'A')
 			{
-				i = toupper(i);
+				i = toupper(static_cast<unsigned char>(i));
 			}
 			else
 			{
-				i = tolower(i);
+				i = tolower(static_cast<unsigned char>(i));
 			}
 		}
 		if (strDice.empty())
@@ -443,11 +443,11 @@ public:
 		{
 			if (i != 'a' && i != 'A')
 			{
-				i = toupper(i);
+				i = toupper(static_cast<unsigned char>(i));
 			}
 			else
 			{
-				i = tolower(i);
+				i = tolower(static_cast<unsigned char>(i));
 			}
 		}
 		if (strDice.empty())

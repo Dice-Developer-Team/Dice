@@ -347,7 +347,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	eve.message_block();
 	const string strNickName = getName(eve.fromQQ);
 	string strLowerMessage = eve.message;
-	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), tolower);
+	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
 	if (strLowerMessage.substr(intMsgCnt, 4) == "help")
 	{
 		AddMsgToQueue(GlobalMsg["strHlpMsg"], eve.fromQQ);
@@ -788,7 +788,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			intMsgCnt++;
 		string strSearch = eve.message.substr(intMsgCnt);
 		for (auto& n : strSearch)
-			n = toupper(n);
+			n = toupper(static_cast<unsigned char>(n));
 		string strReturn;
 		if (RuleGetter->analyze(strSearch, strReturn))
 		{
@@ -1480,7 +1480,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	eve.message_block();
 	const string strNickName = getName(eve.fromQQ, eve.fromGroup);
 	string strLowerMessage = eve.message;
-	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), tolower);
+	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
 	{
 		intMsgCnt += 3;
@@ -2545,7 +2545,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			intMsgCnt++;
 		string strSearch = eve.message.substr(intMsgCnt);
 		for (auto& n : strSearch)
-			n = toupper(n);
+			n = toupper(static_cast<unsigned char>(n));
 		string strReturn;
 		if (RuleGetter->analyze(strSearch, strReturn))
 		{
@@ -3191,7 +3191,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	eve.message_block();
 	const string strNickName = getName(eve.fromQQ, eve.fromDiscuss);
 	string strLowerMessage = eve.message;
-	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), tolower);
+	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
 	{
 		intMsgCnt += 3;
@@ -4122,7 +4122,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			intMsgCnt++;
 		string strSearch = eve.message.substr(intMsgCnt);
 		for (auto& n : strSearch)
-			n = toupper(n);
+			n = toupper(static_cast<unsigned char>(n));
 		string strReturn;
 		if (RuleGetter->analyze(strSearch, strReturn))
 		{

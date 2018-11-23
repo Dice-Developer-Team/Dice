@@ -95,7 +95,7 @@ bool GetRule::analyze(string& rawStr, string& des)
 		des = GlobalMsg["strRulesFailedErr"];
 		return false;
 	}
-	for (auto& chr : rawStr)chr = toupper(chr);
+	for (auto& chr : rawStr)chr = toupper(static_cast<unsigned char> (chr));
 
 	if (rawStr.find(':') != string::npos)
 	{
