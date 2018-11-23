@@ -52,13 +52,13 @@ private:
 			vBnP.push_back(WW_Dice);
 			std::string strDiceCnt = dice.substr(0, dice.find("a"));
 			for (auto i : strDiceCnt)
-				if (!isdigit(i))
+				if (!isdigit(static_cast<unsigned char>(i)))
 					return Input_Err;
 			if (strDiceCnt.length() > 3 || (strDiceCnt.length() == 3 && strDiceCnt != "100"))
 				return DiceTooBig_Err;
 			std::string strAddVal = dice.substr(dice.find("a") + 1);
 			for (auto i : strAddVal)
-				if (!isdigit(i))
+				if (!isdigit(static_cast<unsigned char>(i)))
 					return Input_Err;
 			if (strAddVal.length() > 2)
 				return AddDiceVal_Err;
@@ -103,7 +103,7 @@ private:
 				strDiceNum = dice.substr(0, dice.length() - 1);
 			for (auto Element : strDiceNum)
 			{
-				if (!isdigit(Element))
+				if (!isdigit(static_cast<unsigned char>(Element)))
 				{
 					return Value_Err;
 				}
@@ -135,7 +135,7 @@ private:
 			if (dice.length() > 2)
 				return DiceTooBig_Err;
 			for (int i = 1; i != dice.length(); i++)
-				if (!isdigit(dice[i]))
+				if (!isdigit(static_cast<unsigned char>(dice[i])))
 					return Input_Err;
 			int intPNum = stoi(dice.substr(1).empty() ? "1" : dice.substr(1));
 			if (dice.length() == 1)
@@ -172,7 +172,7 @@ private:
 			if (dice.length() > 2)
 				return DiceTooBig_Err;
 			for (int i = 1; i != dice.length(); i++)
-				if (!isdigit(dice[i]))
+				if (!isdigit(static_cast<unsigned char>(dice[i])))
 					return Input_Err;
 			int intBNum = stoi(dice.substr(1).empty() ? "1" : dice.substr(1));
 			if (dice.length() == 1)
@@ -209,7 +209,7 @@ private:
 		for (auto& i : dice)
 		{
 			i = toupper(i);
-			if (!isdigit(i))
+			if (!isdigit(static_cast<unsigned char>(i)))
 			{
 				if (i == 'D')
 				{
@@ -320,14 +320,14 @@ private:
 			std::string strDiceCnt = dice.substr(dice.find("D") + 1);
 			for (auto& i : strDiceCnt)
 			{
-				if (!isdigit(i)) return Input_Err;
+				if (!isdigit(static_cast<unsigned char>(i))) return Input_Err;
 			}
 			if (strDiceCnt.length() > 3) return DiceTooBig_Err;
 			const int intDiceCnt = stoi(strDiceCnt);
 			strDiceCnt = dice.substr(0, dice.find("D"));
 			for (auto& i : strDiceCnt)
 			{
-				if (!isdigit(i)) return Input_Err;
+				if (!isdigit(static_cast<unsigned char>(i))) return Input_Err;
 			}
 			if (strDiceCnt.length() > 3) return DiceTooBig_Err;
 			intSum = stoi(strDiceCnt.empty() ? "1" : strDiceCnt) * intDiceCnt;
@@ -336,7 +336,7 @@ private:
 		{
 			for (auto& i : dice)
 			{
-				if (!isdigit(i)) return Input_Err;
+				if (!isdigit(static_cast<unsigned char>(i))) return Input_Err;
 			}
 			if (dice.length() > 3) return DiceTooBig_Err;
 			intSum = stoi(dice);
@@ -357,7 +357,7 @@ private:
 			std::string strDiceCnt = dice.substr(0, dice.find("D"));
 			for (auto& i : strDiceCnt)
 			{
-				if (!isdigit(i)) return Input_Err;
+				if (!isdigit(static_cast<unsigned char>(i))) return Input_Err;
 			}
 			if (strDiceCnt.length() > 3) return DiceTooBig_Err;
 			intSum = stoi(strDiceCnt.empty() ? "1" : strDiceCnt);
@@ -366,7 +366,7 @@ private:
 		{
 			for (auto& i : dice)
 			{
-				if (!isdigit(i)) return Input_Err;
+				if (!isdigit(static_cast<unsigned char>(i))) return Input_Err;
 			}
 			if (dice.length() > 3) return DiceTooBig_Err;
 			intSum = stoi(dice);

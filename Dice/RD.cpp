@@ -57,9 +57,9 @@ inline void init2(string& msg)
 		}
 	}
 
-	while (isspace(msg[0]))
+	while (isspace(static_cast<unsigned char>(msg[0])))
 		msg.erase(msg.begin());
-	while (!msg.empty() && isspace(msg[msg.length() - 1]))
+	while (!msg.empty() && isspace(static_cast<unsigned char>(msg[msg.length() - 1])))
 		msg.erase(msg.end() - 1);
 	if (msg.substr(0, 2) == "¡£")
 	{

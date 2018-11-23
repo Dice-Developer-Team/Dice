@@ -342,7 +342,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	if (eve.message[0] != '.')
 		return;
 	int intMsgCnt = 1;
-	while (isspace(eve.message[intMsgCnt]))
+	while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		intMsgCnt++;
 	eve.message_block();
 	const string strNickName = getName(eve.fromQQ);
@@ -361,14 +361,14 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			intMsgCnt++;
 			boolDetail = true;
 		}
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 
 		int intTmpMsgCnt;
 		for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != eve.message.length() && eve.message[intTmpMsgCnt] != ' ';
 		     intTmpMsgCnt++)
 		{
-			if (!isdigit(strLowerMessage[intTmpMsgCnt]) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
+			if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
 					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
 				&&
 				strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
@@ -379,7 +379,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			}
 		}
 		string strMainDice = strLowerMessage.substr(intMsgCnt, intTmpMsgCnt - intMsgCnt);
-		while (isspace(eve.message[intTmpMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intTmpMsgCnt])))
 			intTmpMsgCnt++;
 		string strReason = eve.message.substr(intTmpMsgCnt);
 
@@ -456,7 +456,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		bool boolAdda10 = true;
 		for (auto i : strFirstDice)
 		{
-			if (!isdigit(i))
+			if (!isdigit(static_cast<unsigned char>(i)))
 			{
 				boolAdda10 = false;
 				break;
@@ -571,14 +571,14 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "sc")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string SanCost = strLowerMessage.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
 		intMsgCnt += SanCost.length();
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string San;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			San += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -598,7 +598,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		}
 		for (const auto& character : SanCost.substr(0, SanCost.find("/")))
 		{
-			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
 				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ);
 				return;
@@ -606,7 +606,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		}
 		for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
 		{
-			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
 				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ);
 				return;
@@ -682,20 +682,20 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strSkillName;
-		while (intMsgCnt != eve.message.length() && !isdigit(eve.message[intMsgCnt]) && !isspace(eve.message[intMsgCnt])
+		while (intMsgCnt != eve.message.length() && !isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])) && !isspace(static_cast<unsigned char>(eve.message[intMsgCnt]))
 		)
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string strCurrentValue;
-		while (isdigit(eve.message[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		{
 			strCurrentValue += eve.message[intMsgCnt];
 			intMsgCnt++;
@@ -784,7 +784,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
 	{
 		intMsgCnt += 5;
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string strSearch = eve.message.substr(intMsgCnt);
 		for (auto& n : strSearch)
@@ -802,7 +802,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "st")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		if (intMsgCnt == strLowerMessage.length())
 		{
@@ -821,10 +821,10 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		if (strLowerMessage.substr(intMsgCnt, 3) == "del")
 		{
 			intMsgCnt += 3;
-			while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
 			string strSkillName;
-			while (intMsgCnt != strLowerMessage.length() && !isspace(strLowerMessage[intMsgCnt]) && !(strLowerMessage[
+			while (intMsgCnt != strLowerMessage.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !(strLowerMessage[
 				intMsgCnt] == '|'))
 			{
 				strSkillName += strLowerMessage[intMsgCnt];
@@ -846,10 +846,10 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		if (strLowerMessage.substr(intMsgCnt, 4) == "show")
 		{
 			intMsgCnt += 4;
-			while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
 			string strSkillName;
-			while (intMsgCnt != strLowerMessage.length() && !isspace(strLowerMessage[intMsgCnt]) && !(strLowerMessage[
+			while (intMsgCnt != strLowerMessage.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !(strLowerMessage[
 				intMsgCnt] == '|'))
 			{
 				strSkillName += strLowerMessage[intMsgCnt];
@@ -879,18 +879,18 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		while (intMsgCnt != strLowerMessage.length())
 		{
 			string strSkillName;
-			while (intMsgCnt != strLowerMessage.length() && !isdigit(strLowerMessage[intMsgCnt]) && !
-				isspace(strLowerMessage[intMsgCnt]) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt]
+			while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
+				isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt]
 				!= ':')
 			{
 				strSkillName += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
 			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-			while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt
 			] == ':')intMsgCnt++;
 			string strSkillVal;
-			while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			{
 				strSkillVal += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
@@ -901,7 +901,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 				break;
 			}
 			CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)][strSkillName] = stoi(strSkillVal);
-			while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
 		}
 		if (boolError)
 		{
@@ -915,21 +915,21 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strGroupID;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strGroupID += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strAction = strLowerMessage.substr(intMsgCnt);
 
 		for (auto i : strGroupID)
 		{
-			if (!isdigit(i))
+			if (!isdigit(static_cast<unsigned char>(i)))
 			{
 				AddMsgToQueue(GlobalMsg["strGroupIDInvalid"], eve.fromQQ);
 				return;
@@ -970,7 +970,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "set")
 	{
 		intMsgCnt += 3;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strDefaultDice = strLowerMessage.substr(intMsgCnt, strLowerMessage.find(" ", intMsgCnt) - intMsgCnt);
 		while (strDefaultDice[0] == '0')
@@ -978,7 +978,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		if (strDefaultDice.empty())
 			strDefaultDice = "100";
 		for (auto charNumElement : strDefaultDice)
-			if (!isdigit(charNumElement))
+			if (!isdigit(static_cast<unsigned char>(charNumElement)))
 			{
 				AddMsgToQueue(GlobalMsg["strSetInvalid"], eve.fromQQ);
 				return;
@@ -1007,10 +1007,10 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		intMsgCnt += 4;
 		if (strLowerMessage[intMsgCnt] == 's')
 			intMsgCnt++;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strNum;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -1038,10 +1038,10 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "dnd")
 	{
 		intMsgCnt += 3;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strNum;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -1079,10 +1079,10 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			intMsgCnt++;
 		if (strLowerMessage[intMsgCnt] == 's')
 			intMsgCnt++;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strNum;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -1111,24 +1111,24 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	{
 		intMsgCnt += 2;
 		string strSkillName;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
-		while (intMsgCnt != strLowerMessage.length() && !isdigit(strLowerMessage[intMsgCnt]) && !
-			isspace(strLowerMessage[intMsgCnt]) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
+			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
 			':')
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-		while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 			':')intMsgCnt++;
 		string strSkillVal;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strSkillVal += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			intMsgCnt++;
 		}
@@ -1179,24 +1179,24 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	{
 		intMsgCnt += 2;
 		string strSkillName;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
-		while (intMsgCnt != strLowerMessage.length() && !isdigit(strLowerMessage[intMsgCnt]) && !
-			isspace(strLowerMessage[intMsgCnt]) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
+			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
 			':')
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-		while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 			':')intMsgCnt++;
 		string strSkillVal;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strSkillVal += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			intMsgCnt++;
 		}
@@ -1253,7 +1253,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			boolDetail = false;
 			intMsgCnt++;
 		}
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string strMainDice;
 		string strReason;
@@ -1267,7 +1267,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 				||
 				strLowerMessage[intTmpMsgCnt] == 'a')
 				tmpContainD = true;
-			if (!isdigit(strLowerMessage[intTmpMsgCnt]) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
+			if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
 					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
 				&&
 				strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
@@ -1280,7 +1280,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		if (tmpContainD)
 		{
 			strMainDice = strLowerMessage.substr(intMsgCnt, intTmpMsgCnt - intMsgCnt);
-			while (isspace(eve.message[intTmpMsgCnt]))
+			while (isspace(static_cast<unsigned char>(eve.message[intTmpMsgCnt])))
 				intTmpMsgCnt++;
 			strReason = eve.message.substr(intTmpMsgCnt);
 		}
@@ -1446,7 +1446,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	}
 	else
 	{
-		if (isalpha(eve.message[intMsgCnt]))
+		if (isalpha(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		{
 			AddMsgToQueue("√¸¡Ó ‰»Î¥ÌŒÛ!", eve.fromQQ);
 		}
@@ -1457,7 +1457,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 {
 	if (eve.isSystem() || eve.isAnonymous())return;
 	init(eve.message);
-	while (eve.message.size()!=0 && isspace(eve.message[0]))
+	while (isspace(static_cast<unsigned char>(eve.message[0])))
 		eve.message.erase(eve.message.begin());
 	string strAt = "[CQ:at,qq=" + to_string(getLoginQQ()) + "]";
 	if (eve.message.substr(0, 6) == "[CQ:at")
@@ -1475,7 +1475,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	if (eve.message[0] != '.')
 		return;
 	int intMsgCnt = 1;
-	while (eve.message.size() != intMsgCnt && isspace(eve.message[intMsgCnt]))
+	while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		intMsgCnt++;
 	eve.message_block();
 	const string strNickName = getName(eve.fromQQ, eve.fromGroup);
@@ -1484,16 +1484,16 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
 	{
 		intMsgCnt += 3;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string Command;
-		while (intMsgCnt != strLowerMessage.length() && !isdigit(strLowerMessage[intMsgCnt]) && !isspace(
-			strLowerMessage[intMsgCnt]))
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isspace(
+			static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			Command += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string QQNum = strLowerMessage.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
 		if (Command == "on")
@@ -1555,10 +1555,10 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	if (strLowerMessage.substr(intMsgCnt, 7) == "dismiss")
 	{
 		intMsgCnt += 7;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string QQNum;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			QQNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -1635,7 +1635,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 7) == "welcome")
 	{
 		intMsgCnt += 7;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		if (getGroupMemberInfo(eve.fromGroup, eve.fromQQ).permissions >= 2)
 		{
@@ -1666,7 +1666,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "st")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		if (intMsgCnt == strLowerMessage.length())
 		{
@@ -1685,10 +1685,10 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		if (strLowerMessage.substr(intMsgCnt, 3) == "del")
 		{
 			intMsgCnt += 3;
-			while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
 			string strSkillName;
-			while (intMsgCnt != strLowerMessage.length() && !isspace(strLowerMessage[intMsgCnt]) && !(strLowerMessage[
+			while (intMsgCnt != strLowerMessage.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !(strLowerMessage[
 				intMsgCnt] == '|'))
 			{
 				strSkillName += strLowerMessage[intMsgCnt];
@@ -1710,10 +1710,10 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		if (strLowerMessage.substr(intMsgCnt, 4) == "show")
 		{
 			intMsgCnt += 4;
-			while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
 			string strSkillName;
-			while (intMsgCnt != strLowerMessage.length() && !isspace(strLowerMessage[intMsgCnt]) && !(strLowerMessage[
+			while (intMsgCnt != strLowerMessage.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !(strLowerMessage[
 				intMsgCnt] == '|'))
 			{
 				strSkillName += strLowerMessage[intMsgCnt];
@@ -1743,18 +1743,18 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		while (intMsgCnt != strLowerMessage.length())
 		{
 			string strSkillName;
-			while (intMsgCnt != strLowerMessage.length() && !isdigit(strLowerMessage[intMsgCnt]) && !
-				isspace(strLowerMessage[intMsgCnt]) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt]
+			while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
+				isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt]
 				!= ':')
 			{
 				strSkillName += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
 			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-			while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt
 			] == ':')intMsgCnt++;
 			string strSkillVal;
-			while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			{
 				strSkillVal += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
@@ -1765,7 +1765,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				break;
 			}
 			CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)][strSkillName] = stoi(strSkillVal);
-			while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
 		}
 		if (boolError)
 		{
@@ -1779,22 +1779,22 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ri")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		string strinit = "D20";
 		if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-')
 		{
 			strinit += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
-			while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		}
-		else if (isdigit(strLowerMessage[intMsgCnt]))
+		else if (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			strinit += '+';
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strinit += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			intMsgCnt++;
 		}
@@ -1853,7 +1853,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	{
 		intMsgCnt += 4;
 		string strReply;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		if (strLowerMessage.substr(intMsgCnt, 3) == "clr")
 		{
 			if (ilInitList->clear(eve.fromGroup))
@@ -1881,14 +1881,14 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			isHidden = true;
 			intMsgCnt += 1;
 		}
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 
 		int intTmpMsgCnt;
 		for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != eve.message.length() && eve.message[intTmpMsgCnt] != ' ';
 		     intTmpMsgCnt++)
 		{
-			if (!isdigit(strLowerMessage[intTmpMsgCnt]) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
+			if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
 					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
 				&&
 				strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
@@ -1899,7 +1899,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			}
 		}
 		string strMainDice = strLowerMessage.substr(intMsgCnt, intTmpMsgCnt - intMsgCnt);
-		while (isspace(eve.message[intTmpMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intTmpMsgCnt])))
 			intTmpMsgCnt++;
 		string strReason = eve.message.substr(intTmpMsgCnt);
 
@@ -1997,7 +1997,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		bool boolAdda10 = true;
 		for (auto i : strFirstDice)
 		{
-			if (!isdigit(i))
+			if (!isdigit(static_cast<unsigned char>(i)))
 			{
 				boolAdda10 = false;
 				break;
@@ -2138,7 +2138,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ob")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		const string Command = strLowerMessage.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
 		if (Command == "on")
@@ -2260,14 +2260,14 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "sc")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string SanCost = strLowerMessage.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
 		intMsgCnt += SanCost.length();
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string San;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			San += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -2285,7 +2285,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 		for (const auto& character : SanCost.substr(0, SanCost.find("/")))
 		{
-			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
 				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
 				return;
@@ -2293,7 +2293,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 		for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
 		{
-			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
 				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
 				return;
@@ -2361,20 +2361,20 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strSkillName;
-		while (intMsgCnt != eve.message.length() && !isdigit(eve.message[intMsgCnt]) && !isspace(eve.message[intMsgCnt])
+		while (intMsgCnt != eve.message.length() && !isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])) && !isspace(static_cast<unsigned char>(eve.message[intMsgCnt]))
 		)
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string strCurrentValue;
-		while (isdigit(eve.message[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		{
 			strCurrentValue += eve.message[intMsgCnt];
 			intMsgCnt++;
@@ -2432,7 +2432,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
 	{
 		intMsgCnt += 4;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		const string Command = strLowerMessage.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
 		if (Command == "on")
@@ -2510,7 +2510,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 	{
 		intMsgCnt += 2;
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string name = eve.message.substr(intMsgCnt);
 		if (name.length() > 50)
@@ -2541,7 +2541,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
 	{
 		intMsgCnt += 5;
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string strSearch = eve.message.substr(intMsgCnt);
 		for (auto& n : strSearch)
@@ -2559,7 +2559,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strAction = strLowerMessage.substr(intMsgCnt);
 		if (strAction == "on")
@@ -2623,7 +2623,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "set")
 	{
 		intMsgCnt += 3;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strDefaultDice = strLowerMessage.substr(intMsgCnt, strLowerMessage.find(" ", intMsgCnt) - intMsgCnt);
 		while (strDefaultDice[0] == '0')
@@ -2631,7 +2631,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		if (strDefaultDice.empty())
 			strDefaultDice = "100";
 		for (auto charNumElement : strDefaultDice)
-			if (!isdigit(charNumElement))
+			if (!isdigit(static_cast<unsigned char>(charNumElement)))
 			{
 				AddMsgToQueue(GlobalMsg["strSetInvalid"], eve.fromGroup, false);
 				return;
@@ -2660,10 +2660,10 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		intMsgCnt += 4;
 		if (strLowerMessage[intMsgCnt] == 's')
 			intMsgCnt++;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strNum;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -2691,10 +2691,10 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "dnd")
 	{
 		intMsgCnt += 3;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strNum;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -2732,10 +2732,10 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			intMsgCnt++;
 		if (strLowerMessage[intMsgCnt] == 's')
 			intMsgCnt++;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strNum;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -2764,24 +2764,24 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	{
 		intMsgCnt += 2;
 		string strSkillName;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
-		while (intMsgCnt != strLowerMessage.length() && !isdigit(strLowerMessage[intMsgCnt]) && !
-			isspace(strLowerMessage[intMsgCnt]) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
+			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
 			':')
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-		while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 			':')intMsgCnt++;
 		string strSkillVal;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strSkillVal += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			intMsgCnt++;
 		}
@@ -2832,24 +2832,24 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	{
 		intMsgCnt += 2;
 		string strSkillName;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
-		while (intMsgCnt != strLowerMessage.length() && !isdigit(strLowerMessage[intMsgCnt]) && !
-			isspace(strLowerMessage[intMsgCnt]) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
+			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
 			':')
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-		while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 			':')intMsgCnt++;
 		string strSkillVal;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strSkillVal += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			intMsgCnt++;
 		}
@@ -2914,7 +2914,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			isHidden = true;
 			intMsgCnt += 1;
 		}
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string strMainDice;
 		string strReason;
@@ -2928,7 +2928,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 				||
 				strLowerMessage[intTmpMsgCnt] == 'a')
 				tmpContainD = true;
-			if (!isdigit(strLowerMessage[intTmpMsgCnt]) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
+			if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
 					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
 				&&
 				strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
@@ -2941,7 +2941,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		if (tmpContainD)
 		{
 			strMainDice = strLowerMessage.substr(intMsgCnt, intTmpMsgCnt - intMsgCnt);
-			while (isspace(eve.message[intTmpMsgCnt]))
+			while (isspace(static_cast<unsigned char>(eve.message[intTmpMsgCnt])))
 				intTmpMsgCnt++;
 			strReason = eve.message.substr(intTmpMsgCnt);
 		}
@@ -3159,7 +3159,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	}
 	else
 	{
-		if (isalpha(eve.message[intMsgCnt]))
+		if (isalpha(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		{
 			AddMsgToQueue("√¸¡Ó ‰»Î¥ÌŒÛ!", eve.fromGroup, false);
 		}
@@ -3186,7 +3186,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	if (eve.message[0] != '.')
 		return;
 	int intMsgCnt = 1;
-	while (isspace(eve.message[intMsgCnt]))
+	while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		intMsgCnt++;
 	eve.message_block();
 	const string strNickName = getName(eve.fromQQ, eve.fromDiscuss);
@@ -3195,16 +3195,16 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
 	{
 		intMsgCnt += 3;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string Command;
-		while (intMsgCnt != strLowerMessage.length() && !isdigit(strLowerMessage[intMsgCnt]) && !isspace(
-			strLowerMessage[intMsgCnt]))
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isspace(
+			static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			Command += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string QQNum = strLowerMessage.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
 		if (Command == "on")
@@ -3252,10 +3252,10 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	if (strLowerMessage.substr(intMsgCnt, 7) == "dismiss")
 	{
 		intMsgCnt += 7;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string QQNum;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			QQNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -3276,7 +3276,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "st")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		if (intMsgCnt == strLowerMessage.length())
 		{
@@ -3295,10 +3295,10 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (strLowerMessage.substr(intMsgCnt, 3) == "del")
 		{
 			intMsgCnt += 3;
-			while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
 			string strSkillName;
-			while (intMsgCnt != strLowerMessage.length() && !isspace(strLowerMessage[intMsgCnt]) && !(strLowerMessage[
+			while (intMsgCnt != strLowerMessage.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !(strLowerMessage[
 				intMsgCnt] == '|'))
 			{
 				strSkillName += strLowerMessage[intMsgCnt];
@@ -3320,10 +3320,10 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (strLowerMessage.substr(intMsgCnt, 4) == "show")
 		{
 			intMsgCnt += 4;
-			while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
 			string strSkillName;
-			while (intMsgCnt != strLowerMessage.length() && !isspace(strLowerMessage[intMsgCnt]) && !(strLowerMessage[
+			while (intMsgCnt != strLowerMessage.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !(strLowerMessage[
 				intMsgCnt] == '|'))
 			{
 				strSkillName += strLowerMessage[intMsgCnt];
@@ -3353,18 +3353,18 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		while (intMsgCnt != strLowerMessage.length())
 		{
 			string strSkillName;
-			while (intMsgCnt != strLowerMessage.length() && !isdigit(strLowerMessage[intMsgCnt]) && !
-				isspace(strLowerMessage[intMsgCnt]) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt]
+			while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
+				isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt]
 				!= ':')
 			{
 				strSkillName += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
 			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-			while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt
 			] == ':')intMsgCnt++;
 			string strSkillVal;
-			while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			{
 				strSkillVal += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
@@ -3375,7 +3375,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 				break;
 			}
 			CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)][strSkillName] = stoi(strSkillVal);
-			while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
 		}
 		if (boolError)
 		{
@@ -3389,22 +3389,22 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ri")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		string strinit = "D20";
 		if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-')
 		{
 			strinit += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
-			while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		}
-		else if (isdigit(strLowerMessage[intMsgCnt]))
+		else if (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			strinit += '+';
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strinit += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			intMsgCnt++;
 		}
@@ -3463,7 +3463,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	{
 		intMsgCnt += 4;
 		string strReply;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		if (strLowerMessage.substr(intMsgCnt, 3) == "clr")
 		{
 			if (ilInitList->clear(eve.fromDiscuss))
@@ -3491,14 +3491,14 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			isHidden = true;
 			intMsgCnt += 1;
 		}
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 
 		int intTmpMsgCnt;
 		for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != eve.message.length() && eve.message[intTmpMsgCnt] != ' ';
 		     intTmpMsgCnt++)
 		{
-			if (!isdigit(strLowerMessage[intTmpMsgCnt]) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
+			if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
 					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
 				&&
 				strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
@@ -3509,7 +3509,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			}
 		}
 		string strMainDice = strLowerMessage.substr(intMsgCnt, intTmpMsgCnt - intMsgCnt);
-		while (isspace(eve.message[intTmpMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intTmpMsgCnt])))
 			intTmpMsgCnt++;
 		string strReason = eve.message.substr(intTmpMsgCnt);
 
@@ -3602,7 +3602,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		bool boolAdda10 = true;
 		for (auto i : strFirstDice)
 		{
-			if (!isdigit(i))
+			if (!isdigit(static_cast<unsigned char>(i)))
 			{
 				boolAdda10 = false;
 				break;
@@ -3740,7 +3740,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ob")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		const string Command = strLowerMessage.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
 		if (Command == "on")
@@ -3841,14 +3841,14 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "sc")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string SanCost = strLowerMessage.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
 		intMsgCnt += SanCost.length();
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string San;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			San += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -3868,7 +3868,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		}
 		for (const auto& character : SanCost.substr(0, SanCost.find("/")))
 		{
-			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
 				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
 				return;
@@ -3876,7 +3876,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		}
 		for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
 		{
-			if (!isdigit(character) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
 			{
 				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
 				return;
@@ -3953,20 +3953,20 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strSkillName;
-		while (intMsgCnt != eve.message.length() && !isdigit(eve.message[intMsgCnt]) && !isspace(eve.message[intMsgCnt])
+		while (intMsgCnt != eve.message.length() && !isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])) && !isspace(static_cast<unsigned char>(eve.message[intMsgCnt]))
 		)
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string strCurrentValue;
-		while (isdigit(eve.message[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		{
 			strCurrentValue += eve.message[intMsgCnt];
 			intMsgCnt++;
@@ -4023,7 +4023,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
 	{
 		intMsgCnt += 4;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		const string Command = strLowerMessage.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
 		if (Command == "on")
@@ -4087,7 +4087,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 	{
 		intMsgCnt += 2;
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string name = eve.message.substr(intMsgCnt);
 		if (name.length() > 50)
@@ -4118,7 +4118,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
 	{
 		intMsgCnt += 5;
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string strSearch = eve.message.substr(intMsgCnt);
 		for (auto& n : strSearch)
@@ -4136,7 +4136,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
 	{
 		intMsgCnt += 2;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strAction = strLowerMessage.substr(intMsgCnt);
 		if (strAction == "on")
@@ -4186,7 +4186,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "set")
 	{
 		intMsgCnt += 3;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strDefaultDice = strLowerMessage.substr(intMsgCnt, strLowerMessage.find(" ", intMsgCnt) - intMsgCnt);
 		while (strDefaultDice[0] == '0')
@@ -4194,7 +4194,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (strDefaultDice.empty())
 			strDefaultDice = "100";
 		for (auto charNumElement : strDefaultDice)
-			if (!isdigit(charNumElement))
+			if (!isdigit(static_cast<unsigned char>(charNumElement)))
 			{
 				AddMsgToQueue(GlobalMsg["strSetInvalid"], eve.fromDiscuss, false);
 				return;
@@ -4223,10 +4223,10 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		intMsgCnt += 4;
 		if (strLowerMessage[intMsgCnt] == 's')
 			intMsgCnt++;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strNum;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -4254,10 +4254,10 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "dnd")
 	{
 		intMsgCnt += 3;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strNum;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -4295,10 +4295,10 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			intMsgCnt++;
 		if (strLowerMessage[intMsgCnt] == 's')
 			intMsgCnt++;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strNum;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -4327,24 +4327,24 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	{
 		intMsgCnt += 2;
 		string strSkillName;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
-		while (intMsgCnt != strLowerMessage.length() && !isdigit(strLowerMessage[intMsgCnt]) && !
-			isspace(strLowerMessage[intMsgCnt]) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
+			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
 			':')
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-		while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 			':')intMsgCnt++;
 		string strSkillVal;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strSkillVal += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			intMsgCnt++;
 		}
@@ -4395,24 +4395,24 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	{
 		intMsgCnt += 2;
 		string strSkillName;
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
-		while (intMsgCnt != strLowerMessage.length() && !isdigit(strLowerMessage[intMsgCnt]) && !
-			isspace(strLowerMessage[intMsgCnt]) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
+			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
 			':')
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-		while (isspace(strLowerMessage[intMsgCnt]) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 			':')intMsgCnt++;
 		string strSkillVal;
-		while (strLowerMessage.size() != intMsgCnt && isdigit(strLowerMessage[intMsgCnt]))
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strSkillVal += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		while (strLowerMessage.size() != intMsgCnt && isspace(strLowerMessage[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			intMsgCnt++;
 		}
@@ -4477,7 +4477,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			isHidden = true;
 			intMsgCnt += 1;
 		}
-		while (isspace(eve.message[intMsgCnt]))
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string strMainDice;
 		string strReason;
@@ -4491,7 +4491,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 				||
 				strLowerMessage[intTmpMsgCnt] == 'a')
 				tmpContainD = true;
-			if (!isdigit(strLowerMessage[intTmpMsgCnt]) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
+			if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
 					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
 				&&
 				strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
@@ -4504,7 +4504,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		if (tmpContainD)
 		{
 			strMainDice = strLowerMessage.substr(intMsgCnt, intTmpMsgCnt - intMsgCnt);
-			while (isspace(eve.message[intTmpMsgCnt]))
+			while (isspace(static_cast<unsigned char>(eve.message[intTmpMsgCnt])))
 				intTmpMsgCnt++;
 			strReason = eve.message.substr(intTmpMsgCnt);
 		}
@@ -4722,7 +4722,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	}
 	else
 	{
-		if (isalpha(eve.message[intMsgCnt]))
+		if (isalpha(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		{
 			AddMsgToQueue("√¸¡Ó ‰»Î¥ÌŒÛ!", eve.fromDiscuss, false);
 		}
