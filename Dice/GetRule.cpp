@@ -142,7 +142,7 @@ bool GetRule::get(const std::string& rule, const std::string& name, std::string&
 		{
 			if (item.count("Content"))
 			{
-				des = UTF8toGBK(item.at("Content").GetS());
+				des = "πÊ‘Ú: " + ruleName + "\n" + UTF8toGBK(item.at("Content").GetS());
 				return true;
 			}
 			if (item.count("Redirect"))
