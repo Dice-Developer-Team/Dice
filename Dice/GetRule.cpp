@@ -28,6 +28,7 @@
 #include <aws/dynamodb/model/GetItemRequest.h>
 #include <aws/core/auth/AWSAuthSigner.h>
 #include <aws/core/auth/AWSCredentialsProvider.h>
+#include <aws/core/client/ClientConfiguration.h>
 #include <CQLogger.h>
 #include <Windows.h>
 #include "GetRule.h"

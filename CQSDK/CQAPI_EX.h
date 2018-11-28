@@ -206,10 +206,10 @@ namespace CQ
 	class StrangerInfo
 	{
 	public:
-		long long QQID{};
-		std::string nick{}; //昵称
-		int sex{}; //0/男性 1/女性 255/未知
-		int age{}; //年龄
+		long long QQID = 0;
+		std::string nick = ""; //昵称
+		int sex = 255; //0/男性 1/女性 255/未知
+		int age = -1; //年龄
 
 		StrangerInfo(const char* msg);
 		StrangerInfo() = default;

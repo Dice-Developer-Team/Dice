@@ -12,14 +12,7 @@ int lasterr;
 
 StrangerInfo::StrangerInfo(const char* msg)
 {
-	if (msg[0] == '\0')
-	{
-		QQID = 0;
-		sex = 255;
-		age = -1;
-		nick = "";
-	}
-	else
+	if (msg != nullptr && msg[0] != '\0')
 	{
 		Unpack p(base64_decode(msg));
 		QQID = p.getLong();
