@@ -10,7 +10,7 @@ QQ Dice Robot For TRPG Based on CoolQ
 
 ## 简介
 
-Dice!是一款基于酷Q的QQ跑团掷骰机器人 交流QQ群:624807593
+Dice!是一款基于酷Q的QQ跑团掷骰机器人 交流QQ群:941980833或624807593(已满)
 
 GitHub Page: <http://kokona.tech/>
 
