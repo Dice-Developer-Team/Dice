@@ -82,6 +82,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
 	{"strHlpMsg" , Dice_Short_Ver + "\n" +
 	R"(请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
+跑团记录着色器: https://logpainter.kokona.tech
 <通用命令>
 .r [掷骰表达式*] [原因]			普通掷骰
 .rs	[掷骰表达式*] [原因]			简化输出
@@ -113,5 +114,5 @@ std::map<std::string, std::string> GlobalMsg
  支持使用K来取较大的几个骰子
  支持使用 个数#表达式 进行多轮掷骰
 **SC表达式为 成功扣San/失败扣San,如:1/1d6
-插件交流/bug反馈/查看源代码请加QQ群624807593)"}
+插件交流/bug反馈/查看源代码请加QQ群941980833或624807593(已满))"}
 };
