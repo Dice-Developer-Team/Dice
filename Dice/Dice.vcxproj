@@ -23,14 +23,14 @@
     <ProjectGuid>{BA051175-B8E8-4104-9DD9-B9E225738C42}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Dice</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
     <ProjectName>com.w4123.dice</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -38,12 +38,12 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -51,7 +51,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -92,6 +92,7 @@
     <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     <Linkage-AWSSDKCPP-Core>static</Linkage-AWSSDKCPP-Core>
     <Linkage-AWSSDKCPP-DynamoDB>static</Linkage-AWSSDKCPP-DynamoDB>
+    <IncludePath>$(ProjectDir)sqlite3;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -130,6 +131,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <ForceSymbolReferences>%(ForceSymbolReferences)</ForceSymbolReferences>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>MSVCRT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -204,6 +206,7 @@
     <ClCompile Include="..\CQSDKCPP\CQTools.cpp" />
     <ClCompile Include="..\CQSDKCPP\Unpack.cpp" />
     <ClCompile Include="CustomMsg.cpp" />
+    <ClCompile Include="dbManager.cpp" />
     <ClCompile Include="Dice.cpp" />
     <ClCompile Include="DiceMsgSend.cpp" />
     <ClCompile Include="dllmain.cpp" />
@@ -211,6 +214,9 @@
     <ClCompile Include="GetRule.cpp" />
     <ClCompile Include="GlobalVar.cpp" />
     <ClCompile Include="InitList.cpp" />
+    <ClCompile Include="l5rDice.cpp" />
+    <ClCompile Include="l5rDiceManager.cpp" />
+    <ClCompile Include="nameGetter.cpp" />
     <ClCompile Include="NameStorage.cpp" />
     <ClCompile Include="RD.cpp" />
     <ClCompile Include="StorageBase.cpp" />
@@ -239,12 +245,16 @@
     <ClInclude Include="..\CQSDK\Unpack.h" />
     <ClInclude Include="APPINFO.h" />
     <ClInclude Include="CustomMsg.h" />
+    <ClInclude Include="dbManager.h" />
     <ClInclude Include="DiceMsgSend.h" />
     <ClInclude Include="EncodingConvert.h" />
     <ClInclude Include="GetRule.h" />
     <ClInclude Include="GlobalVar.h" />
     <ClInclude Include="InitList.h" />
     <ClInclude Include="json.hpp" />
+    <ClInclude Include="l5rDice.h" />
+    <ClInclude Include="l5rDiceManager.h" />
+    <ClInclude Include="nameGetter.h" />
     <ClInclude Include="NameStorage.h" />
     <ClInclude Include="RD.h" />
     <ClInclude Include="RDConstant.h" />
@@ -252,6 +262,7 @@
   </ItemGroup>
   <ItemGroup>
     <Library Include="CQP.lib" />
+    <Library Include="sqlite3\sqlite3.lib" />
   </ItemGroup>
   <ItemGroup>
     <None Include="com.w4123.dice.json" />
