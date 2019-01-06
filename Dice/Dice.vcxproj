@@ -211,6 +211,7 @@
     <ClCompile Include="GetRule.cpp" />
     <ClCompile Include="GlobalVar.cpp" />
     <ClCompile Include="InitList.cpp" />
+    <ClCompile Include="NameGenerator.cpp" />
     <ClCompile Include="NameStorage.cpp" />
     <ClCompile Include="RD.cpp" />
     <ClCompile Include="StorageBase.cpp" />
@@ -245,6 +246,7 @@
     <ClInclude Include="GlobalVar.h" />
     <ClInclude Include="InitList.h" />
     <ClInclude Include="json.hpp" />
+    <ClInclude Include="NameGenerator.h" />
     <ClInclude Include="NameStorage.h" />
     <ClInclude Include="RD.h" />
     <ClInclude Include="RDConstant.h" />

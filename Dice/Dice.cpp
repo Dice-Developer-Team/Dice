@@ -42,6 +42,7 @@
 #include "GetRule.h"
 #include "DiceMsgSend.h"
 #include "CustomMsg.h"
+#include "NameGenerator.h"
 /*
 TODO:
 1. en可变成长检定
@@ -925,7 +926,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
-		string strAction = strLowerMessage.substr(intMsgCnt);
+		string strAction = strip(eve.message.substr(intMsgCnt));
 
 		for (auto i : strGroupID)
 		{
@@ -956,7 +957,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			AddMsgToQueue(GlobalMsg["strMEDisabledErr"], eve.fromQQ);
 			return;
 		}
-		string strReply = getName(eve.fromQQ, llGroupID) + eve.message.substr(intMsgCnt);
+		string strReply = getName(eve.fromQQ, llGroupID) + strAction;
 		const int intSendRes = sendGroupMsg(llGroupID, strReply);
 		if (intSendRes < 0)
 		{
@@ -2507,6 +2508,62 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			AddMsgToQueue(strReply, eve.fromGroup, false);
 		}
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
+	{
+		intMsgCnt += 4;
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+		string strNum;
+		while(isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
+		{
+			strNum += eve.message[intMsgCnt];
+			intMsgCnt++;
+		}
+		if (strNum.size() > 2)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromGroup, false);
+			return;
+		}
+		int intNum = stoi(strNum.empty() ? "1" : strNum);
+		if (intNum > 10)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromGroup, false);
+			return;
+		}
+		if(intNum == 0)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumCannotBeZero"], eve.fromGroup, false);
+			return;
+		}
+		NameGenerator GetName;
+		vector<string> TempNameStorage;
+		while(TempNameStorage.size() != intNum)
+		{
+			string name = GetName.getRandomName();
+			if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
+			{
+				TempNameStorage.push_back(name);
+			}
+		}
+		string strReply = strNickName + "的随机名称:\n";
+		for (auto i = 0; i != TempNameStorage.size(); i++)
+		{
+			strReply.append(TempNameStorage[i]);
+			if (i != TempNameStorage.size() - 1)strReply.append(", ");
+		}
+		AddMsgToQueue(strReply, eve.fromGroup, false);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "nnn")
+	{
+		intMsgCnt += 3;
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+		NameGenerator GetName;
+		const string name = GetName.getRandomName();
+		Name->set(eve.fromGroup, eve.fromQQ, name);
+		const string strReply = "已将" + strNickName + "的名称更改为" + name;
+		AddMsgToQueue(strReply, eve.fromGroup, false);
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 	{
 		intMsgCnt += 2;
@@ -2607,17 +2664,18 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			AddMsgToQueue("在本群中.me命令已被禁用!", eve.fromGroup, false);
 			return;
 		}
-		if (strAction.empty())
-		{
-			AddMsgToQueue("动作不能为空!", eve.fromGroup, false);
-			return;
-		}
 		if (DisabledMEGroup.count(eve.fromGroup))
 		{
 			AddMsgToQueue(GlobalMsg["strMEDisabledErr"], eve.fromGroup, false);
 			return;
 		}
-		const string strReply = strNickName + eve.message.substr(intMsgCnt);
+		strAction = strip(eve.message.substr(intMsgCnt));
+		if (strAction.empty())
+		{
+			AddMsgToQueue("动作不能为空!", eve.fromGroup, false);
+			return;
+		}
+		const string strReply = strNickName + strAction;
 		AddMsgToQueue(strReply, eve.fromGroup, false);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "set")
@@ -4170,17 +4228,18 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			AddMsgToQueue("在本多人聊天中.me命令已被禁用!", eve.fromDiscuss, false);
 			return;
 		}
-		if (strAction.empty())
-		{
-			AddMsgToQueue("动作不能为空!", eve.fromDiscuss, false);
-			return;
-		}
 		if (DisabledMEDiscuss.count(eve.fromDiscuss))
 		{
 			AddMsgToQueue(GlobalMsg["strMEDisabledErr"], eve.fromDiscuss, false);
 			return;
 		}
-		const string strReply = strNickName + eve.message.substr(intMsgCnt);
+		strAction = strip(eve.message.substr(intMsgCnt));
+		if (strAction.empty())
+		{
+			AddMsgToQueue("动作不能为空!", eve.fromDiscuss, false);
+			return;
+		}
+		const string strReply = strNickName + strAction;
 		AddMsgToQueue(strReply, eve.fromDiscuss, false);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "set")
