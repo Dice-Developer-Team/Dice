@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Dice!'
-copyright = u"2018, W4123溯洄"
+copyright = u"2018-2019, W4123溯洄"
 author = u"W4123溯洄"
 
 # The version info for the project you're documenting, acts as replacement for
