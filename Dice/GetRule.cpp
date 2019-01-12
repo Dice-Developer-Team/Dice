@@ -169,33 +169,53 @@ namespace GetRule
 				des = GlobalMsg["strRuleNotFound"];
 				return false;
 			}
-			char *rcvData = new char[preRcvCnt + 1];
-			DWORD rcvCnt;
-			if (!InternetReadFile(hRequest, rcvData, preRcvCnt, &rcvCnt))
+			string finalRcvData;
+			while (preRcvCnt)
 			{
-				des = getLastErrorMsg();
-				InternetCloseHandle(hRequest);
-				InternetCloseHandle(hConnect);
-				InternetCloseHandle(hInternet);
+				char *rcvData = new char[preRcvCnt + 1];
+				DWORD rcvCnt;
+				
+				if (!InternetReadFile(hRequest, rcvData, preRcvCnt, &rcvCnt))
+				{
+					des = getLastErrorMsg();
+					InternetCloseHandle(hRequest);
+					InternetCloseHandle(hConnect);
+					InternetCloseHandle(hInternet);
+					delete[] rcvData;
+					return false;
+				}
+
+				if (rcvCnt != preRcvCnt)
+				{
+					InternetCloseHandle(hRequest);
+					InternetCloseHandle(hConnect);
+					InternetCloseHandle(hInternet);
+					des = GlobalMsg["strUnknownErr"];
+					delete[] rcvData;
+					return false;
+				}
+
+				rcvData[rcvCnt] = '\0';
+				finalRcvData += rcvData;
+
+				if (!InternetQueryDataAvailable(hRequest, &preRcvCnt, 0, 0))
+				{
+					des = getLastErrorMsg();
+					InternetCloseHandle(hRequest);
+					InternetCloseHandle(hConnect);
+					InternetCloseHandle(hInternet);
+					delete[] rcvData;
+					return false;
+				}
+
 				delete[] rcvData;
-				return false;
 			}
-			if (rcvCnt != preRcvCnt)
-			{
-				InternetCloseHandle(hRequest);
-				InternetCloseHandle(hConnect);
-				InternetCloseHandle(hInternet);
-				des = GlobalMsg["strUnknownErr"];
-				delete[] rcvData;
-				return false;
-			}
-			rcvData[rcvCnt] = '\0';
-			des = UTF8toGBK(rcvData);
+
+			des = UTF8toGBK(finalRcvData);
 
 			InternetCloseHandle(hRequest);
 			InternetCloseHandle(hConnect);
 			InternetCloseHandle(hInternet);
-			delete[] rcvData;
 			return true;
 		}
 		des = getLastErrorMsg();
