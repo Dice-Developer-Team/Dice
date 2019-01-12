@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018 w4123溯洄
+ * Copyright (C) 2018-2019 w4123溯洄
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -57,7 +57,9 @@ std::map<std::string, std::string> GlobalMsg
 	{"strValueErr", "掷骰表达式输入错误!"},
 	{"strInputErr", "命令或掷骰表达式输入错误!"},
 	{"strUnknownErr", "发生了未知错误!"},
+	{"strUnableToGetErrorMsg", "无法获取错误信息!"},
 	{"strDiceTooBigErr", "骰娘被你扔出的骰子淹没了"},
+	{"strRequestRetCodeErr", "访问服务器时出现错误! HTTP状态码: {0}"},
 	{"strTypeTooBigErr", "哇!让我数数骰子有多少面先~1...2..."},
 	{"strZeroTypeErr", "这是...!!时空裂(骰娘被骰子产生的时空裂缝卷走了)"},
 	{"strAddDiceValErr", "你这样要让我扔骰子扔到什么时候嘛~(请输入正确的加骰参数:5-10之内的整数)"},

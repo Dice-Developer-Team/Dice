@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018 w4123溯洄
+ * Copyright (C) 2018-2019 w4123溯洄
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -33,6 +33,7 @@
 #include <mutex>
 
 #include "APPINFO.h"
+#include "RandomGenerator.h"
 #include "RD.h"
 #include "CQEVE_ALL.h"
 #include "CQTools.h"
@@ -43,6 +44,7 @@
 #include "DiceMsgSend.h"
 #include "CustomMsg.h"
 #include "NameGenerator.h"
+#include "MsgFormat.h"
 /*
 TODO:
 1. en可变成长检定
@@ -59,7 +61,6 @@ using namespace std;
 using namespace CQ;
 
 unique_ptr<NameStorage> Name;
-unique_ptr<GetRule> RuleGetter;
 
 std::string strip(std::string origin)
 {
@@ -324,7 +325,6 @@ EVE_Enable(__eventEnable)
 	}
 	ifstreamWelcomeMsg.close();
 	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
-	RuleGetter = make_unique<GetRule>();
 	ifstream ifstreamCustomMsg(strFileLoc + "CustomMsg.json");
 	if (ifstreamCustomMsg)
 	{
@@ -635,7 +635,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			return;
 		}
 		string strAns = strNickName + "的Sancheck:\n1D100=";
-		const int intTmpRollRes = Randint(1, 100);
+		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		strAns += to_string(intTmpRollRes);
 
 		if (intTmpRollRes <= intSan)
@@ -731,7 +731,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		}
 
 		string strAns = strNickName + "的" + strSkillName + "增强或成长检定:\n1D100=";
-		const int intTmpRollRes = Randint(1, 100);
+		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		strAns += to_string(intTmpRollRes) + "/" + to_string(intCurrentVal);
 
 		if (intTmpRollRes <= intCurrentVal && intTmpRollRes <= 95)
@@ -741,7 +741,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		else
 		{
 			strAns += " 成功!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "增加1D10=";
-			const int intTmpRollD10 = Randint(1, 10);
+			const int intTmpRollD10 = RandomGenerator::Randint(1, 10);
 			strAns += to_string(intTmpRollD10) + "点,当前为" + to_string(intCurrentVal + intTmpRollD10) + "点";
 			if (strCurrentValue.empty())
 			{
@@ -782,6 +782,50 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			AddMsgToQueue(strReply, eve.fromQQ);
 		}
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
+	{
+		intMsgCnt += 4;
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+		string strNum;
+		while (isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
+		{
+			strNum += eve.message[intMsgCnt];
+			intMsgCnt++;
+		}
+		if (strNum.size() > 2)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromQQ);
+			return;
+		}
+		int intNum = stoi(strNum.empty() ? "1" : strNum);
+		if (intNum > 10)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromQQ);
+			return;
+		}
+		if (intNum == 0)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumCannotBeZero"], eve.fromQQ);
+			return;
+		}
+		vector<string> TempNameStorage;
+		while (TempNameStorage.size() != intNum)
+		{
+			string name = NameGenerator::getRandomName();
+			if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
+			{
+				TempNameStorage.push_back(name);
+			}
+		}
+		string strReply = strNickName + "的随机名称:\n";
+		for (auto i = 0; i != TempNameStorage.size(); i++)
+		{
+			strReply.append(TempNameStorage[i]);
+			if (i != TempNameStorage.size() - 1)strReply.append(", ");
+		}
+		AddMsgToQueue(strReply, eve.fromQQ);
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
 	{
 		intMsgCnt += 5;
@@ -791,7 +835,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		for (auto& n : strSearch)
 			n = toupper(static_cast<unsigned char>(n));
 		string strReturn;
-		if (RuleGetter->analyze(strSearch, strReturn))
+		if (GetRule::analyze(strSearch, strReturn))
 		{
 			AddMsgToQueue(strReturn, eve.fromQQ);
 		}
@@ -1161,7 +1205,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = Randint(1, 100);
+		const int intD100Res = RandomGenerator::Randint(1, 100);
 		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
 			to_string(intSkillVal) + " ";
 		if (intD100Res <= 5)strReply += "大成功";
@@ -1229,7 +1273,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = Randint(1, 100);
+		const int intD100Res = RandomGenerator::Randint(1, 100);
 		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
 			to_string(intSkillVal) + " ";
 		if (intD100Res == 1)strReply += "大成功";
@@ -2319,7 +2363,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			return;
 		}
 		string strAns = strNickName + "的Sancheck:\n1D100=";
-		const int intTmpRollRes = Randint(1, 100);
+		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		strAns += to_string(intTmpRollRes);
 
 		if (intTmpRollRes <= intSan)
@@ -2410,7 +2454,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 
 		string strAns = strNickName + "的" + strSkillName + "增强或成长检定:\n1D100=";
-		const int intTmpRollRes = Randint(1, 100);
+		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		strAns += to_string(intTmpRollRes) + "/" + to_string(intCurrentVal);
 
 		if (intTmpRollRes <= intCurrentVal && intTmpRollRes <= 95)
@@ -2420,7 +2464,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		else
 		{
 			strAns += " 成功!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "增加1D10=";
-			const int intTmpRollD10 = Randint(1, 10);
+			const int intTmpRollD10 = RandomGenerator::Randint(1, 10);
 			strAns += to_string(intTmpRollD10) + "点,当前为" + to_string(intCurrentVal + intTmpRollD10) + "点";
 			if (strCurrentValue.empty())
 			{
@@ -2535,11 +2579,10 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			AddMsgToQueue(GlobalMsg["strNameNumCannotBeZero"], eve.fromGroup, false);
 			return;
 		}
-		NameGenerator GetName;
 		vector<string> TempNameStorage;
 		while(TempNameStorage.size() != intNum)
 		{
-			string name = GetName.getRandomName();
+			string name = NameGenerator::getRandomName();
 			if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
 			{
 				TempNameStorage.push_back(name);
@@ -2558,8 +2601,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		intMsgCnt += 3;
 		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
-		NameGenerator GetName;
-		const string name = GetName.getRandomName();
+		const string name = NameGenerator::getRandomName();
 		Name->set(eve.fromGroup, eve.fromQQ, name);
 		const string strReply = "已将" + strNickName + "的名称更改为" + name;
 		AddMsgToQueue(strReply, eve.fromGroup, false);
@@ -2604,7 +2646,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		for (auto& n : strSearch)
 			n = toupper(static_cast<unsigned char>(n));
 		string strReturn;
-		if (RuleGetter->analyze(strSearch, strReturn))
+		if (GetRule::analyze(strSearch, strReturn))
 		{
 			AddMsgToQueue(strReturn, eve.fromGroup, false);
 		}
@@ -2871,7 +2913,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = Randint(1, 100);
+		const int intD100Res = RandomGenerator::Randint(1, 100);
 		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
 			to_string(intSkillVal) + " ";
 		if (intD100Res <= 5)strReply += "大成功";
@@ -2939,7 +2981,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = Randint(1, 100);
+		const int intD100Res = RandomGenerator::Randint(1, 100);
 		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
 			to_string(intSkillVal) + " ";
 		if (intD100Res == 1)strReply += "大成功";
@@ -3964,7 +4006,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			return;
 		}
 		string strAns = strNickName + "的Sancheck:\n1D100=";
-		const int intTmpRollRes = Randint(1, 100);
+		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		strAns += to_string(intTmpRollRes);
 
 		if (intTmpRollRes <= intSan)
@@ -4058,7 +4100,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			intCurrentVal = stoi(strCurrentValue);
 		}
 		string strAns = strNickName + "的" + strSkillName + "增强或成长检定:\n1D100=";
-		const int intTmpRollRes = Randint(1, 100);
+		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		strAns += to_string(intTmpRollRes) + "/" + to_string(intCurrentVal);
 
 		if (intTmpRollRes <= intCurrentVal && intTmpRollRes <= 95)
@@ -4068,7 +4110,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		else
 		{
 			strAns += " 成功!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "增加1D10=";
-			const int intTmpRollD10 = Randint(1, 10);
+			const int intTmpRollD10 = RandomGenerator::Randint(1, 10);
 			strAns += to_string(intTmpRollD10) + "点,当前为" + to_string(intCurrentVal + intTmpRollD10) + "点";
 			if (strCurrentValue.empty())
 			{
@@ -4142,9 +4184,63 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			AddMsgToQueue(strReply, eve.fromDiscuss, false);
 		}
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
+	{
+		intMsgCnt += 4;
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+		string strNum;
+		while (isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
+		{
+			strNum += eve.message[intMsgCnt];
+			intMsgCnt++;
+		}
+		if (strNum.size() > 2)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromDiscuss, false);
+			return;
+		}
+		int intNum = stoi(strNum.empty() ? "1" : strNum);
+		if (intNum > 10)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromDiscuss, false);
+			return;
+		}
+		if (intNum == 0)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumCannotBeZero"], eve.fromDiscuss, false);
+			return;
+		}
+		vector<string> TempNameStorage;
+		while (TempNameStorage.size() != intNum)
+		{
+			string name = NameGenerator::getRandomName();
+			if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
+			{
+				TempNameStorage.push_back(name);
+			}
+		}
+		string strReply = strNickName + "的随机名称:\n";
+		for (auto i = 0; i != TempNameStorage.size(); i++)
+		{
+			strReply.append(TempNameStorage[i]);
+			if (i != TempNameStorage.size() - 1)strReply.append(", ");
+		}
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "nnn")
+	{
+		intMsgCnt += 3;
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+		const string name = NameGenerator::getRandomName();
+		Name->set(eve.fromDiscuss, eve.fromQQ, name);
+		const string strReply = "已将" + strNickName + "的名称更改为" + name;
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 	{
-		intMsgCnt += 2;
+	intMsgCnt += 2;
 		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string name = eve.message.substr(intMsgCnt);
@@ -4182,7 +4278,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		for (auto& n : strSearch)
 			n = toupper(static_cast<unsigned char>(n));
 		string strReturn;
-		if (RuleGetter->analyze(strSearch, strReturn))
+		if (GetRule::analyze(strSearch, strReturn))
 		{
 			AddMsgToQueue(strReturn, eve.fromDiscuss, false);
 		}
@@ -4435,7 +4531,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = Randint(1, 100);
+		const int intD100Res = RandomGenerator::Randint(1, 100);
 		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
 			to_string(intSkillVal) + " ";
 		if (intD100Res <= 5)strReply += "大成功";
@@ -4503,7 +4599,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = Randint(1, 100);
+		const int intD100Res = RandomGenerator::Randint(1, 100);
 		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
 			to_string(intSkillVal) + " ";
 		if (intD100Res == 1)strReply += "大成功";
@@ -4827,7 +4923,6 @@ EVE_Disable(__eventDisable)
 {
 	Enabled = false;
 	ilInitList.reset();
-	RuleGetter.reset();
 	Name.reset();
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
@@ -4965,7 +5060,6 @@ EVE_Exit(__eventExit)
 	if (!Enabled)
 		return 0;
 	ilInitList.reset();
-	RuleGetter.reset();
 	Name.reset();
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)

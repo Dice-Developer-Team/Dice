@@ -20,26 +20,24 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
-#ifndef DICE_NAME_STORAGE
-#define DICE_NAME_STORAGE
-#include <map>
-#include <string>
-#include "StorageBase.h"
+#include "RandomGenerator.h"
+#include <random>
 
-class NameStorage : public StorageBase
+namespace RandomGenerator
 {
-	std::map<long long, std::map<long long, std::string>> Name;
-public:
-	NameStorage(const std::string& FilePath);
-	~NameStorage();
+	inline unsigned __int64 GetCycleCount()
+	{
+		__asm _emit 0x0F
+		__asm _emit 0x31
+	}
 
-	void read() override;
-	void save() const override;
+	int Randint(int lowest, int highest)
+	{
+		std::mt19937 gen(static_cast<unsigned int>(GetCycleCount()));
+		const std::uniform_int_distribution<int> dis(lowest, highest);
+		return dis(gen);
+	}
+}
 
-	std::string get(long long GroupID, long long QQ);
-	bool set(long long GroupID, long long QQ, std::string name);
-	void clear();
-	bool del(long long GroupID, long long QQ);
-};
-#endif /*DICE_NAME_STORAGE*/
+
+

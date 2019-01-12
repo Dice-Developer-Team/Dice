@@ -21,24 +21,8 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#ifndef DICE_NAME_GENERATOR
-#define DICE_NAME_GENERATOR
+#ifndef DICE_MSG_FORMAT
+#define DICE_MSG_FORMAT
 #include <string>
-#include <vector>
-
-namespace NameGenerator
-{
-	extern const std::vector<std::string> ChineseFirstName;
-	extern const std::vector<std::string> ChineseSurname;
-	extern const std::vector<std::string> EnglishFirstName;
-	extern const std::vector<std::string> EnglishLastName;
-	extern const std::vector<std::string> EnglishLastNameChineseTranslation;
-	extern const std::vector<std::string> EnglishFirstNameChineseTranslation;
-
-	std::string getChineseName();
-	std::string getEnglishName();
-	std::string getRandomName();
-};
-#endif /*DICE_NAME_GENERATOR*/
-
-
+std::string format(std::string str, const std::initializer_list<const std::string>& replace_str);
+#endif /*DICE_MSG_FORMAT*/

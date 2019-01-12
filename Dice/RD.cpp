@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018 w4123ËÝä§
+ * Copyright (C) 2018-2019 w4123ËÝä§
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -26,6 +26,7 @@
 #include <sstream>
 #include "RD.h"
 #include "RDConstant.h"
+#include "MsgFormat.h"
 using namespace std;
 using namespace CQ;
 
@@ -348,50 +349,50 @@ inline void DND(string& strOutput, int intNum)
 
 inline void TempInsane(string& strAns)
 {
-	const int intSymRes = Randint(1, 10);
+	const int intSymRes = RandomGenerator::Randint(1, 10);
 	std::string strTI = "1D10=" + to_string(intSymRes) + "\nÖ¢×´: " + TempInsanity[intSymRes];
 	if (intSymRes == 9)
 	{
-		const int intDetailSymRes = Randint(1, 100);
+		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
 		strTI = format(strTI, {
-			"1D10=" + to_string(Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strFear[intDetailSymRes]
+			"1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strFear[intDetailSymRes]
 		});
 	}
 	else if (intSymRes == 10)
 	{
-		const int intDetailSymRes = Randint(1, 100);
+		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
 		strTI = format(strTI, {
-			"1D10=" + to_string(Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strPanic[intDetailSymRes]
+			"1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strPanic[intDetailSymRes]
 		});
 	}
 	else
 	{
-		strTI = format(strTI, {"1D10=" + to_string(Randint(1, 10))});
+		strTI = format(strTI, {"1D10=" + to_string(RandomGenerator::Randint(1, 10))});
 	}
 	strAns += strTI;
 }
 
 inline void LongInsane(string& strAns)
 {
-	const int intSymRes = Randint(1, 10);
+	const int intSymRes = RandomGenerator::Randint(1, 10);
 	std::string strLI = "1D10=" + to_string(intSymRes) + "\nÖ¢×´: " + LongInsanity[intSymRes];
 	if (intSymRes == 9)
 	{
-		const int intDetailSymRes = Randint(1, 100);
+		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
 		strLI = format(strLI, {
-			"1D10=" + to_string(Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strFear[intDetailSymRes]
+			"1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strFear[intDetailSymRes]
 		});
 	}
 	else if (intSymRes == 10)
 	{
-		const int intDetailSymRes = Randint(1, 100);
+		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
 		strLI = format(strLI, {
-			"1D10=" + to_string(Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strPanic[intDetailSymRes]
+			"1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strPanic[intDetailSymRes]
 		});
 	}
 	else
 	{
-		strLI = format(strLI, {"1D10=" + to_string(Randint(1, 10))});
+		strLI = format(strLI, {"1D10=" + to_string(RandomGenerator::Randint(1, 10))});
 	}
 	strAns += strLI;
 }

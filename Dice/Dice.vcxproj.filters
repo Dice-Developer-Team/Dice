@@ -78,6 +78,12 @@
     <ClCompile Include="NameGenerator.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="RandomGenerator.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MsgFormat.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -182,6 +188,12 @@
     <ClInclude Include="NameGenerator.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="RandomGenerator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MsgFormat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="CQP.lib">
@@ -189,7 +201,6 @@
     </Library>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="com.w4123.dice.json">
       <Filter>资源文件</Filter>
     </None>

@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018 w4123溯洄
+ * Copyright (C) 2018-2019 w4123溯洄
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -21,8 +21,8 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#ifndef __DICEMSGSEND__
-#define __DICEMSGSEND__
+#ifndef DICE_MSG_SEND
+#define DICE_MSG_SEND
 #include <string>
 
 /*
@@ -39,4 +39,4 @@ void AddMsgToQueue(const std::string& msg, long long target_id, bool is_private 
  * 注意: 切勿在主线程中调用此函数, 此函数仅用于初始化消息发送线程
  */
 void SendMsg();
-#endif /*__DICEMSGSEND__*/
+#endif /*DICE_MSG_SEND*/

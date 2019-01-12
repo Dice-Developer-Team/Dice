@@ -21,24 +21,10 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#ifndef DICE_NAME_GENERATOR
-#define DICE_NAME_GENERATOR
-#include <string>
-#include <vector>
-
-namespace NameGenerator
+#ifndef DICE_RANDOM_GENERATOR
+#define DICE_RANDOM_GENERATOR
+namespace RandomGenerator
 {
-	extern const std::vector<std::string> ChineseFirstName;
-	extern const std::vector<std::string> ChineseSurname;
-	extern const std::vector<std::string> EnglishFirstName;
-	extern const std::vector<std::string> EnglishLastName;
-	extern const std::vector<std::string> EnglishLastNameChineseTranslation;
-	extern const std::vector<std::string> EnglishFirstNameChineseTranslation;
-
-	std::string getChineseName();
-	std::string getEnglishName();
-	std::string getRandomName();
-};
-#endif /*DICE_NAME_GENERATOR*/
-
-
+	int Randint(int lowest, int highest);
+}
+#endif /*DICE_RANDOM_GENERATOR*/

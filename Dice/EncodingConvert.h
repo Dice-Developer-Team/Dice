@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018 w4123ËÝä§
+ * Copyright (C) 2018-2019 w4123ËÝä§
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -21,9 +21,11 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#ifndef __ENCODINGCONVERT__
-#define __ENCODINGCONVERT__
+#ifndef DICE_ENCODING_CONVERT
+#define DICE_ENCODING_CONVERT
 #include <string>
 std::string GBKtoUTF8(const std::string& strGBK);
 std::string UTF8toGBK(const std::string& strUTF8);
-#endif /*__ENCODINGCONVERT__*/
+std::string UrlEncode(const std::string& str);
+std::string UrlDecode(const std::string& str);
+#endif /*DICE_ENCODING_CONVERT*/

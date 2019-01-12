@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018 w4123溯洄
+ * Copyright (C) 2018-2019 w4123溯洄
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -21,15 +21,15 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#ifndef _RDCONSTANT_
-#define _RDCONSTANT_
+#ifndef DICE_RD_CONSTANT
+#define DICE_RD_CONSTANT
 #include <string>
 
 #if !defined WIN32
 #error 请使用Win32(x86)模式进行编译
 #endif
 //Version
-static const std::string Dice_Ver = "2.3.4(498)";
+static const std::string Dice_Ver = "2.3.5(501)";
 static const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
 static const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ +
 	" " + __TIME__ + "]";
@@ -55,23 +55,6 @@ static const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_st
 #define PrivateT 0
 #define GroupT 1
 #define DiscussT 2
-
-static std::string format(std::string str, std::initializer_list<std::string> replace_str)
-{
-	auto counter = 0;
-	for (const auto& element : replace_str)
-	{
-		auto replace = "{" + std::to_string(counter) + "}";
-		auto replace_pos = str.find(replace);
-		while (replace_pos != std::string::npos)
-		{
-			str.replace(replace_pos, replace.length(), element);
-			replace_pos = str.find(replace);
-		}
-		counter++;
-	}
-	return str;
-}
 
 typedef int int_errno;
 
@@ -472,4 +455,4 @@ static std::string strPanic[101] = {
 	"嗜外狂（Xenomania）：痴迷于异国的事物。",
 	"喜兽癖（Zoomania）：对待动物的态度近乎疯狂地友好。"
 };
-#endif /*_RDCONSTANT_*/
+#endif /*DICE_RD_CONSTANT*/
