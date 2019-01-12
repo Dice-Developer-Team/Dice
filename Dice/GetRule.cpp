@@ -190,7 +190,7 @@ namespace GetRule
 				return false;
 			}
 			rcvData[rcvCnt] = '\0';
-			des = "πÊ‘Ú: " + ruleName + "\n" + UTF8toGBK(rcvData);
+			des = UTF8toGBK(rcvData);
 
 			InternetCloseHandle(hRequest);
 			InternetCloseHandle(hConnect);
