@@ -28,6 +28,7 @@
 #include "GlobalVar.h"
 #include "EncodingConvert.h"
 #include "MsgFormat.h"
+#include "CQAPI_EX.h"
 #pragma comment(lib, "Wininet.lib")
 using namespace std;
 
@@ -116,7 +117,7 @@ namespace GetRule
 		const string ruleName = GBKtoUTF8(rule);
 		const string itemName = GBKtoUTF8(name);
 
-		string data = "Name=" + UrlEncode(itemName);
+		string data = "Name=" + UrlEncode(itemName) + "&QQ=" + to_string(CQ::getLoginQQ()) + "&v=20190114";
 		if (!ruleName.empty())
 		{
 			data += "&Type=Rules-" + UrlEncode(ruleName);
