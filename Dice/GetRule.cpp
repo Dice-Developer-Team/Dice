@@ -129,8 +129,8 @@ namespace GetRule
 		const char *header = "Content-Type: application/x-www-form-urlencoded";
 
 		const HINTERNET hInternet = InternetOpenA("Dice/2.3.5", INTERNET_OPEN_TYPE_DIRECT, nullptr, nullptr, 0);
-		const HINTERNET hConnect = InternetConnectA(hInternet, "rules.kokona.tech", 5555, nullptr, nullptr, INTERNET_SERVICE_HTTP, 0, 0);
-		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "POST", "/", "HTTP/1.1", nullptr, acceptTypes, 0, 0);
+		const HINTERNET hConnect = InternetConnectA(hInternet, "api.kokona.tech", 5555, nullptr, nullptr, INTERNET_SERVICE_HTTP, 0, 0);
+		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "POST", "/rules", "HTTP/1.1", nullptr, acceptTypes, 0, 0);
 		const BOOL res = HttpSendRequestA(hRequest, header, strlen(header), frmdata, strlen(frmdata));
 
 		delete[] frmdata;
