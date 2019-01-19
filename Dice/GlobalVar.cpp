@@ -23,13 +23,24 @@
 #include "CQLogger.h"
 #include "GlobalVar.h"
 #include <map>
-#include "RDConstant.h"
 
 bool Enabled = false;
 
 bool msgSendThreadRunning = false;
 
 CQ::logger DiceLogger("Dice!");
+
+/*
+ * 版本信息
+ * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
+ * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
+ */
+unsigned short Dice_Build = 505;
+const std::string Dice_Ver_Without_Build = "2.3.5";
+const std::string DiceRequestHeader = "Dice/" + Dice_Ver_Without_Build;
+const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
+const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
 
 std::map<std::string, std::string> GlobalMsg
 {
@@ -60,6 +71,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strUnableToGetErrorMsg", "无法获取错误信息!"},
 	{"strDiceTooBigErr", "骰娘被你扔出的骰子淹没了"},
 	{"strRequestRetCodeErr", "访问服务器时出现错误! HTTP状态码: {0}"},
+	{"strRequestNoResponse", "服务器未返回任何信息"},
 	{"strTypeTooBigErr", "哇!让我数数骰子有多少面先~1...2..."},
 	{"strZeroTypeErr", "这是...!!时空裂(骰娘被骰子产生的时空裂缝卷走了)"},
 	{"strAddDiceValErr", "你这样要让我扔骰子扔到什么时候嘛~(请输入正确的加骰参数:5-10之内的整数)"},

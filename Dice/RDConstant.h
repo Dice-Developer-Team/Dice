@@ -28,11 +28,6 @@
 #if !defined WIN32
 #error 请使用Win32(x86)模式进行编译
 #endif
-//Version
-static const std::string Dice_Ver = "2.3.5(501)";
-static const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
-static const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ +
-	" " + __TIME__ + "]";
 //Error Handle
 #define Value_Err (-1)
 #define Input_Err (-2)
@@ -232,7 +227,7 @@ static std::string TempInsanity[11]{
 	"逃避行为：调查员会用任何的手段试图逃离现在所处的位置，状态持续{0}轮。",
 	"竭嘶底里：调查员表现出大笑，哭泣，嘶吼，害怕等的极端情绪表现，持续{0}轮。",
 	"恐惧：调查员陷入对某一事物的恐惧之中，就算这一恐惧的事物是并不存在的，持续{0}轮。\n{1}\n具体恐惧症: {2}(守秘人也可以自行从恐惧症状表中选择其他症状)",
-	"狂躁：调查员由于某种诱因进入狂躁状态，症状持续{0}轮。\n{1}\n具体狂躁症: {2}(守秘人也可以自行从狂躁症状表中选择其他症状)"
+	"狂躁：调查员由于某种诱因进入狂躁状态，症状持续{0}轮。\n{1}\n具体狂躁症: {2}(KP也可以自行从狂躁症状表中选择其他症状)"
 };
 
 static std::string LongInsanity[11]{
@@ -246,7 +241,7 @@ static std::string LongInsanity[11]{
 	"被收容：{0}小时后，调查员在精神病院病房或警察局牢房中回过神来",
 	"逃避行为：{0}小时后，调查员恢复清醒时发现自己在很远的地方",
 	"恐惧：调查员患上一个新的恐惧症。调查员会在{0}小时后恢复正常，并开始为避开恐惧源而采取任何措施。\n{1}\n具体恐惧症: {2}(守秘人也可以自行从恐惧症状表中选择其他症状)",
-	"狂躁：调查员患上一个新的狂躁症，在{0}小时后恢复理智。在这次疯狂发作中，调查员将完全沉浸于其新的狂躁症状。这是否会被其他人理解（apparent to other people）则取决于守秘人和此调查员。\n{1}\n具体狂躁症: {2}(守秘人也可以自行从狂躁症状表中选择其他症状)"
+	"狂躁：调查员患上一个新的狂躁症，在{0}小时后恢复理智。在这次疯狂发作中，调查员将完全沉浸于其新的狂躁症状。这是否会被其他人理解（apparent to other people）则取决于守秘人和此调查员。\n{1}\n具体狂躁症: {2}(KP也可以自行从狂躁症状表中选择其他症状)"
 };
 
 static std::string strFear[101] = {

@@ -2,8 +2,8 @@
   "ret": 1,
   "apiver": 9,
   "name": "Dice!",
-  "version": "2.3.4",
-  "version_id": 498,
+  "version": "2.3.5",
+  "version_id": 505,
   "author": "w4123溯洄",
   "description": "跑团用骰子 QQ交流群:941980833或624807593(已满)",
   "event": [
@@ -55,6 +55,12 @@
       "name": "群成员添加事件",
       "function": "_eventGroupMemberIncrease",
       "priority": 30000
+    }
+  ],
+  "menu": [
+    {
+      "name": "更新Dice!",
+      "function": "_eventMenu"
     }
   ],
   "auth": [

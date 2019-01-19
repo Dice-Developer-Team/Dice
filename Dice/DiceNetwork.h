@@ -21,27 +21,13 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#ifndef DICE_GLOBAL_VAR
-#define DICE_GLOBAL_VAR
-#include "CQLogger.h"
-#include <map>
+#ifndef DICE_NETWORK
+#define DICE_NETWORK
+#include <string>
 
-// 版本信息
-extern unsigned short Dice_Build;
-extern const std::string Dice_Ver_Without_Build;
-extern const std::string DiceRequestHeader;
-extern const std::string Dice_Ver;
-extern const std::string Dice_Short_Ver;
-extern const std::string Dice_Full_Ver;
-
-// 应用是否被启用
-extern bool Enabled;
-
-// 消息发送线程是否正在运行
-extern bool msgSendThreadRunning;
-
-// 全局酷QLogger
-extern CQ::logger DiceLogger;
-
-extern std::map<std::string, std::string> GlobalMsg;
-#endif /*DICE_GLOBAL_VAR*/
+namespace Network
+{
+	bool POST(const char* serverName, const char* objectName, unsigned short port, char *frmdata, std::string& des);
+	bool GET(const char* serverName, const char* objectName, unsigned short port, std::string& des);
+}
+#endif /*DICE_NETWORK*/

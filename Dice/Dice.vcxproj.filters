@@ -84,6 +84,12 @@
     <ClCompile Include="MsgFormat.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DiceUpdate.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DiceNetwork.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -192,6 +198,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MsgFormat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceNetwork.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

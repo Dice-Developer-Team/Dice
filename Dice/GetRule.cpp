@@ -29,60 +29,13 @@
 #include "EncodingConvert.h"
 #include "MsgFormat.h"
 #include "CQAPI_EX.h"
+#include "DiceNetwork.h"
 #pragma comment(lib, "Wininet.lib")
 using namespace std;
 
 namespace GetRule
 {
-	std::string getLastErrorMsg()
-	{
-		DWORD dwError = GetLastError();
-		if (dwError == ERROR_INTERNET_EXTENDED_ERROR)
-		{
-			DWORD size = 512;
-			char *szFormatBuffer = new char[size];
-			if (InternetGetLastResponseInfoA(&dwError, szFormatBuffer, &size))
-			{
-				string ret(szFormatBuffer);
-				while (ret[ret.length() - 1] == '\n' || ret[ret.length() - 1] == '\r')ret.erase(ret.length() - 1);
-				delete[] szFormatBuffer;
-				return ret;
-			}
-			if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
-			{
-				delete[] szFormatBuffer;
-				szFormatBuffer = new char[size];
-				if (InternetGetLastResponseInfoA(&dwError, szFormatBuffer, &size))
-				{
-					string ret(szFormatBuffer);
-					while (ret[ret.length() - 1] == '\n' || ret[ret.length() - 1] == '\r')ret.erase(ret.length() - 1);
-					delete[] szFormatBuffer;
-					return ret;
-				}
-				delete[] szFormatBuffer;
-				return GlobalMsg["strUnableToGetErrorMsg"];
 
-			}
-			delete[] szFormatBuffer;
-			return GlobalMsg["strUnableToGetErrorMsg"];
-		}
-		char szFormatBuffer[512];
-		const DWORD dwBaseLength = FormatMessageA(
-			FORMAT_MESSAGE_FROM_HMODULE,             // dwFlags
-			GetModuleHandleA("wininet.dll"),         // lpSource
-			dwError,                                 // dwMessageId
-			0,                                       // dwLanguageId
-			szFormatBuffer,                          // lpBuffer
-			sizeof(szFormatBuffer),                  // nSize
-			nullptr);
-		if (dwBaseLength)
-		{
-			string ret(szFormatBuffer);
-			while (ret[ret.length() - 1] == '\n' || ret[ret.length() - 1] == '\r')ret.erase(ret.length() - 1);
-			return ret;
-		}
-		return GlobalMsg["strUnableToGetErrorMsg"];
-	}
 	bool analyze(string& rawStr, string& des)
 	{
 		if (rawStr.empty())
@@ -124,105 +77,22 @@ namespace GetRule
 		}
 		char *frmdata = new char[data.length() + 1];
 		strcpy_s(frmdata, data.length() + 1, data.c_str());
-
-		const char *acceptTypes[] = { "*/*", nullptr };
-		const char *header = "Content-Type: application/x-www-form-urlencoded";
-
-		const HINTERNET hInternet = InternetOpenA("Dice/2.3.5", INTERNET_OPEN_TYPE_DIRECT, nullptr, nullptr, 0);
-		const HINTERNET hConnect = InternetConnectA(hInternet, "api.kokona.tech", 5555, nullptr, nullptr, INTERNET_SERVICE_HTTP, 0, 0);
-		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "POST", "/rules", "HTTP/1.1", nullptr, acceptTypes, 0, 0);
-		const BOOL res = HttpSendRequestA(hRequest, header, strlen(header), frmdata, strlen(frmdata));
-
+		string temp;
+		const bool reqRes = Network::POST("api.kokona.tech", "/rules", 5555, frmdata, temp);
 		delete[] frmdata;
-		frmdata = nullptr;
-
-		if (res)
+		if (reqRes)
 		{
-			DWORD dwRetCode;
-			DWORD dwBufferLength = sizeof(dwRetCode);
-			if (!HttpQueryInfoA(hRequest, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &dwRetCode, &dwBufferLength, nullptr))
-			{
-				des = getLastErrorMsg();
-				InternetCloseHandle(hRequest);
-				InternetCloseHandle(hConnect);
-				InternetCloseHandle(hInternet);
-				return false;
-			}
-			if (dwRetCode != 200)
-			{
-				des = format(GlobalMsg["strRequestRetCodeErr"], { to_string(dwRetCode) });
-				InternetCloseHandle(hRequest);
-				InternetCloseHandle(hConnect);
-				InternetCloseHandle(hInternet);
-				return false;
-			}
-			DWORD preRcvCnt;
-			if (!InternetQueryDataAvailable(hRequest, &preRcvCnt, 0, 0))
-			{
-				des = getLastErrorMsg();
-				InternetCloseHandle(hRequest);
-				InternetCloseHandle(hConnect);
-				InternetCloseHandle(hInternet);
-				return false;
-			}
-			if (preRcvCnt == 0)
-			{
-				des = GlobalMsg["strRuleNotFound"];
-				return false;
-			}
-			string finalRcvData;
-			while (preRcvCnt)
-			{
-				char *rcvData = new char[preRcvCnt + 1];
-				DWORD rcvCnt;
-				
-				if (!InternetReadFile(hRequest, rcvData, preRcvCnt, &rcvCnt))
-				{
-					des = getLastErrorMsg();
-					InternetCloseHandle(hRequest);
-					InternetCloseHandle(hConnect);
-					InternetCloseHandle(hInternet);
-					delete[] rcvData;
-					return false;
-				}
-
-				if (rcvCnt != preRcvCnt)
-				{
-					InternetCloseHandle(hRequest);
-					InternetCloseHandle(hConnect);
-					InternetCloseHandle(hInternet);
-					des = GlobalMsg["strUnknownErr"];
-					delete[] rcvData;
-					return false;
-				}
-
-				rcvData[rcvCnt] = '\0';
-				finalRcvData += rcvData;
-
-				if (!InternetQueryDataAvailable(hRequest, &preRcvCnt, 0, 0))
-				{
-					des = getLastErrorMsg();
-					InternetCloseHandle(hRequest);
-					InternetCloseHandle(hConnect);
-					InternetCloseHandle(hInternet);
-					delete[] rcvData;
-					return false;
-				}
-
-				delete[] rcvData;
-			}
-
-			des = UTF8toGBK(finalRcvData);
-
-			InternetCloseHandle(hRequest);
-			InternetCloseHandle(hConnect);
-			InternetCloseHandle(hInternet);
+			des = UTF8toGBK(temp);
 			return true;
 		}
-		des = getLastErrorMsg();
-		InternetCloseHandle(hRequest);
-		InternetCloseHandle(hConnect);
-		InternetCloseHandle(hInternet);
+		if (temp == GlobalMsg["strRequestNoResponse"])
+		{
+			des = GlobalMsg["strRuleNotFound"];
+		}
+		else
+		{
+			des = temp;
+		}
 		return false;
 	}
 }
