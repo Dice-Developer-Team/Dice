@@ -30,6 +30,8 @@ namespace NameGenerator
 {
 	extern const std::vector<std::string> ChineseFirstName;
 	extern const std::vector<std::string> ChineseSurname;
+	extern const std::vector<std::string> JapaneseFirstName;
+	extern const std::vector<std::string> JapaneseSurname;
 	extern const std::vector<std::string> EnglishFirstName;
 	extern const std::vector<std::string> EnglishLastName;
 	extern const std::vector<std::string> EnglishLastNameChineseTranslation;
