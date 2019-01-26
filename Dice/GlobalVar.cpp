@@ -35,8 +35,8 @@ CQ::logger DiceLogger("Dice!");
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-const unsigned short Dice_Build = 506;
-const std::string Dice_Ver_Without_Build = "2.3.5";
+const unsigned short Dice_Build = 509;
+const std::string Dice_Ver_Without_Build = "2.3.6";
 const std::string DiceRequestHeader = "Dice/" + Dice_Ver_Without_Build;
 const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
@@ -96,6 +96,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strProp", "{0}的{1}属性值为{2}"},
 	{"strStErr", "格式错误:请参考帮助文档获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
+	{"strJrrp", "{0}今天的人品值是: {1}"},
+	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{0}"},
 	{"strHlpMsg" , Dice_Short_Ver + "\n" +
 	R"(请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
 跑团记录着色器: https://logpainter.kokona.tech
@@ -113,14 +115,14 @@ std::map<std::string, std::string> GlobalMsg
 .st [del/clr/show] [属性名] [属性值]		人物卡导入
 .rc/ra [技能名] [技能值]		技能检定(规则书/房规)
 .jrrp [on/off]				今日人品检定
-.name [个数]					生成随机名称
+.name [cn/jp/en] [个数]			生成随机名称
 .rules [规则名称:]规则条目		规则查询
 .help						显示帮助
 <仅限群/多人聊天>
 .ri [加值] [昵称]			DnD先攻掷骰
 .init [clr]					DnD先攻查看/清空
 .nn [名称]					设置/删除昵称
-.nnn						随机设置昵称
+.nnn [cn/jp/en]				随机设置昵称
 .rh [掷骰表达式*] [原因]			暗骰,结果私聊发送
 .bot [on/off] [机器人QQ号]		机器人开启或关闭
 .ob [exit/list/clr/on/off]			旁观模式

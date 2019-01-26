@@ -44,6 +44,7 @@
 #include "CustomMsg.h"
 #include "NameGenerator.h"
 #include "MsgFormat.h"
+#include "DiceNetwork.h"
 /*
 TODO:
 1. en可变成长检定
@@ -102,7 +103,6 @@ std::string getName(long long QQ, long long GroupID = 0)
 	return strip(getStrangerInfo(QQ).nick);
 }
 
-map<long long, RP> JRRP;
 map<long long, int> DefaultDice;
 map<long long, string> WelcomeMsg;
 set<long long> DisabledGroup;
@@ -121,7 +121,7 @@ struct SourceType
 {
 	SourceType(long long a, int b, long long c) : QQ(a), Type(b), GrouporDiscussID(c)
 	{
-	};
+	}
 	long long QQ = 0;
 	int Type = 0;
 	long long GrouporDiscussID = 0;
@@ -284,19 +284,6 @@ EVE_Enable(__eventEnable)
 		}
 	}
 	ifstreamObserveDiscuss.close();
-	ifstream ifstreamJRRP(strFileLoc + "JRRP.RDconf");
-	if (ifstreamJRRP)
-	{
-		long long QQ;
-		int Val;
-		string strDate;
-		while (ifstreamJRRP >> QQ >> strDate >> Val)
-		{
-			JRRP[QQ].Date = strDate;
-			JRRP[QQ].RPVal = Val;
-		}
-	}
-	ifstreamJRRP.close();
 	ifstream ifstreamDefault(strFileLoc + "Default.RDconf");
 	if (ifstreamDefault)
 	{
@@ -752,33 +739,19 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
 	{
-		char cstrDate[100] = {};
-		time_t time_tTime = 0;
-		time(&time_tTime);
-		tm tmTime{};
-		localtime_s(&tmTime, &time_tTime);
-		strftime(cstrDate, 100, "%F", &tmTime);
-		if (JRRP.count(eve.fromQQ) && JRRP[eve.fromQQ].Date == cstrDate)
+		string des;
+		string data = "QQ=" + to_string(CQ::getLoginQQ()) + "&v=20190114" + "&QueryQQ=" + to_string(eve.fromQQ);
+		char *frmdata = new char[data.length() + 1];
+		strcpy_s(frmdata, data.length() + 1, data.c_str());
+		bool res = Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata, des);
+		delete[] frmdata;
+		if (res)
 		{
-			const string strReply = strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal);
-
-			AddMsgToQueue(strReply, eve.fromQQ);
+			AddMsgToQueue(format(GlobalMsg["strJrrp"], { strNickName, des }), eve.fromQQ);
 		}
 		else
 		{
-			normal_distribution<double> NormalDistribution(60, 15);
-			mt19937 Generator(static_cast<unsigned int>(RandomGenerator::GetCycleCount()));
-			int JRRPRes;
-			do
-			{
-				JRRPRes = static_cast<int>(NormalDistribution(Generator));
-			}
-			while (JRRPRes <= 0 || JRRPRes > 100);
-			JRRP[eve.fromQQ].Date = cstrDate;
-			JRRP[eve.fromQQ].RPVal = JRRPRes;
-			const string strReply(strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal));
-
-			AddMsgToQueue(strReply, eve.fromQQ);
+			AddMsgToQueue(format(GlobalMsg["strJrrpErr"], { des }), eve.fromQQ);
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
@@ -1505,13 +1478,6 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 					strAns.insert(0, "由于" + strReason + " ");
 				AddMsgToQueue(strAns, eve.fromQQ);
 			}
-		}
-	}
-	else
-	{
-		if (isalpha(static_cast<unsigned char>(eve.message[intMsgCnt])))
-		{
-			AddMsgToQueue("命令输入错误!", eve.fromQQ);
 		}
 	}
 }
@@ -2543,31 +2509,19 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			AddMsgToQueue("在本群中JRRP功能已被禁用", eve.fromGroup, false);
 			return;
 		}
-		char cstrDate[100] = {};
-		time_t time_tTime = 0;
-		time(&time_tTime);
-		tm tmTime{};
-		localtime_s(&tmTime, &time_tTime);
-		strftime(cstrDate, 100, "%F", &tmTime);
-		if (JRRP.count(eve.fromQQ) && JRRP[eve.fromQQ].Date == cstrDate)
+		string des;
+		string data = "QQ=" + to_string(CQ::getLoginQQ()) + "&v=20190114" + "&QueryQQ=" + to_string(eve.fromQQ);
+		char *frmdata = new char[data.length() + 1];
+		strcpy_s(frmdata, data.length() + 1, data.c_str());
+		bool res = Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata, des);
+		delete[] frmdata;
+		if (res)
 		{
-			const string strReply = strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal);
-			AddMsgToQueue(strReply, eve.fromGroup, false);
+			AddMsgToQueue(format(GlobalMsg["strJrrp"], { strNickName, des }), eve.fromGroup, false);
 		}
 		else
 		{
-			normal_distribution<double> NormalDistribution(60, 15);
-			mt19937 Generator(static_cast<unsigned int>(RandomGenerator::GetCycleCount()));
-			int JRRPRes;
-			do
-			{
-				JRRPRes = static_cast<int>(NormalDistribution(Generator));
-			}
-			while (JRRPRes <= 0 || JRRPRes > 100);
-			JRRP[eve.fromQQ].Date = cstrDate;
-			JRRP[eve.fromQQ].RPVal = JRRPRes;
-			const string strReply(strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal));
-			AddMsgToQueue(strReply, eve.fromGroup, false);
+			AddMsgToQueue(format(GlobalMsg["strJrrpErr"], { des }), eve.fromGroup, false);
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
@@ -3301,13 +3255,6 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		{
 			const string strReply = strNickName + "进行了一次暗骰";
 			AddMsgToQueue(strReply, eve.fromGroup, false);
-		}
-	}
-	else
-	{
-		if (isalpha(static_cast<unsigned char>(eve.message[intMsgCnt])))
-		{
-			AddMsgToQueue("命令输入错误!", eve.fromGroup, false);
 		}
 	}
 }
@@ -4203,31 +4150,19 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			AddMsgToQueue("在此多人聊天中JRRP已被禁用!", eve.fromDiscuss, false);
 			return;
 		}
-		char cstrDate[100] = {};
-		time_t time_tTime = 0;
-		time(&time_tTime);
-		tm tmTime{};
-		localtime_s(&tmTime, &time_tTime);
-		strftime(cstrDate, 100, "%F", &tmTime);
-		if (JRRP.count(eve.fromQQ) && JRRP[eve.fromQQ].Date == cstrDate)
+		string des;
+		string data =  "QQ=" + to_string(CQ::getLoginQQ()) + "&v=20190114" + "&QueryQQ=" + to_string(eve.fromQQ);
+		char *frmdata = new char[data.length() + 1];
+		strcpy_s(frmdata, data.length() + 1, data.c_str());
+		bool res = Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata, des);
+		delete[] frmdata;
+		if (res)
 		{
-			const string strReply = strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal);
-			AddMsgToQueue(strReply, eve.fromDiscuss, false);
+			AddMsgToQueue(format(GlobalMsg["strJrrp"], { strNickName, des }), eve.fromDiscuss, false);
 		}
 		else
 		{
-			normal_distribution<double> NormalDistribution(60, 15);
-			mt19937 Generator(static_cast<unsigned int>(RandomGenerator::GetCycleCount()));
-			int JRRPRes;
-			do
-			{
-				JRRPRes = static_cast<int>(NormalDistribution(Generator));
-			}
-			while (JRRPRes <= 0 || JRRPRes > 100);
-			JRRP[eve.fromQQ].Date = cstrDate;
-			JRRP[eve.fromQQ].RPVal = JRRPRes;
-			const string strReply(strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal));
-			AddMsgToQueue(strReply, eve.fromDiscuss, false);
+			AddMsgToQueue(format(GlobalMsg["strJrrpErr"], { des }), eve.fromDiscuss, false);
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
@@ -4949,13 +4884,6 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			AddMsgToQueue(strReply, eve.fromDiscuss, false);
 		}
 	}
-	else
-	{
-		if (isalpha(static_cast<unsigned char>(eve.message[intMsgCnt])))
-		{
-			AddMsgToQueue("命令输入错误!", eve.fromDiscuss, false);
-		}
-	}
 }
 
 EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
@@ -5080,12 +5008,6 @@ EVE_Disable(__eventDisable)
 		ofstreamObserveDiscuss << it->first << " " << it->second << std::endl;
 	}
 	ofstreamObserveDiscuss.close();
-	ofstream ofstreamJRRP(strFileLoc + "JRRP.RDconf", ios::out | ios::trunc);
-	for (auto it = JRRP.begin(); it != JRRP.end(); ++it)
-	{
-		ofstreamJRRP << it->first << " " << it->second.Date << " " << it->second.RPVal << std::endl;
-	}
-	ofstreamJRRP.close();
 	ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
 	for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
 	{
@@ -5113,7 +5035,6 @@ EVE_Disable(__eventDisable)
 		ofstreamWelcomeMsg << it->first << " " << it->second << std::endl;
 	}
 	ofstreamWelcomeMsg.close();
-	JRRP.clear();
 	DefaultDice.clear();
 	DisabledGroup.clear();
 	DisabledDiscuss.clear();
@@ -5217,12 +5138,6 @@ EVE_Exit(__eventExit)
 		ofstreamObserveDiscuss << it->first << " " << it->second << std::endl;
 	}
 	ofstreamObserveDiscuss.close();
-	ofstream ofstreamJRRP(strFileLoc + "JRRP.RDconf", ios::out | ios::trunc);
-	for (auto it = JRRP.begin(); it != JRRP.end(); ++it)
-	{
-		ofstreamJRRP << it->first << " " << it->second.Date << " " << it->second.RPVal << std::endl;
-	}
-	ofstreamJRRP.close();
 	ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
 	for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
 	{

@@ -27,14 +27,6 @@
 
 namespace GetRule
 {
-	/*const std::map<std::string, std::string> ruleNameReplace
-	{
-		std::make_pair("5E", "DND5E"),
-		std::make_pair("3R", "DND3R"),
-		std::make_pair("DND", "DND3R"),
-		std::make_pair("D&D", "DND3R"),
-		std::make_pair("COC", "COC7")
-	};*/
 	std::string getLastErrorMsg();
 	bool analyze(std::string& rawStr, std::string& des);
 	bool get(const std::string& rule, const std::string& name, std::string& des);
