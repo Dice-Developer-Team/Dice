@@ -1,16 +1,14 @@
 #pragma once
 #include <vector>
-#include "cqdefine.h"
-
 
 //base64编码
-std::string base64_encode(std::string const& s);
+std::string base64_encode(const std::string& decode_string);
 
 //base64解码
-std::string base64_decode(std::string const& s);
+std::string base64_decode(const std::string& encoded_string);
 
 //替换
-std::string& msg_tihuan(std::string& s, std::string old, std::string New);
+std::string& msg_replace(std::string& s, const std::string& old, const std::string& n);
 
 //CQcode编码
 std::string& msg_encode(std::string& s, bool isCQ = false);
@@ -18,9 +16,3 @@ std::string& msg_encode(std::string& s, bool isCQ = false);
 //CQcode解码
 std::string& msg_decode(std::string& s, bool isCQ = false);
 
-//获取cpu启动后经历的周期..
-inline unsigned __int64 GetCycleCount()
-{
-	__asm _emit 0x0F
-	__asm _emit 0x31
-}

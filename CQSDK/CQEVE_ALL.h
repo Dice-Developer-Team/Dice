@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CQEVE.h"
 #include "CQEVEBasic.h"
 
 #include "CQEVEMsg.h"

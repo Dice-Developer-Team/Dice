@@ -7,7 +7,7 @@
 #include "CQTools.h"
 #include "Unpack.h"
 
-#include <windows.h>
+#include <Windows.h>
 
 using namespace CQ;
 
@@ -16,13 +16,13 @@ void EVE::message_block() { _EVEret = Msg_Blocked; }
 
 bool EVEMsg::isSystem() const { return fromQQ == 1000000; }
 
-Font::Font(int Font)
+Font::Font(const int Font)
 {
-	RtlMoveMemory(static_cast<void*>(this), reinterpret_cast<void *>(Font), 20);
+	RtlMoveMemory(static_cast<void*>(this), reinterpret_cast<const void *>(Font), 20);
 }
 
-EVEMsg::EVEMsg(int subType, int msgId, long long fromQQ, std::string message, int font)
-	: subType(subType), msgId(msgId), fromQQ(fromQQ), message(message), font(font)
+EVEMsg::EVEMsg(const int subType, const int msgId, const long long fromQQ, std::string message, const int font)
+	: subType(subType), msgId(msgId), fromQQ(fromQQ), message(move(message)), font(font)
 {
 }
 
@@ -39,8 +39,8 @@ bool EVEMsg::isUser() const
 	}
 }
 
-EVEGroupMsg::EVEGroupMsg(int subType, int msgId, long long fromGroup, long long fromQQ, const char* fromAnonymous,
-                         const char* msg, int font)
+EVEGroupMsg::EVEGroupMsg(const int subType, const int msgId, const long long fromGroup, const long long fromQQ, const char* fromAnonymous,
+                         const char* msg, const int font)
 	: EVEMsg(subType, msgId, fromQQ, msg, font), fromAnonymousInfo(), fromGroup(fromGroup),
 	  fromAnonymousToken(fromAnonymous)
 {
@@ -62,12 +62,12 @@ AnonymousInfo& EVEGroupMsg::getFromAnonymousInfo() //throw(std::exception_ptr)
 	throw std::exception_ptr();
 }
 
-bool EVEGroupMsg::setGroupKick(bool refusedAddAgain)
+bool EVEGroupMsg::setGroupKick(const bool refusedAddAgain) const
 {
 	return !CQ::setGroupKick(fromGroup, fromQQ, refusedAddAgain);
 }
 
-bool EVEGroupMsg::setGroupBan(long long banTime)
+bool EVEGroupMsg::setGroupBan(const long long banTime) const
 {
 	if (isAnonymous())
 	{
@@ -76,47 +76,47 @@ bool EVEGroupMsg::setGroupBan(long long banTime)
 	return !CQ::setGroupBan(fromGroup, fromQQ, banTime);
 }
 
-bool EVEGroupMsg::setGroupAdmin(bool isAdmin)
+bool EVEGroupMsg::setGroupAdmin(const bool isAdmin) const
 {
 	return !CQ::setGroupAdmin(fromGroup, fromQQ, isAdmin);
 }
 
-bool EVEGroupMsg::setGroupSpecialTitle(std::string Title, long long ExpireTime)
+bool EVEGroupMsg::setGroupSpecialTitle(const std::string& Title, const long long ExpireTime) const
 {
 	return !CQ::setGroupSpecialTitle(fromGroup, fromQQ, Title, ExpireTime);
 }
 
-bool EVEGroupMsg::setGroupWholeBan(bool isBan)
+bool EVEGroupMsg::setGroupWholeBan(const bool isBan) const
 {
 	return CQ::setGroupWholeBan(fromGroup, isBan) != 0;
 }
 
-bool EVEGroupMsg::setGroupAnonymous(bool enableAnonymous)
+bool EVEGroupMsg::setGroupAnonymous(const bool enableAnonymous) const
 {
 	return CQ::setGroupAnonymous(fromGroup, enableAnonymous) != 0;
 }
 
-bool EVEGroupMsg::setGroupCard(std::string newGroupNick)
+bool EVEGroupMsg::setGroupCard(const std::string& newGroupNick) const
 {
 	return CQ::setGroupCard(fromGroup, fromQQ, newGroupNick) != 0;
 }
 
-bool EVEGroupMsg::setGroupLeave(bool isDismiss)
+bool EVEGroupMsg::setGroupLeave(const bool isDismiss) const
 {
 	return CQ::setGroupLeave(fromGroup, isDismiss) != 0;
 }
 
-GroupMemberInfo EVEGroupMsg::getGroupMemberInfo(bool DisableCache)
+GroupMemberInfo EVEGroupMsg::getGroupMemberInfo(const bool disableCache) const
 {
-	return CQ::getGroupMemberInfo(fromGroup, fromQQ, DisableCache);
+	return CQ::getGroupMemberInfo(fromGroup, fromQQ, disableCache);
 }
 
-std::vector<GroupMemberInfo> EVEGroupMsg::getGroupMemberList()
+std::vector<GroupMemberInfo> EVEGroupMsg::getGroupMemberList() const
 {
 	return CQ::getGroupMemberList(fromGroup);
 }
 
-EVEPrivateMsg::EVEPrivateMsg(int subType, int msgId, long long fromQQ, const char* msg, int font)
+EVEPrivateMsg::EVEPrivateMsg(const int subType, const int msgId, const long long fromQQ, const char* msg, const int font)
 	: EVEMsg(subType, msgId, fromQQ, msg, font)
 {
 }
@@ -138,13 +138,13 @@ msg EVEGroupMsg::sendMsg() const { return msg(fromGroup, Group); }
 msg EVEDiscussMsg::sendMsg() const { return msg(fromQQ, Discuss); }
 
 int EVEPrivateMsg::sendMsg(const char* msg) const { return sendPrivateMsg(fromQQ, msg); }
-int EVEPrivateMsg::sendMsg(std::string msg) const { return sendPrivateMsg(fromQQ, msg); }
+int EVEPrivateMsg::sendMsg(const std::string& msg) const { return sendPrivateMsg(fromQQ, msg); }
 int EVEGroupMsg::sendMsg(const char* msg) const { return sendGroupMsg(fromGroup, msg); }
-int EVEGroupMsg::sendMsg(std::string msg) const { return sendGroupMsg(fromGroup, msg); }
+int EVEGroupMsg::sendMsg(const std::string& msg) const { return sendGroupMsg(fromGroup, msg); }
 int EVEDiscussMsg::sendMsg(const char* msg) const { return sendDiscussMsg(fromDiscuss, msg); }
-int EVEDiscussMsg::sendMsg(std::string msg) const { return sendDiscussMsg(fromDiscuss, msg); }
+int EVEDiscussMsg::sendMsg(const std::string& msg) const { return sendDiscussMsg(fromDiscuss, msg); }
 
-EVEDiscussMsg::EVEDiscussMsg(int subType, int msgId, long long fromDiscuss, long long fromQQ, const char* msg, int font)
+EVEDiscussMsg::EVEDiscussMsg(const int subType, const int msgId, const long long fromDiscuss, const long long fromQQ, const char* msg, const int font)
 	: EVEMsg(subType, msgId, fromQQ, msg, font), fromDiscuss(fromDiscuss)
 {
 }
@@ -166,68 +166,62 @@ std::string CQ::statusEVEreturn(EVEStatus& eve)
 	return _ret;
 }
 
-EVERequest::EVERequest(int sendTime, long long fromQQ, const char* msg, const char* responseFlag)
+EVERequest::EVERequest(const int sendTime, const long long fromQQ, const char* msg, const char* responseFlag)
 	: sendTime(sendTime), fromQQ(fromQQ), msg(msg), responseFlag(responseFlag)
 {
 }
 
-EVERequestAddFriend::EVERequestAddFriend(int subType, int sendTime, long long fromQQ, const char* msg,
+EVERequestAddFriend::EVERequestAddFriend(const int subType, const int sendTime, const long long fromQQ, const char* msg,
                                          const char* responseFlag)
 	: EVERequest(sendTime, fromQQ, msg, responseFlag), subType(subType), fromGroup(0)
 {
 }
 
-void EVERequestAddFriend::pass(std::string msg)
+void EVERequestAddFriend::pass(const std::string& msg) const
 {
 	setFriendAddRequest(responseFlag, RequestAccepted, msg.c_str());
 }
 
-void EVERequestAddFriend::fail(std::string msg)
+void EVERequestAddFriend::fail(const std::string& msg) const
 {
 	setFriendAddRequest(responseFlag, RequestRefused, msg.c_str());
 }
 
-EVERequestAddGroup::EVERequestAddGroup(int subType, int sendTime, long long fromGroup, long long fromQQ,
-                                       const char* msg, const char* responseFlag)
+EVERequestAddGroup::EVERequestAddGroup(const int subType, const int sendTime, const long long fromGroup, const long long fromQQ,
+                                       const char* const msg, const char* const responseFlag)
 	: EVERequest(sendTime, fromQQ, msg, responseFlag), subType(subType), fromGroup(fromGroup)
 {
 }
 
-void EVERequestAddGroup::pass(std::string msg)
+void EVERequestAddGroup::pass(const std::string& msg) const
 {
 	setGroupAddRequest(responseFlag, subType, RequestAccepted, msg.c_str());
 }
 
-void EVERequestAddGroup::fail(std::string msg)
+void EVERequestAddGroup::fail(const std::string& msg) const
 {
 	setGroupAddRequest(responseFlag, subType, RequestRefused, msg.c_str());
 }
 
 AnonymousInfo::AnonymousInfo(const char* msg)
 {
-	if (msg[0] == '\0')
-	{
-		AID = 0;
-		AnonymousNick = "";
-	}
-	else
+	if (msg != nullptr && msg[0] != '\0')
 	{
 		Unpack p(base64_decode(msg));
 		AID = p.getLong();
 		AnonymousNick = p.getstring();
-		//Token = p.getchars();
 	}
 }
 
-regexMsg::regexMsg(std::string msg)
+regexMsg::regexMsg(const std::string& msg)
 {
 	Unpack msgs(base64_decode(msg));
 	auto len = msgs.getInt(); //获取参数数量
 	while (len-- > 0)
 	{
 		auto tep = msgs.getUnpack();
-		auto key = tep.getstring();
-		auto value = tep.getstring();
+		const auto key = tep.getstring();
+		const auto value = tep.getstring();
 		if (key == "")
 		{
 			return;
@@ -236,12 +230,12 @@ regexMsg::regexMsg(std::string msg)
 	}
 }
 
-std::string regexMsg::get(std::string key)
+std::string regexMsg::get(const std::string& key)
 {
 	return regexMap[key];
 }
 
-std::string regexMsg::operator[](std::string key)
+std::string regexMsg::operator[](const std::string& key)
 {
 	return regexMap[key];
 }

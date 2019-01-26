@@ -25,7 +25,7 @@
 
 namespace RandomGenerator
 {
-	inline unsigned __int64 GetCycleCount()
+	inline unsigned long long GetCycleCount()
 	{
 		__asm _emit 0x0F
 		__asm _emit 0x31

@@ -1,13 +1,11 @@
 #pragma once
 #include "bufstream.h"
 
-#include <string>
-
 namespace CQ
 {
 	enum msgtype { Friend, Group, Discuss };
 
-	class msg : public CQstream
+	class msg final : public CQstream
 	{
 		long long ID;
 		int subType = 0;

@@ -3,14 +3,14 @@
 
 void show(void* t, int len);
 
-class Unpack
+class Unpack final
 {
 	std::vector<unsigned char> buff;
 public:
 	Unpack();
-	Unpack(const char*);
-	Unpack(std::vector<unsigned char>);
-	Unpack(std::string);
+	explicit Unpack(const char*);
+	explicit Unpack(std::vector<unsigned char>);
+	explicit Unpack(const std::string&);
 
 	Unpack& setData(const char* i, int len);
 	Unpack& clear();
@@ -25,7 +25,7 @@ public:
 	Unpack& add(short i); //添加一个短整数
 	short getshort(); //弹出一个短整数
 
-	Unpack& add(unsigned char* i, short len); //添加一个字节集(请用add(std::string i);)
+	Unpack& add(const unsigned char* i, short len); //添加一个字节集(请用add(std::string i);)
 	std::vector<unsigned char> getchars(); //弹出一个字节集(请用getstring();)
 
 	Unpack& add(std::string i); //添加一个字符串

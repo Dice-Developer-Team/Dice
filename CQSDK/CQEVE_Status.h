@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CQEVE.h"//不能删除此行...
 #include <string>
 /*
 悬浮窗
@@ -25,7 +24,7 @@
 
 namespace CQ
 {
-	struct EVEStatus
+	struct EVEStatus final
 	{
 		std::string
 			//数据

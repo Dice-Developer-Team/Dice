@@ -1,6 +1,4 @@
 #pragma once
-//#include <exception>
-#include "CQEVE.h"//不能删除此行...
 #include "CQEVEMsg.h"
 
 #include <vector>
@@ -36,18 +34,17 @@ namespace CQ
 	class GroupMemberInfo;
 
 	// 群匿名信息
-	struct AnonymousInfo
+	struct AnonymousInfo final
 	{
-		long long AID;
-		std::string AnonymousNick;
-		//std::vector<unsigned char> Token;
+		long long AID = 0;
+		std::string AnonymousNick = "";
 
-		AnonymousInfo(const char* msg);
+		explicit AnonymousInfo(const char* msg);
 		AnonymousInfo() = default;
 	};
 
 	//群事件
-	struct EVEGroupMsg : public EVEMsg
+	struct EVEGroupMsg final : EVEMsg
 	{
 	private:
 		AnonymousInfo* fromAnonymousInfo;
@@ -57,7 +54,7 @@ namespace CQ
 		//禁言用的令牌
 		const char* fromAnonymousToken;
 		EVEGroupMsg(int subType, int msgId, long long fromGroup, long long fromQQ, const char* fromAnonymous,
-		            const char* msg, int Font);
+		            const char* msg, int font);
 
 		virtual ~EVEGroupMsg();
 
@@ -65,33 +62,33 @@ namespace CQ
 
 		// 通过 EVEMsg 继承
 		int sendMsg(const char*) const override;
-		int sendMsg(std::string) const override;
+		int sendMsg(const std::string&) const override;
 		msg sendMsg() const override;
 
 		//获取匿名者信息
 		AnonymousInfo& getFromAnonymousInfo() /*throw(std::exception_ptr)*/;
 
 		//置群员移除
-		bool setGroupKick(bool refusedAddAgain = false);
+		bool setGroupKick(bool refusedAddAgain = false) const;
 		//置群员禁言
 		//自动判断是否是匿名
-		bool setGroupBan(long long banTime = 60);
+		bool setGroupBan(long long banTime = 60) const;
 		//置群管理员
-		bool setGroupAdmin(bool isAdmin);
+		bool setGroupAdmin(bool isAdmin) const;
 		//置群成员专属头衔
-		bool setGroupSpecialTitle(std::string Title, long long ExpireTime = -1);
+		bool setGroupSpecialTitle(const std::string& Title, long long ExpireTime = -1) const;
 
 		//置全群禁言
-		bool setGroupWholeBan(bool enableBan = true);
+		bool setGroupWholeBan(bool enableBan = true) const;
 		//置群匿名设置
-		bool setGroupAnonymous(bool enableAnonymous);
+		bool setGroupAnonymous(bool enableAnonymous) const;
 		//置群成员名片
-		bool setGroupCard(std::string NewGroupCardNick);
+		bool setGroupCard(const std::string& newGroupNick) const;
 		//置群退出
-		bool setGroupLeave(bool isDismiss);
+		bool setGroupLeave(bool isDismiss) const;
 		//取群成员信息 (支持缓存)
-		GroupMemberInfo getGroupMemberInfo(bool disableCache = false);
+		GroupMemberInfo getGroupMemberInfo(bool disableCache = false) const;
 		//取群成员列表
-		std::vector<GroupMemberInfo> getGroupMemberList();
+		std::vector<GroupMemberInfo> getGroupMemberList() const;
 	};
 }

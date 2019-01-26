@@ -1,5 +1,4 @@
 #pragma once
-#include "CQEVE.h"//不能删除此行...
 #include "CQEVEBasic.h"
 
 /*
@@ -25,7 +24,7 @@ fromQQ 来源QQ
 
 namespace CQ
 {
-	struct EVEFriendAdd : public EVE
+	struct EVEFriendAdd final : EVE
 	{
 	};
 }

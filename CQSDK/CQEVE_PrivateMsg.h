@@ -1,7 +1,4 @@
 #pragma once
-#include "CQEVE.h"//不能删除此行...
-//#include "CQEVEMsg.h"
-//#include "CQTools.h"
 #include "CQMsgSend.h"
 
 /*
@@ -31,9 +28,9 @@ font		字体
 
 namespace CQ
 {
-	struct EVEPrivateMsg : public EVEMsg
+	struct EVEPrivateMsg final : EVEMsg
 	{
-		EVEPrivateMsg(int subType, int msgId, long long fromQQ, const char* msg, int Font);
+		EVEPrivateMsg(int subType, int msgId, long long fromQQ, const char* msg, int font);
 
 		//来自好友
 		bool fromPrivate() const;
@@ -52,6 +49,6 @@ namespace CQ
 
 		int sendMsg(const char*) const override;
 
-		int sendMsg(std::string) const override;
+		int sendMsg(const std::string&) const override;
 	};
 }

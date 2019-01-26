@@ -1,13 +1,14 @@
-﻿#include "../CQSDK/Unpack.h"
+﻿#include "Unpack.h"
 
 #include <iostream>
 #include <string>
+#include <utility>
 
 using namespace std;
 //打印内存数据
-void show(void* t, int len)
+void show(void* t, const int len)
 {
-	auto p = static_cast<unsigned char*>(t);
+	const auto p = static_cast<unsigned char*>(t);
 	cout << "{";
 	for (auto i = 0; i < len; ++i)
 	{
@@ -18,14 +19,13 @@ void show(void* t, int len)
 }
 
 //内存翻转
-unsigned char* Flip(unsigned char* str, int len)
+unsigned char* Flip(unsigned char* const str, int len)
 {
-	int f = 0;
+	auto f = 0;
 	--len;
-	unsigned char p;
 	while (f < len)
 	{
-		p = str[len];
+		const auto p = str[len];
 		str[len] = str[f];
 		str[f] = p;
 		++f;
@@ -42,20 +42,13 @@ unsigned char* toBin(ClassType& i)
 	return Flip(reinterpret_cast<unsigned char*>(&i), sizeof(ClassType));
 }
 
-//unsigned char * Int2Bin(int&i)
-//{
-//	return Flip(reinterpret_cast<unsigned char*>(&i), 4);
-//}
-
-Unpack& Unpack::setData(const char* i, int len)
+Unpack& Unpack::setData(const char* i, const int len)
 {
 	buff.assign(i, i + len);
 	return *this;
 }
 
-Unpack::Unpack()
-{
-}
+Unpack::Unpack() = default;
 
 Unpack::Unpack(const char* data)
 {
@@ -64,10 +57,10 @@ Unpack::Unpack(const char* data)
 
 Unpack::Unpack(std::vector<unsigned char> data)
 {
-	buff = data;
+	buff = std::move(data);
 }
 
-Unpack::Unpack(std::string data)
+Unpack::Unpack(const std::string& data)
 {
 	setData(data.data(), data.size());
 }
@@ -85,56 +78,56 @@ int Unpack::len() const
 
 Unpack& Unpack::add(int i)
 {
-	auto t = toBin<int>(i);
+	const auto t = toBin<int>(i);
 	buff.insert(buff.end(), t, t + sizeof(int));
 	return *this;
 }
 
 int Unpack::getInt()
 {
-	auto len = sizeof(int);
+	const auto len = sizeof(int);
 	if (buff.size() < len)return 0;
 
-	auto ret = *reinterpret_cast<int*>(Flip(&(buff[0]), len));
+	const auto ret = *reinterpret_cast<int*>(Flip(&(buff[0]), len));
 	buff.erase(buff.begin(), buff.begin() + len);
 	return ret;
 }
 
 Unpack& Unpack::add(long long i)
 {
-	auto t = toBin<long long>(i);
+	const auto t = toBin<long long>(i);
 	buff.insert(buff.end(), t, t + sizeof(long long));
 	return *this;
 }
 
 long long Unpack::getLong()
 {
-	auto len = sizeof(long long);
+	const auto len = sizeof(long long);
 	if (buff.size() < len)return 0;
 
-	auto ret = *reinterpret_cast<long long*>(Flip(&(buff[0]), len));
+	const auto ret = *reinterpret_cast<long long*>(Flip(&(buff[0]), len));
 	buff.erase(buff.begin(), buff.begin() + len);
 	return ret;
 }
 
 Unpack& Unpack::add(short i)
 {
-	auto t = toBin<short>(i);
+	const auto t = toBin<short>(i);
 	buff.insert(buff.end(), t, t + sizeof(short));
 	return *this;
 }
 
 short Unpack::getshort()
 {
-	auto len = sizeof(short);
+	const auto len = sizeof(short);
 	if (buff.size() < len)return 0;
 
-	auto ret = *reinterpret_cast<short*>(Flip(&(buff[0]), len));
+	const auto ret = *reinterpret_cast<short*>(Flip(&(buff[0]), len));
 	buff.erase(buff.begin(), buff.begin() + len);
 	return ret;
 }
 
-Unpack& Unpack::add(unsigned char* i, short len)
+Unpack& Unpack::add(const unsigned char* i, const short len)
 {
 	if (len < 0)
 		return *this;
@@ -146,7 +139,7 @@ Unpack& Unpack::add(unsigned char* i, short len)
 
 std::vector<unsigned char> Unpack::getchars()
 {
-	auto len = getshort();
+	const auto len = getshort();
 	if (buff.size() < static_cast<size_t>(len))return vector<unsigned char>();
 
 	auto tep = vector<unsigned char>(buff.begin(), buff.begin() + len);
@@ -156,7 +149,7 @@ std::vector<unsigned char> Unpack::getchars()
 
 Unpack& Unpack::add(string i)
 {
-	if (i.size() <= 0) //字符串长度为0,直接放入长度0
+	if (i.empty()) //字符串长度为0,直接放入长度0
 	{
 		add(static_cast<short>(0));
 		return *this;
@@ -166,7 +159,7 @@ Unpack& Unpack::add(string i)
 		i = i.substr(0, 32767);
 	}
 
-	add((unsigned char*)i.data(), (short)i.size());
+	add(reinterpret_cast<const unsigned char*>(i.data()), static_cast<short>(i.size()));
 
 	return *this;
 }
@@ -174,7 +167,7 @@ Unpack& Unpack::add(string i)
 string Unpack::getstring()
 {
 	auto tep = getchars();
-	if (tep.size() == 0)return "";
+	if (tep.empty())return "";
 
 	tep.push_back(static_cast<char>(0));
 	return string(reinterpret_cast<char*>(&tep[0]));

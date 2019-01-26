@@ -1,5 +1,4 @@
 #pragma once
-#include "cqdefine.h"
 #include "CQEVEBasic.h"
 
 #include <string>
@@ -8,7 +7,7 @@
 namespace CQ
 {
 	// 字体
-	struct Font
+	struct Font final
 	{
 		const char* Name{};
 		int Size{},
@@ -21,20 +20,20 @@ namespace CQ
 	};
 
 	//正则消息
-	class regexMsg
+	class regexMsg final
 	{
 		//消息
 		std::map<std::string, std::string> regexMap{};
 	public:
-		regexMsg(std::string msg);
-		std::string get(std::string);
-		std::string operator [](std::string);
+		regexMsg(const std::string& msg);
+		std::string get(const std::string&);
+		std::string operator [](const std::string&);
 	};
 
 	class msg;
 
 	//消息事件基类
-	struct EVEMsg : public EVE
+	struct EVEMsg : EVE
 	{
 		//子类型
 		int subType;
@@ -55,7 +54,7 @@ namespace CQ
 		bool isSystem() const;
 
 		virtual int sendMsg(const char*) const = 0;
-		virtual int sendMsg(std::string) const = 0;
+		virtual int sendMsg(const std::string&) const = 0;
 		virtual msg sendMsg() const = 0;
 	};
 }

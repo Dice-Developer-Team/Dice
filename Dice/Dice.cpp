@@ -36,7 +36,6 @@
 #include "RandomGenerator.h"
 #include "RD.h"
 #include "CQEVE_ALL.h"
-#include "CQTools.h"
 #include "InitList.h"
 #include "GlobalVar.h"
 #include "NameStorage.h"
@@ -768,7 +767,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		else
 		{
 			normal_distribution<double> NormalDistribution(60, 15);
-			mt19937 Generator(static_cast<unsigned int>(GetCycleCount()));
+			mt19937 Generator(static_cast<unsigned int>(RandomGenerator::GetCycleCount()));
 			int JRRPRes;
 			do
 			{
@@ -2539,7 +2538,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		else
 		{
 			normal_distribution<double> NormalDistribution(60, 15);
-			mt19937 Generator(static_cast<unsigned int>(GetCycleCount()));
+			mt19937 Generator(static_cast<unsigned int>(RandomGenerator::GetCycleCount()));
 			int JRRPRes;
 			do
 			{
@@ -4171,7 +4170,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		else
 		{
 			normal_distribution<double> NormalDistribution(60, 15);
-			mt19937 Generator(static_cast<unsigned int>(GetCycleCount()));
+			mt19937 Generator(static_cast<unsigned int>(RandomGenerator::GetCycleCount()));
 			int JRRPRes;
 			do
 			{

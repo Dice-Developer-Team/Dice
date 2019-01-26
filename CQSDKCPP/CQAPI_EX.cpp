@@ -3,7 +3,6 @@
 #include "CQAPI.h"
 #include "Unpack.h"
 #include "CQEVE_GroupMsg.h"
-#include "CQEVE_PrivateMsg.h"
 #include "CQTools.h"
 
 using namespace CQ;
@@ -32,25 +31,6 @@ string StrangerInfo::tostring() const
 		+ "}";
 }
 
-/*void GroupMemberInfo::Void()
-{
-	Group = 0;
-	QQID = 0;
-	Nick = "";
-	GroupNick = "";
-	Gender = 0;
-	Age = 0;
-	Region = "";
-	AddGroupTime = 0;
-	LastMsgTime = 0;
-	LevelName = "";
-	permissions = 0;
-	NaughtyRecord = 0;
-	Title = "";
-	ExpireTime = 0;
-	canEditGroupNick = 0;
-}*/
-
 void GroupMemberInfo::setdata(Unpack& u)
 {
 	Group = u.getLong();
@@ -78,7 +58,6 @@ GroupMemberInfo::GroupMemberInfo(const char* msg)
 	{
 		Unpack u(base64_decode(msg));
 		setdata(u);
-		//setdata(Unpack(base64_decode(msg)));
 	}
 }
 
@@ -88,7 +67,6 @@ GroupMemberInfo::GroupMemberInfo(vector<unsigned char> data)
 	{
 		Unpack u(data);
 		setdata(u);
-		//setdata(Unpack(base64_decode(msg)));
 	}
 }
 
@@ -133,36 +111,33 @@ string GroupMemberInfo::tostring() const
 }
 
 //增加运行日志
-int CQ::addLog(int Priorty, const char* Type, const char* Content)
+int CQ::addLog(const int Priorty, const char* Type, const char* Content)
 {
 	return lasterr = CQ_addLog(getAuthCode(), Priorty, Type, Content);
 }
 
 //发送好友消息
-int CQ::sendPrivateMsg(long long QQ, const char* msg) { return CQ_sendPrivateMsg(getAuthCode(), QQ, msg); }
+int CQ::sendPrivateMsg(const long long QQ, const char* msg) { return CQ_sendPrivateMsg(getAuthCode(), QQ, msg); }
 
 //发送好友消息
-int CQ::sendPrivateMsg(long long QQ, std::string& msg) { return sendPrivateMsg(QQ, msg.c_str()); }
-
-//发送好友消息
-//int CQ::sendPrivateMsg(EVEPrivateMsg eve, std::string msg) { return sendPrivateMsg(eve.fromQQ, msg.c_str()); }
+int CQ::sendPrivateMsg(const long long QQ, const std::string& msg) { return sendPrivateMsg(QQ, msg.c_str()); }
 
 //发送群消息
-int CQ::sendGroupMsg(long long GroupID, const char* msg) { return CQ_sendGroupMsg(getAuthCode(), GroupID, msg); }
+int CQ::sendGroupMsg(const long long GroupID, const char* msg) { return CQ_sendGroupMsg(getAuthCode(), GroupID, msg); }
 
 //发送群消息
-int CQ::sendGroupMsg(long long GroupID, std::string& msg) { return sendGroupMsg(GroupID, msg.c_str()); }
+int CQ::sendGroupMsg(const long long GroupID, const std::string& msg) { return sendGroupMsg(GroupID, msg.c_str()); }
 
-int CQ::sendDiscussMsg(long long DiscussID, const char* msg)
+int CQ::sendDiscussMsg(const long long DiscussID, const char* msg)
 {
 	return CQ_sendDiscussMsg(getAuthCode(), DiscussID, msg);
 }
 
 //发送讨论组消息
-int CQ::sendDiscussMsg(long long DiscussID, std::string& msg) { return sendDiscussMsg(DiscussID, msg.c_str()); }
+int CQ::sendDiscussMsg(const long long DiscussID, const std::string& msg) { return sendDiscussMsg(DiscussID, msg.c_str()); }
 
 //发送赞
-int CQ::sendLike(long long QQID, int times) { return lasterr = CQ_sendLikeV2(getAuthCode(), QQID, times); }
+int CQ::sendLike(const long long QQID, const int times) { return lasterr = CQ_sendLikeV2(getAuthCode(), QQID, times); }
 
 //取Cookies (慎用，此接口需要严格授权)
 const char* CQ::getCookies() { return CQ_getCookies(getAuthCode()); }
@@ -174,7 +149,7 @@ const char* CQ::getRecord(const char* file, const char* outformat)
 }
 
 //接收语音
-std::string CQ::getRecord(std::string& file, std::string outformat)
+std::string CQ::getRecord(const std::string& file, const std::string& outformat)
 {
 	return getRecord(file.c_str(), outformat.c_str());
 }
@@ -192,82 +167,82 @@ long long CQ::getLoginQQ() { return CQ_getLoginQQ(getAuthCode()); }
 const char* CQ::getLoginNick() { return CQ_getLoginNick(getAuthCode()); }
 
 //置群员移除
-int CQ::setGroupKick(long long GroupID, long long QQID, CQBOOL refuseForever)
+int CQ::setGroupKick(const long long GroupID, const long long QQID, const CQBOOL refuseForever)
 {
 	return lasterr = CQ_setGroupKick(getAuthCode(), GroupID, QQID, refuseForever);
 }
 
 //置群员禁言
-int CQ::setGroupBan(long long GroupID, long long QQID, long long banTime)
+int CQ::setGroupBan(const long long GroupID, const long long QQID, const long long banTime)
 {
 	return lasterr = CQ_setGroupBan(getAuthCode(), GroupID, QQID, banTime);
 }
 
 //置群管理员
-int CQ::setGroupAdmin(long long GroupID, long long QQID, CQBOOL isAdmin)
+int CQ::setGroupAdmin(const long long GroupID, const long long QQID, const CQBOOL isAdmin)
 {
 	return lasterr = CQ_setGroupAdmin(getAuthCode(), GroupID, QQID, isAdmin);
 }
 
 //置群成员专属头衔
-int CQ::setGroupSpecialTitle(long long GroupID, long long QQID, const char* Title, long long ExpireTime)
+int CQ::setGroupSpecialTitle(const long long GroupID, const long long QQID, const char* Title, const long long ExpireTime)
 {
 	return lasterr = CQ_setGroupSpecialTitle(getAuthCode(), GroupID, QQID, Title, ExpireTime);
 }
 
 //置群成员专属头衔
-int CQ::setGroupSpecialTitle(long long GroupID, long long QQID, std::string& Title, long long ExpireTime)
+int CQ::setGroupSpecialTitle(const long long GroupID, const long long QQID, const std::string& Title, const long long ExpireTime)
 {
 	return setGroupSpecialTitle(GroupID, QQID, Title.c_str(), ExpireTime);
 }
 
 //置全群禁言
-int CQ::setGroupWholeBan(long long GroupID, CQBOOL isBan)
+int CQ::setGroupWholeBan(const long long GroupID, const CQBOOL isBan)
 {
 	return lasterr = CQ_setGroupWholeBan(getAuthCode(), GroupID, isBan);
 }
 
 //置Anonymous群员禁言
-int CQ::setGroupAnonymousBan(long long GroupID, const char* Anonymous, long long banTime)
+int CQ::setGroupAnonymousBan(const long long GroupID, const char* AnonymousToken, const long long banTime)
 {
-	return lasterr = CQ_setGroupAnonymousBan(getAuthCode(), GroupID, Anonymous, banTime);
+	return lasterr = CQ_setGroupAnonymousBan(getAuthCode(), GroupID, AnonymousToken, banTime);
 }
 
 //置群Anonymous设置
-int CQ::setGroupAnonymous(long long GroupID, CQBOOL enableAnonymous)
+int CQ::setGroupAnonymous(const long long GroupID, const CQBOOL enableAnonymous)
 {
 	return lasterr = CQ_setGroupAnonymous(getAuthCode(), GroupID, enableAnonymous);
 }
 
 //置群成员名片
-int CQ::setGroupCard(long long GroupID, long long QQID, const char* newGroupNick)
+int CQ::setGroupCard(const long long GroupID, const long long QQID, const char* newGroupNick)
 {
 	return lasterr = CQ_setGroupCard(getAuthCode(), GroupID, QQID, newGroupNick);
 }
 
 //置群成员名片
-int CQ::setGroupCard(long long GroupID, long long QQID, std::string newGroupNick)
+int CQ::setGroupCard(const long long GroupID, const long long QQID, const std::string& newGroupNick)
 {
 	return setGroupCard(GroupID, QQID, newGroupNick.c_str());
 }
 
 //置群退出
-int CQ::setGroupLeave(long long GroupID, CQBOOL isDismiss)
+int CQ::setGroupLeave(const long long GroupID, const CQBOOL isDismiss)
 {
 	return lasterr = CQ_setGroupLeave(getAuthCode(), GroupID, isDismiss);
 }
 
 //置讨论组退出
-int CQ::setDiscussLeave(long long DiscussID) { return lasterr = CQ_setDiscussLeave(getAuthCode(), DiscussID); }
+int CQ::setDiscussLeave(const long long DiscussID) { return lasterr = CQ_setDiscussLeave(getAuthCode(), DiscussID); }
 
 //置好友添加请求
-int CQ::setFriendAddRequest(const char* RequestToken, int ReturnType, const char* Remarks)
+int CQ::setFriendAddRequest(const char* RequestToken, const int ReturnType, const char* Remarks)
 {
 	return lasterr = CQ_setFriendAddRequest(getAuthCode(), RequestToken, ReturnType, Remarks);
 }
 
 //置群添加请求
-int CQ::setGroupAddRequest(const char* RequestToken, int RequestType, int ReturnType, const char* Reason)
+int CQ::setGroupAddRequest(const char* RequestToken, const int RequestType, const int ReturnType, const char* Reason)
 {
 	return lasterr = CQ_setGroupAddRequestV2(getAuthCode(), RequestToken, RequestType, ReturnType, Reason);
 }
@@ -276,19 +251,19 @@ int CQ::setGroupAddRequest(const char* RequestToken, int RequestType, int Return
 int CQ::setFatal(const char* ErrorMsg) { return lasterr = CQ_setFatal(getAuthCode(), ErrorMsg); }
 
 //取群成员信息 (支持缓存)
-GroupMemberInfo CQ::getGroupMemberInfo(long long GroupID, long long QQID, CQBOOL disableCache)
+GroupMemberInfo CQ::getGroupMemberInfo(const long long GroupID, const long long QQID, const CQBOOL disableCache)
 {
 	return GroupMemberInfo(CQ_getGroupMemberInfoV2(getAuthCode(), GroupID, QQID, disableCache));
 }
 
 //取陌生人信息 (支持缓存)
-StrangerInfo CQ::getStrangerInfo(long long QQID, CQBOOL disableCache)
+StrangerInfo CQ::getStrangerInfo(const long long QQID, const CQBOOL DisableCache)
 {
-	return StrangerInfo(CQ_getStrangerInfo(getAuthCode(), QQID, disableCache));
+	return StrangerInfo(CQ_getStrangerInfo(getAuthCode(), QQID, DisableCache));
 }
 
 //取群成员列表
-std::vector<GroupMemberInfo> CQ::getGroupMemberList(long long GroupID)
+std::vector<GroupMemberInfo> CQ::getGroupMemberList(const long long GroupID)
 {
 	const char* data = CQ_getGroupMemberList(getAuthCode(), GroupID);
 	vector<GroupMemberInfo> infovector;
@@ -298,7 +273,6 @@ std::vector<GroupMemberInfo> CQ::getGroupMemberList(long long GroupID)
 	auto i = u.getInt();
 	while (--i && u.len() > 0)
 	{
-		//infovector.push_back(GroupMemberInfo(u.getchars()));
 		auto tmp = u.getUnpack();
 		infovector.emplace_back(tmp);
 	}
@@ -309,24 +283,24 @@ std::vector<GroupMemberInfo> CQ::getGroupMemberList(long long GroupID)
 //取群列表
 std::map<long long, std::string> CQ::getGroupList()
 {
-	string source(CQ_getGroupList(getAuthCode())); // 获取原始数据
-	string data(base64_decode(source)); // 解码
+	const string source(CQ_getGroupList(getAuthCode())); // 获取原始数据
+	const auto data(base64_decode(source)); // 解码
 	Unpack pack(data); // 转换为Unpack
 
-	int len = pack.getInt(); //获取总群数
+	pack.getInt(); //获取总群数, 返回值在此并没有用
 	std::map<long long, std::string> ret;
 	while (pack.len() > 0)
 	{
 		//如果还有剩余数据,就继续读取
 		auto tep = pack.getUnpack(); //读取下一个群
-		long long ID = tep.getLong(); //读取GroupID
-		string name = tep.getstring(); //读取群名称
+		auto ID = tep.getLong(); //读取GroupID
+		const auto name = tep.getstring(); //读取群名称
 		ret[ID] = name; //写入map
 	}
 	return ret;
 }
 
-int CQ::deleteMsg(long long MsgId)
+int CQ::deleteMsg(const long long MsgId)
 {
 	return lasterr = CQ_deleteMsg(getAuthCode(), MsgId);
 }
