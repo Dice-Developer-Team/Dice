@@ -7,21 +7,5 @@ image:
 - Previous Visual Studio 2015
 configuration: Release
 platform: x86
-before_build:
-  - nuget restore
 build:
   verbosity: minimal
-artifacts:
-- path: Release\com.w4123.dice.dll
-  name: Dice DLL
-- path: Dice\com.w4123.dice.json
-  name: Dice Json
-deploy:
-- provider: GitHub
-  release: Appveyor Auto Deployment ${appveyor_build_version}
-  description: This is an automatic release from appveyor
-  auth_token:
-    secure: WcFZ0HDPW31VBFY2Tr7X6TLCW8FA2B2eO9G2stU7unxcZkSjdWAn5xEJUAswMrj0
-  artifact: Release\com.w4123.dice.dll,Dice\com.w4123.dice.json
-  draft: true
-  prerelease: true
