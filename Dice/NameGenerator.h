@@ -37,9 +37,18 @@ namespace NameGenerator
 	extern const std::vector<std::string> EnglishLastNameChineseTranslation;
 	extern const std::vector<std::string> EnglishFirstNameChineseTranslation;
 
+	enum class Type
+	{
+		CN = 1,
+		EN = 2,
+		JP = 3,
+		UNKNOWN = 0
+	};
+
 	std::string getChineseName();
 	std::string getEnglishName();
-	std::string getRandomName();
+	std::string getJapaneseName();
+	std::string getRandomName(Type type = Type::UNKNOWN);
 };
 #endif /*DICE_NAME_GENERATOR*/
 

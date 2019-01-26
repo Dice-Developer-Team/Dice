@@ -786,6 +786,25 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		intMsgCnt += 4;
 		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
+
+		string type;
+		while (isalpha(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			type += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+
+		auto nameType = NameGenerator::Type::UNKNOWN;
+		if (type == "cn")
+			nameType = NameGenerator::Type::CN;
+		else if (type == "en")
+			nameType = NameGenerator::Type::EN;
+		else if (type == "jp")
+			nameType = NameGenerator::Type::JP;
+
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+
 		string strNum;
 		while (isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		{
@@ -797,7 +816,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromQQ);
 			return;
 		}
-		int intNum = stoi(strNum.empty() ? "1" : strNum);
+		auto intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum > 10)
 		{
 			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromQQ);
@@ -811,7 +830,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		vector<string> TempNameStorage;
 		while (TempNameStorage.size() != intNum)
 		{
-			string name = NameGenerator::getRandomName();
+			string name = NameGenerator::getRandomName(nameType);
 			if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
 			{
 				TempNameStorage.push_back(name);
@@ -2556,6 +2575,25 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		intMsgCnt += 4;
 		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
+
+		string type;
+		while (isalpha(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			type += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+
+		auto nameType = NameGenerator::Type::UNKNOWN;
+		if (type == "cn")
+			nameType = NameGenerator::Type::CN;
+		else if (type == "en")
+			nameType = NameGenerator::Type::EN;
+		else if (type == "jp")
+			nameType = NameGenerator::Type::JP;
+
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+
 		string strNum;
 		while(isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		{
@@ -2581,7 +2619,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		vector<string> TempNameStorage;
 		while(TempNameStorage.size() != intNum)
 		{
-			string name = NameGenerator::getRandomName();
+			string name = NameGenerator::getRandomName(nameType);
 			if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
 			{
 				TempNameStorage.push_back(name);
@@ -2600,7 +2638,16 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		intMsgCnt += 3;
 		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
-		const string name = NameGenerator::getRandomName();
+		string type = strLowerMessage.substr(intMsgCnt, 2);
+		string name;
+		if (type=="cn")
+			name = NameGenerator::getChineseName();
+		else if (type=="en")
+			name = NameGenerator::getEnglishName();
+		else if (type=="jp")
+			name = NameGenerator::getJapaneseName();
+		else
+			name = NameGenerator::getRandomName();
 		Name->set(eve.fromGroup, eve.fromQQ, name);
 		const string strReply = "已将" + strNickName + "的名称更改为" + name;
 		AddMsgToQueue(strReply, eve.fromGroup, false);
@@ -4188,6 +4235,25 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		intMsgCnt += 4;
 		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
+
+		string type;
+		while (isalpha(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			type += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+
+		auto nameType = NameGenerator::Type::UNKNOWN;
+		if (type == "cn")
+			nameType = NameGenerator::Type::CN;
+		else if (type == "en")
+			nameType = NameGenerator::Type::EN;
+		else if (type == "jp")
+			nameType = NameGenerator::Type::JP;
+
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+
 		string strNum;
 		while (isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		{
@@ -4213,7 +4279,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		vector<string> TempNameStorage;
 		while (TempNameStorage.size() != intNum)
 		{
-			string name = NameGenerator::getRandomName();
+			string name = NameGenerator::getRandomName(nameType);
 			if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
 			{
 				TempNameStorage.push_back(name);
@@ -4232,7 +4298,16 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		intMsgCnt += 3;
 		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
-		const string name = NameGenerator::getRandomName();
+		string type = strLowerMessage.substr(intMsgCnt, 2);
+		string name;
+		if (type == "cn")
+			name = NameGenerator::getChineseName();
+		else if (type == "en")
+			name = NameGenerator::getEnglishName();
+		else if (type == "jp")
+			name = NameGenerator::getJapaneseName();
+		else
+			name = NameGenerator::getRandomName();
 		Name->set(eve.fromDiscuss, eve.fromQQ, name);
 		const string strReply = "已将" + strNickName + "的名称更改为" + name;
 		AddMsgToQueue(strReply, eve.fromDiscuss, false);
