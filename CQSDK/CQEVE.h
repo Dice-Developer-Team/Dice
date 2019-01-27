@@ -8,9 +8,9 @@ Written by MukiPy2001 & Thanks for the help of orzFly and Coxxs
 #define CQEVENT(ReturnType, Name, Size) __pragma(comment(linker, "/EXPORT:" #Name "=_" #Name "@" #Size))\
 	extern "C" __declspec(dllexport) ReturnType __stdcall Name
 #else
-#define CQEVENT(ReturnType, Name, Size) \
-	extern "C" __declspec(dllexport) ReturnType __stdcall Name
-#endif
+#define CQEVENT(ReturnType, Name, Size)\
+	extern "C" __attribute__((dllexport)) ReturnType __attribute__((__stdcall__)) Name
+#endif /*_MSC_VER*/
 /*
 返回应用的ApiVer、Appid，打包后将不会调用
 */

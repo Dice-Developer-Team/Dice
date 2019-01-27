@@ -20,6 +20,7 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <string>
 #include <iostream>
@@ -137,7 +138,7 @@ map<SourceType, PropType> CharacterProp;
 multimap<long long, long long> ObserveGroup;
 multimap<long long, long long> ObserveDiscuss;
 string strFileLoc;
-EVE_Enable(__eventEnable)
+EVE_Enable(eventEnable)
 {
 	//Wait until the thread terminates
 	while (msgSendThreadRunning)
@@ -321,7 +322,7 @@ EVE_Enable(__eventEnable)
 }
 
 
-EVE_PrivateMsg_EX(__eventPrivateMsg)
+EVE_PrivateMsg_EX(eventPrivateMsg)
 {
 	if (eve.isSystem())return;
 	init(eve.message);
@@ -1482,7 +1483,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	}
 }
 
-EVE_GroupMsg_EX(__eventGroupMsg)
+EVE_GroupMsg_EX(eventGroupMsg)
 {
 	if (eve.isSystem() || eve.isAnonymous())return;
 	init(eve.message);
@@ -3259,7 +3260,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 	}
 }
 
-EVE_DiscussMsg_EX(__eventDiscussMsg)
+EVE_DiscussMsg_EX(eventDiscussMsg)
 {
 	if (eve.isSystem())return;
 	init(eve.message);
@@ -4886,7 +4887,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 	}
 }
 
-EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
+EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 {
 	if (beingOperateQQ != getLoginQQ() && WelcomeMsg.count(fromGroup))
 	{
@@ -4921,7 +4922,7 @@ EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
 	return 0;
 }
 
-EVE_Disable(__eventDisable)
+EVE_Disable(eventDisable)
 {
 	Enabled = false;
 	ilInitList.reset();
@@ -5050,7 +5051,7 @@ EVE_Disable(__eventDisable)
 	return 0;
 }
 
-EVE_Exit(__eventExit)
+EVE_Exit(eventExit)
 {
 	if (!Enabled)
 		return 0;

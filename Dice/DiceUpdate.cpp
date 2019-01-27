@@ -20,6 +20,7 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <string>
 #include <fstream>
@@ -28,7 +29,7 @@
 #include "DiceNetwork.h"
 #include "GlobalVar.h"
 
-EVE_Menu(__eventMenu)
+EVE_Menu(eventMenu)
 {
 	std::string ver;
 	if (!Network::GET("api.kokona.tech", "/getVer", 5555, ver))
