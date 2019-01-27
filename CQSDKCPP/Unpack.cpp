@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <cstring>
 
 using namespace std;
 //打印内存数据

@@ -733,13 +733,13 @@ public:
 	}
 };
 
-extern inline void init(std::string&);
-extern inline void init2(std::string&);
-extern inline void COC6D(std::string&);
-extern inline void COC6(std::string&, int);
-extern inline void COC7D(std::string&);
-extern inline void COC7(std::string&, int);
-extern inline void DND(std::string&, int);
-extern inline void LongInsane(std::string&);
-extern inline void TempInsane(std::string&);
+void init(std::string&);
+void init2(std::string&);
+void COC6D(std::string&);
+void COC6(std::string&, int);
+void COC7D(std::string&);
+void COC7(std::string&, int);
+void DND(std::string&, int);
+void LongInsane(std::string&);
+void TempInsane(std::string&);
 #endif /*DICE_RD*/

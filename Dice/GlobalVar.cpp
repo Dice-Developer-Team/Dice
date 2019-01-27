@@ -40,7 +40,13 @@ const std::string Dice_Ver_Without_Build = "2.3.6";
 const std::string DiceRequestHeader = "Dice/" + Dice_Ver_Without_Build;
 const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 const std::string Dice_Short_Ver = "Dice! by ËÝä§ Version " + Dice_Ver;
+#ifdef _MSC_VER
 const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
+#elif defined(__GNUC__)
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__ + "]";
+#else
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
+#endif
 
 std::map<std::string, std::string> GlobalMsg
 {

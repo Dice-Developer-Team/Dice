@@ -23,19 +23,18 @@
 #include "CQEVE_ALL.h"
 #include "CQTools.h"
 #include <cctype>
-#include <sstream>
 #include "RD.h"
 #include "RDConstant.h"
 #include "MsgFormat.h"
 using namespace std;
 using namespace CQ;
 
-inline void init(string& msg)
+void init(string& msg)
 {
 	msg_decode(msg);
 }
 
-inline void init2(string& msg)
+void init2(string& msg)
 {
 	for (int i = 0; i != msg.length(); i++)
 	{
@@ -71,7 +70,7 @@ inline void init2(string& msg)
 		msg[0] = '.';
 }
 
-inline void COC7D(string& strMAns)
+void COC7D(string& strMAns)
 {
 	RD rd3D6("3D6");
 	RD rd2D6p6("2D6+6");
@@ -185,7 +184,7 @@ inline void COC7D(string& strMAns)
 	strMAns += "\n移动力MOV=" + to_string(MOV);
 }
 
-inline void COC6D(string& strMAns)
+void COC6D(string& strMAns)
 {
 	RD rd3D6("3D6");
 	RD rd2D6p6("2D6+6");
@@ -279,7 +278,7 @@ inline void COC6D(string& strMAns)
 	strMAns += DB;
 }
 
-inline void COC7(string& strMAns, int intNum)
+void COC7(string& strMAns, int intNum)
 {
 	strMAns += "的人物作成:";
 	string strProperty[] = {"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育", "幸运"};
@@ -300,7 +299,7 @@ inline void COC7(string& strMAns, int intNum)
 	}
 }
 
-inline void COC6(string& strMAns, int intNum)
+void COC6(string& strMAns, int intNum)
 {
 	strMAns += "的人物作成:";
 	string strProperty[] = {"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育"};
@@ -324,7 +323,7 @@ inline void COC6(string& strMAns, int intNum)
 	}
 }
 
-inline void DND(string& strOutput, int intNum)
+void DND(string& strOutput, int intNum)
 {
 	strOutput += "的英雄作成:";
 	RD rdDND("4D6K3");
@@ -347,7 +346,7 @@ inline void DND(string& strOutput, int intNum)
 	}
 }
 
-inline void TempInsane(string& strAns)
+void TempInsane(string& strAns)
 {
 	const int intSymRes = RandomGenerator::Randint(1, 10);
 	std::string strTI = "1D10=" + to_string(intSymRes) + "\n症状: " + TempInsanity[intSymRes];
@@ -372,7 +371,7 @@ inline void TempInsane(string& strAns)
 	strAns += strTI;
 }
 
-inline void LongInsane(string& strAns)
+void LongInsane(string& strAns)
 {
 	const int intSymRes = RandomGenerator::Randint(1, 10);
 	std::string strLI = "1D10=" + to_string(intSymRes) + "\n症状: " + LongInsanity[intSymRes];

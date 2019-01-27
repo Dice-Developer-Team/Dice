@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <vector>
+#include <string>
 
 void show(void* t, int len);
 

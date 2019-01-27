@@ -1,5 +1,5 @@
 #pragma once
-#include <vector>
+#include <string>
 
 //base64±àÂë
 std::string base64_encode(const std::string& decode_string);
