@@ -127,7 +127,7 @@ private:
 			vBnP.push_back(P_Dice);
 			if (dice.length() > 2)
 				return DiceTooBig_Err;
-			for (int i = 1; i != dice.length(); i++)
+			for (size_t i = 1; i != dice.length(); i++)
 				if (!isdigit(static_cast<unsigned char>(dice[i])))
 					return Input_Err;
 			int intPNum = stoi(dice.substr(1).empty() ? "1" : dice.substr(1));
@@ -146,7 +146,7 @@ private:
 					vintTmpRes.push_back(intTmpRollRes - 1);
 			}
 			int intTmpD100 = vintTmpRes[0];
-			for (int i = 1; i != vintTmpRes.size(); i++)
+			for (size_t i = 1; i != vintTmpRes.size(); i++)
 			{
 				if (vintTmpRes[i] > intTmpD100 / 10)
 					intTmpD100 = vintTmpRes[i] * 10 + intTmpD100 % 10;
@@ -164,7 +164,7 @@ private:
 			vBnP.push_back(B_Dice);
 			if (dice.length() > 2)
 				return DiceTooBig_Err;
-			for (int i = 1; i != dice.length(); i++)
+			for (size_t i = 1; i != dice.length(); i++)
 				if (!isdigit(static_cast<unsigned char>(dice[i])))
 					return Input_Err;
 			int intBNum = stoi(dice.substr(1).empty() ? "1" : dice.substr(1));
@@ -183,7 +183,7 @@ private:
 					vintTmpRes.push_back(intTmpRollRes - 1);
 			}
 			int intTmpD100 = vintTmpRes[0];
-			for (int i = 1; i != vintTmpRes.size(); i++)
+			for (size_t i = 1; i != vintTmpRes.size(); i++)
 			{
 				if (vintTmpRes[i] < intTmpD100 / 10)
 					intTmpD100 = vintTmpRes[i] * 10 + intTmpD100 % 10;
@@ -286,9 +286,9 @@ private:
 		while (intDiceCnt--)
 		{
 			int intTmpResOnce = RandomGenerator::Randint(1, intDiceType);
-			if (vintTmpRes.size() != intKNum)
+			if (vintTmpRes.size() != static_cast<size_t> (intKNum))
 				vintTmpRes.push_back(intTmpResOnce);
-			else if (intTmpResOnce > *(std::min_element(vintTmpRes.begin(), vintTmpRes.end())))
+			else if (intTmpResOnce > *std::min_element(vintTmpRes.begin(), vintTmpRes.end()))
 				vintTmpRes[std::distance(vintTmpRes.begin(), std::min_element(vintTmpRes.begin(), vintTmpRes.end()))] =
 					intTmpResOnce;
 		}
@@ -395,7 +395,7 @@ public:
 			strDice.insert(0, "4");
 		if (strDice[0] == 'F')
 			strDice.insert(0, "4D");
-		for (int ReadCnt = 1; ReadCnt != strDice.length(); ReadCnt++)
+		for (size_t ReadCnt = 1; ReadCnt != strDice.length(); ReadCnt++)
 			if (strDice[ReadCnt] == 'F' && (isdigit(strDice[ReadCnt - 1]) || strDice[ReadCnt - 1] == '+' || strDice[
 				ReadCnt - 1] == '-'))
 				strDice.insert(ReadCnt, "D");
@@ -450,7 +450,7 @@ public:
 			strDice.insert(0, "4");
 		if (strDice[0] == 'F')
 			strDice.insert(0, "4D");
-		for (int ReadCnt = 1; ReadCnt != strDice.length(); ReadCnt++)
+		for (size_t ReadCnt = 1; ReadCnt != strDice.length(); ReadCnt++)
 			if (strDice[ReadCnt] == 'F' && (isdigit(strDice[ReadCnt - 1]) || strDice[ReadCnt - 1] == '+' || strDice[
 				ReadCnt - 1] == '-'))
 				strDice.insert(ReadCnt, "D");
