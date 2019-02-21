@@ -2,7 +2,6 @@
 
 #include <string>
 
-#include "Unpack.h"
 
 using namespace std;
 
@@ -12,17 +11,17 @@ static const string base64_chars =
 	"abcdefghijklmnopqrstuvwxyz"
 	"0123456789+/";
 
-static bool is_base64(unsigned char c)
+static bool is_base64(const unsigned char c)
 {
-	return (isalnum(c) || (c == '+') || (c == '/'));
+	return isalnum(c) || c == '+' || c == '/';
 }
 
-string base64_encode(string const& decode_string)
+string base64_encode(const string& decode_string)
 {
 	auto in_len = decode_string.size();
 	auto bytes_to_encode = decode_string.data();
 	string ret;
-	int i = 0;
+	auto i = 0;
 	int j;
 	unsigned char char_array_3[3];
 	unsigned char char_array_4[4];
@@ -63,12 +62,12 @@ string base64_encode(string const& decode_string)
 	return ret;
 }
 
-string base64_decode(string const& encoded_string)
+string base64_decode(const string& encoded_string)
 {
 	int in_len = encoded_string.size();
-	int i = 0;
+	auto i = 0;
 	int j;
-	int in_ = 0;
+	auto in_ = 0;
 	unsigned char char_array_4[4], char_array_3[3];
 	string ret;
 
@@ -109,7 +108,7 @@ string base64_decode(string const& encoded_string)
 	return ret;
 }
 
-std::string& msg_tihuan(std::string& s, std::string const old, std::string const n)
+std::string& msg_replace(std::string& s, const std::string& old, const std::string& n)
 {
 	size_t st = 0;
 	while ((st = s.find(old, st)) < s.size())
@@ -120,24 +119,24 @@ std::string& msg_tihuan(std::string& s, std::string const old, std::string const
 	return s;
 }
 
-std::string& msg_encode(std::string& s, bool isCQ)
+std::string& msg_encode(std::string& s, const bool isCQ)
 {
-	msg_tihuan(s, "&", "&amp;");
-	msg_tihuan(s, "[", "&#91;");
-	msg_tihuan(s, "]", "&#93;");
-	msg_tihuan(s, "\t", "&#44;");
+	msg_replace(s, "&", "&amp;");
+	msg_replace(s, "[", "&#91;");
+	msg_replace(s, "]", "&#93;");
+	msg_replace(s, "\t", "&#44;");
 	if (isCQ)
-		msg_tihuan(s, ",", "&#44;");
+		msg_replace(s, ",", "&#44;");
 	return s;
 }
 
-std::string& msg_decode(std::string& s, bool isCQ)
+std::string& msg_decode(std::string& s, const bool isCQ)
 {
 	if (isCQ)
-		msg_tihuan(s, "&#44;", ",");
-	msg_tihuan(s, "&#91;", "[");
-	msg_tihuan(s, "&#93;", "]");
-	msg_tihuan(s, "&#44;", "\t");
-	msg_tihuan(s, "&amp;", "&");
+		msg_replace(s, "&#44;", ",");
+	msg_replace(s, "&#91;", "[");
+	msg_replace(s, "&#93;", "]");
+	msg_replace(s, "&#44;", "\t");
+	msg_replace(s, "&amp;", "&");
 	return s;
 }

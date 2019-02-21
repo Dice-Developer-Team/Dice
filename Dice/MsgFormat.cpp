@@ -20,26 +20,22 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
-#ifndef DICE_NAME_STORAGE
-#define DICE_NAME_STORAGE
-#include <map>
+#include "MsgFormat.h"
 #include <string>
-#include "StorageBase.h"
 
-class NameStorage : public StorageBase
+std::string format(std::string str, const std::initializer_list<const std::string>& replace_str)
 {
-	std::map<long long, std::map<long long, std::string>> Name;
-public:
-	NameStorage(const std::string& FilePath);
-	~NameStorage();
-
-	void read() override;
-	void save() const override;
-
-	std::string get(long long GroupID, long long QQ);
-	bool set(long long GroupID, long long QQ, std::string name);
-	void clear();
-	bool del(long long GroupID, long long QQ);
-};
-#endif /*DICE_NAME_STORAGE*/
+	auto counter = 0;
+	for (const auto& element : replace_str)
+	{
+		auto replace = "{" + std::to_string(counter) + "}";
+		auto replace_pos = str.find(replace);
+		while (replace_pos != std::string::npos)
+		{
+			str.replace(replace_pos, replace.length(), element);
+			replace_pos = str.find(replace);
+		}
+		counter++;
+	}
+	return str;
+}

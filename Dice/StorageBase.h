@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018 w4123ËÝä§
+ * Copyright (C) 2018-2019 w4123ËÝä§
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -21,8 +21,8 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#ifndef __STORAGEBASE__
-#define __STORAGEBASE__
+#ifndef DICE_STORAGE_BASE
+#define DICE_STORAGE_BASE
 #include <string>
 
 class StorageBase
@@ -35,4 +35,4 @@ public:
 	StorageBase(std::string FilePath);
 	virtual ~StorageBase() = default;
 };
-#endif /*__STORAGEBASE__*/
+#endif /*DICE_STORAGE_BASE*/

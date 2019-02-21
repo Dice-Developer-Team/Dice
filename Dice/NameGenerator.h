@@ -21,28 +21,35 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#ifndef DICE_GLOBAL_VAR
-#define DICE_GLOBAL_VAR
-#include "CQLogger.h"
-#include <map>
+#ifndef DICE_NAME_GENERATOR
+#define DICE_NAME_GENERATOR
+#include <string>
+#include <vector>
 
-// 版本信息
-extern const unsigned short Dice_Build;
-extern const std::string Dice_Ver_Without_Build;
-extern const std::string DiceRequestHeader;
-extern const std::string Dice_Ver;
-extern const std::string Dice_Short_Ver;
-extern const std::string Dice_Full_Ver;
+namespace NameGenerator
+{
+	extern const std::vector<std::string> ChineseFirstName;
+	extern const std::vector<std::string> ChineseSurname;
+	extern const std::vector<std::string> JapaneseFirstName;
+	extern const std::vector<std::string> JapaneseSurname;
+	extern const std::vector<std::string> EnglishFirstName;
+	extern const std::vector<std::string> EnglishLastName;
+	extern const std::vector<std::string> EnglishLastNameChineseTranslation;
+	extern const std::vector<std::string> EnglishFirstNameChineseTranslation;
 
-// 应用是否被启用
-extern bool Enabled;
+	enum class Type
+	{
+		CN = 1,
+		EN = 2,
+		JP = 3,
+		UNKNOWN = 0
+	};
 
-// 消息发送线程是否正在运行
-extern bool msgSendThreadRunning;
+	std::string getChineseName();
+	std::string getEnglishName();
+	std::string getJapaneseName();
+	std::string getRandomName(Type type = Type::UNKNOWN);
+};
+#endif /*DICE_NAME_GENERATOR*/
 
-// 全局酷QLogger
-extern CQ::logger DiceLogger;
 
-// 回复信息, 此内容可以通过CustomMsg功能修改而无需修改源代码
-extern std::map<std::string, std::string> GlobalMsg;
-#endif /*DICE_GLOBAL_VAR*/

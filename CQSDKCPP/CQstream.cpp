@@ -1,49 +1,51 @@
 /*此文件是下面三个头文件的实现*/
+#include <utility>
 #include "CQAPI_EX.h"
 #include "bufstream.h"
 #include "CQLogger.h"
 #include "CQMsgSend.h"
+#include "CQconstant.h"
 
 using namespace CQ;
 using namespace std;
 
-logger::logger(std::string title) : title(title)
+logger::logger(std::string title) : title(std::move(title))
 {
 }
 
-void logger::setTitle(std::string title) { this->title = title; }
+void logger::setTitle(std::string title) { this->title = std::move(title); }
 
-void logger::Debug(std::string& msg) const { Debug(msg.c_str()); }
+void logger::Debug(const std::string& msg) const { Debug(msg.c_str()); }
 
-void logger::Info(std::string& msg) const { Info(msg.c_str()); }
+void logger::Info(const std::string& msg) const { Info(msg.c_str()); }
 
-void logger::InfoSuccess(std::string& msg) const { InfoSuccess(msg.c_str()); }
+void logger::InfoSuccess(const std::string& msg) const { InfoSuccess(msg.c_str()); }
 
-void logger::InfoRecv(std::string& msg) const { InfoRecv(msg.c_str()); }
+void logger::InfoRecv(const std::string& msg) const { InfoRecv(msg.c_str()); }
 
-void logger::InfoSend(std::string& msg) const { InfoSend(msg.c_str()); }
+void logger::InfoSend(const std::string& msg) const { InfoSend(msg.c_str()); }
 
-void logger::Warning(std::string& msg) const { Warning(msg.c_str()); }
+void logger::Warning(const std::string& msg) const { Warning(msg.c_str()); }
 
-void logger::Error(std::string& msg) const { Error(msg.c_str()); }
+void logger::Error(const std::string& msg) const { Error(msg.c_str()); }
 
-void logger::Fatal(std::string& msg) const { Fatal(msg.c_str()); }
+void logger::Fatal(const std::string& msg) const { Fatal(msg.c_str()); }
 
-void logger::Debug(const char* msg) const { addLog(Log_Debug, title.c_str(), msg); }
+void logger::Debug(const char* const msg) const { addLog(Log_Debug, title.c_str(), msg); }
 
-void logger::Info(const char* msg) const { addLog(Log_Info, title.c_str(), msg); }
+void logger::Info(const char* const msg) const { addLog(Log_Info, title.c_str(), msg); }
 
-void logger::InfoSuccess(const char* msg) const { addLog(Log_InfoSuccess, title.c_str(), msg); }
+void logger::InfoSuccess(const char* const msg) const { addLog(Log_InfoSuccess, title.c_str(), msg); }
 
-void logger::InfoRecv(const char* msg) const { addLog(Log_InfoRecv, title.c_str(), msg); }
+void logger::InfoRecv(const char* const msg) const { addLog(Log_InfoRecv, title.c_str(), msg); }
 
-void logger::InfoSend(const char* msg) const { addLog(Log_InfoSend, title.c_str(), msg); }
+void logger::InfoSend(const char* const msg) const { addLog(Log_InfoSend, title.c_str(), msg); }
 
-void logger::Warning(const char* msg) const { addLog(Log_Warning, title.c_str(), msg); }
+void logger::Warning(const char* const msg) const { addLog(Log_Warning, title.c_str(), msg); }
 
-void logger::Error(const char* msg) const { addLog(Log_Error, title.c_str(), msg); }
+void logger::Error(const char* const msg) const { addLog(Log_Error, title.c_str(), msg); }
 
-void logger::Fatal(const char* msg) const { addLog(Log_Fatal, title.c_str(), msg); }
+void logger::Fatal(const char* const msg) const { addLog(Log_Fatal, title.c_str(), msg); }
 
 logstream logger::Debug() const { return logstream(title, Log_Debug); }
 
@@ -78,7 +80,7 @@ CQstream& CQstream::append(const string& s)
 	return *this;
 }
 
-CQstream& CQstream::operator<<(const string& s) { return (*this).append(s); }
+CQstream& CQstream::operator<<(const string& s) { return append(s); }
 
 CQstream& CQstream::append(const int& i)
 {
@@ -86,7 +88,7 @@ CQstream& CQstream::append(const int& i)
 	return *this;
 }
 
-CQstream& CQstream::operator<<(const int& i) { return (*this).append(i); }
+CQstream& CQstream::operator<<(const int& i) { return append(i); }
 
 CQstream& CQstream::append(const size_t& i)
 {
@@ -94,7 +96,7 @@ CQstream& CQstream::append(const size_t& i)
 	return *this;
 }
 
-CQstream& CQstream::operator<<(const size_t& i) { return (*this).append(i); }
+CQstream& CQstream::operator<<(const size_t& i) { return append(i); }
 
 CQstream& CQstream::append(const long long& l)
 {
@@ -102,15 +104,15 @@ CQstream& CQstream::append(const long long& l)
 	return *this;
 }
 
-CQstream& CQstream::operator<<(const long long& l) { return (*this).append(l); }
+CQstream& CQstream::operator<<(const long long& l) { return append(l); }
 
-CQstream& CQstream::append(const char* c)
+CQstream& CQstream::append(const char* const c)
 {
 	buf += c;
 	return *this;
 }
 
-CQstream& CQstream::operator<<(const char* c) { return (*this).append(c); }
+CQstream& CQstream::operator<<(const char* const c) { return append(c); }
 
 CQstream& CQstream::operator<<(void (*control)(CQstream&))
 {
@@ -120,31 +122,29 @@ CQstream& CQstream::operator<<(void (*control)(CQstream&))
 
 void CQstream::flush() { send(); }
 
-inline CQstream::~CQstream()
-{
-}
+inline CQstream::~CQstream() = default;
 
-inline logstream::logstream(std::string title, int Log_flag) : flag(Log_flag), title(title)
+inline logstream::logstream(std::string title, const int Log_flag) : flag(Log_flag), title(std::move(title))
 {
 }
 
 void logstream::send()
 {
-	if (buf.size() <= 0)return;
+	if (buf.empty())return;
 	addLog(flag, title.c_str(), buf.c_str());
 }
 
-msg::msg(long long ID, msgtype Type) : ID(ID), subType(Type)
+msg::msg(const long long GroupID_Or_QQID, const msgtype Type) : ID(GroupID_Or_QQID), subType(Type)
 {
 }
 
-msg::msg(long long ID, int Type) : ID(ID), subType(Type)
+msg::msg(const long long GroupID_Or_QQID, const int Type) : ID(GroupID_Or_QQID), subType(Type)
 {
 }
 
 void msg::send()
 {
-	if (buf.size() <= 0)return;
+	if (buf.empty())return;
 	switch (subType)
 	{
 	case Friend: //好友

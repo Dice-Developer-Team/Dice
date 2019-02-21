@@ -206,12 +206,17 @@
     <ClCompile Include="CustomMsg.cpp" />
     <ClCompile Include="Dice.cpp" />
     <ClCompile Include="DiceMsgSend.cpp" />
+    <ClCompile Include="DiceNetwork.cpp" />
+    <ClCompile Include="DiceUpdate.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="EncodingConvert.cpp" />
     <ClCompile Include="GetRule.cpp" />
     <ClCompile Include="GlobalVar.cpp" />
     <ClCompile Include="InitList.cpp" />
+    <ClCompile Include="MsgFormat.cpp" />
+    <ClCompile Include="NameGenerator.cpp" />
     <ClCompile Include="NameStorage.cpp" />
+    <ClCompile Include="RandomGenerator.cpp" />
     <ClCompile Include="RD.cpp" />
     <ClCompile Include="StorageBase.cpp" />
   </ItemGroup>
@@ -240,12 +245,16 @@
     <ClInclude Include="APPINFO.h" />
     <ClInclude Include="CustomMsg.h" />
     <ClInclude Include="DiceMsgSend.h" />
+    <ClInclude Include="DiceNetwork.h" />
     <ClInclude Include="EncodingConvert.h" />
     <ClInclude Include="GetRule.h" />
     <ClInclude Include="GlobalVar.h" />
     <ClInclude Include="InitList.h" />
     <ClInclude Include="json.hpp" />
+    <ClInclude Include="MsgFormat.h" />
+    <ClInclude Include="NameGenerator.h" />
     <ClInclude Include="NameStorage.h" />
+    <ClInclude Include="RandomGenerator.h" />
     <ClInclude Include="RD.h" />
     <ClInclude Include="RDConstant.h" />
     <ClInclude Include="StorageBase.h" />
@@ -255,22 +264,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="com.w4123.dice.json" />
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\AWSSDKCPP-Core.redist.1.6.25\build\native\AWSSDKCPP-Core.redist.targets" Condition="Exists('..\packages\AWSSDKCPP-Core.redist.1.6.25\build\native\AWSSDKCPP-Core.redist.targets')" />
-    <Import Project="..\packages\AWSSDKCPP-Core.1.6.25\build\native\AWSSDKCPP-Core.targets" Condition="Exists('..\packages\AWSSDKCPP-Core.1.6.25\build\native\AWSSDKCPP-Core.targets')" />
-    <Import Project="..\packages\AWSSDKCPP-DynamoDB.redist.1.6.20120810.25\build\native\AWSSDKCPP-DynamoDB.redist.targets" Condition="Exists('..\packages\AWSSDKCPP-DynamoDB.redist.1.6.20120810.25\build\native\AWSSDKCPP-DynamoDB.redist.targets')" />
-    <Import Project="..\packages\AWSSDKCPP-DynamoDB.1.6.20120810.25\build\native\AWSSDKCPP-DynamoDB.targets" Condition="Exists('..\packages\AWSSDKCPP-DynamoDB.1.6.20120810.25\build\native\AWSSDKCPP-DynamoDB.targets')" />
-  </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>这台计算机上缺少此项目引用的 NuGet 程序包。使用“NuGet 程序包还原”可下载这些程序包。有关更多信息，请参见 http://go.microsoft.com/fwlink/?LinkID=322105。缺少的文件是 {0}。</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\AWSSDKCPP-Core.redist.1.6.25\build\native\AWSSDKCPP-Core.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\AWSSDKCPP-Core.redist.1.6.25\build\native\AWSSDKCPP-Core.redist.targets'))" />
-    <Error Condition="!Exists('..\packages\AWSSDKCPP-Core.1.6.25\build\native\AWSSDKCPP-Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\AWSSDKCPP-Core.1.6.25\build\native\AWSSDKCPP-Core.targets'))" />
-    <Error Condition="!Exists('..\packages\AWSSDKCPP-DynamoDB.redist.1.6.20120810.25\build\native\AWSSDKCPP-DynamoDB.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\AWSSDKCPP-DynamoDB.redist.1.6.20120810.25\build\native\AWSSDKCPP-DynamoDB.redist.targets'))" />
-    <Error Condition="!Exists('..\packages\AWSSDKCPP-DynamoDB.1.6.20120810.25\build\native\AWSSDKCPP-DynamoDB.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\AWSSDKCPP-DynamoDB.1.6.20120810.25\build\native\AWSSDKCPP-DynamoDB.targets'))" />
-  </Target>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

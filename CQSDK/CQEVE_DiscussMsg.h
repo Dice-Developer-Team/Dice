@@ -1,6 +1,5 @@
 #pragma once
 
-//#include "CQEVE.h"//不能删除此行...
 #include "CQMsgSend.h"
 
 /*
@@ -30,7 +29,7 @@ font		字体
 
 namespace CQ
 {
-	struct EVEDiscussMsg : public EVEMsg
+	struct EVEDiscussMsg : EVEMsg
 	{
 		long long fromDiscuss; //讨论组号
 
@@ -41,6 +40,6 @@ namespace CQ
 		// 通过 EVEMsg 继承
 		msg sendMsg() const override;
 		int sendMsg(const char*) const override;
-		int sendMsg(std::string) const override;
+		int sendMsg(const std::string&) const override;
 	};
 }

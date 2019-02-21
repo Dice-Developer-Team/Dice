@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018 w4123ËÝä§
+ * Copyright (C) 2018-2019 w4123ËÝä§
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -21,24 +21,17 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#ifndef _RD_
-#define _RD_
+#ifndef DICE_RD
+#define DICE_RD
 #include <random>
 #include <algorithm>
 #include <string>
 #include <vector>
 #include <map>
 #include "RDConstant.h"
-#include "CQTools.h"
-extern std::map<long long, int> DefaultDice;
+#include "RandomGenerator.h"
 
-//This function is used to generate random integer
-inline int Randint(int lowest, int highest)
-{
-	std::mt19937 gen(static_cast<unsigned int>(GetCycleCount()));
-	const std::uniform_int_distribution<int> dis(lowest, highest);
-	return dis(gen);
-}
+extern std::map<long long, int> DefaultDice;
 
 class RD
 {
@@ -76,7 +69,7 @@ private:
 				int AddNum = 0;
 				while (intDiceCnt--)
 				{
-					int intTmpResOnce = Randint(1, 10);
+					int intTmpResOnce = RandomGenerator::Randint(1, 10);
 					vintTmpRes.push_back(intTmpResOnce);
 					if (intTmpResOnce >= 8)
 						intTmpRes++;
@@ -117,7 +110,7 @@ private:
 			int intSum = 0;
 			while (intDiceNum--)
 			{
-				int intTmpSum = Randint(0, 2) - 1;
+				int intTmpSum = RandomGenerator::Randint(0, 2) - 1;
 				vintTmpRes.push_back(intTmpSum);
 				intSum += intTmpSum;
 			}
@@ -134,7 +127,7 @@ private:
 			vBnP.push_back(P_Dice);
 			if (dice.length() > 2)
 				return DiceTooBig_Err;
-			for (int i = 1; i != dice.length(); i++)
+			for (size_t i = 1; i != dice.length(); i++)
 				if (!isdigit(static_cast<unsigned char>(dice[i])))
 					return Input_Err;
 			int intPNum = stoi(dice.substr(1).empty() ? "1" : dice.substr(1));
@@ -143,17 +136,17 @@ private:
 			if (intPNum == 0)
 				return Value_Err;
 			std::vector<int> vintTmpRes;
-			vintTmpRes.push_back(Randint(1, 100));
+			vintTmpRes.push_back(RandomGenerator::Randint(1, 100));
 			while (intPNum--)
 			{
-				int intTmpRollRes = Randint(1, 10);
+				int intTmpRollRes = RandomGenerator::Randint(1, 10);
 				if (vintTmpRes[0] % 10 == 0)
 					vintTmpRes.push_back(intTmpRollRes);
 				else
 					vintTmpRes.push_back(intTmpRollRes - 1);
 			}
 			int intTmpD100 = vintTmpRes[0];
-			for (int i = 1; i != vintTmpRes.size(); i++)
+			for (size_t i = 1; i != vintTmpRes.size(); i++)
 			{
 				if (vintTmpRes[i] > intTmpD100 / 10)
 					intTmpD100 = vintTmpRes[i] * 10 + intTmpD100 % 10;
@@ -171,7 +164,7 @@ private:
 			vBnP.push_back(B_Dice);
 			if (dice.length() > 2)
 				return DiceTooBig_Err;
-			for (int i = 1; i != dice.length(); i++)
+			for (size_t i = 1; i != dice.length(); i++)
 				if (!isdigit(static_cast<unsigned char>(dice[i])))
 					return Input_Err;
 			int intBNum = stoi(dice.substr(1).empty() ? "1" : dice.substr(1));
@@ -180,17 +173,17 @@ private:
 			if (intBNum == 0)
 				return Value_Err;
 			std::vector<int> vintTmpRes;
-			vintTmpRes.push_back(Randint(1, 100));
+			vintTmpRes.push_back(RandomGenerator::Randint(1, 100));
 			while (intBNum--)
 			{
-				int intTmpRollRes = Randint(1, 10);
+				int intTmpRollRes = RandomGenerator::Randint(1, 10);
 				if (vintTmpRes[0] % 10 == 0)
 					vintTmpRes.push_back(intTmpRollRes);
 				else
 					vintTmpRes.push_back(intTmpRollRes - 1);
 			}
 			int intTmpD100 = vintTmpRes[0];
-			for (int i = 1; i != vintTmpRes.size(); i++)
+			for (size_t i = 1; i != vintTmpRes.size(); i++)
 			{
 				if (vintTmpRes[i] < intTmpD100 / 10)
 					intTmpD100 = vintTmpRes[i] * 10 + intTmpD100 % 10;
@@ -259,7 +252,7 @@ private:
 			int intTmpRes = 0;
 			while (intDiceCnt--)
 			{
-				int intTmpResOnce = Randint(1, intDiceType);
+				int intTmpResOnce = RandomGenerator::Randint(1, intDiceType);
 				vintTmpRes.push_back(intTmpResOnce);
 				intTmpRes += intTmpResOnce;
 			}
@@ -292,10 +285,10 @@ private:
 		std::vector<int> vintTmpRes;
 		while (intDiceCnt--)
 		{
-			int intTmpResOnce = Randint(1, intDiceType);
-			if (vintTmpRes.size() != intKNum)
+			int intTmpResOnce = RandomGenerator::Randint(1, intDiceType);
+			if (vintTmpRes.size() != static_cast<size_t> (intKNum))
 				vintTmpRes.push_back(intTmpResOnce);
-			else if (intTmpResOnce > *(std::min_element(vintTmpRes.begin(), vintTmpRes.end())))
+			else if (intTmpResOnce > *std::min_element(vintTmpRes.begin(), vintTmpRes.end()))
 				vintTmpRes[std::distance(vintTmpRes.begin(), std::min_element(vintTmpRes.begin(), vintTmpRes.end()))] =
 					intTmpResOnce;
 		}
@@ -402,7 +395,7 @@ public:
 			strDice.insert(0, "4");
 		if (strDice[0] == 'F')
 			strDice.insert(0, "4D");
-		for (int ReadCnt = 1; ReadCnt != strDice.length(); ReadCnt++)
+		for (size_t ReadCnt = 1; ReadCnt != strDice.length(); ReadCnt++)
 			if (strDice[ReadCnt] == 'F' && (isdigit(strDice[ReadCnt - 1]) || strDice[ReadCnt - 1] == '+' || strDice[
 				ReadCnt - 1] == '-'))
 				strDice.insert(ReadCnt, "D");
@@ -457,7 +450,7 @@ public:
 			strDice.insert(0, "4");
 		if (strDice[0] == 'F')
 			strDice.insert(0, "4D");
-		for (int ReadCnt = 1; ReadCnt != strDice.length(); ReadCnt++)
+		for (size_t ReadCnt = 1; ReadCnt != strDice.length(); ReadCnt++)
 			if (strDice[ReadCnt] == 'F' && (isdigit(strDice[ReadCnt - 1]) || strDice[ReadCnt - 1] == '+' || strDice[
 				ReadCnt - 1] == '-'))
 				strDice.insert(ReadCnt, "D");
@@ -740,13 +733,13 @@ public:
 	}
 };
 
-extern inline void init(std::string&);
-extern inline void init2(std::string&);
-extern inline void COC6D(std::string&);
-extern inline void COC6(std::string&, int);
-extern inline void COC7D(std::string&);
-extern inline void COC7(std::string&, int);
-extern inline void DND(std::string&, int);
-extern inline void LongInsane(std::string&);
-extern inline void TempInsane(std::string&);
-#endif /*_RD_*/
+void init(std::string&);
+void init2(std::string&);
+void COC6D(std::string&);
+void COC6(std::string&, int);
+void COC7D(std::string&);
+void COC7(std::string&, int);
+void DND(std::string&, int);
+void LongInsane(std::string&);
+void TempInsane(std::string&);
+#endif /*DICE_RD*/

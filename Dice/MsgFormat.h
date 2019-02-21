@@ -21,28 +21,8 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#ifndef DICE_GLOBAL_VAR
-#define DICE_GLOBAL_VAR
-#include "CQLogger.h"
-#include <map>
-
-// 版本信息
-extern const unsigned short Dice_Build;
-extern const std::string Dice_Ver_Without_Build;
-extern const std::string DiceRequestHeader;
-extern const std::string Dice_Ver;
-extern const std::string Dice_Short_Ver;
-extern const std::string Dice_Full_Ver;
-
-// 应用是否被启用
-extern bool Enabled;
-
-// 消息发送线程是否正在运行
-extern bool msgSendThreadRunning;
-
-// 全局酷QLogger
-extern CQ::logger DiceLogger;
-
-// 回复信息, 此内容可以通过CustomMsg功能修改而无需修改源代码
-extern std::map<std::string, std::string> GlobalMsg;
-#endif /*DICE_GLOBAL_VAR*/
+#ifndef DICE_MSG_FORMAT
+#define DICE_MSG_FORMAT
+#include <string>
+std::string format(std::string str, const std::initializer_list<const std::string>& replace_str);
+#endif /*DICE_MSG_FORMAT*/

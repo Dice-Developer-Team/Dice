@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018 w4123溯洄
+ * Copyright (C) 2018-2019 w4123溯洄
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -23,7 +23,6 @@
 #include "CQLogger.h"
 #include "GlobalVar.h"
 #include <map>
-#include "RDConstant.h"
 
 bool Enabled = false;
 
@@ -31,8 +30,42 @@ bool msgSendThreadRunning = false;
 
 CQ::logger DiceLogger("Dice!");
 
+/*
+ * 版本信息
+ * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
+ * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
+ */
+const unsigned short Dice_Build = 509;
+const std::string Dice_Ver_Without_Build = "2.3.6";
+const std::string DiceRequestHeader = "Dice/" + Dice_Ver_Without_Build;
+const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
+const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
+#ifdef __clang__
+
+#ifdef _MSC_VER
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
+#elif defined(__GNUC__)
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__ + "]";
+#else
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " UNKNOWN]"
+#endif /*__clang__*/
+
+#else
+
+#ifdef _MSC_VER
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
+#elif defined(__GNUC__)
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__ + "]";
+#else
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
+#endif /*__clang__*/
+
+#endif /*_MSC_VER*/
+
 std::map<std::string, std::string> GlobalMsg
 {
+	{"strNameNumTooBig", "生成数量过多!请输入1-10之间的数字!"},
+	{"strNameNumCannotBeZero", "生成数量不能为零!请输入1-10之间的数字!"},
 	{"strSetInvalid", "无效的默认骰!请输入1-99999之间的数字!"},
 	{"strSetTooBig", "默认骰过大!请输入1-99999之间的数字!"},
 	{"strSetCannotBeZero", "默认骰不能为零!请输入1-99999之间的数字!"},
@@ -55,7 +88,10 @@ std::map<std::string, std::string> GlobalMsg
 	{"strValueErr", "掷骰表达式输入错误!"},
 	{"strInputErr", "命令或掷骰表达式输入错误!"},
 	{"strUnknownErr", "发生了未知错误!"},
+	{"strUnableToGetErrorMsg", "无法获取错误信息!"},
 	{"strDiceTooBigErr", "骰娘被你扔出的骰子淹没了"},
+	{"strRequestRetCodeErr", "访问服务器时出现错误! HTTP状态码: {0}"},
+	{"strRequestNoResponse", "服务器未返回任何信息"},
 	{"strTypeTooBigErr", "哇!让我数数骰子有多少面先~1...2..."},
 	{"strZeroTypeErr", "这是...!!时空裂(骰娘被骰子产生的时空裂缝卷走了)"},
 	{"strAddDiceValErr", "你这样要让我扔骰子扔到什么时候嘛~(请输入正确的加骰参数:5-10之内的整数)"},
@@ -80,6 +116,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strProp", "{0}的{1}属性值为{2}"},
 	{"strStErr", "格式错误:请参考帮助文档获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
+	{"strJrrp", "{0}今天的人品值是: {1}"},
+	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{0}"},
 	{"strHlpMsg" , Dice_Short_Ver + "\n" +
 	R"(请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
 跑团记录着色器: https://logpainter.kokona.tech
@@ -97,12 +135,14 @@ std::map<std::string, std::string> GlobalMsg
 .st [del/clr/show] [属性名] [属性值]		人物卡导入
 .rc/ra [技能名] [技能值]		技能检定(规则书/房规)
 .jrrp [on/off]				今日人品检定
+.name [cn/jp/en] [个数]			生成随机名称
 .rules [规则名称:]规则条目		规则查询
 .help						显示帮助
 <仅限群/多人聊天>
 .ri [加值] [昵称]			DnD先攻掷骰
 .init [clr]					DnD先攻查看/清空
 .nn [名称]					设置/删除昵称
+.nnn [cn/jp/en]				随机设置昵称
 .rh [掷骰表达式*] [原因]			暗骰,结果私聊发送
 .bot [on/off] [机器人QQ号]		机器人开启或关闭
 .ob [exit/list/clr/on/off]			旁观模式

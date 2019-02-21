@@ -2,8 +2,8 @@
   "ret": 1,
   "apiver": 9,
   "name": "Dice!",
-  "version": "2.3.4",
-  "version_id": 498,
+  "version": "2.3.6",
+  "version_id": 509,
   "author": "w4123溯洄",
   "description": "跑团用骰子 QQ交流群:941980833或624807593(已满)",
   "event": [
@@ -11,50 +11,56 @@
       "id": 1,
       "type": 21,
       "name": "私聊消息处理",
-      "function": "_eventPrivateMsg",
+      "function": "eventPrivateMsg",
       "priority": 30000
     },
     {
       "id": 2,
       "type": 2,
       "name": "群消息处理",
-      "function": "_eventGroupMsg",
+      "function": "eventGroupMsg",
       "priority": 30000
     },
     {
       "id": 3,
       "type": 4,
       "name": "多人聊天消息处理",
-      "function": "_eventDiscussMsg",
+      "function": "eventDiscussMsg",
       "priority": 30000
     },
     {
       "id": 4,
       "type": 1003,
       "name": "启用事件",
-      "function": "_eventEnable",
+      "function": "eventEnable",
       "priority": 30000
     },
     {
       "id": 5,
       "type": 1002,
       "name": "退出事件",
-      "function": "_eventExit",
+      "function": "eventExit",
       "priority": 30000
     },
     {
       "id": 6,
       "type": 1004,
       "name": "禁用事件",
-      "function": "_eventDisable",
+      "function": "eventDisable",
       "priority": 30000
     },
     {
       "id": 7,
       "type": 103,
       "name": "群成员添加事件",
-      "function": "_eventGroupMemberIncrease",
+      "function": "eventGroupMemberIncrease",
       "priority": 30000
+    }
+  ],
+  "menu": [
+    {
+      "name": "更新Dice!",
+      "function": "eventMenu"
     }
   ],
   "auth": [

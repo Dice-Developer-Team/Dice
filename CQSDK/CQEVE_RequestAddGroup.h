@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-#include "CQEVE.h"//不能删除此行...
 #include "CQEVERequest.h"
 
 /*
@@ -34,7 +33,7 @@ responseFlag 反馈标识(处理请求用)
 
 namespace CQ
 {
-	struct EVERequestAddGroup : public EVERequest
+	struct EVERequestAddGroup final : EVERequest
 	{
 		//子类型
 		//1:他人申请入群
@@ -43,7 +42,7 @@ namespace CQ
 		long long fromGroup; // 来源群号
 		EVERequestAddGroup(int subType, int sendTime, long long fromGroup, long long fromQQ, const char* msg,
 		                   const char* responseFlag);
-		void pass(std::string msg = "") override; //通过此请求
-		void fail(std::string msg = "您由于不满足某些要求被拒绝!") override; //拒绝此请求
+		void pass(const std::string& msg = "") const override; //通过此请求
+		void fail(const std::string& msg = "您由于不满足某些要求被拒绝!") const override; //拒绝此请求
 	};
 }

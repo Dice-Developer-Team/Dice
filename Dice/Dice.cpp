@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018 w4123溯洄
+ * Copyright (C) 2018-2019 w4123溯洄
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -20,6 +20,7 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <string>
 #include <iostream>
@@ -33,15 +34,18 @@
 #include <mutex>
 
 #include "APPINFO.h"
+#include "RandomGenerator.h"
 #include "RD.h"
 #include "CQEVE_ALL.h"
-#include "CQTools.h"
 #include "InitList.h"
 #include "GlobalVar.h"
 #include "NameStorage.h"
 #include "GetRule.h"
 #include "DiceMsgSend.h"
 #include "CustomMsg.h"
+#include "NameGenerator.h"
+#include "MsgFormat.h"
+#include "DiceNetwork.h"
 /*
 TODO:
 1. en可变成长检定
@@ -58,7 +62,6 @@ using namespace std;
 using namespace CQ;
 
 unique_ptr<NameStorage> Name;
-unique_ptr<GetRule> RuleGetter;
 
 std::string strip(std::string origin)
 {
@@ -101,7 +104,6 @@ std::string getName(long long QQ, long long GroupID = 0)
 	return strip(getStrangerInfo(QQ).nick);
 }
 
-map<long long, RP> JRRP;
 map<long long, int> DefaultDice;
 map<long long, string> WelcomeMsg;
 set<long long> DisabledGroup;
@@ -120,7 +122,7 @@ struct SourceType
 {
 	SourceType(long long a, int b, long long c) : QQ(a), Type(b), GrouporDiscussID(c)
 	{
-	};
+	}
 	long long QQ = 0;
 	int Type = 0;
 	long long GrouporDiscussID = 0;
@@ -136,7 +138,7 @@ map<SourceType, PropType> CharacterProp;
 multimap<long long, long long> ObserveGroup;
 multimap<long long, long long> ObserveDiscuss;
 string strFileLoc;
-EVE_Enable(__eventEnable)
+EVE_Enable(eventEnable)
 {
 	//Wait until the thread terminates
 	while (msgSendThreadRunning)
@@ -283,19 +285,6 @@ EVE_Enable(__eventEnable)
 		}
 	}
 	ifstreamObserveDiscuss.close();
-	ifstream ifstreamJRRP(strFileLoc + "JRRP.RDconf");
-	if (ifstreamJRRP)
-	{
-		long long QQ;
-		int Val;
-		string strDate;
-		while (ifstreamJRRP >> QQ >> strDate >> Val)
-		{
-			JRRP[QQ].Date = strDate;
-			JRRP[QQ].RPVal = Val;
-		}
-	}
-	ifstreamJRRP.close();
 	ifstream ifstreamDefault(strFileLoc + "Default.RDconf");
 	if (ifstreamDefault)
 	{
@@ -323,7 +312,6 @@ EVE_Enable(__eventEnable)
 	}
 	ifstreamWelcomeMsg.close();
 	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
-	RuleGetter = make_unique<GetRule>();
 	ifstream ifstreamCustomMsg(strFileLoc + "CustomMsg.json");
 	if (ifstreamCustomMsg)
 	{
@@ -334,7 +322,7 @@ EVE_Enable(__eventEnable)
 }
 
 
-EVE_PrivateMsg_EX(__eventPrivateMsg)
+EVE_PrivateMsg_EX(eventPrivateMsg)
 {
 	if (eve.isSystem())return;
 	init(eve.message);
@@ -634,7 +622,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			return;
 		}
 		string strAns = strNickName + "的Sancheck:\n1D100=";
-		const int intTmpRollRes = Randint(1, 100);
+		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		strAns += to_string(intTmpRollRes);
 
 		if (intTmpRollRes <= intSan)
@@ -730,7 +718,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		}
 
 		string strAns = strNickName + "的" + strSkillName + "增强或成长检定:\n1D100=";
-		const int intTmpRollRes = Randint(1, 100);
+		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		strAns += to_string(intTmpRollRes) + "/" + to_string(intCurrentVal);
 
 		if (intTmpRollRes <= intCurrentVal && intTmpRollRes <= 95)
@@ -740,7 +728,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		else
 		{
 			strAns += " 成功!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "增加1D10=";
-			const int intTmpRollD10 = Randint(1, 10);
+			const int intTmpRollD10 = RandomGenerator::Randint(1, 10);
 			strAns += to_string(intTmpRollD10) + "点,当前为" + to_string(intCurrentVal + intTmpRollD10) + "点";
 			if (strCurrentValue.empty())
 			{
@@ -752,34 +740,83 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
 	{
-		char cstrDate[100] = {};
-		time_t time_tTime = 0;
-		time(&time_tTime);
-		tm tmTime{};
-		localtime_s(&tmTime, &time_tTime);
-		strftime(cstrDate, 100, "%F", &tmTime);
-		if (JRRP.count(eve.fromQQ) && JRRP[eve.fromQQ].Date == cstrDate)
+		string des;
+		string data = "QQ=" + to_string(CQ::getLoginQQ()) + "&v=20190114" + "&QueryQQ=" + to_string(eve.fromQQ);
+		char *frmdata = new char[data.length() + 1];
+		strcpy_s(frmdata, data.length() + 1, data.c_str());
+		bool res = Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata, des);
+		delete[] frmdata;
+		if (res)
 		{
-			const string strReply = strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal);
-
-			AddMsgToQueue(strReply, eve.fromQQ);
+			AddMsgToQueue(format(GlobalMsg["strJrrp"], { strNickName, des }), eve.fromQQ);
 		}
 		else
 		{
-			normal_distribution<double> NormalDistribution(60, 15);
-			mt19937 Generator(static_cast<unsigned int>(GetCycleCount()));
-			int JRRPRes;
-			do
-			{
-				JRRPRes = static_cast<int>(NormalDistribution(Generator));
-			}
-			while (JRRPRes <= 0 || JRRPRes > 100);
-			JRRP[eve.fromQQ].Date = cstrDate;
-			JRRP[eve.fromQQ].RPVal = JRRPRes;
-			const string strReply(strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal));
-
-			AddMsgToQueue(strReply, eve.fromQQ);
+			AddMsgToQueue(format(GlobalMsg["strJrrpErr"], { des }), eve.fromQQ);
 		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
+	{
+		intMsgCnt += 4;
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+
+		string type;
+		while (isalpha(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			type += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+
+		auto nameType = NameGenerator::Type::UNKNOWN;
+		if (type == "cn")
+			nameType = NameGenerator::Type::CN;
+		else if (type == "en")
+			nameType = NameGenerator::Type::EN;
+		else if (type == "jp")
+			nameType = NameGenerator::Type::JP;
+
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+
+		string strNum;
+		while (isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
+		{
+			strNum += eve.message[intMsgCnt];
+			intMsgCnt++;
+		}
+		if (strNum.size() > 2)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromQQ);
+			return;
+		}
+		auto intNum = stoi(strNum.empty() ? "1" : strNum);
+		if (intNum > 10)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromQQ);
+			return;
+		}
+		if (intNum == 0)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumCannotBeZero"], eve.fromQQ);
+			return;
+		}
+		vector<string> TempNameStorage;
+		while (TempNameStorage.size() != intNum)
+		{
+			string name = NameGenerator::getRandomName(nameType);
+			if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
+			{
+				TempNameStorage.push_back(name);
+			}
+		}
+		string strReply = strNickName + "的随机名称:\n";
+		for (auto i = 0; i != TempNameStorage.size(); i++)
+		{
+			strReply.append(TempNameStorage[i]);
+			if (i != TempNameStorage.size() - 1)strReply.append(", ");
+		}
+		AddMsgToQueue(strReply, eve.fromQQ);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
 	{
@@ -790,7 +827,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		for (auto& n : strSearch)
 			n = toupper(static_cast<unsigned char>(n));
 		string strReturn;
-		if (RuleGetter->analyze(strSearch, strReturn))
+		if (GetRule::analyze(strSearch, strReturn))
 		{
 			AddMsgToQueue(strReturn, eve.fromQQ);
 		}
@@ -925,7 +962,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
-		string strAction = strLowerMessage.substr(intMsgCnt);
+		string strAction = strip(eve.message.substr(intMsgCnt));
 
 		for (auto i : strGroupID)
 		{
@@ -956,7 +993,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			AddMsgToQueue(GlobalMsg["strMEDisabledErr"], eve.fromQQ);
 			return;
 		}
-		string strReply = getName(eve.fromQQ, llGroupID) + eve.message.substr(intMsgCnt);
+		string strReply = getName(eve.fromQQ, llGroupID) + strAction;
 		const int intSendRes = sendGroupMsg(llGroupID, strReply);
 		if (intSendRes < 0)
 		{
@@ -1160,7 +1197,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = Randint(1, 100);
+		const int intD100Res = RandomGenerator::Randint(1, 100);
 		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
 			to_string(intSkillVal) + " ";
 		if (intD100Res <= 5)strReply += "大成功";
@@ -1228,7 +1265,7 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = Randint(1, 100);
+		const int intD100Res = RandomGenerator::Randint(1, 100);
 		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
 			to_string(intSkillVal) + " ";
 		if (intD100Res == 1)strReply += "大成功";
@@ -1444,16 +1481,9 @@ EVE_PrivateMsg_EX(__eventPrivateMsg)
 			}
 		}
 	}
-	else
-	{
-		if (isalpha(static_cast<unsigned char>(eve.message[intMsgCnt])))
-		{
-			AddMsgToQueue("命令输入错误!", eve.fromQQ);
-		}
-	}
 }
 
-EVE_GroupMsg_EX(__eventGroupMsg)
+EVE_GroupMsg_EX(eventGroupMsg)
 {
 	if (eve.isSystem() || eve.isAnonymous())return;
 	init(eve.message);
@@ -2318,7 +2348,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			return;
 		}
 		string strAns = strNickName + "的Sancheck:\n1D100=";
-		const int intTmpRollRes = Randint(1, 100);
+		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		strAns += to_string(intTmpRollRes);
 
 		if (intTmpRollRes <= intSan)
@@ -2409,7 +2439,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		}
 
 		string strAns = strNickName + "的" + strSkillName + "增强或成长检定:\n1D100=";
-		const int intTmpRollRes = Randint(1, 100);
+		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		strAns += to_string(intTmpRollRes) + "/" + to_string(intCurrentVal);
 
 		if (intTmpRollRes <= intCurrentVal && intTmpRollRes <= 95)
@@ -2419,7 +2449,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		else
 		{
 			strAns += " 成功!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "增加1D10=";
-			const int intTmpRollD10 = Randint(1, 10);
+			const int intTmpRollD10 = RandomGenerator::Randint(1, 10);
 			strAns += to_string(intTmpRollD10) + "点,当前为" + to_string(intCurrentVal + intTmpRollD10) + "点";
 			if (strCurrentValue.empty())
 			{
@@ -2480,32 +2510,102 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			AddMsgToQueue("在本群中JRRP功能已被禁用", eve.fromGroup, false);
 			return;
 		}
-		char cstrDate[100] = {};
-		time_t time_tTime = 0;
-		time(&time_tTime);
-		tm tmTime{};
-		localtime_s(&tmTime, &time_tTime);
-		strftime(cstrDate, 100, "%F", &tmTime);
-		if (JRRP.count(eve.fromQQ) && JRRP[eve.fromQQ].Date == cstrDate)
+		string des;
+		string data = "QQ=" + to_string(CQ::getLoginQQ()) + "&v=20190114" + "&QueryQQ=" + to_string(eve.fromQQ);
+		char *frmdata = new char[data.length() + 1];
+		strcpy_s(frmdata, data.length() + 1, data.c_str());
+		bool res = Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata, des);
+		delete[] frmdata;
+		if (res)
 		{
-			const string strReply = strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal);
-			AddMsgToQueue(strReply, eve.fromGroup, false);
+			AddMsgToQueue(format(GlobalMsg["strJrrp"], { strNickName, des }), eve.fromGroup, false);
 		}
 		else
 		{
-			normal_distribution<double> NormalDistribution(60, 15);
-			mt19937 Generator(static_cast<unsigned int>(GetCycleCount()));
-			int JRRPRes;
-			do
-			{
-				JRRPRes = static_cast<int>(NormalDistribution(Generator));
-			}
-			while (JRRPRes <= 0 || JRRPRes > 100);
-			JRRP[eve.fromQQ].Date = cstrDate;
-			JRRP[eve.fromQQ].RPVal = JRRPRes;
-			const string strReply(strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal));
-			AddMsgToQueue(strReply, eve.fromGroup, false);
+			AddMsgToQueue(format(GlobalMsg["strJrrpErr"], { des }), eve.fromGroup, false);
 		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
+	{
+		intMsgCnt += 4;
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+
+		string type;
+		while (isalpha(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			type += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+
+		auto nameType = NameGenerator::Type::UNKNOWN;
+		if (type == "cn")
+			nameType = NameGenerator::Type::CN;
+		else if (type == "en")
+			nameType = NameGenerator::Type::EN;
+		else if (type == "jp")
+			nameType = NameGenerator::Type::JP;
+
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+
+		string strNum;
+		while(isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
+		{
+			strNum += eve.message[intMsgCnt];
+			intMsgCnt++;
+		}
+		if (strNum.size() > 2)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromGroup, false);
+			return;
+		}
+		int intNum = stoi(strNum.empty() ? "1" : strNum);
+		if (intNum > 10)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromGroup, false);
+			return;
+		}
+		if(intNum == 0)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumCannotBeZero"], eve.fromGroup, false);
+			return;
+		}
+		vector<string> TempNameStorage;
+		while(TempNameStorage.size() != intNum)
+		{
+			string name = NameGenerator::getRandomName(nameType);
+			if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
+			{
+				TempNameStorage.push_back(name);
+			}
+		}
+		string strReply = strNickName + "的随机名称:\n";
+		for (auto i = 0; i != TempNameStorage.size(); i++)
+		{
+			strReply.append(TempNameStorage[i]);
+			if (i != TempNameStorage.size() - 1)strReply.append(", ");
+		}
+		AddMsgToQueue(strReply, eve.fromGroup, false);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "nnn")
+	{
+		intMsgCnt += 3;
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+		string type = strLowerMessage.substr(intMsgCnt, 2);
+		string name;
+		if (type=="cn")
+			name = NameGenerator::getChineseName();
+		else if (type=="en")
+			name = NameGenerator::getEnglishName();
+		else if (type=="jp")
+			name = NameGenerator::getJapaneseName();
+		else
+			name = NameGenerator::getRandomName();
+		Name->set(eve.fromGroup, eve.fromQQ, name);
+		const string strReply = "已将" + strNickName + "的名称更改为" + name;
+		AddMsgToQueue(strReply, eve.fromGroup, false);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 	{
@@ -2547,7 +2647,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		for (auto& n : strSearch)
 			n = toupper(static_cast<unsigned char>(n));
 		string strReturn;
-		if (RuleGetter->analyze(strSearch, strReturn))
+		if (GetRule::analyze(strSearch, strReturn))
 		{
 			AddMsgToQueue(strReturn, eve.fromGroup, false);
 		}
@@ -2607,17 +2707,18 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			AddMsgToQueue("在本群中.me命令已被禁用!", eve.fromGroup, false);
 			return;
 		}
-		if (strAction.empty())
-		{
-			AddMsgToQueue("动作不能为空!", eve.fromGroup, false);
-			return;
-		}
 		if (DisabledMEGroup.count(eve.fromGroup))
 		{
 			AddMsgToQueue(GlobalMsg["strMEDisabledErr"], eve.fromGroup, false);
 			return;
 		}
-		const string strReply = strNickName + eve.message.substr(intMsgCnt);
+		strAction = strip(eve.message.substr(intMsgCnt));
+		if (strAction.empty())
+		{
+			AddMsgToQueue("动作不能为空!", eve.fromGroup, false);
+			return;
+		}
+		const string strReply = strNickName + strAction;
 		AddMsgToQueue(strReply, eve.fromGroup, false);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "set")
@@ -2813,7 +2914,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = Randint(1, 100);
+		const int intD100Res = RandomGenerator::Randint(1, 100);
 		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
 			to_string(intSkillVal) + " ";
 		if (intD100Res <= 5)strReply += "大成功";
@@ -2881,7 +2982,7 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = Randint(1, 100);
+		const int intD100Res = RandomGenerator::Randint(1, 100);
 		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
 			to_string(intSkillVal) + " ";
 		if (intD100Res == 1)strReply += "大成功";
@@ -3157,16 +3258,9 @@ EVE_GroupMsg_EX(__eventGroupMsg)
 			AddMsgToQueue(strReply, eve.fromGroup, false);
 		}
 	}
-	else
-	{
-		if (isalpha(static_cast<unsigned char>(eve.message[intMsgCnt])))
-		{
-			AddMsgToQueue("命令输入错误!", eve.fromGroup, false);
-		}
-	}
 }
 
-EVE_DiscussMsg_EX(__eventDiscussMsg)
+EVE_DiscussMsg_EX(eventDiscussMsg)
 {
 	if (eve.isSystem())return;
 	init(eve.message);
@@ -3906,7 +4000,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			return;
 		}
 		string strAns = strNickName + "的Sancheck:\n1D100=";
-		const int intTmpRollRes = Randint(1, 100);
+		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		strAns += to_string(intTmpRollRes);
 
 		if (intTmpRollRes <= intSan)
@@ -4000,7 +4094,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			intCurrentVal = stoi(strCurrentValue);
 		}
 		string strAns = strNickName + "的" + strSkillName + "增强或成长检定:\n1D100=";
-		const int intTmpRollRes = Randint(1, 100);
+		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		strAns += to_string(intTmpRollRes) + "/" + to_string(intCurrentVal);
 
 		if (intTmpRollRes <= intCurrentVal && intTmpRollRes <= 95)
@@ -4010,7 +4104,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		else
 		{
 			strAns += " 成功!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "增加1D10=";
-			const int intTmpRollD10 = Randint(1, 10);
+			const int intTmpRollD10 = RandomGenerator::Randint(1, 10);
 			strAns += to_string(intTmpRollD10) + "点,当前为" + to_string(intCurrentVal + intTmpRollD10) + "点";
 			if (strCurrentValue.empty())
 			{
@@ -4057,36 +4151,106 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			AddMsgToQueue("在此多人聊天中JRRP已被禁用!", eve.fromDiscuss, false);
 			return;
 		}
-		char cstrDate[100] = {};
-		time_t time_tTime = 0;
-		time(&time_tTime);
-		tm tmTime{};
-		localtime_s(&tmTime, &time_tTime);
-		strftime(cstrDate, 100, "%F", &tmTime);
-		if (JRRP.count(eve.fromQQ) && JRRP[eve.fromQQ].Date == cstrDate)
+		string des;
+		string data =  "QQ=" + to_string(CQ::getLoginQQ()) + "&v=20190114" + "&QueryQQ=" + to_string(eve.fromQQ);
+		char *frmdata = new char[data.length() + 1];
+		strcpy_s(frmdata, data.length() + 1, data.c_str());
+		bool res = Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata, des);
+		delete[] frmdata;
+		if (res)
 		{
-			const string strReply = strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal);
-			AddMsgToQueue(strReply, eve.fromDiscuss, false);
+			AddMsgToQueue(format(GlobalMsg["strJrrp"], { strNickName, des }), eve.fromDiscuss, false);
 		}
 		else
 		{
-			normal_distribution<double> NormalDistribution(60, 15);
-			mt19937 Generator(static_cast<unsigned int>(GetCycleCount()));
-			int JRRPRes;
-			do
-			{
-				JRRPRes = static_cast<int>(NormalDistribution(Generator));
-			}
-			while (JRRPRes <= 0 || JRRPRes > 100);
-			JRRP[eve.fromQQ].Date = cstrDate;
-			JRRP[eve.fromQQ].RPVal = JRRPRes;
-			const string strReply(strNickName + "今天的人品值是:" + to_string(JRRP[eve.fromQQ].RPVal));
-			AddMsgToQueue(strReply, eve.fromDiscuss, false);
+			AddMsgToQueue(format(GlobalMsg["strJrrpErr"], { des }), eve.fromDiscuss, false);
 		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
+	{
+		intMsgCnt += 4;
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+
+		string type;
+		while (isalpha(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			type += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+
+		auto nameType = NameGenerator::Type::UNKNOWN;
+		if (type == "cn")
+			nameType = NameGenerator::Type::CN;
+		else if (type == "en")
+			nameType = NameGenerator::Type::EN;
+		else if (type == "jp")
+			nameType = NameGenerator::Type::JP;
+
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+
+		string strNum;
+		while (isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
+		{
+			strNum += eve.message[intMsgCnt];
+			intMsgCnt++;
+		}
+		if (strNum.size() > 2)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromDiscuss, false);
+			return;
+		}
+		int intNum = stoi(strNum.empty() ? "1" : strNum);
+		if (intNum > 10)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromDiscuss, false);
+			return;
+		}
+		if (intNum == 0)
+		{
+			AddMsgToQueue(GlobalMsg["strNameNumCannotBeZero"], eve.fromDiscuss, false);
+			return;
+		}
+		vector<string> TempNameStorage;
+		while (TempNameStorage.size() != intNum)
+		{
+			string name = NameGenerator::getRandomName(nameType);
+			if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
+			{
+				TempNameStorage.push_back(name);
+			}
+		}
+		string strReply = strNickName + "的随机名称:\n";
+		for (auto i = 0; i != TempNameStorage.size(); i++)
+		{
+			strReply.append(TempNameStorage[i]);
+			if (i != TempNameStorage.size() - 1)strReply.append(", ");
+		}
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "nnn")
+	{
+		intMsgCnt += 3;
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+		string type = strLowerMessage.substr(intMsgCnt, 2);
+		string name;
+		if (type == "cn")
+			name = NameGenerator::getChineseName();
+		else if (type == "en")
+			name = NameGenerator::getEnglishName();
+		else if (type == "jp")
+			name = NameGenerator::getJapaneseName();
+		else
+			name = NameGenerator::getRandomName();
+		Name->set(eve.fromDiscuss, eve.fromQQ, name);
+		const string strReply = "已将" + strNickName + "的名称更改为" + name;
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 	{
-		intMsgCnt += 2;
+	intMsgCnt += 2;
 		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string name = eve.message.substr(intMsgCnt);
@@ -4124,7 +4288,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		for (auto& n : strSearch)
 			n = toupper(static_cast<unsigned char>(n));
 		string strReturn;
-		if (RuleGetter->analyze(strSearch, strReturn))
+		if (GetRule::analyze(strSearch, strReturn))
 		{
 			AddMsgToQueue(strReturn, eve.fromDiscuss, false);
 		}
@@ -4170,17 +4334,18 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			AddMsgToQueue("在本多人聊天中.me命令已被禁用!", eve.fromDiscuss, false);
 			return;
 		}
-		if (strAction.empty())
-		{
-			AddMsgToQueue("动作不能为空!", eve.fromDiscuss, false);
-			return;
-		}
 		if (DisabledMEDiscuss.count(eve.fromDiscuss))
 		{
 			AddMsgToQueue(GlobalMsg["strMEDisabledErr"], eve.fromDiscuss, false);
 			return;
 		}
-		const string strReply = strNickName + eve.message.substr(intMsgCnt);
+		strAction = strip(eve.message.substr(intMsgCnt));
+		if (strAction.empty())
+		{
+			AddMsgToQueue("动作不能为空!", eve.fromDiscuss, false);
+			return;
+		}
+		const string strReply = strNickName + strAction;
 		AddMsgToQueue(strReply, eve.fromDiscuss, false);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "set")
@@ -4376,7 +4541,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = Randint(1, 100);
+		const int intD100Res = RandomGenerator::Randint(1, 100);
 		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
 			to_string(intSkillVal) + " ";
 		if (intD100Res <= 5)strReply += "大成功";
@@ -4444,7 +4609,7 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = Randint(1, 100);
+		const int intD100Res = RandomGenerator::Randint(1, 100);
 		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
 			to_string(intSkillVal) + " ";
 		if (intD100Res == 1)strReply += "大成功";
@@ -4720,16 +4885,9 @@ EVE_DiscussMsg_EX(__eventDiscussMsg)
 			AddMsgToQueue(strReply, eve.fromDiscuss, false);
 		}
 	}
-	else
-	{
-		if (isalpha(static_cast<unsigned char>(eve.message[intMsgCnt])))
-		{
-			AddMsgToQueue("命令输入错误!", eve.fromDiscuss, false);
-		}
-	}
 }
 
-EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
+EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 {
 	if (beingOperateQQ != getLoginQQ() && WelcomeMsg.count(fromGroup))
 	{
@@ -4764,11 +4922,10 @@ EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
 	return 0;
 }
 
-EVE_Disable(__eventDisable)
+EVE_Disable(eventDisable)
 {
 	Enabled = false;
 	ilInitList.reset();
-	RuleGetter.reset();
 	Name.reset();
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
@@ -4852,12 +5009,6 @@ EVE_Disable(__eventDisable)
 		ofstreamObserveDiscuss << it->first << " " << it->second << std::endl;
 	}
 	ofstreamObserveDiscuss.close();
-	ofstream ofstreamJRRP(strFileLoc + "JRRP.RDconf", ios::out | ios::trunc);
-	for (auto it = JRRP.begin(); it != JRRP.end(); ++it)
-	{
-		ofstreamJRRP << it->first << " " << it->second.Date << " " << it->second.RPVal << std::endl;
-	}
-	ofstreamJRRP.close();
 	ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
 	for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
 	{
@@ -4885,7 +5036,6 @@ EVE_Disable(__eventDisable)
 		ofstreamWelcomeMsg << it->first << " " << it->second << std::endl;
 	}
 	ofstreamWelcomeMsg.close();
-	JRRP.clear();
 	DefaultDice.clear();
 	DisabledGroup.clear();
 	DisabledDiscuss.clear();
@@ -4901,12 +5051,11 @@ EVE_Disable(__eventDisable)
 	return 0;
 }
 
-EVE_Exit(__eventExit)
+EVE_Exit(eventExit)
 {
 	if (!Enabled)
 		return 0;
 	ilInitList.reset();
-	RuleGetter.reset();
 	Name.reset();
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
@@ -4990,12 +5139,6 @@ EVE_Exit(__eventExit)
 		ofstreamObserveDiscuss << it->first << " " << it->second << std::endl;
 	}
 	ofstreamObserveDiscuss.close();
-	ofstream ofstreamJRRP(strFileLoc + "JRRP.RDconf", ios::out | ios::trunc);
-	for (auto it = JRRP.begin(); it != JRRP.end(); ++it)
-	{
-		ofstreamJRRP << it->first << " " << it->second.Date << " " << it->second.RPVal << std::endl;
-	}
-	ofstreamJRRP.close();
 	ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
 	for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
 	{
