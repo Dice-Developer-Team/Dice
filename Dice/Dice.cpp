@@ -111,6 +111,11 @@ std::string getName(long long QQ, long long GroupID = 0)
 
 //Master模式
 bool boolMasterMode = false;
+//替身模式
+bool boolStandByMe = false;
+//本体与替身帐号
+long long IdentityQQ = 0;
+long long StandQQ = 0;
 map<long long, int> DefaultDice;
 map<long long, string> WelcomeMsg;
 map<long long, string> DefaultRule;
@@ -462,6 +467,22 @@ EVE_Enable(eventEnable)
 	}
 	ifstreamCustomMsg.close();
 	return 0;
+	//读取替身模式
+	ifstream ifstreamStandByMe(strFileLoc + "StandByMe.RDconf");
+	if (ifstreamStandByMe)
+	{
+		ifstreamStandByMe >> IdentityQQ >> StandQQ;
+		if (getLoginQQ() == StandQQ) {
+			boolStandByMe = true;
+			string strName,strMsg;
+			while (ifstreamStandByMe) {
+				ifstreamStandByMe >> strName >> strMsg;
+				while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
+				GlobalMsg[strName] = strMsg;
+			}
+		}
+	}
+	ifstreamStandByMe.close();
 }
 
 
@@ -3864,6 +3885,12 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		setDiscussLeave(eve.fromDiscuss);
 		return;
 	}
+	if (boolStandByMe) {
+		AddMsgToQueue("替身不接受讨论组服务", eve.fromDiscuss, false);
+		Sleep(1000);
+		setDiscussLeave(eve.fromDiscuss);
+		return;
+	}
 	if (eve.isSystem())return;
 	init(eve.message);
 	string strAt = "[CQ:at,qq=" + to_string(getLoginQQ()) + "]";
@@ -5688,6 +5715,11 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 	else if(beingOperateQQ == getLoginQQ()){
 		if (boolPreserve&&getGroupMemberInfo(fromGroup, masterQQ).QQID != masterQQ&&WhiteGroup.count(fromGroup)==0&&WhiteQQ.count(fromQQ)==0) {
 			AddMsgToQueue(GlobalMsg["strPreserve"], fromGroup, false);
+			setGroupLeave(fromGroup);
+			return 0;
+		}
+		else if(boolStandByMe&&getGroupMemberInfo(fromGroup, IdentityQQ).QQID != IdentityQQ) {
+			AddMsgToQueue("请不要单独拉替身入群！", fromGroup, false);
 			setGroupLeave(fromGroup);
 			return 0;
 		}

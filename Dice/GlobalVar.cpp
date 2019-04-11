@@ -38,7 +38,7 @@ CQ::logger DiceLogger("Dice!");
 const unsigned short Dice_Build = 509;
 const std::string Dice_Ver_Without_Build = "2.3.6";
 const std::string DiceRequestHeader = "Dice/" + Dice_Ver_Without_Build;
-const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
+const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")" + "Edited++++ by String.Empty";
 const std::string Dice_Short_Ver = "Dice! by ËÝä§ Version " + Dice_Ver;
 #ifdef __clang__
 
