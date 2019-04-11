@@ -1869,10 +1869,6 @@ EVE_GroupMsg_EX(eventGroupMsg)
 	init2(eve.message);
 	if (eve.message[0] != '.')
 		return;
-	if (BlackQQ.count(eve.fromQQ) || BlackGroup.count(eve.fromGroup)) {
-		eve.message_block();
-		return;
-	}
 	int intMsgCnt = 1;
 	while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		intMsgCnt++;
@@ -1880,6 +1876,34 @@ EVE_GroupMsg_EX(eventGroupMsg)
 	const string strNickName = getName(eve.fromQQ, eve.fromGroup);
 	string strLowerMessage = eve.message;
 	std::transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
+	if (strLowerMessage.substr(intMsgCnt, 7) == "dismiss")
+	{
+		intMsgCnt += 7;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		string QQNum;
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			QQNum += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		if (QQNum.empty() || (QQNum.length() == 4 && QQNum == to_string(getLoginQQ() % 10000)) || QQNum ==
+			to_string(getLoginQQ()))
+		{
+			if (getGroupMemberInfo(eve.fromGroup, eve.fromQQ).permissions >= 2)
+			{
+				setGroupLeave(eve.fromGroup);
+			}
+			else
+			{
+				AddMsgToQueue(GlobalMsg["strPermissionDeniedErr"], eve.fromGroup, false);
+			}
+		}
+		return;
+	}
+	if (BlackQQ.count(eve.fromQQ) || BlackGroup.count(eve.fromGroup)) {
+		return;
+	}
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
 	{
 		intMsgCnt += 3;
@@ -1946,32 +1970,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			if (QQNum.empty() || QQNum == to_string(getLoginQQ()) || (QQNum.length() == 4 && QQNum == to_string(
 				getLoginQQ() % 10000)))
 			{
-				AddMsgToQueue(Dice_Full_Ver + PersonalMsg["strBotMsg"] , eve.fromGroup, false);
-			}
-		}
-		return;
-	}
-	if (strLowerMessage.substr(intMsgCnt, 7) == "dismiss")
-	{
-		intMsgCnt += 7;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		string QQNum;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			QQNum += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		if (QQNum.empty() || (QQNum.length() == 4 && QQNum == to_string(getLoginQQ() % 10000)) || QQNum ==
-			to_string(getLoginQQ()))
-		{
-			if (getGroupMemberInfo(eve.fromGroup, eve.fromQQ).permissions >= 2)
-			{
-				setGroupLeave(eve.fromGroup);
-			}
-			else
-			{
-				AddMsgToQueue(GlobalMsg["strPermissionDeniedErr"], eve.fromGroup, false);
+				AddMsgToQueue(Dice_Full_Ver + PersonalMsg["strBotMsg"], eve.fromGroup, false);
 			}
 		}
 		return;
@@ -3866,10 +3865,6 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		return;
 	}
 	if (eve.isSystem())return;
-	if (BlackQQ.count(eve.fromQQ)) {
-		eve.message_block();
-		return;
-	}
 	init(eve.message);
 	string strAt = "[CQ:at,qq=" + to_string(getLoginQQ()) + "]";
 	if (eve.message.substr(0, 6) == "[CQ:at")
@@ -3893,6 +3888,28 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 	const string strNickName = getName(eve.fromQQ, eve.fromDiscuss);
 	string strLowerMessage = eve.message;
 	std::transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
+	if (strLowerMessage.substr(intMsgCnt, 7) == "dismiss")
+	{
+		intMsgCnt += 7;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		string QQNum;
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			QQNum += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		if (QQNum.empty() || (QQNum.length() == 4 && QQNum == to_string(getLoginQQ() % 10000)) || QQNum ==
+			to_string(getLoginQQ()))
+		{
+			setDiscussLeave(eve.fromDiscuss);
+		}
+		return;
+	}
+	if (BlackQQ.count(eve.fromQQ)) {
+		eve.message_block();
+		return;
+	}
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
 	{
 		intMsgCnt += 3;
@@ -3947,24 +3964,6 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 			{
 				AddMsgToQueue(Dice_Full_Ver + PersonalMsg["strBotMsg"], eve.fromDiscuss, false);
 			}
-		}
-		return;
-	}
-	if (strLowerMessage.substr(intMsgCnt, 7) == "dismiss")
-	{
-		intMsgCnt += 7;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		string QQNum;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			QQNum += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		if (QQNum.empty() || (QQNum.length() == 4 && QQNum == to_string(getLoginQQ() % 10000)) || QQNum ==
-			to_string(getLoginQQ()))
-		{
-			setDiscussLeave(eve.fromDiscuss);
 		}
 		return;
 	}
