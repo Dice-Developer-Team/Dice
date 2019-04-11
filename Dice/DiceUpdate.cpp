@@ -29,7 +29,7 @@
 #include "DiceNetwork.h"
 #include "GlobalVar.h"
 
-EVE_Menu(eventMenu)
+EVE_Menu(eventDiceUpdate)
 {
 	std::string ver;
 	if (!Network::GET("api.kokona.tech", "/getVer", 5555, ver))

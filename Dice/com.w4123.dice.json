@@ -55,22 +55,54 @@
       "name": "群成员添加事件",
       "function": "eventGroupMemberIncrease",
       "priority": 30000
+    },
+    {
+      "id": 8,
+      "type": 102,
+      "name": "群成员减少事件",
+      "function": "eventGroupMemberDecrease",
+      "priority": 30000
+    },
+    {
+      "id": 9,
+      "type": 302,
+      "name": "群添加请求事件",
+      "function": "eventGroupInvited",
+      "priority": 30000
     }
   ],
   "menu": [
     {
       "name": "更新Dice!",
-      "function": "eventMenu"
+      "function": "eventDiceUpdate"
+    },
+    {
+      "name": "Master模式切换",
+      "function": "eventMasterMode"
+    },
+    {
+      "name": "一键清退",
+      "function": "eventClearGroup"
+    },
+    {
+      "name": "全局开关",
+      "function": "eventGlobalSwitch"
     }
   ],
   "auth": [
-    101,
-    106,
-    130,
-    131,
-    161,
-    103,
-    127,
-    140
+    20, //取好友列表	getFriendList
+    101, //发送群消息			sendGroupMsg
+    103, //发送讨论组消息		sendDiscussMsg
+    106, //发送私聊消息		sendPrivateMsg
+    121,  //置群成员禁言  setGroupBan
+    122, //置群管理员			setGroupAdmin
+    127, //[敏感]置群退出	setGroupLeave
+    130, //取群成员信息		getGroupMemberInfoV2 / getGroupMemberInfo
+    131, //取陌生人信息		getStrangerInfo
+    140, //置讨论组退出		setDiscussLeave
+    150, //置好友添加请求		setFriendAddRequest
+    151, //置群添加请求		setGroupAddRequest
+    160, //取群成员列表	getGroupMemberList
+    161 //取群列表		getGroupList
   ]
 }

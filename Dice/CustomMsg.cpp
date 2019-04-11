@@ -42,6 +42,7 @@ void ReadCustomMsg(std::ifstream& in)
 			{
 				GlobalMsg[it.key()] = Dice_Short_Ver + "\n" + UTF8toGBK(it.value().get<std::string>());
 			}
+			EditedMsg[it.key()] = UTF8toGBK(it.value().get<std::string>());
 		}
 	}
 }

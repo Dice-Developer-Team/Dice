@@ -46,6 +46,9 @@
 #include "NameGenerator.h"
 #include "MsgFormat.h"
 #include "DiceNetwork.h"
+#include "CardDeck.h"
+#include "DiceConsole.h"
+#include "EncodingConvert.h"
 /*
 TODO:
 1. en可变成长检定
@@ -60,6 +63,7 @@ TODO:
 
 using namespace std;
 using namespace CQ;
+using namespace Console;
 
 unique_ptr<NameStorage> Name;
 
@@ -104,10 +108,12 @@ std::string getName(long long QQ, long long GroupID = 0)
 	return strip(getStrangerInfo(QQ).nick);
 }
 
+
+//Master模式
+bool boolMasterMode = false;
 map<long long, int> DefaultDice;
 map<long long, string> WelcomeMsg;
-set<long long> DisabledGroup;
-set<long long> DisabledDiscuss;
+map<long long, string> DefaultRule;
 set<long long> DisabledJRRPGroup;
 set<long long> DisabledJRRPDiscuss;
 set<long long> DisabledMEGroup;
@@ -138,6 +144,71 @@ map<SourceType, PropType> CharacterProp;
 multimap<long long, long long> ObserveGroup;
 multimap<long long, long long> ObserveDiscuss;
 string strFileLoc;
+
+//备份数据
+void dataBackUp() {
+	//备份MasterQQ
+	ofstream ofstreamMaster(strFileLoc + "Master.RDconf", ios::out | ios::trunc);
+	ofstreamMaster << masterQQ << std::endl << boolMasterMode << std::endl << boolDisabledGlobal << std::endl << boolDisabledMeGlobal << std::endl << boolPreserve << std::endl << boolDisabledJrrpGlobal << std::endl << boolNoDiscuss << std::endl;
+	ofstreamMaster.close();
+	//备份个性化语句
+	ofstream ofstreamPersonalMsg(strFileLoc + "PersonalMsg.RDconf", ios::out | ios::trunc);
+	for (auto it = PersonalMsg.begin(); it != PersonalMsg.end(); ++it)
+	{
+		while (it->second.find(' ') != string::npos)it->second.replace(it->second.find(' '), 1, "{space}");
+		while (it->second.find('\t') != string::npos)it->second.replace(it->second.find('\t'), 1, "{tab}");
+		while (it->second.find('\n') != string::npos)it->second.replace(it->second.find('\n'), 1, "{endl}");
+		while (it->second.find('\r') != string::npos)it->second.replace(it->second.find('\r'), 1, "{enter}");
+		ofstreamPersonalMsg << it->first << std::endl << it->second << std::endl;
+	}
+	//备份CustomMsg
+	ofstream ofstreamCustomMsg(strFileLoc + "CustomMsg.json", ios::out | ios::trunc);
+	ofstreamCustomMsg << "{\n";
+	for (auto it : EditedMsg)
+	{
+		while (it.second.find("\r\n") != string::npos)it.second.replace(it.second.find("\r\n"), 2, "\\n");
+		while (it.second.find('\n') != string::npos)it.second.replace(it.second.find('\n'), 1, "\\n");
+		while (it.second.find('\r') != string::npos)it.second.replace(it.second.find('\r'), 1, "\\r");
+		while (it.second.find("\t") != string::npos)it.second.replace(it.second.find("\t"), 1, "\\t");
+		string strMsg = GBKtoUTF8(it.second);
+		ofstreamCustomMsg <<"\"" << it.first << "\":\"" << strMsg << "\",";
+	}
+	ofstreamCustomMsg << "\n\"Number\":\"" << EditedMsg.size() << "\"\n}" << endl;
+	//备份默认规则
+	ofstream ofstreamDefaultRule(strFileLoc + "DefaultRule.RDconf", ios::out | ios::trunc);
+	for (auto it = DefaultRule.begin(); it != DefaultRule.end(); ++it)
+	{
+		ofstreamDefaultRule << it->first << std::endl << it->second << std::endl;
+	}
+	//备份白名单群
+	ofstream ofstreamWhiteGroup(strFileLoc + "WhiteGroup.RDconf", ios::out | ios::trunc);
+	for (auto it = WhiteGroup.begin(); it != WhiteGroup.end(); ++it)
+	{
+		ofstreamWhiteGroup << *it << std::endl;
+	}
+	ofstreamWhiteGroup.close();
+	//备份黑名单群
+	ofstream ofstreamBlackGroup(strFileLoc + "BlackGroup.RDconf", ios::out | ios::trunc);
+	for (auto it : BlackGroup)
+	{
+		ofstreamBlackGroup << it << std::endl;
+	}
+	ofstreamBlackGroup.close();
+	//备份白名单用户
+	ofstream ofstreamWhiteQQ(strFileLoc + "WhiteQQ.RDconf", ios::out | ios::trunc);
+	for (auto it : WhiteQQ)
+	{
+		ofstreamWhiteQQ << it << std::endl;
+	}
+	ofstreamWhiteQQ.close();
+	//备份黑名单用户
+	ofstream ofstreamBlackQQ(strFileLoc + "BlackQQ.RDconf", ios::out | ios::trunc);
+	for (auto it : BlackQQ)
+	{
+		ofstreamBlackQQ << it << std::endl;
+	}
+	ofstreamBlackQQ.close();
+}
 EVE_Enable(eventEnable)
 {
 	//Wait until the thread terminates
@@ -151,6 +222,13 @@ EVE_Enable(eventEnable)
 	* 名称存储-创建与读取
 	*/
 	Name = make_unique<NameStorage>(strFileLoc + "Name.dicedb");
+	//读取MasterMode
+	ifstream ifstreamMaster(strFileLoc + "Master.RDconf");
+	if (ifstreamMaster)
+	{
+		ifstreamMaster >> masterQQ >> boolMasterMode >> boolDisabledGlobal >> boolDisabledMeGlobal >> boolPreserve >> boolDisabledJrrpGlobal >> boolNoDiscuss;
+	}
+	ifstreamMaster.close();
 	ifstream ifstreamCharacterProp(strFileLoc + "CharacterProp.RDconf");
 	if (ifstreamCharacterProp)
 	{
@@ -311,6 +389,71 @@ EVE_Enable(eventEnable)
 		}
 	}
 	ifstreamWelcomeMsg.close();
+	ifstream ifstreamDefaultRule(strFileLoc + "DefaultRule.RDconf");
+	if (ifstreamDefaultRule)
+	{
+		long long QQ;
+		string strRule;
+		while (ifstreamWelcomeMsg >> QQ >> strRule){
+			DefaultRule[QQ] = strRule;
+		}
+	}
+	ifstreamDefaultRule.close();
+	ifstream ifstreamPersonalMsg(strFileLoc + "PersonalMsg.RDconf");
+	if (ifstreamPersonalMsg)
+	{
+		string strType;
+		string Msg;
+		while (ifstreamPersonalMsg >> strType >> Msg)
+		{
+			while (Msg.find("{space}") != string::npos)Msg.replace(Msg.find("{space}"), 7, " ");
+			while (Msg.find("{tab}") != string::npos)Msg.replace(Msg.find("{tab}"), 5, "\t");
+			while (Msg.find("{endl}") != string::npos)Msg.replace(Msg.find("{endl}"), 6, "\n");
+			while (Msg.find("{enter}") != string::npos)Msg.replace(Msg.find("{enter}"), 7, "\r");
+			PersonalMsg[strType] = Msg;
+		}
+	}
+	ifstreamPersonalMsg.close();
+	ifstream ifstreamWhiteGroup(strFileLoc + "WhiteGroup.RDconf");
+	if (ifstreamWhiteGroup)
+	{
+		long long Group;
+		while (ifstreamWhiteGroup >> Group)
+		{
+			WhiteGroup.insert(Group);
+		}
+	}
+	ifstreamWhiteGroup.close();
+	ifstream ifstreamBlackGroup(strFileLoc + "BlackGroup.RDconf");
+	if (ifstreamBlackGroup)
+	{
+		long long Group;
+		while (ifstreamBlackGroup >> Group)
+		{
+			BlackGroup.insert(Group);
+		}
+	}
+	ifstreamBlackGroup.close();
+	ifstream ifstreamWhiteQQ(strFileLoc + "WhiteQQ.RDconf");
+	if (ifstreamWhiteQQ)
+	{
+		long long Group;
+		while (ifstreamWhiteQQ >> Group)
+		{
+			WhiteQQ.insert(Group);
+		}
+	}
+	ifstreamWhiteQQ.close();
+	ifstream ifstreamBlackQQ(strFileLoc + "BlackQQ.RDconf");
+	if (ifstreamBlackQQ)
+	{
+		long long Group;
+		while (ifstreamBlackQQ >> Group)
+		{
+			BlackQQ.insert(Group);
+		}
+	}
+	ifstreamBlackQQ.close();
 	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
 	ifstream ifstreamCustomMsg(strFileLoc + "CustomMsg.json");
 	if (ifstreamCustomMsg)
@@ -325,6 +468,10 @@ EVE_Enable(eventEnable)
 EVE_PrivateMsg_EX(eventPrivateMsg)
 {
 	if (eve.isSystem())return;
+	if (BlackQQ.count(eve.fromQQ)) {
+		eve.message_block();
+		return;
+	}
 	init(eve.message);
 	init2(eve.message);
 	if (eve.message[0] != '.')
@@ -335,10 +482,45 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 	eve.message_block();
 	const string strNickName = getName(eve.fromQQ);
 	string strLowerMessage = eve.message;
-	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
+	std::transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
 	if (strLowerMessage.substr(intMsgCnt, 4) == "help")
 	{
 		AddMsgToQueue(GlobalMsg["strHlpMsg"], eve.fromQQ);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 6) == "master"&&boolMasterMode) {
+		intMsgCnt+=6;
+		if (masterQQ==0) {
+			masterQQ = eve.fromQQ;
+			AddMsgToQueue("试问，你就是本骰娘的Master√", eve.fromQQ);
+		}else if (eve.fromQQ == masterQQ){
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+				intMsgCnt++;
+			//命令选项
+			Process(eve.message.substr(intMsgCnt));
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "str"&&boolMasterMode&&eve.fromQQ == masterQQ) {
+		string strName;
+		while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			strName += eve.message[intMsgCnt];
+			intMsgCnt++;
+		}
+		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
+			intMsgCnt++;
+		string strMsg = eve.message.substr(intMsgCnt);
+		if (GlobalMsg.count(strName)) {
+			EditedMsg[strName] = strMsg;
+			GlobalMsg[strName] = (strName=="strHlpMsg")? Dice_Short_Ver + "\n" + strMsg : strMsg;
+			AddMsgToQueue("已记下" + strName + "的自定义", eve.fromQQ);
+		}
+		else {
+			AddMsgToQueue("是说" + strName + "？这似乎不是会用到的语句×", eve.fromQQ);
+		}
+	}
+	else if (boolDisabledGlobal){
+		AddMsgToQueue(GlobalMsg["strGlobalOff"], eve.fromQQ);
+		return;
 	}
 	else if (strLowerMessage[intMsgCnt] == 'w')
 	{
@@ -665,7 +847,7 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
 	{
-		AddMsgToQueue(Dice_Full_Ver, eve.fromQQ);
+		AddMsgToQueue(Dice_Full_Ver+PersonalMsg["strBotMsg"], eve.fromQQ);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
 	{
@@ -740,6 +922,10 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
 	{
+		if (boolDisabledJrrpGlobal) {
+			AddMsgToQueue(GlobalMsg["strDisabledJrrpGlobal"], eve.fromQQ);
+			return;
+		}
 		string des;
 		string data = "QQ=" + to_string(CQ::getLoginQQ()) + "&v=20190114" + "&QueryQQ=" + to_string(eve.fromQQ);
 		char *frmdata = new char[data.length() + 1];
@@ -823,17 +1009,38 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 		intMsgCnt += 5;
 		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
-		string strSearch = eve.message.substr(intMsgCnt);
-		for (auto& n : strSearch)
-			n = toupper(static_cast<unsigned char>(n));
-		string strReturn;
-		if (GetRule::analyze(strSearch, strReturn))
-		{
-			AddMsgToQueue(strReturn, eve.fromQQ);
+		if (strLowerMessage.substr(intMsgCnt, 3) == "set") {
+			intMsgCnt += 3;
+			while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt]))|| eve.message[intMsgCnt] == ':')
+				intMsgCnt++;
+			string strDefaultRule = eve.message.substr(intMsgCnt);
+			if (strDefaultRule.empty()) {
+				DefaultRule.erase(eve.fromQQ);
+				AddMsgToQueue(GlobalMsg["strRuleReset"], eve.fromQQ);
+			}
+			else {
+				for (auto& n : strDefaultRule)
+					n = toupper(static_cast<unsigned char>(n));
+				DefaultRule[eve.fromQQ] = strDefaultRule;
+				AddMsgToQueue(GlobalMsg["strRuleSet"], eve.fromQQ);
+			}
 		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strRuleErr"] + strReturn, eve.fromQQ);
+		else {
+			string strSearch = eve.message.substr(intMsgCnt);
+			string strDefaultRule = DefaultRule[eve.fromQQ];
+			for (auto& n : strSearch)
+				n = toupper(static_cast<unsigned char>(n));
+			string strReturn;
+			if (DefaultRule.count(eve.fromQQ) && strSearch.find(':') == string::npos && GetRule::get(strDefaultRule, strSearch, strReturn)) {
+				AddMsgToQueue(strReturn, eve.fromQQ);
+			}else if (GetRule::analyze(strSearch, strReturn))
+			{
+				AddMsgToQueue(strReturn, eve.fromQQ);
+			}
+			else
+			{
+				AddMsgToQueue(GlobalMsg["strRuleErr"] + strReturn, eve.fromQQ);
+			}
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "st")
@@ -952,6 +1159,10 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
 	{
 		intMsgCnt += 2;
+		if (boolDisabledMeGlobal) {
+			AddMsgToQueue(GlobalMsg["strDisabledMeGlobal"], eve.fromQQ);
+			return;
+		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strGroupID;
@@ -1020,7 +1231,7 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 				AddMsgToQueue(GlobalMsg["strSetInvalid"], eve.fromQQ);
 				return;
 			}
-		if (strDefaultDice.length() > 5)
+		if (strDefaultDice.length() > 3 && strDefaultDice!= "1000")
 		{
 			AddMsgToQueue(GlobalMsg["strSetTooBig"], eve.fromQQ);
 			return;
@@ -1148,15 +1359,35 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 	{
 		intMsgCnt += 2;
 		string strSkillName;
+		string strMainDice = "D100";
+		string strSkillModify;
+		int intSkillModify = 0;
+		if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') {
+			strMainDice = strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+			while(isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+				strMainDice += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
 			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
-			':')
+			':' && strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-')
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+		if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
+			strSkillModify += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+				strSkillModify += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+			intSkillModify = stoi(strSkillModify);
+		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 			':')intMsgCnt++;
 		string strSkillVal;
@@ -1197,15 +1428,34 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = RandomGenerator::Randint(1, 100);
-		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
-			to_string(intSkillVal) + " ";
-		if (intD100Res <= 5)strReply += "大成功";
-		else if (intD100Res <= intSkillVal / 5)strReply += "极难成功";
-		else if (intD100Res <= intSkillVal / 2)strReply += "困难成功";
-		else if (intD100Res <= intSkillVal)strReply += "成功";
-		else if (intD100Res <= 95)strReply += "失败";
-		else strReply += "大失败";
+		int intFianlSkillVal = intSkillVal + intSkillModify;
+		if (intFianlSkillVal < 0 || intFianlSkillVal > 1000)
+		{
+			AddMsgToQueue(GlobalMsg["strSuccessRateErr"], eve.fromQQ);
+			return;
+		}
+		RD rdMainDice(strMainDice, eve.fromQQ);
+		const int intFirstTimeRes = rdMainDice.Roll(); 
+		if (intFirstTimeRes == ZeroDice_Err)
+		{
+			AddMsgToQueue(GlobalMsg["strZeroDiceErr"], eve.fromQQ);
+			return;
+		}
+		if (intFirstTimeRes == DiceTooBig_Err)
+		{
+			AddMsgToQueue(GlobalMsg["strDiceTooBigErr"], eve.fromQQ);
+			return;
+		}
+		const int intD100Res = rdMainDice.intTotal;
+		string strReply = strNickName + "进行" + strSkillName + strSkillModify + "检定: "+ rdMainDice.FormCompleteString() + "/" +
+			to_string(intFianlSkillVal) +" ";
+		if (intD100Res <= 5 && intD100Res <= intSkillVal)strReply += GlobalMsg["strRollCriticalSuccess"];
+		else if (intD100Res == 100)strReply += GlobalMsg["strRollFumble"];
+		else if (intD100Res <= intFianlSkillVal / 5)strReply += GlobalMsg["strRollExtremeSuccess"];
+		else if (intD100Res <= intFianlSkillVal / 2)strReply += GlobalMsg["strRollHardSuccess"];
+		else if (intD100Res <= intFianlSkillVal)strReply += GlobalMsg["strRollRegularSuccess"];
+		else if (intD100Res <= 95)strReply += GlobalMsg["strRollFailure"];
+		else strReply += GlobalMsg["strRollFumble"];
 		if (!strReason.empty())
 		{
 			strReply = "由于" + strReason + " " + strReply;
@@ -1216,15 +1466,35 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 	{
 		intMsgCnt += 2;
 		string strSkillName;
+		string strMainDice = "D100";
+		string strSkillModify;
+		int intSkillModify = 0;
+		if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') {
+			strMainDice = strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+				strMainDice += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
 			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
-			':')
+			':' && strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-')
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+		if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
+			strSkillModify += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+				strSkillModify += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+			intSkillModify = stoi(strSkillModify);
+		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 			':')intMsgCnt++;
 		string strSkillVal;
@@ -1265,21 +1535,90 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = RandomGenerator::Randint(1, 100);
-		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
-			to_string(intSkillVal) + " ";
-		if (intD100Res == 1)strReply += "大成功";
-		else if (intD100Res <= intSkillVal / 5)strReply += "极难成功";
-		else if (intD100Res <= intSkillVal / 2)strReply += "困难成功";
-		else if (intD100Res <= intSkillVal)strReply += "成功";
-		else if (intD100Res <= 95 || (intSkillVal >= 50 && intD100Res != 100))strReply += "失败";
-		else strReply += "大失败";
+
+		int intFianlSkillVal = intSkillVal + intSkillModify;
+		if (intFianlSkillVal < 0 || intFianlSkillVal > 1000)
+		{
+			AddMsgToQueue(GlobalMsg["strSuccessRateErr"], eve.fromQQ);
+			return;
+		}
+		RD rdMainDice(strMainDice, eve.fromQQ);
+		const int intFirstTimeRes = rdMainDice.Roll();
+		if (intFirstTimeRes == ZeroDice_Err)
+		{
+			AddMsgToQueue(GlobalMsg["strZeroDiceErr"], eve.fromQQ);
+			return;
+		}
+		if (intFirstTimeRes == DiceTooBig_Err)
+		{
+			AddMsgToQueue(GlobalMsg["strDiceTooBigErr"], eve.fromQQ);
+			return;
+		}
+		const int intD100Res = rdMainDice.intTotal;
+		string strReply = strNickName + "进行" + strSkillName + strSkillModify + "检定: " + rdMainDice.FormCompleteString() + "/" +
+			to_string(intFianlSkillVal) + " ";
+		if (intD100Res == 1)strReply += GlobalMsg["strRollCriticalSuccess"];
+		else if (intD100Res == 100)strReply += GlobalMsg["strRollFumble"];
+		else if (intD100Res <= intFianlSkillVal / 5)strReply += GlobalMsg["strRollExtremeSuccess"];
+		else if (intD100Res <= intFianlSkillVal / 2)strReply += GlobalMsg["strRollHardSuccess"];
+		else if (intD100Res <= intFianlSkillVal)strReply += GlobalMsg["strRollRegularSuccess"];
+		else if (intD100Res <= 95 || intFianlSkillVal >= 50 )strReply += GlobalMsg["strRollFailure"];
+		else strReply += GlobalMsg["strRollFumble"];
 		if (!strReason.empty())
 		{
 			strReply = "由于" + strReason + " " + strReply;
 		}
 		AddMsgToQueue(strReply, eve.fromQQ);
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "draw") {
+
+	intMsgCnt += 4;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))||(strLowerMessage[intMsgCnt]=='.'))
+		intMsgCnt++;
+
+	string strDeckName;
+	while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		strDeckName += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	string strCardNum;
+	while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		strCardNum += eve.message[intMsgCnt];
+		intMsgCnt++;
+	}
+	auto intCardNum = strCardNum.empty() ? 1 : stoi(strCardNum);
+	if (intCardNum == 0)
+	{
+		AddMsgToQueue(GlobalMsg["strNumCannotBeZero"], eve.fromQQ);
+		return;
+	}
+	int intDeckRes = CardDeck::findDeck(strDeckName);
+	string strReply;
+	if (intDeckRes < 0) {
+		strReply = strDeckName + "?" + GlobalMsg["strDeckNotFound"];
+		AddMsgToQueue(strReply, eve.fromQQ);
+		return;
+	}
+	vector<string>TempDeck(CardDeck::PublicDeck[intDeckRes]);
+	TempDeck.erase(TempDeck.begin());
+	strReply = "来看看" + strNickName + "的随机抽取结果:\n" + CardDeck::drawCard(TempDeck);
+	while (--intCardNum && TempDeck.size()) {
+		strReply += "\n"+CardDeck::drawCard(TempDeck);
+		if (strReply.length() > 1000) {
+			AddMsgToQueue(strReply, eve.fromQQ);
+			strReply.clear();
+		}
+	}
+	AddMsgToQueue(strReply, eve.fromQQ);
+	if (intCardNum) {
+		AddMsgToQueue(GlobalMsg["strDeckEmpty"], eve.fromQQ);
+		return;
+	}
+}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'd'
 	)
 	{
@@ -1485,16 +1824,42 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 
 EVE_GroupMsg_EX(eventGroupMsg)
 {
-	if (eve.isSystem() || eve.isAnonymous())return;
+	if (eve.isAnonymous())return;
+	if (eve.isSystem()) {
+		if (eve.message.find("被管理员禁言") != string::npos&&eve.message.find(to_string(getLoginQQ())) != string::npos) {
+			long long fromQQ;
+			int intAuthCnt=0;
+			for (auto member : getGroupMemberList(eve.fromGroup)) {
+				if (member.permissions == 3) {
+					//相应核心精神，由群主做负责人
+					fromQQ = member.QQID;				}
+				else if (member.permissions == 2) {
+					//记录管理员数量
+					intAuthCnt++;
+				}
+			}
+			if(masterQQ&&boolMasterMode){
+				string strMsg = "在群\"" + getGroupList()[eve.fromGroup] + "\"("+ to_string(eve.fromGroup)+ ")中," + eve.message+"\n群主"+getStrangerInfo(fromQQ).nick+"("+to_string(fromQQ)+"),另有管理员"+to_string(intAuthCnt)+"名";
+				AddMsgToQueue(strMsg, masterQQ);
+				BlackGroup.insert(eve.fromGroup);
+				if(WhiteGroup.count(eve.fromGroup))WhiteGroup.erase(eve.fromGroup);
+				//setGroupLeave(eve.fromGroup);
+			}
+			string strInfo = "{\"LoginQQ\":\"" + to_string(getLoginQQ()) + "\",\"fromGroup\":" + to_string(eve.fromGroup) + "\",\"Type\":\"banned\",\"fromQQ\":\"" + to_string(fromQQ)+"\"";
+		}
+		else return;
+	}
 	init(eve.message);
 	while (isspace(static_cast<unsigned char>(eve.message[0])))
 		eve.message.erase(eve.message.begin());
 	string strAt = "[CQ:at,qq=" + to_string(getLoginQQ()) + "]";
+	bool boolNamed=false;
 	if (eve.message.substr(0, 6) == "[CQ:at")
 	{
 		if (eve.message.substr(0, strAt.length()) == strAt)
 		{
 			eve.message = eve.message.substr(strAt.length());
+			boolNamed = true;
 		}
 		else
 		{
@@ -1504,13 +1869,17 @@ EVE_GroupMsg_EX(eventGroupMsg)
 	init2(eve.message);
 	if (eve.message[0] != '.')
 		return;
+	if (BlackQQ.count(eve.fromQQ) || BlackGroup.count(eve.fromGroup)) {
+		eve.message_block();
+		return;
+	}
 	int intMsgCnt = 1;
 	while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		intMsgCnt++;
 	eve.message_block();
 	const string strNickName = getName(eve.fromQQ, eve.fromGroup);
 	string strLowerMessage = eve.message;
-	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
+	std::transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
 	{
 		intMsgCnt += 3;
@@ -1577,7 +1946,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			if (QQNum.empty() || QQNum == to_string(getLoginQQ()) || (QQNum.length() == 4 && QQNum == to_string(
 				getLoginQQ() % 10000)))
 			{
-				AddMsgToQueue(Dice_Full_Ver, eve.fromGroup, false);
+				AddMsgToQueue(Dice_Full_Ver + PersonalMsg["strBotMsg"] , eve.fromGroup, false);
 			}
 		}
 		return;
@@ -1607,7 +1976,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		}
 		return;
 	}
-	if (DisabledGroup.count(eve.fromGroup))
+	if (boolDisabledGlobal||!boolNamed&&DisabledGroup.count(eve.fromGroup))
 		return;
 	if (strLowerMessage.substr(intMsgCnt, 4) == "help")
 	{
@@ -1692,6 +2061,70 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		{
 			AddMsgToQueue(GlobalMsg["strPermissionDeniedErr"], eve.fromGroup, false);
 		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "group")
+	{
+		if (getGroupMemberInfo(eve.fromGroup, eve.fromQQ).permissions == 1) {
+			AddMsgToQueue(GlobalMsg["strPermissionDeniedErr"], eve.fromGroup, false);
+			return;
+		}
+		if (getGroupMemberInfo(eve.fromGroup, getLoginQQ()).permissions == 1) {
+			AddMsgToQueue(GlobalMsg["strSelfPermissionErr"], eve.fromGroup, false);
+			return;
+		}
+		intMsgCnt += 5;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		string Command;
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isspace(
+			static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			Command += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		string QQNum;
+		if (strLowerMessage.substr(intMsgCnt, 10) == "[cq:at,qq=") {
+			intMsgCnt += 10;
+			while (isdigit(strLowerMessage[intMsgCnt])) {
+				QQNum += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+			intMsgCnt++;
+		}
+		else while (isdigit(strLowerMessage[intMsgCnt])) {
+			QQNum += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		if (Command == "ban")
+		{
+			long long llMemberQQ = stoll(QQNum);
+			GroupMemberInfo Member = getGroupMemberInfo(eve.fromGroup, llMemberQQ);
+			if (Member.QQID == llMemberQQ)
+			{
+				if (Member.permissions > 1) {
+					AddMsgToQueue(GlobalMsg["strSelfPermissionErr"], eve.fromGroup, false);
+					return;
+				}
+				string strMainDice;
+				while (isdigit(strLowerMessage[intMsgCnt])|| (strLowerMessage[intMsgCnt])=='d'|| (strLowerMessage[intMsgCnt])=='+'|| (strLowerMessage[intMsgCnt])=='-') {
+					strMainDice += strLowerMessage[intMsgCnt];
+					intMsgCnt++;
+				}
+				RD rdMainDice(strMainDice, llMemberQQ);
+				rdMainDice.Roll();
+				int intDuration = rdMainDice.intTotal;
+				if (setGroupBan(eve.fromGroup, llMemberQQ, intDuration * 60)==0)
+					if(intDuration<=0)
+						AddMsgToQueue("裁定" + getName(Member.QQID, eve.fromGroup) + "解除禁言√", eve.fromGroup, false);
+					else AddMsgToQueue("裁定" + getName(Member.QQID, eve.fromGroup) + "禁言时长" + rdMainDice.FormCompleteString() + "分钟√", eve.fromGroup, false);
+				else AddMsgToQueue("禁言失败×", eve.fromGroup, false);
+			}else AddMsgToQueue("查无此人×", eve.fromGroup, false);
+		}
+		return;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "st")
 	{
@@ -2461,6 +2894,10 @@ EVE_GroupMsg_EX(eventGroupMsg)
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
 	{
+		if (boolDisabledJrrpGlobal) {
+			AddMsgToQueue(GlobalMsg["strDisabledJrrpGlobal"], eve.fromGroup,false);
+			return;
+		}
 		intMsgCnt += 4;
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
@@ -2643,17 +3080,39 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		intMsgCnt += 5;
 		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
-		string strSearch = eve.message.substr(intMsgCnt);
-		for (auto& n : strSearch)
-			n = toupper(static_cast<unsigned char>(n));
-		string strReturn;
-		if (GetRule::analyze(strSearch, strReturn))
-		{
-			AddMsgToQueue(strReturn, eve.fromGroup, false);
+		if (strLowerMessage.substr(intMsgCnt, 3) == "set") {
+			intMsgCnt += 3;
+			while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])) || eve.message[intMsgCnt] == ':')
+				intMsgCnt++;
+			string strDefaultRule = eve.message.substr(intMsgCnt);
+			if (strDefaultRule.empty()) {
+				DefaultRule.erase(eve.fromQQ);
+				AddMsgToQueue(GlobalMsg["strRuleReset"], eve.fromGroup, false);
+			}
+			else {
+				for (auto& n : strDefaultRule)
+					n = toupper(static_cast<unsigned char>(n));
+				DefaultRule[eve.fromQQ] = strDefaultRule;
+				AddMsgToQueue(GlobalMsg["strRuleSet"], eve.fromGroup, false);
+			}
 		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strRuleErr"] + strReturn, eve.fromGroup, false);
+		else {
+			string strSearch = eve.message.substr(intMsgCnt);
+			string strDefaultRule = DefaultRule[eve.fromQQ];
+			for (auto& n : strSearch)
+				n = toupper(static_cast<unsigned char>(n));
+			string strReturn;
+			if (DefaultRule.count(eve.fromQQ) && strSearch.find(':') == string::npos && GetRule::get(strDefaultRule, strSearch, strReturn)) {
+				AddMsgToQueue(strReturn, eve.fromGroup, false);
+			}
+			else if (GetRule::analyze(strSearch, strReturn))
+			{
+				AddMsgToQueue(strReturn, eve.fromGroup, false);
+			}
+			else
+			{
+				AddMsgToQueue(GlobalMsg["strRuleErr"] + strReturn, eve.fromGroup, false);
+			}
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
@@ -2702,6 +3161,11 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			}
 			return;
 		}
+		if (boolDisabledMeGlobal)
+		{
+			AddMsgToQueue(GlobalMsg["strDisabledMeGlobal"], eve.fromGroup, false);
+			return;
+		}
 		if (DisabledMEGroup.count(eve.fromGroup))
 		{
 			AddMsgToQueue("在本群中.me命令已被禁用!", eve.fromGroup, false);
@@ -2737,7 +3201,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 				AddMsgToQueue(GlobalMsg["strSetInvalid"], eve.fromGroup, false);
 				return;
 			}
-		if (strDefaultDice.length() > 5)
+		if (strDefaultDice.length() > 3 && strDefaultDice != "1000")
 		{
 			AddMsgToQueue(GlobalMsg["strSetTooBig"], eve.fromGroup, false);
 			return;
@@ -2865,15 +3329,35 @@ EVE_GroupMsg_EX(eventGroupMsg)
 	{
 		intMsgCnt += 2;
 		string strSkillName;
+		string strMainDice = "D100";
+		string strSkillModify;
+		int intSkillModify = 0;
+		if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') {
+			strMainDice = strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+				strMainDice += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
 			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
-			':')
+			':'&& strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-')
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+		if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
+			strSkillModify += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+				strSkillModify += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+			intSkillModify = stoi(strSkillModify);
+		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 			':')intMsgCnt++;
 		string strSkillVal;
@@ -2914,15 +3398,34 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = RandomGenerator::Randint(1, 100);
-		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
-			to_string(intSkillVal) + " ";
-		if (intD100Res <= 5)strReply += "大成功";
-		else if (intD100Res <= intSkillVal / 5)strReply += "极难成功";
-		else if (intD100Res <= intSkillVal / 2)strReply += "困难成功";
-		else if (intD100Res <= intSkillVal)strReply += "成功";
-		else if (intD100Res <= 95)strReply += "失败";
-		else strReply += "大失败";
+		int intFianlSkillVal = intSkillVal + intSkillModify;
+		if (intFianlSkillVal < 0 || intFianlSkillVal > 1000)
+		{
+			AddMsgToQueue(GlobalMsg["strSuccessRateErr"], eve.fromGroup, false);
+			return;
+		}
+		RD rdMainDice(strMainDice, eve.fromQQ);
+		const int intFirstTimeRes = rdMainDice.Roll();
+		if (intFirstTimeRes == ZeroDice_Err)
+		{
+			AddMsgToQueue(GlobalMsg["strZeroDiceErr"], eve.fromGroup, false);
+			return;
+		}
+		if (intFirstTimeRes == DiceTooBig_Err)
+		{
+			AddMsgToQueue(GlobalMsg["strDiceTooBigErr"], eve.fromGroup, false);
+			return;
+		}
+		const int intD100Res = rdMainDice.intTotal;
+		string strReply = strNickName + "进行" + strSkillName + strSkillModify + "检定: " + rdMainDice.FormCompleteString() + "/" +
+			to_string(intFianlSkillVal) + " ";
+		if (intD100Res <= 5 && intD100Res <= intSkillVal)strReply += GlobalMsg["strRollCriticalSuccess"];
+		else if (intD100Res == 100)strReply += GlobalMsg["strRollFumble"];
+		else if (intD100Res <= intFianlSkillVal / 5)strReply += GlobalMsg["strRollExtremeSuccess"];
+		else if (intD100Res <= intFianlSkillVal / 2)strReply += GlobalMsg["strRollHardSuccess"];
+		else if (intD100Res <= intFianlSkillVal)strReply += GlobalMsg["strRollRegularSuccess"];
+		else if (intD100Res <= 95)strReply += GlobalMsg["strRollFailure"];
+		else strReply += GlobalMsg["strRollFumble"];
 		if (!strReason.empty())
 		{
 			strReply = "由于" + strReason + " " + strReply;
@@ -2933,15 +3436,35 @@ EVE_GroupMsg_EX(eventGroupMsg)
 	{
 		intMsgCnt += 2;
 		string strSkillName;
+		string strMainDice = "D100";
+		string strSkillModify;
+		int intSkillModify = 0;
+		if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') {
+			strMainDice = strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+				strMainDice += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
 			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
-			':')
+			':' && strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-')
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+		if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
+			strSkillModify += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+				strSkillModify += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+			intSkillModify = stoi(strSkillModify);
+		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 			':')intMsgCnt++;
 		string strSkillVal;
@@ -2982,21 +3505,89 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = RandomGenerator::Randint(1, 100);
-		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
-			to_string(intSkillVal) + " ";
-		if (intD100Res == 1)strReply += "大成功";
-		else if (intD100Res <= intSkillVal / 5)strReply += "极难成功";
-		else if (intD100Res <= intSkillVal / 2)strReply += "困难成功";
-		else if (intD100Res <= intSkillVal)strReply += "成功";
-		else if (intD100Res <= 95 || (intSkillVal >= 50 && intD100Res != 100))strReply += "失败";
-		else strReply += "大失败";
+		int intFianlSkillVal = intSkillVal + intSkillModify;
+		if (intFianlSkillVal < 0 || intFianlSkillVal > 1000)
+		{
+			AddMsgToQueue(GlobalMsg["strSuccessRateErr"], eve.fromGroup, false);
+			return;
+		}
+		RD rdMainDice(strMainDice, eve.fromQQ);
+		const int intFirstTimeRes = rdMainDice.Roll();
+		if (intFirstTimeRes == ZeroDice_Err)
+		{
+			AddMsgToQueue(GlobalMsg["strZeroDiceErr"], eve.fromGroup, false);
+			return;
+		}
+		if (intFirstTimeRes == DiceTooBig_Err)
+		{
+			AddMsgToQueue(GlobalMsg["strDiceTooBigErr"], eve.fromGroup, false);
+			return;
+		}
+		const int intD100Res = rdMainDice.intTotal;
+		string strReply = strNickName + "进行" + strSkillName + strSkillModify + "检定: " + rdMainDice.FormCompleteString() + "/" +
+			to_string(intFianlSkillVal) + " ";
+		if (intD100Res == 1)strReply += GlobalMsg["strRollCriticalSuccess"];
+		else if (intD100Res == 100)strReply += GlobalMsg["strRollFumble"];
+		else if (intD100Res <= intFianlSkillVal / 5)strReply += GlobalMsg["strRollExtremeSuccess"];
+		else if (intD100Res <= intFianlSkillVal / 2)strReply += GlobalMsg["strRollHardSuccess"];
+		else if (intD100Res <= intFianlSkillVal)strReply += GlobalMsg["strRollRegularSuccess"];
+		else if (intD100Res <= 95)strReply += GlobalMsg["strRollFailure"];
+		else strReply += GlobalMsg["strRollFumble"];
 		if (!strReason.empty())
 		{
 			strReply = "由于" + strReason + " " + strReply;
 		}
 		AddMsgToQueue(strReply, eve.fromGroup, false);
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "draw") {
+
+	intMsgCnt += 4;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+
+	string strDeckName;
+	while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		strDeckName += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	string strCardNum;
+	while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		strCardNum += eve.message[intMsgCnt];
+		intMsgCnt++;
+	}
+	auto intCardNum = strCardNum.empty() ? 1 : stoi(strCardNum);
+	if (intCardNum == 0)
+	{
+		AddMsgToQueue(GlobalMsg["strNumCannotBeZero"], eve.fromGroup, false);
+		return;
+	}
+	int intDeckRes = CardDeck::findDeck(strDeckName);
+	string strReply;
+	if (intDeckRes < 0) {
+		strReply = strDeckName + "?" + GlobalMsg["strDeckNotFound"];
+		AddMsgToQueue(strReply, eve.fromGroup, false);
+		return;
+	}
+	vector<string>TempDeck(CardDeck::PublicDeck[intDeckRes]);
+	TempDeck.erase(TempDeck.begin());
+	strReply = "来看看" + strNickName + "的随机抽取结果:\n" + CardDeck::drawCard(TempDeck);
+	while (--intCardNum && TempDeck.size()) {
+		strReply += "\n" + CardDeck::drawCard(TempDeck);
+		if (strReply.length() > 1000) {
+			AddMsgToQueue(strReply, eve.fromGroup, false);
+			strReply.clear();
+		}
+	}
+	AddMsgToQueue(strReply, eve.fromGroup, false);
+	if (intCardNum) {
+		AddMsgToQueue(GlobalMsg["strDeckEmpty"], eve.fromGroup, false);
+		return;
+	}
+}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'h'
 		|| strLowerMessage[intMsgCnt] == 'd')
 	{
@@ -3262,7 +3853,23 @@ EVE_GroupMsg_EX(eventGroupMsg)
 
 EVE_DiscussMsg_EX(eventDiscussMsg)
 {
+	if (boolNoDiscuss) {
+		AddMsgToQueue(GlobalMsg["strNoDiscuss"], eve.fromDiscuss, false);
+		Sleep(1000);
+		setDiscussLeave(eve.fromDiscuss);
+		return;
+	}
+	if (boolPreserve&&WhiteGroup.count(eve.fromDiscuss)==0) {
+		AddMsgToQueue(GlobalMsg["strPreserve"],eve.fromDiscuss,false);
+		Sleep(1000);
+		setDiscussLeave(eve.fromDiscuss);
+		return;
+	}
 	if (eve.isSystem())return;
+	if (BlackQQ.count(eve.fromQQ)) {
+		eve.message_block();
+		return;
+	}
 	init(eve.message);
 	string strAt = "[CQ:at,qq=" + to_string(getLoginQQ()) + "]";
 	if (eve.message.substr(0, 6) == "[CQ:at")
@@ -3285,7 +3892,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 	eve.message_block();
 	const string strNickName = getName(eve.fromQQ, eve.fromDiscuss);
 	string strLowerMessage = eve.message;
-	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
+	std::transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
 	{
 		intMsgCnt += 3;
@@ -3338,7 +3945,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 			if (QQNum.empty() || QQNum == to_string(getLoginQQ()) || (QQNum.length() == 4 && QQNum == to_string(
 				getLoginQQ() % 10000)))
 			{
-				AddMsgToQueue(Dice_Full_Ver, eve.fromDiscuss, false);
+				AddMsgToQueue(Dice_Full_Ver + PersonalMsg["strBotMsg"], eve.fromDiscuss, false);
 			}
 		}
 		return;
@@ -3361,11 +3968,13 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		}
 		return;
 	}
-	if (DisabledDiscuss.count(eve.fromDiscuss))
+	if (boolDisabledGlobal|| DisabledDiscuss.count(eve.fromDiscuss))
 		return;
 	if (strLowerMessage.substr(intMsgCnt, 4) == "help")
 	{
-		AddMsgToQueue(GlobalMsg["strHlpMsg"], eve.fromDiscuss, false);
+		if (PersonalMsg.count("strHelpMsg"))
+			AddMsgToQueue(PersonalMsg["strHelpMsg"], eve.fromDiscuss, false);
+		else AddMsgToQueue(GlobalMsg["strHlpMsg"], eve.fromDiscuss, false);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "st")
 	{
@@ -4116,6 +4725,10 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
 	{
+		if (boolDisabledJrrpGlobal) {
+			AddMsgToQueue(GlobalMsg["strDisabledJrrpGlobal"], eve.fromDiscuss,false);
+			return;
+		}
 		intMsgCnt += 4;
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
@@ -4284,17 +4897,39 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		intMsgCnt += 5;
 		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
-		string strSearch = eve.message.substr(intMsgCnt);
-		for (auto& n : strSearch)
-			n = toupper(static_cast<unsigned char>(n));
-		string strReturn;
-		if (GetRule::analyze(strSearch, strReturn))
-		{
-			AddMsgToQueue(strReturn, eve.fromDiscuss, false);
+		if (strLowerMessage.substr(intMsgCnt, 3) == "set") {
+			intMsgCnt += 3;
+			while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])) || eve.message[intMsgCnt] == ':')
+				intMsgCnt++;
+			string strDefaultRule = eve.message.substr(intMsgCnt);
+			if (strDefaultRule.empty()) {
+				DefaultRule.erase(eve.fromQQ);
+				AddMsgToQueue(GlobalMsg["strRuleReset"], eve.fromDiscuss, false);
+			}
+			else {
+				for (auto& n : strDefaultRule)
+					n = toupper(static_cast<unsigned char>(n));
+				DefaultRule[eve.fromQQ] = strDefaultRule;
+				AddMsgToQueue(GlobalMsg["strRuleSet"], eve.fromDiscuss, false);
+			}
 		}
-		else
-		{
-			AddMsgToQueue(GlobalMsg["strRuleErr"] + strReturn, eve.fromDiscuss, false);
+		else {
+			string strSearch = eve.message.substr(intMsgCnt);
+			string strDefaultRule = DefaultRule[eve.fromQQ];
+			for (auto& n : strSearch)
+				n = toupper(static_cast<unsigned char>(n));
+			string strReturn;
+			if (DefaultRule.count(eve.fromQQ) && strSearch.find(':') == string::npos && GetRule::get(strDefaultRule, strSearch, strReturn)) {
+				AddMsgToQueue(strReturn, eve.fromDiscuss, false);
+			}
+			else if (GetRule::analyze(strSearch, strReturn))
+			{
+				AddMsgToQueue(strReturn, eve.fromDiscuss, false);
+			}
+			else
+			{
+				AddMsgToQueue(GlobalMsg["strRuleErr"] + strReturn, eve.fromDiscuss, false);
+			}
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
@@ -4327,6 +4962,11 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 			{
 				AddMsgToQueue("在本多人聊天中.me命令没有被启用!", eve.fromDiscuss, false);
 			}
+			return;
+		}
+		if (boolDisabledMeGlobal)
+		{
+			AddMsgToQueue(GlobalMsg["strDisabledMeGlobal"], eve.fromDiscuss, false);
 			return;
 		}
 		if (DisabledMEDiscuss.count(eve.fromDiscuss))
@@ -4364,7 +5004,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 				AddMsgToQueue(GlobalMsg["strSetInvalid"], eve.fromDiscuss, false);
 				return;
 			}
-		if (strDefaultDice.length() > 5)
+		if (strDefaultDice.length() > 3 && strDefaultDice !="1000" )
 		{
 			AddMsgToQueue(GlobalMsg["strSetTooBig"], eve.fromDiscuss, false);
 			return;
@@ -4492,15 +5132,35 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 	{
 		intMsgCnt += 2;
 		string strSkillName;
+		string strMainDice = "D100";
+		string strSkillModify;
+		int intSkillModify = 0;
+		if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') {
+			strMainDice = strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+				strMainDice += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
 			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
-			':')
+			':' && strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-')
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+		if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
+			strSkillModify += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+				strSkillModify += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+			intSkillModify = stoi(strSkillModify);
+		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 			':')intMsgCnt++;
 		string strSkillVal;
@@ -4541,15 +5201,34 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = RandomGenerator::Randint(1, 100);
-		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
-			to_string(intSkillVal) + " ";
-		if (intD100Res <= 5)strReply += "大成功";
-		else if (intD100Res <= intSkillVal / 5)strReply += "极难成功";
-		else if (intD100Res <= intSkillVal / 2)strReply += "困难成功";
-		else if (intD100Res <= intSkillVal)strReply += "成功";
-		else if (intD100Res <= 95)strReply += "失败";
-		else strReply += "大失败";
+		int intFianlSkillVal = intSkillVal + intSkillModify;
+		if (intFianlSkillVal < 0 || intFianlSkillVal > 1000)
+		{
+			AddMsgToQueue(GlobalMsg["strSuccessRateErr"], eve.fromDiscuss, false);
+			return;
+		}
+		RD rdMainDice(strMainDice, eve.fromQQ);
+		const int intFirstTimeRes = rdMainDice.Roll();
+		if (intFirstTimeRes == ZeroDice_Err)
+		{
+			AddMsgToQueue(GlobalMsg["strZeroDiceErr"], eve.fromDiscuss, false);
+			return;
+		}
+		if (intFirstTimeRes == DiceTooBig_Err)
+		{
+			AddMsgToQueue(GlobalMsg["strDiceTooBigErr"], eve.fromDiscuss, false);
+			return;
+		}
+		const int intD100Res = rdMainDice.intTotal;
+		string strReply = strNickName + "进行" + strSkillName + strSkillModify + "检定: " + rdMainDice.FormCompleteString() + "/" +
+			to_string(intFianlSkillVal) + " ";
+		if (intD100Res <= 5 && intD100Res <= intSkillVal)strReply += GlobalMsg["strRollCriticalSuccess"];
+		else if (intD100Res == 100)strReply += GlobalMsg["strRollFumble"];
+		else if (intD100Res <= intFianlSkillVal / 5)strReply += GlobalMsg["strRollExtremeSuccess"];
+		else if (intD100Res <= intFianlSkillVal / 2)GlobalMsg["strRollHardSuccess"];
+		else if (intD100Res <= intFianlSkillVal)GlobalMsg["strRollRegularSuccess"];
+		else if (intD100Res <= 95)strReply += GlobalMsg["strRollFailure"];
+		else strReply += GlobalMsg["strRollFumble"];
 		if (!strReason.empty())
 		{
 			strReply = "由于" + strReason + " " + strReply;
@@ -4560,6 +5239,17 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 	{
 		intMsgCnt += 2;
 		string strSkillName;
+		string strMainDice = "D100";
+		string strSkillModify;
+		int intSkillModify = 0;
+		if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') {
+			strMainDice = strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+				strMainDice += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
 			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
@@ -4569,6 +5259,15 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 			intMsgCnt++;
 		}
 		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+		if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
+			strSkillModify += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+				strSkillModify += strLowerMessage[intMsgCnt];
+				intMsgCnt++;
+			}
+			intSkillModify = stoi(strSkillModify);
+		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 			':')intMsgCnt++;
 		string strSkillVal;
@@ -4609,21 +5308,89 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		{
 			intSkillVal = stoi(strSkillVal);
 		}
-		const int intD100Res = RandomGenerator::Randint(1, 100);
-		string strReply = strNickName + "进行" + strSkillName + "检定: D100=" + to_string(intD100Res) + "/" +
-			to_string(intSkillVal) + " ";
-		if (intD100Res == 1)strReply += "大成功";
-		else if (intD100Res <= intSkillVal / 5)strReply += "极难成功";
-		else if (intD100Res <= intSkillVal / 2)strReply += "困难成功";
-		else if (intD100Res <= intSkillVal)strReply += "成功";
-		else if (intD100Res <= 95 || (intSkillVal >= 50 && intD100Res != 100))strReply += "失败";
-		else strReply += "大失败";
+		int intFianlSkillVal = intSkillVal + intSkillModify;
+		if (intFianlSkillVal < 0 || intFianlSkillVal > 1000)
+		{
+			AddMsgToQueue(GlobalMsg["strSuccessRateErr"], eve.fromDiscuss, false);
+			return;
+		}
+		RD rdMainDice(strMainDice, eve.fromQQ);
+		const int intFirstTimeRes = rdMainDice.Roll();
+		if (intFirstTimeRes == ZeroDice_Err)
+		{
+			AddMsgToQueue(GlobalMsg["strZeroDiceErr"], eve.fromDiscuss, false);
+			return;
+		}
+		if (intFirstTimeRes == DiceTooBig_Err)
+		{
+			AddMsgToQueue(GlobalMsg["strDiceTooBigErr"], eve.fromDiscuss, false);
+			return;
+		}
+		const int intD100Res = rdMainDice.intTotal;
+		string strReply = strNickName + "进行" + strSkillName + strSkillModify + "检定: " + rdMainDice.FormCompleteString() + "/" +
+			to_string(intFianlSkillVal) + " ";
+		if (intD100Res == 1)strReply += GlobalMsg["strRollCriticalSuccess"];
+		else if (intD100Res == 100)strReply += GlobalMsg["strRollFumble"];
+		else if (intD100Res <= intFianlSkillVal / 5)strReply += GlobalMsg["strRollExtremeSuccess"];
+		else if (intD100Res <= intFianlSkillVal / 2)strReply += GlobalMsg["strRollHardSuccess"];
+		else if (intD100Res <= intFianlSkillVal)strReply += GlobalMsg["strRollRegularSuccess"];
+		else if (intD100Res <= 95 || intFianlSkillVal >= 50)strReply += GlobalMsg["strRollFailure"];
+		else strReply += GlobalMsg["strRollFumble"];
 		if (!strReason.empty())
 		{
 			strReply = "由于" + strReason + " " + strReply;
 		}
 		AddMsgToQueue(strReply, eve.fromDiscuss, false);
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "draw") {
+
+	intMsgCnt += 4;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || (strLowerMessage[intMsgCnt] == '.'))
+		intMsgCnt++;
+
+	string strDeckName;
+	while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		strDeckName += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	string strCardNum;
+	while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		strCardNum += eve.message[intMsgCnt];
+		intMsgCnt++;
+	}
+	auto intCardNum = strCardNum.empty() ? 1 : stoi(strCardNum);
+	if (intCardNum == 0)
+	{
+		AddMsgToQueue(GlobalMsg["strNumCannotBeZero"], eve.fromDiscuss, false);
+		return;
+	}
+	int intDeckRes = CardDeck::findDeck(strDeckName);
+	string strReply;
+	if (intDeckRes < 0) {
+		strReply = strDeckName + "?" + GlobalMsg["strDeckNotFound"];
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);
+		return;
+	}
+	vector<string>TempDeck(CardDeck::PublicDeck[intDeckRes]);
+	TempDeck.erase(TempDeck.begin());
+	strReply = "来看看" + strNickName + "的随机抽取结果:\n" + CardDeck::drawCard(TempDeck);
+	while (--intCardNum && TempDeck.size()) {
+		strReply += "\n" + CardDeck::drawCard(TempDeck);
+		if (strReply.length() > 1000) {
+			AddMsgToQueue(strReply, eve.fromDiscuss, false);
+			strReply.clear();
+		}
+	}
+	AddMsgToQueue(strReply, eve.fromDiscuss, false);
+	if (intCardNum) {
+		AddMsgToQueue(GlobalMsg["strDeckEmpty"], eve.fromDiscuss, false);
+		return;
+	}
+}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'h'
 		|| strLowerMessage[intMsgCnt] == 'd')
 	{
@@ -4919,6 +5686,83 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 		}
 		AddMsgToQueue(strReply, fromGroup, false);
 	}
+	else if(beingOperateQQ == getLoginQQ()){
+		if (boolPreserve&&getGroupMemberInfo(fromGroup, masterQQ).QQID != masterQQ&&WhiteGroup.count(fromGroup)==0&&WhiteQQ.count(fromQQ)==0) {
+			AddMsgToQueue(GlobalMsg["strPreserve"], fromGroup, false);
+			setGroupLeave(fromGroup);
+			return 0;
+		}
+		else if(PersonalMsg.count("strAddGroup")) {
+			AddMsgToQueue(PersonalMsg["strAddGroup"], fromGroup, false);
+		}
+	}
+	return 0;
+}
+
+EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
+	if (beingOperateQQ == getLoginQQ()) {
+		if (masterQQ&&boolMasterMode) {
+			string strMsg = to_string(fromQQ)+"将本骰娘移出了群" + to_string(fromGroup) + "！";
+			AddMsgToQueue(strMsg, masterQQ);
+			if (WhiteQQ.count(fromQQ)) {
+				WhiteQQ.erase(fromQQ);
+			}
+			BlackQQ.insert(fromQQ);
+			if (WhiteGroup.count(fromGroup)) {
+				WhiteGroup.erase(fromGroup);
+			}
+			BlackGroup.insert(fromGroup);
+		}
+		string strInfo = "{\"LoginQQ\":\"" + to_string(getLoginQQ()) + "\",\"fromGroup\":" + to_string(fromGroup) + "\",\"Type\":\"kicked\",\"fromQQ\":\"" + to_string(fromQQ) + "\"";
+	}
+	return 0;
+}
+
+EVE_Request_AddGroup(eventGroupInvited) {
+	if (subType == 2) {
+		setGroupAddRequest(responseFlag,2, 1,"");
+		if (masterQQ&&boolMasterMode) {
+			string strMsg = "群添加请求，来自：" + getStrangerInfo(fromQQ).nick +"("+ to_string(fromQQ) + "),群：(" + to_string(fromGroup)+")。";
+			if (BlackGroup.count(fromGroup)) {
+				strMsg += "\n已拒绝（群在黑名单中）";
+				setGroupAddRequest(responseFlag, 2, 2, "");
+			}
+			else if (BlackQQ.count(fromQQ)) {
+				strMsg += "\n已拒绝（用户在黑名单中）";
+				setGroupAddRequest(responseFlag, 2, 2, "");
+			}
+			else if (WhiteGroup.count(fromQQ)) {
+				strMsg += "\n已同意（群在白名单中）";
+				setGroupAddRequest(responseFlag, 2, 1, "");
+			}
+			else if (WhiteQQ.count(fromQQ)) {
+				strMsg += "\n已同意（用户在白名单中）";
+				WhiteGroup.insert(fromQQ);
+				setGroupAddRequest(responseFlag, 2, 1, "");
+			}
+			else if (boolPreserve) {
+				strMsg += "\n已拒绝（当前在私用模式）";
+				WhiteGroup.insert(fromQQ);
+				setGroupAddRequest(responseFlag, 2, 2, "");
+			}
+			else{
+				strMsg += "已同意";
+				setGroupAddRequest(responseFlag, 2, 1, "");
+			}
+			AddMsgToQueue(strMsg, masterQQ);
+		}
+	}
+	return 1;
+}
+
+EVE_Menu(eventMasterMode) {
+	if (boolMasterMode) {
+		boolMasterMode = false;
+		MessageBoxA(nullptr, "Master模式已关闭√", "Master模式切换",MB_OK | MB_ICONINFORMATION);
+	}else {
+		boolMasterMode = true;
+		MessageBoxA(nullptr, "Master模式已开启√", "Master模式切换", MB_OK | MB_ICONINFORMATION);
+	}
 	return 0;
 }
 
@@ -4927,6 +5771,7 @@ EVE_Disable(eventDisable)
 	Enabled = false;
 	ilInitList.reset();
 	Name.reset();
+	dataBackUp();
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
 	{
@@ -5057,6 +5902,7 @@ EVE_Exit(eventExit)
 		return 0;
 	ilInitList.reset();
 	Name.reset();
+	dataBackUp();
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
 	{

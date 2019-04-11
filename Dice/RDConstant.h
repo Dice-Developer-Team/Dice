@@ -64,6 +64,7 @@ static std::map<std::string, std::string> SkillNameReplace = {
 	{"灵感", "智力/灵感"},
 	{"idea", "智力/灵感"},
 	{"edu", "教育"},
+	{"知识", "教育"},
 	{"mov", "移动力"},
 	{"san", "理智"},
 	{"hp", "体力"},

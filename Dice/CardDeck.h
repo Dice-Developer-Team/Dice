@@ -21,31 +21,18 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#ifndef DICE_GLOBAL_VAR
-#define DICE_GLOBAL_VAR
-#include "CQLogger.h"
-#include <map>
+#ifndef CARD_DECK
+#define CARD_DECK
+#include <string>
+#include <vector>
 
-// 版本信息
-extern const unsigned short Dice_Build;
-extern const std::string Dice_Ver_Without_Build;
-extern const std::string DiceRequestHeader;
-extern const std::string Dice_Ver;
-extern const std::string Dice_Short_Ver;
-extern const std::string Dice_Full_Ver;
+namespace CardDeck
+{
+	extern const std::vector<std::vector<std::string>> PublicDeck;
+	extern const std::vector<std::vector<std::string>> PublicDeckList;
+	int findDeck(std::string strDeckName);
+	std::string drawCard(std::vector<std::string> &TempDeck);
+};
+#endif /*CARD_DECK*/
 
-// 应用是否被启用
-extern bool Enabled;
 
-// 消息发送线程是否正在运行
-extern bool msgSendThreadRunning;
-
-// 全局酷QLogger
-extern CQ::logger DiceLogger;
-
-// 回复信息, 此内容可以通过CustomMsg功能修改而无需修改源代码
-extern std::map<std::string, std::string> GlobalMsg;
-// 修改后的Global语句
-extern std::map<std::string, std::string> EditedMsg;
-
-#endif /*DICE_GLOBAL_VAR*/

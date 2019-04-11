@@ -90,6 +90,12 @@
     <ClCompile Include="DiceNetwork.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="CardDeck.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DiceConsole.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -201,6 +207,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="DiceNetwork.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CardDeck.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceConsole.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

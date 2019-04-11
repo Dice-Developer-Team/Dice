@@ -23,7 +23,7 @@
     <ProjectGuid>{BA051175-B8E8-4104-9DD9-B9E225738C42}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Dice</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
     <ProjectName>com.w4123.dice</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -38,7 +38,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -203,8 +203,10 @@
     <ClCompile Include="..\CQSDKCPP\CQstream.cpp" />
     <ClCompile Include="..\CQSDKCPP\CQTools.cpp" />
     <ClCompile Include="..\CQSDKCPP\Unpack.cpp" />
+    <ClCompile Include="CardDeck.cpp" />
     <ClCompile Include="CustomMsg.cpp" />
     <ClCompile Include="Dice.cpp" />
+    <ClCompile Include="DiceConsole.cpp" />
     <ClCompile Include="DiceMsgSend.cpp" />
     <ClCompile Include="DiceNetwork.cpp" />
     <ClCompile Include="DiceUpdate.cpp" />
@@ -243,7 +245,9 @@
     <ClInclude Include="..\CQSDK\CQTools.h" />
     <ClInclude Include="..\CQSDK\Unpack.h" />
     <ClInclude Include="APPINFO.h" />
+    <ClInclude Include="CardDeck.h" />
     <ClInclude Include="CustomMsg.h" />
+    <ClInclude Include="DiceConsole.h" />
     <ClInclude Include="DiceMsgSend.h" />
     <ClInclude Include="DiceNetwork.h" />
     <ClInclude Include="EncodingConvert.h" />

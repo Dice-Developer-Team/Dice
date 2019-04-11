@@ -189,54 +189,54 @@ void COC6D(string& strMAns)
 	RD rd3D6("3D6");
 	RD rd2D6p6("2D6+6");
 	RD rd3D6p3("3D6+3");
+	RD rd1D10("1D10");
 	strMAns += "的人物作成:";
 	strMAns += '\n';
 	strMAns += "力量STR=3D6=";
 	rd3D6.Roll();
 	const int STR = rd3D6.intTotal;
-
 	strMAns += to_string(STR);
 	strMAns += '\n';
+
 	strMAns += "体质CON=3D6=";
 	rd3D6.Roll();
 	const int CON = rd3D6.intTotal;
-
 	strMAns += to_string(CON);
 	strMAns += '\n';
+
 	strMAns += "体型SIZ=2D6+6=";
 	rd2D6p6.Roll();
 	const int SIZ = rd2D6p6.intTotal;
-
 	strMAns += to_string(SIZ);
 	strMAns += '\n';
+
 	strMAns += "敏捷DEX=3D6=";
 	rd3D6.Roll();
 	const int DEX = rd3D6.intTotal;
-
 	strMAns += to_string(DEX);
 	strMAns += '\n';
+
 	strMAns += "外貌APP=3D6=";
 	rd3D6.Roll();
 	const int APP = rd3D6.intTotal;
-
 	strMAns += to_string(APP);
 	strMAns += '\n';
+
 	strMAns += "智力INT=2D6+6=";
 	rd2D6p6.Roll();
 	const int INT = rd2D6p6.intTotal;
-
 	strMAns += to_string(INT);
 	strMAns += '\n';
+
 	strMAns += "意志POW=3D6=";
 	rd3D6.Roll();
 	const int POW = rd3D6.intTotal;
-
 	strMAns += to_string(POW);
 	strMAns += '\n';
+
 	strMAns += "教育EDU=3D6+3=";
 	rd3D6p3.Roll();
 	const int EDU = rd3D6p3.intTotal;
-
 	strMAns += to_string(EDU);
 	strMAns += '\n';
 	strMAns += "共计:" + to_string(STR + CON + SIZ + APP + POW + EDU + DEX + INT);
@@ -276,6 +276,11 @@ void COC6D(string& strMAns)
 		DB = "计算错误!";
 	}
 	strMAns += DB;
+	strMAns += "\n";
+	strMAns += "资产=1D10=";
+	rd1D10.Roll();
+	const int PRO = rd1D10.intTotal;
+	strMAns += to_string(PRO);
 }
 
 void COC7(string& strMAns, int intNum)
@@ -302,8 +307,8 @@ void COC7(string& strMAns, int intNum)
 void COC6(string& strMAns, int intNum)
 {
 	strMAns += "的人物作成:";
-	string strProperty[] = {"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育"};
-	string strRoll[] = {"3D6", "3D6", "2D6+6", "3D6", "3D6", "2D6+6", "3D6", "3D6+3"};
+	string strProperty[] = {"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育", "资产" };
+	string strRoll[] = {"3D6", "3D6", "2D6+6", "3D6", "3D6", "2D6+6", "3D6", "3D6+3","1D10"};
 	const bool boolAddSpace = intNum != 1;
 	int intAllTotal = 0;
 	while (intNum--)
@@ -320,6 +325,9 @@ void COC6(string& strMAns, int intNum)
 		}
 		strMAns += "共计:" + to_string(intAllTotal);
 		intAllTotal = 0;
+		RD rdCOC(strRoll[8]);
+		rdCOC.Roll();
+		strMAns += " "+ strProperty[8] + ":" + to_string(rdCOC.intTotal);
 	}
 }
 

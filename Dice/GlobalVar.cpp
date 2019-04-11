@@ -64,25 +64,35 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 
 std::map<std::string, std::string> GlobalMsg
 {
+	{"strRollCriticalSuccess","大成功！"},
+	{"strRollExtremeSuccess","极难成功"},
+	{"strRollHardSuccess","困难成功"},
+	{"strRollRegularSuccess","成功"},
+	{"strRollFailure","失败"},
+	{"strRollFumble","大失败！"},
+	{"strNumCannotBeZero", "无意义的数目！莫要消遣于我!"},
+	{"strDeckNotFound", "没听说过呢……"},
+	{"strDeckEmpty", "疲劳警告！已经什么也不剩了！"},
 	{"strNameNumTooBig", "生成数量过多!请输入1-10之间的数字!"},
 	{"strNameNumCannotBeZero", "生成数量不能为零!请输入1-10之间的数字!"},
-	{"strSetInvalid", "无效的默认骰!请输入1-99999之间的数字!"},
-	{"strSetTooBig", "默认骰过大!请输入1-99999之间的数字!"},
-	{"strSetCannotBeZero", "默认骰不能为零!请输入1-99999之间的数字!"},
+	{"strSetInvalid", "无效的默认骰!请输入1-1000之间的数字!"},
+	{"strSetTooBig", "这面数……让我丢个球啊!请输入1-1000之间的数字!"},
+	{"strSetCannotBeZero", "默认骰不能为零!请输入1-1000之间的数字!"},
 	{"strCharacterCannotBeZero", "人物作成次数不能为零!请输入1-10之间的数字!"},
-	{"strSetInvalid", "无效的默认骰!请输入1-99999之间的数字!"},
-	{"strSetTooBig", "默认骰过大!请输入1-99999之间的数字!"},
-	{"strSetCannotBeZero", "默认骰不能为零!请输入1-99999之间的数字!"},
-	{"strCharacterCannotBeZero", "人物作成次数不能为零!请输入1-10之间的数字!"},
+	{"strSetInvalid", "无效的默认骰!请输入1-1000之间的数字!"},
+	{"strSetTooBig", "默认骰过大!请输入1-1000之间的数字!"},
 	{"strCharacterTooBig", "人物作成次数过多!请输入1-10之间的数字!"},
 	{"strCharacterInvalid", "人物作成次数无效!请输入1-10之间的数字!"},
 	{"strSCInvalid", "SC表达式输入不正确,格式为成功扣San/失败扣San,如1/1d6!"},
 	{"strSanInvalid", "San值输入不正确,请输入1-99范围内的整数!"},
 	{"strEnValInvalid", "技能值或属性输入不正确,请输入1-99范围内的整数!"},
+	{"strSuccessRateErr","这成功率还需要检定吗？"},
 	{"strGroupIDInvalid", "无效的群号!"},
 	{"strSendErr", "消息发送失败!"},
 	{"strDisabledErr", "命令无法执行:机器人已在此群中被关闭!"},
 	{"strMEDisabledErr", "管理员已在此群中禁用.me命令!"},
+	{"strDisabledMeGlobal", "恕不提供.me服务×"},
+	{"strDisabledJrrpGlobal", "恕不提供.jrrp服务×"},
 	{"strHELPDisabledErr", "管理员已在此群中禁用.help命令!"},
 	{"strNameDelErr", "没有设置名称,无法删除!"},
 	{"strValueErr", "掷骰表达式输入错误!"},
@@ -102,12 +112,15 @@ std::map<std::string, std::string> GlobalMsg
 	{"strWelcomeMsgClearErr", "错误:没有设置入群欢迎词，清除失败"},
 	{"strWelcomeMsgUpdateNotice", "已更新本群的入群欢迎词"},
 	{"strPermissionDeniedErr", "错误:此操作需要群主或管理员权限"},
+	{"strSelfPermissionErr","本骰娘权限不够无能为力呢"},
 	{"strNameTooLongErr", "错误:名称过长(最多为50英文字符)"},
 	{"strUnknownPropErr", "错误:属性不存在"},
 	{"strEmptyWWDiceErr", "格式错误:正确格式为.w(w)XaY!其中X≥1, 5≤Y≤10"},
 	{"strPropErr", "请认真的输入你的属性哦~"},
 	{"strSetPropSuccess", "属性设置成功"},
 	{"strPropCleared", "已清除所有属性"},
+	{"strRuleReset","已重置默认规则"},
+	{"strRuleSet","已设置默认规则"},
 	{"strRuleErr", "规则数据获取失败,具体信息:\n"},
 	{"strRulesFailedErr", "请求失败,无法连接数据库"},
 	{"strPropDeleted", "属性删除成功"},
@@ -116,6 +129,10 @@ std::map<std::string, std::string> GlobalMsg
 	{"strProp", "{0}的{1}属性值为{2}"},
 	{"strStErr", "格式错误:请参考帮助文档获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
+	{"strNoDiscuss", "本骰娘现不支持讨论组服务，即将退出"},
+	{"strGroupClr", "本骰娘清退中，即将退群"},
+	{"strGlobalOff","休假中，暂停服务×"},
+	{"strPreserve", "本骰娘私有私用，勿扰勿怪"},
 	{"strJrrp", "{0}今天的人品值是: {1}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{0}"},
 	{"strHlpMsg" , Dice_Short_Ver + "\n" +
@@ -137,6 +154,7 @@ std::map<std::string, std::string> GlobalMsg
 .jrrp [on/off]				今日人品检定
 .name [cn/jp/en] [个数]			生成随机名称
 .rules [规则名称:]规则条目		规则查询
+.draw [牌堆名称] ([抽牌数])		抽牌
 .help						显示帮助
 <仅限群/多人聊天>
 .ri [加值] [昵称]			DnD先攻掷骰
@@ -154,5 +172,7 @@ std::map<std::string, std::string> GlobalMsg
  支持使用K来取较大的几个骰子
  支持使用 个数#表达式 进行多轮掷骰
 **SC表达式为 成功扣San/失败扣San,如:1/1d6
-插件交流/bug反馈/查看源代码请加QQ群941980833或624807593(已满))"}
+**官方骰娘相关**/使用手册/插件交流/bug反馈/查看源代码请加QQ群941980833或624807593(已满))"}
 };
+
+std::map<std::string, std::string> EditedMsg;
