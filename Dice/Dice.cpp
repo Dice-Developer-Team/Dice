@@ -466,7 +466,6 @@ EVE_Enable(eventEnable)
 		ReadCustomMsg(ifstreamCustomMsg);
 	}
 	ifstreamCustomMsg.close();
-	return 0;
 	//读取替身模式
 	ifstream ifstreamStandByMe(strFileLoc + "StandByMe.RDconf");
 	if (ifstreamStandByMe)
@@ -478,11 +477,13 @@ EVE_Enable(eventEnable)
 			while (ifstreamStandByMe) {
 				ifstreamStandByMe >> strName >> strMsg;
 				while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
+				while (strMsg.find("\\b") != string::npos)strMsg.replace(strMsg.find("\\b"), 2, " ");
 				GlobalMsg[strName] = strMsg;
 			}
 		}
 	}
 	ifstreamStandByMe.close();
+	return 0;
 }
 
 
@@ -522,22 +523,27 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "str"&&boolMasterMode&&eve.fromQQ == masterQQ) {
 		string strName;
-		while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))&&intMsgCnt!= strLowerMessage.length())
 		{
 			strName += eve.message[intMsgCnt];
 			intMsgCnt++;
 		}
 		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
-		string strMsg = eve.message.substr(intMsgCnt);
-		if (GlobalMsg.count(strName)) {
+		if (intMsgCnt == eve.message.length()) {
+			EditedMsg.erase(strName);
+			AddMsgToQueue("已清除" + strName + "的自定义，但恢复默认设置需要重启应用。", eve.fromQQ);
+		}
+		else if (GlobalMsg.count(strName)) {
+			string strMsg = eve.message.substr(intMsgCnt);
 			EditedMsg[strName] = strMsg;
-			GlobalMsg[strName] = (strName=="strHlpMsg")? Dice_Short_Ver + "\n" + strMsg : strMsg;
+			GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMsg : strMsg;
 			AddMsgToQueue("已记下" + strName + "的自定义", eve.fromQQ);
 		}
 		else {
 			AddMsgToQueue("是说" + strName + "？这似乎不是会用到的语句×", eve.fromQQ);
 		}
+		
 	}
 	else if (boolDisabledGlobal){
 		AddMsgToQueue(GlobalMsg["strGlobalOff"], eve.fromQQ);
