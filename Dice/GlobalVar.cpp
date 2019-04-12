@@ -135,6 +135,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPreserve", "本骰娘私有私用，勿扰勿怪"},
 	{"strJrrp", "{0}今天的人品值是: {1}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{0}"},
+	{"strAddGroup", ""},
+	{"strBotMsg", ""},
 	{"strHlpMsg" , Dice_Short_Ver + "\n" +
 	R"(请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
 跑团记录着色器: https://logpainter.kokona.tech

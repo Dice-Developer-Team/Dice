@@ -99,28 +99,28 @@ namespace Console
 			if (strOption == "addgroup") {
 				std::string strPersonalMsg = strMessage.substr(intMsgCnt);
 				if (strPersonalMsg.empty()) {
-					if (PersonalMsg.count("strAddGroup")) {
-						PersonalMsg.erase("strAddGroup");
+					if (GlobalMsg.count("strAddGroup")) {
+						GlobalMsg["strAddGroup"].clear();
 						AddMsgToQueue("入群发言已清除√", masterQQ);
 					}
 					else AddMsgToQueue("当前未设置入群发言×", masterQQ);
 				}
 				else {
-					PersonalMsg["strAddGroup"] = strPersonalMsg;
+					GlobalMsg["strAddGroup"] = strPersonalMsg;
 					AddMsgToQueue("入群发言已准备好了√", masterQQ);
 				}
 			}
 			else if (strOption == "bot") {
 				std::string strPersonalMsg = strMessage.substr(intMsgCnt);
 				if (strPersonalMsg.empty()) {
-					if (PersonalMsg.count("strBotMsg")) {
-						PersonalMsg.erase("strBotMsg");
+					if (GlobalMsg.count("strBotMsg")) {
+						GlobalMsg["strBotMsg"].clear();
 						AddMsgToQueue("已清除bot附加信息√", masterQQ);
 					}
 					else AddMsgToQueue("当前未设置bot附加信息×", masterQQ);
 				}
 				else {
-					PersonalMsg["strBotMsg"] = strPersonalMsg;
+					GlobalMsg["strBotMsg"] = strPersonalMsg;
 					AddMsgToQueue("已为bot附加信息√", masterQQ);
 				}
 			}

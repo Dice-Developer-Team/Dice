@@ -868,7 +868,7 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
 	{
-		AddMsgToQueue(Dice_Full_Ver+PersonalMsg["strBotMsg"], eve.fromQQ);
+		AddMsgToQueue(Dice_Full_Ver+GlobalMsg["strBotMsg"], eve.fromQQ);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
 	{
@@ -1991,7 +1991,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			if (QQNum.empty() || QQNum == to_string(getLoginQQ()) || (QQNum.length() == 4 && QQNum == to_string(
 				getLoginQQ() % 10000)))
 			{
-				AddMsgToQueue(Dice_Full_Ver + PersonalMsg["strBotMsg"], eve.fromGroup, false);
+				AddMsgToQueue(Dice_Full_Ver + GlobalMsg["strBotMsg"], eve.fromGroup, false);
 			}
 		}
 		return;
@@ -3989,7 +3989,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 			if (QQNum.empty() || QQNum == to_string(getLoginQQ()) || (QQNum.length() == 4 && QQNum == to_string(
 				getLoginQQ() % 10000)))
 			{
-				AddMsgToQueue(Dice_Full_Ver + PersonalMsg["strBotMsg"], eve.fromDiscuss, false);
+				AddMsgToQueue(Dice_Full_Ver + GlobalMsg["strBotMsg"], eve.fromDiscuss, false);
 			}
 		}
 		return;
@@ -5723,8 +5723,8 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 			setGroupLeave(fromGroup);
 			return 0;
 		}
-		else if(PersonalMsg.count("strAddGroup")) {
-			AddMsgToQueue(PersonalMsg["strAddGroup"], fromGroup, false);
+		else if(!GlobalMsg["strAddGroup"].empty()) {
+			AddMsgToQueue(GlobalMsg["strAddGroup"], fromGroup, false);
 		}
 	}
 	return 0;
