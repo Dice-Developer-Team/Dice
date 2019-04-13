@@ -3067,7 +3067,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		else
 			name = NameGenerator::getRandomName();
 		Name->set(eve.fromGroup, eve.fromQQ, name);
-		const string strReply = "已将" + strNickName + "的名称更改为" + name;
+		const string strReply = format(GlobalMsg["strNameSet"], { strNickName, strip(name)});
 		AddMsgToQueue(strReply, eve.fromGroup, false);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
@@ -3084,7 +3084,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		if (!name.empty())
 		{
 			Name->set(eve.fromGroup, eve.fromQQ, name);
-			const string strReply = "已将" + strNickName + "的名称更改为" + strip(name);
+			const string strReply = format(GlobalMsg["strNameSet"], { strNickName, strip(name)});
 			AddMsgToQueue(strReply, eve.fromGroup, false);
 		}
 		else
@@ -4890,7 +4890,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		else
 			name = NameGenerator::getRandomName();
 		Name->set(eve.fromDiscuss, eve.fromQQ, name);
-		const string strReply = "已将" + strNickName + "的名称更改为" + name;
+		const string strReply = format(GlobalMsg["strNameSet"], { strNickName, strip(name)});
 		AddMsgToQueue(strReply, eve.fromDiscuss, false);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")

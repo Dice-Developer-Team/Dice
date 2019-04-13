@@ -118,6 +118,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPermissionDeniedErr", "错误:此操作需要群主或管理员权限"},
 	{"strSelfPermissionErr","本骰娘权限不够无能为力呢"},
 	{"strNameTooLongErr", "错误:名称过长(最多为50英文字符)"},
+	{"strNameSet","已将{0}的名称更改为{1}"},
 	{"strUnknownPropErr", "错误:属性不存在"},
 	{"strEmptyWWDiceErr", "格式错误:正确格式为.w(w)XaY!其中X≥1, 5≤Y≤10"},
 	{"strPropErr", "请认真的输入你的属性哦~"},
