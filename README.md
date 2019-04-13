@@ -1,4 +1,16 @@
-﻿# Dice!
+﻿# 测试中的扩展功能
+Log记录与染色、邮件发送模块、文件抽取功能、喵稣噜属性作成。欢迎大家提出意见和建议。
+
+基线系统见：https://github.com/w4123/Dice
+
+## 额外配置：
+1、需要在系统中安装python2.7.16(可在python官方网站的历史版本中找到，默认安装到C:\Python2786路径。)
+
+2、在VS的解决方案右键->属性->VC++目录->库目录中添加该Python环境的libs目录。(默认为C:\Python2786\libs)
+
+3、将Files目录中的文件放到任意位置，并在代码中搜索"F://"(没有双引号),修改对应的路径。(默认路径为"F://")
+
+# Dice!
 QQ Dice Robot For TRPG Based on CoolQ 
 
 [![License](https://img.shields.io/github/license/w4123/Dice.svg)](http://www.gnu.org/licenses)
