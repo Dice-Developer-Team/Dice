@@ -5719,7 +5719,12 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 		AddMsgToQueue(strReply, fromGroup, false);
 	}
 	else if(beingOperateQQ == getLoginQQ()){
-		if (boolPreserve&&getGroupMemberInfo(fromGroup, masterQQ).QQID != masterQQ&&WhiteGroup.count(fromGroup)==0&&WhiteQQ.count(fromQQ)==0) {
+		if (boolPreserve&&WhiteGroup.count(fromGroup)==0) 
+		{	//避免小群绕过邀请没加上白名单
+			if (fromQQ==masterQQ||WhiteQQ.count(fromQQ)) {
+				WhiteGroup.insert(fromGroup);
+				return 0;
+			}
 			AddMsgToQueue(GlobalMsg["strPreserve"], fromGroup, false);
 			setGroupLeave(fromGroup);
 			return 0;
