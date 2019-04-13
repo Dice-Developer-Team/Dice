@@ -23,7 +23,6 @@
 #include <queue>
 #include <mutex>
 #include <string>
-#include <thread>
 #include "CQAPI_EX.h"
 #include "DiceMsgSend.h"
 #include "GlobalVar.h"

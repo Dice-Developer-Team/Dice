@@ -20,18 +20,22 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#define WIN32_LEAN_AND_MEAN
+#include "Smtp.h"
 #include <Windows.h>
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <map>
 #include <set>
-#include <fstream>
 #include <algorithm>
 #include <ctime>
 #include <thread>
 #include <chrono>
 #include <mutex>
+#include <sstream>
+#include <fstream>
+#include <vector>
+#include <atlstr.h>
 
 #include "APPINFO.h"
 #include "RandomGenerator.h"
@@ -40,28 +44,60 @@
 #include "InitList.h"
 #include "GlobalVar.h"
 #include "NameStorage.h"
+#include "LogStorage.h"
 #include "GetRule.h"
 #include "DiceMsgSend.h"
 #include "CustomMsg.h"
 #include "NameGenerator.h"
 #include "MsgFormat.h"
 #include "DiceNetwork.h"
-/*
-TODO:
-1. en可变成长检定
-2. st多人物卡
-3. st人物卡绑定
-4. st属性展示，全属性展示以及排序
-5. 完善rules规则数据库
-6. jrrp优化
-7. help优化
-8. 全局昵称
-*/
+#include "makedocx.h"
+#include "direct.h"
+#include <ctime>
+#include <time.h>
+
+ /*
+ TODO:
+ 1. en可变成长检定
+ 2. st多人物卡
+ 3. st人物卡绑定
+ 4. st属性展示，全属性展示以及排序
+ 5. 完善rules规则数据库
+ 6. jrrp优化
+ 7. help优化
+ 8. 全局昵称
+ */
 
 using namespace std;
 using namespace CQ;
 
 unique_ptr<NameStorage> Name;
+unique_ptr<LogStorage> Log;
+
+std::string changetoString(long long input)
+{
+	ostringstream os;
+	os << input;
+	string output;
+	istringstream is(os.str());
+	is >> output;
+	return output;
+}
+
+vector<string> split(string& str, const char* c)
+{
+	char *cstr, *p;
+	vector<string> res;
+	cstr = new char[str.size() + 1];
+	strcpy(cstr, str.c_str());
+	p = strtok(cstr, c);
+	while (p != NULL)
+	{
+		res.push_back(p);
+		p = strtok(NULL, c);
+	}
+	return res;
+}
 
 std::string strip(std::string origin)
 {
@@ -92,10 +128,10 @@ std::string getName(long long QQ, long long GroupID = 0)
 		if (GroupID < 1000000000)
 		{
 			return strip(Name->get(GroupID, QQ).empty()
-				             ? (getGroupMemberInfo(GroupID, QQ).GroupNick.empty()
-					                ? getStrangerInfo(QQ).nick
-					                : getGroupMemberInfo(GroupID, QQ).GroupNick)
-				             : Name->get(GroupID, QQ));
+				? (getGroupMemberInfo(GroupID, QQ).GroupNick.empty()
+					? getStrangerInfo(QQ).nick
+					: getGroupMemberInfo(GroupID, QQ).GroupNick)
+				: Name->get(GroupID, QQ));
 		}
 		/*讨论组*/
 		return strip(Name->get(GroupID, QQ).empty() ? getStrangerInfo(QQ).nick : Name->get(GroupID, QQ));
@@ -137,8 +173,54 @@ using PropType = map<string, int>;
 map<SourceType, PropType> CharacterProp;
 multimap<long long, long long> ObserveGroup;
 multimap<long long, long long> ObserveDiscuss;
+
+
+map<long long, int> EmailTime;
+int day = -1;
+int emailTimeRemain(long long a)
+{
+	if (EmailTime.count(a) != 0)
+	{
+		return EmailTime[a];
+	}
+	else 
+	{
+		EmailTime[a] = 5;
+		return EmailTime[a];
+	}
+}
+void emailTimeReduce(long long a)
+{
+	EmailTime[a] -= 1;
+}
+string emailTimeUpdata()
+{
+	time_t rawtime;
+	struct tm *ptminfo;
+	time(&rawtime);
+	ptminfo = localtime(&rawtime);
+	if (day == -1)
+	{
+		day = ptminfo->tm_mday;
+		for (map<long long, int>::iterator it = EmailTime.begin(); it != EmailTime.end();it++)
+		{
+			EmailTime[it->first] = 5;
+		}
+	}
+	else if (day != ptminfo->tm_mday)
+	{
+		day = ptminfo->tm_mday;
+		for (map<long long, int>::iterator it = EmailTime.begin(); it != EmailTime.end();it++)
+		{
+			EmailTime[it->first] = 5;
+		}
+	}
+	return to_string(day) + ":" + to_string(ptminfo->tm_mday);
+}
+
+
 string strFileLoc;
-EVE_Enable(eventEnable)
+EVE_Enable(__eventEnable)
 {
 	//Wait until the thread terminates
 	while (msgSendThreadRunning)
@@ -151,7 +233,9 @@ EVE_Enable(eventEnable)
 	* 名称存储-创建与读取
 	*/
 	Name = make_unique<NameStorage>(strFileLoc + "Name.dicedb");
+	Log = make_unique<LogStorage>(strFileLoc + "Log.dicedb");
 	ifstream ifstreamCharacterProp(strFileLoc + "CharacterProp.RDconf");
+
 	if (ifstreamCharacterProp)
 	{
 		long long QQ, GrouporDiscussID;
@@ -322,10 +406,11 @@ EVE_Enable(eventEnable)
 }
 
 
-EVE_PrivateMsg_EX(eventPrivateMsg)
+EVE_PrivateMsg_EX(__eventPrivateMsg)
 {
 	if (eve.isSystem())return;
 	init(eve.message);
+	emailTimeUpdata();
 	init2(eve.message);
 	if (eve.message[0] != '.')
 		return;
@@ -354,14 +439,14 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 
 		int intTmpMsgCnt;
 		for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != eve.message.length() && eve.message[intTmpMsgCnt] != ' ';
-		     intTmpMsgCnt++)
+			intTmpMsgCnt++)
 		{
 			if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
-					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
-				&&
-				strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
-					intTmpMsgCnt
-				] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
+				intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
+					&&
+					strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
+						intTmpMsgCnt
+					] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
 			{
 				break;
 			}
@@ -439,8 +524,8 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 			}
 		}
 		string strFirstDice = strMainDice.substr(0, strMainDice.find('+') < strMainDice.find('-')
-			                                            ? strMainDice.find('+')
-			                                            : strMainDice.find('-'));
+			? strMainDice.find('+')
+			: strMainDice.find('-'));
 		bool boolAdda10 = true;
 		for (auto i : strFirstDice)
 		{
@@ -534,8 +619,8 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				rdMainDice.Roll();
 				string strAns = strNickName + "骰出了: " + (boolDetail
-					                                         ? rdMainDice.FormCompleteString()
-					                                         : rdMainDice.FormShortString());
+					? rdMainDice.FormCompleteString()
+					: rdMainDice.FormShortString());
 				if (!strReason.empty())
 					strAns.insert(0, "由于" + strReason + " ");
 				AddMsgToQueue(strAns, eve.fromQQ);
@@ -667,14 +752,14 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 	{
 		AddMsgToQueue(Dice_Full_Ver, eve.fromQQ);
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
+	else if (strLowerMessage.substr(intMsgCnt, 2) == "en" & strLowerMessage.substr(intMsgCnt, 3) != "end")
 	{
 		intMsgCnt += 2;
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strSkillName;
 		while (intMsgCnt != eve.message.length() && !isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])) && !isspace(static_cast<unsigned char>(eve.message[intMsgCnt]))
-		)
+			)
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -818,6 +903,10 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 		}
 		AddMsgToQueue(strReply, eve.fromQQ);
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "log" | strLowerMessage.substr(intMsgCnt, 5) == "begin" | strLowerMessage.substr(intMsgCnt, 3) == "end" | (strLowerMessage.substr(intMsgCnt, 3) == "get" & strLowerMessage.substr(intMsgCnt, 7) != "getcard" & strLowerMessage.substr(intMsgCnt, 7) != "getbook"))
+	{
+		AddMsgToQueue(GlobalMsg["strLogNotSupportPrivateChat"], eve.fromQQ);
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
 	{
 		intMsgCnt += 5;
@@ -867,18 +956,18 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 				strSkillName += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
-			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-			if (CharacterProp.count(SourceType(eve.fromQQ, PrivateT, 0)) && CharacterProp[SourceType(
-				eve.fromQQ, PrivateT, 0)].count(strSkillName))
-			{
-				CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)].erase(strSkillName);
-				AddMsgToQueue(GlobalMsg["strPropDeleted"], eve.fromQQ);
-			}
-			else
-			{
-				AddMsgToQueue(GlobalMsg["strPropNotFound"], eve.fromQQ);
-			}
-			return;
+				if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+				if (CharacterProp.count(SourceType(eve.fromQQ, PrivateT, 0)) && CharacterProp[SourceType(
+					eve.fromQQ, PrivateT, 0)].count(strSkillName))
+				{
+					CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)].erase(strSkillName);
+					AddMsgToQueue(GlobalMsg["strPropDeleted"], eve.fromQQ);
+				}
+				else
+				{
+					AddMsgToQueue(GlobalMsg["strPropNotFound"], eve.fromQQ);
+				}
+				return;
 		}
 		if (strLowerMessage.substr(intMsgCnt, 4) == "show")
 		{
@@ -892,25 +981,25 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 				strSkillName += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
-			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-			if (CharacterProp.count(SourceType(eve.fromQQ, PrivateT, 0)) && CharacterProp[SourceType(
-				eve.fromQQ, PrivateT, 0)].count(strSkillName))
-			{
-				AddMsgToQueue(format(GlobalMsg["strProp"], {
-					strNickName, strSkillName,
-					to_string(CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)][strSkillName])
-				}), eve.fromQQ);
-			}
-			else if (SkillDefaultVal.count(strSkillName))
-			{
-				AddMsgToQueue(format(GlobalMsg["strProp"], {strNickName, strSkillName, to_string(SkillDefaultVal[strSkillName])}),
-				              eve.fromQQ);
-			}
-			else
-			{
-				AddMsgToQueue(GlobalMsg["strPropNotFound"], eve.fromQQ);
-			}
-			return;
+				if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+				if (CharacterProp.count(SourceType(eve.fromQQ, PrivateT, 0)) && CharacterProp[SourceType(
+					eve.fromQQ, PrivateT, 0)].count(strSkillName))
+				{
+					AddMsgToQueue(format(GlobalMsg["strProp"], {
+						strNickName, strSkillName,
+						to_string(CharacterProp[SourceType(eve.fromQQ, PrivateT, 0)][strSkillName])
+						}), eve.fromQQ);
+				}
+				else if (SkillDefaultVal.count(strSkillName))
+				{
+					AddMsgToQueue(format(GlobalMsg["strProp"], { strNickName, strSkillName, to_string(SkillDefaultVal[strSkillName]) }),
+						eve.fromQQ);
+				}
+				else
+				{
+					AddMsgToQueue(GlobalMsg["strPropNotFound"], eve.fromQQ);
+				}
+				return;
 		}
 		bool boolError = false;
 		while (intMsgCnt != strLowerMessage.length())
@@ -1144,6 +1233,192 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 		COC7(strReply, intNum);
 		AddMsgToQueue(strReply, eve.fromQQ);
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "cat")
+	{
+		intMsgCnt += 3;
+		if (strLowerMessage[intMsgCnt] == '7')
+			intMsgCnt++;
+		if (strLowerMessage[intMsgCnt] == 's')
+			intMsgCnt++;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		string strNum;
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			strNum += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		if (strNum.length() > 2)
+		{
+			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ);
+			return;
+		}
+		const int intNum = stoi(strNum.empty() ? "1" : strNum);
+		if (intNum > 10)
+		{
+			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ);
+			return;
+		}
+		if (intNum == 0)
+		{
+			AddMsgToQueue(GlobalMsg["strCharacterCannotBeZero"], eve.fromQQ);
+			return;
+		}
+		string strReply = strNickName;
+		CAT7(strReply, intNum);
+		AddMsgToQueue(strReply, eve.fromQQ);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 7) == "getbook")
+	{
+		string Command = "";
+
+		intMsgCnt += 7;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isspace(
+			static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			Command += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		if (Command == "cat")
+		{
+			int tmpETR = emailTimeRemain(eve.fromQQ);
+			if (tmpETR <= 0)
+			{
+				AddMsgToQueue(GlobalMsg["strNoExtractionTime"], eve.fromQQ);
+				return;
+			}
+			else
+			{
+				AddMsgToQueue("您今天的抽取次数还剩：" + to_string(tmpETR - 1) + "次", eve.fromQQ);
+				emailTimeReduce(eve.fromQQ);
+			}
+			AddMsgToQueue(GlobalMsg["strGetBookCatInfo"], eve.fromQQ);
+			const int intD100Res = RandomGenerator::Randint(1, 1000);
+			string fileName = GlobalMsg["pathCardOfHuman"];
+			if (intD100Res <= 4)
+			{
+				AddMsgToQueue(GlobalMsg["strGetBook1"], eve.fromQQ);
+				fileName = GlobalMsg["pathBook1"];
+			}
+			else if (intD100Res <= 20)
+			{
+				AddMsgToQueue(GlobalMsg["strGetBook2"], eve.fromQQ);
+				fileName = GlobalMsg["pathBook2"];
+			}
+			else if (intD100Res <= 100)
+			{
+				AddMsgToQueue(GlobalMsg["strGetBook3"], eve.fromQQ);
+				fileName = GlobalMsg["pathBook3"];
+			}
+			else if (intD100Res <= 300)
+			{
+				AddMsgToQueue(GlobalMsg["strGetBook4"], eve.fromQQ);
+				fileName = GlobalMsg["pathBook4"];
+			}
+			else
+			{
+				AddMsgToQueue(GlobalMsg["strExtractNothing"], eve.fromQQ);
+				return;
+			}
+			Csmtp mail(
+				changetoString(eve.fromQQ) + "@qq.com" //目标邮箱
+			);
+			if (!mail.CReateSocket())
+			{
+				//cout << "ReateSocket failed!" << endl;
+				return;//
+			}
+			//标题默认是主机名，内容默认是ip
+			mail.setTitle(GlobalMsg["strGetBookMailTitle"]);
+			mail.setContent(GlobalMsg["strGetBookMailContent"]);
+			//附件路径错误，不影响邮件正文的发送。
+			mail.SendMail(); //类主函数
+			
+			AddMsgToQueue(GlobalMsg["strGetBookMailContent"], eve.fromQQ);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 7) == "getcard")
+	{
+		string Command = "";
+		
+		intMsgCnt += 7;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isspace(
+			static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			Command += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		if (Command == "human")
+		{
+			int tmpETR = emailTimeRemain(eve.fromQQ);
+			if (tmpETR <= 0)
+			{
+				AddMsgToQueue(GlobalMsg["strNoExtractionTime"], eve.fromQQ);
+				return;
+			}
+			else
+			{
+				AddMsgToQueue("您今天的抽取次数还剩："+ to_string(tmpETR-1) +"次", eve.fromQQ);
+				emailTimeReduce(eve.fromQQ);
+			}
+			Csmtp mail(
+				changetoString(eve.fromQQ) + "@qq.com" //目标邮箱
+			);
+			if (!mail.CReateSocket())
+			{
+				//cout << "ReateSocket failed!" << endl;
+				return;//
+			}
+			//标题默认是主机名，内容默认是ip
+			mail.setTitle(GlobalMsg["strGetCardHumanMailTitle"]);
+			mail.setContent(GlobalMsg["strGetCardHumanMailContent"]);
+			//附件路径错误，不影响邮件正文的发送。
+			mail.addfile(GlobalMsg["pathCardOfHuman"]); //添加附件
+			mail.SendMail(); //类主函数
+
+			AddMsgToQueue(GlobalMsg["strGetCardHumanMessage"], eve.fromQQ);
+		}
+		else if (Command == "cat")
+		{
+			int tmpETR = emailTimeRemain(eve.fromQQ);
+			if (tmpETR <= 0)
+			{
+				AddMsgToQueue(GlobalMsg["strNoExtractionTime"], eve.fromQQ);
+				return;
+			}
+			else
+			{
+				AddMsgToQueue("您今天的抽取次数还剩：" + to_string(tmpETR - 1) + "次", eve.fromQQ);
+				emailTimeReduce(eve.fromQQ);
+			}
+			Csmtp mail(
+				changetoString(eve.fromQQ) + "@qq.com" //目标邮箱
+			);
+			if (!mail.CReateSocket())
+			{
+				//cout << "ReateSocket failed!" << endl;
+				return;//
+			}
+			//标题默认是主机名，内容默认是ip
+			mail.setTitle(GlobalMsg["strGetCardCatMailTitle"]);
+			mail.setContent(GlobalMsg["strGetCardCatMailContent"]);
+			//附件路径错误，不影响邮件正文的发送。
+			mail.addfile(GlobalMsg["pathCardOfCat"]); //添加附件
+			mail.SendMail(); //类主函数
+			
+			AddMsgToQueue(GlobalMsg["strGetCardCatMessage"], eve.fromQQ);
+		}
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ra")
 	{
 		intMsgCnt += 2;
@@ -1281,7 +1556,7 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 		AddMsgToQueue(strReply, eve.fromQQ);
 	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'd'
-	)
+		)
 	{
 		intMsgCnt += 1;
 		bool boolDetail = true;
@@ -1297,22 +1572,22 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 		bool tmpContainD = false;
 		int intTmpMsgCnt;
 		for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != eve.message.length() && eve.message[intTmpMsgCnt] != ' ';
-		     intTmpMsgCnt++)
+			intTmpMsgCnt++)
 		{
 			if (strLowerMessage[intTmpMsgCnt] == 'd' || strLowerMessage[intTmpMsgCnt] == 'p' || strLowerMessage[
-					intTmpMsgCnt] == 'b' || strLowerMessage[intTmpMsgCnt] == '#' || strLowerMessage[intTmpMsgCnt] == 'f'
-				||
-				strLowerMessage[intTmpMsgCnt] == 'a')
+				intTmpMsgCnt] == 'b' || strLowerMessage[intTmpMsgCnt] == '#' || strLowerMessage[intTmpMsgCnt] == 'f'
+					||
+					strLowerMessage[intTmpMsgCnt] == 'a')
 				tmpContainD = true;
-			if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
+				if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
 					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
-				&&
-				strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
-					intTmpMsgCnt
-				] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
-			{
-				break;
-			}
+						&&
+						strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
+							intTmpMsgCnt
+						] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
+				{
+					break;
+				}
 		}
 		if (tmpContainD)
 		{
@@ -1473,8 +1748,8 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				rdMainDice.Roll();
 				string strAns = strNickName + "骰出了: " + (boolDetail
-					                                         ? rdMainDice.FormCompleteString()
-					                                         : rdMainDice.FormShortString());
+					? rdMainDice.FormCompleteString()
+					: rdMainDice.FormShortString());
 				if (!strReason.empty())
 					strAns.insert(0, "由于" + strReason + " ");
 				AddMsgToQueue(strAns, eve.fromQQ);
@@ -1483,7 +1758,7 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 	}
 }
 
-EVE_GroupMsg_EX(eventGroupMsg)
+EVE_GroupMsg_EX(__eventGroupMsg)
 {
 	if (eve.isSystem() || eve.isAnonymous())return;
 	init(eve.message);
@@ -1501,14 +1776,18 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			return;
 		}
 	}
+	emailTimeUpdata();
+	//AddMsgToQueue(emailTimeUpdata(), eve.fromGroup, false);
 	init2(eve.message);
+	const string strNickName = getName(eve.fromQQ, eve.fromGroup);
+	Log->record(eve.fromGroup, strNickName, eve.message);
+	//AddMsgToQueue("记录了消息& " + strNickName + ":" + eve.message, eve.fromGroup, false);
 	if (eve.message[0] != '.')
 		return;
 	int intMsgCnt = 1;
 	while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		intMsgCnt++;
 	eve.message_block();
-	const string strNickName = getName(eve.fromQQ, eve.fromGroup);
 	string strLowerMessage = eve.message;
 	transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
@@ -1724,18 +2003,18 @@ EVE_GroupMsg_EX(eventGroupMsg)
 				strSkillName += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
-			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-			if (CharacterProp.count(SourceType(eve.fromQQ, GroupT, eve.fromGroup)) && CharacterProp[SourceType(
-				eve.fromQQ, GroupT, eve.fromGroup)].count(strSkillName))
-			{
-				CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)].erase(strSkillName);
-				AddMsgToQueue(GlobalMsg["strPropDeleted"], eve.fromGroup, false);
-			}
-			else
-			{
-				AddMsgToQueue(GlobalMsg["strPropNotFound"], eve.fromGroup, false);
-			}
-			return;
+				if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+				if (CharacterProp.count(SourceType(eve.fromQQ, GroupT, eve.fromGroup)) && CharacterProp[SourceType(
+					eve.fromQQ, GroupT, eve.fromGroup)].count(strSkillName))
+				{
+					CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)].erase(strSkillName);
+					AddMsgToQueue(GlobalMsg["strPropDeleted"], eve.fromGroup, false);
+				}
+				else
+				{
+					AddMsgToQueue(GlobalMsg["strPropNotFound"], eve.fromGroup, false);
+				}
+				return;
 		}
 		if (strLowerMessage.substr(intMsgCnt, 4) == "show")
 		{
@@ -1749,25 +2028,25 @@ EVE_GroupMsg_EX(eventGroupMsg)
 				strSkillName += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
-			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-			if (CharacterProp.count(SourceType(eve.fromQQ, GroupT, eve.fromGroup)) && CharacterProp[SourceType(
-				eve.fromQQ, GroupT, eve.fromGroup)].count(strSkillName))
-			{
-				AddMsgToQueue(format(GlobalMsg["strProp"], {
-					strNickName, strSkillName,
-					to_string(CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)][strSkillName])
-				}), eve.fromGroup, false);
-			}
-			else if (SkillDefaultVal.count(strSkillName))
-			{
-				AddMsgToQueue(format(GlobalMsg["strProp"], {strNickName, strSkillName, to_string(SkillDefaultVal[strSkillName])}),
-				              eve.fromGroup, false);
-			}
-			else
-			{
-				AddMsgToQueue(GlobalMsg["strPropNotFound"], eve.fromGroup, false);
-			}
-			return;
+				if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+				if (CharacterProp.count(SourceType(eve.fromQQ, GroupT, eve.fromGroup)) && CharacterProp[SourceType(
+					eve.fromQQ, GroupT, eve.fromGroup)].count(strSkillName))
+				{
+					AddMsgToQueue(format(GlobalMsg["strProp"], {
+						strNickName, strSkillName,
+						to_string(CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)][strSkillName])
+						}), eve.fromGroup, false);
+				}
+				else if (SkillDefaultVal.count(strSkillName))
+				{
+					AddMsgToQueue(format(GlobalMsg["strProp"], { strNickName, strSkillName, to_string(SkillDefaultVal[strSkillName]) }),
+						eve.fromGroup, false);
+				}
+				else
+				{
+					AddMsgToQueue(GlobalMsg["strPropNotFound"], eve.fromGroup, false);
+				}
+				return;
 		}
 		bool boolError = false;
 		while (intMsgCnt != strLowerMessage.length())
@@ -1916,14 +2195,14 @@ EVE_GroupMsg_EX(eventGroupMsg)
 
 		int intTmpMsgCnt;
 		for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != eve.message.length() && eve.message[intTmpMsgCnt] != ' ';
-		     intTmpMsgCnt++)
+			intTmpMsgCnt++)
 		{
 			if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
-					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
-				&&
-				strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
-					intTmpMsgCnt
-				] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
+				intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
+					&&
+					strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
+						intTmpMsgCnt
+					] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
 			{
 				break;
 			}
@@ -2022,8 +2301,8 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			return;
 		}
 		string strFirstDice = strMainDice.substr(0, strMainDice.find('+') < strMainDice.find('-')
-			                                            ? strMainDice.find('+')
-			                                            : strMainDice.find('-'));
+			? strMainDice.find('+')
+			: strMainDice.find('-'));
 		bool boolAdda10 = true;
 		for (auto i : strFirstDice)
 		{
@@ -2136,8 +2415,8 @@ EVE_GroupMsg_EX(eventGroupMsg)
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				rdMainDice.Roll();
 				string strAns = strNickName + "骰出了: " + (boolDetail
-					                                         ? rdMainDice.FormCompleteString()
-					                                         : rdMainDice.FormShortString());
+					? rdMainDice.FormCompleteString()
+					: rdMainDice.FormShortString());
 				if (!strReason.empty())
 					strAns.insert(0, "由于" + strReason + " ");
 				if (!isHidden)
@@ -2279,12 +2558,14 @@ EVE_GroupMsg_EX(eventGroupMsg)
 	{
 		string strAns = strNickName + "的疯狂发作-临时症状:\n";
 		TempInsane(strAns);
+		Log->record(eve.fromGroup, strNickName, strAns);
 		AddMsgToQueue(strAns, eve.fromGroup, false);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "li")
 	{
 		string strAns = strNickName + "的疯狂发作-总结症状:\n";
 		LongInsane(strAns);
+		Log->record(eve.fromGroup, strNickName, strAns);
 		AddMsgToQueue(strAns, eve.fromGroup, false);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "sc")
@@ -2313,89 +2594,90 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			AddMsgToQueue(GlobalMsg["strSanInvalid"], eve.fromGroup, false);
 			return;
 		}
-		for (const auto& character : SanCost.substr(0, SanCost.find("/")))
-		{
-			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			for (const auto& character : SanCost.substr(0, SanCost.find("/")))
 			{
-				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
+				if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
+				{
+					AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
+					return;
+				}
+			}
+			for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
+			{
+				if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
+				{
+					AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
+					return;
+				}
+			}
+			RD rdSuc(SanCost.substr(0, SanCost.find("/")));
+			RD rdFail(SanCost.substr(SanCost.find("/") + 1));
+			if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
+			{
+				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromGroup, false);
 				return;
 			}
-		}
-		for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
-		{
-			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			if (San.length() >= 3)
 			{
-				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
+				AddMsgToQueue(GlobalMsg["strSanInvalid"], eve.fromGroup, false);
 				return;
 			}
-		}
-		RD rdSuc(SanCost.substr(0, SanCost.find("/")));
-		RD rdFail(SanCost.substr(SanCost.find("/") + 1));
-		if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
-		{
-			AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromGroup, false);
-			return;
-		}
-		if (San.length() >= 3)
-		{
-			AddMsgToQueue(GlobalMsg["strSanInvalid"], eve.fromGroup, false);
-			return;
-		}
-		const int intSan = San.empty() ? CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] : stoi(San);
-		if (intSan == 0)
-		{
-			AddMsgToQueue(GlobalMsg["strSanInvalid"], eve.fromGroup, false);
-			return;
-		}
-		string strAns = strNickName + "的Sancheck:\n1D100=";
-		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
-		strAns += to_string(intTmpRollRes);
+			const int intSan = San.empty() ? CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] : stoi(San);
+			if (intSan == 0)
+			{
+				AddMsgToQueue(GlobalMsg["strSanInvalid"], eve.fromGroup, false);
+				return;
+			}
+			string strAns = strNickName + "的Sancheck:\n1D100=";
+			const int intTmpRollRes = RandomGenerator::Randint(1, 100);
+			strAns += to_string(intTmpRollRes);
 
-		if (intTmpRollRes <= intSan)
-		{
-			strAns += " 成功\n你的San值减少" + SanCost.substr(0, SanCost.find("/"));
-			if (SanCost.substr(0, SanCost.find("/")).find("d") != string::npos)
-				strAns += "=" + to_string(rdSuc.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSuc.intTotal)) + "点";
-			if (San.empty())
+			if (intTmpRollRes <= intSan)
 			{
-				CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] = max(0, intSan - rdSuc.intTotal);
+				strAns += " 成功\n你的San值减少" + SanCost.substr(0, SanCost.find("/"));
+				if (SanCost.substr(0, SanCost.find("/")).find("d") != string::npos)
+					strAns += "=" + to_string(rdSuc.intTotal);
+				strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSuc.intTotal)) + "点";
+				if (San.empty())
+				{
+					CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] = max(0, intSan - rdSuc.intTotal);
+				}
 			}
-		}
-		else if (intTmpRollRes == 100 || (intSan < 50 && intTmpRollRes > 95))
-		{
-			strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-			// ReSharper disable once CppExpressionWithoutSideEffects
-			rdFail.Max();
-			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-				strAns += "最大值=" + to_string(rdFail.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
-			if (San.empty())
+			else if (intTmpRollRes == 100 || (intSan < 50 && intTmpRollRes > 95))
 			{
-				CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
+				strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
+				// ReSharper disable once CppExpressionWithoutSideEffects
+				rdFail.Max();
+				if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
+					strAns += "最大值=" + to_string(rdFail.intTotal);
+				strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
+				if (San.empty())
+				{
+					CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
+				}
 			}
-		}
-		else
-		{
-			strAns += " 失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-				strAns += "=" + to_string(rdFail.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
-			if (San.empty())
+			else
 			{
-				CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
+				strAns += " 失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
+				if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
+					strAns += "=" + to_string(rdFail.intTotal);
+				strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
+				if (San.empty())
+				{
+					CharacterProp[SourceType(eve.fromQQ, GroupT, eve.fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
+				}
 			}
-		}
-		AddMsgToQueue(strAns, eve.fromGroup, false);
+			Log->record(eve.fromGroup, strNickName, strAns);
+			AddMsgToQueue(strAns, eve.fromGroup, false);
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
+	else if (strLowerMessage.substr(intMsgCnt, 2) == "en" & strLowerMessage.substr(intMsgCnt, 3) != "end")
 	{
 		intMsgCnt += 2;
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strSkillName;
 		while (intMsgCnt != eve.message.length() && !isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])) && !isspace(static_cast<unsigned char>(eve.message[intMsgCnt]))
-		)
+			)
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -2457,6 +2739,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 					intTmpRollD10;
 			}
 		}
+		Log->record(eve.fromGroup, strNickName, strAns);
 		AddMsgToQueue(strAns, eve.fromGroup, false);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
@@ -2550,7 +2833,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			intMsgCnt++;
 
 		string strNum;
-		while(isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
+		while (isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])))
 		{
 			strNum += eve.message[intMsgCnt];
 			intMsgCnt++;
@@ -2566,13 +2849,13 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			AddMsgToQueue(GlobalMsg["strNameNumTooBig"], eve.fromGroup, false);
 			return;
 		}
-		if(intNum == 0)
+		if (intNum == 0)
 		{
 			AddMsgToQueue(GlobalMsg["strNameNumCannotBeZero"], eve.fromGroup, false);
 			return;
 		}
 		vector<string> TempNameStorage;
-		while(TempNameStorage.size() != intNum)
+		while (TempNameStorage.size() != intNum)
 		{
 			string name = NameGenerator::getRandomName(nameType);
 			if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
@@ -2595,11 +2878,11 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			intMsgCnt++;
 		string type = strLowerMessage.substr(intMsgCnt, 2);
 		string name;
-		if (type=="cn")
+		if (type == "cn")
 			name = NameGenerator::getChineseName();
-		else if (type=="en")
+		else if (type == "en")
 			name = NameGenerator::getEnglishName();
-		else if (type=="jp")
+		else if (type == "jp")
 			name = NameGenerator::getJapaneseName();
 		else
 			name = NameGenerator::getRandomName();
@@ -2635,6 +2918,259 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			{
 				const string strReply = strNickName + GlobalMsg["strNameDelErr"];
 				AddMsgToQueue(strReply, eve.fromGroup, false);
+			}
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "log" | strLowerMessage.substr(intMsgCnt, 5) == "begin" | strLowerMessage.substr(intMsgCnt, 3) == "end" | (strLowerMessage.substr(intMsgCnt, 3) == "get" & strLowerMessage.substr(intMsgCnt, 7) != "getcard" & strLowerMessage.substr(intMsgCnt, 7) != "getbook"))
+	{
+		string Command;
+		if (strLowerMessage.substr(intMsgCnt, 3) == "log")
+		{
+			intMsgCnt += 3;
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+				intMsgCnt++;
+			
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+				intMsgCnt++;
+			if (strLowerMessage.substr(intMsgCnt, 2) == "on")
+			{
+				Command = "on";
+				intMsgCnt += 2;
+			}
+			else if (strLowerMessage.substr(intMsgCnt, 3) == "off")
+			{
+				Command = "off";
+				intMsgCnt += 3;
+			}
+			else if (strLowerMessage.substr(intMsgCnt, 3) == "get")
+			{
+				Command = "get";
+				intMsgCnt += 3;
+			}
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+				intMsgCnt++;
+		}
+		if (strLowerMessage.substr(intMsgCnt, 5) == "begin")
+		{
+			intMsgCnt += 5;
+			Command = "on";
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+				intMsgCnt++;
+		}
+		if (strLowerMessage.substr(intMsgCnt, 3) == "end")
+		{
+			intMsgCnt += 3;
+			Command = "off";
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+				intMsgCnt++;
+		}
+		if (strLowerMessage.substr(intMsgCnt, 3) == "get")
+		{
+			intMsgCnt += 3;
+			Command = "get";
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+				intMsgCnt++;
+		}
+		if (Command == "on")
+		{
+			if (!Log->haveAuthority(eve.fromQQ, eve.fromGroup))
+			{
+				AddMsgToQueue("操作无效。现在已有用户在本群进行log记录，请等待其（使用.log off或.end）操作完毕。", eve.fromGroup, false);
+				return;
+			}
+			string name = eve.message.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
+			if (name.length() > 50)
+			{
+				AddMsgToQueue(GlobalMsg["strNameTooLongErr"], eve.fromGroup, false);
+				return;
+			}
+			if (!name.empty())
+			{
+				Log->logOn(eve.fromQQ, eve.fromGroup, name);
+				const string strReply = "已开始为 " + strip(name) + " 记录log";
+				AddMsgToQueue(strReply, eve.fromGroup, false);
+			}
+			else
+			{
+				AddMsgToQueue("请输入log名称", eve.fromGroup, false);
+			}
+		}
+		if (Command == "off")
+		{
+			if (!Log->haveAuthority(eve.fromQQ, eve.fromGroup))
+			{
+				AddMsgToQueue("操作无效。现在已有用户在本群进行log记录，请等待其（使用.log off或.end）操作完毕。", eve.fromGroup, false);
+				return;
+			}
+			if (Log->logOff(eve.fromGroup))
+			{
+				const string strReply = "已终止log记录";
+				AddMsgToQueue(strReply, eve.fromGroup, false);
+			}
+			else
+			{
+				const string strReply = "无效指令";
+				AddMsgToQueue(strReply, eve.fromGroup, false);
+			}
+		}
+		if (Command == "get")
+		{
+			if (!Log->haveAuthority(eve.fromQQ, eve.fromGroup))
+			{
+				AddMsgToQueue("操作无效。现在已有用户在本群进行log记录，请等待其（使用.log off或.end）操作完毕。", eve.fromGroup, false);
+				return;
+			}
+			string name = eve.message.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
+			if (name.length() > 50)
+			{
+				AddMsgToQueue(GlobalMsg["strNameTooLongErr"], eve.fromGroup, false);
+				return;
+			}
+			int tmpETR = emailTimeRemain(eve.fromQQ);
+			if (tmpETR <= 0)
+			{
+				AddMsgToQueue(GlobalMsg["strNoExtractionTime"], eve.fromGroup, false);
+				return;
+			}
+			else
+			{
+				AddMsgToQueue("您今天的抽取次数还剩：" + to_string(tmpETR - 1) + "次", eve.fromGroup);
+				emailTimeReduce(eve.fromQQ);
+			}
+			if (!name.empty())
+			{
+				AddMsgToQueue("正在处理有关 " + name + " 的log，请稍等", eve.fromGroup, false);
+				string logGet = Log->get(eve.fromQQ, eve.fromGroup, name);
+				if (logGet == "\n")
+				{
+					AddMsgToQueue("无相关记录", eve.fromGroup, false);
+					return;
+				}
+				ofstream  ost;
+				string fileName = string(name + "." + changetoString(eve.fromQQ) + ".txt");
+				string filePath = string("F:\\" + fileName);
+				string fileNameDocx = string(name + "." + changetoString(eve.fromQQ) + ".docx");
+				string filePathDocx = string("F:\\" + fileNameDocx);
+
+				ost.open(filePath);
+				ost << logGet << endl;
+				ost.close();
+
+				makedocx::make(filePathDocx + '\n' + logGet);
+
+				Csmtp mail(
+					changetoString(eve.fromQQ) + "@qq.com" //目标邮箱
+				);
+				if (!mail.CReateSocket())
+				{
+					//cout << "ReateSocket failed!" << endl;
+					return;//
+				}
+				//标题默认是主机名，内容默认是ip
+				mail.setTitle("跑团log文件:" + name);
+				mail.setContent("附件“" + fileName + "”为原始的log记录。附件“" + fileNameDocx + "”为上色后的log记录。请务必回复一下该邮件，不然以后系统会把我发的邮件归类到垃圾邮件的。o(╥﹏╥)o");
+				//附件路径错误，不影响邮件正文的发送。
+
+				
+				WIN32_FIND_DATA  FindFileData;
+				HANDLE hFind;
+				CString strFileName = CString((filePathDocx + ".finish").c_str());
+				LPCWSTR lpcwStr = strFileName.AllocSysString();
+				hFind = FindFirstFile(lpcwStr, &FindFileData);
+				int sleepTime = 0;
+				while ((hFind == INVALID_HANDLE_VALUE) & (sleepTime <= 10000))
+				{
+					hFind = FindFirstFile(lpcwStr, &FindFileData);
+					Sleep(50);
+					sleepTime += 1;
+					if (sleepTime == 10000)
+					{
+						AddMsgToQueue("抱歉目前骰子很忙，未按时生成染色后的文件。请稍后再试。", eve.fromGroup, false);
+					}
+				}
+				if (hFind != INVALID_HANDLE_VALUE)
+				{
+					remove((filePathDocx + ".finish").c_str());
+					AddMsgToQueue("已生成染色后的文件。骰子现在比较忙，文件将在5秒后发送。", eve.fromGroup, false);
+					Sleep(5000);
+				}
+				mail.addfile(filePath); //添加附件
+				mail.addfile(filePathDocx); //添加附件
+				mail.SendMail(); //类主函数
+				AddMsgToQueue("已发送log文件到" + strNickName + "的QQ邮箱，如未看见请检查垃圾箱。" + "附件“" + fileName + "”为原始的log记录。附件“" + fileNameDocx + "”为上色后的log记录。\n\n请小伙伴务必回复一下本邮件，不然系统很容易把我发的邮件归类到垃圾邮件。\n如果你有什么建议和意见，欢迎发邮件告诉我哟~", eve.fromGroup, false);
+			}
+			else
+			{
+				int tmpETR = emailTimeRemain(eve.fromQQ);
+				if (tmpETR <= 0)
+				{
+					AddMsgToQueue(GlobalMsg["strNoExtractionTime"], eve.fromGroup, false);
+					return;
+				}
+				else
+				{
+					AddMsgToQueue("您今天的抽取次数还剩：" + to_string(tmpETR - 1) + "次", eve.fromGroup, false);
+					emailTimeReduce(eve.fromQQ);
+				}
+				AddMsgToQueue("正在处理" + strNickName + "的log，请稍等", eve.fromGroup, false);
+				string logGet = Log->get(eve.fromQQ, eve.fromGroup);
+				if (logGet == "\n")
+				{
+					AddMsgToQueue("无相关记录", eve.fromGroup, false);
+					return;
+				}
+				ofstream  ost;
+				string fileName = string("all." + changetoString(eve.fromQQ) + ".txt");
+				string filePath = string("F:\\" + fileName);
+				string fileNameDocx = string("all." + changetoString(eve.fromQQ) + ".docx");
+				string filePathDocx = string("F:\\" + fileNameDocx);
+
+				ost.open(filePath);
+				ost << logGet << endl;
+				ost.close();
+
+				makedocx::make(filePathDocx + '\n' + logGet);
+				Csmtp mail(
+					changetoString(eve.fromQQ) + "@qq.com" //目标邮箱
+				);
+				if (!mail.CReateSocket())
+				{
+					//cout << "ReateSocket failed!" << endl;
+					return;//
+				}
+				//标题默认是主机名，内容默认是ip
+				mail.setTitle("跑团log文件:" + name);
+				mail.setContent("附件“" + fileName + "”为原始的log记录。附件“" + fileNameDocx + "”为上色后的log记录。请务必回复一下该邮件，不然以后系统会把我发的邮件归类到垃圾邮件的。o(╥﹏╥)o");
+				//附件路径错误，不影响邮件正文的发送。
+				mail.addfile(filePath); //添加附件
+				
+				WIN32_FIND_DATA  FindFileData;
+				HANDLE hFind;
+				CString strFileName = CString((filePathDocx + ".finish").c_str());
+				LPCWSTR lpcwStr = strFileName.AllocSysString();
+				hFind = FindFirstFile(lpcwStr, &FindFileData);
+				int sleepTime = 0;
+				while ((hFind == INVALID_HANDLE_VALUE) & (sleepTime <= 10000))
+				{
+					hFind = FindFirstFile(lpcwStr, &FindFileData);
+					Sleep(50);
+					sleepTime += 1;
+					if (sleepTime == 10000)
+					{
+						AddMsgToQueue("抱歉目前骰子很忙，未按时生成染色后的文件。请稍后再试。", eve.fromGroup, false);
+					}
+				}
+				if (hFind != INVALID_HANDLE_VALUE)
+				{
+					remove((filePathDocx + ".finish").c_str());
+					AddMsgToQueue("已生成染色后的文件。骰子现在比较忙，文件将在5秒后发送。", eve.fromGroup, false);
+					Sleep(5000);
+				}
+				//附件路径错误，不影响邮件正文的发送。
+				mail.addfile(filePath); //添加附件
+				mail.addfile(filePathDocx); //添加附件
+				mail.SendMail(); //类主函数
+				AddMsgToQueue("已发送log文件到" + strNickName + "的QQ邮箱，如未看见请检查垃圾箱。" + "附件“" + fileName + "”为原始的log记录。附件“" + fileNameDocx + "”为上色后的log记录。\n\n请小伙伴务必回复一下本邮件，不然系统很容易把我发的邮件归类到垃圾邮件。\n如果你有什么建议和意见，欢迎发邮件告诉我哟~", eve.fromGroup, false);
 			}
 		}
 	}
@@ -2738,7 +3274,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 				return;
 			}
 		if (strDefaultDice.length() > 5)
-		{
+		{  
 			AddMsgToQueue(GlobalMsg["strSetTooBig"], eve.fromGroup, false);
 			return;
 		}
@@ -2861,6 +3397,182 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		COC7(strReply, intNum);
 		AddMsgToQueue(strReply, eve.fromGroup, false);
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "cat")
+	{
+		intMsgCnt += 3;
+		if (strLowerMessage[intMsgCnt] == '7')
+			intMsgCnt++;
+		if (strLowerMessage[intMsgCnt] == 's')
+			intMsgCnt++;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		string strNum;
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			strNum += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		if (strNum.length() > 2)
+		{
+			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ, false);
+			return;
+		}
+		const int intNum = stoi(strNum.empty() ? "1" : strNum);
+		if (intNum > 10)
+		{
+			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromGroup, false);
+			return;
+		}
+		if (intNum == 0)
+		{
+			AddMsgToQueue(GlobalMsg["strCharacterCannotBeZero"], eve.fromGroup, false);
+			return;
+		}
+		string strReply = strNickName;
+		CAT7(strReply, intNum);
+		AddMsgToQueue(strReply, eve.fromGroup, false);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 7) == "getbook")
+	{
+		string Command = "";
+
+		intMsgCnt += 7;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isspace(
+			static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			Command += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		if (Command == "cat")
+		{
+			int tmpETR = emailTimeRemain(eve.fromQQ);
+			if (tmpETR <= 0)
+			{
+				AddMsgToQueue(GlobalMsg["strNoExtractionTime"], eve.fromGroup, false);
+				return;
+			}
+			else
+			{
+				AddMsgToQueue("您今天的抽取次数还剩：" + to_string(tmpETR - 1) + "次", eve.fromGroup, false);
+				emailTimeReduce(eve.fromQQ);
+			}
+			AddMsgToQueue(GlobalMsg["strGetBookCatInfo"], eve.fromGroup, false);
+			const int intD100Res = RandomGenerator::Randint(1, 1000);
+			string fileName = GlobalMsg["pathCardOfHuman"];
+			if (intD100Res <= 4)
+			{
+				AddMsgToQueue(GlobalMsg["strGetBook1"], eve.fromGroup, false);
+				fileName = GlobalMsg["pathBook1"];
+			}
+			else if (intD100Res <= 20)
+			{
+				AddMsgToQueue(GlobalMsg["strGetBook2"], eve.fromGroup, false);
+				fileName = GlobalMsg["pathBook2"];
+			}
+			else if (intD100Res <= 100)
+			{
+				AddMsgToQueue(GlobalMsg["strGetBook3"], eve.fromGroup, false);
+				fileName = GlobalMsg["pathBook3"];
+			}
+			else if (intD100Res <= 300)
+			{
+				AddMsgToQueue(GlobalMsg["strGetBook4"], eve.fromGroup, false);
+				fileName = GlobalMsg["pathBook4"];
+			}
+			else
+			{
+				AddMsgToQueue(GlobalMsg["strExtractNothing"], eve.fromGroup, false);
+				return;
+			}
+			Csmtp mail(
+				changetoString(eve.fromQQ) + "@qq.com" //目标邮箱
+			);
+			if (!mail.CReateSocket())
+			{
+				//cout << "ReateSocket failed!" << endl;
+				return;//
+			}
+			//标题默认是主机名，内容默认是ip
+			mail.setTitle(GlobalMsg["strGetBookMailTitle"]);
+			mail.setContent(GlobalMsg["strGetBookMailContent"]);
+			//附件路径错误，不影响邮件正文的发送。
+			mail.addfile(fileName); //添加附件
+			mail.SendMail(); //类主函数
+
+			AddMsgToQueue(GlobalMsg["strGetBookMailContent"], eve.fromGroup, false);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 7) == "getcard")
+	{
+		string Command = "";
+
+		intMsgCnt += 7;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isspace(
+			static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			Command += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		int tmpETR = emailTimeRemain(eve.fromQQ);
+		if (tmpETR <= 0)
+		{
+			AddMsgToQueue(GlobalMsg["strNoExtractionTime"], eve.fromGroup, false);
+			return;
+		}
+		else
+		{
+			AddMsgToQueue("您今天的抽取次数还剩：" + to_string(tmpETR - 1) + "次", eve.fromGroup);
+			emailTimeReduce(eve.fromQQ);
+		}
+		if (Command == "human")
+		{
+			Csmtp mail(
+				changetoString(eve.fromQQ) + "@qq.com" //目标邮箱
+			);
+			if (!mail.CReateSocket())
+			{
+				//cout << "ReateSocket failed!" << endl;
+				return;//
+			}
+			//标题默认是主机名，内容默认是ip
+			mail.setTitle(GlobalMsg["strGetCardHumanMailTitle"]);
+			mail.setContent(GlobalMsg["strGetCardHumanMailContent"]);
+			//附件路径错误，不影响邮件正文的发送。
+			mail.addfile(GlobalMsg["pathCardOfHuman"]); //添加附件
+			mail.SendMail(); //类主函数
+			
+			AddMsgToQueue(GlobalMsg["strGetCardHumanMessage"], eve.fromGroup, false);
+		}
+		else if (Command == "cat")
+		{
+			Csmtp mail(
+				changetoString(eve.fromQQ) + "@qq.com" //目标邮箱
+			);
+			if (!mail.CReateSocket())
+			{
+				//cout << "ReateSocket failed!" << endl;
+				return;//
+			}
+			//标题默认是主机名，内容默认是ip
+			mail.setTitle(GlobalMsg["strGetCardCatMailTitle"]);
+			mail.setContent(GlobalMsg["strGetCardCatMailContent"]);
+			//附件路径错误，不影响邮件正文的发送。
+			mail.addfile(GlobalMsg["pathCardOfCat"]); //添加附件
+			mail.SendMail(); //类主函数
+
+			AddMsgToQueue(GlobalMsg["strGetCardCatMessage"], eve.fromGroup, false);
+		}
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ra")
 	{
 		intMsgCnt += 2;
@@ -2927,6 +3639,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		{
 			strReply = "由于" + strReason + " " + strReply;
 		}
+		Log->record(eve.fromGroup, strNickName, strReply);
 		AddMsgToQueue(strReply, eve.fromGroup, false);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "rc")
@@ -2995,6 +3708,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		{
 			strReply = "由于" + strReason + " " + strReply;
 		}
+		Log->record(eve.fromGroup, strNickName, strReply);
 		AddMsgToQueue(strReply, eve.fromGroup, false);
 	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'h'
@@ -3022,22 +3736,22 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		bool tmpContainD = false;
 		int intTmpMsgCnt;
 		for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != eve.message.length() && eve.message[intTmpMsgCnt] != ' ';
-		     intTmpMsgCnt++)
+			intTmpMsgCnt++)
 		{
 			if (strLowerMessage[intTmpMsgCnt] == 'd' || strLowerMessage[intTmpMsgCnt] == 'p' || strLowerMessage[
-					intTmpMsgCnt] == 'b' || strLowerMessage[intTmpMsgCnt] == '#' || strLowerMessage[intTmpMsgCnt] == 'f'
-				||
-				strLowerMessage[intTmpMsgCnt] == 'a')
+				intTmpMsgCnt] == 'b' || strLowerMessage[intTmpMsgCnt] == '#' || strLowerMessage[intTmpMsgCnt] == 'f'
+					||
+					strLowerMessage[intTmpMsgCnt] == 'a')
 				tmpContainD = true;
-			if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
+				if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
 					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
-				&&
-				strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
-					intTmpMsgCnt
-				] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
-			{
-				break;
-			}
+						&&
+						strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
+							intTmpMsgCnt
+						] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
+				{
+					break;
+				}
 		}
 		if (tmpContainD)
 		{
@@ -3114,17 +3828,20 @@ EVE_GroupMsg_EX(eventGroupMsg)
 				string strTurnNotice = strNickName + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
 				if (!isHidden)
 				{
+					Log->record(eve.fromGroup, strNickName, strTurnNotice);
 					AddMsgToQueue(strTurnNotice, eve.fromGroup, false);
 				}
 				else
 				{
 					strTurnNotice = "在群\"" + getGroupList()[eve.fromGroup] + "\"中 " + strTurnNotice;
+					Log->record(eve.fromGroup, strNickName, strTurnNotice);
 					AddMsgToQueue(strTurnNotice, eve.fromQQ);
 					const auto range = ObserveGroup.equal_range(eve.fromGroup);
 					for (auto it = range.first; it != range.second; ++it)
 					{
 						if (it->second != eve.fromQQ)
 						{
+							Log->record(eve.fromGroup, strNickName, strTurnNotice);
 							AddMsgToQueue(strTurnNotice, it->second);
 						}
 					}
@@ -3205,17 +3922,20 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			}
 			if (!isHidden)
 			{
+				Log->record(eve.fromGroup, strNickName, strAns);
 				AddMsgToQueue(strAns, eve.fromGroup, false);
 			}
 			else
 			{
 				strAns = "在群\"" + getGroupList()[eve.fromGroup] + "\"中 " + strAns;
+				Log->record(eve.fromGroup, strNickName, strAns);
 				AddMsgToQueue(strAns, eve.fromQQ);
 				const auto range = ObserveGroup.equal_range(eve.fromGroup);
 				for (auto it = range.first; it != range.second; ++it)
 				{
 					if (it->second != eve.fromQQ)
 					{
+						Log->record(eve.fromGroup, strNickName, strAns);
 						AddMsgToQueue(strAns, it->second);
 					}
 				}
@@ -3229,23 +3949,26 @@ EVE_GroupMsg_EX(eventGroupMsg)
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				rdMainDice.Roll();
 				string strAns = strNickName + "骰出了: " + (boolDetail
-					                                         ? rdMainDice.FormCompleteString()
-					                                         : rdMainDice.FormShortString());
+					? rdMainDice.FormCompleteString()
+					: rdMainDice.FormShortString());
 				if (!strReason.empty())
 					strAns.insert(0, "由于" + strReason + " ");
 				if (!isHidden)
 				{
+					Log->record(eve.fromGroup, strNickName, strAns);
 					AddMsgToQueue(strAns, eve.fromGroup, false);
 				}
 				else
 				{
 					strAns = "在群\"" + getGroupList()[eve.fromGroup] + "\"中 " + strAns;
+					Log->record(eve.fromGroup, strNickName, strAns);
 					AddMsgToQueue(strAns, eve.fromQQ);
 					const auto range = ObserveGroup.equal_range(eve.fromGroup);
 					for (auto it = range.first; it != range.second; ++it)
 					{
 						if (it->second != eve.fromQQ)
 						{
+							Log->record(eve.fromGroup, strNickName, strAns);
 							AddMsgToQueue(strAns, it->second);
 						}
 					}
@@ -3255,12 +3978,13 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		if (isHidden)
 		{
 			const string strReply = strNickName + "进行了一次暗骰";
+			Log->record(eve.fromGroup, strNickName, strReply);
 			AddMsgToQueue(strReply, eve.fromGroup, false);
 		}
 	}
 }
 
-EVE_DiscussMsg_EX(eventDiscussMsg)
+EVE_DiscussMsg_EX(__eventDiscussMsg)
 {
 	if (eve.isSystem())return;
 	init(eve.message);
@@ -3276,6 +4000,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 			return;
 		}
 	}
+	emailTimeUpdata();
 	init2(eve.message);
 	if (eve.message[0] != '.')
 		return;
@@ -3398,18 +4123,18 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 				strSkillName += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
-			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-			if (CharacterProp.count(SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)) && CharacterProp[SourceType(
-				eve.fromQQ, DiscussT, eve.fromDiscuss)].count(strSkillName))
-			{
-				CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)].erase(strSkillName);
-				AddMsgToQueue(GlobalMsg["strPropDeleted"], eve.fromDiscuss, false);
-			}
-			else
-			{
-				AddMsgToQueue(GlobalMsg["strPropNotFound"], eve.fromDiscuss, false);
-			}
-			return;
+				if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+				if (CharacterProp.count(SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)) && CharacterProp[SourceType(
+					eve.fromQQ, DiscussT, eve.fromDiscuss)].count(strSkillName))
+				{
+					CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)].erase(strSkillName);
+					AddMsgToQueue(GlobalMsg["strPropDeleted"], eve.fromDiscuss, false);
+				}
+				else
+				{
+					AddMsgToQueue(GlobalMsg["strPropNotFound"], eve.fromDiscuss, false);
+				}
+				return;
 		}
 		if (strLowerMessage.substr(intMsgCnt, 4) == "show")
 		{
@@ -3423,25 +4148,25 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 				strSkillName += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
-			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-			if (CharacterProp.count(SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)) && CharacterProp[SourceType(
-				eve.fromQQ, DiscussT, eve.fromDiscuss)].count(strSkillName))
-			{
-				AddMsgToQueue(format(GlobalMsg["strProp"], {
-					strNickName, strSkillName,
-					to_string(CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)][strSkillName])
-				}), eve.fromDiscuss, false);
-			}
-			else if (SkillDefaultVal.count(strSkillName))
-			{
-				AddMsgToQueue(format(GlobalMsg["strProp"], {strNickName, strSkillName, to_string(SkillDefaultVal[strSkillName])}),
-				              eve.fromDiscuss, false);
-			}
-			else
-			{
-				AddMsgToQueue(GlobalMsg["strPropNotFound"], eve.fromDiscuss, false);
-			}
-			return;
+				if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+				if (CharacterProp.count(SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)) && CharacterProp[SourceType(
+					eve.fromQQ, DiscussT, eve.fromDiscuss)].count(strSkillName))
+				{
+					AddMsgToQueue(format(GlobalMsg["strProp"], {
+						strNickName, strSkillName,
+						to_string(CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)][strSkillName])
+						}), eve.fromDiscuss, false);
+				}
+				else if (SkillDefaultVal.count(strSkillName))
+				{
+					AddMsgToQueue(format(GlobalMsg["strProp"], { strNickName, strSkillName, to_string(SkillDefaultVal[strSkillName]) }),
+						eve.fromDiscuss, false);
+				}
+				else
+				{
+					AddMsgToQueue(GlobalMsg["strPropNotFound"], eve.fromDiscuss, false);
+				}
+				return;
 		}
 		bool boolError = false;
 		while (intMsgCnt != strLowerMessage.length())
@@ -3590,14 +4315,14 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 
 		int intTmpMsgCnt;
 		for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != eve.message.length() && eve.message[intTmpMsgCnt] != ' ';
-		     intTmpMsgCnt++)
+			intTmpMsgCnt++)
 		{
 			if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
-					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
-				&&
-				strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
-					intTmpMsgCnt
-				] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
+				intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
+					&&
+					strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
+						intTmpMsgCnt
+					] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
 			{
 				break;
 			}
@@ -3691,8 +4416,8 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 			}
 		}
 		string strFirstDice = strMainDice.substr(0, strMainDice.find('+') < strMainDice.find('-')
-			                                            ? strMainDice.find('+')
-			                                            : strMainDice.find('-'));
+			? strMainDice.find('+')
+			: strMainDice.find('-'));
 		bool boolAdda10 = true;
 		for (auto i : strFirstDice)
 		{
@@ -3802,8 +4527,8 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				rdMainDice.Roll();
 				string strAns = strNickName + "骰出了: " + (boolDetail
-					                                         ? rdMainDice.FormCompleteString()
-					                                         : rdMainDice.FormShortString());
+					? rdMainDice.FormCompleteString()
+					: rdMainDice.FormShortString());
 				if (!strReason.empty())
 					strAns.insert(0, "由于" + strReason + " ");
 				if (!isHidden)
@@ -3960,98 +4685,98 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 
 			return;
 		}
-		for (const auto& character : SanCost.substr(0, SanCost.find("/")))
-		{
-			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			for (const auto& character : SanCost.substr(0, SanCost.find("/")))
 			{
-				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
+				if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
+				{
+					AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
+					return;
+				}
+			}
+			for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
+			{
+				if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
+				{
+					AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
+					return;
+				}
+			}
+			RD rdSuc(SanCost.substr(0, SanCost.find("/")));
+			RD rdFail(SanCost.substr(SanCost.find("/") + 1));
+			if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
+			{
+				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromDiscuss, false);
+
 				return;
 			}
-		}
-		for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
-		{
-			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			if (San.length() >= 3)
 			{
-				AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromQQ, false);
+				AddMsgToQueue(GlobalMsg["strSanInvalid"], eve.fromDiscuss, false);
+
 				return;
 			}
-		}
-		RD rdSuc(SanCost.substr(0, SanCost.find("/")));
-		RD rdFail(SanCost.substr(SanCost.find("/") + 1));
-		if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
-		{
-			AddMsgToQueue(GlobalMsg["strSCInvalid"], eve.fromDiscuss, false);
-
-			return;
-		}
-		if (San.length() >= 3)
-		{
-			AddMsgToQueue(GlobalMsg["strSanInvalid"], eve.fromDiscuss, false);
-
-			return;
-		}
-		const int intSan = San.empty()
-			                   ? CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"]
-			                   : stoi(San);
-		if (intSan == 0)
-		{
-			AddMsgToQueue(GlobalMsg["strSanInvalid"], eve.fromDiscuss, false);
-
-			return;
-		}
-		string strAns = strNickName + "的Sancheck:\n1D100=";
-		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
-		strAns += to_string(intTmpRollRes);
-
-		if (intTmpRollRes <= intSan)
-		{
-			strAns += " 成功\n你的San值减少" + SanCost.substr(0, SanCost.find("/"));
-			if (SanCost.substr(0, SanCost.find("/")).find("d") != string::npos)
-				strAns += "=" + to_string(rdSuc.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSuc.intTotal)) + "点";
-			if (San.empty())
+			const int intSan = San.empty()
+				? CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"]
+				: stoi(San);
+			if (intSan == 0)
 			{
-				CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"] = max(0, intSan - rdSuc.intTotal
-				);
-			}
-		}
-		else if (intTmpRollRes == 100 || (intSan < 50 && intTmpRollRes > 95))
+				AddMsgToQueue(GlobalMsg["strSanInvalid"], eve.fromDiscuss, false);
 
-		{
-			strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-			// ReSharper disable once CppExpressionWithoutSideEffects
-			rdFail.Max();
-			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-				strAns += "最大值=" + to_string(rdFail.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
-			if (San.empty())
-			{
-				CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"] = max(0, intSan - rdFail.intTotal
-				);
+				return;
 			}
-		}
-		else
-		{
-			strAns += " 失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-				strAns += "=" + to_string(rdFail.intTotal);
-			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
-			if (San.empty())
+			string strAns = strNickName + "的Sancheck:\n1D100=";
+			const int intTmpRollRes = RandomGenerator::Randint(1, 100);
+			strAns += to_string(intTmpRollRes);
+
+			if (intTmpRollRes <= intSan)
 			{
-				CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"] = max(0, intSan - rdFail.intTotal
-				);
+				strAns += " 成功\n你的San值减少" + SanCost.substr(0, SanCost.find("/"));
+				if (SanCost.substr(0, SanCost.find("/")).find("d") != string::npos)
+					strAns += "=" + to_string(rdSuc.intTotal);
+				strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSuc.intTotal)) + "点";
+				if (San.empty())
+				{
+					CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"] = max(0, intSan - rdSuc.intTotal
+					);
+				}
 			}
-		}
-		AddMsgToQueue(strAns, eve.fromDiscuss, false);
+			else if (intTmpRollRes == 100 || (intSan < 50 && intTmpRollRes > 95))
+
+			{
+				strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
+				// ReSharper disable once CppExpressionWithoutSideEffects
+				rdFail.Max();
+				if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
+					strAns += "最大值=" + to_string(rdFail.intTotal);
+				strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
+				if (San.empty())
+				{
+					CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"] = max(0, intSan - rdFail.intTotal
+					);
+				}
+			}
+			else
+			{
+				strAns += " 失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
+				if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
+					strAns += "=" + to_string(rdFail.intTotal);
+				strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
+				if (San.empty())
+				{
+					CharacterProp[SourceType(eve.fromQQ, DiscussT, eve.fromDiscuss)]["理智"] = max(0, intSan - rdFail.intTotal
+					);
+				}
+			}
+			AddMsgToQueue(strAns, eve.fromDiscuss, false);
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
+	else if (strLowerMessage.substr(intMsgCnt, 2) == "en" & strLowerMessage.substr(intMsgCnt, 3) != "end")
 	{
 		intMsgCnt += 2;
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strSkillName;
 		while (intMsgCnt != eve.message.length() && !isdigit(static_cast<unsigned char>(eve.message[intMsgCnt])) && !isspace(static_cast<unsigned char>(eve.message[intMsgCnt]))
-		)
+			)
 		{
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
@@ -4152,7 +4877,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 			return;
 		}
 		string des;
-		string data =  "QQ=" + to_string(CQ::getLoginQQ()) + "&v=20190114" + "&QueryQQ=" + to_string(eve.fromQQ);
+		string data = "QQ=" + to_string(CQ::getLoginQQ()) + "&v=20190114" + "&QueryQQ=" + to_string(eve.fromQQ);
 		char *frmdata = new char[data.length() + 1];
 		strcpy_s(frmdata, data.length() + 1, data.c_str());
 		bool res = Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata, des);
@@ -4248,9 +4973,262 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		const string strReply = "已将" + strNickName + "的名称更改为" + name;
 		AddMsgToQueue(strReply, eve.fromDiscuss, false);
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "log" | strLowerMessage.substr(intMsgCnt, 5) == "begin" | strLowerMessage.substr(intMsgCnt, 3) == "end" | (strLowerMessage.substr(intMsgCnt, 3) == "get" & strLowerMessage.substr(intMsgCnt, 7) != "getcard" & strLowerMessage.substr(intMsgCnt, 7) != "getbook"))
+	{
+		string Command;
+		if (strLowerMessage.substr(intMsgCnt, 3) == "log")
+		{
+			intMsgCnt += 3;
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+				intMsgCnt++;
+
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+				intMsgCnt++;
+			if (strLowerMessage.substr(intMsgCnt, 2) == "on")
+			{
+				Command = "on";
+				intMsgCnt += 2;
+			}
+			else if (strLowerMessage.substr(intMsgCnt, 3) == "off")
+			{
+				Command = "off";
+				intMsgCnt += 3;
+			}
+			else if (strLowerMessage.substr(intMsgCnt, 3) == "get")
+			{
+				Command = "get";
+				intMsgCnt += 3;
+			}
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+				intMsgCnt++;
+		}
+		if (strLowerMessage.substr(intMsgCnt, 5) == "begin")
+		{
+			intMsgCnt += 5;
+			Command = "on";
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+				intMsgCnt++;
+		}
+		if (strLowerMessage.substr(intMsgCnt, 3) == "end")
+		{
+			intMsgCnt += 3;
+			Command = "off";
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+				intMsgCnt++;
+		}
+		if (strLowerMessage.substr(intMsgCnt, 3) == "get")
+		{
+			intMsgCnt += 3;
+			Command = "get";
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+				intMsgCnt++;
+		}
+		if (Command == "on")
+		{
+			if (!Log->haveAuthority(eve.fromQQ, eve.fromDiscuss))
+			{
+				AddMsgToQueue("操作无效。现在已有用户在本群进行log记录，请等待其（使用.log off或.end）操作完毕。", eve.fromDiscuss, false);
+				return;
+			}
+			string name = eve.message.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
+			if (name.length() > 50)
+			{
+				AddMsgToQueue(GlobalMsg["strNameTooLongErr"], eve.fromDiscuss, false);
+				return;
+			}
+			if (!name.empty())
+			{
+				Log->logOn(eve.fromQQ, eve.fromDiscuss, name);
+				const string strReply = "已开始为 " + strip(name) + " 记录log";
+				AddMsgToQueue(strReply, eve.fromDiscuss, false);
+			}
+			else
+			{
+				AddMsgToQueue("请输入log名称", eve.fromDiscuss, false);
+			}
+		}
+		if (Command == "off")
+		{
+			if (!Log->haveAuthority(eve.fromQQ, eve.fromDiscuss))
+			{
+				AddMsgToQueue("操作无效。现在已有用户在本群进行log记录，请等待其（使用.log off或.end）操作完毕。", eve.fromDiscuss, false);
+				return;
+			}
+			if (Log->logOff(eve.fromDiscuss))
+			{
+				const string strReply = "已终止log记录";
+				AddMsgToQueue(strReply, eve.fromDiscuss, false);
+			}
+			else
+			{
+				const string strReply = "无效指令";
+				AddMsgToQueue(strReply, eve.fromDiscuss, false);
+			}
+		}
+		if (Command == "get")
+		{
+			if (!Log->haveAuthority(eve.fromQQ, eve.fromDiscuss))
+			{
+				AddMsgToQueue("操作无效。现在已有用户在本群进行log记录，请等待其（使用.log off或.end）操作完毕。", eve.fromDiscuss, false);
+				return;
+			}
+			string name = eve.message.substr(intMsgCnt, eve.message.find(' ', intMsgCnt) - intMsgCnt);
+			if (name.length() > 50)
+			{
+				AddMsgToQueue(GlobalMsg["strNameTooLongErr"], eve.fromDiscuss, false);
+				return;
+			}
+			int tmpETR = emailTimeRemain(eve.fromQQ);
+			if (tmpETR <= 0)
+			{
+				AddMsgToQueue(GlobalMsg["strNoExtractionTime"], eve.fromDiscuss, false);
+				return;
+			}
+			else
+			{
+				AddMsgToQueue("您今天的抽取次数还剩：" + to_string(tmpETR - 1) + "次", eve.fromDiscuss, false);
+				emailTimeReduce(eve.fromQQ);
+			}
+			if (!name.empty())
+			{
+				AddMsgToQueue("正在处理有关 " + name + " 的log，请稍等", eve.fromDiscuss, false);
+				string logGet = Log->get(eve.fromQQ, eve.fromDiscuss, name);
+				if (logGet == "\n")
+				{
+					AddMsgToQueue("无相关记录", eve.fromDiscuss, false);
+					return;
+				}
+				ofstream  ost;
+				string fileName = string(name + "." + changetoString(eve.fromQQ) + ".txt");
+				string filePath = string("F:\\" + fileName);
+				string fileNameDocx = string(name + "." + changetoString(eve.fromQQ) + ".docx");
+				string filePathDocx = string("F:\\" + fileNameDocx);
+
+				ost.open(filePath);
+				ost << logGet << endl;
+				ost.close();
+
+				makedocx::make(filePathDocx + '\n' + logGet);
+
+				Csmtp mail(
+					changetoString(eve.fromQQ) + "@qq.com" //目标邮箱
+				);
+				if (!mail.CReateSocket())
+				{
+					//cout << "ReateSocket failed!" << endl;
+					return;//
+				}
+				//标题默认是主机名，内容默认是ip
+				mail.setTitle("跑团log文件:" + name);
+				mail.setContent("附件“" + fileName + "”为原始的log记录。附件“" + fileNameDocx + "”为上色后的log记录。请务必回复一下该邮件，不然以后系统会把我发的邮件归类到垃圾邮件的。o(╥﹏╥)o");
+				//附件路径错误，不影响邮件正文的发送。
+
+
+				WIN32_FIND_DATA  FindFileData;
+				HANDLE hFind;
+				CString strFileName = CString((filePathDocx + ".finish").c_str());
+				LPCWSTR lpcwStr = strFileName.AllocSysString();
+				hFind = FindFirstFile(lpcwStr, &FindFileData);
+				int sleepTime = 0;
+				while ((hFind == INVALID_HANDLE_VALUE) & (sleepTime <= 10000))
+				{
+					hFind = FindFirstFile(lpcwStr, &FindFileData);
+					Sleep(50);
+					sleepTime += 1;
+					if (sleepTime == 10000)
+					{
+						AddMsgToQueue("抱歉目前骰子很忙，未按时生成染色后的文件。请稍后再试。", eve.fromDiscuss, false);
+					}
+				}
+				if (hFind != INVALID_HANDLE_VALUE)
+				{
+					remove((filePathDocx + ".finish").c_str());
+					AddMsgToQueue("已生成染色后的文件。骰子现在比较忙，文件将在5秒后发送。", eve.fromDiscuss, false);
+					Sleep(5000);
+				}
+				mail.addfile(filePath); //添加附件
+				mail.addfile(filePathDocx); //添加附件
+				mail.SendMail(); //类主函数
+				AddMsgToQueue("已发送log文件到" + strNickName + "的QQ邮箱，如未看见请检查垃圾箱。" + "附件“" + fileName + "”为原始的log记录。附件“" + fileNameDocx + "”为上色后的log记录。\n\n请小伙伴务必回复一下本邮件，不然系统很容易把我发的邮件归类到垃圾邮件。\n如果你有什么建议和意见，欢迎发邮件告诉我哟~", eve.fromDiscuss, false);
+			}
+			else
+			{
+				int tmpETR = emailTimeRemain(eve.fromQQ);
+				if (tmpETR <= 0)
+				{
+					AddMsgToQueue(GlobalMsg["strNoExtractionTime"], eve.fromDiscuss, false);
+					return;
+				}
+				else
+				{
+					AddMsgToQueue("您今天的抽取次数还剩：" + to_string(tmpETR - 1) + "次", eve.fromDiscuss);
+					emailTimeReduce(eve.fromQQ);
+				}
+				AddMsgToQueue("正在处理" + strNickName + "的log，请稍等", eve.fromDiscuss, false);
+				string logGet = Log->get(eve.fromQQ, eve.fromDiscuss);
+				if (logGet == "\n")
+				{
+					AddMsgToQueue("无相关记录", eve.fromDiscuss, false);
+					return;
+				}
+				ofstream  ost;
+				string fileName = string("all." + changetoString(eve.fromQQ) + ".txt");
+				string filePath = string("F:\\" + fileName);
+				string fileNameDocx = string("all." + changetoString(eve.fromQQ) + ".docx");
+				string filePathDocx = string("F:\\" + fileNameDocx);
+
+				ost.open(filePath);
+				ost << logGet << endl;
+				ost.close();
+
+				makedocx::make(filePathDocx + '\n' + logGet);
+				Csmtp mail(
+					changetoString(eve.fromQQ) + "@qq.com" //目标邮箱
+				);
+				if (!mail.CReateSocket())
+				{
+					//cout << "ReateSocket failed!" << endl;
+					return;//
+				}
+				//标题默认是主机名，内容默认是ip
+				mail.setTitle("跑团log文件:" + name);
+				mail.setContent("附件“" + fileName + "”为原始的log记录。附件“" + fileNameDocx + "”为上色后的log记录。请务必回复一下该邮件，不然以后系统会把我发的邮件归类到垃圾邮件的。o(╥﹏╥)o");
+				//附件路径错误，不影响邮件正文的发送。
+				mail.addfile(filePath); //添加附件
+
+				WIN32_FIND_DATA  FindFileData;
+				HANDLE hFind;
+				CString strFileName = CString((filePathDocx + ".finish").c_str());
+				LPCWSTR lpcwStr = strFileName.AllocSysString();
+				hFind = FindFirstFile(lpcwStr, &FindFileData);
+				int sleepTime = 0;
+				while ((hFind == INVALID_HANDLE_VALUE) & (sleepTime <= 10000))
+				{
+					hFind = FindFirstFile(lpcwStr, &FindFileData);
+					Sleep(50);
+					sleepTime += 1;
+					if (sleepTime == 10000)
+					{
+						AddMsgToQueue("抱歉目前骰子很忙，未按时生成染色后的文件。请稍后再试。", eve.fromDiscuss, false);
+					}
+				}
+				if (hFind != INVALID_HANDLE_VALUE)
+				{
+					remove((filePathDocx + ".finish").c_str());
+					AddMsgToQueue("已生成染色后的文件。骰子现在比较忙，文件将在5秒后发送。", eve.fromDiscuss, false);
+					Sleep(5000);
+				}
+				//附件路径错误，不影响邮件正文的发送。
+				mail.addfile(filePath); //添加附件
+				mail.addfile(filePathDocx); //添加附件
+				mail.SendMail(); //类主函数
+				AddMsgToQueue("已发送log文件到" + strNickName + "的QQ邮箱，如未看见请检查垃圾箱。" + "附件“" + fileName + "”为原始的log记录。附件“" + fileNameDocx + "”为上色后的log记录。\n\n请小伙伴务必回复一下本邮件，不然系统很容易把我发的邮件归类到垃圾邮件。\n如果你有什么建议和意见，欢迎发邮件告诉我哟~", eve.fromDiscuss, false);
+			}
+		}
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 	{
-	intMsgCnt += 2;
+		intMsgCnt += 2;
 		while (isspace(static_cast<unsigned char>(eve.message[intMsgCnt])))
 			intMsgCnt++;
 		string name = eve.message.substr(intMsgCnt);
@@ -4488,6 +5466,181 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		COC7(strReply, intNum);
 		AddMsgToQueue(strReply, eve.fromDiscuss, false);
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "cat")
+	{
+		intMsgCnt += 3;
+		if (strLowerMessage[intMsgCnt] == '7')
+			intMsgCnt++;
+		if (strLowerMessage[intMsgCnt] == 's')
+			intMsgCnt++;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		string strNum;
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			strNum += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		if (strNum.length() > 2)
+		{
+			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromQQ, false);
+			return;
+		}
+		const int intNum = stoi(strNum.empty() ? "1" : strNum);
+		if (intNum > 10)
+		{
+			AddMsgToQueue(GlobalMsg["strCharacterTooBig"], eve.fromDiscuss, false);
+			return;
+		}
+		if (intNum == 0)
+		{
+			AddMsgToQueue(GlobalMsg["strCharacterCannotBeZero"], eve.fromDiscuss, false);
+			return;
+		}
+		string strReply = strNickName;
+		CAT7(strReply, intNum);
+		AddMsgToQueue(strReply, eve.fromDiscuss, false);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 7) == "getbook")
+		{
+		string Command = "";
+
+		intMsgCnt += 7;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isspace(
+			static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			Command += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		if (Command == "cat")
+		{
+			int tmpETR = emailTimeRemain(eve.fromQQ);
+			if (tmpETR <= 0)
+			{
+				AddMsgToQueue(GlobalMsg["strNoExtractionTime"], eve.fromDiscuss, false);
+				return;
+			}
+			else
+			{
+				AddMsgToQueue("您今天的抽取次数还剩：" + to_string(tmpETR - 1) + "次", eve.fromDiscuss, false);
+				emailTimeReduce(eve.fromQQ);
+			}
+			AddMsgToQueue(GlobalMsg["strGetBookCatInfo"], eve.fromDiscuss, false);
+			const int intD100Res = RandomGenerator::Randint(1, 1000);
+			string fileName = GlobalMsg["pathCardOfHuman"];
+			if (intD100Res <= 4)
+			{
+				AddMsgToQueue(GlobalMsg["strGetBook1"], eve.fromDiscuss, false);
+				fileName = GlobalMsg["pathBook1"];
+			}
+			else if (intD100Res <= 20)
+			{
+				AddMsgToQueue(GlobalMsg["strGetBook2"], eve.fromDiscuss, false);
+				fileName = GlobalMsg["pathBook2"];
+			}
+			else if (intD100Res <= 100)
+			{
+				AddMsgToQueue(GlobalMsg["strGetBook3"], eve.fromDiscuss, false);
+				fileName = GlobalMsg["pathBook3"];
+			}
+			else if (intD100Res <= 300)
+			{
+				AddMsgToQueue(GlobalMsg["strGetBook4"], eve.fromDiscuss, false);
+				fileName = GlobalMsg["pathBook4"];
+			}
+			else
+			{
+				AddMsgToQueue(GlobalMsg["strExtractNothing"], eve.fromDiscuss, false);
+				return;
+			}
+			Csmtp mail(
+				changetoString(eve.fromQQ) + "@qq.com" //目标邮箱
+			);
+			if (!mail.CReateSocket())
+			{
+				//cout << "ReateSocket failed!" << endl;
+				return;//
+			}
+			//标题默认是主机名，内容默认是ip
+			mail.setTitle(GlobalMsg["strGetBookMailTitle"]);
+			mail.setContent(GlobalMsg["strGetBookMailContent"]);
+			//附件路径错误，不影响邮件正文的发送。
+			mail.addfile(fileName); //添加附件
+
+			AddMsgToQueue(GlobalMsg["strGetBookMailContent"], eve.fromDiscuss, false);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 7) == "getcard")
+	{
+		int tmpETR = emailTimeRemain(eve.fromQQ);
+		if (tmpETR <= 0)
+		{
+			AddMsgToQueue(GlobalMsg["strNoExtractionTime"], eve.fromDiscuss, false);
+			return;
+		}
+		else
+		{
+			AddMsgToQueue("您今天的抽取次数还剩：" + to_string(tmpETR - 1) + "次", eve.fromDiscuss, false);
+			emailTimeReduce(eve.fromQQ);
+		}
+		string Command = "";
+
+		intMsgCnt += 7;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isspace(
+			static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			Command += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		if (Command == "human")
+		{
+			Csmtp mail(
+				changetoString(eve.fromQQ) + "@qq.com" //目标邮箱
+			);
+			if (!mail.CReateSocket())
+			{
+				//cout << "ReateSocket failed!" << endl;
+				return;//
+			}
+			//标题默认是主机名，内容默认是ip
+			mail.setTitle(GlobalMsg["strGetCardHumanMailTitle"]);
+			mail.setContent(GlobalMsg["strGetCardHumanMailContent"]);
+			//附件路径错误，不影响邮件正文的发送。
+			mail.addfile(GlobalMsg["pathCardOfHuman"]); //添加附件
+			mail.SendMail(); //类主函数
+			
+
+			AddMsgToQueue(GlobalMsg["strGetCardHumanMessage"], eve.fromDiscuss, false);
+		}
+		else if (Command == "cat")
+		{
+			Csmtp mail(
+				changetoString(eve.fromQQ) + "@qq.com" //目标邮箱
+			);
+			if (!mail.CReateSocket())
+			{
+				//cout << "ReateSocket failed!" << endl;
+				return;//
+			}
+			//标题默认是主机名，内容默认是ip
+			mail.setTitle(GlobalMsg["strGetCardCatMailTitle"]);
+			mail.setContent(GlobalMsg["strGetCardCatMailContent"]);
+			//附件路径错误，不影响邮件正文的发送。
+			mail.addfile(GlobalMsg["pathCardOfCat"]); //添加附件
+			mail.SendMail(); //类主函数
+			AddMsgToQueue(GlobalMsg["strGetCardCatMessage"], eve.fromDiscuss, false);
+		}
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ra")
 	{
 		intMsgCnt += 2;
@@ -4649,22 +5802,22 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		bool tmpContainD = false;
 		int intTmpMsgCnt;
 		for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != eve.message.length() && eve.message[intTmpMsgCnt] != ' ';
-		     intTmpMsgCnt++)
+			intTmpMsgCnt++)
 		{
 			if (strLowerMessage[intTmpMsgCnt] == 'd' || strLowerMessage[intTmpMsgCnt] == 'p' || strLowerMessage[
-					intTmpMsgCnt] == 'b' || strLowerMessage[intTmpMsgCnt] == '#' || strLowerMessage[intTmpMsgCnt] == 'f'
-				||
-				strLowerMessage[intTmpMsgCnt] == 'a')
+				intTmpMsgCnt] == 'b' || strLowerMessage[intTmpMsgCnt] == '#' || strLowerMessage[intTmpMsgCnt] == 'f'
+					||
+					strLowerMessage[intTmpMsgCnt] == 'a')
 				tmpContainD = true;
-			if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
+				if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
 					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
-				&&
-				strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
-					intTmpMsgCnt
-				] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
-			{
-				break;
-			}
+						&&
+						strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
+							intTmpMsgCnt
+						] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
+				{
+					break;
+				}
 		}
 		if (tmpContainD)
 		{
@@ -4856,8 +6009,8 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				rdMainDice.Roll();
 				string strAns = strNickName + "骰出了: " + (boolDetail
-					                                         ? rdMainDice.FormCompleteString()
-					                                         : rdMainDice.FormShortString());
+					? rdMainDice.FormCompleteString()
+					: rdMainDice.FormShortString());
 				if (!strReason.empty())
 					strAns.insert(0, "由于" + strReason + " ");
 				if (!isHidden)
@@ -4887,7 +6040,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 	}
 }
 
-EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
+EVE_System_GroupMemberIncrease(__eventGroupMemberIncrease)
 {
 	if (beingOperateQQ != getLoginQQ() && WelcomeMsg.count(fromGroup))
 	{
@@ -4907,11 +6060,11 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 		while (strReply.find("{sex}") != string::npos)
 		{
 			strReply.replace(strReply.find("{sex}"), 5,
-			                 getStrangerInfo(beingOperateQQ).sex == 0
-				                 ? "男"
-				                 : getStrangerInfo(beingOperateQQ).sex == 1
-				                 ? "女"
-				                 : "未知");
+				getStrangerInfo(beingOperateQQ).sex == 0
+				? "男"
+				: getStrangerInfo(beingOperateQQ).sex == 1
+				? "女"
+				: "未知");
 		}
 		while (strReply.find("{qq}") != string::npos)
 		{
@@ -4922,11 +6075,12 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 	return 0;
 }
 
-EVE_Disable(eventDisable)
+EVE_Disable(__eventDisable)
 {
 	Enabled = false;
 	ilInitList.reset();
 	Name.reset();
+	Log.reset();
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
 	{
@@ -5051,12 +6205,13 @@ EVE_Disable(eventDisable)
 	return 0;
 }
 
-EVE_Exit(eventExit)
+EVE_Exit(__eventExit)
 {
 	if (!Enabled)
 		return 0;
 	ilInitList.reset();
 	Name.reset();
+	Log.reset();
 	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
 	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
 	{

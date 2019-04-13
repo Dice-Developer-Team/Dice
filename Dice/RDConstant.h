@@ -25,6 +25,9 @@
 #define DICE_RD_CONSTANT
 #include <string>
 
+#if !defined WIN32
+#error 请使用Win32(x86)模式进行编译
+#endif
 //Error Handle
 #define Value_Err (-1)
 #define Input_Err (-2)

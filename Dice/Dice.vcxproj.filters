@@ -90,6 +90,15 @@
     <ClCompile Include="DiceNetwork.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="LogStorage.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Smtp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="makedocx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -201,6 +210,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="DiceNetwork.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LogStorage.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Smtp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="makedocx.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

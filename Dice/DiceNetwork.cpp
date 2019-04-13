@@ -20,19 +20,13 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <WinInet.h>
-
-#ifdef _MSC_VER
-#pragma comment(lib, "WinInet.lib")
-#endif /*_MSC_VER*/
-
 #include <string>
 #include "GlobalVar.h"
 #include "MsgFormat.h"
 #include "DiceNetwork.h"
-
+#pragma comment(lib, "WinInet.lib")
 
 namespace Network
 {	

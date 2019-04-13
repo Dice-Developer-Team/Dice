@@ -20,22 +20,17 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <WinInet.h>
-
-#ifdef _MSC_VER
-#pragma comment(lib, "Wininet.lib")
-#endif /*_MSC_VER*/
 
 #include <string>
+#include <Windows.h>
+#include <WinInet.h>
 #include "GetRule.h"
 #include "GlobalVar.h"
 #include "EncodingConvert.h"
+#include "MsgFormat.h"
 #include "CQAPI_EX.h"
 #include "DiceNetwork.h"
-
-
+#pragma comment(lib, "Wininet.lib")
 using namespace std;
 
 namespace GetRule

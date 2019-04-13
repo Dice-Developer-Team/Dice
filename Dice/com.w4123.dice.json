@@ -11,56 +11,56 @@
       "id": 1,
       "type": 21,
       "name": "私聊消息处理",
-      "function": "eventPrivateMsg",
+      "function": "_eventPrivateMsg",
       "priority": 30000
     },
     {
       "id": 2,
       "type": 2,
       "name": "群消息处理",
-      "function": "eventGroupMsg",
+      "function": "_eventGroupMsg",
       "priority": 30000
     },
     {
       "id": 3,
       "type": 4,
       "name": "多人聊天消息处理",
-      "function": "eventDiscussMsg",
+      "function": "_eventDiscussMsg",
       "priority": 30000
     },
     {
       "id": 4,
       "type": 1003,
       "name": "启用事件",
-      "function": "eventEnable",
+      "function": "_eventEnable",
       "priority": 30000
     },
     {
       "id": 5,
       "type": 1002,
       "name": "退出事件",
-      "function": "eventExit",
+      "function": "_eventExit",
       "priority": 30000
     },
     {
       "id": 6,
       "type": 1004,
       "name": "禁用事件",
-      "function": "eventDisable",
+      "function": "_eventDisable",
       "priority": 30000
     },
     {
       "id": 7,
       "type": 103,
       "name": "群成员添加事件",
-      "function": "eventGroupMemberIncrease",
+      "function": "_eventGroupMemberIncrease",
       "priority": 30000
     }
   ],
   "menu": [
     {
       "name": "更新Dice!",
-      "function": "eventMenu"
+      "function": "_eventMenu"
     }
   ],
   "auth": [

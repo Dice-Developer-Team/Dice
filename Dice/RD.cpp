@@ -23,18 +23,19 @@
 #include "CQEVE_ALL.h"
 #include "CQTools.h"
 #include <cctype>
+#include <sstream>
 #include "RD.h"
 #include "RDConstant.h"
 #include "MsgFormat.h"
 using namespace std;
 using namespace CQ;
 
-void init(string& msg)
+inline void init(string& msg)
 {
 	msg_decode(msg);
 }
 
-void init2(string& msg)
+inline void init2(string& msg)
 {
 	for (int i = 0; i != msg.length(); i++)
 	{
@@ -70,7 +71,7 @@ void init2(string& msg)
 		msg[0] = '.';
 }
 
-void COC7D(string& strMAns)
+inline void COC7D(string& strMAns)
 {
 	RD rd3D6("3D6");
 	RD rd2D6p6("2D6+6");
@@ -184,7 +185,7 @@ void COC7D(string& strMAns)
 	strMAns += "\n移动力MOV=" + to_string(MOV);
 }
 
-void COC6D(string& strMAns)
+inline void COC6D(string& strMAns)
 {
 	RD rd3D6("3D6");
 	RD rd2D6p6("2D6+6");
@@ -278,7 +279,7 @@ void COC6D(string& strMAns)
 	strMAns += DB;
 }
 
-void COC7(string& strMAns, int intNum)
+inline void COC7(string& strMAns, int intNum)
 {
 	strMAns += "的人物作成:";
 	string strProperty[] = {"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育", "幸运"};
@@ -299,7 +300,28 @@ void COC7(string& strMAns, int intNum)
 	}
 }
 
-void COC6(string& strMAns, int intNum)
+inline void CAT7(string& strMAns, int intNum)
+{
+	strMAns += "的猫咪作成:";
+	string strProperty[] = { "力量", "体质", "智力", "敏捷", "教育", "外貌", "意志" };
+	string strRoll[] = { "1D3", "2D6", "2D6+6", "2D6+14", "3D6+3", "3D6", "2D6+6" };
+	int intAllTotal = 0;
+	while (intNum--)
+	{
+		strMAns += '\n';
+		for (int i = 0; i != 7; i++)
+		{
+			RD rdCOC(strRoll[i]);
+			rdCOC.Roll();
+			strMAns += strProperty[i] + ":" + to_string(rdCOC.intTotal * 5) + " ";
+			intAllTotal += rdCOC.intTotal * 5;
+		}
+		strMAns += "共计:" + to_string(intAllTotal);
+		intAllTotal = 0;
+	}
+}
+
+inline void COC6(string& strMAns, int intNum)
 {
 	strMAns += "的人物作成:";
 	string strProperty[] = {"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育"};
@@ -323,7 +345,7 @@ void COC6(string& strMAns, int intNum)
 	}
 }
 
-void DND(string& strOutput, int intNum)
+inline void DND(string& strOutput, int intNum)
 {
 	strOutput += "的英雄作成:";
 	RD rdDND("4D6K3");
@@ -346,7 +368,7 @@ void DND(string& strOutput, int intNum)
 	}
 }
 
-void TempInsane(string& strAns)
+inline void TempInsane(string& strAns)
 {
 	const int intSymRes = RandomGenerator::Randint(1, 10);
 	std::string strTI = "1D10=" + to_string(intSymRes) + "\n症状: " + TempInsanity[intSymRes];
@@ -371,7 +393,7 @@ void TempInsane(string& strAns)
 	strAns += strTI;
 }
 
-void LongInsane(string& strAns)
+inline void LongInsane(string& strAns)
 {
 	const int intSymRes = RandomGenerator::Randint(1, 10);
 	std::string strLI = "1D10=" + to_string(intSymRes) + "\n症状: " + LongInsanity[intSymRes];
