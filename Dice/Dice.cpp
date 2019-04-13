@@ -1956,11 +1956,11 @@ EVE_GroupMsg_EX(eventGroupMsg)
 					if (DisabledGroup.count(eve.fromGroup))
 					{
 						DisabledGroup.erase(eve.fromGroup);
-						AddMsgToQueue("成功开启本机器人!", eve.fromGroup, false);
+						AddMsgToQueue(GlobalMsg["strBotOn"], eve.fromGroup, false);
 					}
 					else
 					{
-						AddMsgToQueue("本机器人已经处于开启状态!", eve.fromGroup, false);
+						AddMsgToQueue(GlobalMsg["strBotOnAlready"], eve.fromGroup, false);
 					}
 				}
 				else
@@ -1979,11 +1979,11 @@ EVE_GroupMsg_EX(eventGroupMsg)
 					if (!DisabledGroup.count(eve.fromGroup))
 					{
 						DisabledGroup.insert(eve.fromGroup);
-						AddMsgToQueue("成功关闭本机器人!", eve.fromGroup, false);
+						AddMsgToQueue(GlobalMsg["strBotOff"], eve.fromGroup, false);
 					}
 					else
 					{
-						AddMsgToQueue("本机器人已经处于关闭状态!", eve.fromGroup, false);
+						AddMsgToQueue(GlobalMsg["strBotOffAlready"], eve.fromGroup, false);
 					}
 				}
 				else
@@ -3966,11 +3966,11 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 				if (DisabledDiscuss.count(eve.fromDiscuss))
 				{
 					DisabledDiscuss.erase(eve.fromDiscuss);
-					AddMsgToQueue("成功开启本机器人!", eve.fromDiscuss, false);
+					AddMsgToQueue(GlobalMsg["strBotOn"], eve.fromDiscuss, false);
 				}
 				else
 				{
-					AddMsgToQueue("本机器人已经处于开启状态!", eve.fromDiscuss, false);
+					AddMsgToQueue(GlobalMsg["strBotOnAlready"], eve.fromDiscuss, false);
 				}
 			}
 		}
@@ -3982,11 +3982,11 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 				if (!DisabledDiscuss.count(eve.fromDiscuss))
 				{
 					DisabledDiscuss.insert(eve.fromDiscuss);
-					AddMsgToQueue("成功关闭本机器人!", eve.fromDiscuss, false);
+					AddMsgToQueue(GlobalMsg["strBotOff"], eve.fromDiscuss, false);
 				}
 				else
 				{
-					AddMsgToQueue("本机器人已经处于关闭状态!", eve.fromDiscuss, false);
+					AddMsgToQueue(GlobalMsg["strBotOffAlready"], eve.fromDiscuss, false);
 				}
 			}
 		}

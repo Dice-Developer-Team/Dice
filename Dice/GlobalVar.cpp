@@ -64,6 +64,10 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 
 std::map<std::string, std::string> GlobalMsg
 {
+	{"strBotOn","成功开启本机器人!"},
+	{"strBotOff","成功关闭本机器人!"},
+	{"strBotOnAlready","本机器人已经处于开启状态!"},
+	{"strBotOffAlready","本机器人已经处于关闭状态!"},
 	{"strRollCriticalSuccess","大成功！"},
 	{"strRollExtremeSuccess","极难成功"},
 	{"strRollHardSuccess","困难成功"},
