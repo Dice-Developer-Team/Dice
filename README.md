@@ -34,7 +34,7 @@ Latest Release: [![GitHub release](https://img.shields.io/github/release-pre/w41
 
 新增: 现在可以用GCC/Clang编译, 只测试了几个版本, 编译出现问题请反馈, 下面列出编译选项, 正在写cmake
 
-- GCC: ` g++ -shared -static -std=c++14 -O2 -o com.w4123.dice.dll -Wl,--kill-at -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -pthread -lWinInet -luser32 `
+- GCC(mingw_w64 GCC5.4.0以上已测试 GCC4.x经过测试无法编译): ` g++ -shared -static -std=c++14 -O2 -o com.w4123.dice.dll -Wl,--kill-at -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -pthread -lWinInet `
 - Clang+MSVC: ` clang++ --target=i686-pc-windows-msvc  -m32 -shared -static -o com.w4123.dice.dll -Xclang -flto-visibility-public-std -std=c++14 -O2 -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -lWinInet -luser32 -pthread -Wno-invalid-source-encoding `
 - Clang+GCC: ` clang++ --target=i686-pc-windows-gnu -m32 -shared -static -o com.w4123.dice.dll -Xclang -flto-visibility-public-std -Wl,--kill-at -std=c++14 -O2 -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -lWinInet -luser32 -pthread -Wno-invalid-source-encoding  `
 
