@@ -35,8 +35,8 @@ CQ::logger DiceLogger("Dice!");
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-const unsigned short Dice_Build = 509;
-const std::string Dice_Ver_Without_Build = "2.3.6";
+const unsigned short Dice_Build = 515;
+const std::string Dice_Ver_Without_Build = "2.3.7";
 const std::string DiceRequestHeader = "Dice/" + Dice_Ver_Without_Build;
 const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
