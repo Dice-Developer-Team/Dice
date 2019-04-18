@@ -25,13 +25,15 @@
 #define CARD_DECK
 #include <string>
 #include <vector>
+#include <map>
 
 namespace CardDeck
 {
-	extern const std::vector<std::vector<std::string>> PublicDeck;
-	extern const std::vector<std::vector<std::string>> PublicDeckList;
+	extern std::map<std::string, std::vector<std::string>> mPublicDeck;
+	extern std::map<std::string, std::string> PublicComplexDeck;
 	int findDeck(std::string strDeckName);
-	std::string drawCard(std::vector<std::string> &TempDeck);
+	std::string drawCard(std::vector<std::string> &TempDeck,bool boolBack=false);
+	std::string drawCard(std::string strDeckName, bool boolBack = false);
 };
 #endif /*CARD_DECK*/
 

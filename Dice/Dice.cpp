@@ -1617,35 +1617,34 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 		strCardNum += eve.message[intMsgCnt];
 		intMsgCnt++;
 	}
-	auto intCardNum = strCardNum.empty() ? 1 : stoi(strCardNum);
+	int intCardNum = strCardNum.empty() ? 1 : stoi(strCardNum);
 	if (intCardNum == 0)
 	{
 		AddMsgToQueue(GlobalMsg["strNumCannotBeZero"], eve.fromQQ);
 		return;
 	}
-	int intDeckRes = CardDeck::findDeck(strDeckName);
+	int intFoundRes = CardDeck::findDeck(strDeckName);
 	string strReply;
-	if (intDeckRes < 0) {
-		strReply = strDeckName + "?" + GlobalMsg["strDeckNotFound"];
+	if (intFoundRes == 0) {
+		strReply = "是说" + strDeckName + "?" + GlobalMsg["strDeckNotFound"];
 		AddMsgToQueue(strReply, eve.fromQQ);
 		return;
 	}
-	vector<string>TempDeck(CardDeck::PublicDeck[intDeckRes]);
-	TempDeck.erase(TempDeck.begin());
-	strReply = "来看看" + strNickName + "的随机抽取结果:\n" + CardDeck::drawCard(TempDeck);
-	while (--intCardNum && TempDeck.size()) {
-		strReply += "\n"+CardDeck::drawCard(TempDeck);
-		if (strReply.length() > 1000) {
-			AddMsgToQueue(strReply, eve.fromQQ);
-			strReply.clear();
+	vector<string> TempDeck(CardDeck::mPublicDeck[strDeckName]);
+		strReply = "来看看" + strNickName + "的随机抽取结果:\n" + CardDeck::drawCard(TempDeck);
+		while (--intCardNum && TempDeck.size()) {
+			strReply += "\n" + CardDeck::drawCard(TempDeck);
+			if (strReply.length() > 1000) {
+				AddMsgToQueue(strReply, eve.fromQQ);
+				strReply.clear();
+			}
+		}
+		AddMsgToQueue(strReply, eve.fromQQ);
+		if (intCardNum) {
+			AddMsgToQueue(GlobalMsg["strDeckEmpty"], eve.fromQQ);
+			return;
 		}
 	}
-	AddMsgToQueue(strReply, eve.fromQQ);
-	if (intCardNum) {
-		AddMsgToQueue(GlobalMsg["strDeckEmpty"], eve.fromQQ);
-		return;
-	}
-}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'd'
 	)
 	{
@@ -3565,8 +3564,8 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		}
 		AddMsgToQueue(strReply, eve.fromGroup, false);
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "draw") {
-
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "draw")
+	{
 	intMsgCnt += 4;
 	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		intMsgCnt++;
@@ -3591,15 +3590,14 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		AddMsgToQueue(GlobalMsg["strNumCannotBeZero"], eve.fromGroup, false);
 		return;
 	}
-	int intDeckRes = CardDeck::findDeck(strDeckName);
+	int intFoundRes = CardDeck::findDeck(strDeckName);
 	string strReply;
-	if (intDeckRes < 0) {
-		strReply = strDeckName + "?" + GlobalMsg["strDeckNotFound"];
+	if (intFoundRes == 0) {
+		strReply = "是说" + strDeckName + "?" + GlobalMsg["strDeckNotFound"];
 		AddMsgToQueue(strReply, eve.fromGroup, false);
 		return;
 	}
-	vector<string>TempDeck(CardDeck::PublicDeck[intDeckRes]);
-	TempDeck.erase(TempDeck.begin());
+	vector<string> TempDeck(CardDeck::mPublicDeck[strDeckName]);
 	strReply = "来看看" + strNickName + "的随机抽取结果:\n" + CardDeck::drawCard(TempDeck);
 	while (--intCardNum && TempDeck.size()) {
 		strReply += "\n" + CardDeck::drawCard(TempDeck);
@@ -3613,7 +3611,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		AddMsgToQueue(GlobalMsg["strDeckEmpty"], eve.fromGroup, false);
 		return;
 	}
-}
+	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'h'
 		|| strLowerMessage[intMsgCnt] == 'd')
 	{
@@ -5400,15 +5398,14 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		AddMsgToQueue(GlobalMsg["strNumCannotBeZero"], eve.fromDiscuss, false);
 		return;
 	}
-	int intDeckRes = CardDeck::findDeck(strDeckName);
+	int intFoundRes = CardDeck::findDeck(strDeckName);
 	string strReply;
-	if (intDeckRes < 0) {
-		strReply = strDeckName + "?" + GlobalMsg["strDeckNotFound"];
+	if (intFoundRes == 0) {
+		strReply = "是说" + strDeckName + "?" + GlobalMsg["strDeckNotFound"];
 		AddMsgToQueue(strReply, eve.fromDiscuss, false);
 		return;
 	}
-	vector<string>TempDeck(CardDeck::PublicDeck[intDeckRes]);
-	TempDeck.erase(TempDeck.begin());
+	vector<string> TempDeck(CardDeck::mPublicDeck[strDeckName]);
 	strReply = "来看看" + strNickName + "的随机抽取结果:\n" + CardDeck::drawCard(TempDeck);
 	while (--intCardNum && TempDeck.size()) {
 		strReply += "\n" + CardDeck::drawCard(TempDeck);
