@@ -296,7 +296,6 @@ namespace Console
 							AddMsgToQueue("该群已移出白名单√", masterQQ, MsgType::Private);
 						}
 						else {
-							WhiteGroup.insert(llTargetID);
 							AddMsgToQueue("该群并不在白名单！", masterQQ, MsgType::Private);
 						}
 					}
@@ -317,7 +316,6 @@ namespace Console
 							AddMsgToQueue("该群已移出黑名单√", masterQQ, MsgType::Private);
 						}
 						else {
-							BlackGroup.insert(llTargetID);
 							AddMsgToQueue("该群并不在黑名单！", masterQQ, MsgType::Private);
 						}
 					}
@@ -338,7 +336,6 @@ namespace Console
 							AddMsgToQueue("该用户已移出白名单√", masterQQ, MsgType::Private);
 						}
 						else {
-							WhiteQQ.insert(llTargetID);
 							AddMsgToQueue("该用户并不在白名单！", masterQQ, MsgType::Private);
 						}
 					}
@@ -359,7 +356,6 @@ namespace Console
 							AddMsgToQueue("该用户已移出黑名单√", masterQQ, MsgType::Private);
 						}
 						else {
-							BlackQQ.insert(llTargetID);
 							AddMsgToQueue("该用户并不在黑名单！", masterQQ, MsgType::Private);
 						}
 					}
