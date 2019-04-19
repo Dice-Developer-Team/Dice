@@ -745,6 +745,18 @@ int DiceReply(Msg fromMsg) {
 			fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
 		}
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd")
+	{
+	string strReply = strNickName;
+	COC7D(strReply);
+	fromMsg.reply(strReply);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc6d")
+	{
+	string strReply = strNickName;
+	COC6D(strReply);
+	fromMsg.reply(strReply);
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "group")
 	{
 		if (intT != GroupT)return 1;
@@ -811,117 +823,1073 @@ int DiceReply(Msg fromMsg) {
 		}
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "st")
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
 	{
-		intMsgCnt += 2;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	intMsgCnt += 5;
+	while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
+		intMsgCnt++;
+	if (strLowerMessage.substr(intMsgCnt, 3) == "set") {
+		intMsgCnt += 3;
+		while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])) || fromMsg.strMsg[intMsgCnt] == ':')
 			intMsgCnt++;
-		if (intMsgCnt == strLowerMessage.length())
-		{
-			fromMsg.reply(GlobalMsg["strStErr"]);
-			return 1;
+		string strDefaultRule = fromMsg.strMsg.substr(intMsgCnt);
+		if (strDefaultRule.empty()) {
+			DefaultRule.erase(fromMsg.fromQQ);
+			fromMsg.reply(GlobalMsg["strRuleReset"]);
 		}
-		if (strLowerMessage.substr(intMsgCnt, 3) == "clr")
-		{
-			if (CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)))
-			{
-				CharacterProp.erase(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup));
-			}
-			fromMsg.reply(GlobalMsg["strPropCleared"]);
-			return 1;
+		else {
+			for (auto& n : strDefaultRule)
+				n = toupper(static_cast<unsigned char>(n));
+			DefaultRule[fromMsg.fromQQ] = strDefaultRule;
+			fromMsg.reply(GlobalMsg["strRuleSet"]);
 		}
-		if (strLowerMessage.substr(intMsgCnt, 3) == "del")
-		{
-			intMsgCnt += 3;
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-				intMsgCnt++;
-			string strSkillName;
-			while (intMsgCnt != strLowerMessage.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !(strLowerMessage[
-				intMsgCnt] == '|'))
-			{
-				strSkillName += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-				if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-				if (CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)) && CharacterProp[SourceType(
-					fromMsg.fromQQ, intT, fromMsg.fromGroup)].count(strSkillName))
-				{
-					CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)].erase(strSkillName);
-					fromMsg.reply(GlobalMsg["strPropDeleted"]);
-				}
-				else
-				{
-					fromMsg.reply(GlobalMsg["strPropNotFound"]);
-				}
-				return 1;
+	}
+	else {
+		string strSearch = fromMsg.strMsg.substr(intMsgCnt);
+		string strDefaultRule = DefaultRule[fromMsg.fromQQ];
+		for (auto& n : strSearch)
+			n = toupper(static_cast<unsigned char>(n));
+		string strReturn;
+		if (DefaultRule.count(fromMsg.fromQQ) && strSearch.find(':') == string::npos && GetRule::get(strDefaultRule, strSearch, strReturn)) {
+			fromMsg.reply(strReturn);
 		}
-		if (strLowerMessage.substr(intMsgCnt, 4) == "show")
+		else if (GetRule::analyze(strSearch, strReturn))
 		{
-			intMsgCnt += 4;
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-				intMsgCnt++;
-			string strSkillName;
-			while (intMsgCnt != strLowerMessage.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !(strLowerMessage[
-				intMsgCnt] == '|'))
-			{
-				strSkillName += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-				if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-				if (CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)) && CharacterProp[SourceType(
-					fromMsg.fromQQ, intT, fromMsg.fromGroup)].count(strSkillName))
-				{
-					fromMsg.reply(format(GlobalMsg["strProp"], {
-						strNickName, strSkillName,
-						to_string(CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)][strSkillName])
-						}));
-				}
-				else if (SkillDefaultVal.count(strSkillName))
-				{
-					fromMsg.reply(format(GlobalMsg["strProp"], { strNickName, strSkillName, to_string(SkillDefaultVal[strSkillName]) }));
-				}
-				else
-				{
-					fromMsg.reply(GlobalMsg["strPropNotFound"]);
-				}
-				return 1;
-		}
-		bool boolError = false;
-		while (intMsgCnt != strLowerMessage.length())
-		{
-			string strSkillName;
-			while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
-				isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt]
-				!= ':')
-			{
-				strSkillName += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt
-			] == ':')intMsgCnt++;
-			string strSkillVal;
-			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			{
-				strSkillVal += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			if (strSkillName.empty() || strSkillVal.empty() || strSkillVal.length() > 3)
-			{
-				boolError = true;
-				break;
-			}
-			CharacterProp[SourceType(fromMsg.fromQQ, GroupT, fromMsg.fromGroup)][strSkillName] = stoi(strSkillVal);
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
-		}
-		if (boolError)
-		{
-			fromMsg.reply(GlobalMsg["strPropErr"]);
+			fromMsg.reply(strReturn);
 		}
 		else
 		{
-			fromMsg.reply(GlobalMsg["strSetPropSuccess"]);
+			fromMsg.reply(GlobalMsg["strRuleErr"] + strReturn);
 		}
+	}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "coc6")
+	{
+	intMsgCnt += 4;
+	if (strLowerMessage[intMsgCnt] == 's')
+		intMsgCnt++;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	string strNum;
+	while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		strNum += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+	if (strNum.length() > 2)
+	{
+		fromMsg.reply(GlobalMsg["strCharacterTooBig"]);
+		return 1;
+	}
+	const int intNum = stoi(strNum.empty() ? "1" : strNum);
+	if (intNum > 10)
+	{
+		fromMsg.reply(GlobalMsg["strCharacterTooBig"]);
+		return 1;
+	}
+	if (intNum == 0)
+	{
+		fromMsg.reply(GlobalMsg["strCharacterCannotBeZero"]);
+		return 1;
+	}
+	string strReply = strNickName;
+	COC6(strReply, intNum);
+	fromMsg.reply(strReply);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "draw")
+	{
+	intMsgCnt += 4;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+
+	string strDeckName;
+	while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		strDeckName += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	string strCardNum;
+	while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		strCardNum += fromMsg.strMsg[intMsgCnt];
+		intMsgCnt++;
+	}
+	auto intCardNum = strCardNum.empty() ? 1 : stoi(strCardNum);
+	if (intCardNum == 0)
+	{
+		fromMsg.reply(GlobalMsg["strNumCannotBeZero"]);
+		return 1;
+	}
+	int intFoundRes = CardDeck::findDeck(strDeckName);
+	string strReply;
+	if (intFoundRes == 0) {
+		strReply = "是说" + strDeckName + "?" + GlobalMsg["strDeckNotFound"];
+		fromMsg.reply(strReply);
+		return 1;
+	}
+	vector<string> TempDeck(CardDeck::mPublicDeck[strDeckName]);
+	strReply = "来看看" + strNickName + "的随机抽取结果:\n" + CardDeck::drawCard(TempDeck);
+	while (--intCardNum && TempDeck.size()) {
+		strReply += "\n" + CardDeck::drawCard(TempDeck);
+		if (strReply.length() > 1000) {
+			fromMsg.reply(strReply);
+			strReply.clear();
+		}
+	}
+	fromMsg.reply(strReply);
+	if (intCardNum) {
+		fromMsg.reply(GlobalMsg["strDeckEmpty"]);
+		return 1;
+	}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "init"&&intT)
+	{
+	intMsgCnt += 4;
+	string strReply;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+	if (strLowerMessage.substr(intMsgCnt, 3) == "clr")
+	{
+		if (ilInitList->clear(fromMsg.fromGroup))
+			strReply = "成功清除先攻记录！";
+		else
+			strReply = "列表为空！";
+		fromMsg.reply(strReply);
+		return 1;
+	}
+	ilInitList->show(fromMsg.fromGroup, strReply);
+	fromMsg.reply(strReply);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
+	{
+	if (boolDisabledJrrpGlobal) {
+		fromMsg.reply(GlobalMsg["strDisabledJrrpGlobal"]);
+		return 1;
+	}
+	intMsgCnt += 4;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	const string Command = strLowerMessage.substr(intMsgCnt, fromMsg.strMsg.find(' ', intMsgCnt) - intMsgCnt);
+	if (intT == GroupT) {
+		if (Command == "on")
+		{
+			if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
+			{
+				if (DisabledJRRPGroup.count(fromMsg.fromGroup))
+				{
+					DisabledJRRPGroup.erase(fromMsg.fromGroup);
+					fromMsg.reply("成功在本群中启用JRRP!");
+				}
+				else
+				{
+					fromMsg.reply("在本群中JRRP没有被禁用!");
+				}
+			}
+			else
+			{
+				fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
+			}
+			return 1;
+		}
+		if (Command == "off")
+		{
+			if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
+			{
+				if (!DisabledJRRPGroup.count(fromMsg.fromGroup))
+				{
+					DisabledJRRPGroup.insert(fromMsg.fromGroup);
+					fromMsg.reply("成功在本群中禁用JRRP!");
+				}
+				else
+				{
+					fromMsg.reply("在本群中JRRP没有被启用!");
+				}
+			}
+			else
+			{
+				fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
+			}
+			return 1;
+		}
+		if (DisabledJRRPGroup.count(fromMsg.fromGroup))
+		{
+			fromMsg.reply("在本群中JRRP功能已被禁用");
+			return 1;
+		}
+	}
+	else if (intT == DiscussT) {
+		if (Command == "on")
+		{
+			if (DisabledJRRPDiscuss.count(fromMsg.fromGroup))
+			{
+				DisabledJRRPDiscuss.erase(fromMsg.fromGroup);
+				fromMsg.reply("成功在此多人聊天中启用JRRP!");
+			}
+			else
+			{
+				fromMsg.reply("在此多人聊天中JRRP没有被禁用!");
+			}
+			return 1;
+		}
+		if (Command == "off")
+		{
+			if (!DisabledJRRPDiscuss.count(fromMsg.fromGroup))
+			{
+				DisabledJRRPDiscuss.insert(fromMsg.fromGroup);
+				fromMsg.reply("成功在此多人聊天中禁用JRRP!");
+			}
+			else
+			{
+				fromMsg.reply("在此多人聊天中JRRP没有被启用!");
+			}
+			return 1;
+		}
+		if (DisabledJRRPDiscuss.count(fromMsg.fromGroup))
+		{
+			fromMsg.reply("在此多人聊天中JRRP已被禁用!");
+			return 1;
+		}
+	}
+	string des;
+	string data = "QQ=" + to_string(CQ::getLoginQQ()) + "&v=20190114" + "&QueryQQ=" + to_string(fromMsg.fromQQ);
+	char *frmdata = new char[data.length() + 1];
+	strcpy_s(frmdata, data.length() + 1, data.c_str());
+	bool res = Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata, des);
+	delete[] frmdata;
+	if (res)
+	{
+		fromMsg.reply(format(GlobalMsg["strJrrp"], { strNickName, des }));
+	}
+	else
+	{
+		fromMsg.reply(format(GlobalMsg["strJrrpErr"], { des }));
+	}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
+	{
+	intMsgCnt += 4;
+	while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
+		intMsgCnt++;
+
+	string type;
+	while (isalpha(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		type += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+
+	auto nameType = NameGenerator::Type::UNKNOWN;
+	if (type == "cn")
+		nameType = NameGenerator::Type::CN;
+	else if (type == "en")
+		nameType = NameGenerator::Type::EN;
+	else if (type == "jp")
+		nameType = NameGenerator::Type::JP;
+
+	while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
+		intMsgCnt++;
+
+	string strNum;
+	while (isdigit(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
+	{
+		strNum += fromMsg.strMsg[intMsgCnt];
+		intMsgCnt++;
+	}
+	if (strNum.size() > 2)
+	{
+		fromMsg.reply(GlobalMsg["strNameNumTooBig"]);
+		return 1;
+	}
+	int intNum = stoi(strNum.empty() ? "1" : strNum);
+	if (intNum > 10)
+	{
+		fromMsg.reply(GlobalMsg["strNameNumTooBig"]);
+		return 1;
+	}
+	if (intNum == 0)
+	{
+		fromMsg.reply(GlobalMsg["strNameNumCannotBeZero"]);
+		return 1;
+	}
+	vector<string> TempNameStorage;
+	while (TempNameStorage.size() != intNum)
+	{
+		string name = NameGenerator::getRandomName(nameType);
+		if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
+		{
+			TempNameStorage.push_back(name);
+		}
+	}
+	string strReply = strNickName + "的随机名称:\n";
+	for (auto i = 0; i != TempNameStorage.size(); i++)
+	{
+		strReply.append(TempNameStorage[i]);
+		if (i != TempNameStorage.size() - 1)strReply.append(", ");
+	}
+	fromMsg.reply(strReply);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "coc")
+	{
+	intMsgCnt += 3;
+	if (strLowerMessage[intMsgCnt] == '7')
+		intMsgCnt++;
+	if (strLowerMessage[intMsgCnt] == 's')
+		intMsgCnt++;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	string strNum;
+	while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		strNum += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+	if (strNum.length() > 2)
+	{
+		fromMsg.reply(GlobalMsg["strCharacterTooBig"]);
+		return 1;
+	}
+	const int intNum = stoi(strNum.empty() ? "1" : strNum);
+	if (intNum > 10)
+	{
+		fromMsg.reply(GlobalMsg["strCharacterTooBig"]);
+		return 1;
+	}
+	if (intNum == 0)
+	{
+		fromMsg.reply(GlobalMsg["strCharacterCannotBeZero"]);
+		return 1;
+	}
+	string strReply = strNickName;
+	COC7(strReply, intNum);
+	fromMsg.reply(strReply);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "dnd")
+	{
+	intMsgCnt += 3;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	string strNum;
+	while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		strNum += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+	if (strNum.length() > 2)
+	{
+		fromMsg.reply(GlobalMsg["strCharacterTooBig"]);
+		return 1;
+	}
+	const int intNum = stoi(strNum.empty() ? "1" : strNum);
+	if (intNum > 10)
+	{
+		fromMsg.reply(GlobalMsg["strCharacterTooBig"]);
+		return 1;
+	}
+	if (intNum == 0)
+	{
+		fromMsg.reply(GlobalMsg["strCharacterCannotBeZero"]);
+		return 1;
+	}
+	string strReply = strNickName;
+	DND(strReply, intNum);
+	fromMsg.reply(strReply);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "nnn")
+	{
+	intMsgCnt += 3;
+	while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
+		intMsgCnt++;
+	string type = strLowerMessage.substr(intMsgCnt, 2);
+	string name;
+	if (type == "cn")
+		name = NameGenerator::getChineseName();
+	else if (type == "en")
+		name = NameGenerator::getEnglishName();
+	else if (type == "jp")
+		name = NameGenerator::getJapaneseName();
+	else
+		name = NameGenerator::getRandomName();
+	Name->set(fromMsg.fromGroup, fromMsg.fromQQ, name);
+	const string strReply = format(GlobalMsg["strNameSet"], { strNickName, strip(name) });
+	fromMsg.reply(strReply);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "set")
+	{
+	intMsgCnt += 3;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	string strDefaultDice = strLowerMessage.substr(intMsgCnt, strLowerMessage.find(" ", intMsgCnt) - intMsgCnt);
+	while (strDefaultDice[0] == '0')
+		strDefaultDice.erase(strDefaultDice.begin());
+	if (strDefaultDice.empty())
+		strDefaultDice = "100";
+	for (auto charNumElement : strDefaultDice)
+		if (!isdigit(static_cast<unsigned char>(charNumElement)))
+		{
+			fromMsg.reply(GlobalMsg["strSetInvalid"]);
+			return 1;
+		}
+	if (strDefaultDice.length() > 3 && strDefaultDice != "1000")
+	{
+		fromMsg.reply(GlobalMsg["strSetTooBig"]);
+		return 1;
+	}
+	const int intDefaultDice = stoi(strDefaultDice);
+	if (intDefaultDice == 100)
+		DefaultDice.erase(fromMsg.fromQQ);
+	else
+		DefaultDice[fromMsg.fromQQ] = intDefaultDice;
+	const string strSetSuccessReply = "已将" + strNickName + "的默认骰类型更改为D" + strDefaultDice;
+	fromMsg.reply(strSetSuccessReply);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "str"&&boolMasterMode&&fromMsg.fromQQ == masterQQ) {
+	string strName;
+	while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && intMsgCnt != strLowerMessage.length())
+	{
+		strName += fromMsg.strMsg[intMsgCnt];
+		intMsgCnt++;
+	}
+	while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
+		intMsgCnt++;
+	if (intMsgCnt == fromMsg.strMsg.length()) {
+		EditedMsg.erase(strName);
+		fromMsg.reply("已清除" + strName + "的自定义，但恢复默认设置需要重启应用。");
+	}
+	else if (GlobalMsg.count(strName)) {
+		string strMsg = fromMsg.strMsg.substr(intMsgCnt);
+		EditedMsg[strName] = strMsg;
+		GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMsg : strMsg;
+		fromMsg.reply("已记下" + strName + "的自定义");
+	}
+	else {
+		fromMsg.reply("是说" + strName + "？这似乎不是会用到的语句×");
+	}
+
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
+	{
+	intMsgCnt += 2;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	string strSkillName;
+	while (intMsgCnt != fromMsg.strMsg.length() && !isdigit(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])) && !isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt]))
+		)
+	{
+		strSkillName += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+	if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+	while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
+		intMsgCnt++;
+	string strCurrentValue;
+	while (isdigit(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
+	{
+		strCurrentValue += fromMsg.strMsg[intMsgCnt];
+		intMsgCnt++;
+	}
+	int intCurrentVal;
+	if (strCurrentValue.empty())
+	{
+		if (CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)) && CharacterProp[SourceType(
+			fromMsg.fromQQ, intT, fromMsg.fromGroup)].count(strSkillName))
+		{
+			intCurrentVal = CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)][strSkillName];
+		}
+		else if (SkillDefaultVal.count(strSkillName))
+		{
+			intCurrentVal = SkillDefaultVal[strSkillName];
+		}
+		else
+		{
+			fromMsg.reply(GlobalMsg["strEnValInvalid"]);
+			return 1;
+		}
+	}
+	else
+	{
+		if (strCurrentValue.length() > 3)
+		{
+			fromMsg.reply(GlobalMsg["strEnValInvalid"]);
+
+			return 1;
+		}
+		intCurrentVal = stoi(strCurrentValue);
+	}
+
+	string strAns = strNickName + "的" + strSkillName + "增强或成长检定:\n1D100=";
+	const int intTmpRollRes = RandomGenerator::Randint(1, 100);
+	strAns += to_string(intTmpRollRes) + "/" + to_string(intCurrentVal);
+
+	if (intTmpRollRes <= intCurrentVal && intTmpRollRes <= 95)
+	{
+		strAns += " 失败!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "没有变化!";
+	}
+	else
+	{
+		strAns += " 成功!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "增加1D10=";
+		const int intTmpRollD10 = RandomGenerator::Randint(1, 10);
+		strAns += to_string(intTmpRollD10) + "点,当前为" + to_string(intCurrentVal + intTmpRollD10) + "点";
+		if (strCurrentValue.empty())
+		{
+			CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)][strSkillName] = intCurrentVal +
+				intTmpRollD10;
+		}
+	}
+	fromMsg.reply(strAns);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 2) == "li")
+	{
+	string strAns = strNickName + "的疯狂发作-总结症状:\n";
+	LongInsane(strAns);
+	fromMsg.reply(strAns);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
+	{
+	if (boolDisabledMeGlobal)
+	{
+		fromMsg.reply(GlobalMsg["strDisabledMeGlobal"]);
+		return 1;
+	}
+	intMsgCnt += 2;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	if (intT == 0) {
+		string strGroupID;
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			strGroupID += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		string strAction = strip(fromMsg.strMsg.substr(intMsgCnt));
+
+		for (auto i : strGroupID)
+		{
+			if (!isdigit(static_cast<unsigned char>(i)))
+			{
+				fromMsg.reply(GlobalMsg["strGroupIDInvalid"]);
+				return 1;
+			}
+		}
+		if (strGroupID.empty())
+		{
+			fromMsg.reply("群号不能为空!");
+			return 1;
+		}
+		if (strAction.empty())
+		{
+			fromMsg.reply("动作不能为空!");
+			return 1;
+		}
+		const long long llGroupID = stoll(strGroupID);
+		if (DisabledGroup.count(llGroupID))
+		{
+			fromMsg.reply(GlobalMsg["strDisabledErr"]);
+			return 1;
+		}
+		if (DisabledMEGroup.count(llGroupID))
+		{
+			fromMsg.reply(GlobalMsg["strMEDisabledErr"]);
+			return 1;
+		}
+		string strReply = getName(fromMsg.fromQQ, llGroupID) + strAction;
+		const int intSendRes = sendGroupMsg(llGroupID, strReply);
+		if (intSendRes < 0)
+		{
+			fromMsg.reply(GlobalMsg["strSendErr"]);
+		}
+		else
+		{
+			fromMsg.reply("命令执行成功!");
+		}
+		return 1;
+	}
+	string strAction = strLowerMessage.substr(intMsgCnt);
+	if (intT == GroupT) {
+		if (strAction == "on")
+		{
+			if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
+			{
+				if (DisabledMEGroup.count(fromMsg.fromGroup))
+				{
+					DisabledMEGroup.erase(fromMsg.fromGroup);
+					fromMsg.reply("成功在本群中启用.me命令!");
+				}
+				else
+				{
+					fromMsg.reply("在本群中.me命令没有被禁用!");
+				}
+			}
+			else
+			{
+				fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
+			}
+			return 1;
+		}
+		if (strAction == "off")
+		{
+			if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
+			{
+				if (!DisabledMEGroup.count(fromMsg.fromGroup))
+				{
+					DisabledMEGroup.insert(fromMsg.fromGroup);
+					fromMsg.reply("成功在本群中禁用.me命令!");
+				}
+				else
+				{
+					fromMsg.reply("在本群中.me命令没有被启用!");
+				}
+			}
+			else
+			{
+				fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
+			}
+			return 1;
+		}
+		if (DisabledMEGroup.count(fromMsg.fromGroup))
+		{
+			fromMsg.reply(GlobalMsg["strMEDisabledErr"]);
+			return 1;
+		}
+	}
+	else if (intT == DiscussT) {
+		if (strAction == "on")
+		{
+			if (DisabledMEDiscuss.count(fromMsg.fromGroup))
+			{
+				DisabledMEDiscuss.erase(fromMsg.fromGroup);
+				fromMsg.reply("成功在本多人聊天中启用.me命令!");
+			}
+			else
+			{
+				fromMsg.reply("在本多人聊天中.me命令没有被禁用!");
+			}
+			return 1;
+		}
+		if (strAction == "off")
+		{
+			if (!DisabledMEDiscuss.count(fromMsg.fromGroup))
+			{
+				DisabledMEDiscuss.insert(fromMsg.fromGroup);
+				fromMsg.reply("成功在本多人聊天中禁用.me命令!");
+			}
+			else
+			{
+				fromMsg.reply("在本多人聊天中.me命令没有被启用!");
+			}
+			return 1;
+		}
+		if (DisabledMEDiscuss.count(fromMsg.fromGroup))
+		{
+			fromMsg.reply(GlobalMsg["strMEDisabledErr"]);
+			return 1;
+		}
+	}
+	strAction = strip(fromMsg.strMsg.substr(intMsgCnt));
+	if (strAction.empty())
+	{
+		fromMsg.reply("动作不能为空!");
+		return 1;
+	}
+	const string strReply = strNickName + strAction;
+	fromMsg.reply(strReply);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
+	{
+	intMsgCnt += 2;
+	while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
+		intMsgCnt++;
+	string name = fromMsg.strMsg.substr(intMsgCnt);
+	if (name.length() > 50)
+	{
+		fromMsg.reply(GlobalMsg["strNameTooLongErr"]);
+		return 1;
+	}
+	if (!name.empty())
+	{
+		Name->set(fromMsg.fromGroup, fromMsg.fromQQ, name);
+		const string strReply = format(GlobalMsg["strNameSet"], { strNickName, strip(name) });
+		fromMsg.reply(strReply);
+	}
+	else
+	{
+		if (Name->del(fromMsg.fromGroup, fromMsg.fromQQ))
+		{
+			const string strReply = "已将" + strNickName + "的名称删除";
+			fromMsg.reply(strReply);
+		}
+		else
+		{
+			const string strReply = strNickName + GlobalMsg["strNameDelErr"];
+			fromMsg.reply(strReply);
+		}
+	}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 2) == "ob")
+	{
+	if (intT == PrivateT) {
+		fromMsg.reply("你想看什么呀？");
+		return 1;
+	}
+	intMsgCnt += 2;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	const string Command = strLowerMessage.substr(intMsgCnt, fromMsg.strMsg.find(' ', intMsgCnt) - intMsgCnt);
+	if (Command == "on")
+	{
+		if (intT == GroupT) {
+			if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
+			{
+				if (DisabledOBGroup.count(fromMsg.fromGroup))
+				{
+					DisabledOBGroup.erase(fromMsg.fromGroup);
+					fromMsg.reply("成功在本群中启用旁观模式!");
+				}
+				else
+				{
+					fromMsg.reply("本群中旁观模式没有被禁用!");
+				}
+			}
+			else
+			{
+				fromMsg.reply("你没有权限执行此命令!");
+			}
+			return 1;
+		}
+		else {
+			if (DisabledOBDiscuss.count(fromMsg.fromGroup))
+			{
+				DisabledOBDiscuss.erase(fromMsg.fromGroup);
+				fromMsg.reply("成功在本多人聊天中启用旁观模式!");
+			}
+			else
+			{
+				fromMsg.reply("在本多人聊天中旁观模式没有被禁用!");
+			}
+			return 1;
+		}
+	}
+	if (Command == "off")
+	{
+		if (intT == Group) {
+			if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
+			{
+				if (!DisabledOBGroup.count(fromMsg.fromGroup))
+				{
+					DisabledOBGroup.insert(fromMsg.fromGroup);
+					ObserveGroup.clear();
+					fromMsg.reply("成功在本群中禁用旁观模式!");
+				}
+				else
+				{
+					fromMsg.reply("本群中旁观模式没有被启用!");
+				}
+			}
+			else
+			{
+				fromMsg.reply("你没有权限执行此命令!");
+			}
+			return 1;
+		}
+		else {
+			if (!DisabledOBDiscuss.count(fromMsg.fromGroup))
+			{
+				DisabledOBDiscuss.insert(fromMsg.fromGroup);
+				ObserveDiscuss.clear();
+				fromMsg.reply("成功在本多人聊天中禁用旁观模式!");
+			}
+			else
+			{
+				fromMsg.reply("在本多人聊天中旁观模式没有被启用!");
+			}
+			return 1;
+		}
+	}
+	if (intT == GroupT && DisabledOBGroup.count(fromMsg.fromGroup))
+	{
+		fromMsg.reply("在本群中旁观模式已被禁用!");
+		return 1;
+	}
+	if (intT == DiscussT && DisabledOBDiscuss.count(fromMsg.fromGroup))
+	{
+		fromMsg.reply("在本多人聊天中旁观模式已被禁用!");
+		return 1;
+	}
+	if (Command == "list")
+	{
+		string Msg = "当前的旁观者有:";
+		const auto Range = (intT == GroupT) ? ObserveGroup.equal_range(fromMsg.fromGroup) : ObserveDiscuss.equal_range(fromMsg.fromGroup);
+		for (auto it = Range.first; it != Range.second; ++it)
+		{
+			Msg += "\n" + getName(it->second, fromMsg.fromGroup) + "(" + to_string(it->second) + ")";
+		}
+		const string strReply = Msg == "当前的旁观者有:" ? "当前暂无旁观者" : Msg;
+		fromMsg.reply(strReply);
+	}
+	else if (Command == "clr")
+	{
+		if (intT = DiscussT) {
+			ObserveDiscuss.erase(fromMsg.fromGroup);
+			fromMsg.reply("成功删除所有旁观者!");
+		}
+		else if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
+		{
+			ObserveGroup.erase(fromMsg.fromGroup);
+			fromMsg.reply("成功删除所有旁观者!");
+		}
+		else
+		{
+			fromMsg.reply("你没有权限执行此命令!");
+		}
+	}
+	else if (Command == "exit")
+	{
+		const auto Range = (intT == GroupT) ? ObserveGroup.equal_range(fromMsg.fromGroup) : ObserveDiscuss.equal_range(fromMsg.fromGroup);
+		for (auto it = Range.first; it != Range.second; ++it)
+		{
+			if (it->second == fromMsg.fromQQ)
+			{
+				(intT == GroupT) ? ObserveGroup.erase(it) : ObserveDiscuss.erase(it);
+				const string strReply = strNickName + "成功退出旁观模式!";
+				fromMsg.reply(strReply);
+				return 1;
+			}
+		}
+		const string strReply = strNickName + "没有加入旁观模式!";
+		fromMsg.reply(strReply);
+	}
+	else
+	{
+		const auto Range = (intT == GroupT) ? ObserveGroup.equal_range(fromMsg.fromGroup) : ObserveDiscuss.equal_range(fromMsg.fromGroup);
+		for (auto it = Range.first; it != Range.second; ++it)
+		{
+			if (it->second == fromMsg.fromQQ)
+			{
+				const string strReply = strNickName + "已经处于旁观模式!";
+				fromMsg.reply(strReply);
+				return 1;
+			}
+		}
+		(intT == GroupT) ? ObserveGroup.insert(make_pair(fromMsg.fromGroup, fromMsg.fromQQ)) : ObserveDiscuss.insert(make_pair(fromMsg.fromGroup, fromMsg.fromQQ));
+		const string strReply = strNickName + "成功加入旁观模式!";
+		fromMsg.reply(strReply);
+	}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 2) == "ra")
+	{
+	intMsgCnt += 2;
+	string strSkillName;
+	string strMainDice = "D100";
+	string strSkillModify;
+	int intSkillModify = 0;
+	if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') {
+		strMainDice = strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+			strMainDice += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+	}
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+	while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
+		isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
+		':'&& strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-')
+	{
+		strSkillName += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+	if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+	if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
+		strSkillModify += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+			strSkillModify += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		intSkillModify = stoi(strSkillModify);
+	}
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
+		':')intMsgCnt++;
+	string strSkillVal;
+	while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		strSkillVal += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		intMsgCnt++;
+	}
+	string strReason = fromMsg.strMsg.substr(intMsgCnt);
+	int intSkillVal;
+	if (strSkillVal.empty())
+	{
+		if (CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)) && CharacterProp[SourceType(
+			fromMsg.fromQQ, intT, fromMsg.fromGroup)].count(strSkillName))
+		{
+			intSkillVal = CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)][strSkillName];
+		}
+		else if (SkillDefaultVal.count(strSkillName))
+		{
+			intSkillVal = SkillDefaultVal[strSkillName];
+		}
+		else
+		{
+			fromMsg.reply(GlobalMsg["strUnknownPropErr"]);
+			return 1;
+		}
+	}
+	else if (strSkillVal.length() > 3)
+	{
+		fromMsg.reply(GlobalMsg["strPropErr"]);
+		return 1;
+	}
+	else
+	{
+		intSkillVal = stoi(strSkillVal);
+	}
+	int intFianlSkillVal = intSkillVal + intSkillModify;
+	if (intFianlSkillVal < 0 || intFianlSkillVal > 1000)
+	{
+		fromMsg.reply(GlobalMsg["strSuccessRateErr"]);
+		return 1;
+	}
+	RD rdMainDice(strMainDice, fromMsg.fromQQ);
+	const int intFirstTimeRes = rdMainDice.Roll();
+	if (intFirstTimeRes == ZeroDice_Err)
+	{
+		fromMsg.reply(GlobalMsg["strZeroDiceErr"]);
+		return 1;
+	}
+	if (intFirstTimeRes == DiceTooBig_Err)
+	{
+		fromMsg.reply(GlobalMsg["strDiceTooBigErr"]);
+		return 1;
+	}
+	const int intD100Res = rdMainDice.intTotal;
+	string strReply = strNickName + "进行" + strSkillName + strSkillModify + "检定: " + rdMainDice.FormCompleteString() + "/" +
+		to_string(intFianlSkillVal) + " ";
+	if (intD100Res <= 5 && intD100Res <= intSkillVal)strReply += GlobalMsg["strRollCriticalSuccess"];
+	else if (intD100Res == 100)strReply += GlobalMsg["strRollFumble"];
+	else if (intD100Res <= intFianlSkillVal / 5)strReply += GlobalMsg["strRollExtremeSuccess"];
+	else if (intD100Res <= intFianlSkillVal / 2)strReply += GlobalMsg["strRollHardSuccess"];
+	else if (intD100Res <= intFianlSkillVal)strReply += GlobalMsg["strRollRegularSuccess"];
+	else if (intD100Res <= 95)strReply += GlobalMsg["strRollFailure"];
+	else strReply += GlobalMsg["strRollFumble"];
+	if (!strReason.empty())
+	{
+		strReply = "由于" + strReason + " " + strReply;
+	}
+	fromMsg.reply(strReply);
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 2) == "rc")
+	{
+	intMsgCnt += 2;
+	string strSkillName;
+	string strMainDice = "D100";
+	string strSkillModify;
+	int intSkillModify = 0;
+	if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') {
+		strMainDice = strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+			strMainDice += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+	}
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+	while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
+		isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
+		':' && strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-')
+	{
+		strSkillName += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+	if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+	if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
+		strSkillModify += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+			strSkillModify += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		intSkillModify = stoi(strSkillModify);
+	}
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
+		':')intMsgCnt++;
+	string strSkillVal;
+	while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		strSkillVal += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		intMsgCnt++;
+	}
+	string strReason = fromMsg.strMsg.substr(intMsgCnt);
+	int intSkillVal;
+	if (strSkillVal.empty())
+	{
+		if (CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)) && CharacterProp[SourceType(
+			fromMsg.fromQQ, intT, fromMsg.fromGroup)].count(strSkillName))
+		{
+			intSkillVal = CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)][strSkillName];
+		}
+		else if (SkillDefaultVal.count(strSkillName))
+		{
+			intSkillVal = SkillDefaultVal[strSkillName];
+		}
+		else
+		{
+			fromMsg.reply(GlobalMsg["strUnknownPropErr"]);
+			return 1;
+		}
+	}
+	else if (strSkillVal.length() > 3)
+	{
+		fromMsg.reply(GlobalMsg["strPropErr"]);
+		return 1;
+	}
+	else
+	{
+		intSkillVal = stoi(strSkillVal);
+	}
+	int intFianlSkillVal = intSkillVal + intSkillModify;
+	if (intFianlSkillVal < 0 || intFianlSkillVal > 1000)
+	{
+		fromMsg.reply(GlobalMsg["strSuccessRateErr"]);
+		return 1;
+	}
+	RD rdMainDice(strMainDice, fromMsg.fromQQ);
+	const int intFirstTimeRes = rdMainDice.Roll();
+	if (intFirstTimeRes == ZeroDice_Err)
+	{
+		fromMsg.reply(GlobalMsg["strZeroDiceErr"]);
+		return 1;
+	}
+	if (intFirstTimeRes == DiceTooBig_Err)
+	{
+		fromMsg.reply(GlobalMsg["strDiceTooBigErr"]);
+		return 1;
+	}
+	const int intD100Res = rdMainDice.intTotal;
+	string strReply = strNickName + "进行" + strSkillName + strSkillModify + "检定: " + rdMainDice.FormCompleteString() + "/" +
+		to_string(intFianlSkillVal) + " ";
+	if (intD100Res == 1)strReply += GlobalMsg["strRollCriticalSuccess"];
+	else if (intD100Res == 100)strReply += GlobalMsg["strRollFumble"];
+	else if (intD100Res <= intFianlSkillVal / 5)strReply += GlobalMsg["strRollExtremeSuccess"];
+	else if (intD100Res <= intFianlSkillVal / 2)strReply += GlobalMsg["strRollHardSuccess"];
+	else if (intD100Res <= intFianlSkillVal)strReply += GlobalMsg["strRollRegularSuccess"];
+	else if (intD100Res <= 95)strReply += GlobalMsg["strRollFailure"];
+	else strReply += GlobalMsg["strRollFumble"];
+	if (!strReason.empty())
+	{
+		strReply = "由于" + strReason + " " + strReply;
+	}
+	fromMsg.reply(strReply);
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ri"&&intT)
 	{
@@ -996,1192 +1964,224 @@ int DiceReply(Msg fromMsg) {
 		const string strReply = strname + "的先攻骰点：" + strinit + '=' + to_string(initdice.intTotal);
 		fromMsg.reply(strReply);
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "init"&&intT)
+	else if (strLowerMessage.substr(intMsgCnt, 2) == "sc")
 	{
-		intMsgCnt += 4;
-		string strReply;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
-		if (strLowerMessage.substr(intMsgCnt, 3) == "clr")
+	intMsgCnt += 2;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	string SanCost = strLowerMessage.substr(intMsgCnt, fromMsg.strMsg.find(' ', intMsgCnt) - intMsgCnt);
+	intMsgCnt += SanCost.length();
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	string San;
+	while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+	{
+		San += strLowerMessage[intMsgCnt];
+		intMsgCnt++;
+	}
+	if (SanCost.empty() || SanCost.find("/") == string::npos)
+	{
+		fromMsg.reply(GlobalMsg["strSCInvalid"]);
+		return 1;
+	}
+	if (San.empty() && !(CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)) && CharacterProp[
+		SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)].count("理智")))
+	{
+		fromMsg.reply(GlobalMsg["strSanInvalid"]);
+		return 1;
+	}
+		for (const auto& character : SanCost.substr(0, SanCost.find("/")))
 		{
-			if (ilInitList->clear(fromMsg.fromGroup))
-				strReply = "成功清除先攻记录！";
-			else
-				strReply = "列表为空！";
-			fromMsg.reply(strReply);
+			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			{
+				fromMsg.reply(GlobalMsg["strSCInvalid"]);
+				return 1;
+			}
+		}
+		for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
+		{
+			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
+			{
+				fromMsg.reply(GlobalMsg["strSCInvalid"]);
+				return 1;
+			}
+		}
+		RD rdSuc(SanCost.substr(0, SanCost.find("/")));
+		RD rdFail(SanCost.substr(SanCost.find("/") + 1));
+		if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
+		{
+			fromMsg.reply(GlobalMsg["strSCInvalid"]);
 			return 1;
 		}
-		ilInitList->show(fromMsg.fromGroup, strReply);
-		fromMsg.reply(strReply);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "str"&&boolMasterMode&&fromMsg.fromQQ == masterQQ) {
-	string strName;
-	while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && intMsgCnt != strLowerMessage.length())
-	{
-		strName += fromMsg.strMsg[intMsgCnt];
-		intMsgCnt++;
-	}
-	while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
-		intMsgCnt++;
-	if (intMsgCnt == fromMsg.strMsg.length()) {
-		EditedMsg.erase(strName);
-		fromMsg.reply("已清除" + strName + "的自定义，但恢复默认设置需要重启应用。");
-	}
-	else if (GlobalMsg.count(strName)) {
-		string strMsg = fromMsg.strMsg.substr(intMsgCnt);
-		EditedMsg[strName] = strMsg;
-		GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMsg : strMsg;
-		fromMsg.reply("已记下" + strName + "的自定义");
-	}
-	else {
-		fromMsg.reply("是说" + strName + "？这似乎不是会用到的语句×");
-	}
+		if (San.length() >= 3)
+		{
+			fromMsg.reply(GlobalMsg["strSanInvalid"]);
+			return 1;
+		}
+		const int intSan = San.empty() ? CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)]["理智"] : stoi(San);
+		if (intSan == 0)
+		{
+			fromMsg.reply(GlobalMsg["strSanInvalid"]);
+			return 1;
+		}
+		string strAns = strNickName + "的Sancheck:\n1D100=";
+		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
+		strAns += to_string(intTmpRollRes);
 
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "ob")
-	{
-		if (intT == PrivateT) {
-			fromMsg.reply("你想看什么呀？");
-			return 1;
-		}
-		intMsgCnt += 2;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		const string Command = strLowerMessage.substr(intMsgCnt, fromMsg.strMsg.find(' ', intMsgCnt) - intMsgCnt);
-		if (Command == "on")
+		if (intTmpRollRes <= intSan)
 		{
-			if (intT==GroupT) {
-				if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
-				{
-					if (DisabledOBGroup.count(fromMsg.fromGroup))
-					{
-						DisabledOBGroup.erase(fromMsg.fromGroup);
-						fromMsg.reply("成功在本群中启用旁观模式!");
-					}
-					else
-					{
-						fromMsg.reply("本群中旁观模式没有被禁用!");
-					}
-				}
-				else
-				{
-					fromMsg.reply("你没有权限执行此命令!");
-				}
-				return 1;
-			}
-			else {
-				if (DisabledOBDiscuss.count(fromMsg.fromGroup))
-				{
-					DisabledOBDiscuss.erase(fromMsg.fromGroup);
-						fromMsg.reply("成功在本多人聊天中启用旁观模式!");
-				}
-				else
-				{
-					fromMsg.reply("在本多人聊天中旁观模式没有被禁用!");
-				}
-				return 1;
-			}
-		}
-		if (Command == "off")
-		{
-			if(intT==Group){
-				if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
-				{
-					if (!DisabledOBGroup.count(fromMsg.fromGroup))
-					{
-						DisabledOBGroup.insert(fromMsg.fromGroup);
-						ObserveGroup.clear();
-						fromMsg.reply("成功在本群中禁用旁观模式!");
-					}
-					else
-					{
-						fromMsg.reply("本群中旁观模式没有被启用!");
-					}
-				}
-				else
-				{
-					fromMsg.reply("你没有权限执行此命令!");
-				}
-				return 1;
-			}
-			else {
-				if (!DisabledOBDiscuss.count(fromMsg.fromGroup))
-				{
-					DisabledOBDiscuss.insert(fromMsg.fromGroup);
-					ObserveDiscuss.clear();
-					fromMsg.reply("成功在本多人聊天中禁用旁观模式!");
-				}
-				else
-				{
-					fromMsg.reply("在本多人聊天中旁观模式没有被启用!");
-				}
-				return 1;
-			}
-		}
-		if (intT==GroupT&&DisabledOBGroup.count(fromMsg.fromGroup))
-		{
-			fromMsg.reply("在本群中旁观模式已被禁用!");
-			return 1;
-		}
-		if (intT == DiscussT && DisabledOBDiscuss.count(fromMsg.fromGroup))
-		{
-			fromMsg.reply("在本多人聊天中旁观模式已被禁用!");
-			return 1;
-		}
-		if (Command == "list")
-		{
-			string Msg = "当前的旁观者有:";
-			const auto Range = (intT == GroupT) ? ObserveGroup.equal_range(fromMsg.fromGroup) : ObserveDiscuss.equal_range(fromMsg.fromGroup);
-			for (auto it = Range.first; it != Range.second; ++it)
+			strAns += " 成功\n你的San值减少" + SanCost.substr(0, SanCost.find("/"));
+			if (SanCost.substr(0, SanCost.find("/")).find("d") != string::npos)
+				strAns += "=" + to_string(rdSuc.intTotal);
+			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSuc.intTotal)) + "点";
+			if (San.empty())
 			{
-				Msg += "\n" + getName(it->second, fromMsg.fromGroup) + "(" + to_string(it->second) + ")";
-			}
-			const string strReply = Msg == "当前的旁观者有:" ? "当前暂无旁观者" : Msg;
-			fromMsg.reply(strReply);
-		}
-		else if (Command == "clr")
-		{
-			if (intT = DiscussT) {
-				ObserveDiscuss.erase(fromMsg.fromGroup);
-				fromMsg.reply("成功删除所有旁观者!");
-			}
-			else if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
-			{
-				ObserveGroup.erase(fromMsg.fromGroup);
-				fromMsg.reply("成功删除所有旁观者!");
-			}
-			else
-			{
-				fromMsg.reply("你没有权限执行此命令!");
+				CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)]["理智"] = max(0, intSan - rdSuc.intTotal);
 			}
 		}
-		else if (Command == "exit")
+		else if (intTmpRollRes == 100 || (intSan < 50 && intTmpRollRes > 95))
 		{
-			const auto Range = (intT == GroupT) ? ObserveGroup.equal_range(fromMsg.fromGroup) : ObserveDiscuss.equal_range(fromMsg.fromGroup);
-			for (auto it = Range.first; it != Range.second; ++it)
+			strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
+			// ReSharper disable once CppExpressionWithoutSideEffects
+			rdFail.Max();
+			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
+				strAns += "最大值=" + to_string(rdFail.intTotal);
+			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
+			if (San.empty())
 			{
-				if (it->second == fromMsg.fromQQ)
-				{
-					(intT == GroupT) ? ObserveGroup.erase(it) : ObserveDiscuss.erase(it);
-					const string strReply = strNickName + "成功退出旁观模式!";
-					fromMsg.reply(strReply);
-					return 1;
-				}
+				CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
 			}
-			const string strReply = strNickName + "没有加入旁观模式!";
-			fromMsg.reply(strReply);
 		}
 		else
 		{
-			const auto Range = (intT == GroupT) ? ObserveGroup.equal_range(fromMsg.fromGroup) : ObserveDiscuss.equal_range(fromMsg.fromGroup);
-			for (auto it = Range.first; it != Range.second; ++it)
+			strAns += " 失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
+			if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
+				strAns += "=" + to_string(rdFail.intTotal);
+			strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
+			if (San.empty())
 			{
-				if (it->second == fromMsg.fromQQ)
-				{
-					const string strReply = strNickName + "已经处于旁观模式!";
-					fromMsg.reply(strReply);
-					return 1;
-				}
+				CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
 			}
-			(intT == GroupT) ? ObserveGroup.insert(make_pair(fromMsg.fromGroup, fromMsg.fromQQ)) : ObserveDiscuss.insert(make_pair(fromMsg.fromGroup, fromMsg.fromQQ));
-			const string strReply = strNickName + "成功加入旁观模式!";
-			fromMsg.reply(strReply);
 		}
+		fromMsg.reply(strAns);
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 2) == "st")
+	{
+	intMsgCnt += 2;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	if (intMsgCnt == strLowerMessage.length())
+	{
+		fromMsg.reply(GlobalMsg["strStErr"]);
+		return 1;
+	}
+	if (strLowerMessage.substr(intMsgCnt, 3) == "clr")
+	{
+		if (CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)))
+		{
+			CharacterProp.erase(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup));
+		}
+		fromMsg.reply(GlobalMsg["strPropCleared"]);
+		return 1;
+	}
+	if (strLowerMessage.substr(intMsgCnt, 3) == "del")
+	{
+		intMsgCnt += 3;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		string strSkillName;
+		while (intMsgCnt != strLowerMessage.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !(strLowerMessage[
+			intMsgCnt] == '|'))
+		{
+			strSkillName += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+			if (CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)) && CharacterProp[SourceType(
+				fromMsg.fromQQ, intT, fromMsg.fromGroup)].count(strSkillName))
+			{
+				CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)].erase(strSkillName);
+				fromMsg.reply(GlobalMsg["strPropDeleted"]);
+			}
+			else
+			{
+				fromMsg.reply(GlobalMsg["strPropNotFound"]);
+			}
+			return 1;
+	}
+	if (strLowerMessage.substr(intMsgCnt, 4) == "show")
+	{
+		intMsgCnt += 4;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		string strSkillName;
+		while (intMsgCnt != strLowerMessage.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !(strLowerMessage[
+			intMsgCnt] == '|'))
+		{
+			strSkillName += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+			if (CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)) && CharacterProp[SourceType(
+				fromMsg.fromQQ, intT, fromMsg.fromGroup)].count(strSkillName))
+			{
+				fromMsg.reply(format(GlobalMsg["strProp"], {
+					strNickName, strSkillName,
+					to_string(CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)][strSkillName])
+					}));
+			}
+			else if (SkillDefaultVal.count(strSkillName))
+			{
+				fromMsg.reply(format(GlobalMsg["strProp"], { strNickName, strSkillName, to_string(SkillDefaultVal[strSkillName]) }));
+			}
+			else
+			{
+				fromMsg.reply(GlobalMsg["strPropNotFound"]);
+			}
+			return 1;
+	}
+	bool boolError = false;
+	while (intMsgCnt != strLowerMessage.length())
+	{
+		string strSkillName;
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
+			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt]
+			!= ':')
+		{
+			strSkillName += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt
+		] == ':')intMsgCnt++;
+		string strSkillVal;
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
+			strSkillVal += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		if (strSkillName.empty() || strSkillVal.empty() || strSkillVal.length() > 3)
+		{
+			boolError = true;
+			break;
+		}
+		CharacterProp[SourceType(fromMsg.fromQQ, GroupT, fromMsg.fromGroup)][strSkillName] = stoi(strSkillVal);
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
+	}
+	if (boolError)
+	{
+		fromMsg.reply(GlobalMsg["strPropErr"]);
+	}
+	else
+	{
+		fromMsg.reply(GlobalMsg["strSetPropSuccess"]);
+	}
+	}	
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ti")
 	{
 		string strAns = strNickName + "的疯狂发作-临时症状:\n";
 		TempInsane(strAns);
 		fromMsg.reply(strAns);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "li")
-	{
-		string strAns = strNickName + "的疯狂发作-总结症状:\n";
-		LongInsane(strAns);
-		fromMsg.reply(strAns);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "sc")
-	{
-		intMsgCnt += 2;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		string SanCost = strLowerMessage.substr(intMsgCnt, fromMsg.strMsg.find(' ', intMsgCnt) - intMsgCnt);
-		intMsgCnt += SanCost.length();
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		string San;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			San += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		if (SanCost.empty() || SanCost.find("/") == string::npos)
-		{
-			fromMsg.reply(GlobalMsg["strSCInvalid"]);
-			return 1;
-		}
-		if (San.empty() && !(CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)) && CharacterProp[
-			SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)].count("理智")))
-		{
-			fromMsg.reply(GlobalMsg["strSanInvalid"]);
-			return 1;
-		}
-			for (const auto& character : SanCost.substr(0, SanCost.find("/")))
-			{
-				if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
-				{
-					fromMsg.reply(GlobalMsg["strSCInvalid"]);
-					return 1;
-				}
-			}
-			for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
-			{
-				if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
-				{
-					fromMsg.reply(GlobalMsg["strSCInvalid"]);
-					return 1;
-				}
-			}
-			RD rdSuc(SanCost.substr(0, SanCost.find("/")));
-			RD rdFail(SanCost.substr(SanCost.find("/") + 1));
-			if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
-			{
-				fromMsg.reply(GlobalMsg["strSCInvalid"]);
-				return 1;
-			}
-			if (San.length() >= 3)
-			{
-				fromMsg.reply(GlobalMsg["strSanInvalid"]);
-				return 1;
-			}
-			const int intSan = San.empty() ? CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)]["理智"] : stoi(San);
-			if (intSan == 0)
-			{
-				fromMsg.reply(GlobalMsg["strSanInvalid"]);
-				return 1;
-			}
-			string strAns = strNickName + "的Sancheck:\n1D100=";
-			const int intTmpRollRes = RandomGenerator::Randint(1, 100);
-			strAns += to_string(intTmpRollRes);
-
-			if (intTmpRollRes <= intSan)
-			{
-				strAns += " 成功\n你的San值减少" + SanCost.substr(0, SanCost.find("/"));
-				if (SanCost.substr(0, SanCost.find("/")).find("d") != string::npos)
-					strAns += "=" + to_string(rdSuc.intTotal);
-				strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSuc.intTotal)) + "点";
-				if (San.empty())
-				{
-					CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)]["理智"] = max(0, intSan - rdSuc.intTotal);
-				}
-			}
-			else if (intTmpRollRes == 100 || (intSan < 50 && intTmpRollRes > 95))
-			{
-				strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-				// ReSharper disable once CppExpressionWithoutSideEffects
-				rdFail.Max();
-				if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-					strAns += "最大值=" + to_string(rdFail.intTotal);
-				strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
-				if (San.empty())
-				{
-					CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
-				}
-			}
-			else
-			{
-				strAns += " 失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-				if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-					strAns += "=" + to_string(rdFail.intTotal);
-				strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
-				if (San.empty())
-				{
-					CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
-				}
-			}
-			fromMsg.reply(strAns);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
-	{
-		intMsgCnt += 2;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		string strSkillName;
-		while (intMsgCnt != fromMsg.strMsg.length() && !isdigit(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])) && !isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt]))
-			)
-		{
-			strSkillName += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-		while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
-			intMsgCnt++;
-		string strCurrentValue;
-		while (isdigit(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
-		{
-			strCurrentValue += fromMsg.strMsg[intMsgCnt];
-			intMsgCnt++;
-		}
-		int intCurrentVal;
-		if (strCurrentValue.empty())
-		{
-			if (CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)) && CharacterProp[SourceType(
-				fromMsg.fromQQ, intT, fromMsg.fromGroup)].count(strSkillName))
-			{
-				intCurrentVal = CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)][strSkillName];
-			}
-			else if (SkillDefaultVal.count(strSkillName))
-			{
-				intCurrentVal = SkillDefaultVal[strSkillName];
-			}
-			else
-			{
-				fromMsg.reply(GlobalMsg["strEnValInvalid"]);
-				return 1;
-			}
-		}
-		else
-		{
-			if (strCurrentValue.length() > 3)
-			{
-				fromMsg.reply(GlobalMsg["strEnValInvalid"]);
-
-				return 1;
-			}
-			intCurrentVal = stoi(strCurrentValue);
-		}
-
-		string strAns = strNickName + "的" + strSkillName + "增强或成长检定:\n1D100=";
-		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
-		strAns += to_string(intTmpRollRes) + "/" + to_string(intCurrentVal);
-
-		if (intTmpRollRes <= intCurrentVal && intTmpRollRes <= 95)
-		{
-			strAns += " 失败!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "没有变化!";
-		}
-		else
-		{
-			strAns += " 成功!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "增加1D10=";
-			const int intTmpRollD10 = RandomGenerator::Randint(1, 10);
-			strAns += to_string(intTmpRollD10) + "点,当前为" + to_string(intCurrentVal + intTmpRollD10) + "点";
-			if (strCurrentValue.empty())
-			{
-				CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)][strSkillName] = intCurrentVal +
-					intTmpRollD10;
-			}
-		}
-		fromMsg.reply(strAns);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
-	{
-		if (boolDisabledJrrpGlobal) {
-			fromMsg.reply(GlobalMsg["strDisabledJrrpGlobal"]);
-			return 1;
-		}
-		intMsgCnt += 4;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		const string Command = strLowerMessage.substr(intMsgCnt, fromMsg.strMsg.find(' ', intMsgCnt) - intMsgCnt);
-		if (intT == GroupT) {
-			if (Command == "on")
-			{
-				if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
-				{
-					if (DisabledJRRPGroup.count(fromMsg.fromGroup))
-					{
-						DisabledJRRPGroup.erase(fromMsg.fromGroup);
-						fromMsg.reply("成功在本群中启用JRRP!");
-					}
-					else
-					{
-						fromMsg.reply("在本群中JRRP没有被禁用!");
-					}
-				}
-				else
-				{
-					fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
-				}
-				return 1;
-			}
-			if (Command == "off")
-			{
-				if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
-				{
-					if (!DisabledJRRPGroup.count(fromMsg.fromGroup))
-					{
-						DisabledJRRPGroup.insert(fromMsg.fromGroup);
-						fromMsg.reply("成功在本群中禁用JRRP!");
-					}
-					else
-					{
-						fromMsg.reply("在本群中JRRP没有被启用!");
-					}
-				}
-				else
-				{
-					fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
-				}
-				return 1;
-			}
-			if (DisabledJRRPGroup.count(fromMsg.fromGroup))
-			{
-				fromMsg.reply("在本群中JRRP功能已被禁用");
-				return 1;
-			}
-		}
-		else if(intT==DiscussT){
-			if (Command == "on")
-			{
-				if (DisabledJRRPDiscuss.count(fromMsg.fromGroup))
-				{
-					DisabledJRRPDiscuss.erase(fromMsg.fromGroup);
-					fromMsg.reply("成功在此多人聊天中启用JRRP!");
-				}
-				else
-				{
-					fromMsg.reply("在此多人聊天中JRRP没有被禁用!");
-				}
-				return 1;
-			}
-			if (Command == "off")
-			{
-				if (!DisabledJRRPDiscuss.count(fromMsg.fromGroup))
-				{
-					DisabledJRRPDiscuss.insert(fromMsg.fromGroup);
-					fromMsg.reply("成功在此多人聊天中禁用JRRP!");
-				}
-				else
-				{
-					fromMsg.reply("在此多人聊天中JRRP没有被启用!");
-				}
-				return 1;
-			}
-			if (DisabledJRRPDiscuss.count(fromMsg.fromGroup))
-			{
-				fromMsg.reply("在此多人聊天中JRRP已被禁用!");
-				return 1;
-			}
-		}
-		string des;
-		string data = "QQ=" + to_string(CQ::getLoginQQ()) + "&v=20190114" + "&QueryQQ=" + to_string(fromMsg.fromQQ);
-		char *frmdata = new char[data.length() + 1];
-		strcpy_s(frmdata, data.length() + 1, data.c_str());
-		bool res = Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata, des);
-		delete[] frmdata;
-		if (res)
-		{
-			fromMsg.reply(format(GlobalMsg["strJrrp"], { strNickName, des }));
-		}
-		else
-		{
-			fromMsg.reply(format(GlobalMsg["strJrrpErr"], { des }));
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
-	{
-		intMsgCnt += 4;
-		while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
-			intMsgCnt++;
-
-		string type;
-		while (isalpha(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			type += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-
-		auto nameType = NameGenerator::Type::UNKNOWN;
-		if (type == "cn")
-			nameType = NameGenerator::Type::CN;
-		else if (type == "en")
-			nameType = NameGenerator::Type::EN;
-		else if (type == "jp")
-			nameType = NameGenerator::Type::JP;
-
-		while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
-			intMsgCnt++;
-
-		string strNum;
-		while (isdigit(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
-		{
-			strNum += fromMsg.strMsg[intMsgCnt];
-			intMsgCnt++;
-		}
-		if (strNum.size() > 2)
-		{
-			fromMsg.reply(GlobalMsg["strNameNumTooBig"]);
-			return 1;
-		}
-		int intNum = stoi(strNum.empty() ? "1" : strNum);
-		if (intNum > 10)
-		{
-			fromMsg.reply(GlobalMsg["strNameNumTooBig"]);
-			return 1;
-		}
-		if (intNum == 0)
-		{
-			fromMsg.reply(GlobalMsg["strNameNumCannotBeZero"]);
-			return 1;
-		}
-		vector<string> TempNameStorage;
-		while (TempNameStorage.size() != intNum)
-		{
-			string name = NameGenerator::getRandomName(nameType);
-			if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
-			{
-				TempNameStorage.push_back(name);
-			}
-		}
-		string strReply = strNickName + "的随机名称:\n";
-		for (auto i = 0; i != TempNameStorage.size(); i++)
-		{
-			strReply.append(TempNameStorage[i]);
-			if (i != TempNameStorage.size() - 1)strReply.append(", ");
-		}
-		fromMsg.reply(strReply);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "nnn")
-	{
-		intMsgCnt += 3;
-		while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
-			intMsgCnt++;
-		string type = strLowerMessage.substr(intMsgCnt, 2);
-		string name;
-		if (type == "cn")
-			name = NameGenerator::getChineseName();
-		else if (type == "en")
-			name = NameGenerator::getEnglishName();
-		else if (type == "jp")
-			name = NameGenerator::getJapaneseName();
-		else
-			name = NameGenerator::getRandomName();
-		Name->set(fromMsg.fromGroup, fromMsg.fromQQ, name);
-		const string strReply = format(GlobalMsg["strNameSet"], { strNickName, strip(name) });
-		fromMsg.reply(strReply);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
-	{
-		intMsgCnt += 2;
-		while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
-			intMsgCnt++;
-		string name = fromMsg.strMsg.substr(intMsgCnt);
-		if (name.length() > 50)
-		{
-			fromMsg.reply(GlobalMsg["strNameTooLongErr"]);
-			return 1;
-		}
-		if (!name.empty())
-		{
-			Name->set(fromMsg.fromGroup, fromMsg.fromQQ, name);
-			const string strReply = format(GlobalMsg["strNameSet"], { strNickName, strip(name) });
-			fromMsg.reply(strReply);
-		}
-		else
-		{
-			if (Name->del(fromMsg.fromGroup, fromMsg.fromQQ))
-			{
-				const string strReply = "已将" + strNickName + "的名称删除";
-				fromMsg.reply(strReply);
-			}
-			else
-			{
-				const string strReply = strNickName + GlobalMsg["strNameDelErr"];
-				fromMsg.reply(strReply);
-			}
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
-	{
-		intMsgCnt += 5;
-		while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
-			intMsgCnt++;
-		if (strLowerMessage.substr(intMsgCnt, 3) == "set") {
-			intMsgCnt += 3;
-			while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])) || fromMsg.strMsg[intMsgCnt] == ':')
-				intMsgCnt++;
-			string strDefaultRule = fromMsg.strMsg.substr(intMsgCnt);
-			if (strDefaultRule.empty()) {
-				DefaultRule.erase(fromMsg.fromQQ);
-				fromMsg.reply(GlobalMsg["strRuleReset"]);
-			}
-			else {
-				for (auto& n : strDefaultRule)
-					n = toupper(static_cast<unsigned char>(n));
-				DefaultRule[fromMsg.fromQQ] = strDefaultRule;
-				fromMsg.reply(GlobalMsg["strRuleSet"]);
-			}
-		}
-		else {
-			string strSearch = fromMsg.strMsg.substr(intMsgCnt);
-			string strDefaultRule = DefaultRule[fromMsg.fromQQ];
-			for (auto& n : strSearch)
-				n = toupper(static_cast<unsigned char>(n));
-			string strReturn;
-			if (DefaultRule.count(fromMsg.fromQQ) && strSearch.find(':') == string::npos && GetRule::get(strDefaultRule, strSearch, strReturn)) {
-				fromMsg.reply(strReturn);
-			}
-			else if (GetRule::analyze(strSearch, strReturn))
-			{
-				fromMsg.reply(strReturn);
-			}
-			else
-			{
-				fromMsg.reply(GlobalMsg["strRuleErr"] + strReturn);
-			}
-		}
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
-	{
-		if (boolDisabledMeGlobal)
-		{
-			fromMsg.reply(GlobalMsg["strDisabledMeGlobal"]);
-			return 1;
-		}
-		intMsgCnt += 2;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		if (intT == 0) {
-			string strGroupID;
-			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			{
-				strGroupID += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-				intMsgCnt++;
-			string strAction = strip(fromMsg.strMsg.substr(intMsgCnt));
-
-			for (auto i : strGroupID)
-			{
-				if (!isdigit(static_cast<unsigned char>(i)))
-				{
-					fromMsg.reply(GlobalMsg["strGroupIDInvalid"]);
-					return 1;
-				}
-			}
-			if (strGroupID.empty())
-			{
-				fromMsg.reply("群号不能为空!");
-				return 1;
-			}
-			if (strAction.empty())
-			{
-				fromMsg.reply("动作不能为空!");
-				return 1;
-			}
-			const long long llGroupID = stoll(strGroupID);
-			if (DisabledGroup.count(llGroupID))
-			{
-				fromMsg.reply(GlobalMsg["strDisabledErr"]);
-				return 1;
-			}
-			if (DisabledMEGroup.count(llGroupID))
-			{
-				fromMsg.reply(GlobalMsg["strMEDisabledErr"]);
-				return 1;
-			}
-			string strReply = getName(fromMsg.fromQQ, llGroupID) + strAction;
-			const int intSendRes = sendGroupMsg(llGroupID, strReply);
-			if (intSendRes < 0)
-			{
-				fromMsg.reply(GlobalMsg["strSendErr"]);
-			}
-			else
-			{
-				fromMsg.reply("命令执行成功!");
-			}
-			return 1;
-		}
-		string strAction = strLowerMessage.substr(intMsgCnt);
-		if(intT==GroupT){
-			if (strAction == "on")
-			{
-				if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
-				{
-					if (DisabledMEGroup.count(fromMsg.fromGroup))
-					{
-						DisabledMEGroup.erase(fromMsg.fromGroup);
-						fromMsg.reply("成功在本群中启用.me命令!");
-					}
-					else
-					{
-						fromMsg.reply("在本群中.me命令没有被禁用!");
-					}
-				}
-				else
-				{
-					fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
-				}
-				return 1;
-			}
-			if (strAction == "off")
-			{
-				if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
-				{
-					if (!DisabledMEGroup.count(fromMsg.fromGroup))
-					{
-						DisabledMEGroup.insert(fromMsg.fromGroup);
-						fromMsg.reply("成功在本群中禁用.me命令!");
-					}
-					else
-					{
-						fromMsg.reply("在本群中.me命令没有被启用!");
-					}
-				}
-				else
-				{
-					fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
-				}
-				return 1;
-			}
-			if (DisabledMEGroup.count(fromMsg.fromGroup))
-			{
-				fromMsg.reply(GlobalMsg["strMEDisabledErr"]);
-				return 1;
-			}
-		}
-		else if(intT==DiscussT){
-			if (strAction == "on")
-			{
-				if (DisabledMEDiscuss.count(fromMsg.fromGroup))
-				{
-					DisabledMEDiscuss.erase(fromMsg.fromGroup);
-					fromMsg.reply("成功在本多人聊天中启用.me命令!");
-				}
-				else
-				{
-					fromMsg.reply("在本多人聊天中.me命令没有被禁用!");
-				}
-				return 1;
-			}
-			if (strAction == "off")
-			{
-				if (!DisabledMEDiscuss.count(fromMsg.fromGroup))
-				{
-					DisabledMEDiscuss.insert(fromMsg.fromGroup);
-					fromMsg.reply("成功在本多人聊天中禁用.me命令!");
-				}
-				else
-				{
-					fromMsg.reply("在本多人聊天中.me命令没有被启用!");
-				}
-				return 1;
-			}
-			if (DisabledMEDiscuss.count(fromMsg.fromGroup))
-			{
-				fromMsg.reply(GlobalMsg["strMEDisabledErr"]);
-				return 1;
-			}
-		}
-		strAction = strip(fromMsg.strMsg.substr(intMsgCnt));
-		if (strAction.empty())
-		{
-			fromMsg.reply("动作不能为空!");
-			return 1;
-		}
-		const string strReply = strNickName + strAction;
-		fromMsg.reply(strReply);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "set")
-	{
-		intMsgCnt += 3;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		string strDefaultDice = strLowerMessage.substr(intMsgCnt, strLowerMessage.find(" ", intMsgCnt) - intMsgCnt);
-		while (strDefaultDice[0] == '0')
-			strDefaultDice.erase(strDefaultDice.begin());
-		if (strDefaultDice.empty())
-			strDefaultDice = "100";
-		for (auto charNumElement : strDefaultDice)
-			if (!isdigit(static_cast<unsigned char>(charNumElement)))
-			{
-				fromMsg.reply(GlobalMsg["strSetInvalid"]);
-				return 1;
-			}
-		if (strDefaultDice.length() > 3 && strDefaultDice != "1000")
-		{
-			fromMsg.reply(GlobalMsg["strSetTooBig"]);
-			return 1;
-		}
-		const int intDefaultDice = stoi(strDefaultDice);
-		if (intDefaultDice == 100)
-			DefaultDice.erase(fromMsg.fromQQ);
-		else
-			DefaultDice[fromMsg.fromQQ] = intDefaultDice;
-		const string strSetSuccessReply = "已将" + strNickName + "的默认骰类型更改为D" + strDefaultDice;
-		fromMsg.reply(strSetSuccessReply);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc6d")
-	{
-		string strReply = strNickName;
-		COC6D(strReply);
-		fromMsg.reply(strReply);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "coc6")
-	{
-		intMsgCnt += 4;
-		if (strLowerMessage[intMsgCnt] == 's')
-			intMsgCnt++;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		string strNum;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			strNum += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		if (strNum.length() > 2)
-		{
-			fromMsg.reply(GlobalMsg["strCharacterTooBig"]);
-			return 1;
-		}
-		const int intNum = stoi(strNum.empty() ? "1" : strNum);
-		if (intNum > 10)
-		{
-			fromMsg.reply(GlobalMsg["strCharacterTooBig"]);
-			return 1;
-		}
-		if (intNum == 0)
-		{
-			fromMsg.reply(GlobalMsg["strCharacterCannotBeZero"]);
-			return 1;
-		}
-		string strReply = strNickName;
-		COC6(strReply, intNum);
-		fromMsg.reply(strReply);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "dnd")
-	{
-		intMsgCnt += 3;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		string strNum;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			strNum += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		if (strNum.length() > 2)
-		{
-			fromMsg.reply(GlobalMsg["strCharacterTooBig"]);
-			return 1;
-		}
-		const int intNum = stoi(strNum.empty() ? "1" : strNum);
-		if (intNum > 10)
-		{
-			fromMsg.reply(GlobalMsg["strCharacterTooBig"]);
-			return 1;
-		}
-		if (intNum == 0)
-		{
-			fromMsg.reply(GlobalMsg["strCharacterCannotBeZero"]);
-			return 1;
-		}
-		string strReply = strNickName;
-		DND(strReply, intNum);
-		fromMsg.reply(strReply);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd")
-	{
-		string strReply = strNickName;
-		COC7D(strReply);
-		fromMsg.reply(strReply);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "coc")
-	{
-		intMsgCnt += 3;
-		if (strLowerMessage[intMsgCnt] == '7')
-			intMsgCnt++;
-		if (strLowerMessage[intMsgCnt] == 's')
-			intMsgCnt++;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		string strNum;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			strNum += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		if (strNum.length() > 2)
-		{
-			fromMsg.reply(GlobalMsg["strCharacterTooBig"]);
-			return 1;
-		}
-		const int intNum = stoi(strNum.empty() ? "1" : strNum);
-		if (intNum > 10)
-		{
-			fromMsg.reply(GlobalMsg["strCharacterTooBig"]);
-			return 1;
-		}
-		if (intNum == 0)
-		{
-			fromMsg.reply(GlobalMsg["strCharacterCannotBeZero"]);
-			return 1;
-		}
-		string strReply = strNickName;
-		COC7(strReply, intNum);
-		fromMsg.reply(strReply);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "ra")
-	{
-		intMsgCnt += 2;
-		string strSkillName;
-		string strMainDice = "D100";
-		string strSkillModify;
-		int intSkillModify = 0;
-		if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') {
-			strMainDice = strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
-				strMainDice += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-		}
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
-		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
-			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
-			':'&& strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-')
-		{
-			strSkillName += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-		if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
-			strSkillModify += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
-				strSkillModify += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			intSkillModify = stoi(strSkillModify);
-		}
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
-			':')intMsgCnt++;
-		string strSkillVal;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			strSkillVal += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			intMsgCnt++;
-		}
-		string strReason = fromMsg.strMsg.substr(intMsgCnt);
-		int intSkillVal;
-		if (strSkillVal.empty())
-		{
-			if (CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)) && CharacterProp[SourceType(
-				fromMsg.fromQQ, intT, fromMsg.fromGroup)].count(strSkillName))
-			{
-				intSkillVal = CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)][strSkillName];
-			}
-			else if (SkillDefaultVal.count(strSkillName))
-			{
-				intSkillVal = SkillDefaultVal[strSkillName];
-			}
-			else
-			{
-				fromMsg.reply(GlobalMsg["strUnknownPropErr"]);
-				return 1;
-			}
-		}
-		else if (strSkillVal.length() > 3)
-		{
-			fromMsg.reply(GlobalMsg["strPropErr"]);
-			return 1;
-		}
-		else
-		{
-			intSkillVal = stoi(strSkillVal);
-		}
-		int intFianlSkillVal = intSkillVal + intSkillModify;
-		if (intFianlSkillVal < 0 || intFianlSkillVal > 1000)
-		{
-			fromMsg.reply(GlobalMsg["strSuccessRateErr"]);
-			return 1;
-		}
-		RD rdMainDice(strMainDice, fromMsg.fromQQ);
-		const int intFirstTimeRes = rdMainDice.Roll();
-		if (intFirstTimeRes == ZeroDice_Err)
-		{
-			fromMsg.reply(GlobalMsg["strZeroDiceErr"]);
-			return 1;
-		}
-		if (intFirstTimeRes == DiceTooBig_Err)
-		{
-			fromMsg.reply(GlobalMsg["strDiceTooBigErr"]);
-			return 1;
-		}
-		const int intD100Res = rdMainDice.intTotal;
-		string strReply = strNickName + "进行" + strSkillName + strSkillModify + "检定: " + rdMainDice.FormCompleteString() + "/" +
-			to_string(intFianlSkillVal) + " ";
-		if (intD100Res <= 5 && intD100Res <= intSkillVal)strReply += GlobalMsg["strRollCriticalSuccess"];
-		else if (intD100Res == 100)strReply += GlobalMsg["strRollFumble"];
-		else if (intD100Res <= intFianlSkillVal / 5)strReply += GlobalMsg["strRollExtremeSuccess"];
-		else if (intD100Res <= intFianlSkillVal / 2)strReply += GlobalMsg["strRollHardSuccess"];
-		else if (intD100Res <= intFianlSkillVal)strReply += GlobalMsg["strRollRegularSuccess"];
-		else if (intD100Res <= 95)strReply += GlobalMsg["strRollFailure"];
-		else strReply += GlobalMsg["strRollFumble"];
-		if (!strReason.empty())
-		{
-			strReply = "由于" + strReason + " " + strReply;
-		}
-		fromMsg.reply(strReply);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "rc")
-	{
-		intMsgCnt += 2;
-		string strSkillName;
-		string strMainDice = "D100";
-		string strSkillModify;
-		int intSkillModify = 0;
-		if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') {
-			strMainDice = strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
-				strMainDice += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-		}
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
-		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
-			isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
-			':' && strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-')
-		{
-			strSkillName += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-		if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
-			strSkillModify += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
-				strSkillModify += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			intSkillModify = stoi(strSkillModify);
-		}
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
-			':')intMsgCnt++;
-		string strSkillVal;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			strSkillVal += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			intMsgCnt++;
-		}
-		string strReason = fromMsg.strMsg.substr(intMsgCnt);
-		int intSkillVal;
-		if (strSkillVal.empty())
-		{
-			if (CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)) && CharacterProp[SourceType(
-				fromMsg.fromQQ, intT, fromMsg.fromGroup)].count(strSkillName))
-			{
-				intSkillVal = CharacterProp[SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)][strSkillName];
-			}
-			else if (SkillDefaultVal.count(strSkillName))
-			{
-				intSkillVal = SkillDefaultVal[strSkillName];
-			}
-			else
-			{
-				fromMsg.reply(GlobalMsg["strUnknownPropErr"]);
-				return 1;
-			}
-		}
-		else if (strSkillVal.length() > 3)
-		{
-			fromMsg.reply(GlobalMsg["strPropErr"]);
-			return 1;
-		}
-		else
-		{
-			intSkillVal = stoi(strSkillVal);
-		}
-		int intFianlSkillVal = intSkillVal + intSkillModify;
-		if (intFianlSkillVal < 0 || intFianlSkillVal > 1000)
-		{
-			fromMsg.reply(GlobalMsg["strSuccessRateErr"]);
-			return 1;
-		}
-		RD rdMainDice(strMainDice, fromMsg.fromQQ);
-		const int intFirstTimeRes = rdMainDice.Roll();
-		if (intFirstTimeRes == ZeroDice_Err)
-		{
-			fromMsg.reply(GlobalMsg["strZeroDiceErr"]);
-			return 1;
-		}
-		if (intFirstTimeRes == DiceTooBig_Err)
-		{
-			fromMsg.reply(GlobalMsg["strDiceTooBigErr"]);
-			return 1;
-		}
-		const int intD100Res = rdMainDice.intTotal;
-		string strReply = strNickName + "进行" + strSkillName + strSkillModify + "检定: " + rdMainDice.FormCompleteString() + "/" +
-			to_string(intFianlSkillVal) + " ";
-		if (intD100Res == 1)strReply += GlobalMsg["strRollCriticalSuccess"];
-		else if (intD100Res == 100)strReply += GlobalMsg["strRollFumble"];
-		else if (intD100Res <= intFianlSkillVal / 5)strReply += GlobalMsg["strRollExtremeSuccess"];
-		else if (intD100Res <= intFianlSkillVal / 2)strReply += GlobalMsg["strRollHardSuccess"];
-		else if (intD100Res <= intFianlSkillVal)strReply += GlobalMsg["strRollRegularSuccess"];
-		else if (intD100Res <= 95)strReply += GlobalMsg["strRollFailure"];
-		else strReply += GlobalMsg["strRollFumble"];
-		if (!strReason.empty())
-		{
-			strReply = "由于" + strReason + " " + strReply;
-		}
-		fromMsg.reply(strReply);
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "draw")
-	{
-		intMsgCnt += 4;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-
-		string strDeckName;
-		while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			strDeckName += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		string strCardNum;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			strCardNum += fromMsg.strMsg[intMsgCnt];
-			intMsgCnt++;
-		}
-		auto intCardNum = strCardNum.empty() ? 1 : stoi(strCardNum);
-		if (intCardNum == 0)
-		{
-			fromMsg.reply(GlobalMsg["strNumCannotBeZero"]);
-			return 1;
-		}
-		int intFoundRes = CardDeck::findDeck(strDeckName);
-		string strReply;
-		if (intFoundRes == 0) {
-			strReply = "是说" + strDeckName + "?" + GlobalMsg["strDeckNotFound"];
-			fromMsg.reply(strReply);
-			return 1;
-		}
-		vector<string> TempDeck(CardDeck::mPublicDeck[strDeckName]);
-		strReply = "来看看" + strNickName + "的随机抽取结果:\n" + CardDeck::drawCard(TempDeck);
-		while (--intCardNum && TempDeck.size()) {
-			strReply += "\n" + CardDeck::drawCard(TempDeck);
-			if (strReply.length() > 1000) {
-				fromMsg.reply(strReply);
-				strReply.clear();
-			}
-		}
-		fromMsg.reply(strReply);
-		if (intCardNum) {
-			fromMsg.reply(GlobalMsg["strDeckEmpty"]);
-			return 1;
-		}
 	}
 	else if (strLowerMessage[intMsgCnt] == 'w')
 	{
