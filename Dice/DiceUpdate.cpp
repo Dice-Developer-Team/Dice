@@ -29,6 +29,10 @@
 #include "DiceNetwork.h"
 #include "GlobalVar.h"
 
+#ifdef _MSC_VER
+#pragma comment(lib, "user32.lib")
+#endif
+
 EVE_Menu(eventMenu)
 {
 	std::string ver;
