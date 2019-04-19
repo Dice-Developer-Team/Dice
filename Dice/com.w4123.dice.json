@@ -2,10 +2,10 @@
   "ret": 1,
   "apiver": 9,
   "name": "Dice!",
-  "version": "2.3.7",
-  "version_id": 515,
-  "author": "w4123溯洄",
-  "description": "跑团用骰子 QQ交流群:941980833或624807593(已满) 本程序使用AGPLv3开源协议授权 Copyright (c) 2018-2019 w4123溯洄",
+  "version": "2.3.7.1",
+  "version_id": 516,
+  "author": "w4123溯洄 Shiki",
+  "description": "跑团用骰子 本程序使用AGPLv3开源协议授权 Copyright (c) 2018-2019 w4123溯洄 Shiki",
   "event": [
     {
       "id": 1,

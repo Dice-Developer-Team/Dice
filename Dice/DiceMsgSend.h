@@ -51,12 +51,13 @@ public:
 	long long fromID=0;
 	MsgType fromType=MsgType::Private;
 	long long fromQQ=0;
-
-	Msg(std::string message, long long fromNum) :strMsg(message),fromQQ(fromNum),fromID(fromNum){
+	long long fromGroup = 0;
+	bool isCalled = false;
+	Msg(std::string message, long long fromNum) :strMsg(message),fromQQ(fromNum), fromID(fromNum) {
 		fromType = MsgType::Private;
 	}
 	
-	Msg(std::string message, long long fromNum, MsgType msgType,long long fromGroup) :strMsg(message), fromQQ(fromNum), fromType(msgType),fromID(fromGroup) {}
+	Msg(std::string message, long long fromGroup, MsgType msgType, long long fromNum) :strMsg(message), fromQQ(fromNum), fromType(msgType),fromID(fromGroup), fromGroup(fromGroup) {}
 
 	void reply(std::string strReply) {
 		AddMsgToQueue(strReply, fromID, fromType);
