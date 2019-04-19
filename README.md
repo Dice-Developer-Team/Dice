@@ -30,12 +30,12 @@ Latest Release: [![GitHub release](https://img.shields.io/github/release-pre/w41
 
 从GitHub克隆源码时请不要直接从master分支克隆, 因为所有的更改都会提交到此分支, 很有可能包含最新的测试性更改, 未经过测试无法保证稳定 请选择Tag中最新的Release进行下载
 
-请使用最新版Visual Studio **2015或2017** (或其独立编译器)进行编译, 项目主文件为Dice.sln, 编译时务必使用Win32模式否则无法编译成功
+请使用最新版Visual Studio 2015或以上版本 (或其独立编译器)进行编译, 项目主文件为Dice.sln, 编译时务必使用Win32模式否则无法编译成功
 
 新增: 现在可以用GCC/Clang编译, 只测试了几个版本, 编译出现问题请反馈, 下面列出编译选项, 正在写cmake
 
-- GCC: ` g++ -shared -static -std=c++14 -O2 -o com.w4123.dice.dll -Wl,--kill-at -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -pthread -lWinInet -luser32 `
-- Clang+MSVC: ` clang++ --target=i686-pc-windows-msvc  -m32 -shared -static -o com.w4123.dice.dll -Xclang -flto-visibility-public-std -std=c++14 -O2 -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -lWinInet -luser32 -pthread -Wno-invalid-source-encoding `
+- GCC(mingw_w64 GCC5及以上已测试 GCC4经过测试无法编译): ` g++ -shared -static -std=c++14 -O2 -o com.w4123.dice.dll -Wl,--kill-at -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -pthread -lWinInet `
+- Clang+MSVC: ` clang-cl /EHsc /o com.w4123.dice.dll /O2 /LD Dice\*.cpp CQSDKCPP\*.cpp Dice\CQP.lib /I CQSDK -Wno-invalid-source-encoding `
 - Clang+GCC: ` clang++ --target=i686-pc-windows-gnu -m32 -shared -static -o com.w4123.dice.dll -Xclang -flto-visibility-public-std -Wl,--kill-at -std=c++14 -O2 -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -lWinInet -luser32 -pthread -Wno-invalid-source-encoding  `
 
 编译后会得到com.w4123.dice.dll文件, 请勿更改此文件的名称! 请从Releases中下载对应的json文件(或自己编写), 放至酷Q app文件夹下, 并开启开发模式, 在应用管理中合成cpk文件即可正常使用
