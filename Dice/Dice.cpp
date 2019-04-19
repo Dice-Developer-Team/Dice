@@ -93,10 +93,12 @@ std::string getName(long long QQ, long long GroupID = 0)
 	//if (GroupID)
 	{
 		return strip(Name->get(GroupID, QQ).empty()
-			             ? (getGroupMemberInfo(GroupID, QQ).GroupNick.empty()
-				                ? getStrangerInfo(QQ).nick
-				                : getGroupMemberInfo(GroupID, QQ).GroupNick)
-			             : Name->get(GroupID, QQ));
+					? (Name->get(0, QQ).empty()
+							? (getGroupMemberInfo(GroupID, QQ).GroupNick.empty()
+									? getStrangerInfo(QQ).nick
+									: getGroupMemberInfo(GroupID, QQ).GroupNick)
+							: getGroupMemberInfo(0, QQ).GroupNick)
+					: Name->get(GroupID, QQ));
 	}
 	/*к╫ад*/
 	//return strip(getStrangerInfo(QQ).nick);
