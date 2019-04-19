@@ -34,11 +34,11 @@ struct msg_t
 {
 	string msg;
 	long long target_id = 0;
-	bool is_private = true;
+	MsgType msg_type;
 	msg_t() = default;
 
-	msg_t(string msg, long long target_id = 0, bool is_private = true) : msg(move(msg)), target_id(target_id),
-	                                                                     is_private(is_private)
+	msg_t(string msg, long long target_id, MsgType msg_type) : msg(move(msg)), target_id(target_id),
+	                                                                     msg_type(msg_type)
 	{
 	}
 };
@@ -49,10 +49,10 @@ std::queue<msg_t> msgQueue;
 // 消息发送队列锁
 mutex msgQueueMutex;
 
-void AddMsgToQueue(const string& msg, long long target_id, bool is_private)
+void AddMsgToQueue(const string& msg, long long target_id, MsgType msg_type)
 {
 	lock_guard<std::mutex> lock_queue(msgQueueMutex);
-	msgQueue.emplace(msg_t(msg, target_id, is_private));
+	msgQueue.emplace(msg_t(msg, target_id, msg_type));
 }
 
 
@@ -63,20 +63,21 @@ void SendMsg()
 	while (Enabled)
 	{
 		msg_t msg;
-		msgQueueMutex.lock();
-		if (!msgQueue.empty())
 		{
-			msg = msgQueue.front();
-			msgQueue.pop();
+			lock_guard<std::mutex> lock_queue(msgQueueMutex);
+			if (!msgQueue.empty())
+			{
+				msg = msgQueue.front();
+				msgQueue.pop();
+			}
 		}
-		msgQueueMutex.unlock();
 		if (!msg.msg.empty())
 		{
-			if (msg.is_private)
+			if (msg.msg_type == MsgType::Private)
 			{
 				CQ::sendPrivateMsg(msg.target_id, msg.msg);
 			}
-			else if (msg.target_id < 1000000000)
+			else if (msg.msg_type == MsgType::Group)
 			{
 				CQ::sendGroupMsg(msg.target_id, msg.msg);
 			}
