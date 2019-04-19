@@ -31,10 +31,15 @@ using namespace CQ;
 namespace Console
 {
 	long long masterQQ = 0;
+	//全局静默
 	bool boolDisabledGlobal = false;
+	//全局禁用.me
 	bool boolDisabledMeGlobal = false;
+	//全局禁用.jrrp
 	bool boolDisabledJrrpGlobal = false;
+	//私用模式
 	bool boolPreserve = false;
+	//禁用讨论组
 	bool boolNoDiscuss = false;
 	//个性化语句
 	std::map<std::string, std::string> PersonalMsg;
@@ -91,8 +96,22 @@ namespace Console
 			return;
 		}
 		if (strOption == "delete") {
-			AddMsgToQueue("你不再是本骰娘的Master！", masterQQ, MsgType::Private);
+			AddMsgToQueue("你不再是"+GlobalMsg["strSelfName"]+"的Master！", masterQQ, MsgType::Private);
 			masterQQ = 0;
+		}
+		else if (strOption == "state") {
+			string strReply;
+			strReply += getStrangerInfo(getLoginQQ()).nick + "的当前情况\n"
+				+ (boolPreserve?"私用模式":("公用模式，" + boolNoDiscuss ? "禁用讨论组" : "启用讨论组"))+ "\n"
+				+ "全局开关：" + (boolDisabledGlobal ? "禁用" : "启用") + "\n"
+				+ "全局.me开关：" + (boolDisabledMeGlobal ? "禁用" : "启用") + "\n"
+				+ "全局.jrrp开关：" + (boolDisabledJrrpGlobal ? "禁用" : "启用") + "\n"
+				+ "所在群聊数：" + to_string(getGroupList().size()) + "\n"
+				+ "黑名单用户数："+ to_string(BlackQQ.size())+ "\n"
+				+ "黑名单群数：" + to_string(BlackGroup.size()) + "\n"
+				+ "白名单用户数：" + to_string(WhiteQQ.size()) + "\n"
+				+ "白名单群数：" + to_string(WhiteGroup.size());
+			AddMsgToQueue(strReply, masterQQ, MsgType::Private);
 		}
 		else {
 			while (isspace(static_cast<unsigned char>(strMessage[intMsgCnt])))intMsgCnt++;

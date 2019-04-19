@@ -35,8 +35,8 @@ CQ::logger DiceLogger("Dice!");
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-const unsigned short Dice_Build = 516;
-const std::string Dice_Ver_Without_Build = "2.3.7.1";
+const unsigned short Dice_Build = 520;
+const std::string Dice_Ver_Without_Build = "2.3.7.2";
 const std::string DiceRequestHeader = "Dice/" + Dice_Ver_Without_Build;
 const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 const std::string Dice_Short_Ver = "Dice! by 溯洄 Shiki.Ver " + Dice_Ver;
@@ -141,12 +141,15 @@ std::map<std::string, std::string> GlobalMsg
 	{"strJrrp", "{0}今天的人品值是: {1}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{0}"},
 	{"strAddGroup", ""},
+	{"strSelfName", "本骰娘"},
 	{"strBotMsg", ""},
 	{"strHlpMsg" , Dice_Short_Ver + "\n" +
 	R"(请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
 跑团记录着色器: https://logpainter.kokona.tech
 <通用命令>
 .r [掷骰表达式*] [原因]			普通掷骰
+.nn [名称]					设置/删除昵称
+.nnn [cn/jp/en]				随机设置昵称
 .rs	[掷骰表达式*] [原因]			简化输出
 .w/ww XaY						骰池
 .set [1-99999之间的整数]			设置默认骰
@@ -166,8 +169,6 @@ std::map<std::string, std::string> GlobalMsg
 <仅限群/多人聊天>
 .ri [加值] [昵称]			DnD先攻掷骰
 .init [clr]					DnD先攻查看/清空
-.nn [名称]					设置/删除昵称
-.nnn [cn/jp/en]				随机设置昵称
 .rh [掷骰表达式*] [原因]			暗骰,结果私聊发送
 .bot [on/off] [机器人QQ号]		机器人开启或关闭
 .ob [exit/list/clr/on/off]			旁观模式
@@ -179,7 +180,7 @@ std::map<std::string, std::string> GlobalMsg
  支持使用K来取较大的几个骰子
  支持使用 个数#表达式 进行多轮掷骰
 **SC表达式为 成功扣San/失败扣San,如:1/1d6
-**官方骰娘相关**/使用手册/插件交流/bug反馈/查看源代码请加QQ群941980833或624807593(已满))"}
+使用手册/插件交流/bug反馈/查看源代码请加QQ群192499947)"}
 };
 
 std::map<std::string, std::string> EditedMsg;

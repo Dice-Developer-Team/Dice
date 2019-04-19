@@ -97,7 +97,7 @@ std::string getName(long long QQ, long long GroupID = 0)
 							? (getGroupMemberInfo(GroupID, QQ).GroupNick.empty()
 									? getStrangerInfo(QQ).nick
 									: getGroupMemberInfo(GroupID, QQ).GroupNick)
-							: getGroupMemberInfo(0, QQ).GroupNick)
+							: Name->get(0, QQ))
 					: Name->get(GroupID, QQ));
 	}
 	/*私聊*/
@@ -526,7 +526,7 @@ int DiceReply(Msg fromMsg) {
 		intMsgCnt += 6;
 		if (masterQQ == 0) {
 			masterQQ = fromMsg.fromQQ;
-			fromMsg.reply("试问，你就是本骰娘的Master√");
+			fromMsg.reply("试问，你就是"+GlobalMsg["strSelfName"]+"的Master√");
 		}
 		else if (fromMsg.fromQQ == masterQQ) {
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
@@ -534,6 +534,7 @@ int DiceReply(Msg fromMsg) {
 			//命令选项
 			Process(fromMsg.strMsg.substr(intMsgCnt));
 		}
+		return 1;
 	}
 	if (BlackQQ.count(fromMsg.fromQQ) || (intT == GroupT &&BlackGroup.count(fromMsg.fromGroup))) {
 		return 1;
@@ -766,10 +767,6 @@ int DiceReply(Msg fromMsg) {
 			fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
 			return 1;
 		}
-		if (getGroupMemberInfo(fromMsg.fromGroup, getLoginQQ()).permissions == 1) {
-			fromMsg.reply(GlobalMsg["strSelfPermissionErr"]);
-			return 1;
-		}
 		intMsgCnt += 5;
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
@@ -779,6 +776,42 @@ int DiceReply(Msg fromMsg) {
 		{
 			Command += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
+		}
+		string strReply;
+		if (Command == "state") {
+			time_t tNow = time(NULL);
+			const int intTMonth= 30 * 24 * 60 * 60;
+			set<string> sInact;
+			set<string> sBlackQQ; 
+			for (auto each : getGroupMemberList(fromMsg.fromGroup)) {
+				if (!each.LastMsgTime || tNow - each.LastMsgTime > intTMonth) {
+					sInact.insert(each.GroupNick + "(" + to_string(each.QQID) + ")");
+				}
+				if (BlackQQ.count(each.QQID)) {
+					sBlackQQ.insert(each.GroupNick + "(" + to_string(each.QQID) + ")");
+				}
+			}
+			strReply += getGroupList()[fromMsg.fromGroup] + "——本群现状:\n"
+				+ "群号:" + to_string(fromMsg.fromGroup) + "\n"
+				+ GlobalMsg["strSelfName"] + "在本群状态：" + (DisabledGroup.count(fromMsg.fromGroup) ? "禁用" : "启用") + "\n"
+				+ ".me：" + (DisabledMEGroup.count(fromMsg.fromGroup) ? "禁用" : "启用") + "\n"
+				+ ".jrrp：" + (DisabledJRRPGroup.count(fromMsg.fromGroup) ? "禁用" : "启用")+ "\n"
+				+ (DisabledOBGroup.count(fromMsg.fromGroup) ? "已禁用旁观模式\n" : "")
+				+ "入群欢迎:" +(WelcomeMsg.count(fromMsg.fromGroup) ? "已设置" : "未设置")
+				+ (sInact.size() ? "\n30天不活跃群员数：" + to_string(sInact.size()) : "");
+			if (sBlackQQ.size()) {
+				strReply += "\n"+ GlobalMsg["strSelfName"] +"的黑名单成员:";
+				for (auto each : sBlackQQ) {
+					strReply += "\n" + each;
+				}
+			}
+			
+			fromMsg.reply(strReply);
+			return 1;
+		}
+		if (getGroupMemberInfo(fromMsg.fromGroup, getLoginQQ()).permissions == 1) {
+			fromMsg.reply(GlobalMsg["strSelfPermissionErr"]);
+			return 1;
 		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
@@ -1503,7 +1536,7 @@ int DiceReply(Msg fromMsg) {
 	intMsgCnt += 2;
 	while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
 		intMsgCnt++;
-	string name = fromMsg.strMsg.substr(intMsgCnt);
+	string name = strip(fromMsg.strMsg.substr(intMsgCnt));
 	if (name.length() > 50)
 	{
 		fromMsg.reply(GlobalMsg["strNameTooLongErr"]);
@@ -2897,7 +2930,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 	if (beingOperateQQ == getLoginQQ()) {
 		if (masterQQ&&boolMasterMode) {
-			string strMsg = to_string(fromQQ)+"将本骰娘移出了群" + to_string(fromGroup) + "！";
+			string strMsg = to_string(fromQQ)+"将"+GlobalMsg["strSelfName"]+"移出了群" + to_string(fromGroup) + "！";
 			AddMsgToQueue(strMsg, masterQQ,MsgType::Private);
 			if (WhiteQQ.count(fromQQ)) {
 				WhiteQQ.erase(fromQQ);
