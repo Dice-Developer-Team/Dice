@@ -44,7 +44,24 @@ enum class MsgType
  *  MsgType msg_type 消息类型
  */
 void AddMsgToQueue(const std::string& msg, long long target_id, MsgType msg_type);
+//打包待处理消息
+class Msg {
+public:
+	std::string strMsg;
+	long long fromID=0;
+	MsgType fromType=MsgType::Private;
+	long long fromQQ=0;
 
+	Msg(std::string message, long long fromNum) :strMsg(message),fromQQ(fromNum),fromID(fromNum){
+		fromType = MsgType::Private;
+	}
+	
+	Msg(std::string message, long long fromNum, MsgType msgType,long long fromGroup) :strMsg(message), fromQQ(fromNum), fromType(msgType),fromID(fromGroup) {}
+
+	void reply(std::string strReply) {
+		AddMsgToQueue(strReply, fromID, fromType);
+	}
+};
 /*
  * 消息发送线程函数
  * 注意: 切勿在主线程中调用此函数, 此函数仅用于初始化消息发送线程
