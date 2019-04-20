@@ -1642,12 +1642,24 @@ namespace Dice
 				name = NameGenerator::getJapaneseName();
 			else
 				name = NameGenerator::getRandomName();
-			Name->set(dice_msg.group_id, dice_msg.qq_id, name);
-			const string strReply = "已将" + strNickName + "的名称更改为" + name;
+			if (dice_msg.msg_type == Dice::MsgType::Private)
+			{
+				Name->set(0LL, dice_msg.qq_id, name);
+			}
+			else
+			{
+				Name->set(dice_msg.group_id, dice_msg.qq_id, name);
+			}
+			const string strReply = "已将" + strNickName + "的" + (dice_msg.msg_type == Dice::MsgType::Private ? "全局" : "") +"名称更改为" + name;
 			dice_msg.Reply(strReply);
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 		{
+			if (dice_msg.msg_type == Dice::MsgType::Private)
+			{
+				dice_msg.Reply(GlobalMsg["strCommandNotAvailableErr"]);
+				return;
+			}
 			intMsgCnt += 2;
 			while (isspace(static_cast<unsigned char>(dice_msg.msg[intMsgCnt])))
 				intMsgCnt++;
@@ -1668,6 +1680,37 @@ namespace Dice
 				if (Name->del(dice_msg.group_id, dice_msg.qq_id))
 				{
 					const string strReply = "已将" + strNickName + "的名称删除";
+					dice_msg.Reply(strReply);
+				}
+				else
+				{
+					const string strReply = strNickName + GlobalMsg["strNameDelErr"];
+					dice_msg.Reply(strReply);
+				}
+			}
+		}
+		else if (strLowerMessage[intMsgCnt] == 'n')
+		{
+			intMsgCnt += 1;
+			while (isspace(static_cast<unsigned char>(dice_msg.msg[intMsgCnt])))
+				intMsgCnt++;
+			string name = dice_msg.msg.substr(intMsgCnt);
+			if (name.length() > 50)
+			{
+				dice_msg.Reply(GlobalMsg["strNameTooLongErr"]);
+				return;
+			}
+			if (!name.empty())
+			{
+				Name->set(0LL, dice_msg.qq_id, name);
+				const string strReply = "已将" + strNickName + "的全局名称更改为" + strip(name);
+				dice_msg.Reply(strReply);
+			}
+			else
+			{
+				if (Name->del(0LL, dice_msg.qq_id))
+				{
+					const string strReply = "已将" + strNickName + "的全局名称删除";
 					dice_msg.Reply(strReply);
 				}
 				else
