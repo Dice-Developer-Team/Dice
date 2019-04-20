@@ -228,5 +228,8 @@
     <None Include="com.w4123.dice.json">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="CustomMsg.json">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -274,6 +274,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="com.w4123.dice.json" />
+    <None Include="CustomMsg.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

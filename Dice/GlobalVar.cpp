@@ -62,14 +62,10 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 
 #endif /*__clang__*/
 
-std::map<std::string, std::string> GlobalMsg
+std::map<const std::string, std::string> GlobalMsg
 {
 	{"strNameNumTooBig", "生成数量过多!请输入1-10之间的数字!"},
 	{"strNameNumCannotBeZero", "生成数量不能为零!请输入1-10之间的数字!"},
-	{"strSetInvalid", "无效的默认骰!请输入1-99999之间的数字!"},
-	{"strSetTooBig", "默认骰过大!请输入1-99999之间的数字!"},
-	{"strSetCannotBeZero", "默认骰不能为零!请输入1-99999之间的数字!"},
-	{"strCharacterCannotBeZero", "人物作成次数不能为零!请输入1-10之间的数字!"},
 	{"strSetInvalid", "无效的默认骰!请输入1-99999之间的数字!"},
 	{"strSetTooBig", "默认骰过大!请输入1-99999之间的数字!"},
 	{"strSetCannotBeZero", "默认骰不能为零!请输入1-99999之间的数字!"},
