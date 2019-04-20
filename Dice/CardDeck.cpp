@@ -107,7 +107,9 @@ namespace CardDeck
 				strReply += "\n"+ strTempName +"?发现未知牌堆名";
 				break;
 			}
-			TempDeckList[strTempName]=mPublicDeck[strTempName];
+			else if (TempDeckList.count(strTempName)==0) {
+				TempDeckList[strTempName] = mPublicDeck[strTempName];
+			}
 			strReply.replace(strReply.begin()+lq, strReply.begin() + rq+1, drawCard(TempDeckList[strTempName]));
 		}
 		while (strReply.find('[') != std::string::npos) {
