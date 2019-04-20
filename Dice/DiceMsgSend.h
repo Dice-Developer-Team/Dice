@@ -24,26 +24,21 @@
 #ifndef DICE_MSG_SEND
 #define DICE_MSG_SEND
 #include <string>
+#include "DiceMsg.h"
 
 /*
- * 消息类型枚举类
- * 用于发送消息
- */
-enum class MsgType
-{
-	Private,
-	Group,
-	Discuss
-};
-
-/*
- *  加锁并将消息存入消息发送队列
+ *  加锁并将消息存入消息发送队列(移动)
  *  Param:
- *  const std::string& msg 消息内容字符串
- *  long long target_id 目标ID(QQ,群号或讨论组uin)
- *  MsgType msg_type 消息类型
+ *  Dice::DiceMsg&& dice_msg 消息信息
  */
-void AddMsgToQueue(const std::string& msg, long long target_id, MsgType msg_type);
+void AddMsgToQueue(Dice::DiceMsg&& dice_msg);
+
+/*
+ *  加锁并将消息存入消息发送队列(复制)
+ *  Param:
+ *  const Dice::DiceMsg& dice_msg 消息信息
+ */
+void AddMsgToQueue(const Dice::DiceMsg& dice_msg);
 
 /*
  * 消息发送线程函数

@@ -34,7 +34,7 @@ void ReadCustomMsg(std::ifstream& in)
 	for (nlohmann::json::iterator it = customMsg.begin(); it != customMsg.end(); ++it) {
 		if(GlobalMsg.count(it.key()))
 		{
-			if (it.key() != "strHlpMsg")
+			if (it.key() != "strHelpMsg")
 			{
 				GlobalMsg[it.key()] = UTF8toGBK(it.value().get<std::string>());
 			}

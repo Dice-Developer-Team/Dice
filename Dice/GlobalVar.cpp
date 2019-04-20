@@ -35,8 +35,8 @@ CQ::logger DiceLogger("Dice!");
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-const unsigned short Dice_Build = 515;
-const std::string Dice_Ver_Without_Build = "2.3.7";
+const unsigned short Dice_Build = 523;
+const std::string Dice_Ver_Without_Build = "2.3.8";
 const std::string DiceRequestHeader = "Dice/" + Dice_Ver_Without_Build;
 const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 const std::string Dice_Short_Ver = "Dice! by 溯洄 Version " + Dice_Ver;
@@ -48,7 +48,7 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version_
 const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__ + "]";
 #else
 const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " UNKNOWN]"
-#endif /*__clang__*/
+#endif /*_MSC_VER*/
 
 #else
 
@@ -58,9 +58,9 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_M
 const std::string Dice_Full_Ver = Dice_Short_Ver + " [GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__ + "]";
 #else
 const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
-#endif /*__clang__*/
-
 #endif /*_MSC_VER*/
+
+#endif /*__clang__*/
 
 std::map<std::string, std::string> GlobalMsg
 {
@@ -79,11 +79,6 @@ std::map<std::string, std::string> GlobalMsg
 	{"strSCInvalid", "SC表达式输入不正确,格式为成功扣San/失败扣San,如1/1d6!"},
 	{"strSanInvalid", "San值输入不正确,请输入1-99范围内的整数!"},
 	{"strEnValInvalid", "技能值或属性输入不正确,请输入1-99范围内的整数!"},
-	{"strGroupIDInvalid", "无效的群号!"},
-	{"strSendErr", "消息发送失败!"},
-	{"strDisabledErr", "命令无法执行:机器人已在此群中被关闭!"},
-	{"strMEDisabledErr", "管理员已在此群中禁用.me命令!"},
-	{"strHELPDisabledErr", "管理员已在此群中禁用.help命令!"},
 	{"strNameDelErr", "没有设置名称,无法删除!"},
 	{"strValueErr", "掷骰表达式输入错误!"},
 	{"strInputErr", "命令或掷骰表达式输入错误!"},
@@ -98,9 +93,9 @@ std::map<std::string, std::string> GlobalMsg
 	{"strZeroDiceErr", "咦?我的骰子呢?"},
 	{"strRollTimeExceeded", "掷骰轮数超过了最大轮数限制!"},
 	{"strRollTimeErr", "异常的掷骰轮数"},
-	{"strWelcomeMsgClearNotice", "已清除本群的入群欢迎词"},
-	{"strWelcomeMsgClearErr", "错误:没有设置入群欢迎词，清除失败"},
-	{"strWelcomeMsgUpdateNotice", "已更新本群的入群欢迎词"},
+	{"strWelcomeMsgClearedNotice", "已清除本群的入群欢迎词"},
+	{"strWelcomeMsgIsEmptyErr", "错误:没有设置入群欢迎词，清除失败"},
+	{"strWelcomeMsgUpdatedNotice", "已更新本群的入群欢迎词"},
 	{"strPermissionDeniedErr", "错误:此操作需要群主或管理员权限"},
 	{"strNameTooLongErr", "错误:名称过长(最多为50英文字符)"},
 	{"strUnknownPropErr", "错误:属性不存在"},
@@ -118,7 +113,36 @@ std::map<std::string, std::string> GlobalMsg
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
 	{"strJrrp", "{0}今天的人品值是: {1}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{0}"},
-	{"strHlpMsg" , Dice_Short_Ver + "\n" +
+	{"strFumble", "大失败"},
+	{"strFailure", "失败"},
+	{"strSuccess", "成功"},
+	{"strHardSuccess", "困难成功"},
+	{"strExtremeSuccess", "极难成功"},
+	{"strCriticalSuccess", "大成功"},
+	{"strInitListClearedNotice", "成功清除先攻记录!"},
+	{"strInitListIsEmptyErr", "错误: 先攻列表为空!"},
+	{"strCommandNotAvailableErr", "错误: 此命令仅可在群/讨论组中使用"},
+	{"strSuccessfullyEnabledNotice", "成功开启本机器人!"},
+	{"strAlreadyEnabledErr", "本机器人已经处于开启状态!"},
+	{"strSuccessfullyDisabledNotice", "成功关闭本机器人!"},
+	{"strAlreadyDisabledErr", "本机器人已经处于关闭状态!"},
+	{"strObCommandSuccessfullyEnabledNotice", "成功在本群/讨论组中启用旁观模式!"},
+	{"strObCommandAlreadyEnabledErr", "错误: 在本群/讨论组旁观模式已经被启用!"},
+	{"strObCommandSuccessfullyDisabledNotice", "成功在本群/讨论组中禁用旁观模式!"},
+	{"strObCommandAlreadyDisabledErr", "错误: 在本群/讨论组旁观模式已经被禁用!"},
+	{"strObCommandDisabledErr", "管理员已在本群/讨论组中禁用旁观模式!"},
+	{"strObListClearedNotice", "成功删除所有旁观者!"},
+	{"strJrrpCommandSuccessfullyEnabledNotice", "成功在本群/讨论组中启用.jrrp命令!"},
+	{"strJrrpCommandAlreadyEnabledErr", "错误: 在本群/讨论组中.jrrp命令已经被启用!"},
+	{"strJrrpCommandSuccessfullyDisabledNotice", "成功在本群/讨论组中禁用.jrrp命令!"},
+	{"strJrrpCommandAlreadyDisabledErr", "错误: 在本群/讨论组中.jrrp命令已经被禁用!"},
+	{"strJrrpCommandDisabledErr", "管理员已在此群/讨论组中禁用.jrrp命令!"},
+	{"strHelpCommandSuccessfullyEnabledNotice", "成功在本群/讨论组中启用.help命令!"},
+	{"strHelpCommandAlreadyEnabledErr", "错误: 在本群/讨论组中.help命令已经被启用!"},
+	{"strHelpCommandSuccessfullyDisabledNotice", "成功在本群/讨论组中禁用.help命令!"},
+	{"strHelpCommandAlreadyDisabledErr", "错误: 在本群/讨论组中.help命令已经被禁用!"},
+	{"strHelpCommandDisabledErr", "管理员已在此群/讨论组中禁用.help命令!"},
+	{"strHelpMsg" , Dice_Short_Ver + "\n" +
 	R"(请使用!dismiss [机器人QQ号]命令让机器人自动退群或讨论组！
 跑团记录着色器: https://logpainter.kokona.tech
 <通用命令>
@@ -137,22 +161,19 @@ std::map<std::string, std::string> GlobalMsg
 .jrrp [on/off]				今日人品检定
 .name [cn/jp/en] [个数]			生成随机名称
 .rules [规则名称:]规则条目		规则查询
+.nn [名称]					设置/删除昵称
+.nnn [cn/jp/en]				随机设置昵称
+.rh [掷骰表达式*] [原因]			暗骰,结果私聊发送
 .help						显示帮助
 <仅限群/多人聊天>
 .ri [加值] [昵称]			DnD先攻掷骰
 .init [clr]					DnD先攻查看/清空
-.nn [名称]					设置/删除昵称
-.nnn [cn/jp/en]				随机设置昵称
-.rh [掷骰表达式*] [原因]			暗骰,结果私聊发送
 .bot [on/off] [机器人QQ号]		机器人开启或关闭
 .ob [exit/list/clr/on/off]			旁观模式
-.me on/off/动作				以第三方视角做出动作
 .welcome 欢迎消息				群欢迎提示
-<仅限私聊>
-.me 群号 动作				以第三方视角做出动作
 *COC7惩罚骰为P+个数,奖励骰为B+个数
  支持使用K来取较大的几个骰子
  支持使用 个数#表达式 进行多轮掷骰
 **SC表达式为 成功扣San/失败扣San,如:1/1d6
-插件交流/bug反馈/查看源代码请加QQ群941980833或624807593(已满))"}
+插件交流/bug反馈/查看源代码请加QQ群941980833或624807593(已满)"}
 };

@@ -90,6 +90,12 @@
     <ClCompile Include="DiceNetwork.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DiceMsg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="EventHandler.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -201,6 +207,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="DiceNetwork.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceMsg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceMsgType.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EventHandler.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

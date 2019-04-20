@@ -43,7 +43,7 @@ void NameStorage::read()
 
 bool NameStorage::set(long long GroupID, long long QQ, string name)
 {
-	Name[GroupID][QQ] = name;
+	Name[GroupID][QQ] = std::move(name);
 	return true;
 }
 

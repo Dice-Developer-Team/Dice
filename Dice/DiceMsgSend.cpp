@@ -25,34 +25,28 @@
 #include <string>
 #include <thread>
 #include "CQAPI_EX.h"
-#include "DiceMsgSend.h"
+#include "DiceMsg.h"
+#include "DiceMsgType.h"
 #include "GlobalVar.h"
 using namespace std;
 
-// 消息发送存储结构体
-struct msg_t
-{
-	string msg;
-	long long target_id = 0;
-	MsgType msg_type;
-	msg_t() = default;
-
-	msg_t(string msg, long long target_id, MsgType msg_type) : msg(move(msg)), target_id(target_id),
-	                                                                     msg_type(msg_type)
-	{
-	}
-};
 
 // 消息发送队列
-std::queue<msg_t> msgQueue;
+std::queue<Dice::DiceMsg> msgQueue;
 
 // 消息发送队列锁
 mutex msgQueueMutex;
 
-void AddMsgToQueue(const string& msg, long long target_id, MsgType msg_type)
+void AddMsgToQueue(Dice::DiceMsg&& dice_msg)
 {
 	lock_guard<std::mutex> lock_queue(msgQueueMutex);
-	msgQueue.emplace(msg_t(msg, target_id, msg_type));
+	msgQueue.push(move(dice_msg));
+}
+
+void AddMsgToQueue(const Dice::DiceMsg& dice_msg)
+{
+	lock_guard<std::mutex> lock_queue(msgQueueMutex);
+	msgQueue.push(dice_msg);
 }
 
 
@@ -62,28 +56,28 @@ void SendMsg()
 	msgSendThreadRunning = true;
 	while (Enabled)
 	{
-		msg_t msg;
+		Dice::DiceMsg dice_msg;
 		{
 			lock_guard<std::mutex> lock_queue(msgQueueMutex);
 			if (!msgQueue.empty())
 			{
-				msg = msgQueue.front();
+				dice_msg = std::move(msgQueue.front());
 				msgQueue.pop();
 			}
 		}
-		if (!msg.msg.empty())
+		if (!dice_msg.msg.empty())
 		{
-			if (msg.msg_type == MsgType::Private)
+			if (dice_msg.msg_type == Dice::MsgType::Private)
 			{
-				CQ::sendPrivateMsg(msg.target_id, msg.msg);
+				CQ::sendPrivateMsg(dice_msg.qq_id, dice_msg.msg);
 			}
-			else if (msg.msg_type == MsgType::Group)
+			else if (dice_msg.msg_type == Dice::MsgType::Group)
 			{
-				CQ::sendGroupMsg(msg.target_id, msg.msg);
+				CQ::sendGroupMsg(dice_msg.group_id, dice_msg.msg);
 			}
 			else
 			{
-				CQ::sendDiscussMsg(msg.target_id, msg.msg);
+				CQ::sendDiscussMsg(dice_msg.group_id, dice_msg.msg);
 			}
 		}
 		else
