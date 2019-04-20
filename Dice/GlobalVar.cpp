@@ -157,6 +157,7 @@ std::map<const std::string, std::string> GlobalMsg
 .jrrp [on/off]				今日人品检定
 .name [cn/jp/en] [个数]			生成随机名称
 .rules [规则名称:]规则条目		规则查询
+.n [名称]					设置/删除全局昵称
 .nn [名称]					设置/删除昵称
 .nnn [cn/jp/en]				随机设置昵称
 .rh [掷骰表达式*] [原因]			暗骰,结果私聊发送
