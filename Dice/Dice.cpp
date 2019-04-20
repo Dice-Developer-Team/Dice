@@ -2156,6 +2156,15 @@ int DiceReply(Msg fromMsg) {
 			strSkillName += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
+			SourceType sCharProp= SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup);
+			if (strSkillName.empty()&& CharacterProp.count(sCharProp)) {
+				string strReply = strNickName + "的属性列表：";
+				for (auto each : CharacterProp[sCharProp]) {
+					strReply += "\t" + each.first + ":" + to_string(each.second);
+				}
+				fromMsg.reply(strReply);
+				return 1;
+			}
 			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
 			if (CharacterProp.count(SourceType(fromMsg.fromQQ, intT, fromMsg.fromGroup)) && CharacterProp[SourceType(
 				fromMsg.fromQQ, intT, fromMsg.fromGroup)].count(strSkillName))
