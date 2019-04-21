@@ -1189,7 +1189,7 @@ namespace Dice
 				}
 				else if (dice_msg.msg_type == Dice::MsgType::Discuss)
 				{
-					range = ObserveGroup.equal_range(dice_msg.group_id);
+					range = ObserveDiscuss.equal_range(dice_msg.group_id);
 				}
 				for (auto it = range.first; it != range.second; ++it)
 				{
@@ -1228,7 +1228,7 @@ namespace Dice
 				}
 				else if (dice_msg.msg_type == Dice::MsgType::Discuss)
 				{
-					range = ObserveGroup.equal_range(dice_msg.group_id);
+					range = ObserveDiscuss.equal_range(dice_msg.group_id);
 				}
 				for (auto it = range.first; it != range.second; ++it)
 				{
@@ -1242,7 +1242,6 @@ namespace Dice
 						{
 							ObserveDiscuss.erase(it);
 						}
-						ObserveGroup.erase(it);
 						const string strReply = strNickName + "成功退出旁观模式!";
 						dice_msg.Reply(strReply);
 						return;
@@ -1260,7 +1259,7 @@ namespace Dice
 				}
 				else if (dice_msg.msg_type == Dice::MsgType::Discuss)
 				{
-					range = ObserveGroup.equal_range(dice_msg.group_id);
+					range = ObserveDiscuss.equal_range(dice_msg.group_id);
 				}
 				for (auto it = range.first; it != range.second; ++it)
 				{
