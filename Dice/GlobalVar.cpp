@@ -136,6 +136,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
 	{"strNoDiscuss", "本骰娘现不支持讨论组服务，即将退出"},
 	{"strGroupClr", "本骰娘清退中，即将退群"},
+	{"strOverdue","{0}已经在这里被放置{1}天啦，马上就会离开这里了"},
 	{"strGlobalOff","休假中，暂停服务×"},
 	{"strPreserve", "本骰娘私有私用，勿扰勿怪"},
 	{"strJrrp", "{0}今天的人品值是: {1}"},

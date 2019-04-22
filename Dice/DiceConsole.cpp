@@ -25,6 +25,7 @@
 #include "DiceConsole.h"
 #include "GlobalVar.h"
 #include "DiceMsgSend.h"
+#include "MsgFormat.h"
 
 using namespace std;
 using namespace CQ;
@@ -41,6 +42,8 @@ namespace Console
 	bool boolPreserve = false;
 	//禁用讨论组
 	bool boolNoDiscuss = false;
+	//讨论组消息记录
+	std::map<long long, time_t> DiscussList;
 	//个性化语句
 	std::map<std::string, std::string> PersonalMsg;
 	//botoff的群
@@ -65,6 +68,26 @@ namespace Console
 					AddMsgToQueue(GlobalMsg["strGroupClr"], eachGroup.first, MsgType::Group);
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
+					intCnt++;
+				}
+			}
+		}
+		else if (isdigit(strPara[0])) {
+			time_t tNow(NULL);
+			time_t tLim= tNow - stoi(strPara) * 24 * 60 * 60;
+			for (auto eachGroup : GroupList) {
+				if (getGroupMemberInfo(eachGroup.first, getLoginQQ()).LastMsgTime < tLim) {
+					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSlefName"], strPara }), eachGroup.first, MsgType::Group);
+					Sleep(10);
+					setGroupLeave(eachGroup.first);
+					intCnt++;
+				}
+			}
+			for (auto eachDiscuss : DiscussList) {
+				if (eachDiscuss.second < tLim) {
+					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSlefName"], strPara }), eachDiscuss.first, MsgType::Group);
+					Sleep(10);
+					setDiscussLeave(eachDiscuss.first);
 					intCnt++;
 				}
 			}
@@ -107,6 +130,7 @@ namespace Console
 				+ "全局.me开关：" + (boolDisabledMeGlobal ? "禁用" : "启用") + "\n"
 				+ "全局.jrrp开关：" + (boolDisabledJrrpGlobal ? "禁用" : "启用") + "\n"
 				+ "所在群聊数：" + to_string(getGroupList().size()) + "\n"
+				+ (DiscussList.size() ? "有记录的讨论组数：" + to_string(DiscussList.size()) + "\n" : "")
 				+ "黑名单用户数："+ to_string(BlackQQ.size())+ "\n"
 				+ "黑名单群数：" + to_string(BlackGroup.size()) + "\n"
 				+ "白名单用户数：" + to_string(WhiteQQ.size()) + "\n"
@@ -254,12 +278,13 @@ namespace Console
 				long long llTargetID = stoll(strTargetID);
 				if (strOption == "dismiss") {
 					WhiteGroup.erase(llTargetID);
-					if (getGroupList().count(llTargetID)&& llTargetID<1000000000) {
+					if (getGroupList().count(llTargetID)) {
 						setGroupLeave(llTargetID);
 						AddMsgToQueue("骰娘已退出该群√", masterQQ, MsgType::Private);
 					}
 					else if(llTargetID > 1000000000&& setDiscussLeave(llTargetID)==0) {
 						AddMsgToQueue("骰娘已退出该讨论组√", masterQQ, MsgType::Private);
+						DiscussList.erase(llTargetID);
 					}
 					else {
 						AddMsgToQueue(GlobalMsg["strGroupGetErr"], masterQQ, MsgType::Private);

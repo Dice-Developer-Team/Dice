@@ -43,6 +43,8 @@ namespace Console
 	extern bool boolPreserve;
 	//自动退出一切讨论组
 	extern bool boolNoDiscuss;
+	//讨论组消息记录
+	extern std::map<long long, time_t> DiscussList;
 	//个性化语句
 	extern std::map<std::string, std::string> PersonalMsg;
 	//botoff的群

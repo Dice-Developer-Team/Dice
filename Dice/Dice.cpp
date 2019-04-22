@@ -209,6 +209,13 @@ void dataBackUp() {
 		ofstreamBlackQQ << it << std::endl;
 	}
 	ofstreamBlackQQ.close();
+	//备份讨论组列表
+	ofstream ofstreamDiscussList(strFileLoc + "DiscussList.map", ios::out | ios::trunc);
+	for (auto it : DiscussList)
+	{
+		ofstreamDiscussList << it.first << "\n" << it.second << std::endl;
+	}
+	ofstreamDiscussList.close();
 }
 EVE_Enable(eventEnable)
 {
@@ -455,6 +462,18 @@ EVE_Enable(eventEnable)
 		}
 	}
 	ifstreamBlackQQ.close();
+	//读取讨论组列表
+	ifstream ifstreamDiscussList(strFileLoc + "DiscussList.map");
+	if (ifstreamDiscussList)
+	{
+		long long llDiscuss;
+		time_t tNow;
+		while (ifstreamDiscussList >> llDiscuss >> tNow)
+		{
+			DiscussList[llDiscuss]=tNow;
+		}
+	}
+	ifstreamDiscussList.close();
 	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
 	ifstream ifstreamCustomMsg(strFileLoc + "CustomMsg.json");
 	if (ifstreamCustomMsg)
@@ -2160,7 +2179,7 @@ int DiceReply(Msg fromMsg) {
 			if (strSkillName.empty()&& CharacterProp.count(sCharProp)) {
 				string strReply = strNickName + "的属性列表：";
 				for (auto each : CharacterProp[sCharProp]) {
-					strReply += "\t" + each.first + ":" + to_string(each.second);
+					strReply += " " + each.first + ":" + to_string(each.second);
 				}
 				fromMsg.reply(strReply);
 				return 1;
@@ -2833,6 +2852,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 EVE_DiscussMsg_EX(eventDiscussMsg)
 {
 	void AddMsgToQueue(const string & msg, long long target_id, MsgType msg_type = MsgType::Discuss);
+	time_t tNow = time(NULL);
 	if (boolNoDiscuss) {
 		AddMsgToQueue(GlobalMsg["strNoDiscuss"], eve.fromDiscuss, MsgType::Discuss);
 		Sleep(1000);
@@ -2845,19 +2865,15 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		setDiscussLeave(eve.fromDiscuss);
 		return;
 	}
-	if (boolStandByMe) {
-		AddMsgToQueue(GlobalMsg["替身不接受讨论组服务"], eve.fromDiscuss, MsgType::Discuss); 
-		Sleep(1000);
-		setDiscussLeave(eve.fromDiscuss);
-		return;
-	}
 	if (eve.isSystem()) {
-		if (boolMasterMode&&eve.message.find("移出群聊") != string::npos && eve.message.find("你被") != string::npos || eve.message.find("将您") != string::npos) {
+		if (boolMasterMode&&eve.message.find("移出") != string::npos&&eve.message.find("你") != string::npos|| eve.message.find("您") != string::npos) {
 			if (masterQQ) {
-				AddMsgToQueue(eve.message, masterQQ, MsgType::Private);
+				AddMsgToQueue("在讨论组"+to_string(eve.fromDiscuss)+"中，"+eve.message, masterQQ, MsgType::Private);
 			}
 		}
+		return;
 	}
+	DiscussList[eve.fromDiscuss] = tNow;
 	init(eve.message);
 	bool boolNamed = false;
 	string strAt = "[CQ:at,qq=" + to_string(getLoginQQ()) + "]";
@@ -2924,11 +2940,11 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 			setGroupLeave(fromGroup);
 			return 0;
 		}
-		else if(boolStandByMe&&getGroupMemberInfo(fromGroup, IdentityQQ).QQID != IdentityQQ) {
-			AddMsgToQueue("请不要单独拉替身入群！", fromGroup, MsgType::Group);
-			setGroupLeave(fromGroup);
-			return 0;
-		}
+		//else if(boolStandByMe&&getGroupMemberInfo(fromGroup, IdentityQQ).QQID != IdentityQQ) {
+		//	AddMsgToQueue("请不要单独拉替身入群！", fromGroup, MsgType::Group);
+		//	setGroupLeave(fromGroup);
+		//	return 0;
+		//}
 		else if(!GlobalMsg["strAddGroup"].empty()) {
 			AddMsgToQueue(GlobalMsg["strAddGroup"], fromGroup, MsgType::Group);
 		}
