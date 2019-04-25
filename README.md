@@ -49,6 +49,7 @@ Latest Release: [![GitHub release](https://img.shields.io/github/release-pre/w41
 Dice! QQ Dice Robot for TRPG
 
 Copyright (C) 2018-2019 w4123溯洄
+
 Copyright (C) 2018-2019 绯色月下
 
 This program is free software: you can redistribute it and/or modify it under the terms
