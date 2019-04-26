@@ -93,6 +93,7 @@ namespace CardDeck
 		std::string strReply;
 		if (TempDeck.size() == 1) {
 			strReply = TempDeck[0];
+			TempDeck.clear();
 		}
 		else {
 			int ans = RandomGenerator::Randint(0, TempDeck.size() - 1);
@@ -107,7 +108,7 @@ namespace CardDeck
 				strReply += "\n"+ strTempName +"?发现未知牌堆名";
 				break;
 			}
-			else if (TempDeckList.count(strTempName)==0) {
+			else if (TempDeckList.count(strTempName)==0|| TempDeckList[strTempName].empty()) {
 				TempDeckList[strTempName] = mPublicDeck[strTempName];
 			}
 			strReply.replace(strReply.begin()+lq, strReply.begin() + rq+1, drawCard(TempDeckList[strTempName]));
