@@ -389,7 +389,7 @@ private:
 public:
 	std::string strDice;
 
-	RD(std::string dice) : strDice(dice)
+	RD(std::string dice, const int defaultDice=100) : strDice(dice)
 	{
 		for (auto& i : strDice)
 		{
@@ -406,65 +406,7 @@ public:
 			}
 		}
 		if (strDice.empty())
-			strDice = "D100";
-		if (strDice[0] == 'a')strDice.insert(0, "10");
-		if (strDice[0] == 'D' && strDice[1] == 'F')
-			strDice.insert(0, "4");
-		if (strDice[0] == 'F')
-			strDice.insert(0, "4D");
-		for (size_t ReadCnt = 1; ReadCnt != strDice.length(); ReadCnt++)
-			if (strDice[ReadCnt] == 'F' && (isdigit(strDice[ReadCnt - 1]) || strDice[ReadCnt - 1] == '+' || strDice[
-				ReadCnt - 1] == '-'))
-				strDice.insert(ReadCnt, "D");
-		while (strDice.find("+DF") != std::string::npos)
-			strDice.insert(strDice.find("+DF") + 1, "4");
-		while (strDice.find("-DF") != std::string::npos)
-			strDice.insert(strDice.find("-DF") + 1, "4");
-		while (strDice.find("D+") != std::string::npos)
-			strDice.insert(strDice.find("D+") + 1, "100");
-		while (strDice.find("D-") != std::string::npos)
-			strDice.insert(strDice.find("D-") + 1, "100");
-		while (strDice.find("DK") != std::string::npos)
-			strDice.insert(strDice.find("DK") + 1, "100");
-		while (strDice.find("K+") != std::string::npos)
-			strDice.insert(strDice.find("K+") + 1, "1");
-		while (strDice.find("K-") != std::string::npos)
-			strDice.insert(strDice.find("K-") + 1, "1");
-		while (strDice.find("a-") != std::string::npos)
-			strDice.insert(strDice.find("a-") + 1, "10");
-		while (strDice.find("a+") != std::string::npos)
-			strDice.insert(strDice.find("a+") + 1, "10");
-		while (strDice.find("-a") != std::string::npos)
-			strDice.insert(strDice.find("-a") + 1, "10");
-		while (strDice.find("+a") != std::string::npos)
-			strDice.insert(strDice.find("+a") + 1, "10");
-		if (*(strDice.end() - 1) == 'D')
-			strDice.append("100");
-		if (*(strDice.end() - 1) == 'K')
-			strDice.append("1");
-		if (*strDice.begin() == '+')
-			strDice.erase(strDice.begin());
-		if (strDice[strDice.length() - 1] == 'a')strDice.append("10");
-	}
-
-	RD(std::string dice, long long QQNumber) : strDice(dice)
-	{
-		for (auto& i : strDice)
-		{
-			if (i == '*') {
-				i = 'X';
-			}
-			if (i != 'a' && i != 'A')
-			{
-				i = toupper(static_cast<unsigned char>(i));
-			}
-			else
-			{
-				i = tolower(static_cast<unsigned char>(i));
-			}
-		}
-		if (strDice.empty())
-			strDice.append("D" + (DefaultDice.count(QQNumber) ? std::to_string(DefaultDice[QQNumber]) : "100"));
+			strDice.append("D" + (std::to_string(defaultDice)));
 		if (strDice[0] == 'a')strDice.insert(0, "10");
 		if (strDice[0] == 'D' && strDice[1] == 'F')
 			strDice.insert(0, "4");
@@ -480,13 +422,13 @@ public:
 			strDice.insert(strDice.find("-DF") + 1, "4");
 		while (strDice.find("D+") != std::string::npos)
 			strDice.insert(strDice.find("D+") + 1,
-			               DefaultDice.count(QQNumber) ? std::to_string(DefaultDice[QQNumber]) : "100");
+			               std::to_string(defaultDice));
 		while (strDice.find("D-") != std::string::npos)
 			strDice.insert(strDice.find("D-") + 1,
-			               DefaultDice.count(QQNumber) ? std::to_string(DefaultDice[QQNumber]) : "100");
+			               std::to_string(defaultDice));
 		while (strDice.find("DK") != std::string::npos)
 			strDice.insert(strDice.find("DK") + 1,
-			               DefaultDice.count(QQNumber) ? std::to_string(DefaultDice[QQNumber]) : "100");
+			               std::to_string(defaultDice));
 		while (strDice.find("K+") != std::string::npos)
 			strDice.insert(strDice.find("K+") + 1, "1");
 		while (strDice.find("K-") != std::string::npos)
@@ -500,7 +442,7 @@ public:
 		while (strDice.find("+a") != std::string::npos)
 			strDice.insert(strDice.find("+a") + 1, "10");
 		if (*(strDice.end() - 1) == 'D')
-			strDice.append(DefaultDice.count(QQNumber) ? std::to_string(DefaultDice[QQNumber]) : "100");
+			strDice.append(std::to_string(defaultDice));
 		if (*(strDice.end() - 1) == 'K')
 			strDice.append("1");
 		if (*strDice.begin() == '+')

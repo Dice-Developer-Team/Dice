@@ -864,7 +864,8 @@ int DiceReply(Msg fromMsg) {
 					strMainDice += strLowerMessage[intMsgCnt];
 					intMsgCnt++;
 				}
-				RD rdMainDice(strMainDice, llMemberQQ);
+				const int intDefaultDice = DefaultDice.count(fromMsg.fromQQ) ? DefaultDice[fromMsg.fromQQ] : 100;
+				RD rdMainDice(strMainDice, intDefaultDice);
 				rdMainDice.Roll();
 				int intDuration = rdMainDice.intTotal;
 				if (setGroupBan(fromMsg.fromGroup, llMemberQQ, intDuration * 60) == 0)
@@ -1810,7 +1811,7 @@ int DiceReply(Msg fromMsg) {
 		fromMsg.reply(GlobalMsg["strSuccessRateErr"]);
 		return 1;
 	}
-	RD rdMainDice(strMainDice, fromMsg.fromQQ);
+	RD rdMainDice(strMainDice);
 	const int intFirstTimeRes = rdMainDice.Roll();
 	if (intFirstTimeRes == ZeroDice_Err)
 	{
@@ -1917,7 +1918,7 @@ int DiceReply(Msg fromMsg) {
 		fromMsg.reply(GlobalMsg["strSuccessRateErr"]);
 		return 1;
 	}
-	RD rdMainDice(strMainDice, fromMsg.fromQQ);
+	RD rdMainDice(strMainDice);
 	const int intFirstTimeRes = rdMainDice.Roll();
 	if (intFirstTimeRes == ZeroDice_Err)
 	{
@@ -2292,7 +2293,8 @@ int DiceReply(Msg fromMsg) {
 		if (strTurnCnt.empty())
 			strTurnCnt = "1";
 		strMainDice = strMainDice.substr(strMainDice.find("#") + 1);
-		RD rdTurnCnt(strTurnCnt, fromMsg.fromQQ);
+		const int intDefaultDice = DefaultDice.count(fromMsg.fromQQ) ? DefaultDice[fromMsg.fromQQ] : 100;
+		RD rdTurnCnt(strMainDice, intDefaultDice);
 		const int intRdTurnCntRes = rdTurnCnt.Roll();
 		if (intRdTurnCntRes == Value_Err)
 		{
@@ -2386,7 +2388,8 @@ int DiceReply(Msg fromMsg) {
 	}
 	if (boolAdda10)
 		strMainDice.insert(strFirstDice.length(), "a10");
-	RD rdMainDice(strMainDice, fromMsg.fromQQ);
+	const int intDefaultDice = DefaultDice.count(fromMsg.fromQQ) ? DefaultDice[fromMsg.fromQQ] : 100;
+	RD rdMainDice(strMainDice, intDefaultDice);
 
 	const int intFirstTimeRes = rdMainDice.Roll();
 	if (intFirstTimeRes == Value_Err)
@@ -2576,7 +2579,8 @@ int DiceReply(Msg fromMsg) {
 			if (strTurnCnt.empty())
 				strTurnCnt = "1";
 			strMainDice = strMainDice.substr(strMainDice.find("#") + 1);
-			RD rdTurnCnt(strTurnCnt, fromMsg.fromQQ);
+			const int intDefaultDice = DefaultDice.count(fromMsg.fromQQ) ? DefaultDice[fromMsg.fromQQ] : 100;
+			RD rdTurnCnt(strMainDice, intDefaultDice);
 			const int intRdTurnCntRes = rdTurnCnt.Roll();
 			if (intRdTurnCntRes == Value_Err)
 			{
@@ -2651,7 +2655,8 @@ int DiceReply(Msg fromMsg) {
 				}
 			}
 		}
-		RD rdMainDice(strMainDice, fromMsg.fromQQ);
+		const int intDefaultDice = DefaultDice.count(fromMsg.fromQQ) ? DefaultDice[fromMsg.fromQQ] : 100;
+		RD rdMainDice(strMainDice, intDefaultDice);
 
 		const int intFirstTimeRes = rdMainDice.Roll();
 		if (intFirstTimeRes == Value_Err)
