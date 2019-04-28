@@ -2926,7 +2926,10 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 		AddMsgToQueue(strReply, fromGroup, Group);
 	}
 	else if(beingOperateQQ == getLoginQQ()){
-		if (boolPreserve&&WhiteGroup.count(fromGroup)==0) 
+		if (BlackGroup.count(fromGroup)) {
+			AddMsgToQueue(GlobalMsg["strBlackGroup"], fromGroup, Group);
+		}
+		else if (boolPreserve&&WhiteGroup.count(fromGroup)==0) 
 		{	//避免小群绕过邀请没加上白名单
 			if (fromQQ==masterQQ||WhiteQQ.count(fromQQ)) {
 				WhiteGroup.insert(fromGroup);
@@ -2969,7 +2972,6 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 
 EVE_Request_AddGroup(eventGroupInvited) {
 	if (subType == 2) {
-		setGroupAddRequest(responseFlag,2, 1,"");
 		if (masterQQ&&boolMasterMode) {
 			string strMsg = "群添加请求，来自：" + getStrangerInfo(fromQQ).nick +"("+ to_string(fromQQ) + "),群：(" + to_string(fromGroup)+")。";
 			if (BlackGroup.count(fromGroup)) {

@@ -64,6 +64,7 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 
 std::map<std::string, std::string> GlobalMsg
 {
+	{"strBlackGroup", "该群在黑名单中，如有疑问请联系master"},
 	{"strBotOn","成功开启本机器人!"},
 	{"strBotOff","成功关闭本机器人!"},
 	{"strBotOnAlready","本机器人已经处于开启状态!"},
