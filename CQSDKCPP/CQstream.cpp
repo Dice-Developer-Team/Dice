@@ -147,7 +147,7 @@ void msg::send()
 	if (buf.empty())return;
 	switch (subType)
 	{
-	case Friend: //∫√”—
+	case Private: //∫√”—
 		sendPrivateMsg(ID, buf);
 		break;
 	case Group: //»∫

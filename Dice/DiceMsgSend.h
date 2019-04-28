@@ -24,17 +24,12 @@
 #ifndef DICE_MSG_SEND
 #define DICE_MSG_SEND
 #include <string>
+#include "CQMsgSend.h"
 
 /*
  * 消息类型枚举类
  * 用于发送消息
  */
-enum class MsgType
-{
-	Private,
-	Group,
-	Discuss
-};
 
 /*
  *  加锁并将消息存入消息发送队列
@@ -43,21 +38,21 @@ enum class MsgType
  *  long long target_id 目标ID(QQ,群号或讨论组uin)
  *  MsgType msg_type 消息类型
  */
-void AddMsgToQueue(const std::string& msg, long long target_id, MsgType msg_type);
+void AddMsgToQueue(const std::string& msg, long long target_id, CQ::msgtype msg_type = CQ::Private);
 //打包待处理消息
 class Msg {
 public:
 	std::string strMsg;
 	long long fromID=0;
-	MsgType fromType=MsgType::Private;
+	CQ::msgtype fromType= CQ::Private;
 	long long fromQQ=0;
 	long long fromGroup = 0;
 	bool isCalled = false;
 	Msg(std::string message, long long fromNum) :strMsg(message),fromQQ(fromNum), fromID(fromNum) {
-		fromType = MsgType::Private;
+		fromType = CQ::Private;
 	}
 	
-	Msg(std::string message, long long fromGroup, MsgType msgType, long long fromNum) :strMsg(message), fromQQ(fromNum), fromType(msgType),fromID(fromGroup), fromGroup(fromGroup) {}
+	Msg(std::string message, long long fromGroup, CQ::msgtype msgType, long long fromNum) :strMsg(message), fromQQ(fromNum), fromType(msgType),fromID(fromGroup), fromGroup(fromGroup) {}
 
 	void reply(std::string strReply) {
 		AddMsgToQueue(strReply, fromID, fromType);

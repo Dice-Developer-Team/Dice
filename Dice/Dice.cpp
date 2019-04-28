@@ -506,7 +506,7 @@ int DiceReply(Msg fromMsg) {
 	if (fromMsg.strMsg[0] != '.')
 		return 0;
 	int intMsgCnt = 1;
-	int intT= (fromMsg.fromType == MsgType::Private) ? PrivateT : (fromMsg.fromType == MsgType::Group ? GroupT : DiscussT);
+	int intT= (fromMsg.fromType == Private) ? PrivateT : (fromMsg.fromType == Group ? GroupT : DiscussT);
 	while (isspace(static_cast<unsigned char>(fromMsg.strMsg[intMsgCnt])))
 		intMsgCnt++;
 	const string strNickName = getName(fromMsg.fromQQ, fromMsg.fromGroup);
@@ -578,7 +578,7 @@ int DiceReply(Msg fromMsg) {
 		{
 			if (Command == "on")
 			{
-				if (fromMsg.fromType == MsgType::Group) {
+				if (fromMsg.fromType == Group) {
 					if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
 					{
 						if (DisabledGroup.count(fromMsg.fromGroup))
@@ -596,7 +596,7 @@ int DiceReply(Msg fromMsg) {
 						fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
 					}
 				}
-				else if (fromMsg.fromType == MsgType::Discuss) {
+				else if (fromMsg.fromType == Discuss) {
 					if (DisabledDiscuss.count(fromMsg.fromGroup))
 					{
 						DisabledDiscuss.erase(fromMsg.fromGroup);
@@ -610,7 +610,7 @@ int DiceReply(Msg fromMsg) {
 			}
 			else if (Command == "off")
 			{
-				if (fromMsg.fromType == MsgType::Group) {
+				if (fromMsg.fromType == Group) {
 					if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
 					{
 						if (!DisabledGroup.count(fromMsg.fromGroup))
@@ -628,7 +628,7 @@ int DiceReply(Msg fromMsg) {
 						fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
 					}
 				}
-				else if (fromMsg.fromType == MsgType::Discuss) {
+				else if (fromMsg.fromType == Discuss) {
 					if (!DisabledDiscuss.count(fromMsg.fromGroup))
 					{
 						DisabledDiscuss.insert(fromMsg.fromGroup);
@@ -661,7 +661,7 @@ int DiceReply(Msg fromMsg) {
 		const string strAction = strLowerMessage.substr(intMsgCnt);
 		if (strAction == "on")
 		{
-			if (fromMsg.fromType == MsgType::Group) {
+			if (fromMsg.fromType == Group) {
 				if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
 				{
 					if (DisabledHELPGroup.count(fromMsg.fromGroup))
@@ -679,7 +679,7 @@ int DiceReply(Msg fromMsg) {
 					fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
 				}
 			}
-			else if (fromMsg.fromType == MsgType::Discuss) {
+			else if (fromMsg.fromType == Discuss) {
 				if (DisabledHELPDiscuss.count(fromMsg.fromGroup))
 				{
 					DisabledHELPDiscuss.erase(fromMsg.fromGroup);
@@ -694,7 +694,7 @@ int DiceReply(Msg fromMsg) {
 		}
 		if (strAction == "off")
 		{
-			if (fromMsg.fromType == MsgType::Group) {
+			if (fromMsg.fromType == Group) {
 				if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
 				{
 					if (!DisabledHELPGroup.count(fromMsg.fromGroup))
@@ -712,7 +712,7 @@ int DiceReply(Msg fromMsg) {
 					fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
 				}
 			}
-			else if (fromMsg.fromType == MsgType::Discuss) {
+			else if (fromMsg.fromType == Discuss) {
 				if (!DisabledHELPDiscuss.count(fromMsg.fromGroup))
 				{
 					DisabledHELPDiscuss.insert(fromMsg.fromGroup);
@@ -2357,13 +2357,13 @@ int DiceReply(Msg fromMsg) {
 			else
 			{
 				strTurnNotice = (intT == GroupT ? "在群\"" + getGroupList()[fromMsg.fromGroup] : "在讨论组(" + to_string(fromMsg.fromGroup)) + ")中 " + strTurnNotice;
-				AddMsgToQueue(strTurnNotice, fromMsg.fromQQ, MsgType::Private);
+				AddMsgToQueue(strTurnNotice, fromMsg.fromQQ, Private);
 				const auto range = ObserveGroup.equal_range(fromMsg.fromGroup);
 				for (auto it = range.first; it != range.second; ++it)
 				{
 					if (it->second != fromMsg.fromQQ)
 					{
-						AddMsgToQueue(strTurnNotice, it->second, MsgType::Private);
+						AddMsgToQueue(strTurnNotice, it->second, Private);
 					}
 				}
 			}
@@ -2471,13 +2471,13 @@ int DiceReply(Msg fromMsg) {
 		else
 		{
 			strAns = (intT == GroupT ? "在群\"" + getGroupList()[fromMsg.fromGroup] : "在讨论组(" + to_string(fromMsg.fromGroup)) + ")中 " + strAns;
-			AddMsgToQueue(strAns, fromMsg.fromQQ, MsgType::Private);
+			AddMsgToQueue(strAns, fromMsg.fromQQ, Private);
 			const auto range = ObserveGroup.equal_range(fromMsg.fromGroup);
 			for (auto it = range.first; it != range.second; ++it)
 			{
 				if (it->second != fromMsg.fromQQ)
 				{
-					AddMsgToQueue(strAns, it->second, MsgType::Private);
+					AddMsgToQueue(strAns, it->second, Private);
 				}
 			}
 		}
@@ -2501,13 +2501,13 @@ int DiceReply(Msg fromMsg) {
 			else
 			{
 				strAns = (intT == GroupT ? "在群\"" + getGroupList()[fromMsg.fromGroup] : "在讨论组(" + to_string(fromMsg.fromGroup)) + ")中 " + strAns;
-				AddMsgToQueue(strAns, fromMsg.fromQQ, MsgType::Private);
+				AddMsgToQueue(strAns, fromMsg.fromQQ, Private);
 				const auto range = ObserveGroup.equal_range(fromMsg.fromGroup);
 				for (auto it = range.first; it != range.second; ++it)
 				{
 					if (it->second != fromMsg.fromQQ)
 					{
-						AddMsgToQueue(strAns, it->second, MsgType::Private);
+						AddMsgToQueue(strAns, it->second, Private);
 					}
 				}
 			}
@@ -2643,13 +2643,13 @@ int DiceReply(Msg fromMsg) {
 				else
 				{
 					strTurnNotice = (intT == GroupT ? "在群\"" + getGroupList()[fromMsg.fromGroup] : "在讨论组(" + to_string(fromMsg.fromGroup)) + ")中 " + strTurnNotice;
-					AddMsgToQueue(strTurnNotice, fromMsg.fromQQ, MsgType::Private);
+					AddMsgToQueue(strTurnNotice, fromMsg.fromQQ, Private);
 					const auto range = ObserveGroup.equal_range(fromMsg.fromGroup);
 					for (auto it = range.first; it != range.second; ++it)
 					{
 						if (it->second != fromMsg.fromQQ)
 						{
-							AddMsgToQueue(strTurnNotice, it->second, MsgType::Private);
+							AddMsgToQueue(strTurnNotice, it->second, Private);
 						}
 					}
 				}
@@ -2735,13 +2735,13 @@ int DiceReply(Msg fromMsg) {
 			else
 			{
 				strAns = (intT == GroupT ? "在群\"" + getGroupList()[fromMsg.fromGroup] : "在讨论组(" + to_string(fromMsg.fromGroup)) + ")中 " + strAns;
-				AddMsgToQueue(strAns, fromMsg.fromQQ, MsgType::Private);
+				AddMsgToQueue(strAns, fromMsg.fromQQ, Private);
 				const auto range = ObserveGroup.equal_range(fromMsg.fromGroup);
 				for (auto it = range.first; it != range.second; ++it)
 				{
 					if (it->second != fromMsg.fromQQ)
 					{
-						AddMsgToQueue(strAns, it->second, MsgType::Private);
+						AddMsgToQueue(strAns, it->second, Private);
 					}
 				}
 			}
@@ -2765,13 +2765,13 @@ int DiceReply(Msg fromMsg) {
 				else
 				{
 					strAns = (intT == GroupT ? "在群\"" + getGroupList()[fromMsg.fromGroup] : "在讨论组(" + to_string(fromMsg.fromGroup)) + ")中 " + strAns;
-					AddMsgToQueue(strAns, fromMsg.fromQQ, MsgType::Private);
+					AddMsgToQueue(strAns, fromMsg.fromQQ, Private);
 					const auto range = ObserveGroup.equal_range(fromMsg.fromGroup);
 					for (auto it = range.first; it != range.second; ++it)
 					{
 						if (it->second != fromMsg.fromQQ)
 						{
-							AddMsgToQueue(strAns, it->second, MsgType::Private);
+							AddMsgToQueue(strAns, it->second, Private);
 						}
 					}
 				}
@@ -2788,7 +2788,6 @@ int DiceReply(Msg fromMsg) {
 
 EVE_PrivateMsg_EX(eventPrivateMsg)
 {
-	void AddMsgToQueue(const std::string&, long long target_id, MsgType msg_type = MsgType::Private);
 	if (eve.isSystem())return;
 	if (BlackQQ.count(eve.fromQQ)) {
 		eve.message_block();
@@ -2803,7 +2802,6 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 
 EVE_GroupMsg_EX(eventGroupMsg)
 {
-	void AddMsgToQueue(const std::string&, long long target_id, MsgType msg_type = MsgType::Group);
 	if (eve.isAnonymous())return;
 	if (eve.isSystem()) {
 		if (eve.message.find("被管理员禁言") != string::npos&&eve.message.find(to_string(getLoginQQ())) != string::npos) {
@@ -2821,7 +2819,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			}
 			if (masterQQ&&boolMasterMode) {
 				string strMsg = "在群\"" + getGroupList()[eve.fromGroup] + "\"(" + to_string(eve.fromGroup) + ")中," + eve.message + "\n群主" + getStrangerInfo(fromQQ).nick + "(" + to_string(fromQQ) + "),另有管理员" + to_string(intAuthCnt) + "名";
-				AddMsgToQueue(strMsg, masterQQ, MsgType::Private);
+				AddMsgToQueue(strMsg, masterQQ);
 				BlackGroup.insert(eve.fromGroup);
 				if (WhiteGroup.count(eve.fromGroup))WhiteGroup.erase(eve.fromGroup);
 				//setGroupLeave(eve.fromGroup);
@@ -2848,7 +2846,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		}
 	}
 	init2(eve.message);
-	Msg fromMsg(eve.message, eve.fromGroup, MsgType::Group, eve.fromQQ);
+	Msg fromMsg(eve.message, eve.fromGroup, Group, eve.fromQQ);
 	fromMsg.isCalled = boolNamed;
 	if(DiceReply(fromMsg))eve.message_block();
 	return;
@@ -2856,16 +2854,9 @@ EVE_GroupMsg_EX(eventGroupMsg)
 
 EVE_DiscussMsg_EX(eventDiscussMsg)
 {
-	void AddMsgToQueue(const string & msg, long long target_id, MsgType msg_type = MsgType::Discuss);
 	time_t tNow = time(NULL);
 	if (boolNoDiscuss) {
-		AddMsgToQueue(GlobalMsg["strNoDiscuss"], eve.fromDiscuss, MsgType::Discuss);
-		Sleep(1000);
-		setDiscussLeave(eve.fromDiscuss);
-		return;
-	}
-	if (boolPreserve&&WhiteGroup.count(eve.fromDiscuss)==0) {
-		AddMsgToQueue(GlobalMsg["strPreserve"], eve.fromDiscuss, MsgType::Discuss);
+		AddMsgToQueue(GlobalMsg["strNoDiscuss"], eve.fromDiscuss, Discuss);
 		Sleep(1000);
 		setDiscussLeave(eve.fromDiscuss);
 		return;
@@ -2873,7 +2864,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 	if (eve.isSystem()) {
 		if (boolMasterMode&&eve.message.find("移出") != string::npos&&eve.message.find("你") != string::npos|| eve.message.find("您") != string::npos) {
 			if (masterQQ) {
-				AddMsgToQueue("在讨论组"+to_string(eve.fromDiscuss)+"中，"+eve.message, masterQQ, MsgType::Private);
+				AddMsgToQueue("在讨论组"+to_string(eve.fromDiscuss)+"中，"+eve.message, masterQQ);
 			}
 		}
 		return;
@@ -2896,7 +2887,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 	}
 	init2(eve.message);
 
-	Msg fromMsg(eve.message, eve.fromDiscuss, MsgType::Discuss, eve.fromQQ);
+	Msg fromMsg(eve.message, eve.fromDiscuss, Discuss, eve.fromQQ);
 	fromMsg.isCalled = boolNamed;
 	if (DiceReply(fromMsg))eve.message_block();
 	return;
@@ -2932,7 +2923,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 		{
 			strReply.replace(strReply.find("{qq}"), 4, to_string(beingOperateQQ));
 		}
-		AddMsgToQueue(strReply, fromGroup, MsgType::Group);
+		AddMsgToQueue(strReply, fromGroup, Group);
 	}
 	else if(beingOperateQQ == getLoginQQ()){
 		if (boolPreserve&&WhiteGroup.count(fromGroup)==0) 
@@ -2941,17 +2932,17 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 				WhiteGroup.insert(fromGroup);
 				return 0;
 			}
-			AddMsgToQueue(GlobalMsg["strPreserve"], fromGroup, MsgType::Group);
+			AddMsgToQueue(GlobalMsg["strPreserve"], fromGroup, Group);
 			setGroupLeave(fromGroup);
 			return 0;
 		}
 		//else if(boolStandByMe&&getGroupMemberInfo(fromGroup, IdentityQQ).QQID != IdentityQQ) {
-		//	AddMsgToQueue("请不要单独拉替身入群！", fromGroup, MsgType::Group);
+		//	AddMsgToQueue("请不要单独拉替身入群！", fromGroup, Group);
 		//	setGroupLeave(fromGroup);
 		//	return 0;
 		//}
 		else if(!GlobalMsg["strAddGroup"].empty()) {
-			AddMsgToQueue(GlobalMsg["strAddGroup"], fromGroup, MsgType::Group);
+			AddMsgToQueue(GlobalMsg["strAddGroup"], fromGroup, Group);
 		}
 	}
 	return 0;
@@ -2961,7 +2952,7 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 	if (beingOperateQQ == getLoginQQ()) {
 		if (masterQQ&&boolMasterMode) {
 			string strMsg = to_string(fromQQ)+"将"+GlobalMsg["strSelfName"]+"移出了群" + to_string(fromGroup) + "！";
-			AddMsgToQueue(strMsg, masterQQ,MsgType::Private);
+			AddMsgToQueue(strMsg, masterQQ,Private);
 			if (WhiteQQ.count(fromQQ)) {
 				WhiteQQ.erase(fromQQ);
 			}
@@ -3007,7 +2998,7 @@ EVE_Request_AddGroup(eventGroupInvited) {
 				strMsg += "已同意";
 				setGroupAddRequest(responseFlag, 2, 1, "");
 			}
-			AddMsgToQueue(strMsg, masterQQ, MsgType::Private);
+			AddMsgToQueue(strMsg, masterQQ, Private);
 		}
 	}
 	return 1;

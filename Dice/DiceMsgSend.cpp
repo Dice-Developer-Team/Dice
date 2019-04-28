@@ -28,16 +28,17 @@
 #include "DiceMsgSend.h"
 #include "GlobalVar.h"
 using namespace std;
+using namespace CQ;
 
 // 消息发送存储结构体
 struct msg_t
 {
 	string msg;
 	long long target_id = 0;
-	MsgType msg_type;
+	msgtype msg_type;
 	msg_t() = default;
 
-	msg_t(string msg, long long target_id, MsgType msg_type) : msg(move(msg)), target_id(target_id),
+	msg_t(string msg, long long target_id, msgtype msg_type) : msg(move(msg)), target_id(target_id),
 	                                                                     msg_type(msg_type)
 	{
 	}
@@ -49,7 +50,7 @@ std::queue<msg_t> msgQueue;
 // 消息发送队列锁
 mutex msgQueueMutex;
 
-void AddMsgToQueue(const string& msg, long long target_id, MsgType msg_type)
+void AddMsgToQueue(const string& msg, long long target_id, msgtype msg_type)
 {
 	lock_guard<std::mutex> lock_queue(msgQueueMutex);
 	msgQueue.emplace(msg_t(msg, target_id, msg_type));
@@ -73,11 +74,11 @@ void SendMsg()
 		}
 		if (!msg.msg.empty())
 		{
-			if (msg.msg_type == MsgType::Private)
+			if (msg.msg_type == Private)
 			{
 				CQ::sendPrivateMsg(msg.target_id, msg.msg);
 			}
-			else if (msg.msg_type == MsgType::Group)
+			else if (msg.msg_type == Group)
 			{
 				CQ::sendGroupMsg(msg.target_id, msg.msg);
 			}

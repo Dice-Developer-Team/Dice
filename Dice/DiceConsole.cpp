@@ -65,7 +65,7 @@ namespace Console
 		if (strPara == "unpower" || strPara.empty()) {
 			for (auto eachGroup : GroupList) {
 				if (getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions == 1) {
-					AddMsgToQueue(GlobalMsg["strGroupClr"], eachGroup.first, MsgType::Group);
+					AddMsgToQueue(GlobalMsg["strGroupClr"], eachGroup.first, Group);
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
 					intCnt++;
@@ -77,7 +77,7 @@ namespace Console
 			time_t tLim= tNow - stoi(strPara) * 24 * 60 * 60;
 			for (auto eachGroup : GroupList) {
 				if (getGroupMemberInfo(eachGroup.first, getLoginQQ()).LastMsgTime < tLim) {
-					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSlefName"], strPara }), eachGroup.first, MsgType::Group);
+					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSlefName"], strPara }), eachGroup.first, Group);
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
 					intCnt++;
@@ -85,7 +85,7 @@ namespace Console
 			}
 			for (auto eachDiscuss : DiscussList) {
 				if (eachDiscuss.second < tLim) {
-					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSlefName"], strPara }), eachDiscuss.first, MsgType::Group);
+					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSlefName"], strPara }), eachDiscuss.first, Group);
 					Sleep(10);
 					setDiscussLeave(eachDiscuss.first);
 					intCnt++;
@@ -95,7 +95,7 @@ namespace Console
 		else if (strPara == "preserve") {
 			for (auto eachGroup : GroupList) {
 				if (getGroupMemberInfo(eachGroup.first, masterQQ).QQID != masterQQ&&WhiteGroup.count(eachGroup.first)==0) {
-					AddMsgToQueue(GlobalMsg["strPreserve"], eachGroup.first, MsgType::Group);
+					AddMsgToQueue(GlobalMsg["strPreserve"], eachGroup.first, Group);
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
 					intCnt++;
@@ -103,7 +103,7 @@ namespace Console
 			}
 		}
 		else
-			AddMsgToQueue("无法识别筛选参数×",masterQQ, MsgType::Private);
+			AddMsgToQueue("无法识别筛选参数×",masterQQ);
 		return intCnt;
 	}
 	void Process(std::string strMessage) {
@@ -115,11 +115,11 @@ namespace Console
 			intMsgCnt++;
 		}
 		if (strOption.empty()) {
-			AddMsgToQueue("有什么事么， Master？", masterQQ, MsgType::Private);
+			AddMsgToQueue("有什么事么， Master？", masterQQ);
 			return;
 		}
 		if (strOption == "delete") {
-			AddMsgToQueue("你不再是"+GlobalMsg["strSelfName"]+"的Master！", masterQQ, MsgType::Private);
+			AddMsgToQueue("你不再是"+GlobalMsg["strSelfName"]+"的Master！", masterQQ);
 			masterQQ = 0;
 		}
 		else if (strOption == "state") {
@@ -135,7 +135,7 @@ namespace Console
 				+ "黑名单群数：" + to_string(BlackGroup.size()) + "\n"
 				+ "白名单用户数：" + to_string(WhiteQQ.size()) + "\n"
 				+ "白名单群数：" + to_string(WhiteGroup.size());
-			AddMsgToQueue(strReply, masterQQ, MsgType::Private);
+			AddMsgToQueue(strReply, masterQQ);
 		}
 		else {
 			while (isspace(static_cast<unsigned char>(strMessage[intMsgCnt])))intMsgCnt++;
@@ -144,13 +144,13 @@ namespace Console
 				if (strPersonalMsg.empty()) {
 					if (GlobalMsg.count("strAddGroup")) {
 						GlobalMsg["strAddGroup"].clear();
-						AddMsgToQueue("入群发言已清除√", masterQQ, MsgType::Private);
+						AddMsgToQueue("入群发言已清除√", masterQQ);
 					}
-					else AddMsgToQueue("当前未设置入群发言×", masterQQ, MsgType::Private);
+					else AddMsgToQueue("当前未设置入群发言×", masterQQ);
 				}
 				else {
 					GlobalMsg["strAddGroup"] = strPersonalMsg;
-					AddMsgToQueue("入群发言已准备好了√", masterQQ, MsgType::Private);
+					AddMsgToQueue("入群发言已准备好了√", masterQQ);
 				}
 			}
 			else if (strOption == "bot") {
@@ -158,109 +158,109 @@ namespace Console
 				if (strPersonalMsg.empty()) {
 					if (GlobalMsg.count("strBotMsg")) {
 						GlobalMsg["strBotMsg"].clear();
-						AddMsgToQueue("已清除bot附加信息√", masterQQ, MsgType::Private);
+						AddMsgToQueue("已清除bot附加信息√", masterQQ);
 					}
-					else AddMsgToQueue("当前未设置bot附加信息×", masterQQ, MsgType::Private);
+					else AddMsgToQueue("当前未设置bot附加信息×", masterQQ);
 				}
 				else {
 					GlobalMsg["strBotMsg"] = strPersonalMsg;
-					AddMsgToQueue("已为bot附加信息√", masterQQ, MsgType::Private);
+					AddMsgToQueue("已为bot附加信息√", masterQQ);
 				}
 			}
 			else if (strOption == "on") {
 				if (boolDisabledGlobal) {
 					boolDisabledGlobal = false;
-					AddMsgToQueue("骰娘已结束静默√", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已结束静默√", masterQQ);
 				}
 				else {
-					AddMsgToQueue("骰娘不在静默中！", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘不在静默中！", masterQQ);
 				}
 			}
 			else if (strOption == "off") {
 				if (boolDisabledGlobal) {
-					AddMsgToQueue("骰娘已经静默！", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已经静默！", masterQQ);
 				}
 				else {
 					boolDisabledGlobal = true;
-					AddMsgToQueue("骰娘开始静默√", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘开始静默√", masterQQ);
 				}
 			}
 			else if (strOption == "meon") {
 				if (boolDisabledMeGlobal) {
 					boolDisabledMeGlobal = false;
-					AddMsgToQueue("骰娘已启用.me√", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已启用.me√", masterQQ);
 				}
 				else {
-					AddMsgToQueue("骰娘已启用.me！", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已启用.me！", masterQQ);
 				}
 			}
 			else if (strOption == "meoff") {
 				if (boolDisabledMeGlobal) {
-					AddMsgToQueue("骰娘已禁用.me！", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已禁用.me！", masterQQ);
 				}
 				else {
 					boolDisabledMeGlobal = true;
-					AddMsgToQueue("骰娘已禁用.me√", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已禁用.me√", masterQQ);
 				}
 			}
 			else if (strOption == "jrrpon") {
 				if (boolDisabledMeGlobal) {
 					boolDisabledMeGlobal = false;
-					AddMsgToQueue("骰娘已启用.jrrp√", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已启用.jrrp√", masterQQ);
 				}
 				else {
-					AddMsgToQueue("骰娘已启用.jrrp！", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已启用.jrrp！", masterQQ);
 				}
 			}
 			else if (strOption == "jrrpoff") {
 				if (boolDisabledMeGlobal) {
-					AddMsgToQueue("骰娘已禁用.jrrp！", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已禁用.jrrp！", masterQQ);
 				}
 				else {
 					boolDisabledMeGlobal = true;
-					AddMsgToQueue("骰娘已禁用.jrrp√", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已禁用.jrrp√", masterQQ);
 				}
 			}
 			else if (strOption == "discusson") {
 				if (boolNoDiscuss) {
 					boolNoDiscuss = false;
-					AddMsgToQueue("骰娘已关闭讨论组自动退出√", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已关闭讨论组自动退出√", masterQQ);
 				}
 				else {
-					AddMsgToQueue("骰娘已关闭讨论组自动退出！", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已关闭讨论组自动退出！", masterQQ);
 				}
 			}
 			else if (strOption == "discussoff") {
 				if (boolNoDiscuss) {
-					AddMsgToQueue("骰娘已开启讨论组自动退出！", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已开启讨论组自动退出！", masterQQ);
 				}
 				else {
 					boolNoDiscuss = true;
-					AddMsgToQueue("骰娘已开启讨论组自动退出√", masterQQ, MsgType::Private);
+					AddMsgToQueue("骰娘已开启讨论组自动退出√", masterQQ);
 				}
 			}
 			else if (strOption == "groupclr") {
 				std::string strPara = strMessage.substr(intMsgCnt);
 				int intGroupCnt=clearGroup(strPara);
 				string strReply = "筛除群聊" + to_string(intGroupCnt) + "个√";
-				AddMsgToQueue(strReply, masterQQ, MsgType::Private);
+				AddMsgToQueue(strReply, masterQQ);
 			}
 			else if (strOption == "only") {
 				if (boolPreserve) {
-					AddMsgToQueue("已成为Master的专属骰娘！", masterQQ, MsgType::Private);
+					AddMsgToQueue("已成为Master的专属骰娘！", masterQQ);
 				}
 				else {
 					boolPreserve = true;
-					AddMsgToQueue("已成为Master的专属骰娘√", masterQQ, MsgType::Private);
+					AddMsgToQueue("已成为Master的专属骰娘√", masterQQ);
 				}
 			}
 			else if (strOption == "public") {
 				if (boolPreserve) {
 					boolPreserve = false;
-					AddMsgToQueue("已成为公用骰娘√", masterQQ, MsgType::Private);
+					AddMsgToQueue("已成为公用骰娘√", masterQQ);
 				}
 				else {
-					AddMsgToQueue("已成为公用骰娘！", masterQQ, MsgType::Private);
+					AddMsgToQueue("已成为公用骰娘！", masterQQ);
 				}
 			}
 			else {
@@ -280,57 +280,57 @@ namespace Console
 					WhiteGroup.erase(llTargetID);
 					if (getGroupList().count(llTargetID)) {
 						setGroupLeave(llTargetID);
-						AddMsgToQueue("骰娘已退出该群√", masterQQ, MsgType::Private);
+						AddMsgToQueue("骰娘已退出该群√", masterQQ);
 					}
 					else if(llTargetID > 1000000000&& setDiscussLeave(llTargetID)==0) {
-						AddMsgToQueue("骰娘已退出该讨论组√", masterQQ, MsgType::Private);
+						AddMsgToQueue("骰娘已退出该讨论组√", masterQQ);
 						DiscussList.erase(llTargetID);
 					}
 					else {
-						AddMsgToQueue(GlobalMsg["strGroupGetErr"], masterQQ, MsgType::Private);
+						AddMsgToQueue(GlobalMsg["strGroupGetErr"], masterQQ);
 					}
 				}
 				else if (strOption == "boton") {
 					if (getGroupList().count(llTargetID)) {
 						if (DisabledGroup.count(llTargetID)) {
 							DisabledGroup.erase(llTargetID);
-							AddMsgToQueue("骰娘已在该群起用√", masterQQ, MsgType::Private);
+							AddMsgToQueue("骰娘已在该群起用√", masterQQ);
 						}
-						else AddMsgToQueue("骰娘已在该群起用!", masterQQ, MsgType::Private);
+						else AddMsgToQueue("骰娘已在该群起用!", masterQQ);
 					}
 					else {
-						AddMsgToQueue(GlobalMsg["strGroupGetErr"], masterQQ, MsgType::Private);
+						AddMsgToQueue(GlobalMsg["strGroupGetErr"], masterQQ);
 					}
 				}
 				else if (strOption == "botoff") {
 					if (getGroupList().count(llTargetID)) {
 						if (!DisabledGroup.count(llTargetID)) {
 							DisabledGroup.insert(llTargetID);
-							AddMsgToQueue("骰娘已在该群静默√", masterQQ, MsgType::Private);
+							AddMsgToQueue("骰娘已在该群静默√", masterQQ);
 						}
-						else AddMsgToQueue("骰娘已在该群静默!", masterQQ, MsgType::Private);
+						else AddMsgToQueue("骰娘已在该群静默!", masterQQ);
 					}
 					else {
-						AddMsgToQueue(GlobalMsg["strGroupGetErr"], masterQQ, MsgType::Private);
+						AddMsgToQueue(GlobalMsg["strGroupGetErr"], masterQQ);
 					}
 				}
 				else if (strOption == "whitegroup") {
 					if (boolErase) {
 						if (WhiteGroup.count(llTargetID)) {
 							WhiteGroup.erase(llTargetID);
-							AddMsgToQueue("该群已移出白名单√", masterQQ, MsgType::Private);
+							AddMsgToQueue("该群已移出白名单√", masterQQ);
 						}
 						else {
-							AddMsgToQueue("该群并不在白名单！", masterQQ, MsgType::Private);
+							AddMsgToQueue("该群并不在白名单！", masterQQ);
 						}
 					}
 					else {
 						if (WhiteGroup.count(llTargetID)) {
-							AddMsgToQueue("该群已加入白名单!", masterQQ, MsgType::Private);
+							AddMsgToQueue("该群已加入白名单!", masterQQ);
 						}
 						else {
 							WhiteGroup.insert(llTargetID);
-							AddMsgToQueue("该群已加入白名单√", masterQQ, MsgType::Private);
+							AddMsgToQueue("该群已加入白名单√", masterQQ);
 						}
 					}
 				}
@@ -338,19 +338,19 @@ namespace Console
 					if (boolErase) {
 						if (BlackGroup.count(llTargetID)) {
 							BlackGroup.erase(llTargetID);
-							AddMsgToQueue("该群已移出黑名单√", masterQQ, MsgType::Private);
+							AddMsgToQueue("该群已移出黑名单√", masterQQ);
 						}
 						else {
-							AddMsgToQueue("该群并不在黑名单！", masterQQ, MsgType::Private);
+							AddMsgToQueue("该群并不在黑名单！", masterQQ);
 						}
 					}
 					else {
 						if (BlackGroup.count(llTargetID)) {
-							AddMsgToQueue("该群已加入黑名单!", masterQQ, MsgType::Private);
+							AddMsgToQueue("该群已加入黑名单!", masterQQ);
 						}
 						else {
 							BlackGroup.insert(llTargetID);
-							AddMsgToQueue("该群已加入黑名单√", masterQQ, MsgType::Private);
+							AddMsgToQueue("该群已加入黑名单√", masterQQ);
 						}
 					}
 				}
@@ -358,19 +358,19 @@ namespace Console
 					if (boolErase) {
 						if (WhiteQQ.count(llTargetID)) {
 							WhiteQQ.erase(llTargetID);
-							AddMsgToQueue("该用户已移出白名单√", masterQQ, MsgType::Private);
+							AddMsgToQueue("该用户已移出白名单√", masterQQ);
 						}
 						else {
-							AddMsgToQueue("该用户并不在白名单！", masterQQ, MsgType::Private);
+							AddMsgToQueue("该用户并不在白名单！", masterQQ);
 						}
 					}
 					else {
 						if (WhiteQQ.count(llTargetID)) {
-							AddMsgToQueue("该用户已加入白名单!", masterQQ, MsgType::Private);
+							AddMsgToQueue("该用户已加入白名单!", masterQQ);
 						}
 						else {
 							WhiteQQ.insert(llTargetID);
-							AddMsgToQueue("该用户已加入白名单√", masterQQ, MsgType::Private);
+							AddMsgToQueue("该用户已加入白名单√", masterQQ);
 						}
 					}
 				}
@@ -378,19 +378,19 @@ namespace Console
 					if (boolErase) {
 						if (BlackQQ.count(llTargetID)) {
 							BlackQQ.erase(llTargetID);
-							AddMsgToQueue("该用户已移出黑名单√", masterQQ, MsgType::Private);
+							AddMsgToQueue("该用户已移出黑名单√", masterQQ);
 						}
 						else {
-							AddMsgToQueue("该用户并不在黑名单！", masterQQ, MsgType::Private);
+							AddMsgToQueue("该用户并不在黑名单！", masterQQ);
 						}
 					}
 					else {
 						if (BlackQQ.count(llTargetID)) {
-							AddMsgToQueue("该用户已加入黑名单!", masterQQ, MsgType::Private);
+							AddMsgToQueue("该用户已加入黑名单!", masterQQ);
 						}
 						else {
 							BlackQQ.insert(llTargetID);
-							AddMsgToQueue("该用户已加入黑名单√", masterQQ, MsgType::Private);
+							AddMsgToQueue("该用户已加入黑名单√", masterQQ);
 						}
 					}
 				}
