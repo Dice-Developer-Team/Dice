@@ -47,5 +47,7 @@ extern CQ::logger DiceLogger;
 extern std::map<std::string, std::string> GlobalMsg;
 // 修改后的Global语句
 extern std::map<std::string, std::string> EditedMsg;
+// 帮助文档
+extern std::map<std::string, std::string> HelpDoc;
 
 #endif /*DICE_GLOBAL_VAR*/

@@ -421,6 +421,21 @@ EVE_Enable(eventEnable)
 		}
 	}
 	ifstreamPersonalMsg.close();
+	//¶ÁÈ¡°ïÖúÎÄµµ
+	ifstream ifstreamHelpDoc(strFileLoc + "HelpDoc.txt");
+	if (ifstreamHelpDoc)
+	{
+		string strName, strMsg ,strDebug;
+		while (ifstreamHelpDoc) {
+			getline(ifstreamHelpDoc, strName);
+			getline(ifstreamHelpDoc, strMsg);
+			while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
+			while (strMsg.find("\\s") != string::npos)strMsg.replace(strMsg.find("\\s"), 2, " ");
+			while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
+			HelpDoc[strName] = strMsg;
+		}
+	}
+	ifstreamHelpDoc.close();
 	ifstream ifstreamWhiteGroup(strFileLoc + "WhiteGroup.RDconf");
 	if (ifstreamWhiteGroup)
 	{
@@ -491,7 +506,8 @@ EVE_Enable(eventEnable)
 			while (ifstreamStandByMe) {
 				ifstreamStandByMe >> strName >> strMsg;
 				while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
-				while (strMsg.find("\\b") != string::npos)strMsg.replace(strMsg.find("\\b"), 2, " ");
+				while (strMsg.find("\\b") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, " ");
+				while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
 				GlobalMsg[strName] = strMsg;
 			}
 		}
@@ -657,8 +673,8 @@ int DiceReply(Msg fromMsg) {
 		intMsgCnt += 4;
 		while (strLowerMessage[intMsgCnt] == ' ')
 			intMsgCnt++;
-		const string strAction = strLowerMessage.substr(intMsgCnt);
-		if (strAction == "on")
+		const string strOption = strLowerMessage.substr(intMsgCnt);
+		if (strOption == "on")
 		{
 			if (fromMsg.fromType == Group) {
 				if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
@@ -691,7 +707,7 @@ int DiceReply(Msg fromMsg) {
 			}
 			return 1;
 		}
-		if (strAction == "off")
+		else if (strOption == "off")
 		{
 			if (fromMsg.fromType == Group) {
 				if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
@@ -729,7 +745,21 @@ int DiceReply(Msg fromMsg) {
 			fromMsg.reply(GlobalMsg["strHELPDisabledErr"]);
 			return 1;
 		}
-		fromMsg.reply(GlobalMsg["strHlpMsg"]);
+		if (strOption.empty()) {
+			fromMsg.reply(GlobalMsg["strHlpMsg"]);
+		}
+		else if (HelpDoc.count(strOption)) {
+			string strReply = HelpDoc[strOption];
+			while (strReply[0] == '&') {
+				strReply = HelpDoc[strReply.substr(1)];
+			}
+			fromMsg.reply(strReply);
+			return 1;
+		}
+		else {
+			fromMsg.reply(GlobalMsg["strHlpNotFound"]);
+		}
+		
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 7) == "welcome")
 	{
