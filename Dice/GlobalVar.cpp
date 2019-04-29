@@ -167,7 +167,13 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPreserve", "本骰娘私有私用，勿扰勿怪"},
 	{"strJrrp", "{0}今天的人品值是: {1}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{0}"},
-	{"strAddGroup", ""},
+	{"strAddGroup", R"(欢迎使用本骰娘！
+请使用.dismiss 机器人QQ号 使机器人退群退讨论组
+.bot on/off 机器人QQ号 //机器人开启或关闭
+.help协议 确认服务协议
+.help指令 查看指令列表
+.help设定 确认骰娘设定
+千万别想当然以为本骰娘和别的骰娘一样！)" },
 	{"strSelfName", "本骰娘"},
 	{"strBotMsg", "\n使用.help更新 查看更新内容"},
 	{"strHlpMsg" , Dice_Short_Ver + "\n" +
