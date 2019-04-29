@@ -29,8 +29,7 @@
 
 using namespace std;
 using namespace CQ;
-namespace Console
-{
+
 	long long masterQQ = 0;
 	//È«¾Ö¾²Ä¬
 	bool boolDisabledGlobal = false;
@@ -417,6 +416,5 @@ namespace Console
 		
 		return 0;
 	}
-}
 
 
