@@ -764,7 +764,7 @@ int DiceReply(Msg fromMsg) {
 	else if (strLowerMessage.substr(intMsgCnt, 7) == "welcome")
 	{
 		if (intT != GroupT) {
-			fromMsg.reply(GlobalMsg["strWelcomePrivate"]);
+			fromMsg.reply("你在这欢迎谁呢？");
 			return 1;
 		}
 		intMsgCnt += 7;
@@ -1014,7 +1014,7 @@ int DiceReply(Msg fromMsg) {
 		return 1;
 	}
 	vector<string> TempDeck(CardDeck::mPublicDeck[strDeckName]);
-	strReply = format(GlobalMsg["strDrawCard"], { strNickName , CardDeck::drawCard(TempDeck) });
+	strReply = "来看看" + strNickName + "的随机抽取结果:\n" + CardDeck::drawCard(TempDeck);
 	while (--intCardNum && TempDeck.size()) {
 		strReply += "\n" + CardDeck::drawCard(TempDeck);
 		if (strReply.length() > 1000) {
@@ -1205,7 +1205,7 @@ int DiceReply(Msg fromMsg) {
 			TempNameStorage.push_back(name);
 		}
 	}
-	string strReply = format(GlobalMsg["strNameGenerator"], { strNickName }) + "\n";
+	string strReply = strNickName + "的随机名称:\n";
 	for (auto i = 0; i != TempNameStorage.size(); i++)
 	{
 		strReply.append(TempNameStorage[i]);
@@ -1459,12 +1459,12 @@ int DiceReply(Msg fromMsg) {
 		}
 		if (strGroupID.empty())
 		{
-			fromMsg.reply(GlobalMsg["strGroupIDEmpty"]);
+			fromMsg.reply("群号不能为空!");
 			return 1;
 		}
 		if (strAction.empty())
 		{
-			fromMsg.reply(GlobalMsg["strActionEmpty"]);
+			fromMsg.reply("动作不能为空!");
 			return 1;
 		}
 		const long long llGroupID = stoll(strGroupID);
@@ -1486,7 +1486,7 @@ int DiceReply(Msg fromMsg) {
 		}
 		else
 		{
-			fromMsg.reply(GlobalMsg["strSendSuccess"]);
+			fromMsg.reply("命令执行成功!");
 		}
 		return 1;
 	}
@@ -1499,11 +1499,11 @@ int DiceReply(Msg fromMsg) {
 				if (DisabledMEGroup.count(fromMsg.fromGroup))
 				{
 					DisabledMEGroup.erase(fromMsg.fromGroup);
-					fromMsg.reply(GlobalMsg["strMeOn"]);
+					fromMsg.reply("成功在本群中启用.me命令!");
 				}
 				else
 				{
-					fromMsg.reply(GlobalMsg["strMeOnAlready"]);
+					fromMsg.reply("在本群中.me命令没有被禁用!");
 				}
 			}
 			else
@@ -1519,11 +1519,11 @@ int DiceReply(Msg fromMsg) {
 				if (!DisabledMEGroup.count(fromMsg.fromGroup))
 				{
 					DisabledMEGroup.insert(fromMsg.fromGroup);
-					fromMsg.reply(GlobalMsg["strMeOff"]);
+					fromMsg.reply("成功在本群中禁用.me命令!");
 				}
 				else
 				{
-					fromMsg.reply(GlobalMsg["strMeOffAlready"]);
+					fromMsg.reply("在本群中.me命令没有被启用!");
 				}
 			}
 			else
@@ -1544,11 +1544,11 @@ int DiceReply(Msg fromMsg) {
 			if (DisabledMEDiscuss.count(fromMsg.fromGroup))
 			{
 				DisabledMEDiscuss.erase(fromMsg.fromGroup);
-				fromMsg.reply(GlobalMsg["strMeOn"]);
+				fromMsg.reply("成功在本多人聊天中启用.me命令!");
 			}
 			else
 			{
-				fromMsg.reply(GlobalMsg["strMeOnAlready"]);
+				fromMsg.reply("在本多人聊天中.me命令没有被禁用!");
 			}
 			return 1;
 		}
@@ -1557,11 +1557,11 @@ int DiceReply(Msg fromMsg) {
 			if (!DisabledMEDiscuss.count(fromMsg.fromGroup))
 			{
 				DisabledMEDiscuss.insert(fromMsg.fromGroup);
-				fromMsg.reply(GlobalMsg["strMeOff"]);
+				fromMsg.reply("成功在本多人聊天中禁用.me命令!");
 			}
 			else
 			{
-				fromMsg.reply(GlobalMsg["strMeOffAlready"]);
+				fromMsg.reply("在本多人聊天中.me命令没有被启用!");
 			}
 			return 1;
 		}
@@ -1574,7 +1574,7 @@ int DiceReply(Msg fromMsg) {
 	strAction = strip(fromMsg.strMsg.substr(intMsgCnt));
 	if (strAction.empty())
 	{
-		fromMsg.reply(GlobalMsg["strActionEmpty"]);
+		fromMsg.reply("动作不能为空!");
 		return 1;
 	}
 	const string strReply = strNickName + strAction;
@@ -1601,7 +1601,7 @@ int DiceReply(Msg fromMsg) {
 	{
 		if (Name->del(fromMsg.fromGroup, fromMsg.fromQQ))
 		{
-			const string strReply = format(GlobalMsg["strNameClr"], { strNickName});
+			const string strReply = "已将" + strNickName + "的名称删除";
 			fromMsg.reply(strReply);
 		}
 		else
@@ -1614,7 +1614,7 @@ int DiceReply(Msg fromMsg) {
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ob")
 	{
 	if (intT == PrivateT) {
-		fromMsg.reply(GlobalMsg["strObPrivate"]);
+		fromMsg.reply("你想看什么呀？");
 		return 1;
 	}
 	intMsgCnt += 2;
@@ -1629,16 +1629,16 @@ int DiceReply(Msg fromMsg) {
 				if (DisabledOBGroup.count(fromMsg.fromGroup))
 				{
 					DisabledOBGroup.erase(fromMsg.fromGroup);
-					fromMsg.reply(GlobalMsg["strObOn"]);
+					fromMsg.reply("成功在本群中启用旁观模式!");
 				}
 				else
 				{
-					fromMsg.reply(GlobalMsg["strObOnAlready"]);
+					fromMsg.reply("本群中旁观模式没有被禁用!");
 				}
 			}
 			else
 			{
-				fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
+				fromMsg.reply("你没有权限执行此命令!");
 			}
 			return 1;
 		}
@@ -1646,11 +1646,11 @@ int DiceReply(Msg fromMsg) {
 			if (DisabledOBDiscuss.count(fromMsg.fromGroup))
 			{
 				DisabledOBDiscuss.erase(fromMsg.fromGroup);
-				fromMsg.reply(GlobalMsg["strObOn"]);
+				fromMsg.reply("成功在本多人聊天中启用旁观模式!");
 			}
 			else
 			{
-				fromMsg.reply(GlobalMsg["strObOnAlready"]);
+				fromMsg.reply("在本多人聊天中旁观模式没有被禁用!");
 			}
 			return 1;
 		}
@@ -1664,16 +1664,16 @@ int DiceReply(Msg fromMsg) {
 				{
 					DisabledOBGroup.insert(fromMsg.fromGroup);
 					ObserveGroup.clear();
-					fromMsg.reply(GlobalMsg["strObOff"]);
+					fromMsg.reply("成功在本群中禁用旁观模式!");
 				}
 				else
 				{
-					fromMsg.reply(GlobalMsg["strObOffAlready"]);
+					fromMsg.reply("本群中旁观模式没有被启用!");
 				}
 			}
 			else
 			{
-				fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
+				fromMsg.reply("你没有权限执行此命令!");
 			}
 			return 1;
 		}
@@ -1682,50 +1682,50 @@ int DiceReply(Msg fromMsg) {
 			{
 				DisabledOBDiscuss.insert(fromMsg.fromGroup);
 				ObserveDiscuss.clear();
-				fromMsg.reply(GlobalMsg["strObOff"]);
+				fromMsg.reply("成功在本多人聊天中禁用旁观模式!");
 			}
 			else
 			{
-				fromMsg.reply(GlobalMsg["strObOffAlready"]);
+				fromMsg.reply("在本多人聊天中旁观模式没有被启用!");
 			}
 			return 1;
 		}
 	}
 	if (intT == GroupT && DisabledOBGroup.count(fromMsg.fromGroup))
 	{
-		fromMsg.reply(GlobalMsg["strObOffAlready"]);
+		fromMsg.reply("在本群中旁观模式已被禁用!");
 		return 1;
 	}
 	if (intT == DiscussT && DisabledOBDiscuss.count(fromMsg.fromGroup))
 	{
-		fromMsg.reply(GlobalMsg["strObOffAlready"]);
+		fromMsg.reply("在本多人聊天中旁观模式已被禁用!");
 		return 1;
 	}
 	if (Command == "list")
 	{
-		string Msg = GlobalMsg["strObList"];
+		string Msg = "当前的旁观者有:";
 		const auto Range = (intT == GroupT) ? ObserveGroup.equal_range(fromMsg.fromGroup) : ObserveDiscuss.equal_range(fromMsg.fromGroup);
 		for (auto it = Range.first; it != Range.second; ++it)
 		{
 			Msg += "\n" + getName(it->second, fromMsg.fromGroup) + "(" + to_string(it->second) + ")";
 		}
-		const string strReply = Msg == GlobalMsg["strObList"] ? GlobalMsg["strObListEmpty"] : Msg;
+		const string strReply = Msg == "当前的旁观者有:" ? "当前暂无旁观者" : Msg;
 		fromMsg.reply(strReply);
 	}
 	else if (Command == "clr")
 	{
 		if (intT = DiscussT) {
 			ObserveDiscuss.erase(fromMsg.fromGroup);
-			fromMsg.reply(GlobalMsg["strObListClr"]);
+			fromMsg.reply("成功删除所有旁观者!");
 		}
 		else if (getGroupMemberInfo(fromMsg.fromGroup, fromMsg.fromQQ).permissions >= 2)
 		{
 			ObserveGroup.erase(fromMsg.fromGroup);
-			fromMsg.reply(GlobalMsg["strObListClr"]);
+			fromMsg.reply("成功删除所有旁观者!");
 		}
 		else
 		{
-			fromMsg.reply(GlobalMsg["strPermissionDeniedErr"]);
+			fromMsg.reply("你没有权限执行此命令!");
 		}
 	}
 	else if (Command == "exit")
@@ -1736,12 +1736,12 @@ int DiceReply(Msg fromMsg) {
 			if (it->second == fromMsg.fromQQ)
 			{
 				(intT == GroupT) ? ObserveGroup.erase(it) : ObserveDiscuss.erase(it);
-				const string strReply = strNickName + GlobalMsg["strObExit"];
+				const string strReply = strNickName + "成功退出旁观模式!";
 				fromMsg.reply(strReply);
 				return 1;
 			}
 		}
-		const string strReply = strNickName + GlobalMsg["strObExitAlready"];
+		const string strReply = strNickName + "没有加入旁观模式!";
 		fromMsg.reply(strReply);
 	}
 	else
@@ -1751,13 +1751,13 @@ int DiceReply(Msg fromMsg) {
 		{
 			if (it->second == fromMsg.fromQQ)
 			{
-				const string strReply = strNickName + GlobalMsg["strObEnterAlready"];
+				const string strReply = strNickName + "已经处于旁观模式!";
 				fromMsg.reply(strReply);
 				return 1;
 			}
 		}
 		(intT == GroupT) ? ObserveGroup.insert(make_pair(fromMsg.fromGroup, fromMsg.fromQQ)) : ObserveDiscuss.insert(make_pair(fromMsg.fromGroup, fromMsg.fromQQ));
-		const string strReply = strNickName + GlobalMsg["strObEnter"];
+		const string strReply = strNickName + "成功加入旁观模式!";
 		fromMsg.reply(strReply);
 	}
 	}
