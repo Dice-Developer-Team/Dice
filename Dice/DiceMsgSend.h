@@ -39,25 +39,7 @@
  *  MsgType msg_type 消息类型
  */
 void AddMsgToQueue(const std::string& msg, long long target_id, CQ::msgtype msg_type = CQ::Private);
-//打包待处理消息
-class Msg {
-public:
-	std::string strMsg;
-	long long fromID=0;
-	CQ::msgtype fromType= CQ::Private;
-	long long fromQQ=0;
-	long long fromGroup = 0;
-	bool isCalled = false;
-	Msg(std::string message, long long fromNum) :strMsg(message),fromQQ(fromNum), fromID(fromNum) {
-		fromType = CQ::Private;
-	}
-	
-	Msg(std::string message, long long fromGroup, CQ::msgtype msgType, long long fromNum) :strMsg(message), fromQQ(fromNum), fromType(msgType),fromID(fromGroup), fromGroup(fromGroup) {}
 
-	void reply(std::string strReply) {
-		AddMsgToQueue(strReply, fromID, fromType);
-	}
-};
 /*
  * 消息发送线程函数
  * 注意: 切勿在主线程中调用此函数, 此函数仅用于初始化消息发送线程

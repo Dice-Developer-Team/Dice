@@ -124,7 +124,8 @@ using namespace CQ;
 		else if (strOption == "state") {
 			string strReply;
 			strReply += getStrangerInfo(getLoginQQ()).nick + "的当前情况\n"
-				+ (boolPreserve?"私用模式":("公用模式，" + boolNoDiscuss ? "禁用讨论组" : "启用讨论组"))+ "\n"
+				+ (boolPreserve ? "私用模式":"公用模式") + "\n"
+				+ (boolNoDiscuss ? "禁用讨论组" : "启用讨论组")+ "\n"
 				+ "全局开关：" + (boolDisabledGlobal ? "禁用" : "启用") + "\n"
 				+ "全局.me开关：" + (boolDisabledMeGlobal ? "禁用" : "启用") + "\n"
 				+ "全局.jrrp开关：" + (boolDisabledJrrpGlobal ? "禁用" : "启用") + "\n"

@@ -10,6 +10,8 @@
 #include <set>
 #include <Windows.h>
 
+	//Master模式
+	extern bool boolMasterMode;
 	//Master的QQ，无主时为0
 	extern long long masterQQ;
 	//全部群静默
