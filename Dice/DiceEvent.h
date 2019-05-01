@@ -1897,7 +1897,7 @@ public:
 					strTurnCnt = "1";
 				strMainDice = strMainDice.substr(strMainDice.find("#") + 1);
 				const int intDefaultDice = DefaultDice.count(fromQQ) ? DefaultDice[fromQQ] : 100;
-				RD rdTurnCnt(strMainDice, intDefaultDice);
+				RD rdTurnCnt(strTurnCnt, intDefaultDice);
 				const int intRdTurnCntRes = rdTurnCnt.Roll();
 				if (intRdTurnCntRes == Value_Err)
 				{
@@ -2183,7 +2183,7 @@ public:
 					strTurnCnt = "1";
 				strMainDice = strMainDice.substr(strMainDice.find("#") + 1);
 				const int intDefaultDice = DefaultDice.count(fromQQ) ? DefaultDice[fromQQ] : 100;
-				RD rdTurnCnt(strMainDice, intDefaultDice);
+				RD rdTurnCnt(strTurnCnt, intDefaultDice);
 				const int intRdTurnCntRes = rdTurnCnt.Roll();
 				if (intRdTurnCntRes == Value_Err)
 				{
