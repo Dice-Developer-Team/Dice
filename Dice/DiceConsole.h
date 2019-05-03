@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 #include <Windows.h>
+#include "GlobalVar.h"
 
 	//Master模式
 	extern bool boolMasterMode;
@@ -43,7 +44,14 @@
 	//一键清退
 	extern int clearGroup(std::string strPara = "unpower");
 	//命令处理
-	extern void Process(std::string message);
+	extern void ConsoleHandler(std::string message);
+	//当前时间
+	extern SYSTEMTIME stNow;
+	//上班时间
+	extern std::pair<int, int> ClockToWork;
+	//下班时间
+	extern std::pair<int, int> ClockOffWork;
+	extern void ConsoleTimer();
 #endif /*Dice_Console*/
 
 

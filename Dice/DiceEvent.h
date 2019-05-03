@@ -140,7 +140,7 @@ public:
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 					intMsgCnt++;
 				//ÃüÁîÑ¡Ïî
-				Process(strMsg.substr(intMsgCnt));
+				ConsoleHandler(strMsg.substr(intMsgCnt));
 			}
 			return 1;
 		}

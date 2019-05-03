@@ -98,7 +98,9 @@ string strFileLoc;
 void dataBackUp() {
 	//备份MasterQQ
 	ofstream ofstreamMaster(strFileLoc + "Master.RDconf", ios::out | ios::trunc);
-	ofstreamMaster << masterQQ << std::endl << boolMasterMode << std::endl << boolDisabledGlobal << std::endl << boolDisabledMeGlobal << std::endl << boolPreserve << std::endl << boolDisabledJrrpGlobal << std::endl << boolNoDiscuss << std::endl;
+	ofstreamMaster << masterQQ << std::endl << boolMasterMode << std::endl << boolDisabledGlobal << std::endl << boolDisabledMeGlobal << std::endl << boolPreserve << std::endl << boolDisabledJrrpGlobal << std::endl << boolNoDiscuss <<std::endl;
+	ofstreamMaster	<< ClockToWork.first << " " << ClockToWork.second << endl
+					<< ClockOffWork.first << " " << ClockOffWork.second << endl;
 	ofstreamMaster.close();
 	//备份个性化语句
 	ofstream ofstreamPersonalMsg(strFileLoc + "PersonalMsg.RDconf", ios::out | ios::trunc);
@@ -173,6 +175,8 @@ EVE_Enable(eventEnable)
 
 	thread msgSendThread(SendMsg);
 	msgSendThread.detach();
+	thread threadConsoleTimer(ConsoleTimer);
+	threadConsoleTimer.detach();
 	strFileLoc = getAppDirectory();
 	/*
 	* 名称存储-创建与读取
@@ -182,7 +186,8 @@ EVE_Enable(eventEnable)
 	ifstream ifstreamMaster(strFileLoc + "Master.RDconf");
 	if (ifstreamMaster)
 	{
-		ifstreamMaster >> masterQQ >> boolMasterMode >> boolDisabledGlobal >> boolDisabledMeGlobal >> boolPreserve >> boolDisabledJrrpGlobal >> boolNoDiscuss;
+		ifstreamMaster >> masterQQ >> boolMasterMode >> boolDisabledGlobal >> boolDisabledMeGlobal >> boolPreserve >> boolDisabledJrrpGlobal >> boolNoDiscuss
+			>> ClockToWork.first >> ClockToWork.second >> ClockOffWork.first >> ClockOffWork.second;
 	}
 	ifstreamMaster.close();
 	ifstream ifstreamCharacterProp(strFileLoc + "CharacterProp.RDconf");
