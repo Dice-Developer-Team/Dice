@@ -915,9 +915,9 @@ public:
 				reply("已清除" + strName + "的自定义，但恢复默认设置需要重启应用。");
 			}
 			else if (GlobalMsg.count(strName)) {
-				string strMsg = strMsg.substr(intMsgCnt);
-				EditedMsg[strName] = strMsg;
-				GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMsg : strMsg;
+				string strMessage = strMsg.substr(intMsgCnt);
+				EditedMsg[strName] = strMessage;
+				GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMsg : strMessage;
 				reply("已记下" + strName + "的自定义");
 			}
 			else {
