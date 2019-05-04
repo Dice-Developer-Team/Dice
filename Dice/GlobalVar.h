@@ -49,5 +49,6 @@ extern std::map<std::string, std::string> GlobalMsg;
 extern std::map<std::string, std::string> EditedMsg;
 // 帮助文档
 extern std::map<std::string, std::string> HelpDoc;
-
+// 修改后的帮助文档
+extern std::map<std::string, std::string> EditedHelpDoc;
 #endif /*DICE_GLOBAL_VAR*/

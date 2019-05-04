@@ -64,6 +64,10 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 
 std::map<std::string, std::string> GlobalMsg
 {
+	{"strNotMaster","你不是我的master！你想做什么？"},
+	{"strHlpSet","已为{0}设置词条√"},
+	{"strHlpReset","已清除{0}的词条，重启应用后重置默认词条√"},
+	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
 	{"strClockToWork","已按时启用"},
 	{"strClockOffWork","已按时关闭"},
 	{"strNameGenerator","{0}的随机名称:"},
@@ -265,3 +269,4 @@ std::map<std::string, std::string> HelpDoc = {
 {"溯洄","孕育万千骰娘生机之母，萌妹吃鱼之神，正五棱双角锥体对的监护人，一切诡秘的窥见者，拟人者主宰，时空舞台外的逆流者，永转的命运之轮"},
 {"投食","投食Shiki，请选择http://shiki.stringempty.xyz/投食\n没有中间商赚差价，请选择http://docs.kokona.tech/zh/latest/About.html"}
 };
+std::map<std::string, std::string> EditedHelpDoc;

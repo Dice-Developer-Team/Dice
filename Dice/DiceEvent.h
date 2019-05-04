@@ -3,6 +3,7 @@
 #define DICE_EVENT
 #include <map>
 #include <set>
+#include <sstream>
 #include "CQAPI_EX.h"
 #include "DiceMsgSend.h"
 #include "GlobalVar.h"
@@ -136,11 +137,15 @@ public:
 				masterQQ = fromQQ;
 				reply("试问，你就是" + GlobalMsg["strSelfName"] + "的Master√");
 			}
-			else if (fromQQ == masterQQ) {
+			else if (isMaster) {
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 					intMsgCnt++;
 				//命令选项
 				ConsoleHandler(strMsg.substr(intMsgCnt));
+			}
+			else {
+				reply(GlobalMsg["strNotMaster"]);
+				return true;
 			}
 			return 1;
 		}
@@ -236,13 +241,56 @@ public:
 			}
 			return 1;
 		}
-		if (boolDisabledGlobal) {
+		if (boolDisabledGlobal && !isMaster && !isCalled) {
 			if (intT == PrivateT)reply(GlobalMsg["strGlobalOff"]);
 			return 1;
 		}
 		if (!isCalled && (intT == GroupT && DisabledGroup.count(fromGroup)))return 0;
 		if (!isCalled && (intT == DiscussT && DisabledDiscuss.count(fromGroup)))return 0;
-		if (strLowerMessage.substr(intMsgCnt, 4) == "help")
+		if (strLowerMessage.substr(intMsgCnt, 7) == "helpdoc")
+		{
+			intMsgCnt += 7;
+			if (!isMaster) {
+				reply(GlobalMsg["strNotMaster"]);
+				return true;
+			}
+			while (strMsg[intMsgCnt] == ' ')
+				intMsgCnt++;
+			if (intMsgCnt == strMsg.length()) {
+				reply(GlobalMsg["strHlpNameEmpty"]);
+				return true;
+			}
+			string strName;
+			while (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length())
+			{
+				strName += strMsg[intMsgCnt];
+				intMsgCnt++;
+			}
+			while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
+				intMsgCnt++;
+			if (intMsgCnt == strMsg.length()) {
+				HelpDoc.erase(strName);
+				reply(format(GlobalMsg["strHlpReset"], { strName }));
+			}
+			else{
+				string strHelpdoc = strMsg.substr(intMsgCnt);
+				EditedHelpDoc[strName] = strHelpdoc;
+				HelpDoc[strName] = strHelpdoc;
+				reply(format(GlobalMsg["strHlpSet"], { strName }));
+			}
+			string strFileLoc = getAppDirectory();
+			ofstream ofstreamHelpDoc(strFileLoc + "HelpDoc.txt", ios::out | ios::trunc);
+			for (auto it : EditedHelpDoc)
+			{
+				while (it.second.find("\r\n") != string::npos)it.second.replace(it.second.find("\r\n"), 2, "\\n");
+				while (it.second.find('\n') != string::npos)it.second.replace(it.second.find('\n'), 1, "\\n");
+				while (it.second.find('\r') != string::npos)it.second.replace(it.second.find('\r'), 1, "\\r");
+				while (it.second.find("\t") != string::npos)it.second.replace(it.second.find("\t"), 1, "\\t");
+				ofstreamHelpDoc << it.first << '\n' << it.second << '\n';
+			}
+			return true;
+		}
+		else if (strLowerMessage.substr(intMsgCnt, 4) == "help")
 		{
 			intMsgCnt += 4;
 			while (strLowerMessage[intMsgCnt] == ' ')
@@ -333,7 +381,7 @@ public:
 			else {
 				reply(GlobalMsg["strHlpNotFound"]);
 			}
-
+			return true;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 7) == "welcome")
 		{
@@ -369,18 +417,21 @@ public:
 			{
 				reply(GlobalMsg["strPermissionDeniedErr"]);
 			}
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd")
 		{
 			string strReply = strNickName;
 			COC7D(strReply);
 			reply(strReply);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 5) == "coc6d")
 		{
 			string strReply = strNickName;
 			COC6D(strReply);
 			reply(strReply);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 5) == "group")
 		{
@@ -520,6 +571,7 @@ public:
 					reply(GlobalMsg["strRuleErr"] + strReturn);
 				}
 			}
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "coc6")
 		{
@@ -553,6 +605,7 @@ public:
 			string strReply = strNickName;
 			COC6(strReply, intNum);
 			reply(strReply);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "draw")
 		{
@@ -601,6 +654,7 @@ public:
 				reply(GlobalMsg["strDeckEmpty"]);
 				return 1;
 			}
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "init"&&intT)
 		{
@@ -618,6 +672,7 @@ public:
 			}
 			ilInitList->show(fromGroup, strReply);
 			reply(strReply);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
 		{
@@ -723,6 +778,7 @@ public:
 			{
 				reply(format(GlobalMsg["strJrrpErr"], { des }));
 			}
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
 		{
@@ -786,6 +842,7 @@ public:
 				if (i != TempNameStorage.size() - 1)strReply.append(", ");
 			}
 			reply(strReply);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 3) == "coc")
 		{
@@ -821,6 +878,7 @@ public:
 			string strReply = strNickName;
 			COC7(strReply, intNum);
 			reply(strReply);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 3) == "dnd")
 		{
@@ -852,6 +910,7 @@ public:
 			string strReply = strNickName;
 			DND(strReply, intNum);
 			reply(strReply);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 3) == "nnn")
 		{
@@ -871,6 +930,7 @@ public:
 			Name->set(fromGroup, fromQQ, name);
 			const string strReply = format(GlobalMsg["strNameSet"], { strNickName, strip(name) });
 			reply(strReply);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 3) == "set")
 		{
@@ -900,6 +960,7 @@ public:
 				DefaultDice[fromQQ] = intDefaultDice;
 			const string strSetSuccessReply = "已将" + strNickName + "的默认骰类型更改为D" + strDefaultDice;
 			reply(strSetSuccessReply);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 3) == "str"&&boolMasterMode&&fromQQ == masterQQ) {
 			string strName;
@@ -923,7 +984,7 @@ public:
 			else {
 				reply("是说" + strName + "？这似乎不是会用到的语句×");
 			}
-
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
 		{
@@ -995,12 +1056,14 @@ public:
 				}
 			}
 			reply(strAns);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "li")
 		{
 			string strAns = strNickName + "的疯狂发作-总结症状:\n";
 			LongInsane(strAns);
 			reply(strAns);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
 		{
@@ -1153,6 +1216,7 @@ public:
 			}
 			const string strReply = strNickName + strAction;
 			reply(strReply);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 		{
@@ -1184,6 +1248,7 @@ public:
 					reply(strReply);
 				}
 			}
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "ob")
 		{
@@ -1334,6 +1399,7 @@ public:
 				const string strReply = strNickName + GlobalMsg["strObEnter"];
 				reply(strReply);
 			}
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "ra")
 		{
@@ -1441,6 +1507,7 @@ public:
 				strReply = "由于" + strReason + " " + strReply;
 			}
 			reply(strReply);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "rc")
 		{
@@ -1548,6 +1615,7 @@ public:
 				strReply = "由于" + strReason + " " + strReply;
 			}
 			reply(strReply);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "ri"&&intT)
 		{
@@ -1621,6 +1689,7 @@ public:
 			ilInitList->insert(fromGroup, initdice.intTotal, strname);
 			const string strReply = strname + "的先攻骰点：" + strinit + '=' + to_string(initdice.intTotal);
 			reply(strReply);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "sc")
 		{
@@ -1722,6 +1791,7 @@ public:
 					}
 				}
 				reply(strAns);
+				return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "st")
 		{
@@ -1843,12 +1913,14 @@ public:
 			{
 				reply(GlobalMsg["strSetPropSuccess"]);
 			}
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "ti")
 		{
 			string strAns = strNickName + "的疯狂发作-临时症状:\n";
 			TempInsane(strAns);
 			reply(strAns);
+			return 1;
 		}
 		else if (strLowerMessage[intMsgCnt] == 'w')
 		{
@@ -2121,6 +2193,7 @@ public:
 				const string strReply = strNickName + "进行了一次暗骰";
 				reply(strReply);
 			}
+			return 1;
 		}
 		else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'o' || strLowerMessage[intMsgCnt] == 'h'
 			|| strLowerMessage[intMsgCnt] == 'd')
@@ -2385,6 +2458,7 @@ public:
 				const string strReply = strNickName + "进行了一次暗骰";
 				reply(strReply);
 			}
+			return 1;
 		}
 		return 0;
 	}

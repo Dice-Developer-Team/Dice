@@ -386,6 +386,7 @@ EVE_Enable(eventEnable)
 			while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
 			while (strMsg.find("\\s") != string::npos)strMsg.replace(strMsg.find("\\s"), 2, " ");
 			while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
+			EditedHelpDoc[strName] = strMsg;
 			HelpDoc[strName] = strMsg;
 		}
 	}
