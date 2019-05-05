@@ -21,6 +21,7 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <ctime>
 #include "CQEVE_ALL.h"
 #include "DiceConsole.h"
 #include "GlobalVar.h"
@@ -96,6 +97,7 @@ using namespace CQ;
 	//一键清退
 	int clearGroup(string strPara) {
 		int intCnt=0;
+		string strReply;
 		map<long long,string> GroupList=getGroupList();
 		if (strPara == "unpower" || strPara.empty()) {
 			for (auto eachGroup : GroupList) {
@@ -106,26 +108,36 @@ using namespace CQ;
 					intCnt++;
 				}
 			}
+			strReply = "筛除无群权限群聊" + to_string(intCnt) + "个√";
+			AddMsgToQueue(strReply, masterQQ);
 		}
 		else if (isdigit(strPara[0])) {
-			time_t tNow(NULL);
-			time_t tLim= tNow - stoi(strPara) * 24 * 60 * 60;
+			int intDayLim = stoi(strPara);
+			string strDayLim = to_string(intDayLim);
+			time_t tNow = time(NULL);;
 			for (auto eachGroup : GroupList) {
-				if (getGroupMemberInfo(eachGroup.first, getLoginQQ()).LastMsgTime < tLim) {
-					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSlefName"], strPara }), eachGroup.first, Group);
+				int intDay = (int)(tNow - getGroupMemberInfo(eachGroup.first, getLoginQQ()).LastMsgTime)/86400;
+				if (intDay > intDayLim) {
+					strReply += "群(" + to_string(eachGroup.first) + "):" + to_string(intDay) + "天\n";
+					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }), eachGroup.first, Group);
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
 					intCnt++;
 				}
 			}
 			for (auto eachDiscuss : DiscussList) {
-				if (eachDiscuss.second < tLim) {
-					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSlefName"], strPara }), eachDiscuss.first, Group);
+				int intDay = (int)(tNow - eachDiscuss.second) / 86400;
+				if (intDay > intDayLim){
+					strReply += "讨论组(" + to_string(eachDiscuss.first) + "):" + to_string(intDay) + "天\n";
+					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }), eachDiscuss.first, Group);
 					Sleep(10);
 					setDiscussLeave(eachDiscuss.first);
+					DiscussList.erase(eachDiscuss.first);
 					intCnt++;
 				}
 			}
+			strReply += "筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√";
+			AddMsgToQueue(strReply,masterQQ);
 		}
 		else if (strPara == "preserve") {
 			for (auto eachGroup : GroupList) {
@@ -136,6 +148,8 @@ using namespace CQ;
 					intCnt++;
 				}
 			}
+			strReply = "筛除白名单外群聊" + to_string(intCnt) + "个√";
+			AddMsgToQueue(strReply, masterQQ);
 		}
 		else
 			AddMsgToQueue("无法识别筛选参数×",masterQQ);
@@ -284,8 +298,6 @@ void ConsoleHandler(std::string strMessage) {
 		else if (strOption == "groupclr") {
 			std::string strPara = strMessage.substr(intMsgCnt);
 			int intGroupCnt = clearGroup(strPara);
-			string strReply = "筛除群聊" + to_string(intGroupCnt) + "个√";
-			AddMsgToQueue(strReply, masterQQ);
 		}
 		else if (strOption == "only") {
 			if (boolPreserve) {
