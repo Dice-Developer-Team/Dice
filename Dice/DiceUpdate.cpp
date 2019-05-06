@@ -82,7 +82,7 @@ EVE_Menu(eventDiceUpdate)
 
 	streamUpdate << fileContent;
 	streamUpdate.close();
-	MessageBoxA(nullptr, "Dice!已更新, 请重新启动酷Q!", "Dice!更新", MB_OK | MB_ICONINFORMATION);
+	MessageBoxA(nullptr, "Dice!已更新, 请重载应用!", "Dice!更新", MB_OK | MB_ICONINFORMATION);
 	return 0;
 }
 
