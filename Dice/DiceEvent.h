@@ -133,7 +133,7 @@ public:
 		if (strLowerMessage.substr(intMsgCnt, 7) == "dismiss")
 		{
 			if (intT == PrivateT) {
-				reply("¹ö£¡");
+				reply(GlobalMsg["strDismissPrivate"]);
 				return 1;
 			}
 			intMsgCnt += 7;
@@ -150,6 +150,7 @@ public:
 			{
 				if (getGroupMemberInfo(fromGroup, fromQQ).permissions >= 2)
 				{
+					if (!GlobalMsg["strDismiss"].empty())reply(GlobalMsg["strDismiss"]);
 					intT == GroupT ? setGroupLeave(fromGroup) : setDiscussLeave(fromGroup);
 				}
 				else
@@ -816,7 +817,6 @@ public:
 		}
 		isLinkOrder = true;
 		string strOption = readPara();
-		//string strOption = "with";
 		if (strOption == "close") {
 			if (mLinkedList.count(fromChat)) {
 				chatType ToChat = mLinkedList[fromChat];
@@ -841,10 +841,8 @@ public:
 			return 1;
 		}
 		string strType = readPara();
-		//string strType = "group";
 		chatType ToChat;
 		string strID = readDigit();
-		//string strID = "863062599";
 		if (strID.empty()) {
 			reply(GlobalMsg["strLinkNotFound"]);
 			return 1;
@@ -867,18 +865,18 @@ public:
 			mLinkedList[fromChat] = ToChat;
 			mFwdList.insert({ fromChat,ToChat });
 			mFwdList.insert({ ToChat,fromChat });
-			reply(GlobalMsg["strLinked"]);
 		}
 		else if (strOption == "from") {
 			mLinkedList[fromChat] = ToChat;
 			mFwdList.insert({ ToChat,fromChat });
-			reply(GlobalMsg["strLinked"]);
 		}
 		else if (strOption == "to") {
 			mLinkedList[fromChat] = ToChat;
 			mFwdList.insert({ fromChat,ToChat });
-			reply(GlobalMsg["strLinked"]);
 		}
+		else return 1;
+		if (mLastMsgList.count(ToChat))reply(GlobalMsg["strLinked"]);
+		else reply(GlobalMsg["strLinkWarning"]);
 		return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
