@@ -405,3 +405,63 @@ void LongInsane(string& strAns)
 	}
 	strAns += strLI;
 }
+//成功等级
+//0-大失败，1-失败，2-成功，3-困难成功，4-极难成功，5-大成功
+int RollSuccessLevel(int res, int rate, int rule) {
+	switch (rule) {
+	case 0:
+		if (res == 100)return 0;
+		if (res == 1)return 5;
+		if (res <= rate / 5)return 4;
+		if (res <= rate / 2)return 3;
+		if (res <= rate)return 2;
+		if (rate >= 50 || res < 96)return 1;
+		else return 0;
+		break;
+	case 1:
+		if (res == 100)return 0;
+		if (res <= 5 && res <= rate)return 5;
+		if (res <= rate / 5)return 4;
+		if (res <= rate / 2)return 3;
+		if (res <= rate)return 2;
+		if (res < 96)return 1;
+		else return 0;
+		break;
+	case 2:
+		if (res == 100)return 0;
+		if (res == 1 || res <= 5 && res >=50 )return 5;
+		if (res <= rate / 5)return 4;
+		if (res <= rate / 2)return 3;
+		if (res <= rate)return 2;
+		if (rate >= 50 || res < 96)return 1;
+		else return 0;
+		break;
+	case 3:
+		if (res >= 96)return 0;
+		if (res <= 5)return 5;
+		if (res <= rate / 5)return 4;
+		if (res <= rate / 2)return 3;
+		if (res <= rate)return 2;
+		else return 1;
+		break;
+	case 4:
+		if (res == 100)return 0;
+		if (res <=5 && res <= rate/10)return 5;
+		if (res <= rate / 5)return 4;
+		if (res <= rate / 2)return 3;
+		if (res <= rate)return 2;
+		if (rate >= 50 || res < 96 + rate/10)return 1;
+		else return 0;
+		break;
+	case 5:
+		if (res >= 99)return 0;
+		if (res <= 2 && res < rate / 10)return 5;
+		if (res <= rate / 5)return 4;
+		if (res <= rate / 2)return 3;
+		if (res <= rate)return 2;
+		if (rate >= 50 || res < 96)return 1;
+		else return 0;
+		break;
+	default :return -1;
+	}
+}

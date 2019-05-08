@@ -709,4 +709,5 @@ void COC7(std::string&, int);
 void DND(std::string&, int);
 void LongInsane(std::string&);
 void TempInsane(std::string&);
+int RollSuccessLevel(int,int,int);
 #endif /*DICE_RD*/

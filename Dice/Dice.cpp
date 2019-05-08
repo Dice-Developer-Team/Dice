@@ -76,6 +76,7 @@ bool boolStandByMe = false;
 long long IdentityQQ = 0;
 long long StandQQ = 0;
 map<long long, int> DefaultDice;
+map<chatType, int> mDefaultCOC;
 map<long long, string> WelcomeMsg;
 map<long long, string> DefaultRule;
 set<long long> DisabledJRRPGroup;
@@ -177,6 +178,13 @@ void dataBackUp() {
 		ofstreamLastMsgList << it.first.first << " " << it.first.second << " "<< it.second << std::endl;
 	}
 	ofstreamLastMsgList.close();
+	//备份默认COC房规
+	ofstream ofstreamDefaultCOC(strFileLoc + "DefaultCOC.MYmap", ios::out | ios::trunc);
+	for (auto it : mDefaultCOC)
+	{
+		ofstreamDefaultCOC << it.first.first << " " << it.first.second << " " << it.second << std::endl;
+	}
+	ofstreamDefaultCOC.close();
 }
 EVE_Enable(eventEnable)
 {
@@ -455,7 +463,7 @@ EVE_Enable(eventEnable)
 	}
 	ifstreamDiscussList.close();
 	//读取聊天列表
-	ifstream ifstreamLastMsgList(strFileLoc + "LastMsgList.map");
+	ifstream ifstreamLastMsgList(strFileLoc + "LastMsgList.MYmap");
 	if (ifstreamLastMsgList)
 	{
 		long long llID;
@@ -469,6 +477,21 @@ EVE_Enable(eventEnable)
 		}
 	}
 	ifstreamLastMsgList.close();
+	//读取聊天列表
+	ifstream ifstreamDefaultCOC(strFileLoc + "DefaultCOC.MYmap");
+	if (ifstreamDefaultCOC)
+	{
+		long long llID;
+		int intT;
+		chatType ct;
+		int intRule;
+		while (ifstreamDefaultCOC >> llID >> intT >> intRule)
+		{
+			ct = { llID,(msgtype)intT };
+			mDefaultCOC[ct] = intRule;
+		}
+	}
+	ifstreamDefaultCOC.close();
 	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
 	ifstream ifstreamCustomMsg(strFileLoc + "CustomMsg.json");
 	if (ifstreamCustomMsg)

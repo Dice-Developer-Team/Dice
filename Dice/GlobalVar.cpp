@@ -35,8 +35,8 @@ CQ::logger DiceLogger("Dice!");
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-const unsigned short Dice_Build = 532;
-const std::string Dice_Ver_Without_Build = "2.3.8.2i";
+const unsigned short Dice_Build = 533;
+const std::string Dice_Ver_Without_Build = "2.3.8.3i";
 const std::string DiceRequestHeader = "Dice/" + Dice_Ver_Without_Build;
 const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 const std::string Dice_Short_Ver = "Dice! by 溯洄 Shiki.Ver " + Dice_Ver;
@@ -64,6 +64,9 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 
 std::map<std::string, std::string> GlobalMsg
 {
+	{"strDefaultCOCClr","默认检定房规已清除"},
+	{"strDefaultCOCNotFound","默认检定房规不存在"},
+	{"strDefaultCOCSet","默认检定房规已设置:"},
 	{"strLinkLoss","时空连接已断开"},
 	{"strLinked","已创建时空门"},
 	{"strLinkWarning","尝试创建时空门，但不保证能否连通"},
@@ -201,7 +204,7 @@ std::map<std::string, std::string> GlobalMsg
 
 std::map<std::string, std::string> EditedMsg;
 std::map<std::string, std::string> HelpDoc = {
-{"更新","532：更新了消息转发功能（当前Master专用）\n531：更新了塔罗牌牌阵\n530：允许自定义帮助文档并修复自定义回复的bug\n529：更新master每日定时开关功能，修复掷骰轮数bug\n528：更新.help帮助功能，允许后接参数\n527：更新功能转向追踪Shiki的更新\n526：允许乘法表达式\n525：修复了.draw抽不完最后一张的bug"},
+{"更新","533更新了.rc/ra功能\n532：更新了消息转发功能（当前Master专用）\n531：更新了塔罗牌牌阵\n530：允许自定义帮助文档并修复自定义回复的bug\n529：更新master每日定时开关功能，修复掷骰轮数bug\n528：更新.help帮助功能，允许后接参数\n527：更新功能转向追踪Shiki的更新\n526：允许乘法表达式"},
 {"协议","0.本协议是Shiki(Death、Judgement、The World)的服务协议，不代表同类插件服务有一致的协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
 {"作者","Copyright (C) 2018-2019 w4123溯洄\nCopyright (C) 2019 String.Empty"},
 {"指令","掷骰指令包括:\n.dismiss 退群\n.bot 开关\n.welcome 入群欢迎\n.rules 规则速查\n.r 掷骰\n.ob 旁观模式\n.set 设置默认骰\n.name 随机姓名\n.nn 设置昵称\n.coc COC人物作成\n.dnd DND人物作成\n.st 角色卡设置\n.rc/ra 检定\n.sc 理智检定\n.en 成长检定\n.ri 先攻\n.init 先攻列表\n.ww 骰池\n.me 第三人称动作\n.jrrp 今日人品\n.group ban 群员禁言\n.group state 本群现状\n.draw 抽牌\nat骰娘后接指令可以指定骰娘单独响应，如at骰娘.bot off\n请.help对应指令 获取详细信息\n为了避免未预料到的指令误判，请尽可能在参数之间使用空格"},
@@ -241,7 +244,8 @@ std::map<std::string, std::string> HelpDoc = {
 {"rc","&rc/ra"},
 {"ra","&rc/ra"},
 {"检定","&rc/ra"},
-{"rc/ra","检定指令：.rc/ra [属性名]([成功率])\n角色卡设置了属性时，可省略成功率\n.rc体质 重伤检定\n.rc kp裁决 99\n.rc 敏捷-10\t//修正后成功率必须在1-1000内\n.rcp 手枪	\t//奖惩骰至多9个\n默认使用的房规将在之后版本被移除"},
+{"rc/ra","检定指令：.rc/ra [属性名]([成功率])\n角色卡设置了属性时，可省略成功率\n.rc体质*5\t//允许使用+-*/，但顺序要求为乘法>加减>除法\n.rc 困难幸运\t//技能名开头的困难和极难会被视为关键词\n.rc 敏捷-10\t//修正后成功率必须在1-1000内\n.rcp 手枪\t//奖惩骰至多9个\n默认以规则书判定，大成功大失败的房规由.setcoc设置"},
+{"setcoc","为每个群或讨论组设置COC房规，如.setcoc 1,当前参数0-5\n0 规则书\n出1大成功\n不满50出96 - 100大失败，满50出100大失败\n1\n不满50出1大成功，满50出1 - 5大成功\n不满50出96 - 100大失败，满50出100大失败\n2\n出1 - 5且 <= 成功率大成功\n出100或出96 - 99且 > 成功率大失败\n3\n出1 - 5大成功\n出96 - 100大失败\n4\n出1 - 5且 <= 十分之一大成功\n不满50出 >= 96 + 十分之一大失败，满50出100大失败\n5\n出1 - 2且 < 五分之一大成功\n不满50出96 - 100大失败，满50出99 - 100大失败\n"},
 {"san check","&sc"},
 {"理智检定","&sc"},
 {"sc","San Check指令：.sc[成功损失]/[失败损失] ([当前san值])\n已经.st了理智/san时，可省略最后的参数\n.sc0/1 70\n.sc1d10/1d100 直面外神\n大失败自动失去最大值\n当调用角色卡san时，san会自动更新为sc后的剩余值\n程序上可以损失负数的san，也就是可以用.sc-1d6/-1d6来回复san，但请避免这种奇怪操作"},

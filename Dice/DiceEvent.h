@@ -1,3 +1,7 @@
+/*
+ * 消息处理
+ * Copyright (C) 2019 String.Empty
+ */
 #pragma once
 #ifndef DICE_EVENT
 #define DICE_EVENT
@@ -39,6 +43,8 @@ string strip(std::string origin)
 }
 
 extern map<long long, int> DefaultDice;
+//默认COC检定房规
+extern map<chatType, int> mDefaultCOC;
 extern map<long long, string> WelcomeMsg;
 extern map<long long, string> DefaultRule;
 extern set<long long> DisabledJRRPGroup;
@@ -448,6 +454,47 @@ public:
 			}
 			return 1;
 		}
+		else if (strLowerMessage.substr(intMsgCnt, 6) == "setcoc") {
+		if (intT == GroupT && getGroupMemberInfo(fromGroup, fromQQ).permissions == 1) {
+			reply(GlobalMsg["strPermissionDeniedErr"]);
+			return 1;
+		}
+		string strRule=readDigit();
+		if (strRule.empty()) {
+			mDefaultCOC.erase(fromChat);
+			reply(GlobalMsg["strDefaultCOCClr"]);
+			return 1;
+		}
+		else{
+			int intRule = stoi(strRule);
+			switch (intRule) {
+			case 0:
+				reply(GlobalMsg["strDefaultCOCSet"] + "0 规则书\n出1大成功\n不满50出96-100大失败，满50出100大失败");
+				break;
+			case 1:
+				reply(GlobalMsg["strDefaultCOCSet"] + "1\n不满50出1大成功，满50出1-5大成功\n不满50出96-100大失败，满50出100大失败");
+				break;
+			case 2:
+				reply(GlobalMsg["strDefaultCOCSet"] + "2\n出1-5且<=成功率大成功\n出100或出96-99且>成功率大失败");
+				break;
+			case 3:
+				reply(GlobalMsg["strDefaultCOCSet"] + "3\n出1-5大成功\n出96-100大失败");
+				break;
+			case 4:
+				reply(GlobalMsg["strDefaultCOCSet"] + "4\n出1-5且<=十分之一大成功\n不满50出>=96+十分之一大失败，满50出100大失败");
+				break;
+			case 5:
+				reply(GlobalMsg["strDefaultCOCSet"] + "5\n出1-2且<五分之一大成功\n不满50出96-100大失败，满50出99-100大失败");
+				break;
+			default:
+				reply(GlobalMsg["strDefaultCOCNotFound"]);
+				return 1;
+				break;
+			}
+			mDefaultCOC[fromChat] = intRule;
+			return 1;
+		}
+}
 		else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd")
 		{
 			string strReply = strNickName;
@@ -1500,13 +1547,21 @@ public:
 			}
 			return 1;
 		}
-		else if (strLowerMessage.substr(intMsgCnt, 2) == "ra")
+		else if (strLowerMessage.substr(intMsgCnt, 2) == "ra"|| strLowerMessage.substr(intMsgCnt, 2) == "rc")
 		{
 			intMsgCnt += 2;
+			int intRule = mDefaultCOC.count(fromChat) ? mDefaultCOC[fromChat] : 0;
 			string strSkillName;
 			string strMainDice = "D100";
 			string strSkillModify;
+			//困难等级
+			string strDifficulty;
+			int intDifficulty = 1;
 			int intSkillModify = 0;
+			//乘数
+			int intSkillMultiple = 1;
+			//除数
+			int intSkillDivisor = 1;
 			if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') {
 				strMainDice = strLowerMessage[intMsgCnt];
 				intMsgCnt++;
@@ -1518,13 +1573,22 @@ public:
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 			while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
 				isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
-				':'&& strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-')
+				':' && strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-' && strLowerMessage[intMsgCnt] != '*' && strLowerMessage[intMsgCnt] != '/')
 			{
 				strSkillName += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
+			if (strSkillName.find("困难" == 0) || strSkillName.find("极难" == 0)) {
+				strDifficulty = strSkillName.substr(0,4);
+				intDifficulty = (strDifficulty == "困难") ? 2 : 5;
+				strSkillName=strSkillName.substr(4);
+			}
 			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-			if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
+			if (strLowerMessage[intMsgCnt] == '*') {
+				intMsgCnt++;
+				intSkillMultiple = stoi(readDigit());
+			}
+			while (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
 				strSkillModify += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 				while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
@@ -1532,6 +1596,14 @@ public:
 					intMsgCnt++;
 				}
 				intSkillModify = stoi(strSkillModify);
+			}
+			if (strLowerMessage[intMsgCnt] == '/') {
+				intMsgCnt++;
+				intSkillDivisor = stoi(readDigit());
+				if (intSkillDivisor == 0) {
+					reply(GlobalMsg["strValueErr"]);
+					return 1;
+				}
 			}
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 				':')intMsgCnt++;
@@ -1573,7 +1645,7 @@ public:
 			{
 				intSkillVal = stoi(strSkillVal);
 			}
-			int intFianlSkillVal = intSkillVal + intSkillModify;
+			int intFianlSkillVal = (intSkillVal * intSkillMultiple + intSkillModify)/ intSkillDivisor/ intDifficulty;
 			if (intFianlSkillVal < 0 || intFianlSkillVal > 1000)
 			{
 				reply(GlobalMsg["strSuccessRateErr"]);
@@ -1592,123 +1664,17 @@ public:
 				return 1;
 			}
 			const int intD100Res = rdMainDice.intTotal;
-			string strReply = strNickName + "进行" + strSkillName + strSkillModify + "检定: " + rdMainDice.FormCompleteString() + "/" +
+			string strReply = strNickName + "进行" + strDifficulty + strSkillName + ((intSkillMultiple!=1)?"×"+to_string(intSkillMultiple):"") + strSkillModify + ((intSkillDivisor != 1) ? "/" + to_string(intSkillDivisor) : "") + "检定: " + rdMainDice.FormCompleteString() + "/" +
 				to_string(intFianlSkillVal) + " ";
-			if (intD100Res <= 5 && intD100Res <= intSkillVal)strReply += GlobalMsg["strRollCriticalSuccess"];
-			else if (intD100Res == 100)strReply += GlobalMsg["strRollFumble"];
-			else if (intD100Res <= intFianlSkillVal / 5)strReply += GlobalMsg["strRollExtremeSuccess"];
-			else if (intD100Res <= intFianlSkillVal / 2)strReply += GlobalMsg["strRollHardSuccess"];
-			else if (intD100Res <= intFianlSkillVal)strReply += GlobalMsg["strRollRegularSuccess"];
-			else if (intD100Res <= 95)strReply += GlobalMsg["strRollFailure"];
-			else strReply += GlobalMsg["strRollFumble"];
-			if (!strReason.empty())
-			{
-				strReply = "由于" + strReason + " " + strReply;
+			int intRes = RollSuccessLevel(intD100Res, intFianlSkillVal, intRule);
+			switch (intRes) {
+			case 0:strReply += GlobalMsg["strRollFumble"]; break;
+			case 1:strReply += GlobalMsg["strRollFailure"]; break;
+			case 5:strReply += GlobalMsg["strRollCriticalSuccess"]; break;
+			case 4:if (intDifficulty == 1) { strReply += GlobalMsg["strRollExtremeSuccess"]; break; }
+			case 3:if (intDifficulty == 1) { strReply += GlobalMsg["strRollHardSuccess"]; break; }
+			case 2:strReply += GlobalMsg["strRollRegularSuccess"]; break;
 			}
-			reply(strReply);
-			return 1;
-		}
-		else if (strLowerMessage.substr(intMsgCnt, 2) == "rc")
-		{
-			intMsgCnt += 2;
-			string strSkillName;
-			string strMainDice = "D100";
-			string strSkillModify;
-			int intSkillModify = 0;
-			if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') {
-				strMainDice = strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-				while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
-					strMainDice += strLowerMessage[intMsgCnt];
-					intMsgCnt++;
-				}
-			}
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
-			while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
-				isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] !=
-				':' && strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-')
-			{
-				strSkillName += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-			if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
-				strSkillModify += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-				while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
-					strSkillModify += strLowerMessage[intMsgCnt];
-					intMsgCnt++;
-				}
-				intSkillModify = stoi(strSkillModify);
-			}
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
-				':')intMsgCnt++;
-			string strSkillVal;
-			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			{
-				strSkillVal += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			{
-				intMsgCnt++;
-			}
-			string strReason = strMsg.substr(intMsgCnt);
-			int intSkillVal;
-			if (strSkillVal.empty())
-			{
-				if (CharacterProp.count(SourceType(fromQQ, intT, fromGroup)) && CharacterProp[SourceType(
-					fromQQ, intT, fromGroup)].count(strSkillName))
-				{
-					intSkillVal = CharacterProp[SourceType(fromQQ, intT, fromGroup)][strSkillName];
-				}
-				else if (SkillDefaultVal.count(strSkillName))
-				{
-					intSkillVal = SkillDefaultVal[strSkillName];
-				}
-				else
-				{
-					reply(GlobalMsg["strUnknownPropErr"]);
-					return 1;
-				}
-			}
-			else if (strSkillVal.length() > 3)
-			{
-				reply(GlobalMsg["strPropErr"]);
-				return 1;
-			}
-			else
-			{
-				intSkillVal = stoi(strSkillVal);
-			}
-			int intFianlSkillVal = intSkillVal + intSkillModify;
-			if (intFianlSkillVal < 0 || intFianlSkillVal > 1000)
-			{
-				reply(GlobalMsg["strSuccessRateErr"]);
-				return 1;
-			}
-			RD rdMainDice(strMainDice);
-			const int intFirstTimeRes = rdMainDice.Roll();
-			if (intFirstTimeRes == ZeroDice_Err)
-			{
-				reply(GlobalMsg["strZeroDiceErr"]);
-				return 1;
-			}
-			if (intFirstTimeRes == DiceTooBig_Err)
-			{
-				reply(GlobalMsg["strDiceTooBigErr"]);
-				return 1;
-			}
-			const int intD100Res = rdMainDice.intTotal;
-			string strReply = strNickName + "进行" + strSkillName + strSkillModify + "检定: " + rdMainDice.FormCompleteString() + "/" +
-				to_string(intFianlSkillVal) + " ";
-			if (intD100Res == 1)strReply += GlobalMsg["strRollCriticalSuccess"];
-			else if (intD100Res == 100)strReply += GlobalMsg["strRollFumble"];
-			else if (intD100Res <= intFianlSkillVal / 5)strReply += GlobalMsg["strRollExtremeSuccess"];
-			else if (intD100Res <= intFianlSkillVal / 2)strReply += GlobalMsg["strRollHardSuccess"];
-			else if (intD100Res <= intFianlSkillVal)strReply += GlobalMsg["strRollRegularSuccess"];
-			else if (intD100Res <= 95)strReply += GlobalMsg["strRollFailure"];
-			else strReply += GlobalMsg["strRollFumble"];
 			if (!strReason.empty())
 			{
 				strReply = "由于" + strReason + " " + strReply;
