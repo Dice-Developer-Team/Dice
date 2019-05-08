@@ -130,7 +130,7 @@ void COC7D(string& strMAns)
 	strMAns += to_string(LUCK);
 
 	strMAns += '\n';
-	strMAns += "共计:" + to_string(STR + CON + SIZ + APP + POW + EDU + DEX + INT + LUCK);
+	strMAns += "共计:" + to_string(STR + CON + SIZ + APP + POW + EDU + DEX + INT) + "/" + to_string(STR + CON + SIZ + APP + POW + EDU + DEX + INT + LUCK);
 
 	strMAns += "\n理智SAN=POW=";
 	const int SAN = POW;
@@ -289,6 +289,7 @@ void COC7(string& strMAns, int intNum)
 	string strProperty[] = {"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育", "幸运"};
 	string strRoll[] = {"3D6", "3D6", "2D6+6", "3D6", "3D6", "2D6+6", "3D6", "2D6+6", "3D6"};
 	int intAllTotal = 0;
+	int intLuc = 0;
 	while (intNum--)
 	{
 		strMAns += '\n';
@@ -298,8 +299,9 @@ void COC7(string& strMAns, int intNum)
 			rdCOC.Roll();
 			strMAns += strProperty[i] + ":" + to_string(rdCOC.intTotal * 5) + " ";
 			intAllTotal += rdCOC.intTotal * 5;
+			intLuc = rdCOC.intTotal * 5;
 		}
-		strMAns += "共计:" + to_string(intAllTotal);
+		strMAns += "共计:" + to_string(intAllTotal-intLuc) + "/" + to_string(intAllTotal);
 		intAllTotal = 0;
 	}
 }
