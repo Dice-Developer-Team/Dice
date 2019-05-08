@@ -13,6 +13,13 @@
 using namespace std;
 using namespace CQ;
 
+using chatType = pair<long long, msgtype>;
+//最近消息记录
+extern map<chatType, time_t> mLastMsgList;
+//连接的聊天窗口
+extern map<chatType, chatType> mLinkedList;
+//单向转发列表
+extern multimap<chatType, chatType> mFwdList;
 extern unique_ptr<NameStorage> Name;
 string strip(std::string origin)
 {
@@ -65,13 +72,20 @@ extern multimap<long long, long long> ObserveDiscuss;
 class FromMsg {
 public:
 	std::string strMsg;
+	string strLowerMessage;
 	long long fromID = 0;
 	CQ::msgtype fromType = CQ::Private;
 	long long fromQQ = 0;
 	long long fromGroup = 0;
-	FromMsg(std::string message, long long fromNum) :strMsg(message), fromQQ(fromNum), fromID(fromNum) {}
+	chatType fromChat;
+	FromMsg(std::string message, long long fromNum) :strMsg(message), fromQQ(fromNum), fromID(fromNum) {
+		fromChat = { fromID,Private };
+		mLastMsgList[fromChat] = time(NULL);
+	}
 
-	FromMsg(std::string message, long long fromGroup, CQ::msgtype msgType, long long fromNum) :strMsg(message), fromQQ(fromNum), fromType(msgType), fromID(fromGroup), fromGroup(fromGroup) {}
+	FromMsg(std::string message, long long fromGroup, CQ::msgtype msgType, long long fromNum) :strMsg(message), fromQQ(fromNum), fromType(msgType), fromID(fromGroup), fromGroup(fromGroup), fromChat({ fromGroup,fromType }) {
+		mLastMsgList[fromChat] = time(NULL);
+	}
 
 	string getName(long long QQ , long long GroupID)
 	{
@@ -91,7 +105,21 @@ public:
 	void reply(std::string strReply) {
 		AddMsgToQueue(strReply, fromID, fromType);
 	}
-
+	//转发消息
+	void FwdMsg(string message) {
+		if (mFwdList.count(fromChat)&&!isLinkOrder) {
+			auto range = mFwdList.equal_range(fromChat);
+			string strFwd;
+			if (fromType == Group)strFwd += "[群:"+to_string(fromGroup)+"]";
+			if (fromType == Discuss)strFwd += "[讨论组:" + to_string(fromGroup) + "]";
+			strFwd += getName(fromQQ,fromGroup) + "(" + to_string(fromQQ) + "):";
+			if (masterQQ == fromQQ)strFwd.clear();
+			strFwd += message;
+			for (auto it = range.first; it != range.second; it++) {
+				AddMsgToQueue(strFwd, it->second.first, it->second.second);
+			}
+		}
+	}
 	bool DiceReply() {
 		if (strMsg[0] != '.')
 			return false;
@@ -100,7 +128,7 @@ public:
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
 		const string strNickName = getName(fromQQ, fromGroup);
-		string strLowerMessage = strMsg;
+		strLowerMessage = strMsg;
 		std::transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
 		if (strLowerMessage.substr(intMsgCnt, 7) == "dismiss")
 		{
@@ -779,6 +807,79 @@ public:
 				reply(format(GlobalMsg["strJrrpErr"], { des }));
 			}
 			return 1;
+		}
+		else if (strLowerMessage.substr(intMsgCnt, 4) == "link") {
+		intMsgCnt += 4;
+		if (!isMaster) {
+			reply(GlobalMsg["strNotMaster"]);
+			return true;
+		}
+		isLinkOrder = true;
+		string strOption = readPara();
+		//string strOption = "with";
+		if (strOption == "close") {
+			if (mLinkedList.count(fromChat)) {
+				chatType ToChat = mLinkedList[fromChat];
+				mLinkedList.erase(fromChat);
+				auto Range = mFwdList.equal_range(fromChat);
+				for (auto it = Range.first; it != Range.second; ++it) {
+					if (it->second == ToChat) {
+						mFwdList.erase(it);
+						break;
+					}
+				}
+				Range = mFwdList.equal_range(ToChat);
+				for (auto it = Range.first; it != Range.second; ++it) {
+					if (it->second == fromChat) {
+						mFwdList.erase(it);
+						break;
+					}
+				}
+				reply(GlobalMsg["strLinkLoss"]);
+				return 1;
+			}
+			return 1;
+		}
+		string strType = readPara();
+		//string strType = "group";
+		chatType ToChat;
+		string strID = readDigit();
+		//string strID = "863062599";
+		if (strID.empty()) {
+			reply(GlobalMsg["strLinkNotFound"]);
+			return 1;
+		}
+		ToChat.first = stoll(strID);
+		if (strType == "qq") {
+			ToChat.second = Private;
+		}
+		else if (strType == "group") {
+			ToChat.second = Group;
+		}
+		else if (strType == "discuss") {
+			ToChat.second = Discuss;
+		}
+		else {
+			reply(GlobalMsg["strLinkNotFound"]);
+			return 1;
+		}
+		if (strOption == "with") {
+			mLinkedList[fromChat] = ToChat;
+			mFwdList.insert({ fromChat,ToChat });
+			mFwdList.insert({ ToChat,fromChat });
+			reply(GlobalMsg["strLinked"]);
+		}
+		else if (strOption == "from") {
+			mLinkedList[fromChat] = ToChat;
+			mFwdList.insert({ ToChat,fromChat });
+			reply(GlobalMsg["strLinked"]);
+		}
+		else if (strOption == "to") {
+			mLinkedList[fromChat] = ToChat;
+			mFwdList.insert({ fromChat,ToChat });
+			reply(GlobalMsg["strLinked"]);
+		}
+		return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
 		{
@@ -2490,5 +2591,27 @@ private:
 	int intMsgCnt = 0;
 	bool isCalled = false;
 	bool isMaster = false;
+	bool isLinkOrder = false;
+	//读取参数
+	string readPara() {
+		string strPara;
+		while (isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
+		while (!isspace(strLowerMessage[intMsgCnt]) && intMsgCnt != strLowerMessage.length()) {
+			strPara += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		return strPara;
+	}
+	//读取数字
+	string readDigit() {
+		string strMum;
+		while (!isdigit(strMsg[intMsgCnt]) && intMsgCnt != strMsg.length())intMsgCnt++;
+		while (isdigit(strMsg[intMsgCnt])) {
+			strMum += strMsg[intMsgCnt];
+			intMsgCnt++;
+		}
+		return strMum;
+	}
 };
+
 #endif /*DICE_EVENT*/

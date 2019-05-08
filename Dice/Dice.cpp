@@ -88,6 +88,10 @@ set<long long> DisabledOBGroup;
 set<long long> DisabledOBDiscuss;
 unique_ptr<Initlist> ilInitList;
 
+map<chatType, time_t> mLastMsgList;
+map<chatType, chatType> mLinkedList;
+multimap<chatType, chatType> mFwdList;
+
 using PropType = map<string, int>;
 map<SourceType, PropType> CharacterProp;
 multimap<long long, long long> ObserveGroup;
@@ -166,6 +170,13 @@ void dataBackUp() {
 		ofstreamDiscussList << it.first << "\n" << it.second << std::endl;
 	}
 	ofstreamDiscussList.close();
+	//备份聊天列表
+	ofstream ofstreamLastMsgList(strFileLoc + "LastMsgList.MYmap", ios::out | ios::trunc);
+	for (auto it : mLastMsgList)
+	{
+		ofstreamLastMsgList << it.first.first << " " << it.first.second << " "<< it.second << std::endl;
+	}
+	ofstreamLastMsgList.close();
 }
 EVE_Enable(eventEnable)
 {
@@ -443,6 +454,21 @@ EVE_Enable(eventEnable)
 		}
 	}
 	ifstreamDiscussList.close();
+	//读取聊天列表
+	ifstream ifstreamLastMsgList(strFileLoc + "LastMsgList.map");
+	if (ifstreamLastMsgList)
+	{
+		long long llID;
+		int intT;
+		chatType ct;
+		time_t tLast;
+		while (ifstreamLastMsgList >> llID >> intT >> tLast)
+		{
+			ct = { llID,(msgtype)intT };
+			mLastMsgList[ct] = tLast;
+		}
+	}
+	ifstreamLastMsgList.close();
 	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
 	ifstream ifstreamCustomMsg(strFileLoc + "CustomMsg.json");
 	if (ifstreamCustomMsg)
@@ -457,11 +483,13 @@ EVE_Enable(eventEnable)
 		ifstreamStandByMe >> IdentityQQ >> StandQQ;
 		if (getLoginQQ() == StandQQ) {
 			boolStandByMe = true;
+			masterQQ = IdentityQQ;
 			string strName,strMsg;
 			while (ifstreamStandByMe) {
-				ifstreamStandByMe >> strName >> strMsg;
+				getline(ifstreamStandByMe, strName);
+				getline(ifstreamStandByMe, strMsg);
 				while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
-				while (strMsg.find("\\b") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, " ");
+				while (strMsg.find("\\s") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, " ");
 				while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
 				GlobalMsg[strName] = strMsg;
 			}
@@ -476,15 +504,15 @@ EVE_Enable(eventEnable)
 
 EVE_PrivateMsg_EX(eventPrivateMsg)
 {
-	if (eve.isSystem())return;
-	if (BlackQQ.count(eve.fromQQ)) {
-		eve.message_block();
+	if (eve.isSystem()) {
+		if (boolMasterMode&&masterQQ) {
+			AddMsgToQueue("来自系统：" + eve.message, masterQQ);
+		}
 		return;
 	}
-	init(eve.message);
-	init2(eve.message);
 	FromMsg Msg(eve.message, eve.fromQQ);
 	if (Msg.DiceFilter())eve.message_block();
+	Msg.FwdMsg(eve.message);
 	return;
 }
 
@@ -516,11 +544,9 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		}
 		else return;
 	}
-	
-	
-	
 	FromMsg Msg(eve.message, eve.fromGroup, Group, eve.fromQQ);
 	if (Msg.DiceFilter())eve.message_block();
+	Msg.FwdMsg(eve.message);
 	return;
 }
 
@@ -540,25 +566,9 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		return;
 	}
 	DiscussList[eve.fromDiscuss] = tNow;
-	init(eve.message);
-	bool boolNamed = false;
-	string strAt = "[CQ:at,qq=" + to_string(getLoginQQ()) + "]";
-	if (eve.message.substr(0, 6) == "[CQ:at")
-	{
-		if (eve.message.substr(0, strAt.length()) == strAt)
-		{
-			eve.message = eve.message.substr(strAt.length() + 1);
-			boolNamed = true;
-		}
-		else
-		{
-			return;
-		}
-	}
-	init2(eve.message);
-
 	FromMsg Msg(eve.message, eve.fromDiscuss, Discuss, eve.fromQQ);
 	if (Msg.DiceFilter())eve.message_block();
+	Msg.FwdMsg(eve.message);
 	return;
 }
 
@@ -671,8 +681,9 @@ EVE_Request_AddGroup(eventGroupInvited) {
 			}
 			AddMsgToQueue(strMsg, masterQQ, Private);
 		}
+		return 1;
 	}
-	return 1;
+	return 0;
 }
 
 EVE_Menu(eventMasterMode) {
