@@ -368,10 +368,6 @@ void ConsoleHandler(std::string strMessage) {
 		AddMsgToQueue("已设置定时关闭时间" + strHour + ":" + strMinute, masterQQ);
 		}
 		else {
-			if (intMsgCnt == strMessage.length()) {
-				AddMsgToQueue("有什么事么， Master？", masterQQ);
-				return;
-			}
 			bool boolErase = false;
 			std::string strTargetID;
 			if (strMessage[intMsgCnt] == '-') {
@@ -383,8 +379,8 @@ void ConsoleHandler(std::string strMessage) {
 				strTargetID += strMessage[intMsgCnt];
 				intMsgCnt++;
 			}
-			long long llTargetID;
-			if (strTargetID.empty()) {
+			long long llTargetID=0;
+			if (!strTargetID.empty()) {
 				llTargetID = stoll(strTargetID);
 			}
 			if (strOption == "dismiss") {
@@ -426,6 +422,14 @@ void ConsoleHandler(std::string strMessage) {
 				}
 			}
 			else if (strOption == "whitegroup") {
+				if (llTargetID == 0) {
+					string strReply = "当前白名单群列表：";
+					for (auto each : WhiteGroup) {
+						strReply += "\n" + to_string(each);
+					}
+					AddMsgToQueue(strReply, masterQQ);
+					return;
+				}
 				if (boolErase) {
 					if (WhiteGroup.count(llTargetID)) {
 						WhiteGroup.erase(llTargetID);
@@ -446,6 +450,14 @@ void ConsoleHandler(std::string strMessage) {
 				}
 			}
 			else if (strOption == "blackgroup") {
+				if (llTargetID == 0) {
+					string strReply = "当前黑名单群列表：";
+					for (auto each : BlackGroup) {
+						strReply += "\n" + to_string(each);
+					}
+					AddMsgToQueue(strReply, masterQQ);
+					return;
+				}
 				if (boolErase) {
 					if (BlackGroup.count(llTargetID)) {
 						BlackGroup.erase(llTargetID);
@@ -466,6 +478,14 @@ void ConsoleHandler(std::string strMessage) {
 				}
 			}
 			else if (strOption == "whiteqq") {
+				if (llTargetID == 0) {
+					string strReply = "当前白名单用户列表：";
+					for (auto each : WhiteQQ) {
+						strReply += "\n" + getStrangerInfo(each).nick + "(" + to_string(each) + ")";
+					}
+					AddMsgToQueue(strReply, masterQQ);
+					return;
+				}
 				if (boolErase) {
 					if (WhiteQQ.count(llTargetID)) {
 						WhiteQQ.erase(llTargetID);
@@ -486,6 +506,14 @@ void ConsoleHandler(std::string strMessage) {
 				}
 			}
 			else if (strOption == "blackqq") {
+			if (llTargetID == 0) {
+				string strReply = "当前黑名单用户列表：";
+				for (auto each : BlackQQ) {
+					strReply += "\n" + getStrangerInfo(each).nick + "(" + to_string(each) + ")";
+				}
+				AddMsgToQueue(strReply, masterQQ);
+				return;
+			}
 				if (boolErase) {
 					if (BlackQQ.count(llTargetID)) {
 						BlackQQ.erase(llTargetID);
