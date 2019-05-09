@@ -1578,7 +1578,7 @@ public:
 				strSkillName += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
-			if (strSkillName.find("困难" == 0) || strSkillName.find("极难" == 0)) {
+			if (strSkillName.find("困难") == 0 || strSkillName.find("极难") == 0) {
 				strDifficulty = strSkillName.substr(0,4);
 				intDifficulty = (strDifficulty == "困难") ? 2 : 5;
 				strSkillName=strSkillName.substr(4);
