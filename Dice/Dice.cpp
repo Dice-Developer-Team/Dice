@@ -50,17 +50,6 @@
 #include "DiceConsole.h"
 #include "EncodingConvert.h"
 #include "DiceEvent.h"
-/*
-TODO:
-1. en可变成长检定
-2. st多人物卡
-3. st人物卡绑定
-4. st属性展示，全属性展示以及排序
-5. 完善rules规则数据库
-6. jrrp优化
-7. help优化
-8. 全局昵称
-*/
 
 using namespace std;
 using namespace CQ;
@@ -633,7 +622,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 		}
 		else if (boolPreserve&&WhiteGroup.count(fromGroup)==0) 
 		{	//避免小群绕过邀请没加上白名单
-			if (fromQQ==masterQQ||WhiteQQ.count(fromQQ)) {
+			if (fromQQ == masterQQ || WhiteQQ.count(fromQQ) || getGroupMemberInfo(fromGroup, masterQQ).QQID == masterQQ) {
 				WhiteGroup.insert(fromGroup);
 				return 0;
 			}
