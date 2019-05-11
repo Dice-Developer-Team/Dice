@@ -41,6 +41,16 @@ private:
 	int_errno RollDice(std::string dice) const
 	{
 		const bool boolNegative = *(vboolNegative.end() - 1);
+		int intMultiplier = 1;
+		while (dice.find_last_of('X') != std::string::npos) {
+			const int intXPosition = dice.find_last_of('X');
+			std::string strRate = dice.substr(intXPosition + 1);
+			RD Rate(strRate);
+			if (Rate.Roll() == 0) intMultiplier *= Rate.intTotal;
+			else return Input_Err;
+			dice = dice.substr(0, dice.find_last_of('X'));
+		}
+		vintMultiplier.push_back(intMultiplier);
 		if (dice.find('a') != std::string::npos)
 		{
 			vBnP.push_back(WW_Dice);
@@ -201,16 +211,6 @@ private:
 		if (dice[0] == 'X') {
 			return Input_Err;
 		}
-		int intMultiplier = 1;
-		while (dice.find_last_of('X')!=std::string::npos) {
-			const int intXPosition = dice.find_last_of('X');
-			std::string strRate = dice.substr(intXPosition+1);
-			RD Rate(strRate);
-			if(Rate.Roll()==0) intMultiplier*=Rate.intTotal;
-			else return Input_Err;
-			dice = dice.substr(0, dice.find_last_of('X'));
-		}
-		vintMultiplier.push_back(intMultiplier);
 		bool boolContainD = false;
 		bool boolContainK = false;
 		for (auto& i : dice)

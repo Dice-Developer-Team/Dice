@@ -2062,8 +2062,8 @@ public:
 					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
 						&&
 						strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
-							intTmpMsgCnt
-						] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
+							intTmpMsgCnt] != '-' && strLowerMessage[intTmpMsgCnt] != '#'
+						&& strLowerMessage[intTmpMsgCnt] != 'x' && strLowerMessage[intTmpMsgCnt] != '*')
 				{
 					break;
 				}
@@ -2165,6 +2165,9 @@ public:
 			string strFirstDice = strMainDice.substr(0, strMainDice.find('+') < strMainDice.find('-')
 				? strMainDice.find('+')
 				: strMainDice.find('-'));
+			strFirstDice = strFirstDice.substr(0, strFirstDice.find('x') < strFirstDice.find('*')
+				? strFirstDice.find('x')
+				: strFirstDice.find('*'));
 			bool boolAdda10 = true;
 			for (auto i : strFirstDice)
 			{
