@@ -1181,24 +1181,69 @@ public:
 				}
 				intCurrentVal = stoi(strCurrentValue);
 			}
-
+			readSkipSpace();
+			//可变成长值表达式
+			string strEnChange;
+			string strEnFail;
+			string strEnSuc;
+			//以加减号做开头确保与技能值相区分
+			if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
+				strEnChange = strLowerMessage.substr(intMsgCnt, strMsg.find(' ', intMsgCnt) - intMsgCnt);
+				//没有'/'时默认成功变化值
+				if (strEnChange.find('/')!=std::string::npos) {
+					strEnFail = strEnChange.substr(0, strEnChange.find("/"));
+					strEnSuc = strEnChange.substr(strEnChange.find("/") + 1);
+				}
+				else strEnSuc = strEnChange;
+			}
 			string strAns = strNickName + "的" + strSkillName + "增强或成长检定:\n1D100=";
+			if (strSkillName.empty())strSkillName = "属性或技能值";
 			const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 			strAns += to_string(intTmpRollRes) + "/" + to_string(intCurrentVal);
 
 			if (intTmpRollRes <= intCurrentVal && intTmpRollRes <= 95)
 			{
-				strAns += " 失败!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "没有变化!";
+				if(strEnFail.empty())strAns += " 失败!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "没有变化!";
+				else {
+					RD rdEnFail(strEnFail);
+					if (rdEnFail.Roll()) {
+						reply(GlobalMsg["strValueErr"]);
+						return 1;
+					}
+					if (strCurrentValue.empty())
+					{
+						CharacterProp[SourceType(fromQQ, intT, fromGroup)][strSkillName] = intCurrentVal +
+							rdEnFail.intTotal;
+					}
+					strAns += " 失败!\n你的" + strSkillName + "变化" + rdEnFail.FormCompleteString() + "点，当前为" + to_string(intCurrentVal +
+						rdEnFail.intTotal) + "点";
+				}
 			}
 			else
 			{
-				strAns += " 成功!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "增加1D10=";
-				const int intTmpRollD10 = RandomGenerator::Randint(1, 10);
-				strAns += to_string(intTmpRollD10) + "点,当前为" + to_string(intCurrentVal + intTmpRollD10) + "点";
-				if (strCurrentValue.empty())
-				{
-					CharacterProp[SourceType(fromQQ, intT, fromGroup)][strSkillName] = intCurrentVal +
-						intTmpRollD10;
+				if(strEnSuc.empty()){
+					strAns += " 成功!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "增加1D10=";
+					const int intTmpRollD10 = RandomGenerator::Randint(1, 10);
+					strAns += to_string(intTmpRollD10) + "点,当前为" + to_string(intCurrentVal + intTmpRollD10) + "点";
+					if (strCurrentValue.empty())
+					{
+						CharacterProp[SourceType(fromQQ, intT, fromGroup)][strSkillName] = intCurrentVal +
+							intTmpRollD10;
+					}
+				}
+				else {
+					RD rdEnSuc(strEnSuc);
+					if (rdEnSuc.Roll()) {
+						reply(GlobalMsg["strValueErr"]);
+						return 1;
+					}
+					if (strCurrentValue.empty())
+					{
+						CharacterProp[SourceType(fromQQ, intT, fromGroup)][strSkillName] = intCurrentVal +
+							rdEnSuc.intTotal;
+					}
+					strAns += " 成功!\n你的" + strSkillName + "变化" + rdEnSuc.FormCompleteString() + "点，当前为" + to_string(intCurrentVal +
+						rdEnSuc.intTotal) + "点";
 				}
 			}
 			reply(strAns);
@@ -2556,7 +2601,11 @@ private:
 	bool isCalled = false;
 	bool isMaster = false;
 	bool isLinkOrder = false;
-	//读取参数
+	//跳过空格
+	inline void readSkipSpace() {
+		while (isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
+	}
+	//读取参数(统一小写)
 	string readPara() {
 		string strPara;
 		while (isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
