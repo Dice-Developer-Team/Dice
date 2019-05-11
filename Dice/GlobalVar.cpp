@@ -35,8 +35,8 @@ CQ::logger DiceLogger("Dice!");
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-const unsigned short Dice_Build = 533;
-const std::string Dice_Ver_Without_Build = "2.3.8.3i";
+const unsigned short Dice_Build = 536;
+const std::string Dice_Ver_Without_Build = "2.3.8.4i";
 const std::string DiceRequestHeader = "Dice/" + Dice_Ver_Without_Build;
 const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 const std::string Dice_Short_Ver = "Dice! by 溯洄 Shiki.Ver " + Dice_Ver;
@@ -204,7 +204,7 @@ std::map<std::string, std::string> GlobalMsg
 
 std::map<std::string, std::string> EditedMsg;
 std::map<std::string, std::string> HelpDoc = {
-{"更新","533更新了.rc/ra功能\n532：更新了消息转发功能（当前Master专用）\n531：更新了塔罗牌牌阵\n530：允许自定义帮助文档并修复自定义回复的bug\n529：更新master每日定时开关功能，修复掷骰轮数bug\n528：更新.help帮助功能，允许后接参数\n527：更新功能转向追踪Shiki的更新\n526：允许乘法表达式"},
+{"更新","536：更新ww等表达式正常应用乘法功能/n535：新增了可变成长检定功能/n534：修复房规检定bug，sc也会应用默认房规/n533：更新了.rc/ra功能\n532：更新了消息转发功能（当前Master专用）\n531：更新了塔罗牌牌阵\n530：允许自定义帮助文档并修复自定义回复的bug\n529：更新master每日定时开关功能，修复掷骰轮数bug\n528：更新.help帮助功能，允许后接参数\n527：更新功能转向追踪Shiki的更新\n526：允许乘法表达式"},
 {"协议","0.本协议是Shiki(Death、Judgement、The World)的服务协议，不代表同类插件服务有一致的协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
 {"作者","Copyright (C) 2018-2019 w4123溯洄\nCopyright (C) 2019 String.Empty"},
 {"指令","掷骰指令包括:\n.dismiss 退群\n.bot 开关\n.welcome 入群欢迎\n.rules 规则速查\n.r 掷骰\n.ob 旁观模式\n.set 设置默认骰\n.name 随机姓名\n.nn 设置昵称\n.coc COC人物作成\n.dnd DND人物作成\n.st 角色卡设置\n.rc/ra 检定\n.sc 理智检定\n.en 成长检定\n.ri 先攻\n.init 先攻列表\n.ww 骰池\n.me 第三人称动作\n.jrrp 今日人品\n.group ban 群员禁言\n.group state 本群现状\n.draw 抽牌\nat骰娘后接指令可以指定骰娘单独响应，如at骰娘.bot off\n请.help对应指令 获取详细信息\n为了避免未预料到的指令误判，请尽可能在参数之间使用空格"},
@@ -255,7 +255,7 @@ std::map<std::string, std::string> HelpDoc = {
 {"ti/li","疯狂症状：\n.ti 临时疯狂症状\n.li 总结疯狂症状\n适用coc7版规则，6版请自行用百面骰配合查表"},
 {"成长检定","&en"},
 {"增强检定","&en"},
-{"en","成长检定：.en [技能名称]([技能值])\n已经.st时，可省略最后的参数\n.en 教育 60 教育增强\t//用法见.rules\n.en 幸运 幸运成长\t//调用人物卡属性时，成长后的值会自动更新"},
+{"en","成长检定：.en [技能名称]([技能值])([可变成长值])\n已经.st时，可省略最后的参数\n.en 教育 60 +1D10 教育增强\t//用法见.rules\n.en 幸运 +1D3/1D10幸运成长\t//调用人物卡属性时，成长后的值会自动更新\n可变成长值必须以加减号开头，不限制加减"},
 {"抽牌","&draw"},
 {"draw","抽牌：.draw [牌堆名称] ([抽牌数量])\t//抽到的牌不放回，抽牌数量不能超过牌堆数量\n当前可用牌堆名：硬币/东方角色/麻将/扑克花色/扑克\n调查员职业/调查员背景/英雄天赋/煤气灯/个人描述/思想信念/重要之人/重要之人理由/意义非凡之地/宝贵之物/调查员特点/即时症状/总结症状/恐惧症状/狂躁症状/\n阵营/哈罗花色/冒险点子/\n人偶暗示/人偶宝物/人偶记忆碎片/\nAMGC/AMGC身材/AMGC专精/AMGC武器/AMGC套装/AMGC才能/AMGC特技1/AMGC特技2/AMGC特技3\n/塔罗牌/正逆/塔罗牌占卜/单张塔罗牌/圣三角牌阵/四要素牌阵/小十字牌阵/六芒星牌阵/凯尔特十字牌阵\n.help审判正位（牌+方向）可获取塔罗牌解读"},
 {"先攻","&ri"},
