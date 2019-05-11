@@ -667,6 +667,9 @@ public:
 	std::string FormCompleteString() const
 	{
 		std::string strReturnString = strDice;
+		if (strDice == FormStringSeparate()) {
+			return strDice;
+		}
 		strReturnString.append("=");
 		if (FormStringSeparate().length() > 100)
 		{
