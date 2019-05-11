@@ -1864,9 +1864,13 @@ public:
 				string strAns = strNickName + "的Sancheck:\n1D100=";
 				const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 				strAns += to_string(intTmpRollRes);
-
-				if (intTmpRollRes <= intSan)
-				{
+				//调用房规
+				int intRule = mDefaultCOC.count(fromChat) ? mDefaultCOC[fromChat] : 0;
+				switch (RollSuccessLevel(intTmpRollRes, intSan, intRule)) {
+				case 5:
+				case 4:
+				case 3:
+				case 2:
 					strAns += " 成功\n你的San值减少" + SanCost.substr(0, SanCost.find("/"));
 					if (SanCost.substr(0, SanCost.find("/")).find("d") != string::npos)
 						strAns += "=" + to_string(rdSuc.intTotal);
@@ -1875,9 +1879,18 @@ public:
 					{
 						CharacterProp[SourceType(fromQQ, intT, fromGroup)]["理智"] = max(0, intSan - rdSuc.intTotal);
 					}
-				}
-				else if (intTmpRollRes == 100 || (intSan < 50 && intTmpRollRes > 95))
-				{
+					break;
+				case 1:
+					strAns += " 失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
+					if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
+						strAns += "=" + to_string(rdFail.intTotal);
+					strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
+					if (San.empty())
+					{
+						CharacterProp[SourceType(fromQQ, intT, fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
+					}
+					break;
+				case 0:
 					strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
 					// ReSharper disable once CppExpressionWithoutSideEffects
 					rdFail.Max();
@@ -1888,17 +1901,7 @@ public:
 					{
 						CharacterProp[SourceType(fromQQ, intT, fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
 					}
-				}
-				else
-				{
-					strAns += " 失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-					if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-						strAns += "=" + to_string(rdFail.intTotal);
-					strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
-					if (San.empty())
-					{
-						CharacterProp[SourceType(fromQQ, intT, fromGroup)]["理智"] = max(0, intSan - rdFail.intTotal);
-					}
+					break;
 				}
 				reply(strAns);
 				return 1;
