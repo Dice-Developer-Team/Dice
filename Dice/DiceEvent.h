@@ -1891,7 +1891,7 @@ public:
 					}
 					break;
 				case 0:
-					strAns += " 大失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
+					strAns += " " + GlobalMsg["strRollFumble"] + "\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
 					// ReSharper disable once CppExpressionWithoutSideEffects
 					rdFail.Max();
 					if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
