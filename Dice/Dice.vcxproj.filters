@@ -225,7 +225,7 @@
     </Library>
   </ItemGroup>
   <ItemGroup>
-    <None Include="com.w4123.dice.json">
+    <None Include="app.json">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>
