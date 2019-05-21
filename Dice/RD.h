@@ -701,7 +701,7 @@ public:
 	{
 		std::string strReturnString = strDice;
 		strReturnString.append("=");
-		if (FormStringSeparate().length() > 30)
+		if (FormStringSeparate().length() > 50)
 		{
 			return FormShortString();
 		}

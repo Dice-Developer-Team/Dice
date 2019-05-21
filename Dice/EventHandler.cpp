@@ -20,7 +20,6 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "eventHandler.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -35,7 +34,6 @@
 #include <chrono>
 #include <mutex>
 
-#include "APPINFO.h"
 #include "RandomGenerator.h"
 #include "RD.h"
 #include "CQEVE_ALL.h"
@@ -48,7 +46,7 @@
 #include "NameGenerator.h"
 #include "MsgFormat.h"
 #include "DiceNetwork.h"
-#include "eventHandler.h"
+#include "EventHandler.h"
 #include "RDConstant.h"
 /*
 TODO:
@@ -646,14 +644,23 @@ namespace Dice
 					if (CharacterProp.count(SourceType(dice_msg.qq_id, dice_msg.msg_type, dice_msg.group_id)) && CharacterProp[SourceType(
 						dice_msg.qq_id, dice_msg.msg_type, dice_msg.group_id)].count(strSkillName))
 					{
-						dice_msg.Reply(format(GlobalMsg["strProp"], {
-							strNickName, strSkillName,
-							to_string(CharacterProp[SourceType(dice_msg.qq_id, dice_msg.msg_type, dice_msg.group_id)][strSkillName])
-							}));
+						dice_msg.Reply(format(GlobalMsg["strProp"], 
+							{
+								{ "nick", strNickName },
+								{ "prop_name", strSkillName },
+								{ "prop_value", to_string(CharacterProp[SourceType(dice_msg.qq_id, dice_msg.msg_type, dice_msg.group_id)][strSkillName]) }
+							}
+						));
 					}
 					else if (SkillDefaultVal.count(strSkillName))
 					{
-						dice_msg.Reply(format(GlobalMsg["strProp"], { strNickName, strSkillName, to_string(SkillDefaultVal[strSkillName]) }));
+						dice_msg.Reply(format(GlobalMsg["strProp"],
+							{
+								{ "nick", strNickName },
+								{ "prop_name", strSkillName },
+								{ "prop_value", to_string(SkillDefaultVal[strSkillName]) }
+							}
+						));
 					}
 					else
 					{
@@ -773,8 +780,10 @@ namespace Dice
 				return;
 			}
 			ilInitList->insert(dice_msg.group_id, initdice.intTotal, strname);
-			const string strReply = strname + "的先攻骰点：" + strinit + '=' + to_string(initdice.intTotal);
-			dice_msg.Reply(strReply);
+			dice_msg.Reply(format(GlobalMsg["strInitReplyMsg"], {
+				{ "nick", strname },
+				{ "dice_res", strinit + '=' + to_string(initdice.intTotal) }
+			}));
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "init")
 		{
@@ -837,12 +846,12 @@ namespace Dice
 
 
 			int intTurnCnt = 1;
-			if (strMainDice.find("#") != string::npos)
+			if (strMainDice.find('#') != string::npos)
 			{
-				string strTurnCnt = strMainDice.substr(0, strMainDice.find("#"));
+				string strTurnCnt = strMainDice.substr(0, strMainDice.find('#'));
 				if (strTurnCnt.empty())
 					strTurnCnt = "1";
-				strMainDice = strMainDice.substr(strMainDice.find("#") + 1);
+				strMainDice = strMainDice.substr(strMainDice.find('#') + 1);
 				RD rdTurnCnt(strTurnCnt, dice_msg.qq_id);
 				const int intRdTurnCntRes = rdTurnCnt.Roll();
 				if (intRdTurnCntRes == Value_Err)
@@ -896,9 +905,12 @@ namespace Dice
 					return;
 				}
 				intTurnCnt = rdTurnCnt.intTotal;
-				if (strTurnCnt.find("d") != string::npos)
+				if (strTurnCnt.find('d') != string::npos)
 				{
-					string strTurnNotice = strNickName + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
+					string strTurnNotice = format(GlobalMsg["strTurnNoticeReplyMsg"],{
+						{ "nick", strNickName },
+						{ "dice_res", rdTurnCnt.FormShortString()}
+					});
 					if (!isHidden)
 					{
 						dice_msg.Reply(strTurnNotice);
@@ -907,11 +919,13 @@ namespace Dice
 					{
 						if (dice_msg.msg_type == Dice::MsgType::Group)
 						{
-							strTurnNotice = "在群\"" + getGroupList()[dice_msg.group_id] + "\"中 " + strTurnNotice;
+							strTurnNotice = format(GlobalMsg["strHiddenGroupPrefix"], {
+								{ "group_name", getGroupList()[dice_msg.group_id] }
+							}) +strTurnNotice;
 						}
 						else if (dice_msg.msg_type == Dice::MsgType::Discuss)
 						{
-							strTurnNotice = "在多人聊天中 " + strTurnNotice;
+							strTurnNotice = GlobalMsg["strHiddenDiscussPrefix"] + strTurnNotice;
 						}
 						AddMsgToQueue(Dice::DiceMsg(strTurnNotice, 0LL, dice_msg.qq_id, Dice::MsgType::Private));
 						pair<multimap<long long, long long>::iterator, multimap<long long, long long>::iterator> range;
@@ -1002,7 +1016,9 @@ namespace Dice
 			{
 				string strAns = strNickName + "骰出了: " + to_string(intTurnCnt) + "次" + rdMainDice.strDice + ": { ";
 				if (!strReason.empty())
-					strAns.insert(0, "由于" + strReason + " ");
+					strAns.insert(0, format(GlobalMsg["strRollDiceReasonPrefix"], {
+						{"reason", strReason}
+					}));
 				vector<int> vintExVal;
 				while (intTurnCnt--)
 				{
@@ -1035,11 +1051,13 @@ namespace Dice
 				{
 					if (dice_msg.msg_type == Dice::MsgType::Group)
 					{
-						strAns = "在群\"" + getGroupList()[dice_msg.group_id] + "\"中 " + strAns;
+						strAns = format(GlobalMsg["strHiddenGroupPrefix"], {
+							{ "group_name", getGroupList()[dice_msg.group_id]}
+						});
 					}
 					else if (dice_msg.msg_type == Dice::MsgType::Discuss)
 					{
-						strAns = "在多人聊天中 " + strAns;
+						strAns = GlobalMsg["strHiddenDiscussPrefix"] + strAns;
 					}
 					AddMsgToQueue(Dice::DiceMsg(strAns, 0LL, dice_msg.qq_id, Dice::MsgType::Private));
 					pair<multimap<long long, long long>::iterator, multimap<long long, long long>::iterator> range;
@@ -1067,11 +1085,16 @@ namespace Dice
 					// 此处返回值无用
 					// ReSharper disable once CppExpressionWithoutSideEffects
 					rdMainDice.Roll();
-					string strAns = strNickName + "骰出了: " + (boolDetail
-						? rdMainDice.FormCompleteString()
-						: rdMainDice.FormShortString());
+					string strAns = format(GlobalMsg["strRollDiceReplyMsg"], {
+						{ "nick", strNickName },
+						{ "dice_res", boolDetail
+									? rdMainDice.FormCompleteString()
+									: rdMainDice.FormShortString() }
+					});
 					if (!strReason.empty())
-						strAns.insert(0, "由于" + strReason + " ");
+						strAns.insert(0, format(GlobalMsg["strRollDiceReasonPrefix"], {
+							{ "reason", strReason }
+						}));
 					if (!isHidden)
 					{
 						dice_msg.Reply(strAns);
@@ -1080,11 +1103,13 @@ namespace Dice
 					{
 						if (dice_msg.msg_type == Dice::MsgType::Group)
 						{
-							strAns = "在群\"" + getGroupList()[dice_msg.group_id] + "\"中 " + strAns;
+							strAns = format(GlobalMsg["strHiddenGroupPrefix"], {
+								{ "group_name", getGroupList()[dice_msg.group_id] }
+							}) + strAns;
 						}
 						else if (dice_msg.msg_type == Dice::MsgType::Discuss)
 						{
-							strAns = "在多人聊天中 " + strAns;
+							strAns = GlobalMsg["strHiddenDiscussPrefix"] + strAns;
 						}
 						AddMsgToQueue(Dice::DiceMsg(strAns, 0LL, dice_msg.qq_id, Dice::MsgType::Private));
 						pair<multimap<long long, long long>::iterator, multimap<long long, long long>::iterator> range;
@@ -1108,8 +1133,9 @@ namespace Dice
 			}
 			if (isHidden)
 			{
-				const string strReply = strNickName + "进行了一次暗骰";
-				dice_msg.Reply(strReply);
+				dice_msg.Reply(format(GlobalMsg["strHiddenDiceReplyMsg"], {
+					{ "nick", strNickName }
+				}));
 			}
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "ob")
@@ -1203,7 +1229,6 @@ namespace Dice
 			}
 			if (Command == "list")
 			{
-				string Msg = "当前的旁观者有:";
 				pair<multimap<long long, long long>::iterator, multimap<long long, long long>::iterator> range;
 				if (dice_msg.msg_type == Dice::MsgType::Group)
 				{
@@ -1213,12 +1238,22 @@ namespace Dice
 				{
 					range = ObserveDiscuss.equal_range(dice_msg.group_id);
 				}
-				for (auto it = range.first; it != range.second; ++it)
+				if (range.first == range.second)
 				{
-					Msg += "\n" + getName(it->second, dice_msg.group_id) + "(" + to_string(it->second) + ")";
+					dice_msg.Reply(GlobalMsg["strObListEmptyNotice"]);
 				}
-				const string strReply = Msg == "当前的旁观者有:" ? "当前暂无旁观者" : Msg;
-				dice_msg.Reply(strReply);
+				else
+				{
+					string strObList;
+					for (auto it = range.first; it != range.second; ++it)
+					{
+						strObList += "\n" + getName(it->second, dice_msg.group_id) + "(" + to_string(it->second) + ")";
+					}
+					dice_msg.Reply(format(GlobalMsg["strObListReplyMsg"], {
+						{ "ob_list", strObList }
+					}));
+				}
+
 			}
 			else if (Command == "clr")
 			{
@@ -1332,7 +1367,7 @@ namespace Dice
 				San += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
-			if (SanCost.empty() || SanCost.find("/") == string::npos)
+			if (SanCost.empty() || SanCost.find('/') == string::npos)
 			{
 				dice_msg.Reply(GlobalMsg["strSCInvalid"]);
 				return;
@@ -1343,7 +1378,7 @@ namespace Dice
 				dice_msg.Reply(GlobalMsg["strSanInvalid"]);
 				return;
 			}
-				for (const auto& character : SanCost.substr(0, SanCost.find("/")))
+				for (const auto& character : SanCost.substr(0, SanCost.find('/')))
 				{
 					if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
 					{
@@ -1351,7 +1386,7 @@ namespace Dice
 						return;
 					}
 				}
-				for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
+				for (const auto& character : SanCost.substr(SanCost.find('/') + 1))
 				{
 					if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
 					{
@@ -1359,8 +1394,8 @@ namespace Dice
 						return;
 					}
 				}
-				RD rdSuc(SanCost.substr(0, SanCost.find("/")));
-				RD rdFail(SanCost.substr(SanCost.find("/") + 1));
+				RD rdSuc(SanCost.substr(0, SanCost.find('/')));
+				RD rdFail(SanCost.substr(SanCost.find('/') + 1));
 				if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
 				{
 					dice_msg.Reply(GlobalMsg["strSCInvalid"]);
@@ -1383,8 +1418,8 @@ namespace Dice
 
 				if (intTmpRollRes <= intSan)
 				{
-					strAns += " " + GlobalMsg["strSuccess"] + "\n你的San值减少" + SanCost.substr(0, SanCost.find("/"));
-					if (SanCost.substr(0, SanCost.find("/")).find("d") != string::npos)
+					strAns += " " + GlobalMsg["strSuccess"] + "\n你的San值减少" + SanCost.substr(0, SanCost.find('/'));
+					if (SanCost.substr(0, SanCost.find('/')).find('d') != string::npos)
 						strAns += "=" + to_string(rdSuc.intTotal);
 					strAns += +"点,当前剩余" + to_string(max(0, intSan - rdSuc.intTotal)) + "点";
 					if (San.empty())
@@ -1394,10 +1429,10 @@ namespace Dice
 				}
 				else if (intTmpRollRes == 100 || (intSan < 50 && intTmpRollRes > 95))
 				{
-					strAns += " " + GlobalMsg["strFumble"] + "\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
+					strAns += " " + GlobalMsg["strFumble"] + "\n你的San值减少" + SanCost.substr(SanCost.find('/') + 1);
 					// ReSharper disable once CppExpressionWithoutSideEffects
 					rdFail.Max();
-					if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
+					if (SanCost.substr(SanCost.find('/') + 1).find('d') != string::npos)
 						strAns += "最大值=" + to_string(rdFail.intTotal);
 					strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
 					if (San.empty())
@@ -1407,8 +1442,8 @@ namespace Dice
 				}
 				else
 				{
-					strAns += " " + GlobalMsg["strFailure"] + "\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-					if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
+					strAns += " " + GlobalMsg["strFailure"] + "\n你的San值减少" + SanCost.substr(SanCost.find('/') + 1);
+					if (SanCost.substr(SanCost.find('/') + 1).find('d') != string::npos)
 						strAns += "=" + to_string(rdFail.intTotal);
 					strAns += +"点,当前剩余" + to_string(max(0, intSan - rdFail.intTotal)) + "点";
 					if (San.empty())
@@ -1578,11 +1613,20 @@ namespace Dice
 			delete[] frmdata;
 			if (res)
 			{
-				dice_msg.Reply(format(GlobalMsg["strJrrp"], { strNickName, des }));
+				dice_msg.Reply(format(GlobalMsg["strJrrp"], 
+					{ 
+						{ "nick", strNickName }, 
+						{ "jrrp_value", des } 
+					}
+				));
 			}
 			else
 			{
-				dice_msg.Reply(format(GlobalMsg["strJrrpErr"], { des }));
+				dice_msg.Reply(format(GlobalMsg["strJrrpErr"], 
+					{
+						{ "error_msg" , des }
+					}
+				));
 			}
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "name")
@@ -1671,8 +1715,11 @@ namespace Dice
 			{
 				Name->set(dice_msg.group_id, dice_msg.qq_id, name);
 			}
-			const string strReply = "已将" + strNickName + "的" + (dice_msg.msg_type == Dice::MsgType::Private ? "全局" : "") +"名称更改为" + name;
-			dice_msg.Reply(strReply);
+			dice_msg.Reply(format(GlobalMsg["strNickChangeReplyMsg"], {
+				{"nick", strNickName},
+				{"is_global", dice_msg.msg_type == Dice::MsgType::Private ? "全局" : ""},
+				{"new_nick", name}
+			}));
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "nn")
 		{
@@ -1693,15 +1740,20 @@ namespace Dice
 			if (!name.empty())
 			{
 				Name->set(dice_msg.group_id, dice_msg.qq_id, name);
-				const string strReply = "已将" + strNickName + "的名称更改为" + strip(name);
-				dice_msg.Reply(strReply);
+				dice_msg.Reply(format(GlobalMsg["strNickChangeReplyMsg"], {
+					{"nick", strNickName},
+					{"is_global", ""},
+					{"new_nick", strip(name)}
+				}));
 			}
 			else
 			{
 				if (Name->del(dice_msg.group_id, dice_msg.qq_id))
 				{
-					const string strReply = "已将" + strNickName + "的名称删除";
-					dice_msg.Reply(strReply);
+					dice_msg.Reply(format(GlobalMsg["strNickDeleteReplyMsg"], {
+						{"nick", strNickName},
+						{"is_global", ""}
+					}));
 				}
 				else
 				{
@@ -1724,15 +1776,20 @@ namespace Dice
 			if (!name.empty())
 			{
 				Name->set(0LL, dice_msg.qq_id, name);
-				const string strReply = "已将" + strNickName + "的全局名称更改为" + strip(name);
-				dice_msg.Reply(strReply);
+				dice_msg.Reply(format(GlobalMsg["strNickChangeReplyMsg"], {
+					{"nick", strNickName},
+					{"is_global", "全局"},
+					{"new_nick", strip(name)}
+				}));
 			}
 			else
 			{
 				if (Name->del(0LL, dice_msg.qq_id))
 				{
-					const string strReply = "已将" + strNickName + "的全局名称删除";
-					dice_msg.Reply(strReply);
+					dice_msg.Reply(format(GlobalMsg["strNickDeleteReplyMsg"], {
+						{"nick", strNickName},
+						{"is_global", "全局"}
+					}));
 				}
 				else
 				{
@@ -1764,7 +1821,7 @@ namespace Dice
 			intMsgCnt += 3;
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
-			string strDefaultDice = strLowerMessage.substr(intMsgCnt, strLowerMessage.find(" ", intMsgCnt) - intMsgCnt);
+			string strDefaultDice = strLowerMessage.substr(intMsgCnt, strLowerMessage.find(' ', intMsgCnt) - intMsgCnt);
 			while (strDefaultDice[0] == '0')
 				strDefaultDice.erase(strDefaultDice.begin());
 			if (strDefaultDice.empty())
@@ -2085,12 +2142,12 @@ namespace Dice
 				strReason = dice_msg.msg.substr(intMsgCnt);
 
 			int intTurnCnt = 1;
-			if (strMainDice.find("#") != string::npos)
+			if (strMainDice.find('#') != string::npos)
 			{
-				string strTurnCnt = strMainDice.substr(0, strMainDice.find("#"));
+				string strTurnCnt = strMainDice.substr(0, strMainDice.find('#'));
 				if (strTurnCnt.empty())
 					strTurnCnt = "1";
-				strMainDice = strMainDice.substr(strMainDice.find("#") + 1);
+				strMainDice = strMainDice.substr(strMainDice.find('#') + 1);
 				RD rdTurnCnt(strTurnCnt, dice_msg.qq_id);
 				const int intRdTurnCntRes = rdTurnCnt.Roll();
 				if (intRdTurnCntRes == Value_Err)
@@ -2144,7 +2201,7 @@ namespace Dice
 					return;
 				}
 				intTurnCnt = rdTurnCnt.intTotal;
-				if (strTurnCnt.find("d") != string::npos)
+				if (strTurnCnt.find('d') != string::npos)
 				{
 					string strTurnNotice = strNickName + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
 					if (!isHidden)
@@ -2159,7 +2216,7 @@ namespace Dice
 						}
 						else if (dice_msg.msg_type == Dice::MsgType::Discuss)
 						{
-							strTurnNotice = "在多人聊天中 " + strTurnNotice;
+							strTurnNotice = GlobalMsg["strHiddenDiscussPrefix"] + strTurnNotice;
 						}
 						AddMsgToQueue(Dice::DiceMsg(strTurnNotice, 0LL, dice_msg.qq_id, Dice::MsgType::Private));
 						pair<multimap<long long, long long>::iterator, multimap<long long, long long>::iterator> range;
@@ -2265,7 +2322,7 @@ namespace Dice
 					}
 					else if (dice_msg.msg_type == Dice::MsgType::Discuss)
 					{
-						strAns = "在多人聊天中 " + strAns;
+						strAns = GlobalMsg["strHiddenDiscussPrefix"] + strAns;
 					}
 					AddMsgToQueue(Dice::DiceMsg(strAns, 0LL, dice_msg.qq_id, Dice::MsgType::Private));
 					pair<multimap<long long, long long>::iterator, multimap<long long, long long>::iterator> range;					
@@ -2310,7 +2367,7 @@ namespace Dice
 						}
 						else if (dice_msg.msg_type == Dice::MsgType::Discuss)
 						{
-							strAns = "在多人聊天中 " + strAns;
+							strAns = GlobalMsg["strHiddenDiscussPrefix"] + strAns;
 						}
 						AddMsgToQueue(Dice::DiceMsg(strAns, 0LL, dice_msg.qq_id, Dice::MsgType::Private));
 						pair<multimap<long long, long long>::iterator, multimap<long long, long long>::iterator> range;
@@ -2334,8 +2391,9 @@ namespace Dice
 			}
 			if (isHidden)
 			{
-				const string strReply = strNickName + "进行了一次暗骰";
-				dice_msg.Reply(strReply);
+				dice_msg.Reply(format(GlobalMsg["strHiddenDiceReplyMsg"], {
+					{ "nick", strNickName }
+				}));
 			}
 		}
 		else

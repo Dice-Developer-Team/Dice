@@ -312,6 +312,7 @@ void COC6(string& strMAns, int intNum)
 		for (int i = 0; i != 8; i++)
 		{
 			RD rdCOC(strRoll[i]);
+			// ReSharper disable once CppExpressionWithoutSideEffects
 			rdCOC.Roll();
 			strMAns += strProperty[i] + ":" + to_string(rdCOC.intTotal) + " ";
 			if (boolAddSpace && rdCOC.intTotal < 10)
@@ -335,6 +336,7 @@ void DND(string& strOutput, int intNum)
 		strOutput += "\n";
 		for (int i = 0; i <= 5; i++)
 		{
+			// ReSharper disable once CppExpressionWithoutSideEffects
 			rdDND.Roll();
 			strOutput += strDNDName[i] + ":" + to_string(rdDND.intTotal) + " ";
 			if (rdDND.intTotal < 10 && boolAddSpace)
@@ -354,19 +356,25 @@ void TempInsane(string& strAns)
 	{
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
 		strTI = format(strTI, {
-			"1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strFear[intDetailSymRes]
+			{ "time", "1D10=" + to_string(RandomGenerator::Randint(1, 10)) },
+			{ "detail_roll", "1D100=" + to_string(intDetailSymRes) },
+			{ "detail_res", strFear[intDetailSymRes] }
 		});
 	}
 	else if (intSymRes == 10)
 	{
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
 		strTI = format(strTI, {
-			"1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strPanic[intDetailSymRes]
+			{ "time", "1D10=" + to_string(RandomGenerator::Randint(1, 10)) },
+			{ "detail_roll", "1D100=" + to_string(intDetailSymRes) },
+			{ "detail_res", strPanic[intDetailSymRes] }
 		});
 	}
 	else
 	{
-		strTI = format(strTI, {"1D10=" + to_string(RandomGenerator::Randint(1, 10))});
+		strTI = format(strTI, {
+			{ "time", "1D10=" + to_string(RandomGenerator::Randint(1, 10)) }
+		});
 	}
 	strAns += strTI;
 }
@@ -379,19 +387,25 @@ void LongInsane(string& strAns)
 	{
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
 		strLI = format(strLI, {
-			"1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strFear[intDetailSymRes]
+			{ "time", "1D10=" + to_string(RandomGenerator::Randint(1, 10)) },
+			{ "detail_roll", "1D100=" + to_string(intDetailSymRes) },
+			{ "detail_res", strFear[intDetailSymRes] }
 		});
 	}
 	else if (intSymRes == 10)
 	{
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
 		strLI = format(strLI, {
-			"1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strPanic[intDetailSymRes]
+			{ "time", "1D10=" + to_string(RandomGenerator::Randint(1, 10)) },
+			{ "detail_roll", "1D100=" + to_string(intDetailSymRes) },
+			{ "detail_res", strPanic[intDetailSymRes] }
 		});
 	}
 	else
 	{
-		strLI = format(strLI, {"1D10=" + to_string(RandomGenerator::Randint(1, 10))});
+		strLI = format(strLI, {
+			{ "time", "1D10=" + to_string(RandomGenerator::Randint(1, 10)) }
+		});
 	}
 	strAns += strLI;
 }

@@ -22,20 +22,31 @@
  */
 #include "MsgFormat.h"
 #include <string>
+#include <map>
+#include <sstream>
 
-std::string format(std::string str, const std::initializer_list<const std::string>& replace_str)
+std::string format(const std::string& str, const std::map<const std::string, const std::string>& args)
 {
-	auto counter = 0;
-	for (const auto& element : replace_str)
+	std::stringstream buffer;
+	size_t index_first = str.find('{');
+	size_t index_second = str.find('}', index_first + 1);
+	size_t first_index_not_processed = 0;
+	std::map<const std::string, const std::string>::const_iterator it;
+	while (index_first != std::string::npos && index_second != std::string::npos)
 	{
-		auto replace = "{" + std::to_string(counter) + "}";
-		auto replace_pos = str.find(replace);
-		while (replace_pos != std::string::npos)
+		if ((it = args.find(str.substr(index_first + 1, index_second - index_first - 1))) != args.cend())
 		{
-			str.replace(replace_pos, replace.length(), element);
-			replace_pos = str.find(replace);
+			buffer << str.substr(first_index_not_processed, index_first - first_index_not_processed);
+			buffer << it->second;
 		}
-		counter++;
+		else
+		{
+			buffer << str.substr(first_index_not_processed, index_second - first_index_not_processed + 1);
+		}
+		first_index_not_processed = index_second + 1;
+		index_first = str.find('{', index_second + 1);
+		index_second = str.find('}', index_first + 1);
 	}
-	return str;
+	buffer << str.substr(first_index_not_processed);
+	return buffer.str();
 }
