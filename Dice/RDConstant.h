@@ -218,7 +218,7 @@ static std::string TempInsanity[11]{
 	"逃避行为：调查员会用任何的手段试图逃离现在所处的位置，状态持续{time}轮。",
 	"竭嘶底里：调查员表现出大笑，哭泣，嘶吼，害怕等的极端情绪表现，持续{time}轮。",
 	"恐惧：调查员陷入对某一事物的恐惧之中，就算这一恐惧的事物是并不存在的，持续{time}轮。\n{detail_roll}\n具体恐惧症: {detail_res}(守秘人也可以自行从恐惧症状表中选择其他症状)",
-	"狂躁：调查员由于某种诱因进入狂躁状态，症状持续{time}轮。\n{detail_roll}\n具体狂躁症: {detail_res}(KP也可以自行从狂躁症状表中选择其他症状)"
+	"躁狂：调查员由于某种诱因进入躁狂状态，症状持续{time}轮。\n{detail_roll}\n具体躁狂症: {detail_res}(KP也可以自行从躁狂症状表中选择其他症状)"
 };
 
 static std::string LongInsanity[11]{
@@ -232,7 +232,7 @@ static std::string LongInsanity[11]{
 	"被收容：{time}小时后，调查员在精神病院病房或警察局牢房中回过神来",
 	"逃避行为：{time}小时后，调查员恢复清醒时发现自己在很远的地方",
 	"恐惧：调查员患上一个新的恐惧症。调查员会在{time}小时后恢复正常，并开始为避开恐惧源而采取任何措施。\n{detail_roll}\n具体恐惧症: {detail_res}(守秘人也可以自行从恐惧症状表中选择其他症状)",
-	"狂躁：调查员患上一个新的狂躁症，在{time}小时后恢复理智。在这次疯狂发作中，调查员将完全沉浸于其新的狂躁症状。这是否会被其他人理解（apparent to other people）则取决于守秘人和此调查员。\n{detail_roll}\n具体狂躁症: {detail_res}(KP也可以自行从狂躁症状表中选择其他症状)"
+	"躁狂：调查员患上一个新的躁狂症，在{time}小时后恢复理智。在这次疯狂发作中，调查员将完全沉浸于其新的躁狂症状。这是否会被其他人理解（apparent to other people）则取决于守秘人和此调查员。\n{detail_roll}\n具体躁狂症: {detail_res}(KP也可以自行从躁狂症状表中选择其他症状)"
 };
 
 static std::string strFear[101] = {
