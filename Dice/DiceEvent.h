@@ -990,6 +990,81 @@ public:
 			reply(strReply);
 			return 1;
 		}
+		else if (strLowerMessage.substr(intMsgCnt, 4) == "send") {
+			intMsgCnt += 4;
+			readSkipSpace();
+			//先考虑Master带参数向指定目标发送
+			if (isMaster) {
+				if (strLowerMessage.substr(intMsgCnt, 2) == "qq") {
+					intMsgCnt += 2;
+					string strQQ = readDigit();
+					if (strQQ.empty()) {
+						reply(GlobalMsg["strSendMsgIDEmpty"]);
+					}
+					else if (intMsgCnt == strMsg.length()) {
+						reply(GlobalMsg["strSendMsgEmpty"]);
+					}
+					else{
+						long long llQQ = stoll(strQQ);
+						string strToMsg = readRest();
+						AddMsgToQueue(strToMsg, llQQ, Private);
+						reply(GlobalMsg["strSendMsg"]);
+					}
+					return 1;
+				}
+				else if (strLowerMessage.substr(intMsgCnt, 5) == "group") {
+					intMsgCnt += 5;
+					string strGroup = readDigit();
+					if (strGroup.empty()) {
+						reply(GlobalMsg["strSendMsgIDEmpty"]);
+					}
+					else if (intMsgCnt == strMsg.length()) {
+						reply(GlobalMsg["strSendMsgEmpty"]);
+					}
+					else {
+						long long llGroup = stoll(strGroup);
+						string strToMsg = readRest();
+						AddMsgToQueue(strToMsg, llGroup, Group);
+						reply(GlobalMsg["strSendMsg"]);
+					}
+					return 1;
+				}
+				else if (strLowerMessage.substr(intMsgCnt, 7) == "discuss") {
+					intMsgCnt += 7;
+					string strDiscuss = readDigit();
+					if (strDiscuss.empty()) {
+						reply(GlobalMsg["strSendMsgIDEmpty"]);
+					}
+					else if (intMsgCnt == strMsg.length()) {
+						reply(GlobalMsg["strSendMsgEmpty"]);
+					}
+					else {
+						long long llDiscuss = stoll(strDiscuss);
+						string strToMsg = readRest();
+						AddMsgToQueue(strToMsg, llDiscuss, Discuss);
+						reply(GlobalMsg["strSendMsg"]);
+					}
+					return 1;
+				}
+			}
+			if (!masterQQ || !boolMasterMode) {
+				reply(GlobalMsg["strSendMsgInvalid"]);
+			}
+			else if (intMsgCnt == strMsg.length()) {
+				reply(GlobalMsg["strSendMsgEmpty"]);
+			}
+			else {
+				string strFwd = "来自";
+				if (fromType == Group)strFwd += "群(" + to_string(fromGroup) + ")";
+				if (fromType == Discuss)strFwd += "讨论组(" + to_string(fromGroup) + ")";
+				strFwd += getStrangerInfo(fromQQ).nick + "(" + to_string(fromQQ) + "):";
+				if (masterQQ == fromQQ)strFwd.clear();
+				strFwd += readRest();
+				AddMsgToQueue(strFwd, masterQQ, Private);
+				reply(GlobalMsg["strSendMsg"]);
+			}
+			return 1;
+}
 		else if (strLowerMessage.substr(intMsgCnt, 3) == "coc")
 		{
 			intMsgCnt += 3;
@@ -2610,6 +2685,9 @@ private:
 	//跳过空格
 	inline void readSkipSpace() {
 		while (isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
+	}
+	inline string readRest() {
+		return strMsg.substr(intMsgCnt);
 	}
 	//读取参数(统一小写)
 	string readPara() {
