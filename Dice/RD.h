@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123ËÝä§
+ * Copyright (C) 2018-2019 w4123Ã‹ÃÃ¤Â§
  * Copyright (C) 2019 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -650,7 +650,7 @@ public:
 				if (vintMultiplier[distance(vvintRes.begin(), i)] != 1||i->size() != 1 && (vvintRes.size() != 1 || vboolNegative[distance(vvintRes.begin(), i)]))
 					strReturnString.append(")");
 				if (vintMultiplier[distance(vvintRes.begin(), i)] != 1) {
-					strReturnString += "¡Á" + std::to_string(vintMultiplier[distance(vvintRes.begin(), i)]);
+					strReturnString += "Â¡Ã" + std::to_string(vintMultiplier[distance(vvintRes.begin(), i)]);
 				}
 			}
 			else if (vBnP[distance(vvintRes.begin(), i)] == Fudge_Dice)
@@ -695,7 +695,7 @@ public:
 			else
 			{
 				strReturnString.append(std::to_string((*i)[0]));
-				strReturnString.append(vBnP[distance(vvintRes.begin(), i)] == B_Dice ? "[½±Àø÷»:" : "[³Í·£÷»:");
+				strReturnString.append(vBnP[distance(vvintRes.begin(), i)] == B_Dice ? "[Â½Â±Ã€Ã¸Ã·Â»:" : "[Â³ÃÂ·Â£Ã·Â»:");
 				for (auto it = i->begin() + 1; it != i->end(); ++it)
 				{
 					strReturnString.append(std::to_string(*it) + ((it == i->end() - 1) ? "" : " "));
@@ -726,6 +726,7 @@ public:
 	{
 		std::string strReturnString = strDice;
 		strReturnString.append("=");
+
 		if (FormStringSeparate().length() > 100)
 		{
 			return FormShortString();

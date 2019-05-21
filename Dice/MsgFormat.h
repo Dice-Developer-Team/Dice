@@ -24,5 +24,6 @@
 #ifndef DICE_MSG_FORMAT
 #define DICE_MSG_FORMAT
 #include <string>
-std::string format(std::string str, const std::initializer_list<const std::string>& replace_str);
+#include <map>
+std::string format(const std::string& str, const std::map<const std::string, const std::string>& args);
 #endif /*DICE_MSG_FORMAT*/
