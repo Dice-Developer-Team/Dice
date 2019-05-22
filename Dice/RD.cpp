@@ -420,7 +420,7 @@ int RollSuccessLevel(int res, int rate, int rule) {
 		break;
 	case 1:
 		if (res == 100)return 0;
-		if (res == 1 || res <= 5 && res >= 50)return 5;
+		if (res == 1 || res <= 5 && rate >= 50)return 5;
 		if (res <= rate / 5)return 4;
 		if (res <= rate / 2)return 3;
 		if (res <= rate)return 2;
@@ -446,7 +446,7 @@ int RollSuccessLevel(int res, int rate, int rule) {
 		break;
 	case 4:
 		if (res == 100)return 0;
-		if (res <=5 && res <= rate/10)return 5;
+		if (res <= 5 && res <= rate / 10)return 5;
 		if (res <= rate / 5)return 4;
 		if (res <= rate / 2)return 3;
 		if (res <= rate)return 2;
