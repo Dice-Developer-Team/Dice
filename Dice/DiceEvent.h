@@ -154,10 +154,14 @@ public:
 			if (QQNum.empty() || (QQNum.length() == 4 && QQNum == to_string(getLoginQQ() % 10000)) || QQNum ==
 				to_string(getLoginQQ()))
 			{
-				if (getGroupMemberInfo(fromGroup, fromQQ).permissions >= 2)
+				if (intT == DiscussT) {
+					if (!GlobalMsg["strDismiss"].empty())reply(GlobalMsg["strDismiss"]);
+					setDiscussLeave(fromGroup);
+				}
+				else if (getGroupMemberInfo(fromGroup, fromQQ).permissions >= 2)
 				{
 					if (!GlobalMsg["strDismiss"].empty())reply(GlobalMsg["strDismiss"]);
-					intT == GroupT ? setGroupLeave(fromGroup) : setDiscussLeave(fromGroup);
+					setGroupLeave(fromGroup);
 				}
 				else
 				{
