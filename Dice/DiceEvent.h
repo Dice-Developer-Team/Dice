@@ -1278,14 +1278,14 @@ public:
 				}
 				else strEnSuc = strEnChange;
 			}
-			string strAns = strNickName + "的" + strSkillName + "增强或成长检定:\n1D100=";
-			if (strSkillName.empty())strSkillName = "属性或技能值";
+			if (strSkillName.empty())strSkillName = GlobalMsg["strRollEnSkillName"];
+			string strAns = format(GlobalMsg["strRollEnSkill"], { strNickName ,strSkillName }) ;
 			const int intTmpRollRes = RandomGenerator::Randint(1, 100);
-			strAns += to_string(intTmpRollRes) + "/" + to_string(intCurrentVal);
+			strAns += ":\n1D100=" + to_string(intTmpRollRes) + "/" + to_string(intCurrentVal);
 
 			if (intTmpRollRes <= intCurrentVal && intTmpRollRes <= 95)
 			{
-				if(strEnFail.empty())strAns += " 失败!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "没有变化!";
+				if(strEnFail.empty())strAns += " 失败!\n你的" + strSkillName + "没有变化!";
 				else {
 					RD rdEnFail(strEnFail);
 					if (rdEnFail.Roll()) {
@@ -1304,7 +1304,7 @@ public:
 			else
 			{
 				if(strEnSuc.empty()){
-					strAns += " 成功!\n你的" + (strSkillName.empty() ? "属性或技能值" : strSkillName) + "增加1D10=";
+					strAns += " 成功!\n你的" + strSkillName + "增加1D10=";
 					const int intTmpRollD10 = RandomGenerator::Randint(1, 10);
 					strAns += to_string(intTmpRollD10) + "点,当前为" + to_string(intCurrentVal + intTmpRollD10) + "点";
 					if (strCurrentValue.empty())
@@ -1689,6 +1689,8 @@ public:
 			int intSkillMultiple = 1;
 			//除数
 			int intSkillDivisor = 1;
+			//自动成功
+			bool isAutomatic = false;
 			if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') {
 				strMainDice = strLowerMessage[intMsgCnt];
 				intMsgCnt++;
@@ -1705,9 +1707,14 @@ public:
 				strSkillName += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
+			if (strSkillName.find("自动成功") == 0) {
+				strDifficulty = strSkillName.substr(0, 8);
+				strSkillName = strSkillName.substr(8);
+				isAutomatic = true;
+			}
 			if (strSkillName.find("困难") == 0 || strSkillName.find("极难") == 0) {
-				strDifficulty = strSkillName.substr(0,4);
-				intDifficulty = (strDifficulty == "困难") ? 2 : 5;
+				strDifficulty += strSkillName.substr(0, 4);
+				intDifficulty = (strSkillName.substr(0, 4) == "困难") ? 2 : 5;
 				strSkillName=strSkillName.substr(4);
 			}
 			if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
@@ -1791,20 +1798,21 @@ public:
 				return 1;
 			}
 			const int intD100Res = rdMainDice.intTotal;
-			string strReply = strNickName + "进行" + strDifficulty + strSkillName + ((intSkillMultiple!=1)?"×"+to_string(intSkillMultiple):"") + strSkillModify + ((intSkillDivisor != 1) ? "/" + to_string(intSkillDivisor) : "") + "检定: " + rdMainDice.FormCompleteString() + "/" +
-				to_string(intFianlSkillVal) + " ";
+			string strModifiedSkill = strDifficulty + strSkillName + ((intSkillMultiple != 1) ? "×" + to_string(intSkillMultiple) : "") + strSkillModify + ((intSkillDivisor != 1) ? "/" + to_string(intSkillDivisor) : "");
+			string strReply = format(GlobalMsg["strRollSkill"], { strNickName ,strModifiedSkill });
+			if (!strReason.empty())
+			{
+				strReply = format(GlobalMsg["strRollSkillReason"], { strNickName ,strModifiedSkill ,strReason });
+			}
+			strReply += "：" + rdMainDice.FormCompleteString() + "/" + to_string(intFianlSkillVal) + " ";
 			int intRes = RollSuccessLevel(intD100Res, intFianlSkillVal, intRule);
 			switch (intRes) {
 			case 0:strReply += GlobalMsg["strRollFumble"]; break;
-			case 1:strReply += GlobalMsg["strRollFailure"]; break;
+			case 1:strReply += isAutomatic ? GlobalMsg["strRollRegularSuccess"] : GlobalMsg["strRollFailure"]; break;
 			case 5:strReply += GlobalMsg["strRollCriticalSuccess"]; break;
 			case 4:if (intDifficulty == 1) { strReply += GlobalMsg["strRollExtremeSuccess"]; break; }
 			case 3:if (intDifficulty == 1) { strReply += GlobalMsg["strRollHardSuccess"]; break; }
 			case 2:strReply += GlobalMsg["strRollRegularSuccess"]; break;
-			}
-			if (!strReason.empty())
-			{
-				strReply = "由于" + strReason + " " + strReply;
 			}
 			reply(strReply);
 			return 1;
@@ -1943,9 +1951,9 @@ public:
 					reply(GlobalMsg["strSanInvalid"]);
 					return 1;
 				}
-				string strAns = strNickName + "的Sancheck:\n1D100=";
+				string strAns = format(GlobalMsg["strRollSc"], { strNickName });
 				const int intTmpRollRes = RandomGenerator::Randint(1, 100);
-				strAns += to_string(intTmpRollRes);
+				strAns += ":\n1D100=" + to_string(intTmpRollRes) + "/" + to_string(intSan);
 				//调用房规
 				int intRule = mDefaultCOC.count(fromChat) ? mDefaultCOC[fromChat] : 0;
 				switch (RollSuccessLevel(intTmpRollRes, intSan, intRule)) {

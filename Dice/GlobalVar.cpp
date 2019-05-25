@@ -70,6 +70,11 @@ std::map<std::string, std::string> GlobalMsg
 	{"strRollTurn","{0}的掷骰轮数: {1}轮"},
 	{"strRollTurnDice","{0}骰出了: {1}次{2}"},
 	{"strRollTurnDiceReason","由于{3} {0}骰出了: {1}次{2}"},
+	{"strRollSkill","{0}进行{1}检定"},
+	{"strRollSkillReason","由于{2} {0}进行{1}检定"},
+	{"strRollEnSkill","{0}的{1}增强或成长检定"},//根据用户输入，{1}可能替换为默认文本
+	{"strRollEnSkillName","属性或技能值"},//用户输入为空时，其他回复中替换为改文本
+	{"strRollSc","{0}的San Check"},//根据用户输入，{1}可能替换为默认文本
 	{"strSendMsg","消息已送出√"},//Master定向发送的回执
 	{"strSendMasterMsg","消息已发送给Master√"},//向Master发送的回执
 	{"strSendMsgEmpty","发送消息内容为空×"},
