@@ -78,6 +78,7 @@ private:
 			{
 				vintTmpRes.push_back(intDiceCnt);
 				int AddNum = 0;
+				int intCnt = intDiceCnt;
 				while (intDiceCnt--)
 				{
 					int intTmpResOnce = RandomGenerator::Randint(1, 10);
@@ -87,6 +88,7 @@ private:
 					if (intTmpResOnce >= AddDiceVal)
 						AddNum++;
 				}
+				if (intCnt > 9)sort(vintTmpRes.end() - intCnt, vintTmpRes.end());
 				intDiceCnt = AddNum;
 			}
 			if (boolNegative)
@@ -274,6 +276,7 @@ private:
 				intTotal -= intTmpRes * intMultiplier;
 			else
 				intTotal += intTmpRes * intMultiplier;
+			if (vintTmpRes.size() > 9)sort(vintTmpRes.begin(), vintTmpRes.end());
 			vvintRes.push_back(vintTmpRes);
 			vintRes.push_back(intTmpRes * intMultiplier);
 			return 0;
@@ -314,6 +317,7 @@ private:
 		else
 			intTotal += intTmpRes * intMultiplier;
 		vintRes.push_back(intTmpRes);
+		if (vintTmpRes.size() > 9)sort(vintTmpRes.begin(), vintTmpRes.end());
 		vvintRes.push_back(vintTmpRes);
 		return 0;
 	}
@@ -674,7 +678,7 @@ public:
 			return strDice;
 		}
 		strReturnString.append("=");
-		if (FormStringSeparate().length() > 100)
+		if (FormStringSeparate().length() > 256)
 		{
 			return FormShortString();
 		}
