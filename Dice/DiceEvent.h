@@ -156,12 +156,15 @@ public:
 			{
 				if (intT == DiscussT) {
 					if (!GlobalMsg["strDismiss"].empty())reply(GlobalMsg["strDismiss"]);
+					Sleep(100);
 					setDiscussLeave(fromGroup);
+					mLastMsgList.erase(fromChat);
 				}
 				else if (getGroupMemberInfo(fromGroup, fromQQ).permissions >= 2)
 				{
 					if (!GlobalMsg["strDismiss"].empty())reply(GlobalMsg["strDismiss"]);
 					setGroupLeave(fromGroup);
+					mLastMsgList.erase(fromChat);
 				}
 				else
 				{
@@ -280,7 +283,7 @@ public:
 			}
 			return 1;
 		}
-		if (boolDisabledGlobal && !isMaster && !isCalled) {
+		if (boolDisabledGlobal && (!isMaster && !isCalled)) {
 			if (intT == PrivateT)reply(GlobalMsg["strGlobalOff"]);
 			return 1;
 		}
@@ -1065,7 +1068,7 @@ public:
 				if (masterQQ == fromQQ)strFwd.clear();
 				strFwd += readRest();
 				AddMsgToQueue(strFwd, masterQQ, Private);
-				reply(GlobalMsg["strSendMsg"]);
+				reply(GlobalMsg["strSendMasterMsg"]);
 			}
 			return 1;
 }
@@ -2163,43 +2166,43 @@ public:
 				const int intDefaultDice = DefaultDice.count(fromQQ) ? DefaultDice[fromQQ] : 100;
 				RD rdTurnCnt(strTurnCnt, intDefaultDice);
 				const int intRdTurnCntRes = rdTurnCnt.Roll();
-				if (intRdTurnCntRes == Value_Err)
-				{
-					reply(GlobalMsg["strValueErr"]);
-					return 1;
-				}
-				if (intRdTurnCntRes == Input_Err)
-				{
-					reply(GlobalMsg["strInputErr"]);
-					return 1;
-				}
-				if (intRdTurnCntRes == ZeroDice_Err)
-				{
-					reply(GlobalMsg["strZeroDiceErr"]);
-					return 1;
-				}
-				if (intRdTurnCntRes == ZeroType_Err)
-				{
-					reply(GlobalMsg["strZeroTypeErr"]);
-					return 1;
-				}
-				if (intRdTurnCntRes == DiceTooBig_Err)
-				{
-					reply(GlobalMsg["strDiceTooBigErr"]);
-					return 1;
-				}
-				if (intRdTurnCntRes == TypeTooBig_Err)
-				{
-					reply(GlobalMsg["strTypeTooBigErr"]);
-					return 1;
-				}
-				if (intRdTurnCntRes == AddDiceVal_Err)
-				{
-					reply(GlobalMsg["strAddDiceValErr"]);
-					return 1;
-				}
 				if (intRdTurnCntRes != 0)
 				{
+					if (intRdTurnCntRes == Value_Err)
+					{
+						reply(GlobalMsg["strValueErr"]);
+						return 1;
+					}
+					if (intRdTurnCntRes == Input_Err)
+					{
+						reply(GlobalMsg["strInputErr"]);
+						return 1;
+					}
+					if (intRdTurnCntRes == ZeroDice_Err)
+					{
+						reply(GlobalMsg["strZeroDiceErr"]);
+						return 1;
+					}
+					if (intRdTurnCntRes == ZeroType_Err)
+					{
+						reply(GlobalMsg["strZeroTypeErr"]);
+						return 1;
+					}
+					if (intRdTurnCntRes == DiceTooBig_Err)
+					{
+						reply(GlobalMsg["strDiceTooBigErr"]);
+						return 1;
+					}
+					if (intRdTurnCntRes == TypeTooBig_Err)
+					{
+						reply(GlobalMsg["strTypeTooBigErr"]);
+						return 1;
+					}
+					if (intRdTurnCntRes == AddDiceVal_Err)
+					{
+						reply(GlobalMsg["strAddDiceValErr"]);
+						return 1;
+					}
 					reply(GlobalMsg["strUnknownErr"]);
 					return 1;
 				}
@@ -2262,23 +2265,22 @@ public:
 			RD rdMainDice(strMainDice, intDefaultDice);
 
 			const int intFirstTimeRes = rdMainDice.Roll();
-			if (intFirstTimeRes == Value_Err)
-			{
-				reply(GlobalMsg["strValueErr"]);
-				return 1;
-			}
-			if (intFirstTimeRes == Input_Err)
-			{
-				reply(GlobalMsg["strInputErr"]);
-				return 1;
-			}
-			if (intFirstTimeRes == ZeroDice_Err)
-			{
-				reply(GlobalMsg["strZeroDiceErr"]);
-				return 1;
-			}
-			else
-			{
+			if (intFirstTimeRes != 0) {
+				if (intFirstTimeRes == Value_Err)
+				{
+					reply(GlobalMsg["strValueErr"]);
+					return 1;
+				}
+				if (intFirstTimeRes == Input_Err)
+				{
+					reply(GlobalMsg["strInputErr"]);
+					return 1;
+				}
+				if (intFirstTimeRes == ZeroDice_Err)
+				{
+					reply(GlobalMsg["strZeroDiceErr"]);
+					return 1;
+				}
 				if (intFirstTimeRes == ZeroType_Err)
 				{
 					reply(GlobalMsg["strZeroTypeErr"]);
@@ -2307,9 +2309,9 @@ public:
 			}
 			if (!boolDetail && intTurnCnt != 1)
 			{
-				string strAns = strNickName + "骰出了: " + to_string(intTurnCnt) + "次" + rdMainDice.strDice + ": { ";
+				string strAns = format(GlobalMsg["strRollTurnDice"], { strNickName ,to_string(intTurnCnt) ,rdMainDice.strDice }) + ": { ";
 				if (!strReason.empty())
-					strAns.insert(0, "由于" + strReason + " ");
+					strAns = format(GlobalMsg["strRollTurnDiceReason"], { strNickName ,to_string(intTurnCnt) ,rdMainDice.strDice ,strReason }) + ": { ";
 				vector<int> vintExVal;
 				while (intTurnCnt--)
 				{
@@ -2359,11 +2361,10 @@ public:
 					// 此处返回值无用
 					// ReSharper disable once CppExpressionWithoutSideEffects
 					rdMainDice.Roll();
-					string strAns = strNickName + "骰出了: " + (boolDetail
-						? rdMainDice.FormCompleteString()
-						: rdMainDice.FormShortString());
+					string strDiceRes = boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString();
+					string strAns = format(GlobalMsg["strRollDice"], { strNickName ,strDiceRes });
 					if (!strReason.empty())
-						strAns.insert(0, "由于" + strReason + " ");
+						strAns = format(GlobalMsg["strRollDiceReason"], { strNickName ,strDiceRes ,strReason });
 					if (!isHidden || intT == PrivateT)
 					{
 						reply(strAns);
@@ -2385,7 +2386,7 @@ public:
 			}
 			if (isHidden)
 			{
-				const string strReply = strNickName + "进行了一次暗骰";
+				const string strReply = format(GlobalMsg["strRollHidden"], { strNickName });
 				reply(strReply);
 			}
 			return 1;
@@ -2506,7 +2507,7 @@ public:
 				intTurnCnt = rdTurnCnt.intTotal;
 				if (strTurnCnt.find("d") != string::npos)
 				{
-					string strTurnNotice = strNickName + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
+					string strTurnNotice = format(GlobalMsg["strRollTurn"], { strNickName,rdTurnCnt.FormShortString() });
 					if (!isHidden)
 					{
 						reply(strTurnNotice);
@@ -2572,9 +2573,9 @@ public:
 			}
 			if (!boolDetail && intTurnCnt != 1)
 			{
-				string strAns = strNickName + "骰出了: " + to_string(intTurnCnt) + "次" + rdMainDice.strDice + ": { ";
+				string strAns = format(GlobalMsg["strRollTurnDice"], { strNickName ,to_string(intTurnCnt) ,rdMainDice.strDice }) + ": { ";
 				if (!strReason.empty())
-					strAns.insert(0, "由于" + strReason + " ");
+					strAns = format(GlobalMsg["strRollTurnDiceReason"], { strNickName ,to_string(intTurnCnt) ,rdMainDice.strDice ,strReason}) + ": { ";
 				vector<int> vintExVal;
 				while (intTurnCnt--)
 				{
@@ -2624,11 +2625,10 @@ public:
 					// 此处返回值无用
 					// ReSharper disable once CppExpressionWithoutSideEffects
 					rdMainDice.Roll();
-					string strAns = strNickName + "骰出了: " + (boolDetail
-						? rdMainDice.FormCompleteString()
-						: rdMainDice.FormShortString());
+					string strDiceRes = boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString();
+					string strAns = format(GlobalMsg["strRollDice"], { strNickName ,strDiceRes });
 					if (!strReason.empty())
-						strAns.insert(0, "由于" + strReason + " ");
+						strAns = format(GlobalMsg["strRollDiceReason"], { strNickName ,strDiceRes ,strReason});
 					if (!isHidden)
 					{
 						reply(strAns);
@@ -2650,7 +2650,7 @@ public:
 			}
 			if (isHidden)
 			{
-				const string strReply = strNickName + "进行了一次暗骰";
+				const string strReply = format(GlobalMsg["strRollHidden"], { strNickName });
 				reply(strReply);
 			}
 			return 1;
@@ -2675,6 +2675,7 @@ public:
 				return false;
 			}
 		}
+		if (fromType == Private) isMaster = true;
 		if (fromQQ == masterQQ) isMaster = true;
 		init2(strMsg);
 		return DiceReply();

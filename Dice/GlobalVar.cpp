@@ -64,7 +64,14 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 
 std::map<std::string, std::string> GlobalMsg
 {
-	{"strSendMsg","消息已送出√"},
+	{"strRollDice","{0}骰出了: {1}"},
+	{"strRollDiceReason","由于{2} {0}骰出了: {1}"},
+	{"strRollHidden","{0}进行了一次暗骰"},
+	{"strRollTurn","{0}的掷骰轮数: {1}轮"},
+	{"strRollTurnDice","{0}骰出了: {1}次{2}"},
+	{"strRollTurnDiceReason","由于{3} {0}骰出了: {1}次{2}"},
+	{"strSendMsg","消息已送出√"},//Master定向发送的回执
+	{"strSendMasterMsg","消息已发送给Master√"},//向Master发送的回执
 	{"strSendMsgEmpty","发送消息内容为空×"},
 	{"strSendMsgIDEmpty","未指定发送对象×"},
 	{"strSendMsgInvalid","没有可以发送的对象×"},//没有Master
