@@ -58,7 +58,7 @@ private:
 			for (auto i : strDiceCnt)
 				if (!isdigit(static_cast<unsigned char>(i)))
 					return Input_Err;
-			if (strDiceCnt.length() > 3 || (strDiceCnt.length() == 3 && strDiceCnt != "100"))
+			if (strDiceCnt.length() > 3)
 				return DiceTooBig_Err;
 			std::string strAddVal = dice.substr(dice.find("a") + 1);
 			for (auto i : strAddVal)
@@ -615,26 +615,42 @@ public:
 			}
 			else if (vBnP[distance(vvintRes.begin(), i)] == WW_Dice)
 			{
+				bool isCnt = false;
+				if (i->size() >= 100)isCnt = true;
 				if (vvintRes.size() != 1 && i->size() != (*i)[0] + 1)
 					strReturnString.append("{ ");
 				int intWWPos = 0;
 				while (true)
 				{
-					strReturnString.append("(");
-					for (int a = intWWPos + 1; a <= intWWPos + (*i)[intWWPos]; a++)
+					if (intWWPos) {
+						strReturnString += isCnt ? "\n¼Ó÷»" + std::to_string((*i)[intWWPos]) + "£º" : "+";
+					}
+					strReturnString.append("{");
+					if (isCnt) {
+						int Cnt[11] = { 0 };
+						for (int a = intWWPos + 1; a <= intWWPos + (*i)[intWWPos]; a++)
+						{
+							Cnt[(*i)[a]]++;
+						}
+						for (int i = 1,c=0; i <= 10; i++) {
+							if (Cnt[i]) {
+								strReturnString.append("(" + std::to_string(i) + ":" + std::to_string(Cnt[i]) + "),");
+								c++;
+								if (c % 3 == 1)strReturnString += '\n';
+							}
+						}
+						if (strReturnString[strReturnString.length() - 1] == '\n')strReturnString.pop_back();
+						if (strReturnString[strReturnString.length() - 1] == ',')strReturnString.pop_back();
+					}
+					else for (int a = intWWPos + 1; a <= intWWPos + (*i)[intWWPos]; a++)
 					{
 						strReturnString.append(std::to_string((*i)[a]));
 						if (a != intWWPos + (*i)[intWWPos])
 							strReturnString.append(",");
 					}
-					strReturnString.append(")");
+					strReturnString.append("}");
 					intWWPos = intWWPos + (*i)[intWWPos] + 1;
-					if (intWWPos != i->size())
-					{
-						strReturnString.append("+");
-					}
-					else
-					{
+					if (intWWPos == i->size()){
 						break;
 					}
 				}
