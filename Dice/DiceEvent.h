@@ -2683,7 +2683,7 @@ public:
 				return false;
 			}
 		}
-		if (fromType == Private) isMaster = true;
+		if (fromType == Private) isCalled = true;
 		if (fromQQ == masterQQ) isMaster = true;
 		init2(strMsg);
 		return DiceReply();
