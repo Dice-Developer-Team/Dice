@@ -87,7 +87,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strLinked","已创建时空门"},
 	{"strLinkWarning","尝试创建时空门，但不保证能否连通"},
 	{"strLinkNotFound","时空门要通向不可名状的地方了×"},
-	{"strNotMaster","你不是我的master！你想做什么？"},
+	{"strNotMaster","你不是本机器人的master！你想做什么？"},
 	{"strDismiss", ""},
 	{"strHlpSet","已为{0}设置词条√"},
 	{"strHlpReset","已清除{0}的词条，重启应用后重置默认词条√"},
@@ -169,9 +169,9 @@ std::map<std::string, std::string> GlobalMsg
 	{"strWelcomePrivate", "你在这欢迎谁呢？"},
 	{"strWelcomeMsgClearNotice", "已清除本群的入群欢迎词"},
 	{"strWelcomeMsgClearErr", "错误:没有设置入群欢迎词，清除失败"},
-	{"strWelcomeMsgUpdateNotice", "已更新本群的入群欢迎词"},
-	{"strPermissionDeniedErr", "错误:此操作需要群主或管理员权限"},
-	{"strSelfPermissionErr","本骰娘权限不够无能为力呢"},
+	{"strWelcomeMsgUpdateNotice", "本机器人已更新本群的入群欢迎词"},
+	{"strPermissionDeniedErr", "非群主或管理员无权命令本机器人"},
+	{"strSelfPermissionErr","本机器人权限不够无能为力呢"},
 	{"strNameTooLongErr", "错误:名称过长(最多为50英文字符)"},
 	{"strNameClr","已将{0}的名称删除"},
 	{"strNameSet","已将{0}的名称更改为{1}"},
@@ -183,29 +183,29 @@ std::map<std::string, std::string> GlobalMsg
 	{"strRuleReset","已重置默认规则"},
 	{"strRuleSet","已设置默认规则"},
 	{"strRuleErr", "规则数据获取失败,具体信息:\n"},
-	{"strRulesFailedErr", "请求失败,无法连接数据库"},
+	{"strRulesFailedErr", "请求失败,本机器人无法连接数据库"},
 	{"strPropDeleted", "属性删除成功"},
 	{"strPropNotFound", "错误:属性不存在"},
-	{"strRuleNotFound", "未找到对应的规则信息"},
+	{"strRuleNotFound", "本机器人未找到对应的规则信息"},
 	{"strProp", "{0}的{1}属性值为{2}"},
 	{"strStErr", "格式错误:请参考帮助文档获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
-	{"strNoDiscuss", "本骰娘现不支持讨论组服务，即将退出"},
-	{"strGroupClr", "本骰娘清退中，即将退群"},
+	{"strNoDiscuss", "本机器人现不支持讨论组服务，即将退出"},
+	{"strGroupClr", "本机器人清退中，即将退群"},
 	{"strOverdue","{0}已经在这里被放置{1}天啦，马上就会离开这里了"},
-	{"strGlobalOff","休假中，暂停服务×"},
-	{"strPreserve", "本骰娘私有私用，勿扰勿怪"},
+	{"strGlobalOff","本机器人休假中，暂停服务×"},
+	{"strPreserve", "本机器人私有私用，勿扰勿怪"},
 	{"strJrrp", "{0}今天的人品值是: {1}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{0}"},
-	{"strAddGroup", R"(欢迎使用本骰娘！
+	{"strAddGroup", R"(欢迎使用本机器人！
 请使用.dismiss 机器人QQ号 使机器人退群退讨论组
 .bot on/off 机器人QQ号 //机器人开启或关闭
 .help协议 确认服务协议
 .help指令 查看指令列表
 .help设定 确认骰娘设定
-千万别想当然以为本骰娘和别的骰娘一样！)" },
-	{"strSelfName", "本骰娘"},
-	{"strBotMsg", "\n使用.help更新 查看更新内容"},
+千万别想当然以为本机器人和别的骰娘一样！)" },
+	{"strSelfName", ""},
+	{"strBotMsg", "\n使用.help更新 查看本机器人更新内容"},
 	{"strHlpMsg" , Dice_Short_Ver + "\n" +
 	R"(请使用.dismiss 机器人QQ号 使机器人退群退讨论组
 .bot on/off 机器人QQ号 //机器人开启或关闭

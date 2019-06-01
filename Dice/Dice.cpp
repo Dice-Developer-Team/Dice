@@ -91,11 +91,13 @@ string strFileLoc;
 //备份数据
 void dataBackUp() {
 	//备份MasterQQ
-	ofstream ofstreamMaster(strFileLoc + "Master.RDconf", ios::out | ios::trunc);
-	ofstreamMaster << masterQQ << std::endl << boolMasterMode << std::endl << boolDisabledGlobal << std::endl << boolDisabledMeGlobal << std::endl << boolPreserve << std::endl << boolDisabledJrrpGlobal << std::endl << boolNoDiscuss <<std::endl;
-	ofstreamMaster	<< ClockToWork.first << " " << ClockToWork.second << endl
-					<< ClockOffWork.first << " " << ClockOffWork.second << endl;
-	ofstreamMaster.close();
+	if (!boolStandByMe) {
+		ofstream ofstreamMaster(strFileLoc + "Master.RDconf", ios::out | ios::trunc);
+		ofstreamMaster << masterQQ << std::endl << boolMasterMode << std::endl << boolDisabledGlobal << std::endl << boolDisabledMeGlobal << std::endl << boolPreserve << std::endl << boolDisabledJrrpGlobal << std::endl << boolNoDiscuss << std::endl;
+		ofstreamMaster << ClockToWork.first << " " << ClockToWork.second << endl
+			<< ClockOffWork.first << " " << ClockOffWork.second << endl;
+		ofstreamMaster.close();
+	}
 	//备份个性化语句
 	ofstream ofstreamPersonalMsg(strFileLoc + "PersonalMsg.RDconf", ios::out | ios::trunc);
 	for (auto it = PersonalMsg.begin(); it != PersonalMsg.end(); ++it)
@@ -466,7 +468,7 @@ EVE_Enable(eventEnable)
 		}
 	}
 	ifstreamLastMsgList.close();
-	//读取聊天列表
+	//读取COC房规
 	ifstream ifstreamDefaultCOC(strFileLoc + "DefaultCOC.MYmap");
 	if (ifstreamDefaultCOC)
 	{
@@ -482,12 +484,21 @@ EVE_Enable(eventEnable)
 	}
 	ifstreamDefaultCOC.close();
 	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
+	GlobalMsg["strSelfName"] = getLoginNick();
 	ifstream ifstreamCustomMsg(strFileLoc + "CustomMsg.json");
 	if (ifstreamCustomMsg)
 	{
 		ReadCustomMsg(ifstreamCustomMsg);
 	}
 	ifstreamCustomMsg.close();
+	//预修改出场回复文本
+	for (auto it : GlobalMsg) {
+		string strMsg = it.second;
+		while (strMsg.find("本机器人") != string::npos) {
+			strMsg.replace(strMsg.find("本机器人"), 8, GlobalMsg["strSelfName"]);
+		}
+		GlobalMsg[it.first] = strMsg;
+	}
 	//读取替身模式
 	ifstream ifstreamStandByMe(strFileLoc + "StandByMe.RDconf");
 	if (ifstreamStandByMe)
@@ -684,7 +695,6 @@ EVE_Request_AddGroup(eventGroupInvited) {
 			}
 			else if (boolPreserve) {
 				strMsg += "\n已拒绝（当前在私用模式）";
-				WhiteGroup.insert(fromQQ);
 				setGroupAddRequest(responseFlag, 2, 2, "");
 			}
 			else{
