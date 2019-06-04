@@ -1199,15 +1199,19 @@ public:
 			}
 			while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 				intMsgCnt++;
-			if (intMsgCnt == strMsg.length()) {
-				EditedMsg.erase(strName);
-				reply("已清除" + strName + "的自定义，但恢复默认设置需要重启应用。");
-			}
-			else if (GlobalMsg.count(strName)) {
-				string strMessage = strMsg.substr(intMsgCnt);
-				EditedMsg[strName] = strMessage;
-				GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMsg : strMessage;
-				reply("已记下" + strName + "的自定义");
+			if (GlobalMsg.count(strName)) {
+				if (intMsgCnt == strMsg.length()) {
+					EditedMsg.erase(strName);
+					GlobalMsg[strName] = "";
+					reply("已清除" + strName + "的自定义，但恢复默认设置需要重启应用。");
+				}
+				else {
+					string strMessage = strMsg.substr(intMsgCnt);
+					if (strMessage == "NULL")strMessage = "";
+					EditedMsg[strName] = strMessage;
+					GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMsg : strMessage;
+					reply("已记下" + strName + "的自定义");
+				}
 			}
 			else {
 				reply("是说" + strName + "？这似乎不是会用到的语句×");
