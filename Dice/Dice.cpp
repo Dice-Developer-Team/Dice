@@ -546,18 +546,20 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		if (eve.message.find("被管理员禁言") != string::npos&&eve.message.find(to_string(getLoginQQ())) != string::npos) {
 			long long fromQQ;
 			int intAuthCnt = 0;
+			string strAuthList;
 			for (auto member : getGroupMemberList(eve.fromGroup)) {
 				if (member.permissions == 3) {
 					//相应核心精神，由群主做负责人
 					fromQQ = member.QQID;
 				}
 				else if (member.permissions == 2) {
-					//记录管理员数量
+					//记录管理员
+					strAuthList += '\n' + member.Nick + "(" + to_string(member.QQID) + ")";
 					intAuthCnt++;
 				}
 			}
 			if (masterQQ&&boolMasterMode) {
-				string strMsg = "在群\"" + getGroupList()[eve.fromGroup] + "\"(" + to_string(eve.fromGroup) + ")中," + eve.message + "\n群主" + getStrangerInfo(fromQQ).nick + "(" + to_string(fromQQ) + "),另有管理员" + to_string(intAuthCnt) + "名";
+				string strMsg = "在群\"" + getGroupList()[eve.fromGroup] + "\"(" + to_string(eve.fromGroup) + ")中," + eve.message + "\n群主" + getStrangerInfo(fromQQ).nick + "(" + to_string(fromQQ) + "),另有管理员" + to_string(intAuthCnt) + "名"+ strAuthList;
 				AddMsgToQueue(strMsg, masterQQ);
 				BlackGroup.insert(eve.fromGroup);
 				if (WhiteGroup.count(eve.fromGroup))WhiteGroup.erase(eve.fromGroup);
