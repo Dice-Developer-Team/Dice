@@ -84,6 +84,7 @@ public:
 	long long fromQQ = 0;
 	long long fromGroup = 0;
 	chatType fromChat;
+	string strReply;
 	FromMsg(std::string message, long long fromNum) :strMsg(message), fromQQ(fromNum), fromID(fromNum) {
 		fromChat = { fromID,Private };
 		mLastMsgList[fromChat] = time(NULL);
@@ -690,43 +691,175 @@ public:
 			reply(strReply);
 			return 1;
 		}
+		else if (strLowerMessage.substr(intMsgCnt, 4) == "deck") {
+		intMsgCnt += 4;
+		readSkipSpace();
+		string strPara = readPara();
+		vector<string> *DeckPro = NULL, *DeckTmp = NULL;
+		if (intT != PrivateT && CardDeck::mGroupDeck.count(fromGroup)) {
+			DeckPro = &CardDeck::mGroupDeck[fromGroup];
+			DeckTmp = &CardDeck::mGroupDeckTmp[fromGroup];
+		}
+		else{
+			if (CardDeck::mPrivateDeck.count(fromQQ)) {
+				DeckPro = &CardDeck::mPrivateDeck[fromQQ];
+				DeckTmp = &CardDeck::mPrivateDeckTmp[fromQQ];
+			}
+			//haichayixiangpanding
+		}
+		if (strPara == "show") {
+			if (!DeckTmp) {
+				reply(GlobalMsg["strDeckTmpNotFound"]);
+				return 1;
+			}
+			if (DeckTmp->size() == 0) {
+				reply(GlobalMsg["strDeckTmpEmpty"]);
+				return 1;
+			}
+			string strReply = GlobalMsg["strDeckTmpShow"] + "\n";
+			for (auto it : *DeckTmp) {
+				it.length() > 10 ? strReply += it + "\n" : strReply += it + "|";
+			}
+			strReply.erase(strReply.end()-1);
+			reply(strReply);
+			return 1;
+		}
+		else if (intT == GroupT && getGroupMemberInfo(fromGroup, fromQQ).permissions == 1) {
+			reply(GlobalMsg["strPermissionDeniedErr"]);
+			return 1;
+		}
+		else if (strPara == "set") {
+			string strDeckName = readPara();
+			if (strDeckName.empty())strDeckName = readDigit();
+			if (strDeckName.empty()) {
+				reply(GlobalMsg["strDeckNameEmpty"]);
+				return 1;
+			}
+			vector<string> DeckSet = {};
+			switch (CardDeck::findDeck(strDeckName)) {
+			case 1:
+				DeckSet = CardDeck::mPublicDeck[strDeckName];
+				break;
+			case 2: {
+				int intSize = stoi(strDeckName) + 1;
+				if (intSize == 0) {
+					reply(GlobalMsg["strNumCannotBeZero"]);
+					return 1;
+				}
+				strDeckName = "数列1至" + strDeckName;
+				while (--intSize) {
+					DeckSet.push_back(to_string(intSize));
+				}
+				break;
+			}
+			case 0:
+			default:
+				reply(GlobalMsg["strDeckNotFound"]);
+				return 1;
+			}
+			if (intT == PrivateT) {
+				CardDeck::mPrivateDeck[fromQQ] = DeckSet;
+			}
+			else {
+				CardDeck::mGroupDeck[fromGroup] = DeckSet;
+			}
+			reply(format(GlobalMsg["strDeckProSet"], { strDeckName }));
+			return 1;
+		}
+		else if (strPara == "reset") {
+			*DeckTmp = vector<string>(*DeckPro);
+			reply(GlobalMsg["strDeckTmpReset"]);
+			return 1;
+		}
+		else if (strPara == "clr") {
+			if(intT == PrivateT){
+				if (CardDeck::mPrivateDeck.count(fromQQ) == 0) {
+					reply(GlobalMsg["strDeckProNull"]);
+					return 1;
+				}
+				CardDeck::mPrivateDeck.erase(fromQQ);
+				if (DeckTmp)DeckTmp->clear();
+				reply(GlobalMsg["strDeckProClr"]);
+			}
+			else {
+				if (CardDeck::mGroupDeck.count(fromGroup) == 0) {
+					reply(GlobalMsg["strDeckProNull"]);
+					return 1;
+				}
+				CardDeck::mGroupDeck.erase(fromGroup);
+				if (DeckTmp)DeckTmp->clear();
+				reply(GlobalMsg["strDeckProClr"]);
+			}
+			return 1;
+		}
+		else if (strPara == "new") {
+			if (intT != PrivateT && WhiteGroup.count(fromGroup) == 0) {
+				reply(GlobalMsg["strWhiteGroupDenied"]);
+				return 1;
+			}
+			if (intT == PrivateT && WhiteQQ.count(fromQQ) == 0) {
+				reply(GlobalMsg["strWhiteQQDenied"]);
+				return 1;
+			}
+			if (intT == PrivateT) {
+				CardDeck::mPrivateDeck[fromQQ] = {};
+				DeckPro = &CardDeck::mPrivateDeck[fromQQ];
+			}
+			else {
+				CardDeck::mGroupDeck[fromGroup] = {};
+				DeckPro = &CardDeck::mGroupDeck[fromGroup];
+			}
+			while (intMsgCnt != strMsg.length()) {
+				string item = readItem();
+				DeckPro->push_back(item);
+			}
+			reply(GlobalMsg["strDeckProNew"]);
+			return 1;
+		}
+}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "draw")
 		{
 			intMsgCnt += 4;
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
-
-			string strDeckName;
-			while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			{
-				strDeckName += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
+			vector<string> ProDeck;
+			vector<string> *TempDeck = NULL;
+			string strDeckName = readPara();
+			if (strDeckName.empty()) {
+				if (intT != PrivateT && CardDeck::mGroupDeck.count(fromGroup)) {
+					if (CardDeck::mGroupDeckTmp.count(fromGroup) == 0 || CardDeck::mGroupDeckTmp[fromGroup].size() == 0)CardDeck::mGroupDeckTmp[fromGroup] = vector<string>(CardDeck::mGroupDeck[fromGroup]);
+					TempDeck = &CardDeck::mGroupDeckTmp[fromGroup];
+				}
+				else if (CardDeck::mPrivateDeck.count(fromQQ)) {
+					if (CardDeck::mPrivateDeckTmp.count(fromQQ) == 0 || CardDeck::mPrivateDeckTmp[fromQQ].size() == 0)CardDeck::mPrivateDeckTmp[fromQQ] = vector<string>(CardDeck::mPrivateDeck[fromQQ]);
+					TempDeck = &CardDeck::mPrivateDeckTmp[fromQQ];
+				}
+				else {
+					reply(GlobalMsg["strDeckNameEmpty"]);
+					return 1;
+				}
 			}
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-				intMsgCnt++;
-			string strCardNum;
-			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			{
-				strCardNum += strMsg[intMsgCnt];
-				intMsgCnt++;
+			else {
+				int intFoundRes = CardDeck::findDeck(strDeckName);
+				if (intFoundRes == 0) {
+					strReply = "是说" + strDeckName + "?" + GlobalMsg["strDeckNotFound"];
+					reply(strReply);
+					return 1;
+				}
+				*TempDeck = vector<string>(CardDeck::mPublicDeck[strDeckName]);
 			}
+			string strCardNum=readDigit();
 			auto intCardNum = strCardNum.empty() ? 1 : stoi(strCardNum);
 			if (intCardNum == 0)
 			{
 				reply(GlobalMsg["strNumCannotBeZero"]);
 				return 1;
 			}
-			int intFoundRes = CardDeck::findDeck(strDeckName);
-			string strReply;
-			if (intFoundRes == 0) {
-				strReply = "是说" + strDeckName + "?" + GlobalMsg["strDeckNotFound"];
-				reply(strReply);
-				return 1;
-			}
-			vector<string> TempDeck(CardDeck::mPublicDeck[strDeckName]);
-			strReply = format(GlobalMsg["strDrawCard"], { strNickName , CardDeck::drawCard(TempDeck) });
-			while (--intCardNum && TempDeck.size()) {
-				strReply += "\n" + CardDeck::drawCard(TempDeck);
+			strReply = format(GlobalMsg["strDrawCard"], { strNickName , CardDeck::drawCard(*TempDeck) });
+			while (--intCardNum && TempDeck->size()) {
+				string strItem = CardDeck::drawCard(*TempDeck);
+				(strItem.length() < 10) ? strReply += " | " : strReply += '\n';
+				strReply += strItem;
 				if (strReply.length() > 1000) {
 					reply(strReply);
 					strReply.clear();
@@ -2700,17 +2833,17 @@ private:
 	bool isMaster = false;
 	bool isLinkOrder = false;
 	//跳过空格
-	inline void readSkipSpace() {
+	void readSkipSpace() {
 		while (isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
 	}
-	inline string readRest() {
+	string readRest() {
 		return strMsg.substr(intMsgCnt);
 	}
 	//读取参数(统一小写)
 	string readPara() {
 		string strPara;
 		while (isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
-		while (!isspace(strLowerMessage[intMsgCnt]) && intMsgCnt != strLowerMessage.length()) {
+		while (!isspace(strLowerMessage[intMsgCnt]) && !isdigit(strLowerMessage[intMsgCnt]) && intMsgCnt != strLowerMessage.length()) {
 			strPara += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
@@ -2721,6 +2854,16 @@ private:
 		string strMum;
 		while (!isdigit(strMsg[intMsgCnt]) && intMsgCnt != strMsg.length())intMsgCnt++;
 		while (isdigit(strMsg[intMsgCnt])) {
+			strMum += strMsg[intMsgCnt];
+			intMsgCnt++;
+		}
+		return strMum;
+	}
+	//读取分项
+	string readItem() {
+		string strMum;
+		while (isspace(strMsg[intMsgCnt]) || strMsg[intMsgCnt] == '|')intMsgCnt++;
+		while (!isspace(strMsg[intMsgCnt]) && strMsg[intMsgCnt] != '|'&& intMsgCnt != strMsg.length()) {
 			strMum += strMsg[intMsgCnt];
 			intMsgCnt++;
 		}
