@@ -64,6 +64,17 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 
 std::map<std::string, std::string> GlobalMsg
 {
+	{"strWhiteQQDenied","你不在白名单中×"},
+	{"strWhiteGroupDenied","本群聊不在白名单中×"},
+	{"strDeckProNew","已新建自定义牌堆√"},
+	{"strDeckProSet","已将{0}设置为默认牌堆√"},
+	{"strDeckProClr","已删除默认牌堆√"},
+	{"strDeckProNull","默认牌堆不存在!"},
+	{"strDeckTmpReset","已重置卡牌√"},
+	{"strDeckTmpShow","当前剩余卡牌:"},
+	{"strDeckTmpEmpty","已无剩余卡牌！"},		//剩余卡牌数为0
+	{"strDeckTmpNotFound","不存在剩余卡牌×"},	//没有生成过牌堆
+	{"strDeckNameEmpty","未指定牌堆名×"},
 	{"strRollDice","{0}骰出了: {1}"},
 	{"strRollDiceReason","由于{2} {0}骰出了: {1}"},
 	{"strRollHidden","{0}进行了一次暗骰"},
@@ -125,7 +136,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strRollFailure","失败"},
 	{"strRollFumble","大失败！"},
 	{"strNumCannotBeZero", "无意义的数目！莫要消遣于我!"},
-	{"strDeckNotFound", "没听说过呢……"},
+	{"strDeckNotFound", "没听说过的牌堆名呢……"},
 	{"strDeckEmpty", "疲劳警告！已经什么也不剩了！"},
 	{"strNameNumTooBig", "生成数量过多!请输入1-10之间的数字!"},
 	{"strNameNumCannotBeZero", "生成数量不能为零!请输入1-10之间的数字!"},
