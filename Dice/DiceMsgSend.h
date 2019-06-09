@@ -26,10 +26,7 @@
 #include <string>
 #include "CQMsgSend.h"
 
-/*
- * 消息类型枚举类
- * 用于发送消息
- */
+using chatType = std::pair<long long, CQ::msgtype>;
 
 /*
  *  加锁并将消息存入消息发送队列

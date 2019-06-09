@@ -54,8 +54,6 @@
 using namespace std;
 using namespace CQ;
 
-unique_ptr<NameStorage> Name;
-
 
 //Master模式
 bool boolMasterMode = false;
@@ -76,6 +74,7 @@ set<long long> DisabledHELPGroup;
 set<long long> DisabledHELPDiscuss;
 set<long long> DisabledOBGroup;
 set<long long> DisabledOBDiscuss;
+
 unique_ptr<Initlist> ilInitList;
 
 map<chatType, time_t> mLastMsgList;
@@ -98,6 +97,18 @@ void dataBackUp() {
 			<< ClockOffWork.first << " " << ClockOffWork.second << endl;
 		ofstreamMaster.close();
 	}
+	//备份管理员列表
+	ofstream  ofstreamAdmin(strFileLoc + "AdminQQ.RDconf");
+	for (auto it : AdminQQ) {
+		ofstreamAdmin << it;
+	}
+	ofstreamAdmin.close();
+	//备份监控窗口列表
+	ofstream ofstreamMonitorList(strFileLoc + "MonitorList.RDconf");
+	for (auto it : MonitorList) {
+		if (it.first)ofstreamMonitorList << it.first << " " << it.second << std::endl;
+	}
+	ofstreamMonitorList.close();
 	//备份个性化语句
 	ofstream ofstreamPersonalMsg(strFileLoc + "PersonalMsg.RDconf", ios::out | ios::trunc);
 	for (auto it = PersonalMsg.begin(); it != PersonalMsg.end(); ++it)
@@ -169,6 +180,13 @@ void dataBackUp() {
 		ofstreamLastMsgList << it.first.first << " " << it.first.second << " "<< it.second << std::endl;
 	}
 	ofstreamLastMsgList.close();
+	//备份邀请者列表
+	ofstream ofstreamGroupInviter(strFileLoc + "GroupInviter.RDconf", ios::out | ios::trunc);
+	for (auto it : mGroupInviter)
+	{
+		ofstreamGroupInviter << it.first << "\n" << it.second << std::endl;
+	}
+	ofstreamGroupInviter.close();
 	//备份默认COC房规
 	ofstream ofstreamDefaultCOC(strFileLoc + "DefaultCOC.MYmap", ios::out | ios::trunc);
 	for (auto it : mDefaultCOC)
@@ -176,6 +194,11 @@ void dataBackUp() {
 		ofstreamDefaultCOC << it.first.first << " " << it.first.second << " " << it.second << std::endl;
 	}
 	ofstreamDefaultCOC.close();
+	//保存卡牌
+	CardDeck::saveDeck(strFileLoc + "GroupDeck.json", CardDeck::mGroupDeck);
+	CardDeck::saveDeck(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
+	CardDeck::saveDeck(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
+	CardDeck::saveDeck(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
 }
 EVE_Enable(eventEnable)
 {
@@ -200,6 +223,35 @@ EVE_Enable(eventEnable)
 			>> ClockToWork.first >> ClockToWork.second >> ClockOffWork.first >> ClockOffWork.second;
 	}
 	ifstreamMaster.close();
+	//读取管理员列表
+	ifstream ifstreamAdmin(strFileLoc + "AdminQQ.RDconf");
+	while (ifstreamAdmin)
+	{
+		long long llAdmin;
+		ifstreamAdmin >> llAdmin;
+		AdminQQ.insert(llAdmin);
+	}
+	ifstreamAdmin.close();
+	//读取监控窗口列表
+	ifstream ifstreamMonitorList(strFileLoc + "MonitorList.RDconf");
+	while (ifstreamMonitorList)
+	{
+		long long llMonitor = 0;
+		int t = 0;
+		ifstreamMonitorList >> llMonitor >> t;
+		if (llMonitor)MonitorList.insert({ llMonitor ,(msgtype)t });
+	}
+	if (MonitorList.size() == 0) {
+		if (masterQQ)MonitorList.insert({ masterQQ ,Private });
+		for (auto it : AdminQQ) {
+			MonitorList.insert({ it ,Private });
+		}
+		MonitorList.insert({ 624807593 ,Group });
+		MonitorList.insert({ 941980833 ,Group });
+		MonitorList.insert({ 863062599 ,Group });
+		MonitorList.insert({ 192499947 ,Group });
+	}
+	ifstreamMonitorList.close();
 	ifstream ifstreamCharacterProp(strFileLoc + "CharacterProp.RDconf");
 	if (ifstreamCharacterProp)
 	{
@@ -468,6 +520,18 @@ EVE_Enable(eventEnable)
 		}
 	}
 	ifstreamLastMsgList.close();
+	//读取邀请者列表
+	ifstream ifstreamGroupInviter(strFileLoc + "GroupInviter.RDconf");
+	if (ifstreamGroupInviter)
+	{
+		long long llGroup;
+		long long llQQ;
+		while (ifstreamGroupInviter >> llGroup >> llQQ)
+		{
+			if (llGroup&&llQQ)mGroupInviter[llGroup] = llQQ;
+		}
+	}
+	ifstreamGroupInviter.close();
 	//读取COC房规
 	ifstream ifstreamDefaultCOC(strFileLoc + "DefaultCOC.MYmap");
 	if (ifstreamDefaultCOC)
@@ -499,6 +563,11 @@ EVE_Enable(eventEnable)
 		}
 		GlobalMsg[it.first] = strMsg;
 	}
+	//读取卡牌
+	CardDeck::loadDeck(strFileLoc + "GroupDeck.json",CardDeck::mGroupDeck);
+	CardDeck::loadDeck(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
+	CardDeck::loadDeck(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
+	CardDeck::loadDeck(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
 	//读取替身模式
 	ifstream ifstreamStandByMe(strFileLoc + "StandByMe.RDconf");
 	if (ifstreamStandByMe)
@@ -546,23 +615,35 @@ EVE_GroupMsg_EX(eventGroupMsg)
 		if (eve.message.find("被管理员禁言") != string::npos&&eve.message.find(to_string(getLoginQQ())) != string::npos) {
 			long long fromQQ;
 			int intAuthCnt = 0;
+			string strAuthList;
 			for (auto member : getGroupMemberList(eve.fromGroup)) {
 				if (member.permissions == 3) {
 					//相应核心精神，由群主做负责人
 					fromQQ = member.QQID;
 				}
 				else if (member.permissions == 2) {
-					//记录管理员数量
+					//记录管理员
+					strAuthList += '\n' + member.Nick + "(" + to_string(member.QQID) + ")";
 					intAuthCnt++;
 				}
 			}
-			if (masterQQ&&boolMasterMode) {
-				string strMsg = "在群\"" + getGroupList()[eve.fromGroup] + "\"(" + to_string(eve.fromGroup) + ")中," + eve.message + "\n群主" + getStrangerInfo(fromQQ).nick + "(" + to_string(fromQQ) + "),另有管理员" + to_string(intAuthCnt) + "名";
-				AddMsgToQueue(strMsg, masterQQ);
-				BlackGroup.insert(eve.fromGroup);
-				if (WhiteGroup.count(eve.fromGroup))WhiteGroup.erase(eve.fromGroup);
-				//setGroupLeave(eve.fromGroup);
+			if (BlackQQ.count(fromQQ) == 0) {
+				BlackQQ.insert(fromQQ);
+				AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { "群内禁言" + GlobalMsg["strSelfName"] }), fromQQ);
 			}
+			string strMsg = "在群\"" + getGroupList()[eve.fromGroup] + "\"(" + to_string(eve.fromGroup) + ")中," + eve.message + "\n已拉黑群主" + getStrangerInfo(fromQQ).nick + "(" + to_string(fromQQ) + "),另有管理员" + to_string(intAuthCnt) + "名" + strAuthList;
+			if (mGroupInviter.count(eve.fromGroup)) {
+				long long llInviter = mGroupInviter[eve.fromGroup];
+				strMsg += "\n入群邀请者：" + printQQ(llInviter);
+				if (BlackQQ.count(llInviter) == 0) {
+					BlackQQ.insert(llInviter);
+					AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { "不负责任地邀请" + GlobalMsg["strSelfName"] }), llInviter);
+				}
+			}
+			NotifyMonitor(strMsg);
+			BlackGroup.insert(eve.fromGroup);
+			if (WhiteGroup.count(eve.fromGroup))WhiteGroup.erase(eve.fromGroup);
+			//setGroupLeave(eve.fromGroup);
 			string strInfo = "{\"LoginQQ\":\"" + to_string(getLoginQQ()) + "\",\"fromGroup\":" + to_string(eve.fromGroup) + "\",\"Type\":\"banned\",\"fromQQ\":\"" + to_string(fromQQ) + "\"";
 		}
 		else return;
@@ -583,9 +664,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		return;
 	}
 	if (eve.isSystem()) {
-		if (boolMasterMode&&masterQQ) {
-			AddMsgToQueue("在讨论组"+to_string(eve.fromDiscuss)+"中，"+eve.message, masterQQ);
-		}
+		NotifyMonitor("在讨论组" + to_string(eve.fromDiscuss) + "中，" + eve.message);
 		return;
 	}
 	DiscussList[eve.fromDiscuss] = tNow;
@@ -655,18 +734,28 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 
 EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 	if (beingOperateQQ == getLoginQQ()) {
-		if (masterQQ&&boolMasterMode) {
-			string strMsg = to_string(fromQQ)+"将"+GlobalMsg["strSelfName"]+"移出了群" + to_string(fromGroup) + "！";
-			AddMsgToQueue(strMsg, masterQQ,Private);
-			if (WhiteQQ.count(fromQQ)) {
-				WhiteQQ.erase(fromQQ);
+		mLastMsgList.erase({ fromGroup ,Group });
+		string strMsg = printQQ(fromQQ) + "将" + GlobalMsg["strSelfName"] + "移出了群" + to_string(fromGroup) + "！";
+		if (mGroupInviter.count(fromGroup)) {
+			long long llInviter = mGroupInviter[fromGroup];
+			strMsg += "\n入群邀请者：" + printQQ(llInviter);
+			if (BlackQQ.count(llInviter) == 0) {
+				BlackQQ.insert(llInviter);
+				AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { "不负责任地邀请" + GlobalMsg["strSelfName"] }), llInviter);
 			}
-			BlackQQ.insert(fromQQ);
-			if (WhiteGroup.count(fromGroup)) {
-				WhiteGroup.erase(fromGroup);
-			}
-			BlackGroup.insert(fromGroup);
 		}
+		NotifyMonitor(strMsg);
+		if (WhiteQQ.count(fromQQ)) {
+			WhiteQQ.erase(fromQQ);
+		}
+		if (BlackQQ.count(fromQQ) == 0) {
+			BlackQQ.insert(fromQQ);
+			AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { "移出" + GlobalMsg["strSelfName"] }), fromQQ);
+		}
+		if (WhiteGroup.count(fromGroup)) {
+			WhiteGroup.erase(fromGroup);
+		}
+		BlackGroup.insert(fromGroup);
 		string strInfo = "{\"LoginQQ\":\"" + to_string(getLoginQQ()) + "\",\"fromGroup\":" + to_string(fromGroup) + "\",\"Type\":\"kicked\",\"fromQQ\":\"" + to_string(fromQQ) + "\"";
 	}
 	return 0;
@@ -684,14 +773,16 @@ EVE_Request_AddGroup(eventGroupInvited) {
 				strMsg += "\n已拒绝（用户在黑名单中）";
 				setGroupAddRequest(responseFlag, 2, 2, "");
 			}
-			else if (WhiteGroup.count(fromQQ)) {
+			else if (WhiteGroup.count(fromGroup)) {
 				strMsg += "\n已同意（群在白名单中）";
 				setGroupAddRequest(responseFlag, 2, 1, "");
+				mGroupInviter[fromGroup] = fromQQ;
 			}
 			else if (WhiteQQ.count(fromQQ)) {
 				strMsg += "\n已同意（用户在白名单中）";
-				WhiteGroup.insert(fromQQ);
+				WhiteGroup.insert(fromGroup);
 				setGroupAddRequest(responseFlag, 2, 1, "");
+				mGroupInviter[fromGroup] = fromQQ;
 			}
 			else if (boolPreserve) {
 				strMsg += "\n已拒绝（当前在私用模式）";
@@ -700,8 +791,9 @@ EVE_Request_AddGroup(eventGroupInvited) {
 			else{
 				strMsg += "已同意";
 				setGroupAddRequest(responseFlag, 2, 1, "");
+				mGroupInviter[fromGroup] = fromQQ;
 			}
-			AddMsgToQueue(strMsg, masterQQ, Private);
+			sendAdmin(strMsg);
 		}
 		return 1;
 	}

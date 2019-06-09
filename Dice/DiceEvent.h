@@ -13,34 +13,12 @@
 #include "GlobalVar.h"
 #include "MsgFormat.h"
 #include "initList.h"
+#include "NameStorage.h"
 //打包待处理消息
 using namespace std;
 using namespace CQ;
 
-using chatType = pair<long long, msgtype>;
-//最近消息记录
-extern map<chatType, time_t> mLastMsgList;
-//连接的聊天窗口
-extern map<chatType, chatType> mLinkedList;
-//单向转发列表
-extern multimap<chatType, chatType> mFwdList;
-extern unique_ptr<NameStorage> Name;
-string strip(std::string origin)
-{
-	while (true)
-	{
-		if (origin[0] == '!' || origin[0] == '.')
-		{
-			origin.erase(origin.begin());
-		}
-		else if (origin.substr(0, 2) == "！" || origin.substr(0, 2) == "。")
-		{
-			origin.erase(origin.begin());
-			origin.erase(origin.begin());
-		}
-		else return origin;
-	}
-}
+
 
 extern map<long long, int> DefaultDice;
 //默认COC检定房规
@@ -55,6 +33,7 @@ extern set<long long> DisabledHELPGroup;
 extern set<long long> DisabledHELPDiscuss;
 extern set<long long> DisabledOBGroup;
 extern set<long long> DisabledOBDiscuss;
+extern unique_ptr<NameStorage> Name;
 extern unique_ptr<Initlist> ilInitList;
 struct SourceType
 {
@@ -84,6 +63,7 @@ public:
 	long long fromQQ = 0;
 	long long fromGroup = 0;
 	chatType fromChat;
+	string strReply;
 	FromMsg(std::string message, long long fromNum) :strMsg(message), fromQQ(fromNum), fromID(fromNum) {
 		fromChat = { fromID,Private };
 		mLastMsgList[fromChat] = time(NULL);
@@ -93,23 +73,27 @@ public:
 		mLastMsgList[fromChat] = time(NULL);
 	}
 
-	string getName(long long QQ , long long GroupID)
-	{
-		//if (GroupID)
-		{
-			return strip(Name->get(GroupID, QQ).empty()
-				? (Name->get(0, QQ).empty()
-					? (getGroupMemberInfo(GroupID, QQ).GroupNick.empty()
-						? getStrangerInfo(QQ).nick
-						: getGroupMemberInfo(GroupID, QQ).GroupNick)
-					: Name->get(0, QQ))
-				: Name->get(GroupID, QQ));
-		}
-		/*私聊*/
-		//return strip(getStrangerInfo(QQ).nick);
-	}
 	void reply(std::string strReply) {
 		AddMsgToQueue(strReply, fromID, fromType);
+	}
+	void reply() {
+		AddMsgToQueue(strReply, fromID, fromType);
+	}
+	//通知管理员
+	void AdminNotify(std::string strMsg) {
+		reply(strMsg);
+		string strName = getName(fromQQ);
+		if (AdminQQ.count(fromQQ)) {
+			AddMsgToQueue(strName + strMsg, masterQQ);
+			for (auto it : AdminQQ) {
+				if (fromQQ != it) AddMsgToQueue(strName + strMsg, it);
+			}
+		}
+		else {
+			for (auto it : AdminQQ) {
+				AddMsgToQueue(strName + strMsg, it);
+			}
+		}
 	}
 	//转发消息
 	void FwdMsg(string message) {
@@ -126,11 +110,451 @@ public:
 			}
 		}
 	}
+	int AdminEvent(string strOption) {
+		if (strOption == "delete") {
+			AdminNotify("已经放弃管理员权限√");
+			MonitorList.erase({ fromQQ,Private });
+			AdminQQ.erase(fromQQ);
+			return 1;
+		}
+		else if (strOption == "state") {
+			string strReply = getLoginNick();
+			strReply = strReply + "的当前情况" + "\n"
+				+ (ClockToWork.first < 24 ? "定时开启" + printClock(ClockToWork) + "\n" : "")
+				+ (ClockOffWork.first < 24 ? "定时关闭" + printClock(ClockOffWork) + "\n" : "")
+				+ (boolPreserve ? "私用模式" : "公用模式") + "\n"
+				+ (boolNoDiscuss ? "禁用讨论组" : "启用讨论组") + "\n"
+				+ "全局开关：" + (boolDisabledGlobal ? "禁用" : "启用") + "\n"
+				+ "全局.me开关：" + (boolDisabledMeGlobal ? "禁用" : "启用") + "\n"
+				+ "全局.jrrp开关：" + (boolDisabledJrrpGlobal ? "禁用" : "启用") + "\n"
+				+ "所在群聊数：" + to_string(getGroupList().size()) + "\n"
+				+ (DiscussList.size() ? "有记录的讨论组数：" + to_string(DiscussList.size()) + "\n" : "")
+				+ "黑名单用户数：" + to_string(BlackQQ.size()) + "\n"
+				+ "黑名单群数：" + to_string(BlackGroup.size()) + "\n"
+				+ "白名单用户数：" + to_string(WhiteQQ.size()) + "\n"
+				+ "白名单群数：" + to_string(WhiteGroup.size());
+			reply(strReply);
+			return 1;
+		}
+		else if (strOption == "on") {
+			if (boolDisabledGlobal) {
+				boolDisabledGlobal = false;
+				AdminNotify("已全局开启" + GlobalMsg["strSelfName"]);
+			}
+			else {
+				reply(GlobalMsg["strSelfName"] + "不在静默中！");
+			}
+			return 1;
+		}
+		else if (strOption == "off") {
+			if (boolDisabledGlobal) {
+				reply(GlobalMsg["strSelfName"] + "已经静默！");
+			}
+			else {
+				boolDisabledGlobal = true;
+				AdminNotify("已全局关闭" + GlobalMsg["strSelfName"]);
+			}
+			return 1;
+		}
+		else if (strOption == "meon") {
+			if (boolDisabledMeGlobal) {
+				boolDisabledMeGlobal = false;
+				AdminNotify("已令" + GlobalMsg["strSelfName"] + "全局启用.me√");
+			}
+			else {
+				reply(GlobalMsg["strSelfName"] + "已启用.me！");
+			}
+			return 1;
+		}
+		else if (strOption == "meoff") {
+			if (boolDisabledMeGlobal) {
+				reply(GlobalMsg["strSelfName"] + "已禁用.me！");
+			}
+			else {
+				boolDisabledMeGlobal = true;
+				AdminNotify("已令" + GlobalMsg["strSelfName"] + "全局禁用.me√");
+			}
+			return 1;
+		}
+		else if (strOption == "jrrpon") {
+			if (boolDisabledMeGlobal) {
+				boolDisabledMeGlobal = false;
+				AdminNotify("已令" + GlobalMsg["strSelfName"] + "全局启用.jrrp√");
+			}
+			else {
+				reply(GlobalMsg["strSelfName"] + "已启用.jrrp！");
+			}
+			return 1;
+		}
+		else if (strOption == "jrrpoff") {
+			if (boolDisabledMeGlobal) {
+				reply(GlobalMsg["strSelfName"] + "已禁用.jrrp！");
+			}
+			else {
+				boolDisabledMeGlobal = true;
+				AdminNotify("已令" + GlobalMsg["strSelfName"] + "全局禁用.jrrp√");
+			}
+			return 1;
+		}
+		else if (strOption == "discusson") {
+			if (boolNoDiscuss) {
+				boolNoDiscuss = false;
+				AdminNotify("已关闭讨论组自动退出√");
+			}
+			else {
+				reply(GlobalMsg["strSelfName"] + "已关闭讨论组自动退出！");
+			}
+			return 1;
+		}
+		else if (strOption == "discussoff") {
+			if (boolNoDiscuss) {
+				reply(GlobalMsg["strSelfName"] + "已开启讨论组自动退出！");
+			}
+			else {
+				boolNoDiscuss = true;
+				AdminNotify("已开启讨论组自动退出√");
+			}
+			return 1;
+		}
+		else if (strOption == "only") {
+		if (boolPreserve) {
+			reply(GlobalMsg["strSelfName"] + "已成为私用骰娘！");
+		}
+		else {
+			boolPreserve = true;
+			AdminNotify("已将" + GlobalMsg["strSelfName"] + "变为私用√");
+		}
+		return 1;
+			}
+		else if (strOption == "public") {
+		if (boolPreserve) {
+			boolPreserve = false;
+			AdminNotify("已将" + GlobalMsg["strSelfName"] + "变为公用√");
+		}
+		else {
+			reply(GlobalMsg["strSelfName"] + "已成为公用骰娘！");
+		}
+		return 1;
+			}
+		else if (strOption == "clock") {
+		string strReply = "本地时间" + to_string(stNow.wHour) + ":" + to_string(stNow.wMinute);
+		reply(strReply);
+		return 1;
+		}
+		else if (strOption == "clockon") {
+		string strHour = readDigit();
+		if (strHour.empty() || stoi(strHour) > 23) {
+			ClockToWork = { 24,00 };
+			AdminNotify("已清除定时启用");
+			return 1;
+		}
+		int intHour = stoi(strHour);
+		string strMinute = readDigit();
+		if (strMinute.empty()) strMinute = "00";
+		int intMinute = stoi(strMinute);
+		ClockToWork = { intHour,intMinute };
+		AdminNotify("已设置定时启用时间" + printClock(ClockToWork));
+		return 1;
+			}
+		else if (strOption == "clockoff") {
+		string strHour = readDigit();
+		if (strHour.empty() || stoi(strHour) > 23) {
+			ClockOffWork = { 24,00 };
+			AdminNotify("已清除定时关闭");
+			return 1;
+		}
+		int intHour = stoi(strHour);
+		string strMinute = readDigit();
+		if (strMinute.empty()) strMinute = "00";
+		int intMinute = stoi(strMinute);
+		ClockOffWork = { intHour,intMinute };
+		AdminNotify("已设置定时关闭时间" + printClock(ClockOffWork));
+		return 1;
+			}
+		else {
+			bool boolErase = false;
+			string strReason = readPara();
+			if (strMsg[intMsgCnt] == '-') {
+				boolErase = true;
+				intMsgCnt++;
+			}
+			if (strMsg[intMsgCnt] == '+') {intMsgCnt++;}
+			long long llTargetID = readID();
+			if (strOption == "dismiss") {
+				WhiteGroup.erase(llTargetID);
+				if (getGroupList().count(llTargetID) && setGroupLeave(llTargetID)) {
+					mLastMsgList.erase({ llTargetID ,Group });
+					AdminNotify("已令" + GlobalMsg["strSelfName"] + "退出群" + to_string(llTargetID) + "√");
+				}
+				else if (llTargetID > 1000000000 && setDiscussLeave(llTargetID) == 0) {
+					mLastMsgList.erase({ llTargetID ,Discuss });
+					AdminNotify("已令" + GlobalMsg["strSelfName"] + "退出讨论组" + to_string(llTargetID) + "√");
+					DiscussList.erase(llTargetID);
+				}
+				else {
+					reply(GlobalMsg["strGroupGetErr"]);
+				}
+				return 1;
+			}
+			else if (strOption == "boton") {
+				if (getGroupList().count(llTargetID)) {
+					if (DisabledGroup.count(llTargetID)) {
+						DisabledGroup.erase(llTargetID);
+						AdminNotify("已令" + GlobalMsg["strSelfName"] + "在" + printGroup(llTargetID) + "起用√");
+					}
+					else reply(GlobalMsg["strSelfName"] + "已在该群起用!");
+				}
+				else {
+					reply(GlobalMsg["strGroupGetErr"]);
+				}
+			}
+			else if (strOption == "botoff") {
+				if (getGroupList().count(llTargetID)) {
+					if (!DisabledGroup.count(llTargetID)) {
+						DisabledGroup.insert(llTargetID);
+						AdminNotify("已令" + GlobalMsg["strSelfName"] + "在" + printGroup(llTargetID) + "静默√");
+					}
+					else reply(GlobalMsg["strSelfName"] + "已在该群静默!");
+				}
+				else {
+					reply(GlobalMsg["strGroupGetErr"]);
+				}
+				return 1;
+			}
+			else if (strOption == "whitegroup") {
+				if (llTargetID == 0) {
+					string strReply = "当前白名单群列表：";
+					for (auto each : WhiteGroup) {
+						strReply += "\n" + printGroup(each);
+					}
+					reply(strReply);
+					return 1;
+				}
+				do {
+					if (boolErase) {
+						if (WhiteGroup.count(llTargetID)) {
+							WhiteGroup.erase(llTargetID);
+							AdminNotify("已将" + printGroup(llTargetID) + "移出白名单√");
+						}
+						else {
+							reply(printGroup(llTargetID) + "并不在白名单！");
+						}
+					}
+					else {
+						if (WhiteGroup.count(llTargetID)) {
+							reply(printGroup(llTargetID) + "已加入白名单!");
+						}
+						else {
+							WhiteGroup.insert(llTargetID);
+							AdminNotify("已将" + printGroup(llTargetID) + "加入白名单√");
+						}
+					}
+				} while (llTargetID = readID());
+				return 1;
+			}
+			else if (strOption == "blackgroup") {
+				if (llTargetID == 0) {
+					string strReply = "当前黑名单群列表：";
+					for (auto each : BlackGroup) {
+						strReply += "\n" + to_string(each);
+					}
+					reply(strReply);
+					return 1;
+				}
+				do{
+					if (boolErase) {
+						if (BlackGroup.count(llTargetID)) {
+							BlackGroup.erase(llTargetID);
+							AdminNotify("已将" + printGroup(llTargetID) + "移出黑名单√");
+						}
+						else {
+							reply(printGroup(llTargetID) + "并不在黑名单！");
+						}
+					}
+					else {
+						if (BlackGroup.count(llTargetID)) {
+							reply(printGroup(llTargetID) + "已加入黑名单!");
+						}
+						else {
+							BlackGroup.insert(llTargetID);
+							AdminNotify("已将" + printGroup(llTargetID) + "加入黑名单√");
+						}
+					}
+				} while (llTargetID = readID());
+				return 1;
+			}
+			else if (strOption == "whiteqq") {
+				if (llTargetID == 0) {
+					string strReply = "当前白名单用户列表：";
+					for (auto each : WhiteQQ) {
+						strReply += "\n" + printQQ(each);
+					}
+					reply();
+					return 1;
+				}
+				do{
+					if (boolErase) {
+						if (WhiteQQ.count(llTargetID)) {
+							WhiteQQ.erase(llTargetID);
+							AdminNotify("已将" + printQQ(llTargetID) + "移出白名单√");
+						}
+						else {
+							reply(printQQ(llTargetID) + "并不在白名单！");
+						}
+					}
+					else {
+						if (WhiteQQ.count(llTargetID)) {
+							reply(printQQ(llTargetID) + "已加入白名单!");
+						}
+						else {
+							WhiteQQ.insert(llTargetID);
+							AdminNotify("已将" + printQQ(llTargetID) + "加入白名单√");
+							AddMsgToQueue(GlobalMsg["strWhiteQQAddNotice"], llTargetID);
+						}
+					}
+				} while (llTargetID = readID());
+				return 1;
+			}
+			else if (strOption == "blackqq") {
+				if (llTargetID == 0) {
+					string strReply = "当前黑名单用户列表：";
+					for (auto each : BlackQQ) {
+						strReply += "\n" + printQQ(each);
+					}
+					reply(strReply);
+					return 1;
+				}
+				do{
+					if (boolErase) {
+						if (BlackQQ.count(llTargetID)) {
+							BlackQQ.erase(llTargetID);
+							AdminNotify("已将" + printQQ(llTargetID) + "移出黑名单√");
+							strReason.empty() ? AddMsgToQueue(GlobalMsg["strBlackQQDelNotice"], llTargetID)
+								: AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { strReason }), llTargetID);
+						}
+						else {
+							reply(printQQ(llTargetID) + "并不在黑名单！");
+						}
+					}
+					else {
+						if (BlackQQ.count(llTargetID)) {
+							reply(printQQ(llTargetID) + "已加入黑名单!");
+						}
+						else {
+							BlackQQ.insert(llTargetID);
+							AdminNotify("已将" + printQQ(llTargetID) + "加入黑名单√");
+							AddMsgToQueue(GlobalMsg["strBlackQQAddNotice"], llTargetID);
+						}
+					}
+				} while (llTargetID = readID());
+				return 1;
+			}
+			else reply("有什么事么？" + getName(fromQQ));
+			return 0;
+		
+		}
+	}
+	int MasterSet() {
+		std::string strOption = readPara();
+		if (strOption.empty()) {
+			reply("有什么事么" + getName(fromQQ));
+			return -1;
+		}
+		if (strOption == "groupclr") {
+			std::string strPara = readRest();
+			int intGroupCnt = clearGroup(strPara);
+			return 1;
+		}
+		else if (strOption == "monitor") {
+			bool boolErase = false;
+			readSkipSpace();
+			if (strMsg[intMsgCnt] == '-') {
+				boolErase = true;
+				intMsgCnt++;
+			}
+			if (strMsg[intMsgCnt] == '+') {intMsgCnt++;}
+			chatType cTarget;
+			if (readChat(cTarget)) {
+				strReply = "当前监视窗口" + to_string(MonitorList.size()) + "个：";
+				for (auto it : MonitorList) {
+					strReply += "\n" + printChat(it);
+				}
+				reply();
+				return 1;
+			}
+			if (boolErase) {
+				if (MonitorList.count(cTarget)) {
+					MonitorList.erase(cTarget);
+					AdminNotify("已移除监视窗口" + printChat(cTarget) + "√");
+				}
+				else {
+					reply("该窗口不存在于监视列表！");
+				}
+			}
+			else {
+				if (MonitorList.count(cTarget)) {
+					reply("该窗口已存在于监视列表！");
+				}
+				else {
+					MonitorList.insert(cTarget);
+					AdminNotify("已添加监视窗口" + printChat(cTarget) + "√");
+				}
+			}
+			return 1;
+		}
+		else if (strOption == "delete") {
+			MonitorList.erase({ masterQQ,Private });
+			reply("你不再是" + GlobalMsg["strSelfName"] + "的Master！");
+			masterQQ = 0;
+			return 1;
+		}
+		else if (strOption == "admin") {
+			bool boolErase = false;
+			readSkipSpace();
+			if (strMsg[intMsgCnt] == '-') {
+				boolErase = true;
+				intMsgCnt++;
+			}
+			if (strMsg[intMsgCnt] == '+') {intMsgCnt++;}
+			long long llAdmin = readID();
+			if (llAdmin) {
+				if (boolErase) {
+					if (AdminQQ.count(llAdmin)) {
+						AdminNotify("已移除管理员" + printQQ(llAdmin) + "√");
+						MonitorList.erase({ llAdmin,Private });
+						AdminQQ.erase(llAdmin);
+					}
+					else {
+						reply("该用户不是管理员！");
+					}
+				}
+				else {
+					if (AdminQQ.count(llAdmin)) {
+						reply("该用户已是管理员！");
+					}
+					else {
+						AdminQQ.insert(llAdmin);
+						MonitorList.insert({ llAdmin,Private });
+						AdminNotify("已添加管理员" + printQQ(llAdmin) + "√");
+					}
+				}
+				return 1;
+			}
+			else{
+				strReply = "当前管理员：";
+				for (auto it : AdminQQ) {
+					strReply += "\n" + printQQ(it);
+				}
+				reply();
+				return 1;
+			}
+		}
+		else return AdminEvent(strOption);
+		return 0;
+	}
 	bool DiceReply() {
-		if (strMsg[0] != '.')
-			return false;
 		intMsgCnt++ ;
-		int intT = (fromType == Private) ? PrivateT : (fromType == Group ? GroupT : DiscussT);
+		int intT = (int)fromType;
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
 		const string strNickName = getName(fromQQ, fromGroup);
@@ -177,13 +601,11 @@ public:
 			intMsgCnt += 6;
 			if (masterQQ == 0) {
 				masterQQ = fromQQ;
+				MonitorList.insert({ masterQQ,Private });
 				reply("试问，你就是" + GlobalMsg["strSelfName"] + "的Master√");
 			}
 			else if (isMaster) {
-				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-					intMsgCnt++;
-				//命令选项
-				ConsoleHandler(strMsg.substr(intMsgCnt));
+				return MasterSet();
 			}
 			else {
 				reply(GlobalMsg["strNotMaster"]);
@@ -191,7 +613,7 @@ public:
 			}
 			return 1;
 		}
-		if (BlackQQ.count(fromQQ) || (intT == GroupT && BlackGroup.count(fromGroup))) {
+		if (BlackQQ.count(fromQQ) || (intT != PrivateT && BlackGroup.count(fromGroup))) {
 			return 1;
 		}
 		if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
@@ -283,7 +705,7 @@ public:
 			}
 			return 1;
 		}
-		if (boolDisabledGlobal && (!isMaster && !isCalled)) {
+		if (boolDisabledGlobal && (!isAdmin || !isCalled)) {
 			if (intT == PrivateT)reply(GlobalMsg["strGlobalOff"]);
 			return 1;
 		}
@@ -502,6 +924,11 @@ public:
 			return 1;
 		}
 }
+		else if (strLowerMessage.substr(intMsgCnt, 5) == "admin") 
+		{
+			intMsgCnt += 5;
+			if(isAdmin)return AdminEvent(readPara());
+		}
 		else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd")
 		{
 			string strReply = strNickName;
@@ -549,10 +976,12 @@ public:
 				}
 				strReply += getGroupList()[fromGroup] + "——本群现状:\n"
 					+ "群号:" + to_string(fromGroup) + "\n"
-					+ GlobalMsg["strSelfName"] + "在本群状态：" + (DisabledGroup.count(fromGroup) ? "禁用" : "启用") + "\n"
-					+ ".me：" + (DisabledMEGroup.count(fromGroup) ? "禁用" : "启用") + "\n"
-					+ ".jrrp：" + (DisabledJRRPGroup.count(fromGroup) ? "禁用" : "启用") + "\n"
+					+ GlobalMsg["strSelfName"] + "在本群状态：" + (DisabledGroup.count(fromGroup) ? "禁用" : "启用") + (boolDisabledGlobal ? "（全局静默中）" : "") + "\n"
+					+ ".me：" + (DisabledMEGroup.count(fromGroup) ? "禁用" : "启用") + (boolDisabledMeGlobal ? "（全局禁用中）" : "") + "\n"
+					+ ".jrrp：" + (DisabledJRRPGroup.count(fromGroup) ? "禁用" : "启用") + (boolDisabledJrrpGlobal ? "（全局禁用中）" : "") + "\n"
+					+ (DisabledHELPGroup.count(fromGroup) ? "已禁用.help\n" : "") 
 					+ (DisabledOBGroup.count(fromGroup) ? "已禁用旁观模式\n" : "")
+					+ (mGroupInviter.count(fromGroup) ? "邀请者" + printQQ(mGroupInviter[fromGroup]) + "\n" : "")
 					+ "入群欢迎:" + (WelcomeMsg.count(fromGroup) ? "已设置" : "未设置")
 					+ (sInact.size() ? "\n30天不活跃群员数：" + to_string(sInact.size()) : "");
 				if (sBlackQQ.size()) {
@@ -690,43 +1119,175 @@ public:
 			reply(strReply);
 			return 1;
 		}
+		else if (strLowerMessage.substr(intMsgCnt, 4) == "deck") {
+		intMsgCnt += 4;
+		readSkipSpace();
+		string strPara = readPara();
+		vector<string> *DeckPro = NULL, *DeckTmp = NULL;
+		if (intT != PrivateT && CardDeck::mGroupDeck.count(fromGroup)) {
+			DeckPro = &CardDeck::mGroupDeck[fromGroup];
+			DeckTmp = &CardDeck::mGroupDeckTmp[fromGroup];
+		}
+		else{
+			if (CardDeck::mPrivateDeck.count(fromQQ)) {
+				DeckPro = &CardDeck::mPrivateDeck[fromQQ];
+				DeckTmp = &CardDeck::mPrivateDeckTmp[fromQQ];
+			}
+			//haichayixiangpanding
+		}
+		if (strPara == "show") {
+			if (!DeckTmp) {
+				reply(GlobalMsg["strDeckTmpNotFound"]);
+				return 1;
+			}
+			if (DeckTmp->size() == 0) {
+				reply(GlobalMsg["strDeckTmpEmpty"]);
+				return 1;
+			}
+			string strReply = GlobalMsg["strDeckTmpShow"] + "\n";
+			for (auto it : *DeckTmp) {
+				it.length() > 10 ? strReply += it + "\n" : strReply += it + "|";
+			}
+			strReply.erase(strReply.end()-1);
+			reply(strReply);
+			return 1;
+		}
+		else if (intT == GroupT && getGroupMemberInfo(fromGroup, fromQQ).permissions == 1) {
+			reply(GlobalMsg["strPermissionDeniedErr"]);
+			return 1;
+		}
+		else if (strPara == "set") {
+			string strDeckName = readPara();
+			if (strDeckName.empty())strDeckName = readDigit();
+			if (strDeckName.empty()) {
+				reply(GlobalMsg["strDeckNameEmpty"]);
+				return 1;
+			}
+			vector<string> DeckSet = {};
+			switch (CardDeck::findDeck(strDeckName)) {
+			case 1:
+				DeckSet = CardDeck::mPublicDeck[strDeckName];
+				break;
+			case 2: {
+				int intSize = stoi(strDeckName) + 1;
+				if (intSize == 0) {
+					reply(GlobalMsg["strNumCannotBeZero"]);
+					return 1;
+				}
+				strDeckName = "数列1至" + strDeckName;
+				while (--intSize) {
+					DeckSet.push_back(to_string(intSize));
+				}
+				break;
+			}
+			case 0:
+			default:
+				reply(GlobalMsg["strDeckNotFound"]);
+				return 1;
+			}
+			if (intT == PrivateT) {
+				CardDeck::mPrivateDeck[fromQQ] = DeckSet;
+			}
+			else {
+				CardDeck::mGroupDeck[fromGroup] = DeckSet;
+			}
+			reply(format(GlobalMsg["strDeckProSet"], { strDeckName }));
+			return 1;
+		}
+		else if (strPara == "reset") {
+			*DeckTmp = vector<string>(*DeckPro);
+			reply(GlobalMsg["strDeckTmpReset"]);
+			return 1;
+		}
+		else if (strPara == "clr") {
+			if(intT == PrivateT){
+				if (CardDeck::mPrivateDeck.count(fromQQ) == 0) {
+					reply(GlobalMsg["strDeckProNull"]);
+					return 1;
+				}
+				CardDeck::mPrivateDeck.erase(fromQQ);
+				if (DeckTmp)DeckTmp->clear();
+				reply(GlobalMsg["strDeckProClr"]);
+			}
+			else {
+				if (CardDeck::mGroupDeck.count(fromGroup) == 0) {
+					reply(GlobalMsg["strDeckProNull"]);
+					return 1;
+				}
+				CardDeck::mGroupDeck.erase(fromGroup);
+				if (DeckTmp)DeckTmp->clear();
+				reply(GlobalMsg["strDeckProClr"]);
+			}
+			return 1;
+		}
+		else if (strPara == "new") {
+			if (intT != PrivateT && WhiteGroup.count(fromGroup) == 0) {
+				reply(GlobalMsg["strWhiteGroupDenied"]);
+				return 1;
+			}
+			if (intT == PrivateT && WhiteQQ.count(fromQQ) == 0) {
+				reply(GlobalMsg["strWhiteQQDenied"]);
+				return 1;
+			}
+			if (intT == PrivateT) {
+				CardDeck::mPrivateDeck[fromQQ] = {};
+				DeckPro = &CardDeck::mPrivateDeck[fromQQ];
+			}
+			else {
+				CardDeck::mGroupDeck[fromGroup] = {};
+				DeckPro = &CardDeck::mGroupDeck[fromGroup];
+			}
+			while (intMsgCnt != strMsg.length()) {
+				string item = readItem();
+				DeckPro->push_back(item);
+			}
+			reply(GlobalMsg["strDeckProNew"]);
+			return 1;
+		}
+}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "draw")
 		{
 			intMsgCnt += 4;
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
-
-			string strDeckName;
-			while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			{
-				strDeckName += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
+			vector<string> ProDeck;
+			vector<string> *TempDeck = NULL;
+			string strDeckName = readPara();
+			if (strDeckName.empty()) {
+				if (intT != PrivateT && CardDeck::mGroupDeck.count(fromGroup)) {
+					if (CardDeck::mGroupDeckTmp.count(fromGroup) == 0 || CardDeck::mGroupDeckTmp[fromGroup].size() == 0)CardDeck::mGroupDeckTmp[fromGroup] = vector<string>(CardDeck::mGroupDeck[fromGroup]);
+					TempDeck = &CardDeck::mGroupDeckTmp[fromGroup];
+				}
+				else if (CardDeck::mPrivateDeck.count(fromQQ)) {
+					if (CardDeck::mPrivateDeckTmp.count(fromQQ) == 0 || CardDeck::mPrivateDeckTmp[fromQQ].size() == 0)CardDeck::mPrivateDeckTmp[fromQQ] = vector<string>(CardDeck::mPrivateDeck[fromQQ]);
+					TempDeck = &CardDeck::mPrivateDeckTmp[fromQQ];
+				}
+				else {
+					reply(GlobalMsg["strDeckNameEmpty"]);
+					return 1;
+				}
 			}
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-				intMsgCnt++;
-			string strCardNum;
-			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			{
-				strCardNum += strMsg[intMsgCnt];
-				intMsgCnt++;
+			else {
+				int intFoundRes = CardDeck::findDeck(strDeckName);
+				if (intFoundRes == 0) {
+					strReply = "是说" + strDeckName + "?" + GlobalMsg["strDeckNotFound"];
+					reply(strReply);
+					return 1;
+				}
+				*TempDeck = vector<string>(CardDeck::mPublicDeck[strDeckName]);
 			}
+			string strCardNum=readDigit();
 			auto intCardNum = strCardNum.empty() ? 1 : stoi(strCardNum);
 			if (intCardNum == 0)
 			{
 				reply(GlobalMsg["strNumCannotBeZero"]);
 				return 1;
 			}
-			int intFoundRes = CardDeck::findDeck(strDeckName);
-			string strReply;
-			if (intFoundRes == 0) {
-				strReply = "是说" + strDeckName + "?" + GlobalMsg["strDeckNotFound"];
-				reply(strReply);
-				return 1;
-			}
-			vector<string> TempDeck(CardDeck::mPublicDeck[strDeckName]);
-			strReply = format(GlobalMsg["strDrawCard"], { strNickName , CardDeck::drawCard(TempDeck) });
-			while (--intCardNum && TempDeck.size()) {
-				strReply += "\n" + CardDeck::drawCard(TempDeck);
+			strReply = format(GlobalMsg["strDrawCard"], { strNickName , CardDeck::drawCard(*TempDeck) });
+			while (--intCardNum && TempDeck->size()) {
+				string strItem = CardDeck::drawCard(*TempDeck);
+				(strItem.length() < 10) ? strReply += " | " : strReply += '\n';
+				strReply += strItem;
 				if (strReply.length() > 1000) {
 					reply(strReply);
 					strReply.clear();
@@ -742,7 +1303,6 @@ public:
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "init"&&intT)
 		{
 			intMsgCnt += 4;
-			string strReply;
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 			if (strLowerMessage.substr(intMsgCnt, 3) == "clr")
 			{
@@ -750,11 +1310,11 @@ public:
 					strReply = "成功清除先攻记录！";
 				else
 					strReply = "列表为空！";
-				reply(strReply);
+				reply();
 				return 1;
 			}
 			ilInitList->show(fromGroup, strReply);
-			reply(strReply);
+			reply();
 			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
@@ -1001,7 +1561,7 @@ public:
 			intMsgCnt += 4;
 			readSkipSpace();
 			//先考虑Master带参数向指定目标发送
-			if (isMaster) {
+			if (isAdmin) {
 				if (strLowerMessage.substr(intMsgCnt, 2) == "qq") {
 					intMsgCnt += 2;
 					string strQQ = readDigit();
@@ -1067,7 +1627,7 @@ public:
 				strFwd += getStrangerInfo(fromQQ).nick + "(" + to_string(fromQQ) + "):";
 				if (masterQQ == fromQQ)strFwd.clear();
 				strFwd += readRest();
-				AddMsgToQueue(strFwd, masterQQ, Private);
+				sendAdmin(strFwd);
 				reply(GlobalMsg["strSendMasterMsg"]);
 			}
 			return 1;
@@ -1190,7 +1750,7 @@ public:
 			reply(strSetSuccessReply);
 			return 1;
 		}
-		else if (strLowerMessage.substr(intMsgCnt, 3) == "str"&&boolMasterMode&&fromQQ == masterQQ) {
+		else if (strLowerMessage.substr(intMsgCnt, 3) == "str"&&isAdmin) {
 			string strName;
 			while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && intMsgCnt != strLowerMessage.length())
 			{
@@ -1199,15 +1759,19 @@ public:
 			}
 			while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 				intMsgCnt++;
-			if (intMsgCnt == strMsg.length()) {
-				EditedMsg.erase(strName);
-				reply("已清除" + strName + "的自定义，但恢复默认设置需要重启应用。");
-			}
-			else if (GlobalMsg.count(strName)) {
-				string strMessage = strMsg.substr(intMsgCnt);
-				EditedMsg[strName] = strMessage;
-				GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMsg : strMessage;
-				reply("已记下" + strName + "的自定义");
+			if (GlobalMsg.count(strName)) {
+				if (intMsgCnt == strMsg.length()) {
+					EditedMsg.erase(strName);
+					GlobalMsg[strName] = "";
+					AdminNotify("已清除" + strName + "的自定义，但恢复默认设置需要重启应用。");
+				}
+				else {
+					string strMessage = strMsg.substr(intMsgCnt);
+					if (strMessage == "NULL")strMessage = "";
+					EditedMsg[strName] = strMessage;
+					GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMsg : strMessage;
+					AdminNotify("已自定义" + strName + "的文本");
+				}
 			}
 			else {
 				reply("是说" + strName + "？这似乎不是会用到的语句×");
@@ -1249,7 +1813,7 @@ public:
 				}
 				else
 				{
-					reply(GlobalMsg["strEnValInvalid"]);
+					reply(GlobalMsg["strEnValEmpty"]);
 					return 1;
 				}
 			}
@@ -1914,7 +2478,7 @@ public:
 			if (San.empty() && !(CharacterProp.count(SourceType(fromQQ, intT, fromGroup)) && CharacterProp[
 				SourceType(fromQQ, intT, fromGroup)].count("理智")))
 			{
-				reply(GlobalMsg["strSanInvalid"]);
+				reply(GlobalMsg["strSanEmpty"]);
 				return 1;
 			}
 				for (const auto& character : SanCost.substr(0, SanCost.find("/")))
@@ -2081,12 +2645,14 @@ public:
 					return 1;
 			}
 			bool boolError = false;
+			bool isDetail = false;
+			bool isModify = false;
 			while (intMsgCnt != strLowerMessage.length())
 			{
 				string strSkillName;
 				while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
 					isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt]
-					!= ':')
+					!= ':' && strLowerMessage[intMsgCnt] != '-' && strLowerMessage[intMsgCnt] != '+')
 				{
 					strSkillName += strLowerMessage[intMsgCnt];
 					intMsgCnt++;
@@ -2094,6 +2660,47 @@ public:
 				if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt
 				] == ':')intMsgCnt++;
+				if (strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+') {
+					char chSign = strLowerMessage[intMsgCnt];
+					isDetail = true;
+					isModify = true;
+					intMsgCnt++;
+					int intCurrentVal;
+					if (CharacterProp.count(SourceType(fromQQ, intT, fromGroup)) && CharacterProp[SourceType(
+						fromQQ, intT, fromGroup)].count(strSkillName))
+					{
+						intCurrentVal = CharacterProp[SourceType(fromQQ, intT, fromGroup)][strSkillName];
+					}
+					else if (SkillDefaultVal.count(strSkillName))
+					{
+						intCurrentVal = SkillDefaultVal[strSkillName];
+					}
+					else
+					{
+						reply(format(GlobalMsg["strStValEmpty"], {strSkillName}));
+						return 1;
+					}
+					RD Mod(to_string(intCurrentVal) + chSign + readDice());
+					if (Mod.Roll()) {
+						reply(GlobalMsg["strValueErr"]);
+						return 1;
+					}
+					else 
+					{
+						strReply += "\n" + strSkillName + "：" + Mod.FormCompleteString();
+						if (Mod.intTotal < 0) {
+							strReply += "→0";
+							CharacterProp[SourceType(fromQQ, intT, fromGroup)][strSkillName] = 0;
+						}
+						else if (Mod.intTotal > 1000) {
+							strReply += "→1000";
+							CharacterProp[SourceType(fromQQ, intT, fromGroup)][strSkillName] = 1000;
+						}
+						else CharacterProp[SourceType(fromQQ, intT, fromGroup)][strSkillName] = Mod.intTotal;
+					}
+					while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
+					continue;
+				}
 				string strSkillVal;
 				while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				{
@@ -2111,6 +2718,9 @@ public:
 			if (boolError)
 			{
 				reply(GlobalMsg["strPropErr"]);
+			}
+			else if(isModify){
+				reply(format(GlobalMsg["strStModify"], { strNickName }) + strReply);
 			}
 			else
 			{
@@ -2234,7 +2844,7 @@ public:
 					}
 					else
 					{
-						strTurnNotice = (intT == GroupT ? "在群\"" + getGroupList()[fromGroup] : "在讨论组(" + to_string(fromGroup)) + ")中 " + strTurnNotice;
+						strTurnNotice = "在" + printChat(fromChat) + "中 " + strTurnNotice;
 						AddMsgToQueue(strTurnNotice, fromQQ, Private);
 						const auto range = ObserveGroup.equal_range(fromGroup);
 						for (auto it = range.first; it != range.second; ++it)
@@ -2350,7 +2960,7 @@ public:
 				}
 				else
 				{
-					strAns = (intT == GroupT ? "在群\"" + getGroupList()[fromGroup] : "在讨论组(" + to_string(fromGroup)) + ")中 " + strAns;
+					strAns = "在" + printChat(fromChat) + "中 " + strAns;
 					AddMsgToQueue(strAns, fromQQ, Private);
 					const auto range = ObserveGroup.equal_range(fromGroup);
 					for (auto it = range.first; it != range.second; ++it)
@@ -2379,7 +2989,7 @@ public:
 					}
 					else
 					{
-						strAns = (intT == GroupT ? "在群\"" + getGroupList()[fromGroup] : "在讨论组(" + to_string(fromGroup)) + ")中 " + strAns;
+						strAns = "在" + printChat(fromChat) + "中 " + strAns;
 						AddMsgToQueue(strAns, fromQQ, Private);
 						const auto range = ObserveGroup.equal_range(fromGroup);
 						for (auto it = range.first; it != range.second; ++it)
@@ -2522,7 +3132,7 @@ public:
 					}
 					else
 					{
-						strTurnNotice = (intT == GroupT ? "在群\"" + getGroupList()[fromGroup] : "在讨论组(" + to_string(fromGroup)) + ")中 " + strTurnNotice;
+						strTurnNotice = "在" + printChat(fromChat) + "中 " + strTurnNotice;
 						AddMsgToQueue(strTurnNotice, fromQQ, Private);
 						const auto range = ObserveGroup.equal_range(fromGroup);
 						for (auto it = range.first; it != range.second; ++it)
@@ -2614,7 +3224,7 @@ public:
 				}
 				else
 				{
-					strAns = (intT == GroupT ? "在群\"" + getGroupList()[fromGroup] : "在讨论组(" + to_string(fromGroup)) + ")中 " + strAns;
+					strAns = "在" + printChat(fromChat) + "中 " + strAns;
 					AddMsgToQueue(strAns, fromQQ, Private);
 					const auto range = ObserveGroup.equal_range(fromGroup);
 					for (auto it = range.first; it != range.second; ++it)
@@ -2643,7 +3253,7 @@ public:
 					}
 					else
 					{
-						strAns = (intT == GroupT ? "在群\"" + getGroupList()[fromGroup] : "在讨论组(" + to_string(fromGroup)) + ")中 " + strAns;
+						strAns = "在" + printChat(fromChat) + "中 " + strAns;
 						AddMsgToQueue(strAns, fromQQ, Private);
 						const auto range = ObserveGroup.equal_range(fromGroup);
 						for (auto it = range.first; it != range.second; ++it)
@@ -2683,30 +3293,34 @@ public:
 				return false;
 			}
 		}
-		if (fromType == Private) isCalled = true;
-		if (fromQQ == masterQQ) isMaster = true;
 		init2(strMsg);
+		if (strMsg[0] != '.')return 0;
+		if (fromType == Private) isCalled = true;
+		isMaster = fromQQ == masterQQ && boolMasterMode;
+		isAdmin = isMaster || AdminQQ.count(fromQQ);
+		isAuth = isAdmin || fromType != Group || getGroupMemberInfo(fromGroup, fromQQ).permissions > 1;
 		return DiceReply();
 	}
-
 
 private:
 	int intMsgCnt = 0;
 	bool isCalled = false;
 	bool isMaster = false;
+	bool isAdmin = false;
+	bool isAuth = false;
 	bool isLinkOrder = false;
 	//跳过空格
-	inline void readSkipSpace() {
+	void readSkipSpace() {
 		while (isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
 	}
-	inline string readRest() {
+	string readRest() {
 		return strMsg.substr(intMsgCnt);
 	}
 	//读取参数(统一小写)
 	string readPara() {
 		string strPara;
 		while (isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
-		while (!isspace(strLowerMessage[intMsgCnt]) && intMsgCnt != strLowerMessage.length()) {
+		while (!isspace(strLowerMessage[intMsgCnt]) && !isdigit(strLowerMessage[intMsgCnt]) && (strLowerMessage[intMsgCnt] != '-') && (strLowerMessage[intMsgCnt] != '+') && intMsgCnt != strLowerMessage.length()) {
 			strPara += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
@@ -2717,6 +3331,60 @@ private:
 		string strMum;
 		while (!isdigit(strMsg[intMsgCnt]) && intMsgCnt != strMsg.length())intMsgCnt++;
 		while (isdigit(strMsg[intMsgCnt])) {
+			strMum += strMsg[intMsgCnt];
+			intMsgCnt++;
+		}
+		return strMum;
+	}
+	//读取群号
+	long long readID() {
+		string strGroup = readDigit();
+		if (strGroup.empty()) return 0;
+		return stoll(strGroup);
+	}
+	//读取掷骰表达式
+	string readDice(){
+		string strDice;
+		while (isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
+			|| strLowerMessage[intMsgCnt] == 'd' || strLowerMessage[intMsgCnt] == 'k'
+			|| strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b'
+			|| strLowerMessage[intMsgCnt] == 'f'
+			|| strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-'
+			|| strLowerMessage[intMsgCnt] == 'a'
+			|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*')
+		{
+			strDice += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		return strDice;
+	}
+	//
+	int readChat(chatType &ct) {
+		string strT = readPara();
+		msgtype T = Private;
+		long long llID = readID();
+		if (strT == "qq") {
+			T = Private;
+		}
+		else if (strT == "group"){
+			T = Group;
+		}
+		else if (strT == "discuss") {
+			T = Discuss;
+		}
+		else return -1;
+		if (llID) {
+			ct = { llID,T };
+			return 0;
+		}
+		else return -2;
+	}
+	//读取分项
+	string readItem() {
+		string strMum;
+		while (isspace(strMsg[intMsgCnt]) || strMsg[intMsgCnt] == '|')intMsgCnt++;
+		while (!isspace(strMsg[intMsgCnt]) && strMsg[intMsgCnt] != '|'&& intMsgCnt != strMsg.length()) {
 			strMum += strMsg[intMsgCnt];
 			intMsgCnt++;
 		}

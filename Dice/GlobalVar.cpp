@@ -64,6 +64,24 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 
 std::map<std::string, std::string> GlobalMsg
 {
+	{"strStModify","已记录{0}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
+	{"strStDetail","已设置{0}的属性："},		//存在掷骰时，使用此文本(暂时无用)
+	{"strStValEmpty","未记录{0}原值×"},		//{0}为属性名
+	{"strBlackQQAddNotice","你已被本机器人加入黑名单，详情请联系Master"},				
+	{"strBlackQQAddNoticeReason","由于{0}，你已被本机器人加入黑名单，申诉解封请联系管理员"},
+	{"strBlackQQDelNotice","你已被本机器人移出黑名单，现在可以继续使用了"},
+	{"strWhiteQQAddNotice","你已被本机器人加入白名单，欢迎使用√"},
+	{"strWhiteQQDenied","你不在白名单中×"},
+	{"strWhiteGroupDenied","本群聊不在白名单中×"},
+	{"strDeckProNew","已新建自定义牌堆√"},
+	{"strDeckProSet","已将{0}设置为默认牌堆√"},
+	{"strDeckProClr","已删除默认牌堆√"},
+	{"strDeckProNull","默认牌堆不存在!"},
+	{"strDeckTmpReset","已重置卡牌√"},
+	{"strDeckTmpShow","当前剩余卡牌:"},
+	{"strDeckTmpEmpty","已无剩余卡牌！"},		//剩余卡牌数为0
+	{"strDeckTmpNotFound","不存在剩余卡牌×"},	//没有生成过牌堆
+	{"strDeckNameEmpty","未指定牌堆名×"},
 	{"strRollDice","{0}骰出了: {1}"},
 	{"strRollDiceReason","由于{2} {0}骰出了: {1}"},
 	{"strRollHidden","{0}进行了一次暗骰"},
@@ -125,7 +143,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strRollFailure","失败"},
 	{"strRollFumble","大失败！"},
 	{"strNumCannotBeZero", "无意义的数目！莫要消遣于我!"},
-	{"strDeckNotFound", "没听说过呢……"},
+	{"strDeckNotFound", "没听说过的牌堆名呢……"},
 	{"strDeckEmpty", "疲劳警告！已经什么也不剩了！"},
 	{"strNameNumTooBig", "生成数量过多!请输入1-10之间的数字!"},
 	{"strNameNumCannotBeZero", "生成数量不能为零!请输入1-10之间的数字!"},
@@ -139,6 +157,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strCharacterInvalid", "人物作成次数无效!请输入1-10之间的数字!"},
 	{"strSCInvalid", "SC表达式输入不正确,格式为成功扣San/失败扣San,如1/1d6!"},
 	{"strSanInvalid", "San值输入不正确,请输入1-99范围内的整数!"},
+	{"strSanEmpty", "未设定San值，请先.st san 或查看.help sc×"},
+	{"strEnValEmpty", "未设定待成长属性值，请先.st 属性名 属性值 或查看.help en×"},
 	{"strEnValInvalid", "技能值或属性输入不正确,请输入1-99范围内的整数!"},
 	{"strSuccessRateErr","这成功率还需要检定吗？"},
 	{"strGroupIDInvalid", "无效的群号!"},
@@ -175,7 +195,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strNameTooLongErr", "错误:名称过长(最多为50英文字符)"},
 	{"strNameClr","已将{0}的名称删除"},
 	{"strNameSet","已将{0}的名称更改为{1}"},
-	{"strUnknownPropErr", "错误:属性不存在"},
+	{"strUnknownPropErr", "未设定成功率，请先.st 技能名 技能值 或查看.help rc×"},
 	{"strEmptyWWDiceErr", "格式错误:正确格式为.w(w)XaY!其中X≥1, 5≤Y≤10"},
 	{"strPropErr", "请认真的输入你的属性哦~"},
 	{"strSetPropSuccess", "属性设置成功"},
@@ -188,7 +208,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPropNotFound", "错误:属性不存在"},
 	{"strRuleNotFound", "本机器人未找到对应的规则信息"},
 	{"strProp", "{0}的{1}属性值为{2}"},
-	{"strStErr", "格式错误:请参考帮助文档获取.st命令的使用方法"},
+	{"strStErr", "格式错误:请参考.help st获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
 	{"strNoDiscuss", "本机器人现不支持讨论组服务，即将退出"},
 	{"strGroupClr", "本机器人清退中，即将退群"},

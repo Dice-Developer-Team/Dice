@@ -69,6 +69,13 @@
       "name": "群添加请求事件",
       "function": "eventGroupInvited",
       "priority": 30000
+    },
+    {
+      "id": 10,
+      "type": 301,
+      "name": "好友添加请求事件",
+      "function": "eventAddFriend",
+      "priority": 30000
     }
   ],
   "menu": [
@@ -81,8 +88,12 @@
       "function": "eventMasterMode"
     },
     {
-      "name": "一键清退",
-      "function": "eventClearGroup"
+      "name": "清退非管理群聊",
+      "function": "eventClearGroupUnpower"
+    },
+    {
+      "name": "清退不活跃群聊",
+      "function": "eventClearGroup30"
     },
     {
       "name": "全局开关",
