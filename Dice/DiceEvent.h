@@ -976,10 +976,12 @@ public:
 				}
 				strReply += getGroupList()[fromGroup] + "——本群现状:\n"
 					+ "群号:" + to_string(fromGroup) + "\n"
-					+ GlobalMsg["strSelfName"] + "在本群状态：" + (DisabledGroup.count(fromGroup) ? "禁用" : "启用") + "\n"
-					+ ".me：" + (DisabledMEGroup.count(fromGroup) ? "禁用" : "启用") + "\n"
-					+ ".jrrp：" + (DisabledJRRPGroup.count(fromGroup) ? "禁用" : "启用") + "\n"
+					+ GlobalMsg["strSelfName"] + "在本群状态：" + (DisabledGroup.count(fromGroup) ? "禁用" : "启用") + (boolDisabledGlobal ? "（全局静默中）" : "") + "\n"
+					+ ".me：" + (DisabledMEGroup.count(fromGroup) ? "禁用" : "启用") + (boolDisabledMeGlobal ? "（全局禁用中）" : "") + "\n"
+					+ ".jrrp：" + (DisabledJRRPGroup.count(fromGroup) ? "禁用" : "启用") + (boolDisabledJrrpGlobal ? "（全局禁用中）" : "") + "\n"
+					+ (DisabledHELPGroup.count(fromGroup) ? "已禁用.help\n" : "") 
 					+ (DisabledOBGroup.count(fromGroup) ? "已禁用旁观模式\n" : "")
+					+ (mGroupInviter.count(fromGroup) ? "邀请者" + printQQ(mGroupInviter[fromGroup]) + "\n" : "")
 					+ "入群欢迎:" + (WelcomeMsg.count(fromGroup) ? "已设置" : "未设置")
 					+ (sInact.size() ? "\n30天不活跃群员数：" + to_string(sInact.size()) : "");
 				if (sBlackQQ.size()) {
