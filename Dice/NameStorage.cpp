@@ -25,6 +25,7 @@
 #include <utility>
 #include <fstream>
 #include "CQTools.h"
+#include "CQEVE_ALL.h"
 using namespace std;
 
 void NameStorage::read()
@@ -94,4 +95,37 @@ NameStorage::NameStorage(const string& FilePath) : StorageBase(FilePath)
 NameStorage::~NameStorage()
 {
 	NameStorage::save();
+}
+unique_ptr<NameStorage> Name;
+string strip(std::string origin)
+{
+	while (true)
+	{
+		if (origin[0] == '!' || origin[0] == '.')
+		{
+			origin.erase(origin.begin());
+		}
+		else if (origin.substr(0, 2) == "£¡" || origin.substr(0, 2) == "¡£")
+		{
+			origin.erase(origin.begin());
+			origin.erase(origin.begin());
+		}
+		else return origin;
+	}
+}
+
+string getName(long long QQ, long long GroupID )
+{
+	//if (GroupID)
+	{
+		return strip(Name->get(GroupID, QQ).empty()
+			? (Name->get(0, QQ).empty()
+				? (CQ::getGroupMemberInfo(GroupID, QQ).GroupNick.empty()
+					? CQ::getStrangerInfo(QQ).nick
+					: CQ::getGroupMemberInfo(GroupID, QQ).GroupNick)
+				: Name->get(0, QQ))
+			: Name->get(GroupID, QQ));
+	}
+	/*Ë½ÁÄ*/
+	//return strip(getStrangerInfo(QQ).nick);
 }

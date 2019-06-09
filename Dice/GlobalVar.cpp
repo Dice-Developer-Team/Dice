@@ -64,6 +64,10 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 
 std::map<std::string, std::string> GlobalMsg
 {
+	{"strBlackQQAddNotice","你已被本机器人加入黑名单，详情请联系Master"},				
+	{"strBlackQQAddNoticeReason","由于{0}，你已被本机器人加入黑名单，申诉解封请联系管理员"},
+	{"strBlackQQDelNotice","你已被本机器人移出黑名单，现在可以继续使用了"},
+	{"strWhiteQQAddNotice","你已被本机器人加入白名单，欢迎使用√"},
 	{"strWhiteQQDenied","你不在白名单中×"},
 	{"strWhiteGroupDenied","本群聊不在白名单中×"},
 	{"strDeckProNew","已新建自定义牌堆√"},

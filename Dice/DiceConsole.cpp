@@ -22,16 +22,17 @@
  */
 #pragma once
 #include <ctime>
-#include "CQEVE_ALL.h"
 #include "DiceConsole.h"
 #include "GlobalVar.h"
-#include "DiceMsgSend.h"
 #include "MsgFormat.h"
+#include "NameStorage.h"
 
 using namespace std;
 using namespace CQ;
 
 	long long masterQQ = 0;
+set<long long> AdminQQ = {};
+set<chatType> MonitorList = {};
 	//全局静默
 	bool boolDisabledGlobal = false;
 	//全局禁用.me
@@ -66,7 +67,7 @@ using namespace CQ;
 	//下班时间
 	std::pair<int, int> ClockOffWork = { 24,0 };
 
-	string transClock(std::pair<int, int> clock) {
+	string printClock(std::pair<int, int> clock) {
 		string strClock=to_string(clock.first);
 		strClock += ":";
 		if(clock.second<10)strClock += "0";
@@ -74,6 +75,29 @@ using namespace CQ;
 		return strClock;
 	}
 
+	void sendAdmin(std::string strMsg, long long fromQQ) {
+		string strName = fromQQ ? getName(fromQQ) : "";
+		if(AdminQQ.count(fromQQ)) {
+			AddMsgToQueue(strName + strMsg, masterQQ);
+			for (auto it : AdminQQ) {
+				if (fromQQ == it)AddMsgToQueue(strMsg, it);
+				else AddMsgToQueue(strName + strMsg, it);
+			}
+		}
+		else {
+			AddMsgToQueue(strMsg, masterQQ);
+			for (auto it : AdminQQ) {
+				AddMsgToQueue(strName + strMsg, it);
+			}
+		}
+	}
+
+	void NotifyMonitor(std::string strMsg) {
+		if (!boolMasterMode)return;
+		for (auto it : MonitorList) {
+			AddMsgToQueue(strMsg, it.first, it.second);
+		}
+	}
 	//简易计时器
 	void ConsoleTimer() {
 		while (Enabled) {
@@ -83,11 +107,11 @@ using namespace CQ;
 				stTmp = stNow;
 				if (stNow.wHour == ClockOffWork.first&&stNow.wMinute == ClockOffWork.second && !boolDisabledGlobal) {
 					boolDisabledGlobal = true;
-					AddMsgToQueue(GlobalMsg["strSelfName"] + GlobalMsg["strClockOffWork"], masterQQ);
+					NotifyMonitor(GlobalMsg["strSelfName"] + GlobalMsg["strClockOffWork"]);
 				}
 				if (stNow.wHour == ClockToWork.first&&stNow.wMinute == ClockToWork.second&&boolDisabledGlobal) {
 					boolDisabledGlobal = false;
-					AddMsgToQueue(GlobalMsg["strSelfName"] + GlobalMsg["strClockToWork"], masterQQ);
+					NotifyMonitor(GlobalMsg["strSelfName"] + GlobalMsg["strClockToWork"]);
 				}
 			}
 			Sleep(10000);
@@ -95,7 +119,7 @@ using namespace CQ;
 	}
 
 	//一键清退
-	int clearGroup(string strPara) {
+	int clearGroup(string strPara,long long) {
 		int intCnt=0;
 		string strReply;
 		map<long long,string> GroupList=getGroupList();
@@ -109,7 +133,7 @@ using namespace CQ;
 				}
 			}
 			strReply = "筛除无群权限群聊" + to_string(intCnt) + "个√";
-			AddMsgToQueue(strReply, masterQQ);
+			sendAdmin(strReply);
 		}
 		else if (isdigit(strPara[0])) {
 			int intDayLim = stoi(strPara);
@@ -122,6 +146,7 @@ using namespace CQ;
 					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }), eachGroup.first, Group);
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
+					mLastMsgList.erase({ eachGroup.first ,CQ::Group });
 					intCnt++;
 				}
 			}
@@ -133,6 +158,7 @@ using namespace CQ;
 					Sleep(10);
 					setDiscussLeave(eachDiscuss.first);
 					DiscussList.erase(eachDiscuss.first);
+					mLastMsgList.erase({ eachDiscuss.first ,Discuss });
 					intCnt++;
 				}
 			}
@@ -145,407 +171,36 @@ using namespace CQ;
 					AddMsgToQueue(GlobalMsg["strPreserve"], eachGroup.first, Group);
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
+					mLastMsgList.erase({ eachGroup.first ,Group });
 					intCnt++;
 				}
 			}
 			strReply = "筛除白名单外群聊" + to_string(intCnt) + "个√";
-			AddMsgToQueue(strReply, masterQQ);
+			sendAdmin(strReply);
 		}
 		else
 			AddMsgToQueue("无法识别筛选参数×",masterQQ);
 		return intCnt;
 	}
-void ConsoleHandler(std::string strMessage) {
-	int intMsgCnt = 0;
-	std::string strOption;
-	while (!isspace(static_cast<unsigned char>(strMessage[intMsgCnt])) && intMsgCnt != strMessage.length() && !isdigit(static_cast<unsigned char>(strMessage[intMsgCnt])))
-	{
-		strOption += strMessage[intMsgCnt];
-		intMsgCnt++;
-	}
-	if (strOption.empty()) {
-		AddMsgToQueue("有什么事么， Master？", masterQQ);
-		return;
-	}
-	if (strOption == "delete") {
-		AddMsgToQueue("你不再是" + GlobalMsg["strSelfName"] + "的Master！", masterQQ);
-		masterQQ = 0;
-	}
-	else if (strOption == "state") {
-		string strReply= getLoginNick();
-		strReply = strReply + "的当前情况" + "\n"
-			+ (ClockToWork.first < 24 ? "定时开启" + transClock(ClockToWork) + "\n" : "")
-			+ (ClockOffWork.first < 24 ? "定时关闭" + transClock(ClockOffWork) + "\n" : "")
-			+ (boolPreserve ? "私用模式" : "公用模式") + "\n"
-			+ (boolNoDiscuss ? "禁用讨论组" : "启用讨论组") + "\n"
-			+ "全局开关：" + (boolDisabledGlobal ? "禁用" : "启用") + "\n"
-			+ "全局.me开关：" + (boolDisabledMeGlobal ? "禁用" : "启用") + "\n"
-			+ "全局.jrrp开关：" + (boolDisabledJrrpGlobal ? "禁用" : "启用") + "\n"
-			+ "所在群聊数：" + to_string(getGroupList().size()) + "\n"
-			+ (DiscussList.size() ? "有记录的讨论组数：" + to_string(DiscussList.size()) + "\n" : "")
-			+ "黑名单用户数：" + to_string(BlackQQ.size()) + "\n"
-			+ "黑名单群数：" + to_string(BlackGroup.size()) + "\n"
-			+ "白名单用户数：" + to_string(WhiteQQ.size()) + "\n"
-			+ "白名单群数：" + to_string(WhiteGroup.size());
-		AddMsgToQueue(strReply, masterQQ);
-	}
-	else if (strOption == "clock") {
-		string strReply = "本地时间" + to_string(stNow.wHour) + ":" + to_string(stNow.wMinute);
-		AddMsgToQueue(strReply, masterQQ);
-	}
-	else {
-		while (isspace(static_cast<unsigned char>(strMessage[intMsgCnt])))intMsgCnt++;
-		if (strOption == "addgroup") {
-			std::string strPersonalMsg = strMessage.substr(intMsgCnt);
-			if (strPersonalMsg.empty()) {
-				if (GlobalMsg.count("strAddGroup")) {
-					GlobalMsg["strAddGroup"].clear();
-					AddMsgToQueue("入群发言已清除√", masterQQ);
-				}
-				else AddMsgToQueue("当前未设置入群发言×", masterQQ);
-			}
-			else {
-				GlobalMsg["strAddGroup"] = strPersonalMsg;
-				AddMsgToQueue("入群发言已准备好了√", masterQQ);
-			}
-		}
-		else if (strOption == "bot") {
-			std::string strPersonalMsg = strMessage.substr(intMsgCnt);
-			if (strPersonalMsg.empty()) {
-				if (GlobalMsg.count("strBotMsg")) {
-					GlobalMsg["strBotMsg"].clear();
-					AddMsgToQueue("已清除bot附加信息√", masterQQ);
-				}
-				else AddMsgToQueue("当前未设置bot附加信息×", masterQQ);
-			}
-			else {
-				GlobalMsg["strBotMsg"] = strPersonalMsg;
-				AddMsgToQueue("已为bot附加信息√", masterQQ);
-			}
-		}
-		else if (strOption == "on") {
-			if (boolDisabledGlobal) {
-				boolDisabledGlobal = false;
-				AddMsgToQueue("骰娘已结束静默√", masterQQ);
-			}
-			else {
-				AddMsgToQueue("骰娘不在静默中！", masterQQ);
-			}
-		}
-		else if (strOption == "off") {
-			if (boolDisabledGlobal) {
-				AddMsgToQueue("骰娘已经静默！", masterQQ);
-			}
-			else {
-				boolDisabledGlobal = true;
-				AddMsgToQueue("骰娘开始静默√", masterQQ);
-			}
-		}
-		else if (strOption == "meon") {
-			if (boolDisabledMeGlobal) {
-				boolDisabledMeGlobal = false;
-				AddMsgToQueue("骰娘已启用.me√", masterQQ);
-			}
-			else {
-				AddMsgToQueue("骰娘已启用.me！", masterQQ);
-			}
-		}
-		else if (strOption == "meoff") {
-			if (boolDisabledMeGlobal) {
-				AddMsgToQueue("骰娘已禁用.me！", masterQQ);
-			}
-			else {
-				boolDisabledMeGlobal = true;
-				AddMsgToQueue("骰娘已禁用.me√", masterQQ);
-			}
-		}
-		else if (strOption == "jrrpon") {
-			if (boolDisabledMeGlobal) {
-				boolDisabledMeGlobal = false;
-				AddMsgToQueue("骰娘已启用.jrrp√", masterQQ);
-			}
-			else {
-				AddMsgToQueue("骰娘已启用.jrrp！", masterQQ);
-			}
-		}
-		else if (strOption == "jrrpoff") {
-			if (boolDisabledMeGlobal) {
-				AddMsgToQueue("骰娘已禁用.jrrp！", masterQQ);
-			}
-			else {
-				boolDisabledMeGlobal = true;
-				AddMsgToQueue("骰娘已禁用.jrrp√", masterQQ);
-			}
-		}
-		else if (strOption == "discusson") {
-			if (boolNoDiscuss) {
-				boolNoDiscuss = false;
-				AddMsgToQueue("骰娘已关闭讨论组自动退出√", masterQQ);
-			}
-			else {
-				AddMsgToQueue("骰娘已关闭讨论组自动退出！", masterQQ);
-			}
-		}
-		else if (strOption == "discussoff") {
-			if (boolNoDiscuss) {
-				AddMsgToQueue("骰娘已开启讨论组自动退出！", masterQQ);
-			}
-			else {
-				boolNoDiscuss = true;
-				AddMsgToQueue("骰娘已开启讨论组自动退出√", masterQQ);
-			}
-		}
-		else if (strOption == "groupclr") {
-			std::string strPara = strMessage.substr(intMsgCnt);
-			int intGroupCnt = clearGroup(strPara);
-		}
-		else if (strOption == "only") {
-			if (boolPreserve) {
-				AddMsgToQueue("已成为Master的专属骰娘！", masterQQ);
-			}
-			else {
-				boolPreserve = true;
-				AddMsgToQueue("已成为Master的专属骰娘√", masterQQ);
-			}
-		}
-		else if (strOption == "public") {
-			if (boolPreserve) {
-				boolPreserve = false;
-				AddMsgToQueue("已成为公用骰娘√", masterQQ);
-			}
-			else {
-				AddMsgToQueue("已成为公用骰娘！", masterQQ);
-			}
-		}
-		else if (strOption == "clockon") {
-			string strHour;
-			while (isdigit(strMessage[intMsgCnt])) {
-				strHour += strMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			if (strHour.empty()||stoi(strHour)> 23) {
-				ClockToWork = { 24,00 };
-				AddMsgToQueue("已清除定时启用", masterQQ);
-				return;
-			}
-			int intHour = stoi(strHour);
-			while (!isdigit(strMessage[intMsgCnt])) {
-				intMsgCnt++;
-			}
-			string strMinute;
-			while (isdigit(strMessage[intMsgCnt])) {
-				strMinute += strMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			if(strMinute.empty()) strMinute="00";
-			int intMinute = stoi(strMinute);
-			ClockToWork = { intHour,intMinute };
-			AddMsgToQueue("已设置定时启用时间"+strHour+":"+strMinute,masterQQ);
-		}
-		else if (strOption == "clockoff") {
-		string strHour;
-		while (isdigit(strMessage[intMsgCnt])) {
-			strHour += strMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		if (strHour.empty() || stoi(strHour) > 23) {
-			ClockOffWork = { 24,00 };
-			AddMsgToQueue("已清除定时关闭", masterQQ);
-			return;
-		}
-		int intHour = stoi(strHour);
-		while (!isdigit(strMessage[intMsgCnt])) {
-			intMsgCnt++;
-		}
-		string strMinute;
-		while (isdigit(strMessage[intMsgCnt])) {
-			strMinute += strMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		if (strMinute.empty()) strMinute = "00";
-		int intMinute = stoi(strMinute);
-		ClockOffWork = { intHour,intMinute };
-		AddMsgToQueue("已设置定时关闭时间" + strHour + ":" + strMinute, masterQQ);
-		}
-		else {
-			bool boolErase = false;
-			std::string strTargetID;
-			if (strMessage[intMsgCnt] == '-') {
-				boolErase = true;
-				intMsgCnt++;
-			}
-			while (isspace(static_cast<unsigned char>(strMessage[intMsgCnt])))intMsgCnt++;
-			while (isdigit(static_cast<unsigned char>(strMessage[intMsgCnt]))) {
-				strTargetID += strMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			long long llTargetID=0;
-			if (!strTargetID.empty()) {
-				llTargetID = stoll(strTargetID);
-			}
-			if (strOption == "dismiss") {
-				WhiteGroup.erase(llTargetID);
-				if (getGroupList().count(llTargetID)) {
-					setGroupLeave(llTargetID);
-					AddMsgToQueue("骰娘已退出该群√", masterQQ);
-				}
-				else if (llTargetID > 1000000000 && setDiscussLeave(llTargetID) == 0) {
-					AddMsgToQueue("骰娘已退出该讨论组√", masterQQ);
-					DiscussList.erase(llTargetID);
-				}
-				else {
-					AddMsgToQueue(GlobalMsg["strGroupGetErr"], masterQQ);
-				}
-			}
-			else if (strOption == "boton") {
-				if (getGroupList().count(llTargetID)) {
-					if (DisabledGroup.count(llTargetID)) {
-						DisabledGroup.erase(llTargetID);
-						AddMsgToQueue("骰娘已在该群起用√", masterQQ);
-					}
-					else AddMsgToQueue("骰娘已在该群起用!", masterQQ);
-				}
-				else {
-					AddMsgToQueue(GlobalMsg["strGroupGetErr"], masterQQ);
-				}
-			}
-			else if (strOption == "botoff") {
-				if (getGroupList().count(llTargetID)) {
-					if (!DisabledGroup.count(llTargetID)) {
-						DisabledGroup.insert(llTargetID);
-						AddMsgToQueue("骰娘已在该群静默√", masterQQ);
-					}
-					else AddMsgToQueue("骰娘已在该群静默!", masterQQ);
-				}
-				else {
-					AddMsgToQueue(GlobalMsg["strGroupGetErr"], masterQQ);
-				}
-			}
-			else if (strOption == "whitegroup") {
-				if (llTargetID == 0) {
-					string strReply = "当前白名单群列表：";
-					for (auto each : WhiteGroup) {
-						strReply += "\n" + to_string(each);
-					}
-					AddMsgToQueue(strReply, masterQQ);
-					return;
-				}
-				if (boolErase) {
-					if (WhiteGroup.count(llTargetID)) {
-						WhiteGroup.erase(llTargetID);
-						AddMsgToQueue("该群已移出白名单√", masterQQ);
-					}
-					else {
-						AddMsgToQueue("该群并不在白名单！", masterQQ);
-					}
-				}
-				else {
-					if (WhiteGroup.count(llTargetID)) {
-						AddMsgToQueue("该群已加入白名单!", masterQQ);
-					}
-					else {
-						WhiteGroup.insert(llTargetID);
-						AddMsgToQueue("该群已加入白名单√", masterQQ);
-					}
-				}
-			}
-			else if (strOption == "blackgroup") {
-				if (llTargetID == 0) {
-					string strReply = "当前黑名单群列表：";
-					for (auto each : BlackGroup) {
-						strReply += "\n" + to_string(each);
-					}
-					AddMsgToQueue(strReply, masterQQ);
-					return;
-				}
-				if (boolErase) {
-					if (BlackGroup.count(llTargetID)) {
-						BlackGroup.erase(llTargetID);
-						AddMsgToQueue("该群已移出黑名单√", masterQQ);
-					}
-					else {
-						AddMsgToQueue("该群并不在黑名单！", masterQQ);
-					}
-				}
-				else {
-					if (BlackGroup.count(llTargetID)) {
-						AddMsgToQueue("该群已加入黑名单!", masterQQ);
-					}
-					else {
-						BlackGroup.insert(llTargetID);
-						AddMsgToQueue("该群已加入黑名单√", masterQQ);
-					}
-				}
-			}
-			else if (strOption == "whiteqq") {
-				if (llTargetID == 0) {
-					string strReply = "当前白名单用户列表：";
-					for (auto each : WhiteQQ) {
-						strReply += "\n" + getStrangerInfo(each).nick + "(" + to_string(each) + ")";
-					}
-					AddMsgToQueue(strReply, masterQQ);
-					return;
-				}
-				if (boolErase) {
-					if (WhiteQQ.count(llTargetID)) {
-						WhiteQQ.erase(llTargetID);
-						AddMsgToQueue("该用户已移出白名单√", masterQQ);
-					}
-					else {
-						AddMsgToQueue("该用户并不在白名单！", masterQQ);
-					}
-				}
-				else {
-					if (WhiteQQ.count(llTargetID)) {
-						AddMsgToQueue("该用户已加入白名单!", masterQQ);
-					}
-					else {
-						WhiteQQ.insert(llTargetID);
-						AddMsgToQueue("该用户已加入白名单√", masterQQ);
-					}
-				}
-			}
-			else if (strOption == "blackqq") {
-			if (llTargetID == 0) {
-				string strReply = "当前黑名单用户列表：";
-				for (auto each : BlackQQ) {
-					strReply += "\n" + getStrangerInfo(each).nick + "(" + to_string(each) + ")";
-				}
-				AddMsgToQueue(strReply, masterQQ);
-				return;
-			}
-				if (boolErase) {
-					if (BlackQQ.count(llTargetID)) {
-						BlackQQ.erase(llTargetID);
-						AddMsgToQueue("该用户已移出黑名单√", masterQQ);
-					}
-					else {
-						AddMsgToQueue("该用户并不在黑名单！", masterQQ);
-					}
-				}
-				else {
-					if (BlackQQ.count(llTargetID)) {
-						AddMsgToQueue("该用户已加入黑名单!", masterQQ);
-					}
-					else {
-						BlackQQ.insert(llTargetID);
-						AddMsgToQueue("该用户已加入黑名单√", masterQQ);
-					}
-				}
-			}
-			else AddMsgToQueue("有什么事么， Master？", masterQQ);
-			return;
-		}
-	}
-}
 
-EVE_Menu(eventClearGroup) {
-	int intGroupCnt = clearGroup();
+EVE_Menu(eventClearGroupUnpower) {
+	int intGroupCnt = clearGroup("unpower");
 	string strReply = "已清退无权限群聊" + to_string(intGroupCnt) + "个√";
 	MessageBoxA(nullptr, strReply.c_str(), "一键清退", MB_OK | MB_ICONINFORMATION);
 	return 0;
 }
-
+EVE_Menu(eventClearGroup30) {
+	int intGroupCnt = clearGroup("30");
+	string strReply = "已清退30天未使用群聊" + to_string(intGroupCnt) + "个√";
+	MessageBoxA(nullptr, strReply.c_str(), "一键清退", MB_OK | MB_ICONINFORMATION);
+	return 0;
+}
+EVE_Menu(eventClearGroupPreserve) {
+	int intGroupCnt = clearGroup("preserve");
+	string strReply = "已清退非白名单群聊" + to_string(intGroupCnt) + "个√";
+	MessageBoxA(nullptr, strReply.c_str(), "一键清退", MB_OK | MB_ICONINFORMATION);
+	return 0;
+}
 EVE_Menu(eventGlobalSwitch) {
 	if (boolDisabledGlobal) {
 		boolDisabledGlobal = false;

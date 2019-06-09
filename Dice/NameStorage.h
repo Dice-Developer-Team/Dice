@@ -42,4 +42,6 @@ public:
 	void clear();
 	bool del(long long GroupID, long long QQ);
 };
+std::string strip(std::string);
+std::string getName(long long QQ, long long GroupID = 0);
 #endif /*DICE_NAME_STORAGE*/

@@ -10,11 +10,17 @@
 #include <set>
 #include <Windows.h>
 #include "GlobalVar.h"
+#include "DiceMsgSend.h"
+#include "CQEVE_ALL.h"
 
 	//Master模式
 	extern bool boolMasterMode;
 	//Master的QQ，无主时为0
 	extern long long masterQQ;
+	//管理员列表
+	extern std::set<long long> AdminQQ;
+	//监控窗口列表
+	extern std::set<std::pair<long long, CQ::msgtype>> MonitorList;
 	//全部群静默
 	extern bool boolDisabledGlobal;
 	//全局禁用.ME
@@ -41,16 +47,25 @@
 	extern std::set<long long> WhiteQQ;
 	//黑名单用户：无条件禁用
 	extern std::set<long long> BlackQQ;
+	//通知管理员 
+	void sendAdmin(std::string strMsg, long long fromQQ = 0);
+	//通知监控窗口 
+	void NotifyMonitor(std::string strMsg);
 	//一键清退
-	extern int clearGroup(std::string strPara = "unpower");
-	//命令处理
-	extern void ConsoleHandler(std::string message);
+	extern int clearGroup(std::string strPara = "unpower", long long fromQQ = 0);
+	//最近消息记录
+	extern std::map<chatType, time_t> mLastMsgList;
+	//连接的聊天窗口
+	extern std::map<chatType, chatType> mLinkedList;
+	//单向转发列表
+	extern std::multimap<chatType, chatType> mFwdList;
 	//当前时间
 	extern SYSTEMTIME stNow;
 	//上班时间
 	extern std::pair<int, int> ClockToWork;
 	//下班时间
 	extern std::pair<int, int> ClockOffWork;
+	std::string printClock(std::pair<int, int> clock);
 	extern void ConsoleTimer();
 #endif /*Dice_Console*/
 

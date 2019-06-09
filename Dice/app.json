@@ -81,8 +81,12 @@
       "function": "eventMasterMode"
     },
     {
-      "name": "一键清退",
-      "function": "eventClearGroup"
+      "name": "清退非管理群聊",
+      "function": "eventClearGroupUnpower"
+    },
+    {
+      "name": "清退不活跃群聊",
+      "function": "eventClearGroup30"
     },
     {
       "name": "全局开关",
