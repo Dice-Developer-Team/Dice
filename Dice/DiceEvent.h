@@ -271,6 +271,43 @@ public:
 		AdminNotify("已设置定时关闭时间" + printClock(ClockOffWork));
 		return 1;
 			}
+		else if (strOption == "monitor") {
+		bool boolErase = false;
+		readSkipSpace();
+		if (strMsg[intMsgCnt] == '-') {
+			boolErase = true;
+			intMsgCnt++;
+		}
+		if (strMsg[intMsgCnt] == '+') { intMsgCnt++; }
+		chatType cTarget;
+		if (readChat(cTarget)) {
+			strReply = "当前监视窗口" + to_string(MonitorList.size()) + "个：";
+			for (auto it : MonitorList) {
+				strReply += "\n" + printChat(it);
+			}
+			reply();
+			return 1;
+		}
+		if (boolErase) {
+			if (MonitorList.count(cTarget)) {
+				MonitorList.erase(cTarget);
+				AdminNotify("已移除监视窗口" + printChat(cTarget) + "√");
+			}
+			else {
+				reply("该窗口不存在于监视列表！");
+			}
+		}
+		else {
+			if (MonitorList.count(cTarget)) {
+				reply("该窗口已存在于监视列表！");
+			}
+			else {
+				MonitorList.insert(cTarget);
+				AdminNotify("已添加监视窗口" + printChat(cTarget) + "√");
+			}
+		}
+		return 1;
+		}
 		else {
 			bool boolErase = false;
 			string strReason = readPara();
@@ -337,12 +374,12 @@ public:
 							AdminNotify("已将" + printGroup(llTargetID) + "移出白名单√");
 						}
 						else {
-							reply(printGroup(llTargetID) + "并不在白名单！");
+							reply(printGroup(llTargetID) + "并不在" + GlobalMsg["strSelfName"] + "的白名单！");
 						}
 					}
 					else {
 						if (WhiteGroup.count(llTargetID)) {
-							reply(printGroup(llTargetID) + "已加入白名单!");
+							reply(printGroup(llTargetID) + "已加入" + GlobalMsg["strSelfName"] + "的白名单!");
 						}
 						else {
 							WhiteGroup.insert(llTargetID);
@@ -368,12 +405,12 @@ public:
 							AdminNotify("已将" + printGroup(llTargetID) + "移出黑名单√");
 						}
 						else {
-							reply(printGroup(llTargetID) + "并不在黑名单！");
+							reply(printGroup(llTargetID) + "并不在" + GlobalMsg["strSelfName"] + "的黑名单！");
 						}
 					}
 					else {
 						if (BlackGroup.count(llTargetID)) {
-							reply(printGroup(llTargetID) + "已加入黑名单!");
+							reply(printGroup(llTargetID) + "已加入" + GlobalMsg["strSelfName"] + "的黑名单!");
 						}
 						else {
 							BlackGroup.insert(llTargetID);
@@ -399,12 +436,12 @@ public:
 							AdminNotify("已将" + printQQ(llTargetID) + "移出白名单√");
 						}
 						else {
-							reply(printQQ(llTargetID) + "并不在白名单！");
+							reply(printQQ(llTargetID) + "并不在" + GlobalMsg["strSelfName"] + "的白名单！");
 						}
 					}
 					else {
 						if (WhiteQQ.count(llTargetID)) {
-							reply(printQQ(llTargetID) + "已加入白名单!");
+							reply(printQQ(llTargetID) + "已加入" + GlobalMsg["strSelfName"] + "的白名单!");
 						}
 						else {
 							WhiteQQ.insert(llTargetID);
@@ -429,21 +466,21 @@ public:
 						if (BlackQQ.count(llTargetID)) {
 							BlackQQ.erase(llTargetID);
 							AdminNotify("已将" + printQQ(llTargetID) + "移出黑名单√");
-							strReason.empty() ? AddMsgToQueue(GlobalMsg["strBlackQQDelNotice"], llTargetID)
-								: AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { strReason }), llTargetID);
+							AddMsgToQueue(GlobalMsg["strBlackQQDelNotice"], llTargetID);
 						}
 						else {
-							reply(printQQ(llTargetID) + "并不在黑名单！");
+							reply(printQQ(llTargetID) + "并不在" + GlobalMsg["strSelfName"] + "的黑名单！");
 						}
 					}
 					else {
 						if (BlackQQ.count(llTargetID)) {
-							reply(printQQ(llTargetID) + "已加入黑名单!");
+							reply(printQQ(llTargetID) + "已加入" + GlobalMsg["strSelfName"] + "的黑名单!");
 						}
 						else {
 							BlackQQ.insert(llTargetID);
 							AdminNotify("已将" + printQQ(llTargetID) + "加入黑名单√");
-							AddMsgToQueue(GlobalMsg["strBlackQQAddNotice"], llTargetID);
+							strReason.empty() ? AddMsgToQueue(GlobalMsg["strBlackQQAddNotice"], llTargetID)
+								: AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { strReason }), llTargetID);
 						}
 					}
 				} while (llTargetID = readID());
@@ -463,43 +500,6 @@ public:
 		if (strOption == "groupclr") {
 			std::string strPara = readRest();
 			int intGroupCnt = clearGroup(strPara);
-			return 1;
-		}
-		else if (strOption == "monitor") {
-			bool boolErase = false;
-			readSkipSpace();
-			if (strMsg[intMsgCnt] == '-') {
-				boolErase = true;
-				intMsgCnt++;
-			}
-			if (strMsg[intMsgCnt] == '+') {intMsgCnt++;}
-			chatType cTarget;
-			if (readChat(cTarget)) {
-				strReply = "当前监视窗口" + to_string(MonitorList.size()) + "个：";
-				for (auto it : MonitorList) {
-					strReply += "\n" + printChat(it);
-				}
-				reply();
-				return 1;
-			}
-			if (boolErase) {
-				if (MonitorList.count(cTarget)) {
-					MonitorList.erase(cTarget);
-					AdminNotify("已移除监视窗口" + printChat(cTarget) + "√");
-				}
-				else {
-					reply("该窗口不存在于监视列表！");
-				}
-			}
-			else {
-				if (MonitorList.count(cTarget)) {
-					reply("该窗口已存在于监视列表！");
-				}
-				else {
-					MonitorList.insert(cTarget);
-					AdminNotify("已添加监视窗口" + printChat(cTarget) + "√");
-				}
-			}
 			return 1;
 		}
 		else if (strOption == "delete") {
@@ -1274,7 +1274,8 @@ public:
 					reply(strReply);
 					return 1;
 				}
-				*TempDeck = vector<string>(CardDeck::mPublicDeck[strDeckName]);
+				ProDeck = CardDeck::mPublicDeck[strDeckName];
+				TempDeck = &ProDeck;
 			}
 			string strCardNum=readDigit();
 			auto intCardNum = strCardNum.empty() ? 1 : stoi(strCardNum);

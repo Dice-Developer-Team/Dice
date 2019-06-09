@@ -2,8 +2,8 @@
   "ret": 1,
   "apiver": 9,
   "name": "Dice!",
-  "version": "2.3.8.6i",
-  "version_id": 538,
+  "version": "2.3.8Express7",
+  "version_id": 543,
   "author": "w4123溯洄 Shiki",
   "description": "跑团用骰子 本程序使用AGPLv3开源协议授权 Copyright (c) 2018-2019 w4123溯洄 Shiki",
   "event": [
@@ -105,7 +105,7 @@
     101, //发送群消息			sendGroupMsg
     103, //发送讨论组消息		sendDiscussMsg
     106, //发送私聊消息		sendPrivateMsg
-    121,  //置群成员禁言  setGroupBan
+    121, //置群成员禁言  setGroupBan
     122, //置群管理员			setGroupAdmin
     127, //[敏感]置群退出	setGroupLeave
     130, //取群成员信息		getGroupMemberInfoV2 / getGroupMemberInfo
