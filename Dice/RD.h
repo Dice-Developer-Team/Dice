@@ -690,15 +690,18 @@ public:
 	std::string FormCompleteString() const
 	{
 		std::string strReturnString = strDice;
-		if (strDice == FormStringSeparate()) {
+		if (strDice == FormStringSeparate() && vintRes.size() == 1) {
 			return strDice;
 		}
-		strReturnString.append("=");
 		if (FormStringSeparate().length() > 256)
 		{
 			return FormShortString();
 		}
-		strReturnString.append(FormStringSeparate());
+		if (strDice != FormStringSeparate())
+		{
+			strReturnString.append("=");
+			strReturnString.append(FormStringSeparate());
+		}
 		if (FormStringSeparate() != FormStringCombined())
 		{
 			strReturnString.append("=");

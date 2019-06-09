@@ -2645,12 +2645,14 @@ public:
 					return 1;
 			}
 			bool boolError = false;
+			bool isDetail = false;
+			bool isModify = false;
 			while (intMsgCnt != strLowerMessage.length())
 			{
 				string strSkillName;
 				while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
 					isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt]
-					!= ':')
+					!= ':' && strLowerMessage[intMsgCnt] != '-' && strLowerMessage[intMsgCnt] != '+')
 				{
 					strSkillName += strLowerMessage[intMsgCnt];
 					intMsgCnt++;
@@ -2658,6 +2660,47 @@ public:
 				if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt
 				] == ':')intMsgCnt++;
+				if (strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+') {
+					char chSign = strLowerMessage[intMsgCnt];
+					isDetail = true;
+					isModify = true;
+					intMsgCnt++;
+					int intCurrentVal;
+					if (CharacterProp.count(SourceType(fromQQ, intT, fromGroup)) && CharacterProp[SourceType(
+						fromQQ, intT, fromGroup)].count(strSkillName))
+					{
+						intCurrentVal = CharacterProp[SourceType(fromQQ, intT, fromGroup)][strSkillName];
+					}
+					else if (SkillDefaultVal.count(strSkillName))
+					{
+						intCurrentVal = SkillDefaultVal[strSkillName];
+					}
+					else
+					{
+						reply(format(GlobalMsg["strStValEmpty"], {strSkillName}));
+						return 1;
+					}
+					RD Mod(to_string(intCurrentVal) + chSign + readDice());
+					if (Mod.Roll()) {
+						reply(GlobalMsg["strValueErr"]);
+						return 1;
+					}
+					else 
+					{
+						strReply += "\n" + strSkillName + "：" + Mod.FormCompleteString();
+						if (Mod.intTotal < 0) {
+							strReply += "→0";
+							CharacterProp[SourceType(fromQQ, intT, fromGroup)][strSkillName] = 0;
+						}
+						else if (Mod.intTotal > 1000) {
+							strReply += "→1000";
+							CharacterProp[SourceType(fromQQ, intT, fromGroup)][strSkillName] = 1000;
+						}
+						else CharacterProp[SourceType(fromQQ, intT, fromGroup)][strSkillName] = Mod.intTotal;
+					}
+					while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
+					continue;
+				}
 				string strSkillVal;
 				while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				{
@@ -2675,6 +2718,9 @@ public:
 			if (boolError)
 			{
 				reply(GlobalMsg["strPropErr"]);
+			}
+			else if(isModify){
+				reply(format(GlobalMsg["strStModify"], { strNickName }) + strReply);
 			}
 			else
 			{
@@ -3295,6 +3341,23 @@ private:
 		string strGroup = readDigit();
 		if (strGroup.empty()) return 0;
 		return stoll(strGroup);
+	}
+	//读取掷骰表达式
+	string readDice(){
+		string strDice;
+		while (isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
+		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
+			|| strLowerMessage[intMsgCnt] == 'd' || strLowerMessage[intMsgCnt] == 'k'
+			|| strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b'
+			|| strLowerMessage[intMsgCnt] == 'f'
+			|| strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-'
+			|| strLowerMessage[intMsgCnt] == 'a'
+			|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*')
+		{
+			strDice += strLowerMessage[intMsgCnt];
+			intMsgCnt++;
+		}
+		return strDice;
 	}
 	//
 	int readChat(chatType &ct) {

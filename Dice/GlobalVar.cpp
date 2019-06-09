@@ -64,6 +64,9 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 
 std::map<std::string, std::string> GlobalMsg
 {
+	{"strStModify","已记录{0}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
+	{"strStDetail","已设置{0}的属性："},		//存在掷骰时，使用此文本(暂时无用)
+	{"strStValEmpty","未记录{0}原值×"},		//{0}为属性名
 	{"strBlackQQAddNotice","你已被本机器人加入黑名单，详情请联系Master"},				
 	{"strBlackQQAddNoticeReason","由于{0}，你已被本机器人加入黑名单，申诉解封请联系管理员"},
 	{"strBlackQQDelNotice","你已被本机器人移出黑名单，现在可以继续使用了"},
@@ -205,7 +208,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPropNotFound", "错误:属性不存在"},
 	{"strRuleNotFound", "本机器人未找到对应的规则信息"},
 	{"strProp", "{0}的{1}属性值为{2}"},
-	{"strStErr", "格式错误:请参考帮助文档获取.st命令的使用方法"},
+	{"strStErr", "格式错误:请参考.help st获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
 	{"strNoDiscuss", "本机器人现不支持讨论组服务，即将退出"},
 	{"strGroupClr", "本机器人清退中，即将退群"},
