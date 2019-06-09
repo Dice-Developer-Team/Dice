@@ -59,6 +59,8 @@
 	extern std::map<chatType, chatType> mLinkedList;
 	//单向转发列表
 	extern std::multimap<chatType, chatType> mFwdList;
+	//群邀请者
+	extern std::map<long long,long long> mGroupInviter;
 	//当前时间
 	extern SYSTEMTIME stNow;
 	//上班时间
@@ -66,6 +68,9 @@
 	//下班时间
 	extern std::pair<int, int> ClockOffWork;
 	std::string printClock(std::pair<int, int> clock);
+	std::string printQQ(long long);
+	std::string printGroup(long long);
+	std::string printChat(chatType);
 	extern void ConsoleTimer();
 #endif /*Dice_Console*/
 

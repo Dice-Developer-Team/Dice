@@ -3325,30 +3325,6 @@ private:
 		}
 		return strMum;
 	}
-	//打印用户昵称QQ
-	string printQQ(long long llqq) {
-		return getStrangerInfo(llqq).nick + "(" + to_string(llqq) + ")";
-	}
-	//打印QQ群号
-	string printGroup(long long llgroup) {
-		if(getGroupList().count(llgroup))return getGroupList()[llgroup] + "(" + to_string(llgroup) + ")";
-		return "群聊(" + to_string(llgroup) + ")";
-	}
-	//打印聊天窗口
-	string printChat(chatType ct) {
-		switch (ct.second)
-		{
-		case Private:
-			return printQQ(ct.first);
-		case Group:
-			return printGroup(ct.first);
-		case Discuss:
-			return "讨论组(" + to_string(ct.first) + ")";
-		default:
-			break;
-		}
-		return "";
-	}
 };
 
 #endif /*DICE_EVENT*/

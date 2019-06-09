@@ -45,6 +45,8 @@ set<chatType> MonitorList = {};
 	bool boolNoDiscuss = false;
 	//讨论组消息记录
 	std::map<long long, time_t> DiscussList;
+//群邀请者
+std::map<long long, long long> mGroupInviter;
 	//个性化语句
 	std::map<std::string, std::string> PersonalMsg;
 	//botoff的群
@@ -75,6 +77,30 @@ set<chatType> MonitorList = {};
 		return strClock;
 	}
 
+	//打印用户昵称QQ
+	string printQQ(long long llqq) {
+		return getStrangerInfo(llqq).nick + "(" + to_string(llqq) + ")";
+	}
+	//打印QQ群号
+	string printGroup(long long llgroup) {
+		if (getGroupList().count(llgroup))return getGroupList()[llgroup] + "(" + to_string(llgroup) + ")";
+		return "群聊(" + to_string(llgroup) + ")";
+	}
+	//打印聊天窗口
+	string printChat(chatType ct) {
+		switch (ct.second)
+		{
+		case Private:
+			return printQQ(ct.first);
+		case Group:
+			return printGroup(ct.first);
+		case Discuss:
+			return "讨论组(" + to_string(ct.first) + ")";
+		default:
+			break;
+		}
+		return "";
+	}
 	void sendAdmin(std::string strMsg, long long fromQQ) {
 		string strName = fromQQ ? getName(fromQQ) : "";
 		if(AdminQQ.count(fromQQ)) {
@@ -192,12 +218,6 @@ EVE_Menu(eventClearGroupUnpower) {
 EVE_Menu(eventClearGroup30) {
 	int intGroupCnt = clearGroup("30");
 	string strReply = "已清退30天未使用群聊" + to_string(intGroupCnt) + "个√";
-	MessageBoxA(nullptr, strReply.c_str(), "一键清退", MB_OK | MB_ICONINFORMATION);
-	return 0;
-}
-EVE_Menu(eventClearGroupPreserve) {
-	int intGroupCnt = clearGroup("preserve");
-	string strReply = "已清退非白名单群聊" + to_string(intGroupCnt) + "个√";
 	MessageBoxA(nullptr, strReply.c_str(), "一键清退", MB_OK | MB_ICONINFORMATION);
 	return 0;
 }
