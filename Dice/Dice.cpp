@@ -780,7 +780,7 @@ EVE_Request_AddGroup(eventGroupInvited) {
 			}
 			else if (WhiteQQ.count(fromQQ)) {
 				strMsg += "\n已同意（用户在白名单中）";
-				WhiteGroup.insert(fromQQ);
+				WhiteGroup.insert(fromGroup);
 				setGroupAddRequest(responseFlag, 2, 1, "");
 				mGroupInviter[fromGroup] = fromQQ;
 			}

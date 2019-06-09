@@ -233,5 +233,27 @@ EVE_Menu(eventGlobalSwitch) {
 
 	return 0;
 }
-
+EVE_Request_AddFriend(eventAddFriend) {
+	if (masterQQ&&boolMasterMode) {
+		string strMsg = "好友添加请求，来自：" + printQQ(fromQQ) + ",";
+		if (BlackQQ.count(fromQQ)) {
+			strMsg += "已拒绝（用户在黑名单中）";
+			setFriendAddRequest(responseFlag, 2, "");
+		}
+		else if (WhiteQQ.count(fromQQ)) {
+			strMsg += "已同意（用户在白名单中）";
+			setFriendAddRequest(responseFlag, 1, "");
+		}
+		else if (boolPreserve) {
+			strMsg += "已拒绝（当前在私用模式）";
+			setFriendAddRequest(responseFlag, 2, "");
+		}
+		else {
+			strMsg += "已同意";
+			setFriendAddRequest(responseFlag, 1, "");
+		}
+		sendAdmin(strMsg);
+	}
+	return 1;
+}
 

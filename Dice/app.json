@@ -69,6 +69,13 @@
       "name": "群添加请求事件",
       "function": "eventGroupInvited",
       "priority": 30000
+    },
+    {
+      "id": 10,
+      "type": 301,
+      "name": "好友添加请求事件",
+      "function": "eventAddFriend",
+      "priority": 30000
     }
   ],
   "menu": [
