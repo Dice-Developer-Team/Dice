@@ -1813,7 +1813,7 @@ public:
 				}
 				else
 				{
-					reply(GlobalMsg["strEnValInvalid"]);
+					reply(GlobalMsg["strEnValEmpty"]);
 					return 1;
 				}
 			}
@@ -2478,7 +2478,7 @@ public:
 			if (San.empty() && !(CharacterProp.count(SourceType(fromQQ, intT, fromGroup)) && CharacterProp[
 				SourceType(fromQQ, intT, fromGroup)].count("理智")))
 			{
-				reply(GlobalMsg["strSanInvalid"]);
+				reply(GlobalMsg["strSanEmpty"]);
 				return 1;
 			}
 				for (const auto& character : SanCost.substr(0, SanCost.find("/")))
@@ -2798,7 +2798,7 @@ public:
 					}
 					else
 					{
-						strTurnNotice = (intT == GroupT ? "在群\"" + getGroupList()[fromGroup] : "在讨论组(" + to_string(fromGroup)) + ")中 " + strTurnNotice;
+						strTurnNotice = "在" + printChat(fromChat) + "中 " + strTurnNotice;
 						AddMsgToQueue(strTurnNotice, fromQQ, Private);
 						const auto range = ObserveGroup.equal_range(fromGroup);
 						for (auto it = range.first; it != range.second; ++it)
@@ -2914,7 +2914,7 @@ public:
 				}
 				else
 				{
-					strAns = (intT == GroupT ? "在群\"" + getGroupList()[fromGroup] : "在讨论组(" + to_string(fromGroup)) + ")中 " + strAns;
+					strAns = "在" + printChat(fromChat) + "中 " + strAns;
 					AddMsgToQueue(strAns, fromQQ, Private);
 					const auto range = ObserveGroup.equal_range(fromGroup);
 					for (auto it = range.first; it != range.second; ++it)
@@ -2943,7 +2943,7 @@ public:
 					}
 					else
 					{
-						strAns = (intT == GroupT ? "在群\"" + getGroupList()[fromGroup] : "在讨论组(" + to_string(fromGroup)) + ")中 " + strAns;
+						strAns = "在" + printChat(fromChat) + "中 " + strAns;
 						AddMsgToQueue(strAns, fromQQ, Private);
 						const auto range = ObserveGroup.equal_range(fromGroup);
 						for (auto it = range.first; it != range.second; ++it)
@@ -3086,7 +3086,7 @@ public:
 					}
 					else
 					{
-						strTurnNotice = (intT == GroupT ? "在群\"" + getGroupList()[fromGroup] : "在讨论组(" + to_string(fromGroup)) + ")中 " + strTurnNotice;
+						strTurnNotice = "在" + printChat(fromChat) + "中 " + strTurnNotice;
 						AddMsgToQueue(strTurnNotice, fromQQ, Private);
 						const auto range = ObserveGroup.equal_range(fromGroup);
 						for (auto it = range.first; it != range.second; ++it)
@@ -3178,7 +3178,7 @@ public:
 				}
 				else
 				{
-					strAns = (intT == GroupT ? "在群\"" + getGroupList()[fromGroup] : "在讨论组(" + to_string(fromGroup)) + ")中 " + strAns;
+					strAns = "在" + printChat(fromChat) + "中 " + strAns;
 					AddMsgToQueue(strAns, fromQQ, Private);
 					const auto range = ObserveGroup.equal_range(fromGroup);
 					for (auto it = range.first; it != range.second; ++it)
@@ -3207,7 +3207,7 @@ public:
 					}
 					else
 					{
-						strAns = (intT == GroupT ? "在群\"" + getGroupList()[fromGroup] : "在讨论组(" + to_string(fromGroup)) + ")中 " + strAns;
+						strAns = "在" + printChat(fromChat) + "中 " + strAns;
 						AddMsgToQueue(strAns, fromQQ, Private);
 						const auto range = ObserveGroup.equal_range(fromGroup);
 						for (auto it = range.first; it != range.second; ++it)
