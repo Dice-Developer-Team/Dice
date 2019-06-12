@@ -52,9 +52,9 @@ Dice!分为**标准版**与**增强版**, 标准版已经几乎可以满足所�
 
 Dice! QQ Dice Robot for TRPG
 
-Copyright (C) 2018-2019 w4123溯洄
-Copyright (C) 2018-2019 String.Empty
-Copyright (C) 2018-2019 绯色月下
+Copyright (C) 2018-2019 w4123溯洄  
+Copyright (C) 2018-2019 String.Empty  
+Copyright (C) 2018-2019 绯色月下  
 
 This program is free software: you can redistribute it and/or modify it under the terms
 of the GNU Affero General Public License as published by the Free Software Foundation,
