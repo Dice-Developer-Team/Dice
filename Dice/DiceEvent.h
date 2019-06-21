@@ -1003,15 +1003,11 @@ public:
 			string QQNum;
 			if (strLowerMessage.substr(intMsgCnt, 10) == "[cq:at,qq=") {
 				intMsgCnt += 10;
-				while (isdigit(strLowerMessage[intMsgCnt])) {
-					QQNum += strLowerMessage[intMsgCnt];
-					intMsgCnt++;
-				}
+				QQNum = readDigit();
 				intMsgCnt++;
 			}
-			else while (isdigit(strLowerMessage[intMsgCnt])) {
-				QQNum += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
+			else {
+				QQNum = readDigit();
 			}
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
@@ -1025,11 +1021,7 @@ public:
 						reply(GlobalMsg["strSelfPermissionErr"]);
 						return 1;
 					}
-					string strMainDice;
-					while (isdigit(strLowerMessage[intMsgCnt]) || (strLowerMessage[intMsgCnt]) == 'd' || (strLowerMessage[intMsgCnt]) == '+' || (strLowerMessage[intMsgCnt]) == '-') {
-						strMainDice += strLowerMessage[intMsgCnt];
-						intMsgCnt++;
-					}
+					string strMainDice = readDice();
 					const int intDefaultDice = DefaultDice.count(fromQQ) ? DefaultDice[fromQQ] : 100;
 					RD rdMainDice(strMainDice, intDefaultDice);
 					rdMainDice.Roll();
@@ -3312,7 +3304,7 @@ private:
 	bool isLinkOrder = false;
 	//跳过空格
 	void readSkipSpace() {
-		while (isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 	}
 	string readRest() {
 		return strMsg.substr(intMsgCnt);
@@ -3320,8 +3312,8 @@ private:
 	//读取参数(统一小写)
 	string readPara() {
 		string strPara;
-		while (isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
-		while (!isspace(strLowerMessage[intMsgCnt]) && !isdigit(strLowerMessage[intMsgCnt]) && (strLowerMessage[intMsgCnt] != '-') && (strLowerMessage[intMsgCnt] != '+') && intMsgCnt != strLowerMessage.length()) {
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && (strLowerMessage[intMsgCnt] != '-') && (strLowerMessage[intMsgCnt] != '+') && intMsgCnt != strLowerMessage.length()) {
 			strPara += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
@@ -3330,8 +3322,8 @@ private:
 	//读取数字
 	string readDigit() {
 		string strMum;
-		while (!isdigit(strMsg[intMsgCnt]) && intMsgCnt != strMsg.length())intMsgCnt++;
-		while (isdigit(strMsg[intMsgCnt])) {
+		while (!isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length())intMsgCnt++;
+		while (isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
 			strMum += strMsg[intMsgCnt];
 			intMsgCnt++;
 		}
@@ -3346,7 +3338,7 @@ private:
 	//读取掷骰表达式
 	string readDice(){
 		string strDice;
-		while (isspace(strLowerMessage[intMsgCnt]))intMsgCnt++;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
 			|| strLowerMessage[intMsgCnt] == 'd' || strLowerMessage[intMsgCnt] == 'k'
 			|| strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b'
@@ -3384,8 +3376,8 @@ private:
 	//读取分项
 	string readItem() {
 		string strMum;
-		while (isspace(strMsg[intMsgCnt]) || strMsg[intMsgCnt] == '|')intMsgCnt++;
-		while (!isspace(strMsg[intMsgCnt]) && strMsg[intMsgCnt] != '|'&& intMsgCnt != strMsg.length()) {
+		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == '|')intMsgCnt++;
+		while (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) && strMsg[intMsgCnt] != '|'&& intMsgCnt != strMsg.length()) {
 			strMum += strMsg[intMsgCnt];
 			intMsgCnt++;
 		}

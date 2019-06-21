@@ -100,7 +100,7 @@ void dataBackUp() {
 	//备份管理员列表
 	ofstream  ofstreamAdmin(strFileLoc + "AdminQQ.RDconf");
 	for (auto it : AdminQQ) {
-		ofstreamAdmin << it;
+		ofstreamAdmin << it << std::endl;
 	}
 	ofstreamAdmin.close();
 	//备份监控窗口列表
