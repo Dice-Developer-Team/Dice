@@ -834,7 +834,7 @@ namespace Dice
 						&&
 						strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
 							intTmpMsgCnt
-						] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
+						] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a' && strLowerMessage[intTmpMsgCnt] != 'x' && strLowerMessage[intTmpMsgCnt] != '*')
 				{
 					break;
 				}
@@ -852,7 +852,8 @@ namespace Dice
 				if (strTurnCnt.empty())
 					strTurnCnt = "1";
 				strMainDice = strMainDice.substr(strMainDice.find('#') + 1);
-				RD rdTurnCnt(strTurnCnt, dice_msg.qq_id);
+				const int intDefaultDice = DefaultDice.count(dice_msg.qq_id) ? DefaultDice[dice_msg.qq_id] : 100;
+				RD rdTurnCnt(strTurnCnt, intDefaultDice);
 				const int intRdTurnCntRes = rdTurnCnt.Roll();
 				if (intRdTurnCntRes == Value_Err)
 				{
@@ -966,7 +967,8 @@ namespace Dice
 			}
 			if (boolAdda10)
 				strMainDice.insert(strFirstDice.length(), "a10");
-			RD rdMainDice(strMainDice, dice_msg.qq_id);
+			const int intDefaultDice = DefaultDice.count(dice_msg.qq_id) ? DefaultDice[dice_msg.qq_id] : 100;
+			RD rdMainDice(strMainDice, intDefaultDice);
 
 			const int intFirstTimeRes = rdMainDice.Roll();
 			if (intFirstTimeRes == Value_Err)
@@ -2119,14 +2121,14 @@ namespace Dice
 			{
 				if (strLowerMessage[intTmpMsgCnt] == 'd' || strLowerMessage[intTmpMsgCnt] == 'p' || strLowerMessage[
 					intTmpMsgCnt] == 'b' || strLowerMessage[intTmpMsgCnt] == '#' || strLowerMessage[intTmpMsgCnt] == 'f'
-						|| strLowerMessage[intTmpMsgCnt] == 'a')
+						|| strLowerMessage[intTmpMsgCnt] == 'a' || strLowerMessage[intTmpMsgCnt] == 'x' || strLowerMessage[intTmpMsgCnt] == '*')
 					tmpContainD = true;
 					if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
 						intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
 							&&
 							strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
 								intTmpMsgCnt
-							] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a')
+							] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a' && strLowerMessage[intTmpMsgCnt] != 'x'&& strLowerMessage[intTmpMsgCnt] != '*')
 					{
 						break;
 					}
@@ -2148,7 +2150,8 @@ namespace Dice
 				if (strTurnCnt.empty())
 					strTurnCnt = "1";
 				strMainDice = strMainDice.substr(strMainDice.find('#') + 1);
-				RD rdTurnCnt(strTurnCnt, dice_msg.qq_id);
+				const int intDefaultDice = DefaultDice.count(dice_msg.qq_id) ? DefaultDice[dice_msg.qq_id] : 100;
+				RD rdTurnCnt(strTurnCnt, intDefaultDice);
 				const int intRdTurnCntRes = rdTurnCnt.Roll();
 				if (intRdTurnCntRes == Value_Err)
 				{
@@ -2238,7 +2241,8 @@ namespace Dice
 					}
 				}
 			}
-			RD rdMainDice(strMainDice, dice_msg.qq_id);
+			const int intDefaultDice = DefaultDice.count(dice_msg.qq_id) ? DefaultDice[dice_msg.qq_id] : 100;
+			RD rdMainDice(strMainDice, intDefaultDice);
 
 			const int intFirstTimeRes = rdMainDice.Roll();
 			if (intFirstTimeRes == Value_Err)
@@ -2548,103 +2552,7 @@ namespace Dice
 	void EventHandler::HandleExitEvent()
 	{
 		if (!Enabled) return;
-		ilInitList.reset();
-		Name.reset();
-		ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
-		for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
-		{
-			ofstreamDisabledGroup << *it << std::endl;
-		}
-		ofstreamDisabledGroup.close();
-
-		ofstream ofstreamDisabledDiscuss(strFileLoc + "DisabledDiscuss.RDconf", ios::out | ios::trunc);
-		for (auto it = DisabledDiscuss.begin(); it != DisabledDiscuss.end(); ++it)
-		{
-			ofstreamDisabledDiscuss << *it << std::endl;
-		}
-		ofstreamDisabledDiscuss.close();
-		ofstream ofstreamDisabledJRRPGroup(strFileLoc + "DisabledJRRPGroup.RDconf", ios::out | ios::trunc);
-		for (auto it = DisabledJRRPGroup.begin(); it != DisabledJRRPGroup.end(); ++it)
-		{
-			ofstreamDisabledJRRPGroup << *it << std::endl;
-		}
-		ofstreamDisabledJRRPGroup.close();
-
-		ofstream ofstreamDisabledJRRPDiscuss(strFileLoc + "DisabledJRRPDiscuss.RDconf", ios::out | ios::trunc);
-		for (auto it = DisabledJRRPDiscuss.begin(); it != DisabledJRRPDiscuss.end(); ++it)
-		{
-			ofstreamDisabledJRRPDiscuss << *it << std::endl;
-		}
-		ofstreamDisabledJRRPDiscuss.close();
-
-		ofstream ofstreamDisabledHELPGroup(strFileLoc + "DisabledHELPGroup.RDconf", ios::in | ios::trunc);
-		for (auto it = DisabledHELPGroup.begin(); it != DisabledHELPGroup.end(); ++it)
-		{
-			ofstreamDisabledHELPGroup << *it << std::endl;
-		}
-		ofstreamDisabledHELPGroup.close();
-
-		ofstream ofstreamDisabledHELPDiscuss(strFileLoc + "DisabledHELPDiscuss.RDconf", ios::in | ios::trunc);
-		for (auto it = DisabledHELPDiscuss.begin(); it != DisabledHELPDiscuss.end(); ++it)
-		{
-			ofstreamDisabledHELPDiscuss << *it << std::endl;
-		}
-		ofstreamDisabledHELPDiscuss.close();
-
-		ofstream ofstreamDisabledOBGroup(strFileLoc + "DisabledOBGroup.RDconf", ios::out | ios::trunc);
-		for (auto it = DisabledOBGroup.begin(); it != DisabledOBGroup.end(); ++it)
-		{
-			ofstreamDisabledOBGroup << *it << std::endl;
-		}
-		ofstreamDisabledOBGroup.close();
-
-		ofstream ofstreamDisabledOBDiscuss(strFileLoc + "DisabledOBDiscuss.RDconf", ios::out | ios::trunc);
-		for (auto it = DisabledOBDiscuss.begin(); it != DisabledOBDiscuss.end(); ++it)
-		{
-			ofstreamDisabledOBDiscuss << *it << std::endl;
-		}
-		ofstreamDisabledOBDiscuss.close();
-
-		ofstream ofstreamObserveGroup(strFileLoc + "ObserveGroup.RDconf", ios::out | ios::trunc);
-		for (auto it = ObserveGroup.begin(); it != ObserveGroup.end(); ++it)
-		{
-			ofstreamObserveGroup << it->first << " " << it->second << std::endl;
-		}
-		ofstreamObserveGroup.close();
-
-		ofstream ofstreamObserveDiscuss(strFileLoc + "ObserveDiscuss.RDconf", ios::out | ios::trunc);
-		for (auto it = ObserveDiscuss.begin(); it != ObserveDiscuss.end(); ++it)
-		{
-			ofstreamObserveDiscuss << it->first << " " << it->second << std::endl;
-		}
-		ofstreamObserveDiscuss.close();
-		ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
-		for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
-		{
-			for (auto it1 = it->second.cbegin(); it1 != it->second.cend(); ++it1)
-			{
-				ofstreamCharacterProp << it->first.QQ << " " << it->first.Type << " " << it->first.GrouporDiscussID << " "
-					<< it1->first << " " << it1->second << std::endl;
-			}
-		}
-		ofstreamCharacterProp.close();
-		ofstream ofstreamDefault(strFileLoc + "Default.RDconf", ios::out | ios::trunc);
-		for (auto it = DefaultDice.begin(); it != DefaultDice.end(); ++it)
-		{
-			ofstreamDefault << it->first << " " << it->second << std::endl;
-		}
-		ofstreamDefault.close();
-
-		ofstream ofstreamWelcomeMsg(strFileLoc + "WelcomeMsg.RDconf", ios::out | ios::trunc);
-		for (auto it = WelcomeMsg.begin(); it != WelcomeMsg.end(); ++it)
-		{
-			while (it->second.find(' ') != string::npos)it->second.replace(it->second.find(' '), 1, "{space}");
-			while (it->second.find('\t') != string::npos)it->second.replace(it->second.find('\t'), 1, "{tab}");
-			while (it->second.find('\n') != string::npos)it->second.replace(it->second.find('\n'), 1, "{endl}");
-			while (it->second.find('\r') != string::npos)it->second.replace(it->second.find('\r'), 1, "{enter}");
-			ofstreamWelcomeMsg << it->first << " " << it->second << std::endl;
-		}
-		ofstreamWelcomeMsg.close();
+		this->HandleDisableEvent();
 	}
 }
 
