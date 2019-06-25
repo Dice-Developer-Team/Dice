@@ -20,9 +20,13 @@ Latest Stable Release: [![GitHub release](https://img.shields.io/github/release/
 
 Latest Release: [![GitHub release](https://img.shields.io/github/release-pre/w4123/dice.svg)](https://github.com/w4123/Dice/releases) [![GitHub Release Date](https://img.shields.io/github/release-date-pre/w4123/dice.svg)](https://github.com/w4123/Dice/releases)
 
+## 关于版本
+
+Dice!分为**标准版**与**增强版**, 标准版已经几乎可以满足所有跑团所需，拓展版主要为想要把自己骰子公开的master们准备，其中包含了黑名单等管理功能。其中，标准版位于master分支，主要由溯洄负责，增强版位于Shiki分支，主要由String.Empty负责。出现问题时，请确定使用的版本并向对应负责人报告(或者直接提issue)。增强版中可能还包含一些其他新功能，如果合适就会引入到标准版中。标准版更新频率较慢但增强版较快。在发布页面，不带Express字样的属于标准版，否则属于增强版。
+
 ## 开发者
 
-贡献者:w4123溯洄 jh123111 緋色月下、スイカを食う
+贡献者:w4123溯洄 jh123111 緋色月下、スイカを食う String.Empty 等
 
 感谢:Flandre Cirno 回転 他是王家乐。白いとう 哞哞哞哞哞哞哞哞哞哞哞哞 丸子 黯星 一盏大师 初音py2001 Coxxs orzFly 等(排名不分先后)(如有缺漏请务必联系溯洄:QQ1840686745) 
 
@@ -49,7 +53,8 @@ Latest Release: [![GitHub release](https://img.shields.io/github/release-pre/w41
 Dice! QQ Dice Robot for TRPG
 
 Copyright (C) 2018-2019 w4123溯洄  
-Copyright (C) 2018-2019 绯色月下
+Copyright (C) 2018-2019 String.Empty  
+Copyright (C) 2018-2019 绯色月下  
 
 This program is free software: you can redistribute it and/or modify it under the terms
 of the GNU Affero General Public License as published by the Free Software Foundation,
