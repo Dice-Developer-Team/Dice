@@ -34,6 +34,7 @@
 #include <mutex>
 
 #include "APPINFO.h"
+#include "jsonio.h"
 #include "RandomGenerator.h"
 #include "RD.h"
 #include "CQEVE_ALL.h"
@@ -195,10 +196,10 @@ void dataBackUp() {
 	}
 	ofstreamDefaultCOC.close();
 	//保存卡牌
-	CardDeck::saveDeck(strFileLoc + "GroupDeck.json", CardDeck::mGroupDeck);
-	CardDeck::saveDeck(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
-	CardDeck::saveDeck(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
-	CardDeck::saveDeck(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
+	saveJMap(strFileLoc + "GroupDeck.json", CardDeck::mGroupDeck);
+	saveJMap(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
+	saveJMap(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
+	saveJMap(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
 }
 EVE_Enable(eventEnable)
 {
@@ -564,10 +565,11 @@ EVE_Enable(eventEnable)
 		GlobalMsg[it.first] = strMsg;
 	}
 	//读取卡牌
-	CardDeck::loadDeck(strFileLoc + "GroupDeck.json",CardDeck::mGroupDeck);
-	CardDeck::loadDeck(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
-	CardDeck::loadDeck(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
-	CardDeck::loadDeck(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
+	loadJMap(strFileLoc + "GroupDeck.json",CardDeck::mGroupDeck);
+	loadJMap(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
+	loadJMap(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
+	loadJMap(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
+	loadJMap(strFileLoc + "PublicDeck.json", CardDeck::mPublicDeck);
 	//读取替身模式
 	ifstream ifstreamStandByMe(strFileLoc + "StandByMe.RDconf");
 	if (ifstreamStandByMe)

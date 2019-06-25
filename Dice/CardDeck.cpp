@@ -74,46 +74,14 @@ namespace CardDeck
 	std::map<std::string, std::string> PublicComplexDeck{
 		//{"调查员背景","个人描述：{个人描述}\n思想信念：{思想信念}\n重要之人：{重要之人}\n重要之人理由：{重要之人理由}\n意义非凡之地：{意义非凡之地}\n宝贵之物：{宝贵之物}\n特点：{调查员特点}"}
 	};
-	//读取备份牌堆
-	int loadDeck(std::string strLoc, std::map<long long, std::vector<std::string>> &deck) {
-		ifstream fin(strLoc);
-		if (fin) {
-			json j;
-			fin >> j;
-			for (json::iterator it = j.begin(); it != j.end(); ++it)
-			{
-				long long llID = stoll(it.key());
-				std::vector<std::string> card = {};
-				for (auto iit : it.value()) {
-					card.push_back(UTF8toGBK(iit));
-				}
-				deck[llID]= card;
-			}
-			fin.close();
-		}
-		return 0;
-	}
-	//保存备份牌堆
-	int saveDeck(std::string strLoc, std::map<long long, std::vector<std::string>> deck) {
-		if (deck.empty())return 0;
-		ofstream fout(strLoc);
-		if (fout) {
-			json j;
-			for (auto it : deck) {
-				j[to_string(it.first)] = GBKtoUTF8(it.second);
-			}
-			fout << j;
-			fout.close();
-		}
-		return 0;
-	}
+	
 	//返回0：未找到;1：公共牌组;2：自然数列
 	int findDeck(std::string strDeckName) {
 		std::string strDeck;
 		if (mPublicDeck.count(strDeckName)) {
 			return 1;
 		}
-		else if (isdigit(strDeckName[0]) && strDeckName.length() < 3 || strDeckName == "100") {
+		else if (isdigit(static_cast<unsigned char>(strDeckName[0])) && strDeckName.length() < 3 || strDeckName == "100") {
 			return 2;
 		}
 		return 0;
