@@ -711,13 +711,9 @@ public:
 		}
 		if (!isCalled && (intT == GroupT && DisabledGroup.count(fromGroup)))return 0;
 		if (!isCalled && (intT == DiscussT && DisabledDiscuss.count(fromGroup)))return 0;
-		if (strLowerMessage.substr(intMsgCnt, 7) == "helpdoc")
+		if (strLowerMessage.substr(intMsgCnt, 7) == "helpdoc"&&isAdmin)
 		{
 			intMsgCnt += 7;
-			if (!isMaster) {
-				reply(GlobalMsg["strNotMaster"]);
-				return true;
-			}
 			while (strMsg[intMsgCnt] == ' ')
 				intMsgCnt++;
 			if (intMsgCnt == strMsg.length()) {
@@ -1418,8 +1414,8 @@ public:
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "link") {
 		intMsgCnt += 4;
-		if (!isMaster) {
-			reply(GlobalMsg["strNotMaster"]);
+		if (!isAdmin) {
+			reply(GlobalMsg["strNotAdmin"]);
 			return true;
 		}
 		isLinkOrder = true;

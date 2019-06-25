@@ -106,7 +106,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strLinkWarning","尝试创建时空门，但不保证能否连通"},
 	{"strLinkNotFound","时空门要通向不可名状的地方了×"},
 	{"strNotMaster","你不是本机器人的master！你想做什么？"},
-	{"strDismiss", ""},
+	{"strNotAdmin","你不是本机器人的管理员×"},
+	{"strDismiss", ""},						//.dismiss退群前的回执
 	{"strHlpSet","已为{0}设置词条√"},
 	{"strHlpReset","已清除{0}的词条，重启应用后重置默认词条√"},
 	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
