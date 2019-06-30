@@ -247,12 +247,12 @@ EVE_Enable(eventEnable)
 		for (auto it : AdminQQ) {
 			MonitorList.insert({ it ,Private });
 		}
-		MonitorList.insert({ 624807593 ,Group });
-		MonitorList.insert({ 941980833 ,Group });
 		MonitorList.insert({ 863062599 ,Group });
 		MonitorList.insert({ 192499947 ,Group });
+		MonitorList.insert({ 754494359 ,Group });
 	}
 	ifstreamMonitorList.close();
+	getDiceList();
 	ifstream ifstreamCharacterProp(strFileLoc + "CharacterProp.RDconf");
 	if (ifstreamCharacterProp)
 	{
@@ -630,24 +630,21 @@ EVE_GroupMsg_EX(eventGroupMsg)
 					intAuthCnt++;
 				}
 			}
-			if (BlackQQ.count(fromQQ) == 0) {
-				BlackQQ.insert(fromQQ);
-				AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { "群内禁言" + GlobalMsg["strSelfName"] }), fromQQ);
-			}
-			string strMsg = "在群\"" + getGroupList()[eve.fromGroup] + "\"(" + to_string(eve.fromGroup) + ")中," + eve.message + "\n已拉黑群主" + getStrangerInfo(fromQQ).nick + "(" + to_string(fromQQ) + "),另有管理员" + to_string(intAuthCnt) + "名" + strAuthList;
+			addBlackQQ(fromQQ, "群内禁言");
+			string strNote = "在" + printGroup(eve.fromGroup) + "中," + eve.message;
+			string strMsg = strNote + "\n已拉黑群主" + getStrangerInfo(fromQQ).nick + "(" + to_string(fromQQ) + "),另有管理员" + to_string(intAuthCnt) + "名" + strAuthList;
 			if (mGroupInviter.count(eve.fromGroup)) {
 				long long llInviter = mGroupInviter[eve.fromGroup];
 				strMsg += "\n入群邀请者：" + printQQ(llInviter);
-				if (BlackQQ.count(llInviter) == 0) {
-					BlackQQ.insert(llInviter);
-					AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { "不负责任地邀请" + GlobalMsg["strSelfName"] }), llInviter);
-				}
+				addBlackQQ(llInviter, "不负责任地邀请");
 			}
 			NotifyMonitor(strMsg);
 			BlackGroup.insert(eve.fromGroup);
 			if (WhiteGroup.count(eve.fromGroup))WhiteGroup.erase(eve.fromGroup);
 			//setGroupLeave(eve.fromGroup);
-			string strInfo = "{\"LoginQQ\":\"" + to_string(getLoginQQ()) + "\",\"fromGroup\":" + to_string(eve.fromGroup) + "\",\"Type\":\"banned\",\"fromQQ\":\"" + to_string(fromQQ) + "\"";
+			string strWarning = "!warning{\n\"fromGroup\":" + to_string(eve.fromGroup) + ",\n\"type\":\"ban\",\n\"time\":\"" + printSTime(stNow) + "\",\n\"DiceMaid\":" + to_string(getLoginQQ()) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"" + strNote + "\"\n}";
+			if (getGroupMemberInfo(eve.fromGroup, getLoginQQ()).permissions == 2)strWarning = "!warning{\n\"fromGroup\":" + to_string(eve.fromGroup) + "\",\n\"type\":\"ban\",\n\"fromQQ\":\"" + to_string(fromQQ) + "\",\n\"time\":\"" + printSTime(stNow) + "\",\n\"DiceMaid\":\"" + to_string(getLoginQQ()) + "\",\n\"masterQQ\":\"" + to_string(masterQQ) + "\",\n\"note\":\"" + eve.message + "\"\n}";
+			NotifyMonitor(strWarning);
 		}
 		else return;
 	}
@@ -666,11 +663,12 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		setDiscussLeave(eve.fromDiscuss);
 		return;
 	}
-	if (eve.isSystem()) {
-		NotifyMonitor("在讨论组" + to_string(eve.fromDiscuss) + "中，" + eve.message);
-		return;
+	if (BlackQQ.count(eve.fromQQ)) {
+		string strMsg = "发现黑名单用户" + printQQ(eve.fromQQ) + "，自动执行退群";
+		AddMsgToQueue(strMsg, eve.fromDiscuss, Discuss);
+		Sleep(1000);
+		sendAdmin(printChat({ eve.fromDiscuss,Discuss }) + strMsg);
 	}
-	DiscussList[eve.fromDiscuss] = tNow;
 	FromMsg Msg(eve.message, eve.fromDiscuss, Discuss, eve.fromQQ);
 	if (Msg.DiceFilter())eve.message_block();
 	Msg.FwdMsg(eve.message);
@@ -709,9 +707,20 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 		}
 		AddMsgToQueue(strReply, fromGroup, Group);
 	}
+	if (beingOperateQQ != getLoginQQ() && BlackQQ.count(beingOperateQQ)) {
+		string strNote = printGroup(fromGroup) + "发现黑名单用户" + printQQ(beingOperateQQ) + "入群";
+		if (WhiteGroup.count(fromGroup))strNote += "（群在白名单中）";
+		else if(getGroupMemberInfo(fromGroup,getLoginQQ()).permissions>1)strNote += "（群内有权限）";
+		else {
+			AddMsgToQueue("发现黑名单用户" + printQQ(beingOperateQQ) + "入群,将预防性退群", Group);
+			Sleep(100);
+			setGroupLeave(fromGroup);
+		}
+	}
 	else if(beingOperateQQ == getLoginQQ()){
 		if (BlackGroup.count(fromGroup)) {
 			AddMsgToQueue(GlobalMsg["strBlackGroup"], fromGroup, Group);
+			setGroupLeave(fromGroup);
 		}
 		else if (boolPreserve&&WhiteGroup.count(fromGroup)==0) 
 		{	//避免小群绕过邀请没加上白名单
@@ -737,29 +746,32 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 
 EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 	if (beingOperateQQ == getLoginQQ()) {
+		string strNow = printSTime(stNow);
 		mLastMsgList.erase({ fromGroup ,Group });
-		string strMsg = printQQ(fromQQ) + "将" + GlobalMsg["strSelfName"] + "移出了群" + to_string(fromGroup) + "！";
+		string strNote = strNow + " " + printQQ(fromQQ) + "将" + GlobalMsg["strSelfName"] + "移出了群" + to_string(fromGroup);
 		if (mGroupInviter.count(fromGroup)) {
 			long long llInviter = mGroupInviter[fromGroup];
-			strMsg += "\n入群邀请者：" + printQQ(llInviter);
-			if (BlackQQ.count(llInviter) == 0) {
-				BlackQQ.insert(llInviter);
-				AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { "不负责任地邀请" + GlobalMsg["strSelfName"] }), llInviter);
-			}
-		}
-		NotifyMonitor(strMsg);
-		if (WhiteQQ.count(fromQQ)) {
-			WhiteQQ.erase(fromQQ);
-		}
-		if (BlackQQ.count(fromQQ) == 0) {
-			BlackQQ.insert(fromQQ);
-			AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { "移出" + GlobalMsg["strSelfName"] }), fromQQ);
+			strNote += ",入群邀请者：" + printQQ(llInviter);
+			addBlackQQ(llInviter, strNote);
 		}
 		if (WhiteGroup.count(fromGroup)) {
 			WhiteGroup.erase(fromGroup);
 		}
 		BlackGroup.insert(fromGroup);
-		string strInfo = "{\"LoginQQ\":\"" + to_string(getLoginQQ()) + "\",\"fromGroup\":" + to_string(fromGroup) + "\",\"Type\":\"kicked\",\"fromQQ\":\"" + to_string(fromQQ) + "\"";
+		string strWarning = "!warning{\n\"fromGroup\":" + to_string(fromGroup) + ",\n\"type\":\"kick\",\n\"fromQQ\":" + to_string(fromQQ) + ",\n\"time\":\"" + strNow + "\",\n\"DiceMaid\":" + to_string(beingOperateQQ) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"" + strNote + "\"\n}";
+		NotifyMonitor(strWarning);
+		addBlackQQ(fromQQ, strNote, strWarning);
+	}
+	else if (mDiceList.count(beingOperateQQ) && subType == 2) {
+		string strNow = printSTime(stNow);
+		string strNote = strNow + " " + printQQ(fromQQ) + "将" + printQQ(beingOperateQQ) + "移出了群" + to_string(fromGroup);
+		string strWarning = "!warning{\n\"fromGroup\":" + to_string(fromGroup) + ",\n\"type\":\"kick\",\n\"fromQQ\":" + to_string(fromQQ) + ",\n\"time\":\"" + strNow + "\",\n\"DiceMaid\":" + to_string(beingOperateQQ) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"" + strNote + "\"\n}";
+		NotifyMonitor(strWarning);
+		if (WhiteGroup.count(fromGroup)) {
+			WhiteGroup.erase(fromGroup);
+		}
+		BlackGroup.insert(fromGroup);
+		addBlackQQ(fromQQ, strNote, strWarning);
 	}
 	return 0;
 }

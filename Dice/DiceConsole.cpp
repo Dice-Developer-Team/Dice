@@ -26,6 +26,8 @@
 #include "GlobalVar.h"
 #include "MsgFormat.h"
 #include "NameStorage.h"
+#include "DiceNetwork.h"
+#include "jsonio.h"
 
 using namespace std;
 using namespace CQ;
@@ -43,6 +45,8 @@ set<chatType> MonitorList = {};
 	bool boolPreserve = false;
 	//禁用讨论组
 	bool boolNoDiscuss = false;
+//骰娘列表
+std::map<long long, long long> mDiceList;
 	//讨论组消息记录
 	std::map<long long, time_t> DiscussList;
 //群邀请者
@@ -76,7 +80,9 @@ std::map<long long, long long> mGroupInviter;
 		strClock += to_string(clock.second);
 		return strClock;
 	}
-
+std::string printSTime(SYSTEMTIME st){
+	return to_string(st.wYear) + "/" + to_string(st.wMonth) + "/" + to_string(st.wDay) + " " + to_string(st.wHour) + ":" + to_string(st.wMinute) + ":" + to_string(st.wSecond);
+}
 	//打印用户昵称QQ
 	string printQQ(long long llqq) {
 		return getStrangerInfo(llqq).nick + "(" + to_string(llqq) + ")";
@@ -101,6 +107,16 @@ std::map<long long, long long> mGroupInviter;
 		}
 		return "";
 	}
+//获取骰娘列表
+void getDiceList() {
+	std::string list;
+	if (!Network::GET("shiki.stringempty.xyz", "/DiceList", 80, list))
+	{
+		sendAdmin(("获取骰娘列表时遇到错误: \n" + list).c_str(), 0);
+		return;
+	}
+	readJson(list, mDiceList);
+}
 	void sendAdmin(std::string strMsg, long long fromQQ) {
 		string strName = fromQQ ? getName(fromQQ) : "";
 		if(AdminQQ.count(fromQQ)) {
@@ -118,13 +134,60 @@ std::map<long long, long long> mGroupInviter;
 		}
 	}
 
-	void NotifyMonitor(std::string strMsg) {
+void NotifyMonitor(std::string strMsg) {
 		if (!boolMasterMode)return;
 		for (auto it : MonitorList) {
 			AddMsgToQueue(strMsg, it.first, it.second);
 		}
 	}
-	//简易计时器
+//拉黑用户后搜查群
+void checkBlackQQ(long long llQQ, std::string strWarning) {
+	map<long long, string> GroupList = getGroupList();
+	string strNotice;
+	int intCnt = 0;
+	for (auto eachGroup : GroupList) {
+		if (getGroupMemberInfo(eachGroup.first, llQQ).QQID == llQQ) {
+			strNotice += "\n" + printGroup(eachGroup.first);
+			if (getGroupMemberInfo(eachGroup.first, llQQ).permissions < getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions) {
+				strNotice += "对方群权限较低";
+			}
+			else if (getGroupMemberInfo(eachGroup.first, llQQ).permissions > getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions) {
+				AddMsgToQueue(strWarning, eachGroup.first, Group);
+				AddMsgToQueue("发现新增黑名单成员" + printQQ(llQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first, Group);
+				strNotice += "对方群权限较高，已退群";
+				Sleep(1000);
+				setGroupLeave(eachGroup.first);
+			}
+			else if (WhiteGroup.count(eachGroup.first)) {
+				strNotice += "群在白名单中";
+			}
+			else {
+				AddMsgToQueue(strWarning, eachGroup.first, Group);
+				AddMsgToQueue("发现新增黑名单成员" + printQQ(llQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first, Group);
+				strNotice += "已退群";
+				Sleep(1000);
+				setGroupLeave(eachGroup.first);
+			}
+			intCnt++;
+		}
+	}
+	if (intCnt) {
+		strNotice = "已清查与" + printQQ(llQQ) + "共同群聊" + to_string(intCnt) + "个：" + strNotice;
+		sendAdmin(strNotice);
+	}
+}
+//拉黑用户
+void addBlackQQ(long long llQQ, std::string strReason, std::string strNotice) {
+	if (llQQ == masterQQ || AdminQQ.count(llQQ) || llQQ == getLoginQQ())return;
+	if (WhiteQQ.count(llQQ))WhiteQQ.erase(llQQ);
+	if (BlackQQ.count(llQQ) == 0) {
+		BlackQQ.insert(llQQ);
+		strReason.empty() ? AddMsgToQueue(GlobalMsg["strBlackQQAddNotice"], llQQ)
+			: AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { strReason }), llQQ);
+	}
+	checkBlackQQ(llQQ, strNotice);
+}
+//简易计时器
 	void ConsoleTimer() {
 		while (Enabled) {
 			GetLocalTime(&stNow);
@@ -139,13 +202,17 @@ std::map<long long, long long> mGroupInviter;
 					boolDisabledGlobal = false;
 					NotifyMonitor(GlobalMsg["strSelfName"] + GlobalMsg["strClockToWork"]);
 				}
+				if (stNow.wHour == 5 && stNow.wMinute == 0) {
+					getDiceList();
+					clearGroup("black");
+				}
 			}
-			Sleep(10000);
+			Sleep(100);
 		}
 	}
 
 	//一键清退
-	int clearGroup(string strPara,long long) {
+	int clearGroup(string strPara,long long fromQQ) {
 		int intCnt=0;
 		string strReply;
 		map<long long,string> GroupList=getGroupList();
@@ -158,10 +225,10 @@ std::map<long long, long long> mGroupInviter;
 					intCnt++;
 				}
 			}
-			strReply = "筛除无群权限群聊" + to_string(intCnt) + "个√";
+			strReply = GlobalMsg["strSelfName"] + "筛除无群权限群聊" + to_string(intCnt) + "个√";
 			sendAdmin(strReply);
 		}
-		else if (isdigit(strPara[0])) {
+		else if (isdigit(static_cast<unsigned char>(strPara[0]))) {
 			int intDayLim = stoi(strPara);
 			string strDayLim = to_string(intDayLim);
 			time_t tNow = time(NULL);;
@@ -188,8 +255,48 @@ std::map<long long, long long> mGroupInviter;
 					intCnt++;
 				}
 			}
-			strReply += "筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√";
+			strReply += GlobalMsg["strSelfName"] + "已筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√";
 			AddMsgToQueue(strReply,masterQQ);
+		}
+		else if (strPara == "black") {
+			for (auto eachGroup : GroupList) {
+				if (BlackGroup.count(eachGroup.first)) {
+					strReply += "\n" + printGroup(eachGroup.first) + "：" + "黑名单群";
+				}
+				vector<GroupMemberInfo> MemberList = getGroupMemberList(eachGroup.first);
+				for (auto eachQQ : MemberList) {
+					if (BlackQQ.count(eachQQ.QQID)) {
+						if (getGroupMemberInfo(eachGroup.first, eachQQ.QQID).permissions < getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions) {
+							continue;
+						}
+						else if (getGroupMemberInfo(eachGroup.first, eachQQ.QQID).permissions > getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions) {
+							AddMsgToQueue("发现黑名单成员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first);
+							strReply += "\n" + printGroup(eachGroup.first) + "：" + printQQ(eachQQ.QQID) + "对方群权限较高";
+							Sleep(10);
+							setGroupLeave(eachGroup.first);
+							break;
+						}
+						else if (WhiteGroup.count(eachGroup.first)) {
+							continue;
+						}
+						else {
+							AddMsgToQueue("发现黑名单成员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first);
+							strReply += "\n" + printGroup(eachGroup.first) + "：" + printQQ(eachQQ.QQID);
+							Sleep(100);
+							setGroupLeave(eachGroup.first);
+							break;
+						}
+						intCnt++;
+					}
+				}
+			}
+			if (intCnt) {
+				strReply = GlobalMsg["strSelfName"] + "已按黑名单清查群聊" + to_string(intCnt) + "个：" + strReply;
+				sendAdmin(strReply);
+			}
+			else if (fromQQ) {
+				sendAdmin(GlobalMsg["strSelfName"] + "未发现涉黑群聊");
+			}
 		}
 		else if (strPara == "preserve") {
 			for (auto eachGroup : GroupList) {
@@ -201,11 +308,11 @@ std::map<long long, long long> mGroupInviter;
 					intCnt++;
 				}
 			}
-			strReply = "筛除白名单外群聊" + to_string(intCnt) + "个√";
+			strReply = GlobalMsg["strSelfName"] + "筛除白名单外群聊" + to_string(intCnt) + "个√";
 			sendAdmin(strReply);
 		}
 		else
-			AddMsgToQueue("无法识别筛选参数×",masterQQ);
+			AddMsgToQueue("无法识别筛选参数×", fromQQ);
 		return intCnt;
 	}
 

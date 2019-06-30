@@ -111,29 +111,33 @@ public:
 		}
 	}
 	int AdminEvent(string strOption) {
-		if (strOption == "delete") {
-			AdminNotify("已经放弃管理员权限√");
-			MonitorList.erase({ fromQQ,Private });
-			AdminQQ.erase(fromQQ);
-			return 1;
-		}
-		else if (strOption == "state") {
-			string strReply = getLoginNick();
-			strReply = strReply + "的当前情况" + "\n"
+		if (strOption == "state") {
+			strReply = GlobalMsg["strSelfName"] + "的当前情况" + "\n"
+				+ "Master：" + printQQ(masterQQ) + "\n"
 				+ (ClockToWork.first < 24 ? "定时开启" + printClock(ClockToWork) + "\n" : "")
 				+ (ClockOffWork.first < 24 ? "定时关闭" + printClock(ClockOffWork) + "\n" : "")
 				+ (boolPreserve ? "私用模式" : "公用模式") + "\n"
 				+ (boolNoDiscuss ? "禁用讨论组" : "启用讨论组") + "\n"
 				+ "全局开关：" + (boolDisabledGlobal ? "禁用" : "启用") + "\n"
 				+ "全局.me开关：" + (boolDisabledMeGlobal ? "禁用" : "启用") + "\n"
-				+ "全局.jrrp开关：" + (boolDisabledJrrpGlobal ? "禁用" : "启用") + "\n"
-				+ "所在群聊数：" + to_string(getGroupList().size()) + "\n"
+				+ "全局.jrrp开关：" + (boolDisabledJrrpGlobal ? "禁用" : "启用") + "\n";
+			if (isAdmin) strReply += "所在群聊数：" + to_string(getGroupList().size()) + "\n"
 				+ (DiscussList.size() ? "有记录的讨论组数：" + to_string(DiscussList.size()) + "\n" : "")
 				+ "黑名单用户数：" + to_string(BlackQQ.size()) + "\n"
 				+ "黑名单群数：" + to_string(BlackGroup.size()) + "\n"
 				+ "白名单用户数：" + to_string(WhiteQQ.size()) + "\n"
 				+ "白名单群数：" + to_string(WhiteGroup.size());
-			reply(strReply);
+			reply();
+			return 1;
+		}
+		if (!isAdmin) {
+			reply(GlobalMsg["strNotAdmin"]);
+			return -1;
+		}
+		if (strOption == "delete") {
+			AdminNotify("已经放弃管理员权限√");
+			MonitorList.erase({ fromQQ,Private });
+			AdminQQ.erase(fromQQ);
 			return 1;
 		}
 		else if (strOption == "on") {
@@ -477,10 +481,8 @@ public:
 							reply(printQQ(llTargetID) + "已加入" + GlobalMsg["strSelfName"] + "的黑名单!");
 						}
 						else {
-							BlackQQ.insert(llTargetID);
+							addBlackQQ(llTargetID, strReason);
 							AdminNotify("已将" + printQQ(llTargetID) + "加入黑名单√");
-							strReason.empty() ? AddMsgToQueue(GlobalMsg["strBlackQQAddNotice"], llTargetID)
-								: AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { strReason }), llTargetID);
 						}
 					}
 				} while (llTargetID = readID());
@@ -499,7 +501,7 @@ public:
 		}
 		if (strOption == "groupclr") {
 			std::string strPara = readRest();
-			int intGroupCnt = clearGroup(strPara);
+			int intGroupCnt = clearGroup(strPara, fromQQ);
 			return 1;
 		}
 		else if (strOption == "delete") {
@@ -552,7 +554,7 @@ public:
 		else return AdminEvent(strOption);
 		return 0;
 	}
-	bool DiceReply() {
+	int DiceReply() {
 		intMsgCnt++ ;
 		int intT = (int)fromType;
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
@@ -597,7 +599,46 @@ public:
 			}
 			return 1;
 		}
-		if (strLowerMessage.substr(intMsgCnt, 6) == "master"&&boolMasterMode) {
+		else if (strLowerMessage.substr(intMsgCnt, 7) == "warning") {
+			if (isAdmin || mDiceList.count(fromQQ)) {
+				intMsgCnt += 7;
+				string strWarning = readRest();
+				nlohmann::json jInfo = { {"fromGroup",0},{"time","Unknown"},{"fromQQ",0},{"note","" } };
+				try {
+					jInfo = nlohmann::json::parse(GBKtoUTF8(strWarning));
+				}
+				catch (...) {
+					return -1;
+				}
+				string type = UTF8toGBK(jInfo["type"]);
+				string time = UTF8toGBK(jInfo["time"]);
+				string note = UTF8toGBK(jInfo["note"]);
+				long long blackQQ = jInfo["fromQQ"];
+				long long blackGroup = jInfo["fromGroup"];
+				if (type != "ban" && type != "kick" || (blackGroup&&BlackGroup.count(blackGroup)) && (blackQQ&&BlackQQ.count(blackQQ))) {
+					return 1;
+				}
+				if (!isAdmin)sendAdmin("来自" + printQQ(fromQQ) + ":" + strWarning);
+				strWarning = "!warning" + strWarning;
+				if (blackGroup) {
+					BlackGroup.insert(blackGroup);
+					if (!intT && blackGroup == fromGroup) {
+						setGroupLeave(fromGroup);
+					}
+					else if(getGroupList().count(blackGroup)){
+						AddMsgToQueue(strWarning, blackGroup, Group);
+						Sleep(100);
+						setGroupLeave(blackGroup);
+					}
+				}
+				if (blackQQ) {
+					addBlackQQ(blackQQ, note, strWarning);
+				}
+				return 1;
+			}
+			else return 0;
+		}
+		else if (strLowerMessage.substr(intMsgCnt, 6) == "master"&&boolMasterMode) {
 			intMsgCnt += 6;
 			if (masterQQ == 0) {
 				masterQQ = fromQQ;
@@ -923,7 +964,7 @@ public:
 		else if (strLowerMessage.substr(intMsgCnt, 5) == "admin") 
 		{
 			intMsgCnt += 5;
-			if(isAdmin)return AdminEvent(readPara());
+			return AdminEvent(readPara());
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd")
 		{
@@ -1758,8 +1799,8 @@ public:
 					string strMessage = strMsg.substr(intMsgCnt);
 					if (strMessage == "NULL")strMessage = "";
 					EditedMsg[strName] = strMessage;
-					GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMsg : strMessage;
-					AdminNotify("已自定义" + strName + "的文本");
+					GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMessage : strMessage;
+					isMaster ? reply("已自定义" + strName + "的文本") : AdminNotify("已自定义" + strName + "的文本");
 				}
 			}
 			else {
@@ -3303,6 +3344,7 @@ private:
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 	}
 	string readRest() {
+		readSkipSpace();
 		return strMsg.substr(intMsgCnt);
 	}
 	//读取参数(统一小写)

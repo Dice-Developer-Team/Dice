@@ -6,12 +6,12 @@
 #include "EncodingConvert.h" 
 
 template<typename T>
-T readJson(std::string strJson) {
+typename std::enable_if<!std::is_arithmetic<T>::value, T>::type readJson(std::string strJson) {
 	return UTF8toGBK(strJson);
 }
 
-template<>
-long long readJson(std::string strJson) {
+template<typename T>
+typename std::enable_if<std::is_arithmetic<T>::value, T>::type readJson(std::string strJson) {
 	return stoll(strJson);
 }
 
@@ -23,13 +23,36 @@ std::vector<T> readJVec(std::vector<std::string> vJson) {
 	}
 	return vTmp;
 }
+template<typename T1, typename T2>
+int readJson(std::string strJson, std::map<T1, T2> &mapTmp) {
+	nlohmann::json j;
+	int intCnt;
+	try {
+		j = nlohmann::json::parse(strJson);
+	}
+	catch (...) {
+		return -1;
+	}
+	for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it)
+	{
+		T1 tKey = readJson<T1>(it.key());
+		T2 tVal = readJson<T2>(it.value());
+		mapTmp[tKey] = tVal;
+		intCnt++;
+	}
+	return intCnt;
+}
 
 template<typename T1, typename T2>
 int loadJMap(std::string strLoc, std::map<T1, std::vector<T2>> &mapTmp) {
 	std::ifstream fin(strLoc);
 	if (fin) {
 		nlohmann::json j;
-		fin >> j;
+		try {
+			fin >> j;
+		}catch(...){
+			return -1;
+		}
 		for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it)
 		{
 			T1 tKey = readJson<T1>(it.key());
@@ -40,12 +63,13 @@ int loadJMap(std::string strLoc, std::map<T1, std::vector<T2>> &mapTmp) {
 	}
 	return 0;
 }
-
-std::string writeJson(std::string strJson) {
+template<typename T>
+std::string writeJson(typename std::enable_if<!std::is_arithmetic<T>::value, T>::type strJson) {
 	return GBKtoUTF8(strJson);
 }
 
-std::string writeJson(long long llJson) {
+template<typename T>
+std::string writeJson(typename std::enable_if<std::is_arithmetic<T>::value, T>::type llJson) {
 	return std::to_string(llJson);
 }
 
@@ -53,7 +77,7 @@ template<typename T>
 std::vector<std::string> writeJVec(std::vector<T> vJson) {
 	std::vector<std::string> vTmp;
 	for (auto it : vJson) {
-		vTmp.push_back(writeJson(it));
+		vTmp.push_back(writeJson<T>(it));
 	}
 	return vTmp;
 }
@@ -65,7 +89,7 @@ int saveJMap(std::string strLoc, std::map<T1, std::vector<T2>> mapTmp) {
 	if (fout) {
 		nlohmann::json j;
 		for (auto it : mapTmp) {
-			j[writeJson(it.first)] = writeJVec(it.second);
+			j[writeJson<T1>(it.first)] = writeJVec<T2>(it.second);
 		}
 		fout << j;
 		fout.close();
