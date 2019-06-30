@@ -2721,18 +2721,14 @@ public:
 					while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
 					continue;
 				}
-				string strSkillVal;
-				while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-				{
-					strSkillVal += strLowerMessage[intMsgCnt];
-					intMsgCnt++;
-				}
+				string strSkillVal = readDigit();
 				if (strSkillName.empty() || strSkillVal.empty() || strSkillVal.length() > 3)
 				{
 					boolError = true;
 					break;
 				}
-				CharacterProp[SourceType(fromQQ, GroupT, fromGroup)][strSkillName] = stoi(strSkillVal);
+				int intSkillVal = stoi(strSkillVal);
+				if (SkillDefaultVal.count(strSkillName) && SkillDefaultVal[strSkillName] != intSkillVal)CharacterProp[SourceType(fromQQ, GroupT, fromGroup)][strSkillName] = intSkillVal;
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
 			}
 			if (boolError)
