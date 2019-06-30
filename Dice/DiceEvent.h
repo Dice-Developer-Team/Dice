@@ -990,13 +990,7 @@ public:
 			intMsgCnt += 5;
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
-			string Command;
-			while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isspace(
-				static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			{
-				Command += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
+			string Command=readPara();
 			string strReply;
 			if (Command == "state") {
 				time_t tNow = time(NULL);
@@ -1035,21 +1029,13 @@ public:
 				reply(GlobalMsg["strSelfPermissionErr"]);
 				return 1;
 			}
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-				intMsgCnt++;
-			string QQNum;
-			if (strLowerMessage.substr(intMsgCnt, 10) == "[cq:at,qq=") {
-				intMsgCnt += 10;
-				QQNum = readDigit();
-				intMsgCnt++;
-			}
-			else {
-				QQNum = readDigit();
-			}
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-				intMsgCnt++;
 			if (Command == "ban")
 			{
+				string QQNum = readDigit();
+				if (QQNum.empty()) {
+					reply(GlobalMsg["strQQIDEmpty"]);
+					return -1;
+				}
 				long long llMemberQQ = stoll(QQNum);
 				GroupMemberInfo Member = getGroupMemberInfo(fromGroup, llMemberQQ);
 				if (Member.QQID == llMemberQQ)
@@ -1059,6 +1045,10 @@ public:
 						return 1;
 					}
 					string strMainDice = readDice();
+					if (strMainDice.empty()) {
+						reply(GlobalMsg["strValueErr"]);
+						return -1;
+					}
 					const int intDefaultDice = DefaultDice.count(fromQQ) ? DefaultDice[fromQQ] : 100;
 					RD rdMainDice(strMainDice, intDefaultDice);
 					rdMainDice.Roll();
@@ -3318,6 +3308,10 @@ public:
 				strMsg = strMsg.substr(strAt.length());
 				isCalled = true;
 			}
+			else if (strMsg.substr(0, 14) == "[CQ:at,qq=all]") {
+				strMsg = strMsg.substr(14);
+				isCalled = true;
+			}
 			else
 			{
 				return false;
@@ -3365,6 +3359,7 @@ private:
 			strMum += strMsg[intMsgCnt];
 			intMsgCnt++;
 		}
+		if (strMsg[intMsgCnt] == ']')intMsgCnt++;
 		return strMum;
 	}
 	//∂¡»°»∫∫≈

@@ -131,6 +131,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strObExit","成功退出旁观模式!"},
 	{"strObEnterAlready","已经处于旁观模式!"},
 	{"strObExitAlready","没有加入旁观模式!"},
+	{"strQQIDEmpty","QQ号不能为空×"},
 	{"strGroupIDEmpty","群号不能为空×"},
 	{"strBlackGroup", "该群在黑名单中，如有疑问请联系master"},
 	{"strBotOn","成功开启本机器人!"},
