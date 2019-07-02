@@ -2728,7 +2728,8 @@ public:
 					break;
 				}
 				int intSkillVal = stoi(strSkillVal);
-				if (SkillDefaultVal.count(strSkillName) && SkillDefaultVal[strSkillName] != intSkillVal)CharacterProp[SourceType(fromQQ, GroupT, fromGroup)][strSkillName] = intSkillVal;
+				if (!SkillDefaultVal.count(strSkillName) || SkillDefaultVal[strSkillName] != intSkillVal)CharacterProp[SourceType(fromQQ, GroupT, fromGroup)][strSkillName] = intSkillVal;
+				else if (CharacterProp[SourceType(fromQQ, GroupT, fromGroup)].count(strSkillName))CharacterProp[SourceType(fromQQ, GroupT, fromGroup)].erase(strSkillName);
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
 			}
 			if (boolError)
