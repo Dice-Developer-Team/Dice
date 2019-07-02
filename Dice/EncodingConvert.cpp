@@ -60,7 +60,14 @@ std::string UTF8toGBK(const std::string& strUTF8)
 	delete[] wszGBK;
 	return strTemp;
 }
-
+std::vector<std::string> UTF8toGBK(const std::vector<std::string> &vUTF8)
+{
+	std::vector<std::string> vOutGBK;
+	for (auto it : vUTF8) {
+		vOutGBK.push_back(UTF8toGBK(it));
+	}
+	return vOutGBK;
+}
 unsigned char ToHex(const unsigned char x)
 {
 	return  x > 9 ? x + 55 : x + 48;

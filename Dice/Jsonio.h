@@ -6,20 +6,30 @@
 #include "EncodingConvert.h" 
 
 template<typename T>
-typename std::enable_if<!std::is_arithmetic<T>::value, T>::type readJson(std::string strJson) {
+typename std::enable_if<!std::is_arithmetic<T>::value, T>::type readJKey(std::string strJson) {
 	return UTF8toGBK(strJson);
 }
 
 template<typename T>
-typename std::enable_if<std::is_arithmetic<T>::value, T>::type readJson(std::string strJson) {
+typename std::enable_if<std::is_arithmetic<T>::value, T>::type readJKey(std::string strJson) {
 	return stoll(strJson);
+}
+
+template<typename T>
+typename std::enable_if<!std::is_arithmetic<T>::value, T>::type readJVal(T strJson) {
+	return UTF8toGBK(strJson);
+}
+
+template<typename T>
+typename std::enable_if<std::is_arithmetic<T>::value, T>::type readJVal(T Json) {
+	return Json;
 }
 
 template<typename T>
 std::vector<T> readJVec(std::vector<std::string> vJson) {
 	std::vector<T> vTmp;
 	for (auto it : vJson) {
-		vTmp.push_back(readJson<T>(it));
+		vTmp.push_back(readJVal<T>(it));
 	}
 	return vTmp;
 }
@@ -29,40 +39,43 @@ int readJson(std::string strJson, std::map<T1, T2> &mapTmp) {
 	int intCnt;
 	try {
 		j = nlohmann::json::parse(strJson);
+		for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it)
+		{
+			T1 tKey = readJKey<T1>(it.key());
+			T2 tVal = readJVal<T2>(it.value());
+			mapTmp[tKey] = tVal;
+			intCnt++;
+		}
 	}
 	catch (...) {
 		return -1;
-	}
-	for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it)
-	{
-		T1 tKey = readJson<T1>(it.key());
-		T2 tVal = readJson<T2>(it.value());
-		mapTmp[tKey] = tVal;
-		intCnt++;
 	}
 	return intCnt;
 }
 
 template<typename T1, typename T2>
-int loadJMap(std::string strLoc, std::map<T1, std::vector<T2>> &mapTmp) {
+int loadJMap(std::string strLoc, std::map<T1, T2> &mapTmp) {
 	std::ifstream fin(strLoc);
 	if (fin) {
 		nlohmann::json j;
 		try {
 			fin >> j;
-		}catch(...){
+			for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it)
+			{
+				T1 tKey = readJKey<T1>(it.key());
+				T2 tVal = readJVal<T2>(it.value());
+				mapTmp[tKey] = tVal;
+			}
+		}
+		catch (...) {
+			fin.close();
 			return -1;
 		}
-		for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it)
-		{
-			T1 tKey = readJson<T1>(it.key());
-			std::vector <T2> tVal = readJVec<T2>(it.value());
-			mapTmp[tKey] = tVal;
-		}
-		fin.close();
 	}
+	fin.close();
 	return 0;
 }
+
 template<typename T>
 std::string writeJson(typename std::enable_if<!std::is_arithmetic<T>::value, T>::type strJson) {
 	return GBKtoUTF8(strJson);

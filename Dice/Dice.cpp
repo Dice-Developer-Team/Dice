@@ -713,8 +713,10 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 		else if(getGroupMemberInfo(fromGroup,getLoginQQ()).permissions>1)strNote += "（群内有权限）";
 		else {
 			AddMsgToQueue("发现黑名单用户" + printQQ(beingOperateQQ) + "入群,将预防性退群", Group);
+			strNote += "（已退群）";
 			Sleep(100);
 			setGroupLeave(fromGroup);
+			sendAdmin(strNote);
 		}
 	}
 	else if(beingOperateQQ == getLoginQQ()){
