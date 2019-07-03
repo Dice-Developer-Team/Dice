@@ -113,11 +113,11 @@ public:
 	int AdminEvent(string strOption) {
 		if (boolConsole.count(strOption)){
 			string strBool=readDigit();
-			if (strBool.empty())reply("该项当前正" + boolConsole[strOption] ? "开启" : "关闭");
+			if (strBool.empty())boolConsole[strOption] ? reply("该项当前正开启") : reply("该项当前正关闭");
 			else {
 				bool isOn = stoi(strBool);
 				boolConsole[strOption] = isOn;
-				AdminNotify("已" + isOn ? "开启" : "关闭" + strOption);
+				isOn ? AdminNotify("已开启" + strOption) : AdminNotify("已关闭" + strOption);
 			}
 			return 1;
 		}
@@ -504,7 +504,7 @@ public:
 		}
 	}
 	int MasterSet() {
-		std::string strOption = readPara();
+		std::string strOption = readUntilSpace();
 		if (strOption.empty()) {
 			reply("有什么事么" + getName(fromQQ));
 			return -1;
@@ -974,7 +974,7 @@ public:
 		else if (strLowerMessage.substr(intMsgCnt, 5) == "admin") 
 		{
 			intMsgCnt += 5;
-			return AdminEvent(readPara());
+			return AdminEvent(readUntilSpace());
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd")
 		{
@@ -3343,6 +3343,15 @@ private:
 	//跳过空格
 	void readSkipSpace() {
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+	}
+	string readUntilSpace() {
+		string strPara;
+		readSkipSpace(); 
+		while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && intMsgCnt != strLowerMessage.length()) {
+			strPara += strMsg[intMsgCnt];
+			intMsgCnt++;
+		}
+		return strPara;
 	}
 	string readRest() {
 		readSkipSpace();
