@@ -27,8 +27,16 @@
 #include <vector>
 std::string GBKtoUTF8(const std::string& strGBK);
 std::vector<std::string> GBKtoUTF8(const std::vector<std::string> &strGBK);
+template<typename T>
+T GBKtoUTF8(T TGBK) {
+	return TGBK;
+}
 std::string UTF8toGBK(const std::string& strUTF8);
 std::vector<std::string> UTF8toGBK(const std::vector<std::string> &strUTF8);
+template<typename T>
+T UTF8toGBK(T TUTF8) {
+	return TUTF8;
+}
 std::string UrlEncode(const std::string& str);
 std::string UrlDecode(const std::string& str);
 #endif /*DICE_ENCODING_CONVERT*/

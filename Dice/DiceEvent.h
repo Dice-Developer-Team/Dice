@@ -610,9 +610,9 @@ public:
 				catch (...) {
 					return -1;
 				}
-				string type = readJVal<string>(jInfo["type"]);
-				string time = readJVal<string>(jInfo["time"]);
-				string note = readJVal<string>(jInfo["note"]);
+				string type = readJKey<string>(jInfo["type"]);
+				string time = readJKey<string>(jInfo["time"]);
+				string note = readJKey<string>(jInfo["note"]);
 				long long blackQQ = jInfo["fromQQ"];
 				long long blackGroup = jInfo["fromGroup"];
 				if (type != "ban" && type != "kick" || (blackGroup&&BlackGroup.count(blackGroup)) && (blackQQ&&BlackQQ.count(blackQQ))) {
