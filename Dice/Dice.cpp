@@ -93,7 +93,7 @@ void dataBackUp() {
 	//备份MasterQQ
 	if (!boolStandByMe) {
 		ofstream ofstreamMaster(strFileLoc + "Master.RDconf", ios::out | ios::trunc);
-		ofstreamMaster << masterQQ << std::endl << boolMasterMode << std::endl << boolDisabledGlobal << std::endl << boolDisabledMeGlobal << std::endl << boolPreserve << std::endl << boolDisabledJrrpGlobal << std::endl << boolNoDiscuss << std::endl;
+		ofstreamMaster << masterQQ << std::endl << boolMasterMode << std::endl << boolConsole["DisabledGlobal"] << std::endl << boolConsole["DisabledMe"] << std::endl << boolConsole["Private"] << std::endl << boolConsole["DisabledJrrp"] << std::endl << boolConsole["LeaveDiscuss"] << std::endl;
 		ofstreamMaster << ClockToWork.first << " " << ClockToWork.second << endl
 			<< ClockOffWork.first << " " << ClockOffWork.second << endl;
 		ofstreamMaster.close();
@@ -110,6 +110,7 @@ void dataBackUp() {
 		if (it.first)ofstreamMonitorList << it.first << " " << it.second << std::endl;
 	}
 	ofstreamMonitorList.close();
+	saveJMap(strFileLoc + "boolConsole.json", boolConsole);
 	//备份个性化语句
 	ofstream ofstreamPersonalMsg(strFileLoc + "PersonalMsg.RDconf", ios::out | ios::trunc);
 	for (auto it = PersonalMsg.begin(); it != PersonalMsg.end(); ++it)
@@ -220,7 +221,7 @@ EVE_Enable(eventEnable)
 	ifstream ifstreamMaster(strFileLoc + "Master.RDconf");
 	if (ifstreamMaster)
 	{
-		ifstreamMaster >> masterQQ >> boolMasterMode >> boolDisabledGlobal >> boolDisabledMeGlobal >> boolPreserve >> boolDisabledJrrpGlobal >> boolNoDiscuss
+		ifstreamMaster >> masterQQ >> boolMasterMode >> boolConsole["DisabledGlobal"] >> boolConsole["DisabledMe"] >> boolConsole["Private"] >> boolConsole["DisabledJrrp"] >> boolConsole["LeaveDiscuss"]
 			>> ClockToWork.first >> ClockToWork.second >> ClockOffWork.first >> ClockOffWork.second;
 	}
 	ifstreamMaster.close();
@@ -252,6 +253,8 @@ EVE_Enable(eventEnable)
 		MonitorList.insert({ 754494359 ,Group });
 	}
 	ifstreamMonitorList.close();
+	//获取boolConsole
+	loadJMap(strFileLoc + "boolConsole.json", boolConsole);
 	getDiceList();
 	ifstream ifstreamCharacterProp(strFileLoc + "CharacterProp.RDconf");
 	if (ifstreamCharacterProp)
@@ -643,6 +646,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			if (WhiteGroup.count(eve.fromGroup))WhiteGroup.erase(eve.fromGroup);
 			//setGroupLeave(eve.fromGroup);
 			string strWarning = "!warning{\n\"fromGroup\":" + to_string(eve.fromGroup) + ",\n\"type\":\"ban\",\n\"time\":\"" + printSTime(stNow) + "\",\n\"DiceMaid\":" + to_string(getLoginQQ()) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"" + strNote + "\"\n}";
+			while (strWarning.find('\"') != string::npos)strWarning.replace(strWarning.find('\"'), 1, "\'"); NotifyMonitor(strWarning);
 			if (getGroupMemberInfo(eve.fromGroup, getLoginQQ()).permissions == 2)strWarning = "!warning{\n\"fromGroup\":" + to_string(eve.fromGroup) + "\",\n\"type\":\"ban\",\n\"fromQQ\":\"" + to_string(fromQQ) + "\",\n\"time\":\"" + printSTime(stNow) + "\",\n\"DiceMaid\":\"" + to_string(getLoginQQ()) + "\",\n\"masterQQ\":\"" + to_string(masterQQ) + "\",\n\"note\":\"" + eve.message + "\"\n}";
 			NotifyMonitor(strWarning);
 		}
@@ -657,7 +661,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 EVE_DiscussMsg_EX(eventDiscussMsg)
 {
 	time_t tNow = time(NULL);
-	if (boolNoDiscuss) {
+	if (boolConsole["LeaveDiscuss"]) {
 		AddMsgToQueue(GlobalMsg["strNoDiscuss"], eve.fromDiscuss, Discuss);
 		Sleep(1000);
 		setDiscussLeave(eve.fromDiscuss);
@@ -710,21 +714,21 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 	if (beingOperateQQ != getLoginQQ() && BlackQQ.count(beingOperateQQ)) {
 		string strNote = printGroup(fromGroup) + "发现黑名单用户" + printQQ(beingOperateQQ) + "入群";
 		if (WhiteGroup.count(fromGroup))strNote += "（群在白名单中）";
-		else if(getGroupMemberInfo(fromGroup,getLoginQQ()).permissions>1)strNote += "（群内有权限）";
-		else {
+		else if (getGroupMemberInfo(fromGroup, getLoginQQ()).permissions > 1)strNote += "（群内有权限）";
+		else if (boolConsole["LeaveBlackQQ"]) {
 			AddMsgToQueue("发现黑名单用户" + printQQ(beingOperateQQ) + "入群,将预防性退群", Group);
 			strNote += "（已退群）";
 			Sleep(100);
 			setGroupLeave(fromGroup);
-			sendAdmin(strNote);
 		}
+		sendAdmin(strNote);
 	}
 	else if(beingOperateQQ == getLoginQQ()){
 		if (BlackGroup.count(fromGroup)) {
 			AddMsgToQueue(GlobalMsg["strBlackGroup"], fromGroup, Group);
 			setGroupLeave(fromGroup);
 		}
-		else if (boolPreserve&&WhiteGroup.count(fromGroup)==0) 
+		else if (boolConsole["Private"]&&WhiteGroup.count(fromGroup)==0) 
 		{	//避免小群绕过邀请没加上白名单
 			if (fromQQ == masterQQ || WhiteQQ.count(fromQQ) || getGroupMemberInfo(fromGroup, masterQQ).QQID == masterQQ) {
 				WhiteGroup.insert(fromGroup);
@@ -761,6 +765,7 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 		}
 		BlackGroup.insert(fromGroup);
 		string strWarning = "!warning{\n\"fromGroup\":" + to_string(fromGroup) + ",\n\"type\":\"kick\",\n\"fromQQ\":" + to_string(fromQQ) + ",\n\"time\":\"" + strNow + "\",\n\"DiceMaid\":" + to_string(beingOperateQQ) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"" + strNote + "\"\n}";
+		while (strWarning.find('\"') != string::npos)strWarning.replace(strWarning.find('\"'), 1, "\'");
 		NotifyMonitor(strWarning);
 		addBlackQQ(fromQQ, strNote, strWarning);
 	}
@@ -768,7 +773,7 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 		string strNow = printSTime(stNow);
 		string strNote = strNow + " " + printQQ(fromQQ) + "将" + printQQ(beingOperateQQ) + "移出了群" + to_string(fromGroup);
 		string strWarning = "!warning{\n\"fromGroup\":" + to_string(fromGroup) + ",\n\"type\":\"kick\",\n\"fromQQ\":" + to_string(fromQQ) + ",\n\"time\":\"" + strNow + "\",\n\"DiceMaid\":" + to_string(beingOperateQQ) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"" + strNote + "\"\n}";
-		NotifyMonitor(strWarning);
+		while (strWarning.find('\"') != string::npos)strWarning.replace(strWarning.find('\"'), 1, "\'"); NotifyMonitor(strWarning);
 		if (WhiteGroup.count(fromGroup)) {
 			WhiteGroup.erase(fromGroup);
 		}
@@ -801,7 +806,7 @@ EVE_Request_AddGroup(eventGroupInvited) {
 				setGroupAddRequest(responseFlag, 2, 1, "");
 				mGroupInviter[fromGroup] = fromQQ;
 			}
-			else if (boolPreserve) {
+			else if (boolConsole["Private"]) {
 				strMsg += "\n已拒绝（当前在私用模式）";
 				setGroupAddRequest(responseFlag, 2, 2, "");
 			}

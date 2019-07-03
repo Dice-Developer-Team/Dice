@@ -35,16 +35,9 @@ using namespace CQ;
 	long long masterQQ = 0;
 set<long long> AdminQQ = {};
 set<chatType> MonitorList = {};
-	//全局静默
-	bool boolDisabledGlobal = false;
-	//全局禁用.me
-	bool boolDisabledMeGlobal = false;
-	//全局禁用.jrrp
-	bool boolDisabledJrrpGlobal = false;
-	//私用模式
-	bool boolPreserve = false;
-	//禁用讨论组
-	bool boolNoDiscuss = false;
+std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},{"DisabledMe",false},{"DisabledJrrp",false},
+{"Private",false},{"LeaveDiscuss",false},
+{"LeaveBlackQQ",true},{"AllowStranger",true} };
 //骰娘列表
 std::map<long long, long long> mDiceList;
 	//讨论组消息记录
@@ -161,13 +154,14 @@ void checkBlackQQ(long long llQQ, std::string strWarning) {
 			else if (WhiteGroup.count(eachGroup.first)) {
 				strNotice += "群在白名单中";
 			}
-			else {
-				AddMsgToQueue(strWarning, eachGroup.first, Group);
+			else if (boolConsole["LeaveBlackQQ"]) {
 				AddMsgToQueue("发现新增黑名单成员" + printQQ(llQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first, Group);
 				strNotice += "已退群";
 				Sleep(1000);
 				setGroupLeave(eachGroup.first);
 			}
+			else
+				AddMsgToQueue(strWarning, eachGroup.first, Group);
 			intCnt++;
 		}
 	}
@@ -194,12 +188,12 @@ void addBlackQQ(long long llQQ, std::string strReason, std::string strNotice) {
 			//分钟时点变动
 			if (stTmp.wMinute != stNow.wMinute) {
 				stTmp = stNow;
-				if (stNow.wHour == ClockOffWork.first&&stNow.wMinute == ClockOffWork.second && !boolDisabledGlobal) {
-					boolDisabledGlobal = true;
+				if (stNow.wHour == ClockOffWork.first&&stNow.wMinute == ClockOffWork.second && !boolConsole["DisabledGlobal"]) {
+					boolConsole["DisabledGlobal"] = true;
 					NotifyMonitor(GlobalMsg["strSelfName"] + GlobalMsg["strClockOffWork"]);
 				}
-				if (stNow.wHour == ClockToWork.first&&stNow.wMinute == ClockToWork.second&&boolDisabledGlobal) {
-					boolDisabledGlobal = false;
+				if (stNow.wHour == ClockToWork.first&&stNow.wMinute == ClockToWork.second&&boolConsole["DisabledGlobal"]) {
+					boolConsole["DisabledGlobal"] = false;
 					NotifyMonitor(GlobalMsg["strSelfName"] + GlobalMsg["strClockToWork"]);
 				}
 				if (stNow.wHour == 5 && stNow.wMinute == 0) {
@@ -274,19 +268,20 @@ void addBlackQQ(long long llQQ, std::string strReason, std::string strNotice) {
 							strReply += "\n" + printGroup(eachGroup.first) + "：" + printQQ(eachQQ.QQID) + "对方群权限较高";
 							Sleep(10);
 							setGroupLeave(eachGroup.first);
+							intCnt++;
 							break;
 						}
 						else if (WhiteGroup.count(eachGroup.first)) {
 							continue;
 						}
-						else {
+						else if (boolConsole["LeaveBlackQQ"]) {
 							AddMsgToQueue("发现黑名单成员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first);
 							strReply += "\n" + printGroup(eachGroup.first) + "：" + printQQ(eachQQ.QQID);
-							Sleep(100);
+							Sleep(10);
 							setGroupLeave(eachGroup.first);
+							intCnt++;
 							break;
 						}
-						intCnt++;
 					}
 				}
 			}
@@ -329,12 +324,12 @@ EVE_Menu(eventClearGroup30) {
 	return 0;
 }
 EVE_Menu(eventGlobalSwitch) {
-	if (boolDisabledGlobal) {
-		boolDisabledGlobal = false;
+	if (boolConsole["DisabledGlobal"]) {
+		boolConsole["DisabledGlobal"] = false;
 		MessageBoxA(nullptr, "骰娘已结束静默√", "全局开关", MB_OK | MB_ICONINFORMATION);
 	}
 	else {
-		boolDisabledGlobal = true;
+		boolConsole["DisabledGlobal"] = true;
 		MessageBoxA(nullptr, "骰娘已全局静默√", "全局开关", MB_OK | MB_ICONINFORMATION);
 	}
 
@@ -351,6 +346,10 @@ EVE_Request_AddFriend(eventAddFriend) {
 		setFriendAddRequest(responseFlag, 1, "");
 		GlobalMsg["strAddFriendWhiteQQ"].empty() ? AddMsgToQueue(GlobalMsg["strAddFriend"], fromQQ)
 			: AddMsgToQueue(GlobalMsg["strAddFriendWhiteQQ"], fromQQ);
+	}
+	else if (boolConsole["Private"]&& !boolConsole["AllowStranger"]) {
+		strMsg += "，已拒绝（当前在私用模式）";
+		setFriendAddRequest(responseFlag, 2, "");
 	}
 	else {
 		strMsg += "，已同意";

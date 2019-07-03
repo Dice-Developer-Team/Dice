@@ -21,16 +21,8 @@
 	extern std::set<long long> AdminQQ;
 	//监控窗口列表
 	extern std::set<std::pair<long long, CQ::msgtype>> MonitorList;
-	//全部群静默
-	extern bool boolDisabledGlobal;
-	//全局禁用.ME
-	extern bool boolDisabledMeGlobal;
-	//全局禁用.jrrp
-	extern bool boolDisabledJrrpGlobal;
-	//独占模式：被拉进讨论组或Master不在的群则秒退
-	extern bool boolPreserve;
-	//自动退出一切讨论组
-	extern bool boolNoDiscuss;
+	//各类全局开关
+	extern std::map<std::string, bool>boolConsole;
 	//骰娘列表
 	extern std::map<long long, long long> mDiceList;
 	//讨论组消息记录

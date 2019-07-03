@@ -111,16 +111,26 @@ public:
 		}
 	}
 	int AdminEvent(string strOption) {
+		if (boolConsole.count(strOption)){
+			string strBool=readDigit();
+			if (strBool.empty())reply("该项当前正" + boolConsole[strOption] ? "开启" : "关闭");
+			else {
+				bool isOn = stoi(strBool);
+				boolConsole[strOption] = isOn;
+				AdminNotify("已" + isOn ? "开启" : "关闭" + strOption);
+			}
+			return 1;
+		}
 		if (strOption == "state") {
 			strReply = GlobalMsg["strSelfName"] + "的当前情况" + "\n"
 				+ "Master：" + printQQ(masterQQ) + "\n"
 				+ (ClockToWork.first < 24 ? "定时开启" + printClock(ClockToWork) + "\n" : "")
 				+ (ClockOffWork.first < 24 ? "定时关闭" + printClock(ClockOffWork) + "\n" : "")
-				+ (boolPreserve ? "私用模式" : "公用模式") + "\n"
-				+ (boolNoDiscuss ? "禁用讨论组" : "启用讨论组") + "\n"
-				+ "全局开关：" + (boolDisabledGlobal ? "禁用" : "启用") + "\n"
-				+ "全局.me开关：" + (boolDisabledMeGlobal ? "禁用" : "启用") + "\n"
-				+ "全局.jrrp开关：" + (boolDisabledJrrpGlobal ? "禁用" : "启用") + "\n";
+				+ (boolConsole["Private"] ? "私用模式" : "公用模式") + "\n"
+				+ (boolConsole["LeaveDiscuss"] ? "禁用讨论组" : "启用讨论组") + "\n"
+				+ "全局开关：" + (boolConsole["DisabledGlobal"] ? "禁用" : "启用") + "\n"
+				+ "全局.me开关：" + (boolConsole["DisabledMe"] ? "禁用" : "启用") + "\n"
+				+ "全局.jrrp开关：" + (boolConsole["DisabledJrrp"] ? "禁用" : "启用") + "\n";
 			if (isAdmin) strReply += "所在群聊数：" + to_string(getGroupList().size()) + "\n"
 				+ (DiscussList.size() ? "有记录的讨论组数：" + to_string(DiscussList.size()) + "\n" : "")
 				+ "黑名单用户数：" + to_string(BlackQQ.size()) + "\n"
@@ -141,8 +151,8 @@ public:
 			return 1;
 		}
 		else if (strOption == "on") {
-			if (boolDisabledGlobal) {
-				boolDisabledGlobal = false;
+			if (boolConsole["DisabledGlobal"]) {
+				boolConsole["DisabledGlobal"] = false;
 				AdminNotify("已全局开启" + GlobalMsg["strSelfName"]);
 			}
 			else {
@@ -151,18 +161,18 @@ public:
 			return 1;
 		}
 		else if (strOption == "off") {
-			if (boolDisabledGlobal) {
+			if (boolConsole["DisabledGlobal"]) {
 				reply(GlobalMsg["strSelfName"] + "已经静默！");
 			}
 			else {
-				boolDisabledGlobal = true;
+				boolConsole["DisabledGlobal"] = true;
 				AdminNotify("已全局关闭" + GlobalMsg["strSelfName"]);
 			}
 			return 1;
 		}
 		else if (strOption == "meon") {
-			if (boolDisabledMeGlobal) {
-				boolDisabledMeGlobal = false;
+			if (boolConsole["DisabledMe"]) {
+				boolConsole["DisabledMe"] = false;
 				AdminNotify("已令" + GlobalMsg["strSelfName"] + "全局启用.me√");
 			}
 			else {
@@ -171,18 +181,18 @@ public:
 			return 1;
 		}
 		else if (strOption == "meoff") {
-			if (boolDisabledMeGlobal) {
+			if (boolConsole["DisabledMe"]) {
 				reply(GlobalMsg["strSelfName"] + "已禁用.me！");
 			}
 			else {
-				boolDisabledMeGlobal = true;
+				boolConsole["DisabledMe"] = true;
 				AdminNotify("已令" + GlobalMsg["strSelfName"] + "全局禁用.me√");
 			}
 			return 1;
 		}
 		else if (strOption == "jrrpon") {
-			if (boolDisabledMeGlobal) {
-				boolDisabledMeGlobal = false;
+			if (boolConsole["DisabledMe"]) {
+				boolConsole["DisabledMe"] = false;
 				AdminNotify("已令" + GlobalMsg["strSelfName"] + "全局启用.jrrp√");
 			}
 			else {
@@ -191,18 +201,18 @@ public:
 			return 1;
 		}
 		else if (strOption == "jrrpoff") {
-			if (boolDisabledMeGlobal) {
+			if (boolConsole["DisabledMe"]) {
 				reply(GlobalMsg["strSelfName"] + "已禁用.jrrp！");
 			}
 			else {
-				boolDisabledMeGlobal = true;
+				boolConsole["DisabledMe"] = true;
 				AdminNotify("已令" + GlobalMsg["strSelfName"] + "全局禁用.jrrp√");
 			}
 			return 1;
 		}
 		else if (strOption == "discusson") {
-			if (boolNoDiscuss) {
-				boolNoDiscuss = false;
+			if (boolConsole["LeaveDiscuss"]) {
+				boolConsole["LeaveDiscuss"] = false;
 				AdminNotify("已关闭讨论组自动退出√");
 			}
 			else {
@@ -211,28 +221,28 @@ public:
 			return 1;
 		}
 		else if (strOption == "discussoff") {
-			if (boolNoDiscuss) {
+			if (boolConsole["LeaveDiscuss"]) {
 				reply(GlobalMsg["strSelfName"] + "已开启讨论组自动退出！");
 			}
 			else {
-				boolNoDiscuss = true;
+				boolConsole["LeaveDiscuss"] = true;
 				AdminNotify("已开启讨论组自动退出√");
 			}
 			return 1;
 		}
 		else if (strOption == "only") {
-		if (boolPreserve) {
+		if (boolConsole["Private"]) {
 			reply(GlobalMsg["strSelfName"] + "已成为私用骰娘！");
 		}
 		else {
-			boolPreserve = true;
+			boolConsole["Private"] = true;
 			AdminNotify("已将" + GlobalMsg["strSelfName"] + "变为私用√");
 		}
 		return 1;
 			}
 		else if (strOption == "public") {
-		if (boolPreserve) {
-			boolPreserve = false;
+		if (boolConsole["Private"]) {
+			boolConsole["Private"] = false;
 			AdminNotify("已将" + GlobalMsg["strSelfName"] + "变为公用√");
 		}
 		else {
@@ -746,7 +756,7 @@ public:
 			}
 			return 1;
 		}
-		if (boolDisabledGlobal && (!isAdmin || !isCalled)) {
+		if (boolConsole["DisabledGlobal"] && (!isAdmin || !isCalled)) {
 			if (intT == PrivateT)reply(GlobalMsg["strGlobalOff"]);
 			return 1;
 		}
@@ -1007,9 +1017,9 @@ public:
 				}
 				strReply += getGroupList()[fromGroup] + "——本群现状:\n"
 					+ "群号:" + to_string(fromGroup) + "\n"
-					+ GlobalMsg["strSelfName"] + "在本群状态：" + (DisabledGroup.count(fromGroup) ? "禁用" : "启用") + (boolDisabledGlobal ? "（全局静默中）" : "") + "\n"
-					+ ".me：" + (DisabledMEGroup.count(fromGroup) ? "禁用" : "启用") + (boolDisabledMeGlobal ? "（全局禁用中）" : "") + "\n"
-					+ ".jrrp：" + (DisabledJRRPGroup.count(fromGroup) ? "禁用" : "启用") + (boolDisabledJrrpGlobal ? "（全局禁用中）" : "") + "\n"
+					+ GlobalMsg["strSelfName"] + "在本群状态：" + (DisabledGroup.count(fromGroup) ? "禁用" : "启用") + (boolConsole["DisabledGlobal"] ? "（全局静默中）" : "") + "\n"
+					+ ".me：" + (DisabledMEGroup.count(fromGroup) ? "禁用" : "启用") + (boolConsole["DisabledMe"] ? "（全局禁用中）" : "") + "\n"
+					+ ".jrrp：" + (DisabledJRRPGroup.count(fromGroup) ? "禁用" : "启用") + (boolConsole["DisabledJrrp"] ? "（全局禁用中）" : "") + "\n"
 					+ (DisabledHELPGroup.count(fromGroup) ? "已禁用.help\n" : "") 
 					+ (DisabledOBGroup.count(fromGroup) ? "已禁用旁观模式\n" : "")
 					+ (mGroupInviter.count(fromGroup) ? "邀请者" + printQQ(mGroupInviter[fromGroup]) + "\n" : "")
@@ -1339,7 +1349,7 @@ public:
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
 		{
-			if (boolDisabledJrrpGlobal) {
+			if (boolConsole["DisabledJrrp"]) {
 				reply(GlobalMsg["strDisabledJrrpGlobal"]);
 				return 1;
 			}
@@ -1924,7 +1934,7 @@ public:
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
 		{
-			if (boolDisabledMeGlobal)
+			if (boolConsole["DisabledMe"])
 			{
 				reply(GlobalMsg["strDisabledMeGlobal"]);
 				return 1;
