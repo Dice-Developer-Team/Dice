@@ -111,16 +111,6 @@ public:
 		}
 	}
 	int AdminEvent(string strOption) {
-		if (boolConsole.count(strOption)){
-			string strBool=readDigit();
-			if (strBool.empty())boolConsole[strOption] ? reply("该项当前正开启") : reply("该项当前正关闭");
-			else {
-				bool isOn = stoi(strBool);
-				boolConsole[strOption] = isOn;
-				isOn ? AdminNotify("已开启" + strOption) : AdminNotify("已关闭" + strOption);
-			}
-			return 1;
-		}
 		if (strOption == "state") {
 			strReply = GlobalMsg["strSelfName"] + "的当前情况" + "\n"
 				+ "Master：" + printQQ(masterQQ) + "\n"
@@ -130,8 +120,8 @@ public:
 				+ (boolConsole["LeaveDiscuss"] ? "禁用讨论组" : "启用讨论组") + "\n"
 				+ "全局开关：" + (boolConsole["DisabledGlobal"] ? "禁用" : "启用") + "\n"
 				+ "全局.me开关：" + (boolConsole["DisabledMe"] ? "禁用" : "启用") + "\n"
-				+ "全局.jrrp开关：" + (boolConsole["DisabledJrrp"] ? "禁用" : "启用") + "\n";
-			if (isAdmin) strReply += "所在群聊数：" + to_string(getGroupList().size()) + "\n"
+				+ "全局.jrrp开关：" + (boolConsole["DisabledJrrp"] ? "禁用" : "启用");
+			if (isAdmin) strReply += "\n所在群聊数：" + to_string(getGroupList().size()) + "\n"
 				+ (DiscussList.size() ? "有记录的讨论组数：" + to_string(DiscussList.size()) + "\n" : "")
 				+ "黑名单用户数：" + to_string(BlackQQ.size()) + "\n"
 				+ "黑名单群数：" + to_string(BlackGroup.size()) + "\n"
@@ -144,7 +134,17 @@ public:
 			reply(GlobalMsg["strNotAdmin"]);
 			return -1;
 		}
-		if (strOption == "delete") {
+		if (boolConsole.count(strOption)) {
+			string strBool = readDigit();
+			if (strBool.empty())boolConsole[strOption] ? reply("该项当前正开启") : reply("该项当前正关闭");
+			else {
+				bool isOn = stoi(strBool);
+				boolConsole[strOption] = isOn;
+				isOn ? AdminNotify("已开启" + strOption) : AdminNotify("已关闭" + strOption);
+			}
+			return 1;
+		}
+		else if (strOption == "delete") {
 			AdminNotify("已经放弃管理员权限√");
 			MonitorList.erase({ fromQQ,Private });
 			AdminQQ.erase(fromQQ);
@@ -168,6 +168,16 @@ public:
 				boolConsole["DisabledGlobal"] = true;
 				AdminNotify("已全局关闭" + GlobalMsg["strSelfName"]);
 			}
+			return 1;
+		}
+		else if (strOption == "dicelist")
+		{
+			getDiceList();
+			strReply = "当前骰娘列表：";
+			for (auto it : mDiceList) {
+				strReply += "\n" + printQQ(it.first);
+			}
+			reply();
 			return 1;
 		}
 		else if (strOption == "meon") {
@@ -613,9 +623,12 @@ public:
 			if (isAdmin || mDiceList.count(fromQQ)) {
 				intMsgCnt += 7;
 				string strWarning = readRest();
-				nlohmann::json jInfo = { {"fromGroup",0},{"time","Unknown"},{"fromQQ",0},{"note","" } };
+				long long blackQQ,blackGroup;
+				nlohmann::json jInfo = { {"type","Unknown"},{"fromGroup",0},{"time","Unknown"},{"fromQQ",0},{"note","" } };
 				try {
 					jInfo = nlohmann::json::parse(GBKtoUTF8(strWarning));
+					blackQQ = jInfo["fromQQ"];
+					blackGroup = jInfo["fromGroup"];
 				}
 				catch (...) {
 					return -1;
@@ -623,8 +636,6 @@ public:
 				string type = readJKey<string>(jInfo["type"]);
 				string time = readJKey<string>(jInfo["time"]);
 				string note = readJKey<string>(jInfo["note"]);
-				long long blackQQ = jInfo["fromQQ"];
-				long long blackGroup = jInfo["fromGroup"];
 				if (type != "ban" && type != "kick" || (blackGroup&&BlackGroup.count(blackGroup)) && (blackQQ&&BlackQQ.count(blackQQ))) {
 					return 1;
 				}
@@ -688,7 +699,7 @@ public:
 				if (Command == "on")
 				{
 					if (fromType == Group) {
-						if (getGroupMemberInfo(fromGroup, fromQQ).permissions >= 2)
+						if (isAuth)
 						{
 							if (DisabledGroup.count(fromGroup))
 							{
@@ -720,7 +731,7 @@ public:
 				else if (Command == "off")
 				{
 					if (fromType == Group) {
-						if (getGroupMemberInfo(fromGroup, fromQQ).permissions >= 2)
+						if (isAuth)
 						{
 							if (!DisabledGroup.count(fromGroup))
 							{
@@ -903,7 +914,7 @@ public:
 			intMsgCnt += 7;
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
-			if (getGroupMemberInfo(fromGroup, fromQQ).permissions >= 2)
+			if (isAuth)
 			{
 				string strWelcomeMsg = strMsg.substr(intMsgCnt);
 				if (strWelcomeMsg.empty())
@@ -1022,6 +1033,7 @@ public:
 					+ ".jrrp：" + (DisabledJRRPGroup.count(fromGroup) ? "禁用" : "启用") + (boolConsole["DisabledJrrp"] ? "（全局禁用中）" : "") + "\n"
 					+ (DisabledHELPGroup.count(fromGroup) ? "已禁用.help\n" : "") 
 					+ (DisabledOBGroup.count(fromGroup) ? "已禁用旁观模式\n" : "")
+					+ "COC房规：" + (mDefaultCOC.count({ fromGroup,Group }) ? to_string(mDefaultCOC[{ fromGroup, Group }])+"\n" : "未设置\n")
 					+ (mGroupInviter.count(fromGroup) ? "邀请者" + printQQ(mGroupInviter[fromGroup]) + "\n" : "")
 					+ "入群欢迎:" + (WelcomeMsg.count(fromGroup) ? "已设置" : "未设置")
 					+ (sInact.size() ? "\n30天不活跃群员数：" + to_string(sInact.size()) : "");

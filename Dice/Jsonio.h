@@ -23,7 +23,8 @@ int readJson(std::string strJson, std::map<T1, T2> &mapTmp) {
 		for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it)
 		{
 			T1 tKey = readJKey<T1>(it.key());
-			T2 tVal = UTF8toGBK<T2>(it.value());
+			T2 tVal = it.value();
+			tVal = UTF8toGBK(tVal);
 			mapTmp[tKey] = tVal;
 			intCnt++;
 		}
@@ -44,7 +45,8 @@ int loadJMap(std::string strLoc, std::map<T1, T2> &mapTmp) {
 			for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it)
 			{
 				T1 tKey = readJKey<T1>(it.key());
-				T2 tVal = UTF8toGBK<T2>(it.value());
+				T2 tVal = it.value();
+				tVal = UTF8toGBK(tVal);
 				mapTmp[tKey] = tVal;
 			}
 		}
@@ -73,7 +75,7 @@ int saveJMap(std::string strLoc, std::map<T1, T2> mapTmp) {
 	if (fout) {
 		nlohmann::json j;
 		for (auto it : mapTmp) {
-			j[writeJKey<T1>(it.first)] = GBKtoUTF8<T2>(it.second);
+			j[writeJKey<T1>(it.first)] = GBKtoUTF8(it.second);
 		}
 		fout << j;
 		fout.close();

@@ -37,7 +37,9 @@ set<long long> AdminQQ = {};
 set<chatType> MonitorList = {};
 std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},{"DisabledMe",false},{"DisabledJrrp",false},
 {"Private",false},{"LeaveDiscuss",false},
-{"LeaveBlackQQ",true},{"AllowStranger",true} };
+{"LeaveBlackQQ",true},{"AllowStranger",true},
+{"BannedBanOwner",true},{"BannedInviter",true},{"BannedLeave",false},
+{"KickedBanInviter",false} };
 //骰娘列表
 std::map<long long, long long> mDiceList;
 	//讨论组消息记录
@@ -155,6 +157,7 @@ void checkBlackQQ(long long llQQ, std::string strWarning) {
 				strNotice += "群在白名单中";
 			}
 			else if (boolConsole["LeaveBlackQQ"]) {
+				AddMsgToQueue(strWarning, eachGroup.first, Group); 
 				AddMsgToQueue("发现新增黑名单成员" + printQQ(llQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first, Group);
 				strNotice += "已退群";
 				Sleep(1000);
@@ -229,7 +232,7 @@ void addBlackQQ(long long llQQ, std::string strReason, std::string strNotice) {
 			for (auto eachGroup : GroupList) {
 				int intDay = (int)(tNow - getGroupMemberInfo(eachGroup.first, getLoginQQ()).LastMsgTime)/86400;
 				if (intDay > intDayLim) {
-					strReply += "群(" + to_string(eachGroup.first) + "):" + to_string(intDay) + "天\n";
+					strReply += printGroup(eachGroup.first) + ":" + to_string(intDay) + "天\n";
 					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }), eachGroup.first, Group);
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
@@ -240,7 +243,7 @@ void addBlackQQ(long long llQQ, std::string strReason, std::string strNotice) {
 			for (auto eachDiscuss : DiscussList) {
 				int intDay = (int)(tNow - eachDiscuss.second) / 86400;
 				if (intDay > intDayLim){
-					strReply += "讨论组(" + to_string(eachDiscuss.first) + "):" + to_string(intDay) + "天\n";
+					strReply += printChat({ eachDiscuss.first,Discuss }) + ":" + to_string(intDay) + "天\n";
 					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }), eachDiscuss.first, Group);
 					Sleep(10);
 					setDiscussLeave(eachDiscuss.first);
@@ -255,7 +258,10 @@ void addBlackQQ(long long llQQ, std::string strReason, std::string strNotice) {
 		else if (strPara == "black") {
 			for (auto eachGroup : GroupList) {
 				if (BlackGroup.count(eachGroup.first)) {
+					AddMsgToQueue(GlobalMsg["strBlackGroup"], eachGroup.first, Group);
 					strReply += "\n" + printGroup(eachGroup.first) + "：" + "黑名单群";
+					Sleep(100);
+					setGroupLeave(eachGroup.first);
 				}
 				vector<GroupMemberInfo> MemberList = getGroupMemberList(eachGroup.first);
 				for (auto eachQQ : MemberList) {
@@ -264,9 +270,9 @@ void addBlackQQ(long long llQQ, std::string strReason, std::string strNotice) {
 							continue;
 						}
 						else if (getGroupMemberInfo(eachGroup.first, eachQQ.QQID).permissions > getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions) {
-							AddMsgToQueue("发现黑名单成员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first);
+							AddMsgToQueue("发现黑名单成员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first, Group);
 							strReply += "\n" + printGroup(eachGroup.first) + "：" + printQQ(eachQQ.QQID) + "对方群权限较高";
-							Sleep(10);
+							Sleep(100);
 							setGroupLeave(eachGroup.first);
 							intCnt++;
 							break;
@@ -275,9 +281,9 @@ void addBlackQQ(long long llQQ, std::string strReason, std::string strNotice) {
 							continue;
 						}
 						else if (boolConsole["LeaveBlackQQ"]) {
-							AddMsgToQueue("发现黑名单成员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first);
+							AddMsgToQueue("发现黑名单成员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first, Group);
 							strReply += "\n" + printGroup(eachGroup.first) + "：" + printQQ(eachQQ.QQID);
-							Sleep(10);
+							Sleep(100);
 							setGroupLeave(eachGroup.first);
 							intCnt++;
 							break;
