@@ -619,6 +619,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 	if (eve.isAnonymous())return;
 	if (eve.isSystem()) {
 		if (eve.message.find("被管理员禁言") != string::npos&&eve.message.find(to_string(getLoginQQ())) != string::npos) {
+			string strNow = printSTime(stNow);
 			long long fromQQ;
 			int intAuthCnt = 0;
 			string strAuthList;
@@ -633,9 +634,11 @@ EVE_GroupMsg_EX(eventGroupMsg)
 					intAuthCnt++;
 				}
 			}
-			if(boolConsole["BannedBanOwner"])addBlackQQ(fromQQ, "群内禁言");
-			string strNote = "在" + printGroup(eve.fromGroup) + "中," + eve.message;
-			string strMsg = strNote + "\n群主" + getStrangerInfo(fromQQ).nick + "(" + to_string(fromQQ) + "),另有管理员" + to_string(intAuthCnt) + "名" + strAuthList;
+			//能否锁定群主
+			bool isOwner = intAuthCnt == 0 || getGroupMemberInfo(eve.fromGroup, getLoginQQ()).permissions == 2;
+			string strNote = strNow + "在" + printGroup(eve.fromGroup) + "中," + eve.message;
+			if (boolConsole["BannedBanOwner"]||isOwner)addBlackQQ(fromQQ, strNote);
+			string strMsg = strNote + "\n群主" + printQQ(fromQQ)+",另有管理员" + to_string(intAuthCnt) + "名" + strAuthList;
 			if (mGroupInviter.count(eve.fromGroup)) {
 				long long llInviter = mGroupInviter[eve.fromGroup];
 				strMsg += "\n入群邀请者：" + printQQ(llInviter);
@@ -646,8 +649,8 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			if (WhiteGroup.count(eve.fromGroup))WhiteGroup.erase(eve.fromGroup);
 			if (boolConsole["BannedLeave"])setGroupLeave(eve.fromGroup);
 			while (strNote.find('\"') != string::npos)strNote.replace(strNote.find('\"'), 1, "\'"); 
-			string strWarning = "!warning{\n\"fromGroup\":" + to_string(eve.fromGroup) + ",\n\"type\":\"ban\",\n\"time\":\"" + printSTime(stNow) + "\",\n\"DiceMaid\":" + to_string(getLoginQQ()) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"" + strNote + "\"\n}";
-			if (getGroupMemberInfo(eve.fromGroup, getLoginQQ()).permissions == 2)strWarning = "!warning{\n\"fromGroup\":" + to_string(eve.fromGroup) + "\",\n\"type\":\"ban\",\n\"fromQQ\":\"" + to_string(fromQQ) + "\",\n\"time\":\"" + printSTime(stNow) + "\",\n\"DiceMaid\":\"" + to_string(getLoginQQ()) + "\",\n\"masterQQ\":\"" + to_string(masterQQ) + "\",\n\"note\":\"" + eve.message + "\"\n}";
+			string strWarning = "!warning{\n\"fromGroup\":" + to_string(eve.fromGroup) + ",\n\"type\":\"ban\",\n\"time\":\"" + strNow + "\",\n\"DiceMaid\":" + to_string(getLoginQQ()) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"" + strNote + "\"\n}";
+			if (isOwner)strWarning = "!warning{\n\"fromGroup\":" + to_string(eve.fromGroup) + "\",\n\"type\":\"ban\",\n\"fromQQ\":\"" + to_string(fromQQ) + "\",\n\"time\":\"" + printSTime(stNow) + "\",\n\"DiceMaid\":\"" + to_string(getLoginQQ()) + "\",\n\"masterQQ\":\"" + to_string(masterQQ) + "\",\n\"note\":\"" + eve.message + "\"\n}";
 			NotifyMonitor(strWarning);
 		}
 		else return;

@@ -343,7 +343,7 @@ public:
 			long long llTargetID = readID();
 			if (strOption == "dismiss") {
 				WhiteGroup.erase(llTargetID);
-				if (getGroupList().count(llTargetID) && setGroupLeave(llTargetID)) {
+				if (getGroupList().count(llTargetID) && setGroupLeave(llTargetID) == 0) {
 					mLastMsgList.erase({ llTargetID ,Group });
 					AdminNotify("已令" + GlobalMsg["strSelfName"] + "退出群" + to_string(llTargetID) + "√");
 				}
@@ -606,7 +606,7 @@ public:
 					setDiscussLeave(fromGroup);
 					mLastMsgList.erase(fromChat);
 				}
-				else if (getGroupMemberInfo(fromGroup, fromQQ).permissions >= 2)
+				else if (isAuth)
 				{
 					if (!GlobalMsg["strDismiss"].empty())reply(GlobalMsg["strDismiss"]);
 					setGroupLeave(fromGroup);
@@ -631,28 +631,27 @@ public:
 					blackGroup = jInfo["fromGroup"];
 				}
 				catch (...) {
-					return -1;
+					return 0;
 				}
 				string type = readJKey<string>(jInfo["type"]);
 				string time = readJKey<string>(jInfo["time"]);
 				string note = readJKey<string>(jInfo["note"]);
-				if (type != "ban" && type != "kick" || (blackGroup&&BlackGroup.count(blackGroup)) && (blackQQ&&BlackQQ.count(blackQQ))) {
+				if (type != "ban" && type != "kick" || (!blackGroup||BlackGroup.count(blackGroup)) && (!blackQQ||BlackQQ.count(blackQQ))) {
 					return 1;
 				}
 				if (!isAdmin)sendAdmin("来自" + printQQ(fromQQ) + ":" + strWarning);
 				strWarning = "!warning" + strWarning;
 				if (blackGroup) {
 					BlackGroup.insert(blackGroup);
-					if (!intT && blackGroup == fromGroup) {
-						setGroupLeave(fromGroup);
-					}
-					else if(getGroupList().count(blackGroup)){
-						AddMsgToQueue(strWarning, blackGroup, Group);
+					if(getGroupList().count(blackGroup)){
+						if (blackGroup != fromGroup)AddMsgToQueue(strWarning, blackGroup, Group);
+						AdminNotify("已通知" + GlobalMsg["strSelfName"] + "将" + printGroup(blackGroup) + "加入群黑名单√");
 						Sleep(100);
 						setGroupLeave(blackGroup);
 					}
 				}
 				if (blackQQ) {
+					AdminNotify("已通知" + GlobalMsg["strSelfName"] + "将" + printQQ(blackQQ) + "加入用户黑名单");
 					addBlackQQ(blackQQ, note, strWarning);
 				}
 				return 1;
