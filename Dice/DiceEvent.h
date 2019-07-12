@@ -90,6 +90,7 @@ public:
 			}
 		}
 		else {
+			if(!isMaster)AddMsgToQueue(strName + strMsg, masterQQ);
 			for (auto it : AdminQQ) {
 				AddMsgToQueue(strName + strMsg, it);
 			}

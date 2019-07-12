@@ -38,8 +38,8 @@ set<chatType> MonitorList = {};
 std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},{"DisabledMe",false},{"DisabledJrrp",false},
 {"Private",false},{"LeaveDiscuss",false},
 {"LeaveBlackQQ",true},{"AllowStranger",true},
-{"BannedBanOwner",true},{"BannedInviter",true},{"BannedLeave",false},
-{"KickedBanInviter",false} };
+{"BannedBanOwner",true},{"BannedLeave",false},{"BannedBanInviter",true},
+{"KickedBanInviter",true} };
 //骰娘列表
 std::map<long long, long long> mDiceList;
 	//讨论组消息记录
