@@ -37,7 +37,8 @@ using namespace CQ;
 	long long masterQQ = 0;
 set<long long> AdminQQ = {};
 set<chatType> MonitorList = {};
-std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},{"DisabledMe",false},{"DisabledJrrp",false},
+std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},
+{"DisabledMe",false},{"DisabledJrrp",false},{"DisabledDeck",true},{"DisabledDraw",false},{"DisabledSend",true},
 {"Private",false},{"LeaveDiscuss",false},
 {"LeaveBlackQQ",true},{"AllowStranger",true},
 {"BannedBanOwner",true},{"BannedLeave",false},{"BannedBanInviter",true},

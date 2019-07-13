@@ -1131,6 +1131,11 @@ public:
 			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "deck") {
+		if (!isAdmin&&boolConsole["DisabledDeck"])
+		{
+			reply(GlobalMsg["strDisabledDeckGlobal"]);
+			return 1;
+		}
 		intMsgCnt += 4;
 		readSkipSpace();
 		string strPara = readPara();
@@ -1258,6 +1263,11 @@ public:
 }
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "draw")
 		{
+		if (!isAdmin&&boolConsole["DisabledDraw"])
+		{
+			reply(GlobalMsg["strDisabledDrawGlobal"]);
+			return 1;
+		}
 			intMsgCnt += 4;
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
@@ -1629,14 +1639,15 @@ public:
 			if (!masterQQ || !boolMasterMode) {
 				reply(GlobalMsg["strSendMsgInvalid"]);
 			}
+			else if (boolConsole["DisabledSend"]) {
+				reply(GlobalMsg["strDisabledSendGlobal"]);
+			}
 			else if (intMsgCnt == strMsg.length()) {
 				reply(GlobalMsg["strSendMsgEmpty"]);
 			}
 			else {
-				string strFwd = "来自";
-				if (fromType == Group)strFwd += "群(" + to_string(fromGroup) + ")";
-				if (fromType == Discuss)strFwd += "讨论组(" + to_string(fromGroup) + ")";
-				strFwd += getStrangerInfo(fromQQ).nick + "(" + to_string(fromQQ) + "):";
+				string strFwd = "来自" + printChat(fromChat);
+				if (fromType == Private)strFwd += printQQ(fromQQ);
 				if (masterQQ == fromQQ)strFwd.clear();
 				strFwd += readRest();
 				sendAdmin(strFwd);
@@ -1916,7 +1927,7 @@ public:
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "me")
 		{
-			if (boolConsole["DisabledMe"])
+			if (!isAdmin&&boolConsole["DisabledMe"])
 			{
 				reply(GlobalMsg["strDisabledMeGlobal"]);
 				return 1;
