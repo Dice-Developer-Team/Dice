@@ -667,7 +667,8 @@ public:
 			{
 				if (Command == "on")
 				{
-					if (fromType == Group) {
+					if (boolConsole["DisabledGlobal"])reply(GlobalMsg["strGlobalOff"]);
+					else if (fromType == Group) {
 						if (isAuth)
 						{
 							if (DisabledGroup.count(fromGroup))
