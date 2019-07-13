@@ -623,38 +623,7 @@ public:
 		else if (strLowerMessage.substr(intMsgCnt, 7) == "warning") {
 			if (isAdmin || mDiceList.count(fromQQ)) {
 				intMsgCnt += 7;
-				string strWarning = readRest();
-				long long blackQQ,blackGroup;
-				nlohmann::json jInfo = { {"type","Unknown"},{"fromGroup",0},{"time","Unknown"},{"fromQQ",0},{"note","" } };
-				try {
-					jInfo = nlohmann::json::parse(GBKtoUTF8(strWarning));
-					blackQQ = jInfo["fromQQ"];
-					blackGroup = jInfo["fromGroup"];
-				}
-				catch (...) {
-					return 0;
-				}
-				string type = readJKey<string>(jInfo["type"]);
-				string time = readJKey<string>(jInfo["time"]);
-				string note = readJKey<string>(jInfo["note"]);
-				if (type != "ban" && type != "kick" || (!blackGroup||BlackGroup.count(blackGroup)) && (!blackQQ||BlackQQ.count(blackQQ))) {
-					return 1;
-				}
-				if (!isAdmin)sendAdmin("来自" + printQQ(fromQQ) + ":" + strWarning);
-				strWarning = "!warning" + strWarning;
-				if (blackGroup) {
-					BlackGroup.insert(blackGroup);
-					if(getGroupList().count(blackGroup)){
-						if (blackGroup != fromGroup)AddMsgToQueue(strWarning, blackGroup, Group);
-						AdminNotify("已通知" + GlobalMsg["strSelfName"] + "将" + printGroup(blackGroup) + "加入群黑名单√");
-						Sleep(100);
-						setGroupLeave(blackGroup);
-					}
-				}
-				if (blackQQ) {
-					AdminNotify("已通知" + GlobalMsg["strSelfName"] + "将" + printQQ(blackQQ) + "加入用户黑名单");
-					addBlackQQ(blackQQ, note, strWarning);
-				}
+				AddWarning(readRest(), fromQQ, fromGroup);
 				return 1;
 			}
 			else return 0;

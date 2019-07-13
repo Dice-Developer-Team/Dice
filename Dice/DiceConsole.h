@@ -72,6 +72,8 @@
 void checkBlackQQ(long long, std::string strWarning = "");
 //À­ºÚÓÃ»§
 void addBlackQQ(long long, std::string strReason = "", std::string strNotice = "");
+void AddWarning(const std::string& msg, long long DiceQQ, long long fromGroup);
+void warningHandler();
 	extern void ConsoleTimer();
 #endif /*Dice_Console*/
 

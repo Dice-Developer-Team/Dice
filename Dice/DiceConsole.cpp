@@ -22,6 +22,8 @@
  */
 #pragma once
 #include <ctime>
+#include <queue>
+#include <mutex>
 #include "DiceConsole.h"
 #include "GlobalVar.h"
 #include "MsgFormat.h"
@@ -122,7 +124,7 @@ void getDiceList() {
 			}
 		}
 		else {
-			AddMsgToQueue(strMsg, masterQQ);
+			masterQQ == fromQQ ? AddMsgToQueue(strMsg, masterQQ) : AddMsgToQueue(strName + strMsg, masterQQ);
 			for (auto it : AdminQQ) {
 				AddMsgToQueue(strName + strMsg, it);
 			}
@@ -133,6 +135,7 @@ void NotifyMonitor(std::string strMsg) {
 		if (!boolMasterMode)return;
 		for (auto it : MonitorList) {
 			AddMsgToQueue(strMsg, it.first, it.second);
+			Sleep(1000);
 		}
 	}
 //拉黑用户后搜查群
@@ -183,6 +186,72 @@ void addBlackQQ(long long llQQ, std::string strReason, std::string strNotice) {
 			: AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { strReason }), llQQ);
 	}
 	checkBlackQQ(llQQ, strNotice);
+}
+struct fromMsg {
+	string strMsg;
+	long long fromQQ = 0;
+	long long fromGroup = 0;
+	fromMsg() = default;
+	fromMsg(string strMsg, long long QQ, long long Group) :strMsg(strMsg), fromQQ(QQ), fromGroup(Group) {};
+};
+// 消息发送队列
+std::queue<fromMsg> warningQueue;
+// 消息发送队列锁
+mutex warningMutex;
+void AddWarning(const string& msg, long long DiceQQ, long long fromGroup)
+{
+	lock_guard<std::mutex> lock_queue(warningMutex);
+	warningQueue.emplace(msg, DiceQQ, fromGroup);
+}
+void warningHandler() {
+	while (Enabled)
+	{
+		fromMsg warning;
+		{
+			lock_guard<std::mutex> lock_queue(warningMutex);
+			if (!warningQueue.empty())
+			{
+				warning = warningQueue.front();
+				warningQueue.pop();
+			}
+		}
+		if (!warning.strMsg.empty()) {
+			long long blackQQ, blackGroup;
+			nlohmann::json jInfo = { {"type","Unknown"},{"fromGroup",0},{"time","Unknown"},{"fromQQ",0},{"note","" } };
+			try {
+				jInfo = nlohmann::json::parse(GBKtoUTF8(warning.strMsg));
+				blackQQ = jInfo["fromQQ"];
+				blackGroup = jInfo["fromGroup"];
+			}
+			catch (...) {
+				continue;
+			}
+			string type = readJKey<string>(jInfo["type"]);
+			string time = readJKey<string>(jInfo["time"]);
+			string note = readJKey<string>(jInfo["note"]);
+			if (type != "ban" && type != "kick" || (!blackGroup || BlackGroup.count(blackGroup)) && (!blackQQ || BlackQQ.count(blackQQ))) {
+				continue;
+			}
+			string strWarning = "!warning" + warning.strMsg;
+			if (warning.fromQQ != masterQQ || !AdminQQ.count(warning.fromQQ))sendAdmin("来自" + printQQ(warning.fromQQ) + strWarning);
+			if (blackGroup) {
+				BlackGroup.insert(blackGroup);
+				if (getGroupList().count(blackGroup)) {
+					if (blackGroup != warning.fromGroup)AddMsgToQueue(strWarning, blackGroup, Group);
+					setGroupLeave(blackGroup);
+				}
+				sendAdmin("已通知" + GlobalMsg["strSelfName"] + "将" + printGroup(blackGroup) + "加入群黑名单√", warning.fromQQ);
+			}
+			if (blackQQ) {
+				addBlackQQ(blackQQ, note, strWarning);
+				sendAdmin("已通知" + GlobalMsg["strSelfName"] + "将" + printQQ(blackQQ) + "加入用户黑名单", warning.fromQQ);
+			}
+		}
+		else
+		{
+			this_thread::sleep_for(chrono::milliseconds(20));
+		}
+	}
 }
 //简易计时器
 	void ConsoleTimer() {

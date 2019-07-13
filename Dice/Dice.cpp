@@ -212,6 +212,8 @@ EVE_Enable(eventEnable)
 	msgSendThread.detach();
 	thread threadConsoleTimer(ConsoleTimer);
 	threadConsoleTimer.detach();
+	thread threadWarning(warningHandler);
+	threadWarning.detach();
 	strFileLoc = getAppDirectory();
 	/*
 	* 名称存储-创建与读取
