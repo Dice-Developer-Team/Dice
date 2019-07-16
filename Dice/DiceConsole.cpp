@@ -236,16 +236,18 @@ void warningHandler() {
 			string strWarning = "!warning" + warning.strMsg;
 			if (warning.fromQQ != masterQQ || !AdminQQ.count(warning.fromQQ))sendAdmin("来自" + printQQ(warning.fromQQ) + strWarning);
 			if (blackGroup) {
-				BlackGroup.insert(blackGroup);
+				if (!BlackGroup.count(blackGroup)) {
+					BlackGroup.insert(blackGroup);
+					sendAdmin("已通知" + GlobalMsg["strSelfName"] + "将" + printGroup(blackGroup) + "加入群黑名单√", warning.fromQQ);
+				}
 				if (getGroupList().count(blackGroup)) {
 					if (blackGroup != warning.fromGroup)AddMsgToQueue(strWarning, blackGroup, Group);
 					setGroupLeave(blackGroup);
 				}
-				sendAdmin("已通知" + GlobalMsg["strSelfName"] + "将" + printGroup(blackGroup) + "加入群黑名单√", warning.fromQQ);
 			}
 			if (blackQQ) {
+				if (!BlackQQ.count(blackQQ))sendAdmin("已通知" + GlobalMsg["strSelfName"] + "将" + printQQ(blackQQ) + "加入用户黑名单", warning.fromQQ);
 				addBlackQQ(blackQQ, note, strWarning);
-				sendAdmin("已通知" + GlobalMsg["strSelfName"] + "将" + printQQ(blackQQ) + "加入用户黑名单", warning.fromQQ);
 			}
 		}
 		else
