@@ -64,6 +64,9 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 
 std::map<std::string, std::string> GlobalMsg
 {
+	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
+	{"strReplySet","关键词{0}的回复已设置"},
+	{"strReplyDel","关键词{0}的回复已清除"},
 	{"strStModify","已记录{0}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","已设置{0}的属性："},		//存在掷骰时，使用此文本(暂时无用)
 	{"strStValEmpty","未记录{0}原值×"},		//{0}为属性名

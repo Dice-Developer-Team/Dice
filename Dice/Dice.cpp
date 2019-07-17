@@ -201,6 +201,7 @@ void dataBackUp() {
 	saveJMap(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
 	saveJMap(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
 	saveJMap(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
+	saveJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);
 }
 EVE_Enable(eventEnable)
 {
@@ -576,6 +577,7 @@ EVE_Enable(eventEnable)
 	loadJMap(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
 	loadJMap(strFileLoc + "PublicDeck.json", CardDeck::mPublicDeck);
 	loadJMap(strFileLoc + "ExternDeck.json", CardDeck::mPublicDeck);
+	loadJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);
 	//读取替身模式
 	ifstream ifstreamStandByMe(strFileLoc + "StandByMe.RDconf");
 	if (ifstreamStandByMe)

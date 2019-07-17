@@ -576,6 +576,7 @@ public:
 		return 0;
 	}
 	int DiceReply() {
+		if (strMsg[0] != '.')return 0;
 		intMsgCnt++ ;
 		int intT = (int)fromType;
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
@@ -741,8 +742,8 @@ public:
 			if (intT == PrivateT)reply(GlobalMsg["strGlobalOff"]);
 			return 1;
 		}
-		if (!isCalled && (intT == GroupT && DisabledGroup.count(fromGroup)))return 0;
-		if (!isCalled && (intT == DiscussT && DisabledDiscuss.count(fromGroup)))return 0;
+		if (!isCalled && (intT == GroupT && DisabledGroup.count(fromGroup)))return 1;
+		if (!isCalled && (intT == DiscussT && DisabledDiscuss.count(fromGroup)))return 1;
 		if (strLowerMessage.substr(intMsgCnt, 7) == "helpdoc"&&isAdmin)
 		{
 			intMsgCnt += 7;
@@ -1055,6 +1056,33 @@ public:
 			}
 			return 1;
 		}
+		else if (strLowerMessage.substr(intMsgCnt, 5) == "reply") {
+		intMsgCnt += 5;
+		if (!isAdmin) {
+			reply(GlobalMsg["strNotAdmin"]);
+			return -1;
+		}
+		string strReplyName = readUntilSpace();
+		vector<string> *Deck = NULL;
+		if (strReplyName.empty()) {
+			reply(GlobalMsg["strParaEmpty"]);
+			return -1;
+		}
+		else {
+			CardDeck::mReplyDeck[strReplyName] = {};
+			Deck = &CardDeck::mReplyDeck[strReplyName];
+		}
+		while (intMsgCnt != strMsg.length()) {
+			string item = readItem();
+			if(!item.empty())Deck->push_back(item);
+		}
+		if (Deck->empty()) {
+			reply(format(GlobalMsg["strReplyDel"], { strReplyName }));
+			CardDeck::mReplyDeck.erase(strReplyName);
+		}
+		else reply(format(GlobalMsg["strReplySet"], { strReplyName }));
+		return 1;
+}
 		else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
 		{
 			intMsgCnt += 5;
@@ -1255,7 +1283,7 @@ public:
 			}
 			while (intMsgCnt != strMsg.length()) {
 				string item = readItem();
-				DeckPro->push_back(item);
+				if (!item.empty())DeckPro->push_back(item);
 			}
 			reply(GlobalMsg["strDeckProNew"]);
 			return 1;
@@ -3295,6 +3323,14 @@ public:
 		}
 		return 0;
 	}
+	int CustomReply(){
+		string strKey = readRest();
+		if (CardDeck::mReplyDeck.count(strKey)) {
+			reply(CardDeck::drawCard(CardDeck::mReplyDeck[strKey], true));
+			return 1;
+		}
+		else return 0;
+	}
 	//ÅÐ¶ÏÊÇ·ñÏìÓ¦
 	bool DiceFilter() {
 		init(strMsg);
@@ -3318,12 +3354,13 @@ public:
 			}
 		}
 		init2(strMsg);
-		if (strMsg[0] != '.')return 0;
+		if (strMsg[0] != '.'&&CardDeck::mReplyDeck.count(strMsg) == 0)return 0;
 		if (fromType == Private) isCalled = true;
 		isMaster = fromQQ == masterQQ && boolMasterMode;
 		isAdmin = isMaster || AdminQQ.count(fromQQ);
 		isAuth = isAdmin || fromType != Group || getGroupMemberInfo(fromGroup, fromQQ).permissions > 1;
-		return DiceReply();
+		if (DiceReply())return 1;
+		else return CustomReply();
 	}
 
 private:
@@ -3419,7 +3456,7 @@ private:
 	string readItem() {
 		string strMum;
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == '|')intMsgCnt++;
-		while (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) && strMsg[intMsgCnt] != '|'&& intMsgCnt != strMsg.length()) {
+		while (strMsg[intMsgCnt] != '|'&& intMsgCnt != strMsg.length()) {
 			strMum += strMsg[intMsgCnt];
 			intMsgCnt++;
 		}
