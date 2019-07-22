@@ -218,18 +218,19 @@ void warningHandler() {
 		}
 		if (!warning.strMsg.empty()) {
 			long long blackQQ, blackGroup;
-			nlohmann::json jInfo = { {"type","Unknown"},{"fromGroup",0},{"time","Unknown"},{"fromQQ",0},{"note","" } };
+			string type, time, note;
+			nlohmann::json jInfo;
 			try {
 				jInfo = nlohmann::json::parse(GBKtoUTF8(warning.strMsg));
-				blackQQ = jInfo["fromQQ"];
-				blackGroup = jInfo["fromGroup"];
+				jInfo.count("fromQQ") ? blackQQ = jInfo["fromQQ"] : blackQQ = 0;
+				jInfo.count("fromGroup") ? blackGroup = jInfo["fromGroup"] : blackGroup = 0;
+				jInfo.count("type") ? type = readJKey<string>(jInfo["type"]) : type = "Unknown";
+				//jInfo.count("time") ? time = readJKey<string>(jInfo["time"]) : time = "Unknown";
+				jInfo.count("note") ? note = readJKey<string>(jInfo["note"]) : note = "";
 			}
 			catch (...) {
 				continue;
 			}
-			string type = readJKey<string>(jInfo["type"]);
-			string time = readJKey<string>(jInfo["time"]);
-			string note = readJKey<string>(jInfo["note"]);
 			if (type != "ban" && type != "kick" || (!blackGroup || BlackGroup.count(blackGroup)) && (!blackQQ || BlackQQ.count(blackQQ))) {
 				continue;
 			}
