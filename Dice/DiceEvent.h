@@ -2435,7 +2435,7 @@ public:
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "ri"&&intT)
 		{
 			intMsgCnt += 2;
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+			readSkipSpace();
 			string strinit = "D20";
 			if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-')
 			{
@@ -2443,23 +2443,16 @@ public:
 				intMsgCnt++;
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 			}
-			else if (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-				strinit += '+';
-			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			{
-				strinit += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
+			else if (isRollDice()){
+				strinit = readDice();
 			}
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			{
-				intMsgCnt++;
-			}
+			readSkipSpace();
 			string strname = strMsg.substr(intMsgCnt);
 			if (strname.empty())
 				strname = strNickName;
 			else
 				strname = strip(strname);
-			RD initdice(strinit);
+			RD initdice(strinit, 20);
 			const int intFirstTimeRes = initdice.Roll();
 			if (intFirstTimeRes == Value_Err)
 			{
@@ -3414,6 +3407,20 @@ private:
 		if (strGroup.empty()) return 0;
 		return stoll(strGroup);
 	}
+	//是否可看做掷骰表达式
+	bool isRollDice() {
+		readSkipSpace();
+		if (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
+			|| strLowerMessage[intMsgCnt] == 'd' || strLowerMessage[intMsgCnt] == 'k'
+			|| strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b'
+			|| strLowerMessage[intMsgCnt] == 'f'
+			|| strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-'
+			|| strLowerMessage[intMsgCnt] == 'a'
+			|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*') {
+			return true;
+		}
+		else return false;
+	}
 	//读取掷骰表达式
 	string readDice(){
 		string strDice;
@@ -3426,7 +3433,7 @@ private:
 			|| strLowerMessage[intMsgCnt] == 'a'
 			|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*')
 		{
-			strDice += strLowerMessage[intMsgCnt];
+			strDice += strMsg[intMsgCnt];
 			intMsgCnt++;
 		}
 		return strDice;
