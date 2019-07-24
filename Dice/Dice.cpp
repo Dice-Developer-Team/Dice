@@ -168,13 +168,6 @@ void dataBackUp() {
 		ofstreamBlackQQ << it << std::endl;
 	}
 	ofstreamBlackQQ.close();
-	//备份讨论组列表
-	ofstream ofstreamDiscussList(strFileLoc + "DiscussList.map", ios::out | ios::trunc);
-	for (auto it : DiscussList)
-	{
-		ofstreamDiscussList << it.first << "\n" << it.second << std::endl;
-	}
-	ofstreamDiscussList.close();
 	//备份聊天列表
 	ofstream ofstreamLastMsgList(strFileLoc + "LastMsgList.MYmap", ios::out | ios::trunc);
 	for (auto it : mLastMsgList)
@@ -500,18 +493,6 @@ EVE_Enable(eventEnable)
 		}
 	}
 	ifstreamBlackQQ.close();
-	//读取讨论组列表
-	ifstream ifstreamDiscussList(strFileLoc + "DiscussList.map");
-	if (ifstreamDiscussList)
-	{
-		long long llDiscuss;
-		time_t tNow;
-		while (ifstreamDiscussList >> llDiscuss >> tNow)
-		{
-			DiscussList[llDiscuss]=tNow;
-		}
-	}
-	ifstreamDiscussList.close();
 	//读取聊天列表
 	ifstream ifstreamLastMsgList(strFileLoc + "LastMsgList.MYmap");
 	if (ifstreamLastMsgList)

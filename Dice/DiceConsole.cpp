@@ -45,8 +45,6 @@ std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},
 {"KickedBanInviter",true} };
 //骰娘列表
 std::map<long long, long long> mDiceList;
-	//讨论组消息记录
-	std::map<long long, time_t> DiscussList;
 //群邀请者
 std::map<long long, long long> mGroupInviter;
 	//个性化语句
@@ -302,6 +300,22 @@ void warningHandler() {
 			int intDayLim = stoi(strPara);
 			string strDayLim = to_string(intDayLim);
 			time_t tNow = time(NULL);;
+			for (auto eachChat : mLastMsgList) {
+				if (eachChat.first.second == Private)continue;
+				int intDay = (int)(tNow - eachChat.second) / 86400;
+				if (intDay > intDayLim) {
+					strReply += printChat(eachChat.first) + ":" + to_string(intDay) + "天\n";
+					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }), eachChat.first.first, eachChat.first.second);
+					Sleep(100);
+					if (eachChat.first.second == Group) {
+						setGroupLeave(eachChat.first.first);
+						if (GroupList.count(eachChat.first.first))GroupList.erase(eachChat.first.first);
+					}
+					else setDiscussLeave(eachChat.first.first);
+					mLastMsgList.erase(eachChat.first);
+					intCnt++;
+				}
+			}
 			for (auto eachGroup : GroupList) {
 				int intDay = (int)(tNow - getGroupMemberInfo(eachGroup.first, getLoginQQ()).LastMsgTime)/86400;
 				if (intDay > intDayLim) {
@@ -310,18 +324,6 @@ void warningHandler() {
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
 					mLastMsgList.erase({ eachGroup.first ,CQ::Group });
-					intCnt++;
-				}
-			}
-			for (auto eachDiscuss : DiscussList) {
-				int intDay = (int)(tNow - eachDiscuss.second) / 86400;
-				if (intDay > intDayLim){
-					strReply += printChat({ eachDiscuss.first,Discuss }) + ":" + to_string(intDay) + "天\n";
-					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }), eachDiscuss.first, Group);
-					Sleep(10);
-					setDiscussLeave(eachDiscuss.first);
-					DiscussList.erase(eachDiscuss.first);
-					mLastMsgList.erase({ eachDiscuss.first ,Discuss });
 					intCnt++;
 				}
 			}

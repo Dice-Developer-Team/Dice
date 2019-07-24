@@ -25,8 +25,6 @@
 	extern std::map<std::string, bool>boolConsole;
 	//骰娘列表
 	extern std::map<long long, long long> mDiceList;
-	//讨论组消息记录
-	extern std::map<long long, time_t> DiscussList;
 	//个性化语句
 	extern std::map<std::string, std::string> PersonalMsg;
 	//botoff的群

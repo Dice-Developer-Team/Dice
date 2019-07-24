@@ -123,7 +123,6 @@ public:
 				+ "全局.me开关：" + (boolConsole["DisabledMe"] ? "禁用" : "启用") + "\n"
 				+ "全局.jrrp开关：" + (boolConsole["DisabledJrrp"] ? "禁用" : "启用");
 			if (isAdmin) strReply += "\n所在群聊数：" + to_string(getGroupList().size()) + "\n"
-				+ (DiscussList.size() ? "有记录的讨论组数：" + to_string(DiscussList.size()) + "\n" : "")
 				+ "黑名单用户数：" + to_string(BlackQQ.size()) + "\n"
 				+ "黑名单群数：" + to_string(BlackGroup.size()) + "\n"
 				+ "白名单用户数：" + to_string(WhiteQQ.size()) + "\n"
@@ -351,7 +350,6 @@ public:
 				else if (llTargetID > 1000000000 && setDiscussLeave(llTargetID) == 0) {
 					mLastMsgList.erase({ llTargetID ,Discuss });
 					AdminNotify("已令" + GlobalMsg["strSelfName"] + "退出讨论组" + to_string(llTargetID) + "√");
-					DiscussList.erase(llTargetID);
 				}
 				else {
 					reply(GlobalMsg["strGroupGetErr"]);
