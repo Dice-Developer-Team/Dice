@@ -383,11 +383,11 @@ public:
 			}
 			else if (strOption == "whitegroup") {
 				if (llTargetID == 0) {
-					string strReply = "当前白名单群列表：";
+					strReply = "当前白名单群列表：";
 					for (auto each : WhiteGroup) {
 						strReply += "\n" + printGroup(each);
 					}
-					reply(strReply);
+					reply();
 					return 1;
 				}
 				do {
@@ -414,11 +414,11 @@ public:
 			}
 			else if (strOption == "blackgroup") {
 				if (llTargetID == 0) {
-					string strReply = "当前黑名单群列表：";
+					strReply = "当前黑名单群列表：";
 					for (auto each : BlackGroup) {
 						strReply += "\n" + to_string(each);
 					}
-					reply(strReply);
+					reply();
 					return 1;
 				}
 				do{
@@ -445,7 +445,7 @@ public:
 			}
 			else if (strOption == "whiteqq") {
 				if (llTargetID == 0) {
-					string strReply = "当前白名单用户列表：";
+					strReply = "当前白名单用户列表：";
 					for (auto each : WhiteQQ) {
 						strReply += "\n" + printQQ(each);
 					}
@@ -477,11 +477,11 @@ public:
 			}
 			else if (strOption == "blackqq") {
 				if (llTargetID == 0) {
-					string strReply = "当前黑名单用户列表：";
+					strReply = "当前黑名单用户列表：";
 					for (auto each : BlackQQ) {
 						strReply += "\n" + printQQ(each);
 					}
-					reply(strReply);
+					reply();
 					return 1;
 				}
 				do{
