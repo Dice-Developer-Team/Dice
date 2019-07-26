@@ -13,6 +13,7 @@
 namespace CardDeck
 {
 	extern std::map<std::string, std::vector<std::string>> mPublicDeck;
+	extern std::map<std::string, std::vector<std::string>> mReplyDeck;
 	//»∫¡ƒ≈∆∂—
 	extern std::map<long long, std::vector<std::string>> mGroupDeck;
 	//»∫¡ƒ¡Ÿ ±≈∆∂—
@@ -22,8 +23,6 @@ namespace CardDeck
 	//ÀΩ»À¡Ÿ ±≈∆∂—
 	extern std::map<long long, std::vector<std::string>> mPrivateDeckTmp;
 	extern std::map<std::string, std::string> PublicComplexDeck;
-	int loadDeck(std::string strLoc, std::map<long long, std::vector<std::string>> &deck);
-	int saveDeck(std::string strLoc, std::map<long long, std::vector<std::string>> deck);
 	int findDeck(std::string strDeckName);
 	std::string drawCard(std::vector<std::string> &TempDeck,bool boolBack=false);
 	std::string drawCard(std::string strDeckName, bool boolBack = false);

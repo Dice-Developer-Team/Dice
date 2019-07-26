@@ -35,8 +35,8 @@ CQ::logger DiceLogger("Dice!");
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-const unsigned short Dice_Build = 543;
-const std::string Dice_Ver_Without_Build = "2.3.8Express7";
+const unsigned short Dice_Build = 547;
+const std::string Dice_Ver_Without_Build = "2.3.8Express8";
 const std::string DiceRequestHeader = "Dice/2.3.8";
 const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 const std::string Dice_Short_Ver = "Dice! by 溯洄 Shiki.Ver " + Dice_Ver;
@@ -64,6 +64,9 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 
 std::map<std::string, std::string> GlobalMsg
 {
+	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
+	{"strReplySet","关键词{0}的回复已设置"},
+	{"strReplyDel","关键词{0}的回复已清除"},
 	{"strStModify","已记录{0}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","已设置{0}的属性："},		//存在掷骰时，使用此文本(暂时无用)
 	{"strStValEmpty","未记录{0}原值×"},		//{0}为属性名
@@ -106,7 +109,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strLinkWarning","尝试创建时空门，但不保证能否连通"},
 	{"strLinkNotFound","时空门要通向不可名状的地方了×"},
 	{"strNotMaster","你不是本机器人的master！你想做什么？"},
-	{"strDismiss", ""},
+	{"strNotAdmin","你不是本机器人的管理员×"},
+	{"strDismiss", ""},						//.dismiss退群前的回执
 	{"strHlpSet","已为{0}设置词条√"},
 	{"strHlpReset","已清除{0}的词条，重启应用后重置默认词条√"},
 	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
@@ -130,6 +134,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strObExit","成功退出旁观模式!"},
 	{"strObEnterAlready","已经处于旁观模式!"},
 	{"strObExitAlready","没有加入旁观模式!"},
+	{"strQQIDEmpty","QQ号不能为空×"},
 	{"strGroupIDEmpty","群号不能为空×"},
 	{"strBlackGroup", "该群在黑名单中，如有疑问请联系master"},
 	{"strBotOn","成功开启本机器人!"},
@@ -169,6 +174,9 @@ std::map<std::string, std::string> GlobalMsg
 	{"strMEDisabledErr", "管理员已在此群中禁用.me命令!"},
 	{"strDisabledMeGlobal", "恕不提供.me服务×"},
 	{"strDisabledJrrpGlobal", "恕不提供.jrrp服务×"},
+	{"strDisabledDeckGlobal", "恕不提供.deck服务×"},
+	{"strDisabledDrawGlobal", "恕不提供.draw服务×"},
+	{"strDisabledSendGlobal", "恕不提供.send服务×"},
 	{"strHELPDisabledErr", "管理员已在此群中禁用.help命令!"},
 	{"strNameDelErr", "没有设置名称,无法删除!"},
 	{"strValueErr", "掷骰表达式输入错误!"},
@@ -217,6 +225,13 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPreserve", "本机器人私有私用，勿扰勿怪"},
 	{"strJrrp", "{0}今天的人品值是: {1}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{0}"},
+	{ "strAddFriendWhiteQQ","" },				//此项非空，则白名单用户添加好友时回复此句
+	{ "strAddFriend", R"(欢迎使用本机器人！
+.help协议 确认服务协议
+.help指令 查看指令列表
+.help设定 确认骰娘设定
+.help链接 查看源码文档
+使用服务默认已经同意服务协议)" },					//同意添加好友时额外发送的语句
 	{"strAddGroup", R"(欢迎使用本机器人！
 请使用.dismiss QQ号（或后四位） 使本机器人退群退讨论组
 .bot on/off QQ号（或后四位） //插件开启或关闭
@@ -224,7 +239,7 @@ std::map<std::string, std::string> GlobalMsg
 .help指令 查看指令列表
 .help设定 确认骰娘设定
 .help链接 查看源码文档
-千万别想当然以为本机器人和别的骰娘一样！)" },
+邀请入群默认视为同意服务协议)" },
 	{"strSelfName", ""},
 	{"strBotMsg", "\n使用.help更新 查看本机器人更新内容"},
 	{"strHlpMsg" , Dice_Short_Ver + "\n" +
@@ -240,7 +255,7 @@ std::map<std::string, std::string> GlobalMsg
 
 std::map<std::string, std::string> EditedMsg;
 std::map<std::string, std::string> HelpDoc = {
-{"更新","543：允许.st输入变化值\n542：新增.deck功能\n541：后台管理大修，允许同意好友\n540：预定义回执文本\n539：优化表达，加入骰池计数\n537：更新.send功能\n535：新增了可变成长检定功能\n533：更新了.rc/ra功能\n532：更新了消息转发功能（当前Master专用）\n528：更新.help帮助功能，允许后接参数"},
+{"更新","547：更新指令开关\n546：完善骰娘列表体验\n545：开放自定义deck\n544：后台管理更新\n543：允许.st输入变化值\n542：新增.deck功能\n541：后台管理大修，允许同意好友\n540：预定义回执文本\n539：优化表达，加入骰池计数\n537：更新.send功能\n535：新增了可变成长检定功能"},
 {"协议","0.本协议是Shiki(Death、Judgement、The World)的服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
 {"链接","查看源码:https://github.com/w4123/Dice/tree/Shiki\n插件下载:https://github.com/w4123/Dice/releases\n官方文档:https://www.stringempty.xyz\n跑团记录着色器:https://logpainter.kokona.tech"},
 {"设定","Master：（）\n.me使用：禁止\n.jrrp使用：允许\n邀请处理：黑名单制，非禁即入\n讨论组使用：允许\n移出反制：拉黑群和操作者\n禁言反制：默认拉黑群和群主\n刷屏反制：警告\n邀请人责任：有限连带\n窥屏可能：有\n其他插件：无\n官方群：941980833\n私骰群：192499947"},
@@ -296,8 +311,9 @@ std::map<std::string, std::string> HelpDoc = {
 {"增强检定","&en"},
 {"en","成长检定：.en [技能名称]([技能值])(([失败成长值]/)[成功成长值])\n已经.st时，可省略最后的参数\n.en 教育 60 +1D10 教育增强\t//后接成功时成长值\n.en 幸运 +1D3/1D10幸运成长\t//调用人物卡属性时，成长后的值会自动更新\n可变成长值必须以加减号开头，不限制加减"},
 {"抽牌","&draw"},
-{"draw","抽牌：.draw [牌堆名称] ([抽牌数量])\t//抽到的牌不放回，抽牌数量不能超过牌堆数量\n当前可用牌堆名：硬币/东方角色/麻将/扑克花色/扑克\n调查员职业/调查员背景/英雄天赋/煤气灯/个人描述/思想信念/重要之人/重要之人理由/意义非凡之地/宝贵之物/调查员特点/即时症状/总结症状/恐惧症状/狂躁症状/\n阵营/哈罗花色/冒险点子/\n人偶暗示/人偶宝物/人偶记忆碎片/\nAMGC/AMGC身材/AMGC专精/AMGC武器/AMGC套装/AMGC才能/AMGC特技1/AMGC特技2/AMGC特技3\n/塔罗牌/正逆/塔罗牌占卜/单张塔罗牌/圣三角牌阵/四要素牌阵/小十字牌阵/六芒星牌阵/凯尔特十字牌阵\n.help审判正位（牌+方向）可获取塔罗牌解读"},
+{"draw","抽牌：.draw [牌堆名称] ([抽牌数量])\t//抽到的牌不放回，抽牌数量不能超过牌堆数量\n当前内置牌堆：硬币/性别/\n调查员职业/调查员背景/英雄天赋/煤气灯/个人描述/思想信念/重要之人/重要之人理由/意义非凡之地/宝贵之物/调查员特点/即时症状/总结症状/恐惧症状/狂躁症状/\n阵营/哈罗花色/冒险点子/\n人偶暗示/人偶宝物/人偶记忆碎片/人偶依恋/\nAMGC/AMGC身材/AMGC专精/AMGC武器/AMGC套装/AMGC才能/AMGC特技1/AMGC特技2/AMGC特技3\n/塔罗牌/正逆/塔罗牌占卜/单张塔罗牌/圣三角牌阵/四要素牌阵/小十字牌阵/六芒星牌阵/凯尔特十字牌阵\n.help审判正位（牌+方向）可获取塔罗牌解读\nmaster额外配置请.help扩展牌堆"},
 {"先攻","&ri"},
+{"扩展牌堆","此处展示master额外添加的牌堆名："},
 {"ri","先攻（群聊限定）：.ri([加值])([昵称])\n.ri -1 某pc\t//自动记入先攻列表\n.ri +5 boss"},
 {"先攻列表","&init"},
 {"init","先攻列表：\n.init\t//查看先攻列表\n.init clr\t//清除先攻列表"},

@@ -32,8 +32,8 @@
 EVE_Menu(eventDiceUpdate)
 {
 	std::string ver;
-	if (!Network::GET("shiki.stringempty.xyz", "/DiceVer", 80, ver))
-	{
+	//if (!Network::GET("api.kokona.tech", "/getExpVer", 5555, ver) && !Network::GET("shiki.stringempty.xyz", "/DiceVer", 80, ver)) {
+	if (!Network::GET("shiki.stringempty.xyz", "/DiceVer", 80, ver)) {
 		MessageBoxA(nullptr, ("检查更新时遇到错误: \n" + ver).c_str(), "Dice!更新错误", MB_OK | MB_ICONWARNING);
 		return -1;
 	}
@@ -67,6 +67,7 @@ EVE_Menu(eventDiceUpdate)
 	filePath = filePath.substr(0, filePath.find_last_of("\\")) + "\\app\\com.w4123.dice.cpk";
 	
 	std::string fileContent;
+	//if (!Network::GET("api.kokona.tech", "/getExpDice", 5555, fileContent) && !Network::GET("shiki.stringempty.xyz", "/download/com.w4123.dice.cpk", 80, fileContent))
 	if (!Network::GET("shiki.stringempty.xyz", "/download/com.w4123.dice.cpk", 80, fileContent))
 	{
 		MessageBoxA(nullptr, ("新版本文件下载失败! 请检查您的网络状态! 错误信息: " + fileContent).c_str(), "Dice!更新错误", MB_OK | MB_ICONERROR);

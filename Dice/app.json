@@ -2,8 +2,8 @@
   "ret": 1,
   "apiver": 9,
   "name": "Dice!",
-  "version": "2.3.8Express7",
-  "version_id": 543,
+  "version": "2.3.8Express8",
+  "version_id": 547,
   "author": "w4123溯洄 Shiki",
   "description": "跑团用骰子 本程序使用AGPLv3开源协议授权 Copyright (c) 2018-2019 w4123溯洄 Shiki",
   "event": [
@@ -101,7 +101,7 @@
     }
   ],
   "auth": [
-    20, //取好友列表	getFriendList
+    //20, //取好友列表	getFriendList
     101, //发送群消息			sendGroupMsg
     103, //发送讨论组消息		sendDiscussMsg
     106, //发送私聊消息		sendPrivateMsg

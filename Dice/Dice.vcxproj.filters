@@ -218,6 +218,9 @@
     <ClInclude Include="DiceEvent.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Jsonio.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="CQP.lib">

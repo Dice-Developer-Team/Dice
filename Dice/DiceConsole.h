@@ -21,18 +21,10 @@
 	extern std::set<long long> AdminQQ;
 	//监控窗口列表
 	extern std::set<std::pair<long long, CQ::msgtype>> MonitorList;
-	//全部群静默
-	extern bool boolDisabledGlobal;
-	//全局禁用.ME
-	extern bool boolDisabledMeGlobal;
-	//全局禁用.jrrp
-	extern bool boolDisabledJrrpGlobal;
-	//独占模式：被拉进讨论组或Master不在的群则秒退
-	extern bool boolPreserve;
-	//自动退出一切讨论组
-	extern bool boolNoDiscuss;
-	//讨论组消息记录
-	extern std::map<long long, time_t> DiscussList;
+	//各类全局开关
+	extern std::map<std::string, bool>boolConsole;
+	//骰娘列表
+	extern std::map<long long, long long> mDiceList;
 	//个性化语句
 	extern std::map<std::string, std::string> PersonalMsg;
 	//botoff的群
@@ -47,6 +39,8 @@
 	extern std::set<long long> WhiteQQ;
 	//黑名单用户：无条件禁用
 	extern std::set<long long> BlackQQ;
+	//获取骰娘列表
+	void getDiceList();
 	//通知管理员 
 	void sendAdmin(std::string strMsg, long long fromQQ = 0);
 	//通知监控窗口 
@@ -68,9 +62,16 @@
 	//下班时间
 	extern std::pair<int, int> ClockOffWork;
 	std::string printClock(std::pair<int, int> clock);
+	std::string printSTime(SYSTEMTIME st);
 	std::string printQQ(long long);
 	std::string printGroup(long long);
 	std::string printChat(chatType);
+//拉黑用户后检查群
+void checkBlackQQ(long long, std::string strWarning = "");
+//拉黑用户
+void addBlackQQ(long long, std::string strReason = "", std::string strNotice = "");
+void AddWarning(const std::string& msg, long long DiceQQ, long long fromGroup);
+void warningHandler();
 	extern void ConsoleTimer();
 #endif /*Dice_Console*/
 

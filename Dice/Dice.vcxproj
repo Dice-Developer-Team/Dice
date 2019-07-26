@@ -261,6 +261,7 @@
     <ClInclude Include="GlobalVar.h" />
     <ClInclude Include="InitList.h" />
     <ClInclude Include="json.hpp" />
+    <ClInclude Include="Jsonio.h" />
     <ClInclude Include="MsgFormat.h" />
     <ClInclude Include="NameGenerator.h" />
     <ClInclude Include="NameStorage.h" />

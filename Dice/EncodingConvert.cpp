@@ -24,6 +24,7 @@
 #include <Windows.h>
 #include <string>
 #include <cassert>
+#include <vector>
 
 std::string GBKtoUTF8(const std::string& strGBK)
 {
@@ -38,7 +39,14 @@ std::string GBKtoUTF8(const std::string& strGBK)
 	delete[] str2;
 	return strOutUTF8;
 }
-
+std::vector<std::string> GBKtoUTF8(const std::vector<std::string> &strGBK)
+{
+	std::vector<std::string> vOutUTF8;
+	for (auto it : strGBK) {
+		vOutUTF8.push_back(GBKtoUTF8(it));
+	}
+	return vOutUTF8;
+}
 std::string UTF8toGBK(const std::string& strUTF8)
 {
 	int len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
@@ -52,7 +60,14 @@ std::string UTF8toGBK(const std::string& strUTF8)
 	delete[] wszGBK;
 	return strTemp;
 }
-
+std::vector<std::string> UTF8toGBK(const std::vector<std::string> &vUTF8)
+{
+	std::vector<std::string> vOutGBK;
+	for (auto it : vUTF8) {
+		vOutGBK.push_back(UTF8toGBK(it));
+	}
+	return vOutGBK;
+}
 unsigned char ToHex(const unsigned char x)
 {
 	return  x > 9 ? x + 55 : x + 48;
