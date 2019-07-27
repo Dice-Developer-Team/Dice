@@ -155,7 +155,7 @@ void checkBlackQQ(long long llQQ, std::string strWarning) {
 				Sleep(1000);
 				setGroupLeave(eachGroup.first);
 			}
-			else if (WhiteGroup.count(eachGroup.first)) {
+			else if (WhiteGroup.count(eachGroup.first) || MonitorList.count({ eachGroup.first ,Group })) {
 				strNotice += "群在白名单中";
 			}
 			else if (boolConsole["LeaveBlackQQ"]) {
@@ -352,7 +352,7 @@ void warningHandler() {
 							intCnt++;
 							break;
 						}
-						else if (WhiteGroup.count(eachGroup.first)) {
+						else if (WhiteGroup.count(eachGroup.first) || MonitorList.count({ eachGroup.first ,Group })) {
 							continue;
 						}
 						else if (boolConsole["LeaveBlackQQ"]) {
