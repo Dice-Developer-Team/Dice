@@ -660,7 +660,6 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		AddMsgToQueue(strMsg, eve.fromDiscuss, Discuss);
 		Sleep(1000);
 		sendAdmin(printChat({ eve.fromDiscuss,Discuss }) + strMsg);
-		setDiscussLeave(eve.fromDiscuss);
 	}
 	FromMsg Msg(eve.message, eve.fromDiscuss, Discuss, eve.fromQQ);
 	if (Msg.DiceFilter())eve.message_block();
