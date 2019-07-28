@@ -136,11 +136,11 @@ public:
 		}
 		if (boolConsole.count(strOption)) {
 			string strBool = readDigit();
-			if (strBool.empty())boolConsole[strOption] ? reply("该项当前正开启") : reply("该项当前正关闭");
+			if (strBool.empty())boolConsole[strOption] ? reply(GlobalMsg["strSelfName"] + "该项当前正开启") : reply(GlobalMsg["strSelfName"] + "该项当前正关闭");
 			else {
 				bool isOn = stoi(strBool);
 				boolConsole[strOption] = isOn;
-				isOn ? AdminNotify("已开启" + strOption) : AdminNotify("已关闭" + strOption);
+				isOn ? AdminNotify("已开启" + GlobalMsg["strSelfName"] + "的" + strOption) : AdminNotify("已关闭" + GlobalMsg["strSelfName"] + "的" + strOption);
 			}
 			return 1;
 		}

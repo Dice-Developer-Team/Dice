@@ -77,7 +77,7 @@ std::map<long long, long long> mGroupInviter;
 		return strClock;
 	}
 std::string printSTime(SYSTEMTIME st){
-	return to_string(st.wYear) + "/" + to_string(st.wMonth) + "/" + to_string(st.wDay) + " " + to_string(st.wHour) + ":" + to_string(st.wMinute) + ":" + to_string(st.wSecond);
+	return to_string(st.wYear) + "/" + to_string(st.wMonth) + "/" + to_string(st.wDay) + " " + to_string(st.wHour) + ":" + (st.wMinute < 10 ? "0" : "") + to_string(st.wMinute) + ":" + (st.wSecond < 10 ? "0" : "") + to_string(st.wSecond);
 }
 	//打印用户昵称QQ
 	string printQQ(long long llqq) {
@@ -148,6 +148,9 @@ void checkBlackQQ(long long llQQ, std::string strWarning) {
 			if (getGroupMemberInfo(eachGroup.first, llQQ).permissions < getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions) {
 				strNotice += "对方群权限较低";
 			}
+			else if (MonitorList.count({ eachGroup.first ,Group })) {
+				strNotice += "群监视窗口";
+			}
 			else if (getGroupMemberInfo(eachGroup.first, llQQ).permissions > getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions) {
 				AddMsgToQueue(strWarning, eachGroup.first, Group);
 				AddMsgToQueue("发现新增黑名单成员" + printQQ(llQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first, Group);
@@ -155,7 +158,7 @@ void checkBlackQQ(long long llQQ, std::string strWarning) {
 				Sleep(1000);
 				setGroupLeave(eachGroup.first);
 			}
-			else if (WhiteGroup.count(eachGroup.first) || MonitorList.count({ eachGroup.first ,Group })) {
+			else if (WhiteGroup.count(eachGroup.first)) {
 				strNotice += "群在白名单中";
 			}
 			else if (boolConsole["LeaveBlackQQ"]) {
@@ -193,6 +196,7 @@ struct fromMsg {
 	fromMsg() = default;
 	fromMsg(string strMsg, long long QQ, long long Group) :strMsg(strMsg), fromQQ(QQ), fromGroup(Group) {};
 };
+std::set<std::string> noteList;
 // 消息发送队列
 std::queue<fromMsg> warningQueue;
 // 消息发送队列锁
@@ -222,18 +226,25 @@ void warningHandler() {
 				jInfo = nlohmann::json::parse(GBKtoUTF8(warning.strMsg));
 				jInfo.count("fromQQ") ? blackQQ = jInfo["fromQQ"] : blackQQ = 0;
 				jInfo.count("fromGroup") ? blackGroup = jInfo["fromGroup"] : blackGroup = 0;
-				jInfo.count("type") ? type = readJKey<string>(jInfo["type"]) : type = "Unknown";
+				jInfo.count("type") ? type = readJKey<string>(jInfo["type"]) : type = "other";
 				//jInfo.count("time") ? time = readJKey<string>(jInfo["time"]) : time = "Unknown";
 				jInfo.count("note") ? note = readJKey<string>(jInfo["note"]) : note = "";
 			}
 			catch (...) {
 				continue;
 			}
-			if (type != "ban" && type != "kick" || (!blackGroup || BlackGroup.count(blackGroup)) && (!blackQQ || BlackQQ.count(blackQQ))) {
-				continue;
-			}
+			if ((!blackGroup || BlackGroup.count(blackGroup)) && (!blackQQ || BlackQQ.count(blackQQ))) { continue; }
 			string strWarning = "!warning" + warning.strMsg;
-			if (warning.fromQQ != masterQQ || !AdminQQ.count(warning.fromQQ))sendAdmin("来自" + printQQ(warning.fromQQ) + strWarning);
+			if (warning.fromQQ != masterQQ && !AdminQQ.count(warning.fromQQ)&&(!mDiceList.count(warning.fromQQ)||(mDiceList[warning.fromQQ] != masterQQ&&!AdminQQ.count(mDiceList[warning.fromQQ])&& mDiceList[warning.fromQQ]!= warning.fromQQ))) {
+				if (note.empty() || noteList.count(note)) { continue; }
+				else noteList.insert(note);
+				sendAdmin("来自" + printQQ(warning.fromQQ) + ":\n" + strWarning);
+				if (type != "kick"&&type != "ban"&&(type != "kick-inviter"||!boolConsole["KickedBanInviter"])&&(type != "ban-inviter" || !boolConsole["BannedBanInviter"]) &&(type != "ban-owner" || !boolConsole["BannedBanOwner"]) &&type != "other") { continue; }
+			}
+			else {
+				if (!note.empty() && !noteList.count(note))noteList.insert(note);
+				if (warning.fromQQ != masterQQ)AddMsgToQueue("来自" + printQQ(warning.fromQQ) + ":\n" + strWarning, masterQQ);
+			}
 			if (blackGroup) {
 				if (!BlackGroup.count(blackGroup)) {
 					BlackGroup.insert(blackGroup);
@@ -244,8 +255,8 @@ void warningHandler() {
 					setGroupLeave(blackGroup);
 				}
 			}
-			if (blackQQ) {
-				if (!BlackQQ.count(blackQQ))sendAdmin("已通知" + GlobalMsg["strSelfName"] + "将" + printQQ(blackQQ) + "加入用户黑名单", warning.fromQQ);
+			if (blackQQ && !BlackQQ.count(blackQQ)) {
+				sendAdmin("已通知" + GlobalMsg["strSelfName"] + "将" + printQQ(blackQQ) + "加入用户黑名单", warning.fromQQ);
 				addBlackQQ(blackQQ, note, strWarning);
 			}
 		}
@@ -338,6 +349,7 @@ void warningHandler() {
 					Sleep(100);
 					setGroupLeave(eachGroup.first);
 				}
+				if (MonitorList.count({ eachGroup.first ,Group })) { continue; }
 				vector<GroupMemberInfo> MemberList = getGroupMemberList(eachGroup.first);
 				for (auto eachQQ : MemberList) {
 					if (BlackQQ.count(eachQQ.QQID)) {
@@ -352,7 +364,7 @@ void warningHandler() {
 							intCnt++;
 							break;
 						}
-						else if (WhiteGroup.count(eachGroup.first) || MonitorList.count({ eachGroup.first ,Group })) {
+						else if (WhiteGroup.count(eachGroup.first)) {
 							continue;
 						}
 						else if (boolConsole["LeaveBlackQQ"]) {
