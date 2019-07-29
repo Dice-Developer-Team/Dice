@@ -2188,7 +2188,7 @@ public:
 						if (!DisabledOBGroup.count(fromGroup))
 						{
 							DisabledOBGroup.insert(fromGroup);
-							ObserveGroup.clear();
+							ObserveGroup.erase(fromGroup);
 							reply(GlobalMsg["strObOff"]);
 						}
 						else
@@ -2239,7 +2239,7 @@ public:
 			}
 			else if (Command == "clr")
 			{
-				if (intT = DiscussT) {
+				if (intT == DiscussT) {
 					ObserveDiscuss.erase(fromGroup);
 					reply(GlobalMsg["strObListClr"]);
 				}
