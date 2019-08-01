@@ -580,6 +580,7 @@ public:
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
 		const string strNickName = getName(fromQQ, fromGroup);
+		isAuth = isAdmin || fromType != Group || getGroupMemberInfo(fromGroup, fromQQ).permissions > 1;
 		strLowerMessage = strMsg;
 		std::transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
 		if (strLowerMessage.substr(intMsgCnt, 7) == "dismiss")
@@ -736,12 +737,10 @@ public:
 			}
 			return 1;
 		}
-		if (boolConsole["DisabledGlobal"] && (!isAdmin || !isCalled)) {
-			if (intT == PrivateT)reply(GlobalMsg["strGlobalOff"]);
-			return 1;
+		if (isBotOff) {
+			if (intT == PrivateT)reply(GlobalMsg["strGlobalOff"]); 
+			return 0; 
 		}
-		if (!isCalled && (intT == GroupT && DisabledGroup.count(fromGroup)))return 1;
-		if (!isCalled && (intT == DiscussT && DisabledDiscuss.count(fromGroup)))return 1;
 		if (strLowerMessage.substr(intMsgCnt, 7) == "helpdoc"&&isAdmin)
 		{
 			intMsgCnt += 7;
@@ -3345,17 +3344,18 @@ public:
 			}
 		}
 		init2(strMsg);
-		if (strMsg[0] != '.'&&CardDeck::mReplyDeck.count(strMsg) == 0)return 0;
 		if (fromType == Private) isCalled = true;
 		isMaster = fromQQ == masterQQ && boolMasterMode;
 		isAdmin = isMaster || AdminQQ.count(fromQQ);
-		isAuth = isAdmin || fromType != Group || getGroupMemberInfo(fromGroup, fromQQ).permissions > 1;
+		isBotOff = (boolConsole["DisabledGlobal"] && (!isAdmin || !isCalled)) || (!isCalled && (fromType == Group && DisabledGroup.count(fromGroup) || fromType == Discuss && DisabledDiscuss.count(fromGroup)));
 		if (DiceReply())return 1;
+		else if(isBotOff)return boolConsole["DisabledBlock"];
 		else return CustomReply();
 	}
 
 private:
 	int intMsgCnt = 0;
+	bool isBotOff = false;
 	bool isCalled = false;
 	bool isMaster = false;
 	bool isAdmin = false;
