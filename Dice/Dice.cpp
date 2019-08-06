@@ -131,7 +131,7 @@ void dataBackUp() {
 		while (it.second.find('\r') != string::npos)it.second.replace(it.second.find('\r'), 1, "\\r");
 		while (it.second.find("\t") != string::npos)it.second.replace(it.second.find("\t"), 1, "\\t");
 		string strMsg = GBKtoUTF8(it.second);
-		ofstreamCustomMsg <<"\"" << it.first << "\":\"" << strMsg << "\",";
+		ofstreamCustomMsg <<"\"" << it.first << "\":\"" << strMsg << "\",\n";
 	}
 	ofstreamCustomMsg << "\n\"Number\":\"" << EditedMsg.size() << "\"\n}" << endl;
 	//备份默认规则
@@ -208,6 +208,8 @@ EVE_Enable(eventEnable)
 	threadConsoleTimer.detach();
 	thread threadWarning(warningHandler);
 	threadWarning.detach();
+	thread threadFrq(frqHandler);
+	threadFrq.detach();
 	strFileLoc = getAppDirectory();
 	DiceRequestHeader += "#" + to_string(getLoginQQ());
 	/*
@@ -627,7 +629,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			string strNote = strNow + "在" + printGroup(eve.fromGroup) + "中," + eve.message;
 			string strWarning;
 			if (isOwner) {
-				strNote.replace(strNote.find_last_of("管理员"), 6, printQQ(fromQQ));
+				strNote.replace(strNote.rfind("管理员"), 6, printQQ(fromQQ));
 				strWarning = "!warning{\n\"fromGroup\":" + to_string(eve.fromGroup) + ",\n\"type\":\"ban\",\n\"fromQQ\":" + to_string(fromQQ) + ",\n\"time\":\"" + strNow + "\",\n\"DiceMaid\":" + to_string(getLoginQQ()) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"";
 				}
 			else if (boolConsole["BannedBanOwner"]) {
@@ -635,7 +637,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			}
 			else strWarning = "!warning{\n\"fromGroup\":" + to_string(eve.fromGroup) + ",\n\"type\":\"ban\",\n\"fromQQ\":0,\n\"time\":\"" + strNow + "\",\n\"DiceMaid\":" + to_string(getLoginQQ()) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"";
 			string strMsg = strNote + "\n群主" + printQQ(fromQQ)+",另有管理员" + to_string(intAuthCnt) + "名" + strAuthList;
-			if (mGroupInviter.count(eve.fromGroup) && AdminQQ.count(mGroupInviter[eve.fromGroup]) == 0) {
+			if (mGroupInviter.count(eve.fromGroup) && AdminQQ.count(mGroupInviter[eve.fromGroup]) == 0 && masterQQ!= mGroupInviter[eve.fromGroup]) {
 				long long llInviter = mGroupInviter[eve.fromGroup];
 				strNote += ";入群邀请者：" + printQQ(llInviter);
 				while (strNote.find('\"') != string::npos)strNote.replace(strNote.find('\"'), 1, "\'");

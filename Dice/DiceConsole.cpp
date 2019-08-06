@@ -118,6 +118,7 @@ void getDiceList() {
 		if(AdminQQ.count(fromQQ)) {
 			AddMsgToQueue(strName + strMsg, masterQQ);
 			for (auto it : AdminQQ) {
+				if (!MonitorList.count({ fromQQ,Private }))continue;
 				if (fromQQ == it)AddMsgToQueue(strMsg, it);
 				else AddMsgToQueue(strName + strMsg, it);
 			}
@@ -125,6 +126,7 @@ void getDiceList() {
 		else {
 			masterQQ == fromQQ ? AddMsgToQueue(strMsg, masterQQ) : AddMsgToQueue(strName + strMsg, masterQQ);
 			for (auto it : AdminQQ) {
+				if (!MonitorList.count({ fromQQ,Private }))continue;
 				AddMsgToQueue(strName + strMsg, it);
 			}
 		}
@@ -144,12 +146,13 @@ void checkBlackQQ(long long llQQ, std::string strWarning) {
 	int intCnt = 0;
 	for (auto eachGroup : GroupList) {
 		if (getGroupMemberInfo(eachGroup.first, llQQ).QQID == llQQ) {
+			intCnt++;
 			strNotice += "\n" + printGroup(eachGroup.first);
 			if (getGroupMemberInfo(eachGroup.first, llQQ).permissions < getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions) {
 				strNotice += "对方群权限较低";
 			}
 			else if (MonitorList.count({ eachGroup.first ,Group })) {
-				strNotice += "群监视窗口";
+				continue;
 			}
 			else if (getGroupMemberInfo(eachGroup.first, llQQ).permissions > getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions) {
 				if(!strWarning.empty())AddMsgToQueue(strWarning, eachGroup.first, Group);
@@ -170,7 +173,6 @@ void checkBlackQQ(long long llQQ, std::string strWarning) {
 			}
 			else
 				AddMsgToQueue(strWarning, eachGroup.first, Group);
-			intCnt++;
 		}
 	}
 	if (intCnt) {
@@ -246,7 +248,7 @@ void warningHandler() {
 			else {
 				if (!note.empty() && noteList.count(note)) { continue; }
 				else if(!note.empty())noteList.insert(note);
-				if (warning.fromQQ != masterQQ)AddMsgToQueue("来自" + printQQ(warning.fromQQ) + ":\n" + strWarning, masterQQ);
+				if (warning.fromQQ != masterQQ)sendAdmin("已通知" + GlobalMsg["strSelfName"] + ":\n" + strWarning);
 			}
 			if (blackGroup) {
 				if (!BlackGroup.count(blackGroup)) {

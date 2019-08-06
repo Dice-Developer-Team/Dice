@@ -9,6 +9,7 @@
 #include <set>
 #include <sstream>
 #include "CQAPI_EX.h"
+#include "MsgMonitor.h"
 #include "DiceMsgSend.h"
 #include "GlobalVar.h"
 #include "MsgFormat.h"
@@ -63,14 +64,15 @@ public:
 	long long fromQQ = 0;
 	long long fromGroup = 0;
 	chatType fromChat;
+	time_t fromTime = time(NULL);
 	string strReply;
 	FromMsg(std::string message, long long fromNum) :strMsg(message), fromQQ(fromNum), fromID(fromNum) {
 		fromChat = { fromID,Private };
-		mLastMsgList[fromChat] = time(NULL);
+		mLastMsgList[fromChat] = fromTime;
 	}
 
 	FromMsg(std::string message, long long fromGroup, CQ::msgtype msgType, long long fromNum) :strMsg(message), fromQQ(fromNum), fromType(msgType), fromID(fromGroup), fromGroup(fromGroup), fromChat({ fromGroup,fromType }) {
-		mLastMsgList[fromChat] = time(NULL);
+		mLastMsgList[fromChat] = fromTime;
 	}
 
 	void reply(std::string strReply) {
@@ -738,7 +740,10 @@ public:
 			return 1;
 		}
 		if (isBotOff) {
-			if (intT == PrivateT)reply(GlobalMsg["strGlobalOff"]); 
+			if (intT == PrivateT) {
+				reply(GlobalMsg["strGlobalOff"]);
+				return 1;
+			}
 			return 0; 
 		}
 		if (strLowerMessage.substr(intMsgCnt, 7) == "helpdoc"&&isAdmin)
@@ -3317,6 +3322,7 @@ public:
 		string strKey = readRest();
 		if (CardDeck::mReplyDeck.count(strKey)) {
 			reply(CardDeck::drawCard(CardDeck::mReplyDeck[strKey], true));
+			AddFrq(fromQQ, fromTime, fromChat);
 			return 1;
 		}
 		else return 0;
@@ -3348,7 +3354,10 @@ public:
 		isMaster = fromQQ == masterQQ && boolMasterMode;
 		isAdmin = isMaster || AdminQQ.count(fromQQ);
 		isBotOff = (boolConsole["DisabledGlobal"] && (!isAdmin || !isCalled)) || (!isCalled && (fromType == Group && DisabledGroup.count(fromGroup) || fromType == Discuss && DisabledDiscuss.count(fromGroup)));
-		if (DiceReply())return 1;
+		if (DiceReply()) {
+			AddFrq(fromQQ, fromTime, fromChat);
+			return 1;
+		}
 		else if(isBotOff)return boolConsole["DisabledBlock"];
 		else return CustomReply();
 	}
