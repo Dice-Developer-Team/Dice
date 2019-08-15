@@ -29,6 +29,7 @@
 #include "MsgFormat.h"
 #include "NameStorage.h"
 #include "DiceNetwork.h"
+#include "DiceCloud.h"
 #include "jsonio.h"
 
 using namespace std;
@@ -42,7 +43,9 @@ std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},{"DisabledBl
 {"Private",false},{"LeaveDiscuss",false},
 {"AutoClearBlack",true},{"LeaveBlackQQ",true},{"AllowStranger",true},
 {"BannedBanOwner",true},{"BannedLeave",false},{"BannedBanInviter",true},
-{"KickedBanInviter",true} };
+{"KickedBanInviter",true},
+{"CloudVisible",true}
+};
 //骰娘列表
 std::map<long long, long long> mDiceList;
 //群邀请者
@@ -293,6 +296,9 @@ void warningHandler() {
 				if (stNow.wHour == ClockToWork.first&&stNow.wMinute == ClockToWork.second&&boolConsole["DisabledGlobal"]) {
 					boolConsole["DisabledGlobal"] = false;
 					NotifyMonitor(GlobalMsg["strSelfName"] + GlobalMsg["strClockToWork"]);
+				}
+				if (stNow.wMinute % 15 == 0) {
+					Cloud::update();
 				}
 				if (stNow.wHour == 5 && stNow.wMinute == 0) {
 					getDiceList();

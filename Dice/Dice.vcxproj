@@ -30,7 +30,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -43,7 +43,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -51,7 +51,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -211,6 +211,7 @@
     <ClCompile Include="CardDeck.cpp" />
     <ClCompile Include="CustomMsg.cpp" />
     <ClCompile Include="Dice.cpp" />
+    <ClCompile Include="DiceCloud.cpp" />
     <ClCompile Include="DiceConsole.cpp" />
     <ClCompile Include="DiceMsgSend.cpp" />
     <ClCompile Include="DiceNetwork.cpp" />
@@ -253,6 +254,7 @@
     <ClInclude Include="APPINFO.h" />
     <ClInclude Include="CardDeck.h" />
     <ClInclude Include="CustomMsg.h" />
+    <ClInclude Include="DiceCloud.h" />
     <ClInclude Include="DiceConsole.h" />
     <ClInclude Include="DiceEvent.h" />
     <ClInclude Include="DiceMsgSend.h" />

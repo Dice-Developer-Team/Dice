@@ -99,6 +99,9 @@
     <ClCompile Include="MsgMonitor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DiceCloud.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -225,6 +228,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MsgMonitor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceCloud.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

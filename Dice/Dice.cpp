@@ -46,7 +46,7 @@
 #include "CustomMsg.h"
 #include "NameGenerator.h"
 #include "MsgFormat.h"
-#include "DiceNetwork.h"
+#include "DiceCloud.h"
 #include "CardDeck.h"
 #include "DiceConsole.h"
 #include "EncodingConvert.h"
@@ -211,7 +211,6 @@ EVE_Enable(eventEnable)
 	thread threadFrq(frqHandler);
 	threadFrq.detach();
 	strFileLoc = getAppDirectory();
-	DiceRequestHeader += "#" + to_string(getLoginQQ());
 	/*
 	* 名称存储-创建与读取
 	*/
@@ -267,7 +266,7 @@ EVE_Enable(eventEnable)
 		}
 	}
 	ifstreamCharacterProp.close();
-
+	Cloud::update();
 	ifstream ifstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf");
 	if (ifstreamDisabledGroup)
 	{
