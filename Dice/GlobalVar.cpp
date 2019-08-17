@@ -35,9 +35,9 @@ CQ::logger DiceLogger("Dice!");
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-const unsigned short Dice_Build = 547;
-const std::string Dice_Ver_Without_Build = "2.3.8Express8";
-const std::string DiceRequestHeader = "Dice/2.3.8";
+const unsigned short Dice_Build = 550;
+const std::string Dice_Ver_Without_Build = "2.3.8Express9";
+const std::string DiceRequestHeader = "Dice/2.3.8EXP9";
 const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 const std::string Dice_Short_Ver = "Dice! by 溯洄 Shiki.Ver " + Dice_Ver;
 #ifdef __clang__
@@ -65,8 +65,10 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 std::map<std::string, std::string> GlobalMsg
 {
 	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
-	{"strReplySet","关键词{0}的回复已设置"},
-	{"strReplyDel","关键词{0}的回复已清除"},
+	{"strSpamFirstWarning","你够了，我无法容忍你的行为（刷屏初次警告）"},
+	{"strSpamFinalWarning","希望不要，不是希望，就是呵斥，不要有这种行为出现，这个太野蛮了（刷屏最终警告）"},
+	{"strReplySet","关键词{0}的回复已设置√"},
+	{"strReplyDel","关键词{0}的回复已清除√"},
 	{"strStModify","已记录{0}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","已设置{0}的属性："},		//存在掷骰时，使用此文本(暂时无用)
 	{"strStValEmpty","未记录{0}原值×"},		//{0}为属性名
@@ -101,11 +103,11 @@ std::map<std::string, std::string> GlobalMsg
 	{"strSendMsgEmpty","发送消息内容为空×"},
 	{"strSendMsgIDEmpty","未指定发送对象×"},
 	{"strSendMsgInvalid","没有可以发送的对象×"},//没有Master
-	{"strDefaultCOCClr","默认检定房规已清除"},
-	{"strDefaultCOCNotFound","默认检定房规不存在"},
+	{"strDefaultCOCClr","默认检定房规已清除√"},
+	{"strDefaultCOCNotFound","默认检定房规不存在×"},
 	{"strDefaultCOCSet","默认检定房规已设置:"},
-	{"strLinkLoss","时空连接已断开"},
-	{"strLinked","已创建时空门"},
+	{"strLinkLoss","时空连接已断开√"},
+	{"strLinked","已创建时空门√"},
 	{"strLinkWarning","尝试创建时空门，但不保证能否连通"},
 	{"strLinkNotFound","时空门要通向不可名状的地方了×"},
 	{"strNotMaster","你不是本机器人的master！你想做什么？"},
@@ -114,8 +116,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strHlpSet","已为{0}设置词条√"},
 	{"strHlpReset","已清除{0}的词条，重启应用后重置默认词条√"},
 	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
-	{"strClockToWork","已按时启用"},
-	{"strClockOffWork","已按时关闭"},
+	{"strClockToWork","本机器人已按时启用√"},
+	{"strClockOffWork","本机器人已按时关闭√"},
 	{"strNameGenerator","{0}的随机名称:"},
 	{"strDrawCard", "来看看{0}抽到了什么：{1}"},
 	{"strHlpNotFound", "未找到指定的帮助信息×"},
@@ -129,18 +131,24 @@ std::map<std::string, std::string> GlobalMsg
 	{"strObOffAlready","在这里旁观模式已经被禁用!"},
 	{"strObList","当前的旁观者有:"},
 	{"strObListEmpty","当前暂无旁观者"},
-	{"strObListClr","成功删除所有旁观者!"},
-	{"strObEnter","成功加入旁观模式!"},
-	{"strObExit","成功退出旁观模式!"},
+	{"strObListClr","本机器人成功删除所有旁观者√"},
+	{"strObEnter","成功加入旁观模式√"},
+	{"strObExit","成功退出旁观模式√"},
 	{"strObEnterAlready","已经处于旁观模式!"},
 	{"strObExitAlready","没有加入旁观模式!"},
 	{"strQQIDEmpty","QQ号不能为空×"},
 	{"strGroupIDEmpty","群号不能为空×"},
 	{"strBlackGroup", "该群在黑名单中，如有疑问请联系master"},
-	{"strBotOn","成功开启本机器人!"},
-	{"strBotOff","成功关闭本机器人!"},
+	{"strBotOn","成功开启本机器人√"},
+	{"strBotOff","成功关闭本机器人√"},
 	{"strBotOnAlready","本机器人已经处于开启状态!"},
 	{"strBotOffAlready","本机器人已经处于关闭状态!"},
+	{"strFumble", "大失败!"},
+	{"strFailure", "失败"},
+	{"strSuccess", "成功"},
+	{"strHardSuccess", "困难成功"},
+	{"strExtremeSuccess", "极难成功"},
+	{"strCriticalSuccess", "大成功!"},
 	{"strRollCriticalSuccess","大成功！"},
 	{"strRollExtremeSuccess","极难成功"},
 	{"strRollHardSuccess","困难成功"},
@@ -149,7 +157,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strRollFumble","大失败！"},
 	{"strNumCannotBeZero", "无意义的数目！莫要消遣于我!"},
 	{"strDeckNotFound", "没听说过的牌堆名呢……"},
-	{"strDeckEmpty", "疲劳警告！已经什么也不剩了！"},
+	{"strDeckEmpty", "本机器人已经一张也不剩了！"},
 	{"strNameNumTooBig", "生成数量过多!请输入1-10之间的数字!"},
 	{"strNameNumCannotBeZero", "生成数量不能为零!请输入1-10之间的数字!"},
 	{"strSetInvalid", "无效的默认骰!请输入1-1000之间的数字!"},
@@ -183,9 +191,9 @@ std::map<std::string, std::string> GlobalMsg
 	{"strInputErr", "命令或掷骰表达式输入错误!"},
 	{"strUnknownErr", "发生了未知错误!"},
 	{"strUnableToGetErrorMsg", "无法获取错误信息!"},
-	{"strDiceTooBigErr", "骰娘被你扔出的骰子淹没了"},
+	{"strDiceTooBigErr", "骰娘被你扔出的骰子淹没了×"},
 	{"strRequestRetCodeErr", "访问服务器时出现错误! HTTP状态码: {0}"},
-	{"strRequestNoResponse", "服务器未返回任何信息"},
+	{"strRequestNoResponse", "服务器未返回任何信息×"},
 	{"strTypeTooBigErr", "哇!让我数数骰子有多少面先~1...2..."},
 	{"strZeroTypeErr", "这是...!!时空裂(骰娘被骰子产生的时空裂缝卷走了)"},
 	{"strAddDiceValErr", "你这样要让我扔骰子扔到什么时候嘛~(请输入正确的加骰参数:5-10之内的整数)"},
@@ -195,26 +203,26 @@ std::map<std::string, std::string> GlobalMsg
 	{"strObPrivate", "你想看什么呀？"},
 	{"strDismissPrivate", "滚！"},
 	{"strWelcomePrivate", "你在这欢迎谁呢？"},
-	{"strWelcomeMsgClearNotice", "已清除本群的入群欢迎词"},
-	{"strWelcomeMsgClearErr", "错误:没有设置入群欢迎词，清除失败"},
-	{"strWelcomeMsgUpdateNotice", "本机器人已更新本群的入群欢迎词"},
-	{"strPermissionDeniedErr", "非群主或管理员无权命令本机器人"},
-	{"strSelfPermissionErr","本机器人权限不够无能为力呢"},
-	{"strNameTooLongErr", "错误:名称过长(最多为50英文字符)"},
-	{"strNameClr","已将{0}的名称删除"},
-	{"strNameSet","已将{0}的名称更改为{1}"},
+	{"strWelcomeMsgClearNotice", "已清除本群的入群欢迎词√"},
+	{"strWelcomeMsgClearErr", "没有设置入群欢迎词，清除失败×"},
+	{"strWelcomeMsgUpdateNotice", "本机器人已更新本群的入群欢迎词√"},
+	{"strPermissionDeniedErr", "非群主或管理员无权命令本机器人×"},
+	{"strSelfPermissionErr","本机器人权限不够无能为力呢×"},
+	{"strNameTooLongErr", "名称过长×(最多为50英文字符)"},
+	{"strNameClr","已将{0}的名称删除√"},
+	{"strNameSet","已将{0}的名称更改为{1}√"},
 	{"strUnknownPropErr", "未设定成功率，请先.st 技能名 技能值 或查看.help rc×"},
 	{"strEmptyWWDiceErr", "格式错误:正确格式为.w(w)XaY!其中X≥1, 5≤Y≤10"},
 	{"strPropErr", "请认真的输入你的属性哦~"},
-	{"strSetPropSuccess", "属性设置成功"},
-	{"strPropCleared", "已清除所有属性"},
-	{"strRuleReset","已重置默认规则"},
-	{"strRuleSet","已设置默认规则"},
+	{"strSetPropSuccess", "属性设置成功√"},
+	{"strPropCleared", "已清除所有属性√"},
+	{"strRuleReset","已重置默认规则√"},
+	{"strRuleSet","已设置默认规则√"},
 	{"strRuleErr", "规则数据获取失败,具体信息:\n"},
-	{"strRulesFailedErr", "请求失败,本机器人无法连接数据库"},
-	{"strPropDeleted", "属性删除成功"},
-	{"strPropNotFound", "错误:属性不存在"},
-	{"strRuleNotFound", "本机器人未找到对应的规则信息"},
+	{"strRulesFailedErr", "请求失败,本机器人无法连接数据库×"},
+	{"strPropDeleted", "属性删除成功√"},
+	{"strPropNotFound", "属性不存在×"},
+	{"strRuleNotFound", "本机器人未找到对应的规则信息×"},
 	{"strProp", "{0}的{1}属性值为{2}"},
 	{"strStErr", "格式错误:请参考.help st获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
@@ -255,7 +263,7 @@ std::map<std::string, std::string> GlobalMsg
 
 std::map<std::string, std::string> EditedMsg;
 std::map<std::string, std::string> HelpDoc = {
-{"更新","547：更新指令开关\n546：完善骰娘列表体验\n545：开放自定义deck\n544：后台管理更新\n543：允许.st输入变化值\n542：新增.deck功能\n541：后台管理大修，允许同意好友\n540：预定义回执文本\n539：优化表达，加入骰池计数\n537：更新.send功能\n535：新增了可变成长检定功能"},
+{"更新","550：允许多轮检定\n549：新增刷屏监测\n548：允许自定义先攻检定掷骰\n547：更新指令开关\n546：完善骰娘列表体验\n545：开放自定义deck\n544：后台管理更新\n543：允许.st输入变化值\n537：更新.send功能\n535：新增了可变成长检定功能"},
 {"协议","0.本协议是Shiki(Death、Judgement、The World)的服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
 {"链接","查看源码:https://github.com/w4123/Dice/tree/Shiki\n插件下载:https://github.com/w4123/Dice/releases\n官方文档:https://www.stringempty.xyz\n跑团记录着色器:https://logpainter.kokona.tech"},
 {"设定","Master：（）\n.me使用：禁止\n.jrrp使用：允许\n邀请处理：黑名单制，非禁即入\n讨论组使用：允许\n移出反制：拉黑群和操作者\n禁言反制：默认拉黑群和群主\n刷屏反制：警告\n邀请人责任：有限连带\n窥屏可能：有\n其他插件：无\n官方群：941980833\n私骰群：192499947"},
