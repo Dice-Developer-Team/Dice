@@ -2469,9 +2469,7 @@ public:
 			string strinit = "D20";
 			if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-')
 			{
-				strinit += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+				strinit += readDice();
 			}
 			else if (isRollDice()){
 				strinit = readDice();
