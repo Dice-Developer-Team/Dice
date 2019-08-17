@@ -80,7 +80,7 @@ std::map<long long, long long> mGroupInviter;
 		return strClock;
 	}
 std::string printSTime(SYSTEMTIME st){
-	return to_string(st.wYear) + "/" + to_string(st.wMonth) + "/" + to_string(st.wDay) + " " + to_string(st.wHour) + ":" + (st.wMinute < 10 ? "0" : "") + to_string(st.wMinute) + ":" + (st.wSecond < 10 ? "0" : "") + to_string(st.wSecond);
+	return to_string(st.wYear) + "-" + to_string(st.wMonth) + "-" + to_string(st.wDay) + " " + to_string(st.wHour) + ":" + (st.wMinute < 10 ? "0" : "") + to_string(st.wMinute) + ":" + (st.wSecond < 10 ? "0" : "") + to_string(st.wSecond);
 }
 	//´òÓ¡ÓÃ»§êÇ³ÆQQ
 	string printQQ(long long llqq) {
@@ -291,11 +291,11 @@ void warningHandler() {
 				stTmp = stNow;
 				if (stNow.wHour == ClockOffWork.first&&stNow.wMinute == ClockOffWork.second && !boolConsole["DisabledGlobal"]) {
 					boolConsole["DisabledGlobal"] = true;
-					NotifyMonitor(GlobalMsg["strSelfName"] + GlobalMsg["strClockOffWork"]);
+					NotifyMonitor(GlobalMsg["strClockOffWork"]);
 				}
 				if (stNow.wHour == ClockToWork.first&&stNow.wMinute == ClockToWork.second&&boolConsole["DisabledGlobal"]) {
 					boolConsole["DisabledGlobal"] = false;
-					NotifyMonitor(GlobalMsg["strSelfName"] + GlobalMsg["strClockToWork"]);
+					NotifyMonitor(GlobalMsg["strClockToWork"]);
 				}
 				if (stNow.wMinute % 15 == 0) {
 					Cloud::update();

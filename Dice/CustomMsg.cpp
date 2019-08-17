@@ -26,23 +26,52 @@
 #include "GlobalVar.h"
 #include "EncodingConvert.h"
 
+std::map<std::string, std::string>strKeyReplace = {
+	{"strWelcomeMsgIsEmptyErr","strWelcomeMsgClearErr"},
+	{"strTurnNoticeReplyMsg", "strRollTurn"},
+	{"strHiddenDiceReplyMsg", "strRollHidden"},
+	{"strRollDiceReplyMsg", "strRollDice"},
+	{"strObListReplyMsg", "strObList"},
+	{"strObListEmptyNotice", "strObListEmpty"},
+	{"strNickChangeReplyMsg", "strNameSet"},
+	{"strNickDeleteReplyMsg", "strNameClr"},
+	{"strObCommandSuccessfullyEnabledNotice", "strObOn"},
+	{"strObCommandAlreadyEnabledErr","strObOnAlready"},
+	{"strObCommandSuccessfullyDisabledNotice", "strObOff"},
+	{"strObCommandAlreadyDisabledErr", "strObOffAlready"},
+	{"strObCommandDisabledErr", "strObOffAlready"},
+	{"strObListClearedNotice", "strObListClr"}
+	/*{"strJrrpCommandSuccessfullyEnabledNotice", "成功在本群/讨论组中启用.jrrp命令!"},
+	{"strJrrpCommandAlreadyEnabledErr", "错误: 在本群/讨论组中.jrrp命令已经被启用!"},
+	{"strJrrpCommandSuccessfullyDisabledNotice", "成功在本群/讨论组中禁用.jrrp命令!"},
+	{"strJrrpCommandAlreadyDisabledErr", "错误: 在本群/讨论组中.jrrp命令已经被禁用!"},
+	{"strJrrpCommandDisabledErr", "管理员已在此群/讨论组中禁用.jrrp命令!"},
+	{"strHelpCommandSuccessfullyEnabledNotice", "成功在本群/讨论组中启用.help命令!"},
+	{"strHelpCommandAlreadyEnabledErr", "错误: 在本群/讨论组中.help命令已经被启用!"},
+	{"strHelpCommandSuccessfullyDisabledNotice", "成功在本群/讨论组中禁用.help命令!"},
+	{"strHelpCommandAlreadyDisabledErr", "错误: 在本群/讨论组中.help命令已经被禁用!"},
+	{"strHelpCommandDisabledErr", "管理员已在此群/讨论组中禁用.help命令!"},*/
+};
+
 void ReadCustomMsg(std::ifstream& in)
 {
 	std::stringstream buffer;
 	buffer << in.rdbuf();
 	nlohmann::json customMsg = nlohmann::json::parse(buffer.str());
 	for (nlohmann::json::iterator it = customMsg.begin(); it != customMsg.end(); ++it) {
-		if(GlobalMsg.count(it.key()))
+		std::string strKey = it.key();
+		if (strKeyReplace.count(strKey))strKey = strKeyReplace[strKey];
+		if(GlobalMsg.count(strKey))
 		{
-			if (it.key() != "strHlpMsg")
+			if (strKey != "strHlpMsg")
 			{
-				GlobalMsg[it.key()] = UTF8toGBK(it.value().get<std::string>());
+				GlobalMsg[strKey] = UTF8toGBK(it.value().get<std::string>());
 			}
 			else
 			{
-				GlobalMsg[it.key()] = Dice_Short_Ver + "\n" + UTF8toGBK(it.value().get<std::string>());
+				GlobalMsg[strKey] = Dice_Short_Ver + "\n" + UTF8toGBK(it.value().get<std::string>());
 			}
-			EditedMsg[it.key()] = UTF8toGBK(it.value().get<std::string>());
+			EditedMsg[strKey] = UTF8toGBK(it.value().get<std::string>());
 		}
 	}
 }
