@@ -2295,6 +2295,17 @@ public:
 		{
 			intMsgCnt += 2;
 			int intRule = mDefaultCOC.count(fromChat) ? mDefaultCOC[fromChat] : 0;
+			int intTurnCnt = 1;
+			if (strMsg.find("#") != string::npos)
+			{
+				string strTurnCnt = strMsg.substr(intMsgCnt, strMsg.find("#") - intMsgCnt);
+				//#能否识别有效
+				if (strTurnCnt.empty())intMsgCnt++;
+				else if (strTurnCnt.length() == 1 && isdigit(static_cast<unsigned char>(strTurnCnt[0])) || strTurnCnt == "10") {
+					intMsgCnt += strTurnCnt.length() + 1;
+					intTurnCnt = stoi(strTurnCnt);
+				}
+			}
 			string strSkillName;
 			string strMainDice = "D100";
 			string strSkillModify;
@@ -2414,15 +2425,32 @@ public:
 				reply(GlobalMsg["strDiceTooBigErr"]);
 				return 1;
 			}
-			const int intD100Res = rdMainDice.intTotal;
 			string strModifiedSkill = strDifficulty + strSkillName + ((intSkillMultiple != 1) ? "×" + to_string(intSkillMultiple) : "") + strSkillModify + ((intSkillDivisor != 1) ? "/" + to_string(intSkillDivisor) : "");
-			string strReply = format(GlobalMsg["strRollSkill"], { strNickName ,strModifiedSkill });
+			strReply = format(GlobalMsg["strRollSkill"], { strNickName ,strModifiedSkill });
 			if (!strReason.empty())
 			{
 				strReply = format(GlobalMsg["strRollSkillReason"], { strNickName ,strModifiedSkill ,strReason });
 			}
-			strReply += "：" + rdMainDice.FormCompleteString() + "/" + to_string(intFianlSkillVal) + " ";
-			int intRes = RollSuccessLevel(intD100Res, intFianlSkillVal, intRule);
+			if (intTurnCnt > 1) {
+				strReply += ":";
+				while (intTurnCnt--) {
+					rdMainDice.Roll();
+					strReply += "\n" + rdMainDice.FormCompleteString() + "/" + to_string(intFianlSkillVal) + " ";
+					int intRes = RollSuccessLevel(rdMainDice.intTotal, intFianlSkillVal, intRule);
+					switch (intRes) {
+					case 0:strReply += GlobalMsg["strFumble"]; break;
+					case 1:strReply += isAutomatic ? GlobalMsg["strSuccess"] : GlobalMsg["strFailure"]; break;
+					case 5:strReply += GlobalMsg["strCriticalSuccess"]; break;
+					case 4:if (intDifficulty == 1) { strReply += GlobalMsg["strExtremeSuccess"]; break; }
+					case 3:if (intDifficulty == 1) { strReply += GlobalMsg["strHardSuccess"]; break; }
+					case 2:strReply += GlobalMsg["strSuccess"]; break;
+					}
+				}
+				reply();
+				return 1;
+			}
+			strReply += ":" + rdMainDice.FormCompleteString() + "/" + to_string(intFianlSkillVal) + " ";
+			int intRes = RollSuccessLevel(rdMainDice.intTotal, intFianlSkillVal, intRule);
 			switch (intRes) {
 			case 0:strReply += GlobalMsg["strRollFumble"]; break;
 			case 1:strReply += isAutomatic ? GlobalMsg["strRollRegularSuccess"] : GlobalMsg["strRollFailure"]; break;
@@ -2431,7 +2459,7 @@ public:
 			case 3:if (intDifficulty == 1) { strReply += GlobalMsg["strRollHardSuccess"]; break; }
 			case 2:strReply += GlobalMsg["strRollRegularSuccess"]; break;
 			}
-			reply(strReply);
+			reply();
 			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "ri"&&intT)
@@ -3281,12 +3309,15 @@ public:
 			}
 			else
 			{
-				while (intTurnCnt--)
+				string strDiceRes;
+				if (intTurnCnt == 1)strDiceRes = boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString();
+				else while (intTurnCnt--)
 				{
 					// 此处返回值无用
 					// ReSharper disable once CppExpressionWithoutSideEffects
 					rdMainDice.Roll();
-					string strDiceRes = boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString();
+					strDiceRes += "\n" + (boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString());
+				}
 					string strAns = format(GlobalMsg["strRollDice"], { strNickName ,strDiceRes });
 					if (!strReason.empty())
 						strAns = format(GlobalMsg["strRollDiceReason"], { strNickName ,strDiceRes ,strReason});
@@ -3307,7 +3338,6 @@ public:
 							}
 						}
 					}
-				}
 			}
 			if (isHidden)
 			{
