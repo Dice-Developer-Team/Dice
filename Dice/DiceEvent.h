@@ -1820,11 +1820,16 @@ public:
 				}
 				else {
 					string strMessage = strMsg.substr(intMsgCnt);
+					if (strMessage == "show") {
+						reply(GlobalMsg[strName]);
+						return 1;
+					}
 					if (strMessage == "NULL")strMessage = "";
 					EditedMsg[strName] = strMessage;
 					GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMessage : strMessage;
 					isMaster ? reply("已自定义" + strName + "的文本") : AdminNotify("已自定义" + strName + "的文本");
 				}
+				SaveCustomMsg(string(getAppDirectory()) + "CustomMsg.json");
 			}
 			else {
 				reply("是说" + strName + "？这似乎不是会用到的语句×");

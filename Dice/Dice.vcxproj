@@ -257,6 +257,7 @@
     <ClInclude Include="DiceCloud.h" />
     <ClInclude Include="DiceConsole.h" />
     <ClInclude Include="DiceEvent.h" />
+    <ClInclude Include="DiceFile.hpp" />
     <ClInclude Include="DiceMsgSend.h" />
     <ClInclude Include="DiceNetwork.h" />
     <ClInclude Include="EncodingConvert.h" />

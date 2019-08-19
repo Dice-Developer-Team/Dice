@@ -35,6 +35,7 @@
 
 #include "APPINFO.h"
 #include "jsonio.h"
+#include "DiceFile.hpp"
 #include "RandomGenerator.h"
 #include "RD.h"
 #include "CQEVE_ALL.h"
@@ -99,11 +100,7 @@ void dataBackUp() {
 		ofstreamMaster.close();
 	}
 	//备份管理员列表
-	ofstream  ofstreamAdmin(strFileLoc + "AdminQQ.RDconf");
-	for (auto it : AdminQQ) {
-		ofstreamAdmin << it << std::endl;
-	}
-	ofstreamAdmin.close();
+	saveFile(strFileLoc + "AdminQQ.RDconf", AdminQQ);
 	//备份监控窗口列表
 	ofstream ofstreamMonitorList(strFileLoc + "MonitorList.RDconf");
 	for (auto it : MonitorList) {
@@ -122,52 +119,17 @@ void dataBackUp() {
 		ofstreamPersonalMsg << it->first << std::endl << it->second << std::endl;
 	}
 	//备份CustomMsg
-	ofstream ofstreamCustomMsg(strFileLoc + "CustomMsg.json", ios::out | ios::trunc);
-	ofstreamCustomMsg << "{\n";
-	for (auto it : EditedMsg)
-	{
-		while (it.second.find("\r\n") != string::npos)it.second.replace(it.second.find("\r\n"), 2, "\\n");
-		while (it.second.find('\n') != string::npos)it.second.replace(it.second.find('\n'), 1, "\\n");
-		while (it.second.find('\r') != string::npos)it.second.replace(it.second.find('\r'), 1, "\\r");
-		while (it.second.find("\t") != string::npos)it.second.replace(it.second.find("\t"), 1, "\\t");
-		string strMsg = GBKtoUTF8(it.second);
-		ofstreamCustomMsg <<"\"" << it.first << "\":\"" << strMsg << "\",\n";
-	}
-	ofstreamCustomMsg << "\n\"Number\":\"" << EditedMsg.size() << "\"\n}" << endl;
 	//备份默认规则
 	ofstream ofstreamDefaultRule(strFileLoc + "DefaultRule.RDconf", ios::out | ios::trunc);
 	for (auto it = DefaultRule.begin(); it != DefaultRule.end(); ++it)
 	{
 		ofstreamDefaultRule << it->first << std::endl << it->second << std::endl;
 	}
-	//备份白名单群
-	ofstream ofstreamWhiteGroup(strFileLoc + "WhiteGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = WhiteGroup.begin(); it != WhiteGroup.end(); ++it)
-	{
-		ofstreamWhiteGroup << *it << std::endl;
-	}
-	ofstreamWhiteGroup.close();
-	//备份黑名单群
-	ofstream ofstreamBlackGroup(strFileLoc + "BlackGroup.RDconf", ios::out | ios::trunc);
-	for (auto it : BlackGroup)
-	{
-		ofstreamBlackGroup << it << std::endl;
-	}
-	ofstreamBlackGroup.close();
-	//备份白名单用户
-	ofstream ofstreamWhiteQQ(strFileLoc + "WhiteQQ.RDconf", ios::out | ios::trunc);
-	for (auto it : WhiteQQ)
-	{
-		ofstreamWhiteQQ << it << std::endl;
-	}
-	ofstreamWhiteQQ.close();
-	//备份黑名单用户
-	ofstream ofstreamBlackQQ(strFileLoc + "BlackQQ.RDconf", ios::out | ios::trunc);
-	for (auto it : BlackQQ)
-	{
-		ofstreamBlackQQ << it << std::endl;
-	}
-	ofstreamBlackQQ.close();
+	//备份黑白名单
+	saveFile(strFileLoc + "WhiteGroup.RDconf", WhiteGroup);
+	saveFile(strFileLoc + "BlackGroup.RDconf", BlackGroup);
+	saveFile(strFileLoc + "WhiteQQ.RDconf", WhiteQQ);
+	saveFile(strFileLoc + "BlackQQ.RDconf", BlackQQ);
 	//备份聊天列表
 	ofstream ofstreamLastMsgList(strFileLoc + "LastMsgList.MYmap", ios::out | ios::trunc);
 	for (auto it : mLastMsgList)
@@ -176,12 +138,7 @@ void dataBackUp() {
 	}
 	ofstreamLastMsgList.close();
 	//备份邀请者列表
-	ofstream ofstreamGroupInviter(strFileLoc + "GroupInviter.RDconf", ios::out | ios::trunc);
-	for (auto it : mGroupInviter)
-	{
-		ofstreamGroupInviter << it.first << "\n" << it.second << std::endl;
-	}
-	ofstreamGroupInviter.close();
+	saveFile(strFileLoc + "GroupInviter.RDconf", mGroupInviter);
 	//备份默认COC房规
 	ofstream ofstreamDefaultCOC(strFileLoc + "DefaultCOC.MYmap", ios::out | ios::trunc);
 	for (auto it : mDefaultCOC)
@@ -189,12 +146,50 @@ void dataBackUp() {
 		ofstreamDefaultCOC << it.first.first << " " << it.first.second << " " << it.second << std::endl;
 	}
 	ofstreamDefaultCOC.close();
+	saveFile(strFileLoc + "Default.RDconf", DefaultDice);
 	//保存卡牌
 	saveJMap(strFileLoc + "GroupDeck.json", CardDeck::mGroupDeck);
 	saveJMap(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
 	saveJMap(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
 	saveJMap(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
 	saveJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);
+	//保存群内设置
+	ilInitList.reset();
+	Name.reset();
+	saveFile(strFileLoc + "DisabledGroup.RDconf", DisabledGroup);
+	saveFile(strFileLoc + "DisabledDiscuss.RDconf", DisabledDiscuss);
+	saveFile(strFileLoc + "DisabledJRRPGroup.RDconf", DisabledJRRPGroup);
+	saveFile(strFileLoc + "DisabledJRRPDiscuss.RDconf", DisabledJRRPDiscuss);
+	saveFile(strFileLoc + "DisabledMEGroup.RDconf", DisabledMEGroup);
+	saveFile(strFileLoc + "DisabledMEDiscuss.RDconf", DisabledMEDiscuss);
+	saveFile(strFileLoc + "DisabledHELPGroup.RDconf", DisabledHELPGroup);
+	saveFile(strFileLoc + "DisabledHELPDiscuss.RDconf", DisabledHELPDiscuss);
+	saveFile(strFileLoc + "DisabledOBGroup.RDconf", DisabledOBGroup);
+	saveFile(strFileLoc + "DisabledOBDiscuss.RDconf", DisabledOBDiscuss);
+	saveFile(strFileLoc + "ObserveGroup.RDconf", ObserveGroup);
+	saveFile(strFileLoc + "ObserveDiscuss.RDconf", ObserveDiscuss);
+
+	ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
+	for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
+	{
+		for (auto it1 = it->second.cbegin(); it1 != it->second.cend(); ++it1)
+		{
+			ofstreamCharacterProp << it->first.QQ << " " << it->first.Type << " " << it->first.GrouporDiscussID << " "
+				<< it1->first << " " << it1->second << std::endl;
+		}
+	}
+	ofstreamCharacterProp.close();
+
+	ofstream ofstreamWelcomeMsg(strFileLoc + "WelcomeMsg.RDconf", ios::out | ios::trunc);
+	for (auto it = WelcomeMsg.begin(); it != WelcomeMsg.end(); ++it)
+	{
+		while (it->second.find(' ') != string::npos)it->second.replace(it->second.find(' '), 1, "{space}");
+		while (it->second.find('\t') != string::npos)it->second.replace(it->second.find('\t'), 1, "{tab}");
+		while (it->second.find('\n') != string::npos)it->second.replace(it->second.find('\n'), 1, "{endl}");
+		while (it->second.find('\r') != string::npos)it->second.replace(it->second.find('\r'), 1, "{enter}");
+		ofstreamWelcomeMsg << it->first << " " << it->second << std::endl;
+	}
+	ofstreamWelcomeMsg.close();
 }
 EVE_Enable(eventEnable)
 {
@@ -224,14 +219,10 @@ EVE_Enable(eventEnable)
 	}
 	ifstreamMaster.close();
 	//读取管理员列表
-	ifstream ifstreamAdmin(strFileLoc + "AdminQQ.RDconf");
-	while (ifstreamAdmin)
-	{
-		long long llAdmin;
-		ifstreamAdmin >> llAdmin;
-		AdminQQ.insert(llAdmin);
+	loadFile(strFileLoc + "AdminQQ.RDconf", AdminQQ);
+	if(AdminQQ.upper_bound(0)!= AdminQQ.begin()) {
+		AdminQQ.erase(AdminQQ.begin(), AdminQQ.upper_bound(0));
 	}
-	ifstreamAdmin.close();
 	//读取监控窗口列表
 	ifstream ifstreamMonitorList(strFileLoc + "MonitorList.RDconf");
 	while (ifstreamMonitorList)
@@ -253,7 +244,6 @@ EVE_Enable(eventEnable)
 	ifstreamMonitorList.close();
 	//获取boolConsole
 	loadJMap(strFileLoc + "boolConsole.json", boolConsole);
-	getDiceList();
 	ifstream ifstreamCharacterProp(strFileLoc + "CharacterProp.RDconf");
 	if (ifstreamCharacterProp)
 	{
@@ -266,139 +256,25 @@ EVE_Enable(eventEnable)
 		}
 	}
 	ifstreamCharacterProp.close();
-	Cloud::update();
-	ifstream ifstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf");
-	if (ifstreamDisabledGroup)
-	{
-		long long Group;
-		while (ifstreamDisabledGroup >> Group)
-		{
-			DisabledGroup.insert(Group);
-		}
-	}
-	ifstreamDisabledGroup.close();
-	ifstream ifstreamDisabledDiscuss(strFileLoc + "DisabledDiscuss.RDconf");
-	if (ifstreamDisabledDiscuss)
-	{
-		long long Discuss;
-		while (ifstreamDisabledDiscuss >> Discuss)
-		{
-			DisabledDiscuss.insert(Discuss);
-		}
-	}
-	ifstreamDisabledDiscuss.close();
-	ifstream ifstreamDisabledJRRPGroup(strFileLoc + "DisabledJRRPGroup.RDconf");
-	if (ifstreamDisabledJRRPGroup)
-	{
-		long long Group;
-		while (ifstreamDisabledJRRPGroup >> Group)
-		{
-			DisabledJRRPGroup.insert(Group);
-		}
-	}
-	ifstreamDisabledJRRPGroup.close();
-	ifstream ifstreamDisabledJRRPDiscuss(strFileLoc + "DisabledJRRPDiscuss.RDconf");
-	if (ifstreamDisabledJRRPDiscuss)
-	{
-		long long Discuss;
-		while (ifstreamDisabledJRRPDiscuss >> Discuss)
-		{
-			DisabledJRRPDiscuss.insert(Discuss);
-		}
-	}
-	ifstreamDisabledJRRPDiscuss.close();
-	ifstream ifstreamDisabledMEGroup(strFileLoc + "DisabledMEGroup.RDconf");
-	if (ifstreamDisabledMEGroup)
-	{
-		long long Group;
-		while (ifstreamDisabledMEGroup >> Group)
-		{
-			DisabledMEGroup.insert(Group);
-		}
-	}
-	ifstreamDisabledMEGroup.close();
-	ifstream ifstreamDisabledMEDiscuss(strFileLoc + "DisabledMEDiscuss.RDconf");
-	if (ifstreamDisabledMEDiscuss)
-	{
-		long long Discuss;
-		while (ifstreamDisabledMEDiscuss >> Discuss)
-		{
-			DisabledMEDiscuss.insert(Discuss);
-		}
-	}
-	ifstreamDisabledMEDiscuss.close();
-	ifstream ifstreamDisabledHELPGroup(strFileLoc + "DisabledHELPGroup.RDconf");
-	if (ifstreamDisabledHELPGroup)
-	{
-		long long Group;
-		while (ifstreamDisabledHELPGroup >> Group)
-		{
-			DisabledHELPGroup.insert(Group);
-		}
-	}
-	ifstreamDisabledHELPGroup.close();
-	ifstream ifstreamDisabledHELPDiscuss(strFileLoc + "DisabledHELPDiscuss.RDconf");
-	if (ifstreamDisabledHELPDiscuss)
-	{
-		long long Discuss;
-		while (ifstreamDisabledHELPDiscuss >> Discuss)
-		{
-			DisabledHELPDiscuss.insert(Discuss);
-		}
-	}
-	ifstreamDisabledHELPDiscuss.close();
-	ifstream ifstreamDisabledOBGroup(strFileLoc + "DisabledOBGroup.RDconf");
-	if (ifstreamDisabledOBGroup)
-	{
-		long long Group;
-		while (ifstreamDisabledOBGroup >> Group)
-		{
-			DisabledOBGroup.insert(Group);
-		}
-	}
-	ifstreamDisabledOBGroup.close();
-	ifstream ifstreamDisabledOBDiscuss(strFileLoc + "DisabledOBDiscuss.RDconf");
-	if (ifstreamDisabledOBDiscuss)
-	{
-		long long Discuss;
-		while (ifstreamDisabledOBDiscuss >> Discuss)
-		{
-			DisabledOBDiscuss.insert(Discuss);
-		}
-	}
-	ifstreamDisabledOBDiscuss.close();
-	ifstream ifstreamObserveGroup(strFileLoc + "ObserveGroup.RDconf");
-	if (ifstreamObserveGroup)
-	{
-		long long Group, QQ;
-		while (ifstreamObserveGroup >> Group >> QQ)
-		{
-			ObserveGroup.insert(make_pair(Group, QQ));
-		}
-	}
-	ifstreamObserveGroup.close();
+	loadFile(strFileLoc + "WhiteGroup.RDconf", WhiteGroup);
+	loadFile(strFileLoc + "WhiteQQ.RDconf", WhiteQQ);
+	loadFile(strFileLoc + "BlackGroup.RDconf", BlackGroup);
+	loadFile(strFileLoc + "BlackQQ.RDconf", BlackQQ);
+	loadFile(strFileLoc + "DisabledGroup.RDconf", DisabledGroup);
+	loadFile(strFileLoc + "DisabledDiscuss.RDconf", DisabledDiscuss);
+	loadFile(strFileLoc + "DisabledJRRPGroup.RDconf", DisabledJRRPGroup);
+	loadFile(strFileLoc + "DisabledJRRPDiscuss.RDconf", DisabledJRRPDiscuss);
+	loadFile(strFileLoc + "DisabledMEGroup.RDconf", DisabledMEGroup);
+	loadFile(strFileLoc + "DisabledMEDiscuss.RDconf", DisabledMEDiscuss);
+	loadFile(strFileLoc + "DisabledHELPGroup.RDconf", DisabledHELPGroup);
+	loadFile(strFileLoc + "DisabledHELPDiscuss.RDconf", DisabledHELPDiscuss);
+	loadFile(strFileLoc + "DisabledOBGroup.RDconf", DisabledOBGroup);
+	loadFile(strFileLoc + "DisabledOBDiscuss.RDconf", DisabledOBDiscuss);
+	loadFile(strFileLoc + "ObserveGroup.RDconf", ObserveGroup);
+	loadFile(strFileLoc + "ObserveDiscuss.RDconf", ObserveDiscuss);
+	loadFile(strFileLoc + "Default.RDconf", DefaultDice);
+	loadFile(strFileLoc + "DefaultRule.RDconf", DefaultRule);
 
-	ifstream ifstreamObserveDiscuss(strFileLoc + "ObserveDiscuss.RDconf");
-	if (ifstreamObserveDiscuss)
-	{
-		long long Discuss, QQ;
-		while (ifstreamObserveDiscuss >> Discuss >> QQ)
-		{
-			ObserveDiscuss.insert(make_pair(Discuss, QQ));
-		}
-	}
-	ifstreamObserveDiscuss.close();
-	ifstream ifstreamDefault(strFileLoc + "Default.RDconf");
-	if (ifstreamDefault)
-	{
-		long long QQ;
-		int DefVal;
-		while (ifstreamDefault >> QQ >> DefVal)
-		{
-			DefaultDice[QQ] = DefVal;
-		}
-	}
-	ifstreamDefault.close();
 	ifstream ifstreamWelcomeMsg(strFileLoc + "WelcomeMsg.RDconf");
 	if (ifstreamWelcomeMsg)
 	{
@@ -414,31 +290,6 @@ EVE_Enable(eventEnable)
 		}
 	}
 	ifstreamWelcomeMsg.close();
-	ifstream ifstreamDefaultRule(strFileLoc + "DefaultRule.RDconf");
-	if (ifstreamDefaultRule)
-	{
-		long long QQ;
-		string strRule;
-		while (ifstreamWelcomeMsg >> QQ >> strRule){
-			DefaultRule[QQ] = strRule;
-		}
-	}
-	ifstreamDefaultRule.close();
-	ifstream ifstreamPersonalMsg(strFileLoc + "PersonalMsg.RDconf");
-	if (ifstreamPersonalMsg)
-	{
-		string strType;
-		string Msg;
-		while (ifstreamPersonalMsg >> strType >> Msg)
-		{
-			while (Msg.find("{space}") != string::npos)Msg.replace(Msg.find("{space}"), 7, " ");
-			while (Msg.find("{tab}") != string::npos)Msg.replace(Msg.find("{tab}"), 5, "\t");
-			while (Msg.find("{endl}") != string::npos)Msg.replace(Msg.find("{endl}"), 6, "\n");
-			while (Msg.find("{enter}") != string::npos)Msg.replace(Msg.find("{enter}"), 7, "\r");
-			PersonalMsg[strType] = Msg;
-		}
-	}
-	ifstreamPersonalMsg.close();
 	//读取帮助文档
 	ifstream ifstreamHelpDoc(strFileLoc + "HelpDoc.txt");
 	if (ifstreamHelpDoc)
@@ -455,46 +306,7 @@ EVE_Enable(eventEnable)
 		}
 	}
 	ifstreamHelpDoc.close();
-	ifstream ifstreamWhiteGroup(strFileLoc + "WhiteGroup.RDconf");
-	if (ifstreamWhiteGroup)
-	{
-		long long Group;
-		while (ifstreamWhiteGroup >> Group)
-		{
-			WhiteGroup.insert(Group);
-		}
-	}
-	ifstreamWhiteGroup.close();
-	ifstream ifstreamBlackGroup(strFileLoc + "BlackGroup.RDconf");
-	if (ifstreamBlackGroup)
-	{
-		long long Group;
-		while (ifstreamBlackGroup >> Group)
-		{
-			BlackGroup.insert(Group);
-		}
-	}
-	ifstreamBlackGroup.close();
-	ifstream ifstreamWhiteQQ(strFileLoc + "WhiteQQ.RDconf");
-	if (ifstreamWhiteQQ)
-	{
-		long long Group;
-		while (ifstreamWhiteQQ >> Group)
-		{
-			WhiteQQ.insert(Group);
-		}
-	}
-	ifstreamWhiteQQ.close();
-	ifstream ifstreamBlackQQ(strFileLoc + "BlackQQ.RDconf");
-	if (ifstreamBlackQQ)
-	{
-		long long Group;
-		while (ifstreamBlackQQ >> Group)
-		{
-			BlackQQ.insert(Group);
-		}
-	}
-	ifstreamBlackQQ.close();
+	
 	//读取聊天列表
 	ifstream ifstreamLastMsgList(strFileLoc + "LastMsgList.MYmap");
 	if (ifstreamLastMsgList)
@@ -570,17 +382,19 @@ EVE_Enable(eventEnable)
 			boolStandByMe = true;
 			masterQQ = IdentityQQ;
 			string strName,strMsg;
-			while (ifstreamStandByMe) {
-				getline(ifstreamStandByMe, strName);
+			while (ifstreamStandByMe >> strName) {
 				getline(ifstreamStandByMe, strMsg);
 				while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
-				while (strMsg.find("\\s") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, " ");
+				while (strMsg.find("\\s") != string::npos)strMsg.replace(strMsg.find("\\s"), 2, " ");
 				while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
 				GlobalMsg[strName] = strMsg;
 			}
 		}
 	}
 	ifstreamStandByMe.close();
+	//骰娘网络
+	getDiceList();
+	Cloud::update();
 	return 0;
 }
 
@@ -853,119 +667,15 @@ EVE_Menu(eventMasterMode) {
 EVE_Disable(eventDisable)
 {
 	Enabled = false;
-	ilInitList.reset();
-	Name.reset();
 	dataBackUp();
-	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
-	{
-		ofstreamDisabledGroup << *it << std::endl;
-	}
-	ofstreamDisabledGroup.close();
-
-	ofstream ofstreamDisabledDiscuss(strFileLoc + "DisabledDiscuss.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledDiscuss.begin(); it != DisabledDiscuss.end(); ++it)
-	{
-		ofstreamDisabledDiscuss << *it << std::endl;
-	}
-	ofstreamDisabledDiscuss.close();
-	ofstream ofstreamDisabledJRRPGroup(strFileLoc + "DisabledJRRPGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledJRRPGroup.begin(); it != DisabledJRRPGroup.end(); ++it)
-	{
-		ofstreamDisabledJRRPGroup << *it << std::endl;
-	}
-	ofstreamDisabledJRRPGroup.close();
-
-	ofstream ofstreamDisabledJRRPDiscuss(strFileLoc + "DisabledJRRPDiscuss.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledJRRPDiscuss.begin(); it != DisabledJRRPDiscuss.end(); ++it)
-	{
-		ofstreamDisabledJRRPDiscuss << *it << std::endl;
-	}
-	ofstreamDisabledJRRPDiscuss.close();
-
-	ofstream ofstreamDisabledMEGroup(strFileLoc + "DisabledMEGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledMEGroup.begin(); it != DisabledMEGroup.end(); ++it)
-	{
-		ofstreamDisabledMEGroup << *it << std::endl;
-	}
-	ofstreamDisabledMEGroup.close();
-
-	ofstream ofstreamDisabledMEDiscuss(strFileLoc + "DisabledMEDiscuss.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledMEDiscuss.begin(); it != DisabledMEDiscuss.end(); ++it)
-	{
-		ofstreamDisabledMEDiscuss << *it << std::endl;
-	}
-	ofstreamDisabledMEDiscuss.close();
-
-	ofstream ofstreamDisabledHELPGroup(strFileLoc + "DisabledHELPGroup.RDconf", ios::in | ios::trunc);
-	for (auto it = DisabledHELPGroup.begin(); it != DisabledHELPGroup.end(); ++it)
-	{
-		ofstreamDisabledHELPGroup << *it << std::endl;
-	}
-	ofstreamDisabledHELPGroup.close();
-
-	ofstream ofstreamDisabledHELPDiscuss(strFileLoc + "DisabledHELPDiscuss.RDconf", ios::in | ios::trunc);
-	for (auto it = DisabledHELPDiscuss.begin(); it != DisabledHELPDiscuss.end(); ++it)
-	{
-		ofstreamDisabledHELPDiscuss << *it << std::endl;
-	}
-	ofstreamDisabledHELPDiscuss.close();
-
-	ofstream ofstreamDisabledOBGroup(strFileLoc + "DisabledOBGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledOBGroup.begin(); it != DisabledOBGroup.end(); ++it)
-	{
-		ofstreamDisabledOBGroup << *it << std::endl;
-	}
-	ofstreamDisabledOBGroup.close();
-
-	ofstream ofstreamDisabledOBDiscuss(strFileLoc + "DisabledOBDiscuss.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledOBDiscuss.begin(); it != DisabledOBDiscuss.end(); ++it)
-	{
-		ofstreamDisabledOBDiscuss << *it << std::endl;
-	}
-	ofstreamDisabledOBDiscuss.close();
-
-	ofstream ofstreamObserveGroup(strFileLoc + "ObserveGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = ObserveGroup.begin(); it != ObserveGroup.end(); ++it)
-	{
-		ofstreamObserveGroup << it->first << " " << it->second << std::endl;
-	}
-	ofstreamObserveGroup.close();
-
-	ofstream ofstreamObserveDiscuss(strFileLoc + "ObserveDiscuss.RDconf", ios::out | ios::trunc);
-	for (auto it = ObserveDiscuss.begin(); it != ObserveDiscuss.end(); ++it)
-	{
-		ofstreamObserveDiscuss << it->first << " " << it->second << std::endl;
-	}
-	ofstreamObserveDiscuss.close();
-	ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
-	for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
-	{
-		for (auto it1 = it->second.cbegin(); it1 != it->second.cend(); ++it1)
-		{
-			ofstreamCharacterProp << it->first.QQ << " " << it->first.Type << " " << it->first.GrouporDiscussID << " "
-				<< it1->first << " " << it1->second << std::endl;
-		}
-	}
-	ofstreamCharacterProp.close();
-	ofstream ofstreamDefault(strFileLoc + "Default.RDconf", ios::out | ios::trunc);
-	for (auto it = DefaultDice.begin(); it != DefaultDice.end(); ++it)
-	{
-		ofstreamDefault << it->first << " " << it->second << std::endl;
-	}
-	ofstreamDefault.close();
-
-	ofstream ofstreamWelcomeMsg(strFileLoc + "WelcomeMsg.RDconf", ios::out | ios::trunc);
-	for (auto it = WelcomeMsg.begin(); it != WelcomeMsg.end(); ++it)
-	{
-		while (it->second.find(' ') != string::npos)it->second.replace(it->second.find(' '), 1, "{space}");
-		while (it->second.find('\t') != string::npos)it->second.replace(it->second.find('\t'), 1, "{tab}");
-		while (it->second.find('\n') != string::npos)it->second.replace(it->second.find('\n'), 1, "{endl}");
-		while (it->second.find('\r') != string::npos)it->second.replace(it->second.find('\r'), 1, "{enter}");
-		ofstreamWelcomeMsg << it->first << " " << it->second << std::endl;
-	}
-	ofstreamWelcomeMsg.close();
+	EditedMsg.clear(); 
+	WhiteGroup.clear();
+	BlackGroup.clear();
+	WhiteQQ.clear();
+	BlackQQ.clear();
+	mDefaultCOC.clear();
 	DefaultDice.clear();
+	DefaultRule.clear();
 	DisabledGroup.clear();
 	DisabledDiscuss.clear();
 	DisabledJRRPGroup.clear();
@@ -976,7 +686,6 @@ EVE_Disable(eventDisable)
 	DisabledOBDiscuss.clear();
 	ObserveGroup.clear();
 	ObserveDiscuss.clear();
-	strFileLoc.clear();
 	return 0;
 }
 
@@ -984,118 +693,7 @@ EVE_Exit(eventExit)
 {
 	if (!Enabled)
 		return 0;
-	ilInitList.reset();
-	Name.reset();
 	dataBackUp();
-	ofstream ofstreamDisabledGroup(strFileLoc + "DisabledGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledGroup.begin(); it != DisabledGroup.end(); ++it)
-	{
-		ofstreamDisabledGroup << *it << std::endl;
-	}
-	ofstreamDisabledGroup.close();
-
-	ofstream ofstreamDisabledDiscuss(strFileLoc + "DisabledDiscuss.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledDiscuss.begin(); it != DisabledDiscuss.end(); ++it)
-	{
-		ofstreamDisabledDiscuss << *it << std::endl;
-	}
-	ofstreamDisabledDiscuss.close();
-	ofstream ofstreamDisabledJRRPGroup(strFileLoc + "DisabledJRRPGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledJRRPGroup.begin(); it != DisabledJRRPGroup.end(); ++it)
-	{
-		ofstreamDisabledJRRPGroup << *it << std::endl;
-	}
-	ofstreamDisabledJRRPGroup.close();
-
-	ofstream ofstreamDisabledJRRPDiscuss(strFileLoc + "DisabledJRRPDiscuss.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledJRRPDiscuss.begin(); it != DisabledJRRPDiscuss.end(); ++it)
-	{
-		ofstreamDisabledJRRPDiscuss << *it << std::endl;
-	}
-	ofstreamDisabledJRRPDiscuss.close();
-
-	ofstream ofstreamDisabledMEGroup(strFileLoc + "DisabledMEGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledMEGroup.begin(); it != DisabledMEGroup.end(); ++it)
-	{
-		ofstreamDisabledMEGroup << *it << std::endl;
-	}
-	ofstreamDisabledMEGroup.close();
-
-	ofstream ofstreamDisabledMEDiscuss(strFileLoc + "DisabledMEDiscuss.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledMEDiscuss.begin(); it != DisabledMEDiscuss.end(); ++it)
-	{
-		ofstreamDisabledMEDiscuss << *it << std::endl;
-	}
-	ofstreamDisabledMEDiscuss.close();
-
-	ofstream ofstreamDisabledHELPGroup(strFileLoc + "DisabledHELPGroup.RDconf", ios::in | ios::trunc);
-	for (auto it = DisabledHELPGroup.begin(); it != DisabledHELPGroup.end(); ++it)
-	{
-		ofstreamDisabledHELPGroup << *it << std::endl;
-	}
-	ofstreamDisabledHELPGroup.close();
-
-	ofstream ofstreamDisabledHELPDiscuss(strFileLoc + "DisabledHELPDiscuss.RDconf", ios::in | ios::trunc);
-	for (auto it = DisabledHELPDiscuss.begin(); it != DisabledHELPDiscuss.end(); ++it)
-	{
-		ofstreamDisabledHELPDiscuss << *it << std::endl;
-	}
-	ofstreamDisabledHELPDiscuss.close();
-
-	ofstream ofstreamDisabledOBGroup(strFileLoc + "DisabledOBGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledOBGroup.begin(); it != DisabledOBGroup.end(); ++it)
-	{
-		ofstreamDisabledOBGroup << *it << std::endl;
-	}
-	ofstreamDisabledOBGroup.close();
-
-	ofstream ofstreamDisabledOBDiscuss(strFileLoc + "DisabledOBDiscuss.RDconf", ios::out | ios::trunc);
-	for (auto it = DisabledOBDiscuss.begin(); it != DisabledOBDiscuss.end(); ++it)
-	{
-		ofstreamDisabledOBDiscuss << *it << std::endl;
-	}
-	ofstreamDisabledOBDiscuss.close();
-
-	ofstream ofstreamObserveGroup(strFileLoc + "ObserveGroup.RDconf", ios::out | ios::trunc);
-	for (auto it = ObserveGroup.begin(); it != ObserveGroup.end(); ++it)
-	{
-		ofstreamObserveGroup << it->first << " " << it->second << std::endl;
-	}
-	ofstreamObserveGroup.close();
-
-	ofstream ofstreamObserveDiscuss(strFileLoc + "ObserveDiscuss.RDconf", ios::out | ios::trunc);
-	for (auto it = ObserveDiscuss.begin(); it != ObserveDiscuss.end(); ++it)
-	{
-		ofstreamObserveDiscuss << it->first << " " << it->second << std::endl;
-	}
-	ofstreamObserveDiscuss.close();
-	ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
-	for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
-	{
-		for (auto it1 = it->second.cbegin(); it1 != it->second.cend(); ++it1)
-		{
-			ofstreamCharacterProp << it->first.QQ << " " << it->first.Type << " " << it->first.GrouporDiscussID << " "
-				<< it1->first << " " << it1->second << std::endl;
-		}
-	}
-	ofstreamCharacterProp.close();
-	ofstream ofstreamDefault(strFileLoc + "Default.RDconf", ios::out | ios::trunc);
-	for (auto it = DefaultDice.begin(); it != DefaultDice.end(); ++it)
-	{
-		ofstreamDefault << it->first << " " << it->second << std::endl;
-	}
-	ofstreamDefault.close();
-
-	ofstream ofstreamWelcomeMsg(strFileLoc + "WelcomeMsg.RDconf", ios::out | ios::trunc);
-	for (auto it = WelcomeMsg.begin(); it != WelcomeMsg.end(); ++it)
-	{
-		while (it->second.find(' ') != string::npos)it->second.replace(it->second.find(' '), 1, "{space}");
-		while (it->second.find('\t') != string::npos)it->second.replace(it->second.find('\t'), 1, "{tab}");
-		while (it->second.find('\n') != string::npos)it->second.replace(it->second.find('\n'), 1, "{endl}");
-		while (it->second.find('\r') != string::npos)it->second.replace(it->second.find('\r'), 1, "{enter}");
-		ofstreamWelcomeMsg << it->first << " " << it->second << std::endl;
-	}
-	ofstreamWelcomeMsg.close();
 	return 0;
 }
 

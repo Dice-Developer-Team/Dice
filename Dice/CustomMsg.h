@@ -25,5 +25,6 @@
 #define DICE_CUSTOM_MSG
 
 void ReadCustomMsg(std::ifstream& in);
+void SaveCustomMsg(std::string strPath);
 
 #endif /*DICE_CUSTOM_MSG*/

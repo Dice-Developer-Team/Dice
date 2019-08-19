@@ -75,3 +75,18 @@ void ReadCustomMsg(std::ifstream& in)
 		}
 	}
 }
+
+void SaveCustomMsg(std::string strPath) {
+	std::ofstream ofstreamCustomMsg(strPath);
+	ofstreamCustomMsg << "{\n";
+	for (auto it : EditedMsg)
+	{
+		while (it.second.find("\r\n") != std::string::npos)it.second.replace(it.second.find("\r\n"), 2, "\\n");
+		while (it.second.find('\n') != std::string::npos)it.second.replace(it.second.find('\n'), 1, "\\n");
+		while (it.second.find('\r') != std::string::npos)it.second.replace(it.second.find('\r'), 1, "\\r");
+		while (it.second.find("\t") != std::string::npos)it.second.replace(it.second.find("\t"), 1, "\\t");
+		std::string strMsg = GBKtoUTF8(it.second);
+		ofstreamCustomMsg << "\"" << it.first << "\":\"" << strMsg << "\",\n";
+	}
+	ofstreamCustomMsg << "\n\"Number\":\"" << EditedMsg.size() << "\"\n}" << std::endl;
+}
