@@ -546,26 +546,56 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 		sendAdmin(strNote);
 	}
 	else if(beingOperateQQ == getLoginQQ()){
+		if (!boolConsole["ListenGroupAdd"])return 0;
+		string strMsg = "新加入" + printGroup(fromGroup);
 		if (BlackGroup.count(fromGroup)) {
-			AddMsgToQueue(GlobalMsg["strBlackGroup"], fromGroup, Group);
+			if (mBlackGroupMark.count(fromGroup))sendGroupMsg(fromGroup, mBlackGroupMark[fromGroup].getWarning());
+			else sendGroupMsg(fromGroup, GlobalMsg["strBlackGroup"]);
+			strMsg += "为黑名单群，已退群";
+			sendAdmin(strMsg);
 			setGroupLeave(fromGroup);
+			return 1;
 		}
-		else if (boolConsole["Private"]&&WhiteGroup.count(fromGroup)==0) 
-		{	//避免小群绕过邀请没加上白名单
-			if (fromQQ == masterQQ || WhiteQQ.count(fromQQ) || getGroupMemberInfo(fromGroup, masterQQ).QQID == masterQQ) {
-				WhiteGroup.insert(fromGroup);
-				return 0;
+		if (WhiteGroup.count(fromGroup))strMsg += "（已在白名单中）";
+		if (mGroupInviter.count(fromGroup)) {
+			strMsg += ",邀请者" + printQQ(mGroupInviter[fromGroup]);
+		}
+		long long ownerQQ;
+		for (auto each : getGroupMemberList(fromGroup)) {
+			if (each.permissions > 1) {
+				if (BlackQQ.count(each.QQID)) {
+					if (mBlackQQMark.count(each.QQID))sendGroupMsg(fromGroup, mBlackQQMark[each.QQID].getWarning());
+					else sendGroupMsg(fromGroup, "发现黑名单管理员" + printQQ(each.QQID) + "将预防性退群");
+					strMsg += ",发现黑名单管理员" + printQQ(each.QQID) + "，已退群";
+					sendAdmin(strMsg);
+					setGroupLeave(fromGroup);
+					return 1;
+				}
 			}
-			AddMsgToQueue(GlobalMsg["strPreserve"], fromGroup, Group);
-			setGroupLeave(fromGroup);
-			return 0;
+			if (each.permissions = 3) {
+				ownerQQ = each.QQID;
+				strMsg += "，群主" + printQQ(each.QQID) + "；";
+			}
 		}
-		//else if(boolStandByMe&&getGroupMemberInfo(fromGroup, IdentityQQ).QQID != IdentityQQ) {
-		//	AddMsgToQueue("请不要单独拉替身入群！", fromGroup, Group);
-		//	setGroupLeave(fromGroup);
-		//	return 0;
-		//}
-		else if(!GlobalMsg["strAddGroup"].empty()) {
+		if (boolConsole["Private"] && WhiteGroup.count(fromGroup) == 0)
+		{	//避免小群绕过邀请没加上白名单
+			if (WhiteQQ.count(fromQQ) || WhiteQQ.count(ownerQQ) || getGroupMemberInfo(fromGroup, masterQQ).QQID == masterQQ) {
+				WhiteGroup.insert(fromGroup);
+				strMsg += "已自动添加群白名单";
+				sendAdmin(strMsg);
+			}
+			else {
+				sendGroupMsg(fromGroup, GlobalMsg["strPreserve"]);
+				strMsg += "无白名单，已退群";
+				sendAdmin(strMsg);
+				setGroupLeave(fromGroup);
+				return 1;
+			}
+		}
+		else {
+			if (!mGroupInviter.count(fromGroup) || !WhiteGroup.count(fromGroup))sendAdmin(strMsg);
+		}
+		if(!GlobalMsg["strAddGroup"].empty()) {
 			AddMsgToQueue(GlobalMsg["strAddGroup"], fromGroup, Group);
 		}
 	}
@@ -613,6 +643,7 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 }
 
 EVE_Request_AddGroup(eventGroupInvited) {
+	if (!boolConsole["ListenGroupRequest"])return 0;
 	if (subType == 2) {
 		if (masterQQ&&boolMasterMode) {
 			string strMsg = "群添加请求，来自：" + getStrangerInfo(fromQQ).nick +"("+ to_string(fromQQ) + "),群：(" + to_string(fromGroup)+")。";
@@ -643,6 +674,7 @@ EVE_Request_AddGroup(eventGroupInvited) {
 				strMsg += "已同意";
 				setGroupAddRequest(responseFlag, 2, 1, "");
 				mGroupInviter[fromGroup] = fromQQ;
+				return 1;
 			}
 			sendAdmin(strMsg);
 		}

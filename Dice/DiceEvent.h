@@ -633,6 +633,7 @@ public:
 				masterQQ = fromQQ;
 				AdminQQ.insert(masterQQ);
 				MonitorList.insert({ masterQQ,Private });
+				boolConsole["DisabledSend"] = true;
 				reply("试问，你就是" + GlobalMsg["strSelfName"] + "的Master√");
 			}
 			else if (isMaster) {

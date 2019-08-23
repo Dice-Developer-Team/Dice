@@ -42,9 +42,10 @@ set<chatType> MonitorList = {};
 std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},{"DisabledBlock",false},
 {"DisabledMe",false},{"DisabledJrrp",false},{"DisabledDeck",true},{"DisabledDraw",false},{"DisabledSend",true},
 {"Private",false},{"LeaveDiscuss",false},
+{"ListenGroupRequest",true},{"ListenGroupAdd",true},
 {"ListenFriendRequest",true},{"ListenFriendAdd",true},{"AllowStranger",true},
 {"AutoClearBlack",true},{"LeaveBlackQQ",true},
-{"BannedBanOwner",true},{"BannedLeave",false},{"BannedBanInviter",true},
+{"BannedBanOwner",true},{"BannedLeave",true},{"BannedBanInviter",true},
 {"KickedBanInviter",true},
 {"CloudVisible",true}
 };
@@ -373,7 +374,7 @@ void warningHandler() {
 					if (strWarningList.count(warning.strMsg))continue;
 					else strWarningList.insert(warning.strMsg);
 				}
-				if (warning.fromQQ != masterQQ)sendAdmin("已通知" + GlobalMsg["strSelfName"] + ":\n" + mark.strWarning);
+				if (warning.fromQQ != masterQQ)sendAdmin("已通知" + GlobalMsg["strSelfName"] + ":\n" + mark.strWarning,warning.fromQQ);
 			}
 			else {
 				if (mark.isNoteEmpty() || strWarningList.count(warning.strMsg)) { continue; }
@@ -430,7 +431,11 @@ void warningHandler() {
 	int clearGroup(string strPara,long long fromQQ) {
 		int intCnt=0;
 		string strReply;
-		map<long long,string> GroupList=getGroupList();
+		map<long long, string> GroupList = getGroupList();
+		for (auto it : MonitorList) {
+			if (it.second != Group)continue;
+			if (GroupList.count(it.first))GroupList.erase(it.first);
+		}
 		if (strPara == "unpower" || strPara.empty()) {
 			for (auto eachGroup : GroupList) {
 				if (getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions == 1) {
@@ -449,6 +454,7 @@ void warningHandler() {
 			time_t tNow = time(NULL);;
 			for (auto eachChat : mLastMsgList) {
 				if (eachChat.first.second == Private)continue;
+				if (MonitorList.count(eachChat.first))continue;
 				int intDay = (int)(tNow - eachChat.second) / 86400;
 				if (intDay > intDayLim) {
 					strReply += printChat(eachChat.first) + ":" + to_string(intDay) + "天\n";
