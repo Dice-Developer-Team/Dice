@@ -19,30 +19,33 @@ public:
 	FrqMonitor(long long QQ,time_t TT,chatType CT): fromQQ(QQ),fromTime(TT){
 		if (mFrequence.count(fromQQ)) {
 			mFrequence[fromQQ] += 10;
-			if (mFrequence[fromQQ] > 50 && mWarnLevel[fromQQ] < 50) {
+			if (mFrequence[fromQQ] > 60 && mWarnLevel[fromQQ] < 60) {
 				mWarnLevel[fromQQ] = mFrequence[fromQQ];
-				const std::string strMsg = "提醒：\n于" + printChat(CT) + "监测到" + printQQ(fromQQ) + "指令频度达到" + std::to_string(mFrequence[fromQQ] / 10);
+				const std::string strMsg = "提醒：\n" + (CT.second ? printChat(CT) : "私聊窗口") + "监测到" + printQQ(fromQQ) + "指令频度达到" + std::to_string(mFrequence[fromQQ] / 10);
 				AddMsgToQueue(GlobalMsg["strSpamFirstWarning"], CT.first, CT.second);
 				sendAdmin(strMsg);
 			}
-			else if (mFrequence[fromQQ] > 100 && mWarnLevel[fromQQ] < 100) {
+			else if (mFrequence[fromQQ] > 120 && mWarnLevel[fromQQ] < 120) {
 				mWarnLevel[fromQQ] = mFrequence[fromQQ]; 
-				const std::string strMsg = "警告：\n于" + printChat(CT) + "监测到" + printQQ(fromQQ) + "指令频度达到" + std::to_string(mFrequence[fromQQ] / 10);
+				const std::string strMsg = "警告：\n" + (CT.second ? printChat(CT) : "私聊窗口") + printQQ(fromQQ) + "指令频度达到" + std::to_string(mFrequence[fromQQ] / 10);
 				AddMsgToQueue(GlobalMsg["strSpamFinalWarning"], CT.first, CT.second);
 				NotifyMonitor(strMsg);
 			}
 			else if (mFrequence[fromQQ] > 200 && mWarnLevel[fromQQ] < 200) {
 				mWarnLevel[fromQQ] = mFrequence[fromQQ];
 				std::string strNow = printSTime(stNow);
-				std::string strNote = strNow + " 于" + printChat(CT) + "监测到" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "30s发送指令频度达" + std::to_string(mFrequence[fromQQ] / 10);
+				std::string strNote = strNow + (CT.second ? printChat(CT) : "私聊窗口") + "监测到" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "30s发送指令频度达" + std::to_string(mFrequence[fromQQ] / 10);
 				while (strNote.find('\"') != std::string::npos)strNote.replace(strNote.find('\"'), 1, "\'"); 
-				std::string strWarning = "!warning{\n\"fromGroup\":0,\n\"type\":\"spam\",\n\"fromQQ\":" + std::to_string(fromQQ) + ",\n\"time\":\"" + strNow + "\",\n\"DiceMaid\":" + std::to_string(CQ::getLoginQQ()) + ",\n\"masterQQ\":" + std::to_string(masterQQ) + ",\n\"note\":\"" + strNote + "\"\n}";
+				BlackMark mark(fromQQ);
+				mark.llMap = { {"fromQQ",fromQQ},{"DiceMaid",DiceMaid},{"masterQQ", masterQQ} };
+				mark.strMap = { {"type","kick"},{"time",strNow} };
+				mark.set("note", strNote); 
 				if (AdminQQ.count(fromQQ) || mDiceList.count(fromQQ)) {
 					NotifyMonitor(strNote);
 				}
 				else {
-					NotifyMonitor(strWarning);
-					addBlackQQ(fromQQ, strNote, strWarning);
+					NotifyMonitor(mark.getWarning());
+					addBlackQQ(mark);
 				}
 			}
 		}

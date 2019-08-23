@@ -88,13 +88,13 @@ public:
 		if (AdminQQ.count(fromQQ)) {
 			AddMsgToQueue(strName + strMsg, masterQQ);
 			for (auto it : AdminQQ) {
-				if (fromQQ != it) AddMsgToQueue(strName + strMsg, it);
+				if (MonitorList.count({ it,Private }) && fromQQ != it) AddMsgToQueue(strName + strMsg, it);
 			}
 		}
 		else {
 			if(!isMaster)AddMsgToQueue(strName + strMsg, masterQQ);
 			for (auto it : AdminQQ) {
-				AddMsgToQueue(strName + strMsg, it);
+				if (MonitorList.count({ it,Private }))AddMsgToQueue(strName + strMsg, it);
 			}
 		}
 	}
@@ -345,11 +345,13 @@ public:
 			long long llTargetID = readID();
 			if (strOption == "dismiss") {
 				WhiteGroup.erase(llTargetID);
-				if (getGroupList().count(llTargetID) && setGroupLeave(llTargetID) == 0) {
+				if (getGroupList().count(llTargetID)) {
+					setGroupLeave(llTargetID);
 					mLastMsgList.erase({ llTargetID ,Group });
 					AdminNotify("已令" + GlobalMsg["strSelfName"] + "退出群" + to_string(llTargetID) + "√");
 				}
-				else if (llTargetID > 1000000000 && setDiscussLeave(llTargetID) == 0) {
+				else if (llTargetID > 1000000000 && mLastMsgList.count({ llTargetID ,Discuss })) {
+					setDiscussLeave(llTargetID);
 					mLastMsgList.erase({ llTargetID ,Discuss });
 					AdminNotify("已令" + GlobalMsg["strSelfName"] + "退出讨论组" + to_string(llTargetID) + "√");
 				}
@@ -396,7 +398,7 @@ public:
 					if (boolErase) {
 						if (WhiteGroup.count(llTargetID)) {
 							WhiteGroup.erase(llTargetID);
-							AdminNotify("已将" + printGroup(llTargetID) + "移出白名单√");
+							AdminNotify("已将" + printGroup(llTargetID) + "移出" + GlobalMsg["strSelfName"] + "的白名单√");
 						}
 						else {
 							reply(printGroup(llTargetID) + "并不在" + GlobalMsg["strSelfName"] + "的白名单！");
@@ -408,7 +410,7 @@ public:
 						}
 						else {
 							WhiteGroup.insert(llTargetID);
-							AdminNotify("已将" + printGroup(llTargetID) + "加入白名单√");
+							AdminNotify("已将" + printGroup(llTargetID) + "加入" + GlobalMsg["strSelfName"] + "的白名单√");
 						}
 					}
 				} while (llTargetID = readID());
@@ -423,11 +425,14 @@ public:
 					reply();
 					return 1;
 				}
+				BlackMark mark;
+				mark.llMap = { {"DiceMaid",DiceMaid},{"masterQQ",masterQQ} };
+				mark.strMap = { {"type","other"},{"time",printSTime(stNow)} };
+				if (!strReason.empty())mark.set("note", strReason);
 				do{
 					if (boolErase) {
 						if (BlackGroup.count(llTargetID)) {
-							BlackGroup.erase(llTargetID);
-							AdminNotify("已将" + printGroup(llTargetID) + "移出黑名单√");
+							rmBlackGroup(llTargetID, fromQQ);
 						}
 						else {
 							reply(printGroup(llTargetID) + "并不在" + GlobalMsg["strSelfName"] + "的黑名单！");
@@ -438,8 +443,7 @@ public:
 							reply(printGroup(llTargetID) + "已加入" + GlobalMsg["strSelfName"] + "的黑名单!");
 						}
 						else {
-							BlackGroup.insert(llTargetID);
-							AdminNotify("已将" + printGroup(llTargetID) + "加入黑名单√");
+							if(addBlackGroup(BlackMark("fromGroup", llTargetID) << mark))AdminNotify("已将" + printGroup(llTargetID) + "加入" + GlobalMsg["strSelfName"] + "的黑名单√");;
 						}
 					}
 				} while (llTargetID = readID());
@@ -458,7 +462,7 @@ public:
 					if (boolErase) {
 						if (WhiteQQ.count(llTargetID)) {
 							WhiteQQ.erase(llTargetID);
-							AdminNotify("已将" + printQQ(llTargetID) + "移出白名单√");
+							AdminNotify("已将" + printQQ(llTargetID) + "移出" + GlobalMsg["strSelfName"] + "的白名单√");
 						}
 						else {
 							reply(printQQ(llTargetID) + "并不在" + GlobalMsg["strSelfName"] + "的白名单！");
@@ -470,7 +474,7 @@ public:
 						}
 						else {
 							WhiteQQ.insert(llTargetID);
-							AdminNotify("已将" + printQQ(llTargetID) + "加入白名单√");
+							AdminNotify("已将" + printQQ(llTargetID) + "加入" + GlobalMsg["strSelfName"] + "的白名单√");
 							AddMsgToQueue(GlobalMsg["strWhiteQQAddNotice"], llTargetID);
 						}
 					}
@@ -486,12 +490,14 @@ public:
 					reply();
 					return 1;
 				}
+				BlackMark mark;
+				mark.llMap = { {"DiceMaid",DiceMaid},{"masterQQ",masterQQ} };
+				mark.strMap = { {"type","other"},{"time",printSTime(stNow)} };
+				if (!strReason.empty())mark.set("note", strReason);
 				do{
 					if (boolErase) {
 						if (BlackQQ.count(llTargetID)) {
-							BlackQQ.erase(llTargetID);
-							AdminNotify("已将" + printQQ(llTargetID) + "移出黑名单√");
-							AddMsgToQueue(GlobalMsg["strBlackQQDelNotice"], llTargetID);
+							rmBlackQQ(llTargetID, fromQQ);
 						}
 						else {
 							reply(printQQ(llTargetID) + "并不在" + GlobalMsg["strSelfName"] + "的黑名单！");
@@ -502,8 +508,7 @@ public:
 							reply(printQQ(llTargetID) + "已加入" + GlobalMsg["strSelfName"] + "的黑名单!");
 						}
 						else {
-							addBlackQQ(llTargetID, strReason);
-							AdminNotify("已将" + printQQ(llTargetID) + "加入黑名单√");
+							if(addBlackQQ(BlackMark(llTargetID) << mark))AdminNotify("已将" + printQQ(llTargetID) + "加入" + GlobalMsg["strSelfName"] + "的黑名单√");;
 						}
 					}
 				} while (llTargetID = readID());

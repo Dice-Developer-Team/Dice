@@ -12,11 +12,13 @@
 #include "GlobalVar.h"
 #include "DiceMsgSend.h"
 #include "CQEVE_ALL.h"
+#include "BlackMark.hpp"
 
 	//Master模式
 	extern bool boolMasterMode;
 	//Master的QQ，无主时为0
 	extern long long masterQQ;
+	extern long long DiceMaid;
 	//管理员列表
 	extern std::set<long long> AdminQQ;
 	//监控窗口列表
@@ -39,6 +41,10 @@
 	extern std::set<long long> WhiteQQ;
 	//黑名单用户：无条件禁用
 	extern std::set<long long> BlackQQ;
+	extern std::map<long long, BlackMark>mBlackQQMark;
+	extern std::map<long long, BlackMark>mBlackGroupMark;
+void loadBlackMark(std::string strPath);
+void saveBlackMark(std::string strPath);
 	//获取骰娘列表
 	void getDiceList();
 	//通知管理员 
@@ -67,9 +73,12 @@
 	std::string printGroup(long long);
 	std::string printChat(chatType);
 //拉黑用户后检查群
-void checkBlackQQ(long long, std::string strWarning = "");
+void checkBlackQQ(BlackMark &mark);
 //拉黑用户
-void addBlackQQ(long long, std::string strReason = "", std::string strNotice = "");
+bool addBlackQQ(BlackMark mark);
+bool addBlackGroup(BlackMark &mark);
+void rmBlackQQ(long long llQQ, long long operateQQ = 0);
+void rmBlackGroup(long long llQQ, long long operateQQ = 0);
 void AddWarning(const std::string& msg, long long DiceQQ, long long fromGroup);
 void warningHandler();
 	extern void ConsoleTimer();

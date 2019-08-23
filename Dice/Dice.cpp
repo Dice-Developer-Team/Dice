@@ -130,6 +130,7 @@ void dataBackUp() {
 	saveFile(strFileLoc + "BlackGroup.RDconf", BlackGroup);
 	saveFile(strFileLoc + "WhiteQQ.RDconf", WhiteQQ);
 	saveFile(strFileLoc + "BlackQQ.RDconf", BlackQQ);
+	//saveBlackMark(strFileLoc + "BlackMarks.json");
 	//备份聊天列表
 	ofstream ofstreamLastMsgList(strFileLoc + "LastMsgList.MYmap", ios::out | ios::trunc);
 	for (auto it : mLastMsgList)
@@ -206,6 +207,7 @@ EVE_Enable(eventEnable)
 	thread threadFrq(frqHandler);
 	threadFrq.detach();
 	strFileLoc = getAppDirectory();
+	DiceMaid = getLoginQQ();
 	/*
 	* 名称存储-创建与读取
 	*/
@@ -260,6 +262,7 @@ EVE_Enable(eventEnable)
 	loadFile(strFileLoc + "WhiteQQ.RDconf", WhiteQQ);
 	loadFile(strFileLoc + "BlackGroup.RDconf", BlackGroup);
 	loadFile(strFileLoc + "BlackQQ.RDconf", BlackQQ);
+	loadBlackMark(strFileLoc + "BlackMarks.json");
 	loadFile(strFileLoc + "DisabledGroup.RDconf", DisabledGroup);
 	loadFile(strFileLoc + "DisabledDiscuss.RDconf", DisabledDiscuss);
 	loadFile(strFileLoc + "DisabledJRRPGroup.RDconf", DisabledJRRPGroup);
@@ -440,37 +443,36 @@ EVE_GroupMsg_EX(eventGroupMsg)
 			//能否锁定群主
 			bool isOwner = intAuthCnt == 0 || getGroupMemberInfo(eve.fromGroup, getLoginQQ()).permissions == 2;
 			string strNote = strNow + "在" + printGroup(eve.fromGroup) + "中," + eve.message;
-			string strWarning;
+			BlackMark mark;
+			mark.llMap = { {"fromGroup",eve.fromGroup},{"DiceMaid",getLoginQQ()},{"masterQQ", masterQQ} };
+			mark.strMap = { {"type","ban"},{"time",strNow} };
 			if (isOwner) {
 				strNote.replace(strNote.rfind("管理员"), 6, printQQ(fromQQ));
-				strWarning = "!warning{\n\"fromGroup\":" + to_string(eve.fromGroup) + ",\n\"type\":\"ban\",\n\"fromQQ\":" + to_string(fromQQ) + ",\n\"time\":\"" + strNow + "\",\n\"DiceMaid\":" + to_string(getLoginQQ()) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"";
-				}
-			else if (boolConsole["BannedBanOwner"]) {
-				strWarning = "!warning{\n\"fromGroup\":" + to_string(eve.fromGroup) + ",\n\"type\":\"ban\",\n\"fromQQ\":0,\n\"ownerQQ\":" + to_string(fromQQ) + ",\n\"time\":\"" + strNow + "\",\n\"DiceMaid\":" + to_string(getLoginQQ()) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"";
+				mark.set("fromQQ", fromQQ);
 			}
-			else strWarning = "!warning{\n\"fromGroup\":" + to_string(eve.fromGroup) + ",\n\"type\":\"ban\",\n\"fromQQ\":0,\n\"time\":\"" + strNow + "\",\n\"DiceMaid\":" + to_string(getLoginQQ()) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"";
-			string strMsg = strNote + "\n群主" + printQQ(fromQQ)+",另有管理员" + to_string(intAuthCnt) + "名" + strAuthList;
+			else if (boolConsole["BannedBanOwner"]) {
+				strNote += ";群主" + printQQ(fromQQ);
+				mark.set("ownerQQ", fromQQ);
+			}
+			mark.set("note", strNote);
 			if (mGroupInviter.count(eve.fromGroup) && AdminQQ.count(mGroupInviter[eve.fromGroup]) == 0 && masterQQ!= mGroupInviter[eve.fromGroup]) {
 				long long llInviter = mGroupInviter[eve.fromGroup];
 				strNote += ";入群邀请者：" + printQQ(llInviter);
-				while (strNote.find('\"') != string::npos)strNote.replace(strNote.find('\"'), 1, "\'");
-				strWarning += strNote + "\",\n\"inviterQQ\":" + to_string(llInviter) + "\n}";
-				strMsg += "\n入群邀请者：" + printQQ(llInviter);
-				if (boolConsole["BannedBanInviter"])addBlackQQ(llInviter, strNote, strWarning);
+				mark.set("inviterQQ", llInviter);
+				mark.set("note", strNote);
+				if (boolConsole["BannedBanInviter"])addBlackQQ(BlackMark(mark,"inviterQQ"));
 			}
+			if (isOwner)addBlackQQ(BlackMark(mark, "fromQQ"));
 			else {
-				while (strNote.find('\"') != string::npos)strNote.replace(strNote.find('\"'), 1, "\'");
-				strWarning += strNote + "\"\n}";
+				NotifyMonitor(strNote + ",另有管理员" + to_string(intAuthCnt) + "名" + strAuthList);
+				if (boolConsole["BannedBanOwner"])addBlackQQ(BlackMark(mark, "ownerQQ"));
 			}
-			if (boolConsole["BannedBanOwner"] || isOwner)addBlackQQ(fromQQ, strNote, strWarning);
-			NotifyMonitor(strMsg);
-			BlackGroup.insert(eve.fromGroup);
-			if (WhiteGroup.count(eve.fromGroup))WhiteGroup.erase(eve.fromGroup);
-			NotifyMonitor(strWarning);
-			if (boolConsole["AutoClearBlack"] && boolConsole["BannedLeave"]){
+			NotifyMonitor(mark.getWarning());
+			if (boolConsole["BannedLeave"]){
 				setGroupLeave(eve.fromGroup);
 				mLastMsgList.erase({ eve.fromGroup ,Group });
 			}
+			addBlackGroup(mark);
 		}
 		else return;
 	}
@@ -537,10 +539,12 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 	}
 	if (beingOperateQQ != getLoginQQ() && BlackQQ.count(beingOperateQQ)) {
 		string strNote = printGroup(fromGroup) + "发现黑名单用户" + printQQ(beingOperateQQ) + "入群";
+		if (mBlackQQMark.count(beingOperateQQ) && mBlackQQMark[beingOperateQQ].isVal("DiceMaid", getLoginQQ()))AddMsgToQueue(mBlackQQMark[beingOperateQQ].getWarning(), beingOperateQQ, Group);
 		if (WhiteGroup.count(fromGroup))strNote += "（群在白名单中）";
+		else if (MonitorList.count({ fromGroup,Group }));
 		else if (getGroupMemberInfo(fromGroup, getLoginQQ()).permissions > 1)strNote += "（群内有权限）";
 		else if (boolConsole["LeaveBlackQQ"]) {
-			AddMsgToQueue("发现黑名单用户" + printQQ(beingOperateQQ) + "入群,将预防性退群", Group);
+			sendGroupMsg(fromGroup, "发现黑名单用户" + printQQ(beingOperateQQ) + "入群,将预防性退群");
 			strNote += "（已退群）";
 			Sleep(100);
 			setGroupLeave(fromGroup);
@@ -580,36 +584,36 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 		mLastMsgList.erase({ fromGroup ,Group });
 		if (fromQQ == masterQQ)return 1;
 		string strNote = strNow + " " + printQQ(fromQQ) + "将" + GlobalMsg["strSelfName"] + "移出了群" + to_string(fromGroup);
-		string strWarning = "!warning{\n\"fromGroup\":" + to_string(fromGroup) + ",\n\"type\":\"kick\",\n\"fromQQ\":" + to_string(fromQQ) + ",\n\"time\":\"" + strNow + "\",\n\"DiceMaid\":" + to_string(beingOperateQQ) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"";
+		BlackMark mark;
+		mark.llMap = { {"fromGroup",fromGroup},{"fromQQ",fromQQ},{"DiceMaid",getLoginQQ()},{"masterQQ", masterQQ} };
+		mark.strMap = { {"type","kick"},{"time",strNow}};
+		mark.set("note", strNote);
 		if (mGroupInviter.count(fromGroup) && AdminQQ.count(mGroupInviter[fromGroup]) == 0) {
 			long long llInviter = mGroupInviter[fromGroup];
 			strNote += ";入群邀请者：" + printQQ(llInviter);
-			while (strNote.find('\"') != string::npos)strNote.replace(strNote.find('\"'), 1, "\'");
-			strWarning += strNote + "\",\n\"inviterQQ\":" + to_string(llInviter) + "\n}";
-			if (boolConsole["KickedBanInviter"])addBlackQQ(llInviter, strNote, strWarning);
-		}
-		else {
-			while (strNote.find('\"') != string::npos)strNote.replace(strNote.find('\"'), 1, "\'");
-			strWarning += strNote + "\"\n}";
+			mark.llMap["inviterQQ"] = llInviter;
+			mark.set("note", strNote);
+			mark.getWarning();
+			if (boolConsole["KickedBanInviter"])addBlackQQ(BlackMark(mark, "inviterQQ"));
 		}
 		if (WhiteGroup.count(fromGroup)) {
 			WhiteGroup.erase(fromGroup);
 		}
 		BlackGroup.insert(fromGroup);
-		NotifyMonitor(strWarning);
-		addBlackQQ(fromQQ, strNote, strWarning);
+		NotifyMonitor(mark.getWarning());
+		addBlackQQ(BlackMark(mark, "fromQQ"));
 	}
 	else if (mDiceList.count(beingOperateQQ) && subType == 2) {
 		string strNow = printSTime(stNow);
 		string strNote = strNow + " " + printQQ(fromQQ) + "将" + printQQ(beingOperateQQ) + "移出了群" + to_string(fromGroup);
 		while (strNote.find('\"') != string::npos)strNote.replace(strNote.find('\"'), 1, "\'"); 
 		string strWarning = "!warning{\n\"fromGroup\":" + to_string(fromGroup) + ",\n\"type\":\"kick\",\n\"fromQQ\":" + to_string(fromQQ) + ",\n\"time\":\"" + strNow + "\",\n\"DiceMaid\":" + to_string(beingOperateQQ) + ",\n\"masterQQ\":" + to_string(masterQQ) + ",\n\"note\":\"" + strNote + "\"\n}";
+		BlackMark mark;
+		mark.llMap = { {"fromGroup",fromGroup},{"fromQQ",fromQQ},{"DiceMaid",beingOperateQQ},{"masterQQ", mDiceList[beingOperateQQ]} };
+		mark.strMap = { {"type","kick"},{"time",strNow},{"note",strNote} };
 		NotifyMonitor(strWarning);
-		if (WhiteGroup.count(fromGroup)) {
-			WhiteGroup.erase(fromGroup);
-		}
-		BlackGroup.insert(fromGroup);
-		addBlackQQ(fromQQ, strNote, strWarning);
+		addBlackGroup(mark);
+		addBlackQQ(BlackMark(mark, "fromQQ"));
 	}
 	return 0;
 }
