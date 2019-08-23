@@ -42,9 +42,9 @@ set<chatType> MonitorList = {};
 std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},{"DisabledBlock",false},
 {"DisabledMe",false},{"DisabledJrrp",false},{"DisabledDeck",true},{"DisabledDraw",false},{"DisabledSend",true},
 {"Private",false},{"LeaveDiscuss",false},
-{"ListenAddFriend",true},
-{"AutoClearBlack",true},{"LeaveBlackGroup",true},{"LeaveBlackQQ",true},{"AllowStranger",true},
-{"BannedBanOwner",true},{"BannedLeave",true},{"BannedBanInviter",true},
+{"ListenFriendRequest",true},{"ListenFriendAdd",true},{"AllowStranger",true},
+{"AutoClearBlack",true},{"LeaveBlackQQ",true},
+{"BannedBanOwner",true},{"BannedLeave",false},{"BannedBanInviter",true},
 {"KickedBanInviter",true},
 {"CloudVisible",true}
 };
@@ -181,7 +181,7 @@ int isReliable(long long QQID) {
 		if(AdminQQ.count(fromQQ)) {
 			AddMsgToQueue(strName + strMsg, masterQQ);
 			for (auto it : AdminQQ) {
-				if (!MonitorList.count({ it,Private }))continue;
+				if (!MonitorList.count({ fromQQ,Private }))continue;
 				if (fromQQ == it)AddMsgToQueue(strMsg, it);
 				else AddMsgToQueue(strName + strMsg, it);
 			}
@@ -189,7 +189,7 @@ int isReliable(long long QQID) {
 		else {
 			masterQQ == fromQQ ? AddMsgToQueue(strMsg, masterQQ) : AddMsgToQueue(strName + strMsg, masterQQ);
 			for (auto it : AdminQQ) {
-				if (!MonitorList.count({ it,Private }))continue;
+				if (!MonitorList.count({ fromQQ,Private }))continue;
 				AddMsgToQueue(strName + strMsg, it);
 			}
 		}
@@ -574,8 +574,8 @@ EVE_Menu(eventGlobalSwitch) {
 
 	return 0;
 }
-EVE_Request_AddFriend(eventRequestAddFriend) {
-	if (!boolConsole["ListenAddFriend"])return 0;
+EVE_Request_AddFriend(eventAddFriend) {
+	if (!boolConsole["ListenFriendRequest"])return 0;
 	string strMsg = "好友添加请求，来自：" + printQQ(fromQQ);
 	if (BlackQQ.count(fromQQ)) {
 		strMsg += "，已拒绝（用户在黑名单中）";
@@ -584,6 +584,8 @@ EVE_Request_AddFriend(eventRequestAddFriend) {
 	else if (WhiteQQ.count(fromQQ)) {
 		strMsg += "，已同意（用户在白名单中）";
 		setFriendAddRequest(responseFlag, 1, "");
+		GlobalMsg["strAddFriendWhiteQQ"].empty() ? AddMsgToQueue(GlobalMsg["strAddFriend"], fromQQ)
+			: AddMsgToQueue(GlobalMsg["strAddFriendWhiteQQ"], fromQQ);
 	}
 	else if (boolConsole["Private"]&& !boolConsole["AllowStranger"]) {
 		strMsg += "，已拒绝（当前在私用模式）";
@@ -592,13 +594,15 @@ EVE_Request_AddFriend(eventRequestAddFriend) {
 	else {
 		strMsg += "，已同意";
 		setFriendAddRequest(responseFlag, 1, "");
+		AddMsgToQueue(GlobalMsg["strAddFriend"], fromQQ);
 	}
 	sendAdmin(strMsg);
 	return 1;
 }
 EVE_Friend_Add(eventFriendAdd) {
-	if (!boolConsole["ListenAddFriend"])return 0;
+	if (!boolConsole["ListenFriendAdd"])return 0;
 	GlobalMsg["strAddFriendWhiteQQ"].empty() ? AddMsgToQueue(GlobalMsg["strAddFriend"], fromQQ)
 		: AddMsgToQueue(GlobalMsg["strAddFriendWhiteQQ"], fromQQ);
 	return 0;
 }
+
