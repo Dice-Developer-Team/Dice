@@ -340,7 +340,7 @@ void setQQWarning(BlackMark &mark_full, const char* strType, long long fromQQ) {
 		}
 	}
 	else {
-		if(addBlackQQ(BlackMark(mark_full,strType)))sendAdmin("已通知" + printGroup(blackQQ) + "加入" + GlobalMsg["strSelfName"] + "的用户黑名单√", fromQQ);
+		if (addBlackQQ(BlackMark(mark_full, strType)))sendAdmin("已通知" + GlobalMsg["strSelfName"] + "将" + printQQ(blackQQ) + "加入用户黑名单√", fromQQ);
 	}
 }
 void setGroupWarning(BlackMark &mark_full, long long fromQQ) {
@@ -352,7 +352,7 @@ void setGroupWarning(BlackMark &mark_full, long long fromQQ) {
 		}
 	}
 	else {
-		if(addBlackGroup(mark_full))sendAdmin("已通知" + printGroup(blackGroup) + "加入" + GlobalMsg["strSelfName"] + "的群黑名单√", fromQQ);;
+		if(addBlackGroup(mark_full))sendAdmin("已通知" + GlobalMsg["strSelfName"] + "将" + printGroup(blackGroup) + "加入群黑名单√", fromQQ);
 	}
 }
 void warningHandler() {
