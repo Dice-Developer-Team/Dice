@@ -176,24 +176,14 @@ int isReliable(long long QQID) {
 	}
 	return 0;
 }
-	void sendAdmin(std::string strMsg, long long fromQQ) {
-		string strName = fromQQ ? getName(fromQQ) : "";
-		if(AdminQQ.count(fromQQ)) {
-			AddMsgToQueue(strName + strMsg, masterQQ);
-			for (auto it : AdminQQ) {
-				if (!MonitorList.count({ fromQQ,Private }))continue;
-				if (fromQQ == it)AddMsgToQueue(strMsg, it);
-				else AddMsgToQueue(strName + strMsg, it);
-			}
-		}
-		else {
-			masterQQ == fromQQ ? AddMsgToQueue(strMsg, masterQQ) : AddMsgToQueue(strName + strMsg, masterQQ);
-			for (auto it : AdminQQ) {
-				if (!MonitorList.count({ fromQQ,Private }))continue;
-				AddMsgToQueue(strName + strMsg, it);
-			}
-		}
+void sendAdmin(std::string strMsg, long long fromQQ) {
+	string strName = fromQQ ? getName(fromQQ) : "";
+	for (auto it : AdminQQ) {
+		if (!MonitorList.count({ fromQQ,Private }))continue;
+		if (fromQQ == it)AddMsgToQueue(strMsg, it);
+		else AddMsgToQueue(strName + strMsg, it);
 	}
+}
 
 void NotifyMonitor(std::string strMsg) {
 		if (!boolMasterMode)return;
@@ -250,7 +240,7 @@ void checkBlackQQ(BlackMark &mark) {
 bool addBlackQQ(BlackMark mark) {
 	long long llQQ = mark.fromID;
 	bool isAdd = false;
-	if (llQQ == masterQQ || AdminQQ.count(llQQ) || llQQ == getLoginQQ())return 0;
+	if (AdminQQ.count(llQQ) || llQQ == DiceMaid)return 0;
 	if (WhiteQQ.count(llQQ))WhiteQQ.erase(llQQ);
 	if (BlackQQ.count(llQQ) == 0) {
 		isAdd = true;

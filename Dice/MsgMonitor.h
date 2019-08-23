@@ -35,15 +35,14 @@ public:
 				mWarnLevel[fromQQ] = mFrequence[fromQQ];
 				std::string strNow = printSTime(stNow);
 				std::string strNote = strNow + (CT.second ? printChat(CT) : "私聊窗口") + "监测到" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "30s发送指令频度达" + std::to_string(mFrequence[fromQQ] / 10);
-				while (strNote.find('\"') != std::string::npos)strNote.replace(strNote.find('\"'), 1, "\'"); 
-				BlackMark mark(fromQQ);
-				mark.llMap = { {"fromQQ",fromQQ},{"DiceMaid",DiceMaid},{"masterQQ", masterQQ} };
-				mark.strMap = { {"type","kick"},{"time",strNow} };
-				mark.set("note", strNote); 
 				if (AdminQQ.count(fromQQ) || mDiceList.count(fromQQ)) {
 					NotifyMonitor(strNote);
 				}
 				else {
+					BlackMark mark(fromQQ);
+					mark.llMap = { {"fromQQ",fromQQ},{"DiceMaid",DiceMaid},{"masterQQ", masterQQ} };
+					mark.strMap = { {"type","kick"},{"time",strNow} };
+					mark.set("note", strNote);
 					NotifyMonitor(mark.getWarning());
 					addBlackQQ(mark);
 				}

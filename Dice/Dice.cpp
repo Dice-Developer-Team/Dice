@@ -225,6 +225,7 @@ EVE_Enable(eventEnable)
 	if(AdminQQ.upper_bound(0)!= AdminQQ.begin()) {
 		AdminQQ.erase(AdminQQ.begin(), AdminQQ.upper_bound(0));
 	}
+	AdminQQ.insert(masterQQ);
 	//读取监控窗口列表
 	ifstream ifstreamMonitorList(strFileLoc + "MonitorList.RDconf");
 	while (ifstreamMonitorList)
@@ -235,7 +236,6 @@ EVE_Enable(eventEnable)
 		if (llMonitor)MonitorList.insert({ llMonitor ,(msgtype)t });
 	}
 	if (MonitorList.size() == 0) {
-		if (masterQQ)MonitorList.insert({ masterQQ ,Private });
 		for (auto it : AdminQQ) {
 			MonitorList.insert({ it ,Private });
 		}
@@ -406,12 +406,6 @@ EVE_Enable(eventEnable)
 
 EVE_PrivateMsg_EX(eventPrivateMsg)
 {
-	if (eve.isSystem()) {
-		if (boolMasterMode&&masterQQ) {
-			AddMsgToQueue("来自系统：" + eve.message, masterQQ);
-		}
-		return;
-	}
 	FromMsg Msg(eve.message, eve.fromQQ);
 	if (Msg.DiceFilter())eve.message_block();
 	Msg.FwdMsg(eve.message);
@@ -439,7 +433,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 				}
 			}
 			//Master豁免
-			if (fromQQ == masterQQ)return;
+			if (AdminQQ.count(fromQQ))return;
 			//能否锁定群主
 			bool isOwner = intAuthCnt == 0 || getGroupMemberInfo(eve.fromGroup, getLoginQQ()).permissions == 2;
 			string strNote = strNow + "在" + printGroup(eve.fromGroup) + "中," + eve.message;
@@ -455,7 +449,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 				mark.set("ownerQQ", fromQQ);
 			}
 			mark.set("note", strNote);
-			if (mGroupInviter.count(eve.fromGroup) && AdminQQ.count(mGroupInviter[eve.fromGroup]) == 0 && masterQQ!= mGroupInviter[eve.fromGroup]) {
+			if (mGroupInviter.count(eve.fromGroup) && !AdminQQ.count(mGroupInviter[eve.fromGroup])) {
 				long long llInviter = mGroupInviter[eve.fromGroup];
 				strNote += ";入群邀请者：" + printQQ(llInviter);
 				mark.set("inviterQQ", llInviter);
@@ -582,7 +576,7 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 	if (beingOperateQQ == getLoginQQ() && boolMasterMode) {
 		string strNow = printSTime(stNow);
 		mLastMsgList.erase({ fromGroup ,Group });
-		if (fromQQ == masterQQ)return 1;
+		if (AdminQQ.count(fromQQ))return 1;
 		string strNote = strNow + " " + printQQ(fromQQ) + "将" + GlobalMsg["strSelfName"] + "移出了群" + to_string(fromGroup);
 		BlackMark mark;
 		mark.llMap = { {"fromGroup",fromGroup},{"fromQQ",fromQQ},{"DiceMaid",getLoginQQ()},{"masterQQ", masterQQ} };

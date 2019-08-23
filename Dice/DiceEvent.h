@@ -85,17 +85,8 @@ public:
 	void AdminNotify(std::string strMsg) {
 		reply(strMsg);
 		string strName = getName(fromQQ);
-		if (AdminQQ.count(fromQQ)) {
-			AddMsgToQueue(strName + strMsg, masterQQ);
-			for (auto it : AdminQQ) {
-				if (MonitorList.count({ it,Private }) && fromQQ != it) AddMsgToQueue(strName + strMsg, it);
-			}
-		}
-		else {
-			if(!isMaster)AddMsgToQueue(strName + strMsg, masterQQ);
-			for (auto it : AdminQQ) {
-				if (MonitorList.count({ it,Private }))AddMsgToQueue(strName + strMsg, it);
-			}
+		for (auto it : AdminQQ) {
+			if (MonitorList.count({ it,Private }) && fromQQ != it) AddMsgToQueue(strName + strMsg, it);
 		}
 	}
 	//转发消息
@@ -531,9 +522,10 @@ public:
 			return 1;
 		}
 		else if (strOption == "delete") {
-			MonitorList.erase({ masterQQ,Private });
 			reply("你不再是" + GlobalMsg["strSelfName"] + "的Master！");
 			masterQQ = 0;
+			AdminQQ.clear();
+			MonitorList.clear();
 			return 1;
 		}
 		else if (strOption == "admin") {
@@ -639,6 +631,7 @@ public:
 			intMsgCnt += 6;
 			if (masterQQ == 0) {
 				masterQQ = fromQQ;
+				AdminQQ.insert(masterQQ);
 				MonitorList.insert({ masterQQ,Private });
 				reply("试问，你就是" + GlobalMsg["strSelfName"] + "的Master√");
 			}
