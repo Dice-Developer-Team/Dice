@@ -87,10 +87,7 @@ void SendMsg()
 				CQ::sendDiscussMsg(msg.target_id, msg.msg);
 			}
 		}
-		else
-		{
-			this_thread::sleep_for(chrono::milliseconds(20));
-		}
+		this_thread::sleep_for(chrono::milliseconds(20));
 	}
 	msgSendThreadRunning = false;
 }
