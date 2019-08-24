@@ -43,6 +43,16 @@ public:
 		if (strMap.count("note") && MarkTmp.count("note") && strMap["note"] == MarkTmp.strMap["note"])return true;
 		return false;
 	}
+	const char* getData() {
+		std::string data = "fromQQ=" + std::to_string(llMap["fromQQ"]) + "&fromGroup=" + std::to_string(llMap["fromGroup"]) + "&DiceMaid=" + std::to_string(llMap["DiceMaid"]) + "&masterQQ=" + std::to_string(llMap["masterQQ"]);
+		for (auto it : strMap) {
+			if (it.first == "note") {
+				continue;
+			}
+			data += "&" + it.first + "=" + it.second;
+		}
+		return data.data();
+	}
 	const std::string getJson() {
 		std::string strJson = "{";
 		if (llMap.empty())strJson += "\n\"fromQQ\":" + std::to_string(fromID) + ",";

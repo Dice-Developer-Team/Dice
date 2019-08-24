@@ -79,6 +79,7 @@ bool addBlackQQ(BlackMark mark);
 bool addBlackGroup(BlackMark &mark);
 void rmBlackQQ(long long llQQ, long long operateQQ = 0);
 void rmBlackGroup(long long llQQ, long long operateQQ = 0);
+extern std::set<std::string> strWarningList;
 void AddWarning(const std::string& msg, long long DiceQQ, long long fromGroup);
 void warningHandler();
 	extern void ConsoleTimer();

@@ -620,12 +620,11 @@ public:
 			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 7) == "warning") {
-			if (isAdmin || mDiceList.count(fromQQ)) {
-				intMsgCnt += 7;
-				AddWarning(readRest(), fromQQ, fromGroup);
-				return 1;
-			}
-			else return 0;
+			intMsgCnt += 7;
+			string strWarning = readRest();
+			if (strWarningList.count(strWarning))return 0;
+			AddWarning(strWarning, fromQQ, fromGroup);
+			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 6) == "master"&&boolMasterMode) {
 			intMsgCnt += 6;

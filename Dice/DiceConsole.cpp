@@ -170,10 +170,10 @@ void getDiceList() {
 	readJson(list, mDiceList);
 }
 int isReliable(long long QQID) {
-	if (QQID = masterQQ || AdminQQ.count(QQID))return 3; 
+	if (AdminQQ.count(QQID))return 3; 
 	if (mDiceList.count(QQID)) {
-		if (mDiceList[QQID] = masterQQ && AdminQQ.count(mDiceList[QQID]))return 2;
-		if (mDiceList[QQID] = QQID)return 1;
+		if (AdminQQ.count(mDiceList[QQID]))return 2;
+		if (mDiceList[QQID] == QQID)return 1;
 	}
 	return 0;
 }
@@ -212,7 +212,7 @@ void checkBlackQQ(BlackMark &mark) {
 			}
 			else if (getGroupMemberInfo(eachGroup.first, llQQ).permissions > getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions) {
 				AddMsgToQueue(mark.getWarning(), eachGroup.first, Group);
-				AddMsgToQueue("发现新增黑名单管理员" + printQQ(llQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first, Group);
+				sendGroupMsg(eachGroup.first, "发现新增黑名单管理员" + printQQ(llQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
 				strNotice += "对方群权限较高，已退群";
 				Sleep(1000);
 				setGroupLeave(eachGroup.first);
@@ -223,7 +223,7 @@ void checkBlackQQ(BlackMark &mark) {
 			}
 			else if (boolConsole["LeaveBlackQQ"]) {
 				AddMsgToQueue(mark.getWarning(), eachGroup.first, Group);
-				AddMsgToQueue("发现新增黑名单成员" + printQQ(llQQ) + "（同等群权限）\n" + GlobalMsg["strSelfName"] + "将预防性退群", eachGroup.first, Group);
+				sendGroupMsg(eachGroup.first, "发现新增黑名单成员" + printQQ(llQQ) + "（同等群权限）\n" + GlobalMsg["strSelfName"] + "将预防性退群");
 				strNotice += "已退群";
 				Sleep(1000);
 				setGroupLeave(eachGroup.first);
@@ -240,47 +240,39 @@ void checkBlackQQ(BlackMark &mark) {
 //拉黑用户
 bool addBlackQQ(BlackMark mark) {
 	long long llQQ = mark.fromID;
-	bool isAdd = false;
 	if (AdminQQ.count(llQQ) || llQQ == DiceMaid)return 0;
 	if (WhiteQQ.count(llQQ))WhiteQQ.erase(llQQ);
-	if (BlackQQ.count(llQQ) == 0) {
-		isAdd = true;
-		BlackQQ.insert(llQQ);
-		mark.count("note") ? AddMsgToQueue(GlobalMsg["strBlackQQAddNotice"], llQQ)
-			: AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { mark.strMap["note"] }), llQQ);
-		if (boolConsole["AutoClearBlack"])checkBlackQQ(mark);
-	}
+	if (BlackQQ.count(llQQ))return 0;
+	BlackQQ.insert(llQQ);
+	mark.count("note") ? AddMsgToQueue(GlobalMsg["strBlackQQAddNotice"], llQQ)
+		: AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { mark.strMap["note"] }), llQQ);
+	if (boolConsole["AutoClearBlack"])checkBlackQQ(mark);
 	mark.strWarning.clear();
 	if (!mBlackQQMark.count(llQQ) || mBlackQQMark[llQQ].isErased()) {
 		lock_guard<std::mutex> lock_queue(blackMarkMutex);
 		mBlackQQMark[llQQ] = mark;
 		saveBlackMark(string(getAppDirectory()) + "BlackMarks.json");
-		if(!isAdd)sendAdmin(GlobalMsg["strSelfName"] + "已更新" + printQQ(llQQ) + "的黑名单条目√");
 	}
-	return isAdd;
+	return 1;
 }
 bool addBlackGroup(BlackMark &mark) {
 	if (!mark.count("fromGroup"))return 0;
-	bool isAdd = false;
 	long long llGroup = mark.llMap["fromGroup"];
 	if (MonitorList.count({ llGroup ,Group }))return 0;
 	if (WhiteGroup.count(llGroup))WhiteGroup.erase(llGroup);
-	if (!BlackGroup.count(llGroup)) {
-		isAdd = true;
-		BlackGroup.insert(llGroup);
-		if (getGroupList().count(llGroup) && boolConsole["LeaveBlackGroup"]) {
-			sendGroupMsg(llGroup, mark.getWarning());
-			Sleep(100);
-			setGroupLeave(llGroup);
-		}
+	if (BlackGroup.count(llGroup))return 0;
+	BlackGroup.insert(llGroup);
+	if (getGroupList().count(llGroup) && boolConsole["LeaveBlackGroup"]) {
+		sendGroupMsg(llGroup, mark.getWarning());
+		Sleep(100);
+		setGroupLeave(llGroup);
 	}
 	if (!mBlackGroupMark.count(llGroup) || mBlackGroupMark[llGroup].isErased()) {
 		lock_guard<std::mutex> lock_queue(blackMarkMutex);
 		mBlackGroupMark[llGroup] = BlackMark(mark, "fromGroup");
 		saveBlackMark(string(getAppDirectory()) + "BlackMarks.json");
-		if (!isAdd)sendAdmin(GlobalMsg["strSelfName"] + "已更新" + printGroup(llGroup) + "的黑名单条目√");
 	}
-	return isAdd;
+	return 1;
 }
 void rmBlackQQ(long long llQQ, long long operateQQ) {
 	if (BlackQQ.count(llQQ)) {
@@ -325,9 +317,8 @@ void AddWarning(const string &msg, long long DiceQQ, long long fromGroup)
 void setQQWarning(BlackMark &mark_full, const char* strType, long long fromQQ) {
 	long long blackQQ = mark_full.llMap[strType];
 	if (mark_full.isErased()) {
-		if ((mark_full.isNoteEmpty() || mBlackQQMark.count(blackQQ) && mBlackQQMark[blackQQ] == mark_full)
-			&& (mBlackQQMark.count(blackQQ) && mBlackQQMark[blackQQ].isVal("DiceMaid", fromQQ) || isReliable(fromQQ))) {
-			rmBlackQQ(blackQQ,fromQQ);
+		if (!mBlackQQMark.count(blackQQ) || mBlackQQMark[blackQQ] == mark_full) {
+			rmBlackQQ(blackQQ, fromQQ);
 		}
 	}
 	else {
@@ -337,8 +328,7 @@ void setQQWarning(BlackMark &mark_full, const char* strType, long long fromQQ) {
 void setGroupWarning(BlackMark &mark_full, long long fromQQ) {
 	long long blackGroup = mark_full.llMap["Group"];
 	if (mark_full.isErased()) {
-		if ((mark_full.isNoteEmpty() || mBlackGroupMark.count(blackGroup) && mBlackGroupMark[blackGroup] == mark_full)
-			&& (mBlackGroupMark.count(blackGroup) && mBlackGroupMark[blackGroup].isVal("DiceMaid", fromQQ) || isReliable(fromQQ))) {
+		if (!mBlackGroupMark.count(blackGroup) || mBlackGroupMark[blackGroup] == mark_full){
 			rmBlackGroup(blackGroup, fromQQ);
 		}
 	}
@@ -370,17 +360,18 @@ void warningHandler() {
 			BlackMark mark = readMark(jInfo);
 			mark.strWarning = "!warning" + warning.strMsg;
 			if (isReliable(warning.fromQQ)) {
-				if (!mark.isNoteEmpty()) {
-					if (strWarningList.count(warning.strMsg))continue;
-					else strWarningList.insert(warning.strMsg);
-				}
+				if (strWarningList.count(warning.strMsg))continue;
+				else strWarningList.insert(warning.strMsg);
 				if (warning.fromQQ != masterQQ)sendAdmin("已通知" + GlobalMsg["strSelfName"] + ":\n" + mark.strWarning,warning.fromQQ);
 			}
 			else {
 				if (mark.isNoteEmpty() || strWarningList.count(warning.strMsg)) { continue; }
-				else strWarningList.insert(warning.strMsg);
+				int res = Cloud::checkWarning(mark.getData());
+				if (!mark.isErased() && res < 1)continue;
+				if (mark.isErased() && res > -1 && !mark.isVal("DiceMaid", warning.fromQQ))continue;
+				strWarningList.insert(warning.strMsg);
 				sendAdmin("来自" + printGroup(warning.fromGroup) + printQQ(warning.fromQQ) + ":\n" + mark.strWarning);
-				if (!mark.hasType()) { continue; }}
+			}
 			if (mark.count("fromGroup")) {
 				setGroupWarning(mark, warning.fromQQ);
 			}

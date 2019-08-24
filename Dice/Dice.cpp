@@ -448,6 +448,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 				strNote += ";群主" + printQQ(fromQQ);
 				mark.set("ownerQQ", fromQQ);
 			}
+			Cloud::upWarning(mark.getData());
 			mark.set("note", strNote);
 			if (mGroupInviter.count(eve.fromGroup) && !AdminQQ.count(mGroupInviter[eve.fromGroup])) {
 				long long llInviter = mGroupInviter[eve.fromGroup];
@@ -612,6 +613,7 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 		mark.llMap = { {"fromGroup",fromGroup},{"fromQQ",fromQQ},{"DiceMaid",getLoginQQ()},{"masterQQ", masterQQ} };
 		mark.strMap = { {"type","kick"},{"time",strNow}};
 		mark.set("note", strNote);
+		Cloud::upWarning(mark.getData());
 		if (mGroupInviter.count(fromGroup) && AdminQQ.count(mGroupInviter[fromGroup]) == 0) {
 			long long llInviter = mGroupInviter[fromGroup];
 			strNote += ";入群邀请者：" + printQQ(llInviter);
@@ -635,8 +637,9 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 		BlackMark mark;
 		mark.llMap = { {"fromGroup",fromGroup},{"fromQQ",fromQQ},{"DiceMaid",beingOperateQQ},{"masterQQ", mDiceList[beingOperateQQ]} };
 		mark.strMap = { {"type","kick"},{"time",strNow},{"note",strNote} };
+		Cloud::upWarning(mark.getData());
 		NotifyMonitor(strWarning);
-		addBlackGroup(mark);
+		addBlackGroup(mark);;
 		addBlackQQ(BlackMark(mark, "fromQQ"));
 	}
 	return 0;
