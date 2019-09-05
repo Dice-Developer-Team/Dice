@@ -573,7 +573,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 					return 1;
 				}
 			}
-			if (each.permissions = 3) {
+			if (each.permissions == 3) {
 				ownerQQ = each.QQID;
 				strMsg += "，群主" + printQQ(each.QQID) + "；";
 			}
@@ -660,14 +660,14 @@ EVE_Request_AddGroup(eventGroupInvited) {
 			}
 			else if (WhiteGroup.count(fromGroup)) {
 				strMsg += "\n已同意（群在白名单中）";
-				setGroupAddRequest(responseFlag, 2, 1, "");
 				mGroupInviter[fromGroup] = fromQQ;
+				setGroupAddRequest(responseFlag, 2, 1, "");
 			}
 			else if (WhiteQQ.count(fromQQ)) {
 				strMsg += "\n已同意（用户在白名单中）";
 				WhiteGroup.insert(fromGroup);
-				setGroupAddRequest(responseFlag, 2, 1, "");
 				mGroupInviter[fromGroup] = fromQQ;
+				setGroupAddRequest(responseFlag, 2, 1, "");
 			}
 			else if (boolConsole["Private"]) {
 				strMsg += "\n已拒绝（当前在私用模式）";
@@ -675,8 +675,8 @@ EVE_Request_AddGroup(eventGroupInvited) {
 			}
 			else{
 				strMsg += "已同意";
-				setGroupAddRequest(responseFlag, 2, 1, "");
 				mGroupInviter[fromGroup] = fromQQ;
+				setGroupAddRequest(responseFlag, 2, 1, "");
 				return 1;
 			}
 			sendAdmin(strMsg);

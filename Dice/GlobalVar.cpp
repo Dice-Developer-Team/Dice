@@ -257,7 +257,7 @@ std::map<std::string, std::string> GlobalMsg
 .help指令 查看指令列表
 .help设定 确认骰娘设定
 .help链接 查看源码文档
-官骰群：941980833
+官方群：754494359
 私骰群：192499947)"}
 };
 

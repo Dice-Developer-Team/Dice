@@ -47,7 +47,7 @@ std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},{"DisabledBl
 {"AutoClearBlack",true},{"LeaveBlackQQ",true},
 {"BannedBanOwner",true},{"BannedLeave",true},{"BannedBanInviter",true},
 {"KickedBanInviter",true},
-{"CloudVisible",true}
+{"BelieveDiceList",true},{"CloudVisible",true}
 };
 //骰娘列表
 std::map<long long, long long> mDiceList;
@@ -101,6 +101,7 @@ void loadBlackMark(string strPath) {
 				mBlackQQMark[m.fromID] = m;
 			}
 		}
+		fin.close();
 	}
 }
 void saveBlackMark(string strPath) {
@@ -115,6 +116,7 @@ void saveBlackMark(string strPath) {
 	if (sout.empty())sout = ']';
 	else sout[sout.length() - 1] = ']';
 	fout << "[" << GBKtoUTF8(sout);
+	fout.close();
 }
 	//当前时间
 	SYSTEMTIME stNow = { 0 };
@@ -173,15 +175,16 @@ int isReliable(long long QQID) {
 	if (AdminQQ.count(QQID))return 3; 
 	if (mDiceList.count(QQID)) {
 		if (AdminQQ.count(mDiceList[QQID]))return 2;
-		if (mDiceList[QQID] == QQID)return 1;
+		if (boolConsole["BelieveDiceList"] || mDiceList[QQID] == QQID)return 1;
 	}
+	if(BlackQQ.count(QQID))return -1;
 	return 0;
 }
 void sendAdmin(std::string strMsg, long long fromQQ) {
 	string strName = fromQQ ? getName(fromQQ) : "";
 	for (auto it : AdminQQ) {
-		if (!MonitorList.count({ fromQQ,Private }))continue;
-		if (fromQQ == it)AddMsgToQueue(strMsg, it);
+		if (!MonitorList.count({ it,Private }))continue;
+		else if (fromQQ == it)AddMsgToQueue(strMsg, it);
 		else AddMsgToQueue(strName + strMsg, it);
 	}
 }
@@ -326,7 +329,7 @@ void setQQWarning(BlackMark &mark_full, const char* strType, long long fromQQ) {
 	}
 }
 void setGroupWarning(BlackMark &mark_full, long long fromQQ) {
-	long long blackGroup = mark_full.llMap["Group"];
+	long long blackGroup = mark_full.llMap["fromGroup"];
 	if (mark_full.isErased()) {
 		if (!mBlackGroupMark.count(blackGroup) || mBlackGroupMark[blackGroup] == mark_full){
 			rmBlackGroup(blackGroup, fromQQ);
@@ -359,12 +362,14 @@ void warningHandler() {
 			}
 			BlackMark mark = readMark(jInfo);
 			mark.strWarning = "!warning" + warning.strMsg;
-			if (isReliable(warning.fromQQ)) {
+			int intLevel = isReliable(warning.fromQQ);
+			if (intLevel > 0) {
 				if (strWarningList.count(warning.strMsg))continue;
 				else strWarningList.insert(warning.strMsg);
-				if (warning.fromQQ != masterQQ)sendAdmin("已通知" + GlobalMsg["strSelfName"] + ":\n" + mark.strWarning,warning.fromQQ);
+				if (warning.fromQQ != masterQQ)sendAdmin("已通知" + GlobalMsg["strSelfName"] + ":\n" + mark.strWarning, warning.fromQQ);
+				if (intLevel == 1 && !mark.hasType())continue;
 			}
-			else {
+			else if (intLevel == 0) {
 				if (mark.isNoteEmpty() || strWarningList.count(warning.strMsg)) { continue; }
 				int res = Cloud::checkWarning(mark.getData());
 				if (!mark.isErased() && res < 1)continue;
@@ -372,12 +377,14 @@ void warningHandler() {
 				strWarningList.insert(warning.strMsg);
 				sendAdmin("来自" + printGroup(warning.fromGroup) + printQQ(warning.fromQQ) + ":\n" + mark.strWarning);
 			}
+			else continue;
 			if (mark.count("fromGroup")) {
 				setGroupWarning(mark, warning.fromQQ);
 			}
 			if (mark.count("fromQQ")) {
 				setQQWarning(mark, "fromQQ", warning.fromQQ);
 			}
+			if (intLevel == 0 && !mark.isVal("DiceMaid", warning.fromQQ))continue;
 			if (mark.count("inviterQQ") && ((mark.strMap["type"] == "kick"&&boolConsole["KickedBanInviter"]) || (mark.strMap["type"] == "ban"&&boolConsole["BannedBanInviter"]))) {
 				setQQWarning(mark, "inviterQQ", warning.fromQQ);
 			}

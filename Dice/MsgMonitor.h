@@ -6,6 +6,7 @@
 #include <map>
 #include <ctime>
 #include "DiceConsole.h"
+#include "DiceCloud.h"
 class FrqMonitor {
 public:
 	static const long long earlyTime = 30;
@@ -43,6 +44,7 @@ public:
 					mark.llMap = { {"fromQQ",fromQQ},{"DiceMaid",DiceMaid},{"masterQQ", masterQQ} };
 					mark.strMap = { {"type","kick"},{"time",strNow} };
 					mark.set("note", strNote);
+					Cloud::upWarning(mark.getData());
 					NotifyMonitor(mark.getWarning());
 					addBlackQQ(mark);
 				}
