@@ -42,7 +42,7 @@ public:
 				else {
 					BlackMark mark(fromQQ);
 					mark.llMap = { {"fromQQ",fromQQ},{"DiceMaid",DiceMaid},{"masterQQ", masterQQ} };
-					mark.strMap = { {"type","kick"},{"time",strNow} };
+					mark.strMap = { {"type","spam"},{"time",strNow} };
 					mark.set("note", strNote);
 					Cloud::upWarning(mark.getData());
 					NotifyMonitor(mark.getWarning());
