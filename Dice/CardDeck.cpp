@@ -107,30 +107,33 @@ namespace CardDeck
 			if(!isBack)TempDeck.erase(TempDeck.begin() + ans);
 		}
 		int intCnt = 0;
-		while (strReply.find('{', intCnt) != std::string::npos) {
-			int lq = strReply.find('{',intCnt);
-			int rq = strReply.find('}',lq);
-			if (rq == std::string::npos)break;
-			intCnt = rq;
+		int lq = 0, rq = 0;
+		while ((lq = strReply.find('{', intCnt)) != std::string::npos && (rq = strReply.find('}', lq)) != std::string::npos) {
 			bool isTmpBack = false;
 			string strTempName = strReply.substr(lq + 1, rq - lq - 1);
 			if (strTempName[0] == '%') {
 				isTmpBack = true;
 				strTempName = strTempName.substr(1);
 			}
-			if (mPublicDeck.count(strTempName) == 0) continue;
+			if (mPublicDeck.count(strTempName) == 0) {
+				intCnt = rq + 1;
+				continue;
+			}
 			else if (TempDeckList.count(strTempName)==0|| TempDeckList[strTempName].empty()) {
 				TempDeckList[strTempName] = mPublicDeck[strTempName];
 			}
-			strReply.replace(strReply.begin()+lq, strReply.begin() + rq+1, drawCard(TempDeckList[strTempName], isTmpBack));
+			string strRes = drawCard(TempDeckList[strTempName], isTmpBack);
+			strReply.replace(strReply.begin() + lq, strReply.begin() + rq + 1, strRes);
+			intCnt = lq + strRes.length();
 		}
-		while (strReply.find('[') != std::string::npos) {
-			int lq = strReply.find('[');
-			int rq = strReply.find(']');
+		intCnt = 0;
+		while ((lq = strReply.find('[', intCnt)) != std::string::npos && (rq = strReply.find(']', lq)) != std::string::npos) {
 			string strRoll = strReply.substr(lq + 1, rq - lq - 1);
+			intCnt = rq + 1;
 			RD RDroll(strRoll);
-			RDroll.Roll();
+			if(RDroll.Roll())continue;
 			strReply.replace(strReply.begin() + lq, strReply.begin() + rq + 1, std::to_string(RDroll.intTotal));
+			intCnt = lq + std::to_string(RDroll.intTotal).length();
 		}
 		return strReply;
 	}
