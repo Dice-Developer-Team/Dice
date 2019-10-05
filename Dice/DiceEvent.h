@@ -3363,8 +3363,9 @@ public:
 		init(strMsg);
 		while (isspace(static_cast<unsigned char>(strMsg[0])))
 			strMsg.erase(strMsg.begin());
+		bool isOtherCalled = false;
 		string strAt = "[CQ:at,qq=" + to_string(getLoginQQ()) + "]";
-		if (strMsg.substr(0, 6) == "[CQ:at")
+		while (strMsg.substr(0, 6) == "[CQ:at")
 		{
 			if (strMsg.substr(0, strAt.length()) == strAt)
 			{
@@ -3375,11 +3376,15 @@ public:
 				strMsg = strMsg.substr(14);
 				isCalled = true;
 			}
-			else
+			else if (strMsg.find("]") != string::npos)
 			{
-				return false;
+				strMsg = strMsg.substr(strMsg.find("]") + 1);
+				isOtherCalled = true;
 			}
+			while (isspace(static_cast<unsigned char>(strMsg[0])))
+				strMsg.erase(strMsg.begin());
 		}
+		if (isOtherCalled && !isCalled)return false;
 		init2(strMsg);
 		if (fromType == Private) isCalled = true;
 		isMaster = fromQQ == masterQQ && boolMasterMode;
