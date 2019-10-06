@@ -434,7 +434,8 @@ public:
 							reply(printGroup(llTargetID) + "已加入" + GlobalMsg["strSelfName"] + "的黑名单!");
 						}
 						else {
-							if(addBlackGroup(BlackMark("fromGroup", llTargetID) << mark))AdminNotify("已将" + printGroup(llTargetID) + "加入" + GlobalMsg["strSelfName"] + "的黑名单√");;
+							mark.set("fromGroup", llTargetID);
+							if(addBlackGroup(mark))AdminNotify("已将" + printGroup(llTargetID) + "加入" + GlobalMsg["strSelfName"] + "的黑名单√");;
 						}
 					}
 				} while (llTargetID = readID());
@@ -499,7 +500,8 @@ public:
 							reply(printQQ(llTargetID) + "已加入" + GlobalMsg["strSelfName"] + "的黑名单!");
 						}
 						else {
-							if(addBlackQQ(BlackMark(llTargetID) << mark))AdminNotify("已将" + printQQ(llTargetID) + "加入" + GlobalMsg["strSelfName"] + "的黑名单√");;
+							mark.set("fromQQ", llTargetID);
+							if(addBlackQQ(mark))AdminNotify("已将" + printQQ(llTargetID) + "加入" + GlobalMsg["strSelfName"] + "的黑名单√");;
 						}
 					}
 				} while (llTargetID = readID());
