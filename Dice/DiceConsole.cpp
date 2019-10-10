@@ -44,7 +44,7 @@ std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},{"DisabledBl
 {"Private",false},{"LeaveDiscuss",false},
 {"ListenGroupRequest",true},{"ListenGroupAdd",true},
 {"ListenFriendRequest",true},{"ListenFriendAdd",true},{"AllowStranger",true},
-{"AutoClearBlack",true},{"LeaveBlackQQ",true},
+{"AutoClearBlack",true},{"LeaveBlackQQ",true},{"LeaveBlackGroup",true},
 {"BannedBanOwner",true},{"BannedLeave",true},{"BannedBanInviter",true},
 {"KickedBanInviter",true},
 {"BelieveDiceList",true},{"CloudVisible",true}
