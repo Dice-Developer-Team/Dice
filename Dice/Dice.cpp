@@ -534,7 +534,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 	}
 	if (beingOperateQQ != getLoginQQ() && BlackQQ.count(beingOperateQQ)) {
 		string strNote = printGroup(fromGroup) + "发现黑名单用户" + printQQ(beingOperateQQ) + "入群";
-		if (mBlackQQMark.count(beingOperateQQ) && mBlackQQMark[beingOperateQQ].isVal("DiceMaid", getLoginQQ()))AddMsgToQueue(mBlackQQMark[beingOperateQQ].getWarning(), beingOperateQQ, Group);
+		if (mBlackQQMark.count(beingOperateQQ) && mBlackQQMark[beingOperateQQ].isVal("DiceMaid", getLoginQQ()))AddMsgToQueue(mBlackQQMark[beingOperateQQ].getWarning(), fromGroup, Group);
 		if (WhiteGroup.count(fromGroup))strNote += "（群在白名单中）";
 		else if (MonitorList.count({ fromGroup,Group }));
 		else if (getGroupMemberInfo(fromGroup, getLoginQQ()).permissions > 1)strNote += "（群内有权限）";
@@ -562,6 +562,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 			strMsg += ",邀请者" + printQQ(mGroupInviter[fromGroup]);
 		}
 		long long ownerQQ;
+		set<long long>sBlackList;
 		for (auto each : getGroupMemberList(fromGroup)) {
 			if (each.permissions > 1) {
 				if (BlackQQ.count(each.QQID)) {
@@ -572,11 +573,25 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 					setGroupLeave(fromGroup);
 					return 1;
 				}
+				if (each.permissions == 3) {
+					ownerQQ = each.QQID;
+					strMsg += "，群主" + printQQ(each.QQID) + "；";
+				}
 			}
-			if (each.permissions == 3) {
-				ownerQQ = each.QQID;
-				strMsg += "，群主" + printQQ(each.QQID) + "；";
+			else if (BlackQQ.count(each.QQID)) {
+				sBlackList.insert(each.QQID);
+				if (mBlackQQMark.count(each.QQID)&&mBlackQQMark[each.QQID].isVal("DiceMaid", DiceMaid)) {
+					AddMsgToQueue(mBlackQQMark[each.QQID].getWarning(), fromGroup, Group);
+				}
 			}
+		}
+		if (sBlackList.size()) {
+			string strNote = "发现黑名单群员";
+			for (auto it : sBlackList) {
+				strNote += "\n" + printQQ(it);
+			}
+			AddMsgToQueue(strNote + "\n已通知管理员", fromGroup, Group);
+			strMsg += strNote;
 		}
 		if (boolConsole["Private"] && WhiteGroup.count(fromGroup) == 0)
 		{	//避免小群绕过邀请没加上白名单
@@ -594,7 +609,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 			}
 		}
 		else {
-			if (!mGroupInviter.count(fromGroup) || !WhiteGroup.count(fromGroup))sendAdmin(strMsg);
+			if (!mGroupInviter.count(fromGroup) || !WhiteGroup.count(fromGroup) || sBlackList.size())sendAdmin(strMsg);
 		}
 		if(!GlobalMsg["strAddGroup"].empty()) {
 			AddMsgToQueue(GlobalMsg["strAddGroup"], fromGroup, Group);
