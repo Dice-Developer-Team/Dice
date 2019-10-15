@@ -415,62 +415,7 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 EVE_GroupMsg_EX(eventGroupMsg)
 {
 	if (eve.isAnonymous())return;
-	if (eve.isSystem()) {
-		if (eve.message.find("被管理员禁言") != string::npos&&eve.message.find(to_string(getLoginQQ())) != string::npos&&boolMasterMode) {
-			string strNow = printSTime(stNow);
-			long long fromQQ;
-			int intAuthCnt = 0;
-			string strAuthList;
-			for (auto member : getGroupMemberList(eve.fromGroup)) {
-				if (member.permissions == 3) {
-					//相应核心精神，由群主做负责人
-					fromQQ = member.QQID;
-				}
-				else if (member.permissions == 2) {
-					//记录管理员
-					strAuthList += '\n' + member.Nick + "(" + to_string(member.QQID) + ")";
-					intAuthCnt++;
-				}
-			}
-			//Master豁免
-			if (AdminQQ.count(fromQQ))return;
-			//能否锁定群主
-			bool isOwner = intAuthCnt == 0 || getGroupMemberInfo(eve.fromGroup, getLoginQQ()).permissions == 2;
-			string strNote = strNow + "在" + printGroup(eve.fromGroup) + "中," + eve.message;
-			BlackMark mark;
-			mark.llMap = { {"fromGroup",eve.fromGroup},{"DiceMaid",getLoginQQ()},{"masterQQ", masterQQ} };
-			mark.strMap = { {"type","ban"},{"time",strNow} };
-			if (isOwner) {
-				strNote.replace(strNote.rfind("管理员"), 6, printQQ(fromQQ));
-				mark.set("fromQQ", fromQQ);
-			}
-			else if (boolConsole["BannedBanOwner"]) {
-				strNote += ";群主" + printQQ(fromQQ);
-				mark.set("ownerQQ", fromQQ);
-			}
-			Cloud::upWarning(mark.getData());
-			mark.set("note", strNote);
-			if (mGroupInviter.count(eve.fromGroup) && !AdminQQ.count(mGroupInviter[eve.fromGroup])) {
-				long long llInviter = mGroupInviter[eve.fromGroup];
-				strNote += ";入群邀请者：" + printQQ(llInviter);
-				mark.set("inviterQQ", llInviter);
-				mark.set("note", strNote);
-				if (boolConsole["BannedBanInviter"])addBlackQQ(BlackMark(mark,"inviterQQ"));
-			}
-			if (isOwner)addBlackQQ(BlackMark(mark, "fromQQ"));
-			else {
-				NotifyMonitor(strNote + ",另有管理员" + to_string(intAuthCnt) + "名" + strAuthList);
-				if (boolConsole["BannedBanOwner"])addBlackQQ(BlackMark(mark, "ownerQQ"));
-			}
-			NotifyMonitor(mark.getWarning());
-			if (boolConsole["BannedLeave"]){
-				setGroupLeave(eve.fromGroup);
-				mLastMsgList.erase({ eve.fromGroup ,Group });
-			}
-			addBlackGroup(mark);
-		}
-		else return;
-	}
+	if (eve.isSystem())return;
 	FromMsg Msg(eve.message, eve.fromGroup, Group, eve.fromQQ);
 	if (Msg.DiceFilter())eve.message_block();
 	Msg.FwdMsg(eve.message);
@@ -656,6 +601,61 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 		NotifyMonitor(strWarning);
 		addBlackGroup(mark);;
 		addBlackQQ(BlackMark(mark, "fromQQ"));
+	}
+	return 0;
+}
+
+EVE_System_GroupBan(eventGroupBan) {
+	if (beingOperateQQ != DiceMaid && !mDiceList.count(beingOperateQQ))return 0;
+	if (subType == 1) {
+		if (beingOperateQQ == DiceMaid) {
+			sendAdmin(GlobalMsg["strSelfName"] + "在" + printGroup(fromGroup) + "中被解除禁言");
+			return 1;
+		}
+	}
+	else {
+		string strNow = printSTime(stNow);
+		long long llOwner = 0;
+		string strNote = strNow + "在" + printGroup(fromGroup) + "中," + GlobalMsg["strSelfName"] + "被" + printQQ(fromQQ) + "禁言" + to_string(duration) + "秒";
+		//AdminQQ豁免
+		if (AdminQQ.count(fromQQ)) {
+			sendAdmin(strNote);
+			return 1;
+		}
+		//统计群内管理
+		int intAuthCnt = 0;
+		string strAuthList;
+		for (auto member : getGroupMemberList(fromGroup)) {
+			if (member.permissions == 3) {
+				llOwner = member.QQID;
+			}
+			else if (member.permissions == 2) {
+				strAuthList += '\n' + member.Nick + "(" + to_string(member.QQID) + ")";
+				intAuthCnt++;
+			}
+		}
+		strAuthList = "；群主" + printQQ(llOwner) + ",另有管理员" + to_string(intAuthCnt) + "名" + strAuthList;
+		BlackMark mark;
+		mark.llMap = { {"fromGroup",fromGroup},{"DiceMaid",getLoginQQ()},{"masterQQ", masterQQ} };
+		mark.strMap = { {"type","ban"},{"time",strNow} };
+		if (!mDiceList.count(fromQQ))mark.set("fromQQ", fromQQ);
+		Cloud::upWarning(mark.getData());
+		mark.set("note", strNote);
+		if (mGroupInviter.count(fromGroup) && !AdminQQ.count(mGroupInviter[fromGroup])) {
+			long long llInviter = mGroupInviter[fromGroup];
+			strNote += ";入群邀请者：" + printQQ(llInviter);
+			mark.set("inviterQQ", llInviter);
+			mark.set("note", strNote);
+			if (boolConsole["BannedBanInviter"])addBlackQQ(BlackMark(mark, "inviterQQ"));
+		}
+		NotifyMonitor(strNote + strAuthList);
+		NotifyMonitor(mark.getWarning());
+		if (boolConsole["BannedLeave"]) {
+			CQ::setGroupLeave(fromGroup);
+			mLastMsgList.erase({ fromGroup ,Group });
+		}
+		addBlackGroup(mark);
+		return 1;
 	}
 	return 0;
 }

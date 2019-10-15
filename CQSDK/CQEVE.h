@@ -205,6 +205,18 @@ beingOperateQQ 被操作QQ(即加群的QQ)
 #define EVE_System_GroupMemberIncrease(Name) CQEVENT(int, Name, 32)(int subType, int msgId, long long fromGroup, long long fromQQ, long long beingOperateQQ)
 
 /*
+群事件-群禁言(Type=104)
+
+subtype 子类型，1/被解禁 2/被禁言
+msgId 消息id
+fromGroup 来源群号
+fromQQ 操作者QQ(管理员QQ)
+beingOperateQQ 被操作QQ(若为全群禁言则为0)
+duration 禁言时长（单位：秒，仅子类型为2时可用）
+*/
+#define EVE_System_GroupBan(Name) CQEVENT(int, Name, 40)(int subType, int msgId, long long fromGroup, long long fromQQ, long long beingOperateQQ,long long duration)
+
+/*
 好友事件-好友已添加(Type=201)
 
 subtype 子类型，目前固定为1

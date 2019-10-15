@@ -1026,6 +1026,10 @@ public:
 			}
 			if (Command == "ban")
 			{
+				if (!isAdmin) {
+					reply(GlobalMsg["strNotAdmin"]);
+					return -1;
+				}
 				string QQNum = readDigit();
 				if (QQNum.empty()) {
 					reply(GlobalMsg["strQQIDEmpty"]);
