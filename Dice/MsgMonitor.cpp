@@ -56,3 +56,56 @@ void frqHandler() {
 		Sleep(200);
 	}
 }
+
+int FrqMonitor::getFrqTotal() {
+	return EarlyMsgQueue.size() * 2 + EarlierMsgQueue.size() + EarliestMsgQueue.size() / 5;
+}
+/*EVE_Status_EX(statusUptime) {
+	//初始化以来的秒数
+	long long llDuration = clock() / 1000;
+	//long long llDuration = (clock() - llStartTime) / 1000;
+	if (llDuration < 0) {
+		eve.data = "N";
+		eve.dataf = "/A";
+	}
+	else if (llDuration < 60 * 5) {
+		eve.data = std::to_string(llDuration);
+		eve.dataf = "s";
+	}
+	else if (llDuration < 60 * 60 * 5) {
+		eve.data = std::to_string(llDuration / 60);
+		eve.dataf = "min";
+	}
+	else if (llDuration < 60 * 60 * 24 * 5) {
+		eve.data = std::to_string(llDuration / 60 / 60);
+		eve.dataf = "h";
+	} 
+	else{
+		eve.data = std::to_string(llDuration / 60 / 60 / 24);
+		eve.dataf = "day";
+	}
+	eve.color_green();
+}*/
+EVE_Status_EX(statusFrq) {
+	//平滑到分钟的频度
+	int intFrq = FrqMonitor::getFrqTotal();
+	//long long llDuration = (clock() - llStartTime) / 1000;
+	if (intFrq < 0) {
+		eve.data = "N";
+		eve.dataf = "/A";
+		eve.color_crimson();
+	}
+	else {
+		eve.data = std::to_string(intFrq);
+		eve.dataf = "/min";
+		if (intFrq < 60) {
+			eve.color_green();
+		}
+		else if (intFrq < 120) {
+			eve.color_orange();
+		}
+		else {
+			eve.color_red();
+		}
+	}
+}

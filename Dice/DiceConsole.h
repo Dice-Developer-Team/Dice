@@ -8,6 +8,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <time.h>
 #include <Windows.h>
 #include "GlobalVar.h"
 #include "DiceMsgSend.h"
@@ -61,6 +62,8 @@ void saveBlackMark(std::string strPath);
 	extern std::multimap<chatType, chatType> mFwdList;
 	//群邀请者
 	extern std::map<long long,long long> mGroupInviter;
+	//程序启动时间
+	extern long long llStartTime;
 	//当前时间
 	extern SYSTEMTIME stNow;
 	//上班时间

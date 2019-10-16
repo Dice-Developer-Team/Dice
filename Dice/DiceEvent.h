@@ -253,9 +253,28 @@ public:
 		}
 		return 1;
 			}
-		else if (strOption == "clock") {
-		string strReply = "本地时间" + to_string(stNow.wHour) + ":" + to_string(stNow.wMinute);
-		reply(strReply);
+		else if (strOption == "uptime") {
+		GetLocalTime(&stNow);
+		strReply = "本地时间" + printSTime(stNow) + "\n";
+		//strReply += "本机运行时间：" + std::to_string(clock()) + " 启动时间：" + std::to_string(llStartTime) + "\n";
+		strReply += "运行时长：";
+		long long llDuration = (clock() - llStartTime) / 1000;
+		if (llDuration < 0) {
+			strReply += "N/A";
+		}
+		else if (llDuration < 60 * 5) {
+			strReply += std::to_string(llDuration) + "秒";
+		}
+		else if (llDuration < 60 * 60 * 5) {
+			strReply += std::to_string(llDuration / 60) + "分钟";
+		}
+		else if (llDuration < 60 * 60 * 24 * 5) {
+			strReply += std::to_string(llDuration / 60 / 60) + "小时";
+		}
+		else {
+			strReply += std::to_string(llDuration / 60 / 60 / 24) + "天";
+		}
+		reply();
 		return 1;
 		}
 		else if (strOption == "clockon") {
@@ -323,6 +342,10 @@ public:
 				AdminNotify("已添加监视窗口" + printChat(cTarget) + "√");
 			}
 		}
+		return 1;
+		}
+		else if (strOption == "frq") {
+		reply("当前总指令频度" + to_string(FrqMonitor::getFrqTotal()));
 		return 1;
 		}
 		else {

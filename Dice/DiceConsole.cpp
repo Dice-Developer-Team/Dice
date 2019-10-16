@@ -118,6 +118,8 @@ void saveBlackMark(string strPath) {
 	fout << "[" << GBKtoUTF8(sout);
 	fout.close();
 }
+//程序启动时间
+long long llStartTime = clock();
 	//当前时间
 	SYSTEMTIME stNow = { 0 };
 	SYSTEMTIME stTmp = { 0 };

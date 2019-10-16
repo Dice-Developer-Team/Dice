@@ -15,6 +15,7 @@ public:
 	//ÆµÂÊ¼ÇÂ¼
 	static std::map<long long, int>mFrequence;
 	static std::map<long long, int>mWarnLevel;
+	static int getFrqTotal();
 	long long fromQQ = 0;
 	time_t fromTime = 0;
 	FrqMonitor(long long QQ,time_t TT,chatType CT): fromQQ(QQ),fromTime(TT){

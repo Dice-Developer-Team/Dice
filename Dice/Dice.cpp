@@ -397,7 +397,8 @@ EVE_Enable(eventEnable)
 	ifstreamStandByMe.close();
 	//÷»ÄïÍøÂç
 	getDiceList();
-	Cloud::update();
+	if (masterQQ)Cloud::update();
+	llStartTime = clock();
 	return 0;
 }
 
