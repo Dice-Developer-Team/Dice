@@ -105,7 +105,36 @@ public:
 		}
 	}
 	int AdminEvent(string strOption) {
-		if (strOption == "state") {
+		if (strOption == "isban") {
+			string strID = readDigit();
+			if (strID.empty()) {
+				reply("请给出查询对象的ID×");
+				return -1;
+			}
+			long long llID = stoll(strID);
+			bool isGet = false;
+			if (mBlackQQMark.count(llID)) {
+				reply(string("该用户在黑名单中") + (mBlackQQMark[llID].isErased() ? "已解封" : "") + "：\n" + mBlackQQMark[llID].getWarning());
+				isGet = true;
+			}
+			else if (BlackQQ.count(llID)) {
+				reply("该用户在黑名单中，原因不明");
+				isGet = true;
+			}
+			if (mBlackGroupMark.count(llID)) {
+				reply(string("该群在黑名单中") + (mBlackGroupMark[llID].isErased() ? "已解封" : "") + "：\n" + mBlackGroupMark[llID].getWarning());
+				isGet = true;
+			}
+			else if (BlackGroup.count(llID)) {
+				reply("该群在黑名单中，原因不明");
+				isGet = true;
+			}
+			if (!isGet) {
+				reply("无黑名单记录");
+			}
+			return 1;
+		}
+		else if (strOption == "state") {
 			strReply = GlobalMsg["strSelfName"] + "的当前情况" + "\n"
 				+ "Master：" + printQQ(masterQQ) + "\n"
 				+ (ClockToWork.first < 24 ? "定时开启" + printClock(ClockToWork) + "\n" : "")
