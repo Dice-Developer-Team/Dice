@@ -5,6 +5,13 @@
 #include <fstream>
 #include <cstdio>
 #include <set>
+#include <io.h>
+#include <direct.h>
+
+int mkDir(std::string dir) {
+	if (_access(dir.c_str(), 0))	return _mkdir(dir.c_str());
+	return -2;
+}
 
 template<typename T>
 void loadFile(std::string strPath, std::set<T>&setTmp) {

@@ -368,6 +368,7 @@ EVE_Enable(eventEnable)
 		}
 		GlobalMsg[it.first] = strMsg;
 	}
+	mkDir("DiceData");
 	//读取卡牌
 	loadJMap(strFileLoc + "GroupDeck.json",CardDeck::mGroupDeck);
 	loadJMap(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
@@ -376,6 +377,8 @@ EVE_Enable(eventEnable)
 	loadJMap(strFileLoc + "PublicDeck.json", CardDeck::mPublicDeck);
 	loadJMap(strFileLoc + "ExternDeck.json", CardDeck::mPublicDeck);
 	loadJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);
+	string strLog;
+	if (loadJMaps("DiceData\\PublicDeck\\", CardDeck::mPublicDeck, strLog))sendAdmin(strLog);
 	//读取替身模式
 	ifstream ifstreamStandByMe(strFileLoc + "StandByMe.RDconf");
 	if (ifstreamStandByMe)
