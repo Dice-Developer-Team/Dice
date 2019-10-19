@@ -21,6 +21,7 @@ public:
 	FrqMonitor(long long QQ,time_t TT,chatType CT): fromQQ(QQ),fromTime(TT){
 		if (mFrequence.count(fromQQ)) {
 			mFrequence[fromQQ] += 10;
+			if (!boolConsole["ListenSpam"])return;
 			if (mFrequence[fromQQ] > 60 && mWarnLevel[fromQQ] < 60) {
 				mWarnLevel[fromQQ] = mFrequence[fromQQ];
 				const std::string strMsg = "提醒：\n" + (CT.second ? printChat(CT) : "私聊窗口") + "监测到" + printQQ(fromQQ) + "指令频度达到" + std::to_string(mFrequence[fromQQ] / 10);

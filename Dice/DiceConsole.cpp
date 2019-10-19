@@ -44,11 +44,12 @@ std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},{"DisabledBl
 {"DisabledMe",false},{"DisabledJrrp",false},{"DisabledDeck",true},{"DisabledDraw",false},{"DisabledSend",true},
 {"Private",false},{"LeaveDiscuss",false},
 {"ListenGroupRequest",true},{"ListenGroupAdd",true},
-{"ListenFriendRequest",true},{"ListenFriendAdd",true},{"AllowStranger",true},
-{"AutoClearBlack",true},{"LeaveBlackQQ",true},{"LeaveBlackGroup",true},
-{"BannedLeave",true},{"BannedBanInviter",true},
-{"KickedBanInviter",true},
-{"BelieveDiceList",true},{"CloudVisible",true}
+{"ListenFriendRequest",true},{"ListenFriendAdd",true},{"AllowStranger",false},
+{"AutoClearBlack",false},{"LeaveBlackQQ",false},{"LeaveBlackGroup",true},
+{"ListenGroupKick",true},{"ListenGroupBan",true},{"ListenSpam",true},
+{"BannedLeave",false},{"BannedBanInviter",false},
+{"KickedBanInviter",false},
+{"BelieveDiceList",false},{"CloudVisible",false}
 };
 //÷»ÄïÁÐ±í
 std::map<long long, long long> mDiceList;
@@ -423,7 +424,7 @@ void warningHandler() {
 					boolConsole["DisabledGlobal"] = false;
 					NotifyMonitor(GlobalMsg["strClockToWork"]);
 				}
-				if (stNow.wMinute % 15 == 0) {
+				if (stNow.wMinute % 15 == 0 && masterQQ) {
 					Cloud::update();
 				}
 				if (stNow.wHour == 5 && stNow.wMinute == 0) {

@@ -722,12 +722,40 @@ public:
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 6) == "master"&&boolMasterMode) {
 			intMsgCnt += 6;
-			if (masterQQ == 0) {
+			if (!masterQQ) {
 				masterQQ = fromQQ;
 				AdminQQ.insert(masterQQ);
 				MonitorList.insert({ masterQQ,Private });
-				boolConsole["DisabledSend"] = true;
+				RecorderList.insert({ masterQQ,Private });
 				reply("试问，你就是" + GlobalMsg["strSelfName"] + "的Master√");
+				strReply = "请认真阅读当前版本Master手册以履行职责";
+				strReply += "\n如要添加较多没有单群开关的插件，推荐开启DisabledBlock保证群内的静默；";
+				strReply += "\n默认开启对群移出、禁言、刷屏事件的监听，如要关闭请手动调整；";
+				string strOption = readRest();
+				if (strOption == "public") {
+					strReply += "\n开启公骰模式：";
+					boolConsole["BelieveDiceList"] = true;
+					strReply += "\n自动开启BelieveDiceList响应来自骰娘列表的warning；";
+					boolConsole["AllowStranger"] = true;
+					strReply += "\n公骰模式默认同意陌生人的好友邀请；";
+					boolConsole["AutoClearBlack"] = true;
+					boolConsole["LeaveBlackQQ"] = true;
+					boolConsole["BannedLeave"] = true;
+					strReply += "\n已开启每日五点黑名单清理,黑名单用户群权限不低于自己时自动退群；";
+					boolConsole["BannedBanInviter"] = true;
+					boolConsole["KickedBanInviter"] = true;
+					strReply += "\n拉黑群时会连带邀请人，可以手动关闭；";
+					strReply += "\n已启用send功能；";
+				}
+				else {
+					strReply += "\n默认开启私骰模式：";
+					strReply += "\n默认拒绝陌生人的好友邀请，如要同意请开启AllowStranger；";
+					strReply += "\n默认拒绝陌生人的群邀请，只同意来自管理员、白名单的邀请；";
+					strReply += "\n.me与.send功能默认不可用，需要手动开启；";
+					strReply += "\n切换公用请使用.admin public，但不会初始化响应设置；";
+					strReply += "\n可在.master delete后使用.master public来重新初始化；";
+				}
+				reply();
 			}
 			else if (isMaster) {
 				return MasterSet();

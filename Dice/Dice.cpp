@@ -476,6 +476,8 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 		mLastMsgList.erase({ fromGroup ,Group });
 		if (AdminQQ.count(fromQQ))return 1;
 		string strNote = strNow + " " + printQQ(fromQQ) + "将" + GlobalMsg["strSelfName"] + "移出了群" + to_string(fromGroup);
+		addRecord(strNote);
+		if (!boolConsole["ListenGroupKick"])return 0;
 		BlackMark mark;
 		mark.llMap = { {"fromGroup",fromGroup},{"fromQQ",fromQQ},{"DiceMaid",getLoginQQ()},{"masterQQ", masterQQ} };
 		mark.strMap = { {"type","kick"},{"time",strNow}};
@@ -496,7 +498,7 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 		NotifyMonitor(mark.getWarning());
 		addBlackQQ(BlackMark(mark, "fromQQ"));
 	}
-	else if (mDiceList.count(beingOperateQQ) && subType == 2) {
+	else if (mDiceList.count(beingOperateQQ) && subType == 2 && boolConsole["ListenGroupKick"]) {
 		string strNow = printSTime(stNow);
 		string strNote = strNow + " " + printQQ(fromQQ) + "将" + printQQ(beingOperateQQ) + "移出了群" + to_string(fromGroup);
 		while (strNote.find('\"') != string::npos)strNote.replace(strNote.find('\"'), 1, "\'"); 
@@ -513,7 +515,7 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 }
 
 EVE_System_GroupBan(eventGroupBan) {
-	if (beingOperateQQ != DiceMaid && !mDiceList.count(beingOperateQQ))return 0;
+	if (beingOperateQQ != DiceMaid && !mDiceList.count(beingOperateQQ) || !boolConsole["ListenGroupBan"])return 0;
 	if (subType == 1) {
 		if (beingOperateQQ == DiceMaid) {
 			sendAdmin(GlobalMsg["strSelfName"] + "在" + printGroup(fromGroup) + "中被解除禁言");
