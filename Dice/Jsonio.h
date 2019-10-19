@@ -61,37 +61,6 @@ int loadJMap(std::string strLoc, std::map<T1, T2> &mapTmp) {
 	fin.close();
 	return Cnt;
 }
-//读取文件夹
-template<typename T1, typename T2>
-int loadJMaps(std::string strDir, std::map<T1, T2>& mapTmp, std::string &strLog) {
-	_finddata_t file;
-	long lf = _findfirst((strDir + "*").c_str(), &file);
-	if (lf < 0)return 0;
-	int intFile = 0, intFailure = 0, intItem = 0;
-	std::vector<std::string> files;
-	do {
-		//遍历文件
-		if (!strcmp(file.name, ".") || !strcmp(file.name, ".."))continue;
-		if (file.attrib == _A_SUBDIR)continue;
-		else {
-			intFile++;
-			int Cnt = loadJMap(strDir + file.name, mapTmp);
-			if (Cnt < 0) {
-				files.push_back(file.name);
-				intFailure++;
-			}
-			else intItem += Cnt;
-		}
-	} while (!_findnext(lf, &file));
-	strLog = "读取" + strDir + "中的" + std::to_string(intFile) + "个文件, 共" + std::to_string(intItem) + "个条目";
-	if (intFailure) {
-		strLog += "，读取失败" + std::to_string(intFailure) + "个:";
-		for (auto it : files) {
-			strLog += "\n" + it;
-		}
-	}
-	return intFile;
-}
 
 template<typename T>
 std::string writeJKey(typename std::enable_if<!std::is_arithmetic<T>::value, T>::type strJson) {

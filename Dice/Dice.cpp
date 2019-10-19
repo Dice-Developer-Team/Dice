@@ -378,7 +378,8 @@ EVE_Enable(eventEnable)
 	loadJMap(strFileLoc + "ExternDeck.json", CardDeck::mPublicDeck);
 	loadJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);
 	string strLog;
-	if (loadJMaps("DiceData\\PublicDeck\\", CardDeck::mPublicDeck, strLog))sendAdmin(strLog);
+	//if (loadJMaps("DiceData\\PublicDeck\\", CardDeck::mPublicDeck, strLog))sendAdmin(strLog);
+	loadDir(loadJMap, string("DiceData\\PublicDeck\\"), CardDeck::mPublicDeck, strLog); sendAdmin(strLog);
 	//读取替身模式
 	ifstream ifstreamStandByMe(strFileLoc + "StandByMe.RDconf");
 	if (ifstreamStandByMe)
