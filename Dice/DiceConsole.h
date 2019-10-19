@@ -22,6 +22,8 @@
 	extern long long DiceMaid;
 	//管理员列表
 	extern std::set<long long> AdminQQ;
+	//日志窗口列表
+	extern std::set<chatType> RecorderList;
 	//监控窗口列表
 	extern std::set<std::pair<long long, CQ::msgtype>> MonitorList;
 	//各类全局开关
@@ -50,6 +52,8 @@ void saveBlackMark(std::string strPath);
 	void getDiceList();
 	//通知管理员 
 	void sendAdmin(std::string strMsg, long long fromQQ = 0);
+	//添加日志
+	void addRecord(std::string strMsg);
 	//通知监控窗口 
 	void NotifyMonitor(std::string strMsg);
 	//一键清退

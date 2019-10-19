@@ -39,6 +39,7 @@ long long masterQQ = 0;
 long long DiceMaid = 0;
 set<long long> AdminQQ = {};
 set<chatType> MonitorList = {};
+set<chatType> RecorderList = {};
 std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},{"DisabledBlock",false},
 {"DisabledMe",false},{"DisabledJrrp",false},{"DisabledDeck",true},{"DisabledDraw",false},{"DisabledSend",true},
 {"Private",false},{"LeaveDiscuss",false},
@@ -168,7 +169,7 @@ void getDiceList() {
 	std::string list;
 	if (!Network::GET("shiki.stringempty.xyz", "/DiceList/", 80, list))
 	{
-		if(mDiceList.empty())sendAdmin(("获取骰娘列表时遇到错误: \n" + list).c_str(), 0);
+		addRecord(("获取骰娘列表时遇到错误: \n" + list).c_str());
 		return;
 	}
 	readJson(list, mDiceList);
@@ -185,14 +186,21 @@ int isReliable(long long QQID) {
 void sendAdmin(std::string strMsg, long long fromQQ) {
 	string strName = fromQQ ? getName(fromQQ) : "";
 	for (auto it : AdminQQ) {
-		if (!MonitorList.count({ it,Private }))continue;
+		if (!MonitorList.count({ it,Private }) || RecorderList.count({ it,Private }))continue;
 		else if (fromQQ == it)AddMsgToQueue(strMsg, it);
 		else AddMsgToQueue(strName + strMsg, it);
+	}
+	addRecord(strName + strMsg);
+}
+//添加日志
+void addRecord(std::string strMsg) {
+	for (auto it : RecorderList) {
+		AddMsgToQueue(strMsg, it);
 	}
 }
 
 void NotifyMonitor(std::string strMsg) {
-		if (!boolMasterMode)return;
+	if (!boolMasterMode)return;
 		for (auto it : MonitorList) {
 			AddMsgToQueue(strMsg, it.first, it.second);
 			Sleep(1000);
@@ -283,7 +291,7 @@ void rmBlackQQ(long long llQQ, long long operateQQ) {
 	if (BlackQQ.count(llQQ)) {
 		BlackQQ.erase(llQQ);
 		AddMsgToQueue(GlobalMsg["strBlackQQDelNotice"], llQQ);
-		sendAdmin("已将" + printQQ(llQQ) + "移出" + GlobalMsg["strSelfName"] + "的用户黑名单√", operateQQ);
+		addRecord("已将" + printQQ(llQQ) + "移出" + GlobalMsg["strSelfName"] + "的用户黑名单√");
 	}
 	if (mBlackQQMark.count(llQQ)&& !mBlackQQMark[llQQ].isErased()) {
 		lock_guard<std::mutex> lock_queue(blackMarkMutex);
@@ -294,7 +302,7 @@ void rmBlackQQ(long long llQQ, long long operateQQ) {
 void rmBlackGroup(long long llGroup, long long operateQQ) {
 	if (BlackGroup.count(llGroup)) {
 		BlackGroup.erase(llGroup);
-		sendAdmin("已将" + printGroup(llGroup) + "移出" + GlobalMsg["strSelfName"] + "的群黑名单√", operateQQ);
+		addRecord("已将" + printGroup(llGroup) + "移出" + GlobalMsg["strSelfName"] + "的群黑名单√");
 	}
 	if (mBlackGroupMark.count(llGroup) && !mBlackGroupMark[llGroup].isErased()) {
 		lock_guard<std::mutex> lock_queue(blackMarkMutex);
@@ -368,7 +376,7 @@ void warningHandler() {
 			if (intLevel > 0) {
 				if (strWarningList.count(warning.strMsg))continue;
 				else strWarningList.insert(warning.strMsg);
-				if (warning.fromQQ != masterQQ)sendAdmin("已通知" + GlobalMsg["strSelfName"] + ":\n" + mark.strWarning, warning.fromQQ);
+				if (warning.fromQQ != masterQQ)addRecord(getName(warning.fromQQ)+"已通知" + GlobalMsg["strSelfName"] + ":\n" + mark.strWarning);
 				if (intLevel == 1 && !mark.hasType())continue;
 			}
 			else if (intLevel == 0) {
@@ -421,6 +429,7 @@ void warningHandler() {
 				if (stNow.wHour == 5 && stNow.wMinute == 0) {
 					getDiceList();
 					if(boolConsole["AutoClearBlack"])clearGroup("black");
+					addRecord("每日清理完成");
 				}
 			}
 			Sleep(100);
@@ -525,7 +534,7 @@ void warningHandler() {
 				sendAdmin(strReply);
 			}
 			else if (fromQQ) {
-				sendAdmin(GlobalMsg["strSelfName"] + "未发现涉黑群聊");
+				addRecord(GlobalMsg["strSelfName"] + "未发现涉黑群聊");
 			}
 		}
 		else if (strPara == "preserve") {
@@ -576,23 +585,26 @@ EVE_Request_AddFriend(eventAddFriend) {
 	if (BlackQQ.count(fromQQ)) {
 		strMsg += "，已拒绝（用户在黑名单中）";
 		setFriendAddRequest(responseFlag, 2, "");
+		sendAdmin(strMsg);
 	}
 	else if (WhiteQQ.count(fromQQ)) {
 		strMsg += "，已同意（用户在白名单中）";
 		setFriendAddRequest(responseFlag, 1, "");
 		GlobalMsg["strAddFriendWhiteQQ"].empty() ? AddMsgToQueue(GlobalMsg["strAddFriend"], fromQQ)
 			: AddMsgToQueue(GlobalMsg["strAddFriendWhiteQQ"], fromQQ);
+		addRecord(strMsg);
 	}
 	else if (boolConsole["Private"]&& !boolConsole["AllowStranger"]) {
 		strMsg += "，已拒绝（当前在私用模式）";
 		setFriendAddRequest(responseFlag, 2, "");
+		addRecord(strMsg);
 	}
 	else {
 		strMsg += "，已同意";
 		setFriendAddRequest(responseFlag, 1, "");
 		AddMsgToQueue(GlobalMsg["strAddFriend"], fromQQ);
+		addRecord(strMsg);
 	}
-	sendAdmin(strMsg);
 	return 1;
 }
 EVE_Friend_Add(eventFriendAdd) {

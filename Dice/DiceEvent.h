@@ -83,11 +83,8 @@ public:
 	}
 	//通知管理员
 	void AdminNotify(std::string strMsg) {
-		reply(strMsg);
-		string strName = getName(fromQQ);
-		for (auto it : AdminQQ) {
-			if (MonitorList.count({ it,Private }) && fromQQ != it) AddMsgToQueue(strName + strMsg, it);
-		}
+		if (!RecorderList.count(fromChat))reply(strMsg);
+		addRecord(getName(fromQQ) + strMsg);
 	}
 	//打印消息来源
 	std::string printFrom() {
@@ -167,12 +164,12 @@ public:
 			else {
 				bool isOn = stoi(strBool);
 				boolConsole[strOption] = isOn;
-				isOn ? AdminNotify("已开启" + GlobalMsg["strSelfName"] + "的" + strOption) : AdminNotify("已关闭" + GlobalMsg["strSelfName"] + "的" + strOption);
+				sendAdmin((isOn ? "已开启" : "已关闭") + GlobalMsg["strSelfName"] + "的" + strOption);
 			}
 			return 1;
 		}
 		else if (strOption == "delete") {
-			AdminNotify("已经放弃管理员权限√");
+			sendAdmin("已经放弃管理员权限√");
 			MonitorList.erase({ fromQQ,Private });
 			AdminQQ.erase(fromQQ);
 			return 1;
@@ -273,14 +270,14 @@ public:
 		}
 		else {
 			boolConsole["Private"] = true;
-			AdminNotify("已将" + GlobalMsg["strSelfName"] + "变为私用√");
+			sendAdmin("已将" + GlobalMsg["strSelfName"] + "变为私用√", fromQQ);
 		}
 		return 1;
 			}
 		else if (strOption == "public") {
 		if (boolConsole["Private"]) {
 			boolConsole["Private"] = false;
-			AdminNotify("已将" + GlobalMsg["strSelfName"] + "变为公用√");
+			sendAdmin("已将" + GlobalMsg["strSelfName"] + "变为公用√", fromQQ);
 		}
 		else {
 			reply(GlobalMsg["strSelfName"] + "已成为公用骰娘！");
@@ -341,6 +338,44 @@ public:
 		AdminNotify("已设置定时关闭时间" + printClock(ClockOffWork));
 		return 1;
 			}
+		else if (strOption == "recorder") {
+		bool boolErase = false;
+		readSkipSpace();
+		if (strMsg[intMsgCnt] == '-') {
+			boolErase = true;
+			intMsgCnt++;
+		}
+		if (strMsg[intMsgCnt] == '+') { intMsgCnt++; }
+		chatType cTarget;
+		if (readChat(cTarget)) {
+			strReply = "当前日志窗口" + to_string(RecorderList.size()) + "个：";
+			for (auto it : RecorderList) {
+				strReply += "\n" + printChat(it);
+			}
+			reply();
+			return 1;
+		}
+		if (boolErase) {
+			if (RecorderList.count(cTarget)) {
+				AdminNotify("已移除日志窗口" + printChat(cTarget) + "√");
+				RecorderList.erase(cTarget);
+			}
+			else {
+				reply("该窗口不存在于日志列表！");
+			}
+		}
+		else {
+			if (RecorderList.count(cTarget)) {
+				reply("该窗口已存在于日志列表！");
+			}
+			else {
+				RecorderList.insert(cTarget);
+				reply("已添加日志窗口" + printChat(cTarget) + "√");
+				reply("已添加日志窗口" + printChat(cTarget) + "√");
+			}
+		}
+		return 1;
+		}
 		else if (strOption == "monitor") {
 		bool boolErase = false;
 		readSkipSpace();
@@ -599,7 +634,7 @@ public:
 			if (llAdmin) {
 				if (boolErase) {
 					if (AdminQQ.count(llAdmin)) {
-						AdminNotify("已移除管理员" + printQQ(llAdmin) + "√");
+						sendAdmin("已移除管理员" + printQQ(llAdmin) + "√", fromQQ);
 						MonitorList.erase({ llAdmin,Private });
 						AdminQQ.erase(llAdmin);
 					}
@@ -614,7 +649,7 @@ public:
 					else {
 						AdminQQ.insert(llAdmin);
 						MonitorList.insert({ llAdmin,Private });
-						AdminNotify("已添加管理员" + printQQ(llAdmin) + "√");
+						sendAdmin("已添加管理员" + printQQ(llAdmin) + "√", fromQQ);
 					}
 				}
 				return 1;
@@ -1877,7 +1912,7 @@ public:
 				if (intMsgCnt == strMsg.length()) {
 					EditedMsg.erase(strName);
 					GlobalMsg[strName] = "";
-					AdminNotify("已清除" + strName + "的自定义，但恢复默认设置需要重启应用。");
+					AdminNotify("已清除" + strName + "的自定义，将在下次重启后恢复默认设置。");
 				}
 				else {
 					string strMessage = strMsg.substr(intMsgCnt);
@@ -1888,7 +1923,7 @@ public:
 					if (strMessage == "NULL")strMessage = "";
 					EditedMsg[strName] = strMessage;
 					GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMessage : strMessage;
-					isMaster ? reply("已自定义" + strName + "的文本") : AdminNotify("已自定义" + strName + "的文本");
+					AdminNotify("已自定义" + strName + "的文本");
 				}
 				SaveCustomMsg(string(getAppDirectory()) + "CustomMsg.json");
 			}

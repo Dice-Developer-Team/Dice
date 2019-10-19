@@ -36,6 +36,7 @@ using chatType = std::pair<long long, CQ::msgtype>;
  *  MsgType msg_type 消息类型
  */
 void AddMsgToQueue(const std::string& msg, long long target_id, CQ::msgtype msg_type = CQ::Private);
+void AddMsgToQueue(const std::string& msg, chatType ct);
 
 /*
  * 消息发送线程函数

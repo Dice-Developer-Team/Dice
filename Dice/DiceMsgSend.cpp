@@ -55,6 +55,9 @@ void AddMsgToQueue(const string& msg, long long target_id, msgtype msg_type)
 	lock_guard<std::mutex> lock_queue(msgQueueMutex);
 	msgQueue.emplace(msg_t(msg, target_id, msg_type));
 }
+void AddMsgToQueue(const std::string& msg, chatType ct){
+	AddMsgToQueue(msg, ct.first, ct.second);
+}
 
 
 void SendMsg()

@@ -91,6 +91,7 @@ string strFileLoc;
 
 //备份数据
 void dataBackUp() {
+	mkDir("DiceData\\conf");
 	//备份MasterQQ
 	if (!boolStandByMe) {
 		ofstream ofstreamMaster(strFileLoc + "Master.RDconf", ios::out | ios::trunc);
@@ -101,6 +102,7 @@ void dataBackUp() {
 	}
 	//备份管理员列表
 	saveFile(strFileLoc + "AdminQQ.RDconf", AdminQQ);
+	saveFile("DiceData\\conf\\RecorderList.RDconf", RecorderList);
 	saveFile(strFileLoc + "MonitorList.RDconf", MonitorList);
 	saveJMap(strFileLoc + "boolConsole.json", boolConsole);
 	//备份默认规则
@@ -181,6 +183,7 @@ EVE_Enable(eventEnable)
 	if(AdminQQ.upper_bound(0)!= AdminQQ.begin()) {
 		AdminQQ.erase(AdminQQ.begin(), AdminQQ.upper_bound(0));
 	}
+	loadFile("DiceData\\conf\\RecorderList.RDconf", RecorderList);
 	AdminQQ.insert(masterQQ);
 	//读取监控窗口列表
 	loadFile(strFileLoc + "MonitorList.RDconf", MonitorList);
@@ -275,7 +278,7 @@ EVE_Enable(eventEnable)
 	loadJMap(strFileLoc + "ExternDeck.json", CardDeck::mPublicDeck);
 	loadJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);
 	string strLog;
-	if (loadDir(loadJMap, string("DiceData\\PublicDeck\\"), CardDeck::mPublicDeck, strLog))sendAdmin(strLog);
+	if (loadDir(loadJMap, string("DiceData\\PublicDeck\\"), CardDeck::mPublicDeck, strLog))addRecord(strLog);
 	//读取替身模式
 	ifstream ifstreamStandByMe(strFileLoc + "StandByMe.RDconf");
 	if (ifstreamStandByMe)
@@ -299,6 +302,7 @@ EVE_Enable(eventEnable)
 	getDiceList();
 	if (masterQQ)Cloud::update();
 	llStartTime = clock();
+	addRecord(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string(llStartTime / 1000) + "秒");
 	return 0;
 }
 
@@ -431,6 +435,10 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 				}
 			}
 		}
+		if (!mGroupInviter.count(fromGroup) && getGroupMemberList(fromGroup).size() == 2) {
+			mGroupInviter[fromGroup] = ownerQQ;
+			strMsg += "邀请者" + printQQ(ownerQQ);
+		}
 		if (sBlackList.size()) {
 			string strNote = "发现黑名单群员";
 			for (auto it : sBlackList) {
@@ -444,19 +452,17 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 			if (WhiteQQ.count(fromQQ) || WhiteQQ.count(ownerQQ) || getGroupMemberInfo(fromGroup, masterQQ).QQID == masterQQ) {
 				WhiteGroup.insert(fromGroup);
 				strMsg += "已自动添加群白名单";
-				sendAdmin(strMsg);
 			}
 			else {
 				sendGroupMsg(fromGroup, GlobalMsg["strPreserve"]);
 				strMsg += "无白名单，已退群";
-				sendAdmin(strMsg);
+				addRecord(strMsg);
 				setGroupLeave(fromGroup);
 				return 1;
 			}
 		}
-		else {
-			if (!mGroupInviter.count(fromGroup) || !WhiteGroup.count(fromGroup) || sBlackList.size())sendAdmin(strMsg);
-		}
+		if (sBlackList.size())sendAdmin(strMsg);
+		else addRecord(strMsg);
 		if(!GlobalMsg["strAddGroup"].empty()) {
 			AddMsgToQueue(GlobalMsg["strAddGroup"], fromGroup, Group);
 		}
@@ -569,10 +575,14 @@ EVE_Request_AddGroup(eventGroupInvited) {
 			if (BlackGroup.count(fromGroup)) {
 				strMsg += "\n已拒绝（群在黑名单中）";
 				setGroupAddRequest(responseFlag, 2, 2, "");
+				sendAdmin(strMsg);
+				return 1;
 			}
 			else if (BlackQQ.count(fromQQ)) {
 				strMsg += "\n已拒绝（用户在黑名单中）";
 				setGroupAddRequest(responseFlag, 2, 2, "");
+				sendAdmin(strMsg);
+				return 1;
 			}
 			else if (WhiteGroup.count(fromGroup)) {
 				strMsg += "\n已同意（群在白名单中）";
@@ -593,9 +603,8 @@ EVE_Request_AddGroup(eventGroupInvited) {
 				strMsg += "已同意";
 				mGroupInviter[fromGroup] = fromQQ;
 				setGroupAddRequest(responseFlag, 2, 1, "");
-				return 1;
 			}
-			sendAdmin(strMsg);
+			addRecord(strMsg);
 		}
 		return 1;
 	}
