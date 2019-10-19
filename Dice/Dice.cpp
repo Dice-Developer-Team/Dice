@@ -101,62 +101,27 @@ void dataBackUp() {
 	}
 	//备份管理员列表
 	saveFile(strFileLoc + "AdminQQ.RDconf", AdminQQ);
-	//备份监控窗口列表
-	ofstream ofstreamMonitorList(strFileLoc + "MonitorList.RDconf");
-	for (auto it : MonitorList) {
-		if (it.first)ofstreamMonitorList << it.first << " " << it.second << std::endl;
-	}
-	ofstreamMonitorList.close();
+	saveFile(strFileLoc + "MonitorList.RDconf", MonitorList);
 	saveJMap(strFileLoc + "boolConsole.json", boolConsole);
-	//备份个性化语句
-	ofstream ofstreamPersonalMsg(strFileLoc + "PersonalMsg.RDconf", ios::out | ios::trunc);
-	for (auto it = PersonalMsg.begin(); it != PersonalMsg.end(); ++it)
-	{
-		while (it->second.find(' ') != string::npos)it->second.replace(it->second.find(' '), 1, "{space}");
-		while (it->second.find('\t') != string::npos)it->second.replace(it->second.find('\t'), 1, "{tab}");
-		while (it->second.find('\n') != string::npos)it->second.replace(it->second.find('\n'), 1, "{endl}");
-		while (it->second.find('\r') != string::npos)it->second.replace(it->second.find('\r'), 1, "{enter}");
-		ofstreamPersonalMsg << it->first << std::endl << it->second << std::endl;
-	}
-	//备份CustomMsg
 	//备份默认规则
-	ofstream ofstreamDefaultRule(strFileLoc + "DefaultRule.RDconf", ios::out | ios::trunc);
-	for (auto it = DefaultRule.begin(); it != DefaultRule.end(); ++it)
-	{
-		ofstreamDefaultRule << it->first << std::endl << it->second << std::endl;
-	}
+	saveFile(strFileLoc + "DefaultRule.RDconf", DefaultRule);
 	//备份黑白名单
 	saveFile(strFileLoc + "WhiteGroup.RDconf", WhiteGroup);
 	saveFile(strFileLoc + "BlackGroup.RDconf", BlackGroup);
 	saveFile(strFileLoc + "WhiteQQ.RDconf", WhiteQQ);
 	saveFile(strFileLoc + "BlackQQ.RDconf", BlackQQ);
 	//saveBlackMark(strFileLoc + "BlackMarks.json");
-	//备份聊天列表
-	ofstream ofstreamLastMsgList(strFileLoc + "LastMsgList.MYmap", ios::out | ios::trunc);
-	for (auto it : mLastMsgList)
-	{
-		ofstreamLastMsgList << it.first.first << " " << it.first.second << " "<< it.second << std::endl;
-	}
-	ofstreamLastMsgList.close();
-	//备份邀请者列表
-	saveFile(strFileLoc + "GroupInviter.RDconf", mGroupInviter);
-	//备份默认COC房规
-	ofstream ofstreamDefaultCOC(strFileLoc + "DefaultCOC.MYmap", ios::out | ios::trunc);
-	for (auto it : mDefaultCOC)
-	{
-		ofstreamDefaultCOC << it.first.first << " " << it.first.second << " " << it.second << std::endl;
-	}
-	ofstreamDefaultCOC.close();
+	loadFile(strFileLoc + "LastMsgList.MYmap", mLastMsgList);
 	saveFile(strFileLoc + "Default.RDconf", DefaultDice);
 	//保存卡牌
 	saveJMap(strFileLoc + "GroupDeck.json", CardDeck::mGroupDeck);
 	saveJMap(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
 	saveJMap(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
 	saveJMap(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
-	saveJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);
 	//保存群内设置
 	ilInitList.reset();
 	Name.reset();
+	saveFile(strFileLoc + "GroupInviter.RDconf", mGroupInviter);
 	saveFile(strFileLoc + "DisabledGroup.RDconf", DisabledGroup);
 	saveFile(strFileLoc + "DisabledDiscuss.RDconf", DisabledDiscuss);
 	saveFile(strFileLoc + "DisabledJRRPGroup.RDconf", DisabledJRRPGroup);
@@ -169,6 +134,8 @@ void dataBackUp() {
 	saveFile(strFileLoc + "DisabledOBDiscuss.RDconf", DisabledOBDiscuss);
 	saveFile(strFileLoc + "ObserveGroup.RDconf", ObserveGroup);
 	saveFile(strFileLoc + "ObserveDiscuss.RDconf", ObserveDiscuss);
+	saveFile(strFileLoc + "WelcomeMsg.RDconf", WelcomeMsg);
+	saveFile(strFileLoc + "DefaultCOC.MYmap", mDefaultCOC);
 
 	ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
 	for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
@@ -180,17 +147,6 @@ void dataBackUp() {
 		}
 	}
 	ofstreamCharacterProp.close();
-
-	ofstream ofstreamWelcomeMsg(strFileLoc + "WelcomeMsg.RDconf", ios::out | ios::trunc);
-	for (auto it = WelcomeMsg.begin(); it != WelcomeMsg.end(); ++it)
-	{
-		while (it->second.find(' ') != string::npos)it->second.replace(it->second.find(' '), 1, "{space}");
-		while (it->second.find('\t') != string::npos)it->second.replace(it->second.find('\t'), 1, "{tab}");
-		while (it->second.find('\n') != string::npos)it->second.replace(it->second.find('\n'), 1, "{endl}");
-		while (it->second.find('\r') != string::npos)it->second.replace(it->second.find('\r'), 1, "{enter}");
-		ofstreamWelcomeMsg << it->first << " " << it->second << std::endl;
-	}
-	ofstreamWelcomeMsg.close();
 }
 EVE_Enable(eventEnable)
 {
@@ -227,14 +183,7 @@ EVE_Enable(eventEnable)
 	}
 	AdminQQ.insert(masterQQ);
 	//读取监控窗口列表
-	ifstream ifstreamMonitorList(strFileLoc + "MonitorList.RDconf");
-	while (ifstreamMonitorList)
-	{
-		long long llMonitor = 0;
-		int t = 0;
-		ifstreamMonitorList >> llMonitor >> t;
-		if (llMonitor)MonitorList.insert({ llMonitor ,(msgtype)t });
-	}
+	loadFile(strFileLoc + "MonitorList.RDconf", MonitorList);
 	if (MonitorList.size() == 0) {
 		for (auto it : AdminQQ) {
 			MonitorList.insert({ it ,Private });
@@ -243,7 +192,6 @@ EVE_Enable(eventEnable)
 		MonitorList.insert({ 192499947 ,Group });
 		MonitorList.insert({ 754494359 ,Group });
 	}
-	ifstreamMonitorList.close();
 	//获取boolConsole
 	loadJMap(strFileLoc + "boolConsole.json", boolConsole);
 	ifstream ifstreamCharacterProp(strFileLoc + "CharacterProp.RDconf");
@@ -277,22 +225,7 @@ EVE_Enable(eventEnable)
 	loadFile(strFileLoc + "ObserveDiscuss.RDconf", ObserveDiscuss);
 	loadFile(strFileLoc + "Default.RDconf", DefaultDice);
 	loadFile(strFileLoc + "DefaultRule.RDconf", DefaultRule);
-
-	ifstream ifstreamWelcomeMsg(strFileLoc + "WelcomeMsg.RDconf");
-	if (ifstreamWelcomeMsg)
-	{
-		long long GroupID;
-		string Msg;
-		while (ifstreamWelcomeMsg >> GroupID >> Msg)
-		{
-			while (Msg.find("{space}") != string::npos)Msg.replace(Msg.find("{space}"), 7, " ");
-			while (Msg.find("{tab}") != string::npos)Msg.replace(Msg.find("{tab}"), 5, "\t");
-			while (Msg.find("{endl}") != string::npos)Msg.replace(Msg.find("{endl}"), 6, "\n");
-			while (Msg.find("{enter}") != string::npos)Msg.replace(Msg.find("{enter}"), 7, "\r");
-			WelcomeMsg[GroupID] = Msg;
-		}
-	}
-	ifstreamWelcomeMsg.close();
+	loadFile(strFileLoc + "WelcomeMsg.RDconf", WelcomeMsg);
 	//读取帮助文档
 	ifstream ifstreamHelpDoc(strFileLoc + "HelpDoc.txt");
 	if (ifstreamHelpDoc)
@@ -311,47 +244,11 @@ EVE_Enable(eventEnable)
 	ifstreamHelpDoc.close();
 	
 	//读取聊天列表
-	ifstream ifstreamLastMsgList(strFileLoc + "LastMsgList.MYmap");
-	if (ifstreamLastMsgList)
-	{
-		long long llID;
-		int intT;
-		chatType ct;
-		time_t tLast;
-		while (ifstreamLastMsgList >> llID >> intT >> tLast)
-		{
-			ct = { llID,(msgtype)intT };
-			mLastMsgList[ct] = tLast;
-		}
-	}
-	ifstreamLastMsgList.close();
+	loadFile(strFileLoc + "LastMsgList.MYmap", mLastMsgList);
 	//读取邀请者列表
-	ifstream ifstreamGroupInviter(strFileLoc + "GroupInviter.RDconf");
-	if (ifstreamGroupInviter)
-	{
-		long long llGroup;
-		long long llQQ;
-		while (ifstreamGroupInviter >> llGroup >> llQQ)
-		{
-			if (llGroup&&llQQ)mGroupInviter[llGroup] = llQQ;
-		}
-	}
-	ifstreamGroupInviter.close();
+	loadFile(strFileLoc + "GroupInviter.RDconf", mGroupInviter);
 	//读取COC房规
-	ifstream ifstreamDefaultCOC(strFileLoc + "DefaultCOC.MYmap");
-	if (ifstreamDefaultCOC)
-	{
-		long long llID;
-		int intT;
-		chatType ct;
-		int intRule;
-		while (ifstreamDefaultCOC >> llID >> intT >> intRule)
-		{
-			ct = { llID,(msgtype)intT };
-			mDefaultCOC[ct] = intRule;
-		}
-	}
-	ifstreamDefaultCOC.close();
+	loadFile(strFileLoc + "DefaultCOC.MYmap", mDefaultCOC);
 	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
 	GlobalMsg["strSelfName"] = getLoginNick();
 	ifstream ifstreamCustomMsg(strFileLoc + "CustomMsg.json");
@@ -378,8 +275,7 @@ EVE_Enable(eventEnable)
 	loadJMap(strFileLoc + "ExternDeck.json", CardDeck::mPublicDeck);
 	loadJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);
 	string strLog;
-	//if (loadJMaps("DiceData\\PublicDeck\\", CardDeck::mPublicDeck, strLog))sendAdmin(strLog);
-	loadDir(loadJMap, string("DiceData\\PublicDeck\\"), CardDeck::mPublicDeck, strLog); sendAdmin(strLog);
+	if (loadDir(loadJMap, string("DiceData\\PublicDeck\\"), CardDeck::mPublicDeck, strLog))sendAdmin(strLog);
 	//读取替身模式
 	ifstream ifstreamStandByMe(strFileLoc + "StandByMe.RDconf");
 	if (ifstreamStandByMe)

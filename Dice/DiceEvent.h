@@ -1144,6 +1144,7 @@ public:
 			CardDeck::mReplyDeck.erase(strReplyName);
 		}
 		else reply(format(GlobalMsg["strReplySet"], { strReplyName }));
+		saveJMap(string(getAppDirectory()) + "ReplyDeck.json", CardDeck::mReplyDeck);
 		return 1;
 }
 		else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
