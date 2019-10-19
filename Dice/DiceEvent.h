@@ -89,15 +89,20 @@ public:
 			if (MonitorList.count({ it,Private }) && fromQQ != it) AddMsgToQueue(strName + strMsg, it);
 		}
 	}
+	//打印消息来源
+	std::string printFrom() {
+		std::string strFwd;
+		if (fromType == Group)strFwd += "[群:" + to_string(fromGroup) + "]";
+		if (fromType == Discuss)strFwd += "[讨论组:" + to_string(fromGroup) + "]";
+		strFwd += getName(fromQQ, fromGroup) + "(" + to_string(fromQQ) + "):";
+		return strFwd;
+	}
 	//转发消息
 	void FwdMsg(string message) {
 		if (mFwdList.count(fromChat)&&!isLinkOrder) {
 			auto range = mFwdList.equal_range(fromChat);
 			string strFwd;
-			if (fromType == Group)strFwd += "[群:"+to_string(fromGroup)+"]";
-			if (fromType == Discuss)strFwd += "[讨论组:" + to_string(fromGroup) + "]";
-			strFwd += getName(fromQQ,fromGroup) + "(" + to_string(fromQQ) + "):";
-			if (masterQQ == fromQQ)strFwd.clear();
+			if (masterQQ != fromQQ)strFwd += printFrom();
 			strFwd += message;
 			for (auto it = range.first; it != range.second; it++) {
 				AddMsgToQueue(strFwd, it->second.first, it->second.second);
@@ -1732,9 +1737,8 @@ public:
 				reply(GlobalMsg["strSendMsgEmpty"]);
 			}
 			else {
-				string strFwd = "来自" + printChat(fromChat);
-				if (fromType == Private)strFwd += printQQ(fromQQ);
-				if (masterQQ == fromQQ)strFwd.clear();
+				string strFwd;
+				if (masterQQ != fromQQ)strFwd += "来自" + printFrom();
 				strFwd += readRest();
 				sendAdmin(strFwd);
 				reply(GlobalMsg["strSendMasterMsg"]);
