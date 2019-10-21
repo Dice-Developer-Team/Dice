@@ -377,7 +377,7 @@ void warningHandler() {
 			if (intLevel > 0) {
 				if (strWarningList.count(warning.strMsg))continue;
 				else strWarningList.insert(warning.strMsg);
-				if (warning.fromQQ != masterQQ)addRecord(getName(warning.fromQQ)+"已通知" + GlobalMsg["strSelfName"] + ":\n" + mark.strWarning);
+				addRecord(getName(warning.fromQQ)+"已通知" + GlobalMsg["strSelfName"] + ":\n" + mark.strWarning);
 				if (intLevel == 1 && !mark.hasType())continue;
 			}
 			else if (intLevel == 0) {

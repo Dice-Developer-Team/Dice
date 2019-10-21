@@ -371,7 +371,6 @@ public:
 			else {
 				RecorderList.insert(cTarget);
 				reply("已添加日志窗口" + printChat(cTarget) + "√");
-				reply("已添加日志窗口" + printChat(cTarget) + "√");
 			}
 		}
 		return 1;

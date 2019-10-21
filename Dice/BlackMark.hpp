@@ -39,7 +39,7 @@ public:
 		return *this;
 	}
 	const bool operator==(BlackMark& MarkTmp) {
-		if (!strMap.count("note") && !MarkTmp.count("note"))return true;
+		if (!count("note") && !MarkTmp.count("note"))return true;
 		if (strMap.count("note") && MarkTmp.count("note") && strMap["note"] == MarkTmp.strMap["note"])return true;
 		return false;
 	}
