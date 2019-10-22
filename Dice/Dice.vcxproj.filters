@@ -75,9 +75,6 @@
     <ClCompile Include="EncodingConvert.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="NameGenerator.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="RandomGenerator.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -201,9 +198,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="EncodingConvert.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="NameGenerator.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RandomGenerator.h">

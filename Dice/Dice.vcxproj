@@ -223,7 +223,6 @@
     <ClCompile Include="InitList.cpp" />
     <ClCompile Include="MsgFormat.cpp" />
     <ClCompile Include="MsgMonitor.cpp" />
-    <ClCompile Include="NameGenerator.cpp" />
     <ClCompile Include="NameStorage.cpp" />
     <ClCompile Include="RandomGenerator.cpp" />
     <ClCompile Include="RD.cpp" />
@@ -269,7 +268,6 @@
     <ClInclude Include="Jsonio.h" />
     <ClInclude Include="MsgFormat.h" />
     <ClInclude Include="MsgMonitor.h" />
-    <ClInclude Include="NameGenerator.h" />
     <ClInclude Include="NameStorage.h" />
     <ClInclude Include="RandomGenerator.h" />
     <ClInclude Include="RD.h" />

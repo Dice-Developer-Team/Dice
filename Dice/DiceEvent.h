@@ -1681,56 +1681,26 @@ public:
 				type += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
-
-			auto nameType = NameGenerator::Type::UNKNOWN;
-			if (type == "cn")
-				nameType = NameGenerator::Type::CN;
-			else if (type == "en")
-				nameType = NameGenerator::Type::EN;
-			else if (type == "jp")
-				nameType = NameGenerator::Type::JP;
-
-			while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
-				intMsgCnt++;
-
-			string strNum;
-			while (isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])))
-			{
-				strNum += strMsg[intMsgCnt];
-				intMsgCnt++;
-			}
-			if (strNum.size() > 2)
-			{
+			string strNum = readDigit();
+			if (strNum.size() > 1 && strNum != "10") {
 				reply(GlobalMsg["strNameNumTooBig"]);
 				return 1;
 			}
-			int intNum = stoi(strNum.empty() ? "1" : strNum);
-			if (intNum > 10)
-			{
-				reply(GlobalMsg["strNameNumTooBig"]);
-				return 1;
-			}
+			int intNum = strNum.empty() ? 1 : stoi(strNum);
 			if (intNum == 0)
 			{
 				reply(GlobalMsg["strNameNumCannotBeZero"]);
 				return 1;
 			}
-			vector<string> TempNameStorage;
-			while (TempNameStorage.size() != intNum)
-			{
-				string name = NameGenerator::getRandomName(nameType);
-				if (find(TempNameStorage.begin(), TempNameStorage.end(), name) == TempNameStorage.end())
-				{
-					TempNameStorage.push_back(name);
-				}
+			strReply = format(GlobalMsg["strNameGenerator"], { strNickName }) + "\n";
+			//vector<string> TempNameStorage;
+			string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("random_name_" + type)) ? "random_name_" + type : "random_name";
+			vector<string> TempDeck = CardDeck::mPublicDeck[strDeckName];
+			while (intNum--) {
+				string res = CardDeck::drawCard(TempDeck, true);
+				strReply += intNum ? (res + "¡¢") : res;
 			}
-			string strReply = format(GlobalMsg["strNameGenerator"], { strNickName }) + "\n";
-			for (auto i = 0; i != TempNameStorage.size(); i++)
-			{
-				strReply.append(TempNameStorage[i]);
-				if (i != TempNameStorage.size() - 1)strReply.append(", ");
-			}
-			reply(strReply);
+			reply();
 			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 4) == "send") {
@@ -1881,16 +1851,9 @@ public:
 			intMsgCnt += 3;
 			while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 				intMsgCnt++;
-			string type = strLowerMessage.substr(intMsgCnt, 2);
-			string name;
-			if (type == "cn")
-				name = NameGenerator::getChineseName();
-			else if (type == "en")
-				name = NameGenerator::getEnglishName();
-			else if (type == "jp")
-				name = NameGenerator::getJapaneseName();
-			else
-				name = NameGenerator::getRandomName();
+			string type = readPara();
+			string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("random_name_" + type)) ? "random_name_" + type : "random_name";
+			string name = CardDeck::drawCard(CardDeck::mPublicDeck[strDeckName], true);
 			Name->set(fromGroup, fromQQ, name);
 			const string strReply = format(GlobalMsg["strNameSet"], { strNickName, strip(name) });
 			reply(strReply);

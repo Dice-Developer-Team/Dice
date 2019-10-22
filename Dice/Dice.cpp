@@ -45,7 +45,6 @@
 #include "GetRule.h"
 #include "DiceMsgSend.h"
 #include "CustomMsg.h"
-#include "NameGenerator.h"
 #include "MsgFormat.h"
 #include "DiceCloud.h"
 #include "CardDeck.h"
