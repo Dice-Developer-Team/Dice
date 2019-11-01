@@ -41,6 +41,15 @@ private:
 	int_errno RollDice(std::string dice) const
 	{
 		const bool boolNegative = *(vboolNegative.end() - 1);
+		int intDivider = 1;
+		while (dice.find_last_of('/') != std::string::npos) {
+			const int intXPosition = dice.find_last_of('/');
+			std::string strRate = dice.substr(intXPosition + 1);
+			RD Rate(strRate);
+			if (!Rate.Roll() && Rate.intTotal) intDivider *= Rate.intTotal;
+			else return Input_Err;
+			dice = dice.substr(0, dice.find_last_of('/'));
+		}
 		int intMultiplier = 1;
 		while (dice.find_last_of('X') != std::string::npos) {
 			const int intXPosition = dice.find_last_of('X');
@@ -50,6 +59,7 @@ private:
 			else return Input_Err;
 			dice = dice.substr(0, dice.find_last_of('X'));
 		}
+		vintDivider.push_back(intDivider);
 		vintMultiplier.push_back(intMultiplier);
 		if (dice.find('a') != std::string::npos)
 		{
@@ -243,9 +253,9 @@ private:
 				return Value_Err;
 			const int intTmpRes = stoi(dice);
 			if (boolNegative)
-				intTotal -= intTmpRes * intMultiplier;
+				intTotal -= intTmpRes * intMultiplier / intDivider;
 			else
-				intTotal += intTmpRes * intMultiplier;
+				intTotal += intTmpRes * intMultiplier / intDivider;
 			vintRes.push_back(intTmpRes* intMultiplier);
 			vvintRes.push_back(std::vector<int>{intTmpRes});
 			return 0;
@@ -273,12 +283,12 @@ private:
 				intTmpRes += intTmpResOnce;
 			}
 			if (boolNegative)
-				intTotal -= intTmpRes * intMultiplier;
+				intTotal -= intTmpRes * intMultiplier / intDivider;
 			else
-				intTotal += intTmpRes * intMultiplier;
+				intTotal += intTmpRes * intMultiplier / intDivider;
 			if (vintTmpRes.size() > 20)sort(vintTmpRes.begin(), vintTmpRes.end());
 			vvintRes.push_back(vintTmpRes);
-			vintRes.push_back(intTmpRes * intMultiplier);
+			vintRes.push_back(intTmpRes * intMultiplier / intDivider);
 			return 0;
 		}
 		if (dice.substr(dice.find("K") + 1).length() > 3)
@@ -313,9 +323,9 @@ private:
 		for (const auto intElement : vintTmpRes)
 			intTmpRes += intElement;
 		if (boolNegative)
-			intTotal -= intTmpRes * intMultiplier;
+			intTotal -= intTmpRes * intMultiplier / intDivider;
 		else
-			intTotal += intTmpRes * intMultiplier;
+			intTotal += intTmpRes * intMultiplier / intDivider;
 		vintRes.push_back(intTmpRes);
 		if (vintTmpRes.size() > 20)sort(vintTmpRes.begin(), vintTmpRes.end());
 		vvintRes.push_back(vintTmpRes);
@@ -461,6 +471,7 @@ public:
 	mutable std::vector<int> vintRes{};
 	mutable std::vector<bool> vboolNegative{};
 	mutable std::vector<int> vintMultiplier{};
+	mutable std::vector<int> vintDivider{};
 
 	//0-Normal, 1-B, 2-P
 	mutable std::vector<int> vBnP{};
@@ -483,7 +494,7 @@ public:
 		}
 		else
 			vboolNegative.push_back(false);
-		if (dice[dice.length() - 1] == '+' || dice[dice.length() - 1] == '-' || dice[dice.length() - 1] == 'X')
+		if (dice[dice.length() - 1] == '+' || dice[dice.length() - 1] == '-' || dice[dice.length() - 1] == 'X' || dice[dice.length() - 1] == '/')
 			return Input_Err;
 		while (dice.find("+", intReadDiceLoc) != std::string::npos || dice.find("-", intReadDiceLoc) != std::string::
 			npos)
@@ -600,6 +611,9 @@ public:
 					strReturnString.append(")");
 				if (vintMultiplier[distance(vvintRes.begin(), i)] != 1) {
 					strReturnString += "¡Á" + std::to_string(vintMultiplier[distance(vvintRes.begin(), i)]);
+				}
+				if (vintDivider[distance(vvintRes.begin(), i)] != 1) {
+					strReturnString += "/" + std::to_string(vintDivider[distance(vvintRes.begin(), i)]);
 				}
 			}
 			else if (vBnP[distance(vvintRes.begin(), i)] == Fudge_Dice)

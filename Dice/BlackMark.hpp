@@ -17,7 +17,7 @@ public:
 	BlackMark(std::string IDKey, long long llID) :fromID(llID) {
 		llMap[IDKey] = llID;
 	};
-	BlackMark(BlackMark &mark, std::string IDKey){
+	BlackMark(BlackMark& mark, std::string IDKey) {
 		fromID = llMap[IDKey] = mark.llMap[IDKey];
 		*this << mark;
 	};
@@ -27,11 +27,11 @@ public:
 	}
 	void set(std::string Key, long long Val) {
 		llMap[Key] = Val;
-		if (Key != "DiceMaid"&&Key != "masterQQ")fromID = Val;
+		if (Key != "DiceMaid" && Key != "masterQQ")fromID = Val;
 	}
 	BlackMark& operator<<(BlackMark& MarkTmp) {
 		for (auto it : MarkTmp.strMap) {
-			strMap[it.first]=it.second;
+			strMap[it.first] = it.second;
 		}
 		if (MarkTmp.count("DiceMaid"))llMap["DiceMaid"] = MarkTmp.llMap["DiceMaid"];
 		if (MarkTmp.count("masterQQ"))llMap["masterQQ"] = MarkTmp.llMap["masterQQ"];
@@ -77,10 +77,10 @@ public:
 		strMap["type"] = "erase";
 		strWarning.clear();
 	}
-	const bool isVal(std::string Key,std::string Val) {
+	const bool isVal(std::string Key, std::string Val) {
 		return strMap.count(Key) && strMap[Key] == Val;
 	}
-	const bool isVal(std::string Key,long long Val) {
+	const bool isVal(std::string Key, long long Val) {
 		return llMap.count(Key) && llMap[Key] == Val;
 	}
 	const bool isNoteEmpty() {
@@ -90,6 +90,6 @@ public:
 		return (strMap.count(strKey) && !strMap[strKey].empty()) || (llMap.count(strKey) && llMap[strKey]);
 	}
 	const bool hasType() {
-		return strMap["type"] == "kick" || strMap["type"] == "ban" || strMap["type"] == "spam" || strMap["type"] == "erase";
+		return strMap["type"] == "kick" || strMap["type"] == "ban" || strMap["type"] == "spam" || strMap["type"] == "ruler" || strMap["type"] == "erase";
 	}
 };

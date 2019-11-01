@@ -59,12 +59,9 @@ static std::map<std::string, std::string> SkillNameReplace = {
 	{"luck", "幸运"},
 	{"luk", "幸运"},
 	{"con", "体质"},
-	{"int", "智力/灵感"},
-	{"智力", "智力/灵感"},
-	{"灵感", "智力/灵感"},
-	{"idea", "智力/灵感"},
+	{"int", "智力"},
+	{"idea", "灵感"},
 	{"edu", "教育"},
-	{"知识", "教育"},
 	{"mov", "移动力"},
 	{"san", "理智"},
 	{"hp", "体力"},
@@ -110,7 +107,33 @@ static std::map<std::string, std::string> SkillNameReplace = {
 	{"驾驶(飞行器)", "飞行器驾驶"}
 };
 
-static std::map<std::string, int> SkillDefaultVal = {
+static std::vector<std::pair<std::string, std::string>>BuildCOC7 = {
+	{"力量","3D6*5"},
+	{"体质","3D6*5"},
+	{"体型","2D6*5+30"},
+	{"敏捷","3D6*5"},
+	{"外貌","3D6*5"},
+	{"智力","2D6*5+30"},
+	{"意志","3D6*5"},
+	{"教育","2D6*5+30"},
+	{"幸运","3D6*5"},
+	{"生命","[体质体型和]/10"},
+	{"理智","@意志"},
+	{"魔法","[意志]/5"}
+};
+static std::map<std::string, std::string>DynamicCOC7 = {
+	{"灵感","@智力"},
+	{"知识","@教育"},
+	{"体质体型和","[体质]+[体型]"},
+};
+static std::map<std::string, std::string>AutoFillCOC7 = {
+	{"生命","[体质体型和]/10"},
+	{"理智","@意志"},
+	{"魔法","[意志]/5"},
+	{"母语","@教育"},
+	{"闪避","[敏捷]/2"}
+};
+static std::map<std::string, short> SkillDefaultVal = {
 	{"会计", 5},
 	{"人类学", 1},
 	{"估价", 5},

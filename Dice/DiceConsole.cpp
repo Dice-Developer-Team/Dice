@@ -258,8 +258,8 @@ bool addBlackQQ(BlackMark mark) {
 	if (WhiteQQ.count(llQQ))WhiteQQ.erase(llQQ);
 	if (BlackQQ.count(llQQ))return 0;
 	BlackQQ.insert(llQQ);
-	mark.count("note") ? AddMsgToQueue(GlobalMsg["strBlackQQAddNotice"], llQQ)
-		: AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { mark.strMap["note"] }), llQQ);
+	mark.count("note") ? AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { mark.strMap["note"] }), llQQ)
+		: AddMsgToQueue(GlobalMsg["strBlackQQAddNotice"], llQQ);
 	if (boolConsole["AutoClearBlack"])checkBlackQQ(mark);
 	mark.strWarning.clear();
 	if (!mBlackQQMark.count(llQQ) || mBlackQQMark[llQQ].isErased()) {
@@ -384,7 +384,7 @@ void warningHandler() {
 				if (mark.isNoteEmpty() || strWarningList.count(warning.strMsg)) { continue; }
 				int res = Cloud::checkWarning(mark.getData());
 				if (!mark.isErased() && res < 1)continue;
-				if (mark.isErased() && res > -1 && !mark.isVal("DiceMaid", warning.fromQQ))continue;
+				if (mark.isErased() && res > -1 && !mark.isVal("DiceMaid", warning.fromQQ) && !mark.isVal("masterQQ", warning.fromQQ))continue;
 				strWarningList.insert(warning.strMsg);
 				sendAdmin("ю╢вт" + printGroup(warning.fromGroup) + printQQ(warning.fromQQ) + ":\n" + mark.strWarning);
 			}
@@ -396,10 +396,10 @@ void warningHandler() {
 				setQQWarning(mark, "fromQQ", warning.fromQQ);
 			}
 			if (intLevel == 0 && !mark.isVal("DiceMaid", warning.fromQQ))continue;
-			if (mark.count("inviterQQ") && ((mark.strMap["type"] == "kick"&&boolConsole["KickedBanInviter"]) || (mark.strMap["type"] == "ban"&&boolConsole["BannedBanInviter"]))) {
+			if (mark.count("inviterQQ") && ((mark.strMap["type"] == "kick" && boolConsole["KickedBanInviter"]) || (mark.strMap["type"] == "ban" && boolConsole["BannedBanInviter"])) || mark.strMap["type"] == "erase") {
 				setQQWarning(mark, "inviterQQ", warning.fromQQ);
 			}
-			if (mark.count("ownerQQ") && (mark.strMap["type"] == "ban"&&boolConsole["BannedBanOwner"])) {
+			if (mark.count("ownerQQ") && (mark.strMap["type"] == "ban" && boolConsole["BannedBanOwner"]) || mark.strMap["type"] == "erase") {
 				setQQWarning(mark, "ownerQQ", warning.fromQQ);
 			}
 		}

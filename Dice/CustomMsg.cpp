@@ -85,8 +85,10 @@ void SaveCustomMsg(std::string strPath) {
 		while (it.second.find('\n') != std::string::npos)it.second.replace(it.second.find('\n'), 1, "\\n");
 		while (it.second.find('\r') != std::string::npos)it.second.replace(it.second.find('\r'), 1, "\\r");
 		while (it.second.find("\t") != std::string::npos)it.second.replace(it.second.find("\t"), 1, "\\t");
+		int p = -1;
+		while ((p = it.second.find("\"", ++p)) != std::string::npos)it.second.replace(p++, 1, "\\\"");
 		std::string strMsg = GBKtoUTF8(it.second);
 		ofstreamCustomMsg << "\"" << it.first << "\":\"" << strMsg << "\",\n";
 	}
-	ofstreamCustomMsg << "\n\"Number\":\"" << EditedMsg.size() << "\"\n}" << std::endl;
+	ofstreamCustomMsg << "\"Number\":\"" << EditedMsg.size() << "\"\n}" << std::endl;
 }

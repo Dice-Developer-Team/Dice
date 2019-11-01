@@ -46,6 +46,8 @@
 	extern std::set<long long> BlackQQ;
 	extern std::map<long long, BlackMark>mBlackQQMark;
 	extern std::map<long long, BlackMark>mBlackGroupMark;
+//保存数据
+void dataBackUp();
 void loadBlackMark(std::string strPath);
 void saveBlackMark(std::string strPath);
 	//获取骰娘列表

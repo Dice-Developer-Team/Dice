@@ -30,6 +30,7 @@ namespace CardDeck
 		{"random_name_cn",{"{first_name_cn}{%last_name_cn}"}},
 		{"random_name_en",{"{first_name_en}·{last_name_en}"}},
 		{"random_name_jp",{"{first_name_jp}{last_name_jp}"}},
+		{"random_name_enzh",{"{first_name_enzh}·{last_name_enzh}"}},
 		{"random_name",{"{%random_name_cn}","{%random_name_en}","{%random_name_jp}"}},
 		{"随机姓名",{"{random_name}","{random_name}","{random_name}","{random_name}","{random_name}","{random_name}","{random_name}","{random_name}","{random_name}","{random_name}"}},
 		{"硬币",{"正","反"}},
@@ -134,7 +135,7 @@ namespace CardDeck
 				intCnt = rq + 1;
 				continue;
 			}
-			else if (TempDeckList.count(strTempName)==0|| TempDeckList[strTempName].empty()) {
+			else if (TempDeckList.count(strTempName) == 0 || TempDeckList[strTempName].empty()) {
 				TempDeckList[strTempName] = mPublicDeck[strTempName];
 			}
 			string strRes = drawCard(TempDeckList[strTempName], isTmpBack);

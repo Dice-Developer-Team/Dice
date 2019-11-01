@@ -2,8 +2,8 @@
   "ret": 1,
   "apiver": 9,
   "name": "Dice!",
-  "version": "2.3.8Express9",
-  "version_id": 550,
+  "version": "2.3.8Express10",
+  "version_id": 554,
   "author": "w4123溯洄 Shiki",
   "description": "跑团用骰子 本程序使用AGPLv3开源协议授权 Copyright (c) 2018-2019 w4123溯洄 Shiki",
   "event": [
@@ -64,6 +64,13 @@
       "priority": 30000
     },
     {
+      "id": 12,
+      "type": 104,
+      "name": "群成员禁言事件",
+      "function": "eventGroupBan",
+      "priority": 30000
+    },
+    {
       "id": 9,
       "type": 302,
       "name": "群添加请求事件",
@@ -105,6 +112,15 @@
     {
       "name": "全局开关",
       "function": "eventGlobalSwitch"
+    }
+  ],
+  "status": [ // 悬浮窗状态（将应用运行状态等显示在酷Q悬浮窗）
+    {
+      "id": 1,
+      "name": "指令频度",
+      "title": "OrderFrq",
+      "function": "statusFrq",
+      "period": "1000"
     }
   ],
   "auth": [

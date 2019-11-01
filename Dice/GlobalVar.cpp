@@ -35,9 +35,9 @@ CQ::logger DiceLogger("Dice!");
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-const unsigned short Dice_Build = 550;
-const std::string Dice_Ver_Without_Build = "2.3.8Express9";
-const std::string DiceRequestHeader = "Dice/2.3.8EXP9";
+const unsigned short Dice_Build = 554;
+const std::string Dice_Ver_Without_Build = "2.3.8Express10";
+const std::string DiceRequestHeader = "Dice/2.3.8EXP10";
 const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 const std::string Dice_Short_Ver = "Dice! by 溯洄 Shiki.Ver " + Dice_Ver;
 #ifdef __clang__
@@ -65,6 +65,24 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 std::map<std::string, std::string> GlobalMsg
 {
 	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
+	{"strPcCardNew","成功新建{0}√"},
+	{"strPcCardSet","已将{0}当前角色卡绑定为{2}√"},//{0}-用户昵称 {1}-原角色卡名 {2}-角色卡名
+	{"strPcCardReset","已解绑{0}当前的默认卡√"},
+	{"strPcCardRename","已将{0}重命名为{1}√"},
+	{"strPcCardDel","已将角色卡{0}删除√"},
+	{"strPcCardCpy","已将{0}的属性复制到{1}√"},
+	{"strPcCardBuild","{0}的角色生成：\n"},
+	{"strPcCardList","{0}的角色列表：\n"},
+	{"strPcGroupList","{0}的各群角色列表：\n"},
+	{"strPropList","{0}的{1}属性列表为："},	//{0}-用户昵称 {1}-角色卡名
+	{"strPcCardFull","角色卡已达上限，请先清理多余角色卡×"},
+	{"strPcTempInvalid","无效的角色卡模板×"},
+	{"strPcNameEmpty","名称不能为空×"},
+	{"strPcNameExist","已存在同名卡×"},
+	{"strPcNameNotExist","该名称不存在×"},
+	{"strPcNameInvalid","非法的人物卡名（存在冒号）×"},
+	{"strPcInitDelErr","初始卡不可删除×"},
+	{"strPcNoteTooLong","备注长度不能超过255×"},
 	{"strSpamFirstWarning","你够了，我无法容忍你的行为（刷屏初次警告）"},
 	{"strSpamFinalWarning","希望不要，不是希望，就是呵斥，不要有这种行为出现，这个太野蛮了（刷屏最终警告）"},
 	{"strReplySet","关键词{0}的回复已设置√"},
@@ -211,17 +229,17 @@ std::map<std::string, std::string> GlobalMsg
 	{"strNameTooLongErr", "名称过长×(最多为50英文字符)"},
 	{"strNameClr","已将{0}的名称删除√"},
 	{"strNameSet","已将{0}的名称更改为{1}√"},
-	{"strUnknownPropErr", "未设定成功率，请先.st 技能名 技能值 或查看.help rc×"},
+	{"strUnknownPropErr", "未设定{0}成功率，请先.st {0} 技能值 或查看.help rc×"},
 	{"strEmptyWWDiceErr", "格式错误:正确格式为.w(w)XaY!其中X≥1, 5≤Y≤10"},
 	{"strPropErr", "请认真的输入你的属性哦~"},
 	{"strSetPropSuccess", "属性设置成功√"},
-	{"strPropCleared", "已清除所有属性√"},
+	{"strPropCleared", "已清空{0}的所有属性√"},
 	{"strRuleReset","已重置默认规则√"},
 	{"strRuleSet","已设置默认规则√"},
 	{"strRuleErr", "规则数据获取失败,具体信息:\n"},
 	{"strRulesFailedErr", "请求失败,本机器人无法连接数据库×"},
-	{"strPropDeleted", "属性删除成功√"},
-	{"strPropNotFound", "属性不存在×"},
+	{"strPropDeleted", "已删除{0}的{0}√"},
+	{"strPropNotFound", "属性{0}不存在×"},
 	{"strRuleNotFound", "本机器人未找到对应的规则信息×"},
 	{"strProp", "{0}的{1}属性值为{2}"},
 	{"strStErr", "格式错误:请参考.help st获取.st命令的使用方法"},

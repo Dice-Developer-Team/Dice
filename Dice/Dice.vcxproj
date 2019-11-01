@@ -253,6 +253,7 @@
     <ClInclude Include="APPINFO.h" />
     <ClInclude Include="BlackMark.hpp" />
     <ClInclude Include="CardDeck.h" />
+    <ClInclude Include="CharacterCard.h" />
     <ClInclude Include="CustomMsg.h" />
     <ClInclude Include="DiceCloud.h" />
     <ClInclude Include="DiceConsole.h" />

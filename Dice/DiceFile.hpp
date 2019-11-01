@@ -11,6 +11,11 @@
 #include <direct.h>
 #include "DiceMsgSend.h"
 
+using std::ifstream;
+using std::ofstream;
+using std::ios;
+using std::enable_if;
+
 int mkDir(std::string dir) {
 	if (_access(dir.c_str(), 0))	return _mkdir(dir.c_str());
 	return -2;
@@ -18,7 +23,7 @@ int mkDir(std::string dir) {
 
 template<typename T>
 //typename std::enable_if<std::is_integral<T>::value, bool>::type fscan(std::ifstream& fin, T& t) {
-inline bool fscan(std::ifstream & fin, T & t) {
+inline typename std::enable_if<!std::is_class<T>::value, bool>::type fscan(std::ifstream & fin, T & t) {
 	T val;
 	if (fin >> val) {
 		t = val;
@@ -26,8 +31,8 @@ inline bool fscan(std::ifstream & fin, T & t) {
 	}
 	else return false;
 }
-template<>
-inline bool fscan<std::string>(std::ifstream& fin, std::string& t) {
+//template<>
+inline bool fscan(std::ifstream& fin, std::string& t) {
 	std::string val;
 	if (fin >> val) {
 		while (val.find("{space}") != std::string::npos)val.replace(val.find("{space}"), 7, " ");
@@ -42,8 +47,8 @@ inline bool fscan<std::string>(std::ifstream& fin, std::string& t) {
 	}
 	else return false;
 }
-template<>
-inline bool fscan<std::pair<long long, CQ::msgtype>>(std::ifstream& fin, std::pair<long long, CQ::msgtype>& t) {
+//template<>
+inline bool fscan(std::ifstream& fin, std::pair<long long, CQ::msgtype>& t) {
 	long long first;
 	int second;
 	if (fin >> first >> second) {
@@ -51,6 +56,48 @@ inline bool fscan<std::pair<long long, CQ::msgtype>>(std::ifstream& fin, std::pa
 		return true;
 	}
 	else return false;
+}
+
+template<class C, bool(C::* U)(std::ifstream&) = &C::load>
+inline bool fscan(std::ifstream& fin, C& obj) {
+	if (obj.load(fin))return true;
+	return false;
+}
+
+template<typename T>
+inline typename std::enable_if<std::is_fundamental<T>::value, T>::type fread(ifstream& fin) {
+	T t;
+	fin.read((char*)&t, sizeof(T));
+	return t;
+}
+template<typename T>
+typename std::enable_if<std::is_same<T, std::string>::value, T>::type fread(ifstream& fin) {
+	short len = fread<short>(fin);
+	char* buff = new char[len + 1];
+	fin.read(buff, sizeof(char) * len);
+	buff[len] = '\0';
+	std::string s(buff);
+	delete[] buff;
+	return s;
+}
+template<class C, void(C::* U)(std::ifstream&) = &C::readb>
+inline C fread(ifstream& fin) {
+	C obj;
+	obj.readb(fin);
+	return obj;
+}
+template<typename T1,typename T2>
+std::map<T1, T2> fread(ifstream& fin) {
+	std::map<T1, T2>m;
+	T1 key;
+	T2 val;
+	short len = fread<short>(fin);
+	while (len--) {
+		key = fread<T1>(fin);
+		val = fread<T2>(fin);
+		m[key] = val;
+	}
+	return m;
 }
 
 template<typename T>
@@ -68,7 +115,7 @@ void loadFile(std::string strPath, std::set<T>&setTmp) {
 }
 
 template<typename T1, typename T2>
-void loadFile(std::string strPath, std::map<T1, T2>&mapTmp) {
+typename std::enable_if<std::is_fundamental<T2>::value || std::is_same<T2, std::string>::value, void>::type loadFile(std::string strPath, std::map<T1, T2>&mapTmp) {
 	std::ifstream fin(strPath);
 	if (fin)
 	{
@@ -84,7 +131,7 @@ void loadFile(std::string strPath, std::map<T1, T2>&mapTmp) {
 }
 
 template<typename T1, typename T2>
-void loadFile(std::string strPath, std::multimap<T1,T2>&mapTmp) {
+typename enable_if<!std::is_class<T2>::value, void>::type loadFile(std::string strPath, std::multimap<T1,T2>&mapTmp) {
 	std::ifstream fin(strPath);
 	if (fin)
 	{
@@ -97,7 +144,24 @@ void loadFile(std::string strPath, std::multimap<T1,T2>&mapTmp) {
 	}
 	fin.close();
 }
+template<typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
+int loadFile(std::string strPath, std::map<T, C> & m) {
+	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
+	if (!fin)return -1;
+	int len = fread<int>(fin);
+	int Cnt = 0;
+	T key;
+	C val;
+	while (fin.peek() != EOF && len > Cnt++) {
+		key = fread<T>(fin);
+		val = fread<C>(fin);
+		m[key] = val;
+	}
+	fin.close();
+	return Cnt;
+}
 
+//¶ÁÈ¡ÎÄ¼þ¼Ð
 template<typename T>
 int loadDir(int load(std::string, T&), std::string strDir, T& tmp, std::string& strLog) {
 	_finddata_t file;
@@ -131,11 +195,14 @@ int loadDir(int load(std::string, T&), std::string strDir, T& tmp, std::string& 
 
 //save
 template<typename T>
-inline void fprint(std::ofstream& fout, T t) {
+inline typename std::enable_if<!std::is_class<T>::value>::type fprint(std::ofstream& fout, T t) {
 	fout << t;
 }
-template<>
-inline void fprint<std::string>(std::ofstream& fout, std::string s) {
+template<class C, void(C::* U)(std::ofstream&) = &C::save>
+inline void fprint(std::ofstream& fout, C obj) {
+	obj.save(fout);
+}
+inline void fprint(std::ofstream& fout, std::string s) {
 	while (s.find(' ') != std::string::npos)s.replace(s.find(' '), 1, "{space}");
 	while (s.find('\t') != std::string::npos)s.replace(s.find('\t'), 1, "{tab}");
 	while (s.find('\n') != std::string::npos)s.replace(s.find('\n'), 1, "{endl}");
@@ -160,6 +227,32 @@ bool clrEmpty(std::string strPath, const T& tmp) {
 	}
 	return false;
 }
+
+template<typename T>
+inline typename std::enable_if<!std::is_class<T>::value, void>::type fwrite(ofstream& fout, T t) {
+	T val = t;
+	fout.write((char*)&val, sizeof(T));
+}
+
+
+inline void fwrite(ofstream& fout, const std::string s) {
+	short len = (short)s.length();
+	fout.write((char*)& len, sizeof(short));
+	fout.write(s.c_str(), sizeof(char) * s.length());
+}
+template<class C, void(C::* U)(std::ofstream&) = &C::writeb>
+inline void fwrite(ofstream& fout, C obj) {
+	obj.writeb(fout);
+}
+template<typename T1, typename T2>
+inline void fwrite(ofstream& fout, const std::map<T1,T2>& m) {
+	short len = (short)m.size();
+	fwrite(fout, len);
+	for (auto it : m) {
+		fwrite(fout, it.first);
+		fwrite(fout, it.second);
+	}
+}
 template<typename T>
 void saveFile(std::string strPath, const T& setTmp) {
 	if (clrEmpty(strPath, setTmp))return;
@@ -168,6 +261,19 @@ void saveFile(std::string strPath, const T& setTmp) {
 	{
 		fprint(fout, it);
 		fout << std::endl;
+	}
+	fout.close();
+}
+
+template<typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
+void saveFile(std::string strPath, const std::map<T, C>& m) {
+	if (clrEmpty(strPath, m))return;
+	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
+	int len = m.size();
+	fwrite<int>(fout, len);
+	for (auto it : m) {
+		fwrite(fout, it.first);
+		fwrite(fout, it.second);
 	}
 	fout.close();
 }
