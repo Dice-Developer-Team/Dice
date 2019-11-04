@@ -82,12 +82,24 @@ map<chatType, time_t> mLastMsgList;
 map<chatType, chatType> mLinkedList;
 multimap<chatType, chatType> mFwdList;
 
-using PropType = map<string, int>;
-map<SourceType, PropType> CharacterProp;
 multimap<long long, long long> ObserveGroup;
 multimap<long long, long long> ObserveDiscuss;
 string strFileLoc;
 
+//加载数据
+void loadData() {
+	mkDir("DiceData");
+	string strLog;
+	loadDir(loadINI<CardTemp>, string("DiceData\\CardTemp\\"), mCardTemplet, strLog);
+	loadJMap(strFileLoc + "PublicDeck.json", CardDeck::mPublicDeck);
+	loadJMap(strFileLoc + "ExternDeck.json", CardDeck::mPublicDeck);
+	loadJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);
+	loadDir(loadJMap, string("DiceData\\PublicDeck\\"), CardDeck::mPublicDeck, strLog); 
+	if (!strLog.empty()) {
+		strLog += "扩展配置读取完毕√";
+		addRecord(strLog);
+	}
+}
 //备份数据
 void dataBackUp() {
 	mkDir("DiceData\\conf");
@@ -136,17 +148,6 @@ void dataBackUp() {
 	saveFile(strFileLoc + "ObserveDiscuss.RDconf", ObserveDiscuss);
 	saveFile(strFileLoc + "WelcomeMsg.RDconf", WelcomeMsg);
 	saveFile(strFileLoc + "DefaultCOC.MYmap", mDefaultCOC);
-
-	ofstream ofstreamCharacterProp(strFileLoc + "CharacterProp.RDconf", ios::out | ios::trunc);
-	for (auto it = CharacterProp.begin(); it != CharacterProp.end(); ++it)
-	{
-		for (auto it1 = it->second.cbegin(); it1 != it->second.cend(); ++it1)
-		{
-			ofstreamCharacterProp << it->first.QQ << " " << it->first.Type << " " << it->first.GrouporDiscussID << " "
-				<< it1->first << " " << it1->second << std::endl;
-		}
-	}
-	ofstreamCharacterProp.close();
 	saveFile("DiceData\\user\\PlayerCards.RDconf", PList);
 }
 EVE_Enable(eventEnable)
@@ -258,7 +259,7 @@ EVE_Enable(eventEnable)
 		}
 		GlobalMsg[it.first] = strMsg;
 	}
-	mkDir("DiceData");
+	loadData();
 	if (loadFile("DiceData\\user\\PlayerCards.RDconf", PList) < 1) {
 		ifstream ifstreamCharacterProp(strFileLoc + "CharacterProp.RDconf");
 		if (ifstreamCharacterProp)
@@ -279,11 +280,6 @@ EVE_Enable(eventEnable)
 	loadJMap(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
 	loadJMap(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
 	loadJMap(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
-	loadJMap(strFileLoc + "PublicDeck.json", CardDeck::mPublicDeck);
-	loadJMap(strFileLoc + "ExternDeck.json", CardDeck::mPublicDeck);
-	loadJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);
-	string strLog;
-	if (loadDir(loadJMap, string("DiceData\\PublicDeck\\"), CardDeck::mPublicDeck, strLog))addRecord(strLog);
 	//读取替身模式
 	ifstream ifstreamStandByMe(strFileLoc + "StandByMe.RDconf");
 	if (ifstreamStandByMe)

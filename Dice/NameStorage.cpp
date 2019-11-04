@@ -101,7 +101,7 @@ string strip(std::string origin)
 {
 	while (true)
 	{
-		if (origin[0] == '!' || origin[0] == '.')
+		if (origin[0] == '!' || origin[0] == '.' || isspace(static_cast<unsigned char>(origin[0])))
 		{
 			origin.erase(origin.begin());
 		}

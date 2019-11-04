@@ -426,6 +426,10 @@ public:
 			strDice.insert(0, "4");
 		if (strDice[0] == 'F')
 			strDice.insert(0, "4D");
+		while (strDice.find("++") != std::string::npos)	strDice.replace(strDice.find("++"), 2, "+");
+		while (strDice.find("+-") != std::string::npos)	strDice.replace(strDice.find("+-"), 2, "-");
+		while (strDice.find("-+") != std::string::npos)	strDice.replace(strDice.find("-+"), 2, "-");
+		while (strDice.find("--") != std::string::npos)	strDice.replace(strDice.find("--"), 2, "+");
 		for (size_t ReadCnt = 1; ReadCnt != strDice.length(); ReadCnt++)
 			if (strDice[ReadCnt] == 'F' && (isdigit(strDice[ReadCnt - 1]) || strDice[ReadCnt - 1] == '+' || strDice[
 				ReadCnt - 1] == '-'))

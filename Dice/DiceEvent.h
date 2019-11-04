@@ -37,20 +37,6 @@ extern set<long long> DisabledOBGroup;
 extern set<long long> DisabledOBDiscuss;
 extern unique_ptr<NameStorage> Name;
 extern unique_ptr<Initlist> ilInitList;
-struct SourceType
-{
-	SourceType(long long a, int b, long long c) : QQ(a), Type(b), GrouporDiscussID(c)
-	{
-	}
-	long long QQ = 0;
-	int Type = 0;
-	long long GrouporDiscussID = 0;
-
-	bool operator<(SourceType b) const
-	{
-		return this->QQ < b.QQ;
-	}
-};
 
 using PropType = map<string, int>;
 //extern map<SourceType, PropType> CharacterProp;
@@ -171,7 +157,12 @@ public:
 		}
 		else if (strOption == "save") {
 			dataBackUp();
-			AdminNotify("数据已保存");
+			AdminNotify("数据已保存√");
+			return 1;
+		}
+		else if (strOption == "load") {
+			loadData();
+			AdminNotify("数据已加载√");
 			return 1;
 		}
 		else if (strOption == "delete") {
@@ -1937,12 +1928,12 @@ public:
 				intMsgCnt++;
 			string strSkillName = readPara();
 			string strCurrentValue = readDigit();
-			int intCurrentVal;
-			bool isReference = false;
+			short nCurrentVal;
+			short& nVal = nCurrentVal;
 			//获取技能原值
 			if (strCurrentValue.empty()) {
-				if (PList.count(fromQQ) && (intCurrentVal = getPlayer(fromQQ)[fromGroup].getVal(strSkillName)) != NOT_FOUND) {
-					isReference = true;
+				if (PList.count(fromQQ) && (getPlayer(fromQQ)[fromGroup].stored(strSkillName))) {
+					nVal = getPlayer(fromQQ)[fromGroup][strSkillName];
 				}
 				else {
 					reply(GlobalMsg["strEnValEmpty"]);
@@ -1956,7 +1947,7 @@ public:
 					reply(GlobalMsg["strEnValInvalid"]);
 					return 1;
 				}
-				intCurrentVal = stoi(strCurrentValue);
+				nCurrentVal = stoi(strCurrentValue);
 			}
 			readSkipSpace();
 			//可变成长值表达式
@@ -1976,9 +1967,9 @@ public:
 			if (strSkillName.empty())strSkillName = GlobalMsg["strRollEnSkillName"];
 			string strAns = format(GlobalMsg["strRollEnSkill"], { strPCName ,strSkillName }) ;
 			const int intTmpRollRes = RandomGenerator::Randint(1, 100);
-			strAns += ":\n1D100=" + to_string(intTmpRollRes) + "/" + to_string(intCurrentVal);
+			strAns += ":\n1D100=" + to_string(intTmpRollRes) + "/" + to_string(nVal);
 
-			if (intTmpRollRes <= intCurrentVal && intTmpRollRes <= 95)
+			if (intTmpRollRes <= nVal && intTmpRollRes <= 95)
 			{
 				if(strEnFail.empty())strAns += " 失败!\n你的" + strSkillName + "没有变化!";
 				else {
@@ -1987,11 +1978,10 @@ public:
 						reply(GlobalMsg["strValueErr"]);
 						return 1;
 					}
-					int intFinalVal = intCurrentVal + rdEnFail.intTotal;
-					if (intFinalVal > 32767)intFinalVal = 32767;
-					if (intFinalVal < -32767)intFinalVal = -32767;
-					if (isReference)getPlayer(fromQQ)[fromGroup][strSkillName] = intFinalVal;
-					strAns += " 失败!\n你的" + strSkillName + "变化" + rdEnFail.FormCompleteString() + "点，当前为" + to_string(intCurrentVal +
+					nVal += rdEnFail.intTotal;
+					if (nVal > 32767)nVal = 32767;
+					if (nVal < -32767)nVal = -32767;
+					strAns += " 失败!\n你的" + strSkillName + "变化" + rdEnFail.FormCompleteString() + "点，当前为" + to_string(nVal +
 						rdEnFail.intTotal) + "点";
 				}
 			}
@@ -2000,8 +1990,8 @@ public:
 				if(strEnSuc.empty()){
 					strAns += " 成功!\n你的" + strSkillName + "增加1D10=";
 					const int intTmpRollD10 = RandomGenerator::Randint(1, 10);
-					strAns += to_string(intTmpRollD10) + "点,当前为" + to_string(intCurrentVal + intTmpRollD10) + "点";
-					if (isReference)getPlayer(fromQQ)[fromGroup][strSkillName] = intCurrentVal + intTmpRollD10;
+					strAns += to_string(intTmpRollD10) + "点,当前为" + to_string(nVal + intTmpRollD10) + "点";
+					nVal += intTmpRollD10;
 				}
 				else {
 					RD rdEnSuc(strEnSuc);
@@ -2009,11 +1999,10 @@ public:
 						reply(GlobalMsg["strValueErr"]);
 						return 1;
 					}
-					int intFinalVal = intCurrentVal + rdEnSuc.intTotal;
-					if (intFinalVal > 32767)intFinalVal = 32767;
-					if (intFinalVal < -32767)intFinalVal = -32767;
-					if (isReference)getPlayer(fromQQ)[fromGroup][strSkillName] = intFinalVal;
-					strAns += " 成功!\n你的" + strSkillName + "变化" + rdEnSuc.FormCompleteString() + "点，当前为" + to_string(intFinalVal) + "点";
+					nVal += rdEnSuc.intTotal;
+					if (nVal > 32767)nVal = 32767;
+					if (nVal < -32767)nVal = -32767;
+					strAns += " 成功!\n你的" + strSkillName + "变化" + rdEnSuc.FormCompleteString() + "点，当前为" + to_string(nVal) + "点";
 				}
 			}
 			reply(strAns);
@@ -2385,14 +2374,14 @@ public:
 		}
 		else if (strOption == "show") {
 			string strName = readRest();
-			//strReply = pl.getCard(strName, fromGroup).show();
 			reply(format(GlobalMsg["strPropList"], { strPCName,pl.getCard(strName, fromGroup).Name }) + pl.getCard(strName, fromGroup).show());
+			return 1;
 		}
 		else if (strOption == "new") {
 			string strName = strip(readRest());
 			switch (pl.newCard(strName, fromGroup)) {
 			case 0:
-				reply(format(GlobalMsg["strPcCardNew"], { pl[fromGroup].Name}));
+				reply(format(GlobalMsg["strPcCardNew"], { pl[fromGroup].Name }));
 				break;
 			case -1:
 				reply(GlobalMsg["strPcCardFull"]);
@@ -2410,23 +2399,32 @@ public:
 				reply(GlobalMsg["strUnknownErr"]);
 				break;
 			}
+			return 1;
 		}
-		else if (strOption == "del") {
+		else if (strOption == "build") {
 			string strName = strip(readRest());
-			switch (pl.removeCard(strName)) {
+			switch (pl.buildCard(strName, fromGroup)) {
 			case 0:
-				reply(format(GlobalMsg["strPcCardDel"], { strName }));
+				reply(format(GlobalMsg["strPcCardBuild"], { pl.getCard(strName, fromGroup).Name }) + pl.getCard(strName, fromGroup).show());
 				break;
-			case -5:
-				reply(GlobalMsg["strPcNameNotExist"]);
+			case -1:
+				reply(GlobalMsg["strPcCardFull"]);
 				break;
-			case -7:
-				reply(GlobalMsg["strPcInitDelErr"]);
+			case -2:
+				reply(GlobalMsg["strPcTempInvalid"]);
+				break;
+			case -6:
+				reply(GlobalMsg["strPcNameInvalid"]);
 				break;
 			default:
 				reply(GlobalMsg["strUnknownErr"]);
 				break;
 			}
+			return 1;
+		}
+		else if (strOption == "list") {
+			reply(format(GlobalMsg["strPcCardList"], { strNickName }) + pl.listCard());
+			return 1;
 		}
 		else if (strOption == "nn") {
 			string strNewName = strip(readRest());
@@ -2449,39 +2447,43 @@ public:
 				reply(GlobalMsg["strUnknownErr"]);
 				break;
 			}
+			return 1;
 		}
-		else if (strOption == "build") {
+		else if (strOption == "del") {
 			string strName = strip(readRest());
-
-			switch (pl.buildCard(strName, fromGroup)) {
+			switch (pl.removeCard(strName)) {
 			case 0:
-				reply(format(GlobalMsg["strPcCardBuild"], { pl.getCard(strName, fromGroup).Name }) + pl.getCard(strName, fromGroup).show());
+				reply(format(GlobalMsg["strPcCardDel"], { strName }));
 				break;
-			case -1:
-				reply(GlobalMsg["strPcCardFull"]);
+			case -5:
+				reply(GlobalMsg["strPcNameNotExist"]);
 				break;
-			case -2:
-				reply(GlobalMsg["strPcTempInvalid"]);
-				break;
-			case -6:
-				reply(GlobalMsg["strPcNameInvalid"]);
+			case -7:
+				reply(GlobalMsg["strPcInitDelErr"]);
 				break;
 			default:
 				reply(GlobalMsg["strUnknownErr"]);
 				break;
 			}
+			return 1;
 		}
-		else if (strOption == "list") {
-			reply(format(GlobalMsg["strPcCardList"], { strNickName }) + pl.listCard());
+		else if (strOption == "redo") {
+		string strName = strip(readRest());
+		pl.getCard(strName, fromGroup).rebuild();
+		reply(format(GlobalMsg["strPcCardRedo"], { pl.getCard(strName, fromGroup).Name }) + pl.getCard(strName, fromGroup).show());
+		return 1;
 		}
 		else if (strOption == "grp") {
 			reply(format(GlobalMsg["strPcGroupList"], { strNickName }) + pl.listMap());
+			return 1;
 		}
 		else if (strOption == "cpy") {
 			string strName = strip(readRest());
-			switch (pl.copyCard(strName, fromGroup)) {
+			string strName1 = strName.substr(0, strName.find('='));
+			string strName2 = (strName1.length() < strName.length() - 1) ? strip(strName.substr(strName1.length() + 1)) : pl[fromGroup].Name;
+			switch (pl.copyCard(strName1, strName2, fromGroup)) {
 			case 0:
-				reply(format(GlobalMsg["strPcCardCpy"], { pl[fromGroup].Name,pl[strName].Name }));
+				reply(format(GlobalMsg["strPcCardCpy"], { strName2,strName1 }));
 				break;
 			case -1:
 				reply(GlobalMsg["strPcCardFull"]);
@@ -2496,8 +2498,13 @@ public:
 				reply(GlobalMsg["strUnknownErr"]);
 				break;
 			}
+			return 1;
 }
+		else if (strOption == "clr") {
+		PList.erase(fromQQ);
+		reply(format(GlobalMsg["strPcClr"], { strNickName }));
 		return 1;
+		}
 }
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "ra"|| strLowerMessage.substr(intMsgCnt, 2) == "rc")
 		{
@@ -2591,16 +2598,10 @@ public:
 			int intSkillVal;
 			if (strSkillVal.empty())
 			{
-				if (PList.count(fromQQ) && PList[fromQQ][fromGroup].count(strSkillName))
-				{
-					intSkillVal = PList[fromQQ][fromGroup].getVal(strSkillName);
+				if (PList.count(fromQQ) && PList[fromQQ][fromGroup].count(strSkillName)) {
+					intSkillVal = PList[fromQQ][fromGroup].call(strSkillName);
 				}
-				else if (SkillDefaultVal.count(strSkillName))
-				{
-					intSkillVal = SkillDefaultVal[strSkillName];
-				}
-				else
-				{
+				else {
 					reply(format(GlobalMsg["strUnknownPropErr"], { strSkillName }));
 					return 1;
 				}
@@ -2877,17 +2878,14 @@ public:
 					intMsgCnt++;
 				}
 					if (strSkillName.empty()) {
-						reply(format(GlobalMsg["strPropList"], { strPCName,pc.Name }) + pc.show());
+						reply(format(GlobalMsg["strPropList"], { strNickName,pc.Name }) + pc.show());
 						return 1;
 					}
-					if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
-					if (pc.count(strSkillName)){
-						reply(format(GlobalMsg["strProp"], { pc.Name, strSkillName,to_string(pc[strSkillName]) }));
+					string res;
+					if (pc.show(strSkillName, res) > -1) {
+						reply(format(GlobalMsg["strProp"], { pc.Name, strSkillName,res }));
 					}
-					else if (SkillDefaultVal.count(strSkillName)){
-						reply(format(GlobalMsg["strProp"], { strPCName, strSkillName, to_string(SkillDefaultVal[strSkillName]) }));
-					}
-					else{
+					else {
 						reply(GlobalMsg["strPropNotFound"]);
 					}
 					return 1;
@@ -2898,14 +2896,7 @@ public:
 			//循环录入
 			while (intMsgCnt != strLowerMessage.length())
 			{
-				string strSkillName;
-				while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
-					&& strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt]!= ':' && strLowerMessage[intMsgCnt] != '-' && strLowerMessage[intMsgCnt] != '+')
-				{
-					strSkillName += strLowerMessage[intMsgCnt];
-					intMsgCnt++;
-				}
-				if (SkillNameReplace.count(strSkillName))strSkillName = SkillNameReplace[strSkillName];
+				string strSkillName = readSkillName();
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt
 				] == ':')intMsgCnt++;
 				if (strSkillName == "note") {
@@ -2914,6 +2905,14 @@ public:
 						return 1;
 					}
 					break;
+				}
+				if (strSkillName[0] == '&') {
+					strSkillName = strSkillName.substr(1);
+					if (pc.setExp(strSkillName, readExp())) {
+						reply(GlobalMsg["strPcExpTooLong"]);
+						return 1;
+					}
+					continue;
 				}
 				if (strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+') {
 					char chSign = strLowerMessage[intMsgCnt];
@@ -3383,6 +3382,9 @@ public:
 				}
 			}
 			const int intDefaultDice = DefaultDice.count(fromQQ) ? DefaultDice[fromQQ] : 100;
+			if (strMainDice.empty() && PList.count(fromQQ) && getPlayer(fromQQ)[fromGroup].countExp(strReason)) {
+				strMainDice = getPlayer(fromQQ)[fromGroup].getExp(strReason);
+			}
 			RD rdMainDice(strMainDice, intDefaultDice);
 
 			const int intFirstTimeRes = rdMainDice.Roll();
@@ -3476,13 +3478,12 @@ public:
 			else
 			{
 				string strDiceRes;
-				if (intTurnCnt == 1)strDiceRes = boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString();
-				else while (intTurnCnt--)
+				while (intTurnCnt--)
 				{
 					// 此处返回值无用
 					// ReSharper disable once CppExpressionWithoutSideEffects
 					rdMainDice.Roll();
-					strDiceRes += "\n" + (boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString());
+					strDiceRes += (boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString()) + (intTurnCnt ? "\n" : "");
 				}
 					string strAns = format(GlobalMsg["strRollDice"], { strPCName ,strDiceRes });
 					if (!strReason.empty())
@@ -3645,6 +3646,48 @@ private:
 			intMsgCnt++;
 		}
 		return strDice;
+	}
+	//读取含转义的表达式
+	string readExp() {
+		string strExp;
+		bool inBracket = false;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		while (intMsgCnt!=strMsg.length())
+		{
+			if (inBracket) {
+				if (strMsg[intMsgCnt] == ']')inBracket = false;
+				strExp += strMsg[intMsgCnt];
+				intMsgCnt++;
+				continue;
+			}
+			else if (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
+				|| strLowerMessage[intMsgCnt] == 'd' || strLowerMessage[intMsgCnt] == 'k'
+				|| strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b'
+				|| strLowerMessage[intMsgCnt] == 'f'
+				|| strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-'
+				|| strLowerMessage[intMsgCnt] == 'a'
+				|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*'
+				|| strLowerMessage[intMsgCnt] == '[') {
+				if (strMsg[intMsgCnt] == '[')inBracket = true;
+				strExp += strMsg[intMsgCnt];
+				intMsgCnt++;
+			}
+			else break;
+		}
+		return strExp;
+	}
+	//读取大小写不敏感的技能名
+	string readSkillName() {
+		string strSkillName;
+		int intBegin = intMsgCnt;
+		while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
+			&& strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] != ':'
+			&& strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-' && strLowerMessage[intMsgCnt] != '*' && strLowerMessage[intMsgCnt] != '/')
+		{
+			intMsgCnt++;
+		}
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt - 1])))intMsgCnt--;
+		return strMsg.substr(intBegin, intMsgCnt - intBegin);
 	}
 	//
 	int readChat(chatType &ct) {

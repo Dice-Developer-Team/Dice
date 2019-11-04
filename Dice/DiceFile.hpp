@@ -3,6 +3,7 @@
  * Copyright (C) 2019 String.Empty
  */
 #include <fstream>
+#include <sstream> 
 #include <cstdio>
 #include <vector>
 #include <map>
@@ -99,7 +100,46 @@ std::map<T1, T2> fread(ifstream& fin) {
 	}
 	return m;
 }
-
+template<typename T1, typename T2>
+void readini(ifstream& fin,std::pair<T1,T2>& p) {
+	std::string line;
+	getline(fin, line);
+	int pos = line.find('=');
+	if (pos == std::string::npos)return;
+	std::istringstream sin(line.substr(0, pos));
+	sin >> p.first;
+	sin.clear();
+	sin.str(line.substr(pos + 1));
+	sin >> p.second;
+	return;
+}
+void readini(ifstream& fin, std::string& s) {
+	std::string line;
+	getline(fin, line);
+	int pos = line.find('=');
+	if (pos == std::string::npos)return;
+	std::istringstream sin(line.substr(pos + 1));
+	sin >> s;
+	return;
+}
+template<typename T1, typename T2>
+void readini(ifstream& fin, std::map<T1,T2>& m) {
+	std::pair<T1, T2> p;
+	while (fin.peek() != '[' && fin.peek() != EOF) {
+		readini(fin, p);
+		m.insert(p);
+	}
+	return;
+}
+template<typename T>
+void readini(ifstream& fin, std::vector<T>& v) {
+	T p;
+	while (fin.peek() != '[' && fin.peek() != EOF) {
+		readini(fin, p);
+		v.push_back(p);
+	}
+	return;
+}
 template<typename T>
 void loadFile(std::string strPath, std::set<T>&setTmp) {
 	std::ifstream fin(strPath);
@@ -160,7 +200,20 @@ int loadFile(std::string strPath, std::map<T, C> & m) {
 	fin.close();
 	return Cnt;
 }
-
+//读取ini
+template<class C>
+int loadINI(std::string strPath, std::map<std::string, C>& m) {
+	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
+	if (!fin)return -1;
+	std::string s, name;
+	C val;
+	getline(fin, s);
+	readini(fin, name);
+	val.readi(fin);
+	m[name] = val;
+	fin.close();
+	return 1;
+}
 //读取文件夹
 template<typename T>
 int loadDir(int load(std::string, T&), std::string strDir, T& tmp, std::string& strLog) {
@@ -183,9 +236,10 @@ int loadDir(int load(std::string, T&), std::string strDir, T& tmp, std::string& 
 			else intItem += Cnt;
 		}
 	} while (!_findnext(lf, &file));
-	strLog = "读取" + strDir + "中的" + std::to_string(intFile) + "个文件, 共" + std::to_string(intItem) + "个条目";
+	if (!intFile)return 0;
+	strLog += "读取" + strDir + "中的" + std::to_string(intFile) + "个文件, 共" + std::to_string(intItem) + "个条目\n";
 	if (intFailure) {
-		strLog += "，读取失败" + std::to_string(intFailure) + "个:";
+		strLog += "读取失败" + std::to_string(intFailure) + "个:";
 		for (auto it : files) {
 			strLog += "\n" + it;
 		}
