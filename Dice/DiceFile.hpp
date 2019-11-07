@@ -21,6 +21,25 @@ int mkDir(std::string dir) {
 	if (_access(dir.c_str(), 0))	return _mkdir(dir.c_str());
 	return -2;
 }
+int clrDir(std::string dir,const std::set<std::string>& exceptList) {
+	int nCnt = 0;
+	_finddata_t file;
+	long lf = _findfirst((dir + "*").c_str(), &file);
+	//输入文件夹路径
+	if (lf < 0) {
+		throw(dir + " not found!");
+	}
+	else {
+		do {
+			if (file.attrib == _A_SUBDIR)continue;
+			if (!strcmp(file.name, ".") || !strcmp(file.name, ".."))continue;
+			if (exceptList.count(file.name))continue;
+			if (!remove((dir + file.name).c_str()))nCnt++;
+		} while (!_findnext(lf, &file));
+	}
+	_findclose(lf);
+	return nCnt;
+}
 
 template<typename T>
 //typename std::enable_if<std::is_integral<T>::value, bool>::type fscan(std::ifstream& fin, T& t) {

@@ -35,14 +35,12 @@
 
 #include "APPINFO.h"
 #include "jsonio.h"
-#include "DiceFile.hpp"
 #include "RandomGenerator.h"
 #include "RD.h"
 #include "CQEVE_ALL.h"
 #include "InitList.h"
 #include "GlobalVar.h"
 #include "NameStorage.h"
-#include "GetRule.h"
 #include "DiceMsgSend.h"
 #include "CustomMsg.h"
 #include "MsgFormat.h"
@@ -65,7 +63,6 @@ long long IdentityQQ = 0;
 long long StandQQ = 0;
 map<long long, int> DefaultDice;
 map<chatType, int> mDefaultCOC;
-map<long long, string> WelcomeMsg;
 map<long long, string> DefaultRule;
 set<long long> DisabledJRRPGroup;
 set<long long> DisabledJRRPDiscuss;
@@ -149,6 +146,7 @@ void dataBackUp() {
 	saveFile(strFileLoc + "WelcomeMsg.RDconf", WelcomeMsg);
 	saveFile(strFileLoc + "DefaultCOC.MYmap", mDefaultCOC);
 	saveFile("DiceData\\user\\PlayerCards.RDconf", PList);
+	Name->save();
 }
 EVE_Enable(eventEnable)
 {
@@ -624,7 +622,10 @@ EVE_Request_AddGroup(eventGroupInvited) {
 EVE_Menu(eventMasterMode) {
 	if (boolMasterMode) {
 		boolMasterMode = false;
-		MessageBoxA(nullptr, "Master模式已关闭√", "Master模式切换",MB_OK | MB_ICONINFORMATION);
+		masterQQ = 0;
+		AdminQQ.clear();
+		MonitorList.clear();
+		MessageBoxA(nullptr, "Master模式已关闭√\nmaster已清除", "Master模式切换",MB_OK | MB_ICONINFORMATION);
 	}else {
 		boolMasterMode = true;
 		MessageBoxA(nullptr, "Master模式已开启√", "Master模式切换", MB_OK | MB_ICONINFORMATION);

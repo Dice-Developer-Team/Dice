@@ -13,6 +13,8 @@
 #include "DiceMsgSend.h"
 #include "GlobalVar.h"
 #include "MsgFormat.h"
+#include "ManagerSystem.h"
+#include "GetRule.h"
 #include "initList.h"
 #include "NameStorage.h"
 #include "CharacterCard.h"
@@ -25,7 +27,6 @@ using namespace CQ;
 extern map<long long, int> DefaultDice;
 //默认COC检定房规
 extern map<chatType, int> mDefaultCOC;
-extern map<long long, string> WelcomeMsg;
 extern map<long long, string> DefaultRule;
 extern set<long long> DisabledJRRPGroup;
 extern set<long long> DisabledJRRPDiscuss;
@@ -39,7 +40,6 @@ extern unique_ptr<NameStorage> Name;
 extern unique_ptr<Initlist> ilInitList;
 
 using PropType = map<string, int>;
-//extern map<SourceType, PropType> CharacterProp;
 extern multimap<long long, long long> ObserveGroup;
 extern multimap<long long, long long> ObserveDiscuss;
 class FromMsg {
@@ -153,16 +153,6 @@ public:
 				boolConsole[strOption] = isOn;
 				sendAdmin((isOn ? "已开启" : "已关闭") + GlobalMsg["strSelfName"] + "的" + strOption);
 			}
-			return 1;
-		}
-		else if (strOption == "save") {
-			dataBackUp();
-			AdminNotify("数据已保存√");
-			return 1;
-		}
-		else if (strOption == "load") {
-			loadData();
-			AdminNotify("数据已加载√");
 			return 1;
 		}
 		else if (strOption == "delete") {
@@ -279,30 +269,6 @@ public:
 			else {
 				reply(GlobalMsg["strSelfName"] + "已成为公用骰娘！");
 			}
-			return 1;
-		}
-		else if (strOption == "uptime") {
-			GetLocalTime(&stNow);
-			strReply = "本地时间" + printSTime(stNow) + "\n";
-			//strReply += "本机运行时间：" + std::to_string(clock()) + " 启动时间：" + std::to_string(llStartTime) + "\n";
-			strReply += "运行时长：";
-			long long llDuration = (clock() - llStartTime) / 1000;
-			if (llDuration < 0) {
-				strReply += "N/A";
-			}
-			else if (llDuration < 60 * 5) {
-				strReply += std::to_string(llDuration) + "秒";
-			}
-			else if (llDuration < 60 * 60 * 5) {
-				strReply += std::to_string(llDuration / 60) + "分钟";
-			}
-			else if (llDuration < 60 * 60 * 24 * 5) {
-				strReply += std::to_string(llDuration / 60 / 60) + "小时";
-			}
-			else {
-				strReply += std::to_string(llDuration / 60 / 60 / 24) + "天";
-			}
-			reply();
 			return 1;
 		}
 		else if (strOption == "clockon") {
@@ -1073,6 +1039,62 @@ public:
 			return 1;
 		}
 }
+		else if (strLowerMessage.substr(intMsgCnt, 6) == "system"){
+			intMsgCnt += 6;
+			if (!isAdmin) {
+				reply(GlobalMsg["strNotAdmin"]);
+				return -1;
+			}
+			string strOption = readPara();
+			if (strOption == "save") {
+				dataBackUp();
+				AdminNotify("数据已保存√");
+				return 1;
+			}
+			else if (strOption == "load") {
+				loadData();
+				AdminNotify("数据已加载√");
+				return 1;
+			}
+			else if (strOption == "uptime") {
+				GetLocalTime(&stNow);
+				strReply = "本地时间" + printSTime(stNow) + "\n";
+				//strReply += "本机运行时间：" + std::to_string(clock()) + " 启动时间：" + std::to_string(llStartTime) + "\n";
+				strReply += "运行时长：";
+				long long llDuration = (clock() - llStartTime) / 1000;
+				if (llDuration < 0) {
+					strReply += "N/A";
+				}
+				else if (llDuration < 60 * 5) {
+					strReply += std::to_string(llDuration) + "秒";
+				}
+				else if (llDuration < 60 * 60 * 5) {
+					strReply += std::to_string(llDuration / 60) + "分钟";
+				}
+				else if (llDuration < 60 * 60 * 24 * 5) {
+					strReply += std::to_string(llDuration / 60 / 60) + "小时";
+				}
+				else {
+					strReply += std::to_string(llDuration / 60 / 60 / 24) + "天";
+				}
+				reply();
+				return 1;
+			}
+			else if (strOption == "clrimg") {
+				int Cnt = clearImage();
+				AdminNotify("已清理image文件" + to_string(Cnt) + "项");
+				return 1;
+			}
+			else if (strOption == "scanimg") {
+				set<string> sImage;
+				strReply = "图片文件名:";
+				scanImage(readRest(), sImage);
+				for (auto it : sImage) {
+					strReply += "\n" + it;
+				}
+				reply();
+			}
+		}
 		else if (strLowerMessage.substr(intMsgCnt, 5) == "admin") 
 		{
 			intMsgCnt += 5;

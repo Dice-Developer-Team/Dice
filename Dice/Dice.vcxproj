@@ -267,6 +267,7 @@
     <ClInclude Include="InitList.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="Jsonio.h" />
+    <ClInclude Include="ManagerSystem.h" />
     <ClInclude Include="MsgFormat.h" />
     <ClInclude Include="MsgMonitor.h" />
     <ClInclude Include="NameStorage.h" />

@@ -468,13 +468,17 @@ void warningHandler() {
 				int intDay = (int)(tNow - eachChat.second) / 86400;
 				if (intDay > intDayLim) {
 					strReply += printChat(eachChat.first) + ":" + to_string(intDay) + "Ìì\n";
-					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }), eachChat.first.first, eachChat.first.second);
-					Sleep(100);
 					if (eachChat.first.second == Group) {
+						sendGroupMsg(eachChat.first.first, format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }));
+						Sleep(100);
 						setGroupLeave(eachChat.first.first);
 						if (GroupList.count(eachChat.first.first))GroupList.erase(eachChat.first.first);
 					}
-					else setDiscussLeave(eachChat.first.first);
+					else {
+						sendGroupMsg(eachChat.first.first, format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }));
+						Sleep(100);
+						setDiscussLeave(eachChat.first.first);
+					}
 					mLastMsgList.erase(eachChat.first);
 					intCnt++;
 				}
@@ -483,7 +487,7 @@ void warningHandler() {
 				int intDay = (int)(tNow - getGroupMemberInfo(eachGroup.first, getLoginQQ()).LastMsgTime)/86400;
 				if (intDay > intDayLim) {
 					strReply += printGroup(eachGroup.first) + ":" + to_string(intDay) + "Ìì\n";
-					AddMsgToQueue(format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }), eachGroup.first, Group);
+					sendGroupMsg(eachGroup.first, format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }));
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
 					mLastMsgList.erase({ eachGroup.first ,CQ::Group });

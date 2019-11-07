@@ -217,7 +217,8 @@ public:
 	}
 	int setNote(string note) {
 		if (note.length() > 255)return -11;
-		Note = note;
+		Note = note; 
+		scanImage(note, sReferencedImage);
 		return 0;
 	}
 	string erase(string key, bool isExp = false) {
@@ -326,6 +327,7 @@ public:
 				break;
 			case 101:
 				Note = fread<string>(fin);
+				scanImage(Note, sReferencedImage);
 				break;
 			default:
 				break;
