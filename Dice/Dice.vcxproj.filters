@@ -69,9 +69,6 @@
     <ClCompile Include="GlobalVar.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CustomMsg.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="EncodingConvert.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -193,9 +190,6 @@
     </ClInclude>
     <ClInclude Include="json.hpp">
       <Filter>头文件\nlohmann</Filter>
-    </ClInclude>
-    <ClInclude Include="CustomMsg.h">
-      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="EncodingConvert.h">
       <Filter>头文件</Filter>

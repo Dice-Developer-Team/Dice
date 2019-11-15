@@ -209,7 +209,6 @@
     <ClCompile Include="..\CQSDKCPP\CQTools.cpp" />
     <ClCompile Include="..\CQSDKCPP\Unpack.cpp" />
     <ClCompile Include="CardDeck.cpp" />
-    <ClCompile Include="CustomMsg.cpp" />
     <ClCompile Include="Dice.cpp" />
     <ClCompile Include="DiceCloud.cpp" />
     <ClCompile Include="DiceConsole.cpp" />
@@ -254,7 +253,6 @@
     <ClInclude Include="BlackMark.hpp" />
     <ClInclude Include="CardDeck.h" />
     <ClInclude Include="CharacterCard.h" />
-    <ClInclude Include="CustomMsg.h" />
     <ClInclude Include="DiceCloud.h" />
     <ClInclude Include="DiceConsole.h" />
     <ClInclude Include="DiceEvent.h" />

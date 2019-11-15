@@ -142,6 +142,9 @@ std::string printSTime(SYSTEMTIME st){
 }
 	//打印用户昵称QQ
 	string printQQ(long long llqq) {
+		string nick = getStrangerInfo(llqq).nick;
+		while (nick.find(" ") != string::npos)nick.erase(nick.begin() + nick.find(" "), nick.begin() + nick.find(" ") + strlen(" "));
+		while (nick.find(" ") != string::npos)nick.erase(nick.begin() + nick.find(" "), nick.begin() + nick.find(" ") + strlen(" "));
 		return getStrangerInfo(llqq).nick + "(" + to_string(llqq) + ")";
 	}
 	//打印QQ群号
@@ -441,6 +444,7 @@ void warningHandler() {
 	int clearGroup(string strPara,long long fromQQ) {
 		int intCnt=0;
 		string strReply;
+		std::map<string, string>strVar;
 		map<long long, string> GroupList = getGroupList();
 		for (auto it : MonitorList) {
 			if (it.second != Group)continue;
@@ -449,7 +453,7 @@ void warningHandler() {
 		if (strPara == "unpower" || strPara.empty()) {
 			for (auto eachGroup : GroupList) {
 				if (getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions == 1) {
-					AddMsgToQueue(GlobalMsg["strGroupClr"], eachGroup.first, Group);
+					sendGroupMsg(eachGroup.first, GlobalMsg["strLeaveNoPower"]);
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
 					intCnt++;
@@ -467,15 +471,16 @@ void warningHandler() {
 				if (MonitorList.count(eachChat.first))continue;
 				int intDay = (int)(tNow - eachChat.second) / 86400;
 				if (intDay > intDayLim) {
-					strReply += printChat(eachChat.first) + ":" + to_string(intDay) + "天\n";
+					strVar["day"] = to_string(intDay);
+					strReply += printChat(eachChat.first) + ":" + strVar["day"] + "天\n";
 					if (eachChat.first.second == Group) {
-						sendGroupMsg(eachChat.first.first, format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }));
+						sendGroupMsg(eachChat.first.first, format(GlobalMsg["strLeaveUnused"], GlobalMsg, strVar));
 						Sleep(100);
 						setGroupLeave(eachChat.first.first);
 						if (GroupList.count(eachChat.first.first))GroupList.erase(eachChat.first.first);
 					}
 					else {
-						sendGroupMsg(eachChat.first.first, format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }));
+						sendDiscussMsg(eachChat.first.first, format(GlobalMsg["strLeaveUnused"], GlobalMsg, strVar));
 						Sleep(100);
 						setDiscussLeave(eachChat.first.first);
 					}
@@ -486,8 +491,9 @@ void warningHandler() {
 			for (auto eachGroup : GroupList) {
 				int intDay = (int)(tNow - getGroupMemberInfo(eachGroup.first, getLoginQQ()).LastMsgTime)/86400;
 				if (intDay > intDayLim) {
+					strVar["day"] = to_string(intDay);
 					strReply += printGroup(eachGroup.first) + ":" + to_string(intDay) + "天\n";
-					sendGroupMsg(eachGroup.first, format(GlobalMsg["strOverdue"], { GlobalMsg["strSelfName"], to_string(intDay) }));
+					sendGroupMsg(eachGroup.first, format(GlobalMsg["strLeaveUnused"], GlobalMsg, strVar));
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
 					mLastMsgList.erase({ eachGroup.first ,CQ::Group });

@@ -112,7 +112,7 @@ namespace Network
 			}
 			if (dwRetCode != 200)
 			{
-				des = format(GlobalMsg["strRequestRetCodeErr"], {std::to_string(dwRetCode) });
+				des = format(GlobalMsg["strRequestRetCodeErr"], GlobalMsg, { { "error",std::to_string(dwRetCode) } });
 				InternetCloseHandle(hRequest);
 				InternetCloseHandle(hConnect);
 				InternetCloseHandle(hInternet);
@@ -211,7 +211,7 @@ namespace Network
 			}
 			if (dwRetCode != 200)
 			{
-				des = format(GlobalMsg["strRequestRetCodeErr"], { std::to_string(dwRetCode) });
+				des = format(GlobalMsg["strRequestRetCodeErr"], GlobalMsg, { { "error",std::to_string(dwRetCode) } });
 				InternetCloseHandle(hRequest);
 				InternetCloseHandle(hConnect);
 				InternetCloseHandle(hInternet);

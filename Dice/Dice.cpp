@@ -42,7 +42,6 @@
 #include "GlobalVar.h"
 #include "NameStorage.h"
 #include "DiceMsgSend.h"
-#include "CustomMsg.h"
 #include "MsgFormat.h"
 #include "DiceCloud.h"
 #include "CardDeck.h"
@@ -147,6 +146,7 @@ void dataBackUp() {
 	saveFile(strFileLoc + "DefaultCOC.MYmap", mDefaultCOC);
 	saveFile("DiceData\\user\\PlayerCards.RDconf", PList);
 	Name->save();
+	ilInitList->save();
 }
 EVE_Enable(eventEnable)
 {
@@ -197,7 +197,6 @@ EVE_Enable(eventEnable)
 	//获取boolConsole
 	loadJMap(strFileLoc + "boolConsole.json", boolConsole);
 
-	
 	loadFile(strFileLoc + "WhiteGroup.RDconf", WhiteGroup);
 	loadFile(strFileLoc + "WhiteQQ.RDconf", WhiteQQ);
 	loadFile(strFileLoc + "BlackGroup.RDconf", BlackGroup);
@@ -219,6 +218,7 @@ EVE_Enable(eventEnable)
 	loadFile(strFileLoc + "DefaultRule.RDconf", DefaultRule);
 	loadFile(strFileLoc + "WelcomeMsg.RDconf", WelcomeMsg);
 	//读取帮助文档
+	HelpDoc["master"] = printQQ(masterQQ);
 	ifstream ifstreamHelpDoc(strFileLoc + "HelpDoc.txt");
 	if (ifstreamHelpDoc)
 	{
@@ -234,7 +234,6 @@ EVE_Enable(eventEnable)
 		}
 	}
 	ifstreamHelpDoc.close();
-	
 	//读取聊天列表
 	loadFile(strFileLoc + "LastMsgList.MYmap", mLastMsgList);
 	//读取邀请者列表
@@ -243,19 +242,10 @@ EVE_Enable(eventEnable)
 	loadFile(strFileLoc + "DefaultCOC.MYmap", mDefaultCOC);
 	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
 	GlobalMsg["strSelfName"] = getLoginNick();
-	ifstream ifstreamCustomMsg(strFileLoc + "CustomMsg.json");
-	if (ifstreamCustomMsg)
-	{
-		ReadCustomMsg(ifstreamCustomMsg);
-	}
-	ifstreamCustomMsg.close();
+	if (loadJMap("DiceData\\conf\\CustomMsg.json", EditedMsg) < 0)loadJMap(strFileLoc + "CustomMsg.json", EditedMsg);
 	//预修改出场回复文本
-	for (auto it : GlobalMsg) {
-		string strMsg = it.second;
-		while (strMsg.find("本机器人") != string::npos) {
-			strMsg.replace(strMsg.find("本机器人"), 8, GlobalMsg["strSelfName"]);
-		}
-		GlobalMsg[it.first] = strMsg;
+	for (auto it : EditedMsg) {
+		GlobalMsg[it.first] = it.second;
 	}
 	loadData();
 	if (loadFile("DiceData\\user\\PlayerCards.RDconf", PList) < 1) {
@@ -330,15 +320,14 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 {
 	time_t tNow = time(NULL);
 	if (boolConsole["LeaveDiscuss"]) {
-		AddMsgToQueue(GlobalMsg["strNoDiscuss"], eve.fromDiscuss, Discuss);
+		sendDiscussMsg(eve.fromDiscuss, format(GlobalMsg["strLeaveDiscuss"], GlobalMsg));
 		Sleep(1000);
 		setDiscussLeave(eve.fromDiscuss);
 		return;
 	}
 	if (BlackQQ.count(eve.fromQQ) && boolConsole["AutoClearBlack"]) {
 		string strMsg = "发现黑名单用户" + printQQ(eve.fromQQ) + "，自动执行退群";
-		AddMsgToQueue(strMsg, eve.fromDiscuss, Discuss);
-		Sleep(1000);
+		sendDiscussMsg(eve.fromDiscuss, strMsg);
 		sendAdmin(printChat({ eve.fromDiscuss,Discuss }) + strMsg);
 		setDiscussLeave(eve.fromDiscuss);
 		return;

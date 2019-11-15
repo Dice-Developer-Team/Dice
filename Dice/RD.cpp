@@ -34,34 +34,12 @@ void init(string& msg)
 	msg_decode(msg);
 }
 
-void init2(string& msg)
-{
-	for (int i = 0; i != msg.length(); i++)
-	{
-		if (msg[i] < 0)
-		{
-			if ((msg[i] & 0xff) == 0xa1 && (msg[i + 1] & 0xff) == 0xa1)
-			{
-				msg[i] = 0x20;
-				msg.erase(msg.begin() + i + 1);
-			}
-			else if ((msg[i] & 0xff) == 0xa3 && (msg[i + 1] & 0xff) >= 0xa1 && (msg[i + 1] & 0xff) <= 0xfe)
-			{
-				msg[i] = msg[i + 1] - 0x80;
-				msg.erase(msg.begin() + i + 1);
-			}
-			else
-			{
-				i++;
-			}
-		}
-	}
-
+void init2(string& msg){
 	while (isspace(static_cast<unsigned char>(msg[0])))
 		msg.erase(msg.begin());
 	while (!msg.empty() && isspace(static_cast<unsigned char>(msg[msg.length() - 1])))
 		msg.erase(msg.end() - 1);
-	if (msg.substr(0, 2) == "¡£")
+	if (msg.substr(0, 2) == "¡£"|| msg.substr(0, 2) == "£¡")
 	{
 		msg.erase(msg.begin());
 		msg[0] = '.';

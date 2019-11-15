@@ -52,14 +52,15 @@ int loadJMap(std::string strLoc, std::map<T1, T2> &mapTmp) {
 				mapTmp[tKey] = tVal;
 				Cnt++;
 			}
+			fin.close();
+			return Cnt;
 		}
 		catch (...) {
 			fin.close();
 			return -1;
 		}
 	}
-	fin.close();
-	return Cnt;
+	return -2;
 }
 
 template<typename T>

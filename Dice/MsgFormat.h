@@ -24,5 +24,41 @@
 #ifndef DICE_MSG_FORMAT
 #define DICE_MSG_FORMAT
 #include <string>
+#include <map>
+#include <vector>
+using std::string;
 std::string format(std::string str, const std::initializer_list<const std::string>& replace_str);
+std::string format(std::string str, const std::map<std::string, std::string>& replace_str, std::map<std::string, std::string> str_tmp = {});
+
+class ResList {
+	std::vector<std::string> vRes;
+	unsigned int intMaxLen = 0;
+	string sDot;
+public:
+	ResList() = default;
+	ResList(std::string s, std::string dot = " | ") :sDot(dot) {
+		vRes.push_back(s);
+		intMaxLen = s.length();
+	}
+	ResList& operator<<(std::string s) {
+		vRes.push_back(s);
+		if (s.length() > intMaxLen)intMaxLen = s.length();
+		return *this;
+	}
+	std::string show() {
+		std::string s;
+		if (intMaxLen > 10) {
+			for (auto it : vRes) {
+				s += "\n" + it;
+			}
+		}
+		else {
+			for (auto it = vRes.begin(); it != vRes.end(); it++) {
+				if (it == vRes.begin())s = *it;
+				else s += sDot + *it;
+			}
+		}
+		return s;
+	}
+};
 #endif /*DICE_MSG_FORMAT*/
