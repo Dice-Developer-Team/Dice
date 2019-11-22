@@ -74,9 +74,9 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPcCardCpy","已将{char2}的属性复制到{char1}√"},
 	{"strPcClr","已清空{nick}的角色卡记录√"},
 	{"strPcCardList","{nick}的角色列表：{show}\n"},
-	{"strPcCardBuild","{nick}的{char}生成：\n{show}"},
-	{"strPcCardShow","{nick}的{char}属性列表为：\n{show}"},	//{nick}-用户昵称 {type}-角色卡类型 {char}-角色卡名
-	{"strPcCardRedo","{nick}的{char}重新生成：\n{show}"},
+	{"strPcCardBuild","{nick}的{char}生成：{show}"},
+	{"strPcCardShow","{nick}的{char}属性列表为：{show}"},	//{nick}-用户昵称 {type}-角色卡类型 {char}-角色卡名
+	{"strPcCardRedo","{nick}的{char}重新生成：{show}"},
 	{"strPcGroupList","{nick}的各群角色列表：\n{show}"},
 	{"strPcCardFull","角色卡已达上限，请先清理多余角色卡×"},
 	{"strPcTempInvalid","无效的角色卡模板×"},

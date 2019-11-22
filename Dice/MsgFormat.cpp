@@ -41,11 +41,8 @@ std::string format(std::string str, const std::initializer_list<const std::strin
 	return str;
 }
 std::string format(std::string s, const std::map<std::string, std::string>& replace_str, std::map<std::string, std::string> str_tmp) {
-	std::ofstream log("Dice.log", std::ios::out|std::ios::app);//
-	log << s <<std::endl;//
 	if (s[0] == '&') {
 		string key = s.substr(1);
-		log << key << std::endl;//
 		auto it = replace_str.find(key);
 		if (it != replace_str.end()) {
 			return format(it->second, replace_str, str_tmp);
@@ -58,12 +55,10 @@ std::string format(std::string s, const std::map<std::string, std::string>& repl
 	int len = s.length();
 	while ((l = s.find('{', r)) != string::npos && (r = s.find('}', l)) != string::npos) {
 		if (s[l - 1] == 0x5c) {
-			//log << "ºöÂÔ×ªÒå" << std::endl;//
 			s.replace(l - 1, 1, "");
 			continue;
 		}
 		string key = s.substr(l + 1, r - l - 1);
-		//log << key << std::endl;//
 		auto it = replace_str.find(key);
 		if (it != replace_str.end()) {
 			s.replace(l, r - l + 1, format(it->second, replace_str, str_tmp));
@@ -71,7 +66,6 @@ std::string format(std::string s, const std::map<std::string, std::string>& repl
 			len = s.length();
 		}
 		else if ((it = str_tmp.find(key)) != str_tmp.end()) {
-			log << it->second << std::endl;//
 			s.replace(l, r - l + 1, it->second);
 			r += s.length() - len;
 			len = s.length();

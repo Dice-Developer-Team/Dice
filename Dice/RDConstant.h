@@ -106,7 +106,10 @@ static std::map<std::string, std::string> SkillNameReplace = {
 	{"驾驶:飞行器", "飞行器驾驶"},
 	{"驾驶(飞行器)", "飞行器驾驶"}
 };
-
+static std::vector<std::vector<std::string>>BasicCOC7 = {
+	{"力量","体质","体型","敏捷","外貌","智力","意志","教育","幸运"},
+	{"生命","理智","魔法"}
+};
 static std::vector<std::pair<std::string, std::string>>BuildCOC7 = {
 	{"力量","3D6*5"},
 	{"体质","3D6*5"},
@@ -121,7 +124,7 @@ static std::vector<std::pair<std::string, std::string>>BuildCOC7 = {
 	{"理智","&意志"},
 	{"魔法","[意志]/5"}
 };
-static std::map<std::string, std::string>mDynamicCOC7 = {
+static std::map<std::string, std::string>mVariableCOC7 = {
 	{"灵感","&智力"},
 	{"知识","&教育"},
 	{"体质体型和","[体质]+[体型]"},
@@ -137,12 +140,12 @@ static std::map<std::string, std::string>ExpressionCOC7 = {
 {"甩棍","1D8+[DB]"},
 {"大头棍","1D8+[DB]"},
 {"包护身棒","1D8+[DB]"},
-{"大型棍状物","1D8+[DB]"},
+{"大型棍","1D8+[DB]"},
 {"棒球棍","1D8+[DB]"},
 {"板球棒","1D8+[DB]"},
 {"拨火棍","1D8+[DB]"},
 {"小型棍状物","1D6+[DB]"},
-{"警棍等","1D6+[DB]"},
+{"警棍","1D6+[DB]"},
 {"弩","1D8+2"},
 {"绞具","1D6+[DB]"},
 {"手斧","1D6+1+[DB]"},

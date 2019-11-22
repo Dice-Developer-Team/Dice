@@ -259,6 +259,7 @@
     <ClInclude Include="DiceFile.hpp" />
     <ClInclude Include="DiceMsgSend.h" />
     <ClInclude Include="DiceNetwork.h" />
+    <ClInclude Include="DiceXMLTree.h" />
     <ClInclude Include="EncodingConvert.h" />
     <ClInclude Include="GetRule.h" />
     <ClInclude Include="GlobalVar.h" />

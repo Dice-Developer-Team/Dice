@@ -8,6 +8,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <stack>
 #include <mutex>
 #include "CQTools.h"
 #include "Unpack.h"
@@ -22,14 +23,17 @@ using std::map;
 #define NOT_FOUND -32767
 
 static map<string, short>mTempletTag = {
-	{"Name",1},
-	{"Replace",10},
-	{"Build",11},
-	{"AutoFill",12},
-	{"Dynamic",13},
-	{"DiceExp",21},
-	{"Default",31},
-	{"Note",101}
+	{"name",1},
+	{"type",2},
+	{"alias",20},
+	{"basic",31},
+	{"autofill",22},
+	{"variable",23},
+	{"diceexp",21},
+	{"default",12},
+	{"build",41},
+	{"generate",24},
+	{"note",101},
 };
 static map<string, short>mCardTag = {
 	{"Name",1},
@@ -39,68 +43,101 @@ static map<string, short>mCardTag = {
 	{"Note",101},
 	{"End",255}
 };
-
-class CardTemp {
+//生成模板
+class CardBuild {
 public:
+	CardBuild() = default;
+	CardBuild(vector<std::pair<string, string>>attr,vector<string>name, vector<string>note):vBuildList(attr), vNameList(name), vNoteList(note) {}
+	//属性生成
+	vector<std::pair<string, string>>vBuildList = {};
 	//随机姓名
 	vector<string>vNameList = {};
+	//Note生成
+	vector<string>vNoteList = {};
+	CardBuild(DDOM d) {
+		for (auto sub : d.vChild) {
+			switch (mTempletTag[sub.tag]) {
+			case 1:
+				vNameList = getLines(sub.strValue);
+				break;
+			case 24:
+				readini(sub.strValue, vBuildList);
+				break;
+			case 101:
+				vNoteList = getLines(sub.strValue);
+				break;
+			default:break;
+			}
+		}
+	}
+};
+class CardTemp {
+public:
+	string type;
 	map<string, string>replaceName = {};
 	//作成时生成
-	vector<std::pair<string, string>>vBuildList = {};
+	vector<vector<string>>vBasicList = {};
 	//调用时生成
 	map<string, string>mAutoFill = {};
 	//动态引用
-	map<string, string>mDynamic = {};
+	map<string, string>mVariable = {};
 	//表达式
 	map<string, string>mExpression = {};
 	//默认值
 	map<string, short>defaultSkill = {};
-	//备选note
-	vector<string>vNoteList = {};
+	//生成参数
+	map<string, CardBuild>mBuildOption = {};
 	CardTemp() = default;
-	CardTemp(vector<string>name,map<string, string>replace, vector<std::pair<string, string>>build, map<string, string>autofill, map<string, string>dynamic, map<string, string>exp, map<string, short>skill, vector<string>note) :vNameList(name),replaceName(replace), vBuildList(build), mAutoFill(autofill), mDynamic(dynamic), mExpression(exp), defaultSkill(skill), vNoteList(note) {}
-	void readi(ifstream& fin) {
-		string line;
-		string tag; 
-		while (fin.peek() != EOF) {
-			getline(fin, line);
-			tag = line.substr(1, line.find(']') - 1);
-			switch(mTempletTag[tag]) {
-				case 1:
-					readini(fin, vNameList);
-					break;
-				case 10:
-					readini(fin, replaceName);
-					break;
-				case 11:
-					readini(fin, vBuildList);
-					break;
-				case 12:
-					readini(fin, mAutoFill);
-					break;
-				case 13:
-					readini(fin, mDynamic);
-					break;
-				case 21:
-					readini(fin, mExpression);
-					break;
-				case 31:
-					readini(fin, defaultSkill);
-					break;
-				case 101:
-					readini(fin, vNoteList);
-					break;
-				default:
-					break;
+	CardTemp(string type, map<string, string>replace, vector<vector<string>>basic, map<string, string>autofill, map<string, string>dynamic, map<string, string>exp, map<string, short>skill, map<string, CardBuild> option) :type(type),replaceName(replace), vBasicList(basic), mAutoFill(autofill), mVariable(dynamic), mExpression(exp), defaultSkill(skill), mBuildOption(option) {}
+	CardTemp(DDOM d) {
+		readt(d);
+	}
+	void readt(DDOM d) {
+		for (auto node : d.vChild) {
+			switch (mTempletTag[node.tag]) {
+			case 2:
+				type = node.strValue;
+				break;
+			case 20:
+				readini(node.strValue, replaceName);
+				break;
+			case 31:
+				for (auto sub : node.vChild) {
+					vBasicList.push_back(getLines(sub.strValue));
+				}
+				break;
+			case 22:
+				readini(node.strValue, mAutoFill);
+				break;
+			case 23:
+				readini(node.strValue, mVariable);
+				break;
+			case 21:
+				readini(node.strValue, mExpression);
+				break;
+			case 12:
+				readini(node.strValue, defaultSkill);
+				break;
+			case 41:
+				for (auto sub : node.vChild) {
+					mBuildOption[sub.strValue] = CardBuild(sub);
+				}
+				break;
+			default:
+				break;
 			}
 		}
-		return;
+	}
+	string getName() {
+		return type;
 	}
 };
-//人物卡模板列表
-//static CardTemp CardCOC7(SkillNameReplace, SkillDefaultVal, CreatingCOC7);
+
+
 static map<string, CardTemp>mCardTemplet = {
-	{"COC7",{CardDeck::mPublicDeck["随机姓名"],SkillNameReplace,BuildCOC7,AutoFillCOC7,mDynamicCOC7,ExpressionCOC7,SkillDefaultVal,CardDeck::mPublicDeck["调查员信息"]}},
+	{"COC7",{"COC7",SkillNameReplace,BasicCOC7,AutoFillCOC7,mVariableCOC7,ExpressionCOC7,SkillDefaultVal,{
+		{"",CardBuild({BuildCOC7},CardDeck::mPublicDeck["随机姓名"],CardDeck::mPublicDeck["调查员信息"])}
+	}}}
 };
 
 class CharaCard {
@@ -121,16 +158,16 @@ public:
 			Attr[key] = cal(pTemplet->mAutoFill.find(key)->second);
 			return Attr[key];
 		}
-		else if (pTemplet->mDynamic.count(key)) {
-			return cal(pTemplet->mDynamic.find(key)->second);
+		else if (pTemplet->mVariable.count(key)) {
+			return cal(pTemplet->mVariable.find(key)->second);
 		}
 		else if (pTemplet->defaultSkill.count(key))return pTemplet->defaultSkill.find(key)->second;
 		else return 0;
 	}
 	short getVal(string key)const {
 		if (Attr.count(key))return Attr.find(key)->second;
-		else if (pTemplet->mDynamic.count(key)) {
-			string exp = pTemplet->mDynamic.find(key)->second;
+		else if (pTemplet->mVariable.count(key)) {
+			string exp = pTemplet->mVariable.find(key)->second;
 			RD Res(exp);
 			Res.Roll();
 			return Res.intTotal;
@@ -185,14 +222,20 @@ public:
 		Res.Roll();
 		return Res.intTotal;
 	}
-	void build() {
-		for (auto it : pTemplet->vBuildList) {
+	void build(string para = "") {
+		auto it = pTemplet->mBuildOption.find(para);
+		if (it == pTemplet->mBuildOption.end())return;
+		CardBuild build = it->second;
+		while (Name.empty() && !build.vNameList.empty()) {
+			Name = CardDeck::drawCard(build.vNameList);
+		}
+		for (auto it : build.vBuildList) {
 			if (Attr.count(it.first))continue;
 			Attr[it.first] = cal(it.second);
 		}
-		if (!Note.empty())return;
-		std::vector<string>deck = pTemplet->vNoteList;
-		if (!deck.empty())Note = CardDeck::drawCard(deck, true);
+		if (Note.empty() && !build.vNoteList.empty()) {
+			setNote(CardDeck::drawCard(build.vNoteList));
+		}
 	}
 	void rebuild() {
 		clear();
@@ -211,7 +254,7 @@ public:
 		return 0;
 	}
 	int setExp(string key, string exp) {
-		if (exp.length() > 64)return -1;
+		if (exp.length() > 63)return -1;
 		DiceExp[key] = exp;
 		return 0;
 	}
@@ -221,17 +264,18 @@ public:
 		scanImage(note, sReferencedImage);
 		return 0;
 	}
-	string erase(string key, bool isExp = false) {
+	bool erase(string& key, bool isExp = false) {
 		string strKey = standard(key);
 		if (!isExp && Attr.count(strKey)) {
 			Attr.erase(strKey);
-			return strKey;
+			key = strKey;
+			return true;
 		}
-		else if (isExp && Attr.count(strKey)) {
-			Attr.erase(strKey);
-			return strKey;
+		else if (isExp && DiceExp.count(key)) {
+			DiceExp.erase(key);
+			return true;
 		}
-		return "";
+		return false;
 	}
 	void clear() {
 		Attr.clear();
@@ -257,27 +301,33 @@ public:
 		}
 	}
 	string show()const{
-		string strRes;
-		std::set<string>sDefault;
-		for (auto it : pTemplet->vBuildList) {
-			if (!Attr.count(it.first))continue;
-			sDefault.insert(it.first);
-			strRes += it.first + ":" + to_string(Attr.find(it.first)->second) + " ";
+		std::set<string>sDefault; 
+		ResList Res;
+		for (auto list : pTemplet->vBasicList) {
+			ResList subList;
+			subList.setDot("\t");
+			for (auto it : list) {
+				if (!Attr.count(it))continue;
+				sDefault.insert(it);
+				subList << it + ":" + to_string(Attr.find(it)->second) + " ";
+			}
+			Res << subList.show();
 		}
-		if(sDefault.size()<Attr.size())strRes += "\n";
+		string strAttrRest;
 		for (auto it : Attr) {
 			if (sDefault.count(it.first))continue;
-			strRes += it.first + ":" + to_string(it.second) + " ";
+			strAttrRest += it.first + ":" + to_string(it.second) + " ";
 		}
+		Res << strAttrRest;
 		for (auto it : DiceExp) {
-			strRes += "\n&" + it.first + ":" + it.second + " ";
+			Res << "&" + it.first + ":" + it.second + " ";
 		}
-		if (!Note.empty())strRes += "\n————————————\n" + Note;
-		return strRes;
+		if (!Note.empty())Res << "————————————\n" + Note;
+		return Res.show();
 	}
 	bool count(string& key)const {
 		key = standard(key);
-		return Attr.count(key)|| pTemplet->mAutoFill.count(key) || pTemplet->mDynamic.count(key) || pTemplet->defaultSkill.count(key);
+		return Attr.count(key)|| pTemplet->mAutoFill.count(key) || pTemplet->mVariable.count(key) || pTemplet->defaultSkill.count(key);
 	}
 	bool stored(string& key)const {
 		key = standard(key);
@@ -368,36 +418,51 @@ public:
 	bool count(string name)const {
 		return mNameIndex.count(name);
 	}
-	int newCard(string s,long long group = 0) {
+	int newCard(string& s,long long group = 0) {
 		std::lock_guard<std::mutex> lock_queue(cardMutex);
 		//人物卡数量上限
 		if (mCardList.size() > 16)return -1;
 		string type = "COC7";
-		string name = strip(s);
-		int Cnt = s.find(":");
+		s = strip(s);
+		std::stack<string> vOption;
+		int Cnt = s.rfind(":");
 		if (Cnt != string::npos) {
 			type = s.substr(0, Cnt);
-			name = strip(s.substr(Cnt + 1));
+			s.erase(s.begin(), s.begin() + Cnt + 1);
 			if (type == "COC")type = "COC7";
 		}
-		else if (mCardTemplet.count(name)) {
-			type = name;
-			name.clear();
+		else if (mCardTemplet.count(s)) {
+			type = s;
+			s.clear();
+		}
+		while ((Cnt = type.rfind(':')) != string::npos) {
+			vOption.push(type.substr(Cnt + 1));
+			type.erase(type.begin() + Cnt, type.end());
 		}
 		//无效模板
 		if (!mCardTemplet.count(type))return -2;
-		if (name.empty()) {
-			std::vector<string>deck = mCardTemplet[type].vNameList;
-			while (name.empty() && !deck.empty()) {
-				name = CardDeck::drawCard(deck);
-				if (mNameIndex.count(name))name.clear();
-			} 
-			if(name.empty())name = to_string(indexMax + 1);
+		if (mNameIndex.count(s))return -4;
+		if (s.find("=") != string::npos)return -6;
+		mCardList[++indexMax] = CharaCard(s, type);
+		CharaCard& card = mCardList[indexMax];
+		CardTemp& temp = mCardTemplet[type];
+		while(!vOption.empty()) {
+			string para = vOption.top();
+			vOption.pop();
+			card.build(para);
+			if (mNameIndex.count(card.Name))card.Name.clear();
 		}
-		if (mNameIndex.count(name))return -4;
-		if (name.find(":") != string::npos)return -6;
-		mCardList[++indexMax] = CharaCard(name, type);
-		mNameIndex[name] = indexMax;
+		s = card.Name;
+		if (s.empty()) {
+			std::vector<string>deck = mCardTemplet[type].mBuildOption[""].vNameList;
+			while (s.empty() && !deck.empty()) {
+				s = CardDeck::drawCard(deck);
+				if (mNameIndex.count(s))s.clear();
+			}
+			if (s.empty())s = to_string(indexMax + 1);
+			card.Name = s;
+		}
+		mNameIndex[s] = indexMax;
 		mGroupIndex[group] = indexMax;
 		return 0;
 	}

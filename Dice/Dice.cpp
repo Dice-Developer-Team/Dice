@@ -86,7 +86,7 @@ string strFileLoc;
 void loadData() {
 	mkDir("DiceData");
 	string strLog;
-	loadDir(loadINI<CardTemp>, string("DiceData\\CardTemp\\"), mCardTemplet, strLog);
+	loadDir(loadXML<CardTemp>, string("DiceData\\CardTemp\\"), mCardTemplet, strLog, true);
 	loadJMap(strFileLoc + "PublicDeck.json", CardDeck::mPublicDeck);
 	loadJMap(strFileLoc + "ExternDeck.json", CardDeck::mPublicDeck);
 	loadJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);

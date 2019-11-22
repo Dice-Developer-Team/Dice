@@ -33,14 +33,15 @@ std::string format(std::string str, const std::map<std::string, std::string>& re
 class ResList {
 	std::vector<std::string> vRes;
 	unsigned int intMaxLen = 0;
-	string sDot;
+	string sDot = " ";
 public:
 	ResList() = default;
-	ResList(std::string s, std::string dot = " | ") :sDot(dot) {
+	ResList(std::string s, std::string dot) :sDot(dot) {
 		vRes.push_back(s);
 		intMaxLen = s.length();
 	}
 	ResList& operator<<(std::string s) {
+		if (s.empty())return *this;
 		vRes.push_back(s);
 		if (s.length() > intMaxLen)intMaxLen = s.length();
 		return *this;
@@ -59,6 +60,9 @@ public:
 			}
 		}
 		return s;
+	}
+	void setDot(string s) {
+		sDot = s;
 	}
 };
 #endif /*DICE_MSG_FORMAT*/

@@ -11,11 +11,14 @@
 #include <io.h>
 #include <direct.h>
 #include "DiceMsgSend.h"
+#include "DiceXMLTree.h"
 
 using std::ifstream;
 using std::ofstream;
 using std::ios;
+using std::stringstream;
 using std::enable_if;
+using std::map;
 
 int mkDir(std::string dir) {
 	if (_access(dir.c_str(), 0))	return _mkdir(dir.c_str());
@@ -39,6 +42,28 @@ int clrDir(std::string dir,const std::set<std::string>& exceptList) {
 	}
 	_findclose(lf);
 	return nCnt;
+}
+
+template<typename TKey, typename TVal>
+void merge(map<TKey, TVal>& m1, const map<TKey, TVal>& m2) {
+	for (auto p : m2) {
+		m1[p.first] = p.second;
+	}
+}
+vector<string> getLines(string s) {
+	vector<string>vLine;
+	stringstream ss(s);
+	string line;
+	while (getline(ss, line)) {
+		int r = line.length();
+		while (r && isspace(static_cast<unsigned char>(line[r - 1])))r--;
+		int l = 0;
+		while (isspace(static_cast<unsigned char>(line[l])) && l < r)l++;
+		line = line.substr(l, r - l);
+		if (line.empty())continue;
+		vLine.push_back(line);
+	}
+	return vLine;
 }
 
 template<typename T>
@@ -120,9 +145,7 @@ std::map<T1, T2> fread(ifstream& fin) {
 	return m;
 }
 template<typename T1, typename T2>
-void readini(ifstream& fin,std::pair<T1,T2>& p) {
-	std::string line;
-	getline(fin, line);
+void readini(string& line,std::pair<T1,T2>& p) {
 	int pos = line.find('=');
 	if (pos == std::string::npos)return;
 	std::istringstream sin(line.substr(0, pos));
@@ -142,19 +165,23 @@ void readini(ifstream& fin, std::string& s) {
 	return;
 }
 template<typename T1, typename T2>
-void readini(ifstream& fin, std::map<T1,T2>& m) {
+void readini(string s, std::map<T1,T2>& m) {
 	std::pair<T1, T2> p;
-	while (fin.peek() != '[' && fin.peek() != EOF) {
-		readini(fin, p);
-		m.insert(p);
+	string line;
+	stringstream ss(s);
+	while (getline(ss,line)) {
+		readini(line, p);
+		m[p.first] = p.second;
 	}
 	return;
 }
 template<typename T>
-void readini(ifstream& fin, std::vector<T>& v) {
+void readini(string s, std::vector<T>& v) {
 	T p;
-	while (fin.peek() != '[' && fin.peek() != EOF) {
-		readini(fin, p);
+	string line;
+	stringstream ss(s);
+	while (getline(ss, line)) {
+		readini(line, p);
 		v.push_back(p);
 	}
 	return;
@@ -219,7 +246,7 @@ int loadFile(std::string strPath, std::map<T, C> & m) {
 	fin.close();
 	return Cnt;
 }
-//读取ini
+//读取伪ini
 template<class C>
 int loadINI(std::string strPath, std::map<std::string, C>& m) {
 	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
@@ -233,18 +260,32 @@ int loadINI(std::string strPath, std::map<std::string, C>& m) {
 	fin.close();
 	return 1;
 }
+//读取伪xml
+template<class C,std::string(C::* U)() = &C::getName>
+int loadXML(std::string strPath, std::map<std::string, C>& m) {
+	std::ifstream fin(strPath);
+	if (!fin)return -1;
+	stringstream ss;
+	ss << fin.rdbuf();
+	string s = ss.str();
+	DDOM xml(s);
+	C obj(xml);
+	m[obj.getName()].readt(xml);
+	return 1;
+}
 //读取文件夹
 template<typename T>
-int loadDir(int load(std::string, T&), std::string strDir, T& tmp, std::string& strLog) {
+int loadDir(int load(std::string, T&), std::string strDir, T& tmp, std::string& strLog, bool isSubdir = false) {
 	_finddata_t file;
 	long lf = _findfirst((strDir + "*").c_str(), &file);
 	if (lf < 0)return 0;
 	int intFile = 0, intFailure = 0, intItem = 0;
 	std::vector<std::string> files;
+	std::vector<std::string> dirs;
 	do {
 		//遍历文件
 		if (!strcmp(file.name, ".") || !strcmp(file.name, ".."))continue;
-		if (file.attrib == _A_SUBDIR)continue;
+		if (file.attrib == _A_SUBDIR)dirs.push_back(file.name);
 		else {
 			intFile++;
 			int Cnt = load(strDir + file.name, tmp);
@@ -262,6 +303,9 @@ int loadDir(int load(std::string, T&), std::string strDir, T& tmp, std::string& 
 		for (auto it : files) {
 			strLog += "\n" + it;
 		}
+	}
+	if (isSubdir)for (auto it : dirs) {
+		loadDir(load, it + "\\", tmp, strLog, true);
 	}
 	return intFile;
 }

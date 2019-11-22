@@ -1045,12 +1045,12 @@ public:
 			string strOption = readPara();
 			if (strOption == "save") {
 				dataBackUp();
-				AdminNotify("数据已保存√");
+				AdminNotify("已手动保存数据√");
 				return 1;
 			}
 			else if (strOption == "load") {
 				loadData();
-				AdminNotify("数据已加载√");
+				AdminNotify("已手动加载数据√");
 				return 1;
 			}
 			else if (strOption == "state") {
@@ -1484,7 +1484,7 @@ public:
 				return 1;
 			}
 			string strRes = CardDeck::drawCard(*TempDeck);
-			ResList Res(strRes);
+			ResList Res(strRes, " | ");
 			while (--intCardNum && TempDeck->size()) {
 				string strItem = CardDeck::drawCard(*TempDeck);
 				Res << strItem;
@@ -1783,7 +1783,7 @@ public:
 			if (!masterQQ || !boolMasterMode) {
 				reply(GlobalMsg["strSendMsgInvalid"]);
 			}
-			else if (boolConsole["DisabledSend"]) {
+			else if (boolConsole["DisabledSend"] && !isAdmin) {
 				reply(GlobalMsg["strDisabledSendGlobal"]);
 			}
 			else if (intMsgCnt == strMsg.length()) {
@@ -2662,7 +2662,7 @@ public:
 				case 5:strAns += GlobalMsg["strRollCriticalSuccess"]; break;
 				case 4:if (intDifficulty == 1) { strAns += GlobalMsg["strRollExtremeSuccess"]; break; }
 				case 3:if (intDifficulty == 1) { strAns += GlobalMsg["strRollHardSuccess"]; break; }
-				case 2:strAns += GlobalMsg["strRollSuccess"]; break;
+				case 2:strAns += GlobalMsg["strRollRegularSuccess"]; break;
 				}
 				strReply += strAns;
 			}
@@ -2877,7 +2877,7 @@ public:
 					intMsgCnt++;
 				strVar["attr"] = readAttrName();
 				if (strVar["attr"].empty()) {
-					strVar["char"] = strVar["pc"];
+					strVar["char"] = pc.Name;
 					strVar["type"] = pc.Type;
 					strVar["show"] = pc.show();
 					reply(GlobalMsg["strPcCardShow"]);
@@ -3262,36 +3262,41 @@ public:
 			while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 				intMsgCnt++;
 			string strMainDice;
-			bool tmpContainD = false;
-			int intTmpMsgCnt;
-			for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != strMsg.length() && strMsg[intTmpMsgCnt] != ' ';
-				intTmpMsgCnt++)
-			{
-				if (strLowerMessage[intTmpMsgCnt] == 'd' || strLowerMessage[intTmpMsgCnt] == 'p' || strLowerMessage[
-					intTmpMsgCnt] == 'b' || strLowerMessage[intTmpMsgCnt] == '#' || strLowerMessage[intTmpMsgCnt] == 'f'
-						||
-						strLowerMessage[intTmpMsgCnt] == 'a')
-					tmpContainD = true;
-					if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
-						intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
-							&&
-							strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
-								intTmpMsgCnt
-							] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a'&& strLowerMessage[intTmpMsgCnt] != 'x'&& strLowerMessage[intTmpMsgCnt] != '*')
-					{
-						break;
-					}
-			}
-			if (tmpContainD)
-			{
-				strMainDice = strLowerMessage.substr(intMsgCnt, intTmpMsgCnt - intMsgCnt);
-				while (isspace(static_cast<unsigned char>(strMsg[intTmpMsgCnt])))
-					intTmpMsgCnt++;
-				strVar["reason"] = strMsg.substr(intTmpMsgCnt);
-			}
-			else
+			if (PList.count(fromQQ) && getPlayer(fromQQ)[fromGroup].countExp(strMsg.substr(intMsgCnt))) {
 				strVar["reason"] = strMsg.substr(intMsgCnt);
-
+				strMainDice = getPlayer(fromQQ)[fromGroup].getExp(strVar["reason"]);
+			}
+			else {
+				bool tmpContainD = false;
+				int intTmpMsgCnt;
+				for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != strMsg.length() && strMsg[intTmpMsgCnt] != ' ';
+					intTmpMsgCnt++)
+				{
+					if (strLowerMessage[intTmpMsgCnt] == 'd' || strLowerMessage[intTmpMsgCnt] == 'p' || strLowerMessage[
+						intTmpMsgCnt] == 'b' || strLowerMessage[intTmpMsgCnt] == '#' || strLowerMessage[intTmpMsgCnt] == 'f'
+							||
+							strLowerMessage[intTmpMsgCnt] == 'a')
+						tmpContainD = true;
+						if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
+							intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
+								&&
+								strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
+									intTmpMsgCnt
+								] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a' && strLowerMessage[intTmpMsgCnt] != 'x' && strLowerMessage[intTmpMsgCnt] != '*')
+						{
+							break;
+						}
+				}
+				if (tmpContainD)
+				{
+					strMainDice = strLowerMessage.substr(intMsgCnt, intTmpMsgCnt - intMsgCnt);
+					while (isspace(static_cast<unsigned char>(strMsg[intTmpMsgCnt])))
+						intTmpMsgCnt++;
+					strVar["reason"] = strMsg.substr(intTmpMsgCnt);
+				}
+				else
+					strVar["reason"] = strMsg.substr(intMsgCnt);
+			}
 			int intTurnCnt = 1;
 			const int intDefaultDice = DefaultDice.count(fromQQ) ? DefaultDice[fromQQ] : 100;
 			if (strMainDice.find("#") != string::npos){
@@ -3472,10 +3477,9 @@ public:
 					rdMainDice.Roll();
 					strVar["res"] += (boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString()) + (intTurnCnt ? "\n" : "");
 				}
-				if (!strVar["reason"].empty())strReply = format(GlobalMsg["strRollDice"], { strVar["pc"] ,strVar["res"] });
+				if (strVar["reason"].empty())strReply = format(GlobalMsg["strRollDice"], { strVar["pc"] ,strVar["res"] });
 				else strReply = format(GlobalMsg["strRollDiceReason"], { strVar["pc"] ,strVar["res"] ,strVar["reason"] });
-					if (!isHidden)
-					{
+					if (!isHidden){
 						reply();
 					}
 					else
@@ -3633,14 +3637,12 @@ private:
 	}
 	//读取含转义的表达式
 	string readExp() {
-		string strExp;
 		bool inBracket = false;
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
-		while (intMsgCnt!=strMsg.length())
-		{
+		int intBegin = intMsgCnt;
+		while (intMsgCnt!=strMsg.length()){
 			if (inBracket) {
 				if (strMsg[intMsgCnt] == ']')inBracket = false;
-				strExp += strMsg[intMsgCnt];
 				intMsgCnt++;
 				continue;
 			}
@@ -3650,15 +3652,17 @@ private:
 				|| strLowerMessage[intMsgCnt] == 'f'
 				|| strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-'
 				|| strLowerMessage[intMsgCnt] == 'a'
-				|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*'
-				|| strLowerMessage[intMsgCnt] == '[') {
-				if (strMsg[intMsgCnt] == '[')inBracket = true;
-				strExp += strMsg[intMsgCnt];
+				|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*') {
+				intMsgCnt++;
+			}
+			else if (strMsg[intMsgCnt] == '[') {
+				inBracket = true;
 				intMsgCnt++;
 			}
 			else break;
 		}
-		return strExp;
+		while (isalpha(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && isalpha(static_cast<unsigned char>(strLowerMessage[intMsgCnt - 1]))) intMsgCnt--;
+		return strMsg.substr(intBegin, intMsgCnt - intBegin);
 	}
 	//读取大小写不敏感的技能名
 	string readAttrName() {
@@ -3673,7 +3677,6 @@ private:
 			else intMsgCnt++;
 		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt - 1])))intMsgCnt--; 
-		string strAttrName = strMsg.substr(intBegin, intMsgCnt - intBegin);
 		return strMsg.substr(intBegin, intMsgCnt - intBegin);
 	}
 	//
@@ -3683,8 +3686,10 @@ private:
 		long long llID = readID();
 		if (strT == "me") {
 			ct = { fromQQ,Private };
+			return 0;
 		}else if (strT == "this") {
 			ct = fromChat;
+			return 0;
 		}
 		else if (strT == "qq") {
 			T = Private;

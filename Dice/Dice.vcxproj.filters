@@ -233,6 +233,9 @@
     <ClInclude Include="ManagerSystem.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DiceXMLTree.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="CQP.lib">
