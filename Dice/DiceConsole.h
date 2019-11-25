@@ -83,7 +83,7 @@ void saveBlackMark(std::string strPath);
 void checkBlackQQ(BlackMark &mark);
 //À­ºÚÓÃ»§
 bool addBlackQQ(BlackMark mark);
-bool addBlackGroup(BlackMark &mark);
+bool addBlackGroup(const BlackMark &mark);
 void rmBlackQQ(long long llQQ, long long operateQQ = 0);
 void rmBlackGroup(long long llQQ, long long operateQQ = 0);
 extern std::set<std::string> strWarningList;

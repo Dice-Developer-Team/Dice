@@ -75,7 +75,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPcClr","已清空{nick}的角色卡记录√"},
 	{"strPcCardList","{nick}的角色列表：{show}\n"},
 	{"strPcCardBuild","{nick}的{char}生成：{show}"},
-	{"strPcCardShow","{nick}的{char}属性列表为：{show}"},	//{nick}-用户昵称 {type}-角色卡类型 {char}-角色卡名
+	{"strPcCardShow","{nick}的{type}{char}属性列表为：{show}"},	//{nick}-用户昵称 {type}-角色卡类型 {char}-角色卡名
 	{"strPcCardRedo","{nick}的{char}重新生成：{show}"},
 	{"strPcGroupList","{nick}的各群角色列表：\n{show}"},
 	{"strPcCardFull","角色卡已达上限，请先清理多余角色卡×"},
@@ -86,18 +86,18 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPcNameInvalid","非法的人物卡名（存在冒号）×"},
 	{"strPcInitDelErr","初始卡不可删除×"},
 	{"strPcNoteTooLong","备注长度不能超过255×"},
-	{"strPcExpTooLong","表达式长度不能超过32×"},
+	{"strPcTextTooLong","文本长度不能超过48×"},
 	{"strSpamFirstWarning","你够了，我无法容忍你的行为（刷屏初次警告）"},
 	{"strSpamFinalWarning","希望不要，不是希望，就是呵斥，不要有这种行为出现，这个太野蛮了（刷屏最终警告）"},
 	{"strReplySet","关键词{key}的回复已设置√"},
 	{"strReplyDel","关键词{key}的回复已清除√"},
 	{"strStModify","已记录{pc}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
-	{"strStDetail","已设置{pc的属性："},		//存在掷骰时，使用此文本(暂时无用)
+	{"strStDetail","已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
 	{"strStValEmpty","未记录{attr}原值×"},		//{0}为属性名
-	{"strBlackQQAddNotice","你已被本机器人加入黑名单，详情请联系Master"},				
-	{"strBlackQQAddNoticeReason","由于{reason}，你已被本机器人加入黑名单，申诉解封请联系管理员"},
-	{"strBlackQQDelNotice","你已被本机器人移出黑名单，现在可以继续使用了"},
-	{"strWhiteQQAddNotice","你已被本机器人加入白名单，欢迎使用√"},
+	{"strBlackQQAddNotice","{nick}，你已被{self}加入黑名单，详情请联系Master"},				
+	{"strBlackQQAddNoticeReason","{nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员"},
+	{"strBlackQQDelNotice","{nick}，你已被{self}移出黑名单，现在可以继续使用了"},
+	{"strWhiteQQAddNotice","{nick}，你已被{self}加入白名单，欢迎使用√"},
 	{"strWhiteQQDenied","你不在白名单中×"},
 	{"strWhiteGroupDenied","本群聊不在白名单中×"},
 	{"strDeckProNew","已新建自定义牌堆√"},
@@ -109,8 +109,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strDeckTmpEmpty","已无剩余卡牌！"},		//剩余卡牌数为0
 	{"strDeckTmpNotFound","不存在剩余卡牌×"},	//没有生成过牌堆
 	{"strDeckNameEmpty","未指定牌堆名×"},
-	{"strRollDice","{pc}骰出了: {res}"},
-	{"strRollDiceReason","由于{reason} {pc}骰出了: {res}"},
+	{"strRollDice","{pc}掷骰: {res}"},
+	{"strRollDiceReason","{pc}掷骰 {reason}: {res}"},
 	{"strRollHidden","{pc}进行了一次暗骰"},
 	{"strRollTurn","{pc}的掷骰轮数: {turn}轮"},
 	{"strRollMultiDice","{pc}骰出了: {turn}次{dice_exp}：{res}"},
@@ -137,8 +137,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strHlpSet","已为{key}设置词条√"},
 	{"strHlpReset","已清除{key}的词条，重启应用后重置默认词条√"},
 	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
-	{"strClockToWork","本机器人已按时启用√"},
-	{"strClockOffWork","本机器人已按时关闭√"},
+	{"strClockToWork","{self}已按时启用√"},
+	{"strClockOffWork","{self}已按时关闭√"},
 	{"strNameGenerator","{pc}的随机名称:{res}"},
 	{"strDrawCard", "来看看{pc}抽到了什么：{res}"},
 	{"strHlpNotFound", "未找到指定的帮助信息×"},
@@ -152,7 +152,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strObOffAlready","在这里旁观模式已经被禁用!"},
 	{"strObList","当前的旁观者有:"},
 	{"strObListEmpty","当前暂无旁观者"},
-	{"strObListClr","本机器人成功删除所有旁观者√"},
+	{"strObListClr","{self}成功删除所有旁观者√"},
 	{"strObEnter","成功加入旁观模式√"},
 	{"strObExit","成功退出旁观模式√"},
 	{"strObEnterAlready","已经处于旁观模式!"},
@@ -178,15 +178,13 @@ std::map<std::string, std::string> GlobalMsg
 	{"strRollFumble","大失败！"},
 	{"strNumCannotBeZero", "无意义的数目！莫要消遣于我!"},
 	{"strDeckNotFound", "没听说过的牌堆名呢……"},
-	{"strDeckEmpty", "本机器人已经一张也不剩了！"},
+	{"strDeckEmpty", "{self}已经一张也不剩了！"},
 	{"strNameNumTooBig", "生成数量过多!请输入1-10之间的数字!"},
 	{"strNameNumCannotBeZero", "生成数量不能为零!请输入1-10之间的数字!"},
-	{"strSetInvalid", "无效的默认骰!请输入1-1000之间的数字!"},
-	{"strSetTooBig", "这面数……让我丢个球啊!请输入1-1000之间的数字!"},
-	{"strSetCannotBeZero", "默认骰不能为零!请输入1-1000之间的数字!"},
+	{"strSetInvalid", "无效的默认骰!请输入1-9999之间的数字!"},
+	{"strSetTooBig", "这面数……让我丢个球啊!请输入1-9999之间的数字!"},
+	{"strSetCannotBeZero", "默认骰不能为零!请输入1-9999之间的数字!"},
 	{"strCharacterCannotBeZero", "人物作成次数不能为零!请输入1-10之间的数字!"},
-	{"strSetInvalid", "无效的默认骰!请输入1-1000之间的数字!"},
-	{"strSetTooBig", "默认骰过大!请输入1-1000之间的数字!"},
 	{"strCharacterTooBig", "人物作成次数过多!请输入1-10之间的数字!"},
 	{"strCharacterInvalid", "人物作成次数无效!请输入1-10之间的数字!"},
 	{"strSanRoll","{pc}的San Check：\n{res}"},
@@ -208,7 +206,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strDisabledDrawGlobal", "恕不提供.draw服务×"},
 	{"strDisabledSendGlobal", "恕不提供.send服务×"},
 	{"strHELPDisabledErr", "管理员已在此群中禁用.help命令!"},
-	{"strNameEmpty", "{nick}没有设置名称,无法删除!"},
+	{"strNameDelEmpty", "{nick}没有设置名称,无法删除!"},
 	{"strValueErr", "掷骰表达式输入错误!"},
 	{"strInputErr", "命令或掷骰表达式输入错误!"},
 	{"strUnknownErr", "发生了未知错误!"},
@@ -227,9 +225,9 @@ std::map<std::string, std::string> GlobalMsg
 	{"strWelcomePrivate", "你在这欢迎谁呢？"},
 	{"strWelcomeMsgClearNotice", "已清除本群的入群欢迎词√"},
 	{"strWelcomeMsgClearErr", "没有设置入群欢迎词，清除失败×"},
-	{"strWelcomeMsgUpdateNotice", "本机器人已更新本群的入群欢迎词√"},
-	{"strPermissionDeniedErr", "非群主或管理员无权命令本机器人×"},
-	{"strSelfPermissionErr","本机器人权限不够无能为力呢×"},
+	{"strWelcomeMsgUpdateNotice", "{self}已更新本群的入群欢迎词√"},
+	{"strPermissionDeniedErr", "非群主或管理员无权命令{self}×"},
+	{"strSelfPermissionErr","{self}权限不够无能为力呢×"},
 	{"strNameTooLongErr", "名称过长×(最多为50英文字符)"},
 	{"strNameClr","已将{nick}的名称删除√"},
 	{"strNameSet","已将{nick}的名称更改为{new_nick}√"},
@@ -241,11 +239,11 @@ std::map<std::string, std::string> GlobalMsg
 	{"strRuleReset","已重置默认规则√"},
 	{"strRuleSet","已设置默认规则√"},
 	{"strRuleErr", "规则数据获取失败,具体信息:\n"},
-	{"strRulesFailedErr", "请求失败,本机器人无法连接数据库×"},
+	{"strRulesFailedErr", "请求失败,{self}无法连接数据库×"},
 	{"strPropDeleted", "已删除{pc}的{attr}√"},
 	{"strPropNotFound", "属性{attr}不存在×"},
-	{"strRuleNotFound", "本机器人未找到对应的规则信息×"},
-	{"strProp", "{pc}的{attr}属性值为{val}"},
+	{"strRuleNotFound", "{self}未找到对应的规则信息×"},
+	{"strProp", "{pc}的{attr}值为{val}"},
 	{"strStErr", "格式错误:请参考.help st获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
 	{"strLeaveDiscuss", "{self}现不支持讨论组服务，即将退出"},
@@ -256,14 +254,14 @@ std::map<std::string, std::string> GlobalMsg
 	{"strJrrp", "{nick}今天的人品值是: {res}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{res}"},
 	{ "strAddFriendWhiteQQ","" },				//此项非空，则白名单用户添加好友时回复此句
-	{ "strAddFriend", R"(欢迎使用本机器人！
+	{ "strAddFriend", R"(欢迎使用{self}！
 .help协议 确认服务协议
 .help指令 查看指令列表
 .help设定 确认骰娘设定
 .help链接 查看源码文档
 使用服务默认已经同意服务协议)" },					//同意添加好友时额外发送的语句
-	{"strAddGroup", R"(欢迎使用本机器人！
-请使用.dismiss QQ号（或后四位） 使本机器人退群退讨论组
+	{"strAddGroup", R"(欢迎使用{self}！
+请使用.dismiss QQ号（或后四位） 使{self}退群退讨论组
 .bot on/off QQ号（或后四位） //插件开启或关闭
 .help协议 确认服务协议
 .help指令 查看指令列表
@@ -272,8 +270,8 @@ std::map<std::string, std::string> GlobalMsg
 邀请入群默认视为同意服务协议)" },
 	{"strSelfName", ""},
 	{"self", "&strSelfName" },
-	{"strBotMsg", "\n使用.help更新 查看本机器人更新内容"},
-	{"strHlpMsg" , R"(请使用.dismiss QQ号（或后四位） 使本机器人退群退讨论组
+	{"strBotMsg", "\n使用.help更新 查看{self}更新内容"},
+	{"strHlpMsg" , R"(请使用.dismiss QQ号（或后四位） 使{self}退群退讨论组
 .bot on/off QQ号（或后四位） //插件开启或关闭
 .help协议 确认服务协议
 .help指令 查看指令列表
@@ -290,7 +288,7 @@ std::map<std::string, std::string> HelpDoc = {
 {"链接","查看源码:https://github.com/w4123/Dice/tree/Shiki\n插件下载:https://github.com/w4123/Dice/releases\n官方文档:https://www.stringempty.xyz\n跑团记录着色器:https://logpainter.kokona.tech"},
 {"设定","Master：{master}\n.me使用：禁止\n.jrrp使用：允许\n邀请处理：黑名单制，非禁即入\n讨论组使用：允许\n移出反制：拉黑群和操作者\n禁言反制：默认拉黑群和群主\n刷屏反制：警告\n邀请人责任：有限连带\n窥屏可能：有\n其他插件：无\n官方群：941980833\n私骰群：192499947"},
 {"作者","Copyright (C) 2018-2019 w4123溯洄\nCopyright (C) 2019 String.Empty"},
-{"指令","at骰娘后接指令可以指定骰娘单独响应，如at骰娘.bot off\n多数指令需要后接参数，请.help对应指令 获取详细信息\n掷骰指令包括:\n.dismiss 退群\n.bot 开关\n.welcome 入群欢迎\n.rules 规则速查\n.r 掷骰\n.ob 旁观模式\n.set 设置默认骰\n.name 随机姓名\n.nn 设置昵称\n.coc COC人物作成\n.dnd DND人物作成\n.st 角色卡设置\n.rc/ra 检定\n.setcoc 设置检定房规\n.sc 理智检定\n.en 成长检定\n.ri 先攻\n.init 先攻列表\n.ww 骰池\n.me 第三人称动作\n.jrrp 今日人品\n.send 向Master发送消息\n.group ban 群员禁言\n.group state 本群现状\n.draw 抽牌\n.deck 牌堆\n为了避免未预料到的指令误判，请尽可能在参数之间使用空格"},
+{"指令","at骰娘后接指令可以指定骰娘单独响应，如at骰娘.bot off\n多数指令需要后接参数，请.help对应指令 获取详细信息\n掷骰指令包括:\n.dismiss 退群\n.bot 开关\n.welcome 入群欢迎\n.rules 规则速查\n.r 掷骰\n.ob 旁观模式\n.set 设置默认骰\n.name 随机姓名\n.nn 设置昵称\n.coc COC人物作成\n.dnd DND人物作成\n.st 角色卡设置\n.rc/ra 检定\n.setcoc 设置检定房规\n.sc 理智检定\n.en 成长检定\n.ri 先攻\n.init 先攻列表\n.ww 骰池\n.me 第三人称动作\n.jrrp 今日人品\n.send 向Master发送消息\n.group ban 群员禁言\n.group state 本群现状\n.draw 抽牌\n为了避免未预料到的指令误判，请尽可能在参数之间使用空格"},
 {"deck","该指令可以设置默认牌堆，使用.draw不指定牌堆名时将使用此牌堆。该牌堆不会放回直到抽完最后一张后洗牌。\n.deck set 公共牌堆名 设置默认牌堆\n.deck set 正整数1-100 设置指定长度的数列\n.deck show 查看剩余卡牌\n.deck reset 重置剩余卡牌\n.deck new 自定义牌堆（用空格或|分割）（白名单限定）\n.deck new 有弹|无弹|无弹|无弹|无弹|无弹\n除show外其他群内操作需要管理权限"},
 {"退群","&dismiss"},
 {"退群指令","&dismiss"},
@@ -357,7 +355,7 @@ std::map<std::string, std::string> HelpDoc = {
 {"send","发送消息：.send 想对Master说的话\n如果用来调戏Master请做好心理准备"},
 {"入群欢迎","&welcome"},
 {"入群欢迎词","&welcome"},
-{"welcome","入群欢迎词：.welcome\n.welcome \\\\{@}欢迎\\\\{nick}入群！\t//\\\\{@}视为at入群者，\\\\{nick}会替换为新人的昵称\n.welcome\t//不带参数时清除欢迎词\n无论开关状态，只要有欢迎词时有人入群，都会响应"},
+{"welcome","入群欢迎词：.welcome\n.welcome \\\\{at}欢迎\\\\{nick}入群！\t//\\\\{at}视为at入群者，\\\\{nick}会替换为新人的昵称\n.welcome\t//不带参数时清除欢迎词\n无论开关状态，只要有欢迎词时有人入群，都会响应"},
 {"本群现状","查看在群内对骰娘的设置"},
 {"溯洄","孕育万千骰娘生机之母，萌妹吃鱼之神，正五棱双角锥体对的监护人，一切诡秘的窥见者，拟人者主宰，时空舞台外的逆流者，永转的命运之轮"},
 {"投食","投食Shiki，请选择http://shiki.stringempty.xyz/投食\n没有中间商赚差价，请选择http://docs.kokona.tech/zh/latest/About.html"},

@@ -75,14 +75,21 @@ void NameStorage::clear()
 
 bool NameStorage::del(long long GroupID, long long QQ)
 {
-	if (Name.count(GroupID) && Name[GroupID].count(QQ))
-	{
-		Name[GroupID].erase(QQ);
-		if (Name[GroupID].empty())
-		{
-			Name.erase(GroupID);
+	if (Name.count(GroupID)){
+		if (Name[GroupID].count(QQ)) {
+			Name[GroupID].erase(QQ);
+			if (Name[GroupID].empty()){
+				Name.erase(GroupID);
+			}
+			return true;
 		}
-		return true;
+		else if(Name[0].count(QQ)){
+			Name[0].erase(QQ);
+			if (Name[0].empty()) {
+				Name.erase(0);
+			}
+			return true;
+		}
 	}
 	return false;
 }

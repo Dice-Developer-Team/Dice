@@ -79,7 +79,7 @@ namespace CardDeck
 {"凯尔特十字牌阵",{"\n问题现状：{塔罗牌} {%正逆}\n障碍助力：{塔罗牌} {%正逆}\n理想状况：{塔罗牌} {%正逆}\n基础条件：{塔罗牌} {%正逆}\n过去状况：{塔罗牌} {%正逆}\n未来发展：{塔罗牌} {%正逆}\n自身现状：{塔罗牌} {%正逆}\n周围环境：{塔罗牌} {%正逆}\n希望恐惧：{塔罗牌} {%正逆}\n最终结果：{塔罗牌} {%正逆}"}},
 	};
 	//
-	std::map<std::string, std::vector<std::string>> mReplyDeck{};
+	std::map<std::string, std::vector<std::string>> mReplyDeck = { {"Dice Time!",{"{self}"}} };
 	//群聊牌堆
 	std::map<long long, std::vector<std::string>> mGroupDeck;
 	//群聊临时牌堆
@@ -112,7 +112,6 @@ namespace CardDeck
 	//}
 	std::string drawCard(std::vector<std::string> &TempDeck, bool isBack)
 	{
-		std::map<std::string, std::vector<string>>TempDeckList;
 		std::string strReply;
 		if (TempDeck.size() == 1) {
 			strReply = TempDeck[0];
@@ -123,11 +122,16 @@ namespace CardDeck
 			strReply = TempDeck[ans];
 			if(!isBack)TempDeck.erase(TempDeck.begin() + ans);
 		}
+		return draw(strReply);
+	}
+	std::map<string, vector<string>>TempDeck;
+	std::string draw(std::string strExp) {
+		std::map<std::string, std::vector<string>>TempDeckList;
 		int intCnt = 0;
 		int lq = 0, rq = 0;
-		while ((lq = strReply.find('{', intCnt)) != std::string::npos && (rq = strReply.find('}', lq)) != std::string::npos) {
+		while ((lq = strExp.find('{', intCnt)) != std::string::npos && (rq = strExp.find('}', lq)) != std::string::npos) {
 			bool isTmpBack = false;
-			string strTempName = strReply.substr(lq + 1, rq - lq - 1);
+			string strTempName = strExp.substr(lq + 1, rq - lq - 1);
 			if (strTempName[0] == '%') {
 				isTmpBack = true;
 				strTempName = strTempName.substr(1);
@@ -140,22 +144,20 @@ namespace CardDeck
 				TempDeckList[strTempName] = mPublicDeck[strTempName];
 			}
 			string strRes = drawCard(TempDeckList[strTempName], isTmpBack);
-			strReply.replace(strReply.begin() + lq, strReply.begin() + rq + 1, strRes);
+			strExp.replace(strExp.begin() + lq, strExp.begin() + rq + 1, strRes);
 			intCnt = lq + strRes.length();
 		}
 		intCnt = 0;
-		while ((lq = strReply.find('[', intCnt)) != std::string::npos && (rq = strReply.find(']', lq)) != std::string::npos) {
-			string strRoll = strReply.substr(lq + 1, rq - lq - 1);
+		while ((lq = strExp.find('[', intCnt)) != std::string::npos && (rq = strExp.find(']', lq)) != std::string::npos) {
+			string strRoll = strExp.substr(lq + 1, rq - lq - 1);
 			intCnt = rq + 1;
 			RD RDroll(strRoll);
-			if(RDroll.Roll())continue;
-			strReply.replace(strReply.begin() + lq, strReply.begin() + rq + 1, std::to_string(RDroll.intTotal));
+			if (RDroll.Roll())continue;
+			strExp.replace(strExp.begin() + lq, strExp.begin() + rq + 1, std::to_string(RDroll.intTotal));
 			intCnt = lq + std::to_string(RDroll.intTotal).length();
 		}
-		return strReply;
+		return strExp;
 	}
-	std::map<string, vector<string>>TempDeck;
-
 }
 
 

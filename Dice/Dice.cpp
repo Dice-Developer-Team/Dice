@@ -244,7 +244,9 @@ EVE_Enable(eventEnable)
 	GlobalMsg["strSelfName"] = getLoginNick();
 	if (loadJMap("DiceData\\conf\\CustomMsg.json", EditedMsg) < 0)loadJMap(strFileLoc + "CustomMsg.json", EditedMsg);
 	//预修改出场回复文本
+	if (EditedMsg.count("strSelfName"))GlobalMsg["strSelfName"] = EditedMsg["strSelfName"];
 	for (auto it : EditedMsg) {
+		while (it.second.find("本机器人") != string::npos)it.second.replace(it.second.find("本机器人"), 8, GlobalMsg["strSelfName"]);
 		GlobalMsg[it.first] = it.second;
 	}
 	loadData();
@@ -343,6 +345,9 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 	if (beingOperateQQ != getLoginQQ() && WelcomeMsg.count(fromGroup))
 	{
 		string strReply = WelcomeMsg[fromGroup];
+		while (strReply.find("{at}") != string::npos){
+			strReply.replace(strReply.find("{at}"), 3, "[CQ:at,qq=" + to_string(beingOperateQQ) + "]");
+		}
 		while (strReply.find("{@}") != string::npos)
 		{
 			strReply.replace(strReply.find("{@}"), 3, "[CQ:at,qq=" + to_string(beingOperateQQ) + "]");
@@ -371,7 +376,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 		AddMsgToQueue(strReply, fromGroup, Group);
 	}
 	if (beingOperateQQ != getLoginQQ() && BlackQQ.count(beingOperateQQ)) {
-		string strNote = printGroup(fromGroup) + "发现黑名单用户" + printQQ(beingOperateQQ) + "入群";
+		string strNote = printGroup(fromGroup) + "发现" + GlobalMsg["strSelfName"] + "的黑名单用户" + printQQ(beingOperateQQ) + "入群";
 		if (mBlackQQMark.count(beingOperateQQ) && mBlackQQMark[beingOperateQQ].isVal("DiceMaid", getLoginQQ()))AddMsgToQueue(mBlackQQMark[beingOperateQQ].getWarning(), fromGroup, Group);
 		if (WhiteGroup.count(fromGroup))strNote += "（群在白名单中）";
 		else if (MonitorList.count({ fromGroup,Group }));
@@ -491,6 +496,7 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 		BlackGroup.insert(fromGroup);
 		NotifyMonitor(mark.getWarning());
 		addBlackQQ(BlackMark(mark, "fromQQ"));
+		addBlackGroup(mark);
 	}
 	else if (mDiceList.count(beingOperateQQ) && subType == 2 && boolConsole["ListenGroupKick"]) {
 		string strNow = printSTime(stNow);
@@ -545,13 +551,15 @@ EVE_System_GroupBan(eventGroupBan) {
 		Cloud::upWarning(mark.getData());
 		mark.set("masterQQ", beingOperateQQ == DiceMaid ? masterQQ : mDiceList[beingOperateQQ]);
 		mark.set("note", strNote);
-		if (mGroupInviter.count(fromGroup) && !AdminQQ.count(mGroupInviter[fromGroup])) {
+		if (mGroupInviter.count(fromGroup) && beingOperateQQ == DiceMaid  && !AdminQQ.count(mGroupInviter[fromGroup])) {
 			long long llInviter = mGroupInviter[fromGroup];
 			strNote += ";入群邀请者：" + printQQ(llInviter);
 			mark.set("inviterQQ", llInviter);
 			mark.set("note", strNote);
+			mark.getWarning();
 			if (boolConsole["BannedBanInviter"])addBlackQQ(BlackMark(mark, "inviterQQ"));
 		}
+		if(mark.count("fromQQ"))addBlackQQ(BlackMark(mark, "fromQQ"));
 		NotifyMonitor(strNote + strAuthList);
 		NotifyMonitor(mark.getWarning());
 		if (boolConsole["BannedLeave"]) {
@@ -567,7 +575,7 @@ EVE_System_GroupBan(eventGroupBan) {
 EVE_Request_AddGroup(eventGroupInvited) {
 	if (!boolConsole["ListenGroupRequest"])return 0;
 	if (subType == 2) {
-		if (masterQQ&&boolMasterMode) {
+		if (masterQQ && boolMasterMode) {
 			string strMsg = "群添加请求，来自：" + getStrangerInfo(fromQQ).nick +"("+ to_string(fromQQ) + "),群：(" + to_string(fromGroup)+")。";
 			if (BlackGroup.count(fromGroup)) {
 				strMsg += "\n已拒绝（群在黑名单中）";
@@ -602,6 +610,9 @@ EVE_Request_AddGroup(eventGroupInvited) {
 				setGroupAddRequest(responseFlag, 2, 1, "");
 			}
 			addRecord(strMsg);
+		}
+		else {
+			setGroupAddRequest(responseFlag, 2, 1, "");
 		}
 		return 1;
 	}

@@ -261,8 +261,8 @@ bool addBlackQQ(BlackMark mark) {
 	if (WhiteQQ.count(llQQ))WhiteQQ.erase(llQQ);
 	if (BlackQQ.count(llQQ))return 0;
 	BlackQQ.insert(llQQ);
-	mark.count("note") ? AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], { mark.strMap["note"] }), llQQ)
-		: AddMsgToQueue(GlobalMsg["strBlackQQAddNotice"], llQQ);
+	mark.count("note") ? AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], GlobalMsg, { {"reason",mark.strMap["note"]},{"nick",getName(llQQ)} }), llQQ)
+		: AddMsgToQueue(format(GlobalMsg["strBlackQQAddNotice"], GlobalMsg, { {"nick",getName(llQQ)} }), llQQ);
 	if (boolConsole["AutoClearBlack"])checkBlackQQ(mark);
 	mark.strWarning.clear();
 	if (!mBlackQQMark.count(llQQ) || mBlackQQMark[llQQ].isErased()) {
@@ -272,15 +272,15 @@ bool addBlackQQ(BlackMark mark) {
 	}
 	return 1;
 }
-bool addBlackGroup(BlackMark &mark) {
+bool addBlackGroup(const BlackMark &mark) {
 	if (!mark.count("fromGroup"))return 0;
-	long long llGroup = mark.llMap["fromGroup"];
+	long long llGroup = mark.llMap.find("fromGroup")->second;
 	if (MonitorList.count({ llGroup ,Group }))return 0;
 	if (WhiteGroup.count(llGroup))WhiteGroup.erase(llGroup);
 	if (BlackGroup.count(llGroup))return 0;
 	BlackGroup.insert(llGroup);
 	if (getGroupList().count(llGroup) && boolConsole["LeaveBlackGroup"]) {
-		sendGroupMsg(llGroup, mark.getWarning());
+		sendGroupMsg(llGroup, mark.strWarning);
 		Sleep(100);
 		setGroupLeave(llGroup);
 	}
@@ -294,7 +294,7 @@ bool addBlackGroup(BlackMark &mark) {
 void rmBlackQQ(long long llQQ, long long operateQQ) {
 	if (BlackQQ.count(llQQ)) {
 		BlackQQ.erase(llQQ);
-		AddMsgToQueue(GlobalMsg["strBlackQQDelNotice"], llQQ);
+		AddMsgToQueue(format(GlobalMsg["strBlackQQDelNotice"], GlobalMsg, { {"nick",getName(llQQ)} }), llQQ);
 		addRecord("已将" + printQQ(llQQ) + "移出" + GlobalMsg["strSelfName"] + "的用户黑名单√");
 	}
 	if (mBlackQQMark.count(llQQ)&& !mBlackQQMark[llQQ].isErased()) {
@@ -342,8 +342,8 @@ void setQQWarning(BlackMark &mark_full, const char* strType, long long fromQQ) {
 		if (addBlackQQ(BlackMark(mark_full, strType)))sendAdmin("已通知" + GlobalMsg["strSelfName"] + "将" + printQQ(blackQQ) + "加入用户黑名单√", fromQQ);
 	}
 }
-void setGroupWarning(BlackMark &mark_full, long long fromQQ) {
-	long long blackGroup = mark_full.llMap["fromGroup"];
+void setGroupWarning(const BlackMark &mark_full, long long fromQQ) {
+	long long blackGroup = mark_full.llMap.find("fromGroup")->second;
 	if (mark_full.isErased()) {
 		if (!mBlackGroupMark.count(blackGroup) || mBlackGroupMark[blackGroup] == mark_full){
 			rmBlackGroup(blackGroup, fromQQ);
@@ -380,7 +380,7 @@ void warningHandler() {
 			if (intLevel > 0) {
 				if (strWarningList.count(warning.strMsg))continue;
 				else strWarningList.insert(warning.strMsg);
-				addRecord(getName(warning.fromQQ)+"已通知" + GlobalMsg["strSelfName"] + ":\n" + mark.strWarning);
+				addRecord(getName(warning.fromQQ) + "已通知" + GlobalMsg["strSelfName"] + ":\n" + mark.strWarning);
 				if (intLevel == 1 && !mark.hasType())continue;
 			}
 			else if (intLevel == 0) {
@@ -389,7 +389,7 @@ void warningHandler() {
 				if (!mark.isErased() && res < 1)continue;
 				if (mark.isErased() && res > -1 && !mark.isVal("DiceMaid", warning.fromQQ) && !mark.isVal("masterQQ", warning.fromQQ))continue;
 				strWarningList.insert(warning.strMsg);
-				sendAdmin("来自" + printGroup(warning.fromGroup) + printQQ(warning.fromQQ) + ":\n" + mark.strWarning);
+				addRecord("来自" + printGroup(warning.fromGroup) + printQQ(warning.fromQQ) + ":\n" + mark.strWarning);
 			}
 			else continue;
 			if (mark.count("fromGroup")) {
@@ -421,11 +421,11 @@ void warningHandler() {
 				stTmp = stNow;
 				if (stNow.wHour == ClockOffWork.first&&stNow.wMinute == ClockOffWork.second && !boolConsole["DisabledGlobal"]) {
 					boolConsole["DisabledGlobal"] = true;
-					NotifyMonitor(GlobalMsg["strClockOffWork"]);
+					NotifyMonitor(format(GlobalMsg["strClockOffWork"],GlobalMsg));
 				}
 				if (stNow.wHour == ClockToWork.first&&stNow.wMinute == ClockToWork.second&&boolConsole["DisabledGlobal"]) {
 					boolConsole["DisabledGlobal"] = false;
-					NotifyMonitor(GlobalMsg["strClockToWork"]);
+					NotifyMonitor(format(GlobalMsg["strClockToWork"], GlobalMsg));
 				}
 				if (stNow.wMinute % 15 == 0 && masterQQ) {
 					Cloud::update();

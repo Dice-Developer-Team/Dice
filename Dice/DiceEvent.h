@@ -527,7 +527,7 @@ public:
 						else {
 							WhiteQQ.insert(llTargetID);
 							AdminNotify("已将" + printQQ(llTargetID) + "加入" + GlobalMsg["strSelfName"] + "的白名单√");
-							AddMsgToQueue(GlobalMsg["strWhiteQQAddNotice"], llTargetID);
+							AddMsgToQueue(format(GlobalMsg["strWhiteQQAddNotice"], GlobalMsg, strVar), llTargetID);
 						}
 					}
 				} while (llTargetID = readID());
@@ -561,7 +561,7 @@ public:
 						}
 						else {
 							mark.set("fromQQ", llTargetID);
-							if(addBlackQQ(mark))AdminNotify("已将" + printQQ(llTargetID) + "加入" + GlobalMsg["strSelfName"] + "的黑名单√");;
+							if(addBlackQQ(mark))AdminNotify("已将" + printQQ(llTargetID) + "加入" + GlobalMsg["strSelfName"] + "的黑名单√");
 						}
 					}
 				} while (llTargetID = readID());
@@ -642,7 +642,7 @@ public:
 			intMsgCnt++;
 		strVar["nick"] = getName(fromQQ, fromGroup);
 		strVar["pc"] = getPCName(fromQQ, fromGroup);
-		strVar["at"] = intT ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : "";
+		strVar["at"] = intT ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
 		isAuth = isAdmin || fromType != Group || getGroupMemberInfo(fromGroup, fromQQ).permissions > 1;
 		strLowerMessage = strMsg;
 		std::transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
@@ -656,7 +656,7 @@ public:
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
 			string QQNum = readDigit();
-			if (QQNum.empty() || (QQNum.length() == 4 && QQNum == to_string(getLoginQQ() % 10000)) || QQNum ==
+			if (QQNum.empty() || (QQNum.length() == 4 && stoi(QQNum) == getLoginQQ() % 10000) || QQNum ==
 				to_string(getLoginQQ()))
 			{
 				if (intT == DiscussT) {
@@ -714,6 +714,7 @@ public:
 					strReply += "\n已启用send功能；";
 				}
 				else {
+					boolConsole["Private"] = true;
 					strReply += "\n默认开启私骰模式：";
 					strReply += "\n默认拒绝陌生人的好友邀请，如要同意请开启AllowStranger；";
 					strReply += "\n默认拒绝陌生人的群邀请，只同意来自管理员、白名单的邀请；";
@@ -738,21 +739,9 @@ public:
 		if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
 		{
 			intMsgCnt += 3;
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-				intMsgCnt++;
-			string Command;
-			while (intMsgCnt != strLowerMessage.length() && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isspace(
-				static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			{
-				Command += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-				intMsgCnt++;
-			string QQNum = strLowerMessage.substr(intMsgCnt, strMsg.find(' ', intMsgCnt) - intMsgCnt);
-			if (QQNum.empty() || QQNum == to_string(getLoginQQ()) || (QQNum.length() == 4 && QQNum == to_string(
-				getLoginQQ() % 10000)))
-			{
+			string Command = readPara();
+			string QQNum = readDigit();
+			if (QQNum.empty() || QQNum == to_string(getLoginQQ()) || (QQNum.length() == 4 && stoi(QQNum) == getLoginQQ() % 10000)){
 				if (Command == "on")
 				{
 					if (boolConsole["DisabledGlobal"])reply(GlobalMsg["strGlobalOff"]);
@@ -832,7 +821,7 @@ public:
 			}
 			return 0; 
 		}
-		if (strLowerMessage.substr(intMsgCnt, 7) == "helpdoc"&&isAdmin)
+		if (strLowerMessage.substr(intMsgCnt, 7) == "helpdoc" && isAdmin)
 		{
 			intMsgCnt += 7;
 			while (strMsg[intMsgCnt] == ' ')
@@ -939,8 +928,7 @@ public:
 				}
 				return 1;
 			}
-			if (DisabledHELPGroup.count(fromGroup))
-			{
+			if (DisabledHELPGroup.count(fromGroup)){
 				reply(GlobalMsg["strHELPDisabledErr"]);
 				return 1;
 			}
@@ -1895,7 +1883,7 @@ public:
 					reply(GlobalMsg["strSetInvalid"]);
 					return 1;
 				}
-			if (strDefaultDice.length() > 3 && strDefaultDice != "1000")
+			if (strDefaultDice.length() > 4)
 			{
 				reply(GlobalMsg["strSetTooBig"]);
 				return 1;
@@ -1918,28 +1906,23 @@ public:
 			}
 			while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 				intMsgCnt++;
-			if (GlobalMsg.count(strName)) {
-				if (intMsgCnt == strMsg.length()) {
-					EditedMsg.erase(strName);
-					GlobalMsg[strName] = "";
-					AdminNotify("已清除" + strName + "的自定义，将在下次重启后恢复默认设置。");
-				}
-				else {
-					string strMessage = strMsg.substr(intMsgCnt);
-					if (strMessage == "show") {
-						AddMsgToQueue(GlobalMsg[strName], fromChat);
-						return 1;
-					}
-					if (strMessage == "NULL")strMessage = "";
-					EditedMsg[strName] = strMessage;
-					GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMessage : strMessage;
-					AdminNotify("已自定义" + strName + "的文本");
-				}
-				saveJMap("DiceData\\conf\\CustomMsg.json", EditedMsg);
+			if (intMsgCnt == strMsg.length()) {
+				EditedMsg.erase(strName);
+				GlobalMsg[strName] = "";
+				AdminNotify("已清除" + strName + "的自定义，将在下次重启后恢复默认设置。");
 			}
 			else {
-				reply("是说" + strName + "？这似乎不是会用到的语句×");
+				string strMessage = strMsg.substr(intMsgCnt);
+				if (strMessage == "show") {
+					AddMsgToQueue(GlobalMsg[strName], fromChat);
+					return 1;
+				}
+				if (strMessage == "NULL")strMessage = "";
+				EditedMsg[strName] = strMessage;
+				GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMessage : strMessage;
+				AdminNotify("已自定义" + strName + "的文本");
 			}
+			saveJMap("DiceData\\conf\\CustomMsg.json", EditedMsg);
 			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
@@ -2208,7 +2191,7 @@ public:
 					reply(GlobalMsg["strNameClr"], { strVar["nick"] });
 				}
 				else{
-					reply(GlobalMsg["strNameDelErr"]);
+					reply(GlobalMsg["strNameDelEmpty"]);
 				}
 			}
 			return 1;
@@ -2389,6 +2372,7 @@ public:
 		else if (strOption == "show") {
 			string strName = readRest();
 			strVar["char"] = pl.getCard(strName, fromGroup).Name;
+			strVar["type"] = pl.getCard(strName, fromGroup).Type;
 			strVar["show"] = pl[strVar["char"]].show();
 			reply(GlobalMsg["strPcCardShow"]);
 			return 1;
@@ -2419,9 +2403,8 @@ public:
 		}
 		else if (strOption == "build") {
 			strVar["char"] = strip(readRest());
-			switch (pl.buildCard(strVar["char"], fromGroup)) {
+			switch (pl.buildCard(strVar["char"], false ,fromGroup)) {
 			case 0:
-				strVar["char"] = pl.getCard(strVar["char"], fromGroup).Name;
 				strVar["show"] = pl[strVar["char"]].show();
 				reply(GlobalMsg["strPcCardBuild"]);
 				break;
@@ -2475,7 +2458,7 @@ public:
 				reply(GlobalMsg["strPcCardDel"]);
 				break;
 			case -5:
-				reply(GlobalMsg["strPCNameNotExist"]);
+				reply(GlobalMsg["strPcNameNotExist"]);
 				break;
 			case -7:
 				reply(GlobalMsg["strPcInitDelErr"]);
@@ -2487,9 +2470,9 @@ public:
 			return 1;
 		}
 		else if (strOption == "redo") {
-		string strName = strip(readRest());
-		pl.getCard(strName, fromGroup).rebuild();
-		strVar["char"] = pl.getCard(strName, fromGroup).Name;
+		strVar["char"] = strip(readRest());
+		pl.buildCard(strVar["char"], true, fromGroup);
+		strVar["show"] = pl[strVar["char"]].show();
 		reply(GlobalMsg["strPcCardRedo"]);
 		return 1;
 		}
@@ -2562,7 +2545,10 @@ public:
 					intMsgCnt++;
 				}
 			}
-			strVar["attr"] = readAttrName();
+			readSkipSpace();
+			strVar["attr"] = strMsg.substr(intMsgCnt);
+			if (PList.count(fromQQ) && PList[fromQQ][fromGroup].count(strVar["attr"]))intMsgCnt = strMsg.length();
+			else strVar["attr"] = readAttrName();
 			if (strVar["attr"].find("自动成功") == 0) {
 				strDifficulty = strVar["attr"].substr(0, 8);
 				strVar["attr"] = strVar["attr"].substr(8);
@@ -2606,7 +2592,7 @@ public:
 			{
 				intMsgCnt++;
 			}
-			strVar["reason"] = strMsg.substr(intMsgCnt);
+			strVar["reason"] = readRest();
 			int intSkillVal;
 			if (strSkillVal.empty())
 			{
@@ -2614,8 +2600,16 @@ public:
 					intSkillVal = PList[fromQQ][fromGroup].call(strVar["attr"]);
 				}
 				else {
-					reply(GlobalMsg["strUnknownPropErr"], { strVar["attr"] });
-					return 1;
+					if (SkillNameReplace.count(strVar["attr"])) {
+						strVar["attr"] = SkillNameReplace[strVar["attr"]];
+					}
+					if (SkillDefaultVal.count(strVar["attr"])) {
+						intSkillVal = SkillDefaultVal[strVar["attr"]];
+					}
+					else {
+						reply(GlobalMsg["strUnknownPropErr"], { strVar["attr"] });
+						return 1;
+					}
 				}
 			}
 			else if (strSkillVal.length() > 3)
@@ -2900,6 +2894,13 @@ public:
 				string strSkillName = readAttrName();
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt
 				] == ':')intMsgCnt++;
+				if (pc.pTemplet->sInfoList.count(strSkillName)) {
+					if (pc.setInfo(strSkillName, readLine())) {
+						reply(GlobalMsg["strPcTextTooLong"]);
+						return 1;
+					}
+					continue;
+				}
 				if (strSkillName == "note") {
 					if (pc.setNote(readRest())) {
 						reply(GlobalMsg["strPcNoteTooLong"]);
@@ -2910,7 +2911,7 @@ public:
 				if (strSkillName[0] == '&') {
 					strSkillName = strSkillName.substr(1);
 					if (pc.setExp(strSkillName, readExp())) {
-						reply(GlobalMsg["strPcExpTooLong"]);
+						reply(GlobalMsg["strPcTextTooLong"]);
 						return 1;
 					}
 					continue;
@@ -2943,7 +2944,7 @@ public:
 					continue;
 				}
 				string strSkillVal = readDigit();
-				if (strSkillName.empty() || strSkillVal.empty() || strSkillVal.length() > 3)
+				if (strSkillName.empty() || strSkillVal.empty() || strSkillVal.length() > 5)
 				{
 					boolError = true;
 					break;
@@ -2953,8 +2954,7 @@ public:
 				pc.set(strSkillName,intSkillVal);
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;
 			}
-			if (boolError)
-			{
+			if (boolError)			{
 				reply(GlobalMsg["strPropErr"]);
 			}
 			else if(isModify){
@@ -3505,6 +3505,11 @@ public:
 	int CustomReply(){
 		string strKey = readRest();
 		if (CardDeck::mReplyDeck.count(strKey)) {
+			if (strVar.empty()) {
+				strVar["nick"] = getName(fromQQ, fromGroup);
+				strVar["pc"] = getPCName(fromQQ, fromGroup);
+				strVar["at"] = fromType ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
+			}
 			reply(CardDeck::drawCard(CardDeck::mReplyDeck[strKey], true));
 			AddFrq(fromQQ, fromTime, fromChat);
 			return 1;
@@ -3618,6 +3623,20 @@ private:
 		}
 		else return false;
 	}
+	//读取至换行符
+	string readLine() {
+		readSkipSpace();
+		int intBegin = intMsgCnt;
+		int intCR = strMsg.find('\r', intMsgCnt);
+		int intLF = strMsg.find('\n', intMsgCnt);
+		if (intCR == string::npos && intLF == string::npos) {
+			intMsgCnt = strMsg.length();
+			return strMsg.substr(intBegin);
+		}
+		intMsgCnt = min(intCR, intLF);
+		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt - 1])) && strMsg[intMsgCnt - 2] > 0)intMsgCnt--;
+		return strMsg.substr(intBegin, intMsgCnt - intBegin);
+	}
 	//读取掷骰表达式
 	string readDice(){
 		string strDice;
@@ -3668,15 +3687,22 @@ private:
 	string readAttrName() {
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
 		int intBegin = intMsgCnt;
+		int intEnd = intBegin;
+		int intLast = intMsgCnt;
 		int len = strMsg.length();
-		while (intMsgCnt < len && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
-			&& strLowerMessage[intMsgCnt] != '=' && strLowerMessage[intMsgCnt] != ':'
-			&& strLowerMessage[intMsgCnt] != '+' && strLowerMessage[intMsgCnt] != '-' && strLowerMessage[intMsgCnt] != '*' && strLowerMessage[intMsgCnt] != '/')
+		while (intMsgCnt < len && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))
+			&& strMsg[intMsgCnt] != '=' && strMsg[intMsgCnt] != ':'
+			&& strMsg[intMsgCnt] != '+' && strMsg[intMsgCnt] != '-' && strMsg[intMsgCnt] != '*' && strMsg[intMsgCnt] != '/')
 		{
+			if (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || (!isspace(static_cast<unsigned char>(strMsg[intLast]))))intEnd = intMsgCnt;
+			intLast = intMsgCnt;
 			if (strMsg[intMsgCnt] < 0 && intMsgCnt < len)intMsgCnt += 2;
 			else intMsgCnt++;
 		}
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt - 1])))intMsgCnt--; 
+		if (intMsgCnt == strLowerMessage.length() && strLowerMessage.find(' ', intBegin) != string::npos) {
+			intMsgCnt = strLowerMessage.find(' ', intBegin);
+		}
+		else if (isspace(static_cast<unsigned char>(strMsg[intLast])))intMsgCnt = intEnd;
 		return strMsg.substr(intBegin, intMsgCnt - intBegin);
 	}
 	//

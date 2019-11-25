@@ -17,8 +17,8 @@ public:
 	BlackMark(std::string IDKey, long long llID) :fromID(llID) {
 		llMap[IDKey] = llID;
 	};
-	BlackMark(BlackMark& mark, std::string IDKey) {
-		fromID = llMap[IDKey] = mark.llMap[IDKey];
+	BlackMark(const BlackMark& mark, std::string IDKey) {
+		fromID = llMap[IDKey] = mark.llMap.find(IDKey)->second;
 		*this << mark;
 	};
 	void set(std::string Key, std::string Val) {
@@ -29,18 +29,19 @@ public:
 		llMap[Key] = Val;
 		if (Key != "DiceMaid" && Key != "masterQQ")fromID = Val;
 	}
-	BlackMark& operator<<(BlackMark& MarkTmp) {
+	BlackMark& operator<<(const BlackMark& MarkTmp) {
 		for (auto it : MarkTmp.strMap) {
 			strMap[it.first] = it.second;
 		}
-		if (MarkTmp.count("DiceMaid"))llMap["DiceMaid"] = MarkTmp.llMap["DiceMaid"];
-		if (MarkTmp.count("masterQQ"))llMap["masterQQ"] = MarkTmp.llMap["masterQQ"];
-		strWarning = MarkTmp.getWarning();
+		if (MarkTmp.count("DiceMaid"))llMap["DiceMaid"] = MarkTmp.llMap.find("DiceMaid")->second;
+		if (MarkTmp.count("masterQQ"))llMap["masterQQ"] = MarkTmp.llMap.find("masterQQ")->second;
+		strWarning = MarkTmp.strWarning;
+		getWarning();
 		return *this;
 	}
-	const bool operator==(BlackMark& MarkTmp) {
+	const bool operator==(const BlackMark& MarkTmp) {
 		if (!count("note") && !MarkTmp.count("note"))return true;
-		if (strMap.count("note") && MarkTmp.count("note") && strMap["note"] == MarkTmp.strMap["note"])return true;
+		if (strMap.count("note") && MarkTmp.count("note") && strMap["note"] == MarkTmp.strMap.find("note")->second)return true;
 		return false;
 	}
 	const char* getData() {
@@ -53,7 +54,7 @@ public:
 		}
 		return data.data();
 	}
-	const std::string getJson() {
+	const std::string getJson() const{
 		std::string strJson = "{";
 		if (llMap.empty())strJson += "\n\"fromQQ\":" + std::to_string(fromID) + ",";
 		for (auto it : strMap) {
@@ -66,12 +67,12 @@ public:
 		strJson += "\n}";
 		return strJson;
 	}
-	const std::string getWarning() {
+	const std::string& getWarning() {
 		if (strWarning.empty())strWarning = "!warning" + getJson();
 		return strWarning;
 	}
-	const bool isErased() {
-		return strMap["type"] == "erase";
+	const bool isErased() const {
+		return strMap.find("type")->second == "erase";
 	}
 	void erase() {
 		strMap["type"] = "erase";
@@ -86,8 +87,8 @@ public:
 	const bool isNoteEmpty() {
 		return !strMap.count("note") || strMap["note"].empty();
 	}
-	const bool count(std::string strKey) {
-		return (strMap.count(strKey) && !strMap[strKey].empty()) || (llMap.count(strKey) && llMap[strKey]);
+	const bool count(std::string strKey) const {
+		return (strMap.count(strKey) && !strMap.find(strKey)->second.empty()) || (llMap.count(strKey) && llMap.find(strKey)->second);
 	}
 	const bool hasType() {
 		return strMap["type"] == "kick" || strMap["type"] == "ban" || strMap["type"] == "spam" || strMap["type"] == "ruler" || strMap["type"] == "erase";

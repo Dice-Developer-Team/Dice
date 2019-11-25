@@ -27,12 +27,13 @@ static map<string, short>mTempletTag = {
 	{"type",2},
 	{"alias",20},
 	{"basic",31},
+	{"info",102},
 	{"autofill",22},
 	{"variable",23},
 	{"diceexp",21},
 	{"default",12},
 	{"build",41},
-	{"generate",24},
+	{"generate",24 },
 	{"note",101},
 };
 static map<string, short>mCardTag = {
@@ -41,6 +42,7 @@ static map<string, short>mCardTag = {
 	{"Attr",11},
 	{"DiceExp",21},
 	{"Note",101},
+	{"Info",102},
 	{"End",255}
 };
 //生成模板
@@ -77,6 +79,7 @@ public:
 	map<string, string>replaceName = {};
 	//作成时生成
 	vector<vector<string>>vBasicList = {};
+	set<string>sInfoList = {};
 	//调用时生成
 	map<string, string>mAutoFill = {};
 	//动态引用
@@ -88,7 +91,7 @@ public:
 	//生成参数
 	map<string, CardBuild>mBuildOption = {};
 	CardTemp() = default;
-	CardTemp(string type, map<string, string>replace, vector<vector<string>>basic, map<string, string>autofill, map<string, string>dynamic, map<string, string>exp, map<string, short>skill, map<string, CardBuild> option) :type(type),replaceName(replace), vBasicList(basic), mAutoFill(autofill), mVariable(dynamic), mExpression(exp), defaultSkill(skill), mBuildOption(option) {}
+	CardTemp(string type, map<string, string>replace, vector<vector<string>>basic, set<string>info, map<string, string>autofill, map<string, string>dynamic, map<string, string>exp, map<string, short>skill, map<string, CardBuild> option) :type(type),replaceName(replace), vBasicList(basic), sInfoList(info),mAutoFill(autofill), mVariable(dynamic), mExpression(exp), defaultSkill(skill), mBuildOption(option) {}
 	CardTemp(DDOM d) {
 		readt(d);
 	}
@@ -102,10 +105,15 @@ public:
 				readini(node.strValue, replaceName);
 				break;
 			case 31:
+				vBasicList.clear();
 				for (auto sub : node.vChild) {
 					vBasicList.push_back(getLines(sub.strValue));
 				}
 				break;
+			case 102:
+				for (auto sub : getLines(node.strValue)) {
+					sInfoList.insert(sub);
+				}
 			case 22:
 				readini(node.strValue, mAutoFill);
 				break;
@@ -133,10 +141,12 @@ public:
 	}
 };
 
-
 static map<string, CardTemp>mCardTemplet = {
-	{"COC7",{"COC7",SkillNameReplace,BasicCOC7,AutoFillCOC7,mVariableCOC7,ExpressionCOC7,SkillDefaultVal,{
-		{"",CardBuild({BuildCOC7},CardDeck::mPublicDeck["随机姓名"],CardDeck::mPublicDeck["调查员信息"])}
+	{"COC7",{"COC7",SkillNameReplace,BasicCOC7,InfoCOC7,AutoFillCOC7,mVariableCOC7,ExpressionCOC7,SkillDefaultVal,{
+		{"",CardBuild({BuildCOC7},CardDeck::mPublicDeck["随机姓名"],{})},
+		{"bg",CardBuild({
+			{"性别","{性别}"},{"年龄","7D6+8"},{"职业","{调查员职业}"},{"个人描述","{个人描述}"},{"重要之人","{重要之人}"},{"思想信念","{思想信念}"},{"意义非凡之地","{意义非凡之地}"},{"宝贵之物","{宝贵之物}"},{"特质","{调查员特点}"}
+		},CardDeck::mPublicDeck["随机姓名"],{})}
 	}}}
 };
 
@@ -146,6 +156,7 @@ public:
 	string Name = "角色卡";
 	string Type = "COC7";
 	map<string, short>Attr;
+	map<string, string>Info;
 	map<string, string>DiceExp;
 	string Note;
 	const CardTemp* pTemplet = &mCardTemplet[Type];
@@ -230,43 +241,82 @@ public:
 			Name = CardDeck::drawCard(build.vNameList);
 		}
 		for (auto it : build.vBuildList) {
-			if (Attr.count(it.first))continue;
-			Attr[it.first] = cal(it.second);
+			//exp
+			if (it.first[0] == '&') {
+				it.first.erase(it.first.begin());
+				if (DiceExp.count(it.first))continue;
+				DiceExp[it.first] = it.second;
+			}
+			//info
+			else if (pTemplet->sInfoList.count(it.first)) {
+				if (Info.count(it.first))continue;
+				Info[it.first] = CardDeck::draw(it.second);
+			}
+			//attr
+			else {
+				if (Attr.count(it.first))continue;
+				Attr[it.first] = cal(it.second);
+			}
 		}
 		if (Note.empty() && !build.vNoteList.empty()) {
 			setNote(CardDeck::drawCard(build.vNoteList));
 		}
 	}
-	void rebuild() {
-		clear();
-		build();
+	//解析生成参数
+	void buildv(string para = "") {
+		std::stack<string> vOption;
+vOption.push("");
+int Cnt;
+while ((Cnt = para.rfind(':')) != string::npos) {
+	vOption.push(para.substr(Cnt + 1));
+	para.erase(para.begin() + Cnt, para.end());
+}
+if (!para.empty())vOption.push(para);
+while (!vOption.empty()) {
+	string para = vOption.top();
+	vOption.pop();
+	build(para);
+}
 	}
-	string standard(string key)const{
+	string standard(string key)const {
 		if (pTemplet->replaceName.count(key))return pTemplet->replaceName.find(key)->second;
 		return key;
 	}
 	int set(string key, short val) {
-		if (val == pTemplet->defaultSkill.find(key)->second) {
+		key = standard(key);
+		if (val == pTemplet->defaultSkill.find(key)->second && !Attr.count(key)) {
 			Attr.erase(key);
 			return -1;
 		}
 		Attr[key] = val;
 		return 0;
 	}
+	int setInfo(string key, string s) {
+		if (s.length() > 48)return -1;
+		Info[key] = s;
+		return 0;
+	}
 	int setExp(string key, string exp) {
-		if (exp.length() > 63)return -1;
+		if (exp.length() > 48)return -1;
 		DiceExp[key] = exp;
 		return 0;
 	}
 	int setNote(string note) {
 		if (note.length() > 255)return -11;
-		Note = note; 
+		Note = note;
 		scanImage(note, sReferencedImage);
 		return 0;
 	}
 	bool erase(string& key, bool isExp = false) {
 		string strKey = standard(key);
-		if (!isExp && Attr.count(strKey)) {
+		if (pTemplet->sInfoList.count(key)) {
+			if (Info.count(key)) {
+				Info.erase(key);
+				return true;
+			}
+			else return false;
+		}
+		else if (!isExp && Attr.count(strKey)) {
 			Attr.erase(strKey);
 			key = strKey;
 			return true;
@@ -279,16 +329,24 @@ public:
 	}
 	void clear() {
 		Attr.clear();
+		Info.clear();
 		DiceExp.clear();
 		Note.clear();
 	}
-	int show(string key,string& val)const{
+	int show(string key, string& val)const {
+		if (pTemplet->sInfoList.count(key)) {
+			if (Info.count(key)) {
+				val = Info.find(key)->second;
+				return 3;
+			}
+			else return -1;
+		}
 		if (key == "note") {
 			val = Note;
 			return 2;
 		}
 		if (DiceExp.count(key)) {
-			val = to_string(Attr.find(key)->second);
+			val = DiceExp.find(key)->second;
 			return 1;
 		}
 		key = standard(key);
@@ -296,20 +354,33 @@ public:
 			val = to_string(Attr.find(key)->second);
 			return 0;
 		}
-		else{
+		else {
 			return -1;
 		}
 	}
-	string show()const{
-		std::set<string>sDefault; 
+	string show()const {
+		std::set<string>sDefault;
 		ResList Res;
 		for (auto list : pTemplet->vBasicList) {
 			ResList subList;
-			subList.setDot("\t");
+			string strVal;
 			for (auto it : list) {
-				if (!Attr.count(it))continue;
-				sDefault.insert(it);
-				subList << it + ":" + to_string(Attr.find(it)->second) + " ";
+				switch (show(it, strVal)) {
+				case 0:
+					sDefault.insert(it);
+					subList << it + ":" + strVal;
+					break;
+				case 1:
+					sDefault.insert(it);
+					subList << "&" + it + "=" + strVal;
+					break;
+				case 3:
+					sDefault.insert(it);
+					subList << it + ":" + strVal;
+					break;
+				default:
+					continue;
+				}
 			}
 			Res << subList.show();
 		}
@@ -319,8 +390,13 @@ public:
 			strAttrRest += it.first + ":" + to_string(it.second) + " ";
 		}
 		Res << strAttrRest;
+		for (auto it : Info) {
+			if (sDefault.count(it.first))continue;
+			Res << it.first + ":" + it.second;
+		}
 		for (auto it : DiceExp) {
-			Res << "&" + it.first + ":" + it.second + " ";
+			if (sDefault.count(it.first))continue;
+			Res << "&" + it.first + "=" + it.second;
 		}
 		if (!Note.empty())Res << "————————————\n" + Note;
 		return Res.show();
@@ -349,6 +425,10 @@ public:
 			fwrite(fout, (string)"Attr");
 			fwrite(fout, Attr);
 		}
+		if (!Info.empty()) {
+			fwrite(fout, (string)"Info");
+			fwrite(fout, Info);
+		}
 		if (!DiceExp.empty()) {
 			fwrite(fout, (string)"DiceExp");
 			fwrite(fout, DiceExp);
@@ -374,6 +454,10 @@ public:
 				break;
 			case 21:
 				DiceExp = fread<string, string>(fin);
+				break;
+			case 102:
+				Info = fread<string, string>(fin);
+				scanImage(Note, sReferencedImage);
 				break;
 			case 101:
 				Note = fread<string>(fin);
@@ -466,22 +550,24 @@ public:
 		mGroupIndex[group] = indexMax;
 		return 0;
 	}
-	int buildCard(string name, long long group = 0) {
-		string strName = (name.find(":") != string::npos) ? strip(name.substr(name.find(":") + 1)) : name;
-		//不存在则新建人物卡
-		if (!name.empty() && !mNameIndex.count(strName)) {
-			if (int res = newCard(name, group))return res;
+	int buildCard(string& name, bool isClear ,long long group = 0) {
+		string strName = name;
+		string strType;
+		if (name.find(":") != string::npos) {
+			strName = strip(name.substr(name.rfind(":") + 1));
+			strType = name.substr(0, name.rfind(":"));
 		}
-		getCard(strName, group).build();
-		return 0;
-	}
-	int rebuildCard(string name, long long group = 0) {
-		string strName = (name.find(":") != string::npos) ? strip(name.substr(name.find(":") + 1)) : name;
 		//不存在则新建人物卡
-		if (!name.empty() && !mNameIndex.count(strName)) {
+		if (!strName.empty() && !mNameIndex.count(strName)) {
 			if (int res = newCard(name, group))return res;
+			name = getCard(strName, group).Name;
+			getCard(strName, group).buildv(strType);
 		}
-		getCard(strName, group).build();
+		else {
+			name = getCard(strName, group).Name;
+			if (isClear)(*this)[name].clear();
+			(*this)[name].buildv();
+		}
 		return 0;
 	}
 	int changeCard(string name, long long group) {

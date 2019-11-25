@@ -298,8 +298,7 @@ private:
 		if (dice.substr(0, dice.find("D")).length() > 3 || (dice.substr(0, dice.find("D")).length() == 3 && dice.
 			substr(0, dice.find("D")) != "100"))
 			return DiceTooBig_Err;
-		if (dice.substr(dice.find("D") + 1).length() > 4 || (dice.substr(dice.find("D") + 1).length() == 4 && dice.
-			substr(dice.find("D") + 1) != "1000"))
+		if (dice.substr(dice.find("D") + 1).length() > 4)
 			return TypeTooBig_Err;
 		int intDiceCnt = dice.substr(0, dice.find("D")).length() == 0 ? 1 : stoi(dice.substr(0, dice.find("D")));
 		const int intDiceType = stoi(dice.substr(dice.find("D") + 1));
