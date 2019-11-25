@@ -256,7 +256,7 @@ private:
 				intTotal -= intTmpRes * intMultiplier / intDivider;
 			else
 				intTotal += intTmpRes * intMultiplier / intDivider;
-			vintRes.push_back(intTmpRes* intMultiplier);
+			vintRes.push_back(intTmpRes * intMultiplier / intDivider);
 			vvintRes.push_back(std::vector<int>{intTmpRes});
 			return 0;
 		}
