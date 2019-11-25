@@ -704,10 +704,9 @@ public:
 					strReply += "\n自动开启BelieveDiceList响应来自骰娘列表的warning；";
 					boolConsole["AllowStranger"] = true;
 					strReply += "\n公骰模式默认同意陌生人的好友邀请；";
-					boolConsole["AutoClearBlack"] = true;
 					boolConsole["LeaveBlackQQ"] = true;
 					boolConsole["BannedLeave"] = true;
-					strReply += "\n已开启每日五点黑名单清理,黑名单用户群权限不低于自己时自动退群；";
+					strReply += "\n已开启黑名单自动清理，拉黑时及每日定时会自动清理与黑名单用户的共同群聊，黑名单用户群权限不低于自己时自动退群；";
 					boolConsole["BannedBanInviter"] = true;
 					boolConsole["KickedBanInviter"] = true;
 					strReply += "\n拉黑群时会连带邀请人，可以手动关闭；";
@@ -719,6 +718,7 @@ public:
 					strReply += "\n默认开启私骰模式：";
 					strReply += "\n默认拒绝陌生人的好友邀请，如要同意请开启AllowStranger；";
 					strReply += "\n默认拒绝陌生人的群邀请，只同意来自管理员、白名单的邀请；";
+					strReply += "\n已开启黑名单自动清理，拉黑时及每日定时会自动清理与黑名单用户的共同群聊，黑名单用户群权限高于自己时自动退群；";
 					strReply += "\n.me与.send功能默认不可用，需要手动开启；";
 					strReply += "\n切换公用请使用.admin public，但不会初始化响应设置；";
 					strReply += "\n可在.master delete后使用.master public来重新初始化；";

@@ -45,7 +45,7 @@ std::map<std::string, bool>boolConsole = { {"DisabledGlobal",false},{"DisabledBl
 {"Private",false},{"LeaveDiscuss",false},
 {"ListenGroupRequest",true},{"ListenGroupAdd",true},
 {"ListenFriendRequest",true},{"ListenFriendAdd",true},{"AllowStranger",false},
-{"AutoClearBlack",false},{"LeaveBlackQQ",false},{"LeaveBlackGroup",true},
+{"AutoClearBlack",true},{"LeaveBlackQQ",false},{"LeaveBlackGroup",true},
 {"ListenGroupKick",true},{"ListenGroupBan",true},{"ListenSpam",true},
 {"BannedLeave",false},{"BannedBanInviter",false},
 {"KickedBanInviter",false},
@@ -432,7 +432,7 @@ void warningHandler() {
 				}
 				if (stNow.wHour == 5 && stNow.wMinute == 0) {
 					getDiceList();
-					if(boolConsole["AutoClearBlack"])clearGroup("black");
+					if (boolMasterMode && boolConsole["AutoClearBlack"])clearGroup("black");
 					addRecord("每日清理完成");
 				}
 			}
