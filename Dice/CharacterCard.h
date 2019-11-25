@@ -139,6 +139,11 @@ public:
 	string getName() {
 		return type;
 	}
+	string showItem() {
+		string strItem = listKey(mBuildOption);
+		if (strItem.empty())return type;
+		else return type + "[" + strItem + "]";
+	}
 };
 
 static map<string, CardTemp>mCardTemplet = {
@@ -165,6 +170,9 @@ public:
 	short call(string &key){
 		key = standard(key);
 		if (Attr.count(key))return Attr.find(key)->second;
+		else if (DiceExp.count(key)) {
+			return cal(DiceExp[key]);
+		}
 		else if (pTemplet->mAutoFill.count(key)){
 			Attr[key] = cal(pTemplet->mAutoFill.find(key)->second);
 			return Attr[key];
@@ -237,9 +245,6 @@ public:
 		auto it = pTemplet->mBuildOption.find(para);
 		if (it == pTemplet->mBuildOption.end())return;
 		CardBuild build = it->second;
-		while (Name.empty() && !build.vNameList.empty()) {
-			Name = CardDeck::drawCard(build.vNameList);
-		}
 		for (auto it : build.vBuildList) {
 			//exp
 			if (it.first[0] == '&') {
@@ -258,25 +263,25 @@ public:
 				Attr[it.first] = cal(it.second);
 			}
 		}
-		if (Note.empty() && !build.vNoteList.empty()) {
-			setNote(CardDeck::drawCard(build.vNoteList));
+		while (Note.empty() && !build.vNoteList.empty()) {
+			Note = CardDeck::drawCard(build.vNoteList);
 		}
 	}
 	//解析生成参数
 	void buildv(string para = "") {
 		std::stack<string> vOption;
-vOption.push("");
-int Cnt;
-while ((Cnt = para.rfind(':')) != string::npos) {
-	vOption.push(para.substr(Cnt + 1));
-	para.erase(para.begin() + Cnt, para.end());
-}
-if (!para.empty())vOption.push(para);
-while (!vOption.empty()) {
-	string para = vOption.top();
-	vOption.pop();
-	build(para);
-}
+		int Cnt;
+		vOption.push("");
+		while ((Cnt = para.rfind(':')) != string::npos) {
+			vOption.push(para.substr(Cnt + 1));
+			para.erase(para.begin() + Cnt, para.end());
+		}
+		if (!para.empty())vOption.push(para);
+		while (!vOption.empty()) {
+			string para = vOption.top();
+			vOption.pop();
+			build(para);
+		}
 	}
 	string standard(string key)const {
 		if (pTemplet->replaceName.count(key))return pTemplet->replaceName.find(key)->second;
@@ -321,7 +326,7 @@ while (!vOption.empty()) {
 			key = strKey;
 			return true;
 		}
-		else if (isExp && DiceExp.count(key)) {
+		else if (DiceExp.count(key)) {
 			DiceExp.erase(key);
 			return true;
 		}
@@ -358,7 +363,7 @@ while (!vOption.empty()) {
 			return -1;
 		}
 	}
-	string show()const {
+	string show(bool isWhole)const {
 		std::set<string>sDefault;
 		ResList Res;
 		for (auto list : pTemplet->vBasicList) {
@@ -376,6 +381,7 @@ while (!vOption.empty()) {
 					break;
 				case 3:
 					sDefault.insert(it);
+					subList.setDot("\t");
 					subList << it + ":" + strVal;
 					break;
 				default:
@@ -390,20 +396,20 @@ while (!vOption.empty()) {
 			strAttrRest += it.first + ":" + to_string(it.second) + " ";
 		}
 		Res << strAttrRest;
-		for (auto it : Info) {
+		if (isWhole && !Info.empty())for (auto it : Info) {
 			if (sDefault.count(it.first))continue;
 			Res << it.first + ":" + it.second;
 		}
-		for (auto it : DiceExp) {
+		if (isWhole && !DiceExp.empty())for (auto it : DiceExp) {
 			if (sDefault.count(it.first))continue;
 			Res << "&" + it.first + "=" + it.second;
 		}
-		if (!Note.empty())Res << "————————————\n" + Note;
+		if (isWhole && !Note.empty())Res << "====================\n" + Note;
 		return Res.show();
 	}
 	bool count(string& key)const {
 		key = standard(key);
-		return Attr.count(key)|| pTemplet->mAutoFill.count(key) || pTemplet->mVariable.count(key) || pTemplet->defaultSkill.count(key);
+		return Attr.count(key) || DiceExp.count(key) || pTemplet->mAutoFill.count(key) || pTemplet->mVariable.count(key) || pTemplet->defaultSkill.count(key);
 	}
 	bool stored(string& key)const {
 		key = standard(key);
@@ -534,18 +540,31 @@ public:
 			string para = vOption.top();
 			vOption.pop();
 			card.build(para);
-			if (mNameIndex.count(card.Name))card.Name.clear();
+			if (card.Name.empty()) {
+				std::vector<string>list = mCardTemplet[type].mBuildOption[para].vNameList;
+				while (!list.empty()) {
+					s = CardDeck::draw(list[0]);
+					if (mNameIndex.count(s))list.erase(list.begin());
+					else {
+						card.Name = s;
+						break;
+					}
+				}
+			}
+		}
+		if (card.Name.empty()) {
+			std::vector<string>list = mCardTemplet[type].mBuildOption[""].vNameList;
+			while (!list.empty()) {
+				s = CardDeck::draw(list[0]);
+				if (mNameIndex.count(s))list.erase(list.begin());
+				else {
+					card.Name = s;
+					break;
+				}
+			}
+			if (card.Name.empty())card.Name = to_string(indexMax + 1);
 		}
 		s = card.Name;
-		if (s.empty()) {
-			std::vector<string>deck = mCardTemplet[type].mBuildOption[""].vNameList;
-			while (s.empty() && !deck.empty()) {
-				s = CardDeck::drawCard(deck);
-				if (mNameIndex.count(s))s.clear();
-			}
-			if (s.empty())s = to_string(indexMax + 1);
-			card.Name = s;
-		}
 		mNameIndex[s] = indexMax;
 		mGroupIndex[group] = indexMax;
 		return 0;
@@ -561,12 +580,12 @@ public:
 		if (!strName.empty() && !mNameIndex.count(strName)) {
 			if (int res = newCard(name, group))return res;
 			name = getCard(strName, group).Name;
-			getCard(strName, group).buildv(strType);
+			(*this)[name].buildv();
 		}
 		else {
 			name = getCard(strName, group).Name;
 			if (isClear)(*this)[name].clear();
-			(*this)[name].buildv();
+			(*this)[name].buildv(strType);
 		}
 		return 0;
 	}

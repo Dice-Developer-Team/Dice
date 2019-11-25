@@ -66,7 +66,8 @@ std::map<std::string, std::string> GlobalMsg
 {
 	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
 	{"strAdminOptionEmpty","有什么事么？{nick}"},			//
-	{"strPcCardNew","成功新建{char}√"},
+	{"strPcNewEmptyCard","已为{nick}新建{type}空白卡{char}√"},
+	{"strPcNewCardShow","已为{nick}新建{type}卡{char}：{show}"},//由于预生成选项而存在属性
 	{"strPcCardSet","已将{nick}当前角色卡绑定为{char}√"},//{nick}-用户昵称 {pc}-原角色卡名 {char}-新角色卡名
 	{"strPcCardReset","已解绑{nick}当前的默认卡√"},//{nick}-用户昵称 {pc}-原角色卡名
 	{"strPcCardRename","已将{old_name}重命名为{new_name}√"},
@@ -75,7 +76,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPcClr","已清空{nick}的角色卡记录√"},
 	{"strPcCardList","{nick}的角色列表：{show}\n"},
 	{"strPcCardBuild","{nick}的{char}生成：{show}"},
-	{"strPcCardShow","{nick}的{type}{char}属性列表为：{show}"},	//{nick}-用户昵称 {type}-角色卡类型 {char}-角色卡名
+	{"strPcCardShow","{nick}的{type}:{char}：{show}"},	//{nick}-用户昵称 {type}-角色卡类型 {char}-角色卡名
 	{"strPcCardRedo","{nick}的{char}重新生成：{show}"},
 	{"strPcGroupList","{nick}的各群角色列表：\n{show}"},
 	{"strPcCardFull","角色卡已达上限，请先清理多余角色卡×"},
@@ -243,7 +244,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPropDeleted", "已删除{pc}的{attr}√"},
 	{"strPropNotFound", "属性{attr}不存在×"},
 	{"strRuleNotFound", "{self}未找到对应的规则信息×"},
-	{"strProp", "{pc}的{attr}值为{val}"},
+	{"strProp", "{pc}的{attr}为{val}"},
+	{"strPropList", "{nick}的{char}属性列表为：{show}" }, 
 	{"strStErr", "格式错误:请参考.help st获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
 	{"strLeaveDiscuss", "{self}现不支持讨论组服务，即将退出"},

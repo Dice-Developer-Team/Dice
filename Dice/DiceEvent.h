@@ -588,6 +588,7 @@ public:
 			masterQQ = 0;
 			AdminQQ.clear();
 			MonitorList.clear();
+			RecorderList.erase({ fromQQ,Private });
 			return 1;
 		}
 		else if (strOption == "admin") {
@@ -2373,7 +2374,7 @@ public:
 			string strName = readRest();
 			strVar["char"] = pl.getCard(strName, fromGroup).Name;
 			strVar["type"] = pl.getCard(strName, fromGroup).Type;
-			strVar["show"] = pl[strVar["char"]].show();
+			strVar["show"] = pl[strVar["char"]].show(true);
 			reply(GlobalMsg["strPcCardShow"]);
 			return 1;
 		}
@@ -2381,7 +2382,10 @@ public:
 			strVar["char"] = strip(readRest());
 			switch (pl.newCard(strVar["char"], fromGroup)) {
 			case 0:
-				reply(GlobalMsg["strPcCardNew"]);
+				strVar["type"] = pl[fromGroup].Type;
+				strVar["show"] = pl[fromGroup].show(true);
+				if(strVar["show"].empty())reply(GlobalMsg["strPcNewEmptyCard"]);
+				else reply(GlobalMsg["strPcNewCardShow"]);
 				break;
 			case -1:
 				reply(GlobalMsg["strPcCardFull"]);
@@ -2405,7 +2409,7 @@ public:
 			strVar["char"] = strip(readRest());
 			switch (pl.buildCard(strVar["char"], false ,fromGroup)) {
 			case 0:
-				strVar["show"] = pl[strVar["char"]].show();
+				strVar["show"] = pl[strVar["char"]].show(true);
 				reply(GlobalMsg["strPcCardBuild"]);
 				break;
 			case -1:
@@ -2472,7 +2476,7 @@ public:
 		else if (strOption == "redo") {
 		strVar["char"] = strip(readRest());
 		pl.buildCard(strVar["char"], true, fromGroup);
-		strVar["show"] = pl[strVar["char"]].show();
+		strVar["show"] = pl[strVar["char"]].show(true);
 		reply(GlobalMsg["strPcCardRedo"]);
 		return 1;
 		}
@@ -2583,8 +2587,7 @@ public:
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] ==
 				':')intMsgCnt++;
 			string strSkillVal;
-			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			{
+			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))){
 				strSkillVal += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 			}
@@ -2855,6 +2858,11 @@ public:
 				intMsgCnt += 3;
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 					intMsgCnt++;
+				bool isExp = false;
+				if (strMsg[intMsgCnt] == '&') {
+					intMsgCnt++;
+					isExp = true;
+				}
 				strVar["attr"] = readAttrName();
 				if (pc.erase(strVar["attr"])) {
 					reply(GlobalMsg["strPropDeleted"], { strVar["pc"],strVar["attr"] });
@@ -2873,8 +2881,8 @@ public:
 				if (strVar["attr"].empty()) {
 					strVar["char"] = pc.Name;
 					strVar["type"] = pc.Type;
-					strVar["show"] = pc.show();
-					reply(GlobalMsg["strPcCardShow"]);
+					strVar["show"] = pc.show(false);
+					reply(GlobalMsg["strPropList"]);
 					return 1;
 				}
 				if (pc.show(strVar["attr"], strVar["val"]) > -1) {
@@ -2889,34 +2897,36 @@ public:
 			bool isDetail = false;
 			bool isModify = false;
 			//循环录入
-			while (intMsgCnt != strLowerMessage.length())
-			{
+			while (intMsgCnt != strLowerMessage.length()){
+				readSkipSpace();
+				if (strMsg[intMsgCnt] == '&') {
+					intMsgCnt++;
+					strVar["attr"] = readToColon();
+					if (pc.setExp(strVar["attr"], readExp())) {
+						reply(GlobalMsg["strPcTextTooLong"]);
+						return 1;
+					}
+					continue;
+				}
 				string strSkillName = readAttrName();
-				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt
-				] == ':')intMsgCnt++;
 				if (pc.pTemplet->sInfoList.count(strSkillName)) {
-					if (pc.setInfo(strSkillName, readLine())) {
+					while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
+					if (pc.setInfo(strSkillName, readUntilTab())) {
 						reply(GlobalMsg["strPcTextTooLong"]);
 						return 1;
 					}
 					continue;
 				}
 				if (strSkillName == "note") {
+					while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
 					if (pc.setNote(readRest())) {
 						reply(GlobalMsg["strPcNoteTooLong"]);
 						return 1;
 					}
 					break;
 				}
-				if (strSkillName[0] == '&') {
-					strSkillName = strSkillName.substr(1);
-					if (pc.setExp(strSkillName, readExp())) {
-						reply(GlobalMsg["strPcTextTooLong"]);
-						return 1;
-					}
-					continue;
-				}
-				if (strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+') {
+				readSkipSpace();
+				if ((strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+')) {
 					char chSign = strLowerMessage[intMsgCnt];
 					isDetail = true;
 					isModify = true;
@@ -3577,6 +3587,21 @@ private:
 		}
 		return strPara;
 	}
+	//读取至非空格空白符
+	string readUntilTab() {
+		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
+		int intBegin = intMsgCnt;
+		int intEnd = intBegin;
+		int len = strMsg.length();
+		while (intMsgCnt < len && (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == ' '))
+		{
+			if (strMsg[intMsgCnt] != ' ' || strMsg[intEnd] != ' ')intEnd = intMsgCnt;
+			if (strMsg[intMsgCnt] < 0 && intMsgCnt < len)intMsgCnt += 2;
+			else intMsgCnt++;
+		}
+		if (strMsg[intEnd] == ' ')intMsgCnt = intEnd;
+		return strMsg.substr(intBegin, intMsgCnt - intBegin);
+	}
 	string readRest() {
 		readSkipSpace();
 		return strMsg.substr(intMsgCnt);
@@ -3594,7 +3619,10 @@ private:
 	//读取数字
 	string readDigit(bool isForce = true) {
 		string strMum;
-		if (isForce)while (!isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length())intMsgCnt++;
+		if (isForce)while (!isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length()) {
+			if (strMsg[intMsgCnt] < 0)intMsgCnt++;
+			intMsgCnt++;
+		}
 		else while(isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length())intMsgCnt++;
 		while (isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
 			strMum += strMsg[intMsgCnt];
@@ -3623,30 +3651,17 @@ private:
 		}
 		else return false;
 	}
-	//读取至换行符
-	string readLine() {
-		readSkipSpace();
-		int intBegin = intMsgCnt;
-		int intCR = strMsg.find('\r', intMsgCnt);
-		int intLF = strMsg.find('\n', intMsgCnt);
-		if (intCR == string::npos && intLF == string::npos) {
-			intMsgCnt = strMsg.length();
-			return strMsg.substr(intBegin);
-		}
-		intMsgCnt = min(intCR, intLF);
-		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt - 1])) && strMsg[intMsgCnt - 2] > 0)intMsgCnt--;
-		return strMsg.substr(intBegin, intMsgCnt - intBegin);
-	}
 	//读取掷骰表达式
 	string readDice(){
 		string strDice;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
 		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
 			|| strLowerMessage[intMsgCnt] == 'd' || strLowerMessage[intMsgCnt] == 'k'
 			|| strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b'
 			|| strLowerMessage[intMsgCnt] == 'f'
 			|| strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-'
 			|| strLowerMessage[intMsgCnt] == 'a'
+			|| strLowerMessage[intMsgCnt] == 'n'
 			|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*')
 		{
 			strDice += strMsg[intMsgCnt];
@@ -3657,9 +3672,9 @@ private:
 	//读取含转义的表达式
 	string readExp() {
 		bool inBracket = false;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
 		int intBegin = intMsgCnt;
-		while (intMsgCnt!=strMsg.length()){
+		while (intMsgCnt != strMsg.length()) {
 			if (inBracket) {
 				if (strMsg[intMsgCnt] == ']')inBracket = false;
 				intMsgCnt++;
@@ -3671,7 +3686,8 @@ private:
 				|| strLowerMessage[intMsgCnt] == 'f'
 				|| strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-'
 				|| strLowerMessage[intMsgCnt] == 'a'
-				|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*') {
+				|| strLowerMessage[intMsgCnt] == 'a'
+				|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*' || strLowerMessage[intMsgCnt] == '/') {
 				intMsgCnt++;
 			}
 			else if (strMsg[intMsgCnt] == '[') {
@@ -3683,26 +3699,38 @@ private:
 		while (isalpha(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && isalpha(static_cast<unsigned char>(strLowerMessage[intMsgCnt - 1]))) intMsgCnt--;
 		return strMsg.substr(intBegin, intMsgCnt - intBegin);
 	}
+	//读取到冒号或等号停止的文本
+	string readToColon() {
+		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
+		int intBegin = intMsgCnt;
+		int intEnd = intBegin;
+		int len = strMsg.length();
+		while (intMsgCnt < len && strMsg[intMsgCnt] != '=' && strMsg[intMsgCnt] != ':')		{
+			if (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || (!isspace(static_cast<unsigned char>(strMsg[intEnd]))))intEnd = intMsgCnt;
+			if (strMsg[intMsgCnt] < 0)intMsgCnt += 2;
+			else intMsgCnt++;
+		}
+		if (isspace(static_cast<unsigned char>(strMsg[intEnd])))intMsgCnt = intEnd;
+		return strMsg.substr(intBegin, intMsgCnt - intBegin);
+	}
 	//读取大小写不敏感的技能名
 	string readAttrName() {
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
 		int intBegin = intMsgCnt;
 		int intEnd = intBegin;
-		int intLast = intMsgCnt;
 		int len = strMsg.length();
 		while (intMsgCnt < len && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))
 			&& strMsg[intMsgCnt] != '=' && strMsg[intMsgCnt] != ':'
 			&& strMsg[intMsgCnt] != '+' && strMsg[intMsgCnt] != '-' && strMsg[intMsgCnt] != '*' && strMsg[intMsgCnt] != '/')
 		{
-			if (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || (!isspace(static_cast<unsigned char>(strMsg[intLast]))))intEnd = intMsgCnt;
-			intLast = intMsgCnt;
-			if (strMsg[intMsgCnt] < 0 && intMsgCnt < len)intMsgCnt += 2;
+			if (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || (!isspace(static_cast<unsigned char>(strMsg[intEnd]))))intEnd = intMsgCnt;
+			if (strMsg[intMsgCnt] < 0)intMsgCnt += 2;
 			else intMsgCnt++;
 		}
 		if (intMsgCnt == strLowerMessage.length() && strLowerMessage.find(' ', intBegin) != string::npos) {
 			intMsgCnt = strLowerMessage.find(' ', intBegin);
 		}
-		else if (isspace(static_cast<unsigned char>(strMsg[intLast])))intMsgCnt = intEnd;
+		else if (isspace(static_cast<unsigned char>(strMsg[intEnd])))intMsgCnt = intEnd;
 		return strMsg.substr(intBegin, intMsgCnt - intBegin);
 	}
 	//

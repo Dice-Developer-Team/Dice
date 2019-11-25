@@ -131,8 +131,7 @@ static std::vector<std::pair<std::string, std::string>>BuildCOC7 = {
 	{"教育","2D6*5+30"},
 	{"幸运","3D6*5"},
 	{"生命","[体质体型和]/10"},
-	{"理智","&意志"},
-	{"魔法","[意志]/5"}
+	{"魔法","[意志]/5"},
 };
 static std::map<std::string, std::string>mVariableCOC7 = {
 	{"灵感","&智力"},
@@ -140,8 +139,8 @@ static std::map<std::string, std::string>mVariableCOC7 = {
 	{"体质体型和","[体质]+[体型]"},
 };
 static std::map<std::string, std::string>ExpressionCOC7 = {
-{"医学","1D3"},
-{"精神分析","1D3"},
+{"医学回复","1D3"},
+{"精神分析回复","1D3"},
 {"空手","1D3+[DB]"},
 {"弓箭","1D6+[DB]/2"},
 {"指虎","1D3+1+[DB]"},
