@@ -453,7 +453,7 @@ void warningHandler() {
 		if (strPara == "unpower" || strPara.empty()) {
 			for (auto eachGroup : GroupList) {
 				if (getGroupMemberInfo(eachGroup.first, getLoginQQ()).permissions == 1) {
-					sendGroupMsg(eachGroup.first, GlobalMsg["strLeaveNoPower"]);
+					sendGroupMsg(eachGroup.first, getMsg("strLeaveNoPower"));
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
 					intCnt++;
@@ -465,7 +465,7 @@ void warningHandler() {
 		else if (isdigit(static_cast<unsigned char>(strPara[0]))) {
 			int intDayLim = stoi(strPara);
 			string strDayLim = to_string(intDayLim);
-			time_t tNow = time(NULL);;
+			time_t tNow = time(NULL);
 			for (auto eachChat : mLastMsgList) {
 				if (eachChat.first.second == Private)continue;
 				if (MonitorList.count(eachChat.first))continue;
@@ -506,7 +506,7 @@ void warningHandler() {
 		else if (strPara == "black") {
 			for (auto eachGroup : GroupList) {
 				if (BlackGroup.count(eachGroup.first)) {
-					AddMsgToQueue(GlobalMsg["strBlackGroup"], eachGroup.first, Group);
+					AddMsgToQueue(getMsg("strBlackGroup"), eachGroup.first, Group);
 					strReply += "\n" + printGroup(eachGroup.first) + "：" + "黑名单群";
 					Sleep(100);
 					setGroupLeave(eachGroup.first);
@@ -551,7 +551,7 @@ void warningHandler() {
 		else if (strPara == "preserve") {
 			for (auto eachGroup : GroupList) {
 				if (getGroupMemberInfo(eachGroup.first, masterQQ).QQID != masterQQ&&WhiteGroup.count(eachGroup.first)==0) {
-					AddMsgToQueue(GlobalMsg["strPreserve"], eachGroup.first, Group);
+					AddMsgToQueue(getMsg("strPreserve"), eachGroup.first, Group);
 					Sleep(10);
 					setGroupLeave(eachGroup.first);
 					mLastMsgList.erase({ eachGroup.first ,Group });
@@ -601,8 +601,8 @@ EVE_Request_AddFriend(eventAddFriend) {
 	else if (WhiteQQ.count(fromQQ)) {
 		strMsg += "，已同意（用户在白名单中）";
 		setFriendAddRequest(responseFlag, 1, "");
-		GlobalMsg["strAddFriendWhiteQQ"].empty() ? AddMsgToQueue(GlobalMsg["strAddFriend"], fromQQ)
-			: AddMsgToQueue(GlobalMsg["strAddFriendWhiteQQ"], fromQQ);
+		GlobalMsg["strAddFriendWhiteQQ"].empty() ? AddMsgToQueue(getMsg("strAddFriend"), fromQQ)
+			: AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromQQ);
 		addRecord(strMsg);
 	}
 	else if (boolConsole["Private"]&& !boolConsole["AllowStranger"]) {
@@ -613,15 +613,15 @@ EVE_Request_AddFriend(eventAddFriend) {
 	else {
 		strMsg += "，已同意";
 		setFriendAddRequest(responseFlag, 1, "");
-		AddMsgToQueue(GlobalMsg["strAddFriend"], fromQQ);
+		AddMsgToQueue(getMsg("strAddFriend"), fromQQ);
 		addRecord(strMsg);
 	}
 	return 1;
 }
 EVE_Friend_Add(eventFriendAdd) {
 	if (!boolConsole["ListenFriendAdd"])return 0;
-	GlobalMsg["strAddFriendWhiteQQ"].empty() ? AddMsgToQueue(GlobalMsg["strAddFriend"], fromQQ)
-		: AddMsgToQueue(GlobalMsg["strAddFriendWhiteQQ"], fromQQ);
+	GlobalMsg["strAddFriendWhiteQQ"].empty() ? AddMsgToQueue(getMsg("strAddFriend"), fromQQ)
+		: AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromQQ);
 	return 0;
 }
 

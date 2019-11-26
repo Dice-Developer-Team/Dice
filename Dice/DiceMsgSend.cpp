@@ -26,6 +26,7 @@
 #include <thread>
 #include "CQAPI_EX.h"
 #include "DiceMsgSend.h"
+#include "MsgFormat.h"
 #include "GlobalVar.h"
 using namespace std;
 using namespace CQ;

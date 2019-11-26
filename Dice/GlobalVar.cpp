@@ -22,6 +22,7 @@
  */
 #include "CQLogger.h"
 #include "GlobalVar.h"
+#include "MsgFormat.h"
 #include <map>
 
 bool Enabled = false;
@@ -407,3 +408,8 @@ std::map<std::string, std::string> HelpDoc = {
 {"世界逆位","未完成、失败、准备不足、盲目接受、一时不顺利、半途而废、精神颓废、饱和状态、合谋、态度不够融洽、感情受挫。"},
 };
 std::map<std::string, std::string> EditedHelpDoc;
+std::string getMsg(std::string key, const std::map<std::string, std::string>& dir) {
+	auto it = dir.find(key);
+	if (it != dir.end())return format(it->second, dir);
+	return "";
+}
