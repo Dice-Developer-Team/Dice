@@ -2603,10 +2603,10 @@ public:
 					intSkillVal = PList[fromQQ][fromGroup].call(strVar["attr"]);
 				}
 				else {
-					if (SkillNameReplace.count(strVar["attr"])) {
+					if (!PList.count(fromQQ) && SkillNameReplace.count(strVar["attr"])) {
 						strVar["attr"] = SkillNameReplace[strVar["attr"]];
 					}
-					if (SkillDefaultVal.count(strVar["attr"])) {
+					if (!PList.count(fromQQ) && SkillDefaultVal.count(strVar["attr"])) {
 						intSkillVal = SkillDefaultVal[strVar["attr"]];
 					}
 					else {

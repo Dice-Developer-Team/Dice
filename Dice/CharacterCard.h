@@ -183,19 +183,8 @@ public:
 		else if (pTemplet->defaultSkill.count(key))return pTemplet->defaultSkill.find(key)->second;
 		else return 0;
 	}
-	short getVal(string key)const {
-		if (Attr.count(key))return Attr.find(key)->second;
-		else if (pTemplet->mVariable.count(key)) {
-			string exp = pTemplet->mVariable.find(key)->second;
-			RD Res(exp);
-			Res.Roll();
-			return Res.intTotal;
-		}
-		else if (pTemplet->defaultSkill.count(key))return pTemplet->defaultSkill.find(key)->second;
-		else return 0;
-	}
 	//表达式转义
-	string escape(string exp) const{
+	string escape(string exp){
 		if (exp[0] == '&') {
 			string key = exp.substr(1);
 			return getExp(key);
@@ -203,22 +192,25 @@ public:
 		int intCnt = 0, lp = 0, rp = 0;
 		while ((lp = exp.find('[', intCnt)) != std::string::npos && (rp = exp.find(']', lp)) != std::string::npos) {
 			string strProp = exp.substr(lp + 1, rp - lp - 1);
-			string val = count(strProp) ? to_string(getVal(strProp)) : getExp(strProp);
+			string val = getExp(strProp);
 			exp.replace(exp.begin() + lp, exp.begin() + rp + 1, val);
 			intCnt = lp + val.length();
 		}
 		return exp;
 	}
 	//求key对应掷骰表达式
-	string getExp(string& key) const {
-		auto exp = DiceExp.find(key);
-		if (exp != DiceExp.end()) {
-			return escape(exp->second);
-		}
+	string getExp(string& key){
+		std::map<string, string>::const_iterator exp = DiceExp.find(key);
+		if (exp != DiceExp.end()) return escape(exp->second);
 		exp = pTemplet->mExpression.find(key);
-		if (exp != pTemplet->mExpression.end()) {
-			return escape(exp->second);
-		}
+		if (exp != pTemplet->mExpression.end()) return escape(exp->second);
+		key = standard(key);
+		std::map<string, short>::const_iterator val = Attr.find(key);
+		if (val != Attr.end())return to_string(val->second);
+		exp = pTemplet->mVariable.find(key);
+		if (exp != pTemplet->mVariable.end())return to_string(cal(exp->second));
+		val = pTemplet->defaultSkill.find(key);
+		if (val != pTemplet->defaultSkill.end())return to_string(val->second);
 		return "0";
 	}
 	bool countExp(string key) {
@@ -638,20 +630,20 @@ public:
 		return 0;
 	}
 	string listCard(){
-		string strRes;
+		ResList Res;
 		for (auto it : mCardList) {
-			strRes += "[" + to_string(it.first) + "]" + it.second.Name + "\n";
+			Res << "[" + to_string(it.first) + "]" + it.second.Name + "\n";
 		}
-		strRes += "default:" + (*this)[0].Name;
-		return strRes;
+		Res << "default:" + (*this)[0].Name;
+		return Res.show();
 	}
 	string listMap() {
-		string strRes;
+		ResList Res;
 		for (auto it : mGroupIndex) {
-			if (!it.first)strRes += "（默认）" + mCardList[it.second].Name;
-			else strRes += "\n(" + to_string(it.first) + ")" + mCardList[it.second].Name;
+			if (!it.first)Res << "default:" + mCardList[it.second].Name;
+			else Res << "(" + to_string(it.first) + ")" + mCardList[it.second].Name;
 		}
-		return strRes;
+		return Res.show();
 	}
 	CharaCard& getCard(string name, long long group = 0) {
 		if (mNameIndex.count(name))return mCardList[mNameIndex[name]];
