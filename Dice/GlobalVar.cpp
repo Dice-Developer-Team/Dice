@@ -140,7 +140,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
 	{"strClockToWork","{self}已按时启用√"},
 	{"strClockOffWork","{self}已按时关闭√"},
-	{"strNameGenerator","{pc}的随机名称:{res}"},
+	{"strNameGenerator","{pc}的随机名称：{res}"},
 	{"strDrawCard", "来看看{pc}抽到了什么：{res}"},
 	{"strHlpNotFound", "未找到指定的帮助信息×"},
 	{"strMeOn","成功在这里启用.me命令√"},

@@ -1702,7 +1702,7 @@ public:
 				return 1;
 			}
 			//vector<string> TempNameStorage;
-			string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("random_name_" + type)) ? "random_name_" + type : "random_name";
+			string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("随机姓名_" + type)) ? "随机姓名_" + type : "随机姓名";
 			vector<string> TempDeck = CardDeck::mPublicDeck[strDeckName];
 			ResList Res(CardDeck::drawCard(TempDeck, true), "、");
 			while (--intNum) {
@@ -1861,10 +1861,10 @@ public:
 			while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 				intMsgCnt++;
 			string type = readPara();
-			string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("random_name_" + type)) ? "random_name_" + type : "random_name";
-			string name = CardDeck::drawCard(CardDeck::mPublicDeck[strDeckName], true);
-			Name->set(fromGroup, fromQQ, name);
-			const string strReply = format(GlobalMsg["strNameSet"], { strVar["nick"], strip(name) });
+			string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("随机姓名_" + type)) ? "随机姓名_" + type : "随机姓名";
+			strVar["new_nick"] = strip(CardDeck::drawCard(CardDeck::mPublicDeck[strDeckName], true));
+			Name->set(fromGroup, fromQQ, strVar["new_nick"]);
+			const string strReply = format(GlobalMsg["strNameSet"], { strVar["nick"], strVar["new_nick"] });
 			reply(strReply);
 			return 1;
 		}
@@ -2674,7 +2674,7 @@ public:
 					case 5:strAns += GlobalMsg["strCriticalSuccess"]; break;
 					case 4:if (intDifficulty == 1) { strAns += GlobalMsg["strExtremeSuccess"]; break; }
 					case 3:if (intDifficulty == 1) { strAns += GlobalMsg["strHardSuccess"]; break; }
-					case 2:strAns += GlobalMsg["strRegularSuccess"]; break;
+					case 2:strAns += GlobalMsg["strSuccess"]; break;
 					}
 					Res << strAns;
 				}

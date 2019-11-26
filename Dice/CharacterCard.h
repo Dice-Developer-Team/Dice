@@ -168,11 +168,9 @@ public:
 	CharaCard(){}
 	CharaCard(string name, string type = "COC7") :Name(name), Type(type){}
 	short call(string &key){
+		if (Attr.count(key))return Attr.find(key)->second;
 		key = standard(key);
 		if (Attr.count(key))return Attr.find(key)->second;
-		else if (DiceExp.count(key)) {
-			return cal(DiceExp[key]);
-		}
 		else if (pTemplet->mAutoFill.count(key)){
 			Attr[key] = cal(pTemplet->mAutoFill.find(key)->second);
 			return Attr[key];
@@ -313,6 +311,11 @@ public:
 			}
 			else return false;
 		}
+		else if (!isExp && Attr.count(key)) {
+			Attr.erase(strKey);
+			key = strKey;
+			return true;
+		}
 		else if (!isExp && Attr.count(strKey)) {
 			Attr.erase(strKey);
 			key = strKey;
@@ -400,6 +403,7 @@ public:
 		return Res.show();
 	}
 	bool count(string& key)const {
+		if (Attr.count(key))return true;
 		key = standard(key);
 		return Attr.count(key) || DiceExp.count(key) || pTemplet->mAutoFill.count(key) || pTemplet->mVariable.count(key) || pTemplet->defaultSkill.count(key);
 	}
@@ -632,7 +636,7 @@ public:
 	string listCard(){
 		ResList Res;
 		for (auto it : mCardList) {
-			Res << "[" + to_string(it.first) + "]" + it.second.Name + "\n";
+			Res << "[" + to_string(it.first) + "]" + it.second.Name;
 		}
 		Res << "default:" + (*this)[0].Name;
 		return Res.show();

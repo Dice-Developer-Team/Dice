@@ -66,7 +66,8 @@ std::string format(std::string s, const std::map<std::string, std::string>& repl
 			len = s.length();
 		}
 		else if ((it = str_tmp.find(key)) != str_tmp.end()) {
-			s.replace(l, r - l + 1, it->second);
+			if (key == "res")s.replace(l, r - l + 1, format(it->second, replace_str, str_tmp));
+			else s.replace(l, r - l + 1, it->second);
 			r += s.length() - len;
 			len = s.length();
 		}
