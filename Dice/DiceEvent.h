@@ -1920,7 +1920,7 @@ public:
 				}
 				if (strMessage == "NULL")strMessage = "";
 				EditedMsg[strName] = strMessage;
-				GlobalMsg[strName] = (strName == "strHlpMsg") ? Dice_Short_Ver + "\n" + strMessage : strMessage;
+				GlobalMsg[strName] = strMessage;
 				AdminNotify("已自定义" + strName + "的文本");
 			}
 			saveJMap("DiceData\\conf\\CustomMsg.json", EditedMsg);
