@@ -694,7 +694,8 @@ public:
 				MonitorList.insert({ masterQQ,Private });
 				RecorderList.insert({ masterQQ,Private });
 				reply("试问，你就是" + GlobalMsg["strSelfName"] + "的Master√");
-				strReply = "请认真阅读当前版本Master手册以履行职责";
+				strReply = "请认真阅读当前版本Master手册以履行职责。最后发布版:shiki.stringempty.xyz/download/Shiki_Master_Manual.pdf";
+				strReply += "用户手册:shiki.stringempty.xyz/download/Shiki_Master_Manual.pdf";
 				strReply += "\n如要添加较多没有单群开关的插件，推荐开启DisabledBlock保证群内的静默；";
 				strReply += "\n默认开启对群移出、禁言、刷屏事件的监听，如要关闭请手动调整；";
 				string strOption = readRest();
@@ -2489,7 +2490,7 @@ public:
 			string strName = strip(readRest());
 			strVar["char1"] = strName.substr(0, strName.find('='));
 			strVar["char2"] = (strVar["char1"].length() < strName.length() - 1) ? strip(strName.substr(strVar["char1"].length() + 1)) : pl[fromGroup].Name;
-			switch (pl.copyCard(strVar["char1"], strVar["char1"], fromGroup)) {
+			switch (pl.copyCard(strVar["char1"], strVar["char2"], fromGroup)) {
 			case 0:
 				reply(GlobalMsg["strPcCardCpy"]);
 				break;
@@ -2497,10 +2498,10 @@ public:
 				reply(GlobalMsg["strPcCardFull"]);
 				break;
 			case -3:
-				reply(GlobalMsg["strPCNameEmpty"]);
+				reply(GlobalMsg["strPcNameEmpty"]);
 				break;
 			case -6:
-				reply(GlobalMsg["strPCNameInvalid"]);
+				reply(GlobalMsg["strPcNameInvalid"]);
 				break;
 			default:
 				reply(GlobalMsg["strUnknownErr"]);
@@ -3528,7 +3529,6 @@ public:
 	}
 	//判断是否响应
 	bool DiceFilter() {
-		init(strMsg);
 		while (isspace(static_cast<unsigned char>(strMsg[0])))
 			strMsg.erase(strMsg.begin());
 		bool isOtherCalled = false;
@@ -3553,6 +3553,7 @@ public:
 				strMsg.erase(strMsg.begin());
 		}
 		if (isOtherCalled && !isCalled)return false;
+		init(strMsg);
 		init2(strMsg);
 		if (fromType == Private) isCalled = true;
 		isMaster = fromQQ == masterQQ && boolMasterMode;

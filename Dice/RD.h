@@ -80,7 +80,7 @@ private:
 			const int AddDiceVal = stoi(strAddVal);
 			if (intDiceCnt == 0)
 				return ZeroDice_Err;
-			if (AddDiceVal < 5 || AddDiceVal > 10)
+			if (AddDiceVal < 5 || AddDiceVal > 11)
 				return AddDiceVal_Err;
 			std::vector<int> vintTmpRes;
 			int intTmpRes = 0;

@@ -418,6 +418,11 @@ public:
 		}
 		return Attr[key];
 	}
+	void operator<<(const CharaCard& card) {
+		string name = Name;
+		(*this) = card;
+		Name = name;
+	}
 	void writeb(std::ofstream& fout) {
 		fwrite(fout, (string)"Name");
 		fwrite(fout, Name);
@@ -623,14 +628,10 @@ public:
 			//人物卡数量上限
 			if (mCardList.size() > 16)return -1;
 			if (name1.find(":") != string::npos)return -6;
-			mCardList[++indexMax] = (*this)[name2];
+			mCardList[++indexMax] = name1;
 			mNameIndex[name1] = indexMax;
-			mCardList[indexMax].Name = name1;
-			return 0;
 		}
-		CharaCard& pc1 = (*this)[name1];
-		pc1 = (*this)[name2];
-		pc1.Name = name1;
+		(*this)[name1] << (*this)[name2];
 		return 0;
 	}
 	string listCard(){
