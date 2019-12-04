@@ -1933,21 +1933,20 @@ public:
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
 			strVar["attr"] = readAttrName();
-			string strCurrentValue = readDigit();
+			string strCurrentValue = readDigit(false);
 			short nCurrentVal;
-			short& nVal = nCurrentVal;
+			short* pVal = &nCurrentVal;
 			//获取技能原值
 			if (strCurrentValue.empty()) {
 				if (PList.count(fromQQ) && (getPlayer(fromQQ)[fromGroup].stored(strVar["attr"]))) {
-					nVal = getPlayer(fromQQ)[fromGroup][strVar["attr"]];
+					pVal = &getPlayer(fromQQ)[fromGroup][strVar["attr"]];
 				}
 				else {
 					reply(GlobalMsg["strEnValEmpty"]);
 					return 1;
 				}
 			}
-			else
-			{
+			else{
 				if (strCurrentValue.length() > 3)
 				{
 					reply(GlobalMsg["strEnValInvalid"]);
@@ -1959,12 +1958,12 @@ public:
 			//可变成长值表达式
 			string strEnChange;
 			string strEnFail;
-			string strEnSuc;
+			string strEnSuc = "1D10";
 			//以加减号做开头确保与技能值相区分
 			if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
 				strEnChange = strLowerMessage.substr(intMsgCnt, strMsg.find(' ', intMsgCnt) - intMsgCnt);
 				//没有'/'时默认成功变化值
-				if (strEnChange.find('/')!=std::string::npos) {
+				if (strEnChange.find('/') != std::string::npos) {
 					strEnFail = strEnChange.substr(0, strEnChange.find("/"));
 					strEnSuc = strEnChange.substr(strEnChange.find("/") + 1);
 				}
@@ -1972,46 +1971,46 @@ public:
 			}
 			if (strVar["attr"].empty())strVar["attr"] = GlobalMsg["strEnDefaultName"];
 			const int intTmpRollRes = RandomGenerator::Randint(1, 100);
-			strVar["res"] = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(nVal);
+			strVar["res"] = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(*pVal) + " ";
 
-			if (intTmpRollRes <= nVal && intTmpRollRes <= 95)
+			if (intTmpRollRes <= *pVal && intTmpRollRes <= 95)
 			{
-				if(strEnFail.empty())strVar["res"] += " 失败!\n你的" + strVar["attr"] + "没有变化!";
+				if (strEnFail.empty()) {
+					strVar["res"] += GlobalMsg["strFailure"];
+					reply(GlobalMsg["strEnRollNotChange"]);
+					return 1;
+				}
 				else {
+					strVar["res"] += GlobalMsg["strFailure"];
 					RD rdEnFail(strEnFail);
 					if (rdEnFail.Roll()) {
 						reply(GlobalMsg["strValueErr"]);
 						return 1;
 					}
-					nVal += rdEnFail.intTotal;
-					if (nVal > 32767)nVal = 32767;
-					if (nVal < -32767)nVal = -32767;
-					strVar["res"] += " 失败!\n你的" + strVar["attr"] + "变化" + rdEnFail.FormCompleteString() + "点，当前为" + to_string(nVal +
-						rdEnFail.intTotal) + "点";
+					*pVal += rdEnFail.intTotal;
+					if (*pVal > 32767)*pVal = 32767;
+					if (*pVal < -32767)*pVal = -32767;
+					strVar["change"] = rdEnFail.FormCompleteString();
+					strVar["final"] = to_string(*pVal);
+					reply(GlobalMsg["strEnRollFailure"]);
+					return 1;
 				}
 			}
-			else
-			{
-				if(strEnSuc.empty()){
-					strVar["res"] += " 成功!\n你的" + strVar["attr"] + "增加1D10=";
-					const int intTmpRollD10 = RandomGenerator::Randint(1, 10);
-					strVar["res"] += to_string(intTmpRollD10) + "点,当前为" + to_string(nVal + intTmpRollD10) + "点";
-					nVal += intTmpRollD10;
+			else{
+				strVar["res"] += GlobalMsg["strSuccess"];
+				RD rdEnSuc(strEnSuc);
+				if (rdEnSuc.Roll()) {
+					reply(GlobalMsg["strValueErr"]);
+					return 1;
 				}
-				else {
-					RD rdEnSuc(strEnSuc);
-					if (rdEnSuc.Roll()) {
-						reply(GlobalMsg["strValueErr"]);
-						return 1;
-					}
-					nVal += rdEnSuc.intTotal;
-					if (nVal > 32767)nVal = 32767;
-					if (nVal < -32767)nVal = -32767;
-					strVar["res"] += " 成功!\n你的" + strVar["attr"] + "变化" + rdEnSuc.FormCompleteString() + "点，当前为" + to_string(nVal) + "点";
-				}
+				*pVal += rdEnSuc.intTotal;
+				if (*pVal > 32767)* pVal = 32767;
+				if (*pVal < -32767)* pVal = -32767;
+				strVar["change"] = rdEnSuc.FormCompleteString();
+				strVar["final"] = to_string(*pVal);
+				reply(GlobalMsg["strEnRollSuccess"]);
+				return 1;
 			}
-			reply(GlobalMsg["strEnRoll"]);
-			return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "li")
 		{
@@ -2762,20 +2761,22 @@ public:
 			}
 			string attr = "理智";
 			short intSan = 0;
-			short& nSan = intSan;
+			short* pSan = &intSan;
 			if (!San.empty()) {
 				intSan = stoi(San);
 			}
 			else {
 				if (PList.count(fromQQ) && getPlayer(fromQQ)[fromGroup].count(attr)) {
-					nSan = getPlayer(fromQQ)[fromGroup][attr];
+					pSan = &getPlayer(fromQQ)[fromGroup][attr];
 				}
 				else{
 					reply(GlobalMsg["strSanEmpty"]);
 					return 1;
 				}
 			}
-				for (const auto& character : SanCost.substr(0, SanCost.find("/")))
+			string strSanCostSuc = SanCost.substr(0, SanCost.find("/"));
+			string strSanCostFail = SanCost.substr(SanCost.find("/") + 1);
+				for (const auto& character : strSanCostSuc)
 				{
 					if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character != '+' && character != '-')
 					{
@@ -2791,50 +2792,44 @@ public:
 						return 1;
 					}
 				}
-				RD rdSuc(SanCost.substr(0, SanCost.find("/")));
-				RD rdFail(SanCost.substr(SanCost.find("/") + 1));
+				RD rdSuc(strSanCostSuc);
+				RD rdFail(strSanCostFail);
 				if (rdSuc.Roll() != 0 || rdFail.Roll() != 0)
 				{
 					reply(GlobalMsg["strSanCostInvalid"]);
 					return 1;
 				}
-				if (San.length() >= 3|| nSan == 0){
+				if (San.length() >= 3 || *pSan == 0) {
 					reply(GlobalMsg["strSanInvalid"]);
 					return 1;
 				}
 				const int intTmpRollRes = RandomGenerator::Randint(1, 100);
-				strVar["res"] = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(nSan);
+				strVar["res"] = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(*pSan) + " ";
 				//调用房规
 				int intRule = mDefaultCOC.count(fromChat) ? mDefaultCOC[fromChat] : 0;
-				switch (RollSuccessLevel(intTmpRollRes, nSan, intRule)) {
+				switch (RollSuccessLevel(intTmpRollRes, *pSan, intRule)) {
 				case 5:
 				case 4:
 				case 3:
 				case 2:
-					strVar["res"] += " 成功\n你的San值减少" + SanCost.substr(0, SanCost.find("/"));
-					if (SanCost.substr(0, SanCost.find("/")).find("d") != string::npos)
-						strVar["res"] += "=" + to_string(rdSuc.intTotal);
-					nSan = max(0, nSan - rdSuc.intTotal);
-					strVar["res"] += +"点,当前剩余" + to_string(nSan) + "点";
+					strVar["res"] += GlobalMsg["strSuccess"];
+					strVar["change"] = rdSuc.FormCompleteString();
+					*pSan = max(0, *pSan - rdSuc.intTotal);
 					break;
 				case 1:
-					strVar["res"] += " 失败\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-					if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-						strVar["res"] += "=" + to_string(rdFail.intTotal);
-					nSan = max(0, nSan - rdFail.intTotal);
-					strVar["res"] += +"点,当前剩余" + to_string(nSan) + "点";
+					strVar["res"] += GlobalMsg["strFailure"];
+					strVar["change"] = rdFail.FormCompleteString();
+					*pSan = max(0, *pSan - rdFail.intTotal);
 					break;
 				case 0:
-					strVar["res"] += " " + GlobalMsg["strRollFumble"] + "\n你的San值减少" + SanCost.substr(SanCost.find("/") + 1);
-					// ReSharper disable once CppExpressionWithoutSideEffects
+					strVar["res"] += GlobalMsg["strFumble"];
 					rdFail.Max();
-					if (SanCost.substr(SanCost.find("/") + 1).find("d") != string::npos)
-						strVar["res"] += "最大值=" + to_string(rdFail.intTotal);
-					nSan = max(0, nSan - rdSuc.intTotal);
-					strVar["res"] += +"点,当前剩余" + to_string(nSan) + "点";
+					strVar["change"] = rdFail.strDice + "最大值=" + to_string(rdFail.intTotal);
+					*pSan = max(0, *pSan - rdFail.intTotal);
 					break;
 				}
-				reply(GlobalMsg["strSanRoll"]);
+				strVar["final"] = to_string(*pSan);
+				reply(GlobalMsg["strSanRollRes"]);
 				return 1;
 		}
 		else if (strLowerMessage.substr(intMsgCnt, 2) == "st")
@@ -3000,29 +2995,9 @@ public:
 				intMsgCnt += 1;
 			}
 			if (intT == 0)isHidden = false;
-			while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
-				intMsgCnt++;
-
-			int intTmpMsgCnt;
-			for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != strMsg.length() && strMsg[intTmpMsgCnt] != ' ';
-				intTmpMsgCnt++)
-			{
-				if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
-					intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
-						&& strLowerMessage[intTmpMsgCnt] != 'a'
-						&& strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
-							intTmpMsgCnt] != '-' && strLowerMessage[intTmpMsgCnt] != '#'
-						&& strLowerMessage[intTmpMsgCnt] != 'x' && strLowerMessage[intTmpMsgCnt] != '*')
-				{
-					break;
-				}
-			}
-			string strMainDice = strLowerMessage.substr(intMsgCnt, intTmpMsgCnt - intMsgCnt);
-			while (isspace(static_cast<unsigned char>(strMsg[intTmpMsgCnt])))
-				intTmpMsgCnt++;
-			strVar["reason"] = strMsg.substr(intTmpMsgCnt);
-
-
+			string strMainDice = readDice();
+			readSkipSpace();
+			strVar["reason"] = strMsg.substr(intMsgCnt);
 			int intTurnCnt = 1;
 			if (strMainDice.find("#") != string::npos)
 			{
@@ -3273,40 +3248,21 @@ public:
 			while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 				intMsgCnt++;
 			string strMainDice;
+			strVar["reason"] = strMsg.substr(intMsgCnt);
 			if (PList.count(fromQQ) && getPlayer(fromQQ)[fromGroup].countExp(strMsg.substr(intMsgCnt))) {
-				strVar["reason"] = strMsg.substr(intMsgCnt);
 				strMainDice = getPlayer(fromQQ)[fromGroup].getExp(strVar["reason"]);
 			}
 			else {
-				bool tmpContainD = false;
-				int intTmpMsgCnt;
-				for (intTmpMsgCnt = intMsgCnt; intTmpMsgCnt != strMsg.length() && strMsg[intTmpMsgCnt] != ' ';
-					intTmpMsgCnt++)
-				{
-					if (strLowerMessage[intTmpMsgCnt] == 'd' || strLowerMessage[intTmpMsgCnt] == 'p' || strLowerMessage[
-						intTmpMsgCnt] == 'b' || strLowerMessage[intTmpMsgCnt] == '#' || strLowerMessage[intTmpMsgCnt] == 'f'
-							||
-							strLowerMessage[intTmpMsgCnt] == 'a')
-						tmpContainD = true;
-						if (!isdigit(static_cast<unsigned char>(strLowerMessage[intTmpMsgCnt])) && strLowerMessage[intTmpMsgCnt] != 'd' && strLowerMessage[
-							intTmpMsgCnt] != 'k' && strLowerMessage[intTmpMsgCnt] != 'p' && strLowerMessage[intTmpMsgCnt] != 'b'
-								&&
-								strLowerMessage[intTmpMsgCnt] != 'f' && strLowerMessage[intTmpMsgCnt] != '+' && strLowerMessage[
-									intTmpMsgCnt
-								] != '-' && strLowerMessage[intTmpMsgCnt] != '#' && strLowerMessage[intTmpMsgCnt] != 'a' && strLowerMessage[intTmpMsgCnt] != 'x' && strLowerMessage[intTmpMsgCnt] != '*')
-						{
-							break;
-						}
+				strMainDice = readDice();
+				bool isExp = false;
+				for (auto ch : strMainDice) {
+					if (!isdigit(ch)) {
+						isExp = true;
+						break;
+					}
 				}
-				if (tmpContainD)
-				{
-					strMainDice = strLowerMessage.substr(intMsgCnt, intTmpMsgCnt - intMsgCnt);
-					while (isspace(static_cast<unsigned char>(strMsg[intTmpMsgCnt])))
-						intTmpMsgCnt++;
-					strVar["reason"] = strMsg.substr(intTmpMsgCnt);
-				}
-				else
-					strVar["reason"] = strMsg.substr(intMsgCnt);
+				if (isExp)strVar["reason"] = strMsg.substr(intMsgCnt);
+				else strMainDice.clear();
 			}
 			int intTurnCnt = 1;
 			const int intDefaultDice = DefaultDice.count(fromQQ) ? DefaultDice[fromQQ] : 100;
@@ -3662,8 +3618,8 @@ private:
 			|| strLowerMessage[intMsgCnt] == 'f'
 			|| strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-'
 			|| strLowerMessage[intMsgCnt] == 'a'
-			|| strLowerMessage[intMsgCnt] == 'n'
-			|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*')
+			|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*' || strMsg[intMsgCnt] == '/'
+			|| strLowerMessage[intMsgCnt] == '#')
 		{
 			strDice += strMsg[intMsgCnt];
 			intMsgCnt++;
@@ -3686,7 +3642,6 @@ private:
 				|| strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b'
 				|| strLowerMessage[intMsgCnt] == 'f'
 				|| strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-'
-				|| strLowerMessage[intMsgCnt] == 'a'
 				|| strLowerMessage[intMsgCnt] == 'a'
 				|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*' || strLowerMessage[intMsgCnt] == '/') {
 				intMsgCnt++;
