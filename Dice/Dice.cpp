@@ -87,14 +87,34 @@ void loadData() {
 	mkDir("DiceData");
 	string strLog;
 	loadDir(loadXML<CardTemp>, string("DiceData\\CardTemp\\"), mCardTemplet, strLog, true);
-	loadJMap(strFileLoc + "PublicDeck.json", CardDeck::mPublicDeck);
-	loadJMap(strFileLoc + "ExternDeck.json", CardDeck::mPublicDeck);
 	loadJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);
-	loadDir(loadJMap, string("DiceData\\PublicDeck\\"), CardDeck::mPublicDeck, strLog); 
+	if (loadDir(loadJMap, string("DiceData\\PublicDeck\\"), CardDeck::mExternPublicDeck, strLog) < 1) {
+		loadJMap(strFileLoc + "PublicDeck.json", CardDeck::mExternPublicDeck);
+		loadJMap(strFileLoc + "ExternDeck.json", CardDeck::mExternPublicDeck);
+	}
+	merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
 	if (!strLog.empty()) {
 		strLog += "扩展配置读取完毕√";
 		addRecord(strLog);
 	}
+	HelpDoc["扩展牌堆"] = listKey(CardDeck::mExternPublicDeck);
+	//读取帮助文档
+	HelpDoc["master"] = printQQ(masterQQ);
+	ifstream ifstreamHelpDoc(strFileLoc + "HelpDoc.txt");
+	if (ifstreamHelpDoc)
+	{
+		string strName, strMsg, strDebug;
+		while (ifstreamHelpDoc) {
+			getline(ifstreamHelpDoc, strName);
+			getline(ifstreamHelpDoc, strMsg);
+			while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
+			while (strMsg.find("\\s") != string::npos)strMsg.replace(strMsg.find("\\s"), 2, " ");
+			while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
+			EditedHelpDoc[strName] = strMsg;
+			HelpDoc[strName] = strMsg;
+		}
+	}
+	ifstreamHelpDoc.close();
 }
 //备份数据
 void dataBackUp() {
@@ -217,23 +237,6 @@ EVE_Enable(eventEnable)
 	loadFile(strFileLoc + "Default.RDconf", DefaultDice);
 	loadFile(strFileLoc + "DefaultRule.RDconf", DefaultRule);
 	loadFile(strFileLoc + "WelcomeMsg.RDconf", WelcomeMsg);
-	//读取帮助文档
-	HelpDoc["master"] = printQQ(masterQQ);
-	ifstream ifstreamHelpDoc(strFileLoc + "HelpDoc.txt");
-	if (ifstreamHelpDoc)
-	{
-		string strName, strMsg ,strDebug;
-		while (ifstreamHelpDoc) {
-			getline(ifstreamHelpDoc, strName);
-			getline(ifstreamHelpDoc, strMsg);
-			while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
-			while (strMsg.find("\\s") != string::npos)strMsg.replace(strMsg.find("\\s"), 2, " ");
-			while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
-			EditedHelpDoc[strName] = strMsg;
-			HelpDoc[strName] = strMsg;
-		}
-	}
-	ifstreamHelpDoc.close();
 	//读取聊天列表
 	loadFile(strFileLoc + "LastMsgList.MYmap", mLastMsgList);
 	//读取邀请者列表
@@ -322,7 +325,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 {
 	time_t tNow = time(NULL);
 	if (boolConsole["LeaveDiscuss"]) {
-		sendDiscussMsg(eve.fromDiscuss, format(GlobalMsg["strLeaveDiscuss"], GlobalMsg));
+		sendDiscussMsg(eve.fromDiscuss, getMsg("strLeaveDiscuss"));
 		Sleep(1000);
 		setDiscussLeave(eve.fromDiscuss);
 		return;
@@ -394,7 +397,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 		string strMsg = "新加入" + printGroup(fromGroup);
 		if (BlackGroup.count(fromGroup)) {
 			if (mBlackGroupMark.count(fromGroup))sendGroupMsg(fromGroup, mBlackGroupMark[fromGroup].getWarning());
-			else sendGroupMsg(fromGroup, GlobalMsg["strBlackGroup"]);
+			else sendGroupMsg(fromGroup, getMsg("strBlackGroup"));
 			strMsg += "为黑名单群，已退群";
 			sendAdmin(strMsg);
 			setGroupLeave(fromGroup);
@@ -453,7 +456,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 				strMsg += "已自动添加群白名单";
 			}
 			else {
-				sendGroupMsg(fromGroup, GlobalMsg["strPreserve"]);
+				sendGroupMsg(fromGroup, getMsg("strPreserve"));
 				strMsg += "无白名单，已退群";
 				addRecord(strMsg);
 				setGroupLeave(fromGroup);
@@ -463,7 +466,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 		if (sBlackList.size())sendAdmin(strMsg);
 		else addRecord(strMsg);
 		if(!GlobalMsg["strAddGroup"].empty()) {
-			AddMsgToQueue(GlobalMsg["strAddGroup"], fromGroup, Group);
+			AddMsgToQueue(getMsg("strAddGroup"), { fromGroup, Group });
 		}
 	}
 	return 0;
@@ -531,6 +534,18 @@ EVE_System_GroupBan(eventGroupBan) {
 			sendAdmin(strNote);
 			return 1;
 		}
+		BlackMark mark;
+		mark.llMap = { {"fromGroup",fromGroup},{"DiceMaid",beingOperateQQ} };
+		mark.strMap = { {"type","ban"},{"time",strNow} };
+		if (!mDiceList.count(fromQQ))mark.set("fromQQ", fromQQ);
+		if (beingOperateQQ == DiceMaid) {
+			if (!boolMasterMode)return 0;
+			mark.set("masterQQ", masterQQ);
+		}
+		else {
+			mark.set("masterQQ", mDiceList[beingOperateQQ]);
+		}
+		Cloud::upWarning(mark.getData());
 		//统计群内管理
 		int intAuthCnt = 0;
 		string strAuthList;
@@ -544,12 +559,6 @@ EVE_System_GroupBan(eventGroupBan) {
 			}
 		}
 		strAuthList = "；群主" + printQQ(llOwner) + ",另有管理员" + to_string(intAuthCnt) + "名" + strAuthList;
-		BlackMark mark;
-		mark.llMap = { {"fromGroup",fromGroup},{"DiceMaid",beingOperateQQ} };
-		mark.strMap = { {"type","ban"},{"time",strNow} };
-		if (!mDiceList.count(fromQQ))mark.set("fromQQ", fromQQ);
-		Cloud::upWarning(mark.getData());
-		mark.set("masterQQ", beingOperateQQ == DiceMaid ? masterQQ : mDiceList[beingOperateQQ]);
 		mark.set("note", strNote);
 		if (mGroupInviter.count(fromGroup) && beingOperateQQ == DiceMaid  && !AdminQQ.count(mGroupInviter[fromGroup])) {
 			long long llInviter = mGroupInviter[fromGroup];

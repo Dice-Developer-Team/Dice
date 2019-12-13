@@ -51,6 +51,6 @@ extern std::map<std::string, std::string> EditedMsg;
 extern std::map<std::string, std::string> HelpDoc;
 // 修改后的帮助文档
 extern std::map<std::string, std::string> EditedHelpDoc;
-std::string getMsg(std::string key, const std::map<std::string, std::string>& dir = GlobalMsg);
+std::string getMsg(std::string key, std::map<std::string, std::string> tmp = {}, const std::map<std::string, std::string>& dir = GlobalMsg);
 
 #endif /*DICE_GLOBAL_VAR*/

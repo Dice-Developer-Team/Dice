@@ -399,10 +399,10 @@ void warningHandler() {
 				setQQWarning(mark, "fromQQ", warning.fromQQ);
 			}
 			if (intLevel == 0 && !mark.isVal("DiceMaid", warning.fromQQ))continue;
-			if (mark.count("inviterQQ") && ((mark.strMap["type"] == "kick" && boolConsole["KickedBanInviter"]) || (mark.strMap["type"] == "ban" && boolConsole["BannedBanInviter"])) || mark.strMap["type"] == "erase") {
+			if (mark.count("inviterQQ") && (((mark.strMap["type"] == "kick" && boolConsole["KickedBanInviter"]) || (mark.strMap["type"] == "ban" && boolConsole["BannedBanInviter"])) || mark.strMap["type"] == "erase")) {
 				setQQWarning(mark, "inviterQQ", warning.fromQQ);
 			}
-			if (mark.count("ownerQQ") && (mark.strMap["type"] == "ban" && boolConsole["BannedBanOwner"]) || mark.strMap["type"] == "erase") {
+			if (mark.count("ownerQQ") && ((mark.strMap["type"] == "ban" && boolConsole["BannedBanOwner"]) || mark.strMap["type"] == "erase")) {
 				setQQWarning(mark, "ownerQQ", warning.fromQQ);
 			}
 		}
