@@ -29,8 +29,6 @@
 #include <fstream>
 #include <algorithm>
 #include <ctime>
-#include <thread>
-#include <chrono>
 #include <mutex>
 
 #include "APPINFO.h"
@@ -174,15 +172,6 @@ EVE_Enable(eventEnable)
 	//Wait until the thread terminates
 	while (msgSendThreadRunning)
 		Sleep(10);
-
-	thread msgSendThread(SendMsg);
-	msgSendThread.detach();
-	thread threadConsoleTimer(ConsoleTimer);
-	threadConsoleTimer.detach();
-	thread threadWarning(warningHandler);
-	threadWarning.detach();
-	thread threadFrq(frqHandler);
-	threadFrq.detach();
 	strFileLoc = getAppDirectory();
 	DiceMaid = getLoginQQ();
 	/*
@@ -252,6 +241,14 @@ EVE_Enable(eventEnable)
 		while (it.second.find("本机器人") != string::npos)it.second.replace(it.second.find("本机器人"), 8, GlobalMsg["strSelfName"]);
 		GlobalMsg[it.first] = it.second;
 	}
+	thread msgSendThread(SendMsg);
+	msgSendThread.detach();
+	thread threadConsoleTimer(ConsoleTimer);
+	threadConsoleTimer.detach();
+	thread threadWarning(warningHandler);
+	threadWarning.detach();
+	thread threadFrq(frqHandler);
+	threadFrq.detach();
 	loadData();
 	if (loadFile("DiceData\\user\\PlayerCards.RDconf", PList) < 1) {
 		ifstream ifstreamCharacterProp(strFileLoc + "CharacterProp.RDconf");
@@ -273,25 +270,6 @@ EVE_Enable(eventEnable)
 	loadJMap(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
 	loadJMap(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
 	loadJMap(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
-	//读取替身模式
-	ifstream ifstreamStandByMe(strFileLoc + "StandByMe.RDconf");
-	if (ifstreamStandByMe)
-	{
-		ifstreamStandByMe >> IdentityQQ >> StandQQ;
-		if (getLoginQQ() == StandQQ) {
-			boolStandByMe = true;
-			masterQQ = IdentityQQ;
-			string strName,strMsg;
-			while (ifstreamStandByMe >> strName) {
-				getline(ifstreamStandByMe, strMsg);
-				while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
-				while (strMsg.find("\\s") != string::npos)strMsg.replace(strMsg.find("\\s"), 2, " ");
-				while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
-				GlobalMsg[strName] = strMsg;
-			}
-		}
-	}
-	ifstreamStandByMe.close();
 	//骰娘网络
 	getDiceList();
 	if (masterQQ)Cloud::update();
