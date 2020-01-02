@@ -672,9 +672,9 @@ public:
 					setGroupLeave(fromGroup);
 					mLastMsgList.erase(fromChat);
 				}
-				else{
-					if (DisabledGroup.count(fromGroup))AddMsgToQueue(getMsg("strPermissionDeniedErr", strVar), fromQQ);
-					else reply(GlobalMsg["strPermissionDeniedErr"]);
+				else
+				{
+					reply(GlobalMsg["strPermissionDeniedErr"]);
 				}
 			}
 			return 1;
@@ -730,8 +730,7 @@ public:
 				return MasterSet();
 			}
 			else {
-				if (DisabledGroup.count(fromGroup))AddMsgToQueue(getMsg("strNotMaster", strVar), fromQQ);
-				else reply(GlobalMsg["strNotMaster"]);
+				reply(GlobalMsg["strNotMaster"]);
 				return true;
 			}
 			return 1;
@@ -761,9 +760,9 @@ public:
 								reply(GlobalMsg["strBotOnAlready"]);
 							}
 						}
-						else{
-							if (DisabledGroup.count(fromGroup))AddMsgToQueue(getMsg("strPermissionDeniedErr", strVar), fromQQ);
-							else reply(GlobalMsg["strPermissionDeniedErr"]);
+						else
+						{
+							reply(GlobalMsg["strPermissionDeniedErr"]);
 						}
 					}
 					else if (fromType == Discuss) {
@@ -793,9 +792,9 @@ public:
 								reply(GlobalMsg["strBotOffAlready"]);
 							}
 						}
-						else{
-							if (DisabledGroup.count(fromGroup))AddMsgToQueue(getMsg("strPermissionDeniedErr", strVar), fromQQ);
-							else reply(GlobalMsg["strPermissionDeniedErr"]);
+						else
+						{
+							reply(GlobalMsg["strPermissionDeniedErr"]);
 						}
 					}
 					else if (fromType == Discuss) {
@@ -2370,7 +2369,6 @@ public:
 				reply(GlobalMsg["strUnknownErr"]);
 				break;
 			}
-			return 1;
 		}
 		else if (strOption == "show") {
 			string strName = readRest();
@@ -2666,7 +2664,6 @@ public:
 				strReply += strAns;
 			}
 			else {
-				Res.setDot("\n");
 				while (intTurnCnt--) {
 					rdMainDice.Roll();
 					strAns = rdMainDice.FormCompleteString() + "/" + to_string(intFianlSkillVal) + " ";
