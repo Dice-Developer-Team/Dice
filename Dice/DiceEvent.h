@@ -2565,11 +2565,11 @@ public:
 				intDifficulty = (strVar["attr"].substr(0, 4) == "ю╖дя") ? 2 : 5;
 				strVar["attr"] = strVar["attr"].substr(4);
 			}
-			if (strLowerMessage[intMsgCnt] == '*') {
+			if (strLowerMessage[intMsgCnt] == '*' && isdigit(strLowerMessage[intMsgCnt + 1])) {
 				intMsgCnt++;
 				intSkillMultiple = stoi(readDigit());
 			}
-			while (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
+			while ((strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') && isdigit(strLowerMessage[intMsgCnt + 1])) {
 				strSkillModify += strLowerMessage[intMsgCnt];
 				intMsgCnt++;
 				while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
@@ -2578,7 +2578,7 @@ public:
 				}
 				intSkillModify = stoi(strSkillModify);
 			}
-			if (strLowerMessage[intMsgCnt] == '/') {
+			if (strLowerMessage[intMsgCnt] == '/' && isdigit(strLowerMessage[intMsgCnt + 1])) {
 				intMsgCnt++;
 				intSkillDivisor = stoi(readDigit());
 				if (intSkillDivisor == 0) {
@@ -2908,6 +2908,10 @@ public:
 					continue;
 				}
 				string strSkillName = readAttrName();
+				if (strSkillName.empty()) {
+					readDigit();
+					continue;
+				}
 				if (pc.pTemplet->sInfoList.count(strSkillName)) {
 					while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
 					if (pc.setInfo(strSkillName, readUntilTab())) {
