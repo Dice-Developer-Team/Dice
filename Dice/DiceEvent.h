@@ -140,6 +140,7 @@ public:
 				+ "全局.me开关：" + (boolConsole["DisabledMe"] ? "禁用" : "启用") + "\n"
 				+ "全局.jrrp开关：" + (boolConsole["DisabledJrrp"] ? "禁用" : "启用");
 			if (isAdmin) strReply += "\n所在群聊数：" + to_string(getGroupList().size()) + "\n"
+				+ (PList.size()? "角色卡记录数" + to_string(PList.size()) + "\n":"")
 				+ "黑名单用户数：" + to_string(BlackQQ.size()) + "\n"
 				+ "黑名单群数：" + to_string(BlackGroup.size()) + "\n"
 				+ "白名单用户数：" + to_string(WhiteQQ.size()) + "\n"
@@ -2555,6 +2556,11 @@ public:
 			strVar["attr"] = strMsg.substr(intMsgCnt);
 			if (PList.count(fromQQ) && PList[fromQQ][fromGroup].count(strVar["attr"]))intMsgCnt = strMsg.length();
 			else strVar["attr"] = readAttrName();
+			if (strVar["attr"].empty()) {
+				strVar["attr"] = GlobalMsg["strEnDefaultName"];
+				reply(GlobalMsg["strUnknownPropErr"], { strVar["attr"] });
+				return 1;
+			}
 			if (strVar["attr"].find("自动成功") == 0) {
 				strDifficulty = strVar["attr"].substr(0, 8);
 				strVar["attr"] = strVar["attr"].substr(8);
@@ -2845,15 +2851,22 @@ public:
 				reply(GlobalMsg["strStErr"]);
 				return 1;
 			}
-			CharaCard& pc = getPlayer(fromQQ)[fromGroup];
 			if (strLowerMessage.substr(intMsgCnt, 3) == "clr")
 			{
-				pc.clear();
-				strVar["char"] = pc.Name;
+				if (!PList.count(fromQQ)) {
+					reply(getMsg("strPcNotExistErr"));
+					return 1;
+				}
+				getPlayer(fromQQ)[fromGroup].clear();
+				strVar["char"] = getPlayer(fromQQ)[fromGroup].Name;
 				reply(GlobalMsg["strPropCleared"], { strVar["char"] });
 				return 1;
 			}
 			if (strLowerMessage.substr(intMsgCnt, 3) == "del"){
+				if (!PList.count(fromQQ)) {
+					reply(getMsg("strPcNotExistErr"));
+					return 1;
+				}
 				intMsgCnt += 3;
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 					intMsgCnt++;
@@ -2863,7 +2876,7 @@ public:
 					isExp = true;
 				}
 				strVar["attr"] = readAttrName();
-				if (pc.erase(strVar["attr"])) {
+				if (getPlayer(fromQQ)[fromGroup].erase(strVar["attr"])) {
 					reply(GlobalMsg["strPropDeleted"], { strVar["pc"],strVar["attr"] });
 				}
 				else {
@@ -2871,6 +2884,7 @@ public:
 				}
 				return 1;
 			}
+			CharaCard& pc = getPlayer(fromQQ)[fromGroup];
 			if (strLowerMessage.substr(intMsgCnt, 4) == "show")
 			{
 				intMsgCnt += 4;
