@@ -53,12 +53,12 @@ void frqHandler() {
 			}
 		}
 		setFrq.clear();
-		Sleep(200);
+		std::this_thread::sleep_for(100ms);
 	}
 }
 
 int FrqMonitor::getFrqTotal() {
-	return EarlyMsgQueue.size() * 2 + EarlierMsgQueue.size() + EarliestMsgQueue.size() / 5;
+	return EarlyMsgQueue.size() + EarlierMsgQueue.size() / 2 + EarliestMsgQueue.size() / 10;
 }
 /*EVE_Status_EX(statusUptime) {
 	//初始化以来的秒数

@@ -13,6 +13,7 @@
 namespace CardDeck
 {
 	extern std::map<std::string, std::vector<std::string>> mPublicDeck;
+	static std::map<std::string, std::vector<std::string>> mExternPublicDeck;
 	extern std::map<std::string, std::vector<std::string>> mReplyDeck;
 	//х╨адеф╤я
 	extern std::map<long long, std::vector<std::string>> mGroupDeck;

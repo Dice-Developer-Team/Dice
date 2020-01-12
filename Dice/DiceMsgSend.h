@@ -27,7 +27,9 @@
 #include "CQMsgSend.h"
 
 using chatType = std::pair<long long, CQ::msgtype>;
-
+std::ifstream& operator>>(std::ifstream& fin, CQ::msgtype& t);
+std::ifstream& operator>>(std::ifstream& fin, chatType& ct);
+std::ofstream& operator<<(std::ofstream& fout, const chatType& ct);
 /*
  *  加锁并将消息存入消息发送队列
  *  Param:

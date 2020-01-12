@@ -32,8 +32,6 @@
 #include "RDConstant.h"
 #include "RandomGenerator.h"
 
-extern std::map<long long, int> DefaultDice;
-
 class RD
 {
 private:
@@ -602,7 +600,7 @@ public:
 				                       : (i == vvintRes.begin() ? "" : "+"));
 			if (vBnP[distance(vvintRes.begin(), i)] == Normal_Dice)
 			{
-				if (i->size() != 1 && (vintMultiplier[distance(vvintRes.begin(), i)] != 1 || vvintRes.size() != 1 || vboolNegative[distance(vvintRes.begin(), i)]))
+				if (i->size() != 1 && (vvintRes.size() != 1 || vintMultiplier[distance(vvintRes.begin(), i)] != 1 || vintDivider[distance(vvintRes.begin(), i)] != 1 || vboolNegative[distance(vvintRes.begin(), i)]))
 					strReturnString.append("(");
 				for (auto j = i->begin(); j != i->end(); ++j)
 				{
@@ -610,7 +608,7 @@ public:
 						strReturnString.append("+");
 					strReturnString.append(std::to_string(*j));
 				}
-				if (i->size() != 1 && (vintMultiplier[distance(vvintRes.begin(), i)] != 1 || vvintRes.size() != 1 || vboolNegative[distance(vvintRes.begin(), i)]))
+				if (i->size() != 1 && (vvintRes.size() != 1 || vintMultiplier[distance(vvintRes.begin(), i)] != 1 || vintDivider[distance(vvintRes.begin(), i)] != 1 || vboolNegative[distance(vvintRes.begin(), i)]))
 					strReturnString.append(")");
 				if (vintMultiplier[distance(vvintRes.begin(), i)] != 1) {
 					strReturnString += "¡Á" + std::to_string(vintMultiplier[distance(vvintRes.begin(), i)]);

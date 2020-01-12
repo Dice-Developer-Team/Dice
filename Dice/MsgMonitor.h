@@ -6,6 +6,7 @@
 #include <map>
 #include <ctime>
 #include "DiceConsole.h"
+#include "ManagerSystem.h"
 #include "DiceCloud.h"
 class FrqMonitor {
 public:
@@ -21,33 +22,33 @@ public:
 	FrqMonitor(long long QQ,time_t TT,chatType CT): fromQQ(QQ),fromTime(TT){
 		if (mFrequence.count(fromQQ)) {
 			mFrequence[fromQQ] += 10;
-			if (!boolConsole["ListenSpam"] || AdminQQ.count(fromQQ))return;
+			if (!console["ListenSpam"] || trustedQQ(fromQQ) > 1 )return;
 			if (mFrequence[fromQQ] > 60 && mWarnLevel[fromQQ] < 60) {
 				mWarnLevel[fromQQ] = mFrequence[fromQQ];
 				const std::string strMsg = "提醒：\n" + (CT.second ? printChat(CT) : "私聊窗口") + "监测到" + printQQ(fromQQ) + "指令频度达到" + std::to_string(mFrequence[fromQQ] / 10);
 				AddMsgToQueue(GlobalMsg["strSpamFirstWarning"], CT.first, CT.second);
-				addRecord(strMsg);
+				console.log(strMsg, 1, printSTNow());
 			}
 			else if (mFrequence[fromQQ] > 120 && mWarnLevel[fromQQ] < 120) {
 				mWarnLevel[fromQQ] = mFrequence[fromQQ]; 
 				const std::string strMsg = "警告：\n" + (CT.second ? printChat(CT) : "私聊窗口") + printQQ(fromQQ) + "指令频度达到" + std::to_string(mFrequence[fromQQ] / 10);
 				AddMsgToQueue(GlobalMsg["strSpamFinalWarning"], CT.first, CT.second);
-				sendAdmin(strMsg);
+				console.log(strMsg, 3, printSTNow());
 			}
 			else if (mFrequence[fromQQ] > 200 && mWarnLevel[fromQQ] < 200) {
 				mWarnLevel[fromQQ] = mFrequence[fromQQ];
-				std::string strNow = printSTime(stNow);
-				std::string strNote = strNow + (CT.second ? printChat(CT) : "私聊窗口") + "监测到" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "30s发送指令频度达" + std::to_string(mFrequence[fromQQ] / 10);
+				std::string strNow = printSTNow();
+				std::string strNote = (CT.second ? printChat(CT) : "私聊窗口") + "监测到" + printQQ(fromQQ) + "对" + printQQ(DiceMaid) + "30s发送指令频度达" + std::to_string(mFrequence[fromQQ] / 10);
 				if ( mDiceList.count(fromQQ)) {
-					NotifyMonitor(strNote);
+					console.log(strNote, 9, strNow);
 				}
 				else {
 					BlackMark mark(fromQQ);
-					mark.llMap = { {"fromQQ",fromQQ},{"DiceMaid",DiceMaid},{"masterQQ", masterQQ} };
+					mark.llMap = { {"fromQQ",fromQQ},{"DiceMaid",DiceMaid},{"masterQQ", console.master()} };
 					mark.strMap = { {"type","spam"},{"time",strNow} };
-					mark.set("note", strNote);
+					mark.set("note", strNow + strNote);
 					Cloud::upWarning(mark.getData());
-					NotifyMonitor(mark.getWarning());
+					console.log(mark.getWarning(), 33, "");
 					addBlackQQ(mark);
 				}
 			}
@@ -77,7 +78,7 @@ public:
 	}
 	bool isEarly() {
 		if (time(NULL) - fromTime > earlyTime) {
-			mFrequence[fromQQ] -= 5;
+			mFrequence[fromQQ] -= 4;
 			return true;
 		}
 		else return false;

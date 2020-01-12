@@ -63,7 +63,6 @@ void AddMsgToQueue(const std::string& msg, chatType ct){
 
 void SendMsg()
 {
-	Enabled = true;
 	msgSendThreadRunning = true;
 	while (Enabled)
 	{
@@ -91,7 +90,8 @@ void SendMsg()
 				CQ::sendDiscussMsg(msg.target_id, msg.msg);
 			}
 		}
-		this_thread::sleep_for(chrono::milliseconds(20));
+		if (msgQueue.size() > 2)this_thread::sleep_for(chrono::milliseconds(64));
+		else this_thread::sleep_for(chrono::milliseconds(256));
 	}
 	msgSendThreadRunning = false;
 }

@@ -36,9 +36,6 @@
     <ClCompile Include="InitList.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="NameStorage.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="StorageBase.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -96,6 +93,9 @@
     <ClCompile Include="DiceCloud.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DiceFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -108,9 +108,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="InitList.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="NameStorage.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="StorageBase.h">
@@ -234,6 +231,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="DiceXMLTree.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="STLExtern.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

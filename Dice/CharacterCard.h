@@ -13,7 +13,6 @@
 #include "CQTools.h"
 #include "Unpack.h"
 #include "RD.h"
-#include "NameStorage.h"
 #include "CardDeck.h"
 using std::string;
 using std::to_string;
@@ -160,9 +159,9 @@ private:
 public:
 	string Name = "½ÇÉ«¿¨";
 	string Type = "COC7";
-	map<string, short>Attr;
-	map<string, string>Info;
-	map<string, string>DiceExp;
+	map<string, short>Attr{};
+	map<string, string>Info{};
+	map<string, string>DiceExp{};
 	string Note;
 	const CardTemp* pTemplet = &mCardTemplet[Type];
 	CharaCard(){}
@@ -376,7 +375,7 @@ public:
 					break;
 				case 3:
 					sDefault.insert(it);
-					subList.setDot("\t");
+					subList.dot("\t");
 					subList << it + ":" + strVal;
 					break;
 				default:
@@ -409,12 +408,13 @@ public:
 	}
 	bool stored(string& key)const {
 		key = standard(key);
-		return Attr.count(key) || pTemplet->defaultSkill.count(key);
+		return Attr.count(key) || pTemplet->mAutoFill.count(key) || pTemplet->defaultSkill.count(key);
 	}
 	short& operator[](string& key){
 		key = standard(key);
-		if (!Attr.count(key)&&pTemplet->mAutoFill.count(key)) {
-			Attr[key] = cal(pTemplet->mAutoFill.find(key)->second);
+		if (!Attr.count(key)) {
+			if (pTemplet->mAutoFill.count(key))Attr[key] = cal(pTemplet->mAutoFill.find(key)->second);
+			if (pTemplet->defaultSkill.count(key))Attr[key] = pTemplet->defaultSkill.find(key)->second;
 		}
 		return Attr[key];
 	}
@@ -502,6 +502,9 @@ public:
 		mNameIndex = pl.mNameIndex;
 		mGroupIndex = pl.mGroupIndex;
 		return *this;
+	}
+	size_t size()const {
+		return mCardList.size();
 	}
 	bool count(long long group)const {
 		return mGroupIndex.count(group);

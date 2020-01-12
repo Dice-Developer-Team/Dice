@@ -62,15 +62,31 @@ std::string format(std::string s, const std::map<std::string, std::string>& repl
 		auto it = replace_str.find(key);
 		if (it != replace_str.end()) {
 			s.replace(l, r - l + 1, format(it->second, replace_str, str_tmp));
-			r += s.length() - len;
+			r += s.length() - len + 1;
 			len = s.length();
 		}
 		else if ((it = str_tmp.find(key)) != str_tmp.end()) {
 			if (key == "res")s.replace(l, r - l + 1, format(it->second, replace_str, str_tmp));
 			else s.replace(l, r - l + 1, it->second);
-			r += s.length() - len;
+			r += s.length() - len + 1;
 			len = s.length();
 		}
 	}
 	return s;
+}
+
+string strip(std::string origin)
+{
+	while (true)
+	{
+		if (origin[0] == '!' || origin[0] == '.' || isspace(static_cast<unsigned char>(origin[0])))
+		{
+			origin.erase(origin.begin());
+		}
+		else if (origin.substr(0, 2) == "£¡" || origin.substr(0, 2) == "¡£")
+		{
+			origin.erase(origin.begin(), origin.begin() + 2);
+		}
+		else return origin;
+	}
 }

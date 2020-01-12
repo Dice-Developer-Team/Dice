@@ -1,7 +1,8 @@
 /*
  * 文件读写
- * Copyright (C) 2019 String.Empty
+ * Copyright (C) 2019-2020 String.Empty
  */
+#pragma once
 #include <fstream>
 #include <sstream> 
 #include <cstdio>
@@ -19,23 +20,26 @@ using std::ios;
 using std::stringstream;
 using std::enable_if;
 using std::map;
+using std::multimap;
+using std::set;
 
-int mkDir(std::string dir) {
+static int mkDir(std::string dir) {
 	if (_access(dir.c_str(), 0))	return _mkdir(dir.c_str());
 	return -2;
 }
-int clrDir(std::string dir,const std::set<std::string>& exceptList) {
+static int clrDir(std::string dir,const std::set<std::string>& exceptList) {
 	int nCnt = 0;
 	_finddata_t file;
 	long lf = _findfirst((dir + "*").c_str(), &file);
 	//输入文件夹路径
 	if (lf < 0) {
-		throw(dir + " not found!");
+		return -1;
 	}
 	else {
 		do {
 			if (file.attrib == _A_SUBDIR)continue;
 			if (!strcmp(file.name, ".") || !strcmp(file.name, ".."))continue;
+			if (strlen(file.name) < 36)continue;
 			if (exceptList.count(file.name))continue;
 			if (!remove((dir + file.name).c_str()))nCnt++;
 		} while (!_findnext(lf, &file));
@@ -50,7 +54,20 @@ void merge(map<TKey, TVal>& m1, const map<TKey, TVal>& m2) {
 		m1[p.first] = p.second;
 	}
 }
-vector<string> getLines(string s) {
+template<typename TKey, typename TVal>
+inline TVal get(const map<TKey, TVal>& m, TKey key, TVal def) {
+	auto it = m.find(key);
+	if (it == m.end())return def;
+	else return it->second;
+}
+template<typename TVal>
+inline TVal get(const map<string, TVal>& m, string key, TVal def) {
+	auto it = m.find(key);
+	if (it == m.end())return def;
+	else return it->second;
+}
+
+static vector<string> getLines(string s) {
 	vector<string>vLine;
 	stringstream ss(s);
 	string line;
@@ -65,13 +82,17 @@ vector<string> getLines(string s) {
 	}
 	return vLine;
 }
-
+static string printLine(string s) {
+	while (s.find('\t') != std::string::npos)s.replace(s.find('\t'), 1, "\\t");
+	while (s.find("\r\n") != std::string::npos)s.replace(s.find("\r\n"), 2, "\\n");
+	while (s.find('\r') != std::string::npos)s.replace(s.find('\r'), 1, "\\n");
+	while (s.find('\n') != std::string::npos)s.replace(s.find('\n'), 1, "\\n");
+	return s;
+}
 template<typename T>
 //typename std::enable_if<std::is_integral<T>::value, bool>::type fscan(std::ifstream& fin, T& t) {
-inline typename std::enable_if<!std::is_class<T>::value, bool>::type fscan(std::ifstream & fin, T & t) {
-	T val;
-	if (fin >> val) {
-		t = val;
+inline bool fscan(std::ifstream & fin, T & t) {
+	if (fin >> t) {
 		return true;
 	}
 	else return false;
@@ -88,16 +109,6 @@ inline bool fscan(std::ifstream& fin, std::string& t) {
 		while (val.find("\\s") != std::string::npos)val.replace(val.find("\\s"), 2, " ");
 		while (val.find("\\t") != std::string::npos)val.replace(val.find("\\t"), 2, "	");
 		t = val;
-		return true;
-	}
-	else return false;
-}
-//template<>
-inline bool fscan(std::ifstream& fin, std::pair<long long, CQ::msgtype>& t) {
-	long long first;
-	int second;
-	if (fin >> first >> second) {
-		t = { first,(CQ::msgtype)second };
 		return true;
 	}
 	else return false;
@@ -144,8 +155,19 @@ std::map<T1, T2> fread(ifstream& fin) {
 	}
 	return m;
 }
+template<typename T,bool isLib>
+std::set<T> fread(ifstream& fin) {
+	T item;
+	short len = fread<short>(fin);
+	set<T> s{};
+	while (len--) {
+		item = fread<T>(fin);
+		s.insert(item);
+	}
+	return s;
+}
 template<typename T1, typename T2>
-void readini(string& line,std::pair<T1,T2>& p) {
+static void readini(string& line,std::pair<T1,T2>& p) {
 	int pos = line.find('=');
 	if (pos == std::string::npos)return;
 	std::istringstream sin(line.substr(0, pos));
@@ -155,7 +177,7 @@ void readini(string& line,std::pair<T1,T2>& p) {
 	sin >> p.second;
 	return;
 }
-void readini(ifstream& fin, std::string& s) {
+static void readini(ifstream& fin, std::string& s) {
 	std::string line;
 	getline(fin, line);
 	int pos = line.find('=');
@@ -165,7 +187,7 @@ void readini(ifstream& fin, std::string& s) {
 	return;
 }
 template<typename T1, typename T2>
-void readini(string s, std::map<T1,T2>& m) {
+static void readini(string s, std::map<T1,T2>& m) {
 	std::pair<T1, T2> p;
 	string line;
 	stringstream ss(s);
@@ -176,7 +198,7 @@ void readini(string s, std::map<T1,T2>& m) {
 	return;
 }
 template<typename T>
-void readini(string s, std::vector<T>& v) {
+static void readini(string s, std::vector<T>& v) {
 	T p;
 	string line;
 	stringstream ss(s);
@@ -187,37 +209,43 @@ void readini(string s, std::vector<T>& v) {
 	return;
 }
 template<typename T>
-void loadFile(std::string strPath, std::set<T>&setTmp) {
+int loadFile(std::string strPath, std::set<T>&setTmp) {
 	std::ifstream fin(strPath);
 	if (fin)
 	{
+		int Cnt = 0;
 		T item;
 		while (fscan(fin, item))
 		{
 			setTmp.insert(item);
+			Cnt++;
 		}
+		return Cnt;
 	}
 	fin.close();
+	return -1;
 }
 
 template<typename T1, typename T2>
-typename std::enable_if<std::is_fundamental<T2>::value || std::is_same<T2, std::string>::value, void>::type loadFile(std::string strPath, std::map<T1, T2>&mapTmp) {
+typename int loadFile(std::string strPath, std::map<T1, T2>&mapTmp) {
 	std::ifstream fin(strPath);
 	if (fin)
 	{
+		int Cnt = 0;
 		T1 key;
-		T2 Val;
-		while (fscan(fin,key))
+		while (fin >> key)
 		{
-			fscan(fin, Val);
-			mapTmp[key] = Val;
+			fscan(fin, mapTmp[key]);
+			Cnt++;
 		}
+		return Cnt;
 	}
 	fin.close();
+	return -1;
 }
 
 template<typename T1, typename T2>
-typename enable_if<!std::is_class<T2>::value, void>::type loadFile(std::string strPath, std::multimap<T1,T2>&mapTmp) {
+typename void loadFile(std::string strPath, std::multimap<T1,T2>&mapTmp) {
 	std::ifstream fin(strPath);
 	if (fin)
 	{
@@ -230,8 +258,9 @@ typename enable_if<!std::is_class<T2>::value, void>::type loadFile(std::string s
 	}
 	fin.close();
 }
+
 template<typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
-int loadFile(std::string strPath, std::map<T, C> & m) {
+int loadBFile(std::string strPath, std::map<T, C> & m) {
 	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
 	if (!fin)return -1;
 	int len = fread<int>(fin);
@@ -240,8 +269,7 @@ int loadFile(std::string strPath, std::map<T, C> & m) {
 	C val;
 	while (fin.peek() != EOF && len > Cnt++) {
 		key = fread<T>(fin);
-		val = fread<C>(fin);
-		m[key] = val;
+		m[key].readb(fin);
 	}
 	fin.close();
 	return Cnt;
@@ -260,14 +288,19 @@ int loadINI(std::string strPath, std::map<std::string, C>& m) {
 	fin.close();
 	return 1;
 }
+static bool rdbuf(string strPath,string& s) {
+	std::ifstream fin(strPath);
+	if (!fin)return false;
+	stringstream ss;
+	ss << fin.rdbuf();
+	s = ss.str();
+	return true;
+}
 //读取伪xml
 template<class C,std::string(C::* U)() = &C::getName>
 int loadXML(std::string strPath, std::map<std::string, C>& m) {
-	std::ifstream fin(strPath);
-	if (!fin)return -1;
-	stringstream ss;
-	ss << fin.rdbuf();
-	string s = ss.str();
+	string s;
+	if (!rdbuf(strPath, s))return -1;
 	DDOM xml(s);
 	C obj(xml);
 	m[obj.getName()].readt(xml);
@@ -312,7 +345,7 @@ int loadDir(int load(std::string, T&), std::string strDir, T& tmp, std::string& 
 
 //save
 template<typename T>
-inline typename std::enable_if<!std::is_class<T>::value>::type fprint(std::ofstream& fout, T t) {
+void fprint(std::ofstream& fout,const T& t) {
 	fout << t;
 }
 template<class C, void(C::* U)(std::ofstream&) = &C::save>
@@ -326,10 +359,10 @@ inline void fprint(std::ofstream& fout, std::string s) {
 	while (s.find('\r') != std::string::npos)s.replace(s.find('\r'), 1, "{enter}");
 	fout << s;
 }
-template<typename T1,typename T2>
+template<typename T1, typename T2>
 inline void fprint(std::ofstream& fout, std::pair<T1, T2> t) {
 	fprint(fout, t.first);
-	fout << " ";
+	fout << "\t";
 	fprint(fout, t.second);
 }
 template<typename T>
@@ -358,7 +391,7 @@ inline void fwrite(ofstream& fout, const std::string s) {
 	fout.write(s.c_str(), sizeof(char) * s.length());
 }
 template<class C, void(C::* U)(std::ofstream&) = &C::writeb>
-inline void fwrite(ofstream& fout, C obj) {
+inline void fwrite(ofstream& fout, C& obj) {
 	obj.writeb(fout);
 }
 template<typename T1, typename T2>
@@ -371,26 +404,52 @@ inline void fwrite(ofstream& fout, const std::map<T1,T2>& m) {
 	}
 }
 template<typename T>
+inline void fwrite(ofstream& fout, const std::set<T>& s) {
+	short len = (short)s.size();
+	fwrite(fout, len);
+	for (auto it : s) {
+		fwrite(fout, it);
+	}
+}
+template<typename T>
 void saveFile(std::string strPath, const T& setTmp) {
 	if (clrEmpty(strPath, setTmp))return;
 	std::ofstream fout(strPath);
-	for (auto it : setTmp)
+	for (const auto &it : setTmp)
 	{
 		fprint(fout, it);
 		fout << std::endl;
 	}
 	fout.close();
 }
+template<typename TKey, typename TVal>
+void saveFile(std::string strPath, const map<TKey,TVal>& mTmp) {
+	if (clrEmpty(strPath, mTmp))return;
+	std::ofstream fout(strPath);
+	for (const auto& [key,val] : mTmp)
+	{
+		fout << key << "\t";
+		fprint(fout, val);
+		fout << std::endl;
+	}
+	fout.close();
+}
 
 template<typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
-void saveFile(std::string strPath, const std::map<T, C>& m) {
+void saveBFile(std::string strPath, std::map<T, C>& m) {
 	if (clrEmpty(strPath, m))return;
 	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
 	int len = m.size();
 	fwrite<int>(fout, len);
-	for (auto it : m) {
-		fwrite(fout, it.first);
-		fwrite(fout, it.second);
+	for (auto &[key,val] : m) {
+		fwrite(fout, key);
+		fwrite(fout, val);
 	}
 	fout.close();
+}
+//读取伪xml
+template<class C, std::string(C::* U)() = &C::writet>
+void saveXML(std::string strPath, C& obj) {
+	std::ofstream fout(strPath);
+	fout << obj.writet();
 }
