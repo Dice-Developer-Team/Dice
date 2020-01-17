@@ -140,8 +140,8 @@ EVE_Enable(eventEnable)
 			console.set("Private", iPrivate);
 			console.set("DisabledJrrp", iDisabledJrrp);
 			console.set("LeaveDiscuss", iLeaveDiscuss);
-			console.setClock(ClockToWork, Console::clock_on);
-			console.setClock(ClockOffWork, Console::clock_off);
+			console.setClock(ClockToWork, ClockEvent::on);
+			console.setClock(ClockOffWork, ClockEvent::off);
 		}
 		ifstreamMaster.close();
 		std::map<string, int>boolConsole;
@@ -149,8 +149,8 @@ EVE_Enable(eventEnable)
 		for (auto& [key, val] : boolConsole) {
 			console.set(key, val);
 		}
-		console.setClock({ 4, 0 }, Console::clock_save);
-		console.setClock({ 5, 0 }, Console::clock_clear);
+		console.setClock({ 4, 0 }, ClockEvent::save);
+		console.setClock({ 5, 0 }, ClockEvent::clear);
 	}
 	//读取管理员列表
 	set<long long> AdminQQ;
@@ -357,6 +357,7 @@ bool eveGroupAdd(Chat& grp) {
 	}
 	else {
 		for (auto &each : list) {
+			if (each.QQID == DiceMaid)continue;
 			max_trust |= (1 << trustedQQ(each.QQID));
 			if (each.permissions > 1) {
 				if (BlackQQ.count(each.QQID)) {
@@ -373,7 +374,7 @@ bool eveGroupAdd(Chat& grp) {
 				}
 			}
 			else if (BlackQQ.count(each.QQID)) {
-				max_trust |= 1;
+				//max_trust |= 1;
 				blacks << printQQ(each.QQID);
 				if (mBlackQQMark.count(each.QQID) && mBlackQQMark[each.QQID].isVal("DiceMaid", DiceMaid)) {
 					AddMsgToQueue(mBlackQQMark[each.QQID].getWarning(), fromGroup, Group);
@@ -389,10 +390,10 @@ bool eveGroupAdd(Chat& grp) {
 		string strNote = "发现黑名单群员" + blacks.show();
 		strMsg += strNote;
 	}
-	if (console["Private"] && !grp.isset("使用许可"))
+	if (console["Private"] && !grp.isset("许可使用"))
 	{	//避免小群绕过邀请没加上白名单
 		if (max_trust > 1) {
-			grp.set("使用许可");
+			grp.set("许可使用");
 			strMsg += "已自动追加使用许可";
 		}
 		else {
@@ -626,7 +627,7 @@ EVE_Request_AddGroup(eventGroupInvited) {
 	Chat& grp = chat(fromQQ).group().set("未进");
 	if (!console["ListenGroupRequest"])return 0;
 	if (subType == 2 && !grp.isset("忽略")) {
-		if ( console) {
+		if (console) {
 			string strNow = printSTNow();
 			string strMsg = "群添加请求，来自：" + getStrangerInfo(fromQQ).nick +"("+ to_string(fromQQ) + "),群：(" + to_string(fromGroup)+")。";
 			if (BlackGroup.count(fromGroup)) {

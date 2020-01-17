@@ -193,7 +193,7 @@ public:
 		return *this;
 	}
 	Chat& set(string item) {
-		boolConf.insert(item);
+		if(mChatConf.count(item))boolConf.insert(item);
 		return *this;
 	}
 	Chat& reset(string item) {
@@ -295,7 +295,9 @@ static void scanImage(string s, set<string>& list) {
 	int l = 0, r = 0;
 	while ((l = s.find('[', r)) != string::npos && (r = s.find(']', l)) != string::npos) {
 		if (s.substr(l, 15) != CQ_IMAGE)continue;
-		list.insert(s.substr(l + 15, r - l - 15) + ".cqimg");
+		string strFile = s.substr(l + 15, r - l - 15);
+		if (strFile.length() > 36)strFile += ".cqimg";
+		list.insert(strFile);
 	}
 }
 static void scanImage(const vector<string>& v, set<string>& list) {

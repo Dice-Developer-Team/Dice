@@ -23,6 +23,7 @@
 using namespace std::literals::chrono_literals;
 using std::string;
 using std::to_string;
+enum class ClockEvent { off, on, save, clear };
 class Console {
 public:
 	bool isMasterMode = false;
@@ -32,7 +33,6 @@ public:
 	friend void ConsoleTimer();
 	friend class FromMsg;
 	using Clock = std::pair<unsigned short, unsigned short>;
-	enum ClockEvent { clock_off, clock_on, clock_save, clock_clear };
 	static const enumap<string> mClockEvent;
 	static std::string printClock(Clock clock) {
 		return to_string(clock.first) + ":" + (clock.second < 10 ? "0" : "") + to_string(clock.second);
@@ -53,19 +53,21 @@ public:
 	int log(std::string msg, int lv, std::string strTime = "");
 	operator bool()const{ return isMasterMode && masterQQ;}
 	long long master()const { return masterQQ; }
+	void newMaster(long long qq) { masterQQ = qq; setNotice({qq,CQ::Private }, 0b111111); save(); AddMsgToQueue(getMsg("strNewMaster"), qq); }
 	void killMaster() { rmNotice({ masterQQ,CQ::Private }); masterQQ = 0; save(); }
 	int operator[](const char* key)const {
 		auto it = intConf.find(key);
 		if (it != intConf.end() || (it = intDefault.find(key)) != intDefault.end())return it->second;
 		else return 0;
 	}
-	int setClock(Clock c, int e);
-	int rmClock(Clock c, int e);
+	int setClock(Clock c, ClockEvent e);
+	int rmClock(Clock c, ClockEvent e);
 	ResList listClock()const;
 	ResList listNotice()const;
 	int showNotice(chatType ct)const;
 	void set(std::string key, int val) {intConf[key] = val;	save();}
 	void addNotice(chatType ct, int lv);
+	void redNotice(chatType ct, int lv);
 	void setNotice(chatType ct, int lv);
 	void rmNotice(chatType ct);
 	void reset();
@@ -96,7 +98,7 @@ public:
 		if (!mWorkClock.empty()) {
 			DDOM clocks("clock", "");
 			for (auto &[clock, type]: mWorkClock) {
-				clocks.push(DDOM(mClockEvent[type], printClock(clock)));
+				clocks.push(DDOM(mClockEvent[(int)type], printClock(clock)));
 			}
 			xml.push(clocks);
 		}

@@ -101,5 +101,6 @@ std::string listKey(std::map<std::string, T>m) {
 	return list.show();
 }
 
+std::string to_binary(int b);
 std::string strip(std::string);
 #endif /*DICE_MSG_FORMAT*/

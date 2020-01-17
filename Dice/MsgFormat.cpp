@@ -90,3 +90,11 @@ string strip(std::string origin)
 		else return origin;
 	}
 }
+
+std::string to_binary(int b) {
+	ResList res;
+	for (int i = 0; i < 6; i++) {
+		if (b & (1 << i))res << std::to_string(i);
+	}
+	return res.dot("+").show();
+}

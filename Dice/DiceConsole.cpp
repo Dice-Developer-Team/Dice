@@ -48,15 +48,15 @@ const std::map<std::string, int>Console::intDefault{
 {"SystemAlarmCPU",90},{"SystemAlarmRAM",90}
 };
 const enumap<string> Console::mClockEvent { "off", "on", "save", "clear" };
-int Console::setClock(Clock c, int e) {
+int Console::setClock(Clock c, ClockEvent e) {
 	if (c.first > 23 || c.second > 59)return -1;
-	if (e > 3)return -2;
-	mWorkClock.emplace(c, ClockEvent(e));
+	if (int(e) > 3)return -2;
+	mWorkClock.emplace(c, e);
 	save();
 	return 0;
 }
-int Console::rmClock(Clock c, int e) {
-	if (auto it = match(mWorkClock, c, ClockEvent(e)); it != mWorkClock.end()) {
+int Console::rmClock(Clock c, ClockEvent e) {
+	if (auto it = match(mWorkClock, c, e); it != mWorkClock.end()) {
 		mWorkClock.erase(it);
 		save();
 		return 0;
@@ -69,16 +69,16 @@ ResList Console::listClock()const {
 	for (auto& [clock, eve] : mWorkClock) {
 		strClock = printClock(clock);
 		switch (eve) {
-		case clock_on:
+		case ClockEvent::on:
 			strClock += " 定时开启";
 			break;
-		case clock_off:
+		case ClockEvent::off:
 			strClock += " 定时关闭";
 			break;
-		case clock_save:
+		case ClockEvent::save:
 			strClock += " 定时保存";
 			break;
-		case clock_clear:
+		case ClockEvent::clear:
 			strClock += " 定时清群";
 			break;
 		default:break;
@@ -90,7 +90,7 @@ ResList Console::listClock()const {
 ResList Console::listNotice()const {
 	ResList list;
 	for (auto& [ct,lv] : NoticeList) {
-		list << printChat(ct) + " " + to_string(lv);
+		list << printChat(ct) + " " + to_binary(lv);
 	}
 	return list;
 }
@@ -99,6 +99,7 @@ int Console::showNotice(chatType ct)const {
 	else return 0;
 }
 void Console::addNotice(chatType ct, int lv) { NoticeList[ct] |= lv; saveNotice(); }
+void Console::redNotice(chatType ct, int lv) { NoticeList[ct] &= (~lv); saveNotice(); }
 void Console::setNotice(chatType ct, int lv){
 	NoticeList[ct] = lv;
 	saveNotice();
@@ -131,19 +132,24 @@ void Console::reset() {
 }
 void  Console::loadNotice() {
 	if (loadFile("DiceData\\conf\\NoticeList.txt", NoticeList) < 1) {
-		console.setNotice({ 863062599, Group }, 32);
-		console.setNotice({ 192499947, Group }, 32);
-		console.setNotice({ 754494359, Group }, 32);
 		std::set<chatType>sChat;
 		if (loadFile((string)getAppDirectory() + "MonitorList.RDconf", sChat) > 0)
 			for (auto& it : sChat) {
-				console.setNotice(it, 32);
+				console.setNotice(it, 0b100000);
 			}
 		sChat.clear();
 		if (loadFile("DiceData\\conf\\RecorderList.RDconf", sChat) > 0)
 			for (auto& it : sChat) {
-				console.setNotice(it, 27);
+				console.setNotice(it, 0b11011);
 			}
+		console.setNotice({ 863062599, Group }, 0b100000);
+		console.setNotice({ 192499947, Group }, 0b100000);
+		console.setNotice({ 754494359, Group }, 0b100000);
+		for (auto& [ct, lv] : NoticeList) {
+			if (ct.second) {
+				chat(ct.first).set("许可使用").set("免清").set("免黑");
+			}
+		}
 	}
 }
 void Console::saveNotice() {
@@ -444,10 +450,12 @@ void warningHandler() {
 			console.log(getName(warning.fromQQ) + "已通知" + GlobalMsg["strSelfName"] + ":\n!warning" + warning.strMsg, 1, printSTNow());
 			isAns = false;
 		}
-		if (lock_guard<std::mutex> lock_queue(warningMutex); !warningQueue.empty()) {
-			warning = warningQueue.front();
-			warningQueue.pop();
-			lock_queue.~lock_guard();
+		if (!warningQueue.empty()) {
+			{
+				lock_guard<std::mutex> lock_queue(warningMutex);
+				warning = warningQueue.front();
+				warningQueue.pop();
+			}
 			if (!warning.strMsg.empty()) {
 				nlohmann::json jInfo;
 				try {
@@ -515,23 +523,23 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st) {
 				clockNow = { stNow.wHour,stNow.wMinute };
 				for (auto &[clock,eve_type] : multi_range(console.mWorkClock, clockNow)) {
 					switch (eve_type) {
-					case Console::clock_on:
+					case ClockEvent::on:
 						if (console["DisabledGlobal"]) {
 							console.set("DisabledGlobal", 0);
-							console.log(getMsg("strClockToWork"), 17, "");
+							console.log(getMsg("strClockToWork"), 0b10000, "");
 						}
 						break;
-					case Console::clock_off:
+					case ClockEvent::off:
 						if (!console["DisabledGlobal"]) {
 							console.set("DisabledGlobal", 1);
-							console.log(getMsg("strClockOffWork"), 17, "");
+							console.log(getMsg("strClockOffWork"), 0b10000, "");
 						}
 						break;
-					case Console::clock_save:
+					case ClockEvent::save:
 						dataBackUp();
 						console.log(GlobalMsg["strSelfName"] + "定时保存完成√", 1, printSTime(stTmp));
 						break;
-					case Console::clock_clear:
+					case ClockEvent::clear:
 						if (console && console["AutoClearBlack"] && clearGroup("black"))
 							console.log(GlobalMsg["strSelfName"] + "定时清群完成√", 1, printSTNow());
 						break;
@@ -564,7 +572,6 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st) {
 		string strReply;
 		ResList res;
 		std::map<string, string>strVar;
-		std::ofstream test("test.txt",std::ios::out|std::ios::app);
 		if (strPara == "unpower" || strPara.empty()) {
 			for (auto& [id, grp] : ChatList) {
 				if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清"))continue;
@@ -581,13 +588,11 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st) {
 			int intDayLim = stoi(strPara);
 			string strDayLim = to_string(intDayLim);
 			time_t tNow = time(NULL);
-			test << "list size:" << ChatList.size() << std::endl;
 			for (auto& [id, grp] : ChatList) {
 				if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清"))continue;
 				time_t tLast = grp.tLastMsg;
 				if (int tLMT; grp.isGroup && (tLMT = getGroupMemberInfo(id, console.DiceMaid).LastMsgTime) > 0)tLast = tLMT;
 				if (!tLast)continue;
-				test << printChat(grp) << "\t" << tLast << std::endl;
 				int intDay = (int)(tNow - tLast) / 86400;
 				if (intDay > intDayLim) {
 					strVar["day"] = to_string(intDay);
@@ -600,11 +605,12 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st) {
 			console.log(strReply, 3, printSTNow());
 		}
 		else if (strPara == "black") {
+			std::map<long long, string>mGroupList = getGroupList();
 			for (auto &[id,grp] : ChatList) {
-				if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("免黑"))continue;
+				if (!mGroupList.count(id)||grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("免黑"))continue;
 				if (BlackGroup.count(id)) {
 					res << printGroup(id) + "：" + "黑名单群";
-					grp.leave(getMsg("strBlackGroup"));
+					if(console["LeaveBlackGroup"])grp.leave(getMsg("strBlackGroup"));
 				}
 				if (!grp.isGroup)continue;
 				vector<GroupMemberInfo> MemberList = getGroupMemberList(id);
