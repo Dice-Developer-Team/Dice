@@ -53,7 +53,7 @@ public:
 	int log(std::string msg, int lv, std::string strTime = "");
 	operator bool()const{ return isMasterMode && masterQQ;}
 	long long master()const { return masterQQ; }
-	void newMaster(long long qq) { masterQQ = qq; setNotice({qq,CQ::Private }, 0b111111); save(); AddMsgToQueue(getMsg("strNewMaster"), qq); }
+	void newMaster(long long);
 	void killMaster() { rmNotice({ masterQQ,CQ::Private }); masterQQ = 0; save(); }
 	int operator[](const char* key)const {
 		auto it = intConf.find(key);

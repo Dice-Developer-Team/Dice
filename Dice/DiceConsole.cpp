@@ -125,6 +125,13 @@ int Console::log(std::string strMsg, int note_lv, string strTime) {
 	fout.close();
 	return Cnt;
 } 
+void Console::newMaster(long long qq) {
+	masterQQ = qq; 
+	getUser(qq).trust(5); 
+	setNotice({ qq,CQ::Private }, 0b111111); 
+	save(); 
+	AddMsgToQueue(getMsg("strNewMaster"), qq); 
+}
 void Console::reset() {
 	intConf.clear();
 	mWorkClock.clear();
@@ -328,7 +335,6 @@ void checkBlackQQ(BlackMark &mark) {
 				strNotice += "“—ÕÀ»∫";
 			}
 			else if (mark.isVal("DiceMaid", DiceMaid))AddMsgToQueue(mark.getWarning(), id, Group);
-				AddMsgToQueue(mark.getWarning(), id, Group);
 			list << strNotice;
 		}
 	}
@@ -469,7 +475,11 @@ void warningHandler() {
 				mark.strWarning = "!warning" + warning.strMsg;
 				int intLevel = isReliable(warning.fromQQ);
 				if (intLevel > 0) {
-					if (intLevel == 1 && !mark.hasType()) {
+					if (intLevel < 2 && !mark.hasType()) {
+						isAns = true;
+						continue;
+					}
+					else if (intLevel < 4 && mark.isVal("type", "local")) {
 						isAns = true;
 						continue;
 					}

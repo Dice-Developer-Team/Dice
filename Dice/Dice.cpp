@@ -151,9 +151,8 @@ EVE_Enable(eventEnable)
 		}
 		console.setClock({ 4, 0 }, ClockEvent::save);
 		console.setClock({ 5, 0 }, ClockEvent::clear);
+		console.loadNotice();
 	}
-	//读取管理员列表
-	set<long long> AdminQQ;
 	//读取聊天列表
 	if (loadBFile("DiceData\\user\\UserConf.RDconf", UserList) < 1) {
 		map<long long, int>DefaultDice;
@@ -182,10 +181,13 @@ EVE_Enable(eventEnable)
 			for (auto qq : WhiteQQ) {
 				getUser(qq).create(NEWYEAR).trust(1);
 			}
+		//读取管理员列表
+		set<long long> AdminQQ;
+		if (loadFile(strFileLoc + "AdminQQ.RDconf", AdminQQ) > 0)
 		for (auto qq : AdminQQ) {
 			getUser(qq).create(NEWYEAR).trust(4);
 		}
-		getUser(console.master()).create(NEWYEAR).trust(5);
+		if(console.master())getUser(console.master()).create(NEWYEAR).trust(5);
 	}
 	if (loadBFile("DiceData\\user\\ChatConf.RDconf", ChatList) < 1) {
 		set<long long>GroupList;

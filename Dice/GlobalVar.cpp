@@ -31,38 +31,6 @@ bool msgSendThreadRunning = false;
 
 CQ::logger DiceLogger("Dice!");
 
-/*
- * 版本信息
- * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
- * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
- */
-const unsigned short Dice_Build = 555;
-const std::string Dice_Ver_Without_Build = "2.3.8Express10";
-const std::string DiceRequestHeader = "Dice/2.3.8EXP10";
-const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
-const std::string Dice_Short_Ver = "Dice! by 溯洄 Shiki.Ver " + Dice_Ver;
-#ifdef __clang__
-
-#ifdef _MSC_VER
-const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
-#elif defined(__GNUC__)
-const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__ + "]";
-#else
-const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " UNKNOWN]"
-#endif /*__clang__*/
-
-#else
-
-#ifdef _MSC_VER
-const std::string Dice_Full_Ver = Dice_Short_Ver + " [MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
-#elif defined(__GNUC__)
-const std::string Dice_Full_Ver = Dice_Short_Ver + " [GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__ + "]";
-#else
-const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
-#endif /*__clang__*/
-
-#endif /*_MSC_VER*/
-
 std::map<std::string, std::string> GlobalMsg
 {
 	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
@@ -382,7 +350,7 @@ std::map<std::string, std::string> HelpDoc = {
 {"welcome","入群欢迎词：.welcome\n.welcome \\\\{at}欢迎\\\\{nick}入群！\t//\\\\{at}视为at入群者，\\\\{nick}会替换为新人的昵称\n.welcome\t//不带参数时清除欢迎词\n无论开关状态，只要有欢迎词时有人入群，都会响应"},
 {"本群现状","查看在群内对骰娘的设置"},
 {"溯洄","孕育万千骰娘生机之母，萌妹吃鱼之神，正五棱双角锥体对的监护人，一切诡秘的窥见者，拟人者主宰，时空舞台外的逆流者，永转的命运之轮"},
-{"投食","投食Shiki，请选择http://shiki.stringempty.xyz/投食\n没有中间商赚差价，请选择http://docs.kokona.tech/zh/latest/About.html"},
+{"投食","投食Shiki，请选择http://shiki.stringempty.xyz/alipay.png\n投食溯洄，可选择https://afdian.net/@suhuiw4123"},
 {"愚者正位","憧憬自然的地方、毫无目的地前行、喜欢尝试挑战新鲜事物、四处流浪。美好的梦想。"},
 {"愚者逆位","冒险的行动，追求可能性，重视梦想，无视物质的损失，离开家园，过于信赖别人，为出外旅行而烦恼。心情空虚、轻率的恋情、无法长久持续的融洽感、不安的爱情的旅程、对婚姻感到束缚、彼此忽冷忽热、不顾众人反对坠入爱河、为恋人的负心所伤、感情不专一。"},
 {"魔术师正位","事情的开始，行动的改变，熟练的技术及技巧，贯彻我的意志，运用自然的力量来达到野心。"},

@@ -29,6 +29,10 @@
 #include "DiceNetwork.h"
 #include "GlobalVar.h"
 
+bool checkUpdate() {
+
+}
+
 EVE_Menu(eventDiceUpdate)
 {
 	std::string ver;
@@ -46,7 +50,7 @@ EVE_Menu(eventDiceUpdate)
 		return 0;
 	}
 
-	const std::string updateNotice = "发现新版本! \n\n当前版本: " + Dice_Ver + "\n新版本: " + ver + "\n\n警告: 如果正在使用的Dice!为修改版, 此更新会将其覆盖为原版!\n点击确定键开始更新, 取消键取消更新";
+	const std::string updateNotice = std::string("发现新版本! \n\n当前版本: ") + std::string(Dice_Ver) + "\n新版本: " + ver + "\n\n警告: 如果正在使用的Dice!为修改版, 此更新会将其覆盖为原版!\n点击确定键开始更新, 取消键取消更新";
 	
 	if (MessageBoxA(nullptr, updateNotice.c_str(), "Dice!更新", MB_OKCANCEL | MB_ICONINFORMATION) != IDOK)
 	{

@@ -16,7 +16,7 @@ using namespace std;
 namespace Cloud {
 	void update()
 	{
-		const string strVer = GBKtoUTF8(Dice_Ver);
+		const string strVer = GBKtoUTF8(string(Dice_Ver));
 		string data = "DiceQQ=" + to_string(DiceMaid) + "&masterQQ=" + to_string(console.master()) + "&Ver=" + strVer + "&isGlobalOn="+to_string(!console["DisabledGlobal"]) + "&isPublic=" + to_string(!console["Private"]) + "&isVisible=" + to_string(console["CloudVisible"]);
 		char *frmdata = new char[data.length() + 1];
 		strcpy_s(frmdata, data.length() + 1, data.c_str());

@@ -83,7 +83,7 @@ public:
 		if (mFwdList.count(fromChat)&&!isLinkOrder) {
 			auto range = mFwdList.equal_range(fromChat);
 			string strFwd;
-			if (console.master() != fromQQ)strFwd += printFrom();
+			if (trusted < 5)strFwd += printFrom();
 			strFwd += message;
 			for (auto it = range.first; it != range.second; it++) {
 				AddMsgToQueue(strFwd, it->second.first, it->second.second);
@@ -365,7 +365,7 @@ public:
 					reply("该窗口已存在于监视列表！");
 				}
 				else {
-					console.addNotice(cTarget, 0b111011);
+					console.addNotice(cTarget, 0b100000);
 					note("已添加监视窗口" + printChat(cTarget) + "√",0b1);
 				}
 			}
@@ -786,6 +786,9 @@ public:
 						}
 					}
 				}
+				else if (!Command.empty() && intT && groupset(fromGroup, "停用指令") > 0) {
+					return 0;
+				}
 				else{
 					reply(Dice_Full_Ver + GlobalMsg["strBotMsg"]);
 				}
@@ -873,7 +876,7 @@ public:
 				}
 			}
 			if (strOption.empty()) {
-				reply(Dice_Short_Ver + "\n" + GlobalMsg["strHlpMsg"]);
+				reply(string(Dice_Short_Ver) + "\n" + GlobalMsg["strHlpMsg"]);
 			}
 			else if (HelpDoc.count(strOption)) {
 				strReply = format(HelpDoc[strOption], HelpDoc, {});
@@ -1749,11 +1752,11 @@ public:
 			intMsgCnt += 4;
 			readSkipSpace();
 			//先考虑Master带参数向指定目标发送
-			string strFwd;
 			if (trusted > 2) {
 				chatType ct;
-				if(!readChat(ct)) {
-					strFwd = readRest();
+				if(!readChat(ct,true)) {
+					readSkipColon();
+					string strFwd{ readRest() };
 					if (strFwd.empty()) {
 						reply(GlobalMsg["strSendMsgEmpty"]);
 					}
@@ -1763,20 +1766,21 @@ public:
 					}
 					return 1;
 				}
+				readSkipColon();
 			}
 			else if (!console) {
 				reply(GlobalMsg["strSendMsgInvalid"]);
 				return 1;
 			}
-			else if (console["DisabledSend"]) {
+			else if (console["DisabledSend"] && trusted < 3) {
 				reply(GlobalMsg["strDisabledSendGlobal"]);
 				return 1;
 			}
-			else if (intMsgCnt == strMsg.length()) {
+			else if (readSkipColon(); intMsgCnt == strMsg.length()) {
 				reply(GlobalMsg["strSendMsgEmpty"]);
 				return 1;
 			}
-			if (console.master() != fromQQ)strFwd = "来自" + printFrom();
+			string strFwd = (trusted > 4) ? "| " : ("| " + printFrom());
 			strFwd += readRest();
 			console.log(strFwd, 0b100, printSTNow());
 			reply(GlobalMsg["strSendMasterMsg"]);
@@ -1966,10 +1970,12 @@ public:
 					GlobalMsg[strName] = "";
 					note("已清除" + strName + "的自定义，将在下次重启后恢复默认设置。", 0b1);
 				}
-				if (strMessage == "NULL")strMessage = "";
-				EditedMsg[strName] = strMessage;
-				GlobalMsg[strName] = strMessage;
-				note("已自定义" + strName + "的文本", 0b1);
+				else {
+					if (strMessage == "NULL")strMessage = "";
+					EditedMsg[strName] = strMessage;
+					GlobalMsg[strName] = strMessage;
+					note("已自定义" + strName + "的文本", 0b1);
+				}
 			}
 			saveJMap("DiceData\\conf\\CustomMsg.json", EditedMsg);
 			return 1;
@@ -2299,7 +2305,7 @@ public:
 				reply(GlobalMsg["strPcCardSet"]);
 				break;
 			case -5:
-				reply(GlobalMsg["strPCNameNotExist"]);
+				reply(GlobalMsg["strPcNameNotExist"]);
 				break;
 			default:
 				reply(GlobalMsg["strUnknownErr"]);
@@ -3471,6 +3477,10 @@ private:
 	//跳过空格
 	void readSkipSpace() {
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+	}
+	void readSkipColon() {
+		readSkipSpace();
+		while (strMsg[intMsgCnt] == ':')intMsgCnt++;
 	}
 	string readUntilSpace() {
 		string strPara;

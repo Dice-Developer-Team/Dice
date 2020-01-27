@@ -63,7 +63,7 @@ public:
 	}
 	bool isEarliest() {
 		if (time(NULL) - fromTime > earliestTime) {
-			mFrequence[fromQQ]--;
+			mFrequence[fromQQ] -= 2;
 			delete this;
 			return true;
 		}

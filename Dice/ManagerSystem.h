@@ -288,7 +288,6 @@ static string printChat(Chat& grp) {
 ifstream& operator>>(ifstream& fin, Chat& grp);
 ofstream& operator<<(ofstream& fout, const Chat& grp);
 
-
 //被引用的图片列表
 static set<string> sReferencedImage;
 static void scanImage(string s, set<string>& list) {
@@ -296,7 +295,7 @@ static void scanImage(string s, set<string>& list) {
 	while ((l = s.find('[', r)) != string::npos && (r = s.find(']', l)) != string::npos) {
 		if (s.substr(l, 15) != CQ_IMAGE)continue;
 		string strFile = s.substr(l + 15, r - l - 15);
-		if (strFile.length() > 36)strFile += ".cqimg";
+		if (strFile.length() > 35)strFile += ".cqimg";
 		list.insert(strFile);
 	}
 }
