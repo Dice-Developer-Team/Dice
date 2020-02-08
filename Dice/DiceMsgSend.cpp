@@ -28,6 +28,7 @@
 #include "DiceMsgSend.h"
 #include "MsgFormat.h"
 #include "GlobalVar.h"
+#include "DiceConsole.h"
 using namespace std;
 using namespace CQ;
 
@@ -90,8 +91,8 @@ void SendMsg()
 				CQ::sendDiscussMsg(msg.target_id, msg.msg);
 			}
 		}
-		if (msgQueue.size() > 2)this_thread::sleep_for(chrono::milliseconds(64));
-		else this_thread::sleep_for(chrono::milliseconds(256));
+		if (msgQueue.size() > 2)this_thread::sleep_for(chrono::milliseconds(console["SendIntervalBusy"]));
+		else this_thread::sleep_for(chrono::milliseconds(console["SendIntervalIdle"]));
 	}
 	msgSendThreadRunning = false;
 }

@@ -18,7 +18,7 @@ using std::set;
 using std::map;
 using std::vector;
 constexpr auto CQ_IMAGE = "[CQ:image,file=";
-constexpr time_t NEWYEAR = 1577808000;
+constexpr time_t NEWYEAR = 1580486400;
 
 //º”‘ÿ ˝æ›
 void loadData();
@@ -52,6 +52,9 @@ public:
 	User& trust(short n) {
 		nTrust = n;
 		return *this;
+	}
+	bool empty()const {
+		return (!nTrust) && (!tUpdated) && intConf.empty() && strConf.empty() && strNick.empty();
 	}
 	string show()const {
 		ResList res;
@@ -125,6 +128,17 @@ static short trustedQQ(long long qq) {
 	if (!UserList.count(qq))return 0;
 	else return UserList[qq].nTrust;
 }
+static int clearUser() {
+	int cnt = 0;
+	for (auto& [qq,user] : UserList) {
+		if (user.empty()) {
+			UserList.erase(qq);
+			cnt++;
+		}
+	}
+	return cnt;
+}
+
 static string getName(long long QQ, long long GroupID = 0)
 {
 	string nick;
@@ -210,7 +224,7 @@ public:
 		if (isGroup)CQ::setGroupLeave(ID);
 		else CQ::setDiscussLeave(ID);
 	}
-	bool isset(string key) {
+	bool isset(string key)const {
 		return boolConf.count(key) || intConf.count(key) || strConf.count(key);
 	}
 	void setConf(string key, int val) {

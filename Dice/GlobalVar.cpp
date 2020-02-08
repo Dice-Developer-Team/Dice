@@ -41,6 +41,9 @@ std::map<std::string, std::string> GlobalMsg
 	{"strUserTrustDenied","{nick}在{self}处无权访问对方的权限×"},
 	{"strUserTrustIllegal","将目标权限修改为{trust}是非法的×"},
 	{"strUserNotFound","{self}无{user}的用户记录"},
+	{"strAddGroupNoLicense","本群未获{self}许可使用，将自动在群内静默。\n请先.help协议 阅读并同意协议后向运营方申请许可使用，\n否则请管理员使用!dismiss送出{self}" },
+	{"strGroupLicenseDeny","此群未获{self}许可使用，请先确认协议并申请许可×\n或请管理员使用!dismiss送出{self}" },
+	{"strGroupAuthorized","DiceMaid {self}√\n本群已授权许可，请尽情使用{self}√\n请遵守协议使用，服务结束后使用.dismiss送出!" },
 	{"strGroupSetOn","现已开启{self}在此群的“{option}”选项√"},			//群内开关和遥控开关通用此文本
 	{"strGroupSetOnAlready","{self}已在此群设置了{option}！"},			
 	{"strGroupSetOff","现已关闭{self}在此群的“{option}”选项√"},			
@@ -75,6 +78,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPcInitDelErr","初始卡不可删除×"},
 	{"strPcNoteTooLong","备注长度不能超过255×"},
 	{"strPcTextTooLong","文本长度不能超过48×"},
+	{"strSensNote","发现指令中带敏感词，{self}已记录并上报！"},
+	{"strSensWarn","发现指令中带敏感词，{self}拒绝响应且已上报！"},
 	{"strSpamFirstWarning","你够了，我无法容忍你的行为（刷屏初次警告）"},
 	{"strSpamFinalWarning","希望不要，不是希望，就是呵斥，不要有这种行为出现，这个太野蛮了（刷屏最终警告）"},
 	{"strReplySet","{self}对关键词{key}的回复已设置√"},

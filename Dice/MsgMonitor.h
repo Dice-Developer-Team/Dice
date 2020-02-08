@@ -38,13 +38,13 @@ public:
 			else if (mFrequence[fromQQ] > 200 && mWarnLevel[fromQQ] < 200) {
 				mWarnLevel[fromQQ] = mFrequence[fromQQ];
 				std::string strNow = printSTNow();
-				std::string strNote = (CT.second ? printChat(CT) : "私聊窗口") + "监测到" + printQQ(fromQQ) + "对" + printQQ(DiceMaid) + "30s发送指令频度达" + std::to_string(mFrequence[fromQQ] / 10);
+				std::string strNote = (CT.second ? printChat(CT) : "私聊窗口") + "监测到" + printQQ(fromQQ) + "对" + printQQ(console.DiceMaid) + "30s发送指令频度达" + std::to_string(mFrequence[fromQQ] / 10);
 				if ( mDiceList.count(fromQQ)) {
 					console.log(strNote, 9, strNow);
 				}
 				else {
 					BlackMark mark(fromQQ);
-					mark.llMap = { {"fromQQ",fromQQ},{"DiceMaid",DiceMaid},{"masterQQ", console.master()} };
+					mark.llMap = { {"fromQQ",fromQQ},{"DiceMaid",console.DiceMaid},{"masterQQ", console.master()} };
 					mark.strMap = { {"type","spam"},{"time",strNow} };
 					mark.set("note", strNow + strNote);
 					Cloud::upWarning(mark.getData());

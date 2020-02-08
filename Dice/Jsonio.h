@@ -2,7 +2,6 @@
 #include <fstream>
 #include <map>
 #include <vector>
-#include <io.h>
 #include "json.hpp"
 #include "EncodingConvert.h" 
 
@@ -13,6 +12,19 @@ typename std::enable_if<!std::is_arithmetic<T>::value, T>::type readJKey(std::st
 template<typename T>
 typename std::enable_if<std::is_arithmetic<T>::value, T>::type readJKey(std::string strJson) {
 	return stoll(strJson);
+}
+
+static nlohmann::json freadJson(std::string strPath) {
+	std::ifstream fin(strPath);
+	if(!fin)return nlohmann::json();
+	nlohmann::json j;
+	try {
+		fin >> j;
+	}
+	catch (...) {
+		return nlohmann::json();
+	}
+	return j;
 }
 
 template<typename T1, typename T2>
@@ -86,3 +98,4 @@ int saveJMap(std::string strLoc, std::map<T1, T2> mapTmp) {
 	}
 	return 0;
 }
+
