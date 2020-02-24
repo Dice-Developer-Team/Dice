@@ -93,7 +93,7 @@ int saveJMap(std::string strLoc, std::map<T1, T2> mapTmp) {
 		for (auto it : mapTmp) {
 			j[writeJKey<T1>(it.first)] = GBKtoUTF8(it.second);
 		}
-		fout << j.dump(4);
+		fout << j.dump(2);
 		fout.close();
 	}
 	return 0;

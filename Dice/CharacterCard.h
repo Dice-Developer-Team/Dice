@@ -13,6 +13,10 @@
 #include "CQTools.h"
 #include "Unpack.h"
 #include "RD.h"
+#include "DiceXMLTree.h"
+#include "DiceFile.hpp"
+#include "ManagerSystem.h"
+#include "MsgFormat.h"
 #include "CardDeck.h"
 using std::string;
 using std::to_string;
@@ -738,14 +742,8 @@ public:
 	}
 };
 
-static map<long long, Player>PList;
+extern map<long long, Player>PList;
 
-Player& getPlayer(long long qq) {
-	if (!PList.count(qq))PList[qq] = {};
-	return PList[qq];
-}
+Player& getPlayer(long long qq);
 
-string getPCName(long long qq, long long group) {
-	if (PList.count(qq) && PList[qq][group].Name != "½ÇÉ«¿¨")return PList[qq][group].Name;
-	return getName(qq, group);
-}
+string getPCName(long long qq, long long group);

@@ -14,12 +14,13 @@
 #include <chrono>
 #include "STLExtern.hpp"
 #include "DiceXMLTree.h"
+//#include "DiceMod.h"
+//#include "DiceSensitive.h"
 #include "DiceFile.hpp"
 #include "MsgFormat.h"
 #include "GlobalVar.h"
 #include "DiceMsgSend.h"
 #include "CQEVE_ALL.h"
-#include "BlackMark.hpp"
 using namespace std::literals::chrono_literals;
 using std::string;
 using std::to_string;
@@ -32,6 +33,7 @@ public:
 	Console(string path) :strPath(path) {}
 	friend void ConsoleTimer();
 	friend class FromMsg;
+	//DiceSens DSens;
 	using Clock = std::pair<unsigned short, unsigned short>;
 	static const enumap<string> mClockEvent;
 	static std::string printClock(Clock clock) {
@@ -73,6 +75,7 @@ public:
 	void reset();
 	bool load() {
 		string s;
+		//DSens.build({ {"nn老公",2 } });
 		if(!rdbuf(strPath,s))return false;
 		DDOM xml(s);
 		if (xml.count("mode"))isMasterMode = stoi(xml["mode"].strValue);
@@ -85,7 +88,6 @@ public:
 			for (auto& child : xml["conf"].vChild) {
 				std::pair<string, int>conf;
 				readini(child.strValue, conf);
-				log(conf.first, 0);
 				if(intDefault.count(conf.first))intConf.insert(conf);
 			}
 		loadNotice();
@@ -120,21 +122,10 @@ private:
 	std::multimap<Clock, ClockEvent>mWorkClock{};
 	std::map<chatType, int> NoticeList{};
 };
-extern Console console;
-	//Master的QQ，无主时为0
-	static long long DiceMaid;
+	extern Console console;
+	//extern DiceModManager modules;
 	//骰娘列表
 	extern std::map<long long, long long> mDiceList;
-	//个性化语句
-	extern std::map<std::string, std::string> PersonalMsg;
-	//黑名单群：无条件禁用
-	extern std::set<long long> BlackGroup;
-	//黑名单用户：无条件禁用
-	extern std::set<long long> BlackQQ;
-	extern std::map<long long, BlackMark>mBlackQQMark;
-	extern std::map<long long, BlackMark>mBlackGroupMark;
-void loadBlackMark(std::string strPath);
-void saveBlackMark(std::string strPath);
 	//获取骰娘列表
 	void getDiceList();
 	struct fromMsg {
@@ -163,16 +154,7 @@ void saveBlackMark(std::string strPath);
 	std::string printQQ(long long);
 	std::string printGroup(long long);
 	std::string printChat(chatType);
-//拉黑用户后检查群
-void checkBlackQQ(BlackMark &mark);
-//拉黑用户
-bool addBlackQQ(BlackMark mark);
-bool addBlackGroup(const BlackMark &mark);
-bool rmBlackQQ(long long llQQ, long long operateQQ = 0);
-bool rmBlackGroup(long long llQQ, long long operateQQ = 0);
-void AddWarning(const std::string& msg, long long DiceQQ, long long fromGroup);
-void warningHandler();
-extern void ConsoleTimer();
+void ConsoleTimer();
 class ThreadFactory {
 public:
 	ThreadFactory(){}
@@ -185,7 +167,7 @@ public:
 		rear++;
 	}
 };
-static ThreadFactory threads;
+extern ThreadFactory threads;
 #endif /*Dice_Console*/
 
 

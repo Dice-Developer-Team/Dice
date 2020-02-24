@@ -1,6 +1,7 @@
 /*
  * ºóÌ¨ÏµÍ³
  * Copyright (C) 2019-2020 String.Empty
+ * ¿ØÖÆÇåÀíÓÃ»§/ÈºÁÄ¼ÇÂ¼£¬ÇåÀíÍ¼Æ¬£¬¼à¿ØÏµÍ³
  */
 #pragma once
 #include <set>
@@ -120,33 +121,11 @@ public:
 ifstream& operator>>(ifstream& fin, User& user);
 ofstream& operator<<(ofstream& fout, const User& user);
 extern map<long long, User>UserList;
-static User& getUser(long long qq) {
-	if (!UserList.count(qq))UserList[qq].id(qq);
-	return UserList[qq];
-}
-static short trustedQQ(long long qq) {
-	if (!UserList.count(qq))return 0;
-	else return UserList[qq].nTrust;
-}
-static int clearUser() {
-	int cnt = 0;
-	for (auto& [qq,user] : UserList) {
-		if (user.empty()) {
-			UserList.erase(qq);
-			cnt++;
-		}
-	}
-	return cnt;
-}
+User& getUser(long long qq);
+short trustedQQ(long long qq);
+int clearUser();
 
-static string getName(long long QQ, long long GroupID = 0)
-{
-	string nick;
-	if (getUser(QQ).getNick(nick, GroupID))return nick;
-	if (GroupID && !(nick = strip(CQ::getGroupMemberInfo(GroupID, QQ).GroupNick)).empty())return nick;
-	if (!(nick = strip(CQ::getStrangerInfo(QQ).nick)).empty())return nick;
-	return "²»ÈÏÊ¶µÄ¼Ò»ï";
-}
+string getName(long long QQ, long long GroupID = 0);
 
 static const map<string,short> mChatConf{//0-Èº¹ÜÀíÔ±£¬2-°×Ãûµ¥2¼¶£¬3-°×Ãûµ¥3¼¶£¬4-¹ÜÀíÔ±£¬5-ÏµÍ³²Ù×÷
 	{"ºöÂÔ",4},
@@ -159,6 +138,7 @@ static const map<string,short> mChatConf{//0-Èº¹ÜÀíÔ±£¬2-°×Ãûµ¥2¼¶£¬3-°×Ãûµ¥3¼¶£
 	{"½ûÓÃhelp",0},
 	{"½ûÓÃob",0},
 	{"Ğí¿ÉÊ¹ÓÃ",1},
+	{"Î´ÉóºË",1},
 	{"ÃâÇå",2},
 	{"ÃâºÚ",4},
 	{"Î´½ø",5},
@@ -285,20 +265,9 @@ public:
 	}
 };
 extern map<long long, Chat>ChatList;
-static Chat& chat(long long id) {
-	if (!ChatList.count(id))ChatList[id].id(id);
-	return ChatList[id];
-}
-static int groupset(long long id, string st) {
-	if (!ChatList.count(id))return -1;
-	else return ChatList[id].isset(st);
-}
-static string printChat(Chat& grp) {
-	if (CQ::getGroupList().count(grp.ID))return CQ::getGroupList()[grp.ID] + "(" + to_string(grp.ID) + ")";
-	if (grp.isset("ÈºÃû"))return grp.strConf["ÈºÃû"] + "(" + to_string(grp.ID) + ")";
-	if (grp.isGroup) return "Èº" + to_string(grp.ID) + "";
-	return "ÌÖÂÛ×é" + to_string(grp.ID) + "";
-}
+Chat& chat(long long id);
+int groupset(long long id, string st);
+string printChat(Chat& grp);
 ifstream& operator>>(ifstream& fin, Chat& grp);
 ofstream& operator<<(ofstream& fout, const Chat& grp);
 
@@ -347,14 +316,16 @@ static int clearImage() {
 	return clrDir("data\\image\\", sReferencedImage);
 }
 
-static DWORD getRamPort() {
+DWORD getRamPort();
+
+/*static DWORD getRamPort() {
 	typedef BOOL(WINAPI * func)(LPMEMORYSTATUSEX);
 	MEMORYSTATUSEX stMem = { 0 };
 	func GlobalMemoryStatusEx = (func)GetProcAddress(LoadLibrary(L"Kernel32.dll"), "GlobalMemoryStatusEx");
 	stMem.dwLength = sizeof(stMem);
 	GlobalMemoryStatusEx(&stMem);
 	return stMem.dwMemoryLoad;
-}
+}*/
 
 static __int64 compareFileTime(FILETIME& ft1, FILETIME& ft2) {
 	__int64 t1 = ft1.dwHighDateTime;
@@ -381,7 +352,8 @@ static __int64 getWinCpuUsage() {
 	preuserTime = userTime;
 
 	hEvent = CreateEventA(NULL, FALSE, FALSE, NULL); // ³õÊ¼ÖµÎª nonsignaled £¬²¢ÇÒÃ¿´Î´¥·¢ºó×Ô¶¯ÉèÖÃÎªnonsignaled
-	WaitForSingleObject(hEvent, 1000);
+	//WaitForSingleObject(hEvent, 1000);
+	Sleep(2000);
 	res = GetSystemTimes(&idleTime, &kernelTime, &userTime);
 
 	__int64 idle = compareFileTime(idleTime, preidleTime);

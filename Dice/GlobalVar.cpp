@@ -35,15 +35,17 @@ std::map<std::string, std::string> GlobalMsg
 {
 	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
 	{"strParaIllegal","参数非法×"},			//偷懒用万能回复
+	{"stranger","找{self}有什么事么？{nick}"},			//{nick}无法获取非空昵称时的称呼
 	{"strAdminOptionEmpty","找{self}有什么事么？{nick}"},			//
 	{"strUserTrustShow","{user}在{self}处的信任级别为{trust}"},
 	{"strUserTrusted","已将{self}对{user}的信任级别调整为{trust}"},
 	{"strUserTrustDenied","{nick}在{self}处无权访问对方的权限×"},
 	{"strUserTrustIllegal","将目标权限修改为{trust}是非法的×"},
 	{"strUserNotFound","{self}无{user}的用户记录"},
-	{"strAddGroupNoLicense","本群未获{self}许可使用，将自动在群内静默。\n请先.help协议 阅读并同意协议后向运营方申请许可使用，\n否则请管理员使用!dismiss送出{self}" },
+	{"strGroupAuthorized","A roll to the table turns to a dice fumble\nDice Roller {self}√\n本群已授权许可，请尽情使用本骰娘√\n请遵守协议使用，服务结束后使用.dismiss送出!" },
+	{"strAddGroupNoLicense","本群未获{self}许可使用，将自动在群内静默。\n请先.help协议 阅读并同意协议后向运营方申请许可使用，\n否则请管理员使用!dismiss送出{self}\n可按以下格式填写并发送申请:\n!authorize 申请用途:[理由] 我已了解Dice!基本用法，仔细阅读并保证遵守{self}的用户协议，如需停用指令使用[指令]，用后使用[指令]送出群" },
 	{"strGroupLicenseDeny","此群未获{self}许可使用，请先确认协议并申请许可×\n或请管理员使用!dismiss送出{self}" },
-	{"strGroupAuthorized","DiceMaid {self}√\n本群已授权许可，请尽情使用{self}√\n请遵守协议使用，服务结束后使用.dismiss送出!" },
+	{"strGroupLicenseApply","此群未通过自助授权×\n许可申请已发送√" },
 	{"strGroupSetOn","现已开启{self}在此群的“{option}”选项√"},			//群内开关和遥控开关通用此文本
 	{"strGroupSetOnAlready","{self}已在此群设置了{option}！"},			
 	{"strGroupSetOff","现已关闭{self}在此群的“{option}”选项√"},			
@@ -86,11 +88,11 @@ std::map<std::string, std::string> GlobalMsg
 	{"strReplyDel","{self}对关键词{key}的回复已清除√"},
 	{"strStModify","{self}对已记录{pc}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","{self}对已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
-	{"strStValEmpty","{self}对未记录{attr}原值×"},		//{0}为属性名
+	{"strStValEmpty","{self}未记录{attr}原值×"},		//{0}为属性名
 	{"strBlackQQAddNotice","{nick}，你已被{self}加入黑名单，详情请联系Master"},				
 	{"strBlackQQAddNoticeReason","{nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员"},
 	{"strBlackQQDelNotice","{nick}，你已被{self}移出黑名单，现在可以继续使用了"},
-	{"strWhiteQQAddNotice","{nick}，你已被{self}加入白名单，欢迎使用√"},
+	{"strWhiteQQAddNotice","{user_nick}，你已被{self}加入白名单，欢迎使用√"},
 	{"strWhiteQQDenied","你不在白名单中×"},
 	{"strWhiteGroupDenied","本群聊不在白名单中×"},
 	{"strDeckProNew","已新建自定义牌堆√"},
@@ -116,7 +118,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strEnRollSuccess","{strEnRoll}\n{pc}的{attr}增加{change}点，当前为{final}点"},
 	{"strEnDefaultName","属性或技能"},//默认文本
 	{"strEnValEmpty", "未对{self}设定待成长属性值，请先.st {attr} 属性值 或查看.help en×"},
-	{"strEnValInvalid", "{attr}指输入不正确,请输入1-99范围内的整数!"},
+	{"strEnValInvalid", "{attr}值输入不正确,请输入1-99范围内的整数!"},
 	{"strSendMsg","消息已送出√"},//Master定向发送的回执
 	{"strSendMasterMsg","消息已发送给Master√"},//向Master发送的回执
 	{"strSendMsgEmpty","发送消息内容为空×"},
@@ -250,7 +252,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPreserve", "{self}私有私用，勿扰勿怪"},
 	{"strJrrp", "{nick}今天的人品值是: {res}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{res}"},
-	{ "strAddFriendWhiteQQ","" },				//此项非空，则白名单用户添加好友时回复此句
+	{ "strAddFriendWhiteQQ","{strAddFriend}" },				//白名单用户添加好友时回复此句
 	{ "strAddFriend", R"(欢迎使用{self}！
 .help协议 确认服务协议
 .help指令 查看指令列表
@@ -404,6 +406,6 @@ std::map<std::string, std::string> HelpDoc = {
 std::map<std::string, std::string> EditedHelpDoc;
 std::string getMsg(std::string key, std::map<std::string, std::string> maptmp, const std::map<std::string, std::string>& dir) {
 	auto it = dir.find(key);
-	if (it != dir.end())return format(it->second, dir);
+	if (it != dir.end())return format(it->second, dir, maptmp);
 	return "";
 }

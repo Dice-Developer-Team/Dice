@@ -30,6 +30,7 @@
 #include "DiceNetwork.h"
 #include "DiceCloud.h"
 #include "Jsonio.h"
+#include "BlackListManager.h"
 
 using namespace std;
 using namespace CQ;
@@ -39,12 +40,12 @@ const std::map<std::string, int>Console::intDefault{
 {"DisabledMe",1},{"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
 {"Private",0},{"CheckGroupLicense",0},{"LeaveDiscuss",0},
 {"ListenGroupRequest",1},{"ListenGroupAdd",1},
-{"ListenFriendRequest",1},{"ListenFriendAdd",1},{"AllowStranger",0},
-{"AutoClearBlack",1},{"LeaveBlackQQ",0},{"LeaveBlackGroup",1},
+{"ListenFriendRequest",1},{"ListenFriendAdd",1},{"AllowStranger",1},
+{"AutoClearBlack",1},{"LeaveBlackQQ",0},
 {"ListenGroupKick",1},{"ListenGroupBan",1},{"ListenSpam",1},
 {"BannedLeave",0},{"BannedBanInviter",0},
 {"KickedBanInviter",0},
-{"BelieveDiceList",0},{"CloudVisible",0},
+{"CloudBlackShare",1},{"BelieveDiceList",0},{"CloudVisible",1},
 {"SystemAlarmCPU",90},{"SystemAlarmRAM",90},
 {"SendIntervalIdle",500},{"SendIntervalBusy",100}
 };
@@ -169,63 +170,7 @@ Console console{"DiceData\\conf\\Console.xml"};
 
 //骰娘列表
 std::map<long long, long long> mDiceList;
-	//个性化语句
-	std::map<std::string, std::string> PersonalMsg;
-	//黑名单群：无条件禁用
-	std::set<long long> BlackGroup;
-	//黑名单用户：无条件禁用
-	std::set<long long> BlackQQ;
 
-//黑名单锁
-mutex blackMarkMutex;
-std::set<std::string>BlackMarks;
-std::map<long long, BlackMark>mBlackQQMark;
-std::map<long long, BlackMark>mBlackGroupMark;
-BlackMark readMark(nlohmann::json j) {
-	BlackMark mark;
-	if (j.count("inviterQQ"))mark.set("inviterQQ", j["inviterQQ"].get<long long>());
-	if (j.count("ownerQQ"))mark.set("ownerQQ", j["ownerQQ"].get<long long>());
-	if (j.count("fromQQ"))mark.set("fromQQ", j["fromQQ"].get<long long>());
-	if (j.count("fromGroup"))mark.set("fromGroup", j["fromGroup"].get<long long>());
-	if (j.count("DiceMaid"))mark.set("DiceMaid", j["DiceMaid"].get<long long>());
-	if (j.count("masterQQ"))mark.set("masterQQ", j["masterQQ"].get<long long>());
-	if (j.count("type"))mark.set("type", UTF8toGBK(j["type"].get<string>()));
-	if (j.count("time"))mark.set("time", UTF8toGBK(j["time"].get<string>()));
-	if (j.count("note"))mark.set("note", UTF8toGBK(j["note"].get<string>()));
-	return mark;
-}
-void loadBlackMark(string strPath) {
-	ifstream fin(strPath);
-	if (fin) {
-		nlohmann::json j;
-		BlackMark m;
-		fin >> j;
-		for (auto it : j) {
-			m = readMark(it);
-			if (m.count("fromGroup")) {
-				mBlackGroupMark[m.fromID] = m;
-			}
-			else {
-				mBlackQQMark[m.fromID] = m;
-			}
-		}
-		fin.close();
-	}
-}
-void saveBlackMark(string strPath) {
-	ofstream fout(strPath);
-	string sout;
-	for (auto it : mBlackGroupMark) {
-		sout += it.second.getJson() + ',';
-	}
-	for (auto it : mBlackQQMark) {
-		sout += it.second.getJson() + ',';
-	}
-	if (sout.empty())sout = ']';
-	else sout[sout.length() - 1] = ']';
-	fout << "[" << GBKtoUTF8(sout);
-	fout.close();
-}
 //程序启动时间
 long long llStartTime = clock();
 	//当前时间
@@ -241,7 +186,7 @@ std::string printDate() {
 std::string printDate(time_t tt) {
 	tm t;
 	if (!tt || localtime_s(&t, &tt))return "????-??-??";
-	return to_string(t.tm_year+1900) + "-" + to_string(t.tm_mon+1) + "-" + to_string(t.tm_mday);
+	return to_string(t.tm_year + 1900) + "-" + to_string(t.tm_mon + 1) + "-" + to_string(t.tm_mday);
 }
 	//上班时间
 	std::pair<int, int> ClockToWork = { 24,0 };
@@ -289,236 +234,14 @@ std::string printSTime(SYSTEMTIME st){
 //获取骰娘列表
 void getDiceList() {
 	std::string list;
-	if (!Network::GET("shiki.stringempty.xyz", "/DiceList/", 80, list))
+	if (!Network::GET("shiki.stringempty.xyz", "/DiceList/", 80, list) && mDiceList.empty())
 	{
 		console.log(("获取骰娘列表时遇到错误: \n" + list).c_str(), 1, printSTNow());
 		return;
 	}
 	readJson(list, mDiceList);
 }
-int isReliable(long long QQID) {
-	if (trustedQQ(QQID) > 2)return trustedQQ(QQID);
-	if (mDiceList.count(QQID)) {
-		if (trustedQQ(mDiceList[QQID]) > 2)return 2;
-		if (console["BelieveDiceList"] || mDiceList[QQID] == QQID)return 1;
-	}
-	if(BlackQQ.count(QQID))return -1;
-	return 0;
-}
 
-//拉黑用户后搜查群
-void checkBlackQQ(BlackMark &mark) {
-	long long llQQ = mark.fromID;
-	ResList list;
-	string strNotice;
-	for (auto &[id,grp] : ChatList) {
-		if (grp.isset("已退") || grp.isset("忽略") || !grp.isGroup)continue;
-		if (getGroupMemberInfo(id, llQQ).QQID == llQQ) {
-			strNotice = printGroup(id); 
-			if (grp.isset("免黑")) {
-				if (mark.isVal("DiceMaid", console.DiceMaid))sendGroupMsg(id, mark.getWarning());
-				strNotice += "群免黑";
-			}
-			else if (getGroupMemberInfo(id, llQQ).permissions < getGroupMemberInfo(id, getLoginQQ()).permissions) {
-				if (mark.isVal("DiceMaid", console.DiceMaid))AddMsgToQueue(mark.getWarning(), id, Group);
-				strNotice += "对方群权限较低";
-			}
-			else if (getGroupMemberInfo(id, llQQ).permissions > getGroupMemberInfo(id, getLoginQQ()).permissions) {
-				sendGroupMsg(id,mark.getWarning());
-				grp.leave("发现新增黑名单管理员" + printQQ(llQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
-				strNotice += "对方群权限较高，已退群";
-				this_thread::sleep_for(1s);
-			}
-			else if (grp.isset("免清")) {
-				if(mark.isVal("DiceMaid", console.DiceMaid))AddMsgToQueue(mark.getWarning(), id, Group);
-				strNotice += "群免清";
-			}
-			else if (console["LeaveBlackQQ"]) {
-				sendGroupMsg(id, mark.getWarning());
-				grp.leave("发现新增黑名单成员" + printQQ(llQQ) + "（同等群权限）\n" + GlobalMsg["strSelfName"] + "将预防性退群");
-				strNotice += "已退群";
-				this_thread::sleep_for(1s);
-			}
-			else if (mark.isVal("DiceMaid", console.DiceMaid))AddMsgToQueue(mark.getWarning(), id, Group);
-			list << strNotice;
-		}
-	}
-	if (!list.empty()) {
-		strNotice = "已清查与" + printQQ(llQQ) + "共同群聊" + to_string(list.size()) + "个：" + list.show();
-		console.log(strNotice, 0b100, printSTNow());
-	}
-}
-//拉黑用户
-bool addBlackQQ(BlackMark mark) {
-	long long llQQ = mark.fromID;
-	if (llQQ == console.DiceMaid || trustedQQ(llQQ) > 3)return 0;
-	if (trustedQQ(llQQ))getUser(llQQ).trust(0);
-	if (BlackQQ.count(llQQ))return 0;
-	BlackQQ.insert(llQQ);
-	if(UserList.count(llQQ))
-		mark.count("note") ? AddMsgToQueue(format(GlobalMsg["strBlackQQAddNoticeReason"], GlobalMsg, { {"0",mark.strMap["note"]},{"reason",mark.strMap["note"]},{"nick",getName(llQQ)} }), llQQ)
-			: AddMsgToQueue(format(GlobalMsg["strBlackQQAddNotice"], GlobalMsg, { {"nick",getName(llQQ)} }), llQQ);
-	if (console["AutoClearBlack"])checkBlackQQ(mark);
-	mark.strWarning.clear();
-	if (!mBlackQQMark.count(llQQ) || mBlackQQMark[llQQ].isErased()) {
-		lock_guard<std::mutex> lock_queue(blackMarkMutex);
-		mBlackQQMark[llQQ] = mark;
-		saveBlackMark(string(getAppDirectory()) + "BlackMarks.json");
-	}
-	return 1;
-}
-bool addBlackGroup(const BlackMark &mark) {
-	if (!mark.count("fromGroup"))return 0;
-	long long llGroup = mark.llMap.find("fromGroup")->second;
-	if (groupset(llGroup, "免黑") > 0)return 0;
-	if (groupset(llGroup, "许可使用") > 0)chat(llGroup).reset("许可使用").reset("免清");
-	if (BlackGroup.count(llGroup))return 0;
-	BlackGroup.insert(llGroup);
-	if (ChatList.count(llGroup) && console["LeaveBlackGroup"]) {
-		chat(llGroup).leave(mark.strWarning);
-	}
-	if (!mBlackGroupMark.count(llGroup) || mBlackGroupMark[llGroup].isErased()) {
-		lock_guard<std::mutex> lock_queue(blackMarkMutex);
-		mBlackGroupMark[llGroup] = BlackMark(mark, "fromGroup");
-		saveBlackMark(string(getAppDirectory()) + "BlackMarks.json");
-	}
-	return 1;
-}
-bool rmBlackQQ(long long llQQ, long long operateQQ) {
-	bool flag = false;
-	if (BlackQQ.count(llQQ)) {
-		BlackQQ.erase(llQQ);
-		if(UserList.count(llQQ))AddMsgToQueue(format(GlobalMsg["strBlackQQDelNotice"], GlobalMsg, { {"nick",getName(llQQ)} }), llQQ);
-		console.log("已将" + printQQ(llQQ) + "移出" + GlobalMsg["strSelfName"] + "的用户黑名单√", 1, printSTNow());
-		flag = true;
-	}
-	if (mBlackQQMark.count(llQQ) && !mBlackQQMark[llQQ].isErased()) {
-		lock_guard<std::mutex> lock_queue(blackMarkMutex);
-		mBlackQQMark[llQQ].erase();
-		saveBlackMark(string(getAppDirectory()) + "BlackMarks.json");
-		flag = true;
-	}
-	return flag;
-}
-bool rmBlackGroup(long long llGroup, long long operateQQ) {
-	bool flag = false;
-	if (BlackGroup.count(llGroup)) {
-		BlackGroup.erase(llGroup);
-		flag = true;
-		console.log("已将" + printGroup(llGroup) + "移出" + GlobalMsg["strSelfName"] + "的群黑名单√", 1, printSTNow());
-	}
-	if (mBlackGroupMark.count(llGroup) && !mBlackGroupMark[llGroup].isErased()) {
-		lock_guard<std::mutex> lock_queue(blackMarkMutex);
-		mBlackGroupMark[llGroup].erase();
-		saveBlackMark(string(getAppDirectory()) + "BlackMarks.json");
-		flag = true;
-	}
-	return flag;
-}
-// warning处理队列
-std::queue<fromMsg> warningQueue;
-// 消息发送队列锁
-mutex warningMutex;
-void AddWarning(const string &msg, long long DiceQQ, long long fromGroup)
-{
-	lock_guard<std::mutex> lock_queue(warningMutex);
-	warningQueue.emplace(msg, DiceQQ, fromGroup);
-}
-bool setQQWarning(BlackMark &mark_full, const char* strType, long long fromQQ) {
-	long long blackQQ = mark_full.llMap[strType];
-	if (mark_full.isErased()) {
-		if (!mBlackQQMark.count(blackQQ) || mBlackQQMark[blackQQ] == mark_full) {
-			return rmBlackQQ(blackQQ, fromQQ);
-		}
-	}
-	else {
-		if (addBlackQQ(BlackMark(mark_full, strType))) {
-			console.log(printQQ(fromQQ) + "已通知" + GlobalMsg["strSelfName"] + "将" + printQQ(blackQQ) + "加入用户黑名单√", 3, printSTNow());
-			return true;
-		}
-	}
-	return false;
-}
-bool setGroupWarning(const BlackMark &mark_full, long long fromQQ) {
-	long long blackGroup = mark_full.llMap.find("fromGroup")->second;
-	if (mark_full.isErased()) {
-		if (!mBlackGroupMark.count(blackGroup) || mBlackGroupMark[blackGroup] == mark_full){
-			return rmBlackGroup(blackGroup, fromQQ);
-		}
-	}
-	else {
-		if (addBlackGroup(mark_full)) {
-			console.log("已通知" + GlobalMsg["strSelfName"] + "将" + printGroup(blackGroup) + "加入群黑名单√", 3, printSTNow());
-			return true;
-		}
-	}
-	return false;
-}
-void warningHandler() {
-	fromMsg warning;
-	bool isAns = false;
-	while (Enabled){
-		if (isAns) {
-			console.log(getName(warning.fromQQ) + "已通知" + GlobalMsg["strSelfName"] + ":\n!warning" + warning.strMsg, 1, printSTNow());
-			isAns = false;
-		}
-		if (!warningQueue.empty()) {
-			{
-				lock_guard<std::mutex> lock_queue(warningMutex);
-				warning = warningQueue.front();
-				warningQueue.pop();
-			}
-			if (!warning.strMsg.empty()) {
-				nlohmann::json jInfo;
-				try {
-					jInfo = nlohmann::json::parse(GBKtoUTF8(warning.strMsg));
-				}
-				catch (...) {
-					continue;
-				}
-				BlackMark mark = readMark(jInfo);
-				if (mark.strMap["type"] == "spam" && !console["ListenSpam"] || mark.strMap["type"] == "ban" && !console["ListenGroupBan"] || mark.strMap["type"] == "kick" && !console["ListenGroupKick"])continue;
-				mark.strWarning = "!warning" + warning.strMsg;
-				int intLevel = isReliable(warning.fromQQ);
-				if (intLevel > 0) {
-					if (intLevel < 2 && !mark.hasType()) {
-						isAns = true;
-						continue;
-					}
-					else if (intLevel < 4 && mark.isVal("type", "local")) {
-						isAns = true;
-						continue;
-					}
-				}
-				else if (intLevel == 0) {
-					if (mark.isNoteEmpty()) { continue; }
-					int res = Cloud::checkWarning(mark.getData());
-					if (!mark.isErased() && res < 1)continue;
-					if (mark.isErased() && res > -1 && !mark.isVal("DiceMaid", warning.fromQQ) && !mark.isVal("masterQQ", warning.fromQQ))continue;
-				}
-				else continue;
-				if (mark.count("fromGroup")) {
-					isAns |= setGroupWarning(mark, warning.fromQQ);
-				}
-				if (mark.count("fromQQ")) {
-					isAns |= setQQWarning(mark, "fromQQ", warning.fromQQ);
-				}
-				if (intLevel == 0 && !mark.isVal("DiceMaid", warning.fromQQ))continue;
-				if (mark.count("inviterQQ") && ((mark.strMap["type"] == "kick" && console["KickedBanInviter"]) || (mark.strMap["type"] == "ban" && console["BannedBanInviter"]) || mark.strMap["type"] == "erase")) {
-					isAns |= setQQWarning(mark, "inviterQQ", warning.fromQQ);
-				}
-				if (mark.count("ownerQQ") && ((mark.strMap["type"] == "ban" && console["BannedBanOwner"]) || mark.strMap["type"] == "erase")) {
-					isAns |= setQQWarning(mark, "ownerQQ", warning.fromQQ);
-				}
-			}
-			else
-			{
-				this_thread::sleep_for(100ms);
-			}
-		}
-		else std::this_thread::sleep_for(200ms);
-	}
-}
 
 bool operator==(const SYSTEMTIME& st, const Console::Clock clock) {
 	return st.wHour == clock.first && st.wHour == clock.second;
@@ -572,7 +295,7 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st) {
 					}
 					if (console["SystemAlarmRAM"]) {
 						long long perRAM = getRamPort();
-						if(perRAM > console["SystemAlarmRAM"])console.log("警告：" + GlobalMsg["strSelfName"] + "所在系统内存占用达" + to_string(perRAM) + "%", 0b1001, printSTime(stNow));
+						if(perRAM > console["SystemAlarmRAM"] && perRAM > perLastRAM)console.log("警告：" + GlobalMsg["strSelfName"] + "所在系统内存占用达" + to_string(perRAM) + "%", 0b1001, printSTime(stNow));
 						else if (perLastRAM > console["SystemAlarmRAM"] && perRAM < console["SystemAlarmRAM"])console.log("提醒：" + GlobalMsg["strSelfName"] + "所在系统内存占用降至" + to_string(perRAM) + "%", 0b11, printSTime(stNow));
 						perLastRAM = perRAM;
 					}
@@ -626,14 +349,14 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st) {
 			std::map<long long, string>mGroupList = getGroupList();
 			for (auto &[id,grp] : ChatList) {
 				if (!mGroupList.count(id)||grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("免黑"))continue;
-				if (BlackGroup.count(id)) {
+				if (blacklist->get_group_danger(id)) {
 					res << printGroup(id) + "：" + "黑名单群";
 					if(console["LeaveBlackGroup"])grp.leave(getMsg("strBlackGroup"));
 				}
 				if (!grp.isGroup)continue;
 				vector<GroupMemberInfo> MemberList = getGroupMemberList(id);
 				for (auto eachQQ : MemberList) {
-					if (BlackQQ.count(eachQQ.QQID)) {
+					if (blacklist->get_qq_danger(eachQQ.QQID)) {
 						if (getGroupMemberInfo(id, eachQQ.QQID).permissions < getGroupMemberInfo(id, getLoginQQ()).permissions) {
 							continue;
 						}
@@ -707,20 +430,24 @@ EVE_Menu(eventGlobalSwitch) {
 EVE_Request_AddFriend(eventAddFriend) {
 	if (!console["ListenFriendRequest"])return 0;
 	string strMsg = "好友添加请求，来自：" + printQQ(fromQQ);
-	if (BlackQQ.count(fromQQ)) {
+	if (blacklist->get_qq_danger(fromQQ)) {
 		strMsg += "，已拒绝（用户在黑名单中）";
 		setFriendAddRequest(responseFlag, 2, "");
-		console.log(strMsg, 3, printSTNow());
+		console.log(strMsg, 0b10, printSTNow());
 	}
 	else if (trustedQQ(fromQQ)) {
 		strMsg += "，已同意（受信任用户）";
 		setFriendAddRequest(responseFlag, 1, "");
-		GlobalMsg["strAddFriendWhiteQQ"].empty() ? AddMsgToQueue(getMsg("strAddFriend"), fromQQ)
-			: AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromQQ);
+		AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromQQ);
 		console.log(strMsg, 1, printSTNow());
 	}
-	else if (console["Private"] && !console["AllowStranger"]) {
-		strMsg += "，已拒绝（当前在私用模式）";
+	else if (!UserList.count(fromQQ) && console["AllowStranger"] < 2) {
+		strMsg += "，已拒绝（无用户记录）";
+		setFriendAddRequest(responseFlag, 2, "");
+		console.log(strMsg, 1, printSTNow());
+	}
+	else if (console["AllowStranger"] < 1) {
+		strMsg += "，已拒绝（非信任用户）";
 		setFriendAddRequest(responseFlag, 2, "");
 		console.log(strMsg, 1, printSTNow());
 	}
@@ -738,4 +465,3 @@ EVE_Friend_Add(eventFriendAdd) {
 		: AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromQQ);
 	return 0;
 }
-

@@ -8,6 +8,7 @@
 #include "DiceConsole.h"
 #include "ManagerSystem.h"
 #include "DiceCloud.h"
+#include "BlackListManager.h"
 class FrqMonitor {
 public:
 	static const long long earlyTime = 30;
@@ -33,23 +34,19 @@ public:
 				mWarnLevel[fromQQ] = mFrequence[fromQQ]; 
 				const std::string strMsg = "警告：\n" + (CT.second ? printChat(CT) : "私聊窗口") + printQQ(fromQQ) + "指令频度达到" + std::to_string(mFrequence[fromQQ] / 10);
 				AddMsgToQueue(GlobalMsg["strSpamFinalWarning"], CT.first, CT.second);
-				console.log(strMsg, 3, printSTNow());
+				console.log(strMsg, 0b10, printSTNow());
 			}
 			else if (mFrequence[fromQQ] > 200 && mWarnLevel[fromQQ] < 200) {
 				mWarnLevel[fromQQ] = mFrequence[fromQQ];
 				std::string strNow = printSTNow();
 				std::string strNote = (CT.second ? printChat(CT) : "私聊窗口") + "监测到" + printQQ(fromQQ) + "对" + printQQ(console.DiceMaid) + "30s发送指令频度达" + std::to_string(mFrequence[fromQQ] / 10);
-				if ( mDiceList.count(fromQQ)) {
-					console.log(strNote, 9, strNow);
+				if (mDiceList.count(fromQQ)) {
+					console.log(strNote, 0b1000, strNow);
 				}
 				else {
-					BlackMark mark(fromQQ);
-					mark.llMap = { {"fromQQ",fromQQ},{"DiceMaid",console.DiceMaid},{"masterQQ", console.master()} };
-					mark.strMap = { {"type","spam"},{"time",strNow} };
-					mark.set("note", strNow + strNote);
-					Cloud::upWarning(mark.getData());
-					console.log(mark.getWarning(), 33, "");
-					addBlackQQ(mark);
+					DDBlackMarkFactory mark{ fromQQ ,0 };
+					mark.sign().type("spam").time(strNow).note(strNow + " " + strNote);
+					blacklist->create(mark.product());
 				}
 			}
 		}

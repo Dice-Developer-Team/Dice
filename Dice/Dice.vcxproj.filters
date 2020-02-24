@@ -96,6 +96,24 @@
     <ClCompile Include="DiceFile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DiceSensitive.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CharacterCard.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ManagerSystem.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BlackListManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DiceSession.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DiceEvent.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -209,19 +227,10 @@
     <ClInclude Include="DiceEvent.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Jsonio.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="MsgMonitor.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="DiceCloud.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="DiceFile.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="BlackMark.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="CharacterCard.h">
@@ -234,6 +243,30 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="STLExtern.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceFile.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceTrie.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceSensitive.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceMod.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="StrExtern.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Jsonio.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="BlackListManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceSession.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

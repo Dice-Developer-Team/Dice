@@ -83,7 +83,7 @@ string strip(std::string origin)
 		{
 			origin.erase(origin.begin());
 		}
-		else if (origin.substr(0, 2) == "£¡" || origin.substr(0, 2) == "¡£")
+		else if (origin.substr(0, 2) == "£¡" || origin.substr(0, 2) == "¡£" || origin.substr(0, 2) == "£®")
 		{
 			origin.erase(origin.begin(), origin.begin() + 2);
 		}
