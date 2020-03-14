@@ -194,44 +194,7 @@ DDBlackMark::DDBlackMark(void* pJson) {
 DDBlackMark::DDBlackMark(string strWarning) {
     try {
         nlohmann::json j = nlohmann::json::parse(strWarning);
-        bool isAdd = true;
-        if (j.count("type")) {
-            if (j["type"] == "erase") {
-                isAdd = false;
-                isClear = true;
-            }
-            else if (!credit_limit.count(j["type"].get<string>())) { return; }
-            else type = j["type"].get<string>();
-        }
-        if (j.count("fromGroup"))fromGroup = { j["fromGroup"].get<long long>(), isAdd };
-        if (j.count("fromQQ"))fromQQ = { j["fromQQ"].get<long long>(), isAdd };
-        if (j.count("inviterQQ"))inviterQQ = { j["inviterQQ"].get<long long>(),isAdd };
-        if (j.count("ownerQQ"))ownerQQ = { j["ownerQQ"].get<long long>(), isAdd };
-
-        if (j.count("DiceMaid"))DiceMaid = j["DiceMaid"].get<long long>();
-        if (j.count("masterQQ"))masterQQ = j["masterQQ"].get<long long>();
-
-        if (j.count("wid"))wid = j["wid"].get<int>();
-        if (j.count("danger")) {
-            danger = j["danger"].get<int>();
-            if (danger < 1)return;
-        }
-
-        if (j.count("time"))time = UTF8toGBK(j["time"].get<string>());
-        if (j.count("note"))note = UTF8toGBK(j["note"].get<string>());
-        if (j.count("comment"))comment = UTF8toGBK(j["comment"].get<string>());
-        if (j.count("erase")) {
-            isClear = true;
-            for (auto &key : j["erase"]) {
-                if (key.get<string>() == "fromGroup")fromGroup.second = false;
-                else if (key.get<string>() == "fromQQ")fromQQ.second = false;
-                else if (key.get<string>() == "inviterQQ")inviterQQ.second = false;
-                else if (key.get<string>() == "ownerQQ")ownerQQ.second = false;
-            }
-            if (fromGroup.second || fromQQ.second || inviterQQ.second || ownerQQ.second)isClear = false;
-        }
-        isValid = true;
-        return;
+        new (this)DDBlackMark(&j);
     }
     catch (...) {
         console.log("½âÎöºÚÃûµ¥jsonÊ§°Ü£¡", 0b10, printSTNow());
@@ -355,7 +318,7 @@ void DDBlackMark::erase() {
     isClear = true;
 }
 void DDBlackMark::upload() {
-    std::string frmdata = "fromQQ=" + std::to_string(fromQQ.first) + "&fromGroup=" + std::to_string(fromGroup.first) + "&DiceMaid=" + std::to_string(DiceMaid) + "&masterQQ=" + std::to_string(masterQQ) + "&type=" + type + "&time=" + time;
+    std::string frmdata = "fromQQ=" + std::to_string(fromQQ.first) + "&fromGroup=" + std::to_string(fromGroup.first) + "&DiceMaid=" + std::to_string(DiceMaid) + "&masterQQ=" + std::to_string(masterQQ) + "&type=" + type + "&time=" + time + "&note=" + UrlEncode(GBKtoUTF8(note));
     string temp;
     const bool reqRes = Network::POST("shiki.stringempty.xyz", "/DiceCloud/warning_upload.php", 80, frmdata.data(), temp);
     if (isdigit(static_cast<unsigned char>(temp[0])))wid = stoi(temp);
@@ -782,14 +745,14 @@ void DDBlackManager::isban(FromMsg* msg) {
 string DDBlackManager::list_group_warning(long long llgroup){
     for (auto [group, index] : multi_range(mGroupIndex, llgroup)) {
         const DDBlackMark& mark = vBlackList[index];
-        if (mark.fromGroup.second && mark.danger == mGroupDanger[llgroup])return mark.warning();
+        if (mark.fromGroup.second && mark.danger == mGroupDanger[llgroup] && !mark.isType("local"))return mark.warning();
     }
     return "";
 }
 string DDBlackManager::list_qq_warning(long long llqq) {
     for (auto [qq, index] : multi_range(mQQIndex, llqq)) {
         const DDBlackMark& mark = vBlackList[index];
-        if (mark.danger != mQQDanger[llqq])continue;
+        if (mark.danger != mQQDanger[llqq] || mark.isType("local"))continue;
         if ((mark.fromQQ.first == llqq && mark.fromQQ.second)
             || (mark.inviterQQ.first == llqq && mark.inviterQQ.second)
             || (mark.ownerQQ.first == llqq && mark.ownerQQ.second))
@@ -800,15 +763,15 @@ string DDBlackManager::list_qq_warning(long long llqq) {
 string DDBlackManager::list_self_group_warning(long long llgroup) {
     for (auto [group, index] : multi_range(mGroupIndex, llgroup)) {
         const DDBlackMark& mark = vBlackList[index];
-        if (mark.isSource(console.DiceMaid) && mark.fromGroup.second && mark.danger == mGroupDanger[llgroup] )return mark.warning();
+        if (mark.isSource(console.DiceMaid) && mark.fromGroup.second && mark.danger == mGroupDanger[llgroup] && !mark.isType("local"))return mark.warning();
     }
     return "";
 }
 string DDBlackManager::list_self_qq_warning(long long llqq) {
     for (auto [qq, index] : multi_range(mQQIndex, llqq)) {
         const DDBlackMark& mark = vBlackList[index];
-        if (mark.danger != mQQDanger[llqq])continue;
-        if (mark.isSource(console.DiceMaid) && !mark.isType("local") && 
+        if (mark.danger != mQQDanger[llqq] || mark.isType("local"))continue;
+        if (mark.isSource(console.DiceMaid) && 
             ((mark.fromQQ.first == llqq && mark.fromQQ.second)
             || (mark.inviterQQ.first == llqq && mark.inviterQQ.second)
             || (mark.ownerQQ.first == llqq && mark.ownerQQ.second)))
@@ -872,7 +835,10 @@ void DDBlackManager::verify(void* pJson, long long operateQQ) {
                     mark.masterQQ = j["masterQQ"].get<long long>();
                     mark.type = j["type"].get<string>();
                     mark.time = j["time"].get<string>();
-                    if (mark.note.empty())mark.fill_note();
+                    if (mark.note.empty()) {
+                         if (j.count("note") && !j["note"].get<string>().empty())mark.note = UTF8toGBK(j["note"].get<string>());
+                         else mark.fill_note();
+                    }
                     if (credit < 3 || !mark.danger)mark.danger = 2;
                 }
                 catch (...) {

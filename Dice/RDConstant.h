@@ -141,6 +141,7 @@ static std::map<std::string, std::string>mVariableCOC7 = {
 	{"体质体型和","[体质]+[体型]"},
 };
 static std::map<std::string, std::string>ExpressionCOC7 = {
+{"","D100"},
 {"医学回复","1D3"},
 {"精神分析回复","1D3"},
 {"徒手伤害","1D3+[DB]"},

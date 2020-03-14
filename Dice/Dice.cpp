@@ -50,6 +50,9 @@
 #include "CharacterCard.h"
 #include "DiceEvent.h"
 
+#pragma warning(disable:4996)
+#pragma warning(disable:6031)
+
 using namespace std;
 using namespace CQ;
 
@@ -420,6 +423,7 @@ bool eve_GroupAdd(Chat& grp) {
 	}
 	if (console["CheckGroupLicense"] && !grp.isset("许可使用")) {
 		grp.set("未审核");
+		this_thread::sleep_for(chrono::seconds(2));
 		AddMsgToQueue(getMsg("strAddGroupNoLicense"), { fromGroup, Group });
 	}
 	return 0;
@@ -621,11 +625,9 @@ EVE_System_GroupBan(eventGroupBan) {
 }
 
 EVE_Request_AddGroup(eventGroupInvited) {
-	Chat& grp = chat(fromGroup).group();
 	if (!console["ListenGroupRequest"])return 0;
-	if (subType == 2 && !grp.isset("忽略")) {
+	if (subType == 2 && groupset(fromGroup,"忽略") < 1) {
 		if (console) {
-			grp.set("未进");
 			string strNow = printSTNow();
 			string strMsg = "群添加请求，来自：" + getStrangerInfo(fromQQ).nick +"("+ to_string(fromQQ) + "),群:" + to_string(fromGroup)+"。";
 			if (blacklist->get_group_danger(fromGroup)) {
@@ -640,7 +642,7 @@ EVE_Request_AddGroup(eventGroupInvited) {
 				console.log(strMsg, 0b10, strNow);
 				return 1;
 			}
-			else if (grp.isset("许可使用")) {
+			else if (Chat& grp = chat(fromGroup).group(); grp.isset("许可使用")) {
 				strMsg += "\n已同意（群已许可使用）";
 				grp.inviter = fromQQ;
 				setGroupAddRequest(responseFlag, 2, 1, "");
@@ -648,7 +650,7 @@ EVE_Request_AddGroup(eventGroupInvited) {
 			}
 			else if (trustedQQ(fromQQ)) {
 				strMsg += "\n已同意（受信任用户）";
-				grp.set("许可使用");
+				grp.set("许可使用").set("未进");
 				grp.inviter = fromQQ;
 				setGroupAddRequest(responseFlag, 2, 1, "");
 				console.log(strMsg, 1, strNow);
@@ -661,6 +663,7 @@ EVE_Request_AddGroup(eventGroupInvited) {
 			}
 			else{
 				strMsg += "已同意";
+				grp.set("未进");
 				grp.inviter = fromQQ;
 				setGroupAddRequest(responseFlag, 2, 1, "");
 				console.log(strMsg, 1, strNow);

@@ -1,3 +1,6 @@
+#include <windows.h>
+#include <TlHelp32.h>
+#include <Psapi.h>
 #include "DiceEvent.h"
 #include "Jsonio.h"
 #include "MsgFormat.h"
@@ -7,6 +10,7 @@
 #include "CharacterCard.h"
 #include "DiceSession.h"
 #include "GetRule.h"
+#pragma warning(disable:28159)
 using namespace std;
 using namespace CQ;
 
@@ -544,6 +548,7 @@ int FromMsg::DiceReply() {
 			}
 			return 1;
 		}
+		if (!console["CheckGroupLicense"])return 0;
 		if (pGrp->isset("许可使用") && !pGrp->isset("未审核"))return 0;
 		if (trusted > 0) {
 			pGrp->set("许可使用").reset("未审核");
@@ -770,7 +775,7 @@ int FromMsg::DiceReply() {
 		intMsgCnt += 4;
 		while (strLowerMessage[intMsgCnt] == ' ')
 			intMsgCnt++;
-		const string strOption = strLowerMessage.substr(intMsgCnt);
+		const string strOption = readRest();
 		if (intT) {
 			if (!isAuth && (strOption == "on" || strOption == "off")) {
 				reply(GlobalMsg["strPermissionDeniedErr"]);
@@ -955,6 +960,85 @@ int FromMsg::DiceReply() {
 			note("已清理image文件" + to_string(Cnt) + "项", 0b1);
 			return 1;
 		}
+		else if (strOption == "reload") {
+			if (trusted < 5) {
+				reply(GlobalMsg["strNotMaster"]);
+				return -1;
+			}
+			char** path = new char* ();
+			_get_pgmptr(path);
+			string strSelfPath(*path);
+			delete path;
+			string strSelfName;
+			int pid = getpid();
+			PROCESSENTRY32 pe32;
+			pe32.dwSize = sizeof(pe32);
+			HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+			if (hProcessSnap == INVALID_HANDLE_VALUE) {
+				note("重启失败：进程快照创建失败！",1);
+				return false;
+			}
+			BOOL bResult = Process32First(hProcessSnap, &pe32);
+			int ppid(0);
+			while (bResult){
+				if (pe32.th32ProcessID == pid) {
+					ppid = pe32.th32ParentProcessID;
+					reply("确认进程" + strSelfPath + "\n进程id:" + to_string(pe32.th32ProcessID) + "\n父进程id:" + to_string(pe32.th32ParentProcessID));
+					strSelfName = convert_w2a(pe32.szExeFile);
+					break;
+				}
+				bResult = Process32Next(hProcessSnap, &pe32);
+			}
+			if (!ppid) {
+				note("重启失败：未找到进程！", 1);
+				return false;
+			}
+			string command = "taskkill /f /pid " + to_string(ppid) + "\n.\\" + strSelfName + " /account " + to_string(getLoginQQ());
+			//string command = "taskkill /f /pid " + to_string(ppid) + "\ntaskkill /f /pid " + to_string(pid) + "\nstart " + strSelfPath + " /account " + to_string(getLoginQQ()) + "\ntimeout /t 60\ndel %0";
+			ofstream fout("reload.bat");
+			fout << command << std::endl;
+			fout.close();
+			note(command, 0);
+			this_thread::sleep_for(2s);
+			Enabled = false;
+			dataBackUp();
+			switch (UINT res = -1;res = WinExec(".\\reload.bat", SW_SHOW)) {
+			case 0:
+				note("重启失败：内存或资源已耗尽！", 1);
+				break;
+			case ERROR_FILE_NOT_FOUND:
+				note("重启失败：指定的文件未找到！", 1);
+				break;
+			case ERROR_PATH_NOT_FOUND:
+				note("重启失败：指定的路径未找到！", 1);
+				break;
+			default:
+				note("重启失败：未知错误" + to_string(res), 1);
+				break;
+			};
+			return 1;
+		}
+		else if (strOption == "rexplorer") {
+		if (trusted < 5) {
+			reply(GlobalMsg["strNotMaster"]);
+			return -1;
+		}
+		system(R"(taskkill /f /fi "username eq %username%" /im explorer.exe
+start C:\Windows\explorer.exe
+timeout /t 10
+)");
+		note("已重启资源管理器√");
+		}
+		else if (strOption == "cmd") {
+		if (fromQQ != console.master()) {
+			reply(GlobalMsg["strNotMaster"]);
+			return -1;
+		}
+		string strCMD = readRest() + "\ntimeout /t 10";
+		system(strCMD.c_str());
+		reply("已启动命令行√");
+		return 1;
+		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "admin")
 	{
@@ -1028,7 +1112,7 @@ int FromMsg::DiceReply() {
 				return 1;
 			}
 		}
-		else if (!intT)return 0;
+		else if (intT != GroupT)return 0;
 		Chat& grp = chat(llGroup);
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
@@ -1120,8 +1204,35 @@ int FromMsg::DiceReply() {
 			reply(GlobalMsg["strSelfName"] + res.show());
 			return 1;
 		}
+		else if (Command == "diver") {
+			std::priority_queue<std::pair<time_t, string>> qDiver;
+			time_t tNow = time(NULL);
+			const int intTDay = 24 * 60 * 60;
+			time_t intLastMsg = 0;
+			for (auto each : getGroupMemberList(llGroup)) {
+				intLastMsg = (tNow - each.LastMsgTime) / intTDay;
+				if (!each.LastMsgTime || intLastMsg > 30) {
+					qDiver.emplace(intLastMsg,each.Nick + "(" + to_string(each.QQID) + ")");
+				}
+			}
+			if (qDiver.empty()) {
+				reply("{self}未发现潜水成员或成员列表加载失败！");
+				return 1;
+			}
+			else {
+				int intCnt(0);
+				ResList res;
+				while (!qDiver.empty()) {
+					res << qDiver.top().second + to_string(qDiver.top().first) + "天";
+					if (++intCnt > 15)break;
+					qDiver.pop();
+				}
+				reply("潜水成员列表:" + res.show());
+				return 1;
+			}
+		}
 		if (!grp.isGroup || (getGroupMemberInfo(llGroup, fromQQ).permissions < 2 && (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 3 || trusted < 5))) {
-			reply(GlobalMsg["strSelfPermissionErr"]);
+			reply(GlobalMsg["strPermissionDeniedErr"]);
 			return 1;
 		}
 		if (Command == "ban") {
@@ -1158,6 +1269,30 @@ int FromMsg::DiceReply() {
 				else reply("禁言失败×");
 			}
 			else reply("查无此人×");
+		}
+		else if (Command == "kick") {
+			if (trusted < 4) {
+				reply(GlobalMsg["strNotAdmin"]);
+				return -1;
+			}
+			string QQNum = readDigit();
+			if (QQNum.empty()) {
+				reply(GlobalMsg["strQQIDEmpty"]);
+				return -1;
+			}
+			long long llMemberQQ = stoll(QQNum);
+			GroupMemberInfo Member = getGroupMemberInfo(llGroup, llMemberQQ);
+			if (Member.QQID == llMemberQQ){
+				if (Member.permissions > 1) {
+					reply(GlobalMsg["strSelfPermissionErr"]);
+					return 1;
+				}
+				string strMainDice = readDice();
+				if (setGroupKick(llGroup, llMemberQQ, false) == 0)
+					reply("已将" + Member.Nick + "(" + to_string(Member.QQID) + ")踢出群聊√");
+				else reply("移出失败×");
+			}
+			else reply("{self}群内查无此人×");
 		}
 		return 1;
 	}
@@ -1698,7 +1833,7 @@ int FromMsg::DiceReply() {
 			chatType ct;
 			if (!readChat(ct, true)) {
 				readSkipColon();
-				string strFwd{ readRest() };
+				string strFwd(readRest());
 				if (strFwd.empty()) {
 					reply(GlobalMsg["strSendMsgEmpty"]);
 				}
@@ -1718,12 +1853,12 @@ int FromMsg::DiceReply() {
 			reply(GlobalMsg["strDisabledSendGlobal"]);
 			return 1;
 		}
-		else if (readSkipColon(); intMsgCnt == strMsg.length()) {
+		string strInfo = readRest();
+		if (strInfo.empty()) {
 			reply(GlobalMsg["strSendMsgEmpty"]);
 			return 1;
 		}
-		string strFwd = (trusted > 4) ? "| " : ("| " + printFrom());
-		strFwd += readRest();
+		string strFwd = (trusted > 4) ? "| " : ("| " + printFrom()) + strInfo;
 		console.log(strFwd, 0b100, printSTNow());
 		reply(GlobalMsg["strSendMasterMsg"]);
 		return 1;

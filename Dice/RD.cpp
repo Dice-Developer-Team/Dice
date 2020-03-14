@@ -39,7 +39,7 @@ void init2(string& msg){
 		msg.erase(msg.begin());
 	while (!msg.empty() && isspace(static_cast<unsigned char>(msg[msg.length() - 1])))
 		msg.erase(msg.end() - 1);
-	if (msg.substr(0, 2) == "¡£"|| msg.substr(0, 2) == "£¡")
+	if (msg.substr(0, 2) == "¡£" || msg.substr(0, 2) == "£¡" || msg.substr(0, 2) == "£®")
 	{
 		msg.erase(msg.begin());
 		msg[0] = '.';
@@ -428,7 +428,7 @@ int RollSuccessLevel(int res, int rate, int rule) {
 		if (res <= rate / 5)return 4;
 		if (res <= rate / 2)return 3;
 		if (res <= rate)return 2;
-		if (rate >= 50 || res < 96 + rate/10)return 1;
+		if (rate >= 50 || res < 96 + rate / 10)return 1;
 		else return 0;
 		break;
 	case 5:
