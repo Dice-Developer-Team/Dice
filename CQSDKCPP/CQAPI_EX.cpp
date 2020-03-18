@@ -31,6 +31,25 @@ string StrangerInfo::tostring() const
 		+ "}";
 }
 
+void GroupInfo::setdata(Unpack& u)
+{
+	llGroup = u.getLong();
+	strGroupName = u.getstring();
+	nGroupSize = u.getInt();// 群人数
+	nMaxGroupSize = u.getInt();//群规模
+	nFriendCnt = u.getInt();//好友数
+}
+
+GroupInfo::GroupInfo(long long group) {
+	 Unpack pack(base64_decode(CQ_getGroupInfo(getAuthCode(), group, true)));
+	 if (!pack.len())return;
+	 setdata(pack);
+}
+
+std::string GroupInfo::tostring()const {
+	return strGroupName + "(" + std::to_string(llGroup) + ")[" + std::to_string(nGroupSize) + "/" + std::to_string(nMaxGroupSize) + "]";
+}
+
 void GroupMemberInfo::setdata(Unpack& u)
 {
 	Group = u.getLong();
@@ -110,6 +129,15 @@ string GroupMemberInfo::tostring() const
 	return s;
 }
 
+FriendInfo::FriendInfo(Unpack p) {
+	QQID = p.getLong();
+	nick = p.getstring();
+	remark = p.getstring();
+}
+std::string FriendInfo::tostring() const {
+	return remark + '(' + std::to_string(QQID) + ')' + ((remark == nick) ? "" : "（" + nick + "）");
+}
+
 //增加运行日志
 int CQ::addLog(const int Priorty, const char* Type, const char* Content)
 {
@@ -140,12 +168,12 @@ int CQ::sendDiscussMsg(const long long DiscussID, const std::string& msg) { retu
 int CQ::sendLike(const long long QQID, const int times) { return lasterr = CQ_sendLikeV2(getAuthCode(), QQID, times); }
 
 //取Cookies (慎用，此接口需要严格授权)
-const char* CQ::getCookies() { return CQ_getCookies(getAuthCode()); }
+const char* CQ::getCookies() { return CQ_getCookiesV2(getAuthCode()); }
 
 //接收语音
 const char* CQ::getRecord(const char* file, const char* outformat)
 {
-	return CQ_getRecord(getAuthCode(), file, outformat);
+	return CQ_getRecordV2(getAuthCode(), file, outformat);
 }
 
 //接收语音
@@ -280,6 +308,7 @@ std::vector<GroupMemberInfo> CQ::getGroupMemberList(const long long GroupID)
 	return infovector;
 }
 
+#include <fstream>
 //取群列表
 std::map<long long, std::string> CQ::getGroupList()
 {
@@ -299,7 +328,20 @@ std::map<long long, std::string> CQ::getGroupList()
 	}
 	return ret;
 }
-
+//取好友列表
+std::map<long long, FriendInfo> CQ::getFriendList(){
+	Unpack pack(base64_decode(CQ_getFriendList(getAuthCode()))); // 获取原始数据转换为Unpack
+	int Cnt = pack.getInt();//获取总数
+	std::map<long long, FriendInfo> ret;
+	while (Cnt--){
+		FriendInfo info(pack.getUnpack()); //读取
+		ret[info.QQID] = info; //写入map
+	}
+	std::ofstream fout("friendinfo.log", std::ios::out | std::ios::app);
+	fout << "friend add" << std::endl;
+	fout.close();
+	return ret;
+}
 int CQ::deleteMsg(const long long MsgId)
 {
 	return lasterr = CQ_deleteMsg(getAuthCode(), MsgId);

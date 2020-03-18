@@ -27,13 +27,13 @@ public:
 			if (mFrequence[fromQQ] > 60 && mWarnLevel[fromQQ] < 60) {
 				mWarnLevel[fromQQ] = mFrequence[fromQQ];
 				const std::string strMsg = "提醒：\n" + (CT.second ? printChat(CT) : "私聊窗口") + "监测到" + printQQ(fromQQ) + "指令频度达到" + std::to_string(mFrequence[fromQQ] / 10);
-				AddMsgToQueue(GlobalMsg["strSpamFirstWarning"], CT.first, CT.second);
+				AddMsgToQueue(getMsg("strSpamFirstWarning"), CT.first, CT.second);
 				console.log(strMsg, 1, printSTNow());
 			}
 			else if (mFrequence[fromQQ] > 120 && mWarnLevel[fromQQ] < 120) {
 				mWarnLevel[fromQQ] = mFrequence[fromQQ]; 
 				const std::string strMsg = "警告：\n" + (CT.second ? printChat(CT) : "私聊窗口") + printQQ(fromQQ) + "指令频度达到" + std::to_string(mFrequence[fromQQ] / 10);
-				AddMsgToQueue(GlobalMsg["strSpamFinalWarning"], CT.first, CT.second);
+				AddMsgToQueue(getMsg("strSpamFinalWarning"), CT.first, CT.second);
 				console.log(strMsg, 0b10, printSTNow());
 			}
 			else if (mFrequence[fromQQ] > 200 && mWarnLevel[fromQQ] < 200) {

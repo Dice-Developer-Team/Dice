@@ -51,11 +51,11 @@ namespace CQ
 	);
 	//取Cookies (慎用，此接口需要严格授权) 
 	//Auth=20 慎用,此接口需要严格授权 
-	CQAPI(CQ_getCookies, const char *)(
+	CQAPI(CQ_getCookiesV2, const char *)(
 		int AuthCode // 
 	);
 	//接收语音 
-	CQAPI(CQ_getRecord, const char *)(
+	CQAPI(CQ_getRecordV2, const char *)(
 		int AuthCode, // 
 		const char* file, // 收到消息中的语音文件名 (file) 
 		const char* outformat // 应用所需的格式  mp3,amr,wma,m4a,spx,ogg,wav,flac
@@ -197,6 +197,13 @@ namespace CQ
 		long long QQID, // 目标QQ 
 		CQBOOL DisableCache
 	);
+	//取群信息 (支持缓存) Auth=132
+	CQAPI(CQ_getGroupInfo, const char*)(
+		int AuthCode, // 
+		long long GroupID, // 目标群
+		CQBOOL DisableCache
+	);
+
 	//取群成员列表 Auth=160  
 	CQAPI(CQ_getGroupMemberList, const char *)(
 		int AuthCode, // 
@@ -206,6 +213,10 @@ namespace CQ
 	CQAPI(CQ_getGroupList, const char *)(
 		int AuthCode
 	);
+	//取好友列表 Auth=162 
+	CQAPI(CQ_getFriendList, const char*)(
+		int AuthCode
+		);
 	//撤回消息 Auth=180
 	CQAPI(CQ_deleteMsg, int)(
 		int AuthCode,

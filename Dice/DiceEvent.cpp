@@ -10,6 +10,9 @@
 #include "CharacterCard.h"
 #include "DiceSession.h"
 #include "GetRule.h"
+
+#include "CQAPI.h"
+#include <iostream>
 #pragma warning(disable:28159)
 using namespace std;
 using namespace CQ;
@@ -283,6 +286,23 @@ int FromMsg::AdminEvent(string strOption) {
 		}
 		return 1;
 	}
+	else if (strOption == "blackfriend") {
+	ResList res;
+	Unpack pack(base64_decode(CQ_getFriendList(getAuthCode())));	//获取原始数据转换为Unpack
+	int Cnt = pack.getInt();	//获取总数
+	while (Cnt--) {
+		FriendInfo info(pack.getUnpack()); //读取
+		if (blacklist->get_qq_danger(info.QQID))
+			res << info.tostring();
+	}
+	if (res.empty()) {
+		reply("好友列表内无黑名单用户√", false);
+	}
+	else {
+		reply("好友列表内黑名单用户：" + res.show(), false);
+	}
+	return 1;
+}
 	else if (strOption == "whitegroup") {
 		readSkipSpace();
 		bool isErase = false;
@@ -695,7 +715,7 @@ int FromMsg::DiceReply() {
 					if (isAuth)
 					{
 						if (groupset(fromGroup, "停用指令")) {
-							if (!isCalled && QQNum.empty())AddMsgToQueue(getMsg("strBotOffAlready", strVar), fromQQ);
+							if (!isCalled && QQNum.empty() && pGrp->isGroup && GroupInfo(fromGroup).nGroupSize > 200)AddMsgToQueue(getMsg("strBotOffAlready", strVar), fromQQ);
 							else reply(GlobalMsg["strBotOffAlready"]);
 						}
 						else {
@@ -1155,6 +1175,11 @@ timeout /t 10
 				return 1;
 			}
 		}
+		GroupInfo grpinfo(llGroup);
+		if (!grpinfo.llGroup) {
+			reply(GlobalMsg["strGroupAway"]);
+			return 1;
+		}
 		string Command = readPara();
 		string strReply;
 		if (Command == "state") {
@@ -1172,7 +1197,8 @@ timeout /t 10
 					}
 				}
 			ResList res;
-			strVar["group"] = printGroup(llGroup);
+			GroupInfo grpinfo(llGroup);
+			strVar["group"] = grpinfo.llGroup ? grpinfo.tostring() : printGroup(llGroup);
 			res << "在{group}中：";
 			ResList subres;
 			subres.dot("+");
@@ -1204,12 +1230,16 @@ timeout /t 10
 			reply(GlobalMsg["strSelfName"] + res.show());
 			return 1;
 		}
+		else if (Command == "info") {
+			reply(grpinfo.tostring(), false);
+			return 1;
+		}
 		else if (Command == "diver") {
 			std::priority_queue<std::pair<time_t, string>> qDiver;
 			time_t tNow = time(NULL);
 			const int intTDay = 24 * 60 * 60;
 			time_t intLastMsg = 0;
-			for (auto each : getGroupMemberList(llGroup)) {
+			for (auto &each : getGroupMemberList(llGroup)) {
 				intLastMsg = (tNow - each.LastMsgTime) / intTDay;
 				if (!each.LastMsgTime || intLastMsg > 30) {
 					qDiver.emplace(intLastMsg,each.Nick + "(" + to_string(each.QQID) + ")");
@@ -1231,7 +1261,25 @@ timeout /t 10
 				return 1;
 			}
 		}
-		if (!grp.isGroup || (getGroupMemberInfo(llGroup, fromQQ).permissions < 2 && (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 3 || trusted < 5))) {
+		else if (Command == "pause") {
+			if (getGroupMemberInfo(llGroup, fromQQ).permissions < 2) {
+				reply(GlobalMsg["strPermissionDeniedErr"]);
+				return 1;
+			}
+			setGroupWholeBan(llGroup);
+			reply(GlobalMsg["strGroupWholeBan"]);
+			return 1;
+		}
+		else if (Command == "restart") {
+			if (getGroupMemberInfo(llGroup, fromQQ).permissions < 2) {
+				reply(GlobalMsg["strPermissionDeniedErr"]);
+				return 1;
+			}
+			setGroupWholeBan(llGroup, 0);
+			reply(GlobalMsg["strGroupWholeUnban"]);
+			return 1;
+		}
+		if ((getGroupMemberInfo(llGroup, fromQQ).permissions < 2 && (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 3 || trusted < 5))) {
 			reply(GlobalMsg["strPermissionDeniedErr"]);
 			return 1;
 		}

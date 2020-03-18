@@ -3,7 +3,7 @@
   "apiver": 9,
   "name": "Dice!",
   "version": "2.3.8Express10",
-  "version_id": 554,
+  "version_id": 556,
   "author": "w4123溯洄 Shiki",
   "description": "跑团用骰子 本程序使用AGPLv3开源协议授权 Copyright (c) 2018-2019 w4123溯洄 Shiki",
   "event": [
@@ -118,7 +118,7 @@
     {
       "id": 1,
       "name": "指令频度",
-      "title": "OrderFrq",
+      "title": "ORDER",
       "function": "statusFrq",
       "period": "1000"
     }
@@ -129,15 +129,19 @@
     103, //发送讨论组消息		sendDiscussMsg
     106, //发送私聊消息		sendPrivateMsg
     110, //发送赞		sendLike
+    120, //置群成员移出  setGroupKick
     121, //置群成员禁言  setGroupBan
     122, //置群管理员			setGroupAdmin
+    123, //置全群禁言			setGroupWholeBan
     127, //[敏感]置群退出	setGroupLeave
     130, //取群成员信息		getGroupMemberInfoV2 / getGroupMemberInfo
     131, //取陌生人信息		getStrangerInfo
+    132, //取群信息		getGroupInfo
     140, //置讨论组退出		setDiscussLeave
     150, //置好友添加请求		setFriendAddRequest
     151, //置群添加请求		setGroupAddRequest
     160, //取群成员列表	getGroupMemberList
-    161 //取群列表		getGroupList
+    161, //取群列表		getGroupList
+    162 //取好友列表		getFriendList
   ]
 }

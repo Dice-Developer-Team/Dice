@@ -343,7 +343,7 @@ bool eve_GroupAdd(Chat& grp) {
 	if (!console["ListenGroupAdd"] || grp.isset("忽略"))return 0;
 	long long fromGroup = grp.ID;
 	string strNow = printSTNow();
-	string strMsg = GlobalMsg["strSelfName"] + "新加入" + printGroup(fromGroup);
+	string strMsg = GlobalMsg["strSelfName"] + "新加入" + GroupInfo(fromGroup).tostring();
 	if (blacklist->get_group_danger(fromGroup)) {
 		grp.leave("!warning" + blacklist->list_group_warning(fromGroup));
 		strMsg += "为黑名单群，已退群";

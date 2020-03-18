@@ -164,11 +164,28 @@ namespace CQ
 	//取群列表 Auth=161  
 	std::map<long long, std::string> getGroupList();
 
+	class FriendInfo;
+	//取好友列表 Auth=162  
+	std::map<long long, FriendInfo> getFriendList();
+
 	//撤回消息 Auth=180
 	int deleteMsg(long long MsgId);
 
 	const char* getlasterrmsg();
+	// 群信息
+	class GroupInfo final {
+		void setdata(Unpack& u);
+	public:
+		long long llGroup{};
+		std::string strGroupName{};
+		int nGroupSize = 0; // 群人数
+		int nMaxGroupSize = 0;//群规模
+		int nFriendCnt = 0;//好友数
 
+		explicit GroupInfo(long long group);
+		GroupInfo() = default;
+		std::string tostring() const;
+	};
 	// 群成员信息
 	class GroupMemberInfo final
 	{
@@ -197,7 +214,18 @@ namespace CQ
 
 		std::string tostring() const;
 	};
+	// 好友信息
+	class FriendInfo final
+	{
+	public:
+		long long QQID = 0;
+		std::string nick; //昵称
+		std::string remark; //备注
 
+		explicit FriendInfo(Unpack p);
+		FriendInfo() = default;
+		std::string tostring() const;
+	};
 	// 陌生人信息
 	class StrangerInfo final
 	{

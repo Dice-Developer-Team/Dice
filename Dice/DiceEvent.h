@@ -35,13 +35,23 @@ public:
 		pGrp = &chat(fromGroup);
 	}
 	bool isBlock = false;
-	void reply(std::string strReply, const std::initializer_list<const std::string> replace_str = {}) {
+	void reply(std::string strReply, bool isFormat) {
+		isAns = true;
+		if (isFormat)
+			AddMsgToQueue(format(strReply, GlobalMsg, strVar), fromID, fromType); 
+		else AddMsgToQueue(strReply, fromID, fromType);
+	}
+	void reply(std::string strReply, const std::initializer_list<const std::string> replace_str = {}, bool isFormat = true) {
+		isAns = true;
+		if (!isFormat) {
+			AddMsgToQueue(strReply, fromID, fromType);
+			return;
+		}
 		int index = 0;
 		for (auto s : replace_str) {
 			strVar[to_string(index++)] = s;
 		}
 		AddMsgToQueue(format(strReply, GlobalMsg, strVar), fromID, fromType);
-		isAns = true;
 	}
 	void reply() {
 		reply(strReply);
