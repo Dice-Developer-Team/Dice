@@ -26,6 +26,7 @@
 #define DICE_GLOBAL_VAR
 #include "CQLogger.h"
 #include <map>
+#include "StrExtern.hpp"
 
  /*
   * 版本信息
@@ -77,9 +78,9 @@ extern std::map<std::string, std::string> GlobalMsg;
 // 修改后的Global语句
 extern std::map<std::string, std::string> EditedMsg;
 // 帮助文档
-extern std::map<std::string, std::string> HelpDoc;
+extern std::map<std::string, std::string, less_ci> HelpDoc;
 // 修改后的帮助文档
-extern std::map<std::string, std::string> EditedHelpDoc;
+extern std::map<std::string, std::string, less_ci> EditedHelpDoc;
 std::string getMsg(std::string key, std::map<std::string, std::string> tmp = {}, const std::map<std::string, std::string>& dir = GlobalMsg);
 
 #endif /*DICE_GLOBAL_VAR*/

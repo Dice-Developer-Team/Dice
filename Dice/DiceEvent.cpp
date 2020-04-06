@@ -729,8 +729,11 @@ int FromMsg::DiceReply() {
 					}
 				}
 			}
-			else if (!Command.empty() && intT && pGrp->isset("停用指令")) {
+			else if (!Command.empty() && !isCalled && pGrp->isset("停用指令")) {
 				return 0;
+			}
+			else if (intT == GroupT && pGrp->isset("停用指令") && GroupInfo(fromGroup).nGroupSize >= 500 && !isCalled){
+				AddMsgToQueue(Dice_Full_Ver + getMsg("strBotMsg"), fromQQ);
 			}
 			else {
 				this_thread::sleep_for(1s);
@@ -1003,7 +1006,7 @@ int FromMsg::DiceReply() {
 			while (bResult){
 				if (pe32.th32ProcessID == pid) {
 					ppid = pe32.th32ParentProcessID;
-					reply("确认进程" + strSelfPath + "\n进程id:" + to_string(pe32.th32ProcessID) + "\n父进程id:" + to_string(pe32.th32ParentProcessID));
+					reply("确认进程" + strSelfPath + "\n本进程id:" + to_string(pe32.th32ProcessID) + "\n父进程id:" + to_string(pe32.th32ParentProcessID));
 					strSelfName = convert_w2a(pe32.szExeFile);
 					break;
 				}
@@ -1033,7 +1036,8 @@ int FromMsg::DiceReply() {
 				note("重启失败：指定的路径未找到！", 1);
 				break;
 			default:
-				note("重启失败：未知错误" + to_string(res), 1);
+				if (res > 31)note("重启成功" + to_string(res), 1);
+				else note("重启失败：未知错误" + to_string(res), 1);
 				break;
 			};
 			return 1;
@@ -1082,7 +1086,7 @@ timeout /t 10
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "group")
 	{
 		intMsgCnt += 5;
-		long long llGroup = fromGroup;
+		long long llGroup(fromGroup);
 		readSkipSpace();
 		if (strLowerMessage.substr(intMsgCnt, 3) == "all") {
 			if (trusted < 5) {
@@ -1197,7 +1201,6 @@ timeout /t 10
 					}
 				}
 			ResList res;
-			GroupInfo grpinfo(llGroup);
 			strVar["group"] = grpinfo.llGroup ? grpinfo.tostring() : printGroup(llGroup);
 			res << "在{group}中：";
 			ResList subres;
@@ -1266,8 +1269,8 @@ timeout /t 10
 				reply(GlobalMsg["strPermissionDeniedErr"]);
 				return 1;
 			}
-			setGroupWholeBan(llGroup);
-			reply(GlobalMsg["strGroupWholeBan"]);
+			if (setGroupWholeBan(llGroup))reply(GlobalMsg["strGroupWholeBanErr"]);
+			else reply(GlobalMsg["strGroupWholeBan"]);
 			return 1;
 		}
 		else if (Command == "restart") {
@@ -1275,8 +1278,7 @@ timeout /t 10
 				reply(GlobalMsg["strPermissionDeniedErr"]);
 				return 1;
 			}
-			setGroupWholeBan(llGroup, 0);
-			reply(GlobalMsg["strGroupWholeUnban"]);
+			if(!setGroupWholeBan(llGroup, 0))reply(GlobalMsg["strGroupWholeUnban"]);
 			return 1;
 		}
 		if ((getGroupMemberInfo(llGroup, fromQQ).permissions < 2 && (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 3 || trusted < 5))) {
@@ -1603,8 +1605,8 @@ timeout /t 10
 			intMsgCnt++;
 		vector<string> ProDeck;
 		vector<string>* TempDeck = NULL;
-		string strDeckName = readPara();
-		if (strDeckName.empty()) {
+		strVar["deck_name"] = readPara();
+		if (strVar["deck_name"].empty()) {
 			if (intT != PrivateT && CardDeck::mGroupDeck.count(fromGroup)) {
 				if (CardDeck::mGroupDeckTmp.count(fromGroup) == 0 || CardDeck::mGroupDeckTmp[fromGroup].size() == 0)CardDeck::mGroupDeckTmp[fromGroup] = vector<string>(CardDeck::mGroupDeck[fromGroup]);
 				TempDeck = &CardDeck::mGroupDeckTmp[fromGroup];
@@ -1619,13 +1621,13 @@ timeout /t 10
 			}
 		}
 		else {
-			int intFoundRes = CardDeck::findDeck(strDeckName);
+			int intFoundRes = CardDeck::findDeck(strVar["deck_name"]);
 			if (intFoundRes == 0) {
-				strReply = "是说" + strDeckName + "?" + GlobalMsg["strDeckNotFound"];
+				strReply = GlobalMsg["strDeckNotFound"];
 				reply(strReply);
 				return 1;
 			}
-			ProDeck = CardDeck::mPublicDeck[strDeckName];
+			ProDeck = CardDeck::mPublicDeck[strVar["deck_name"]];
 			TempDeck = &ProDeck;
 		}
 		string strCardNum = readDigit();
@@ -1635,15 +1637,14 @@ timeout /t 10
 			reply(GlobalMsg["strNumCannotBeZero"]);
 			return 1;
 		}
-		string strRes = CardDeck::drawCard(*TempDeck);
-		ResList Res(strRes, " | ");
-		while (--intCardNum && TempDeck->size()) {
-			string strItem = CardDeck::drawCard(*TempDeck);
-			Res << strItem;
+		ResList Res;
+		while (intCardNum--) {
+			Res << CardDeck::drawCard(*TempDeck);
+			if (TempDeck->empty())break;
 		}
-		strVar["res"] = Res.show();
+		strVar["res"] = Res.dot("|").show();
 		reply(GlobalMsg["strDrawCard"], { strVar["pc"] ,strVar["res"] });
-		if (intCardNum) {
+		if (intCardNum > 0) {
 			reply(GlobalMsg["strDeckEmpty"]);
 			return 1;
 		}
@@ -1821,6 +1822,9 @@ timeout /t 10
 			reply(GlobalMsg["strLinkNotFound"]);
 			return 1;
 		}
+		if (mLinkedList.count(fromChat)&&mFwdList.count(mLinkedList[fromChat])) {
+			mFwdList.erase(mLinkedList[fromChat]);
+		}
 		if (strOption == "with") {
 			mLinkedList[fromChat] = ToChat;
 			mFwdList.insert({ fromChat,ToChat });
@@ -1845,14 +1849,9 @@ timeout /t 10
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
 
-		string type;
-		while (isalpha(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-		{
-			type += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
+		string type = readPara();
 		string strNum = readDigit();
-		if (strNum.size() > 1 && strNum != "10") {
+		if (strNum.length() > 1 && strNum != "10") {
 			reply(GlobalMsg["strNameNumTooBig"]);
 			return 1;
 		}
@@ -1862,15 +1861,14 @@ timeout /t 10
 			reply(GlobalMsg["strNameNumCannotBeZero"]);
 			return 1;
 		}
-		//vector<string> TempNameStorage;
 		string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("随机姓名_" + type)) ? "随机姓名_" + type : "随机姓名";
-		vector<string> TempDeck = CardDeck::mPublicDeck[strDeckName];
-		ResList Res(CardDeck::drawCard(TempDeck, true), "、");
-		while (--intNum) {
+		vector<string> TempDeck(CardDeck::mPublicDeck[strDeckName]);
+		ResList Res;
+		while (intNum--) {
 			Res << CardDeck::drawCard(TempDeck, true);
 		}
-		strVar["res"] = Res.show();
-		reply(GlobalMsg["strNameGenerator"], { strVar["pc"],strVar["res"] });
+		strVar["res"] = Res.dot("、").show();
+		reply(GlobalMsg["strNameGenerator"]);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "send") {
@@ -1906,7 +1904,7 @@ timeout /t 10
 			reply(GlobalMsg["strSendMsgEmpty"]);
 			return 1;
 		}
-		string strFwd = (trusted > 4) ? "| " : ("| " + printFrom()) + strInfo;
+		string strFwd = ((trusted > 4) ? "| " : ("| " + printFrom())) + strInfo;
 		console.log(strFwd, 0b100, printSTNow());
 		reply(GlobalMsg["strSendMasterMsg"]);
 		return 1;

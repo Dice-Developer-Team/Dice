@@ -236,7 +236,7 @@ void getDiceList() {
 	std::string list;
 	if (!Network::GET("shiki.stringempty.xyz", "/DiceList/", 80, list) && mDiceList.empty())
 	{
-		console.log(("获取骰娘列表时遇到错误: \n" + list).c_str(), 1, printSTNow());
+		console.log("获取骰娘列表时遇到错误: \n" + list, 1, printSTNow());
 		return;
 	}
 	readJson(list, mDiceList);
@@ -430,6 +430,7 @@ EVE_Menu(eventGlobalSwitch) {
 EVE_Request_AddFriend(eventAddFriend) {
 	if (!console["ListenFriendRequest"])return 0;
 	string strMsg = "好友添加请求，来自：" + printQQ(fromQQ);
+	this_thread::sleep_for(3s);
 	if (blacklist->get_qq_danger(fromQQ)) {
 		strMsg += "，已拒绝（用户在黑名单中）";
 		setFriendAddRequest(responseFlag, 2, "");
@@ -441,7 +442,7 @@ EVE_Request_AddFriend(eventAddFriend) {
 		AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromQQ);
 		console.log(strMsg, 1, printSTNow());
 	}
-	else if (!UserList.count(fromQQ) && console["AllowStranger"] < 2) {
+	else if (console["AllowStranger"] < 2 && !UserList.count(fromQQ)) {
 		strMsg += "，已拒绝（无用户记录）";
 		setFriendAddRequest(responseFlag, 2, "");
 		console.log(strMsg, 1, printSTNow());
@@ -461,6 +462,7 @@ EVE_Request_AddFriend(eventAddFriend) {
 }
 EVE_Friend_Add(eventFriendAdd) {
 	if (!console["ListenFriendAdd"])return 0;
+	this_thread::sleep_for(3s);
 	GlobalMsg["strAddFriendWhiteQQ"].empty() ? AddMsgToQueue(getMsg("strAddFriend"), fromQQ)
 		: AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromQQ);
 	return 0;

@@ -87,6 +87,11 @@ int FrqMonitor::getFrqTotal() {
 	eve.color_green();
 }*/
 EVE_Status_EX(statusFrq) {
+	if (!Enabled) {
+		eve.data = "准备中";
+		eve.color_gray();
+		return;
+	}
 	//平滑到分钟的频度
 	int intFrq = FrqMonitor::getFrqTotal();
 	//long long llDuration = (clock() - llStartTime) / 1000;

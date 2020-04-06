@@ -9,12 +9,13 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "StrExtern.hpp"
 
 namespace CardDeck
 {
-	extern std::map<std::string, std::vector<std::string>> mPublicDeck;
-	static std::map<std::string, std::vector<std::string>> mExternPublicDeck;
-	extern std::map<std::string, std::vector<std::string>> mReplyDeck;
+	extern std::map<std::string, std::vector<std::string>, less_ci> mPublicDeck;
+	extern std::map<std::string, std::vector<std::string>, less_ci> mExternPublicDeck;
+	extern std::map<std::string, std::vector<std::string>, less_ci> mReplyDeck;
 	//»∫¡ƒ≈∆∂—
 	extern std::map<long long, std::vector<std::string>> mGroupDeck;
 	//»∫¡ƒ¡Ÿ ±≈∆∂—

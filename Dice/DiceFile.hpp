@@ -48,10 +48,10 @@ static int clrDir(std::string dir,const std::set<std::string>& exceptList) {
 	return nCnt;
 }
 
-template<typename TKey, typename TVal>
-void merge(map<TKey, TVal>& m1, const map<TKey, TVal>& m2) {
-	for (auto p : m2) {
-		m1[p.first] = p.second;
+template<typename TKey, typename TVal, typename sort>
+void map_merge(map<TKey, TVal, sort>& m1, const map<TKey, TVal, sort>& m2) {
+	for (auto &[k,v] : m2) {
+		m1[k] = v;
 	}
 }
 template<typename TKey, typename TVal>

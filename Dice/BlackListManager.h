@@ -53,7 +53,7 @@ public:
     friend class DDBlackManager;
     friend class DDBlackMarkFactory;
     //warning文本生成
-    bool printJson(void *)const;
+    string printJson(int tab)const;
     string warning()const;
     const char* getData()const;
     void fill_note();
@@ -83,7 +83,7 @@ class DDBlackManager {
     int find(const DDBlackMark&);
     //更新记录
     void insert(DDBlackMark&);
-    bool update(DDBlackMark&, unsigned int);
+    bool update(DDBlackMark&, unsigned int, int);
     void reset_group_danger(long long);
     void reset_qq_danger(long long);
     bool up_group_danger(long long, DDBlackMark&);

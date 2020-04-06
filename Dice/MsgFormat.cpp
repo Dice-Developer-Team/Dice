@@ -40,40 +40,6 @@ std::string format(std::string str, const std::initializer_list<const std::strin
 	}
 	return str;
 }
-std::string format(std::string s, const std::map<std::string, std::string>& replace_str, std::map<std::string, std::string> str_tmp) {
-	if (s[0] == '&') {
-		string key = s.substr(1);
-		auto it = replace_str.find(key);
-		if (it != replace_str.end()) {
-			return format(it->second, replace_str, str_tmp);
-		}
-		else if ((it = str_tmp.find(key)) != str_tmp.end()) {
-			return it->second;
-		}
-	}
-	int l = 0, r = 0;
-	int len = s.length();
-	while ((l = s.find('{', r)) != string::npos && (r = s.find('}', l)) != string::npos) {
-		if (s[l - 1] == 0x5c) {
-			s.replace(l - 1, 1, "");
-			continue;
-		}
-		string key = s.substr(l + 1, r - l - 1);
-		auto it = replace_str.find(key);
-		if (it != replace_str.end()) {
-			s.replace(l, r - l + 1, format(it->second, replace_str, str_tmp));
-			r += s.length() - len + 1;
-			len = s.length();
-		}
-		else if ((it = str_tmp.find(key)) != str_tmp.end()) {
-			if (key == "res")s.replace(l, r - l + 1, format(it->second, replace_str, str_tmp));
-			else s.replace(l, r - l + 1, it->second);
-			r += s.length() - len + 1;
-			len = s.length();
-		}
-	}
-	return s;
-}
 
 string strip(std::string origin)
 {

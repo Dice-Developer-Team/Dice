@@ -28,7 +28,42 @@
 #include <vector>
 using std::string;
 std::string format(std::string str, const std::initializer_list<const std::string>& replace_str);
-std::string format(std::string str, const std::map<std::string, std::string>& replace_str, std::map<std::string, std::string> str_tmp = {});
+template<typename sort>
+std::string format(std::string s, const std::map<std::string, std::string, sort>& replace_str, std::map<std::string, std::string> str_tmp = {}) {
+	if (s[0] == '&') {
+		string key = s.substr(1);
+		auto it = replace_str.find(key);
+		if (it != replace_str.end()) {
+			return format(it->second, replace_str, str_tmp);
+		}
+		else if ((it = str_tmp.find(key)) != str_tmp.end()) {
+			return it->second;
+		}
+	}
+	int l = 0, r = 0;
+	int len = s.length();
+	while ((l = s.find('{', r)) != string::npos && (r = s.find('}', l)) != string::npos) {
+		if (s[l - 1] == 0x5c) {
+			s.replace(l - 1, 1, "");
+			continue;
+		}
+		string key = s.substr(l + 1, r - l - 1);
+		auto it = replace_str.find(key);
+		if (it != replace_str.end()) {
+			s.replace(l, r - l + 1, format(it->second, replace_str, str_tmp));
+			r += s.length() - len + 1;
+			len = s.length();
+		}
+		else if ((it = str_tmp.find(key)) != str_tmp.end()) {
+			if (key == "res")s.replace(l, r - l + 1, format(it->second, replace_str, str_tmp));
+			else s.replace(l, r - l + 1, it->second);
+			r += s.length() - len + 1;
+			len = s.length();
+		}
+	}
+	return s;
+}
+
 class ResList {
 	std::vector<std::string> vRes;
 	unsigned int intMaxLen = 0;
@@ -91,8 +126,8 @@ public:
 	}
 };
 
-template<typename T>
-std::string listKey(std::map<std::string, T>m) {
+template<typename T,typename sort>
+std::string listKey(std::map<std::string, T, sort>m) {
 	ResList list;
 	list.setDot("/", "/");
 	for (auto pair : m) {

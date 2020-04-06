@@ -72,16 +72,18 @@ void loadData() {
 	string strLog;
 	loadDir(loadXML<CardTemp>, string("DiceData\\CardTemp\\"), mCardTemplet, strLog, true);
 	loadJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);
+	HelpDoc["回复列表"] = "回复触发词列表:" + listKey(CardDeck::mReplyDeck);
 	if (loadDir(loadJMap, string("DiceData\\PublicDeck\\"), CardDeck::mExternPublicDeck, strLog) < 1) {
 		loadJMap(strFileLoc + "PublicDeck.json", CardDeck::mExternPublicDeck);
 		loadJMap(strFileLoc + "ExternDeck.json", CardDeck::mExternPublicDeck);
 	}
-	merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
+	map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
 	if (!strLog.empty()) {
 		strLog += "扩展配置读取完毕√";
 		console.log(strLog, 1, printSTNow());
 	}
 	HelpDoc["扩展牌堆"] = listKey(CardDeck::mExternPublicDeck);
+	HelpDoc["全牌堆列表"] = listKey(CardDeck::mPublicDeck);
 	//读取帮助文档
 	HelpDoc["master"] = printQQ(console.master());
 	ifstream ifstreamHelpDoc(strFileLoc + "HelpDoc.txt");
@@ -393,7 +395,7 @@ bool eve_GroupAdd(Chat& grp) {
 				}
 			}
 		}
-		if (!chat(fromGroup).inviter && getGroupMemberList(fromGroup).size() == 2 && ownerQQ) {
+		if (!chat(fromGroup).inviter && list.size() == 2 && ownerQQ) {
 			chat(fromGroup).inviter = ownerQQ;
 			strMsg += "邀请者" + printQQ(ownerQQ);
 		}

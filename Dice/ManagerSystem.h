@@ -287,6 +287,13 @@ static void scanImage(const vector<string>& v, set<string>& list) {
 		scanImage(it, sReferencedImage);
 	}
 }
+template<typename TVal, typename sort>
+static void scanImage(const map<string, TVal, sort>& m, set<string>& list) {
+	for (auto it : m) {
+		scanImage(it.first, sReferencedImage);
+		scanImage(it.second, sReferencedImage);
+	}
+}
 template<typename TVal>
 static void scanImage(const map<string, TVal>& m, set<string>& list) {
 	for (auto it : m) {
