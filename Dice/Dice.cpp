@@ -345,80 +345,87 @@ bool eve_GroupAdd(Chat& grp) {
 	if (!console["ListenGroupAdd"] || grp.isset("忽略"))return 0;
 	long long fromGroup = grp.ID;
 	string strNow = printSTNow();
-	string strMsg = GlobalMsg["strSelfName"] + "新加入" + GroupInfo(fromGroup).tostring();
-	if (blacklist->get_group_danger(fromGroup)) {
-		grp.leave("!warning" + blacklist->list_group_warning(fromGroup));
-		strMsg += "为黑名单群，已退群";
-		console.log(strMsg, 0b10, printSTNow());
-		return 1;
-	}
-	if (grp.isset("使用许可"))strMsg += "（已获使用许可）";
-	if (grp.inviter) {
-		strMsg += ",邀请者" + printQQ(chat(fromGroup).inviter);
-	}
-	int max_trust = 0;
-	int max_danger = 0;
-	long long ownerQQ = 0;
-	ResList blacks;
-	std::vector<GroupMemberInfo>list = getGroupMemberList(fromGroup);
-	if (list.empty()) {
-		strMsg += "，群员名单未加载；";
-	}
-	else {
-		for (auto &each : list) {
-			if (each.QQID == console.DiceMaid)continue;
-			if (each.permissions > 1) {
-				max_trust |= (1 << trustedQQ(each.QQID));
-				if (blacklist->get_qq_danger(each.QQID)) {
-					strMsg += ",发现黑名单管理员" + printQQ(each.QQID);
-					if (grp.isset("免黑")) {
-						strMsg += "（群免黑）";
-					}
-					else {
-						sendGroupMsg(fromGroup, "!warning" + blacklist->list_qq_warning(each.QQID));
-						grp.leave("发现黑名单管理员" + printQQ(each.QQID) + "将预防性退群");
-						strMsg += "，已退群";
-						console.log(strMsg, 0b10, strNow);
-						return 1;
-					}
-				}
-				if (each.permissions == 3) {
-					ownerQQ = each.QQID;
-					strMsg += "，群主" + printQQ(each.QQID) + "；";
-				}
-			}
-			else if (blacklist->get_qq_danger(each.QQID)) {
-				//max_trust |= 1;
-				blacks << printQQ(each.QQID);
-				if (blacklist->get_qq_danger(each.QQID)) {
-					AddMsgToQueue(blacklist->list_self_qq_warning(each.QQID), fromGroup, Group);
-				}
-			}
-		}
-		if (!chat(fromGroup).inviter && list.size() == 2 && ownerQQ) {
-			chat(fromGroup).inviter = ownerQQ;
-			strMsg += "邀请者" + printQQ(ownerQQ);
-		}
-	}
-	if (!blacks.empty()) {
-		string strNote = "发现黑名单群员" + blacks.show();
-		strMsg += strNote;
-	}
-	if (console["Private"] && !grp.isset("许可使用"))
-	{	//避免小群绕过邀请没加上白名单
-		if (max_trust > 1) {
-			grp.set("许可使用");
-			strMsg += "已自动追加使用许可";
-		}
-		else {
-			strMsg += "无白名单，已退群";
-			console.log(strMsg, 1, strNow);
-			grp.leave(getMsg("strPreserve"));
+	string strMsg(GlobalMsg["strSelfName"]);
+	try {
+		strMsg+= "新加入" + GroupInfo(fromGroup).tostring();
+		if (blacklist->get_group_danger(fromGroup)) {
+			grp.leave("!warning" + blacklist->list_group_warning(fromGroup));
+			strMsg += "为黑名单群，已退群";
+			console.log(strMsg, 0b10, printSTNow());
 			return 1;
 		}
+		if (grp.isset("使用许可"))strMsg += "（已获使用许可）";
+		if (grp.inviter) {
+			strMsg += ",邀请者" + printQQ(chat(fromGroup).inviter);
+		}
+		int max_trust = 0;
+		int max_danger = 0;
+		long long ownerQQ = 0;
+		ResList blacks;
+		std::vector<GroupMemberInfo>list = getGroupMemberList(fromGroup);
+		if (list.empty()) {
+			strMsg += "，群员名单未加载；";
+		}
+		else {
+			for (auto& each : list) {
+				if (each.QQID == console.DiceMaid)continue;
+				if (each.permissions > 1) {
+					max_trust |= (1 << trustedQQ(each.QQID));
+					if (blacklist->get_qq_danger(each.QQID) > 1) {
+						strMsg += ",发现黑名单管理员" + printQQ(each.QQID);
+						if (grp.isset("免黑")) {
+							strMsg += "（群免黑）";
+						}
+						else {
+							sendGroupMsg(fromGroup, "!warning" + blacklist->list_qq_warning(each.QQID));
+							grp.leave("发现黑名单管理员" + printQQ(each.QQID) + "将预防性退群");
+							strMsg += "，已退群";
+							console.log(strMsg, 0b10, strNow);
+							return 1;
+						}
+					}
+					if (each.permissions == 3) {
+						ownerQQ = each.QQID;
+						strMsg += "，群主" + printQQ(each.QQID) + "；";
+					}
+				}
+				else if (blacklist->get_qq_danger(each.QQID) > 1) {
+					//max_trust |= 1;
+					blacks << printQQ(each.QQID);
+					if (blacklist->get_qq_danger(each.QQID)) {
+						AddMsgToQueue(blacklist->list_self_qq_warning(each.QQID), fromGroup, Group);
+					}
+				}
+			}
+			if (!chat(fromGroup).inviter && list.size() == 2 && ownerQQ) {
+				chat(fromGroup).inviter = ownerQQ;
+				strMsg += "邀请者" + printQQ(ownerQQ);
+			}
+		}
+		if (!blacks.empty()) {
+			string strNote = "发现黑名单群员" + blacks.show();
+			strMsg += strNote;
+		}
+		if (console["Private"] && !grp.isset("许可使用"))
+		{	//避免小群绕过邀请没加上白名单
+			if (max_trust > 1) {
+				grp.set("许可使用");
+				strMsg += "已自动追加使用许可";
+			}
+			else {
+				strMsg += "无白名单，已退群";
+				console.log(strMsg, 1, strNow);
+				grp.leave(getMsg("strPreserve"));
+				return 1;
+			}
+		}
+		if (!blacks.empty())console.log(strMsg, 0b10, strNow);
+		else console.log(strMsg, 1, strNow);
 	}
-	if (!blacks.empty())console.log(strMsg, 0b10, strNow);
-	else console.log(strMsg, 1, strNow);
+	catch (...) {
+		console.log(strMsg + "\n群" + to_string(fromGroup) + "信息获取失败！", 0b1, printSTNow());
+		return 1;
+	}
 	if (!GlobalMsg["strAddGroup"].empty()) {
 		this_thread::sleep_for(chrono::seconds(2));
 		AddMsgToQueue(getMsg("strAddGroup"), { fromGroup, Group });
@@ -550,8 +557,12 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 		if (!console["ListenGroupKick"] || trustedQQ(fromQQ) > 1 || grp.isset("免黑"))return 0;
 		DDBlackMarkFactory mark{ fromQQ ,fromGroup };
 		mark.sign().type("kick").time(strNow).note(strNow + " " + strNote);
-		blacklist->create(mark.product());
+		if (grp.inviter && trustedQQ(grp.inviter) < 2) {
+			strNote += ";入群邀请者：" + printQQ(grp.inviter);
+			if (console["KickedBanInviter"])mark.inviterQQ(grp.inviter).note(strNow + " " + strNote);
+		}
 		grp.reset("许可使用").reset("免清");
+		blacklist->create(mark.product());
 	}
 	else if (mDiceList.count(beingOperateQQ) && subType == 2 && console["ListenGroupKick"]) {
 		if (!console || grp.isset("忽略"))return 0;
@@ -561,10 +572,6 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
 		if (trustedQQ(fromQQ) > 1 || grp.isset("免黑"))return 0;
 		DDBlackMarkFactory mark{ fromQQ ,fromGroup };
 		mark.type("kick").time(strNow).note(strNow + " " + strNote).DiceMaid(beingOperateQQ).masterQQ(mDiceList[beingOperateQQ]);
-		if (grp.inviter && trustedQQ(grp.inviter) < 2) {
-			strNote += ";入群邀请者：" + printQQ(grp.inviter);
-			if (console["KickedBanInviter"])mark.inviterQQ(grp.inviter).note(strNow + " " + strNote);
-		}
 		grp.reset("许可使用").reset("免清");
 		blacklist->create(mark.product());
 	}

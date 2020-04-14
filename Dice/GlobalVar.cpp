@@ -56,8 +56,9 @@ std::map<std::string, std::string> GlobalMsg
 	{"strGroupSetNotExist","{self}无{option}此选项×"},
 	{"strGroupWholeUnban","{self}已关闭全局禁言√"},
 	{"strGroupWholeBan","{self}已开启全局禁言√"},
+	{"strGroupWholeBanErr","{self}开启全局禁言失败×"},
 	{"strGroupNotFound","{self}无该群记录×"},
-	{"strGroupAway","{self}当前不在该群！"},
+	{"strGroupNotIn","{self}当前不在该群或对象不是群！"},
 	{"strGroupExit","{self}已退出该群√"},
 	{"strPcNewEmptyCard","已为{nick}新建{type}空白卡{char}√"},
 	{"strPcNewCardShow","已为{nick}新建{type}卡{char}：{show}"},//由于预生成选项而存在属性
@@ -121,15 +122,15 @@ std::map<std::string, std::string> GlobalMsg
 	{"strEnDefaultName","属性或技能"},//默认文本
 	{"strEnValEmpty", "未对{self}设定待成长属性值，请先.st {attr} 属性值 或查看.help en×"},
 	{"strEnValInvalid", "{attr}值输入不正确,请输入1-99范围内的整数!"},
-	{"strSendMsg","消息已送出√"},//Master定向发送的回执
-	{"strSendMasterMsg","消息已发送给Master√"},//向Master发送的回执
+	{"strSendMsg","{self}已将消息送出√"},//Master定向发送的回执
+	{"strSendMasterMsg","消息{self}已发送给Master√"},//向Master发送的回执
 	{"strSendMsgEmpty","发送消息内容为空×"},
-	{"strSendMsgInvalid","没有可以发送的对象×"},//没有Master
+	{"strSendMsgInvalid","{self}没有可以发送的对象×"},//没有Master
 	{"strDefaultCOCClr","默认检定房规已清除√"},
 	{"strDefaultCOCNotFound","默认检定房规不存在×"},
 	{"strDefaultCOCSet","默认检定房规已设置:"},
-	{"strLinkLoss","时空连接已断开√"},
-	{"strLinked","已创建时空门√"},
+	{"strLinkLoss","{self}的时空连接已断开√"},
+	{"strLinked","{self}已创建时空门√"},
 	{"strLinkWarning","尝试创建时空门，但不保证能否连通"},
 	{"strLinkNotFound","时空门要通向不可名状的地方了×"},
 	{"strNotMaster","你不是{self}的master！你想做什么？"},

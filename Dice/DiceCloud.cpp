@@ -5,6 +5,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <WinInet.h>
+#include <urlmon.h>
+#include "Json.hpp"
 #include "DiceCloud.h"
 #include "GlobalVar.h"
 #include "EncodingConvert.h"
@@ -12,7 +14,13 @@
 #include "DiceNetwork.h"
 #include "DiceConsole.h"
 #include "DiceMsgSend.h"
+#include "DiceEvent.h"
+
+#pragma comment(lib, "urlmon.lib")
+
 using namespace std;
+using namespace nlohmann;
+
 namespace Cloud {
 	void update()
 	{
@@ -47,6 +55,41 @@ namespace Cloud {
 		}
 		else if (temp == "erased") {
 			return -1;
+		}
+		return 0;
+	}
+	int DownloadFile(const char* url, const char* downloadPath)
+	{
+		if (URLDownloadToFileA(NULL, url, downloadPath, 0, NULL) != S_OK) return -1;
+		else if (_access(downloadPath, 0))return -2;
+		else return 0;
+	}
+	int checkUpdate(FromMsg* msg) {
+		std::string strVerInfo;
+		if (!Network::GET("shiki.stringempty.xyz", "/DiceVer/update", 80, strVerInfo))
+		{
+			msg->reply("{self}获取版本信息时遇到错误: \n" + strVerInfo);
+			return -1;
+		}
+		try {
+			json jInfo(json::parse(strVerInfo, nullptr, false));
+			unsigned short nBuild = jInfo["release"]["build"];
+			if (nBuild > Dice_Build) {
+				msg->note("发现Dice!的发布版更新:" + jInfo["release"]["ver"].get<string>() + "(" + to_string(nBuild) + ")\n更新说明：" + UTF8toGBK(jInfo["release"]["changelog"].get<string>()), 1);
+				return 1;
+			}
+			else if(nBuild = jInfo["dev"]["build"]; nBuild > Dice_Build) {
+				msg->note("发现Dice!的开发版更新:" + jInfo["dev"]["ver"].get<string>() + "(" + to_string(nBuild) + ")\n更新说明：" + UTF8toGBK(jInfo["dev"]["changelog"].get<string>()), 1);
+				return 2;
+			}
+			else {
+				msg->reply("未发现版本更新。");
+				return 0;
+			}
+		}
+		catch (...) {
+			msg->reply("{self}解析json失败！");
+			return -2;
 		}
 		return 0;
 	}

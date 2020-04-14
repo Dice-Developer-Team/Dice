@@ -477,6 +477,10 @@ int FromMsg::MasterSet() {
 		return 1;
 	}
 	else if (strOption == "delete") {
+		if (console.master() != fromQQ) {
+			reply(GlobalMsg["strNotMaster"]);
+			return 1;
+		}
 		reply("你不再是" + GlobalMsg["strSelfName"] + "的Master！");
 		console.killMaster();
 		return 1;
@@ -1016,7 +1020,7 @@ int FromMsg::DiceReply() {
 				note("重启失败：未找到进程！", 1);
 				return false;
 			}
-			string command = "taskkill /f /pid " + to_string(ppid) + "\n.\\" + strSelfName + " /account " + to_string(getLoginQQ());
+			string command = "taskkill /f /pid " + to_string(ppid) + "\nstart .\\" + strSelfName + " /account " + to_string(getLoginQQ());
 			//string command = "taskkill /f /pid " + to_string(ppid) + "\ntaskkill /f /pid " + to_string(pid) + "\nstart " + strSelfPath + " /account " + to_string(getLoginQQ()) + "\ntimeout /t 60\ndel %0";
 			ofstream fout("reload.bat");
 			fout << command << std::endl;
@@ -1036,8 +1040,8 @@ int FromMsg::DiceReply() {
 				note("重启失败：指定的路径未找到！", 1);
 				break;
 			default:
-				if (res > 31)note("重启成功" + to_string(res), 1);
-				else note("重启失败：未知错误" + to_string(res), 1);
+				if (res > 31)note("重启成功" + to_string(res), 0);
+				else note("重启失败：未知错误" + to_string(res), 0);
 				break;
 			};
 			return 1;
@@ -1069,6 +1073,47 @@ timeout /t 10
 		intMsgCnt += 5;
 		return AdminEvent(readUntilSpace());
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "cloud") {
+		intMsgCnt += 5;
+		string strOpt = readPara();
+		if (trusted < 4 && fromQQ != console.master()) {
+			reply(GlobalMsg["strNotAdmin"]);
+			return 1;
+		}
+		if (strOpt == "update") {
+			string strPara = readPara();
+			if (strPara.empty()) {
+				Cloud::checkUpdate(this);
+			}
+			else if (strPara == "dev") {
+				char** path = new char* ();
+				_get_pgmptr(path);
+				string strAppPath(*path);
+				strAppPath = strAppPath.substr(0, strAppPath.find_last_of("\\")) + "\\app\\com.w4123.dice.cpk";
+				delete path;
+				/*if (!Cloud::DownloadFile("shiki.stringempty.xyz/DiceVer/dev", strAppPath.c_str())) {
+					note("更新开发版成功√\n可reload应用更新");
+				}
+				else {
+					reply("更新失败！");
+				}*/
+				switch (Cloud::DownloadFile("http://shiki.stringempty.xyz/DiceVer/dev", strAppPath.c_str())) {
+				case -1:
+					reply("下载失败:" + strAppPath);
+					break;
+				case -2:
+					reply("文件未找到:" + strAppPath);
+					break;
+				case 0:
+					note("更新开发版成功√\n可reload应用更新");
+				}
+			}
+			else if (strPara == "release") {
+
+			}
+			return 1;
+		}
+}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd")
 	{
 		strReply = strVar["nick"];
@@ -1179,11 +1224,9 @@ timeout /t 10
 				return 1;
 			}
 		}
-		GroupInfo grpinfo(llGroup);
-		if (!grpinfo.llGroup) {
-			reply(GlobalMsg["strGroupAway"]);
-			return 1;
-		}
+		GroupInfo grpinfo;
+		bool isInGroup = getGroupList().count(llGroup);
+		if (isInGroup)grpinfo = GroupInfo(llGroup);
 		string Command = readPara();
 		string strReply;
 		if (Command == "state") {
@@ -1191,7 +1234,7 @@ timeout /t 10
 			const int intTMonth = 30 * 24 * 60 * 60;
 			set<string> sInact;
 			set<string> sBlackQQ;
-			if (grp.isGroup)
+			if (isInGroup)
 				for (auto each : getGroupMemberList(llGroup)) {
 					if (!each.LastMsgTime || tNow - each.LastMsgTime > intTMonth) {
 						sInact.insert(each.GroupNick + "(" + to_string(each.QQID) + ")");
@@ -1202,7 +1245,7 @@ timeout /t 10
 				}
 			ResList res;
 			strVar["group"] = grpinfo.llGroup ? grpinfo.tostring() : printGroup(llGroup);
-			res << "在{group}中：";
+			res << "在{group}：";
 			ResList subres;
 			subres.dot("+");
 			for (auto it : grp.boolConf) {
@@ -1212,32 +1255,44 @@ timeout /t 10
 			for (auto it : grp.intConf) {
 				res << it.first + "：" + to_string(it.second);
 			}
+			res << "记录创建：" + printDate(grp.tCreated);
+			res << "最后记录：" + printDate(grp.tUpdated);
 			if (grp.inviter)res << "邀请者：" + printQQ(grp.inviter);
-			res << string("入群欢迎：") + (grp.isset("入群欢迎") ? "已设置" : "未设置");
-			res << (sInact.size() ? "\n30天不活跃群员数：" + to_string(sInact.size()) : "");
-			if (sBlackQQ.size()) {
-				if (sBlackQQ.size() > 8)
-					res << GlobalMsg["strSelfName"] + "的黑名单成员" + to_string(sBlackQQ.size()) + "名";
-				else {
-					res << GlobalMsg["strSelfName"] + "的黑名单成员:{blackqq}";
-					ResList blacks;
-					for (auto each : sBlackQQ) {
-						blacks << each;
+			if (isInGroup) {
+				res << string("入群欢迎：") + (grp.isset("入群欢迎") ? "已设置" : "未设置");
+				res << (sInact.size() ? "\n30天不活跃群员数：" + to_string(sInact.size()) : "");
+				if (sBlackQQ.size()) {
+					if (sBlackQQ.size() > 8)
+						res << GlobalMsg["strSelfName"] + "的黑名单成员" + to_string(sBlackQQ.size()) + "名";
+					else {
+						res << GlobalMsg["strSelfName"] + "的黑名单成员:{blackqq}";
+						ResList blacks;
+						for (auto each : sBlackQQ) {
+							blacks << each;
+						}
+						strVar["blackqq"] = blacks.show();
 					}
-					strVar["blackqq"] = blacks.show();
 				}
-			}
-			else {
-				res << "无{self}的黑名单成员";
+				else {
+					res << "无{self}的黑名单成员";
+				}
 			}
 			reply(GlobalMsg["strSelfName"] + res.show());
 			return 1;
 		}
 		else if (Command == "info") {
+			if (!isInGroup) {
+				reply(GlobalMsg["strGroupNotIn"]);
+				return 1;
+			}
 			reply(grpinfo.tostring(), false);
 			return 1;
 		}
 		else if (Command == "diver") {
+			if (!isInGroup) {
+				reply(GlobalMsg["strGroupNotIn"]);
+				return 1;
+			}
 			std::priority_queue<std::pair<time_t, string>> qDiver;
 			time_t tNow = time(NULL);
 			const int intTDay = 24 * 60 * 60;
@@ -1265,6 +1320,10 @@ timeout /t 10
 			}
 		}
 		else if (Command == "pause") {
+			if (!isInGroup) {
+				reply(GlobalMsg["strGroupNotIn"]);
+				return 1;
+			}
 			if (getGroupMemberInfo(llGroup, fromQQ).permissions < 2) {
 				reply(GlobalMsg["strPermissionDeniedErr"]);
 				return 1;
@@ -1274,6 +1333,10 @@ timeout /t 10
 			return 1;
 		}
 		else if (Command == "restart") {
+			if (!isInGroup) {
+				reply(GlobalMsg["strGroupNotIn"]);
+				return 1;
+			}
 			if (getGroupMemberInfo(llGroup, fromQQ).permissions < 2) {
 				reply(GlobalMsg["strPermissionDeniedErr"]);
 				return 1;
@@ -1318,7 +1381,7 @@ timeout /t 10
 					else reply("裁定" + getName(Member.QQID, llGroup) + "禁言时长" + rdMainDice.FormCompleteString() + "分钟√");
 				else reply("禁言失败×");
 			}
-			else reply("查无此人×");
+			else reply("{self}查无此群员×");
 		}
 		else if (Command == "kick") {
 			if (trusted < 4) {
@@ -1342,7 +1405,7 @@ timeout /t 10
 					reply("已将" + Member.Nick + "(" + to_string(Member.QQID) + ")踢出群聊√");
 				else reply("移出失败×");
 			}
-			else reply("{self}群内查无此人×");
+			else reply("{self}查无此群员×");
 		}
 		return 1;
 	}
@@ -1490,26 +1553,26 @@ timeout /t 10
 			return 1;
 		}
 		else if (strPara == "set") {
-			strVar["key"] = readAttrName();
-			if (strVar["key"].empty())strVar["key"] = readDigit();
-			if (strVar["key"].empty()) {
+			strVar["deck_name"] = readAttrName();
+			if (strVar["deck_name"].empty())strVar["deck_name"] = readDigit();
+			if (strVar["deck_name"].empty()) {
 				reply(GlobalMsg["strDeckNameEmpty"]);
 				return 1;
 			}
 			vector<string> DeckSet = {};
-			if (strVar["key"] == "member" && intT == GroupT) {
+			if ((strVar["deck_name"] == "群成员" || strVar["deck_name"] == "member") && intT == GroupT) {
 				vector<GroupMemberInfo>list = getGroupMemberList(fromGroup);
 				for (auto& each : list) {
 					DeckSet.push_back((each.GroupNick.empty() ? each.Nick : each.GroupNick) + "(" + to_string(each.QQID) + ")");
 				}
 				CardDeck::mGroupDeck[fromGroup] = DeckSet;
-				strVar["key"] = "群成员";
-				reply(GlobalMsg["strDeckProSet"], { strVar["key"] });
+				CardDeck::mGroupDeckTmp.erase(fromGroup);
+				reply(GlobalMsg["strDeckProSet"], { strVar["deck_name"] });
 				return 1;
 			}
-			switch (CardDeck::findDeck(strVar["key"])) {
+			switch (CardDeck::findDeck(strVar["deck_name"])) {
 			case 1:
-				DeckSet = CardDeck::mPublicDeck[strVar["key"]];
+				DeckSet = CardDeck::mPublicDeck[strVar["deck_name"]];
 				break;
 			case 2: {
 				int intSize = stoi(strVar["key"]) + 1;

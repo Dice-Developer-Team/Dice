@@ -113,18 +113,17 @@ void Console::rmNotice(chatType ct) {
 int Console::log(std::string strMsg, int note_lv, string strTime) {
 	ofstream fout(string("DiceData\\audit\\log") + to_string(DiceMaid) + "_" + printDate() + ".txt", ios::out | ios::app);
 	fout << strTime << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
-	int Cnt = 0;
-	string note = strTime.empty() ? strMsg : (strTime + " " + strMsg);
-	//fout << "list:" << NoticeList.size() << endl;
-	for (auto& [ct, level] : NoticeList) {
-		int i = level & note_lv;
-		//fout << ct << "\t" << i << std::endl;
-		if (!(level & note_lv))continue;
-		AddMsgToQueue(note, ct);
-		Cnt++;
-	}
-	//fout << "send:" << Cnt << std::endl;
 	fout.close();
+	int Cnt = 0;
+	if (note_lv) {
+		string note = strTime.empty() ? strMsg : (strTime + " " + strMsg); 
+		for (auto& [ct, level] : NoticeList) {
+			if (!(level & note_lv))continue;
+			AddMsgToQueue(note, ct);
+			Cnt++;
+		}
+		if (!Cnt)sendPrivateMsg(DiceMaid, note);
+	}
 	return Cnt;
 } 
 void Console::newMaster(long long qq) {
