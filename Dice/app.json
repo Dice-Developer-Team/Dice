@@ -134,6 +134,7 @@
     122, //置群管理员			setGroupAdmin
     123, //置全群禁言			setGroupWholeBan
     127, //[敏感]置群退出	setGroupLeave
+    128, //置群成员专属头衔	setGroupSpecialTitle
     130, //取群成员信息		getGroupMemberInfoV2 / getGroupMemberInfo
     131, //取陌生人信息		getStrangerInfo
     132, //取群信息		getGroupInfo

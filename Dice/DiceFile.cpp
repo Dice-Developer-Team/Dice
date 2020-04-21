@@ -39,3 +39,24 @@ ofstream& operator<<(ofstream& fout, const Chat& grp) {
 	fout << grp.ID << '\t' << grp.isGroup <<  '\t' << grp.inviter << '\t' << grp.tCreated << '\t' << grp.tUpdated << '\t' << grp.tLastMsg;
 	return fout;
 }
+
+int listDir(string dir, set<string>& files, bool isSub, string subdir) {
+	_finddata_t file;
+	long lf = _findfirst((dir + subdir + "*").c_str(), &file);
+	if (lf < 0)return -1;
+	int intFile = 0;
+	std::set<std::string> dirs;
+	do {
+		//±éÀúÎÄ¼þ
+		if (!strcmp(file.name, ".") || !strcmp(file.name, ".."))continue;
+		if (file.attrib == _A_SUBDIR)dirs.insert(file.name);
+		else {
+			files.insert(subdir + file.name);
+			intFile++;
+		}
+	} while (!_findnext(lf, &file));
+	if (isSub)for (auto &it : dirs) {
+		listDir(dir, files, true, subdir + it + "\\");
+	}
+	return intFile;
+}

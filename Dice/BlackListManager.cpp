@@ -438,9 +438,11 @@ DDBlackMark& DDBlackMark::operator<<(const DDBlackMark& mark) {
     return *this;
 }
 
-void DDBlackManager::insert(DDBlackMark& mark) {
+void DDBlackManager::insert(DDBlackMark& ex_mark) {
     std::lock_guard<std::mutex> lock_queue(blacklistMutex);
     unsigned id = vBlackList.size();
+    vBlackList.push_back(ex_mark);
+    DDBlackMark& mark(vBlackList[id]);
     if (mark.wid)mCloud[mark.wid] = id;
     else sIDEmpty.insert(id);
     if (mark.time.empty())sTimeEmpty.insert(id);
@@ -475,7 +477,6 @@ void DDBlackManager::insert(DDBlackMark& mark) {
             up_qq_danger(mark.ownerQQ.first, mark);
         }
     }
-    vBlackList.push_back(mark);
     if (Enabled)blacklist->saveJson("DiceData\\conf\\BlackList.json");
 }
 bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5) {
@@ -657,7 +658,9 @@ bool DDBlackManager::up_group_danger(long long llgroup, DDBlackMark& mark) {
 }
 bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark) {
     if (trustedQQ(llqq) > 1 || llqq == console.master()) {
-        mark.erase();
+        if (mark.fromQQ.first == llqq)mark.fromQQ.second = 0;
+        if (mark.inviterQQ.first == llqq)mark.inviterQQ.second = 0;
+        if (mark.ownerQQ.first == llqq)mark.ownerQQ.second = 0;
         return false;
     }
     if (mQQDanger.count(llqq) && mQQDanger[llqq] >= mark.danger)return false;
@@ -869,7 +872,10 @@ void DDBlackManager::verify(void* pJson, long long operateQQ) {
     }
     if (credit < 3) {
         if (mark.isType("kick") && !console["ListenGroupKick"] || mark.isType("ban") && !console["ListenGroupBan"] || mark.isType("spam") && !console["ListenSpam"])return;
-        if (mark.type == "local" || mark.type == "other")return;
+        if (mark.type == "local" || mark.type == "other") {
+            if (credit > 0)console.log(getName(operateQQ) + "已通知" + GlobalMsg["strSelfName"] + "不良记录(未采用):\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
+            return;
+        }
     }
     else if (credit < 5 && mark.danger > credit) mark.danger = credit;
     if (!mark.danger)mark.danger = 2;
@@ -891,6 +897,7 @@ void DDBlackManager::verify(void* pJson, long long operateQQ) {
         else {
             if (mark.type == "local" && credit < 4)return;
         }
+        if (get_qq_danger(mark.DiceMaid) || get_qq_danger(mark.masterQQ))return;
         insert(mark);
         console.log(getName(operateQQ) + "已通知" + GlobalMsg["strSelfName"] + "不良记录" + to_string(vBlackList.size() - 1) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
     }
@@ -926,6 +933,7 @@ void DDBlackManager::create(DDBlackMark& mark) {
 int DDBlackManager::loadJson(string strPath) {
     nlohmann::json j = freadJson(strPath);
     if (j.empty())return 0;
+    if (j.size() > vBlackList.capacity())vBlackList.reserve(j.size() * 2);
     for (auto& item : j) {
         DDBlackMark mark{ &item }; 
         if (!mark.isValid)continue;
@@ -938,11 +946,10 @@ int DDBlackManager::loadJson(string strPath) {
             update(mark, res);
         }
     }
-    console.log("黑名单记录读取完毕", 0, printSTNow());
     return vBlackList.size();
 }
 int DDBlackManager::loadHistory(string strLoc) {
-    console.log("开始读取历史黑名单", 0, printSTNow());
+    console.log("开始初始化历史黑名单", 0, printSTNow());
     long long id;
     std::ifstream fgroup(strLoc + "BlackGroup.RDconf");
     if (fgroup) {

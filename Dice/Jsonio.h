@@ -8,10 +8,10 @@
 class JsonList {
 	std::vector<std::string> vRes;
 public:
-	string dump() {
+	std::string dump() {
 		if (vRes.empty())return "{}";
 		if (vRes.size() == 1)return vRes[0];
-		string s;
+		std::string s;
 		for (auto it = vRes.begin(); it != vRes.end(); it++) {
 			if (it == vRes.begin())s = "[\n" + *it;
 			else s += ",\n" + *it;

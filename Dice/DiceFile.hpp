@@ -306,6 +306,10 @@ int loadXML(std::string strPath, std::map<std::string, C>& m) {
 	m[obj.getName()].readt(xml);
 	return 1;
 }
+
+//遍历文件夹
+int listDir(string, set<string>&, bool = false, string subdir = "");
+
 //读取文件夹
 template<typename T>
 int loadDir(int load(std::string, T&), std::string strDir, T& tmp, std::string& strLog, bool isSubdir = false) {

@@ -1051,11 +1051,9 @@ int FromMsg::DiceReply() {
 			reply(GlobalMsg["strNotMaster"]);
 			return -1;
 		}
-		system(R"(taskkill /f /fi "username eq %username%" /im explorer.exe
-start C:\Windows\explorer.exe
-timeout /t 10
-)");
-		note("已重启资源管理器√");
+		system(R"(taskkill /f /fi "username eq %username%" /im explorer.exe)");
+		system(R"(start %SystemRoot%\explorer.exe)");
+		note("已重启资源管理器√\n当前内存占用：" + to_string(getRamPort()) + "%");
 		}
 		else if (strOption == "cmd") {
 		if (fromQQ != console.master()) {
@@ -1091,12 +1089,6 @@ timeout /t 10
 				string strAppPath(*path);
 				strAppPath = strAppPath.substr(0, strAppPath.find_last_of("\\")) + "\\app\\com.w4123.dice.cpk";
 				delete path;
-				/*if (!Cloud::DownloadFile("shiki.stringempty.xyz/DiceVer/dev", strAppPath.c_str())) {
-					note("更新开发版成功√\n可reload应用更新");
-				}
-				else {
-					reply("更新失败！");
-				}*/
 				switch (Cloud::DownloadFile("http://shiki.stringempty.xyz/DiceVer/dev", strAppPath.c_str())) {
 				case -1:
 					reply("下载失败:" + strAppPath);
@@ -1297,6 +1289,7 @@ timeout /t 10
 			time_t tNow = time(NULL);
 			const int intTDay = 24 * 60 * 60;
 			time_t intLastMsg = 0;
+			int intSize = GroupInfo(llGroup).nGroupSize;
 			for (auto &each : getGroupMemberList(llGroup)) {
 				intLastMsg = (tNow - each.LastMsgTime) / intTDay;
 				if (!each.LastMsgTime || intLastMsg > 30) {
@@ -1312,7 +1305,7 @@ timeout /t 10
 				ResList res;
 				while (!qDiver.empty()) {
 					res << qDiver.top().second + to_string(qDiver.top().first) + "天";
-					if (++intCnt > 15)break;
+					if (++intCnt > 15 && intCnt > intSize / 80)break;
 					qDiver.pop();
 				}
 				reply("潜水成员列表:" + res.show());
@@ -1353,6 +1346,10 @@ timeout /t 10
 				reply(GlobalMsg["strNotAdmin"]);
 				return -1;
 			}
+			if (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 2) {
+				reply(GlobalMsg["strSelfPermissionErr"]);
+				return 1;
+			}
 			string QQNum = readDigit();
 			if (QQNum.empty()) {
 				reply(GlobalMsg["strQQIDEmpty"]);
@@ -1388,24 +1385,59 @@ timeout /t 10
 				reply(GlobalMsg["strNotAdmin"]);
 				return -1;
 			}
-			string QQNum = readDigit();
-			if (QQNum.empty()) {
+			if (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 2) {
+				reply(GlobalMsg["strSelfPermissionErr"]);
+				return 1;
+			}
+			long long llMemberQQ = readID();
+			if (!llMemberQQ) {
 				reply(GlobalMsg["strQQIDEmpty"]);
 				return -1;
 			}
-			long long llMemberQQ = stoll(QQNum);
-			GroupMemberInfo Member = getGroupMemberInfo(llGroup, llMemberQQ);
-			if (Member.QQID == llMemberQQ){
-				if (Member.permissions > 1) {
-					reply(GlobalMsg["strSelfPermissionErr"]);
-					return 1;
+			ResList resKicked, resDenied, resNotFound;
+			GroupMemberInfo Member;
+			do {
+				Member = getGroupMemberInfo(llGroup, llMemberQQ);
+				if (Member.QQID == llMemberQQ) {
+					if (Member.permissions > 1) {
+						resDenied << Member.Nick + "(" + to_string(Member.QQID) + ")";
+						continue;
+					}
+					if (setGroupKick(llGroup, llMemberQQ, false) == 0) {
+						resKicked << Member.Nick + "(" + to_string(Member.QQID) + ")";
+					}
+					else resDenied << Member.Nick + "(" + to_string(Member.QQID) + ")";
 				}
-				string strMainDice = readDice();
-				if (setGroupKick(llGroup, llMemberQQ, false) == 0)
-					reply("已将" + Member.Nick + "(" + to_string(Member.QQID) + ")踢出群聊√");
-				else reply("移出失败×");
+				else resNotFound << to_string(llMemberQQ);
+			} while (llMemberQQ = readID());
+			strReply = GlobalMsg["strSelfName"];
+			if (!resKicked.empty())strReply += "已移出群员：" + resKicked.show() + "\n";
+			if (!resDenied.empty())strReply += "移出失败：" + resDenied.show() + "\n";
+			if (!resNotFound.empty())strReply += "找不到对象：" + resNotFound.show();
+			reply(strReply);
+			return 1;
+		}
+		else if (Command == "title") {
+			if (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 3) {
+				reply(GlobalMsg["strSelfPermissionErr"]);
+				return 1;
 			}
-			else reply("{self}查无此群员×");
+			if (long long llqq = readID()) {
+				while (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length())intMsgCnt++;
+				while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
+				strVar["title"] = readRest();
+				if (setGroupSpecialTitle(llGroup, llqq, strVar["title"])) {
+					reply(GlobalMsg["strGroupTitleSetErr"]);
+				}
+				else {
+					strVar["target"] = getName(llqq, llGroup);
+					reply(GlobalMsg["strGroupTitleSet"]);
+				}
+			}
+			else {
+				reply(GlobalMsg["strQQIDEmpty"]);
+			}
+			return 1;
 		}
 		return 1;
 	}
@@ -1717,17 +1749,17 @@ timeout /t 10
 	{
 		intMsgCnt += 4;
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
-		if (strLowerMessage.substr(intMsgCnt, 3) == "clr")
-		{
-			if (ilInitList->clear(fromGroup))
-				strReply = "成功清除先攻记录！";
+		if (strLowerMessage.substr(intMsgCnt, 3) == "clr"){
+			if (gm->session(fromGroup).table_clr("先攻"))
+				reply("成功清除先攻记录！");
 			else
-				strReply = "列表为空！";
-			reply();
+				reply("列表为空！");
 			return 1;
 		}
-		ilInitList->show(fromGroup, strReply);
-		reply();
+		strVar["table_name"] = "先攻";
+		if (gm->session(fromGroup).table_count("先攻"))
+			reply(GlobalMsg["strGMTableShow"] + gm->session(fromGroup).table_prior_show("先攻"));
+		else reply(GlobalMsg["strGMTableNotExist"]);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
@@ -2420,7 +2452,7 @@ timeout /t 10
 		if (strOption == "off") {
 			if (groupset(fromGroup, strVar["option"]) < 1) {
 				chat(fromGroup).set(strVar["option"]);
-				ObserveGroup.erase(fromGroup);
+				gm->session(fromGroup).clear_ob();
 				reply(GlobalMsg["strObOff"]);
 			}
 			else {
@@ -2442,61 +2474,22 @@ timeout /t 10
 			reply(GlobalMsg["strObOffAlready"]);
 			return 1;
 		}
-		if (strOption == "list")
-		{
-			string Msg = GlobalMsg["strObList"];
-			const auto Range = (intT == GroupT) ? ObserveGroup.equal_range(fromGroup) : ObserveDiscuss.equal_range(fromGroup);
-			for (auto it = Range.first; it != Range.second; ++it)
-			{
-				Msg += "\n" + getName(it->second, fromGroup) + "(" + to_string(it->second) + ")";
-			}
-			const string strReply = Msg == GlobalMsg["strObList"] ? GlobalMsg["strObListEmpty"] : Msg;
-			reply(strReply);
+		if (strOption == "list"){
+			gm->session(fromGroup).ob_list(this);
 		}
-		else if (strOption == "clr")
-		{
-			if (intT == DiscussT) {
-				ObserveDiscuss.erase(fromGroup);
-				reply(GlobalMsg["strObListClr"]);
+		else if (strOption == "clr"){
+			if (intT == DiscussT || getGroupMemberInfo(fromGroup, fromQQ).permissions >= 2) {
+				gm->session(fromGroup).ob_clr(this);
 			}
-			else if (getGroupMemberInfo(fromGroup, fromQQ).permissions >= 2)
-			{
-				ObserveGroup.erase(fromGroup);
-				reply(GlobalMsg["strObListClr"]);
-			}
-			else
-			{
+			else{
 				reply(GlobalMsg["strPermissionDeniedErr"]);
 			}
 		}
-		else if (strOption == "exit")
-		{
-			const auto Range = (intT == GroupT) ? ObserveGroup.equal_range(fromGroup) : ObserveDiscuss.equal_range(fromGroup);
-			for (auto it = Range.first; it != Range.second; ++it)
-			{
-				if (it->second == fromQQ)
-				{
-					(intT == GroupT) ? ObserveGroup.erase(it) : ObserveDiscuss.erase(it);
-					const string strReply = strVar["nick"] + GlobalMsg["strObExit"];
-					reply(strReply);
-					return 1;
-				}
-			}
-			const string strReply = strVar["nick"] + GlobalMsg["strObExitAlready"];
-			reply(strReply);
+		else if (strOption == "exit"){
+			gm->session(fromGroup).ob_exit(this);
 		}
-		else
-		{
-			const auto Range = (intT == GroupT) ? ObserveGroup.equal_range(fromGroup) : ObserveDiscuss.equal_range(fromGroup);
-			for (auto it = Range.first; it != Range.second; ++it)
-			{
-				if (it->second == fromQQ) {
-					reply(GlobalMsg["strObEnterAlready"]);
-					return 1;
-				}
-			}
-			(intT == GroupT) ? ObserveGroup.insert(make_pair(fromGroup, fromQQ)) : ObserveDiscuss.insert(make_pair(fromGroup, fromQQ));
-			reply(GlobalMsg["strObEnter"]);
+		else{
+			gm->session(fromGroup).ob_enter(this);
 		}
 		return 1;
 	}
@@ -2902,8 +2895,8 @@ timeout /t 10
 			reply(GlobalMsg["strUnknownErr"]);
 			return 1;
 		}
-		ilInitList->insert(fromGroup, initdice.intTotal, strname);
-		const string strReply = strname + "的先攻骰点：" + strinit + '=' + to_string(initdice.intTotal);
+		gm->session(fromGroup).table_add("先攻", initdice.intTotal, strname);
+		const string strReply = strname + "的先攻骰点：" + initdice.FormCompleteString();
 		reply(strReply);
 		return 1;
 	}
@@ -3242,12 +3235,10 @@ timeout /t 10
 				{
 					strTurnNotice = "在" + printChat(fromChat) + "中 " + strTurnNotice;
 					AddMsgToQueue(strTurnNotice, fromQQ, Private);
-					const auto range = ObserveGroup.equal_range(fromGroup);
-					for (auto it = range.first; it != range.second; ++it)
-					{
-						if (it->second != fromQQ)
+					for (auto qq:gm->session(fromGroup).get_ob()){
+						if (qq != fromQQ)
 						{
-							AddMsgToQueue(strTurnNotice, it->second, Private);
+							AddMsgToQueue(strTurnNotice, qq, Private);
 						}
 					}
 				}
@@ -3355,12 +3346,9 @@ timeout /t 10
 				strReply = format(strReply, GlobalMsg, strVar);
 				strReply = "在" + printChat(fromChat) + "中 " + strReply;
 				AddMsgToQueue(strReply, fromQQ, Private);
-				const auto range = ObserveGroup.equal_range(fromGroup);
-				for (auto it = range.first; it != range.second; ++it)
-				{
-					if (it->second != fromQQ)
-					{
-						AddMsgToQueue(strReply, it->second, Private);
+				for (auto qq : gm->session(fromGroup).get_ob()) {
+					if (qq != fromQQ){
+						AddMsgToQueue(strReply, qq, Private);
 					}
 				}
 			}
@@ -3385,11 +3373,9 @@ timeout /t 10
 					strReply = format(strReply, GlobalMsg, strVar);
 					strReply = "在" + printChat(fromChat) + "中 " + strReply;
 					AddMsgToQueue(strReply, fromQQ, Private);
-					const auto range = ObserveGroup.equal_range(fromGroup);
-					for (auto it = range.first; it != range.second; ++it) {
-						if (it->second != fromQQ)
-						{
-							AddMsgToQueue(strReply, it->second, Private);
+					for (auto qq : gm->session(fromGroup).get_ob()) {
+						if (qq != fromQQ) {
+							AddMsgToQueue(strReply, qq, Private);
 						}
 					}
 				}
@@ -3489,10 +3475,9 @@ timeout /t 10
 				else {
 					strReply = format("在" + printChat(fromChat) + "中 " + GlobalMsg["strRollTurn"], GlobalMsg, strVar);
 					AddMsgToQueue(strReply, fromQQ, Private);
-					const auto range = ObserveGroup.equal_range(fromGroup);
-					for (auto it = range.first; it != range.second; ++it) {
-						if (it->second != fromQQ) {
-							AddMsgToQueue(strReply, it->second, Private);
+					for (auto qq : gm->session(fromGroup).get_ob()) {
+						if (qq != fromQQ) {
+							AddMsgToQueue(strReply, qq, Private);
 						}
 					}
 				}
@@ -3568,12 +3553,9 @@ timeout /t 10
 				strReply = format(strReply, GlobalMsg, strVar);
 				strReply = "在" + printChat(fromChat) + "中 " + strReply;
 				AddMsgToQueue(strReply, fromQQ, Private);
-				const auto range = ObserveGroup.equal_range(fromGroup);
-				for (auto it = range.first; it != range.second; ++it)
-				{
-					if (it->second != fromQQ)
-					{
-						AddMsgToQueue(strReply, it->second, Private);
+				for (auto qq : gm->session(fromGroup).get_ob()) {
+					if (qq != fromQQ) {
+						AddMsgToQueue(strReply, qq, Private);
 					}
 				}
 			}
@@ -3597,10 +3579,9 @@ timeout /t 10
 				strReply = format(strReply, GlobalMsg, strVar);
 				strReply = "在" + printChat(fromChat) + "中 " + strReply;
 				AddMsgToQueue(strReply, fromQQ, Private);
-				const auto range = ObserveGroup.equal_range(fromGroup);
-				for (auto it = range.first; it != range.second; ++it) {
-					if (it->second != fromQQ) {
-						AddMsgToQueue(strReply, it->second, Private);
+				for (auto qq : gm->session(fromGroup).get_ob()) {
+					if (qq != fromQQ) {
+						AddMsgToQueue(strReply, qq, Private);
 					}
 				}
 			}
@@ -3614,7 +3595,8 @@ timeout /t 10
 }
 int FromMsg::CustomReply() {
 	string strKey = readRest();
-	if (auto deck = CardDeck::mReplyDeck.find(strKey); deck != CardDeck::mReplyDeck.end() || (deck = CardDeck::mReplyDeck.find(strMsg)) != CardDeck::mReplyDeck.end()) {
+	if (auto deck = CardDeck::mReplyDeck.find(strKey); deck != CardDeck::mReplyDeck.end()
+		|| (!isBotOff && (deck = CardDeck::mReplyDeck.find(strMsg)) != CardDeck::mReplyDeck.end())) {
 		if (strVar.empty()) {
 			strVar["nick"] = getName(fromQQ, fromGroup);
 			strVar["pc"] = getPCName(fromQQ, fromGroup);

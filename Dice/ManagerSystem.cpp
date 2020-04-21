@@ -30,7 +30,7 @@ string getName(long long QQ, long long GroupID)
 	if (getUser(QQ).getNick(nick, GroupID))return nick;
 	if (GroupID && !(nick = strip(CQ::getGroupMemberInfo(GroupID, QQ).GroupNick)).empty())return nick;
 	if (!(nick = strip(CQ::getStrangerInfo(QQ).nick)).empty())return nick;
-	return GlobalMsg["stranger"];
+	return GlobalMsg["stranger"] + "(" + to_string(QQ) + ")";
 }
 
 Chat& chat(long long id) {

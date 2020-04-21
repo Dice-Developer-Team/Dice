@@ -115,8 +115,8 @@ int Console::log(std::string strMsg, int note_lv, string strTime) {
 	fout << strTime << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 	fout.close();
 	int Cnt = 0;
+	string note = strTime.empty() ? strMsg : (strTime + " " + strMsg);
 	if (note_lv) {
-		string note = strTime.empty() ? strMsg : (strTime + " " + strMsg); 
 		for (auto& [ct, level] : NoticeList) {
 			if (!(level & note_lv))continue;
 			AddMsgToQueue(note, ct);
@@ -321,7 +321,7 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st) {
 				}
 			}
 			strReply = GlobalMsg["strSelfName"] + "筛除无群权限群聊" + to_string(intCnt) + "个:" + res.show();
-			console.log(strReply, 3, printSTNow());
+			console.log(strReply, 0b10, printSTNow());
 		}
 		else if (isdigit(static_cast<unsigned char>(strPara[0]))) {
 			int intDayLim = stoi(strPara);
@@ -338,45 +338,49 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st) {
 					res << printGroup(id) + ":" + to_string(intDay) + "天\n";
 					grp.leave(getMsg("strLeaveUnused", GlobalMsg, strVar));
 					intCnt++;
-					this_thread::sleep_for(3s);
+					this_thread::sleep_for(2s);
 				}
 			}
 			strReply += GlobalMsg["strSelfName"] + "已筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√" + res.show();
-			console.log(strReply, 3, printSTNow());
+			console.log(strReply, 0b10, printSTNow());
 		}
 		else if (strPara == "black") {
-			std::map<long long, string>mGroupList = getGroupList();
-			for (auto &[id,grp] : ChatList) {
-				if (!mGroupList.count(id)||grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("免黑"))continue;
-				if (blacklist->get_group_danger(id)) {
-					res << printGroup(id) + "：" + "黑名单群";
-					if(console["LeaveBlackGroup"])grp.leave(getMsg("strBlackGroup"));
-				}
-				if (!grp.isGroup)continue;
-				vector<GroupMemberInfo> MemberList = getGroupMemberList(id);
-				for (auto eachQQ : MemberList) {
-					if (blacklist->get_qq_danger(eachQQ.QQID)) {
-						if (getGroupMemberInfo(id, eachQQ.QQID).permissions < getGroupMemberInfo(id, getLoginQQ()).permissions) {
-							continue;
-						}
-						else if (getGroupMemberInfo(id, eachQQ.QQID).permissions > getGroupMemberInfo(id, getLoginQQ()).permissions) {
-							res << printChat(grp) + "：" + printQQ(eachQQ.QQID) + "对方群权限较高";
-							grp.leave("发现黑名单管理员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
-							intCnt++;
-							break;
-						}
-						else if (console["LeaveBlackQQ"]) {
-							res << printChat(grp) + "：" + printQQ(eachQQ.QQID);
-							grp.leave("发现黑名单成员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
-							intCnt++;
-							break;
+			try {
+				for (auto& [id, grp_name] : getGroupList()) {
+					Chat& grp = chat(id).group().name(grp_name);
+					if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("免黑"))continue;
+					if (blacklist->get_group_danger(id)) {
+						res << printGroup(id) + "：" + "黑名单群";
+						if (console["LeaveBlackGroup"])grp.leave(getMsg("strBlackGroup"));
+					}
+					vector<GroupMemberInfo> MemberList = getGroupMemberList(id);
+					for (auto eachQQ : MemberList) {
+						if (blacklist->get_qq_danger(eachQQ.QQID) > 1) {
+							if (eachQQ.permissions < getGroupMemberInfo(id, getLoginQQ()).permissions) {
+								continue;
+							}
+							else if (eachQQ.permissions > getGroupMemberInfo(id, getLoginQQ()).permissions) {
+								res << printChat(grp) + "：" + printQQ(eachQQ.QQID) + "对方群权限较高";
+								grp.leave("发现黑名单管理员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
+								intCnt++;
+								break;
+							}
+							else if (console["LeaveBlackQQ"]) {
+								res << printChat(grp) + "：" + printQQ(eachQQ.QQID);
+								grp.leave("发现黑名单成员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
+								intCnt++;
+								break;
+							}
 						}
 					}
 				}
 			}
+			catch (...) {
+				console.log(strReply, 0b10, "提醒：" + GlobalMsg["strSelfName"] + "清查黑名单群聊时出错！");
+			}
 			if (intCnt) {
-				strReply = GlobalMsg["strSelfName"] + "已按黑名单清查群聊" + to_string(intCnt) + "个：" + strReply;
-				console.log(strReply, 3, printSTNow());
+				strReply = GlobalMsg["strSelfName"] + "已按黑名单清查群聊" + to_string(intCnt) + "个：" + res.show();
+				console.log(strReply, 0b10, printSTNow());
 			}
 			else if (fromQQ) {
 				console.log(strReply, 1, printSTNow());
@@ -394,7 +398,7 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st) {
 				intCnt++;
 				this_thread::sleep_for(3s);
 			}
-			strReply = GlobalMsg["strSelfName"] + "筛除无许可群聊" + to_string(intCnt) + "个√";
+			strReply = GlobalMsg["strSelfName"] + "筛除无许可群聊" + to_string(intCnt) + "个：" + res.show();
 			console.log(strReply, 1, printSTNow());
 		}
 		else

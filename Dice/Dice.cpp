@@ -39,7 +39,6 @@
 #include "RD.h"
 #include "CQEVE_ALL.h"
 #include "ManagerSystem.h"
-#include "InitList.h"
 #include "GlobalVar.h"
 #include "DiceMsgSend.h"
 #include "MsgFormat.h"
@@ -49,6 +48,7 @@
 #include "EncodingConvert.h"
 #include "CharacterCard.h"
 #include "DiceEvent.h"
+#include "DiceSession.h"
 
 #pragma warning(disable:4996)
 #pragma warning(disable:6031)
@@ -58,11 +58,8 @@ using namespace CQ;
 
 map<long long, User>UserList{};
 map<long long, Chat>ChatList{};
-unique_ptr<Initlist> ilInitList;
 map<chatType, chatType> mLinkedList;
 multimap<chatType, chatType> mFwdList;
-multimap<long long, long long> ObserveGroup;
-multimap<long long, long long> ObserveDiscuss;
 ThreadFactory threads;
 string strFileLoc;
 
@@ -102,6 +99,31 @@ void loadData() {
 	}
 	ifstreamHelpDoc.close();
 }
+//初始化
+void dataInit() {
+	gm = make_unique<DiceTableMaster>();
+	if (gm->load() < 0) {
+		multimap<long long, long long> ObserveGroup;
+		loadFile(strFileLoc + "ObserveDiscuss.RDconf", ObserveGroup);
+		loadFile(strFileLoc + "ObserveGroup.RDconf", ObserveGroup);
+		for (auto [grp, qq] : ObserveGroup) {
+			gm->session(grp).sOB.insert(qq);
+		}
+		ifstream ifINIT(strFileLoc + "INIT.DiceDB");
+		if (ifINIT) {
+			long long Group(0);
+			int value;
+			string nickname;
+			while (ifINIT >> Group >> nickname >> value){
+				gm->session(Group).mTable["先攻"].emplace(base64_decode(nickname),value);
+			}
+		}
+		ifINIT.close();
+		console.log("初始化旁观与先攻记录" + to_string(gm->mSession.size()) + "条", 1);
+		gm->save();
+	}
+	
+}
 //备份数据
 void dataBackUp() {
 	mkDir("DiceData\\conf");
@@ -112,8 +134,6 @@ void dataBackUp() {
 	saveJMap(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
 	saveJMap(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
 	saveJMap(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
-	saveFile(strFileLoc + "ObserveGroup.RDconf", ObserveGroup);
-	saveFile(strFileLoc + "ObserveDiscuss.RDconf", ObserveDiscuss);
 	//备份列表
 	saveBFile("DiceData\\user\\PlayerCards.RDconf", PList);
 	saveFile("DiceData\\user\\ChatList.txt", ChatList);
@@ -121,7 +141,6 @@ void dataBackUp() {
 	clearUser();
 	saveFile("DiceData\\user\\UserList.txt", UserList);
 	saveBFile("DiceData\\user\\UserConf.RDconf", UserList);
-	ilInitList->save();
 }
 EVE_Enable(eventEnable)
 {
@@ -193,6 +212,7 @@ EVE_Enable(eventEnable)
 			getUser(qq).create(NEWYEAR).trust(4);
 		}
 		if(console.master())getUser(console.master()).create(NEWYEAR).trust(5);
+		console.log("初始化用户记录" + to_string(UserList.size()) + "条", 1);
 	}
 	if (loadBFile("DiceData\\user\\ChatConf.RDconf", ChatList) < 1) {
 		set<long long>GroupList;
@@ -276,19 +296,18 @@ EVE_Enable(eventEnable)
 				chat(it.first).group().inviter = it.second;
 			}
 		}
+		console.log("初始化群记录" + to_string(ChatList.size()) + "条", 1);
 	}
 	for (auto &[gid,gname] : getGroupList()) {
 		chat(gid).group().name(gname).reset("已退");
 	}
-	loadFile(strFileLoc + "ObserveGroup.RDconf", ObserveGroup);
-	loadFile(strFileLoc + "ObserveDiscuss.RDconf", ObserveDiscuss);
 	blacklist = make_unique<DDBlackManager>();
 	if (!blacklist->loadJson("DiceData\\conf\\BlackList.json")) {
 		blacklist->loadJson(strFileLoc + "BlackMarks.json");
-		blacklist->loadHistory(strFileLoc);
+		int cnt = blacklist->loadHistory(strFileLoc);
 		blacklist->saveJson("DiceData\\conf\\BlackList.json");
+		console.log("初始化不良记录" + to_string(cnt) + "条", 1);
 	}
-	ilInitList = make_unique<Initlist>(strFileLoc + "INIT.DiceDB");
 	if (loadJMap("DiceData\\conf\\CustomMsg.json", EditedMsg) < 0)loadJMap(strFileLoc + "CustomMsg.json", EditedMsg);
 	//预修改出场回复文本
 	if (EditedMsg.count("strSelfName"))GlobalMsg["strSelfName"] = EditedMsg["strSelfName"];
@@ -309,6 +328,7 @@ EVE_Enable(eventEnable)
 				if (SkillName == "智力/灵感")SkillName = "智力";
 				getPlayer(QQ)[0].set(SkillName, Value);
 			}
+			console.log("初始化角色卡记录" + to_string(PList.size()) + "条", 1);
 		}
 		ifstreamCharacterProp.close();
 	}
@@ -320,15 +340,16 @@ EVE_Enable(eventEnable)
 	loadJMap(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
 	loadJMap(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
 	loadJMap(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
-	//骰娘网络
-	getDiceList();
-	Cloud::update();
+	dataInit();
 	while (msgSendThreadRunning)Sleep(10);
 	Enabled = true;
 	threads(SendMsg);
 	threads(ConsoleTimer);
 	threads(warningHandler);
 	threads(frqHandler);
+	//骰娘网络
+	getDiceList();
+	Cloud::update();
 	console.log(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string((clock() - llStartTime) / 1000) + "秒", 0b1, printSTNow());
 	llStartTime = clock();
 	return 0;
@@ -338,8 +359,7 @@ mutex GroupAddMutex;
 bool eve_GroupAdd(Chat& grp) {
 	{
 		lock_guard<std::mutex> lock_queue(GroupAddMutex);
-		if (grp.isset("未进"))grp.reset("未进");
-		else if(grp.isset("已退"))grp.reset("已退");
+		if (grp.isset("未进")|| grp.isset("已退"))grp.reset("未进").reset("已退");
 		else if (time(NULL) - grp.tCreated > 1)return 0;
 	}
 	if (!console["ListenGroupAdd"] || grp.isset("忽略"))return 0;
@@ -541,7 +561,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 	}
 	}
 	else if (beingOperateQQ == console.DiceMaid){
-		return eve_GroupAdd(grp);
+		return eve_GroupAdd(grp.set("未进"));
 	}
 	return 0;
 }
@@ -703,14 +723,12 @@ EVE_Disable(eventDisable)
 	Enabled = false;
 	threads = {};
 	dataBackUp();
+	gm.reset();
 	PList.clear();
 	ChatList.clear();
 	UserList.clear();
 	console.reset();
-	ilInitList.reset();
 	EditedMsg.clear(); 
-	ObserveGroup.clear();
-	ObserveDiscuss.clear();
 	blacklist.reset();
 	return 0;
 }
