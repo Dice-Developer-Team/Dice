@@ -5,11 +5,15 @@
 #pragma once
 #include <vector>
 #include <map>
+#include <queue>
 using std::initializer_list;
 using std::pair;
 using std::vector;
 using std::map;
 using std::multimap;
+using std::string;
+using std::to_string;
+
 template<typename T>
 class enumap{
 public:
@@ -52,9 +56,35 @@ public:
 };
 
 template<typename K,typename V>
-typename multimap<K, V>::iterator match(multimap<K, V> mmp, K key, V val) {
-	for (auto [it, ed] = mmp.equal_range(key);it!=ed;it++) {
+typename multimap<K, V>::iterator match(multimap<K, V>& mmp, K key, V val) {
+	for (auto [it, ed] = mmp.equal_range(key); it != ed; it++) {
 		if (it->second == val)return it;
 	}
 	return mmp.end();
 }
+
+using prior_item = std::pair<int, string>;
+//按优先级输出项目
+class PriorList {
+	std::priority_queue<prior_item> qItem;
+public:
+	PriorList(const map<string, int>& mItem) {
+		for (auto& [key, prior] : mItem) {
+			qItem.emplace(prior, key);
+		}
+	}
+	string show() {
+		string res;
+		int index = 0;
+		while (!qItem.empty()) {
+			auto [prior, item] = qItem.top();
+			qItem.pop();
+			res += "\n" + to_string(++index) + "." + item + ":" + to_string(prior);
+		}
+		return res;
+	}
+};
+
+class FormStep {
+
+};

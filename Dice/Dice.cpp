@@ -57,7 +57,6 @@ using namespace std;
 using namespace CQ;
 
 map<long long, User>UserList{};
-map<long long, Chat>ChatList{};
 map<chatType, chatType> mLinkedList;
 multimap<chatType, chatType> mFwdList;
 ThreadFactory threads;
@@ -359,7 +358,7 @@ mutex GroupAddMutex;
 bool eve_GroupAdd(Chat& grp) {
 	{
 		lock_guard<std::mutex> lock_queue(GroupAddMutex);
-		if (grp.isset("未进")|| grp.isset("已退"))grp.reset("未进").reset("已退");
+		if (grp.isset("未进") || grp.isset("已退"))grp.reset("未进").reset("已退");
 		else if (time(NULL) - grp.tCreated > 1)return 0;
 	}
 	if (!console["ListenGroupAdd"] || grp.isset("忽略"))return 0;
@@ -367,7 +366,7 @@ bool eve_GroupAdd(Chat& grp) {
 	string strNow = printSTNow();
 	string strMsg(GlobalMsg["strSelfName"]);
 	try {
-		strMsg+= "新加入" + GroupInfo(fromGroup).tostring();
+		strMsg += "新加入" + GroupInfo(fromGroup).tostring();
 		if (blacklist->get_group_danger(fromGroup)) {
 			grp.leave("!warning" + blacklist->list_group_warning(fromGroup));
 			strMsg += "为黑名单群，已退群";
@@ -447,12 +446,12 @@ bool eve_GroupAdd(Chat& grp) {
 		return 1;
 	}
 	if (!GlobalMsg["strAddGroup"].empty()) {
-		this_thread::sleep_for(chrono::seconds(2));
+		this_thread::sleep_for(2s);
 		AddMsgToQueue(getMsg("strAddGroup"), { fromGroup, Group });
 	}
 	if (console["CheckGroupLicense"] && !grp.isset("许可使用")) {
 		grp.set("未审核");
-		this_thread::sleep_for(chrono::seconds(2));
+		this_thread::sleep_for(2s);
 		AddMsgToQueue(getMsg("strAddGroupNoLicense"), { fromGroup, Group });
 	}
 	return 0;
@@ -475,7 +474,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 	if (eve.isAnonymous())return;
 	if (eve.isSystem())return;
 	Chat& grp = chat(eve.fromGroup).group().lastmsg(time(NULL));
-	if (grp.isset("未进"))eve_GroupAdd(grp);
+	if (grp.isset("未进") || grp.isset("已退"))eve_GroupAdd(grp);
 	if (!grp.isset("忽略")) {
 		FromMsg Msg(eve.message, eve.fromGroup, Group, eve.fromQQ);
 		if (Msg.DiceFilter())eve.message_block();
@@ -655,50 +654,46 @@ EVE_System_GroupBan(eventGroupBan) {
 
 EVE_Request_AddGroup(eventGroupInvited) {
 	if (!console["ListenGroupRequest"])return 0;
-	if (subType == 2 && groupset(fromGroup,"忽略") < 1) {
-		if (console) {
-			string strNow = printSTNow();
-			string strMsg = "群添加请求，来自：" + getStrangerInfo(fromQQ).nick +"("+ to_string(fromQQ) + "),群:" + to_string(fromGroup)+"。";
-			if (blacklist->get_group_danger(fromGroup)) {
-				strMsg += "\n已拒绝（群在黑名单中）";
-				setGroupAddRequest(responseFlag, 2, 2, "");
-				console.log(strMsg, 0b10, strNow);
-				return 1;
-			}
-			else if (blacklist->get_qq_danger(fromQQ)) {
-				strMsg += "\n已拒绝（用户在黑名单中）";
-				setGroupAddRequest(responseFlag, 2, 2, "");
-				console.log(strMsg, 0b10, strNow);
-				return 1;
-			}
-			else if (Chat& grp = chat(fromGroup).group(); grp.isset("许可使用")) {
-				strMsg += "\n已同意（群已许可使用）";
-				grp.inviter = fromQQ;
-				setGroupAddRequest(responseFlag, 2, 1, "");
-				console.log(strMsg, 1, strNow);
-			}
-			else if (trustedQQ(fromQQ)) {
-				strMsg += "\n已同意（受信任用户）";
-				grp.set("许可使用").set("未进");
-				grp.inviter = fromQQ;
-				setGroupAddRequest(responseFlag, 2, 1, "");
-				console.log(strMsg, 1, strNow);
-			}
-			else if (console["Private"]) {
-				strMsg += "\n已拒绝（当前在私用模式）";
-				setGroupAddRequest(responseFlag, 2, 2, "");
-				sendPrivateMsg(fromQQ, getMsg("strPreserve"));
-				console.log(strMsg, 1, strNow);
-			}
-			else{
-				strMsg += "已同意";
-				grp.set("未进");
-				grp.inviter = fromQQ;
-				setGroupAddRequest(responseFlag, 2, 1, "");
-				console.log(strMsg, 1, strNow);
-			}
+	if (subType == 2 && groupset(fromGroup, "忽略") < 1) {
+		this_thread::sleep_for(3s);
+		string strNow = printSTNow();
+		string strMsg = "群添加请求，来自：" + getStrangerInfo(fromQQ).nick + "(" + to_string(fromQQ) + "),群:" + to_string(fromGroup) + "。";
+		if (blacklist->get_group_danger(fromGroup)) {
+			strMsg += "\n已拒绝（群在黑名单中）";
+			console.log(strMsg, 0b10, strNow);
+			setGroupAddRequest(responseFlag, 2, 2, "");
+		}
+		else if (blacklist->get_qq_danger(fromQQ)) {
+			strMsg += "\n已拒绝（用户在黑名单中）";
+			console.log(strMsg, 0b10, strNow);
+			setGroupAddRequest(responseFlag, 2, 2, "");
+		}
+		else if (Chat& grp = chat(fromGroup).group(); grp.isset("许可使用")) {
+			grp.set("许可使用").set("未进");
+			grp.inviter = fromQQ;
+			strMsg += "\n已同意（群已许可使用）" + grp.listBoolConf();
+			console.log(strMsg, 1, strNow);
+			setGroupAddRequest(responseFlag, 2, 1, "");
+		}
+		else if (trustedQQ(fromQQ)) {
+			grp.set("许可使用").set("未进");
+			grp.inviter = fromQQ;
+			strMsg += "\n已同意（受信任用户）";
+			console.log(strMsg, 1, strNow);
+			setGroupAddRequest(responseFlag, 2, 1, "");
+		}
+		else if (console && console["Private"]) {
+			sendPrivateMsg(fromQQ, getMsg("strPreserve"));
+			strMsg += "\n已拒绝（当前在私用模式）";
+			console.log(strMsg, 1, strNow);
+			setGroupAddRequest(responseFlag, 2, 2, "");
 		}
 		else {
+			grp.set("未进");
+			grp.inviter = fromQQ;
+			strMsg += "已同意";
+			this_thread::sleep_for(2s);
+			console.log(strMsg, 1, strNow);
 			setGroupAddRequest(responseFlag, 2, 1, "");
 		}
 		return 1;
@@ -713,6 +708,7 @@ EVE_Menu(eventMasterMode) {
 		MessageBoxA(nullptr, "Master模式已关闭√\nmaster已清除", "Master模式切换", MB_OK | MB_ICONINFORMATION);
 	}else {
 		console.isMasterMode = true;
+		console.save();
 		MessageBoxA(nullptr, "Master模式已开启√", "Master模式切换", MB_OK | MB_ICONINFORMATION);
 	}
 	return 0;

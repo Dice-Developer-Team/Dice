@@ -74,7 +74,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPcClr","已清空{nick}的角色卡记录√"},
 	{"strPcCardList","{nick}的角色列表：{show}"},
 	{"strPcCardBuild","{nick}的{char}生成：{show}"},
-	{"strPcCardShow","{nick}的{type}:{char}：{show}"},	//{nick}-用户昵称 {type}-角色卡类型 {char}-角色卡名
+	{"strPcCardShow","{nick}的<{type}>{char}：{show}"},	//{nick}-用户昵称 {type}-角色卡类型 {char}-角色卡名
 	{"strPcCardRedo","{nick}的{char}重新生成：{show}"},
 	{"strPcGroupList","{nick}的各群角色列表：{show}"},
 	{"strPcNotExistErr","{self}无{nick}的角色卡记录，无法删除×"},

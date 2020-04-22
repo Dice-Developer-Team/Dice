@@ -25,7 +25,7 @@ using std::map;
 
 #define NOT_FOUND -32767
 
-static map<string, short>mTempletTag = {
+inline map<string, short>mTempletTag = {
 	{"name",1},
 	{"type",2},
 	{"alias",20},
@@ -39,7 +39,7 @@ static map<string, short>mTempletTag = {
 	{"generate",24 },
 	{"note",101},
 };
-static map<string, short>mCardTag = {
+inline map<string, short>mCardTag = {
 	{"Name",1},
 	{"Type",2},
 	{"Attr",11},
@@ -149,13 +149,14 @@ public:
 	}
 };
 
-static map<string, CardTemp>mCardTemplet = {
+inline map<string, CardTemp>mCardTemplet = {
 	{"COC7",{"COC7",SkillNameReplace,BasicCOC7,InfoCOC7,AutoFillCOC7,mVariableCOC7,ExpressionCOC7,SkillDefaultVal,{
 		{"",CardBuild({BuildCOC7},CardDeck::mPublicDeck["随机姓名"],{})},
 		{"bg",CardBuild({
 			{"性别","{性别}"},{"年龄","7D6+8"},{"职业","{调查员职业}"},{"个人描述","{个人描述}"},{"重要之人","{重要之人}"},{"思想信念","{思想信念}"},{"意义非凡之地","{意义非凡之地}"},{"宝贵之物","{宝贵之物}"},{"特质","{调查员特点}"}
 		},CardDeck::mPublicDeck["随机姓名"],{})}
-	}}}
+	}}},
+	{"BRP",{}}
 };
 
 class CharaCard {
@@ -742,7 +743,7 @@ public:
 	}
 };
 
-extern map<long long, Player>PList;
+inline map<long long, Player>PList;
 
 Player& getPlayer(long long qq);
 

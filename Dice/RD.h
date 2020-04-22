@@ -427,6 +427,7 @@ public:
 		while (strDice.find("+-") != std::string::npos)	strDice.replace(strDice.find("+-"), 2, "-");
 		while (strDice.find("-+") != std::string::npos)	strDice.replace(strDice.find("-+"), 2, "-");
 		while (strDice.find("--") != std::string::npos)	strDice.replace(strDice.find("--"), 2, "+");
+		while (strDice.find("XX") != std::string::npos)	strDice.replace(strDice.find("XX"), 2, "X");
 		for (size_t ReadCnt = 1; ReadCnt != strDice.length(); ReadCnt++)
 			if (strDice[ReadCnt] == 'F' && (isdigit(strDice[ReadCnt - 1]) || strDice[ReadCnt - 1] == '+' || strDice[
 				ReadCnt - 1] == '-'))

@@ -657,7 +657,7 @@ bool DDBlackManager::up_group_danger(long long llgroup, DDBlackMark& mark) {
     return true;
 }
 bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark) {
-    if (trustedQQ(llqq) > 1 || llqq == console.master()) {
+    if (trustedQQ(llqq) > 1 || llqq == console.master() || llqq == console.DiceMaid) {
         if (mark.fromQQ.first == llqq)mark.fromQQ.second = 0;
         if (mark.inviterQQ.first == llqq)mark.inviterQQ.second = 0;
         if (mark.ownerQQ.first == llqq)mark.ownerQQ.second = 0;

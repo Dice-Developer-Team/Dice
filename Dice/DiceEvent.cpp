@@ -1238,12 +1238,7 @@ int FromMsg::DiceReply() {
 			ResList res;
 			strVar["group"] = grpinfo.llGroup ? grpinfo.tostring() : printGroup(llGroup);
 			res << "ÔÚ{group}£º";
-			ResList subres;
-			subres.dot("+");
-			for (auto it : grp.boolConf) {
-				subres << it;
-			}
-			res << subres.show();
+			res << grp.listBoolConf();
 			for (auto it : grp.intConf) {
 				res << it.first + "£º" + to_string(it.second);
 			}
@@ -3417,7 +3412,7 @@ int FromMsg::DiceReply() {
 					break;
 				}
 			}
-			if (isExp)strVar["reason"] = strMsg.substr(intMsgCnt);
+			if (isExp)strVar["reason"] = readRest();
 			else strMainDice.clear();
 		}
 		int intTurnCnt = 1;
@@ -3565,9 +3560,16 @@ int FromMsg::DiceReply() {
 			if (intTurnCnt > 1) {
 				while (intTurnCnt--) {
 					rdMainDice.Roll();
-					dices << "\n" + rdMainDice.FormStringCombined() + ((rdMainDice.FormStringCombined() != std::to_string(rdMainDice.intTotal)) ? ("=" + to_string(rdMainDice.intTotal)) : "");
+					string strForm = to_string(rdMainDice.intTotal);
+					if (boolDetail) {
+						string strCombined = rdMainDice.FormStringCombined();
+						string strSeparate = rdMainDice.FormStringSeparate();
+						if (strCombined != strForm)strForm = strCombined + "=" + strForm;
+						if (strSeparate != strMainDice && strSeparate != strCombined)strForm = strSeparate + "=" + strForm;
+					}
+					dices << strForm;
 				}
-				strVar["res"] = dices.dot(", ").line(10).show();
+				strVar["res"] = dices.dot(", ").line(7).show();
 			}
 			else strVar["res"] = boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString();
 			strReply = format(GlobalMsg[strType], { strVar["pc"] ,strVar["res"] ,strVar["reason"] });

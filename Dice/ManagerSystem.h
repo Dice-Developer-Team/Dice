@@ -127,7 +127,7 @@ int clearUser();
 
 string getName(long long QQ, long long GroupID = 0);
 
-static const map<string,short> mChatConf{//0-群管理员，2-白名单2级，3-白名单3级，4-管理员，5-系统操作
+inline const map<string,short> mChatConf{//0-群管理员，2-白名单2级，3-白名单3级，4-管理员，5-系统操作
 	{"忽略",4},
 	{"拦截消息",0},
 	{"停用指令",0},
@@ -213,6 +213,13 @@ public:
 	void rmConf(string key) {
 		intConf.erase(key);
 	}
+	string listBoolConf() {
+		ResList res;
+		for (auto it : boolConf) {
+			res << it;
+		}
+		return res.dot("+").show();
+	}
 	void setText(string key, string val) {
 		strConf[key] = val;
 	}
@@ -264,7 +271,7 @@ public:
 		//strConf = fread<string, string>(fin);
 	}
 };
-extern map<long long, Chat>ChatList;
+inline map<long long, Chat>ChatList;
 Chat& chat(long long id);
 int groupset(long long id, string st);
 string printChat(Chat& grp);

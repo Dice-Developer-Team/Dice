@@ -107,7 +107,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;DICE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;DICE_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <ExceptionHandling>Sync</ExceptionHandling>
       <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -226,7 +226,6 @@
     <ClCompile Include="EncodingConvert.cpp" />
     <ClCompile Include="GetRule.cpp" />
     <ClCompile Include="GlobalVar.cpp" />
-    <ClCompile Include="InitList.cpp" />
     <ClCompile Include="ManagerSystem.cpp" />
     <ClCompile Include="MsgFormat.cpp" />
     <ClCompile Include="MsgMonitor.cpp" />
@@ -274,7 +273,6 @@
     <ClInclude Include="EncodingConvert.h" />
     <ClInclude Include="GetRule.h" />
     <ClInclude Include="GlobalVar.h" />
-    <ClInclude Include="InitList.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="Jsonio.h" />
     <ClInclude Include="ManagerSystem.h" />
