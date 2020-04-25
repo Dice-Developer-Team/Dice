@@ -10,7 +10,6 @@
 #include "EncodingConvert.h"
 #include "DiceEvent.h"
 
-std::unique_ptr<DiceTableMaster> gm;
 std::shared_mutex sessionMutex;
 
 int DiceSession::table_add(string key, int prior, string item) {

@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "StrExtern.hpp"
+#include "STLExtern.hpp"
 
 namespace CardDeck
 {

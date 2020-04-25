@@ -336,9 +336,9 @@ int loadDir(int load(std::string, T&), std::string strDir, T& tmp, std::string& 
 	if (!intFile)return 0;
 	strLog += "读取" + strDir + "中的" + std::to_string(intFile) + "个文件, 共" + std::to_string(intItem) + "个条目\n";
 	if (intFailure) {
-		strLog += "读取失败" + std::to_string(intFailure) + "个:";
-		for (auto it : files) {
-			strLog += "\n" + it;
+		strLog += "读取失败" + std::to_string(intFailure) + "个:\n";
+		for (auto &it : files) {
+			strLog += it + "\n";
 		}
 	}
 	if (isSubdir)for (auto it : dirs) {

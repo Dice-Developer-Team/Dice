@@ -4,7 +4,7 @@
 #include "DiceEvent.h"
 #include "Jsonio.h"
 #include "MsgFormat.h"
-#include "GlobalVar.h"
+#include "DiceMod.h"
 #include "ManagerSystem.h"
 #include "BlackListManager.h"
 #include "CharacterCard.h"
@@ -775,26 +775,20 @@ int FromMsg::DiceReply() {
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
 		if (intMsgCnt == strMsg.length()) {
-			HelpDoc.erase(strVar["key"]);
-			EditedHelpDoc.erase(strVar["key"]);
+			CustomHelp.erase(strVar["key"]);
+			if (auto it = HelpDoc.find(strVar["key"]); it != HelpDoc.end())
+				fmt->set_help(it->first, it->second);
+			else 
+				fmt->rm_help(strVar["key"]);
 			reply(format(GlobalMsg["strHlpReset"], { strVar["key"] }));
 		}
 		else {
 			string strHelpdoc = strMsg.substr(intMsgCnt);
-			EditedHelpDoc[strVar["key"]] = strHelpdoc;
-			HelpDoc[strVar["key"]] = strHelpdoc;
+			CustomHelp[strVar["key"]] = strHelpdoc;
+			fmt->set_help(strVar["key"], strHelpdoc);
 			reply(format(GlobalMsg["strHlpSet"], { strVar["key"] }));
 		}
-		string strFileLoc = getAppDirectory();
-		ofstream ofstreamHelpDoc(strFileLoc + "HelpDoc.txt", ios::out | ios::trunc);
-		for (auto it : EditedHelpDoc)
-		{
-			while (it.second.find("\r\n") != string::npos)it.second.replace(it.second.find("\r\n"), 2, "\\n");
-			while (it.second.find('\n') != string::npos)it.second.replace(it.second.find('\n'), 1, "\\n");
-			while (it.second.find('\r') != string::npos)it.second.replace(it.second.find('\r'), 1, "\\r");
-			while (it.second.find("\t") != string::npos)it.second.replace(it.second.find("\t"), 1, "\\t");
-			ofstreamHelpDoc << it.first << '\n' << it.second << '\n';
-		}
+		saveJMap("DiceData\\conf\\CustomHelp.json", CustomHelp);
 		return true;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "help")
@@ -838,13 +832,8 @@ int FromMsg::DiceReply() {
 		if (strOption.empty()) {
 			reply(string(Dice_Short_Ver) + "\n" + GlobalMsg["strHlpMsg"]);
 		}
-		else if (HelpDoc.count(strOption)) {
-			strReply = format(HelpDoc[strOption], HelpDoc, {});
-			reply(strReply);
-			return 1;
-		}
 		else {
-			reply(GlobalMsg["strHlpNotFound"]);
+			reply(fmt->get_help(strOption));
 		}
 		return true;
 	}
@@ -1461,7 +1450,7 @@ int FromMsg::DiceReply() {
 			CardDeck::mReplyDeck.erase(strVar["key"]);
 		}
 		else reply(GlobalMsg["strReplySet"], { strVar["key"] });
-		saveJMap(string(getAppDirectory()) + "ReplyDeck.json", CardDeck::mReplyDeck);
+		saveJMap("DiceData\\conf\\CustomReply.json", CardDeck::mReplyDeck);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
@@ -2231,7 +2220,7 @@ int FromMsg::DiceReply() {
 		short* pVal = &nCurrentVal;
 		//获取技能原值
 		if (strCurrentValue.empty()) {
-			if (PList.count(fromQQ) && (getPlayer(fromQQ)[fromGroup].stored(strVar["attr"]))) {
+			if (PList.count(fromQQ) && !strVar["attr"].empty() && (getPlayer(fromQQ)[fromGroup].stored(strVar["attr"]))) {
 				pVal = &getPlayer(fromQQ)[fromGroup][strVar["attr"]];
 			}
 			else {

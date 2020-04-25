@@ -39,7 +39,7 @@
 #include "RD.h"
 #include "CQEVE_ALL.h"
 #include "ManagerSystem.h"
-#include "GlobalVar.h"
+#include "DiceMod.h"
 #include "DiceMsgSend.h"
 #include "MsgFormat.h"
 #include "DiceCloud.h"
@@ -67,36 +67,40 @@ void loadData() {
 	mkDir("DiceData");
 	string strLog;
 	loadDir(loadXML<CardTemp>, string("DiceData\\CardTemp\\"), mCardTemplet, strLog, true);
-	loadJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck);
-	HelpDoc["回复列表"] = "回复触发词列表:" + listKey(CardDeck::mReplyDeck);
+	if (loadJMap("DiceData\\conf\\CustomReply.json", CardDeck::mReplyDeck) < 0 && loadJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck) > 0) {
+		saveJMap("DiceData\\conf\\CustomReply.json", CardDeck::mReplyDeck);
+	}
+	fmt->set_help("回复列表","回复触发词列表:" + listKey(CardDeck::mReplyDeck));
 	if (loadDir(loadJMap, string("DiceData\\PublicDeck\\"), CardDeck::mExternPublicDeck, strLog) < 1) {
 		loadJMap(strFileLoc + "PublicDeck.json", CardDeck::mExternPublicDeck);
 		loadJMap(strFileLoc + "ExternDeck.json", CardDeck::mExternPublicDeck);
 	}
 	map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
+	fmt->set_help("扩展牌堆",listKey(CardDeck::mExternPublicDeck));
+	fmt->set_help("全牌堆列表",listKey(CardDeck::mPublicDeck));
+	fmt->set_help("master",printQQ(console.master()));
+	//读取帮助文档
+	fmt->load(strLog);
+	if (loadJMap("DiceData\\conf\\CustomHelp.json", CustomHelp) < 0) {
+		ifstream ifstreamHelpDoc(strFileLoc + "HelpDoc.txt");
+		if (ifstreamHelpDoc){
+			string strName, strMsg;
+			while (getline(ifstreamHelpDoc, strName) && getline(ifstreamHelpDoc, strMsg)) {
+				while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
+				while (strMsg.find("\\s") != string::npos)strMsg.replace(strMsg.find("\\s"), 2, " ");
+				while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
+				CustomHelp[strName] = strMsg;
+			}
+			saveJMap("DiceData\\conf\\CustomHelp.json", CustomHelp);
+			console.log("初始化自定义帮助词条" + to_string(CustomHelp.size()) + "条", 1);
+		}
+		ifstreamHelpDoc.close();
+	}
+	map_merge(fmt->helpdoc, CustomHelp);
 	if (!strLog.empty()) {
 		strLog += "扩展配置读取完毕√";
 		console.log(strLog, 1, printSTNow());
 	}
-	HelpDoc["扩展牌堆"] = listKey(CardDeck::mExternPublicDeck);
-	HelpDoc["全牌堆列表"] = listKey(CardDeck::mPublicDeck);
-	//读取帮助文档
-	HelpDoc["master"] = printQQ(console.master());
-	ifstream ifstreamHelpDoc(strFileLoc + "HelpDoc.txt");
-	if (ifstreamHelpDoc)
-	{
-		string strName, strMsg, strDebug;
-		while (ifstreamHelpDoc) {
-			getline(ifstreamHelpDoc, strName);
-			getline(ifstreamHelpDoc, strMsg);
-			while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
-			while (strMsg.find("\\s") != string::npos)strMsg.replace(strMsg.find("\\s"), 2, " ");
-			while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
-			EditedHelpDoc[strName] = strMsg;
-			HelpDoc[strName] = strMsg;
-		}
-	}
-	ifstreamHelpDoc.close();
 }
 //初始化
 void dataInit() {
@@ -307,6 +311,8 @@ EVE_Enable(eventEnable)
 		blacklist->saveJson("DiceData\\conf\\BlackList.json");
 		console.log("初始化不良记录" + to_string(cnt) + "条", 1);
 	}
+
+	fmt = make_unique<DiceModManager>();
 	if (loadJMap("DiceData\\conf\\CustomMsg.json", EditedMsg) < 0)loadJMap(strFileLoc + "CustomMsg.json", EditedMsg);
 	//预修改出场回复文本
 	if (EditedMsg.count("strSelfName"))GlobalMsg["strSelfName"] = EditedMsg["strSelfName"];
@@ -719,6 +725,7 @@ EVE_Disable(eventDisable)
 	Enabled = false;
 	threads = {};
 	dataBackUp();
+	fmt.reset();
 	gm.reset();
 	PList.clear();
 	ChatList.clear();

@@ -53,45 +53,39 @@ static nlohmann::json freadJson(std::string strPath) {
 	return j;
 }
 
+template<typename T1, typename T2, class sort>
+int readJMap(nlohmann::json& j, std::map<T1, T2, sort>& mapTmp) {
+	int intCnt = 0;
+	for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it) {
+		T1 tKey = readJKey<T1>(it.key());
+		T2 tVal = it.value();
+		tVal = UTF8toGBK(tVal);
+		mapTmp[tKey] = tVal;
+		intCnt++;
+	}
+	return intCnt;
+}
+
 template<typename T1, typename T2>
 int readJson(const std::string& strJson, std::map<T1, T2> &mapTmp) {
-	nlohmann::json j;
-	int intCnt = 0;
 	try {
-		j = nlohmann::json::parse(strJson);
-		for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it)
-		{
-			T1 tKey = readJKey<T1>(it.key());
-			T2 tVal = it.value();
-			tVal = UTF8toGBK(tVal);
-			mapTmp[tKey] = tVal;
-			intCnt++;
-		}
+		nlohmann::json j = nlohmann::json::parse(strJson);
+		return readJMap(j, mapTmp);
 	}
 	catch (...) {
 		return -1;
 	}
-	return intCnt;
 }
 
 template<typename T1, typename T2, typename sort>
 int loadJMap(std::string strLoc, std::map<T1, T2, sort> &mapTmp) {
 	std::ifstream fin(strLoc);
-	int Cnt = 0;
 	if (fin) {
-		nlohmann::json j;
 		try {
+			nlohmann::json j;
 			fin >> j;
-			for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it)
-			{
-				T1 tKey = readJKey<T1>(it.key());
-				T2 tVal = it.value();
-				tVal = UTF8toGBK(tVal);
-				mapTmp[tKey] = tVal;
-				Cnt++;
-			}
 			fin.close();
-			return Cnt;
+			return readJMap(j, mapTmp);
 		}
 		catch (...) {
 			fin.close();

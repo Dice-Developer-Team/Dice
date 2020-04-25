@@ -12,7 +12,6 @@
 #include "DiceMsgSend.h"
 
 using std::string;
-using PropType = map<string, int>;
 //打包待处理消息
 class FromMsg {
 public:

@@ -217,6 +217,7 @@
     <ClCompile Include="DiceConsole.cpp" />
     <ClCompile Include="DiceEvent.cpp" />
     <ClCompile Include="DiceFile.cpp" />
+    <ClCompile Include="DiceMod.cpp" />
     <ClCompile Include="DiceMsgSend.cpp" />
     <ClCompile Include="DiceNetwork.cpp" />
     <ClCompile Include="DiceSensitive.cpp" />

@@ -8,6 +8,7 @@
 #include <windows.h>
 
 using std::string;
+using std::wstring;
 using std::to_string;
 
 static string toString(int num, unsigned short size = 0) {
@@ -29,7 +30,7 @@ static int count_char(string s, char ch) {
     return cnt;
 }
 
-static string convert_w2a(wchar_t* wch) {
+static string convert_w2a(const wchar_t* wch) {
     int len = WideCharToMultiByte(CP_ACP, 0, wch, wcslen(wch), NULL, 0, NULL, NULL);
     char* m_char = new char[len + 1];
     WideCharToMultiByte(CP_ACP, 0, wch, wcslen(wch), m_char, len, NULL, NULL);
@@ -38,16 +39,12 @@ static string convert_w2a(wchar_t* wch) {
     delete[] m_char;
     return str;
 }
-
-struct less_ci {
-    bool operator()(const string& str1, const string& str2)const {
-        string::const_iterator it1 = str1.begin(), it2 = str2.begin();
-        while (it1 != str1.end() && it2 != str2.end()) {
-            if (tolower(*it1) < tolower(*it2))return true;
-            else if (tolower(*it2) < tolower(*it1))return false;
-            it1++;
-            it2++;
-        }
-        return str1.length() < str2.length();
-    }
-};
+static wstring convert_a2w(const char* ch) {
+    int len = MultiByteToWideChar(CP_ACP, 0, ch, strlen(ch), NULL, 0);
+    wchar_t* m_char = new wchar_t[len + 1];
+    MultiByteToWideChar(CP_ACP, 0, ch, strlen(ch), m_char, len);
+    m_char[len] = L'\0';
+    std::wstring wstr(m_char);
+    delete[] m_char;
+    return wstr;
+}

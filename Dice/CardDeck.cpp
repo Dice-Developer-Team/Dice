@@ -84,7 +84,7 @@ namespace CardDeck
 	};
 	std::map<std::string, std::vector<std::string>, less_ci> mExternPublicDeck;
 	//
-	std::map<std::string, std::vector<std::string>, less_ci> mReplyDeck = { {"dissmiss",{"diss!diss!diss!会英语吗在那diss本骰娘？那叫!dismiss!"}} };
+	std::map<std::string, std::vector<std::string>, less_ci> mReplyDeck = { {".dissmiss",{"diss!diss!diss!会英语吗在那diss本骰娘？那叫!dismiss!"}} };
 	//群聊牌堆
 	std::map<long long, std::vector<std::string>> mGroupDeck;
 	//群聊临时牌堆

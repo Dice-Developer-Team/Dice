@@ -54,8 +54,6 @@ class DiceSession {
 	DiceSession& clear_ob() { sOB.clear(); return *this; }
 
 	void save() const;
-	int load(string, map<long long, std::shared_ptr<DiceSession>>);
-
 };
 
 using Session = DiceSession;
@@ -73,4 +71,4 @@ public:
 	int load();
 };
 
-extern std::unique_ptr<DiceTableMaster> gm;
+inline std::unique_ptr<DiceTableMaster> gm;

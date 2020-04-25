@@ -26,7 +26,7 @@
 #define DICE_GLOBAL_VAR
 #include "CQLogger.h"
 #include <map>
-#include "StrExtern.hpp"
+#include "STLExtern.hpp"
 
  /*
   * 版本信息
@@ -34,10 +34,10 @@
   * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
   */
 const unsigned short Dice_Build = 556u;
-static const std::string Dice_Ver_Without_Build = "2.3.8Express10";
+inline const std::string Dice_Ver_Without_Build = "2.3.8Express10";
 constexpr auto DiceRequestHeader = "Dice/2.3.8EXP10";
-static const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
-static const std::string Dice_Short_Ver = "Dice! by 溯洄 Shiki.Ver " + Dice_Ver;
+inline const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
+inline const std::string Dice_Short_Ver = "Dice! by 溯洄 Shiki.Ver " + Dice_Ver;
 
 #ifdef __clang__
 
@@ -78,9 +78,9 @@ extern std::map<std::string, std::string> GlobalMsg;
 // 修改后的Global语句
 extern std::map<std::string, std::string> EditedMsg;
 // 帮助文档
-extern std::map<std::string, std::string, less_ci> HelpDoc;
+extern const std::map<std::string, std::string, less_ci> HelpDoc;
 // 修改后的帮助文档
-extern std::map<std::string, std::string, less_ci> EditedHelpDoc;
-std::string getMsg(std::string key, std::map<std::string, std::string> tmp = {}, const std::map<std::string, std::string>& dir = GlobalMsg);
+inline std::map<std::string, std::string, less_ci> CustomHelp;
+std::string getMsg(std::string key, std::map<std::string, std::string> tmp = {});
 
 #endif /*DICE_GLOBAL_VAR*/

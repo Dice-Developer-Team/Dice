@@ -336,7 +336,7 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st) {
 				if (intDay > intDayLim) {
 					strVar["day"] = to_string(intDay);
 					res << printGroup(id) + ":" + to_string(intDay) + "Ìì\n";
-					grp.leave(getMsg("strLeaveUnused", GlobalMsg, strVar));
+					grp.leave(getMsg("strLeaveUnused", strVar));
 					intCnt++;
 					this_thread::sleep_for(2s);
 				}

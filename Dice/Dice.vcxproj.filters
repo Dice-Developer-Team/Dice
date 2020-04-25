@@ -111,6 +111,9 @@
     <ClCompile Include="DiceEvent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DiceMod.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">

@@ -89,8 +89,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPcTextTooLong","文本长度不能超过48×"},
 	{"strSensNote","发现指令中带敏感词，{self}已记录并上报！"},
 	{"strSensWarn","发现指令中带敏感词，{self}拒绝响应且已上报！"},
-	{"strSpamFirstWarning","你够了，我无法容忍你的行为（{self}的刷屏初次警告）"},
-	{"strSpamFinalWarning","希望不要，不是希望，就是呵斥，不要有这种行为出现，这个太野蛮了（{self}的刷屏最终警告）"},
+	{"strSpamFirstWarning","你短时间内对{self}指令次数过多！请善用多轮掷骰和复数生成指令（刷屏初次警告）"},
+	{"strSpamFinalWarning","请暂停你的一切指令，避免因高频指令被{self}拉黑！（刷屏最终警告）"},
 	{"strReplySet","{self}对关键词{key}的回复已设置√"},
 	{"strReplyDel","{self}对关键词{key}的回复已清除√"},
 	{"strStModify","{self}对已记录{pc}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
@@ -141,13 +141,13 @@ std::map<std::string, std::string> GlobalMsg
 	{"strNotAdmin","你不是{self}的管理员×"},
 	{"strDismiss", ""},						//.dismiss退群前的回执
 	{"strHlpSet","已为{key}设置词条√"},
-	{"strHlpReset","已清除{key}的词条，重启应用后重置默认词条√"},
+	{"strHlpReset","已清除{key}的词条√"},
 	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
+	{"strHlpNotFound","{self}未找到指定的帮助信息×"},
 	{"strClockToWork","{self}已按时启用√"},
 	{"strClockOffWork","{self}已按时关闭√"},
 	{"strNameGenerator","{pc}的随机名称：{res}"},
 	{"strDrawCard", "来看看{pc}抽到了什么：{res}"},
-	{"strHlpNotFound", "未找到指定的帮助信息×"},
 	{"strMeOn","成功在这里启用{self}的.me命令√"},
 	{"strMeOff","成功在这里禁用{self}的.me命令√"},
 	{"strMeOnAlready","在这里{self}的.me命令没有被禁用!"},
@@ -268,7 +268,8 @@ std::map<std::string, std::string> GlobalMsg
 使用服务默认已经同意服务协议)" },					//同意添加好友时额外发送的语句
 	{"strAddGroup", R"(欢迎使用{self}！
 请使用.dismiss QQ号（或后四位） 使{self}退群退讨论组
-.bot on/off QQ号（或后四位） //插件开启或关闭
+.bot on/off QQ号（或后四位） //开启或关闭指令
+.group +/-禁用回复 //禁用或启用回复
 .help协议 确认服务协议
 .help指令 查看指令列表
 .help设定 确认骰娘设定
@@ -278,20 +279,30 @@ std::map<std::string, std::string> GlobalMsg
 	{"self", "&strSelfName" },
 	{"strBotMsg", "\n使用.help更新 查看{self}更新内容"},
 	{"strHlpMsg" , R"(请使用.dismiss QQ号（或后四位） 使{self}退群退讨论组
-.bot on/off QQ号（或后四位） //插件开启或关闭
+.bot on/off QQ号（或后四位） //开启或关闭指令
 .help协议 确认服务协议
 .help指令 查看指令列表
 .help设定 确认骰娘设定
 .help链接 查看源码文档
-官方群：754494359
-私骰群：863062599)"}
+开发交流群：1029435374
+私骰分流群：863062599)"}
 };
 
 std::map<std::string, std::string> EditedMsg;
-std::map<std::string, std::string, less_ci> HelpDoc = {
-{"更新","550：允许多轮检定\n549：新增刷屏监测\n548：允许自定义先攻检定掷骰\n547：更新指令开关\n546：完善骰娘列表体验\n545：开放自定义deck\n544：后台管理更新\n543：允许.st输入变化值\n537：更新.send功能\n535：新增了可变成长检定功能"},
+const std::map<std::string, std::string, less_ci> HelpDoc = {
+{"更新",R"(556:黑名单系统重做
+555:用户记录/群管系统
+554:新增多角色卡功能
+553:name功能调整
+552:后台系统大修
+551:文件夹批量读取牌堆
+550：允许多轮检定
+549：新增刷屏监测
+547：更新指令开关
+544：后台管理更新
+537：更新.send功能)"},
 {"协议","0.本协议是Shiki(The Star、Death、Judgement、The World)的服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
-{"链接","查看源码:https://github.com/mystringEmpty/Dice\n插件下载:https://github.com/mystringEmpty/Dice/releases\n用户手册:http://shiki.stringempty.xyz/download/Shiki_User_Manual.pdf\n骰主手册:http://shiki.stringempty.xyz/download/Shiki_Master_Manual.pdf\n炼骰手册:http://shiki.stringempty.xyz/download/DiceMaid_CookBook.html\n(在线文档)https://dice.c-j.dev/manuals/DiceMaid_CookBook.html\nst用人物卡:http://shiki.stringempty.xyz/download/COC7_player_card_shiki.xlsx"},
+{"链接","查看源码:https://github.com/mystringEmpty/Dice\n插件下载:https://github.com/mystringEmpty/Dice/releases\n用户手册:http://shiki.stringempty.xyz/download/Shiki_User_Manual.pdf\n骰主手册:http://shiki.stringempty.xyz/download/Shiki_Master_Manual.pdf\n炼骰手册:http://shiki.stringempty.xyz/download/DiceMaid_CookBook.html\n(在线文档)https://dice.c-j.dev/\nst用人物卡:http://shiki.stringempty.xyz/download/COC7_player_card_shiki.xlsx"},
 {"设定","Master：{master}\n.me使用：禁止\n.jrrp使用：允许\n邀请处理：黑名单制，非禁即入\n讨论组使用：允许\n移出反制：拉黑群和操作者\n禁言反制：默认拉黑群和群主\n刷屏反制：警告\n邀请人责任：有限连带\n窥屏可能：有\n其他插件：无\n骰娘个人群:（未设置）\n私骰分流群：863062599\n开发交流群：1029435374"},
 {"作者","Copyright (C) 2018-2020 w4123溯洄\nCopyright (C) 2019-2020 String.Empty"},
 {"指令","at骰娘后接指令可以指定骰娘单独响应，如at骰娘.bot off\n多数指令需要后接参数，请.help对应指令 获取详细信息\n掷骰指令包括:\n.dismiss 退群\n.bot 开关\n.welcome 入群欢迎\n.rules 规则速查\n.r 掷骰\n.ob 旁观模式\n.set 设置默认骰\n.name 随机姓名\n.nn 设置昵称\n.coc COC人物作成\n.dnd DND人物作成\n.st 角色卡设置\n.rc/ra 检定\n.setcoc 设置检定房规\n.sc 理智检定\n.en 成长检定\n.ri 先攻\n.init 先攻列表\n.ww 骰池\n.me 第三人称动作\n.jrrp 今日人品\n.send 向Master发送消息\n.group 群管\n.draw 抽牌\n为了避免未预料到的指令误判，请尽可能在参数之间使用空格"},
@@ -410,9 +421,8 @@ std::map<std::string, std::string, less_ci> HelpDoc = {
 {"世界正位","完成、成功、完美无缺、连续不断、精神亢奋、拥有毕生奋斗的目标、完成使命、幸运降临、快乐的结束、模范情侣。"},
 {"世界逆位","未完成、失败、准备不足、盲目接受、一时不顺利、半途而废、精神颓废、饱和状态、合谋、态度不够融洽、感情受挫。"},
  };
-std::map<std::string, std::string, less_ci> EditedHelpDoc;
-std::string getMsg(std::string key, std::map<std::string, std::string> maptmp, const std::map<std::string, std::string>& dir) {
-	auto it = dir.find(key);
-	if (it != dir.end())return format(it->second, dir, maptmp);
+std::string getMsg(std::string key, std::map<std::string, std::string> maptmp) {
+	auto it = GlobalMsg.find(key);
+	if (it != GlobalMsg.end())return format(it->second, GlobalMsg, maptmp);
 	return "";
 }
