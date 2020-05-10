@@ -130,8 +130,9 @@ template<typename T,typename sort>
 std::string listKey(std::map<std::string, T, sort>m) {
 	ResList list;
 	list.setDot("/", "/");
-	for (auto pair : m) {
-		list << pair.first;
+	for (auto &[key,val] : m) {
+		if (key[0] == '_')continue;
+		list << key;
 	}
 	return list.show();
 }

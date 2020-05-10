@@ -790,13 +790,17 @@ string DDBlackManager::list_self_qq_warning(long long llqq) {
 
 void DDBlackManager::add_black_group(long long llgroup, FromMsg* msg) {
     if (groupset(llgroup,"免黑") > 0) {
-        msg->note(GlobalMsg["self"] + "不能拉黑免黑群！");
+        msg->reply(GlobalMsg["self"] + "不能拉黑免黑群！");
         return;
     }
     DDBlackMark mark{ 0,llgroup };
     mark.danger = 1;
     mark.note = msg->strVar["note"];
     if (!mark.note.empty())mark.danger = 2;
+    if (mark.danger < get_qq_danger(llgroup)) {
+        msg->reply(GlobalMsg["strSelfName"] + "已拉黑群" + to_string(llgroup) + "！");
+        return;
+    }
     mark.time = msg->strVar["time"];
     mark.DiceMaid = console.DiceMaid;
     mark.masterQQ = console.masterQQ;
@@ -805,13 +809,17 @@ void DDBlackManager::add_black_group(long long llgroup, FromMsg* msg) {
 }
 void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg) {
     if (trustedQQ(llqq) > 1) {
-        msg->note(GlobalMsg["strSelfName"] + "不能拉黑受信任用户！");
+        msg->reply(GlobalMsg["strSelfName"] + "不能拉黑受信任用户！");
         return;
     }
     DDBlackMark mark{ llqq,0 };
     mark.danger = 1;
     mark.note = msg->strVar["note"];
     if (!mark.note.empty())mark.danger = 2;
+    if (mark.danger < get_qq_danger(llqq)) {
+        msg->reply(GlobalMsg["strSelfName"] + "已拉黑用户" + printQQ(llqq) + "！");
+        return;
+    }
     mark.time = msg->strVar["time"];
     mark.DiceMaid = console.DiceMaid;
     mark.masterQQ = console.masterQQ;
@@ -932,7 +940,7 @@ void DDBlackManager::create(DDBlackMark& mark) {
 
 int DDBlackManager::loadJson(string strPath) {
     nlohmann::json j = freadJson(strPath);
-    if (j.empty())return 0;
+    if (j.is_null())return -1;
     if (j.size() > vBlackList.capacity())vBlackList.reserve(j.size() * 2);
     for (auto& item : j) {
         DDBlackMark mark{ &item }; 

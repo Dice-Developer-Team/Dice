@@ -68,6 +68,7 @@ void loadData() {
 	string strLog;
 	loadDir(loadXML<CardTemp>, string("DiceData\\CardTemp\\"), mCardTemplet, strLog, true);
 	if (loadJMap("DiceData\\conf\\CustomReply.json", CardDeck::mReplyDeck) < 0 && loadJMap(strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck) > 0) {
+		console.log("迁移自定义回复" + to_string(CardDeck::mReplyDeck.size()) + "条", 1);
 		saveJMap("DiceData\\conf\\CustomReply.json", CardDeck::mReplyDeck);
 	}
 	fmt->set_help("回复列表","回复触发词列表:" + listKey(CardDeck::mReplyDeck));
@@ -81,7 +82,8 @@ void loadData() {
 	fmt->set_help("master",printQQ(console.master()));
 	//读取帮助文档
 	fmt->load(strLog);
-	if (loadJMap("DiceData\\conf\\CustomHelp.json", CustomHelp) < 0) {
+	if (int cnt = 0; (cnt = loadJMap("DiceData\\conf\\CustomHelp.json", CustomHelp)) < 0) {
+		if (cnt == -1)console.log("自定义帮助文件json解析失败！", 1);
 		ifstream ifstreamHelpDoc(strFileLoc + "HelpDoc.txt");
 		if (ifstreamHelpDoc){
 			string strName, strMsg;
@@ -91,8 +93,10 @@ void loadData() {
 				while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
 				CustomHelp[strName] = strMsg;
 			}
-			saveJMap("DiceData\\conf\\CustomHelp.json", CustomHelp);
-			console.log("初始化自定义帮助词条" + to_string(CustomHelp.size()) + "条", 1);
+			if (!CustomHelp.empty()) {
+				saveJMap("DiceData\\conf\\CustomHelp.json", CustomHelp);
+				console.log("初始化自定义帮助词条" + to_string(CustomHelp.size()) + "条", 1);
+			}
 		}
 		ifstreamHelpDoc.close();
 	}
@@ -169,15 +173,23 @@ EVE_Enable(eventEnable)
 			console.setClock(ClockToWork, ClockEvent::on);
 			console.setClock(ClockOffWork, ClockEvent::off);
 		}
+		else {
+			sendPrivateMsg(console.DiceMaid, R"(欢迎使用Dice!exp版掷骰机器人！
+右键点击酷Q->【应用管理】->【菜单】->【Master模式切换】可开启Master模式，开启对骰娘的后台功能
+炼骰手册:http://shiki.stringempty.xyz/download/DiceMaid_CookBook.html
+更多文件参看.help链接
+)");
+		}
 		ifstreamMaster.close();
 		std::map<string, int>boolConsole;
 		loadJMap(strFileLoc + "boolConsole.json", boolConsole);
 		for (auto& [key, val] : boolConsole) {
 			console.set(key, val);
 		}
-		console.setClock({ 4, 0 }, ClockEvent::save);
-		console.setClock({ 5, 0 }, ClockEvent::clear);
+		console.setClock({ 4, 4 }, ClockEvent::save);
+		console.setClock({ 5, 5 }, ClockEvent::clear);
 		console.loadNotice();
+		console.save();
 	}
 	//读取聊天列表
 	if (loadBFile("DiceData\\user\\UserConf.RDconf", UserList) < 1) {
@@ -305,7 +317,7 @@ EVE_Enable(eventEnable)
 		chat(gid).group().name(gname).reset("已退");
 	}
 	blacklist = make_unique<DDBlackManager>();
-	if (!blacklist->loadJson("DiceData\\conf\\BlackList.json")) {
+	if (blacklist->loadJson("DiceData\\conf\\BlackList.json") < 0) {
 		blacklist->loadJson(strFileLoc + "BlackMarks.json");
 		int cnt = blacklist->loadHistory(strFileLoc);
 		blacklist->saveJson("DiceData\\conf\\BlackList.json");
@@ -374,7 +386,7 @@ bool eve_GroupAdd(Chat& grp) {
 	try {
 		strMsg += "新加入" + GroupInfo(fromGroup).tostring();
 		if (blacklist->get_group_danger(fromGroup)) {
-			grp.leave("!warning" + blacklist->list_group_warning(fromGroup));
+			grp.leave(blacklist->list_group_warning(fromGroup));
 			strMsg += "为黑名单群，已退群";
 			console.log(strMsg, 0b10, printSTNow());
 			return 1;
@@ -402,7 +414,7 @@ bool eve_GroupAdd(Chat& grp) {
 							strMsg += "（群免黑）";
 						}
 						else {
-							sendGroupMsg(fromGroup, "!warning" + blacklist->list_qq_warning(each.QQID));
+							sendGroupMsg(fromGroup, blacklist->list_qq_warning(each.QQID));
 							grp.leave("发现黑名单管理员" + printQQ(each.QQID) + "将预防性退群");
 							strMsg += "，已退群";
 							console.log(strMsg, 0b10, strNow);
@@ -715,7 +727,7 @@ EVE_Menu(eventMasterMode) {
 	}else {
 		console.isMasterMode = true;
 		console.save();
-		MessageBoxA(nullptr, "Master模式已开启√", "Master模式切换", MB_OK | MB_ICONINFORMATION);
+		MessageBoxA(nullptr, "Master模式已开启√\n认主请对骰娘发送.master public/private", "Master模式切换", MB_OK | MB_ICONINFORMATION);
 	}
 	return 0;
 }

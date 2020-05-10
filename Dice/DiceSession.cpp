@@ -114,6 +114,7 @@ void DiceTableMaster::session_end(long long group) {
 const enumap<string> mSMTag{ "type", "room", "gm", "player", "observer", "tables" };
 
 void DiceTableMaster::save() {
+    mkDir("DiceData\\user\\session");
     std::shared_lock<std::shared_mutex> lock(sessionMutex);
     for (auto [grp, pSession] : mSession) {
         pSession->save();

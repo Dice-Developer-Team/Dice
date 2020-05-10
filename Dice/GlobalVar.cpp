@@ -44,8 +44,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strUserTrustDenied","{nick}在{self}处无权访问对方的权限×"},
 	{"strUserTrustIllegal","将目标权限修改为{trust}是非法的×"},
 	{"strUserNotFound","{self}无{user}的用户记录"},
-	{"strGroupAuthorized","A roll to the table turns to a dice fumble!\nDice Roller {self}√\n本群已授权许可，请尽情使用本骰娘√\n请遵守协议使用，服务结束后使用.dismiss送出!" },
-	{"strAddGroupNoLicense","本群未获{self}许可使用，将自动在群内静默。\n请先.help协议 阅读并同意协议后向运营方申请许可使用，\n否则请管理员使用!dismiss送出{self}\n可按以下格式填写并发送申请:\n!authorize 申请用途:[理由] 我已了解Dice!基本用法，仔细阅读并保证遵守{self}的用户协议，如需停用指令使用[指令]，用后使用[指令]送出群" },
+	{"strGroupAuthorized","A roll to the table turns to a dice fumble!\nDice Roller {strSelfName}√\n本群已授权许可，请尽情使用本骰娘√\n请遵守协议使用，服务结束后使用.dismiss送出!" },
+	{"strAddGroupNoLicense","本群未获{self}许可使用，将自动在群内静默。\n请先.help协议 阅读并同意协议后向运营方申请许可使用，\n否则请管理员使用!dismiss送出{self}\n可按以下格式填写并发送申请:\n!authorize 申请用途:[理由] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[指令]，用后使用[指令]送出群" },
 	{"strGroupLicenseDeny","此群未获{self}许可使用，请先确认协议并申请许可×\n或请管理员使用!dismiss送出{self}" },
 	{"strGroupLicenseApply","此群未通过自助授权×\n许可申请已发送√" },
 	{"strGroupSetOn","现已开启{self}在此群的“{option}”选项√"},			//群内开关和遥控开关通用此文本
@@ -59,6 +59,9 @@ std::map<std::string, std::string> GlobalMsg
 	{"strGroupWholeUnban","{self}已关闭全局禁言√"},
 	{"strGroupWholeBan","{self}已开启全局禁言√"},
 	{"strGroupWholeBanErr","{self}开启全局禁言失败×"},
+	{"strGroupUnban","{self}裁定:{member}解除禁言√"},
+	{"strGroupBan","{self}裁定:{member}禁言{res}分钟√"},
+	{"strGroupBanErr","{self}禁言{member}失败×"},
 	{"strGroupNotFound","{self}无该群记录×"},
 	{"strGroupNotIn","{self}当前不在该群或对象不是群！"},
 	{"strGroupExit","{self}已退出该群√"},
@@ -259,14 +262,14 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPreserve", "{self}私有私用，勿扰勿怪"},
 	{"strJrrp", "{nick}今天的人品值是: {res}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{res}"},
-	{ "strAddFriendWhiteQQ","{strAddFriend}" },				//白名单用户添加好友时回复此句
-	{ "strAddFriend", R"(欢迎使用{self}！
+	{"strAddFriendWhiteQQ","{strAddFriend}" },				//白名单用户添加好友时回复此句
+	{"strAddFriend", R"(欢迎使用{strSelfName}！
 .help协议 确认服务协议
 .help指令 查看指令列表
 .help设定 确认骰娘设定
 .help链接 查看源码文档
 使用服务默认已经同意服务协议)" },					//同意添加好友时额外发送的语句
-	{"strAddGroup", R"(欢迎使用{self}！
+	{"strAddGroup", R"(欢迎使用{strSelfName}！
 请使用.dismiss QQ号（或后四位） 使{self}退群退讨论组
 .bot on/off QQ号（或后四位） //开启或关闭指令
 .group +/-禁用回复 //禁用或启用回复
@@ -276,12 +279,14 @@ std::map<std::string, std::string> GlobalMsg
 .help链接 查看源码文档
 邀请入群默认视为同意服务协议，知晓禁言或移出的后果)" },
 	{"strSelfName", ""},
-	{"self", "&strSelfName" },
+	{"strSelfCall", "&strSelfName" },
+	{"self", "&strSelfCall" },
 	{"strBotMsg", "\n使用.help更新 查看{self}更新内容"},
 	{"strHlpMsg" , R"(请使用.dismiss QQ号（或后四位） 使{self}退群退讨论组
 .bot on/off QQ号（或后四位） //开启或关闭指令
 .help协议 确认服务协议
 .help指令 查看指令列表
+.help群管 查看群管指令
 .help设定 确认骰娘设定
 .help链接 查看源码文档
 开发交流群：1029435374
@@ -373,7 +378,11 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"入群欢迎","&welcome"},
 {"入群欢迎词","&welcome"},
 {"welcome","入群欢迎词：.welcome\n.welcome \\\\{at}欢迎\\\\{nick}入群！\t//\\\\{at}视为at入群者，\\\\{nick}会替换为新人的昵称\n.welcome\t//不带参数时清除欢迎词\n无论开关状态，只要有欢迎词时有人入群，都会响应"},
-{"群管",".group查看在群内对骰娘的设置"},
+{"group","&群管"},
+{"群管",R"(群管指令.group
+.group +/-[群管词条] //为群加减设置
+群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/拦截消息/许可使用
+.group state //查看在群内对骰娘的设置)"},
 {"溯洄","孕育万千骰娘生机之母，萌妹吃鱼之神，正五棱双角锥体对的监护人，一切诡秘的窥见者，拟人者主宰，时空舞台外的逆流者，永转的命运之轮"},
 {"投食","投食Shiki，请选择http://shiki.stringempty.xyz/alipay.png\n投食溯洄，可选择https://afdian.net/@suhuiw4123"},
 {"愚者正位","憧憬自然的地方、毫无目的地前行、喜欢尝试挑战新鲜事物、四处流浪。美好的梦想。"},

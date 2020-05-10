@@ -164,6 +164,8 @@ private:
 		if (strMsg[intMsgCnt] == ']')intMsgCnt++;
 		return strMum;
 	}
+	//读取数字并存入整型
+	int readNum(int&);
 	//读取群号
 	long long readID() {
 		string strGroup = readDigit();

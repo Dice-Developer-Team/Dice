@@ -60,12 +60,18 @@ int FromMsg::AdminEvent(string strOption) {
 		return -1;
 	}
 	if (Console::intDefault.count(strOption)) {
-		string strBool = readDigit();
-		if (strBool.empty())reply(GlobalMsg["strSelfName"] + "该项为" + to_string(console[strOption.c_str()]));
-		else {
-			int intSet = stoi(strBool);
+		int intSet = 0;
+		switch (readNum(intSet)) {
+		case 0:
 			console.set(strOption, intSet);
 			note("已将" + GlobalMsg["strSelfName"] + "的" + strOption + "设置为" + to_string(intSet), 0b10);
+			break;
+		case -1:
+			reply(GlobalMsg["strSelfName"] + "该项为" + to_string(console[strOption.c_str()]));
+			break;
+		case -2:
+			reply("{nick}设置参数超出范围×");
+			break;
 		}
 		return 1;
 	}
@@ -189,7 +195,7 @@ int FromMsg::AdminEvent(string strOption) {
 				while (intMsgCnt < strMsg.length()) {
 					isReduce = strMsg[intMsgCnt] == '-';
 					string strNum = readDigit();
-					if (strNum.empty())break;
+					if (strNum.empty() || strNum.length() > 1)break;
 					if (int intNum = stoi(strNum); intNum > 5)continue;
 					else {
 						if (isReduce)intReduce |= (1 << intNum);
@@ -203,18 +209,23 @@ int FromMsg::AdminEvent(string strOption) {
 				else reply(GlobalMsg["strParaIllegal"]);
 				return 1;
 			}
-			string strLV = readDigit();
-			if (strLV.empty()) {
+			int intLV;
+			switch (readNum(intLV)) {
+			case 0:
+				if (intLV < 0 || intLV > 63) {
+					reply(GlobalMsg["strParaIllegal"]);
+					return 1;
+				}
+				console.setNotice(cTarget, intLV);
+				note("已将" + GlobalMsg["strSelfName"] + "对窗口" + printChat(cTarget) + "通知级别调整为" + to_string(intLV), 0b1);
+				break;
+			case -1:
 				reply("窗口" + printChat(cTarget) + "在" + GlobalMsg["strSelfName"] + "处的通知级别为：" + to_binary(console.showNotice(cTarget)));
-				return 1;
-			}
-			int intLV = stoi(strLV);
-			if (intLV < 0 || intLV > 63) {
+				break;
+			case -2:
 				reply(GlobalMsg["strParaIllegal"]);
-				return 1;
+				break;
 			}
-			console.setNotice(cTarget, intLV);
-			note("已将" + GlobalMsg["strSelfName"] + "对窗口" + printChat(cTarget) + "通知级别调整为" + strLV, 0b1);
 		}
 		return 1;
 	}
@@ -621,10 +632,9 @@ int FromMsg::DiceReply() {
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string QQNum = readDigit();
-		if (QQNum.empty() || (QQNum.length() == 4 && stoi(QQNum) == getLoginQQ() % 10000) || QQNum == to_string(console.DiceMaid))
-		{
+		if (QQNum.empty() || QQNum == to_string(console.DiceMaid) || (QQNum.length() == 4 && stoll(QQNum) == getLoginQQ() % 10000)){
 			if (!isAuth && trusted < 3) {
-				if (groupset(fromGroup, "停用指令") > 0)AddMsgToQueue(getMsg("strPermissionDeniedErr", strVar), fromQQ);
+				if (pGrp->isset("停用指令") && GroupInfo(fromGroup).nGroupSize > 200)AddMsgToQueue(getMsg("strPermissionDeniedErr", strVar), fromQQ);
 				else reply(GlobalMsg["strPermissionDeniedErr"]);
 				return -1;
 			}
@@ -691,14 +701,13 @@ int FromMsg::DiceReply() {
 		intMsgCnt += 3;
 		string Command = readPara();
 		string QQNum = readDigit();
-		if (QQNum.empty() || QQNum == to_string(getLoginQQ()) || (QQNum.length() == 4 && stoi(QQNum) == getLoginQQ() % 10000)) {
+		if (QQNum.empty() || QQNum == to_string(getLoginQQ()) || (QQNum.length() == 4 && stoll(QQNum) == getLoginQQ() % 10000)) {
 			if (Command == "on")
 			{
 				if (console["DisabledGlobal"])reply(GlobalMsg["strGlobalOff"]);
 				else if (intT == GroupT && (console["CheckGroupLicense"] && pGrp->isset("未审核") || console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")))reply(GlobalMsg["strGroupLicenseDeny"]);
 				else if (intT) {
-					if (isAuth)
-					{
+					if (isAuth){
 						if (groupset(fromGroup, "停用指令") > 0) {
 							chat(fromGroup).reset("停用指令");
 							reply(GlobalMsg["strBotOn"]);
@@ -708,7 +717,7 @@ int FromMsg::DiceReply() {
 						}
 					}
 					else {
-						if (groupset(fromGroup, "停用指令") > 0)AddMsgToQueue(getMsg("strPermissionDeniedErr", strVar), fromQQ);
+						if (groupset(fromGroup, "停用指令") > 0 && GroupInfo(fromGroup).nGroupSize > 100)AddMsgToQueue(getMsg("strPermissionDeniedErr", strVar), fromQQ);
 						else reply(GlobalMsg["strPermissionDeniedErr"]);
 					}
 				}
@@ -890,6 +899,10 @@ int FromMsg::DiceReply() {
 			return 1;
 		}
 		else {
+			if (strRule.length() > 1) {
+				reply(GlobalMsg["strDefaultCOCNotFound"]);
+				return 1;
+			}
 			int intRule = stoi(strRule);
 			switch (intRule) {
 			case 0:
@@ -1078,7 +1091,7 @@ int FromMsg::DiceReply() {
 				string strAppPath(*path);
 				strAppPath = strAppPath.substr(0, strAppPath.find_last_of("\\")) + "\\app\\com.w4123.dice.cpk";
 				delete path;
-				switch (Cloud::DownloadFile("http://shiki.stringempty.xyz/DiceVer/dev", strAppPath.c_str())) {
+				switch (Cloud::DownloadFile(string("http://shiki.stringempty.xyz/DiceVer/dev?" + to_string(fromTime)).c_str(), strAppPath.c_str())) {
 				case -1:
 					reply("下载失败:" + strAppPath);
 					break;
@@ -1341,8 +1354,8 @@ int FromMsg::DiceReply() {
 			}
 			long long llMemberQQ = stoll(QQNum);
 			GroupMemberInfo Member = getGroupMemberInfo(llGroup, llMemberQQ);
-			if (Member.QQID == llMemberQQ)
-			{
+			if (Member.QQID == llMemberQQ){
+				strVar["member"] = getName(Member.QQID, llGroup);
 				if (Member.permissions > 1) {
 					reply(GlobalMsg["strSelfPermissionErr"]);
 					return 1;
@@ -1356,11 +1369,12 @@ int FromMsg::DiceReply() {
 				RD rdMainDice(strMainDice, intDefaultDice);
 				rdMainDice.Roll();
 				long long intDuration = rdMainDice.intTotal;
+				strVar["res"] = rdMainDice.FormCompleteString();
 				if (setGroupBan(llGroup, llMemberQQ, intDuration * 60) == 0)
 					if (intDuration <= 0)
-						reply("裁定" + getName(Member.QQID, llGroup) + "解除禁言√");
-					else reply("裁定" + getName(Member.QQID, llGroup) + "禁言时长" + rdMainDice.FormCompleteString() + "分钟√");
-				else reply("禁言失败×");
+						reply(GlobalMsg["strGroupUnban"]);
+					else reply(GlobalMsg["strGroupBan"]);
+				else reply(GlobalMsg["strGroupBanErr"]);
 			}
 			else reply("{self}查无此群员×");
 		}
@@ -1588,7 +1602,10 @@ int FromMsg::DiceReply() {
 			}
 			switch (CardDeck::findDeck(strVar["deck_name"])) {
 			case 1:
-				DeckSet = CardDeck::mPublicDeck[strVar["deck_name"]];
+				if(strVar["deck_name"][0] =='_')
+					reply(GlobalMsg["strDeckNotFound"]);
+				else
+					DeckSet = CardDeck::mPublicDeck[strVar["deck_name"]];
 				break;
 			case 2: {
 				int intSize = stoi(strVar["key"]) + 1;
@@ -1700,8 +1717,8 @@ int FromMsg::DiceReply() {
 			}
 		}
 		else {
-			int intFoundRes = CardDeck::findDeck(strVar["deck_name"]);
-			if (intFoundRes == 0) {
+			//int intFoundRes = CardDeck::findDeck(strVar["deck_name"]);
+			if (strVar["deck_name"][0]=='_'|| CardDeck::findDeck(strVar["deck_name"]) == 0) {
 				strReply = GlobalMsg["strDeckNotFound"];
 				reply(strReply);
 				return 1;
@@ -1709,11 +1726,18 @@ int FromMsg::DiceReply() {
 			ProDeck = CardDeck::mPublicDeck[strVar["deck_name"]];
 			TempDeck = &ProDeck;
 		}
-		string strCardNum = readDigit();
-		auto intCardNum = strCardNum.empty() ? 1 : stoi(strCardNum);
-		if (intCardNum == 0)
-		{
-			reply(GlobalMsg["strNumCannotBeZero"]);
+		int intCardNum = 1;
+		switch (readNum(intCardNum)) {
+		case 0:
+			if (intCardNum == 0){
+				reply(GlobalMsg["strNumCannotBeZero"]);
+				return 1;
+			}
+			break;
+		case -1:break;
+		case -2:
+			reply(GlobalMsg["strParaIllegal"]);
+			console.log("提醒:" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "使用了非法指令参数\n" + strMsg, 1, printSTNow());
 			return 1;
 		}
 		ResList Res;
@@ -2031,12 +2055,13 @@ int FromMsg::DiceReply() {
 				return 1;
 			}
 			User& user = getUser(llTarget);
-			short intTrust = stoi(strVar["trust"]);
-			if (intTrust < 0 || intTrust > 255 || intTrust >= trusted && fromQQ != console.master()) {
+			if (short intTrust = stoi(strVar["trust"]); intTrust < 0 || intTrust > 255 || intTrust >= trusted && fromQQ != console.master()) {
 				reply(GlobalMsg["strUserTrustIllegal"]);
 				return 1;
 			}
-			user.trust(intTrust);
+			else {
+				user.trust(intTrust);
+			}
 			reply(GlobalMsg["strUserTrusted"]);
 			return 1;
 		}
@@ -2084,17 +2109,12 @@ int FromMsg::DiceReply() {
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		if (strNum.length() > 2)
+		if (strNum.length() > 1 && strNum != "10")
 		{
 			reply(GlobalMsg["strCharacterTooBig"]);
 			return 1;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
-		if (intNum > 10)
-		{
-			reply(GlobalMsg["strCharacterTooBig"]);
-			return 1;
-		}
 		if (intNum == 0)
 		{
 			reply(GlobalMsg["strCharacterCannotBeZero"]);
@@ -2116,17 +2136,12 @@ int FromMsg::DiceReply() {
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		if (strNum.length() > 2)
+		if (strNum.length() > 1 && strNum != "10")
 		{
 			reply(GlobalMsg["strCharacterTooBig"]);
 			return 1;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
-		if (intNum > 10)
-		{
-			reply(GlobalMsg["strCharacterTooBig"]);
-			return 1;
-		}
 		if (intNum == 0)
 		{
 			reply(GlobalMsg["strCharacterCannotBeZero"]);
@@ -2700,20 +2715,14 @@ int FromMsg::DiceReply() {
 		}
 		if (strLowerMessage[intMsgCnt] == '*' && isdigit(strLowerMessage[intMsgCnt + 1])) {
 			intMsgCnt++;
-			intSkillMultiple = stoi(readDigit());
+			readNum(intSkillMultiple);
 		}
 		while ((strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') && isdigit(strLowerMessage[intMsgCnt + 1])) {
-			strSkillModify += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
-				strSkillModify += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
-			intSkillModify = stoi(strSkillModify);
+			if (!readNum(intSkillModify))strSkillModify = to_signed_string(intSkillModify);
 		}
 		if (strLowerMessage[intMsgCnt] == '/' && isdigit(strLowerMessage[intMsgCnt + 1])) {
 			intMsgCnt++;
-			intSkillDivisor = stoi(readDigit());
+			readNum(intSkillDivisor);
 			if (intSkillDivisor == 0) {
 				reply(GlobalMsg["strValueErr"]);
 				return 1;
@@ -2890,18 +2899,14 @@ int FromMsg::DiceReply() {
 		string SanCost = readUntilSpace();
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
-		string San = readDigit();
 		if (SanCost.empty() || SanCost.find("/") == string::npos) {
 			reply(GlobalMsg["strSanCostInvalid"]);
 			return 1;
 		}
 		string attr = "理智";
-		short intSan = 0;
-		short* pSan = &intSan;
-		if (!San.empty()) {
-			intSan = stoi(San);
-		}
-		else {
+		int intSan = 0;
+		short* pSan = (short*)&intSan;
+		if (readNum(intSan)) {
 			if (PList.count(fromQQ) && getPlayer(fromQQ)[fromGroup].count(attr)) {
 				pSan = &getPlayer(fromQQ)[fromGroup][attr];
 			}
@@ -2935,7 +2940,7 @@ int FromMsg::DiceReply() {
 			reply(GlobalMsg["strSanCostInvalid"]);
 			return 1;
 		}
-		if (San.length() >= 3 || *pSan == 0) {
+		if (*pSan == 0) {
 			reply(GlobalMsg["strSanInvalid"]);
 			return 1;
 		}
@@ -3641,7 +3646,22 @@ bool FromMsg::DiceFilter() {
 	return 0;
 }
 
-
+int FromMsg::readNum(int& num) {
+	string strNum;
+	while (!isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length() && strMsg[intMsgCnt] != '-')intMsgCnt++;
+	if (strMsg[intMsgCnt] == '-') {
+		strNum += '-';
+		intMsgCnt++;
+	}
+	if (intMsgCnt == strMsg.length())return -1;
+	while (isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
+		strNum += strMsg[intMsgCnt];
+		intMsgCnt++;
+	}
+	if (strNum.length() > 9)return -2;
+	num = stoi(strNum);
+	return 0;
+}
 int FromMsg::readChat(chatType& ct, bool isReroll) {
 	int intFormor = intMsgCnt;
 	if (string strT = readPara(); strT == "me") {

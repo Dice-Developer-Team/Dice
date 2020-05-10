@@ -22,6 +22,12 @@ static string toString(int num, unsigned short size = 0) {
     return sign + res;
 }
 
+template<typename Dig>
+string to_signed_string(Dig num) {
+    if (num > 0)return "+" + to_string(num);
+    return to_string(num);
+}
+
 static int count_char(string s, char ch) {
     int cnt = 0;
     for (auto c : s) {

@@ -58,8 +58,8 @@ namespace Cloud {
 		}
 		return 0;
 	}
-	int DownloadFile(const char* url, const char* downloadPath)
-	{
+	int DownloadFile(const char* url, const char* downloadPath){
+		DeleteUrlCacheEntryA(url);
 		if (URLDownloadToFileA(NULL, url, downloadPath, 0, NULL) != S_OK) return -1;
 		else if (_access(downloadPath, 0))return -2;
 		else return 0;
