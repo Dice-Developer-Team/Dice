@@ -19,7 +19,7 @@ using std::set;
 using std::map;
 using std::vector;
 constexpr auto CQ_IMAGE = "[CQ:image,file=";
-constexpr time_t NEWYEAR = 1585670400;
+constexpr time_t NEWYEAR = 1588262400;
 
 //МгдиЪ§Он
 void loadData();

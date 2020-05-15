@@ -169,7 +169,7 @@ private:
 	//读取群号
 	long long readID() {
 		string strGroup = readDigit();
-		if (strGroup.empty()) return 0;
+		if (strGroup.empty() || strGroup.length() > 18) return 0;
 		return stoll(strGroup);
 	}
 	//是否可看做掷骰表达式

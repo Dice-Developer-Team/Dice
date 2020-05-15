@@ -638,7 +638,7 @@ void DDBlackManager::reset_qq_danger(long long llqq) {
         mQQDanger.erase(llqq);
         if (Enabled) {
             console.log("已消除" + printQQ(llqq) + "的危险等级", 0b10, printSTNow());
-            if (UserList.count(llqq))AddMsgToQueue(getMsg("strBlackQQDelNotice", { { "nick",getName(llqq) } }), llqq);
+            if (UserList.count(llqq))AddMsgToQueue(getMsg("strBlackQQDelNotice", { { "user_nick",getName(llqq) } }), llqq);
         }
     }
 }
@@ -665,8 +665,8 @@ bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark) {
     }
     if (mQQDanger.count(llqq) && mQQDanger[llqq] >= mark.danger)return false;
     if (Enabled && mark.danger > 1) {
-        if (!mQQDanger.count(llqq)&&UserList.count(llqq))mark.note.empty() ? AddMsgToQueue(getMsg("strBlackQQAddNotice", {{"nick",getName(llqq)} }), llqq)
-            : AddMsgToQueue(getMsg("strBlackQQAddNoticeReason",{ {"0",mark.note},{"reason",mark.note},{"nick",getName(llqq)} }), llqq);
+        if (!mQQDanger.count(llqq)&&UserList.count(llqq))mark.note.empty() ? AddMsgToQueue(getMsg("strBlackQQAddNotice", {{"user_nick",getName(llqq)} }), llqq)
+            : AddMsgToQueue(getMsg("strBlackQQAddNoticeReason",{ {"0",mark.note},{"reason",mark.note},{"user_nick",getName(llqq)} }), llqq);
         console.log(GlobalMsg["strSelfName"] + "已将" + printQQ(llqq) + "危险等级提升至" + to_string(mark.danger), 0b10, printSTNow());
         checkGroupWithBlackQQ(mark, llqq);
     }
@@ -713,7 +713,7 @@ void DDBlackManager::rm_black_qq(long long llqq, FromMsg* msg) {
         if (vBlackList[index].inviterQQ.first == llqq)vBlackList[index].inviterQQ.second = 0;
         if (vBlackList[index].ownerQQ.first == llqq)vBlackList[index].ownerQQ.second = 0;
     }
-    mQQDanger.erase(llqq);
+    reset_qq_danger(llqq);
     msg->note("已注销" + printQQ(llqq) + "的黑名单记录√");
     blacklist->saveJson("DiceData\\conf\\BlackList.json");
 }
@@ -906,6 +906,7 @@ void DDBlackManager::verify(void* pJson, long long operateQQ) {
             if (mark.type == "local" && credit < 4)return;
         }
         if (get_qq_danger(mark.DiceMaid) || get_qq_danger(mark.masterQQ))return;
+        if (mark.fromGroup.first && groupset(mark.fromGroup.first, "忽略") > 0)return;
         insert(mark);
         console.log(getName(operateQQ) + "已通知" + GlobalMsg["strSelfName"] + "不良记录" + to_string(vBlackList.size() - 1) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
     }

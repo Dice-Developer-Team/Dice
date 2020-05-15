@@ -156,6 +156,8 @@ EVE_Enable(eventEnable)
 	strFileLoc = getAppDirectory();
 	console.DiceMaid = getLoginQQ();
 	GlobalMsg["strSelfName"] = getLoginNick();
+	mkDir("DiceData\\conf");
+	mkDir("DiceData\\user");
 	mkDir("DiceData\\audit");
 	if(!console.load()){
 		ifstream ifstreamMaster(strFileLoc + "Master.RDconf");
@@ -375,9 +377,10 @@ EVE_Enable(eventEnable)
 mutex GroupAddMutex;
 bool eve_GroupAdd(Chat& grp) {
 	{
-		lock_guard<std::mutex> lock_queue(GroupAddMutex);
+		unique_lock<std::mutex> lock_queue(GroupAddMutex);
 		if (grp.isset("未进") || grp.isset("已退"))grp.reset("未进").reset("已退");
 		else if (time(NULL) - grp.tCreated > 1)return 0;
+		lock_queue.unlock();
 	}
 	if (!console["ListenGroupAdd"] || grp.isset("忽略"))return 0;
 	long long fromGroup = grp.ID;
@@ -395,6 +398,7 @@ bool eve_GroupAdd(Chat& grp) {
 		if (grp.inviter) {
 			strMsg += ",邀请者" + printQQ(chat(fromGroup).inviter);
 		}
+		console.log(strMsg, 0, strNow);
 		int max_trust = 0;
 		int max_danger = 0;
 		long long ownerQQ = 0;
@@ -450,7 +454,7 @@ bool eve_GroupAdd(Chat& grp) {
 				strMsg += "已自动追加使用许可";
 			}
 			else {
-				strMsg += "无白名单，已退群";
+				strMsg += "无许可使用，已退群";
 				console.log(strMsg, 1, strNow);
 				grp.leave(getMsg("strPreserve"));
 				return 1;

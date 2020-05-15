@@ -207,7 +207,7 @@ std::string printSTime(SYSTEMTIME st){
 		string nick = getStrangerInfo(llqq).nick;
 		while (nick.find(" ") != string::npos)nick.erase(nick.begin() + nick.find(" "), nick.begin() + nick.find(" ") + strlen(" "));
 		while (nick.find(" ") != string::npos)nick.erase(nick.begin() + nick.find(" "), nick.begin() + nick.find(" ") + strlen(" "));
-		return getStrangerInfo(llqq).nick + "(" + to_string(llqq) + ")";
+		return nick + "(" + to_string(llqq) + ")";
 	}
 	//¥Ú”°QQ»∫∫≈
 	string printGroup(long long llgroup) {

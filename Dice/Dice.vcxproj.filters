@@ -93,9 +93,6 @@
     <ClCompile Include="DiceFile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="DiceSensitive.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="CharacterCard.cpp">
       <Filter>源文件</Filter>
     </ClCompile>

@@ -65,8 +65,10 @@ std::map<std::string, std::string> GlobalMsg
 	{"strGroupNotFound","{self}无该群记录×"},
 	{"strGroupNotIn","{self}当前不在该群或对象不是群！"},
 	{"strGroupExit","{self}已退出该群√"},
+	{"strGroupCardSet","{self}已将{target}的群名片修改为{card}√"},
+	{"strGroupCardSetErr","{self}设置{target}的群名片失败×"},
 	{"strGroupTitleSet","{self}已将{target}的头衔修改为{title}√"},
-	{"strGroupTitleSetErr","{self}设置头衔失败×"},
+	{"strGroupTitleSetErr","{self}设置{target}的头衔失败×"},
 	{"strPcNewEmptyCard","已为{nick}新建{type}空白卡{char}√"},
 	{"strPcNewCardShow","已为{nick}新建{type}卡{char}：{show}"},//由于预生成选项而存在属性
 	{"strPcCardSet","已将{nick}当前角色卡绑定为{char}√"},//{nick}-用户昵称 {pc}-原角色卡名 {char}-新角色卡名
@@ -99,11 +101,11 @@ std::map<std::string, std::string> GlobalMsg
 	{"strStModify","{self}对已记录{pc}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","{self}对已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
 	{"strStValEmpty","{self}未记录{attr}原值×"},		//{0}为属性名
-	{"strBlackQQAddNotice","{nick}，你已被{self}加入黑名单，详情请联系Master"},				
-	{"strBlackQQAddNoticeReason","{nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员"},
-	{"strBlackQQDelNotice","{nick}，你已被{self}移出黑名单，现在可以继续使用了"},
-	{"strWhiteQQAddNotice","{user_nick}，你已被{self}加入白名单，欢迎使用√"},
-	{"strWhiteQQDenied","你不在白名单中×"},
+	{"strBlackQQAddNotice","{user_nick}，你已被{self}加入黑名单，详情请联系Master"},				
+	{"strBlackQQAddNoticeReason","{user_nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员"},
+	{"strBlackQQDelNotice","{user_nick}，你已被{self}移出黑名单，现在可以继续使用了"},
+	{"strWhiteQQAddNotice","{user_nick}，您已获得{self}的信任，请尽情使用{self}√"},
+	{"strWhiteQQDenied","你不是{self}信任的用户×"},
 	{"strWhiteGroupDenied","本群聊不在白名单中×"},
 	{"strDeckProNew","已新建自定义牌堆√"},
 	{"strDeckProSet","已将{key}设置为默认牌堆√"},
@@ -259,7 +261,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strLeaveNoPower", "{self}未获得群管理，即将退群"},
 	{"strLeaveUnused","{self}已经在这里被放置{day}天啦，马上就会离开这里了"},
 	{"strGlobalOff","{self}休假中，暂停服务×"},
-	{"strPreserve", "{self}私有私用，勿扰勿怪"},
+	{"strPreserve", "{self}私有私用，勿扰勿怪\n如需申请许可请发送!authorize +[群号] [申请理由]"},
 	{"strJrrp", "{nick}今天的人品值是: {res}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{res}"},
 	{"strAddFriendWhiteQQ","{strAddFriend}" },				//白名单用户添加好友时回复此句
@@ -301,20 +303,50 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 553:name功能调整
 552:后台系统大修
 551:文件夹批量读取牌堆
-550：允许多轮检定
-549：新增刷屏监测
-547：更新指令开关
-544：后台管理更新
-537：更新.send功能)"},
+550:允许多轮检定
+549:新增刷屏监测
+547:更新指令开关
+537:更新.send功能)"},
 {"协议","0.本协议是Shiki(The Star、Death、Judgement、The World)的服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
 {"链接","查看源码:https://github.com/mystringEmpty/Dice\n插件下载:https://github.com/mystringEmpty/Dice/releases\n用户手册:http://shiki.stringempty.xyz/download/Shiki_User_Manual.pdf\n骰主手册:http://shiki.stringempty.xyz/download/Shiki_Master_Manual.pdf\n炼骰手册:http://shiki.stringempty.xyz/download/DiceMaid_CookBook.html\n(在线文档)https://dice.c-j.dev/\nst用人物卡:http://shiki.stringempty.xyz/download/COC7_player_card_shiki.xlsx"},
 {"设定","Master：{master}\n.me使用：禁止\n.jrrp使用：允许\n邀请处理：黑名单制，非禁即入\n讨论组使用：允许\n移出反制：拉黑群和操作者\n禁言反制：默认拉黑群和群主\n刷屏反制：警告\n邀请人责任：有限连带\n窥屏可能：有\n其他插件：无\n骰娘个人群:（未设置）\n私骰分流群：863062599\n开发交流群：1029435374"},
 {"作者","Copyright (C) 2018-2020 w4123溯洄\nCopyright (C) 2019-2020 String.Empty"},
-{"指令","at骰娘后接指令可以指定骰娘单独响应，如at骰娘.bot off\n多数指令需要后接参数，请.help对应指令 获取详细信息\n掷骰指令包括:\n.dismiss 退群\n.bot 开关\n.welcome 入群欢迎\n.rules 规则速查\n.r 掷骰\n.ob 旁观模式\n.set 设置默认骰\n.name 随机姓名\n.nn 设置昵称\n.coc COC人物作成\n.dnd DND人物作成\n.st 角色卡设置\n.rc/ra 检定\n.setcoc 设置检定房规\n.sc 理智检定\n.en 成长检定\n.ri 先攻\n.init 先攻列表\n.ww 骰池\n.me 第三人称动作\n.jrrp 今日人品\n.send 向Master发送消息\n.group 群管\n.draw 抽牌\n为了避免未预料到的指令误判，请尽可能在参数之间使用空格"},
+{"指令",R"(at骰娘后接指令可以指定骰娘单独响应，如at骰娘.bot off
+多数指令需要后接参数，请.help对应指令 获取详细信息
+掷骰指令包括:
+.dismiss 退群
+.authorize 授权许可
+.bot 开关
+.welcome 入群欢迎
+.rules 规则速查
+.r 掷骰
+.ob 旁观模式
+.set 设置默认骰
+.name 随机姓名
+.nn 设置昵称
+.coc COC人物作成
+.dnd DND人物作成
+.st 属性记录
+.pc 角色卡
+.rc 检定
+.setcoc 设置检定房规
+.sc 理智检定
+.en 成长检定
+.ri 先攻
+.init 先攻列表
+.ww 骰池
+.me 第三人称动作
+.jrrp 今日人品
+.send 向管理发送消息
+.group 群管
+.draw 抽牌
+为了避免未预料到的指令误判，请尽可能在参数之间使用空格)"},
 {"deck","该指令可以设置默认牌堆，使用.draw不指定牌堆名时将使用此牌堆。该牌堆不会放回直到抽完最后一张后洗牌。\n.deck set 公共牌堆名 设置默认牌堆\n.deck set 正整数1-100 设置指定长度的数列\n.deck show 查看剩余卡牌\n.deck reset 重置剩余卡牌\n.deck new 自定义牌堆（用空格或|分割）（白名单限定）\n.deck new 有弹|无弹|无弹|无弹|无弹|无弹\n除show外其他群内操作需要管理权限"},
 {"退群","&dismiss"},
 {"退群指令","&dismiss"},
 {"dismiss","该指令需要群管理员权限，使用后即退出群聊\n!dismiss [目标QQ(完整或末四位)]指名退群\n!dismiss无视内置黑名单和静默状态，只要插件开启总是有效"},
+{"授权许可","&authoize"},
+{"authorize","授权许可(非信任用户使用时转为向管理申请许可)\n!authorize (+[群号]) ([申请理由])\n群内原地发送可省略群号，无法自动授权时会连同理由发给管理"},
 {"开关","&bot"},
 {"bot",".bot on/off开启/静默骰子（限群管理）\n.bot无视静默状态，只要插件开启且不在黑名单总是有效"},
 {"规则速查","&rules"},
@@ -328,7 +360,7 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"旁观模式","&ob"},
 {"ob","旁观模式：.ob (exit/list/clr/on/off)\n.ob\t//加入旁观可以看到他人暗骰结果\n.ob exit\t//退出旁观模式\n.ob list\t//查看群内旁观者\n.ob clr\t//清除所有旁观者\n.ob on\t//全群允许旁观模式\n.ob off\t//禁用旁观模式\n暗骰与旁观仅在群聊中有效"},
 {"默认骰","&set"},
-{"set","当表达式中‘D’之后没有接面数时，视为投掷默认骰\n.set20 将默认骰设置为20\n.set 不带参数视为将默认骰重置为默认的100"},
+{"set","当表达式中‘D’之后没有接面数时，视为投掷默认骰\n.set20 将默认骰设置为20\n.set 不带参数视为将默认骰重置为默认的100\n若所用规则判定掷骰形如2D6，推荐使用.st &=2D6"},
 {"个位骰","个位骰有十面，为0~9十个数字，百面骰的结果为十位骰与个位骰之和（但00+0时视为100）"},
 {"十位骰","十位骰有十面，为00~90十个数字，百面骰的结果为十位骰与个位骰之和（但00+0时视为100）"},
 {"奖励骰","&奖励/惩罚骰"},
@@ -343,20 +375,37 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"人物作成","该版本人物作成支持COC7(.coc、.draw调查员背景/英雄天赋)、COC6(.coc6、.draw煤气灯)、DND(.dnd)、AMGC(.draw AMGC)"},
 {"coc","克苏鲁的呼唤(COC)人物作成：.coc([7/6])(d)([生成数量])\n.coc 10\t//默认生成7版人物\n.coc6d\t//接d为详细作成，一次只能作成一个\n仅用作骰点法人物作成，可应用变体规则，参考.rules创建调查员的其他选项"},
 {"dnd","龙与地下城(DND)人物作成：.dnd([生成数量])\n.dnd 5\t//仅作参考，可自行应用变体规则"},
-{"角色卡设置","&st"},
-{"st","角色卡设置：.st (del/clr/show) ([属性名]) ([属性值])\n目前用户的人物卡是所有群互通的，因此无法在pl多开时使用同一个骰子设定属性\n.st力量:50 体质:55 体型:65 敏捷:45 外貌:70 智力:75 意志:35 教育:65 幸运:75\n.st hp-1 后接+/-时视为从原值上变化\n.st san+1d6 修改属性时可使用掷骰表达式\n.st del kp裁决\t//删除已保存的属性\n.st clr\t//清空人物卡\n.st show 灵感\t//查看指定人物属性\n.st show\t//无参数时查看所有属性，请使用只st加点过技能的半自动人物卡！\n部分COC属性会被视为同义词，如智力/灵感、理智/san、侦查/侦察"},
+{"属性记录","&st"},
+{"st","属性记录：.st (del/clr/show) ([属性名]:[属性值])\n用户默认所有群使用同一张卡，pl如需多开请使用.pc指令切卡\n.st力量:50 体质:55 体型:65 敏捷:45 外貌:70 智力:75 意志:35 教育:65 幸运:75\n.st hp-1 后接+/-时视为从原值上变化\n.st san+1d6 修改属性时可使用掷骰表达式\n.st del kp裁决\t//删除已保存的属性\n.st clr\t//清空当前卡\n.st show 灵感\t//查看指定属性\n.st show\t//无参数时查看所有属性，请使用只st加点过技能的半自动人物卡！\n部分COC属性会被视为同义词，如智力/灵感、理智/san、侦查/侦察"},
+{"角色卡","&pc"},
+{"pc",R"(角色卡：.pc 
+每名用户最多可同时保存16张角色卡
+.pc new ([模板]:([生成参数]:))([卡名]) 
+完全省略参数将生成一张COC7模板的随机姓名卡
+.pc tag ([卡名]) //为当前群绑定指定卡，为空则解绑使用默认卡
+所有群默认使用私聊绑定卡，未绑定则使用0号卡
+.pc show ([卡名]) //展示指定卡所有记录的属性，为空则展示当前卡
+.pc nn [新卡名] //重命名当前卡，不允许重名
+.pc cpy [卡名1]=[卡名2] //将后者属性复制给前者
+.pc del [卡名] //删除指定卡
+.pc list //列出全部角色卡
+.pc grp //列出各群绑定卡
+.pc build ([生成参数]:)(卡名) //根据模板填充生成属性（COC7为9项主属性）
+.pc redo ([生成参数]:)(卡名) //清空原有属性后重新生成
+.pc clr //销毁全部角色卡记录
+)"},
 {"rc","&rc/ra"},
 {"ra","&rc/ra"},
 {"检定","&rc/ra"},
 {"rc/ra","检定指令：.rc/ra [属性名]([成功率])\n角色卡设置了属性时，可省略成功率\n.rc体质*5\t//允许使用+-*/，但顺序要求为乘法>加减>除法\n.rc 困难幸运\t//技能名开头的困难和极难会被视为关键词\n.rc 敏捷-10\t//修正后成功率必须在1-1000内\n.rcp 手枪\t//奖惩骰至多9个\n默认以规则书判定，大成功大失败的房规由.setcoc设置"},
-{"setcoc","为每个群或讨论组设置COC房规，如.setcoc 1,当前参数0-5\n0 规则书\n出1大成功\n不满50出96 - 100大失败，满50出100大失败\n1\n不满50出1大成功，满50出1 - 5大成功\n不满50出96 - 100大失败，满50出100大失败\n2\n出1 - 5且 <= 成功率大成功\n出100或出96 - 99且 > 成功率大失败\n3\n出1 - 5大成功\n出96 - 100大失败\n4\n出1 - 5且 <= 十分之一大成功\n不满50出 >= 96 + 十分之一大失败，满50出100大失败\n5\n出1 - 2且 < 五分之一大成功\n不满50出96 - 100大失败，满50出99 - 100大失败\n"},
+{"setcoc","为当前群或讨论组设置COC房规，如.setcoc 1,当前参数0-5\n0 规则书\n出1大成功\n不满50出96 - 100大失败，满50出100大失败\n1\n不满50出1大成功，满50出1 - 5大成功\n不满50出96 - 100大失败，满50出100大失败\n2\n出1 - 5且 <= 成功率大成功\n出100或出96 - 99且 > 成功率大失败\n3\n出1 - 5大成功\n出96 - 100大失败\n4\n出1 - 5且 <= 十分之一大成功\n不满50出 >= 96 + 十分之一大失败，满50出100大失败\n5\n出1 - 2且 < 五分之一大成功\n不满50出96 - 100大失败，满50出99 - 100大失败\n"},
 {"san check","&sc"},
 {"理智检定","&sc"},
 {"sc","San Check指令：.sc[成功损失]/[失败损失] ([当前san值])\n已经.st了理智/san时，可省略最后的参数\n.sc0/1 70\n.sc1d10/1d100 直面外神\n大失败自动失去最大值\n当调用角色卡san时，san会自动更新为sc后的剩余值\n程序上可以损失负数的san，也就是可以用.sc-1d6/-1d6来回复san，但请避免这种奇怪操作"},
 {"ti","&ti/li"},
 {"li","&ti/li"},
 {"疯狂症状","&ti/li"},
-{"ti/li","疯狂症状：\n.ti 临时疯狂症状\n.li 总结疯狂症状\n适用coc7版规则，6版请自行用百面骰配合查表"},
+{"ti/li","疯狂症状：\n.ti 临时疯狂症状\n.li 总结疯狂症状\n适用coc7版规则，6版请自行用百面骰配合查表\n具体适用哪项参见.rules 疯狂发作"},
 {"成长检定","&en"},
 {"增强检定","&en"},
 {"en","成长检定：.en [技能名称]([技能值])(([失败成长值]/)[成功成长值])\n已经.st时，可省略最后的参数\n.en 教育 60 +1D10 教育增强\t//后接成功时成长值\n.en 幸运 +1D3/1D10幸运成长\t//调用人物卡属性时，成长后的值会自动更新\n可变成长值必须以加减号开头，不限制加减"},
@@ -379,10 +428,15 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"入群欢迎词","&welcome"},
 {"welcome","入群欢迎词：.welcome\n.welcome \\\\{at}欢迎\\\\{nick}入群！\t//\\\\{at}视为at入群者，\\\\{nick}会替换为新人的昵称\n.welcome\t//不带参数时清除欢迎词\n无论开关状态，只要有欢迎词时有人入群，都会响应"},
 {"group","&群管"},
-{"群管",R"(群管指令.group
-.group +/-[群管词条] //为群加减设置
-群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/拦截消息/许可使用
-.group state //查看在群内对骰娘的设置)"},
+{"群管",R"(群管指令.group(群管理员限定)
+.group state //查看在群内对骰娘的设置
+.group pause/restart //群全体禁言/全体解除禁言
+.group card [at/用户QQ] [名片] //设置群员名片
+.group title [at/用户QQ] [头衔] //设置群员头衔
+.group diver //查看潜水成员
+.group +/-[群管词条] //为群加减设置，需要对应权限
+例:.group +禁用回复 //关闭本群自定义回复
+群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/拦截消息/许可使用/免清/免黑)"},
 {"溯洄","孕育万千骰娘生机之母，萌妹吃鱼之神，正五棱双角锥体对的监护人，一切诡秘的窥见者，拟人者主宰，时空舞台外的逆流者，永转的命运之轮"},
 {"投食","投食Shiki，请选择http://shiki.stringempty.xyz/alipay.png\n投食溯洄，可选择https://afdian.net/@suhuiw4123"},
 {"愚者正位","憧憬自然的地方、毫无目的地前行、喜欢尝试挑战新鲜事物、四处流浪。美好的梦想。"},

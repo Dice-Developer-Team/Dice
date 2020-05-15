@@ -186,14 +186,16 @@ public:
 		else return 0;
 	}
 	//表达式转义
-	string escape(string exp){
+	string escape(string exp, set<string>sRef){
 		if (exp[0] == '&') {
 			string key = exp.substr(1);
+			if (sRef.count(key))return "";
 			return getExp(key);
 		}
 		int intCnt = 0, lp = 0, rp = 0;
 		while ((lp = exp.find('[', intCnt)) != std::string::npos && (rp = exp.find(']', lp)) != std::string::npos) {
 			string strProp = exp.substr(lp + 1, rp - lp - 1);
+			if (sRef.count(strProp))return "";
 			string val = getExp(strProp);
 			exp.replace(exp.begin() + lp, exp.begin() + rp + 1, val);
 			intCnt = lp + val.length();
@@ -201,11 +203,12 @@ public:
 		return exp;
 	}
 	//求key对应掷骰表达式
-	string getExp(string& key){
+	string getExp(string& key, set<string>sRef = {}) {
+		sRef.insert(key);
 		std::map<string, string>::const_iterator exp = DiceExp.find(key);
-		if (exp != DiceExp.end()) return escape(exp->second);
+		if (exp != DiceExp.end()) return escape(exp->second, sRef);
 		exp = pTemplet->mExpression.find(key);
-		if (exp != pTemplet->mExpression.end()) return escape(exp->second);
+		if (exp != pTemplet->mExpression.end()) return escape(exp->second, sRef);
 		key = standard(key);
 		std::map<string, short>::const_iterator val = Attr.find(key);
 		if (val != Attr.end())return to_string(val->second);
