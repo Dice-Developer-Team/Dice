@@ -20,6 +20,10 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+
+// 此文件用于酷Q获取对应的APPINFO
+// 请勿修改
+
 #pragma once
 #ifndef DICE_APPINFO
 #define DICE_APPINFO

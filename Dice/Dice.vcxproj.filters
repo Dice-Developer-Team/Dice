@@ -242,12 +242,6 @@
     <ClInclude Include="DiceFile.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="DiceTrie.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="DiceSensitive.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="DiceMod.h">
       <Filter>头文件</Filter>
     </ClInclude>

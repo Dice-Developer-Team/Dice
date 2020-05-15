@@ -996,7 +996,7 @@ int FromMsg::DiceReply() {
 			string strSelfPath(*path);
 			delete path;
 			string strSelfName;
-			int pid = getpid();
+			int pid = _getpid();
 			PROCESSENTRY32 pe32;
 			pe32.dwSize = sizeof(pe32);
 			HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -2671,7 +2671,7 @@ int FromMsg::DiceReply() {
 	{
 		intMsgCnt += 2;
 		readSkipSpace();
-		int intRule = intT ? get(chat(fromGroup).intConf, "rc房规", 0) : get(getUser(fromQQ).intConf, "rc房规", 0);
+		int intRule = intT ? get(chat(fromGroup).intConf, string("rc房规"), 0) : get(getUser(fromQQ).intConf, string("rc房规"), 0);
 		int intTurnCnt = 1;
 		if (strMsg.find("#") != string::npos)
 		{
@@ -2956,7 +2956,7 @@ int FromMsg::DiceReply() {
 		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		strVar["res"] = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(*pSan) + " ";
 		//调用房规
-		int intRule = intT ? get(chat(fromGroup).intConf, "rc房规", 0) : get(getUser(fromQQ).intConf, "rc房规", 0);
+		int intRule = intT ? get(chat(fromGroup).intConf, string("rc房规"), 0) : get(getUser(fromQQ).intConf, string("rc房规"), 0);
 		switch (RollSuccessLevel(intTmpRollRes, *pSan, intRule)) {
 		case 5:
 		case 4:
