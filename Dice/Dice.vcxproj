@@ -236,6 +236,7 @@
     <ClCompile Include="RandomGenerator.cpp" />
     <ClCompile Include="RD.cpp" />
     <ClCompile Include="StorageBase.cpp" />
+    <ClCompile Include="strExtern.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CQSDK\BotEnvironment.h" />

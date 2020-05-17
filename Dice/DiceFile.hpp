@@ -24,46 +24,9 @@ using std::map;
 using std::multimap;
 using std::set;
 
-static int mkDir(const std::string& dir) {
-	std::error_code err;
-	std::filesystem::create_directory(dir, err);
-	return err.value();
-	/*if (_access(dir.c_str(), 0))	return _mkdir(dir.c_str());
-	return -2;*/
-}
-static int clrDir(std::string dir,const std::set<std::string>& exceptList) {
-	int nCnt = 0;
-	std::error_code err;
-	for (const auto& p : std::filesystem::directory_iterator(dir, err))
-	{
-		if (!p.is_directory() && p.path().filename().string().length() >= 36 && !exceptList.count(p.path().filename().string()))
-		{
-			std::error_code err2;
-			std::filesystem::remove(p.path(), err2);
-			if (!err2) nCnt++;
-		}
-	}
-	return (err ? err.value() : nCnt);
+int mkDir(const std::string& dir);
 
-	/* int nCnt = 0;
-	_finddata_t file;
-	long lf = _findfirst((dir + "*").c_str(), &file);
-	//输入文件夹路径
-	if (lf < 0) {
-		return -1;
-	}
-	else {
-		do {
-			if (file.attrib == _A_SUBDIR)continue;
-			if (!strcmp(file.name, ".") || !strcmp(file.name, ".."))continue;
-			if (strlen(file.name) < 36)continue;
-			if (exceptList.count(file.name))continue;
-			if (!remove((dir + file.name).c_str()))nCnt++;
-		} while (!_findnext(lf, &file));
-	}
-	_findclose(lf);
-	return nCnt;*/
-}
+int clrDir(std::string dir, const std::set<std::string>& exceptList);
 
 template<typename TKey, typename TVal, typename sort>
 void map_merge(map<TKey, TVal, sort>& m1, const map<TKey, TVal, sort>& m2) {
@@ -79,28 +42,10 @@ inline TVal get(const map<TKey, TVal>& m, TKey key, TVal def) {
 	else return it->second;*/
 }
 
-static vector<string> getLines(const string& s) {
-	vector<string>vLine;
-	stringstream ss(s);
-	string line;
-	while (getline(ss, line)) {
-		int r = line.length();
-		while (r && isspace(static_cast<unsigned char>(line[r - 1])))r--;
-		int l = 0;
-		while (isspace(static_cast<unsigned char>(line[l])) && l < r)l++;
-		line = line.substr(l, r - l);
-		if (line.empty())continue;
-		vLine.push_back(std::move(line));
-	}
-	return vLine;
-}
-static string printLine(string s) {
-	while (s.find('\t') != std::string::npos)s.replace(s.find('\t'), 1, "\\t");
-	while (s.find("\r\n") != std::string::npos)s.replace(s.find("\r\n"), 2, "\\n");
-	while (s.find('\r') != std::string::npos)s.replace(s.find('\r'), 1, "\\n");
-	while (s.find('\n') != std::string::npos)s.replace(s.find('\n'), 1, "\\n");
-	return s;
-}
+vector<string> getLines(const string& s);
+
+string printLine(string s);
+
 template<typename T>
 //typename std::enable_if<std::is_integral<T>::value, bool>::type fscan(std::ifstream& fin, T& t) {
 inline bool fscan(std::ifstream & fin, T & t) {
@@ -110,21 +55,7 @@ inline bool fscan(std::ifstream & fin, T & t) {
 	else return false;
 }
 //template<>
-[[deprecated]] inline bool fscan(std::ifstream& fin, std::string& t) {
-	std::string val;
-	if (fin >> val) {
-		while (val.find("{space}") != std::string::npos)val.replace(val.find("{space}"), 7, " ");
-		while (val.find("{tab}") != std::string::npos)val.replace(val.find("{tab}"), 5, "\t");
-		while (val.find("{endl}") != std::string::npos)val.replace(val.find("{endl}"), 6, "\n");
-		while (val.find("{enter}") != std::string::npos)val.replace(val.find("{enter}"), 7, "\r");
-		while (val.find("\\n") != std::string::npos)val.replace(val.find("\\n"), 2, "\n");
-		while (val.find("\\s") != std::string::npos)val.replace(val.find("\\s"), 2, " ");
-		while (val.find("\\t") != std::string::npos)val.replace(val.find("\\t"), 2, "	");
-		t = val;
-		return true;
-	}
-	else return false;
-}
+[[deprecated]] bool fscan(std::ifstream& fin, std::string& t);
 
 template<class C, bool(C::* U)(std::ifstream&) = &C::load>
 inline bool fscan(std::ifstream& fin, C& obj) {
@@ -187,7 +118,7 @@ std::set<T> fread(ifstream& fin) {
 	return s;
 }
 template<typename T1, typename T2>
-static void readini(string& line,std::pair<T1,T2>& p) {
+void readini(string& line,std::pair<T1,T2>& p) {
 	int pos = line.find('=');
 	if (pos == std::string::npos)return;
 	std::istringstream sin(line.substr(0, pos));
@@ -197,17 +128,11 @@ static void readini(string& line,std::pair<T1,T2>& p) {
 	sin >> p.second;
 	return;
 }
-static void readini(ifstream& fin, std::string& s) {
-	std::string line;
-	getline(fin, line);
-	int pos = line.find('=');
-	if (pos == std::string::npos)return;
-	std::istringstream sin(line.substr(pos + 1));
-	sin >> s;
-	return;
-}
+
+void readini(ifstream& fin, std::string& s);
+
 template<typename T1, typename T2>
-static void readini(string s, std::map<T1,T2>& m) {
+void readini(string s, std::map<T1,T2>& m) {
 	std::pair<T1, T2> p;
 	string line;
 	stringstream ss(s);
@@ -217,8 +142,9 @@ static void readini(string s, std::map<T1,T2>& m) {
 	}
 	return;
 }
+
 template<typename T>
-static void readini(string s, std::vector<T>& v) {
+void readini(string s, std::vector<T>& v) {
 	T p;
 	string line;
 	stringstream ss(s);
@@ -228,6 +154,7 @@ static void readini(string s, std::vector<T>& v) {
 	}
 	return;
 }
+
 template<typename T>
 int loadFile(std::string strPath, std::set<T>&setTmp) {
 	std::ifstream fin(strPath);
@@ -308,14 +235,9 @@ int loadINI(std::string strPath, std::map<std::string, C>& m) {
 	fin.close();
 	return 1;
 }
-static bool rdbuf(string strPath,string& s) {
-	std::ifstream fin(strPath);
-	if (!fin)return false;
-	stringstream ss;
-	ss << fin.rdbuf();
-	s = ss.str();
-	return true;
-}
+
+bool rdbuf(string strPath, string& s);
+
 //读取伪xml
 template<class C,std::string(C::* U)() = &C::getName>
 int loadXML(const std::string& strPath, std::map<std::string, C>& m) {
@@ -381,17 +303,14 @@ template<typename T>
 void fprint(std::ofstream& fout,const T& t) {
 	fout << t;
 }
+
 template<class C, void(C::* U)(std::ofstream&) = &C::save>
 inline void fprint(std::ofstream& fout, C obj) {
 	obj.save(fout);
 }
-inline void fprint(std::ofstream& fout, std::string s) {
-	while (s.find(' ') != std::string::npos)s.replace(s.find(' '), 1, "{space}");
-	while (s.find('\t') != std::string::npos)s.replace(s.find('\t'), 1, "{tab}");
-	while (s.find('\n') != std::string::npos)s.replace(s.find('\n'), 1, "{endl}");
-	while (s.find('\r') != std::string::npos)s.replace(s.find('\r'), 1, "{enter}");
-	fout << s;
-}
+
+void fprint(std::ofstream& fout, std::string s);
+
 template<typename T1, typename T2>
 inline void fprint(std::ofstream& fout, std::pair<T1, T2> t) {
 	fprint(fout, t.first);
@@ -418,11 +337,8 @@ inline typename std::enable_if<!std::is_class<T>::value, void>::type fwrite(ofst
 }
 
 
-inline void fwrite(ofstream& fout, const std::string s) {
-	short len = (short)s.length();
-	fout.write((char*)& len, sizeof(short));
-	fout.write(s.c_str(), sizeof(char) * s.length());
-}
+void fwrite(ofstream& fout, const std::string& s);
+
 template<class C, void(C::* U)(std::ofstream&) = &C::writeb>
 inline void fwrite(ofstream& fout, C& obj) {
 	obj.writeb(fout);
