@@ -184,14 +184,6 @@ namespace CQ
 	//接收图片，并返回图片文件绝对路径
 	const char* getImage(const std::string& file);
 
-	//接收语音
-
-	CQAPI(CQ_getRecordV2, const char*)(
-		int AuthCode,
-		const char* file,//收到消息中的语音文件名(file)
-		const char* outformat//应用所需的格式
-		);
-
 	//撤回消息 Auth=180
 	int deleteMsg(long long MsgId);
 
