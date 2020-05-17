@@ -19,7 +19,7 @@ bool EVEMsg::isSystem() const { return fromQQ == 1000000; }
 
 Font::Font(const int Font)
 {
-	RtlMoveMemory(static_cast<void*>(this), reinterpret_cast<const void *>(Font), 20);
+	//RtlMoveMemory(static_cast<void*>(this), reinterpret_cast<const void *>(Font), 20);
 }
 
 EVEMsg::EVEMsg(const int subType, const int msgId, const long long fromQQ, std::string message, const int font)

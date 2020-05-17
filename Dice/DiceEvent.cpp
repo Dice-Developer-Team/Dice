@@ -13,7 +13,7 @@
 
 #include "CQAPI.h"
 #include <iostream>
-#pragma warning(disable:28159)
+//#pragma warning(disable:28159)
 using namespace std;
 using namespace CQ;
 

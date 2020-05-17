@@ -146,6 +146,7 @@
       <AdditionalIncludeDirectories>..\CQSDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <CallingConvention>Cdecl</CallingConvention>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -237,6 +238,7 @@
     <ClCompile Include="StorageBase.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\CQSDK\BotEnvironment.h" />
     <ClInclude Include="..\CQSDK\bufstream.h" />
     <ClInclude Include="..\CQSDK\CQAPI.h" />
     <ClInclude Include="..\CQSDK\CQAPI_EX.h" />
@@ -285,9 +287,6 @@
     <ClInclude Include="STLExtern.hpp" />
     <ClInclude Include="StorageBase.h" />
     <ClInclude Include="StrExtern.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="CQP.lib" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.json" />

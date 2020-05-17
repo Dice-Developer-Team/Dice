@@ -5,13 +5,12 @@ Written by MukiPy2001 & Thanks for the help of orzFly and Coxxs
 */
 #pragma once
 #include "cqdefine.h"
-
+#include "BotEnvironment.h"
 #ifdef _MSC_VER
 #define CQAPI(NAME,ReturnType) extern "C" __declspec(dllimport) ReturnType __stdcall NAME  // NOLINT
 #else
 #define CQAPI(NAME,ReturnType) extern "C" __attribute__((dllimport)) ReturnType __attribute__((__stdcall__)) NAME  // NOLINT
 #endif /*_MSC_VER*/
-
 
 namespace CQ
 {
@@ -52,7 +51,8 @@ namespace CQ
 	//取Cookies (慎用，此接口需要严格授权) 
 	//Auth=20 慎用,此接口需要严格授权 
 	CQAPI(CQ_getCookiesV2, const char *)(
-		int AuthCode // 
+		int AuthCode, // 
+		const char* Domain
 	);
 	//接收语音 
 	CQAPI(CQ_getRecordV2, const char *)(
@@ -215,11 +215,26 @@ namespace CQ
 	);
 	//取好友列表 Auth=162 
 	CQAPI(CQ_getFriendList, const char*)(
-		int AuthCode
+		int AuthCode,
+		CQBOOL Reserved = false // 保持为false
 		);
 	//撤回消息 Auth=180
 	CQAPI(CQ_deleteMsg, int)(
 		int AuthCode,
 		long long MsgId
+	);
+
+	//是否支持发送图片，返回大于 0 为支持，等于 0 为不支持
+	CQAPI(CQ_canSendImage, int)(
+		int AuthCode
+	);
+	//是否支持发送语音，返回大于 0 为支持，等于 0 为不支持
+	CQAPI(CQ_canSendRecord, int)(
+		int AuthCode
+	);
+	//接收图片，并返回图片文件绝对路径
+	CQAPI(CQ_getImage, const char*)(
+		int AuthCode,
+		const char* file//收到消息中的图片文件名(file)
 	);
 }

@@ -257,11 +257,9 @@
     <ClInclude Include="DiceSession.h">
       <Filter>头文件</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="CQP.lib">
-      <Filter>资源文件</Filter>
-    </Library>
+    <ClInclude Include="..\CQSDK\BotEnvironment.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.json">

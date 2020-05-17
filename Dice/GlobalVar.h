@@ -27,39 +27,68 @@
 #include "CQLogger.h"
 #include <map>
 #include "STLExtern.hpp"
+#include "BotEnvironment.h"
 
  /*
   * 版本信息
   * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
   * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
   */
-const unsigned short Dice_Build = 556u;
-inline const std::string Dice_Ver_Without_Build = "2.3.8Express10";
-constexpr auto DiceRequestHeader = "Dice/2.3.8EXP10";
+const unsigned short Dice_Build = 560u;
+inline const std::string Dice_Ver_Without_Build = "2.4.0alpha";
+constexpr auto DiceRequestHeader = "Dice/2.4.0ALPHA";
 inline const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
-inline const std::string Dice_Short_Ver = "Dice! by 溯洄 Shiki.Ver " + Dice_Ver;
+inline const std::string Dice_Short_Ver = "Dice! by 溯洄 Shiki Ver " + Dice_Ver;
+
+#ifdef __MIRAI__
 
 #ifdef __clang__
 
 #ifdef _MSC_VER
-const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + "]";
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + " For Mirai]";
 #elif defined(__GNUC__)
-const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__ + "]";
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__ + " For Mirai]";
 #else
-const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " UNKNOWN]"
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " UNKNOWN For Mirai]"
 #endif /*__clang__*/
 
 #else
 
 #ifdef _MSC_VER
-const std::string Dice_Full_Ver = std::string(Dice_Short_Ver) + "[" + __DATE__ + " " + __TIME__ + "]";
+const std::string Dice_Full_Ver = std::string(Dice_Short_Ver) + "[" + __DATE__ + " " + __TIME__ + " For Mirai]";
 #elif defined(__GNUC__)
-const std::string Dice_Full_Ver = Dice_Short_Ver + " [GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__ + "]";
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__ + " For Mirai]";
 #else
-const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER For Mirai]"
 #endif /*__clang__*/
 
 #endif /*_MSC_VER*/
+
+#else
+
+#ifdef __clang__
+
+#ifdef _MSC_VER
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__ + " For CoolQ]";
+#elif defined(__GNUC__)
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__ + " For CoolQ]";
+#else
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " UNKNOWN For CoolQ]"
+#endif /*__clang__*/
+
+#else
+
+#ifdef _MSC_VER
+const std::string Dice_Full_Ver = std::string(Dice_Short_Ver) + "[" + __DATE__ + " " + __TIME__ + " For CoolQ]";
+#elif defined(__GNUC__)
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__ + " For CoolQ]";
+#else
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER For CoolQ]"
+#endif /*__clang__*/
+
+#endif /*_MSC_VER*/
+
+#endif /*__MIRAI__*/
 
 
 

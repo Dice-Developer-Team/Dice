@@ -40,7 +40,11 @@ namespace CQ
 
 	//取Cookies (慎用，此接口需要严格授权) 
 	//Auth=20
-	const char* getCookies();
+	const char* getCookies(const char* Domain);
+
+	//取Cookies (慎用，此接口需要严格授权) 
+	//Auth=20
+	const char* getCookies(const std::string& Domain);
 
 	//接收语音 
 	const char* getRecord(
@@ -167,6 +171,26 @@ namespace CQ
 	class FriendInfo;
 	//取好友列表 Auth=162  
 	std::map<long long, FriendInfo> getFriendList();
+
+	//是否支持发送图片，返回true为支持，返回false为不支持
+	bool canSendImage();
+
+	//是否支持发送语音，返回大于 0 为支持，等于 0 为不支持
+	bool canSendRecord();
+
+	//接收图片，并返回图片文件绝对路径
+	const char* getImage(const char* file);
+
+	//接收图片，并返回图片文件绝对路径
+	const char* getImage(const std::string& file);
+
+	//接收语音
+
+	CQAPI(CQ_getRecordV2, const char*)(
+		int AuthCode,
+		const char* file,//收到消息中的语音文件名(file)
+		const char* outformat//应用所需的格式
+		);
 
 	//撤回消息 Auth=180
 	int deleteMsg(long long MsgId);
