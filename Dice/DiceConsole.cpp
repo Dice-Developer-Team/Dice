@@ -35,7 +35,7 @@
 using namespace std;
 using namespace CQ;
 
-const std::map<std::string, int>Console::intDefault{
+const std::map<std::string, int, less_ci>Console::intDefault{
 {"DisabledGlobal",0},{"DisabledBlock",0},{"DisabledListenAt",1},
 {"DisabledMe",1},{"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
 {"Private",0},{"CheckGroupLicense",0},{"LeaveDiscuss",0},
@@ -285,6 +285,9 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st) {
 					}
 				}
 				//整点事件
+				if (stNow.wMinute % 10 == 0) {
+					Cloud::update();
+				}
 				if (stNow.wMinute % 30 == 0) {
 					if (console["SystemAlarmCPU"]) {
 						long long perCPU = getWinCpuUsage();
