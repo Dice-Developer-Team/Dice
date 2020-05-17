@@ -1,20 +1,17 @@
 ﻿# Dice!
-QQ Dice Robot For TRPG Based on CoolQ 
+QQ Dice Robot For TRPG Based on CoolQ/Mirai
 
 [![License](https://img.shields.io/github/license/w4123/Dice.svg)](http://www.gnu.org/licenses)
 [![Build status](https://ci.appveyor.com/api/projects/status/6qm1l31k07dst0rk?svg=true)](https://ci.appveyor.com/project/w4123/dice)
-[![Doc Build status](https://readthedocs.org/projects/dice-for-qq/badge/?badge=latest)](http://docs.kokona.tech)
 [![Downloads](https://img.shields.io/github/downloads/w4123/dice/total.svg)](https://github.com/w4123/Dice/releases)
 [![GitHub contributors](https://img.shields.io/github/contributors/w4123/dice.svg)](https://github.com/w4123/Dice/graphs/contributors)
 [![GitHub last commit](https://img.shields.io/github/last-commit/w4123/dice.svg)](https://github.com/w4123/Dice/commits)
 
 ## 简介
 
-Dice!是一款基于酷Q的QQ跑团掷骰机器人 交流QQ群:941980833或624807593(已满)
+Dice!是一款基于酷Q的QQ跑团掷骰机器人 交流QQ群:882747577或941980833或624807593(已满)
 
-GitHub Page: <http://kokona.tech/>
-
-Doc: <http://docs.kokona.tech/>
+主页: <http://kokona.tech/>
 
 Latest Stable Release: [![GitHub release](https://img.shields.io/github/release/w4123/dice.svg)](https://github.com/w4123/Dice/releases) [![GitHub Release Date](https://img.shields.io/github/release-date/w4123/dice.svg)](https://github.com/w4123/Dice/releases)
 
@@ -30,13 +27,13 @@ Latest Release: [![GitHub release](https://img.shields.io/github/release-pre/w41
 
 从GitHub克隆源码时请不要直接从master分支克隆, 因为所有的更改都会提交到此分支, 很有可能包含最新的测试性更改, 未经过测试无法保证稳定 请选择Tag中最新的Release进行下载
 
-请使用最新版Visual Studio 2015或以上版本 (或其独立编译器)进行编译, 项目主文件为Dice.sln, 编译时务必使用Win32模式否则无法编译成功
+请使用最新版Visual Studio 2019或以上版本 (或其独立编译器)进行编译, 项目主文件为Dice.sln, 编译时务必使用Win32模式否则无法编译成功
 
 新增: 现在可以用GCC/Clang编译, 只测试了几个版本, 编译出现问题请反馈, 下面列出编译选项, 正在写cmake
 
-- GCC: ` g++ -shared -static -std=c++14 -O2 -o com.w4123.dice.dll -Wl,--kill-at -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -pthread -lWinInet -luser32 `
-- Clang+MSVC: ` clang++ --target=i686-pc-windows-msvc  -m32 -shared -static -o com.w4123.dice.dll -Xclang -flto-visibility-public-std -std=c++14 -O2 -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -lWinInet -luser32 -pthread -Wno-invalid-source-encoding `
-- Clang+GCC: ` clang++ --target=i686-pc-windows-gnu -m32 -shared -static -o com.w4123.dice.dll -Xclang -flto-visibility-public-std -Wl,--kill-at -std=c++14 -O2 -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -lWinInet -luser32 -pthread -Wno-invalid-source-encoding  `
+- GCC: ` g++ -shared -static -std=c++17 -O2 -o com.w4123.dice.dll -Wl,--kill-at -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -pthread -lWinInet -luser32 `
+- Clang+MSVC: ` clang++ --target=i686-pc-windows-msvc  -m32 -shared -static -o com.w4123.dice.dll -Xclang -flto-visibility-public-std -std=c++17 -O2 -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -lWinInet -luser32 -pthread -Wno-invalid-source-encoding `
+- Clang+GCC: ` clang++ --target=i686-pc-windows-gnu -m32 -shared -static -o com.w4123.dice.dll -Xclang -flto-visibility-public-std -Wl,--kill-at -std=c++17 -O2 -I CQSDK\ -I Dice\ CQSDKCPP\*.cpp Dice\*.cpp Dice\CQP.lib -lWinInet -luser32 -pthread -Wno-invalid-source-encoding  `
 
 编译后会得到com.w4123.dice.dll文件, 请勿更改此文件的名称! 请从Releases中下载对应的json文件(或自己编写), 放至酷Q app文件夹下, 并开启开发模式, 在应用管理中合成cpk文件即可正常使用
 
@@ -48,7 +45,7 @@ Latest Release: [![GitHub release](https://img.shields.io/github/release-pre/w41
 
 Dice! QQ Dice Robot for TRPG
 
-Copyright (C) 2018-2019 w4123溯洄
+Copyright (C) 2018-2020 w4123溯洄 Shiki
 
 This program is free software: you can redistribute it and/or modify it under the terms
 of the GNU Affero General Public License as published by the Free Software Foundation,
