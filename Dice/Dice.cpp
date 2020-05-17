@@ -161,8 +161,6 @@ EVE_Enable(eventEnable)
 		Mirai = true;
 		this_thread::sleep_for(3s); //确保Mirai异步信息加载执行完毕
 	}
-	
-	this_thread::sleep_for(3s);
 	llStartTime = clock();
 	strFileLoc = getAppDirectory();
 	mkDir(strFileLoc); // Mirai不会自动创建文件夹
