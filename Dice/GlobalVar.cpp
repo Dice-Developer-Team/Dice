@@ -27,6 +27,8 @@
 
 bool Enabled = false;
 
+bool Mirai = false;
+
 bool msgSendThreadRunning = false;
 
 CQ::logger DiceLogger("Dice!");

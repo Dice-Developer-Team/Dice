@@ -68,6 +68,9 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER]"
 // 应用是否被启用
 extern bool Enabled;
 
+// 是否在Mirai环境中运行
+extern bool Mirai;
+
 // 消息发送线程是否正在运行
 extern bool msgSendThreadRunning;
 

@@ -35,14 +35,17 @@ short trustedQQ(long long qq) {
 	else return UserList[qq].nTrust;
 }
 int clearUser() {
-	int cnt = 0;
-	for (auto& [qq, user] : UserList) {
+	vector<long long> QQDelete;
+	for (const auto& [qq, user] : UserList) {
 		if (user.empty()) {
-			UserList.erase(qq);
-			cnt++;
+			QQDelete.push_back(qq);
 		}
 	}
-	return cnt;
+	for (const auto& qq : QQDelete)
+	{
+		UserList.erase(qq);
+	}
+	return QQDelete.size();
 }
 
 string getName(long long QQ, long long GroupID)
