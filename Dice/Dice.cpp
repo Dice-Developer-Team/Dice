@@ -154,6 +154,7 @@ EVE_Enable(eventEnable)
 	llStartTime = clock();
 	//Wait until the thread terminates
 	strFileLoc = getAppDirectory();
+	mkDir(strFileLoc);
 	console.DiceMaid = getLoginQQ();
 	GlobalMsg["strSelfName"] = getLoginNick();
 	mkDir("DiceData\\conf");

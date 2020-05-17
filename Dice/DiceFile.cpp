@@ -9,7 +9,7 @@
 
 int mkDir(const std::string& dir) {
 	std::error_code err;
-	std::filesystem::create_directory(dir, err);
+	std::filesystem::create_directories(dir, err);
 	return err.value();
 	/*if (_access(dir.c_str(), 0))	return _mkdir(dir.c_str());
 	return -2;*/
