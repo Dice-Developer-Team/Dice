@@ -5,11 +5,14 @@
  */
 
 #include <string>
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 using std::string;
 using std::wstring;
 using std::to_string;
+
+#define CP_GB18030 54936
 
 static string toString(int num, unsigned short size = 0) {
     string res{ to_string(num) };
@@ -37,19 +40,18 @@ static int count_char(string s, char ch) {
 }
 
 static string convert_w2a(const wchar_t* wch) {
-    int len = WideCharToMultiByte(CP_ACP, 0, wch, wcslen(wch), NULL, 0, NULL, NULL);
-    char* m_char = new char[len + 1];
-    WideCharToMultiByte(CP_ACP, 0, wch, wcslen(wch), m_char, len, NULL, NULL);
-    m_char[len] = '\0';
+    int len = WideCharToMultiByte(CP_GB18030, 0, wch, -1, nullptr, 0, nullptr, nullptr);
+    char* m_char = new char[len];
+    WideCharToMultiByte(CP_GB18030, 0, wch, -1, m_char, len, nullptr, nullptr);
     std::string str(m_char);
     delete[] m_char;
     return str;
 }
+
 static wstring convert_a2w(const char* ch) {
-    int len = MultiByteToWideChar(CP_ACP, 0, ch, strlen(ch), NULL, 0);
-    wchar_t* m_char = new wchar_t[len + 1];
-    MultiByteToWideChar(CP_ACP, 0, ch, strlen(ch), m_char, len);
-    m_char[len] = L'\0';
+    int len = MultiByteToWideChar(CP_GB18030, 0, ch, -1, nullptr, 0);
+    wchar_t* m_char = new wchar_t[len];
+    MultiByteToWideChar(CP_GB18030, 0, ch, -1, m_char, len);
     std::wstring wstr(m_char);
     delete[] m_char;
     return wstr;

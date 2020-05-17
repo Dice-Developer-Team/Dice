@@ -20,6 +20,8 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#define CP_GB18030 54936
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <string>
@@ -28,9 +30,9 @@
 
 std::string GBKtoUTF8(const std::string& strGBK)
 {
-	int len = MultiByteToWideChar(CP_ACP, 0, strGBK.c_str(), -1, nullptr, 0);
+	int len = MultiByteToWideChar(CP_GB18030, 0, strGBK.c_str(), -1, nullptr, 0);
 	auto* const str1 = new wchar_t[len + 1];
-	MultiByteToWideChar(CP_ACP, 0, strGBK.c_str(), -1, str1, len);
+	MultiByteToWideChar(CP_GB18030, 0, strGBK.c_str(), -1, str1, len);
 	len = WideCharToMultiByte(CP_UTF8, 0, str1, -1, nullptr, 0, nullptr, nullptr);
 	auto* const str2 = new char[len + 1];
 	WideCharToMultiByte(CP_UTF8, 0, str1, -1, str2, len, nullptr, nullptr);
@@ -52,9 +54,9 @@ std::string UTF8toGBK(const std::string& strUTF8)
 	int len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
 	auto* const wszGBK = new wchar_t[len + 1];
 	MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, wszGBK, len);
-	len = WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, nullptr, 0, nullptr, nullptr);
+	len = WideCharToMultiByte(CP_GB18030, 0, wszGBK, -1, nullptr, 0, nullptr, nullptr);
 	auto* const szGBK = new char[len + 1];
-	WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, szGBK, len, nullptr, nullptr);
+	WideCharToMultiByte(CP_GB18030, 0, wszGBK, -1, szGBK, len, nullptr, nullptr);
 	std::string strTemp(szGBK);
 	delete[] szGBK;
 	delete[] wszGBK;
