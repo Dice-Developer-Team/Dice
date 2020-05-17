@@ -59,12 +59,12 @@ int FromMsg::AdminEvent(string strOption) {
 		reply(GlobalMsg["strNotAdmin"]);
 		return -1;
 	}
-	if (Console::intDefault.count(strOption)) {
+	if (auto it = Console::intDefault.find(strOption);it != Console::intDefault.end()) {
 		int intSet = 0;
 		switch (readNum(intSet)) {
 		case 0:
-			console.set(strOption, intSet);
-			note("已将" + GlobalMsg["strSelfName"] + "的" + strOption + "设置为" + to_string(intSet), 0b10);
+			console.set(it->first, intSet);
+			note("已将" + GlobalMsg["strSelfName"] + "的" + it->first + "设置为" + to_string(intSet), 0b10);
 			break;
 		case -1:
 			reply(GlobalMsg["strSelfName"] + "该项为" + to_string(console[strOption.c_str()]));
@@ -478,11 +478,10 @@ int FromMsg::AdminEvent(string strOption) {
 		}
 		else reply(GlobalMsg["strAdminOptionEmpty"]);
 		return 0;
-
 	}
 }
 int FromMsg::MasterSet() {
-	std::string strOption = readUntilSpace();
+	std::string strOption = readPara();
 	if (strOption.empty()) {
 		reply(GlobalMsg["strAdminOptionEmpty"]);
 		return -1;
@@ -1068,7 +1067,7 @@ int FromMsg::DiceReply() {
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "admin")
 	{
 		intMsgCnt += 5;
-		return AdminEvent(readAttrName());
+		return AdminEvent(readPara());
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "cloud") {
 		intMsgCnt += 5;

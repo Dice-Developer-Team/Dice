@@ -50,7 +50,7 @@ public:
 		if (sMin.empty())return { stoi(sHour),0 };
 		return { stoi(sHour),stoi(sMin) };
 	}
-	static const std::map<std::string, int>intDefault;
+	static const std::map<std::string, int, less_ci>intDefault;
 	//通知列表 1-日常活动/2-提醒事件/4-接收消息/8-警告内容/16-用户推送/32-骰娘广播
 	int log(std::string msg, int lv, std::string strTime = "");
 	operator bool()const{ return isMasterMode && masterQQ;}
@@ -118,7 +118,7 @@ public:
 	void saveNotice();
 private:
 	string strPath;
-	std::map<std::string, int>intConf;
+	std::map<std::string, int, less_ci>intConf;
 	std::multimap<Clock, ClockEvent>mWorkClock{};
 	std::map<chatType, int> NoticeList{};
 };
