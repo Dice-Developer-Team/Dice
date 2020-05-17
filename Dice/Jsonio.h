@@ -1,3 +1,4 @@
+// Json信息获取以及写入
 #pragma once
 #include <fstream>
 #include <map>
@@ -32,11 +33,11 @@ public:
 };
 
 template<typename T>
-typename std::enable_if<!std::is_arithmetic<T>::value, T>::type readJKey(std::string strJson) {
+typename std::enable_if_t<!std::is_arithmetic_v<T>, T> readJKey(std::string strJson) {
 	return UTF8toGBK(strJson);
 }
 template<typename T>
-typename std::enable_if<std::is_arithmetic<T>::value, T>::type readJKey(std::string strJson) {
+typename std::enable_if_t<std::is_arithmetic_v<T>, T> readJKey(std::string strJson) {
 	return stoll(strJson);
 }
 
@@ -54,9 +55,9 @@ static nlohmann::json freadJson(std::string strPath) {
 }
 
 template<typename T1, typename T2, class sort>
-int readJMap(nlohmann::json& j, std::map<T1, T2, sort>& mapTmp) {
+int readJMap(const nlohmann::json& j, std::map<T1, T2, sort>& mapTmp) {
 	int intCnt = 0;
-	for (nlohmann::json::iterator it = j.begin(); it != j.end(); ++it) {
+	for (auto it = j.cbegin(); it != j.cend(); ++it) {
 		T1 tKey = readJKey<T1>(it.key());
 		T2 tVal = it.value();
 		tVal = UTF8toGBK(tVal);
@@ -78,7 +79,7 @@ int readJson(const std::string& strJson, std::map<T1, T2> &mapTmp) {
 }
 
 template<typename T1, typename T2, typename sort>
-int loadJMap(std::string strLoc, std::map<T1, T2, sort> &mapTmp) {
+int loadJMap(const std::string& strLoc, std::map<T1, T2, sort> &mapTmp) {
 	std::ifstream fin(strLoc);
 	if (fin) {
 		try {
@@ -96,16 +97,16 @@ int loadJMap(std::string strLoc, std::map<T1, T2, sort> &mapTmp) {
 }
 
 template<typename T>
-std::string writeJKey(typename std::enable_if<!std::is_arithmetic<T>::value, T>::type strJson) {
+std::string writeJKey(typename std::enable_if_t<!std::is_arithmetic_v<T>, T> strJson) {
 	return GBKtoUTF8(strJson);
 }
 template<typename T>
-std::string writeJKey(typename std::enable_if<std::is_arithmetic<T>::value, T>::type llJson) {
+std::string writeJKey(typename std::enable_if_t<std::is_arithmetic_v<T>, T> llJson) {
 	return std::to_string(llJson);
 }
 
 template<typename T1, typename T2, typename sort>
-int saveJMap(std::string strLoc, std::map<T1, T2, sort> mapTmp) {
+int saveJMap(const std::string& strLoc, std::map<T1, T2, sort> mapTmp) {
 	if (mapTmp.empty())return 0;
 	std::ofstream fout(strLoc);
 	if (fout) {

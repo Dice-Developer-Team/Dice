@@ -5,6 +5,123 @@
 #include <fstream>
 #include "DiceMsgSend.h"
 #include "ManagerSystem.h"
+#include "DiceFile.hpp"
+
+int mkDir(const std::string& dir) {
+	std::error_code err;
+	std::filesystem::create_directory(dir, err);
+	return err.value();
+	/*if (_access(dir.c_str(), 0))	return _mkdir(dir.c_str());
+	return -2;*/
+}
+
+int clrDir(std::string dir, const std::set<std::string>& exceptList) {
+	int nCnt = 0;
+	std::error_code err;
+	for (const auto& p : std::filesystem::directory_iterator(dir, err))
+	{
+		if (!p.is_directory() && p.path().filename().string().length() >= 36 && !exceptList.count(p.path().filename().string()))
+		{
+			std::error_code err2;
+			std::filesystem::remove(p.path(), err2);
+			if (!err2) nCnt++;
+		}
+	}
+	return (err ? err.value() : nCnt);
+
+	/* int nCnt = 0;
+	_finddata_t file;
+	long lf = _findfirst((dir + "*").c_str(), &file);
+	//输入文件夹路径
+	if (lf < 0) {
+		return -1;
+	}
+	else {
+		do {
+			if (file.attrib == _A_SUBDIR)continue;
+			if (!strcmp(file.name, ".") || !strcmp(file.name, ".."))continue;
+			if (strlen(file.name) < 36)continue;
+			if (exceptList.count(file.name))continue;
+			if (!remove((dir + file.name).c_str()))nCnt++;
+		} while (!_findnext(lf, &file));
+	}
+	_findclose(lf);
+	return nCnt;*/
+}
+
+vector<string> getLines(const string& s) {
+	vector<string>vLine;
+	stringstream ss(s);
+	string line;
+	while (getline(ss, line)) {
+		int r = line.length();
+		while (r && isspace(static_cast<unsigned char>(line[r - 1])))r--;
+		int l = 0;
+		while (isspace(static_cast<unsigned char>(line[l])) && l < r)l++;
+		line = line.substr(l, r - l);
+		if (line.empty())continue;
+		vLine.push_back(std::move(line));
+	}
+	return vLine;
+}
+
+string printLine(string s) {
+	while (s.find('\t') != std::string::npos)s.replace(s.find('\t'), 1, "\\t");
+	while (s.find("\r\n") != std::string::npos)s.replace(s.find("\r\n"), 2, "\\n");
+	while (s.find('\r') != std::string::npos)s.replace(s.find('\r'), 1, "\\n");
+	while (s.find('\n') != std::string::npos)s.replace(s.find('\n'), 1, "\\n");
+	return s;
+}
+
+[[deprecated]] bool fscan(std::ifstream& fin, std::string& t) {
+	std::string val;
+	if (fin >> val) {
+		while (val.find("{space}") != std::string::npos)val.replace(val.find("{space}"), 7, " ");
+		while (val.find("{tab}") != std::string::npos)val.replace(val.find("{tab}"), 5, "\t");
+		while (val.find("{endl}") != std::string::npos)val.replace(val.find("{endl}"), 6, "\n");
+		while (val.find("{enter}") != std::string::npos)val.replace(val.find("{enter}"), 7, "\r");
+		while (val.find("\\n") != std::string::npos)val.replace(val.find("\\n"), 2, "\n");
+		while (val.find("\\s") != std::string::npos)val.replace(val.find("\\s"), 2, " ");
+		while (val.find("\\t") != std::string::npos)val.replace(val.find("\\t"), 2, "	");
+		t = val;
+		return true;
+	}
+	else return false;
+}
+
+bool rdbuf(string strPath, string& s) {
+	std::ifstream fin(strPath);
+	if (!fin)return false;
+	stringstream ss;
+	ss << fin.rdbuf();
+	s = ss.str();
+	return true;
+}
+
+void fprint(std::ofstream& fout, std::string s) {
+	while (s.find(' ') != std::string::npos)s.replace(s.find(' '), 1, "{space}");
+	while (s.find('\t') != std::string::npos)s.replace(s.find('\t'), 1, "{tab}");
+	while (s.find('\n') != std::string::npos)s.replace(s.find('\n'), 1, "{endl}");
+	while (s.find('\r') != std::string::npos)s.replace(s.find('\r'), 1, "{enter}");
+	fout << s;
+}
+
+void fwrite(ofstream& fout, const std::string& s) {
+	short len = (short)s.length();
+	fout.write((char*)&len, sizeof(short));
+	fout.write(s.c_str(), sizeof(char) * s.length());
+}
+
+void readini(ifstream& fin, std::string& s) {
+	std::string line;
+	getline(fin, line);
+	int pos = line.find('=');
+	if (pos == std::string::npos)return;
+	std::istringstream sin(line.substr(pos + 1));
+	sin >> s;
+	return;
+}
+
 
 using namespace std;
 std::ifstream& operator>>(std::ifstream& fin, CQ::msgtype& t) {

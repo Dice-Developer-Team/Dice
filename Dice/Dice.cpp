@@ -588,6 +588,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 }
 
 EVE_System_GroupMemberDecrease(eventGroupMemberDecrease) {
+	if (fromQQ == 0)return 0; // 考虑Mirai在机器人自行退群时也会调用一次这个函数
 	Chat& grp = chat(fromGroup);
 	if (beingOperateQQ == console.DiceMaid) {
 		grp.set("已退");

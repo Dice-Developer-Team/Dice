@@ -164,6 +164,7 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <AdditionalIncludeDirectories>..\CQSDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -191,6 +192,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -233,8 +235,10 @@
     <ClCompile Include="RandomGenerator.cpp" />
     <ClCompile Include="RD.cpp" />
     <ClCompile Include="StorageBase.cpp" />
+    <ClCompile Include="strExtern.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\CQSDK\BotEnvironment.h" />
     <ClInclude Include="..\CQSDK\bufstream.h" />
     <ClInclude Include="..\CQSDK\CQAPI.h" />
     <ClInclude Include="..\CQSDK\CQAPI_EX.h" />
@@ -267,9 +271,7 @@
     <ClInclude Include="DiceMod.h" />
     <ClInclude Include="DiceMsgSend.h" />
     <ClInclude Include="DiceNetwork.h" />
-    <ClInclude Include="DiceSensitive.h" />
     <ClInclude Include="DiceSession.h" />
-    <ClInclude Include="DiceTrie.h" />
     <ClInclude Include="DiceXMLTree.h" />
     <ClInclude Include="EncodingConvert.h" />
     <ClInclude Include="GetRule.h" />
@@ -285,9 +287,6 @@
     <ClInclude Include="STLExtern.hpp" />
     <ClInclude Include="StorageBase.h" />
     <ClInclude Include="StrExtern.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="CQP.lib" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.json" />

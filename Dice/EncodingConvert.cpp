@@ -20,23 +20,26 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+
+#define CP_GB18030 54936
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <string>
 #include <cassert>
 #include <vector>
 
+// 事实上是GB18030
 std::string GBKtoUTF8(const std::string& strGBK)
 {
-	int len = MultiByteToWideChar(CP_ACP, 0, strGBK.c_str(), -1, nullptr, 0);
-	auto* const str1 = new wchar_t[len + 1];
-	MultiByteToWideChar(CP_ACP, 0, strGBK.c_str(), -1, str1, len);
-	len = WideCharToMultiByte(CP_UTF8, 0, str1, -1, nullptr, 0, nullptr, nullptr);
-	auto* const str2 = new char[len + 1];
-	WideCharToMultiByte(CP_UTF8, 0, str1, -1, str2, len, nullptr, nullptr);
-	std::string strOutUTF8(str2);
-	delete[] str1;
-	delete[] str2;
+	int UTF16len = MultiByteToWideChar(CP_GB18030, 0, strGBK.c_str(), -1, nullptr, 0);
+	auto* const strUTF16 = new wchar_t[UTF16len];
+	MultiByteToWideChar(CP_GB18030, 0, strGBK.c_str(), -1, strUTF16, UTF16len);
+	int UTF8len = WideCharToMultiByte(CP_UTF8, 0, strUTF16, -1, nullptr, 0, nullptr, nullptr);
+	auto* const strUTF8 = new char[UTF8len];
+	WideCharToMultiByte(CP_UTF8, 0, strUTF16, -1, strUTF8, UTF8len, nullptr, nullptr);
+	std::string strOutUTF8(strUTF8);
+	delete[] strUTF16;
+	delete[] strUTF8;
 	return strOutUTF8;
 }
 std::vector<std::string> GBKtoUTF8(const std::vector<std::string> &strGBK)
@@ -47,18 +50,19 @@ std::vector<std::string> GBKtoUTF8(const std::vector<std::string> &strGBK)
 	}
 	return vOutUTF8;
 }
+// 事实上是GB18030
 std::string UTF8toGBK(const std::string& strUTF8)
 {
-	int len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
-	auto* const wszGBK = new wchar_t[len + 1];
-	MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, wszGBK, len);
-	len = WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, nullptr, 0, nullptr, nullptr);
-	auto* const szGBK = new char[len + 1];
-	WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, szGBK, len, nullptr, nullptr);
-	std::string strTemp(szGBK);
-	delete[] szGBK;
-	delete[] wszGBK;
-	return strTemp;
+	int UTF16len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
+	auto* const strUTF16 = new wchar_t[UTF16len];
+	MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, strUTF16, UTF16len);
+	int GBKlen = WideCharToMultiByte(CP_GB18030, 0, strUTF16, -1, nullptr, 0, nullptr, nullptr);
+	auto* const strGBK = new char[GBKlen];
+	WideCharToMultiByte(CP_GB18030, 0, strUTF16, -1, strGBK, GBKlen, nullptr, nullptr);
+	std::string strOutGBK(strGBK);
+	delete[] strUTF16;
+	delete[] strGBK;
+	return strOutGBK;
 }
 std::vector<std::string> UTF8toGBK(const std::vector<std::string> &vUTF8)
 {

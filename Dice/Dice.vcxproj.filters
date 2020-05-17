@@ -111,6 +111,9 @@
     <ClCompile Include="DiceMod.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="strExtern.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -242,12 +245,6 @@
     <ClInclude Include="DiceFile.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="DiceTrie.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="DiceSensitive.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="DiceMod.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -263,11 +260,9 @@
     <ClInclude Include="DiceSession.h">
       <Filter>头文件</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="CQP.lib">
-      <Filter>资源文件</Filter>
-    </Library>
+    <ClInclude Include="..\CQSDK\BotEnvironment.h">
+      <Filter>头文件\CQHead</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.json">

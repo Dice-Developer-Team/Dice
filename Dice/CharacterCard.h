@@ -286,8 +286,8 @@ public:
 	}
 	int set(string key, short val) {
 		key = standard(key);
-		if (val == pTemplet->defaultSkill.find(key)->second && !Attr.count(key)) {
-			Attr.erase(key);
+		if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.find(key)->second) {
+			if (Attr.count(key)) Attr.erase(key);
 			return -1;
 		}
 		Attr[key] = val;

@@ -167,8 +167,12 @@ int CQ::sendDiscussMsg(const long long DiscussID, const std::string& msg) { retu
 //发送赞
 int CQ::sendLike(const long long QQID, const int times) { return lasterr = CQ_sendLikeV2(getAuthCode(), QQID, times); }
 
+
 //取Cookies (慎用，此接口需要严格授权)
-const char* CQ::getCookies() { return CQ_getCookiesV2(getAuthCode()); }
+const char* CQ::getCookies(const char * Domain) { return CQ_getCookiesV2(getAuthCode(), Domain); }
+
+//取Cookies (慎用，此接口需要严格授权)
+const char* CQ::getCookies(const std::string& Domain) { return getCookies(Domain.c_str()); }
 
 //接收语音
 const char* CQ::getRecord(const char* file, const char* outformat)
@@ -329,7 +333,7 @@ std::map<long long, std::string> CQ::getGroupList()
 }
 //取好友列表
 std::map<long long, FriendInfo> CQ::getFriendList(){
-	Unpack pack(base64_decode(CQ_getFriendList(getAuthCode()))); // 获取原始数据转换为Unpack
+	Unpack pack(base64_decode(CQ_getFriendList(getAuthCode(), false))); // 获取原始数据转换为Unpack
 	int Cnt = pack.getInt();//获取总数
 	std::map<long long, FriendInfo> ret;
 	while (Cnt--){
@@ -340,6 +344,22 @@ std::map<long long, FriendInfo> CQ::getFriendList(){
 	fout << "friend add" << std::endl;
 	fout.close();
 	return ret;
+}
+bool CQ::canSendImage()
+{
+	return CQ_canSendImage(getAuthCode()) > 0;
+}
+bool CQ::canSendRecord()
+{
+	return CQ_canSendRecord(getAuthCode()) > 0;
+}
+const char* CQ::getImage(const char* file)
+{
+	return CQ_getImage(getAuthCode(), file);
+}
+const char* CQ::getImage(const std::string& file)
+{
+	return getImage(file.c_str());
 }
 int CQ::deleteMsg(const long long MsgId)
 {

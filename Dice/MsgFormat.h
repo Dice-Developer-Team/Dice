@@ -43,7 +43,7 @@ std::string format(std::string s, const std::map<std::string, std::string, sort>
 	int l = 0, r = 0;
 	int len = s.length();
 	while ((l = s.find('{', r)) != string::npos && (r = s.find('}', l)) != string::npos) {
-		if (s[l - 1] == 0x5c) {
+		if (l - 1 >= 0 && s[l - 1] == 0x5c) {
 			s.replace(l - 1, 1, "");
 			continue;
 		}
