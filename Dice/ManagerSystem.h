@@ -20,6 +20,7 @@ using std::map;
 using std::vector;
 constexpr auto CQ_IMAGE = "[CQ:image,file=";
 constexpr time_t NEWYEAR = 1588262400;
+extern string DiceDir;
 
 //МгдиЪ§Он
 void loadData();

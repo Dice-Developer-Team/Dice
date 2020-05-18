@@ -30,7 +30,6 @@ public:
 	bool isMasterMode = false;
 	long long masterQQ = 0;
 	long long DiceMaid = 0;
-	Console(string path) :strPath(path) {}
 	friend void ConsoleTimer();
 	friend class FromMsg;
 	//DiceSens DSens;
@@ -67,6 +66,7 @@ public:
 	ResList listClock()const;
 	ResList listNotice()const;
 	int showNotice(chatType ct)const;
+	void setPath(std::string path) { strPath = path; save(); }
 	void set(std::string key, int val) {intConf[key] = val;	save();}
 	void addNotice(chatType ct, int lv);
 	void redNotice(chatType ct, int lv);

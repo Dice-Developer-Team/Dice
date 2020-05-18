@@ -5,6 +5,7 @@
 #include <windows.h>
 #include "ManagerSystem.h"
 
+string DiceDir = "DiceData";
  //被引用的图片列表
 set<string> sReferencedImage;
 
@@ -53,6 +54,9 @@ string getName(long long QQ, long long GroupID)
 	string nick;
 	if (getUser(QQ).getNick(nick, GroupID))return nick;
 	if (GroupID && !(nick = strip(CQ::getGroupMemberInfo(GroupID, QQ).GroupNick)).empty())return nick;
+	CQ::FriendInfo frd = CQ::getFriendList()[QQ];
+	if (!(nick = strip(frd.remark)).empty())return nick;
+	if (!(nick = strip(frd.nick)).empty())return nick;
 	if (!(nick = strip(CQ::getStrangerInfo(QQ).nick)).empty())return nick;
 	return GlobalMsg["stranger"] + "(" + to_string(QQ) + ")";
 }

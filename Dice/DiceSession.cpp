@@ -75,10 +75,10 @@ int DiceSession::ob_clr(FromMsg* msg) {
 }
 
 void DiceSession::save() const {
-    mkDir("DiceData\\user\\session");
-    ofstream fout("DiceData\\user\\session\\" + to_string(room) + ".json");
+    mkDir(DiceDir + "\\user\\session");
+    ofstream fout(DiceDir + "\\user\\session\\" + to_string(room) + ".json");
     if (!fout) {
-        console.log("群开团信息保存失败:DiceData\\user\\session\\" + to_string(room), 1);
+        console.log("群开团信息保存失败:" + DiceDir + "\\user\\session\\" + to_string(room), 1);
         return;
     }
     nlohmann::json jData;
@@ -107,14 +107,14 @@ Session& DiceTableMaster::session(long long group) {
 
 void DiceTableMaster::session_end(long long group) {
     std::unique_lock<std::shared_mutex> lock(sessionMutex);
-    remove(("DiceData\\user\\session\\" + to_string(group)).c_str());
+    remove((DiceDir + "\\user\\session\\" + to_string(group)).c_str());
     mSession.erase(group);
 }
 
 const enumap<string> mSMTag{ "type", "room", "gm", "player", "observer", "tables" };
 
 void DiceTableMaster::save() {
-    mkDir("DiceData\\user\\session");
+    mkDir(DiceDir + "\\user\\session");
     std::shared_lock<std::shared_mutex> lock(sessionMutex);
     for (auto [grp, pSession] : mSession) {
         pSession->save();
@@ -125,10 +125,10 @@ int DiceTableMaster::load() {
     string strLog;
     std::unique_lock<std::shared_mutex> lock(sessionMutex);
     set<string> sFile;
-    int cnt = listDir("DiceData\\user\\session\\", sFile);
+    int cnt = listDir(DiceDir + "\\user\\session\\", sFile);
     if (cnt <= 0)return cnt;
     for (auto& filename : sFile) {
-        nlohmann::json j = freadJson("DiceData\\user\\session\\" + filename);
+        nlohmann::json j = freadJson(DiceDir + "\\user\\session\\" + filename);
         if (j.is_null()) {
             cnt--;
             continue;

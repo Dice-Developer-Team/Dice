@@ -111,7 +111,7 @@ void Console::rmNotice(chatType ct) {
 	saveNotice();
 }
 int Console::log(std::string strMsg, int note_lv, string strTime) {
-	ofstream fout(string("DiceData\\audit\\log") + to_string(DiceMaid) + "_" + printDate() + ".txt", ios::out | ios::app);
+	ofstream fout(string(DiceDir + "\\audit\\log") + to_string(DiceMaid) + "_" + printDate() + ".txt", ios::out | ios::app);
 	fout << strTime << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 	fout.close();
 	int Cnt = 0;
@@ -139,14 +139,14 @@ void Console::reset() {
 	NoticeList.clear();
 }
 void  Console::loadNotice() {
-	if (loadFile("DiceData\\conf\\NoticeList.txt", NoticeList) < 1) {
+	if (loadFile(DiceDir + "\\conf\\NoticeList.txt", NoticeList) < 1) {
 		std::set<chatType>sChat;
 		if (loadFile((string)getAppDirectory() + "MonitorList.RDconf", sChat) > 0)
 			for (auto& it : sChat) {
 				console.setNotice(it, 0b100000);
 			}
 		sChat.clear();
-		if (loadFile("DiceData\\conf\\RecorderList.RDconf", sChat) > 0)
+		if (loadFile(DiceDir + "\\conf\\RecorderList.RDconf", sChat) > 0)
 			for (auto& it : sChat) {
 				console.setNotice(it, 0b11011);
 			}
@@ -161,9 +161,9 @@ void  Console::loadNotice() {
 	}
 }
 void Console::saveNotice() {
-	saveFile("DiceData\\conf\\NoticeList.txt", NoticeList);
+	saveFile(DiceDir + "\\conf\\NoticeList.txt", NoticeList);
 }
-Console console{"DiceData\\conf\\Console.xml"};
+Console console;
 
 //DiceModManager modules{};
 
@@ -205,6 +205,7 @@ std::string printSTime(SYSTEMTIME st){
 	//¥Ú”°”√ªßÍ«≥∆QQ
 	string printQQ(long long llqq) {
 		string nick = getStrangerInfo(llqq).nick;
+		if (nick.empty())nick = getFriendList()[llqq].nick;
 		while (nick.find(" ") != string::npos)nick.erase(nick.begin() + nick.find(" "), nick.begin() + nick.find(" ") + strlen(" "));
 		while (nick.find(" ") != string::npos)nick.erase(nick.begin() + nick.find(" "), nick.begin() + nick.find(" ") + strlen(" "));
 		return nick + "(" + to_string(llqq) + ")";
