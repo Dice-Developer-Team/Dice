@@ -5,12 +5,11 @@ Written by MukiPy2001 & Thanks for the help of orzFly and Coxxs
 */
 #pragma once
 #include "cqdefine.h"
-#include "BotEnvironment.h"
 #ifdef _MSC_VER
 #define CQAPI(NAME,ReturnType) extern "C" __declspec(dllimport) ReturnType __stdcall NAME  // NOLINT
 #else
 #define CQAPI(NAME,ReturnType) extern "C" __attribute__((dllimport)) ReturnType __attribute__((__stdcall__)) NAME  // NOLINT
-#endif /*_MSC_VER*/
+#endif /*_MSC_VER*/	
 
 namespace CQ
 {

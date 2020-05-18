@@ -151,9 +151,19 @@ void dataBackUp() {
 }
 EVE_Enable(eventEnable)
 {
+	char path[MAX_PATH];
+	GetModuleFileNameA(nullptr, path, MAX_PATH);
+	std::string pathStr(path);
+	pathStr = pathStr.substr(pathStr.rfind("\\") + 1);
+	std::transform(pathStr.begin(), pathStr.end(), pathStr.begin(), [](unsigned char c) {return tolower(c); });
+	if (pathStr.substr(0, 4) == "java")
+	{
+		Mirai = true;
+		this_thread::sleep_for(3s); //确保Mirai异步信息加载执行完毕
+	}
 	llStartTime = clock();
-	//Wait until the thread terminates
 	strFileLoc = getAppDirectory();
+	mkDir(strFileLoc); // Mirai不会自动创建文件夹
 	console.DiceMaid = getLoginQQ();
 	GlobalMsg["strSelfName"] = getLoginNick();
 	mkDir("DiceData\\conf");
@@ -360,6 +370,7 @@ EVE_Enable(eventEnable)
 	loadJMap(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
 	loadJMap(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
 	dataInit();
+	// 确保线程执行结束
 	while (msgSendThreadRunning)Sleep(10);
 	Enabled = true;
 	threads(SendMsg);
