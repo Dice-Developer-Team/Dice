@@ -36,7 +36,7 @@ int FromMsg::AdminEvent(string strOption) {
 	}
 	else if (strOption == "state") {
 		ResList res;
-		res << "Servant:" + GlobalMsg["strSelfName"]
+		res << "Servant:" + printQQ(console.DiceMaid)
 			<< "Master:" + printQQ(console.master())
 			<< console.listClock().dot("\t").show()
 			<< (console["Private"] ? "私用模式" : "公用模式");
@@ -46,12 +46,13 @@ int FromMsg::AdminEvent(string strOption) {
 		if (console["DisabledJrrp"])res << "全局禁用.jrrp";
 		if (console["DisabledDraw"])res << "全局禁用.draw";
 		if (console["DisabledSend"])res << "全局禁用.send";
-		if (trusted > 3) res << "所在群聊数：" + to_string(getGroupList().size()) + "\n"
-			"群记录数：" + to_string(ChatList.size()) + "\n"
-			+ "用户记录数：" + to_string(UserList.size()) + "\n"
-			+ (PList.size() ? "角色卡记录数：" + to_string(PList.size()) + "\n" : "")
-			+ "黑名单用户数：" + to_string(blacklist->mQQDanger.size()) + "\n"
-			+ "黑名单群数：" + to_string(blacklist->mGroupDanger.size());
+		if (trusted > 3) res << "所在群聊数：" + to_string(getGroupList().size())
+			<< "群记录数：" + to_string(ChatList.size())
+			<< "好友数："+to_string(getFriendList().size())
+			<< "用户记录数：" + to_string(UserList.size())
+			<< (PList.size() ? "角色卡记录数：" + to_string(PList.size()) : "无角色卡记录")
+			<< "黑名单用户数：" + to_string(blacklist->mQQDanger.size())
+			<< "黑名单群数：" + to_string(blacklist->mGroupDanger.size());
 		reply(GlobalMsg["strSelfName"] + "的当前情况" + res.show());
 		return 1;
 	}
@@ -742,11 +743,11 @@ int FromMsg::DiceReply() {
 				return 0;
 			}
 			else if (intT == GroupT && pGrp->isset("停用指令") && GroupInfo(fromGroup).nGroupSize >= 500 && !isCalled){
-				AddMsgToQueue(Dice_Full_Ver + getMsg("strBotMsg"), fromQQ);
+				AddMsgToQueue(Dice_Full_Ver_For + getMsg("strBotMsg"), fromQQ);
 			}
 			else {
 				this_thread::sleep_for(1s);
-				reply(Dice_Full_Ver + GlobalMsg["strBotMsg"]);
+				reply(Dice_Full_Ver_For + GlobalMsg["strBotMsg"]);
 			}
 		}
 		return 1;
@@ -793,7 +794,7 @@ int FromMsg::DiceReply() {
 			fmt->set_help(strVar["key"], strHelpdoc);
 			reply(format(GlobalMsg["strHlpSet"], { strVar["key"] }));
 		}
-		saveJMap("DiceData\\conf\\CustomHelp.json", CustomHelp);
+		saveJMap(DiceDir + "\\conf\\CustomHelp.json", CustomHelp);
 		return true;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "help")
@@ -1471,7 +1472,7 @@ int FromMsg::DiceReply() {
 			CardDeck::mReplyDeck.erase(strVar["key"]);
 		}
 		else reply(GlobalMsg["strReplySet"], { strVar["key"] });
-		saveJMap("DiceData\\conf\\CustomReply.json", CardDeck::mReplyDeck);
+		saveJMap(DiceDir + "\\conf\\CustomReply.json", CardDeck::mReplyDeck);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
@@ -2228,7 +2229,7 @@ int FromMsg::DiceReply() {
 				note("已自定义" + strName + "的文本", 0b1);
 			}
 		}
-		saveJMap("DiceData\\conf\\CustomMsg.json", EditedMsg);
+		saveJMap(DiceDir + "\\conf\\CustomMsg.json", EditedMsg);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")
@@ -3052,6 +3053,7 @@ int FromMsg::DiceReply() {
 		bool isModify = false;
 		//循环录入
 		while (intMsgCnt != strLowerMessage.length()) {
+			//读取属性名
 			readSkipSpace();
 			if (strMsg[intMsgCnt] == '&') {
 				intMsgCnt++;
@@ -3083,14 +3085,14 @@ int FromMsg::DiceReply() {
 				}
 				break;
 			}
+			//读取属性值
 			readSkipSpace();
 			if ((strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+')) {
-				char chSign = strLowerMessage[intMsgCnt];
 				isDetail = true;
 				isModify = true;
 				intMsgCnt++;
 				short& nVal = pc[strSkillName];
-				RD Mod((nVal == 0 ? "" : to_string(nVal)) + chSign + readDice());
+				RD Mod((nVal == 0 ? "" : to_string(nVal)) + readDice());
 				if (Mod.Roll()) {
 					reply(GlobalMsg["strValueErr"]);
 					return 1;

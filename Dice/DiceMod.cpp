@@ -1,6 +1,7 @@
 #include <set>
 #include "DiceMod.h"
 #include "GlobalVar.h"
+#include "ManagerSystem.h"
 #include "Jsonio.h"
 #include "DiceFile.hpp"
 using std::set;
@@ -55,11 +56,11 @@ void DiceModManager::rm_help(string key) {
 int DiceModManager::load(string& strLog) {
 	set<string> sFile;
 	set<string> sFileErr;
-	int cntFile = listDir("DiceData\\mod\\", sFile, true);
+	int cntFile = listDir(DiceDir + "\\mod\\", sFile, true);
 	int cntItem{ 0 };
 	if (cntFile <= 0)return cntFile;
 	for (auto& filename : sFile) {
-		nlohmann::json j = freadJson("DiceData\\mod\\" + filename);
+		nlohmann::json j = freadJson(DiceDir + "\\mod\\" + filename);
 		if (j.is_null()) {
 			sFileErr.insert(filename);
 			continue;
@@ -68,7 +69,7 @@ int DiceModManager::load(string& strLog) {
 			cntItem += readJMap(j["helpdoc"], helpdoc);
 		}
 	}
-	strLog += "读取DiceData\\mod\\中的" + std::to_string(cntFile) + "个文件, 共" + std::to_string(cntItem) + "个条目\n";
+	strLog += "读取" + DiceDir + "mod\\中的" + std::to_string(cntFile) + "个文件, 共" + std::to_string(cntItem) + "个条目\n";
 	if (!sFileErr.empty()) {
 		strLog += "读取失败" + std::to_string(sFileErr.size()) + "个:\n";
 		for (auto &it : sFileErr) {

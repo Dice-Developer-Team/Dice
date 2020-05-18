@@ -477,7 +477,7 @@ void DDBlackManager::insert(DDBlackMark& ex_mark) {
             up_qq_danger(mark.ownerQQ.first, mark);
         }
     }
-    if (Enabled)blacklist->saveJson("DiceData\\conf\\BlackList.json");
+    if (Enabled)blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
 }
 bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5) {
     std::lock_guard<std::mutex> lock_queue(blacklistMutex);
@@ -601,7 +601,7 @@ bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5) 
     //save comment if the mark changed at this update
     if (isUpdated) {
         if (!mark.comment.empty())old_mark.comment = mark.comment;
-        if (Enabled)blacklist->saveJson("DiceData\\conf\\BlackList.json");
+        if (Enabled)blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
     }
     return isUpdated;
 }
@@ -665,7 +665,7 @@ bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark) {
     }
     if (mQQDanger.count(llqq) && mQQDanger[llqq] >= mark.danger)return false;
     if (Enabled && mark.danger > 1) {
-        if (!mQQDanger.count(llqq)&&UserList.count(llqq))mark.note.empty() ? AddMsgToQueue(getMsg("strBlackQQAddNotice", {{"user_nick",getName(llqq)} }), llqq)
+        if (!mQQDanger.count(llqq) && UserList.count(llqq) && mark.danger == 2)mark.note.empty() ? AddMsgToQueue(getMsg("strBlackQQAddNotice", {{"user_nick",getName(llqq)} }), llqq)
             : AddMsgToQueue(getMsg("strBlackQQAddNoticeReason",{ {"0",mark.note},{"reason",mark.note},{"user_nick",getName(llqq)} }), llqq);
         console.log(GlobalMsg["strSelfName"] + "已将" + printQQ(llqq) + "危险等级提升至" + to_string(mark.danger), 0b10, printSTNow());
         checkGroupWithBlackQQ(mark, llqq);
@@ -697,7 +697,7 @@ void DDBlackManager::rm_black_group(long long llgroup, FromMsg* msg) {
     }
     mGroupDanger.erase(llgroup);
     msg->note("已注销" + printGroup(llgroup) + "的黑名单记录√");
-    blacklist->saveJson("DiceData\\conf\\BlackList.json");
+    blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
 }
 void DDBlackManager::rm_black_qq(long long llqq, FromMsg* msg) {
     std::lock_guard<std::mutex> lock_queue(blacklistMutex);
@@ -715,7 +715,7 @@ void DDBlackManager::rm_black_qq(long long llqq, FromMsg* msg) {
     }
     reset_qq_danger(llqq);
     msg->note("已注销" + printQQ(llqq) + "的黑名单记录√");
-    blacklist->saveJson("DiceData\\conf\\BlackList.json");
+    blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
 }
 
 void DDBlackManager::isban(FromMsg* msg) {
@@ -901,6 +901,12 @@ void DDBlackManager::verify(void* pJson, long long operateQQ) {
         }
         if (credit < 3) {
             if (is_cloud < 1 && mark.type == "extern")return;
+            if (mark.type != "ruler") {
+                if (mark.danger > 2)mark.danger = 2;
+            }
+            else {
+                if (mark.danger > 3)mark.danger = 3;
+            }
         }
         else {
             if (mark.type == "local" && credit < 4)return;
