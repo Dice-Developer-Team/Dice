@@ -105,16 +105,16 @@ private:
 	}
 	//跳过空格
 	void readSkipSpace() {
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 	}
 	void readSkipColon() {
 		readSkipSpace();
-		while (strMsg[intMsgCnt] == ':')intMsgCnt++;
+		while (intMsgCnt < strMsg.length() && strMsg[intMsgCnt] == ':')intMsgCnt++;
 	}
 	string readUntilSpace() {
 		string strPara;
 		readSkipSpace(); 
-		while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && intMsgCnt != strLowerMessage.length()) {
+		while (intMsgCnt < strMsg.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
 			strPara += strMsg[intMsgCnt];
 			intMsgCnt++;
 		}
@@ -122,7 +122,7 @@ private:
 	}
 	//读取至非空格空白符
 	string readUntilTab() {
-		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
+		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
 		int intBegin = intMsgCnt;
 		int intEnd = intBegin;
 		unsigned int len = strMsg.length();
@@ -142,8 +142,8 @@ private:
 	//读取参数(统一小写)
 	string readPara() {
 		string strPara;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
-		while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
+		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		while (intMsgCnt < strMsg.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
 			&& (strLowerMessage[intMsgCnt] != '-') && (strLowerMessage[intMsgCnt] != '+') && (strLowerMessage[intMsgCnt] != '[') && (strLowerMessage[intMsgCnt] != ']') && (strLowerMessage[intMsgCnt] != '=') && (strLowerMessage[intMsgCnt] != ':')
 			&& intMsgCnt != strLowerMessage.length()) {
 			strPara += strLowerMessage[intMsgCnt];
@@ -154,16 +154,16 @@ private:
 	//读取数字
 	string readDigit(bool isForce = true) {
 		string strMum;
-		if (isForce)while (!isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length()) {
+		if (isForce)while (intMsgCnt < strMsg.length() && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
 			if (strMsg[intMsgCnt] < 0)intMsgCnt++;
 			intMsgCnt++;
 		}
-		else while(isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length())intMsgCnt++;
-		while (isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
+		else while(intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
+		while (intMsgCnt < strMsg.length() && isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
 			strMum += strMsg[intMsgCnt];
 			intMsgCnt++;
 		}
-		if (strMsg[intMsgCnt] == ']')intMsgCnt++;
+		if (intMsgCnt < strMsg.length() && strMsg[intMsgCnt] == ']')intMsgCnt++;
 		return strMum;
 	}
 	//读取数字并存入整型
@@ -278,9 +278,9 @@ private:
 		if (nHour > 23)return -2;
 		cc.first = nHour;
 		if (strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '.')intMsgCnt++;
-		//if (strMsg[intMsgCnt] == 0xa3 && strMsg[intMsgCnt + 1] == 0xba)intMsgCnt += 2;
+		if (strMsg.substr(intMsgCnt, 2) == "：")intMsgCnt += 2;
 		readSkipSpace();
-		if (!isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
+		if (intMsgCnt >= strMsg.length() || !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
 			cc.second = 0;
 			return 0;
 		}

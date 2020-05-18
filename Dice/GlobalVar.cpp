@@ -29,6 +29,7 @@ bool Enabled = false;
 
 bool Mirai = false;
 std::string Dice_Full_Ver_For = Dice_Full_Ver + " For CoolQ]";
+std::string strModulePath;
 
 bool msgSendThreadRunning = false;
 

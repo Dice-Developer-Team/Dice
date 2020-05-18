@@ -155,6 +155,7 @@ EVE_Enable(eventEnable)
 	char path[MAX_PATH];
 	GetModuleFileNameA(nullptr, path, MAX_PATH);
 	std::string pathStr(path);
+	strModulePath = pathStr;
 	pathStr = pathStr.substr(pathStr.rfind("\\") + 1);
 	std::transform(pathStr.begin(), pathStr.end(), pathStr.begin(), [](unsigned char c) {return tolower(c); });
 	if (pathStr.substr(0, 4) == "java")

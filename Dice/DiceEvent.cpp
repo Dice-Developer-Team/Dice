@@ -1,4 +1,4 @@
-#include <windows.h>
+#include <Windows.h>
 #include <TlHelp32.h>
 #include <Psapi.h>
 #include "DiceEvent.h"
@@ -978,6 +978,10 @@ int FromMsg::DiceReply() {
 			return 1;
 		}
 		else if (strOption == "clrimg") {
+			if (Mirai) {
+				reply("Mirai不支持此功能");
+				return -1;
+			}
 			if (trusted < 5) {
 				reply(GlobalMsg["strNotMaster"]);
 				return -1;
@@ -987,14 +991,15 @@ int FromMsg::DiceReply() {
 			return 1;
 		}
 		else if (strOption == "reload") {
+			if (Mirai) {
+				reply("Mirai不支持此功能");
+				return -1;
+			}
 			if (trusted < 5) {
 				reply(GlobalMsg["strNotMaster"]);
 				return -1;
 			}
-			char** path = new char* ();
-			_get_pgmptr(path);
-			string strSelfPath(*path);
-			delete path;
+
 			string strSelfName;
 			int pid = _getpid();
 			PROCESSENTRY32 pe32;
@@ -1009,15 +1014,15 @@ int FromMsg::DiceReply() {
 			while (bResult){
 				if (pe32.th32ProcessID == pid) {
 					ppid = pe32.th32ParentProcessID;
-					reply("确认进程" + strSelfPath + "\n本进程id:" + to_string(pe32.th32ProcessID) + "\n父进程id:" + to_string(pe32.th32ParentProcessID));
-					strSelfName = convert_w2a(pe32.szExeFile);
+					reply("确认进程" + strModulePath + "\n本进程id:" + to_string(pe32.th32ProcessID) + "\n父进程id:" + to_string(pe32.th32ParentProcessID));
+					strSelfName = pe32.szExeFile;
 					break;
 				}
 				bResult = Process32Next(hProcessSnap, &pe32);
 			}
 			if (!ppid) {
 				note("重启失败：未找到进程！", 1);
-				return false;
+				return -1;
 			}
 			string command = "taskkill /f /pid " + to_string(ppid) + "\nstart .\\" + strSelfName + " /account " + to_string(getLoginQQ());
 			//string command = "taskkill /f /pid " + to_string(ppid) + "\ntaskkill /f /pid " + to_string(pid) + "\nstart " + strSelfPath + " /account " + to_string(getLoginQQ()) + "\ntimeout /t 60\ndel %0";
@@ -1083,11 +1088,9 @@ int FromMsg::DiceReply() {
 				Cloud::checkUpdate(this);
 			}
 			else if (strPara == "dev" || strPara == "release") {
-				char** path = new char* ();
-				_get_pgmptr(path);
-				string strAppPath(*path);
+				string strAppPath(strModulePath);
 				strAppPath = strAppPath.substr(0, strAppPath.find_last_of("\\")) + "\\app\\com.w4123.dice.cpk";
-				delete path;
+
 				switch (Cloud::DownloadFile(("http://shiki.stringempty.xyz/DiceVer/" + strPara + "?" + to_string(fromTime)).c_str(), strAppPath.c_str())) {
 				case -1:
 					reply("下载失败:" + strAppPath);
@@ -3658,13 +3661,13 @@ bool FromMsg::DiceFilter() {
 
 int FromMsg::readNum(int& num) {
 	string strNum;
-	while (!isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length() && strMsg[intMsgCnt] != '-')intMsgCnt++;
+	while (intMsgCnt < strMsg.length() && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])) && strMsg[intMsgCnt] != '-')intMsgCnt++;
 	if (strMsg[intMsgCnt] == '-') {
 		strNum += '-';
 		intMsgCnt++;
 	}
-	if (intMsgCnt == strMsg.length())return -1;
-	while (isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
+	if (intMsgCnt >= strMsg.length())return -1;
+	while (intMsgCnt < strMsg.length() && isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
 		strNum += strMsg[intMsgCnt];
 		intMsgCnt++;
 	}

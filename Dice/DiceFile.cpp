@@ -20,7 +20,7 @@ int clrDir(std::string dir, const std::set<std::string>& exceptList) {
 	std::error_code err;
 	for (const auto& p : std::filesystem::directory_iterator(dir, err))
 	{
-		if (!p.is_directory() && p.path().filename().string().length() >= 36 && !exceptList.count(p.path().filename().string()))
+		if (p.is_regular_file() && p.path().filename().string().length() >= 36 && !exceptList.count(p.path().filename().string()))
 		{
 			std::error_code err2;
 			std::filesystem::remove(p.path(), err2);
