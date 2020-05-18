@@ -400,21 +400,51 @@ private:
 public:
 	std::string strDice;
 
-	RD(std::string dice, const int defaultDice=100) : strDice(dice)
+	RD(std::string dice, const int defaultDice=100)
 	{
-		for (auto& i : strDice)
+		char ch = '\0';
+		const std::string strOpera("+-X/");
+		for (auto& i : dice)
 		{
-			if (i == '*') {
+			if (i == '*' || i == 'x' || i == 'X') {
+				if (strOpera.find(ch) != std::string::npos) {
+					strDice.erase(--strDice.end());
+					break;
+				}
 				i = 'X';
 			}
-			if (i != 'a' && i != 'A')
-			{
-				i = toupper(static_cast<unsigned char>(i));
+			if (i == '/') {
+				if (strOpera.find(ch) != std::string::npos) {
+					strDice.erase(--strDice.end());
+					break;
+				}
 			}
-			else
-			{
+			if (i == '+') {
+				if (strOpera.find(ch) != std::string::npos)continue;
+			}
+			if (i == '-') {
+				if (strOpera.find(ch) != std::string::npos) {
+					if (ch == '+') {
+						strDice[strDice.length() - 1] = '-';
+					}
+					else if (ch == '-') {
+						strDice[strDice.length()-1] = '+';
+					}
+					else if (ch == 'X' || ch == '/') {
+						strDice.erase(--strDice.end());
+						break;
+					}
+					continue;
+				}
+			}
+			else if (i == 'a' || i == 'A') {
 				i = tolower(static_cast<unsigned char>(i));
 			}
+			else{
+				i = toupper(static_cast<unsigned char>(i));
+			}
+			ch = i;			
+			strDice += i;
 		}
 		if (strDice.empty())
 			strDice.append("D" + (std::to_string(defaultDice)));
@@ -423,11 +453,8 @@ public:
 			strDice.insert(0, "4");
 		if (strDice[0] == 'F')
 			strDice.insert(0, "4D");
-		while (strDice.find("++") != std::string::npos)	strDice.replace(strDice.find("++"), 2, "+");
-		while (strDice.find("+-") != std::string::npos)	strDice.replace(strDice.find("+-"), 2, "-");
-		while (strDice.find("-+") != std::string::npos)	strDice.replace(strDice.find("-+"), 2, "-");
-		while (strDice.find("--") != std::string::npos)	strDice.replace(strDice.find("--"), 2, "+");
 		while (strDice.find("XX") != std::string::npos)	strDice.replace(strDice.find("XX"), 2, "X");
+		while (strDice.find("//") != std::string::npos)	strDice.replace(strDice.find("//"), 2, "/");
 		for (size_t ReadCnt = 1; ReadCnt != strDice.length(); ReadCnt++)
 			if (strDice[ReadCnt] == 'F' && (isdigit(strDice[ReadCnt - 1]) || strDice[ReadCnt - 1] == '+' || strDice[
 				ReadCnt - 1] == '-'))
