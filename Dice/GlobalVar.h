@@ -27,7 +27,6 @@
 #include "CQLogger.h"
 #include <map>
 #include "STLExtern.hpp"
-#include "BotEnvironment.h"
 
  /*
   * ∞Ê±æ–≈œ¢
