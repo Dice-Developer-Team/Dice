@@ -30,8 +30,8 @@ struct less_ci {
 template<typename T>
 class enumap{
 public:
-	typedef typename map<T, int> mapT;
-	typedef typename std::initializer_list<T> initlist;
+	typedef map<T, int> mapT;
+	typedef std::initializer_list<T> initlist;
 	vector<T> ary;
 	mapT mVal;
 	enumap(initlist items) :ary{items} {

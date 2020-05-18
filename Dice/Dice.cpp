@@ -417,7 +417,7 @@ bool eve_GroupAdd(Chat& grp) {
 		}
 		console.log(strMsg, 0, strNow);
 		int max_trust = 0;
-		int max_danger = 0;
+		//int max_danger = 0;
 		long long ownerQQ = 0;
 		ResList blacks;
 		std::vector<GroupMemberInfo>list = getGroupMemberList(fromGroup);
@@ -526,7 +526,7 @@ EVE_GroupMsg_EX(eventGroupMsg)
 EVE_DiscussMsg_EX(eventDiscussMsg)
 {
 	if (!Enabled)return;
-	time_t tNow = time(NULL);
+	//time_t tNow = time(NULL);
 	if (console["LeaveDiscuss"]) {
 		sendDiscussMsg(eve.fromDiscuss, getMsg("strLeaveDiscuss"));
 		Sleep(1000);

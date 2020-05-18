@@ -320,7 +320,7 @@ void DDBlackMark::erase() {
 void DDBlackMark::upload() {
     std::string frmdata = "fromQQ=" + std::to_string(fromQQ.first) + "&fromGroup=" + std::to_string(fromGroup.first) + "&DiceMaid=" + std::to_string(DiceMaid) + "&masterQQ=" + std::to_string(masterQQ) + "&type=" + type + "&time=" + time + "&note=" + UrlEncode(GBKtoUTF8(note));
     string temp;
-    const bool reqRes = Network::POST("shiki.stringempty.xyz", "/DiceCloud/warning_upload.php", 80, frmdata.data(), temp);
+    Network::POST("shiki.stringempty.xyz", "/DiceCloud/warning_upload.php", 80, frmdata.data(), temp);
     if (isdigit(static_cast<unsigned char>(temp[0])))wid = stoi(temp);
     else if (temp == "denied")erase();
     return;
@@ -407,7 +407,7 @@ int DDBlackManager::find(const DDBlackMark& mark) {
 }
 
 DDBlackMark& DDBlackMark::operator<<(const DDBlackMark& mark) {
-    int delta_danger = mark.danger - danger;
+    // int delta_danger = mark.danger - danger;
     if (type == "null" && mark.type != "null")type = mark.type;
     if (time.empty() && !mark.time.empty()) {
         time = mark.time;
@@ -879,7 +879,7 @@ void DDBlackManager::verify(void* pJson, long long operateQQ) {
         mark.wid = 0;
     }
     if (credit < 3) {
-        if (mark.isType("kick") && !console["ListenGroupKick"] || mark.isType("ban") && !console["ListenGroupBan"] || mark.isType("spam") && !console["ListenSpam"])return;
+        if ((mark.isType("kick") && !console["ListenGroupKick"]) || (mark.isType("ban") && !console["ListenGroupBan"]) || (mark.isType("spam") && !console["ListenSpam"]))return;
         if (mark.type == "local" || mark.type == "other") {
             if (credit > 0)console.log(getName(operateQQ) + "已通知" + GlobalMsg["strSelfName"] + "不良记录(未采用):\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
             return;

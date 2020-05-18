@@ -229,6 +229,7 @@
     <ClCompile Include="EncodingConvert.cpp" />
     <ClCompile Include="GetRule.cpp" />
     <ClCompile Include="GlobalVar.cpp" />
+    <ClCompile Include="Jsonio.cpp" />
     <ClCompile Include="ManagerSystem.cpp" />
     <ClCompile Include="MsgFormat.cpp" />
     <ClCompile Include="MsgMonitor.cpp" />

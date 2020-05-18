@@ -6,7 +6,7 @@
 #include <Windows.h>
 #include <WinInet.h>
 #include <urlmon.h>
-#include "Json.hpp"
+#include "json.hpp"
 #include "DiceCloud.h"
 #include "GlobalVar.h"
 #include "EncodingConvert.h"
@@ -29,7 +29,7 @@ namespace Cloud {
 		char *frmdata = new char[data.length() + 1];
 		strcpy_s(frmdata, data.length() + 1, data.c_str());
 		string temp;
-		const bool reqRes = Network::POST("shiki.stringempty.xyz", "/DiceCloud/update.php", 80, frmdata, temp);
+		Network::POST("shiki.stringempty.xyz", "/DiceCloud/update.php", 80, frmdata, temp);
 		//AddMsgToQueue(temp, masterQQ);
 		delete[] frmdata;
 		return;
@@ -39,7 +39,7 @@ namespace Cloud {
 		char *frmdata = new char[strlen(warning) + 1];
 		strcpy_s(frmdata, strlen(warning) + 1, warning);
 		string temp;
-		const bool reqRes = Network::POST("shiki.stringempty.xyz", "/DiceCloud/warning_upload.php", 80, frmdata, temp);
+		Network::POST("shiki.stringempty.xyz", "/DiceCloud/warning_upload.php", 80, frmdata, temp);
 		delete[] frmdata;
 		return;
 	}
@@ -48,7 +48,7 @@ namespace Cloud {
 		char *frmdata = new char[strlen(warning) + 1];
 		strcpy_s(frmdata, strlen(warning) + 1, warning);
 		string temp;
-		const bool reqRes = Network::POST("shiki.stringempty.xyz", "/DiceCloud/warning_check.php", 80, frmdata, temp);
+		Network::POST("shiki.stringempty.xyz", "/DiceCloud/warning_check.php", 80, frmdata, temp);
 		delete[] frmdata;
 		if (temp == "exist") {
 			return 1;

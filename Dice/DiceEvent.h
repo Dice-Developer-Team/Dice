@@ -27,10 +27,10 @@ public:
 	string strReply;
 	//¡Ÿ ±±‰¡øø‚
 	map<string, string> strVar = {};
-	FromMsg(std::string message, long long fromNum) :strMsg(message), fromQQ(fromNum), fromID(fromNum) {
+	FromMsg(std::string message, long long fromNum) :strMsg(message), fromID(fromNum), fromQQ(fromNum) {
 		fromChat = { fromID,CQ::Private };
 	}
-	FromMsg(std::string message, long long fromGroup, CQ::msgtype msgType, long long fromNum) :strMsg(message), fromQQ(fromNum), fromType(msgType), fromID(fromGroup), fromGroup(fromGroup), fromChat({ fromGroup,fromType }) {
+	FromMsg(std::string message, long long fromGroup, CQ::msgtype msgType, long long fromNum) :strMsg(message), fromID(fromGroup), fromType(msgType), fromQQ(fromNum), fromGroup(fromGroup), fromChat({ fromGroup,fromType }) {
 		pGrp = &chat(fromGroup);
 	}
 	bool isBlock = false;
@@ -278,7 +278,7 @@ private:
 		if (nHour > 23)return -2;
 		cc.first = nHour;
 		if (strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '.')intMsgCnt++;
-		if (strMsg[intMsgCnt] == 0xa3 && strMsg[intMsgCnt + 1] == 0xba)intMsgCnt += 2;
+		//if (strMsg[intMsgCnt] == 0xa3 && strMsg[intMsgCnt + 1] == 0xba)intMsgCnt += 2;
 		readSkipSpace();
 		if (!isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
 			cc.second = 0;

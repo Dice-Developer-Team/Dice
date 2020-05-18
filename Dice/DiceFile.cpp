@@ -73,7 +73,7 @@ string printLine(string s) {
 	return s;
 }
 
-[[deprecated]] bool fscan(std::ifstream& fin, std::string& t) {
+bool fscan(std::ifstream& fin, std::string& t) {
 	std::string val;
 	if (fin >> val) {
 		while (val.find("{space}") != std::string::npos)val.replace(val.find("{space}"), 7, " ");

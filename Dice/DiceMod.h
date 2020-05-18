@@ -14,11 +14,11 @@ using std::map;
 
 class DiceGenerator {
     //冷却时间
-    int cold_time;
+    //int cold_time;
     //单次抽取上限
-    int draw_limit = 1;
+    //int draw_limit = 1;
     string expression;
-    string cold_msg = "冷却时间中×";
+    //string cold_msg = "冷却时间中×";
 public:
     string getExp() { return expression; }
 };

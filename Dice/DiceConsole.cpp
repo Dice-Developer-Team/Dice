@@ -20,10 +20,10 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
 #include <ctime>
 #include <queue>
 #include <mutex>
+#include <chrono>
 #include "DiceConsole.h"
 #include "GlobalVar.h"
 #include "ManagerSystem.h"
@@ -173,8 +173,8 @@ std::map<long long, long long> mDiceList;
 //程序启动时间
 long long llStartTime = clock();
 	//当前时间
-	SYSTEMTIME stNow = { 0 };
-	SYSTEMTIME stTmp = { 0 };
+	SYSTEMTIME stNow{};
+	SYSTEMTIME stTmp{};
 std::string printSTNow() {
 	GetLocalTime(&stNow);
 	return printSTime(stNow);
@@ -184,7 +184,7 @@ std::string printDate() {
 }
 std::string printDate(time_t tt) {
 	tm t;
-	if (!tt || localtime_s(&t, &tt))return "????-??-??";
+	if (!tt || localtime_s(&t, &tt))return "\?\?\?\?-\?\?-\?\?";
 	return to_string(t.tm_year + 1900) + "-" + to_string(t.tm_mon + 1) + "-" + to_string(t.tm_mday);
 }
 	//上班时间

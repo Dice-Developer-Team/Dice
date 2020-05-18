@@ -103,7 +103,7 @@ namespace CardDeck
 		if (mPublicDeck.count(strDeckName)) {
 			return 1;
 		}
-		else if (isdigit(static_cast<unsigned char>(strDeckName[0])) && strDeckName.length() < 3 || strDeckName == "100") {
+		else if ((isdigit(static_cast<unsigned char>(strDeckName[0])) && strDeckName.length() < 3) || strDeckName == "100") {
 			return 2;
 		}
 		return 0;

@@ -416,7 +416,7 @@ int FromMsg::AdminEvent(string strOption) {
 				else {
 					blacklist->add_black_group(llTargetID, this);
 				}
-			} while (llTargetID = readID());
+			} while ((llTargetID = readID()));
 			return 1;
 		}
 		else if (strOption == "whiteqq") {
@@ -454,7 +454,7 @@ int FromMsg::AdminEvent(string strOption) {
 						AddMsgToQueue(format(GlobalMsg["strWhiteQQAddNotice"], GlobalMsg, strVar), llTargetID);
 					}
 				}
-			} while (llTargetID = readID());
+			} while ((llTargetID = readID()));
 			return 1;
 		}
 		else if (strOption == "blackqq") {
@@ -474,7 +474,7 @@ int FromMsg::AdminEvent(string strOption) {
 				else {
 					blacklist->add_black_qq(llTargetID, this);
 				}
-			} while (llTargetID = readID());
+			} while ((llTargetID = readID()));
 			return 1;
 		}
 		else reply(GlobalMsg["strAdminOptionEmpty"]);
@@ -489,7 +489,7 @@ int FromMsg::MasterSet() {
 	}
 	if (strOption == "groupclr") {
 		std::string strPara = readRest();
-		int intGroupCnt = clearGroup(strPara, fromQQ);
+		clearGroup(strPara, fromQQ);
 		return 1;
 	}
 	else if (strOption == "delete") {
@@ -702,7 +702,7 @@ int FromMsg::DiceReply() {
 			if (Command == "on")
 			{
 				if (console["DisabledGlobal"])reply(GlobalMsg["strGlobalOff"]);
-				else if (intT == GroupT && (console["CheckGroupLicense"] && pGrp->isset("未审核") || console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")))reply(GlobalMsg["strGroupLicenseDeny"]);
+				else if (intT == GroupT && ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用"))))reply(GlobalMsg["strGroupLicenseDeny"]);
 				else if (intT) {
 					if (isAuth){
 						if (groupset(fromGroup, "停用指令") > 0) {
@@ -843,7 +843,7 @@ int FromMsg::DiceReply() {
 		}
 		return true;
 	}
-	else if (intT == GroupT && (console["CheckGroupLicense"] && pGrp->isset("未审核") || console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用"))) {
+	else if (intT == GroupT && ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")))) {
 		return 0;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 7) == "welcome")
@@ -1415,7 +1415,7 @@ int FromMsg::DiceReply() {
 					else resDenied << Member.Nick + "(" + to_string(Member.QQID) + ")";
 				}
 				else resNotFound << to_string(llMemberQQ);
-			} while (llMemberQQ = readID());
+			} while ((llMemberQQ = readID()));
 			strReply = GlobalMsg["strSelfName"];
 			if (!resKicked.empty())strReply += "已移出群员：" + resKicked.show() + "\n";
 			if (!resDenied.empty())strReply += "移出失败：" + resDenied.show() + "\n";
@@ -2029,10 +2029,10 @@ int FromMsg::DiceReply() {
 			strVar["user"] = printQQ(fromQQ);
 			ResList rep;
 			rep << "信任级别：" + to_string(trusted)
-				<< "和{nick}的第一印象大约是在" + printDate(getUser(fromQQ).tCreated)
-				<< (!(getUser(fromQQ).strNick.empty()) ? "正记录{nick}的" + to_string(getUser(fromQQ).strNick.size()) + "个称呼" : "没有记录{nick}的称呼")
+				<< "和{nick}的第一印象大约是在" + printDate(user.tCreated)
+				<< (!(user.strNick.empty()) ? "正记录{nick}的" + to_string(user.strNick.size()) + "个称呼" : "没有记录{nick}的称呼")
 				<< ((PList.count(fromQQ)) ? "这里有{nick}的" + to_string(PList[fromQQ].size()) + "张角色卡" : "无角色卡记录")
-				<< getUser(fromQQ).show();
+				<< user.show();
 			reply("{user}" + rep.show());
 			return 1;
 		}
@@ -2063,7 +2063,7 @@ int FromMsg::DiceReply() {
 				return 1;
 			}
 			User& user = getUser(llTarget);
-			if (short intTrust = stoi(strVar["trust"]); intTrust < 0 || intTrust > 255 || intTrust >= trusted && fromQQ != console.master()) {
+			if (short intTrust = stoi(strVar["trust"]); intTrust < 0 || intTrust > 255 || (intTrust >= trusted && fromQQ != console.master())) {
 				reply(GlobalMsg["strUserTrustIllegal"]);
 				return 1;
 			}
@@ -2678,7 +2678,7 @@ int FromMsg::DiceReply() {
 			string strTurnCnt = strMsg.substr(intMsgCnt, strMsg.find("#") - intMsgCnt);
 			//#能否识别有效
 			if (strTurnCnt.empty())intMsgCnt++;
-			else if (strTurnCnt.length() == 1 && isdigit(static_cast<unsigned char>(strTurnCnt[0])) || strTurnCnt == "10") {
+			else if ((strTurnCnt.length() == 1 && isdigit(static_cast<unsigned char>(strTurnCnt[0]))) || strTurnCnt == "10") {
 				intMsgCnt += strTurnCnt.length() + 1;
 				intTurnCnt = stoi(strTurnCnt);
 			}

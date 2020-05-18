@@ -17,10 +17,6 @@ void EVE::message_block() { _EVEret = Msg_Blocked; }
 
 bool EVEMsg::isSystem() const { return fromQQ == 1000000; }
 
-Font::Font(const int Font)
-{
-	//RtlMoveMemory(static_cast<void*>(this), reinterpret_cast<const void *>(Font), 20);
-}
 
 EVEMsg::EVEMsg(const int subType, const int msgId, const long long fromQQ, std::string message, const int font)
 	: subType(subType), msgId(msgId), fromQQ(fromQQ), message(move(message)), font(font)

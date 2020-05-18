@@ -547,7 +547,7 @@ public:
 		if (s.find("=") != string::npos)return -6;
 		mCardList[++indexMax] = CharaCard(s, type);
 		CharaCard& card = mCardList[indexMax];
-		CardTemp& temp = mCardTemplet[type];
+		// CardTemp& temp = mCardTemplet[type];
 		while(!vOption.empty()) {
 			string para = vOption.top();
 			vOption.pop();

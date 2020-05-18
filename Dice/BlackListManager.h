@@ -88,7 +88,7 @@ class DDBlackManager {
     void reset_qq_danger(long long);
     bool up_group_danger(long long, DDBlackMark&);
     bool up_qq_danger(long long, DDBlackMark&);
-    bool isActive = false;
+    // bool isActive = false;
 public:
     multimap<long long, unsigned int>mGroupIndex;
     multimap<long long, unsigned int>mQQIndex;

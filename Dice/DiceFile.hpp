@@ -55,7 +55,7 @@ inline bool fscan(std::ifstream & fin, T & t) {
 	else return false;
 }
 //template<>
-[[deprecated]] bool fscan(std::ifstream& fin, std::string& t);
+bool fscan(std::ifstream& fin, std::string& t);
 
 template<class C, bool(C::* U)(std::ifstream&) = &C::load>
 inline bool fscan(std::ifstream& fin, C& obj) {
@@ -174,7 +174,7 @@ int loadFile(std::string strPath, std::set<T>&setTmp) {
 }
 
 template<typename T1, typename T2>
-typename int loadFile(std::string strPath, std::map<T1, T2>&mapTmp) {
+int loadFile(std::string strPath, std::map<T1, T2>&mapTmp) {
 	std::ifstream fin(strPath);
 	if (fin)
 	{
@@ -192,7 +192,7 @@ typename int loadFile(std::string strPath, std::map<T1, T2>&mapTmp) {
 }
 
 template<typename T1, typename T2>
-typename void loadFile(std::string strPath, std::multimap<T1,T2>&mapTmp) {
+void loadFile(std::string strPath, std::multimap<T1,T2>&mapTmp) {
 	std::ifstream fin(strPath);
 	if (fin)
 	{

@@ -6,18 +6,6 @@
 
 namespace CQ
 {
-	// 字体
-	struct Font final
-	{
-		const char* Name{};
-		int Size{},
-		    Color{},
-		    /*粗体：1 斜体：2 下划线：4*/
-		    Style{},
-		    Bubble{};
-
-		explicit Font(int);
-	};
 
 	//正则消息
 	class regexMsg final
@@ -44,7 +32,7 @@ namespace CQ
 		//消息
 		std::string message;
 		//字体
-		Font font;
+		int font;
 
 		EVEMsg(int subType, int msgId, long long fromQQ, std::string message, int font);
 
