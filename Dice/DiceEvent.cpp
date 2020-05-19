@@ -79,7 +79,7 @@ int FromMsg::AdminEvent(string strOption) {
 	else if (strOption == "delete") {
 		note("已经放弃管理员权限√", 0b100);
 		getUser(fromQQ).trust(3);
-		console.NoticeList.erase({ fromQQ,Private });
+		console.NoticeList.erase({ fromQQ,msgtype::Private });
 		return 1;
 	}
 	else if (strOption == "on") {
@@ -336,7 +336,7 @@ int FromMsg::AdminEvent(string strOption) {
 				}
 				else {
 					chat(llGroup).set("许可使用").reset("未审核");
-					if (!chat(llGroup).isset("已退") && !chat(llGroup).isset("未进"))AddMsgToQueue(getMsg("strAuthorized"), llGroup, Group);
+					if (!chat(llGroup).isset("已退") && !chat(llGroup).isset("未进"))AddMsgToQueue(getMsg("strAuthorized"), llGroup, msgtype::Group);
 					note("已添加" + printGroup(llGroup) + "在" + GlobalMsg["strSelfName"] + "的使用许可");
 				}
 			}
@@ -525,7 +525,7 @@ int FromMsg::MasterSet() {
 			if (boolErase) {
 				if (trustedQQ(llAdmin) > 3) {
 					note("已收回" + printQQ(llAdmin) + "对" + GlobalMsg["strSelfName"] + "的管理权限√", 0b100);
-					console.rmNotice({ llAdmin,Private });
+					console.rmNotice({ llAdmin,msgtype::Private });
 					getUser(llAdmin).trust(0);
 				}
 				else {
@@ -538,7 +538,7 @@ int FromMsg::MasterSet() {
 				}
 				else {
 					getUser(llAdmin).trust(4);
-					console.addNotice({ llAdmin, Private }, 0b1110);
+					console.addNotice({ llAdmin, msgtype::Private }, 0b1110);
 					note("已添加" + printQQ(llAdmin) + "对" + GlobalMsg["strSelfName"] + "的管理权限√", 0b100);
 				}
 			}
@@ -565,7 +565,7 @@ int FromMsg::DiceReply() {
 	strVar["nick"] = getName(fromQQ, fromGroup);
 	strVar["pc"] = getPCName(fromQQ, fromGroup);
 	strVar["at"] = intT ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
-	isAuth = trusted > 3 || fromType != Group || getGroupMemberInfo(fromGroup, fromQQ).permissions > 1;
+	isAuth = trusted > 3 || fromType != msgtype::Group || getGroupMemberInfo(fromGroup, fromQQ).permissions > 1;
 	strLowerMessage = strMsg;
 	std::transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(), [](unsigned char c) { return tolower(c); });
 	//指令匹配
@@ -586,7 +586,7 @@ int FromMsg::DiceReply() {
 		if (trusted > 0) {
 			pGrp->set("许可使用").reset("未审核");
 			note("已授权" + printGroup(pGrp->ID) + "许可使用", 1);
-			AddMsgToQueue(getMsg("strGroupAuthorized", strVar), pGrp->ID, Group);
+			AddMsgToQueue(getMsg("strGroupAuthorized", strVar), pGrp->ID, msgtype::Group);
 		}
 		else {
 			if (!console["CheckGroupLicense"] && !console["Private"] && !isCalled)return 0;
@@ -721,7 +721,7 @@ int FromMsg::DiceReply() {
 			}
 			else if (Command == "off")
 			{
-				if (fromType == intT) {
+				if (fromType == msgtype(intT)) {
 					if (isAuth)
 					{
 						if (groupset(fromGroup, "停用指令")) {
@@ -1190,7 +1190,7 @@ int FromMsg::DiceReply() {
 						chat(llGroup).set(strVar["option"]);
 						reply(GlobalMsg["strGroupSetOn"]);
 						if (strVar["Option"] == "许可使用") {
-							AddMsgToQueue(getMsg("strGroupAuthorized",strVar),fromQQ,CQ::Group);
+							AddMsgToQueue(getMsg("strGroupAuthorized",strVar),fromQQ,CQ::msgtype::Group);
 						}
 					}
 					else
@@ -1924,13 +1924,13 @@ int FromMsg::DiceReply() {
 		}
 		ToChat.first = stoll(strID);
 		if (strType == "qq") {
-			ToChat.second = Private;
+			ToChat.second = msgtype::Private;
 		}
 		else if (strType == "group") {
-			ToChat.second = Group;
+			ToChat.second = msgtype::Group;
 		}
 		else if (strType == "discuss") {
-			ToChat.second = Discuss;
+			ToChat.second = msgtype::Discuss;
 		}
 		else {
 			reply(GlobalMsg["strLinkNotFound"]);
@@ -3236,11 +3236,11 @@ int FromMsg::DiceReply() {
 				else
 				{
 					strTurnNotice = "在" + printChat(fromChat) + "中 " + strTurnNotice;
-					AddMsgToQueue(strTurnNotice, fromQQ, Private);
+					AddMsgToQueue(strTurnNotice, fromQQ, msgtype::Private);
 					for (auto qq:gm->session(fromGroup).get_ob()){
 						if (qq != fromQQ)
 						{
-							AddMsgToQueue(strTurnNotice, qq, Private);
+							AddMsgToQueue(strTurnNotice, qq, msgtype::Private);
 						}
 					}
 				}
@@ -3347,10 +3347,10 @@ int FromMsg::DiceReply() {
 			{
 				strReply = format(strReply, GlobalMsg, strVar);
 				strReply = "在" + printChat(fromChat) + "中 " + strReply;
-				AddMsgToQueue(strReply, fromQQ, Private);
+				AddMsgToQueue(strReply, fromQQ, msgtype::Private);
 				for (auto qq : gm->session(fromGroup).get_ob()) {
 					if (qq != fromQQ){
-						AddMsgToQueue(strReply, qq, Private);
+						AddMsgToQueue(strReply, qq, msgtype::Private);
 					}
 				}
 			}
@@ -3374,10 +3374,10 @@ int FromMsg::DiceReply() {
 				{
 					strReply = format(strReply, GlobalMsg, strVar);
 					strReply = "在" + printChat(fromChat) + "中 " + strReply;
-					AddMsgToQueue(strReply, fromQQ, Private);
+					AddMsgToQueue(strReply, fromQQ, msgtype::Private);
 					for (auto qq : gm->session(fromGroup).get_ob()) {
 						if (qq != fromQQ) {
-							AddMsgToQueue(strReply, qq, Private);
+							AddMsgToQueue(strReply, qq, msgtype::Private);
 						}
 					}
 				}
@@ -3476,10 +3476,10 @@ int FromMsg::DiceReply() {
 				}
 				else {
 					strReply = format("在" + printChat(fromChat) + "中 " + GlobalMsg["strRollTurn"], GlobalMsg, strVar);
-					AddMsgToQueue(strReply, fromQQ, Private);
+					AddMsgToQueue(strReply, fromQQ, msgtype::Private);
 					for (auto qq : gm->session(fromGroup).get_ob()) {
 						if (qq != fromQQ) {
-							AddMsgToQueue(strReply, qq, Private);
+							AddMsgToQueue(strReply, qq, msgtype::Private);
 						}
 					}
 				}
@@ -3554,10 +3554,10 @@ int FromMsg::DiceReply() {
 			{
 				strReply = format(strReply, GlobalMsg, strVar);
 				strReply = "在" + printChat(fromChat) + "中 " + strReply;
-				AddMsgToQueue(strReply, fromQQ, Private);
+				AddMsgToQueue(strReply, fromQQ, msgtype::Private);
 				for (auto qq : gm->session(fromGroup).get_ob()) {
 					if (qq != fromQQ) {
-						AddMsgToQueue(strReply, qq, Private);
+						AddMsgToQueue(strReply, qq, msgtype::Private);
 					}
 				}
 			}
@@ -3587,10 +3587,10 @@ int FromMsg::DiceReply() {
 			{
 				strReply = format(strReply, GlobalMsg, strVar);
 				strReply = "在" + printChat(fromChat) + "中 " + strReply;
-				AddMsgToQueue(strReply, fromQQ, Private);
+				AddMsgToQueue(strReply, fromQQ, msgtype::Private);
 				for (auto qq : gm->session(fromGroup).get_ob()) {
 					if (qq != fromQQ) {
-						AddMsgToQueue(strReply, qq, Private);
+						AddMsgToQueue(strReply, qq, msgtype::Private);
 					}
 				}
 			}
@@ -3609,7 +3609,7 @@ int FromMsg::CustomReply() {
 		if (strVar.empty()) {
 			strVar["nick"] = getName(fromQQ, fromGroup);
 			strVar["pc"] = getPCName(fromQQ, fromGroup);
-			strVar["at"] = fromType ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
+			strVar["at"] = fromType != msgtype::Private ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
 		}
 		reply(CardDeck::drawCard(deck->second, true));
 		AddFrq(fromQQ, fromTime, fromChat);
@@ -3645,13 +3645,13 @@ bool FromMsg::DiceFilter() {
 	}
 	if (isOtherCalled && !isCalled)return false;
 	init2(strMsg);
-	if (fromType == Private) isCalled = true;
+	if (fromType == msgtype::Private) isCalled = true;
 	trusted = trustedQQ(fromQQ);
 	isBotOff = (console["DisabledGlobal"] && (trusted < 4 || !isCalled)) || (!(isCalled && console["DisabledListenAt"]) && (groupset(fromGroup, "停用指令") > 0));
 	if (DiceReply()) {
 		AddFrq(fromQQ, fromTime, fromChat);
 		if (isAns)getUser(fromQQ).update(fromTime);
-		if (fromType != Private)chat(fromGroup).update(fromTime);
+		if (fromType != msgtype::Private)chat(fromGroup).update(fromTime);
 		return 1;
 	}
 	else if (groupset(fromGroup, "禁用回复") < 1 && CustomReply())return 1;
@@ -3678,7 +3678,7 @@ int FromMsg::readNum(int& num) {
 int FromMsg::readChat(chatType& ct, bool isReroll) {
 	int intFormor = intMsgCnt;
 	if (string strT = readPara(); strT == "me") {
-		ct = { fromQQ,CQ::Private };
+		ct = { fromQQ,CQ::msgtype::Private };
 		return 0;
 	}
 	else if (strT == "this") {
@@ -3686,13 +3686,13 @@ int FromMsg::readChat(chatType& ct, bool isReroll) {
 		return 0;
 	}
 	else if (strT == "qq") {
-		ct.second = CQ::Private;
+		ct.second = CQ::msgtype::Private;
 	}
 	else if (strT == "group") {
-		ct.second = CQ::Group;
+		ct.second = CQ::msgtype::Group;
 	}
 	else if (strT == "discuss") {
-		ct.second = CQ::Discuss;
+		ct.second = CQ::msgtype::Discuss;
 	}
 	else {
 		if (isReroll)intMsgCnt = intFormor;

@@ -37,7 +37,7 @@ struct msg_t
 {
 	string msg;
 	long long target_id = 0;
-	msgtype msg_type;
+	msgtype msg_type{};
 	msg_t() = default;
 
 	msg_t(string msg, long long target_id, msgtype msg_type) : msg(move(msg)), target_id(target_id),
@@ -78,11 +78,11 @@ void SendMsg()
 		}
 		if (!msg.msg.empty())
 		{
-			if (msg.msg_type == Private)
+			if (msg.msg_type == msgtype::Private)
 			{
 				CQ::sendPrivateMsg(msg.target_id, msg.msg);
 			}
-			else if (msg.msg_type == Group)
+			else if (msg.msg_type == msgtype::Group)
 			{
 				CQ::sendGroupMsg(msg.target_id, msg.msg);
 			}

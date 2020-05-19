@@ -37,7 +37,7 @@ std::ofstream& operator<<(std::ofstream& fout, const chatType& ct);
  *  long long target_id 目标ID(QQ,群号或讨论组uin)
  *  MsgType msg_type 消息类型
  */
-void AddMsgToQueue(const std::string& msg, long long target_id, CQ::msgtype msg_type = CQ::Private);
+void AddMsgToQueue(const std::string& msg, long long target_id, CQ::msgtype msg_type = CQ::msgtype::Private);
 void AddMsgToQueue(const std::string& msg, chatType ct);
 
 /*

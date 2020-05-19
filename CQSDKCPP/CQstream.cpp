@@ -134,7 +134,7 @@ void logstream::send()
 	addLog(flag, title.c_str(), buf.c_str());
 }
 
-msg::msg(const long long GroupID_Or_QQID, const msgtype Type) : ID(GroupID_Or_QQID), subType(Type)
+msg::msg(const long long GroupID_Or_QQID, const msgtype Type) : ID(GroupID_Or_QQID), subType(int(Type))
 {
 }
 
@@ -147,13 +147,13 @@ void msg::send()
 	if (buf.empty())return;
 	switch (subType)
 	{
-	case Private: //好友
+	case int(CQ::msgtype::Private): //好友
 		sendPrivateMsg(ID, buf);
 		break;
-	case Group: //群
+	case int(CQ::msgtype::Group): //群
 		sendGroupMsg(ID, buf);
 		break;
-	case Discuss: //讨论组
+	case int(CQ::msgtype::Discuss): //讨论组
 		sendDiscussMsg(ID, buf);
 		break;
 	default:

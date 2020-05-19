@@ -222,7 +222,7 @@ void COC6D(string& strMAns)
 	const int IDEA = INT * 5;
 	const int LUCK = POW * 5;
 	const int KNOW = EDU * 5;
-	const int HP = static_cast<int>(ceil(static_cast<double>(CON + SIZ) / 2.0));
+	const int HP = static_cast<int>(ceil((static_cast<double>(CON) + SIZ) / 2.0));
 	const int MP = POW;
 	strMAns += "\n理智SAN=POW*5=" + to_string(SAN) + "\n灵感IDEA=INT*5=" + to_string(IDEA) + "\n幸运LUCK=POW*5=" +
 		to_string(LUCK) + "\n知识KNOW=EDU*5=" + to_string(KNOW);

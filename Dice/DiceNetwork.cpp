@@ -100,7 +100,7 @@ namespace Network
 
 		if (res)
 		{
-			DWORD dwRetCode;
+			DWORD dwRetCode = 0;
 			DWORD dwBufferLength = sizeof(dwRetCode);
 			if (!HttpQueryInfoA(hRequest, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &dwRetCode, &dwBufferLength, nullptr))
 			{
@@ -199,7 +199,7 @@ namespace Network
 
 		if (res)
 		{
-			DWORD dwRetCode;
+			DWORD dwRetCode = 0;
 			DWORD dwBufferLength = sizeof(dwRetCode);
 			if (!HttpQueryInfoA(hRequest, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &dwRetCode, &dwBufferLength, nullptr))
 			{

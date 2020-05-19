@@ -3,7 +3,7 @@
 
 namespace CQ
 {
-	enum msgtype { Private, Group, Discuss };
+	enum class msgtype : int { Private = 0, Group = 1, Discuss = 2 };
 
 	class msg final : public CQstream
 	{

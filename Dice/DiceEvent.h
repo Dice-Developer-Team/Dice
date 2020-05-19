@@ -18,7 +18,7 @@ public:
 	std::string strMsg;
 	string strLowerMessage;
 	long long fromID = 0;
-	CQ::msgtype fromType = CQ::Private;
+	CQ::msgtype fromType = CQ::msgtype::Private;
 	long long fromQQ = 0;
 	long long fromGroup = 0;
 	Chat* pGrp = nullptr;
@@ -28,7 +28,7 @@ public:
 	//临时变量库
 	map<string, string> strVar = {};
 	FromMsg(std::string message, long long fromNum) :strMsg(message), fromID(fromNum), fromQQ(fromNum) {
-		fromChat = { fromID,CQ::Private };
+		fromChat = { fromID,CQ::msgtype::Private };
 	}
 	FromMsg(std::string message, long long fromGroup, CQ::msgtype msgType, long long fromNum) :strMsg(message), fromID(fromGroup), fromType(msgType), fromQQ(fromNum), fromGroup(fromGroup), fromChat({ fromGroup,fromType }) {
 		pGrp = &chat(fromGroup);
@@ -64,15 +64,15 @@ public:
 		reply(strMsg);
 		string note = getName(fromQQ) + strMsg;
 		for (const auto &[ct,level] : console.NoticeList) {
-			if (!(level & note_lv) || pair(fromQQ, CQ::Private) == ct || ct == fromChat)continue;
+			if (!(level & note_lv) || pair(fromQQ, CQ::msgtype::Private) == ct || ct == fromChat)continue;
 			AddMsgToQueue(note, ct);
 		}
 	}
 	//打印消息来源
 	std::string printFrom() {
 		std::string strFwd;
-		if (fromType == CQ::Group)strFwd += "[群:" + to_string(fromGroup) + "]";
-		if (fromType == CQ::Discuss)strFwd += "[讨论组:" + to_string(fromGroup) + "]";
+		if (fromType == CQ::msgtype::Group)strFwd += "[群:" + to_string(fromGroup) + "]";
+		if (fromType == CQ::msgtype::Discuss)strFwd += "[讨论组:" + to_string(fromGroup) + "]";
 		strFwd += getName(fromQQ, fromGroup) + "(" + to_string(fromQQ) + "):";
 		return strFwd;
 	}

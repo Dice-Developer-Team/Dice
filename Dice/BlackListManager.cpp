@@ -48,7 +48,7 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark,long long llQQ) {
                 strNotice += "群免黑";
             }
             else if (getGroupMemberInfo(id, llQQ).permissions < getGroupMemberInfo(id, getLoginQQ()).permissions) {
-                if (mark.isSource(console.DiceMaid && !mark.isType("local")))AddMsgToQueue(mark.warning(), id, Group);
+                if (mark.isSource(console.DiceMaid && !mark.isType("local")))AddMsgToQueue(mark.warning(), id, CQ::msgtype::Group);
                 strNotice += "对方群权限较低";
             }
             else if (getGroupMemberInfo(id, llQQ).permissions > getGroupMemberInfo(id, getLoginQQ()).permissions) {
@@ -58,7 +58,7 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark,long long llQQ) {
                 this_thread::sleep_for(1s);
             }
             else if (grp.isset("免清")) {
-                if (mark.isSource(console.DiceMaid) && !mark.isType("local"))AddMsgToQueue(mark.warning(), id, Group);
+                if (mark.isSource(console.DiceMaid) && !mark.isType("local"))AddMsgToQueue(mark.warning(), id, msgtype::Group);
                 strNotice += "群免清";
             }
             else if (console["LeaveBlackQQ"]) {
@@ -67,7 +67,7 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark,long long llQQ) {
                 strNotice += "已退群";
                 this_thread::sleep_for(1s);
             }
-            else if (mark.isSource(console.DiceMaid) && !mark.isType("local"))AddMsgToQueue(mark.warning(), id, Group);
+            else if (mark.isSource(console.DiceMaid) && !mark.isType("local"))AddMsgToQueue(mark.warning(), id, msgtype::Group);
             list << strNotice;
         }
     }

@@ -55,7 +55,7 @@ public:
 	operator bool()const{ return isMasterMode && masterQQ;}
 	long long master()const { return masterQQ; }
 	void newMaster(long long);
-	void killMaster() { rmNotice({ masterQQ,CQ::Private }); masterQQ = 0; save(); }
+	void killMaster() { rmNotice({ masterQQ, CQ::msgtype::Private }); masterQQ = 0; save(); }
 	int operator[](const char* key)const {
 		auto it = intConf.find(key);
 		if (it != intConf.end() || (it = intDefault.find(key)) != intDefault.end())return it->second;
@@ -66,7 +66,7 @@ public:
 	ResList listClock()const;
 	ResList listNotice()const;
 	int showNotice(chatType ct)const;
-	void setPath(std::string path) { strPath = path; save(); }
+	void setPath(std::string path) { strPath = std::move(path); }
 	void set(std::string key, int val) {intConf[key] = val;	save();}
 	void addNotice(chatType ct, int lv);
 	void redNotice(chatType ct, int lv);
