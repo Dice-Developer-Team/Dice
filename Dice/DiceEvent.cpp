@@ -3093,7 +3093,6 @@ int FromMsg::DiceReply() {
 			if ((strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+')) {
 				isDetail = true;
 				isModify = true;
-				intMsgCnt++;
 				short& nVal = pc[strSkillName];
 				RD Mod((nVal == 0 ? "" : to_string(nVal)) + readDice());
 				if (Mod.Roll()) {
