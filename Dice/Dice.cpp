@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <ctime>
 #include <mutex>
+#include <unordered_map>
 
 #include "APPINFO.h"
 #include "DiceFile.hpp"
@@ -56,7 +57,7 @@
 using namespace std;
 using namespace CQ;
 
-map<long long, User>UserList{};
+unordered_map<long long, User>UserList{};
 map<chatType, chatType> mLinkedList;
 multimap<chatType, chatType> mFwdList;
 ThreadFactory threads;

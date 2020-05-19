@@ -54,15 +54,15 @@ void DiceModManager::rm_help(string key) {
 }
 
 int DiceModManager::load(string& strLog) {
-	set<string> sFile;
-	set<string> sFileErr;
+	vector<std::filesystem::path> sFile;
+	vector<string> sFileErr;
 	int cntFile = listDir(DiceDir + "\\mod\\", sFile, true);
 	int cntItem{ 0 };
 	if (cntFile <= 0)return cntFile;
 	for (auto& filename : sFile) {
-		nlohmann::json j = freadJson(DiceDir + "\\mod\\" + filename);
+		nlohmann::json j = freadJson(filename);
 		if (j.is_null()) {
-			sFileErr.insert(filename);
+			sFileErr.push_back(filename.filename().string());
 			continue;
 		}
 		if (j.count("helpdoc")) {

@@ -157,23 +157,30 @@ ofstream& operator<<(ofstream& fout, const Chat& grp) {
 	return fout;
 }
 
-int listDir(string dir, set<string>& files, bool isSub, string subdir) {
-	_finddata_t file;
-	long lf = _findfirst((dir + subdir + "*").c_str(), &file);
-	if (lf < 0)return -1;
+template<typename T>
+int _listDir(const string& dir, vector<std::filesystem::path>& files) noexcept
+{
 	int intFile = 0;
-	std::set<std::string> dirs;
-	do {
-		//±éÀúÎÄ¼þ
-		if (!strcmp(file.name, ".") || !strcmp(file.name, ".."))continue;
-		if (file.attrib == _A_SUBDIR)dirs.insert(file.name);
-		else {
-			files.insert(subdir + file.name);
+	std::error_code err;
+	for (const auto& file : T(dir, err))
+	{
+		if (file.is_regular_file())
+		{
 			intFile++;
+			files.push_back(file.path());
 		}
-	} while (!_findnext(lf, &file));
-	if (isSub)for (auto &it : dirs) {
-		listDir(dir, files, true, subdir + it + "\\");
 	}
-	return intFile;
+	return err ? -1 : intFile;
+}
+
+int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub) noexcept
+{
+	if (isSub)
+	{
+		return _listDir<std::filesystem::recursive_directory_iterator>(dir, files);
+	}
+	else
+	{
+		return _listDir<std::filesystem::directory_iterator>(dir, files);
+	}
 }

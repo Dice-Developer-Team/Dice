@@ -124,11 +124,11 @@ void DiceTableMaster::save() {
 int DiceTableMaster::load() {
     string strLog;
     std::unique_lock<std::shared_mutex> lock(sessionMutex);
-    set<string> sFile;
+    vector<std::filesystem::path> sFile;
     int cnt = listDir(DiceDir + "\\user\\session\\", sFile);
     if (cnt <= 0)return cnt;
     for (auto& filename : sFile) {
-        nlohmann::json j = freadJson(DiceDir + "\\user\\session\\" + filename);
+        nlohmann::json j = freadJson(filename);
         if (j.is_null()) {
             cnt--;
             continue;

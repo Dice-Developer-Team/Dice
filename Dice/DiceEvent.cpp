@@ -3121,7 +3121,7 @@ int FromMsg::DiceReply() {
 				boolError = true;
 				break;
 			}
-			int intSkillVal = stoi(strSkillVal);
+			int intSkillVal = std::clamp(stoi(strSkillVal), -32767, 32767);
 			//Â¼Èë
 			pc.set(strSkillName, intSkillVal);
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')intMsgCnt++;

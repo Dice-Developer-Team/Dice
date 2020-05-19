@@ -10,6 +10,8 @@
 #include <map>
 #include <set>
 #include <memory>
+#include <unordered_map>
+#include <unordered_set>
 
 using std::pair;
 using std::string;
@@ -18,6 +20,8 @@ using std::vector;
 using std::map;
 using std::multimap;
 using std::set;
+using std::unordered_map;
+using std::unordered_set;
 
 class FromMsg;
 
@@ -72,13 +76,13 @@ public:
 class DDBlackManager {
     vector<DDBlackMark>vBlackList;
     //云端编号映射表
-    map<int, unsigned int>mCloud;
-    set<unsigned int> sIDEmpty;
+    unordered_map<int, unsigned int>mCloud;
+    unordered_set<unsigned int> sIDEmpty;
     //可重复映射表
     multimap<string, unsigned int>mTimeIndex;
-    set<unsigned int> sTimeEmpty;
-    set<unsigned int> sGroupEmpty;
-    set<unsigned int> sQQEmpty;
+    unordered_set<unsigned int> sTimeEmpty;
+    unordered_set<unsigned int> sGroupEmpty;
+    unordered_set<unsigned int> sQQEmpty;
     //发现所指相同的记录
     int find(const DDBlackMark&);
     //更新记录
@@ -93,8 +97,8 @@ public:
     multimap<long long, unsigned int>mGroupIndex;
     multimap<long long, unsigned int>mQQIndex;
     //未注销黑名单的危险等级
-    map<long long, short>mQQDanger;
-    map<long long, short>mGroupDanger;
+    unordered_map<long long, short>mQQDanger;
+    unordered_map<long long, short>mGroupDanger;
     short get_group_danger(long long)const;
     short get_qq_danger(long long)const;
     void isban(FromMsg*);

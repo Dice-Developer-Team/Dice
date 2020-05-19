@@ -6,6 +6,8 @@
 #include <mutex>
 #include <thread>
 #include <chrono>
+#include <unordered_map>
+#include <unordered_set>
 #include "BlackListManager.h"
 #include "Jsonio.h"
 #include "STLExtern.hpp"
@@ -350,10 +352,10 @@ int DDBlackMark::check_cloud() {
 
 int DDBlackManager::find(const DDBlackMark& mark) {
     std::lock_guard<std::mutex> lock_queue(blacklistMutex);
-    set<unsigned int> sRange;
+    unordered_set<unsigned int> sRange;
     if (mark.wid && mCloud.count(mark.wid)) return mCloud[mark.wid];
     if (!mark.time.empty()) {
-        set<unsigned int> sTimeRange = sTimeEmpty;
+        unordered_set<unsigned int> sTimeRange = sTimeEmpty;
         for (auto &[key,id] : multi_range(mTimeIndex, mark.time)) {
             sTimeRange.insert(id);
         }
@@ -361,14 +363,14 @@ int DDBlackManager::find(const DDBlackMark& mark) {
             sRange.swap(sTimeRange);
         }
         else {
-            set<unsigned int> sInter;
+            unordered_set<unsigned int> sInter;
             std::set_intersection(sRange.begin(), sRange.end(), sTimeRange.begin(), sTimeRange.end(), std::inserter(sInter, sInter.begin()));
             if (sInter.empty())return -1;
             sRange.swap(sInter);
         }
     }
     if (mark.fromGroup.first) {
-        set<unsigned int> sGroupRange = sGroupEmpty;
+        unordered_set<unsigned int> sGroupRange = sGroupEmpty;
         for (auto& [key, id] : multi_range(mGroupIndex, mark.fromGroup.first)) {
             sGroupRange.insert(id);
         }
@@ -377,14 +379,14 @@ int DDBlackManager::find(const DDBlackMark& mark) {
             sRange.swap(sGroupRange);
         }
         else {
-            set<unsigned int> sInter;
+            unordered_set<unsigned int> sInter;
             std::set_intersection(sRange.begin(), sRange.end(), sGroupRange.begin(), sGroupRange.end(), std::inserter(sInter, sInter.begin()));
             if (sInter.empty())return -1;
             sRange.swap(sInter);
         }
     }
     if (mark.fromQQ.first) {
-        set<unsigned int> sQQRange = sQQEmpty;
+        unordered_set<unsigned int> sQQRange = sQQEmpty;
         for (auto& [key, id] : multi_range(mQQIndex, mark.fromQQ.first)) {
             if (Enabled)console.log("∆•≈‰”√ªßº«¬º" + to_string(id), 0);
             sQQRange.insert(id);
@@ -394,7 +396,7 @@ int DDBlackManager::find(const DDBlackMark& mark) {
             sRange.swap(sQQRange);
         }
         else {
-            set<unsigned int> sInter;
+            unordered_set<unsigned int> sInter;
             std::set_intersection(sRange.begin(), sRange.end(), sQQRange.begin(), sQQRange.end(), std::inserter(sInter, sInter.begin()));
             if (sInter.empty())return -1;
             sRange.swap(sInter);

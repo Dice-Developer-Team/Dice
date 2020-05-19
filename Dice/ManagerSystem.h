@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <mutex>
+#include <unordered_map>
 #include "DiceFile.hpp"
 #include "DiceConsole.h"
 #include "GlobalVar.h"
@@ -18,6 +19,7 @@ using std::to_string;
 using std::set;
 using std::map;
 using std::vector;
+using std::unordered_map;
 constexpr auto CQ_IMAGE = "[CQ:image,file=";
 constexpr time_t NEWYEAR = 1588262400;
 extern string DiceDir;
@@ -121,7 +123,7 @@ public:
 };
 ifstream& operator>>(ifstream& fin, User& user);
 ofstream& operator<<(ofstream& fout, const User& user);
-extern map<long long, User>UserList;
+extern unordered_map<long long, User>UserList;
 User& getUser(long long qq);
 short trustedQQ(long long qq);
 int clearUser();
@@ -257,7 +259,7 @@ public:
 		//strConf = fread<string, string>(fin);
 	}
 };
-inline map<long long, Chat>ChatList;
+inline unordered_map<long long, Chat>ChatList;
 Chat& chat(long long id);
 int groupset(long long id, string st);
 string printChat(Chat& grp);

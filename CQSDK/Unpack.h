@@ -1,4 +1,4 @@
-ï»¿#pragma once
+#pragma once
 #include <vector>
 #include <string>
 
@@ -17,25 +17,25 @@ public:
 	Unpack& clear();
 	int len() const;
 
-	Unpack& add(int i); //æ·»åŠ ä¸€ä¸ªæ•´æ•°
-	int getInt(); //å¼¹å‡ºä¸€ä¸ªæ•´æ•°
+	Unpack& add(int i); //Ìí¼ÓÒ»¸öÕûÊı
+	int getInt(); //µ¯³öÒ»¸öÕûÊı
 
-	Unpack& add(long long i); //æ·»åŠ ä¸€ä¸ªé•¿æ•´æ•°
-	long long getLong(); //å¼¹å‡ºä¸€ä¸ªé•¿æ•´æ•°
+	Unpack& add(long long i); //Ìí¼ÓÒ»¸ö³¤ÕûÊı
+	long long getLong(); //µ¯³öÒ»¸ö³¤ÕûÊı
 
-	Unpack& add(short i); //æ·»åŠ ä¸€ä¸ªçŸ­æ•´æ•°
-	short getshort(); //å¼¹å‡ºä¸€ä¸ªçŸ­æ•´æ•°
+	Unpack& add(short i); //Ìí¼ÓÒ»¸ö¶ÌÕûÊı
+	short getshort(); //µ¯³öÒ»¸ö¶ÌÕûÊı
 
-	Unpack& add(const unsigned char* i, short len); //æ·»åŠ ä¸€ä¸ªå­—èŠ‚é›†(è¯·ç”¨add(std::string i);)
-	std::vector<unsigned char> getchars(); //å¼¹å‡ºä¸€ä¸ªå­—èŠ‚é›†(è¯·ç”¨getstring();)
+	Unpack& add(const unsigned char* i, short len); //Ìí¼ÓÒ»¸ö×Ö½Ú¼¯(ÇëÓÃadd(std::string i);)
+	std::vector<unsigned char> getchars(); //µ¯³öÒ»¸ö×Ö½Ú¼¯(ÇëÓÃgetstring();)
 
-	Unpack& add(std::string i); //æ·»åŠ ä¸€ä¸ªå­—ç¬¦ä¸²
-	std::string getstring(); //å¼¹å‡ºä¸€ä¸ªå­—ç¬¦ä¸²
+	Unpack& add(std::string i); //Ìí¼ÓÒ»¸ö×Ö·û´®
+	std::string getstring(); //µ¯³öÒ»¸ö×Ö·û´®
 
-	Unpack& add(Unpack& i); //æ·»åŠ ä¸€ä¸ªUnpack
-	Unpack getUnpack(); //å¼¹å‡ºä¸€ä¸ªUnpack
+	Unpack& add(Unpack& i); //Ìí¼ÓÒ»¸öUnpack
+	Unpack getUnpack(); //µ¯³öÒ»¸öUnpack
 
-	std::string getAll(); //è¿”å›æœ¬åŒ…æ•°æ®
+	std::string getAll(); //·µ»Ø±¾°üÊı¾İ
 
 	void show();
 };
