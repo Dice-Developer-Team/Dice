@@ -42,17 +42,17 @@ inline const std::string Dice_Short_Ver = "Dice! by ËÝä§ Shiki Ver " + Dice_Ver;
 #ifdef __clang__
 
 #ifdef _MSC_VER
-const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " MSVC " + std::to_string(_MSC_FULL_VER) + " " + __DATE__ + " " + __TIME__;
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " MSVC " + std::to_string(_MSC_VER) + " " + __DATE__ + " " + __TIME__;
 #elif defined(__GNUC__)
 const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__;
 #else
-const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__ + " UNKNOWN";
+const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + __clang_version__;
 #endif /*__clang__*/
 
 #else
 
 #ifdef _MSC_VER
-const std::string Dice_Full_Ver = std::string(Dice_Short_Ver) + "[" + __DATE__ + " " + __TIME__;
+const std::string Dice_Full_Ver = std::string(Dice_Short_Ver) + "[MSVC" + std::to_string(_MSC_VER) + " " + __DATE__ + " " + __TIME__;
 #elif defined(__GNUC__)
 const std::string Dice_Full_Ver = Dice_Short_Ver + " [GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__;
 #else

@@ -16,6 +16,8 @@
 #include <direct.h>
 #include "DiceMsgSend.h"
 #include "DiceXMLTree.h"
+#include "StrExtern.hpp"
+
 
 using std::ifstream;
 using std::ofstream;
@@ -317,9 +319,10 @@ int _loadDir(int (*load)(const std::string&, T2&) ,const std::string& strDir, T2
 		if (p.is_regular_file())
 		{
 			intFile++;
-			int Cnt = load(strDir + p.path().filename().string(), tmp);
+			string path = convert_w2a(p.path().filename().wstring().c_str());
+			int Cnt = load(strDir + path, tmp);
 			if (Cnt < 0) {
-				files.push_back(p.path().filename().string());
+				files.push_back(path);
 				intFailure++;
 			}
 			else intItem += Cnt;

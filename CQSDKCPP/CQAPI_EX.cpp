@@ -297,7 +297,9 @@ StrangerInfo CQ::getStrangerInfo(const long long QQID, const CQBOOL DisableCache
 //取群成员列表
 std::vector<GroupMemberInfo> CQ::getGroupMemberList(const long long GroupID)
 {
-	const string data(base64_decode(CQ_getGroupMemberList(getAuthCode(), GroupID)));
+	const char* ret = CQ_getGroupMemberList(getAuthCode(), GroupID);
+	if (!ret)return {};
+	const string data(base64_decode(ret));
 	if (data.empty())return {};
 	vector<GroupMemberInfo> infovector;
 	Unpack u(data);

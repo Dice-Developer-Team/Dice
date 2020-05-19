@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <fstream>
+#include "StrExtern.hpp"
 #include "Jsonio.h"
 
 nlohmann::json freadJson(std::string strPath) {
@@ -16,7 +17,7 @@ nlohmann::json freadJson(std::string strPath) {
 }
 
 nlohmann::json freadJson(const std::filesystem::path& path) {
-	std::ifstream fin(path);
+   	std::ifstream fin(convert_w2a(path.wstring().c_str()));
 	if (!fin)return nlohmann::json();
 	nlohmann::json j;
 	try {
