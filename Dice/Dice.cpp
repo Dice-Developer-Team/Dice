@@ -164,9 +164,9 @@ EVE_Enable(eventEnable)
 		Mirai = true;
 		Dice_Full_Ver_For = Dice_Full_Ver + " For Mirai]";
 		DiceDir = "Dice" + to_string(getLoginQQ());
-		console.setPath(DiceDir + "\\conf\\Console.xml");
 		this_thread::sleep_for(3s); //确保Mirai异步信息加载执行完毕
 	}
+	console.setPath(DiceDir + "\\conf\\Console.xml");
 	strFileLoc = getAppDirectory();
 	mkDir(strFileLoc); // Mirai不会自动创建文件夹
 	console.DiceMaid = getLoginQQ();
