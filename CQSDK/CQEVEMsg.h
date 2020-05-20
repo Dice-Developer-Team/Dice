@@ -34,15 +34,17 @@ namespace CQ
 		//字体
 		int font;
 
-		EVEMsg(int subType, int msgId, long long fromQQ, std::string message, int font);
+		EVEMsg(int subType, int msgId, long long fromQQ, std::string message, int font) noexcept;
 
 		//真实用户
-		bool isUser() const;
+		bool isUser() const noexcept;
 		//是否是系统用户
-		bool isSystem() const;
+		bool isSystem() const noexcept;
 
-		virtual int sendMsg(const char*) const = 0;
-		virtual int sendMsg(const std::string&) const = 0;
-		virtual msg sendMsg() const = 0;
+		virtual int sendMsg(const char*) const noexcept = 0;
+		virtual int sendMsg(const std::string&) const noexcept = 0;
+		virtual msg sendMsg() const noexcept = 0;
 	};
+
+	inline bool EVEMsg::isSystem() const noexcept { return fromQQ == 1000000; }
 }

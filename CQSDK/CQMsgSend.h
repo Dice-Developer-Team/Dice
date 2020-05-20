@@ -17,15 +17,15 @@ namespace CQ
 		1=msgtype::群
 		2=msgtype::讨论组
 		*/
-		msg(long long GroupID_Or_QQID, msgtype Type);
+		msg(long long GroupID_Or_QQID, msgtype Type) noexcept;
 		/*
 		Type:
 		0=好友
 		1=群
 		2=讨论组
 		*/
-		msg(long long GroupID_Or_QQID, int Type);
+		msg(long long GroupID_Or_QQID, int Type) noexcept;
 
-		void send() override;
+		void send() noexcept override;
 	};
 }

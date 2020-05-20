@@ -1,6 +1,8 @@
 /*
 此文件是所有EX事件的实现
 */
+#include <exception>
+#include <stdexcept>
 #include "CQEVE_ALL.h"
 
 #include "CQAPI_EX.h"
@@ -12,19 +14,16 @@
 
 using namespace CQ;
 
-void EVE::message_ignore() { _EVEret = Msg_Ignored; }
-void EVE::message_block() { _EVEret = Msg_Blocked; }
-
-bool EVEMsg::isSystem() const { return fromQQ == 1000000; }
 
 
-EVEMsg::EVEMsg(const int subType, const int msgId, const long long fromQQ, std::string message, const int font)
+
+EVEMsg::EVEMsg(const int subType, const int msgId, const long long fromQQ, std::string message, const int font) noexcept
 	: subType(subType), msgId(msgId), fromQQ(fromQQ), message(move(message)), font(font)
 {
 }
 
 //真实用户
-bool EVEMsg::isUser() const
+bool EVEMsg::isUser() const noexcept
 {
 	switch (fromQQ)
 	{
@@ -37,34 +36,34 @@ bool EVEMsg::isUser() const
 }
 
 EVEGroupMsg::EVEGroupMsg(const int subType, const int msgId, const long long fromGroup, const long long fromQQ, const char* fromAnonymous,
-                         const char* msg, const int font)
+                         const char* msg, const int font) noexcept
 	: EVEMsg(subType, msgId, fromQQ, msg, font), fromAnonymousInfo(), fromGroup(fromGroup),
 	  fromAnonymousToken(fromAnonymous)
 {
 }
 
-EVEGroupMsg::~EVEGroupMsg() { delete fromAnonymousInfo; }
+EVEGroupMsg::~EVEGroupMsg() noexcept { delete fromAnonymousInfo; }
 
 
-bool EVEGroupMsg::isAnonymous() const { return fromQQ == 80000000; }
+bool EVEGroupMsg::isAnonymous() const noexcept { return fromQQ == 80000000; }
 
 
-AnonymousInfo& EVEGroupMsg::getFromAnonymousInfo() //throw(std::exception_ptr)
+AnonymousInfo& EVEGroupMsg::getFromAnonymousInfo() noexcept(false)
 {
 	if (isAnonymous())
 		return
 			fromAnonymousInfo != nullptr
 				? *fromAnonymousInfo
 				: *(fromAnonymousInfo = new AnonymousInfo(fromAnonymousToken));
-	throw std::exception_ptr();
+	throw std::logic_error("Trying to Get Anonymous Info from Non-anonymous User");
 }
 
-bool EVEGroupMsg::setGroupKick(const bool refusedAddAgain) const
+bool EVEGroupMsg::setGroupKick(const bool refusedAddAgain) const noexcept
 {
 	return !CQ::setGroupKick(fromGroup, fromQQ, refusedAddAgain);
 }
 
-bool EVEGroupMsg::setGroupBan(const long long banTime) const
+bool EVEGroupMsg::setGroupBan(const long long banTime) const noexcept
 {
 	if (isAnonymous())
 	{
@@ -73,89 +72,89 @@ bool EVEGroupMsg::setGroupBan(const long long banTime) const
 	return !CQ::setGroupBan(fromGroup, fromQQ, banTime);
 }
 
-bool EVEGroupMsg::setGroupAdmin(const bool isAdmin) const
+bool EVEGroupMsg::setGroupAdmin(const bool isAdmin) const noexcept
 {
 	return !CQ::setGroupAdmin(fromGroup, fromQQ, isAdmin);
 }
 
-bool EVEGroupMsg::setGroupSpecialTitle(const std::string& Title, const long long ExpireTime) const
+bool EVEGroupMsg::setGroupSpecialTitle(const std::string& Title, const long long ExpireTime) const noexcept
 {
 	return !CQ::setGroupSpecialTitle(fromGroup, fromQQ, Title, ExpireTime);
 }
 
-bool EVEGroupMsg::setGroupWholeBan(const bool isBan) const
+bool EVEGroupMsg::setGroupWholeBan(const bool isBan) const noexcept
 {
 	return CQ::setGroupWholeBan(fromGroup, isBan) != 0;
 }
 
-bool EVEGroupMsg::setGroupAnonymous(const bool enableAnonymous) const
+bool EVEGroupMsg::setGroupAnonymous(const bool enableAnonymous) const noexcept
 {
 	return CQ::setGroupAnonymous(fromGroup, enableAnonymous) != 0;
 }
 
-bool EVEGroupMsg::setGroupCard(const std::string& newGroupNick) const
+bool EVEGroupMsg::setGroupCard(const std::string& newGroupNick) const noexcept
 {
 	return CQ::setGroupCard(fromGroup, fromQQ, newGroupNick) != 0;
 }
 
-bool EVEGroupMsg::setGroupLeave(const bool isDismiss) const
+bool EVEGroupMsg::setGroupLeave(const bool isDismiss) const noexcept
 {
 	return CQ::setGroupLeave(fromGroup, isDismiss) != 0;
 }
 
-GroupMemberInfo EVEGroupMsg::getGroupMemberInfo(const bool disableCache) const
+GroupMemberInfo EVEGroupMsg::getGroupMemberInfo(const bool disableCache) const noexcept
 {
 	return CQ::getGroupMemberInfo(fromGroup, fromQQ, disableCache);
 }
 
-std::vector<GroupMemberInfo> EVEGroupMsg::getGroupMemberList() const
+std::vector<GroupMemberInfo> EVEGroupMsg::getGroupMemberList() const noexcept
 {
 	return CQ::getGroupMemberList(fromGroup);
 }
 
-EVEPrivateMsg::EVEPrivateMsg(const int subType, const int msgId, const long long fromQQ, const char* msg, const int font)
+EVEPrivateMsg::EVEPrivateMsg(const int subType, const int msgId, const long long fromQQ, const char* msg, const int font) noexcept
 	: EVEMsg(subType, msgId, fromQQ, msg, font)
 {
 }
 
 //来自好友
-bool EVEPrivateMsg::fromPrivate() const { return subType == 11; }
+bool EVEPrivateMsg::fromPrivate() const noexcept { return subType == 11; }
 
 //来自在线状态
-bool EVEPrivateMsg::fromOnlineStatus() const { return subType == 1; }
+bool EVEPrivateMsg::fromOnlineStatus() const noexcept { return subType == 1; }
 
 //来自群临时
-bool EVEPrivateMsg::fromGroup() const { return subType == 2; }
+bool EVEPrivateMsg::fromGroup() const noexcept { return subType == 2; }
 
 //来自讨论组临时
-bool EVEPrivateMsg::fromDiscuss() const { return subType == 3; }
+bool EVEPrivateMsg::fromDiscuss() const noexcept { return subType == 3; }
 
-msg EVEPrivateMsg::sendMsg() const { return msg(fromQQ, msgtype::Private); }
-msg EVEGroupMsg::sendMsg() const { return msg(fromGroup, msgtype::Group); }
-msg EVEDiscussMsg::sendMsg() const { return msg(fromQQ, msgtype::Discuss); }
+msg EVEPrivateMsg::sendMsg() const noexcept { return msg(fromQQ, msgtype::Private); }
+msg EVEGroupMsg::sendMsg() const noexcept { return msg(fromGroup, msgtype::Group); }
+msg EVEDiscussMsg::sendMsg() const noexcept { return msg(fromQQ, msgtype::Discuss); }
 
-int EVEPrivateMsg::sendMsg(const char* msg) const { return sendPrivateMsg(fromQQ, msg); }
-int EVEPrivateMsg::sendMsg(const std::string& msg) const { return sendPrivateMsg(fromQQ, msg); }
-int EVEGroupMsg::sendMsg(const char* msg) const { return sendGroupMsg(fromGroup, msg); }
-int EVEGroupMsg::sendMsg(const std::string& msg) const { return sendGroupMsg(fromGroup, msg); }
-int EVEDiscussMsg::sendMsg(const char* msg) const { return sendDiscussMsg(fromDiscuss, msg); }
-int EVEDiscussMsg::sendMsg(const std::string& msg) const { return sendDiscussMsg(fromDiscuss, msg); }
+int EVEPrivateMsg::sendMsg(const char* msg) const noexcept { return sendPrivateMsg(fromQQ, msg); }
+int EVEPrivateMsg::sendMsg(const std::string& msg) const noexcept { return sendPrivateMsg(fromQQ, msg); }
+int EVEGroupMsg::sendMsg(const char* msg) const noexcept { return sendGroupMsg(fromGroup, msg); }
+int EVEGroupMsg::sendMsg(const std::string& msg) const noexcept { return sendGroupMsg(fromGroup, msg); }
+int EVEDiscussMsg::sendMsg(const char* msg) const noexcept { return sendDiscussMsg(fromDiscuss, msg); }
+int EVEDiscussMsg::sendMsg(const std::string& msg) const noexcept { return sendDiscussMsg(fromDiscuss, msg); }
 
-EVEDiscussMsg::EVEDiscussMsg(const int subType, const int msgId, const long long fromDiscuss, const long long fromQQ, const char* msg, const int font)
+EVEDiscussMsg::EVEDiscussMsg(const int subType, const int msgId, const long long fromDiscuss, const long long fromQQ, const char* msg, const int font) noexcept
 	: EVEMsg(subType, msgId, fromQQ, msg, font), fromDiscuss(fromDiscuss)
 {
 }
 
-bool EVEDiscussMsg::leave() const { return !setDiscussLeave(fromDiscuss); }
+bool EVEDiscussMsg::leave() const noexcept { return !setDiscussLeave(fromDiscuss); }
 
-void EVEStatus::color_green() { color = 1; }
-void EVEStatus::color_orange() { color = 2; }
-void EVEStatus::color_red() { color = 3; }
-void EVEStatus::color_crimson() { color = 4; }
-void EVEStatus::color_black() { color = 5; }
-void EVEStatus::color_gray() { color = 6; }
+void EVEStatus::color_green() noexcept { color = 1; }
+void EVEStatus::color_orange() noexcept { color = 2; }
+void EVEStatus::color_red() noexcept { color = 3; }
+void EVEStatus::color_crimson() noexcept { color = 4; }
+void EVEStatus::color_black() noexcept { color = 5; }
+void EVEStatus::color_gray() noexcept { color = 6; }
 
-std::string CQ::statusEVEreturn(EVEStatus& eve)
+std::string CQ::statusEVEreturn(EVEStatus& eve) noexcept
 {
 	Unpack pack;
 	std::string _ret = pack.add(eve.data).add(eve.dataf).add(eve.color).getAll();
@@ -163,44 +162,44 @@ std::string CQ::statusEVEreturn(EVEStatus& eve)
 	return _ret;
 }
 
-EVERequest::EVERequest(const int sendTime, const long long fromQQ, const char* msg, const char* responseFlag)
-	: sendTime(sendTime), fromQQ(fromQQ), msg(msg), responseFlag(responseFlag)
+EVERequest::EVERequest(const int sendTime, const long long fromQQ, const char* msg, const char* responseFlag) noexcept
+	: sendTime(sendTime), fromQQ(fromQQ), msg(msg), responseFlag(responseFlag) 
 {
 }
 
 EVERequestAddFriend::EVERequestAddFriend(const int subType, const int sendTime, const long long fromQQ, const char* msg,
-                                         const char* responseFlag)
+                                         const char* responseFlag) noexcept
 	: EVERequest(sendTime, fromQQ, msg, responseFlag), subType(subType), fromGroup(0)
 {
 }
 
-void EVERequestAddFriend::pass(const std::string& msg) const
+void EVERequestAddFriend::pass(const std::string& msg) const noexcept
 {
 	setFriendAddRequest(responseFlag, RequestAccepted, msg.c_str());
 }
 
-void EVERequestAddFriend::fail(const std::string& msg) const
+void EVERequestAddFriend::fail(const std::string& msg) const noexcept
 {
 	setFriendAddRequest(responseFlag, RequestRefused, msg.c_str());
 }
 
 EVERequestAddGroup::EVERequestAddGroup(const int subType, const int sendTime, const long long fromGroup, const long long fromQQ,
-                                       const char* const msg, const char* const responseFlag)
+                                       const char* const msg, const char* const responseFlag) noexcept
 	: EVERequest(sendTime, fromQQ, msg, responseFlag), subType(subType), fromGroup(fromGroup)
 {
 }
 
-void EVERequestAddGroup::pass(const std::string& msg) const
+void EVERequestAddGroup::pass(const std::string& msg) const noexcept
 {
 	setGroupAddRequest(responseFlag, subType, RequestAccepted, msg.c_str());
 }
 
-void EVERequestAddGroup::fail(const std::string& msg) const
+void EVERequestAddGroup::fail(const std::string& msg) const noexcept
 {
 	setGroupAddRequest(responseFlag, subType, RequestRefused, msg.c_str());
 }
 
-AnonymousInfo::AnonymousInfo(const char* msg)
+AnonymousInfo::AnonymousInfo(const char* msg) noexcept
 {
 	if (msg != nullptr && msg[0] != '\0')
 	{

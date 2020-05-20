@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CQMsgSend.h"
-
+#include "CQEVEMsg.h"
 /*
 讨论组消息(Type=4)
 
@@ -33,13 +33,13 @@ namespace CQ
 	{
 		long long fromDiscuss; //讨论组号
 
-		EVEDiscussMsg(int subType, int msgId, long long fromDiscuss, long long fromQQ, const char* msg, int font);
+		EVEDiscussMsg(int subType, int msgId, long long fromDiscuss, long long fromQQ, const char* msg, int font) noexcept;
 
-		bool leave() const; //退出讨论组
-
+		bool leave() const noexcept; //退出讨论组
+		
 		// 通过 EVEMsg 继承
-		msg sendMsg() const override;
-		int sendMsg(const char*) const override;
-		int sendMsg(const std::string&) const override;
+		msg sendMsg() const noexcept override;
+		int sendMsg(const char*) const noexcept override;
+		int sendMsg(const std::string&) const noexcept override;
 	};
 }

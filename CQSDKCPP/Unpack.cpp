@@ -7,7 +7,7 @@
 
 using namespace std;
 //打印内存数据
-void show(void* t, const int len)
+void show(void* t, const int len) noexcept
 {
 	const auto p = static_cast<unsigned char*>(t);
 	cout << "{";
@@ -20,7 +20,7 @@ void show(void* t, const int len)
 }
 
 //内存翻转
-unsigned char* Flip(unsigned char* const str, int len)
+unsigned char* Flip(unsigned char* const str, int len) noexcept
 {
 	auto f = 0;
 	--len;
@@ -38,53 +38,53 @@ unsigned char* Flip(unsigned char* const str, int len)
 //到字节集...
 //在原有的数据基础上操作
 template <typename ClassType>
-unsigned char* toBin(ClassType& i)
+unsigned char* toBin(ClassType& i) noexcept
 {
 	return Flip(reinterpret_cast<unsigned char*>(&i), sizeof(ClassType));
 }
 
-Unpack& Unpack::setData(const char* i, const int len)
+Unpack& Unpack::setData(const char* i, const int len) noexcept
 {
 	buff.assign(i, i + len);
 	return *this;
 }
 
-Unpack::Unpack() = default;
+Unpack::Unpack() noexcept = default;
 
-Unpack::Unpack(const char* data)
+Unpack::Unpack(const char* data) noexcept
 {
 	setData(data, strlen(data));
 }
 
-Unpack::Unpack(std::vector<unsigned char> data)
+Unpack::Unpack(std::vector<unsigned char> data) noexcept
 {
 	buff = std::move(data);
 }
 
-Unpack::Unpack(const std::string& data)
+Unpack::Unpack(const std::string& data) noexcept
 {
 	setData(data.data(), data.size());
 }
 
-Unpack& Unpack::clear()
+Unpack& Unpack::clear() noexcept
 {
 	buff.clear();
 	return *this;
 }
 
-int Unpack::len() const
+int Unpack::len() const noexcept
 {
 	return buff.size();
 }
 
-Unpack& Unpack::add(int i)
+Unpack& Unpack::add(int i) noexcept
 {
 	const auto t = toBin<int>(i);
 	buff.insert(buff.end(), t, t + sizeof(int));
 	return *this;
 }
 
-int Unpack::getInt()
+int Unpack::getInt() noexcept
 {
 	const auto len = sizeof(int);
 	if (buff.size() < len)return 0;
@@ -94,14 +94,14 @@ int Unpack::getInt()
 	return ret;
 }
 
-Unpack& Unpack::add(long long i)
+Unpack& Unpack::add(long long i) noexcept
 {
 	const auto t = toBin<long long>(i);
 	buff.insert(buff.end(), t, t + sizeof(long long));
 	return *this;
 }
 
-long long Unpack::getLong()
+long long Unpack::getLong() noexcept
 {
 	const auto len = sizeof(long long);
 	if (buff.size() < len)return 0;
@@ -111,14 +111,14 @@ long long Unpack::getLong()
 	return ret;
 }
 
-Unpack& Unpack::add(short i)
+Unpack& Unpack::add(short i) noexcept
 {
 	const auto t = toBin<short>(i);
 	buff.insert(buff.end(), t, t + sizeof(short));
 	return *this;
 }
 
-short Unpack::getshort()
+short Unpack::getshort() noexcept
 {
 	const auto len = sizeof(short);
 	if (buff.size() < len)return 0;
@@ -128,7 +128,7 @@ short Unpack::getshort()
 	return ret;
 }
 
-Unpack& Unpack::add(const unsigned char* i, const short len)
+Unpack& Unpack::add(const unsigned char* i, const short len) noexcept
 {
 	if (len < 0)
 		return *this;
@@ -138,7 +138,7 @@ Unpack& Unpack::add(const unsigned char* i, const short len)
 	return *this;
 }
 
-std::vector<unsigned char> Unpack::getchars()
+std::vector<unsigned char> Unpack::getchars() noexcept
 {
 	const auto len = getshort();
 	if (buff.size() < static_cast<size_t>(len))return vector<unsigned char>();
@@ -148,7 +148,7 @@ std::vector<unsigned char> Unpack::getchars()
 	return tep;
 }
 
-Unpack& Unpack::add(string i)
+Unpack& Unpack::add(string i) noexcept
 {
 	if (i.empty()) //字符串长度为0,直接放入长度0
 	{
@@ -165,7 +165,7 @@ Unpack& Unpack::add(string i)
 	return *this;
 }
 
-string Unpack::getstring()
+string Unpack::getstring() noexcept
 {
 	auto tep = getchars();
 	if (tep.empty())return "";
@@ -174,15 +174,15 @@ string Unpack::getstring()
 	return string(reinterpret_cast<char*>(&tep[0]));
 }
 
-Unpack& Unpack::add(Unpack& i)
+Unpack& Unpack::add(Unpack& i)noexcept
 {
 	add(i.getAll());
 	return *this;
 }
 
-Unpack Unpack::getUnpack() { return Unpack(getchars()); }
+Unpack Unpack::getUnpack() noexcept { return Unpack(getchars()); }
 
-std::string Unpack::getAll()
+std::string Unpack::getAll() noexcept
 {
 	string ret;
 	for (auto b : buff)
@@ -190,7 +190,7 @@ std::string Unpack::getAll()
 	return ret;
 }
 
-void Unpack::show()
+void Unpack::show() noexcept
 {
 	string out;
 	auto len = 0;

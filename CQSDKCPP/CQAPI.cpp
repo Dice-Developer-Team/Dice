@@ -8,12 +8,12 @@ CQEVENT(int, Initialize, 4)(const int AuthCode)
 	return 0;
 }
 
-int getAuthCode()
+int getAuthCode() noexcept
 {
 	return AuthCode;
 }
 
-int CQ::getAuthCode()
+int CQ::getAuthCode() noexcept
 {
 	return AuthCode;
 }

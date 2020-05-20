@@ -1,5 +1,6 @@
 #pragma once
 #include "CQMsgSend.h"
+#include "CQEVEMsg.h"
 
 /*
 私聊消息(Type=21)
@@ -30,25 +31,25 @@ namespace CQ
 {
 	struct EVEPrivateMsg final : EVEMsg
 	{
-		EVEPrivateMsg(int subType, int msgId, long long fromQQ, const char* msg, int font);
+		EVEPrivateMsg(int subType, int msgId, long long fromQQ, const char* msg, int font) noexcept;
 
 		//来自好友
-		bool fromPrivate() const;
+		bool fromPrivate() const noexcept;
 
 		//来自在线状态
-		bool fromOnlineStatus() const;
+		bool fromOnlineStatus() const noexcept;
 
 		//来自群临时
-		bool fromGroup() const;
+		bool fromGroup() const noexcept;
 
 		//来自讨论组临时
-		bool fromDiscuss() const;
+		bool fromDiscuss() const noexcept;
 
 		// 通过 EVEMsg 继承
-		msg sendMsg() const override;
+		msg sendMsg() const noexcept override;
 
-		int sendMsg(const char*) const override;
+		int sendMsg(const char*) const noexcept override;
 
-		int sendMsg(const std::string&) const override;
+		int sendMsg(const std::string&) const noexcept override;
 	};
 }

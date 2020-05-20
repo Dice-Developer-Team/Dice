@@ -11,12 +11,12 @@ static const string base64_chars =
 	"abcdefghijklmnopqrstuvwxyz"
 	"0123456789+/";
 
-static bool is_base64(const unsigned char c)
+static bool is_base64(const unsigned char c) noexcept
 {
 	return isalnum(c) || c == '+' || c == '/';
 }
 
-string base64_encode(const string& decode_string)
+string base64_encode(const string& decode_string) noexcept
 {
 	auto in_len = decode_string.size();
 	auto bytes_to_encode = decode_string.data();
@@ -62,7 +62,7 @@ string base64_encode(const string& decode_string)
 	return ret;
 }
 
-string base64_decode(const string& encoded_string)
+string base64_decode(const string& encoded_string) noexcept
 {
 	int in_len = encoded_string.size();
 	auto i = 0;

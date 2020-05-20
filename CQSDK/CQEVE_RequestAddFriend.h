@@ -35,8 +35,8 @@ namespace CQ
 		//1:固定为1
 		int subType;
 		long long fromGroup; // 来源群号
-		EVERequestAddFriend(int subType, int sendTime, long long fromQQ, const char* msg, const char* responseFlag);
-		void pass(const std::string& msg = "") const override; //通过此请求
-		void fail(const std::string& msg = "您由于不满足某些要求被拒绝!") const override; //拒绝此请求
+		EVERequestAddFriend(int subType, int sendTime, long long fromQQ, const char* msg, const char* responseFlag) noexcept;
+		void pass(const std::string& msg = "") const noexcept override; //通过此请求
+		void fail(const std::string& msg = "您由于不满足某些要求被拒绝!") const noexcept override; //拒绝此请求
 	};
 }

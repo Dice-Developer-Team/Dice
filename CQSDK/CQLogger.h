@@ -11,44 +11,44 @@ namespace CQ
 		int flag;
 		std::string title;
 	public:
-		logstream(std::string title, int Log_flag);
+		logstream(std::string title, int Log_flag) noexcept;
 
 		// Í¨¹ý CQstream ¼Ì³Ð
-		void send() override;
+		void send() noexcept override;
 	};
 
 	class logger
 	{
 		std::string title;
 	public:
-		logger(std::string title);
-		void setTitle(std::string title);
+		logger(std::string title) noexcept;
+		void setTitle(std::string title) noexcept;
 
-		void Debug(const std::string& msg) const;
-		void Info(const std::string& msg) const;
-		void InfoSuccess(const std::string& msg) const;
-		void InfoRecv(const std::string& msg) const;
-		void InfoSend(const std::string& msg) const;
-		void Warning(const std::string& msg) const;
-		void Error(const std::string& msg) const;
-		void Fatal(const std::string& msg) const;
+		void Debug(const std::string& msg) const noexcept;
+		void Info(const std::string& msg) const noexcept;
+		void InfoSuccess(const std::string& msg) const noexcept;
+		void InfoRecv(const std::string& msg) const noexcept;
+		void InfoSend(const std::string& msg) const noexcept;
+		void Warning(const std::string& msg) const noexcept;
+		void Error(const std::string& msg) const noexcept;
+		void Fatal(const std::string& msg) const noexcept;
 
-		void Debug(const char* msg) const;
-		void Info(const char* msg) const;
-		void InfoSuccess(const char* msg) const;
-		void InfoRecv(const char* msg) const;
-		void InfoSend(const char* msg) const;
-		void Warning(const char* msg) const;
-		void Error(const char* msg) const;
-		void Fatal(const char* msg) const;
+		void Debug(const char* msg) const noexcept;
+		void Info(const char* msg) const noexcept;
+		void InfoSuccess(const char* msg) const noexcept;
+		void InfoRecv(const char* msg) const noexcept;
+		void InfoSend(const char* msg) const noexcept;
+		void Warning(const char* msg) const noexcept;
+		void Error(const char* msg) const noexcept;
+		void Fatal(const char* msg) const noexcept;
 
-		logstream Debug() const;
-		logstream Info() const;
-		logstream InfoSuccess() const;
-		logstream InfoRecv() const;
-		logstream InfoSend() const;
-		logstream Warning() const;
-		logstream Error() const;
-		logstream Fatal() const;
+		logstream Debug() const noexcept;
+		logstream Info() const noexcept;
+		logstream InfoSuccess() const noexcept;
+		logstream InfoRecv() const noexcept;
+		logstream InfoSend() const noexcept;
+		logstream Warning() const noexcept;
+		logstream Error() const noexcept;
+		logstream Fatal() const noexcept;
 	};
 }

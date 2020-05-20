@@ -40,18 +40,18 @@ namespace CQ
 			// 6 : »Ò
 			color = 4;
 		// 1 : ÂÌ
-		void color_green();
+		void color_green() noexcept;
 		// 2 : ³È
-		void color_orange();
+		void color_orange() noexcept;
 		// 3 : ºì
-		void color_red();
+		void color_red() noexcept;
 		// 4 : Éîºì
-		void color_crimson();
+		void color_crimson() noexcept;
 		// 5 : ºÚ
-		void color_black();
+		void color_black() noexcept;
 		// 6 : »Ò
-		void color_gray();
+		void color_gray() noexcept;
 	};
 
-	std::string statusEVEreturn(EVEStatus& eve);
+	std::string statusEVEreturn(EVEStatus& eve) noexcept;
 }
