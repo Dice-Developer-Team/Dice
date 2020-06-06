@@ -50,6 +50,7 @@
 #include "CharacterCard.h"
 #include "DiceEvent.h"
 #include "DiceSession.h"
+#include "DiceGUI.h"
 
 #pragma warning(disable:4996)
 #pragma warning(disable:6031)
@@ -754,6 +755,10 @@ EVE_Menu(eventMasterMode) {
 		MessageBoxA(nullptr, "Master模式已开启√\n认主请对骰娘发送.master public/private", "Master模式切换", MB_OK | MB_ICONINFORMATION);
 	}
 	return 0;
+}
+
+EVE_Menu(eventGUI) {
+	return GUIMain();
 }
 
 EVE_Disable(eventDisable)

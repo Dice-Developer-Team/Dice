@@ -364,7 +364,14 @@ int DDBlackManager::find(const DDBlackMark& mark) {
         }
         else {
             unordered_set<unsigned int> sInter;
-            std::set_intersection(sRange.begin(), sRange.end(), sTimeRange.begin(), sTimeRange.end(), std::inserter(sInter, sInter.begin()));
+            for (const auto& item : sRange)
+            {
+                if (sTimeRange.count(item))
+                {
+                    sInter.insert(item);
+                }
+            }
+            //std::set_intersection(sRange.begin(), sRange.end(), sTimeRange.begin(), sTimeRange.end(), std::inserter(sInter, sInter.begin()));
             if (sInter.empty())return -1;
             sRange.swap(sInter);
         }
@@ -380,7 +387,14 @@ int DDBlackManager::find(const DDBlackMark& mark) {
         }
         else {
             unordered_set<unsigned int> sInter;
-            std::set_intersection(sRange.begin(), sRange.end(), sGroupRange.begin(), sGroupRange.end(), std::inserter(sInter, sInter.begin()));
+        	for(const auto& item: sRange)
+        	{
+        		if(sGroupRange.count(item))
+        		{
+                    sInter.insert(item);
+        		}
+        	}
+            //std::set_intersection(sRange.begin(), sRange.end(), sGroupRange.begin(), sGroupRange.end(), std::inserter(sInter, sInter.begin()));
             if (sInter.empty())return -1;
             sRange.swap(sInter);
         }
@@ -397,7 +411,14 @@ int DDBlackManager::find(const DDBlackMark& mark) {
         }
         else {
             unordered_set<unsigned int> sInter;
-            std::set_intersection(sRange.begin(), sRange.end(), sQQRange.begin(), sQQRange.end(), std::inserter(sInter, sInter.begin()));
+            for (const auto& item : sRange)
+            {
+                if (sQQRange.count(item))
+                {
+                    sInter.insert(item);
+                }
+            }
+            //std::set_intersection(sRange.begin(), sRange.end(), sQQRange.begin(), sQQRange.end(), std::inserter(sInter, sInter.begin()));
             if (sInter.empty())return -1;
             sRange.swap(sInter);
         }

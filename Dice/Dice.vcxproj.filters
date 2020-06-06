@@ -117,6 +117,9 @@
     <ClCompile Include="Jsonio.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DiceGUI.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -263,6 +266,12 @@
     <ClInclude Include="DiceSession.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DiceGUI.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.json">
@@ -273,5 +282,21 @@
     <Library Include="CQP.lib">
       <Filter>资源文件</Filter>
     </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Dice.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="bitmap1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="DiceLogo.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -502,6 +502,10 @@ int FromMsg::MasterSet() {
 		return 1;
 	}
 	else if (strOption == "reset") {
+		if (console.master() != fromQQ) {
+			reply(GlobalMsg["strNotMaster"]);
+			return 1;
+		}
 		string strMaster = readDigit();
 		if (strMaster.empty() || stoll(strMaster) == console.master()) {
 			reply("Master不要消遣于我!");
@@ -1899,15 +1903,23 @@ int FromMsg::DiceReply() {
 				chatType ToChat = mLinkedList[fromChat];
 				mLinkedList.erase(fromChat);
 				auto Range = mFwdList.equal_range(fromChat);
-				for (auto it = Range.first; it != Range.second; ++it) {
+				for (auto it = Range.first; it != Range.second;) {
 					if (it->second == ToChat) {
-						mFwdList.erase(it);
+						it = mFwdList.erase(it);
+					}
+					else
+					{
+						++it;
 					}
 				}
 				Range = mFwdList.equal_range(ToChat);
-				for (auto it = Range.first; it != Range.second; ++it) {
+				for (auto it = Range.first; it != Range.second;) {
 					if (it->second == fromChat) {
-						mFwdList.erase(it);
+						it = mFwdList.erase(it);
+					}
+					else
+					{
+						++it;
 					}
 				}
 				reply(GlobalMsg["strLinkLoss"]);
@@ -2060,7 +2072,7 @@ int FromMsg::DiceReply() {
 				if (!UserList.count(llTarget)) {
 					reply(GlobalMsg["strUserNotFound"]);
 					return 1;
-				}
+				}	
 				strVar["trust"] = to_string(trustedQQ(llTarget));
 				reply(GlobalMsg["strUserTrustShow"]);
 				return 1;

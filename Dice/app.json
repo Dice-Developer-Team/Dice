@@ -112,6 +112,10 @@
     {
       "name": "全局开关",
       "function": "eventGlobalSwitch"
+    },
+    {
+      "name": "综合管理",
+      "function": "eventGUI"
     }
   ],
   "status": [ // 悬浮窗状态（将应用运行状态等显示在酷Q悬浮窗）
