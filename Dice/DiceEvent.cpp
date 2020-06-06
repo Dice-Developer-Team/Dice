@@ -2822,7 +2822,7 @@ int FromMsg::DiceReply() {
 			strAns = rdMainDice.FormCompleteString() + "/" + to_string(intFianlSkillVal) + " ";
 			int intRes = RollSuccessLevel(rdMainDice.intTotal, intFianlSkillVal, intRule);
 			switch (intRes) {
-			case 0:sendLike(fromQQ, 10); strAns += GlobalMsg["strRollFumble"]; break;
+			case 0:strAns += GlobalMsg["strRollFumble"]; break;
 			case 1:strAns += isAutomatic ? GlobalMsg["strRollRegularSuccess"] : GlobalMsg["strRollFailure"]; break;
 			case 5:strAns += GlobalMsg["strRollCriticalSuccess"]; break;
 			case 4:if (intDifficulty == 1) { strAns += GlobalMsg["strRollExtremeSuccess"]; break; }
@@ -2838,7 +2838,7 @@ int FromMsg::DiceReply() {
 				strAns = rdMainDice.FormCompleteString() + "/" + to_string(intFianlSkillVal) + " ";
 				int intRes = RollSuccessLevel(rdMainDice.intTotal, intFianlSkillVal, intRule);
 				switch (intRes) {
-				case 0:sendLike(fromQQ, 10); strAns += GlobalMsg["strFumble"]; break;
+				case 0:strAns += GlobalMsg["strFumble"]; break;
 				case 1:strAns += isAutomatic ? GlobalMsg["strSuccess"] : GlobalMsg["strFailure"]; break;
 				case 5:strAns += GlobalMsg["strCriticalSuccess"]; break;
 				case 4:if (intDifficulty == 1) { strAns += GlobalMsg["strExtremeSuccess"]; break; }
@@ -2987,7 +2987,6 @@ int FromMsg::DiceReply() {
 			*pSan = max(0, *pSan - rdFail.intTotal);
 			break;
 		case 0:
-			sendLike(fromQQ, 10);
 			strVar["res"] += GlobalMsg["strFumble"];
 			rdFail.Max();
 			strVar["change"] = rdFail.strDice + "×î´óÖµ=" + to_string(rdFail.intTotal);
