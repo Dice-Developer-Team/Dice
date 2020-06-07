@@ -121,8 +121,6 @@ __int64 compareFileTime(FILETIME& ft1, FILETIME& ft2) {
 }
 
 __int64 getWinCpuUsage() {
-	HANDLE hEvent;
-	BOOL res;
 	FILETIME preidleTime;
 	FILETIME prekernelTime;
 	FILETIME preuserTime;
@@ -130,15 +128,13 @@ __int64 getWinCpuUsage() {
 	FILETIME kernelTime;
 	FILETIME userTime;
 
-	res = GetSystemTimes(&idleTime, &kernelTime, &userTime);
+	if (!GetSystemTimes(&idleTime, &kernelTime, &userTime)) return -1;
 	preidleTime = idleTime;
 	prekernelTime = kernelTime;
 	preuserTime = userTime;
 
-	hEvent = CreateEventA(NULL, FALSE, FALSE, NULL); // 初始值为 nonsignaled ，并且每次触发后自动设置为nonsignaled
-	//WaitForSingleObject(hEvent, 1000);
-	Sleep(2000);
-	res = GetSystemTimes(&idleTime, &kernelTime, &userTime);
+	Sleep(1000);
+	if (!GetSystemTimes(&idleTime, &kernelTime, &userTime)) return -1;
 
 	__int64 idle = compareFileTime(idleTime, preidleTime);
 	__int64 kernel = compareFileTime(kernelTime, prekernelTime);
@@ -164,9 +160,7 @@ int getProcessCpu()
 
 	if (!GetProcessTimes(hProcess, &ftCreationTime, &ftExitTime, &ftPreKernelTime, &ftPreUserTime)) { return -1; }
 	log << ftPreKernelTime.dwLowDateTime << "\n" << ftPreUserTime.dwLowDateTime << "\n";
-	HANDLE hEvent = CreateEventA(NULL, FALSE, FALSE, NULL); // 初始值为 nonsignaled ，并且每次触发后自动设置为nonsignaled
-	if (hEvent == nullptr) { return -1; }
-	WaitForSingleObject(hEvent, 1000);
+	Sleep(1000);
 	if (!GetProcessTimes(hProcess, &ftCreationTime, &ftExitTime, &ftKernelTime, &ftUserTime)) { return -1; }
 	log << ftKernelTime.dwLowDateTime << "\n" << ftUserTime.dwLowDateTime << "\n";
 	__int64 ullKernelTime = compareFileTime(ftKernelTime, ftPreKernelTime);

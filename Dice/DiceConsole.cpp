@@ -304,7 +304,7 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st) {
 					}
 				}
 			}
-			this_thread::sleep_for(100ms);
+			this_thread::sleep_for(1000ms);
 		}
 	}
 

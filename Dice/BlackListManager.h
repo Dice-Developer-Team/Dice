@@ -59,7 +59,7 @@ public:
     //warning文本生成
     string printJson(int tab)const;
     string warning()const;
-    const char* getData()const;
+    std::string getData()const;
     void fill_note();
     //是否合法构造
     bool isValid = false;

@@ -251,9 +251,9 @@ string DDBlackMark::warning()const {
     if (!comment.empty())j["comment"] = GBKtoUTF8(comment);
     return "!warning" + UTF8toGBK(j.dump(2));
 }
-const char* DDBlackMark::getData()const {
+std::string DDBlackMark::getData()const {
     std::string data = "fromQQ=" + std::to_string(fromQQ.first) + "&fromGroup=" + std::to_string(fromGroup.first) + "&DiceMaid=" + std::to_string(DiceMaid) + "&masterQQ=" + std::to_string(masterQQ) + "&time=" + time;
-    return data.data();
+    return data;
 }
 void DDBlackMark::fill_note() {
     if (!note.empty())return;
