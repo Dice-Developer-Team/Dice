@@ -1,4 +1,5 @@
 /*此文件是下面三个头文件的实现*/
+#include <cassert>
 #include <utility>
 #include "CQAPI_EX.h"
 #include "bufstream.h"
@@ -157,12 +158,7 @@ void msg::send() noexcept
 		sendDiscussMsg(ID, buf);
 		break;
 	default:
-		static logger log("异常报告");
-		log.Warning()
-			<< "消息发送异常"
-			<< ",类别:" << ID
-			<< ",原文: " << buf
-			<< CQ::send;
+		assert(false);
 		break;
 	}
 }

@@ -56,9 +56,8 @@ Unpack::Unpack(const char* data) noexcept
 	setData(data, strlen(data));
 }
 
-Unpack::Unpack(std::vector<unsigned char> data) noexcept
+Unpack::Unpack(std::vector<unsigned char> data) noexcept : buff(std::move(data))
 {
-	buff = std::move(data);
 }
 
 Unpack::Unpack(const std::string& data) noexcept
@@ -184,9 +183,7 @@ Unpack Unpack::getUnpack() noexcept { return Unpack(getchars()); }
 
 std::string Unpack::getAll() noexcept
 {
-	string ret;
-	for (auto b : buff)
-		ret += b;
+	string ret(buff.begin(), buff.end());
 	return ret;
 }
 

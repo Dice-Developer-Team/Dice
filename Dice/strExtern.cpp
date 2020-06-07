@@ -1,4 +1,5 @@
 #include <string>
+#include <algorithm>
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "StrExtern.hpp"
@@ -20,12 +21,8 @@ string toString(int num, unsigned short size) {
     return sign + res;
 }
 
-int count_char(string s, char ch) {
-    int cnt = 0;
-    for (auto c : s) {
-        if (c == ch)cnt++;
-    }
-    return cnt;
+int count_char(const string& s, char ch) {
+    return std::count(s.begin(), s.end(), ch);
 }
 
 string convert_w2a(const wchar_t* wch) {

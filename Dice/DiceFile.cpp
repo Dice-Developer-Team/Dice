@@ -8,7 +8,8 @@
 #include "StrExtern.hpp"
 #include "DiceFile.hpp"
 
-int mkDir(const std::string& dir) {
+int mkDir(const std::string& dir)
+{
 	std::error_code err;
 	std::filesystem::create_directories(dir, err);
 	return err.value();
@@ -16,7 +17,8 @@ int mkDir(const std::string& dir) {
 	return -2;*/
 }
 
-int clrDir(std::string dir, const std::set<std::string>& exceptList) {
+int clrDir(const std::string& dir, const std::set<std::string>& exceptList)
+{
 	int nCnt = 0;
 	std::error_code err;
 	for (const auto& p : std::filesystem::directory_iterator(dir, err))
@@ -54,15 +56,17 @@ int clrDir(std::string dir, const std::set<std::string>& exceptList) {
 	return nCnt;*/
 }
 
-vector<string> getLines(const string& s) {
-	vector<string>vLine;
+vector<string> getLines(const string& s)
+{
+	vector<string> vLine;
 	stringstream ss(s);
 	string line;
-	while (getline(ss, line)) {
+	while (getline(ss, line))
+	{
 		int r = line.length();
 		while (r && isspace(static_cast<unsigned char>(line[r - 1])))r--;
 		int l = 0;
-		while (isspace(static_cast<unsigned char>(line[l])) && l < r)l++;
+		while (l < r && isspace(static_cast<unsigned char>(line[l])))l++;
 		line = line.substr(l, r - l);
 		if (line.empty())continue;
 		vLine.push_back(std::move(line));
@@ -70,7 +74,8 @@ vector<string> getLines(const string& s) {
 	return vLine;
 }
 
-string printLine(string s) {
+string printLine(string s)
+{
 	while (s.find('\t') != std::string::npos)s.replace(s.find('\t'), 1, "\\t");
 	while (s.find("\r\n") != std::string::npos)s.replace(s.find("\r\n"), 2, "\\n");
 	while (s.find('\r') != std::string::npos)s.replace(s.find('\r'), 1, "\\n");
@@ -78,9 +83,11 @@ string printLine(string s) {
 	return s;
 }
 
-bool fscan(std::ifstream& fin, std::string& t) {
+bool fscan(std::ifstream& fin, std::string& t)
+{
 	std::string val;
-	if (fin >> val) {
+	if (fin >> val)
+	{
 		while (val.find("{space}") != std::string::npos)val.replace(val.find("{space}"), 7, " ");
 		while (val.find("{tab}") != std::string::npos)val.replace(val.find("{tab}"), 5, "\t");
 		while (val.find("{endl}") != std::string::npos)val.replace(val.find("{endl}"), 6, "\n");
@@ -91,10 +98,11 @@ bool fscan(std::ifstream& fin, std::string& t) {
 		t = val;
 		return true;
 	}
-	else return false;
+	return false;
 }
 
-bool rdbuf(string strPath, string& s) {
+bool rdbuf(const string& strPath, string& s)
+{
 	std::ifstream fin(strPath);
 	if (!fin)return false;
 	stringstream ss;
@@ -103,7 +111,8 @@ bool rdbuf(string strPath, string& s) {
 	return true;
 }
 
-void fprint(std::ofstream& fout, std::string s) {
+void fprint(std::ofstream& fout, std::string s)
+{
 	while (s.find(' ') != std::string::npos)s.replace(s.find(' '), 1, "{space}");
 	while (s.find('\t') != std::string::npos)s.replace(s.find('\t'), 1, "{tab}");
 	while (s.find('\n') != std::string::npos)s.replace(s.find('\n'), 1, "{endl}");
@@ -111,58 +120,72 @@ void fprint(std::ofstream& fout, std::string s) {
 	fout << s;
 }
 
-void fwrite(ofstream& fout, const std::string& s) {
-	short len = (short)s.length();
+void fwrite(ofstream& fout, const std::string& s)
+{
+	short len = static_cast<short>(s.length());
 	fout.write((char*)&len, sizeof(short));
 	fout.write(s.c_str(), sizeof(char) * s.length());
 }
 
-void readini(ifstream& fin, std::string& s) {
+void readini(ifstream& fin, std::string& s)
+{
 	std::string line;
 	getline(fin, line);
 	int pos = line.find('=');
 	if (pos == std::string::npos)return;
 	std::istringstream sin(line.substr(pos + 1));
 	sin >> s;
-	return;
 }
 
 
 using namespace std;
-std::ifstream& operator>>(std::ifstream& fin, CQ::msgtype& t) {
+
+std::ifstream& operator>>(std::ifstream& fin, CQ::msgtype& t)
+{
 	fin >> (int&)t;
 	return fin;
 }
-std::ifstream& operator>>(std::ifstream& fin, chatType& ct) {
+
+std::ifstream& operator>>(std::ifstream& fin, chatType& ct)
+{
 	int t;
 	fin >> ct.first >> t;
-	ct.second = (CQ::msgtype)t;
+	ct.second = static_cast<CQ::msgtype>(t);
 	return fin;
 }
-std::ofstream& operator<<(std::ofstream& fout, const chatType& ct) {
-	fout << ct.first << "\t" << (int)ct.second;
+
+std::ofstream& operator<<(std::ofstream& fout, const chatType& ct)
+{
+	fout << ct.first << "\t" << static_cast<int>(ct.second);
 	return fout;
 }
 
-ifstream& operator>>(ifstream& fin, User& user) {
+ifstream& operator>>(ifstream& fin, User& user)
+{
 	fin >> user.ID >> user.nTrust >> user.tCreated >> user.tUpdated;
 	return fin;
 }
-ofstream& operator<<(ofstream& fout, const User& user) {
+
+ofstream& operator<<(ofstream& fout, const User& user)
+{
 	fout << user.ID << '\t' << user.nTrust << '\t' << user.tCreated << '\t' << user.tUpdated;
 	return fout;
 }
 
-ifstream& operator>>(ifstream& fin, Chat& grp) {
+ifstream& operator>>(ifstream& fin, Chat& grp)
+{
 	fin >> grp.ID >> grp.isGroup >> grp.inviter >> grp.tCreated >> grp.tUpdated >> grp.tLastMsg;
 	return fin;
 }
-ofstream& operator<<(ofstream& fout, const Chat& grp) {
-	fout << grp.ID << '\t' << grp.isGroup <<  '\t' << grp.inviter << '\t' << grp.tCreated << '\t' << grp.tUpdated << '\t' << grp.tLastMsg;
+
+ofstream& operator<<(ofstream& fout, const Chat& grp)
+{
+	fout << grp.ID << '\t' << grp.isGroup << '\t' << grp.inviter << '\t' << grp.tCreated << '\t' << grp.tUpdated << '\t'
+		<< grp.tLastMsg;
 	return fout;
 }
 
-template<typename T>
+template <typename T>
 int _listDir(const string& dir, vector<std::filesystem::path>& files) noexcept
 {
 	int intFile = 0;
@@ -184,8 +207,5 @@ int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub)
 	{
 		return _listDir<std::filesystem::recursive_directory_iterator>(dir, files);
 	}
-	else
-	{
-		return _listDir<std::filesystem::directory_iterator>(dir, files);
-	}
+	return _listDir<std::filesystem::directory_iterator>(dir, files);
 }

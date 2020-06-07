@@ -3,6 +3,8 @@
  * Copyright (C) 2019-2020 String.Empty
  */
 #include <windows.h>
+
+#include <utility>
 #include "ManagerSystem.h"
 
 string DiceDir = "DiceData";
@@ -64,7 +66,7 @@ Chat& chat(long long id) {
 }
 int groupset(long long id, string st) {
 	if (!ChatList.count(id))return -1;
-	else return ChatList[id].isset(st);
+	else return ChatList[id].isset(std::move(st));
 }
 string printChat(Chat& grp) {
 	if (CQ::getGroupList().count(grp.ID))return CQ::getGroupList()[grp.ID] + "(" + to_string(grp.ID) + ")";
@@ -73,7 +75,7 @@ string printChat(Chat& grp) {
 	return "ÌÖÂÛ×é" + to_string(grp.ID) + "";
 }
 
-void scanImage(string s, set<string>& list) {
+void scanImage(const string& s, set<string>& list) {
 	int l = 0, r = 0;
 	while ((l = s.find('[', r)) != string::npos && (r = s.find(']', l)) != string::npos) {
 		if (s.substr(l, 15) != CQ_IMAGE)continue;
@@ -112,7 +114,7 @@ DWORD getRamPort() {
 	return memory_status.dwMemoryLoad;
 }
 
-__int64 compareFileTime(FILETIME& ft1, FILETIME& ft2) {
+__int64 compareFileTime(const FILETIME& ft1, const FILETIME& ft2) {
 	__int64 t1 = ft1.dwHighDateTime;
 	t1 = t1 << 32 | ft1.dwLowDateTime;
 	__int64 t2 = ft2.dwHighDateTime;

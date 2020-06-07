@@ -30,11 +30,11 @@
 #include <map>
 #include "STLExtern.hpp"
 
- /*
-  * 版本信息
-  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
-  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
-  */
+/*
+ * 版本信息
+ * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
+ * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
+ */
 const unsigned short Dice_Build = 562u;
 inline const std::string Dice_Ver_Without_Build = "2.4.0beta2";
 constexpr auto DiceRequestHeader = "Dice/2.4.0BETA2";
@@ -54,7 +54,8 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + std::to_string(_
 #else
 
 #ifdef _MSC_VER
-const std::string Dice_Full_Ver = std::string(Dice_Short_Ver) + "[MSVC " + std::to_string(_MSC_VER) + " " + __DATE__ + " " + __TIME__;
+const std::string Dice_Full_Ver = std::string(Dice_Short_Ver) + "[MSVC " + std::to_string(_MSC_VER) + " " + __DATE__ +
+	" " + __TIME__;
 #elif defined(__GNUC__)
 const std::string Dice_Full_Ver = Dice_Short_Ver + " [GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__;
 #else
@@ -92,6 +93,6 @@ extern std::map<std::string, std::string> EditedMsg;
 extern const std::map<std::string, std::string, less_ci> HelpDoc;
 // 修改后的帮助文档
 inline std::map<std::string, std::string, less_ci> CustomHelp;
-std::string getMsg(std::string key, std::map<std::string, std::string> tmp = {});
+std::string getMsg(const std::string& key, const std::map<std::string, std::string>& tmp = {});
 
 #endif /*DICE_GLOBAL_VAR*/

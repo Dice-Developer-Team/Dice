@@ -23,6 +23,7 @@
 #pragma once
 #ifndef DICE_RANDOM_GENERATOR
 #define DICE_RANDOM_GENERATOR
+
 namespace RandomGenerator
 {
 	inline unsigned long long GetCycleCount();

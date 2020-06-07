@@ -3,7 +3,7 @@
 #include "StrExtern.hpp"
 #include "Jsonio.h"
 
-nlohmann::json freadJson(std::string strPath) {
+nlohmann::json freadJson(const std::string& strPath) {
 	std::ifstream fin(strPath);
 	if (!fin)return nlohmann::json();
 	nlohmann::json j;

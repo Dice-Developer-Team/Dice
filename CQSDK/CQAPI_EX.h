@@ -225,7 +225,7 @@ namespace CQ
 
 		explicit GroupMemberInfo(Unpack& msg);
 		explicit GroupMemberInfo(const char* msg); //从API解码
-		explicit GroupMemberInfo(std::vector<unsigned char> data); //从Unpack解码
+		explicit GroupMemberInfo(const std::vector<unsigned char>& data); //从Unpack解码
 		GroupMemberInfo() = default;
 
 		std::string tostring() const;

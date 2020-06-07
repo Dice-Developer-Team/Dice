@@ -16,13 +16,14 @@ using std::to_string;
 
 string toString(int num, unsigned short size = 0);
 
-template<typename Dig>
-string to_signed_string(Dig num) {
-    if (num > 0)return "+" + to_string(num);
-    return to_string(num);
+template <typename Dig>
+string to_signed_string(Dig num)
+{
+	if (num > 0)return "+" + to_string(num);
+	return to_string(num);
 }
 
-int count_char(string s, char ch);
+int count_char(const string& s, char ch);
 
 string convert_w2a(const wchar_t* wch);
 

@@ -35,42 +35,51 @@
 using namespace std;
 using namespace CQ;
 
-const std::map<std::string, int, less_ci>Console::intDefault{
-{"DisabledGlobal",0},{"DisabledBlock",0},{"DisabledListenAt",1},
-{"DisabledMe",1},{"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
-{"Private",0},{"CheckGroupLicense",0},{"LeaveDiscuss",0},
-{"ListenGroupRequest",1},{"ListenGroupAdd",1},
-{"ListenFriendRequest",1},{"ListenFriendAdd",1},{"AllowStranger",1},
-{"AutoClearBlack",1},{"LeaveBlackQQ",0},
-{"ListenGroupKick",1},{"ListenGroupBan",1},{"ListenSpam",1},
-{"BannedLeave",0},{"BannedBanInviter",0},
-{"KickedBanInviter",0},
-{"CloudBlackShare",1},{"BelieveDiceList",0},{"CloudVisible",1},
-{"SystemAlarmCPU",90},{"SystemAlarmRAM",90},
-{"SendIntervalIdle",500},{"SendIntervalBusy",100}
+const std::map<std::string, int, less_ci> Console::intDefault{
+	{"DisabledGlobal", 0}, {"DisabledBlock", 0}, {"DisabledListenAt", 1},
+	{"DisabledMe", 1}, {"DisabledJrrp", 0}, {"DisabledDeck", 1}, {"DisabledDraw", 0}, {"DisabledSend", 0},
+	{"Private", 0}, {"CheckGroupLicense", 0}, {"LeaveDiscuss", 0},
+	{"ListenGroupRequest", 1}, {"ListenGroupAdd", 1},
+	{"ListenFriendRequest", 1}, {"ListenFriendAdd", 1}, {"AllowStranger", 1},
+	{"AutoClearBlack", 1}, {"LeaveBlackQQ", 0},
+	{"ListenGroupKick", 1}, {"ListenGroupBan", 1}, {"ListenSpam", 1},
+	{"BannedLeave", 0}, {"BannedBanInviter", 0},
+	{"KickedBanInviter", 0},
+	{"CloudBlackShare", 1}, {"BelieveDiceList", 0}, {"CloudVisible", 1},
+	{"SystemAlarmCPU", 90}, {"SystemAlarmRAM", 90},
+	{"SendIntervalIdle", 500}, {"SendIntervalBusy", 100}
 };
-const enumap<string> Console::mClockEvent { "off", "on", "save", "clear" };
-int Console::setClock(Clock c, ClockEvent e) {
+const enumap<string> Console::mClockEvent{"off", "on", "save", "clear"};
+
+int Console::setClock(Clock c, ClockEvent e)
+{
 	if (c.first > 23 || c.second > 59)return -1;
-	if (int(e) > 3)return -2;
+	if (static_cast<int>(e) > 3)return -2;
 	mWorkClock.emplace(c, e);
 	save();
 	return 0;
 }
-int Console::rmClock(Clock c, ClockEvent e) {
-	if (auto it = match(mWorkClock, c, e); it != mWorkClock.end()) {
+
+int Console::rmClock(Clock c, ClockEvent e)
+{
+	if (auto it = match(mWorkClock, c, e); it != mWorkClock.end())
+	{
 		mWorkClock.erase(it);
 		save();
 		return 0;
 	}
-	else return -1;
+	return -1;
 }
-ResList Console::listClock()const {
+
+ResList Console::listClock() const
+{
 	ResList list;
 	string strClock;
-	for (auto& [clock, eve] : mWorkClock) {
+	for (auto& [clock, eve] : mWorkClock)
+	{
 		strClock = printClock(clock);
-		switch (eve) {
+		switch (eve)
+		{
 		case ClockEvent::on:
 			strClock += " 定时开启";
 			break;
@@ -83,41 +92,65 @@ ResList Console::listClock()const {
 		case ClockEvent::clear:
 			strClock += " 定时清群";
 			break;
-		default:break;
+		default: break;
 		}
 		list << strClock;
 	}
 	return list;
 }
-ResList Console::listNotice()const {
+
+ResList Console::listNotice() const
+{
 	ResList list;
-	for (auto& [ct,lv] : NoticeList) {
+	for (auto& [ct,lv] : NoticeList)
+	{
 		list << printChat(ct) + " " + to_binary(lv);
 	}
 	return list;
 }
-int Console::showNotice(chatType ct)const {
+
+int Console::showNotice(chatType ct) const
+{
 	if (auto it = NoticeList.find(ct); it != NoticeList.end())return it->second;
-	else return 0;
+	return 0;
 }
-void Console::addNotice(chatType ct, int lv) { NoticeList[ct] |= lv; saveNotice(); }
-void Console::redNotice(chatType ct, int lv) { NoticeList[ct] &= (~lv); saveNotice(); }
-void Console::setNotice(chatType ct, int lv){
+
+void Console::addNotice(chatType ct, int lv)
+{
+	NoticeList[ct] |= lv;
+	saveNotice();
+}
+
+void Console::redNotice(chatType ct, int lv)
+{
+	NoticeList[ct] &= (~lv);
+	saveNotice();
+}
+
+void Console::setNotice(chatType ct, int lv)
+{
 	NoticeList[ct] = lv;
 	saveNotice();
 }
-void Console::rmNotice(chatType ct) {
+
+void Console::rmNotice(chatType ct)
+{
 	NoticeList.erase(ct);
 	saveNotice();
 }
-int Console::log(std::string strMsg, int note_lv, string strTime) {
-	ofstream fout(string(DiceDir + "\\audit\\log") + to_string(DiceMaid) + "_" + printDate() + ".txt", ios::out | ios::app);
+
+int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
+{
+	ofstream fout(string(DiceDir + "\\audit\\log") + to_string(DiceMaid) + "_" + printDate() + ".txt",
+	              ios::out | ios::app);
 	fout << strTime << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 	fout.close();
 	int Cnt = 0;
 	string note = strTime.empty() ? strMsg : (strTime + " " + strMsg);
-	if (note_lv) {
-		for (auto& [ct, level] : NoticeList) {
+	if (note_lv)
+	{
+		for (auto& [ct, level] : NoticeList)
+		{
 			if (!(level & note_lv))continue;
 			AddMsgToQueue(note, ct);
 			Cnt++;
@@ -125,44 +158,58 @@ int Console::log(std::string strMsg, int note_lv, string strTime) {
 		if (!Cnt)sendPrivateMsg(DiceMaid, note);
 	}
 	return Cnt;
-} 
-void Console::newMaster(long long qq) {
-	masterQQ = qq; 
-	getUser(qq).trust(5); 
-	setNotice({ qq,CQ::msgtype::Private }, 0b111111);
-	save(); 
-	AddMsgToQueue(getMsg("strNewMaster"), qq); 
 }
-void Console::reset() {
+
+void Console::newMaster(long long qq)
+{
+	masterQQ = qq;
+	getUser(qq).trust(5);
+	setNotice({qq, msgtype::Private}, 0b111111);
+	save();
+	AddMsgToQueue(getMsg("strNewMaster"), qq);
+}
+
+void Console::reset()
+{
 	intConf.clear();
 	mWorkClock.clear();
 	NoticeList.clear();
 }
-void  Console::loadNotice() {
-	if (loadFile(DiceDir + "\\conf\\NoticeList.txt", NoticeList) < 1) {
-		std::set<chatType>sChat;
-		if (loadFile((string)getAppDirectory() + "MonitorList.RDconf", sChat) > 0)
-			for (auto& it : sChat) {
+
+void Console::loadNotice()
+{
+	if (loadFile(DiceDir + "\\conf\\NoticeList.txt", NoticeList) < 1)
+	{
+		std::set<chatType> sChat;
+		if (loadFile(static_cast<string>(getAppDirectory()) + "MonitorList.RDconf", sChat) > 0)
+			for (auto& it : sChat)
+			{
 				console.setNotice(it, 0b100000);
 			}
 		sChat.clear();
 		if (loadFile(DiceDir + "\\conf\\RecorderList.RDconf", sChat) > 0)
-			for (auto& it : sChat) {
+			for (auto& it : sChat)
+			{
 				console.setNotice(it, 0b11011);
 			}
-		console.setNotice({ 863062599, msgtype::Group }, 0b100000);
-		console.setNotice({ 192499947, msgtype::Group }, 0b100000);
-		console.setNotice({ 754494359, msgtype::Group }, 0b100000);
-		for (auto& [ct, lv] : NoticeList) {
-			if (ct.second != msgtype::Private) {
+		console.setNotice({863062599, msgtype::Group}, 0b100000);
+		console.setNotice({192499947, msgtype::Group}, 0b100000);
+		console.setNotice({754494359, msgtype::Group}, 0b100000);
+		for (auto& [ct, lv] : NoticeList)
+		{
+			if (ct.second != msgtype::Private)
+			{
 				chat(ct.first).set("许可使用").set("免清").set("免黑");
 			}
 		}
 	}
 }
-void Console::saveNotice() {
+
+void Console::saveNotice()
+{
 	saveFile(DiceDir + "\\conf\\NoticeList.txt", NoticeList);
 }
+
 Console console;
 
 //DiceModManager modules{};
@@ -172,67 +219,93 @@ std::map<long long, long long> mDiceList;
 
 //程序启动时间
 long long llStartTime = clock();
-	//当前时间
-	SYSTEMTIME stNow{};
-	SYSTEMTIME stTmp{};
-std::string printSTNow() {
+
+//当前时间
+SYSTEMTIME stNow{};
+SYSTEMTIME stTmp{};
+
+std::string printSTNow()
+{
 	GetLocalTime(&stNow);
 	return printSTime(stNow);
 }
-std::string printDate() {
-	return to_string(stNow.wYear) + "-" + (stNow.wMonth < 10 ? "0" : "") + to_string(stNow.wMonth) + "-" + (stNow.wDay < 10 ? "0" : "") + to_string(stNow.wDay);
+
+std::string printDate()
+{
+	return to_string(stNow.wYear) + "-" + (stNow.wMonth < 10 ? "0" : "") + to_string(stNow.wMonth) + "-" + (
+		stNow.wDay < 10 ? "0" : "") + to_string(stNow.wDay);
 }
-std::string printDate(time_t tt) {
+
+std::string printDate(time_t tt)
+{
 	tm t;
 	if (!tt || localtime_s(&t, &tt))return "\?\?\?\?-\?\?-\?\?";
 	return to_string(t.tm_year + 1900) + "-" + to_string(t.tm_mon + 1) + "-" + to_string(t.tm_mday);
 }
-	//上班时间
-	std::pair<int, int> ClockToWork = { 24,0 };
-	//下班时间
-	std::pair<int, int> ClockOffWork = { 24,0 };
 
-	string printClock(std::pair<int, int> clock) {
-		string strClock = to_string(clock.first);
-		strClock += ":";
-		if (clock.second < 10)strClock += "0";
-		strClock += to_string(clock.second);
-		return strClock;
-	}
-std::string printSTime(SYSTEMTIME st){
-	return to_string(st.wYear) + "-" + (st.wMonth < 10 ? "0" : "") + to_string(st.wMonth) + "-" + (st.wDay < 10 ? "0" : "") + to_string(st.wDay) + " " + (st.wHour < 10 ? "0" : "") + to_string(st.wHour) + ":" + (st.wMinute < 10 ? "0" : "") + to_string(st.wMinute) + ":" + (st.wSecond < 10 ? "0" : "") + to_string(st.wSecond);
+//上班时间
+std::pair<int, int> ClockToWork = {24, 0};
+//下班时间
+std::pair<int, int> ClockOffWork = {24, 0};
+
+string printClock(std::pair<int, int> clock)
+{
+	string strClock = to_string(clock.first);
+	strClock += ":";
+	if (clock.second < 10)strClock += "0";
+	strClock += to_string(clock.second);
+	return strClock;
 }
-	//打印用户昵称QQ
-	string printQQ(long long llqq) {
-		string nick = getStrangerInfo(llqq).nick;
-		if (nick.empty())nick = getFriendList()[llqq].nick;
-		while (nick.find(" ") != string::npos)nick.erase(nick.begin() + nick.find(" "), nick.begin() + nick.find(" ") + strlen(" "));
-		while (nick.find(" ") != string::npos)nick.erase(nick.begin() + nick.find(" "), nick.begin() + nick.find(" ") + strlen(" "));
-		return nick + "(" + to_string(llqq) + ")";
+
+std::string printSTime(SYSTEMTIME st)
+{
+	return to_string(st.wYear) + "-" + (st.wMonth < 10 ? "0" : "") + to_string(st.wMonth) + "-" + (
+			st.wDay < 10 ? "0" : "") + to_string(st.wDay) + " " + (st.wHour < 10 ? "0" : "") + to_string(st.wHour) + ":"
+		+ (
+			st.wMinute < 10 ? "0" : "") + to_string(st.wMinute) + ":" + (st.wSecond < 10 ? "0" : "") +
+		to_string(st.wSecond);
+}
+
+//打印用户昵称QQ
+string printQQ(long long llqq)
+{
+	string nick = getStrangerInfo(llqq).nick;
+	if (nick.empty())nick = getFriendList()[llqq].nick;
+	while (nick.find(" ") != string::npos)nick.erase(nick.begin() + nick.find(" "),
+	                                                 nick.begin() + nick.find(" ") + strlen(" "));
+	while (nick.find(" ") != string::npos)nick.erase(nick.begin() + nick.find(" "),
+	                                                 nick.begin() + nick.find(" ") + strlen(" "));
+	return nick + "(" + to_string(llqq) + ")";
+}
+
+//打印QQ群号
+string printGroup(long long llgroup)
+{
+	if (!llgroup)return "私聊";
+	if (getGroupList().count(llgroup))return getGroupList()[llgroup] + "(" + to_string(llgroup) + ")";
+	return "群聊(" + to_string(llgroup) + ")";
+}
+
+//打印聊天窗口
+string printChat(chatType ct)
+{
+	switch (ct.second)
+	{
+	case msgtype::Private:
+		return printQQ(ct.first);
+	case msgtype::Group:
+		return printGroup(ct.first);
+	case msgtype::Discuss:
+		return "讨论组(" + to_string(ct.first) + ")";
+	default:
+		break;
 	}
-	//打印QQ群号
-	string printGroup(long long llgroup) {
-		if (!llgroup)return"私聊";
-		if (getGroupList().count(llgroup))return getGroupList()[llgroup] + "(" + to_string(llgroup) + ")";
-		return "群聊(" + to_string(llgroup) + ")";
-	}
-	//打印聊天窗口
-	string printChat(chatType ct) {
-		switch (ct.second)
-		{
-		case msgtype::Private:
-			return printQQ(ct.first);
-		case msgtype::Group:
-			return printGroup(ct.first);
-		case msgtype::Discuss:
-			return "讨论组(" + to_string(ct.first) + ")";
-		default:
-			break;
-		}
-		return "";
-	}
+	return "";
+}
+
 //获取骰娘列表
-void getDiceList() {
+void getDiceList()
+{
 	std::string list;
 	if (!Network::GET("shiki.stringempty.xyz", "/DiceList/", 80, list) && mDiceList.empty())
 	{
@@ -243,223 +316,289 @@ void getDiceList() {
 }
 
 
-bool operator==(const SYSTEMTIME& st, const Console::Clock clock) {
+bool operator==(const SYSTEMTIME& st, const Console::Clock clock)
+{
 	return st.wHour == clock.first && st.wHour == clock.second;
 }
-bool operator<(const Console::Clock clock, const SYSTEMTIME& st) {
-	return st.wHour == clock.first && st.wHour == clock.second;
-}
-//简易计时器
-	void ConsoleTimer() {
-		Console::Clock clockNow{ stNow.wHour,stNow.wMinute };
-		long long perLastCPU = 0;
-		long long perLastRAM = 0;
-		while (Enabled) {
-			GetLocalTime(&stNow);
-			//分钟时点变动
-			if (stTmp.wMinute != stNow.wMinute) {
-				stTmp = stNow;
-				clockNow = { stNow.wHour,stNow.wMinute };
-				for (auto &[clock,eve_type] : multi_range(console.mWorkClock, clockNow)) {
-					switch (eve_type) {
-					case ClockEvent::on:
-						if (console["DisabledGlobal"]) {
-							console.set("DisabledGlobal", 0);
-							console.log(getMsg("strClockToWork"), 0b10000, "");
-						}
-						break;
-					case ClockEvent::off:
-						if (!console["DisabledGlobal"]) {
-							console.set("DisabledGlobal", 1);
-							console.log(getMsg("strClockOffWork"), 0b10000, "");
-						}
-						break;
-					case ClockEvent::save:
-						dataBackUp();
-						console.log(GlobalMsg["strSelfName"] + "定时保存完成√", 1, printSTime(stTmp));
-						break;
-					case ClockEvent::clear:
-						if (console && console["AutoClearBlack"] && clearGroup("black"))
-							console.log(GlobalMsg["strSelfName"] + "定时清群完成√", 1, printSTNow());
-						break;
-					default:break;
-					}
-				}
-				//整点事件
-				if (stNow.wMinute % 10 == 0) {
-					Cloud::update();
-				}
-				if (stNow.wMinute % 30 == 0) {
-					if (console["SystemAlarmCPU"]) {
-						long long perCPU = getWinCpuUsage();
-						if (perCPU > console["SystemAlarmCPU"] && perCPU > perLastCPU)console.log("警告：" + GlobalMsg["strSelfName"] + "所在系统CPU占用达" + to_string(perCPU) + "%", 0b1001, printSTime(stNow));
-						else if (perLastCPU > console["SystemAlarmCPU"] && perCPU < console["SystemAlarmCPU"])console.log("提醒：" + GlobalMsg["strSelfName"] + "所在系统CPU占用降至" + to_string(perCPU) + "%", 0b11, printSTime(stNow));
-						perLastCPU = perCPU;
-					}
-					if (console["SystemAlarmRAM"]) {
-						long long perRAM = getRamPort();
-						if(perRAM > console["SystemAlarmRAM"] && perRAM > perLastRAM)console.log("警告：" + GlobalMsg["strSelfName"] + "所在系统内存占用达" + to_string(perRAM) + "%", 0b1001, printSTime(stNow));
-						else if (perLastRAM > console["SystemAlarmRAM"] && perRAM < console["SystemAlarmRAM"])console.log("提醒：" + GlobalMsg["strSelfName"] + "所在系统内存占用降至" + to_string(perRAM) + "%", 0b11, printSTime(stNow));
-						perLastRAM = perRAM;
-					}
-				}
-			}
-			this_thread::sleep_for(1000ms);
-		}
-	}
 
-	//一键清退
-	int clearGroup(string strPara,long long fromQQ) {
-		int intCnt = 0;
-		string strReply;
-		ResList res;
-		std::map<string, string>strVar;
-		if (strPara == "unpower" || strPara.empty()) {
-			for (auto& [id, grp] : ChatList) {
-				if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清"))continue;
-				if (grp.isGroup && getGroupMemberInfo(id, console.DiceMaid).permissions == 1) {
-					res << printGroup(id);
-					grp.leave(getMsg("strLeaveNoPower"));
-					intCnt++;
-					this_thread::sleep_for(3s);
-				}
-			}
-			strReply = GlobalMsg["strSelfName"] + "筛除无群权限群聊" + to_string(intCnt) + "个:" + res.show();
-			console.log(strReply, 0b10, printSTNow());
-		}
-		else if (isdigit(static_cast<unsigned char>(strPara[0]))) {
-			int intDayLim = stoi(strPara);
-			string strDayLim = to_string(intDayLim);
-			time_t tNow = time(NULL);
-			for (auto& [id, grp] : ChatList) {
-				if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清"))continue;
-				time_t tLast = grp.tLastMsg;
-				if (int tLMT; grp.isGroup && (tLMT = getGroupMemberInfo(id, console.DiceMaid).LastMsgTime) > 0)tLast = tLMT;
-				if (!tLast)continue;
-				int intDay = (int)(tNow - tLast) / 86400;
-				if (intDay > intDayLim) {
-					strVar["day"] = to_string(intDay);
-					res << printGroup(id) + ":" + to_string(intDay) + "天\n";
-					grp.leave(getMsg("strLeaveUnused", strVar));
-					intCnt++;
-					this_thread::sleep_for(2s);
-				}
-			}
-			strReply += GlobalMsg["strSelfName"] + "已筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√" + res.show();
-			console.log(strReply, 0b10, printSTNow());
-		}
-		else if (strPara == "black") {
-			try {
-				for (auto& [id, grp_name] : getGroupList()) {
-					Chat& grp = chat(id).group().name(grp_name);
-					if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("免黑"))continue;
-					if (blacklist->get_group_danger(id)) {
-						res << printGroup(id) + "：" + "黑名单群";
-						if (console["LeaveBlackGroup"])grp.leave(getMsg("strBlackGroup"));
+bool operator<(const Console::Clock clock, const SYSTEMTIME& st)
+{
+	return st.wHour == clock.first && st.wHour == clock.second;
+}
+
+//简易计时器
+void ConsoleTimer()
+{
+	Console::Clock clockNow{stNow.wHour, stNow.wMinute};
+	long long perLastCPU = 0;
+	long long perLastRAM = 0;
+	while (Enabled)
+	{
+		GetLocalTime(&stNow);
+		//分钟时点变动
+		if (stTmp.wMinute != stNow.wMinute)
+		{
+			stTmp = stNow;
+			clockNow = {stNow.wHour, stNow.wMinute};
+			for (auto& [clock,eve_type] : multi_range(console.mWorkClock, clockNow))
+			{
+				switch (eve_type)
+				{
+				case ClockEvent::on:
+					if (console["DisabledGlobal"])
+					{
+						console.set("DisabledGlobal", 0);
+						console.log(getMsg("strClockToWork"), 0b10000, "");
 					}
-					vector<GroupMemberInfo> MemberList = getGroupMemberList(id);
-					for (auto eachQQ : MemberList) {
-						if (blacklist->get_qq_danger(eachQQ.QQID) > 1) {
-							if (eachQQ.permissions < getGroupMemberInfo(id, getLoginQQ()).permissions) {
-								continue;
-							}
-							else if (eachQQ.permissions > getGroupMemberInfo(id, getLoginQQ()).permissions) {
-								res << printChat(grp) + "：" + printQQ(eachQQ.QQID) + "对方群权限较高";
-								grp.leave("发现黑名单管理员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
-								intCnt++;
-								break;
-							}
-							else if (console["LeaveBlackQQ"]) {
-								res << printChat(grp) + "：" + printQQ(eachQQ.QQID);
-								grp.leave("发现黑名单成员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
-								intCnt++;
-								break;
-							}
-						}
+					break;
+				case ClockEvent::off:
+					if (!console["DisabledGlobal"])
+					{
+						console.set("DisabledGlobal", 1);
+						console.log(getMsg("strClockOffWork"), 0b10000, "");
 					}
+					break;
+				case ClockEvent::save:
+					dataBackUp();
+					console.log(GlobalMsg["strSelfName"] + "定时保存完成√", 1, printSTime(stTmp));
+					break;
+				case ClockEvent::clear:
+					if (console && console["AutoClearBlack"] && clearGroup("black"))
+						console.log(GlobalMsg["strSelfName"] + "定时清群完成√", 1, printSTNow());
+					break;
+				default: break;
 				}
 			}
-			catch (...) {
-				console.log(strReply, 0b10, "提醒：" + GlobalMsg["strSelfName"] + "清查黑名单群聊时出错！");
+			//整点事件
+			if (stNow.wMinute % 10 == 0)
+			{
+				Cloud::update();
 			}
-			if (intCnt) {
-				strReply = GlobalMsg["strSelfName"] + "已按黑名单清查群聊" + to_string(intCnt) + "个：" + res.show();
-				console.log(strReply, 0b10, printSTNow());
-			}
-			else if (fromQQ) {
-				console.log(strReply, 1, printSTNow());
+			if (stNow.wMinute % 30 == 0)
+			{
+				if (console["SystemAlarmCPU"])
+				{
+					long long perCPU = getWinCpuUsage();
+					if (perCPU > console["SystemAlarmCPU"] && perCPU > perLastCPU)console.log(
+						"警告：" + GlobalMsg["strSelfName"] + "所在系统CPU占用达" + to_string(perCPU) + "%", 0b1001,
+						printSTime(stNow));
+					else if (perLastCPU > console["SystemAlarmCPU"] && perCPU < console["SystemAlarmCPU"])console.log(
+						"提醒：" + GlobalMsg["strSelfName"] + "所在系统CPU占用降至" + to_string(perCPU) + "%", 0b11,
+						printSTime(stNow));
+					perLastCPU = perCPU;
+				}
+				if (console["SystemAlarmRAM"])
+				{
+					long long perRAM = getRamPort();
+					if (perRAM > console["SystemAlarmRAM"] && perRAM > perLastRAM)console.log(
+						"警告：" + GlobalMsg["strSelfName"] + "所在系统内存占用达" + to_string(perRAM) + "%", 0b1001,
+						printSTime(stNow));
+					else if (perLastRAM > console["SystemAlarmRAM"] && perRAM < console["SystemAlarmRAM"])console.log(
+						"提醒：" + GlobalMsg["strSelfName"] + "所在系统内存占用降至" + to_string(perRAM) + "%", 0b11,
+						printSTime(stNow));
+					perLastRAM = perRAM;
+				}
 			}
 		}
-		else if (strPara == "preserve") {
-			for (auto &[id,grp] : ChatList) {
-				if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("使用许可") || grp.isset("免清"))continue;
-				if (grp.isGroup && getGroupMemberInfo(id, console.master()).permissions) {
-					grp.set("使用许可");
-					continue;
-				}
-				res << printChat(grp);
-				grp.leave(getMsg("strPreserve"));
+		this_thread::sleep_for(1000ms);
+	}
+}
+
+//一键清退
+int clearGroup(string strPara, long long fromQQ)
+{
+	int intCnt = 0;
+	string strReply;
+	ResList res;
+	std::map<string, string> strVar;
+	if (strPara == "unpower" || strPara.empty())
+	{
+		for (auto& [id, grp] : ChatList)
+		{
+			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清"))continue;
+			if (grp.isGroup && getGroupMemberInfo(id, console.DiceMaid).permissions == 1)
+			{
+				res << printGroup(id);
+				grp.leave(getMsg("strLeaveNoPower"));
 				intCnt++;
 				this_thread::sleep_for(3s);
 			}
-			strReply = GlobalMsg["strSelfName"] + "筛除无许可群聊" + to_string(intCnt) + "个：" + res.show();
+		}
+		strReply = GlobalMsg["strSelfName"] + "筛除无群权限群聊" + to_string(intCnt) + "个:" + res.show();
+		console.log(strReply, 0b10, printSTNow());
+	}
+	else if (isdigit(static_cast<unsigned char>(strPara[0])))
+	{
+		int intDayLim = stoi(strPara);
+		string strDayLim = to_string(intDayLim);
+		time_t tNow = time(nullptr);
+		for (auto& [id, grp] : ChatList)
+		{
+			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清"))continue;
+			time_t tLast = grp.tLastMsg;
+			if (grp.isGroup)
+			{
+				int tLMT = getGroupMemberInfo(id, console.DiceMaid).LastMsgTime;
+				if (tLMT > 0)
+					tLast = tLMT;
+			}
+			if (!tLast)continue;
+			int intDay = static_cast<int>(tNow - tLast) / 86400;
+			if (intDay > intDayLim)
+			{
+				strVar["day"] = to_string(intDay);
+				res << printGroup(id) + ":" + to_string(intDay) + "天\n";
+				grp.leave(getMsg("strLeaveUnused", strVar));
+				intCnt++;
+				this_thread::sleep_for(2s);
+			}
+		}
+		strReply += GlobalMsg["strSelfName"] + "已筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√" + res.show();
+		console.log(strReply, 0b10, printSTNow());
+	}
+	else if (strPara == "black")
+	{
+		try
+		{
+			for (auto& [id, grp_name] : getGroupList())
+			{
+				Chat& grp = chat(id).group().name(grp_name);
+				if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("免黑"))continue
+					;
+				if (blacklist->get_group_danger(id))
+				{
+					res << printGroup(id) + "：" + "黑名单群";
+					if (console["LeaveBlackGroup"])grp.leave(getMsg("strBlackGroup"));
+				}
+				vector<GroupMemberInfo> MemberList = getGroupMemberList(id);
+				for (auto eachQQ : MemberList)
+				{
+					if (blacklist->get_qq_danger(eachQQ.QQID) > 1)
+					{
+						if (eachQQ.permissions < getGroupMemberInfo(id, getLoginQQ()).permissions)
+						{
+							continue;
+						}
+						if (eachQQ.permissions > getGroupMemberInfo(id, getLoginQQ()).permissions)
+						{
+							res << printChat(grp) + "：" + printQQ(eachQQ.QQID) + "对方群权限较高";
+							grp.leave("发现黑名单管理员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
+							intCnt++;
+							break;
+						}
+						if (console["LeaveBlackQQ"])
+						{
+							res << printChat(grp) + "：" + printQQ(eachQQ.QQID);
+							grp.leave("发现黑名单成员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
+							intCnt++;
+							break;
+						}
+					}
+				}
+			}
+		}
+		catch (...)
+		{
+			console.log(strReply, 0b10, "提醒：" + GlobalMsg["strSelfName"] + "清查黑名单群聊时出错！");
+		}
+		if (intCnt)
+		{
+			strReply = GlobalMsg["strSelfName"] + "已按黑名单清查群聊" + to_string(intCnt) + "个：" + res.show();
+			console.log(strReply, 0b10, printSTNow());
+		}
+		else if (fromQQ)
+		{
 			console.log(strReply, 1, printSTNow());
 		}
-		else
-			AddMsgToQueue("无法识别筛选参数×", fromQQ);
-		return intCnt;
 	}
+	else if (strPara == "preserve")
+	{
+		for (auto& [id,grp] : ChatList)
+		{
+			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("使用许可") || grp.isset("免清"))continue;
+			if (grp.isGroup && getGroupMemberInfo(id, console.master()).permissions)
+			{
+				grp.set("使用许可");
+				continue;
+			}
+			res << printChat(grp);
+			grp.leave(getMsg("strPreserve"));
+			intCnt++;
+			this_thread::sleep_for(3s);
+		}
+		strReply = GlobalMsg["strSelfName"] + "筛除无许可群聊" + to_string(intCnt) + "个：" + res.show();
+		console.log(strReply, 1, printSTNow());
+	}
+	else
+		AddMsgToQueue("无法识别筛选参数×", fromQQ);
+	return intCnt;
+}
 
-EVE_Menu(eventClearGroupUnpower) {
+
+EVE_Menu(eventClearGroupUnpower)
+{
 	int intGroupCnt = clearGroup("unpower");
 	string strReply = "已清退无权限群聊" + to_string(intGroupCnt) + "个√";
 	MessageBoxA(nullptr, strReply.c_str(), "一键清退", MB_OK | MB_ICONINFORMATION);
 	return 0;
 }
-EVE_Menu(eventClearGroup30) {
+
+EVE_Menu(eventClearGroup30)
+{
 	int intGroupCnt = clearGroup("30");
 	string strReply = "已清退30天未使用群聊" + to_string(intGroupCnt) + "个√";
 	MessageBoxA(nullptr, strReply.c_str(), "一键清退", MB_OK | MB_ICONINFORMATION);
 	return 0;
 }
-EVE_Menu(eventGlobalSwitch) {
-	if (console["DisabledGlobal"]) {
+
+EVE_Menu(eventGlobalSwitch)
+{
+	if (console["DisabledGlobal"])
+	{
 		console.set("DisabledGlobal", 0);
 		MessageBoxA(nullptr, "骰娘已结束静默√", "全局开关", MB_OK | MB_ICONINFORMATION);
 	}
-	else {
+	else
+	{
 		console.set("DisabledGlobal", 1);
 		MessageBoxA(nullptr, "骰娘已全局静默√", "全局开关", MB_OK | MB_ICONINFORMATION);
 	}
 
 	return 0;
 }
-EVE_Request_AddFriend(eventAddFriend) {
+
+EVE_Request_AddFriend(eventAddFriend)
+{
 	if (!console["ListenFriendRequest"])return 0;
 	string strMsg = "好友添加请求，来自：" + printQQ(fromQQ);
 	this_thread::sleep_for(3s);
-	if (blacklist->get_qq_danger(fromQQ)) {
+	if (blacklist->get_qq_danger(fromQQ))
+	{
 		strMsg += "，已拒绝（用户在黑名单中）";
 		setFriendAddRequest(responseFlag, 2, "");
 		console.log(strMsg, 0b10, printSTNow());
 	}
-	else if (trustedQQ(fromQQ)) {
+	else if (trustedQQ(fromQQ))
+	{
 		strMsg += "，已同意（受信任用户）";
 		setFriendAddRequest(responseFlag, 1, "");
 		AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromQQ);
 		console.log(strMsg, 1, printSTNow());
 	}
-	else if (console["AllowStranger"] < 2 && !UserList.count(fromQQ)) {
+	else if (console["AllowStranger"] < 2 && !UserList.count(fromQQ))
+	{
 		strMsg += "，已拒绝（无用户记录）";
 		setFriendAddRequest(responseFlag, 2, "");
 		console.log(strMsg, 1, printSTNow());
 	}
-	else if (console["AllowStranger"] < 1) {
+	else if (console["AllowStranger"] < 1)
+	{
 		strMsg += "，已拒绝（非信任用户）";
 		setFriendAddRequest(responseFlag, 2, "");
 		console.log(strMsg, 1, printSTNow());
 	}
-	else {
+	else
+	{
 		strMsg += "，已同意";
 		setFriendAddRequest(responseFlag, 1, "");
 		AddMsgToQueue(getMsg("strAddFriend"), fromQQ);
@@ -467,10 +606,13 @@ EVE_Request_AddFriend(eventAddFriend) {
 	}
 	return 1;
 }
-EVE_Friend_Add(eventFriendAdd) {
+
+EVE_Friend_Add(eventFriendAdd)
+{
 	if (!console["ListenFriendAdd"])return 0;
 	this_thread::sleep_for(3s);
-	GlobalMsg["strAddFriendWhiteQQ"].empty() ? AddMsgToQueue(getMsg("strAddFriend"), fromQQ)
+	GlobalMsg["strAddFriendWhiteQQ"].empty()
+		? AddMsgToQueue(getMsg("strAddFriend"), fromQQ)
 		: AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromQQ);
 	return 0;
 }

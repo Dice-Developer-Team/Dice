@@ -486,8 +486,9 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"世界正位","完成、成功、完美无缺、连续不断、精神亢奋、拥有毕生奋斗的目标、完成使命、幸运降临、快乐的结束、模范情侣。"},
 {"世界逆位","未完成、失败、准备不足、盲目接受、一时不顺利、半途而废、精神颓废、饱和状态、合谋、态度不够融洽、感情受挫。"},
  };
-std::string getMsg(std::string key, std::map<std::string, std::string> maptmp) {
-	auto it = GlobalMsg.find(key);
+
+std::string getMsg(const std::string& key, const std::map<std::string, std::string>& maptmp) {
+	const auto it = GlobalMsg.find(key);
 	if (it != GlobalMsg.end())return format(it->second, GlobalMsg, maptmp);
 	return "";
 }

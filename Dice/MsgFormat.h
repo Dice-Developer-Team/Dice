@@ -25,36 +25,47 @@
 #define DICE_MSG_FORMAT
 #include <string>
 #include <map>
+#include <utility>
 #include <vector>
 using std::string;
 std::string format(std::string str, const std::initializer_list<const std::string>& replace_str);
-template<typename sort>
-std::string format(std::string s, const std::map<std::string, std::string, sort>& replace_str, std::map<std::string, std::string> str_tmp = {}) {
-	if (s[0] == '&') {
+
+template <typename sort>
+std::string format(std::string s, const std::map<std::string, std::string, sort>& replace_str,
+                   const std::map<std::string, std::string>& str_tmp = {})
+{
+	if (s[0] == '&')
+	{
 		string key = s.substr(1);
 		auto it = replace_str.find(key);
-		if (it != replace_str.end()) {
+		if (it != replace_str.end())
+		{
 			return format(it->second, replace_str, str_tmp);
 		}
-		else if ((it = str_tmp.find(key)) != str_tmp.end()) {
+		if ((it = str_tmp.find(key)) != str_tmp.end())
+		{
 			return it->second;
 		}
 	}
 	int l = 0, r = 0;
 	int len = s.length();
-	while ((l = s.find('{', r)) != string::npos && (r = s.find('}', l)) != string::npos) {
-		if (l - 1 >= 0 && s[l - 1] == 0x5c) {
+	while ((l = s.find('{', r)) != string::npos && (r = s.find('}', l)) != string::npos)
+	{
+		if (l - 1 >= 0 && s[l - 1] == 0x5c)
+		{
 			s.replace(l - 1, 1, "");
 			continue;
 		}
 		string key = s.substr(l + 1, r - l - 1);
 		auto it = replace_str.find(key);
-		if (it != replace_str.end()) {
+		if (it != replace_str.end())
+		{
 			s.replace(l, r - l + 1, format(it->second, replace_str, str_tmp));
 			r += s.length() - len + 1;
 			len = s.length();
 		}
-		else if ((it = str_tmp.find(key)) != str_tmp.end()) {
+		else if ((it = str_tmp.find(key)) != str_tmp.end())
+		{
 			if (key == "res")s.replace(l, r - l + 1, format(it->second, replace_str, str_tmp));
 			else s.replace(l, r - l + 1, it->second);
 			r += s.length() - len + 1;
@@ -64,7 +75,8 @@ std::string format(std::string s, const std::map<std::string, std::string, sort>
 	return s;
 }
 
-class ResList {
+class ResList
+{
 	std::vector<std::string> vRes;
 	unsigned int intMaxLen = 0;
 	bool isLineBreak = false;
@@ -73,64 +85,89 @@ class ResList {
 	string strLongSepa = "\n";
 public:
 	ResList() = default;
-	ResList(std::string s, std::string dot) :sDot(dot) {
+
+	ResList(const std::string& s, std::string dot) : sDot(std::move(dot))
+	{
 		vRes.push_back(s);
 		intMaxLen = s.length();
 	}
-	ResList& operator<<(std::string s) {
+
+	ResList& operator<<(std::string s)
+	{
 		while (isspace(static_cast<unsigned char>(s[0])))s.erase(s.begin());
 		if (s.empty())return *this;
 		vRes.push_back(s);
 		if (s.length() > intMaxLen)intMaxLen = s.length();
 		return *this;
 	}
-	std::string show() {
+
+	std::string show()
+	{
 		std::string s;
-		if (intMaxLen > intLineLen || isLineBreak) {
-			for (auto it : vRes) {
-				for (auto it = vRes.begin(); it != vRes.end(); it++) {
-					if (it == vRes.begin())s = "\n" + *it;
-					else s += strLongSepa + *it;
+		if (intMaxLen > intLineLen || isLineBreak)
+		{
+			for (auto it : vRes)
+			{
+				for (auto it2 = vRes.begin(); it2 != vRes.end(); ++it2)
+				{
+					if (it2 == vRes.begin())s = "\n" + *it2;
+					else s += strLongSepa + *it2;
 				}
 			}
 		}
-		else {
-			for (auto it = vRes.begin(); it != vRes.end(); it++) {
+		else
+		{
+			for (auto it = vRes.begin(); it != vRes.end(); ++it)
+			{
 				if (it == vRes.begin())s = *it;
 				else s += sDot + *it;
 			}
 		}
 		return s;
 	}
-	ResList& dot(string s) {
-		sDot = s;
+
+	ResList& dot(string s)
+	{
+		sDot = std::move(s);
 		return *this;
 	}
-	ResList& linebreak() {
+
+	ResList& linebreak()
+	{
 		isLineBreak = true;
 		return *this;
 	}
-	ResList& line(unsigned int l) {
+
+	ResList& line(unsigned int l)
+	{
 		intLineLen = l;
 		return *this;
 	}
-	void setDot(string s,string sLong) {
-		sDot = s;
-		strLongSepa = sLong;
+
+	void setDot(string s, string sLong)
+	{
+		sDot = std::move(s);
+		strLongSepa = std::move(sLong);
 	}
-	bool empty()const {
+
+	bool empty() const
+	{
 		return vRes.empty();
 	}
-	size_t size()const {
+
+	size_t size() const
+	{
 		return vRes.size();
 	}
 };
 
-template<typename T,typename sort>
-std::string listKey(std::map<std::string, T, sort>m) {
+template <typename T, typename sort>
+std::string listKey(std::map<std::string, T, sort> m)
+{
 	ResList list;
 	list.setDot("/", "/");
-	for (auto &[key,val] : m) {
+	for (auto& [key,val] : m)
+	{
 		if (key[0] == '_')continue;
 		list << key;
 	}

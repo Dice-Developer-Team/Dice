@@ -14,7 +14,4 @@
     <libraries>
         <library>windows</library>
     </libraries>
-    <addons>
-        <addon>threadsafety</addon>
-    </addons>
 </project>

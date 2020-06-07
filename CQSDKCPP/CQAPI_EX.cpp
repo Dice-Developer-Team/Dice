@@ -80,7 +80,7 @@ GroupMemberInfo::GroupMemberInfo(const char* msg)
 	}
 }
 
-GroupMemberInfo::GroupMemberInfo(vector<unsigned char> data)
+GroupMemberInfo::GroupMemberInfo(const vector<unsigned char>& data)
 {
 	if (data.size() != 0)
 	{

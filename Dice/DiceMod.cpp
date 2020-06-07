@@ -6,8 +6,8 @@
 #include "DiceFile.hpp"
 using std::set;
 
-DiceModManager::DiceModManager() {
-	helpdoc = HelpDoc;
+DiceModManager::DiceModManager() : helpdoc(HelpDoc) {
+
 }
 
 string DiceModManager::format(string s, const map<string, string, less_ci>& dict, const char* mod_name = "") const {

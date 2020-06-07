@@ -26,9 +26,7 @@ namespace CardDeck
 	extern std::map<long long, std::vector<std::string>> mPrivateDeckTmp;
 	extern std::map<std::string, std::string> PublicComplexDeck;
 	int findDeck(std::string strDeckName);
-	std::string drawCard(std::vector<std::string> &TempDeck,bool boolBack=false);
+	std::string drawCard(std::vector<std::string>& TempDeck, bool boolBack = false);
 	std::string draw(std::string strDeckName);
 };
 #endif /*CARD_DECK*/
-
-

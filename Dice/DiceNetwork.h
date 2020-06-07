@@ -27,7 +27,7 @@
 
 namespace Network
 {
-	bool POST(const char* serverName, const char* objectName, unsigned short port, char *frmdata, std::string& des);
+	bool POST(const char* serverName, const char* objectName, unsigned short port, char* frmdata, std::string& des);
 	bool GET(const char* serverName, const char* objectName, unsigned short port, std::string& des);
 }
 #endif /*DICE_NETWORK*/
