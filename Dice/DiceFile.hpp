@@ -83,7 +83,7 @@ template <typename T>
 std::enable_if_t<std::is_fundamental_v<T>, T> fread(ifstream& fin)
 {
 	T t;
-	fin.read(static_cast<char*>(&t), sizeof(T));
+	fin.read(reinterpret_cast<char*>(&t), sizeof(T));
 	return t;
 }
 
@@ -438,7 +438,7 @@ template <typename T>
 typename std::enable_if<!std::is_class<T>::value, void>::type fwrite(ofstream& fout, T t)
 {
 	T val = t;
-	fout.write(static_cast<char*>(&val), sizeof(T));
+	fout.write(reinterpret_cast<char*>(&val), sizeof(T));
 }
 
 

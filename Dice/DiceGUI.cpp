@@ -30,14 +30,14 @@ public:
 		if (uMsg == WM_NCCREATE)
 		{
 			LPCREATESTRUCTA pCreate = reinterpret_cast<LPCREATESTRUCTA>(lParam);
-			pThis = static_cast<T*>(pCreate->lpCreateParams);
-			SetWindowLongPtrA(hwnd, GWLP_USERDATA, static_cast<LONG_PTR>(pThis));
+			pThis = reinterpret_cast<T*>(pCreate->lpCreateParams);
+			SetWindowLongPtrA(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
 
 			pThis->m_hwnd = hwnd;
 		}
 		else
 		{
-			pThis = static_cast<T*>(GetWindowLongPtrA(hwnd, GWLP_USERDATA));
+			pThis = reinterpret_cast<T*>(GetWindowLongPtrA(hwnd, GWLP_USERDATA));
 		}
 
 		if (pThis)
