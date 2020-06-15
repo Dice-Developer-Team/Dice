@@ -28,16 +28,20 @@
 std::string GBKtoUTF8(const std::string& strGBK);
 std::vector<std::string> GBKtoUTF8(const std::vector<std::string>& strGBK);
 
-template <typename T>
+template <typename T,
+		  typename = std::enable_if_t<!std::is_convertible_v<T, std::string> &&
+									  !std::is_convertible_v<T, std::vector<std::string>>>>
 T GBKtoUTF8(T TGBK)
 {
-	return TGBK;
+    return TGBK;
 }
 
 std::string UTF8toGBK(const std::string& strUTF8);
 std::vector<std::string> UTF8toGBK(const std::vector<std::string>& strUTF8);
 
-template <typename T>
+template <typename T,
+		 typename = std::enable_if_t<!std::is_convertible_v<T, std::string> &&
+									 !std::is_convertible_v<T, std::vector<std::string>>>>
 T UTF8toGBK(T TUTF8)
 {
 	return TUTF8;

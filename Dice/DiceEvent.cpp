@@ -231,10 +231,9 @@ int FromMsg::AdminEvent(const string& strOption)
 			{
 				int intAdd = 0;
 				int intReduce = 0;
-				bool isReduce = true;
 				while (intMsgCnt < strMsg.length())
 				{
-					isReduce = strMsg[intMsgCnt] == '-';
+					bool isReduce = strMsg[intMsgCnt] == '-';
 					string strNum = readDigit();
 					if (strNum.empty() || strNum.length() > 1)break;
 					if (int intNum = stoi(strNum); intNum > 5)continue;
@@ -695,7 +694,6 @@ int FromMsg::MasterSet()
 		return 1;
 	}
 	return AdminEvent(strOption);
-	return 0;
 }
 
 int FromMsg::DiceReply()
@@ -1549,11 +1547,10 @@ int FromMsg::DiceReply()
 			std::priority_queue<std::pair<time_t, string>> qDiver;
 			time_t tNow = time(nullptr);
 			const int intTDay = 24 * 60 * 60;
-			time_t intLastMsg = 0;
 			int intSize = grpinfo.nGroupSize;
 			for (auto& each : getGroupMemberList(llGroup))
 			{
-				intLastMsg = (tNow - each.LastMsgTime) / intTDay;
+				time_t intLastMsg = (tNow - each.LastMsgTime) / intTDay;
 				if (!each.LastMsgTime || intLastMsg > 30)
 				{
 					qDiver.emplace(intLastMsg, each.Nick + "(" + to_string(each.QQID) + ")");

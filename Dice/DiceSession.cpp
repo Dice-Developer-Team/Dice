@@ -150,7 +150,7 @@ void DiceTableMaster::save()
 
 int DiceTableMaster::load()
 {
-	string strLog;
+	// string strLog;
 	std::unique_lock<std::shared_mutex> lock(sessionMutex);
 	vector<std::filesystem::path> sFile;
 	int cnt = listDir(DiceDir + "\\user\\session\\", sFile);

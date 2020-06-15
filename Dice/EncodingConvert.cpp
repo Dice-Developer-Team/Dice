@@ -23,10 +23,12 @@
 
 #define CP_GB18030 54936
 #define WIN32_LEAN_AND_MEAN
+#include "EncodingConvert.h"
 #include <Windows.h>
 #include <string>
 #include <cassert>
 #include <vector>
+#include <algorithm>
 
 // 事实上是GB18030
 std::string GBKtoUTF8(const std::string& strGBK)
@@ -46,10 +48,7 @@ std::string GBKtoUTF8(const std::string& strGBK)
 std::vector<std::string> GBKtoUTF8(const std::vector<std::string>& strGBK)
 {
 	std::vector<std::string> vOutUTF8;
-	for (auto it : strGBK)
-	{
-		vOutUTF8.push_back(GBKtoUTF8(it));
-	}
+	std::transform(strGBK.begin(), strGBK.end(), std::back_inserter(vOutUTF8), [](const std::string& s) { return GBKtoUTF8(s); });
 	return vOutUTF8;
 }
 
@@ -71,10 +70,7 @@ std::string UTF8toGBK(const std::string& strUTF8)
 std::vector<std::string> UTF8toGBK(const std::vector<std::string>& vUTF8)
 {
 	std::vector<std::string> vOutGBK;
-	for (auto it : vUTF8)
-	{
-		vOutGBK.push_back(UTF8toGBK(it));
-	}
+	std::transform(vUTF8.begin(), vUTF8.end(), std::back_inserter(vOutGBK), [](const std::string& s) { return UTF8toGBK(s); });
 	return vOutGBK;
 }
 

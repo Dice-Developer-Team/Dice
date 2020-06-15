@@ -54,12 +54,12 @@ string DiceModManager::get_help(const string& key) const
 	return "{strHlpNotFound}";
 }
 
-void DiceModManager::set_help(string key, string val)
+void DiceModManager::set_help(const string& key, const string& val)
 {
 	helpdoc[key] = val;
 }
 
-void DiceModManager::rm_help(string key)
+void DiceModManager::rm_help(const string& key)
 {
 	helpdoc.erase(key);
 }

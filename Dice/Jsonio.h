@@ -65,6 +65,7 @@ int readJMap(const nlohmann::json& j, std::map<T1, T2, sort>& mapTmp)
 	{
 		T1 tKey = readJKey<T1>(it.key());
 		T2 tVal = it.value();
+		
 		tVal = UTF8toGBK(tVal);
 		mapTmp[tKey] = tVal;
 		intCnt++;
