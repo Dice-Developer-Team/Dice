@@ -256,7 +256,7 @@ public:
 		return (hwnd ? TRUE : FALSE);
 	}
 
-	LRESULT SetFont(const HFONT& hFont)
+	LRESULT SetFont(HFONT hFont)
 	{
 		return SendMessageA(hwnd, WM_SETFONT, (WPARAM)hFont, 1);
 	}
@@ -317,7 +317,7 @@ public:
 		return (hwnd ? TRUE : FALSE);
 	}
 
-	LRESULT SetFont(const HFONT& hFont)
+	LRESULT SetFont(HFONT hFont)
 	{
 		return SendMessageA(hwnd, WM_SETFONT, (WPARAM)hFont, 1);
 	}
@@ -366,7 +366,7 @@ public:
 		return (hwnd ? TRUE : FALSE);
 	}
 
-	LRESULT SetFont(const HFONT& hFont)
+	LRESULT SetFont(HFONT hFont)
 	{
 		return SendMessageA(hwnd, WM_SETFONT, (WPARAM)hFont, 1);
 	}
