@@ -10,45 +10,55 @@
 std::map<long long, int> FrqMonitor::mFrequence = {};
 std::map<long long, int> FrqMonitor::mWarnLevel = {};
 
-std::queue<FrqMonitor*>EarlyMsgQueue;
-std::queue<FrqMonitor*>EarlierMsgQueue;
-std::queue<FrqMonitor*>EarliestMsgQueue;
+std::queue<FrqMonitor*> EarlyMsgQueue;
+std::queue<FrqMonitor*> EarlierMsgQueue;
+std::queue<FrqMonitor*> EarliestMsgQueue;
 
-std::set<long long>setFrq;
+std::set<long long> setFrq;
 std::mutex FrqMutex;
+
 void AddFrq(long long QQ, time_t TT, chatType CT)
 {
 	std::lock_guard<std::mutex> lock_queue(FrqMutex);
 	if (setFrq.count(QQ)) return;
 	setFrq.insert(QQ);
-	FrqMonitor *newFrq = new FrqMonitor(QQ, TT, CT);
+	FrqMonitor* newFrq = new FrqMonitor(QQ, TT, CT);
 	EarlyMsgQueue.push(newFrq);
 }
-void frqHandler() {
+
+void frqHandler()
+{
 	while (Enabled)
 	{
-		while (!EarliestMsgQueue.empty()) {
+		while (!EarliestMsgQueue.empty())
+		{
 			std::lock_guard<std::mutex> lock_queue(FrqMutex);
-			if(EarliestMsgQueue.front()->isEarliest()){
+			if (EarliestMsgQueue.front()->isEarliest())
+			{
 				EarliestMsgQueue.pop();
 			}
 			else break;
 		}
-		while (!EarlierMsgQueue.empty()) {
+		while (!EarlierMsgQueue.empty())
+		{
 			std::lock_guard<std::mutex> lock_queue(FrqMutex);
-			if (EarlierMsgQueue.front()->isEarlier()) {
+			if (EarlierMsgQueue.front()->isEarlier())
+			{
 				EarliestMsgQueue.push(EarlierMsgQueue.front());
 				EarlierMsgQueue.pop();
 			}
 			else break;
 		}
-		while (!EarlyMsgQueue.empty()) {
+		while (!EarlyMsgQueue.empty())
+		{
 			std::lock_guard<std::mutex> lock_queue(FrqMutex);
-			if (EarlyMsgQueue.front()->isEarly()) {
+			if (EarlyMsgQueue.front()->isEarly())
+			{
 				EarlierMsgQueue.push(EarlyMsgQueue.front());
 				EarlyMsgQueue.pop();
 			}
-			else {
+			else
+			{
 				break;
 			}
 		}
@@ -57,9 +67,11 @@ void frqHandler() {
 	}
 }
 
-int FrqMonitor::getFrqTotal() {
+int FrqMonitor::getFrqTotal()
+{
 	return EarlyMsgQueue.size() + EarlierMsgQueue.size() / 2 + EarliestMsgQueue.size() / 10;
 }
+
 /*EVE_Status_EX(statusUptime) {
 	//初始化以来的秒数
 	long long llDuration = clock() / 1000;
@@ -86,8 +98,10 @@ int FrqMonitor::getFrqTotal() {
 	}
 	eve.color_green();
 }*/
-EVE_Status_EX(statusFrq) {
-	if (!Enabled) {
+EVE_Status_EX(statusFrq)
+{
+	if (!Enabled)
+	{
 		eve.data = "准备中";
 		eve.color_gray();
 		return;
@@ -95,21 +109,26 @@ EVE_Status_EX(statusFrq) {
 	//平滑到分钟的频度
 	int intFrq = FrqMonitor::getFrqTotal();
 	//long long llDuration = (clock() - llStartTime) / 1000;
-	if (intFrq < 0) {
+	if (intFrq < 0)
+	{
 		eve.data = "N";
 		eve.dataf = "/A";
 		eve.color_crimson();
 	}
-	else {
+	else
+	{
 		eve.data = std::to_string(intFrq);
 		eve.dataf = "/min";
-		if (intFrq < 60) {
+		if (intFrq < 60)
+		{
 			eve.color_green();
 		}
-		else if (intFrq < 120) {
+		else if (intFrq < 120)
+		{
 			eve.color_orange();
 		}
-		else {
+		else
+		{
 			eve.color_red();
 		}
 	}

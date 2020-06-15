@@ -24,6 +24,7 @@
 #include <string>
 #include <fstream>//
 using std::string;
+
 std::string format(std::string str, const std::initializer_list<const std::string>& replace_str)
 {
 	auto counter = 0;
@@ -57,9 +58,11 @@ string strip(std::string origin)
 	}
 }
 
-std::string to_binary(int b) {
+std::string to_binary(int b)
+{
 	ResList res;
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 6; i++)
+	{
 		if (b & (1 << i))res << std::to_string(i);
 	}
 	return res.dot("+").show();

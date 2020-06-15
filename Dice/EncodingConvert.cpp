@@ -42,14 +42,17 @@ std::string GBKtoUTF8(const std::string& strGBK)
 	delete[] strUTF8;
 	return strOutUTF8;
 }
-std::vector<std::string> GBKtoUTF8(const std::vector<std::string> &strGBK)
+
+std::vector<std::string> GBKtoUTF8(const std::vector<std::string>& strGBK)
 {
 	std::vector<std::string> vOutUTF8;
-	for (auto it : strGBK) {
+	for (auto it : strGBK)
+	{
 		vOutUTF8.push_back(GBKtoUTF8(it));
 	}
 	return vOutUTF8;
 }
+
 // 事实上是GB18030
 std::string UTF8toGBK(const std::string& strUTF8)
 {
@@ -64,17 +67,20 @@ std::string UTF8toGBK(const std::string& strUTF8)
 	delete[] strGBK;
 	return strOutGBK;
 }
-std::vector<std::string> UTF8toGBK(const std::vector<std::string> &vUTF8)
+
+std::vector<std::string> UTF8toGBK(const std::vector<std::string>& vUTF8)
 {
 	std::vector<std::string> vOutGBK;
-	for (auto it : vUTF8) {
+	for (auto it : vUTF8)
+	{
 		vOutGBK.push_back(UTF8toGBK(it));
 	}
 	return vOutGBK;
 }
+
 unsigned char ToHex(const unsigned char x)
 {
-	return  x > 9 ? x + 55 : x + 48;
+	return x > 9 ? x + 55 : x + 48;
 }
 
 unsigned char FromHex(const unsigned char x)

@@ -8,39 +8,47 @@
 #include "ManagerSystem.h"
 
 string DiceDir = "DiceData";
- //被引用的图片列表
+//被引用的图片列表
 set<string> sReferencedImage;
 
-const map<string, short> mChatConf{//0-群管理员，2-白名单2级，3-白名单3级，4-管理员，5-系统操作
-	{"忽略",4},
-	{"拦截消息",0},
-	{"停用指令",0},
-	{"禁用回复",0},
-	{"禁用jrrp",0},
-	{"禁用draw",0},
-	{"禁用me",0},
-	{"禁用help",0},
-	{"禁用ob",0},
-	{"许可使用",1},
-	{"未审核",1},
-	{"免清",2},
-	{"免黑",4},
-	{"未进",5},
-	{"已退",5}
+const map<string, short> mChatConf{
+	//0-群管理员，2-白名单2级，3-白名单3级，4-管理员，5-系统操作
+	{"忽略", 4},
+	{"拦截消息", 0},
+	{"停用指令", 0},
+	{"禁用回复", 0},
+	{"禁用jrrp", 0},
+	{"禁用draw", 0},
+	{"禁用me", 0},
+	{"禁用help", 0},
+	{"禁用ob", 0},
+	{"许可使用", 1},
+	{"未审核", 1},
+	{"免清", 2},
+	{"免黑", 4},
+	{"未进", 5},
+	{"已退", 5}
 };
 
-User& getUser(long long qq) {
+User& getUser(long long qq)
+{
 	if (!UserList.count(qq))UserList[qq].id(qq);
 	return UserList[qq];
 }
-short trustedQQ(long long qq) {
+
+short trustedQQ(long long qq)
+{
 	if (!UserList.count(qq))return 0;
-	else return UserList[qq].nTrust;
+	return UserList[qq].nTrust;
 }
-int clearUser() {
+
+int clearUser()
+{
 	vector<long long> QQDelete;
-	for (const auto& [qq, user] : UserList) {
-		if (user.empty()) {
+	for (const auto& [qq, user] : UserList)
+	{
+		if (user.empty())
+		{
 			QQDelete.push_back(qq);
 		}
 	}
@@ -60,24 +68,31 @@ string getName(long long QQ, long long GroupID)
 	return GlobalMsg["stranger"] + "(" + to_string(QQ) + ")";
 }
 
-Chat& chat(long long id) {
+Chat& chat(long long id)
+{
 	if (!ChatList.count(id))ChatList[id].id(id);
 	return ChatList[id];
 }
-int groupset(long long id, string st) {
+
+int groupset(long long id, string st)
+{
 	if (!ChatList.count(id))return -1;
-	else return ChatList[id].isset(std::move(st));
+	return ChatList[id].isset(std::move(st));
 }
-string printChat(Chat& grp) {
+
+string printChat(Chat& grp)
+{
 	if (CQ::getGroupList().count(grp.ID))return CQ::getGroupList()[grp.ID] + "(" + to_string(grp.ID) + ")";
 	if (grp.isset("群名"))return grp.strConf["群名"] + "(" + to_string(grp.ID) + ")";
 	if (grp.isGroup) return "群" + to_string(grp.ID) + "";
 	return "讨论组" + to_string(grp.ID) + "";
 }
 
-void scanImage(const string& s, set<string>& list) {
+void scanImage(const string& s, set<string>& list)
+{
 	int l = 0, r = 0;
-	while ((l = s.find('[', r)) != string::npos && (r = s.find(']', l)) != string::npos) {
+	while ((l = s.find('[', r)) != string::npos && (r = s.find(']', l)) != string::npos)
+	{
 		if (s.substr(l, 15) != CQ_IMAGE)continue;
 		string strFile = s.substr(l + 15, r - l - 15);
 		if (strFile.length() > 35)strFile += ".cqimg";
@@ -85,21 +100,25 @@ void scanImage(const string& s, set<string>& list) {
 	}
 }
 
-void scanImage(const vector<string>& v, set<string>& list) {
-	for (auto it : v) {
+void scanImage(const vector<string>& v, set<string>& list)
+{
+	for (auto it : v)
+	{
 		scanImage(it, sReferencedImage);
 	}
 }
 
 
-int clearImage() {
+int clearImage()
+{
 	scanImage(GlobalMsg, sReferencedImage);
 	scanImage(HelpDoc, sReferencedImage);
 	scanImage(CardDeck::mPublicDeck, sReferencedImage);
 	scanImage(CardDeck::mReplyDeck, sReferencedImage);
 	scanImage(CardDeck::mGroupDeck, sReferencedImage);
 	scanImage(CardDeck::mPrivateDeck, sReferencedImage);
-	for (auto it : ChatList) {
+	for (auto it : ChatList)
+	{
 		scanImage(it.second.strConf, sReferencedImage);
 	}
 	string strLog = "整理" + GlobalMsg["strSelfName"] + "被引用图片" + to_string(sReferencedImage.size()) + "项";
@@ -107,14 +126,16 @@ int clearImage() {
 	return clrDir("data\\image\\", sReferencedImage);
 }
 
-DWORD getRamPort() {
+DWORD getRamPort()
+{
 	MEMORYSTATUSEX memory_status;
 	memory_status.dwLength = sizeof(memory_status);
 	GlobalMemoryStatusEx(&memory_status);
 	return memory_status.dwMemoryLoad;
 }
 
-__int64 compareFileTime(const FILETIME& ft1, const FILETIME& ft2) {
+__int64 compareFileTime(const FILETIME& ft1, const FILETIME& ft2)
+{
 	__int64 t1 = ft1.dwHighDateTime;
 	t1 = t1 << 32 | ft1.dwLowDateTime;
 	__int64 t2 = ft2.dwHighDateTime;
@@ -122,7 +143,8 @@ __int64 compareFileTime(const FILETIME& ft1, const FILETIME& ft2) {
 	return t1 - t2;
 }
 
-__int64 getWinCpuUsage() {
+__int64 getWinCpuUsage()
+{
 	FILETIME preidleTime;
 	FILETIME prekernelTime;
 	FILETIME preuserTime;
@@ -169,5 +191,5 @@ int getProcessCpu()
 	__int64 ullUserTime = compareFileTime(ftUserTime, ftPreUserTime);
 	log << ullKernelTime << "\n" << ullUserTime << "\n" << iCpuNum;
 	__int64 dCpu = (ullKernelTime + ullUserTime) / (iCpuNum * 100);
-	return (int)dCpu;
+	return static_cast<int>(dCpu);
 }

@@ -40,7 +40,6 @@ using namespace std;
 
 namespace GetRule
 {
-
 	bool analyze(string& rawStr, string& des)
 	{
 		if (rawStr.empty())
@@ -49,7 +48,7 @@ namespace GetRule
 			return false;
 		}
 
-		for (auto& chr : rawStr)chr = toupper(static_cast<unsigned char> (chr));
+		for (auto& chr : rawStr)chr = toupper(static_cast<unsigned char>(chr));
 
 		if (rawStr.find(':') != string::npos)
 		{
@@ -80,7 +79,7 @@ namespace GetRule
 		{
 			data += "&Type=Rules-" + UrlEncode(ruleName);
 		}
-		char *frmdata = new char[data.length() + 1];
+		char* frmdata = new char[data.length() + 1];
 		strcpy_s(frmdata, data.length() + 1, data.c_str());
 		string temp;
 		const bool reqRes = Network::POST("api.kokona.tech", "/rules", 5555, frmdata, temp);
@@ -101,4 +100,3 @@ namespace GetRule
 		return false;
 	}
 }
-

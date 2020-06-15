@@ -31,13 +31,12 @@
 #include "GlobalVar.h"
 
 
-
-
 EVE_Menu(eventDiceUpdate)
 {
 	std::string ver;
 	//if (!Network::GET("api.kokona.tech", "/getExpVer", 5555, ver) && !Network::GET("shiki.stringempty.xyz", "/DiceVer", 80, ver)) {
-	if (!Network::GET("shiki.stringempty.xyz", "/DiceVer", 80, ver)) {
+	if (!Network::GET("shiki.stringempty.xyz", "/DiceVer", 80, ver))
+	{
 		MessageBoxA(nullptr, ("检查更新时遇到错误: \n" + ver).c_str(), "Dice!更新错误", MB_OK | MB_ICONWARNING);
 		return -1;
 	}
@@ -50,8 +49,9 @@ EVE_Menu(eventDiceUpdate)
 		return 0;
 	}
 
-	const std::string updateNotice = std::string("发现新版本! \n\n当前版本: ") + std::string(Dice_Ver) + "\n新版本: " + ver + "\n\n警告: 如果正在使用的Dice!为修改版, 此更新会将其覆盖为原版!\n点击确定键开始更新, 取消键取消更新";
-	
+	const std::string updateNotice = std::string("发现新版本! \n\n当前版本: ") + std::string(Dice_Ver) + "\n新版本: " + ver +
+		"\n\n警告: 如果正在使用的Dice!为修改版, 此更新会将其覆盖为原版!\n点击确定键开始更新, 取消键取消更新";
+
 	if (MessageBoxA(nullptr, updateNotice.c_str(), "Dice!更新", MB_OKCANCEL | MB_ICONINFORMATION) != IDOK)
 	{
 		MessageBoxA(nullptr, "更新已取消", "Dice!更新", MB_OK | MB_ICONINFORMATION);
@@ -69,7 +69,7 @@ EVE_Menu(eventDiceUpdate)
 
 	std::string filePath(buffer, length);
 	filePath = filePath.substr(0, filePath.find_last_of("\\")) + "\\app\\com.w4123.dice.cpk";
-	
+
 	std::string fileContent;
 	//if (!Network::GET("api.kokona.tech", "/getExpDice", 5555, fileContent) && !Network::GET("shiki.stringempty.xyz", "/download/com.w4123.dice.cpk", 80, fileContent))
 	if (!Network::GET("shiki.stringempty.xyz", "/download/com.w4123.dice.cpk", 80, fileContent))
@@ -77,7 +77,7 @@ EVE_Menu(eventDiceUpdate)
 		MessageBoxA(nullptr, ("新版本文件下载失败! 请检查您的网络状态! 错误信息: " + fileContent).c_str(), "Dice!更新错误", MB_OK | MB_ICONERROR);
 		return -1;
 	}
-	
+
 	std::ofstream streamUpdate(filePath, std::ios::trunc | std::ios::binary | std::ios::out);
 	if (!streamUpdate)
 	{
@@ -90,4 +90,3 @@ EVE_Menu(eventDiceUpdate)
 	MessageBoxA(nullptr, "Dice!已更新, 请重载应用!", "Dice!更新", MB_OK | MB_ICONINFORMATION);
 	return 0;
 }
-

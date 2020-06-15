@@ -41,7 +41,7 @@ struct msg_t
 	msg_t() = default;
 
 	msg_t(string msg, long long target_id, msgtype msg_type) : msg(move(msg)), target_id(target_id),
-	                                                                     msg_type(msg_type)
+	                                                           msg_type(msg_type)
 	{
 	}
 };
@@ -57,7 +57,9 @@ void AddMsgToQueue(const string& msg, long long target_id, msgtype msg_type)
 	lock_guard<std::mutex> lock_queue(msgQueueMutex);
 	msgQueue.emplace(msg_t(msg, target_id, msg_type));
 }
-void AddMsgToQueue(const std::string& msg, chatType ct){
+
+void AddMsgToQueue(const std::string& msg, chatType ct)
+{
 	AddMsgToQueue(msg, ct.first, ct.second);
 }
 
@@ -80,15 +82,15 @@ void SendMsg()
 		{
 			if (msg.msg_type == msgtype::Private)
 			{
-				CQ::sendPrivateMsg(msg.target_id, msg.msg);
+				sendPrivateMsg(msg.target_id, msg.msg);
 			}
 			else if (msg.msg_type == msgtype::Group)
 			{
-				CQ::sendGroupMsg(msg.target_id, msg.msg);
+				sendGroupMsg(msg.target_id, msg.msg);
 			}
 			else
 			{
-				CQ::sendDiscussMsg(msg.target_id, msg.msg);
+				sendDiscussMsg(msg.target_id, msg.msg);
 			}
 		}
 		if (msgQueue.size() > 2)this_thread::sleep_for(chrono::milliseconds(console["SendIntervalBusy"]));

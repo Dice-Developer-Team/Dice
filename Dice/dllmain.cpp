@@ -29,6 +29,6 @@ BOOL APIENTRY DllMain(HMODULE hModule,
                       LPVOID lpReserved
 )
 {
-    hDllModule = hModule;
+	hDllModule = hModule;
 	return TRUE;
 }

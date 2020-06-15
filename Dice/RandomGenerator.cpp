@@ -45,6 +45,3 @@ namespace RandomGenerator
 		return dis(gen);
 	}
 }
-
-
-

@@ -34,7 +34,8 @@ void init(string& msg)
 	msg_decode(msg);
 }
 
-void init2(string& msg){
+void init2(string& msg)
+{
 	while (isspace(static_cast<unsigned char>(msg[0])))
 		msg.erase(msg.begin());
 	while (!msg.empty() && isspace(static_cast<unsigned char>(msg[msg.length() - 1])))
@@ -108,7 +109,8 @@ void COC7D(string& strMAns)
 	strMAns += to_string(LUCK);
 
 	strMAns += '\n';
-	strMAns += "共计:" + to_string(STR + CON + SIZ + APP + POW + EDU + DEX + INT) + "/" + to_string(STR + CON + SIZ + APP + POW + EDU + DEX + INT + LUCK);
+	strMAns += "共计:" + to_string(STR + CON + SIZ + APP + POW + EDU + DEX + INT) + "/" + to_string(
+		STR + CON + SIZ + APP + POW + EDU + DEX + INT + LUCK);
 
 	strMAns += "\n理智SAN=POW=";
 	const int SAN = POW;
@@ -279,7 +281,7 @@ void COC7(string& strMAns, int intNum)
 			intAllTotal += rdCOC.intTotal * 5;
 			intLuc = rdCOC.intTotal * 5;
 		}
-		strMAns += "共计:" + to_string(intAllTotal-intLuc) + "/" + to_string(intAllTotal);
+		strMAns += "共计:" + to_string(intAllTotal - intLuc) + "/" + to_string(intAllTotal);
 		intAllTotal = 0;
 	}
 }
@@ -287,8 +289,8 @@ void COC7(string& strMAns, int intNum)
 void COC6(string& strMAns, int intNum)
 {
 	strMAns += "的人物作成:";
-	string strProperty[] = {"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育", "资产" };
-	string strRoll[] = {"3D6", "3D6", "2D6+6", "3D6", "3D6", "2D6+6", "3D6", "3D6+3","1D10"};
+	string strProperty[] = {"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育", "资产"};
+	string strRoll[] = {"3D6", "3D6", "2D6+6", "3D6", "3D6", "2D6+6", "3D6", "3D6+3", "1D10"};
 	const bool boolAddSpace = intNum != 1;
 	int intAllTotal = 0;
 	while (intNum--)
@@ -307,7 +309,7 @@ void COC6(string& strMAns, int intNum)
 		intAllTotal = 0;
 		RD rdCOC(strRoll[8]);
 		rdCOC.Roll();
-		strMAns += " "+ strProperty[8] + ":" + to_string(rdCOC.intTotal);
+		strMAns += " " + strProperty[8] + ":" + to_string(rdCOC.intTotal);
 	}
 }
 
@@ -342,15 +344,17 @@ void TempInsane(string& strAns)
 	{
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
 		strTI = format(strTI, {
-			"1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strFear[intDetailSymRes]
-		});
+			               "1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes),
+			               strFear[intDetailSymRes]
+		               });
 	}
 	else if (intSymRes == 10)
 	{
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
 		strTI = format(strTI, {
-			"1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strPanic[intDetailSymRes]
-		});
+			               "1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes),
+			               strPanic[intDetailSymRes]
+		               });
 	}
 	else
 	{
@@ -367,15 +371,17 @@ void LongInsane(string& strAns)
 	{
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
 		strLI = format(strLI, {
-			"1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strFear[intDetailSymRes]
-		});
+			               "1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes),
+			               strFear[intDetailSymRes]
+		               });
 	}
 	else if (intSymRes == 10)
 	{
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
 		strLI = format(strLI, {
-			"1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes), strPanic[intDetailSymRes]
-		});
+			               "1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes),
+			               strPanic[intDetailSymRes]
+		               });
 	}
 	else
 	{
@@ -383,10 +389,13 @@ void LongInsane(string& strAns)
 	}
 	strAns += strLI;
 }
+
 //成功等级
 //0-大失败，1-失败，2-成功，3-困难成功，4-极难成功，5-大成功
-int RollSuccessLevel(int res, int rate, int rule) {
-	switch (rule) {
+int RollSuccessLevel(int res, int rate, int rule)
+{
+	switch (rule)
+	{
 	case 0:
 		if (res == 100)return 0;
 		if (res == 1)return 5;
@@ -394,7 +403,7 @@ int RollSuccessLevel(int res, int rate, int rule) {
 		if (res <= rate / 2)return 3;
 		if (res <= rate)return 2;
 		if (rate >= 50 || res < 96)return 1;
-		else return 0;
+		return 0;
 		break;
 	case 1:
 		if (res == 100)return 0;
@@ -403,7 +412,7 @@ int RollSuccessLevel(int res, int rate, int rule) {
 		if (res <= rate / 2)return 3;
 		if (res <= rate)return 2;
 		if (rate >= 50 || res < 96)return 1;
-		else return 0;
+		return 0;
 		break;
 	case 2:
 		if (res == 100)return 0;
@@ -412,7 +421,7 @@ int RollSuccessLevel(int res, int rate, int rule) {
 		if (res <= rate / 2)return 3;
 		if (res <= rate)return 2;
 		if (res < 96)return 1;
-		else return 0;
+		return 0;
 		break;
 	case 3:
 		if (res >= 96)return 0;
@@ -420,7 +429,7 @@ int RollSuccessLevel(int res, int rate, int rule) {
 		if (res <= rate / 5)return 4;
 		if (res <= rate / 2)return 3;
 		if (res <= rate)return 2;
-		else return 1;
+		return 1;
 		break;
 	case 4:
 		if (res == 100)return 0;
@@ -429,7 +438,7 @@ int RollSuccessLevel(int res, int rate, int rule) {
 		if (res <= rate / 2)return 3;
 		if (res <= rate)return 2;
 		if (rate >= 50 || res < 96 + rate / 10)return 1;
-		else return 0;
+		return 0;
 		break;
 	case 5:
 		if (res >= 99)return 0;
@@ -438,8 +447,8 @@ int RollSuccessLevel(int res, int rate, int rule) {
 		if (res <= rate / 2)return 3;
 		if (res <= rate)return 2;
 		if (rate >= 50 || res < 96)return 1;
-		else return 0;
+		return 0;
 		break;
-	default :return -1;
+	default: return -1;
 	}
 }
