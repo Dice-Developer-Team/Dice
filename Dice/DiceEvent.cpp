@@ -1534,7 +1534,7 @@ int FromMsg::DiceReply()
 			reply(GlobalMsg["strSelfName"] + res.show());
 			return 1;
 		}
-		if (!isInGroup)
+		if (!isInGroup && (intT != GroupT || fromGroup != llGroup))
 		{
 			reply(GlobalMsg["strGroupNotIn"]);
 			return 1;
@@ -1550,7 +1550,7 @@ int FromMsg::DiceReply()
 			time_t tNow = time(nullptr);
 			const int intTDay = 24 * 60 * 60;
 			time_t intLastMsg = 0;
-			int intSize = GroupInfo(llGroup).nGroupSize;
+			int intSize = grpinfo.nGroupSize;
 			for (auto& each : getGroupMemberList(llGroup))
 			{
 				intLastMsg = (tNow - each.LastMsgTime) / intTDay;
