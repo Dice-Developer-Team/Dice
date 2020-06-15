@@ -3556,11 +3556,9 @@ int FromMsg::DiceReply()
 			intMsgCnt += 3;
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
-			bool isExp = false;
 			if (strMsg[intMsgCnt] == '&')
 			{
 				intMsgCnt++;
-				isExp = true;
 			}
 			strVar["attr"] = readAttrName();
 			if (getPlayer(fromQQ)[fromGroup].erase(strVar["attr"]))
