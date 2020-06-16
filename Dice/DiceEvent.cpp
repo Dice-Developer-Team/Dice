@@ -3174,7 +3174,7 @@ int FromMsg::DiceReply()
 		int intSkillDivisor = 1;
 		//自动成功
 		bool isAutomatic = false;
-		if (strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b')
+		if ((strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') && strLowerMessage[intMsgCnt - 1] != ' ')
 		{
 			strMainDice = strLowerMessage[intMsgCnt];
 			intMsgCnt++;
