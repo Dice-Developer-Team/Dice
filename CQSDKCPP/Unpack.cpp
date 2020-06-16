@@ -173,7 +173,7 @@ string Unpack::getstring() noexcept
 	return string(reinterpret_cast<char*>(&tep[0]));
 }
 
-Unpack& Unpack::add(Unpack& i)noexcept
+Unpack& Unpack::add(Unpack& i) noexcept
 {
 	add(i.getAll());
 	return *this;

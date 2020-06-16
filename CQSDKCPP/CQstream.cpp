@@ -125,7 +125,7 @@ void CQstream::flush() noexcept { send(); }
 
 inline CQstream::~CQstream() noexcept = default;
 
-inline logstream::logstream(std::string title, const int Log_flag) noexcept : flag(Log_flag), title(std::move(title)) 
+inline logstream::logstream(std::string title, const int Log_flag) noexcept : flag(Log_flag), title(std::move(title))
 {
 }
 
@@ -135,7 +135,8 @@ void logstream::send() noexcept
 	addLog(flag, title.c_str(), buf.c_str());
 }
 
-msg::msg(const long long GroupID_Or_QQID, const msgtype Type) noexcept : ID(GroupID_Or_QQID), subType(int(Type))
+msg::msg(const long long GroupID_Or_QQID, const msgtype Type) noexcept : ID(GroupID_Or_QQID),
+                                                                         subType(static_cast<int>(Type))
 {
 }
 
@@ -143,18 +144,18 @@ msg::msg(const long long GroupID_Or_QQID, const int Type) noexcept : ID(GroupID_
 {
 }
 
-void msg::send() noexcept 
+void msg::send() noexcept
 {
 	if (buf.empty())return;
 	switch (subType)
 	{
-	case int(CQ::msgtype::Private): //好友
+	case static_cast<int>(msgtype::Private): //好友
 		sendPrivateMsg(ID, buf);
 		break;
-	case int(CQ::msgtype::Group): //群
+	case static_cast<int>(msgtype::Group): //群
 		sendGroupMsg(ID, buf);
 		break;
-	case int(CQ::msgtype::Discuss): //讨论组
+	case static_cast<int>(msgtype::Discuss): //讨论组
 		sendDiscussMsg(ID, buf);
 		break;
 	default:

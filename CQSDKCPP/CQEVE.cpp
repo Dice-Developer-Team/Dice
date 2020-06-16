@@ -15,8 +15,6 @@
 using namespace CQ;
 
 
-
-
 EVEMsg::EVEMsg(const int subType, const int msgId, const long long fromQQ, std::string message, const int font) noexcept
 	: subType(subType), msgId(msgId), fromQQ(fromQQ), message(move(message)), font(font)
 {
@@ -35,7 +33,8 @@ bool EVEMsg::isUser() const noexcept
 	}
 }
 
-EVEGroupMsg::EVEGroupMsg(const int subType, const int msgId, const long long fromGroup, const long long fromQQ, const char* fromAnonymous,
+EVEGroupMsg::EVEGroupMsg(const int subType, const int msgId, const long long fromGroup, const long long fromQQ,
+                         const char* fromAnonymous,
                          const char* msg, const int font) noexcept
 	: EVEMsg(subType, msgId, fromQQ, msg, font), fromAnonymousInfo(), fromGroup(fromGroup),
 	  fromAnonymousToken(fromAnonymous)
@@ -112,7 +111,8 @@ std::vector<GroupMemberInfo> EVEGroupMsg::getGroupMemberList() const noexcept
 	return CQ::getGroupMemberList(fromGroup);
 }
 
-EVEPrivateMsg::EVEPrivateMsg(const int subType, const int msgId, const long long fromQQ, const char* msg, const int font) noexcept
+EVEPrivateMsg::EVEPrivateMsg(const int subType, const int msgId, const long long fromQQ, const char* msg,
+                             const int font) noexcept
 	: EVEMsg(subType, msgId, fromQQ, msg, font)
 {
 }
@@ -140,7 +140,8 @@ int EVEGroupMsg::sendMsg(const std::string& msg) const noexcept { return sendGro
 int EVEDiscussMsg::sendMsg(const char* msg) const noexcept { return sendDiscussMsg(fromDiscuss, msg); }
 int EVEDiscussMsg::sendMsg(const std::string& msg) const noexcept { return sendDiscussMsg(fromDiscuss, msg); }
 
-EVEDiscussMsg::EVEDiscussMsg(const int subType, const int msgId, const long long fromDiscuss, const long long fromQQ, const char* msg, const int font) noexcept
+EVEDiscussMsg::EVEDiscussMsg(const int subType, const int msgId, const long long fromDiscuss, const long long fromQQ,
+                             const char* msg, const int font) noexcept
 	: EVEMsg(subType, msgId, fromQQ, msg, font), fromDiscuss(fromDiscuss)
 {
 }
@@ -163,7 +164,7 @@ std::string CQ::statusEVEreturn(EVEStatus& eve) noexcept
 }
 
 EVERequest::EVERequest(const int sendTime, const long long fromQQ, const char* msg, const char* responseFlag) noexcept
-	: sendTime(sendTime), fromQQ(fromQQ), msg(msg), responseFlag(responseFlag) 
+	: sendTime(sendTime), fromQQ(fromQQ), msg(msg), responseFlag(responseFlag)
 {
 }
 
@@ -183,7 +184,8 @@ void EVERequestAddFriend::fail(const std::string& msg) const noexcept
 	setFriendAddRequest(responseFlag, RequestRefused, msg.c_str());
 }
 
-EVERequestAddGroup::EVERequestAddGroup(const int subType, const int sendTime, const long long fromGroup, const long long fromQQ,
+EVERequestAddGroup::EVERequestAddGroup(const int subType, const int sendTime, const long long fromGroup,
+                                       const long long fromQQ,
                                        const char* const msg, const char* const responseFlag) noexcept
 	: EVERequest(sendTime, fromQQ, msg, responseFlag), subType(subType), fromGroup(fromGroup)
 {
