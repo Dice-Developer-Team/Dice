@@ -19,7 +19,7 @@ Latest Release: [![GitHub release](https://img.shields.io/github/release-pre/w41
 
 ## 开发者
 
-贡献者:w4123溯洄 jh123111 緋色月下、スイカを食う
+贡献者:w4123溯洄 Shiki jh123111 緋色月下、スイカを食う
 
 感谢:Flandre Cirno 回転 他是王家乐。白いとう 哞哞哞哞哞哞哞哞哞哞哞哞 丸子 黯星 一盏大师 初音py2001 Coxxs orzFly 等(排名不分先后)(如有缺漏请务必联系溯洄:QQ1840686745) 
 
