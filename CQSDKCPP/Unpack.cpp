@@ -7,9 +7,9 @@
 
 using namespace std;
 //打印内存数据
-void show(void* t, const int len) noexcept
+void show(void* t, const int len)
 {
-	const auto p = static_cast<unsigned char*>(t);
+	auto* const p = static_cast<unsigned char*>(t);
 	cout << "{";
 	for (auto i = 0; i < len; ++i)
 	{

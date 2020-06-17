@@ -58,9 +58,9 @@ public:
 		return *this;
 	}
 
-	bool table_count(string key) const { return mTable.count(key); }
+	[[nodiscard]] bool table_count(string key) const { return mTable.count(key); }
 	int table_add(string, int, string);
-	string table_prior_show(string key) const;
+	[[nodiscard]] string table_prior_show(string key) const;
 	bool table_clr(string key);
 
 	//≈‘π€÷∏¡Ó
@@ -68,7 +68,7 @@ public:
 	int ob_exit(FromMsg*);
 	int ob_list(FromMsg*) const;
 	int ob_clr(FromMsg*);
-	set<long long> get_ob() const { return sOB; }
+	[[nodiscard]] set<long long> get_ob() const { return sOB; }
 
 	DiceSession& clear_ob()
 	{
@@ -94,7 +94,7 @@ public:
 	Session& session(long long group);
 	void session_end(long long group);
 	void save();
-	int load();
+	int load() const;
 };
 
 inline std::unique_ptr<DiceTableMaster> gm;

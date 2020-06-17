@@ -36,8 +36,6 @@
 #include "APPINFO.h"
 #include "DiceFile.hpp"
 #include "Jsonio.h"
-#include "RandomGenerator.h"
-#include "RD.h"
 #include "CQEVE_ALL.h"
 #include "ManagerSystem.h"
 #include "DiceMod.h"
@@ -46,7 +44,7 @@
 #include "DiceCloud.h"
 #include "CardDeck.h"
 #include "DiceConsole.h"
-#include "EncodingConvert.h"
+#include "GlobalVar.h"
 #include "CharacterCard.h"
 #include "DiceEvent.h"
 #include "DiceSession.h"
@@ -88,7 +86,7 @@ void loadData()
 	fmt->set_help("master", printQQ(console.master()));
 	//读取帮助文档
 	fmt->load(strLog);
-	if (int cnt = 0; (cnt = loadJMap(DiceDir + "\\conf\\CustomHelp.json", CustomHelp)) < 0)
+	if (int cnt; (cnt = loadJMap(DiceDir + "\\conf\\CustomHelp.json", CustomHelp)) < 0)
 	{
 		if (cnt == -1)console.log("自定义帮助文件json解析失败！", 1);
 		ifstream ifstreamHelpDoc(strFileLoc + "HelpDoc.txt");
@@ -428,7 +426,7 @@ EVE_Enable(eventEnable)
 		}
 		ifstreamCharacterProp.close();
 	}
-	for (auto pl : PList)
+	for (const auto& pl : PList)
 	{
 		if (!UserList.count(pl.first))getUser(pl.first).create(NEWYEAR);
 	}
@@ -623,7 +621,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 	Chat& grp = chat(eve.fromDiscuss).discuss().lastmsg(time(nullptr));
 	if (blacklist->get_qq_danger(eve.fromQQ) && console["AutoClearBlack"])
 	{
-		string strMsg = "发现黑名单用户" + printQQ(eve.fromQQ) + "，自动执行退群";
+		const string strMsg = "发现黑名单用户" + printQQ(eve.fromQQ) + "，自动执行退群";
 		console.log(printChat({eve.fromDiscuss, msgtype::Discuss}) + strMsg, 0b10, printSTNow());
 		grp.leave(strMsg);
 		return;
@@ -676,7 +674,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 		}
 		if (blacklist->get_qq_danger(beingOperateQQ))
 		{
-			string strNow = printSTNow();
+			const string strNow = printSTNow();
 			string strNote = printGroup(fromGroup) + "发现" + GlobalMsg["strSelfName"] + "的黑名单用户" + printQQ(
 				beingOperateQQ) + "入群";
 			AddMsgToQueue(blacklist->list_self_qq_warning(beingOperateQQ), fromGroup, msgtype::Group);
@@ -810,7 +808,7 @@ EVE_Request_AddGroup(eventGroupInvited)
 	if (subType == 2 && groupset(fromGroup, "忽略") < 1)
 	{
 		this_thread::sleep_for(3s);
-		string strNow = printSTNow();
+		const string strNow = printSTNow();
 		string strMsg = "群添加请求，来自：" + getStrangerInfo(fromQQ).nick + "(" + to_string(fromQQ) + "),群:" +
 			to_string(fromGroup) + "。";
 		if (blacklist->get_group_danger(fromGroup))

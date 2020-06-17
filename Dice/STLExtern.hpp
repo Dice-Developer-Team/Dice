@@ -48,7 +48,7 @@ public:
 		}
 	}
 
-	bool count(T val) const
+	[[nodiscard]] bool count(T val) const
 	{
 		return mVal.find(val) != mVal.end();
 	}

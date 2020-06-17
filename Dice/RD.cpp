@@ -316,7 +316,7 @@ void COC6(string& strMAns, int intNum)
 void DND(string& strOutput, int intNum)
 {
 	strOutput += "的英雄作成:";
-	RD rdDND("4D6K3");
+	const RD rdDND("4D6K3");
 	string strDNDName[6] = {"力量", "体质", "敏捷", "智力", "感知", "魅力"};
 	const bool boolAddSpace = intNum != 1;
 	int intAllTotal = 0;

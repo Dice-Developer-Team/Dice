@@ -147,7 +147,7 @@ void warningHandler()
 
 int getCloudBlackMark(int wid, string& res)
 {
-	string strObj{"/blacklist/warning.php?wid=" + to_string(wid)};
+	const string strObj{"/blacklist/warning.php?wid=" + to_string(wid)};
 	string temp;
 	const bool reqRes = Network::GET("shiki.stringempty.xyz", strObj.c_str(), 80, temp);
 	if (!reqRes)return -1;
@@ -614,7 +614,7 @@ bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5)
 {
 	std::lock_guard<std::mutex> lock_queue(blacklistMutex);
 	DDBlackMark& old_mark = vBlackList[id];
-	int delta_danger = mark.danger - old_mark.danger;
+	const int delta_danger = mark.danger - old_mark.danger;
 	bool isUpdated = false;
 	if (delta_danger)
 	{
@@ -864,13 +864,13 @@ bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark)
 
 short DDBlackManager::get_group_danger(long long id) const
 {
-	if (auto it = mGroupDanger.find(id); it != mGroupDanger.end())return it->second;
+	if (const auto it = mGroupDanger.find(id); it != mGroupDanger.end())return it->second;
 	return 0;
 }
 
 short DDBlackManager::get_qq_danger(long long id) const
 {
-	if (auto it = mQQDanger.find(id); it != mQQDanger.end())return it->second;
+	if (const auto it = mQQDanger.find(id); it != mQQDanger.end())return it->second;
 	return 0;
 }
 
@@ -925,7 +925,7 @@ void DDBlackManager::isban(FromMsg* msg)
 		msg->reply("请给出查询对象的ID×");
 		return;
 	}
-	long long llID = stoll(msg->strVar["target"]);
+	const long long llID = stoll(msg->strVar["target"]);
 	bool isGet = false;
 	if (mGroupIndex.count(llID))
 	{
@@ -1225,7 +1225,7 @@ int DDBlackManager::loadJson(string strPath)
 		if (!mark.isValid)continue;
 		if (!mark.danger)mark.danger = 2;
 		//新插入或更新
-		if (int res = find(mark); res < 0)
+		if (const int res = find(mark); res < 0)
 		{
 			insert(mark);
 		}

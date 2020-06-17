@@ -15,7 +15,6 @@
 #include <numeric>
 #include <direct.h>
 #include <cstdio>
-#include "DiceMsgSend.h"
 #include "DiceXMLTree.h"
 #include "StrExtern.hpp"
 
@@ -91,7 +90,7 @@ std::enable_if_t<std::is_fundamental_v<T>, T> fread(ifstream& fin)
 template <typename T>
 std::enable_if_t<std::is_same_v<T, std::string>, T> fread(ifstream& fin)
 {
-	short len = fread<short>(fin);
+	const short len = fread<short>(fin);
 	char* buff = new char[len];
 	fin.read(buff, sizeof(char) * len);
 	std::string s(buff, len);
@@ -113,13 +112,11 @@ template <typename T1, typename T2>
 std::map<T1, T2> fread(ifstream& fin)
 {
 	std::map<T1, T2> m;
-	T1 key;
-	T2 val;
 	short len = fread<short>(fin);
 	while (len--)
 	{
-		key = fread<T1>(fin);
-		val = fread<T2>(fin);
+		T1 key = fread<T1>(fin);
+		T2 val = fread<T2>(fin);
 		m[key] = val;
 	}
 	return m;
@@ -142,7 +139,7 @@ std::set<T> fread(ifstream& fin)
 template <typename T1, typename T2>
 void readini(string& line, std::pair<T1, T2>& p)
 {
-	int pos = line.find('=');
+	const int pos = line.find('=');
 	if (pos == std::string::npos)return;
 	std::istringstream sin(line.substr(0, pos));
 	sin >> p.first;
@@ -276,7 +273,7 @@ int loadBFile(std::string strPath, std::map<T, C>& m)
 {
 	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
 	if (!fin)return -1;
-	int len = fread<int>(fin);
+	const int len = fread<int>(fin);
 	int Cnt = 0;
 	T key;
 	C val;
@@ -294,7 +291,7 @@ int loadBFile(std::string strPath, std::unordered_map<T, C>& m)
 {
 	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
 	if (!fin)return -1;
-	int len = fread<int>(fin);
+	const int len = fread<int>(fin);
 	int Cnt = 0;
 	T key;
 	C val;
@@ -338,7 +335,7 @@ int loadXML(const std::string& strPath, std::map<std::string, C>& m)
 }
 
 //±éÀúÎÄ¼þ¼Ð
-int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub = false) noexcept;
+int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub = false);
 
 template <typename T1, typename T2>
 int _loadDir(int (*load)(const std::string&, T2&), const std::string& strDir, T2& tmp, int& intFile, int& intFailure,
@@ -351,7 +348,7 @@ int _loadDir(int (*load)(const std::string&, T2&), const std::string& strDir, T2
 		{
 			intFile++;
 			string path = convert_w2a(p.path().filename().wstring().c_str());
-			int Cnt = load(strDir + path, tmp);
+			const int Cnt = load(strDir + path, tmp);
 			if (Cnt < 0)
 			{
 				files.push_back(path);
@@ -453,7 +450,7 @@ void fwrite(ofstream& fout, C& obj)
 template <typename T1, typename T2>
 void fwrite(ofstream& fout, const std::map<T1, T2>& m)
 {
-	short len = static_cast<short>(m.size());
+	const auto len = static_cast<short>(m.size());
 	fwrite(fout, len);
 	for (auto it : m)
 	{
@@ -465,7 +462,7 @@ void fwrite(ofstream& fout, const std::map<T1, T2>& m)
 template <typename T>
 void fwrite(ofstream& fout, const std::set<T>& s)
 {
-	short len = static_cast<short>(s.size());
+	const auto len = static_cast<short>(s.size());
 	fwrite(fout, len);
 	for (auto it : s)
 	{
@@ -520,7 +517,7 @@ void saveBFile(std::string strPath, std::map<T, C>& m)
 {
 	if (clrEmpty(strPath, m))return;
 	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
-	int len = m.size();
+	const int len = m.size();
 	fwrite<int>(fout, len);
 	for (auto& [key,val] : m)
 	{
@@ -535,7 +532,7 @@ void saveBFile(std::string strPath, std::unordered_map<T, C>& m)
 {
 	if (clrEmpty(strPath, m))return;
 	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
-	int len = m.size();
+	const int len = m.size();
 	fwrite<int>(fout, len);
 	for (auto& [key, val] : m)
 	{

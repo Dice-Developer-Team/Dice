@@ -9,17 +9,13 @@
 #include <vector>
 #include <map>
 #include <set>
-#include <time.h>
 #include <Windows.h>
 #include <thread>
 #include <chrono>
 #include "STLExtern.hpp"
 #include "DiceXMLTree.h"
-//#include "DiceMod.h"
-//#include "DiceSensitive.h"
 #include "DiceFile.hpp"
 #include "MsgFormat.h"
-#include "GlobalVar.h"
 #include "DiceMsgSend.h"
 #include "CQEVE_ALL.h"
 using namespace std::literals::chrono_literals;
@@ -62,7 +58,7 @@ public:
 	//通知列表 1-日常活动/2-提醒事件/4-接收消息/8-警告内容/16-用户推送/32-骰娘广播
 	int log(const std::string& msg, int lv, const std::string& strTime = "");
 	operator bool() const { return isMasterMode && masterQQ; }
-	long long master() const { return masterQQ; }
+	[[nodiscard]] long long master() const { return masterQQ; }
 	void newMaster(long long);
 
 	void killMaster()
@@ -81,9 +77,9 @@ public:
 
 	int setClock(Clock c, ClockEvent e);
 	int rmClock(Clock c, ClockEvent e);
-	ResList listClock() const;
-	ResList listNotice() const;
-	int showNotice(chatType ct) const;
+	[[nodiscard]] ResList listClock() const;
+	[[nodiscard]] ResList listNotice() const;
+	[[nodiscard]] int showNotice(chatType ct) const;
 	void setPath(std::string path) { strPath = std::move(path); }
 
 	void set(const std::string& key, int val)

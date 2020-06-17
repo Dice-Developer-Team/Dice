@@ -16,7 +16,7 @@ static bool is_base64(const unsigned char c) noexcept
 	return isalnum(c) || c == '+' || c == '/';
 }
 
-string base64_encode(const string& decode_string) noexcept
+string base64_encode(const string& decode_string)
 {
 	auto in_len = decode_string.size();
 	auto bytes_to_encode = decode_string.data();
@@ -62,7 +62,7 @@ string base64_encode(const string& decode_string) noexcept
 	return ret;
 }
 
-string base64_decode(const string& encoded_string) noexcept
+string base64_decode(const string& encoded_string)
 {
 	int in_len = encoded_string.size();
 	auto i = 0;

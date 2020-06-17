@@ -7,6 +7,9 @@
 #include <utility>
 #include "ManagerSystem.h"
 
+#include "CardDeck.h"
+#include "GlobalVar.h"
+
 string DiceDir = "DiceData";
 //被引用的图片列表
 set<string> sReferencedImage;
@@ -121,7 +124,7 @@ int clearImage()
 	{
 		scanImage(it.second.strConf, sReferencedImage);
 	}
-	string strLog = "整理" + GlobalMsg["strSelfName"] + "被引用图片" + to_string(sReferencedImage.size()) + "项";
+	const string strLog = "整理" + GlobalMsg["strSelfName"] + "被引用图片" + to_string(sReferencedImage.size()) + "项";
 	console.log(strLog, 0b0, printSTNow());
 	return clrDir("data\\image\\", sReferencedImage);
 }
@@ -160,22 +163,22 @@ __int64 getWinCpuUsage()
 	Sleep(1000);
 	if (!GetSystemTimes(&idleTime, &kernelTime, &userTime)) return -1;
 
-	__int64 idle = compareFileTime(idleTime, preidleTime);
-	__int64 kernel = compareFileTime(kernelTime, prekernelTime);
-	__int64 user = compareFileTime(userTime, preuserTime);
+	const __int64 idle = compareFileTime(idleTime, preidleTime);
+	const __int64 kernel = compareFileTime(kernelTime, prekernelTime);
+	const __int64 user = compareFileTime(userTime, preuserTime);
 
-	__int64 cpu = (kernel + user - idle) * 100 / (kernel + user);
+	const __int64 cpu = (kernel + user - idle) * 100 / (kernel + user);
 	return cpu;
 }
 
 int getProcessCpu()
 {
-	HANDLE hProcess = GetCurrentProcess();
+	const HANDLE hProcess = GetCurrentProcess();
 	//if (INVALID_HANDLE_VALUE == hProcess){return -1;}
 
 	SYSTEM_INFO si;
 	GetSystemInfo(&si);
-	__int64 iCpuNum = si.dwNumberOfProcessors;
+	const __int64 iCpuNum = si.dwNumberOfProcessors;
 
 	FILETIME ftPreKernelTime, ftPreUserTime;
 	FILETIME ftKernelTime, ftUserTime;
@@ -187,9 +190,9 @@ int getProcessCpu()
 	Sleep(1000);
 	if (!GetProcessTimes(hProcess, &ftCreationTime, &ftExitTime, &ftKernelTime, &ftUserTime)) { return -1; }
 	log << ftKernelTime.dwLowDateTime << "\n" << ftUserTime.dwLowDateTime << "\n";
-	__int64 ullKernelTime = compareFileTime(ftKernelTime, ftPreKernelTime);
-	__int64 ullUserTime = compareFileTime(ftUserTime, ftPreUserTime);
+	const __int64 ullKernelTime = compareFileTime(ftKernelTime, ftPreKernelTime);
+	const __int64 ullUserTime = compareFileTime(ftUserTime, ftPreUserTime);
 	log << ullKernelTime << "\n" << ullUserTime << "\n" << iCpuNum;
-	__int64 dCpu = (ullKernelTime + ullUserTime) / (iCpuNum * 100);
+	const __int64 dCpu = (ullKernelTime + ullUserTime) / (iCpuNum * 100);
 	return static_cast<int>(dCpu);
 }

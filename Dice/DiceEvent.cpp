@@ -1,6 +1,6 @@
 #include <Windows.h>
 #include <TlHelp32.h>
-#include <Psapi.h>
+#include <iostream>
 #include "DiceEvent.h"
 #include "Jsonio.h"
 #include "MsgFormat.h"
@@ -10,9 +10,10 @@
 #include "CharacterCard.h"
 #include "DiceSession.h"
 #include "GetRule.h"
-
 #include "CQAPI.h"
-#include <iostream>
+#include "DiceNetwork.h"
+#include "DiceCloud.h"
+
 //#pragma warning(disable:28159)
 using namespace std;
 using namespace CQ;
@@ -21,7 +22,7 @@ void FromMsg::FwdMsg(const string& message)
 {
 	if (mFwdList.count(fromChat) && !isLinkOrder)
 	{
-		auto range = mFwdList.equal_range(fromChat);
+		const auto range = mFwdList.equal_range(fromChat);
 		string strFwd;
 		if (trusted < 5)strFwd += printFrom();
 		strFwd += message;
@@ -602,7 +603,7 @@ int FromMsg::AdminEvent(const string& strOption)
 
 int FromMsg::MasterSet()
 {
-	std::string strOption = readPara();
+	const std::string strOption = readPara();
 	if (strOption.empty())
 	{
 		reply(GlobalMsg["strAdminOptionEmpty"]);
@@ -610,7 +611,7 @@ int FromMsg::MasterSet()
 	}
 	if (strOption == "groupclr")
 	{
-		std::string strPara = readRest();
+		const std::string strPara = readRest();
 		clearGroup(strPara, fromQQ);
 		return 1;
 	}
@@ -632,7 +633,7 @@ int FromMsg::MasterSet()
 			reply(GlobalMsg["strNotMaster"]);
 			return 1;
 		}
-		string strMaster = readDigit();
+		const string strMaster = readDigit();
 		if (strMaster.empty() || stoll(strMaster) == console.master())
 		{
 			reply("Master不要消遣于我!");
@@ -3447,7 +3448,7 @@ int FromMsg::DiceReply()
 		}
 		string attr = "理智";
 		int intSan = 0;
-		short* pSan = (short*)&intSan;
+		auto* pSan = (short*)&intSan;
 		if (readNum(intSan))
 		{
 			if (PList.count(fromQQ) && getPlayer(fromQQ)[fromGroup].count(attr))
@@ -4201,7 +4202,7 @@ int FromMsg::DiceReply()
 
 int FromMsg::CustomReply()
 {
-	string strKey = readRest();
+	const string strKey = readRest();
 	if (auto deck = CardDeck::mReplyDeck.find(strKey); deck != CardDeck::mReplyDeck.end()
 		|| (!isBotOff && (deck = CardDeck::mReplyDeck.find(strMsg)) != CardDeck::mReplyDeck.end()))
 	{
@@ -4225,7 +4226,7 @@ bool FromMsg::DiceFilter()
 		strMsg.erase(strMsg.begin());
 	init(strMsg);
 	bool isOtherCalled = false;
-	string strAt = "[CQ:at,qq=" + to_string(getLoginQQ()) + "]";
+	const string strAt = "[CQ:at,qq=" + to_string(getLoginQQ()) + "]";
 	while (strMsg.substr(0, 6) == "[CQ:at")
 	{
 		if (strMsg.substr(0, strAt.length()) == strAt)
@@ -4287,8 +4288,8 @@ int FromMsg::readNum(int& num)
 
 int FromMsg::readChat(chatType& ct, bool isReroll)
 {
-	int intFormor = intMsgCnt;
-	if (string strT = readPara(); strT == "me")
+	const int intFormor = intMsgCnt;
+	if (const string strT = readPara(); strT == "me")
 	{
 		ct = {fromQQ, msgtype::Private};
 		return 0;
@@ -4318,7 +4319,7 @@ int FromMsg::readChat(chatType& ct, bool isReroll)
 			return -1;
 		}
 	}
-	if (long long llID = readID(); llID)
+	if (const long long llID = readID(); llID)
 	{
 		ct.first = llID;
 		return 0;

@@ -200,7 +200,7 @@ namespace CQ
 
 		explicit GroupInfo(long long group);
 		GroupInfo() = default;
-		std::string tostring() const;
+		[[nodiscard]] std::string tostring() const;
 	};
 	// 群成员信息
 	class GroupMemberInfo final
@@ -228,7 +228,7 @@ namespace CQ
 		explicit GroupMemberInfo(const std::vector<unsigned char>& data); //从Unpack解码
 		GroupMemberInfo() = default;
 
-		std::string tostring() const;
+		[[nodiscard]] std::string tostring() const;
 	};
 	// 好友信息
 	class FriendInfo final
@@ -240,7 +240,7 @@ namespace CQ
 
 		explicit FriendInfo(Unpack p);
 		FriendInfo() = default;
-		std::string tostring() const;
+		[[nodiscard]] std::string tostring() const;
 	};
 	// 陌生人信息
 	class StrangerInfo final
@@ -254,6 +254,6 @@ namespace CQ
 		explicit StrangerInfo(const char* msg);
 		StrangerInfo() = default;
 
-		std::string tostring() const;
+		[[nodiscard]] std::string tostring() const;
 	};
 }

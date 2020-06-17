@@ -46,7 +46,7 @@ public:
 		vChild.push_back(std::move(dom));
 	}
 
-	bool count(const string& key) const
+	[[nodiscard]] bool count(const string& key) const
 	{
 		return mChild.count(key);
 	}

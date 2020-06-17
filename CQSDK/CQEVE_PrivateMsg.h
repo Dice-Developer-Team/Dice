@@ -34,22 +34,22 @@ namespace CQ
 		EVEPrivateMsg(int subType, int msgId, long long fromQQ, const char* msg, int font) noexcept;
 
 		//来自好友
-		bool fromPrivate() const noexcept;
+		[[nodiscard]] bool fromPrivate() const noexcept;
 
 		//来自在线状态
-		bool fromOnlineStatus() const noexcept;
+		[[nodiscard]] bool fromOnlineStatus() const noexcept;
 
 		//来自群临时
-		bool fromGroup() const noexcept;
+		[[nodiscard]] bool fromGroup() const noexcept;
 
 		//来自讨论组临时
-		bool fromDiscuss() const noexcept;
+		[[nodiscard]] bool fromDiscuss() const noexcept;
 
 		// 通过 EVEMsg 继承
-		msg sendMsg() const noexcept override;
+		[[nodiscard]] msg sendMsg() const noexcept override;
 
 		int sendMsg(const char*) const noexcept override;
 
-		int sendMsg(const std::string&) const noexcept override;
+		[[nodiscard]] int sendMsg(const std::string&) const noexcept override;
 	};
 }

@@ -62,7 +62,7 @@ int Console::setClock(Clock c, ClockEvent e)
 
 int Console::rmClock(Clock c, ClockEvent e)
 {
-	if (auto it = match(mWorkClock, c, e); it != mWorkClock.end())
+	if (const auto it = match(mWorkClock, c, e); it != mWorkClock.end())
 	{
 		mWorkClock.erase(it);
 		save();
@@ -111,7 +111,7 @@ ResList Console::listNotice() const
 
 int Console::showNotice(chatType ct) const
 {
-	if (auto it = NoticeList.find(ct); it != NoticeList.end())return it->second;
+	if (const auto it = NoticeList.find(ct); it != NoticeList.end())return it->second;
 	return 0;
 }
 
@@ -146,7 +146,7 @@ int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 	fout << strTime << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 	fout.close();
 	int Cnt = 0;
-	string note = strTime.empty() ? strMsg : (strTime + " " + strMsg);
+	const string note = strTime.empty() ? strMsg : (strTime + " " + strMsg);
 	if (note_lv)
 	{
 		for (auto& [ct, level] : NoticeList)
@@ -378,7 +378,7 @@ void ConsoleTimer()
 			{
 				if (console["SystemAlarmCPU"])
 				{
-					long long perCPU = getWinCpuUsage();
+					const long long perCPU = getWinCpuUsage();
 					if (perCPU > console["SystemAlarmCPU"] && perCPU > perLastCPU)console.log(
 						"警告：" + GlobalMsg["strSelfName"] + "所在系统CPU占用达" + to_string(perCPU) + "%", 0b1001,
 						printSTime(stNow));
@@ -389,7 +389,7 @@ void ConsoleTimer()
 				}
 				if (console["SystemAlarmRAM"])
 				{
-					long long perRAM = getRamPort();
+					const long long perRAM = getRamPort();
 					if (perRAM > console["SystemAlarmRAM"] && perRAM > perLastRAM)console.log(
 						"警告：" + GlobalMsg["strSelfName"] + "所在系统内存占用达" + to_string(perRAM) + "%", 0b1001,
 						printSTime(stNow));
@@ -537,16 +537,16 @@ int clearGroup(string strPara, long long fromQQ)
 
 EVE_Menu(eventClearGroupUnpower)
 {
-	int intGroupCnt = clearGroup("unpower");
-	string strReply = "已清退无权限群聊" + to_string(intGroupCnt) + "个√";
+	const int intGroupCnt = clearGroup("unpower");
+	const string strReply = "已清退无权限群聊" + to_string(intGroupCnt) + "个√";
 	MessageBoxA(nullptr, strReply.c_str(), "一键清退", MB_OK | MB_ICONINFORMATION);
 	return 0;
 }
 
 EVE_Menu(eventClearGroup30)
 {
-	int intGroupCnt = clearGroup("30");
-	string strReply = "已清退30天未使用群聊" + to_string(intGroupCnt) + "个√";
+	const int intGroupCnt = clearGroup("30");
+	const string strReply = "已清退30天未使用群聊" + to_string(intGroupCnt) + "个√";
 	MessageBoxA(nullptr, strReply.c_str(), "一键清退", MB_OK | MB_ICONINFORMATION);
 	return 0;
 }

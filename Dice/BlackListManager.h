@@ -5,7 +5,6 @@
  */
 #pragma once
 #include <string>
-#include "StrExtern.hpp"
 #include <utility>
 #include <vector>
 #include <map>
@@ -60,18 +59,18 @@ public:
 	friend class DDBlackManager;
 	friend class DDBlackMarkFactory;
 	//warning文本生成
-	string printJson(int tab) const;
-	string warning() const;
-	std::string getData() const;
+	[[nodiscard]] string printJson(int tab) const;
+	[[nodiscard]] string warning() const;
+	[[nodiscard]] string getData() const;
 	void fill_note();
 	//是否合法构造
 	bool isValid = false;
 	bool isClear = false;
-	bool isType() const;
-	bool isType(const string& strType) const;
-	bool isSame(const DDBlackMark&) const;
-	bool isSource(long long) const;
-	bool is_remit() const;
+	[[nodiscard]] bool isType() const;
+	[[nodiscard]] bool isType(const string& strType) const;
+	[[nodiscard]] bool isSame(const DDBlackMark&) const;
+	[[nodiscard]] bool isSource(long long) const;
+	[[nodiscard]] bool is_remit() const;
 	DDBlackMark& operator<<(const DDBlackMark&);
 	//bool operator<(const DDBlackMark&)const;
 };
@@ -103,8 +102,8 @@ public:
 	//未注销黑名单的危险等级
 	unordered_map<long long, short> mQQDanger;
 	unordered_map<long long, short> mGroupDanger;
-	short get_group_danger(long long) const;
-	short get_qq_danger(long long) const;
+	[[nodiscard]] short get_group_danger(long long) const;
+	[[nodiscard]] short get_qq_danger(long long) const;
 	void isban(FromMsg*);
 	string list_group_warning(long long);
 	string list_qq_warning(long long);

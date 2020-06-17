@@ -33,10 +33,10 @@
 // 事实上是GB18030
 std::string GBKtoUTF8(const std::string& strGBK)
 {
-	int UTF16len = MultiByteToWideChar(CP_GB18030, 0, strGBK.c_str(), -1, nullptr, 0);
+	const int UTF16len = MultiByteToWideChar(CP_GB18030, 0, strGBK.c_str(), -1, nullptr, 0);
 	auto* const strUTF16 = new wchar_t[UTF16len];
 	MultiByteToWideChar(CP_GB18030, 0, strGBK.c_str(), -1, strUTF16, UTF16len);
-	int UTF8len = WideCharToMultiByte(CP_UTF8, 0, strUTF16, -1, nullptr, 0, nullptr, nullptr);
+	const int UTF8len = WideCharToMultiByte(CP_UTF8, 0, strUTF16, -1, nullptr, 0, nullptr, nullptr);
 	auto* const strUTF8 = new char[UTF8len];
 	WideCharToMultiByte(CP_UTF8, 0, strUTF16, -1, strUTF8, UTF8len, nullptr, nullptr);
 	std::string strOutUTF8(strUTF8);
@@ -55,10 +55,10 @@ std::vector<std::string> GBKtoUTF8(const std::vector<std::string>& strGBK)
 // 事实上是GB18030
 std::string UTF8toGBK(const std::string& strUTF8)
 {
-	int UTF16len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
+	const int UTF16len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
 	auto* const strUTF16 = new wchar_t[UTF16len];
 	MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, strUTF16, UTF16len);
-	int GBKlen = WideCharToMultiByte(CP_GB18030, 0, strUTF16, -1, nullptr, 0, nullptr, nullptr);
+	const int GBKlen = WideCharToMultiByte(CP_GB18030, 0, strUTF16, -1, nullptr, 0, nullptr, nullptr);
 	auto* const strGBK = new char[GBKlen];
 	WideCharToMultiByte(CP_GB18030, 0, strUTF16, -1, strGBK, GBKlen, nullptr, nullptr);
 	std::string strOutGBK(strGBK);
@@ -122,8 +122,8 @@ std::string UrlDecode(const std::string& str)
 		else if (str[i] == '%')
 		{
 			assert(i + 2 < length);
-			unsigned char high = FromHex(static_cast<unsigned char>(str[++i]));
-			unsigned char low = FromHex(static_cast<unsigned char>(str[++i]));
+			const unsigned char high = FromHex(static_cast<unsigned char>(str[++i]));
+			const unsigned char low = FromHex(static_cast<unsigned char>(str[++i]));
 			strTemp += high * 16 + low;
 		}
 		else strTemp += str[i];

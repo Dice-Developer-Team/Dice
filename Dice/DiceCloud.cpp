@@ -27,7 +27,7 @@ namespace Cloud
 	void update()
 	{
 		const string strVer = GBKtoUTF8(string(Dice_Ver));
-		string data = "DiceQQ=" + to_string(console.DiceMaid) + "&masterQQ=" + to_string(console.master()) + "&Ver=" +
+		const string data = "DiceQQ=" + to_string(console.DiceMaid) + "&masterQQ=" + to_string(console.master()) + "&Ver=" +
 			strVer + "&isGlobalOn=" + to_string(!console["DisabledGlobal"]) + "&isPublic=" +
 			to_string(!console["Private"]) + "&isVisible=" + to_string(console["CloudVisible"]);
 		char* frmdata = new char[data.length() + 1];

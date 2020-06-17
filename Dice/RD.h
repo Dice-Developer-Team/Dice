@@ -64,13 +64,13 @@ private:
 		if (dice.find('a') != std::string::npos)
 		{
 			vBnP.push_back(WW_Dice);
-			std::string strDiceCnt = dice.substr(0, dice.find("a"));
+			std::string strDiceCnt = dice.substr(0, dice.find('a'));
 			for (auto i : strDiceCnt)
 				if (!isdigit(static_cast<unsigned char>(i)))
 					return Input_Err;
 			if (strDiceCnt.length() > 3)
 				return DiceTooBig_Err;
-			std::string strAddVal = dice.substr(dice.find("a") + 1);
+			std::string strAddVal = dice.substr(dice.find('a') + 1);
 			for (auto i : strAddVal)
 				if (!isdigit(static_cast<unsigned char>(i)))
 					return Input_Err;
@@ -263,14 +263,14 @@ private:
 		}
 		if (!boolContainK)
 		{
-			if (dice.substr(0, dice.find("D")).length() > 3 || (dice.substr(0, dice.find("D")).length() == 3 && dice.
-				substr(0, dice.find("D")) != "100"))
+			if (dice.substr(0, dice.find('D')).length() > 3 || (dice.substr(0, dice.find('D')).length() == 3 && dice.
+				substr(0, dice.find('D')) != "100"))
 				return DiceTooBig_Err;
-			if (dice.substr(dice.find("D") + 1).length() > 4 || (dice.substr(dice.find("D") + 1).length() == 4 && dice.
-				substr(dice.find("D") + 1) != "1000"))
+			if (dice.substr(dice.find('D') + 1).length() > 4 || (dice.substr(dice.find('D') + 1).length() == 4 && dice.
+				substr(dice.find('D') + 1) != "1000"))
 				return TypeTooBig_Err;
-			int intDiceCnt = dice.substr(0, dice.find("D")).length() == 0 ? 1 : stoi(dice.substr(0, dice.find("D")));
-			const int intDiceType = stoi(dice.substr(dice.find("D") + 1));
+			int intDiceCnt = dice.substr(0, dice.find('D')).length() == 0 ? 1 : stoi(dice.substr(0, dice.find('D')));
+			const int intDiceType = stoi(dice.substr(dice.find('D') + 1));
 			if (intDiceCnt == 0)
 				return ZeroDice_Err;
 			if (intDiceType == 0)
@@ -292,17 +292,17 @@ private:
 			vintRes.push_back(intTmpRes * intMultiplier / intDivider);
 			return 0;
 		}
-		if (dice.substr(dice.find("K") + 1).length() > 3)
+		if (dice.substr(dice.find('K') + 1).length() > 3)
 			return Value_Err;
-		const int intKNum = stoi(dice.substr(dice.find("K") + 1));
-		dice = dice.substr(0, dice.find("K"));
-		if (dice.substr(0, dice.find("D")).length() > 3 || (dice.substr(0, dice.find("D")).length() == 3 && dice.
-			substr(0, dice.find("D")) != "100"))
+		const int intKNum = stoi(dice.substr(dice.find('K') + 1));
+		dice = dice.substr(0, dice.find('K'));
+		if (dice.substr(0, dice.find('D')).length() > 3 || (dice.substr(0, dice.find('D')).length() == 3 && dice.
+			substr(0, dice.find('D')) != "100"))
 			return DiceTooBig_Err;
-		if (dice.substr(dice.find("D") + 1).length() > 4)
+		if (dice.substr(dice.find('D') + 1).length() > 4)
 			return TypeTooBig_Err;
-		int intDiceCnt = dice.substr(0, dice.find("D")).length() == 0 ? 1 : stoi(dice.substr(0, dice.find("D")));
-		const int intDiceType = stoi(dice.substr(dice.find("D") + 1));
+		int intDiceCnt = dice.substr(0, dice.find('D')).length() == 0 ? 1 : stoi(dice.substr(0, dice.find('D')));
+		const int intDiceType = stoi(dice.substr(dice.find('D') + 1));
 		if (intKNum <= 0 || intDiceCnt == 0)
 			return ZeroDice_Err;
 		if (intKNum > intDiceCnt)
@@ -334,16 +334,16 @@ private:
 	{
 		const bool boolNegative = *(vboolNegative.end() - 1);
 		int intSum;
-		if (dice.find("D") != std::string::npos)
+		if (dice.find('D') != std::string::npos)
 		{
-			std::string strDiceCnt = dice.substr(dice.find("D") + 1);
+			std::string strDiceCnt = dice.substr(dice.find('D') + 1);
 			for (auto& i : strDiceCnt)
 			{
 				if (!isdigit(static_cast<unsigned char>(i))) return Input_Err;
 			}
 			if (strDiceCnt.length() > 3) return DiceTooBig_Err;
 			const int intDiceCnt = stoi(strDiceCnt);
-			strDiceCnt = dice.substr(0, dice.find("D"));
+			strDiceCnt = dice.substr(0, dice.find('D'));
 			for (auto& i : strDiceCnt)
 			{
 				if (!isdigit(static_cast<unsigned char>(i))) return Input_Err;
@@ -353,7 +353,7 @@ private:
 		}
 		else
 		{
-			for (auto& i : dice)
+			for (auto i : dice)
 			{
 				if (!isdigit(static_cast<unsigned char>(i))) return Input_Err;
 			}
@@ -371,9 +371,9 @@ private:
 	{
 		const bool boolNegative = *(vboolNegative.end() - 1);
 		int intSum;
-		if (dice.find("D") != std::string::npos)
+		if (dice.find('D') != std::string::npos)
 		{
-			std::string strDiceCnt = dice.substr(0, dice.find("D"));
+			std::string strDiceCnt = dice.substr(0, dice.find('D'));
 			for (auto& i : strDiceCnt)
 			{
 				if (!isdigit(static_cast<unsigned char>(i))) return Input_Err;
@@ -383,7 +383,7 @@ private:
 		}
 		else
 		{
-			for (auto& i : dice)
+			for (auto i : dice)
 			{
 				if (!isdigit(static_cast<unsigned char>(i))) return Input_Err;
 			}
@@ -539,12 +539,12 @@ public:
 		if (dice[dice.length() - 1] == '+' || dice[dice.length() - 1] == '-' || dice[dice.length() - 1] == 'X' || dice[
 			dice.length() - 1] == '/')
 			return Input_Err;
-		while (dice.find("+", intReadDiceLoc) != std::string::npos || dice.find("-", intReadDiceLoc) != std::string::
+		while (dice.find('+', intReadDiceLoc) != std::string::npos || dice.find('-', intReadDiceLoc) != std::string::
 			npos)
 		{
-			const int intSymbolPosition = dice.find("+", intReadDiceLoc) < dice.find("-", intReadDiceLoc)
-				                              ? dice.find("+", intReadDiceLoc)
-				                              : dice.find("-", intReadDiceLoc);
+			const int intSymbolPosition = dice.find('+', intReadDiceLoc) < dice.find('-', intReadDiceLoc)
+				                              ? dice.find('+', intReadDiceLoc)
+				                              : dice.find('-', intReadDiceLoc);
 			const int intRDRes = RollDice(dice.substr(intReadDiceLoc, intSymbolPosition - intReadDiceLoc));
 			if (intRDRes != 0)
 				return intRDRes;
@@ -575,12 +575,12 @@ public:
 			vboolNegative.push_back(false);
 		if (dice[dice.length() - 1] == '+' || dice[dice.length() - 1] == '-')
 			return Input_Err;
-		while (dice.find("+", intReadDiceLoc) != std::string::npos || dice.find("-", intReadDiceLoc) != std::string::
+		while (dice.find('+', intReadDiceLoc) != std::string::npos || dice.find('-', intReadDiceLoc) != std::string::
 			npos)
 		{
-			const int intSymbolPosition = dice.find("+", intReadDiceLoc) < dice.find("-", intReadDiceLoc)
-				                              ? dice.find("+", intReadDiceLoc)
-				                              : dice.find("-", intReadDiceLoc);
+			const int intSymbolPosition = dice.find('+', intReadDiceLoc) < dice.find('-', intReadDiceLoc)
+				                              ? dice.find('+', intReadDiceLoc)
+				                              : dice.find('-', intReadDiceLoc);
 			strtemp = dice.substr(intReadDiceLoc, intSymbolPosition - intReadDiceLoc);
 			if (*(vboolNegative.end() - 1)) intRDRes = MinDice(strtemp);
 			else intRDRes = MaxDice(strtemp);
@@ -611,12 +611,12 @@ public:
 			vboolNegative.push_back(false);
 		if (dice[dice.length() - 1] == '+' || dice[dice.length() - 1] == '-')
 			return Input_Err;
-		while (dice.find("+", intReadDiceLoc) != std::string::npos || dice.find("-", intReadDiceLoc) != std::string::
+		while (dice.find('+', intReadDiceLoc) != std::string::npos || dice.find('-', intReadDiceLoc) != std::string::
 			npos)
 		{
-			const int intSymbolPosition = dice.find("+", intReadDiceLoc) < dice.find("-", intReadDiceLoc)
-				                              ? dice.find("+", intReadDiceLoc)
-				                              : dice.find("-", intReadDiceLoc);
+			const int intSymbolPosition = dice.find('+', intReadDiceLoc) < dice.find('-', intReadDiceLoc)
+				                              ? dice.find('+', intReadDiceLoc)
+				                              : dice.find('-', intReadDiceLoc);
 			strtemp = dice.substr(intReadDiceLoc, intSymbolPosition - intReadDiceLoc);
 			if (!*(vboolNegative.end() - 1)) intRDRes = MinDice(strtemp);
 			else intRDRes = MaxDice(strtemp);

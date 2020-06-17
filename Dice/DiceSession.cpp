@@ -26,7 +26,7 @@ string DiceSession::table_prior_show(string key) const
 
 bool DiceSession::table_clr(string key)
 {
-	if (auto it = mTable.find(key); it != mTable.end())
+	if (const auto it = mTable.find(key); it != mTable.end())
 	{
 		mTable.erase(it);
 		update();
@@ -95,10 +95,10 @@ int DiceSession::ob_clr(FromMsg* msg)
 void DiceSession::save() const
 {
 	mkDir(DiceDir + "\\user\\session");
-	ofstream fout(DiceDir + "\\user\\session\\" + to_string(room) + ".json");
+	ofstream fout(DiceDir + R"(\user\session\)" + to_string(room) + ".json");
 	if (!fout)
 	{
-		console.log("群开团信息保存失败:" + DiceDir + "\\user\\session\\" + to_string(room), 1);
+		console.log("群开团信息保存失败:" + DiceDir + R"(\user\session\)" + to_string(room), 1);
 		return;
 	}
 	nlohmann::json jData;
@@ -132,7 +132,7 @@ Session& DiceTableMaster::session(long long group)
 void DiceTableMaster::session_end(long long group)
 {
 	std::unique_lock<std::shared_mutex> lock(sessionMutex);
-	remove((DiceDir + "\\user\\session\\" + to_string(group)).c_str());
+	remove((DiceDir + R"(\user\session\)" + to_string(group)).c_str());
 	mSession.erase(group);
 }
 
@@ -148,12 +148,12 @@ void DiceTableMaster::save()
 	}
 }
 
-int DiceTableMaster::load()
+int DiceTableMaster::load() const
 {
 	// string strLog;
 	std::unique_lock<std::shared_mutex> lock(sessionMutex);
 	vector<std::filesystem::path> sFile;
-	int cnt = listDir(DiceDir + "\\user\\session\\", sFile);
+	int cnt = listDir(DiceDir + R"(\user\session\)", sFile);
 	if (cnt <= 0)return cnt;
 	for (auto& filename : sFile)
 	{

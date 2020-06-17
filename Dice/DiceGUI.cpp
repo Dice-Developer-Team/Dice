@@ -7,12 +7,13 @@
 #include <CommCtrl.h>
 #include <shellapi.h>
 #include <type_traits>
+#include <utility>
 
 #include "DiceEvent.h"
 #include "DiceConsole.h"
 #include "GlobalVar.h"
 #include "Jsonio.h"
-#include "Resource.h"
+#include "resource.h"
 
 #pragma comment(lib, "comctl32.lib")
 
@@ -23,13 +24,15 @@ template <typename T>
 class BaseWindow
 {
 public:
+	virtual ~BaseWindow() = default;
+
 	static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
-		T* pThis = nullptr;
+		T* pThis;
 
 		if (uMsg == WM_NCCREATE)
 		{
-			LPCREATESTRUCTA pCreate = reinterpret_cast<LPCREATESTRUCTA>(lParam);
+			auto pCreate = reinterpret_cast<LPCREATESTRUCTA>(lParam);
 			pThis = static_cast<T*>(pCreate->lpCreateParams);
 			SetWindowLongPtrA(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
 
@@ -63,7 +66,7 @@ public:
 		HMENU hMenu = nullptr
 	)
 	{
-		WNDCLASS wc = {0};
+		WNDCLASS wc{};
 
 		wc.lpfnWndProc = T::WindowProc;
 		wc.hInstance = hDllModule;
@@ -81,11 +84,11 @@ public:
 		return (m_hwnd ? TRUE : FALSE);
 	}
 
-	HWND Window() const { return m_hwnd; }
+	[[nodiscard]] HWND Window() const { return m_hwnd; }
 
 protected:
 
-	virtual PCSTR ClassName() const = 0;
+	[[nodiscard]] virtual PCSTR ClassName() const = 0;
 	virtual LRESULT HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) = 0;
 
 	HWND m_hwnd;
@@ -100,7 +103,7 @@ public:
 	{
 	}
 
-	HWND Window() const { return hwnd; }
+	[[nodiscard]] HWND Window() const { return hwnd; }
 
 	BOOL Create(
 		PCSTR lpWindowName,
@@ -234,7 +237,7 @@ public:
 	{
 	}
 
-	HWND Window() const { return hwnd; }
+	[[nodiscard]] HWND Window() const { return hwnd; }
 
 	BOOL Create(
 		PCSTR lpWindowName,
@@ -268,8 +271,8 @@ public:
 
 	[[nodiscard]] std::string GetText()
 	{
-		int length = Edit_GetTextLength(hwnd) + 1;
-		std::unique_ptr<char[]> uptr = std::make_unique<char[]>(length);
+		const int length = Edit_GetTextLength(hwnd) + 1;
+		const std::unique_ptr<char[]> uptr = std::make_unique<char[]>(length);
 		if (uptr)
 		{
 			Edit_GetText(hwnd, uptr.get(), length);
@@ -295,7 +298,7 @@ public:
 	{
 	}
 
-	HWND Window() const { return hwnd; }
+	[[nodiscard]] HWND Window() const { return hwnd; }
 
 	BOOL Create(
 		PCSTR lpWindowName,
@@ -344,7 +347,7 @@ public:
 	{
 	}
 
-	HWND Window() const { return hwnd; }
+	[[nodiscard]] HWND Window() const { return hwnd; }
 
 	BOOL Create(
 		PCSTR lpWindowName,
@@ -383,8 +386,8 @@ public:
 
 	[[nodiscard]] std::string GetText()
 	{
-		int length = Static_GetTextLength(hwnd) + 1;
-		std::unique_ptr<char[]> uptr = std::make_unique<char[]>(length);
+		const int length = Static_GetTextLength(hwnd) + 1;
+		const std::unique_ptr<char[]> uptr = std::make_unique<char[]>(length);
 		if (uptr)
 		{
 			Static_GetText(hwnd, uptr.get(), length);
@@ -402,7 +405,7 @@ protected:
 	HWND hwnd;
 };
 
-class DiceGUI : public BaseWindow<DiceGUI>
+class DiceGUI final : public BaseWindow<DiceGUI>
 {
 public:
 	int CurrentTab = 0;
@@ -451,7 +454,7 @@ public:
 
 	DiceGUI(const std::unordered_map<long long, string>& nicknameMp);
 	DiceGUI(std::unordered_map<long long, string>&& nicknameMp);
-	PCSTR ClassName() const override { return "DiceGUI"; }
+	[[nodiscard]] PCSTR ClassName() const override { return "DiceGUI"; }
 	LRESULT HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 	LRESULT CreateCustomMsgPage();
 	LRESULT CreateMasterPage();
@@ -471,10 +474,10 @@ struct ListViewSorting
 int CALLBACK ListViewUserTrustComp(LPARAM lp1, LPARAM lp2, LPARAM sortParam)
 {
 	ListViewSorting sort = *reinterpret_cast<ListViewSorting*>(sortParam);
-	bool isAsc = sort.isAsc;
-	int column = sort.Column;
-	std::string str1 = sort.pLV->GetItemText(lp1, column);
-	std::string str2 = sort.pLV->GetItemText(lp2, column);
+	const bool isAsc = sort.isAsc;
+	const int column = sort.Column;
+	const std::string str1 = sort.pLV->GetItemText(lp1, column);
+	const std::string str2 = sort.pLV->GetItemText(lp2, column);
 	try
 	{
 		switch (column)
@@ -488,7 +491,6 @@ int CALLBACK ListViewUserTrustComp(LPARAM lp1, LPARAM lp2, LPARAM sortParam)
 				return static_cast<int>(std::clamp(std::stoll(str2) - std::stoll(str1), static_cast<long long>(INT_MIN),
 				                                   static_cast<long long>(INT_MAX)));
 			}
-			break;
 		case 1:
 			return 0;
 		case 2:
@@ -500,7 +502,6 @@ int CALLBACK ListViewUserTrustComp(LPARAM lp1, LPARAM lp2, LPARAM sortParam)
 				return static_cast<int>(std::clamp(std::stoll(str2) - std::stoll(str1), static_cast<long long>(INT_MIN),
 				                                   static_cast<long long>(INT_MAX)));
 			}
-			break;
 		default:
 			return 0;
 		}
@@ -509,7 +510,6 @@ int CALLBACK ListViewUserTrustComp(LPARAM lp1, LPARAM lp2, LPARAM sortParam)
 	{
 		return 0;
 	}
-	return 0;
 }
 
 DiceGUI::DiceGUI(std::unordered_map<long long, string>&& nicknameMp) : nicknameMp(std::move(nicknameMp))
@@ -586,8 +586,6 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			return 0;
 		}
-
-		return 0;
 	case WM_CLOSE:
 		if (MessageBoxA(m_hwnd, "未点击保存/设置的项目不会被保存，确认退出?", "Dice! GUI", MB_OKCANCEL) == IDOK)
 		{
@@ -779,17 +777,16 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			default:
 				return DefWindowProc(m_hwnd, uMsg, wParam, lParam);
 			}
-			return TRUE;
 		}
 	case WM_NOTIFY:
 		{
-			switch (((LPNMHDR)lParam)->code)
+			switch (reinterpret_cast<LPNMHDR>(lParam)->code)
 			{
 			case LVN_ITEMACTIVATE:
 				{
-					if (((LPNMHDR)lParam)->idFrom == IDM_LIST_MSG)
+					if (reinterpret_cast<LPNMHDR>(lParam)->idFrom == IDM_LIST_MSG)
 					{
-						LPNMITEMACTIVATE lpnmitem = (LPNMITEMACTIVATE)lParam;
+						auto lpnmitem = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
 						if (lpnmitem->iItem != -1)
 						{
 							std::string text = ListViewCustomMsg.GetItemText(lpnmitem->iItem);
@@ -798,9 +795,9 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 						}
 						return 0;
 					}
-					if (((LPNMHDR)lParam)->idFrom == ID_MASTER_LISTVIEWUSERTRUST)
+					if (reinterpret_cast<LPNMHDR>(lParam)->idFrom == ID_MASTER_LISTVIEWUSERTRUST)
 					{
-						LPNMITEMACTIVATE lpnmitem = (LPNMITEMACTIVATE)lParam;
+						auto lpnmitem = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
 						if (lpnmitem->iItem != -1)
 						{
 							string text = ListViewUserTrust.GetItemText(lpnmitem->iItem);
@@ -809,9 +806,9 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 							EditUserTrustLevel.SetText(trust);
 						}
 					}
-					else if (((LPNMHDR)lParam)->idFrom == ID_MASTER_LISTVIEWCONFIG)
+					else if (reinterpret_cast<LPNMHDR>(lParam)->idFrom == ID_MASTER_LISTVIEWCONFIG)
 					{
-						LPNMITEMACTIVATE lpnmitem = (LPNMITEMACTIVATE)lParam;
+						auto lpnmitem = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
 						if (lpnmitem->iItem != -1)
 						{
 							string text = ListViewConfig.GetItemText(lpnmitem->iItem);
@@ -823,9 +820,9 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				return 0;
 			case LVN_COLUMNCLICK:
-				if (((LPNMHDR)lParam)->idFrom == ID_MASTER_LISTVIEWUSERTRUST)
+				if (reinterpret_cast<LPNMHDR>(lParam)->idFrom == ID_MASTER_LISTVIEWUSERTRUST)
 				{
-					LPNMLISTVIEW pLVInfo = reinterpret_cast<LPNMLISTVIEW>(lParam);
+					auto pLVInfo = reinterpret_cast<LPNMLISTVIEW>(lParam);
 					static int nSortColumn = 0;
 					static BOOL bSortAscending = TRUE;
 
@@ -857,7 +854,6 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	default:
 		return DefWindowProc(m_hwnd, uMsg, wParam, lParam);
 	}
-	return TRUE;
 }
 
 LRESULT DiceGUI::CreateCustomMsgPage()
@@ -868,16 +864,16 @@ LRESULT DiceGUI::CreateCustomMsgPage()
 	DiceLogger.Info(to_string(rcClient.bottom));
 
 	ButtonSaveCustomMsg.Create("保存", WS_CHILD | WS_VISIBLE, 0,
-	                           80, rcClient.bottom - 70, 70, 30, m_hwnd, (HMENU)IDB_BUTTON_SAVE);
+	                           80, rcClient.bottom - 70, 70, 30, m_hwnd, reinterpret_cast<HMENU>(IDB_BUTTON_SAVE));
 
 	EditCustomMsg.Create("请双击列表中的项目",
 	                     WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | WS_BORDER, 0,
-	                     300, rcClient.bottom - 80, rcClient.right - rcClient.left - 320, 60, m_hwnd, (HMENU)ID_EDIT);
+	                     300, rcClient.bottom - 80, rcClient.right - rcClient.left - 320, 60, m_hwnd, reinterpret_cast<HMENU>(ID_EDIT));
 
 
 	StaticMainLabel.Create("欢迎来到Dice!自定义回复修改面板\r\n请双击右侧标题，在下方更改文本\r\n更改文本后请点击保存\r\n每个文本修改后均需点击一次",
 	                       WS_CHILD | WS_VISIBLE, 0,
-	                       25, 40, 230, 200, m_hwnd, (HMENU)ID_MAINLABEL);
+	                       25, 40, 230, 200, m_hwnd, reinterpret_cast<HMENU>(ID_MAINLABEL));
 
 	ListViewCustomMsg.Create("",
 	                         WS_CHILD | LVS_REPORT | WS_VISIBLE | WS_BORDER | LVS_SINGLESEL,
@@ -886,7 +882,7 @@ LRESULT DiceGUI::CreateCustomMsgPage()
 	                         rcClient.right - rcClient.left - 320,
 	                         rcClient.bottom - rcClient.top - 140,
 	                         m_hwnd,
-	                         (HMENU)IDM_LIST_MSG);
+	                         reinterpret_cast<HMENU>(IDM_LIST_MSG));
 	ListViewCustomMsg.SetExtendedListViewStyle(
 		LVS_EX_DOUBLEBUFFER | LVS_EX_AUTOSIZECOLUMNS | LVS_EX_TWOCLICKACTIVATE | LVS_EX_UNDERLINEHOT);
 
@@ -911,17 +907,17 @@ LRESULT DiceGUI::CreateMasterPage()
 	GetClientRect(m_hwnd, &rcClient);
 	ButtonMaster.Create("设置Master",
 	                    WS_CHILD | WS_VISIBLE, 0, rcClient.right - 180, 40, 140, 30,
-	                    m_hwnd, (HMENU)ID_MASTER_BUTTONMASTER);
+	                    m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_BUTTONMASTER));
 
 	StaticMasterLabel.Create(
 		(!console ? "Master模式已关闭" : ("当前的Master为" + to_string(console.masterQQ) + "(设置QQ为0以关闭Master模式)").c_str()),
 		WS_CHILD | WS_VISIBLE | SS_CENTERIMAGE, 0, 30, 40, 450, 30,
-		m_hwnd, (HMENU)ID_MASTER_LABELMASTER);
+		m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_LABELMASTER));
 
 	EditMaster.Create("0",
 	                  WS_CHILD | WS_VISIBLE | ES_NUMBER | WS_BORDER,
 	                  0, 490, 40, 200, 30,
-	                  m_hwnd, (HMENU)ID_MASTER_EDITMASTER);
+	                  m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_EDITMASTER));
 
 	ListViewUserTrust.Create("",
 	                         WS_CHILD | LVS_REPORT | WS_VISIBLE | WS_BORDER | LVS_SINGLESEL,
@@ -930,39 +926,39 @@ LRESULT DiceGUI::CreateMasterPage()
 	                         500,
 	                         rcClient.bottom - rcClient.top - 170,
 	                         m_hwnd,
-	                         (HMENU)ID_MASTER_LISTVIEWUSERTRUST);
+	                         reinterpret_cast<HMENU>(ID_MASTER_LISTVIEWUSERTRUST));
 	ListViewUserTrust.SetExtendedListViewStyle(
 		LVS_EX_DOUBLEBUFFER | LVS_EX_AUTOSIZECOLUMNS | LVS_EX_TWOCLICKACTIVATE | LVS_EX_UNDERLINEHOT);
 	ListViewUserTrust.AddAllTextColumn({"QQ", "昵称", "信任等级"});
 	int index = 0;
 	for (const auto& item : UserList)
 	{
-		string qq = to_string(item.first);
-		string trust = to_string(item.second.nTrust);
-		string nick = nicknameMp[item.first];
+		const string qq = to_string(item.first);
+		const string trust = to_string(item.second.nTrust);
+		const string nick = nicknameMp[item.first];
 		ListViewUserTrust.AddTextRow({qq, nick, trust}, index);
 		index++;
 	}
 
 
 	EditUserTrustID.Create(nullptr, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_NUMBER, 0,
-	                       30, 90, 200, 30, m_hwnd, (HMENU)ID_MASTER_EDITUSERTRUSTID);
+	                       30, 90, 200, 30, m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_EDITUSERTRUSTID));
 
 	ButtonUserRemove.Create("移除", WS_CHILD | WS_VISIBLE, 0, 240, 90, 80, 30, m_hwnd,
-	                        (HMENU)ID_MASTER_BUTTONUSERTRUSTREMOVE);
+	                        reinterpret_cast<HMENU>(ID_MASTER_BUTTONUSERTRUSTREMOVE));
 
 	StaticUserTrustLabel.Create("信任等级:", WS_CHILD | WS_VISIBLE | SS_CENTER | SS_CENTERIMAGE, 0,
 	                            330, 90, 60, 30, m_hwnd);
 
 	EditUserTrustLevel.Create("0", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_NUMBER, 0,
-	                          400, 90, 40, 30, m_hwnd, (HMENU)ID_MASTER_EDITUSERTRUSTLEVEL);
+	                          400, 90, 40, 30, m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_EDITUSERTRUSTLEVEL));
 
 	ButtonUserTrustLevelSet.Create("设置", WS_CHILD | WS_VISIBLE, 0, 450, 90, 80, 30, m_hwnd,
-	                               (HMENU)ID_MASTER_BUTTONUSERTRUSTSET);
+	                               reinterpret_cast<HMENU>(ID_MASTER_BUTTONUSERTRUSTSET));
 
 	ListViewConfig.Create(nullptr, WS_CHILD | LVS_REPORT | WS_VISIBLE | WS_BORDER | LVS_SINGLESEL,
 	                      0, 550, 140, rcClient.right - rcClient.left - 590, rcClient.bottom - rcClient.top - 170,
-	                      m_hwnd, (HMENU)ID_MASTER_LISTVIEWCONFIG);
+	                      m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_LISTVIEWCONFIG));
 
 	ListViewConfig.SetExtendedListViewStyle(
 		LVS_EX_DOUBLEBUFFER | LVS_EX_AUTOSIZECOLUMNS | LVS_EX_TWOCLICKACTIVATE | LVS_EX_UNDERLINEHOT);
@@ -971,7 +967,7 @@ LRESULT DiceGUI::CreateMasterPage()
 	int index1 = 0;
 	for (const auto& item : console.intDefault)
 	{
-		string value = to_string(console[item.first.c_str()]);
+		const string value = to_string(console[item.first.c_str()]);
 		ListViewConfig.AddTextRow({item.first, value}, index1);
 		index1++;
 	}
@@ -980,16 +976,16 @@ LRESULT DiceGUI::CreateMasterPage()
 	                                 550, 90, 60, 30, m_hwnd);
 
 	StaticCurrentConfigLabel.Create("无", WS_CHILD | WS_VISIBLE | SS_CENTERIMAGE, 0,
-	                                620, 90, 150, 30, m_hwnd, (HMENU)ID_MASTER_STATICCURRENTCONFIGLABEL);
+	                                620, 90, 150, 30, m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_STATICCURRENTCONFIGLABEL));
 
 	StaticValueLabel.Create("值:", WS_CHILD | WS_VISIBLE | SS_CENTER | SS_CENTERIMAGE, 0,
 	                        780, 90, 40, 30, m_hwnd);
 
 	EditConfigValue.Create("0", WS_CHILD | WS_VISIBLE | ES_NUMBER | WS_BORDER, 0,
-	                       830, 90, 100, 30, m_hwnd, (HMENU)ID_MASTER_EDITCONFIGVALUE);
+	                       830, 90, 100, 30, m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_EDITCONFIGVALUE));
 
 	ButtonConfigSet.Create("设置", WS_CHILD | WS_VISIBLE, 0,
-	                       940, 90, rcClient.right - rcClient.left - 980, 30, m_hwnd, (HMENU)ID_MASTER_BUTTONCONFIGSET);
+	                       940, 90, rcClient.right - rcClient.left - 980, 30, m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_BUTTONCONFIGSET));
 
 	HFONT Yahei18 = Fonts["Yahei18"];
 	ButtonMaster.SetFont(Yahei18);
@@ -1023,19 +1019,19 @@ LRESULT DiceGUI::CreateAboutPage()
 	                          40, 440, 200, 30, m_hwnd);
 
 	ButtonSupport.Create("赞助我们", WS_CHILD | WS_VISIBLE, 0,
-	                     250, 440, 90, 30, m_hwnd, (HMENU)ID_ABOUT_BUTTONSUPPORT);
+	                     250, 440, 90, 30, m_hwnd, reinterpret_cast<HMENU>(ID_ABOUT_BUTTONSUPPORT));
 
 	ButtonDocument.Create("访问文档", WS_CHILD | WS_VISIBLE, 0,
-	                      40, 480, 80, 30, m_hwnd, (HMENU)ID_ABOUT_BUTTONDOCUMENT);
+	                      40, 480, 80, 30, m_hwnd, reinterpret_cast<HMENU>(ID_ABOUT_BUTTONDOCUMENT));
 
 	ButtonGithub.Create("访问源码", WS_CHILD | WS_VISIBLE, 0,
-	                    150, 480, 80, 30, m_hwnd, (HMENU)ID_ABOUT_BUTTONGITHUB);
+	                    150, 480, 80, 30, m_hwnd, reinterpret_cast<HMENU>(ID_ABOUT_BUTTONGITHUB));
 
 	ButtonQQGroup.Create("加官方群", WS_CHILD | WS_VISIBLE, 0,
-	                     260, 480, 80, 30, m_hwnd, (HMENU)ID_ABOUT_BUTTONQQGROUP);
+	                     260, 480, 80, 30, m_hwnd, reinterpret_cast<HMENU>(ID_ABOUT_BUTTONQQGROUP));
 
-	HBITMAP hBitmap = static_cast<HBITMAP>(LoadImageA(hDllModule, MAKEINTRESOURCEA(ID_BITMAP_DICELOGO), IMAGE_BITMAP, 0,
-	                                                  0, LR_SHARED));
+	auto hBitmap = static_cast<HBITMAP>(LoadImageA(hDllModule, MAKEINTRESOURCEA(ID_BITMAP_DICELOGO), IMAGE_BITMAP, 0,
+	                                               0, LR_SHARED));
 	StaticImageDiceLogo.SetBitmap(hBitmap);
 
 

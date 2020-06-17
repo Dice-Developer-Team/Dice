@@ -30,7 +30,7 @@ int count_char(const string& s, char ch)
 
 string convert_w2a(const wchar_t* wch)
 {
-	int len = WideCharToMultiByte(CP_GB18030, 0, wch, -1, nullptr, 0, nullptr, nullptr);
+	const int len = WideCharToMultiByte(CP_GB18030, 0, wch, -1, nullptr, 0, nullptr, nullptr);
 	char* m_char = new char[len];
 	WideCharToMultiByte(CP_GB18030, 0, wch, -1, m_char, len, nullptr, nullptr);
 	std::string str(m_char);
@@ -40,8 +40,8 @@ string convert_w2a(const wchar_t* wch)
 
 wstring convert_a2w(const char* ch)
 {
-	int len = MultiByteToWideChar(CP_GB18030, 0, ch, -1, nullptr, 0);
-	wchar_t* m_char = new wchar_t[len];
+	const int len = MultiByteToWideChar(CP_GB18030, 0, ch, -1, nullptr, 0);
+	auto* m_char = new wchar_t[len];
 	MultiByteToWideChar(CP_GB18030, 0, ch, -1, m_char, len);
 	std::wstring wstr(m_char);
 	delete[] m_char;

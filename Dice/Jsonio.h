@@ -31,12 +31,12 @@ public:
 		return *this;
 	}
 
-	bool empty() const
+	[[nodiscard]] bool empty() const
 	{
 		return vRes.empty();
 	}
 
-	size_t size() const
+	[[nodiscard]] size_t size() const
 	{
 		return vRes.size();
 	}

@@ -22,7 +22,7 @@ void AddFrq(long long QQ, time_t TT, chatType CT)
 	std::lock_guard<std::mutex> lock_queue(FrqMutex);
 	if (setFrq.count(QQ)) return;
 	setFrq.insert(QQ);
-	FrqMonitor* newFrq = new FrqMonitor(QQ, TT, CT);
+	auto* newFrq = new FrqMonitor(QQ, TT, CT);
 	EarlyMsgQueue.push(newFrq);
 }
 
@@ -107,7 +107,7 @@ EVE_Status_EX(statusFrq)
 		return;
 	}
 	//平滑到分钟的频度
-	int intFrq = FrqMonitor::getFrqTotal();
+	const int intFrq = FrqMonitor::getFrqTotal();
 	//long long llDuration = (clock() - llStartTime) / 1000;
 	if (intFrq < 0)
 	{

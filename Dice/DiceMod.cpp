@@ -15,8 +15,8 @@ string DiceModManager::format(string s, const map<string, string, less_ci>& dict
 	//直接重定向
 	if (s[0] == '&')
 	{
-		string key = s.substr(1);
-		auto it = dict.find(key);
+		const string key = s.substr(1);
+		const auto it = dict.find(key);
 		if (it != dict.end())
 		{
 			return format(it->second, dict, mod_name);
@@ -47,7 +47,7 @@ string DiceModManager::format(string s, const map<string, string, less_ci>& dict
 
 string DiceModManager::get_help(const string& key) const
 {
-	if (auto it = helpdoc.find(key); it != helpdoc.end())
+	if (const auto it = helpdoc.find(key); it != helpdoc.end())
 	{
 		return format(it->second, helpdoc);
 	}
@@ -68,7 +68,7 @@ int DiceModManager::load(string& strLog)
 {
 	vector<std::filesystem::path> sFile;
 	vector<string> sFileErr;
-	int cntFile = listDir(DiceDir + "\\mod\\", sFile, true);
+	const int cntFile = listDir(DiceDir + "\\mod\\", sFile, true);
 	int cntItem{0};
 	if (cntFile <= 0)return cntFile;
 	for (auto& filename : sFile)

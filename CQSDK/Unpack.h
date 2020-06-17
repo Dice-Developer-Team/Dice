@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 
-void show(void* t, int len) noexcept;
+void show(void* t, int len);
 
 class Unpack final
 {
@@ -15,7 +15,7 @@ public:
 
 	Unpack& setData(const char* i, int len) noexcept;
 	Unpack& clear() noexcept;
-	int len() const noexcept;
+	[[nodiscard]] int len() const noexcept;
 
 	Unpack& add(int i) noexcept; //添加一个整数
 	int getInt() noexcept; //弹出一个整数

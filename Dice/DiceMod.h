@@ -4,6 +4,7 @@
  */
 #pragma once
 #include <string>
+#include <utility>
 #include <vector>
 #include <map>
 #include <memory>
@@ -39,12 +40,12 @@ class DiceMod
 	map<string, DiceGenerator> m_generator;*/
 public:
 
-	DiceMod(const string& name,
-	        const map<string, string, less_ci>& helpdoc /*,
+	DiceMod(string name,
+	        map<string, string, less_ci> helpdoc /*,
 	map<string, vector<string>> private_deck,
 	map<string, vector<string>> public_deck,
 	map<string, DiceGenerator> generator*/
-	) : mod_name(name), m_helpdoc(helpdoc)
+	) : mod_name(std::move(name)), m_helpdoc(std::move(helpdoc))
 	/*,m_private_deck(private_deck),m_public_deck(public_deck),m_generator(generator)*/
 	{
 	}
@@ -58,7 +59,7 @@ public:
 	DiceModManager();
 	friend void loadData();
 	string format(string, const map<string, string, less_ci>&, const char*) const;
-	string get_help(const string&) const;
+	[[nodiscard]] string get_help(const string&) const;
 	void set_help(const string&, const string&);
 	void rm_help(const string&);
 	int load(string&);

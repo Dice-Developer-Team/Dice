@@ -33,6 +33,10 @@ public:
 	virtual void read() = 0;
 	virtual void save() const = 0;
 	StorageBase(std::string FilePath);
+    StorageBase(const StorageBase&) = delete;
+    StorageBase(StorageBase&&) = delete;
 	virtual ~StorageBase() = default;
+    virtual StorageBase& operator=(const StorageBase&) = delete;
+    virtual StorageBase& operator=(StorageBase&&) = delete;
 };
 #endif /*DICE_STORAGE_BASE*/

@@ -2,10 +2,10 @@
 #include <string>
 
 //base64±àÂë
-std::string base64_encode(const std::string& decode_string) noexcept;
+std::string base64_encode(const std::string& decode_string);
 
 //base64½âÂë
-std::string base64_decode(const std::string& encoded_string) noexcept;
+std::string base64_decode(const std::string& encoded_string);
 
 //Ìæ»»
 std::string& msg_replace(std::string& s, const std::string& old, const std::string& n);

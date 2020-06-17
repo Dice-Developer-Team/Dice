@@ -6,10 +6,11 @@
 #define DICE_EVENT
 #include <map>
 #include <set>
-#include <queue>
+#include <utility>
 #include "CQAPI_EX.h"
 #include "MsgMonitor.h"
 #include "DiceMsgSend.h"
+#include "GlobalVar.h"
 
 using std::string;
 
@@ -30,23 +31,20 @@ public:
 	//临时变量库
 	map<string, string> strVar = {};
 
-	FromMsg(const std::string& message, long long fromNum) : strMsg(message), fromID(fromNum), fromQQ(fromNum)
+	FromMsg(std::string message, long long fromNum) : strMsg(std::move(message)), fromID(fromNum), fromQQ(fromNum)
 	{
 		fromChat = {fromID, CQ::msgtype::Private};
 	}
 
-	FromMsg(const std::string& message, long long fromGroup, CQ::msgtype msgType, long long fromNum) : strMsg(message),
-	                                                                                                   fromID(
-		                                                                                                   fromGroup),
-	                                                                                                   fromType(
-		                                                                                                   msgType),
-	                                                                                                   fromQQ(fromNum),
-	                                                                                                   fromGroup(
-		                                                                                                   fromGroup),
-	                                                                                                   fromChat({
-		                                                                                                   fromGroup,
-		                                                                                                   fromType
-	                                                                                                   })
+	FromMsg(std::string message, long long fromGroup, CQ::msgtype msgType, long long fromNum) : strMsg(std::move(message)),
+	                                                                                            fromID(fromGroup),
+	                                                                                            fromType(msgType),
+	                                                                                            fromQQ(fromNum),
+	                                                                                            fromGroup(fromGroup),
+	                                                                                            fromChat({
+		                                                                                            fromGroup,
+		                                                                                            fromType
+	                                                                                            })
 	{
 		pGrp = &chat(fromGroup);
 	}
@@ -71,7 +69,7 @@ public:
 			return;
 		}
 		int index = 0;
-		for (auto s : replace_str)
+		for (const auto& s : replace_str)
 		{
 			strVar[to_string(index++)] = s;
 		}
@@ -92,7 +90,7 @@ public:
 		fout << printSTNow() << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 		fout.close();
 		reply(strMsg);
-		string note = getName(fromQQ) + strMsg;
+		const string note = getName(fromQQ) + strMsg;
 		for (const auto& [ct,level] : console.NoticeList)
 		{
 			if (!(level & note_lv) || pair(fromQQ, CQ::msgtype::Private) == ct || ct == fromChat)continue;
@@ -134,7 +132,7 @@ private:
 		if (trusted > 0)return trusted;
 		if (ChatList.count(group))
 		{
-			int per = CQ::getGroupMemberInfo(group, fromQQ).permissions;
+			const int per = CQ::getGroupMemberInfo(group, fromQQ).permissions;
 			if (per > 1)return 0;
 			if (per)return -1;
 		}
@@ -170,9 +168,9 @@ private:
 	string readUntilTab()
 	{
 		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
-		int intBegin = intMsgCnt;
+		const int intBegin = intMsgCnt;
 		int intEnd = intBegin;
-		unsigned int len = strMsg.length();
+		const unsigned int len = strMsg.length();
 		while (intMsgCnt < len && (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == ' '))
 		{
 			if (strMsg[intMsgCnt] != ' ' || strMsg[intEnd] != ' ')intEnd = intMsgCnt;
@@ -233,7 +231,7 @@ private:
 	//读取群号
 	long long readID()
 	{
-		string strGroup = readDigit();
+		const string strGroup = readDigit();
 		if (strGroup.empty() || strGroup.length() > 18) return 0;
 		return stoll(strGroup);
 	}
@@ -282,7 +280,7 @@ private:
 		bool inBracket = false;
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' ||
 			strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
-		int intBegin = intMsgCnt;
+		const int intBegin = intMsgCnt;
 		while (intMsgCnt != strMsg.length())
 		{
 			if (inBracket)
@@ -318,9 +316,9 @@ private:
 	string readToColon()
 	{
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
-		int intBegin = intMsgCnt;
+		const int intBegin = intMsgCnt;
 		int intEnd = intBegin;
-		unsigned int len = strMsg.length();
+		const unsigned int len = strMsg.length();
 		while (intMsgCnt < len && strMsg[intMsgCnt] != '=' && strMsg[intMsgCnt] != ':')
 		{
 			if (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || (!isspace(
@@ -336,9 +334,9 @@ private:
 	string readAttrName()
 	{
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
-		int intBegin = intMsgCnt;
+		const int intBegin = intMsgCnt;
 		int intEnd = intBegin;
-		unsigned int len = strMsg.length();
+		const unsigned int len = strMsg.length();
 		while (intMsgCnt < len && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))
 			&& strMsg[intMsgCnt] != '=' && strMsg[intMsgCnt] != ':'
 			&& strMsg[intMsgCnt] != '+' && strMsg[intMsgCnt] != '-' && strMsg[intMsgCnt] != '*' && strMsg[intMsgCnt] !=
@@ -362,9 +360,9 @@ private:
 
 	int readClock(Console::Clock& cc)
 	{
-		string strHour = readDigit();
+		const string strHour = readDigit();
 		if (strHour.empty())return -1;
-		unsigned short nHour = stoi(strHour);
+		const unsigned short nHour = stoi(strHour);
 		if (nHour > 23)return -2;
 		cc.first = nHour;
 		if (strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '.')intMsgCnt++;
@@ -375,8 +373,8 @@ private:
 			cc.second = 0;
 			return 0;
 		}
-		string strMin = readDigit();
-		unsigned short nMin = stoi(strMin);
+		const string strMin = readDigit();
+		const unsigned short nMin = stoi(strMin);
 		if (nMin > 59)return -2;
 		cc.second = nMin;
 		return 0;

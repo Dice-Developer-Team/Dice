@@ -7,8 +7,6 @@
 #include "json.hpp"
 #include "RandomGenerator.h"
 #include "GlobalVar.h"
-//#include "DiceMsgSend.h"
-#include "EncodingConvert.h"
 #include "RD.h"
 using json = nlohmann::json;
 
@@ -1060,7 +1058,7 @@ namespace CardDeck
 		}
 		else
 		{
-			int ans = RandomGenerator::Randint(0, TempDeck.size() - 1);
+			const int ans = RandomGenerator::Randint(0, TempDeck.size() - 1);
 			strReply = TempDeck[ans];
 			if (!isBack)TempDeck.erase(TempDeck.begin() + ans);
 		}

@@ -3,7 +3,6 @@
  * Copyright (C) 2019 String.Empty
  */
 #pragma once
-#include "DiceNetwork.h"
 
 class FromMsg;
 

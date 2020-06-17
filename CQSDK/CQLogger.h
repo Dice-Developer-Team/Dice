@@ -42,13 +42,13 @@ namespace CQ
 		void Error(const char* msg) const noexcept;
 		void Fatal(const char* msg) const noexcept;
 
-		logstream Debug() const noexcept;
-		logstream Info() const noexcept;
-		logstream InfoSuccess() const noexcept;
-		logstream InfoRecv() const noexcept;
-		logstream InfoSend() const noexcept;
-		logstream Warning() const noexcept;
-		logstream Error() const noexcept;
-		logstream Fatal() const noexcept;
+		[[nodiscard]] logstream Debug() const noexcept;
+		[[nodiscard]] logstream Info() const noexcept;
+		[[nodiscard]] logstream InfoSuccess() const noexcept;
+		[[nodiscard]] logstream InfoRecv() const noexcept;
+		[[nodiscard]] logstream InfoSend() const noexcept;
+		[[nodiscard]] logstream Warning() const noexcept;
+		[[nodiscard]] logstream Error() const noexcept;
+		[[nodiscard]] logstream Fatal() const noexcept;
 	};
 }

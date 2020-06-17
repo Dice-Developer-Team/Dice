@@ -24,7 +24,7 @@ using std::to_string;
 using std::vector;
 using std::map;
 
-#define NOT_FOUND -32767
+constexpr short NOT_FOUND = -32767;
 
 inline map<string, short> mTempletTag = {
 	{"name", 1},
@@ -195,7 +195,7 @@ public:
 
 	string showItem()
 	{
-		string strItem = listKey(mBuildOption);
+		const string strItem = listKey(mBuildOption);
 		if (strItem.empty())return type;
 		return type + "[" + strItem + "]";
 	}
@@ -252,7 +252,7 @@ public:
 			if (sRef.count(key))return "";
 			return getExp(key);
 		}
-		int intCnt = 0, lp = 0, rp = 0;
+		int intCnt = 0, lp, rp;
 		while ((lp = exp.find('[', intCnt)) != std::string::npos && (rp = exp.find(']', lp)) != std::string::npos)
 		{
 			string strProp = exp.substr(lp + 1, rp - lp - 1);
@@ -295,22 +295,22 @@ public:
 			string key = exp.substr(1);
 			return call(key);
 		}
-		int intCnt = 0, lp = 0, rp = 0;
+		int intCnt = 0, lp, rp;
 		while ((lp = exp.find('[', intCnt)) != std::string::npos && (rp = exp.find(']', lp)) != std::string::npos)
 		{
 			string strProp = exp.substr(lp + 1, rp - lp - 1);
-			short val = call(strProp);
+			const short val = call(strProp);
 			exp.replace(exp.begin() + lp, exp.begin() + rp + 1, std::to_string(val));
 			intCnt = lp + std::to_string(val).length();
 		}
-		RD Res(exp);
+		const RD Res(exp);
 		Res.Roll();
 		return Res.intTotal;
 	}
 
 	void build(const string& para = "")
 	{
-		auto it = pTemplet->mBuildOption.find(para);
+		const auto it = pTemplet->mBuildOption.find(para);
 		if (it == pTemplet->mBuildOption.end())return;
 		CardBuild build = it->second;
 		for (auto it2 : build.vBuildList)
@@ -361,7 +361,7 @@ public:
 		}
 	}
 
-	string standard(string key) const
+	[[nodiscard]] string standard(string key) const
 	{
 		if (pTemplet->replaceName.count(key))return pTemplet->replaceName.find(key)->second;
 		return key;
@@ -403,7 +403,7 @@ public:
 
 	bool erase(string& key, bool isExp = false)
 	{
-		string strKey = standard(key);
+		const string strKey = standard(key);
 		if (pTemplet->sInfoList.count(key))
 		{
 			if (Info.count(key))
@@ -471,7 +471,7 @@ public:
 		return -1;
 	}
 
-	string show(bool isWhole) const
+	[[nodiscard]] string show(bool isWhole) const
 	{
 		std::set<string> sDefault;
 		ResList Res;
@@ -552,7 +552,7 @@ public:
 
 	void operator<<(const CharaCard& card)
 	{
-		string name = Name;
+		const string name = Name;
 		(*this) = card;
 		Name = name;
 	}
@@ -748,7 +748,7 @@ public:
 		//不存在则新建人物卡
 		if (!strName.empty() && !mNameIndex.count(strName))
 		{
-			if (int res = newCard(name, group))return res;
+			if (const int res = newCard(name, group))return res;
 			name = getCard(strName, group).Name;
 			(*this)[name].buildv();
 		}
@@ -793,7 +793,7 @@ public:
 		std::lock_guard<std::mutex> lock_queue(cardMutex);
 		if (mNameIndex.count(name_new))return -4;
 		if (name_new.find(":") != string::npos)return -6;
-		int i = mNameIndex[name_new] = mNameIndex[name];
+		const int i = mNameIndex[name_new] = mNameIndex[name];
 		mNameIndex.erase(name);
 		mCardList[i].Name = name_new;
 		return 0;
@@ -870,9 +870,9 @@ public:
 		while (cards.len() > 0)
 		{
 			Unpack card = cards.getUnpack();
-			int nIndex = card.getInt();
+			const int nIndex = card.getInt();
 			string name = card.getstring();
-			string type = card.getstring();
+			const string type = card.getstring();
 			mCardList[nIndex] = CharaCard(name, type);
 			mNameIndex[name] = nIndex;
 			Unpack skills = card.getUnpack();

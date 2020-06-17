@@ -12,8 +12,6 @@
 #include <unordered_map>
 #include "DiceFile.hpp"
 #include "DiceConsole.h"
-#include "GlobalVar.h"
-#include "CardDeck.h"
 #include "MsgFormat.h"
 using std::string;
 using std::to_string;
@@ -73,12 +71,12 @@ public:
 		return *this;
 	}
 
-	bool empty() const
+	[[nodiscard]] bool empty() const
 	{
 		return (!nTrust) && (!tUpdated) && intConf.empty() && strConf.empty() && strNick.empty();
 	}
 
-	string show() const
+	[[nodiscard]] string show() const
 	{
 		ResList res;
 		//res << "êÇ³Æ¼ÇÂ¼Êý:" + to_string(strNick.size());
@@ -261,7 +259,7 @@ public:
 		else CQ::setDiscussLeave(ID);
 	}
 
-	bool isset(const string& key) const
+	[[nodiscard]] bool isset(const string& key) const
 	{
 		return boolConf.count(key) || intConf.count(key) || strConf.count(key);
 	}
@@ -279,7 +277,7 @@ public:
 	string listBoolConf()
 	{
 		ResList res;
-		for (auto it : boolConf)
+		for (const auto& it : boolConf)
 		{
 			res << it;
 		}

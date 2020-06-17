@@ -7,8 +7,9 @@
 #include <ctime>
 #include "DiceConsole.h"
 #include "ManagerSystem.h"
-#include "DiceCloud.h"
+#include "GlobalVar.h"
 #include "BlackListManager.h"
+#include "DiceEvent.h"
 
 class FrqMonitor
 {
