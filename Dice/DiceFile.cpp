@@ -123,7 +123,7 @@ void fprint(std::ofstream& fout, std::string s)
 void fwrite(ofstream& fout, const std::string& s)
 {
 	auto len = static_cast<short>(s.length());
-	fout.write((char*)&len, sizeof(short));
+	fout.write(reinterpret_cast<char*>(&len), sizeof(short));
 	fout.write(s.c_str(), sizeof(char) * s.length());
 }
 
@@ -142,7 +142,7 @@ using namespace std;
 
 std::ifstream& operator>>(std::ifstream& fin, CQ::msgtype& t)
 {
-	fin >> (int&)t;
+	fin >> reinterpret_cast<int&>(t);
 	return fin;
 }
 
@@ -186,7 +186,7 @@ ofstream& operator<<(ofstream& fout, const Chat& grp)
 }
 
 template <typename T>
-int _listDir(const string& dir, vector<std::filesystem::path>& files) noexcept
+int _listDir(const string& dir, vector<std::filesystem::path>& files)
 {
 	int intFile = 0;
 	std::error_code err;

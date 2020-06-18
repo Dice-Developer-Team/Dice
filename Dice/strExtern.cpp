@@ -8,19 +8,20 @@ using std::string;
 using std::wstring;
 using std::to_string;
 
-#define CP_GB18030 54936
+#define CP_GB18030 (54936)
 
 string toString(int num, unsigned short size)
 {
-	string res{to_string(num)};
-	string sign{""};
+	string res = to_string(num);
+	string sign;
 	if (res[0] == '-')
 	{
 		res.erase(res.begin());
 		sign = "-";
 	}
-	while (res.length() < size)res = "0" + res;
-	return sign + res;
+	string ret(size - res.length(), '0');
+	ret.append(res);
+	return sign + ret;
 }
 
 int count_char(const string& s, char ch)

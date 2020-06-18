@@ -1,5 +1,8 @@
 #include "CQAPI_EX.h"
 
+#include <ctime>
+
+
 #include "CQAPI.h"
 #include "Unpack.h"
 #include "CQEVE_GroupMsg.h"
@@ -85,7 +88,7 @@ GroupMemberInfo::GroupMemberInfo(const char* msg)
 
 GroupMemberInfo::GroupMemberInfo(const vector<unsigned char>& data)
 {
-	if (data.size() != 0)
+	if (!data.empty())
 	{
 		Unpack u(data);
 		setdata(u);
@@ -323,7 +326,7 @@ StrangerInfo CQ::getStrangerInfo(const long long QQID, const CQBOOL DisableCache
 }
 
 //取群成员列表
-std::vector<GroupMemberInfo> CQ::getGroupMemberList(const long long GroupID) noexcept
+std::vector<GroupMemberInfo> CQ::getGroupMemberList(const long long GroupID)
 {
 	const char* ret = CQ_getGroupMemberList(getAuthCode(), GroupID);
 	if (!ret || ret[0] == '\0') return {};
@@ -343,8 +346,20 @@ std::vector<GroupMemberInfo> CQ::getGroupMemberList(const long long GroupID) noe
 
 #include <fstream>
 //取群列表
-std::map<long long, std::string> CQ::getGroupList() noexcept
+std::map<long long, std::string> CQ::getGroupList()
 {
+	static std::map<long long, std::string> ret;
+	static time_t lastUpdateTime = 0;
+
+	const time_t timeNow = time(nullptr);
+	if (timeNow - lastUpdateTime < 600 && !ret.empty())
+	{
+		return ret;
+	}
+
+	ret.clear();
+	lastUpdateTime = timeNow;
+
 	const char* src = CQ_getGroupList(getAuthCode());
 	if (!src || src[0] == '\0') return {};
 	const auto data(base64_decode(src)); // 解码
@@ -352,7 +367,6 @@ std::map<long long, std::string> CQ::getGroupList() noexcept
 	Unpack pack(data); // 转换为Unpack
 
 	pack.getInt(); //获取总群数, 返回值在此并没有用
-	std::map<long long, std::string> ret;
 	while (pack.len() > 0)
 	{
 		//如果还有剩余数据,就继续读取
@@ -365,15 +379,26 @@ std::map<long long, std::string> CQ::getGroupList() noexcept
 }
 
 //取好友列表
-std::map<long long, FriendInfo> CQ::getFriendList() noexcept
+std::map<long long, FriendInfo> CQ::getFriendList()
 {
+	static std::map<long long, FriendInfo> ret;
+	static time_t lastUpdateTime = 0;
+	
+	const time_t timeNow = time(nullptr);
+	if (timeNow - lastUpdateTime < 600 && !ret.empty())
+	{
+		return ret;
+	}
+	
+	ret.clear();
+	lastUpdateTime = timeNow;
+	
 	const char* src = CQ_getFriendList(getAuthCode(), false);
 	if (!src || src[0] == '\0') return {};
 	const auto data(base64_decode(src)); // 解码
 	if (data.empty())return {};
 	Unpack pack(data); // 获取原始数据转换为Unpack
 	int Cnt = pack.getInt(); //获取总数
-	std::map<long long, FriendInfo> ret;
 	while (Cnt--)
 	{
 		FriendInfo info(pack.getUnpack()); //读取

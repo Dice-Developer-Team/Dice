@@ -74,10 +74,9 @@ int Console::rmClock(Clock c, ClockEvent e)
 ResList Console::listClock() const
 {
 	ResList list;
-	string strClock;
-	for (auto& [clock, eve] : mWorkClock)
+	for (const auto& [clock, eve] : mWorkClock)
 	{
-		strClock = printClock(clock);
+		string strClock = printClock(clock);
 		switch (eve)
 		{
 		case ClockEvent::on:
@@ -102,7 +101,7 @@ ResList Console::listClock() const
 ResList Console::listNotice() const
 {
 	ResList list;
-	for (auto& [ct,lv] : NoticeList)
+	for (const auto& [ct,lv] : NoticeList)
 	{
 		list << printChat(ct) + " " + to_binary(lv);
 	}
@@ -182,13 +181,13 @@ void Console::loadNotice()
 	{
 		std::set<chatType> sChat;
 		if (loadFile(static_cast<string>(getAppDirectory()) + "MonitorList.RDconf", sChat) > 0)
-			for (auto& it : sChat)
+			for (const auto& it : sChat)
 			{
 				console.setNotice(it, 0b100000);
 			}
 		sChat.clear();
 		if (loadFile(DiceDir + "\\conf\\RecorderList.RDconf", sChat) > 0)
-			for (auto& it : sChat)
+			for (const auto& it : sChat)
 			{
 				console.setNotice(it, 0b11011);
 			}
@@ -205,7 +204,7 @@ void Console::loadNotice()
 	}
 }
 
-void Console::saveNotice()
+void Console::saveNotice() const
 {
 	saveFile(DiceDir + "\\conf\\NoticeList.txt", NoticeList);
 }
@@ -238,8 +237,8 @@ std::string printDate()
 
 std::string printDate(time_t tt)
 {
-	tm t;
-	if (!tt || localtime_s(&t, &tt))return "\?\?\?\?-\?\?-\?\?";
+	tm t{};
+	if (!tt || localtime_s(&t, &tt))return R"(????-??-??)";
 	return to_string(t.tm_year + 1900) + "-" + to_string(t.tm_mon + 1) + "-" + to_string(t.tm_mday);
 }
 
@@ -257,7 +256,7 @@ string printClock(std::pair<int, int> clock)
 	return strClock;
 }
 
-std::string printSTime(SYSTEMTIME st)
+std::string printSTime(const SYSTEMTIME st)
 {
 	return to_string(st.wYear) + "-" + (st.wMonth < 10 ? "0" : "") + to_string(st.wMonth) + "-" + (
 			st.wDay < 10 ? "0" : "") + to_string(st.wDay) + " " + (st.wHour < 10 ? "0" : "") + to_string(st.wHour) + ":"
@@ -270,11 +269,11 @@ std::string printSTime(SYSTEMTIME st)
 string printQQ(long long llqq)
 {
 	string nick = getStrangerInfo(llqq).nick;
-	if (nick.empty())nick = getFriendList()[llqq].nick;
-	while (nick.find(" ") != string::npos)nick.erase(nick.begin() + nick.find(" "),
-	                                                 nick.begin() + nick.find(" ") + strlen(" "));
-	while (nick.find(" ") != string::npos)nick.erase(nick.begin() + nick.find(" "),
-	                                                 nick.begin() + nick.find(" ") + strlen(" "));
+	string::size_type i;
+	while ((i = nick.find(' ')) != string::npos)
+	{
+		nick.erase(nick.begin() + i);
+	}
 	return nick + "(" + to_string(llqq) + ")";
 }
 
@@ -282,7 +281,11 @@ string printQQ(long long llqq)
 string printGroup(long long llgroup)
 {
 	if (!llgroup)return "Ë½ÁÄ";
-	if (getGroupList().count(llgroup))return getGroupList()[llgroup] + "(" + to_string(llgroup) + ")";
+	const auto GroupList = getGroupList();
+	if (GroupList.count(llgroup))
+	{
+		return GroupList.at(llgroup) + "(" + to_string(llgroup) + ")";
+	}
 	return "ÈºÁÄ(" + to_string(llgroup) + ")";
 }
 
@@ -340,7 +343,7 @@ void ConsoleTimer()
 		{
 			stTmp = stNow;
 			clockNow = {stNow.wHour, stNow.wMinute};
-			for (auto& [clock,eve_type] : multi_range(console.mWorkClock, clockNow))
+			for (const auto& [clock,eve_type] : multi_range(console.mWorkClock, clockNow))
 			{
 				switch (eve_type)
 				{
@@ -429,21 +432,21 @@ int clearGroup(string strPara, long long fromQQ)
 	}
 	else if (isdigit(static_cast<unsigned char>(strPara[0])))
 	{
-		int intDayLim = stoi(strPara);
-		string strDayLim = to_string(intDayLim);
-		time_t tNow = time(nullptr);
+		const int intDayLim = stoi(strPara);
+		const string strDayLim = to_string(intDayLim);
+		const time_t tNow = time(nullptr);
 		for (auto& [id, grp] : ChatList)
 		{
 			if (grp.isset("ºöÂÔ") || grp.isset("ÒÑÍË") || grp.isset("Î´½ø") || grp.isset("ÃâÇå"))continue;
 			time_t tLast = grp.tLastMsg;
 			if (grp.isGroup)
 			{
-				int tLMT = getGroupMemberInfo(id, console.DiceMaid).LastMsgTime;
+				const int tLMT = getGroupMemberInfo(id, console.DiceMaid).LastMsgTime;
 				if (tLMT > 0)
 					tLast = tLMT;
 			}
 			if (!tLast)continue;
-			int intDay = static_cast<int>(tNow - tLast) / 86400;
+			const int intDay = static_cast<int>(tNow - tLast) / 86400;
 			if (intDay > intDayLim)
 			{
 				strVar["day"] = to_string(intDay);
@@ -471,7 +474,7 @@ int clearGroup(string strPara, long long fromQQ)
 					if (console["LeaveBlackGroup"])grp.leave(getMsg("strBlackGroup"));
 				}
 				vector<GroupMemberInfo> MemberList = getGroupMemberList(id);
-				for (auto eachQQ : MemberList)
+				for (const auto& eachQQ : MemberList)
 				{
 					if (blacklist->get_qq_danger(eachQQ.QQID) > 1)
 					{

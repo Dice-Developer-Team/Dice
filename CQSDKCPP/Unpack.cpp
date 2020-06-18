@@ -43,7 +43,7 @@ unsigned char* toBin(ClassType& i) noexcept
 	return Flip(reinterpret_cast<unsigned char*>(&i), sizeof(ClassType));
 }
 
-Unpack& Unpack::setData(const char* i, const int len) noexcept
+Unpack& Unpack::setData(const char* i, const int len)
 {
 	buff.assign(i, i + len);
 	return *this;
@@ -51,7 +51,7 @@ Unpack& Unpack::setData(const char* i, const int len) noexcept
 
 Unpack::Unpack() noexcept = default;
 
-Unpack::Unpack(const char* data) noexcept
+Unpack::Unpack(const char* data)
 {
 	setData(data, strlen(data));
 }
@@ -60,7 +60,7 @@ Unpack::Unpack(std::vector<unsigned char> data) noexcept : buff(std::move(data))
 {
 }
 
-Unpack::Unpack(const std::string& data) noexcept
+Unpack::Unpack(const std::string& data)
 {
 	setData(data.data(), data.size());
 }
@@ -76,7 +76,7 @@ int Unpack::len() const noexcept
 	return buff.size();
 }
 
-Unpack& Unpack::add(int i) noexcept
+Unpack& Unpack::add(int i)
 {
 	const auto t = toBin<int>(i);
 	buff.insert(buff.end(), t, t + sizeof(int));
@@ -93,7 +93,7 @@ int Unpack::getInt() noexcept
 	return ret;
 }
 
-Unpack& Unpack::add(long long i) noexcept
+Unpack& Unpack::add(long long i)
 {
 	const auto t = toBin<long long>(i);
 	buff.insert(buff.end(), t, t + sizeof(long long));
@@ -110,7 +110,7 @@ long long Unpack::getLong() noexcept
 	return ret;
 }
 
-Unpack& Unpack::add(short i) noexcept
+Unpack& Unpack::add(short i)
 {
 	const auto t = toBin<short>(i);
 	buff.insert(buff.end(), t, t + sizeof(short));
@@ -127,7 +127,7 @@ short Unpack::getshort() noexcept
 	return ret;
 }
 
-Unpack& Unpack::add(const unsigned char* i, const short len) noexcept
+Unpack& Unpack::add(const unsigned char* i, const short len) 
 {
 	if (len < 0)
 		return *this;
@@ -147,7 +147,7 @@ std::vector<unsigned char> Unpack::getchars() noexcept
 	return tep;
 }
 
-Unpack& Unpack::add(string i) noexcept
+Unpack& Unpack::add(string i)
 {
 	if (i.empty()) //字符串长度为0,直接放入长度0
 	{
@@ -164,7 +164,7 @@ Unpack& Unpack::add(string i) noexcept
 	return *this;
 }
 
-string Unpack::getstring() noexcept
+string Unpack::getstring()
 {
 	auto tep = getchars();
 	if (tep.empty())return "";
@@ -173,7 +173,7 @@ string Unpack::getstring() noexcept
 	return string(reinterpret_cast<char*>(&tep[0]));
 }
 
-Unpack& Unpack::add(Unpack& i) noexcept
+Unpack& Unpack::add(Unpack& i)
 {
 	add(i.getAll());
 	return *this;
@@ -187,7 +187,7 @@ std::string Unpack::getAll() noexcept
 	return ret;
 }
 
-void Unpack::show() noexcept
+void Unpack::show()
 {
 	string out;
 	auto len = 0;

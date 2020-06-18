@@ -148,17 +148,14 @@ __int64 compareFileTime(const FILETIME& ft1, const FILETIME& ft2)
 
 __int64 getWinCpuUsage()
 {
-	FILETIME preidleTime;
-	FILETIME prekernelTime;
-	FILETIME preuserTime;
 	FILETIME idleTime;
 	FILETIME kernelTime;
 	FILETIME userTime;
 
 	if (!GetSystemTimes(&idleTime, &kernelTime, &userTime)) return -1;
-	preidleTime = idleTime;
-	prekernelTime = kernelTime;
-	preuserTime = userTime;
+	FILETIME preidleTime = idleTime;
+	FILETIME prekernelTime = kernelTime;
+	FILETIME preuserTime = userTime;
 
 	Sleep(1000);
 	if (!GetSystemTimes(&idleTime, &kernelTime, &userTime)) return -1;

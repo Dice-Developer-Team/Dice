@@ -148,7 +148,7 @@ public:
 	}
 
 	void loadNotice();
-	void saveNotice();
+	void saveNotice() const;
 private:
 	string strPath;
 	std::map<std::string, int, less_ci> intConf;

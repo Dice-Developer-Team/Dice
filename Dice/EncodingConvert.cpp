@@ -21,7 +21,7 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define CP_GB18030 54936
+#define CP_GB18030 (54936)
 #define WIN32_LEAN_AND_MEAN
 #include "EncodingConvert.h"
 #include <Windows.h>
@@ -124,7 +124,7 @@ std::string UrlDecode(const std::string& str)
 			assert(i + 2 < length);
 			const unsigned char high = FromHex(static_cast<unsigned char>(str[++i]));
 			const unsigned char low = FromHex(static_cast<unsigned char>(str[++i]));
-			strTemp += high * 16 + low;
+			strTemp += static_cast<char>(high * 16 + low);
 		}
 		else strTemp += str[i];
 	}

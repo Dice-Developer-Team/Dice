@@ -163,14 +163,14 @@ namespace CQ
 	StrangerInfo getStrangerInfo(long long QQID, CQBOOL DisableCache = false) noexcept;
 
 	//取群成员列表 Auth=160  
-	std::vector<GroupMemberInfo> getGroupMemberList(long long GroupID) noexcept;
+	std::vector<GroupMemberInfo> getGroupMemberList(long long GroupID);
 
 	//取群列表 Auth=161  
-	std::map<long long, std::string> getGroupList() noexcept;
+	std::map<long long, std::string> getGroupList();
 
 	class FriendInfo;
 	//取好友列表 Auth=162  
-	std::map<long long, FriendInfo> getFriendList() noexcept;
+	std::map<long long, FriendInfo> getFriendList();
 
 	//是否支持发送图片，返回true为支持，返回false为不支持
 	bool canSendImage() noexcept;
