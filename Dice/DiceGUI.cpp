@@ -771,7 +771,7 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				return 0;
 			case ID_ABOUT_BUTTONDOCUMENT:
 				{
-					MessageBoxA(m_hwnd, "文档正在整理中, 暂时不可用!", "Dice! GUI", MB_OK);
+					ShellExecute(m_hwnd, "open", "https://v2docs.kokona.tech", nullptr, nullptr, SW_SHOWDEFAULT);
 				}
 				return 0;
 			default:
@@ -860,8 +860,6 @@ LRESULT DiceGUI::CreateCustomMsgPage()
 {
 	RECT rcClient;
 	GetClientRect(m_hwnd, &rcClient);
-	DiceLogger.Info(to_string(rcClient.right));
-	DiceLogger.Info(to_string(rcClient.bottom));
 
 	ButtonSaveCustomMsg.Create("保存", WS_CHILD | WS_VISIBLE, 0,
 	                           80, rcClient.bottom - 70, 70, 30, m_hwnd, reinterpret_cast<HMENU>(IDB_BUTTON_SAVE));
@@ -1019,7 +1017,7 @@ LRESULT DiceGUI::CreateAboutPage()
 	                          40, 440, 200, 30, m_hwnd);
 
 	ButtonSupport.Create("赞助我们", WS_CHILD | WS_VISIBLE, 0,
-	                     250, 440, 90, 30, m_hwnd, reinterpret_cast<HMENU>(ID_ABOUT_BUTTONSUPPORT));
+	                     260, 440, 80, 30, m_hwnd, reinterpret_cast<HMENU>(ID_ABOUT_BUTTONSUPPORT));
 
 	ButtonDocument.Create("访问文档", WS_CHILD | WS_VISIBLE, 0,
 	                      40, 480, 80, 30, m_hwnd, reinterpret_cast<HMENU>(ID_ABOUT_BUTTONDOCUMENT));
@@ -1103,19 +1101,36 @@ int WINAPI GUIMain()
 	// Nickname存储结构
 	std::unordered_map<long long, string> nicknameMp;
 
+	bool LoadStranger = true;
+	
+	if (UserList.size() > 100)
+	{
+		LoadStranger = false;
+		MessageBoxA(nullptr, "用户数量超过100, 跳过非好友用户昵称加载", "Dice! GUI", MB_OK);
+	}
+
 	// 进度条
 	HWND progress = CreateWindowA(PROGRESS_CLASSA, nullptr,
-	                              WS_VISIBLE | WS_OVERLAPPED | WS_CAPTION | WS_BORDER | PBS_SMOOTHREVERSE | PBS_SMOOTH
-	                              , CW_USEDEFAULT, CW_USEDEFAULT, 200, 50, nullptr, nullptr, hDllModule, nullptr);
+		WS_VISIBLE | WS_OVERLAPPED | WS_CAPTION | WS_BORDER | PBS_SMOOTHREVERSE | PBS_SMOOTH
+		, CW_USEDEFAULT, CW_USEDEFAULT, 200, 50, nullptr, nullptr, hDllModule, nullptr);
 	SendMessageA(progress, PBM_SETRANGE, 0, MAKELPARAM(0, UserList.size()));
 
 	SendMessageA(progress, PBM_SETSTEP, static_cast<WPARAM>(1), 0);
 	ShowWindow(progress, SW_SHOWDEFAULT);
 
+	const std::map<long long, CQ::FriendInfo> FriendMp = CQ::getFriendList();
+
 	// 获取Nickname
 	for (const auto& item : UserList)
 	{
-		nicknameMp[item.first] = CQ::getStrangerInfo(item.first).nick;
+		if (FriendMp.count(item.first))
+		{
+			nicknameMp[item.first] = FriendMp.at(item.first).nick;
+		}
+		else if (LoadStranger)
+		{
+			nicknameMp[item.first] = CQ::getStrangerInfo(item.first).nick;
+		}
 		SendMessageA(progress, PBM_STEPIT, 0, 0);
 		MSG msg;
 		while (PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE))
@@ -1125,6 +1140,9 @@ int WINAPI GUIMain()
 		}
 	}
 	DestroyWindow(progress);
+	
+
+
 
 	// 主GUI
 	DiceGUI MainWindow(std::move(nicknameMp));
