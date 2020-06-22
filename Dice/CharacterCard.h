@@ -72,7 +72,7 @@ public:
 
 	CardBuild(const DDOM& d)
 	{
-		for (auto sub : d.vChild)
+		for (const auto& sub : d.vChild)
 		{
 			switch (mTempletTag[sub.tag])
 			{
@@ -142,7 +142,7 @@ public:
 
 	void readt(const DDOM& d)
 	{
-		for (auto node : d.vChild)
+		for (const auto& node : d.vChild)
 		{
 			switch (mTempletTag[node.tag])
 			{
@@ -154,13 +154,13 @@ public:
 				break;
 			case 31:
 				vBasicList.clear();
-				for (auto sub : node.vChild)
+				for (const auto& sub : node.vChild)
 				{
 					vBasicList.push_back(getLines(sub.strValue));
 				}
 				break;
 			case 102:
-				for (auto sub : getLines(node.strValue))
+				for (const auto& sub : getLines(node.strValue))
 				{
 					sInfoList.insert(sub);
 				}
@@ -177,7 +177,7 @@ public:
 				readini(node.strValue, defaultSkill);
 				break;
 			case 41:
-				for (auto sub : node.vChild)
+				for (const auto& sub : node.vChild)
 				{
 					mBuildOption[sub.strValue] = CardBuild(sub);
 				}
@@ -475,11 +475,11 @@ public:
 	{
 		std::set<string> sDefault;
 		ResList Res;
-		for (auto list : pTemplet->vBasicList)
+		for (const auto& list : pTemplet->vBasicList)
 		{
 			ResList subList;
 			string strVal;
-			for (auto it : list)
+			for (const auto& it : list)
 			{
 				switch (show(it, strVal))
 				{
@@ -503,20 +503,20 @@ public:
 			Res << subList.show();
 		}
 		string strAttrRest;
-		for (auto it : Attr)
+		for (const auto& it : Attr)
 		{
 			if (sDefault.count(it.first))continue;
 			strAttrRest += it.first + ":" + to_string(it.second) + " ";
 		}
 		Res << strAttrRest;
 		if (isWhole && !Info.empty())
-			for (auto it : Info)
+			for (const auto& it : Info)
 			{
 				if (sDefault.count(it.first))continue;
 				Res << it.first + ":" + it.second;
 			}
 		if (isWhole && !DiceExp.empty())
-			for (auto it : DiceExp)
+			for (const auto& it : DiceExp)
 			{
 				if (sDefault.count(it.first))continue;
 				Res << "&" + it.first + "=" + it.second;
@@ -557,7 +557,7 @@ public:
 		Name = name;
 	}
 
-	void writeb(std::ofstream& fout)
+	void writeb(std::ofstream& fout) const
 	{
 		fwrite(fout, string("Name"));
 		fwrite(fout, Name);
@@ -819,7 +819,7 @@ public:
 	string listCard()
 	{
 		ResList Res;
-		for (auto it : mCardList)
+		for (const auto& it : mCardList)
 		{
 			Res << "[" + to_string(it.first) + "]" + it.second.Name;
 		}
@@ -897,14 +897,14 @@ public:
 		Unpack pack;
 		pack.add(indexMax);
 		Unpack cards;
-		for (auto it : mCardList)
+		for (const auto& it : mCardList)
 		{
 			Unpack card;
 			card.add(it.first);
 			card.add(it.second.Name);
 			card.add(it.second.Type);
 			Unpack skills;
-			for (auto skill : it.second.Attr)
+			for (const auto& skill : it.second.Attr)
 			{
 				skills.add(skill.first);
 				skills.add(skill.second);
@@ -935,7 +935,7 @@ public:
 	{
 		indexMax = fread<short>(fin);
 		mCardList = fread<unsigned short, CharaCard>(fin);
-		for (auto card : mCardList)
+		for (const auto& card : mCardList)
 		{
 			mNameIndex[card.second.Name] = card.first;
 		}

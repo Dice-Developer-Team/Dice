@@ -220,7 +220,7 @@ regexMsg::regexMsg(const std::string& msg)
 		auto tep = msgs.getUnpack();
 		const auto key = tep.getstring();
 		const auto value = tep.getstring();
-		if (key == "")
+		if (key.empty())
 		{
 			return;
 		}

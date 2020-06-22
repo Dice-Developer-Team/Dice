@@ -59,7 +59,7 @@ int FromMsg::AdminEvent(const string& strOption)
 				<< "群记录数：" + to_string(ChatList.size())
 				<< "好友数：" + to_string(getFriendList().size())
 				<< "用户记录数：" + to_string(UserList.size())
-				<< (PList.size() ? "角色卡记录数：" + to_string(PList.size()) : "无角色卡记录")
+				<< (!PList.empty() ? "角色卡记录数：" + to_string(PList.size()) : "无角色卡记录")
 				<< "黑名单用户数：" + to_string(blacklist->mQQDanger.size())
 				<< "黑名单群数：" + to_string(blacklist->mGroupDanger.size());
 		reply(GlobalMsg["strSelfName"] + "的当前情况" + res.show());
@@ -1328,7 +1328,7 @@ int FromMsg::DiceReply()
 			else if (strPara == "dev" || strPara == "release")
 			{
 				string strAppPath(strModulePath);
-				strAppPath = strAppPath.substr(0, strAppPath.find_last_of("\\")) + "\\app\\com.w4123.dice.cpk";
+				strAppPath = strAppPath.substr(0, strAppPath.find_last_of('\\')) + "\\app\\com.w4123.dice.cpk";
 
 				switch (Cloud::DownloadFile(
 					("http://shiki.stringempty.xyz/DiceVer/" + strPara + "?" + to_string(fromTime)).c_str(),
@@ -1484,7 +1484,7 @@ int FromMsg::DiceReply()
 			set<string> sInact;
 			set<string> sBlackQQ;
 			if (isInGroup)
-				for (auto each : getGroupMemberList(llGroup))
+				for (const auto& each : getGroupMemberList(llGroup))
 				{
 					if (!each.LastMsgTime || tNow - each.LastMsgTime > intTMonth)
 					{
@@ -1499,7 +1499,7 @@ int FromMsg::DiceReply()
 			strVar["group"] = grpinfo.llGroup ? grpinfo.tostring() : printGroup(llGroup);
 			res << "在{group}：";
 			res << grp.listBoolConf();
-			for (auto it : grp.intConf)
+			for (const auto& it : grp.intConf)
 			{
 				res << it.first + "：" + to_string(it.second);
 			}
@@ -1509,8 +1509,8 @@ int FromMsg::DiceReply()
 			if (isInGroup)
 			{
 				res << string("入群欢迎：") + (grp.isset("入群欢迎") ? "已设置" : "未设置");
-				res << (sInact.size() ? "\n30天不活跃群员数：" + to_string(sInact.size()) : "");
-				if (sBlackQQ.size())
+				res << (!sInact.empty() ? "\n30天不活跃群员数：" + to_string(sInact.size()) : "");
+				if (!sBlackQQ.empty())
 				{
 					if (sBlackQQ.size() > 8)
 						res << GlobalMsg["strSelfName"] + "的黑名单成员" + to_string(sBlackQQ.size()) + "名";
@@ -1518,7 +1518,7 @@ int FromMsg::DiceReply()
 					{
 						res << GlobalMsg["strSelfName"] + "的黑名单成员:{blackqq}";
 						ResList blacks;
-						for (auto each : sBlackQQ)
+						for (const auto& each : sBlackQQ)
 						{
 							blacks << each;
 						}
@@ -1821,8 +1821,8 @@ int FromMsg::DiceReply()
 			for (auto& n : strSearch)
 				n = toupper(static_cast<unsigned char>(n));
 			string strReturn;
-			if (getUser(fromQQ).strConf.count("默认规则") && strSearch.find(':') == string::npos && GetRule::get(
-				getUser(fromQQ).strConf["默认规则"], strSearch, strReturn))
+			if (getUser(fromQQ).strConf.count("默认规则") && strSearch.find(':') == string::npos && 
+				GetRule::get(getUser(fromQQ).strConf["默认规则"], strSearch, strReturn))
 			{
 				reply(strReturn);
 			}
@@ -1903,13 +1903,13 @@ int FromMsg::DiceReply()
 				reply(GlobalMsg["strDeckTmpNotFound"]);
 				return 1;
 			}
-			if (DeckTmp->size() == 0)
+			if (DeckTmp->empty())
 			{
 				reply(GlobalMsg["strDeckTmpEmpty"]);
 				return 1;
 			}
 			string strReply = GlobalMsg["strDeckTmpShow"] + "\n";
-			for (auto it : *DeckTmp)
+			for (const auto& it : *DeckTmp)
 			{
 				it.length() > 10 ? strReply += it + "\n" : strReply += it + "|";
 			}
@@ -2070,13 +2070,13 @@ int FromMsg::DiceReply()
 		{
 			if (intT != PrivateT && CardDeck::mGroupDeck.count(fromGroup))
 			{
-				if (CardDeck::mGroupDeckTmp.count(fromGroup) == 0 || CardDeck::mGroupDeckTmp[fromGroup].size() == 0)
+				if (CardDeck::mGroupDeckTmp.count(fromGroup) == 0 || CardDeck::mGroupDeckTmp[fromGroup].empty())
 					CardDeck::mGroupDeckTmp[fromGroup] = vector<string>(CardDeck::mGroupDeck[fromGroup]);
 				TempDeck = &CardDeck::mGroupDeckTmp[fromGroup];
 			}
 			else if (CardDeck::mPrivateDeck.count(fromQQ))
 			{
-				if (CardDeck::mPrivateDeckTmp.count(fromQQ) == 0 || CardDeck::mPrivateDeckTmp[fromQQ].size() == 0)
+				if (CardDeck::mPrivateDeckTmp.count(fromQQ) == 0 || CardDeck::mPrivateDeckTmp[fromQQ].empty())
 					CardDeck::mPrivateDeckTmp[fromQQ] = vector<string>(CardDeck::mPrivateDeck[fromQQ]);
 				TempDeck = &CardDeck::mPrivateDeckTmp[fromQQ];
 			}
@@ -2603,7 +2603,7 @@ int FromMsg::DiceReply()
 		intMsgCnt += 3;
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
-		string strDefaultDice = strLowerMessage.substr(intMsgCnt, strLowerMessage.find(" ", intMsgCnt) - intMsgCnt);
+		string strDefaultDice = strLowerMessage.substr(intMsgCnt, strLowerMessage.find(' ', intMsgCnt) - intMsgCnt);
 		while (strDefaultDice[0] == '0')
 			strDefaultDice.erase(strDefaultDice.begin());
 		if (strDefaultDice.empty())
@@ -2703,8 +2703,8 @@ int FromMsg::DiceReply()
 			//没有'/'时默认成功变化值
 			if (strEnChange.find('/') != std::string::npos)
 			{
-				strEnFail = strEnChange.substr(0, strEnChange.find("/"));
-				strEnSuc = strEnChange.substr(strEnChange.find("/") + 1);
+				strEnFail = strEnChange.substr(0, strEnChange.find('/'));
+				strEnSuc = strEnChange.substr(strEnChange.find('/') + 1);
 			}
 			else strEnSuc = strEnChange;
 		}
@@ -3151,9 +3151,9 @@ int FromMsg::DiceReply()
 			              ? get(chat(fromGroup).intConf, string("rc房规"), 0)
 			              : get(getUser(fromQQ).intConf, string("rc房规"), 0);
 		int intTurnCnt = 1;
-		if (strMsg.find("#") != string::npos)
+		if (strMsg.find('#') != string::npos)
 		{
-			string strTurnCnt = strMsg.substr(intMsgCnt, strMsg.find("#") - intMsgCnt);
+			string strTurnCnt = strMsg.substr(intMsgCnt, strMsg.find('#') - intMsgCnt);
 			//#能否识别有效
 			if (strTurnCnt.empty())intMsgCnt++;
 			else if ((strTurnCnt.length() == 1 && isdigit(static_cast<unsigned char>(strTurnCnt[0]))) || strTurnCnt ==
@@ -3441,7 +3441,7 @@ int FromMsg::DiceReply()
 		string SanCost = readUntilSpace();
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
-		if (SanCost.empty() || SanCost.find("/") == string::npos)
+		if (SanCost.empty() || SanCost.find('/') == string::npos)
 		{
 			reply(GlobalMsg["strSanCostInvalid"]);
 			return 1;
@@ -3461,8 +3461,8 @@ int FromMsg::DiceReply()
 				return 1;
 			}
 		}
-		string strSanCostSuc = SanCost.substr(0, SanCost.find("/"));
-		string strSanCostFail = SanCost.substr(SanCost.find("/") + 1);
+		string strSanCostSuc = SanCost.substr(0, SanCost.find('/'));
+		string strSanCostFail = SanCost.substr(SanCost.find('/') + 1);
 		for (const auto& character : strSanCostSuc)
 		{
 			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character !=
@@ -3472,7 +3472,7 @@ int FromMsg::DiceReply()
 				return 1;
 			}
 		}
-		for (const auto& character : SanCost.substr(SanCost.find("/") + 1))
+		for (const auto& character : SanCost.substr(SanCost.find('/') + 1))
 		{
 			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character !=
 				'+' && character != '-')
@@ -3727,12 +3727,12 @@ int FromMsg::DiceReply()
 		strVar["reason"] = strMsg.substr(intMsgCnt);
 		int intTurnCnt = 1;
 		const int intDefaultDice = get(getUser(fromQQ).intConf, string("默认骰"), 100);
-		if (strMainDice.find("#") != string::npos)
+		if (strMainDice.find('#') != string::npos)
 		{
-			string strTurnCnt = strMainDice.substr(0, strMainDice.find("#"));
+			string strTurnCnt = strMainDice.substr(0, strMainDice.find('#'));
 			if (strTurnCnt.empty())
 				strTurnCnt = "1";
-			strMainDice = strMainDice.substr(strMainDice.find("#") + 1);
+			strMainDice = strMainDice.substr(strMainDice.find('#') + 1);
 			RD rdTurnCnt(strTurnCnt, intDefaultDice);
 			const int intRdTurnCntRes = rdTurnCnt.Roll();
 			if (intRdTurnCntRes != 0)
@@ -3786,7 +3786,7 @@ int FromMsg::DiceReply()
 				return 1;
 			}
 			intTurnCnt = rdTurnCnt.intTotal;
-			if (strTurnCnt.find("d") != string::npos)
+			if (strTurnCnt.find('d') != string::npos)
 			{
 				string strTurnNotice = strVar["pc"] + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
 				if (!isHidden || intT == PrivateT)
@@ -3997,12 +3997,12 @@ int FromMsg::DiceReply()
 		}
 		int intTurnCnt = 1;
 		const int intDefaultDice = get(getUser(fromQQ).intConf, string("默认骰"), 100);
-		if (strMainDice.find("#") != string::npos)
+		if (strMainDice.find('#') != string::npos)
 		{
-			strVar["turn"] = strMainDice.substr(0, strMainDice.find("#"));
+			strVar["turn"] = strMainDice.substr(0, strMainDice.find('#'));
 			if (strVar["turn"].empty())
 				strVar["turn"] = "1";
-			strMainDice = strMainDice.substr(strMainDice.find("#") + 1);
+			strMainDice = strMainDice.substr(strMainDice.find('#') + 1);
 			RD rdTurnCnt(strVar["turn"], intDefaultDice);
 			const int intRdTurnCntRes = rdTurnCnt.Roll();
 			switch (intRdTurnCntRes)
@@ -4044,7 +4044,7 @@ int FromMsg::DiceReply()
 				return 1;
 			}
 			intTurnCnt = rdTurnCnt.intTotal;
-			if (strVar["turn"].find("d") != string::npos)
+			if (strVar["turn"].find('d') != string::npos)
 			{
 				strVar["turn"] = rdTurnCnt.FormShortString();
 				if (!isHidden)
@@ -4239,9 +4239,9 @@ bool FromMsg::DiceFilter()
 			strMsg = strMsg.substr(14);
 			isCalled = true;
 		}
-		else if (strMsg.find("]") != string::npos)
+		else if (strMsg.find(']') != string::npos)
 		{
-			strMsg = strMsg.substr(strMsg.find("]") + 1);
+			strMsg = strMsg.substr(strMsg.find(']') + 1);
 			isOtherCalled = true;
 		}
 		while (isspace(static_cast<unsigned char>(strMsg[0])))

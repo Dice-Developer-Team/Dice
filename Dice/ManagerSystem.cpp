@@ -105,7 +105,7 @@ void scanImage(const string& s, set<string>& list)
 
 void scanImage(const vector<string>& v, set<string>& list)
 {
-	for (auto it : v)
+	for (const auto& it : v)
 	{
 		scanImage(it, sReferencedImage);
 	}
@@ -120,7 +120,7 @@ int clearImage()
 	scanImage(CardDeck::mReplyDeck, sReferencedImage);
 	scanImage(CardDeck::mGroupDeck, sReferencedImage);
 	scanImage(CardDeck::mPrivateDeck, sReferencedImage);
-	for (auto it : ChatList)
+	for (const auto& it : ChatList)
 	{
 		scanImage(it.second.strConf, sReferencedImage);
 	}

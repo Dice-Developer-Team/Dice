@@ -452,7 +452,7 @@ void fwrite(ofstream& fout, const std::map<T1, T2>& m)
 {
 	const auto len = static_cast<short>(m.size());
 	fwrite(fout, len);
-	for (auto it : m)
+	for (const auto& it : m)
 	{
 		fwrite(fout, it.first);
 		fwrite(fout, it.second);
@@ -464,7 +464,7 @@ void fwrite(ofstream& fout, const std::set<T>& s)
 {
 	const auto len = static_cast<short>(s.size());
 	fwrite(fout, len);
-	for (auto it : s)
+	for (const auto& it : s)
 	{
 		fwrite(fout, it);
 	}

@@ -366,7 +366,7 @@ void scanImage(const vector<string>& v, set<string>& list);
 template <typename TVal, typename sort>
 void scanImage(const map<string, TVal, sort>& m, set<string>& list)
 {
-	for (auto it : m)
+	for (const auto& it : m)
 	{
 		scanImage(it.first, sReferencedImage);
 		scanImage(it.second, sReferencedImage);
@@ -376,7 +376,7 @@ void scanImage(const map<string, TVal, sort>& m, set<string>& list)
 template <typename TVal>
 void scanImage(const map<string, TVal>& m, set<string>& list)
 {
-	for (auto it : m)
+	for (const auto& it : m)
 	{
 		scanImage(it.first, sReferencedImage);
 		scanImage(it.second, sReferencedImage);
@@ -386,7 +386,7 @@ void scanImage(const map<string, TVal>& m, set<string>& list)
 template <typename TKey, typename TVal>
 void scanImage(const map<TKey, TVal>& m, set<string>& list)
 {
-	for (auto it : m)
+	for (const auto& it : m)
 	{
 		scanImage(it.second, sReferencedImage);
 	}

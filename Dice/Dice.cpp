@@ -352,7 +352,7 @@ EVE_Enable(eventEnable)
 		map<long long, string> WelcomeMsg;
 		if (loadFile(strFileLoc + "WelcomeMsg.RDconf", WelcomeMsg) > 0)
 		{
-			for (auto p : WelcomeMsg)
+			for (const auto& p : WelcomeMsg)
 			{
 				chat(p.first).group().setText("»Î»∫ª∂”≠", p.second);
 			}
