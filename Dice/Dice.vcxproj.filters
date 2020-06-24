@@ -292,9 +292,6 @@
     <Image Include="Dice.ico">
       <Filter>资源文件</Filter>
     </Image>
-    <Image Include="bitmap1.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
     <Image Include="DiceLogo.bmp">
       <Filter>资源文件</Filter>
     </Image>

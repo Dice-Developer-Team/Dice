@@ -346,13 +346,13 @@ std::vector<GroupMemberInfo> CQ::getGroupMemberList(const long long GroupID)
 
 #include <fstream>
 //取群列表
-std::map<long long, std::string> CQ::getGroupList()
+std::map<long long, std::string> CQ::getGroupList(bool disableCache)
 {
 	static std::map<long long, std::string> ret;
 	static time_t lastUpdateTime = 0;
 
 	const time_t timeNow = time(nullptr);
-	if (timeNow - lastUpdateTime < 600 && !ret.empty())
+	if (!disableCache && timeNow - lastUpdateTime < 600 && !ret.empty())
 	{
 		return ret;
 	}
@@ -379,13 +379,13 @@ std::map<long long, std::string> CQ::getGroupList()
 }
 
 //取好友列表
-std::map<long long, FriendInfo> CQ::getFriendList()
+std::map<long long, FriendInfo> CQ::getFriendList(bool disableCache)
 {
 	static std::map<long long, FriendInfo> ret;
 	static time_t lastUpdateTime = 0;
 	
 	const time_t timeNow = time(nullptr);
-	if (timeNow - lastUpdateTime < 600 && !ret.empty())
+	if (!disableCache && timeNow - lastUpdateTime < 600 && !ret.empty())
 	{
 		return ret;
 	}

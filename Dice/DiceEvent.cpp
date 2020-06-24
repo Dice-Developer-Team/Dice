@@ -1129,7 +1129,6 @@ int FromMsg::DiceReply()
 		default:
 			reply(GlobalMsg["strDefaultCOCNotFound"]);
 			return 1;
-			break;
 		}
 		if (intT)chat(fromGroup).setConf("rc房规", intRule);
 		else getUser(fromQQ).setConf("rc房规", intRule);

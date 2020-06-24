@@ -333,7 +333,6 @@
     <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="bitmap1.bmp" />
     <Image Include="Dice.ico" />
     <Image Include="DiceLogo.bmp" />
   </ItemGroup>

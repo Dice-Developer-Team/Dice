@@ -166,11 +166,11 @@ namespace CQ
 	std::vector<GroupMemberInfo> getGroupMemberList(long long GroupID);
 
 	//取群列表 Auth=161  
-	std::map<long long, std::string> getGroupList();
+	std::map<long long, std::string> getGroupList(bool disableCache = false);
 
 	class FriendInfo;
 	//取好友列表 Auth=162  
-	std::map<long long, FriendInfo> getFriendList();
+	std::map<long long, FriendInfo> getFriendList(bool disableCache = false);
 
 	//是否支持发送图片，返回true为支持，返回false为不支持
 	bool canSendImage() noexcept;

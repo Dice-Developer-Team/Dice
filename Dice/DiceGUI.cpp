@@ -1141,9 +1141,6 @@ int WINAPI GUIMain()
 	}
 	DestroyWindow(progress);
 	
-
-
-
 	// Ö÷GUI
 	DiceGUI MainWindow(std::move(nicknameMp));
 
