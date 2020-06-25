@@ -1049,18 +1049,82 @@ namespace CardDeck
 	//}
 	std::string drawCard(std::vector<std::string>& TempDeck, bool isBack)
 	{
+		std::vector<std::string> parsedDeck;
+		std::vector<int> sortedIndex = {0};
+		for (const auto& str: TempDeck)
+		{
+			int l = 0, r = 0, cnt = 0;
+
+			// 用于表示是否为经典牌堆项目
+			// true: 经典牌堆项目
+			// false: 权重牌堆项目
+			bool classic = true;
+			if ((l = str.find("::")) != string::npos && (r = str.find("::", l + 2)) != string::npos)
+			{
+				classic = false;
+				try
+				{
+					cnt = std::stoi(str.substr(l + 2, r - l - 2));
+					if (cnt <= 0)
+					{
+						classic = true;
+					}
+				}
+				catch(...)
+				{
+					classic = true;
+				}
+
+			}
+
+			if (classic)
+			{
+				parsedDeck.push_back(str);
+				sortedIndex.push_back(sortedIndex[sortedIndex.size() - 1] + 1);
+			}
+			else
+			{
+				parsedDeck.push_back(str.substr(r + 2));
+				sortedIndex.push_back(sortedIndex[sortedIndex.size() - 1] + cnt);
+			}
+		}
+
+
+		
 		std::string strReply;
 		if (TempDeck.empty())return "";
 		if (TempDeck.size() == 1)
 		{
 			strReply = TempDeck[0];
-			if (!isBack)TempDeck.erase(TempDeck.begin());
+			if (!isBack)
+			{
+				if (sortedIndex[1] == 1)
+				{
+					TempDeck.erase(TempDeck.begin());
+				}
+				else
+				{
+					TempDeck[0] = "::" + std::to_string(sortedIndex[1] - 1) + "::" + parsedDeck[0];
+				}
+			}
 		}
 		else
 		{
-			const int ans = RandomGenerator::Randint(0, TempDeck.size() - 1);
-			strReply = TempDeck[ans];
-			if (!isBack)TempDeck.erase(TempDeck.begin() + ans);
+			const int ans = RandomGenerator::Randint(0, sortedIndex[sortedIndex.size() - 1] - 1);
+			const int index = std::distance(sortedIndex.begin(), std::upper_bound(sortedIndex.begin(), sortedIndex.end(), ans)) - 1;
+			strReply = parsedDeck[index];
+			if (!isBack)
+			{
+				if(sortedIndex[index + 1] - sortedIndex[index] == 1)
+				{
+					TempDeck.erase(TempDeck.begin() + index);
+				}
+				else
+				{
+					TempDeck[index] = "::" + std::to_string(sortedIndex[index + 1] - sortedIndex[index] - 1) + "::" + parsedDeck[index];
+				}
+				
+			}
 		}
 		return draw(strReply);
 	}
