@@ -1064,7 +1064,7 @@ namespace CardDeck
 				classic = false;
 				try
 				{
-					string number = str.substr(l + 2, r - l - 2);
+					string number = draw(str.substr(l + 2, r - l - 2));
 					if (number.length() > 6)
 					{
 						classic = true;	
