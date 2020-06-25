@@ -1064,10 +1064,18 @@ namespace CardDeck
 				classic = false;
 				try
 				{
-					cnt = std::stoi(str.substr(l + 2, r - l - 2));
-					if (cnt <= 0)
+					string number = str.substr(l + 2, r - l - 2);
+					if (number.length() > 6)
 					{
-						classic = true;
+						classic = true;	
+					}
+					else
+					{
+						cnt = std::stoi(number);
+						if (cnt <= 0)
+						{
+							classic = true;
+						}
 					}
 				}
 				catch(...)
@@ -1095,7 +1103,7 @@ namespace CardDeck
 		if (TempDeck.empty())return "";
 		if (TempDeck.size() == 1)
 		{
-			strReply = TempDeck[0];
+			strReply = parsedDeck[0];
 			if (!isBack)
 			{
 				if (sortedIndex[1] == 1)
