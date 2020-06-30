@@ -189,7 +189,7 @@ EVE_Enable(eventEnable)
 	GlobalMsg["strSelfName"] = getLoginNick();
 	if (GlobalMsg["strSelfName"].empty() && Mirai)
 	{
-		GlobalMsg["strSelfName"] = "÷»Äï[" + to_string(console.DiceMaid % 1000) + "]";
+		GlobalMsg["strSelfName"] = "÷»Äï[" + toString(console.DiceMaid % 1000, 4) + "]";
 	}
 	mkDir(DiceDir + "\\conf");
 	mkDir(DiceDir + "\\user");

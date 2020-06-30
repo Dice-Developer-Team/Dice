@@ -3,8 +3,8 @@
  * Copyright (C) 2019-2020 String.Empty
  */
 #include <windows.h>
-
-#include <utility>
+#include <xutility>
+#include <string_view>
 #include "ManagerSystem.h"
 
 #include "CardDeck.h"
@@ -38,11 +38,11 @@ User& getUser(long long qq)
 	if (!UserList.count(qq))UserList[qq].id(qq);
 	return UserList[qq];
 }
-
-short trustedQQ(long long qq)
+short trustedQQ(long long qq) 
 {
-	if (!UserList.count(qq))return 0;
-	return UserList[qq].nTrust;
+	if (qq == console.master())return 256;
+	else if (!UserList.count(qq))return 0;
+	else return UserList[qq].nTrust;
 }
 
 int clearUser()
@@ -65,10 +65,45 @@ int clearUser()
 string getName(long long QQ, long long GroupID)
 {
 	string nick;
-	if (getUser(QQ).getNick(nick, GroupID))return nick;
+	if (UserList.count(QQ) && getUser(QQ).getNick(nick, GroupID))return nick;
 	if (GroupID && !(nick = strip(CQ::getGroupMemberInfo(GroupID, QQ).GroupNick)).empty())return nick;
 	if (!(nick = strip(CQ::getStrangerInfo(QQ).nick)).empty())return nick;
 	return GlobalMsg["stranger"] + "(" + to_string(QQ) + ")";
+}
+void filter_CQcode(string& nick, long long fromGroup) {
+	size_t posL(0);
+	while ((posL = nick.find(CQ_AT)) != string::npos) {
+		//检查at格式
+		if (size_t posR = nick.find(']',posL); posR != string::npos) {
+			std::string_view stvQQ(nick);
+			stvQQ = stvQQ.substr(posL + 10, posR - posL - 10);
+			//检查QQ号格式
+			bool isDig = true;
+			for (auto ch: stvQQ) {
+				if (!isdigit(static_cast<unsigned char>(ch))) {
+					isDig = false;
+					break;
+				}
+			}
+			//转义
+			if (isDig && posR - posL < 29) {
+				nick.replace(posL, posR - posL + 1, "@" + getName(stoll(string(stvQQ)), fromGroup));
+			}
+			else if (stvQQ == "all") {
+				nick.replace(posL, posR - posL + 1, "@全体成员");
+			}
+			else {
+				nick.replace(posL, posR - posL + 1, "@");
+			}
+		}
+		else return;
+	}
+	while ((posL = nick.find("[CQ:")) != string::npos) {
+		if (size_t posR = nick.find(']', posL); posR != string::npos) {
+			nick.erase(posL, posR - posL + 1);
+		}
+		else return;
+	}
 }
 
 Chat& chat(long long id)

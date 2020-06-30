@@ -84,8 +84,8 @@ int DiceModManager::load(string& strLog)
 			cntItem += readJMap(j["helpdoc"], helpdoc);
 		}
 	}
-	strLog += "读取" + DiceDir + "mod\\中的" + std::to_string(cntFile) + "个文件, 共" + std::to_string(cntItem) + "个条目\n";
-	if (!sFileErr.empty())
+	strLog += "读取" + DiceDir + "\\mod\\中的" + std::to_string(cntFile) + "个文件, 共" + std::to_string(cntItem) + "个条目\n";
+	if (!sFileErr.empty()) 
 	{
 		strLog += "读取失败" + std::to_string(sFileErr.size()) + "个:\n";
 		for (auto& it : sFileErr)

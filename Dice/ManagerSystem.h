@@ -20,6 +20,7 @@ using std::map;
 using std::vector;
 using std::unordered_map;
 constexpr auto CQ_IMAGE = "[CQ:image,file=";
+constexpr auto CQ_AT = "[CQ:at,qq=";
 constexpr time_t NEWYEAR = 1588262400;
 extern string DiceDir;
 
@@ -169,6 +170,7 @@ short trustedQQ(long long qq);
 int clearUser();
 
 string getName(long long QQ, long long GroupID = 0);
+void filter_CQcode(string&, long long fromGroup = 0);
 
 extern const map<string, short> mChatConf;
 

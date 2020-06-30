@@ -43,108 +43,102 @@ CQ::logger DiceLogger("Dice!");
 
 std::map<std::string, std::string> GlobalMsg
 {
-	{"strParaEmpty", "参数不能为空×"}, //偷懒用万能回复
-	{"strParaIllegal", "参数非法×"}, //偷懒用万能回复
-	{"stranger", "用户"}, //{nick}无法获取非空昵称时的称呼
-	{"strAdminOptionEmpty", "找{self}有什么事么？{nick}"}, //
-	{"strGMTableShow", "{self}记录的{table_name}列表："},
-	{"strGMTableNotExist", "{self}没有保存的{table_name}记录"},
-	{"strUserTrustShow", "{user}在{self}处的信任级别为{trust}"},
-	{"strUserTrusted", "已将{self}对{user}的信任级别调整为{trust}"},
-	{"strUserTrustDenied", "{nick}在{self}处无权访问对方的权限×"},
-	{"strUserTrustIllegal", "将目标权限修改为{trust}是非法的×"},
-	{"strUserNotFound", "{self}无{user}的用户记录"},
-	{
-		"strGroupAuthorized",
-		"A roll to the table turns to a dice fumble!\nDice Roller {strSelfName}√\n本群已授权许可，请尽情使用本骰娘√\n请遵守协议使用，服务结束后使用.dismiss送出!"
-	},
-	{
-		"strAddGroupNoLicense",
-		"本群未获{self}许可使用，将自动在群内静默。\n请先.help协议 阅读并同意协议后向运营方申请许可使用，\n否则请管理员使用!dismiss送出{self}\n可按以下格式填写并发送申请:\n!authorize 申请用途:[理由] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[指令]，用后使用[指令]送出群"
-	},
-	{"strGroupLicenseDeny", "此群未获{self}许可使用，请先确认协议并申请许可×\n或请管理员使用!dismiss送出{self}"},
-	{"strGroupLicenseApply", "此群未通过自助授权×\n许可申请已发送√"},
-	{"strGroupSetOn", "现已开启{self}在此群的“{option}”选项√"}, //群内开关和遥控开关通用此文本
-	{"strGroupSetOnAlready", "{self}已在此群设置了{option}！"},
-	{"strGroupSetOff", "现已关闭{self}在此群的“{option}”选项√"},
-	{"strGroupSetOffAlready", "{self}未在此群设置{option}！"},
-	{"strGroupSetAll", "{self}已修改记录中{cnt}个群的“{option}”选项√"},
-	{"strGroupDenied", "{nick}在{self}处无权访问此群的设置×"},
-	{"strGroupSetDenied", "{nick}在{self}处设置{option}的权限不足×"},
-	{"strGroupSetNotExist", "{self}无{option}此选项×"},
-	{"strGroupWholeUnban", "{self}已关闭全局禁言√"},
-	{"strGroupWholeBan", "{self}已开启全局禁言√"},
-	{"strGroupWholeBanErr", "{self}开启全局禁言失败×"},
-	{"strGroupUnban", "{self}裁定:{member}解除禁言√"},
-	{"strGroupBan", "{self}裁定:{member}禁言{res}分钟√"},
-	{"strGroupBanErr", "{self}禁言{member}失败×"},
-	{"strGroupNotFound", "{self}无该群记录×"},
-	{"strGroupNotIn", "{self}当前不在该群或对象不是群！"},
-	{"strGroupExit", "{self}已退出该群√"},
-	{"strGroupCardSet", "{self}已将{target}的群名片修改为{card}√"},
-	{"strGroupCardSetErr", "{self}设置{target}的群名片失败×"},
-	{"strGroupTitleSet", "{self}已将{target}的头衔修改为{title}√"},
-	{"strGroupTitleSetErr", "{self}设置{target}的头衔失败×"},
-	{"strPcNewEmptyCard", "已为{nick}新建{type}空白卡{char}√"},
-	{"strPcNewCardShow", "已为{nick}新建{type}卡{char}：{show}"}, //由于预生成选项而存在属性
-	{"strPcCardSet", "已将{nick}当前角色卡绑定为{char}√"}, //{nick}-用户昵称 {pc}-原角色卡名 {char}-新角色卡名
-	{"strPcCardReset", "已解绑{nick}当前的默认卡√"}, //{nick}-用户昵称 {pc}-原角色卡名
-	{"strPcCardRename", "已将{old_name}重命名为{new_name}√"},
-	{"strPcCardDel", "已将角色卡{char}删除√"},
-	{"strPcCardCpy", "已将{char2}的属性复制到{char1}√"},
-	{"strPcClr", "已清空{nick}的角色卡记录√"},
-	{"strPcCardList", "{nick}的角色列表：{show}"},
-	{"strPcCardBuild", "{nick}的{char}生成：{show}"},
-	{"strPcCardShow", "{nick}的<{type}>{char}：{show}"}, //{nick}-用户昵称 {type}-角色卡类型 {char}-角色卡名
-	{"strPcCardRedo", "{nick}的{char}重新生成：{show}"},
-	{"strPcGroupList", "{nick}的各群角色列表：{show}"},
-	{"strPcNotExistErr", "{self}无{nick}的角色卡记录，无法删除×"},
-	{"strPcCardFull", "{nick}在{self}处的角色卡已达上限，请先清理多余角色卡×"},
-	{"strPcTempInvalid", "{self}无法识别的角色卡模板×"},
-	{"strPcNameEmpty", "名称不能为空×"},
-	{"strPcNameExist", "已存在同名卡×"},
-	{"strPcNameNotExist", "该名称不存在×"},
-	{"strPcNameInvalid", "非法的人物卡名（存在冒号）×"},
-	{"strPcInitDelErr", "初始卡不可删除×"},
-	{"strPcNoteTooLong", "备注长度不能超过255×"},
-	{"strPcTextTooLong", "文本长度不能超过48×"},
-	{"strSensNote", "发现指令中带敏感词，{self}已记录并上报！"},
-	{"strSensWarn", "发现指令中带敏感词，{self}拒绝响应且已上报！"},
-	{"strSpamFirstWarning", "你短时间内对{self}指令次数过多！请善用多轮掷骰和复数生成指令（刷屏初次警告）"},
-	{"strSpamFinalWarning", "请暂停你的一切指令，避免因高频指令被{self}拉黑！（刷屏最终警告）"},
-	{"strReplySet", "{self}对关键词{key}的回复已设置√"},
-	{"strReplyDel", "{self}对关键词{key}的回复已清除√"},
-	{"strStModify", "{self}对已记录{pc}的属性变化:"}, //存在技能值变化情况时，优先使用此文本
-	{"strStDetail", "{self}对已设置{pc}的属性："}, //存在掷骰时，使用此文本(暂时无用)
-	{"strStValEmpty", "{self}未记录{attr}原值×"}, //{0}为属性名
-	{"strBlackQQAddNotice", "{user_nick}，你已被{self}加入黑名单，详情请联系Master"},
-	{"strBlackQQAddNoticeReason", "{user_nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员"},
-	{"strBlackQQDelNotice", "{user_nick}，你已被{self}移出黑名单，现在可以继续使用了"},
-	{"strWhiteQQAddNotice", "{user_nick}，您已获得{self}的信任，请尽情使用{self}√"},
-	{"strWhiteQQDenied", "你不是{self}信任的用户×"},
-	{"strWhiteGroupDenied", "本群聊不在白名单中×"},
-	{"strDeckProNew", "已新建自定义牌堆√"},
-	{"strDeckProSet", "已将{key}设置为默认牌堆√"},
-	{"strDeckProClr", "已删除默认牌堆√"},
-	{"strDeckProNull", "默认牌堆不存在!"},
-	{"strDeckTmpReset", "已重置卡牌√"},
-	{"strDeckTmpShow", "当前剩余卡牌:"},
-	{"strDeckTmpEmpty", "已无剩余卡牌！"}, //剩余卡牌数为0
-	{"strDeckTmpNotFound", "不存在剩余卡牌×"}, //没有生成过牌堆
-	{"strDeckNameEmpty", "未指定牌堆名×"},
-	{"strRollDice", "{pc}掷骰: {res}"},
-	{"strRollDiceReason", "{pc}掷骰 {reason}: {res}"},
-	{"strRollHidden", "{pc}进行了一次暗骰"},
-	{"strRollTurn", "{pc}的掷骰轮数: {turn}轮"},
-	{"strRollMultiDice", "{pc}掷骰{turn}次: {dice_exp}={res}"},
-	{"strRollMultiDiceReason", "{pc}掷骰{turn}次{reason}: {dice_exp}={res}"},
-	{"strRollSkill", "{pc}进行{attr}检定："},
-	{"strRollSkillReason", "由于{reason} {pc}进行{attr}检定："},
-	{"strEnRoll", "{pc}的{attr}增强或成长检定：\n{res}"}, //{attr}在用户省略技能名后替换为{strEnDefaultName}
-	{"strEnRollNotChange", "{strEnRoll}\n{pc}的{attr}值没有变化"},
-	{"strEnRollFailure", "{strEnRoll}\n{pc}的{attr}变化{change}点，当前为{final}点"},
-	{"strEnRollSuccess", "{strEnRoll}\n{pc}的{attr}增加{change}点，当前为{final}点"},
-	{"strEnDefaultName", "属性或技能"}, //默认文本
+	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
+	{"strParaIllegal","参数非法×"},			//偷懒用万能回复
+	{"stranger","用户"},			//{nick}无法获取非空昵称时的称呼
+	{"strAdminOptionEmpty","找{self}有什么事么？{nick}"},			//
+	{"strGMTableShow","{self}记录的{table_name}列表："},
+	{"strGMTableNotExist","{self}没有保存的{table_name}记录"},
+	{"strUserTrustShow","{user}在{self}处的信任级别为{trust}"},
+	{"strUserTrusted","已将{self}对{user}的信任级别调整为{trust}"},
+	{"strUserTrustDenied","{nick}在{self}处无权访问对方的权限×"},
+	{"strUserTrustIllegal","将目标权限修改为{trust}是非法的×"},
+	{"strUserNotFound","{self}无{user}的用户记录"},
+	{"strGroupAuthorized","A roll to the table turns to a dice fumble!\nDice Roller {strSelfName}√\n本群已授权许可，请尽情使用本骰娘√\n请遵守协议使用，服务结束后使用.dismiss送出!" },
+	{"strAddGroupNoLicense","本群未获{self}许可使用，将自动在群内静默。\n请先.help协议 阅读并同意协议后向运营方申请许可使用，\n否则请管理员使用!dismiss送出{self}\n可按以下格式填写并发送申请:\n!authorize 申请用途:[理由] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[指令]，用后使用[指令]送出群" },
+	{"strGroupLicenseDeny","此群未获{self}许可使用，请先确认协议并申请许可×\n或请管理员使用!dismiss送出{self}" },
+	{"strGroupLicenseApply","此群未通过自助授权×\n许可申请已发送√" },
+	{"strGroupSetOn","现已开启{self}在此群的“{option}”选项√"},			//群内开关和遥控开关通用此文本
+	{"strGroupSetOnAlready","{self}已在此群设置了{option}！"},			
+	{"strGroupSetOff","现已关闭{self}在此群的“{option}”选项√"},			
+	{"strGroupSetOffAlready","{self}未在此群设置{option}！"},
+	{"strGroupSetAll","{self}已修改记录中{cnt}个群的“{option}”选项√"},
+	{"strGroupDenied","{nick}在{self}处无权访问此群的设置×"},
+	{"strGroupSetDenied","{nick}在{self}处设置{option}的权限不足×"},
+	{"strGroupSetNotExist","{self}无{option}此选项×"},
+	{"strGroupWholeUnban","{self}已关闭全局禁言√"},
+	{"strGroupWholeBan","{self}已开启全局禁言√"},
+	{"strGroupWholeBanErr","{self}开启全局禁言失败×"},
+	{"strGroupUnban","{self}裁定:{member}解除禁言√"},
+	{"strGroupBan","{self}裁定:{member}禁言{res}分钟√"},
+	{"strGroupBanErr","{self}禁言{member}失败×"},
+	{"strGroupNotFound","{self}无该群记录×"},
+	{"strGroupNotIn","{self}当前不在该群或对象不是群！"},
+	{"strGroupExit","{self}已退出该群√"},
+	{"strGroupCardSet","{self}已将{target}的群名片修改为{card}√"},
+	{"strGroupCardSetErr","{self}设置{target}的群名片失败×"},
+	{"strGroupTitleSet","{self}已将{target}的头衔修改为{title}√"},
+	{"strGroupTitleSetErr","{self}设置{target}的头衔失败×"},
+	{"strPcNewEmptyCard","已为{nick}新建{type}空白卡{char}√"},
+	{"strPcNewCardShow","已为{nick}新建{type}卡{char}：{show}"},//由于预生成选项而存在属性
+	{"strPcCardSet","已将{nick}当前角色卡绑定为{char}√"},//{nick}-用户昵称 {pc}-原角色卡名 {char}-新角色卡名
+	{"strPcCardReset","已解绑{nick}当前的默认卡√"},//{nick}-用户昵称 {pc}-原角色卡名
+	{"strPcCardRename","已将{old_name}重命名为{new_name}√"},
+	{"strPcCardDel","已将角色卡{char}删除√"},
+	{"strPcCardCpy","已将{char2}的属性复制到{char1}√"},
+	{"strPcClr","已清空{nick}的角色卡记录√"},
+	{"strPcCardList","{nick}的角色列表：{show}"},
+	{"strPcCardBuild","{nick}的{char}生成：{show}"},
+	{"strPcCardShow","{nick}的<{type}>{char}：{show}"},	//{nick}-用户昵称 {type}-角色卡类型 {char}-角色卡名
+	{"strPcCardRedo","{nick}的{char}重新生成：{show}"},
+	{"strPcGroupList","{nick}的各群角色列表：{show}"},
+	{"strPcNotExistErr","{self}无{nick}的角色卡记录，无法删除×"},
+	{"strPcCardFull","{nick}在{self}处的角色卡已达上限，请先清理多余角色卡×"},
+	{"strPcTempInvalid","{self}无法识别的角色卡模板×"},
+	{"strPcNameEmpty","名称不能为空×"},
+	{"strPcNameExist","已存在同名卡×"},
+	{"strPcNameNotExist","该名称不存在×"},
+	{"strPcNameInvalid","非法的人物卡名（存在冒号）×"},
+	{"strPcInitDelErr","初始卡不可删除×"},
+	{"strPcNoteTooLong","备注长度不能超过255×"},
+	{"strPcTextTooLong","文本长度不能超过48×"},
+	{"strSensNote","发现指令中带敏感词，{self}已记录并上报！"},
+	{"strSensWarn","发现指令中带敏感词，{self}拒绝响应且已上报！"},
+	{"strSpamFirstWarning","你短时间内对{self}指令次数过多！请善用多轮掷骰和复数生成指令（刷屏初次警告）"},
+	{"strSpamFinalWarning","请暂停你的一切指令，避免因高频指令被{self}拉黑！（刷屏最终警告）"},
+	{"strReplySet","{self}对关键词{key}的回复已设置√"},
+	{"strReplyDel","{self}对关键词{key}的回复已清除√"},
+	{"strStModify","{self}对已记录{pc}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
+	{"strStDetail","{self}对已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
+	{"strStValEmpty","{self}未记录{attr}原值×"},		//{0}为属性名
+	{"strBlackQQAddNotice","{user_nick}，你已被{self}加入黑名单，详情请联系Master"},				
+	{"strBlackQQAddNoticeReason","{user_nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员"},
+	{"strBlackQQDelNotice","{user_nick}，你已被{self}移出黑名单，现在可以继续使用了"},
+	{"strWhiteQQAddNotice","{user_nick}，您已获得{self}的信任，请尽情使用{self}√"},
+	{"strWhiteQQDenied","你不是{self}信任的用户×"},
+	{"strWhiteGroupDenied","本群聊不在白名单中×"},
+	{"strDeckProNew","已新建自定义牌堆√"},
+	{"strDeckProSet","已将{deck_name}设置为默认牌堆√"},
+	{"strDeckProClr","已删除默认牌堆√"},
+	{"strDeckProNull","默认牌堆不存在!"},
+	{"strDeckTmpReset","已重置卡牌√"},
+	{"strDeckTmpShow","当前剩余卡牌:"},
+	{"strDeckTmpEmpty","已无剩余卡牌！"},		//剩余卡牌数为0
+	{"strDeckTmpNotFound","不存在剩余卡牌×"},	//没有生成过牌堆
+	{"strDeckNameEmpty","未指定牌堆名×"},
+	{"strRollDice","{pc}掷骰: {res}"},
+	{"strRollDiceReason","{pc}掷骰 {reason}: {res}"},
+	{"strRollHidden","{pc}进行了一次暗骰"},
+	{"strRollTurn","{pc}的掷骰轮数: {turn}轮"},
+	{"strRollMultiDice","{pc}掷骰{turn}次: {dice_exp}={res}"},
+	{"strRollMultiDiceReason","{pc}掷骰{turn}次{reason}: {dice_exp}={res}"},
+	{"strRollSkill","{pc}进行{attr}检定："},
+	{"strRollSkillReason","由于{reason} {pc}进行{attr}检定："},
+	{"strEnRoll","{pc}的{attr}增强或成长检定：\n{res}"},//{attr}在用户省略技能名后替换为{strEnDefaultName}
+	{"strEnRollNotChange","{strEnRoll}\n{pc}的{attr}值没有变化"},
+	{"strEnRollFailure","{strEnRoll}\n{pc}的{attr}变化{change}点，当前为{final}点"},
+	{"strEnRollSuccess","{strEnRoll}\n{pc}的{attr}增加{change}点，当前为{final}点"},
+	{"strEnDefaultName","属性或技能"},//默认文本
 	{"strEnValEmpty", "未对{self}设定待成长属性值，请先.st {attr} 属性值 或查看.help en×"},
 	{"strEnValInvalid", "{attr}值输入不正确,请输入1-99范围内的整数!"},
 	{"strSendMsg", "{self}已将消息送出√"}, //Master定向发送的回执
