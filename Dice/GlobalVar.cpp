@@ -309,9 +309,10 @@ std::map<std::string, std::string> GlobalMsg
 .help群管 查看群管指令
 .help设定 确认骰娘设定
 .help链接 查看源码文档
+官方论坛:https://forum.kokona.tech/
 官方(水)群: 624807593 941980833 882747577
-Shiki交流群：1029435374
-私骰分流群：863062599)"
+Shiki交流群: 1029435374
+私骰分流群: 863062599)"
 	}
 };
 
@@ -324,7 +325,14 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 	},
 	{
 		"链接",
-		"查看源码:https://github.com/mystringEmpty/Dice\n插件下载:https://github.com/mystringEmpty/Dice/releases\n用户手册:http://shiki.stringempty.xyz/download/Shiki_User_Manual.pdf\n骰主手册:http://shiki.stringempty.xyz/download/Shiki_Master_Manual.pdf\n炼骰手册:http://shiki.stringempty.xyz/download/DiceMaid_CookBook.html\n(在线文档)https://dice.c-j.dev/\nst用人物卡:http://shiki.stringempty.xyz/download/COC7_player_card_shiki.xlsx"
+		R"(官方论坛:https://forum.kokona.tech/
+查看源码:https://github.com/mystringEmpty/Dice
+插件下载:https://github.com/mystringEmpty/Dice/releases
+用户手册:http://shiki.stringempty.xyz/download/Shiki_User_Manual.pdf
+骰主手册:http://shiki.stringempty.xyz/download/Shiki_Master_Manual.pdf
+炼骰手册:http://shiki.stringempty.xyz/download/DiceMaid_CookBook.html
+(在线文档)https://dice.c-j.dev/
+st用COC7人物卡:http://shiki.stringempty.xyz/download/COC7_player_card_shiki.xlsx)"
 	},
 	{
 		"设定",
