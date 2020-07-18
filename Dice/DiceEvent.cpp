@@ -78,6 +78,10 @@ int FromMsg::AdminEvent(const string& strOption)
 		case 0:
 			console.set(it->first, intSet);
 			note("已将" + GlobalMsg["strSelfName"] + "的" + it->first + "设置为" + to_string(intSet), 0b10);
+			if (ConsoleSafe.count(it->first) != 0 && intSet != ConsoleSafe[it->first])
+			{
+				note(GlobalMsg["strConfSetToUnsafe"], 0b10);
+			}
 			break;
 		case -1:
 			reply(GlobalMsg["strSelfName"] + "该项为" + to_string(console[strOption.c_str()]));

@@ -35,6 +35,10 @@
 using namespace std;
 using namespace CQ;
 
+extern std::map<std::string, int, less_ci> ConsoleSafe{
+	{"CloudBlackShare", 0}
+};
+
 const std::map<std::string, int, less_ci> Console::intDefault{
 	{"DisabledGlobal", 0}, {"DisabledBlock", 0}, {"DisabledListenAt", 1},
 	{"DisabledMe", 1}, {"DisabledJrrp", 0}, {"DisabledDeck", 1}, {"DisabledDraw", 0}, {"DisabledSend", 0},
@@ -45,7 +49,7 @@ const std::map<std::string, int, less_ci> Console::intDefault{
 	{"ListenGroupKick", 1}, {"ListenGroupBan", 1}, {"ListenSpam", 1},
 	{"BannedLeave", 0}, {"BannedBanInviter", 0},
 	{"KickedBanInviter", 0},
-	{"CloudBlackShare", 1}, {"BelieveDiceList", 0}, {"CloudVisible", 1},
+	{"CloudBlackShare", 0}, {"BelieveDiceList", 0}, {"CloudVisible", 1},
 	{"SystemAlarmCPU", 90}, {"SystemAlarmRAM", 90},
 	{"SendIntervalIdle", 500}, {"SendIntervalBusy", 100}
 };

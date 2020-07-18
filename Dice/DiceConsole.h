@@ -156,6 +156,8 @@ private:
 	std::map<chatType, int> NoticeList{};
 };
 
+extern std::map<std::string, int, less_ci> ConsoleSafe;
+
 extern Console console;
 //extern DiceModManager modules;
 //÷»ÄïÁÐ±í
