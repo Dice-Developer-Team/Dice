@@ -93,10 +93,10 @@ namespace Network
 		const char* header = "Content-Type: application/x-www-form-urlencoded";
 
 		const HINTERNET hInternet = InternetOpenA(DiceRequestHeader, INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
-		const HINTERNET hConnect = InternetConnectA(hInternet, serverName, port, nullptr, nullptr,
-		                                            INTERNET_SERVICE_HTTP, 0, 0);
-		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "POST", objectName, "HTTP/1.1", nullptr, acceptTypes, 0,
-		                                            0);
+		const HINTERNET hConnect = InternetConnectA(hInternet, serverName, port, nullptr, nullptr, 
+			INTERNET_SERVICE_HTTP, 0, 0);
+		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "POST", objectName, "HTTP/1.1", nullptr, acceptTypes, 0, 
+			0);
 		const BOOL res = HttpSendRequestA(hRequest, header, strlen(header), frmdata, strlen(frmdata));
 
 
@@ -195,10 +195,10 @@ namespace Network
 		const char* acceptTypes[] = {"*/*", nullptr};
 
 		const HINTERNET hInternet = InternetOpenA(DiceRequestHeader, INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
-		const HINTERNET hConnect = InternetConnectA(hInternet, serverName, port, nullptr, nullptr,
-		                                            INTERNET_SERVICE_HTTP, 0, 0);
+		const HINTERNET hConnect = InternetConnectA(hInternet, serverName, port, nullptr, nullptr, 
+			INTERNET_SERVICE_HTTP, 0, 0);
 		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "GET", objectName, "HTTP/1.1", nullptr, acceptTypes,
-		                                            INTERNET_FLAG_NO_CACHE_WRITE, 0);
+			INTERNET_FLAG_NO_CACHE_WRITE, 0);
 		const BOOL res = HttpSendRequestA(hRequest, nullptr, 0, nullptr, 0);
 
 

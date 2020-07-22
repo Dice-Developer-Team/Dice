@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123Ëİä§
+ * Copyright (C) 2018-2019 w4123æº¯æ´„
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -43,534 +43,503 @@ CQ::logger DiceLogger("Dice!");
 
 std::map<std::string, std::string> GlobalMsg
 {
-	{"strParaEmpty","²ÎÊı²»ÄÜÎª¿Õ¡Á"},			//ÍµÀÁÓÃÍòÄÜ»Ø¸´
-	{"strParaIllegal","²ÎÊı·Ç·¨¡Á"},			//ÍµÀÁÓÃÍòÄÜ»Ø¸´
-	{"stranger","ÓÃ»§"},			//{nick}ÎŞ·¨»ñÈ¡·Ç¿ÕêÇ³ÆÊ±µÄ³Æºô
-	{"strAdminOptionEmpty","ÕÒ{self}ÓĞÊ²Ã´ÊÂÃ´£¿{nick}"},			//
-	{"strGMTableShow","{self}¼ÇÂ¼µÄ{table_name}ÁĞ±í£º"},
-	{"strGMTableNotExist","{self}Ã»ÓĞ±£´æµÄ{table_name}¼ÇÂ¼"},
-	{"strUserTrustShow","{user}ÔÚ{self}´¦µÄĞÅÈÎ¼¶±ğÎª{trust}"},
-	{"strUserTrusted","ÒÑ½«{self}¶Ô{user}µÄĞÅÈÎ¼¶±ğµ÷ÕûÎª{trust}"},
-	{"strUserTrustDenied","{nick}ÔÚ{self}´¦ÎŞÈ¨·ÃÎÊ¶Ô·½µÄÈ¨ÏŞ¡Á"},
-	{"strUserTrustIllegal","½«Ä¿±êÈ¨ÏŞĞŞ¸ÄÎª{trust}ÊÇ·Ç·¨µÄ¡Á"},
-	{"strUserNotFound","{self}ÎŞ{user}µÄÓÃ»§¼ÇÂ¼"},
-	{"strGroupAuthorized","A roll to the table turns to a dice fumble!\nDice Roller {strSelfName}¡Ì\n±¾ÈºÒÑÊÚÈ¨Ğí¿É£¬Çë¾¡ÇéÊ¹ÓÃ±¾÷»Äï¡Ì\nÇë×ñÊØĞ­ÒéÊ¹ÓÃ£¬·şÎñ½áÊøºóÊ¹ÓÃ.dismissËÍ³ö!" },
-	{"strAddGroupNoLicense","±¾ÈºÎ´»ñ{self}Ğí¿ÉÊ¹ÓÃ£¬½«×Ô¶¯ÔÚÈºÄÚ¾²Ä¬¡£\nÇëÏÈ.helpĞ­Òé ÔÄ¶Á²¢Í¬ÒâĞ­ÒéºóÏòÔËÓª·½ÉêÇëĞí¿ÉÊ¹ÓÃ£¬\n·ñÔòÇë¹ÜÀíÔ±Ê¹ÓÃ!dismissËÍ³ö{self}\n¿É°´ÒÔÏÂ¸ñÊ½ÌîĞ´²¢·¢ËÍÉêÇë:\n!authorize ÉêÇëÓÃÍ¾:[ÀíÓÉ] ÎÒÒÑÁË½âDice!»ù±¾ÓÃ·¨£¬×ĞÏ¸ÔÄ¶Á²¢±£Ö¤×ñÊØ{strSelfName}µÄÓÃ»§Ğ­Òé£¬ÈçĞèÍ£ÓÃÖ¸ÁîÊ¹ÓÃ[Ö¸Áî]£¬ÓÃºóÊ¹ÓÃ[Ö¸Áî]ËÍ³öÈº" },
-	{"strGroupLicenseDeny","´ËÈºÎ´»ñ{self}Ğí¿ÉÊ¹ÓÃ£¬ÇëÏÈÈ·ÈÏĞ­Òé²¢ÉêÇëĞí¿É¡Á\n»òÇë¹ÜÀíÔ±Ê¹ÓÃ!dismissËÍ³ö{self}" },
-	{"strGroupLicenseApply","´ËÈºÎ´Í¨¹ı×ÔÖúÊÚÈ¨¡Á\nĞí¿ÉÉêÇëÒÑ·¢ËÍ¡Ì" },
-	{"strGroupSetOn","ÏÖÒÑ¿ªÆô{self}ÔÚ´ËÈºµÄ¡°{option}¡±Ñ¡Ïî¡Ì"},			//ÈºÄÚ¿ª¹ØºÍÒ£¿Ø¿ª¹ØÍ¨ÓÃ´ËÎÄ±¾
-	{"strGroupSetOnAlready","{self}ÒÑÔÚ´ËÈºÉèÖÃÁË{option}£¡"},			
-	{"strGroupSetOff","ÏÖÒÑ¹Ø±Õ{self}ÔÚ´ËÈºµÄ¡°{option}¡±Ñ¡Ïî¡Ì"},			
-	{"strGroupSetOffAlready","{self}Î´ÔÚ´ËÈºÉèÖÃ{option}£¡"},
-	{"strGroupSetAll","{self}ÒÑĞŞ¸Ä¼ÇÂ¼ÖĞ{cnt}¸öÈºµÄ¡°{option}¡±Ñ¡Ïî¡Ì"},
-	{"strGroupDenied","{nick}ÔÚ{self}´¦ÎŞÈ¨·ÃÎÊ´ËÈºµÄÉèÖÃ¡Á"},
-	{"strGroupSetDenied","{nick}ÔÚ{self}´¦ÉèÖÃ{option}µÄÈ¨ÏŞ²»×ã¡Á"},
-	{"strGroupSetNotExist","{self}ÎŞ{option}´ËÑ¡Ïî¡Á"},
-	{"strGroupWholeUnban","{self}ÒÑ¹Ø±ÕÈ«¾Ö½ûÑÔ¡Ì"},
-	{"strGroupWholeBan","{self}ÒÑ¿ªÆôÈ«¾Ö½ûÑÔ¡Ì"},
-	{"strGroupWholeBanErr","{self}¿ªÆôÈ«¾Ö½ûÑÔÊ§°Ü¡Á"},
-	{"strGroupUnban","{self}²Ã¶¨:{member}½â³ı½ûÑÔ¡Ì"},
-	{"strGroupBan","{self}²Ã¶¨:{member}½ûÑÔ{res}·ÖÖÓ¡Ì"},
-	{"strGroupBanErr","{self}½ûÑÔ{member}Ê§°Ü¡Á"},
-	{"strGroupNotFound","{self}ÎŞ¸ÃÈº¼ÇÂ¼¡Á"},
-	{"strGroupNotIn","{self}µ±Ç°²»ÔÚ¸ÃÈº»ò¶ÔÏó²»ÊÇÈº£¡"},
-	{"strGroupExit","{self}ÒÑÍË³ö¸ÃÈº¡Ì"},
-	{"strGroupCardSet","{self}ÒÑ½«{target}µÄÈºÃûÆ¬ĞŞ¸ÄÎª{card}¡Ì"},
-	{"strGroupCardSetErr","{self}ÉèÖÃ{target}µÄÈºÃûÆ¬Ê§°Ü¡Á"},
-	{"strGroupTitleSet","{self}ÒÑ½«{target}µÄÍ·ÏÎĞŞ¸ÄÎª{title}¡Ì"},
-	{"strGroupTitleSetErr","{self}ÉèÖÃ{target}µÄÍ·ÏÎÊ§°Ü¡Á"},
-	{"strPcNewEmptyCard","ÒÑÎª{nick}ĞÂ½¨{type}¿Õ°×¿¨{char}¡Ì"},
-	{"strPcNewCardShow","ÒÑÎª{nick}ĞÂ½¨{type}¿¨{char}£º{show}"},//ÓÉÓÚÔ¤Éú³ÉÑ¡Ïî¶ø´æÔÚÊôĞÔ
-	{"strPcCardSet","ÒÑ½«{nick}µ±Ç°½ÇÉ«¿¨°ó¶¨Îª{char}¡Ì"},//{nick}-ÓÃ»§êÇ³Æ {pc}-Ô­½ÇÉ«¿¨Ãû {char}-ĞÂ½ÇÉ«¿¨Ãû
-	{"strPcCardReset","ÒÑ½â°ó{nick}µ±Ç°µÄÄ¬ÈÏ¿¨¡Ì"},//{nick}-ÓÃ»§êÇ³Æ {pc}-Ô­½ÇÉ«¿¨Ãû
-	{"strPcCardRename","ÒÑ½«{old_name}ÖØÃüÃûÎª{new_name}¡Ì"},
-	{"strPcCardDel","ÒÑ½«½ÇÉ«¿¨{char}É¾³ı¡Ì"},
-	{"strPcCardCpy","ÒÑ½«{char2}µÄÊôĞÔ¸´ÖÆµ½{char1}¡Ì"},
-	{"strPcClr","ÒÑÇå¿Õ{nick}µÄ½ÇÉ«¿¨¼ÇÂ¼¡Ì"},
-	{"strPcCardList","{nick}µÄ½ÇÉ«ÁĞ±í£º{show}"},
-	{"strPcCardBuild","{nick}µÄ{char}Éú³É£º{show}"},
-	{"strPcCardShow","{nick}µÄ<{type}>{char}£º{show}"},	//{nick}-ÓÃ»§êÇ³Æ {type}-½ÇÉ«¿¨ÀàĞÍ {char}-½ÇÉ«¿¨Ãû
-	{"strPcCardRedo","{nick}µÄ{char}ÖØĞÂÉú³É£º{show}"},
-	{"strPcGroupList","{nick}µÄ¸÷Èº½ÇÉ«ÁĞ±í£º{show}"},
-	{"strPcNotExistErr","{self}ÎŞ{nick}µÄ½ÇÉ«¿¨¼ÇÂ¼£¬ÎŞ·¨É¾³ı¡Á"},
-	{"strPcCardFull","{nick}ÔÚ{self}´¦µÄ½ÇÉ«¿¨ÒÑ´ïÉÏÏŞ£¬ÇëÏÈÇåÀí¶àÓà½ÇÉ«¿¨¡Á"},
-	{"strPcTempInvalid","{self}ÎŞ·¨Ê¶±ğµÄ½ÇÉ«¿¨Ä£°å¡Á"},
-	{"strPcNameEmpty","Ãû³Æ²»ÄÜÎª¿Õ¡Á"},
-	{"strPcNameExist","ÒÑ´æÔÚÍ¬Ãû¿¨¡Á"},
-	{"strPcNameNotExist","¸ÃÃû³Æ²»´æÔÚ¡Á"},
-	{"strPcNameInvalid","·Ç·¨µÄÈËÎï¿¨Ãû£¨´æÔÚÃ°ºÅ£©¡Á"},
-	{"strPcInitDelErr","³õÊ¼¿¨²»¿ÉÉ¾³ı¡Á"},
-	{"strPcNoteTooLong","±¸×¢³¤¶È²»ÄÜ³¬¹ı255¡Á"},
-	{"strPcTextTooLong","ÎÄ±¾³¤¶È²»ÄÜ³¬¹ı48¡Á"},
-	{"strSensNote","·¢ÏÖÖ¸ÁîÖĞ´øÃô¸Ğ´Ê£¬{self}ÒÑ¼ÇÂ¼²¢ÉÏ±¨£¡"},
-	{"strSensWarn","·¢ÏÖÖ¸ÁîÖĞ´øÃô¸Ğ´Ê£¬{self}¾Ü¾øÏìÓ¦ÇÒÒÑÉÏ±¨£¡"},
-	{"strSpamFirstWarning","Äã¶ÌÊ±¼äÄÚ¶Ô{self}Ö¸Áî´ÎÊı¹ı¶à£¡ÇëÉÆÓÃ¶àÂÖÖÀ÷»ºÍ¸´ÊıÉú³ÉÖ¸Áî£¨Ë¢ÆÁ³õ´Î¾¯¸æ£©"},
-	{"strSpamFinalWarning","ÇëÔİÍ£ÄãµÄÒ»ÇĞÖ¸Áî£¬±ÜÃâÒò¸ßÆµÖ¸Áî±»{self}À­ºÚ£¡£¨Ë¢ÆÁ×îÖÕ¾¯¸æ£©"},
-	{"strReplySet","{self}¶Ô¹Ø¼ü´Ê{key}µÄ»Ø¸´ÒÑÉèÖÃ¡Ì"},
-	{"strReplyDel","{self}¶Ô¹Ø¼ü´Ê{key}µÄ»Ø¸´ÒÑÇå³ı¡Ì"},
-	{"strStModify","{self}¶ÔÒÑ¼ÇÂ¼{pc}µÄÊôĞÔ±ä»¯:"},		//´æÔÚ¼¼ÄÜÖµ±ä»¯Çé¿öÊ±£¬ÓÅÏÈÊ¹ÓÃ´ËÎÄ±¾
-	{"strStDetail","{self}¶ÔÒÑÉèÖÃ{pc}µÄÊôĞÔ£º"},		//´æÔÚÖÀ÷»Ê±£¬Ê¹ÓÃ´ËÎÄ±¾(ÔİÊ±ÎŞÓÃ)
-	{"strStValEmpty","{self}Î´¼ÇÂ¼{attr}Ô­Öµ¡Á"},		//{0}ÎªÊôĞÔÃû
-	{"strBlackQQAddNotice","{user_nick}£¬ÄãÒÑ±»{self}¼ÓÈëºÚÃûµ¥£¬ÏêÇéÇëÁªÏµMaster"},				
-	{"strBlackQQAddNoticeReason","{user_nick}£¬ÓÉÓÚ{reason}£¬ÄãÒÑ±»{self}¼ÓÈëºÚÃûµ¥£¬ÉêËß½â·âÇëÁªÏµ¹ÜÀíÔ±"},
-	{"strBlackQQDelNotice","{user_nick}£¬ÄãÒÑ±»{self}ÒÆ³öºÚÃûµ¥£¬ÏÖÔÚ¿ÉÒÔ¼ÌĞøÊ¹ÓÃÁË"},
-	{"strWhiteQQAddNotice","{user_nick}£¬ÄúÒÑ»ñµÃ{self}µÄĞÅÈÎ£¬Çë¾¡ÇéÊ¹ÓÃ{self}¡Ì"},
-	{"strWhiteQQDenied","Äã²»ÊÇ{self}ĞÅÈÎµÄÓÃ»§¡Á"},
-	{"strWhiteGroupDenied","±¾ÈºÁÄ²»ÔÚ°×Ãûµ¥ÖĞ¡Á"},
-	{"strDeckProNew","ÒÑĞÂ½¨×Ô¶¨ÒåÅÆ¶Ñ¡Ì"},
-	{"strDeckProSet","ÒÑ½«{deck_name}ÉèÖÃÎªÄ¬ÈÏÅÆ¶Ñ¡Ì"},
-	{"strDeckProClr","ÒÑÉ¾³ıÄ¬ÈÏÅÆ¶Ñ¡Ì"},
-	{"strDeckProNull","Ä¬ÈÏÅÆ¶Ñ²»´æÔÚ!"},
-	{"strDeckTmpReset","ÒÑÖØÖÃ¿¨ÅÆ¡Ì"},
-	{"strDeckTmpShow","µ±Ç°Ê£Óà¿¨ÅÆ:"},
-	{"strDeckTmpEmpty","ÒÑÎŞÊ£Óà¿¨ÅÆ£¡"},		//Ê£Óà¿¨ÅÆÊıÎª0
-	{"strDeckTmpNotFound","²»´æÔÚÊ£Óà¿¨ÅÆ¡Á"},	//Ã»ÓĞÉú³É¹ıÅÆ¶Ñ
-	{"strDeckNameEmpty","Î´Ö¸¶¨ÅÆ¶ÑÃû¡Á"},
-	{"strRollDice","{pc}ÖÀ÷»: {res}"},
-	{"strRollDiceReason","{pc}ÖÀ÷» {reason}: {res}"},
-	{"strRollHidden","{pc}½øĞĞÁËÒ»´Î°µ÷»"},
-	{"strRollTurn","{pc}µÄÖÀ÷»ÂÖÊı: {turn}ÂÖ"},
-	{"strRollMultiDice","{pc}ÖÀ÷»{turn}´Î: {dice_exp}={res}"},
-	{"strRollMultiDiceReason","{pc}ÖÀ÷»{turn}´Î{reason}: {dice_exp}={res}"},
-	{"strRollSkill","{pc}½øĞĞ{attr}¼ì¶¨£º"},
-	{"strRollSkillReason","ÓÉÓÚ{reason} {pc}½øĞĞ{attr}¼ì¶¨£º"},
-	{"strEnRoll","{pc}µÄ{attr}ÔöÇ¿»ò³É³¤¼ì¶¨£º\n{res}"},//{attr}ÔÚÓÃ»§Ê¡ÂÔ¼¼ÄÜÃûºóÌæ»»Îª{strEnDefaultName}
-	{"strEnRollNotChange","{strEnRoll}\n{pc}µÄ{attr}ÖµÃ»ÓĞ±ä»¯"},
-	{"strEnRollFailure","{strEnRoll}\n{pc}µÄ{attr}±ä»¯{change}µã£¬µ±Ç°Îª{final}µã"},
-	{"strEnRollSuccess","{strEnRoll}\n{pc}µÄ{attr}Ôö¼Ó{change}µã£¬µ±Ç°Îª{final}µã"},
-	{"strEnDefaultName","ÊôĞÔ»ò¼¼ÄÜ"},//Ä¬ÈÏÎÄ±¾
-	{"strEnValEmpty", "Î´¶Ô{self}Éè¶¨´ı³É³¤ÊôĞÔÖµ£¬ÇëÏÈ.st {attr} ÊôĞÔÖµ »ò²é¿´.help en¡Á"},
-	{"strEnValInvalid", "{attr}ÖµÊäÈë²»ÕıÈ·,ÇëÊäÈë1-99·¶Î§ÄÚµÄÕûÊı!"},
-	{"strSendMsg", "{self}ÒÑ½«ÏûÏ¢ËÍ³ö¡Ì"}, //Master¶¨Ïò·¢ËÍµÄ»ØÖ´
-	{"strSendMasterMsg", "ÏûÏ¢{self}ÒÑ·¢ËÍ¸øMaster¡Ì"}, //ÏòMaster·¢ËÍµÄ»ØÖ´
-	{"strSendMsgEmpty", "·¢ËÍÏûÏ¢ÄÚÈİÎª¿Õ¡Á"},
-	{"strSendMsgInvalid", "{self}Ã»ÓĞ¿ÉÒÔ·¢ËÍµÄ¶ÔÏó¡Á"}, //Ã»ÓĞMaster
-	{"strDefaultCOCClr", "Ä¬ÈÏ¼ì¶¨·¿¹æÒÑÇå³ı¡Ì"},
-	{"strDefaultCOCNotFound", "Ä¬ÈÏ¼ì¶¨·¿¹æ²»´æÔÚ¡Á"},
-	{"strDefaultCOCSet", "Ä¬ÈÏ¼ì¶¨·¿¹æÒÑÉèÖÃ:"},
-	{"strLinkLoss", "{self}µÄÊ±¿ÕÁ¬½ÓÒÑ¶Ï¿ª¡Ì"},
-	{"strLinked", "{self}ÒÑ´´½¨Ê±¿ÕÃÅ¡Ì"},
-	{"strLinkWarning", "³¢ÊÔ´´½¨Ê±¿ÕÃÅ£¬µ«²»±£Ö¤ÄÜ·ñÁ¬Í¨"},
-	{"strLinkNotFound", "Ê±¿ÕÃÅÒªÍ¨Ïò²»¿ÉÃû×´µÄµØ·½ÁË¡Á"},
-	{"strNotMaster", "Äã²»ÊÇ{self}µÄmaster£¡ÄãÏë×öÊ²Ã´£¿"},
-	{"strNotAdmin", "Äã²»ÊÇ{self}µÄ¹ÜÀíÔ±¡Á"},
-	{"strDismiss", ""}, //.dismissÍËÈºÇ°µÄ»ØÖ´
-	{"strHlpSet", "ÒÑÎª{key}ÉèÖÃ´ÊÌõ¡Ì"},
-	{"strHlpReset", "ÒÑÇå³ı{key}µÄ´ÊÌõ¡Ì"},
-	{"strHlpNameEmpty", "MasterÏëÒª×Ô¶¨ÒåÊ²Ã´´ÊÌõÑ½£¿"},
-	{"strHlpNotFound", "{self}Î´ÕÒµ½Ö¸¶¨µÄ°ïÖúĞÅÏ¢¡Á"},
-	{"strClockToWork", "{self}ÒÑ°´Ê±ÆôÓÃ¡Ì"},
-	{"strClockOffWork", "{self}ÒÑ°´Ê±¹Ø±Õ¡Ì"},
-	{"strNameGenerator", "{pc}µÄËæ»úÃû³Æ£º{res}"},
-	{"strDrawCard", "À´¿´¿´{pc}³éµ½ÁËÊ²Ã´£º{res}"},
-	{"strMeOn", "³É¹¦ÔÚÕâÀïÆôÓÃ{self}µÄ.meÃüÁî¡Ì"},
-	{"strMeOff", "³É¹¦ÔÚÕâÀï½ûÓÃ{self}µÄ.meÃüÁî¡Ì"},
-	{"strMeOnAlready", "ÔÚÕâÀï{self}µÄ.meÃüÁîÃ»ÓĞ±»½ûÓÃ!"},
-	{"strMeOffAlready", "ÔÚÕâÀï{self}µÄ.meÃüÁîÒÑ¾­±»½ûÓÃ!"},
-	{"strObOn", "³É¹¦ÔÚÕâÀïÆôÓÃ{self}µÄÅÔ¹ÛÄ£Ê½¡Ì"},
-	{"strObOff", "³É¹¦ÔÚÕâÀï½ûÓÃ{self}µÄÅÔ¹ÛÄ£Ê½¡Ì"},
-	{"strObOnAlready", "ÔÚÕâÀï{self}µÄÅÔ¹ÛÄ£Ê½Ã»ÓĞ±»½ûÓÃ!"},
-	{"strObOffAlready", "ÔÚÕâÀï{self}µÄÅÔ¹ÛÄ£Ê½ÒÑ¾­±»½ûÓÃ!"},
-	{"strObList", "µ±Ç°{self}µÄÅÔ¹ÛÕßÓĞ:"},
-	{"strObListEmpty", "µ±Ç°{self}ÔİÎŞÅÔ¹ÛÕß"},
-	{"strObListClr", "{self}³É¹¦É¾³ıËùÓĞÅÔ¹ÛÕß¡Ì"},
-	{"strObEnter", "{nick}³É¹¦¼ÓÈë{self}µÄÅÔ¹Û¡Ì"},
-	{"strObExit", "{nick}³É¹¦ÍË³ö{self}µÄÅÔ¹Û¡Ì"},
-	{"strObEnterAlready", "{nick}ÒÑ¾­´¦ÓÚ{self}µÄÅÔ¹ÛÄ£Ê½!"},
-	{"strObExitAlready", "{nick}Ã»ÓĞ¼ÓÈë{self}µÄÅÔ¹ÛÄ£Ê½!"},
-	{"strQQIDEmpty", "QQºÅ²»ÄÜÎª¿Õ¡Á"},
-	{"strGroupIDEmpty", "ÈººÅ²»ÄÜÎª¿Õ¡Á"},
-	{"strBlackGroup", "¸ÃÈºÔÚºÚÃûµ¥ÖĞ£¬ÈçÓĞÒÉÎÊÇëÁªÏµmaster"},
-	{"strBotOn", "³É¹¦¿ªÆô{self}¡Ì"},
-	{"strBotOff", "³É¹¦¹Ø±Õ{self}¡Ì"},
-	{"strBotOnAlready", "{self}ÒÑ¾­´¦ÓÚ¿ªÆô×´Ì¬!"},
-	{"strBotOffAlready", "{self}ÒÑ¾­´¦ÓÚ¹Ø±Õ×´Ì¬!"},
-	{"strRollCriticalSuccess", "´ó³É¹¦£¡"}, //Ò»°ã¼ì¶¨ÓÃ
-	{"strRollExtremeSuccess", "¼«ÄÑ³É¹¦"},
-	{"strRollHardSuccess", "À§ÄÑ³É¹¦"},
-	{"strRollRegularSuccess", "³É¹¦"},
-	{"strRollFailure", "Ê§°Ü"},
-	{"strRollFumble", "´óÊ§°Ü£¡"},
-	{"strFumble", "´óÊ§°Ü!"}, //¶àÂÖ¼ì¶¨ÓÃ£¬Çë¿ØÖÆ³¤¶È
-	{"strFailure", "Ê§°Ü"},
-	{"strSuccess", "³É¹¦"},
-	{"strHardSuccess", "À§ÄÑ³É¹¦"},
-	{"strExtremeSuccess", "¼«ÄÑ³É¹¦"},
-	{"strCriticalSuccess", "´ó³É¹¦!"},
-	{"strNumCannotBeZero", "ÎŞÒâÒåµÄÊıÄ¿£¡ÄªÒªÏûÇ²ÓÚÎÒ!"},
-	{"strDeckNotFound", "ÊÇËµ{deck_name}£¿{self}Ã»ÌıËµ¹ıµÄÅÆ¶ÑÃûÄØ¡­¡­"},
-	{"strDeckEmpty", "{self}ÒÑ¾­Ò»ÕÅÒ²²»Ê£ÁË£¡"},
-	{"strNameNumTooBig", "Éú³ÉÊıÁ¿¹ı¶à!ÇëÊäÈë1-10Ö®¼äµÄÊı×Ö!"},
-	{"strNameNumCannotBeZero", "Éú³ÉÊıÁ¿²»ÄÜÎªÁã!ÇëÊäÈë1-10Ö®¼äµÄÊı×Ö!"},
-	{"strSetInvalid", "ÎŞĞ§µÄÄ¬ÈÏ÷»!ÇëÊäÈë1-9999Ö®¼äµÄÊı×Ö!"},
-	{"strSetTooBig", "ÕâÃæÊı¡­¡­ÈÃÎÒ¶ª¸öÇò°¡!ÇëÊäÈë1-9999Ö®¼äµÄÊı×Ö!"},
-	{"strSetCannotBeZero", "Ä¬ÈÏ÷»²»ÄÜÎªÁã!ÇëÊäÈë1-9999Ö®¼äµÄÊı×Ö!"},
-	{"strCharacterCannotBeZero", "ÈËÎï×÷³É´ÎÊı²»ÄÜÎªÁã!ÇëÊäÈë1-10Ö®¼äµÄÊı×Ö!"},
-	{"strCharacterTooBig", "ÈËÎï×÷³É´ÎÊı¹ı¶à!ÇëÊäÈë1-10Ö®¼äµÄÊı×Ö!"},
-	{"strCharacterInvalid", "ÈËÎï×÷³É´ÎÊıÎŞĞ§!ÇëÊäÈë1-10Ö®¼äµÄÊı×Ö!"},
-	{"strSanRoll", "{pc}µÄSan Check£º\n{res}"},
-	{"strSanRollRes", "{strSanRoll}\n{pc}µÄSanÖµ¼õÉÙ{change}µã,µ±Ç°Ê£Óà{final}µã"},
-	{"strSanCostInvalid", "SC±í´ïÊ½ÊäÈë²»ÕıÈ·,¸ñÊ½Îª³É¹¦¿ÛSan/Ê§°Ü¿ÛSan,Èç1/1d6!"},
-	{"strSanInvalid", "SanÖµÊäÈë²»ÕıÈ·,ÇëÊäÈë1-99·¶Î§ÄÚµÄÕûÊı!"},
-	{"strSanEmpty", "Î´Éè¶¨SanÖµ£¬ÇëÏÈ.st san »ò²é¿´.help sc¡Á"},
-	{"strSuccessRateErr", "Õâ³É¹¦ÂÊ»¹ĞèÒª¼ì¶¨Âğ£¿"},
-	{"strGroupIDInvalid", "ÎŞĞ§µÄÈººÅ!"},
-	{"strSendErr", "ÏûÏ¢·¢ËÍÊ§°Ü!"},
-	{"strSendSuccess", "ÃüÁîÖ´ĞĞ³É¹¦¡Ì"},
-	{"strDisabledErr", "ÃüÁîÎŞ·¨Ö´ĞĞ:»úÆ÷ÈËÒÑÔÚ´ËÈºÖĞ±»¹Ø±Õ!"},
-	{"strActionEmpty", "¶¯×÷²»ÄÜÎª¿Õ¡Á"},
-	{"strMEDisabledErr", "¹ÜÀíÔ±ÒÑÔÚ´ËÈºÖĞ½ûÓÃ.meÃüÁî!"},
-	{"strDisabledMeGlobal", "Ë¡²»Ìá¹©.me·şÎñ¡Á"},
-	{"strDisabledJrrpGlobal", "Ë¡²»Ìá¹©.jrrp·şÎñ¡Á"},
-	{"strDisabledDeckGlobal", "Ë¡²»Ìá¹©.deck·şÎñ¡Á"},
-	{"strDisabledDrawGlobal", "Ë¡²»Ìá¹©.draw·şÎñ¡Á"},
-	{"strDisabledSendGlobal", "Ë¡²»Ìá¹©.send·şÎñ¡Á"},
-	{"strHELPDisabledErr", "¹ÜÀíÔ±ÒÑÔÚ´ËÈºÖĞ½ûÓÃ.helpÃüÁî!"},
-	{"strNameDelEmpty", "{nick}Ã»ÓĞÉèÖÃÃû³Æ,ÎŞ·¨É¾³ı!"},
-	{"strValueErr", "ÖÀ÷»±í´ïÊ½ÊäÈë´íÎó!"},
-	{"strInputErr", "ÃüÁî»òÖÀ÷»±í´ïÊ½ÊäÈë´íÎó!"},
-	{"strUnknownErr", "·¢ÉúÁËÎ´Öª´íÎó!"},
-	{"strUnableToGetErrorMsg", "ÎŞ·¨»ñÈ¡´íÎóĞÅÏ¢!"},
-	{"strDiceTooBigErr", "{self}±»ÄãÈÓ³öµÄ÷»×ÓÑÍÃ»ÁË¡Á"},
-	{"strRequestRetCodeErr", "·ÃÎÊ·şÎñÆ÷Ê±³öÏÖ´íÎó! HTTP×´Ì¬Âë: {error}"},
-	{"strRequestNoResponse", "·şÎñÆ÷Î´·µ»ØÈÎºÎĞÅÏ¢¡Á"},
-	{"strTypeTooBigErr", "ÍÛ!ÈÃÎÒÊıÊı÷»×ÓÓĞ¶àÉÙÃæÏÈ~1...2..."},
-	{"strZeroTypeErr", "ÕâÊÇ...!!Ê±¿ÕÁÑ({self}±»÷»×Ó²úÉúµÄÊ±¿ÕÁÑ·ì¾í×ßÁË)"},
-	{"strAddDiceValErr", "ÄãÕâÑùÒªÈÃ{self}ÈÓ÷»×ÓÈÓµ½Ê²Ã´Ê±ºòÂï~(ÇëÊäÈëÕıÈ·µÄ¼Ó÷»²ÎÊı:5-10Ö®ÄÚµÄÕûÊı)"},
-	{"strZeroDiceErr", "ß×?ÎÒµÄ÷»×ÓÄØ?"},
-	{"strRollTimeExceeded", "ÖÀ÷»ÂÖÊı³¬¹ıÁË×î´óÂÖÊıÏŞÖÆ!"},
-	{"strRollTimeErr", "Òì³£µÄÖÀ÷»ÂÖÊı"},
-	{"strObPrivate", "ÄãÏë¿´Ê²Ã´Ñ½£¿"},
-	{"strDismissPrivate", "¹ö£¡"},
-	{"strWelcomePrivate", "ÄãÔÚÕâ»¶Ó­Ë­ÄØ£¿"},
-	{"strWelcomeMsgClearNotice", "ÒÑÇå³ı±¾ÈºµÄÈëÈº»¶Ó­´Ê¡Ì"},
-	{"strWelcomeMsgClearErr", "Ã»ÓĞÉèÖÃÈëÈº»¶Ó­´Ê£¬Çå³ıÊ§°Ü¡Á"},
-	{"strWelcomeMsgUpdateNotice", "{self}ÒÑ¸üĞÂ±¾ÈºµÄÈëÈº»¶Ó­´Ê¡Ì"},
-	{"strPermissionDeniedErr", "ÇëÈÃÈºÄÚ¹ÜÀí¶Ô{self}·¢ËÍ¸ÃÖ¸Áî¡Á"},
-	{"strSelfPermissionErr", "{self}È¨ÏŞ²»¹»ÎŞÄÜÎªÁ¦ÄØ¡Á"},
-	{"strNameTooLongErr", "Ãû³Æ¹ı³¤¡Á(×î¶àÎª50Ó¢ÎÄ×Ö·û)"},
-	{"strNameClr", "ÒÑ½«{nick}µÄÃû³ÆÉ¾³ı¡Ì"},
-	{"strNameSet", "ÒÑ½«{nick}µÄÃû³Æ¸ü¸ÄÎª{new_nick}¡Ì"},
-	{"strUnknownPropErr", "Î´Éè¶¨{attr}³É¹¦ÂÊ£¬ÇëÏÈ.st {attr} ¼¼ÄÜÖµ »ò²é¿´.help rc¡Á"},
-	{"strEmptyWWDiceErr", "¸ñÊ½´íÎó:ÕıÈ·¸ñÊ½Îª.w(w)XaY!ÆäÖĞX¡İ1, 5¡ÜY¡Ü10"},
-	{"strPropErr", "ÇëÈÏÕæµÄÊäÈëÄãµÄÊôĞÔÅ¶~"},
-	{"strSetPropSuccess", "ÊôĞÔÉèÖÃ³É¹¦¡Ì"},
-	{"strPropCleared", "ÒÑÇå¿Õ{char}µÄËùÓĞÊôĞÔ¡Ì"},
-	{"strRuleReset", "ÒÑÖØÖÃÄ¬ÈÏ¹æÔò¡Ì"},
-	{"strRuleSet", "ÒÑÉèÖÃÄ¬ÈÏ¹æÔò¡Ì"},
-	{"strRuleErr", "¹æÔòÊı¾İ»ñÈ¡Ê§°Ü,¾ßÌåĞÅÏ¢:\n"},
-	{"strRulesFailedErr", "ÇëÇóÊ§°Ü,{self}ÎŞ·¨Á¬½ÓÊı¾İ¿â¡Á"},
-	{"strPropDeleted", "ÒÑÉ¾³ı{pc}µÄ{attr}¡Ì"},
-	{"strPropNotFound", "ÊôĞÔ{attr}²»´æÔÚ¡Á"},
-	{"strRuleNotFound", "{self}Î´ÕÒµ½¶ÔÓ¦µÄ¹æÔòĞÅÏ¢¡Á"},
-	{"strProp", "{pc}µÄ{attr}Îª{val}"},
-	{"strPropList", "{nick}µÄ{char}ÊôĞÔÁĞ±íÎª£º{show}"},
-	{"strStErr", "¸ñÊ½´íÎó:Çë²Î¿¼.help st»ñÈ¡.stÃüÁîµÄÊ¹ÓÃ·½·¨"},
-	{"strRulesFormatErr", "¸ñÊ½´íÎó:ÕıÈ·¸ñÊ½Îª.rules[¹æÔòÃû³Æ:]¹æÔòÌõÄ¿ Èç.rules COC7:Á¦Á¿"},
-	{"strLeaveDiscuss", "{self}ÏÖ²»Ö§³ÖÌÖÂÛ×é·şÎñ£¬¼´½«ÍË³ö"},
-	{"strLeaveNoPower", "{self}Î´»ñµÃÈº¹ÜÀí£¬¼´½«ÍËÈº"},
-	{"strLeaveUnused", "{self}ÒÑ¾­ÔÚÕâÀï±»·ÅÖÃ{day}ÌìÀ²£¬ÂíÉÏ¾Í»áÀë¿ªÕâÀïÁË"},
-	{"strGlobalOff", "{self}Ğİ¼ÙÖĞ£¬ÔİÍ£·şÎñ¡Á"},
-	{"strPreserve", "{self}Ë½ÓĞË½ÓÃ£¬ÎğÈÅÎğ¹Ö\nÈçĞèÉêÇëĞí¿ÉÇë·¢ËÍ!authorize +[ÈººÅ] [ÉêÇëÀíÓÉ]"},
-	{"strJrrp", "{nick}½ñÌìµÄÈËÆ·ÖµÊÇ: {res}"},
-	{"strJrrpErr", "JRRP»ñÈ¡Ê§°Ü! ´íÎóĞÅÏ¢: \n{res}"},
-	{"strAddFriendWhiteQQ", "{strAddFriend}"}, //°×Ãûµ¥ÓÃ»§Ìí¼ÓºÃÓÑÊ±»Ø¸´´Ë¾ä
+	{"strParaEmpty","å‚æ•°ä¸èƒ½ä¸ºç©ºÃ—"},			//å·æ‡’ç”¨ä¸‡èƒ½å›å¤
+	{"strParaIllegal","å‚æ•°éæ³•Ã—"},			//å·æ‡’ç”¨ä¸‡èƒ½å›å¤
+	{"stranger","ç”¨æˆ·"},			//{nick}æ— æ³•è·å–éç©ºæ˜µç§°æ—¶çš„ç§°å‘¼
+	{"strAdminOptionEmpty","æ‰¾{self}æœ‰ä»€ä¹ˆäº‹ä¹ˆï¼Ÿ{nick}"},			//
+	{"strGMTableShow","{self}è®°å½•çš„{table_name}åˆ—è¡¨ï¼š"},
+	{"strGMTableNotExist","{self}æ²¡æœ‰ä¿å­˜çš„{table_name}è®°å½•"},
+	{"strUserTrustShow","{user}åœ¨{self}å¤„çš„ä¿¡ä»»çº§åˆ«ä¸º{trust}"},
+	{"strUserTrusted","å·²å°†{self}å¯¹{user}çš„ä¿¡ä»»çº§åˆ«è°ƒæ•´ä¸º{trust}"},
+	{"strUserTrustDenied","{nick}åœ¨{self}å¤„æ— æƒè®¿é—®å¯¹æ–¹çš„æƒé™Ã—"},
+	{"strUserTrustIllegal","å°†ç›®æ ‡æƒé™ä¿®æ”¹ä¸º{trust}æ˜¯éæ³•çš„Ã—"},
+	{"strUserNotFound","{self}æ— {user}çš„ç”¨æˆ·è®°å½•"},
+	{"strGroupAuthorized","A roll to the table turns to a dice fumble!\nDice Roller {strSelfName}âˆš\næœ¬ç¾¤å·²æˆæƒè®¸å¯ï¼Œè¯·å°½æƒ…ä½¿ç”¨æœ¬éª°å¨˜âˆš\nè¯·éµå®ˆåè®®ä½¿ç”¨ï¼ŒæœåŠ¡ç»“æŸåä½¿ç”¨.dismissé€å‡º!" },
+	{"strGroupLicenseDeny","æœ¬ç¾¤æœªè·{self}è®¸å¯ä½¿ç”¨ï¼Œè‡ªåŠ¨åœ¨ç¾¤å†…é™é»˜ã€‚\nè¯·å…ˆ.helpåè®® é˜…è¯»å¹¶åŒæ„åè®®åå‘è¿è¥æ–¹ç”³è¯·è®¸å¯ä½¿ç”¨ï¼Œ\nå¦åˆ™è¯·ç®¡ç†å‘˜ä½¿ç”¨!dismissé€å‡º{self}\nå¯æŒ‰ä»¥ä¸‹æ ¼å¼å¡«å†™å¹¶å‘é€ç”³è¯·:\n!authorize ç”³è¯·ç”¨é€”:[*è¯·å†™å…¥ç†ç”±*] æˆ‘å·²äº†è§£Dice!åŸºæœ¬ç”¨æ³•ï¼Œä»”ç»†é˜…è¯»å¹¶ä¿è¯éµå®ˆ{strSelfName}çš„ç”¨æˆ·åè®®ï¼Œå¦‚éœ€åœç”¨æŒ‡ä»¤ä½¿ç”¨[*è¯·å†™å…¥æŒ‡ä»¤*]ï¼Œç”¨åä½¿ç”¨[*è¯·å†™å…¥æŒ‡ä»¤*]é€å‡ºç¾¤" },
+	{"strGroupLicenseApply","æ­¤ç¾¤æœªé€šè¿‡è‡ªåŠ©æˆæƒÃ—\nè®¸å¯ç”³è¯·å·²å‘é€âˆš" },
+	{"strGroupSetOn","ç°å·²å¼€å¯{self}åœ¨æ­¤ç¾¤çš„â€œ{option}â€é€‰é¡¹âˆš"},			//ç¾¤å†…å¼€å…³å’Œé¥æ§å¼€å…³é€šç”¨æ­¤æ–‡æœ¬
+	{"strGroupSetOnAlready","{self}å·²åœ¨æ­¤ç¾¤è®¾ç½®äº†{option}ï¼"},			
+	{"strGroupSetOff","ç°å·²å…³é—­{self}åœ¨æ­¤ç¾¤çš„â€œ{option}â€é€‰é¡¹âˆš"},			
+	{"strGroupSetOffAlready","{self}æœªåœ¨æ­¤ç¾¤è®¾ç½®{option}ï¼"},
+	{"strGroupSetAll","{self}å·²ä¿®æ”¹è®°å½•ä¸­{cnt}ä¸ªç¾¤çš„â€œ{option}â€é€‰é¡¹âˆš"},
+	{"strGroupDenied","{nick}åœ¨{self}å¤„æ— æƒè®¿é—®æ­¤ç¾¤çš„è®¾ç½®Ã—"},
+	{"strGroupSetDenied","{nick}åœ¨{self}å¤„è®¾ç½®{option}çš„æƒé™ä¸è¶³Ã—"},
+	{"strGroupSetNotExist","{self}æ— {option}æ­¤é€‰é¡¹Ã—"},
+	{"strGroupWholeUnban","{self}å·²å…³é—­å…¨å±€ç¦è¨€âˆš"},
+	{"strGroupWholeBan","{self}å·²å¼€å¯å…¨å±€ç¦è¨€âˆš"},
+	{"strGroupWholeBanErr","{self}å¼€å¯å…¨å±€ç¦è¨€å¤±è´¥Ã—"},
+	{"strGroupUnban","{self}è£å®š:{member}è§£é™¤ç¦è¨€âˆš"},
+	{"strGroupBan","{self}è£å®š:{member}ç¦è¨€{res}åˆ†é’Ÿâˆš"},
+	{"strGroupBanErr","{self}ç¦è¨€{member}å¤±è´¥Ã—"},
+	{"strGroupNotFound","{self}æ— è¯¥ç¾¤è®°å½•Ã—"},
+	{"strGroupNotIn","{self}å½“å‰ä¸åœ¨è¯¥ç¾¤æˆ–å¯¹è±¡ä¸æ˜¯ç¾¤ï¼"},
+	{"strGroupExit","{self}å·²é€€å‡ºè¯¥ç¾¤âˆš"},
+	{"strGroupCardSet","{self}å·²å°†{target}çš„ç¾¤åç‰‡ä¿®æ”¹ä¸º{card}âˆš"},
+	{"strGroupCardSetErr","{self}è®¾ç½®{target}çš„ç¾¤åç‰‡å¤±è´¥Ã—"},
+	{"strGroupTitleSet","{self}å·²å°†{target}çš„å¤´è¡”ä¿®æ”¹ä¸º{title}âˆš"},
+	{"strGroupTitleSetErr","{self}è®¾ç½®{target}çš„å¤´è¡”å¤±è´¥Ã—"},
+	{"strPcNewEmptyCard","å·²ä¸º{nick}æ–°å»º{type}ç©ºç™½å¡{char}âˆš"},
+	{"strPcNewCardShow","å·²ä¸º{nick}æ–°å»º{type}å¡{char}ï¼š{show}"},//ç”±äºé¢„ç”Ÿæˆé€‰é¡¹è€Œå­˜åœ¨å±æ€§
+	{"strPcCardSet","å·²å°†{nick}å½“å‰è§’è‰²å¡ç»‘å®šä¸º{char}âˆš"},//{nick}-ç”¨æˆ·æ˜µç§° {pc}-åŸè§’è‰²å¡å {char}-æ–°è§’è‰²å¡å
+	{"strPcCardReset","å·²è§£ç»‘{nick}å½“å‰çš„é»˜è®¤å¡âˆš"},//{nick}-ç”¨æˆ·æ˜µç§° {pc}-åŸè§’è‰²å¡å
+	{"strPcCardRename","å·²å°†{old_name}é‡å‘½åä¸º{new_name}âˆš"},
+	{"strPcCardDel","å·²å°†è§’è‰²å¡{char}åˆ é™¤âˆš"},
+	{"strPcCardCpy","å·²å°†{char2}çš„å±æ€§å¤åˆ¶åˆ°{char1}âˆš"},
+	{"strPcClr","å·²æ¸…ç©º{nick}çš„è§’è‰²å¡è®°å½•âˆš"},
+	{"strPcCardList","{nick}çš„è§’è‰²åˆ—è¡¨ï¼š{show}"},
+	{"strPcCardBuild","{nick}çš„{char}ç”Ÿæˆï¼š{show}"},
+	{"strPcCardShow","{nick}çš„<{type}>{char}ï¼š{show}"},	//{nick}-ç”¨æˆ·æ˜µç§° {type}-è§’è‰²å¡ç±»å‹ {char}-è§’è‰²å¡å
+	{"strPcCardRedo","{nick}çš„{char}é‡æ–°ç”Ÿæˆï¼š{show}"},
+	{"strPcGroupList","{nick}çš„å„ç¾¤è§’è‰²åˆ—è¡¨ï¼š{show}"},
+	{"strPcNotExistErr","{self}æ— {nick}çš„è§’è‰²å¡è®°å½•ï¼Œæ— æ³•åˆ é™¤Ã—"},
+	{"strPcCardFull","{nick}åœ¨{self}å¤„çš„è§’è‰²å¡å·²è¾¾ä¸Šé™ï¼Œè¯·å…ˆæ¸…ç†å¤šä½™è§’è‰²å¡Ã—"},
+	{"strPcTempInvalid","{self}æ— æ³•è¯†åˆ«çš„è§’è‰²å¡æ¨¡æ¿Ã—"},
+	{"strPcNameEmpty","åç§°ä¸èƒ½ä¸ºç©ºÃ—"},
+	{"strPcNameExist","{nick}å·²å­˜åœ¨åŒåå¡Ã—"},
+	{"strPcNameNotExist","{nick}æ— è¯¥åç§°è§’è‰²å¡å¡Ã—"},
+	{"strPcNameInvalid","éæ³•çš„è§’è‰²å¡åï¼ˆå­˜åœ¨å†’å·ï¼‰Ã—"},
+	{"strPcInitDelErr","{nick}çš„åˆå§‹å¡ä¸å¯åˆ é™¤Ã—"},
+	{"strPcNoteTooLong","å¤‡æ³¨é•¿åº¦ä¸èƒ½è¶…è¿‡255Ã—"},
+	{"strPcTextTooLong","æ–‡æœ¬é•¿åº¦ä¸èƒ½è¶…è¿‡48Ã—"},
+	{"strSensNote","å‘ç°æŒ‡ä»¤ä¸­å¸¦æ•æ„Ÿè¯ï¼Œ{self}å·²è®°å½•å¹¶ä¸ŠæŠ¥ï¼"},
+	{"strSensWarn","å‘ç°æŒ‡ä»¤ä¸­å¸¦æ•æ„Ÿè¯ï¼Œ{self}æ‹’ç»å“åº”ä¸”å·²ä¸ŠæŠ¥ï¼"},
+	{"strSpamFirstWarning","ä½ çŸ­æ—¶é—´å†…å¯¹{self}æŒ‡ä»¤æ¬¡æ•°è¿‡å¤šï¼è¯·å–„ç”¨å¤šè½®æ·éª°å’Œå¤æ•°ç”ŸæˆæŒ‡ä»¤ï¼ˆåˆ·å±åˆæ¬¡è­¦å‘Šï¼‰"},
+	{"strSpamFinalWarning","è¯·æš‚åœä½ çš„ä¸€åˆ‡æŒ‡ä»¤ï¼Œé¿å…å› é«˜é¢‘æŒ‡ä»¤è¢«{self}æ‹‰é»‘ï¼ï¼ˆåˆ·å±æœ€ç»ˆè­¦å‘Šï¼‰"},
+	{"strReplySet","{self}å¯¹å…³é”®è¯{key}çš„å›å¤å·²è®¾ç½®âˆš"},
+	{"strReplyDel","{self}å¯¹å…³é”®è¯{key}çš„å›å¤å·²æ¸…é™¤âˆš"},
+	{"strStModify","{self}å¯¹å·²è®°å½•{pc}çš„å±æ€§å˜åŒ–:"},		//å­˜åœ¨æŠ€èƒ½å€¼å˜åŒ–æƒ…å†µæ—¶ï¼Œä¼˜å…ˆä½¿ç”¨æ­¤æ–‡æœ¬
+	{"strStDetail","{self}å¯¹å·²è®¾ç½®{pc}çš„å±æ€§ï¼š"},		//å­˜åœ¨æ·éª°æ—¶ï¼Œä½¿ç”¨æ­¤æ–‡æœ¬(æš‚æ—¶æ— ç”¨)
+	{"strStValEmpty","{self}æœªè®°å½•{attr}åŸå€¼Ã—"},		
+	{"strBlackQQAddNotice","{user_nick}ï¼Œä½ å·²è¢«{self}åŠ å…¥é»‘åå•ï¼Œè¯¦æƒ…è¯·è”ç³»Master:{master_QQ}"},				
+	{"strBlackQQAddNoticeReason","{user_nick}ï¼Œç”±äº{reason}ï¼Œä½ å·²è¢«{self}åŠ å…¥é»‘åå•ï¼Œç”³è¯‰è§£å°è¯·è”ç³»ç®¡ç†å‘˜ã€‚Master:{master_QQ}"},
+	{"strBlackQQDelNotice","{user_nick}ï¼Œä½ å·²è¢«{self}ç§»å‡ºé»‘åå•ï¼Œç°åœ¨å¯ä»¥ç»§ç»­ä½¿ç”¨äº†"},
+	{"strWhiteQQAddNotice","{user_nick}ï¼Œæ‚¨å·²è·å¾—{self}çš„ä¿¡ä»»ï¼Œè¯·å°½æƒ…ä½¿ç”¨{self}âˆš"},
+	{"strWhiteQQDenied","ä½ ä¸æ˜¯{self}ä¿¡ä»»çš„ç”¨æˆ·Ã—"},
+	{"strWhiteGroupDenied","æœ¬ç¾¤èŠä¸åœ¨ç™½åå•ä¸­Ã—"},
+	{"strDeckProNew","å·²æ–°å»ºè‡ªå®šä¹‰ç‰Œå †âˆš"},
+	{"strDeckProSet","å·²å°†{deck_name}è®¾ç½®ä¸ºé»˜è®¤ç‰Œå †âˆš"},
+	{"strDeckProClr","å·²åˆ é™¤é»˜è®¤ç‰Œå †âˆš"},
+	{"strDeckProNull","é»˜è®¤ç‰Œå †ä¸å­˜åœ¨!"},
+	{"strDeckTmpReset","å·²é‡ç½®å¡ç‰Œâˆš"},
+	{"strDeckTmpShow","å½“å‰å‰©ä½™å¡ç‰Œ:"},
+	{"strDeckTmpEmpty","å·²æ— å‰©ä½™å¡ç‰Œï¼"},		//å‰©ä½™å¡ç‰Œæ•°ä¸º0
+	{"strDeckTmpNotFound","ä¸å­˜åœ¨å‰©ä½™å¡ç‰ŒÃ—"},	//æ²¡æœ‰ç”Ÿæˆè¿‡ç‰Œå †
+	{"strDeckNameEmpty","æœªæŒ‡å®šç‰Œå †åÃ—"},
+	{"strRollDice","{pc}æ·éª°: {res}"},
+	{"strRollDiceReason","{pc}æ·éª° {reason}: {res}"},
+	{"strRollHidden","{pc}è¿›è¡Œäº†ä¸€æ¬¡æš—éª°"},
+	{"strRollTurn","{pc}çš„æ·éª°è½®æ•°: {turn}è½®"},
+	{"strRollMultiDice","{pc}æ·éª°{turn}æ¬¡: {dice_exp}={res}"},
+	{"strRollMultiDiceReason","{pc}æ·éª°{turn}æ¬¡{reason}: {dice_exp}={res}"},
+	{"strRollSkill","{pc}è¿›è¡Œ{attr}æ£€å®šï¼š"},
+	{"strRollSkillReason","ç”±äº{reason} {pc}è¿›è¡Œ{attr}æ£€å®šï¼š"},
+	{"strEnRoll","{pc}çš„{attr}å¢å¼ºæˆ–æˆé•¿æ£€å®šï¼š\n{res}"},//{attr}åœ¨ç”¨æˆ·çœç•¥æŠ€èƒ½ååæ›¿æ¢ä¸º{strEnDefaultName}
+	{"strEnRollNotChange","{strEnRoll}\n{pc}çš„{attr}å€¼æ²¡æœ‰å˜åŒ–"},
+	{"strEnRollFailure","{strEnRoll}\n{pc}çš„{attr}å˜åŒ–{change}ç‚¹ï¼Œå½“å‰ä¸º{final}ç‚¹"},
+	{"strEnRollSuccess","{strEnRoll}\n{pc}çš„{attr}å¢åŠ {change}ç‚¹ï¼Œå½“å‰ä¸º{final}ç‚¹"},
+	{"strEnDefaultName","å±æ€§æˆ–æŠ€èƒ½"},//é»˜è®¤æ–‡æœ¬
+	{"strEnValEmpty", "æœªå¯¹{self}è®¾å®šå¾…æˆé•¿å±æ€§å€¼ï¼Œè¯·å…ˆ.st {attr} å±æ€§å€¼ æˆ–æŸ¥çœ‹.help enÃ—"},
+	{"strEnValInvalid", "{attr}å€¼è¾“å…¥ä¸æ­£ç¡®,è¯·è¾“å…¥1-99èŒƒå›´å†…çš„æ•´æ•°!"},
+	{"strSendMsg","{self}å·²å°†æ¶ˆæ¯é€å‡ºâˆš"},//Masterå®šå‘å‘é€çš„å›æ‰§
+	{"strSendMasterMsg","æ¶ˆæ¯{self}å·²å‘é€ç»™Masterâˆš"},//å‘Masterå‘é€çš„å›æ‰§
+	{"strSendMsgEmpty","å‘é€æ¶ˆæ¯å†…å®¹ä¸ºç©ºÃ—"},
+	{"strSendMsgInvalid","{self}æ²¡æœ‰å¯ä»¥å‘é€çš„å¯¹è±¡Ã—"},//æ²¡æœ‰Master
+	{"strDefaultCOCClr","é»˜è®¤æ£€å®šæˆ¿è§„å·²æ¸…é™¤âˆš"},
+	{"strDefaultCOCNotFound","é»˜è®¤æ£€å®šæˆ¿è§„ä¸å­˜åœ¨Ã—"},
+	{"strDefaultCOCSet","é»˜è®¤æ£€å®šæˆ¿è§„å·²è®¾ç½®:"},
+	{"strLinkLoss","{self}çš„æ—¶ç©ºè¿æ¥å·²æ–­å¼€âˆš"},
+	{"strLinked","{self}å·²åˆ›å»ºæ—¶ç©ºé—¨âˆš"},
+	{"strLinkWarning","å°è¯•åˆ›å»ºæ—¶ç©ºé—¨ï¼Œä½†ä¸ä¿è¯èƒ½å¦è¿é€š"},
+	{"strLinkNotFound","æ—¶ç©ºé—¨è¦é€šå‘ä¸å¯åçŠ¶çš„åœ°æ–¹äº†Ã—"},
+	{"strNotMaster","ä½ ä¸æ˜¯{self}çš„masterï¼ä½ æƒ³åšä»€ä¹ˆï¼Ÿ"},
+	{"strNotAdmin","ä½ ä¸æ˜¯{self}çš„ç®¡ç†å‘˜Ã—"},
+	{ "strAdminDismiss", "{strDismiss}" },					//ç®¡ç†å‘˜æŒ‡ä»¤é€€ç¾¤çš„å›æ‰§
+	{"strDismiss", ""},						//.dismissé€€ç¾¤å‰çš„å›æ‰§
+	{"strHlpSet","å·²ä¸º{key}è®¾ç½®è¯æ¡âˆš"},
+	{"strHlpReset","å·²æ¸…é™¤{key}çš„è¯æ¡âˆš"},
+	{"strHlpNameEmpty","Masteræƒ³è¦è‡ªå®šä¹‰ä»€ä¹ˆè¯æ¡å‘€ï¼Ÿ"},
+	{"strHlpNotFound","{self}æœªæ‰¾åˆ°æŒ‡å®šçš„å¸®åŠ©ä¿¡æ¯Ã—"},
+	{"strClockToWork","{self}å·²æŒ‰æ—¶å¯ç”¨âˆš"},
+	{"strClockOffWork","{self}å·²æŒ‰æ—¶å…³é—­âˆš"},
+	{"strNameGenerator","{pc}çš„éšæœºåç§°ï¼š{res}"},
+	{"strDrawCard", "æ¥çœ‹çœ‹{pc}æŠ½åˆ°äº†ä»€ä¹ˆï¼š{res}"},
+	{"strMeOn", "æˆåŠŸåœ¨è¿™é‡Œå¯ç”¨{self}çš„.meå‘½ä»¤âˆš"},
+	{"strMeOff", "æˆåŠŸåœ¨è¿™é‡Œç¦ç”¨{self}çš„.meå‘½ä»¤âˆš"},
+	{"strMeOnAlready", "åœ¨è¿™é‡Œ{self}çš„.meå‘½ä»¤æ²¡æœ‰è¢«ç¦ç”¨!"},
+	{"strMeOffAlready", "åœ¨è¿™é‡Œ{self}çš„.meå‘½ä»¤å·²ç»è¢«ç¦ç”¨!"},
+	{"strObOn", "æˆåŠŸåœ¨è¿™é‡Œå¯ç”¨{self}çš„æ—è§‚æ¨¡å¼âˆš"},
+	{"strObOff", "æˆåŠŸåœ¨è¿™é‡Œç¦ç”¨{self}çš„æ—è§‚æ¨¡å¼âˆš"},
+	{"strObOnAlready", "åœ¨è¿™é‡Œ{self}çš„æ—è§‚æ¨¡å¼æ²¡æœ‰è¢«ç¦ç”¨!"},
+	{"strObOffAlready", "åœ¨è¿™é‡Œ{self}çš„æ—è§‚æ¨¡å¼å·²ç»è¢«ç¦ç”¨!"},
+	{"strObList", "å½“å‰{self}çš„æ—è§‚è€…æœ‰:"},
+	{"strObListEmpty", "å½“å‰{self}æš‚æ— æ—è§‚è€…"},
+	{"strObListClr", "{self}æˆåŠŸåˆ é™¤æ‰€æœ‰æ—è§‚è€…âˆš"},
+	{"strObEnter", "{nick}æˆåŠŸåŠ å…¥{self}çš„æ—è§‚âˆš"},
+	{"strObExit", "{nick}æˆåŠŸé€€å‡º{self}çš„æ—è§‚âˆš"},
+	{"strObEnterAlready", "{nick}å·²ç»å¤„äº{self}çš„æ—è§‚æ¨¡å¼!"},
+	{"strObExitAlready", "{nick}æ²¡æœ‰åŠ å…¥{self}çš„æ—è§‚æ¨¡å¼!"},
+	{"strQQIDEmpty", "QQå·ä¸èƒ½ä¸ºç©ºÃ—"},
+	{"strGroupIDEmpty", "ç¾¤å·ä¸èƒ½ä¸ºç©ºÃ—"},
+	{"strBlackGroup", "è¯¥ç¾¤åœ¨é»‘åå•ä¸­ï¼Œå¦‚æœ‰ç–‘é—®è¯·è”ç³»master"},
+	{"strBotOn", "æˆåŠŸå¼€å¯{self}âˆš"},
+	{"strBotOff", "æˆåŠŸå…³é—­{self}âˆš"},
+	{"strBotOnAlready", "{self}å·²ç»å¤„äºå¼€å¯çŠ¶æ€!"},
+	{"strBotOffAlready", "{self}å·²ç»å¤„äºå…³é—­çŠ¶æ€!"},
+	{"strRollCriticalSuccess", "å¤§æˆåŠŸï¼"}, //ä¸€èˆ¬æ£€å®šç”¨
+	{"strRollExtremeSuccess", "æéš¾æˆåŠŸ"},
+	{"strRollHardSuccess", "å›°éš¾æˆåŠŸ"},
+	{"strRollRegularSuccess", "æˆåŠŸ"},
+	{"strRollFailure", "å¤±è´¥"},
+	{"strRollFumble", "å¤§å¤±è´¥ï¼"},
+	{"strFumble", "å¤§å¤±è´¥!"}, //å¤šè½®æ£€å®šç”¨ï¼Œè¯·æ§åˆ¶é•¿åº¦
+	{"strFailure", "å¤±è´¥"},
+	{"strSuccess", "æˆåŠŸ"},
+	{"strHardSuccess", "å›°éš¾æˆåŠŸ"},
+	{"strExtremeSuccess", "æéš¾æˆåŠŸ"},
+	{"strCriticalSuccess", "å¤§æˆåŠŸ!"},
+	{"strNumCannotBeZero", "æ— æ„ä¹‰çš„æ•°ç›®ï¼è«è¦æ¶ˆé£äºæˆ‘!"},
+	{"strDeckNotFound", "æ˜¯è¯´{deck_name}ï¼Ÿ{self}æ²¡å¬è¯´è¿‡çš„ç‰Œå †åå‘¢â€¦â€¦"},
+	{"strDeckEmpty", "{self}å·²ç»ä¸€å¼ ä¹Ÿä¸å‰©äº†ï¼"},
+	{"strNameNumTooBig", "ç”Ÿæˆæ•°é‡è¿‡å¤š!è¯·è¾“å…¥1-10ä¹‹é—´çš„æ•°å­—!"},
+	{"strNameNumCannotBeZero", "ç”Ÿæˆæ•°é‡ä¸èƒ½ä¸ºé›¶!è¯·è¾“å…¥1-10ä¹‹é—´çš„æ•°å­—!"},
+	{"strSetInvalid", "æ— æ•ˆçš„é»˜è®¤éª°!è¯·è¾“å…¥1-9999ä¹‹é—´çš„æ•°å­—!"},
+	{"strSetTooBig", "è¿™é¢æ•°â€¦â€¦è®©æˆ‘ä¸¢ä¸ªçƒå•Š!è¯·è¾“å…¥1-9999ä¹‹é—´çš„æ•°å­—!"},
+	{"strSetCannotBeZero", "é»˜è®¤éª°ä¸èƒ½ä¸ºé›¶!è¯·è¾“å…¥1-9999ä¹‹é—´çš„æ•°å­—!"},
+	{"strCharacterCannotBeZero", "äººç‰©ä½œæˆæ¬¡æ•°ä¸èƒ½ä¸ºé›¶!è¯·è¾“å…¥1-10ä¹‹é—´çš„æ•°å­—!"},
+	{"strCharacterTooBig", "äººç‰©ä½œæˆæ¬¡æ•°è¿‡å¤š!è¯·è¾“å…¥1-10ä¹‹é—´çš„æ•°å­—!"},
+	{"strCharacterInvalid", "äººç‰©ä½œæˆæ¬¡æ•°æ— æ•ˆ!è¯·è¾“å…¥1-10ä¹‹é—´çš„æ•°å­—!"},
+	{"strSanRoll", "{pc}çš„San Checkï¼š\n{res}"},
+	{"strSanRollRes", "{strSanRoll}\n{pc}çš„Sanå€¼å‡å°‘{change}ç‚¹,å½“å‰å‰©ä½™{final}ç‚¹"},
+	{"strSanCostInvalid", "SCè¡¨è¾¾å¼è¾“å…¥ä¸æ­£ç¡®,æ ¼å¼ä¸ºæˆåŠŸæ‰£San/å¤±è´¥æ‰£San,å¦‚1/1d6!"},
+	{"strSanInvalid", "Sanå€¼è¾“å…¥ä¸æ­£ç¡®,è¯·è¾“å…¥1-99èŒƒå›´å†…çš„æ•´æ•°!"},
+	{"strSanEmpty", "æœªè®¾å®šSanå€¼ï¼Œè¯·å…ˆ.st san æˆ–æŸ¥çœ‹.help scÃ—"},
+	{"strSuccessRateErr", "è¿™æˆåŠŸç‡è¿˜éœ€è¦æ£€å®šå—ï¼Ÿ"},
+	{"strGroupIDInvalid", "æ— æ•ˆçš„ç¾¤å·!"},
+	{"strSendErr", "æ¶ˆæ¯å‘é€å¤±è´¥!"},
+	{"strSendSuccess", "å‘½ä»¤æ‰§è¡ŒæˆåŠŸâˆš"},
+	{"strDisabledErr", "å‘½ä»¤æ— æ³•æ‰§è¡Œ:æœºå™¨äººå·²åœ¨æ­¤ç¾¤ä¸­è¢«å…³é—­!"},
+	{"strActionEmpty", "åŠ¨ä½œä¸èƒ½ä¸ºç©ºÃ—"},
+	{"strMEDisabledErr", "ç®¡ç†å‘˜å·²åœ¨æ­¤ç¾¤ä¸­ç¦ç”¨.meå‘½ä»¤!"},
+	{"strDisabledMeGlobal", "æ•ä¸æä¾›.meæœåŠ¡Ã—"},
+	{"strDisabledJrrpGlobal", "æ•ä¸æä¾›.jrrpæœåŠ¡Ã—"},
+	{"strDisabledDeckGlobal", "æ•ä¸æä¾›.deckæœåŠ¡Ã—"},
+	{"strDisabledDrawGlobal", "æ•ä¸æä¾›.drawæœåŠ¡Ã—"},
+	{"strDisabledSendGlobal", "æ•ä¸æä¾›.sendæœåŠ¡Ã—"},
+	{"strHELPDisabledErr", "ç®¡ç†å‘˜å·²åœ¨æ­¤ç¾¤ä¸­ç¦ç”¨.helpå‘½ä»¤!"},
+	{"strNameDelEmpty", "{nick}æ²¡æœ‰è®¾ç½®åç§°,æ— æ³•åˆ é™¤!"},
+	{"strValueErr", "æ·éª°è¡¨è¾¾å¼è¾“å…¥é”™è¯¯!"},
+	{"strInputErr", "å‘½ä»¤æˆ–æ·éª°è¡¨è¾¾å¼è¾“å…¥é”™è¯¯!"},
+	{"strUnknownErr", "å‘ç”Ÿäº†æœªçŸ¥é”™è¯¯!"},
+	{"strUnableToGetErrorMsg", "æ— æ³•è·å–é”™è¯¯ä¿¡æ¯!"},
+	{"strDiceTooBigErr", "{self}è¢«ä½ æ‰”å‡ºçš„éª°å­æ·¹æ²¡äº†Ã—"},
+	{"strRequestRetCodeErr", "è®¿é—®æœåŠ¡å™¨æ—¶å‡ºç°é”™è¯¯! HTTPçŠ¶æ€ç : {error}"},
+	{"strRequestNoResponse", "æœåŠ¡å™¨æœªè¿”å›ä»»ä½•ä¿¡æ¯Ã—"},
+	{"strTypeTooBigErr", "å“‡!è®©æˆ‘æ•°æ•°éª°å­æœ‰å¤šå°‘é¢å…ˆ~1...2..."},
+	{"strZeroTypeErr", "è¿™æ˜¯...!!æ—¶ç©ºè£‚({self}è¢«éª°å­äº§ç”Ÿçš„æ—¶ç©ºè£‚ç¼å·èµ°äº†)"},
+	{"strAddDiceValErr", "ä½ è¿™æ ·è¦è®©{self}æ‰”éª°å­æ‰”åˆ°ä»€ä¹ˆæ—¶å€™å˜›~(è¯·è¾“å…¥æ­£ç¡®çš„åŠ éª°å‚æ•°:5-10ä¹‹å†…çš„æ•´æ•°)"},
+	{"strZeroDiceErr", "å’¦?æˆ‘çš„éª°å­å‘¢?"},
+	{"strRollTimeExceeded", "æ·éª°è½®æ•°è¶…è¿‡äº†æœ€å¤§è½®æ•°é™åˆ¶!"},
+	{"strRollTimeErr", "å¼‚å¸¸çš„æ·éª°è½®æ•°"},
+	{"strObPrivate", "ä½ æƒ³çœ‹ä»€ä¹ˆå‘€ï¼Ÿ"},
+	{"strDismissPrivate", "æ»šï¼"},
+	{"strWelcomePrivate", "ä½ åœ¨è¿™æ¬¢è¿è°å‘¢ï¼Ÿ"},
+	{"strWelcomeMsgClearNotice", "å·²æ¸…é™¤æœ¬ç¾¤çš„å…¥ç¾¤æ¬¢è¿è¯âˆš"},
+	{"strWelcomeMsgClearErr", "æ²¡æœ‰è®¾ç½®å…¥ç¾¤æ¬¢è¿è¯ï¼Œæ¸…é™¤å¤±è´¥Ã—"},
+	{"strWelcomeMsgUpdateNotice", "{self}å·²æ›´æ–°æœ¬ç¾¤çš„å…¥ç¾¤æ¬¢è¿è¯âˆš"},
+	{"strPermissionDeniedErr", "è¯·è®©ç¾¤å†…ç®¡ç†å¯¹{self}å‘é€è¯¥æŒ‡ä»¤Ã—"},
+	{"strSelfPermissionErr", "{self}æƒé™ä¸å¤Ÿæ— èƒ½ä¸ºåŠ›å‘¢Ã—"},
+	{"strNameTooLongErr", "åç§°è¿‡é•¿Ã—(æœ€å¤šä¸º50è‹±æ–‡å­—ç¬¦)"},
+	{"strNameClr", "å·²å°†{nick}çš„åç§°åˆ é™¤âˆš"},
+	{"strNameSet", "å·²å°†{nick}çš„åç§°æ›´æ”¹ä¸º{new_nick}âˆš"},
+	{"strUnknownPropErr", "æœªè®¾å®š{attr}æˆåŠŸç‡ï¼Œè¯·å…ˆ.st {attr} æŠ€èƒ½å€¼ æˆ–æŸ¥çœ‹.help rcÃ—"},
+	{"strEmptyWWDiceErr", "æ ¼å¼é”™è¯¯:æ­£ç¡®æ ¼å¼ä¸º.w(w)XaY!å…¶ä¸­Xâ‰¥1, 5â‰¤Yâ‰¤10"},
+	{"strPropErr", "è¯·è®¤çœŸçš„è¾“å…¥ä½ çš„å±æ€§å“¦~"},
+	{"strSetPropSuccess", "å±æ€§è®¾ç½®æˆåŠŸâˆš"},
+	{"strPropCleared", "å·²æ¸…ç©º{char}çš„æ‰€æœ‰å±æ€§âˆš"},
+	{"strRuleReset", "å·²é‡ç½®é»˜è®¤è§„åˆ™âˆš"},
+	{"strRuleSet", "å·²è®¾ç½®é»˜è®¤è§„åˆ™âˆš"},
+	{"strRuleErr", "è§„åˆ™æ•°æ®è·å–å¤±è´¥,å…·ä½“ä¿¡æ¯:\n"},
+	{"strRulesFailedErr", "è¯·æ±‚å¤±è´¥,{self}æ— æ³•è¿æ¥æ•°æ®åº“Ã—"},
+	{"strPropDeleted", "å·²åˆ é™¤{pc}çš„{attr}âˆš"},
+	{"strPropNotFound", "å±æ€§{attr}ä¸å­˜åœ¨Ã—"},
+	{"strRuleNotFound", "{self}æœªæ‰¾åˆ°å¯¹åº”çš„è§„åˆ™ä¿¡æ¯Ã—"},
+	{"strProp", "{pc}çš„{attr}ä¸º{val}"},
+	{"strPropList", "{nick}çš„{char}å±æ€§åˆ—è¡¨ä¸ºï¼š{show}"},
+	{"strStErr", "æ ¼å¼é”™è¯¯:è¯·å‚è€ƒ.help stè·å–.stå‘½ä»¤çš„ä½¿ç”¨æ–¹æ³•"},
+	{"strRulesFormatErr", "æ ¼å¼é”™è¯¯:æ­£ç¡®æ ¼å¼ä¸º.rules[è§„åˆ™åç§°:]è§„åˆ™æ¡ç›® å¦‚.rules COC7:åŠ›é‡"},
+	{"strLeaveDiscuss", "{self}ç°ä¸æ”¯æŒè®¨è®ºç»„æœåŠ¡ï¼Œå³å°†é€€å‡º"},
+	{"strLeaveNoPower", "{self}æœªè·å¾—ç¾¤ç®¡ç†ï¼Œå³å°†é€€ç¾¤"},
+	{"strLeaveUnused", "{self}å·²ç»åœ¨è¿™é‡Œè¢«æ”¾ç½®{day}å¤©å•¦ï¼Œé©¬ä¸Šå°±ä¼šç¦»å¼€è¿™é‡Œäº†"},
+	{"strGlobalOff", "{self}ä¼‘å‡ä¸­ï¼Œæš‚åœæœåŠ¡Ã—"},
+	{"strPreserve", "{self}ç§æœ‰ç§ç”¨ï¼Œå‹¿æ‰°å‹¿æ€ª\nå¦‚éœ€ç”³è¯·è®¸å¯è¯·å‘é€!authorize +[ç¾¤å·] [ç”³è¯·ç†ç”±]"},
+	{"strJrrp", "{nick}ä»Šå¤©çš„äººå“å€¼æ˜¯: {res}"},
+	{"strJrrpErr", "JRRPè·å–å¤±è´¥! é”™è¯¯ä¿¡æ¯: \n{res}"},
+	{"strAddFriendWhiteQQ", "{strAddFriend}"}, //ç™½åå•ç”¨æˆ·æ·»åŠ å¥½å‹æ—¶å›å¤æ­¤å¥
 	{
 		"strAddFriend",
-		R"(»¶Ó­Ê¹ÓÃ{strSelfName}£¡
-.helpĞ­Òé È·ÈÏ·şÎñĞ­Òé
-.helpÖ¸Áî ²é¿´Ö¸ÁîÁĞ±í
-.helpÉè¶¨ È·ÈÏ÷»ÄïÉè¶¨
-.helpÁ´½Ó ²é¿´Ô´ÂëÎÄµµ
-Ê¹ÓÃ·şÎñÄ¬ÈÏÒÑ¾­Í¬Òâ·şÎñĞ­Òé)"
-	}, //Í¬ÒâÌí¼ÓºÃÓÑÊ±¶îÍâ·¢ËÍµÄÓï¾ä
+		R"(æ¬¢è¿ä½¿ç”¨{strSelfName}ï¼
+.helpåè®® ç¡®è®¤æœåŠ¡åè®®
+.helpæŒ‡ä»¤ æŸ¥çœ‹æŒ‡ä»¤åˆ—è¡¨
+.helpè®¾å®š ç¡®è®¤éª°å¨˜è®¾å®š
+.helpé“¾æ¥ æŸ¥çœ‹æºç æ–‡æ¡£
+ä½¿ç”¨æœåŠ¡é»˜è®¤å·²ç»åŒæ„æœåŠ¡åè®®)"
+	}, //åŒæ„æ·»åŠ å¥½å‹æ—¶é¢å¤–å‘é€çš„è¯­å¥
 	{
 		"strAddGroup",
-		R"(»¶Ó­Ê¹ÓÃ{strSelfName}£¡
-ÇëÊ¹ÓÃ.dismiss QQºÅ£¨»òºóËÄÎ»£© Ê¹{self}ÍËÈºÍËÌÖÂÛ×é
-.bot on/off QQºÅ£¨»òºóËÄÎ»£© //¿ªÆô»ò¹Ø±ÕÖ¸Áî
-.group +/-½ûÓÃ»Ø¸´ //½ûÓÃ»òÆôÓÃ»Ø¸´
-.helpĞ­Òé È·ÈÏ·şÎñĞ­Òé
-.helpÖ¸Áî ²é¿´Ö¸ÁîÁĞ±í
-.helpÉè¶¨ È·ÈÏ÷»ÄïÉè¶¨
-.helpÁ´½Ó ²é¿´Ô´ÂëÎÄµµ
-ÑûÇëÈëÈºÄ¬ÈÏÊÓÎªÍ¬Òâ·şÎñĞ­Òé£¬ÖªÏş½ûÑÔ»òÒÆ³öµÄºó¹û)"
+		R"(æ¬¢è¿ä½¿ç”¨{strSelfName}ï¼
+è¯·ä½¿ç”¨.dismiss QQå·ï¼ˆæˆ–åå››ä½ï¼‰ ä½¿{self}é€€ç¾¤é€€è®¨è®ºç»„
+.bot on/off QQå·ï¼ˆæˆ–åå››ä½ï¼‰ //å¼€å¯æˆ–å…³é—­æŒ‡ä»¤
+.group +/-ç¦ç”¨å›å¤ //ç¦ç”¨æˆ–å¯ç”¨å›å¤
+.helpåè®® ç¡®è®¤æœåŠ¡åè®®
+.helpæŒ‡ä»¤ æŸ¥çœ‹æŒ‡ä»¤åˆ—è¡¨
+.helpè®¾å®š ç¡®è®¤éª°å¨˜è®¾å®š
+.helpé“¾æ¥ æŸ¥çœ‹æºç æ–‡æ¡£
+é‚€è¯·å…¥ç¾¤é»˜è®¤è§†ä¸ºåŒæ„æœåŠ¡åè®®ï¼ŒçŸ¥æ™“ç¦è¨€æˆ–ç§»å‡ºçš„åæœ)"
 	},
 	{"strSelfName", ""},
 	{"strSelfCall", "&strSelfName"},
 	{"self", "&strSelfCall"},
-	{"strBotMsg", "\nÊ¹ÓÃ.help¸üĞÂ ²é¿´{self}¸üĞÂÄÚÈİ"},
+	{"strBotMsg", "\nä½¿ç”¨.helpæ›´æ–° æŸ¥çœ‹{self}æ›´æ–°å†…å®¹"},
 	{
 		"strHlpMsg",
-		R"(ÇëÊ¹ÓÃ.dismiss QQºÅ£¨»òºóËÄÎ»£© Ê¹{self}ÍËÈºÍËÌÖÂÛ×é
-.bot on/off QQºÅ£¨»òºóËÄÎ»£© //¿ªÆô»ò¹Ø±ÕÖ¸Áî
-.helpĞ­Òé È·ÈÏ·şÎñĞ­Òé
-.helpÖ¸Áî ²é¿´Ö¸ÁîÁĞ±í
-.helpÈº¹Ü ²é¿´Èº¹ÜÖ¸Áî
-.helpÉè¶¨ È·ÈÏ÷»ÄïÉè¶¨
-.helpÁ´½Ó ²é¿´Ô´ÂëÎÄµµ
-¹Ù·½ÂÛÌ³:https://forum.kokona.tech/
-¹Ù·½(Ë®)Èº: 624807593 941980833 882747577
-Shiki½»Á÷Èº: 1029435374
-Ë½÷»·ÖÁ÷Èº: 863062599)"
+		R"(è¯·ä½¿ç”¨.dismiss QQå·ï¼ˆæˆ–åå››ä½ï¼‰ ä½¿{self}é€€ç¾¤é€€è®¨è®ºç»„
+.bot on/off QQå·ï¼ˆæˆ–åå››ä½ï¼‰ //å¼€å¯æˆ–å…³é—­æŒ‡ä»¤
+.helpåè®® ç¡®è®¤æœåŠ¡åè®®
+.helpæŒ‡ä»¤ æŸ¥çœ‹æŒ‡ä»¤åˆ—è¡¨
+.helpç¾¤ç®¡ æŸ¥çœ‹ç¾¤ç®¡æŒ‡ä»¤
+.helpè®¾å®š ç¡®è®¤éª°å¨˜è®¾å®š
+.helpé“¾æ¥ æŸ¥çœ‹æºç æ–‡æ¡£
+å®˜æ–¹è®ºå›:https://forum.kokona.tech/
+å®˜æ–¹(æ°´)ç¾¤: 624807593 941980833 882747577
+Shikiäº¤æµç¾¤: 1029435374
+ç§éª°åˆ†æµç¾¤: 863062599)"
 	}
 };
 
 std::map<std::string, std::string> EditedMsg;
 const std::map<std::string, std::string, less_ci> HelpDoc = {
-	{"¸üĞÂ", R"(V2.4.0 ¶à¹¦ÄÜ¸üĞÂ Dice! GUI ¹ÜÀíÃæ°å)"},
-	{
-		"Ğ­Òé",
-		"0.±¾Ğ­ÒéÊÇDice!Ä¬ÈÏ·şÎñĞ­Òé¡£Èç¹ûÄã¿´µ½ÁËÕâ¾ä»°£¬ÒâÎ¶×ÅMasterÓ¦ÓÃÄ¬ÈÏĞ­Òé£¬Çë×¢Òâ¡£\n1.ÑûÇë÷»Äï¡¢Ê¹ÓÃÖÀ÷»·şÎñºÍÔÚÈºÄÚÔÄ¶Á´ËĞ­ÒéÊÓÎªÍ¬Òâ²¢³ĞÅµ×ñÊØ´ËĞ­Òé£¬·ñÔòÇëÊ¹ÓÃ.dismissÒÆ³ö÷»Äï¡£\n2.²»ÔÊĞí½ûÑÔ¡¢ÒÆ³ö÷»Äï»òË¢ÆÁÖÀ÷»µÈ¶Ô÷»ÄïµÄ²»ÓÑÉÆĞĞÎª£¬ÕâĞ©ĞĞÎª½«»áÌá¸ß÷»Äï±»ÖÆ²ÃµÄ·çÏÕ¡£¿ª¹Ø÷»ÄïÏìÓ¦ÇëÊ¹ÓÃ.bot on/off¡£\n3.÷»ÄïÄ¬ÈÏÑûÇëĞĞÎªÒÑÊÂÏÈµÃµ½ÈºÄÚÍ¬Òâ£¬Òò¶ø»á×Ô¶¯Í¬ÒâÈºÑûÇë¡£ÒòÉÃ×ÔÑûÇë¶øÊ¹÷»ÄïÔâÓö²»ÓÑÉÆĞĞÎªÊ±£¬ÑûÇëÕßÒòÎ´ÂÄĞĞÔ¤¼ûÒåÎñ¶ø½«³Ğµ£Á¬´øÔğÈÎ¡£\n4.½ûÖ¹½«÷»ÄïÓÃÓÚ¶Ä²©¼°ÆäËûÎ¥·¨·¸×ïĞĞÎª¡£\n5.¶ÔÓÚÉèÖÃÃô¸ĞêÇ³ÆµÈÎŞ·¨Ô¤¼ûµ«ÓĞ¿ÉÄÜÕĞÖÂÑÔÂÛÉó²éµÄĞĞÎª£¬÷»Äï¿ÉÄÜ»á³öÓÚ×ÔÎÒ±£»¤¶ø¾Ü¾øÌá¹©·şÎñ\n6.ÓÉÓÚ¼¼ÊõÒÔ¼°×Ê½ğÔ­Òò£¬ÎÒÃÇÎŞ·¨±£Ö¤»úÆ÷ÈË100%µÄÊ±¼äÎÈ¶¨ÔËĞĞ£¬¿ÉÄÜ²»¶¨Ê±Í£»úÎ¬»¤»òÔâÓö¶³½á£¬µ«ÊÇÏàÓ¦Çé¿ö»á¼°Ê±Í¨¹ı¸÷ÖÖÇşµÀ½øĞĞÍ¨Öª£¬¾´ÇëÁÂ½â¡£ÁÙÊ±Í£»úµÄ÷»Äï²»»áÓĞÈÎºÎÏìÓ¦£¬¹Ê¶ø²»»áÓ°ÏìÈºÄÚ»î¶¯£¬´Ë×´Ì¬ÏÂÈÔÈ»½ûÖ¹²»ÓÑÉÆĞĞÎª¡£\n7.¶ÔÓÚÎ¥·´Ğ­ÒéµÄĞĞÎª£¬÷»Äï½«ÊÓÇé¿öÖÕÖ¹¶ÔÓÃ»§ºÍËùÔÚÈºÌá¹©·şÎñ£¬²¢½«²»Á¼¼ÇÂ¼¹²Ïí¸øÆäËû·şÎñÌá¹©·½¡£ºÚÃûµ¥Ïà¹ØÊÂÒË¿ÉÒÔÓë·şÎñÌá¹©·½Ğ­ÉÌ£¬µ«×îÖÕ²Ã¶¨È¨ÔÚ·şÎñÌá¹©·½¡£\n8.±¾Ğ­ÒéÄÚÈİËæÊ±ÓĞ¿ÉÄÜ¸Ä¶¯¡£Çë×¢Òâ°ïÖúĞÅÏ¢¡¢Ç©Ãû¡¢¿Õ¼ä¡¢¹Ù·½ÈºµÈ´¦µÄ÷»Äï¶¯Ì¬¡£\n9.÷»ÄïÌá¹©ÖÀ÷»·şÎñÊÇÍêÈ«Ãâ·ÑµÄ£¬»¶Ó­Í¶Ê³¡£\n10.±¾·şÎñ×îÖÕ½âÊÍÈ¨¹é·şÎñÌá¹©·½ËùÓĞ¡£"
-	},
-	{
-		"Á´½Ó",
-		R"(¹Ù·½ÂÛÌ³:https://forum.kokona.tech/
-²é¿´Ô´Âë:https://github.com/mystringEmpty/Dice
-²å¼şÏÂÔØ:https://github.com/mystringEmpty/Dice/releases
-ÓÃ»§ÊÖ²á:http://shiki.stringempty.xyz/download/Shiki_User_Manual.pdf
-÷»Ö÷ÊÖ²á:http://shiki.stringempty.xyz/download/Shiki_Master_Manual.pdf
-Á¶÷»ÊÖ²á:http://shiki.stringempty.xyz/download/DiceMaid_CookBook.html
-(ÔÚÏßÎÄµµ)https://dice.c-j.dev/
-stÓÃCOC7ÈËÎï¿¨:http://shiki.stringempty.xyz/download/COC7_player_card_shiki.xlsx)"
-	},
-	{
-		"Éè¶¨",
-		"Master£º{master}\n.meÊ¹ÓÃ£º½ûÖ¹\n.jrrpÊ¹ÓÃ£ºÔÊĞí\nÑûÇë´¦Àí£ººÚÃûµ¥ÖÆ£¬·Ç½û¼´Èë\nÌÖÂÛ×éÊ¹ÓÃ£ºÔÊĞí\nÒÆ³ö·´ÖÆ£ºÀ­ºÚÈººÍ²Ù×÷Õß\n½ûÑÔ·´ÖÆ£ºÄ¬ÈÏÀ­ºÚÈººÍÈºÖ÷\nË¢ÆÁ·´ÖÆ£º¾¯¸æ\nÑûÇëÈËÔğÈÎ£ºÓĞÏŞÁ¬´ø\n¿úÆÁ¿ÉÄÜ£ºÓĞ\nÆäËû²å¼ş£ºÎŞ\n÷»Äï¸öÈËÈº:£¨Î´ÉèÖÃ£©\n¹Ù·½(Ë®)Èº: 624807593 941980833 882747577\nË½÷»·ÖÁ÷Èº£º863062599\nShiki½»Á÷Èº£º1029435374"
-	},
-	{"×÷Õß", "Copyright (C) 2018-2020 w4123Ëİä§\nCopyright (C) 2019-2020 String.Empty\n±¾Ó¦ÓÃÔÚAGPLv3ÏÂÊÚÈ¨"},
-	{
-		"Ö¸Áî",
-		R"(at÷»Äïºó½ÓÖ¸Áî¿ÉÒÔÖ¸¶¨÷»Äïµ¥¶ÀÏìÓ¦£¬Èçat÷»Äï.bot off
-¶àÊıÖ¸ÁîĞèÒªºó½Ó²ÎÊı£¬Çë.help¶ÔÓ¦Ö¸Áî »ñÈ¡ÏêÏ¸ĞÅÏ¢
-ÖÀ÷»Ö¸Áî°üÀ¨:
-.dismiss ÍËÈº
-.authorize ÊÚÈ¨Ğí¿É
-.bot ¿ª¹Ø
-.welcome ÈëÈº»¶Ó­
-.rules ¹æÔòËÙ²é
-.r ÖÀ÷»
-.ob ÅÔ¹ÛÄ£Ê½
-.set ÉèÖÃÄ¬ÈÏ÷»
-.name Ëæ»úĞÕÃû
-.nn ÉèÖÃêÇ³Æ
-.coc COCÈËÎï×÷³É
-.dnd DNDÈËÎï×÷³É
-.st ÊôĞÔ¼ÇÂ¼
-.pc ½ÇÉ«¿¨
-.rc ¼ì¶¨
-.setcoc ÉèÖÃ¼ì¶¨·¿¹æ
-.sc ÀíÖÇ¼ì¶¨
-.en ³É³¤¼ì¶¨
-.ri ÏÈ¹¥
-.init ÏÈ¹¥ÁĞ±í
-.ww ÷»³Ø
-.me µÚÈıÈË³Æ¶¯×÷
-.jrrp ½ñÈÕÈËÆ·
-.send Ïò¹ÜÀí·¢ËÍÏûÏ¢
-.group Èº¹Ü
-.draw ³éÅÆ
-ÎªÁË±ÜÃâÎ´Ô¤ÁÏµ½µÄÖ¸ÁîÎóÅĞ£¬Çë¾¡¿ÉÄÜÔÚ²ÎÊıÖ®¼äÊ¹ÓÃ¿Õ¸ñ)"
-	},
-	{
-		"deck",
-		"¸ÃÖ¸Áî¿ÉÒÔÉèÖÃÄ¬ÈÏÅÆ¶Ñ£¬Ê¹ÓÃ.draw²»Ö¸¶¨ÅÆ¶ÑÃûÊ±½«Ê¹ÓÃ´ËÅÆ¶Ñ¡£¸ÃÅÆ¶Ñ²»»á·Å»ØÖ±µ½³éÍê×îºóÒ»ÕÅºóÏ´ÅÆ¡£\n.deck set ¹«¹²ÅÆ¶ÑÃû ÉèÖÃÄ¬ÈÏÅÆ¶Ñ\n.deck set ÕıÕûÊı1-100 ÉèÖÃÖ¸¶¨³¤¶ÈµÄÊıÁĞ\n.deck show ²é¿´Ê£Óà¿¨ÅÆ\n.deck reset ÖØÖÃÊ£Óà¿¨ÅÆ\n.deck new ×Ô¶¨ÒåÅÆ¶Ñ£¨ÓÃ¿Õ¸ñ»ò|·Ö¸î£©£¨°×Ãûµ¥ÏŞ¶¨£©\n.deck new ÓĞµ¯|ÎŞµ¯|ÎŞµ¯|ÎŞµ¯|ÎŞµ¯|ÎŞµ¯\n³ıshowÍâÆäËûÈºÄÚ²Ù×÷ĞèÒª¹ÜÀíÈ¨ÏŞ"
-	},
-	{"ÍËÈº", "&dismiss"},
-	{"ÍËÈºÖ¸Áî", "&dismiss"},
-	{"dismiss", "¸ÃÖ¸ÁîĞèÒªÈº¹ÜÀíÔ±È¨ÏŞ£¬Ê¹ÓÃºó¼´ÍË³öÈºÁÄ\n!dismiss [Ä¿±êQQ(ÍêÕû»òÄ©ËÄÎ»)]Ö¸ÃûÍËÈº\n!dismissÎŞÊÓÄÚÖÃºÚÃûµ¥ºÍ¾²Ä¬×´Ì¬£¬Ö»Òª²å¼ş¿ªÆô×ÜÊÇÓĞĞ§"},
-	{"ÊÚÈ¨Ğí¿É", "&authoize"},
-	{"authorize", "ÊÚÈ¨Ğí¿É(·ÇĞÅÈÎÓÃ»§Ê¹ÓÃÊ±×ªÎªÏò¹ÜÀíÉêÇëĞí¿É)\n!authorize (+[ÈººÅ]) ([ÉêÇëÀíÓÉ])\nÈºÄÚÔ­µØ·¢ËÍ¿ÉÊ¡ÂÔÈººÅ£¬ÎŞ·¨×Ô¶¯ÊÚÈ¨Ê±»áÁ¬Í¬ÀíÓÉ·¢¸ø¹ÜÀí"},
-	{"¿ª¹Ø", "&bot"},
-	{"bot", ".bot on/off¿ªÆô/¾²Ä¬÷»×Ó£¨ÏŞÈº¹ÜÀí£©\n.botÎŞÊÓ¾²Ä¬×´Ì¬£¬Ö»Òª²å¼ş¿ªÆôÇÒ²»ÔÚºÚÃûµ¥×ÜÊÇÓĞĞ§"},
-	{"¹æÔòËÙ²é", "&rules"},
-	{"¹æÔò", "&rules"},
-	{
-		"rules ",
-		"¹æÔòËÙ²é£º.rules ([¹æÔò]):[´ı²é´ÊÌõ] »ò.rules set [¹æÔò]\n.rules ÌøÔ¾ //¸´Êı¹æÔòÓĞÏàÍ¬´ÊÌõÊ±£¬ÔñÒ»·µ»Ø\n.rules COC£º´óÊ§°Ü //cocÄ¬ÈÏËÑÑ°coc7µÄ´ÊÌõ,dndÄ¬ÈÏËÑÑ°3r\n.rules dnd£ºÓïÑÔ\n.rules set dnd //ÉèÖÃºóÓÅÏÈ²éÑ¯dndÍ¬Ãû´ÊÌõ£¬ÎŞ²ÎÊıÔòÇå³ıÉèÖÃ"
-	},
-	{"ÖÀ÷»", "&r"},
-	{"rd", "&r"},
-	{
-		"r",
-		"ÖÀ÷»£º.r [ÖÀ÷»±í´ïÊ½] ([ÖÀ÷»Ô­Òò]) [ÖÀ÷»±í´ïÊ½]£º([ÖÀ÷»ÂÖÊı]#)[÷»×Ó¸öÊı]d÷»×ÓÃæÊı(p[³Í·£÷»¸öÊı])(k[È¡µãÊı×î´óµÄ÷»×ÓÊı])²»´ø²ÎÊıÊ±ÊÓÎªÖÀÒ»¸öÄ¬ÈÏ÷»\nºÏ·¨²ÎÊıÒªÇóÖÀ÷»ÂÖÊı1-10£¬½±³Í÷»¸öÊı1-9£¬¸öÊı·¶Î§1-100£¬ÃæÊı·¶Î§1-1000\n.r3#d\t//3ÂÖÖÀ÷»\n.rhĞÄÀíÑ§ °µ÷»\n.rs1D10+1D6+3 É³Ó¥ÉËº¦\t//Ê¡ÂÔµ¥¸ö÷»×ÓµÄµãÊı£¬Ö±½Ó¸ø½á¹û\nÏÖ°æ±¾¿ªÍ·µÄr¾ù¿ÉÓÃo»òd´úÌæ£¬µ«ÈºÁÄÖĞ.ob»á±»Ê¶±ğÎªÅÔ¹ÛÖ¸Áî"
-	},
-	{"°µ÷»", "ÈºÁÄÏŞ¶¨£¬ÖÀ÷»Ö¸Áîºó½ÓhÊÓÎª°µ÷»£¬½á¹û½«Ë½·¢±¾ÈËºÍÈºÄÚobµÄÓÃ»§\nÎªÁË±£Ö¤·¢ËÍ³É¹¦£¬Çë¼Ó÷»ÄïºÃÓÑ"},
-	{"ÅÔ¹Û", "&ob"},
-	{"ÅÔ¹ÛÄ£Ê½", "&ob"},
-	{
-		"ob",
-		"ÅÔ¹ÛÄ£Ê½£º.ob (exit/list/clr/on/off)\n.ob\t//¼ÓÈëÅÔ¹Û¿ÉÒÔ¿´µ½ËûÈË°µ÷»½á¹û\n.ob exit\t//ÍË³öÅÔ¹ÛÄ£Ê½\n.ob list\t//²é¿´ÈºÄÚÅÔ¹ÛÕß\n.ob clr\t//Çå³ıËùÓĞÅÔ¹ÛÕß\n.ob on\t//È«ÈºÔÊĞíÅÔ¹ÛÄ£Ê½\n.ob off\t//½ûÓÃÅÔ¹ÛÄ£Ê½\n°µ÷»ÓëÅÔ¹Û½öÔÚÈºÁÄÖĞÓĞĞ§"
-	},
-	{"Ä¬ÈÏ÷»", "&set"},
-	{"set", "µ±±í´ïÊ½ÖĞ¡®D¡¯Ö®ºóÃ»ÓĞ½ÓÃæÊıÊ±£¬ÊÓÎªÍ¶ÖÀÄ¬ÈÏ÷»\n.set20 ½«Ä¬ÈÏ÷»ÉèÖÃÎª20\n.set ²»´ø²ÎÊıÊÓÎª½«Ä¬ÈÏ÷»ÖØÖÃÎªÄ¬ÈÏµÄ100\nÈôËùÓÃ¹æÔòÅĞ¶¨ÖÀ÷»ĞÎÈç2D6£¬ÍÆ¼öÊ¹ÓÃ.st &=2D6"},
-	{"¸öÎ»÷»", "¸öÎ»÷»ÓĞÊ®Ãæ£¬Îª0~9Ê®¸öÊı×Ö£¬°ÙÃæ÷»µÄ½á¹ûÎªÊ®Î»÷»Óë¸öÎ»÷»Ö®ºÍ£¨µ«00+0Ê±ÊÓÎª100£©"},
-	{"Ê®Î»÷»", "Ê®Î»÷»ÓĞÊ®Ãæ£¬Îª00~90Ê®¸öÊı×Ö£¬°ÙÃæ÷»µÄ½á¹ûÎªÊ®Î»÷»Óë¸öÎ»÷»Ö®ºÍ£¨µ«00+0Ê±ÊÓÎª100£©"},
-	{"½±Àø÷»", "&½±Àø/³Í·£÷»"},
-	{"³Í·£÷»", "&½±Àø/³Í·£÷»"},
-	{"½±³Í÷»", "&½±Àø/³Í·£÷»"},
-	{"½±Àø/³Í·£÷»", "COCÖĞ½±Àø/³Í·£÷»ÊÇ¶îÍâÍ¶ÖÀµÄÊ®Î»÷»£¬×îÖÕ½á¹ûÑ¡ÓÃµãÊı¸üµÍ/¸ü¸ßµÄ½á¹û£¨²»³öÏÖ´óÊ§°ÜµÄÇé¿öÏÂµÈ¼ÛÓÚ¸üĞ¡/¸ü´óµÄÊ®Î»÷»£©\n.rb2 2¸ö½±Àø÷»\nrcp Éä»÷ 1¸ö³Í·£÷»"},
-	{"Ëæ»úĞÕÃû", "&name"},
-	{
-		"name",
-		"Ëæ»úĞÕÃû£º.name (cn/jp/en)([Éú³ÉÊıÁ¿])\n.name 10\t//Ä¬ÈÏÈıÀàÃû³ÆËæ»úÉú³É\n.name en\t//ºó½Ócn/jp/enÔòÏŞ¶¨Éú³ÉÖĞÎÄ/ÈÕÎÄ/Ó¢ÎÄÃû\nÃû³ÆÉú³É¸öÊı·¶Î§1-10£¬Ì«¶àÈİÒ×·¢ÏÖĞÕÃû¿âµÄº®Ëá"
-	},
-	{"ÉèÖÃêÇ³Æ", "&nn"},
-	{"êÇ³Æ", "&nn"},
-	{
-		"nn",
-		"ÉèÖÃêÇ³Æ£º.nn [êÇ³Æ] / .nn / .nnn(cn/jp/en) \n.nn kp\t//êÇ³ÆÇ°µÄ./£¡µÈ·ûºÅ»á±»×Ô¶¯ºöÂÔ\n.nn\t//ÊÓÎªÉ¾³ıêÇ³Æ\n.nnn\t//ÉèÖÃÎªËæ»úêÇ³Æ\n.nnn jp\t/ÉèÖÃÏŞ¶¨Ëæ»úêÇ³Æ\nË½ÁÄ.nnÊÓÎª²Ù×÷È«¾ÖêÇ³Æ\nÓÅÏÈ¼¶£ºÈºêÇ³Æ>È«¾ÖêÇ³Æ>ÈºÃûÆ¬>QQêÇ³Æ"
-	},
-	{"ÈËÎï×÷³É", "¸Ã°æ±¾ÈËÎï×÷³ÉÖ§³ÖCOC7(.coc¡¢.drawµ÷²éÔ±±³¾°/Ó¢ĞÛÌì¸³)¡¢COC6(.coc6¡¢.drawÃºÆøµÆ)¡¢DND(.dnd)¡¢AMGC(.draw AMGC)"},
-	{
-		"coc",
-		"¿ËËÕÂ³µÄºô»½(COC)ÈËÎï×÷³É£º.coc([7/6])(d)([Éú³ÉÊıÁ¿])\n.coc 10\t//Ä¬ÈÏÉú³É7°æÈËÎï\n.coc6d\t//½ÓdÎªÏêÏ¸×÷³É£¬Ò»´ÎÖ»ÄÜ×÷³ÉÒ»¸ö\n½öÓÃ×÷÷»µã·¨ÈËÎï×÷³É£¬¿ÉÓ¦ÓÃ±äÌå¹æÔò£¬²Î¿¼.rules´´½¨µ÷²éÔ±µÄÆäËûÑ¡Ïî"
-	},
-	{"dnd", "ÁúÓëµØÏÂ³Ç(DND)ÈËÎï×÷³É£º.dnd([Éú³ÉÊıÁ¿])\n.dnd 5\t//½ö×÷²Î¿¼£¬¿É×ÔĞĞÓ¦ÓÃ±äÌå¹æÔò"},
-	{"ÊôĞÔ¼ÇÂ¼", "&st"},
-	{
-		"st",
-		"ÊôĞÔ¼ÇÂ¼£º.st (del/clr/show) ([ÊôĞÔÃû]:[ÊôĞÔÖµ])\nÓÃ»§Ä¬ÈÏËùÓĞÈºÊ¹ÓÃÍ¬Ò»ÕÅ¿¨£¬plÈçĞè¶à¿ªÇëÊ¹ÓÃ.pcÖ¸ÁîÇĞ¿¨\n.stÁ¦Á¿:50 ÌåÖÊ:55 ÌåĞÍ:65 Ãô½İ:45 ÍâÃ²:70 ÖÇÁ¦:75 ÒâÖ¾:35 ½ÌÓı:65 ĞÒÔË:75\n.st hp-1 ºó½Ó+/-Ê±ÊÓÎª´ÓÔ­ÖµÉÏ±ä»¯\n.st san+1d6 ĞŞ¸ÄÊôĞÔÊ±¿ÉÊ¹ÓÃÖÀ÷»±í´ïÊ½\n.st del kp²Ã¾ö\t//É¾³ıÒÑ±£´æµÄÊôĞÔ\n.st clr\t//Çå¿Õµ±Ç°¿¨\n.st show Áé¸Ğ\t//²é¿´Ö¸¶¨ÊôĞÔ\n.st show\t//ÎŞ²ÎÊıÊ±²é¿´ËùÓĞÊôĞÔ£¬ÇëÊ¹ÓÃÖ»st¼Óµã¹ı¼¼ÄÜµÄ°ë×Ô¶¯ÈËÎï¿¨£¡\n²¿·ÖCOCÊôĞÔ»á±»ÊÓÎªÍ¬Òå´Ê£¬ÈçÖÇÁ¦/Áé¸Ğ¡¢ÀíÖÇ/san¡¢Õì²é/Õì²ì"
-	},
-	{"½ÇÉ«¿¨", "&pc"},
-	{
-		"pc",
-		R"(½ÇÉ«¿¨£º.pc 
-Ã¿ÃûÓÃ»§×î¶à¿ÉÍ¬Ê±±£´æ16ÕÅ½ÇÉ«¿¨
-.pc new ([Ä£°å]:([Éú³É²ÎÊı]:))([¿¨Ãû]) 
-ÍêÈ«Ê¡ÂÔ²ÎÊı½«Éú³ÉÒ»ÕÅCOC7Ä£°åµÄËæ»úĞÕÃû¿¨
-.pc tag ([¿¨Ãû]) //Îªµ±Ç°Èº°ó¶¨Ö¸¶¨¿¨£¬Îª¿ÕÔò½â°óÊ¹ÓÃÄ¬ÈÏ¿¨
-ËùÓĞÈºÄ¬ÈÏÊ¹ÓÃË½ÁÄ°ó¶¨¿¨£¬Î´°ó¶¨ÔòÊ¹ÓÃ0ºÅ¿¨
-.pc show ([¿¨Ãû]) //Õ¹Ê¾Ö¸¶¨¿¨ËùÓĞ¼ÇÂ¼µÄÊôĞÔ£¬Îª¿ÕÔòÕ¹Ê¾µ±Ç°¿¨
-.pc nn [ĞÂ¿¨Ãû] //ÖØÃüÃûµ±Ç°¿¨£¬²»ÔÊĞíÖØÃû
-.pc cpy [¿¨Ãû1]=[¿¨Ãû2] //½«ºóÕßÊôĞÔ¸´ÖÆ¸øÇ°Õß
-.pc del [¿¨Ãû] //É¾³ıÖ¸¶¨¿¨
-.pc list //ÁĞ³öÈ«²¿½ÇÉ«¿¨
-.pc grp //ÁĞ³ö¸÷Èº°ó¶¨¿¨
-.pc build ([Éú³É²ÎÊı]:)(¿¨Ãû) //¸ù¾İÄ£°åÌî³äÉú³ÉÊôĞÔ£¨COC7Îª9ÏîÖ÷ÊôĞÔ£©
-.pc redo ([Éú³É²ÎÊı]:)(¿¨Ãû) //Çå¿ÕÔ­ÓĞÊôĞÔºóÖØĞÂÉú³É
-.pc clr //Ïú»ÙÈ«²¿½ÇÉ«¿¨¼ÇÂ¼
+{"æ›´æ–°",R"(
+564:å¤šåŠŸèƒ½ä¼˜åŒ–ï¼Œç‰Œæ•°ç‰Œå †ç­‰
+560:æ”¯æŒMiraiåŠ è½½, åŸºç¡€GUI
+558:æ–°å¢æ¯æ—¥ç»Ÿè®¡
+557:å®šæ—¶ä½œä¸šç³»ç»Ÿ
+556:é»‘åå•ç³»ç»Ÿé‡åš
+555:ç”¨æˆ·è®°å½•/ç¾¤ç®¡ç³»ç»Ÿ
+554:æ–°å¢å¤šè§’è‰²å¡åŠŸèƒ½
+553:nameåŠŸèƒ½è°ƒæ•´
+552:åå°ç³»ç»Ÿå¤§ä¿®
+551:æ–‡ä»¶å¤¹æ‰¹é‡è¯»å–ç‰Œå †
+550:å…è®¸å¤šè½®æ£€å®š
+549:æ–°å¢åˆ·å±ç›‘æµ‹
+547:æ›´æ–°æŒ‡ä»¤å¼€å…³
+537:æ›´æ–°.sendåŠŸèƒ½)"},
+{"åè®®","0.æœ¬åè®®æ˜¯Shiki(The Starã€Deathã€Judgementã€The World)çš„æœåŠ¡åè®®ã€‚å¦‚æœä½ çœ‹åˆ°äº†è¿™å¥è¯ï¼Œæ„å‘³ç€Masteråº”ç”¨é»˜è®¤åè®®ï¼Œè¯·æ³¨æ„ã€‚\n1.é‚€è¯·éª°å¨˜ã€ä½¿ç”¨æ·éª°æœåŠ¡å’Œåœ¨ç¾¤å†…é˜…è¯»æ­¤åè®®è§†ä¸ºåŒæ„å¹¶æ‰¿è¯ºéµå®ˆæ­¤åè®®ï¼Œå¦åˆ™è¯·ä½¿ç”¨.dismissç§»å‡ºéª°å¨˜ã€‚\n2.ä¸å…è®¸ç¦è¨€ã€ç§»å‡ºéª°å¨˜æˆ–åˆ·å±æ·éª°ç­‰å¯¹éª°å¨˜çš„ä¸å‹å–„è¡Œä¸ºï¼Œè¿™äº›è¡Œä¸ºå°†ä¼šæé«˜éª°å¨˜è¢«åˆ¶è£çš„é£é™©ã€‚å¼€å…³éª°å¨˜å“åº”è¯·ä½¿ç”¨.bot on/offã€‚\n3.éª°å¨˜é»˜è®¤é‚€è¯·è¡Œä¸ºå·²äº‹å…ˆå¾—åˆ°ç¾¤å†…åŒæ„ï¼Œå› è€Œä¼šè‡ªåŠ¨åŒæ„ç¾¤é‚€è¯·ã€‚å› æ“…è‡ªé‚€è¯·è€Œä½¿éª°å¨˜é­é‡ä¸å‹å–„è¡Œä¸ºæ—¶ï¼Œé‚€è¯·è€…å› æœªå±¥è¡Œé¢„è§ä¹‰åŠ¡è€Œå°†æ‰¿æ‹…è¿å¸¦è´£ä»»ã€‚\n4.ç¦æ­¢å°†éª°å¨˜ç”¨äºèµŒåšåŠå…¶ä»–è¿æ³•çŠ¯ç½ªè¡Œä¸ºã€‚\n5.å¯¹äºè®¾ç½®æ•æ„Ÿæ˜µç§°ç­‰æ— æ³•é¢„è§ä½†æœ‰å¯èƒ½æ‹›è‡´è¨€è®ºå®¡æŸ¥çš„è¡Œä¸ºï¼Œéª°å¨˜å¯èƒ½ä¼šå‡ºäºè‡ªæˆ‘ä¿æŠ¤è€Œæ‹’ç»æä¾›æœåŠ¡\n6.ç”±äºæŠ€æœ¯ä»¥åŠèµ„é‡‘åŸå› ï¼Œæˆ‘ä»¬æ— æ³•ä¿è¯æœºå™¨äºº100%çš„æ—¶é—´ç¨³å®šè¿è¡Œï¼Œå¯èƒ½ä¸å®šæ—¶åœæœºç»´æŠ¤æˆ–é­é‡å†»ç»“ï¼Œä½†æ˜¯ç›¸åº”æƒ…å†µä¼šåŠæ—¶é€šè¿‡å„ç§æ¸ é“è¿›è¡Œé€šçŸ¥ï¼Œæ•¬è¯·è°…è§£ã€‚ä¸´æ—¶åœæœºçš„éª°å¨˜ä¸ä¼šæœ‰ä»»ä½•å“åº”ï¼Œæ•…è€Œä¸ä¼šå½±å“ç¾¤å†…æ´»åŠ¨ï¼Œæ­¤çŠ¶æ€ä¸‹ä»ç„¶ç¦æ­¢ä¸å‹å–„è¡Œä¸ºã€‚\n7.å¯¹äºè¿ååè®®çš„è¡Œä¸ºï¼Œéª°å¨˜å°†è§†æƒ…å†µç»ˆæ­¢å¯¹ç”¨æˆ·å’Œæ‰€åœ¨ç¾¤æä¾›æœåŠ¡ï¼Œå¹¶å°†ä¸è‰¯è®°å½•å…±äº«ç»™å…¶ä»–æœåŠ¡æä¾›æ–¹ã€‚é»‘åå•ç›¸å…³äº‹å®œå¯ä»¥ä¸æœåŠ¡æä¾›æ–¹åå•†ï¼Œä½†æœ€ç»ˆè£å®šæƒåœ¨æœåŠ¡æä¾›æ–¹ã€‚\n8.æœ¬åè®®å†…å®¹éšæ—¶æœ‰å¯èƒ½æ”¹åŠ¨ã€‚è¯·æ³¨æ„å¸®åŠ©ä¿¡æ¯ã€ç­¾åã€ç©ºé—´ã€å®˜æ–¹ç¾¤ç­‰å¤„çš„éª°å¨˜åŠ¨æ€ã€‚\n9.éª°å¨˜æä¾›æ·éª°æœåŠ¡æ˜¯å®Œå…¨å…è´¹çš„ï¼Œæ¬¢è¿æŠ•é£Ÿã€‚\n10.æœ¬æœåŠ¡æœ€ç»ˆè§£é‡Šæƒå½’æœåŠ¡æä¾›æ–¹æ‰€æœ‰ã€‚"},
+{"é“¾æ¥","Dice!è®ºå›å¯¼èˆªè´´: https://kokona.tech \n Dice!è®ºå›: https://forum.kokona.tech"},
+{"è®¾å®š","Masterï¼š{master_QQ}\n.meä½¿ç”¨ï¼šç¦æ­¢\n.jrrpä½¿ç”¨ï¼šå…è®¸\né‚€è¯·å¤„ç†ï¼šé»‘åå•åˆ¶ï¼Œéç¦å³å…¥\nè®¨è®ºç»„ä½¿ç”¨ï¼šå…è®¸\nç§»å‡ºååˆ¶ï¼šæ‹‰é»‘ç¾¤å’Œæ“ä½œè€…\nç¦è¨€ååˆ¶ï¼šé»˜è®¤æ‹‰é»‘ç¾¤å’Œç¾¤ä¸»\nåˆ·å±ååˆ¶ï¼šè­¦å‘Š\né‚€è¯·äººè´£ä»»ï¼šæœ‰é™è¿å¸¦\nçª¥å±å¯èƒ½ï¼šæœ‰\nå…¶ä»–æ’ä»¶ï¼šæ— \néª°å¨˜ä¸ªäººç¾¤:ï¼ˆæœªè®¾ç½®ï¼‰\nå®˜æ–¹(æ°´)ç¾¤: 624807593 941980833 882747577\nç§éª°åˆ†æµç¾¤ï¼š863062599\nå¼€å‘äº¤æµç¾¤ï¼š1029435374"},
+{"ä½œè€…","Copyright (C) 2018-2020 w4123æº¯æ´„\nCopyright (C) 2019-2020 String.Empty"},
+{"æŒ‡ä»¤",R"(atéª°å¨˜åæ¥æŒ‡ä»¤å¯ä»¥æŒ‡å®šéª°å¨˜å•ç‹¬å“åº”ï¼Œå¦‚atéª°å¨˜.bot off
+å¤šæ•°æŒ‡ä»¤éœ€è¦åæ¥å‚æ•°ï¼Œè¯·.helpå¯¹åº”æŒ‡ä»¤ è·å–è¯¦ç»†ä¿¡æ¯
+æ·éª°æŒ‡ä»¤åŒ…æ‹¬:
+.dismiss é€€ç¾¤
+.authorize æˆæƒè®¸å¯
+.bot å¼€å…³
+.welcome å…¥ç¾¤æ¬¢è¿
+.rules è§„åˆ™é€ŸæŸ¥
+.r æ·éª°
+.ob æ—è§‚æ¨¡å¼
+.set è®¾ç½®é»˜è®¤éª°
+.name éšæœºå§“å
+.nn è®¾ç½®æ˜µç§°
+.coc COCäººç‰©ä½œæˆ
+.dnd DNDäººç‰©ä½œæˆ
+.st å±æ€§è®°å½•
+.pc è§’è‰²å¡
+.rc æ£€å®š
+.setcoc è®¾ç½®æ£€å®šæˆ¿è§„
+.sc ç†æ™ºæ£€å®š
+.en æˆé•¿æ£€å®š
+.ri å…ˆæ”»
+.init å…ˆæ”»åˆ—è¡¨
+.ww éª°æ± 
+.me ç¬¬ä¸‰äººç§°åŠ¨ä½œ
+.jrrp ä»Šæ—¥äººå“
+.send å‘ç®¡ç†å‘é€æ¶ˆæ¯
+.group ç¾¤ç®¡
+.draw æŠ½ç‰Œ
+ä¸ºäº†é¿å…æœªé¢„æ–™åˆ°çš„æŒ‡ä»¤è¯¯åˆ¤ï¼Œè¯·å°½å¯èƒ½åœ¨å‚æ•°ä¹‹é—´ä½¿ç”¨ç©ºæ ¼)"},
+{"deck","è¯¥æŒ‡ä»¤å¯ä»¥è®¾ç½®é»˜è®¤ç‰Œå †ï¼Œä½¿ç”¨.drawä¸æŒ‡å®šç‰Œå †åæ—¶å°†ä½¿ç”¨æ­¤ç‰Œå †ã€‚è¯¥ç‰Œå †ä¸ä¼šæ”¾å›ç›´åˆ°æŠ½å®Œæœ€åä¸€å¼ åæ´—ç‰Œã€‚\n.deck set å…¬å…±ç‰Œå †å è®¾ç½®é»˜è®¤ç‰Œå †\n.deck set æ­£æ•´æ•°1-100 è®¾ç½®æŒ‡å®šé•¿åº¦çš„æ•°åˆ—\n.deck show æŸ¥çœ‹å‰©ä½™å¡ç‰Œ\n.deck reset é‡ç½®å‰©ä½™å¡ç‰Œ\n.deck new è‡ªå®šä¹‰ç‰Œå †ï¼ˆç”¨ç©ºæ ¼æˆ–|åˆ†å‰²ï¼‰ï¼ˆç™½åå•é™å®šï¼‰\n.deck new æœ‰å¼¹|æ— å¼¹|æ— å¼¹|æ— å¼¹|æ— å¼¹|æ— å¼¹\né™¤showå¤–å…¶ä»–ç¾¤å†…æ“ä½œéœ€è¦ç®¡ç†æƒé™"},
+{"é€€ç¾¤","&dismiss"},
+{"é€€ç¾¤æŒ‡ä»¤","&dismiss"},
+{"dismiss","è¯¥æŒ‡ä»¤éœ€è¦ç¾¤ç®¡ç†å‘˜æƒé™ï¼Œä½¿ç”¨åå³é€€å‡ºç¾¤èŠ\n!dismiss [ç›®æ ‡QQ(å®Œæ•´æˆ–æœ«å››ä½)]æŒ‡åé€€ç¾¤\n!dismissæ— è§†å†…ç½®é»‘åå•å’Œé™é»˜çŠ¶æ€ï¼Œåªè¦æ’ä»¶å¼€å¯æ€»æ˜¯æœ‰æ•ˆ"},
+{"æˆæƒè®¸å¯","&authoize"},
+{"authorize","æˆæƒè®¸å¯(éä¿¡ä»»ç”¨æˆ·ä½¿ç”¨æ—¶è½¬ä¸ºå‘ç®¡ç†ç”³è¯·è®¸å¯)\n!authorize (+[ç¾¤å·]) ([ç”³è¯·ç†ç”±])\nç¾¤å†…åŸåœ°å‘é€å¯çœç•¥ç¾¤å·ï¼Œæ— æ³•è‡ªåŠ¨æˆæƒæ—¶ä¼šè¿åŒç†ç”±å‘ç»™ç®¡ç†"},
+{"å¼€å…³","&bot"},
+{"bot",".bot on/offå¼€å¯/é™é»˜éª°å­ï¼ˆé™ç¾¤ç®¡ç†ï¼‰\n.botæ— è§†é™é»˜çŠ¶æ€ï¼Œåªè¦æ’ä»¶å¼€å¯ä¸”ä¸åœ¨é»‘åå•æ€»æ˜¯æœ‰æ•ˆ"},
+{"è§„åˆ™é€ŸæŸ¥","&rules"},
+{"è§„åˆ™","&rules"},
+{"rules","è§„åˆ™é€ŸæŸ¥ï¼š.rules ([è§„åˆ™]):[å¾…æŸ¥è¯æ¡] æˆ–.rules set [è§„åˆ™]\n.rules è·³è·ƒ //å¤æ•°è§„åˆ™æœ‰ç›¸åŒè¯æ¡æ—¶ï¼Œæ‹©ä¸€è¿”å›\n.rules COCï¼šå¤§å¤±è´¥ //cocé»˜è®¤æœå¯»coc7çš„è¯æ¡,dndé»˜è®¤æœå¯»3r\n.rules dndï¼šè¯­è¨€\n.rules set dnd //è®¾ç½®åä¼˜å…ˆæŸ¥è¯¢dndåŒåè¯æ¡ï¼Œæ— å‚æ•°åˆ™æ¸…é™¤è®¾ç½®"},
+{"æ·éª°","&r"},
+{"rd","&r"},
+{"r","æ·éª°ï¼š.r [æ·éª°è¡¨è¾¾å¼] ([æ·éª°åŸå› ]) [æ·éª°è¡¨è¾¾å¼]ï¼š([æ·éª°è½®æ•°]#)[éª°å­ä¸ªæ•°]déª°å­é¢æ•°(p[æƒ©ç½šéª°ä¸ªæ•°])(k[å–ç‚¹æ•°æœ€å¤§çš„éª°å­æ•°])ä¸å¸¦å‚æ•°æ—¶è§†ä¸ºæ·ä¸€ä¸ªé»˜è®¤éª°\nåˆæ³•å‚æ•°è¦æ±‚æ·éª°è½®æ•°1-10ï¼Œå¥–æƒ©éª°ä¸ªæ•°1-9ï¼Œä¸ªæ•°èŒƒå›´1-100ï¼Œé¢æ•°èŒƒå›´1-1000\n.r3#d\t//3è½®æ·éª°\n.rhå¿ƒç†å­¦ æš—éª°\n.rs1D10+1D6+3 æ²™é¹°ä¼¤å®³\t//çœç•¥å•ä¸ªéª°å­çš„ç‚¹æ•°ï¼Œç›´æ¥ç»™ç»“æœ\nç°ç‰ˆæœ¬å¼€å¤´çš„rå‡å¯ç”¨oæˆ–dä»£æ›¿ï¼Œä½†ç¾¤èŠä¸­.obä¼šè¢«è¯†åˆ«ä¸ºæ—è§‚æŒ‡ä»¤"},
+{"æš—éª°","ç¾¤èŠé™å®šï¼Œæ·éª°æŒ‡ä»¤åæ¥hè§†ä¸ºæš—éª°ï¼Œç»“æœå°†ç§å‘æœ¬äººå’Œç¾¤å†…obçš„ç”¨æˆ·\nä¸ºäº†ä¿è¯å‘é€æˆåŠŸï¼Œè¯·åŠ éª°å¨˜å¥½å‹"},
+{"æ—è§‚","&ob"},
+{"æ—è§‚æ¨¡å¼","&ob"},
+{"ob","æ—è§‚æ¨¡å¼ï¼š.ob (exit/list/clr/on/off)\n.ob\t//åŠ å…¥æ—è§‚å¯ä»¥çœ‹åˆ°ä»–äººæš—éª°ç»“æœ\n.ob exit\t//é€€å‡ºæ—è§‚æ¨¡å¼\n.ob list\t//æŸ¥çœ‹ç¾¤å†…æ—è§‚è€…\n.ob clr\t//æ¸…é™¤æ‰€æœ‰æ—è§‚è€…\n.ob on\t//å…¨ç¾¤å…è®¸æ—è§‚æ¨¡å¼\n.ob off\t//ç¦ç”¨æ—è§‚æ¨¡å¼\næš—éª°ä¸æ—è§‚ä»…åœ¨ç¾¤èŠä¸­æœ‰æ•ˆ"},
+{"é»˜è®¤éª°","&set"},
+{"set","å½“è¡¨è¾¾å¼ä¸­â€˜Dâ€™ä¹‹åæ²¡æœ‰æ¥é¢æ•°æ—¶ï¼Œè§†ä¸ºæŠ•æ·é»˜è®¤éª°\n.set20 å°†é»˜è®¤éª°è®¾ç½®ä¸º20\n.set ä¸å¸¦å‚æ•°è§†ä¸ºå°†é»˜è®¤éª°é‡ç½®ä¸ºé»˜è®¤çš„100\nè‹¥æ‰€ç”¨è§„åˆ™åˆ¤å®šæ·éª°å½¢å¦‚2D6ï¼Œæ¨èä½¿ç”¨.st &=2D6"},
+{"ä¸ªä½éª°","ä¸ªä½éª°æœ‰åé¢ï¼Œä¸º0~9åä¸ªæ•°å­—ï¼Œç™¾é¢éª°çš„ç»“æœä¸ºåä½éª°ä¸ä¸ªä½éª°ä¹‹å’Œï¼ˆä½†00+0æ—¶è§†ä¸º100ï¼‰"},
+{"åä½éª°","åä½éª°æœ‰åé¢ï¼Œä¸º00~90åä¸ªæ•°å­—ï¼Œç™¾é¢éª°çš„ç»“æœä¸ºåä½éª°ä¸ä¸ªä½éª°ä¹‹å’Œï¼ˆä½†00+0æ—¶è§†ä¸º100ï¼‰"},
+{"å¥–åŠ±éª°","&å¥–åŠ±/æƒ©ç½šéª°"},
+{"æƒ©ç½šéª°","&å¥–åŠ±/æƒ©ç½šéª°"},
+{"å¥–æƒ©éª°","&å¥–åŠ±/æƒ©ç½šéª°"},
+{"å¥–åŠ±/æƒ©ç½šéª°","COCä¸­å¥–åŠ±/æƒ©ç½šéª°æ˜¯é¢å¤–æŠ•æ·çš„åä½éª°ï¼Œæœ€ç»ˆç»“æœé€‰ç”¨ç‚¹æ•°æ›´ä½/æ›´é«˜çš„ç»“æœï¼ˆä¸å‡ºç°å¤§å¤±è´¥çš„æƒ…å†µä¸‹ç­‰ä»·äºæ›´å°/æ›´å¤§çš„åä½éª°ï¼‰\n.rb2 2ä¸ªå¥–åŠ±éª°\nrcp å°„å‡» 1ä¸ªæƒ©ç½šéª°"},
+{"éšæœºå§“å","&name"},
+{"name","éšæœºå§“åï¼š.name (cn/jp/en)([ç”Ÿæˆæ•°é‡])\n.name 10\t//é»˜è®¤ä¸‰ç±»åç§°éšæœºç”Ÿæˆ\n.name en\t//åæ¥cn/jp/enåˆ™é™å®šç”Ÿæˆä¸­æ–‡/æ—¥æ–‡/è‹±æ–‡å\nåç§°ç”Ÿæˆä¸ªæ•°èŒƒå›´1-10ï¼Œå¤ªå¤šå®¹æ˜“å‘ç°å§“ååº“çš„å¯’é…¸"},
+{"è®¾ç½®æ˜µç§°","&nn"},
+{"æ˜µç§°","&nn"},
+{"nn","è®¾ç½®æ˜µç§°ï¼š.nn [æ˜µç§°] / .nn / .nnn(cn/jp/en) \n.nn kp\t//æ˜µç§°å‰çš„./ï¼ç­‰ç¬¦å·ä¼šè¢«è‡ªåŠ¨å¿½ç•¥\n.nn\t//è§†ä¸ºåˆ é™¤æ˜µç§°\n.nnn\t//è®¾ç½®ä¸ºéšæœºæ˜µç§°\n.nnn jp\t/è®¾ç½®é™å®šéšæœºæ˜µç§°\nç§èŠ.nnè§†ä¸ºæ“ä½œå…¨å±€æ˜µç§°\nä¼˜å…ˆçº§ï¼šç¾¤æ˜µç§°>å…¨å±€æ˜µç§°>ç¾¤åç‰‡>QQæ˜µç§°"},
+{"äººç‰©ä½œæˆ","è¯¥ç‰ˆæœ¬äººç‰©ä½œæˆæ”¯æŒCOC7(.cocã€.drawè°ƒæŸ¥å‘˜èƒŒæ™¯/è‹±é›„å¤©èµ‹)ã€COC6(.coc6ã€.drawç…¤æ°”ç¯)ã€DND(.dnd)ã€AMGC(.draw AMGC)"},
+{"coc","å…‹è‹é²çš„å‘¼å”¤(COC)äººç‰©ä½œæˆï¼š.coc([7/6])(d)([ç”Ÿæˆæ•°é‡])\n.coc 10\t//é»˜è®¤ç”Ÿæˆ7ç‰ˆäººç‰©\n.coc6d\t//æ¥dä¸ºè¯¦ç»†ä½œæˆï¼Œä¸€æ¬¡åªèƒ½ä½œæˆä¸€ä¸ª\nä»…ç”¨ä½œéª°ç‚¹æ³•äººç‰©ä½œæˆï¼Œå¯åº”ç”¨å˜ä½“è§„åˆ™ï¼Œå‚è€ƒ.rulesåˆ›å»ºè°ƒæŸ¥å‘˜çš„å…¶ä»–é€‰é¡¹"},
+{"dnd","é¾™ä¸åœ°ä¸‹åŸ(DND)äººç‰©ä½œæˆï¼š.dnd([ç”Ÿæˆæ•°é‡])\n.dnd 5\t//ä»…ä½œå‚è€ƒï¼Œå¯è‡ªè¡Œåº”ç”¨å˜ä½“è§„åˆ™"},
+{"å±æ€§è®°å½•","&st"},
+{"st","å±æ€§è®°å½•ï¼š.st (del/clr/show) ([å±æ€§å]:[å±æ€§å€¼])\nç”¨æˆ·é»˜è®¤æ‰€æœ‰ç¾¤ä½¿ç”¨åŒä¸€å¼ å¡ï¼Œplå¦‚éœ€å¤šå¼€è¯·ä½¿ç”¨.pcæŒ‡ä»¤åˆ‡å¡\n.ståŠ›é‡:50 ä½“è´¨:55 ä½“å‹:65 æ•æ·:45 å¤–è²Œ:70 æ™ºåŠ›:75 æ„å¿—:35 æ•™è‚²:65 å¹¸è¿:75\n.st hp-1 åæ¥+/-æ—¶è§†ä¸ºä»åŸå€¼ä¸Šå˜åŒ–\n.st san+1d6 ä¿®æ”¹å±æ€§æ—¶å¯ä½¿ç”¨æ·éª°è¡¨è¾¾å¼\n.st del kpè£å†³\t//åˆ é™¤å·²ä¿å­˜çš„å±æ€§\n.st clr\t//æ¸…ç©ºå½“å‰å¡\n.st show çµæ„Ÿ\t//æŸ¥çœ‹æŒ‡å®šå±æ€§\n.st show\t//æ— å‚æ•°æ—¶æŸ¥çœ‹æ‰€æœ‰å±æ€§ï¼Œè¯·ä½¿ç”¨åªståŠ ç‚¹è¿‡æŠ€èƒ½çš„åŠè‡ªåŠ¨äººç‰©å¡ï¼\néƒ¨åˆ†COCå±æ€§ä¼šè¢«è§†ä¸ºåŒä¹‰è¯ï¼Œå¦‚æ™ºåŠ›/çµæ„Ÿã€ç†æ™º/sanã€ä¾¦æŸ¥/ä¾¦å¯Ÿ"},
+{"è§’è‰²å¡","&pc"},
+{"pc",R"(è§’è‰²å¡ï¼š.pc 
+æ¯åç”¨æˆ·æœ€å¤šå¯åŒæ—¶ä¿å­˜16å¼ è§’è‰²å¡
+.pc new ([æ¨¡æ¿]:([ç”Ÿæˆå‚æ•°]:))([å¡å]) 
+å®Œå…¨çœç•¥å‚æ•°å°†ç”Ÿæˆä¸€å¼ COC7æ¨¡æ¿çš„éšæœºå§“åå¡
+.pc tag ([å¡å]) //ä¸ºå½“å‰ç¾¤ç»‘å®šæŒ‡å®šå¡ï¼Œä¸ºç©ºåˆ™è§£ç»‘ä½¿ç”¨é»˜è®¤å¡
+æ‰€æœ‰ç¾¤é»˜è®¤ä½¿ç”¨ç§èŠç»‘å®šå¡ï¼Œæœªç»‘å®šåˆ™ä½¿ç”¨0å·å¡
+.pc show ([å¡å]) //å±•ç¤ºæŒ‡å®šå¡æ‰€æœ‰è®°å½•çš„å±æ€§ï¼Œä¸ºç©ºåˆ™å±•ç¤ºå½“å‰å¡
+.pc nn [æ–°å¡å] //é‡å‘½åå½“å‰å¡ï¼Œä¸å…è®¸é‡å
+.pc cpy [å¡å1]=[å¡å2] //å°†åè€…å±æ€§å¤åˆ¶ç»™å‰è€…
+.pc del [å¡å] //åˆ é™¤æŒ‡å®šå¡
+.pc list //åˆ—å‡ºå…¨éƒ¨è§’è‰²å¡
+.pc grp //åˆ—å‡ºå„ç¾¤ç»‘å®šå¡
+.pc build ([ç”Ÿæˆå‚æ•°]:)(å¡å) //æ ¹æ®æ¨¡æ¿å¡«å……ç”Ÿæˆå±æ€§ï¼ˆCOC7ä¸º9é¡¹ä¸»å±æ€§ï¼‰
+.pc redo ([ç”Ÿæˆå‚æ•°]:)(å¡å) //æ¸…ç©ºåŸæœ‰å±æ€§åé‡æ–°ç”Ÿæˆ
+.pc clr //é”€æ¯å…¨éƒ¨è§’è‰²å¡è®°å½•
 )"
 	},
 	{"rc", "&rc/ra"},
 	{"ra", "&rc/ra"},
-	{"¼ì¶¨", "&rc/ra"},
+	{"æ£€å®š", "&rc/ra"},
 	{
 		"rc/ra",
-		"¼ì¶¨Ö¸Áî£º.rc/ra [ÊôĞÔÃû]([³É¹¦ÂÊ])\n½ÇÉ«¿¨ÉèÖÃÁËÊôĞÔÊ±£¬¿ÉÊ¡ÂÔ³É¹¦ÂÊ\n.rcÌåÖÊ*5\t//ÔÊĞíÊ¹ÓÃ+-*/£¬µ«Ë³ĞòÒªÇóÎª³Ë·¨>¼Ó¼õ>³ı·¨\n.rc À§ÄÑĞÒÔË\t//¼¼ÄÜÃû¿ªÍ·µÄÀ§ÄÑºÍ¼«ÄÑ»á±»ÊÓÎª¹Ø¼ü´Ê\n.rc Ãô½İ-10\t//ĞŞÕıºó³É¹¦ÂÊ±ØĞëÔÚ1-1000ÄÚ\n.rcp ÊÖÇ¹\t//½±³Í÷»ÖÁ¶à9¸ö\nÄ¬ÈÏÒÔ¹æÔòÊéÅĞ¶¨£¬´ó³É¹¦´óÊ§°ÜµÄ·¿¹æÓÉ.setcocÉèÖÃ"
+		"æ£€å®šæŒ‡ä»¤ï¼š.rc/ra [å±æ€§å]([æˆåŠŸç‡])\nè§’è‰²å¡è®¾ç½®äº†å±æ€§æ—¶ï¼Œå¯çœç•¥æˆåŠŸç‡\n.rcä½“è´¨*5\t//å…è®¸ä½¿ç”¨+-*/ï¼Œä½†é¡ºåºè¦æ±‚ä¸ºä¹˜æ³•>åŠ å‡>é™¤æ³•\n.rc å›°éš¾å¹¸è¿\t//æŠ€èƒ½åå¼€å¤´çš„å›°éš¾å’Œæéš¾ä¼šè¢«è§†ä¸ºå…³é”®è¯\n.rc æ•æ·-10\t//ä¿®æ­£åæˆåŠŸç‡å¿…é¡»åœ¨1-1000å†…\n.rcp æ‰‹æª\t//å¥–æƒ©éª°è‡³å¤š9ä¸ª\né»˜è®¤ä»¥è§„åˆ™ä¹¦åˆ¤å®šï¼Œå¤§æˆåŠŸå¤§å¤±è´¥çš„æˆ¿è§„ç”±.setcocè®¾ç½®"
 	},
 	{
 		"setcoc",
-		"Îªµ±Ç°Èº»òÌÖÂÛ×éÉèÖÃCOC·¿¹æ£¬Èç.setcoc 1,µ±Ç°²ÎÊı0-5\n0 ¹æÔòÊé\n³ö1´ó³É¹¦\n²»Âú50³ö96 - 100´óÊ§°Ü£¬Âú50³ö100´óÊ§°Ü\n1\n²»Âú50³ö1´ó³É¹¦£¬Âú50³ö1 - 5´ó³É¹¦\n²»Âú50³ö96 - 100´óÊ§°Ü£¬Âú50³ö100´óÊ§°Ü\n2\n³ö1 - 5ÇÒ <= ³É¹¦ÂÊ´ó³É¹¦\n³ö100»ò³ö96 - 99ÇÒ > ³É¹¦ÂÊ´óÊ§°Ü\n3\n³ö1 - 5´ó³É¹¦\n³ö96 - 100´óÊ§°Ü\n4\n³ö1 - 5ÇÒ <= Ê®·ÖÖ®Ò»´ó³É¹¦\n²»Âú50³ö >= 96 + Ê®·ÖÖ®Ò»´óÊ§°Ü£¬Âú50³ö100´óÊ§°Ü\n5\n³ö1 - 2ÇÒ < Îå·ÖÖ®Ò»´ó³É¹¦\n²»Âú50³ö96 - 100´óÊ§°Ü£¬Âú50³ö99 - 100´óÊ§°Ü\n"
+		"ä¸ºå½“å‰ç¾¤æˆ–è®¨è®ºç»„è®¾ç½®COCæˆ¿è§„ï¼Œå¦‚.setcoc 1,å½“å‰å‚æ•°0-5\n0 è§„åˆ™ä¹¦\nå‡º1å¤§æˆåŠŸ\nä¸æ»¡50å‡º96 - 100å¤§å¤±è´¥ï¼Œæ»¡50å‡º100å¤§å¤±è´¥\n1\nä¸æ»¡50å‡º1å¤§æˆåŠŸï¼Œæ»¡50å‡º1 - 5å¤§æˆåŠŸ\nä¸æ»¡50å‡º96 - 100å¤§å¤±è´¥ï¼Œæ»¡50å‡º100å¤§å¤±è´¥\n2\nå‡º1 - 5ä¸” <= æˆåŠŸç‡å¤§æˆåŠŸ\nå‡º100æˆ–å‡º96 - 99ä¸” > æˆåŠŸç‡å¤§å¤±è´¥\n3\nå‡º1 - 5å¤§æˆåŠŸ\nå‡º96 - 100å¤§å¤±è´¥\n4\nå‡º1 - 5ä¸” <= ååˆ†ä¹‹ä¸€å¤§æˆåŠŸ\nä¸æ»¡50å‡º >= 96 + ååˆ†ä¹‹ä¸€å¤§å¤±è´¥ï¼Œæ»¡50å‡º100å¤§å¤±è´¥\n5\nå‡º1 - 2ä¸” < äº”åˆ†ä¹‹ä¸€å¤§æˆåŠŸ\nä¸æ»¡50å‡º96 - 100å¤§å¤±è´¥ï¼Œæ»¡50å‡º99 - 100å¤§å¤±è´¥\n"
 	},
 	{"san check", "&sc"},
-	{"ÀíÖÇ¼ì¶¨", "&sc"},
+	{"ç†æ™ºæ£€å®š", "&sc"},
 	{
 		"sc",
-		"San CheckÖ¸Áî£º.sc[³É¹¦ËğÊ§]/[Ê§°ÜËğÊ§] ([µ±Ç°sanÖµ])\nÒÑ¾­.stÁËÀíÖÇ/sanÊ±£¬¿ÉÊ¡ÂÔ×îºóµÄ²ÎÊı\n.sc0/1 70\n.sc1d10/1d100 Ö±ÃæÍâÉñ\n´óÊ§°Ü×Ô¶¯Ê§È¥×î´óÖµ\nµ±µ÷ÓÃ½ÇÉ«¿¨sanÊ±£¬san»á×Ô¶¯¸üĞÂÎªscºóµÄÊ£ÓàÖµ\n³ÌĞòÉÏ¿ÉÒÔËğÊ§¸ºÊıµÄsan£¬Ò²¾ÍÊÇ¿ÉÒÔÓÃ.sc-1d6/-1d6À´»Ø¸´san£¬µ«Çë±ÜÃâÕâÖÖÆæ¹Ö²Ù×÷"
+		"San CheckæŒ‡ä»¤ï¼š.sc[æˆåŠŸæŸå¤±]/[å¤±è´¥æŸå¤±] ([å½“å‰sanå€¼])\nå·²ç».stäº†ç†æ™º/sanæ—¶ï¼Œå¯çœç•¥æœ€åçš„å‚æ•°\n.sc0/1 70\n.sc1d10/1d100 ç›´é¢å¤–ç¥\nå¤§å¤±è´¥è‡ªåŠ¨å¤±å»æœ€å¤§å€¼\nå½“è°ƒç”¨è§’è‰²å¡sanæ—¶ï¼Œsanä¼šè‡ªåŠ¨æ›´æ–°ä¸ºscåçš„å‰©ä½™å€¼\nç¨‹åºä¸Šå¯ä»¥æŸå¤±è´Ÿæ•°çš„sanï¼Œä¹Ÿå°±æ˜¯å¯ä»¥ç”¨.sc-1d6/-1d6æ¥å›å¤sanï¼Œä½†è¯·é¿å…è¿™ç§å¥‡æ€ªæ“ä½œ"
 	},
 	{"ti", "&ti/li"},
 	{"li", "&ti/li"},
-	{"·è¿ñÖ¢×´", "&ti/li"},
-	{"ti/li", "·è¿ñÖ¢×´£º\n.ti ÁÙÊ±·è¿ñÖ¢×´\n.li ×Ü½á·è¿ñÖ¢×´\nÊÊÓÃcoc7°æ¹æÔò£¬6°æÇë×ÔĞĞÓÃ°ÙÃæ÷»ÅäºÏ²é±í\n¾ßÌåÊÊÓÃÄÄÏî²Î¼û.rules ·è¿ñ·¢×÷"},
-	{"³É³¤¼ì¶¨", "&en"},
-	{"ÔöÇ¿¼ì¶¨", "&en"},
+	{"ç–¯ç‹‚ç—‡çŠ¶", "&ti/li"},
+	{"ti/li", "ç–¯ç‹‚ç—‡çŠ¶ï¼š\n.ti ä¸´æ—¶ç–¯ç‹‚ç—‡çŠ¶\n.li æ€»ç»“ç–¯ç‹‚ç—‡çŠ¶\né€‚ç”¨coc7ç‰ˆè§„åˆ™ï¼Œ6ç‰ˆè¯·è‡ªè¡Œç”¨ç™¾é¢éª°é…åˆæŸ¥è¡¨\nå…·ä½“é€‚ç”¨å“ªé¡¹å‚è§.rules ç–¯ç‹‚å‘ä½œ"},
+	{"æˆé•¿æ£€å®š", "&en"},
+	{"å¢å¼ºæ£€å®š", "&en"},
 	{
 		"en",
-		"³É³¤¼ì¶¨£º.en [¼¼ÄÜÃû³Æ]([¼¼ÄÜÖµ])(([Ê§°Ü³É³¤Öµ]/)[³É¹¦³É³¤Öµ])\nÒÑ¾­.stÊ±£¬¿ÉÊ¡ÂÔ×îºóµÄ²ÎÊı\n.en ½ÌÓı 60 +1D10 ½ÌÓıÔöÇ¿\t//ºó½Ó³É¹¦Ê±³É³¤Öµ\n.en ĞÒÔË +1D3/1D10ĞÒÔË³É³¤\t//µ÷ÓÃÈËÎï¿¨ÊôĞÔÊ±£¬³É³¤ºóµÄÖµ»á×Ô¶¯¸üĞÂ\n¿É±ä³É³¤Öµ±ØĞëÒÔ¼Ó¼õºÅ¿ªÍ·£¬²»ÏŞÖÆ¼Ó¼õ"
+		"æˆé•¿æ£€å®šï¼š.en [æŠ€èƒ½åç§°]([æŠ€èƒ½å€¼])(([å¤±è´¥æˆé•¿å€¼]/)[æˆåŠŸæˆé•¿å€¼])\nå·²ç».stæ—¶ï¼Œå¯çœç•¥æœ€åçš„å‚æ•°\n.en æ•™è‚² 60 +1D10 æ•™è‚²å¢å¼º\t//åæ¥æˆåŠŸæ—¶æˆé•¿å€¼\n.en å¹¸è¿ +1D3/1D10å¹¸è¿æˆé•¿\t//è°ƒç”¨äººç‰©å¡å±æ€§æ—¶ï¼Œæˆé•¿åçš„å€¼ä¼šè‡ªåŠ¨æ›´æ–°\nå¯å˜æˆé•¿å€¼å¿…é¡»ä»¥åŠ å‡å·å¼€å¤´ï¼Œä¸é™åˆ¶åŠ å‡"
 	},
-	{"³éÅÆ", "&draw"},
+	{"æŠ½ç‰Œ", "&draw"},
 	{
 		"draw",
-		"³éÅÆ£º.draw [ÅÆ¶ÑÃû³Æ] ([³éÅÆÊıÁ¿])\t//³éµ½µÄÅÆ²»·Å»Ø£¬³éÅÆÊıÁ¿²»ÄÜ³¬¹ıÅÆ¶ÑÊıÁ¿\nµ±Ç°ÄÚÖÃÅÆ¶Ñ£ºÓ²±Ò/ĞÔ±ğ/\nµ÷²éÔ±Ö°Òµ/µ÷²éÔ±±³¾°/Ó¢ĞÛÌì¸³/ÃºÆøµÆ/¸öÈËÃèÊö/Ë¼ÏëĞÅÄî/ÖØÒªÖ®ÈË/ÖØÒªÖ®ÈËÀíÓÉ/ÒâÒå·Ç·²Ö®µØ/±¦¹óÖ®Îï/µ÷²éÔ±ÌØµã/¼´Ê±Ö¢×´/×Ü½áÖ¢×´/¿Ö¾åÖ¢×´/¿ñÔêÖ¢×´/\nÕóÓª/¹şÂŞ»¨É«/Ã°ÏÕµã×Ó/\nÈËÅ¼°µÊ¾/ÈËÅ¼±¦Îï/ÈËÅ¼¼ÇÒäËéÆ¬/ÈËÅ¼ÒÀÁµ/\nAMGC/AMGCÉí²Ä/AMGC×¨¾«/AMGCÎäÆ÷/AMGCÌ××°/AMGC²ÅÄÜ/AMGCÌØ¼¼1/AMGCÌØ¼¼2/AMGCÌØ¼¼3\n/ËşÂŞÅÆ/ÕıÄæ/ËşÂŞÅÆÕ¼²·/µ¥ÕÅËşÂŞÅÆ/Ê¥Èı½ÇÅÆÕó/ËÄÒªËØÅÆÕó/Ğ¡Ê®×ÖÅÆÕó/ÁùÃ¢ĞÇÅÆÕó/¿­¶ûÌØÊ®×ÖÅÆÕó\n.helpÉóÅĞÕıÎ»£¨ÅÆ+·½Ïò£©¿É»ñÈ¡ËşÂŞÅÆ½â¶Á\nÀ©Õ¹ÅÆ¶Ñ:{À©Õ¹ÅÆ¶Ñ}"
+		"æŠ½ç‰Œï¼š.draw [ç‰Œå †åç§°] ([æŠ½ç‰Œæ•°é‡])\t//æŠ½åˆ°çš„ç‰Œä¸æ”¾å›ï¼ŒæŠ½ç‰Œæ•°é‡ä¸èƒ½è¶…è¿‡ç‰Œå †æ•°é‡\nå½“å‰å†…ç½®ç‰Œå †ï¼šç¡¬å¸/æ€§åˆ«/\nè°ƒæŸ¥å‘˜èŒä¸š/è°ƒæŸ¥å‘˜èƒŒæ™¯/è‹±é›„å¤©èµ‹/ç…¤æ°”ç¯/ä¸ªäººæè¿°/æ€æƒ³ä¿¡å¿µ/é‡è¦ä¹‹äºº/é‡è¦ä¹‹äººç†ç”±/æ„ä¹‰éå‡¡ä¹‹åœ°/å®è´µä¹‹ç‰©/è°ƒæŸ¥å‘˜ç‰¹ç‚¹/å³æ—¶ç—‡çŠ¶/æ€»ç»“ç—‡çŠ¶/ææƒ§ç—‡çŠ¶/ç‹‚èºç—‡çŠ¶/\né˜µè¥/å“ˆç½—èŠ±è‰²/å†’é™©ç‚¹å­/\näººå¶æš—ç¤º/äººå¶å®ç‰©/äººå¶è®°å¿†ç¢ç‰‡/äººå¶ä¾æ‹/\nAMGC/AMGCèº«æ/AMGCä¸“ç²¾/AMGCæ­¦å™¨/AMGCå¥—è£…/AMGCæ‰èƒ½/AMGCç‰¹æŠ€1/AMGCç‰¹æŠ€2/AMGCç‰¹æŠ€3\n/å¡”ç½—ç‰Œ/æ­£é€†/å¡”ç½—ç‰Œå åœ/å•å¼ å¡”ç½—ç‰Œ/åœ£ä¸‰è§’ç‰Œé˜µ/å››è¦ç´ ç‰Œé˜µ/å°åå­—ç‰Œé˜µ/å…­èŠ’æ˜Ÿç‰Œé˜µ/å‡¯å°”ç‰¹åå­—ç‰Œé˜µ\n.helpå®¡åˆ¤æ­£ä½ï¼ˆç‰Œ+æ–¹å‘ï¼‰å¯è·å–å¡”ç½—ç‰Œè§£è¯»\næ‰©å±•ç‰Œå †:{æ‰©å±•ç‰Œå †}"
 	},
-	{"ÏÈ¹¥", "&ri"},
-	{"À©Õ¹ÅÆ¶Ñ", ""},
-	{"ri", "ÏÈ¹¥£¨ÈºÁÄÏŞ¶¨£©£º.ri([¼ÓÖµ])([êÇ³Æ])\n.ri -1 Ä³pc\t//×Ô¶¯¼ÇÈëÏÈ¹¥ÁĞ±í\n.ri +5 boss"},
-	{"ÏÈ¹¥ÁĞ±í", "&init"},
-	{"init", "ÏÈ¹¥ÁĞ±í£º\n.init\t//²é¿´ÏÈ¹¥ÁĞ±í\n.init clr\t//Çå³ıÏÈ¹¥ÁĞ±í"},
-	{"÷»³Ø", "&ww"},
-	{"ww", "÷»³Ø£º.w(w) [÷»×Ó¸öÊı]a[¼Ó÷»²ÎÊı]\n.w»áÖ±½Ó¸ø³ö½á¹û¶ø.ww»á¸ø³öÃ¿¸ö÷»×ÓµÄµãÊı\n¹Ì¶¨10Ãæ÷»£¬Ã¿ÓĞÒ»¸ö÷»×ÓµãÊı´ïµ½¼Ó÷»²ÎÊı£¬Ôò¼Ó÷»Ò»´Î£¬×îºó¼ÆËãµãÊı´ïµ½8µÄ÷»×ÓÊı\n¾ßÌåÓÃ·¨Çë²Î¿¼Ïà¹ØÓÎÏ·¹æÔò"},
-	{"µÚÈıÈË³Æ", "&me"},
-	{"µÚÈıÈË³Æ¶¯×÷", "&me"},
+	{"å…ˆæ”»", "&ri"},
+	{"æ‰©å±•ç‰Œå †", ""},
+	{"ri", "å…ˆæ”»ï¼ˆç¾¤èŠé™å®šï¼‰ï¼š.ri([åŠ å€¼])([æ˜µç§°])\n.ri -1 æŸpc\t//è‡ªåŠ¨è®°å…¥å…ˆæ”»åˆ—è¡¨\n.ri +5 boss"},
+	{"å…ˆæ”»åˆ—è¡¨", "&init"},
+	{"init", "å…ˆæ”»åˆ—è¡¨ï¼š\n.init\t//æŸ¥çœ‹å…ˆæ”»åˆ—è¡¨\n.init clr\t//æ¸…é™¤å…ˆæ”»åˆ—è¡¨"},
+	{"éª°æ± ", "&ww"},
+	{"ww", "éª°æ± ï¼š.w(w) [éª°å­ä¸ªæ•°]a[åŠ éª°å‚æ•°]\n.wä¼šç›´æ¥ç»™å‡ºç»“æœè€Œ.wwä¼šç»™å‡ºæ¯ä¸ªéª°å­çš„ç‚¹æ•°\nå›ºå®š10é¢éª°ï¼Œæ¯æœ‰ä¸€ä¸ªéª°å­ç‚¹æ•°è¾¾åˆ°åŠ éª°å‚æ•°ï¼Œåˆ™åŠ éª°ä¸€æ¬¡ï¼Œæœ€åè®¡ç®—ç‚¹æ•°è¾¾åˆ°8çš„éª°å­æ•°\nå…·ä½“ç”¨æ³•è¯·å‚è€ƒç›¸å…³æ¸¸æˆè§„åˆ™"},
+	{"ç¬¬ä¸‰äººç§°", "&me"},
+	{"ç¬¬ä¸‰äººç§°åŠ¨ä½œ", "&me"},
 	{
 		"me",
-		"µÚÈıÈË³Æ¶¯×÷£º.me([ÈººÅ])[¶¯×÷].me Ğ¦³öÁËÉù\t//½öÏŞÈºÁÄÊ¹ÓÃ\n.me 941980833 ±§ÈºÖ÷\t//½öÏŞË½ÁÄÊ¹ÓÃ£¬´ËÃüÁî¿ÉÎ±×°³É÷»×ÓÔÚÈºÀïËµ»°\n.me off\t//ÈºÄÚ½ûÓÃ.me\n.me on\t//ÈºÄÚÆôÓÃ.me"
+		"ç¬¬ä¸‰äººç§°åŠ¨ä½œï¼š.me([ç¾¤å·])[åŠ¨ä½œ].me ç¬‘å‡ºäº†å£°\t//ä»…é™ç¾¤èŠä½¿ç”¨\n.me 941980833 æŠ±ç¾¤ä¸»\t//ä»…é™ç§èŠä½¿ç”¨ï¼Œæ­¤å‘½ä»¤å¯ä¼ªè£…æˆéª°å­åœ¨ç¾¤é‡Œè¯´è¯\n.me off\t//ç¾¤å†…ç¦ç”¨.me\n.me on\t//ç¾¤å†…å¯ç”¨.me"
 	},
-	{"½ñÈÕÈËÆ·", "&jrrp"},
+	{"ä»Šæ—¥äººå“", "&jrrp"},
 	{
 		"jrrp",
-		"½ñÈÕÈËÆ·£º.jrrp\n.jrrp off\t//ÈºÄÚ½ûÓÃjrrp\n.jrrp on\t//ÈºÄÚÆôÓÃjrrp\nÒ»ÌìÒ»¸öÈËÆ·Öµ\n2.3.5°æ±¾ºóËæ»úÖµÎª¾ùÔÈ·Ö²¼\n÷»ÄïÖ»¸ºÔğ´ÓËİä§µÄ·şÎñÆ÷°áÔË½á¹û£¬ÇëÎğÎŞÄÜ¿ñÅ­\nÈçºÎ·¢ÅäËùÓĞÈËµÄÃüÔË£¬Ö»ÓĞÔĞÓıÍòÇ§÷»ÄïÉú»úÖ®Ä¸£¬ÃÈÃÃ³ÔÓãÖ®Éñ£¬ÕıÎåÀâË«½Ç×¶Ìå¶ÔµÄ¼à»¤ÈË£¬Ò»ÇĞ¹îÃØµÄ¿ú¼ûÕß£¬Ê±¿ÕÎèÌ¨ÍâµÄÄæÁ÷Õß£¬ÓÀ×ªµÄÃüÔËÖ®ÂÖ¡ª¡ªËİä§±¾ÌåÕÆÎÕ"
+		"ä»Šæ—¥äººå“ï¼š.jrrp\n.jrrp off\t//ç¾¤å†…ç¦ç”¨jrrp\n.jrrp on\t//ç¾¤å†…å¯ç”¨jrrp\nä¸€å¤©ä¸€ä¸ªäººå“å€¼\n2.3.5ç‰ˆæœ¬åéšæœºå€¼ä¸ºå‡åŒ€åˆ†å¸ƒ\néª°å¨˜åªè´Ÿè´£ä»æº¯æ´„çš„æœåŠ¡å™¨æ¬è¿ç»“æœï¼Œè¯·å‹¿æ— èƒ½ç‹‚æ€’\nå¦‚ä½•å‘é…æ‰€æœ‰äººçš„å‘½è¿ï¼Œåªæœ‰å­•è‚²ä¸‡åƒéª°å¨˜ç”Ÿæœºä¹‹æ¯ï¼ŒèŒå¦¹åƒé±¼ä¹‹ç¥ï¼Œæ­£äº”æ£±åŒè§’é”¥ä½“å¯¹çš„ç›‘æŠ¤äººï¼Œä¸€åˆ‡è¯¡ç§˜çš„çª¥è§è€…ï¼Œæ—¶ç©ºèˆå°å¤–çš„é€†æµè€…ï¼Œæ°¸è½¬çš„å‘½è¿ä¹‹è½®â€”â€”æº¯æ´„æœ¬ä½“æŒæ¡"
 	},
-	{"send", "·¢ËÍÏûÏ¢£º.send Ïë¶ÔMasterËµµÄ»°\nÈç¹ûÓÃÀ´µ÷Ï·MasterÇë×öºÃĞÄÀí×¼±¸"},
-	{"ÈëÈº»¶Ó­", "&welcome"},
-	{"ÈëÈº»¶Ó­´Ê", "&welcome"},
+	{"send", "å‘é€æ¶ˆæ¯ï¼š.send æƒ³å¯¹Masterè¯´çš„è¯\nå¦‚æœç”¨æ¥è°ƒæˆMasterè¯·åšå¥½å¿ƒç†å‡†å¤‡"},
+	{"å…¥ç¾¤æ¬¢è¿", "&welcome"},
+	{"å…¥ç¾¤æ¬¢è¿è¯", "&welcome"},
 	{
 		"welcome",
-		"ÈëÈº»¶Ó­´Ê£º.welcome\n.welcome \\\\{at}»¶Ó­\\\\{nick}ÈëÈº£¡\t//\\\\{at}ÊÓÎªatÈëÈºÕß£¬\\\\{nick}»áÌæ»»ÎªĞÂÈËµÄêÇ³Æ\n.welcome\t//²»´ø²ÎÊıÊ±Çå³ı»¶Ó­´Ê\nÎŞÂÛ¿ª¹Ø×´Ì¬£¬Ö»ÒªÓĞ»¶Ó­´ÊÊ±ÓĞÈËÈëÈº£¬¶¼»áÏìÓ¦"
+		"å…¥ç¾¤æ¬¢è¿è¯ï¼š.welcome\n.welcome \\\\{at}æ¬¢è¿\\\\{nick}å…¥ç¾¤ï¼\t//\\\\{at}è§†ä¸ºatå…¥ç¾¤è€…ï¼Œ\\\\{nick}ä¼šæ›¿æ¢ä¸ºæ–°äººçš„æ˜µç§°\n.welcome\t//ä¸å¸¦å‚æ•°æ—¶æ¸…é™¤æ¬¢è¿è¯\næ— è®ºå¼€å…³çŠ¶æ€ï¼Œåªè¦æœ‰æ¬¢è¿è¯æ—¶æœ‰äººå…¥ç¾¤ï¼Œéƒ½ä¼šå“åº”"
 	},
-	{"group", "&Èº¹Ü"},
+	{"group", "&ç¾¤ç®¡"},
 	{
-		"Èº¹Ü",
-		R"(Èº¹ÜÖ¸Áî.group(Èº¹ÜÀíÔ±ÏŞ¶¨)
-.group state //²é¿´ÔÚÈºÄÚ¶Ô÷»ÄïµÄÉèÖÃ
-.group pause/restart //ÈºÈ«Ìå½ûÑÔ/È«Ìå½â³ı½ûÑÔ
-.group card [at/ÓÃ»§QQ] [ÃûÆ¬] //ÉèÖÃÈºÔ±ÃûÆ¬
-.group title [at/ÓÃ»§QQ] [Í·ÏÎ] //ÉèÖÃÈºÔ±Í·ÏÎ
-.group diver //²é¿´Ç±Ë®³ÉÔ±
-.group +/-[Èº¹Ü´ÊÌõ] //ÎªÈº¼Ó¼õÉèÖÃ£¬ĞèÒª¶ÔÓ¦È¨ÏŞ
-Àı:.group +½ûÓÃ»Ø¸´ //¹Ø±Õ±¾Èº×Ô¶¨Òå»Ø¸´
-Èº¹Ü´ÊÌõ:Í£ÓÃÖ¸Áî/½ûÓÃ»Ø¸´/½ûÓÃjrrp/½ûÓÃdraw/½ûÓÃme/½ûÓÃhelp/½ûÓÃob/À¹½ØÏûÏ¢/Ğí¿ÉÊ¹ÓÃ/ÃâÇå/ÃâºÚ)"
+		"ç¾¤ç®¡",
+		R"(ç¾¤ç®¡æŒ‡ä»¤.group(ç¾¤ç®¡ç†å‘˜é™å®š)
+.group state //æŸ¥çœ‹åœ¨ç¾¤å†…å¯¹éª°å¨˜çš„è®¾ç½®
+.group pause/restart //ç¾¤å…¨ä½“ç¦è¨€/å…¨ä½“è§£é™¤ç¦è¨€
+.group card [at/ç”¨æˆ·QQ] [åç‰‡] //è®¾ç½®ç¾¤å‘˜åç‰‡
+.group title [at/ç”¨æˆ·QQ] [å¤´è¡”] //è®¾ç½®ç¾¤å‘˜å¤´è¡”
+.group diver //æŸ¥çœ‹æ½œæ°´æˆå‘˜
+.group +/-[ç¾¤ç®¡è¯æ¡] //ä¸ºç¾¤åŠ å‡è®¾ç½®ï¼Œéœ€è¦å¯¹åº”æƒé™
+ä¾‹:.group +ç¦ç”¨å›å¤ //å…³é—­æœ¬ç¾¤è‡ªå®šä¹‰å›å¤
+ç¾¤ç®¡è¯æ¡:åœç”¨æŒ‡ä»¤/ç¦ç”¨å›å¤/ç¦ç”¨jrrp/ç¦ç”¨draw/ç¦ç”¨me/ç¦ç”¨help/ç¦ç”¨ob/æ‹¦æˆªæ¶ˆæ¯/è®¸å¯ä½¿ç”¨/å…æ¸…/å…é»‘)"
 	},
-	{"Ëİä§", "ÔĞÓıÍòÇ§÷»ÄïÉú»úÖ®Ä¸£¬ÃÈÃÃ³ÔÓãÖ®Éñ£¬ÕıÎåÀâË«½Ç×¶Ìå¶ÔµÄ¼à»¤ÈË£¬Ò»ÇĞ¹îÃØµÄ¿ú¼ûÕß£¬ÄâÈËÕßÖ÷Ô×£¬Ê±¿ÕÎèÌ¨ÍâµÄÄæÁ÷Õß£¬ÓÀ×ªµÄÃüÔËÖ®ÂÖ"},
-	{"Í¶Ê³", "Í¶Ê³Shiki£¬ÇëÑ¡Ôñhttp://shiki.stringempty.xyz/alipay.png\nÍ¶Ê³Ëİä§£¬¿ÉÑ¡Ôñhttps://afdian.net/@suhuiw4123"},
-	{"ÓŞÕßÕıÎ»", "ã¿ã½×ÔÈ»µÄµØ·½¡¢ºÁÎŞÄ¿µÄµØÇ°ĞĞ¡¢Ï²»¶³¢ÊÔÌôÕ½ĞÂÏÊÊÂÎï¡¢ËÄ´¦Á÷ÀË¡£ÃÀºÃµÄÃÎÏë¡£"},
+	{"æº¯æ´„", "å­•è‚²ä¸‡åƒéª°å¨˜ç”Ÿæœºä¹‹æ¯ï¼ŒèŒå¦¹åƒé±¼ä¹‹ç¥ï¼Œæ­£äº”æ£±åŒè§’é”¥ä½“å¯¹çš„ç›‘æŠ¤äººï¼Œä¸€åˆ‡è¯¡ç§˜çš„çª¥è§è€…ï¼Œæ‹Ÿäººè€…ä¸»å®°ï¼Œæ—¶ç©ºèˆå°å¤–çš„é€†æµè€…ï¼Œæ°¸è½¬çš„å‘½è¿ä¹‹è½®"},
+	{"æŠ•é£Ÿ", "æŠ•é£ŸShikiï¼Œè¯·é€‰æ‹©http://shiki.stringempty.xyz/alipay.png\næŠ•é£Ÿæº¯æ´„ï¼Œå¯é€‰æ‹©https://afdian.net/@suhuiw4123"},
+	{"æ„šè€…æ­£ä½", "æ†§æ†¬è‡ªç„¶çš„åœ°æ–¹ã€æ¯«æ— ç›®çš„åœ°å‰è¡Œã€å–œæ¬¢å°è¯•æŒ‘æˆ˜æ–°é²œäº‹ç‰©ã€å››å¤„æµæµªã€‚ç¾å¥½çš„æ¢¦æƒ³ã€‚"},
 	{
-		"ÓŞÕßÄæÎ»",
-		"Ã°ÏÕµÄĞĞ¶¯£¬×·Çó¿ÉÄÜĞÔ£¬ÖØÊÓÃÎÏë£¬ÎŞÊÓÎïÖÊµÄËğÊ§£¬Àë¿ª¼ÒÔ°£¬¹ıÓÚĞÅÀµ±ğÈË£¬Îª³öÍâÂÃĞĞ¶ø·³ÄÕ¡£ĞÄÇé¿ÕĞé¡¢ÇáÂÊµÄÁµÇé¡¢ÎŞ·¨³¤¾Ã³ÖĞøµÄÈÚÇ¢¸Ğ¡¢²»°²µÄ°®ÇéµÄÂÃ³Ì¡¢¶Ô»éÒö¸Ğµ½Êø¸¿¡¢±Ë´ËºöÀäºöÈÈ¡¢²»¹ËÖÚÈË·´¶Ô×¹Èë°®ºÓ¡¢ÎªÁµÈËµÄ¸ºĞÄËùÉË¡¢¸ĞÇé²»×¨Ò»¡£"
+		"æ„šè€…é€†ä½",
+		"å†’é™©çš„è¡ŒåŠ¨ï¼Œè¿½æ±‚å¯èƒ½æ€§ï¼Œé‡è§†æ¢¦æƒ³ï¼Œæ— è§†ç‰©è´¨çš„æŸå¤±ï¼Œç¦»å¼€å®¶å›­ï¼Œè¿‡äºä¿¡èµ–åˆ«äººï¼Œä¸ºå‡ºå¤–æ—…è¡Œè€Œçƒ¦æ¼ã€‚å¿ƒæƒ…ç©ºè™šã€è½»ç‡çš„æ‹æƒ…ã€æ— æ³•é•¿ä¹…æŒç»­çš„èæ´½æ„Ÿã€ä¸å®‰çš„çˆ±æƒ…çš„æ—…ç¨‹ã€å¯¹å©šå§»æ„Ÿåˆ°æŸç¼šã€å½¼æ­¤å¿½å†·å¿½çƒ­ã€ä¸é¡¾ä¼—äººåå¯¹å å…¥çˆ±æ²³ã€ä¸ºæ‹äººçš„è´Ÿå¿ƒæ‰€ä¼¤ã€æ„Ÿæƒ…ä¸ä¸“ä¸€ã€‚"
 	},
-	{"Ä§ÊõÊ¦ÕıÎ»", "ÊÂÇéµÄ¿ªÊ¼£¬ĞĞ¶¯µÄ¸Ä±ä£¬ÊìÁ·µÄ¼¼Êõ¼°¼¼ÇÉ£¬¹á³¹ÎÒµÄÒâÖ¾£¬ÔËÓÃ×ÔÈ»µÄÁ¦Á¿À´´ïµ½Ò°ĞÄ¡£"},
-	{"Ä§ÊõÊ¦ÄæÎ»", "ÒâÖ¾Á¦±¡Èõ£¬ÆğÍ·ÄÑ£¬×ßÈë´íÎóµÄ·½Ïò£¬ÖªÊ¶²»×ã£¬±»Æ­ºÍÊ§°Ü¡£"},
-	{"Å®¼ÀË¾ÕıÎ»", "¿ª·¢³öÄÚÔÚµÄÉñÃØÇ±Á¦£¬Ç°Í¾½«ÓĞËù±ä»¯µÄÔ¤ÑÔ£¬Éî¿ÌµØË¼¿¼£¬ÃôÈñµÄ¶´²ìÁ¦£¬×¼È·µÄÖ±¾õ¡£"},
-	{"Å®¼ÀË¾ÄæÎ»", "¹ıÓÚ½àñ±£¬ÎŞÖª£¬Ì°ĞÄ£¬Ä¿¹â¶ÌÇ³£¬×Ô×ğĞÄ¹ı¸ß£¬Æ«²îµÄÅĞ¶Ï£¬ÓĞÓÂÎŞÄ±£¬×ÔÃü²»·²¡£"},
-	{"Å®»ÊÕıÎ»", "ĞÒ¸££¬³É¹¦£¬ÊÕ»ñ£¬ÎŞÓÇÎŞÂÇ£¬Ô²ÂúµÄ¼ÒÍ¥Éú»î£¬Á¼ºÃµÄ»·¾³£¬ÃÀÃ²£¬ÒÕÊõ£¬Óë´ó×ÔÈ»½Ó´¥£¬Óä¿ìµÄÂÃĞĞ£¬ĞİÏĞ¡£"},
-	{"Å®»ÊÄæÎ»", "²»»îÆÃ£¬È±·¦ÉÏ½øĞÄ£¬É¢ÂşµÄÉú»îÏ°¹ß£¬ÎŞ·¨½â¾öµÄÊÂÇé£¬²»ÄÜ¿´µ½³É¹û£¬µ£ÓÚÏíÀÖ£¬»·¾³ÏÕ¶ñ£¬Óë¼ÒÈË·¢Éú¾À·×¡£"},
-	{"»ÊµÛÕıÎ»", "¹âÈÙ£¬È¨Á¦£¬Ê¤Àû£¬ÎÕÓĞÁìµ¼È¨£¬¼áÇ¿µÄÒâÖ¾£¬´ï³ÉÄ¿±ê£¬¸¸Ç×µÄÔğÈÎ£¬¾«ÉñÉÏµÄ¹Âµ¥¡£"},
-	{"»ÊµÛÄæÎ»", "Ó×ÖÉ£¬ÎŞÁ¦£¬¶À²Ã£¬Èö½¿ÈÎĞÔ£¬Æ½·²£¬Ã»ÓĞ×ÔĞÅ£¬ĞĞ¶¯Á¦²»×ã£¬ÒâÖ¾±¡Èõ£¬±»Ö§Åä¡£"},
-	{"½Ì»ÊÕıÎ»", "Ô®Öú£¬Í¬Çé£¬¿íºê´óÁ¿£¬¿ÉĞÅÈÎµÄÈË¸øÓèµÄÈ°¸æ£¬Á¼ºÃµÄÉÌÁ¿¶ÔÏó£¬µÃµ½¾«ÉñÉÏµÄÂú×ã£¬×ñÊØ¹æÔò£¬Ö¾Ô¸Õß¡£"},
-	{"½Ì»ÊÄæÎ»", "´íÎóµÄÑ¶Ï¢£¬¶ñÒâµÄ¹æÈ°£¬ÉÏµ±£¬Ô®Öú±»ÖĞ¶Ï£¬Ô¸ÍûÎŞ·¨´ï³É£¬±»ÈËÀûÓÃ£¬±»·ÅÆú¡£"},
-	{"ÁµÈËÕıÎ»", "´éºÏ£¬°®Çé£¬Á÷ĞĞ£¬ĞËÈ¤£¬³äÂúÏ£ÍûµÄÎ´À´£¬÷ÈÁ¦£¬Ôö¼ÓÅóÓÑ¡£"},
-	{"ÁµÈËÄæÎ»", "½û²»ÆğÓÕ»ó£¬×İÓû¹ı¶È£¬·´¸²ÎŞ³££¬ÓÑÇé±äµ­£¬Ñá¾ë£¬Õù³³£¬»ªÀöµÄ´ò°ç£¬ÓÅÈá¹Ñ¶Ï¡£"},
-	{"Õ½³µÕıÎ»", "Å¬Á¦¶ø»ñµÃ³É¹¦£¬Ê¤Àû£¬¿Ë·şÕÏ°­£¬ĞĞ¶¯Á¦£¬×ÔÁ¢£¬³¢ÊÔ£¬×ÔÎÒÖ÷ÕÅ£¬ÄêÇáÄĞ×Ó£¬½»Í¨¹¤¾ß£¬ÂÃĞĞÔË´ó¼ª¡£"},
-	{"Õ½³µÄæÎ»", "ÕùÂÛÊ§°Ü£¬·¢Éú¾À·×£¬×èÖÍ£¬Î¥·µ¹æÔò£¬ËßÖî±©Á¦£¬Íç¹ÌµÄÄĞ×Ó£¬Í»È»µÄÊ§°Ü£¬²»Á¼ÉÙÄê£¬´ìÕÛºÍ×ÔË½×ÔÀû¡£"},
-	{"Á¦Á¿ÕıÎ»", "´óµ¨µÄĞĞ¶¯£¬ÓĞÓÂÆøµÄ¾ö¶Ï£¬ĞÂ·¢Õ¹£¬´ó×ª»ú£¬Òì¶¯£¬ÒÔÒâÖ¾Á¦Õ½Ê¤À§ÄÑ£¬½¡×³µÄÅ®ÈË¡£"},
-	{"Á¦Á¿ÄæÎ»", "µ¨Ğ¡£¬Êä¸øÇ¿Õß£¬¾­²»ÆğÓÕ»ó£¬Çü·şÔÚÈ¨ÍşÓë³£Ê¶Ö®ÏÂ£¬Ã»ÓĞÊµ¼ù±ã¸æ·ÅÆú£¬ĞéÈÙ£¬Å³Èõ£¬Ã»ÓĞÄÍĞÔ¡£"},
-	{"ÒşÕßÕıÎ»", "Òş²ØµÄÊÂÊµ£¬¸ö±ğµÄĞĞ¶¯£¬ÇãÌıËûÈËµÄÒâ¼û£¬ÏíÊÜ¹Â¶À£¬ÓĞÒæµÄ¾¯½ä£¬Äê³¤Õß£¬±Ü¿ªÎ£ÏÕ£¬×æ¸¸£¬Ïç¼äÉú»î¡£"},
-	{"ÒşÕßÄæÎ»", "Ô÷ºŞ¹Â¶À£¬×Ô±°£¬µ£ĞÄ£¬Ó×ÖÉË¼Ïë£¬¹ıÓÚÉ÷ÖØµ¼ÖÂÊ§°Ü£¬Æ«²î£¬²»ÒËÂÃĞĞ¡£"},
-	{"ÃüÔËÖ®ÂÖÕıÎ»", "¹Ø¼üĞÔµÄÊÂ¼ş£¬ÓĞĞÂµÄ»ú»á£¬ÒòµÄ³±Á÷£¬»·¾³µÄ±ä»¯£¬ĞÒÔËµÄ¿ª¶Ë£¬×´¿öºÃ×ª£¬ÎÊÌâ½â¾ö£¬ĞÒÔËÖ®Éñ½µÁÙ¡£"},
-	{"ÃüÔËÖ®ÂÖÄæÎ»", "´ìÕÛ£¬¼Æ»®ÅİÌÀ£¬ÕÏ°­£¬ÎŞ·¨ĞŞÕı·½Ïò£¬Íù»µ´¦·¢Õ¹£¬¶ñĞÔÑ­»·£¬ÖĞ¶Ï¡£"},
-	{"ÕıÒåÕıÎ»", "¹«Õı¡¢ÖĞÁ¢¡¢³ÏÊµ¡¢ĞÄĞØÌ¹µ´¡¢±íÀïÈçÒ»¡¢Éí¼æ¶şÖ°¡¢×·ÇóºÏÀí»¯¡¢Ğ­µ÷Õß¡¢Óë·¨ÂÉÓĞ¹Ø¡¢¹âÃ÷Õı´óµÄ½»Íù¡¢¸ĞÇéºÍÄÀ¡£"},
-	{"ÕıÒåÄæÎ»", "Ê§ºâ¡¢Æ«¼û¡¢·×ÈÅ¡¢ËßËÏ¡¢¶À¶Ï×¨ĞĞ¡¢ÎÊĞÄÓĞÀ¢¡¢ÎŞ·¨Á½È«¡¢±íÀï²»Ò»¡¢ÄĞÅ®ĞÔ¸ñ²»ºÏ¡¢Çé¸Ğ²¨ÕÛ¡¢ÎŞÊÓÉç»áµÀµÂµÄÁµÇé¡£"},
-	{"µ¹µõÈËÕıÎ»", "½ÓÊÜ¿¼Ñé¡¢ĞĞ¶¯ÊÜÏŞ¡¢ÎşÉü¡¢²»Î·¼èĞÁ¡¢²»ÊÜÀûÓÕ¡¢ÓĞÊ§±ØÓĞµÃ¡¢ÎüÈ¡¾­Ñé½ÌÑµ¡¢Ô¡»ğÖØÉú¡¢¹ã·ºÑ§Ï°¡¢·îÏ×µÄ°®¡£"},
-	{"µ¹µõÈËÄæÎ»", "ÎŞÎ½µÄÎşÉü¡¢¹ÇÕÛ¡¢¶òÔË¡¢²»¹»Å¬Á¦¡¢´¦ÓÚÁÓÊÆ¡¢ÈÎĞÔ¡¢Àû¼ºÖ÷ÒåÕß¡¢È±·¦ÄÍĞÄ¡¢ÊÜ³Í·£¡¢ÌÓ±Ü°®Çé¡¢Ã»ÓĞ½á¹ûµÄÁµÇé¡£"},
-	{"ËÀÉñÕıÎ»", "Ê§°Ü¡¢½Ó½ü»ÙÃğ¡¢Éú²¡¡¢Ê§Òµ¡¢Î¬³ÖÍ£ÖÍ×´Ì¬¡¢³ÖĞøµÄËğº¦¡¢½»Ò×Í£Ö¹¡¢¿İÔïµÄÉú»î¡¢±ğÀë¡¢ÖØĞÂ¿ªÊ¼¡¢Ë«·½ÓĞºÜÉîµÄºè¹µ¡¢ÁµÇéÖÕÖ¹¡£"},
-	{"ËÀÉñÄæÎ»", "±§ÓĞÒ»ÏßÏ£Íû¡¢ÆğËÀ»ØÉú¡¢»ØĞÄ×ªÒâ¡¢°ÚÍÑµÍÃÔ×´Ì¬¡¢Íì»ØÃûÓş¡¢ÉíÌå¿µ¸´¡¢Í»È»¸Ä±ä¼Æ»®¡¢ÌÓ±ÜÏÖÊµ¡¢Õ¶¶ÏÇéË¿¡¢Óë¾ÉÇéÈËÏà·ê¡£"},
-	{"½ÚÖÆÕıÎ»", "µ¥´¿¡¢µ÷Õû¡¢Æ½Ë³¡¢»¥»İ»¥Àû¡¢ºÃ¸Ğ×ªÎª°®Òâ¡¢´¿°®¡¢Éî°®¡£"},
-	{"½ÚÖÆÄæÎ»", "ÏûºÄ¡¢ÏÂ½µ¡¢Æ£ÀÍ¡¢ËğÊ§¡¢²»°²¡¢²»ÈÚÇ¢¡¢°®ÇéµÄÅäºÏ¶È²»¼Ñ¡£"},
-	{"¶ñÄ§ÕıÎ»", "±»Êø¸¿¡¢¶éÂä¡¢Éú²¡¡¢¶ñÒâ¡¢Çü·ş¡¢ÓûÍûµÄ·ıÂ²¡¢²»¿É¿¹¾ÜµÄÓÕ»ó¡¢ÍÇ·ÏµÄÉú»î¡¢¾ÙÕ®¶ÈÈÕ¡¢²»¿É¸æÈËµÄÃØÃÜ¡¢Ë½ÃÜÁµÇé¡£"},
-	{"¶ñÄ§ÄæÎ»", "ÌÓÀë¾ĞÊø¡¢½â³ıÀ§ÈÅ¡¢ÖÎÓú²¡Í´¡¢¸æ±ğ¹ıÈ¥¡¢ÔİÍ£¡¢±ğÀë¡¢¾Ü¾øÓÕ»ó¡¢ÉáÆúË½Óû¡¢±ğÀëÊ±¿Ì¡¢°®ºŞ½»¼ÓµÄÁµÇé¡£"},
-	{"ËşÕıÎ»", "ÆÆ²ú¡¢Äæ¾³¡¢±»¿ª³ı¡¢¼±²¡¡¢ÖÂÃüµÄ´ò»÷¡¢¾Ş´óµÄ±ä¶¯¡¢ÊÜÇ£Á¬¡¢ĞÅÄî±ÀÀ£¡¢Íæ»ğ×Ô·Ù¡¢·×ÈÅ²»¶Ï¡¢Í»È»·ÖÀë£¬ÆÆÃğµÄ°®¡£"},
-	{"ËşÄæÎ»", "À§¾³¡¢ÄÚÚ§¡¢½ôÆÈµÄ×´Ì¬¡¢×´¿ö²»¼Ñ¡¢Ç÷ÓÚÎÈ¶¨¡¢½¾°Á×Ô´ó½«¸¶³ö´ú¼Û¡¢±³Ë®Ò»Õ½¡¢·ÖÀëµÄÔ¤¸Ğ¡¢°®ÇéÎ£»ú¡£"},
-	{"ĞÇĞÇÕıÎ»", "Ç°Í¾¹âÃ÷¡¢³äÂúÏ£Íû¡¢ÏëÏóÁ¦¡¢´´ÔìÁ¦¡¢»ÃÏë¡¢Âú×ãÔ¸Íû¡¢Ë®×¼Ìá¸ß¡¢ÀíÏëµÄ¶ÔÏó¡¢ÃÀºÃµÄÁµÇé¡£"},
-	{"ĞÇĞÇÄæÎ»", "´ìÕÛ¡¢Ê§Íû¡¢ºÃ¸ßæğÔ¶¡¢ÒìÏëÌì¿ª¡¢²Ö»ÊÊ§´ë¡¢ÊÂÓëÔ¸Î¥¡¢¹¤×÷²»Ë³ĞÄ¡¢Çé¿ö±¯¹Û¡¢ÃØÃÜÁµÇé¡¢È±ÉÙ°®µÄÉú»î¡£"},
-	{"ÔÂÁÁÕıÎ»", "²»°²¡¢ÃÔ»ó¡¢¶¯Ò¡¡¢»ÑÑÔ¡¢ÆÛÆ­¡¢¹íÃÔĞÄÇÏ¡¢¶¯µ´µÄ°®¡¢Èı½Ç¹ØÏµ¡£"},
-	{"ÔÂÁÁÄæÎ»", "ÌÓÍÑÆ­¾Ö¡¢½â³ıÎó»á¡¢×´¿öºÃ×ª¡¢Ô¤ÖªÎ£ÏÕ¡¢µÈ´ı¡¢ÕıÊÓ°®ÇéµÄÁÑ·ì¡£"},
-	{"Ì«ÑôÕıÎ»", "»îÔ¾¡¢·á¸»µÄÉúÃüÁ¦¡¢³äÂúÉú»ú¡¢¾«Á¦³äÅæ¡¢¹¤×÷Ë³Àû¡¢¹óÈËÏàÖú¡¢ĞÒ¸£µÄ»éÒö¡¢½¡¿µµÄ½»¼Ê¡£"},
-	{"Ì«ÑôÄæÎ»", "Ïû³Á¡¢ÌåÁ¦²»¼Ñ¡¢È±·¦Á¬ĞøĞÔ¡¢ÒâÆøÏû³Á¡¢Éú»î²»°²¡¢ÈË¼Ê¹ØÏµ²»ºÃ¡¢¸ĞÇé²¨¶¯¡¢Àë»é¡£"},
-	{"ÉóÅĞÕıÎ»", "¸´»îµÄÏ²ÔÃ¡¢¿µ¸´¡¢Ì¹°×¡¢ºÃÏûÏ¢¡¢ºÃÔËÆø¡¢³õÂ¶·æÃ¢¡¢¸´ËÕµÄ°®¡¢ÖØ·ê¡¢°®µÄÆæ¼£¡£"},
-	{"ÉóÅĞÄæÎ»", "Ò»õê²»Õñ¡¢»ÃÃğ¡¢ÒşÂ÷¡¢»µÏûÏ¢¡¢ÎŞ·¨¾ö¶¨¡¢È±ÉÙÄ¿±ê¡¢Ã»ÓĞ½øÕ¹¡¢Ïû³ı¡¢ÁµÁµ²»Éá¡£"},
-	{"ÊÀ½çÕıÎ»", "Íê³É¡¢³É¹¦¡¢ÍêÃÀÎŞÈ±¡¢Á¬Ğø²»¶Ï¡¢¾«Éñ¿º·Ü¡¢ÓµÓĞ±ÏÉú·Ü¶·µÄÄ¿±ê¡¢Íê³ÉÊ¹Ãü¡¢ĞÒÔË½µÁÙ¡¢¿ìÀÖµÄ½áÊø¡¢Ä£·¶ÇéÂÂ¡£"},
-	{"ÊÀ½çÄæÎ»", "Î´Íê³É¡¢Ê§°Ü¡¢×¼±¸²»×ã¡¢Ã¤Ä¿½ÓÊÜ¡¢Ò»Ê±²»Ë³Àû¡¢°ëÍ¾¶ø·Ï¡¢¾«ÉñÍÇ·Ï¡¢±¥ºÍ×´Ì¬¡¢ºÏÄ±¡¢Ì¬¶È²»¹»ÈÚÇ¢¡¢¸ĞÇéÊÜ´ì¡£"},
+	{"é­”æœ¯å¸ˆæ­£ä½", "äº‹æƒ…çš„å¼€å§‹ï¼Œè¡ŒåŠ¨çš„æ”¹å˜ï¼Œç†Ÿç»ƒçš„æŠ€æœ¯åŠæŠ€å·§ï¼Œè´¯å½»æˆ‘çš„æ„å¿—ï¼Œè¿ç”¨è‡ªç„¶çš„åŠ›é‡æ¥è¾¾åˆ°é‡å¿ƒã€‚"},
+	{"é­”æœ¯å¸ˆé€†ä½", "æ„å¿—åŠ›è–„å¼±ï¼Œèµ·å¤´éš¾ï¼Œèµ°å…¥é”™è¯¯çš„æ–¹å‘ï¼ŒçŸ¥è¯†ä¸è¶³ï¼Œè¢«éª—å’Œå¤±è´¥ã€‚"},
+	{"å¥³ç¥­å¸æ­£ä½", "å¼€å‘å‡ºå†…åœ¨çš„ç¥ç§˜æ½œåŠ›ï¼Œå‰é€”å°†æœ‰æ‰€å˜åŒ–çš„é¢„è¨€ï¼Œæ·±åˆ»åœ°æ€è€ƒï¼Œæ•é”çš„æ´å¯ŸåŠ›ï¼Œå‡†ç¡®çš„ç›´è§‰ã€‚"},
+	{"å¥³ç¥­å¸é€†ä½", "è¿‡äºæ´ç™–ï¼Œæ— çŸ¥ï¼Œè´ªå¿ƒï¼Œç›®å…‰çŸ­æµ…ï¼Œè‡ªå°Šå¿ƒè¿‡é«˜ï¼Œåå·®çš„åˆ¤æ–­ï¼Œæœ‰å‹‡æ— è°‹ï¼Œè‡ªå‘½ä¸å‡¡ã€‚"},
+	{"å¥³çš‡æ­£ä½", "å¹¸ç¦ï¼ŒæˆåŠŸï¼Œæ”¶è·ï¼Œæ— å¿§æ— è™‘ï¼Œåœ†æ»¡çš„å®¶åº­ç”Ÿæ´»ï¼Œè‰¯å¥½çš„ç¯å¢ƒï¼Œç¾è²Œï¼Œè‰ºæœ¯ï¼Œä¸å¤§è‡ªç„¶æ¥è§¦ï¼Œæ„‰å¿«çš„æ—…è¡Œï¼Œä¼‘é—²ã€‚"},
+	{"å¥³çš‡é€†ä½", "ä¸æ´»æ³¼ï¼Œç¼ºä¹ä¸Šè¿›å¿ƒï¼Œæ•£æ¼«çš„ç”Ÿæ´»ä¹ æƒ¯ï¼Œæ— æ³•è§£å†³çš„äº‹æƒ…ï¼Œä¸èƒ½çœ‹åˆ°æˆæœï¼Œæ‹…äºäº«ä¹ï¼Œç¯å¢ƒé™©æ¶ï¼Œä¸å®¶äººå‘ç”Ÿçº çº·ã€‚"},
+	{"çš‡å¸æ­£ä½", "å…‰è£ï¼ŒæƒåŠ›ï¼Œèƒœåˆ©ï¼Œæ¡æœ‰é¢†å¯¼æƒï¼Œåšå¼ºçš„æ„å¿—ï¼Œè¾¾æˆç›®æ ‡ï¼Œçˆ¶äº²çš„è´£ä»»ï¼Œç²¾ç¥ä¸Šçš„å­¤å•ã€‚"},
+	{"çš‡å¸é€†ä½", "å¹¼ç¨šï¼Œæ— åŠ›ï¼Œç‹¬è£ï¼Œæ’’å¨‡ä»»æ€§ï¼Œå¹³å‡¡ï¼Œæ²¡æœ‰è‡ªä¿¡ï¼Œè¡ŒåŠ¨åŠ›ä¸è¶³ï¼Œæ„å¿—è–„å¼±ï¼Œè¢«æ”¯é…ã€‚"},
+	{"æ•™çš‡æ­£ä½", "æ´åŠ©ï¼ŒåŒæƒ…ï¼Œå®½å®å¤§é‡ï¼Œå¯ä¿¡ä»»çš„äººç»™äºˆçš„åŠå‘Šï¼Œè‰¯å¥½çš„å•†é‡å¯¹è±¡ï¼Œå¾—åˆ°ç²¾ç¥ä¸Šçš„æ»¡è¶³ï¼Œéµå®ˆè§„åˆ™ï¼Œå¿—æ„¿è€…ã€‚"},
+	{"æ•™çš‡é€†ä½", "é”™è¯¯çš„è®¯æ¯ï¼Œæ¶æ„çš„è§„åŠï¼Œä¸Šå½“ï¼Œæ´åŠ©è¢«ä¸­æ–­ï¼Œæ„¿æœ›æ— æ³•è¾¾æˆï¼Œè¢«äººåˆ©ç”¨ï¼Œè¢«æ”¾å¼ƒã€‚"},
+	{"æ‹äººæ­£ä½", "æ’®åˆï¼Œçˆ±æƒ…ï¼Œæµè¡Œï¼Œå…´è¶£ï¼Œå……æ»¡å¸Œæœ›çš„æœªæ¥ï¼Œé­…åŠ›ï¼Œå¢åŠ æœ‹å‹ã€‚"},
+	{"æ‹äººé€†ä½", "ç¦ä¸èµ·è¯±æƒ‘ï¼Œçºµæ¬²è¿‡åº¦ï¼Œåè¦†æ— å¸¸ï¼Œå‹æƒ…å˜æ·¡ï¼ŒåŒå€¦ï¼Œäº‰åµï¼Œåä¸½çš„æ‰“æ‰®ï¼Œä¼˜æŸ”å¯¡æ–­ã€‚"},
+	{"æˆ˜è½¦æ­£ä½", "åŠªåŠ›è€Œè·å¾—æˆåŠŸï¼Œèƒœåˆ©ï¼Œå…‹æœéšœç¢ï¼Œè¡ŒåŠ¨åŠ›ï¼Œè‡ªç«‹ï¼Œå°è¯•ï¼Œè‡ªæˆ‘ä¸»å¼ ï¼Œå¹´è½»ç”·å­ï¼Œäº¤é€šå·¥å…·ï¼Œæ—…è¡Œè¿å¤§å‰ã€‚"},
+	{"æˆ˜è½¦é€†ä½", "äº‰è®ºå¤±è´¥ï¼Œå‘ç”Ÿçº çº·ï¼Œé˜»æ»ï¼Œè¿è¿”è§„åˆ™ï¼Œè¯‰è¯¸æš´åŠ›ï¼Œé¡½å›ºçš„ç”·å­ï¼Œçªç„¶çš„å¤±è´¥ï¼Œä¸è‰¯å°‘å¹´ï¼ŒæŒ«æŠ˜å’Œè‡ªç§è‡ªåˆ©ã€‚"},
+	{"åŠ›é‡æ­£ä½", "å¤§èƒ†çš„è¡ŒåŠ¨ï¼Œæœ‰å‹‡æ°”çš„å†³æ–­ï¼Œæ–°å‘å±•ï¼Œå¤§è½¬æœºï¼Œå¼‚åŠ¨ï¼Œä»¥æ„å¿—åŠ›æˆ˜èƒœå›°éš¾ï¼Œå¥å£®çš„å¥³äººã€‚"},
+	{"åŠ›é‡é€†ä½", "èƒ†å°ï¼Œè¾“ç»™å¼ºè€…ï¼Œç»ä¸èµ·è¯±æƒ‘ï¼Œå±ˆæœåœ¨æƒå¨ä¸å¸¸è¯†ä¹‹ä¸‹ï¼Œæ²¡æœ‰å®è·µä¾¿å‘Šæ”¾å¼ƒï¼Œè™šè£ï¼Œæ‡¦å¼±ï¼Œæ²¡æœ‰è€æ€§ã€‚"},
+	{"éšè€…æ­£ä½", "éšè—çš„äº‹å®ï¼Œä¸ªåˆ«çš„è¡ŒåŠ¨ï¼Œå€¾å¬ä»–äººçš„æ„è§ï¼Œäº«å—å­¤ç‹¬ï¼Œæœ‰ç›Šçš„è­¦æˆ’ï¼Œå¹´é•¿è€…ï¼Œé¿å¼€å±é™©ï¼Œç¥–çˆ¶ï¼Œä¹¡é—´ç”Ÿæ´»ã€‚"},
+	{"éšè€…é€†ä½", "æ†æ¨å­¤ç‹¬ï¼Œè‡ªå‘ï¼Œæ‹…å¿ƒï¼Œå¹¼ç¨šæ€æƒ³ï¼Œè¿‡äºæ…é‡å¯¼è‡´å¤±è´¥ï¼Œåå·®ï¼Œä¸å®œæ—…è¡Œã€‚"},
+	{"å‘½è¿ä¹‹è½®æ­£ä½", "å…³é”®æ€§çš„äº‹ä»¶ï¼Œæœ‰æ–°çš„æœºä¼šï¼Œå› çš„æ½®æµï¼Œç¯å¢ƒçš„å˜åŒ–ï¼Œå¹¸è¿çš„å¼€ç«¯ï¼ŒçŠ¶å†µå¥½è½¬ï¼Œé—®é¢˜è§£å†³ï¼Œå¹¸è¿ä¹‹ç¥é™ä¸´ã€‚"},
+	{"å‘½è¿ä¹‹è½®é€†ä½", "æŒ«æŠ˜ï¼Œè®¡åˆ’æ³¡æ±¤ï¼Œéšœç¢ï¼Œæ— æ³•ä¿®æ­£æ–¹å‘ï¼Œå¾€åå¤„å‘å±•ï¼Œæ¶æ€§å¾ªç¯ï¼Œä¸­æ–­ã€‚"},
+	{"æ­£ä¹‰æ­£ä½", "å…¬æ­£ã€ä¸­ç«‹ã€è¯šå®ã€å¿ƒèƒ¸å¦è¡ã€è¡¨é‡Œå¦‚ä¸€ã€èº«å…¼äºŒèŒã€è¿½æ±‚åˆç†åŒ–ã€åè°ƒè€…ã€ä¸æ³•å¾‹æœ‰å…³ã€å…‰æ˜æ­£å¤§çš„äº¤å¾€ã€æ„Ÿæƒ…å’Œç¦ã€‚"},
+	{"æ­£ä¹‰é€†ä½", "å¤±è¡¡ã€åè§ã€çº·æ‰°ã€è¯‰è®¼ã€ç‹¬æ–­ä¸“è¡Œã€é—®å¿ƒæœ‰æ„§ã€æ— æ³•ä¸¤å…¨ã€è¡¨é‡Œä¸ä¸€ã€ç”·å¥³æ€§æ ¼ä¸åˆã€æƒ…æ„Ÿæ³¢æŠ˜ã€æ— è§†ç¤¾ä¼šé“å¾·çš„æ‹æƒ…ã€‚"},
+	{"å€’åŠäººæ­£ä½", "æ¥å—è€ƒéªŒã€è¡ŒåŠ¨å—é™ã€ç‰ºç‰²ã€ä¸ç•è‰°è¾›ã€ä¸å—åˆ©è¯±ã€æœ‰å¤±å¿…æœ‰å¾—ã€å¸å–ç»éªŒæ•™è®­ã€æµ´ç«é‡ç”Ÿã€å¹¿æ³›å­¦ä¹ ã€å¥‰çŒ®çš„çˆ±ã€‚"},
+	{"å€’åŠäººé€†ä½", "æ— è°“çš„ç‰ºç‰²ã€éª¨æŠ˜ã€å„è¿ã€ä¸å¤ŸåŠªåŠ›ã€å¤„äºåŠ£åŠ¿ã€ä»»æ€§ã€åˆ©å·±ä¸»ä¹‰è€…ã€ç¼ºä¹è€å¿ƒã€å—æƒ©ç½šã€é€ƒé¿çˆ±æƒ…ã€æ²¡æœ‰ç»“æœçš„æ‹æƒ…ã€‚"},
+	{"æ­»ç¥æ­£ä½", "å¤±è´¥ã€æ¥è¿‘æ¯ç­ã€ç”Ÿç—…ã€å¤±ä¸šã€ç»´æŒåœæ»çŠ¶æ€ã€æŒç»­çš„æŸå®³ã€äº¤æ˜“åœæ­¢ã€æ¯ç‡¥çš„ç”Ÿæ´»ã€åˆ«ç¦»ã€é‡æ–°å¼€å§‹ã€åŒæ–¹æœ‰å¾ˆæ·±çš„é¸¿æ²Ÿã€æ‹æƒ…ç»ˆæ­¢ã€‚"},
+	{"æ­»ç¥é€†ä½", "æŠ±æœ‰ä¸€çº¿å¸Œæœ›ã€èµ·æ­»å›ç”Ÿã€å›å¿ƒè½¬æ„ã€æ‘†è„±ä½è¿·çŠ¶æ€ã€æŒ½å›åèª‰ã€èº«ä½“åº·å¤ã€çªç„¶æ”¹å˜è®¡åˆ’ã€é€ƒé¿ç°å®ã€æ–©æ–­æƒ…ä¸ã€ä¸æ—§æƒ…äººç›¸é€¢ã€‚"},
+	{"èŠ‚åˆ¶æ­£ä½", "å•çº¯ã€è°ƒæ•´ã€å¹³é¡ºã€äº’æƒ äº’åˆ©ã€å¥½æ„Ÿè½¬ä¸ºçˆ±æ„ã€çº¯çˆ±ã€æ·±çˆ±ã€‚"},
+	{"èŠ‚åˆ¶é€†ä½", "æ¶ˆè€—ã€ä¸‹é™ã€ç–²åŠ³ã€æŸå¤±ã€ä¸å®‰ã€ä¸èæ´½ã€çˆ±æƒ…çš„é…åˆåº¦ä¸ä½³ã€‚"},
+	{"æ¶é­”æ­£ä½", "è¢«æŸç¼šã€å •è½ã€ç”Ÿç—…ã€æ¶æ„ã€å±ˆæœã€æ¬²æœ›çš„ä¿˜è™ã€ä¸å¯æŠ—æ‹’çš„è¯±æƒ‘ã€é¢“åºŸçš„ç”Ÿæ´»ã€ä¸¾å€ºåº¦æ—¥ã€ä¸å¯å‘Šäººçš„ç§˜å¯†ã€ç§å¯†æ‹æƒ…ã€‚"},
+	{"æ¶é­”é€†ä½", "é€ƒç¦»æ‹˜æŸã€è§£é™¤å›°æ‰°ã€æ²»æ„ˆç—…ç—›ã€å‘Šåˆ«è¿‡å»ã€æš‚åœã€åˆ«ç¦»ã€æ‹’ç»è¯±æƒ‘ã€èˆå¼ƒç§æ¬²ã€åˆ«ç¦»æ—¶åˆ»ã€çˆ±æ¨äº¤åŠ çš„æ‹æƒ…ã€‚"},
+	{"å¡”æ­£ä½", "ç ´äº§ã€é€†å¢ƒã€è¢«å¼€é™¤ã€æ€¥ç—…ã€è‡´å‘½çš„æ‰“å‡»ã€å·¨å¤§çš„å˜åŠ¨ã€å—ç‰µè¿ã€ä¿¡å¿µå´©æºƒã€ç©ç«è‡ªç„šã€çº·æ‰°ä¸æ–­ã€çªç„¶åˆ†ç¦»ï¼Œç ´ç­çš„çˆ±ã€‚"},
+	{"å¡”é€†ä½", "å›°å¢ƒã€å†…è®§ã€ç´§è¿«çš„çŠ¶æ€ã€çŠ¶å†µä¸ä½³ã€è¶‹äºç¨³å®šã€éª„å‚²è‡ªå¤§å°†ä»˜å‡ºä»£ä»·ã€èƒŒæ°´ä¸€æˆ˜ã€åˆ†ç¦»çš„é¢„æ„Ÿã€çˆ±æƒ…å±æœºã€‚"},
+	{"æ˜Ÿæ˜Ÿæ­£ä½", "å‰é€”å…‰æ˜ã€å……æ»¡å¸Œæœ›ã€æƒ³è±¡åŠ›ã€åˆ›é€ åŠ›ã€å¹»æƒ³ã€æ»¡è¶³æ„¿æœ›ã€æ°´å‡†æé«˜ã€ç†æƒ³çš„å¯¹è±¡ã€ç¾å¥½çš„æ‹æƒ…ã€‚"},
+	{"æ˜Ÿæ˜Ÿé€†ä½", "æŒ«æŠ˜ã€å¤±æœ›ã€å¥½é«˜éª›è¿œã€å¼‚æƒ³å¤©å¼€ã€ä»“çš‡å¤±æªã€äº‹ä¸æ„¿è¿ã€å·¥ä½œä¸é¡ºå¿ƒã€æƒ…å†µæ‚²è§‚ã€ç§˜å¯†æ‹æƒ…ã€ç¼ºå°‘çˆ±çš„ç”Ÿæ´»ã€‚"},
+	{"æœˆäº®æ­£ä½", "ä¸å®‰ã€è¿·æƒ‘ã€åŠ¨æ‘‡ã€è°è¨€ã€æ¬ºéª—ã€é¬¼è¿·å¿ƒçªã€åŠ¨è¡çš„çˆ±ã€ä¸‰è§’å…³ç³»ã€‚"},
+	{"æœˆäº®é€†ä½", "é€ƒè„±éª—å±€ã€è§£é™¤è¯¯ä¼šã€çŠ¶å†µå¥½è½¬ã€é¢„çŸ¥å±é™©ã€ç­‰å¾…ã€æ­£è§†çˆ±æƒ…çš„è£‚ç¼ã€‚"},
+	{"å¤ªé˜³æ­£ä½", "æ´»è·ƒã€ä¸°å¯Œçš„ç”Ÿå‘½åŠ›ã€å……æ»¡ç”Ÿæœºã€ç²¾åŠ›å……æ²›ã€å·¥ä½œé¡ºåˆ©ã€è´µäººç›¸åŠ©ã€å¹¸ç¦çš„å©šå§»ã€å¥åº·çš„äº¤é™…ã€‚"},
+	{"å¤ªé˜³é€†ä½", "æ¶ˆæ²‰ã€ä½“åŠ›ä¸ä½³ã€ç¼ºä¹è¿ç»­æ€§ã€æ„æ°”æ¶ˆæ²‰ã€ç”Ÿæ´»ä¸å®‰ã€äººé™…å…³ç³»ä¸å¥½ã€æ„Ÿæƒ…æ³¢åŠ¨ã€ç¦»å©šã€‚"},
+	{"å®¡åˆ¤æ­£ä½", "å¤æ´»çš„å–œæ‚¦ã€åº·å¤ã€å¦ç™½ã€å¥½æ¶ˆæ¯ã€å¥½è¿æ°”ã€åˆéœ²é”‹èŠ’ã€å¤è‹çš„çˆ±ã€é‡é€¢ã€çˆ±çš„å¥‡è¿¹ã€‚"},
+	{"å®¡åˆ¤é€†ä½", "ä¸€è¹¶ä¸æŒ¯ã€å¹»ç­ã€éšç’ã€åæ¶ˆæ¯ã€æ— æ³•å†³å®šã€ç¼ºå°‘ç›®æ ‡ã€æ²¡æœ‰è¿›å±•ã€æ¶ˆé™¤ã€æ‹æ‹ä¸èˆã€‚"},
+	{"ä¸–ç•Œæ­£ä½", "å®Œæˆã€æˆåŠŸã€å®Œç¾æ— ç¼ºã€è¿ç»­ä¸æ–­ã€ç²¾ç¥äº¢å¥‹ã€æ‹¥æœ‰æ¯•ç”Ÿå¥‹æ–—çš„ç›®æ ‡ã€å®Œæˆä½¿å‘½ã€å¹¸è¿é™ä¸´ã€å¿«ä¹çš„ç»“æŸã€æ¨¡èŒƒæƒ…ä¾£ã€‚"},
+	{"ä¸–ç•Œé€†ä½", "æœªå®Œæˆã€å¤±è´¥ã€å‡†å¤‡ä¸è¶³ã€ç›²ç›®æ¥å—ã€ä¸€æ—¶ä¸é¡ºåˆ©ã€åŠé€”è€ŒåºŸã€ç²¾ç¥é¢“åºŸã€é¥±å’ŒçŠ¶æ€ã€åˆè°‹ã€æ€åº¦ä¸å¤Ÿèæ´½ã€æ„Ÿæƒ…å—æŒ«ã€‚"},
 };
 
 std::string getMsg(const std::string& key, const std::map<std::string, std::string>& maptmp)

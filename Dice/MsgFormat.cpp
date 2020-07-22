@@ -23,7 +23,19 @@
 #include "MsgFormat.h"
 #include <string>
 #include <fstream>//
+#include "DiceJob.h"
+#include "EncodingConvert.h"
 using std::string;
+
+std::map<string, string> GlobalChar{
+	{"FormFeed","\f…"},
+};
+
+std::map<string, GobalTex> strFuncs{
+	{"master_QQ",print_master},
+	{"扩展牌堆",list_extern_deck},
+	{"全牌堆列表",list_deck},
+};
 
 std::string format(std::string str, const std::initializer_list<const std::string>& replace_str)
 {

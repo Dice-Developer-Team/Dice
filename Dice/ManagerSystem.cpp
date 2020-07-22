@@ -11,8 +11,8 @@
 #include "GlobalVar.h"
 
 string DiceDir = "DiceData";
-//被引用的图片列表
-set<string> sReferencedImage;
+ //被引用的图片列表
+unordered_set<string> sReferencedImage;
 
 const map<string, short> mChatConf{
 	//0-群管理员，2-白名单2级，3-白名单3级，4-管理员，5-系统操作
@@ -29,6 +29,7 @@ const map<string, short> mChatConf{
 	{"未审核", 1},
 	{"免清", 2},
 	{"免黑", 4},
+	{"协议无效", 4},
 	{"未进", 5},
 	{"已退", 5}
 };
@@ -64,42 +65,53 @@ int clearUser()
 
 string getName(long long QQ, long long GroupID)
 {
+	if (QQ == console.DiceMaid)return getMsg("strSelfCall");
 	string nick;
 	if (UserList.count(QQ) && getUser(QQ).getNick(nick, GroupID))return nick;
 	if (GroupID && !(nick = strip(CQ::getGroupMemberInfo(GroupID, QQ).GroupNick)).empty())return nick;
 	if (!(nick = strip(CQ::getStrangerInfo(QQ).nick)).empty())return nick;
 	return GlobalMsg["stranger"] + "(" + to_string(QQ) + ")";
 }
-void filter_CQcode(string& nick, long long fromGroup) {
+void filter_CQcode(string& nick, long long fromGroup)
+{
 	size_t posL(0);
-	while ((posL = nick.find(CQ_AT)) != string::npos) {
+	while ((posL = nick.find(CQ_AT)) != string::npos)
+	{
 		//检查at格式
-		if (size_t posR = nick.find(']',posL); posR != string::npos) {
+		if (size_t posR = nick.find(']',posL); posR != string::npos) 
+		{
 			std::string_view stvQQ(nick);
 			stvQQ = stvQQ.substr(posL + 10, posR - posL - 10);
 			//检查QQ号格式
 			bool isDig = true;
-			for (auto ch: stvQQ) {
-				if (!isdigit(static_cast<unsigned char>(ch))) {
+			for (auto ch: stvQQ) 
+			{
+				if (!isdigit(static_cast<unsigned char>(ch)))
+				{
 					isDig = false;
 					break;
 				}
 			}
 			//转义
-			if (isDig && posR - posL < 29) {
+			if (isDig && posR - posL < 29) 
+			{
 				nick.replace(posL, posR - posL + 1, "@" + getName(stoll(string(stvQQ)), fromGroup));
 			}
-			else if (stvQQ == "all") {
+			else if (stvQQ == "all") 
+			{
 				nick.replace(posL, posR - posL + 1, "@全体成员");
 			}
-			else {
+			else
+			{
 				nick.replace(posL, posR - posL + 1, "@");
 			}
 		}
 		else return;
 	}
-	while ((posL = nick.find("[CQ:")) != string::npos) {
-		if (size_t posR = nick.find(']', posL); posR != string::npos) {
+	while ((posL = nick.find("[CQ:")) != string::npos)
+	{
+		if (size_t posR = nick.find(']', posL); posR != string::npos) 
+		{
 			nick.erase(posL, posR - posL + 1);
 		}
 		else return;
@@ -111,6 +123,18 @@ Chat& chat(long long id)
 	if (!ChatList.count(id))ChatList[id].id(id);
 	return ChatList[id];
 }
+Chat& Chat::id(long long grp) {
+	ID = grp;
+	if (CQ::getGroupList().count(grp)) {
+		CQ::GroupInfo ginfo(grp);
+		Name = ginfo.strGroupName;
+		isGroup = true;
+		if (ExceptGroups.count(grp) || ginfo.nGroupSize > 499) {
+			boolConf.insert("协议无效");
+		}
+	}
+	return *this;
+}
 
 int groupset(long long id, string st)
 {
@@ -120,14 +144,14 @@ int groupset(long long id, string st)
 
 string printChat(Chat& grp)
 {
-	if (CQ::getGroupList().count(grp.ID))return CQ::getGroupList()[grp.ID] + "(" + to_string(grp.ID) + ")";
-	if (grp.isset("群名"))return grp.strConf["群名"] + "(" + to_string(grp.ID) + ")";
-	if (grp.isGroup) return "群" + to_string(grp.ID) + "";
-	return "讨论组" + to_string(grp.ID) + "";
+	if (CQ::getGroupList().count(grp.ID))return "[" + CQ::getGroupList()[grp.ID] + "](" + to_string(grp.ID) + ")";
+	if (!grp.Name.empty())return "[" + grp.Name + "](" + to_string(grp.ID) + ")";
+	if (grp.isset("群名"))return "[" + grp.strConf["群名"] + "](" + to_string(grp.ID) + ")";
+	if (grp.isGroup) return "群(" + to_string(grp.ID) + ")";
+	return "讨论组(" + to_string(grp.ID) + ")";
 }
 
-void scanImage(const string& s, set<string>& list)
-{
+void scanImage(const string& s, unordered_set<string>& list) {
 	int l = 0, r = 0;
 	while ((l = s.find('[', r)) != string::npos && (r = s.find(']', l)) != string::npos)
 	{
@@ -138,30 +162,11 @@ void scanImage(const string& s, set<string>& list)
 	}
 }
 
-void scanImage(const vector<string>& v, set<string>& list)
-{
+void scanImage(const vector<string>& v, unordered_set<string>& list) {
 	for (const auto& it : v)
 	{
 		scanImage(it, sReferencedImage);
 	}
-}
-
-
-int clearImage()
-{
-	scanImage(GlobalMsg, sReferencedImage);
-	scanImage(HelpDoc, sReferencedImage);
-	scanImage(CardDeck::mPublicDeck, sReferencedImage);
-	scanImage(CardDeck::mReplyDeck, sReferencedImage);
-	scanImage(CardDeck::mGroupDeck, sReferencedImage);
-	scanImage(CardDeck::mPrivateDeck, sReferencedImage);
-	for (const auto& it : ChatList)
-	{
-		scanImage(it.second.strConf, sReferencedImage);
-	}
-	const string strLog = "整理" + GlobalMsg["strSelfName"] + "被引用图片" + to_string(sReferencedImage.size()) + "项";
-	console.log(strLog, 0b0, printSTNow());
-	return clrDir("data\\image\\", sReferencedImage);
 }
 
 DWORD getRamPort()
@@ -181,16 +186,19 @@ __int64 compareFileTime(const FILETIME& ft1, const FILETIME& ft2)
 	return t1 - t2;
 }
 
-__int64 getWinCpuUsage()
+long long getWinCpuUsage() 
 {
+	FILETIME preidleTime;
+	FILETIME prekernelTime;
+	FILETIME preuserTime;
 	FILETIME idleTime;
 	FILETIME kernelTime;
 	FILETIME userTime;
 
 	if (!GetSystemTimes(&idleTime, &kernelTime, &userTime)) return -1;
-	FILETIME preidleTime = idleTime;
-	FILETIME prekernelTime = kernelTime;
-	FILETIME preuserTime = userTime;
+	preidleTime = idleTime;
+	prekernelTime = kernelTime;
+	preuserTime = userTime;	
 
 	Sleep(1000);
 	if (!GetSystemTimes(&idleTime, &kernelTime, &userTime)) return -1;
@@ -199,11 +207,10 @@ __int64 getWinCpuUsage()
 	const __int64 kernel = compareFileTime(kernelTime, prekernelTime);
 	const __int64 user = compareFileTime(userTime, preuserTime);
 
-	const __int64 cpu = (kernel + user - idle) * 100 / (kernel + user);
-	return cpu;
+	return (kernel + user - idle) * 1000 / (kernel + user);
 }
 
-int getProcessCpu()
+long long getProcessCpu()
 {
 	const HANDLE hProcess = GetCurrentProcess();
 	//if (INVALID_HANDLE_VALUE == hProcess){return -1;}
@@ -225,6 +232,30 @@ int getProcessCpu()
 	const __int64 ullKernelTime = compareFileTime(ftKernelTime, ftPreKernelTime);
 	const __int64 ullUserTime = compareFileTime(ftUserTime, ftPreUserTime);
 	log << ullKernelTime << "\n" << ullUserTime << "\n" << iCpuNum;
-	const __int64 dCpu = (ullKernelTime + ullUserTime) / (iCpuNum * 100);
-	return static_cast<int>(dCpu);
+	return (ullKernelTime + ullUserTime) / (iCpuNum * 10);
+}
+
+//获取空闲硬盘(千分比)
+long long getDiskUsage(double& mbFreeBytes, double& mbTotalBytes){
+	/*int sizStr = GetLogicalDriveStrings(0, NULL);//获得本地所有盘符存在Drive数组中
+	char* chsDrive = new char[sizStr];//初始化数组用以存储盘符信息
+	GetLogicalDriveStrings(sizStr, chsDrive);
+	int DType;
+	int si = 0;*/
+	BOOL fResult;
+	unsigned _int64 i64FreeBytesToCaller;
+	unsigned _int64 i64TotalBytes;
+	unsigned _int64 i64FreeBytes;
+	fResult = GetDiskFreeSpaceEx(
+		NULL,
+		(PULARGE_INTEGER)&i64FreeBytesToCaller,
+		(PULARGE_INTEGER)&i64TotalBytes,
+		(PULARGE_INTEGER)&i64FreeBytes);
+	//GetDiskFreeSpaceEx函数，可以获取驱动器磁盘的空间状态,函数返回的是个BOOL类型数据
+	if (fResult) {
+		mbTotalBytes = i64TotalBytes * 1000 / 1024 / 1024 / 1024 / 1000.0;//磁盘总容量
+		mbFreeBytes = i64FreeBytesToCaller * 1000 / 1024 / 1024 / 1024 / 1000.0;//磁盘剩余空间
+		return 1000 - 1000 * i64FreeBytesToCaller / i64TotalBytes;
+	}
+	return 0;
 }

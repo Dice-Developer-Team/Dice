@@ -34,3 +34,9 @@ nlohmann::json freadJson(const std::filesystem::path& path)
 	}
 	return j;
 }
+
+void fwriteJson(std::string strPath, const json& j) 
+{
+	std::ofstream fout(strPath);
+	fout << std::setw(2) << j;
+}

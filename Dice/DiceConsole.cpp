@@ -7,7 +7,8 @@
  * |_______/  |________| |________| |________| |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123溯洄
+ * Copyright (C) 2018-2020 w4123溯洄
+ * Copyright (C) 2019-2020 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -35,19 +36,22 @@
 using namespace std;
 using namespace CQ;
 
-const std::map<std::string, int, less_ci> Console::intDefault{
-	{"DisabledGlobal", 0}, {"DisabledBlock", 0}, {"DisabledListenAt", 1},
-	{"DisabledMe", 1}, {"DisabledJrrp", 0}, {"DisabledDeck", 1}, {"DisabledDraw", 0}, {"DisabledSend", 0},
-	{"Private", 0}, {"CheckGroupLicense", 0}, {"LeaveDiscuss", 0},
-	{"ListenGroupRequest", 1}, {"ListenGroupAdd", 1},
-	{"ListenFriendRequest", 1}, {"ListenFriendAdd", 1}, {"AllowStranger", 1},
-	{"AutoClearBlack", 1}, {"LeaveBlackQQ", 0},
-	{"ListenGroupKick", 1}, {"ListenGroupBan", 1}, {"ListenSpam", 1},
-	{"BannedLeave", 0}, {"BannedBanInviter", 0},
-	{"KickedBanInviter", 0},
-	{"CloudBlackShare", 1}, {"BelieveDiceList", 0}, {"CloudVisible", 1},
-	{"SystemAlarmCPU", 90}, {"SystemAlarmRAM", 90},
-	{"SendIntervalIdle", 500}, {"SendIntervalBusy", 100}
+const std::map<std::string, int, less_ci>Console::intDefault{
+{"DisabledGlobal",0},{"DisabledBlock",0},{"DisabledListenAt",1},
+{"DisabledMe",1},{"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
+{"Private",0},{"CheckGroupLicense",0},{"LeaveDiscuss",0},
+{"ListenGroupRequest",1},{"ListenGroupAdd",1},
+{"ListenFriendRequest",1},{"ListenFriendAdd",1},{"AllowStranger",1},
+{"AutoClearBlack",1},{"LeaveBlackQQ",0},
+{"ListenGroupKick",1},{"ListenGroupBan",1},{"ListenSpam",1},
+{"BannedLeave",0},{"BannedBanInviter",0},
+{"KickedBanInviter",0},
+{"GroupClearLimit",20},
+{"CloudBlackShare",1},{"BelieveDiceList",0},{"CloudVisible",1},
+{"SystemAlarmCPU",90},{"SystemAlarmRAM",90},{"SystemAlarmDisk",90},
+{"SendIntervalIdle",500},{"SendIntervalBusy",100},
+//自动保存事件间隔[min],自动图片清理间隔[h]
+{"AutoSaveInterval",10},{"AutoClearImage",0}
 };
 const enumap<string> Console::mClockEvent{"off", "on", "save", "clear"};
 
@@ -157,15 +161,14 @@ int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 		if (!Cnt)sendPrivateMsg(DiceMaid, note);
 	}
 	return Cnt;
-}
-
+} 
 void Console::newMaster(long long qq)
 {
-	masterQQ = qq;
-	getUser(qq).trust(5);
-	setNotice({qq, msgtype::Private}, 0b111111);
-	save();
-	AddMsgToQueue(getMsg("strNewMaster"), qq);
+	masterQQ = qq; 
+	getUser(qq).trust(5); 
+	setNotice({qq, CQ::msgtype::Private}, 0b111111);
+	save(); 
+	AddMsgToQueue(getMsg("strNewMaster"), qq); 
 }
 
 void Console::reset()
@@ -212,7 +215,8 @@ void Console::saveNotice() const
 Console console;
 
 //DiceModManager modules{};
-
+//除外群列表
+std::set<long long> ExceptGroups;
 //骰娘列表
 std::map<long long, long long> mDiceList;
 
@@ -264,58 +268,50 @@ std::string printSTime(const SYSTEMTIME st)
 			st.wMinute < 10 ? "0" : "") + to_string(st.wMinute) + ":" + (st.wSecond < 10 ? "0" : "") +
 		to_string(st.wSecond);
 }
-
-//打印用户昵称QQ
-string printQQ(long long llqq)
-{
-	string nick = getStrangerInfo(llqq).nick;
-	string::size_type i;
-	while ((i = nick.find(' ')) != string::npos)
+	//打印用户昵称QQ
+	string printQQ(long long llqq)
 	{
-		nick.erase(nick.begin() + i);
+		string nick = getStrangerInfo(llqq).nick;
+		if (nick.empty())nick = getFriendList()[llqq].nick;
+		if(nick.empty())return "用户(" + to_string(llqq) + ")";
+		return nick + "(" + to_string(llqq) + ")";
 	}
-	return nick + "(" + to_string(llqq) + ")";
-}
-
-//打印QQ群号
-string printGroup(long long llgroup)
-{
-	if (!llgroup)return "私聊";
-	const auto GroupList = getGroupList();
-	if (GroupList.count(llgroup))
+	//打印QQ群号
+	string printGroup(long long llgroup)
 	{
-		return GroupList.at(llgroup) + "(" + to_string(llgroup) + ")";
+		if (!llgroup)return"私聊";
+		if (ChatList.count(llgroup))return printChat(ChatList[llgroup]);
+		if (getGroupList().count(llgroup))return "[" + getGroupList()[llgroup] + "](" + to_string(llgroup) + ")";
+		return "群(" + to_string(llgroup) + ")";
 	}
-	return "群聊(" + to_string(llgroup) + ")";
-}
-
-//打印聊天窗口
-string printChat(chatType ct)
-{
-	switch (ct.second)
+	//打印聊天窗口
+	string printChat(chatType ct)
 	{
-	case msgtype::Private:
-		return printQQ(ct.first);
-	case msgtype::Group:
-		return printGroup(ct.first);
-	case msgtype::Discuss:
-		return "讨论组(" + to_string(ct.first) + ")";
-	default:
-		break;
+		switch (ct.second)
+		{
+		case msgtype::Private:
+			return printQQ(ct.first);
+		case msgtype::Group:
+			return printGroup(ct.first);
+		case msgtype::Discuss:
+			return "讨论组(" + to_string(ct.first) + ")";
+		default:
+			break;
+		}
+		return "";
 	}
-	return "";
-}
-
 //获取骰娘列表
 void getDiceList()
 {
 	std::string list;
-	if (!Network::GET("shiki.stringempty.xyz", "/DiceList/", 80, list) && mDiceList.empty())
-	{
-		console.log("获取骰娘列表时遇到错误: \n" + list, 1, printSTNow());
-		return;
-	}
-	readJson(list, mDiceList);
+	if (Network::GET("shiki.stringempty.xyz", "/DiceList/", 80, list))
+		readJson(list, mDiceList);
+}
+//获取骰娘列表
+void getExceptGroup() {
+	std::string list;
+	if (Network::GET("shiki.stringempty.xyz", "/DiceCloud/except_group.json", 80, list))
+		json::parse(list, nullptr, false).get_to(ExceptGroups);
 }
 
 
@@ -330,82 +326,50 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st)
 }
 
 //简易计时器
-void ConsoleTimer()
-{
-	Console::Clock clockNow{stNow.wHour, stNow.wMinute};
-	long long perLastCPU = 0;
-	long long perLastRAM = 0;
-	while (Enabled)
+	void ConsoleTimer()
 	{
-		GetLocalTime(&stNow);
-		//分钟时点变动
-		if (stTmp.wMinute != stNow.wMinute)
+		Console::Clock clockNow{stNow.wHour,stNow.wMinute};
+		while (Enabled) 
 		{
-			stTmp = stNow;
-			clockNow = {stNow.wHour, stNow.wMinute};
-			for (const auto& [clock,eve_type] : multi_range(console.mWorkClock, clockNow))
+			GetLocalTime(&stNow);
+			//分钟时点变动
+			if (stTmp.wMinute != stNow.wMinute)
 			{
-				switch (eve_type)
+				stTmp = stNow;
+				clockNow = {stNow.wHour, stNow.wMinute};
+				for (const auto& [clock,eve_type] : multi_range(console.mWorkClock, clockNow))
 				{
-				case ClockEvent::on:
-					if (console["DisabledGlobal"])
+					switch (eve_type)
 					{
-						console.set("DisabledGlobal", 0);
-						console.log(getMsg("strClockToWork"), 0b10000, "");
+					case ClockEvent::on:
+						if (console["DisabledGlobal"])
+						{
+							console.set("DisabledGlobal", 0);
+							console.log(getMsg("strClockToWork"), 0b10000, "");
+						}
+						break;
+					case ClockEvent::off:
+						if (!console["DisabledGlobal"])
+						{
+							console.set("DisabledGlobal", 1);
+							console.log(getMsg("strClockOffWork"), 0b10000, "");
+						}
+						break;
+					case ClockEvent::save:
+						dataBackUp();
+						console.log(GlobalMsg["strSelfName"] + "定时保存完成√", 1, printSTime(stTmp));
+						break;
+					case ClockEvent::clear:
+						if (clearGroup("black"))
+							console.log(GlobalMsg["strSelfName"] + "定时清群完成√", 1, printSTNow());
+						break;
+					default: break;
 					}
-					break;
-				case ClockEvent::off:
-					if (!console["DisabledGlobal"])
-					{
-						console.set("DisabledGlobal", 1);
-						console.log(getMsg("strClockOffWork"), 0b10000, "");
-					}
-					break;
-				case ClockEvent::save:
-					dataBackUp();
-					console.log(GlobalMsg["strSelfName"] + "定时保存完成√", 1, printSTime(stTmp));
-					break;
-				case ClockEvent::clear:
-					if (console && console["AutoClearBlack"] && clearGroup("black"))
-						console.log(GlobalMsg["strSelfName"] + "定时清群完成√", 1, printSTNow());
-					break;
-				default: break;
 				}
 			}
-			//整点事件
-			if (stNow.wMinute % 10 == 0)
-			{
-				Cloud::update();
-			}
-			if (stNow.wMinute % 30 == 0)
-			{
-				if (console["SystemAlarmCPU"])
-				{
-					const long long perCPU = getWinCpuUsage();
-					if (perCPU > console["SystemAlarmCPU"] && perCPU > perLastCPU)console.log(
-						"警告：" + GlobalMsg["strSelfName"] + "所在系统CPU占用达" + to_string(perCPU) + "%", 0b1001,
-						printSTime(stNow));
-					else if (perLastCPU > console["SystemAlarmCPU"] && perCPU < console["SystemAlarmCPU"])console.log(
-						"提醒：" + GlobalMsg["strSelfName"] + "所在系统CPU占用降至" + to_string(perCPU) + "%", 0b11,
-						printSTime(stNow));
-					perLastCPU = perCPU;
-				}
-				if (console["SystemAlarmRAM"])
-				{
-					const long long perRAM = getRamPort();
-					if (perRAM > console["SystemAlarmRAM"] && perRAM > perLastRAM)console.log(
-						"警告：" + GlobalMsg["strSelfName"] + "所在系统内存占用达" + to_string(perRAM) + "%", 0b1001,
-						printSTime(stNow));
-					else if (perLastRAM > console["SystemAlarmRAM"] && perRAM < console["SystemAlarmRAM"])console.log(
-						"提醒：" + GlobalMsg["strSelfName"] + "所在系统内存占用降至" + to_string(perRAM) + "%", 0b11,
-						printSTime(stNow));
-					perLastRAM = perRAM;
-				}
-			}
+			this_thread::sleep_for(100ms);
 		}
-		this_thread::sleep_for(1000ms);
 	}
-}
 
 //一键清退
 int clearGroup(string strPara, long long fromQQ)

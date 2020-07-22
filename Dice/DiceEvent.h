@@ -7,65 +7,46 @@
 #include <map>
 #include <set>
 #include <utility>
+#include <string>
 #include "CQAPI_EX.h"
 #include "MsgMonitor.h"
+#include "DiceSchedule.h"
 #include "DiceMsgSend.h"
 #include "GlobalVar.h"
 
 using std::string;
 
 //打包待处理消息
-class FromMsg
-{
+class FromMsg :public DiceJobDetail {
 public:
-	std::string strMsg;
 	string strLowerMessage;
-	long long fromID = 0;
-	CQ::msgtype fromType = CQ::msgtype::Private;
-	long long fromQQ = 0;
 	long long fromGroup = 0;
 	Chat* pGrp = nullptr;
-	chatType fromChat;
-	time_t fromTime = time(nullptr);
 	string strReply;
-	//临时变量库
-	map<string, string> strVar = {};
-
-	FromMsg(std::string message, long long fromNum) : strMsg(std::move(message)), fromID(fromNum), fromQQ(fromNum)
-	{
-		fromChat = {fromID, CQ::msgtype::Private};
-	}
-
-	FromMsg(std::string message, long long fromGroup, CQ::msgtype msgType, long long fromNum) : strMsg(std::move(message)),
-	                                                                                            fromID(fromGroup),
-	                                                                                            fromType(msgType),
-	                                                                                            fromQQ(fromNum),
-	                                                                                            fromGroup(fromGroup),
-	                                                                                            fromChat({
-		                                                                                            fromGroup,
-		                                                                                            fromType
-	                                                                                            })
-	{
+	FromMsg(std::string message, long long qq) :DiceJobDetail(qq, { qq,CQ::msgtype::Private }, message){}
+	FromMsg(std::string message, long long fromGroup, CQ::msgtype msgType, long long qq) :DiceJobDetail(qq, { fromGroup,msgType }, message), fromGroup(fromGroup) {
 		pGrp = &chat(fromGroup);
 	}
 
 	bool isBlock = false;
 
-	void reply(const std::string& strReply, bool isFormat)
+	void reply(std::string strReply, bool isFormat)
 	{
 		isAns = true;
 		if (isFormat)
-			AddMsgToQueue(format(strReply, GlobalMsg, strVar), fromID, fromType);
-		else AddMsgToQueue(strReply, fromID, fromType);
+			AddMsgToQueue(format(strReply, GlobalMsg, strVar), fromChat);
+		else AddMsgToQueue(strReply, fromChat);
 	}
 
-	void reply(const std::string& strReply, const std::initializer_list<const std::string> replace_str = {},
+	void reply(std::string strReply, const std::initializer_list<const std::string> replace_str = {},
 	           bool isFormat = true)
 	{
 		isAns = true;
+		while (isspace(static_cast<unsigned char>(strReply[0])))
+			strReply.erase(strReply.begin());
 		if (!isFormat)
 		{
-			AddMsgToQueue(strReply, fromID, fromType);
+			AddMsgToQueue(strReply, fromChat);
 			return;
 		}
 		int index = 0;
@@ -73,7 +54,7 @@ public:
 		{
 			strVar[to_string(index++)] = s;
 		}
-		AddMsgToQueue(format(strReply, GlobalMsg, strVar), fromID, fromType);
+		AddMsgToQueue(format(strReply, GlobalMsg, strVar), fromChat);
 	}
 
 	void reply()
@@ -91,7 +72,7 @@ public:
 		fout.close();
 		reply(strMsg);
 		const string note = getName(fromQQ) + strMsg;
-		for (const auto& [ct,level] : console.NoticeList)
+		for (const auto& [ct,level] : console.NoticeList) 
 		{
 			if (!(level & note_lv) || pair(fromQQ, CQ::msgtype::Private) == ct || ct == fromChat)continue;
 			AddMsgToQueue(note, ct);
@@ -102,8 +83,8 @@ public:
 	std::string printFrom()
 	{
 		std::string strFwd;
-		if (fromType == CQ::msgtype::Group)strFwd += "[群:" + to_string(fromGroup) + "]";
-		if (fromType == CQ::msgtype::Discuss)strFwd += "[讨论组:" + to_string(fromGroup) + "]";
+		if (fromChat.second == CQ::msgtype::Group)strFwd += "[群:" + to_string(fromGroup) + "]";
+		if (fromChat.second == CQ::msgtype::Discuss)strFwd += "[讨论组:" + to_string(fromGroup) + "]";
 		strFwd += getName(fromQQ, fromGroup) + "(" + to_string(fromQQ) + "):";
 		return strFwd;
 	}
@@ -142,8 +123,7 @@ private:
 	//跳过空格
 	void readSkipSpace()
 	{
-		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt
-			++;
+		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 	}
 
 	void readSkipColon()
@@ -155,7 +135,7 @@ private:
 	string readUntilSpace()
 	{
 		string strPara;
-		readSkipSpace();
+		readSkipSpace(); 
 		while (intMsgCnt < strMsg.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strPara += strMsg[intMsgCnt];
@@ -191,15 +171,12 @@ private:
 	string readPara()
 	{
 		string strPara;
-		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt
-			++;
-		while (intMsgCnt < strMsg.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !
-			isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
-			&& (strLowerMessage[intMsgCnt] != '-') && (strLowerMessage[intMsgCnt] != '+') && (strLowerMessage[intMsgCnt]
-				!= '[') && (strLowerMessage[intMsgCnt] != ']') && (strLowerMessage[intMsgCnt] != '=') && (
-				strLowerMessage[intMsgCnt] != ':')
-			&& intMsgCnt != strLowerMessage.length())
-		{
+		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		while (intMsgCnt < strMsg.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
+			&& (strLowerMessage[intMsgCnt] != '-') && (strLowerMessage[intMsgCnt] != '+') 
+			&& (strLowerMessage[intMsgCnt] != '[') && (strLowerMessage[intMsgCnt] != ']') 
+			&& (strLowerMessage[intMsgCnt] != '=') && (strLowerMessage[intMsgCnt] != ':')
+			&& intMsgCnt != strLowerMessage.length()) {
 			strPara += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
@@ -210,13 +187,12 @@ private:
 	string readDigit(bool isForce = true)
 	{
 		string strMum;
-		if (isForce)
-			while (intMsgCnt < strMsg.length() && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])))
-			{
-				if (strMsg[intMsgCnt] < 0)intMsgCnt++;
-				intMsgCnt++;
-			}
-		else while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
+		if (isForce)while (intMsgCnt < strMsg.length() && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])))
+		{
+			if (strMsg[intMsgCnt] < 0)intMsgCnt++;
+			intMsgCnt++;
+		}
+		else while(intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
 		while (intMsgCnt < strMsg.length() && isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])))
 		{
 			strMum += strMsg[intMsgCnt];

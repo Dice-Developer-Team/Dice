@@ -5,6 +5,7 @@
 #pragma once
 #include <map>
 #include <ctime>
+#include <atomic>
 #include "DiceConsole.h"
 #include "ManagerSystem.h"
 #include "GlobalVar.h"
@@ -18,8 +19,10 @@ public:
 	static const long long earlierTime = 60;
 	static const long long earliestTime = 300;
 	//ÆµÂÊ¼ÇÂ¼
-	static std::map<long long, int> mFrequence;
-	static std::map<long long, int> mWarnLevel;
+	static std::map<long long, int>mFrequence;
+	static std::map<long long, int>mWarnLevel;
+	static std::map<long long, int>mDailyFrq;
+	static std::atomic<unsigned int> sumFrqTotal;
 	static int getFrqTotal();
 	long long fromQQ = 0;
 	time_t fromTime = 0;

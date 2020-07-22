@@ -12,7 +12,7 @@
 #include <filesystem>
 #include <unordered_set>
 #include <unordered_map>
-#include <numeric>
+#include <io.h>
 #include <direct.h>
 #include <cstdio>
 #include "DiceXMLTree.h"
@@ -32,7 +32,7 @@ using std::unordered_map;
 
 int mkDir(const std::string& dir);
 
-int clrDir(const std::string& dir, const std::set<std::string>& exceptList);
+int clrDir(const std::string& dir, const unordered_set<std::string>& exceptList);
 
 template <typename TKey, typename TVal, typename sort>
 void map_merge(map<TKey, TVal, sort>& m1, const map<TKey, TVal, sort>& m2)
@@ -234,7 +234,7 @@ int loadFile(std::string strPath, std::map<T1, T2>& mapTmp)
 }
 
 template <typename T1, typename T2>
-int loadFile(std::string strPath, std::unordered_map<T1, T2>& mapTmp)
+int loadFile(std::string strPath, std::unordered_map<T1, T2>& mapTmp) 
 {
 	std::ifstream fin(strPath);
 	if (fin)
