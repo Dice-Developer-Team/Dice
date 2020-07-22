@@ -32,6 +32,7 @@ public:
 	long long DiceMaid = 0;
 	friend void ConsoleTimer();
 	friend class FromMsg;
+	friend class DiceJob;
 	//DiceSens DSens;
 	using Clock = std::pair<unsigned short, unsigned short>;
 	static const enumap<string> mClockEvent;
@@ -119,10 +120,10 @@ public:
 		loadNotice();
 		return true;
 	}
-
-	void save()
+	void save() 
 	{
-		DDOM xml("console", "");
+		mkDir("DiceData\\conf");
+		DDOM xml("console","");
 		xml.push(DDOM("mode", to_string(isMasterMode)));
 		xml.push(DDOM("master", to_string(masterQQ)));
 		if (!mWorkClock.empty())
@@ -155,45 +156,41 @@ private:
 	std::multimap<Clock, ClockEvent> mWorkClock{};
 	std::map<chatType, int> NoticeList{};
 };
+	extern Console console;
+	//extern DiceModManager modules;
 
-extern Console console;
-//extern DiceModManager modules;
-//骰娘列表
-extern std::map<long long, long long> mDiceList;
-//获取骰娘列表
-void getDiceList();
-
-struct fromMsg
-{
-	std::string strMsg;
-	long long fromQQ = 0;
-	long long fromGroup = 0;
-	fromMsg() = default;
-
-	fromMsg(std::string msg, long long QQ, long long Group) : strMsg(std::move(msg)), fromQQ(QQ), fromGroup(Group)
-	{
+extern std::set<long long> ExceptGroups;
+void getExceptGroup();
+	//骰娘列表
+	extern std::map<long long, long long> mDiceList;
+	//获取骰娘列表
+	void getDiceList();
+	struct fromMsg {
+		std::string strMsg;
+		long long fromQQ = 0;
+		long long fromGroup = 0;
+		fromMsg() = default;
+		fromMsg(std::string msg, long long QQ, long long Group) :strMsg(msg), fromQQ(QQ), fromGroup(Group) {};
 	};
-};
-
-//通知
-//一键清退
-extern int clearGroup(std::string strPara = "unpower", long long fromQQ = 0);
-//连接的聊天窗口
-extern std::map<chatType, chatType> mLinkedList;
-//单向转发列表
-extern std::multimap<chatType, chatType> mFwdList;
-//程序启动时间
-extern long long llStartTime;
-//当前时间
-extern SYSTEMTIME stNow;
-std::string printClock(std::pair<int, int> clock);
-std::string printSTime(SYSTEMTIME st);
-std::string printSTNow();
-std::string printDate();
-std::string printDate(time_t tt);
-std::string printQQ(long long);
-std::string printGroup(long long);
-std::string printChat(chatType);
+	//通知
+	//一键清退
+	extern int clearGroup(std::string strPara = "unpower", long long fromQQ = 0);
+	//连接的聊天窗口
+	extern std::map<chatType, chatType> mLinkedList;
+	//单向转发列表
+	extern std::multimap<chatType, chatType> mFwdList;
+	//程序启动时间
+	extern long long llStartTime;
+	//当前时间
+	extern SYSTEMTIME stNow;
+	std::string printClock(std::pair<int, int> clock);
+	std::string printSTime(SYSTEMTIME st);
+	std::string printSTNow(); 
+	std::string printDate();
+	std::string printDate(time_t tt);
+	std::string printQQ(long long);
+	std::string printGroup(long long);
+	std::string printChat(chatType);
 void ConsoleTimer();
 
 class ThreadFactory

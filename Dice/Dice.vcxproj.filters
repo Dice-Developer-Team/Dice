@@ -117,6 +117,12 @@
     <ClCompile Include="Jsonio.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DiceSchedule.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DiceJob.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="DiceGUI.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -264,6 +270,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="DiceSession.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceSchedule.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceJob.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="DiceGUI.h">

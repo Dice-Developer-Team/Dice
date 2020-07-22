@@ -32,6 +32,7 @@ bool Enabled = false;
 bool Mirai = false;
 
 std::string Dice_Full_Ver_For = Dice_Full_Ver + " For CoolQ]";
+std::string strModulePath;
 
 std::string strModulePath;
 
@@ -55,8 +56,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strUserTrustIllegal","将目标权限修改为{trust}是非法的×"},
 	{"strUserNotFound","{self}无{user}的用户记录"},
 	{"strGroupAuthorized","A roll to the table turns to a dice fumble!\nDice Roller {strSelfName}√\n本群已授权许可，请尽情使用本骰娘√\n请遵守协议使用，服务结束后使用.dismiss送出!" },
-	{"strAddGroupNoLicense","本群未获{self}许可使用，将自动在群内静默。\n请先.help协议 阅读并同意协议后向运营方申请许可使用，\n否则请管理员使用!dismiss送出{self}\n可按以下格式填写并发送申请:\n!authorize 申请用途:[理由] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[指令]，用后使用[指令]送出群" },
-	{"strGroupLicenseDeny","此群未获{self}许可使用，请先确认协议并申请许可×\n或请管理员使用!dismiss送出{self}" },
+	{"strGroupLicenseDeny","本群未获{self}许可使用，自动在群内静默。\n请先.help协议 阅读并同意协议后向运营方申请许可使用，\n否则请管理员使用!dismiss送出{self}\n可按以下格式填写并发送申请:\n!authorize 申请用途:[*请写入理由*] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[*请写入指令*]，用后使用[*请写入指令*]送出群" },
 	{"strGroupLicenseApply","此群未通过自助授权×\n许可申请已发送√" },
 	{"strGroupSetOn","现已开启{self}在此群的“{option}”选项√"},			//群内开关和遥控开关通用此文本
 	{"strGroupSetOnAlready","{self}已在此群设置了{option}！"},			
@@ -96,10 +96,10 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPcCardFull","{nick}在{self}处的角色卡已达上限，请先清理多余角色卡×"},
 	{"strPcTempInvalid","{self}无法识别的角色卡模板×"},
 	{"strPcNameEmpty","名称不能为空×"},
-	{"strPcNameExist","已存在同名卡×"},
-	{"strPcNameNotExist","该名称不存在×"},
-	{"strPcNameInvalid","非法的人物卡名（存在冒号）×"},
-	{"strPcInitDelErr","初始卡不可删除×"},
+	{"strPcNameExist","{nick}已存在同名卡×"},
+	{"strPcNameNotExist","{nick}无该名称角色卡卡×"},
+	{"strPcNameInvalid","非法的角色卡名（存在冒号）×"},
+	{"strPcInitDelErr","{nick}的初始卡不可删除×"},
 	{"strPcNoteTooLong","备注长度不能超过255×"},
 	{"strPcTextTooLong","文本长度不能超过48×"},
 	{"strSensNote","发现指令中带敏感词，{self}已记录并上报！"},
@@ -110,9 +110,9 @@ std::map<std::string, std::string> GlobalMsg
 	{"strReplyDel","{self}对关键词{key}的回复已清除√"},
 	{"strStModify","{self}对已记录{pc}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","{self}对已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
-	{"strStValEmpty","{self}未记录{attr}原值×"},		//{0}为属性名
-	{"strBlackQQAddNotice","{user_nick}，你已被{self}加入黑名单，详情请联系Master"},				
-	{"strBlackQQAddNoticeReason","{user_nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员"},
+	{"strStValEmpty","{self}未记录{attr}原值×"},		
+	{"strBlackQQAddNotice","{user_nick}，你已被{self}加入黑名单，详情请联系Master:{master_QQ}"},				
+	{"strBlackQQAddNoticeReason","{user_nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{master_QQ}"},
 	{"strBlackQQDelNotice","{user_nick}，你已被{self}移出黑名单，现在可以继续使用了"},
 	{"strWhiteQQAddNotice","{user_nick}，您已获得{self}的信任，请尽情使用{self}√"},
 	{"strWhiteQQDenied","你不是{self}信任的用户×"},
@@ -141,27 +141,28 @@ std::map<std::string, std::string> GlobalMsg
 	{"strEnDefaultName","属性或技能"},//默认文本
 	{"strEnValEmpty", "未对{self}设定待成长属性值，请先.st {attr} 属性值 或查看.help en×"},
 	{"strEnValInvalid", "{attr}值输入不正确,请输入1-99范围内的整数!"},
-	{"strSendMsg", "{self}已将消息送出√"}, //Master定向发送的回执
-	{"strSendMasterMsg", "消息{self}已发送给Master√"}, //向Master发送的回执
-	{"strSendMsgEmpty", "发送消息内容为空×"},
-	{"strSendMsgInvalid", "{self}没有可以发送的对象×"}, //没有Master
-	{"strDefaultCOCClr", "默认检定房规已清除√"},
-	{"strDefaultCOCNotFound", "默认检定房规不存在×"},
-	{"strDefaultCOCSet", "默认检定房规已设置:"},
-	{"strLinkLoss", "{self}的时空连接已断开√"},
-	{"strLinked", "{self}已创建时空门√"},
-	{"strLinkWarning", "尝试创建时空门，但不保证能否连通"},
-	{"strLinkNotFound", "时空门要通向不可名状的地方了×"},
-	{"strNotMaster", "你不是{self}的master！你想做什么？"},
-	{"strNotAdmin", "你不是{self}的管理员×"},
-	{"strDismiss", ""}, //.dismiss退群前的回执
-	{"strHlpSet", "已为{key}设置词条√"},
-	{"strHlpReset", "已清除{key}的词条√"},
-	{"strHlpNameEmpty", "Master想要自定义什么词条呀？"},
-	{"strHlpNotFound", "{self}未找到指定的帮助信息×"},
-	{"strClockToWork", "{self}已按时启用√"},
-	{"strClockOffWork", "{self}已按时关闭√"},
-	{"strNameGenerator", "{pc}的随机名称：{res}"},
+	{"strSendMsg","{self}已将消息送出√"},//Master定向发送的回执
+	{"strSendMasterMsg","消息{self}已发送给Master√"},//向Master发送的回执
+	{"strSendMsgEmpty","发送消息内容为空×"},
+	{"strSendMsgInvalid","{self}没有可以发送的对象×"},//没有Master
+	{"strDefaultCOCClr","默认检定房规已清除√"},
+	{"strDefaultCOCNotFound","默认检定房规不存在×"},
+	{"strDefaultCOCSet","默认检定房规已设置:"},
+	{"strLinkLoss","{self}的时空连接已断开√"},
+	{"strLinked","{self}已创建时空门√"},
+	{"strLinkWarning","尝试创建时空门，但不保证能否连通"},
+	{"strLinkNotFound","时空门要通向不可名状的地方了×"},
+	{"strNotMaster","你不是{self}的master！你想做什么？"},
+	{"strNotAdmin","你不是{self}的管理员×"},
+	{ "strAdminDismiss", "{strDismiss}" },					//管理员指令退群的回执
+	{"strDismiss", ""},						//.dismiss退群前的回执
+	{"strHlpSet","已为{key}设置词条√"},
+	{"strHlpReset","已清除{key}的词条√"},
+	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
+	{"strHlpNotFound","{self}未找到指定的帮助信息×"},
+	{"strClockToWork","{self}已按时启用√"},
+	{"strClockOffWork","{self}已按时关闭√"},
+	{"strNameGenerator","{pc}的随机名称：{res}"},
 	{"strDrawCard", "来看看{pc}抽到了什么：{res}"},
 	{"strMeOn", "成功在这里启用{self}的.me命令√"},
 	{"strMeOff", "成功在这里禁用{self}的.me命令√"},
@@ -318,30 +319,25 @@ Shiki交流群: 1029435374
 
 std::map<std::string, std::string> EditedMsg;
 const std::map<std::string, std::string, less_ci> HelpDoc = {
-	{"更新", R"(V2.4.0 多功能更新 Dice! GUI 管理面板)"},
-	{
-		"协议",
-		"0.本协议是Dice!默认服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"
-	},
-	{
-		"链接",
-		R"(官方论坛:https://forum.kokona.tech/
-查看源码:https://github.com/mystringEmpty/Dice
-插件下载:https://github.com/mystringEmpty/Dice/releases
-用户手册:http://shiki.stringempty.xyz/download/Shiki_User_Manual.pdf
-骰主手册:http://shiki.stringempty.xyz/download/Shiki_Master_Manual.pdf
-炼骰手册:http://shiki.stringempty.xyz/download/DiceMaid_CookBook.html
-(在线文档)https://dice.c-j.dev/
-st用COC7人物卡:http://shiki.stringempty.xyz/download/COC7_player_card_shiki.xlsx)"
-	},
-	{
-		"设定",
-		"Master：{master}\n.me使用：禁止\n.jrrp使用：允许\n邀请处理：黑名单制，非禁即入\n讨论组使用：允许\n移出反制：拉黑群和操作者\n禁言反制：默认拉黑群和群主\n刷屏反制：警告\n邀请人责任：有限连带\n窥屏可能：有\n其他插件：无\n骰娘个人群:（未设置）\n官方(水)群: 624807593 941980833 882747577\n私骰分流群：863062599\nShiki交流群：1029435374"
-	},
-	{"作者", "Copyright (C) 2018-2020 w4123溯洄\nCopyright (C) 2019-2020 String.Empty\n本应用在AGPLv3下授权"},
-	{
-		"指令",
-		R"(at骰娘后接指令可以指定骰娘单独响应，如at骰娘.bot off
+{"更新",R"(
+560:支持Mirai加载
+558:新增每日统计
+557:定时作业系统
+556:黑名单系统重做
+555:用户记录/群管系统
+554:新增多角色卡功能
+553:name功能调整
+552:后台系统大修
+551:文件夹批量读取牌堆
+550:允许多轮检定
+549:新增刷屏监测
+547:更新指令开关
+537:更新.send功能)"},
+{"协议","0.本协议是Shiki(The Star、Death、Judgement、The World)的服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
+{"链接","查看源码:https://github.com/mystringEmpty/Dice\n插件下载:https://github.com/mystringEmpty/Dice/releases\n用户手册:http://shiki.stringempty.xyz/download/Shiki_User_Manual.pdf\n骰主手册:http://shiki.stringempty.xyz/download/Shiki_Master_Manual.pdf\n炼骰手册:http://shiki.stringempty.xyz/download/DiceMaid_CookBook.html\n(在线文档)https://dice.c-j.dev/\nst用人物卡:http://shiki.stringempty.xyz/download/COC7_player_card_shiki.xlsx"},
+{"设定","Master：{master_QQ}\n.me使用：禁止\n.jrrp使用：允许\n邀请处理：黑名单制，非禁即入\n讨论组使用：允许\n移出反制：拉黑群和操作者\n禁言反制：默认拉黑群和群主\n刷屏反制：警告\n邀请人责任：有限连带\n窥屏可能：有\n其他插件：无\n骰娘个人群:（未设置）\n官方(水)群: 624807593 941980833 882747577\n私骰分流群：863062599\n开发交流群：1029435374"},
+{"作者","Copyright (C) 2018-2020 w4123溯洄\nCopyright (C) 2019-2020 String.Empty"},
+{"指令",R"(at骰娘后接指令可以指定骰娘单独响应，如at骰娘.bot off
 多数指令需要后接参数，请.help对应指令 获取详细信息
 掷骰指令包括:
 .dismiss 退群
@@ -370,72 +366,45 @@ st用COC7人物卡:http://shiki.stringempty.xyz/download/COC7_player_card_shiki.xlsx
 .send 向管理发送消息
 .group 群管
 .draw 抽牌
-为了避免未预料到的指令误判，请尽可能在参数之间使用空格)"
-	},
-	{
-		"deck",
-		"该指令可以设置默认牌堆，使用.draw不指定牌堆名时将使用此牌堆。该牌堆不会放回直到抽完最后一张后洗牌。\n.deck set 公共牌堆名 设置默认牌堆\n.deck set 正整数1-100 设置指定长度的数列\n.deck show 查看剩余卡牌\n.deck reset 重置剩余卡牌\n.deck new 自定义牌堆（用空格或|分割）（白名单限定）\n.deck new 有弹|无弹|无弹|无弹|无弹|无弹\n除show外其他群内操作需要管理权限"
-	},
-	{"退群", "&dismiss"},
-	{"退群指令", "&dismiss"},
-	{"dismiss", "该指令需要群管理员权限，使用后即退出群聊\n!dismiss [目标QQ(完整或末四位)]指名退群\n!dismiss无视内置黑名单和静默状态，只要插件开启总是有效"},
-	{"授权许可", "&authoize"},
-	{"authorize", "授权许可(非信任用户使用时转为向管理申请许可)\n!authorize (+[群号]) ([申请理由])\n群内原地发送可省略群号，无法自动授权时会连同理由发给管理"},
-	{"开关", "&bot"},
-	{"bot", ".bot on/off开启/静默骰子（限群管理）\n.bot无视静默状态，只要插件开启且不在黑名单总是有效"},
-	{"规则速查", "&rules"},
-	{"规则", "&rules"},
-	{
-		"rules ",
-		"规则速查：.rules ([规则]):[待查词条] 或.rules set [规则]\n.rules 跳跃 //复数规则有相同词条时，择一返回\n.rules COC：大失败 //coc默认搜寻coc7的词条,dnd默认搜寻3r\n.rules dnd：语言\n.rules set dnd //设置后优先查询dnd同名词条，无参数则清除设置"
-	},
-	{"掷骰", "&r"},
-	{"rd", "&r"},
-	{
-		"r",
-		"掷骰：.r [掷骰表达式] ([掷骰原因]) [掷骰表达式]：([掷骰轮数]#)[骰子个数]d骰子面数(p[惩罚骰个数])(k[取点数最大的骰子数])不带参数时视为掷一个默认骰\n合法参数要求掷骰轮数1-10，奖惩骰个数1-9，个数范围1-100，面数范围1-1000\n.r3#d\t//3轮掷骰\n.rh心理学 暗骰\n.rs1D10+1D6+3 沙鹰伤害\t//省略单个骰子的点数，直接给结果\n现版本开头的r均可用o或d代替，但群聊中.ob会被识别为旁观指令"
-	},
-	{"暗骰", "群聊限定，掷骰指令后接h视为暗骰，结果将私发本人和群内ob的用户\n为了保证发送成功，请加骰娘好友"},
-	{"旁观", "&ob"},
-	{"旁观模式", "&ob"},
-	{
-		"ob",
-		"旁观模式：.ob (exit/list/clr/on/off)\n.ob\t//加入旁观可以看到他人暗骰结果\n.ob exit\t//退出旁观模式\n.ob list\t//查看群内旁观者\n.ob clr\t//清除所有旁观者\n.ob on\t//全群允许旁观模式\n.ob off\t//禁用旁观模式\n暗骰与旁观仅在群聊中有效"
-	},
-	{"默认骰", "&set"},
-	{"set", "当表达式中‘D’之后没有接面数时，视为投掷默认骰\n.set20 将默认骰设置为20\n.set 不带参数视为将默认骰重置为默认的100\n若所用规则判定掷骰形如2D6，推荐使用.st &=2D6"},
-	{"个位骰", "个位骰有十面，为0~9十个数字，百面骰的结果为十位骰与个位骰之和（但00+0时视为100）"},
-	{"十位骰", "十位骰有十面，为00~90十个数字，百面骰的结果为十位骰与个位骰之和（但00+0时视为100）"},
-	{"奖励骰", "&奖励/惩罚骰"},
-	{"惩罚骰", "&奖励/惩罚骰"},
-	{"奖惩骰", "&奖励/惩罚骰"},
-	{"奖励/惩罚骰", "COC中奖励/惩罚骰是额外投掷的十位骰，最终结果选用点数更低/更高的结果（不出现大失败的情况下等价于更小/更大的十位骰）\n.rb2 2个奖励骰\nrcp 射击 1个惩罚骰"},
-	{"随机姓名", "&name"},
-	{
-		"name",
-		"随机姓名：.name (cn/jp/en)([生成数量])\n.name 10\t//默认三类名称随机生成\n.name en\t//后接cn/jp/en则限定生成中文/日文/英文名\n名称生成个数范围1-10，太多容易发现姓名库的寒酸"
-	},
-	{"设置昵称", "&nn"},
-	{"昵称", "&nn"},
-	{
-		"nn",
-		"设置昵称：.nn [昵称] / .nn / .nnn(cn/jp/en) \n.nn kp\t//昵称前的./！等符号会被自动忽略\n.nn\t//视为删除昵称\n.nnn\t//设置为随机昵称\n.nnn jp\t/设置限定随机昵称\n私聊.nn视为操作全局昵称\n优先级：群昵称>全局昵称>群名片>QQ昵称"
-	},
-	{"人物作成", "该版本人物作成支持COC7(.coc、.draw调查员背景/英雄天赋)、COC6(.coc6、.draw煤气灯)、DND(.dnd)、AMGC(.draw AMGC)"},
-	{
-		"coc",
-		"克苏鲁的呼唤(COC)人物作成：.coc([7/6])(d)([生成数量])\n.coc 10\t//默认生成7版人物\n.coc6d\t//接d为详细作成，一次只能作成一个\n仅用作骰点法人物作成，可应用变体规则，参考.rules创建调查员的其他选项"
-	},
-	{"dnd", "龙与地下城(DND)人物作成：.dnd([生成数量])\n.dnd 5\t//仅作参考，可自行应用变体规则"},
-	{"属性记录", "&st"},
-	{
-		"st",
-		"属性记录：.st (del/clr/show) ([属性名]:[属性值])\n用户默认所有群使用同一张卡，pl如需多开请使用.pc指令切卡\n.st力量:50 体质:55 体型:65 敏捷:45 外貌:70 智力:75 意志:35 教育:65 幸运:75\n.st hp-1 后接+/-时视为从原值上变化\n.st san+1d6 修改属性时可使用掷骰表达式\n.st del kp裁决\t//删除已保存的属性\n.st clr\t//清空当前卡\n.st show 灵感\t//查看指定属性\n.st show\t//无参数时查看所有属性，请使用只st加点过技能的半自动人物卡！\n部分COC属性会被视为同义词，如智力/灵感、理智/san、侦查/侦察"
-	},
-	{"角色卡", "&pc"},
-	{
-		"pc",
-		R"(角色卡：.pc 
+为了避免未预料到的指令误判，请尽可能在参数之间使用空格)"},
+{"deck","该指令可以设置默认牌堆，使用.draw不指定牌堆名时将使用此牌堆。该牌堆不会放回直到抽完最后一张后洗牌。\n.deck set 公共牌堆名 设置默认牌堆\n.deck set 正整数1-100 设置指定长度的数列\n.deck show 查看剩余卡牌\n.deck reset 重置剩余卡牌\n.deck new 自定义牌堆（用空格或|分割）（白名单限定）\n.deck new 有弹|无弹|无弹|无弹|无弹|无弹\n除show外其他群内操作需要管理权限"},
+{"退群","&dismiss"},
+{"退群指令","&dismiss"},
+{"dismiss","该指令需要群管理员权限，使用后即退出群聊\n!dismiss [目标QQ(完整或末四位)]指名退群\n!dismiss无视内置黑名单和静默状态，只要插件开启总是有效"},
+{"授权许可","&authoize"},
+{"authorize","授权许可(非信任用户使用时转为向管理申请许可)\n!authorize (+[群号]) ([申请理由])\n群内原地发送可省略群号，无法自动授权时会连同理由发给管理"},
+{"开关","&bot"},
+{"bot",".bot on/off开启/静默骰子（限群管理）\n.bot无视静默状态，只要插件开启且不在黑名单总是有效"},
+{"规则速查","&rules"},
+{"规则","&rules"},
+{"rules","规则速查：.rules ([规则]):[待查词条] 或.rules set [规则]\n.rules 跳跃 //复数规则有相同词条时，择一返回\n.rules COC：大失败 //coc默认搜寻coc7的词条,dnd默认搜寻3r\n.rules dnd：语言\n.rules set dnd //设置后优先查询dnd同名词条，无参数则清除设置"},
+{"掷骰","&r"},
+{"rd","&r"},
+{"r","掷骰：.r [掷骰表达式] ([掷骰原因]) [掷骰表达式]：([掷骰轮数]#)[骰子个数]d骰子面数(p[惩罚骰个数])(k[取点数最大的骰子数])不带参数时视为掷一个默认骰\n合法参数要求掷骰轮数1-10，奖惩骰个数1-9，个数范围1-100，面数范围1-1000\n.r3#d\t//3轮掷骰\n.rh心理学 暗骰\n.rs1D10+1D6+3 沙鹰伤害\t//省略单个骰子的点数，直接给结果\n现版本开头的r均可用o或d代替，但群聊中.ob会被识别为旁观指令"},
+{"暗骰","群聊限定，掷骰指令后接h视为暗骰，结果将私发本人和群内ob的用户\n为了保证发送成功，请加骰娘好友"},
+{"旁观","&ob"},
+{"旁观模式","&ob"},
+{"ob","旁观模式：.ob (exit/list/clr/on/off)\n.ob\t//加入旁观可以看到他人暗骰结果\n.ob exit\t//退出旁观模式\n.ob list\t//查看群内旁观者\n.ob clr\t//清除所有旁观者\n.ob on\t//全群允许旁观模式\n.ob off\t//禁用旁观模式\n暗骰与旁观仅在群聊中有效"},
+{"默认骰","&set"},
+{"set","当表达式中‘D’之后没有接面数时，视为投掷默认骰\n.set20 将默认骰设置为20\n.set 不带参数视为将默认骰重置为默认的100\n若所用规则判定掷骰形如2D6，推荐使用.st &=2D6"},
+{"个位骰","个位骰有十面，为0~9十个数字，百面骰的结果为十位骰与个位骰之和（但00+0时视为100）"},
+{"十位骰","十位骰有十面，为00~90十个数字，百面骰的结果为十位骰与个位骰之和（但00+0时视为100）"},
+{"奖励骰","&奖励/惩罚骰"},
+{"惩罚骰","&奖励/惩罚骰"},
+{"奖惩骰","&奖励/惩罚骰"},
+{"奖励/惩罚骰","COC中奖励/惩罚骰是额外投掷的十位骰，最终结果选用点数更低/更高的结果（不出现大失败的情况下等价于更小/更大的十位骰）\n.rb2 2个奖励骰\nrcp 射击 1个惩罚骰"},
+{"随机姓名","&name"},
+{"name","随机姓名：.name (cn/jp/en)([生成数量])\n.name 10\t//默认三类名称随机生成\n.name en\t//后接cn/jp/en则限定生成中文/日文/英文名\n名称生成个数范围1-10，太多容易发现姓名库的寒酸"},
+{"设置昵称","&nn"},
+{"昵称","&nn"},
+{"nn","设置昵称：.nn [昵称] / .nn / .nnn(cn/jp/en) \n.nn kp\t//昵称前的./！等符号会被自动忽略\n.nn\t//视为删除昵称\n.nnn\t//设置为随机昵称\n.nnn jp\t/设置限定随机昵称\n私聊.nn视为操作全局昵称\n优先级：群昵称>全局昵称>群名片>QQ昵称"},
+{"人物作成","该版本人物作成支持COC7(.coc、.draw调查员背景/英雄天赋)、COC6(.coc6、.draw煤气灯)、DND(.dnd)、AMGC(.draw AMGC)"},
+{"coc","克苏鲁的呼唤(COC)人物作成：.coc([7/6])(d)([生成数量])\n.coc 10\t//默认生成7版人物\n.coc6d\t//接d为详细作成，一次只能作成一个\n仅用作骰点法人物作成，可应用变体规则，参考.rules创建调查员的其他选项"},
+{"dnd","龙与地下城(DND)人物作成：.dnd([生成数量])\n.dnd 5\t//仅作参考，可自行应用变体规则"},
+{"属性记录","&st"},
+{"st","属性记录：.st (del/clr/show) ([属性名]:[属性值])\n用户默认所有群使用同一张卡，pl如需多开请使用.pc指令切卡\n.st力量:50 体质:55 体型:65 敏捷:45 外貌:70 智力:75 意志:35 教育:65 幸运:75\n.st hp-1 后接+/-时视为从原值上变化\n.st san+1d6 修改属性时可使用掷骰表达式\n.st del kp裁决\t//删除已保存的属性\n.st clr\t//清空当前卡\n.st show 灵感\t//查看指定属性\n.st show\t//无参数时查看所有属性，请使用只st加点过技能的半自动人物卡！\n部分COC属性会被视为同义词，如智力/灵感、理智/san、侦查/侦察"},
+{"角色卡","&pc"},
+{"pc",R"(角色卡：.pc 
 每名用户最多可同时保存16张角色卡
 .pc new ([模板]:([生成参数]:))([卡名]) 
 完全省略参数将生成一张COC7模板的随机姓名卡

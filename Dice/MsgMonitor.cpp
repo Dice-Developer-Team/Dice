@@ -6,7 +6,9 @@
 #include <queue>
 #include <mutex>
 #include "MsgMonitor.h"
+#include "DiceSchedule.h"
 
+std::atomic<unsigned int> FrqMonitor::sumFrqTotal = 0;
 std::map<long long, int> FrqMonitor::mFrequence = {};
 std::map<long long, int> FrqMonitor::mWarnLevel = {};
 
@@ -24,6 +26,9 @@ void AddFrq(long long QQ, time_t TT, chatType CT)
 	setFrq.insert(QQ);
 	auto* newFrq = new FrqMonitor(QQ, TT, CT);
 	EarlyMsgQueue.push(newFrq);
+	FrqMonitor::sumFrqTotal++;
+	today->inc("frq");
+	today->inc(QQ, "frq");
 }
 
 void frqHandler()
@@ -119,11 +124,11 @@ EVE_Status_EX(statusFrq)
 	{
 		eve.data = std::to_string(intFrq);
 		eve.dataf = "/min";
-		if (intFrq < 60)
+		if (intFrq < 10)
 		{
 			eve.color_green();
 		}
-		else if (intFrq < 120)
+		else if (intFrq < 20) 
 		{
 			eve.color_orange();
 		}

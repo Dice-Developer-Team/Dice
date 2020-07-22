@@ -358,43 +358,31 @@ string printChat(Chat& grp);
 ifstream& operator>>(ifstream& fin, Chat& grp);
 ofstream& operator<<(ofstream& fout, const Chat& grp);
 
-//被引用的图片列表
-extern set<string> sReferencedImage;
+extern unordered_set<std::string>sReferencedImage;
+void scanImage(string s, unordered_set<string>& list);
 
-void scanImage(const string& s, set<string>& list);
+void scanImage(const vector<string>& v, unordered_set<string>& list);
 
-void scanImage(const vector<string>& v, set<string>& list);
-
-template <typename TVal, typename sort>
-void scanImage(const map<string, TVal, sort>& m, set<string>& list)
-{
-	for (const auto& it : m)
-	{
+template<typename TVal, typename sort>
+void scanImage(const map<string, TVal, sort>& m, unordered_set<string>& list) {
+	for (auto it : m) {
 		scanImage(it.first, sReferencedImage);
 		scanImage(it.second, sReferencedImage);
 	}
 }
-
-template <typename TVal>
-void scanImage(const map<string, TVal>& m, set<string>& list)
-{
-	for (const auto& it : m)
-	{
+template<typename TVal>
+void scanImage(const map<string, TVal>& m, unordered_set<string>& list) {
+	for (auto it : m) {
 		scanImage(it.first, sReferencedImage);
 		scanImage(it.second, sReferencedImage);
 	}
 }
-
-template <typename TKey, typename TVal>
-void scanImage(const map<TKey, TVal>& m, set<string>& list)
-{
-	for (const auto& it : m)
-	{
+template<typename TKey, typename TVal>
+void scanImage(const map<TKey, TVal>& m, unordered_set<string>& list) {
+	for (auto it : m) {
 		scanImage(it.second, sReferencedImage);
 	}
 }
-
-int clearImage();
 
 DWORD getRamPort();
 
@@ -410,6 +398,8 @@ DWORD getRamPort();
 __int64 compareFileTime(const FILETIME& ft1, const FILETIME& ft2);
 
 //WIN CPU使用情况
-__int64 getWinCpuUsage();
+long long getWinCpuUsage();
 
-int getProcessCpu();
+long long getProcessCpu();
+
+long long getDiskUsage(double&, double&);

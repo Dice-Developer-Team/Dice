@@ -47,6 +47,10 @@ void init2(string& msg)
 	}
 	if (msg[0] == '!')
 		msg[0] = '.';
+	int posFF(0);
+	while ((posFF = msg.find('\f'))!= string::npos) {
+		msg[posFF] = '\v';
+	}
 }
 
 void COC7D(string& strMAns)

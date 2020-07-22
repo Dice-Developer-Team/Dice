@@ -6,7 +6,6 @@
 #include <Windows.h>
 #include <WinInet.h>
 #include <urlmon.h>
-#include <io.h>
 #include "json.hpp"
 #include "DiceCloud.h"
 #include "GlobalVar.h"

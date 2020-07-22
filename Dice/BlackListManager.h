@@ -70,7 +70,7 @@ public:
 	[[nodiscard]] bool isType(const string& strType) const;
 	[[nodiscard]] bool isSame(const DDBlackMark&) const;
 	[[nodiscard]] bool isSource(long long) const;
-	[[nodiscard]] bool is_remit() const;
+    void check_remit();
 	DDBlackMark& operator<<(const DDBlackMark&);
 	//bool operator<(const DDBlackMark&)const;
 };

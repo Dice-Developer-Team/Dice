@@ -78,8 +78,11 @@ void SendMsg()
 				msgQueue.pop();
 			}
 		}
-		if (!msg.msg.empty())
-		{
+		if (!msg.msg.empty()){
+			if (int pos = msg.msg.find('\f'); pos != string::npos) {
+				AddMsgToQueue(msg.msg.substr(pos + 1), msg.target_id, msg.msg_type);
+				msg.msg = msg.msg.substr(0, pos);
+			}
 			if (msg.msg_type == msgtype::Private)
 			{
 				sendPrivateMsg(msg.target_id, msg.msg);
