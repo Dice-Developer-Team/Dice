@@ -166,7 +166,7 @@ void Console::newMaster(long long qq)
 {
 	masterQQ = qq; 
 	getUser(qq).trust(5); 
-	setNotice({ qq,CQ::msgtype::Private }, 0b111111);
+	setNotice({qq, CQ::msgtype::Private}, 0b111111);
 	save(); 
 	AddMsgToQueue(getMsg("strNewMaster"), qq); 
 }
@@ -326,24 +326,31 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st)
 }
 
 //简易计时器
-	void ConsoleTimer() {
-		Console::Clock clockNow{ stNow.wHour,stNow.wMinute };
-		while (Enabled) {
+	void ConsoleTimer()
+	{
+		Console::Clock clockNow{stNow.wHour,stNow.wMinute};
+		while (Enabled) 
+		{
 			GetLocalTime(&stNow);
 			//分钟时点变动
-			if (stTmp.wMinute != stNow.wMinute) {
+			if (stTmp.wMinute != stNow.wMinute)
+			{
 				stTmp = stNow;
-				clockNow = { stNow.wHour,stNow.wMinute };
-				for (auto &[clock,eve_type] : multi_range(console.mWorkClock, clockNow)) {
-					switch (eve_type) {
+				clockNow = {stNow.wHour, stNow.wMinute};
+				for (const auto& [clock,eve_type] : multi_range(console.mWorkClock, clockNow))
+				{
+					switch (eve_type)
+					{
 					case ClockEvent::on:
-						if (console["DisabledGlobal"]) {
+						if (console["DisabledGlobal"])
+						{
 							console.set("DisabledGlobal", 0);
 							console.log(getMsg("strClockToWork"), 0b10000, "");
 						}
 						break;
 					case ClockEvent::off:
-						if (!console["DisabledGlobal"]) {
+						if (!console["DisabledGlobal"])
+						{
 							console.set("DisabledGlobal", 1);
 							console.log(getMsg("strClockOffWork"), 0b10000, "");
 						}
@@ -356,7 +363,7 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st)
 						if (clearGroup("black"))
 							console.log(GlobalMsg["strSelfName"] + "定时清群完成√", 1, printSTNow());
 						break;
-					default:break;
+					default: break;
 					}
 				}
 			}

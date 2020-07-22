@@ -7,6 +7,8 @@
 #include <string>
 #include <map>
 #include "DiceConsole.h"
+#include "Jsonio.h"
+#include "json.hpp"
 using std::string;
 using std::map;
 

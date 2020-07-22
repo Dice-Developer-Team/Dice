@@ -443,7 +443,8 @@ EVE_Enable(eventEnable)
 	//骰娘网络
 	getDiceList();
 	getExceptGroup();
-	console.log(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string((clock() - llStartTime) / 1000) + "秒", 0b1, printSTNow());
+	console.log(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string((clock() - llStartTime) / 1000) + "秒", 0b1, 
+		printSTNow());
 	llStartTime = clock();
 	return 0;
 }
@@ -505,7 +506,8 @@ bool eve_GroupAdd(Chat& grp)
 					cntUser++;
 					ave_trust += getUser(each.QQID).nTrust;
 				}
-				if (each.permissions > 1) {
+				if (each.permissions > 1) 
+				{
 					max_trust |= (1 << trustedQQ(each.QQID));
 					if (blacklist->get_qq_danger(each.QQID) > 1)
 					{
@@ -529,7 +531,8 @@ bool eve_GroupAdd(Chat& grp)
 						ave_trust += ginf.nGroupSize * trustedQQ(each.QQID);
 						strMsg += "，群主" + printQQ(each.QQID) + "；";
 					}
-					else {
+					else
+					{
 						ave_trust += ginf.nGroupSize * trustedQQ(each.QQID) / 10;
 					}
 				}
@@ -564,7 +567,8 @@ bool eve_GroupAdd(Chat& grp)
 			strMsg += strNote;
 		}
 		if (console["Private"] && !grp.isset("许可使用"))
-		{	//避免小群绕过邀请没加上白名单
+		{	
+			//避免小群绕过邀请没加上白名单
 			if (max_trust > 1 || ave_trust > 0.5)
 			{
 				grp.set("许可使用");
@@ -590,13 +594,13 @@ bool eve_GroupAdd(Chat& grp)
 	if (!GlobalMsg["strAddGroup"].empty())
 	{
 		this_thread::sleep_for(2s);
-		AddMsgToQueue(getMsg("strAddGroup"), { fromGroup, msgtype::Group });
+		AddMsgToQueue(getMsg("strAddGroup"), {fromGroup, msgtype::Group});
 	}
 	if (console["CheckGroupLicense"] && !grp.isset("许可使用"))
 	{
 		grp.set("未审核");
 		this_thread::sleep_for(2s);
-		AddMsgToQueue(getMsg("strGroupLicenseDeny"), { fromGroup, msgtype::Group });
+		AddMsgToQueue(getMsg("strGroupLicenseDeny"), {fromGroup, msgtype::Group});
 	}
 	return false;
 }
@@ -642,7 +646,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 	if (blacklist->get_qq_danger(eve.fromQQ) && console["AutoClearBlack"])
 	{
 		const string strMsg = "发现黑名单用户" + printQQ(eve.fromQQ) + "，自动执行退群";
-		console.log(printChat({ eve.fromDiscuss, msgtype::Discuss }) + strMsg, 0b10, printSTNow());
+		console.log(printChat({eve.fromDiscuss, msgtype::Discuss}) + strMsg, 0b10, printSTNow());
 		grp.leave(strMsg);
 		return;
 	}
@@ -728,9 +732,10 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease)
 		string strNote = printQQ(fromQQ) + "将" + printQQ(beingOperateQQ) + "移出了" + printChat(grp);
 		console.log(strNote, 0b1000, strNow);
 		if (!console["ListenGroupKick"] || trustedQQ(fromQQ) > 1 || grp.isset("免黑") || grp.isset("协议无效") || ExceptGroups.count(fromGroup)) return 0;
-		DDBlackMarkFactory mark{ fromQQ ,fromGroup };
+		DDBlackMarkFactory mark{fromQQ, fromGroup};
 		mark.sign().type("kick").time(strNow).note(strNow + " " + strNote).comment(getMsg("strSelfCall") + "原生记录");
-		if (grp.inviter && trustedQQ(grp.inviter) < 2) {
+		if (grp.inviter && trustedQQ(grp.inviter) < 2)
+		{
 			strNote += ";入群邀请者：" + printQQ(grp.inviter);
 			if (console["KickedBanInviter"])mark.inviterQQ(grp.inviter).note(strNow + " " + strNote);
 		}
@@ -744,7 +749,7 @@ EVE_System_GroupMemberDecrease(eventGroupMemberDecrease)
 		string strNote = printQQ(fromQQ) + "将" + printQQ(beingOperateQQ) + "移出了" + printChat(grp);
 		console.log(strNote, 0b1000, strNow);
 		if (trustedQQ(fromQQ) > 1 || grp.isset("免黑") || grp.isset("协议无效") || ExceptGroups.count(fromGroup)) return 0;
-		DDBlackMarkFactory mark{ fromQQ ,fromGroup };
+		DDBlackMarkFactory mark{fromQQ, fromGroup};
 		mark.type("kick").time(strNow).note(strNow + " " + strNote).DiceMaid(beingOperateQQ).masterQQ(mDiceList[beingOperateQQ]).comment(strNow + " " + printQQ(console.DiceMaid) + "目击");
 		grp.reset("许可使用").reset("免清");
 		blacklist->create(mark.product());
@@ -783,7 +788,8 @@ EVE_System_GroupBan(eventGroupBan)
 			if (!console)return 0;
 			mark.sign().comment(getMsg("strSelfCall") + "原生记录");
 		}
-		else {
+		else
+		{
 			mark.DiceMaid(beingOperateQQ).masterQQ(mDiceList[beingOperateQQ]).comment(strNow + " " + printQQ(console.DiceMaid) + "目击");
 		}
 		//统计群内管理
@@ -824,8 +830,9 @@ EVE_Request_AddGroup(eventGroupInvited)
 	if (subType == 2 && groupset(fromGroup, "忽略") < 1)
 	{
 		this_thread::sleep_for(3s);
-		string strNow = printSTNow();
-		string strMsg = "群添加请求，来自：" + printQQ(fromQQ) + ",群:" + to_string(fromGroup) + "。";
+		const string strNow = printSTNow();
+		string strMsg = "群添加请求，来自：" + printQQ(fromQQ) + ",群:" +
+			to_string(fromGroup) + "。";
 		if (blacklist->get_group_danger(fromGroup)) 
 		{
 			strMsg += "\n已拒绝（群在黑名单中）";

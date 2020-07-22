@@ -7,6 +7,8 @@
 #include "ManagerSystem.h"
 #include "DiceCloud.h"
 #include "BlackListManager.h"
+#include "GlobalVar.h"
+#include "CardDeck.h"
 #pragma warning(disable:28159)
 
 using namespace std;

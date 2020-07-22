@@ -18,7 +18,8 @@ int mkDir(const std::string& dir)
 	return -2;*/
 }
 
-int clrDir(std::string dir, const std::unordered_set<std::string>& exceptList) {
+int clrDir(const std::string& dir, const std::unordered_set<std::string>& exceptList)
+{
 	int nCnt = 0;
 	std::error_code err;
 	for (const auto& p : std::filesystem::directory_iterator(dir, err))

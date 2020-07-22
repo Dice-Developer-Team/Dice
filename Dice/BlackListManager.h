@@ -152,6 +152,12 @@ public:
 		return *this;
 	}
 
+	Factory& comment(string strNote) 
+	{
+		mark.comment = strNote;
+		return *this;
+	}
+
 	Factory& inviterQQ(long long qq)
 	{
 		mark.inviterQQ = {qq, true};

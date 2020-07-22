@@ -7,9 +7,12 @@
 #include <map>
 #include <set>
 #include <utility>
+#include <string>
 #include "CQAPI_EX.h"
 #include "MsgMonitor.h"
 #include "DiceSchedule.h"
+#include "DiceMsgSend.h"
+#include "GlobalVar.h"
 
 using std::string;
 
@@ -27,7 +30,7 @@ public:
 
 	bool isBlock = false;
 
-	void reply(const std::string& strReply, bool isFormat)
+	void reply(std::string strReply, bool isFormat)
 	{
 		isAns = true;
 		if (isFormat)
@@ -35,13 +38,14 @@ public:
 		else AddMsgToQueue(strReply, fromChat);
 	}
 
-	void reply(const std::string& strReply, const std::initializer_list<const std::string> replace_str = {},
+	void reply(std::string strReply, const std::initializer_list<const std::string> replace_str = {},
 	           bool isFormat = true)
 	{
 		isAns = true;
 		while (isspace(static_cast<unsigned char>(strReply[0])))
 			strReply.erase(strReply.begin());
-		if (!isFormat) {
+		if (!isFormat)
+		{
 			AddMsgToQueue(strReply, fromChat);
 			return;
 		}
@@ -67,8 +71,9 @@ public:
 		fout << printSTNow() << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 		fout.close();
 		reply(strMsg);
-		string note = getName(fromQQ) + strMsg;
-		for (const auto &[ct,level] : console.NoticeList) {
+		const string note = getName(fromQQ) + strMsg;
+		for (const auto& [ct,level] : console.NoticeList) 
+		{
 			if (!(level & note_lv) || pair(fromQQ, CQ::msgtype::Private) == ct || ct == fromChat)continue;
 			AddMsgToQueue(note, ct);
 		}
@@ -116,7 +121,8 @@ private:
 	}
 
 	//跳过空格
-	void readSkipSpace() {
+	void readSkipSpace()
+	{
 		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 	}
 
@@ -130,7 +136,8 @@ private:
 	{
 		string strPara;
 		readSkipSpace(); 
-		while (intMsgCnt < strMsg.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+		while (intMsgCnt < strMsg.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		{
 			strPara += strMsg[intMsgCnt];
 			intMsgCnt++;
 		}
@@ -138,9 +145,10 @@ private:
 	}
 
 	//读取至非空格空白符
-	string readUntilTab() {
+	string readUntilTab()
+	{
 		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
-		int intBegin = intMsgCnt;
+		const int intBegin = intMsgCnt;
 		int intEnd = intBegin;
 		const unsigned int len = strMsg.length();
 		while (intMsgCnt < len && (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == ' '))
@@ -179,12 +187,14 @@ private:
 	string readDigit(bool isForce = true)
 	{
 		string strMum;
-		if (isForce)while (intMsgCnt < strMsg.length() && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
+		if (isForce)while (intMsgCnt < strMsg.length() && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])))
+		{
 			if (strMsg[intMsgCnt] < 0)intMsgCnt++;
 			intMsgCnt++;
 		}
 		else while(intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
-		while (intMsgCnt < strMsg.length() && isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
+		while (intMsgCnt < strMsg.length() && isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])))
+		{
 			strMum += strMsg[intMsgCnt];
 			intMsgCnt++;
 		}
@@ -334,7 +344,8 @@ private:
 		if (strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '.')intMsgCnt++;
 		if (strMsg.substr(intMsgCnt, 2) == "：")intMsgCnt += 2;
 		readSkipSpace();
-		if (intMsgCnt >= strMsg.length() || !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
+		if (intMsgCnt >= strMsg.length() || !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])))
+		{
 			cc.second = 0;
 			return 0;
 		}

@@ -62,17 +62,21 @@ std::string format(std::string s, const std::map<std::string, std::string, sort>
 		string key = s.substr(l + 1, r - l - 1);
 		string val;
 		auto it = replace_str.find(key);
-		if (it != replace_str.end()) {
+		if (it != replace_str.end()) 
+		{
 			val = format(it->second, replace_str, str_tmp);
 		}
-		else if ((it = GlobalChar.find(key)) != GlobalChar.end()) {
+		else if ((it = GlobalChar.find(key)) != GlobalChar.end()) 
+		{
 			val = it->second;
 		}
-		else if ((it = str_tmp.find(key)) != str_tmp.end()) {
+		else if ((it = str_tmp.find(key)) != str_tmp.end())
+		{
 			if (key == "res")val = format(it->second, replace_str, str_tmp);
 			else val = it->second;
 		}
-		else if (auto func = strFuncs.find(key); func != strFuncs.end()) {
+		else if (auto func = strFuncs.find(key); func != strFuncs.end())
+		{
 			val = func->second();
 		}
 		else continue;
@@ -111,14 +115,18 @@ public:
 	std::string show()
 	{
 		std::string s;
-		if (intMaxLen > intLineLen || isLineBreak) {
-			for (auto it = vRes.begin(); it != vRes.end(); it++) {
+		if (intMaxLen > intLineLen || isLineBreak)
+		{
+			for (auto it = vRes.begin(); it != vRes.end(); it++)
+			{
 				if (it == vRes.begin())s = "\n" + *it;
 				else s += strLongSepa + *it;
 			}
 		}
-		else {
-			for (auto it = vRes.begin(); it != vRes.end(); it++) {
+		else
+		{
+			for (auto it = vRes.begin(); it != vRes.end(); it++)
+			{
 				if (it == vRes.begin())s = *it;
 				else s += sDot + *it;
 			}

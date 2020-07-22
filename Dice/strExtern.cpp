@@ -43,7 +43,7 @@ string convert_w2a(const wchar_t* wch)
 
 wstring convert_a2w(const char* ch) 
 {
-    int len = MultiByteToWideChar(CP_GB18030, 0, ch, -1, nullptr, 0);
+    const int len = MultiByteToWideChar(CP_GB18030, 0, ch, -1, nullptr, 0);
     wchar_t* m_char = new wchar_t[len];
     MultiByteToWideChar(CP_GB18030, 0, ch, -1, m_char, len);
     std::wstring wstr(m_char);

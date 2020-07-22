@@ -148,26 +148,33 @@ void DiceTableMaster::save()
 	}
 }
 
-int DiceTableMaster::load() {
+int DiceTableMaster::load() 
+{
     string strLog;
     std::unique_lock<std::shared_mutex> lock(sessionMutex);
     vector<std::filesystem::path> sFile;
     int cnt = listDir(DiceDir + "\\user\\session\\", sFile);
     if (cnt <= 0)return cnt;
-    for (auto& filename : sFile) {
+    for (auto& filename : sFile)
+	{
         nlohmann::json j = freadJson(filename);
-        if (j.is_null()) {
+        if (j.is_null())
+		{
             cnt--;
             continue;
         }
-        if (j["type"] == "simple") {
+        if (j["type"] == "simple")
+		{
             auto pSession(std::make_shared<Session>(j["room"]));
             pSession->create(j["create_time"]).update(j["update_time"]);
             if (j.count("observer")) pSession->sOB = j["observer"].get<set<long long>>();
-            if (j.count("tables")) {
-                for (nlohmann::json::iterator itTable = j["tables"].begin(); itTable != j["tables"].end(); ++itTable){
+            if (j.count("tables"))
+			{
+                for (nlohmann::json::iterator itTable = j["tables"].begin(); itTable != j["tables"].end(); ++itTable)
+				{
                     string strTable = UTF8toGBK(itTable.key());
-                    for (nlohmann::json::iterator itItem = itTable.value().begin(); itItem != j.end(); ++itItem) {
+                    for (nlohmann::json::iterator itItem = itTable.value().begin(); itItem != j.end(); ++itItem)
+					{
                         pSession->mTable[strTable].emplace(UTF8toGBK(itItem.key()), itItem.value());
                     }
                 }

@@ -32,7 +32,7 @@ using std::unordered_map;
 
 int mkDir(const std::string& dir);
 
-int clrDir(std::string dir, const unordered_set<std::string>& exceptList);
+int clrDir(const std::string& dir, const unordered_set<std::string>& exceptList);
 
 template <typename TKey, typename TVal, typename sort>
 void map_merge(map<TKey, TVal, sort>& m1, const map<TKey, TVal, sort>& m2)
@@ -214,26 +214,9 @@ int loadFile(std::string strPath, std::unordered_set<T>& setTmp)
 	return -1;
 }
 
-template<typename T>
-int loadFile(std::string strPath, std::unordered_set<T>& setTmp) {
-	std::ifstream fin(strPath);
-	if (fin)
-	{
-		int Cnt = 0;
-		T item;
-		while (fscan(fin, item))
-		{
-			setTmp.insert(item);
-			Cnt++;
-		}
-		return Cnt;
-	}
-	fin.close();
-	return -1;
-}
-
-template<typename T1, typename T2>
-int loadFile(std::string strPath, std::map<T1, T2>&mapTmp) {
+template <typename T1, typename T2>
+int loadFile(std::string strPath, std::map<T1, T2>& mapTmp)
+{
 	std::ifstream fin(strPath);
 	if (fin)
 	{
@@ -250,8 +233,9 @@ int loadFile(std::string strPath, std::map<T1, T2>&mapTmp) {
 	return -1;
 }
 
-template<typename T1, typename T2>
-int loadFile(std::string strPath, std::unordered_map<T1, T2>& mapTmp) {
+template <typename T1, typename T2>
+int loadFile(std::string strPath, std::unordered_map<T1, T2>& mapTmp) 
+{
 	std::ifstream fin(strPath);
 	if (fin)
 	{
@@ -268,8 +252,9 @@ int loadFile(std::string strPath, std::unordered_map<T1, T2>& mapTmp) {
 	return -1;
 }
 
-template<typename T1, typename T2>
-void loadFile(std::string strPath, std::multimap<T1,T2>&mapTmp) {
+template <typename T1, typename T2>
+void loadFile(std::string strPath, std::multimap<T1, T2>& mapTmp)
+{
 	std::ifstream fin(strPath);
 	if (fin)
 	{
@@ -319,21 +304,6 @@ int loadBFile(std::string strPath, std::unordered_map<T, C>& m)
 	return Cnt;
 }
 
-template<typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
-int loadBFile(std::string strPath, std::unordered_map<T, C>& m) {
-	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
-	if (!fin)return -1;
-	int len = fread<int>(fin);
-	int Cnt = 0;
-	T key;
-	C val;
-	while (fin.peek() != EOF && len > Cnt++) {
-		key = fread<T>(fin);
-		m[key].readb(fin);
-	}
-	fin.close();
-	return Cnt;
-}
 //读取伪ini
 template <class C>
 int loadINI(std::string strPath, std::map<std::string, C>& m)
@@ -365,7 +335,7 @@ int loadXML(const std::string& strPath, std::map<std::string, C>& m)
 }
 
 //遍历文件夹
-int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub = false) noexcept;
+int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub = false);
 
 template <typename T1, typename T2>
 int _loadDir(int (*load)(const std::string&, T2&), const std::string& strDir, T2& tmp, int& intFile, int& intFailure,
@@ -378,8 +348,9 @@ int _loadDir(int (*load)(const std::string&, T2&), const std::string& strDir, T2
 		{
 			intFile++;
 			string path = convert_w2a(p.path().filename().wstring().c_str());
-			int Cnt = load(strDir + path, tmp);
-			if (Cnt < 0) {
+			const int Cnt = load(strDir + path, tmp);
+			if (Cnt < 0)
+			{
 				files.push_back(path);
 				intFailure++;
 			}
@@ -541,27 +512,14 @@ void saveFile(std::string strPath, const unordered_map<TKey, TVal>& mTmp)
 	fout.close();
 }
 
-
-template<typename TKey, typename TVal>
-void saveFile(std::string strPath, const unordered_map<TKey, TVal>& mTmp) {
-	if (clrEmpty(strPath, mTmp))return;
-	std::ofstream fout(strPath);
-	for (const auto& [key, val] : mTmp)
-	{
-		fout << key << "\t";
-		fprint(fout, val);
-		fout << std::endl;
-	}
-	fout.close();
-}
-
-template<typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
-void saveBFile(std::string strPath, std::map<T, C>& m) {
+template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
+void saveBFile(std::string strPath, std::map<T, C>& m)
+{
 	if (clrEmpty(strPath, m))return;
 	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
 	const int len = m.size();
 	fwrite<int>(fout, len);
-	for (auto& [key, val] : m)
+	for (auto& [key,val] : m)
 	{
 		fwrite(fout, key);
 		fwrite(fout, val);
@@ -569,13 +527,15 @@ void saveBFile(std::string strPath, std::map<T, C>& m) {
 	fout.close();
 }
 
-template<typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
-void saveBFile(std::string strPath, std::unordered_map<T, C>& m) {
+template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
+void saveBFile(std::string strPath, std::unordered_map<T, C>& m)
+{
 	if (clrEmpty(strPath, m))return;
 	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
-	int len = m.size();
+	const int len = m.size();
 	fwrite<int>(fout, len);
-	for (auto& [key, val] : m) {
+	for (auto& [key, val] : m)
+	{
 		fwrite(fout, key);
 		fwrite(fout, val);
 	}

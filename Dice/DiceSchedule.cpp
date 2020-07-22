@@ -1,9 +1,11 @@
 #include <mutex>
 #include <condition_variable>
 #include <deque>
+#include "GlobalVar.h"
 #include "DiceJob.h" 
 #include "ManagerSystem.h"
 #include "Jsonio.h"
+#include "DiceSchedule.h"
 
 unordered_map<string, cmd> mCommand = {
 	{"syscheck",check_system},

@@ -370,7 +370,8 @@ bool DDBlackMark::isSource(long long qq) const
 {
 	return DiceMaid == qq || masterQQ == qq;
 }
-void DDBlackMark::check_remit(){
+void DDBlackMark::check_remit()
+{
     if (fromGroup.first && groupset(fromGroup.first, "免黑") > 0)erase();
     if (fromQQ.first && trustedQQ(fromQQ.first) > 1)erase();
     if (inviterQQ.first && trustedQQ(inviterQQ.first) > 1)inviterQQ.second = 0;
@@ -426,7 +427,8 @@ int DDBlackMark::check_cloud()
 	return -1;
 }
 
-int DDBlackManager::find(const DDBlackMark& mark) {
+int DDBlackManager::find(const DDBlackMark& mark)
+{
     std::lock_guard<std::mutex> lock_queue(blacklistMutex);
     unordered_set<unsigned int> sRange;
     if (mark.wid && mCloud.count(mark.wid)) return mCloud[mark.wid];
@@ -434,15 +436,19 @@ int DDBlackManager::find(const DDBlackMark& mark) {
         if (mCloud.count(mark.wid)) return mCloud[mark.wid];
         sRange = sIDEmpty;
     }
-    if (mark.time.length() == 19) {
+    if (mark.time.length() == 19) 
+	{
         unordered_set<unsigned int> sTimeRange = sTimeEmpty;
-        for (auto &[key,id] : multi_range(mTimeIndex, mark.time)) {
+        for (auto& [key,id] : multi_range(mTimeIndex, mark.time)) 
+		{
             sTimeRange.insert(id);
         }
-        if (sRange.empty()) {
+        if (sRange.empty())
+		{
             sRange.swap(sTimeRange);
         }
-        else {
+        else
+		{
             unordered_set<unsigned int> sInter;
 
             for (const auto& ele : sRange)
@@ -457,16 +463,20 @@ int DDBlackManager::find(const DDBlackMark& mark) {
             sRange.swap(sInter);
         }
     }
-    if (mark.fromGroup.first) {
+    if (mark.fromGroup.first)
+	{
         unordered_set<unsigned int> sGroupRange = sGroupEmpty;
-        for (auto& [key, id] : multi_range(mGroupIndex, mark.fromGroup.first)) {
+        for (auto& [key, id] : multi_range(mGroupIndex, mark.fromGroup.first))
+		{
             sGroupRange.insert(id);
         }
         if (sGroupRange.empty())return -1;
-        if (sRange.empty()) {
+        if (sRange.empty())
+		{
             sRange.swap(sGroupRange);
         }
-        else {
+        else 
+		{
             unordered_set<unsigned int> sInter;
             
             // O(n)
@@ -482,17 +492,21 @@ int DDBlackManager::find(const DDBlackMark& mark) {
             sRange.swap(sInter);
         }
     }
-    if (mark.fromQQ.first) {
+    if (mark.fromQQ.first)
+	{
         unordered_set<unsigned int> sQQRange = sQQEmpty;
-        for (auto& [key, id] : multi_range(mQQIndex, mark.fromQQ.first)) {
+        for (auto& [key, id] : multi_range(mQQIndex, mark.fromQQ.first)) 
+		{
             if (Enabled)console.log("匹配用户记录" + to_string(id), 0);
             sQQRange.insert(id);
         }
         if (sQQRange.empty())return -1;
-        if (sRange.empty()) {
+        if (sRange.empty())
+		{
             sRange.swap(sQQRange);
         }
-        else {
+        else
+		{
             unordered_set<unsigned int> sInter;
 
             for (const auto& ele : sRange)
@@ -507,45 +521,55 @@ int DDBlackManager::find(const DDBlackMark& mark) {
             sRange.swap(sInter);
         }
     }
-    for (auto i : sRange) {
+    for (auto i : sRange) 
+	{
         if (vBlackList[i].isSame(mark))return i;
     }
     return -1;
 }
 
-DDBlackMark& DDBlackMark::operator<<(const DDBlackMark& mark) {
+DDBlackMark& DDBlackMark::operator<<(const DDBlackMark& mark)
+{
     // int delta_danger = mark.danger - danger;
     if (type == "null" && mark.type != "null")type = mark.type;
-    if (time.empty() && !mark.time.empty()) {
+    if (time.empty() && !mark.time.empty())
+	{
         time = mark.time;
     }
     if (note != mark.note &&
         (note.empty() || count_char(note, '?') > count_char(mark.note, '?') || note.length() < mark.note.length())
-        ) {
+        )
+	{
         note = mark.note;
     }
-    if (mark.fromGroup.first) {
+    if (mark.fromGroup.first)
+	{
         fromGroup = mark.fromGroup;
     }
-    if (mark.fromQQ.first) {
+    if (mark.fromQQ.first)
+	{
         fromQQ = mark.fromQQ;
     }
-    if (mark.inviterQQ.first) {
+    if (mark.inviterQQ.first)
+	{
         inviterQQ = mark.inviterQQ;
     }
-    if (mark.ownerQQ.first) {
+    if (mark.ownerQQ.first) 
+	{
         ownerQQ = mark.ownerQQ;
     }
     if (!DiceMaid && mark.DiceMaid)DiceMaid = mark.DiceMaid;
     if (!masterQQ && mark.masterQQ)masterQQ = mark.masterQQ;
     //save comment if the mark changed at this update
-    if (!mark.comment.empty()) {
+    if (!mark.comment.empty())
+	{
         comment = mark.comment;
     }
     return *this;
 }
 
-void DDBlackManager::insert(DDBlackMark& ex_mark) {
+void DDBlackManager::insert(DDBlackMark& ex_mark)
+{
     std::lock_guard<std::mutex> lock_queue(blacklistMutex);
     unsigned id = vBlackList.size();
     vBlackList.push_back(ex_mark);
@@ -554,48 +578,62 @@ void DDBlackManager::insert(DDBlackMark& ex_mark) {
     else sIDEmpty.insert(id);
     if (mark.time.length() == 19)mTimeIndex.emplace(mark.time, id);
     else sTimeEmpty.insert(id);
-    if (mark.fromGroup.first) {
+    if (mark.fromGroup.first)
+	{
         mGroupIndex.emplace(mark.fromGroup.first, id);
-        if (mark.fromGroup.second) {
+        if (mark.fromGroup.second)
+		{
             up_group_danger(mark.fromGroup.first, mark); 
         }
     }
-    else {
+    else
+	{
         sGroupEmpty.insert(id);
     }
-    if (mark.fromQQ.first) {
+    if (mark.fromQQ.first) 
+	{
         mQQIndex.emplace(mark.fromQQ.first, id);
-        if (mark.fromQQ.second) {
+        if (mark.fromQQ.second)
+		{
             up_qq_danger(mark.fromQQ.first, mark); 
         }
     }
-    else {
+    else
+	{
         sQQEmpty.insert(id);
     }
-    if (mark.inviterQQ.first) {
+    if (mark.inviterQQ.first)
+	{
         mQQIndex.emplace(mark.inviterQQ.first, id);
-        if (mark.inviterQQ.second) {
+        if (mark.inviterQQ.second)
+		{
             up_qq_danger(mark.inviterQQ.first, mark);
         }
     }
-    if (mark.ownerQQ.first) {
+    if (mark.ownerQQ.first)
+	{
         mQQIndex.emplace(mark.ownerQQ.first, id);
-        if (mark.ownerQQ.second) {
+        if (mark.ownerQQ.second)
+		{
             up_qq_danger(mark.ownerQQ.first, mark);
         }
     }
     if (Enabled)blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
 }
-bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5) {
+
+bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5)
+{
     std::lock_guard<std::mutex> lock_queue(blacklistMutex);
     DDBlackMark& old_mark = vBlackList[id];
     int delta_danger = mark.danger - old_mark.danger;
     bool isUpdated = false;
-    if (delta_danger) {
+    if (delta_danger)
+	{
         old_mark.danger = mark.danger;
         isUpdated = true;
     }
-    if (mark.wid && !old_mark.wid) {
+    if (mark.wid && !old_mark.wid)
+	{
         sIDEmpty.erase(id);
         old_mark.wid = mark.wid;
         mCloud.emplace(old_mark.wid, id);
@@ -608,95 +646,121 @@ bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5) 
         if (mark.time.length() == 19)mTimeIndex.emplace(old_mark.time, id);
     }
     if (old_mark.note != mark.note &&
-        (old_mark.note.empty() || count_char(old_mark.note, '?') > count_char(mark.note, '?') || old_mark.note.length() < mark.note.length())
-        ) {
+        (old_mark.note.empty() || count_char(old_mark.note, '?') > count_char(mark.note, '?') || old_mark.note.length()
+			< mark.note.length())
+        )
+	{
         old_mark.note = mark.note;
     }
-    if (mark.fromGroup.first) {
-        if (!old_mark.fromGroup.first) {
+    if (mark.fromGroup.first)
+	{
+        if (!old_mark.fromGroup.first) 
+		{
             sGroupEmpty.erase(id);
             mGroupIndex.emplace(mark.fromGroup.first, id);
-            if (mark.fromGroup.second) {
+            if (mark.fromGroup.second)
+			{
                 up_group_danger(mark.fromGroup.first, mark);
             }
             old_mark.fromGroup = mark.fromGroup;
             isUpdated = true;
         }
-        else if (mark.fromGroup.second != old_mark.fromGroup.second) {
-            if (old_mark.fromGroup.second) {
+        else if (mark.fromGroup.second != old_mark.fromGroup.second)
+		{
+            if (old_mark.fromGroup.second)
+			{
                 old_mark.fromGroup.second = false;
                 reset_group_danger(mark.fromGroup.first);
                 isUpdated = true;
             }
-            else if (delta_danger > 0 || credit > 2){
+            else if (delta_danger > 0 || credit > 2)
+			{
                 old_mark.fromGroup.second = true;
                 up_group_danger(mark.fromGroup.first, mark);
                 isUpdated = true;
             }
         }
     }
-    if (mark.fromQQ.first) {
-        if (!old_mark.fromQQ.first) {
+    if (mark.fromQQ.first) 
+	{
+        if (!old_mark.fromQQ.first) 
+		{
             sQQEmpty.erase(id);
             mQQIndex.emplace(mark.fromQQ.first, id);
             old_mark.fromQQ = mark.fromQQ;
-            if (mark.fromQQ.second) {
+            if (mark.fromQQ.second)
+			{
                 up_qq_danger(mark.fromQQ.first, mark);
             }
             isUpdated = true;
         }
-        else if (mark.fromQQ.second != old_mark.fromQQ.second) {
-            if (old_mark.fromQQ.second) {
+        else if (mark.fromQQ.second != old_mark.fromQQ.second)
+		{
+            if (old_mark.fromQQ.second)
+			{
                 old_mark.fromQQ.second = false;
                 reset_qq_danger(mark.fromQQ.first);
                 isUpdated = true;
             }
-            else if (delta_danger > 0 || credit > 2) {
+            else if (delta_danger > 0 || credit > 2)
+			{
                 old_mark.fromQQ.second = true;
                 up_qq_danger(mark.fromQQ.first, mark);
                 isUpdated = true;
             }
         }
     }
-    if (mark.inviterQQ.first) {
-        if (!old_mark.inviterQQ.first) {
+    if (mark.inviterQQ.first)
+	{
+        if (!old_mark.inviterQQ.first)
+		{
             mQQIndex.emplace(mark.inviterQQ.first, id);
             old_mark.inviterQQ = mark.inviterQQ;
-            if (mark.inviterQQ.second) {
+            if (mark.inviterQQ.second)
+			{
                 up_qq_danger(mark.inviterQQ.first, mark);
             }
             isUpdated = true;
         }
-        else if (mark.inviterQQ.second != old_mark.inviterQQ.second) {
-            if (old_mark.inviterQQ.second) {
+        else if (mark.inviterQQ.second != old_mark.inviterQQ.second)
+		{
+            if (old_mark.inviterQQ.second) 
+			{
                 old_mark.inviterQQ.second = false;
                 reset_qq_danger(mark.inviterQQ.first);
                 isUpdated = true;
             }
-            else if (delta_danger > 0 || credit > 2) {
+            else if (delta_danger > 0 || credit > 2) 
+			{
                 old_mark.inviterQQ.second = true;
                 up_qq_danger(mark.inviterQQ.first, mark);
                 isUpdated = true;
             }
         }
     }
-    if (mark.ownerQQ.first) {
-        if (!old_mark.ownerQQ.first) {
+    if (mark.ownerQQ.first)
+	{
+        if (!old_mark.ownerQQ.first)
+		{
             sQQEmpty.erase(id);
             mQQIndex.emplace(mark.ownerQQ.first, id);
             old_mark.ownerQQ = mark.ownerQQ;
-            if (mark.ownerQQ.second) {
+            if (mark.ownerQQ.second)
+			{
                 up_qq_danger(mark.ownerQQ.first, mark);
             }
             isUpdated = true;
         }
-        else if (mark.ownerQQ.second != old_mark.ownerQQ.second) {
-            if (old_mark.ownerQQ.second) {
+        else if (mark.ownerQQ.second != old_mark.ownerQQ.second) 
+		{
+            if (old_mark.ownerQQ.second)
+			{
                 old_mark.ownerQQ.second = false;
                 reset_qq_danger(mark.ownerQQ.first);
                 isUpdated = true;
             }
-            else if (delta_danger > 0 || credit > 2) {
+            else if (delta_danger > 0 || credit > 2)
+			{
                 old_mark.ownerQQ.second = true;
                 up_qq_danger(mark.ownerQQ.first, mark);
                 isUpdated = true;
@@ -706,7 +770,8 @@ bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5) 
     if (!old_mark.DiceMaid && mark.DiceMaid)old_mark.DiceMaid = mark.DiceMaid;
     if (!old_mark.masterQQ && mark.masterQQ)old_mark.masterQQ = mark.masterQQ;
     //save comment if the mark changed at this update
-    if (isUpdated) {
+    if (isUpdated)
+	{
         if (!mark.comment.empty())old_mark.comment = mark.comment;
         if (Enabled)blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
     }
@@ -1002,63 +1067,83 @@ void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
 	insert(mark);
 	msg->note("已添加" + printQQ(llqq) + "的本地黑名单记录√");
 }
-void DDBlackManager::verify(void* pJson, long long operateQQ) {
-    DDBlackMark mark{ pJson };
+
+void DDBlackManager::verify(void* pJson, long long operateQQ)
+{
+    DDBlackMark mark{pJson};
     if (!mark.isValid)return;
     int credit = isReliable(operateQQ);
     //数据库是否有记录:-1=不存在;0=已注销;1=未确认;2=已确认;
     int is_cloud = -1;
-    if (console["CloudBlackShare"]) {
-        if (mark.wid) {
+    if (console["CloudBlackShare"])
+	{
+        if (mark.wid)
+		{
             string strInfo;
-            if ((is_cloud = getCloudBlackMark(mark.wid, strInfo)) > -1) {
-                try {
+            if ((is_cloud = getCloudBlackMark(mark.wid, strInfo)) > -1)
+			{
+                try
+				{
                     nlohmann::json j = nlohmann::json::parse(strInfo);
                     if (j["isErased"].get<int>())is_cloud = 0;
                     else if (j["isCheck"].get<int>())is_cloud = 2;
-                    if (mark.fromQQ.first) {
+                    if (mark.fromQQ.first) 
+					{
                         if (mark.fromQQ.first != j["fromQQ"].get<long long>())return;
                     }
-                    else {
-                        if (!mark.isClear)mark.fromQQ = { j["fromQQ"].get<long long>() ,true };
+                    else
+					{
+                        if (!mark.isClear)mark.fromQQ = {j["fromQQ"].get<long long>(), true};
                     }
-                    if (mark.fromGroup.first) {
+                    if (mark.fromGroup.first)
+					{
                         if (mark.fromGroup.first != j["fromGroup"].get<long long>())return;
                     }
-                    else {
-                        if (!mark.isClear)mark.fromGroup = { j["fromGroup"].get<long long>() ,true };
+                    else
+					{
+                        if (!mark.isClear)mark.fromGroup = {j["fromGroup"].get<long long>(), true};
                     }
                     mark.DiceMaid = j["DiceMaid"].get<long long>();
                     mark.masterQQ = j["masterQQ"].get<long long>();
                     mark.type = j["type"].get<string>();
                     mark.time = j["time"].get<string>();
-                    if (mark.note.empty()) {
-                         if (j.count("note") && !j["note"].get<string>().empty())mark.note = UTF8toGBK(j["note"].get<string>());
+                    if (mark.note.empty())
+					{
+                         if (j.count("note") && !j["note"].get<string>().empty())mark.note = UTF8toGBK(
+							 j["note"].get<string>());
                          else mark.fill_note();
                     }
                     if (credit < 3 || !mark.danger)mark.danger = 2;
                 }
-                catch (...) {
+                catch (...)
+				{
                     console.log("云端数据同步失败:wid=" + to_string(mark.wid), 0);
                     //mark.wid = 0;
                 }
             }
-            else {
+            else 
+			{
                 console.log("云端核验失败:wid=" + to_string(mark.wid), 0);
                 mark.wid = 0;
             }
         }
-        else {
+        else
+		{
             is_cloud = mark.check_cloud();
         }
     }
-    else{
+    else
+	{
         mark.wid = 0;
     }
-    if (credit < 3) {
-        if ((mark.isType("kick") && !console["ListenGroupKick"]) || (mark.isType("ban") && !console["ListenGroupBan"]) || (mark.isType("spam") && !console["ListenSpam"]))return;
+    if (credit < 3)
+	{
+        if ((mark.isType("kick") && !console["ListenGroupKick"]) || (mark.isType("ban") && !console["ListenGroupBan"])
+			|| (mark.isType("spam") && !console["ListenSpam"]))return;
         if (mark.type == "local" || mark.type == "other" || mark.isSource(console.DiceMaid)) {
-            if (credit > 0)console.log(getName(operateQQ) + "已通知" + GlobalMsg["strSelfName"] + "不良记录(未采用):\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
+            if (credit > 0)console.log(
+				getName(operateQQ) + "已通知" + GlobalMsg["strSelfName"] + "不良记录(未采用):\n!warning" + UTF8toGBK(
+					static_cast<json*>(pJson)->dump()), 1, printSTNow());
             return;
         }
     }
@@ -1067,29 +1152,36 @@ void DDBlackManager::verify(void* pJson, long long operateQQ) {
     mark.check_remit();
     int index = find(mark);
     //新记录
-    if (index < 0) {
+    if (index < 0)
+	{
         //发送者或当事人任一有黑名单
         if (credit < 0 || get_qq_danger(mark.DiceMaid) || get_qq_danger(mark.masterQQ))return;
         if (!mark.isType())return;
         //无云端确认记录且不受信任
-        if (is_cloud < 0 || is_cloud == 1) {
+        if (is_cloud < 0 || is_cloud == 1) 
+		{
             if (mark.type == "ruler" || credit == 0)return;
         }
         //云端注销，则同步注销
-        else if(is_cloud == 0){
+        else if (is_cloud == 0)
+		{
             if (!mark.isClear && credit < 3)mark.erase();
         }
-        if (credit < 3) {
+        if (credit < 3)
+		{
             if (is_cloud < 1 && mark.type == "extern")return;
         }
-        else {
+        else
+		{
             if (mark.type == "local" && credit < 4)return;
         }
         if (mark.fromGroup.first && (groupset(mark.fromGroup.first, "忽略") > 0 || groupset(mark.fromGroup.first, "协议无效") > 0 || ExceptGroups.count(mark.fromGroup.first)))return;
         insert(mark);
         console.log(getName(operateQQ) + "已通知" + GlobalMsg["strSelfName"] + "不良记录" + to_string(vBlackList.size() - 1) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
     }
-    else {  //已有记录
+    else 
+	{ 
+		//已有记录
         DDBlackMark& old_mark = vBlackList[index];
         bool isSource = operateQQ == old_mark.DiceMaid || operateQQ == old_mark.masterQQ;
         //低于危险等级无权修改

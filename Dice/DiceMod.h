@@ -13,7 +13,8 @@ using std::string;
 using std::vector;
 using std::map;
 
-class DiceGenerator {
+class DiceGenerator
+{
     //冷却时间
     //int cold_time;
     //单次抽取上限
@@ -30,7 +31,8 @@ public:
 	vector<string> cards;
 };
 
-class DiceMod{
+class DiceMod
+{
     string mod_name;
     string auther;
     string ver;
@@ -46,7 +48,9 @@ public:
         map<string, vector<string>> private_deck,
         map<string, vector<string>> public_deck,
         map<string, DiceGenerator> generator*/
-        ):mod_name(name), m_helpdoc(helpdoc) /*,m_private_deck(private_deck),m_public_deck(public_deck),m_generator(generator)*/ {
+        ) : mod_name(std::move(name)), m_helpdoc(std::move(helpdoc))
+        /*,m_private_deck(private_deck),m_public_deck(public_deck),m_generator(generator)*/
+    {
     }
     friend class DiceModFactory;
 };

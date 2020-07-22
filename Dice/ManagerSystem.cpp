@@ -14,23 +14,24 @@ string DiceDir = "DiceData";
  //被引用的图片列表
 unordered_set<string> sReferencedImage;
 
-const map<string, short> mChatConf{//0-群管理员，2-白名单2级，3-白名单3级，4-管理员，5-系统操作
-	{"忽略",4},
-	{"拦截消息",0},
-	{"停用指令",0},
-	{"禁用回复",0},
-	{"禁用jrrp",0},
-	{"禁用draw",0},
-	{"禁用me",0},
-	{"禁用help",0},
-	{"禁用ob",0},
-	{"许可使用",1},
-	{"未审核",1},
-	{"免清",2},
-	{"免黑",4},
-	{"协议无效",4},
-	{"未进",5},
-	{"已退",5}
+const map<string, short> mChatConf{
+	//0-群管理员，2-白名单2级，3-白名单3级，4-管理员，5-系统操作
+	{"忽略", 4},
+	{"拦截消息", 0},
+	{"停用指令", 0},
+	{"禁用回复", 0},
+	{"禁用jrrp", 0},
+	{"禁用draw", 0},
+	{"禁用me", 0},
+	{"禁用help", 0},
+	{"禁用ob", 0},
+	{"许可使用", 1},
+	{"未审核", 1},
+	{"免清", 2},
+	{"免黑", 4},
+	{"协议无效", 4},
+	{"未进", 5},
+	{"已退", 5}
 };
 
 User& getUser(long long qq)
@@ -62,7 +63,8 @@ int clearUser()
 	return QQDelete.size();
 }
 
-string getName(long long QQ, long long GroupID){
+string getName(long long QQ, long long GroupID)
+{
 	if (QQ == console.DiceMaid)return getMsg("strSelfCall");
 	string nick;
 	if (UserList.count(QQ) && getUser(QQ).getNick(nick, GroupID))return nick;
@@ -70,36 +72,46 @@ string getName(long long QQ, long long GroupID){
 	if (!(nick = strip(CQ::getStrangerInfo(QQ).nick)).empty())return nick;
 	return GlobalMsg["stranger"] + "(" + to_string(QQ) + ")";
 }
-void filter_CQcode(string& nick, long long fromGroup) {
+void filter_CQcode(string& nick, long long fromGroup)
+{
 	size_t posL(0);
-	while ((posL = nick.find(CQ_AT)) != string::npos) {
+	while ((posL = nick.find(CQ_AT)) != string::npos)
+	{
 		//检查at格式
-		if (size_t posR = nick.find(']',posL); posR != string::npos) {
+		if (size_t posR = nick.find(']',posL); posR != string::npos) 
+		{
 			std::string_view stvQQ(nick);
 			stvQQ = stvQQ.substr(posL + 10, posR - posL - 10);
 			//检查QQ号格式
 			bool isDig = true;
-			for (auto ch: stvQQ) {
-				if (!isdigit(static_cast<unsigned char>(ch))) {
+			for (auto ch: stvQQ) 
+			{
+				if (!isdigit(static_cast<unsigned char>(ch)))
+				{
 					isDig = false;
 					break;
 				}
 			}
 			//转义
-			if (isDig && posR - posL < 29) {
+			if (isDig && posR - posL < 29) 
+			{
 				nick.replace(posL, posR - posL + 1, "@" + getName(stoll(string(stvQQ)), fromGroup));
 			}
-			else if (stvQQ == "all") {
+			else if (stvQQ == "all") 
+			{
 				nick.replace(posL, posR - posL + 1, "@全体成员");
 			}
-			else {
+			else
+			{
 				nick.replace(posL, posR - posL + 1, "@");
 			}
 		}
 		else return;
 	}
-	while ((posL = nick.find("[CQ:")) != string::npos) {
-		if (size_t posR = nick.find(']', posL); posR != string::npos) {
+	while ((posL = nick.find("[CQ:")) != string::npos)
+	{
+		if (size_t posR = nick.find(']', posL); posR != string::npos) 
+		{
 			nick.erase(posL, posR - posL + 1);
 		}
 		else return;
@@ -123,11 +135,15 @@ Chat& Chat::id(long long grp) {
 	}
 	return *this;
 }
-int groupset(long long id, string st) {
+
+int groupset(long long id, string st)
+{
 	if (!ChatList.count(id))return -1;
 	return ChatList[id].isset(std::move(st));
 }
-string printChat(Chat& grp) {
+
+string printChat(Chat& grp)
+{
 	if (CQ::getGroupList().count(grp.ID))return "[" + CQ::getGroupList()[grp.ID] + "](" + to_string(grp.ID) + ")";
 	if (!grp.Name.empty())return "[" + grp.Name + "](" + to_string(grp.ID) + ")";
 	if (grp.isset("群名"))return "[" + grp.strConf["群名"] + "](" + to_string(grp.ID) + ")";
@@ -135,7 +151,7 @@ string printChat(Chat& grp) {
 	return "讨论组(" + to_string(grp.ID) + ")";
 }
 
-void scanImage(string s, unordered_set<string>& list) {
+void scanImage(const string& s, unordered_set<string>& list) {
 	int l = 0, r = 0;
 	while ((l = s.find('[', r)) != string::npos && (r = s.find(']', l)) != string::npos)
 	{
@@ -147,7 +163,8 @@ void scanImage(string s, unordered_set<string>& list) {
 }
 
 void scanImage(const vector<string>& v, unordered_set<string>& list) {
-	for (auto it : v) {
+	for (const auto& it : v)
+	{
 		scanImage(it, sReferencedImage);
 	}
 }
@@ -169,9 +186,8 @@ __int64 compareFileTime(const FILETIME& ft1, const FILETIME& ft2)
 	return t1 - t2;
 }
 
-long long getWinCpuUsage() {
-	HANDLE hEvent;
-	BOOL res;
+long long getWinCpuUsage() 
+{
 	FILETIME preidleTime;
 	FILETIME prekernelTime;
 	FILETIME preuserTime;
@@ -180,9 +196,9 @@ long long getWinCpuUsage() {
 	FILETIME userTime;
 
 	if (!GetSystemTimes(&idleTime, &kernelTime, &userTime)) return -1;
-	FILETIME preidleTime = idleTime;
-	FILETIME prekernelTime = kernelTime;
-	FILETIME preuserTime = userTime;
+	preidleTime = idleTime;
+	prekernelTime = kernelTime;
+	preuserTime = userTime;	
 
 	Sleep(1000);
 	if (!GetSystemTimes(&idleTime, &kernelTime, &userTime)) return -1;

@@ -56,7 +56,7 @@ std::enable_if_t<std::is_arithmetic_v<T>, T> readJKey(const std::string& strJson
 	return stoll(strJson);
 }
 
-nlohmann::json freadJson(std::string strPath);
+nlohmann::json freadJson(const std::string& strPath);
 nlohmann::json freadJson(const std::filesystem::path& path);
 void fwriteJson(std::string strPath, const json& j);
 
@@ -94,10 +94,12 @@ template<typename T1, typename T2, typename sort>
 int loadJMap(const std::string& strLoc, std::map<T1, T2, sort> &mapTmp) {
 	nlohmann::json j = freadJson(strLoc);
 	if (j.is_null())return -2;
-	try {
+	try 
+	{
 		return readJMap(j, mapTmp);
 	}
-	catch (...) {
+	catch (...)
+	{
 		return -1;
 	}
 }

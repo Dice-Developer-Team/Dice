@@ -9,6 +9,8 @@
 #include "DiceSession.h"
 #include "GetRule.h"
 #include "CQAPI.h"
+#include "DiceNetwork.h"
+#include "DiceCloud.h"
 #include <iostream>
 using namespace std;
 using namespace CQ;
@@ -49,12 +51,13 @@ int FromMsg::AdminEvent(const string& strOption)
 		if (console["DisabledJrrp"])res << "全局禁用.jrrp";
 		if (console["DisabledDraw"])res << "全局禁用.draw";
 		if (console["DisabledSend"])res << "全局禁用.send";
-		if (trusted > 3) res << "所在群聊数：" + to_string(getGroupList().size())
+		if (trusted > 3)
+			res << "所在群聊数：" + to_string(getGroupList().size())
 			<< "群记录数：" + to_string(ChatList.size())
-			<< "好友数："+to_string(getFriendList().size())
+			<< "好友数：" + to_string(getFriendList().size())
 			<< "用户记录数：" + to_string(UserList.size())
 			<< "今日用户量：" + to_string(today->cnt())
-			<< (PList.size() ? "角色卡记录数：" + to_string(PList.size()) : "")
+			<< (!PList.empty() ? "角色卡记录数：" + to_string(PList.size()) : "")
 			<< "黑名单用户数：" + to_string(blacklist->mQQDanger.size())
 			<< "黑名单群数：" + to_string(blacklist->mGroupDanger.size());
 		reply(GlobalMsg["strSelfName"] + "的当前情况" + res.show());
@@ -87,7 +90,7 @@ int FromMsg::AdminEvent(const string& strOption)
 	{
 		note("已经放弃管理员权限√", 0b100);
 		getUser(fromQQ).trust(3);
-		console.NoticeList.erase({ fromQQ,msgtype::Private });
+		console.NoticeList.erase({fromQQ, msgtype::Private});
 		return 1;
 	}
 	if (strOption == "on")
@@ -411,7 +414,8 @@ int FromMsg::AdminEvent(const string& strOption)
 				else
 				{
 					chat(llGroup).set("许可使用").reset("未审核");
-					if (!chat(llGroup).isset("已退") && !chat(llGroup).isset("未进"))AddMsgToQueue(getMsg("strAuthorized"), llGroup, Group);
+					if (!chat(llGroup).isset("已退") && !chat(llGroup).isset("未进"))AddMsgToQueue(
+						getMsg("strAuthorized"), llGroup, msgtype::Group);
 					note("已添加" + printGroup(llGroup) + "在" + GlobalMsg["strSelfName"] + "的使用许可");
 				}
 			}
@@ -438,130 +442,171 @@ int FromMsg::AdminEvent(const string& strOption)
 		reply("当前总指令频度" + to_string(FrqMonitor::getFrqTotal()));
 		return 1;
 	}
-	else {
+	else 
+	{
 		bool boolErase = false;
 		strVar["note"] = readPara();
-		if (strMsg[intMsgCnt] == '-') {
+		if (strMsg[intMsgCnt] == '-')
+		{
 			boolErase = true;
 			intMsgCnt++;
 		}
 		if (strMsg[intMsgCnt] == '+') { intMsgCnt++; }
 		long long llTargetID = readID();
-		if (strOption == "dismiss") {
-			if (ChatList.count(llTargetID)) {
+		if (strOption == "dismiss")
+		{
+			if (ChatList.count(llTargetID))
+			{
 				note("已令" + GlobalMsg["strSelfName"] + "退出" + printChat(chat(llTargetID)), 0b10);
 				chat(llTargetID).reset("免清").leave();
 			}
-			else {
+			else
+			{
 				reply(GlobalMsg["strGroupGetErr"]);
 			}
 			return 1;
 		}
-		else if (strOption == "boton") {
-			if (getGroupList().count(llTargetID)) {
-				if (groupset(llTargetID, "停用指令") > 0) {
+		else if (strOption == "boton")
+		{
+			if (getGroupList().count(llTargetID))
+			{
+				if (groupset(llTargetID, "停用指令") > 0)
+				{
 					chat(llTargetID).reset("停用指令");
 					note("已令" + GlobalMsg["strSelfName"] + "在" + printGroup(llTargetID) + "启用指令√");
 				}
 				else reply(GlobalMsg["strSelfName"] + "已在该群启用指令!");
 			}
-			else {
+			else
+			{
 				reply(GlobalMsg["strGroupGetErr"]);
 			}
 		}
-		else if (strOption == "botoff") {
-			if (groupset(llTargetID, "停用指令") < 1) {
+		else if (strOption == "botoff")
+		{
+			if (groupset(llTargetID, "停用指令") < 1)
+			{
 				chat(llTargetID).set("停用指令");
 				note("已令" + GlobalMsg["strSelfName"] + "在" + printGroup(llTargetID) + "停用指令√", 0b1);
 			}
 			else reply(GlobalMsg["strSelfName"] + "已在该群停用指令!");
 			return 1;
 		}
-		else if (strOption == "blackgroup") {
-			if (llTargetID == 0) {
+		else if (strOption == "blackgroup")
+		{
+			if (llTargetID == 0)
+			{
 				strReply = "当前黑名单群列表：";
-				for (auto [each, danger] : blacklist->mGroupDanger) {
+				for (auto [each, danger] : blacklist->mGroupDanger)
+				{
 					strReply += "\n" + to_string(each);
 				}
 				reply();
 				return 1;
 			}
 			strVar["time"] = printSTNow();
-			do {
-				if (boolErase) {
+			do
+			{
+				if (boolErase)
+				{
 					blacklist->rm_black_group(llTargetID, this);
 				}
-				else {
+				else
+				{
 					blacklist->add_black_group(llTargetID, this);
 				}
-			} while ((llTargetID = readID()));
+			} 
+			while ((llTargetID = readID()));
 			return 1;
 		}
-		else if (strOption == "whiteqq") {
-			if (llTargetID == 0) {
+		else if (strOption == "whiteqq")
+		{
+			if (llTargetID == 0)
+			{
 				strReply = "当前白名单用户列表：";
-				for (auto& [qq, user] : UserList) {
+				for (auto& [qq, user] : UserList)
+				{
 					if (user.nTrust)strReply += "\n" + printQQ(qq) + ":" + to_string(user.nTrust);
 				}
 				reply();
 				return 1;
 			}
-			do {
-				if (boolErase) {
-					if (trustedQQ(llTargetID)) {
-						if (trusted <= trustedQQ(llTargetID)) {
+			do
+			{
+				if (boolErase)
+				{
+					if (trustedQQ(llTargetID))
+					{
+						if (trusted <= trustedQQ(llTargetID))
+						{
 							reply(GlobalMsg["strUserTrustDenied"]);
 						}
-						else {
+						else 
+						{
 							getUser(llTargetID).trust(0);
 							note("已收回" + GlobalMsg["strSelfName"] + "对" + printQQ(llTargetID) + "的信任√", 0b1);
 						}
 					}
-					else {
+					else
+					{
 						reply(printQQ(llTargetID) + "并不在" + GlobalMsg["strSelfName"] + "的白名单！");
 					}
 				}
-				else {
-					if (trustedQQ(llTargetID)) {
+				else 
+				{
+					if (trustedQQ(llTargetID))
+					{
 						reply(printQQ(llTargetID) + "已加入" + GlobalMsg["strSelfName"] + "的白名单!");
 					}
-					else {
+					else
+					{
 						getUser(llTargetID).trust(1);
 						note("已添加" + GlobalMsg["strSelfName"] + "对" + printQQ(llTargetID) + "的信任√", 0b1);
 						strVar["user_nick"] = getName(llTargetID);
 						AddMsgToQueue(format(GlobalMsg["strWhiteQQAddNotice"], GlobalMsg, strVar), llTargetID);
 					}
 				}
-			} while ((llTargetID = readID()));
+			}
+			while ((llTargetID = readID()));
 			return 1;
 		}
-		else if (strOption == "blackqq") {
-			if (llTargetID == 0) {
+		else if (strOption == "blackqq")
+		{
+			if (llTargetID == 0) 
+			{
 				strReply = "当前黑名单用户列表：";
-				for (auto [each, danger] : blacklist->mQQDanger) {
+				for (auto [each, danger] : blacklist->mQQDanger) 
+				{
 					strReply += "\n" + printQQ(each);
 				}
 				reply();
 				return 1;
 			}
 			strVar["time"] = printSTNow();
-			do {
-				if (boolErase) {
+			do 
+			{
+				if (boolErase)
+				{
 					blacklist->rm_black_qq(llTargetID, this);
 				}
-				else {
+				else
+				{
 					blacklist->add_black_qq(llTargetID, this);
 				}
-			} while ((llTargetID = readID()));
+			}
+			while ((llTargetID = readID()));
 			return 1;
 		}
 		else reply(GlobalMsg["strAdminOptionEmpty"]);
 		return 0;
 	}
 }
-int FromMsg::MasterSet() {
-	std::string strOption = readPara();
-	if (strOption.empty()) {
+
+int FromMsg::MasterSet() 
+{
+	const std::string strOption = readPara();
+	if (strOption.empty())
+	{
 		reply(GlobalMsg["strAdminOptionEmpty"]);
 		return -1;
 	}
@@ -582,13 +627,16 @@ int FromMsg::MasterSet() {
 		console.killMaster();
 		return 1;
 	}
-	else if (strOption == "reset") {
-		if (console.master() != fromQQ) {
+	else if (strOption == "reset")
+	{
+		if (console.master() != fromQQ)
+		{
 			reply(GlobalMsg["strNotMaster"]);
 			return 1;
 		}
-		string strMaster = readDigit();
-		if (strMaster.empty() || stoll(strMaster) == console.master()) {
+		const string strMaster = readDigit();
+		if (strMaster.empty() || stoll(strMaster) == console.master())
+		{
 			reply("Master不要消遣{strSelfCall}!");
 		}
 		else
@@ -616,7 +664,7 @@ int FromMsg::MasterSet() {
 				if (trustedQQ(llAdmin) > 3)
 				{
 					note("已收回" + printQQ(llAdmin) + "对" + GlobalMsg["strSelfName"] + "的管理权限√", 0b100);
-					console.rmNotice({ llAdmin,msgtype::Private });
+					console.rmNotice({llAdmin, msgtype::Private});
 					getUser(llAdmin).trust(0);
 				}
 				else
@@ -633,7 +681,7 @@ int FromMsg::MasterSet() {
 				else
 				{
 					getUser(llAdmin).trust(4);
-					console.addNotice({ llAdmin, msgtype::Private }, 0b1110);
+					console.addNotice({llAdmin, msgtype::Private}, 0b1110);
 					note("已添加" + printQQ(llAdmin) + "对" + GlobalMsg["strSelfName"] + "的管理权限√", 0b100);
 				}
 			}
@@ -654,7 +702,7 @@ int FromMsg::DiceReply()
 {
 	if (strMsg[0] != '.')return 0;
 	intMsgCnt++;
-	int intT = (int)fromChat.second;
+	int intT = static_cast<int>(fromChat.second);
 	while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 		intMsgCnt++;
 	strVar["nick"] = getName(fromQQ, fromGroup);
@@ -683,7 +731,8 @@ int FromMsg::DiceReply()
 			}
 		}
 		if (pGrp->isset("许可使用") && !pGrp->isset("未审核"))return 0;
-		if (trusted > 0) {
+		if (trusted > 0)
+		{
 			pGrp->set("许可使用").reset("未审核").reset("协议无效");
 			note("已授权" + printGroup(pGrp->ID) + "许可使用", 1);
 			AddMsgToQueue(getMsg("strGroupAuthorized", strVar), pGrp->ID, msgtype::Group);
@@ -701,7 +750,8 @@ int FromMsg::DiceReply()
 	if (strLowerMessage.substr(intMsgCnt, 7) == "dismiss")
 	{
 		intMsgCnt += 7;
-		if (!intT) {
+		if (!intT)
+		{
 			string QQNum = readDigit();
 			if (QQNum.empty())
 			{
@@ -723,24 +773,29 @@ int FromMsg::DiceReply()
 				grp.leave(GlobalMsg["strAdminDismiss"]);
 				reply(GlobalMsg["strGroupExit"]);
 			}
-			else if(getGroupMemberInfo(llGroup, fromQQ).permissions > 1){
+			else if(getGroupMemberInfo(llGroup, fromQQ).permissions > 1)
+			{
 				reply(GlobalMsg["strDismiss"]);
 			}
-			else {
+			else
+			{
 				reply(GlobalMsg["strPermissionDeniedErr"]);
 			}
 			return 1;
 		}
 		string QQNum = readDigit();
 		if (QQNum.empty() || QQNum == to_string(console.DiceMaid) || (QQNum.length() == 4 && stoll(QQNum) == getLoginQQ() % 10000)){
-			if (trusted > 2) {
+			if (trusted > 2) 
+			{
 				pGrp->leave(GlobalMsg["strAdminDismiss"]);
 			}
 			if (pGrp->isset("协议无效"))return 0;
-			if (isAuth) {
+			if (isAuth)
+			{
 				pGrp->leave(GlobalMsg["strDismiss"]);
 			}
-			else {
+			else
+			{
 				if (!isCalled && (pGrp->isset("停用指令") || GroupInfo(fromGroup).nGroupSize > 200))AddMsgToQueue(getMsg("strPermissionDeniedErr", strVar), fromQQ);
 				else reply(GlobalMsg["strPermissionDeniedErr"]);
 			}
@@ -806,10 +861,12 @@ int FromMsg::DiceReply()
 		}
 		return 1;
 	}
-	else if (intT != PrivateT && pGrp->isset("协议无效")) {
+	else if (intT != PrivateT && pGrp->isset("协议无效"))
+	{
 		return 0;
 	}
-	else if (blacklist->get_qq_danger(fromQQ) || (intT != PrivateT && blacklist->get_group_danger(fromGroup))) {
+	if (blacklist->get_qq_danger(fromQQ) || (intT != PrivateT && blacklist->get_group_danger(fromGroup)))
+	{
 		return 0;
 	}
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
@@ -824,9 +881,12 @@ int FromMsg::DiceReply()
 			{
 				if (console["DisabledGlobal"])reply(GlobalMsg["strGlobalOff"]);
 				else if (intT == GroupT && ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用"))))reply(GlobalMsg["strGroupLicenseDeny"]);
-				else if (intT) {
-					if (isAuth){
-						if (groupset(fromGroup, "停用指令") > 0) {
+				else if (intT)
+				{
+					if (isAuth)
+					{
+						if (groupset(fromGroup, "停用指令") > 0)
+						{
 							chat(fromGroup).reset("停用指令");
 							reply(GlobalMsg["strBotOn"]);
 						}
@@ -843,23 +903,29 @@ int FromMsg::DiceReply()
 					}
 				}
 			}
-			else if (Command == "off"){
-				if (isAuth){
-					if (groupset(fromGroup, "停用指令")) {
+			else if (Command == "off")
+			{
+				if (isAuth)
+				{
+					if (groupset(fromGroup, "停用指令"))
+					{
 						if (!isCalled && QQNum.empty() && pGrp->isGroup && GroupInfo(fromGroup).nGroupSize > 200)AddMsgToQueue(getMsg("strBotOffAlready", strVar), fromQQ);
 						else reply(GlobalMsg["strBotOffAlready"]);
 					}
-					else {
+					else 
+					{
 						chat(fromGroup).set("停用指令");
 						reply(GlobalMsg["strBotOff"]);
 					}
 				}
-				else {
+				else
+				{
 					if (groupset(fromGroup, "停用指令"))AddMsgToQueue(getMsg("strPermissionDeniedErr", strVar), fromQQ);
 					else reply(GlobalMsg["strPermissionDeniedErr"]);
 				}
 			}
-			else if (!Command.empty() && !isCalled && pGrp->isset("停用指令")) {
+			else if (!Command.empty() && !isCalled && pGrp->isset("停用指令"))
+			{
 				return 0;
 			}
 			else if (intT == GroupT && pGrp->isset("停用指令") && GroupInfo(fromGroup).nGroupSize >= 500 && !isCalled)
@@ -980,7 +1046,9 @@ int FromMsg::DiceReply()
 		}
 		return true;
 	}
-	else if (intT == GroupT && ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")))) {
+	else if (intT == GroupT && ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && 
+		!pGrp->isset("许可使用"))))
+	{
 		return 0;
 	}
 	if (strLowerMessage.substr(intMsgCnt, 7) == "welcome")
@@ -1133,7 +1201,6 @@ int FromMsg::DiceReply()
 				reply("Mirai不支持此功能");
 				return -1;
 			}
-
 			if (trusted < 5 && fromQQ != console.master()) 
 			{
 				reply(GlobalMsg["strNotMaster"]);
@@ -1143,8 +1210,10 @@ int FromMsg::DiceReply()
 			sch.push_job(*this);
 			return 1;
 		}
-		else if (strOption == "die") {
-			if (trusted < 5 && fromQQ != console.master()) {
+		else if (strOption == "die") 
+		{
+			if (trusted < 5 && fromQQ != console.master()) 
+			{
 				reply(GlobalMsg["strNotMaster"]);
 				return -1;
 			}
@@ -1365,11 +1434,13 @@ int FromMsg::DiceReply()
 			res << "记录创建：" + printDate(grp.tCreated);
 			res << "最后记录：" + printDate(grp.tUpdated);
 			if (grp.inviter)res << "邀请者：" + printQQ(grp.inviter);
-			if (isInGroup) {
+			if (isInGroup)
+			{
 				res << string("入群欢迎：") + (grp.isset("入群欢迎") ? "已设置" : "未设置")
 					<< "用户占比：" + to_string(cntUser * 100 / (grpinfo.nGroupSize - 1)) + "%";
-				res << (sInact.size() ? "\n30天不活跃群员数：" + to_string(sInact.size()) : "");
-				if (sBlackQQ.size()) {
+				res << (!sInact.empty() ? "\n30天不活跃群员数：" + to_string(sInact.size()) : "");
+				if (!sBlackQQ.empty())
+				{
 					if (sBlackQQ.size() > 8)
 						res << GlobalMsg["strSelfName"] + "的黑名单成员" + to_string(sBlackQQ.size()) + "名";
 					else
@@ -1442,68 +1513,86 @@ int FromMsg::DiceReply()
 			else reply(GlobalMsg["strGroupWholeBan"]);
 			return 1;
 		}
-		else if (Command == "restart") {
-			if (intPms < 2 && trusted < 4) {
+		else if (Command == "restart")
+		{
+			if (intPms < 2 && trusted < 4)
+			{
 				reply(GlobalMsg["strPermissionDeniedErr"]);
 				return 1;
 			}
-			if(!setGroupWholeBan(llGroup, 0))reply(GlobalMsg["strGroupWholeUnban"]);
+			if (!setGroupWholeBan(llGroup, 0))reply(GlobalMsg["strGroupWholeUnban"]);
 			return 1;
 		}
-		else if (Command == "card") {
-			if (long long llqq = readID()) {
-				if (trusted < 4 && intPms < 2 && llqq != fromQQ) {
+		else if (Command == "card") 
+		{
+			if (long long llqq = readID()) 
+			{
+				if (trusted < 4 && intPms < 2 && llqq != fromQQ)
+				{
 					reply(GlobalMsg["strPermissionDeniedErr"]);
 					return 1;
 				}
-				if (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 2) {
+				if (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 2)
+				{
 					reply(GlobalMsg["strSelfPermissionErr"]);
 					return 1;
 				}
-				while (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length())intMsgCnt++;
+				while (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length())
+					intMsgCnt++;
 				while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
 				strVar["card"] = readRest();
 				strVar["target"] = getName(llqq, llGroup);
-				if (setGroupCard(llGroup, llqq, strVar["card"])) {
+				if (setGroupCard(llGroup, llqq, strVar["card"]))
+				{
 					reply(GlobalMsg["strGroupCardSetErr"]);
 				}
-				else {
+				else 
+				{
 					reply(GlobalMsg["strGroupCardSet"]);
 				}
 			}
-			else {
+			else 
+			{
 				reply(GlobalMsg["strQQIDEmpty"]);
 			}
 			return 1;
 		}
-		else if ((intPms < 2 && (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 3 || trusted < 5))) {
+		else if ((intPms < 2 && (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 3 || trusted < 5)))
+		{
 			reply(GlobalMsg["strPermissionDeniedErr"]);
 			return 1;
 		}
-		else if (Command == "ban") {
-			if (trusted < 4) {
+		else if (Command == "ban")
+		{
+			if (trusted < 4)
+			{
 				reply(GlobalMsg["strNotAdmin"]);
 				return -1;
 			}
-			if (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 2) {
+			if (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 2) 
+			{
 				reply(GlobalMsg["strSelfPermissionErr"]);
 				return 1;
 			}
 			string QQNum = readDigit();
-			if (QQNum.empty()) {
+			if (QQNum.empty()) 
+			{
 				reply(GlobalMsg["strQQIDEmpty"]);
 				return -1;
 			}
 			long long llMemberQQ = stoll(QQNum);
 			GroupMemberInfo Member = getGroupMemberInfo(llGroup, llMemberQQ);
-			if (Member.QQID == llMemberQQ){
+			if (Member.QQID == llMemberQQ)
+			{
 				strVar["member"] = getName(Member.QQID, llGroup);
-				if (Member.permissions > 1) {
+				if (Member.permissions > 1)
+				{
 					reply(GlobalMsg["strSelfPermissionErr"]);
 					return 1;
 				}
 				string strMainDice = readDice();
-				if (strMainDice.empty()) {
+				if (strMainDice.empty())
+				{
 					reply(GlobalMsg["strValueErr"]);
 					return -1;
 				}
@@ -1520,36 +1609,45 @@ int FromMsg::DiceReply()
 			}
 			else reply("{self}查无此群员×");
 		}
-		else if (Command == "kick") {
-			if (trusted < 4) {
+		else if (Command == "kick") 
+{
+			if (trusted < 4)
+			{
 				reply(GlobalMsg["strNotAdmin"]);
 				return -1;
 			}
-			if (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 2) {
+			if (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 2)
+			{
 				reply(GlobalMsg["strSelfPermissionErr"]);
 				return 1;
 			}
 			long long llMemberQQ = readID();
-			if (!llMemberQQ) {
+			if (!llMemberQQ) 
+			{
 				reply(GlobalMsg["strQQIDEmpty"]);
 				return -1;
 			}
 			ResList resKicked, resDenied, resNotFound;
 			GroupMemberInfo Member;
-			do {
+			do 
+			{
 				Member = getGroupMemberInfo(llGroup, llMemberQQ);
-				if (Member.QQID == llMemberQQ) {
-					if (Member.permissions > 1) {
+				if (Member.QQID == llMemberQQ)
+				{
+					if (Member.permissions > 1)
+					{
 						resDenied << Member.Nick + "(" + to_string(Member.QQID) + ")";
 						continue;
 					}
-					if (setGroupKick(llGroup, llMemberQQ, false) == 0) {
+					if (setGroupKick(llGroup, llMemberQQ, false) == 0)
+					{
 						resKicked << Member.Nick + "(" + to_string(Member.QQID) + ")";
 					}
 					else resDenied << Member.Nick + "(" + to_string(Member.QQID) + ")";
 				}
 				else resNotFound << to_string(llMemberQQ);
-			} while ((llMemberQQ = readID()));
+			} 
+			while ((llMemberQQ = readID()));
 			strReply = GlobalMsg["strSelfName"];
 			if (!resKicked.empty())strReply += "已移出群员：" + resKicked.show() + "\n";
 			if (!resDenied.empty())strReply += "移出失败：" + resDenied.show() + "\n";
@@ -1557,24 +1655,31 @@ int FromMsg::DiceReply()
 			reply();
 			return 1;
 		}
-		else if (Command == "title") {
-			if (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 3) {
+		else if (Command == "title") 
+{
+			if (getGroupMemberInfo(llGroup, console.DiceMaid).permissions < 3)
+			{
 				reply(GlobalMsg["strSelfPermissionErr"]);
 				return 1;
 			}
-			if (long long llqq = readID()) {
-				while (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length())intMsgCnt++;
+			if (long long llqq = readID()) 
+			{
+				while (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length())
+					intMsgCnt++;
 				while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
 				strVar["title"] = readRest();
-				if (setGroupSpecialTitle(llGroup, llqq, strVar["title"])) {
+				if (setGroupSpecialTitle(llGroup, llqq, strVar["title"]))
+				{
 					reply(GlobalMsg["strGroupTitleSetErr"]);
 				}
-				else {
+				else 
+				{
 					strVar["target"] = getName(llqq, llGroup);
 					reply(GlobalMsg["strGroupTitleSet"]);
 				}
 			}
-			else {
+			else 
+			{
 				reply(GlobalMsg["strQQIDEmpty"]);
 			}
 			return 1;
@@ -2982,7 +3087,9 @@ int FromMsg::DiceReply()
 			string strTurnCnt = strMsg.substr(intMsgCnt, strMsg.find('#') - intMsgCnt);
 			//#能否识别有效
 			if (strTurnCnt.empty())intMsgCnt++;
-			else if ((strTurnCnt.length() == 1 && isdigit(static_cast<unsigned char>(strTurnCnt[0]))) || strTurnCnt == "10") {
+			else if ((strTurnCnt.length() == 1 && isdigit(static_cast<unsigned char>(strTurnCnt[0]))) || strTurnCnt ==
+				"10") 
+			{
 				intMsgCnt += strTurnCnt.length() + 1;
 				intTurnCnt = stoi(strTurnCnt);
 			}
@@ -4034,7 +4141,7 @@ int FromMsg::CustomReply()
 		{
 			strVar["nick"] = getName(fromQQ, fromGroup);
 			strVar["pc"] = getPCName(fromQQ, fromGroup);
-			strVar["at"] = fromType != msgtype::Private ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
+			strVar["at"] = fromChat.second != msgtype::Private ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
 		}
 		reply(CardDeck::drawCard(deck->second, true));
 		AddFrq(fromQQ, fromTime, fromChat);
@@ -4076,8 +4183,10 @@ bool FromMsg::DiceFilter()
 	if (fromChat.second == msgtype::Private) isCalled = true;
 	trusted = trustedQQ(fromQQ);
 	isBotOff = (console["DisabledGlobal"] && (trusted < 4 || !isCalled)) || (!(isCalled && console["DisabledListenAt"]) && (groupset(fromGroup, "停用指令") > 0));
-	if (DiceReply()) {
-		if (isAns) {
+	if (DiceReply()) 
+	{
+		if (isAns)
+		{
 			AddFrq(fromQQ, fromTime, fromChat);
 			getUser(fromQQ).update(fromTime);
 		}
@@ -4093,12 +4202,14 @@ int FromMsg::readNum(int& num)
 {
 	string strNum;
 	while (intMsgCnt < strMsg.length() && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])) && strMsg[intMsgCnt] != '-')intMsgCnt++;
-	if (strMsg[intMsgCnt] == '-') {
+	if (strMsg[intMsgCnt] == '-')
+	{
 		strNum += '-';
 		intMsgCnt++;
 	}
 	if (intMsgCnt >= strMsg.length())return -1;
-	while (intMsgCnt < strMsg.length() && isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
+	while (intMsgCnt < strMsg.length() && isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])))
+	{
 		strNum += strMsg[intMsgCnt];
 		intMsgCnt++;
 	}
@@ -4128,7 +4239,6 @@ int FromMsg::readChat(chatType& ct, bool isReroll)
 	{
 		ct.second = CQ::msgtype::Group;
 	}
-
 	else if (strT == "discuss")
 	{
 		ct.second = CQ::msgtype::Discuss;
@@ -4138,7 +4248,7 @@ int FromMsg::readChat(chatType& ct, bool isReroll)
 		if (isReroll)intMsgCnt = intFormor;
 		return -1;
 	}
-	if (long long llID = readID(); llID)
+	if (const long long llID = readID(); llID)
 	{
 		ct.first = llID;
 		return 0;

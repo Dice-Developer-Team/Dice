@@ -194,11 +194,7 @@ public:
 	map<string, int> intConf{};
 	map<string, string> strConf{};
 
-	Chat& id(long long grp)
-	{
-		ID = grp;
-		return *this;
-	}
+	Chat& id(long long grp);
 
 	Chat& group()
 	{
@@ -359,27 +355,36 @@ ifstream& operator>>(ifstream& fin, Chat& grp);
 ofstream& operator<<(ofstream& fout, const Chat& grp);
 
 extern unordered_set<std::string>sReferencedImage;
-void scanImage(string s, unordered_set<string>& list);
+
+void scanImage(const string& s, unordered_set<string>& list);
 
 void scanImage(const vector<string>& v, unordered_set<string>& list);
 
-template<typename TVal, typename sort>
-void scanImage(const map<string, TVal, sort>& m, unordered_set<string>& list) {
-	for (auto it : m) {
+template <typename TVal, typename sort>
+void scanImage(const map<string, TVal, sort>& m, unordered_set<string>& list)
+{
+	for (const auto& it : m)
+	{
 		scanImage(it.first, sReferencedImage);
 		scanImage(it.second, sReferencedImage);
 	}
 }
-template<typename TVal>
-void scanImage(const map<string, TVal>& m, unordered_set<string>& list) {
-	for (auto it : m) {
+
+template <typename TVal>
+void scanImage(const map<string, TVal>& m, unordered_set<string>& list)
+{
+	for (const auto& it : m)
+	{
 		scanImage(it.first, sReferencedImage);
 		scanImage(it.second, sReferencedImage);
 	}
 }
-template<typename TKey, typename TVal>
-void scanImage(const map<TKey, TVal>& m, unordered_set<string>& list) {
-	for (auto it : m) {
+
+template <typename TKey, typename TVal>
+void scanImage(const map<TKey, TVal>& m, unordered_set<string>& list)
+{
+	for (const auto& it : m) 
+	{
 		scanImage(it.second, sReferencedImage);
 	}
 }

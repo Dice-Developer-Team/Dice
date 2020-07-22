@@ -165,13 +165,19 @@ void getExceptGroup();
 	extern std::map<long long, long long> mDiceList;
 	//获取骰娘列表
 	void getDiceList();
-	struct fromMsg {
+
+	struct fromMsg
+	{
 		std::string strMsg;
 		long long fromQQ = 0;
 		long long fromGroup = 0;
 		fromMsg() = default;
-		fromMsg(std::string msg, long long QQ, long long Group) :strMsg(msg), fromQQ(QQ), fromGroup(Group) {};
+
+		fromMsg(std::string msg, long long QQ, long long Group) : strMsg(std::move(msg)), fromQQ(QQ), fromGroup(Group)
+		{
+		};
 	};
+
 	//通知
 	//一键清退
 	extern int clearGroup(std::string strPara = "unpower", long long fromQQ = 0);
