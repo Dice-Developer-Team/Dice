@@ -1,11 +1,11 @@
 ﻿# Dice!
 QQ Dice Robot For TRPG Based on CoolQ/Mirai
 
-[![License](https://img.shields.io/github/license/w4123/Dice.svg)](http://www.gnu.org/licenses)
-[![Build status](https://ci.appveyor.com/api/projects/status/6qm1l31k07dst0rk?svg=true)](https://ci.appveyor.com/project/w4123/dice)
-[![Downloads](https://img.shields.io/github/downloads/w4123/dice/total.svg)](https://github.com/w4123/Dice/releases)
-[![GitHub contributors](https://img.shields.io/github/contributors/w4123/dice.svg)](https://github.com/w4123/Dice/graphs/contributors)
-[![GitHub last commit](https://img.shields.io/github/last-commit/w4123/dice.svg)](https://github.com/w4123/Dice/commits)
+[![License](https://img.shields.io/github/license/Dice-Developer-Team/Dice.svg)](http://www.gnu.org/licenses)
+[![Build status](https://ci.appveyor.com/api/projects/status/7uq2qi3348ny1tfv?svg=true)](https://ci.appveyor.com/project/w4123/dice-ovf7o)
+[![Downloads](https://img.shields.io/github/downloads/Dice-Developer-Team/dice/total.svg)](https://github.com/Dice-Developer-Team/Dice/releases)
+[![GitHub contributors](https://img.shields.io/github/contributors/Dice-Developer-Team/dice.svg)](https://github.com/Dice-Developer-Team/Dice/graphs/contributors)
+[![GitHub last commit](https://img.shields.io/github/last-commit/Dice-Developer-Team/dice.svg)](https://github.com/Dice-Developer-Team/Dice/commits)
 
 ## 简介
 
@@ -13,9 +13,9 @@ Dice!是一款基于酷Q的QQ跑团掷骰机器人 交流QQ群:882747577或94198
 
 主页: <http://kokona.tech/>
 
-Latest Stable Release: [![GitHub release](https://img.shields.io/github/release/w4123/dice.svg)](https://github.com/w4123/Dice/releases) [![GitHub Release Date](https://img.shields.io/github/release-date/w4123/dice.svg)](https://github.com/w4123/Dice/releases)
+Latest Stable Release: [![GitHub release](https://img.shields.io/github/release/Dice-Developer-Team/dice.svg)](https://github.com/w4123/Dice-Developer-Team/releases) [![GitHub Release Date](https://img.shields.io/github/release-date/Dice-Developer-Team/dice.svg)](https://github.com/Dice-Developer-Team/Dice/releases)
 
-Latest Release: [![GitHub release](https://img.shields.io/github/release-pre/w4123/dice.svg)](https://github.com/w4123/Dice/releases) [![GitHub Release Date](https://img.shields.io/github/release-date-pre/w4123/dice.svg)](https://github.com/w4123/Dice/releases)
+Latest Release: [![GitHub release](https://img.shields.io/github/release-pre/Dice-Developer-Team/dice.svg)](https://github.com/Dice-Developer-Team/Dice/releases) [![GitHub Release Date](https://img.shields.io/github/release-date-pre/Dice-Developer-Team/dice.svg)](https://github.com/Dice-Developer-Team/Dice/releases)
 
 ## 开发者
 
