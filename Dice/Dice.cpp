@@ -213,9 +213,9 @@ EVE_Enable(eventEnable)
 		else
 		{
 			sendPrivateMsg(console.DiceMaid,
-			               R"(欢迎使用Dice!exp版掷骰机器人！
+			               R"(欢迎使用Dice!掷骰机器人！
 右键点击酷Q->【应用管理】->【菜单】->【Master模式切换】可开启Master模式，开启对骰娘的后台功能
-炼骰手册:http://shiki.stringempty.xyz/download/DiceMaid_CookBook.html
+文档: https://v2docs.kokona.tech
 更多文件参看.help链接
 )");
 		}

@@ -816,10 +816,10 @@ int FromMsg::DiceReply()
 		if (!console.master())
 		{
 			console.newMaster(fromQQ);
-			strReply = "请认真阅读当前版本Master手册以履行职责。最新发布版:shiki.stringempty.xyz/download/Shiki_Master_Manual.pdf";
-			strReply += "\n用户手册:shiki.stringempty.xyz/download/Shiki_User_Manual.pdf";
+			strReply = "请认真阅读当前版本Master手册以及用户手册。最新版，请注意版本号对应: https://v2docs.kokona.tech";
 			strReply += "\n如要添加较多没有单群开关的插件，推荐开启DisabledBlock保证群内的静默；";
 			strReply += "\n默认开启对群移出、禁言、刷屏事件的监听，如要关闭请手动调整；";
+			strReply += "\n请注意云黑系统默认开启，如无需此功能请关闭CloudBlackShare；";
 			string strOption = readRest();
 			if (strOption == "public")
 			{
