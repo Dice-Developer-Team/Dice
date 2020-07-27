@@ -153,8 +153,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strLinkNotFound","时空门要通向不可名状的地方了×"},
 	{"strNotMaster","你不是{self}的master！你想做什么？"},
 	{"strNotAdmin","你不是{self}的管理员×"},
-	{ "strAdminDismiss", "{strDismiss}" },					//管理员指令退群的回执
-	{"strDismiss", ""},						//.dismiss退群前的回执
+	{"strAdminDismiss","{strDismiss}"},					//管理员指令退群的回执
+	{"strDismiss",""},						//.dismiss退群前的回执
 	{"strHlpSet","已为{key}设置词条√"},
 	{"strHlpReset","已清除{key}的词条√"},
 	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
