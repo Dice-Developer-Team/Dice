@@ -770,7 +770,7 @@ int FromMsg::DiceReply()
 				reply(GlobalMsg["strGroupAway"]);
 			}
 			if (trustedQQ(fromQQ) > 2) {
-				grp.leave(GlobalMsg["strAdminDismiss"]);
+				grp.leave(getMsg("strAdminDismiss", strVar));
 				reply(GlobalMsg["strGroupExit"]);
 			}
 			else if(getGroupMemberInfo(llGroup, fromQQ).permissions > 1)
@@ -787,7 +787,7 @@ int FromMsg::DiceReply()
 		if (QQNum.empty() || QQNum == to_string(console.DiceMaid) || (QQNum.length() == 4 && stoll(QQNum) == getLoginQQ() % 10000)){
 			if (trusted > 2) 
 			{
-				pGrp->leave(GlobalMsg["strAdminDismiss"]);
+				pGrp->leave(getMsg("strAdminDismiss", strVar));
 			}
 			if (pGrp->isset("协议无效"))return 0;
 			if (isAuth)
