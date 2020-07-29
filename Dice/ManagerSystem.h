@@ -252,9 +252,9 @@ public:
 			else CQ::sendDiscussMsg(ID, msg);
 			Sleep(500);
 		}
-		set("рямк");
 		if (isGroup)CQ::setGroupLeave(ID);
 		else CQ::setDiscussLeave(ID);
+		set("рямк");
 	}
 
 	[[nodiscard]] bool isset(const string& key) const

@@ -116,7 +116,7 @@ public:
 	void verify(void*, long long);
 	void create(DDBlackMark&);
 	//读取json格式黑名单记录
-	int loadJson(string strPath);
+	int loadJson(string strPath, bool isExtern = false);
 	//读取旧版本黑名单列表
 	int loadHistory(const string& strLoc);
 	void saveJson(const string& strPath) const;

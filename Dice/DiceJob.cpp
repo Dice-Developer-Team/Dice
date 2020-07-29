@@ -82,6 +82,7 @@ void cq_restart(DiceJob& job) {
 	std::this_thread::sleep_for(3s);
 	Enabled = false;
 	dataBackUp();
+	std::this_thread::sleep_for(3s);
 	switch (UINT res = -1; res = WinExec(".\\reload.bat", SW_SHOW)) {
 	case 0:
 		job.note("重启失败：内存或资源已耗尽！", 1);
@@ -313,6 +314,22 @@ void dice_update(DiceJob& job) {
 	}
 }
 
+//获取云不良记录
+void dice_cloudblack(DiceJob& job) {
+	job.note("开始获取云端记录", 1); 
+	string strURL("http://shiki.stringempty.xyz/blacklist/checked.json?" + to_string(job.fromTime));
+	switch (Cloud::DownloadFile(strURL.c_str(), "DiceData/conf/CloudBlackList.json")) {
+	case -1:
+		job.echo("云不良记录同步失败:" + strURL);
+		break;
+	case -2:
+		job.echo("云不良记录同步失败!文件未找到");
+		break;
+	case 0:
+		job.note(getMsg("self") + "云不良记录同步成功，开始读取", 1);
+		blacklist->loadJson("DiceData/conf/CloudBlackList.json", true);
+	}
+}
 string print_master() {
 	return printQQ(console.master());
 }

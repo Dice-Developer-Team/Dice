@@ -311,7 +311,7 @@ void getDiceList()
 void getExceptGroup() {
 	std::string list;
 	if (Network::GET("shiki.stringempty.xyz", "/DiceCloud/except_group.json", 80, list))
-		json::parse(list, nullptr, false).get_to(ExceptGroups);
+		readJson(list, ExceptGroups);
 }
 
 
@@ -435,7 +435,7 @@ int clearGroup(string strPara, long long fromQQ)
 				if (blacklist->get_group_danger(id))
 				{
 					res << printGroup(id) + "£º" + "ºÚÃûµ¥Èº";
-					if (console["LeaveBlackGroup"])grp.leave(getMsg("strBlackGroup"));
+					grp.leave(getMsg("strBlackGroup"));
 				}
 				vector<GroupMemberInfo> MemberList = getGroupMemberList(id);
 				for (const auto& eachQQ : MemberList)

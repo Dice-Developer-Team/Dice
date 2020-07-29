@@ -3,6 +3,7 @@
 #include <fstream>
 #include <map>
 #include <vector>
+#include <set>
 #include <filesystem>
 #include "json.hpp"
 #include "EncodingConvert.h"
@@ -75,7 +76,16 @@ int readJMap(const nlohmann::json& j, std::map<T1, T2, sort>& mapTmp)
 	}
 	return intCnt;
 }
-
+template <typename T>
+int readJson(const std::string& strJson, std::set<T>& setTmp) {
+	try {
+		nlohmann::json j(nlohmann::json::parse(strJson));
+		j.get_to(setTmp);
+		return j.size();
+	} catch (...) {
+		return -1;
+	}
+}
 template <typename T1, typename T2>
 int readJson(const std::string& strJson, std::map<T1, T2>& mapTmp)
 {

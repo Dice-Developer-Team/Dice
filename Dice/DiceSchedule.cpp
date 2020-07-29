@@ -14,7 +14,8 @@ unordered_map<string, cmd> mCommand = {
 	{"reload",cq_restart},
 	{"die",cq_exit},
 	{"heartbeat",cloud_beat},
-	{"update",dice_update}
+	{"update",dice_update},
+	{"cloudblack",dice_cloudblack}
 };
 
 
