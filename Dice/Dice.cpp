@@ -216,8 +216,7 @@ EVE_Enable(eventEnable)
 			               R"(欢迎使用Dice!掷骰机器人！
 右键点击酷Q->【应用管理】->【菜单】->【Master模式切换】可开启Master模式，开启对骰娘的后台功能
 文档: https://v2docs.kokona.tech
-更多文件参看.help链接
-)");
+更多文件参看.help链接)");
 		}
 		ifstreamMaster.close();
 		std::map<string, int> boolConsole;
@@ -226,7 +225,7 @@ EVE_Enable(eventEnable)
 		{
 			console.set(key, val);
 		}
-		console.setClock({ 5, 5 }, ClockEvent::clear);
+		console.setClock({ 11, 45 }, ClockEvent::clear);
 		console.loadNotice();
 		console.save();
 	}
@@ -393,7 +392,9 @@ EVE_Enable(eventEnable)
 		blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
 		console.log("初始化不良记录" + to_string(cnt) + "条", 1);
 	}
-
+	else {
+		blacklist->loadJson(DiceDir + "\\conf\\BlackListEx.json", true);
+	}
 	fmt = make_unique<DiceModManager>();
 	if (loadJMap(DiceDir + "\\conf\\CustomMsg.json", EditedMsg) < 0)loadJMap(strFileLoc + "CustomMsg.json", EditedMsg);
 	//预修改出场回复文本
@@ -558,7 +559,7 @@ bool eve_GroupAdd(Chat& grp)
 			else 
 			{
 				ave_trust /= cntMember;
-				strMsg += "\n用户浓度" + to_string(cntUser * 100 / cntMember) + "%, 信任度" + toString(ave_trust);
+				strMsg += "\n用户浓度" + to_string(cntUser * 100 / cntMember) + "% (" + to_string(cntUser) + "/" + to_string(cntMember) + "), 信任度" + toString(ave_trust);
 			}
 		}
 		if (!blacks.empty())

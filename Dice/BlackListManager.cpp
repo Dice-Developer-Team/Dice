@@ -98,6 +98,8 @@ std::queue<fromMsg> warningQueue;
 // 消息发送队列锁
 mutex warningMutex;
 
+bool isLoadingExtern = false;
+
 void AddWarning(const string& msg, long long DiceQQ, long long fromGroup)
 {
 	lock_guard<std::mutex> lock_queue(warningMutex);
@@ -186,6 +188,13 @@ DDBlackMark::DDBlackMark(void* pJson)
 			else if (!credit_limit.count(j["type"].get<string>())) { return; }
 			else type = j["type"].get<string>();
 		}
+		if (j.count("wid")) {
+			j["wid"].get_to(wid);
+			if (j.count("isErased")) {
+				isClear = j["isErased"].get<int>();
+				isAdd = !isClear;
+			}
+		}
 		if (j.count("fromGroup"))fromGroup = {j["fromGroup"].get<long long>(), isAdd};
 		if (j.count("fromQQ"))fromQQ = {j["fromQQ"].get<long long>(), isAdd};
 		if (j.count("inviterQQ"))inviterQQ = {j["inviterQQ"].get<long long>(), isAdd};
@@ -194,11 +203,13 @@ DDBlackMark::DDBlackMark(void* pJson)
 		if (j.count("DiceMaid"))DiceMaid = j["DiceMaid"].get<long long>();
 		if (j.count("masterQQ"))masterQQ = j["masterQQ"].get<long long>();
 
-		if (j.count("wid"))wid = j["wid"].get<int>();
 		if (j.count("danger"))
 		{
 			danger = j["danger"].get<int>();
 			if (danger < 1)return;
+		}
+		else {
+			danger = (type == "ruler") ? 3 : 2;
 		}
 
 		if (j.count("time"))time = UTF8toGBK(j["time"].get<string>());
@@ -221,7 +232,7 @@ DDBlackMark::DDBlackMark(void* pJson)
 	}
 	catch (...)
 	{
-		console.log("解析黑名单json失败！", 0b10, printSTNow());
+		console.log("解析黑名单json失败！", 0, printSTNow());
 		return;
 	}
 }
@@ -618,7 +629,7 @@ void DDBlackManager::insert(DDBlackMark& ex_mark)
             up_qq_danger(mark.ownerQQ.first, mark);
         }
     }
-    if (Enabled)blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
+    if (Enabled && !isLoadingExtern)blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
 }
 
 bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5)
@@ -730,7 +741,7 @@ bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5)
                 reset_qq_danger(mark.inviterQQ.first);
                 isUpdated = true;
             }
-            else if (delta_danger > 0 || credit > 2) 
+            else if (delta_danger > 0 || credit > 2)
 			{
                 old_mark.inviterQQ.second = true;
                 up_qq_danger(mark.inviterQQ.first, mark);
@@ -773,7 +784,10 @@ bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5)
     if (isUpdated)
 	{
         if (!mark.comment.empty())old_mark.comment = mark.comment;
-        if (Enabled)blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
+		else if (old_mark.comment.empty()) {
+			old_mark.comment = printSTNow() + " 更新";
+		}
+		if (Enabled && !isLoadingExtern)blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
     }
     return isUpdated;
 }
@@ -794,7 +808,7 @@ void DDBlackManager::reset_group_danger(long long llgroup)
 	else
 	{
 		mGroupDanger.erase(llgroup);
-		if (Enabled)console.log("已消除" + printGroup(llgroup) + "的危险等级", 0b10, printSTNow());
+		if (Enabled && !isLoadingExtern)console.log("已消除" + printGroup(llgroup) + "的危险等级", 0b10, printSTNow());
 	}
 }
 
@@ -821,7 +835,7 @@ void DDBlackManager::reset_qq_danger(long long llqq)
 		mQQDanger.erase(llqq);
 		if (Enabled)
 		{
-			console.log("已消除" + printQQ(llqq) + "的危险等级", 0b10, printSTNow());
+			if (!isLoadingExtern)console.log("已消除" + printQQ(llqq) + "的危险等级", 0b10, printSTNow());
 			if (UserList.count(llqq))AddMsgToQueue(getMsg("strBlackQQDelNotice", {{"user_nick", getName(llqq)}}), llqq);
 		}
 	}
@@ -837,9 +851,9 @@ bool DDBlackManager::up_group_danger(long long llgroup, DDBlackMark& mark)
 	if (mGroupDanger.count(llgroup) && mGroupDanger[llgroup] >= mark.danger)return false;
 	if (Enabled)
 	{
-		if (console["LeaveBlackGroup"] && ChatList.count(llgroup) && !chat(llgroup).isset("已退"))chat(llgroup).leave(
+		if (ChatList.count(llgroup) && !chat(llgroup).isset("已退"))chat(llgroup).leave(
 			mark.warning());
-		console.log(GlobalMsg["strSelfName"] + "已将" + printGroup(llgroup) + "危险等级提升至" + to_string(mark.danger), 0b10,
+		if(!isLoadingExtern)console.log(GlobalMsg["strSelfName"] + "已将" + printGroup(llgroup) + "危险等级提升至" + to_string(mark.danger), 0b10,
 		            printSTNow());
 	}
 	mGroupDanger[llgroup] = mark.danger;
@@ -850,7 +864,7 @@ bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark)
 {
 	if (trustedQQ(llqq) > 1 || llqq == console.master() || llqq == console.DiceMaid)
 	{
-		if (mark.fromQQ.first == llqq)mark.fromQQ.second = false;
+		if (mark.fromQQ.first == llqq)mark.erase();
 		if (mark.inviterQQ.first == llqq)mark.inviterQQ.second = false;
 		if (mark.ownerQQ.first == llqq)mark.ownerQQ.second = false;
 		return false;
@@ -864,9 +878,11 @@ bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark)
 				: AddMsgToQueue(getMsg("strBlackQQAddNoticeReason", {
 					                       {"0", mark.note}, {"reason", mark.note}, {"user_nick", getName(llqq)}
 				                       }), llqq);
-		console.log(GlobalMsg["strSelfName"] + "已将" + printQQ(llqq) + "危险等级提升至" + to_string(mark.danger), 0b10,
-		            printSTNow());
-		checkGroupWithBlackQQ(mark, llqq);
+		if (!isLoadingExtern) {
+			console.log(GlobalMsg["strSelfName"] + "已将" + printQQ(llqq) + "危险等级提升至" + to_string(mark.danger), 0b10,
+						printSTNow());
+			checkGroupWithBlackQQ(mark, llqq);
+		}
 	}
 	mQQDanger[llqq] = mark.danger;
 	return true;
@@ -1041,6 +1057,7 @@ void DDBlackManager::add_black_group(long long llgroup, FromMsg* msg)
 	mark.time = msg->strVar["time"];
 	mark.DiceMaid = console.DiceMaid;
 	mark.masterQQ = console.masterQQ;
+	mark.comment = printSTNow() + " 由" + printQQ(msg->fromQQ) + "拉黑";
 	insert(mark);
 	msg->note("已添加" + printGroup(llgroup) + "的黑名单记录√");
 }
@@ -1064,6 +1081,7 @@ void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
 	mark.time = msg->strVar["time"];
 	mark.DiceMaid = console.DiceMaid;
 	mark.masterQQ = console.masterQQ;
+	mark.comment = printSTNow() + " 由" + printQQ(msg->fromQQ) + "拉黑";
 	insert(mark);
 	msg->note("已添加" + printQQ(llqq) + "的本地黑名单记录√");
 }
@@ -1219,27 +1237,40 @@ void DDBlackManager::create(DDBlackMark& mark)
     insert(mark);
 }
 
-int DDBlackManager::loadJson(string strPath)
+int DDBlackManager::loadJson(string strPath, bool isExtern)
 {
 	json j = freadJson(strPath);
 	if (j.is_null())return -1;
 	if (j.size() > vBlackList.capacity())vBlackList.reserve(j.size() * 2);
+	int cnt(0);
 	for (auto& item : j)
 	{
 		DDBlackMark mark{&item};
 		if (!mark.isValid)continue;
 		if (!mark.danger)mark.danger = 2;
 		//新插入或更新
+		isLoadingExtern = true;
 		if (int res = find(mark); res < 0)
 		{
 			insert(mark);
 		}
 		else
 		{
+			if (isExtern) {
+				if (mark.isSource(console.DiceMaid))continue;	//涉及自身的不处理
+				if (mark.danger != vBlackList[res].danger)continue;	//危险等级特别改动的不处理
+			}
 			update(mark, res);
 		}
+		isLoadingExtern = false;
+		cnt++;
 	}
-	return vBlackList.size();
+	if (isExtern) {
+		filesystem::remove(strPath);
+		console.log("更新外源不良记录条目" + to_string(cnt) + "条", 1, printSTNow());
+		blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
+	}
+	return cnt;
 }
 
 int DDBlackManager::loadHistory(const string& strLoc)

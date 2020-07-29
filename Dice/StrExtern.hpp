@@ -16,14 +16,14 @@ string toString(int num, unsigned short size = 0);
 
 template<typename F>
 typename std::enable_if<std::is_floating_point<F>::value, string>::type 
-toString(F num, unsigned short scale = 0, bool align = false) 
+toString(F num, unsigned short scale = 2, bool align = false) 
 {
     string strNum{ to_string(num) };
     size_t dot(strNum.find('.') + scale + 1);
     if (align)return strNum.substr(0, dot);
     size_t last(strNum.find_last_not_of('0') + 1);
-    if (strNum[last - 1] == '.')last--;
     if (last > dot)last = dot;
+    if (strNum[last - 1] == '.')last--;
     return strNum.substr(0, last);
 }
 
