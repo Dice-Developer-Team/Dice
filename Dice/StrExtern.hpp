@@ -10,7 +10,7 @@ using std::string;
 using std::wstring;
 using std::to_string;
 
-#define CP_GB18030 (54936)
+#define CP_GBK (936)
 
 string toString(int num, unsigned short size = 0);
 

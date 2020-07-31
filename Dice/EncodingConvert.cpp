@@ -21,7 +21,7 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define CP_GB18030 (54936)
+#define CP_GBK (936)
 #define WIN32_LEAN_AND_MEAN
 #include "EncodingConvert.h"
 #include <Windows.h>
@@ -33,9 +33,9 @@
 // 事实上是GB18030
 std::string GBKtoUTF8(const std::string& strGBK)
 {
-	const int UTF16len = MultiByteToWideChar(CP_GB18030, 0, strGBK.c_str(), -1, nullptr, 0);
+	const int UTF16len = MultiByteToWideChar(CP_GBK, 0, strGBK.c_str(), -1, nullptr, 0);
 	auto* const strUTF16 = new wchar_t[UTF16len];
-	MultiByteToWideChar(CP_GB18030, 0, strGBK.c_str(), -1, strUTF16, UTF16len);
+	MultiByteToWideChar(CP_GBK, 0, strGBK.c_str(), -1, strUTF16, UTF16len);
 	const int UTF8len = WideCharToMultiByte(CP_UTF8, 0, strUTF16, -1, nullptr, 0, nullptr, nullptr);
 	auto* const strUTF8 = new char[UTF8len];
 	WideCharToMultiByte(CP_UTF8, 0, strUTF16, -1, strUTF8, UTF8len, nullptr, nullptr);
@@ -58,9 +58,9 @@ std::string UTF8toGBK(const std::string& strUTF8)
 	const int UTF16len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
 	auto* const strUTF16 = new wchar_t[UTF16len];
 	MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, strUTF16, UTF16len);
-	const int GBKlen = WideCharToMultiByte(CP_GB18030, 0, strUTF16, -1, nullptr, 0, nullptr, nullptr);
+	const int GBKlen = WideCharToMultiByte(CP_GBK, 0, strUTF16, -1, nullptr, 0, nullptr, nullptr);
 	auto* const strGBK = new char[GBKlen];
-	WideCharToMultiByte(CP_GB18030, 0, strUTF16, -1, strGBK, GBKlen, nullptr, nullptr);
+	WideCharToMultiByte(CP_GBK, 0, strUTF16, -1, strGBK, GBKlen, nullptr, nullptr);
 	std::string strOutGBK(strGBK);
 	delete[] strUTF16;
 	delete[] strGBK;
