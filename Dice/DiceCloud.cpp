@@ -37,15 +37,6 @@ namespace Cloud
 		delete[] frmdata;
 	}
 
-	void upWarning(const char* warning)
-	{
-		char* frmdata = new char[strlen(warning) + 1];
-		strcpy_s(frmdata, strlen(warning) + 1, warning);
-		string temp;
-		Network::POST("shiki.stringempty.xyz", "/DiceCloud/warning_upload.php", 80, frmdata, temp);
-		delete[] frmdata;
-	}
-
 	int checkWarning(const char* warning)
 	{
 		char* frmdata = new char[strlen(warning) + 1];

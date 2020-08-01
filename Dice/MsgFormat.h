@@ -92,6 +92,7 @@ class ResList
 	unsigned int intMaxLen = 0;
 	bool isLineBreak = false;
 	unsigned int intLineLen = 16;
+	unsigned int intPageLen = 512;
 	string sDot = " ";
 	string strLongSepa = "\n";
 public:
@@ -114,22 +115,26 @@ public:
 
 	std::string show()
 	{
-		std::string s;
+		std::string s, strHead, strSepa;
+		unsigned int lenPage(0),cntPage(1);
 		if (intMaxLen > intLineLen || isLineBreak)
 		{
-			for (auto it = vRes.begin(); it != vRes.end(); it++)
-			{
-				if (it == vRes.begin())s = "\n" + *it;
-				else s += strLongSepa + *it;
-			}
+			strHead = "\n";
+			strSepa = strLongSepa;
 		}
 		else
 		{
-			for (auto it = vRes.begin(); it != vRes.end(); it++)
-			{
-				if (it == vRes.begin())s = *it;
-				else s += sDot + *it;
+			strSepa = sDot;
+		}
+		for (auto it = vRes.begin(); it != vRes.end(); it++) {
+			//超过上限后分页
+			if (lenPage > intPageLen) {
+				s += "\f[第" + std::to_string(++cntPage) + "页]\n" + *it;
+				lenPage = 0;
 			}
+			else if (it == vRes.begin())s = strHead + *it;
+			else s += strSepa + *it;
+			lenPage += it->length();
 		}
 		return s;
 	}

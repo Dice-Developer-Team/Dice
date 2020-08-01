@@ -84,6 +84,12 @@ int DiceModManager::load(string& strLog)
 			sFileErr.push_back(filename.filename().string());
 			continue;
 		}
+		if (j.count("dice_build")) {
+			if (j["dice_build"] > Dice_Build) {
+				sFileErr.push_back(filename.filename().string()+"(Dice°æ±¾¹ýµÍ)");
+				continue;
+			}
+		}
 		if (j.count("helpdoc"))
 		{
 			cntItem += readJMap(j["helpdoc"], helpdoc);

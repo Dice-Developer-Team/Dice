@@ -246,7 +246,7 @@ DDBlackMark::DDBlackMark(const string& strWarning)
 	}
 	catch (...)
 	{
-		console.log("½âÎöºÚÃûµ¥jsonÊ§°Ü£¡", 0b10, printSTNow());
+		console.log("½âÎöºÚÃûµ¥jsonÊ§°Ü£¡", 0, printSTNow());
 		return;
 	}
 }
@@ -385,8 +385,8 @@ void DDBlackMark::check_remit()
 {
     if (fromGroup.first && groupset(fromGroup.first, "ÃâºÚ") > 0)erase();
     if (fromQQ.first && trustedQQ(fromQQ.first) > 1)erase();
-    if (inviterQQ.first && trustedQQ(inviterQQ.first) > 1)inviterQQ.second = 0;
-    if (ownerQQ.first && trustedQQ(ownerQQ.first) > 1)ownerQQ.second = 0;
+	if (inviterQQ.first && trustedQQ(inviterQQ.first) > 1)inviterQQ = { 0,false };
+    if (ownerQQ.first && trustedQQ(ownerQQ.first) > 1)ownerQQ = { 0,false };
 }
 
 void DDBlackMark::erase()
@@ -401,8 +401,10 @@ void DDBlackMark::upload()
 		"&DiceMaid=" + std::to_string(DiceMaid) + "&masterQQ=" + std::to_string(masterQQ) + "&type=" + type + "&time=" +
 		time + "&note=" + UrlEncode(GBKtoUTF8(note));
 	string temp;
-	Network::POST("shiki.stringempty.xyz", "/DiceCloud/warning_upload.php", 80, frmdata.data(), temp);
-	if (isdigit(static_cast<unsigned char>(temp[0])))wid = stoi(temp);
+	if (!Network::POST("shiki.stringempty.xyz", "/DiceCloud/warning_upload.php", 80, frmdata.data(), temp)) {
+		console.log("ÉÏ´«²»Á¼¼ÇÂ¼Ê§°Ü:" + temp, 0b1000);
+	}
+	else if (isdigit(static_cast<unsigned char>(temp[0])))wid = stoi(temp);
 	else if (temp == "denied")erase();
 }
 

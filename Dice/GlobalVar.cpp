@@ -96,7 +96,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPcTempInvalid","{self}无法识别的角色卡模板×"},
 	{"strPcNameEmpty","名称不能为空×"},
 	{"strPcNameExist","{nick}已存在同名卡×"},
-	{"strPcNameNotExist","{nick}无该名称角色卡卡×"},
+	{"strPcNameNotExist","{nick}无该名称角色卡×"},
 	{"strPcNameInvalid","非法的角色卡名（存在冒号）×"},
 	{"strPcInitDelErr","{nick}的初始卡不可删除×"},
 	{"strPcNoteTooLong","备注长度不能超过255×"},
@@ -466,7 +466,6 @@ R"([第三页]其他指令
 		"抽牌：.draw [牌堆名称] ([抽牌数量])\t//抽到的牌不放回，抽牌数量不能超过牌堆数量\n当前内置牌堆：硬币/性别/\n调查员职业/调查员背景/英雄天赋/煤气灯/个人描述/思想信念/重要之人/重要之人理由/意义非凡之地/宝贵之物/调查员特点/即时症状/总结症状/恐惧症状/狂躁症状/\n阵营/哈罗花色/冒险点子/\n人偶暗示/人偶宝物/人偶记忆碎片/人偶依恋/\nAMGC/AMGC身材/AMGC专精/AMGC武器/AMGC套装/AMGC才能/AMGC特技1/AMGC特技2/AMGC特技3\n/塔罗牌/正逆/塔罗牌占卜/单张塔罗牌/圣三角牌阵/四要素牌阵/小十字牌阵/六芒星牌阵/凯尔特十字牌阵\n.help审判正位（牌+方向）可获取塔罗牌解读\n扩展牌堆:{扩展牌堆}"
 	},
 	{"先攻", "&ri"},
-	{"扩展牌堆", ""},
 	{"ri", "先攻（群聊限定）：.ri([加值])([昵称])\n.ri -1 某pc\t//自动记入先攻列表\n.ri +5 boss"},
 	{"先攻列表", "&init"},
 	{"init", "先攻列表：\n.init\t//查看先攻列表\n.init clr\t//清除先攻列表"},
@@ -504,7 +503,7 @@ R"([第三页]其他指令
 群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/拦截消息/许可使用/免清/免黑)"
 	},
 	{"溯洄", "孕育万千骰娘生机之母，萌妹吃鱼之神，正五棱双角锥体对的监护人，一切诡秘的窥见者，拟人者主宰，时空舞台外的逆流者，永转的命运之轮"},
-	{"投食", "投食Shiki，请选择http://shiki.stringempty.xyz/alipay.png\n投食溯洄，可选择https://afdian.net/@suhuiw4123"},
+	{"投食", "投食Shiki，请选择https://afdian.net/@dice_shiki\n投食溯洄，可选择https://afdian.net/@suhuiw4123\n投食{self}，可选择……充超会？"},
 	{"愚者正位", "憧憬自然的地方、毫无目的地前行、喜欢尝试挑战新鲜事物、四处流浪。美好的梦想。"},
 	{
 		"愚者逆位",

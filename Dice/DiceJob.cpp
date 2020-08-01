@@ -301,13 +301,13 @@ void dice_update(DiceJob& job) {
 	string strAppPath(*path);
 	strAppPath = strAppPath.substr(0, strAppPath.find_last_of("\\")) + "\\app\\com.w4123.dice.cpk";
 	delete path;
-	string strURL("http://shiki.stringempty.xyz/DiceVer/" + job.strVar["ver"] + "?" + to_string(job.fromTime));
+	string strURL("https://shiki.stringempty.xyz/DiceVer/" + job.strVar["ver"] + "?" + to_string(job.fromTime));
 	switch (Cloud::DownloadFile(strURL.c_str(), strAppPath.c_str())) {
 	case -1:
 		job.echo("更新失败:" + strURL);
 		break;
 	case -2:
-		job.echo("更新失败!文件未找到:" + strAppPath);
+		job.note("更新Dice失败!文件未找到:" + strAppPath, 0b10);
 		break;
 	case 0:
 		job.note("更新Dice!" + job.strVar["ver"] + "版成功√\n可用.system reload 重启应用更新", 1);
@@ -316,17 +316,17 @@ void dice_update(DiceJob& job) {
 
 //获取云不良记录
 void dice_cloudblack(DiceJob& job) {
-	job.note("开始获取云端记录", 1); 
-	string strURL("http://shiki.stringempty.xyz/blacklist/checked.json?" + to_string(job.fromTime));
+	job.echo("开始获取云端记录"); 
+	string strURL("https://shiki.stringempty.xyz/blacklist/checked.json?" + to_string(job.fromTime));
 	switch (Cloud::DownloadFile(strURL.c_str(), "DiceData/conf/CloudBlackList.json")) {
 	case -1:
-		job.echo("云不良记录同步失败:" + strURL);
+		job.echo("同步云不良记录同步失败:" + strURL);
 		break;
 	case -2:
-		job.echo("云不良记录同步失败!文件未找到");
+		job.echo("同步云不良记录同步失败!文件未找到");
 		break;
 	case 0:
-		job.note(getMsg("self") + "云不良记录同步成功，开始读取", 1);
+		job.note("同步云不良记录成功，" + getMsg("self") + "开始读取", 1);
 		blacklist->loadJson("DiceData/conf/CloudBlackList.json", true);
 	}
 }

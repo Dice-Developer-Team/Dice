@@ -30,7 +30,7 @@
 #include <vector>
 #include <algorithm>
 
-// 事实上是GB18030
+// 现在是GBK了
 std::string GBKtoUTF8(const std::string& strGBK)
 {
 	const int UTF16len = MultiByteToWideChar(CP_GBK, 0, strGBK.c_str(), -1, nullptr, 0);
