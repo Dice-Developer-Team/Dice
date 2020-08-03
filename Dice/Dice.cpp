@@ -930,7 +930,18 @@ EVE_Exit(eventExit)
 {
 	if (!Enabled)
 		return 0;
+	Enabled = false;
+	threads = {};
 	dataBackUp();
+	sch.end();
+	fmt.reset();
+	gm.reset();
+	PList.clear();
+	ChatList.clear();
+	UserList.clear();
+	console.reset();
+	EditedMsg.clear();
+	blacklist.reset();
 	return 0;
 }
 

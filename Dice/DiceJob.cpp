@@ -130,7 +130,7 @@ void cq_restart(DiceJob& job) {
 }
 
 void mirai_reload(DiceJob& job){
-	using cq_reload_type = int(*)(int32_t);
+	using cq_reload_type = int(__stdcall*)(int32_t);
 	HMODULE hModule = LoadLibraryA("CQP.dll");
 	cq_reload_type cq_reload = (cq_reload_type)GetProcAddress(hModule, "CQ_reload");
 	if (!cq_reload) {
@@ -138,6 +138,7 @@ void mirai_reload(DiceJob& job){
 		return;
 	}
 	cq_reload(getAuthCode());
+	FreeLibrary(hModule);
 }
 
 void auto_save(DiceJob& job) {
