@@ -7,6 +7,7 @@ int sendSelf(const string msg);
 
 void cq_exit(DiceJob& job);
 void cq_restart(DiceJob& job);
+void mirai_reload(DiceJob& job);
 
 void auto_save(DiceJob& job);
 void check_system(DiceJob& job);

@@ -4,6 +4,7 @@
 #include <TlHelp32.h>
 #include <Psapi.h>
 #include "StrExtern.hpp"
+#include "CQAPI.h"
 #include "ManagerSystem.h"
 #include "DiceCloud.h"
 #include "BlackListManager.h"
@@ -47,13 +48,17 @@ void cq_exit(DiceJob& job) {
 	dataBackUp();
 	system(strCMD.c_str());
 }
+
+inline PROCESSENTRY32 getProcess(int pid) {
+	PROCESSENTRY32 pe32;
+	pe32.dwSize = sizeof(pe32);
+	HANDLE hParentProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+	Process32First(hParentProcess, &pe32);
+	return pe32;
+}
 void cq_restart(DiceJob& job) {
-	char** path = new char* ();
-	_get_pgmptr(path);
-	string strSelfPath(*path);
-	delete path;
+	//string strSelfPath;
 	string strSelfName;
-	int pid = _getpid();
 	PROCESSENTRY32 pe32;
 	pe32.dwSize = sizeof(pe32);
 	HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -62,19 +67,43 @@ void cq_restart(DiceJob& job) {
 	}
 	BOOL bResult = Process32First(hProcessSnap, &pe32);
 	int ppid(0);
-	while (bResult) {
-		if (pe32.th32ProcessID == pid) {
-			ppid = pe32.th32ParentProcessID;
-			job.echo("确认进程" + strSelfPath + "\n本进程id:" + to_string(pe32.th32ProcessID) + "\n父进程id:" + to_string(pe32.th32ParentProcessID));
-			strSelfName = pe32.szExeFile;
-			break;
+	if (Mirai) {
+		char buffer[MAX_PATH];
+		const DWORD length = GetModuleFileNameA(nullptr, buffer, sizeof buffer);
+		std::string pathSelf(buffer, length);
+		pathSelf = pathSelf.substr(0, pathSelf.find("jre\\bin\\java.exe")) + "MiraiOK.exe";
+		char pathFull[MAX_PATH];
+		while (bResult) {
+			if (strcmp(pe32.szExeFile, "MiraiOK.exe") == 0) {
+				HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID);
+				GetModuleFileNameEx(hProcess, NULL, pathFull, sizeof(pathFull));
+				if (pathSelf != pathFull)continue;
+				ppid = pe32.th32ProcessID;
+				job.echo("确认进程" + pathSelf + "\n进程id:" + to_string(ppid));
+				break;
+			}
+			bResult = Process32Next(hProcessSnap, &pe32);
 		}
-		bResult = Process32Next(hProcessSnap, &pe32);
+	}
+	else {
+		int pid = _getpid();
+		while (bResult) {
+			if (pe32.th32ProcessID == pid) {
+				ppid = pe32.th32ParentProcessID;
+				PROCESSENTRY32 pp32 = getProcess(ppid);
+				strSelfName = pp32.szExeFile;
+				job.echo("确认进程" + strSelfName + "\n本进程id:" + to_string(pe32.th32ProcessID) + "\n父进程id:" + to_string(ppid));
+				break;
+			}
+			bResult = Process32Next(hProcessSnap, &pe32);
+		}
 	}
 	if (!ppid) {
 		job.note("重启失败：未找到进程！", 1);
+		return;
 	}
 	string command = "taskkill /f /pid " + to_string(ppid) + "\nstart .\\" + strSelfName + " /account " + to_string(console.DiceMaid);
+	if (Mirai) command = "taskkill /f /pid " + to_string(ppid) + "\nstart .\\MiraiOK.exe";
 	ofstream fout("reload.bat");
 	fout << command << std::endl;
 	fout.close();
@@ -98,6 +127,17 @@ void cq_restart(DiceJob& job) {
 		else job.note("重启失败：未知错误" + to_string(res), 0);
 		break;
 	}
+}
+
+void mirai_reload(DiceJob& job){
+	using cq_reload_type = int(*)(int32_t);
+	HMODULE hModule = LoadLibraryA("CQP.dll");
+	cq_reload_type cq_reload = (cq_reload_type)GetProcAddress(hModule, "CQ_reload");
+	if (!cq_reload) {
+		job.note("重载MiraiNative失败×\n版本过旧，请升级", 0b10);
+		return;
+	}
+	cq_reload(getAuthCode());
 }
 
 void auto_save(DiceJob& job) {
@@ -296,21 +336,51 @@ void cloud_beat(DiceJob& job) {
 
 void dice_update(DiceJob& job) {
 	job.note("开始更新Dice\n版本:" + job.strVar["ver"], 1);
-	char** path = new char* ();
-	_get_pgmptr(path);
-	string strAppPath(*path);
-	strAppPath = strAppPath.substr(0, strAppPath.find_last_of("\\")) + "\\app\\com.w4123.dice.cpk";
-	delete path;
-	string strURL("https://shiki.stringempty.xyz/DiceVer/" + job.strVar["ver"] + "?" + to_string(job.fromTime));
-	switch (Cloud::DownloadFile(strURL.c_str(), strAppPath.c_str())) {
-	case -1:
-		job.echo("更新失败:" + strURL);
-		break;
-	case -2:
-		job.note("更新Dice失败!文件未找到:" + strAppPath, 0b10);
-		break;
-	case 0:
-		job.note("更新Dice!" + job.strVar["ver"] + "版成功√\n可用.system reload 重启应用更新", 1);
+	if (Mirai) {
+		mkDir("plugins/MiraiNative/pluginsnew");
+		char pathDll[] = "plugins/MiraiNative/pluginsnew/com.w4123.dice.dll";
+		char pathJson[] = "plugins/MiraiNative/pluginsnew/com.w4123.dice.json";
+		string urlDll("https://shiki.stringempty.xyz/DiceVer/" + job.strVar["ver"] + "/com.w4123.dice.dll?" + to_string(job.fromTime));
+		string urlJson("https://shiki.stringempty.xyz/DiceVer/" + job.strVar["ver"] + "/com.w4123.dice.json?" + to_string(job.fromTime));
+		switch (Cloud::DownloadFile(urlDll.c_str(), pathDll)) {
+		case -1:
+			job.echo("更新失败:" + urlDll);
+			break;
+		case -2:
+			job.note("更新Dice失败!dll文件未下载到指定位置", 0b1);
+			break;
+		case 0:
+		default:
+			switch (Cloud::DownloadFile(urlJson.c_str(), pathJson)) {
+			case -1:
+				job.echo("更新失败:" + urlJson);
+				break;
+			case -2:
+				job.note("更新Dice失败!json文件未下载到指定位置", 0b1);
+				break;
+			case 0:
+			default:
+				job.note("更新Dice!" + job.strVar["ver"] + "版成功√", 1);
+			}
+		}
+	}
+	else {
+		char** path = new char* ();
+		_get_pgmptr(path);
+		string strAppPath(*path);
+		delete path;
+		strAppPath = strAppPath.substr(0, strAppPath.find_last_of("\\")) + "\\app\\com.w4123.dice.cpk";
+		string strURL("https://shiki.stringempty.xyz/DiceVer/" + job.strVar["ver"] + "?" + to_string(job.fromTime));
+		switch (Cloud::DownloadFile(strURL.c_str(), strAppPath.c_str())) {
+		case -1:
+			job.echo("更新失败:" + strURL);
+			break;
+		case -2:
+			job.note("更新Dice失败!文件未找到:" + strAppPath, 0b10);
+			break;
+		case 0:
+			job.note("更新Dice!" + job.strVar["ver"] + "版成功√\n可用.system reload 重启应用更新", 1);
+		}
 	}
 }
 
@@ -318,7 +388,7 @@ void dice_update(DiceJob& job) {
 void dice_cloudblack(DiceJob& job) {
 	job.echo("开始获取云端记录"); 
 	string strURL("https://shiki.stringempty.xyz/blacklist/checked.json?" + to_string(job.fromTime));
-	switch (Cloud::DownloadFile(strURL.c_str(), "DiceData/conf/CloudBlackList.json")) {
+	switch (Cloud::DownloadFile(strURL.c_str(), (DiceDir + "/conf/CloudBlackList.json").c_str())) {
 	case -1:
 		job.echo("同步云不良记录同步失败:" + strURL);
 		break;
@@ -327,7 +397,7 @@ void dice_cloudblack(DiceJob& job) {
 		break;
 	case 0:
 		job.note("同步云不良记录成功，" + getMsg("self") + "开始读取", 1);
-		blacklist->loadJson("DiceData/conf/CloudBlackList.json", true);
+		blacklist->loadJson(DiceDir + "/conf/CloudBlackList.json", true);
 	}
 }
 string print_master() {

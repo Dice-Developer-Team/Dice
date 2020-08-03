@@ -11,7 +11,8 @@ unordered_map<string, cmd> mCommand = {
 	{"syscheck",check_system},
 	{"autosave",auto_save},
 	{"clrimage",clear_image},
-	{"reload",cq_restart},
+	{"reload",mirai_reload},
+	{"remake",cq_restart},
 	{"die",cq_exit},
 	{"heartbeat",cloud_beat},
 	{"update",dice_update},
@@ -39,7 +40,7 @@ void DiceJob::echo(const std::string& msg) {
 	}
 }
 void DiceJob::note(const std::string& strMsg, int note_lv = 0b1) {
-	ofstream fout(string("DiceData\\audit\\log") + to_string(console.DiceMaid) + "_" + printDate() + ".txt", ios::out | ios::app);
+	ofstream fout(DiceDir + "/audit/log" + to_string(console.DiceMaid) + "_" + printDate() + ".txt", ios::out | ios::app);
 	fout << printSTNow() << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 	fout.close();
 	echo(strMsg);

@@ -1182,7 +1182,7 @@ int FromMsg::DiceReply()
 		{
 			if (Mirai)
 			{
-				reply("Mirai不支持此功能");
+				reply("Mirai不需要此功能");
 				return -1;
 			}
 			if (trusted < 5)
@@ -1196,17 +1196,21 @@ int FromMsg::DiceReply()
 		}
 		else if (strOption == "reload")
 		{
-			if (Mirai)
-			{
-				reply("Mirai不支持此功能");
-				return -1;
-			}
 			if (trusted < 5 && fromQQ != console.master()) 
 			{
 				reply(GlobalMsg["strNotMaster"]);
 				return -1;
 			}
-			cmd_key = "reload";
+			cmd_key = Mirai ? "reload" : "remake";
+			sch.push_job(*this);
+			return 1;
+		}
+		else if (strOption == "remake") {
+			if (trusted < 5 && fromQQ != console.master()) {
+				reply(GlobalMsg["strNotMaster"]);
+				return -1;
+			}
+			cmd_key = "remake";
 			sch.push_job(*this);
 			return 1;
 		}
@@ -1223,13 +1227,14 @@ int FromMsg::DiceReply()
 		}
 		if (strOption == "rexplorer")
 		{
-			if (trusted < 5)
+			if (trusted < 5 && fromQQ != console.master())
 			{
 				reply(GlobalMsg["strNotMaster"]);
 				return -1;
 			}
 			system(R"(taskkill /f /fi "username eq %username%" /im explorer.exe)");
 			system(R"(start %SystemRoot%\explorer.exe)");
+			this_thread::sleep_for(3s);
 			note("已重启资源管理器√\n当前内存占用：" + to_string(getRamPort()) + "%");
 		}
 		else if (strOption == "cmd")

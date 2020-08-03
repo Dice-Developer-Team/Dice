@@ -142,7 +142,6 @@ static std::map<std::string, std::string> mVariableCOC7 = {
 	{"取悦", "&魅惑"},
 };
 static std::map<std::string, std::string> ExpressionCOC7 = {
-	{"", "D100"},
 	{"医学回复", "1D3"},
 	{"精神分析回复", "1D3"},
 	{"徒手伤害", "1D3+[DB]"},

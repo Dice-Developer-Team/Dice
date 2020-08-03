@@ -22,6 +22,8 @@ using namespace std::literals::chrono_literals;
 using std::string;
 using std::to_string;
 
+extern string DiceDir;
+
 enum class ClockEvent { off, on, save, clear };
 
 class Console
@@ -122,7 +124,7 @@ public:
 	}
 	void save() 
 	{
-		mkDir("DiceData\\conf");
+		mkDir(DiceDir + "/conf");
 		DDOM xml("console","");
 		xml.push(DDOM("mode", to_string(isMasterMode)));
 		xml.push(DDOM("master", to_string(masterQQ)));

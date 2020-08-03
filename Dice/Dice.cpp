@@ -177,7 +177,12 @@ EVE_Enable(eventEnable)
 	{
 		Mirai = true;
 		Dice_Full_Ver_For = Dice_Full_Ver + " For Mirai]";
-		DiceDir = "Dice" + to_string(getLoginQQ());
+		DiceDir = "Dice" + to_string(getLoginQQ());	
+		filesystem::path pathDir(DiceDir);
+		if (!exists(pathDir)) {
+			filesystem::path pathDirOld("DiceData");
+			if (exists(pathDirOld))rename(pathDirOld, pathDir);
+		}
 		this_thread::sleep_for(3s); //确保Mirai异步信息加载执行完毕
 	}
 	console.setPath(DiceDir + "\\conf\\Console.xml");
