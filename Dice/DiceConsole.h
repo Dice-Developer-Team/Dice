@@ -12,6 +12,7 @@
 #include <Windows.h>
 #include <thread>
 #include <chrono>
+#include <array>
 #include "STLExtern.hpp"
 #include "DiceXMLTree.h"
 #include "DiceFile.hpp"
@@ -204,19 +205,23 @@ void ConsoleTimer();
 class ThreadFactory
 {
 public:
-	ThreadFactory()
-	{
-	}
+	ThreadFactory() {}
 
 	int rear = 0;
-	std::thread vTh[4];
+	std::array<std::thread, 6> vTh;
 
 	void operator()(void (*func)())
 	{
 		std::thread th(func);
-		th.detach();
 		vTh[rear] = std::move(th);
 		rear++;
+	}
+	void exit() {
+		for (auto& th : vTh) {
+			th.join();
+		}
+		vTh = {};
+		rear = 0;
 	}
 };
 
