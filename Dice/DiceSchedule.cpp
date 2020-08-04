@@ -72,7 +72,7 @@ void jobHandle() {
 			cvJobWaited.notify_one();
 		}
 		else{
-			cvJob.wait(lock_queue, []() {return !queueJob.empty(); });
+			cvJob.wait_for(lock_queue, 2s, []() {return !queueJob.empty(); });
 		}
 	}
 }
