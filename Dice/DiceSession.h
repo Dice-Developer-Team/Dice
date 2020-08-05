@@ -55,6 +55,7 @@ public:
 	DiceSession& update()
 	{
 		tUpdate = time(nullptr);
+		save();
 		return *this;
 	}
 

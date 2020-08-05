@@ -10,6 +10,7 @@
 #include "CardDeck.h"
 #include "GlobalVar.h"
 
+string dirExe;
 string DiceDir = "DiceData";
  //被引用的图片列表
 unordered_set<string> sReferencedImage;

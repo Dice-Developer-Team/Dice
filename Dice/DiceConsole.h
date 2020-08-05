@@ -23,6 +23,7 @@ using namespace std::literals::chrono_literals;
 using std::string;
 using std::to_string;
 
+extern string dirExe;
 extern string DiceDir;
 
 enum class ClockEvent { off, on, save, clear };

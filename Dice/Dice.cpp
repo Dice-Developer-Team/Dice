@@ -62,6 +62,12 @@ multimap<chatType, chatType> mFwdList;
 ThreadFactory threads;
 string strFileLoc;
 
+constexpr auto msgInit{ R"(欢迎使用Dice!掷骰机器人！
+请从菜单【Dice!】->【综合管理】开启骰娘的后台面板
+开启Master模式通过认主后即可成为我的主人~
+可发送.help查看帮助
+参考文档参看.help链接)" };
+
 //加载数据
 void loadData()
 {
@@ -177,11 +183,17 @@ EVE_Enable(eventEnable)
 	{
 		Mirai = true;
 		Dice_Full_Ver_For = Dice_Full_Ver + " For Mirai]";
+		char buffer[MAX_PATH];
+		const DWORD length = GetModuleFileNameA(nullptr, buffer, sizeof buffer);
+		std::string pathSelf(buffer, length);
+		dirExe = pathSelf.substr(0, pathSelf.find("jre\\bin\\java.exe"));
 		DiceDir = "Dice" + to_string(getLoginQQ());	
-		filesystem::path pathDir(DiceDir);
+		filesystem::path pathDir(dirExe + DiceDir);
+		DiceDir = dirExe + DiceDir;
 		if (!exists(pathDir)) {
-			filesystem::path pathDirOld("DiceData");
+			filesystem::path pathDirOld(dirExe + "DiceData");
 			if (exists(pathDirOld))rename(pathDirOld, pathDir);
+			else filesystem::create_directory(pathDir);
 		}
 		this_thread::sleep_for(3s); //确保Mirai异步信息加载执行完毕
 	}
@@ -217,11 +229,7 @@ EVE_Enable(eventEnable)
 		}
 		else
 		{
-			sendPrivateMsg(console.DiceMaid,
-			               R"(欢迎使用Dice!掷骰机器人！
-右键点击酷Q->【应用管理】->【菜单】->【Master模式切换】可开启Master模式，开启对骰娘的后台功能
-文档: https://v2docs.kokona.tech
-更多文件参看.help链接)");
+			sendPrivateMsg(console.DiceMaid, msgInit);
 		}
 		ifstreamMaster.close();
 		std::map<string, int> boolConsole;
@@ -446,11 +454,11 @@ EVE_Enable(eventEnable)
 	threads(warningHandler);
 	threads(frqHandler);
 	sch.start();
+	console.log(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string((clock() - llStartTime) / 1000) + "秒", 0b1,
+				printSTNow());
 	//骰娘网络
 	getDiceList();
 	getExceptGroup();
-	console.log(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string((clock() - llStartTime) / 1000) + "秒", 0b1, 
-		printSTNow());
 	llStartTime = clock();
 	return 0;
 }
@@ -463,7 +471,7 @@ bool eve_GroupAdd(Chat& grp)
 		unique_lock<std::mutex> lock_queue(GroupAddMutex);
 		if (grp.isset("未进") || grp.isset("已退"))grp.reset("未进").reset("已退");
 		else if (time(nullptr) - grp.tCreated > 1)return false;
-		lock_queue.unlock();
+		if (ChatList.size() == 1 && !console.isMasterMode)sendGroupMsg(grp.ID, msgInit);
 	}
 	GroupInfo ginf(grp.ID);
 	grp.Name = ginf.strGroupName;
