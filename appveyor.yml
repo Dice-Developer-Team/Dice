@@ -4,7 +4,9 @@ image:
 - Visual Studio 2019
 before_build:
 - cmd: nuget restore
-configuration: Debug, Release
+configuration:
+- Debug
+- Release
 platform: x86
 build:
   parallel: true
