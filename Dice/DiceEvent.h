@@ -90,7 +90,7 @@ public:
 	}
 
 	//转发消息
-	void FwdMsg(const string& message);
+	void fwdMsg();
 	int AdminEvent(const string& strOption);
 	int MasterSet();
 	int DiceReply();
@@ -106,7 +106,6 @@ private:
 	bool isBotOff = false;
 	bool isCalled = false;
 	bool isAuth = false;
-	bool isLinkOrder = false;
 
 	short getGroupAuth(long long group = 0)
 	{

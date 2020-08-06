@@ -470,7 +470,7 @@ bool eve_GroupAdd(Chat& grp)
 	{
 		unique_lock<std::mutex> lock_queue(GroupAddMutex);
 		if (grp.isset("未进") || grp.isset("已退"))grp.reset("未进").reset("已退");
-		else if (time(nullptr) - grp.tCreated > 1)return false;
+		else return false;
 		if (ChatList.size() == 1 && !console.isMasterMode)sendGroupMsg(grp.ID, msgInit);
 	}
 	GroupInfo ginf(grp.ID);
@@ -626,7 +626,6 @@ EVE_PrivateMsg_EX(eventPrivateMsg)
 	if (!Enabled)return;
 	FromMsg Msg(eve.message, eve.fromQQ);
 	if (Msg.DiceFilter())eve.message_block();
-	Msg.FwdMsg(eve.message);
 }
 
 EVE_GroupMsg_EX(eventGroupMsg)
@@ -640,7 +639,6 @@ EVE_GroupMsg_EX(eventGroupMsg)
 	{
 		FromMsg Msg(eve.message, eve.fromGroup, msgtype::Group, eve.fromQQ);
 		if (Msg.DiceFilter())eve.message_block();
-		Msg.FwdMsg(eve.message);
 	}
 	if (grp.isset("拦截消息"))eve.message_block();
 }
@@ -666,7 +664,6 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 	}
 	FromMsg Msg(eve.message, eve.fromDiscuss, msgtype::Discuss, eve.fromQQ);
 	if (Msg.DiceFilter() || grp.isset("拦截消息"))eve.message_block();
-	Msg.FwdMsg(eve.message);
 }
 
 EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)

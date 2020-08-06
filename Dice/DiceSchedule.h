@@ -17,7 +17,7 @@ struct DiceJobDetail {
     chatType fromChat;
     string cmd_key;
     string strMsg;
-    time_t fromTime = time(NULL);
+    time_t fromTime = time(nullptr);
     //¡Ÿ ±±‰¡øø‚
     map<string, string> strVar = {};
     DiceJobDetail(const char* cmd, bool isFromSelf = false):cmd_key(cmd){
@@ -39,6 +39,7 @@ class DiceJob : public DiceJobDetail {
 public:
     DiceJob(DiceJobDetail detail) :DiceJobDetail(detail) {}
     Renum ren = Renum::NIL;
+    size_t cntExec{ 0 };
     void exec();
     void echo(const std::string&);
     void note(const std::string&, int);
@@ -83,3 +84,5 @@ public:
     void daily_clear();
 };
 inline std::unique_ptr<DiceToday> today;
+
+string printTTime(time_t tt);

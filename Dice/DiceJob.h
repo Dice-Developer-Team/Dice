@@ -20,6 +20,8 @@ void cloud_beat(DiceJob& job);
 void dice_update(DiceJob& job);
 void dice_cloudblack(DiceJob& job);
 
+void log_put(DiceJob& job);
+
 string print_master();
 
 string list_deck();

@@ -47,6 +47,15 @@ std::map<std::string, std::string> GlobalMsg
 	{"strParaIllegal","参数非法×"},			//偷懒用万能回复
 	{"stranger","用户"},			//{nick}无法获取非空昵称时的称呼
 	{"strAdminOptionEmpty","找{self}有什么事么？{nick}"},			//
+	{"strLogNew","{self}开始新日志记录√\n请适时用.log off暂停或.log end完成记录"},
+	{"strLogOn","{self}开始日志记录√\n可使用.log off暂停记录"},
+	{"strLogOnAlready","{self}正在记录中！"},
+	{"strLogOff","{self}已暂停日志记录√\n可使用.log on恢复记录"},
+	{"strLogOffAlready","{self}已经暂停记录！"},
+	{"strLogEnd","{self}已完成日志记录√\n正在上传日志文件{log_file}"},
+	{"strLogNullErr","{self}无日志记录或已结束！"},
+	{"strLogUpSuccess","{self}已完成日志上传√\n请访问 https://logpainter.kokona.tech/?s3={log_file} 以查看记录"},
+	{"strLogUpFailure","很遗憾，{self}无法成功上传日志文件。如需获取可联系Master:{master_QQ}\n错误原因 {ret}"},
 	{"strGMTableShow","{self}记录的{table_name}列表："},
 	{"strGMTableNotExist","{self}没有保存的{table_name}记录"},
 	{"strUserTrustShow","{user}在{self}处的信任级别为{trust}"},
@@ -240,7 +249,6 @@ std::map<std::string, std::string> GlobalMsg
 	{"strZeroDiceErr", "咦?我的骰子呢?"},
 	{"strRollTimeExceeded", "掷骰轮数超过了最大轮数限制!"},
 	{"strRollTimeErr", "异常的掷骰轮数"},
-	{"strObPrivate", "你想看什么呀？"},
 	{"strDismissPrivate", "滚！"},
 	{"strWelcomePrivate", "你在这欢迎谁呢？"},
 	{"strWelcomeMsgClearNotice", "已清除本群的入群欢迎词√"},
@@ -274,6 +282,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPreserve", "{self}私有私用，勿扰勿怪\n如需申请许可请发送!authorize +[群号] [申请理由]"},
 	{"strJrrp", "{nick}今天的人品值是: {res}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{res}"},
+	{ "strFriendDenyNotUser", "很遗憾，你没有使用{self}的记录" },
+	{ "strFriendDenyNoTrust", "很遗憾，你不是{self}信任的用户" },
 	{"strAddFriendWhiteQQ", "{strAddFriend}"}, //白名单用户添加好友时回复此句
 	{
 		"strAddFriend",
@@ -317,6 +327,7 @@ std::map<std::string, std::string> GlobalMsg
 std::map<std::string, std::string> EditedMsg;
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+565:.log日志记录
 564:多功能优化，牌数牌堆等
 563:优化指令帮助
 562:新增GUI
@@ -337,7 +348,9 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 537:更新.send功能)"},
 {"协议","0.本协议是Dice!默认服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
 {"链接","Dice!论坛导航贴: https://kokona.tech \n Dice!论坛: https://forum.kokona.tech"},
-{"设定","Master：{master_QQ}\n.me使用：禁止\n.jrrp使用：允许\n邀请处理：黑名单制，非禁即入\n讨论组使用：允许\n移出反制：拉黑群和操作者\n禁言反制：默认拉黑群和群主\n刷屏反制：警告\n邀请人责任：有限连带\n窥屏可能：有\n其他插件：无\n骰娘个人群:（未设置）\n官方(水)群: 624807593 941980833 882747577\n私骰分流群：863062599\n开发交流群：1029435374"},
+{"设定","Master：{master_QQ}\n好友申请：需要使用记录\n入群邀请：黑名单制，非黑即入\n讨论组使用：允许\n移出反制：拉黑群和操作者\n禁言反制：默认拉黑群和群主\n刷屏反制：警告\n邀请人责任：有限连带\n窥屏可能：有\n其他插件：{其他插件}\n骰娘用户群:{骰娘用户群}\n官方(水)群: 882747577\n私骰分享群：863062599 192499947\n开发交流群：1029435374"},
+{"骰娘用户群","【未设置】"},
+{"其他插件","【未设置】"},
 {"作者","Copyright (C) 2018-2020 w4123溯洄\nCopyright (C) 2019-2020 String.Empty"},
 {"指令",R"(at骰娘后接指令可以指定骰娘单独响应，如at骰娘.bot off
 多数指令需要后接参数，请.help对应指令 获取详细信息，如.help jrrp
@@ -373,6 +386,14 @@ R"([第三页]其他指令
 .welcome 入群欢迎
 .me 第三人称动作
 为了避免未预料到的指令误判，请尽可能在参数之间使用空格)"},
+{"master",R"(当前Master:{master_QQ}
+Master拥有最高权限，且可以调整任意信任)"},
+{"log",R"(跑团日志记录
+.log new 新建日志并开始记录
+.log on 开始记录
+.log off 暂停记录
+.log end 完成记录并发送日志文件
+)"},
 {"deck","该指令可以设置默认牌堆，使用.draw不指定牌堆名时将使用此牌堆。该牌堆不会放回直到抽完最后一张后洗牌。\n.deck set 公共牌堆名 设置默认牌堆\n.deck set 正整数1-100 设置指定长度的数列\n.deck show 查看剩余卡牌\n.deck reset 重置剩余卡牌\n.deck new 自定义牌堆（用空格或|分割）（白名单限定）\n.deck new 有弹|无弹|无弹|无弹|无弹|无弹\n除show外其他群内操作需要管理权限"},
 {"退群","&dismiss"},
 {"退群指令","&dismiss"},

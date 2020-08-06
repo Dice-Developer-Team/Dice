@@ -109,6 +109,13 @@ void filter_CQcode(string& nick, long long fromGroup)
 		}
 		else return;
 	}
+	while ((posL = nick.find(CQ_IMAGE)) != string::npos) {
+		//ºÏ≤Èat∏Ò Ω
+		if (size_t posR = nick.find(']', posL); posR != string::npos) {
+			nick.replace(posL, posR - posL + 1, "[Õº∆¨]");
+		}
+		else return;
+	}
 	while ((posL = nick.find("[CQ:")) != string::npos)
 	{
 		if (size_t posR = nick.find(']', posL); posR != string::npos) 

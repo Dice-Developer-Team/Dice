@@ -15,18 +15,25 @@
 using namespace std;
 using namespace CQ;
 
-void FromMsg::FwdMsg(const string& message)
+void FromMsg::fwdMsg()
 {
-	if (mFwdList.count(fromChat) && !isLinkOrder)
+	if (mFwdList.count(fromChat) && strLowerMessage.find(".link") != 0)
 	{
 		const auto range = mFwdList.equal_range(fromChat);
 		string strFwd;
 		if (trusted < 5)strFwd += printFrom();
-		strFwd += message;
+		strFwd += strMsg;
 		for (auto it = range.first; it != range.second; ++it)
 		{
 			AddMsgToQueue(strFwd, it->second.first, it->second.second);
 		}
+	}
+	if (LogList.count(fromGroup)) {
+		string msg = strMsg;
+		filter_CQcode(msg, fromGroup);
+		ofstream logout(gm->session(fromGroup).log_path(), ios::out | ios::app);
+		logout << printQQ(fromQQ) + " " + printTTime(fromTime) << endl
+			<< msg << endl << endl;
 	}
 }
 
@@ -708,10 +715,11 @@ int FromMsg::DiceReply()
 	strVar["nick"] = getName(fromQQ, fromGroup);
 	strVar["pc"] = getPCName(fromQQ, fromGroup);
 	strVar["at"] = intT ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
-	isAuth = trusted > 3 || intT != GroupT || getGroupMemberInfo(fromGroup, fromQQ).permissions > 1;
+	isAuth = trusted > 3 || intT != GroupT || getGroupMemberInfo(fromGroup, fromQQ).permissions > 1 || pGrp->inviter == fromQQ;
 	strLowerMessage = strMsg;
 	std::transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(),
-	               [](unsigned char c) { return tolower(c); });
+	               [](unsigned char c) { return tolower(c); }); 
+	fwdMsg();
 	//Ö¸ÁîÆ¥Åä
 	if (strLowerMessage.substr(intMsgCnt, 9) == "authorize")
 	{
@@ -773,7 +781,7 @@ int FromMsg::DiceReply()
 				grp.leave(getMsg("strAdminDismiss", strVar));
 				reply(GlobalMsg["strGroupExit"]);
 			}
-			else if(getGroupMemberInfo(llGroup, fromQQ).permissions > 1)
+			else if(getGroupMemberInfo(llGroup, fromQQ).permissions > 1 || (grp.inviter == fromQQ))
 			{
 				reply(GlobalMsg["strDismiss"]);
 			}
@@ -2211,7 +2219,6 @@ int FromMsg::DiceReply()
 			reply(GlobalMsg["strNotAdmin"]);
 			return true;
 		}
-		isLinkOrder = true;
 		string strOption = readPara();
 		if (strOption == "close")
 		{
@@ -2548,6 +2555,32 @@ int FromMsg::DiceReply()
 		reply(strReply);
 		return 1;
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "log") {
+	if (!intT) {
+		reply(fmt->get_help("log"));
+		return 1;
+	}
+	intMsgCnt += 3;
+	string strPara = readPara();
+	if (strPara.empty()) {
+		reply(fmt->get_help("log"));
+	}
+	else if (DiceSession& game = gm->session(fromGroup); strPara == "new") {
+		game.log_new(this);
+	}else if(strPara == "on") {
+		game.log_on(this);
+	}
+	else if (strPara == "off") {
+		game.log_off(this);
+	}
+	else if (strPara == "end") {
+		game.log_end(this);
+	}
+	else {
+		reply(fmt->get_help("log"));
+	}
+	return 1;
+}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "nnn")
 	{
 		intMsgCnt += 3;
@@ -2852,7 +2885,7 @@ int FromMsg::DiceReply()
 	{
 		if (intT == PrivateT)
 		{
-			reply(GlobalMsg["strObPrivate"]);
+			reply(fmt->get_help("ob"));
 			return 1;
 		}
 		intMsgCnt += 2;

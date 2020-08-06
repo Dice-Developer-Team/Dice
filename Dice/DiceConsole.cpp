@@ -555,13 +555,13 @@ EVE_Request_AddFriend(eventAddFriend)
 	else if (console["AllowStranger"] < 2 && !UserList.count(fromQQ))
 	{
 		strMsg += "\n已拒绝（无用户记录）";
-		setFriendAddRequest(responseFlag, 2, "");
+		setFriendAddRequest(responseFlag, 2, getMsg("strFriendDenyNotUser").c_str());
 		console.log(strMsg, 1, printSTNow());
 	}
 	else if (console["AllowStranger"] < 1)
 	{
 		strMsg += "\n已拒绝（非信任用户）";
-		setFriendAddRequest(responseFlag, 2, "");
+		setFriendAddRequest(responseFlag, 2, getMsg("strFriendDenyNoTrust").c_str());
 		console.log(strMsg, 1, printSTNow());
 	}
 	else

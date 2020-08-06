@@ -35,7 +35,7 @@ bool DiceSession::table_clr(string key)
 	return false;
 }
 
-int DiceSession::ob_enter(FromMsg* msg)
+void DiceSession::ob_enter(FromMsg* msg)
 {
 	if (sOB.count(msg->fromQQ))
 	{
@@ -47,10 +47,9 @@ int DiceSession::ob_enter(FromMsg* msg)
 		msg->reply(GlobalMsg["strObEnter"]);
 	}
 	update();
-	return 0;
 }
 
-int DiceSession::ob_exit(FromMsg* msg)
+void DiceSession::ob_exit(FromMsg* msg)
 {
 	if (sOB.count(msg->fromQQ))
 	{
@@ -62,10 +61,9 @@ int DiceSession::ob_exit(FromMsg* msg)
 		msg->reply(GlobalMsg["strObExitAlready"]);
 	}
 	update();
-	return 0;
 }
 
-int DiceSession::ob_list(FromMsg* msg) const
+void DiceSession::ob_list(FromMsg* msg) const
 {
 	if (sOB.empty())msg->reply(GlobalMsg["strObListEmpty"]);
 	else
@@ -77,10 +75,9 @@ int DiceSession::ob_list(FromMsg* msg) const
 		}
 		msg->reply(GlobalMsg["strObList"] + res.linebreak().show());
 	}
-	return 0;
 }
 
-int DiceSession::ob_clr(FromMsg* msg)
+void DiceSession::ob_clr(FromMsg* msg)
 {
 	if (sOB.empty())msg->reply(GlobalMsg["strObListEmpty"]);
 	else
@@ -89,7 +86,63 @@ int DiceSession::ob_clr(FromMsg* msg)
 		msg->reply(GlobalMsg["strObListClr"]);
 	}
 	update();
-	return 0;
+}
+
+void DiceSession::log_new(FromMsg* msg) {
+	mkDir(DiceDir + logger.dirLog);
+	logger.tStart = time(nullptr);
+	logger.isLogging = true;
+	logger.fileLog = "group_" + to_string(msg->fromGroup) + "_" + to_string(time(nullptr)) + ".txt";
+	//先发消息后插入
+	msg->reply(GlobalMsg["strLogNew"]);
+	LogList.insert(msg->fromGroup);
+	update();
+}
+void DiceSession::log_on(FromMsg* msg) {
+	if (!logger.tStart) {
+		log_new(msg);
+		return;
+	}
+	if (logger.isLogging) {
+		msg->reply(GlobalMsg["strLogOnAlready"]);
+		return;
+	}
+	logger.isLogging = true;
+	msg->reply(GlobalMsg["strLogOn"]);
+	LogList.insert(msg->fromGroup);
+	update();
+}
+void DiceSession::log_off(FromMsg* msg) {
+	if (!logger.tStart) {
+		msg->reply(GlobalMsg["strLogNullErr"]);
+		return;
+	}
+	if (!logger.isLogging) {
+		msg->reply(GlobalMsg["strLogOffAlready"]);
+		return;
+	}
+	logger.isLogging = false;
+	//先擦除后发消息
+	LogList.erase(msg->fromGroup);
+	msg->reply(GlobalMsg["strLogOff"]);
+	update();
+}
+void DiceSession::log_end(FromMsg* msg) {
+	if (!logger.tStart) {
+		msg->reply(GlobalMsg["strLogNullErr"]);
+		return;
+	}
+	logger.isLogging = false;
+	logger.tStart = time(0);
+	msg->strVar["log_file"] = logger.fileLog;
+	LogList.erase(msg->fromGroup);
+	msg->reply(GlobalMsg["strLogEnd"]);
+	update();
+	msg->cmd_key = "uplog"; 
+	msg->strVar["log_path"] = log_path();
+}
+string DiceSession::log_path() {
+	return DiceDir + LogInfo::dirLog + "\\" + logger.fileLog; 
 }
 
 void DiceSession::save() const
@@ -116,6 +169,13 @@ void DiceSession::save() const
 				jData["tables"][strTable][GBKtoUTF8(item)] = val;
 			}
 		}
+	if (logger.tStart) {
+		json& jLog = jData["log"];
+		jLog["start"] = logger.tStart;
+		jLog["lastMsg"] = logger.tLastMsg;
+		jLog["file"] = logger.fileLog;
+		jLog["logging"] = logger.isLogging;
+	}
 	fout << jData.dump(1);
 }
 
@@ -136,7 +196,7 @@ void DiceTableMaster::session_end(long long group)
 	mSession.erase(group);
 }
 
-const enumap<string> mSMTag{"type", "room", "gm", "player", "observer", "tables"};
+const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
 
 void DiceTableMaster::save()
 {
@@ -179,6 +239,13 @@ int DiceTableMaster::load()
                     }
                 }
             }
+			if (j.count("log")) {
+				json& jLog = j["log"];
+				jLog["start"].get_to(pSession->logger.tStart);
+				jLog["lastMsg"].get_to(pSession->logger.tLastMsg);
+				jLog["file"].get_to(pSession->logger.fileLog);
+				jLog["logging"].get_to(pSession->logger.isLogging);
+			}
         }
     }
     return cnt;

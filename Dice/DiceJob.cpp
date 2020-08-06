@@ -10,6 +10,7 @@
 #include "BlackListManager.h"
 #include "GlobalVar.h"
 #include "CardDeck.h"
+#include "S3PutObject.h"
 #pragma warning(disable:28159)
 
 using namespace std;
@@ -103,7 +104,7 @@ void cq_restart(DiceJob& job) {
 		return;
 	}
 	string command = "taskkill /f /pid " + to_string(ppid) + "\nstart .\\" + strSelfName + " /account " + to_string(console.DiceMaid);
-	if (Mirai) command = "taskkill /f /pid " + to_string(ppid) + "\nstart .\\MiraiOK.exe";
+	if (Mirai) command = "taskkill /f /pid " + to_string(ppid) + " /t\nstart " + dirExe + "MiraiOK.exe";
 	ofstream fout("reload.bat");
 	fout << command << std::endl;
 	fout.close();
@@ -401,7 +402,26 @@ void dice_cloudblack(DiceJob& job) {
 		blacklist->loadJson(DiceDir + "/conf/CloudBlackList.json", true);
 	}
 }
+
+void log_put(DiceJob& job) {
+	job["ret"] = put_s3_object("dicelogger",
+							   job.strVar["log_file"],
+							   job.strVar["log_path"],
+							   "ap-southeast-1");
+	if (job["ret"] == "SUCCESS") {
+		job.echo(getMsg("strLogUpSuccess", job.strVar));
+		return;
+	}
+	else if (++job.cntExec > 5) {
+		job.echo(getMsg("strLogUpFailure",job.strVar));
+	}
+	else {
+		sch.add_job_for(2 * 60, job);
+	}
+}
+
 string print_master() {
+	if (!console.master())return "£¨ÎÞÖ÷£©";
 	return printQQ(console.master());
 }
 
