@@ -185,10 +185,6 @@ void getExceptGroup();
 	//通知
 	//一键清退
 	extern int clearGroup(std::string strPara = "unpower", long long fromQQ = 0);
-	//连接的聊天窗口
-	extern std::map<chatType, chatType> mLinkedList;
-	//单向转发列表
-	extern std::multimap<chatType, chatType> mFwdList;
 	//程序启动时间
 	extern long long llStartTime;
 	//当前时间

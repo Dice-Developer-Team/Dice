@@ -59,7 +59,7 @@ string printDuringTime(long long seconds)
     else if (seconds < 60) {
         return std::to_string(seconds) + "Ãë";
     }
-    int mins = seconds / 60;
+    int mins = int(seconds / 60);
     seconds = seconds % 60;
     if (mins < 60) {
         return std::to_string(mins) + "·Ö" + std::to_string(seconds) + "Ãë";

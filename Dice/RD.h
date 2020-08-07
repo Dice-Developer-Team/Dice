@@ -482,15 +482,12 @@ public:
 		while (strDice.find("D-") != std::string::npos)
 			strDice.insert(strDice.find("D-") + 1,
 			               std::to_string(defaultDice));
-		while (strDice.find("D*") != std::string::npos)
-			strDice.insert(strDice.find("D-") + 1,
-						   std::to_string(defaultDice));
-		while (strDice.find("D/") != std::string::npos)
-			strDice.insert(strDice.find("D-") + 1,
-						   std::to_string(defaultDice));
 		while (strDice.find("DX") != std::string::npos)
 			strDice.insert(strDice.find("DX") + 1,
-			               std::to_string(defaultDice));
+						   std::to_string(defaultDice));
+		while (strDice.find("D/") != std::string::npos)
+			strDice.insert(strDice.find("D/") + 1,
+						   std::to_string(defaultDice));
 		while (strDice.find("DK") != std::string::npos)
 			strDice.insert(strDice.find("DK") + 1,
 			               std::to_string(defaultDice));

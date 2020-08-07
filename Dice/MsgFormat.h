@@ -113,31 +113,7 @@ public:
 		return *this;
 	}
 
-	std::string show()
-	{
-		std::string s, strHead, strSepa;
-		unsigned int lenPage(0),cntPage(1);
-		if (intMaxLen > intLineLen || isLineBreak)
-		{
-			strHead = "\n";
-			strSepa = strLongSepa;
-		}
-		else
-		{
-			strSepa = sDot;
-		}
-		for (auto it = vRes.begin(); it != vRes.end(); it++) {
-			//超过上限后分页
-			if (lenPage > intPageLen) {
-				s += "\f[第" + std::to_string(++cntPage) + "页]\n" + *it;
-				lenPage = 0;
-			}
-			else if (it == vRes.begin())s = strHead + *it;
-			else s += strSepa + *it;
-			lenPage += it->length();
-		}
-		return s;
-	}
+	std::string show()const;
 
 	ResList& dot(string s)
 	{

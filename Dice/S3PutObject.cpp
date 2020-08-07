@@ -17,6 +17,8 @@
 // 防止WINAPI和AWSSDK冲突
 #undef GetMessage
 
+// Aws SDK设置
+Aws::SDKOptions options;
 Aws::Auth::AWSCredentials awsCredentials("", "");
 
 // 判断文件是否存在
@@ -37,19 +39,16 @@ std::string put_s3_object(const Aws::String& s3_bucket_name,
 {
 	// Verify file_name exists
 	if (!file_exists(file_name)) {
-		return "日志文件不存在!";
+		return "ERROR: File Not Found";
 	}
-
 	// If region is specified, use it
 	Aws::Client::ClientConfiguration clientConfig;
-	if (!region.empty())
+	//if (!region.empty())
 		clientConfig.region = region;
 	clientConfig.endpointOverride = "s3-accelerate.amazonaws.com";
-
 	// Set up request
 	Aws::S3::S3Client s3_client(awsCredentials, clientConfig);
 	Aws::S3::Model::PutObjectRequest object_request;
-
 	object_request.SetBucket(s3_bucket_name);
 	object_request.SetKey(s3_object_name);
 	const std::shared_ptr<Aws::IOStream> input_data =
@@ -57,7 +56,6 @@ std::string put_s3_object(const Aws::String& s3_bucket_name,
 			file_name.c_str(),
 			std::ios_base::in | std::ios_base::binary);
 	object_request.SetBody(input_data);
-
 	// Put the object
 	auto put_object_outcome = s3_client.PutObject(object_request);
 	if (!put_object_outcome.IsSuccess()) {

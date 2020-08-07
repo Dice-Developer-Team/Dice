@@ -63,6 +63,7 @@
     <Linkage-AWSSDKCPP-DynamoDB>static</Linkage-AWSSDKCPP-DynamoDB>
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
     <Linkage-AWSSDKCPP-S3>static</Linkage-AWSSDKCPP-S3>
+    <TargetName>app</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

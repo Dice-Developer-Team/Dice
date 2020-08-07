@@ -22,7 +22,19 @@ struct LogInfo{
 	//创建时间，为0则不存在
 	time_t tStart{ 0 };
 	time_t tLastMsg{ 0 };
-	string fileLog{ false };
+	string fileLog;
+	//路径不保存，初始化时生成
+	string pathLog;
+	void update() {
+		tLastMsg = time(nullptr);
+	}
+};
+
+struct LinkInfo {
+	bool isLinking{ false };
+	string typeLink;
+	//对象窗口，为0则不存在
+	long long linkFwd{ 0 };
 };
 
 class DiceSession
@@ -33,11 +45,14 @@ class DiceSession
 	set<long long> sOB;
 	//日志
 	LogInfo logger;
+	//链接
+	LinkInfo linker;
 public:
+	string type;
 	//群号
 	long long room;
 
-	DiceSession(long long group) : room(group)
+	DiceSession(long long group, string t = "simple") : room(group),type(t)
 	{
 		tUpdate = tCreate = time(nullptr);
 	}
@@ -59,7 +74,6 @@ public:
 	DiceSession& update(time_t tt)
 	{
 		tUpdate = tt;
-		save();
 		return *this;
 	}
 
@@ -93,7 +107,14 @@ public:
 	void log_on(FromMsg*);
 	void log_off(FromMsg*);
 	void log_end(FromMsg*);
-	string log_path();
+	[[nodiscard]] string log_path()const;
+	[[nodiscard]] bool is_logging() const { return logger.isLogging; }
+
+	//link指令
+	void link_new(FromMsg*);
+	void link_start(FromMsg*);
+	void link_close(FromMsg*);
+	[[nodiscard]] bool is_linking() const { return linker.isLinking; }
 
 	void save() const;
 };
@@ -112,9 +133,11 @@ public:
 	map<long long, std::shared_ptr<Session>> mSession;
 	Session& session(long long group);
 	void session_end(long long group);
-	void save();
+	//void save();
 	int load();
 };
 
 inline std::unique_ptr<DiceTableMaster> gm;
 inline set<long long>LogList;
+//禁止桥接等花哨操作
+inline map<long long, pair<long long,bool>>LinkList;

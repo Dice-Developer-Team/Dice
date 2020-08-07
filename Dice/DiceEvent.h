@@ -21,46 +21,24 @@ class FromMsg :public DiceJobDetail {
 public:
 	string strLowerMessage;
 	long long fromGroup = 0;
+	long long fromSession;
 	Chat* pGrp = nullptr;
 	string strReply;
-	FromMsg(std::string message, long long qq) :DiceJobDetail(qq, { qq,CQ::msgtype::Private }, message){}
-	FromMsg(std::string message, long long fromGroup, CQ::msgtype msgType, long long qq) :DiceJobDetail(qq, { fromGroup,msgType }, message), fromGroup(fromGroup) {
+	FromMsg(std::string message, long long qq) :DiceJobDetail(qq, { qq,CQ::msgtype::Private }, message){
+		fromSession = ~fromQQ;
+	}
+	FromMsg(std::string message, long long fromGroup, CQ::msgtype msgType, long long qq) :DiceJobDetail(qq, { fromGroup,msgType }, message), fromGroup(fromGroup), fromSession(fromGroup){
 		pGrp = &chat(fromGroup);
 	}
 
 	bool isBlock = false;
 
-	void reply(std::string strReply, bool isFormat)
-	{
-		isAns = true;
-		if (isFormat)
-			AddMsgToQueue(format(strReply, GlobalMsg, strVar), fromChat);
-		else AddMsgToQueue(strReply, fromChat);
-	}
+	void reply(std::string strReply, bool isFormat);
 
 	void reply(std::string strReply, const std::initializer_list<const std::string> replace_str = {},
-	           bool isFormat = true)
-	{
-		isAns = true;
-		while (isspace(static_cast<unsigned char>(strReply[0])))
-			strReply.erase(strReply.begin());
-		if (!isFormat)
-		{
-			AddMsgToQueue(strReply, fromChat);
-			return;
-		}
-		int index = 0;
-		for (const auto& s : replace_str)
-		{
-			strVar[to_string(index++)] = s;
-		}
-		AddMsgToQueue(format(strReply, GlobalMsg, strVar), fromChat);
-	}
+			   bool isFormat = true);
 
-	void reply()
-	{
-		reply(strReply);
-	}
+	void reply();
 
 	//通知
 	void note(std::string strMsg, int note_lv = 0b1)
@@ -118,7 +96,7 @@ private:
 		}
 		return -2;
 	}
-
+public:
 	//跳过空格
 	void readSkipSpace()
 	{

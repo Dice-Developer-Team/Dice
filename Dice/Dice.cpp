@@ -49,6 +49,7 @@
 #include "DiceEvent.h"
 #include "DiceSession.h"
 #include "DiceGUI.h"
+#include "S3PutObject.h"
 
 #pragma warning(disable:4996)
 #pragma warning(disable:6031)
@@ -57,8 +58,6 @@ using namespace std;
 using namespace CQ;
 
 unordered_map<long long, User> UserList{};
-map<chatType, chatType> mLinkedList;
-multimap<chatType, chatType> mFwdList;
 ThreadFactory threads;
 string strFileLoc;
 
@@ -131,6 +130,7 @@ void dataInit()
 		for (auto [grp, qq] : ObserveGroup)
 		{
 			gm->session(grp).sOB.insert(qq);
+			gm->session(grp).update();
 		}
 		ifstream ifINIT(strFileLoc + "INIT.DiceDB");
 		if (ifINIT)
@@ -141,11 +141,11 @@ void dataInit()
 			while (ifINIT >> Group >> nickname >> value)
 			{
 				gm->session(Group).mTable["先攻"].emplace(base64_decode(nickname), value);
+				gm->session(Group).update();
 			}
 		}
 		ifINIT.close();
 		console.log("初始化旁观与先攻记录" + to_string(gm->mSession.size()) + "条", 1);
-		gm->save();
 	}
 	today = make_unique<DiceToday>(DiceDir + "/user/DiceToday.json");
 }
@@ -165,7 +165,6 @@ void dataBackUp()
 	saveBFile(DiceDir + "\\user\\PlayerCards.RDconf", PList);
 	saveFile(DiceDir + "\\user\\ChatList.txt", ChatList);
 	saveBFile(DiceDir + "\\user\\ChatConf.RDconf", ChatList);
-	clearUser();
 	saveFile(DiceDir + "\\user\\UserList.txt", UserList);
 	saveBFile(DiceDir + "\\user\\UserConf.RDconf", UserList);
 }
@@ -448,6 +447,7 @@ EVE_Enable(eventEnable)
 	dataInit();
 	// 确保线程执行结束
 	while (msgSendThreadRunning)Sleep(10);
+	Aws::InitAPI(options);
 	Enabled = true;
 	threads(SendMsg);
 	threads(ConsoleTimer);
@@ -928,6 +928,7 @@ void global_exit() {
 	console.reset();
 	EditedMsg.clear();
 	blacklist.reset();
+	Aws::ShutdownAPI(options);
 }
 
 EVE_Disable(eventDisable)

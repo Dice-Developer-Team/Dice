@@ -59,7 +59,7 @@ std::condition_variable cvJob;
 std::condition_variable cvJobWaited;
 //延时任务队列
 using waited_job = pair<time_t, DiceJobDetail>;
-std::priority_queue<waited_job, std::deque<waited_job>> queueJobWaited;
+std::priority_queue<waited_job, std::deque<waited_job>,std::greater<waited_job>> queueJobWaited;
 std::mutex mtJobWaited;
 
 void jobHandle() {
@@ -111,12 +111,12 @@ void DiceScheduler::push_job(const char* job_name) {
 void DiceScheduler::add_job_for(unsigned int waited, const DiceJobDetail& job) {
 	if (!Enabled)return;
 	std::unique_lock<std::mutex> lock_queue(mtJobWaited);
-	queueJobWaited.emplace(time(NULL) + waited, job);
+	queueJobWaited.emplace(time(nullptr) + waited, job);
 }
 void DiceScheduler::add_job_for(unsigned int waited, const char* job_name) {
 	if (!Enabled)return;
 	std::unique_lock<std::mutex> lock_queue(mtJobWaited);
-	queueJobWaited.emplace(time(NULL) + waited, job_name);
+	queueJobWaited.emplace(time(nullptr) + waited, job_name);
 }
 
 void DiceScheduler::add_job_until(time_t cloc, const DiceJobDetail& job) {
@@ -180,9 +180,9 @@ void DiceToday::load() {
 }
 
 string printTTime(time_t tt) {
-	char timestamp[20];
+	char tm_buffer[20];
 	tm t{};
-	if (!tt || localtime_s(&t, &tt))return "1970-00-00 00:00:00";
-	sprintf_s(timestamp, "%04d-%02d-%02d %02d:%02d:%02d", t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
-	return timestamp;
+	if (!tt || localtime_s(&t, &tt))return "1970-00-00 00:00:00"; 
+	strftime(tm_buffer, 20, "%Y-%m-%d %H:%M:%S", &t);
+	return tm_buffer;
 }

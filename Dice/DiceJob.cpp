@@ -410,12 +410,13 @@ void log_put(DiceJob& job) {
 							   "ap-southeast-1");
 	if (job["ret"] == "SUCCESS") {
 		job.echo(getMsg("strLogUpSuccess", job.strVar));
-		return;
 	}
-	else if (++job.cntExec > 5) {
-		job.echo(getMsg("strLogUpFailure",job.strVar));
+	else if (job.cntExec++ > 1) {
+		job.echo(getMsg("strLogUpFailureEnd",job.strVar));
 	}
 	else {
+		job["retry"] = to_string(job.cntExec);
+		job.echo(getMsg("strLogUpFailure", job.strVar));
 		sch.add_job_for(2 * 60, job);
 	}
 }

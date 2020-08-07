@@ -18,6 +18,7 @@ struct DiceJobDetail {
     string cmd_key;
     string strMsg;
     time_t fromTime = time(nullptr);
+    size_t cntExec{ 0 };
     //¡Ÿ ±±‰¡øø‚
     map<string, string> strVar = {};
     DiceJobDetail(const char* cmd, bool isFromSelf = false):cmd_key(cmd){
@@ -26,7 +27,7 @@ struct DiceJobDetail {
     DiceJobDetail(long long qq, chatType ct, std::string msg = "", const char* cmd = "") 
         :fromQQ(qq), fromChat(ct), strMsg(msg),cmd_key(cmd) {
     }
-    string operator[](const char* key){
+    string& operator[](const char* key){
         return strVar[key];
     }
     bool operator<(const DiceJobDetail& other)const {
@@ -39,7 +40,6 @@ class DiceJob : public DiceJobDetail {
 public:
     DiceJob(DiceJobDetail detail) :DiceJobDetail(detail) {}
     Renum ren = Renum::NIL;
-    size_t cntExec{ 0 };
     void exec();
     void echo(const std::string&);
     void note(const std::string&, int);
