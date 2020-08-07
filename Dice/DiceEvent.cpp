@@ -543,12 +543,11 @@ int FromMsg::AdminEvent(const string& strOption)
 		{
 			if (llTargetID == 0)
 			{
-				strReply = "当前黑名单群列表：";
-				for (auto [each, danger] : blacklist->mGroupDanger)
-				{
-					strReply += "\n" + to_string(each);
+				ResList res;
+				for (auto [each, danger] : blacklist->mGroupDanger) {
+					res << printGroup(each) + ":" + to_string(danger);
 				}
-				reply();
+				reply(res.show(), false);
 				return 1;
 			}
 			strVar["time"] = printSTNow();
@@ -621,12 +620,12 @@ int FromMsg::AdminEvent(const string& strOption)
 		{
 			if (llTargetID == 0) 
 			{
-				strReply = "当前黑名单用户列表：";
+				ResList res;
 				for (auto [each, danger] : blacklist->mQQDanger) 
 				{
-					strReply += "\n" + printQQ(each);
+					res << printQQ(each) + ":" + to_string(danger);
 				}
-				reply();
+				reply(res.show(), false);
 				return 1;
 			}
 			strVar["time"] = printSTNow();

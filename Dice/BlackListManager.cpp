@@ -1050,7 +1050,10 @@ void DDBlackManager::add_black_group(long long llgroup, FromMsg* msg)
 	DDBlackMark mark{0, llgroup};
 	mark.danger = 1;
 	mark.note = msg->strVar["note"];
-	if (!mark.note.empty())mark.danger = 2;
+	if (!mark.note.empty()) {
+		mark.danger = 2;
+		mark.type = "other";
+	}
 	if (mark.danger < get_qq_danger(llgroup))
 	{
 		msg->reply(GlobalMsg["strSelfName"] + "已拉黑群" + to_string(llgroup) + "！");
@@ -1074,7 +1077,10 @@ void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
 	DDBlackMark mark{llqq, 0};
 	mark.danger = 1;
 	mark.note = msg->strVar["note"];
-	if (!mark.note.empty())mark.danger = 2;
+	if (!mark.note.empty()) {
+		mark.danger = 2;
+		mark.type = "other";
+	}
 	if (mark.danger < get_qq_danger(llqq))
 	{
 		msg->reply(GlobalMsg["strSelfName"] + "已拉黑用户" + printQQ(llqq) + "！");
