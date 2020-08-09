@@ -182,7 +182,7 @@ void Console::loadNotice()
 	if (loadFile(DiceDir + "\\conf\\NoticeList.txt", NoticeList) < 1)
 	{
 		std::set<chatType> sChat;
-		if (loadFile(static_cast<string>(getAppDirectory()) + "MonitorList.RDconf", sChat) > 0)
+		if (loadFile(std::string(getAppDirectory()) + "MonitorList.RDconf", sChat) > 0)
 			for (const auto& it : sChat)
 			{
 				console.setNotice(it, 0b100000);
