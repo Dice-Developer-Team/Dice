@@ -352,7 +352,7 @@ int DiceTableMaster::load()
                 for (nlohmann::json::iterator itTable = j["tables"].begin(); itTable != j["tables"].end(); ++itTable)
 				{
                     string strTable = UTF8toGBK(itTable.key());
-                    for (nlohmann::json::iterator itItem = itTable.value().begin(); itItem != j.end(); ++itItem)
+                    for (nlohmann::json::iterator itItem = itTable.value().begin(); itItem != itTable.value().end(); ++itItem)
 					{
                         pSession->mTable[strTable].emplace(UTF8toGBK(itItem.key()), itItem.value());
                     }
