@@ -154,6 +154,7 @@ void DiceToday::daily_clear() {
 	if (stToday.wDay != stNow.wDay) {
 		stToday = stNow;
 		cntGlobal.clear();
+		cntUser.clear();
 	}
 }
 

@@ -241,7 +241,7 @@ void clear_group(DiceJob& job) {
 	std::map<string, string>strVar;
 	if (job.strVar["clear_mode"] == "unpower") {
 		for (auto& [id, grp] : ChatList) {
-			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清"))continue;
+			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("协议无效"))continue;
 			if (grp.isGroup && getGroupMemberInfo(id, console.DiceMaid).permissions == 1) {
 				res << printGroup(id);
 				grp.leave(getMsg("strLeaveNoPower"));
@@ -256,7 +256,7 @@ void clear_group(DiceJob& job) {
 		string strDayLim = to_string(intDayLim);
 		time_t tNow = time(NULL);
 		for (auto& [id, grp] : ChatList) {
-			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清"))continue;
+			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("协议无效"))continue;
 			time_t tLast = grp.tLastMsg;
 			if (int tLMT; grp.isGroup && (tLMT = getGroupMemberInfo(id, console.DiceMaid).LastMsgTime) > 0 && tLMT > tLast)tLast = tLMT;
 			if (!tLast)continue;
@@ -275,7 +275,7 @@ void clear_group(DiceJob& job) {
 		try {
 			for (auto& [id, grp_name] : getGroupList()) {
 				Chat& grp = chat(id).group().name(grp_name);
-				if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("免黑"))continue;
+				if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("免黑") || grp.isset("协议无效"))continue;
 				if (blacklist->get_group_danger(id)) {
 					res << printGroup(id) + "：" + "黑名单群";
 					if (console["LeaveBlackGroup"])grp.leave(getMsg("strBlackGroup"));
@@ -314,7 +314,7 @@ void clear_group(DiceJob& job) {
 	}
 	else if (job["clear_mode"] == "preserve") {
 		for (auto& [id, grp] : ChatList) {
-			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("使用许可") || grp.isset("免清"))continue;
+			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("使用许可") || grp.isset("免清") || grp.isset("协议无效"))continue;
 			if (grp.isGroup && getGroupMemberInfo(id, console.master()).permissions) {
 				grp.set("使用许可");
 				continue;

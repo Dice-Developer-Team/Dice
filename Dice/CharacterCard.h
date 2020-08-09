@@ -19,6 +19,8 @@
 #include "ManagerSystem.h"
 #include "MsgFormat.h"
 #include "CardDeck.h"
+#include "DiceEvent.h"
+
 using std::string;
 using std::to_string;
 using std::vector;
@@ -947,4 +949,4 @@ inline map<long long, Player> PList;
 
 Player& getPlayer(long long qq);
 
-string getPCName(long long qq, long long group);
+void getPCName(FromMsg&);

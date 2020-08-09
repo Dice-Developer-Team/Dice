@@ -33,8 +33,9 @@ Player& getPlayer(long long qq)
 	return PList[qq];
 }
 
-string getPCName(long long qq, long long group)
+void getPCName(FromMsg& msg)
 {
-	if (PList.count(qq) && PList[qq][group].Name != "½ÇÉ«¿¨")return PList[qq][group].Name;
-	return "{nick}";
+	msg["pc"] = (PList.count(msg.fromQQ) && PList[msg.fromQQ][msg.fromGroup].Name != "½ÇÉ«¿¨")
+		? PList[msg.fromQQ][msg.fromGroup].Name
+		: msg["nick"];
 }

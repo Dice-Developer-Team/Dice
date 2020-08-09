@@ -715,6 +715,7 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 			AddMsgToQueue(blacklist->list_self_qq_warning(beingOperateQQ), fromGroup, msgtype::Group);
 			if (grp.isset("免清"))strNote += "（群免清）";
 			else if (grp.isset("免黑"))strNote += "（群免黑）";
+			else if (grp.isset("协议无效"))strNote += "（群协议无效）";
 			else if (getGroupMemberInfo(fromGroup, console.DiceMaid).permissions > 1)strNote += "（群内有权限）";
 			else if (console["LeaveBlackQQ"])
 			{
