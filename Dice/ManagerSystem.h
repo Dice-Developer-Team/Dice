@@ -251,8 +251,7 @@ public:
 			else CQ::sendDiscussMsg(ID, msg);
 			Sleep(500);
 		}
-		if (isGroup)CQ::setGroupLeave(ID);
-		else CQ::setDiscussLeave(ID);
+		isGroup ? CQ::setGroupLeave(ID) : CQ::setDiscussLeave(ID);
 		set("рямк");
 	}
 
@@ -260,6 +259,8 @@ public:
 	{
 		return boolConf.count(key) || intConf.count(key) || strConf.count(key);
 	}
+
+	bool is_except()const;
 
 	void setConf(const string& key, int val)
 	{

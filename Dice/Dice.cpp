@@ -474,7 +474,13 @@ bool eve_GroupAdd(Chat& grp)
 		if (ChatList.size() == 1 && !console.isMasterMode)sendGroupMsg(grp.ID, msgInit);
 	}
 	GroupInfo ginf(grp.ID);
-	grp.Name = ginf.strGroupName;
+	//群信息是否获取成功
+	if (ginf.llGroup) {
+		grp.Name = ginf.strGroupName;
+	}
+	else {
+		ginf.llGroup = grp.ID;
+	}
 	if (grp.boolConf.empty() && ginf.nGroupSize > 499) {
 		grp.set("协议无效");
 	}

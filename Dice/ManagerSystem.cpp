@@ -144,6 +144,10 @@ Chat& Chat::id(long long grp) {
 	return *this;
 }
 
+bool Chat::is_except()const {
+	return boolConf.count("免黑") || boolConf.count("协议无效");
+}
+
 int groupset(long long id, string st)
 {
 	if (!ChatList.count(id))return -1;

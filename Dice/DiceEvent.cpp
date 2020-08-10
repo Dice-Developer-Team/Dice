@@ -754,7 +754,7 @@ int FromMsg::DiceReply()
 	strVar["nick"] = getName(fromQQ, fromGroup);
 	getPCName(*this);
 	strVar["at"] = intT ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
-	isAuth = trusted > 3 || intT != GroupT || getGroupMemberInfo(fromGroup, fromQQ).permissions > 1 || pGrp->inviter == fromQQ;
+	isAuth = trusted > 3 || intT != GroupT || getGroupMemberInfo(fromGroup, fromQQ).permissions != 1 || pGrp->inviter == fromQQ;
 	//÷∏¡Ó∆•≈‰
 	if (strLowerMessage.substr(intMsgCnt, 9) == "authorize")
 	{

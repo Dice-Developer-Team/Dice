@@ -46,22 +46,27 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 	string strNotice;
 	for (auto& [id, grp] : ChatList)
 	{
-		if (grp.isset("已退") || grp.isset("忽略") || !grp.isGroup)continue;
-		if (getGroupMemberInfo(id, llQQ).QQID == llQQ)
+		if (grp.isset("已退") || grp.isset("未进") || grp.isset("忽略") || grp.isset("协议无效") || !grp.isGroup)continue;
+		if (GroupMemberInfo member = getGroupMemberInfo(id, llQQ); member.QQID == llQQ)
 		{
 			strNotice = printGroup(id);
-			if (grp.isset("免黑"))
+			if (grp.isset("协议无效"))
 			{
+				strNotice += "群协议无效";
+			}
+			else if (grp.isset("免黑")) {
 				if (mark.isSource(console.DiceMaid) && !mark.isType("local"))sendGroupMsg(id, mark.warning());
 				strNotice += "群免黑";
 			}
-			else if (getGroupMemberInfo(id, llQQ).permissions < getGroupMemberInfo(id, getLoginQQ()).permissions)
-			{
+			else if (GroupMemberInfo self = getGroupMemberInfo(id, console.DiceMaid); !self.permissions) {
+				continue;
+			}
+			else if (member.permissions < self.permissions) {
 				if (mark.isSource(console.DiceMaid && !mark.isType("local")))AddMsgToQueue(
 					mark.warning(), id, msgtype::Group);
 				strNotice += "对方群权限较低";
 			}
-			else if (getGroupMemberInfo(id, llQQ).permissions > getGroupMemberInfo(id, getLoginQQ()).permissions)
+			else if (member.permissions > self.permissions)
 			{
 				sendGroupMsg(id, mark.warning());
 				grp.leave("发现新增黑名单管理员" + printQQ(llQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
