@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123溯洄
+ * Copyright (C) 2018-2019 w4123脣脻盲搂
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -29,8 +29,9 @@
 #include <cassert>
 #include <vector>
 #include <algorithm>
+#include <iterator>
 
-// 现在是GBK了
+// 脧脰脭脷脢脟GBK脕脣
 std::string GBKtoUTF8(const std::string& strGBK)
 {
 	const int UTF16len = MultiByteToWideChar(CP_GBK, 0, strGBK.c_str(), -1, nullptr, 0);
@@ -52,7 +53,7 @@ std::vector<std::string> GBKtoUTF8(const std::vector<std::string>& strGBK)
 	return vOutUTF8;
 }
 
-// 事实上是GB18030
+// 脢脗脢碌脡脧脢脟GB18030
 std::string UTF8toGBK(const std::string& strUTF8)
 {
 	const int UTF16len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
