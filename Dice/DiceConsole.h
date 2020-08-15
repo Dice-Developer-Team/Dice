@@ -34,6 +34,7 @@ public:
 	bool isMasterMode = false;
 	long long masterQQ = 0;
 	long long DiceMaid = 0;
+	bool is_self(long long qq)const { return masterQQ == qq || DiceMaid == qq; }
 	friend void ConsoleTimer();
 	friend class FromMsg;
 	friend class DiceJob;
@@ -182,9 +183,6 @@ void getExceptGroup();
 		};
 	};
 
-	//通知
-	//一键清退
-	extern int clearGroup(std::string strPara = "unpower", long long fromQQ = 0);
 	//程序启动时间
 	extern long long llStartTime;
 	//当前时间

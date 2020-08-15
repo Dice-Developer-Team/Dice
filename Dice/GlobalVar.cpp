@@ -25,11 +25,10 @@
 #include "CQLogger.h"
 #include "GlobalVar.h"
 #include "MsgFormat.h"
-#include <map>
 
 bool Enabled = false;
 
-bool Mirai = false;
+QQFrame frame{ QQFrame::CoolQ };
 
 std::string Dice_Full_Ver_For = Dice_Full_Ver + " For CoolQ]";
 
@@ -172,7 +171,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strHlpSet","已为{key}设置词条√"},
 	{"strHlpReset","已清除{key}的词条√"},
 	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
-	{"strHlpNotFound","{self}未找到指定的帮助信息×"},
+	{"strHelpNotFound","{self}未找到名为{help_word}的词条×"},
+	{"strHelpSuggestion","{self}猜{nick}想要查找的是:{res}"},
 	{"strClockToWork","{self}已按时启用√"},
 	{"strClockOffWork","{self}已按时关闭√"},
 	{"strNameGenerator","{pc}的随机名称：{res}"},
@@ -332,6 +332,7 @@ std::map<std::string, std::string> GlobalMsg
 std::map<std::string, std::string> EditedMsg;
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+566:.help查询建议
 565:.log日志记录
 564:多功能优化，牌数牌堆等
 563:优化指令帮助
@@ -361,7 +362,9 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 多数指令需要后接参数，请.help对应指令 获取详细信息，如.help jrrp
 控制指令:
 .dismiss 退群
-.bot 开关
+.bot 版本信息
+.bot on 启用指令
+.bot off 停用指令
 .group 群管
 .authorize 授权许可
 .send 向后台发送消息)"
@@ -369,6 +372,7 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 R"([第二页]跑团指令
 .rules 规则速查
 .r 掷骰
+.log 日志记录
 .ob 旁观模式
 .set 设置默认骰
 .coc COC人物作成
@@ -404,7 +408,7 @@ Master拥有最高权限，且可以调整任意信任)"},
 {"退群指令","&dismiss"},
 {"dismiss","该指令需要群管理员权限，使用后即退出群聊\n!dismiss [目标QQ(完整或末四位)]指名退群\n!dismiss无视内置黑名单和静默状态，只要插件开启总是有效"},
 {"授权许可","&authoize"},
-{"authorize","授权许可(非信任用户使用时转为向管理申请许可)\n!authorize (+[群号]) ([申请理由])\n群内原地发送可省略群号，无法自动授权时会连同理由发给管理"},
+{"authorize","授权许可(非信任用户使用时转为向管理申请许可)\n!authorize (+[群号]) ([申请理由])\n群内原地发送可省略群号，无法自动授权时会连同理由发给管理\n默认格式为:!authorize 申请用途:[ **请写入理由** ] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[ **请写入指令** ]，用后使用[ **请写入指令** ]送出群"},
 {"开关","&bot"},
 {"bot",".bot on/off开启/静默骰子（限群管理）\n.bot无视静默状态，只要插件开启且不在黑名单总是有效"},
 {"规则速查","&rules"},
@@ -581,7 +585,7 @@ Master拥有最高权限，且可以调整任意信任)"},
 	{"世界逆位", "未完成、失败、准备不足、盲目接受、一时不顺利、半途而废、精神颓废、饱和状态、合谋、态度不够融洽、感情受挫。"},
 };
 
-std::string getMsg(const std::string& key, const std::map<std::string, std::string>& maptmp)
+std::string getMsg(const std::string& key, const std::unordered_map<std::string, std::string>& maptmp)
 {
 	const auto it = GlobalMsg.find(key);
 	if (it != GlobalMsg.end())return format(it->second, GlobalMsg, maptmp);

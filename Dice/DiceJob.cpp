@@ -68,7 +68,7 @@ void cq_restart(DiceJob& job) {
 	}
 	BOOL bResult = Process32First(hProcessSnap, &pe32);
 	int ppid(0);
-	if (Mirai) {
+	if (frame == QQFrame::Mirai) {
 		char buffer[MAX_PATH];
 		const DWORD length = GetModuleFileNameA(nullptr, buffer, sizeof buffer);
 		std::string pathSelf(buffer, length);
@@ -104,7 +104,7 @@ void cq_restart(DiceJob& job) {
 		return;
 	}
 	string command = "taskkill /f /pid " + to_string(ppid) + "\nstart .\\" + strSelfName + " /account " + to_string(console.DiceMaid);
-	if (Mirai) command = "taskkill /f /pid " + to_string(ppid) + " /t\nstart " + dirExe + "MiraiOK.exe";
+	if (frame == QQFrame::Mirai) command = "taskkill /f /pid " + to_string(ppid) + " /t\nstart " + dirExe + "MiraiOK.exe";
 	ofstream fout("reload.bat");
 	fout << command << std::endl;
 	fout.close();
@@ -138,7 +138,10 @@ void mirai_reload(DiceJob& job){
 		job.note("重载MiraiNative失败×\n使用了过旧或不适配的CQP.dll\n请保证更新适配版本的MiraiNative并删除旧CQP.dll", 0b10);
 		return;
 	}
-	cq_reload(getAuthCode());
+	if(cq_reload(getAuthCode()))
+		job.note("重载" + getMsg("self") + "完成√", 1);
+	else
+		job.note("重载" + getMsg("self") + "失败×", 0b10);
 	FreeLibrary(hModule);
 }
 
@@ -238,7 +241,6 @@ void clear_image(DiceJob& job) {
 void clear_group(DiceJob& job) {
 	int intCnt = 0;
 	ResList res;
-	std::map<string, string>strVar;
 	if (job.strVar["clear_mode"] == "unpower") {
 		for (auto& [id, grp] : ChatList) {
 			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("协议无效"))continue;
@@ -257,14 +259,14 @@ void clear_group(DiceJob& job) {
 		time_t tNow = time(NULL);
 		for (auto& [id, grp] : ChatList) {
 			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("协议无效"))continue;
-			time_t tLast = grp.tLastMsg;
+			time_t tLast = grp.tUpdated;
 			if (int tLMT; grp.isGroup && (tLMT = getGroupMemberInfo(id, console.DiceMaid).LastMsgTime) > 0 && tLMT > tLast)tLast = tLMT;
 			if (!tLast)continue;
 			int intDay = (int)(tNow - tLast) / 86400;
 			if (intDay > intDayLim) {
-				strVar["day"] = to_string(intDay);
+				job["day"] = to_string(intDay);
 				res << printGroup(id) + ":" + to_string(intDay) + "天\n";
-				grp.leave(getMsg("strLeaveUnused", strVar));
+				grp.leave(getMsg("strLeaveUnused", job.strVar));
 				intCnt++;
 				this_thread::sleep_for(2s);
 			}
@@ -329,6 +331,40 @@ void clear_group(DiceJob& job) {
 	else
 		job.echo("无法识别筛选参数×");
 }
+void list_group(DiceJob& job) {
+	if (mChatConf.count(job["list_mode"])) {
+		ResList res;
+		for (auto& [id, grp] : ChatList) {
+			if (grp.isset(job["list_mode"])) {
+				res << printChat(grp);
+			}
+		}
+		job.reply("{self}含词条" + job["list_mode"] + "群记录" + to_string(res.size()) + "条" + res.head(":").show());
+	}
+	else if (job["list_mode"] == "idle") {
+		std::priority_queue<std::pair<time_t, string>> qDiver;
+		time_t tNow = time(NULL);
+		for (auto& [id, grp] : ChatList) {
+			if (grp.isset("已退") || grp.isset("未进"))continue;
+			time_t tLast = grp.tUpdated;
+			if (int tLMT; grp.isGroup && (tLMT = getGroupMemberInfo(id, console.DiceMaid).LastMsgTime) > 0 && tLMT > tLast)tLast = tLMT;
+			if (!tLast)continue;
+			int intDay = (int)(tNow - tLast) / 86400;
+			qDiver.emplace(intDay, printGroup(id));
+		}
+		if (qDiver.empty()) {
+			job.reply("{self}无群聊或群信息加载失败！");
+		}
+		size_t intCnt(0);
+		ResList res;
+		while (!qDiver.empty()) {
+			res << qDiver.top().second + to_string(qDiver.top().first) + "天";
+			qDiver.pop();
+			if (++intCnt > 64 || intCnt > qDiver.size() || qDiver.top().first < 7)break;
+		}
+		job.reply("{self}所在闲置群列表:" + res.show());
+	}
+}
 
 //心跳检测
 void cloud_beat(DiceJob& job) {
@@ -338,8 +374,8 @@ void cloud_beat(DiceJob& job) {
 
 void dice_update(DiceJob& job) {
 	job.note("开始更新Dice\n版本:" + job.strVar["ver"], 1);
-	if (Mirai) {
-		mkDir("plugins/MiraiNative/pluginsnew");
+	if (frame == QQFrame::Mirai) {
+		mkDir(dirExe + "plugins/MiraiNative/pluginsnew");
 		char pathDll[] = "plugins/MiraiNative/pluginsnew/com.w4123.dice.dll";
 		char pathJson[] = "plugins/MiraiNative/pluginsnew/com.w4123.dice.json";
 		string urlDll("https://shiki.stringempty.xyz/DiceVer/" + job.strVar["ver"] + "/com.w4123.dice.dll?" + to_string(job.fromTime));
@@ -401,6 +437,8 @@ void dice_cloudblack(DiceJob& job) {
 		job.note("同步云不良记录成功，" + getMsg("self") + "开始读取", 1);
 		blacklist->loadJson(DiceDir + "/conf/CloudBlackList.json", true);
 	}
+	if (console["CloudBlackShare"])
+		sch.add_job_for(24 * 60 * 60, "cloudblack");
 }
 
 void log_put(DiceJob& job) {

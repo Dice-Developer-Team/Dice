@@ -47,7 +47,7 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 	for (auto& [id, grp] : ChatList)
 	{
 		if (grp.isset("已退") || grp.isset("未进") || grp.isset("忽略") || grp.isset("协议无效") || !grp.isGroup)continue;
-		if (GroupMemberInfo member = getGroupMemberInfo(id, llQQ); member.QQID == llQQ)
+		if (GroupMemberInfo member = getGroupMemberInfo(id, llQQ); member.QQID == llQQ && member.Group == id)
 		{
 			strNotice = printGroup(id);
 			if (grp.isset("协议无效"))
@@ -60,6 +60,9 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 			}
 			else if (GroupMemberInfo self = getGroupMemberInfo(id, console.DiceMaid); !self.permissions) {
 				continue;
+			}
+			else if (!member.permissions) {
+				strNotice += "对方群权限获取失败";
 			}
 			else if (member.permissions < self.permissions) {
 				if (mark.isSource(console.DiceMaid && !mark.isType("local")))AddMsgToQueue(
@@ -333,7 +336,7 @@ void DDBlackMark::fill_note()
 	}
 	else if (type == "spam")
 	{
-		note = time + " " + (fromQQ.first ? printQQ(fromQQ.first) : "") + "对" + printQQ(DiceMaid) + "刷屏";
+		note = time + " " + (fromQQ.first ? printQQ(fromQQ.first) : "") + "对" + printQQ(DiceMaid) + "高频发送指令";
 	}
 }
 
@@ -411,6 +414,9 @@ void DDBlackMark::upload()
 	}
 	else if (isdigit(static_cast<unsigned char>(temp[0])))wid = stoi(temp);
 	else if (temp == "denied")erase();
+	else if (temp.find("error") == 0) {
+		console.log("上传不良记录被拒绝:" + temp, 0b10);
+	}
 }
 
 int DDBlackMark::check_cloud()
@@ -586,7 +592,7 @@ DDBlackMark& DDBlackMark::operator<<(const DDBlackMark& mark)
     return *this;
 }
 
-void DDBlackManager::insert(DDBlackMark& ex_mark)
+bool DDBlackManager::insert(DDBlackMark& ex_mark)
 {
     std::lock_guard<std::mutex> lock_queue(blacklistMutex);
     unsigned id = vBlackList.size();
@@ -637,6 +643,7 @@ void DDBlackManager::insert(DDBlackMark& ex_mark)
         }
     }
     if (Enabled && !isLoadingExtern)blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
+	return !mark.isClear;
 }
 
 bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5)
@@ -856,6 +863,7 @@ bool DDBlackManager::up_group_danger(long long llgroup, DDBlackMark& mark)
 		return false;
 	}
 	if (mGroupDanger.count(llgroup) && mGroupDanger[llgroup] >= mark.danger)return false;
+	mGroupDanger[llgroup] = mark.danger;
 	if (Enabled)
 	{
 		if (ChatList.count(llgroup) && !chat(llgroup).isset("已退"))chat(llgroup).leave(
@@ -863,7 +871,6 @@ bool DDBlackManager::up_group_danger(long long llgroup, DDBlackMark& mark)
 		if(!isLoadingExtern)console.log(GlobalMsg["strSelfName"] + "已将" + printGroup(llgroup) + "危险等级提升至" + to_string(mark.danger), 0b10,
 		            printSTNow());
 	}
-	mGroupDanger[llgroup] = mark.danger;
 	return true;
 }
 
@@ -877,6 +884,7 @@ bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark)
 		return false;
 	}
 	if (mQQDanger.count(llqq) && mQQDanger[llqq] >= mark.danger)return false;
+	mQQDanger[llqq] = mark.danger;
 	if (Enabled && mark.danger > 1)
 	{
 		if (!mQQDanger.count(llqq) && UserList.count(llqq) && mark.danger == 2)
@@ -891,7 +899,6 @@ bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark)
 			checkGroupWithBlackQQ(mark, llqq);
 		}
 	}
-	mQQDanger[llqq] = mark.danger;
 	return true;
 }
 
@@ -1265,7 +1272,7 @@ int DDBlackManager::loadJson(string strPath, bool isExtern)
 		isLoadingExtern = true;
 		if (int res = find(mark); res < 0)
 		{
-			insert(mark);
+			if(insert(mark))cnt++;
 		}
 		else
 		{
@@ -1273,10 +1280,9 @@ int DDBlackManager::loadJson(string strPath, bool isExtern)
 				if (mark.isSource(console.DiceMaid))continue;	//涉及自身的不处理
 				if (mark.danger != vBlackList[res].danger)continue;	//危险等级特别改动的不处理
 			}
-			update(mark, res);
+			if (update(mark, res))cnt++;
 		}
 		isLoadingExtern = false;
-		cnt++;
 	}
 	if (isExtern) {
 		filesystem::remove(strPath);
@@ -1288,7 +1294,6 @@ int DDBlackManager::loadJson(string strPath, bool isExtern)
 
 int DDBlackManager::loadHistory(const string& strLoc)
 {
-	console.log("开始初始化历史黑名单", 0, printSTNow());
 	long long id;
 	std::ifstream fgroup(strLoc + "BlackGroup.RDconf");
 	if (fgroup)

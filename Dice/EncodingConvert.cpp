@@ -29,6 +29,7 @@
 #include <cassert>
 #include <vector>
 #include <algorithm>
+#include <iterator>
 
 // 现在是GBK了
 std::string GBKtoUTF8(const std::string& strGBK)

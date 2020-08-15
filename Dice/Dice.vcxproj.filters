@@ -72,9 +72,6 @@
     <ClCompile Include="MsgFormat.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="DiceUpdate.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="DiceNetwork.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -290,13 +287,16 @@
     <ClInclude Include="S3PutObject.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="SHKQuerier.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.json">
-      <Filter>资源文件</Filter>
-    </None>
     <None Include="packages.config" />
     <None Include="ClassDiagram.cd" />
+    <None Include="com.w4123.dice.json">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Library Include="CQP.lib">

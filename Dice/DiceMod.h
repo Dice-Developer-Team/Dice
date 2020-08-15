@@ -1,6 +1,6 @@
 /*
  * ×ÊÔ´Ä£¿é
- * Copyright (C) 2019 String.Empty
+ * Copyright (C) 2019-2020 String.Empty
  */
 #pragma once
 #include <string>
@@ -9,6 +9,8 @@
 #include <map>
 #include <memory>
 #include "STLExtern.hpp"
+#include "SHKQuerier.h"
+#include "DiceSchedule.h"
 using std::string;
 using std::vector;
 using std::map;
@@ -71,14 +73,19 @@ class DiceModManager
 {
 	map<string, DiceMod> mNameIndex;
 	map<string, string, less_ci> helpdoc;
+    WordQuerier querier;
 public:
 	DiceModManager();
 	friend void loadData();
+    bool isIniting{ false };
 	string format(string, const map<string, string, less_ci>&, const char*) const;
+    unordered_map<string, size_t>cntHelp;
 	[[nodiscard]] string get_help(const string&) const;
+    void get_help(DiceJobDetail*);
 	void set_help(const string&, const string&);
 	void rm_help(const string&);
 	int load(string&);
+    void init();
 	void clear();
 };
 

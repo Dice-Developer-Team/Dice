@@ -6,11 +6,14 @@
 #pragma once
 #include <string>
 #include <map>
-#include "DiceConsole.h"
+#include <unordered_map>
+#include "DiceMsgSend.h"
 #include "Jsonio.h"
 #include "json.hpp"
+
 using std::string;
 using std::map;
+using std::unordered_map;
 
 struct DiceJobDetail {
     long long fromQQ = 0;
@@ -20,13 +23,12 @@ struct DiceJobDetail {
     time_t fromTime = time(nullptr);
     size_t cntExec{ 0 };
     //临时变量库
-    map<string, string> strVar = {};
-    DiceJobDetail(const char* cmd, bool isFromSelf = false):cmd_key(cmd){
-        if(isFromSelf)fromQQ = console.DiceMaid;
-    }
+    unordered_map<string, string> strVar = {};
+    DiceJobDetail(const char* cmd, bool isFromSelf = false, unordered_map<string, string> vars = {});
     DiceJobDetail(long long qq, chatType ct, std::string msg = "", const char* cmd = "") 
         :fromQQ(qq), fromChat(ct), strMsg(msg),cmd_key(cmd) {
     }
+    virtual void reply(string, bool = true) {}
     string& operator[](const char* key){
         return strVar[key];
     }
@@ -42,6 +44,7 @@ public:
     Renum ren = Renum::NIL;
     void exec();
     void echo(const std::string&);
+    void reply(const std::string&);
     void note(const std::string&, int);
 };
 
@@ -52,7 +55,7 @@ public:
     void start();
     void end();
     void push_job(const DiceJobDetail&);
-    void push_job(const char*);
+    void push_job(const char*, bool = false, unordered_map<string, string> = {});
     void add_job_for(unsigned int, const DiceJobDetail&);
     void add_job_for(unsigned int, const char*);
     void add_job_until(time_t, const DiceJobDetail&);
@@ -66,7 +69,7 @@ typedef void (*cmd)(DiceJob&);
 
 //今日记录
 class DiceToday {
-    SYSTEMTIME stToday;
+    tm stToday;
     string pathFile;
     unordered_map<string, int>cntGlobal;
     unordered_map<long long, unordered_map<string, int>>cntUser;

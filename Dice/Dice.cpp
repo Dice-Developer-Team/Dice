@@ -145,7 +145,7 @@ void dataInit()
 			}
 		}
 		ifINIT.close();
-		console.log("初始化旁观与先攻记录" + to_string(gm->mSession.size()) + "条", 1);
+		if(gm->mSession.size())console.log("初始化旁观与先攻记录" + to_string(gm->mSession.size()) + "条", 1);
 	}
 	today = make_unique<DiceToday>(DiceDir + "/user/DiceToday.json");
 }
@@ -156,11 +156,6 @@ void dataBackUp()
 	mkDir(DiceDir + "\\conf");
 	mkDir(DiceDir + "\\user");
 	mkDir(DiceDir + "\\audit");
-	//保存卡牌
-	saveJMap(strFileLoc + "GroupDeck.json", CardDeck::mGroupDeck);
-	saveJMap(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
-	saveJMap(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
-	saveJMap(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
 	//备份列表
 	saveBFile(DiceDir + "\\user\\PlayerCards.RDconf", PList);
 	saveFile(DiceDir + "\\user\\ChatList.txt", ChatList);
@@ -176,32 +171,34 @@ EVE_Enable(eventEnable)
 	GetModuleFileNameA(nullptr, path, MAX_PATH);
 	std::string pathStr(path);
 	strModulePath = pathStr;
-	pathStr = pathStr.substr(pathStr.rfind("\\") + 1);
+	string pathExe = pathStr.substr(pathStr.rfind("\\") + 1);
 	std::transform(pathStr.begin(), pathStr.end(), pathStr.begin(), [](unsigned char c) { return tolower(c); });
-	if (pathStr.substr(0, 4) == "java")
+	if (pathExe.substr(0, 4) == "java")
 	{
-		Mirai = true;
+		frame = QQFrame::Mirai;
 		Dice_Full_Ver_For = Dice_Full_Ver + " For Mirai]";
-		char buffer[MAX_PATH];
-		const DWORD length = GetModuleFileNameA(nullptr, buffer, sizeof buffer);
-		std::string pathSelf(buffer, length);
-		dirExe = pathSelf.substr(0, pathSelf.find("jre\\bin\\java.exe"));
-		DiceDir = "Dice" + to_string(getLoginQQ());	
-		filesystem::path pathDir(dirExe + DiceDir);
-		DiceDir = dirExe + DiceDir;
+		dirExe = pathStr.substr(0, pathStr.find("jre\\bin\\java.exe"));
+		this_thread::sleep_for(3s); //确保Mirai异步信息加载执行完毕
+	}
+	else if (pathExe.substr(0, 4) == "先驱") {
+		frame = QQFrame::XianQu;
+		dirExe = pathStr.substr(0, pathStr.find_last_of('\\') + 1);
+	}
+	{
+		DiceDir = dirExe + "Dice" + to_string(getLoginQQ());
+		filesystem::path pathDir(DiceDir);
 		if (!exists(pathDir)) {
 			filesystem::path pathDirOld(dirExe + "DiceData");
 			if (exists(pathDirOld))rename(pathDirOld, pathDir);
 			else filesystem::create_directory(pathDir);
 		}
-		this_thread::sleep_for(3s); //确保Mirai异步信息加载执行完毕
 	}
 	console.setPath(DiceDir + "\\conf\\Console.xml");
 	strFileLoc = getAppDirectory();
 	mkDir(strFileLoc); // Mirai不会自动创建文件夹
 	console.DiceMaid = getLoginQQ();
 	GlobalMsg["strSelfName"] = getLoginNick();
-	if (GlobalMsg["strSelfName"].empty() && Mirai)
+	if (GlobalMsg["strSelfName"].empty())
 	{
 		GlobalMsg["strSelfName"] = "骰娘[" + toString(console.DiceMaid % 1000, 4) + "]";
 	}
@@ -285,7 +282,7 @@ EVE_Enable(eventEnable)
 				getUser(qq).create(NEWYEAR).trust(4);
 			}
 		if (console.master())getUser(console.master()).create(NEWYEAR).trust(5);
-		console.log("初始化用户记录" + to_string(UserList.size()) + "条", 1);
+		if (UserList.size())console.log("初始化用户记录" + to_string(UserList.size()) + "条", 1);
 	}
 	if (loadBFile(DiceDir + "\\user\\ChatConf.RDconf", ChatList) < 1)
 	{
@@ -390,7 +387,7 @@ EVE_Enable(eventEnable)
 				chat(it.first).group().inviter = it.second;
 			}
 		}
-		console.log("初始化群记录" + to_string(ChatList.size()) + "条", 1);
+		if(ChatList.size())console.log("初始化群记录" + to_string(ChatList.size()) + "条", 1);
 	}
 	for (auto& [gid,gname] : getGroupList())
 	{
@@ -401,8 +398,10 @@ EVE_Enable(eventEnable)
 	{
 		blacklist->loadJson(strFileLoc + "BlackMarks.json");
 		int cnt = blacklist->loadHistory(strFileLoc);
-		blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
-		console.log("初始化不良记录" + to_string(cnt) + "条", 1);
+		if (cnt) {
+			blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
+			console.log("初始化不良记录" + to_string(cnt) + "条", 1);
+		}
 	}
 	else {
 		blacklist->loadJson(DiceDir + "\\conf\\BlackListEx.json", true);
@@ -439,11 +438,6 @@ EVE_Enable(eventEnable)
 	{
 		if (!UserList.count(pl.first))getUser(pl.first).create(NEWYEAR);
 	}
-	//读取卡牌
-	loadJMap(strFileLoc + "GroupDeck.json", CardDeck::mGroupDeck);
-	loadJMap(strFileLoc + "GroupDeckTmp.json", CardDeck::mGroupDeckTmp);
-	loadJMap(strFileLoc + "PrivateDeck.json", CardDeck::mPrivateDeck);
-	loadJMap(strFileLoc + "PrivateDeckTmp.json", CardDeck::mPrivateDeckTmp);
 	dataInit();
 	// 确保线程执行结束
 	while (msgSendThreadRunning)Sleep(10);
@@ -469,7 +463,7 @@ bool eve_GroupAdd(Chat& grp)
 {
 	{
 		unique_lock<std::mutex> lock_queue(GroupAddMutex);
-		if (grp.isset("未进") || grp.isset("已退"))grp.reset("未进").reset("已退");
+		if (grp.lastmsg(time(nullptr)).isset("未进") || grp.isset("已退"))grp.reset("未进").reset("已退");
 		else return false;
 		if (ChatList.size() == 1 && !console.isMasterMode)sendGroupMsg(grp.ID, msgInit);
 	}
@@ -733,7 +727,8 @@ EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)
 	}
 	else
 	{
-		return eve_GroupAdd(grp.set("未进"));
+		if (!grp.tLastMsg)grp.set("未进");
+		return eve_GroupAdd(grp);
 	}
 	return 0;
 }

@@ -59,8 +59,51 @@ string DiceModManager::get_help(const string& key) const
 	return "{strHlpNotFound}";
 }
 
+struct help_sorter {
+	bool operator()(const string& _Left, const string& _Right) const {
+		if (fmt->cntHelp.count(_Right) && !fmt->cntHelp.count(_Left))
+			return true;
+		else if (fmt->cntHelp.count(_Left) && !fmt->cntHelp.count(_Right))
+			return false;
+		else if (fmt->cntHelp.count(_Left) && fmt->cntHelp.count(_Right) && fmt->cntHelp[_Left] != fmt->cntHelp[_Right])
+			return fmt->cntHelp[_Left] < fmt->cntHelp[_Right];
+		else if (_Left.length() != _Right.length()) {
+			return _Left.length() > _Right.length();
+		}
+		else return _Left > _Right;
+	}
+};
+
+void DiceModManager::get_help(DiceJobDetail* job) {
+	if ((*job)["help_word"].empty()) {
+		job->reply(string(Dice_Short_Ver) + "\n" + GlobalMsg["strHlpMsg"]);
+		return;
+	}
+	else if (const auto it = helpdoc.find((*job)["help_word"]); it != helpdoc.end()) {
+		job->reply(format(it->second, helpdoc));
+	}
+	else if (unordered_set<string> keys = querier.search((*job)["help_word"]);!keys.empty()) {
+		std::priority_queue<string, vector<string>, help_sorter> qKey;
+		for (auto key : keys) {
+			qKey.emplace(key);
+		}
+		ResList res;
+		while (!qKey.empty()) {
+			res << qKey.top();
+			qKey.pop();
+			if (res.size() > 20)break;
+		}
+		(*job)["res"] = res.dot("/").show(1);
+		job->reply("{strHelpSuggestion}");
+	}
+	else job->reply("{strHelpNotFound}");
+	cntHelp[(*job)["help_word"]] += 1;
+	saveJMap(DiceDir + "\\user\\HelpStatic.json",cntHelp);
+}
+
 void DiceModManager::set_help(const string& key, const string& val)
 {
+	if (!helpdoc.count(key))querier.insert(key);
 	helpdoc[key] = val;
 }
 
@@ -108,9 +151,19 @@ int DiceModManager::load(string& strLog)
 			strLog += it + "\n";
 		}
 	}
+	std::thread factory(&DiceModManager::init,this);
+	factory.detach();
+	cntHelp.reserve(helpdoc.size());
+	loadJMap(DiceDir + "\\user\\HelpStatic.json", cntHelp);
 	return cntFile;
 }
-
+void DiceModManager::init() {
+	isIniting = true;
+	for (auto& [key, word] : helpdoc) {
+		querier.insert(key);
+	}
+	isIniting = false;
+}
 void DiceModManager::clear()
 {
 	helpdoc.clear();

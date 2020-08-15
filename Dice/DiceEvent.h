@@ -33,9 +33,9 @@ public:
 
 	bool isBlock = false;
 
-	void reply(std::string strReply, bool isFormat);
+	void reply(std::string strReply, bool isFormat = true)override;
 
-	void reply(std::string strReply, const std::initializer_list<const std::string> replace_str = {},
+	void reply(std::string strReply, const std::initializer_list<const std::string> replace_str,
 			   bool isFormat = true);
 
 	void reply();
@@ -81,7 +81,7 @@ private:
 	// «∑ÒœÏ”¶
 	bool isAns = false;
 	unsigned int intMsgCnt = 0;
-	bool isBotOff = false;
+	bool isDisabled = false;
 	bool isCalled = false;
 	bool isAuth = false;
 

@@ -157,7 +157,6 @@
     <ClCompile Include="DiceNetwork.cpp" />
     <ClCompile Include="DiceSchedule.cpp" />
     <ClCompile Include="DiceSession.cpp" />
-    <ClCompile Include="DiceUpdate.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="EncodingConvert.cpp" />
     <ClCompile Include="GetRule.cpp" />
@@ -223,13 +222,14 @@
     <ClInclude Include="RDConstant.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="S3PutObject.h" />
+    <ClInclude Include="SHKQuerier.h" />
     <ClInclude Include="STLExtern.hpp" />
     <ClInclude Include="StorageBase.h" />
     <ClInclude Include="StrExtern.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.json" />
     <None Include="ClassDiagram.cd" />
+    <None Include="com.w4123.dice.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -251,7 +251,7 @@
   </ImportGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties app_1json__JsonSchema="" />
+      <UserProperties />
     </VisualStudio>
   </ProjectExtensions>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

@@ -21,7 +21,7 @@ using std::vector;
 using std::unordered_map;
 constexpr auto CQ_IMAGE = "[CQ:image,file=";
 constexpr auto CQ_AT = "[CQ:at,qq=";
-constexpr time_t NEWYEAR = 1593532800;
+constexpr time_t NEWYEAR = 1596211200;
 
 //МгдиЪ§Он
 void loadData();

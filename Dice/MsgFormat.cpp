@@ -80,11 +80,12 @@ std::string to_binary(int b)
 	return res.dot("+").show();
 }
 
-std::string ResList::show()const {
+std::string ResList::show(size_t limPage)const {
+	if (empty())return {};
 	std::string s, strHead, strSepa;
 	unsigned int lenPage(0), cntPage(0);
 	if (intMaxLen > intLineLen || isLineBreak) {
-		strHead = "\n";
+		strHead = sHead + "\n";
 		strSepa = strLongSepa;
 	}
 	else {
@@ -93,6 +94,8 @@ std::string ResList::show()const {
 	for (auto it = vRes.begin(); it != vRes.end(); it++) {
 		//超过上限后分页
 		if (lenPage > intPageLen) {
+			if (limPage && limPage <= cntPage + 1)
+				return s;
 			if (cntPage++ == 0)s = "\f[第" + std::to_string(cntPage++) + "页]" + (strHead.empty() ? "\n" : "") + s;
 			s += "\f[第" + std::to_string(cntPage) + "页]\n" + *it;
 			lenPage = 0;

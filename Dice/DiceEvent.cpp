@@ -658,8 +658,9 @@ int FromMsg::MasterSet()
 	}
 	if (strOption == "groupclr")
 	{
-		const std::string strPara = readRest();
-		clearGroup(strPara, fromQQ);
+		strVar["clear_mode"] = readRest();
+		cmd_key = "clrgroup";
+		sch.push_job(*this);
 		return 1;
 	}
 	if (strOption == "delete")
@@ -983,7 +984,7 @@ int FromMsg::DiceReply()
 		}
 		return 1;
 	}
-	if (isBotOff)
+	if (isDisabled || (!isCalled || !console["DisabledListenAt"]) && (groupset(fromGroup, "停用指令") > 0))
 	{
 		if (intT == PrivateT)
 		{
@@ -1038,16 +1039,16 @@ int FromMsg::DiceReply()
 		intMsgCnt += 4;
 		while (strLowerMessage[intMsgCnt] == ' ')
 			intMsgCnt++;
-		const string strOption = readRest();
+		strVar["help_word"] = readRest();
 		if (intT)
 		{
-			if (!isAuth && (strOption == "on" || strOption == "off"))
+			if (!isAuth && (strVar["help_word"] == "on" || strVar["help_word"] == "off"))
 			{
 				reply(GlobalMsg["strPermissionDeniedErr"]);
 				return 1;
 			}
 			strVar["option"] = "禁用help";
-			if (strOption == "off")
+			if (strVar["help_word"] == "off")
 			{
 				if (groupset(fromGroup, strVar["option"]) < 1)
 				{
@@ -1060,7 +1061,7 @@ int FromMsg::DiceReply()
 				}
 				return 1;
 			}
-			if (strOption == "on")
+			if (strVar["help_word"] == "on")
 			{
 				if (groupset(fromGroup, strVar["option"]) > 0)
 				{
@@ -1079,14 +1080,7 @@ int FromMsg::DiceReply()
 				return 1;
 			}
 		}
-		if (strOption.empty())
-		{
-			reply(string(Dice_Short_Ver) + "\n" + GlobalMsg["strHlpMsg"]);
-		}
-		else
-		{
-			reply(fmt->get_help(strOption));
-		}
+		fmt->get_help(this);
 		return true;
 	}
 	else if (intT == GroupT && ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && 
@@ -1135,7 +1129,20 @@ int FromMsg::DiceReply()
 		}
 		return 1;
 	}
-	if (strLowerMessage.substr(intMsgCnt, 6) == "setcoc")
+	else if (strLowerMessage.substr(intMsgCnt, 6) == "groups") {
+		if (trusted < 4) {
+			reply(GlobalMsg["strNotAdmin"]);
+			return 1;
+		}
+		intMsgCnt += 6;
+		string strOption = readPara();
+		if (strOption == "list") {
+			strVar["list_mode"] = readPara();
+			cmd_key = "lsgroup";
+			sch.push_job(*this);
+		}
+	}
+	else if (strLowerMessage.substr(intMsgCnt, 6) == "setcoc")
 	{
 		if (!isAuth)
 		{
@@ -1184,7 +1191,7 @@ int FromMsg::DiceReply()
 		else getUser(fromQQ).setConf("rc房规", intRule);
 		return 1;
 	}
-	if (strLowerMessage.substr(intMsgCnt, 6) == "system")
+	else if (strLowerMessage.substr(intMsgCnt, 6) == "system")
 	{
 		intMsgCnt += 6;
 		if (trusted < 4)
@@ -1223,9 +1230,9 @@ int FromMsg::DiceReply()
 		}
 		if (strOption == "clrimg")
 		{
-			if (Mirai)
+			if (frame != QQFrame::CoolQ)
 			{
-				reply("Mirai不需要此功能");
+				reply("非酷Q框架不需要此功能");
 				return -1;
 			}
 			if (trusted < 5)
@@ -1244,7 +1251,7 @@ int FromMsg::DiceReply()
 				reply(GlobalMsg["strNotMaster"]);
 				return -1;
 			}
-			cmd_key = Mirai ? "reload" : "remake";
+			cmd_key = (frame == QQFrame::Mirai) ? "reload" : "remake";
 			sch.push_job(*this);
 			return 1;
 		}
@@ -2419,7 +2426,14 @@ int FromMsg::DiceReply()
 			if (!llTargetID) {
 				reply(GlobalMsg["strQQIDEmpty"]);
 			}
-			else blacklist->add_black_qq(llTargetID, this);
+			else if (trustedQQ(llTargetID) >= trusted) {
+				reply(GlobalMsg["strUserTrustDenied"]);
+			}
+			else {
+				blacklist->add_black_qq(llTargetID, this);
+				UserList.erase(llTargetID);
+				PList.erase(llTargetID);
+			}
 			return 1;
 		}
 		if (strOption == "kill")
@@ -4177,7 +4191,7 @@ int FromMsg::CustomReply()
 {
 	const string strKey = readRest();
 	if (auto deck = CardDeck::mReplyDeck.find(strKey); deck != CardDeck::mReplyDeck.end()
-		|| (!isBotOff && (deck = CardDeck::mReplyDeck.find(strMsg)) != CardDeck::mReplyDeck.end()))
+		|| (!isDisabled && (deck = CardDeck::mReplyDeck.find(strMsg)) != CardDeck::mReplyDeck.end()))
 	{
 		if (strVar.empty())
 		{
@@ -4228,7 +4242,7 @@ bool FromMsg::DiceFilter()
 	trusted = trustedQQ(fromQQ);
 	fwdMsg();
 	if (fromChat.second == msgtype::Private) isCalled = true;
-	isBotOff = (console["DisabledGlobal"] && (trusted < 4 || !isCalled)) || (!(isCalled && console["DisabledListenAt"]) && (groupset(fromGroup, "停用指令") > 0));
+	isDisabled = (console["DisabledGlobal"] && (trusted < 4 || !isCalled)) || (!(isCalled && console["DisabledListenAt"]) && groupset(fromGroup, "协议无效") > 0);
 	if (DiceReply()) 
 	{
 		if (isAns)
@@ -4239,8 +4253,8 @@ bool FromMsg::DiceFilter()
 		if (fromChat.second != msgtype::Private)chat(fromGroup).update(fromTime);
 		return 1;
 	}
-	if (groupset(fromGroup, "禁用回复") < 1 && CustomReply())return true;
-	if (isBotOff)return console["DisabledBlock"];
+	if (groupset(fromGroup, "禁用回复") < 1 && !isDisabled && CustomReply())return true;
+	if (isDisabled)return console["DisabledBlock"];
 	return false;
 }
 

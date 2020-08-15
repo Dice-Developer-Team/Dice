@@ -28,6 +28,7 @@
 #include <Windows.h>
 #include "CQLogger.h"
 #include <map>
+#include <unordered_map>
 #include "STLExtern.hpp"
 
 /*
@@ -35,11 +36,11 @@
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-const unsigned short Dice_Build = 565u;
-inline const std::string Dice_Ver_Without_Build = "2.4.1beta1";
-constexpr auto DiceRequestHeader = "Dice/2.4.0";
+const unsigned short Dice_Build = 566u;
+inline const std::string Dice_Ver_Without_Build = "2.4.1beta2";
+constexpr auto DiceRequestHeader = "Dice/2.4.1";
 inline const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
-inline const std::string Dice_Short_Ver = "Dice! by 溯洄 Shiki Ver " + Dice_Ver;
+inline const std::string Dice_Short_Ver = "Dice! by 溯洄 & Shiki Ver " + Dice_Ver;
 
 #ifdef __clang__
 
@@ -70,8 +71,9 @@ extern HMODULE hDllModule;
 // 应用是否被启用
 extern bool Enabled;
 
-// 是否在Mirai环境中运行
-extern bool Mirai;
+// 运行环境
+enum class QQFrame { CoolQ, Mirai, XianQu };
+extern QQFrame frame;
 
 // Dice最完整的版本字符串
 extern std::string Dice_Full_Ver_For;
@@ -93,6 +95,6 @@ extern std::map<std::string, std::string> EditedMsg;
 extern const std::map<std::string, std::string, less_ci> HelpDoc;
 // 修改后的帮助文档
 inline std::map<std::string, std::string, less_ci> CustomHelp;
-std::string getMsg(const std::string& key, const std::map<std::string, std::string>& tmp = {});
+std::string getMsg(const std::string& key, const std::unordered_map<std::string, std::string>& tmp = {});
 
 #endif /*DICE_GLOBAL_VAR*/

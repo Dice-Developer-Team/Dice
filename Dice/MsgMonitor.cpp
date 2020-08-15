@@ -10,6 +10,7 @@
 
 std::atomic<unsigned int> FrqMonitor::sumFrqTotal = 0;
 std::map<long long, int> FrqMonitor::mFrequence = {};
+std::map<long long, int> FrqMonitor::mCntOrder = {};
 std::map<long long, int> FrqMonitor::mWarnLevel = {};
 
 std::queue<FrqMonitor*> EarlyMsgQueue;
@@ -69,6 +70,52 @@ void frqHandler()
 		}
 		setFrq.clear();
 		std::this_thread::sleep_for(100ms);
+	}
+}
+
+
+FrqMonitor::FrqMonitor(long long QQ, time_t TT, chatType CT) : fromQQ(QQ), fromTime(TT) {
+	if (mFrequence.count(fromQQ)) {
+		mFrequence[fromQQ] += 10;
+		mCntOrder[fromQQ] += 1;
+		if (!console["ListenSpam"] || trustedQQ(fromQQ) > 1 || console.is_self(QQ))return;
+		if (mFrequence[fromQQ] > 60 && mWarnLevel[fromQQ] < 60) {
+			mWarnLevel[fromQQ] = mFrequence[fromQQ];
+			const std::string strMsg = "提醒：\n" + (CT.second != CQ::msgtype::Private ? printChat(CT) : "私聊窗口") +
+				"监测到" + printQQ(fromQQ) + "高频发送指令达" + to_string(mCntOrder[fromQQ])
+				+ (mCntOrder[fromQQ] > 18 ? "/5min"
+				   : (mCntOrder[fromQQ] > 8 ? "/min" : "/30s"));
+			AddMsgToQueue(getMsg("strSpamFirstWarning"), CT);
+			console.log(strMsg, 1, printSTNow());
+		}
+		else if (mFrequence[fromQQ] > 120 && mWarnLevel[fromQQ] < 120) {
+			mWarnLevel[fromQQ] = mFrequence[fromQQ];
+			const std::string strMsg = "警告：\n" + (CT.second != CQ::msgtype::Private ? printChat(CT) : "私聊窗口") +
+				printQQ(fromQQ) + "高频发送指令达" + to_string(mCntOrder[fromQQ])
+				+ (mCntOrder[fromQQ] > 36 ? "/5min"
+				   : (mCntOrder[fromQQ] > 15 ? "/min" : "/30s"));
+			console.log(strMsg, 0b10, printSTNow());
+		}
+		else if (mFrequence[fromQQ] > 200 && mWarnLevel[fromQQ] < 200) {
+			mWarnLevel[fromQQ] = mFrequence[fromQQ];
+			std::string strNow = printSTNow();
+			std::string strNote = (CT.second != CQ::msgtype::Private ? printChat(CT) : "私聊窗口") + "监测到" +
+				printQQ(fromQQ) + "对" + printQQ(console.DiceMaid) + "高频发送指令达" + to_string(mCntOrder[fromQQ])
+				+ (mCntOrder[fromQQ] > 60 ? "/5min"
+				   : (mCntOrder[fromQQ] > 25 ? "/min" : "/30s"));
+			if (mDiceList.count(fromQQ)) {
+				console.log(strNote, 0b1000, strNow);
+			}
+			else {
+				DDBlackMarkFactory mark{ fromQQ, 0 };
+				mark.sign().type("spam").time(strNow).note(strNow + " " + strNote);
+				blacklist->create(mark.product());
+			}
+		}
+	}
+	else {
+		mFrequence[fromQQ] = 10;
+		mWarnLevel[fromQQ] = 0;
 	}
 }
 

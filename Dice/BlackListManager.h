@@ -89,7 +89,7 @@ class DDBlackManager
 	//发现所指相同的记录
 	int find(const DDBlackMark&);
 	//更新记录
-	void insert(DDBlackMark&);
+	bool insert(DDBlackMark&);
 	bool update(DDBlackMark&, unsigned int, int);
 	void reset_group_danger(long long);
 	void reset_qq_danger(long long);

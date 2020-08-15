@@ -2,10 +2,10 @@
   "ret": 1,
   "apiver": 9,
   "name": "Dice!",
-  "version": "2.4.0",
-  "version_id": 564,
-  "author": "w4123溯洄 Shiki",
-  "description": "跑团用骰子 本程序使用AGPLv3开源协议授权 Copyright (c) 2018-2019 w4123溯洄 Shiki",
+  "version": "2.4.1",
+  "version_id": 566,
+  "author": "w4123溯洄 & Shiki",
+  "description": "跑团用骰子 本程序使用AGPLv3开源协议授权 Copyright (c) 2018-2020 w4123溯洄 & Shiki",
   "event": [
     {
       "id": 1,
@@ -94,20 +94,8 @@
   ],
   "menu": [
     {
-      "name": "更新Dice!",
-      "function": "eventDiceUpdate"
-    },
-    {
       "name": "Master模式切换",
       "function": "eventMasterMode"
-    },
-    {
-      "name": "清退非管理群聊",
-      "function": "eventClearGroupUnpower"
-    },
-    {
-      "name": "清退不活跃群聊",
-      "function": "eventClearGroup30"
     },
     {
       "name": "全局开关",

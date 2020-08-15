@@ -16,6 +16,8 @@ void clear_image(DiceJob& job);
 
 void clear_group(DiceJob& job);
 
+void list_group(DiceJob& job);
+
 void cloud_beat(DiceJob& job);
 void dice_update(DiceJob& job);
 void dice_cloudblack(DiceJob& job);

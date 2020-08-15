@@ -32,6 +32,7 @@
 #include "DiceCloud.h"
 #include "Jsonio.h"
 #include "BlackListManager.h"
+#include "DiceSchedule.h"
 
 using namespace std;
 using namespace CQ;
@@ -302,9 +303,6 @@ std::string printSTime(const SYSTEMTIME st)
 //获取骰娘列表
 void getDiceList()
 {
-	std::string list;
-	if (Network::GET("shiki.stringempty.xyz", "/DiceList/", 80, list))
-		readJson(list, mDiceList);
 }
 //获取骰娘列表
 void getExceptGroup() {
@@ -359,8 +357,9 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st)
 						console.log(GlobalMsg["strSelfName"] + "定时保存完成√", 1, printSTime(stTmp));
 						break;
 					case ClockEvent::clear:
-						if (clearGroup("black"))
-							console.log(GlobalMsg["strSelfName"] + "定时清群完成√", 1, printSTNow());
+						sch.push_job("clrgroup", true, {
+							{"clear_mode","black"}
+									 });
 						break;
 					default: break;
 					}
@@ -370,152 +369,6 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st)
 		}
 	}
 
-//一键清退
-int clearGroup(string strPara, long long fromQQ)
-{
-	int intCnt = 0;
-	string strReply;
-	ResList res;
-	std::map<string, string> strVar;
-	if (strPara == "unpower" || strPara.empty())
-	{
-		for (auto& [id, grp] : ChatList)
-		{
-			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清"))continue;
-			if (grp.isGroup && getGroupMemberInfo(id, console.DiceMaid).permissions == 1)
-			{
-				res << printGroup(id);
-				grp.leave(getMsg("strLeaveNoPower"));
-				intCnt++;
-				this_thread::sleep_for(3s);
-			}
-		}
-		strReply = GlobalMsg["strSelfName"] + "筛除无群权限群聊" + to_string(intCnt) + "个:" + res.show();
-		console.log(strReply, 0b10, printSTNow());
-	}
-	else if (isdigit(static_cast<unsigned char>(strPara[0])))
-	{
-		const int intDayLim = stoi(strPara);
-		const string strDayLim = to_string(intDayLim);
-		const time_t tNow = time(nullptr);
-		for (auto& [id, grp] : ChatList)
-		{
-			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清"))continue;
-			time_t tLast = grp.tLastMsg;
-			if (grp.isGroup)
-			{
-				const int tLMT = getGroupMemberInfo(id, console.DiceMaid).LastMsgTime;
-				if (tLMT > 0)
-					tLast = tLMT;
-			}
-			if (!tLast)continue;
-			const int intDay = static_cast<int>(tNow - tLast) / 86400;
-			if (intDay > intDayLim)
-			{
-				strVar["day"] = to_string(intDay);
-				res << printGroup(id) + ":" + to_string(intDay) + "天\n";
-				grp.leave(getMsg("strLeaveUnused", strVar));
-				intCnt++;
-				this_thread::sleep_for(2s);
-			}
-		}
-		strReply += GlobalMsg["strSelfName"] + "已筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√" + res.show();
-		console.log(strReply, 0b10, printSTNow());
-	}
-	else if (strPara == "black")
-	{
-		try
-		{
-			for (auto& [id, grp_name] : getGroupList())
-			{
-				Chat& grp = chat(id).group().name(grp_name);
-				if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("免黑"))continue
-					;
-				if (blacklist->get_group_danger(id))
-				{
-					res << printGroup(id) + "：" + "黑名单群";
-					grp.leave(getMsg("strBlackGroup"));
-				}
-				vector<GroupMemberInfo> MemberList = getGroupMemberList(id);
-				for (const auto& eachQQ : MemberList)
-				{
-					if (blacklist->get_qq_danger(eachQQ.QQID) > 1)
-					{
-						if (eachQQ.permissions < getGroupMemberInfo(id, getLoginQQ()).permissions)
-						{
-							continue;
-						}
-						if (eachQQ.permissions > getGroupMemberInfo(id, getLoginQQ()).permissions)
-						{
-							res << printChat(grp) + "：" + printQQ(eachQQ.QQID) + "对方群权限较高";
-							grp.leave("发现黑名单管理员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
-							intCnt++;
-							break;
-						}
-						if (console["LeaveBlackQQ"])
-						{
-							res << printChat(grp) + "：" + printQQ(eachQQ.QQID);
-							grp.leave("发现黑名单成员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
-							intCnt++;
-							break;
-						}
-					}
-				}
-			}
-		}
-		catch (...)
-		{
-			console.log(strReply, 0b10, "提醒：" + GlobalMsg["strSelfName"] + "清查黑名单群聊时出错！");
-		}
-		if (intCnt)
-		{
-			strReply = GlobalMsg["strSelfName"] + "已按黑名单清查群聊" + to_string(intCnt) + "个：" + res.show();
-			console.log(strReply, 0b10, printSTNow());
-		}
-		else if (fromQQ)
-		{
-			console.log(strReply, 1, printSTNow());
-		}
-	}
-	else if (strPara == "preserve")
-	{
-		for (auto& [id,grp] : ChatList)
-		{
-			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("使用许可") || grp.isset("免清"))continue;
-			if (grp.isGroup && getGroupMemberInfo(id, console.master()).permissions)
-			{
-				grp.set("使用许可");
-				continue;
-			}
-			res << printChat(grp);
-			grp.leave(getMsg("strPreserve"));
-			intCnt++;
-			this_thread::sleep_for(3s);
-		}
-		strReply = GlobalMsg["strSelfName"] + "筛除无许可群聊" + to_string(intCnt) + "个：" + res.show();
-		console.log(strReply, 1, printSTNow());
-	}
-	else
-		AddMsgToQueue("无法识别筛选参数×", fromQQ);
-	return intCnt;
-}
-
-
-EVE_Menu(eventClearGroupUnpower)
-{
-	const int intGroupCnt = clearGroup("unpower");
-	const string strReply = "已清退无权限群聊" + to_string(intGroupCnt) + "个√";
-	MessageBoxA(nullptr, strReply.c_str(), "一键清退", MB_OK | MB_ICONINFORMATION);
-	return 0;
-}
-
-EVE_Menu(eventClearGroup30)
-{
-	const int intGroupCnt = clearGroup("30");
-	const string strReply = "已清退30天未使用群聊" + to_string(intGroupCnt) + "个√";
-	MessageBoxA(nullptr, strReply.c_str(), "一键清退", MB_OK | MB_ICONINFORMATION);
-	return 0;
-}
 
 EVE_Menu(eventGlobalSwitch)
 {
