@@ -50,6 +50,9 @@ wstring convert_a2w(const char* ch)
     delete[] m_char;
     return wstr;
 }
+size_t wstrlen(const char* ch) {
+    return MultiByteToWideChar(CP_GBK, 0, ch, -1, nullptr, 0);
+}
 
 string printDuringTime(long long seconds) 
 {

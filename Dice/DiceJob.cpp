@@ -69,13 +69,14 @@ void cq_restart(DiceJob& job) {
 	BOOL bResult = Process32First(hProcessSnap, &pe32);
 	int ppid(0);
 	if (frame == QQFrame::Mirai) {
+		strSelfName = "MiraiOK.exe";
 		char buffer[MAX_PATH];
 		const DWORD length = GetModuleFileNameA(nullptr, buffer, sizeof buffer);
 		std::string pathSelf(buffer, length);
-		pathSelf = pathSelf.substr(0, pathSelf.find("jre\\bin\\java.exe")) + "MiraiOK.exe";
+		pathSelf = pathSelf.substr(0, pathSelf.find("jre\\bin\\java.exe")) + strSelfName;
 		char pathFull[MAX_PATH];
 		while (bResult) {
-			if (strcmp(pe32.szExeFile, "MiraiOK.exe") == 0) {
+			if (strSelfName == pe32.szExeFile) {
 				HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID);
 				GetModuleFileNameEx(hProcess, NULL, pathFull, sizeof(pathFull));
 				if (pathSelf != pathFull)continue;
@@ -84,6 +85,10 @@ void cq_restart(DiceJob& job) {
 				break;
 			}
 			bResult = Process32Next(hProcessSnap, &pe32);
+		}
+		if (!ppid) {
+			job.echo("未找到进程" + pathSelf);
+			return;
 		}
 	}
 	else {
@@ -103,9 +108,9 @@ void cq_restart(DiceJob& job) {
 		job.note("重启失败：未找到进程！", 1);
 		return;
 	}
-	string command = "taskkill /f /pid " + to_string(ppid) + "\nstart .\\" + strSelfName + " /account " + to_string(console.DiceMaid);
-	if (frame == QQFrame::Mirai) command = "taskkill /f /pid " + to_string(ppid) + " /t\nstart " + dirExe + "MiraiOK.exe";
-	ofstream fout("reload.bat");
+	string command = "taskkill /f /pid " + to_string(ppid) + " /t\nstart .\\" + strSelfName;
+	if (frame == QQFrame::CoolQ) command += " /account " + to_string(console.DiceMaid);
+	ofstream fout("remake.bat");
 	fout << command << std::endl;
 	fout.close();
 	job.note(command, 0);
@@ -113,7 +118,7 @@ void cq_restart(DiceJob& job) {
 	Enabled = false;
 	dataBackUp();
 	std::this_thread::sleep_for(3s);
-	switch (UINT res = -1; res = WinExec(".\\reload.bat", SW_SHOW)) {
+	switch (UINT res = -1; res = WinExec(".\\remake.bat", SW_SHOW)) {
 	case 0:
 		job.note("重启失败：内存或资源已耗尽！", 1);
 		break;
@@ -363,6 +368,27 @@ void list_group(DiceJob& job) {
 			if (++intCnt > 64 || intCnt > qDiver.size() || qDiver.top().first < 7)break;
 		}
 		job.reply("{self}所在闲置群列表:" + res.show());
+	}
+	else if (job["list_mode"] == "size") {
+		std::priority_queue<std::pair<time_t, string>> qSize;
+		time_t tNow = time(NULL);
+		for (auto& [id, grp] : ChatList) {
+			if (grp.isset("已退") || grp.isset("未进") || !grp.isGroup)continue;
+			GroupInfo ginfo(id);
+			if (!ginfo.nGroupSize)continue;
+			qSize.emplace(ginfo.nGroupSize, printGroup(id));
+		}
+		if (qSize.empty()) {
+			job.reply("{self}无群聊或群信息加载失败！");
+		}
+		size_t intCnt(0);
+		ResList res;
+		while (!qSize.empty()) {
+			res << qSize.top().second + "[" + to_string(qSize.top().first) + "]";
+			qSize.pop();
+			if (++intCnt > 64 || intCnt > qSize.size() || qSize.top().first < 7)break;
+		}
+		job.reply("{self}所在大群列表:" + res.show(1));
 	}
 }
 

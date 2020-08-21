@@ -25,6 +25,7 @@
 #include <fstream>//
 #include "DiceJob.h"
 #include "EncodingConvert.h"
+#include "StrExtern.hpp"
 using std::string;
 
 std::map<string, string> GlobalChar{
@@ -80,10 +81,18 @@ std::string to_binary(int b)
 	return res.dot("+").show();
 }
 
+unsigned int ResList::intPageLen = 255;
+ResList& ResList::operator<<(std::string s) {
+	while (isspace(static_cast<unsigned char>(s[0])))s.erase(s.begin());
+	if (s.empty())return *this;
+	vRes.push_back(s);
+	if (size_t len = wstrlen(s.c_str());len > intMaxLen)intMaxLen = len;
+	return *this;
+}
 std::string ResList::show(size_t limPage)const {
 	if (empty())return {};
 	std::string s, strHead, strSepa;
-	unsigned int lenPage(0), cntPage(0);
+	unsigned int cntPage(0);
 	if (intMaxLen > intLineLen || isLineBreak) {
 		strHead = sHead + "\n";
 		strSepa = strLongSepa;
@@ -93,16 +102,14 @@ std::string ResList::show(size_t limPage)const {
 	}
 	for (auto it = vRes.begin(); it != vRes.end(); it++) {
 		//超过上限后分页
-		if (lenPage > intPageLen) {
+		if (wstrlen(s.c_str()) + wstrlen(it->c_str()) > intPageLen && !s.empty()) {
 			if (limPage && limPage <= cntPage + 1)
 				return s;
 			if (cntPage++ == 0)s = "\f[第" + std::to_string(cntPage++) + "页]" + (strHead.empty() ? "\n" : "") + s;
 			s += "\f[第" + std::to_string(cntPage) + "页]\n" + *it;
-			lenPage = 0;
 		}
 		else if (it == vRes.begin())s = strHead + *it;
 		else s += strSepa + *it;
-		lenPage += it->length();
 	}
 	return s;
 }

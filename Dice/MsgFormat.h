@@ -92,8 +92,8 @@ class ResList
 	std::vector<std::string> vRes;
 	unsigned int intMaxLen = 0;
 	bool isLineBreak = false;
-	unsigned int intLineLen = 16;
-	unsigned int intPageLen = 512;
+	unsigned int intLineLen = 10;
+	static unsigned int intPageLen;
 	string sHead = "";
 	string sDot = " ";
 	string strLongSepa = "\n";
@@ -106,14 +106,7 @@ public:
 		intMaxLen = s.length();
 	}
 
-	ResList& operator<<(std::string s)
-	{
-		while (isspace(static_cast<unsigned char>(s[0])))s.erase(s.begin());
-		if (s.empty())return *this;
-		vRes.push_back(s);
-		if (s.length() > intMaxLen)intMaxLen = s.length();
-		return *this;
-	}
+	ResList& operator<<(std::string s);
 
 	std::string show(size_t = 0)const;
 

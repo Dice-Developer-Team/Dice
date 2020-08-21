@@ -182,6 +182,7 @@ EVE_Enable(eventEnable)
 	}
 	else if (pathExe.substr(0, 4) == "ÏÈÇý") {
 		frame = QQFrame::XianQu;
+		Dice_Full_Ver_For = Dice_Full_Ver + " For CQXQ]";
 		dirExe = pathStr.substr(0, pathStr.find_last_of('\\') + 1);
 	}
 	{

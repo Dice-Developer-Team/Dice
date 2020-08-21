@@ -80,6 +80,9 @@ void SendMsg()
 		}
 		if (!msg.msg.empty())
 		{
+			if (int pos = msg.msg.find_first_not_of(" \t\r\n"); pos && pos != string::npos) {
+				msg.msg = msg.msg.substr(pos);
+			}
 			if (int pos = msg.msg.find('\f'); pos != string::npos) 
 			{
 				AddMsgToQueue(msg.msg.substr(pos + 1), msg.target_id, msg.msg_type);

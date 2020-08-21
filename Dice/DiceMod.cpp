@@ -56,7 +56,7 @@ string DiceModManager::get_help(const string& key) const
 	{
 		return format(it->second, helpdoc);
 	}
-	return "{strHlpNotFound}";
+	return "{strHelpNotFound}";
 }
 
 struct help_sorter {
@@ -85,7 +85,7 @@ void DiceModManager::get_help(DiceJobDetail* job) {
 	else if (unordered_set<string> keys = querier.search((*job)["help_word"]);!keys.empty()) {
 		std::priority_queue<string, vector<string>, help_sorter> qKey;
 		for (auto key : keys) {
-			qKey.emplace(key);
+			qKey.emplace(".help " + key);
 		}
 		ResList res;
 		while (!qKey.empty()) {

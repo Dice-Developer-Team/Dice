@@ -2271,6 +2271,9 @@ int FromMsg::DiceReply()
 		else if (strVar["option"] == "with" || strVar["option"] == "from" || strVar["option"] == "to") {
 			gm->session(fromSession).link_new(this);
 		}
+		else {
+			reply(fmt->get_help("link"));
+		}
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "name")

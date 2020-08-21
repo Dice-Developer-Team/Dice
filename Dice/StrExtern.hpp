@@ -41,3 +41,5 @@ string convert_w2a(const wchar_t* wch);
 wstring convert_a2w(const char* ch);
 
 string printDuringTime(long long);
+
+size_t wstrlen(const char*);
