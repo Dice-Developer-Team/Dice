@@ -184,9 +184,11 @@ EVE_Enable(eventEnable)
 		frame = QQFrame::XianQu;
 		Dice_Full_Ver_For = Dice_Full_Ver + " For CQXQ]";
 		dirExe = pathStr.substr(0, pathStr.find_last_of('\\') + 1);
+		this_thread::sleep_for(3s);
 	}
+	if (console.DiceMaid = getLoginQQ())
 	{
-		DiceDir = dirExe + "Dice" + to_string(getLoginQQ());
+		DiceDir = dirExe + "Dice" + to_string(console.DiceMaid);
 		filesystem::path pathDir(DiceDir);
 		if (!exists(pathDir)) {
 			filesystem::path pathDirOld(dirExe + "DiceData");
@@ -197,7 +199,6 @@ EVE_Enable(eventEnable)
 	console.setPath(DiceDir + "\\conf\\Console.xml");
 	strFileLoc = getAppDirectory();
 	mkDir(strFileLoc); // Mirai不会自动创建文件夹
-	console.DiceMaid = getLoginQQ();
 	GlobalMsg["strSelfName"] = getLoginNick();
 	if (GlobalMsg["strSelfName"].empty())
 	{

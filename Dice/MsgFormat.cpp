@@ -92,7 +92,7 @@ ResList& ResList::operator<<(std::string s) {
 std::string ResList::show(size_t limPage)const {
 	if (empty())return {};
 	std::string s, strHead, strSepa;
-	unsigned int cntPage(0);
+	unsigned int lenPage(0), cntPage(0), lenItem(0);
 	if (intMaxLen > intLineLen || isLineBreak) {
 		strHead = sHead + "\n";
 		strSepa = strLongSepa;
@@ -101,15 +101,18 @@ std::string ResList::show(size_t limPage)const {
 		strSepa = sDot;
 	}
 	for (auto it = vRes.begin(); it != vRes.end(); it++) {
+		lenItem = wstrlen(it->c_str());
 		//超过上限后分页
-		if (wstrlen(s.c_str()) + wstrlen(it->c_str()) > intPageLen && !s.empty()) {
+		if (lenPage + lenItem > intPageLen && !s.empty()) {
 			if (limPage && limPage <= cntPage + 1)
 				return s;
 			if (cntPage++ == 0)s = "\f[第" + std::to_string(cntPage++) + "页]" + (strHead.empty() ? "\n" : "") + s;
 			s += "\f[第" + std::to_string(cntPage) + "页]\n" + *it;
+			lenPage = 0;
 		}
 		else if (it == vRes.begin())s = strHead + *it;
 		else s += strSepa + *it;
+		lenPage += lenItem;
 	}
 	return s;
 }
