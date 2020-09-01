@@ -321,7 +321,7 @@ EVE_Enable(eventEnable)
 		GroupList.clear();
 		map<chatType, int> mDefault;
 		if (loadFile(strFileLoc + "DefaultCOC.MYmap", mDefault) > 0)
-			for (auto it : mDefault)
+			for (const auto& it : mDefault)
 			{
 				if (it.first.second == msgtype::Private)getUser(it.first.first)
 				                                        .create(NEWYEAR).setConf("rc·¿¹æ", it.second);
@@ -376,7 +376,7 @@ EVE_Enable(eventEnable)
 	if (loadFile(DiceDir + "\\user\\ChatList.txt", ChatList) < 1)
 	{
 		map<chatType, time_t> mLastMsgList;
-		for (auto it : mLastMsgList) 
+		for (const auto& it : mLastMsgList) 
 		{
 			if (it.first.second == msgtype::Private)getUser(it.first.first).create(it.second);
 			else chat(it.first.first).create(it.second).lastmsg(it.second).isGroup = 2 - int(it.first.second);
@@ -384,7 +384,7 @@ EVE_Enable(eventEnable)
 		std::map<long long, long long> mGroupInviter;
 		if (loadFile(strFileLoc + "GroupInviter.RDconf", mGroupInviter) < 1)
 		{
-			for (auto it : mGroupInviter)
+			for (const auto& it : mGroupInviter)
 			{
 				chat(it.first).group().inviter = it.second;
 			}

@@ -179,7 +179,7 @@ void DiceToday::load() {
 	json jFile = freadJson(pathFile);
 	if (jFile.is_null()) {
 		time_t tt = time(nullptr);
-		stToday = *localtime(&tt);
+		localtime_s(&stToday, &tt);
 		return;
 	}
 	if (jFile.count("date")) {
