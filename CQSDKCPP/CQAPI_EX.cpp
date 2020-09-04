@@ -45,7 +45,9 @@ void GroupInfo::setdata(Unpack& u)
 
 GroupInfo::GroupInfo(long long group)
 {
-	Unpack pack(base64_decode(CQ_getGroupInfo(getAuthCode(), group, true)));
+	const char* data = CQ_getGroupInfo(getAuthCode(), group, true);
+	if (!data || data[0] == '\0')return;
+	Unpack pack(base64_decode(data));
 	if (!pack.len())return;
 	setdata(pack);
 }

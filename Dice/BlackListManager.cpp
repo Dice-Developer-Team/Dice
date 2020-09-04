@@ -49,6 +49,16 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 		if (grp.isset("已退") || grp.isset("未进") || grp.isset("忽略") || grp.isset("协议无效") || !grp.isGroup)continue;
 		if (GroupMemberInfo member = getGroupMemberInfo(id, llQQ); member.QQID == llQQ && member.Group == id)
 		{
+			if (frame == QQFrame::XianQu) {
+				bool isValid = false;
+				for (auto& mem : getGroupMemberList(id)) {
+					if (mem.QQID == llQQ) {
+						isValid = true;
+						break;
+					}
+				}
+				if (!isValid)continue;
+			}
 			strNotice = printGroup(id);
 			if (grp.isset("协议无效"))
 			{
@@ -61,7 +71,7 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 			else if (GroupMemberInfo self = getGroupMemberInfo(id, console.DiceMaid); !self.permissions) {
 				continue;
 			}
-			else if (!member.permissions) {
+			else if (member.permissions < 1 || member.permissions > 3) {
 				strNotice += "对方群权限获取失败";
 			}
 			else if (member.permissions < self.permissions) {
