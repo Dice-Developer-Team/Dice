@@ -81,7 +81,7 @@ public:
 	string format(string, const map<string, string, less_ci>&, const char*) const;
     unordered_map<string, size_t>cntHelp;
 	[[nodiscard]] string get_help(const string&) const;
-    void get_help(DiceJobDetail*);
+    void _help(DiceJobDetail*);
 	void set_help(const string&, const string&);
 	void rm_help(const string&);
 	int load(string&);
@@ -89,4 +89,4 @@ public:
 	void clear();
 };
 
-inline std::unique_ptr<DiceModManager> fmt;
+inline std::shared_ptr<DiceModManager> fmt;

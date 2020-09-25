@@ -74,7 +74,7 @@ struct help_sorter {
 	}
 };
 
-void DiceModManager::get_help(DiceJobDetail* job) {
+void DiceModManager::_help(DiceJobDetail* job) {
 	if ((*job)["help_word"].empty()) {
 		job->reply(string(Dice_Short_Ver) + "\n" + GlobalMsg["strHlpMsg"]);
 		return;

@@ -146,6 +146,7 @@
     <ClCompile Include="CardDeck.cpp" />
     <ClCompile Include="CharacterCard.cpp" />
     <ClCompile Include="Dice.cpp" />
+    <ClCompile Include="DiceCensor.cpp" />
     <ClCompile Include="DiceCloud.cpp" />
     <ClCompile Include="DiceConsole.cpp" />
     <ClCompile Include="DiceEvent.cpp" />
@@ -168,7 +169,6 @@
     <ClCompile Include="RandomGenerator.cpp" />
     <ClCompile Include="RD.cpp" />
     <ClCompile Include="S3PutObject.cpp" />
-    <ClCompile Include="StorageBase.cpp" />
     <ClCompile Include="strExtern.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -197,6 +197,7 @@
     <ClInclude Include="BlackListManager.h" />
     <ClInclude Include="CardDeck.h" />
     <ClInclude Include="CharacterCard.h" />
+    <ClInclude Include="DiceCensor.h" />
     <ClInclude Include="DiceCloud.h" />
     <ClInclude Include="DiceConsole.h" />
     <ClInclude Include="DiceEvent.h" />
@@ -208,6 +209,7 @@
     <ClInclude Include="DiceNetwork.h" />
     <ClInclude Include="DiceSchedule.h" />
     <ClInclude Include="DiceSession.h" />
+    <ClInclude Include="SHKTrie.h" />
     <ClInclude Include="DiceXMLTree.h" />
     <ClInclude Include="EncodingConvert.h" />
     <ClInclude Include="GetRule.h" />
@@ -224,7 +226,6 @@
     <ClInclude Include="S3PutObject.h" />
     <ClInclude Include="SHKQuerier.h" />
     <ClInclude Include="STLExtern.hpp" />
-    <ClInclude Include="StorageBase.h" />
     <ClInclude Include="StrExtern.hpp" />
   </ItemGroup>
   <ItemGroup>

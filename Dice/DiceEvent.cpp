@@ -2,6 +2,7 @@
 #include "DiceEvent.h"
 #include "Jsonio.h"
 #include "MsgFormat.h"
+#include "DiceCensor.h"
 #include "DiceMod.h"
 #include "ManagerSystem.h"
 #include "BlackListManager.h"
@@ -106,7 +107,8 @@ int FromMsg::AdminEvent(const string& strOption)
 			<< "今日用户量：" + to_string(today->cnt())
 			<< (!PList.empty() ? "角色卡记录数：" + to_string(PList.size()) : "")
 			<< "黑名单用户数：" + to_string(blacklist->mQQDanger.size())
-			<< "黑名单群数：" + to_string(blacklist->mGroupDanger.size());
+			<< "黑名单群数：" + to_string(blacklist->mGroupDanger.size())
+			<< (censor.size() ? "敏感词库规模：" + to_string(censor.size()) : "");
 		reply(GlobalMsg["strSelfName"] + "的当前情况" + res.show());
 		return 1;
 	}
@@ -993,15 +995,39 @@ int FromMsg::DiceReply()
 		}
 		return 0;
 	}
-	/*switch(console.DSens.find(strLowerMessage, fromQQ, fromChat)) {
-	case 0:break;
-	case 1:
-		reply(GlobalMsg["strSensNote"]);
-		break;
-	case 2:
-		reply(GlobalMsg["strSensWarn"]);
-		return 1;
-	}*/
+	//信任小于4的用户进行敏感词检测
+	if (trusted < 4) {
+		unordered_set<string>sens_words;
+		switch (int danger = censor.search(strMsg, sens_words) - 1) {
+		case 3:
+			if (trusted < danger++) {
+				console.log("警告:" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "发送了含敏感词指令:\n" + strMsg, 0b1000,
+							printTTime(fromTime));
+				reply(GlobalMsg["strCensorDanger"]);
+				return 1;
+			}
+		case 2:
+			if (trusted < danger++) {
+				console.log("警告:" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "发送了含敏感词指令:\n" + strMsg, 0b10,
+							printTTime(fromTime));
+				reply(GlobalMsg["strCensorWarning"]);
+				break;
+			}
+		case 1:
+			if (trusted < danger++) {
+				console.log("提醒:" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "发送了含敏感词指令:\n" + strMsg, 0b10,
+							printTTime(fromTime));
+				reply(GlobalMsg["strCensorCaution"]);
+				break;
+			}
+		case 0:
+			console.log("提醒:" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "发送了含敏感词指令:\n" + strMsg, 1,
+						printTTime(fromTime));
+			break;
+		default:
+			break;
+		}
+	}
 	if (strLowerMessage.substr(intMsgCnt, 7) == "helpdoc" && trusted > 3)
 	{
 		intMsgCnt += 7;
@@ -1080,7 +1106,11 @@ int FromMsg::DiceReply()
 				return 1;
 			}
 		}
-		fmt->get_help(this);
+		if (frame == QQFrame::Mirai) {
+			std::thread th(&DiceModManager::_help, fmt.get(), this);
+			th.detach();
+		}
+		else fmt->_help(this);
 		return true;
 	}
 	else if (intT == GroupT && ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && 
@@ -1251,7 +1281,7 @@ int FromMsg::DiceReply()
 				reply(GlobalMsg["strNotMaster"]);
 				return -1;
 			}
-			cmd_key = (frame == QQFrame::Mirai) ? "reload" : "remake";
+			cmd_key = (frame == QQFrame::CoolQ) ? "remake" : "reload";
 			sch.push_job(*this);
 			return 1;
 		}

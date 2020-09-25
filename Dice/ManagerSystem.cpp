@@ -133,6 +133,7 @@ Chat& chat(long long id)
 }
 Chat& Chat::id(long long grp) {
 	ID = grp;
+	if (!Enabled)return *this;
 	if (CQ::GroupInfo ginfo(grp); ginfo.llGroup || CQ::getGroupList().count(grp)) {
 		
 		Name = ginfo.strGroupName;

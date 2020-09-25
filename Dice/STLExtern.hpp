@@ -16,6 +16,9 @@ using std::to_string;
 
 struct less_ci
 {
+	bool operator()(const char& ch1, const char& ch2) const {
+		return tolower(static_cast<unsigned char>(ch1)) < tolower(static_cast<unsigned char>(ch2));
+	}
 	bool operator()(const string& str1, const string& str2) const
 	{
 		string::const_iterator it1 = str1.cbegin(), it2 = str2.cbegin();
@@ -53,7 +56,7 @@ public:
 		return mVal.find(val) != mVal.end();
 	}
 
-	int operator[](T& val) const
+	size_t operator[](T& val) const
 	{
 		if (auto it = mVal.find(val); it != mVal.end())return it->second;
 		return -1;

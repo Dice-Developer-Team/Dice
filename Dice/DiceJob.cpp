@@ -135,19 +135,21 @@ void cq_restart(DiceJob& job) {
 	}
 }
 
-void mirai_reload(DiceJob& job){
+void frame_reload(DiceJob& job){
 	using cq_reload_type = int(__stdcall*)(int32_t);
-	HMODULE hModule = LoadLibraryA("CQP.dll");
+	HMODULE hModule = GetModuleHandleA("CQP.dll");
 	cq_reload_type cq_reload = (cq_reload_type)GetProcAddress(hModule, "CQ_reload");
 	if (!cq_reload) {
-		job.note("重载MiraiNative失败×\n使用了过旧或不适配的CQP.dll\n请保证更新适配版本的MiraiNative并删除旧CQP.dll", 0b10);
+		if (frame == QQFrame::Mirai)
+			job.note("重载MiraiNative失败×\n使用了过旧或不适配的CQP.dll\n请保证更新适配版本的MiraiNative并删除旧CQP.dll", 0b10);
+		else if (frame == QQFrame::XianQu)
+			job.note("重载CQXQ失败×\n版本过旧，请保证更新适配版本的CQXQ", 0b10);
 		return;
 	}
 	if(cq_reload(getAuthCode()))
 		job.note("重载" + getMsg("self") + "完成√", 1);
 	else
 		job.note("重载" + getMsg("self") + "失败×", 0b10);
-	FreeLibrary(hModule);
 }
 
 void auto_save(DiceJob& job) {

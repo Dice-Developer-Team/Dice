@@ -50,6 +50,7 @@
 #include "DiceSession.h"
 #include "DiceGUI.h"
 #include "S3PutObject.h"
+#include "DiceCensor.h"
 
 #pragma warning(disable:4996)
 #pragma warning(disable:6031)
@@ -111,6 +112,9 @@ void loadData()
 		ifstreamHelpDoc.close();
 	}
 	map_merge(fmt->helpdoc, CustomHelp);
+	//∂¡»°√Ù∏–¥ ø‚
+	loadDir(load_words, DiceDir + "\\conf\\censor\\", censor, strLog, true);
+	censor.build();
 	if (!strLog.empty())
 	{
 		strLog += "¿©’π≈‰÷√∂¡»°ÕÍ±œ°Ã";

@@ -33,9 +33,6 @@
     <ClCompile Include="RD.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="StorageBase.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="GetRule.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -126,6 +123,9 @@
     <ClCompile Include="S3PutObject.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DiceCensor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -135,9 +135,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RDConstant.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="StorageBase.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="GetRule.h">
@@ -288,6 +285,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="SHKQuerier.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DiceCensor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SHKTrie.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -111,8 +111,10 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPcInitDelErr","{nick}的初始卡不可删除×"},
 	{"strPcNoteTooLong","备注长度不能超过255×"},
 	{"strPcTextTooLong","文本长度不能超过48×"},
-	{"strSensNote","发现指令中带敏感词，{self}已记录并上报！"},
-	{"strSensWarn","发现指令中带敏感词，{self}拒绝响应且已上报！"},
+	{"strCensorCaution","提醒：{nick}的指令包含敏感词，{self}已上报"},
+	{"strCensorWarning","警告：{nick}的指令包含敏感词，{self}已记录并上报！"},
+	{"strCensorDanger","警告：{nick}的指令包含敏感词，{self}拒绝指令并已上报！"},
+	//{"strCensorCritical","警告：{nick}的指令包含敏感词，{self}已记录并上报！"},
 	{"strSpamFirstWarning","你短时间内对{self}指令次数过多！请善用多轮掷骰和复数生成指令（刷屏初次警告）"},
 	{"strSpamFinalWarning","请暂停你的一切指令，避免因高频指令被{self}拉黑！（刷屏最终警告）"},
 	{"strReplySet","{self}对关键词{key}的回复已设置√"},
@@ -332,6 +334,7 @@ std::map<std::string, std::string> GlobalMsg
 std::map<std::string, std::string> EditedMsg;
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+567:敏感词检测
 566:.help查询建议
 565:.log日志记录
 564:多功能优化，牌数牌堆等

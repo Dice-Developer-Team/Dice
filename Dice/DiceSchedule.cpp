@@ -13,7 +13,7 @@ unordered_map<string, cmd> mCommand = {
 	{"clrimage",clear_image},
 	{"clrgroup",clear_group},
 	{"lsgroup",list_group},
-	{"reload",mirai_reload},
+	{"reload",frame_reload},
 	{"remake",cq_restart},
 	{"die",cq_exit},
 	{"heartbeat",cloud_beat},

@@ -46,7 +46,7 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 	string strNotice;
 	for (auto& [id, grp] : ChatList)
 	{
-		if (grp.isset("已退") || grp.isset("未进") || grp.isset("忽略") || grp.isset("协议无效") || !grp.isGroup)continue;
+		if (grp.isset("已退") || grp.isset("未进") || grp.isset("忽略") || !grp.isGroup)continue;
 		if (GroupMemberInfo member = getGroupMemberInfo(id, llQQ); member.QQID == llQQ && member.Group == id)
 		{
 			if (frame == QQFrame::XianQu) {
