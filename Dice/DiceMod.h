@@ -35,38 +35,34 @@ public:
 
 class DiceMod
 {
+protected:
     string mod_name;
-    string auther;
-    string ver;
-    unsigned int build;
-    unsigned int Dice_build;
-    map<string, string, less_ci>m_helpdoc;
-    map<string, vector<string>> m_public_deck;
+    string mod_author;
+    string mod_ver;
+    unsigned int mod_build{ 0 };
+    unsigned int mod_Dice_build{ 0 };
+    using dir = map<string, string, less_ci>;
+    dir mod_helpdoc;
+    map<string, vector<string>> mod_public_deck;
     /*map<string, DiceGenerator> m_generator;*/
 public:
     DiceMod() = default;
-    DiceMod(string name,
-        map<string, string, less_ci>helpdoc/*,
-        map<string, vector<string>> private_deck,
-        map<string, vector<string>> public_deck,
-        map<string, DiceGenerator> generator*/
-        ) : mod_name(std::move(name)), m_helpdoc(std::move(helpdoc))
-        /*,m_private_deck(private_deck),m_public_deck(public_deck),m_generator(generator)*/
-    {
-    }
     friend class DiceModFactory;
 };
+
+#define MOD_BUILD(TYPE, MEM) DiceModFactory& MEM(const TYPE& val){ \
+        mod_##MEM = val;  \
+		return *this; \
+	} 
 class DiceModFactory :public DiceMod {
-    string mod_name;
-    string auther;
-    string ver;
-    unsigned int build;
-    unsigned int Dice_build;
-    map<string, string, less_ci>m_helpdoc;
-    map<string, vector<string>> m_public_deck;
-    /*map<string, DiceGenerator> m_generator;*/
 public:
-    DiceModFactory& name(string strMod){}
+    DiceModFactory() {}
+    MOD_BUILD(string, name)
+    MOD_BUILD(string, author)
+    MOD_BUILD(string, ver)
+    MOD_BUILD(unsigned int, build)
+    MOD_BUILD(unsigned int, Dice_build)
+    MOD_BUILD(dir, helpdoc)
 };
 
 class DiceModManager
@@ -81,7 +77,7 @@ public:
 	string format(string, const map<string, string, less_ci>&, const char*) const;
     unordered_map<string, size_t>cntHelp;
 	[[nodiscard]] string get_help(const string&) const;
-    void _help(DiceJobDetail*);
+    void _help(const shared_ptr<DiceJobDetail>&);
 	void set_help(const string&, const string&);
 	void rm_help(const string&);
 	int load(string&);

@@ -56,7 +56,7 @@ public:
 		return mVal.find(val) != mVal.end();
 	}
 
-	size_t operator[](T& val) const
+	size_t operator[](const T& val) const
 	{
 		if (auto it = mVal.find(val); it != mVal.end())return it->second;
 		return -1;

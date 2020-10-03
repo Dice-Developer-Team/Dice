@@ -114,9 +114,12 @@ int loadJMap(const std::string& strLoc, Map& mapTmp) {
 
 //template <class C, class TKey, class TVal, TVal& (C::* U)(const TKey&) = &C::operator[]>
 template <class C>
-int saveJMap(const std::string& strLoc, const C& mapTmp)
+void saveJMap(const std::string& strLoc, const C& mapTmp)
 {
-	if (mapTmp.empty())return 0;
+	if (mapTmp.empty()) {
+		remove(strLoc.c_str());
+		return;
+	}
 	std::ofstream fout(strLoc);
 	if (fout)
 	{
@@ -128,5 +131,4 @@ int saveJMap(const std::string& strLoc, const C& mapTmp)
 		fout << j.dump(2);
 		fout.close();
 	}
-	return 0;
 }

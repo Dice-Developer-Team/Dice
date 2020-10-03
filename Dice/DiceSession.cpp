@@ -215,8 +215,10 @@ void DiceSession::link_start(FromMsg* msg) {
 void DiceSession::link_close(FromMsg* msg) {
 	if (auto link = LinkList.find(room); link != LinkList.end()) {
 		linker.isLinking = false;
-		if (gm->mSession.count(link->second.first))
+		if (gm->mSession.count(link->second.first)) {
 			gm->session(link->second.first).linker.isLinking = false;
+			gm->session(link->second.first).update();
+		}
 		LinkList.erase(link->second.first);
 		LinkList.erase(link);
 		msg->reply(GlobalMsg["strLinkClose"]);

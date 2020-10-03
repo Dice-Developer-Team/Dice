@@ -114,6 +114,7 @@ void loadData()
 	map_merge(fmt->helpdoc, CustomHelp);
 	//读取敏感词库
 	loadDir(load_words, DiceDir + "\\conf\\censor\\", censor, strLog, true);
+	loadJMap(DiceDir + "\\conf\\CustomCensor.json", censor.CustomWords);
 	censor.build();
 	if (!strLog.empty())
 	{
@@ -630,8 +631,8 @@ bool eve_GroupAdd(Chat& grp)
 EVE_PrivateMsg_EX(eventPrivateMsg)
 {
 	if (!Enabled)return;
-	FromMsg Msg(eve.message, eve.fromQQ);
-	if (Msg.DiceFilter())eve.message_block();
+	shared_ptr<FromMsg> Msg(make_shared<FromMsg>(eve.message, eve.fromQQ));
+	if (Msg->DiceFilter())eve.message_block();
 }
 
 EVE_GroupMsg_EX(eventGroupMsg)
@@ -643,8 +644,8 @@ EVE_GroupMsg_EX(eventGroupMsg)
 	if (grp.isset("未进") || grp.isset("已退"))eve_GroupAdd(grp);
 	if (!grp.isset("忽略"))
 	{
-		FromMsg Msg(eve.message, eve.fromGroup, msgtype::Group, eve.fromQQ);
-		if (Msg.DiceFilter())eve.message_block();
+		shared_ptr<FromMsg> Msg(make_shared<FromMsg>(eve.message, eve.fromGroup, msgtype::Group, eve.fromQQ));
+		if (Msg->DiceFilter())eve.message_block();
 	}
 	if (grp.isset("拦截消息"))eve.message_block();
 }
@@ -668,8 +669,8 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 		grp.leave(strMsg);
 		return;
 	}
-	FromMsg Msg(eve.message, eve.fromDiscuss, msgtype::Discuss, eve.fromQQ);
-	if (Msg.DiceFilter() || grp.isset("拦截消息"))eve.message_block();
+	shared_ptr<FromMsg> Msg(make_shared<FromMsg>(eve.message, eve.fromDiscuss, msgtype::Discuss, eve.fromQQ));
+	if (Msg->DiceFilter() || grp.isset("拦截消息"))eve.message_block();
 }
 
 EVE_System_GroupMemberIncrease(eventGroupMemberIncrease)

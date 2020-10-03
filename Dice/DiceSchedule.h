@@ -14,8 +14,9 @@
 using std::string;
 using std::map;
 using std::unordered_map;
+using std::shared_ptr;
 
-struct DiceJobDetail {
+struct DiceJobDetail : public std::enable_shared_from_this<DiceJobDetail> {
     long long fromQQ = 0;
     chatType fromChat;
     string cmd_key;

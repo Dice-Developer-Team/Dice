@@ -17,7 +17,7 @@
 using std::string;
 
 //打包待处理消息
-class FromMsg :public DiceJobDetail {
+class FromMsg : public DiceJobDetail {
 public:
 	string strLowerMessage;
 	long long fromGroup = 0;
@@ -103,11 +103,7 @@ public:
 		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 	}
 
-	void readSkipColon()
-	{
-		readSkipSpace();
-		while (intMsgCnt < strMsg.length() && strMsg[intMsgCnt] == ':')intMsgCnt++;
-	}
+	void readSkipColon();
 
 	string readUntilSpace()
 	{

@@ -17,9 +17,13 @@ public:
 		Critical,		//仅占位，不启用
 	};
 	map<string, Level, less_ci> words;
+	map<string, Level, less_ci> CustomWords;
+	Level get_level(const string&);
 	void insert(const string& word, Level);
-	//void load();
+	void add_word(const string& word, Level);
+	bool rm_word(const string& word);
 	void build();
+	void save();
 	size_t size()const { return words.size(); }
 	int search(const string& text, unordered_set<string>& res);
 };

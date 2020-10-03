@@ -10,6 +10,7 @@
 #include "BlackListManager.h"
 #include "GlobalVar.h"
 #include "CardDeck.h"
+#include "DiceMod.h"
 #include "S3PutObject.h"
 #pragma warning(disable:28159)
 
@@ -339,6 +340,9 @@ void clear_group(DiceJob& job) {
 		job.echo("无法识别筛选参数×");
 }
 void list_group(DiceJob& job) {
+	if (job["list_mode"].empty()) {
+		job.reply(fmt->get_help("groups_list"));
+	}
 	if (mChatConf.count(job["list_mode"])) {
 		ResList res;
 		for (auto& [id, grp] : ChatList) {
@@ -367,9 +371,9 @@ void list_group(DiceJob& job) {
 		while (!qDiver.empty()) {
 			res << qDiver.top().second + to_string(qDiver.top().first) + "天";
 			qDiver.pop();
-			if (++intCnt > 64 || intCnt > qDiver.size() || qDiver.top().first < 7)break;
+			if (++intCnt > 32 || qDiver.top().first < 7)break;
 		}
-		job.reply("{self}所在闲置群列表:" + res.show());
+		job.reply("{self}所在闲置群列表:" + res.show(1));
 	}
 	else if (job["list_mode"] == "size") {
 		std::priority_queue<std::pair<time_t, string>> qSize;
@@ -388,7 +392,7 @@ void list_group(DiceJob& job) {
 		while (!qSize.empty()) {
 			res << qSize.top().second + "[" + to_string(qSize.top().first) + "]";
 			qSize.pop();
-			if (++intCnt > 64 || intCnt > qSize.size() || qSize.top().first < 7)break;
+			if (++intCnt > 32 || qSize.top().first < 7)break;
 		}
 		job.reply("{self}所在大群列表:" + res.show(1));
 	}
@@ -428,6 +432,22 @@ void dice_update(DiceJob& job) {
 			default:
 				job.note("更新Dice!" + job.strVar["ver"] + "版成功√", 1);
 			}
+		}
+	}
+	else if (frame == QQFrame::XianQu) {
+		mkDir(dirExe + "CQPlugins/");
+		char pathDll[] = "CQPlugins/com.w4123.dice.dll";
+		string urlDll("https://shiki.stringempty.xyz/DiceVer/" + job.strVar["ver"] + "/com.w4123.dice.dll?" + to_string(job.fromTime));
+		switch (Cloud::DownloadFile(urlDll.c_str(), pathDll)) {
+		case -1:
+			job.echo("更新失败:" + urlDll);
+			break;
+		case -2:
+			job.note("更新Dice失败!dll文件未下载到指定位置", 0b1);
+			break;
+		case 0:
+		default:
+			job.note("更新Dice!" + job.strVar["ver"] + "版成功√", 1);
 		}
 	}
 	else {
