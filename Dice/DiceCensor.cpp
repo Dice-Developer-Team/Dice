@@ -45,6 +45,7 @@ void Censor::insert(const string& word, Level danger = Level::Warning) {
 }
 void Censor::add_word(const string& word, Level danger = Level::Warning) {
 	CustomWords[word] = danger;
+	if (!words.count(word))wordG.insert(word);
 	words[word] = danger;
 	save();
 }

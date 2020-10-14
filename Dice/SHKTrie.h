@@ -27,8 +27,8 @@ class TrieG {
 	//是为目标节点的子节点匹配fail
 	void make_fail(Node& node) {
 		if (&node == &root) {
-			for (auto& kid : node.next) {
-				kid.second.fail = &node;
+			for (auto& [ch, kid] : node.next) {
+				kid.fail = &node;
 			}
 		}
 		else {
@@ -41,8 +41,8 @@ class TrieG {
 				}
 			}
 		}
-		for (auto& kid : node.next) {
-			make_fail(kid.second);
+		for (auto& [ch, kid] : node.next) {
+			make_fail(kid);
 		}
 	}
 	static bool ignored(char ch) {
@@ -72,6 +72,10 @@ public:
 	template<typename Con>
 	void build(const Con& dir) {
 		new(this)TrieG(dir);
+	}
+	void insert(const string& key) {
+		add(key);
+		make_fail(root);
 	}
 	//前缀匹配
 	bool match_head(const string& s, unordered_set<string>& res)const {
