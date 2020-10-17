@@ -23,32 +23,45 @@ int sendSelf(const string msg) {
 }
 
 void cq_exit(DiceJob& job) {
-	int pid = _getpid();
-	PROCESSENTRY32 pe32;
-	pe32.dwSize = sizeof(pe32);
-	HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	if (hProcessSnap == INVALID_HANDLE_VALUE) {
-		job.note("重启失败：进程快照创建失败！", 1);
-	}
-	BOOL bResult = Process32First(hProcessSnap, &pe32);
-	int ppid(0);
-	while (bResult) {
-		if (pe32.th32ProcessID == pid) {
-			ppid = pe32.th32ParentProcessID;
-			break;
+	job.note("已令" + getMsg("self") + "在5秒后自杀", 1);
+	if (frame == QQFrame::CoolQ) {
+		int pid = _getpid();
+		PROCESSENTRY32 pe32;
+		pe32.dwSize = sizeof(pe32);
+		HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (hProcessSnap == INVALID_HANDLE_VALUE) {
+			job.note("重启失败：进程快照创建失败！", 1);
 		}
-		bResult = Process32Next(hProcessSnap, &pe32);
+		BOOL bResult = Process32First(hProcessSnap, &pe32);
+		int ppid(0);
+		while (bResult) {
+			if (pe32.th32ProcessID == pid) {
+				ppid = pe32.th32ParentProcessID;
+				break;
+			}
+			bResult = Process32Next(hProcessSnap, &pe32);
+		}
+		if (!ppid) {
+			job.note("重启失败：未找到进程！", 1);
+		}
+		string strCMD("taskkill /f /pid " + to_string(ppid));
+		std::this_thread::sleep_for(5s);
+		job.echo(strCMD);
+		Enabled = false;
+		dataBackUp();
+		system(strCMD.c_str());
 	}
-	if (!ppid) {
-		job.note("重启失败：未找到进程！", 1);
+	else if (frame == QQFrame::Mirai) {
+		std::this_thread::sleep_for(5s);
+		//Enabled = false;
+		dataBackUp();
+		cout << "stop" << endl;
+		string cmd = "stop";
+		for (auto key : cmd) {
+			keybd_event(key, 0, 0, 0);
+		}
+		keybd_event(VK_RETURN, MapVirtualKey(VK_RETURN, 0), 0, 0);
 	}
-	string strCMD("taskkill /f /pid " + to_string(ppid));
-	job.note("已命令" + getMsg("self") + "在5秒后自杀", 1);
-	std::this_thread::sleep_for(5s);
-	job.echo(strCMD);
-	Enabled = false;
-	dataBackUp();
-	system(strCMD.c_str());
 }
 
 inline PROCESSENTRY32 getProcess(int pid) {
@@ -58,8 +71,17 @@ inline PROCESSENTRY32 getProcess(int pid) {
 	Process32First(hParentProcess, &pe32);
 	return pe32;
 }
-void cq_restart(DiceJob& job) {
-	//string strSelfPath;
+void frame_restart(DiceJob& job) {
+	if (!job.fromQQ) {
+		if (console["AutoFrameRemake"] <= 0) {
+			sch.add_job_for(60 * 60, job);
+			return;
+		}
+		else if (int tWait = console["AutoFrameRemake"] * 60 * 60 - (clock() - llStartTime) / 1000; tWait > 0) {
+			sch.add_job_for(tWait, job);
+			return;
+		}
+	}
 	string strSelfName;
 	PROCESSENTRY32 pe32;
 	pe32.dwSize = sizeof(pe32);
@@ -92,7 +114,7 @@ void cq_restart(DiceJob& job) {
 			return;
 		}
 	}
-	else {
+	else if (frame == QQFrame::CoolQ) {
 		int pid = _getpid();
 		while (bResult) {
 			if (pe32.th32ProcessID == pid) {
@@ -105,12 +127,25 @@ void cq_restart(DiceJob& job) {
 			bResult = Process32Next(hProcessSnap, &pe32);
 		}
 	}
+	else {
+		ppid = _getpid();
+		while (bResult) {
+			if (pe32.th32ProcessID == ppid) {
+				strSelfName = pe32.szExeFile;
+				job.echo("确认进程" + strSelfName + "\n本进程id:" + to_string(pe32.th32ProcessID));
+				break;
+			}
+			bResult = Process32Next(hProcessSnap, &pe32);
+		}
+	}
 	if (!ppid) {
 		job.note("重启失败：未找到进程！", 1);
 		return;
 	}
-	string command = "taskkill /f /pid " + to_string(ppid) + " /t\nstart .\\" + strSelfName;
+	string command = "taskkill /f /pid " + to_string(ppid) + " /t\nstart " + strSelfName;
 	if (frame == QQFrame::CoolQ) command += " /account " + to_string(console.DiceMaid);
+	//else if (frame == QQFrame::XianQu) command = "start .\\remake.exe " + to_string(ppid) + " " + strSelfName;
+	else if (frame == QQFrame::XianQu) command = "start .\\先驱.exe\ntaskkill /f /pid " + to_string(ppid);
 	ofstream fout("remake.bat");
 	fout << command << std::endl;
 	fout.close();
@@ -119,6 +154,11 @@ void cq_restart(DiceJob& job) {
 	Enabled = false;
 	dataBackUp();
 	std::this_thread::sleep_for(3s);
+	//if (frame == QQFrame::Mirai) {
+	//	WinExec(("remake.exe " + to_string(ppid) + " " + strSelfName).c_str(), SW_SHOW);
+	//	return;
+	//}
+	/*
 	switch (UINT res = -1; res = WinExec(".\\remake.bat", SW_SHOW)) {
 	case 0:
 		job.note("重启失败：内存或资源已耗尽！", 1);
@@ -134,6 +174,8 @@ void cq_restart(DiceJob& job) {
 		else job.note("重启失败：未知错误" + to_string(res), 0);
 		break;
 	}
+	*/
+	ShellExecute(NULL, "open", "remake.bat", NULL, NULL, SW_SHOWNORMAL);
 }
 
 void frame_reload(DiceJob& job){
@@ -232,8 +274,6 @@ void clear_image(DiceJob& job) {
 	scanImage(HelpDoc, sReferencedImage);
 	scanImage(CardDeck::mPublicDeck, sReferencedImage);
 	scanImage(CardDeck::mReplyDeck, sReferencedImage);
-	scanImage(CardDeck::mGroupDeck, sReferencedImage);
-	scanImage(CardDeck::mPrivateDeck, sReferencedImage);
 	for (auto it : ChatList) {
 		scanImage(it.second.strConf, sReferencedImage);
 	}
