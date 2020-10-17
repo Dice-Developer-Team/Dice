@@ -6,7 +6,7 @@ inline time_t tNow = time(NULL);
 int sendSelf(const string msg);
 
 void cq_exit(DiceJob& job);
-void cq_restart(DiceJob& job);
+void frame_restart(DiceJob& job);
 void frame_reload(DiceJob& job);
 
 void auto_save(DiceJob& job);

@@ -14,7 +14,7 @@ unordered_map<string, cmd> mCommand = {
 	{"clrgroup",clear_group},
 	{"lsgroup",list_group},
 	{"reload",frame_reload},
-	{"remake",cq_restart},
+	{"remake",frame_restart},
 	{"die",cq_exit},
 	{"heartbeat",cloud_beat},
 	{"update",dice_update},
@@ -153,8 +153,9 @@ void DiceScheduler::start() {
 	push_job("heartbeat");
 	push_job("syscheck");
 	if (console["AutoSaveInterval"] > 0)add_job_for(console["AutoSaveInterval"] * 60, "autosave");
-	if (console["AutoClearImage"] > 0)add_job_for(console["AutoClearImage"] * 60 * 60, "clrimage");
-	else add_job_for(60 * 60, "clrimage");
+	if (console["AutoFrameRemake"] > 0)
+		add_job_for(console["AutoFrameRemake"] * 60 * 60, "remake");
+	else add_job_for(60 * 60, "remake");
 }
 void DiceScheduler::end() {
 }
