@@ -269,7 +269,6 @@ void COC6D(string& strMAns)
 
 void COC7(string& strMAns, int intNum)
 {
-	strMAns += "的人物作成:";
 	string strProperty[] = {"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育", "幸运"};
 	string strRoll[] = {"3D6", "3D6", "2D6+6", "3D6", "3D6", "2D6+6", "3D6", "2D6+6", "3D6"};
 	int intAllTotal = 0;
@@ -292,7 +291,6 @@ void COC7(string& strMAns, int intNum)
 
 void COC6(string& strMAns, int intNum)
 {
-	strMAns += "的人物作成:";
 	string strProperty[] = {"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育", "资产"};
 	string strRoll[] = {"3D6", "3D6", "2D6+6", "3D6", "3D6", "2D6+6", "3D6", "3D6+3", "1D10"};
 	const bool boolAddSpace = intNum != 1;

@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <memory>
+#include "STLExtern.hpp"
 
 using std::pair;
 using std::string;
@@ -37,6 +38,19 @@ struct LinkInfo {
 	long long linkFwd{ 0 };
 };
 
+struct DeckInfo {
+	//元表
+	vector<string> meta;
+	//剩余牌
+	vector<size_t> idxs;
+	size_t sizRes;
+	DeckInfo() = default;
+	DeckInfo(const vector<string>& deck);
+	void init();
+	void reset();
+	string draw();
+};
+
 class DiceSession
 {
 	//数值表
@@ -47,6 +61,8 @@ class DiceSession
 	LogInfo logger;
 	//链接
 	LinkInfo linker;
+	//牌堆
+	map<string, DeckInfo, less_ci> decks;
 public:
 	string type;
 	//群号
@@ -84,10 +100,11 @@ public:
 		return *this;
 	}
 
-	[[nodiscard]] bool table_count(string key) const { return mTable.count(key); }
-	int table_add(string, int, string);
-	[[nodiscard]] string table_prior_show(string key) const;
-	bool table_clr(string key);
+	[[nodiscard]] bool table_count(const string& key) const { return mTable.count(key); }
+	bool table_del(const string&, const string&);
+	int table_add(const string&, int, const string&);
+	[[nodiscard]] string table_prior_show(const string& key) const;
+	bool table_clr(const string& key);
 
 	//旁观指令
 	void ob_enter(FromMsg*);
@@ -116,6 +133,16 @@ public:
 	void link_close(FromMsg*);
 	[[nodiscard]] bool is_linking() const { return linker.isLinking; }
 
+	//deck指令
+	void deck_set(FromMsg*);
+	void deck_draw(FromMsg*);
+	void deck_show(FromMsg*);
+	void deck_reset(FromMsg*);
+	void deck_del(FromMsg*);
+	void deck_clr(FromMsg*);
+	void deck_new(FromMsg*);
+	[[nodiscard]] bool has_deck(const string& key) const { return decks.count(key); }
+
 	void save() const;
 };
 
@@ -132,6 +159,7 @@ class DiceTableMaster
 public:
 	map<long long, std::shared_ptr<Session>> mSession;
 	Session& session(long long group);
+	bool has_session(long long group);
 	void session_end(long long group);
 	//void save();
 	int load();

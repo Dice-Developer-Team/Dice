@@ -153,8 +153,10 @@ int DiceModManager::load(string& strLog)
 	}
 	std::thread factory(&DiceModManager::init,this);
 	factory.detach();
-	cntHelp.reserve(helpdoc.size());
-	loadJMap(DiceDir + "\\user\\HelpStatic.json", cntHelp);
+	if (cntHelp.empty()) {
+		cntHelp.reserve(helpdoc.size());
+		loadJMap(DiceDir + "\\user\\HelpStatic.json", cntHelp);
+	}
 	return cntFile;
 }
 void DiceModManager::init() {

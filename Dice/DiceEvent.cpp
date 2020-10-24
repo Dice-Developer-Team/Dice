@@ -17,33 +17,36 @@ using namespace std;
 using namespace CQ;
 
 
-void FromMsg::reply(std::string strReply, bool isFormat) {
-	isAns = true;
-	if (isFormat)
-		strReply = format(strReply, GlobalMsg, strVar);
-	AddMsgToQueue(strReply, fromChat);
-	if (LogList.count(fromSession)) {
-		filter_CQcode(strReply, fromGroup);
-		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
-		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime(fromTime) << endl
-			<< GBKtoUTF8(strReply) << endl << endl;
+FromMsg& FromMsg::initVar(const std::initializer_list<const std::string>& replace_str) {
+	int index = 0;
+	for (const auto& s : replace_str) {
+		strVar[to_string(index++)] = s;
 	}
+	return *this;
+}
+void FromMsg::formatReply() {
+	strReply = format(strReply, GlobalMsg, strVar);
 }
 
-void FromMsg::reply(std::string strReply, const std::initializer_list<const std::string> replace_str,
-		   bool isFormat) {
+void FromMsg::reply(const std::string& msgReply, bool isFormat) {
+	strReply = msgReply;
+	reply(isFormat);
+}
+
+void FromMsg::reply(const std::string& msgReply, const std::initializer_list<const std::string>& replace_str) {
+	initVar(replace_str);
+	strReply = msgReply;
+	reply();
+}
+
+void FromMsg::reply(bool isFormat) {
 	isAns = true;
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
-	if (isFormat) {
-		int index = 0;
-		for (const auto& s : replace_str) {
-			strVar[to_string(index++)] = s;
-		}
-		strReply = format(strReply, GlobalMsg, strVar);
-	}
+	if (isFormat)
+		formatReply();
 	AddMsgToQueue(strReply, fromChat);
-	if (LogList.count(fromSession)&& gm->session(fromSession).is_logging()) {
+	if (LogList.count(fromSession) && gm->session(fromSession).is_logging()) {
 		filter_CQcode(strReply, fromGroup);
 		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime(fromTime) << endl
@@ -51,8 +54,30 @@ void FromMsg::reply(std::string strReply, const std::initializer_list<const std:
 	}
 }
 
-void FromMsg::reply() {
-	reply(strReply);
+void FromMsg::replyHidden(const std::string& msgReply) {
+	strReply = msgReply;
+	replyHidden();
+}
+void FromMsg::replyHidden() {
+	isAns = true;
+	while (isspace(static_cast<unsigned char>(strReply[0])))
+		strReply.erase(strReply.begin());
+	formatReply();
+	if (LogList.count(fromSession) && gm->session(fromSession).is_logging()) {
+		filter_CQcode(strReply, fromGroup);
+		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
+		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime(fromTime) << endl
+			<< '*' << GBKtoUTF8(strReply) << endl << endl;
+	}
+	strReply = "在" + printChat(fromChat) + "中 " + strReply;
+	AddMsgToQueue(strReply, fromQQ);
+	if (gm->has_session(fromSession)) {
+		for (auto qq : gm->session(fromSession).get_ob()) {
+			if (qq != fromQQ) {
+				AddMsgToQueue(strReply, qq);
+			}
+		}
+	}
 }
 
 void FromMsg::fwdMsg()
@@ -976,7 +1001,7 @@ int FromMsg::DiceReply()
 				else if (intT == GroupT && ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用"))))reply(GlobalMsg["strGroupLicenseDeny"]);
 				else if (intT)
 				{
-					if (isAuth)
+					if (isAuth || trusted >2)
 					{
 						if (groupset(fromGroup, "停用指令") > 0)
 						{
@@ -998,7 +1023,7 @@ int FromMsg::DiceReply()
 			}
 			else if (Command == "off")
 			{
-				if (isAuth)
+				if (isAuth || trusted > 2)
 				{
 					if (groupset(fromGroup, "停用指令"))
 					{
@@ -1958,176 +1983,44 @@ int FromMsg::DiceReply()
 			return 1;
 		}
 		intMsgCnt += 4;
-		readSkipSpace();
+		string strRoom = readDigit(false);
+		long long llRoom = strRoom.empty() ? fromSession : stoll(strRoom);
 		if (strMsg.length() == intMsgCnt) {
 			reply(fmt->get_help("deck"));
 			return 1;
 		}
 		string strPara = readPara();
-		vector<string> *DeckPro = nullptr, *DeckTmp = nullptr;
-		if (intT != PrivateT && CardDeck::mGroupDeck.count(fromGroup))
-		{
-			DeckPro = &CardDeck::mGroupDeck[fromGroup];
-			DeckTmp = &CardDeck::mGroupDeckTmp[fromGroup];
-		}
-		else
-		{
-			if (CardDeck::mPrivateDeck.count(fromQQ))
-			{
-				DeckPro = &CardDeck::mPrivateDeck[fromQQ];
-				DeckTmp = &CardDeck::mPrivateDeckTmp[fromQQ];
-			}
-			//haichayixiangpanding
-		}
 		if (strPara == "show")
 		{
-			if (!DeckTmp)
-			{
-				reply(GlobalMsg["strDeckTmpNotFound"]);
-				return 1;
-			}
-			if (DeckTmp->empty())
-			{
-				reply(GlobalMsg["strDeckTmpEmpty"]);
-				return 1;
-			}
-			string strReply = GlobalMsg["strDeckTmpShow"] + "\n";
-			for (const auto& it : *DeckTmp)
-			{
-				it.length() > 10 ? strReply += it + "\n" : strReply += it + "|";
-			}
-			strReply.erase(strReply.end() - 1);
-			reply(strReply);
+			if (gm->has_session(llRoom))
+				gm->session(llRoom).deck_show(this); 
+			else reply(GlobalMsg["strDeckListEmpty"]);
 			return 1;
 		}
-		if (!intT && !isAuth && !trusted)
+		if ((!isAuth || llRoom != fromSession) && !trusted)
 		{
-			reply(GlobalMsg["strPermissionDeniedErr"]);
-			return 1;
+			reply(GlobalMsg["strWhiteQQDenied"]);
 		}
-		if (strPara == "set")
+		else if (strPara == "set")
 		{
-			strVar["deck_name"] = readAttrName();
-			if (strVar["deck_name"].empty())strVar["deck_name"] = readDigit();
-			if (strVar["deck_name"].empty())
-			{
-				reply(GlobalMsg["strDeckNameEmpty"]);
-				return 1;
-			}
-			vector<string> DeckSet = {};
-			if ((strVar["deck_name"] == "群成员" || strVar["deck_name"] == "member") && intT == GroupT)
-			{
-				vector<GroupMemberInfo> list = getGroupMemberList(fromGroup);
-				for (auto& each : list)
-				{
-					DeckSet.push_back(
-						(each.GroupNick.empty() ? each.Nick : each.GroupNick) + "(" + to_string(each.QQID) + ")");
-				}
-				CardDeck::mGroupDeck[fromGroup] = DeckSet;
-				CardDeck::mGroupDeckTmp.erase(fromGroup);
-				reply(GlobalMsg["strDeckProSet"], {strVar["deck_name"]});
-				return 1;
-			}
-			switch (CardDeck::findDeck(strVar["deck_name"]))
-			{
-			case 1:
-				if (strVar["deck_name"][0] == '_')
-					reply(GlobalMsg["strDeckNotFound"]);
-				else
-					DeckSet = CardDeck::mPublicDeck[strVar["deck_name"]];
-				break;
-			case 2: 
-				{
-					int intSize = stoi(strVar["deck_name"]) + 1;
-					if (intSize == 0) 
-					{
-						reply(GlobalMsg["strNumCannotBeZero"]);
-						return 1;
-					}
-					strVar["deck_name"] = "数列1至" + strVar["deck_name"];
-					while (--intSize) {
-						DeckSet.push_back(to_string(intSize));
-					}
-					break;
-				}
-			case 0:
-			default:
-				reply(GlobalMsg["strDeckNotFound"]);
-				return 1;
-			}
-			if (intT == PrivateT)
-			{
-				CardDeck::mPrivateDeck[fromQQ] = DeckSet;
-			}
-			else
-			{
-				CardDeck::mGroupDeck[fromGroup] = DeckSet;
-			}
-			reply(GlobalMsg["strDeckProSet"], { strVar["deck_name"] });
-			return 1;
+			gm->session(llRoom).deck_set(this);
 		}
-		if (strPara == "reset")
+		else if (strPara == "reset")
 		{
-			*DeckTmp = vector<string>(*DeckPro);
-			reply(GlobalMsg["strDeckTmpReset"]);
-			return 1;
+			gm->session(llRoom).deck_reset(this);
 		}
-		if (strPara == "clr")
+		else if (strPara == "del") {
+			gm->session(llRoom).deck_del(this);
+		}
+		else if (strPara == "clr")
 		{
-			if (intT == PrivateT)
-			{
-				if (CardDeck::mPrivateDeck.count(fromQQ) == 0)
-				{
-					reply(GlobalMsg["strDeckProNull"]);
-					return 1;
-				}
-				CardDeck::mPrivateDeck.erase(fromQQ);
-				if (DeckTmp)DeckTmp->clear();
-				reply(GlobalMsg["strDeckProClr"]);
-			}
-			else
-			{
-				if (CardDeck::mGroupDeck.count(fromGroup) == 0)
-				{
-					reply(GlobalMsg["strDeckProNull"]);
-					return 1;
-				}
-				CardDeck::mGroupDeck.erase(fromGroup);
-				if (DeckTmp)DeckTmp->clear();
-				reply(GlobalMsg["strDeckProClr"]);
-			}
-			return 1;
+			gm->session(llRoom).deck_clr(this);
 		}
-		if (strPara == "new")
+		else if (strPara == "new")
 		{
-			if (intT != PrivateT && groupset(fromGroup, "许可使用") == 0)
-			{
-				reply(GlobalMsg["strWhiteGroupDenied"]);
-				return 1;
-			}
-			if (intT == PrivateT && trustedQQ(fromQQ) == 0)
-			{
-				reply(GlobalMsg["strWhiteQQDenied"]);
-				return 1;
-			}
-			if (intT == PrivateT)
-			{
-				CardDeck::mPrivateDeck[fromQQ] = {};
-				DeckPro = &CardDeck::mPrivateDeck[fromQQ];
-			}
-			else
-			{
-				CardDeck::mGroupDeck[fromGroup] = {};
-				DeckPro = &CardDeck::mGroupDeck[fromGroup];
-			}
-			while (intMsgCnt != strMsg.length())
-			{
-				string item = readItem();
-				if (!item.empty())DeckPro->push_back(item);
-			}
-			reply(GlobalMsg["strDeckProNew"]);
-			return 1;
+			gm->session(llRoom).deck_new(this);
 		}
+		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "draw")
 	{
@@ -2147,31 +2040,24 @@ int FromMsg::DiceReply()
 			intMsgCnt++;
 		vector<string> ProDeck;
 		vector<string>* TempDeck = nullptr;
-		strVar["deck_name"] = readPara();
-		if (strVar["deck_name"].empty())
-		{
-			if (intT != PrivateT && CardDeck::mGroupDeck.count(fromGroup))
-			{
-				if (CardDeck::mGroupDeckTmp.count(fromGroup) == 0 || CardDeck::mGroupDeckTmp[fromGroup].empty())
-					CardDeck::mGroupDeckTmp[fromGroup] = vector<string>(CardDeck::mGroupDeck[fromGroup]);
-				TempDeck = &CardDeck::mGroupDeckTmp[fromGroup];
-			}
-			else if (CardDeck::mPrivateDeck.count(fromQQ))
-			{
-				if (CardDeck::mPrivateDeckTmp.count(fromQQ) == 0 || CardDeck::mPrivateDeckTmp[fromQQ].empty())
-					CardDeck::mPrivateDeckTmp[fromQQ] = vector<string>(CardDeck::mPrivateDeck[fromQQ]);
-				TempDeck = &CardDeck::mPrivateDeckTmp[fromQQ];
-			}
-			else
-			{
-				reply(GlobalMsg["strDeckNameEmpty"]);
-				return 1;
-			}
+		bool isPrivate(false);
+		string& key{ strVar["deck_name"] = readAttrName() };
+		if (!strVar["deck_name"].empty() && strVar["deck_name"][0] == '_') {
+			isPrivate = true;
+			strVar["hidden"];
+			strVar["deck_name"].erase(strVar["deck_name"].begin());
+		}
+		if (strVar["deck_name"].empty()){
+			reply(fmt->get_help("draw"));
+			return 1;
 		}
 		else
 		{
-			//int intFoundRes = CardDeck::findDeck(strVar["deck_name"]);
-			if (strVar["deck_name"][0] == '_' || CardDeck::findDeck(strVar["deck_name"]) == 0)
+			if (gm->has_session(fromSession) && gm->session(fromSession).has_deck(key)) {
+				gm->session(fromSession).deck_draw(this);
+				return 1;
+			}
+			else if (strVar["deck_name"][0] == '_' || CardDeck::findDeck(strVar["deck_name"]) == 0)
 			{
 				strReply = GlobalMsg["strDeckNotFound"];
 				reply(strReply);
@@ -2204,7 +2090,14 @@ int FromMsg::DiceReply()
 			if (TempDeck->empty())break;
 		}
 		strVar["res"] = Res.dot("|").show();
-		reply(GlobalMsg["strDrawCard"], {strVar["pc"], strVar["res"]});
+		strVar["cnt"] = to_string(Res.size());
+		initVar({ strVar["pc"], strVar["res"] });
+		if (isPrivate) {
+			reply(GlobalMsg["strDrawHidden"]);
+			replyHidden(GlobalMsg["strDrawCard"]);
+		}
+		else 
+			reply(GlobalMsg["strDrawCard"]);
 		if (intCardNum > 0)
 		{
 			reply(GlobalMsg["strDeckEmpty"]);
@@ -2215,19 +2108,31 @@ int FromMsg::DiceReply()
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "init" && intT)
 	{
 		intMsgCnt += 4;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
-		if (strLowerMessage.substr(intMsgCnt, 3) == "clr")
-		{
-			if (gm->session(fromSession).table_clr("先攻"))
-				reply("成功清除先攻记录！");
-			else
-				reply("列表为空！");
-			return 1;
-		}
 		strVar["table_name"] = "先攻";
-		if (gm->session(fromSession).table_count("先攻"))
-			reply(GlobalMsg["strGMTableShow"] + gm->session(fromSession).table_prior_show("先攻"));
-		else reply(GlobalMsg["strGMTableNotExist"]);
+		string strCmd = readPara();
+		if (strCmd.empty()) {
+			reply(fmt->get_help("init"));
+		}
+		else if (!gm->has_session(fromSession)|| !gm->session(fromSession).table_count("先攻")) {
+			reply(GlobalMsg["strGMTableNotExist"]);
+		}
+		else if (strCmd == "show" || strCmd == "list") {
+			strVar["res"] = gm->session(fromSession).table_prior_show("先攻");
+			reply(GlobalMsg["strGMTableShow"]);
+		}
+		else if (strCmd == "del") {
+			strVar["table_item"] = readRest();
+			if (strVar["table_item"].empty())
+				reply(GlobalMsg["strGMTableItemEmpty"]);
+			else if (gm->session(fromSession).table_del("先攻", strVar["table_item"]))
+				reply(GlobalMsg["strGMTableItemDel"]);
+			else
+				reply(GlobalMsg["strGMTableItemNotFound"]);
+		}
+		else if (strCmd == "clr") {
+			gm->session(fromSession).table_clr("先攻");
+			reply(GlobalMsg["strGMTableClr"]);
+		}
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp")
@@ -2585,9 +2490,8 @@ int FromMsg::DiceReply()
 			reply(GlobalMsg["strCharacterCannotBeZero"]);
 			return 1;
 		}
-		string strReply = strVar["pc"];
-		COC7(strReply, intNum);
-		reply(strReply);
+		COC7(strVar["res"], intNum);
+		reply(GlobalMsg["strCOCBuild"]);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "dnd")
@@ -4409,4 +4313,16 @@ int FromMsg::readChat(chatType& ct, bool isReroll)
 	}
 	if (isReroll)intMsgCnt = intFormor;
 	return -2;
+}
+
+void FromMsg::readItems(vector<string>& vItem) {
+	while (intMsgCnt != strMsg.length()) {
+		string strItem;
+		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == '|')intMsgCnt++;
+		while (strMsg[intMsgCnt] != '|' && intMsgCnt != strMsg.length()) {
+			strItem += strMsg[intMsgCnt];
+			intMsgCnt++;
+		}
+		vItem.push_back(strItem);
+	}
 }

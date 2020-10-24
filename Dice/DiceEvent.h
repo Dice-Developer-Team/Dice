@@ -33,12 +33,17 @@ public:
 
 	bool isBlock = false;
 
-	void reply(std::string strReply, bool isFormat = true)override;
+	void formatReply();
 
-	void reply(std::string strReply, const std::initializer_list<const std::string> replace_str,
-			   bool isFormat = true);
+	void reply(const std::string& strReply, bool isFormat = true)override;
 
-	void reply();
+	FromMsg& initVar(const std::initializer_list<const std::string>& replace_str);
+	void reply(const std::string& strReply, const std::initializer_list<const std::string>& replace_str);
+	void replyHidden(const std::string& strReply);
+
+	void reply(bool isFormat = true);
+
+	void replyHidden();
 
 	//通知
 	void note(std::string strMsg, int note_lv = 0b1)
@@ -80,7 +85,6 @@ public:
 private:
 	//是否响应
 	bool isAns = false;
-	unsigned int intMsgCnt = 0;
 	bool isDisabled = false;
 	bool isCalled = false;
 	bool isAuth = false;
@@ -97,6 +101,7 @@ private:
 		return -2;
 	}
 public:
+	unsigned int intMsgCnt = 0;
 	//跳过空格
 	void readSkipSpace()
 	{
@@ -341,6 +346,7 @@ public:
 		}
 		return strMum;
 	}
+	void readItems(vector<string>&);
 };
 
 #endif /*DICE_EVENT*/

@@ -1030,14 +1030,6 @@ namespace CardDeck
 	std::map<std::string, std::vector<std::string>, less_ci> mReplyDeck = {
 		{".dissmiss", {"diss!diss!diss!会英语吗在那diss本骰娘？那叫!dismiss!"}}
 	};
-	//群聊牌堆
-	std::map<long long, std::vector<std::string>> mGroupDeck;
-	//群聊临时牌堆
-	std::map<long long, std::vector<std::string>> mGroupDeckTmp;
-	//私人牌堆
-	std::map<long long, std::vector<std::string>> mPrivateDeck;
-	//私人临时牌堆
-	std::map<long long, std::vector<std::string>> mPrivateDeckTmp;
 	std::map<std::string, std::string> PublicComplexDeck{
 		//{"调查员背景","个人描述：{个人描述}\n思想信念：{思想信念}\n重要之人：{重要之人}\n重要之人理由：{重要之人理由}\n意义非凡之地：{意义非凡之地}\n宝贵之物：{宝贵之物}\n特点：{调查员特点}"}
 	};

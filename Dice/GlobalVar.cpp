@@ -57,8 +57,12 @@ std::map<std::string, std::string> GlobalMsg
 	{"strLogUpSuccess","{self}已完成日志上传√\n请访问 https://logpainter.kokona.tech/?s3={log_file} 以查看记录"},
 	{"strLogUpFailure","{self}上传日志文件失败，正在第{retry}次重试…{ret}"},
 	{"strLogUpFailureEnd","很遗憾，{self}无法成功上传日志文件×\n{ret}\n如需获取可联系Master:{master_QQ}\n文件名:{log_file}"},
-	{"strGMTableShow","{self}记录的{table_name}列表："},
-	{"strGMTableNotExist","{self}没有保存的{table_name}记录"},
+	{"strGMTableShow","{self}记录的{table_name}列表: {res}"},
+	{"strGMTableClr","{self}已清除{table_name}表√"},
+	{"strGMTableItemDel","{self}已移除{table_name}表的项目{table_item}√"},
+	{"strGMTableNotExist","{self}没有保存{table_name}表×"},
+	{"strGMTableItemNotFound","{self}没有找到{table_name}表的项目{table_item}×"},
+	{"strGMTableItemEmpty","请告知{self}待移除的{table_name}列表项目×"},
 	{"strUserTrustShow","{user}在{self}处的信任级别为{trust}"},
 	{"strUserTrusted","已将{self}对{user}的信任级别调整为{trust}"},
 	{"strUserTrustDenied","{nick}在{self}处无权访问对方的权限×"},
@@ -111,6 +115,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPcInitDelErr","{nick}的初始卡不可删除×"},
 	{"strPcNoteTooLong","备注长度不能超过255×"},
 	{"strPcTextTooLong","文本长度不能超过48×"},
+	{"strCOCBuild","{pc}的调查员作成:{res}"},
 	{"strCensorCaution","提醒：{nick}的指令包含敏感词，{self}已上报"},
 	{"strCensorWarning","警告：{nick}的指令包含敏感词，{self}已记录并上报！"},
 	{"strCensorDanger","警告：{nick}的指令包含敏感词，{self}拒绝指令并已上报！"},
@@ -128,15 +133,24 @@ std::map<std::string, std::string> GlobalMsg
 	{"strWhiteQQAddNotice","{user_nick}，您已获得{self}的信任，请尽情使用{self}√"},
 	{"strWhiteQQDenied","你不是{self}信任的用户×"},
 	{"strWhiteGroupDenied","本群聊不在白名单中×"},
-	{"strDeckProNew","已新建自定义牌堆√"},
-	{"strDeckProSet","已将{deck_name}设置为默认牌堆√"},
-	{"strDeckProClr","已删除默认牌堆√"},
-	{"strDeckProNull","默认牌堆不存在!"},
-	{"strDeckTmpReset","已重置卡牌√"},
-	{"strDeckTmpShow","当前剩余卡牌:"},
-	{"strDeckTmpEmpty","已无剩余卡牌！"},		//剩余卡牌数为0
-	{"strDeckTmpNotFound","不存在剩余卡牌×"},	//没有生成过牌堆
+	{"strDeckNew","{self}已为{nick}自定义新牌堆<{deck_name}>√"},
+	{"strDeckSet","{nick}已用<{deck_name}>创建{self}的牌堆实例√"},
+	{"strDeckSetRename","{nick}已用<{deck_cited}>创建{self}的牌堆实例{deck_name}√"},
+	{"strDeckRestEmpty","牌堆<{deck_name}>已抽空，请使用.deck reset {deck_name}手动重置牌堆"},		
+	{"strDeckOversize","{nick}定义的牌太多，{self}装不下啦×"},
+	{"strDeckRestShow","当前牌堆<{deck_name}>剩余卡牌:{deck_rest}"},
+	{"strDeckRestReset","{self}已重置牌堆实例<{deck_name}>√"},
+	{"strDeckDelete","{self}已移除牌堆实例<{deck_name}>√"},
+	{"strDeckListShow","在{self}处创建的牌堆实例有:{res}"},
+	{"strDeckListClr","{nick}已清空{self}处牌堆实例√"},
+	{"strDeckListEmpty","{self}处牌堆实例列表为空！"},
+	{"strDeckNewEmpty","{self}无法为{nick}新建虚空牌堆×"},
+	{"strDeckListFull","{self}处牌堆实例已达上限，请先清理无用实例×"},
+	{"strDeckNotFound","{self}找不到牌堆{deck_name}×"},
+	{"strDeckCiteNotFound","{self}找不到公共牌堆{deck_cited}×" },
 	{"strDeckNameEmpty","未指定牌堆名×"},
+	{"strRangeEmpty","{self}没法对着空气数数×" },
+	{"strOutRange","{nick}定义的数列超出{self}允许范围×" },
 	{"strRollDice","{pc}掷骰: {res}"},
 	{"strRollDiceReason","{pc}掷骰 {reason}: {res}"},
 	{"strRollHidden","{pc}进行了一次暗骰"},
@@ -179,6 +193,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strClockOffWork","{self}已按时关闭√"},
 	{"strNameGenerator","{pc}的随机名称：{res}"},
 	{"strDrawCard", "来看看{pc}抽到了什么：{res}"},
+	{"strDrawHidden", "{pc}抽了{cnt}张手牌√" },
 	{"strMeOn", "成功在这里启用{self}的.me命令√"},
 	{"strMeOff", "成功在这里禁用{self}的.me命令√"},
 	{"strMeOnAlready", "在这里{self}的.me命令没有被禁用!"},
@@ -334,6 +349,7 @@ std::map<std::string, std::string> GlobalMsg
 std::map<std::string, std::string> EditedMsg;
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+568:.deck自定义牌堆重做
 567:敏感词检测
 566:.help查询建议
 565:.log日志记录
@@ -407,7 +423,21 @@ Master拥有最高权限，且可以调整任意信任)"},
 .log off 暂停记录
 .log end 完成记录并发送日志文件
 日志上传存在失败可能，届时请联系后台管理索取)"},
-{"deck","该指令可以设置默认牌堆，使用.draw不指定牌堆名时将使用此牌堆。该牌堆不会放回直到抽完最后一张后洗牌。\n.deck set 公共牌堆名 设置默认牌堆\n.deck set 正整数1-100 设置指定长度的数列\n.deck show 查看剩余卡牌\n.deck reset 重置剩余卡牌\n.deck new 自定义牌堆（用空格或|分割）（白名单限定）\n.deck new 有弹|无弹|无弹|无弹|无弹|无弹\n除show外其他群内操作需要管理权限"},
+{"deck",R"(牌堆实例.deck
+该指令可以在群内自设牌堆，使用.draw时，牌堆实例优先级高于同名公共对象
+抽牌不会放回直到抽空
+每个群的牌堆列表至多保存10个牌堆
+.deck set ([牌堆实例名]=)[公共牌堆名] //从公共牌堆创建实例
+.deck set ([牌堆实例名]=)member //从群成员列表创建实例
+.deck set ([牌堆实例名]=)range [下限] [上限] //创建等差数列作为实例
+.deck show //查看牌堆实例列表
+.deck show [牌堆名] //查看剩余卡牌
+.deck reset [牌堆名] //重置剩余卡牌
+.deck clr //清空所有实例
+.deck new [牌堆名]=[卡面1](...|[卡面n])	//自定义牌堆
+例:
+.deck new 俄罗斯轮盘=有弹|无弹|无弹|无弹|无弹|无弹
+除show外其他群内操作需要管理权限)"},
 {"退群","&dismiss"},
 {"退群指令","&dismiss"},
 {"dismiss","该指令需要群管理员权限，使用后即退出群聊\n!dismiss [目标QQ(完整或末四位)]指名退群\n!dismiss无视内置黑名单和静默状态，只要插件开启总是有效"},
@@ -497,14 +527,19 @@ Master拥有最高权限，且可以调整任意信任)"},
 	{"抽牌", "&draw"},
 	{
 		"draw",
-		"抽牌：.draw [牌堆名称] ([抽牌数量])\t//抽到的牌不放回，抽牌数量不能超过牌堆数量\n当前已安装牌堆:{全牌堆列表}"
+		R"(抽牌：.draw [牌堆名称] ([抽牌数量])	
+.draw _[牌堆名称] ([抽牌数量])	//暗抽，结果私聊发送
+.draw _狼人杀	//抽牌结果通过私聊获取，可ob
+*牌堆名称可以是公共牌堆名或牌堆实例名
+*抽到的牌不放回，牌堆抽空后无法继续
+*查看{self}已安装牌堆，可.help 全牌堆列表或.help 扩展牌堆)"
 	},
 	{ "扩展牌堆","{list_extern_deck}" },
 	{ "全牌堆列表","{list_all_deck}" },
 	{"先攻", "&ri"},
 	{"ri", "先攻（群聊限定）：.ri([加值])([昵称])\n.ri -1 某pc\t//自动记入先攻列表\n.ri +5 boss"},
 	{"先攻列表", "&init"},
-	{"init", "先攻列表：\n.init\t//查看先攻列表\n.init clr\t//清除先攻列表"},
+	{"init", "先攻列表：\n.init list\t//查看先攻列表\n.init clr\t//清除先攻列表\n.init del [项目名]\t//从先攻列表移除项目"},
 	{"骰池", "&ww"},
 	{"ww", "骰池：.w(w) [骰子个数]a[加骰参数]\n.w会直接给出结果而.ww会给出每个骰子的点数\n固定10面骰，每有一个骰子点数达到加骰参数，则加骰一次，最后计算点数达到8的骰子数\n具体用法请参考相关游戏规则"},
 	{"第三人称", "&me"},

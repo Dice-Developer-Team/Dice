@@ -92,7 +92,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <ForceSymbolReferences>%(ForceSymbolReferences)</ForceSymbolReferences>
@@ -105,7 +105,8 @@
       </Command>
     </CustomBuildStep>
     <PostBuildEvent>
-      <Command>copy /Y $(TargetPath) "D:\酷Q Air\dev\com.w4123.dice"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

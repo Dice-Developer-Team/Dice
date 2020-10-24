@@ -929,6 +929,7 @@ void global_exit() {
 	threads = {};
 	dataBackUp();
 	sch.end();
+	censor = {};
 	fmt.reset();
 	gm.reset();
 	PList.clear();

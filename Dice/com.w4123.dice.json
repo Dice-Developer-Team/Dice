@@ -2,8 +2,8 @@
   "ret": 1,
   "apiver": 9,
   "name": "Dice!",
-  "version": "2.4.1",
-  "version_id": 567,
+  "version": "2.4.2beta1",
+  "version_id": 568,
   "author": "w4123溯洄 & Shiki",
   "description": "跑团用骰子 本程序使用AGPLv3开源协议授权 Copyright (c) 2018-2020 w4123溯洄 & Shiki",
   "event": [

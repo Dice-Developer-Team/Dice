@@ -10,22 +10,31 @@
 #include "MsgFormat.h"
 #include "EncodingConvert.h"
 #include "DiceEvent.h"
+#include "CardDeck.h"
+#include "RandomGenerator.h"
 
 std::shared_mutex sessionMutex;
 
-int DiceSession::table_add(string key, int prior, string item)
+bool DiceSession::table_del(const string& tab, const string& item) {
+	if (!mTable.count(tab) || !mTable[tab].count(item))return false;
+	mTable[tab].erase(item);
+	update();
+	return true;
+}
+
+int DiceSession::table_add(const string& key, int prior, const string& item)
 {
 	mTable[key].emplace(item, prior);
 	update();
 	return 0;
 }
 
-string DiceSession::table_prior_show(string key) const
+string DiceSession::table_prior_show(const string& key) const
 {
 	return PriorList(mTable.find(key)->second).show();
 }
 
-bool DiceSession::table_clr(string key)
+bool DiceSession::table_clr(const string& key)
 {
 	if (const auto it = mTable.find(key); it != mTable.end())
 	{
@@ -229,23 +238,262 @@ void DiceSession::link_close(FromMsg* msg) {
 	}
 }
 
+DeckInfo::DeckInfo(const vector<string>& deck) :meta(deck) {
+	init();
+}
+void DeckInfo::init() {
+	idxs.reserve(meta.size());
+	for (size_t idx = 0; idx < meta.size(); idx++) {
+		size_t l, r;
+		size_t cnt(1);
+		if ((l = meta[idx].find("::")) != string::npos && (r = meta[idx].find("::", l + 2)) != string::npos) {
+			string strCnt = CardDeck::draw(meta[idx].substr(l + 2, r - l - 2));
+			if (strCnt.length() < 4 && !strCnt.empty() && isdigit(static_cast<unsigned char>(strCnt[0])) && strCnt != "0") {
+				meta[idx].erase(meta[idx].begin(), meta[idx].begin() + r + 2);
+				cnt = stoi(strCnt);
+			}
+		}
+		while (cnt--) {
+			idxs.push_back(idx);
+		}
+	}
+	sizRes = idxs.size();
+}
+void DeckInfo::reset() {
+	sizRes = idxs.size();
+}
+string DeckInfo::draw() {
+	if (idxs.empty())return{};
+	size_t idx = RandomGenerator::Randint(0, --sizRes);
+	size_t res = idxs[idx];
+	idxs[idx] = idxs[sizRes];
+	idxs[sizRes] = res;
+	return CardDeck::draw(meta[res]);
+}
+
+void DiceSession::deck_set(FromMsg* msg) {
+	string& key{ msg->strVar["deck_name"] = msg->readAttrName() };
+	size_t pos = msg->strMsg.find('=', msg->intMsgCnt);
+	string& strCiteDeck{ msg->strVar["deck_cited"] = pos == string::npos 
+		? key 
+		: (++msg->intMsgCnt, msg->readAttrName()) };
+	if (key.empty()) {
+		msg->reply(GlobalMsg["strDeckNameEmpty"]);
+	}
+	else if (decks.size() > 9 && !decks.count(key)) {
+		msg->reply(GlobalMsg["strDeckListFull"]);
+	}
+	else {
+		vector<string> DeckSet = {};
+		if ((strCiteDeck == "群成员" || (strCiteDeck == "member" && !(strCiteDeck = "群成员").empty())) && msg->fromChat.second == CQ::msgtype::Group) {
+			vector<CQ::GroupMemberInfo> list = CQ::getGroupMemberList(msg->fromGroup);
+			if (list.empty()) {
+				msg->reply("群成员列表获取失败×");
+			}
+			for (auto& each : list) {
+				DeckSet.push_back(
+					(each.GroupNick.empty() ? each.Nick : each.GroupNick) + "(" + to_string(each.QQID) + ")");
+			}
+			decks[key] = DeckSet;
+		}
+		else if (strCiteDeck == "range") {
+			string strL = msg->readDigit();
+			string strR = msg->readDigit();
+			string strStep = msg->readDigit();	//步长，不支持反向
+			if (strL.empty()) {
+				msg->reply(GlobalMsg["strRangeEmpty"]);
+				return;
+			}
+			else if (strL.length() > 16 || strR.length() > 16) {
+				msg->reply(GlobalMsg["strOutRange"]);
+				return;
+			}
+			else {
+				long long llBegin{ stoll(strL) };
+				long long llEnd{ strR.empty() ? 0 : stoll(strR) };
+				long long llStep{ strStep.empty() ? 1 : stoll(strStep) };
+				if (llBegin == llEnd) {
+					msg->reply(GlobalMsg["strRangeEmpty"]);
+					return;
+				}
+				else if (llBegin > llEnd) {
+					long long temp = llBegin;
+					llBegin = llEnd;
+					llEnd = temp;
+				}
+				if ((llEnd - llBegin) > 1000 * llStep) {
+					msg->reply(GlobalMsg["strOutRange"]);
+					return;
+				}
+				for (long long card = llBegin; card <= llEnd; card += llStep) {
+					DeckSet.emplace_back(to_string(card));
+				}
+				decks[key] = DeckSet;
+				strCiteDeck += to_string(llBegin) + "~" + *(--DeckSet.end());
+			}
+		}
+		else if (!CardDeck::mPublicDeck.count(strCiteDeck) || strCiteDeck[0] == '_') {
+			msg->reply(GlobalMsg["strDeckCiteNotFound"]);
+			return;
+		}
+		else {
+			decks[key] = CardDeck::mPublicDeck[strCiteDeck];
+		}
+		if (key == strCiteDeck)msg->reply(GlobalMsg["strDeckSet"], { msg->strVar["deck_name"] });
+		else msg->reply(GlobalMsg["strDeckSetRename"]);
+		update();
+	}
+}
+void DiceSession::deck_new(FromMsg* msg) {
+	string& key{ msg->strVar["deck_name"] };
+	size_t pos = msg->strMsg.find('=', msg->intMsgCnt);
+	if (pos == string::npos) {
+		key = "new";
+	}
+	else {
+		key = msg->readAttrName();
+		msg->intMsgCnt = pos + 1;
+	}
+	if (decks.size() > 9 && !decks.count(key)) {
+		msg->reply(GlobalMsg["strDeckListFull"]);
+	}
+	else {
+		vector<string> DeckSet = {};
+		msg->readItems(DeckSet);
+		if (DeckSet.empty()) {
+			msg->reply(GlobalMsg["strDeckNewEmpty"]);
+			return;
+		}
+		else if (DeckSet.size() > 256) {
+			msg->reply(GlobalMsg["strDeckOversize"]);
+			return;
+		}
+		DeckInfo deck{ DeckSet };
+		if (deck.idxs.size() > 1024) {
+			msg->reply(GlobalMsg["strDeckOversize"]);
+			return;
+		}
+		decks[key] = std::move(deck);
+		msg->reply(GlobalMsg["strDeckNew"]);
+		update();
+	}
+}
+void DiceSession::deck_draw(FromMsg* msg) {
+	string& key{ msg->strVar["deck_name"] };
+	if (key.empty())key = msg->readAttrName();
+	DeckInfo& deck = decks[key];
+	int intCardNum = 1;
+	switch (msg->readNum(intCardNum)) {
+	case 0:
+		if (intCardNum == 0) {
+			msg->reply(GlobalMsg["strNumCannotBeZero"]);
+			return;
+		}
+		break;
+	case -1: break;
+	case -2:
+		msg->reply(GlobalMsg["strParaIllegal"]);
+		console.log("提醒:" + printQQ(msg->fromQQ) + "对" + GlobalMsg["strSelfName"] + "使用了非法指令参数\n" + msg->strMsg, 1,
+					printSTNow());
+		return;
+	}
+	ResList Res;
+	while (!deck.idxs.empty()&&intCardNum--) {
+		Res << deck.draw();
+		if (deck.idxs.empty())break;
+	}
+	if(!Res.empty()){
+		msg->strVar["res"] = Res.dot("|").show();
+		msg->strVar["cnt"] = to_string(Res.size());
+		msg->initVar({ msg->strVar["pc"], msg->strVar["res"] });
+		if (msg->strVar.count("hidden")) {
+			msg->reply(GlobalMsg["strDrawHidden"]);
+			msg->replyHidden(GlobalMsg["strDrawCard"]);
+		}
+		else
+			msg->reply(GlobalMsg["strDrawCard"]);
+		update();
+	}
+	if (deck.idxs.empty()) {
+		msg->reply(GlobalMsg["strDeckRestEmpty"]);
+	}
+}
+void DiceSession::deck_show(FromMsg* msg) {
+	if (decks.empty()) {
+		msg->reply(GlobalMsg["strDeckListEmpty"]);
+		return;
+	}
+	string& strDeckName{ msg->strVar["deck_name"] = msg->readAttrName() };
+	//默认列出所有牌堆
+	if (strDeckName.empty()) {
+		ResList res;
+		for (auto& [key, val] : decks) {
+			res << key + "[" + to_string(val.sizRes) + "/" + to_string(val.idxs.size()) + "]";
+		}
+		msg->strVar["res"] = res.show();
+		msg->reply(GlobalMsg["strDeckListShow"]);
+	}
+	else {
+		if (decks.count(strDeckName)) {
+			DeckInfo& deck{ decks[strDeckName] };
+			ResList residxs;
+			size_t idx(0);
+			while (idx < deck.sizRes) {
+				residxs << deck.meta[deck.idxs[idx++]];
+			}
+			msg->strVar["deck_rest"] = residxs.dot(" | ").show();
+			msg->reply(GlobalMsg["strDeckRestShow"]);
+		}
+		else {
+			msg->reply(GlobalMsg["strDeckNotFound"]);
+		}
+	}
+}
+void DiceSession::deck_reset(FromMsg* msg) {
+	string& key{ msg->strVar["deck_name"] = msg->readAttrName() };
+	if (key.empty())key = msg->readDigit();
+	if (key.empty()) {
+		msg->reply(GlobalMsg["strDeckNameEmpty"]);
+	}
+	else if (!decks.count(key)) {
+		msg->reply(GlobalMsg["strDeckNotFound"]);
+	}
+	else {
+		decks[key].reset();
+		msg->reply(GlobalMsg["strDeckidxsReset"]);
+		update();
+	}
+}
+void DiceSession::deck_del(FromMsg* msg) {
+	string& key{ msg->strVar["deck_name"] = msg->readAttrName() };
+	if (key.empty())key = msg->readDigit();
+	if (key.empty()) {
+		msg->reply(GlobalMsg["strDeckNameEmpty"]);
+	}
+	else if (!decks.count(key)) {
+		msg->reply(GlobalMsg["strDeckNotFound"]);
+	}
+	else {
+		decks.erase(key);
+		msg->reply(GlobalMsg["strDeckDelete"]);
+		update();
+	}
+}
+void DiceSession::deck_clr(FromMsg* msg) {
+	decks.clear();
+	msg->reply(GlobalMsg["strDeckListClr"]);
+	update();
+}
+
+std::mutex exSessionSave;
+
 void DiceSession::save() const
 {
 	mkDir(DiceDir + "\\user\\session");
 	string pathFile = (type == "solo")
 		? (DiceDir + R"(\user\session\Q)" + to_string(~room) + ".json" )
 		: (DiceDir + R"(\user\session\)" + to_string(room) + ".json");
-	ofstream fout(pathFile);
-	if (!fout)
-	{
-		console.log("开团信息保存失败:" + DiceDir + R"(\user\session\)" + to_string(room), 1);
-		return;
-	}
 	nlohmann::json jData;
-	jData["type"] = type;
-	jData["room"] = room;
-	jData["create_time"] = tCreate;
-	jData["update_time"] = tUpdate;
 	if (!sOB.empty())jData["observer"] = sOB;
 	if (!mTable.empty())
 		for (auto& [key, table] : mTable)
@@ -271,7 +519,36 @@ void DiceSession::save() const
 		jLink["linking"] = linker.isLinking;
 		jData["link"] = jLink;
 	}
+	if (!decks.empty()) {
+		json jDecks;
+		for (auto& [key,deck]:decks) {
+			jDecks[GBKtoUTF8(key)] = {
+				{"meta",GBKtoUTF8(deck.meta)},
+				{"idxs",deck.idxs},
+				{"size",deck.sizRes}
+			};
+		}
+		jData["decks"] = jDecks;
+	}
+	std::lock_guard<std::mutex> lock(exSessionSave);
+	if (jData.empty()) {
+		remove(pathFile.c_str());
+		return;
+	}
+	jData["type"] = type;
+	jData["room"] = room;
+	jData["create_time"] = tCreate;
+	jData["update_time"] = tUpdate;
+	ofstream fout(pathFile);
+	if (!fout) {
+		console.log("开团信息保存失败:" + pathFile, 1);
+		return;
+	}
 	fout << jData.dump(1);
+}
+
+bool DiceTableMaster::has_session(long long group) {
+	return mSession.count(group);
 }
 
 Session& DiceTableMaster::session(long long group)
@@ -344,6 +621,21 @@ int DiceTableMaster::load()
 			if (pSession->linker.isLinking) {
 				LinkList[pSession->room] = { pSession->linker.linkFwd,pSession->linker.typeLink != "from" };
 				LinkList[pSession->linker.linkFwd] = { pSession->room,pSession->linker.typeLink != "to" };
+			}
+		}
+		if (j.count("decks")) {
+			json& jDecks = j["decks"];
+			for (auto it = jDecks.cbegin(); it != jDecks.cend(); ++it) {
+				std::string key = UTF8toGBK(it.key());
+				pSession->decks[key].meta = UTF8toGBK(it.value()["meta"].get<vector<string>>());
+				if (it.value().count("rest")) {
+					it.value()["rest"].get_to(pSession->decks[key].idxs);
+					pSession->decks[key].sizRes = pSession->decks[key].meta.size();
+				}
+				else {
+					it.value()["idxs"].get_to(pSession->decks[key].idxs);
+					it.value()["size"].get_to(pSession->decks[key].sizRes);
+				}
 			}
 		}
         if (j["type"] == "simple")

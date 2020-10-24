@@ -149,6 +149,21 @@ public:
 	}
 };
 
+//按属性名输出项目
+class AttrList {
+	std::unordered_map<string, string> mItem;
+	std::vector<string> vKey;
+public:
+	string show() {
+		string res;
+		int index = 0;
+		for (auto& key : vKey) {
+			res += "\n" + key + "=" + mItem[key];
+		}
+		return res;
+	}
+};
+
 template <typename T, typename sort>
 std::string listKey(std::map<std::string, T, sort> m)
 {

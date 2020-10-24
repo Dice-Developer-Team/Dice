@@ -43,6 +43,7 @@ User& getUser(long long qq)
 short trustedQQ(long long qq) 
 {
 	if (qq == console.master())return 256;
+	if (qq == console.DiceMaid)return 255;
 	else if (!UserList.count(qq))return 0;
 	else return UserList[qq].nTrust;
 }
