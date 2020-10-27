@@ -1437,16 +1437,14 @@ int FromMsg::DiceReply()
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd")
 	{
-		strReply = strVar["nick"];
-		COC7D(strReply);
-		reply(strReply);
+		COC7D(strVar["res"]);
+		reply(GlobalMsg["strCOCBuild"]);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc6d")
 	{
-		strReply = strVar["nick"];
-		COC6D(strReply);
-		reply(strReply);
+		COC6D(strVar["res"]);
+		reply(GlobalMsg["strCOCBuild"]);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "group")
@@ -1970,9 +1968,8 @@ int FromMsg::DiceReply()
 			reply(GlobalMsg["strCharacterCannotBeZero"]);
 			return 1;
 		}
-		strReply = strVar["nick"];
-		COC6(strReply, intNum);
-		reply(strReply);
+		COC6(strVar["res"], intNum);
+		reply(GlobalMsg["strCOCBuild"]);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "deck")
@@ -2517,8 +2514,8 @@ int FromMsg::DiceReply()
 			return 1;
 		}
 		string strReply = strVar["pc"];
-		DND(strReply, intNum);
-		reply(strReply);
+		DND(strVar["res"], intNum);
+		reply(GlobalMsg["strDNDBuild"]);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "log") {

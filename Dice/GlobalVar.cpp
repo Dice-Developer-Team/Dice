@@ -116,6 +116,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPcNoteTooLong","备注长度不能超过255×"},
 	{"strPcTextTooLong","文本长度不能超过48×"},
 	{"strCOCBuild","{pc}的调查员作成:{res}"},
+	{"strDNDBuild","{pc}的英雄作成:{res}"},
 	{"strCensorCaution","提醒：{nick}的指令包含敏感词，{self}已上报"},
 	{"strCensorWarning","警告：{nick}的指令包含敏感词，{self}已记录并上报！"},
 	{"strCensorDanger","警告：{nick}的指令包含敏感词，{self}拒绝指令并已上报！"},
