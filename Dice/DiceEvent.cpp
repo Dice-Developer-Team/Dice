@@ -3127,6 +3127,11 @@ int FromMsg::DiceReply()
 			              ? get(chat(fromGroup).intConf, string("rc房规"), 0)
 			              : get(getUser(fromQQ).intConf, string("rc房规"), 0);
 		int intTurnCnt = 1;
+		bool isHidden(false);
+		if (strMsg[intMsgCnt] == '_') {
+			isHidden = true;
+			++intMsgCnt;
+		}
 		if (strMsg.find('#') != string::npos)
 		{
 			string strTurnCnt = strMsg.substr(intMsgCnt, strMsg.find('#') - intMsgCnt);
@@ -3162,6 +3167,10 @@ int FromMsg::DiceReply()
 			}
 		}
 		readSkipSpace();
+		if (strMsg[intMsgCnt] == '_') {
+			isHidden = true;
+			++intMsgCnt;
+		}
 		if (strMsg.length() == intMsgCnt)
 		{
 			strVar["attr"] = GlobalMsg["strEnDefaultName"];
@@ -3342,7 +3351,12 @@ int FromMsg::DiceReply()
 			}
 			strReply += Res.show();
 		}
-		reply();
+		if (isHidden) {
+			replyHidden();
+			reply(GlobalMsg["strRollSkillHidden"]);
+		}
+		else
+			reply();
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ri" && intT)
