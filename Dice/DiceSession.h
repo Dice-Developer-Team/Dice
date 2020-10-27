@@ -135,7 +135,8 @@ public:
 
 	//deck÷∏¡Ó
 	void deck_set(FromMsg*);
-	void deck_draw(FromMsg*);
+	string deck_draw(const string&);
+	void _draw(FromMsg*);
 	void deck_show(FromMsg*);
 	void deck_reset(FromMsg*);
 	void deck_del(FromMsg*);

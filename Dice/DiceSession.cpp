@@ -378,10 +378,19 @@ void DiceSession::deck_new(FromMsg* msg) {
 		update();
 	}
 }
-void DiceSession::deck_draw(FromMsg* msg) {
-	string& key{ msg->strVar["deck_name"] };
-	if (key.empty())key = msg->readAttrName();
-	DeckInfo& deck = decks[key];
+string DiceSession::deck_draw(const string& key) {
+	if (decks.count(key)) {
+		if (!decks[key].sizRes)return "{strDeckRestEmpty}";
+		return decks[key].draw();
+	}
+	else if (CardDeck::mPublicDeck.count(key)) {
+		return CardDeck::draw(key);
+	}
+	return "";
+}
+void DiceSession::_draw(FromMsg* msg) {
+	if (msg->strVar["deck_name"].empty())msg->strVar["deck_name"] = msg->readAttrName();
+	DeckInfo& deck = decks[msg->strVar["deck_name"]];
 	int intCardNum = 1;
 	switch (msg->readNum(intCardNum)) {
 	case 0:
@@ -398,9 +407,9 @@ void DiceSession::deck_draw(FromMsg* msg) {
 		return;
 	}
 	ResList Res;
-	while (!deck.idxs.empty()&&intCardNum--) {
+	while (deck.sizRes && intCardNum--) {
 		Res << deck.draw();
-		if (deck.idxs.empty())break;
+		if (!deck.sizRes)break;
 	}
 	if(!Res.empty()){
 		msg->strVar["res"] = Res.dot("|").show();
@@ -460,7 +469,7 @@ void DiceSession::deck_reset(FromMsg* msg) {
 	}
 	else {
 		decks[key].reset();
-		msg->reply(GlobalMsg["strDeckidxsReset"]);
+		msg->reply(GlobalMsg["strDeckRestReset"]);
 		update();
 	}
 }
