@@ -451,6 +451,19 @@ int RollSuccessLevel(int res, int rate, int rule)
 		if (rate >= 50 || res < 96)return 1;
 		return 0;
 		break;
+	case 6:
+		if (res > rate) {
+			if (res == 100 || res % 11 == 0) {
+				return 0;
+			}
+			return 1;
+		} else {
+			if (res == 1 || res % 11 == 0) {
+				return 5;
+			}
+			return 2;
+		}
+		break;
 	default: return -1;
 	}
 }

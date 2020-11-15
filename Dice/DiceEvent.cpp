@@ -1285,6 +1285,9 @@ int FromMsg::DiceReply()
 		case 5:
 			reply(GlobalMsg["strDefaultCOCSet"] + "5\n出1-2且<五分之一大成功\n不满50出96-100大失败，满50出99-100大失败");
 			break;
+		case 6:
+			reply(GlobalMsg["strDefaultCOCSet"] + "6\n出1或两骰相同<=成功率大成功\n出100或两骰相同>=成功率大失败");
+			break;
 		default:
 			reply(GlobalMsg["strDefaultCOCNotFound"]);
 			return 1;
