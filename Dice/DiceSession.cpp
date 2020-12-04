@@ -12,6 +12,7 @@
 #include "DiceEvent.h"
 #include "CardDeck.h"
 #include "RandomGenerator.h"
+#include "DDAPI.h"
 
 std::shared_mutex sessionMutex;
 
@@ -285,14 +286,13 @@ void DiceSession::deck_set(FromMsg* msg) {
 	}
 	else {
 		vector<string> DeckSet = {};
-		if ((strCiteDeck == "群成员" || (strCiteDeck == "member" && !(strCiteDeck = "群成员").empty())) && msg->fromChat.second == CQ::msgtype::Group) {
-			vector<CQ::GroupMemberInfo> list = CQ::getGroupMemberList(msg->fromGroup);
-			if (list.empty()) {
+		if ((strCiteDeck == "群成员" || (strCiteDeck == "member" && !(strCiteDeck = "群成员").empty())) && msg->fromChat.second == msgtype::Group) {
+			
+			if (auto list{ DD::getGroupMemberList(msg->fromGroup) }; list.empty()) {
 				msg->reply("群成员列表获取失败×");
 			}
-			for (auto& each : list) {
-				DeckSet.push_back(
-					(each.GroupNick.empty() ? each.Nick : each.GroupNick) + "(" + to_string(each.QQID) + ")");
+			else for (auto each : list) {
+				DeckSet.push_back(printQQ(each));
 			}
 			decks[key] = DeckSet;
 		}
@@ -380,13 +380,14 @@ void DiceSession::deck_new(FromMsg* msg) {
 }
 string DiceSession::deck_draw(const string& key) {
 	if (decks.count(key)) {
-		if (!decks[key].sizRes)return "{strDeckRestEmpty}";
+		if (!decks[key].sizRes)return getMsg("strDeckRestEmpty", { {"deck_name",key} });
 		return decks[key].draw();
 	}
 	else if (CardDeck::mPublicDeck.count(key)) {
-		return CardDeck::draw(key);
+		vector<string>& deck = CardDeck::mPublicDeck[key];
+		return CardDeck::draw(deck[RandomGenerator::Randint(0, deck.size() - 1)]);
 	}
-	return "";
+	return "{key}";
 }
 void DiceSession::_draw(FromMsg* msg) {
 	if (msg->strVar["deck_name"].empty())msg->strVar["deck_name"] = msg->readAttrName();
@@ -423,7 +424,7 @@ void DiceSession::_draw(FromMsg* msg) {
 			msg->reply(GlobalMsg["strDrawCard"]);
 		update();
 	}
-	if (deck.idxs.empty()) {
+	if (!deck.sizRes) {
 		msg->reply(GlobalMsg["strDeckRestEmpty"]);
 	}
 }

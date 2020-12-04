@@ -371,6 +371,7 @@ public:
 
 	int set(string key, short val)
 	{
+		if (key.empty())return -1;
 		key = standard(key);
 		if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.find(key)->second)
 		{
@@ -383,14 +384,14 @@ public:
 
 	int setInfo(const string& key, const string& s)
 	{
-		if (s.length() > 48)return -1;
+		if (key.empty() || s.length() > 48)return -1;
 		Info[key] = s;
 		return 0;
 	}
 
 	int setExp(const string& key, const string& exp)
 	{
-		if (exp.length() > 48)return -1;
+		if (key.empty() || exp.length() > 48)return -1;
 		DiceExp[key] = exp;
 		return 0;
 	}

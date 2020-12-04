@@ -4,7 +4,7 @@
 #include <TlHelp32.h>
 #include <Psapi.h>
 #include "StrExtern.hpp"
-#include "CQAPI.h"
+#include "DDAPI.h"
 #include "ManagerSystem.h"
 #include "DiceCloud.h"
 #include "BlackListManager.h"
@@ -16,53 +16,18 @@
 #pragma warning(disable:28159)
 
 using namespace std;
-using namespace CQ;
 
 int sendSelf(const string msg) {
-	static long long selfQQ = CQ::getLoginQQ();
-	return CQ::sendPrivateMsg(selfQQ, msg);
+	static long long selfQQ = DD::getLoginQQ();
+	DD::sendPrivateMsg(selfQQ, msg);
+	return 0;
 }
 
 void cq_exit(DiceJob& job) {
 	job.note("已令" + getMsg("self") + "在5秒后自杀", 1);
-	if (frame == QQFrame::CoolQ) {
-		int pid = _getpid();
-		PROCESSENTRY32 pe32;
-		pe32.dwSize = sizeof(pe32);
-		HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-		if (hProcessSnap == INVALID_HANDLE_VALUE) {
-			job.note("重启失败：进程快照创建失败！", 1);
-		}
-		BOOL bResult = Process32First(hProcessSnap, &pe32);
-		int ppid(0);
-		while (bResult) {
-			if (pe32.th32ProcessID == pid) {
-				ppid = pe32.th32ParentProcessID;
-				break;
-			}
-			bResult = Process32Next(hProcessSnap, &pe32);
-		}
-		if (!ppid) {
-			job.note("重启失败：未找到进程！", 1);
-		}
-		string strCMD("taskkill /f /pid " + to_string(ppid));
-		std::this_thread::sleep_for(5s);
-		job.echo(strCMD);
-		Enabled = false;
-		dataBackUp();
-		system(strCMD.c_str());
-	}
-	else if (frame == QQFrame::Mirai) {
-		std::this_thread::sleep_for(5s);
-		//Enabled = false;
-		dataBackUp();
-		cout << "stop" << endl;
-		string cmd = "stop";
-		for (auto key : cmd) {
-			keybd_event(key, 0, 0, 0);
-		}
-		keybd_event(VK_RETURN, MapVirtualKey(VK_RETURN, 0), 0, 0);
-	}
+	std::this_thread::sleep_for(5s);
+	dataBackUp();
+	DD::killme();
 }
 
 inline PROCESSENTRY32 getProcess(int pid) {
@@ -78,119 +43,19 @@ void frame_restart(DiceJob& job) {
 			sch.add_job_for(60 * 60, job);
 			return;
 		}
-		else if (int tWait = console["AutoFrameRemake"] * 60 * 60 - (clock() - llStartTime) / 1000; tWait > 0) {
+		else if (int tWait{ console["AutoFrameRemake"] * 60 * 60 - int(clock() - llStartTime) / 1000 }; tWait > 0) {
 			sch.add_job_for(tWait, job);
 			return;
 		}
 	}
-	string strSelfName;
-	PROCESSENTRY32 pe32;
-	pe32.dwSize = sizeof(pe32);
-	HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	if (hProcessSnap == INVALID_HANDLE_VALUE) {
-		job.note("重启失败：进程快照创建失败！", 1);
-	}
-	BOOL bResult = Process32First(hProcessSnap, &pe32);
-	int ppid(0);
-	if (frame == QQFrame::Mirai) {
-		strSelfName = "MiraiOK.exe";
-		char buffer[MAX_PATH];
-		const DWORD length = GetModuleFileNameA(nullptr, buffer, sizeof buffer);
-		std::string pathSelf(buffer, length);
-		pathSelf = pathSelf.substr(0, pathSelf.find("jre\\bin\\java.exe")) + strSelfName;
-		char pathFull[MAX_PATH];
-		while (bResult) {
-			if (strSelfName == pe32.szExeFile) {
-				HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID);
-				GetModuleFileNameEx(hProcess, NULL, pathFull, sizeof(pathFull));
-				if (pathSelf != pathFull)continue;
-				ppid = pe32.th32ProcessID;
-				job.echo("确认进程" + pathSelf + "\n进程id:" + to_string(ppid));
-				break;
-			}
-			bResult = Process32Next(hProcessSnap, &pe32);
-		}
-		if (!ppid) {
-			job.echo("未找到进程" + pathSelf);
-			return;
-		}
-	}
-	else if (frame == QQFrame::CoolQ) {
-		int pid = _getpid();
-		while (bResult) {
-			if (pe32.th32ProcessID == pid) {
-				ppid = pe32.th32ParentProcessID;
-				PROCESSENTRY32 pp32 = getProcess(ppid);
-				strSelfName = pp32.szExeFile;
-				job.echo("确认进程" + strSelfName + "\n本进程id:" + to_string(pe32.th32ProcessID) + "\n父进程id:" + to_string(ppid));
-				break;
-			}
-			bResult = Process32Next(hProcessSnap, &pe32);
-		}
-	}
-	else {
-		ppid = _getpid();
-		while (bResult) {
-			if (pe32.th32ProcessID == ppid) {
-				strSelfName = pe32.szExeFile;
-				job.echo("确认进程" + strSelfName + "\n本进程id:" + to_string(pe32.th32ProcessID));
-				break;
-			}
-			bResult = Process32Next(hProcessSnap, &pe32);
-		}
-	}
-	if (!ppid) {
-		job.note("重启失败：未找到进程！", 1);
-		return;
-	}
-	string command = "taskkill /f /pid " + to_string(ppid) + " /t\nstart " + strSelfName;
-	if (frame == QQFrame::CoolQ) command += " /account " + to_string(console.DiceMaid);
-	//else if (frame == QQFrame::XianQu) command = "start .\\remake.exe " + to_string(ppid) + " " + strSelfName;
-	else if (frame == QQFrame::XianQu) command = "start .\\先驱.exe\ntaskkill /f /pid " + to_string(ppid);
-	ofstream fout("remake.bat");
-	fout << command << std::endl;
-	fout.close();
-	job.note(command, 0);
-	std::this_thread::sleep_for(3s);
 	Enabled = false;
 	dataBackUp();
 	std::this_thread::sleep_for(3s);
-	//if (frame == QQFrame::Mirai) {
-	//	WinExec(("remake.exe " + to_string(ppid) + " " + strSelfName).c_str(), SW_SHOW);
-	//	return;
-	//}
-	/*
-	switch (UINT res = -1; res = WinExec(".\\remake.bat", SW_SHOW)) {
-	case 0:
-		job.note("重启失败：内存或资源已耗尽！", 1);
-		break;
-	case ERROR_FILE_NOT_FOUND:
-		job.note("重启失败：指定的文件未找到！", 1);
-		break;
-	case ERROR_PATH_NOT_FOUND:
-		job.note("重启失败：指定的路径未找到！", 1);
-		break;
-	default:
-		if (res > 31)job.note("重启成功√", 0);
-		else job.note("重启失败：未知错误" + to_string(res), 0);
-		break;
-	}
-	*/
-	ShellExecute(NULL, "open", "remake.bat", NULL, NULL, SW_SHOWNORMAL);
+	DD::remake();
 }
 
 void frame_reload(DiceJob& job){
-	using cq_reload_type = int(__stdcall*)(int32_t);
-	HMODULE hModule = GetModuleHandleA("CQP.dll");
-	cq_reload_type cq_reload = (cq_reload_type)GetProcAddress(hModule, "CQ_reload");
-	if (!cq_reload) {
-		if (frame == QQFrame::Mirai)
-			job.note("重载MiraiNative失败×\n使用了过旧或不适配的CQP.dll\n请保证更新适配版本的MiraiNative并删除旧CQP.dll", 0b10);
-		else if (frame == QQFrame::XianQu)
-			job.note("重载CQXQ失败×\n版本过旧，请保证更新适配版本的CQXQ", 0b10);
-		return;
-	}
-	if(cq_reload(getAuthCode()))
+	if(DD::reload())
 		job.note("重载" + getMsg("self") + "完成√", 1);
 	else
 		job.note("重载" + getMsg("self") + "失败×", 0b10);
@@ -293,7 +158,7 @@ void clear_group(DiceJob& job) {
 	if (job.strVar["clear_mode"] == "unpower") {
 		for (auto& [id, grp] : ChatList) {
 			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("协议无效"))continue;
-			if (grp.isGroup && getGroupMemberInfo(id, console.DiceMaid).permissions == 1) {
+			if (grp.isGroup && !DD::isGroupAdmin(id, console.DiceMaid, true)) {
 				res << printGroup(id);
 				grp.leave(getMsg("strLeaveNoPower"));
 				intCnt++;
@@ -309,7 +174,7 @@ void clear_group(DiceJob& job) {
 		for (auto& [id, grp] : ChatList) {
 			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("协议无效"))continue;
 			time_t tLast = grp.tUpdated;
-			if (int tLMT; grp.isGroup && (tLMT = getGroupMemberInfo(id, console.DiceMaid).LastMsgTime) > 0 && tLMT > tLast)tLast = tLMT;
+			if (long long tLMT; grp.isGroup && ((tLMT = DD::getGroupLastMsg(id, console.DiceMaid)) > 0 && tLMT > tLast))tLast = tLMT;
 			if (!tLast)continue;
 			int intDay = (int)(tNow - tLast) / 86400;
 			if (intDay > intDayLim) {
@@ -324,28 +189,29 @@ void clear_group(DiceJob& job) {
 	}
 	else if (job.strVar["clear_mode"] == "black") {
 		try {
-			for (auto& [id, grp_name] : getGroupList()) {
-				Chat& grp = chat(id).group().name(grp_name);
+			for (auto id : DD::getGroupIDList()) {
+				Chat& grp = chat(id).group().name(DD::getGroupName(id));
 				if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("免黑") || grp.isset("协议无效"))continue;
 				if (blacklist->get_group_danger(id)) {
 					res << printGroup(id) + "：" + "黑名单群";
 					if (console["LeaveBlackGroup"])grp.leave(getMsg("strBlackGroup"));
 				}
-				vector<GroupMemberInfo> MemberList = getGroupMemberList(id);
+				set<long long> MemberList{ DD::getGroupMemberList(id) };
+				int authSelf{ DD::getGroupAuth(id, console.DiceMaid, 1) };
 				for (auto eachQQ : MemberList) {
-					if (blacklist->get_qq_danger(eachQQ.QQID) > 1) {
-						if (eachQQ.permissions < getGroupMemberInfo(id, getLoginQQ()).permissions) {
+					if (blacklist->get_qq_danger(eachQQ) > 1) {
+						if (auto authBlack{DD::getGroupAuth(id, eachQQ, 1)};authBlack < authSelf) {
 							continue;
 						}
-						else if (eachQQ.permissions > getGroupMemberInfo(id, getLoginQQ()).permissions) {
-							res << printChat(grp) + "：" + printQQ(eachQQ.QQID) + "对方群权限较高";
-							grp.leave("发现黑名单管理员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
+						else if (authBlack > authSelf) {
+							res << printChat(grp) + "：" + printQQ(eachQQ) + "对方群权限较高";
+							grp.leave("发现黑名单管理员" + printQQ(eachQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
 							intCnt++;
 							break;
 						}
 						else if (console["LeaveBlackQQ"]) {
-							res << printChat(grp) + "：" + printQQ(eachQQ.QQID);
-							grp.leave("发现黑名单成员" + printQQ(eachQQ.QQID) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
+							res << printChat(grp) + "：" + printQQ(eachQQ);
+							grp.leave("发现黑名单成员" + printQQ(eachQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
 							intCnt++;
 							break;
 						}
@@ -366,7 +232,7 @@ void clear_group(DiceJob& job) {
 	else if (job["clear_mode"] == "preserve") {
 		for (auto& [id, grp] : ChatList) {
 			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("使用许可") || grp.isset("免清") || grp.isset("协议无效"))continue;
-			if (grp.isGroup && getGroupMemberInfo(id, console.master()).permissions) {
+			if (grp.isGroup && DD::isGroupAdmin(id, console.master(), false)) {
 				grp.set("使用许可");
 				continue;
 			}
@@ -393,13 +259,14 @@ void list_group(DiceJob& job) {
 		}
 		job.reply("{self}含词条" + job["list_mode"] + "群记录" + to_string(res.size()) + "条" + res.head(":").show());
 	}
-	else if (job["list_mode"] == "idle") {
+	else if (set<long long> grps(DD::getGroupIDList()); job["list_mode"] == "idle") {
 		std::priority_queue<std::pair<time_t, string>> qDiver;
 		time_t tNow = time(NULL);
 		for (auto& [id, grp] : ChatList) {
+			if (grp.isGroup && !grps.empty() && !grps.count(id))grp.set("已退");
 			if (grp.isset("已退") || grp.isset("未进"))continue;
 			time_t tLast = grp.tUpdated;
-			if (int tLMT; grp.isGroup && (tLMT = getGroupMemberInfo(id, console.DiceMaid).LastMsgTime) > 0 && tLMT > tLast)tLast = tLMT;
+			if (long long tLMT; grp.isGroup && (tLMT = DD::getGroupLastMsg(grp.ID, console.DiceMaid)) > 0 && tLMT > tLast)tLast = tLMT;
 			if (!tLast)continue;
 			int intDay = (int)(tNow - tLast) / 86400;
 			qDiver.emplace(intDay, printGroup(id));
@@ -420,10 +287,11 @@ void list_group(DiceJob& job) {
 		std::priority_queue<std::pair<time_t, string>> qSize;
 		time_t tNow = time(NULL);
 		for (auto& [id, grp] : ChatList) {
+			if (grp.isGroup && !grps.empty() && !grps.count(id))grp.set("已退");
 			if (grp.isset("已退") || grp.isset("未进") || !grp.isGroup)continue;
-			GroupInfo ginfo(id);
-			if (!ginfo.nGroupSize)continue;
-			qSize.emplace(ginfo.nGroupSize, printGroup(id));
+			Size size(DD::getGroupSize(id));
+			if (!size.siz)continue;
+			qSize.emplace(size.siz, printGroup(id));
 		}
 		if (qSize.empty()) {
 			job.reply("{self}无群聊或群信息加载失败！");
@@ -441,73 +309,18 @@ void list_group(DiceJob& job) {
 
 //心跳检测
 void cloud_beat(DiceJob& job) {
-	Cloud::update();
+	Cloud::heartbeat();
 	sch.add_job_for(5 * 60, job);
 }
 
 void dice_update(DiceJob& job) {
 	job.note("开始更新Dice\n版本:" + job.strVar["ver"], 1);
-	if (frame == QQFrame::Mirai) {
-		mkDir(dirExe + "plugins/MiraiNative/pluginsnew");
-		char pathDll[] = "plugins/MiraiNative/pluginsnew/com.w4123.dice.dll";
-		char pathJson[] = "plugins/MiraiNative/pluginsnew/com.w4123.dice.json";
-		string urlDll("https://shiki.stringempty.xyz/DiceVer/" + job.strVar["ver"] + "/com.w4123.dice.dll?" + to_string(job.fromTime));
-		string urlJson("https://shiki.stringempty.xyz/DiceVer/" + job.strVar["ver"] + "/com.w4123.dice.json?" + to_string(job.fromTime));
-		switch (Cloud::DownloadFile(urlDll.c_str(), pathDll)) {
-		case -1:
-			job.echo("更新失败:" + urlDll);
-			break;
-		case -2:
-			job.note("更新Dice失败!dll文件未下载到指定位置", 0b1);
-			break;
-		case 0:
-		default:
-			switch (Cloud::DownloadFile(urlJson.c_str(), pathJson)) {
-			case -1:
-				job.echo("更新失败:" + urlJson);
-				break;
-			case -2:
-				job.note("更新Dice失败!json文件未下载到指定位置", 0b1);
-				break;
-			case 0:
-			default:
-				job.note("更新Dice!" + job.strVar["ver"] + "版成功√", 1);
-			}
-		}
-	}
-	else if (frame == QQFrame::XianQu) {
-		mkDir(dirExe + "CQPlugins/");
-		char pathDll[] = "CQPlugins/com.w4123.dice.dll";
-		string urlDll("https://shiki.stringempty.xyz/DiceVer/" + job.strVar["ver"] + "/com.w4123.dice.dll?" + to_string(job.fromTime));
-		switch (Cloud::DownloadFile(urlDll.c_str(), pathDll)) {
-		case -1:
-			job.echo("更新失败:" + urlDll);
-			break;
-		case -2:
-			job.note("更新Dice失败!dll文件未下载到指定位置", 0b1);
-			break;
-		case 0:
-		default:
-			job.note("更新Dice!" + job.strVar["ver"] + "版成功√", 1);
-		}
+	string ret;
+	if (DD::updateDice(job.strVar["ver"], ret)) {
+		job.note("更新Dice!" + job.strVar["ver"] + "版成功√", 1);
 	}
 	else {
-		char** path = new char* ();
-		_get_pgmptr(path);
-		string strAppPath(*path);
-		delete path;
-		strAppPath = strAppPath.substr(0, strAppPath.find_last_of("\\")) + "\\app\\com.w4123.dice.cpk";
-		string strURL("https://shiki.stringempty.xyz/DiceVer/" + job.strVar["ver"] + "?" + to_string(job.fromTime));
-		switch (Cloud::DownloadFile(strURL.c_str(), strAppPath.c_str())) {
-		case -1:
-			job.echo("更新失败:" + strURL);
-			break;
-		case -2:
-			job.note("更新Dice失败!文件未找到:" + strAppPath, 0b10);
-			break;
-		case 0:
-			job.note("更新Dice!" + job.strVar["ver"] + "版成功√\n可用.system reload 重启应用更新", 1);
-		}
+		job.echo("更新失败:" + ret);
 	}
 }
 
@@ -525,7 +338,7 @@ void dice_cloudblack(DiceJob& job) {
 			isSuccess = true;
 		}
 		else
-			job.echo("同步云不良记录同步失败:" + strURL);
+			job.echo("同步云不良记录同步失败:" + des);
 	}
 		break;
 	case -2:
@@ -561,6 +374,7 @@ void log_put(DiceJob& job) {
 	}
 }
 
+
 string print_master() {
 	if (!console.master())return "（无主）";
 	return printQQ(console.master());
@@ -571,4 +385,20 @@ string list_deck() {
 }
 string list_extern_deck() {
 	return listKey(CardDeck::mExternPublicDeck);
+}
+string list_order_ex() {
+	return fmt->list_order();
+}
+string list_dice_sister() {
+	std::set<long long>list{ DD::getDiceSisters() };
+	if (list.size() <= 1)return {};
+	else {
+		list.erase(console.DiceMaid);
+		ResList li;
+		li << printQQ(console.DiceMaid) + "的姐妹骰:";
+		for (auto dice : list) {
+			li << printQQ(dice);
+		}
+		return li.show();
+	}
 }

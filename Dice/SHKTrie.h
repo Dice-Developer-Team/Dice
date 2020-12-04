@@ -78,6 +78,18 @@ public:
 		make_fail(root);
 	}
 	//Ç°×ºÆ¥Åä
+	bool match_head(const string& s, string& res)const {
+		const Node* p = &root;
+		for (const auto& ch : s) {
+			//if (ignored(ch))continue;
+			if (!p->next.count(ch))break;
+			p = &(p->next.find(ch)->second);
+			if (p->isleaf) {
+				res = p->value;
+			}
+		}
+		return !res.empty();
+	}
 	bool match_head(const string& s, unordered_set<string>& res)const {
 		const Node* p = &root;
 		for (const auto& ch : s) {

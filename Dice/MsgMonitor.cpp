@@ -81,7 +81,7 @@ FrqMonitor::FrqMonitor(long long QQ, time_t TT, chatType CT) : fromQQ(QQ), fromT
 		if (!console["ListenSpam"] || trustedQQ(fromQQ) > 1 || console.is_self(QQ))return;
 		if (mFrequence[fromQQ] > 60 && mWarnLevel[fromQQ] < 60) {
 			mWarnLevel[fromQQ] = mFrequence[fromQQ];
-			const std::string strMsg = "提醒：\n" + (CT.second != CQ::msgtype::Private ? printChat(CT) : "私聊窗口") +
+			const std::string strMsg = "提醒：\n" + (CT.second != msgtype::Private ? printChat(CT) : "私聊窗口") +
 				"监测到" + printQQ(fromQQ) + "高频发送指令达" + to_string(mCntOrder[fromQQ])
 				+ (mCntOrder[fromQQ] > 18 ? "/5min"
 				   : (mCntOrder[fromQQ] > 8 ? "/min" : "/30s"));
@@ -90,7 +90,7 @@ FrqMonitor::FrqMonitor(long long QQ, time_t TT, chatType CT) : fromQQ(QQ), fromT
 		}
 		else if (mFrequence[fromQQ] > 120 && mWarnLevel[fromQQ] < 120) {
 			mWarnLevel[fromQQ] = mFrequence[fromQQ];
-			const std::string strMsg = "警告：\n" + (CT.second != CQ::msgtype::Private ? printChat(CT) : "私聊窗口") +
+			const std::string strMsg = "警告：\n" + (CT.second != msgtype::Private ? printChat(CT) : "私聊窗口") +
 				printQQ(fromQQ) + "高频发送指令达" + to_string(mCntOrder[fromQQ])
 				+ (mCntOrder[fromQQ] > 36 ? "/5min"
 				   : (mCntOrder[fromQQ] > 15 ? "/min" : "/30s"));
@@ -99,7 +99,7 @@ FrqMonitor::FrqMonitor(long long QQ, time_t TT, chatType CT) : fromQQ(QQ), fromT
 		else if (mFrequence[fromQQ] > 200 && mWarnLevel[fromQQ] < 200) {
 			mWarnLevel[fromQQ] = mFrequence[fromQQ];
 			std::string strNow = printSTNow();
-			std::string strNote = (CT.second != CQ::msgtype::Private ? printChat(CT) : "私聊窗口") + "监测到" +
+			std::string strNote = (CT.second != msgtype::Private ? printChat(CT) : "私聊窗口") + "监测到" +
 				printQQ(fromQQ) + "对" + printQQ(console.DiceMaid) + "高频发送指令达" + to_string(mCntOrder[fromQQ])
 				+ (mCntOrder[fromQQ] > 60 ? "/5min"
 				   : (mCntOrder[fromQQ] > 25 ? "/min" : "/30s"));
@@ -123,33 +123,7 @@ int FrqMonitor::getFrqTotal()
 {
 	return EarlyMsgQueue.size() + EarlierMsgQueue.size() / 2 + EarliestMsgQueue.size() / 10;
 }
-
-/*EVE_Status_EX(statusUptime) {
-	//初始化以来的秒数
-	long long llDuration = clock() / 1000;
-	//long long llDuration = (clock() - llStartTime) / 1000;
-	if (llDuration < 0) {
-		eve.data = "N";
-		eve.dataf = "/A";
-	}
-	else if (llDuration < 60 * 5) {
-		eve.data = std::to_string(llDuration);
-		eve.dataf = "s";
-	}
-	else if (llDuration < 60 * 60 * 5) {
-		eve.data = std::to_string(llDuration / 60);
-		eve.dataf = "min";
-	}
-	else if (llDuration < 60 * 60 * 24 * 5) {
-		eve.data = std::to_string(llDuration / 60 / 60);
-		eve.dataf = "h";
-	} 
-	else{
-		eve.data = std::to_string(llDuration / 60 / 60 / 24);
-		eve.dataf = "day";
-	}
-	eve.color_green();
-}*/
+/*
 EVE_Status_EX(statusFrq)
 {
 	if (!Enabled)
@@ -185,3 +159,4 @@ EVE_Status_EX(statusFrq)
 		}
 	}
 }
+*/

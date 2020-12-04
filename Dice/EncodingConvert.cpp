@@ -31,9 +31,48 @@
 #include <algorithm>
 #include <iterator>
 
+bool checkUTF8(const std::string& strUTF8) {
+	size_t cntUTF8(0);
+	int num = 0;
+	size_t i = 0;
+	while (i < strUTF8.length()) {
+		if ((strUTF8[i] & 0x80) == 0x00) {
+			i++;
+			continue;
+		}
+		else if ((strUTF8[i] & 0xc0) == 0xc0 && (strUTF8[i] & 0xfe) != 0xfe) {
+			// 110X_XXXX 10XX_XXXX
+			// 1110_XXXX 10XX_XXXX 10XX_XXXX
+			// 1111_0XXX 10XX_XXXX 10XX_XXXX 10XX_XXXX
+			// 1111_10XX 10XX_XXXX 10XX_XXXX 10XX_XXXX 10XX_XXXX
+			// 1111_110X 10XX_XXXX 10XX_XXXX 10XX_XXXX 10XX_XXXX 10XX_XXXX
+			unsigned char mask = 0x80;
+			for (num = 0; num < 8; ++num) {
+				if ((strUTF8[i] & mask) == mask) {
+					mask = mask >> 1;
+				}
+				else
+					break;
+			}
+			for (int j = 0; j < num - 1; j++) {
+				if ((strUTF8[++i] & 0xc0) != 0x80) {
+					return false;
+				}
+			}
+			++i;
+			if (++cntUTF8 > 10)return true;
+		}
+		else {
+			return false;
+		}
+	}
+	return cntUTF8;
+}
+
 // 现在是GBK了
-std::string GBKtoUTF8(const std::string& strGBK)
+std::string GBKtoUTF8(const std::string& strGBK, bool isTrial)
 {
+	if (isTrial && checkUTF8(strGBK))return strGBK;
 	const int UTF16len = MultiByteToWideChar(CP_GBK, 0, strGBK.c_str(), -1, nullptr, 0);
 	auto* const strUTF16 = new wchar_t[UTF16len];
 	MultiByteToWideChar(CP_GBK, 0, strGBK.c_str(), -1, strUTF16, UTF16len);
@@ -54,8 +93,9 @@ std::vector<std::string> GBKtoUTF8(const std::vector<std::string>& strGBK)
 }
 
 // 事实上是GB18030
-std::string UTF8toGBK(const std::string& strUTF8)
+std::string UTF8toGBK(const std::string& strUTF8, bool isTrial)
 {
+	if (isTrial && !checkUTF8(strUTF8))return strUTF8;
 	const int UTF16len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
 	auto* const strUTF16 = new wchar_t[UTF16len];
 	MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, strUTF16, UTF16len);

@@ -22,6 +22,18 @@
     <Filter Include="头文件\nlohmann">
       <UniqueIdentifier>{911e9211-0dd0-42ff-82bc-c6ae90928af6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Lua">
+      <UniqueIdentifier>{f5bad68a-94f2-4074-9c0f-07a82e89f4c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Lua">
+      <UniqueIdentifier>{fad2c6f3-9fa5-4929-bda1-abc1ebf0f39a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\QQAPI">
+      <UniqueIdentifier>{b57b7ace-ef77-42c8-b7a6-683797f35a8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\DDAPI">
+      <UniqueIdentifier>{0cd77685-d94c-4a78-a991-b73ea3153780}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dice.cpp">
@@ -35,18 +47,6 @@
     </ClCompile>
     <ClCompile Include="GetRule.cpp">
       <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\CQSDKCPP\CQAPI.cpp">
-      <Filter>源文件\CQCPP</Filter>
-    </ClCompile>
-    <ClCompile Include="..\CQSDKCPP\CQAPI_EX.cpp">
-      <Filter>源文件\CQCPP</Filter>
-    </ClCompile>
-    <ClCompile Include="..\CQSDKCPP\CQEVE.cpp">
-      <Filter>源文件\CQCPP</Filter>
-    </ClCompile>
-    <ClCompile Include="..\CQSDKCPP\CQstream.cpp">
-      <Filter>源文件\CQCPP</Filter>
     </ClCompile>
     <ClCompile Include="..\CQSDKCPP\CQTools.cpp">
       <Filter>源文件\CQCPP</Filter>
@@ -126,6 +126,114 @@
     <ClCompile Include="DiceCensor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DiceLua.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lapi.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lauxlib.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lbaselib.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lcode.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lcorolib.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lctype.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\ldblib.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\ldebug.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\ldo.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\ldump.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lfunc.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lgc.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\linit.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\liolib.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\llex.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lmathlib.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lmem.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\loadlib.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lobject.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lopcodes.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\loslib.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lparser.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lstate.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lstring.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lstrlib.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\ltable.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\ltablib.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\ltm.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\luac.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lundump.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lutf8lib.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lvm.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lua\lzio.c">
+      <Filter>源文件\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\QQAPI\QQEvent.cpp">
+      <Filter>源文件\QQAPI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\QQAPI\DDAPI.cpp">
+      <Filter>源文件\QQAPI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="APPINFO.h">
@@ -141,60 +249,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\CQSDK\bufstream.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQAPI.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQAPI_EX.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQconstant.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\cqdefine.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQEVE.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQEVE_ALL.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQEVE_DiscussMsg.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQEVE_FriendAdd.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQEVE_GroupMsg.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQEVE_PrivateMsg.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQEVE_RequestAddFriend.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQEVE_RequestAddGroup.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQEVE_Status.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQEVEBasic.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQEVEMsg.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQEVERequest.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQLogger.h">
-      <Filter>头文件\CQHead</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CQSDK\CQMsgSend.h">
       <Filter>头文件\CQHead</Filter>
     </ClInclude>
     <ClInclude Include="..\CQSDK\CQTools.h">
@@ -293,6 +347,24 @@
     <ClInclude Include="SHKTrie.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DiceLua.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lua\lauxlib.h">
+      <Filter>头文件\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lua\lua.h">
+      <Filter>头文件\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lua\lualib.h">
+      <Filter>头文件\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\QQAPI\DDAPI.h">
+      <Filter>头文件\DDAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\QQAPI\QQEvent.h">
+      <Filter>头文件\DDAPI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -300,11 +372,6 @@
     <None Include="com.w4123.dice.json">
       <Filter>资源文件</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="CQP.lib">
-      <Filter>资源文件</Filter>
-    </Library>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">

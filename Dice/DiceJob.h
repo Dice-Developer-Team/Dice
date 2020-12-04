@@ -22,9 +22,13 @@ void cloud_beat(DiceJob& job);
 void dice_update(DiceJob& job);
 void dice_cloudblack(DiceJob& job);
 
-void log_put(DiceJob& job);
+void log_put(DiceJob& job); 
+void global_exit();
+
 
 string print_master();
 
 string list_deck();
 string list_extern_deck();
+string list_order_ex();
+string list_dice_sister();

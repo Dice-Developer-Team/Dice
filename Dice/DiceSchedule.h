@@ -80,10 +80,12 @@ public:
     }
     void load();
     void save();
+    void set(long long qq, const string& key, int cnt) { cntUser[qq][key] = cnt; save(); }
     void inc(const string& key) { cntGlobal[key]++; save(); }
     void inc(long long qq, const string& key, int cnt = 1) { cntUser[qq][key] += cnt; save(); }
     int& get(const string& key) { return cntGlobal[key]; }
     int& get(long long qq, const string& key) { return cntUser[qq][key]; }
+    int getJrrp(long long qq);
     size_t cnt(const string& key = "") { return cntUser.size(); }
     void daily_clear();
 };

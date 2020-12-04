@@ -11,12 +11,12 @@
 #include "BlackListManager.h"
 #include "Jsonio.h"
 #include "STLExtern.hpp"
+#include "DDAPI.h"
 #include "DiceEvent.h"
 #include "DiceConsole.h"
 #include "DiceNetwork.h"
 
 using namespace std;
-using namespace CQ;
 using namespace nlohmann;
 
 using Mark = DDBlackMark;
@@ -46,42 +46,29 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 	string strNotice;
 	for (auto& [id, grp] : ChatList)
 	{
-		if (grp.isset("已退") || grp.isset("未进") || grp.isset("忽略") || !grp.isGroup)continue;
-		if (GroupMemberInfo member = getGroupMemberInfo(id, llQQ); member.QQID == llQQ && member.Group == id)
-		{
-			if (frame == QQFrame::XianQu) {
-				bool isValid = false;
-				for (auto& mem : getGroupMemberList(id)) {
-					if (mem.QQID == llQQ) {
-						isValid = true;
-						break;
-					}
-				}
-				if (!isValid)continue;
-			}
+		int authSelf;
+		if (grp.isset("已退") || grp.isset("未进") || grp.isset("忽略") || !grp.isGroup 
+			|| !(authSelf = DD::getGroupAuth(id, console.DiceMaid, 0)))continue;
+		if (DD::isGroupMember(grp.ID, llQQ, false))	{
 			strNotice = printGroup(id);
-			if (grp.isset("协议无效"))
-			{
+			if (grp.isset("协议无效")) {
 				strNotice += "群协议无效";
 			}
 			else if (grp.isset("免黑")) {
-				if (mark.isSource(console.DiceMaid) && !mark.isType("local"))sendGroupMsg(id, mark.warning());
+				if (mark.isSource(console.DiceMaid) && !mark.isType("local"))DD::sendGroupMsg(id, mark.warning());
 				strNotice += "群免黑";
 			}
-			else if (GroupMemberInfo self = getGroupMemberInfo(id, console.DiceMaid); !self.permissions) {
-				continue;
+			else if (int authBlack{ DD::getGroupAuth(id,llQQ,0) }; authBlack < 1 || authSelf < 1) {
+				strNotice += "群权限获取失败";
 			}
-			else if (member.permissions < 1 || member.permissions > 3) {
-				strNotice += "对方群权限获取失败";
-			}
-			else if (member.permissions < self.permissions) {
+			else if (authBlack < authSelf) {
 				if (mark.isSource(console.DiceMaid && !mark.isType("local")))AddMsgToQueue(
 					mark.warning(), id, msgtype::Group);
 				strNotice += "对方群权限较低";
 			}
-			else if (member.permissions > self.permissions)
+			else if (authSelf > authBlack)
 			{
-				sendGroupMsg(id, mark.warning());
+				DD::sendGroupMsg(id, mark.warning());
 				grp.leave("发现新增黑名单管理员" + printQQ(llQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
 				strNotice += "对方群权限较高，已退群";
 				this_thread::sleep_for(1s);
@@ -94,7 +81,7 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 			}
 			else if (console["LeaveBlackQQ"])
 			{
-				sendGroupMsg(id, mark.warning());
+				DD::sendGroupMsg(id, mark.warning());
 				grp.leave("发现新增黑名单成员" + printQQ(llQQ) + "（同等群权限）\n" + GlobalMsg["strSelfName"] + "将预防性退群");
 				strNotice += "已退群";
 				this_thread::sleep_for(1s);
@@ -920,7 +907,8 @@ short DDBlackManager::get_group_danger(long long id) const
 
 short DDBlackManager::get_qq_danger(long long id) const
 {
-	if (auto it = mQQDanger.find(id); it != mQQDanger.end())return it->second;
+	if (auto it = mQQDanger.find(id); it != mQQDanger.end())
+		return it->second;
 	return 0;
 }
 
@@ -935,6 +923,7 @@ void DDBlackManager::rm_black_group(long long llgroup, FromMsg* msg)
 	if (mGroupDanger[llgroup] >= msg->trusted && msg->fromQQ != console.master())
 	{
 		msg->reply("你注销目标黑名单的权限不足×");
+		return;
 	}
 	for (auto [key,index] : multi_range(mGroupIndex, llgroup))
 	{
@@ -956,6 +945,7 @@ void DDBlackManager::rm_black_qq(long long llqq, FromMsg* msg)
 	if (mQQDanger[llqq] >= msg->trusted && msg->fromQQ != console.master())
 	{
 		msg->reply("你注销目标黑名单的权限不足×");
+		return;
 	}
 	for (auto [key, index] : multi_range(mQQIndex, llqq))
 	{
@@ -1099,7 +1089,7 @@ void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
 	DDBlackMark mark{llqq, 0};
 	mark.danger = 1;
 	mark.note = msg->strVar["note"];
-	if (!mark.note.empty()) {
+	if (!mark.note.empty() && !msg->strVar.count("user")) {
 		mark.danger = 2;
 		mark.type = "other";
 	}
@@ -1116,11 +1106,11 @@ void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
 	msg->note("已添加" + printQQ(llqq) + "的本地黑名单记录√");
 }
 
-void DDBlackManager::verify(void* pJson, long long operateQQ)
+void DDBlackManager::verify(void* pJson, long long operatorQQ)
 {
     DDBlackMark mark{pJson};
     if (!mark.isValid)return;
-    int credit = isReliable(operateQQ);
+    int credit = isReliable(operatorQQ);
     //数据库是否有记录:-1=不存在;0=已注销;1=未确认;2=已确认;
     int is_cloud = -1;
     if (console["CloudBlackShare"])
@@ -1190,7 +1180,7 @@ void DDBlackManager::verify(void* pJson, long long operateQQ)
 			|| (mark.isType("spam") && !console["ListenSpam"]))return;
         if (mark.type == "local" || mark.type == "other" || mark.isSource(console.DiceMaid)) {
             if (credit > 0)console.log(
-				getName(operateQQ) + "已通知" + GlobalMsg["strSelfName"] + "不良记录(未采用):\n!warning" + UTF8toGBK(
+				getName(operatorQQ) + "已通知" + GlobalMsg["strSelfName"] + "不良记录(未采用):\n!warning" + UTF8toGBK(
 					static_cast<json*>(pJson)->dump()), 1, printSTNow());
             return;
         }
@@ -1225,13 +1215,13 @@ void DDBlackManager::verify(void* pJson, long long operateQQ)
         }
         if (mark.fromGroup.first && (groupset(mark.fromGroup.first, "忽略") > 0 || groupset(mark.fromGroup.first, "协议无效") > 0 || ExceptGroups.count(mark.fromGroup.first)))return;
         insert(mark);
-        console.log(getName(operateQQ) + "已通知" + GlobalMsg["strSelfName"] + "不良记录" + to_string(vBlackList.size() - 1) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
+        console.log(getName(operatorQQ) + "已通知" + GlobalMsg["strSelfName"] + "不良记录" + to_string(vBlackList.size() - 1) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
     }
     else 
 	{ 
 		//已有记录
         DDBlackMark& old_mark = vBlackList[index];
-        bool isSource = operateQQ == old_mark.DiceMaid || operateQQ == old_mark.masterQQ;
+        bool isSource = operatorQQ == old_mark.DiceMaid || operatorQQ == old_mark.masterQQ;
         //低于危险等级无权修改
         if (old_mark.danger > credit && credit < 255) {
             if (old_mark.danger != 2)return;
@@ -1255,7 +1245,7 @@ void DDBlackManager::verify(void* pJson, long long operateQQ)
         if (mark.danger != old_mark.danger && credit < 3) { 
             mark.danger = old_mark.danger; 
         }
-        if(update(mark,index,credit))console.log(getName(operateQQ) + "已更新" + GlobalMsg["strSelfName"] + "不良记录" + to_string(index) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
+        if(update(mark,index,credit))console.log(getName(operatorQQ) + "已更新" + GlobalMsg["strSelfName"] + "不良记录" + to_string(index) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
     }
 }
 
