@@ -46,13 +46,14 @@ const std::map<std::string, int, less_ci>Console::intDefault{
 {"AutoClearBlack",1},{"LeaveBlackQQ",0},
 {"ListenGroupKick",1},{"ListenGroupBan",1},{"ListenSpam",1},
 {"BannedBanInviter",0},{"KickedBanInviter",0},
-{"GroupClearLimit",20},
+{"GroupInvalidSize",500},{"GroupClearLimit",20},
 {"CloudBlackShare",1},{"BelieveDiceList",0},{"CloudVisible",1},
 {"SystemAlarmCPU",90},{"SystemAlarmRAM",90},{"SystemAlarmDisk",90},
 {"SendIntervalIdle",500},{"SendIntervalBusy",100},
 //自动保存事件间隔[min],自动图片清理间隔[h],自动重启框架间隔[h]
-{"AutoSaveInterval",10},{"AutoClearImage",0},{"AutoFrameRemake",0},
-{"ListenGroupEcho",0}
+{"AutoSaveInterval",5},{"AutoClearImage",0},{"AutoFrameRemake",0},
+//接收群内自己的消息，接受自己私聊消息
+{"ListenGroupEcho",0},{"ListenSelfEcho",0},
 };
 const enumap<string> Console::mClockEvent{"off", "on", "save", "clear"};
 
@@ -161,6 +162,7 @@ int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 		}
 		if (!Cnt)DD::sendPrivateMsg(DiceMaid, note);
 	}
+	else DD::debugLog(note);
 	return Cnt;
 } 
 void Console::newMaster(long long qq)
@@ -377,6 +379,5 @@ bool operator<(const Console::Clock clock, const SYSTEMTIME& st)
 			if (th.joinable())th.join();
 		}
 		vTh = {};
-		DD::debugLog("Dice销毁线程");
 	}
 

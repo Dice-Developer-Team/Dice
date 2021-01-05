@@ -135,6 +135,7 @@ std::map<T1, T2> fread(ifstream& fin)
 {
 	std::map<T1, T2> m;
 	short len = fread<short>(fin);
+	if (len < 0)return m;
 	while (len--)
 	{
 		T1 key = fread<T1>(fin);
@@ -143,12 +144,23 @@ std::map<T1, T2> fread(ifstream& fin)
 	}
 	return m;
 }
+template <typename T1, typename T2, typename sort>
+void fread(ifstream& fin, std::map<T1, T2, sort>& dir) {
+	short len = fread<short>(fin);
+	if (len < 0)return;
+	while (len--) {
+		T1 key = fread<T1>(fin);
+		T2 val = fread<T2>(fin);
+		dir[key] = val;
+	}
+}
 
 // 读取二进制文件——std::set重载
 template <typename T, bool isLib>
 std::set<T> fread(ifstream& fin)
 {
 	short len = fread<short>(fin);
+	if (len < 0)return {};
 	set<T> s{};
 	while (len--)
 	{
@@ -470,8 +482,8 @@ void fwrite(ofstream& fout, C& obj)
 	obj.writeb(fout);
 }
 
-template <typename T1, typename T2>
-void fwrite(ofstream& fout, const std::map<T1, T2>& m)
+template <typename T1, typename T2, typename sort>
+void fwrite(ofstream& fout, const std::map<T1, T2, sort>& m)
 {
 	const auto len = static_cast<short>(m.size());
 	fwrite(fout, len);

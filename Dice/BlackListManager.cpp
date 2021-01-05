@@ -402,17 +402,16 @@ void DDBlackMark::erase()
 
 void DDBlackMark::upload()
 {
-	std::string frmdata = "fromQQ=" + std::to_string(fromQQ.first) + "&fromGroup=" + std::to_string(fromGroup.first) +
-		"&DiceMaid=" + std::to_string(DiceMaid) + "&masterQQ=" + std::to_string(masterQQ) + "&type=" + type + "&time=" +
-		time + "&note=" + UrlEncode(GBKtoUTF8(note));
-	string temp;
-	if (!Network::POST("shiki.stringempty.xyz", "/DiceCloud/warning_upload.php", 80, frmdata.data(), temp)) {
-		console.log("上传不良记录失败:" + temp, 0b1000);
+	std::string info = "&masterQQ=" + std::to_string(masterQQ) + "&time=" +	time + "&note=" + UrlEncode(GBKtoUTF8(note));
+	int res{ DD::uploadBlack(console.DiceMaid, fromQQ.first, fromGroup.first, type, info) };
+	if (!res) {
+		erase();
 	}
-	else if (isdigit(static_cast<unsigned char>(temp[0])))wid = stoi(temp);
-	else if (temp == "denied")erase();
-	else if (temp.find("error") == 0) {
-		console.log("上传不良记录被拒绝:" + temp, 0b10);
+	else if (res < 0) {
+		console.log("上传不良记录失败:" + info, 0b1);
+	}
+	else {
+		wid = res;
 	}
 }
 

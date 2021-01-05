@@ -81,6 +81,7 @@ public:
 	int CustomReply();
 	//ÅĞ¶ÏÊÇ·ñÏìÓ¦
 	bool DiceFilter();
+	bool WordCensor();
 	void operator()();
 	short trusted = 0;
 

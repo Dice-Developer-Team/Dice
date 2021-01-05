@@ -73,14 +73,14 @@ void loadData()
 {
 	mkDir(DiceDir);
 	ResList logList;
-	loadDir(loadXML<CardTemp>, string(DiceDir + "\\CardTemp\\"), getmCardTemplet(), logList, true);
+	loadDir(loadXML<CardTemp>, string(DiceDir + "\\CardTemp\\"), mCardTemplet, logList, true);
 	if (loadJMap(DiceDir + "\\conf\\CustomReply.json", CardDeck::mReplyDeck) < 0 && loadJMap(
 		strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck) > 0)
 	{
 		logList << "迁移自定义回复" + to_string(CardDeck::mReplyDeck.size()) + "条";
 		saveJMap(DiceDir + "\\conf\\CustomReply.json", CardDeck::mReplyDeck);
 	}
-	fmt->set_help("回复列表", "回复触发词列表:" + listKey(CardDeck::mReplyDeck));
+	fmt->set_help("回复列表", "回复触发词列表:{list_reply_deck}");
 	if (loadDir(loadJMap, string(DiceDir + "\\PublicDeck\\"), CardDeck::mExternPublicDeck, logList) < 1)
 	{
 		loadJMap(strFileLoc + "PublicDeck.json", CardDeck::mExternPublicDeck);
@@ -388,7 +388,7 @@ EVE_Enable(eventEnable)
 	}
 	for (auto gid : DD::getGroupIDList())
 	{
-		chat(gid).group().name(DD::getGroupName(gid)).reset("未进").reset("已退");
+		chat(gid).group().reset("未进").reset("已退");
 	}
 	blacklist = make_unique<DDBlackManager>();
 	if (blacklist->loadJson(DiceDir + "\\conf\\BlackList.json") < 0)
@@ -469,7 +469,7 @@ bool eve_GroupAdd(Chat& grp)
 	if (grp.Name.empty())
 		grp.Name = DD::getGroupName(fromGroup);
 	Size gsize(DD::getGroupSize(fromGroup));
-	if (grp.boolConf.empty() && gsize.siz > 499) {
+	if (console["GroupInvalidSize"] > 0 && grp.boolConf.empty() && gsize.siz > (size_t)console["GroupInvalidSize"]) {
 		grp.set("协议无效");
 	}
 	if (!console["ListenGroupAdd"] || grp.isset("忽略"))return 0;
@@ -617,6 +617,7 @@ bool eve_GroupAdd(Chat& grp)
 EVE_PrivateMsg(eventPrivateMsg)
 {
 	if (!Enabled)return 0;
+	if (fromQQ == console.DiceMaid && !console["ListenSelfEcho"])return 0;
 	shared_ptr<FromMsg> Msg(make_shared<FromMsg>(message, fromQQ));
 	return Msg->DiceFilter();
 }
@@ -660,6 +661,7 @@ EVE_DiscussMsg(eventDiscussMsg)
 
 EVE_GroupMemberIncrease(eventGroupMemberAdd)
 {
+	if (!Enabled)return 0;
 	Chat& grp = chat(fromGroup);
 	if (grp.isset("忽略"))return 0;
 	if (fromQQ != console.DiceMaid)
@@ -821,7 +823,7 @@ EVE_GroupInvited(eventGroupInvited)
 		this_thread::sleep_for(3s);
 		const string strNow = printSTNow();
 		string strMsg = "群添加请求，来自：" + printQQ(fromQQ) + ",群:" +
-			to_string(fromGroup) + "。";
+			DD::printGroupInfo(fromGroup);
 		if (ExceptGroups.count(fromGroup)) {
 			strMsg += "\n已忽略（默认协议无效）";
 			console.log(strMsg, 0b10, strNow);
@@ -857,6 +859,12 @@ EVE_GroupInvited(eventGroupInvited)
 		else if (grp.isset("协议无效")) {
 			grp.set("未进");
 			strMsg += "\n已忽略（协议无效）";
+			console.log(strMsg, 0b10, strNow);
+			DD::answerGroupInvited(fromGroup, 3);
+		}
+		else if (console["GroupInvalidSize"] > 0 && DD::getGroupSize(grp.ID).siz > (size_t)console["GroupInvalidSize"]) {
+			grp.set("协议无效");
+			strMsg += "\n已忽略（大群默认协议无效）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGroup, 3);
 		}

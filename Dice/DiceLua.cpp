@@ -33,6 +33,12 @@ void lua_push_string(lua_State* L, const string& str) {
 	else
 		lua_pushstring(L, str.c_str());
 }
+void lua_set_field(lua_State* L, int idx, const string& str) {
+	if (UTF8Luas.count(L))
+		lua_setfield(L, idx, GBKtoUTF8(str).c_str());
+	else
+		lua_setfield(L, idx, str.c_str());
+}
 
 void lua_push_msg(lua_State* L, FromMsg* msg) {
 	lua_newtable(L);
@@ -45,7 +51,20 @@ void lua_push_msg(lua_State* L, FromMsg* msg) {
 	lua_push_string(L, msg->strMsg);
 	lua_setfield(L, -2, "fromMsg");
 }
+void CharaCard::pushTable(lua_State* L) {
+	lua_newtable(L);
+	for (auto& [key, val] : Info) {
+		lua_push_string(L, val);
+		lua_set_field(L, -2, key.c_str());
+	}
+	for (auto& [key, val] : Attr) {
+		lua_pushnumber(L, val);
+		lua_set_field(L, -2, key.c_str());
+	}
+}
+void CharaCard::toCard(lua_State* L) {
 
+}
 //读取指定lua文件的函数，返回
 bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 	LuaState L(file);
@@ -142,6 +161,7 @@ int setUserToday(lua_State* L) {
 	today->set(qq, item, val);
 	return 0;
 }
+
 int getPlayerCardAttr(lua_State* L) {
 	long long plQQ{ (long long)lua_tonumber(L, 1) };
 	long long group{ (long long)lua_tonumber(L, 2) };
@@ -156,6 +176,15 @@ int getPlayerCardAttr(lua_State* L) {
 		lua_insert(L, 4);
 	}
 	return 1;
+}
+int getPlayerCard(lua_State* L) {
+	long long plQQ{ (long long)lua_tonumber(L, 1) };
+	long long group{ (long long)lua_tonumber(L, 2) };
+	if (PList.count(plQQ)) {
+		getPlayer(plQQ)[group].pushTable(L);
+		return 1;
+	}
+	return 0;
 }
 int setPlayerCardAttr(lua_State* L) {
 	long long plQQ{ (long long)lua_tonumber(L, 1) };
@@ -222,6 +251,7 @@ void LuaState::regist() {
 		{"setUserToday", setUserToday},
 		{"getPlayerCardAttr", getPlayerCardAttr},
 		{"setPlayerCardAttr", setPlayerCardAttr},
+		{"getPlayerCard", getPlayerCard},
 		{"ranint", ranint},
 		{"drawDeck", drawDeck},
 		{"eventMsg", eventMsg},
@@ -236,7 +266,6 @@ void LuaState::regist() {
 	lua_pushstring(state, strPath.c_str());
 	lua_setfield(state, -3, "path");
 	lua_pop(state, 2);
-	SetCurrentDirectory((DiceDir + "\\plugin\\").c_str());
 }
 
 LuaState::LuaState(const char* file) {//:isValid(false) {
@@ -267,7 +296,7 @@ int lua_readStringTable(const char* file, const char* var, std::unordered_map<st
 	LuaState L(file);
 	if (!L)return -1;
 	lua_getglobal(L, var);
-	if (!lua_gettop(L)) {
+	if (lua_type(L, 1) == LUA_TNIL) {
 		return 0;
 	}
 	if (lua_type(L, 1) != LUA_TTABLE) {

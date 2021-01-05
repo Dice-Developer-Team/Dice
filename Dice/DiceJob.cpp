@@ -291,7 +291,7 @@ void list_group(DiceJob& job) {
 			if (grp.isset("已退") || grp.isset("未进") || !grp.isGroup)continue;
 			Size size(DD::getGroupSize(id));
 			if (!size.siz)continue;
-			qSize.emplace(size.siz, printGroup(id));
+			qSize.emplace(size.siz, DD::printGroupInfo(id));
 		}
 		if (qSize.empty()) {
 			job.reply("{self}无群聊或群信息加载失败！");
@@ -299,7 +299,7 @@ void list_group(DiceJob& job) {
 		size_t intCnt(0);
 		ResList res;
 		while (!qSize.empty()) {
-			res << qSize.top().second + "[" + to_string(qSize.top().first) + "]";
+			res << qSize.top().second;
 			qSize.pop();
 			if (++intCnt > 32 || qSize.top().first < 7)break;
 		}
@@ -349,7 +349,7 @@ void dice_cloudblack(DiceJob& job) {
 		break;
 	}
 	if (isSuccess) {
-		job.note("同步云不良记录成功，" + getMsg("self") + "开始读取", 1);
+		if (job.fromQQ)job.note("同步云不良记录成功，" + getMsg("self") + "开始读取", 1);
 		blacklist->loadJson(DiceDir + "/conf/CloudBlackList.json", true);
 	}
 	if (console["CloudBlackShare"])

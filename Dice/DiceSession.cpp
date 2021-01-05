@@ -390,8 +390,9 @@ string DiceSession::deck_draw(const string& key) {
 	return "{key}";
 }
 void DiceSession::_draw(FromMsg* msg) {
-	if (msg->strVar["deck_name"].empty())msg->strVar["deck_name"] = msg->readAttrName();
-	DeckInfo& deck = decks[msg->strVar["deck_name"]];
+	shared_ptr<DiceJobDetail> job{ msg->shared_from_this() };
+	if ((*job)["deck_name"].empty())(*job)["deck_name"] = msg->readAttrName();
+	DeckInfo& deck = decks[(*job)["deck_name"]];
 	int intCardNum = 1;
 	switch (msg->readNum(intCardNum)) {
 	case 0:
@@ -413,9 +414,9 @@ void DiceSession::_draw(FromMsg* msg) {
 		if (!deck.sizRes)break;
 	}
 	if(!Res.empty()){
-		msg->strVar["res"] = Res.dot("|").show();
-		msg->strVar["cnt"] = to_string(Res.size());
-		msg->initVar({ msg->strVar["pc"], msg->strVar["res"] });
+		(*job)["res"] = Res.dot("|").show();
+		(*job)["cnt"] = to_string(Res.size());
+		msg->initVar({ (*job)["pc"], (*job)["res"] });
 		if (msg->strVar.count("hidden")) {
 			msg->reply(GlobalMsg["strDrawHidden"]);
 			msg->replyHidden(GlobalMsg["strDrawCard"]);

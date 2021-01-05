@@ -4,6 +4,7 @@
 #include "ManagerSystem.h"
 #include "Jsonio.h"
 #include "DiceFile.hpp"
+#include "DiceEvent.h"
 #include "DiceLua.h"
 using std::set;
 
@@ -133,6 +134,9 @@ void DiceModManager::rm_help(const string& key)
 bool DiceModManager::listen_order(DiceJobDetail* msg) {
 	string nameOrder;
 	if(!gOrder.match_head(msg->strMsg, nameOrder))return false;
+	if (((FromMsg*)msg)->WordCensor()) {
+		return true;
+	}
 	msgorder[nameOrder].exec((FromMsg*)msg);
 	return true;
 }

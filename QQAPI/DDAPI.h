@@ -29,6 +29,7 @@ namespace DD {
 	bool isDiceMaid(long long);
 	std::set<long long> getDiceSisters();
 	void heartbeat(const std::string&);
+	int uploadBlack(long long DiceMaid, long long fromQQ, long long fromGroup, const std::string& type, std::string& info);
 	void sendPrivateMsg(long long, const std::string& msg);
 	void sendGroupMsg(long long, const std::string& msg);
 	void sendDiscussMsg(long long, const std::string& msg);

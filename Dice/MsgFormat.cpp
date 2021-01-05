@@ -26,16 +26,22 @@
 #include "DiceJob.h"
 #include "EncodingConvert.h"
 #include "StrExtern.hpp"
+#include "CardDeck.h"
 using std::string;
 
 std::map<string, string> GlobalChar{
 	{"FormFeed","\f"},
+	{"LBrace","{"},
+	{"RBrace","}"},
+	{"LBracket","["},
+	{"RBracket","]"},
 };
 
 std::map<string, GobalTex> strFuncs{
 	{"master_QQ",print_master},
 	{"list_extern_deck",list_extern_deck},
 	{"list_all_deck",list_deck},
+	{"list_reply_deck",[]() {return listKey(CardDeck::mReplyDeck); }},
 	{"list_extern_order",list_order_ex},
 	{"list_dice_sister",list_dice_sister},
 };

@@ -137,13 +137,10 @@ Chat& chat(long long id)
 }
 Chat& Chat::id(long long grp) {
 	ID = grp;
+	Name = DD::getGroupName(grp);
 	if (!Enabled)return *this;
 	if (DD::getGroupIDList().count(grp)) {
-		Name = DD::getGroupName(grp);
 		isGroup = true;
-		if (ExceptGroups.count(grp) || DD::getGroupSize(grp).siz > 499) {
-			boolConf.insert("协议无效");
-		}
 	}
 	else {
 		boolConf.insert("未进");
@@ -172,7 +169,8 @@ int groupset(long long id, const string& st)
 
 string printChat(Chat& grp)
 {
-	if (DD::getGroupIDList().count(grp.ID))return "[" + DD::getGroupName(grp.ID) + "](" + to_string(grp.ID) + ")";
+	string name{ DD::getGroupName(grp.ID) };
+	if (!name.empty())return "[" + name + "](" + to_string(grp.ID) + ")";
 	if (!grp.Name.empty())return "[" + grp.Name + "](" + to_string(grp.ID) + ")";
 	if (grp.isGroup) return "群(" + to_string(grp.ID) + ")";
 	return "讨论组(" + to_string(grp.ID) + ")";
