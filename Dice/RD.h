@@ -789,12 +789,15 @@ public:
 	std::string FormShortString() const
 	{
 		std::string strReturnString = strDice;
-		strReturnString.append("=");
-		strReturnString.append(FormStringCombined());
-		if (FormStringCombined() != std::to_string(intTotal))
+		std::string stringCombined{ FormStringCombined() };
+		if (strDice != stringCombined) {
+			strReturnString.append("=");
+			strReturnString.append(stringCombined);
+		}
+		if (std::string strTotal{ std::to_string(intTotal) };stringCombined != strTotal)
 		{
 			strReturnString.append("=");
-			strReturnString.append(std::to_string(intTotal));
+			strReturnString.append(strTotal);
 		}
 		return strReturnString;
 	}

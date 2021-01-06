@@ -1,11 +1,14 @@
 #include <mutex>
-#include <condition_variable>
 #include <deque>
+#include "DDAPI.h"
 #include "GlobalVar.h"
 #include "DiceJob.h" 
 #include "ManagerSystem.h"
 #include "Jsonio.h"
 #include "DiceSchedule.h"
+#include "DiceNetwork.h"
+#include "RandomGenerator.h"
+#include <condition_variable>
 
 unordered_map<string, cmd> mCommand = {
 	{"syscheck",check_system},
@@ -35,14 +38,14 @@ void DiceJob::exec() {
 void DiceJob::echo(const std::string& msg) {
 	if (!fromChat.first)return;
 	switch (fromChat.second) {
-	case CQ::msgtype::Private:
-		CQ::sendPrivateMsg(fromQQ, msg);
+	case msgtype::Private:
+		DD::sendPrivateMsg(fromQQ, msg);
 		break;
-	case CQ::msgtype::Group:
-		CQ::sendGroupMsg(fromChat.first, msg);
+	case msgtype::Group:
+		DD::sendGroupMsg(fromChat.first, msg);
 		break;
-	case CQ::msgtype::Discuss:
-		CQ::sendDiscussMsg(fromChat.first, msg);
+	case msgtype::Discuss:
+		DD::sendDiscussMsg(fromChat.first, msg);
 		break;
 	}
 }
@@ -56,7 +59,7 @@ void DiceJob::note(const std::string& strMsg, int note_lv = 0b1) {
 	echo(strMsg);
 	string note = fromQQ ? getName(fromQQ) + strMsg : strMsg;
 	for (const auto& [ct, level] : console.NoticeList) {
-		if (!(level & note_lv) || pair(fromQQ, CQ::msgtype::Private) == ct || ct == fromChat)continue;
+		if (!(level & note_lv) || pair(fromQQ, msgtype::Private) == ct || ct == fromChat)continue;
 		AddMsgToQueue(note, ct);
 	}
 }
@@ -64,8 +67,8 @@ void DiceJob::note(const std::string& strMsg, int note_lv = 0b1) {
 // 待处理任务队列
 std::queue<DiceJobDetail> queueJob;
 std::mutex mtQueueJob;
-std::condition_variable cvJob;
-std::condition_variable cvJobWaited;
+//std::condition_variable cvJob;
+//std::condition_variable cvJobWaited;
 //延时任务队列
 using waited_job = pair<time_t, DiceJobDetail>;
 std::priority_queue<waited_job, std::deque<waited_job>,std::greater<waited_job>> queueJobWaited;
@@ -79,10 +82,11 @@ void jobHandle() {
 			queueJob.pop();
 			lock_queue.unlock();
 			job.exec();
-			cvJobWaited.notify_one();
+			//cvJobWaited.notify_one();
 		}
 		else{
-			cvJob.wait_for(lock_queue, 2s, []() {return !queueJob.empty(); });
+			//cvJob.wait_for(lock_queue, 2s, []() {return !Enabled || !queueJob.empty(); });
+			std::this_thread::sleep_for(1s); 
 		}
 	}
 }
@@ -94,7 +98,8 @@ void jobWait() {
 			queueJobWaited.pop();
 		}
 		else {
-			cvJobWaited.wait_for(lock_queue, 1s);
+			//cvJobWaited.wait_for(lock_queue, 1s);
+			std::this_thread::sleep_for(1s); 
 		}
 		today->daily_clear();
 	}
@@ -107,7 +112,7 @@ void DiceScheduler::push_job(const DiceJobDetail& job) {
 		std::unique_lock<std::mutex> lock_queue(mtQueueJob);
 		queueJob.push(job); 
 	}
-	cvJob.notify_one();
+	//cvJob.notify_one();
 }
 void DiceScheduler::push_job(const char* job_name, bool isSelf, unordered_map<string,string>vars) {
 	if (!Enabled)return; 
@@ -115,7 +120,7 @@ void DiceScheduler::push_job(const char* job_name, bool isSelf, unordered_map<st
 		std::unique_lock<std::mutex> lock_queue(mtQueueJob);
 		queueJob.emplace(job_name, isSelf, vars);
 	}
-	cvJob.notify_one();
+	//cvJob.notify_one();
 }
 //将任务加入等待队列
 void DiceScheduler::add_job_for(unsigned int waited, const DiceJobDetail& job) {
@@ -160,6 +165,24 @@ void DiceScheduler::start() {
 void DiceScheduler::end() {
 }
 
+int DiceToday::getJrrp(long long qq) {
+	if (cntUser.count(qq) && cntUser[qq].count("jrrp"))
+		return cntUser[qq]["jrrp"];
+	string frmdata = "QQ=" + to_string(console.DiceMaid) + "&v=20190114" + "&QueryQQ=" + to_string(qq);
+	string res;
+	if (Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata.data(), res)) {
+		return cntUser[qq]["jrrp"] = stoi(res);
+	}
+	else {
+		if (!cntUser[qq].count("jrrp_local"))
+			cntUser[qq]["jrrp_local"] = RandomGenerator::Randint(1, 100);
+		console.log(getMsg("strJrrpErr",
+						   { {"res", res} }
+		), 1);
+		return cntUser[qq]["jrrp_local"];
+	}
+}
+
 void DiceToday::daily_clear() {
 	GetLocalTime(&stNow);
 	if (stToday.tm_mday != stNow.wDay) {
@@ -171,10 +194,14 @@ void DiceToday::daily_clear() {
 
 void DiceToday::save() {
 	json jFile;
-	jFile["date"] = { stToday.tm_year + 1900,stToday.tm_mon + 1,stToday.tm_mday };
-	jFile["global"] = cntGlobal;
-	jFile["user_cnt"] = cntUser;
-	fwriteJson(pathFile, jFile);
+	try {
+		jFile["date"] = { stToday.tm_year + 1900,stToday.tm_mon + 1,stToday.tm_mday };
+		jFile["global"] = GBKtoUTF8(cntGlobal);
+		jFile["user_cnt"] = GBKtoUTF8(cntUser);
+		fwriteJson(pathFile, jFile);
+	} catch (...) {
+		console.log("每日记录保存失败:json错误!", 0b10);
+	}
 }
 void DiceToday::load() {
 	json jFile = freadJson(pathFile);
@@ -190,8 +217,14 @@ void DiceToday::load() {
 		stToday.tm_mon -= 1;
 		jFile["date"][2].get_to(stToday.tm_mday);
 	}
-	if (jFile.count("global")) { jFile["global"].get_to(cntGlobal); }
-	if (jFile.count("user_cnt")) { jFile["user_cnt"].get_to(cntUser); }
+	if (jFile.count("global")) { 
+		jFile["global"].get_to(cntGlobal); 
+		cntGlobal = UTF8toGBK(cntGlobal);
+	}
+	if (jFile.count("user_cnt")) { 
+		jFile["user_cnt"].get_to(cntUser);
+		cntUser = UTF8toGBK(cntUser);
+	}
 }
 
 string printTTime(time_t tt) {

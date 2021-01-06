@@ -10,11 +10,11 @@
 #include "DiceCloud.h"
 #include "GlobalVar.h"
 #include "EncodingConvert.h"
-#include "CQAPI_EX.h"
 #include "DiceNetwork.h"
 #include "DiceConsole.h"
 #include "DiceMsgSend.h"
 #include "DiceEvent.h"
+#include "DDAPI.h"
 
 #pragma comment(lib, "urlmon.lib")
 
@@ -23,18 +23,13 @@ using namespace nlohmann;
 
 namespace Cloud
 {
-	void update()
+	void heartbeat()
 	{
 		const string strVer = GBKtoUTF8(string(Dice_Ver));
-		const string data = "DiceQQ=" + to_string(console.DiceMaid) + "&masterQQ=" + to_string(console.master()) + "&Ver=" +
+		const string data = "&masterQQ=" + to_string(console.master()) + "&Ver=" +
 			strVer + "&isGlobalOn=" + to_string(!console["DisabledGlobal"]) + "&isPublic=" +
 			to_string(!console["Private"]) + "&isVisible=" + to_string(console["CloudVisible"]);
-		char* frmdata = new char[data.length() + 1];
-		strcpy_s(frmdata, data.length() + 1, data.c_str());
-		string temp;
-		Network::POST("shiki.stringempty.xyz", "/DiceCloud/update.php", 80, frmdata, temp);
-		//AddMsgToQueue(temp, masterQQ);
-		delete[] frmdata;
+		DD::heartbeat(data);
 	}
 
 	int checkWarning(const char* warning)

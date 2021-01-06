@@ -97,10 +97,10 @@ public:
 		intConf[key] = val;
 	}
 
-	void setConf(const string& key, string val)
+	void setConf(const string& key, const string& val)
 	{
 		std::lock_guard<std::mutex> lock_queue(ex_user);
-		strConf[key] = std::move(val);
+		strConf[key] = val;
 	}
 
 	void rmIntConf(const string& key)
@@ -243,17 +243,7 @@ public:
 		return *this;
 	}
 
-	void leave(const string& msg = "")
-	{
-		if (!msg.empty())
-		{
-			if (isGroup)CQ::sendGroupMsg(ID, msg);
-			else CQ::sendDiscussMsg(ID, msg);
-			Sleep(500);
-		}
-		isGroup ? CQ::setGroupLeave(ID) : CQ::setDiscussLeave(ID);
-		set("рямк");
-	}
+	void leave(const string& msg = "");
 
 	[[nodiscard]] bool isset(const string& key) const
 	{
@@ -349,7 +339,7 @@ public:
 
 inline unordered_map<long long, Chat> ChatList;
 Chat& chat(long long id);
-int groupset(long long id, string st);
+int groupset(long long id, const string& st);
 string printChat(Chat& grp);
 ifstream& operator>>(ifstream& fin, Chat& grp);
 ofstream& operator<<(ofstream& fout, const Chat& grp);

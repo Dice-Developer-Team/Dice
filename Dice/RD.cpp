@@ -20,14 +20,12 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "CQEVE_ALL.h"
 #include "CQTools.h"
 #include <cctype>
 #include "RD.h"
 #include "RDConstant.h"
 #include "MsgFormat.h"
 using namespace std;
-using namespace CQ;
 
 void init(string& msg)
 {
@@ -57,7 +55,6 @@ void COC7D(string& strMAns)
 {
 	RD rd3D6("3D6");
 	RD rd2D6p6("2D6+6");
-	strMAns += "的人物作成:";
 	strMAns += '\n';
 	strMAns += "力量STR=3D6*5=";
 	rd3D6.Roll();
@@ -174,7 +171,6 @@ void COC6D(string& strMAns)
 	RD rd2D6p6("2D6+6");
 	RD rd3D6p3("3D6+3");
 	RD rd1D10("1D10");
-	strMAns += "的人物作成:";
 	strMAns += '\n';
 	strMAns += "力量STR=3D6=";
 	rd3D6.Roll();
@@ -317,7 +313,6 @@ void COC6(string& strMAns, int intNum)
 
 void DND(string& strOutput, int intNum)
 {
-	strOutput += "的英雄作成:";
 	const RD rdDND("4D6K3");
 	string strDNDName[6] = {"力量", "体质", "敏捷", "智力", "感知", "魅力"};
 	const bool boolAddSpace = intNum != 1;

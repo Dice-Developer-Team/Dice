@@ -36,6 +36,8 @@ std::map<string, GobalTex> strFuncs{
 	{"master_QQ",print_master},
 	{"list_extern_deck",list_extern_deck},
 	{"list_all_deck",list_deck},
+	{"list_extern_order",list_order_ex},
+	{"list_dice_sister",list_dice_sister},
 };
 
 std::string format(std::string str, const std::initializer_list<const std::string>& replace_str)
@@ -81,7 +83,7 @@ std::string to_binary(int b)
 	return res.dot("+").show();
 }
 
-unsigned int ResList::intPageLen = 255;
+unsigned int ResList::intPageLen = 512;
 ResList& ResList::operator<<(std::string s) {
 	while (isspace(static_cast<unsigned char>(s[0])))s.erase(s.begin());
 	if (s.empty())return *this;

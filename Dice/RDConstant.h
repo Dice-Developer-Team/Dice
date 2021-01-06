@@ -25,6 +25,7 @@
 #define DICE_RD_CONSTANT
 #include <string>
 #include <set>
+#include <map>
 
 //Error Handle
 #define Value_Err (-1)

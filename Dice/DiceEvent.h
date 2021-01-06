@@ -8,7 +8,6 @@
 #include <set>
 #include <utility>
 #include <string>
-#include "CQAPI_EX.h"
 #include "MsgMonitor.h"
 #include "DiceSchedule.h"
 #include "DiceMsgSend.h"
@@ -24,10 +23,10 @@ public:
 	long long fromSession;
 	Chat* pGrp = nullptr;
 	string strReply;
-	FromMsg(std::string message, long long qq) :DiceJobDetail(qq, { qq,CQ::msgtype::Private }, message){
+	FromMsg(std::string message, long long qq) :DiceJobDetail(qq, { qq,msgtype::Private }, message){
 		fromSession = ~fromQQ;
 	}
-	FromMsg(std::string message, long long fromGroup, CQ::msgtype msgType, long long qq) :DiceJobDetail(qq, { fromGroup,msgType }, message), fromGroup(fromGroup), fromSession(fromGroup){
+	FromMsg(std::string message, long long fromGroup, msgtype msgType, long long qq) :DiceJobDetail(qq, { fromGroup,msgType }, message), fromGroup(fromGroup), fromSession(fromGroup){
 		pGrp = &chat(fromGroup);
 	}
 
@@ -57,7 +56,7 @@ public:
 		const string note = getName(fromQQ) + strMsg;
 		for (const auto& [ct,level] : console.NoticeList) 
 		{
-			if (!(level & note_lv) || pair(fromQQ, CQ::msgtype::Private) == ct || ct == fromChat)continue;
+			if (!(level & note_lv) || pair(fromQQ, msgtype::Private) == ct || ct == fromChat)continue;
 			AddMsgToQueue(note, ct);
 		}
 	}
@@ -66,8 +65,8 @@ public:
 	std::string printFrom()
 	{
 		std::string strFwd;
-		if (fromChat.second == CQ::msgtype::Group)strFwd += "[群:" + to_string(fromGroup) + "]";
-		if (fromChat.second == CQ::msgtype::Discuss)strFwd += "[讨论组:" + to_string(fromGroup) + "]";
+		if (fromChat.second == msgtype::Group)strFwd += "[群:" + to_string(fromGroup) + "]";
+		if (fromChat.second == msgtype::Discuss)strFwd += "[讨论组:" + to_string(fromGroup) + "]";
 		strFwd += getName(fromQQ, fromGroup) + "(" + to_string(fromQQ) + "):";
 		return strFwd;
 	}
@@ -76,30 +75,24 @@ public:
 	void fwdMsg();
 	int AdminEvent(const string& strOption);
 	int MasterSet();
-	int DiceReply();
+	int BasicOrder();
+	int InnerOrder();
+	//int CustomOrder();
 	int CustomReply();
 	//判断是否响应
 	bool DiceFilter();
+	void operator()();
 	short trusted = 0;
 
 private:
+	bool isVirtual = false;
 	//是否响应
 	bool isAns = false;
 	bool isDisabled = false;
 	bool isCalled = false;
 	bool isAuth = false;
 
-	short getGroupAuth(long long group = 0)
-	{
-		if (trusted > 0)return trusted;
-		if (ChatList.count(group))
-		{
-			const int per = CQ::getGroupMemberInfo(group, fromQQ).permissions;
-			if (per > 1)return 0;
-			if (per)return -1;
-		}
-		return -2;
-	}
+	int getGroupAuth(long long group = 0);
 public:
 	unsigned int intMsgCnt = 0;
 	//跳过空格

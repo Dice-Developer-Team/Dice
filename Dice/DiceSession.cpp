@@ -12,6 +12,7 @@
 #include "DiceEvent.h"
 #include "CardDeck.h"
 #include "RandomGenerator.h"
+#include "DDAPI.h"
 
 std::shared_mutex sessionMutex;
 
@@ -285,14 +286,13 @@ void DiceSession::deck_set(FromMsg* msg) {
 	}
 	else {
 		vector<string> DeckSet = {};
-		if ((strCiteDeck == "群成员" || (strCiteDeck == "member" && !(strCiteDeck = "群成员").empty())) && msg->fromChat.second == CQ::msgtype::Group) {
-			vector<CQ::GroupMemberInfo> list = CQ::getGroupMemberList(msg->fromGroup);
-			if (list.empty()) {
+		if ((strCiteDeck == "群成员" || (strCiteDeck == "member" && !(strCiteDeck = "群成员").empty())) && msg->fromChat.second == msgtype::Group) {
+			
+			if (auto list{ DD::getGroupMemberList(msg->fromGroup) }; list.empty()) {
 				msg->reply("群成员列表获取失败×");
 			}
-			for (auto& each : list) {
-				DeckSet.push_back(
-					(each.GroupNick.empty() ? each.Nick : each.GroupNick) + "(" + to_string(each.QQID) + ")");
+			else for (auto each : list) {
+				DeckSet.push_back(printQQ(each));
 			}
 			decks[key] = DeckSet;
 		}
@@ -378,10 +378,20 @@ void DiceSession::deck_new(FromMsg* msg) {
 		update();
 	}
 }
-void DiceSession::deck_draw(FromMsg* msg) {
-	string& key{ msg->strVar["deck_name"] };
-	if (key.empty())key = msg->readAttrName();
-	DeckInfo& deck = decks[key];
+string DiceSession::deck_draw(const string& key) {
+	if (decks.count(key)) {
+		if (!decks[key].sizRes)return getMsg("strDeckRestEmpty", { {"deck_name",key} });
+		return decks[key].draw();
+	}
+	else if (CardDeck::mPublicDeck.count(key)) {
+		vector<string>& deck = CardDeck::mPublicDeck[key];
+		return CardDeck::draw(deck[RandomGenerator::Randint(0, deck.size() - 1)]);
+	}
+	return "{key}";
+}
+void DiceSession::_draw(FromMsg* msg) {
+	if (msg->strVar["deck_name"].empty())msg->strVar["deck_name"] = msg->readAttrName();
+	DeckInfo& deck = decks[msg->strVar["deck_name"]];
 	int intCardNum = 1;
 	switch (msg->readNum(intCardNum)) {
 	case 0:
@@ -398,9 +408,9 @@ void DiceSession::deck_draw(FromMsg* msg) {
 		return;
 	}
 	ResList Res;
-	while (!deck.idxs.empty()&&intCardNum--) {
+	while (deck.sizRes && intCardNum--) {
 		Res << deck.draw();
-		if (deck.idxs.empty())break;
+		if (!deck.sizRes)break;
 	}
 	if(!Res.empty()){
 		msg->strVar["res"] = Res.dot("|").show();
@@ -414,7 +424,7 @@ void DiceSession::deck_draw(FromMsg* msg) {
 			msg->reply(GlobalMsg["strDrawCard"]);
 		update();
 	}
-	if (deck.idxs.empty()) {
+	if (!deck.sizRes) {
 		msg->reply(GlobalMsg["strDeckRestEmpty"]);
 	}
 }
@@ -460,7 +470,7 @@ void DiceSession::deck_reset(FromMsg* msg) {
 	}
 	else {
 		decks[key].reset();
-		msg->reply(GlobalMsg["strDeckidxsReset"]);
+		msg->reply(GlobalMsg["strDeckRestReset"]);
 		update();
 	}
 }

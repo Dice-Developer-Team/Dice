@@ -24,13 +24,13 @@
 #include <mutex>
 #include <string>
 #include <thread>
-#include "CQAPI_EX.h"
+#include "DDAPI.h"
 #include "DiceMsgSend.h"
 #include "MsgFormat.h"
 #include "GlobalVar.h"
 #include "DiceConsole.h"
 using namespace std;
-using namespace CQ;
+
 
 // 消息发送存储结构体
 struct msg_t
@@ -90,15 +90,15 @@ void SendMsg()
 			}
 			if (msg.msg_type == msgtype::Private)
 			{
-				sendPrivateMsg(msg.target_id, msg.msg);
+				DD::sendPrivateMsg(msg.target_id, msg.msg);
 			}
 			else if (msg.msg_type == msgtype::Group)
 			{
-				sendGroupMsg(msg.target_id, msg.msg);
+				DD::sendGroupMsg(msg.target_id, msg.msg);
 			}
 			else
 			{
-				sendDiscussMsg(msg.target_id, msg.msg);
+				DD::sendDiscussMsg(msg.target_id, msg.msg);
 			}
 		}
 		if (msgQueue.size() > 2)this_thread::sleep_for(chrono::milliseconds(console["SendIntervalBusy"]));

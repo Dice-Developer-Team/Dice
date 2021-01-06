@@ -138,5 +138,6 @@ std::string& msg_decode(std::string& s, const bool isCQ)
 	msg_replace(s, "&#93;", "]");
 	msg_replace(s, "&#44;", "\t");
 	msg_replace(s, "&amp;", "&");
+	//msg_replace(s, "&nbsp;", " ");
 	return s;
 }
