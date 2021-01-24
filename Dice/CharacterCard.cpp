@@ -29,6 +29,10 @@ CardTemp& getCardTemplet(const string& type)
 	return  mCardTemplet[type];
 }
 
+void CharaCard::setName(const string& strName) {
+	Name = strName;
+	Info["__Name"] = strName;
+}
 void CharaCard::writeb(std::ofstream& fout) const {
 	fwrite(fout, string("Name"));
 	fwrite(fout, Name);
@@ -56,6 +60,27 @@ int CharaCard::setInfo(const string& key, const string& s) {
 	if (key == "__Type")
 		pTemplet = &getCardTemplet(s);
 	return 0;
+}
+
+int CharaCard::show(string key, string& val) const {
+	if (Info.count(key)) {
+		val = Info.find(key)->second;
+		return 3;
+	}
+	if (key == "note") {
+		val = Note;
+		return 2;
+	}
+	if (DiceExp.count(key)) {
+		val = DiceExp.find(key)->second;
+		return 1;
+	}
+	key = standard(key);
+	if (Attr.count(key)) {
+		val = to_string(Attr.find(key)->second);
+		return 0;
+	}
+	return -1;
 }
 
 bool CharaCard::count(const string& strKey) const {
@@ -133,7 +158,7 @@ void CharaCard::readb(std::ifstream& fin) {
 	while (tag != "END") {
 		switch (mCardTag[tag]) {
 		case 1:
-			Name = fread<string>(fin);
+			setName(fread<string>(fin));
 			break;
 		case 2:
 			Info["__Type"] = fread<string>(fin);
@@ -170,15 +195,15 @@ Player& getPlayer(long long qq)
 string Player::listCard() {
 	ResList Res;
 	for (auto& [idx, pc] : mCardList) {
-		Res << "[" + to_string(idx) + "]<" + getCardTemplet(pc.Info["__Type"]).type + ">" + pc.Name;
+		Res << "[" + to_string(idx) + "]<" + getCardTemplet(pc.Info["__Type"]).type + ">" + pc.getName();
 	}
-	Res << "default:" + (*this)[0].Name;
+	Res << "default:" + (*this)[0].getName();
 	return Res.show();
 }
 
 void getPCName(FromMsg& msg)
 {
-	msg["pc"] = (PList.count(msg.fromQQ) && PList[msg.fromQQ][msg.fromGroup].Name != "½ÇÉ«¿¨")
-		? PList[msg.fromQQ][msg.fromGroup].Name
+	msg["pc"] = (PList.count(msg.fromQQ) && PList[msg.fromQQ][msg.fromGroup].getName() != "½ÇÉ«¿¨")
+		? PList[msg.fromQQ][msg.fromGroup].getName()
 		: msg["nick"];
 }

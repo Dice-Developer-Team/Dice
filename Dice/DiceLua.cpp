@@ -103,6 +103,24 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
  * 供lua调用的函数
  */
 
+ //加载其他lua脚本
+int loadLua(lua_State* L) {
+	string nameFile{ UTF8toGBK(lua_tostring(L, -1),true) };
+	string pathFile = DiceDir + "\\plugin\\" + nameFile + ".lua";
+	if (!std::filesystem::exists(pathFile) && nameFile.find('/') == string::npos && nameFile.find('\\') == string::npos)
+		pathFile = DiceDir + "\\plugin\\" + nameFile + "\\init.lua";
+	if (luaL_loadfile(L, pathFile.c_str())) {
+		const char* pErrorMsg = lua_tostring(L, -1);
+		console.log(GlobalMsg["strSelfName"] + "读取lua文件" + pathFile + "失败:"+ pErrorMsg, 0b10);
+		return 0;
+	}
+	if (lua_pcall(L, 0, 1, 0)) {
+		const char* pErrorMsg = lua_tostring(L, -1);
+		console.log(GlobalMsg["strSelfName"] + "运行lua文件" + pathFile + "失败:"+ pErrorMsg, 0b10);
+		return 1;
+	}
+	return 1;
+}
  //获取DiceMaid
 int getDiceQQ(lua_State* L) {
 	lua_push_string(L, to_string(console.DiceMaid));
@@ -165,11 +183,21 @@ int setUserToday(lua_State* L) {
 int getPlayerCardAttr(lua_State* L) {
 	long long plQQ{ (long long)lua_tonumber(L, 1) };
 	long long group{ (long long)lua_tonumber(L, 2) };
-	string item{ UTF8toGBK(lua_tostring(L, 3),true) };
+	string key{ UTF8toGBK(lua_tostring(L, 3),true) };
 	CharaCard& pc = getPlayer(plQQ)[group];
-	string val;
-	if (pc.show(item, val) > -1) {
-		lua_push_string(L, val);
+	if (pc.Info.count(key)) {
+		lua_push_string(L, pc.Info.find(key)->second);
+		return 3;
+	}
+	else if (key == "note") {
+		lua_push_string(L, pc.Note);
+		return 2;
+	}
+	else if (pc.DiceExp.count(key)) {
+		lua_push_string(L, pc.DiceExp.find(key)->second);
+	}
+	else if (key = pc.standard(key); pc.Attr.count(key)) {
+		lua_pushnumber(L, (double)pc.Attr.find(key)->second);
 	}
 	else {
 		lua_pushnil(L);
@@ -195,7 +223,9 @@ int setPlayerCardAttr(lua_State* L) {
 		pc.set(item, (int)lua_tonumber(L, -1));
 	}
 	else if (lua_isstring(L, -1)) {
-		pc.setInfo(item, UTF8toGBK(lua_tostring(L, -1), true));
+		if (item.empty())return 0;
+		else if (item[0] == '&')pc.setExp(item.substr(1), UTF8toGBK(lua_tostring(L, -1), true));
+		else pc.setInfo(item, UTF8toGBK(lua_tostring(L, -1), true));
 	}
 	return 0;
 }
@@ -206,6 +236,12 @@ int ranint(lua_State* L) {
 	int r{ (int)lua_tonumber(L, -1) };
 	lua_pushnumber(L, RandomGenerator::Randint(l,r));
 	return 1;
+}
+//线程等待
+int sleepTime(lua_State* L) {
+	int ms{ (int)lua_tonumber(L, -1) };
+	std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+	return 0;
 }
 
 int drawDeck(lua_State* L) {
@@ -242,6 +278,7 @@ int eventMsg(lua_State* L) {
 
 void LuaState::regist() {
 	const luaL_Reg Dicelibs[] = {
+		{"loadLua", loadLua},
 		{"getDiceQQ", getDiceQQ},
 		{"getDiceDir", getDiceDir},
 		{"mkDirs", mkDirs},
@@ -253,6 +290,7 @@ void LuaState::regist() {
 		{"setPlayerCardAttr", setPlayerCardAttr},
 		{"getPlayerCard", getPlayerCard},
 		{"ranint", ranint},
+		{"sleepTime", sleepTime},
 		{"drawDeck", drawDeck},
 		{"eventMsg", eventMsg},
 		{nullptr, nullptr},
@@ -272,7 +310,8 @@ LuaState::LuaState(const char* file) {//:isValid(false) {
 	state = luaL_newstate();
 	if (!state)return;
 	if (luaL_loadfile(state, file)) {
-		console.log(GlobalMsg["strSelfName"] + "读取lua文件" + file + "失败!", 0b10);
+		const char* pErrorMsg = lua_tostring(state, -1);
+		console.log(GlobalMsg["strSelfName"] + "读取lua文件" + file + "失败:" + pErrorMsg, 0b10);
 		lua_close(state);
 		state = nullptr;
 		return;
@@ -280,7 +319,8 @@ LuaState::LuaState(const char* file) {//:isValid(false) {
 	luaL_openlibs(state);
 	regist();
 	if (lua_pcall(state, 0, 0, 0)) {
-		console.log(GlobalMsg["strSelfName"] + "运行lua文件" + file + "失败!", 0b10);
+		const char* pErrorMsg = lua_tostring(state, -1);
+		console.log(GlobalMsg["strSelfName"] + "运行lua文件" + file + "失败:" + pErrorMsg, 0b10);
 		lua_close(state);
 		state = nullptr;
 		return;

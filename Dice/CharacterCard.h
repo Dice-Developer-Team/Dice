@@ -254,11 +254,13 @@ struct lua_State;
 class CharaCard
 {
 private:
-public:
 	string Name = "½ÇÉ«¿¨";
+public:
+	const string& getName()const { return Name; }
+	void setName(const string&);
 	//string Type = "COC7";
 	map<string, short, less_ci> Attr{};
-	map<string, string, less_ci> Info{ {"__Type","BRP"} };
+	map<string, string, less_ci> Info{ {"__Type","COC7"} };
 	map<string, string, less_ci> DiceExp{};
 	string Note;
 	CardTemp* pTemplet{ nullptr };
@@ -480,35 +482,7 @@ public:
 
 	void clear();
 
-	int show(string key, string& val) const
-	{
-		if (pTemplet->sInfoList.count(key))
-		{
-			if (Info.count(key))
-			{
-				val = Info.find(key)->second;
-				return 3;
-			}
-			return -1;
-		}
-		if (key == "note")
-		{
-			val = Note;
-			return 2;
-		}
-		if (DiceExp.count(key))
-		{
-			val = DiceExp.find(key)->second;
-			return 1;
-		}
-		key = standard(key);
-		if (Attr.count(key))
-		{
-			val = to_string(Attr.find(key)->second);
-			return 0;
-		}
-		return -1;
-	}
+	int show(string key, string& val) const;
 
 	[[nodiscard]] string show(bool isWhole) const;
 
@@ -615,7 +589,7 @@ public:
 			string para = vOption.top();
 			vOption.pop();
 			card.build(para);
-			if (card.Name.empty())
+			if (card.getName().empty())
 			{
 				std::vector<string> list = getCardTemplet(type).mBuildOption[para].vNameList;
 				while (!list.empty())
@@ -624,13 +598,13 @@ public:
 					if (mNameIndex.count(s))list.erase(list.begin());
 					else
 					{
-						card.Name = s;
+						card.setName(s);
 						break;
 					}
 				}
 			}
 		}
-		if (card.Name.empty())
+		if (card.getName().empty())
 		{
 			std::vector<string> list = getCardTemplet(type).mBuildOption["_default"].vNameList;
 			while (!list.empty())
@@ -639,13 +613,13 @@ public:
 				if (mNameIndex.count(s))list.erase(list.begin());
 				else
 				{
-					card.Name = s;
+					card.setName(s);
 					break;
 				}
 			}
-			if (card.Name.empty())card.Name = to_string(indexMax + 1);
+			if (card.getName().empty())card.setName(to_string(indexMax + 1));
 		}
-		s = card.Name;
+		s = card.getName();
 		mNameIndex[s] = indexMax;
 		mGroupIndex[group] = indexMax;
 		return 0;
@@ -664,12 +638,12 @@ public:
 		if (!strName.empty() && !mNameIndex.count(strName))
 		{
 			if (const int res = newCard(name, group))return res;
-			name = getCard(strName, group).Name;
+			name = getCard(strName, group).getName();
 			(*this)[name].buildv();
 		}
 		else
 		{
-			name = getCard(strName, group).Name;
+			name = getCard(strName, group).getName();
 			if (isClear)(*this)[name].clear();
 			(*this)[name].buildv(strType);
 		}
@@ -718,7 +692,7 @@ public:
 		if (name_new.find(":") != string::npos)return -6;
 		const int i = mNameIndex[name_new] = mNameIndex[name];
 		mNameIndex.erase(name);
-		mCardList[i].Name = name_new;
+		mCardList[i].setName(name_new);
 		return 0;
 	}
 
@@ -746,8 +720,8 @@ public:
 		ResList Res;
 		for (const auto& it : mGroupIndex)
 		{
-			if (!it.first)Res << "default:" + mCardList[it.second].Name;
-			else Res << "(" + to_string(it.first) + ")" + mCardList[it.second].Name;
+			if (!it.first)Res << "default:" + mCardList[it.second].getName();
+			else Res << "(" + to_string(it.first) + ")" + mCardList[it.second].getName();
 		}
 		return Res.show();
 	}
@@ -815,7 +789,7 @@ public:
 		{
 			Unpack card;
 			card.add(it.first);
-			card.add(it.second.Name);
+			card.add(it.second.getName());
 			Unpack skills;
 			for (const auto& skill : it.second.Attr)
 			{
@@ -850,7 +824,7 @@ public:
 		mCardList = fread<unsigned short, CharaCard>(fin);
 		for (const auto& card : mCardList)
 		{
-			mNameIndex[card.second.Name] = card.first;
+			mNameIndex[card.second.getName()] = card.first;
 		}
 		mGroupIndex = fread<unsigned long long, unsigned short>(fin);
 	}

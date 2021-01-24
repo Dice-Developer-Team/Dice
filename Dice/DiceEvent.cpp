@@ -2434,7 +2434,7 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "li") {
-		string strAns = strVar["pc"] + "的疯狂发作-总结症状:\n";
+		string strAns = "{pc}的疯狂发作-总结症状:\n";
 		LongInsane(strAns);
 		reply(strAns);
 		return 1;
@@ -2622,7 +2622,7 @@ int FromMsg::InnerOrder() {
 		}
 		if (strOption == "show") {
 			string strName = readRest();
-			strVar["char"] = pl.getCard(strName, fromGroup).Name;
+			strVar["char"] = pl.getCard(strName, fromGroup).getName();
 			strVar["type"] = pl.getCard(strName, fromGroup).Info["__Type"];
 			strVar["show"] = pl[strVar["char"]].show(true);
 			reply(GlobalMsg["strPcCardShow"]);
@@ -2691,7 +2691,7 @@ int FromMsg::InnerOrder() {
 				reply(GlobalMsg["strPCNameEmpty"]);
 				return 1;
 			}
-			strVar["old_name"] = pl[fromGroup].Name;
+			strVar["old_name"] = pl[fromGroup].getName();
 			switch (pl.renameCard(strVar["old_name"], strVar["new_name"])) {
 			case 0:
 				reply(GlobalMsg["strPcCardRename"]);
@@ -2744,7 +2744,7 @@ int FromMsg::InnerOrder() {
 			strVar["char1"] = strName.substr(0, strName.find('='));
 			strVar["char2"] = (strVar["char1"].length() < strName.length() - 1)
 				? strip(strName.substr(strVar["char1"].length() + 1))
-				: pl[fromGroup].Name;
+				: pl[fromGroup].getName();
 			switch (pl.copyCard(strVar["char1"], strVar["char2"], fromGroup)) {
 			case 0:
 				reply(GlobalMsg["strPcCardCpy"]);
@@ -3157,7 +3157,7 @@ int FromMsg::InnerOrder() {
 				return 1;
 			}
 			getPlayer(fromQQ)[fromGroup].clear();
-			strVar["char"] = getPlayer(fromQQ)[fromGroup].Name;
+			strVar["char"] = getPlayer(fromQQ)[fromGroup].getName();
 			reply(GlobalMsg["strPropCleared"], { strVar["char"] });
 			return 1;
 		}
@@ -3188,7 +3188,7 @@ int FromMsg::InnerOrder() {
 				intMsgCnt++;
 			strVar["attr"] = readAttrName();
 			if (strVar["attr"].empty()) {
-				strVar["char"] = pc.Name;
+				strVar["char"] = pc.getName();
 				strVar["type"] = pc.Info["__Type"];
 				strVar["show"] = pc.show(false);
 				reply(GlobalMsg["strPropList"]);
@@ -3293,7 +3293,7 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ti") {
-		string strAns = strVar["pc"] + "的疯狂发作-临时症状:\n";
+		string strAns = "{pc}的疯狂发作-临时症状:\n";
 		TempInsane(strAns);
 		reply(strAns);
 		return 1;
