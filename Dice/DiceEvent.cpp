@@ -3018,8 +3018,10 @@ int FromMsg::InnerOrder() {
 		}
 		readSkipSpace();
 		string strname = strMsg.substr(intMsgCnt);
-		if (strname.empty())
+		if (strname.empty()) {
+			if (!strVar.count("pc") || strVar["pc"].empty())getPCName(*this);
 			strname = strVar["pc"];
+		}
 		else
 			strname = strip(strname);
 		RD initdice(strinit, 20);
@@ -3594,7 +3596,7 @@ int FromMsg::InnerOrder() {
 					reply(GlobalMsg["strRollTurn"], { strVar["pc"], strVar["turn"] });
 				}
 				else {
-					replyHidden("在" + printChat(fromChat) + "中 " + GlobalMsg["strRollTurn"]);
+					replyHidden(GlobalMsg["strRollTurn"]);
 				}
 			}
 		}
@@ -3663,7 +3665,7 @@ int FromMsg::InnerOrder() {
 				reply();
 			}
 			else {
-				replyHidden("在" + printChat(fromChat) + "中 " + strReply);
+				replyHidden(strReply);
 			}
 		}
 		else {
@@ -3689,7 +3691,7 @@ int FromMsg::InnerOrder() {
 				reply();
 			}
 			else {
-				replyHidden("在" + printChat(fromChat) + "中 " + strReply);
+				replyHidden(strReply);
 			}
 		}
 		if (isHidden) {

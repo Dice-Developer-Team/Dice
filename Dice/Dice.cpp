@@ -63,7 +63,7 @@ ThreadFactory threads;
 string strFileLoc;
 
 constexpr auto msgInit{ R"(欢迎使用Dice!掷骰机器人！
-请从菜单【Dice!】->【综合管理】开启骰娘的后台面板
+请发送.system gui开启骰娘的后台面板
 开启Master模式通过认主后即可成为我的主人~
 可发送.help查看帮助
 参考文档参看.help链接)" };
