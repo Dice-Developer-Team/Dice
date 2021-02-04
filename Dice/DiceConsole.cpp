@@ -37,9 +37,9 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif	
+#include "DDAPI.h"
 
 using namespace std;
-using namespace CQ;
 
 const std::map<std::string, int, less_ci>Console::intDefault{
 {"DisabledGlobal",0},{"DisabledBlock",0},{"DisabledListenAt",1},
@@ -50,12 +50,14 @@ const std::map<std::string, int, less_ci>Console::intDefault{
 {"AutoClearBlack",1},{"LeaveBlackQQ",0},
 {"ListenGroupKick",1},{"ListenGroupBan",1},{"ListenSpam",1},
 {"BannedBanInviter",0},{"KickedBanInviter",0},
-{"GroupClearLimit",20},
+{"GroupInvalidSize",500},{"GroupClearLimit",20},
 {"CloudBlackShare",1},{"BelieveDiceList",0},{"CloudVisible",1},
 {"SystemAlarmCPU",90},{"SystemAlarmRAM",90},{"SystemAlarmDisk",90},
 {"SendIntervalIdle",500},{"SendIntervalBusy",100},
 //自动保存事件间隔[min],自动图片清理间隔[h],自动重启框架间隔[h]
-{"AutoSaveInterval",10},{"AutoClearImage",0},{"AutoFrameRemake",0}
+{"AutoSaveInterval",5},{"AutoClearImage",0},{"AutoFrameRemake",0},
+//接收群内自己的消息，接受自己私聊消息
+{"ListenGroupEcho",0},{"ListenSelfEcho",0},
 };
 const enumap<string> Console::mClockEvent{"off", "on", "save", "clear"};
 
@@ -162,17 +164,19 @@ int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 			AddMsgToQueue(note, ct);
 			Cnt++;
 		}
-		if (!Cnt)sendPrivateMsg(DiceMaid, note);
+		if (!Cnt)DD::sendPrivateMsg(DiceMaid, note);
 	}
+	else DD::debugLog(note);
 	return Cnt;
 } 
 void Console::newMaster(long long qq)
 {
 	masterQQ = qq; 
-	getUser(qq).trust(5); 
-	setNotice({qq, CQ::msgtype::Private}, 0b111111);
+	if (trustedQQ(qq) < 5)getUser(qq).trust(5);
+	setNotice({qq, msgtype::Private}, 0b111111);
 	save(); 
-	AddMsgToQueue(getMsg("strNewMaster"), qq); 
+	AddMsgToQueue(getMsg("strNewMaster"), qq);
+	AddMsgToQueue(intConf["Private"] ? getMsg("strNewMasterPrivate") : getMsg("strNewMasterPublic"), qq);
 }
 
 void Console::reset()
@@ -187,7 +191,7 @@ void Console::loadNotice()
 	if (loadFile(DiceDir + "/conf/NoticeList.txt", NoticeList) < 1)
 	{
 		std::set<chatType> sChat;
-		if (loadFile(std::string(getAppDirectory()) + "MonitorList.RDconf", sChat) > 0)
+		if (loadFile(DiceDir + "com.w4123.dice\\MonitorList.RDconf", sChat) > 0)
 			for (const auto& it : sChat)
 			{
 				console.setNotice(it, 0b100000);
@@ -225,7 +229,7 @@ std::set<long long> ExceptGroups;
 std::map<long long, long long> mDiceList;
 
 //程序启动时间
-long long llStartTime = clock();
+long long llStartTime = time(nullptr);
 
 //当前时间
 tm stNow{};
@@ -287,17 +291,16 @@ std::string printSTime(const tm st)
 	//打印用户昵称QQ
 	string printQQ(long long llqq)
 	{
-		string nick = getStrangerInfo(llqq).nick;
-		if (nick.empty())nick = getFriendList()[llqq].nick;
-		if(nick.empty())return "用户(" + to_string(llqq) + ")";
+		string nick = DD::getQQNick(llqq);
+		if (nick.empty())return getMsg("stranger") + "[" + to_string(llqq) + "]";
 		return nick + "(" + to_string(llqq) + ")";
 	}
 	//打印QQ群号
 	string printGroup(long long llgroup)
 	{
-		if (!llgroup)return"私聊";
+		if (!llgroup)return "私聊";
 		if (ChatList.count(llgroup))return printChat(ChatList[llgroup]);
-		if (getGroupList().count(llgroup))return "[" + getGroupList()[llgroup] + "](" + to_string(llgroup) + ")";
+		if (string name{ DD::getGroupName(llgroup) };!name.empty())return "[" + name + "](" + to_string(llgroup) + ")";
 		return "群(" + to_string(llgroup) + ")";
 	}
 	//打印聊天窗口
@@ -391,73 +394,11 @@ bool operator<(const Console::Clock clock, const tm& st)
 	}
 
 
-EVE_Menu(eventGlobalSwitch)
-{
-	if (console["DisabledGlobal"])
-	{
-		console.set("DisabledGlobal", 0);
-#ifdef _WIN32
-		MessageBoxA(nullptr, "骰娘已结束静默√", "全局开关", MB_OK | MB_ICONINFORMATION);
-#endif
-	}
-	else
-	{
-		console.set("DisabledGlobal", 1);
-#ifdef _WIN32
-		MessageBoxA(nullptr, "骰娘已全局静默√", "全局开关", MB_OK | MB_ICONINFORMATION);
-#endif
+	void ThreadFactory::exit() {
+		rear = 0;
+		for (auto& th : vTh) {
+			if (th.joinable())th.join();
+		}
+		vTh = {};
 	}
 
-	return 0;
-}
-
-EVE_Request_AddFriend(eventAddFriend)
-{
-	if (!console["ListenFriendRequest"])return 0;
-	string strMsg = "好友添加请求，来自 " + printQQ(fromQQ)+ ":";
-	if (msg && msg[0] != '\0') strMsg += msg;
-	this_thread::sleep_for(3s);
-	if (blacklist->get_qq_danger(fromQQ))
-	{
-		strMsg += "\n已拒绝（用户在黑名单中）";
-		setFriendAddRequest(responseFlag, 2, "");
-		console.log(strMsg, 0b10, printSTNow());
-	}
-	else if (trustedQQ(fromQQ))
-	{
-		strMsg += "\n已同意（受信任用户）";
-		setFriendAddRequest(responseFlag, 1, "");
-		AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromQQ);
-		console.log(strMsg, 1, printSTNow());
-	}
-	else if (console["AllowStranger"] < 2 && !UserList.count(fromQQ))
-	{
-		strMsg += "\n已拒绝（无用户记录）";
-		setFriendAddRequest(responseFlag, 2, getMsg("strFriendDenyNotUser").c_str());
-		console.log(strMsg, 1, printSTNow());
-	}
-	else if (console["AllowStranger"] < 1)
-	{
-		strMsg += "\n已拒绝（非信任用户）";
-		setFriendAddRequest(responseFlag, 2, getMsg("strFriendDenyNoTrust").c_str());
-		console.log(strMsg, 1, printSTNow());
-	}
-	else
-	{
-		strMsg += "\n已同意";
-		setFriendAddRequest(responseFlag, 1, "");
-		AddMsgToQueue(getMsg("strAddFriend"), fromQQ);
-		console.log(strMsg, 1, printSTNow());
-	}
-	return 1;
-}
-
-EVE_Friend_Add(eventFriendAdd)
-{
-	if (!console["ListenFriendAdd"])return 0;
-	this_thread::sleep_for(3s);
-	GlobalMsg["strAddFriendWhiteQQ"].empty()
-		? AddMsgToQueue(getMsg("strAddFriend"), fromQQ)
-		: AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromQQ);
-	return 0;
-}

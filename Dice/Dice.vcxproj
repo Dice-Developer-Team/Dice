@@ -55,6 +55,8 @@
     </LinkKeyFile>
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
     <Linkage-AWSSDKCPP-S3>static</Linkage-AWSSDKCPP-S3>
+    <IncludePath>$(SolutionDir)QQAPI;$(IncludePath)</IncludePath>
+    <TargetName>w4123.Dice</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -63,7 +65,8 @@
     <Linkage-AWSSDKCPP-DynamoDB>static</Linkage-AWSSDKCPP-DynamoDB>
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
     <Linkage-AWSSDKCPP-S3>static</Linkage-AWSSDKCPP-S3>
-    <TargetName>app</TargetName>
+    <TargetName>w4123.Dice</TargetName>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Lua;$(SolutionDir)QQAPI</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -77,14 +80,14 @@
       <ConformanceMode>true</ConformanceMode>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointModel>Precise</FloatingPointModel>
-      <AdditionalIncludeDirectories>..\CQSDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\CQSDK;..\Lua;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -127,6 +130,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\packages\AWSSDKCPP-Core.1.6.25\build\native\lib\Win32\Debug\v141\static;..\packages\AWSSDKCPP-S3.1.6.20060301.25\build\native\lib\Win32\Debug\v141\static;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>aws-cpp-sdk-core.lib;aws-cpp-sdk-s3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <HeapReserveSize>4194304</HeapReserveSize>
+      <HeapCommitSize>
+      </HeapCommitSize>
     </Link>
     <CustomBuildStep>
       <Command>
@@ -137,12 +143,43 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\CQSDKCPP\CQAPI.cpp" />
-    <ClCompile Include="..\CQSDKCPP\CQAPI_EX.cpp" />
-    <ClCompile Include="..\CQSDKCPP\CQEVE.cpp" />
-    <ClCompile Include="..\CQSDKCPP\CQstream.cpp" />
     <ClCompile Include="..\CQSDKCPP\CQTools.cpp" />
     <ClCompile Include="..\CQSDKCPP\Unpack.cpp" />
+    <ClCompile Include="..\Lua\lapi.c" />
+    <ClCompile Include="..\Lua\lauxlib.c" />
+    <ClCompile Include="..\Lua\lbaselib.c" />
+    <ClCompile Include="..\Lua\lcode.c" />
+    <ClCompile Include="..\Lua\lcorolib.c" />
+    <ClCompile Include="..\Lua\lctype.c" />
+    <ClCompile Include="..\Lua\ldblib.c" />
+    <ClCompile Include="..\Lua\ldebug.c" />
+    <ClCompile Include="..\Lua\ldo.c" />
+    <ClCompile Include="..\Lua\ldump.c" />
+    <ClCompile Include="..\Lua\lfunc.c" />
+    <ClCompile Include="..\Lua\lgc.c" />
+    <ClCompile Include="..\Lua\linit.c" />
+    <ClCompile Include="..\Lua\liolib.c" />
+    <ClCompile Include="..\Lua\llex.c" />
+    <ClCompile Include="..\Lua\lmathlib.c" />
+    <ClCompile Include="..\Lua\lmem.c" />
+    <ClCompile Include="..\Lua\loadlib.c" />
+    <ClCompile Include="..\Lua\lobject.c" />
+    <ClCompile Include="..\Lua\lopcodes.c" />
+    <ClCompile Include="..\Lua\loslib.c" />
+    <ClCompile Include="..\Lua\lparser.c" />
+    <ClCompile Include="..\Lua\lstate.c" />
+    <ClCompile Include="..\Lua\lstring.c" />
+    <ClCompile Include="..\Lua\lstrlib.c" />
+    <ClCompile Include="..\Lua\ltable.c" />
+    <ClCompile Include="..\Lua\ltablib.c" />
+    <ClCompile Include="..\Lua\ltm.c" />
+    <ClCompile Include="..\Lua\luac.c" />
+    <ClCompile Include="..\Lua\lundump.c" />
+    <ClCompile Include="..\Lua\lutf8lib.c" />
+    <ClCompile Include="..\Lua\lvm.c" />
+    <ClCompile Include="..\Lua\lzio.c" />
+    <ClCompile Include="..\QQAPI\DDAPI.cpp" />
+    <ClCompile Include="..\QQAPI\QQEvent.cpp" />
     <ClCompile Include="BlackListManager.cpp" />
     <ClCompile Include="CardDeck.cpp" />
     <ClCompile Include="CharacterCard.cpp" />
@@ -154,6 +191,7 @@
     <ClCompile Include="DiceFile.cpp" />
     <ClCompile Include="DiceJob.cpp" />
     <ClCompile Include="DiceGUI.cpp" />
+    <ClCompile Include="DiceLua.cpp" />
     <ClCompile Include="DiceMod.cpp" />
     <ClCompile Include="DiceMsgSend.cpp" />
     <ClCompile Include="DiceNetwork.cpp" />
@@ -174,26 +212,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CQSDK\bufstream.h" />
-    <ClInclude Include="..\CQSDK\CQAPI.h" />
-    <ClInclude Include="..\CQSDK\CQAPI_EX.h" />
-    <ClInclude Include="..\CQSDK\CQconstant.h" />
-    <ClInclude Include="..\CQSDK\cqdefine.h" />
-    <ClInclude Include="..\CQSDK\CQEVE.h" />
-    <ClInclude Include="..\CQSDK\CQEVEBasic.h" />
-    <ClInclude Include="..\CQSDK\CQEVEMsg.h" />
-    <ClInclude Include="..\CQSDK\CQEVERequest.h" />
-    <ClInclude Include="..\CQSDK\CQEVE_ALL.h" />
-    <ClInclude Include="..\CQSDK\CQEVE_DiscussMsg.h" />
-    <ClInclude Include="..\CQSDK\CQEVE_FriendAdd.h" />
-    <ClInclude Include="..\CQSDK\CQEVE_GroupMsg.h" />
-    <ClInclude Include="..\CQSDK\CQEVE_PrivateMsg.h" />
-    <ClInclude Include="..\CQSDK\CQEVE_RequestAddFriend.h" />
-    <ClInclude Include="..\CQSDK\CQEVE_RequestAddGroup.h" />
-    <ClInclude Include="..\CQSDK\CQEVE_Status.h" />
-    <ClInclude Include="..\CQSDK\CQLogger.h" />
-    <ClInclude Include="..\CQSDK\CQMsgSend.h" />
     <ClInclude Include="..\CQSDK\CQTools.h" />
     <ClInclude Include="..\CQSDK\Unpack.h" />
+    <ClInclude Include="..\Lua\lauxlib.h" />
+    <ClInclude Include="..\Lua\lua.h" />
+    <ClInclude Include="..\Lua\lualib.h" />
+    <ClInclude Include="..\QQAPI\DDAPI.h" />
+    <ClInclude Include="..\QQAPI\QQEvent.h" />
     <ClInclude Include="APPINFO.h" />
     <ClInclude Include="BlackListManager.h" />
     <ClInclude Include="CardDeck.h" />
@@ -205,6 +230,7 @@
     <ClInclude Include="DiceFile.hpp" />
     <ClInclude Include="DiceJob.h" />
     <ClInclude Include="DiceGUI.h" />
+    <ClInclude Include="DiceLua.h" />
     <ClInclude Include="DiceMod.h" />
     <ClInclude Include="DiceMsgSend.h" />
     <ClInclude Include="DiceNetwork.h" />
@@ -233,9 +259,6 @@
     <None Include="ClassDiagram.cd" />
     <None Include="com.w4123.dice.json" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="CQP.lib" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />

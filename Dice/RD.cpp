@@ -20,14 +20,12 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "CQEVE_ALL.h"
 #include "CQTools.h"
 #include <cctype>
 #include "RD.h"
 #include "RDConstant.h"
 #include "MsgFormat.h"
 using namespace std;
-using namespace CQ;
 
 void init(string& msg)
 {
@@ -447,6 +445,19 @@ int RollSuccessLevel(int res, int rate, int rule)
 		if (res <= rate)return 2;
 		if (rate >= 50 || res < 96)return 1;
 		return 0;
+		break;
+	case 6:
+		if (res > rate) {
+			if (res == 100 || res % 11 == 0) {
+				return 0;
+			}
+			return 1;
+		} else {
+			if (res == 1 || res % 11 == 0) {
+				return 5;
+			}
+			return 2;
+		}
 		break;
 	default: return -1;
 	}

@@ -7,6 +7,7 @@
 #include <mutex>
 #include "MsgMonitor.h"
 #include "DiceSchedule.h"
+#include "DDAPI.h"
 
 std::atomic<unsigned int> FrqMonitor::sumFrqTotal = 0;
 std::map<long long, int> FrqMonitor::mFrequence = {};
@@ -78,32 +79,38 @@ FrqMonitor::FrqMonitor(long long QQ, time_t TT, chatType CT) : fromQQ(QQ), fromT
 	if (mFrequence.count(fromQQ)) {
 		mFrequence[fromQQ] += 10;
 		mCntOrder[fromQQ] += 1;
-		if (!console["ListenSpam"] || trustedQQ(fromQQ) > 1 || console.is_self(QQ))return;
+		if ((!console["ListenSpam"] || trustedQQ(fromQQ) > 1) && !console.is_self(QQ))return;
 		if (mFrequence[fromQQ] > 60 && mWarnLevel[fromQQ] < 60) {
 			mWarnLevel[fromQQ] = mFrequence[fromQQ];
-			const std::string strMsg = "提醒：\n" + (CT.second != CQ::msgtype::Private ? printChat(CT) : "私聊窗口") +
+			const std::string strMsg = "提醒：\n" + (CT.second != msgtype::Private ? printChat(CT) : "私聊窗口") +
 				"监测到" + printQQ(fromQQ) + "高频发送指令达" + to_string(mCntOrder[fromQQ])
 				+ (mCntOrder[fromQQ] > 18 ? "/5min"
 				   : (mCntOrder[fromQQ] > 8 ? "/min" : "/30s"));
-			AddMsgToQueue(getMsg("strSpamFirstWarning"), CT);
+			if(!console.is_self(QQ))AddMsgToQueue(getMsg("strSpamFirstWarning"), CT);
 			console.log(strMsg, 1, printSTNow());
 		}
 		else if (mFrequence[fromQQ] > 120 && mWarnLevel[fromQQ] < 120) {
 			mWarnLevel[fromQQ] = mFrequence[fromQQ];
-			const std::string strMsg = "警告：\n" + (CT.second != CQ::msgtype::Private ? printChat(CT) : "私聊窗口") +
+			const std::string strMsg = "警告：\n" + (CT.second != msgtype::Private ? printChat(CT) : "私聊窗口") +
 				printQQ(fromQQ) + "高频发送指令达" + to_string(mCntOrder[fromQQ])
 				+ (mCntOrder[fromQQ] > 36 ? "/5min"
 				   : (mCntOrder[fromQQ] > 15 ? "/min" : "/30s"));
+			if (!console.is_self(QQ))AddMsgToQueue(getMsg("strSpamFinalWarning"), CT);
 			console.log(strMsg, 0b10, printSTNow());
 		}
 		else if (mFrequence[fromQQ] > 200 && mWarnLevel[fromQQ] < 200) {
 			mWarnLevel[fromQQ] = mFrequence[fromQQ];
 			std::string strNow = printSTNow();
-			std::string strNote = (CT.second != CQ::msgtype::Private ? printChat(CT) : "私聊窗口") + "监测到" +
+			std::string strNote = (CT.second != msgtype::Private ? printChat(CT) : "私聊窗口") + "监测到" +
 				printQQ(fromQQ) + "对" + printQQ(console.DiceMaid) + "高频发送指令达" + to_string(mCntOrder[fromQQ])
 				+ (mCntOrder[fromQQ] > 60 ? "/5min"
 				   : (mCntOrder[fromQQ] > 25 ? "/min" : "/30s"));
-			if (mDiceList.count(fromQQ)) {
+			if (console.is_self(QQ)) {
+				console.set("ListenSelfEcho", 0);
+				console.set("ListenGroupEcho", 0);
+				console.log(strNote + "\n已强制停止接收回音", 0b1000, strNow);
+			}
+			else if (DD::getDiceSisters().count(fromQQ)) {
 				console.log(strNote, 0b1000, strNow);
 			}
 			else {
@@ -124,32 +131,7 @@ int FrqMonitor::getFrqTotal()
 	return EarlyMsgQueue.size() + EarlierMsgQueue.size() / 2 + EarliestMsgQueue.size() / 10;
 }
 
-/*EVE_Status_EX(statusUptime) {
-	//初始化以来的秒数
-	long long llDuration = clock() / CLOCKS_PER_SEC;
-	//long long llDuration = (clock() - llStartTime) / CLOCKS_PER_SEC;
-	if (llDuration < 0) {
-		eve.data = "N";
-		eve.dataf = "/A";
-	}
-	else if (llDuration < 60 * 5) {
-		eve.data = std::to_string(llDuration);
-		eve.dataf = "s";
-	}
-	else if (llDuration < 60 * 60 * 5) {
-		eve.data = std::to_string(llDuration / 60);
-		eve.dataf = "min";
-	}
-	else if (llDuration < 60 * 60 * 24 * 5) {
-		eve.data = std::to_string(llDuration / 60 / 60);
-		eve.dataf = "h";
-	} 
-	else{
-		eve.data = std::to_string(llDuration / 60 / 60 / 24);
-		eve.dataf = "day";
-	}
-	eve.color_green();
-}*/
+/*
 EVE_Status_EX(statusFrq)
 {
 	if (!Enabled)
@@ -160,7 +142,7 @@ EVE_Status_EX(statusFrq)
 	}
 	//平滑到分钟的频度
 	const int intFrq = FrqMonitor::getFrqTotal();
-	//long long llDuration = (clock() - llStartTime) / CLOCKS_PER_SEC;
+	//long long llDuration = time(nullptr) - llStartTime;
 	if (intFrq < 0)
 	{
 		eve.data = "N";
@@ -185,3 +167,4 @@ EVE_Status_EX(statusFrq)
 		}
 	}
 }
+*/

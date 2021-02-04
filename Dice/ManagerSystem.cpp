@@ -11,6 +11,8 @@
 
 #include "CardDeck.h"
 #include "GlobalVar.h"
+#include "DDAPI.h"
+#include "CQTools.h"
 
 string dirExe;
 string DiceDir = "DiceData";
@@ -72,8 +74,9 @@ string getName(long long QQ, long long GroupID)
 	if (QQ == console.DiceMaid)return getMsg("strSelfCall");
 	string nick;
 	if (UserList.count(QQ) && getUser(QQ).getNick(nick, GroupID))return nick;
-	if (GroupID && !(nick = strip(CQ::getGroupMemberInfo(GroupID, QQ).GroupNick)).empty())return nick;
-	if (!(nick = strip(CQ::getStrangerInfo(QQ).nick)).empty())return nick;
+	if (GroupID && !(nick = DD::getGroupNick(GroupID, QQ)).empty()
+		&& !(nick = strip(msg_decode(nick))).empty())return nick;
+	if (nick = DD::getQQNick(QQ); !(nick = strip(msg_decode(nick))).empty())return nick;
 	return GlobalMsg["stranger"] + "(" + to_string(QQ) + ")";
 }
 void filter_CQcode(string& nick, long long fromGroup)
@@ -136,14 +139,10 @@ Chat& chat(long long id)
 }
 Chat& Chat::id(long long grp) {
 	ID = grp;
+	Name = DD::getGroupName(grp);
 	if (!Enabled)return *this;
-	if (CQ::GroupInfo ginfo(grp); ginfo.llGroup || CQ::getGroupList().count(grp)) {
-		
-		Name = ginfo.strGroupName;
+	if (DD::getGroupIDList().count(grp)) {
 		isGroup = true;
-		if (ExceptGroups.count(grp) || ginfo.nGroupSize > 499) {
-			boolConf.insert("协议无效");
-		}
 	}
 	else {
 		boolConf.insert("未进");
@@ -151,21 +150,30 @@ Chat& Chat::id(long long grp) {
 	return *this;
 }
 
+void Chat::leave(const string& msg) {
+	if (!msg.empty()) {
+		if (isGroup)DD::sendGroupMsg(ID, msg);
+		else DD::sendDiscussMsg(ID, msg);
+		Sleep(500);
+	}
+	isGroup ? DD::setGroupLeave(ID) : DD::setDiscussLeave(ID);
+	set("已退");
+}
 bool Chat::is_except()const {
 	return boolConf.count("免黑") || boolConf.count("协议无效");
 }
 
-int groupset(long long id, string st)
+int groupset(long long id, const string& st)
 {
 	if (!ChatList.count(id))return -1;
-	return ChatList[id].isset(std::move(st));
+	return ChatList[id].isset(st);
 }
 
 string printChat(Chat& grp)
 {
-	if (CQ::getGroupList().count(grp.ID))return "[" + CQ::getGroupList()[grp.ID] + "](" + to_string(grp.ID) + ")";
+	string name{ DD::getGroupName(grp.ID) };
+	if (!name.empty())return "[" + name + "](" + to_string(grp.ID) + ")";
 	if (!grp.Name.empty())return "[" + grp.Name + "](" + to_string(grp.ID) + ")";
-	if (grp.isset("群名"))return "[" + grp.strConf["群名"] + "](" + to_string(grp.ID) + ")";
 	if (grp.isGroup) return "群(" + to_string(grp.ID) + ")";
 	return "讨论组(" + to_string(grp.ID) + ")";
 }

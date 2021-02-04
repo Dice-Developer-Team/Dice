@@ -20,7 +20,6 @@
 #include "DiceFile.hpp"
 #include "MsgFormat.h"
 #include "DiceMsgSend.h"
-#include "CQEVE_ALL.h"
 using namespace std::literals::chrono_literals;
 using std::string;
 using std::to_string;
@@ -71,7 +70,7 @@ public:
 
 	void killMaster()
 	{
-		rmNotice({masterQQ, CQ::msgtype::Private});
+		rmNotice({masterQQ, msgtype::Private});
 		masterQQ = 0;
 		save();
 	}
@@ -207,18 +206,15 @@ public:
 	int rear = 0;
 	std::array<std::thread, 6> vTh;
 
-	void operator()(void (*func)())
-	{
-		std::thread th(func);
+	void operator()(void (*func)()) {
+		std::thread th{ [func]() {try { func(); } catch (...) { return; }} };
 		vTh[rear] = std::move(th);
+		//vTh[rear].detach();
 		rear++;
 	}
-	void exit() {
-		for (auto& th : vTh) {
-			th.join();
-		}
-		vTh = {};
-		rear = 0;
+	void exit();
+	~ThreadFactory() {
+		exit();
 	}
 };
 

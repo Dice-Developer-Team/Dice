@@ -3,6 +3,7 @@
  * Copyright (C) 2019-2020 String.Empty
  */
 #pragma once
+#include <string>
 #include <vector>
 #include <map>
 #include <queue>

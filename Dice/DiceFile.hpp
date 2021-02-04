@@ -14,11 +14,12 @@
 #include <filesystem>
 #include <unordered_set>
 #include <unordered_map>
+#include <variant>
 #include <cstdio>
 #include "DiceXMLTree.h"
 #include "StrExtern.hpp"
 #include "DiceMsgSend.h"
-
+#include "MsgFormat.h"
 
 using std::ifstream;
 using std::ofstream;
@@ -78,6 +79,8 @@ bool fscan(std::ifstream& fin, C& obj)
 	return false;
 }
 
+using var = std::variant<std::monostate, int, double, string>;
+
 // 读取二进制文件——基础类型重载
 template <typename T>
 std::enable_if_t<std::is_fundamental_v<T>, T> fread(ifstream& fin)
@@ -98,6 +101,25 @@ std::enable_if_t<std::is_same_v<T, std::string>, T> fread(ifstream& fin)
 	delete[] buff;
 	return s;
 }
+template <typename T>
+std::enable_if_t<std::is_same_v<T, var>, T> fread(ifstream& fin) {
+	const short len = fread<short>(fin);
+	if (len >= 0) {
+		char* buff = new char[len];
+		fin.read(buff, sizeof(char) * len);
+		std::string s(buff, len);
+		delete[] buff;
+		return s;
+	}
+	switch (len) {
+	case -1:
+		return fread<int>(fin);
+	case -2:
+		return fread<double>(fin);
+	default:
+		return {};
+	}
+}
 
 // 读取二进制文件——含readb函数类重载
 template <class C, void(C::* U)(std::ifstream&) = &C::readb>
@@ -114,6 +136,7 @@ std::map<T1, T2> fread(ifstream& fin)
 {
 	std::map<T1, T2> m;
 	short len = fread<short>(fin);
+	if (len < 0)return m;
 	while (len--)
 	{
 		T1 key = fread<T1>(fin);
@@ -122,12 +145,23 @@ std::map<T1, T2> fread(ifstream& fin)
 	}
 	return m;
 }
+template <typename T1, typename T2, typename sort>
+void fread(ifstream& fin, std::map<T1, T2, sort>& dir) {
+	short len = fread<short>(fin);
+	if (len < 0)return;
+	while (len--) {
+		T1 key = fread<T1>(fin);
+		T2 val = fread<T2>(fin);
+		dir[key] = val;
+	}
+}
 
 // 读取二进制文件——std::set重载
 template <typename T, bool isLib>
 std::set<T> fread(ifstream& fin)
 {
 	short len = fread<short>(fin);
+	if (len < 0)return {};
 	set<T> s{};
 	while (len--)
 	{
@@ -364,7 +398,7 @@ int _loadDir(int (*load)(const std::string&, T2&), const std::string& strDir, T2
 
 //读取文件夹
 template <typename T>
-int loadDir(int (*load)(const std::string&, T&), const std::string& strDir, T& tmp, std::string& strLog,
+int loadDir(int (*load)(const std::string&, T&), const std::string& strDir, T& tmp, ResList& logList,
             bool isSubdir = false)
 {
 	int intFile = 0, intFailure = 0, intItem = 0;
@@ -381,13 +415,13 @@ int loadDir(int (*load)(const std::string&, T&), const std::string& strDir, T& t
 	}
 
 	if (!intFile)return 0;
-	strLog += "读取" + strDir + "中的" + std::to_string(intFile) + "个文件, 共" + std::to_string(intItem) + "个条目\n";
+	logList << "读取" + strDir + "中的" + std::to_string(intFile) + "个文件, 共" + std::to_string(intItem) + "个条目";
 	if (intFailure)
 	{
-		strLog += "读取失败" + std::to_string(intFailure) + "个:\n";
+		logList << "读取失败" + std::to_string(intFailure) + "个:";
 		for (auto& it : files)
 		{
-			strLog += it + "\n";
+			logList << it;
 		}
 	}
 	return intFile;
@@ -441,6 +475,7 @@ typename std::enable_if<!std::is_class<T>::value, void>::type fwrite(ofstream& f
 
 
 void fwrite(ofstream& fout, const std::string& s);
+void fwrite(ofstream& fout, const var& var);
 
 template <class C, void(C::* U)(std::ofstream&) const = &C::writeb>
 void fwrite(ofstream& fout, C& obj)
@@ -454,8 +489,8 @@ void fwrite(ofstream& fout, C& obj)
 	obj.writeb(fout);
 }
 
-template <typename T1, typename T2>
-void fwrite(ofstream& fout, const std::map<T1, T2>& m)
+template <typename T1, typename T2, typename sort>
+void fwrite(ofstream& fout, const std::map<T1, T2, sort>& m)
 {
 	const auto len = static_cast<short>(m.size());
 	fwrite(fout, len);

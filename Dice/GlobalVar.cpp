@@ -24,25 +24,22 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif
-#include "CQLogger.h"
 #include "GlobalVar.h"
 #include "MsgFormat.h"
 
 bool Enabled = false;
 
-QQFrame frame{ QQFrame::CoolQ };
+//QQFrame frame{ QQFrame::CoolQ };
 
-std::string Dice_Full_Ver_For = Dice_Full_Ver + " For CoolQ]";
+std::string Dice_Full_Ver_On;
 
-std::string strModulePath;
+//std::string strModulePath;
 
 #ifdef _WIN32
 HMODULE hDllModule = nullptr;
 #endif
 
 bool msgSendThreadRunning = false;
-
-CQ::logger DiceLogger("Dice!");
 
 std::map<std::string, std::string> GlobalMsg
 {
@@ -88,14 +85,12 @@ std::map<std::string, std::string> GlobalMsg
 	{"strGroupWholeBanErr","{self}开启全局禁言失败×"},
 	{"strGroupUnban","{self}裁定:{member}解除禁言√"},
 	{"strGroupBan","{self}裁定:{member}禁言{res}分钟√"},
-	{"strGroupBanErr","{self}禁言{member}失败×"},
 	{"strGroupNotFound","{self}无该群记录×"},
-	{"strGroupNotIn","{self}当前不在该群或对象不是群！"},
+	{"strGroupNot","{group}不是群！"},
+	{"strGroupNotIn","{self}当前不在{group}内×"},
 	{"strGroupExit","{self}已退出该群√"},
 	{"strGroupCardSet","{self}已将{target}的群名片修改为{card}√"},
-	{"strGroupCardSetErr","{self}设置{target}的群名片失败×"},
 	{"strGroupTitleSet","{self}已将{target}的头衔修改为{title}√"},
-	{"strGroupTitleSetErr","{self}设置{target}的头衔失败×"},
 	{"strPcNewEmptyCard","已为{nick}新建{type}空白卡{char}√"},
 	{"strPcNewCardShow","已为{nick}新建{type}卡{char}：{show}"},//由于预生成选项而存在属性
 	{"strPcCardSet","已将{nick}当前角色卡绑定为{char}√"},//{nick}-用户昵称 {pc}-原角色卡名 {char}-新角色卡名
@@ -195,6 +190,7 @@ std::map<std::string, std::string> GlobalMsg
 	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
 	{"strHelpNotFound","{self}未找到【{help_word}】相关的词条×"},
 	{"strHelpSuggestion","{self}猜{nick}想要查找的是:{res}"},
+	{"strHelpRedirect","{self}仅找到相近词条【{redirect_key}】:\n{redirect_res}" },
 	{"strClockToWork","{self}已按时启用√"},
 	{"strClockOffWork","{self}已按时关闭√"},
 	{"strNameGenerator","{pc}的随机名称：{res}"},
@@ -310,8 +306,8 @@ std::map<std::string, std::string> GlobalMsg
 	{"strPreserve", "{self}私有私用，勿扰勿怪\n如需申请许可请发送!authorize +[群号] 申请用途:[ **请写入理由** ] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[ **请写入指令** ]，用后使用[ **请写入指令** ]送出群"},
 	{"strJrrp", "{nick}今天的人品值是: {res}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{res}"},
-	{ "strFriendDenyNotUser", "很遗憾，你没有使用{self}的记录" },
-	{ "strFriendDenyNoTrust", "很遗憾，你不是{self}信任的用户" },
+	{ "strFriendDenyNotUser", "很遗憾，你没有对{self}使用指令的记录" },
+	{ "strFriendDenyNoTrust", "很遗憾，你不是{self}信任的用户，如需使用可联系{master_QQ}" },
 	{"strAddFriendWhiteQQ", "{strAddFriend}"}, //白名单用户添加好友时回复此句
 	{
 		"strAddFriend",
@@ -333,7 +329,21 @@ std::map<std::string, std::string> GlobalMsg
 .help设定 确认骰娘设定
 .help链接 查看源码文档
 邀请入群默认视为同意服务协议，知晓禁言或移出的后果)"
-	},
+	}, 
+	{ "strNewMaster","试问，你就是{strSelfName}的Master√\n请认真阅读当前版本Master手册以及用户手册。请注意版本号对应: https://v2docs.kokona.tech\f{strSelfName}默认开启对群移出、禁言、刷屏事件的监听，如要关闭请手动调整；\n请注意云黑系统默认开启，如无需此功能请关闭CloudBlackShare；" },
+	{ "strNewMasterPublic",R"({strSelfName}初始化开启公骰模式：
+自动开启BelieveDiceList响应来自骰娘列表的warning；
+公骰模式默认同意有掷骰记录用户的好友邀请，如要改为同意任何人请使用.admin AllowStranger=2；
+已开启黑名单自动清理，拉黑时及每日定时会自动清理与黑名单用户的共同群聊，黑名单用户群权限不低于自己时自动退群；
+已开启拉黑群时连带邀请人；
+已启用send功能接收用户发送的消息；)" },
+	{ "strNewMasterPrivate",R"({strSelfName}默认开启私骰模式：
+默认拒绝陌生人的群邀请，只同意来自管理员、受信任用户的邀请；
+默认拒绝陌生人的好友邀请，如要同意请开启AllowStranger；
+已开启黑名单自动清理，拉黑时及每日定时会自动清理与黑名单用户的共同群聊，黑名单用户群权限高于自己时自动退群；
+.me功能默认不可用，需要手动开启；
+切换公用请使用.admin public，但不会初始化相应设置；
+可在.master delete后使用.master public来重新初始化；)" },
 	{"strSelfName", ""},
 	{"strSelfCall", "&strSelfName"},
 	{"self", "&strSelfCall"},
@@ -355,6 +365,12 @@ std::map<std::string, std::string> GlobalMsg
 std::map<std::string, std::string> EditedMsg;
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+575:设置自我响应
+574:默认骰机制优化
+573:角色卡机制优化
+572:允许脚本读写角色卡
+571:更新框架，允许多开
+570:允许.lua脚本自定义指令
 569:.rc/.draw暗骰暗抽
 568:.deck自定义牌堆重做
 567:敏感词检测
@@ -363,26 +379,19 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 564:多功能优化，牌数牌堆等
 563:优化指令帮助
 562:新增GUI
-561:群/好友列表内部缓存
-560:支持Mirai加载, 基础GUI
 559:远程更新插件/不良记录
-558:新增每日统计
 557:定时作业系统
-556:黑名单系统重做
 554:新增多角色卡功能
-553:name功能调整
-552:后台系统大修
 551:文件夹批量读取牌堆
 550:允许多轮检定
-549:新增刷屏监测
-547:更新指令开关
-537:更新.send功能)"},
+549:新增刷屏监测)"},
 {"协议","0.本协议是Dice!默认服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
 {"链接","Dice!论坛导航贴: https://kokona.tech \n Dice!论坛: https://forum.kokona.tech"},
-{"设定","Master：{master_QQ}\n好友申请：需要使用记录\n入群邀请：黑名单制，非黑即入\n讨论组使用：允许\n移出反制：拉黑群和操作者\n禁言反制：默认拉黑群和群主\n刷屏反制：警告\n邀请人责任：有限连带\n窥屏可能：{窥屏可能}\n其他插件：{其他插件}\n骰娘用户群:{骰娘用户群}\n官方(水)群: 882747577\n私骰分享群：863062599 192499947\n开发交流群：1029435374"},
+{"设定","Master：{master_QQ}\n好友申请：需要使用记录\n入群邀请：黑名单制，非黑即入\n讨论组使用：允许\n移出反制：拉黑群和操作者\n禁言反制：默认拉黑群和群主\n刷屏反制：警告\n邀请人责任：有限连带\n窥屏可能：{窥屏可能}\n其他插件：{其他插件}{姐妹骰}\n骰娘用户群:{骰娘用户群}\n官方(水)群: 882747577\n私骰分享群：863062599 192499947\n开发交流群：1029435374"},
 {"骰娘用户群","【未设置】"},
 {"窥屏可能","无"},
 {"其他插件","【未设置】"},
+{"姐妹骰","{list_dice_sister}"},
 {"作者","Copyright (C) 2018-2020 w4123溯洄\nCopyright (C) 2019-2020 String.Empty"},
 {"指令",R"(at骰娘后接指令可以指定骰娘单独响应，如at骰娘.bot off
 多数指令需要后接参数，请.help对应指令 获取详细信息，如.help jrrp
@@ -444,7 +453,7 @@ Master拥有最高权限，且可以调整任意信任)"},
 .deck new [牌堆名]=[卡面1](...|[卡面n])	//自定义牌堆
 例:
 .deck new 俄罗斯轮盘=有弹|无弹|无弹|无弹|无弹|无弹
-除show外其他群内操作需要管理权限)"},
+除show外其他群内操作需要用户信任或管理权限)"},
 {"退群","&dismiss"},
 {"退群指令","&dismiss"},
 {"dismiss","该指令需要群管理员权限，使用后即退出群聊\n!dismiss [目标QQ(完整或末四位)]指名退群\n!dismiss无视内置黑名单和静默状态，只要插件开启总是有效"},
@@ -489,6 +498,7 @@ Master拥有最高权限，且可以调整任意信任)"},
 所有群默认使用私聊绑定卡，未绑定则使用0号卡
 .pc show ([卡名]) //展示指定卡所有记录的属性，为空则展示当前卡
 .pc nn [新卡名] //重命名当前卡，不允许重名
+.pc type [模板] //将切换当前卡模板
 .pc cpy [卡名1]=[卡名2] //将后者属性复制给前者
 .pc del [卡名] //删除指定卡
 .pc list //列出全部角色卡
@@ -511,7 +521,7 @@ Master拥有最高权限，且可以调整任意信任)"},
 	},
 	{
 		"setcoc",
-		"为当前群或讨论组设置COC房规，如.setcoc 1,当前参数0-5\n0 规则书\n出1大成功\n不满50出96 - 100大失败，满50出100大失败\n1\n不满50出1大成功，满50出1 - 5大成功\n不满50出96 - 100大失败，满50出100大失败\n2\n出1 - 5且 <= 成功率大成功\n出100或出96 - 99且 > 成功率大失败\n3\n出1 - 5大成功\n出96 - 100大失败\n4\n出1 - 5且 <= 十分之一大成功\n不满50出 >= 96 + 十分之一大失败，满50出100大失败\n5\n出1 - 2且 < 五分之一大成功\n不满50出96 - 100大失败，满50出99 - 100大失败\n"
+		"为当前群或讨论组设置COC房规，如.setcoc 1,当前参数0-5\n0 规则书\n出1大成功\n不满50出96 - 100大失败，满50出100大失败\n1\n不满50出1大成功，满50出1 - 5大成功\n不满50出96 - 100大失败，满50出100大失败\n2\n出1 - 5且 <= 成功率大成功\n出100或出96 - 99且 > 成功率大失败\n3\n出1 - 5大成功\n出96 - 100大失败\n4\n出1 - 5且 <= 十分之一大成功\n不满50出 >= 96 + 十分之一大失败，满50出100大失败\n5\n出1 - 2且 < 五分之一大成功\n不满50出96 - 100大失败，满50出99 - 100大失败\n6 绿色三角洲\n出1或两骰相同<=成功率大成功\n出100或两骰相同>成功率大失败\n"
 		R"(如果其他房规可向开发者反馈
 无论如何，群内检定只会调用群内设置，否则后果将是团内成员不对等)"
 	},
@@ -536,13 +546,15 @@ Master拥有最高权限，且可以调整任意信任)"},
 		"draw",
 		R"(抽牌：.draw [牌堆名称] ([抽牌数量])	
 .draw _[牌堆名称] ([抽牌数量])	//暗抽，结果私聊发送
+.drawh [牌堆名称] ([抽牌数量])	//暗抽，参数h后必须留空格
 .draw _狼人杀	//抽牌结果通过私聊获取，可ob
-*牌堆名称可以是公共牌堆名或牌堆实例名
+*牌堆名称优先调用牌堆实例，如未设置则从同名公共牌堆生成临时实例
 *抽到的牌不放回，牌堆抽空后无法继续
 *查看{self}已安装牌堆，可.help 全牌堆列表或.help 扩展牌堆)"
 	},
 	{ "扩展牌堆","{list_extern_deck}" },
 	{ "全牌堆列表","{list_all_deck}" },
+	{ "扩展指令","{list_extern_order}" },
 	{"先攻", "&ri"},
 	{"ri", "先攻（群聊限定）：.ri([加值])([昵称])\n.ri -1 某pc\t//自动记入先攻列表\n.ri +5 boss"},
 	{"先攻列表", "&init"},

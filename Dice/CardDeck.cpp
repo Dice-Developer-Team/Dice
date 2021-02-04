@@ -1104,9 +1104,7 @@ namespace CardDeck
 				sortedIndex.push_back(sortedIndex[sortedIndex.size() - 1] + cnt);
 			}
 		}
-
-
-		
+				
 		std::string strReply;
 		if (TempDeck.empty())return "";
 		if (TempDeck.size() == 1)
@@ -1154,6 +1152,11 @@ namespace CardDeck
 		int lq = 0, rq = 0;
 		while ((lq = strExp.find('{', intCnt)) != std::string::npos && (rq = strExp.find('}', lq)) != std::string::npos)
 		{
+			if (lq > 0 && strExp[lq - 1] == '\\') {
+				strExp.erase(strExp.begin() + lq - 1); 
+				intCnt = rq;
+				continue;
+			}
 			bool isTmpBack = false;
 			string strTempName = strExp.substr(lq + 1, rq - lq - 1);
 			if (strTempName[0] == '%')
@@ -1177,6 +1180,11 @@ namespace CardDeck
 		intCnt = 0;
 		while ((lq = strExp.find('[', intCnt)) != std::string::npos && (rq = strExp.find(']', lq)) != std::string::npos)
 		{
+			if (lq > 0 && strExp[lq - 1] == '\\') {
+				strExp.erase(strExp.begin() + lq - 1);
+				intCnt = rq;
+				continue;
+			}
 			string strRoll = strExp.substr(lq + 1, rq - lq - 1);
 			intCnt = rq + 1;
 			RD RDroll(strRoll);

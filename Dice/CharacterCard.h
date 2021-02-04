@@ -139,9 +139,9 @@ public:
 	{
 	}
 
-	CardTemp(DDOM d)
+	CardTemp(const DDOM& d)
 	{
-		readt(std::move(d));
+		readt(d);
 	}
 
 	void readt(const DDOM& d)
@@ -168,6 +168,7 @@ public:
 				{
 					sInfoList.insert(sub);
 				}
+				break;
 			case 22:
 				readini(node.strValue, mAutoFill);
 				break;
@@ -203,30 +204,78 @@ public:
 		if (strItem.empty())return type;
 		return type + "[" + strItem + "]";
 	}
+	string show();
 };
 
+inline map<string, CardTemp> mCardTemplet = {
+		{
+			"COC7", {
+				"COC7", SkillNameReplace, BasicCOC7, InfoCOC7, AutoFillCOC7, mVariableCOC7, ExpressionCOC7,
+				SkillDefaultVal, {
+					{"_default", CardBuild({BuildCOC7}, CardDeck::mPublicDeck["随机姓名"], {})},
+					{
+						"bg", CardBuild({
+											{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
+											{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
+											{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
+										}, CardDeck::mPublicDeck["随机姓名"], {})
+					}
+				}
+			}
+		},
+		{"BRP", {
+				"BRP", {}, {}, {}, {}, {}, {}, {
+					{"__DefaultDice",100}
+				}, {
+					{"_default", CardBuild({}, CardDeck::mPublicDeck["随机姓名"], {})},
+					{
+						"bg", CardBuild({
+											{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
+											{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
+											{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
+										}, CardDeck::mPublicDeck["随机姓名"], {})
+					}
+				}
+		}},
+		{"DND", {
+				"DND", {}, {}, {}, {}, {}, {}, {
+					{"__DefaultDice",20}
+				}, {
+					{"_default", CardBuild({}, CardDeck::mPublicDeck["随机姓名"], {})},
+					{
+						"bg", CardBuild({
+											{"性别", "{性别}"}, 
+										}, CardDeck::mPublicDeck["随机姓名"], {})
+					}
+				}
+		}},
+};
+CardTemp& getCardTemplet(const string& type);
 
-map<string, CardTemp>& getmCardTemplet();
-
-
+struct lua_State;
 class CharaCard
 {
 private:
-public:
 	string Name = "角色卡";
-	string Type = "COC7";
-	map<string, short> Attr{};
-	map<string, string> Info{};
-	map<string, string> DiceExp{};
+public:
+	const string& getName()const { return Name; }
+	void setName(const string&);
+	//string Type = "COC7";
+	map<string, short, less_ci> Attr{};
+	map<string, string, less_ci> Info{ {"__Type","COC7"} };
+	map<string, string, less_ci> DiceExp{};
 	string Note;
-	const CardTemp* pTemplet = &getmCardTemplet()[Type];
+	CardTemp* pTemplet{ nullptr };
 
-	CharaCard()
-	{
+	CharaCard(){
+		pTemplet = &getCardTemplet("BRP");
 	}
 
-	CharaCard(string name, string type = "COC7") : Name(std::move(name)), Type(std::move(type))
+	CharaCard(const string& name, const string& type = "COC7") : Name(name)
 	{
+		Info["__Type"] = type;
+		Info["__Name"] = name;
+		pTemplet = &getCardTemplet(type);
 	}
 
 	short call(string& key)
@@ -365,7 +414,7 @@ public:
 		}
 	}
 
-	[[nodiscard]] string standard(string key) const
+	[[nodiscard]] string standard(const string& key) const
 	{
 		if (pTemplet->replaceName.count(key))return pTemplet->replaceName.find(key)->second;
 		return key;
@@ -373,6 +422,7 @@ public:
 
 	int set(string key, short val)
 	{
+		if (key.empty())return -1;
 		key = standard(key);
 		if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.find(key)->second)
 		{
@@ -383,16 +433,11 @@ public:
 		return 0;
 	}
 
-	int setInfo(const string& key, const string& s)
-	{
-		if (s.length() > 48)return -1;
-		Info[key] = s;
-		return 0;
-	}
+	int setInfo(const string& key, const string& s);
 
 	int setExp(const string& key, const string& exp)
 	{
-		if (exp.length() > 48)return -1;
+		if (key.empty() || exp.length() > 48)return -1;
 		DiceExp[key] = exp;
 		return 0;
 	}
@@ -437,105 +482,13 @@ public:
 		return false;
 	}
 
-	void clear()
-	{
-		Attr.clear();
-		Info.clear();
-		DiceExp.clear();
-		Note.clear();
-	}
+	void clear();
 
-	int show(string key, string& val) const
-	{
-		if (pTemplet->sInfoList.count(key))
-		{
-			if (Info.count(key))
-			{
-				val = Info.find(key)->second;
-				return 3;
-			}
-			return -1;
-		}
-		if (key == "note")
-		{
-			val = Note;
-			return 2;
-		}
-		if (DiceExp.count(key))
-		{
-			val = DiceExp.find(key)->second;
-			return 1;
-		}
-		key = standard(key);
-		if (Attr.count(key))
-		{
-			val = to_string(Attr.find(key)->second);
-			return 0;
-		}
-		return -1;
-	}
+	int show(string key, string& val) const;
 
-	[[nodiscard]] string show(bool isWhole) const
-	{
-		std::set<string> sDefault;
-		ResList Res;
-		for (const auto& list : pTemplet->vBasicList)
-		{
-			ResList subList;
-			string strVal;
-			for (const auto& it : list)
-			{
-				switch (show(it, strVal))
-				{
-				case 0:
-					sDefault.insert(it);
-					subList << it + ":" + strVal;
-					break;
-				case 1:
-					sDefault.insert(it);
-					subList << "&" + it + "=" + strVal;
-					break;
-				case 3:
-					sDefault.insert(it);
-					subList.dot("\t");
-					subList << it + ":" + strVal;
-					break;
-				default:
-					continue;
-				}
-			}
-			Res << subList.show();
-		}
-		string strAttrRest;
-		for (const auto& it : Attr)
-		{
-			if (sDefault.count(it.first))continue;
-			strAttrRest += it.first + ":" + to_string(it.second) + " ";
-		}
-		Res << strAttrRest;
-		if (isWhole && !Info.empty())
-			for (const auto& it : Info)
-			{
-				if (sDefault.count(it.first))continue;
-				Res << it.first + ":" + it.second;
-			}
-		if (isWhole && !DiceExp.empty())
-			for (const auto& it : DiceExp)
-			{
-				if (sDefault.count(it.first))continue;
-				Res << "&" + it.first + "=" + it.second;
-			}
-		if (isWhole && !Note.empty())Res << "====================\n" + Note;
-		return Res.show();
-	}
+	[[nodiscard]] string show(bool isWhole) const;
 
-	bool count(string& key) const
-	{
-		if (Attr.count(key))return true;
-		key = standard(key);
-		return Attr.count(key) || DiceExp.count(key) || pTemplet->mAutoFill.count(key) || pTemplet->mVariable.count(key)
-			|| pTemplet->defaultSkill.count(key);
-	}
+	bool count(const string& key) const;
 
 	bool stored(string& key) const
 	{
@@ -543,16 +496,7 @@ public:
 		return Attr.count(key) || pTemplet->mAutoFill.count(key) || pTemplet->defaultSkill.count(key);
 	}
 
-	short& operator[](string& key)
-	{
-		key = standard(key);
-		if (!Attr.count(key))
-		{
-			if (pTemplet->mAutoFill.count(key))Attr[key] = cal(pTemplet->mAutoFill.find(key)->second);
-			if (pTemplet->defaultSkill.count(key))Attr[key] = pTemplet->defaultSkill.find(key)->second;
-		}
-		return Attr[key];
-	}
+	short& operator[](const string& key);
 
 	void operator<<(const CharaCard& card)
 	{
@@ -561,69 +505,12 @@ public:
 		Name = name;
 	}
 
-	void writeb(std::ofstream& fout) const
-	{
-		fwrite(fout, string("Name"));
-		fwrite(fout, Name);
-		fwrite(fout, string("Type"));
-		fwrite(fout, Type);
-		if (!Attr.empty())
-		{
-			fwrite(fout, string("Attr"));
-			fwrite(fout, Attr);
-		}
-		if (!Info.empty())
-		{
-			fwrite(fout, string("Info"));
-			fwrite(fout, Info);
-		}
-		if (!DiceExp.empty())
-		{
-			fwrite(fout, string("DiceExp"));
-			fwrite(fout, DiceExp);
-		}
-		if (!Note.empty())
-		{
-			fwrite(fout, string("Note"));
-			fwrite(fout, Note);
-		}
-		fwrite(fout, string("END"));
-	}
+	void writeb(std::ofstream& fout) const;
 
-	void readb(std::ifstream& fin)
-	{
-		string tag = fread<string>(fin);
-		while (tag != "END")
-		{
-			switch (mCardTag[tag])
-			{
-			case 1:
-				Name = fread<string>(fin);
-				break;
-			case 2:
-				Type = fread<string>(fin);
-				break;
-			case 11:
-				Attr = fread<string, short>(fin);
-				break;
-			case 21:
-				DiceExp = fread<string, string>(fin);
-				break;
-			case 102:
-				Info = fread<string, string>(fin);
-				scanImage(Note, sReferencedImage);
-				break;
-			case 101:
-				Note = fread<string>(fin);
-				scanImage(Note, sReferencedImage);
-				break;
-			default:
-				break;
-			}
-			tag = fread<string>(fin);
-		}
-		pTemplet = getmCardTemplet().count(Type) ? &getmCardTemplet()[Type] : &getmCardTemplet()["COC7"];
-	}
+	void readb(std::ifstream& fin);
+
+	void pushTable(lua_State*);
+	void toCard(lua_State*);
 };
 
 class Player
@@ -682,7 +569,7 @@ public:
 			s.erase(s.begin(), s.begin() + Cnt + 1);
 			if (type == "COC")type = "COC7";
 		}
-		else if (getmCardTemplet().count(s))
+		else if (mCardTemplet.count(s))
 		{
 			type = s;
 			s.clear();
@@ -692,8 +579,8 @@ public:
 			vOption.push(type.substr(Cnt + 1));
 			type.erase(type.begin() + Cnt, type.end());
 		}
-		//无效模板
-		if (!getmCardTemplet().count(type))return -2;
+		//无效模板不再报错
+		//if (!getmCardTemplet().count(type))return -2;
 		if (mNameIndex.count(s))return -4;
 		if (s.find("=") != string::npos)return -6;
 		mCardList[++indexMax] = CharaCard(s, type);
@@ -704,37 +591,37 @@ public:
 			string para = vOption.top();
 			vOption.pop();
 			card.build(para);
-			if (card.Name.empty())
+			if (card.getName().empty())
 			{
-				std::vector<string> list = getmCardTemplet()[type].mBuildOption[para].vNameList;
+				std::vector<string> list = getCardTemplet(type).mBuildOption[para].vNameList;
 				while (!list.empty())
 				{
 					s = CardDeck::draw(list[0]);
 					if (mNameIndex.count(s))list.erase(list.begin());
 					else
 					{
-						card.Name = s;
+						card.setName(s);
 						break;
 					}
 				}
 			}
 		}
-		if (card.Name.empty())
+		if (card.getName().empty())
 		{
-			std::vector<string> list = getmCardTemplet()[type].mBuildOption[""].vNameList;
+			std::vector<string> list = getCardTemplet(type).mBuildOption["_default"].vNameList;
 			while (!list.empty())
 			{
 				s = CardDeck::draw(list[0]);
 				if (mNameIndex.count(s))list.erase(list.begin());
 				else
 				{
-					card.Name = s;
+					card.setName(s);
 					break;
 				}
 			}
-			if (card.Name.empty())card.Name = to_string(indexMax + 1);
+			if (card.getName().empty())card.setName(to_string(indexMax + 1));
 		}
-		s = card.Name;
+		s = card.getName();
 		mNameIndex[s] = indexMax;
 		mGroupIndex[group] = indexMax;
 		return 0;
@@ -753,12 +640,12 @@ public:
 		if (!strName.empty() && !mNameIndex.count(strName))
 		{
 			if (const int res = newCard(name, group))return res;
-			name = getCard(strName, group).Name;
+			name = getCard(strName, group).getName();
 			(*this)[name].buildv();
 		}
 		else
 		{
-			name = getCard(strName, group).Name;
+			name = getCard(strName, group).getName();
 			if (isClear)(*this)[name].clear();
 			(*this)[name].buildv(strType);
 		}
@@ -807,7 +694,7 @@ public:
 		if (name_new.find(":") != string::npos)return -6;
 		const int i = mNameIndex[name_new] = mNameIndex[name];
 		mNameIndex.erase(name);
-		mCardList[i].Name = name_new;
+		mCardList[i].setName(name_new);
 		return 0;
 	}
 
@@ -828,24 +715,15 @@ public:
 		return 0;
 	}
 
-	string listCard()
-	{
-		ResList Res;
-		for (const auto& it : mCardList)
-		{
-			Res << "[" + to_string(it.first) + "]" + it.second.Name;
-		}
-		Res << "default:" + (*this)[0].Name;
-		return Res.show();
-	}
+	string listCard();
 
 	string listMap()
 	{
 		ResList Res;
 		for (const auto& it : mGroupIndex)
 		{
-			if (!it.first)Res << "default:" + mCardList[it.second].Name;
-			else Res << "(" + to_string(it.first) + ")" + mCardList[it.second].Name;
+			if (!it.first)Res << "default:" + mCardList[it.second].getName();
+			else Res << "(" + to_string(it.first) + ")" + mCardList[it.second].getName();
 		}
 		return Res.show();
 	}
@@ -913,8 +791,7 @@ public:
 		{
 			Unpack card;
 			card.add(it.first);
-			card.add(it.second.Name);
-			card.add(it.second.Type);
+			card.add(it.second.getName());
 			Unpack skills;
 			for (const auto& skill : it.second.Attr)
 			{
@@ -949,7 +826,7 @@ public:
 		mCardList = fread<unsigned short, CharaCard>(fin);
 		for (const auto& card : mCardList)
 		{
-			mNameIndex[card.second.Name] = card.first;
+			mNameIndex[card.second.getName()] = card.first;
 		}
 		mGroupIndex = fread<unsigned long long, unsigned short>(fin);
 	}

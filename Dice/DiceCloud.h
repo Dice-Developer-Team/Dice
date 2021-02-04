@@ -10,7 +10,7 @@ class FromMsg;
 
 namespace Cloud
 {
-	void update();
+	void heartbeat();
 	int checkWarning(const char* warning);
 	int DownloadFile(const char* url, const char* downloadPath);
 	int checkUpdate(FromMsg* msg);
