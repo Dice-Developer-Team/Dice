@@ -18,6 +18,7 @@
 #include <Windows.h>
 #include <WinInet.h>
 #include <urlmon.h>
+#include <io.h>
 #pragma comment(lib, "urlmon.lib")
 #endif
 

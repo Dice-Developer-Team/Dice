@@ -15,6 +15,12 @@
 #include "DiceFile.hpp"
 #include "DiceConsole.h"
 #include "MsgFormat.h"
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
+
 using std::string;
 using std::to_string;
 using std::set;

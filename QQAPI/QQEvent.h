@@ -1,5 +1,6 @@
 #pragma once
 namespace QQ {
+#ifdef _WIN32
 #ifdef _MSC_VER
 #define QQEVENT(ReturnType, Name, Size) __pragma(comment(linker, "/EXPORT:" #Name "=_" #Name "@" #Size))\
 	extern "C" __declspec(dllexport) ReturnType __stdcall Name
@@ -7,6 +8,10 @@ namespace QQ {
 #define QQEVENT(ReturnType, Name, Size)\
 	extern "C" __attribute__((dllexport)) ReturnType __attribute__((__stdcall__)) Name
 #endif /*_MSC_VER*/
+#else
+#define QQEVENT(ReturnType, Name, Size)\
+	extern "C" __attribute__((visibility ("default"))) ReturnType Name
+#endif
 
 /*
 初始化事件，加载api并获取QQ

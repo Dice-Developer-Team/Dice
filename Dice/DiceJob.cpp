@@ -2,6 +2,8 @@
 #include "DiceConsole.h"
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 #include <TlHelp32.h>
 #include <Psapi.h>
 #endif
@@ -69,7 +71,6 @@ void frame_reload(DiceJob& job){
 		job.note("重载" + getMsg("self") + "完成√", 1);
 	else
 		job.note("重载" + getMsg("self") + "失败×", 0b10);
-	#endif
 }
 
 void check_system(DiceJob& job) {

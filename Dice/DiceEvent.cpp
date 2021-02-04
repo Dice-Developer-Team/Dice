@@ -1236,11 +1236,13 @@ int FromMsg::InnerOrder() {
 			return -1;
 		}
 		string strOption = readPara();
+#ifdef _WIN32
 		if (strOption == "gui") {
 			thread th(GUIMain);
 			th.detach();
 			return 1;
 		}
+#endif
 		if (strOption == "save") {
 			dataBackUp();
 			note("已手动保存数据√", 0b1);
@@ -2032,28 +2034,8 @@ int FromMsg::InnerOrder() {
 				return 1;
 			}
 		}
-<<<<<<< HEAD
-		string data = "QQ=" + to_string(getLoginQQ()) + "&v=20190114" + "&QueryQQ=" + to_string(fromQQ);
-		char* frmdata = new char[data.length() + 1];
-#ifdef _MSC_VER
-		strcpy_s(frmdata, data.length() + 1, data.c_str());
-#else
-		strcpy(frmdata, data.c_str());
-#endif
-		bool res = Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata, strVar["res"]);
-		delete[] frmdata;
-		if (res)
-		{
-			reply(GlobalMsg["strJrrp"], {strVar["nick"], strVar["res"]});
-		}
-		else
-		{
-			reply(GlobalMsg["strJrrpErr"], {strVar["res"]});
-		}
-=======
 		strVar["res"] = to_string(today->getJrrp(fromQQ));
 		reply(GlobalMsg["strJrrp"], { strVar["nick"], strVar["res"] });
->>>>>>> 1f74291fe9659cd1ffa3bf51d3e6cf709c15c8d5
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "link") {

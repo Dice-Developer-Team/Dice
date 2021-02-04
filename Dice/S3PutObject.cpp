@@ -12,6 +12,9 @@
 
 #include "GlobalVar.h"
 
+#ifdef _WIN32
+#undef GetMessage
+#endif
 
 // Aws SDK…Ë÷√
 Aws::SDKOptions options;

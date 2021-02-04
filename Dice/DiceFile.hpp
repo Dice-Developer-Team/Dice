@@ -478,7 +478,7 @@ void fwrite(ofstream& fout, const std::string& s);
 void fwrite(ofstream& fout, const var& var);
 
 template <class C, void(C::* U)(std::ofstream&) const = &C::writeb>
-void fwrite(ofstream& fout, C& obj)
+void fwrite(ofstream& fout, const C& obj)
 {
 	obj.writeb(fout);
 }
@@ -488,6 +488,7 @@ void fwrite(ofstream& fout, C& obj)
 {
 	obj.writeb(fout);
 }
+
 
 template <typename T1, typename T2, typename sort>
 void fwrite(ofstream& fout, const std::map<T1, T2, sort>& m)

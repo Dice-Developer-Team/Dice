@@ -154,7 +154,7 @@ void Chat::leave(const string& msg) {
 	if (!msg.empty()) {
 		if (isGroup)DD::sendGroupMsg(ID, msg);
 		else DD::sendDiscussMsg(ID, msg);
-		Sleep(500);
+		std::this_thread::sleep_for(500ms);
 	}
 	isGroup ? DD::setGroupLeave(ID) : DD::setDiscussLeave(ID);
 	set("рямк");
