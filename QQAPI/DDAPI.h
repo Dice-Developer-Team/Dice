@@ -22,6 +22,7 @@ namespace DD {
 	void killme();
 	bool updateDice(const std::string&, std::string&);
 	inline api_list ApiList;
+	const std::string& getRootDir();
 	inline long long getLoginQQ() { return loginQQ; }
 	std::string getQQNick(long long);
 	inline std::string getLoginNick() { return getQQNick(loginQQ); }

@@ -43,7 +43,7 @@ void frame_restart(DiceJob& job) {
 			sch.add_job_for(60 * 60, job);
 			return;
 		}
-		else if (int tWait{ console["AutoFrameRemake"] * 60 * 60 - int(clock() - llStartTime) / 1000 }; tWait > 0) {
+		else if (int tWait{ console["AutoFrameRemake"] * 60 * 60 - int(time(nullptr) - llStartTime) }; tWait > 0) {
 			sch.add_job_for(tWait, job);
 			return;
 		}

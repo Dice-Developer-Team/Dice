@@ -141,7 +141,7 @@ EVE_Status_EX(statusFrq)
 	}
 	//平滑到分钟的频度
 	const int intFrq = FrqMonitor::getFrqTotal();
-	//long long llDuration = (clock() - llStartTime) / 1000;
+	//long long llDuration = time(nullptr) - llStartTime;
 	if (intFrq < 0)
 	{
 		eve.data = "N";

@@ -174,13 +174,15 @@ EVE_Enable(eventEnable)
 {
 	if (isIniting || Enabled)return;
 	isIniting = true;
-	llStartTime = clock();
-	char path[MAX_PATH];
-	GetModuleFileNameA(nullptr, path, MAX_PATH);
-	strModulePath = string(path);
+	llStartTime = time(nullptr);
+	if ((dirExe = DD::getRootDir()).empty()) {
+		char path[MAX_PATH];
+		GetModuleFileNameA(nullptr, path, MAX_PATH);
+		string strPath(path);
+		dirExe = strPath.substr(0, strPath.rfind("\\") + 1);
+	}
 	Dice_Full_Ver_On = Dice_Full_Ver + " on\n" + DD::getDriVer();
 	DD::debugLog(Dice_Full_Ver_On);
-	dirExe = strModulePath.substr(0, strModulePath.rfind("\\") + 1);
 	if (console.DiceMaid = DD::getLoginQQ())
 	{
 		DiceDir = dirExe + "Dice" + to_string(console.DiceMaid);
@@ -446,12 +448,12 @@ EVE_Enable(eventEnable)
 	threads(warningHandler);
 	threads(frqHandler);
 	sch.start();
-	console.log(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string((clock() - llStartTime) / 1000) + "秒", 0b1,
+	console.log(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string(time(nullptr) - llStartTime) + "秒", 0b1,
 				printSTNow());
 	//骰娘网络
 	getDiceList();
 	getExceptGroup();
-	llStartTime = clock();
+	llStartTime = time(nullptr);
 	isIniting = false;
 }
 

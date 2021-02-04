@@ -78,7 +78,7 @@ extern bool Enabled;
 extern std::string Dice_Full_Ver_On;
 
 // 可执行文件位置
-extern std::string strModulePath;
+//extern std::string strModulePath;
 
 // 消息发送线程是否正在运行
 extern bool msgSendThreadRunning;

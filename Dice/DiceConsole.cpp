@@ -225,7 +225,7 @@ std::set<long long> ExceptGroups;
 std::map<long long, long long> mDiceList;
 
 //程序启动时间
-long long llStartTime = clock();
+long long llStartTime = time(nullptr);
 
 //当前时间
 SYSTEMTIME stNow{};

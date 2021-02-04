@@ -1260,7 +1260,7 @@ int FromMsg::InnerOrder() {
 				<< "内存占用:" + to_string(getRamPort()) + "%"
 				<< "CPU占用:" + toString(getWinCpuUsage() / 10.0) + "%"
 				<< "硬盘占用:" + toString(milDisk / 10.0) + "%(空余:" + toString(mbFreeBytes) + "GB/ " + toString(mbTotalBytes) + "GB)"
-				<< "运行时长:" + printDuringTime((clock() - llStartTime) / 1000)
+				<< "运行时长:" + printDuringTime(time(nullptr) - llStartTime)
 				<< "今日指令量:" + to_string(today->get("frq"))
 				<< "启动后指令量:" + to_string(FrqMonitor::sumFrqTotal);
 			reply(res.show());

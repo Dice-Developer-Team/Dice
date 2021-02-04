@@ -7,6 +7,7 @@ using namespace DD;
 #define DDAPI(Name, ReturnType, ...) using Name##_TYPE = ReturnType (*)(__VA_ARGS__)
 
 DDAPI(_DriverVer, const char*);
+DDAPI(GetRootDir, const std::string&);
 DDAPI(Reload, bool);
 DDAPI(Remake, bool);
 DDAPI(Killme, void);
@@ -51,6 +52,10 @@ namespace DD {
 	const std::string& getDriVer() {
 		static string ver{ CALLGET(_DriverVer) :"" };
 		return ver;
+	}
+	const string& getRootDir() {
+		static string dir{ CALLGET(GetRootDir) :"" };
+		return dir;
 	}
 	bool reload() {
 		return CALLGET(Reload) :false;

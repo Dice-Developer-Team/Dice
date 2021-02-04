@@ -31,7 +31,7 @@ bool Enabled = false;
 
 std::string Dice_Full_Ver_On;
 
-std::string strModulePath;
+//std::string strModulePath;
 
 HMODULE hDllModule = nullptr;
 
