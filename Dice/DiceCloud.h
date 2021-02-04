@@ -1,8 +1,10 @@
+#pragma once
+
 /*
  * ÷»ÄïÍøÂç
  * Copyright (C) 2019 String.Empty
  */
-#pragma once
+
 
 class FromMsg;
 

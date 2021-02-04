@@ -1,9 +1,14 @@
 #include <string>
 #include <string_view>
 #include <algorithm>
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#else
+#include <iconv.h>
+#endif
 #include "StrExtern.hpp"
+#include "EncodingConvert.h"
 
 using std::string;
 using std::wstring;
@@ -33,25 +38,37 @@ int count_char(const string& s, char ch)
 
 string convert_w2a(const wchar_t* wch)
 {
+#ifdef _WIN32
 	const int len = WideCharToMultiByte(CP_GBK, 0, wch, -1, nullptr, 0, nullptr, nullptr);
 	char* m_char = new char[len];
 	WideCharToMultiByte(CP_GBK, 0, wch, -1, m_char, len, nullptr, nullptr);
 	std::string str(m_char);
 	delete[] m_char;
 	return str;
+#else
+	return ConvertEncoding<char, wchar_t>(wch, "utf-16le", "gb18030");
+#endif
 }
 
 wstring convert_a2w(const char* ch) 
 {
+#ifdef _WIN32
     const int len = MultiByteToWideChar(CP_GBK, 0, ch, -1, nullptr, 0);
     wchar_t* m_char = new wchar_t[len];
     MultiByteToWideChar(CP_GBK, 0, ch, -1, m_char, len);
     std::wstring wstr(m_char);
     delete[] m_char;
     return wstr;
+#else
+	return ConvertEncoding<wchar_t, char>(ch, "gb18030", "utf-16le");
+#endif
 }
 size_t wstrlen(const char* ch) {
+#ifdef _WIN32
     return MultiByteToWideChar(CP_GBK, 0, ch, -1, nullptr, 0);
+#else
+	return ConvertEncoding<wchar_t, char>(ch, "gb18030", "utf-16le").length();
+#endif
 }
 
 string printDuringTime(long long seconds) 

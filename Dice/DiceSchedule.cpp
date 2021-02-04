@@ -1,4 +1,6 @@
 #include <mutex>
+#define __STDC_WANT_LIB_EXT1__ 1
+#include <ctime>
 #include <condition_variable>
 #include <deque>
 #include "GlobalVar.h"
@@ -161,9 +163,14 @@ void DiceScheduler::end() {
 }
 
 void DiceToday::daily_clear() {
-	GetLocalTime(&stNow);
-	if (stToday.tm_mday != stNow.wDay) {
-		stToday.tm_mday = stNow.wDay;
+	time_t tt = time(nullptr);
+#ifdef _MSC_VER
+	localtime_s(&stNow, &tt);
+#else
+	localtime_r(&tt, &stNow);
+#endif
+	if (stToday.tm_mday != stNow.tm_mday) {
+		stToday.tm_mday = stNow.tm_mday;
 		cntGlobal.clear();
 		cntUser.clear();
 	}
@@ -180,7 +187,11 @@ void DiceToday::load() {
 	json jFile = freadJson(pathFile);
 	if (jFile.is_null()) {
 		time_t tt = time(nullptr);
+#ifdef _MSC_VER
 		localtime_s(&stToday, &tt);
+#else
+		localtime_r(&tt, &stToday);
+#endif
 		return;
 	}
 	if (jFile.count("date")) {
@@ -197,7 +208,14 @@ void DiceToday::load() {
 string printTTime(time_t tt) {
 	char tm_buffer[20];
 	tm t{};
-	if (!tt || localtime_s(&t, &tt))return "1970-00-00 00:00:00"; 
+	if(!tt) return "1970-00-00 00:00:00"; 
+#ifdef _MSC_VER
+	auto ret = localtime_s(&t, &tt);
+	if(ret) return "1970-00-00 00:00:00";
+#else
+	auto ret = localtime_r(&tt, &t);
+	if(!ret) return "1970-00-00 00:00:00";
+#endif
 	strftime(tm_buffer, 20, "%Y-%m-%d %H:%M:%S", &t);
 	return tm_buffer;
 }

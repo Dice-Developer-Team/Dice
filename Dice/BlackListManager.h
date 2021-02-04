@@ -1,9 +1,11 @@
+#pragma once
+
 /**
  * 黑名单明细
  * 更数据库式的管理
  * Copyright (C) 2019-2020 String.Empty
  */
-#pragma once
+
 #include <string>
 #include <utility>
 #include <vector>

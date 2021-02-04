@@ -20,14 +20,8 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
-#ifdef _MSC_VER
-#pragma comment(lib, "Wininet.lib")
-#endif /*_MSC_VER*/
-
 #include <string>
+#include <cstring>
 #include "GetRule.h"
 #include "GlobalVar.h"
 #include "EncodingConvert.h"
@@ -79,7 +73,11 @@ namespace GetRule
 			data += "&Type=Rules-" + UrlEncode(ruleName);
 		}
 		char* frmdata = new char[data.length() + 1];
+#ifdef _MSC_VER
 		strcpy_s(frmdata, data.length() + 1, data.c_str());
+#else
+		strcpy(frmdata, data.c_str());
+#endif
 		string temp;
 		const bool reqRes = Network::POST("api.kokona.tech", "/rules", 5555, frmdata, temp);
 		delete[] frmdata;

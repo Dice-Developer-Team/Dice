@@ -1,8 +1,11 @@
-#pragma once
 #include "DiceJob.h"
 #include "DiceConsole.h"
+
+#ifdef _WIN32
 #include <TlHelp32.h>
 #include <Psapi.h>
+#endif
+
 #include "StrExtern.hpp"
 #include "CQAPI.h"
 #include "ManagerSystem.h"
@@ -24,8 +27,10 @@ int sendSelf(const string msg) {
 }
 
 void cq_exit(DiceJob& job) {
+#ifdef _WIN32
 	job.note("已令" + getMsg("self") + "在5秒后自杀", 1);
 	if (frame == QQFrame::CoolQ) {
+
 		int pid = _getpid();
 		PROCESSENTRY32 pe32;
 		pe32.dwSize = sizeof(pe32);
@@ -63,8 +68,10 @@ void cq_exit(DiceJob& job) {
 		}
 		keybd_event(VK_RETURN, MapVirtualKey(VK_RETURN, 0), 0, 0);
 	}
+#endif
 }
 
+#ifdef _WIN32
 inline PROCESSENTRY32 getProcess(int pid) {
 	PROCESSENTRY32 pe32;
 	pe32.dwSize = sizeof(pe32);
@@ -72,13 +79,16 @@ inline PROCESSENTRY32 getProcess(int pid) {
 	Process32First(hParentProcess, &pe32);
 	return pe32;
 }
+#endif
+
 void frame_restart(DiceJob& job) {
+	#ifdef _WIN32
 	if (!job.fromQQ) {
 		if (console["AutoFrameRemake"] <= 0) {
 			sch.add_job_for(60 * 60, job);
 			return;
 		}
-		else if (int tWait = console["AutoFrameRemake"] * 60 * 60 - (clock() - llStartTime) / 1000; tWait > 0) {
+		else if (int tWait = console["AutoFrameRemake"] * 60 * 60 - (clock() - llStartTime) / CLOCKS_PER_SEC; tWait > 0) {
 			sch.add_job_for(tWait, job);
 			return;
 		}
@@ -177,9 +187,11 @@ void frame_restart(DiceJob& job) {
 	}
 	*/
 	ShellExecute(NULL, "open", "remake.bat", NULL, NULL, SW_SHOWNORMAL);
+	#endif
 }
 
 void frame_reload(DiceJob& job){
+	#ifdef _WIN32
 	using cq_reload_type = int(__stdcall*)(int32_t);
 	HMODULE hModule = GetModuleHandleA("CQP.dll");
 	cq_reload_type cq_reload = (cq_reload_type)GetProcAddress(hModule, "CQ_reload");
@@ -194,19 +206,11 @@ void frame_reload(DiceJob& job){
 		job.note("重载" + getMsg("self") + "完成√", 1);
 	else
 		job.note("重载" + getMsg("self") + "失败×", 0b10);
-}
-
-void auto_save(DiceJob& job) {
-	if (sch.is_job_cold("autosave"))return;
-	dataBackUp();
-	console.log(GlobalMsg["strSelfName"] + "已自动保存", 0, printSTNow());
-	if (console["AutoSaveInterval"] > 0) {
-		sch.refresh_cold("autosave", time(NULL) + console["AutoSaveInterval"]);
-		sch.add_job_for(console["AutoSaveInterval"] * 60, "autosave");
-	}
+	#endif
 }
 
 void check_system(DiceJob& job) {
+	#ifdef _WIN32
 	static int perRAM(0), perLastRAM(0);
 	static double  perLastCPU(0), perLastDisk(0),
 		 perCPU(0), perDisk(0);
@@ -260,6 +264,19 @@ void check_system(DiceJob& job) {
 	else {
 		sch.add_job_for(30 * 60, job);
 	}
+	#endif
+}
+
+
+
+void auto_save(DiceJob& job) {
+	if (sch.is_job_cold("autosave"))return;
+	dataBackUp();
+	console.log(GlobalMsg["strSelfName"] + "已自动保存", 0, printSTNow());
+	if (console["AutoSaveInterval"] > 0) {
+		sch.refresh_cold("autosave", time(NULL) + console["AutoSaveInterval"]);
+		sch.add_job_for(console["AutoSaveInterval"] * 60, "autosave");
+	}
 }
 
 //被引用的图片列表
@@ -279,7 +296,7 @@ void clear_image(DiceJob& job) {
 		scanImage(it.second.strConf, sReferencedImage);
 	}
 	job.note("整理" + GlobalMsg["strSelfName"] + "被引用图片" + to_string(sReferencedImage.size()) + "项", 0b0);
-	int cnt = clrDir("data\\image\\", sReferencedImage);
+	int cnt = clrDir("data/image/", sReferencedImage);
 	job.note("已清理image文件"+ to_string(cnt) + "项", 1);
 	if (console["AutoClearImage"] > 0) {
 		sch.refresh_cold("clrimage", time(NULL) + console["AutoClearImage"]);
@@ -492,10 +509,8 @@ void dice_update(DiceJob& job) {
 		}
 	}
 	else {
-		char** path = new char* ();
-		_get_pgmptr(path);
-		string strAppPath(*path);
-		delete path;
+		// TODO: 为Linux修改
+		string strAppPath(strModulePath);
 		strAppPath = strAppPath.substr(0, strAppPath.find_last_of("\\")) + "\\app\\com.w4123.dice.cpk";
 		string strURL("https://shiki.stringempty.xyz/DiceVer/" + job.strVar["ver"] + "?" + to_string(job.fromTime));
 		switch (Cloud::DownloadFile(strURL.c_str(), strAppPath.c_str())) {
@@ -545,8 +560,8 @@ void dice_cloudblack(DiceJob& job) {
 
 void log_put(DiceJob& job) {
 	job["ret"] = put_s3_object("dicelogger",
-							   job.strVar["log_file"],
-							   job.strVar["log_path"],
+							   job.strVar["log_file"].c_str(),
+							   job.strVar["log_path"].c_str(),
 							   "ap-southeast-1");
 	if (job["ret"] == "SUCCESS") {
 		job.echo(getMsg("strLogUpSuccess", job.strVar));

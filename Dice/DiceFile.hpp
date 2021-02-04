@@ -1,8 +1,10 @@
+#pragma once
+
 /*
  * ÎÄ¼þ¶ÁÐ´
  * Copyright (C) 2019-2020 String.Empty
  */
-#pragma once
+
 #include <fstream>
 #include <sstream>
 #include <cstdio>
@@ -12,11 +14,10 @@
 #include <filesystem>
 #include <unordered_set>
 #include <unordered_map>
-#include <io.h>
-#include <direct.h>
 #include <cstdio>
 #include "DiceXMLTree.h"
 #include "StrExtern.hpp"
+#include "DiceMsgSend.h"
 
 
 using std::ifstream;
@@ -441,6 +442,12 @@ typename std::enable_if<!std::is_class<T>::value, void>::type fwrite(ofstream& f
 
 void fwrite(ofstream& fout, const std::string& s);
 
+template <class C, void(C::* U)(std::ofstream&) const = &C::writeb>
+void fwrite(ofstream& fout, C& obj)
+{
+	obj.writeb(fout);
+}
+
 template <class C, void(C::* U)(std::ofstream&) = &C::writeb>
 void fwrite(ofstream& fout, C& obj)
 {
@@ -512,7 +519,7 @@ void saveFile(std::string strPath, const unordered_map<TKey, TVal>& mTmp)
 	fout.close();
 }
 
-template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
+template <typename T, class C, void(C::* U)(std::ofstream&) const = &C::writeb>
 void saveBFile(std::string strPath, std::map<T, C>& m)
 {
 	if (clrEmpty(strPath, m))return;
@@ -520,6 +527,36 @@ void saveBFile(std::string strPath, std::map<T, C>& m)
 	const int len = m.size();
 	fwrite<int>(fout, len);
 	for (auto& [key,val] : m)
+	{
+		fwrite(fout, key);
+		fwrite(fout, val);
+	}
+	fout.close();
+}
+
+template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
+void saveBFile(std::string strPath, std::map<T, C>& m)
+{
+	if (clrEmpty(strPath, m))return;
+	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
+	const int len = m.size();
+	fwrite<int>(fout, len);
+	for (auto& [key, val] : m)
+	{
+		fwrite(fout, key);
+		fwrite(fout, val);
+	}
+	fout.close();
+}
+
+template <typename T, class C, void(C::* U)(std::ofstream&) const = &C::writeb>
+void saveBFile(std::string strPath, std::unordered_map<T, C>& m)
+{
+	if (clrEmpty(strPath, m))return;
+	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
+	const int len = m.size();
+	fwrite<int>(fout, len);
+	for (auto& [key, val] : m)
 	{
 		fwrite(fout, key);
 		fwrite(fout, val);

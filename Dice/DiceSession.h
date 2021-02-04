@@ -18,7 +18,7 @@ class FromMsg;
 class DiceTableMaster;
 
 struct LogInfo{
-	static constexpr auto dirLog{ "\\user\\log" };
+	static constexpr auto dirLog{ "/user/log" };
 	bool isLogging{ false };
 	//创建时间，为0则不存在
 	time_t tStart{ 0 };

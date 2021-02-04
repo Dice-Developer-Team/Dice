@@ -4,6 +4,7 @@ Api Version 9.10
 Written by MukiPy2001 & Thanks for the help of orzFly and Coxxs
 */
 #pragma once
+#ifdef _WIN32
 #ifdef _MSC_VER
 #define CQEVENT(ReturnType, Name, Size) __pragma(comment(linker, "/EXPORT:" #Name "=_" #Name "@" #Size))\
 	extern "C" __declspec(dllexport) ReturnType __stdcall Name
@@ -11,6 +12,11 @@ Written by MukiPy2001 & Thanks for the help of orzFly and Coxxs
 #define CQEVENT(ReturnType, Name, Size)\
 	extern "C" __attribute__((dllexport)) ReturnType __attribute__((__stdcall__)) Name
 #endif /*_MSC_VER*/
+#else
+#define CQEVENT(ReturnType, Name, Size)\
+	extern "C" __attribute__((visibility("default"))) ReturnType __attribute__((__stdcall__)) Name
+#endif
+	
 /*
 返回应用的ApiVer、Appid，打包后将不会调用
 */

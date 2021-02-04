@@ -29,6 +29,7 @@
 #include <string>
 #include <vector>
 #include <numeric>
+#include <map>
 #include "RDConstant.h"
 #include "RandomGenerator.h"
 

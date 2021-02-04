@@ -126,8 +126,8 @@ int FrqMonitor::getFrqTotal()
 
 /*EVE_Status_EX(statusUptime) {
 	//初始化以来的秒数
-	long long llDuration = clock() / 1000;
-	//long long llDuration = (clock() - llStartTime) / 1000;
+	long long llDuration = clock() / CLOCKS_PER_SEC;
+	//long long llDuration = (clock() - llStartTime) / CLOCKS_PER_SEC;
 	if (llDuration < 0) {
 		eve.data = "N";
 		eve.dataf = "/A";
@@ -160,7 +160,7 @@ EVE_Status_EX(statusFrq)
 	}
 	//平滑到分钟的频度
 	const int intFrq = FrqMonitor::getFrqTotal();
-	//long long llDuration = (clock() - llStartTime) / 1000;
+	//long long llDuration = (clock() - llStartTime) / CLOCKS_PER_SEC;
 	if (intFrq < 0)
 	{
 		eve.data = "N";

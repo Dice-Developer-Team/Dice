@@ -1,8 +1,10 @@
+#pragma once
+
 /*
  * Íæ¼ÒÈËÎï¿¨
  * Copyright (C) 2019 String.Empty
  */
-#pragma once
+
 #include <fstream>
 #include <string>
 #include <utility>
@@ -934,7 +936,7 @@ public:
 		fout << base64_encode(pack.getAll());
 	}
 
-	void writeb(std::ofstream& fout)
+	void writeb(std::ofstream& fout) const
 	{
 		fwrite(fout, indexMax);
 		fwrite(fout, mCardList);

@@ -2,8 +2,10 @@
  * 后台系统
  * Copyright (C) 2019-2020 String.Empty
  */
-#include <windows.h>
-#include <xutility>
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
 #include <string_view>
 #include "ManagerSystem.h"
 
@@ -186,6 +188,8 @@ void scanImage(const vector<string>& v, unordered_set<string>& list) {
 	}
 }
 
+#ifdef _WIN32
+
 DWORD getRamPort()
 {
 	MEMORYSTATUSEX memory_status;
@@ -276,3 +280,5 @@ long long getDiskUsage(double& mbFreeBytes, double& mbTotalBytes){
 	}
 	return 0;
 }
+
+#endif

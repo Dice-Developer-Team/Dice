@@ -6,6 +6,7 @@
 #include <map>
 #include <unordered_set>
 #include <string>
+#include <cstring>
 using std::map;
 using std::unordered_set;
 using std::string;

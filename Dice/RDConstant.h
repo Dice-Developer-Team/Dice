@@ -24,6 +24,7 @@
 #ifndef DICE_RD_CONSTANT
 #define DICE_RD_CONSTANT
 #include <string>
+#include <vector>
 #include <set>
 
 //Error Handle

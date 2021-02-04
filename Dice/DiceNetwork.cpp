@@ -20,13 +20,14 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <WinInet.h>
-
-#ifdef _MSC_VER
 #pragma comment(lib, "WinInet.lib")
-#endif /*_MSC_VER*/
+#else
+#include <curl/curl.h>
+#endif
 
 #include <string>
 #include "GlobalVar.h"
@@ -36,8 +37,19 @@
 
 namespace Network
 {
+#ifndef _WIN32
+	CURLcode lastError;
+	
+	size_t curlWriteToString(void *contents, size_t size, size_t nmemb, std::string *s)
+	{
+		size_t newLength = size*nmemb;
+		s->append((char*)contents, newLength);
+		return newLength;
+	}
+#endif
 	std::string getLastErrorMsg()
 	{
+#ifdef _WIN32
 		DWORD dwError = GetLastError();
 		if (dwError == ERROR_INTERNET_EXTENDED_ERROR)
 		{
@@ -83,12 +95,16 @@ namespace Network
 			return ret;
 		}
 		return GlobalMsg["strUnableToGetErrorMsg"];
+#else
+		return curl_easy_strerror(lastError);
+#endif
 	}
 
 
 	bool POST(const char* const serverName, const char* const objectName, const unsigned short port,
 	          char* const frmdata, std::string& des)
 	{
+#ifdef _WIN32
 		const char* acceptTypes[] = {"*/*", nullptr};
 		const char* header = "Content-Type: application/x-www-form-urlencoded";
 
@@ -188,10 +204,33 @@ namespace Network
 		InternetCloseHandle(hConnect);
 		InternetCloseHandle(hInternet);
 		return false;
+#else
+		CURL *curl;
+		curl = curl_easy_init();
+		if (curl)
+		{
+			curl_easy_setopt(curl, CURLOPT_URL, (std::string("http://") + serverName + ":" + std::to_string(port) + objectName).c_str());
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, frmdata);
+			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteToString);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &des);
+			
+			lastError = curl_easy_perform(curl);
+			if (lastError != CURLE_OK)
+			{
+				des = getLastErrorMsg();
+			}
+			
+			curl_easy_cleanup(curl);
+			return lastError == CURLE_OK;
+		}
+		return false;
+#endif
 	}
 
 	bool GET(const char* const serverName, const char* const objectName, const unsigned short port, std::string& des)
 	{
+#ifdef _WIN32
 		const char* acceptTypes[] = {"*/*", nullptr};
 
 		const HINTERNET hInternet = InternetOpenA(DiceRequestHeader, INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
@@ -290,5 +329,27 @@ namespace Network
 		InternetCloseHandle(hConnect);
 		InternetCloseHandle(hInternet);
 		return false;
+#else
+		CURL *curl;
+		curl = curl_easy_init();
+		if (curl)
+		{
+			curl_easy_setopt(curl, CURLOPT_URL, (std::string("http://") + serverName + ":" + std::to_string(port) + objectName).c_str());
+			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteToString);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &des);
+			
+			lastError = curl_easy_perform(curl);
+			if (lastError != CURLE_OK)
+			{
+				des = getLastErrorMsg();
+			}
+			
+			curl_easy_cleanup(curl);
+			return lastError == CURLE_OK;
+		}
+		return false;
+#endif
 	}
+
 }

@@ -24,24 +24,38 @@
 #include <random>
 #include <chrono>
 
+#if defined(__i386__) || defined(__x86_64__)
 #ifdef _MSC_VER
 #include <intrin.h>
 #else
 #include <x86intrin.h>
 #endif
+#endif
 
 namespace RandomGenerator
 {
-	inline unsigned long long GetCycleCount()
+	unsigned long long GetCycleCount()
 	{
+#if defined(__i386__) || defined(__x86_64__)
 		return __rdtsc();
-		// return static_cast<unsigned long long> (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+#else
+		return static_cast<unsigned long long> (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+#endif	
 	}
-
+	
+#if defined(__i386__) || defined(__x86_64__)
 	int Randint(int lowest, int highest)
 	{
 		std::mt19937 gen(static_cast<unsigned int>(GetCycleCount()));
 		std::uniform_int_distribution<int> dis(lowest, highest);
 		return dis(gen);
 	}
+#else
+	std::mt19937 gen(static_cast<unsigned int>(GetCycleCount()));
+	int Randint(int lowest, int highest)
+	{
+		std::uniform_int_distribution<int> dis(lowest, highest);
+		return dis(gen);
+	}
+#endif
 }

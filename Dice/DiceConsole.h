@@ -1,15 +1,17 @@
+#pragma once
+
 /*
  * Copyright (C) 2019-2020 String.Empty
  */
-#pragma once
+
 #ifndef Dice_Console
 #define Dice_Console
+#include <ctime>
 #include <string>
 #include <utility>
 #include <vector>
 #include <map>
 #include <set>
-#include <Windows.h>
 #include <thread>
 #include <chrono>
 #include <array>
@@ -186,9 +188,9 @@ void getExceptGroup();
 	//程序启动时间
 	extern long long llStartTime;
 	//当前时间
-	extern SYSTEMTIME stNow;
+	extern tm stNow;
 	std::string printClock(std::pair<int, int> clock);
-	std::string printSTime(SYSTEMTIME st);
+	std::string printSTime(tm st);
 	std::string printSTNow(); 
 	std::string printDate();
 	std::string printDate(time_t tt);

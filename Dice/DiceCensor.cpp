@@ -6,6 +6,7 @@
 #include "DiceConsole.h"
 #include "EncodingConvert.h"
 #include <bitset>
+#include <cstring>
 
 TrieG<less_ci> wordG;
 
@@ -79,7 +80,7 @@ void Censor::build() {
 	wordG.build(words);
 }
 void Censor::save() {
-	saveJMap(DiceDir + "\\conf\\CustomCensor.json", censor.CustomWords);
+	saveJMap(DiceDir + "/conf/CustomCensor.json", censor.CustomWords);
 }
 
 int Censor::search(const string& text, unordered_set<string>& res) {

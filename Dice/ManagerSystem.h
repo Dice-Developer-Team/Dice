@@ -1,9 +1,11 @@
+#pragma once
+
 /*
  * 后台系统
  * Copyright (C) 2019-2020 String.Empty
  * 控制清理用户/群聊记录，清理图片，监控系统
  */
-#pragma once
+
 #include <set>
 #include <map>
 #include <utility>
@@ -249,7 +251,7 @@ public:
 		{
 			if (isGroup)CQ::sendGroupMsg(ID, msg);
 			else CQ::sendDiscussMsg(ID, msg);
-			Sleep(500);
+			std::this_thread::sleep_for(500ms);
 		}
 		isGroup ? CQ::setGroupLeave(ID) : CQ::setDiscussLeave(ID);
 		set("已退");
@@ -389,6 +391,7 @@ void scanImage(const map<TKey, TVal>& m, unordered_set<string>& list)
 	}
 }
 
+#ifdef _WIN32
 DWORD getRamPort();
 
 /*static DWORD getRamPort() {
@@ -408,3 +411,4 @@ long long getWinCpuUsage();
 long long getProcessCpu();
 
 long long getDiskUsage(double&, double&);
+#endif

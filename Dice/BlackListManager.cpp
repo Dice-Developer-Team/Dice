@@ -652,7 +652,7 @@ bool DDBlackManager::insert(DDBlackMark& ex_mark)
             up_qq_danger(mark.ownerQQ.first, mark);
         }
     }
-    if (Enabled && !isLoadingExtern)blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
+    if (Enabled && !isLoadingExtern)blacklist->saveJson(DiceDir + "/conf/BlackList.json");
 	return !mark.isClear;
 }
 
@@ -811,7 +811,7 @@ bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5)
 		else if (old_mark.comment.empty()) {
 			old_mark.comment = printSTNow() + " 更新";
 		}
-		if (Enabled && !isLoadingExtern)blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
+		if (Enabled && !isLoadingExtern)blacklist->saveJson(DiceDir + "/conf/BlackList.json");
     }
     return isUpdated;
 }
@@ -942,7 +942,7 @@ void DDBlackManager::rm_black_group(long long llgroup, FromMsg* msg)
 	}
 	mGroupDanger.erase(llgroup);
 	msg->note("已注销" + printGroup(llgroup) + "的黑名单记录√");
-	blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
+	blacklist->saveJson(DiceDir + "/conf/BlackList.json");
 }
 
 void DDBlackManager::rm_black_qq(long long llqq, FromMsg* msg)
@@ -965,7 +965,7 @@ void DDBlackManager::rm_black_qq(long long llqq, FromMsg* msg)
 	}
 	reset_qq_danger(llqq);
 	msg->note("已注销" + printQQ(llqq) + "的黑名单记录√");
-	blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
+	blacklist->saveJson(DiceDir + "/conf/BlackList.json");
 }
 
 void DDBlackManager::isban(FromMsg* msg)
@@ -1297,7 +1297,7 @@ int DDBlackManager::loadJson(string strPath, bool isExtern)
 	if (isExtern) {
 		filesystem::remove(strPath);
 		console.log("更新外源不良记录条目" + to_string(cnt) + "条", 1, printSTNow());
-		blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
+		blacklist->saveJson(DiceDir + "/conf/BlackList.json");
 	}
 	return cnt;
 }

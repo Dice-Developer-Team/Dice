@@ -21,8 +21,6 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
 #include <string>
 #include <iostream>
 #include <map>
@@ -52,6 +50,10 @@
 #include "S3PutObject.h"
 #include "DiceCensor.h"
 
+#ifndef _WIN32
+#include <curl/curl.h>
+#endif
+
 #pragma warning(disable:4996)
 #pragma warning(disable:6031)
 
@@ -73,15 +75,15 @@ void loadData()
 {
 	mkDir(DiceDir);
 	string strLog;
-	loadDir(loadXML<CardTemp>, string(DiceDir + "\\CardTemp\\"), getmCardTemplet(), strLog, true);
-	if (loadJMap(DiceDir + "\\conf\\CustomReply.json", CardDeck::mReplyDeck) < 0 && loadJMap(
+	loadDir(loadXML<CardTemp>, string(DiceDir + "/CardTemp/"), getmCardTemplet(), strLog, true);
+	if (loadJMap(DiceDir + "/conf/CustomReply.json", CardDeck::mReplyDeck) < 0 && loadJMap(
 		strFileLoc + "ReplyDeck.json", CardDeck::mReplyDeck) > 0)
 	{
 		console.log("迁移自定义回复" + to_string(CardDeck::mReplyDeck.size()) + "条", 1);
-		saveJMap(DiceDir + "\\conf\\CustomReply.json", CardDeck::mReplyDeck);
+		saveJMap(DiceDir + "/conf/CustomReply.json", CardDeck::mReplyDeck);
 	}
 	fmt->set_help("回复列表", "回复触发词列表:" + listKey(CardDeck::mReplyDeck));
-	if (loadDir(loadJMap, string(DiceDir + "\\PublicDeck\\"), CardDeck::mExternPublicDeck, strLog) < 1)
+	if (loadDir(loadJMap, string(DiceDir + "/PublicDeck/"), CardDeck::mExternPublicDeck, strLog) < 1)
 	{
 		loadJMap(strFileLoc + "PublicDeck.json", CardDeck::mExternPublicDeck);
 		loadJMap(strFileLoc + "ExternDeck.json", CardDeck::mExternPublicDeck);
@@ -89,7 +91,7 @@ void loadData()
 	map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
 	//读取帮助文档
 	fmt->load(strLog);
-	if (int cnt; (cnt = loadJMap(DiceDir + "\\conf\\CustomHelp.json", CustomHelp)) < 0)
+	if (int cnt; (cnt = loadJMap(DiceDir + "/conf/CustomHelp.json", CustomHelp)) < 0)
 	{
 		if (cnt == -1)console.log("自定义帮助文件json解析失败！", 1);
 		ifstream ifstreamHelpDoc(strFileLoc + "HelpDoc.txt");
@@ -105,7 +107,7 @@ void loadData()
 			}
 			if (!CustomHelp.empty())
 			{
-				saveJMap(DiceDir + "\\conf\\CustomHelp.json", CustomHelp);
+				saveJMap(DiceDir + "/conf/CustomHelp.json", CustomHelp);
 				console.log("初始化自定义帮助词条" + to_string(CustomHelp.size()) + "条", 1);
 			}
 		}
@@ -113,8 +115,8 @@ void loadData()
 	}
 	map_merge(fmt->helpdoc, CustomHelp);
 	//读取敏感词库
-	loadDir(load_words, DiceDir + "\\conf\\censor\\", censor, strLog, true);
-	loadJMap(DiceDir + "\\conf\\CustomCensor.json", censor.CustomWords);
+	loadDir(load_words, DiceDir + "/conf/censor/", censor, strLog, true);
+	loadJMap(DiceDir + "/conf/CustomCensor.json", censor.CustomWords);
 	censor.build();
 	if (!strLog.empty())
 	{
@@ -158,24 +160,37 @@ void dataInit()
 //备份数据
 void dataBackUp()
 {
-	mkDir(DiceDir + "\\conf");
-	mkDir(DiceDir + "\\user");
-	mkDir(DiceDir + "\\audit");
+	mkDir(DiceDir + "/conf");
+	mkDir(DiceDir + "/user");
+	mkDir(DiceDir + "/audit");
 	//备份列表
-	saveBFile(DiceDir + "\\user\\PlayerCards.RDconf", PList);
-	saveFile(DiceDir + "\\user\\ChatList.txt", ChatList);
-	saveBFile(DiceDir + "\\user\\ChatConf.RDconf", ChatList);
-	saveFile(DiceDir + "\\user\\UserList.txt", UserList);
-	saveBFile(DiceDir + "\\user\\UserConf.RDconf", UserList);
+	saveBFile(DiceDir + "/user/PlayerCards.RDconf", PList);
+	saveFile(DiceDir + "/user/ChatList.txt", ChatList);
+	saveBFile(DiceDir + "/user/ChatConf.RDconf", ChatList);
+	saveFile(DiceDir + "/user/UserList.txt", UserList);
+	saveBFile(DiceDir + "/user/UserConf.RDconf", UserList);
 }
 
 EVE_Enable(eventEnable)
 {
 	llStartTime = clock();
-	char path[MAX_PATH];
+#ifndef _WIN32
+	CURLcode err;
+	err = curl_global_init(CURL_GLOBAL_DEFAULT);
+	if (err != CURLE_OK)
+	{
+		console.log("错误: 加载libcurl失败！", 1);
+	}
+#endif
+	char path[260];
+#ifdef _WIN32
 	GetModuleFileNameA(nullptr, path, MAX_PATH);
+#else
+	*path = 0;
+#endif
 	std::string pathStr(path);
 	strModulePath = pathStr;
+	// TODO: 为Linux修改
 	string pathExe = pathStr.substr(pathStr.rfind("\\") + 1);
 	std::transform(pathStr.begin(), pathStr.end(), pathStr.begin(), [](unsigned char c) { return tolower(c); });
 	if (pathExe.substr(0, 4) == "java")
@@ -191,7 +206,7 @@ EVE_Enable(eventEnable)
 		dirExe = pathStr.substr(0, pathStr.find_last_of('\\') + 1);
 		this_thread::sleep_for(3s);
 	}
-	if (console.DiceMaid = getLoginQQ())
+	if ((console.DiceMaid = getLoginQQ()))
 	{
 		DiceDir = dirExe + "Dice" + to_string(console.DiceMaid);
 		filesystem::path pathDir(DiceDir);
@@ -201,7 +216,7 @@ EVE_Enable(eventEnable)
 			else filesystem::create_directory(pathDir);
 		}
 	}
-	console.setPath(DiceDir + "\\conf\\Console.xml");
+	console.setPath(DiceDir + "/conf/Console.xml");
 	strFileLoc = getAppDirectory();
 	mkDir(strFileLoc); // Mirai不会自动创建文件夹
 	GlobalMsg["strSelfName"] = getLoginNick();
@@ -209,9 +224,9 @@ EVE_Enable(eventEnable)
 	{
 		GlobalMsg["strSelfName"] = "骰娘[" + toString(console.DiceMaid % 1000, 4) + "]";
 	}
-	mkDir(DiceDir + "\\conf");
-	mkDir(DiceDir + "\\user");
-	mkDir(DiceDir + "\\audit");
+	mkDir(DiceDir + "/conf");
+	mkDir(DiceDir + "/user");
+	mkDir(DiceDir + "/audit");
 	if (!console.load())
 	{
 		ifstream ifstreamMaster(strFileLoc + "Master.RDconf");
@@ -246,7 +261,7 @@ EVE_Enable(eventEnable)
 		console.save();
 	}
 	//读取聊天列表
-	if (loadBFile(DiceDir + "\\user\\UserConf.RDconf", UserList) < 1)
+	if (loadBFile(DiceDir + "/user/UserConf.RDconf", UserList) < 1)
 	{
 		map<long long, int> DefaultDice;
 		if (loadFile(strFileLoc + "Default.RDconf", DefaultDice) > 0)
@@ -273,7 +288,7 @@ EVE_Enable(eventEnable)
 			}
 		}
 	}
-	if (loadFile(DiceDir + "\\user\\UserList.txt", UserList) < 1)
+	if (loadFile(DiceDir + "/user/UserList.txt", UserList) < 1)
 	{
 		set<long long> WhiteQQ;
 		if (loadFile(strFileLoc + "WhiteQQ.RDconf", WhiteQQ) > 0)
@@ -291,7 +306,7 @@ EVE_Enable(eventEnable)
 		if (console.master())getUser(console.master()).create(NEWYEAR).trust(5);
 		if (UserList.size())console.log("初始化用户记录" + to_string(UserList.size()) + "条", 1);
 	}
-	if (loadBFile(DiceDir + "\\user\\ChatConf.RDconf", ChatList) < 1)
+	if (loadBFile(DiceDir + "/user/ChatConf.RDconf", ChatList) < 1)
 	{
 		set<long long> GroupList;
 		if (loadFile(strFileLoc + "DisabledDiscuss.RDconf", GroupList) > 0)
@@ -378,7 +393,7 @@ EVE_Enable(eventEnable)
 			}
 		}
 	}
-	if (loadFile(DiceDir + "\\user\\ChatList.txt", ChatList) < 1)
+	if (loadFile(DiceDir + "/user/ChatList.txt", ChatList) < 1)
 	{
 		map<chatType, time_t> mLastMsgList;
 		for (const auto& it : mLastMsgList) 
@@ -401,20 +416,20 @@ EVE_Enable(eventEnable)
 		chat(gid).group().name(gname).reset("已退");
 	}
 	blacklist = make_unique<DDBlackManager>();
-	if (blacklist->loadJson(DiceDir + "\\conf\\BlackList.json") < 0)
+	if (blacklist->loadJson(DiceDir + "/conf/BlackList.json") < 0)
 	{
 		blacklist->loadJson(strFileLoc + "BlackMarks.json");
 		int cnt = blacklist->loadHistory(strFileLoc);
 		if (cnt) {
-			blacklist->saveJson(DiceDir + "\\conf\\BlackList.json");
+			blacklist->saveJson(DiceDir + "/conf/BlackList.json");
 			console.log("初始化不良记录" + to_string(cnt) + "条", 1);
 		}
 	}
 	else {
-		blacklist->loadJson(DiceDir + "\\conf\\BlackListEx.json", true);
+		blacklist->loadJson(DiceDir + "/conf/BlackListEx.json", true);
 	}
 	fmt = make_unique<DiceModManager>();
-	if (loadJMap(DiceDir + "\\conf\\CustomMsg.json", EditedMsg) < 0)loadJMap(strFileLoc + "CustomMsg.json", EditedMsg);
+	if (loadJMap(DiceDir + "/conf/CustomMsg.json", EditedMsg) < 0)loadJMap(strFileLoc + "CustomMsg.json", EditedMsg);
 	//预修改出场回复文本
 	if (EditedMsg.count("strSelfName"))GlobalMsg["strSelfName"] = EditedMsg["strSelfName"];
 	for (auto it : EditedMsg)
@@ -424,7 +439,7 @@ EVE_Enable(eventEnable)
 		GlobalMsg[it.first] = it.second;
 	}
 	loadData();
-	if (loadBFile(DiceDir + "\\user\\PlayerCards.RDconf", PList) < 1)
+	if (loadBFile(DiceDir + "/user/PlayerCards.RDconf", PList) < 1)
 	{
 		ifstream ifstreamCharacterProp(strFileLoc + "CharacterProp.RDconf");
 		if (ifstreamCharacterProp)
@@ -447,7 +462,7 @@ EVE_Enable(eventEnable)
 	}
 	dataInit();
 	// 确保线程执行结束
-	while (msgSendThreadRunning)Sleep(10);
+	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
 	Aws::InitAPI(options);
 	Enabled = true;
 	threads(SendMsg);
@@ -455,7 +470,7 @@ EVE_Enable(eventEnable)
 	threads(warningHandler);
 	threads(frqHandler);
 	sch.start();
-	console.log(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string((clock() - llStartTime) / 1000) + "秒", 0b1,
+	console.log(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string((clock() - llStartTime) / CLOCKS_PER_SEC) + "秒", 0b1,
 				printSTNow());
 	//骰娘网络
 	getDiceList();
@@ -657,7 +672,7 @@ EVE_DiscussMsg_EX(eventDiscussMsg)
 	if (console["LeaveDiscuss"])
 	{
 		sendDiscussMsg(eve.fromDiscuss, getMsg("strLeaveDiscuss"));
-		Sleep(1000);
+		this_thread::sleep_for(1000ms);
 		setDiscussLeave(eve.fromDiscuss);
 		return;
 	}
@@ -907,21 +922,27 @@ EVE_Menu(eventMasterMode)
 	{
 		console.isMasterMode = false;
 		console.killMaster();
+#ifdef _WIN32
 		MessageBoxA(nullptr, "Master模式已关闭√\nmaster已清除", "Master模式切换", MB_OK | MB_ICONINFORMATION);
+#endif
 	}
 	else
 	{
 		console.isMasterMode = true;
 		console.save();
+#ifdef _WIN32
 		MessageBoxA(nullptr, "Master模式已开启√\n认主请对骰娘发送.master public/private", "Master模式切换", MB_OK | MB_ICONINFORMATION);
+#endif
 	}
 	return 0;
 }
 
+#ifdef _WIN32
 EVE_Menu(eventGUI)
 {
 	return GUIMain();
 }
+#endif
 
 void global_exit() {
 	Enabled = false;
@@ -939,6 +960,9 @@ void global_exit() {
 	EditedMsg.clear();
 	blacklist.reset();
 	Aws::ShutdownAPI(options);
+#ifndef _WIN32
+	curl_global_cleanup();
+#endif
 }
 
 EVE_Disable(eventDisable)

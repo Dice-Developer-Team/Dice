@@ -1,9 +1,11 @@
+#pragma once
+
 /*
  * 树状结构
  * Copyright (C) 2019-2020 String.Empty
  * 实际并非真正意义上的XML格式
  */
-#pragma once
+
 #include <string>
 #include <vector>
 #include <map>

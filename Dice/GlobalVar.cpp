@@ -20,8 +20,10 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#endif
 #include "CQLogger.h"
 #include "GlobalVar.h"
 #include "MsgFormat.h"
@@ -34,7 +36,9 @@ std::string Dice_Full_Ver_For = Dice_Full_Ver + " For CoolQ]";
 
 std::string strModulePath;
 
+#ifdef _WIN32
 HMODULE hDllModule = nullptr;
+#endif
 
 bool msgSendThreadRunning = false;
 

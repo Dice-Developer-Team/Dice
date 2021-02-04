@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  *  _______     ________    ________    ________    __
  * |   __  \   |__    __|  |   _____|  |   _____|  |  |
@@ -21,11 +23,13 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
+
 #ifndef DICE_GLOBAL_VAR
 #define DICE_GLOBAL_VAR
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#endif
 #include "CQLogger.h"
 #include <map>
 #include <unordered_map>
@@ -65,8 +69,10 @@ const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER";
 
 #endif
 
+#ifdef _WIN32
 // DLL hModule
 extern HMODULE hDllModule;
+#endif 
 
 // 应用是否被启用
 extern bool Enabled;

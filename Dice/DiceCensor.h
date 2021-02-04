@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include "STLExtern.hpp"
 #include <unordered_set>

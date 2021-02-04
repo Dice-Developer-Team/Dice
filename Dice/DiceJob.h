@@ -10,7 +10,9 @@ void frame_restart(DiceJob& job);
 void frame_reload(DiceJob& job);
 
 void auto_save(DiceJob& job);
+
 void check_system(DiceJob& job);
+
 
 void clear_image(DiceJob& job);
 

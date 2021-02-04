@@ -1,4 +1,4 @@
-#include <windows.h>
+
 #include "DiceEvent.h"
 #include "Jsonio.h"
 #include "MsgFormat.h"
@@ -13,6 +13,7 @@
 #include "DiceNetwork.h"
 #include "DiceCloud.h"
 #include <memory>
+#include <ctime>
 using namespace std;
 using namespace CQ;
 
@@ -1129,7 +1130,7 @@ int FromMsg::DiceReply()
 			fmt->set_help(strVar["key"], strHelpdoc);
 			reply(format(GlobalMsg["strHlpSet"], {strVar["key"]}));
 		}
-		saveJMap(DiceDir + "\\conf\\CustomHelp.json", CustomHelp);
+		saveJMap(DiceDir + "/conf/CustomHelp.json", CustomHelp);
 		return true;
 	}
 	if (strLowerMessage.substr(intMsgCnt, 4) == "help")
@@ -1316,15 +1317,24 @@ int FromMsg::DiceReply()
 		}
 		if (strOption == "state")
 		{
-			GetLocalTime(&stNow);
+			time_t tt = time(nullptr);
+#ifdef _MSC_VER
+			localtime_s(&stNow, &tt);
+#else
+			localtime_r(&tt, &stNow);
+#endif
+#ifdef _WIN32
 			double mbFreeBytes = 0, mbTotalBytes = 0;
 			long long milDisk(getDiskUsage(mbFreeBytes, mbTotalBytes));
+#endif
 			ResList res;
 			res << "本地时间:" + printSTime(stNow)
+#ifdef _WIN32
 				<< "内存占用:" + to_string(getRamPort()) + "%"
 				<< "CPU占用:" + toString(getWinCpuUsage() / 10.0) + "%"
 				<< "硬盘占用:" + toString(milDisk / 10.0) + "%(空余:" + toString(mbFreeBytes) + "GB/ " + toString(mbTotalBytes) + "GB)"
-				<< "运行时长:" + printDuringTime((clock() - llStartTime) / 1000)
+#endif
+				<< "运行时长:" + printDuringTime((clock() - llStartTime) / CLOCKS_PER_SEC)
 				<< "今日指令量:" + to_string(today->get("frq"))
 				<< "启动后指令量:" + to_string(FrqMonitor::sumFrqTotal);
 			reply(res.show());
@@ -1358,6 +1368,7 @@ int FromMsg::DiceReply()
 			return 1;
 		}
 		else if (strOption == "remake") {
+			
 			if (trusted < 5 && fromQQ != console.master()) {
 				reply(GlobalMsg["strNotMaster"]);
 				return -1;
@@ -1379,6 +1390,7 @@ int FromMsg::DiceReply()
 		}
 		if (strOption == "rexplorer")
 		{
+#ifdef _WIN32
 			if (trusted < 5 && fromQQ != console.master())
 			{
 				reply(GlobalMsg["strNotMaster"]);
@@ -1388,9 +1400,11 @@ int FromMsg::DiceReply()
 			system(R"(start %SystemRoot%\explorer.exe)");
 			this_thread::sleep_for(3s);
 			note("已重启资源管理器√\n当前内存占用：" + to_string(getRamPort()) + "%");
+#endif
 		}
 		else if (strOption == "cmd")
 		{
+#ifdef _WIN32
 			if (fromQQ != console.master())
 			{
 				reply(GlobalMsg["strNotMaster"]);
@@ -1400,6 +1414,7 @@ int FromMsg::DiceReply()
 			system(strCMD.c_str());
 			reply("已启动命令行√");
 			return 1;
+#endif
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "admin")
@@ -1886,7 +1901,7 @@ int FromMsg::DiceReply()
 			CardDeck::mReplyDeck.erase(strVar["key"]);
 		}
 		else reply(GlobalMsg["strReplySet"], {strVar["key"]});
-		saveJMap(DiceDir + "\\conf\\CustomReply.json", CardDeck::mReplyDeck);
+		saveJMap(DiceDir + "/conf/CustomReply.json", CardDeck::mReplyDeck);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules")
@@ -2051,7 +2066,7 @@ int FromMsg::DiceReply()
 		else
 		{
 			if (gm->has_session(fromSession) && gm->session(fromSession).has_deck(key)) {
-				gm->session(fromSession).deck_draw(this);
+				gm->session(fromSession)._draw(this);
 				return 1;
 			}
 			else if (strVar["deck_name"][0] == '_' || CardDeck::findDeck(strVar["deck_name"]) == 0)
@@ -2227,7 +2242,11 @@ int FromMsg::DiceReply()
 		}
 		string data = "QQ=" + to_string(getLoginQQ()) + "&v=20190114" + "&QueryQQ=" + to_string(fromQQ);
 		char* frmdata = new char[data.length() + 1];
+#ifdef _MSC_VER
 		strcpy_s(frmdata, data.length() + 1, data.c_str());
+#else
+		strcpy(frmdata, data.c_str());
+#endif
 		bool res = Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata, strVar["res"]);
 		delete[] frmdata;
 		if (res)
@@ -2612,7 +2631,7 @@ int FromMsg::DiceReply()
 			GlobalMsg[strName] = strMessage;
 			note("已自定义" + strName + "的文本", 0b1);
 		}
-		saveJMap(DiceDir + "\\conf\\CustomMsg.json", EditedMsg);
+		saveJMap(DiceDir + "/conf/CustomMsg.json", EditedMsg);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en")

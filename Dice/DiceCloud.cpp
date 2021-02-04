@@ -2,10 +2,7 @@
  * ÷»ÄïÍøÂç
  * Copyright (C) 2019 String.Empty
  */
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <WinInet.h>
-#include <urlmon.h>
+#include <cstring>
 #include "json.hpp"
 #include "DiceCloud.h"
 #include "GlobalVar.h"
@@ -16,7 +13,13 @@
 #include "DiceMsgSend.h"
 #include "DiceEvent.h"
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <WinInet.h>
+#include <urlmon.h>
 #pragma comment(lib, "urlmon.lib")
+#endif
 
 using namespace std;
 using namespace nlohmann;
@@ -30,7 +33,11 @@ namespace Cloud
 			strVer + "&isGlobalOn=" + to_string(!console["DisabledGlobal"]) + "&isPublic=" +
 			to_string(!console["Private"]) + "&isVisible=" + to_string(console["CloudVisible"]);
 		char* frmdata = new char[data.length() + 1];
+#ifdef _MSC_VER
 		strcpy_s(frmdata, data.length() + 1, data.c_str());
+#else
+		strcpy(frmdata, data.c_str());
+#endif
 		string temp;
 		Network::POST("shiki.stringempty.xyz", "/DiceCloud/update.php", 80, frmdata, temp);
 		//AddMsgToQueue(temp, masterQQ);
@@ -40,7 +47,11 @@ namespace Cloud
 	int checkWarning(const char* warning)
 	{
 		char* frmdata = new char[strlen(warning) + 1];
+#ifdef _MSC_VER
 		strcpy_s(frmdata, strlen(warning) + 1, warning);
+#else
+		strcpy(frmdata, warning);
+#endif
 		string temp;
 		Network::POST("shiki.stringempty.xyz", "/DiceCloud/warning_check.php", 80, frmdata, temp);
 		delete[] frmdata;
@@ -57,10 +68,14 @@ namespace Cloud
 
 	int DownloadFile(const char* url, const char* downloadPath)
 	{
+#ifdef _WIN32
 		DeleteUrlCacheEntryA(url);
 		if (URLDownloadToFileA(nullptr, url, downloadPath, 0, nullptr) != S_OK) return -1;
 		if (_access(downloadPath, 0))return -2;
 		return 0;
+#else
+		return -1;
+#endif
 	}
 
 	int checkUpdate(FromMsg* msg)

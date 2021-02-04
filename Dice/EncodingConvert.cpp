@@ -22,18 +22,22 @@
  */
 
 #define CP_GBK (936)
-#define WIN32_LEAN_AND_MEAN
 #include "EncodingConvert.h"
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#else
+#include <iconv.h>
+#endif
 #include <string>
 #include <cassert>
 #include <vector>
 #include <algorithm>
 #include <iterator>
 
-// 现在是GBK了
 std::string GBKtoUTF8(const std::string& strGBK)
 {
+#ifdef _WIN32
 	const int UTF16len = MultiByteToWideChar(CP_GBK, 0, strGBK.c_str(), -1, nullptr, 0);
 	auto* const strUTF16 = new wchar_t[UTF16len];
 	MultiByteToWideChar(CP_GBK, 0, strGBK.c_str(), -1, strUTF16, UTF16len);
@@ -44,6 +48,9 @@ std::string GBKtoUTF8(const std::string& strGBK)
 	delete[] strUTF16;
 	delete[] strUTF8;
 	return strOutUTF8;
+#else
+	return ConvertEncoding<char>(strGBK, "gb18030", "utf-8");
+#endif
 }
 
 std::vector<std::string> GBKtoUTF8(const std::vector<std::string>& strGBK)
@@ -53,9 +60,9 @@ std::vector<std::string> GBKtoUTF8(const std::vector<std::string>& strGBK)
 	return vOutUTF8;
 }
 
-// 事实上是GB18030
 std::string UTF8toGBK(const std::string& strUTF8)
 {
+#ifdef _WIN32
 	const int UTF16len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
 	auto* const strUTF16 = new wchar_t[UTF16len];
 	MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, strUTF16, UTF16len);
@@ -66,6 +73,9 @@ std::string UTF8toGBK(const std::string& strUTF8)
 	delete[] strUTF16;
 	delete[] strGBK;
 	return strOutGBK;
+#else
+	return ConvertEncoding<char>(strUTF8, "utf-8", "gb18030");
+#endif
 }
 
 std::vector<std::string> UTF8toGBK(const std::vector<std::string>& vUTF8)

@@ -26,7 +26,7 @@
 
 namespace RandomGenerator
 {
-	inline unsigned long long GetCycleCount();
+	unsigned long long GetCycleCount();
 	int Randint(int lowest, int highest);
 }
 #endif /*DICE_RANDOM_GENERATOR*/

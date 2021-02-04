@@ -1,4 +1,5 @@
 #include <fstream>
+#include <filesystem>
 
 #include <aws/core/auth/AWSAuthSigner.h>
 #include <aws/core/auth/AWSCredentialsProvider.h>
@@ -9,13 +10,8 @@
 
 #include "S3PutObject.h"
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
 #include "GlobalVar.h"
 
-// 防止WINAPI和AWSSDK冲突
-#undef GetMessage
 
 // Aws SDK设置
 Aws::SDKOptions options;
@@ -24,10 +20,8 @@ Aws::Auth::AWSCredentials awsCredentials("", "");
 // 判断文件是否存在
 bool file_exists(const std::string& file_name)
 {
-	const DWORD dwAttrib = GetFileAttributesA(file_name.c_str());
-
-	return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
-		!(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+	std::error_code ec;
+	return std::filesystem::is_regular_file(file_name, ec);
 }
 
 // 上传文件至S3, 采用S3-accelerate
@@ -45,6 +39,7 @@ std::string put_s3_object(const Aws::String& s3_bucket_name,
 	Aws::Client::ClientConfiguration clientConfig;
 	//if (!region.empty())
 		clientConfig.region = region;
+	clientConfig.verifySSL = false;
 	clientConfig.endpointOverride = "s3-accelerate.amazonaws.com";
 	// Set up request
 	Aws::S3::S3Client s3_client(awsCredentials, clientConfig);
@@ -60,8 +55,8 @@ std::string put_s3_object(const Aws::String& s3_bucket_name,
 	auto put_object_outcome = s3_client.PutObject(object_request);
 	if (!put_object_outcome.IsSuccess()) {
 		const auto& error = put_object_outcome.GetError();
-		return "ERROR: " + error.GetExceptionName() + ": "
-			+ error.GetMessage();
+		return std::string("ERROR: ") + error.GetExceptionName().c_str() + ": "
+			+ error.GetMessage().c_str();
 	}
 	return "SUCCESS";
 }

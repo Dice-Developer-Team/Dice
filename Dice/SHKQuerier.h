@@ -4,6 +4,7 @@
  * Copyright (C) 2020 String.Empty
  */
 #pragma once
+#include <cstring>
 #include <string>
 #include <vector>
 #include <unordered_map>

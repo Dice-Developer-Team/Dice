@@ -1,4 +1,5 @@
 #include "DiceGUI.h"
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <cassert>
 #include <map>
@@ -634,7 +635,7 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					GlobalMsg[curr] = str;
 					EditedMsg[curr] = str;
 					ListViewCustomMsg.SetItemText(str, ListViewCustomMsgCurrentActivated, 1);
-					saveJMap(DiceDir + "\\conf\\CustomMsg.json", EditedMsg);
+					saveJMap(DiceDir + "/conf/CustomMsg.json", EditedMsg);
 				}
 				return 0;
 			case ID_MASTER_BUTTONMASTER:
@@ -1163,3 +1164,4 @@ int WINAPI GUIMain()
 
 	return 0;
 }
+#endif

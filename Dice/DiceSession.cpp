@@ -105,7 +105,7 @@ void DiceSession::log_new(FromMsg* msg) {
 	logger.fileLog = (type == "solo")
 		? ("qq_" + to_string(msg->fromQQ) + "_" + to_string(logger.tStart) + ".txt")
 		: ("group_" + to_string(msg->fromGroup) + "_" + to_string(logger.tStart) + ".txt");
-	logger.pathLog = DiceDir + LogInfo::dirLog + "\\" + logger.fileLog;
+	logger.pathLog = DiceDir + LogInfo::dirLog + "/" + logger.fileLog;
 	//先发消息后插入
 	msg->reply(GlobalMsg["strLogNew"]);
 	LogList.insert(room);
@@ -498,10 +498,10 @@ std::mutex exSessionSave;
 
 void DiceSession::save() const
 {
-	mkDir(DiceDir + "\\user\\session");
+	mkDir(DiceDir + "/user/session");
 	string pathFile = (type == "solo")
-		? (DiceDir + R"(\user\session\Q)" + to_string(~room) + ".json" )
-		: (DiceDir + R"(\user\session\)" + to_string(room) + ".json");
+		? (DiceDir + R"(/user/session/Q)" + to_string(~room) + ".json" )
+		: (DiceDir + R"(/user/session/)" + to_string(room) + ".json");
 	nlohmann::json jData;
 	if (!sOB.empty())jData["observer"] = sOB;
 	if (!mTable.empty())
@@ -574,7 +574,7 @@ Session& DiceTableMaster::session(long long group)
 void DiceTableMaster::session_end(long long group)
 {
 	std::unique_lock<std::shared_mutex> lock(sessionMutex);
-	remove((DiceDir + R"(\user\session\)" + to_string(group)).c_str());
+	remove((DiceDir + R"(/user/session/)" + to_string(group)).c_str());
 	mSession.erase(group);
 }
 
@@ -583,7 +583,7 @@ const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "
 /*
 void DiceTableMaster::save()
 {
-	mkDir(DiceDir + "\\user\\session");
+	mkDir(DiceDir + "/user/session");
 	std::shared_lock<std::shared_mutex> lock(sessionMutex);
 	for (auto [grp, pSession] : mSession)
 	{
@@ -597,7 +597,7 @@ int DiceTableMaster::load()
     string strLog;
     std::unique_lock<std::shared_mutex> lock(sessionMutex);
     vector<std::filesystem::path> sFile;
-    int cnt = listDir(DiceDir + "\\user\\session\\", sFile);
+    int cnt = listDir(DiceDir + "/user/session/", sFile);
     if (cnt <= 0)return cnt;
     for (auto& filename : sFile)
 	{
@@ -617,7 +617,7 @@ int DiceTableMaster::load()
 			jLog["file"].get_to(pSession->logger.fileLog);
 			jLog["logging"].get_to(pSession->logger.isLogging);
 			pSession->logger.update();
-			pSession->logger.pathLog = DiceDir + LogInfo::dirLog + "\\" + pSession->logger.fileLog;
+			pSession->logger.pathLog = DiceDir + LogInfo::dirLog + "/" + pSession->logger.fileLog;
 			if (pSession->logger.isLogging) {
 				LogList.insert(pSession->room);
 			}

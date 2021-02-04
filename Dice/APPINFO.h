@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  *  _______     ________    ________    ________    __
  * |   __  \   |__    __|  |   _____|  |   _____|  |  |
@@ -24,7 +26,6 @@
 // 此文件用于酷Q获取对应的APPINFO
 // 请勿修改
 
-#pragma once
 #ifndef DICE_APPINFO
 #define DICE_APPINFO
 

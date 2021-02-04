@@ -33,6 +33,10 @@
 #include "Jsonio.h"
 #include "BlackListManager.h"
 #include "DiceSchedule.h"
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif	
 
 using namespace std;
 using namespace CQ;
@@ -144,7 +148,7 @@ void Console::rmNotice(chatType ct)
 
 int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 {
-	ofstream fout(string(DiceDir + "\\audit\\log") + to_string(DiceMaid) + "_" + printDate() + ".txt",
+	ofstream fout(string(DiceDir + "/audit/log") + to_string(DiceMaid) + "_" + printDate() + ".txt",
 	              ios::out | ios::app);
 	fout << strTime << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 	fout.close();
@@ -180,7 +184,7 @@ void Console::reset()
 
 void Console::loadNotice()
 {
-	if (loadFile(DiceDir + "\\conf\\NoticeList.txt", NoticeList) < 1)
+	if (loadFile(DiceDir + "/conf/NoticeList.txt", NoticeList) < 1)
 	{
 		std::set<chatType> sChat;
 		if (loadFile(std::string(getAppDirectory()) + "MonitorList.RDconf", sChat) > 0)
@@ -189,7 +193,7 @@ void Console::loadNotice()
 				console.setNotice(it, 0b100000);
 			}
 		sChat.clear();
-		if (loadFile(DiceDir + "\\conf\\RecorderList.RDconf", sChat) > 0)
+		if (loadFile(DiceDir + "/conf/RecorderList.RDconf", sChat) > 0)
 			for (const auto& it : sChat)
 			{
 				console.setNotice(it, 0b11011);
@@ -209,7 +213,7 @@ void Console::loadNotice()
 
 void Console::saveNotice() const
 {
-	saveFile(DiceDir + "\\conf\\NoticeList.txt", NoticeList);
+	saveFile(DiceDir + "/conf/NoticeList.txt", NoticeList);
 }
 
 Console console;
@@ -224,25 +228,37 @@ std::map<long long, long long> mDiceList;
 long long llStartTime = clock();
 
 //当前时间
-SYSTEMTIME stNow{};
-SYSTEMTIME stTmp{};
+tm stNow{};
+tm stTmp{};
 
 std::string printSTNow()
 {
-	GetLocalTime(&stNow);
+	time_t tt = time(nullptr);
+#ifdef _MSC_VER
+	localtime_s(&stNow, &tt);
+#else
+	localtime_r(&tt, &stNow);
+#endif
 	return printSTime(stNow);
 }
 
 std::string printDate()
 {
-	return to_string(stNow.wYear) + "-" + (stNow.wMonth < 10 ? "0" : "") + to_string(stNow.wMonth) + "-" + (
-		stNow.wDay < 10 ? "0" : "") + to_string(stNow.wDay);
+	return to_string(stNow.tm_year + 1900) + "-" + (stNow.tm_mon + 1 < 10 ? "0" : "") + to_string(stNow.tm_mon + 1) + "-" + (
+		stNow.tm_mday < 10 ? "0" : "") + to_string(stNow.tm_mday);
 }
 
 std::string printDate(time_t tt)
 {
 	tm t{};
-	if (!tt || localtime_s(&t, &tt))return R"(????-??-??)";
+	if(!tt) return R"(????-??-??)"; 
+#ifdef _MSC_VER
+	auto ret = localtime_s(&t, &tt);
+	if(ret) return R"(????-??-??)";
+#else
+	auto ret = localtime_r(&tt, &t);
+	if(!ret) return R"(????-??-??)";
+#endif
 	return to_string(t.tm_year + 1900) + "-" + to_string(t.tm_mon + 1) + "-" + to_string(t.tm_mday);
 }
 
@@ -260,13 +276,13 @@ string printClock(std::pair<int, int> clock)
 	return strClock;
 }
 
-std::string printSTime(const SYSTEMTIME st)
+std::string printSTime(const tm st)
 {
-	return to_string(st.wYear) + "-" + (st.wMonth < 10 ? "0" : "") + to_string(st.wMonth) + "-" + (
-			st.wDay < 10 ? "0" : "") + to_string(st.wDay) + " " + (st.wHour < 10 ? "0" : "") + to_string(st.wHour) + ":"
+	return to_string(st.tm_year + 1900) + "-" + (st.tm_mon + 1 < 10 ? "0" : "") + to_string(st.tm_mon + 1) + "-" + (
+			st.tm_mday < 10 ? "0" : "") + to_string(st.tm_mday) + " " + (st.tm_hour < 10 ? "0" : "") + to_string(st.tm_hour) + ":"
 		+ (
-			st.wMinute < 10 ? "0" : "") + to_string(st.wMinute) + ":" + (st.wSecond < 10 ? "0" : "") +
-		to_string(st.wSecond);
+			st.tm_min < 10 ? "0" : "") + to_string(st.tm_min) + ":" + (st.tm_sec < 10 ? "0" : "") +
+		to_string(st.tm_sec);
 }
 	//打印用户昵称QQ
 	string printQQ(long long llqq)
@@ -312,28 +328,33 @@ void getExceptGroup() {
 }
 
 
-bool operator==(const SYSTEMTIME& st, const Console::Clock clock)
+bool operator==(const tm& st, const Console::Clock clock)
 {
-	return st.wHour == clock.first && st.wHour == clock.second;
+	return st.tm_hour == clock.first && st.tm_hour == clock.second;
 }
 
-bool operator<(const Console::Clock clock, const SYSTEMTIME& st)
+bool operator<(const Console::Clock clock, const tm& st)
 {
-	return st.wHour == clock.first && st.wHour == clock.second;
+	return st.tm_hour == clock.first && st.tm_hour == clock.second;
 }
 
 //简易计时器
 	void ConsoleTimer()
 	{
-		Console::Clock clockNow{stNow.wHour,stNow.wMinute};
+		Console::Clock clockNow{stNow.tm_hour,stNow.tm_min};
 		while (Enabled) 
 		{
-			GetLocalTime(&stNow);
+			time_t tt = time(nullptr);
+#ifdef _MSC_VER
+			localtime_s(&stNow, &tt);
+#else
+			localtime_r(&tt, &stNow);
+#endif
 			//分钟时点变动
-			if (stTmp.wMinute != stNow.wMinute)
+			if (stTmp.tm_min != stNow.tm_min)
 			{
 				stTmp = stNow;
-				clockNow = {stNow.wHour, stNow.wMinute};
+				clockNow = {stNow.tm_hour, stNow.tm_min};
 				for (const auto& [clock,eve_type] : multi_range(console.mWorkClock, clockNow))
 				{
 					switch (eve_type)
@@ -375,12 +396,16 @@ EVE_Menu(eventGlobalSwitch)
 	if (console["DisabledGlobal"])
 	{
 		console.set("DisabledGlobal", 0);
+#ifdef _WIN32
 		MessageBoxA(nullptr, "骰娘已结束静默√", "全局开关", MB_OK | MB_ICONINFORMATION);
+#endif
 	}
 	else
 	{
 		console.set("DisabledGlobal", 1);
+#ifdef _WIN32
 		MessageBoxA(nullptr, "骰娘已全局静默√", "全局开关", MB_OK | MB_ICONINFORMATION);
+#endif
 	}
 
 	return 0;
