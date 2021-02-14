@@ -3733,6 +3733,8 @@ int FromMsg::CustomReply()
 		if (fromQQ == console.DiceMaid && strAns == strKey)return 0;
 		reply(strAns);
 		if(!isVirtual)AddFrq(fromQQ, fromTime, fromChat);
+		else
+			AddFrq(0, fromTime, fromChat);
 		return 1;
 	}
 	return 0;
@@ -3777,12 +3779,16 @@ bool FromMsg::DiceFilter()
 	isDisabled = ((console["DisabledGlobal"] && trusted < 4) || groupset(fromGroup, "协议无效") > 0);
 	if (BasicOrder()) 
 	{
-		if (isAns)
-		{
-			AddFrq(fromQQ, fromTime, fromChat);
-			getUser(fromQQ).update(fromTime);
+		if (isAns) {
+			if (!isVirtual) {
+				AddFrq(fromQQ, fromTime, fromChat);
+				getUser(fromQQ).update(fromTime);
+				if (fromChat.second != msgtype::Private)chat(fromGroup).update(fromTime);
+			}
+			else {
+				AddFrq(0, fromTime, fromChat);
+			}
 		}
-		if (fromChat.second != msgtype::Private)chat(fromGroup).update(fromTime);
 		return 1;
 	}
 	if (fromChat.second == msgtype::Group && ((console["CheckGroupLicense"] > 0 && pGrp->isset("未审核"))
@@ -3797,6 +3803,9 @@ bool FromMsg::DiceFilter()
 				AddFrq(fromQQ, fromTime, fromChat);
 				getUser(fromQQ).update(fromTime);
 				if (fromChat.second != msgtype::Private)chat(fromGroup).update(fromTime);
+			}
+			else {
+				AddFrq(0, fromTime, fromChat);
 			}
 			return true;
 		}

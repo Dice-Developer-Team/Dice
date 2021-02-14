@@ -97,6 +97,10 @@ void check_system(DiceJob& job) {
 	//CPU检测
 	if (console["SystemAlarmCPU"] > 0) {
 		perCPU = getWinCpuUsage() / 10.0;
+		if (perCPU > 99.9) {
+			this_thread::sleep_for(10s);
+			perCPU = getWinCpuUsage() / 10.0;
+		}
 		if (perCPU > console["SystemAlarmCPU"] && (!isAlarmCPU || perCPU > perLastCPU + 1)) {
 			console.log("警告：" + GlobalMsg["strSelfName"] + "所在系统CPU占用达" + toString(perCPU) + "%", 0b1000, printSTime(stNow));
 			perLastCPU = perCPU;
