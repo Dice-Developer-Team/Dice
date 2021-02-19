@@ -24,8 +24,8 @@ jobs:
           triplet: arm64-linux
         - path: /usr/arm-linux-gnueabihf
           apt: g++-arm-linux-gnueabihf
-          cc: arm-linux-gnueabihf-g++
-          cxx: arm-linux-gnueabihf-gcc
+          cc: arm-linux-gnueabihf-gcc
+          cxx: arm-linux-gnueabihf-g++
           triplet: arm-linux
         
     runs-on: ubuntu-20.04
