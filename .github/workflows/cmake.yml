@@ -12,13 +12,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - arch: x86_64-linux-gnu
+        - apt: g++-9
+          cc: gcc-9
+          cxx: g++-9
           triplet: x64-linux
-        - arch: i686-linux-gnu
-          triplet: x86-linux
-        - arch: aarch64-linux-gnu
+        - apt: g++-aarch64-linux-gnu
+          cc: aarch64-linux-gnu-gcc
+          cxx: aarch64-linux-gnu-g++
           triplet: arm64-linux
-        - arch: arm-linux-gnueabihf
+        - apt: g++-arm-linux-gnueabihf
+          cc: arm-linux-gnueabihf-g++
+          cxx: arm-linux-gnueabihf-gcc
           triplet: arm-linux
         
     runs-on: ubuntu-20.04
@@ -32,7 +36,7 @@ jobs:
       run: cmake -E make_directory ${{github.workspace}}/build
       
     - name: Install Cross Compiler
-      run: sudo apt-get install g++-${{ matrix.arch }}
+      run: sudo apt-get install ${{ matrix.apt }}
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
@@ -42,7 +46,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_COMPILER=${{ matrix.arch }}-g++ -DCMAKE_C_COMPILER=${{ matrix.arch }}-gcc -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
 
     - name: Build
       working-directory: ${{github.workspace}}/build
