@@ -32,7 +32,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake $GITHUB_WORKSPACE -A ${{ matrix.type }} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+      run: cmake ${{github.workspace}} -A ${{ matrix.type }} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
 
     - name: Build
       working-directory: ${{github.workspace}}/build
@@ -79,6 +79,15 @@ jobs:
       
     - name: Install Cross Compiler
       run: sudo apt-get install ${{ matrix.apt }}
+      
+    - name: Cache Upload
+      uses: actions/cache@v2.1.4
+      with:
+        # A list of files, directories, and wildcard patterns to cache and restore
+        path: ${{github.workspace}}/vcpkg_installed
+        # An explicit key for restoring and saving the cache
+        key: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('**/vcpkg.json') }}
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
