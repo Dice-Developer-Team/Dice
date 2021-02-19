@@ -12,15 +12,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - apt: g++-9
+        - path: /
+          apt: g++-9
           cc: gcc-9
           cxx: g++-9
           triplet: x64-linux
-        - apt: g++-aarch64-linux-gnu
+        - path: /usr/aarch64-linux-gnu
+          apt: g++-aarch64-linux-gnu
           cc: aarch64-linux-gnu-gcc
           cxx: aarch64-linux-gnu-g++
           triplet: arm64-linux
-        - apt: g++-arm-linux-gnueabihf
+        - path: /usr/arm-linux-gnueabihf
+          apt: g++-arm-linux-gnueabihf
           cc: arm-linux-gnueabihf-g++
           cxx: arm-linux-gnueabihf-gcc
           triplet: arm-linux
@@ -46,7 +49,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_PREFIX_PATH=${{ matrix.path }}
 
     - name: Build
       working-directory: ${{github.workspace}}/build
