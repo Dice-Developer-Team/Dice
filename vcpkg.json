@@ -1,0 +1,20 @@
+{
+  "name": "dice",
+  "version-string": "2.5.0",
+  "dependencies": [
+    "openssl",
+    {
+      "name": "aws-sdk-cpp",
+      "features": [ "s3" ]
+    },
+    {
+      "name": "curl",
+      "features": [ "openssl" ],
+      "platform" : "!windows"
+    },
+    {
+      "name": "libiconv",
+      "platform" : "!windows"
+    }
+  ]
+}
