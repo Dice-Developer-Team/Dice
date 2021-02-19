@@ -117,11 +117,11 @@ jobs:
     - name: Install Cross Compiler
       run: sudo apt-get install ${{ matrix.apt }}
       
-    - name: Cache Upload
+    - name: Cache
       uses: actions/cache@v2.1.4
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
-        path: ${{github.workspace}}/vcpkg_installed
+        path: ${{github.workspace}}/build/vcpkg_installed
         # An explicit key for restoring and saving the cache
         key: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('**/vcpkg.json') }}
         restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-
