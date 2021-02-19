@@ -19,7 +19,7 @@ jobs:
       run: cmake -E make_directory ${{github.workspace}}/build
       
     - name: Install Cross Compiler
-      run: sudo apt-get install g++-10-aarch64-linux-gnu
+      run: sudo apt-get install g++-aarch64-linux-gnu
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
@@ -29,7 +29,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_COMPILER=g++-10-aarch64-linux-gnu -DCMAKE_C_COMPILER=gcc-10-aarch64-linux-gnu -DVCPKG_TARGET_TRIPLET=arm64-linux
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DCMAKE_CXX_COMPILER=g++-aarch64-linux-gnu -DCMAKE_C_COMPILER=gcc-aarch64-linux-gnu -DVCPKG_TARGET_TRIPLET=arm64-linux
 
     - name: Build
       working-directory: ${{github.workspace}}/build
