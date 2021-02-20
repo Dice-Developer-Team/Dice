@@ -176,6 +176,8 @@ jobs:
       run: ctest -C $BUILD_TYPE
       
   build-android:
+    env:
+      ANDROID_NDK: $ANDROID_NDK_HOME
     strategy:
       fail-fast: false
       matrix:
