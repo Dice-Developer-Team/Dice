@@ -26,6 +26,15 @@ jobs:
       # Some projects don't allow in-source building, so create a separate build directory
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
+      
+    - name: Cache
+      uses: actions/cache@v2.1.4
+      with:
+        # A list of files, directories, and wildcard patterns to cache and restore
+        path: ${{github.workspace}}/build/vcpkg_installed
+        # An explicit key for restoring and saving the cache
+        key: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('**/vcpkg.json') }}
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-
 
     - name: Configure CMake
       shell: bash
@@ -58,7 +67,7 @@ jobs:
         - arch: arm64
           triplet: arm64-osx
           
-    runs-on: 	macos-11.0
+    runs-on: 	macos-latest
     
     steps:
     - uses: actions/checkout@v2
@@ -67,6 +76,15 @@ jobs:
       # Some projects don't allow in-source building, so create a separate build directory
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
+      
+    - name: Cache
+      uses: actions/cache@v2.1.4
+      with:
+        # A list of files, directories, and wildcard patterns to cache and restore
+        path: ${{github.workspace}}/build/vcpkg_installed
+        # An explicit key for restoring and saving the cache
+        key: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('**/vcpkg.json') }}
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-
 
     - name: Configure CMake
       working-directory: ${{github.workspace}}/build
