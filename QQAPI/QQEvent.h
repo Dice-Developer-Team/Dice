@@ -1,12 +1,20 @@
 #pragma once
 namespace QQ {
-#ifdef _WIN32
+#if (defined _WIN32 && !defined _WIN64)
 #ifdef _MSC_VER
 #define QQEVENT(ReturnType, Name, Size) __pragma(comment(linker, "/EXPORT:" #Name "=_" #Name "@" #Size))\
 	extern "C" __declspec(dllexport) ReturnType __stdcall Name
 #else
 #define QQEVENT(ReturnType, Name, Size)\
 	extern "C" __attribute__((dllexport)) ReturnType __attribute__((__stdcall__)) Name
+#endif /*_MSC_VER*/
+#elif defined _WIN64
+#ifdef _MSC_VER
+#define QQEVENT(ReturnType, Name, Size)\
+	extern "C" __declspec(dllexport) ReturnType __stdcall Name
+#else
+#define QQEVENT(ReturnType, Name, Size)\
+	extern "C" __attribute__((dllexport)) Name
 #endif /*_MSC_VER*/
 #else
 #define QQEVENT(ReturnType, Name, Size)\
