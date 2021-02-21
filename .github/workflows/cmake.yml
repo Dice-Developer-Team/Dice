@@ -114,7 +114,7 @@ jobs:
           cc: gcc-9
           cxx: g++-9
           triplet: x64-linux
-        - path: /usr/i686-linux-gnu
+        - path: /
           apt: g++-i686-linux-gnu
           cc: i686-linux-gnu-gcc
           cxx: i686-linux-gnu-g++
