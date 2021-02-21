@@ -1,6 +1,6 @@
 name: CMake
 
-on: [push]
+on: [push, pull_request]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -13,9 +13,9 @@ jobs:
       matrix:
         include:
         - type: Win32
-          triplet: x86-windows
+          triplet: x86-windows-static
         - type: x64
-          triplet: x64-windows
+          triplet: x64-windows-static
           
     runs-on: windows-2019
     
@@ -182,13 +182,13 @@ jobs:
       matrix:
         include:
         - abi: armeabi-v7a
-          triplet: arm-android
+          triplet: arm-android-static
         - abi: arm64-v8a
-          triplet: arm64-android
+          triplet: arm64-android-static
         - abi: x86
-          triplet: x86-android
+          triplet: x86-android-static
         - abi: x86_64
-          triplet: x64-android
+          triplet: x64-android-static
         
     runs-on: ubuntu-20.04
     
