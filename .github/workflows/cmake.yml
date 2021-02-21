@@ -56,6 +56,14 @@ jobs:
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C $BUILD_TYPE
+      
+    - name: Upload
+      uses: actions/upload-artifact@v2.2.2
+      with:
+        # Artifact name
+        name: ${{ matrix.triplet }}
+        # A file, directory or wildcard pattern that describes what to upload
+        path: "**/w4123.Dice.dll"
 
   build-macos:
     strategy:
@@ -103,6 +111,14 @@ jobs:
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C $BUILD_TYPE
+      
+    - name: Upload
+      uses: actions/upload-artifact@v2.2.2
+      with:
+        # Artifact name
+        name: ${{ matrix.triplet }}
+        # A file, directory or wildcard pattern that describes what to upload
+        path: "**/w4123.Dice.dll"
     
   build-linux:
     strategy:
@@ -173,6 +189,14 @@ jobs:
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C $BUILD_TYPE
+    
+    - name: Upload
+      uses: actions/upload-artifact@v2.2.2
+      with:
+        # Artifact name
+        name: ${{ matrix.triplet }}
+        # A file, directory or wildcard pattern that describes what to upload
+        path: "**/w4123.Dice.dll"
       
   build-android:
     env:
@@ -226,4 +250,12 @@ jobs:
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C $BUILD_TYPE
+      
+    - name: Upload
+      uses: actions/upload-artifact@v2.2.2
+      with:
+        # Artifact name
+        name: ${{ matrix.triplet }}
+        # A file, directory or wildcard pattern that describes what to upload
+        path: "**/w4123.Dice.dll"
 
