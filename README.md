@@ -24,7 +24,11 @@ Latest Release: [![GitHub release](https://img.shields.io/github/release-pre/Dic
 
 ## 编译须知
 
-请安装好3.15版本或更高的cmake，并且安装好vcpkg，使用```cmake -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake . && cmake --build .```等进行编译。你可能需要设置```CC```, ```CXX```, ```VCPKG_TARGET_TRIPLET```等环境变量到对应的参数才能正常编译。
+1. 安装CMake(v3.15+), git和一个合适的支持C++17的编译器
+2. clone此repo，请注意此repo含有submodule，```git clone https://github.com/Dice-Developer-Team/Dice --recursive```
+3. 如果你在Cross-compile，请先执行```./vcpkg/bootstrap-vcpkg.sh```，以防止Cross-compiler冲突。如果你没在Cross-compile，你可以直接运行下一步，vcpkg会自动被安装。
+4. 执行```cmake .```，如果你在交叉编译，你可能需要设置```CC```, ```CXX```, ```VCPKG_TARGET_TRIPLET```等环境变量到对应的参数才能正常编译。
+5. 执行```cmake --build .```完成编译
 
 在大多数情况下，你不需要自行编译。你可以在Github Releases 以及 Github Actions中找到编译好的二进制版本。
 
