@@ -42,7 +42,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake $GITHUB_WORKSPACE -A ${{ matrix.type }} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+      run: cmake $GITHUB_WORKSPACE -A ${{ matrix.type }} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
 
     - name: Build
       shell: bash
@@ -99,7 +99,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake ${{github.workspace}} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }}
+      run: cmake ${{github.workspace}} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }}
 
     - name: Build
       working-directory: ${{github.workspace}}/build
@@ -175,7 +175,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run:  CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/triplets -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_PREFIX_PATH=${{ matrix.path }}
+      run:  CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/triplets -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_PREFIX_PATH=${{ matrix.path }}
 
     - name: Build
       working-directory: ${{github.workspace}}/build
@@ -236,7 +236,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/triplets -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DANDROID_ABI=${{ matrix.abi }} -DANDROID_PLATFORM=21
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE  -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/triplets -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DANDROID_ABI=${{ matrix.abi }} -DANDROID_PLATFORM=21
 
     - name: Build
       working-directory: ${{github.workspace}}/build
