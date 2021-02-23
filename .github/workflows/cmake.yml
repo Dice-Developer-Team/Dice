@@ -41,7 +41,7 @@ jobs:
     - name: Setup Vcpkg
       shell: cmd
       working-directory: ${{github.workspace}}/vcpkg
-      run: bootstrap-vcpkg.cmd
+      run: bootstrap-vcpkg.bat
 
     - name: Configure CMake
       shell: bash
