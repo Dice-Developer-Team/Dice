@@ -16,6 +16,8 @@ jobs:
           triplet: x86-windows-static
         - type: x64
           triplet: x64-windows-static
+        - type: ARM64
+          triplet: arm64-windows-static
           
     runs-on: windows-2019
     
