@@ -26,7 +26,7 @@ int clrDir(const std::string& dir, const std::unordered_set<std::string>& except
 	{
 		if (p.is_regular_file())
 		{
-			std::string path = convert_w2a(p.path().filename().wstring().c_str());
+			std::string path = convert_w2a(p.path().filename().u16string().c_str());
 			if (path.length() >= 36 && !exceptList.count(path))
 			{
 				std::error_code err2;

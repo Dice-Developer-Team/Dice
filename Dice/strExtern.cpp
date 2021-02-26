@@ -11,7 +11,7 @@
 #include "EncodingConvert.h"
 
 using std::string;
-using std::wstring;
+using std::u16string;
 using std::string_view;
 using std::to_string;
 
@@ -36,38 +36,38 @@ int count_char(const string& s, char ch)
 	return std::count(s.begin(), s.end(), ch);
 }
 
-string convert_w2a(const wchar_t* wch)
+string convert_w2a(const char16_t* wch)
 {
 #ifdef _WIN32
-	const int len = WideCharToMultiByte(CP_GBK, 0, wch, -1, nullptr, 0, nullptr, nullptr);
+	const int len = WideCharToMultiByte(CP_GBK, 0, (const wchar_t*)wch, -1, nullptr, 0, nullptr, nullptr);
 	char* m_char = new char[len];
-	WideCharToMultiByte(CP_GBK, 0, wch, -1, m_char, len, nullptr, nullptr);
+	WideCharToMultiByte(CP_GBK, 0, (const wchar_t*)wch, -1, m_char, len, nullptr, nullptr);
 	std::string str(m_char);
 	delete[] m_char;
 	return str;
 #else
-	return ConvertEncoding<char, wchar_t>(wch, "utf-16le", "gb18030");
+	return ConvertEncoding<char, char16_t>(wch, "utf-16le", "gb18030");
 #endif
 }
 
-wstring convert_a2w(const char* ch) 
+u16string convert_a2w(const char* ch)
 {
 #ifdef _WIN32
     const int len = MultiByteToWideChar(CP_GBK, 0, ch, -1, nullptr, 0);
     wchar_t* m_char = new wchar_t[len];
     MultiByteToWideChar(CP_GBK, 0, ch, -1, m_char, len);
-    std::wstring wstr(m_char);
+    std::u16string wstr((char16_t*)m_char);
     delete[] m_char;
     return wstr;
 #else
-	return ConvertEncoding<wchar_t, char>(ch, "gb18030", "utf-16le");
+	return ConvertEncoding<char16_t, char>(ch, "gb18030", "utf-16le");
 #endif
 }
 size_t wstrlen(const char* ch) {
 #ifdef _WIN32
     return MultiByteToWideChar(CP_GBK, 0, ch, -1, nullptr, 0);
 #else
-	return ConvertEncoding<wchar_t, char>(ch, "gb18030", "utf-16le").length();
+	return ConvertEncoding<char16_t, char>(ch, "gb18030", "utf-16le").length();
 #endif
 }
 

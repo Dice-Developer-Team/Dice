@@ -382,7 +382,7 @@ int _loadDir(int (*load)(const std::string&, T2&), const std::string& strDir, T2
 		if (p.is_regular_file())
 		{
 			intFile++;
-			string path = convert_w2a(p.path().filename().wstring().c_str());
+			string path = convert_w2a(p.path().filename().u16string().c_str());
 			const int Cnt = load(strDir + path, tmp);
 			if (Cnt < 0)
 			{

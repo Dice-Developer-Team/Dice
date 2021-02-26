@@ -7,7 +7,7 @@
 #include <string>
 
 using std::string;
-using std::wstring;
+using std::u16string;
 using std::to_string;
 
 #define CP_GBK (936)
@@ -36,9 +36,9 @@ string to_signed_string(Dig num)
 
 int count_char(const string& s, char ch);
 
-string convert_w2a(const wchar_t* wch);
+string convert_w2a(const char16_t* wch);
 
-wstring convert_a2w(const char* ch);
+u16string convert_a2w(const char* ch);
 
 string printDuringTime(long long);
 

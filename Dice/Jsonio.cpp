@@ -21,7 +21,7 @@ nlohmann::json freadJson(const std::string& strPath)
 
 nlohmann::json freadJson(const std::filesystem::path& path)
 {
-	std::ifstream fin(convert_w2a(path.wstring().c_str()));
+	std::ifstream fin(path);
 	if (!fin)return nlohmann::json();
 	nlohmann::json j;
 	try
