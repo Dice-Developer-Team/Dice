@@ -2536,6 +2536,7 @@ int FromMsg::InnerOrder() {
 		intMsgCnt += 2;
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
+		strVar["nick"] = getName(fromQQ, fromGroup);
 		strVar["new_nick"] = strip(strMsg.substr(intMsgCnt));
 		filter_CQcode(strVar["new_nick"]);
 		if (strVar["new_nick"].length() > 50) {
@@ -3040,7 +3041,11 @@ int FromMsg::InnerOrder() {
 		readSkipSpace();
 		string strname = strMsg.substr(intMsgCnt);
 		if (strname.empty()) {
-			if (!strVar.count("pc") || strVar["pc"].empty())getPCName(*this);
+			
+			if (!strVar.count("pc") || strVar["pc"].empty()) {
+				strVar["nick"] = getName(fromQQ, fromGroup);
+				getPCName(*this);
+			}
 			strname = strVar["pc"];
 		}
 		else

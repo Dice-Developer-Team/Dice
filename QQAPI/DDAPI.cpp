@@ -80,8 +80,7 @@ namespace DD {
 	}
 	int uploadBlack(long long DiceMaid, long long fromQQ, long long fromGroup, 
 					 const std::string& type, std::string& info) {
-		info = "上传接口不存在";
-		return CALLGET(DiceUploadBlack, DiceMaid, fromQQ, fromGroup, type, info) :-1;
+		return CALLGET(DiceUploadBlack, DiceMaid, fromQQ, fromGroup, type, info) :-2;
 	}
 	bool updateDice(const std::string& ver, std::string& ret) {
 		ret = "更新接口不存在";
