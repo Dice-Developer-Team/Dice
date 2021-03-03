@@ -212,13 +212,13 @@ inline map<string, CardTemp> mCardTemplet = {
 			"COC7", {
 				"COC7", SkillNameReplace, BasicCOC7, InfoCOC7, AutoFillCOC7, mVariableCOC7, ExpressionCOC7,
 				SkillDefaultVal, {
-					{"_default", CardBuild({BuildCOC7}, CardDeck::mPublicDeck["随机姓名"], {})},
+					{"_default", CardBuild({BuildCOC7},  {"{随机姓名}"}, {})},
 					{
 						"bg", CardBuild({
 											{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
 											{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
 											{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
-										}, CardDeck::mPublicDeck["随机姓名"], {})
+										}, {"{随机姓名}"}, {})
 					}
 				}
 			}
@@ -227,13 +227,13 @@ inline map<string, CardTemp> mCardTemplet = {
 				"BRP", {}, {}, {}, {}, {}, {}, {
 					{"__DefaultDice",100}
 				}, {
-					{"_default", CardBuild({}, CardDeck::mPublicDeck["随机姓名"], {})},
+					{"_default", CardBuild({},  {"{随机姓名}"}, {})},
 					{
 						"bg", CardBuild({
 											{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
 											{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
 											{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
-										}, CardDeck::mPublicDeck["随机姓名"], {})
+										}, {"{随机姓名}"}, {})
 					}
 				}
 		}},
@@ -244,8 +244,8 @@ inline map<string, CardTemp> mCardTemplet = {
 					{"_default", CardBuild({}, CardDeck::mPublicDeck["随机姓名"], {})},
 					{
 						"bg", CardBuild({
-											{"性别", "{性别}"}, 
-										}, CardDeck::mPublicDeck["随机姓名"], {})
+											{"性别", "{性别}"},
+										},  {"{随机姓名}"}, {})
 					}
 				}
 		}},
@@ -399,7 +399,7 @@ public:
 	{
 		std::stack<string> vOption;
 		int Cnt;
-		vOption.push("");
+		vOption.push("_default");
 		while ((Cnt = para.rfind(':')) != string::npos)
 		{
 			vOption.push(para.substr(Cnt + 1));
