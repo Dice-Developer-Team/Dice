@@ -241,7 +241,7 @@ inline map<string, CardTemp> mCardTemplet = {
 				"DND", {}, {}, {}, {}, {}, {}, {
 					{"__DefaultDice",20}
 				}, {
-					{"_default", CardBuild({}, CardDeck::mPublicDeck["随机姓名"], {})},
+					{"_default", CardBuild({}, {"{随机姓名}"}, {})},
 					{
 						"bg", CardBuild({
 											{"性别", "{性别}"},
