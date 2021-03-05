@@ -171,7 +171,7 @@ int DiceModManager::load(ResList* resLog)
 				cntItem += readJMap(j["global_char"], GlobalChar);
 			}
 		}
-		*resLog << "读取\\mod\\中的" + std::to_string(cntFile) + "个文件, 共" + std::to_string(cntItem) + "个条目";
+		*resLog << "读取/mod/中的" + std::to_string(cntFile) + "个文件, 共" + std::to_string(cntItem) + "个条目";
 		if (!sModErr.empty()) {
 			*resLog << "读取失败" + std::to_string(sModErr.size()) + "个:";
 			for (auto& it : sModErr) {
@@ -181,7 +181,7 @@ int DiceModManager::load(ResList* resLog)
 	}
 	//读取plugin
 	vector<std::filesystem::path> sLuaFile;
-	int cntLuaFile = listDir(DiceDir + "\\plugin\\", sLuaFile);
+	int cntLuaFile = listDir(DiceDir + "/plugin/", sLuaFile);
 	int cntOrder{ 0 };
 	if (cntLuaFile <= 0)return cntLuaFile;
 	vector<string> sLuaErr; 
@@ -204,7 +204,7 @@ int DiceModManager::load(ResList* resLog)
 			sLuaErr.push_back(pathFile.filename().string());
 		}
 	}
-	*resLog << "读取\\plugin\\中的" + std::to_string(cntLuaFile) + "个脚本, 共" + std::to_string(cntOrder) + "个指令";
+	*resLog << "读取/plugin/中的" + std::to_string(cntLuaFile) + "个脚本, 共" + std::to_string(cntOrder) + "个指令";
 	if (!sLuaErr.empty()) {
 		*resLog << "读取失败" + std::to_string(sLuaErr.size()) + "个:";
 		for (auto& it : sLuaErr) {

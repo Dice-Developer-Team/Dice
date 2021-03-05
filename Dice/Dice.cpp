@@ -93,7 +93,7 @@ void loadData()
 	fmt->load(&logList);
 	if (int cnt; (cnt = loadJMap(DiceDir + "/conf/CustomHelp.json", CustomHelp)) < 0)
 	{
-		if (cnt == -1)logList << DiceDir + "\\conf\\CustomHelp.json解析失败！";
+		if (cnt == -1)logList << DiceDir + "/conf/CustomHelp.json解析失败！";
 		ifstream ifstreamHelpDoc(strFileLoc + "HelpDoc.txt");
 		if (ifstreamHelpDoc)
 		{
@@ -339,7 +339,7 @@ EVE_Enable(eventEnable)
 		if (console.master())getUser(console.master()).create(NEWYEAR).trust(5);
 		if (UserList.size()){
 			console.log("初始化用户记录" + to_string(UserList.size()) + "条", 1);
-			saveFile(DiceDir + "\\user\\UserList.txt", UserList);
+			saveFile(DiceDir + "/user/UserList.txt", UserList);
 		}
 	}
 	if (loadBFile(DiceDir + "/user/ChatConf.RDconf", ChatList) < 1)
@@ -428,7 +428,7 @@ EVE_Enable(eventEnable)
 				chat(g).group().set("许可使用").set("免清");
 			}
 		}
-		saveBFile(DiceDir + "\\user\\ChatConf.RDconf", ChatList);
+		saveBFile(DiceDir + "/user/ChatConf.RDconf", ChatList);
 	}
 	if (loadFile(DiceDir + "/user/ChatList.txt", ChatList) < 1)
 	{
@@ -442,7 +442,7 @@ EVE_Enable(eventEnable)
 		}
 		if(ChatList.size()){
 			console.log("初始化群记录" + to_string(ChatList.size()) + "条", 1);
-			saveFile(DiceDir + "\\user\\ChatList.txt", ChatList);
+			saveFile(DiceDir + "/user/ChatList.txt", ChatList);
 		}
 	}
 	for (auto gid : DD::getGroupIDList())
