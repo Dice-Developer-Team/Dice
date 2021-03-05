@@ -15,7 +15,7 @@ using std::to_string;
 string toString(int num, unsigned short size = 0);
 
 template<typename F>
-typename std::enable_if<std::is_floating_point<F>::value, string>::type 
+typename std::enable_if_t<std::is_floating_point_v<F>, string>
 toString(F num, unsigned short scale = 2, bool align = false) 
 {
     string strNum{ to_string(num) };

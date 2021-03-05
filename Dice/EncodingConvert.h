@@ -9,7 +9,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123ËÝä§
+ * Copyright (C) 2018-2021 w4123ËÝä§
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -75,7 +75,7 @@ std::string UrlEncode(const std::string& str);
 std::string UrlDecode(const std::string& str);
 #ifndef _WIN32
 template <typename T, typename Q>
-std::basic_string<T> ConvertEncoding(const std::basic_string<Q>& in, const std::string& InEnc, const std::string& OutEnc, const double CapFac = 2.0)
+std::basic_string<T> ConvertEncoding(const std::basic_string<Q>& in, const std::string& InEnc, const std::string& OutEnc, const double CapFac = 4.0)
 {
 	const auto cd = iconv_open(OutEnc.c_str(), InEnc.c_str());
 	if (cd == (iconv_t)-1)
@@ -95,8 +95,7 @@ std::basic_string<T> ConvertEncoding(const std::basic_string<Q>& in, const std::
 		iconv_close(cd);
 		return std::basic_string<T>();
 	}
-	memset(out_ptr, 0, sizeof(T));
-	std::basic_string<T> ret(reinterpret_cast<T*>(out_ptr_copy));
+	std::basic_string<T> ret(reinterpret_cast<T*>(out_ptr_copy), (out_ptr - out_ptr_copy) / sizeof(T));
 	delete[] out_ptr_copy;
 	iconv_close(cd);
 	return ret;
