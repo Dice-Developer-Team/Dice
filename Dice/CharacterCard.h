@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Íæ¼ÒÈËÎï¿¨
+ * ç©å®¶äººç‰©å¡
  * Copyright (C) 2019 String.Empty
  */
 
@@ -55,7 +55,7 @@ inline map<string, short> mCardTag = {
 	{"End", 255}
 };
 
-//Éú³ÉÄ£°å
+//ç”Ÿæˆæ¨¡æ¿
 class CardBuild
 {
 public:
@@ -68,11 +68,11 @@ public:
 	{
 	}
 
-	//ÊôĞÔÉú³É
+	//å±æ€§ç”Ÿæˆ
 	vector<std::pair<string, string>> vBuildList = {};
-	//Ëæ»úĞÕÃû
+	//éšæœºå§“å
 	vector<string> vNameList = {};
-	//NoteÉú³É
+	//Noteç”Ÿæˆ
 	vector<string> vNoteList = {};
 
 	CardBuild(const DDOM& d)
@@ -101,18 +101,18 @@ class CardTemp
 public:
 	string type;
 	map<string, string> replaceName = {};
-	//×÷³ÉÊ±Éú³É
+	//ä½œæˆæ—¶ç”Ÿæˆ
 	vector<vector<string>> vBasicList = {};
 	set<string> sInfoList = {};
-	//µ÷ÓÃÊ±Éú³É
+	//è°ƒç”¨æ—¶ç”Ÿæˆ
 	map<string, string> mAutoFill = {};
-	//¶¯Ì¬ÒıÓÃ
+	//åŠ¨æ€å¼•ç”¨
 	map<string, string> mVariable = {};
-	//±í´ïÊ½
+	//è¡¨è¾¾å¼
 	map<string, string> mExpression = {};
-	//Ä¬ÈÏÖµ
+	//é»˜è®¤å€¼
 	map<string, short> defaultSkill = {};
-	//Éú³É²ÎÊı
+	//ç”Ÿæˆå‚æ•°
 	map<string, CardBuild> mBuildOption = {};
 	CardTemp() = default;
 
@@ -201,15 +201,15 @@ public:
 inline map<string, CardTemp> mCardTemplet = {
 		{
 			"COC7", {
-				"COC7", SkillNameReplace, BasicCOC7, InfoCOC7, AutoFillCOC7, mVariableCOC7, ExpressionCOC7,
-				SkillDefaultVal, {
-					{"_default", CardBuild({BuildCOC7},  {"{Ëæ»úĞÕÃû}"}, {})},
+				"COC7", {}, {}, {}, {}, {}, {},
+				{}, {
+					{"_default", CardBuild({},  {"{éšæœºå§“å}"}, {})},
 					{
 						"bg", CardBuild({
-											{"ĞÔ±ğ", "{ĞÔ±ğ}"}, {"ÄêÁä", "7D6+8"}, {"Ö°Òµ", "{µ÷²éÔ±Ö°Òµ}"}, {"¸öÈËÃèÊö", "{¸öÈËÃèÊö}"},
-											{"ÖØÒªÖ®ÈË", "{ÖØÒªÖ®ÈË}"}, {"Ë¼ÏëĞÅÄî", "{Ë¼ÏëĞÅÄî}"}, {"ÒâÒå·Ç·²Ö®µØ", "{ÒâÒå·Ç·²Ö®µØ}"},
-											{"±¦¹óÖ®Îï", "{±¦¹óÖ®Îï}"}, {"ÌØÖÊ", "{µ÷²éÔ±ÌØµã}"}
-										}, {"{Ëæ»úĞÕÃû}"}, {})
+											{"æ€§åˆ«", "{æ€§åˆ«}"}, {"å¹´é¾„", "7D6+8"}, {"èŒä¸š", "{è°ƒæŸ¥å‘˜èŒä¸š}"}, {"ä¸ªäººæè¿°", "{ä¸ªäººæè¿°}"},
+											{"é‡è¦ä¹‹äºº", "{é‡è¦ä¹‹äºº}"}, {"æ€æƒ³ä¿¡å¿µ", "{æ€æƒ³ä¿¡å¿µ}"}, {"æ„ä¹‰éå‡¡ä¹‹åœ°", "{æ„ä¹‰éå‡¡ä¹‹åœ°}"},
+											{"å®è´µä¹‹ç‰©", "{å®è´µä¹‹ç‰©}"}, {"ç‰¹è´¨", "{è°ƒæŸ¥å‘˜ç‰¹ç‚¹}"}
+										}, {"{éšæœºå§“å}"}, {})
 					}
 				}
 			}
@@ -218,13 +218,13 @@ inline map<string, CardTemp> mCardTemplet = {
 				"BRP", {}, {}, {}, {}, {}, {}, {
 					{"__DefaultDice",100}
 				}, {
-					{"_default", CardBuild({},  {"{Ëæ»úĞÕÃû}"}, {})},
+					{"_default", CardBuild({},  {"{éšæœºå§“å}"}, {})},
 					{
 						"bg", CardBuild({
-											{"ĞÔ±ğ", "{ĞÔ±ğ}"}, {"ÄêÁä", "7D6+8"}, {"Ö°Òµ", "{µ÷²éÔ±Ö°Òµ}"}, {"¸öÈËÃèÊö", "{¸öÈËÃèÊö}"},
-											{"ÖØÒªÖ®ÈË", "{ÖØÒªÖ®ÈË}"}, {"Ë¼ÏëĞÅÄî", "{Ë¼ÏëĞÅÄî}"}, {"ÒâÒå·Ç·²Ö®µØ", "{ÒâÒå·Ç·²Ö®µØ}"},
-											{"±¦¹óÖ®Îï", "{±¦¹óÖ®Îï}"}, {"ÌØÖÊ", "{µ÷²éÔ±ÌØµã}"}
-										}, {"{Ëæ»úĞÕÃû}"}, {})
+											{"æ€§åˆ«", "{æ€§åˆ«}"}, {"å¹´é¾„", "7D6+8"}, {"èŒä¸š", "{è°ƒæŸ¥å‘˜èŒä¸š}"}, {"ä¸ªäººæè¿°", "{ä¸ªäººæè¿°}"},
+											{"é‡è¦ä¹‹äºº", "{é‡è¦ä¹‹äºº}"}, {"æ€æƒ³ä¿¡å¿µ", "{æ€æƒ³ä¿¡å¿µ}"}, {"æ„ä¹‰éå‡¡ä¹‹åœ°", "{æ„ä¹‰éå‡¡ä¹‹åœ°}"},
+											{"å®è´µä¹‹ç‰©", "{å®è´µä¹‹ç‰©}"}, {"ç‰¹è´¨", "{è°ƒæŸ¥å‘˜ç‰¹ç‚¹}"}
+										}, {"{éšæœºå§“å}"}, {})
 					}
 				}
 		}},
@@ -232,11 +232,11 @@ inline map<string, CardTemp> mCardTemplet = {
 				"DND", {}, {}, {}, {}, {}, {}, {
 					{"__DefaultDice",20}
 				}, {
-					{"_default", CardBuild({}, {"{Ëæ»úĞÕÃû}"}, {})},
+					{"_default", CardBuild({}, {"{éšæœºå§“å}"}, {})},
 					{
 						"bg", CardBuild({
-											{"ĞÔ±ğ", "{ĞÔ±ğ}"},
-										},  {"{Ëæ»úĞÕÃû}"}, {})
+											{"æ€§åˆ«", "{æ€§åˆ«}"},
+										},  {"{éšæœºå§“å}"}, {})
 					}
 				}
 		}},
@@ -247,7 +247,7 @@ struct lua_State;
 class CharaCard
 {
 private:
-	string Name = "½ÇÉ«¿¨";
+	string Name = "è§’è‰²å¡";
 public:
 	const string& getName()const { return Name; }
 	void setName(const string&);
@@ -287,7 +287,7 @@ public:
 		return 0;
 	}
 
-	//±í´ïÊ½×ªÒå
+	//è¡¨è¾¾å¼è½¬ä¹‰
 	string escape(string exp, const set<string>& sRef)
 	{
 		if (exp[0] == '&')
@@ -308,7 +308,7 @@ public:
 		return exp;
 	}
 
-	//Çókey¶ÔÓ¦ÖÀ÷»±í´ïÊ½
+	//æ±‚keyå¯¹åº”æ·éª°è¡¨è¾¾å¼
 	string getExp(string& key, set<string> sRef = {})
 	{
 		sRef.insert(key);
@@ -331,7 +331,7 @@ public:
 		return DiceExp.count(key) || pTemplet->mExpression.count(key);
 	}
 
-	//¼ÆËã±í´ïÊ½
+	//è®¡ç®—è¡¨è¾¾å¼
 	short cal(string exp)
 	{
 		if (exp[0] == '&')
@@ -385,7 +385,7 @@ public:
 		}
 	}
 
-	//½âÎöÉú³É²ÎÊı
+	//è§£æç”Ÿæˆå‚æ•°
 	void buildv(string para = "")
 	{
 		std::stack<string> vOption;
@@ -508,10 +508,10 @@ class Player
 {
 private:
 	short indexMax = 0;
-	map<unsigned short, CharaCard> mCardList{{0, {"½ÇÉ«¿¨"}}};
+	map<unsigned short, CharaCard> mCardList{{0, {"è§’è‰²å¡"}}};
 	map<string, unsigned short> mNameIndex;
 	map<unsigned long long, unsigned short> mGroupIndex{{0, 0}};
-	// ÈËÎï¿¨»¥³â
+	// äººç‰©å¡äº’æ–¥
 	std::mutex cardMutex;
 public:
 	Player() = default;
@@ -548,7 +548,7 @@ public:
 	int newCard(string& s, long long group = 0)
 	{
 		std::lock_guard<std::mutex> lock_queue(cardMutex);
-		//ÈËÎï¿¨ÊıÁ¿ÉÏÏŞ
+		//äººç‰©å¡æ•°é‡ä¸Šé™
 		if (mCardList.size() > 16)return -1;
 		string type = "COC7";
 		s = strip(s);
@@ -570,7 +570,7 @@ public:
 			vOption.push(type.substr(Cnt + 1));
 			type.erase(type.begin() + Cnt, type.end());
 		}
-		//ÎŞĞ§Ä£°å²»ÔÙ±¨´í
+		//æ— æ•ˆæ¨¡æ¿ä¸å†æŠ¥é”™
 		//if (!getmCardTemplet().count(type))return -2;
 		if (mNameIndex.count(s))return -4;
 		if (s.find("=") != string::npos)return -6;
@@ -627,7 +627,7 @@ public:
 			strName = strip(name.substr(name.rfind(":") + 1));
 			strType = name.substr(0, name.rfind(":"));
 		}
-		//²»´æÔÚÔòĞÂ½¨ÈËÎï¿¨
+		//ä¸å­˜åœ¨åˆ™æ–°å»ºäººç‰©å¡
 		if (!strName.empty() && !mNameIndex.count(strName))
 		{
 			if (const int res = newCard(name, group))return res;
@@ -692,11 +692,11 @@ public:
 	int copyCard(const string& name1, const string& name2, long long group = 0)
 	{
 		if (name1.empty() || name2.empty())return -3;
-		//²»´æÔÚÔòĞÂ½¨ÈËÎï¿¨
+		//ä¸å­˜åœ¨åˆ™æ–°å»ºäººç‰©å¡
 		if (!mNameIndex.count(name1))
 		{
 			std::lock_guard<std::mutex> lock_queue(cardMutex);
-			//ÈËÎï¿¨ÊıÁ¿ÉÏÏŞ
+			//äººç‰©å¡æ•°é‡ä¸Šé™
 			if (mCardList.size() > 16)return -1;
 			if (name1.find(":") != string::npos)return -6;
 			mCardList[++indexMax] = name1;
