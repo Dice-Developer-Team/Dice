@@ -53,7 +53,7 @@
 
 typedef int int_errno;
 
-static std::map<std::string, std::string> SkillNameReplace = {
+inline std::map<std::string, std::string> SkillNameReplace = {
 	{"str", "力量"},
 	{"dex", "敏捷"},
 	{"pow", "意志"},
@@ -112,19 +112,19 @@ static std::map<std::string, std::string> SkillNameReplace = {
 	{"驾驶：飞行器", "飞行器驾驶"},
 	{"驾驶(飞行器)", "飞行器驾驶"}
 };
-static std::vector<std::vector<std::string>> BasicCOC7 = {
+inline std::vector<std::vector<std::string>> BasicCOC7 = {
 	{"职业", "年龄", "性别", "住地", "出身", "时代"},
 	{"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育"},
 	{"生命", "理智", "魔法", "幸运"},
 	{"身体状态", "精神状态"},
 	{"DB", "闪避", "护甲"}
 };
-static std::set<std::string> InfoCOC7 = {
+inline std::set<std::string> InfoCOC7 = {
 	"职业", "性别", "住地", "出身", "时代",
 	"身体状态", "精神状态",
 	"个人描述", "思想信念", "重要之人", "意义非凡之地", "宝贵之物", "特质", "特点", "伤口疤痕", "恐惧躁狂"
 };
-static std::vector<std::pair<std::string, std::string>> BuildCOC7 = {
+inline std::vector<std::pair<std::string, std::string>> BuildCOC7 = {
 	{"力量", "3D6*5"},
 	{"体质", "3D6*5"},
 	{"体型", "2D6*5+30"},
@@ -137,7 +137,7 @@ static std::vector<std::pair<std::string, std::string>> BuildCOC7 = {
 	{"生命", "[体质体型和]/10"},
 	{"魔法", "[意志]/5"},
 };
-static std::map<std::string, std::string> mVariableCOC7 = {
+inline std::map<std::string, std::string> mVariableCOC7 = {
 	{"灵感", "&智力"},
 	{"知识", "&教育"},
 	{"体质体型和", "[体质]+[体型]"},
@@ -265,7 +265,7 @@ static std::map<std::string, std::string> ExpressionCOC7 = {
 	{"火焰喷射器", "2D6"},
 	{"轻型反坦克炮", "8D10"}
 };
-static std::map<std::string, std::string> AutoFillCOC7 = {
+inline std::map<std::string, std::string> AutoFillCOC7 = {
 	{"生命", "[体质体型和]/10"},
 	{"理智", "&意志"},
 	{"魔法", "[意志]/5"},
@@ -373,7 +373,7 @@ static std::map<std::string, short> SkillDefaultVal = {
 	{"斗殴", 25}
 };
 
-static std::string TempInsanity[11]{
+inline std::string TempInsanity[11]{
 	"",
 	"失忆：在{0}轮之内，调查员会发现自己只记得最后身处的安全地点，却没有任何来到这里的记忆。",
 	"假性残疾：调查员陷入了心理性的失明、失聪或躯体缺失感中，持续{0}轮。",
@@ -387,7 +387,7 @@ static std::string TempInsanity[11]{
 	"狂躁：调查员由于某种诱因进入狂躁状态，症状持续{0}轮。\n{1}\n具体狂躁症: {2}(KP也可以自行从狂躁症状表中选择其他症状)"
 };
 
-static std::string LongInsanity[11]{
+inline std::string LongInsanity[11]{
 	"",
 	"失忆：在{0}小时后，调查员回过神来，发现自己身处一个陌生的地方，并忘记了自己是谁。记忆会随时间恢复。",
 	"被窃：调查员在{0}小时后恢复清醒，发觉自己被盗，身体毫发无损。",
@@ -401,7 +401,7 @@ static std::string LongInsanity[11]{
 	"狂躁：调查员患上一个新的狂躁症，在{0}小时后恢复理智。在这次疯狂发作中，调查员将完全沉浸于其新的狂躁症状。这是否会被其他人理解（apparent to other people）则取决于守秘人和此调查员。\n{1}\n具体狂躁症: {2}(KP也可以自行从狂躁症状表中选择其他症状)"
 };
 
-static std::string strFear[101] = {
+inline std::string strFear[101] = {
 	"",
 	"洗澡恐惧症（Ablutophobia）：对于洗涤或洗澡的恐惧。",
 	"恐高症（Acrophobia）：对于身处高处的恐惧。",
@@ -504,7 +504,7 @@ static std::string strFear[101] = {
 	"异域恐惧症（Xenophobia）：对陌生人或外国人的恐惧。",
 	"动物恐惧症（Zoophobia）：对动物的恐惧。"
 };
-static std::string strPanic[101] = {
+inline std::string strPanic[101] = {
 	"",
 	"沐浴癖（Ablutomania）：执着于清洗自己。",
 	"犹豫癖（Aboulomania）：病态地犹豫不定。",

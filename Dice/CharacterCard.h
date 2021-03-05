@@ -118,25 +118,15 @@ public:
 
 	CardTemp(string type, map<string, string> replace, vector<vector<string>> basic, set<string> info,
 	         map<string, string> autofill, map<string, string> dynamic, map<string, string> exp,
-	         map<string, short> skill, map<string, CardBuild> option) : type(
-		                                                                    std::move(
-			                                                                    type)), replaceName(
-		                                                                    std::move(
-			                                                                    replace)), vBasicList(
-		                                                                    std::move(
-			                                                                    basic)), sInfoList(
-		                                                                    std::move(
-			                                                                    info)), mAutoFill(
-		                                                                    std::move(
-			                                                                    autofill)), mVariable(
-		                                                                    std::move(
-			                                                                    dynamic)), mExpression(
-		                                                                    std::move(
-			                                                                    exp)), defaultSkill(
-		                                                                    std::move(
-			                                                                    skill)), mBuildOption(
-		                                                                    std::move(
-			                                                                    option))
+	         map<string, short> skill, map<string, CardBuild> option) : type(std::move(type)), 
+			                                                            replaceName(std::move(replace)), 
+		                                                                vBasicList(std::move(basic)), 
+		                                                                sInfoList(std::move(info)), 
+		                                                                mAutoFill(std::move(autofill)), 
+		                                                                mVariable(std::move(dynamic)), 
+		                                                                mExpression(std::move(exp)), 
+		                                                                defaultSkill(std::move(skill)), 
+		                                                                mBuildOption(std::move(option))
 	{
 	}
 
