@@ -197,6 +197,49 @@ EVE_Enable(eventEnable)
 	}
 	Dice_Full_Ver_On = Dice_Full_Ver + " on\n" + DD::getDriVer();
 	DD::debugLog(Dice_Full_Ver_On);
+	mCardTemplet = {
+		{
+			"COC7", {
+				"COC7", SkillNameReplace, BasicCOC7, InfoCOC7, AutoFillCOC7, mVariableCOC7, ExpressionCOC7,
+				SkillDefaultVal, {
+					{"_default", CardBuild({BuildCOC7},  {"{随机姓名}"}, {})},
+					{
+						"bg", CardBuild({
+											{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
+											{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
+											{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
+										}, {"{随机姓名}"}, {})
+					}
+				}
+			}
+		},
+		{"BRP", {
+				"BRP", {}, {}, {}, {}, {}, {}, {
+					{"__DefaultDice",100}
+				}, {
+					{"_default", CardBuild({},  {"{随机姓名}"}, {})},
+					{
+						"bg", CardBuild({
+											{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
+											{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
+											{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
+										}, {"{随机姓名}"}, {})
+					}
+				}
+		}},
+		{"DND", {
+				"DND", {}, {}, {}, {}, {}, {}, {
+					{"__DefaultDice",20}
+				}, {
+					{"_default", CardBuild({}, {"{随机姓名}"}, {})},
+					{
+						"bg", CardBuild({
+											{"性别", "{性别}"},
+										},  {"{随机姓名}"}, {})
+					}
+				}
+		}},
+	};
 	if ((console.DiceMaid = DD::getLoginQQ()))
 	{
 		DiceDir = dirExe + "Dice" + to_string(console.DiceMaid);

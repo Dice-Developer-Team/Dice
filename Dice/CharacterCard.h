@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * ç©å®¶äººç‰©å¡
+ * Íæ¼ÒÈËÎï¿¨
  * Copyright (C) 2019 String.Empty
  */
 
@@ -55,7 +55,7 @@ inline map<string, short> mCardTag = {
 	{"End", 255}
 };
 
-//ç”Ÿæˆæ¨¡æ¿
+//Éú³ÉÄ£°å
 class CardBuild
 {
 public:
@@ -68,11 +68,11 @@ public:
 	{
 	}
 
-	//å±æ€§ç”Ÿæˆ
+	//ÊôĞÔÉú³É
 	vector<std::pair<string, string>> vBuildList = {};
-	//éšæœºå§“å
+	//Ëæ»úĞÕÃû
 	vector<string> vNameList = {};
-	//Noteç”Ÿæˆ
+	//NoteÉú³É
 	vector<string> vNoteList = {};
 
 	CardBuild(const DDOM& d)
@@ -101,18 +101,18 @@ class CardTemp
 public:
 	string type;
 	map<string, string> replaceName = {};
-	//ä½œæˆæ—¶ç”Ÿæˆ
+	//×÷³ÉÊ±Éú³É
 	vector<vector<string>> vBasicList = {};
 	set<string> sInfoList = {};
-	//è°ƒç”¨æ—¶ç”Ÿæˆ
+	//µ÷ÓÃÊ±Éú³É
 	map<string, string> mAutoFill = {};
-	//åŠ¨æ€å¼•ç”¨
+	//¶¯Ì¬ÒıÓÃ
 	map<string, string> mVariable = {};
-	//è¡¨è¾¾å¼
+	//±í´ïÊ½
 	map<string, string> mExpression = {};
-	//é»˜è®¤å€¼
+	//Ä¬ÈÏÖµ
 	map<string, short> defaultSkill = {};
-	//ç”Ÿæˆå‚æ•°
+	//Éú³É²ÎÊı
 	map<string, CardBuild> mBuildOption = {};
 	CardTemp() = default;
 
@@ -198,56 +198,15 @@ public:
 	string show();
 };
 
-inline map<string, CardTemp> mCardTemplet = {
-		{
-			"COC7", {
-				"COC7", {}, {}, {}, {}, {}, {},
-				{}, {
-					{"_default", CardBuild({},  {"{éšæœºå§“å}"}, {})},
-					{
-						"bg", CardBuild({
-											{"æ€§åˆ«", "{æ€§åˆ«}"}, {"å¹´é¾„", "7D6+8"}, {"èŒä¸š", "{è°ƒæŸ¥å‘˜èŒä¸š}"}, {"ä¸ªäººæè¿°", "{ä¸ªäººæè¿°}"},
-											{"é‡è¦ä¹‹äºº", "{é‡è¦ä¹‹äºº}"}, {"æ€æƒ³ä¿¡å¿µ", "{æ€æƒ³ä¿¡å¿µ}"}, {"æ„ä¹‰éå‡¡ä¹‹åœ°", "{æ„ä¹‰éå‡¡ä¹‹åœ°}"},
-											{"å®è´µä¹‹ç‰©", "{å®è´µä¹‹ç‰©}"}, {"ç‰¹è´¨", "{è°ƒæŸ¥å‘˜ç‰¹ç‚¹}"}
-										}, {"{éšæœºå§“å}"}, {})
-					}
-				}
-			}
-		},
-		{"BRP", {
-				"BRP", {}, {}, {}, {}, {}, {}, {
-					{"__DefaultDice",100}
-				}, {
-					{"_default", CardBuild({},  {"{éšæœºå§“å}"}, {})},
-					{
-						"bg", CardBuild({
-											{"æ€§åˆ«", "{æ€§åˆ«}"}, {"å¹´é¾„", "7D6+8"}, {"èŒä¸š", "{è°ƒæŸ¥å‘˜èŒä¸š}"}, {"ä¸ªäººæè¿°", "{ä¸ªäººæè¿°}"},
-											{"é‡è¦ä¹‹äºº", "{é‡è¦ä¹‹äºº}"}, {"æ€æƒ³ä¿¡å¿µ", "{æ€æƒ³ä¿¡å¿µ}"}, {"æ„ä¹‰éå‡¡ä¹‹åœ°", "{æ„ä¹‰éå‡¡ä¹‹åœ°}"},
-											{"å®è´µä¹‹ç‰©", "{å®è´µä¹‹ç‰©}"}, {"ç‰¹è´¨", "{è°ƒæŸ¥å‘˜ç‰¹ç‚¹}"}
-										}, {"{éšæœºå§“å}"}, {})
-					}
-				}
-		}},
-		{"DND", {
-				"DND", {}, {}, {}, {}, {}, {}, {
-					{"__DefaultDice",20}
-				}, {
-					{"_default", CardBuild({}, {"{éšæœºå§“å}"}, {})},
-					{
-						"bg", CardBuild({
-											{"æ€§åˆ«", "{æ€§åˆ«}"},
-										},  {"{éšæœºå§“å}"}, {})
-					}
-				}
-		}},
-};
+// ÓÉÓÚÒÀÀµÓÚÆäËûÈ«¾Ö±äÁ¿£¬ÎªÁË±ÜÃâÈ«¾Ö±äÁ¿³õÊ¼»¯Ë³Ğò³åÍ»£¬Õâ¸ö±äÁ¿»áÔÚeventEnableÖĞ±»³õÊ¼»¯
+inline map<string, CardTemp> mCardTemplet;
 CardTemp& getCardTemplet(const string& type);
 
 struct lua_State;
 class CharaCard
 {
 private:
-	string Name = "è§’è‰²å¡";
+	string Name = "½ÇÉ«¿¨";
 public:
 	const string& getName()const { return Name; }
 	void setName(const string&);
@@ -287,7 +246,7 @@ public:
 		return 0;
 	}
 
-	//è¡¨è¾¾å¼è½¬ä¹‰
+	//±í´ïÊ½×ªÒå
 	string escape(string exp, const set<string>& sRef)
 	{
 		if (exp[0] == '&')
@@ -308,7 +267,7 @@ public:
 		return exp;
 	}
 
-	//æ±‚keyå¯¹åº”æ·éª°è¡¨è¾¾å¼
+	//Çókey¶ÔÓ¦ÖÀ÷»±í´ïÊ½
 	string getExp(string& key, set<string> sRef = {})
 	{
 		sRef.insert(key);
@@ -331,7 +290,7 @@ public:
 		return DiceExp.count(key) || pTemplet->mExpression.count(key);
 	}
 
-	//è®¡ç®—è¡¨è¾¾å¼
+	//¼ÆËã±í´ïÊ½
 	short cal(string exp)
 	{
 		if (exp[0] == '&')
@@ -385,7 +344,7 @@ public:
 		}
 	}
 
-	//è§£æç”Ÿæˆå‚æ•°
+	//½âÎöÉú³É²ÎÊı
 	void buildv(string para = "")
 	{
 		std::stack<string> vOption;
@@ -508,10 +467,10 @@ class Player
 {
 private:
 	short indexMax = 0;
-	map<unsigned short, CharaCard> mCardList{{0, {"è§’è‰²å¡"}}};
+	map<unsigned short, CharaCard> mCardList{{0, {"½ÇÉ«¿¨"}}};
 	map<string, unsigned short> mNameIndex;
 	map<unsigned long long, unsigned short> mGroupIndex{{0, 0}};
-	// äººç‰©å¡äº’æ–¥
+	// ÈËÎï¿¨»¥³â
 	std::mutex cardMutex;
 public:
 	Player() = default;
@@ -548,7 +507,7 @@ public:
 	int newCard(string& s, long long group = 0)
 	{
 		std::lock_guard<std::mutex> lock_queue(cardMutex);
-		//äººç‰©å¡æ•°é‡ä¸Šé™
+		//ÈËÎï¿¨ÊıÁ¿ÉÏÏŞ
 		if (mCardList.size() > 16)return -1;
 		string type = "COC7";
 		s = strip(s);
@@ -570,7 +529,7 @@ public:
 			vOption.push(type.substr(Cnt + 1));
 			type.erase(type.begin() + Cnt, type.end());
 		}
-		//æ— æ•ˆæ¨¡æ¿ä¸å†æŠ¥é”™
+		//ÎŞĞ§Ä£°å²»ÔÙ±¨´í
 		//if (!getmCardTemplet().count(type))return -2;
 		if (mNameIndex.count(s))return -4;
 		if (s.find("=") != string::npos)return -6;
@@ -627,7 +586,7 @@ public:
 			strName = strip(name.substr(name.rfind(":") + 1));
 			strType = name.substr(0, name.rfind(":"));
 		}
-		//ä¸å­˜åœ¨åˆ™æ–°å»ºäººç‰©å¡
+		//²»´æÔÚÔòĞÂ½¨ÈËÎï¿¨
 		if (!strName.empty() && !mNameIndex.count(strName))
 		{
 			if (const int res = newCard(name, group))return res;
@@ -692,11 +651,11 @@ public:
 	int copyCard(const string& name1, const string& name2, long long group = 0)
 	{
 		if (name1.empty() || name2.empty())return -3;
-		//ä¸å­˜åœ¨åˆ™æ–°å»ºäººç‰©å¡
+		//²»´æÔÚÔòĞÂ½¨ÈËÎï¿¨
 		if (!mNameIndex.count(name1))
 		{
 			std::lock_guard<std::mutex> lock_queue(cardMutex);
-			//äººç‰©å¡æ•°é‡ä¸Šé™
+			//ÈËÎï¿¨ÊıÁ¿ÉÏÏŞ
 			if (mCardList.size() > 16)return -1;
 			if (name1.find(":") != string::npos)return -6;
 			mCardList[++indexMax] = name1;
