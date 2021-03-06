@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
   CACHE STRING "Vcpkg toolchain file")
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" 
+  CACHE STRING "Minimum OS X deployment version")
 project(Dice)
 
 include_directories(CQSDK Dice Lua QQAPI)
