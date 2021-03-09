@@ -8,6 +8,11 @@
       "features": [ "s3" ]
     },
     {
+      "name": "openssl",
+      "platform": "!windows"
+    },
+    }
+    {
       "name": "curl",
       "features": [ "openssl" ],
       "platform" : "!windows"
