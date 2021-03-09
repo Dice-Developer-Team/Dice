@@ -50,6 +50,6 @@ target_include_directories(w4123.Dice PRIVATE ${AWSSDK_INCLUDE_DIRS})
 target_link_libraries(w4123.Dice PRIVATE ${AWSSDK_LIBRARIES})
 
 if(CMAKE_SYSTEM_NAME STREQUAL Android)
-    target_include_directories(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIRECTORY}/libiconv/${ANDROID_ABI}/include)
-    target_link_libraries(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIRECTORY}/libiconv/${ANDROID_ABI}/lib/libiconv.a)
+    target_include_directories(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/libiconv/${ANDROID_ABI}/include)
+    target_link_libraries(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/libiconv/${ANDROID_ABI}/lib/libiconv.a)
 endif()
