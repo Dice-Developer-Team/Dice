@@ -14,7 +14,7 @@
     },
     {
       "name": "libiconv",
-      "platform" : "!windows"
+      "platform" : "!windows & !android"
     }
   ]
 }
