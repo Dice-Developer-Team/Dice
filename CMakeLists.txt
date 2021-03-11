@@ -55,5 +55,5 @@ if(CMAKE_SYSTEM_NAME STREQUAL Android)
 endif()
 
 if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
-    add_link_options($<$<CONFIG:Release>:-s>)
+    set_target_properties(w4123.Dice PROPERTIES LINK_FLAGS_RELEASE -s)
 endif()
