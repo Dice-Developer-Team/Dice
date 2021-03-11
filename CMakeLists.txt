@@ -54,6 +54,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL Android)
     target_link_libraries(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/libiconv/${ANDROID_ABI}/lib/libiconv.a)
 endif()
 
-if(NOT (CMAKE_CXX_COMPILER_ID STREUQAL "MSVC"))
+if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
     add_link_options($<$<CONFIG:Release>:-s>)
 endif()
