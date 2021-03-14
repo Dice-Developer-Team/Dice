@@ -349,11 +349,11 @@ void dice_cloudblack(DiceJob& job) {
 	bool isSuccess(false);
 	job.echo("开始获取云端记录"); 
 	string strURL("https://shiki.stringempty.xyz/blacklist/checked.json?" + to_string(job.fromTime));
-	switch (Cloud::DownloadFile(strURL.c_str(), (DiceDir + "/conf/CloudBlackList.json").c_str())) {
+	switch (Cloud::DownloadFile(strURL.c_str(), DiceDir / "conf" / "CloudBlackList.json")) {
 	case -1: {
 		string des;
 		if (Network::GET("shiki.stringempty.xyz", "/blacklist/checked.json", 80, des)) {
-			ofstream fout(DiceDir + "/conf/CloudBlackList.json");
+			ofstream fout(DiceDir / "conf" / "CloudBlackList.json");
 			fout << des << endl;
 			isSuccess = true;
 		}
@@ -370,7 +370,7 @@ void dice_cloudblack(DiceJob& job) {
 	}
 	if (isSuccess) {
 		if (job.fromQQ)job.note("同步云不良记录成功，" + getMsg("self") + "开始读取", 1);
-		blacklist->loadJson(DiceDir + "/conf/CloudBlackList.json", true);
+		blacklist->loadJson(DiceDir / "conf" / "CloudBlackList.json", true);
 	}
 	if (console["CloudBlackShare"])
 		sch.add_job_for(24 * 60 * 60, "cloudblack");

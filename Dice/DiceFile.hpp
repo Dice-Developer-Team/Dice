@@ -12,6 +12,7 @@
 #include <map>
 #include <set>
 #include <filesystem>
+#include <functional>
 #include <unordered_set>
 #include <unordered_map>
 #include <variant>
@@ -212,7 +213,7 @@ void readini(string s, std::vector<T>& v)
 }
 
 template <typename T>
-int loadFile(std::string strPath, std::set<T>& setTmp)
+[[DEPRECATED]] int loadFile(const std::string& strPath, std::set<T>& setTmp)
 {
 	std::ifstream fin(strPath);
 	if (fin)
@@ -231,7 +232,26 @@ int loadFile(std::string strPath, std::set<T>& setTmp)
 }
 
 template <typename T>
-int loadFile(std::string strPath, std::unordered_set<T>& setTmp)
+int loadFile(const std::filesystem::path& fpPath, std::set<T>& setTmp)
+{
+	std::ifstream fin(fpPath);
+	if (fin)
+	{
+		int Cnt = 0;
+		T item;
+		while (fscan(fin, item))
+		{
+			setTmp.insert(item);
+			Cnt++;
+		}
+		return Cnt;
+	}
+	fin.close();
+	return -1;
+}
+
+template <typename T>
+[[DEPRECATED]] int loadFile(const std::string& strPath, std::unordered_set<T>& setTmp)
 {
 	std::ifstream fin(strPath);
 	if (fin)
@@ -249,8 +269,27 @@ int loadFile(std::string strPath, std::unordered_set<T>& setTmp)
 	return -1;
 }
 
+template <typename T>
+int loadFile(const std::filesystem::path& fpPath, std::unordered_set<T>& setTmp)
+{
+	std::ifstream fin(fpPath);
+	if (fin)
+	{
+		int Cnt = 0;
+		T item;
+		while (fscan(fin, item))
+		{
+			setTmp.insert(item);
+			Cnt++;
+		}
+		return Cnt;
+	}
+	fin.close();
+	return -1;
+}
+
 template <typename T1, typename T2>
-int loadFile(std::string strPath, std::map<T1, T2>& mapTmp)
+[[DEPRECATED]] int loadFile(const std::string& strPath, std::map<T1, T2>& mapTmp)
 {
 	std::ifstream fin(strPath);
 	if (fin)
@@ -269,7 +308,26 @@ int loadFile(std::string strPath, std::map<T1, T2>& mapTmp)
 }
 
 template <typename T1, typename T2>
-int loadFile(std::string strPath, std::unordered_map<T1, T2>& mapTmp) 
+int loadFile(const std::filesystem::path& fpPath, std::map<T1, T2>& mapTmp)
+{
+	std::ifstream fin(fpPath);
+	if (fin)
+	{
+		int Cnt = 0;
+		T1 key;
+		while (fin >> key)
+		{
+			fscan(fin, mapTmp[key]);
+			Cnt++;
+		}
+		return Cnt;
+	}
+	fin.close();
+	return -1;
+}
+
+template <typename T1, typename T2>
+[[DEPRECATED]] int loadFile(const std::string& strPath, std::unordered_map<T1, T2>& mapTmp) 
 {
 	std::ifstream fin(strPath);
 	if (fin)
@@ -288,7 +346,26 @@ int loadFile(std::string strPath, std::unordered_map<T1, T2>& mapTmp)
 }
 
 template <typename T1, typename T2>
-void loadFile(std::string strPath, std::multimap<T1, T2>& mapTmp)
+int loadFile(const std::filesystem::path& fpPath, std::unordered_map<T1, T2>& mapTmp) 
+{
+	std::ifstream fin(fpPath);
+	if (fin)
+	{
+		int Cnt = 0;
+		T1 key;
+		while (fin >> key)
+		{
+			fscan(fin, mapTmp[key]);
+			Cnt++;
+		}
+		return Cnt;
+	}
+	fin.close();
+	return -1;
+}
+
+template <typename T1, typename T2>
+[[DEPRECATED]] void loadFile(const std::string& strPath, std::multimap<T1, T2>& mapTmp)
 {
 	std::ifstream fin(strPath);
 	if (fin)
@@ -303,8 +380,24 @@ void loadFile(std::string strPath, std::multimap<T1, T2>& mapTmp)
 	fin.close();
 }
 
+template <typename T1, typename T2>
+void loadFile(const std::filesystem::path& fpPath, std::multimap<T1, T2>& mapTmp)
+{
+	std::ifstream fin(fpPath);
+	if (fin)
+	{
+		T1 key;
+		T2 Val;
+		while (fin >> key >> Val)
+		{
+			mapTmp.insert({key, Val});
+		}
+	}
+	fin.close();
+}
+
 template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
-int loadBFile(std::string strPath, std::map<T, C>& m)
+[[DEPRECATED]] int loadBFile(const std::string& strPath, std::map<T, C>& m)
 {
 	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
 	if (!fin)return -1;
@@ -322,9 +415,45 @@ int loadBFile(std::string strPath, std::map<T, C>& m)
 }
 
 template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
-int loadBFile(std::string strPath, std::unordered_map<T, C>& m)
+int loadBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
+{
+	std::ifstream fin(fpPath, std::ios::in | std::ios::binary);
+	if (!fin)return -1;
+	const int len = fread<int>(fin);
+	int Cnt = 0;
+	T key;
+	C val;
+	while (fin.peek() != EOF && len > Cnt++)
+	{
+		key = fread<T>(fin);
+		m[key].readb(fin);
+	}
+	fin.close();
+	return Cnt;
+}
+
+template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
+[[DEPRECATED]] int loadBFile(const std::string& strPath, std::unordered_map<T, C>& m)
 {
 	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
+	if (!fin)return -1;
+	const int len = fread<int>(fin);
+	int Cnt = 0;
+	T key;
+	C val;
+	while (fin.peek() != EOF && len > Cnt++)
+	{
+		key = fread<T>(fin);
+		m[key].readb(fin);
+	}
+	fin.close();
+	return Cnt;
+}
+
+template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
+int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
+{
+	std::ifstream fin(fpPath, std::ios::in | std::ios::binary);
 	if (!fin)return -1;
 	const int len = fread<int>(fin);
 	int Cnt = 0;
@@ -341,7 +470,7 @@ int loadBFile(std::string strPath, std::unordered_map<T, C>& m)
 
 //读取伪ini
 template <class C>
-int loadINI(std::string strPath, std::map<std::string, C>& m)
+[[DEPRECATED]] int loadINI(const std::string& strPath, std::map<std::string, C>& m)
 {
 	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
 	if (!fin)return -1;
@@ -355,11 +484,27 @@ int loadINI(std::string strPath, std::map<std::string, C>& m)
 	return 1;
 }
 
-bool rdbuf(const string& strPath, string& s);
+template <class C>
+int loadINI(const std::filesystem::path& fpPath, std::map<std::string, C>& m)
+{
+	std::ifstream fin(fpPath, std::ios::in | std::ios::binary);
+	if (!fin)return -1;
+	std::string s, name;
+	C val;
+	getline(fin, s);
+	readini(fin, name);
+	val.readi(fin);
+	m[name] = val;
+	fin.close();
+	return 1;
+}
+
+[[DEPRECATED]] bool rdbuf(const string& strPath, string& s);
+bool rdbuf(const std::filesystem::path& fpPath, string& s);
 
 //读取伪xml
 template <class C, std::string(C::* U)() = &C::getName>
-int loadXML(const std::string& strPath, std::map<std::string, C>& m)
+[[DEPRECATED]] int loadXML(const std::string& strPath, std::map<std::string, C>& m)
 {
 	string s;
 	if (!rdbuf(strPath, s))return -1;
@@ -369,12 +514,24 @@ int loadXML(const std::string& strPath, std::map<std::string, C>& m)
 	return 1;
 }
 
+template <class C, std::string(C::* U)() = &C::getName>
+int loadXML(const std::filesystem::path& fpPath, std::map<std::string, C>& m)
+{
+	string s;
+	if (!rdbuf(fpPath, s))return -1;
+	DDOM xml(s);
+	C obj(xml);
+	m[obj.getName()].readt(xml);
+	return 1;
+}
+
 //遍历文件夹
-int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub = false);
+[[DEPRECATED]] int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub = false);
+int listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& files, bool isSub = false);
 
 template <typename T1, typename T2>
-int _loadDir(int (*load)(const std::string&, T2&), const std::string& strDir, T2& tmp, int& intFile, int& intFailure,
-             int& intItem, std::vector<std::string>& files)
+[[DEPRECATED]] int _loadDir(int (*load)(const std::string&, T2&), const std::string& strDir, T2& tmp, int& intFile, int& intFailure,
+             int& intItem, std::vector<std::string>& failureFiles)
 {
 	std::error_code err;
 	for (const auto& p : T1(strDir, err))
@@ -386,7 +543,30 @@ int _loadDir(int (*load)(const std::string&, T2&), const std::string& strDir, T2
 			const int Cnt = load(strDir + path, tmp);
 			if (Cnt < 0)
 			{
-				files.push_back(path);
+				failureFiles.push_back(path);
+				intFailure++;
+			}
+			else intItem += Cnt;
+		}
+	}
+	if (err) return -1;
+	return 0;
+}
+
+template <typename T1, typename T2>
+int _loadDir(int (*load)(const std::filesystem::path&, T2&), const std::filesystem::path& fpDir, T2& tmp, int& intFile, int& intFailure,
+             int& intItem, std::vector<std::string>& failureFiles)
+{
+	std::error_code err;
+	for (const auto& p : T1(fpDir, err))
+	{
+		if (p.is_regular_file())
+		{
+			intFile++;
+			const int Cnt = load(p, tmp);
+			if (Cnt < 0)
+			{
+				failureFiles.push_back(UTF8toGBK(p.path().filename().u8string()));
 				intFailure++;
 			}
 			else intItem += Cnt;
@@ -398,7 +578,7 @@ int _loadDir(int (*load)(const std::string&, T2&), const std::string& strDir, T2
 
 //读取文件夹
 template <typename T>
-int loadDir(int (*load)(const std::string&, T&), const std::string& strDir, T& tmp, ResList& logList,
+[[DEPRECATED]] int loadDir(int (*load)(const std::string&, T&), const std::string& strDir, T& tmp, ResList& logList,
             bool isSubdir = false)
 {
 	int intFile = 0, intFailure = 0, intItem = 0;
@@ -416,6 +596,37 @@ int loadDir(int (*load)(const std::string&, T&), const std::string& strDir, T& t
 
 	if (!intFile)return 0;
 	logList << "读取" + strDir + "中的" + std::to_string(intFile) + "个文件, 共" + std::to_string(intItem) + "个条目";
+	if (intFailure)
+	{
+		logList << "读取失败" + std::to_string(intFailure) + "个:";
+		for (auto& it : files)
+		{
+			logList << it;
+		}
+	}
+	return intFile;
+}
+
+
+template <typename T>
+int loadDir(int (*load)(const std::filesystem::path&, T&), const std::filesystem::path& fpDir, T& tmp, ResList& logList,
+            bool isSubdir = false)
+{
+	int intFile = 0, intFailure = 0, intItem = 0;
+	std::vector<std::string> files;
+	if (isSubdir)
+	{
+		if (_loadDir<std::filesystem::recursive_directory_iterator>(load, fpDir, tmp, intFile, intFailure, intItem,
+		                                                            files) == -1) return 0;
+	}
+	else
+	{
+		if (_loadDir<std::filesystem::directory_iterator>(load, fpDir, tmp, intFile, intFailure, intItem, files) == -1)
+			return 0;
+	}
+
+	if (!intFile)return 0;
+	logList << "读取" + UTF8toGBK(fpDir.u8string()) + "中的" + std::to_string(intFile) + "个文件, 共" + std::to_string(intItem) + "个条目";
 	if (intFailure)
 	{
 		logList << "读取失败" + std::to_string(intFailure) + "个:";
@@ -451,7 +662,7 @@ void fprint(std::ofstream& fout, std::pair<T1, T2> t)
 }
 
 template <typename T>
-bool clrEmpty(std::string strPath, const T& tmp)
+[[DEPRECATED]] bool clrEmpty(const std::string& strPath, const T& tmp)
 {
 	if (tmp.empty())
 	{
@@ -460,6 +671,22 @@ bool clrEmpty(std::string strPath, const T& tmp)
 		{
 			fin.close();
 			remove(strPath.c_str());
+		}
+		return true;
+	}
+	return false;
+}
+
+template <typename T>
+bool clrEmpty(const std::filesystem::path& fpPath, const T& tmp)
+{
+	if (tmp.empty())
+	{
+		std::ifstream fin(fpPath);
+		if (fin)
+		{
+			fin.close();
+			remove(fpPath);
 		}
 		return true;
 	}
@@ -514,7 +741,7 @@ void fwrite(ofstream& fout, const std::set<T>& s)
 }
 
 template <typename T>
-void saveFile(std::string strPath, const T& setTmp)
+[[DEPRECATED]] void saveFile(const std::string& strPath, const T& setTmp)
 {
 	if (clrEmpty(strPath, setTmp))return;
 	std::ofstream fout(strPath);
@@ -526,8 +753,21 @@ void saveFile(std::string strPath, const T& setTmp)
 	fout.close();
 }
 
+template <typename T>
+void saveFile(const std::filesystem::path& fpPath, const T& setTmp)
+{
+	if (clrEmpty(fpPath, setTmp))return;
+	std::ofstream fout(fpPath);
+	for (const auto& it : setTmp)
+	{
+		fprint(fout, it);
+		fout << std::endl;
+	}
+	fout.close();
+}
+
 template <typename TKey, typename TVal>
-void saveFile(std::string strPath, const map<TKey, TVal>& mTmp)
+[[DEPRECATED]] void saveFile(const std::string& strPath, const map<TKey, TVal>& mTmp)
 {
 	if (clrEmpty(strPath, mTmp))return;
 	std::ofstream fout(strPath);
@@ -540,9 +780,23 @@ void saveFile(std::string strPath, const map<TKey, TVal>& mTmp)
 	fout.close();
 }
 
+template <typename TKey, typename TVal>
+void saveFile(const std::filesystem::path& fpPath, const map<TKey, TVal>& mTmp)
+{
+	if (clrEmpty(fpPath, mTmp))return;
+	std::ofstream fout(fpPath);
+	for (const auto& [key,val] : mTmp)
+	{
+		fout << key << "\t";
+		fprint(fout, val);
+		fout << std::endl;
+	}
+	fout.close();
+}
+
 
 template <typename TKey, typename TVal>
-void saveFile(std::string strPath, const unordered_map<TKey, TVal>& mTmp)
+[[DEPRECATED]] void saveFile(const std::string& strPath, const unordered_map<TKey, TVal>& mTmp)
 {
 	if (clrEmpty(strPath, mTmp))return;
 	std::ofstream fout(strPath);
@@ -555,8 +809,22 @@ void saveFile(std::string strPath, const unordered_map<TKey, TVal>& mTmp)
 	fout.close();
 }
 
+template <typename TKey, typename TVal>
+void saveFile(const std::filesystem::path& fpPath, const unordered_map<TKey, TVal>& mTmp)
+{
+	if (clrEmpty(fpPath, mTmp))return;
+	std::ofstream fout(fpPath);
+	for (const auto& [key, val] : mTmp)
+	{
+		fout << key << "\t";
+		fprint(fout, val);
+		fout << std::endl;
+	}
+	fout.close();
+}
+
 template <typename T, class C, void(C::* U)(std::ofstream&) const = &C::writeb>
-void saveBFile(std::string strPath, std::map<T, C>& m)
+[[DEPRECATED]] void saveBFile(const std::string& strPath, std::map<T, C>& m)
 {
 	if (clrEmpty(strPath, m))return;
 	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
@@ -570,8 +838,53 @@ void saveBFile(std::string strPath, std::map<T, C>& m)
 	fout.close();
 }
 
+template <typename T, class C, void(C::* U)(std::ofstream&) const = &C::writeb>
+void saveBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
+{
+	if (clrEmpty(fpPath, m))return;
+	std::ofstream fout(fpPath, ios::out | ios::trunc | ios::binary);
+	const int len = m.size();
+	fwrite<int>(fout, len);
+	for (auto& [key,val] : m)
+	{
+		fwrite(fout, key);
+		fwrite(fout, val);
+	}
+	fout.close();
+}
+
 template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
-void saveBFile(std::string strPath, std::map<T, C>& m)
+[[DEPRECATED]] void saveBFile(const std::string& strPath, std::map<T, C>& m)
+{
+	if (clrEmpty(strPath, m))return;
+	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
+	const int len = m.size();
+	fwrite<int>(fout, len);
+	for (auto& [key, val] : m)
+	{
+		fwrite(fout, key);
+		fwrite(fout, val);
+	}
+	fout.close();
+}
+
+template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
+void saveBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
+{
+	if (clrEmpty(fpPath, m))return;
+	std::ofstream fout(fpPath, ios::out | ios::trunc | ios::binary);
+	const int len = m.size();
+	fwrite<int>(fout, len);
+	for (auto& [key, val] : m)
+	{
+		fwrite(fout, key);
+		fwrite(fout, val);
+	}
+	fout.close();
+}
+
+template <typename T, class C, void(C::* U)(std::ofstream&) const = &C::writeb>
+[[DEPRECATED]] void saveBFile(const std::string& strPath, std::unordered_map<T, C>& m)
 {
 	if (clrEmpty(strPath, m))return;
 	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
@@ -586,7 +899,22 @@ void saveBFile(std::string strPath, std::map<T, C>& m)
 }
 
 template <typename T, class C, void(C::* U)(std::ofstream&) const = &C::writeb>
-void saveBFile(std::string strPath, std::unordered_map<T, C>& m)
+void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
+{
+	if (clrEmpty(fpPath, m))return;
+	std::ofstream fout(fpPath, ios::out | ios::trunc | ios::binary);
+	const int len = m.size();
+	fwrite<int>(fout, len);
+	for (auto& [key, val] : m)
+	{
+		fwrite(fout, key);
+		fwrite(fout, val);
+	}
+	fout.close();
+}
+
+template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
+[[DEPRECATED]] void saveBFile(const std::string& strPath, std::unordered_map<T, C>& m)
 {
 	if (clrEmpty(strPath, m))return;
 	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
@@ -601,10 +929,10 @@ void saveBFile(std::string strPath, std::unordered_map<T, C>& m)
 }
 
 template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
-void saveBFile(std::string strPath, std::unordered_map<T, C>& m)
+void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 {
-	if (clrEmpty(strPath, m))return;
-	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
+	if (clrEmpty(fpPath, m))return;
+	std::ofstream fout(fpPath, ios::out | ios::trunc | ios::binary);
 	const int len = m.size();
 	fwrite<int>(fout, len);
 	for (auto& [key, val] : m)
@@ -617,8 +945,15 @@ void saveBFile(std::string strPath, std::unordered_map<T, C>& m)
 
 //读取伪xml
 template <class C, std::string(C::* U)() = &C::writet>
-void saveXML(std::string strPath, C& obj)
+void saveXML(const std::string& strPath, C& obj)
 {
 	std::ofstream fout(strPath);
+	fout << obj.writet();
+}
+
+template <class C, std::string(C::* U)() = &C::writet>
+void saveXML(const std::filesystem::path& fpPath, C& obj)
+{
+	std::ofstream fout(fpPath);
 	fout << obj.writet();
 }

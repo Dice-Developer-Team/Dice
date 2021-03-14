@@ -7,6 +7,7 @@
 #include <Windows.h>
 #endif
 #include <string_view>
+#include <filesystem>
 #include "ManagerSystem.h"
 
 #include "CardDeck.h"
@@ -14,8 +15,8 @@
 #include "DDAPI.h"
 #include "CQTools.h"
 
-string dirExe;
-string DiceDir = "DiceData";
+std::filesystem::path dirExe;
+std::filesystem::path DiceDir("DiceData");
  //被引用的图片列表
 unordered_set<string> sReferencedImage;
 

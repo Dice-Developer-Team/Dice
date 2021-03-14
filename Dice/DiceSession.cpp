@@ -100,13 +100,14 @@ void DiceSession::ob_clr(FromMsg* msg)
 }
 
 void DiceSession::log_new(FromMsg* msg) {
-	mkDir(DiceDir + logger.dirLog);
+	std::error_code ec;
+	std::filesystem::create_directory(DiceDir / logger.dirLog, ec);
 	logger.tStart = time(nullptr);
 	logger.isLogging = true;
 	logger.fileLog = (type == "solo")
 		? ("qq_" + to_string(msg->fromQQ) + "_" + to_string(logger.tStart) + ".txt")
 		: ("group_" + to_string(msg->fromGroup) + "_" + to_string(logger.tStart) + ".txt");
-	logger.pathLog = DiceDir + LogInfo::dirLog + "/" + logger.fileLog;
+	logger.pathLog = DiceDir / logger.dirLog / logger.fileLog;
 	//先发消息后插入
 	msg->reply(GlobalMsg["strLogNew"]);
 	LogList.insert(room);
@@ -154,13 +155,13 @@ void DiceSession::log_end(FromMsg* msg) {
 		return;
 	}
 	msg->strVar["log_file"] = logger.fileLog;
-	msg->strVar["log_path"] = log_path();
+	msg->strVar["log_path"] = UTF8toGBK(log_path().u8string());
 	msg->reply(GlobalMsg["strLogEnd"]);
 	update();
 	msg->cmd_key = "uplog"; 
 	sch.push_job(*msg);
 }
-string DiceSession::log_path()const {
+std::filesystem::path DiceSession::log_path()const {
 	return logger.pathLog; 
 }
 
@@ -500,10 +501,11 @@ std::mutex exSessionSave;
 
 void DiceSession::save() const
 {
-	mkDir(DiceDir + "/user/session");
-	string pathFile = (type == "solo")
-		? (DiceDir + R"(/user/session/Q)" + to_string(~room) + ".json" )
-		: (DiceDir + R"(/user/session/)" + to_string(room) + ".json");
+	std::error_code ec;
+	std::filesystem::create_directories(DiceDir / "user" / "session", ec);
+	std::filesystem::path fpFile = (type == "solo")
+		? (DiceDir / "user" / "session" / ("Q" + to_string(~room) + ".json") )
+		: (DiceDir / "user" / "session" / (to_string(room) + ".json"));
 	nlohmann::json jData;
 	if (!sOB.empty())jData["observer"] = sOB;
 	if (!mTable.empty())
@@ -543,16 +545,16 @@ void DiceSession::save() const
 	}
 	std::lock_guard<std::mutex> lock(exSessionSave);
 	if (jData.empty()) {
-		remove(pathFile.c_str());
+		remove(fpFile);
 		return;
 	}
 	jData["type"] = type;
 	jData["room"] = room;
 	jData["create_time"] = tCreate;
 	jData["update_time"] = tUpdate;
-	ofstream fout(pathFile);
+	ofstream fout(fpFile);
 	if (!fout) {
-		console.log("开团信息保存失败:" + pathFile, 1);
+		console.log("开团信息保存失败:" + UTF8toGBK(fpFile.u8string()), 1);
 		return;
 	}
 	fout << jData.dump(1);
@@ -576,7 +578,7 @@ Session& DiceTableMaster::session(long long group)
 void DiceTableMaster::session_end(long long group)
 {
 	std::unique_lock<std::shared_mutex> lock(sessionMutex);
-	remove((DiceDir + R"(/user/session/)" + to_string(group)).c_str());
+	remove(DiceDir / "user" / "session" / to_string(group));
 	mSession.erase(group);
 }
 
@@ -599,7 +601,7 @@ int DiceTableMaster::load()
     string strLog;
     std::unique_lock<std::shared_mutex> lock(sessionMutex);
     vector<std::filesystem::path> sFile;
-    int cnt = listDir(DiceDir + "/user/session/", sFile);
+    int cnt = listDir(DiceDir / "user" / "session", sFile);
     if (cnt <= 0)return cnt;
     for (auto& filename : sFile)
 	{
@@ -619,7 +621,7 @@ int DiceTableMaster::load()
 			jLog["file"].get_to(pSession->logger.fileLog);
 			jLog["logging"].get_to(pSession->logger.isLogging);
 			pSession->logger.update();
-			pSession->logger.pathLog = DiceDir + LogInfo::dirLog + "/" + pSession->logger.fileLog;
+			pSession->logger.pathLog = DiceDir / pSession->logger.dirLog / pSession->logger.fileLog;
 			if (pSession->logger.isLogging) {
 				LogList.insert(pSession->room);
 			}

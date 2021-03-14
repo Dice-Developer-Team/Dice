@@ -102,9 +102,19 @@ bool fscan(std::ifstream& fin, std::string& t)
 	return false;
 }
 
-bool rdbuf(const string& strPath, string& s)
+[[DEPRECATED]] bool rdbuf(const string& strPath, string& s)
 {
 	const std::ifstream fin(strPath);
+	if (!fin)return false;
+	stringstream ss;
+	ss << fin.rdbuf();
+	s = ss.str();
+	return true;
+}
+
+bool rdbuf(const std::filesystem::path& fpPath, string& s)
+{
+	const std::ifstream fin(fpPath);
 	if (!fin)return false;
 	stringstream ss;
 	ss << fin.rdbuf();
@@ -212,7 +222,7 @@ ofstream& operator<<(ofstream& fout, const Chat& grp)
 }
 
 template <typename T>
-int _listDir(const string& dir, vector<std::filesystem::path>& files)
+[[DEPRECATED]] int _listDir(const string& dir, vector<std::filesystem::path>& files)
 {
 	int intFile = 0;
 	std::error_code err;
@@ -227,7 +237,32 @@ int _listDir(const string& dir, vector<std::filesystem::path>& files)
 	return err ? -1 : intFile;
 }
 
-int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub)
+template <typename T>
+int _listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& files)
+{
+	int intFile = 0;
+	std::error_code err;
+	for (const auto& file : T(dir, err))
+	{
+		if (file.is_regular_file())
+		{
+			intFile++;
+			files.push_back(file.path());
+		}
+	}
+	return err ? -1 : intFile;
+}
+
+[[DEPRECATED]] int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub)
+{
+	if (isSub)
+	{
+		return _listDir<std::filesystem::recursive_directory_iterator>(dir, files);
+	}
+	return _listDir<std::filesystem::directory_iterator>(dir, files);
+}
+
+int listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& files, bool isSub)
 {
 	if (isSub)
 	{

@@ -73,11 +73,11 @@ typedef void (*cmd)(DiceJob&);
 //½ñÈÕ¼ÇÂ¼
 class DiceToday {
     tm stToday;
-    string pathFile;
+    std::filesystem::path pathFile;
     unordered_map<string, int>cntGlobal;
     unordered_map<long long, unordered_map<string, int>>cntUser;
 public:
-    DiceToday(const string& path) :pathFile(path) {
+    DiceToday(const std::filesystem::path& path) :pathFile(path) {
         load();
     }
     void load();

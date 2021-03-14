@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <filesystem>
 #include "STLExtern.hpp"
 #include <unordered_set>
 using std::string;
@@ -31,4 +32,4 @@ public:
 
 inline Censor censor;
 
-int load_words(const string& filename, Censor& cens);
+int load_words(const std::filesystem::path& path, Censor& cens);

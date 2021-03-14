@@ -14,6 +14,7 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <filesystem>
 
 using std::pair;
 using std::string;
@@ -118,10 +119,10 @@ public:
 	void verify(void*, long long);
 	void create(DDBlackMark&);
 	//读取json格式黑名单记录
-	int loadJson(string strPath, bool isExtern = false);
+	int loadJson(const std::filesystem::path& fpPath, bool isExtern = false);
 	//读取旧版本黑名单列表
-	int loadHistory(const string& strLoc);
-	void saveJson(const string& strPath) const;
+	int loadHistory(const std::filesystem::path& fpLoc);
+	void saveJson(const std::filesystem::path& fpPath) const;
 };
 
 extern std::unique_ptr<DDBlackManager> blacklist;

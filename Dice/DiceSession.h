@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <filesystem>
 #include <memory>
 #include "STLExtern.hpp"
 
@@ -18,14 +19,14 @@ class FromMsg;
 class DiceTableMaster;
 
 struct LogInfo{
-	static constexpr auto dirLog{ "/user/log" };
+	const std::filesystem::path dirLog = std::filesystem::path("user") / "log";
 	bool isLogging{ false };
 	//创建时间，为0则不存在
 	time_t tStart{ 0 };
 	time_t tLastMsg{ 0 };
 	string fileLog;
 	//路径不保存，初始化时生成
-	string pathLog;
+	std::filesystem::path pathLog;
 	void update() {
 		tLastMsg = time(nullptr);
 	}
@@ -124,7 +125,7 @@ public:
 	void log_on(FromMsg*);
 	void log_off(FromMsg*);
 	void log_end(FromMsg*);
-	[[nodiscard]] string log_path()const;
+	[[nodiscard]] std::filesystem::path log_path()const;
 	[[nodiscard]] bool is_logging() const { return logger.isLogging; }
 
 	//link指令

@@ -7,14 +7,15 @@
 #include "EncodingConvert.h"
 #include <bitset>
 #include <cstring>
+#include <filesystem>
 
 TrieG<less_ci> wordG;
 
 enumap<string> sens{ "Ignore","Notice","Caution","Warning","Danger" };
 
-int load_words(const string& filename, Censor& cens) {
+int load_words(const std::filesystem::path& path, Censor& cens) {
 	int cnt(0);
-	ifstream fin(filename);
+	ifstream fin(path);
 	if (!fin)return -1;
 	bool isUTF8{ false };
 	string word;
@@ -80,7 +81,7 @@ void Censor::build() {
 	wordG.build(words);
 }
 void Censor::save() {
-	saveJMap(DiceDir + "/conf/CustomCensor.json", censor.CustomWords);
+	saveJMap(DiceDir / "conf" / "CustomCensor.json", censor.CustomWords);
 }
 
 int Censor::search(const string& text, unordered_set<string>& res) {

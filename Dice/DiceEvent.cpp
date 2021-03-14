@@ -1073,7 +1073,7 @@ int FromMsg::BasicOrder()
 			fmt->set_help(strVar["key"], strHelpdoc);
 			reply(format(GlobalMsg["strHlpSet"], {strVar["key"]}));
 		}
-		saveJMap(DiceDir + "/conf/CustomHelp.json", CustomHelp);
+		saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
 		return true;
 	}
 	if (strLowerMessage.substr(intMsgCnt, 4) == "help")
@@ -1744,7 +1744,7 @@ int FromMsg::InnerOrder() {
 			CardDeck::mReplyDeck.erase(strVar["key"]);
 		}
 		else reply(GlobalMsg["strReplySet"], {strVar["key"]});
-		saveJMap(DiceDir + "/conf/CustomReply.json", CardDeck::mReplyDeck);
+		saveJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules") {
@@ -2369,7 +2369,7 @@ int FromMsg::InnerOrder() {
 			GlobalMsg[strName] = strMessage;
 			note("已自定义" + strName + "的文本", 0b1);
 		}
-		saveJMap(DiceDir + "/conf/CustomMsg.json", EditedMsg);
+		saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en") {

@@ -105,18 +105,22 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 
  //加载其他lua脚本
 int loadLua(lua_State* L) {
+#ifdef _WIN32
 	string nameFile{ UTF8toGBK(lua_tostring(L, -1),true) };
-	string pathFile = DiceDir + "\\plugin\\" + nameFile + ".lua";
+#else
+	string nameFile{ lua_tostring(L, -1) };
+#endif
+	std::filesystem::path pathFile = DiceDir / "plugin" / (nameFile + ".lua");
 	if (!std::filesystem::exists(pathFile) && nameFile.find('/') == string::npos && nameFile.find('\\') == string::npos)
-		pathFile = DiceDir + "\\plugin\\" + nameFile + "\\init.lua";
-	if (luaL_loadfile(L, pathFile.c_str())) {
+		pathFile = DiceDir / "plugin" / nameFile / "init.lua";
+	if (luaL_loadfile(L, pathFile.string().c_str())) {
 		const char* pErrorMsg = lua_tostring(L, -1);
-		console.log(GlobalMsg["strSelfName"] + "读取lua文件" + pathFile + "失败:"+ pErrorMsg, 0b10);
+		console.log(GlobalMsg["strSelfName"] + "读取lua文件" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
 		return 0;
 	}
 	if (lua_pcall(L, 0, 1, 0)) {
 		const char* pErrorMsg = lua_tostring(L, -1);
-		console.log(GlobalMsg["strSelfName"] + "运行lua文件" + pathFile + "失败:"+ pErrorMsg, 0b10);
+		console.log(GlobalMsg["strSelfName"] + "运行lua文件" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
 		return 1;
 	}
 	return 1;
@@ -128,7 +132,7 @@ int getDiceQQ(lua_State* L) {
 }
 //获取DiceDir存档目录
 int getDiceDir(lua_State* L) {
-	lua_push_string(L, DiceDir);
+	lua_push_string(L, DiceDir.u8string());
 	return 1;
 }
 int mkDirs(lua_State* L) {
@@ -300,7 +304,7 @@ void LuaState::regist() {
 	}
 	lua_getglobal(state, "package");
 	lua_getfield(state, -1, "path");
-	string strPath(DiceDir + "\\plugin\\?.lua;" + lua_tostring(state, -1));
+	string strPath((DiceDir / "plugin" / "?.lua").u8string() + lua_tostring(state, -1));
 	lua_pushstring(state, strPath.c_str());
 	lua_setfield(state, -3, "path");
 	lua_pop(state, 2);

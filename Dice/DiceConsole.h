@@ -24,8 +24,8 @@ using namespace std::literals::chrono_literals;
 using std::string;
 using std::to_string;
 
-extern string dirExe;
-extern string DiceDir;
+extern std::filesystem::path dirExe;
+extern std::filesystem::path DiceDir;
 
 enum class ClockEvent { off, on, save, clear };
 
@@ -87,7 +87,7 @@ public:
 	[[nodiscard]] ResList listClock() const;
 	[[nodiscard]] ResList listNotice() const;
 	[[nodiscard]] int showNotice(chatType ct) const;
-	void setPath(std::string path) { strPath = std::move(path); }
+	void setPath(const std::filesystem::path& path) { fpPath = path; }
 
 	void set(const std::string& key, int val)
 	{
@@ -105,7 +105,7 @@ public:
 	{
 		string s;
 		//DSens.build({ {"nnÀÏ¹«",2 } });
-		if (!rdbuf(strPath, s))return false;
+		if (!rdbuf(fpPath, s))return false;
 		DDOM xml(s);
 		if (xml.count("mode"))isMasterMode = stoi(xml["mode"].strValue);
 		if (xml.count("master"))masterQQ = stoll(xml["master"].strValue);
@@ -128,7 +128,8 @@ public:
 	}
 	void save() 
 	{
-		mkDir(DiceDir + "/conf");
+		std::error_code ec;
+		std::filesystem::create_directories(DiceDir / "conf", ec);
 		DDOM xml("console","");
 		xml.push(DDOM("mode", to_string(isMasterMode)));
 		xml.push(DDOM("master", to_string(masterQQ)));
@@ -150,14 +151,14 @@ public:
 			}
 			xml.push(conf);
 		}
-		std::ofstream fout(strPath);
-		fout << xml.dump();
+		std::ofstream fout(fpPath);
+		if (fout) fout << xml.dump();
 	}
 
 	void loadNotice();
 	void saveNotice() const;
 private:
-	string strPath;
+	std::filesystem::path fpPath;
 	std::map<std::string, int, less_ci> intConf;
 	std::multimap<Clock, ClockEvent> mWorkClock{};
 	std::map<chatType, int> NoticeList{};

@@ -3,6 +3,7 @@
  * Copyright (C) 2019 String.Empty
  */
 #include <cstring>
+#include <filesystem>
 #include "json.hpp"
 #include "DiceCloud.h"
 #include "GlobalVar.h"
@@ -58,12 +59,25 @@ namespace Cloud
 		return 0;
 	}
 
-	int DownloadFile(const char* url, const char* downloadPath)
+	[[DEPRECATED]] int DownloadFile(const char* url, const char* downloadPath)
 	{
 #ifdef _WIN32
 		DeleteUrlCacheEntryA(url);
 		if (URLDownloadToFileA(nullptr, url, downloadPath, 0, nullptr) != S_OK) return -1;
 		if (_access(downloadPath, 0))return -2;
+		return 0;
+#else
+		return -1;
+#endif
+	}
+	
+	int DownloadFile(const char* url, const std::filesystem::path& downloadPath)
+	{
+#ifdef _WIN32
+		DeleteUrlCacheEntryA(url);
+		if (URLDownloadToFileA(nullptr, url, downloadPath.string().c_str(), 0, nullptr) != S_OK) return -1;
+		std::error_code ec;
+		if (!std::filesystem::exists(downloadPath, ec) || ec)return -2;
 		return 0;
 #else
 		return -1;

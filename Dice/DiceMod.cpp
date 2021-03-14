@@ -117,7 +117,7 @@ void DiceModManager::_help(const shared_ptr<DiceJobDetail>& job) {
 	}
 	else job->reply("{strHelpNotFound}");
 	cntHelp[(*job)["help_word"]] += 1;
-	saveJMap(DiceDir + "/user/HelpStatic.json",cntHelp);
+	saveJMap(DiceDir / "user" / "HelpStatic.json",cntHelp);
 }
 
 void DiceModManager::set_help(const string& key, const string& val)
@@ -149,7 +149,7 @@ int DiceModManager::load(ResList* resLog)
 	vector<std::filesystem::path> sModFile;
 	//∂¡»°mod
 	vector<string> sModErr;
-	int cntFile = listDir(DiceDir + "/mod/", sModFile);
+	int cntFile = listDir(DiceDir / "mod" , sModFile);
 	int cntItem{0};
 	if (cntFile > 0) {
 		for (auto& pathFile : sModFile) {
@@ -181,7 +181,7 @@ int DiceModManager::load(ResList* resLog)
 	}
 	//∂¡»°plugin
 	vector<std::filesystem::path> sLuaFile;
-	int cntLuaFile = listDir(DiceDir + "/plugin/", sLuaFile);
+	int cntLuaFile = listDir(DiceDir / "plugin", sLuaFile);
 	int cntOrder{ 0 };
 	if (cntLuaFile <= 0)return cntLuaFile;
 	vector<string> sLuaErr; 
@@ -215,7 +215,7 @@ int DiceModManager::load(ResList* resLog)
 	factory.detach();
 	if (cntHelp.empty()) {
 		cntHelp.reserve(helpdoc.size());
-		loadJMap(DiceDir + "/user/HelpStatic.json", cntHelp);
+		loadJMap(DiceDir / "user" / "HelpStatic.json", cntHelp);
 	}
 	return cntFile;
 }

@@ -150,7 +150,7 @@ void Console::rmNotice(chatType ct)
 
 int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 {
-	ofstream fout(string(DiceDir + "/audit/log") + to_string(DiceMaid) + "_" + printDate() + ".txt",
+	ofstream fout(DiceDir / "audit" / "log" / (to_string(DiceMaid) + "_" + printDate() + ".txt"),
 	              ios::out | ios::app);
 	fout << strTime << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 	fout.close();
@@ -188,16 +188,16 @@ void Console::reset()
 
 void Console::loadNotice()
 {
-	if (loadFile(DiceDir + "/conf/NoticeList.txt", NoticeList) < 1)
+	if (loadFile(DiceDir / "conf" / "NoticeList.txt", NoticeList) < 1)
 	{
 		std::set<chatType> sChat;
-		if (loadFile(DiceDir + "com.w4123.dice\\MonitorList.RDconf", sChat) > 0)
+		if (loadFile(DiceDir / "com.w4123.dice" / "MonitorList.RDconf", sChat) > 0)
 			for (const auto& it : sChat)
 			{
 				console.setNotice(it, 0b100000);
 			}
 		sChat.clear();
-		if (loadFile(DiceDir + "/conf/RecorderList.RDconf", sChat) > 0)
+		if (loadFile(DiceDir / "conf" / "RecorderList.RDconf", sChat) > 0)
 			for (const auto& it : sChat)
 			{
 				console.setNotice(it, 0b11011);
@@ -217,7 +217,7 @@ void Console::loadNotice()
 
 void Console::saveNotice() const
 {
-	saveFile(DiceDir + "/conf/NoticeList.txt", NoticeList);
+	saveFile(DiceDir / "conf" / "NoticeList.txt", NoticeList);
 }
 
 Console console;
