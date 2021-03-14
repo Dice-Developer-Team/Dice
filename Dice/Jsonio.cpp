@@ -3,7 +3,7 @@
 #include "StrExtern.hpp"
 #include "Jsonio.h"
 
-[[DEPRECATED]] nlohmann::json freadJson(const std::string& strPath)
+[[deprecated]] nlohmann::json freadJson(const std::string& strPath)
 {
 	std::ifstream fin(strPath);
 	if (!fin)return nlohmann::json();
@@ -35,7 +35,7 @@ nlohmann::json freadJson(const std::filesystem::path& path)
 	return j;
 }
 
-[[DEPRECATED]] void fwriteJson(const std::string& strPath, const json& j) 
+[[deprecated]] void fwriteJson(const std::string& strPath, const json& j) 
 {
 	std::ofstream fout(strPath);
 	fout << std::setw(2) << j;

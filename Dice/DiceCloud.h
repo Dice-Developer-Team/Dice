@@ -13,7 +13,7 @@ namespace Cloud
 {
 	void heartbeat();
 	int checkWarning(const char* warning);
-	[[DEPRECATED]] int DownloadFile(const char* url, const char* downloadPath);
+	[[deprecated]] int DownloadFile(const char* url, const char* downloadPath);
 	int DownloadFile(const char* url, const std::filesystem::path& downloadPath);
 	int checkUpdate(FromMsg* msg);
 }

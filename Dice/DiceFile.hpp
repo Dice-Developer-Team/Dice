@@ -21,6 +21,7 @@
 #include "StrExtern.hpp"
 #include "DiceMsgSend.h"
 #include "MsgFormat.h"
+#include "EncodingConvert.h"
 
 using std::ifstream;
 using std::ofstream;
@@ -213,7 +214,7 @@ void readini(string s, std::vector<T>& v)
 }
 
 template <typename T>
-[[DEPRECATED]] int loadFile(const std::string& strPath, std::set<T>& setTmp)
+[[deprecated]] int loadFile(const std::string& strPath, std::set<T>& setTmp)
 {
 	std::ifstream fin(strPath);
 	if (fin)
@@ -251,7 +252,7 @@ int loadFile(const std::filesystem::path& fpPath, std::set<T>& setTmp)
 }
 
 template <typename T>
-[[DEPRECATED]] int loadFile(const std::string& strPath, std::unordered_set<T>& setTmp)
+[[deprecated]] int loadFile(const std::string& strPath, std::unordered_set<T>& setTmp)
 {
 	std::ifstream fin(strPath);
 	if (fin)
@@ -289,7 +290,7 @@ int loadFile(const std::filesystem::path& fpPath, std::unordered_set<T>& setTmp)
 }
 
 template <typename T1, typename T2>
-[[DEPRECATED]] int loadFile(const std::string& strPath, std::map<T1, T2>& mapTmp)
+[[deprecated]] int loadFile(const std::string& strPath, std::map<T1, T2>& mapTmp)
 {
 	std::ifstream fin(strPath);
 	if (fin)
@@ -327,7 +328,7 @@ int loadFile(const std::filesystem::path& fpPath, std::map<T1, T2>& mapTmp)
 }
 
 template <typename T1, typename T2>
-[[DEPRECATED]] int loadFile(const std::string& strPath, std::unordered_map<T1, T2>& mapTmp) 
+[[deprecated]] int loadFile(const std::string& strPath, std::unordered_map<T1, T2>& mapTmp) 
 {
 	std::ifstream fin(strPath);
 	if (fin)
@@ -365,7 +366,7 @@ int loadFile(const std::filesystem::path& fpPath, std::unordered_map<T1, T2>& ma
 }
 
 template <typename T1, typename T2>
-[[DEPRECATED]] void loadFile(const std::string& strPath, std::multimap<T1, T2>& mapTmp)
+[[deprecated]] void loadFile(const std::string& strPath, std::multimap<T1, T2>& mapTmp)
 {
 	std::ifstream fin(strPath);
 	if (fin)
@@ -397,7 +398,7 @@ void loadFile(const std::filesystem::path& fpPath, std::multimap<T1, T2>& mapTmp
 }
 
 template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
-[[DEPRECATED]] int loadBFile(const std::string& strPath, std::map<T, C>& m)
+[[deprecated]] int loadBFile(const std::string& strPath, std::map<T, C>& m)
 {
 	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
 	if (!fin)return -1;
@@ -433,7 +434,7 @@ int loadBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
 }
 
 template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
-[[DEPRECATED]] int loadBFile(const std::string& strPath, std::unordered_map<T, C>& m)
+[[deprecated]] int loadBFile(const std::string& strPath, std::unordered_map<T, C>& m)
 {
 	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
 	if (!fin)return -1;
@@ -470,7 +471,7 @@ int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 
 //读取伪ini
 template <class C>
-[[DEPRECATED]] int loadINI(const std::string& strPath, std::map<std::string, C>& m)
+[[deprecated]] int loadINI(const std::string& strPath, std::map<std::string, C>& m)
 {
 	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
 	if (!fin)return -1;
@@ -499,12 +500,12 @@ int loadINI(const std::filesystem::path& fpPath, std::map<std::string, C>& m)
 	return 1;
 }
 
-[[DEPRECATED]] bool rdbuf(const string& strPath, string& s);
+[[deprecated]] bool rdbuf(const string& strPath, string& s);
 bool rdbuf(const std::filesystem::path& fpPath, string& s);
 
 //读取伪xml
 template <class C, std::string(C::* U)() = &C::getName>
-[[DEPRECATED]] int loadXML(const std::string& strPath, std::map<std::string, C>& m)
+[[deprecated]] int loadXML(const std::string& strPath, std::map<std::string, C>& m)
 {
 	string s;
 	if (!rdbuf(strPath, s))return -1;
@@ -526,11 +527,11 @@ int loadXML(const std::filesystem::path& fpPath, std::map<std::string, C>& m)
 }
 
 //遍历文件夹
-[[DEPRECATED]] int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub = false);
+[[deprecated]] int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub = false);
 int listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& files, bool isSub = false);
 
 template <typename T1, typename T2>
-[[DEPRECATED]] int _loadDir(int (*load)(const std::string&, T2&), const std::string& strDir, T2& tmp, int& intFile, int& intFailure,
+[[deprecated]] int _loadDir(int (*load)(const std::string&, T2&), const std::string& strDir, T2& tmp, int& intFile, int& intFailure,
              int& intItem, std::vector<std::string>& failureFiles)
 {
 	std::error_code err;
@@ -578,7 +579,7 @@ int _loadDir(int (*load)(const std::filesystem::path&, T2&), const std::filesyst
 
 //读取文件夹
 template <typename T>
-[[DEPRECATED]] int loadDir(int (*load)(const std::string&, T&), const std::string& strDir, T& tmp, ResList& logList,
+[[deprecated]] int loadDir(int (*load)(const std::string&, T&), const std::string& strDir, T& tmp, ResList& logList,
             bool isSubdir = false)
 {
 	int intFile = 0, intFailure = 0, intItem = 0;
@@ -662,7 +663,7 @@ void fprint(std::ofstream& fout, std::pair<T1, T2> t)
 }
 
 template <typename T>
-[[DEPRECATED]] bool clrEmpty(const std::string& strPath, const T& tmp)
+[[deprecated]] bool clrEmpty(const std::string& strPath, const T& tmp)
 {
 	if (tmp.empty())
 	{
@@ -741,7 +742,7 @@ void fwrite(ofstream& fout, const std::set<T>& s)
 }
 
 template <typename T>
-[[DEPRECATED]] void saveFile(const std::string& strPath, const T& setTmp)
+[[deprecated]] void saveFile(const std::string& strPath, const T& setTmp)
 {
 	if (clrEmpty(strPath, setTmp))return;
 	std::ofstream fout(strPath);
@@ -767,7 +768,7 @@ void saveFile(const std::filesystem::path& fpPath, const T& setTmp)
 }
 
 template <typename TKey, typename TVal>
-[[DEPRECATED]] void saveFile(const std::string& strPath, const map<TKey, TVal>& mTmp)
+[[deprecated]] void saveFile(const std::string& strPath, const map<TKey, TVal>& mTmp)
 {
 	if (clrEmpty(strPath, mTmp))return;
 	std::ofstream fout(strPath);
@@ -796,7 +797,7 @@ void saveFile(const std::filesystem::path& fpPath, const map<TKey, TVal>& mTmp)
 
 
 template <typename TKey, typename TVal>
-[[DEPRECATED]] void saveFile(const std::string& strPath, const unordered_map<TKey, TVal>& mTmp)
+[[deprecated]] void saveFile(const std::string& strPath, const unordered_map<TKey, TVal>& mTmp)
 {
 	if (clrEmpty(strPath, mTmp))return;
 	std::ofstream fout(strPath);
@@ -824,7 +825,7 @@ void saveFile(const std::filesystem::path& fpPath, const unordered_map<TKey, TVa
 }
 
 template <typename T, class C, void(C::* U)(std::ofstream&) const = &C::writeb>
-[[DEPRECATED]] void saveBFile(const std::string& strPath, std::map<T, C>& m)
+[[deprecated]] void saveBFile(const std::string& strPath, std::map<T, C>& m)
 {
 	if (clrEmpty(strPath, m))return;
 	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
@@ -854,7 +855,7 @@ void saveBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
 }
 
 template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
-[[DEPRECATED]] void saveBFile(const std::string& strPath, std::map<T, C>& m)
+[[deprecated]] void saveBFile(const std::string& strPath, std::map<T, C>& m)
 {
 	if (clrEmpty(strPath, m))return;
 	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
@@ -884,7 +885,7 @@ void saveBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
 }
 
 template <typename T, class C, void(C::* U)(std::ofstream&) const = &C::writeb>
-[[DEPRECATED]] void saveBFile(const std::string& strPath, std::unordered_map<T, C>& m)
+[[deprecated]] void saveBFile(const std::string& strPath, std::unordered_map<T, C>& m)
 {
 	if (clrEmpty(strPath, m))return;
 	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);
@@ -914,7 +915,7 @@ void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 }
 
 template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
-[[DEPRECATED]] void saveBFile(const std::string& strPath, std::unordered_map<T, C>& m)
+[[deprecated]] void saveBFile(const std::string& strPath, std::unordered_map<T, C>& m)
 {
 	if (clrEmpty(strPath, m))return;
 	std::ofstream fout(strPath, ios::out | ios::trunc | ios::binary);

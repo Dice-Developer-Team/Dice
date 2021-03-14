@@ -59,9 +59,9 @@ std::enable_if_t<std::is_arithmetic_v<T>, T> readJKey(const std::string& strJson
 	return stoll(strJson);
 }
 
-[[DEPRECATED]] nlohmann::json freadJson(const std::string& strPath);
+[[deprecated]] nlohmann::json freadJson(const std::string& strPath);
 nlohmann::json freadJson(const std::filesystem::path& path);
-[[DEPRECATED]] void fwriteJson(const std::string& strPath, const json& j);
+[[deprecated]] void fwriteJson(const std::string& strPath, const json& j);
 void fwriteJson(const std::filesystem::path& strPath, const json& j);
 
 template <class Map>
@@ -102,7 +102,7 @@ int readJson(const std::string& strJson, std::map<T1, T2>& mapTmp)
 }
 
 template<class Map>
-[[DEPRECATED]] int loadJMap(const std::string& strLoc, Map& mapTmp) {
+[[deprecated]] int loadJMap(const std::string& strLoc, Map& mapTmp) {
 	nlohmann::json j = freadJson(strLoc);
 	if (j.is_null())return -2;
 	try 
@@ -132,7 +132,7 @@ int loadJMap(const std::filesystem::path& fpLoc, Map& mapTmp) {
 
 //template <class C, class TKey, class TVal, TVal& (C::* U)(const TKey&) = &C::operator[]>
 template <class C>
-[[DEPRECATED]] void saveJMap(const std::string& strLoc, const C& mapTmp)
+[[deprecated]] void saveJMap(const std::string& strLoc, const C& mapTmp)
 {
 	if (mapTmp.empty()) {
 		remove(strLoc.c_str());

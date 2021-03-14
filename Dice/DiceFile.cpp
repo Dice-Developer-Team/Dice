@@ -102,7 +102,7 @@ bool fscan(std::ifstream& fin, std::string& t)
 	return false;
 }
 
-[[DEPRECATED]] bool rdbuf(const string& strPath, string& s)
+[[deprecated]] bool rdbuf(const string& strPath, string& s)
 {
 	const std::ifstream fin(strPath);
 	if (!fin)return false;
@@ -222,7 +222,7 @@ ofstream& operator<<(ofstream& fout, const Chat& grp)
 }
 
 template <typename T>
-[[DEPRECATED]] int _listDir(const string& dir, vector<std::filesystem::path>& files)
+[[deprecated]] int _listDir(const string& dir, vector<std::filesystem::path>& files)
 {
 	int intFile = 0;
 	std::error_code err;
@@ -253,7 +253,7 @@ int _listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& fi
 	return err ? -1 : intFile;
 }
 
-[[DEPRECATED]] int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub)
+[[deprecated]] int listDir(const string& dir, vector<std::filesystem::path>& files, bool isSub)
 {
 	if (isSub)
 	{

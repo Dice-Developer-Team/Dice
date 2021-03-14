@@ -59,7 +59,7 @@ namespace Cloud
 		return 0;
 	}
 
-	[[DEPRECATED]] int DownloadFile(const char* url, const char* downloadPath)
+	[[deprecated]] int DownloadFile(const char* url, const char* downloadPath)
 	{
 #ifdef _WIN32
 		DeleteUrlCacheEntryA(url);

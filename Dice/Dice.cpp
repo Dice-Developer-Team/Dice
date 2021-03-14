@@ -195,8 +195,6 @@ EVE_Enable(eventEnable)
 		char path[MAX_PATH];
 		GetModuleFileNameA(nullptr, path, MAX_PATH);
 		dirExe = std::filesystem::path(path).parent_path();
-#else
-		dirExe = {};
 #endif
 	}
 	else 
