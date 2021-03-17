@@ -49,11 +49,14 @@ find_package(AWSSDK CONFIG COMPONENTS core s3 REQUIRED)
 target_include_directories(w4123.Dice PRIVATE ${AWSSDK_INCLUDE_DIRS})
 target_link_libraries(w4123.Dice PRIVATE ${AWSSDK_LIBRARIES})
 
+set_target_properties(w4123.Dice PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(w4123.Dice PROPERTIES C_VISIBILITY_PRESET hidden)
+
 if(CMAKE_SYSTEM_NAME STREQUAL Android)
     target_include_directories(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/libiconv/${ANDROID_ABI}/include)
     target_link_libraries(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/libiconv/${ANDROID_ABI}/lib/libiconv.a)
 endif()
 
 if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
-    set_target_properties(w4123.Dice PROPERTIES LINK_FLAGS_RELEASE -s)
+    set_target_properties(w4123.Dice PROPERTIES LINK_FLAGS_RELEASE "-s -Wl,--exclude-libs,ALL")
 endif()
