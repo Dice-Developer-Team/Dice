@@ -260,7 +260,7 @@ EVE_Enable(eventEnable)
 	GlobalMsg["strSelfName"] = DD::getLoginNick();
 	if (GlobalMsg["strSelfName"].empty())
 	{
-		GlobalMsg["strSelfName"] = "÷»Äï[" + toString(console.DiceMaid % 1000, 4) + "]";
+		GlobalMsg["strSelfName"] = "÷»Äï[" + toString(console.DiceMaid % 10000, 4) + "]";
 	}
 	std::error_code ec;
 	std::filesystem::create_directory(DiceDir / "conf", ec);
