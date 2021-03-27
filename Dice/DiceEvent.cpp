@@ -905,6 +905,7 @@ int FromMsg::BasicOrder()
 			if (trusted > 2) 
 			{
 				pGrp->leave(getMsg("strAdminDismiss", strVar));
+				return 1;
 			}
 			if (pGrp->isset("协议无效"))return 0;
 			if (isAuth)
