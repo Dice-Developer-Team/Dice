@@ -359,7 +359,7 @@ int FromMsg::AdminEvent(const string& strOption)
 					bool isReduce = strMsg[intMsgCnt] == '-';
 					string strNum = readDigit();
 					if (strNum.empty() || strNum.length() > 1)break;
-					if (int intNum = stoi(strNum); intNum > 5)continue;
+					if (int intNum = stoi(strNum); intNum > 9)continue;
 					else
 					{
 						if (isReduce)intReduce |= (1 << intNum);
@@ -2106,6 +2106,27 @@ int FromMsg::InnerOrder() {
 					AddMsgToQueue(strFwd, ct);
 					reply(GlobalMsg["strSendMsg"]);
 				}
+				return 1;
+			}
+			else if (strLowerMessage.substr(intMsgCnt, 6) == "notice" && trusted > 3) {
+				intMsgCnt += 6;
+				int intLv = 0;
+				string strNum{ readDigit(false) };
+				while (!strNum.empty()){
+					if (strNum.length() > 1)break;
+					if (int intNum = stoi(strNum); intNum > 9)continue;
+					else 					{
+						intLv |= (1 << intNum);
+					}
+					if (strLowerMessage[intMsgCnt] == '+')++intMsgCnt;
+					strNum = readDigit(false);
+				}
+				string strNotice(readRest());
+				if (intLv && !strNotice.empty()){
+					console.log(strNotice, intLv);
+					reply(GlobalMsg["strSendMsg"]);
+				}
+				else reply(GlobalMsg["strParaEmpty"]);
 				return 1;
 			}
 			readSkipColon();

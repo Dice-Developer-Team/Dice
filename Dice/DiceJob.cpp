@@ -140,7 +140,7 @@ void check_system(DiceJob& job) {
 void auto_save(DiceJob& job) {
 	if (sch.is_job_cold("autosave"))return;
 	dataBackUp();
-	console.log(GlobalMsg["strSelfName"] + "已自动保存", 0, printSTNow());
+	//console.log(GlobalMsg["strSelfName"] + "已自动保存", 0, printSTNow());
 	if (console["AutoSaveInterval"] > 0) {
 		sch.refresh_cold("autosave", time(NULL) + console["AutoSaveInterval"]);
 		sch.add_job_for(console["AutoSaveInterval"] * 60, "autosave");

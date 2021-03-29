@@ -82,7 +82,7 @@ string strip(std::string origin)
 std::string to_binary(int b)
 {
 	ResList res;
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 14; i++)
 	{
 		if (b & (1 << i))res << std::to_string(i);
 	}
