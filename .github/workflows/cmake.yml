@@ -141,9 +141,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - apt: g++-9
-          cc: gcc-9
-          cxx: g++-9
+        - apt: g++-8
+          cc: gcc-8
+          cxx: g++-8
           triplet: x64-linux
         - path: /usr/i686-linux-gnu
           apt: g++-i686-linux-gnu
@@ -161,7 +161,7 @@ jobs:
           cxx: arm-linux-gnueabihf-g++
           triplet: arm-linux
         
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     
     steps:
     - uses: actions/checkout@v2
