@@ -146,19 +146,19 @@ jobs:
           cxx: g++-8
           triplet: x64-linux
         - path: /usr/i686-linux-gnu
-          apt: g++-i686-linux-gnu
-          cc: i686-linux-gnu-gcc
-          cxx: i686-linux-gnu-g++
+          apt: g++-8-i686-linux-gnu
+          cc: i686-linux-gnu-gcc-8
+          cxx: i686-linux-gnu-g++-8
           triplet: x86-linux
         - path: /usr/aarch64-linux-gnu
-          apt: g++-aarch64-linux-gnu
-          cc: aarch64-linux-gnu-gcc
-          cxx: aarch64-linux-gnu-g++
+          apt: g++-8-aarch64-linux-gnu
+          cc: aarch64-linux-gnu-gcc-8
+          cxx: aarch64-linux-gnu-g++-8
           triplet: arm64-linux
         - path: /usr/arm-linux-gnueabihf
-          apt: g++-arm-linux-gnueabihf
-          cc: arm-linux-gnueabihf-gcc
-          cxx: arm-linux-gnueabihf-g++
+          apt: g++-8-arm-linux-gnueabihf
+          cc: arm-linux-gnueabihf-gcc-8
+          cxx: arm-linux-gnueabihf-g++-8
           triplet: arm-linux
         
     runs-on: ubuntu-18.04
