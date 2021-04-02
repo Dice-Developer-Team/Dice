@@ -9,8 +9,10 @@
 #include "Jsonio.h"
 #include "DiceSchedule.h"
 #include "DiceNetwork.h"
+#include "DiceMod.h"
 #include "RandomGenerator.h"
 #include <condition_variable>
+#include <chrono>
 
 unordered_map<string, cmd> mCommand = {
 	{"syscheck",check_system},
@@ -251,4 +253,52 @@ string printTTime(time_t tt) {
 #endif
 	strftime(tm_buffer, 20, "%Y-%m-%d %H:%M:%S", &t);
 	return tm_buffer;
+}
+
+//简易计时器
+tm stTmp{};
+void ConsoleTimer() 	{
+	Console::Clock clockNow{ stNow.tm_hour,stNow.tm_min };
+	while (Enabled) 		{
+		time_t tt = time(nullptr);
+#ifdef _MSC_VER
+		localtime_s(&stNow, &tt);
+#else
+		localtime_r(&tt, &stNow);
+#endif
+		//分钟时点变动
+		if (stTmp.tm_min != stNow.tm_min) 			{
+			stTmp = stNow;
+			clockNow = { stNow.tm_hour, stNow.tm_min };
+			for (const auto& [clock, eve_type] : multi_range(console.mWorkClock, clockNow)){
+				switch (Console::mClockEvent[eve_type]) 					{
+				case 1:
+					if (console["DisabledGlobal"]) 						{
+						console.set("DisabledGlobal", 0);
+						console.log(getMsg("strClockToWork"), 0b10000, "");
+					}
+					break;
+				case 0:
+					if (!console["DisabledGlobal"]) 						{
+						console.set("DisabledGlobal", 1);
+						console.log(getMsg("strClockOffWork"), 0b10000, "");
+					}
+					break;
+				case 2:
+					dataBackUp();
+					console.log(GlobalMsg["strSelfName"] + "定时保存完成√", 1, printSTime(stTmp));
+					break;
+				case 3:
+					sch.push_job("clrgroup", true, {
+						{"clear_mode","black"}
+								 });
+					break;
+				default:
+					fmt->call_task(eve_type);
+					break;
+				}
+			}
+		}
+		std::this_thread::sleep_for(100ms);
+	}
 }

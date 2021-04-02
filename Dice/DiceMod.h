@@ -49,6 +49,7 @@ public:
         type = OrderType::Lua;
     }
     bool exec(FromMsg*);
+    bool exec();
 };
 
 class DiceMod
@@ -92,6 +93,7 @@ class DiceModManager
 	map<string, DiceMod> mNameIndex;
 	map<string, string, less_ci> helpdoc;
     map<string, DiceMsgOrder, less_ci> msgorder;
+    map<string, DiceMsgOrder, less_ci> taskcall;
     WordQuerier querier;
     TrieG<less_ci> gOrder;
 public:
@@ -106,6 +108,7 @@ public:
 	void rm_help(const string&);
 
     bool listen_order(DiceJobDetail*);
+    bool call_task(const string&);
     string list_order();
 	int load(ResList*);
     void init();

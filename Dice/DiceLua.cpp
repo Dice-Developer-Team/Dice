@@ -98,6 +98,17 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 	}
 	return true;
 }
+bool lua_call_task(const char* file, const char* func) {
+	LuaState L(file);
+	if (!L)return false;
+	lua_getglobal(L, func);
+	if (lua_pcall(L, 0, 0, 0)) {
+		const char* pErrorMsg = lua_tostring(L, -1);
+		console.log(GlobalMsg["strSelfName"] + "调用" + file + "函数" + func + "失败!\n" + pErrorMsg, 1);
+		return false;
+	}
+	return true;
+}
 
 /**
  * 供lua调用的函数

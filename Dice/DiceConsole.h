@@ -27,7 +27,7 @@ using std::to_string;
 extern std::filesystem::path dirExe;
 extern std::filesystem::path DiceDir;
 
-enum class ClockEvent { off, on, save, clear };
+//enum class ClockEvent { off, on, save, clear };
 
 class Console
 {
@@ -82,8 +82,8 @@ public:
 		return 0;
 	}
 
-	int setClock(Clock c, ClockEvent e);
-	int rmClock(Clock c, ClockEvent e);
+	int setClock(Clock c, const string&);
+	int rmClock(Clock c, const string&);
 	[[nodiscard]] ResList listClock() const;
 	[[nodiscard]] ResList listNotice() const;
 	[[nodiscard]] int showNotice(chatType ct) const;
@@ -113,7 +113,7 @@ public:
 			for (auto& child : xml["clock"].vChild)
 			{
 				if (mClockEvent.count(child.tag))mWorkClock.insert({
-					scanClock(child.strValue), static_cast<ClockEvent>(mClockEvent[child.tag])
+					scanClock(child.strValue), child.tag
 				});
 			}
 		if (xml.count("conf"))
@@ -138,7 +138,7 @@ public:
 			DDOM clocks("clock", "");
 			for (auto& [clock, type] : mWorkClock)
 			{
-				clocks.push(DDOM(mClockEvent[static_cast<int>(type)], printClock(clock)));
+				clocks.push(DDOM(type, printClock(clock)));
 			}
 			xml.push(clocks);
 		}
@@ -160,7 +160,7 @@ public:
 private:
 	std::filesystem::path fpPath;
 	std::map<std::string, int, less_ci> intConf;
-	std::multimap<Clock, ClockEvent> mWorkClock{};
+	std::multimap<Clock, string> mWorkClock{};
 	std::map<chatType, int> NoticeList{};
 };
 	extern Console console;
