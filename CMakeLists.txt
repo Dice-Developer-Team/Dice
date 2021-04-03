@@ -55,6 +55,14 @@ if (BSYMBOLIC_WORKS)
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic-functions -Wl,-Bsymbolic")
 endif()
 
+include(CheckIPOSupported)
+check_ipo_supported(RESULT supported)
+
+if(supported)
+    set_property(TARGET w4123.Dice PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
+
 if(NOT ((CMAKE_SYSTEM_NAME STREQUAL Windows) OR (CMAKE_SYSTEM_NAME STREQUAL Android)))
     find_package(CURL REQUIRED)
     target_link_libraries(w4123.Dice PRIVATE CURL::libcurl)
