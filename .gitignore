@@ -40,5 +40,10 @@
 /packages
 /docs/html
 /Debug
+/Win32
 /x64
 /Dice-cppcheck-build-dir
+/w4123.Dice.dir
+
+/CMakeFiles
+/vcpkg_installed

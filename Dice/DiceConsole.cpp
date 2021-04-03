@@ -59,18 +59,17 @@ const std::map<std::string, int, less_ci>Console::intDefault{
 //接收群内自己的消息，接受自己私聊消息
 {"ListenGroupEcho",0},{"ListenSelfEcho",0},
 };
-const enumap<string> Console::mClockEvent{"off", "on", "save", "clear"};
+const enumap<string> Console::mClockEvent{ "off", "on", "save", "clear" };
 
-int Console::setClock(Clock c, ClockEvent e)
+int Console::setClock(Clock c, const string& e)
 {
 	if (c.first > 23 || c.second > 59)return -1;
-	if (static_cast<int>(e) > 3)return -2;
 	mWorkClock.emplace(c, e);
 	save();
 	return 0;
 }
 
-int Console::rmClock(Clock c, ClockEvent e)
+int Console::rmClock(Clock c, const string& e)
 {
 	if (const auto it = match(mWorkClock, c, e); it != mWorkClock.end())
 	{
@@ -86,23 +85,7 @@ ResList Console::listClock() const
 	ResList list;
 	for (const auto& [clock, eve] : mWorkClock)
 	{
-		string strClock = printClock(clock);
-		switch (eve)
-		{
-		case ClockEvent::on:
-			strClock += " 定时开启";
-			break;
-		case ClockEvent::off:
-			strClock += " 定时关闭";
-			break;
-		case ClockEvent::save:
-			strClock += " 定时保存";
-			break;
-		case ClockEvent::clear:
-			strClock += " 定时清群";
-			break;
-		default: break;
-		}
+		string strClock = printClock(clock) + " " + eve;
 		list << strClock;
 	}
 	return list;
@@ -233,7 +216,6 @@ long long llStartTime = time(nullptr);
 
 //当前时间
 tm stNow{};
-tm stTmp{};
 
 std::string printSTNow()
 {
@@ -340,59 +322,6 @@ bool operator<(const Console::Clock clock, const tm& st)
 {
 	return st.tm_hour == clock.first && st.tm_hour == clock.second;
 }
-
-//简易计时器
-	void ConsoleTimer()
-	{
-		Console::Clock clockNow{stNow.tm_hour,stNow.tm_min};
-		while (Enabled) 
-		{
-			time_t tt = time(nullptr);
-#ifdef _MSC_VER
-			localtime_s(&stNow, &tt);
-#else
-			localtime_r(&tt, &stNow);
-#endif
-			//分钟时点变动
-			if (stTmp.tm_min != stNow.tm_min)
-			{
-				stTmp = stNow;
-				clockNow = {stNow.tm_hour, stNow.tm_min};
-				for (const auto& [clock,eve_type] : multi_range(console.mWorkClock, clockNow))
-				{
-					switch (eve_type)
-					{
-					case ClockEvent::on:
-						if (console["DisabledGlobal"])
-						{
-							console.set("DisabledGlobal", 0);
-							console.log(getMsg("strClockToWork"), 0b10000, "");
-						}
-						break;
-					case ClockEvent::off:
-						if (!console["DisabledGlobal"])
-						{
-							console.set("DisabledGlobal", 1);
-							console.log(getMsg("strClockOffWork"), 0b10000, "");
-						}
-						break;
-					case ClockEvent::save:
-						dataBackUp();
-						console.log(GlobalMsg["strSelfName"] + "定时保存完成√", 1, printSTime(stTmp));
-						break;
-					case ClockEvent::clear:
-						sch.push_job("clrgroup", true, {
-							{"clear_mode","black"}
-									 });
-						break;
-					default: break;
-					}
-				}
-			}
-			this_thread::sleep_for(100ms);
-		}
-	}
-
 
 	void ThreadFactory::exit() {
 		rear = 0;

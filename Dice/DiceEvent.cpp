@@ -66,7 +66,8 @@ void FromMsg::replyHidden() {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	formatReply();
-	if (LogList.count(fromSession) && gm->session(fromSession).is_logging()) {
+	if (LogList.count(fromSession) && gm->session(fromSession).is_logging()
+		&& (fromChat.second == msgtype::Private || !console["ListenGroupEcho"])) {
 		filter_CQcode(strReply, fromGroup);
 		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime(fromTime) << endl
@@ -101,7 +102,8 @@ void FromMsg::fwdMsg()
 		string msg = strMsg;
 		filter_CQcode(msg, fromGroup);
 		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
-		logout << GBKtoUTF8(printQQ(fromQQ)) + " " + printTTime(fromTime) << endl
+		if (!strVar.count("pc") || strVar["pc"].empty())getPCName(*this);
+		logout << GBKtoUTF8(strVar["pc"]) + " " + printTTime(fromTime) << endl
 			<< GBKtoUTF8(msg) << endl << endl;
 	}
 }
@@ -294,7 +296,7 @@ int FromMsg::AdminEvent(const string& strOption)
 			intMsgCnt++;
 		}
 		string strType = readPara();
-		if (strType.empty() || !Console::mClockEvent.count(strType))
+		if (strType.empty())
 		{
 			reply(GlobalMsg["strSelfName"] + "的定时列表：" + console.listClock().show());
 			return 1;
@@ -305,13 +307,13 @@ int FromMsg::AdminEvent(const string& strOption)
 		case 0:
 			if (isErase)
 			{
-				if (console.rmClock(cc, ClockEvent(Console::mClockEvent[strType])))reply(
+				if (console.rmClock(cc, strType))reply(
 					GlobalMsg["strSelfName"] + "无此定时项目");
 				else note("已移除" + GlobalMsg["strSelfName"] + "在" + printClock(cc) + "的定时" + strType, 0b10);
 			}
 			else
 			{
-				console.setClock(cc, ClockEvent(Console::mClockEvent[strType]));
+				console.setClock(cc, strType);
 				note("已设置" + GlobalMsg["strSelfName"] + "在" + printClock(cc) + "的定时" + strType, 0b10);
 			}
 			break;
@@ -1870,6 +1872,7 @@ int FromMsg::InnerOrder() {
 		intMsgCnt += 4;
 		bool isPrivate(false);
 		if (strMsg[intMsgCnt] == 'h' && isspace(static_cast<unsigned char>(strMsg[intMsgCnt + 1]))) {
+			strVar["hidden"];
 			isPrivate = true;
 			++intMsgCnt;
 		}

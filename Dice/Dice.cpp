@@ -281,8 +281,8 @@ EVE_Enable(eventEnable)
 			console.set("Private", iPrivate);
 			console.set("DisabledJrrp", iDisabledJrrp);
 			console.set("LeaveDiscuss", iLeaveDiscuss);
-			console.setClock(ClockToWork, ClockEvent::on);
-			console.setClock(ClockOffWork, ClockEvent::off);
+			console.setClock(ClockToWork, "on");
+			console.setClock(ClockOffWork, "off");
 		}
 		else
 		{
@@ -295,7 +295,7 @@ EVE_Enable(eventEnable)
 		{
 			console.set(key, val);
 		}
-		console.setClock({ 11, 45 }, ClockEvent::clear);
+		console.setClock({ 11, 45 }, "clear");
 		console.loadNotice();
 		console.save();
 	}
