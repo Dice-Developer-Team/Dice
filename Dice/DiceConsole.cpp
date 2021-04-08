@@ -7,8 +7,8 @@
  * |_______/  |________| |________| |________| |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2020 w4123ËÝä§
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2018-2021 w4123ËÝä§
+ * Copyright (C) 2019-2021 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -145,7 +145,8 @@ int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 		{
 			if (!(level & note_lv))continue;
 			AddMsgToQueue(note, ct);
-			Cnt++;
+			Cnt++; 
+			if(strTime.empty())this_thread::sleep_for(chrono::milliseconds(console["SendIntervalIdle"]));
 		}
 		if (!Cnt)DD::sendPrivateMsg(DiceMaid, note);
 	}
@@ -169,6 +170,28 @@ void Console::reset()
 	NoticeList.clear();
 }
 
+bool Console::load() 	{
+	string s;
+	//DSens.build({ {"nnÀÏ¹«",2 } });
+	if (!rdbuf(fpPath, s))return false;
+	DDOM xml(s);
+	if (xml.count("mode"))isMasterMode = stoi(xml["mode"].strValue);
+	if (xml.count("master"))masterQQ = stoll(xml["master"].strValue);
+	if (xml.count("clock"))
+		for (auto& child : xml["clock"].vChild) {
+			mWorkClock.insert({
+				scanClock(child.strValue), child.tag
+							  });
+		}
+	if (xml.count("conf"))
+		for (auto& child : xml["conf"].vChild) 			{
+			std::pair<string, int> conf;
+			readini(child.strValue, conf);
+			if (intDefault.count(conf.first))intConf.insert(conf);
+		}
+	loadNotice();
+	return true;
+}
 void Console::loadNotice()
 {
 	if (loadFile(DiceDir / "conf" / "NoticeList.txt", NoticeList) < 1)

@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2019-2021 String.Empty
  */
 
 #ifndef Dice_Console
@@ -101,31 +101,7 @@ public:
 	void rmNotice(chatType ct);
 	void reset();
 
-	bool load()
-	{
-		string s;
-		//DSens.build({ {"nnÀÏ¹«",2 } });
-		if (!rdbuf(fpPath, s))return false;
-		DDOM xml(s);
-		if (xml.count("mode"))isMasterMode = stoi(xml["mode"].strValue);
-		if (xml.count("master"))masterQQ = stoll(xml["master"].strValue);
-		if (xml.count("clock"))
-			for (auto& child : xml["clock"].vChild)
-			{
-				if (mClockEvent.count(child.tag))mWorkClock.insert({
-					scanClock(child.strValue), child.tag
-				});
-			}
-		if (xml.count("conf"))
-			for (auto& child : xml["conf"].vChild)
-			{
-				std::pair<string, int> conf;
-				readini(child.strValue, conf);
-				if (intDefault.count(conf.first))intConf.insert(conf);
-			}
-		loadNotice();
-		return true;
-	}
+	bool load();
 	void save() 
 	{
 		std::error_code ec;

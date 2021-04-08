@@ -1591,7 +1591,7 @@ int FromMsg::InnerOrder() {
 				: reply("潜水成员列表:" + res.show(1));
 			return 1;
 		}
-		if (bool isAdmin = DD::isGroupAdmin(llGroup, fromQQ, false); Command == "pause") {
+		if (bool isAdmin = DD::isGroupAdmin(llGroup, fromQQ, true); Command == "pause") {
 			if (!isAdmin && trusted < 4) {
 				reply(GlobalMsg["strPermissionDeniedErr"]);
 				return 1;
