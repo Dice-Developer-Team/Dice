@@ -365,6 +365,7 @@ std::map<std::string, std::string> GlobalMsg
 std::map<std::string, std::string> EditedMsg;
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+576:定时任务脚本
 575:设置自我响应
 574:默认骰机制优化
 573:角色卡机制优化

@@ -232,7 +232,7 @@ int DiceModManager::load(ResList* resLog)
 		int cnt = lua_readStringTable(fileLua.c_str(), "msg_order", mOrder);
 		if (cnt > 0) {
 			for (auto& [key, func] : mOrder) {
-				msgorder[key] = { fileLua,func };
+				msgorder[::format(key, GlobalMsg)] = { fileLua,func };
 			}
 			cntOrder += mOrder.size();
 		}

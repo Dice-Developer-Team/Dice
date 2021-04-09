@@ -2179,7 +2179,7 @@ int FromMsg::InnerOrder() {
 				return 1;
 			}
 			long long llTarget = stoll(strTarget);
-			if (trustedQQ(llTarget) >= trusted && fromQQ != console.master()) {
+			if (trustedQQ(llTarget) >= trusted && !console.is_self(fromQQ) && fromQQ != llTarget) {
 				reply(GlobalMsg["strUserTrustDenied"]);
 				return 1;
 			}

@@ -26,11 +26,19 @@ public:
 	}
 	void regist();
 };
-
+string lua_to_string(lua_State* L, int idx) {
+#ifdef _WIN32
+	return UTF8toGBK(lua_tostring(L, idx), true);
+#else
+	return lua_tostring(L, -1);
+#endif
+}
 void lua_push_string(lua_State* L, const string& str) {
+#ifdef _WIN32
 	if (UTF8Luas.count(L))
 		lua_pushstring(L, GBKtoUTF8(str).c_str());
 	else
+#endif // _WIN32
 		lua_pushstring(L, str.c_str());
 }
 void lua_set_field(lua_State* L, int idx, const string& str) {
@@ -83,7 +91,7 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 			msg->reply(GlobalMsg["strOrderLuaErr"]);
 			return false;
 		}
-		if (!(msg->strVar["msg_reply"] = UTF8toGBK(lua_tostring(L, 1), true)).empty()) {
+		if (!(msg->strVar["msg_reply"] = lua_to_string(L, 1)).empty()) {
 			msg->reply(msg->strVar["msg_reply"]);
 		}
 		if (lua_type(L, 2) != LUA_TNIL) {
@@ -91,7 +99,7 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 				console.log(GlobalMsg["strSelfName"] + "调用" + file + "函数" + func + "返回值格式错误!", 1);
 				return false;
 			}
-			if (!(msg->strVar["msg_hidden"] = UTF8toGBK(lua_tostring(L, 2), true)).empty()) {
+			if (!(msg->strVar["msg_hidden"] = lua_to_string(L, 2)).empty()) {
 				msg->replyHidden(msg->strVar["msg_hidden"]);
 			}
 		}
@@ -116,11 +124,7 @@ bool lua_call_task(const char* file, const char* func) {
 
  //加载其他lua脚本
 int loadLua(lua_State* L) {
-#ifdef _WIN32
-	string nameFile{ UTF8toGBK(lua_tostring(L, -1),true) };
-#else
-	string nameFile{ lua_tostring(L, -1) };
-#endif
+	string nameFile{ lua_to_string(L, -1) };
 	std::filesystem::path pathFile = DiceDir / "plugin" / (nameFile + ".lua");
 	if (!std::filesystem::exists(pathFile) && nameFile.find('/') == string::npos && nameFile.find('\\') == string::npos)
 		pathFile = DiceDir / "plugin" / nameFile / "init.lua";
@@ -147,15 +151,18 @@ int getDiceDir(lua_State* L) {
 	return 1;
 }
 int mkDirs(lua_State* L) {
-	string dir{ UTF8toGBK(lua_tostring(L, -1),true) };
+	string dir{ lua_to_string(L, -1) };
 	mkDir(dir);
 	return 0;
 }
 int getUserConf(lua_State* L) {
 	long long qq{ (long long)lua_tonumber(L, 1) };
-	string item{ UTF8toGBK(lua_tostring(L, 2),true) };
+	string item{ lua_to_string(L, 2) };
 	User& user{ getUser(qq) };
-	if (user.intConf.count(item)) {
+	if (item == "trust") {
+		lua_pushnumber(L, trustedQQ(qq));
+	}
+	else if (user.intConf.count(item)) {
 		lua_pushnumber(L, (double)user.intConf[item]);
 	}
 	else if (user.strConf.count(item)) {
@@ -169,18 +176,18 @@ int getUserConf(lua_State* L) {
 }
 int setUserConf(lua_State* L) {
 	long long qq{ (long long)lua_tonumber(L, -3) };
-	string item{ UTF8toGBK(lua_tostring(L, -2),true) };
+	string item{ lua_to_string(L, -2) };
 	if (lua_isnumber(L, -1)) {
 		getUser(qq).setConf(item, (int)lua_tonumber(L, -1));
 	}
 	else if (lua_isstring(L, -1)) {
-		getUser(qq).setConf(item, UTF8toGBK(lua_tostring(L, -1), true));
+		getUser(qq).setConf(item, lua_to_string(L, -1));
 	}
 	return 0;
 }
 int getUserToday(lua_State* L) {
 	long long qq{ (long long)lua_tonumber(L, 1) };
-	string item{ UTF8toGBK(lua_tostring(L, 2),true) };
+	string item{ lua_to_string(L, 2) };
 	if (item == "jrrp")
 		lua_pushnumber(L, today->getJrrp(qq));
 	else
@@ -189,7 +196,7 @@ int getUserToday(lua_State* L) {
 }
 int setUserToday(lua_State* L) {
 	long long qq{ (long long)lua_tonumber(L, -3) };
-	string item{ UTF8toGBK(lua_tostring(L, -2),true) };
+	string item{ lua_to_string(L, -2) };
 	int val{ (int)lua_tonumber(L, -1) };
 	today->set(qq, item, val);
 	return 0;
@@ -198,7 +205,7 @@ int setUserToday(lua_State* L) {
 int getPlayerCardAttr(lua_State* L) {
 	long long plQQ{ (long long)lua_tonumber(L, 1) };
 	long long group{ (long long)lua_tonumber(L, 2) };
-	string key{ UTF8toGBK(lua_tostring(L, 3),true) };
+	string key{ lua_to_string(L, 3) };
 	CharaCard& pc = getPlayer(plQQ)[group];
 	if (pc.Info.count(key)) {
 		lua_push_string(L, pc.Info.find(key)->second);
@@ -232,15 +239,15 @@ int getPlayerCard(lua_State* L) {
 int setPlayerCardAttr(lua_State* L) {
 	long long plQQ{ (long long)lua_tonumber(L, 1) };
 	long long group{ (long long)lua_tonumber(L, 2) };
-	string item{ UTF8toGBK(lua_tostring(L, 3),true) };
+	string item{ lua_to_string(L, 3) };
 	CharaCard& pc = getPlayer(plQQ)[group];
 	if (lua_isnumber(L, -1)) {
 		pc.set(item, (int)lua_tonumber(L, -1));
 	}
 	else if (lua_isstring(L, -1)) {
 		if (item.empty())return 0;
-		else if (item[0] == '&')pc.setExp(item.substr(1), UTF8toGBK(lua_tostring(L, -1), true));
-		else pc.setInfo(item, UTF8toGBK(lua_tostring(L, -1), true));
+		else if (item[0] == '&')pc.setExp(item.substr(1), lua_to_string(L, -1));
+		else pc.setInfo(item, lua_to_string(L, -1));
 	}
 	return 0;
 }
@@ -262,7 +269,7 @@ int sleepTime(lua_State* L) {
 int drawDeck(lua_State* L) {
 	long long fromGroup{ (long long)lua_tonumber(L, -3) };
 	long long fromQQ{ (long long)lua_tonumber(L, -2) };
-	string nameDeck{ UTF8toGBK(lua_tostring(L, -1),true) };
+	string nameDeck{ lua_to_string(L, -1) };
 	long long fromSession{ fromGroup ? fromGroup : ~fromQQ };
 	if (gm->has_session(fromSession)) {
 		lua_push_string(L, gm->session(fromSession).deck_draw(nameDeck));
@@ -277,8 +284,18 @@ int drawDeck(lua_State* L) {
 	return 1;
 }
 
+int sendMsg(lua_State* L) {
+	string fromMsg{ lua_to_string(L, -3) };
+	long long fromGroup{ (long long)lua_tonumber(L, -2) };
+	long long fromQQ{ (long long)lua_tonumber(L, -1) };
+	msgtype type{ fromGroup ?
+		chat(fromGroup).isGroup ? msgtype::Group : msgtype::Discuss
+		: msgtype::Private };
+	AddMsgToQueue(fromMsg, fromGroup ? fromGroup : fromQQ, type);
+	return 0;
+}
 int eventMsg(lua_State* L) {
-	string fromMsg{ UTF8toGBK(lua_tostring(L, -3),true) };
+	string fromMsg{ lua_to_string(L, -3) };
 	long long fromGroup{ (long long)lua_tonumber(L, -2) };
 	long long fromQQ{ (long long)lua_tonumber(L, -1) };
 	msgtype type{ fromGroup ?
@@ -307,6 +324,7 @@ void LuaState::regist() {
 		{"ranint", ranint},
 		{"sleepTime", sleepTime},
 		{"drawDeck", drawDeck},
+		{"sendMsg", sendMsg},
 		{"eventMsg", eventMsg},
 		{nullptr, nullptr},
 	};
@@ -363,8 +381,8 @@ int lua_readStringTable(const char* file, const char* var, std::unordered_map<st
 			if (!lua_isstring(L, -1) || !lua_isstring(L, -2)) {
 				return -1;
 			}
-			string key = UTF8toGBK(lua_tostring(L, -2), true);
-			string value = UTF8toGBK(lua_tostring(L, -1), true);
+			string key = lua_to_string(L, -2);
+			string value = lua_to_string(L, -1);
 			tab[key] = value;
 			lua_pop(L, 1);
 		}
