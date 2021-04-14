@@ -3798,13 +3798,13 @@ bool FromMsg::DiceFilter()
 		while (isspace(static_cast<unsigned char>(strMsg[0])))
 			strMsg.erase(strMsg.begin());
 	}
-	if (isOtherCalled && !isCalled)return false;
 	init2(strMsg);
 	strLowerMessage = strMsg;
 	std::transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(),
 				   [](unsigned char c) { return tolower(c); });
 	trusted = trustedQQ(fromQQ);
 	fwdMsg();
+	if (isOtherCalled && !isCalled)return false;
 	if (fromChat.second == msgtype::Private) isCalled = true;
 	isDisabled = ((console["DisabledGlobal"] && trusted < 4) || groupset(fromGroup, "协议无效") > 0);
 	if (BasicOrder()) 

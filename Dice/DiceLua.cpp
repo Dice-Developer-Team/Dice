@@ -10,6 +10,7 @@ extern "C"{
 #include "CharacterCard.h"
 #include "CardDeck.h"
 #include "DiceSession.h"
+#include "DDAPI.h"
 
 unordered_set<lua_State*> UTF8Luas;
 
@@ -27,10 +28,12 @@ public:
 	void regist();
 };
 string lua_to_string(lua_State* L, int idx) {
+	const char* str{ lua_tostring(L, idx) };
+	if (!str)return {};
 #ifdef _WIN32
-	return UTF8toGBK(lua_tostring(L, idx), true);
+	return UTF8toGBK(str, true);
 #else
-	return lua_tostring(L, -1);
+	return str;
 #endif
 }
 void lua_push_string(lua_State* L, const string& str) {
@@ -125,8 +128,11 @@ bool lua_call_task(const char* file, const char* func) {
  //加载其他lua脚本
 int loadLua(lua_State* L) {
 	string nameFile{ lua_to_string(L, -1) };
+	while (nameFile.find('/') != string::npos) {
+		nameFile[nameFile.find('/')] = '\\';
+	}
 	std::filesystem::path pathFile = DiceDir / "plugin" / (nameFile + ".lua");
-	if (!std::filesystem::exists(pathFile) && nameFile.find('/') == string::npos && nameFile.find('\\') == string::npos)
+	if (!std::filesystem::exists(pathFile) && nameFile.find('\\') == string::npos)
 		pathFile = DiceDir / "plugin" / nameFile / "init.lua";
 	if (luaL_loadfile(L, pathFile.string().c_str())) {
 		const char* pErrorMsg = lua_tostring(L, -1);
@@ -159,14 +165,17 @@ int getUserConf(lua_State* L) {
 	long long qq{ (long long)lua_tonumber(L, 1) };
 	string item{ lua_to_string(L, 2) };
 	User& user{ getUser(qq) };
-	if (item == "trust") {
+	if (string val; item == "nick" && user.getNick(val)) {
+		lua_push_string(L, val);
+	}
+	else if (item == "trust") {
 		lua_pushnumber(L, trustedQQ(qq));
 	}
 	else if (user.intConf.count(item)) {
 		lua_pushnumber(L, (double)user.intConf[item]);
 	}
 	else if (user.strConf.count(item)) {
-		lua_push_string(L, user.strConf[item].c_str());
+		lua_push_string(L, user.strConf[item]);
 	}
 	else {
 		lua_pushnil(L);
