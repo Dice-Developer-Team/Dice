@@ -3,6 +3,7 @@ extern "C"{
 #include <lua.h>  
 #include <lualib.h>  
 #include <lauxlib.h>  
+#include <lobject.h>  
 };
 #include "ManagerSystem.h"
 #include "DiceEvent.h"
@@ -27,6 +28,12 @@ public:
 	}
 	void regist();
 };
+double lua_to_number(lua_State* L, int idx) {
+	return luaL_checknumber(L, idx);
+}
+long long lua_to_int(lua_State* L, int idx) {
+	return luaL_checkinteger(L, idx);
+}
 string lua_to_string(lua_State* L, int idx) {
 	const char* str{ lua_tostring(L, idx) };
 	if (!str)return {};
@@ -162,11 +169,12 @@ int mkDirs(lua_State* L) {
 	return 0;
 }
 int getUserConf(lua_State* L) {
-	long long qq{ (long long)lua_tonumber(L, 1) };
+	long long qq{ lua_to_int(L, 1) };
+	if (!qq)return 0;
 	string item{ lua_to_string(L, 2) };
 	User& user{ getUser(qq) };
-	if (string val; item == "nick" && user.getNick(val)) {
-		lua_push_string(L, val);
+	if (item == "nick" ) {
+		lua_push_string(L, getName(qq));
 	}
 	else if (item == "trust") {
 		lua_pushnumber(L, trustedQQ(qq));
@@ -184,18 +192,20 @@ int getUserConf(lua_State* L) {
 	return 1;
 }
 int setUserConf(lua_State* L) {
-	long long qq{ (long long)lua_tonumber(L, -3) };
-	string item{ lua_to_string(L, -2) };
-	if (lua_isnumber(L, -1)) {
-		getUser(qq).setConf(item, (int)lua_tonumber(L, -1));
+	long long qq{ lua_to_int(L, 1) };
+	if (!qq)return 0;
+	string item{ lua_to_string(L, 2) };
+	if (lua_isnumber(L, 3)) {
+		getUser(qq).setConf(item, (int)lua_tonumber(L, 3));
 	}
-	else if (lua_isstring(L, -1)) {
-		getUser(qq).setConf(item, lua_to_string(L, -1));
+	else if (lua_isstring(L, 3)) {
+		getUser(qq).setConf(item, lua_to_string(L, 3));
 	}
 	return 0;
 }
 int getUserToday(lua_State* L) {
-	long long qq{ (long long)lua_tonumber(L, 1) };
+	long long qq{ lua_to_int(L, 1) };
+	if (!qq)return 0;
 	string item{ lua_to_string(L, 2) };
 	if (item == "jrrp")
 		lua_pushnumber(L, today->getJrrp(qq));
@@ -204,16 +214,17 @@ int getUserToday(lua_State* L) {
 	return 1;
 }
 int setUserToday(lua_State* L) {
-	long long qq{ (long long)lua_tonumber(L, -3) };
-	string item{ lua_to_string(L, -2) };
-	int val{ (int)lua_tonumber(L, -1) };
+	long long qq{ lua_to_int(L, 1) };
+	if (!qq)return 0;
+	string item{ lua_to_string(L, 2) };
+	int val{ (int)lua_to_number(L, 3) };
 	today->set(qq, item, val);
 	return 0;
 }
 
 int getPlayerCardAttr(lua_State* L) {
-	long long plQQ{ (long long)lua_tonumber(L, 1) };
-	long long group{ (long long)lua_tonumber(L, 2) };
+	long long plQQ{ lua_to_int(L, 1) };
+	long long group{ lua_to_int(L, 2) };
 	string key{ lua_to_string(L, 3) };
 	CharaCard& pc = getPlayer(plQQ)[group];
 	if (pc.Info.count(key)) {
@@ -237,8 +248,8 @@ int getPlayerCardAttr(lua_State* L) {
 	return 1;
 }
 int getPlayerCard(lua_State* L) {
-	long long plQQ{ (long long)lua_tonumber(L, 1) };
-	long long group{ (long long)lua_tonumber(L, 2) };
+	long long plQQ{ lua_to_int(L, 1) };
+	long long group{ lua_to_int(L, 2) };
 	if (PList.count(plQQ)) {
 		getPlayer(plQQ)[group].pushTable(L);
 		return 1;
@@ -246,8 +257,8 @@ int getPlayerCard(lua_State* L) {
 	return 0;
 }
 int setPlayerCardAttr(lua_State* L) {
-	long long plQQ{ (long long)lua_tonumber(L, 1) };
-	long long group{ (long long)lua_tonumber(L, 2) };
+	long long plQQ{ lua_to_int(L, 1) };
+	long long group{ lua_to_int(L, 2) };
 	string item{ lua_to_string(L, 3) };
 	CharaCard& pc = getPlayer(plQQ)[group];
 	if (lua_isnumber(L, -1)) {
@@ -263,22 +274,22 @@ int setPlayerCardAttr(lua_State* L) {
 
 //取随机数
 int ranint(lua_State* L) {
-	int l{ (int)lua_tonumber(L, -2) };
-	int r{ (int)lua_tonumber(L, -1) };
+	int l{ (int)lua_to_int(L, 1) };
+	int r{ (int)lua_to_int(L, 2) };
 	lua_pushnumber(L, RandomGenerator::Randint(l,r));
 	return 1;
 }
 //线程等待
 int sleepTime(lua_State* L) {
-	int ms{ (int)lua_tonumber(L, -1) };
+	int ms{ (int)lua_to_int(L, 1) };
 	std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 	return 0;
 }
 
 int drawDeck(lua_State* L) {
-	long long fromGroup{ (long long)lua_tonumber(L, -3) };
-	long long fromQQ{ (long long)lua_tonumber(L, -2) };
-	string nameDeck{ lua_to_string(L, -1) };
+	long long fromGroup{ lua_to_int(L, 1) };
+	long long fromQQ{ lua_to_int(L, 2) };
+	string nameDeck{ lua_to_string(L, 3) };
 	long long fromSession{ fromGroup ? fromGroup : ~fromQQ };
 	if (gm->has_session(fromSession)) {
 		lua_push_string(L, gm->session(fromSession).deck_draw(nameDeck));
@@ -294,9 +305,9 @@ int drawDeck(lua_State* L) {
 }
 
 int sendMsg(lua_State* L) {
-	string fromMsg{ lua_to_string(L, -3) };
-	long long fromGroup{ (long long)lua_tonumber(L, -2) };
-	long long fromQQ{ (long long)lua_tonumber(L, -1) };
+	string fromMsg{ lua_to_string(L, 1) };
+	long long fromGroup{ lua_to_int(L, 2) };
+	long long fromQQ{ lua_to_int(L, 3) };
 	msgtype type{ fromGroup ?
 		chat(fromGroup).isGroup ? msgtype::Group : msgtype::Discuss
 		: msgtype::Private };
@@ -304,9 +315,9 @@ int sendMsg(lua_State* L) {
 	return 0;
 }
 int eventMsg(lua_State* L) {
-	string fromMsg{ lua_to_string(L, -3) };
-	long long fromGroup{ (long long)lua_tonumber(L, -2) };
-	long long fromQQ{ (long long)lua_tonumber(L, -1) };
+	string fromMsg{ lua_to_string(L, 1) };
+	long long fromGroup{ lua_to_int(L, 2) };
+	long long fromQQ{ lua_to_int(L, 3) };
 	msgtype type{ fromGroup ?
 		chat(fromGroup).isGroup ? msgtype::Group : msgtype::Discuss
 		: msgtype::Private };

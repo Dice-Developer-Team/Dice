@@ -101,6 +101,7 @@ public:
 
 	void setConf(const string& key, int val)
 	{
+		if (key.empty())return;
 		std::lock_guard<std::mutex> lock_queue(ex_user);
 		intConf[key] = val;
 	}

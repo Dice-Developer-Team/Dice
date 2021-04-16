@@ -7,7 +7,8 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123溯洄
+ * Copyright (C) 2018-2021 w4123溯洄
+ * Copyright (C) 2019-2021 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -365,6 +366,7 @@ std::map<std::string, std::string> GlobalMsg
 std::map<std::string, std::string> EditedMsg;
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+577:窗口广播通知
 576:定时任务脚本
 575:设置自我响应
 574:默认骰机制优化
@@ -381,7 +383,6 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 563:优化指令帮助
 562:新增GUI
 559:远程更新插件/不良记录
-557:定时作业系统
 554:新增多角色卡功能
 551:文件夹批量读取牌堆
 550:允许多轮检定
