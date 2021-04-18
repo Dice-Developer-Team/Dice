@@ -1441,44 +1441,60 @@ int FromMsg::InnerOrder() {
 		Chat& grp = chat(llGroup);
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
-		if (strMsg[intMsgCnt] == '+' || strMsg[intMsgCnt] == '-') {
-			bool isSet = strMsg[intMsgCnt] == '+';
-			intMsgCnt++;
-			strVar["option"] = readRest();
-			if (!mChatConf.count(strVar["option"])) {
-				reply(GlobalMsg["strGroupSetDenied"]);
-				return 1;
-			}
-			if (getGroupAuth(llGroup) >= get<string, short>(mChatConf, strVar["option"], 0)) {
-				if (isSet) {
-					if (groupset(llGroup, strVar["option"]) < 1) {
-						chat(llGroup).set(strVar["option"]);
-						reply(GlobalMsg["strGroupSetOn"]);
-						if (strVar["Option"] == "许可使用") {
-							AddMsgToQueue(getMsg("strGroupAuthorized", strVar), fromQQ, msgtype::Group);
+		if(strMsg[intMsgCnt] == '+' || strMsg[intMsgCnt] == '-'){
+			int cntSet{ 0 };
+			while (strMsg[intMsgCnt] == '+' || strMsg[intMsgCnt] == '-') {
+				bool isSet = strMsg[intMsgCnt] == '+';
+				intMsgCnt++;
+				strVar["option"] = readPara();
+				if (!mChatConf.count(strVar["option"])) {
+					reply(GlobalMsg["strGroupSetInvalid"]);
+					continue;
+				}
+				if (getGroupAuth(llGroup) >= get<string, short>(mChatConf, strVar["option"], 0)) {
+					if (isSet) {
+						if (groupset(llGroup, strVar["option"]) < 1) {
+							chat(llGroup).set(strVar["option"]);
+							++cntSet;
+							if (strVar["Option"] == "许可使用") {
+								AddMsgToQueue(getMsg("strGroupAuthorized", strVar), fromQQ, msgtype::Group);
+							}
+						}
+						else {
+							reply(GlobalMsg["strGroupSetOnAlready"]);
 						}
 					}
-					else {
-						reply(GlobalMsg["strGroupSetOnAlready"]);
+					else if (grp.isset(strVar["option"])) {
+						++cntSet;
+						chat(llGroup).reset(strVar["option"]);
+						reply(GlobalMsg["strGroupSetOff"]);
 					}
-					return 1;
-				}
-				if (grp.isset(strVar["option"])) {
-					chat(llGroup).reset(strVar["option"]);
-					reply(GlobalMsg["strGroupSetOff"]);
+					else {
+						reply(GlobalMsg["strGroupSetOffAlready"]);
+					}
 				}
 				else {
-					reply(GlobalMsg["strGroupSetOffAlready"]);
+					reply(GlobalMsg["strGroupSetDenied"]);
 				}
-				return 1;
+				readSkipSpace();
 			}
-			reply(GlobalMsg["strGroupSetDenied"]);
+			if (cntSet == 1) {
+				reply(GlobalMsg["strGroupSetOn"]);
+			}
+			else if(cntSet > 1) {
+				strVar["opt_list"] = grp.listBoolConf();
+				reply(GlobalMsg["strGroupMultiSet"]);
+			}
 			return 1;
 		}
 		bool isInGroup{ fromGroup == llGroup || DD::isGroupMember(llGroup,console.DiceMaid,true) };
 		string Command = readPara();
 		strVar["group"] = DD::printGroupInfo(llGroup);
-		if (Command == "state") {
+		if (Command.empty()) {
+			reply(fmt->get_help("group"));
+			return 1;
+		}
+		else if (Command == "state") {
 			ResList res;
 			res << "在{group}：";
 			res << grp.listBoolConf();

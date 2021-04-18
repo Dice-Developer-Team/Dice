@@ -168,6 +168,45 @@ int mkDirs(lua_State* L) {
 	mkDir(dir);
 	return 0;
 }
+int getGroupConf(lua_State* L) {
+	long long id{ lua_to_int(L, 1) };
+	if (!id)return 0;
+	string item{ lua_to_string(L, 2) };
+	Chat& grp{ chat(id) };
+	if (item == "name") {
+		lua_push_string(L, grp.Name);
+	}
+	else if (mChatConf.count(item)) {
+		lua_pushboolean(L, grp.boolConf.count(item));
+	}
+	else if (grp.intConf.count(item)) {
+		lua_pushnumber(L, (double)grp.intConf[item]);
+	}
+	else if (grp.strConf.count(item)) {
+		lua_push_string(L, grp.strConf[item]);
+	}
+	else {
+		lua_pushnil(L);
+		lua_insert(L, 3);
+	}
+	return 1;
+}
+int setGroupConf(lua_State* L) {
+	long long id{ lua_to_int(L, 1) };
+	if (!id)return 0;
+	string item{ lua_to_string(L, 2) };
+	Chat& grp{ chat(id) };
+	if (mChatConf.count(item)) {
+		lua_toboolean(L, 3) ? grp.set(item) : grp.reset(item);
+	}
+	else if (lua_isnumber(L, 3)) {
+		grp.setConf(item, (int)lua_tonumber(L, 3));
+	}
+	else if (lua_isstring(L, 3)) {
+		grp.setText(item, lua_to_string(L, 3));
+	}
+	return 0;
+}
 int getUserConf(lua_State* L) {
 	long long qq{ lua_to_int(L, 1) };
 	if (!qq)return 0;
@@ -334,6 +373,8 @@ void LuaState::regist() {
 		{"getDiceQQ", getDiceQQ},
 		{"getDiceDir", getDiceDir},
 		{"mkDirs", mkDirs},
+		{"getGroupConf", getGroupConf},
+		{"setGroupConf", setGroupConf},
 		{"getUserConf", getUserConf},
 		{"setUserConf", setUserConf},
 		{"getUserToday", getUserToday},

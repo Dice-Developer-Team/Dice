@@ -173,7 +173,7 @@ bool DiceModManager::listen_order(DiceJobDetail* msg) {
 	return true;
 }
 string DiceModManager::list_order() {
-	return "扩展指令:" + listKey(msgorder);
+	return msgorder.empty() ? "" : "扩展指令:" + listKey(msgorder);
 }
 
 bool DiceModManager::call_task(const string& task) {
