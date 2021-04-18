@@ -371,6 +371,9 @@ LuaState::LuaState(const char* file) {//:isValid(false) {
 	}
 	luaL_openlibs(state);
 	regist();
+	ifstream fs(file);
+	if (checkUTF8(fs))UTF8Luas.insert(state);
+	fs.close();
 	if (lua_pcall(state, 0, 0, 0)) {
 		const char* pErrorMsg = lua_tostring(state, -1);
 		console.log(GlobalMsg["strSelfName"] + "运行lua文件" + file + "失败:" + pErrorMsg, 0b10);
@@ -378,11 +381,6 @@ LuaState::LuaState(const char* file) {//:isValid(false) {
 		state = nullptr;
 		return;
 	}
-	ifstream fs(file);
-	stringstream ss; 
-	ss << fs.rdbuf(); 
-	string strCheck = ss.str(); 
-	if (checkUTF8(strCheck))UTF8Luas.insert(state);
 }
 
 int lua_readStringTable(const char* file, const char* var, std::unordered_map<std::string, std::string>& tab) {

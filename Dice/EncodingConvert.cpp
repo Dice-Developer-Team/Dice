@@ -72,7 +72,41 @@ bool checkUTF8(const std::string& strUTF8) {
 	}
 	return cntUTF8;
 }
-
+bool checkUTF8(std::ifstream& fin) {
+	size_t cntUTF8(0);
+	int num = 0;
+	char ch{0};
+	while (fin >> ch) {
+		if ((ch & 0x80) == 0x00) {
+			continue;
+		}
+		else if ((ch & 0xc0) == 0xc0 && (ch & 0xfe) != 0xfe) {
+			// 110X_XXXX 10XX_XXXX
+			// 1110_XXXX 10XX_XXXX 10XX_XXXX
+			// 1111_0XXX 10XX_XXXX 10XX_XXXX 10XX_XXXX
+			// 1111_10XX 10XX_XXXX 10XX_XXXX 10XX_XXXX 10XX_XXXX
+			// 1111_110X 10XX_XXXX 10XX_XXXX 10XX_XXXX 10XX_XXXX 10XX_XXXX
+			unsigned char mask = 0x80;
+			for (num = 0; num < 8; ++num) {
+				if ((ch & mask) == mask) {
+					mask = mask >> 1;
+				}
+				else
+					break;
+			}
+			for (int j = 0; j < num - 1; j++) {
+				if ((fin >> ch) && (ch & 0xc0) != 0x80) {
+					return false;
+				}
+			}
+			if (++cntUTF8 > 10)return true;
+		}
+		else {
+			return false;
+		}
+	}
+	return cntUTF8;
+}
 // 现在是GBK了
 std::string GBKtoUTF8(const std::string& strGBK, bool isTrial)
 {

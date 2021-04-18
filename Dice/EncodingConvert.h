@@ -32,8 +32,10 @@
 #include <iconv.h>
 #endif
 #include <unordered_map>
+#include <fstream>
 
 bool checkUTF8(const std::string& strUTF8);
+bool checkUTF8(std::ifstream&);
 
 template <typename T,
 	typename = std::enable_if_t<!std::is_convertible_v<T, std::string> &&
