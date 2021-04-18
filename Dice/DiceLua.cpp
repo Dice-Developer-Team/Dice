@@ -350,7 +350,8 @@ int sendMsg(lua_State* L) {
 	msgtype type{ fromGroup ?
 		chat(fromGroup).isGroup ? msgtype::Group : msgtype::Discuss
 		: msgtype::Private };
-	AddMsgToQueue(fromMsg, fromGroup ? fromGroup : fromQQ, type);
+	AddMsgToQueue(format(fromMsg, GlobalMsg), 
+				  fromGroup ? fromGroup : fromQQ, type);
 	return 0;
 }
 int eventMsg(lua_State* L) {

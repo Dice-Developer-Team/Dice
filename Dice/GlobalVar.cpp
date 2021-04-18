@@ -42,7 +42,7 @@ HMODULE hDllModule = nullptr;
 
 bool msgSendThreadRunning = false;
 
-std::map<std::string, std::string> GlobalMsg
+std::map<std::string, std::string, less_ci> GlobalMsg
 {
 	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
 	{"strParaIllegal","参数非法×"},			//偷懒用万能回复
@@ -365,7 +365,7 @@ Dice!众筹计划: https://afdian.net/@suhuiw4123)"
 	}
 };
 
-std::map<std::string, std::string> EditedMsg;
+std::map<std::string, std::string, less_ci> EditedMsg;
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
 578:优化群设置读写
@@ -436,7 +436,7 @@ R"([第三页]其他指令
 .me 第三人称动作
 为了避免未预料到的指令误判，请尽可能在参数之间使用空格)"
 "\f"
-R"({list_extern_order})"},
+R"({help:扩展指令})"},
 {"master",R"(当前Master:{master_QQ}
 Master拥有最高权限，且可以调整任意信任)"},
 {"log",R"(跑团日志记录

@@ -54,7 +54,7 @@ DiceModManager::DiceModManager() : helpdoc(HelpDoc)
 {
 }
 
-string DiceModManager::format(string s, const map<string, string, less_ci>& dict, const char* mod_name = "") const
+string DiceModManager::format(string s, const map<string, string, less_ci>& dict, const char* mod_name) const
 {
 	//直接重定向
 	if (s[0] == '&')
@@ -77,9 +77,11 @@ string DiceModManager::format(string s, const map<string, string, less_ci>& dict
 			continue;
 		}
 		string key = s.substr(l + 1, r - l - 1), val;
-		auto it = dict.find(key);
-		if (it != dict.end())
-		{
+		if (key.find("help:") == 0) {
+			key = key.substr(5);
+			val = fmt->format(fmt->get_help(key), dict);
+		}
+		else if (auto it = dict.find(key); it != dict.end()){
 			val = format(it->second, dict, mod_name);
 		}
 		else if (auto func = strFuncs.find(key); func != strFuncs.end())

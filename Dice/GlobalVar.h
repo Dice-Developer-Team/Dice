@@ -90,9 +90,9 @@ extern std::string Dice_Full_Ver_On;
 extern bool msgSendThreadRunning;
 
 // 回复信息, 此内容可以通过CustomMsg功能修改而无需修改源代码
-extern std::map<std::string, std::string> GlobalMsg;
+extern std::map<std::string, std::string, less_ci> GlobalMsg;
 // 修改后的Global语句
-extern std::map<std::string, std::string> EditedMsg;
+extern std::map<std::string, std::string, less_ci> EditedMsg;
 // 帮助文档
 extern const std::map<std::string, std::string, less_ci> HelpDoc;
 // 修改后的帮助文档

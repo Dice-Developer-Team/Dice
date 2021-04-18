@@ -100,7 +100,7 @@ public:
 	DiceModManager();
 	friend void loadData();
     bool isIniting{ false };
-	string format(string, const map<string, string, less_ci>&, const char*) const;
+	string format(string, const map<string, string, less_ci>&, const char* mod_name = "") const;
     unordered_map<string, size_t>cntHelp;
 	[[nodiscard]] string get_help(const string&) const;
     void _help(const shared_ptr<DiceJobDetail>&);
