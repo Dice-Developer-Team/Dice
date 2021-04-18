@@ -3,7 +3,7 @@
 
 inline time_t tNow = time(NULL);
 
-int sendSelf(const string msg);
+int sendSelf(const string& msg);
 
 void cq_exit(DiceJob& job);
 void frame_restart(DiceJob& job);

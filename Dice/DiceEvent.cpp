@@ -103,7 +103,7 @@ void FromMsg::fwdMsg()
 		filter_CQcode(msg, fromGroup);
 		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
 		if (!strVar.count("pc") || strVar["pc"].empty())getPCName(*this);
-		logout << GBKtoUTF8(strVar["pc"]) + " " + printTTime(fromTime) << endl
+		logout << GBKtoUTF8(strVar["pc"]) + "(" + to_string(fromQQ) + ") " + printTTime(fromTime) << endl
 			<< GBKtoUTF8(msg) << endl << endl;
 	}
 }
@@ -1447,6 +1447,7 @@ int FromMsg::InnerOrder() {
 				bool isSet = strMsg[intMsgCnt] == '+';
 				intMsgCnt++;
 				strVar["option"] = readPara();
+				readSkipSpace();
 				if (!mChatConf.count(strVar["option"])) {
 					reply(GlobalMsg["strGroupSetInvalid"]);
 					continue;
@@ -1476,7 +1477,6 @@ int FromMsg::InnerOrder() {
 				else {
 					reply(GlobalMsg["strGroupSetDenied"]);
 				}
-				readSkipSpace();
 			}
 			if (cntSet == 1) {
 				reply(GlobalMsg["strGroupSetOn"]);

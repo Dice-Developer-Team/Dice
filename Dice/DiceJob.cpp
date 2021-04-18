@@ -22,7 +22,7 @@
 
 using namespace std;
 
-int sendSelf(const string msg) {
+int sendSelf(const string& msg) {
 	static long long selfQQ = DD::getLoginQQ();
 	DD::sendPrivateMsg(selfQQ, msg);
 	return 0;
@@ -205,7 +205,7 @@ void clear_group(DiceJob& job) {
 				this_thread::sleep_for(2s);
 			}
 		}
-		console.log(GlobalMsg["strSelfName"] + "已筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√" + res.show(), 0b10, printSTNow());
+		job.note(GlobalMsg["strSelfName"] + "已筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√" + res.show(), 0b10);
 	}
 	else if (job.strVar["clear_mode"] == "black") {
 		try {
