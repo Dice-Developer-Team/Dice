@@ -1942,6 +1942,8 @@ int FromMsg::InnerOrder() {
 		}
 		strVar["res"] = Res.dot("|").show();
 		strVar["cnt"] = to_string(Res.size());
+		strVar["nick"] = getName(fromQQ, fromGroup);
+	    getPCName(*this);
 		initVar({ strVar["pc"], strVar["res"] });
 		if (isPrivate) {
 			reply(GlobalMsg["strDrawHidden"]);
@@ -2317,7 +2319,6 @@ int FromMsg::InnerOrder() {
 			reply(GlobalMsg["strCharacterCannotBeZero"]);
 			return 1;
 		}
-		string strReply = strVar["pc"];
 		DND(strVar["res"], intNum);
 		reply(GlobalMsg["strDNDBuild"]);
 		return 1;
@@ -2376,6 +2377,8 @@ int FromMsg::InnerOrder() {
 			reply(GlobalMsg["strSetTooBig"]);
 			return 1;
 		}
+		strVar["nick"] = getName(fromQQ, fromGroup);
+	    getPCName(*this);
 		const int intDefaultDice = stoi(strVar["default"]);
 		if (PList.count(fromQQ)) {
 			PList[fromQQ][fromGroup]["__DefaultDice"] = intDefaultDice;
@@ -2386,7 +2389,7 @@ int FromMsg::InnerOrder() {
 			getUser(fromQQ).rmIntConf("默认骰");
 		else
 			getUser(fromQQ).setConf("默认骰", intDefaultDice);
-		strVar["nick"] = getName(fromQQ, fromGroup);
+		
 		reply("已将" + strVar["nick"] + "的默认骰类型更改为D" + strVar["default"]);
 		return 1;
 	}
@@ -2574,6 +2577,8 @@ int FromMsg::InnerOrder() {
 			reply(GlobalMsg["strActionEmpty"]);
 			return 1;
 		}
+		strVar["nick"] = getName(fromQQ, fromGroup);
+	    getPCName(*this);
 		trusted > 4 ? reply(strAction) : reply(strVar["pc"] + strAction);
 		return 1;
 	}
@@ -3004,6 +3009,8 @@ int FromMsg::InnerOrder() {
 																								  ? "/" + to_string(
 																									  intSkillDivisor)
 																								  : "");
+		strVar["nick"] = getName(fromQQ, fromGroup);
+	    getPCName(*this);																						 
 		if (strVar["reason"].empty()) {
 			strReply = format(GlobalMsg["strRollSkill"], { strVar["pc"], strVar["attr"] });
 		}
@@ -3224,6 +3231,8 @@ int FromMsg::InnerOrder() {
 			reply(fmt->get_help("st"));
 			return 1;
 		}
+		strVar["nick"] = getName(fromQQ, fromGroup);
+		getPCName(*this);
 		if (strLowerMessage.substr(intMsgCnt, 3) == "clr") {
 			if (!PList.count(fromQQ)) {
 				reply(getMsg("strPcNotExistErr"));
@@ -3383,6 +3392,8 @@ int FromMsg::InnerOrder() {
 			isHidden = true;
 			intMsgCnt += 1;
 		}
+		strVar["nick"] = getName(fromQQ, fromGroup);
+		getPCName(*this);
 		if (!fromGroup)isHidden = false;
 		string strMainDice = readDice();
 		readSkipSpace();
@@ -3575,6 +3586,8 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'h') {
+		strVar["nick"] = getName(fromQQ, fromGroup);
+		getPCName(*this);
 		bool isHidden = false;
 		if (strLowerMessage[intMsgCnt] == 'h')
 			isHidden = true;
