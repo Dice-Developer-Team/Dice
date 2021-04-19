@@ -105,7 +105,7 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 #endif
 	LuaState L(file);
 	if (!L)return false;
-#ifndef _WIN32
+#ifdef _WIN32
 	// 转换为GB18030
 	string fileGB18030(file);
 #else
@@ -153,7 +153,7 @@ bool lua_call_task(const char* file, const char* func) {
 	LuaState L(file);
 	if (!L)return false;
 	lua_getglobal(L, func);
-#ifndef _WIN32
+#ifdef _WIN32
 	// 转换为GB18030
 	string fileGB18030(file);
 #else
@@ -174,10 +174,6 @@ bool lua_call_task(const char* file, const char* func) {
  //加载其他lua脚本
 int loadLua(lua_State* L) {
 	string nameFile{ lua_to_string(L, -1) };
-	// ???
-	while (nameFile.find('/') != string::npos) {
-		nameFile[nameFile.find('/')] = '\\';
-	}
 	std::filesystem::path pathFile = DiceDir / "plugin" / (nameFile + ".lua");
 	if (!std::filesystem::exists(pathFile) && nameFile.find('\\') == string::npos)
 		pathFile = DiceDir / "plugin" / nameFile / "init.lua";
