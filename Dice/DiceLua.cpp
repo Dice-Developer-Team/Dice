@@ -34,28 +34,37 @@ double lua_to_number(lua_State* L, int idx) {
 long long lua_to_int(lua_State* L, int idx) {
 	return luaL_checkinteger(L, idx);
 }
+
+// Return a GB18030 string
+string lua_to_gb18030_string(lua_State* L, int idx) {
+	const char* str{ luaL_checkstring(L, idx) };
+	if (!str) return {};
+	return UTF8toGBK(str, true);
+}
+
+// Return a GB18030 string on Windows and a UTF-8 string on other platforms
 string lua_to_string(lua_State* L, int idx) {
-	const char* str{ lua_tostring(L, idx) };
-	if (!str)return {};
+	const char* str{ luaL_checkstring(L, idx) };
+	if (!str) return {};
 #ifdef _WIN32
 	return UTF8toGBK(str, true);
 #else
-	return str;
+	return GBKtoUTF8(str, true);
 #endif
 }
+
+
 void lua_push_string(lua_State* L, const string& str) {
-#ifdef _WIN32
 	if (UTF8Luas.count(L))
-		lua_pushstring(L, GBKtoUTF8(str).c_str());
+		lua_pushstring(L, GBKtoUTF8(str, true).c_str());
 	else
-#endif // _WIN32
-		lua_pushstring(L, str.c_str());
+		lua_pushstring(L, UTF8toGBK(str, true).c_str());
 }
 void lua_set_field(lua_State* L, int idx, const string& str) {
 	if (UTF8Luas.count(L))
-		lua_setfield(L, idx, GBKtoUTF8(str).c_str());
+		lua_setfield(L, idx, GBKtoUTF8(str, true).c_str());
 	else
-		lua_setfield(L, idx, str.c_str());
+		lua_setfield(L, idx, UTF8toGBK(str, true).c_str());
 }
 
 void lua_push_msg(lua_State* L, FromMsg* msg) {
@@ -83,33 +92,48 @@ void CharaCard::pushTable(lua_State* L) {
 void CharaCard::toCard(lua_State* L) {
 
 }
-//读取指定lua文件的函数，返回
+//读取指定lua文件的函数，file为原生系统编码
 bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
+#ifndef _WIN32
+	// 转换separator
+	string fileStr(file);
+	for (auto& c : fileStr)
+	{
+		if (c == '\\') c = '/';
+	}
+	file = fileStr.c_str();
+#endif
 	LuaState L(file);
 	if (!L)return false;
+#ifndef _WIN32
+	// 转换为GB18030
+	string fileGB18030(file);
+#else
+	string fileGB18030(UTF8toGBK(file, true));
+#endif
 	lua_getglobal(L, func); 
 	lua_push_msg(L, msg);
 	if (lua_pcall(L, 1, 2, 0)) {
-		const char* pErrorMsg = lua_tostring(L, -1);
-		console.log(GlobalMsg["strSelfName"] + "调用" + file + "函数" + func + "失败!\n" + pErrorMsg, 1);
+		string pErrorMsg = lua_to_gb18030_string(L, -1);
+		console.log(GlobalMsg["strSelfName"] + "调用" + fileGB18030 + "函数" + func + "失败!\n" + pErrorMsg, 1);
 		msg->reply(GlobalMsg["strOrderLuaErr"]);
 		return false;
 	}
 	if (lua_gettop(L) && lua_type(L, 1) != LUA_TNIL) {
 		if (!lua_isstring(L, 1)) {
-			console.log(GlobalMsg["strSelfName"] + "调用" + file + "函数" + func + "返回值格式错误!", 1);
+			console.log(GlobalMsg["strSelfName"] + "调用" + fileGB18030 + "函数" + func + "返回值格式错误!", 1);
 			msg->reply(GlobalMsg["strOrderLuaErr"]);
 			return false;
 		}
-		if (!(msg->strVar["msg_reply"] = lua_to_string(L, 1)).empty()) {
+		if (!(msg->strVar["msg_reply"] = lua_to_gb18030_string(L, 1)).empty()) {
 			msg->reply(msg->strVar["msg_reply"]);
 		}
 		if (lua_type(L, 2) != LUA_TNIL) {
 			if (!lua_isstring(L, 2)) {
-				console.log(GlobalMsg["strSelfName"] + "调用" + file + "函数" + func + "返回值格式错误!", 1);
+				console.log(GlobalMsg["strSelfName"] + "调用" + fileGB18030 + "函数" + func + "返回值格式错误!", 1);
 				return false;
 			}
-			if (!(msg->strVar["msg_hidden"] = lua_to_string(L, 2)).empty()) {
+			if (!(msg->strVar["msg_hidden"] = lua_to_gb18030_string(L, 2)).empty()) {
 				msg->replyHidden(msg->strVar["msg_hidden"]);
 			}
 		}
@@ -117,12 +141,27 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 	return true;
 }
 bool lua_call_task(const char* file, const char* func) {
+#ifndef _WIN32
+	// 转换separator
+	string fileStr(file);
+	for (auto& c : fileStr)
+	{
+		if (c == '\\') c = '/';
+	}
+	file = fileStr.c_str();
+#endif
 	LuaState L(file);
 	if (!L)return false;
 	lua_getglobal(L, func);
+#ifndef _WIN32
+	// 转换为GB18030
+	string fileGB18030(file);
+#else
+	string fileGB18030(UTF8toGBK(file, true));
+#endif
 	if (lua_pcall(L, 0, 0, 0)) {
-		const char* pErrorMsg = lua_tostring(L, -1);
-		console.log(GlobalMsg["strSelfName"] + "调用" + file + "函数" + func + "失败!\n" + pErrorMsg, 1);
+		string pErrorMsg = lua_to_gb18030_string(L, -1);
+		console.log(GlobalMsg["strSelfName"] + "调用" + fileGB18030 + "函数" + func + "失败!\n" + pErrorMsg, 1);
 		return false;
 	}
 	return true;
@@ -135,6 +174,7 @@ bool lua_call_task(const char* file, const char* func) {
  //加载其他lua脚本
 int loadLua(lua_State* L) {
 	string nameFile{ lua_to_string(L, -1) };
+	// ???
 	while (nameFile.find('/') != string::npos) {
 		nameFile[nameFile.find('/')] = '\\';
 	}
@@ -142,12 +182,12 @@ int loadLua(lua_State* L) {
 	if (!std::filesystem::exists(pathFile) && nameFile.find('\\') == string::npos)
 		pathFile = DiceDir / "plugin" / nameFile / "init.lua";
 	if (luaL_loadfile(L, pathFile.string().c_str())) {
-		const char* pErrorMsg = lua_tostring(L, -1);
+		string pErrorMsg = lua_to_gb18030_string(L, -1);
 		console.log(GlobalMsg["strSelfName"] + "读取lua文件" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
 		return 0;
 	}
 	if (lua_pcall(L, 0, 1, 0)) {
-		const char* pErrorMsg = lua_tostring(L, -1);
+		string pErrorMsg = lua_to_gb18030_string(L, -1);
 		console.log(GlobalMsg["strSelfName"] + "运行lua文件" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
 		return 1;
 	}
@@ -171,7 +211,7 @@ int mkDirs(lua_State* L) {
 int getGroupConf(lua_State* L) {
 	long long id{ lua_to_int(L, 1) };
 	if (!id)return 0;
-	string item{ lua_to_string(L, 2) };
+	string item{ lua_to_gb18030_string(L, 2) };
 	Chat& grp{ chat(id) };
 	if (item == "name") {
 		lua_push_string(L, grp.Name);
@@ -194,7 +234,7 @@ int getGroupConf(lua_State* L) {
 int setGroupConf(lua_State* L) {
 	long long id{ lua_to_int(L, 1) };
 	if (!id)return 0;
-	string item{ lua_to_string(L, 2) };
+	string item{ lua_to_gb18030_string(L, 2) };
 	Chat& grp{ chat(id) };
 	if (mChatConf.count(item)) {
 		lua_toboolean(L, 3) ? grp.set(item) : grp.reset(item);
@@ -203,14 +243,14 @@ int setGroupConf(lua_State* L) {
 		grp.setConf(item, (int)lua_tonumber(L, 3));
 	}
 	else if (lua_isstring(L, 3)) {
-		grp.setText(item, lua_to_string(L, 3));
+		grp.setText(item, lua_to_gb18030_string(L, 3));
 	}
 	return 0;
 }
 int getUserConf(lua_State* L) {
 	long long qq{ lua_to_int(L, 1) };
 	if (!qq)return 0;
-	string item{ lua_to_string(L, 2) };
+	string item{ lua_to_gb18030_string(L, 2) };
 	User& user{ getUser(qq) };
 	if (item == "nick" ) {
 		lua_push_string(L, getName(qq));
@@ -233,19 +273,19 @@ int getUserConf(lua_State* L) {
 int setUserConf(lua_State* L) {
 	long long qq{ lua_to_int(L, 1) };
 	if (!qq)return 0;
-	string item{ lua_to_string(L, 2) };
+	string item{ lua_to_gb18030_string(L, 2) };
 	if (lua_isnumber(L, 3)) {
 		getUser(qq).setConf(item, (int)lua_tonumber(L, 3));
 	}
 	else if (lua_isstring(L, 3)) {
-		getUser(qq).setConf(item, lua_to_string(L, 3));
+		getUser(qq).setConf(item, lua_to_gb18030_string(L, 3));
 	}
 	return 0;
 }
 int getUserToday(lua_State* L) {
 	long long qq{ lua_to_int(L, 1) };
 	if (!qq)return 0;
-	string item{ lua_to_string(L, 2) };
+	string item{ lua_to_gb18030_string(L, 2) };
 	if (item == "jrrp")
 		lua_pushnumber(L, today->getJrrp(qq));
 	else
@@ -255,7 +295,7 @@ int getUserToday(lua_State* L) {
 int setUserToday(lua_State* L) {
 	long long qq{ lua_to_int(L, 1) };
 	if (!qq)return 0;
-	string item{ lua_to_string(L, 2) };
+	string item{ lua_to_gb18030_string(L, 2) };
 	int val{ (int)lua_to_number(L, 3) };
 	today->set(qq, item, val);
 	return 0;
@@ -264,7 +304,7 @@ int setUserToday(lua_State* L) {
 int getPlayerCardAttr(lua_State* L) {
 	long long plQQ{ lua_to_int(L, 1) };
 	long long group{ lua_to_int(L, 2) };
-	string key{ lua_to_string(L, 3) };
+	string key{ lua_to_gb18030_string(L, 3) };
 	CharaCard& pc = getPlayer(plQQ)[group];
 	if (pc.Info.count(key)) {
 		lua_push_string(L, pc.Info.find(key)->second);
@@ -298,15 +338,15 @@ int getPlayerCard(lua_State* L) {
 int setPlayerCardAttr(lua_State* L) {
 	long long plQQ{ lua_to_int(L, 1) };
 	long long group{ lua_to_int(L, 2) };
-	string item{ lua_to_string(L, 3) };
+	string item{ lua_to_gb18030_string(L, 3) };
 	CharaCard& pc = getPlayer(plQQ)[group];
 	if (lua_isnumber(L, -1)) {
 		pc.set(item, (int)lua_tonumber(L, -1));
 	}
 	else if (lua_isstring(L, -1)) {
 		if (item.empty())return 0;
-		else if (item[0] == '&')pc.setExp(item.substr(1), lua_to_string(L, -1));
-		else pc.setInfo(item, lua_to_string(L, -1));
+		else if (item[0] == '&')pc.setExp(item.substr(1), lua_to_gb18030_string(L, -1));
+		else pc.setInfo(item, lua_to_gb18030_string(L, -1));
 	}
 	return 0;
 }
@@ -328,7 +368,7 @@ int sleepTime(lua_State* L) {
 int drawDeck(lua_State* L) {
 	long long fromGroup{ lua_to_int(L, 1) };
 	long long fromQQ{ lua_to_int(L, 2) };
-	string nameDeck{ lua_to_string(L, 3) };
+	string nameDeck{ lua_to_gb18030_string(L, 3) };
 	long long fromSession{ fromGroup ? fromGroup : ~fromQQ };
 	if (gm->has_session(fromSession)) {
 		lua_push_string(L, gm->session(fromSession).deck_draw(nameDeck));
@@ -344,7 +384,7 @@ int drawDeck(lua_State* L) {
 }
 
 int sendMsg(lua_State* L) {
-	string fromMsg{ lua_to_string(L, 1) };
+	string fromMsg{ lua_to_gb18030_string(L, 1) };
 	long long fromGroup{ lua_to_int(L, 2) };
 	long long fromQQ{ lua_to_int(L, 3) };
 	msgtype type{ fromGroup ?
@@ -355,7 +395,7 @@ int sendMsg(lua_State* L) {
 	return 0;
 }
 int eventMsg(lua_State* L) {
-	string fromMsg{ lua_to_string(L, 1) };
+	string fromMsg{ lua_to_gb18030_string(L, 1) };
 	long long fromGroup{ lua_to_int(L, 2) };
 	long long fromQQ{ lua_to_int(L, 3) };
 	msgtype type{ fromGroup ?
@@ -405,7 +445,7 @@ LuaState::LuaState(const char* file) {//:isValid(false) {
 	state = luaL_newstate();
 	if (!state)return;
 	if (luaL_loadfile(state, file)) {
-		const char* pErrorMsg = lua_tostring(state, -1);
+		string pErrorMsg = lua_to_gb18030_string(state, -1);
 		console.log(GlobalMsg["strSelfName"] + "读取lua文件" + file + "失败:" + pErrorMsg, 0b10);
 		lua_close(state);
 		state = nullptr;
@@ -417,7 +457,7 @@ LuaState::LuaState(const char* file) {//:isValid(false) {
 	if (checkUTF8(fs))UTF8Luas.insert(state);
 	fs.close();
 	if (lua_pcall(state, 0, 0, 0)) {
-		const char* pErrorMsg = lua_tostring(state, -1);
+		string pErrorMsg = lua_to_gb18030_string(state, -1);
 		console.log(GlobalMsg["strSelfName"] + "运行lua文件" + file + "失败:" + pErrorMsg, 0b10);
 		lua_close(state);
 		state = nullptr;
@@ -441,8 +481,8 @@ int lua_readStringTable(const char* file, const char* var, std::unordered_map<st
 			if (!lua_isstring(L, -1) || !lua_isstring(L, -2)) {
 				return -1;
 			}
-			string key = lua_to_string(L, -2);
-			string value = lua_to_string(L, -1);
+			string key = lua_to_gb18030_string(L, -2);
+			string value = lua_to_gb18030_string(L, -1);
 			tab[key] = value;
 			lua_pop(L, 1);
 		}
