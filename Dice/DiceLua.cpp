@@ -174,8 +174,15 @@ bool lua_call_task(const char* file, const char* func) {
  //加载其他lua脚本
 int loadLua(lua_State* L) {
 	string nameFile{ lua_to_string(L, -1) };
+#ifndef _WIN32
+	// 转换separator
+	for (auto& c : nameFile)
+	{
+		if (c == '\\') c = '/';
+	}
+#endif
 	std::filesystem::path pathFile = DiceDir / "plugin" / (nameFile + ".lua");
-	if (!std::filesystem::exists(pathFile) && nameFile.find('\\') == string::npos)
+	if (!std::filesystem::exists(pathFile) && nameFile.find('\\') == string::npos && nameFile.find('/') == string::npos)
 		pathFile = DiceDir / "plugin" / nameFile / "init.lua";
 	if (luaL_loadfile(L, pathFile.string().c_str())) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
@@ -438,6 +445,15 @@ void LuaState::regist() {
 }
 
 LuaState::LuaState(const char* file) {//:isValid(false) {
+#ifndef _WIN32
+	// 转换separator
+	string fileStr(file);
+	for (auto& c : fileStr)
+	{
+		if (c == '\\') c = '/';
+	}
+	file = fileStr.c_str();
+#endif
 	state = luaL_newstate();
 	if (!state)return;
 	if (luaL_loadfile(state, file)) {
@@ -462,6 +478,15 @@ LuaState::LuaState(const char* file) {//:isValid(false) {
 }
 
 int lua_readStringTable(const char* file, const char* var, std::unordered_map<std::string, std::string>& tab) {
+#ifndef _WIN32
+	// 转换separator
+	string fileStr(file);
+	for (auto& c : fileStr)
+	{
+		if (c == '\\') c = '/';
+	}
+	file = fileStr.c_str();
+#endif
 	LuaState L(file);
 	if (!L)return -1;
 	lua_getglobal(L, var);
