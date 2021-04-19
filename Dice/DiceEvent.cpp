@@ -26,7 +26,7 @@ FromMsg& FromMsg::initVar(const std::initializer_list<const std::string>& replac
 void FromMsg::formatReply() {
 	if (!strVar.count("nick") || strVar["nick"].empty())strVar["nick"] = getName(fromQQ, fromGroup);
 	if (!strVar.count("pc") || strVar["pc"].empty())getPCName(*this);
-	if (!strVar.count("at") || strVar["nick"].empty())strVar["at"] = fromChat.second != msgtype::Private ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
+	if (!strVar.count("at") || strVar["at"].empty())strVar["at"] = fromChat.second != msgtype::Private ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
 	strReply = format(strReply, GlobalMsg, strVar);
 }
 
@@ -102,6 +102,7 @@ void FromMsg::fwdMsg()
 		string msg = strMsg;
 		filter_CQcode(msg, fromGroup);
 		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
+		if (!strVar.count("nick") || strVar["nick"].empty())strVar["nick"] = getName(fromQQ, fromGroup);
 		if (!strVar.count("pc") || strVar["pc"].empty())getPCName(*this);
 		logout << GBKtoUTF8(strVar["pc"]) + "(" + to_string(fromQQ) + ") " + printTTime(fromTime) << endl
 			<< GBKtoUTF8(msg) << endl << endl;
@@ -2054,6 +2055,7 @@ int FromMsg::InnerOrder() {
 				return 1;
 			}
 		}
+		strVar["nick"] = getName(fromQQ, fromGroup);
 		strVar["res"] = to_string(today->getJrrp(fromQQ));
 		reply(GlobalMsg["strJrrp"], { strVar["nick"], strVar["res"] });
 		return 1;
@@ -2349,6 +2351,7 @@ int FromMsg::InnerOrder() {
 			intMsgCnt++;
 		string type = readPara();
 		string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("随机姓名_" + type)) ? "随机姓名_" + type : "随机姓名";
+		strVar["nick"] = getName(fromQQ, fromGroup);
 		strVar["new_nick"] = strip(CardDeck::drawCard(CardDeck::mPublicDeck[strDeckName], true));
 		getUser(fromQQ).setNick(fromGroup, strVar["new_nick"]);
 		const string strReply = format(GlobalMsg["strNameSet"], { strVar["nick"], strVar["new_nick"] });
@@ -2383,6 +2386,7 @@ int FromMsg::InnerOrder() {
 			getUser(fromQQ).rmIntConf("默认骰");
 		else
 			getUser(fromQQ).setConf("默认骰", intDefaultDice);
+		strVar["nick"] = getName(fromQQ, fromGroup);
 		reply("已将" + strVar["nick"] + "的默认骰类型更改为D" + strVar["default"]);
 		return 1;
 	}
