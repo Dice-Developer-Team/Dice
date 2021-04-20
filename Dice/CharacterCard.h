@@ -2,7 +2,7 @@
 
 /*
  * Íæ¼ÒÈËÎï¿¨
- * Copyright (C) 2019 String.Empty
+ * Copyright (C) 2019-2021 String.Empty
  */
 
 #include <fstream>
@@ -637,16 +637,7 @@ public:
 		return 0;
 	}
 
-	int renameCard(const string& name, const string& name_new)
-	{
-		std::lock_guard<std::mutex> lock_queue(cardMutex);
-		if (mNameIndex.count(name_new))return -4;
-		if (name_new.find(":") != string::npos)return -6;
-		const int i = mNameIndex[name_new] = mNameIndex[name];
-		mNameIndex.erase(name);
-		mCardList[i].setName(name_new);
-		return 0;
-	}
+	int renameCard(const string& name, const string& name_new);
 
 	int copyCard(const string& name1, const string& name2, long long group = 0)
 	{

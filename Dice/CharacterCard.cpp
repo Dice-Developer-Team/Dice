@@ -1,8 +1,20 @@
 /*
  * 玩家人物卡
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2019-2021 String.Empty
  */
 #include "CharacterCard.h"
+
+/**
+ * 错误返回值
+ * -1:PcCardFull 角色卡已满
+ * -2:PcTempInvalid 模板无效（已弃用）
+ * -3:PcNameEmpty 卡名为空
+ * -4:PCNameExist 卡名已存在
+ * -5:PcNameNotExist 卡名不存在
+ * -6:PCNameInvalid 卡名无效
+ * -7:PcInitDelErr 删除初始卡
+ */
+
 
 string CardTemp::show() {
 	ResList res;
@@ -187,10 +199,21 @@ void CharaCard::readb(std::ifstream& fin) {
 	}
 	pTemplet = &getCardTemplet(Info["__Type"]);
 }
+
 Player& getPlayer(long long qq)
 {
 	if (!PList.count(qq))PList[qq] = {};
 	return PList[qq];
+}
+int Player::renameCard(const string& name, const string& name_new) 	{
+	std::lock_guard<std::mutex> lock_queue(cardMutex);
+	if (name_new.empty())return -3;
+	if (mNameIndex.count(name_new))return -4;
+	if (name_new.find(":") != string::npos)return -6;
+	const int i = mNameIndex[name_new] = mNameIndex[name];
+	mNameIndex.erase(name);
+	mCardList[i].setName(name_new);
+	return 0;
 }
 string Player::listCard() {
 	ResList Res;
@@ -205,5 +228,6 @@ void getPCName(FromMsg& msg)
 {
 	msg["pc"] = (PList.count(msg.fromQQ) && PList[msg.fromQQ][msg.fromGroup].getName() != "角色卡")
 		? PList[msg.fromQQ][msg.fromGroup].getName()
-		: msg["nick"];
+		: ((!msg.strVar.count("nick") || msg["nick"].empty())
+		   ? msg["nick"] = getName(msg.fromQQ, msg.fromGroup) : msg["nick"]);
 }

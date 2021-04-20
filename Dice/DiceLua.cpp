@@ -173,7 +173,7 @@ bool lua_call_task(const char* file, const char* func) {
 
  //加载其他lua脚本
 int loadLua(lua_State* L) {
-	string nameFile{ lua_to_string(L, -1) };
+	string nameFile{ lua_to_string(L, 1) };
 #ifndef _WIN32
 	// 转换separator
 	for (auto& c : nameFile)
@@ -207,14 +207,14 @@ int getDiceDir(lua_State* L) {
 	return 1;
 }
 int mkDirs(lua_State* L) {
-	string dir{ lua_to_string(L, -1) };
+	string dir{ lua_to_string(L, 1) };
 	mkDir(dir);
 	return 0;
 }
 int getGroupConf(lua_State* L) {
 	long long id{ lua_to_int(L, 1) };
-	if (!id)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
+	if (!id || item.empty())return 0;
 	Chat& grp{ chat(id) };
 	if (item == "name") {
 		lua_push_string(L, grp.Name);
@@ -236,8 +236,8 @@ int getGroupConf(lua_State* L) {
 }
 int setGroupConf(lua_State* L) {
 	long long id{ lua_to_int(L, 1) };
-	if (!id)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
+	if (!id || item.empty())return 0;
 	Chat& grp{ chat(id) };
 	if (mChatConf.count(item)) {
 		lua_toboolean(L, 3) ? grp.set(item) : grp.reset(item);
@@ -254,6 +254,7 @@ int getUserConf(lua_State* L) {
 	long long qq{ lua_to_int(L, 1) };
 	if (!qq)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
+	if (item.empty())return 0;
 	User& user{ getUser(qq) };
 	if (item == "nick" ) {
 		lua_push_string(L, getName(qq));
@@ -277,6 +278,7 @@ int setUserConf(lua_State* L) {
 	long long qq{ lua_to_int(L, 1) };
 	if (!qq)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
+	if (item.empty())return 0;
 	if (lua_isnumber(L, 3)) {
 		getUser(qq).setConf(item, (int)lua_tonumber(L, 3));
 	}
@@ -289,6 +291,7 @@ int getUserToday(lua_State* L) {
 	long long qq{ lua_to_int(L, 1) };
 	if (!qq)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
+	if (item.empty())return 0;
 	if (item == "jrrp")
 		lua_pushnumber(L, today->getJrrp(qq));
 	else
@@ -299,6 +302,7 @@ int setUserToday(lua_State* L) {
 	long long qq{ lua_to_int(L, 1) };
 	if (!qq)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
+	if (item.empty())return 0;
 	int val{ (int)lua_to_number(L, 3) };
 	today->set(qq, item, val);
 	return 0;
@@ -308,6 +312,7 @@ int getPlayerCardAttr(lua_State* L) {
 	long long plQQ{ lua_to_int(L, 1) };
 	long long group{ lua_to_int(L, 2) };
 	string key{ lua_to_gb18030_string(L, 3) };
+	if (!plQQ || key.empty())return 0;
 	CharaCard& pc = getPlayer(plQQ)[group];
 	if (pc.Info.count(key)) {
 		lua_push_string(L, pc.Info.find(key)->second);
@@ -331,6 +336,7 @@ int getPlayerCardAttr(lua_State* L) {
 }
 int getPlayerCard(lua_State* L) {
 	long long plQQ{ lua_to_int(L, 1) };
+	if (!plQQ)return 0;
 	long long group{ lua_to_int(L, 2) };
 	if (PList.count(plQQ)) {
 		getPlayer(plQQ)[group].pushTable(L);
@@ -342,13 +348,20 @@ int setPlayerCardAttr(lua_State* L) {
 	long long plQQ{ lua_to_int(L, 1) };
 	long long group{ lua_to_int(L, 2) };
 	string item{ lua_to_gb18030_string(L, 3) };
+	if (!plQQ || item.empty())return 0;
+	//参数4为空则视为删除,__Name除外
 	CharaCard& pc = getPlayer(plQQ)[group];
-	if (lua_isnumber(L, -1)) {
+	if (item == "__Name") {
+		getPlayer(plQQ).renameCard(pc.getName(), lua_to_gb18030_string(L, 4));
+	}
+	else if (lua_isnoneornil(L, 4)) {
+		pc.erase(item);
+	}
+	else if (lua_isnumber(L, 4)) {
 		pc.set(item, (int)lua_tonumber(L, -1));
 	}
-	else if (lua_isstring(L, -1)) {
-		if (item.empty())return 0;
-		else if (item[0] == '&')pc.setExp(item.substr(1), lua_to_gb18030_string(L, -1));
+	else if (lua_isstring(L, 4)) {
+		if (item[0] == '&')pc.setExp(item.substr(1), lua_to_gb18030_string(L, -1));
 		else pc.setInfo(item, lua_to_gb18030_string(L, -1));
 	}
 	return 0;
@@ -364,6 +377,7 @@ int ranint(lua_State* L) {
 //线程等待
 int sleepTime(lua_State* L) {
 	int ms{ (int)lua_to_int(L, 1) };
+	if (ms <= 0)return 0;
 	std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 	return 0;
 }
@@ -371,7 +385,9 @@ int sleepTime(lua_State* L) {
 int drawDeck(lua_State* L) {
 	long long fromGroup{ lua_to_int(L, 1) };
 	long long fromQQ{ lua_to_int(L, 2) };
+	if (!fromGroup && !fromQQ)return 0;
 	string nameDeck{ lua_to_gb18030_string(L, 3) };
+	if (nameDeck.empty())return 0;
 	long long fromSession{ fromGroup ? fromGroup : ~fromQQ };
 	if (gm->has_session(fromSession)) {
 		lua_push_string(L, gm->session(fromSession).deck_draw(nameDeck));
@@ -390,6 +406,7 @@ int sendMsg(lua_State* L) {
 	string fromMsg{ lua_to_gb18030_string(L, 1) };
 	long long fromGroup{ lua_to_int(L, 2) };
 	long long fromQQ{ lua_to_int(L, 3) };
+	if (!fromGroup && !fromQQ)return 0;
 	msgtype type{ fromGroup ?
 		chat(fromGroup).isGroup ? msgtype::Group : msgtype::Discuss
 		: msgtype::Private };

@@ -2713,9 +2713,6 @@ int FromMsg::InnerOrder() {
 			case -1:
 				reply(GlobalMsg["strPcCardFull"]);
 				break;
-			case -2:
-				reply(GlobalMsg["strPcTempInvalid"]);
-				break;
 			case -4:
 				reply(GlobalMsg["strPcNameExist"]);
 				break;
@@ -2758,15 +2755,14 @@ int FromMsg::InnerOrder() {
 		}
 		if (strOption == "nn") {
 			strVar["new_name"] = strip(readRest());
-			filter_CQcode(strVar["char"]);
-			if (strVar["new_name"].empty()) {
-				reply(GlobalMsg["strPCNameEmpty"]);
-				return 1;
-			}
+			filter_CQcode(strVar["new_name"]);
 			strVar["old_name"] = pl[fromGroup].getName();
 			switch (pl.renameCard(strVar["old_name"], strVar["new_name"])) {
 			case 0:
 				reply(GlobalMsg["strPcCardRename"]);
+				break;
+			case -3:
+				reply(GlobalMsg["strPCNameEmpty"]);
 				break;
 			case -4:
 				reply(GlobalMsg["strPCNameExist"]);
