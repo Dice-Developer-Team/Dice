@@ -5,11 +5,13 @@
 
 inline long long loginQQ{ 0 };
 
-struct Size {
-	unsigned int siz{ 0 };
-	unsigned int cap{ 0 };
-	std::string tostring() {
-		return std::to_string(siz) + "/" + std::to_string(cap);
+struct GroupSize_t
+{
+    unsigned int currSize = 0;
+    unsigned int maxSize = 0;
+	std::string tostring() const
+    {
+		return std::to_string(currSize) + "/" + std::to_string(maxSize);
 	}
 };
 
@@ -44,7 +46,7 @@ namespace DD {
 	bool isGroupMember(long long, long long, bool);
 	void answerFriendRequest(long long fromQQ, int respon, const std::string& msg = {});
 	void answerGroupInvited(long long fromGroup, int respon);
-	Size getGroupSize(long long);
+	GroupSize_t getGroupSize(long long);
 	std::string getGroupName(long long);
 	std::string getGroupNick(long long, long long);
 	long long getGroupLastMsg(long long, long long);

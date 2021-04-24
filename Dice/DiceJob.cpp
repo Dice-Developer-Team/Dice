@@ -309,9 +309,9 @@ void list_group(DiceJob& job) {
 		for (auto& [id, grp] : ChatList) {
 			if (grp.isGroup && !grps.empty() && !grps.count(id))grp.set("已退");
 			if (grp.isset("已退") || grp.isset("未进") || !grp.isGroup)continue;
-			Size size(DD::getGroupSize(id));
-			if (!size.siz)continue;
-			qSize.emplace(size.siz, DD::printGroupInfo(id));
+			GroupSize_t size(DD::getGroupSize(id));
+			if (!size.currSize)continue;
+			qSize.emplace(size.currSize, DD::printGroupInfo(id));
 		}
 		if (qSize.empty()) {
 			job.reply("{self}无群聊或群信息加载失败！");

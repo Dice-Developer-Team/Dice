@@ -533,8 +533,8 @@ bool eve_GroupAdd(Chat& grp)
 	long long fromGroup = grp.ID;
 	if (grp.Name.empty())
 		grp.Name = DD::getGroupName(fromGroup);
-	Size gsize(DD::getGroupSize(fromGroup));
-	if (console["GroupInvalidSize"] > 0 && grp.boolConf.empty() && gsize.siz > (size_t)console["GroupInvalidSize"]) {
+	GroupSize_t gsize(DD::getGroupSize(fromGroup));
+	if (console["GroupInvalidSize"] > 0 && grp.boolConf.empty() && gsize.currSize > (size_t)console["GroupInvalidSize"]) {
 		grp.set("协议无效");
 	}
 	if (!console["ListenGroupAdd"] || grp.isset("忽略"))return 0;
@@ -600,12 +600,12 @@ bool eve_GroupAdd(Chat& grp)
 					if (DD::isGroupOwner(fromGroup, each, false))
 					{
 						ownerQQ = each;
-						ave_trust += (gsize.siz - 1) * trustedQQ(each);
+						ave_trust += (gsize.currSize - 1) * trustedQQ(each);
 						strMsg += "，群主" + printQQ(each) + "；";
 					}
 					else
 					{
-						ave_trust += (gsize.siz - 10) * trustedQQ(each) / 10;
+						ave_trust += (gsize.currSize - 10) * trustedQQ(each) / 10;
 					}
 				}
 				else if (blacklist->get_qq_danger(each) > 1)
@@ -927,7 +927,7 @@ EVE_GroupInvited(eventGroupInvited)
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGroup, 3);
 		}
-		else if (console["GroupInvalidSize"] > 0 && DD::getGroupSize(grp.ID).siz > (size_t)console["GroupInvalidSize"]) {
+		else if (console["GroupInvalidSize"] > 0 && DD::getGroupSize(grp.ID).currSize > (size_t)console["GroupInvalidSize"]) {
 			grp.set("协议无效");
 			strMsg += "\n已忽略（大群默认协议无效）";
 			console.log(strMsg, 0b10, strNow);

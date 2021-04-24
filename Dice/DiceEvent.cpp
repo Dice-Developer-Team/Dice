@@ -917,7 +917,7 @@ int FromMsg::BasicOrder()
 			}
 			else
 			{
-				if (!isCalled && (pGrp->isset("停用指令") || DD::getGroupSize(fromGroup).siz > 200))AddMsgToQueue(getMsg("strPermissionDeniedErr", strVar), fromQQ);
+				if (!isCalled && (pGrp->isset("停用指令") || DD::getGroupSize(fromGroup).currSize > 200))AddMsgToQueue(getMsg("strPermissionDeniedErr", strVar), fromQQ);
 				else reply(GlobalMsg["strPermissionDeniedErr"]);
 			}
 			return 1;
@@ -996,7 +996,7 @@ int FromMsg::BasicOrder()
 					}
 					else
 					{
-						if (groupset(fromGroup, "停用指令") > 0 && DD::getGroupSize(fromGroup).siz > 200)AddMsgToQueue(
+						if (groupset(fromGroup, "停用指令") > 0 && DD::getGroupSize(fromGroup).currSize > 200)AddMsgToQueue(
 							getMsg("strPermissionDeniedErr", strVar), fromQQ);
 						else reply(GlobalMsg["strPermissionDeniedErr"]);
 					}
@@ -1008,7 +1008,7 @@ int FromMsg::BasicOrder()
 				{
 					if (groupset(fromGroup, "停用指令"))
 					{
-						if (!isCalled && QQNum.empty() && pGrp->isGroup && DD::getGroupSize(fromGroup).siz > 200)AddMsgToQueue(getMsg("strBotOffAlready", strVar), fromQQ);
+						if (!isCalled && QQNum.empty() && pGrp->isGroup && DD::getGroupSize(fromGroup).currSize > 200)AddMsgToQueue(getMsg("strBotOffAlready", strVar), fromQQ);
 						else reply(GlobalMsg["strBotOffAlready"]);
 					}
 					else 
@@ -1027,7 +1027,7 @@ int FromMsg::BasicOrder()
 			{
 				return 0;
 			}
-			else if (intT == GroupT && pGrp->isset("停用指令") && DD::getGroupSize(fromGroup).siz > 500 && !isCalled)
+			else if (intT == GroupT && pGrp->isset("停用指令") && DD::getGroupSize(fromGroup).currSize > 500 && !isCalled)
 			{
 				AddMsgToQueue(Dice_Full_Ver_On + getMsg("strBotMsg"), fromQQ);
 			}

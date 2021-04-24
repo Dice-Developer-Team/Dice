@@ -31,7 +31,7 @@ DDAPI(IsGroupOwner, bool, long long, long long, long long, bool);
 DDAPI(IsGroupMember, bool, long long, long long, long long, bool);
 DDAPI(AnswerFriendRequest, void, long long, long long, int, const std::string&);
 DDAPI(AnswerGroupInvited, void, long long, long long, int);
-DDAPI(GetGroupSize, const Size&, long long, long long);
+DDAPI(GetGroupSize, const GroupSize_t, long long, long long);
 DDAPI(GetGroupName, const std::string&, long long, long long);
 DDAPI(GetGroupNick, const std::string&, long long, long long, long long);
 DDAPI(GetGroupLastMsg, long long, long long, long long, long long);
@@ -132,8 +132,8 @@ namespace DD {
 	void answerGroupInvited(long long fromGroup, int respon) {
 		CALLVOID(AnswerGroupInvited, loginQQ, fromGroup, respon);
 	}
-	Size getGroupSize(long long aimGroup) {
-		return CALLGET(GetGroupSize, loginQQ, aimGroup) :Size();
+	GroupSize_t getGroupSize(long long aimGroup) {
+		return CALLGET(GetGroupSize, loginQQ, aimGroup) :GroupSize_t();
 	}
 	std::string getGroupName(long long aimGroup) {
 		return CALLGET(GetGroupName, loginQQ, aimGroup) :"";
