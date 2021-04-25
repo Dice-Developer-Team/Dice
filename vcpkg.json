@@ -21,6 +21,9 @@
     {
       "name": "libiconv",
       "platform" : "!windows & !android"
+    },
+    {
+      "name": "civetweb"
     }
   ]
 }

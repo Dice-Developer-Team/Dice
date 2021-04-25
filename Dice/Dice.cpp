@@ -31,6 +31,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <filesystem>
+#include <CivetServer.h>
 
 #include "APPINFO.h"
 #include "DiceFile.hpp"
@@ -52,6 +53,7 @@
 #include "S3PutObject.h"
 #include "DiceCensor.h"
 #include "EncodingConvert.h"
+#include "DiceManager.h"
 
 #ifndef _WIN32
 #include <curl/curl.h>
@@ -65,6 +67,9 @@ using namespace std;
 unordered_map<long long, User> UserList{};
 ThreadFactory threads;
 std::filesystem::path fpFileLoc;
+std::unique_ptr<CivetServer> ManagerServer;
+IndexHandler h_index;
+CustomMsgApiHandler h_msgapi;
 
 constexpr auto msgInit{ R"(欢迎使用Dice!掷骰机器人！
 请发送.system gui开启骰娘的后台面板
@@ -203,6 +208,20 @@ EVE_Enable(eventEnable)
 	}
 	Dice_Full_Ver_On = Dice_Full_Ver + " on\n" + DD::getDriVer();
 	DD::debugLog(Dice_Full_Ver_On);
+
+
+// 初始化服务器
+	mg_init_library(0);
+	std::vector<std::string> mg_options = {"listening_ports", "12315"};
+
+	ManagerServer = std::make_unique<CivetServer>(mg_options);
+
+	ManagerServer->addHandler("/", h_index);
+	ManagerServer->addHandler("/api/custommsg", h_msgapi);
+	DD::debugLog("Dice Manager Server running at localhost: 12315");
+
+
+
 	mCardTemplet = {
 		{
 			"COC7", {
@@ -1023,6 +1042,8 @@ EVE_Menu(eventGUI)
 
 void global_exit() {
 	Enabled = false;
+	mg_exit_library();
+	ManagerServer = nullptr;
 	dataBackUp();
 	sch.end();
 	censor = {};

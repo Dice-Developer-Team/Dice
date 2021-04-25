@@ -81,6 +81,8 @@ target_link_libraries(w4123.Dice PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 find_package(AWSSDK CONFIG COMPONENTS core s3 REQUIRED)
 target_include_directories(w4123.Dice PRIVATE ${AWSSDK_INCLUDE_DIRS})
 target_link_libraries(w4123.Dice PRIVATE ${AWSSDK_LIBRARIES})
+find_package(civetweb CONFIG REQUIRED)
+target_link_libraries(w4123.Dice PRIVATE civetweb::civetweb civetweb::civetweb-cpp)
 
 set_target_properties(w4123.Dice PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(w4123.Dice PROPERTIES C_VISIBILITY_PRESET hidden)
