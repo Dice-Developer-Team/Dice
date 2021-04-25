@@ -32,8 +32,8 @@ jobs:
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: |
-          - $env:USERPROFILE\.cache
-          - ${{github.workspace}}\vcpkg\vcpkg.exe
+          $env:USERPROFILE\.cache
+          ${{github.workspace}}\vcpkg\vcpkg.exe
         # An explicit key for restoring and saving the cache
         key: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('**/vcpkg.json') }}
         restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-
@@ -101,8 +101,8 @@ jobs:
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: |
-          - ~/.cache
-          - ${{github.workspace}}/vcpkg/vcpkg
+          ~/.cache
+          ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
         key: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('**/vcpkg.json') }}
         restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-
@@ -185,8 +185,8 @@ jobs:
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: |
-          - ~/.cache
-          - ${{github.workspace}}/vcpkg/vcpkg
+          ~/.cache
+          ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
         key: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('**/vcpkg.json') }}
         restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-
@@ -261,8 +261,8 @@ jobs:
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: |
-          - ~/.cache
-          - ${{github.workspace}}/vcpkg/vcpkg
+          ~/.cache
+          ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
         key: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('**/vcpkg.json') }}
         restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-
