@@ -212,6 +212,7 @@ EVE_Enable(eventEnable)
 
 // 初始化服务器
 	mg_init_library(0);
+	/*
 	std::vector<std::string> mg_options = {"listening_ports", "12315"};
 
 	ManagerServer = std::make_unique<CivetServer>(mg_options);
@@ -219,7 +220,7 @@ EVE_Enable(eventEnable)
 	ManagerServer->addHandler("/", h_index);
 	ManagerServer->addHandler("/api/custommsg", h_msgapi);
 	DD::debugLog("Dice Manager Server running at localhost: 12315");
-
+	*/
 
 
 	mCardTemplet = {
