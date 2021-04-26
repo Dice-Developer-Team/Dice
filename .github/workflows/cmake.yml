@@ -30,18 +30,6 @@ jobs:
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
       
-    - name: 'Setup NuGet Credentials'
-      shell: 'bash'
-      # Replace <OWNER> with your organization name
-      run: >
-        ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
-        sources add
-        -source "https://nuget.pkg.github.com/<OWNER>/index.json"
-        -storepasswordincleartext
-        -name "GitHub"
-        -username "Dice-Developer-Team"
-        -password "${{ secrets.GITHUB_TOKEN }}"
-      
     - name: Cache
       uses: actions/cache@v2.1.4
       id: cache
@@ -57,6 +45,18 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: bootstrap-vcpkg.bat
+      
+    - name: 'Setup NuGet Credentials'
+      shell: 'bash'
+      # Replace <OWNER> with your organization name
+      run: >
+        ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
+        sources add
+        -source "https://nuget.pkg.github.com/Dice-Developer-Team/index.json"
+        -storepasswordincleartext
+        -name "GitHub"
+        -username "Dice-Developer-Team"
+        -password "${{ secrets.GITHUB_TOKEN }}"
 
     - name: Configure CMake
       shell: bash
@@ -114,18 +114,6 @@ jobs:
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
       
-    - name: 'Setup NuGet Credentials'
-      shell: 'bash'
-      # Replace <OWNER> with your organization name
-      run: >
-        ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
-        sources add
-        -source "https://nuget.pkg.github.com/<OWNER>/index.json"
-        -storepasswordincleartext
-        -name "GitHub"
-        -username "Dice-Developer-Team"
-        -password "${{ secrets.GITHUB_TOKEN }}"
-      
     - name: Cache
       uses: actions/cache@v2.1.4
       id: cache
@@ -141,6 +129,18 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
+      
+    - name: 'Setup NuGet Credentials'
+      shell: 'bash'
+      # Replace <OWNER> with your organization name
+      run: >
+        ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
+        sources add
+        -source "https://nuget.pkg.github.com/Dice-Developer-Team/index.json"
+        -storepasswordincleartext
+        -name "GitHub"
+        -username "Dice-Developer-Team"
+        -password "${{ secrets.GITHUB_TOKEN }}"
 
     - name: Configure CMake
       working-directory: ${{github.workspace}}/build
@@ -215,18 +215,6 @@ jobs:
     - name: Install Cross Compiler
       run: sudo apt-get install ${{ matrix.apt }}
       
-    - name: 'Setup NuGet Credentials'
-      shell: 'bash'
-      # Replace <OWNER> with your organization name
-      run: >
-        ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
-        sources add
-        -source "https://nuget.pkg.github.com/<OWNER>/index.json"
-        -storepasswordincleartext
-        -name "GitHub"
-        -username "Dice-Developer-Team"
-        -password "${{ secrets.GITHUB_TOKEN }}"
-      
     - name: Cache
       uses: actions/cache@v2.1.4
       id: cache
@@ -242,6 +230,18 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
+      
+    - name: 'Setup NuGet Credentials'
+      shell: 'bash'
+      # Replace <OWNER> with your organization name
+      run: >
+        ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
+        sources add
+        -source "https://nuget.pkg.github.com/Dice-Developer-Team/index.json"
+        -storepasswordincleartext
+        -name "GitHub"
+        -username "Dice-Developer-Team"
+        -password "${{ secrets.GITHUB_TOKEN }}"
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
@@ -308,18 +308,6 @@ jobs:
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
       
-    - name: 'Setup NuGet Credentials'
-      shell: 'bash'
-      # Replace <OWNER> with your organization name
-      run: >
-        ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
-        sources add
-        -source "https://nuget.pkg.github.com/<OWNER>/index.json"
-        -storepasswordincleartext
-        -name "GitHub"
-        -username "Dice-Developer-Team"
-        -password "${{ secrets.GITHUB_TOKEN }}"
-      
     - name: Cache
       uses: actions/cache@v2.1.4
       id: cache
@@ -335,6 +323,18 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
+      
+    - name: 'Setup NuGet Credentials'
+      shell: 'bash'
+      # Replace <OWNER> with your organization name
+      run: >
+        ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
+        sources add
+        -source "https://nuget.pkg.github.com/Dice-Developer-Team/index.json"
+        -storepasswordincleartext
+        -name "GitHub"
+        -username "Dice-Developer-Team"
+        -password "${{ secrets.GITHUB_TOKEN }}"
         
     - name: Configure CMake
       shell: bash
