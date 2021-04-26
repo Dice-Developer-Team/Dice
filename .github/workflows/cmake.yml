@@ -188,15 +188,15 @@ jobs:
           triplet: x86-linux
           mono: 'mono'
         - path: /usr/aarch64-linux-gnu
-          apt: g++-8-aarch64-linux-gnu gcc-8-aarch64-linux-gnu cpp-8-aarch64-linux-gnu
-          cc: aarch64-linux-gnu-gcc-8
-          cxx: aarch64-linux-gnu-g++-8
+          apt: g++-aarch64-linux-gnu
+          cc: aarch64-linux-gnu-gcc
+          cxx: aarch64-linux-gnu-g++
           triplet: arm64-linux
           mono: 'mono'
         - path: /usr/arm-linux-gnueabihf
-          apt: g++-8-arm-linux-gnueabihf gcc-8-arm-linux-gnueabihf cpp-8-arm-linux-gnueabihf
-          cc: arm-linux-gnueabihf-gcc-8
-          cxx: arm-linux-gnueabihf-g++-8
+          apt: g++-arm-linux-gnueabihf
+          cc: arm-linux-gnueabihf-gcc
+          cxx: arm-linux-gnueabihf-g++
           triplet: arm-linux
           mono: 'mono'
         
