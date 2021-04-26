@@ -24,7 +24,7 @@ int clrDir(const std::string& dir, const std::unordered_set<std::string>& except
 	std::error_code err;
 	for (const auto& p : std::filesystem::directory_iterator(dir, err))
 	{
-		if (p.is_regular_file())
+		if (std::filesystem::is_regular_file(p.status()))
 		{
 			std::string path = convert_w2a(p.path().filename().u16string().c_str());
 			if (path.length() >= 36 && !exceptList.count(path))
@@ -228,7 +228,7 @@ template <typename T>
 	std::error_code err;
 	for (const auto& file : T(dir, err))
 	{
-		if (file.is_regular_file())
+		if (std::filesystem::is_regular_file(file.status()))
 		{
 			intFile++;
 			files.push_back(file.path());
@@ -244,7 +244,7 @@ int _listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& fi
 	std::error_code err;
 	for (const auto& file : T(dir, err))
 	{
-		if (file.is_regular_file() && file.path().filename().string().substr(0, 1) != ".")
+		if (std::filesystem::is_regular_file(file.status()) && file.path().filename().string().substr(0, 1) != ".")
 		{
 			intFile++;
 			files.push_back(file.path());
