@@ -537,7 +537,7 @@ template <typename T1, typename T2>
 	std::error_code err;
 	for (const auto& p : T1(strDir, err))
 	{
-		if (p.is_regular_file())
+		if (std::filesystem::is_regular_file(p.status()))
 		{
 			intFile++;
 			string path = convert_w2a(p.path().filename().u16string().c_str());
@@ -561,7 +561,7 @@ int _loadDir(int (*load)(const std::filesystem::path&, T2&), const std::filesyst
 	std::error_code err;
 	for (const auto& p : T1(fpDir, err))
 	{
-		if (p.is_regular_file() && p.path().filename().string().substr(0, 1) != ".")
+		if (std::filesystem::is_regular_file(p.status()) && p.path().filename().string().substr(0, 1) != ".")
 		{
 			intFile++;
 			const int Cnt = load(p, tmp);
