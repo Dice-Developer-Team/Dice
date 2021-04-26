@@ -7,7 +7,7 @@
 #include "EncodingConvert.h"
 #include <bitset>
 #include <cstring>
-#include <filesystem>
+#include "filesystem.hpp"
 
 TrieG<less_ci> wordG;
 
