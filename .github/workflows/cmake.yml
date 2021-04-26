@@ -6,14 +6,17 @@ jobs:
   build-windows:
     env:
       BUILD_TYPE: Release
+      VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
     strategy:
       fail-fast: false
       matrix:
         include:
         - type: Win32
           triplet: x86-windows-static
+          mono: ''
         - type: x64
           triplet: x64-windows-static
+          mono: ''
           
     runs-on: windows-2019
     
@@ -27,17 +30,27 @@ jobs:
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
       
+    - name: 'Setup NuGet Credentials'
+      shell: 'bash'
+      # Replace <OWNER> with your organization name
+      run: >
+        ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
+        sources add
+        -source "https://nuget.pkg.github.com/<OWNER>/index.json"
+        -storepasswordincleartext
+        -name "GitHub"
+        -username "Dice-Developer-Team"
+        -password "${{ secrets.GITHUB_TOKEN }}"
+      
     - name: Cache
       uses: actions/cache@v2.1.4
       id: cache
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
-        path: |
-          $env:USERPROFILE\.cache
-          ${{github.workspace}}\vcpkg\vcpkg.exe
+        path: ${{github.workspace}}\vcpkg\vcpkg.exe
         # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('**/vcpkg.json') }}
-        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-
+        key: ${{ runner.os }}-${{ matrix.triplet }}
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}
 
     - name: Setup Vcpkg
       shell: cmd
@@ -77,14 +90,17 @@ jobs:
   build-macos:
     env:
       BUILD_TYPE: Release
+      VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
     strategy:
       fail-fast: false
       matrix:
         include:
         - arch: x86_64
           triplet: x64-osx
+          mono: 'mono'
         - arch: arm64
           triplet: arm64-osx
+          mono: 'mono'
           
     runs-on: 	macos-latest
     
@@ -98,17 +114,27 @@ jobs:
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
       
+    - name: 'Setup NuGet Credentials'
+      shell: 'bash'
+      # Replace <OWNER> with your organization name
+      run: >
+        ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
+        sources add
+        -source "https://nuget.pkg.github.com/<OWNER>/index.json"
+        -storepasswordincleartext
+        -name "GitHub"
+        -username "Dice-Developer-Team"
+        -password "${{ secrets.GITHUB_TOKEN }}"
+      
     - name: Cache
       uses: actions/cache@v2.1.4
       id: cache
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
-        path: |
-          ~/.cache
-          ${{github.workspace}}/vcpkg/vcpkg
+        path: ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('**/vcpkg.json') }}
-        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-
+        key: ${{ runner.os }}-${{ matrix.triplet }}
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}
         
     - name: Setup Vcpkg
       shell: bash
@@ -145,6 +171,7 @@ jobs:
   build-linux:
     env:
       BUILD_TYPE: Release
+      VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
     strategy:
       fail-fast: false
       matrix:
@@ -153,21 +180,25 @@ jobs:
           cc: gcc-8
           cxx: g++-8
           triplet: x64-linux
+          mono: 'mono'
         - path: /usr/i686-linux-gnu
           apt: g++-8-i686-linux-gnu
           cc: i686-linux-gnu-gcc-8
           cxx: i686-linux-gnu-g++-8
           triplet: x86-linux
+          mono: 'mono'
         - path: /usr/aarch64-linux-gnu
           apt: g++-8-aarch64-linux-gnu g++-aarch64-linux-gnu
           cc: aarch64-linux-gnu-gcc-8
           cxx: aarch64-linux-gnu-g++-8
           triplet: arm64-linux
+          mono: 'mono'
         - path: /usr/arm-linux-gnueabihf
           apt: g++-8-arm-linux-gnueabihf g++-arm-linux-gnueabihf
           cc: arm-linux-gnueabihf-gcc-8
           cxx: arm-linux-gnueabihf-g++-8
           triplet: arm-linux
+          mono: 'mono'
         
     runs-on: ubuntu-18.04
     
@@ -184,17 +215,27 @@ jobs:
     - name: Install Cross Compiler
       run: sudo apt-get install ${{ matrix.apt }}
       
+    - name: 'Setup NuGet Credentials'
+      shell: 'bash'
+      # Replace <OWNER> with your organization name
+      run: >
+        ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
+        sources add
+        -source "https://nuget.pkg.github.com/<OWNER>/index.json"
+        -storepasswordincleartext
+        -name "GitHub"
+        -username "Dice-Developer-Team"
+        -password "${{ secrets.GITHUB_TOKEN }}"
+      
     - name: Cache
       uses: actions/cache@v2.1.4
       id: cache
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
-        path: |
-          ~/.cache
-          ${{github.workspace}}/vcpkg/vcpkg
+        path: ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('**/vcpkg.json') }}
-        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-
+        key: ${{ runner.os }}-${{ matrix.triplet }}
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}
         
     - name: Setup Vcpkg
       shell: bash
@@ -237,18 +278,23 @@ jobs:
     env:
       ANDROID_NDK: $ANDROID_NDK_HOME
       BUILD_TYPE: Release
+      VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
     strategy:
       fail-fast: false
       matrix:
         include:
         - abi: armeabi-v7a
           triplet: arm-android-static
+          mono: 'mono'
         - abi: arm64-v8a
           triplet: arm64-android-static
+          mono: 'mono'
         - abi: x86
           triplet: x86-android-static
+          mono: 'mono'
         - abi: x86_64
           triplet: x64-android-static
+          mono: 'mono'
         
     runs-on: ubuntu-20.04
     
@@ -262,17 +308,27 @@ jobs:
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
       
+    - name: 'Setup NuGet Credentials'
+      shell: 'bash'
+      # Replace <OWNER> with your organization name
+      run: >
+        ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
+        sources add
+        -source "https://nuget.pkg.github.com/<OWNER>/index.json"
+        -storepasswordincleartext
+        -name "GitHub"
+        -username "Dice-Developer-Team"
+        -password "${{ secrets.GITHUB_TOKEN }}"
+      
     - name: Cache
       uses: actions/cache@v2.1.4
       id: cache
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
-        path: |
-          ~/.cache
-          ${{github.workspace}}/vcpkg/vcpkg
+        path: ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ matrix.triplet }}-${{ hashFiles('**/vcpkg.json') }}
-        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-
+        key: ${{ runner.os }}-${{ matrix.triplet }}
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}
         
     - name: Setup Vcpkg
       shell: bash
