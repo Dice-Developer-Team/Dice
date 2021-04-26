@@ -29,6 +29,7 @@ jobs:
       
     - name: Cache
       uses: actions/cache@v2.1.4
+      id: cache
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: |
@@ -40,6 +41,7 @@ jobs:
 
     - name: Setup Vcpkg
       shell: cmd
+      if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: bootstrap-vcpkg.bat
 
@@ -98,6 +100,7 @@ jobs:
       
     - name: Cache
       uses: actions/cache@v2.1.4
+      id: cache
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: |
@@ -109,6 +112,7 @@ jobs:
         
     - name: Setup Vcpkg
       shell: bash
+      if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
 
@@ -182,6 +186,7 @@ jobs:
       
     - name: Cache
       uses: actions/cache@v2.1.4
+      id: cache
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: |
@@ -193,6 +198,7 @@ jobs:
         
     - name: Setup Vcpkg
       shell: bash
+      if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
 
@@ -258,6 +264,7 @@ jobs:
       
     - name: Cache
       uses: actions/cache@v2.1.4
+      id: cache
       with:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: |
@@ -269,6 +276,7 @@ jobs:
         
     - name: Setup Vcpkg
       shell: bash
+      if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
         
