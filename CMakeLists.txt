@@ -21,7 +21,7 @@ set_property(TARGET w4123.Dice PROPERTY PREFIX "")
 set_property(TARGET w4123.Dice PROPERTY SUFFIX ".dll")
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "-finput-charset=gbk -fexec-charset=gbk -fpermissive ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-fpermissive ${CMAKE_CXX_FLAGS}")
     target_link_libraries(w4123.Dice PRIVATE $<$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>:stdc++fs>)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     set(CMAKE_CXX_FLAGS "-fpermissive -Wno-invalid-source-encoding ${CMAKE_CXX_FLAGS}")
