@@ -25,7 +25,7 @@ bool DiceSession::table_del(const string& tab, const string& item) {
 
 int DiceSession::table_add(const string& key, int prior, const string& item)
 {
-	mTable[key].emplace(item, prior);
+	mTable[key][item] = prior;
 	update();
 	return 0;
 }
