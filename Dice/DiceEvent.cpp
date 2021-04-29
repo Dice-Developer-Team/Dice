@@ -3087,7 +3087,7 @@ int FromMsg::InnerOrder() {
 			strinit = readDice();
 		}
 		readSkipSpace();
-		string strname = strMsg.substr(intMsgCnt);
+		string strname = strip(strMsg.substr(intMsgCnt));
 		if (strname.empty()) {
 			
 			if (!strVar.count("pc") || strVar["pc"].empty()) {
@@ -3096,8 +3096,6 @@ int FromMsg::InnerOrder() {
 			}
 			strname = strVar["pc"];
 		}
-		else
-			strname = strip(strname);
 		RD initdice(strinit, 20);
 		const int intFirstTimeRes = initdice.Roll();
 		if (intFirstTimeRes == Value_Err) {
