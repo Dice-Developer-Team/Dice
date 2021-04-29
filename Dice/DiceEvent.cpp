@@ -2810,7 +2810,7 @@ int FromMsg::InnerOrder() {
 			string strName = strip(readRest());
 			filter_CQcode(strName);
 			strVar["char1"] = strName.substr(0, strName.find('='));
-			strVar["char2"] = (strVar["char1"].length() < strName.length() - 1)
+			strVar["char2"] = (strVar["char1"].length() + 1 < strName.length())
 				? strip(strName.substr(strVar["char1"].length() + 1))
 				: pl[fromGroup].getName();
 			switch (pl.copyCard(strVar["char1"], strVar["char2"], fromGroup)) {
