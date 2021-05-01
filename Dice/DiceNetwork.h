@@ -29,7 +29,21 @@
 
 namespace Network
 {
-	bool POST(const char* serverName, const char* objectName, unsigned short port, char* frmdata, std::string& des);
-	bool GET(const char* serverName, const char* objectName, unsigned short port, std::string& des);
+	// 发出一个HTTP POST (form) 请求
+	// @param serverName 服务器FQDN或IP
+	// @param objectName 请求Path
+	// @param port 端口号
+	// @param frmdata 编码后的表单数据
+	// @param des 存储返回数据
+	// @param useHttps 是否进行https请求
+	bool POST(const char* serverName, const char* objectName, unsigned short port, char* frmdata, std::string& des, bool useHttps = false);
+	
+	// 发出一个HTTP GET 请求
+	// @param serverName 服务器FQDN或IP
+	// @param objectName 请求Path
+	// @param port 端口号
+	// @param des 存储返回数据
+	// @param useHttps 是否进行https请求
+	bool GET(const char* serverName, const char* objectName, unsigned short port, std::string& des, bool useHttps = false);
 }
 #endif /*DICE_NETWORK*/

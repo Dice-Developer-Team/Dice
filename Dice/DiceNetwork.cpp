@@ -102,7 +102,7 @@ namespace Network
 
 
 	bool POST(const char* const serverName, const char* const objectName, const unsigned short port,
-	          char* const frmdata, std::string& des)
+	          char* const frmdata, std::string& des, bool useHttps)
 	{
 #ifdef _WIN32
 		const char* acceptTypes[] = {"*/*", nullptr};
@@ -111,8 +111,8 @@ namespace Network
 		const HINTERNET hInternet = InternetOpenA(DiceRequestHeader, INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
 		const HINTERNET hConnect = InternetConnectA(hInternet, serverName, port, nullptr, nullptr, 
 			INTERNET_SERVICE_HTTP, 0, 0);
-		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "POST", objectName, "HTTP/1.1", nullptr, acceptTypes, 0, 
-			0);
+		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "POST", objectName, "HTTP/1.1", nullptr, acceptTypes, 
+			(useHttps ? INTERNET_FLAG_SECURE : 0), 0);
 		const BOOL res = HttpSendRequestA(hRequest, header, strlen(header), frmdata, strlen(frmdata));
 
 
@@ -209,7 +209,7 @@ namespace Network
 		curl = curl_easy_init();
 		if (curl)
 		{
-			curl_easy_setopt(curl, CURLOPT_URL, (std::string("http://") + serverName + ":" + std::to_string(port) + objectName).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, ((useHttps ? std::string("https://") : std::string("http://")) + serverName + ":" + std::to_string(port) + objectName).c_str());
 			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, frmdata);
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteToString);
@@ -228,7 +228,7 @@ namespace Network
 #endif
 	}
 
-	bool GET(const char* const serverName, const char* const objectName, const unsigned short port, std::string& des)
+	bool GET(const char* const serverName, const char* const objectName, const unsigned short port, std::string& des, bool useHttps)
 	{
 #ifdef _WIN32
 		const char* acceptTypes[] = {"*/*", nullptr};
@@ -237,7 +237,7 @@ namespace Network
 		const HINTERNET hConnect = InternetConnectA(hInternet, serverName, port, nullptr, nullptr, 
 			INTERNET_SERVICE_HTTP, 0, 0);
 		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "GET", objectName, "HTTP/1.1", nullptr, acceptTypes,
-			INTERNET_FLAG_NO_CACHE_WRITE, 0);
+			(useHttps ? INTERNET_FLAG_SECURE : 0) | INTERNET_FLAG_NO_CACHE_WRITE, 0);
 		const BOOL res = HttpSendRequestA(hRequest, nullptr, 0, nullptr, 0);
 
 
@@ -334,7 +334,7 @@ namespace Network
 		curl = curl_easy_init();
 		if (curl)
 		{
-			curl_easy_setopt(curl, CURLOPT_URL, (std::string("http://") + serverName + ":" + std::to_string(port) + objectName).c_str());
+			curl_easy_setopt(curl, CURLOPT_URL, ((useHttps ? std::string("https://") : std::string("http://")) + serverName + ":" + std::to_string(port) + objectName).c_str());
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteToString);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &des);

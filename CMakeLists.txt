@@ -84,6 +84,8 @@ target_include_directories(w4123.Dice PRIVATE ${AWSSDK_INCLUDE_DIRS})
 target_link_libraries(w4123.Dice PRIVATE ${AWSSDK_LIBRARIES})
 find_package(civetweb CONFIG REQUIRED)
 target_link_libraries(w4123.Dice PRIVATE civetweb::civetweb civetweb::civetweb-cpp)
+find_package(libzip CONFIG REQUIRED)
+target_link_libraries(w4123.Dice PRIVATE libzip::zip)
 
 set_target_properties(w4123.Dice PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(w4123.Dice PROPERTIES C_VISIBILITY_PRESET hidden)

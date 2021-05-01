@@ -24,6 +24,10 @@
     },
     {
       "name": "civetweb"
+    },
+    {
+      "name": "libzip",
+      "default-features": false
     }
   ]
 }
