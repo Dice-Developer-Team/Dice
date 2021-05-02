@@ -628,7 +628,7 @@ int loadDir(int (*load)(const std::filesystem::path&, T&), const std::filesystem
 		std::error_code err;
 		for (const auto& p : std::filesystem::directory_iterator(fpDir, err))
 		{
-			if (std::filesystem::is_directory(p.status()) && std::filesystem::exists(p / ".info.json"))
+			if (std::filesystem::is_directory(p.status()) && std::filesystem::exists(p.path() / ".info.json"))
 			{
 				if (_loadDir<std::filesystem::directory_iterator>(load, p.path(), tmp, intFile, intFailure, intItem, files) == -1)
 					return 0;
