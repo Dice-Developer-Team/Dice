@@ -7,12 +7,6 @@ namespace fs = std::filesystem;
 
 namespace Zip
 {
-    // Zip提取失败异常
-    class ZipExtractionFailedException : std::runtime_error
-    {
-    public:
-        ZipExtractionFailedException(const std::string& what) : std::runtime_error("Failed to extract zip: " + what) {}
-    };
 
     class Unzipper
     {
@@ -38,18 +32,15 @@ namespace Zip
             zip_error_init(&error);
 
             // 创建zip_source
-            zip_source_t* source = zip_source_buffer_create(this->src.c_str(), this->src.size() * sizeof(char), 1, &error);
+            zip_source_t* source = zip_source_buffer_create(this->src.c_str(), this->src.size() * sizeof(char), 0, &error);
             if (error.zip_err != ZIP_ER_OK)
             {
                 throw ZipExtractionFailedException(zip_error_strerror(&error));
             }
-
             // 打开zip
             zip = zip_open_from_source(source, ZIP_RDONLY, &error);
             if (error.zip_err != ZIP_ER_OK)
             {
-                // 如果打开zip失败，zip_source需要手动释放，否则会由libzip自己在zip_close/discard的时候释放
-                zip_source_free(source);
                 throw ZipExtractionFailedException(zip_error_strerror(&error));
             }
         }
@@ -102,12 +93,15 @@ namespace Zip
                     continue;
                 }
 
+                fs::path path = destFolder / name;
+                std::error_code ec;
+                fs::create_directories(path.parent_path(), ec);
                 // 打开输出文件
-                std::ofstream f(destFolder / name, std::ios::out | std::ios::trunc | std::ios::binary);
+                std::ofstream f(path, std::ios::out | std::ios::trunc | std::ios::binary);
 
                 if (!f)
                 {
-                    throw ZipExtractionFailedException("Failed to open file for writing");
+                    throw std::runtime_error("Failed to open file for writing");
                 }
 
                 // 打开压缩文件

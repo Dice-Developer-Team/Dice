@@ -35,6 +35,11 @@ void FromMsg::reply(const std::string& msgReply, bool isFormat) {
 	reply(isFormat);
 }
 
+void FromMsg::reply(const char* msgReply, bool isFormat) {
+	strReply = msgReply;
+	reply(isFormat);
+}
+
 void FromMsg::reply(const std::string& msgReply, const std::initializer_list<const std::string>& replace_str) {
 	initVar(replace_str);
 	strReply = msgReply;
@@ -398,6 +403,63 @@ int FromMsg::AdminEvent(const string& strOption)
 				reply(GlobalMsg["strParaIllegal"]);
 				break;
 			}
+		}
+		return 1;
+	}
+	if (strOption == "ext")
+	{
+		try
+		{
+			string action = readPara();	
+			if (action == "install")
+			{
+				string package = readRest();
+				ExtensionManagerInstance->installPackage(GBKtoUTF8(package));
+				reply("已成功安装" + package);
+			}
+			else if (action == "query")
+			{
+				string package = readRest();
+				reply(ExtensionManagerInstance->queryPackage(GBKtoUTF8(package)));
+			}
+			else if (action == "update")
+			{
+				ExtensionManagerInstance->refreshIndex();
+				reply("已成功刷新软件包缓存，" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用");
+			}
+			else if (action == "list")
+			{
+				string re = "可用拓展:\n";
+				auto index = ExtensionManagerInstance->getIndex();
+				for (const auto& i : index)
+				{
+					re += UTF8toGBK(i.second.name) + " ";
+				}
+				reply(re);
+			}
+			else if (action == "search")
+			{
+				string package = readRest();
+				string re = "搜索结果:\n";
+				auto index = ExtensionManagerInstance->getIndex();
+				for (const auto& i : index)
+				{
+					string GBKname = UTF8toGBK(i.second.name);
+					if(GBKname.find(package) != string::npos)
+					{
+						re += GBKname + " ";
+					}		
+				}
+				reply(re);
+			}
+			else 
+			{
+				reply("Unknown command");
+			}
+		}
+		catch (const std::exception& e)
+		{
+			reply(UTF8toGBK(e.what(), true));
 		}
 		return 1;
 	}

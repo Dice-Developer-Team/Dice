@@ -27,6 +27,7 @@
 #endif
 #include "GlobalVar.h"
 #include "MsgFormat.h"
+#include "DiceExtensionManager.h"
 
 bool Enabled = false;
 
@@ -35,6 +36,8 @@ bool Enabled = false;
 std::string Dice_Full_Ver_On;
 
 //std::string strModulePath;
+
+std::unique_ptr<ExtensionManager> ExtensionManagerInstance;
 
 #ifdef _WIN32
 HMODULE hDllModule = nullptr;

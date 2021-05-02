@@ -31,6 +31,7 @@ struct DiceJobDetail : public std::enable_shared_from_this<DiceJobDetail> {
     DiceJobDetail(long long qq, chatType ct, std::string msg = "", const char* cmd = "") 
         :fromQQ(qq), fromChat(ct), strMsg(msg),cmd_key(cmd) {
     }
+    virtual void reply(const char*, bool = true) {}
     virtual void reply(const string&, bool = true) {}
     string& operator[](const char* key){
         return strVar[key];

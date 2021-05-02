@@ -237,7 +237,7 @@ namespace Network
 		const HINTERNET hConnect = InternetConnectA(hInternet, serverName, port, nullptr, nullptr, 
 			INTERNET_SERVICE_HTTP, 0, 0);
 		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "GET", objectName, "HTTP/1.1", nullptr, acceptTypes,
-			(useHttps ? INTERNET_FLAG_SECURE : 0) | INTERNET_FLAG_NO_CACHE_WRITE, 0);
+			(useHttps ? INTERNET_FLAG_SECURE : 0) | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD, 0);
 		const BOOL res = HttpSendRequestA(hRequest, nullptr, 0, nullptr, 0);
 
 

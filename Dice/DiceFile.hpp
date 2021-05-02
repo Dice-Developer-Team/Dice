@@ -624,6 +624,17 @@ int loadDir(int (*load)(const std::filesystem::path&, T&), const std::filesystem
 	{
 		if (_loadDir<std::filesystem::directory_iterator>(load, fpDir, tmp, intFile, intFailure, intItem, files) == -1)
 			return 0;
+		// ╪сть Dice Extension Packages
+		std::error_code err;
+		for (const auto& p : std::filesystem::directory_iterator(fpDir, err))
+		{
+			if (std::filesystem::is_directory(p.status()) && std::filesystem::exists(p / ".info.json"))
+			{
+				if (_loadDir<std::filesystem::directory_iterator>(load, p.path(), tmp, intFile, intFailure, intItem, files) == -1)
+					return 0;
+			}
+		}
+		if(err) return 0;
 	}
 
 	if (!intFile)return 0;

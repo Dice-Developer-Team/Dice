@@ -31,8 +31,10 @@
 #include <Windows.h>
 #endif
 #include <map>
+#include <memory>
 #include <unordered_map>
 #include "STLExtern.hpp"
+#include "DiceExtensionManager.h"
 
 /*
  * 版本信息
@@ -72,6 +74,8 @@ inline const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER";
 // DLL hModule
 extern HMODULE hDllModule;
 #endif 
+
+extern std::unique_ptr<ExtensionManager> ExtensionManagerInstance;
 
 // 应用是否被启用
 extern bool Enabled;

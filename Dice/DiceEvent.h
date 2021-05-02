@@ -10,10 +10,11 @@
 #include <set>
 #include <utility>
 #include <string>
+#include "GlobalVar.h"
 #include "MsgMonitor.h"
 #include "DiceSchedule.h"
 #include "DiceMsgSend.h"
-#include "GlobalVar.h"
+
 
 using std::string;
 
@@ -36,7 +37,8 @@ public:
 
 	void formatReply();
 
-	void reply(const std::string& strReply, bool isFormat = true)override;
+	void reply(const char* strReply, bool isFormat = true) override;
+	void reply(const std::string& strReply, bool isFormat = true) override;
 
 	FromMsg& initVar(const std::initializer_list<const std::string>& replace_str);
 	void reply(const std::string& strReply, const std::initializer_list<const std::string>& replace_str);

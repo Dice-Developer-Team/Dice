@@ -286,6 +286,8 @@ EVE_Enable(eventEnable)
 	std::filesystem::create_directory(DiceDir / "conf", ec);
 	std::filesystem::create_directory(DiceDir / "user", ec);
 	std::filesystem::create_directory(DiceDir / "audit", ec);
+
+	ExtensionManagerInstance = std::make_unique<ExtensionManager>();
 	if (!console.load())
 	{
 		ifstream ifstreamMaster(fpFileLoc / "Master.RDconf");
@@ -1045,6 +1047,7 @@ void global_exit() {
 	Enabled = false;
 	mg_exit_library();
 	ManagerServer = nullptr;
+	ExtensionManagerInstance = nullptr;
 	dataBackUp();
 	sch.end();
 	censor = {};
