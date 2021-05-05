@@ -90,7 +90,7 @@ class ExtensionManager
     std::shared_mutex _indexMutex;
 
     // 已安装插件列表
-    std::map<std::string, ExtensionInfo> _installedIndex;
+    std::map<std::string, std::pair<ExtensionInfo, std::filesystem::path>> _installedIndex;
     std::shared_mutex _installedIndexMutex;
 
     // 安装目录
@@ -133,6 +133,7 @@ public:
 
     // 获取某个类型插件应该安装的位置
     // @param e 对应插件的插件信息
+    // @returns 插件应该被安装的位置
     std::filesystem::path getInstallPath(const ExtensionInfo& e)
     {
         string name = e.name;
@@ -155,19 +156,28 @@ public:
     }
 
     // 获取Index中的包个数
+    // @returns Index中的包的个数
     size_t getIndexCount()
     {
         std::shared_lock lock(_indexMutex);
         return _index.size();
     }
 
+    // 获取当前Index信息
+    // @returns Index的一份复制
     std::map<std::string, ExtensionInfo> getIndex()
     {
         std::shared_lock lock(_indexMutex);
         return _index;
     }
 
-
+    // 获取已安装Index信息
+    // @returns Index的一份复制
+    std::map<std::string, std::pair<ExtensionInfo, path>> getInstalledIndex()
+    {
+        std::shared_lock lock(_indexMutex);
+        return _installedIndex;
+    }
 
     // 写出插件信息
     // @param e 对应插件的插件信息
@@ -178,8 +188,9 @@ public:
         f << nlohmann::json(e).dump();
     }
 
-
-    // 查询插件信息，name为UTF-8编码
+    // 查询插件信息
+    // @param name 插件名称，UTF-8编码
+    // @returns 插件信息
     // @throws ExtensionNotFoundException
     ExtensionInfo queryPackage(const std::string& name)
     {
@@ -191,9 +202,11 @@ public:
         throw ExtensionNotFoundException(name);
     }
 
-    // 查询已安装信息，name为UTF-8编码
+    // 查询已安装拓展信息
+    // @param name 插件名称，UTF-8编码
+    // @returns pair<插件信息，路径>
     // @throws ExtensionNotFoundException
-    ExtensionInfo queryInstalledPackage(const std::string& name)
+    std::pair<ExtensionInfo, std::filesystem::path> queryInstalledPackage(const std::string& name)
     {
         std::shared_lock lock(_installedIndexMutex);
         if (_installedIndex.count(name))
@@ -203,11 +216,18 @@ public:
         throw ExtensionNotFoundException(name);
     }
 
-    // 安装拓展，name为UTF-8编码
+    // 安装拓展，如果拓展已被安装会卸载原有拓展
+    // @param name 拓展名称，UTF-8编码
+    // @param reloadData 是否自动重载数据
     // @throws ExtensionNotFoundException, PackageInstallFailedException, ZipExtractionFailedException and maybe other exceptions
-    void installPackage(const std::string& name)
+    void installPackage(const std::string& name, bool reloadData = true)
     {   
         ExtensionInfo ext = queryPackage(name);
+        try 
+        {
+            removePackage(name, false);
+        }
+        catch (const ExtensionNotFoundException&) {}
         std::string des;
 
         if (!Network::GET("raw.githubusercontent.com", ("/Dice-Developer-Team/DiceExtensions/main/" + UrlEncode(ext.name) + ".zip").c_str(), 443, des, true))
@@ -220,13 +240,96 @@ public:
         std::filesystem::create_directories(installPath, ec1);
         Zip::extractZip(des, installPath);
         writeExtensionInfo(ext, installPath / ".info.json");
-        loadData();
+        if(reloadData) loadData();
     }
 
-    // 卸载拓展，name为UTF-8编码
-    void removePackage(const std::string& name)
+    // 升级拓展
+    // @param name 拓展名称，UTF-8编码
+    // @param reloadData 是否自动重载数据
+    // @returns 升级是否被执行
+    // @throws ExtensionNotFoundException, PackageInstallFailedException, ZipExtractionFailedException and maybe other exceptions
+    bool upgradePackage(const std::string& name, bool reloadData = true)
     {
+        ExtensionInfo ext = queryPackage(name);
+        auto [currExt, _] = queryInstalledPackage(name);
+        if (currExt.version_code < ext.version_code)
+        {
+            installPackage(name, reloadData);
+            return true;
+        }
+        return false;
+    }
 
+    // 卸载拓展
+    // @param name 拓展名称，UTF-8编码
+    // @param reloadData 是否自动重载数据
+    void removePackage(const std::string& name, bool reloadData = true)
+    {
+        auto [info, path] = queryInstalledPackage(name);
+        std::error_code ec;
+        std::filesystem::remove_all(path, ec);
+        removeInstalledPackage(info);
+        if(reloadData) loadData();
+    }
+
+    // 向InstalledIndex中添加某个拓展
+    // @param info 插件信息
+    // @param path 插件路径
+    void addInstalledPackage(const ExtensionInfo& info, const std::filesystem::path& path)
+    {
+        std::unique_lock lock(_installedIndexMutex);
+        _installedIndexMutex[info.name] = make_pair(info, path);
+    }
+
+    // 从InstalledIndex中删除某个拓展，不实际删除文件
+    // @param info 插件信息
+    void removeInstalledPackage(const ExtensionInfo& info)
+    {
+        std::unique_lock lock(_installedIndexMutex);
+        if (_installedIndexMutex.count(info.name))
+        {
+            _installedIndexMutex.erase(info.name);
+        }
+    }
+
+    // 获取可升级数量
+    // @returns 可升级的拓展包数量
+    int getUpgradableCount()
+    {
+        std::shared_lock lock1(_installedIndexMutex, std::defer_lock);
+        std::shared_lock lock2(_indexMutex, std::defer_lock);
+        std::lock(lock1, lock2);
+
+        int cnt = 0;
+
+        for (const auto& i : _installedIndex)
+        {
+            if(_index.count(i.second.first.name) && _index[i.second.first.name].version_code > i.second.first.version_code)
+            {
+                cnt++;
+            }
+        }
+
+        return cnt;
+    }
+
+    // 升级所有拓展
+    // @returns 升级拓展数量
+    int upgradeAllPackages()
+    {
+        int cnt = 0;
+        for (const auto& i : getInstalledIndex())
+        {
+            try
+            {
+                if (upgradePackage(i.second.first.name, false))
+                {
+                    cnt++;
+                }
+            }
+            catch(const ExtensionNotFoundException&) {}
+        }
+        if (cnt) loadData();
     }
 
     class ExtensionNotFoundException : public std::runtime_error

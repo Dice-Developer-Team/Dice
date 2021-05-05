@@ -630,6 +630,23 @@ int loadDir(int (*load)(const std::filesystem::path&, T&), const std::filesystem
 		{
 			if (std::filesystem::is_directory(p.status()) && std::filesystem::exists(p.path() / ".info.json"))
 			{
+				try 
+				{
+					ifstream i(p.path() / ".info.json");
+					if (!i)
+					{
+						throw std::runtime_error("Cannot open package file");
+					}
+					nlohmann::json j;
+					j << i;
+					ExtensionInfo info;
+					j.get_to(info);
+					DiceExtensionManager->addInstalledPackage(info);
+				}
+				catch (const std::exception& e)
+				{
+					continue;
+				}
 				if (_loadDir<std::filesystem::directory_iterator>(load, p.path(), tmp, intFile, intFailure, intItem, files) == -1)
 					return 0;
 			}

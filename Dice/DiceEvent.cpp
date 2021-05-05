@@ -425,7 +425,8 @@ int FromMsg::AdminEvent(const string& strOption)
 			else if (action == "update")
 			{
 				ExtensionManagerInstance->refreshIndex();
-				reply("已成功刷新软件包缓存，" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用");
+				reply("已成功刷新软件包缓存，" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用，"
+					+ to_string(ExtensionManagerInstance->getUpgradableCount()) + "个可升级");
 			}
 			else if (action == "list")
 			{
@@ -451,6 +452,56 @@ int FromMsg::AdminEvent(const string& strOption)
 					}		
 				}
 				reply(re);
+			}
+			else if (action == "listinstalled")
+			{
+				string re = "已安装拓展:\n";
+				auto index = ExtensionManagerInstance->getInstalledIndex();
+				for (const auto& i : index)
+				{
+					re += UTF8toGBK(i.second.first.name) + " ";
+				}
+				reply(re);
+			}
+			else if (action == "queryinstalled")
+			{
+				string package = readRest();
+				reply(ExtensionManagerInstance->queryInstalledPackage(GBKtoUTF8(package)));
+			}
+			else if (action == "searchinstalled")
+			{
+				string package = readRest();
+				string re = "搜索结果:\n";
+				auto index = ExtensionManagerInstance->getInstalledIndex();
+				for (const auto& i : index)
+				{
+					string GBKname = UTF8toGBK(i.second.first.name);
+					if (GBKname.find(package) != string::npos)
+					{
+						re += GBKname + " ";
+					}		
+				}
+				reply(re);
+			}
+			else if (action == "upgrade")
+			{
+				string package = readRest();
+				if (package.empty())
+				{
+					int cnt = ExtensionManagerInstance->upgradeAllPackages();
+					reply("成功升级" + std::to_string(cnt) + "个拓展");
+				}
+				else
+				{
+					if (ExtensionManagerInstance->upgradePackage(GBKtoUTF8(package)))
+					{
+						reply(package + "已成功被升级");
+					}
+					else
+					{
+						reply(package + "无需升级");
+					}
+				}
 			}
 			else 
 			{
