@@ -642,7 +642,7 @@ int loadDir(int (*load)(const std::filesystem::path&, T&), const std::filesystem
 					j << i;
 					ExtensionInfo info;
 					j.get_to(info);
-					ExtensionManagerInstance->addInstalledPackage(info);
+					ExtensionManagerInstance->addInstalledPackage(info, p.path());
 				}
 				catch (const std::exception& e)
 				{
