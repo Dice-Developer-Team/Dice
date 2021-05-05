@@ -466,7 +466,7 @@ int FromMsg::AdminEvent(const string& strOption)
 			else if (action == "queryinstalled")
 			{
 				string package = readRest();
-				reply(ExtensionManagerInstance->queryInstalledPackage(GBKtoUTF8(package)));
+				reply(ExtensionManagerInstance->queryInstalledPackage(GBKtoUTF8(package)).first);
 			}
 			else if (action == "searchinstalled")
 			{

@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <mutex>
 #include <shared_mutex>
 #include <sstream>
 #include <fstream>
@@ -330,6 +331,7 @@ public:
             catch(const ExtensionNotFoundException&) {}
         }
         if (cnt) loadData();
+        return cnt;
     }
 
     class ExtensionNotFoundException : public std::runtime_error

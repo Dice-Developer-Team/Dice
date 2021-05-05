@@ -639,7 +639,7 @@ int loadDir(int (*load)(const std::filesystem::path&, T&), const std::filesystem
 						throw std::runtime_error("Cannot open package file");
 					}
 					nlohmann::json j;
-					j << i;
+					i >> j;
 					ExtensionInfo info;
 					j.get_to(info);
 					ExtensionManagerInstance->addInstalledPackage(info, p.path());
