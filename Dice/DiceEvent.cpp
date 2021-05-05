@@ -463,6 +463,12 @@ int FromMsg::AdminEvent(const string& strOption)
 				}
 				reply(re);
 			}
+			else if (action == "remove")
+			{
+				string package = readRest();
+				ExtensionManagerInstance->removePackage(GBKtoUTF8(package));
+				reply("“—≥…π¶–∂‘ÿ" + package);
+			}
 			else if (action == "queryinstalled")
 			{
 				string package = readRest();
