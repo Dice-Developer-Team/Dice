@@ -541,7 +541,7 @@ EVE_Enable(eventEnable)
 	}
 	catch(const std::exception& e)
 	{
-		console.log("刷新软件包缓存失败：" + e.what(), 0b1);
+		console.log(std::string("刷新软件包缓存失败：") + e.what(), 0b1);
 	}
 	console.log(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string(time(nullptr) - llStartTime) + "秒", 0b1,
 				printSTNow());
