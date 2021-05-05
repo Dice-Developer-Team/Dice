@@ -269,7 +269,6 @@ public:
         auto [info, path] = queryInstalledPackage(name);
         std::error_code ec;
         std::filesystem::remove_all(path, ec);
-        removeInstalledPackage(info);
         if(reloadData) loadData();
     }
 
