@@ -22,6 +22,7 @@
 #include "DiceMsgSend.h"
 #include "MsgFormat.h"
 #include "EncodingConvert.h"
+#include "GlobalVar.h"
 
 using std::ifstream;
 using std::ofstream;
@@ -641,7 +642,7 @@ int loadDir(int (*load)(const std::filesystem::path&, T&), const std::filesystem
 					j << i;
 					ExtensionInfo info;
 					j.get_to(info);
-					DiceExtensionManager->addInstalledPackage(info);
+					ExtensionManagerInstance->addInstalledPackage(info);
 				}
 				catch (const std::exception& e)
 				{
