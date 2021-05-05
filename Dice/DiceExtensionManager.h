@@ -173,7 +173,7 @@ public:
 
     // 获取已安装Index信息
     // @returns Index的一份复制
-    std::map<std::string, std::pair<ExtensionInfo, path>> getInstalledIndex()
+    std::map<std::string, std::pair<ExtensionInfo, std::filesystem::path>> getInstalledIndex()
     {
         std::shared_lock lock(_indexMutex);
         return _installedIndex;
@@ -278,7 +278,7 @@ public:
     void addInstalledPackage(const ExtensionInfo& info, const std::filesystem::path& path)
     {
         std::unique_lock lock(_installedIndexMutex);
-        _installedIndexMutex[info.name] = make_pair(info, path);
+        _installedIndex[info.name] = std::make_pair(info, path);
     }
 
     // 从InstalledIndex中删除某个拓展，不实际删除文件
@@ -286,9 +286,9 @@ public:
     void removeInstalledPackage(const ExtensionInfo& info)
     {
         std::unique_lock lock(_installedIndexMutex);
-        if (_installedIndexMutex.count(info.name))
+        if (_installedIndex.count(info.name))
         {
-            _installedIndexMutex.erase(info.name);
+            _installedIndex.erase(info.name);
         }
     }
 
