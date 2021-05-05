@@ -533,6 +533,16 @@ EVE_Enable(eventEnable)
 	threads(warningHandler);
 	threads(frqHandler);
 	sch.start();
+	try
+	{
+		ExtensionManagerInstance->refreshIndex();
+		console.log("已成功刷新软件包缓存，" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用，"
+			+ to_string(ExtensionManagerInstance->getUpgradableCount()) + "个可升级", 0b1);
+	}
+	catch(const std::exception& e)
+	{
+		console.log("刷新软件包缓存失败：" + e.what(), 0b1);
+	}
 	console.log(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string(time(nullptr) - llStartTime) + "秒", 0b1,
 				printSTNow());
 	//骰娘网络
