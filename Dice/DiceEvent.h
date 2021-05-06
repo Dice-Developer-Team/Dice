@@ -86,7 +86,7 @@ public:
 	//≈–∂œ «∑ÒœÏ”¶
 	bool DiceFilter();
 	bool WordCensor();
-	void operator()();
+	void virtualCall();
 	short trusted = 0;
 
 private:

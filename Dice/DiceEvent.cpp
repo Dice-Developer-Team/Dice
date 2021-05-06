@@ -4027,11 +4027,10 @@ bool FromMsg::WordCensor() {
 	return false;
 }
 
-void FromMsg::operator()() {
+void FromMsg::virtualCall() {
 	isVirtual = true;
 	isCalled = true;
 	DiceFilter();
-	delete this;
 }
 
 int FromMsg::getGroupAuth(long long group) {

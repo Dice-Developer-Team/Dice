@@ -421,9 +421,11 @@ int eventMsg(lua_State* L) {
 	msgtype type{ fromGroup ?
 		chat(fromGroup).isGroup ? msgtype::Group : msgtype::Discuss
 		: msgtype::Private };
-	FromMsg* Msg = new FromMsg(fromGroup ? FromMsg(fromMsg, fromGroup, type, fromQQ)
+	std::thread th([=](){
+		FromMsg msg(fromGroup ? FromMsg(fromMsg, fromGroup, type, fromQQ)
 							   : FromMsg(fromMsg, fromQQ));
-	std::thread th(*Msg);
+		msg.virtualCall();
+	});
 	th.detach();
 	return 0;
 }
