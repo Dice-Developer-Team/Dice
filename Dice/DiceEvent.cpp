@@ -1444,8 +1444,9 @@ int FromMsg::InnerOrder() {
 			intMsgCnt++;
 		if(strMsg[intMsgCnt] == '+' || strMsg[intMsgCnt] == '-'){
 			int cntSet{ 0 };
-			while (strMsg[intMsgCnt] == '+' || strMsg[intMsgCnt] == '-') {
-				bool isSet = strMsg[intMsgCnt] == '+';
+			bool isSet{ strMsg[intMsgCnt] == '+' };
+			do{
+				isSet = strMsg[intMsgCnt] == '+';
 				intMsgCnt++;
 				strVar["option"] = readPara();
 				readSkipSpace();
@@ -1469,7 +1470,6 @@ int FromMsg::InnerOrder() {
 					else if (grp.isset(strVar["option"])) {
 						++cntSet;
 						chat(llGroup).reset(strVar["option"]);
-						reply(GlobalMsg["strGroupSetOff"]);
 					}
 					else {
 						reply(GlobalMsg["strGroupSetOffAlready"]);
@@ -1478,9 +1478,9 @@ int FromMsg::InnerOrder() {
 				else {
 					reply(GlobalMsg["strGroupSetDenied"]);
 				}
-			}
+			} while (strMsg[intMsgCnt] == '+' || strMsg[intMsgCnt] == '-');
 			if (cntSet == 1) {
-				reply(GlobalMsg["strGroupSetOn"]);
+				isSet ? reply(GlobalMsg["strGroupSetOn"]) : reply(GlobalMsg["strGroupSetOff"]);
 			}
 			else if(cntSet > 1) {
 				strVar["opt_list"] = grp.listBoolConf();
