@@ -133,7 +133,7 @@ void Console::rmNotice(chatType ct)
 
 int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 {
-	ofstream fout(DiceDir / "audit" / "log" / (to_string(DiceMaid) + "_" + printDate() + ".txt"),
+	ofstream fout(DiceDir / "audit" / ("log" + to_string(DiceMaid) + "_" + printDate() + ".txt"),
 	              ios::out | ios::app);
 	fout << strTime << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 	fout.close();

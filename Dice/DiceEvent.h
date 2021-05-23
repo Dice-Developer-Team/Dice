@@ -50,7 +50,7 @@ public:
 	void note(std::string strMsg, int note_lv = 0b1)
 	{
 		strMsg = format(strMsg, GlobalMsg, strVar);
-		ofstream fout(DiceDir / "audit" / "log" / (to_string(console.DiceMaid) + "_" + printDate() + ".txt"),
+		ofstream fout(DiceDir / "audit" / ("log" + to_string(console.DiceMaid) + "_" + printDate() + ".txt"),
 		              ios::out | ios::app);
 		fout << printSTNow() << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 		fout.close();

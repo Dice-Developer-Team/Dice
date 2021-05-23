@@ -57,7 +57,7 @@ void DiceJob::reply(const std::string& msg) {
 	AddMsgToQueue(format(msg, GlobalMsg, strVar), fromChat);
 }
 void DiceJob::note(const std::string& strMsg, int note_lv = 0b1) {
-	ofstream fout(DiceDir / "audit" / "log" / (to_string(console.DiceMaid) + "_" + printDate() + ".txt"), ios::out | ios::app);
+	ofstream fout(DiceDir / "audit" / ("log" + to_string(console.DiceMaid) + "_" + printDate() + ".txt"), ios::out | ios::app);
 	fout << printSTNow() << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 	fout.close();
 	echo(strMsg);
