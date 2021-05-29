@@ -33,7 +33,7 @@
 #include "GlobalVar.h"
 #include "MsgFormat.h"
 #include "DiceNetwork.h"
-
+#include "StrExtern.hpp"
 
 namespace Network
 {
@@ -54,21 +54,22 @@ namespace Network
 		if (dwError == ERROR_INTERNET_EXTENDED_ERROR)
 		{
 			DWORD size = 512;
-			char* szFormatBuffer = new char[size];
-			if (InternetGetLastResponseInfoA(&dwError, szFormatBuffer, &size))
+			wchar_t* szFormatBuffer = new wchar_t[size];
+			if (InternetGetLastResponseInfoW(&dwError, szFormatBuffer, &size))
 			{
-				std::string ret(szFormatBuffer);
+				std::string ret(convert_w2a(reinterpret_cast<char16_t*>(szFormatBuffer)));
 				while (ret[ret.length() - 1] == '\n' || ret[ret.length() - 1] == '\r')ret.erase(ret.length() - 1);
 				delete[] szFormatBuffer;
 				return ret;
 			}
 			if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
 			{
+				size++;
 				delete[] szFormatBuffer;
-				szFormatBuffer = new char[size];
-				if (InternetGetLastResponseInfoA(&dwError, szFormatBuffer, &size))
+				szFormatBuffer = new wchar_t[size];
+				if (InternetGetLastResponseInfoW(&dwError, szFormatBuffer, &size))
 				{
-					std::string ret(szFormatBuffer);
+					std::string ret(convert_w2a(reinterpret_cast<char16_t*>(szFormatBuffer)));
 					while (ret[ret.length() - 1] == '\n' || ret[ret.length() - 1] == '\r')ret.erase(ret.length() - 1);
 					delete[] szFormatBuffer;
 					return ret;
@@ -79,18 +80,31 @@ namespace Network
 			delete[] szFormatBuffer;
 			return GlobalMsg["strUnableToGetErrorMsg"];
 		}
-		char szFormatBuffer[512];
-		const DWORD dwBaseLength = FormatMessageA(
+		wchar_t szFormatBuffer[512];
+		DWORD dwBaseLength = FormatMessageW(
 			FORMAT_MESSAGE_FROM_HMODULE, // dwFlags
-			GetModuleHandleA("wininet.dll"), // lpSource
+			GetModuleHandleW(L"wininet.dll"), // lpSource
 			dwError, // dwMessageId
-			0, // dwLanguageId
+			MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED), // dwLanguageId
 			szFormatBuffer, // lpBuffer
-			sizeof(szFormatBuffer), // nSize
+			512, // nSize
 			nullptr);
+
+		if (dwBaseLength == 0)
+		{
+			dwBaseLength = FormatMessageW(
+				FORMAT_MESSAGE_FROM_HMODULE, // dwFlags
+				GetModuleHandleW(L"wininet.dll"), // lpSource
+				dwError, // dwMessageId
+				MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), // dwLanguageId
+				szFormatBuffer, // lpBuffer
+				512, // nSize
+				nullptr);
+		}
+		
 		if (dwBaseLength)
 		{
-			std::string ret(szFormatBuffer);
+			std::string ret(convert_w2a(reinterpret_cast<char16_t*>(szFormatBuffer)));
 			while (ret[ret.length() - 1] == '\n' || ret[ret.length() - 1] == '\r')ret.erase(ret.length() - 1);
 			return ret;
 		}
