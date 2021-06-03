@@ -568,7 +568,7 @@ bool eve_GroupAdd(Chat& grp)
 		}
 		else 
 		{
-			int cntUser(0), cntMember(0);
+			size_t cntUser{ 0 }, cntMember{ 0 }, cntDiceMaid{ 0 };
 			for (auto& each : list) 
 			{
 				if (each == console.DiceMaid)continue;
@@ -617,6 +617,9 @@ bool eve_GroupAdd(Chat& grp)
 						AddMsgToQueue(blacklist->list_self_qq_warning(each), fromGroup, msgtype::Group);
 					}
 				}
+				if (DD::isDiceMaid(each)) {
+					++cntDiceMaid;
+				}
 			}
 			if (!chat(fromGroup).inviter && list.size() == 2 && ownerQQ)
 			{
@@ -631,6 +634,9 @@ bool eve_GroupAdd(Chat& grp)
 			{
 				ave_trust /= cntMember;
 				strMsg += "\n用户浓度" + to_string(cntUser * 100 / cntMember) + "% (" + to_string(cntUser) + "/" + to_string(cntMember) + "), 信任度" + toString(ave_trust);
+			}
+			if (cntMember) 			{
+				strMsg += "\n可识别同系Dice!" + to_string(cntDiceMaid) + "位";
 			}
 		}
 		if (!blacks.empty())
