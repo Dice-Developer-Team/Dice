@@ -60,7 +60,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strLogEndEmpty","{self}已结束记录√\n本次无日志产生"},
 	{"strLogNullErr","{self}无日志记录或已结束！"},
 	{"strLogUpSuccess","{self}已完成日志上传√\n请访问 https://logpainter.kokona.tech/?s3={log_file} 以查看记录"},
-	{"strLogUpFailure","{self}上传日志文件失败，正在第{retry}次重试…{ret}"},
+	{"strLogUpFailure","{self}上传日志文件失败，正在第{retry}次重传{log_file}…{ret}"},
 	{"strLogUpFailureEnd","很遗憾，{self}无法成功上传日志文件×\n{ret}\n如需获取可联系Master:{master_QQ}\n文件名:{log_file}"},
 	{"strGMTableShow","{self}记录的{table_name}列表: {res}"},
 	{"strGMTableClr","{self}已清除{table_name}表√"},
