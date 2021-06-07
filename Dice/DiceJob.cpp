@@ -180,7 +180,7 @@ void clear_group(DiceJob& job) {
 	int intCnt = 0;
 	ResList res;
 	vector<long long> GrpDelete;
-	time_t grpline{ console["InactiveGroupLine"] > 0 ? tNow - console["InactiveGroupLine"] * 86400 : 0 };
+	time_t grpline{ console["InactiveGroupLine"] > 0 ? (tNow - console["InactiveGroupLine"] * (time_t)86400) : 0 };
 	if (job.strVar["clear_mode"] == "unpower") {
 		for (auto& [id, grp] : ChatList) {
 			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("协议无效"))continue;
@@ -201,15 +201,15 @@ void clear_group(DiceJob& job) {
 		string strDayLim = to_string(intDayLim);
 		time_t tNow = time(NULL);
 		for (auto& [id, grp] : ChatList) {
-			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("协议无效"))continue;
-			time_t tLast = grp.tUpdated;
+			if (grp.isset("忽略") || grp.isset("免清") || grp.isset("协议无效"))continue;
+			time_t tLast{ grp.tUpdated };
 			if (long long tLMT; grp.isGroup && ((tLMT = DD::getGroupLastMsg(id, console.DiceMaid)) > 0 && tLMT > tLast))tLast = tLMT;
+			if (gm->has_session(id) && gm->session(id).tUpdate > tLast)tLast = gm->session(id).tUpdate;
 			if (!tLast)continue;
+			if (tLast < grpline && !grp.isset("免黑"))GrpDelete.push_back(id);
+			if (grp.isset("已退") || grp.isset("未进"))continue;
 			int intDay = (int)(tNow - tLast) / 86400;
 			if (intDay > intDayLim) {
-				time_t tLast{ grp.tUpdated };
-				if (gm->has_session(id) && gm->session(id).tUpdate > grp.tUpdated)tLast = gm->session(id).tUpdate;
-				if (tLast < grpline)GrpDelete.push_back(id);
 				job["day"] = to_string(intDay);
 				res << printGroup(id) + ":" + to_string(intDay) + "天\n";
 				grp.leave(getMsg("strLeaveUnused", job.strVar));
@@ -287,7 +287,7 @@ void clear_group(DiceJob& job) {
 	if (!GrpDelete.empty()) {
 		for (const auto& id : GrpDelete) {
 			ChatList.erase(id);
-			gm->session_end(id);
+			if (gm->has_session(id))gm->session_end(id);
 		}
 		job.note("清查群聊时回收不活跃记录" + to_string(GrpDelete.size()) + "条", 0b1);
 	}

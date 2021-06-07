@@ -371,7 +371,8 @@ Dice!众筹计划: https://afdian.net/@suhuiw4123)"
 std::map<std::string, std::string, less_ci> EditedMsg;
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
-578:允许转义文本多选一
+580:过期记录回收
+579:允许转义文本多选一
 578:优化群设置读写
 577:窗口广播通知
 576:定时任务脚本

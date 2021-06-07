@@ -1304,6 +1304,15 @@ int FromMsg::InnerOrder() {
 			cmd_key = "lsgroup";
 			sch.push_job(*this);
 		}
+		else if (strOption == "clr") {
+			if (trusted < 5) {
+				reply(GlobalMsg["strNotMaster"]);
+				return 1;
+			}
+			int cnt = clearGroup();
+			note("已清理过期群记录" + to_string(cnt) + "条", 0b10);
+			return 1;
+		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 6) == "setcoc") {
 		if (!isAuth) {
@@ -2390,7 +2399,7 @@ int FromMsg::InnerOrder() {
 				return 1;
 			}
 			int cnt = clearUser();
-			note("已清理无效用户记录" + to_string(cnt) + "条", 0b10);
+			note("已清理无效或过期用户记录" + to_string(cnt) + "条", 0b10);
 			return 1;
 		}
 	}

@@ -292,6 +292,12 @@ void ConsoleTimer() 	{
 					sch.push_job("clrgroup", true, {
 						{"clear_mode","black"}
 								 });
+					if (int cnt{ clearGroup() }) {
+						console.log("已清理过期群记录" + to_string(cnt) + "条", 1, printSTime(stTmp));
+					}
+					if (int cnt{ clearUser() }) {
+						console.log("已清理无效或过期用户记录" + to_string(cnt) + "条", 1, printSTime(stTmp));
+					}
 					break;
 				default:
 					fmt->call_task(eve_type);
