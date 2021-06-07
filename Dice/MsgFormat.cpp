@@ -28,10 +28,12 @@
 #include "EncodingConvert.h"
 #include "StrExtern.hpp"
 #include "CardDeck.h"
+#include "RandomGenerator.h"
 using std::string;
 
-std::map<string, string> GlobalChar{
+std::map<string, string> GlobalChar{ 
 	{"FormFeed","\f"},
+	{"Vertical","|"},
 	{"LBrace","{"},
 	{"RBrace","}"},
 	{"LBracket","["},
@@ -88,18 +90,22 @@ std::string format(std::string s, const std::map<std::string, std::string, less_
 			key = key.substr(5);
 			val = fmt->format(fmt->get_help(key), replace_str);
 		}
+		else if (auto uit = str_tmp.find(key); uit != str_tmp.end()) {
+			if (key == "res")val = format(uit->second, replace_str, str_tmp);
+			else val = uit->second;
+		}
+		else if (key.find("sample:") == 0) {
+			key = key.substr(7);
+			vector<string> samples{ split(key,"|") };
+			if (samples.empty())val = "";
+			else
+				val = format(samples[RandomGenerator::Randint(0, samples.size() - 1)], replace_str, str_tmp);
+		}
 		else if (auto it = replace_str.find(key); it != replace_str.end()) 		{
 			val = format(it->second, replace_str, str_tmp);
 		}
-		else if ((it = GlobalChar.find(key)) != GlobalChar.end()) 		{
-			val = it->second;
-		}
 		else if ((it = GlobalChar.find(key)) != GlobalChar.end()) {
 			val = it->second;
-		}
-		else if (auto uit = str_tmp.find(key); uit != str_tmp.end()) 		{
-			if (key == "res")val = format(uit->second, replace_str, str_tmp);
-			else val = uit->second;
 		}
 		else if (auto func = strFuncs.find(key); func != strFuncs.end()) 		{
 			val = func->second();
