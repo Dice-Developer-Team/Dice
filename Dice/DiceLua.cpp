@@ -181,7 +181,9 @@ int loadLua(lua_State* L) {
 		if (c == '\\') c = '/';
 	}
 #endif
-	std::filesystem::path pathFile = DiceDir / "plugin" / (nameFile + ".lua");
+	std::filesystem::path pathFile{ nameFile + ".lua" };
+	if (pathFile.extension() != ".lua")pathFile = nameFile + ".lua";
+	if (pathFile.is_relative())pathFile = DiceDir / "plugin" / pathFile;
 	if (!std::filesystem::exists(pathFile) && nameFile.find('\\') == string::npos && nameFile.find('/') == string::npos)
 		pathFile = DiceDir / "plugin" / nameFile / "init.lua";
 	if (luaL_loadfile(L, pathFile.string().c_str())) {
