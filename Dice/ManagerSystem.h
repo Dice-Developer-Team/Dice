@@ -176,6 +176,7 @@ extern unordered_map<long long, User> UserList;
 User& getUser(long long qq);
 short trustedQQ(long long qq);
 int clearUser();
+int clearGroup();
 
 string getName(long long QQ, long long GroupID = 0);
 void filter_CQcode(string&, long long fromGroup = 0);
