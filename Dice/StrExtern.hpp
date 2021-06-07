@@ -5,10 +5,12 @@
  */
 
 #include <string>
+#include <vector>
 
 using std::string;
 using std::u16string;
 using std::to_string;
+using std::vector;
 
 #define CP_GBK (936)
 
@@ -35,6 +37,8 @@ string to_signed_string(Dig num)
 }
 
 int count_char(const string& s, char ch);
+
+vector<string> split(const string&, const string&);
 
 string convert_w2a(const char16_t* wch);
 

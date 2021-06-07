@@ -29,6 +29,7 @@
 #include "DiceFile.hpp"
 #include "DiceEvent.h"
 #include "DiceLua.h"
+#include "RandomGenerator.h"
 using std::set;
 
 bool DiceMsgOrder::exec(FromMsg* msg) {
@@ -81,8 +82,19 @@ string DiceModManager::format(string s, const map<string, string, less_ci>& dict
 			key = key.substr(5);
 			val = fmt->format(fmt->get_help(key), dict);
 		}
+		else if (key.find("sample:") == 0) {
+			key = key.substr(7);
+			vector<string> samples{ split(key,"|") };
+			if (samples.empty())val = "";
+			else
+				val = fmt->format(samples[RandomGenerator::Randint(0, samples.size() - 1)], dict);
+		}
 		else if (auto it = dict.find(key); it != dict.end()){
 			val = format(it->second, dict, mod_name);
+		}
+		//局部屏蔽全局
+		else if ((it = GlobalChar.find(key)) != GlobalChar.end()) {
+			val = it->second;
 		}
 		else if (auto func = strFuncs.find(key); func != strFuncs.end())
 		{

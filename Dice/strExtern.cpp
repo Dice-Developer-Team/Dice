@@ -35,6 +35,17 @@ int count_char(const string& s, char ch)
 {
 	return std::count(s.begin(), s.end(), ch);
 }
+vector<string> split(const string& str, const string& sep) {
+    vector<string> res;
+    size_t l{ 0 }, pos{ str.find(sep) };
+    while (pos != string::npos) {
+        res.push_back(str.substr(l, pos - l));
+        l = pos + sep.length();
+        pos = str.find(sep, l);
+    }
+    if (l < str.length()) res.push_back(str.substr(l));
+    return res;
+}
 
 string convert_w2a(const char16_t* wch)
 {
