@@ -635,7 +635,7 @@ bool eve_GroupAdd(Chat& grp)
 				ave_trust /= cntMember;
 				strMsg += "\n用户浓度" + to_string(cntUser * 100 / cntMember) + "% (" + to_string(cntUser) + "/" + to_string(cntMember) + "), 信任度" + toString(ave_trust);
 			}
-			if (cntMember) 			{
+			if (cntDiceMaid) 			{
 				strMsg += "\n可识别同系Dice!" + to_string(cntDiceMaid) + "位";
 			}
 		}
