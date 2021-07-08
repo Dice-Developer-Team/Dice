@@ -44,7 +44,7 @@ std::map<string, GobalTex> strFuncs{
 	{"master_QQ",print_master},
 	{"list_extern_deck",list_extern_deck},
 	{"list_all_deck",list_deck},
-	{"list_reply_deck",[]() {return listKey(CardDeck::mReplyDeck); }},
+	{"list_reply_deck",[]() {return listKey(CardDeck::mReplyDeck) + "\n" +  listKey(CardDeck::mRegexReplyDeck); }},
 	{"list_extern_order",list_order_ex},
 	{"list_dice_sister",list_dice_sister},
 };

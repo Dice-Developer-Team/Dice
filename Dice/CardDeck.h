@@ -18,6 +18,7 @@ namespace CardDeck
 	extern std::map<std::string, std::vector<std::string>, less_ci> mPublicDeck;
 	extern std::map<std::string, std::vector<std::string>, less_ci> mExternPublicDeck;
 	extern std::map<std::string, std::vector<std::string>, less_ci> mReplyDeck;
+	extern std::map<std::string, std::vector<std::string>, less_ci> mRegexReplyDeck;
 	extern std::map<std::string, std::string> PublicComplexDeck;
 	int findDeck(std::string strDeckName);
 	std::string drawCard(std::vector<std::string>& TempDeck, bool boolBack = false);

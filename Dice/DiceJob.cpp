@@ -163,6 +163,7 @@ void clear_image(DiceJob& job) {
 	scanImage(HelpDoc, sReferencedImage);
 	scanImage(CardDeck::mPublicDeck, sReferencedImage);
 	scanImage(CardDeck::mReplyDeck, sReferencedImage);
+	scanImage(CardDeck::mRegexReplyDeck, sReferencedImage);
 	for (auto it : ChatList) {
 		scanImage(it.second.strConf, sReferencedImage);
 	}

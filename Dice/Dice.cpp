@@ -84,6 +84,7 @@ void loadData()
 	std::filesystem::create_directory(DiceDir, ec);
 	ResList logList;
 	loadDir(loadXML<CardTemp>, DiceDir / "CardTemp", mCardTemplet, logList, true);
+	loadJMap(DiceDir / "conf" / "CustomRegexReply.json", CardDeck::mRegexReplyDeck);
 	if (loadJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck) < 0 && loadJMap(
 		fpFileLoc / "ReplyDeck.json", CardDeck::mReplyDeck) > 0)
 	{

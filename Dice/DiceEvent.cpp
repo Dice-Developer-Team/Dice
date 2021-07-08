@@ -14,6 +14,7 @@
 #include "DiceGUI.h"
 #include <memory>
 #include <ctime>
+#include <regex>
 using namespace std;
 
 FromMsg& FromMsg::initVar(const std::initializer_list<const std::string>& replace_str) {
@@ -1871,6 +1872,11 @@ int FromMsg::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "reply") {
 		intMsgCnt += 5;
+		auto& DeckVector = CardDeck::mReplyDeck;
+		if (strLowerMessage.substr(intMsgCnt, 2) == "re") {
+			intMsgCnt += 2;
+			DeckVector = CardDeck::mRegexReplyDeck;
+		}
 		if (trusted < 4) {
 			reply(GlobalMsg["strNotAdmin"]);
 			return -1;
@@ -1880,19 +1886,19 @@ int FromMsg::InnerOrder() {
 			reply(GlobalMsg["strParaEmpty"]);
 			return -1;
 		}
-		vector<string>* Deck = nullptr;
-		CardDeck::mReplyDeck[strVar["key"]] = {};
-		Deck = &CardDeck::mReplyDeck[strVar["key"]];
+		DeckVector[strVar["key"]] = {};
+		auto& Deck = DeckVector[strVar["key"]];
 		while (intMsgCnt != strMsg.length()) {
 			string item = readItem();
-			if (!item.empty())Deck->push_back(item);
+			if (!item.empty())Deck.push_back(item);
 		}
-		if (Deck->empty()) {
+		if (Deck.empty()) {
 			reply(GlobalMsg["strReplyDel"], { strVar["key"] });
-			CardDeck::mReplyDeck.erase(strVar["key"]);
+			DeckVector.erase(strVar["key"]);
 		}
 		else reply(GlobalMsg["strReplySet"], {strVar["key"]});
 		saveJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck);
+		saveJMap(DiceDir / "conf" / "CustomRegexReply.json", CardDeck::mRegexReplyDeck);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules") {
@@ -3915,12 +3921,27 @@ int FromMsg::CustomReply()
 		|| (deck = CardDeck::mReplyDeck.find(strMsg)) != CardDeck::mReplyDeck.end())
 	{
 		string strAns(CardDeck::drawCard(deck->second, true));
-		if (fromQQ == console.DiceMaid && strAns == strKey)return 0;
+		if (fromQQ == console.DiceMaid && strAns == strKey) return 0;
 		reply(strAns);
-		if(!isVirtual)AddFrq(fromQQ, fromTime, fromChat);
+		if (!isVirtual) AddFrq(fromQQ, fromTime, fromChat);
 		else
 			AddFrq(0, fromTime, fromChat);
 		return 1;
+	}
+	for (auto& re: CardDeck::mRegexReplyDeck)
+	{
+		std::smatch match;
+		std::regex exp(re.first, std::regex::ECMAScript | std::regex::icase);
+		if (std::regex_match(strKey, match, exp) || std::regex_match(strMsg, match, exp))
+		{
+			string strAns(CardDeck::drawCard(re.second, true));
+			if (fromQQ == console.DiceMaid && strAns == strKey) return 0;
+			reply(strAns);
+			if (!isVirtual) AddFrq(fromQQ, fromTime, fromChat);
+			else
+				AddFrq(0, fromTime, fromChat);
+			return 1;
+		}
 	}
 	return 0;
 }
