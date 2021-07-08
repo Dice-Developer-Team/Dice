@@ -1872,10 +1872,10 @@ int FromMsg::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "reply") {
 		intMsgCnt += 5;
-		auto& DeckVector = CardDeck::mReplyDeck;
+		auto DeckVector = std::ref(CardDeck::mReplyDeck);
 		if (strLowerMessage.substr(intMsgCnt, 2) == "re") {
 			intMsgCnt += 2;
-			DeckVector = CardDeck::mRegexReplyDeck;
+			DeckVector = std::ref(CardDeck::mRegexReplyDeck);
 		}
 		if (trusted < 4) {
 			reply(GlobalMsg["strNotAdmin"]);
@@ -1886,15 +1886,15 @@ int FromMsg::InnerOrder() {
 			reply(GlobalMsg["strParaEmpty"]);
 			return -1;
 		}
-		DeckVector[strVar["key"]] = {};
-		auto& Deck = DeckVector[strVar["key"]];
+		DeckVector.get()[strVar["key"]] = {};
+		auto& Deck = DeckVector.get()[strVar["key"]];
 		while (intMsgCnt != strMsg.length()) {
 			string item = readItem();
 			if (!item.empty())Deck.push_back(item);
 		}
 		if (Deck.empty()) {
 			reply(GlobalMsg["strReplyDel"], { strVar["key"] });
-			DeckVector.erase(strVar["key"]);
+			DeckVector.get().erase(strVar["key"]);
 		}
 		else reply(GlobalMsg["strReplySet"], {strVar["key"]});
 		saveJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck);
