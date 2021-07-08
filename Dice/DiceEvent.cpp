@@ -1871,11 +1871,13 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "reply") {
+		bool isRegex = false;
 		intMsgCnt += 5;
 		auto DeckVector = std::ref(CardDeck::mReplyDeck);
 		if (strLowerMessage.substr(intMsgCnt, 2) == "re") {
 			intMsgCnt += 2;
 			DeckVector = std::ref(CardDeck::mRegexReplyDeck);
+			isRegex = true;
 		}
 		if (trusted < 4) {
 			reply(GlobalMsg["strNotAdmin"]);
@@ -1886,6 +1888,21 @@ int FromMsg::InnerOrder() {
 			reply(GlobalMsg["strParaEmpty"]);
 			return -1;
 		}
+		
+		if(isRegex)
+		{
+			try
+			{
+				std::regex re(strVar["key"], std::regex::ECMAScript);
+			}
+			catch (const std::regex_error& e)
+			{
+				strVar["err"] = e.what();
+				reply(GlobalMsg["strRegexInvalid"]);
+				return -1;
+			}
+		}
+
 		DeckVector.get()[strVar["key"]] = {};
 		auto& Deck = DeckVector.get()[strVar["key"]];
 		while (intMsgCnt != strMsg.length()) {
@@ -3945,7 +3962,7 @@ int FromMsg::CustomReply()
 			}
 		}
 	}
-	catch (const std::exception& e)
+	catch (const std::regex_error& e)
 	{
 		reply(e.what());
 	}

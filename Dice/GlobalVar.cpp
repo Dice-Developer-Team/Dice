@@ -128,6 +128,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	//{"strCensorCritical","警告：{nick}的指令包含敏感词，{self}已记录并上报！"},
 	{"strSpamFirstWarning","你短时间内对{self}指令次数过多！请善用多轮掷骰和复数生成指令（刷屏初次警告）"},
 	{"strSpamFinalWarning","请暂停你的一切指令，避免因高频指令被{self}拉黑！（刷屏最终警告）"},
+	{"strRegexInvalid","正则表达式{key}无效: {err}"},
 	{"strReplySet","{self}对关键词{key}的回复已设置√"},
 	{"strReplyDel","{self}对关键词{key}的回复已清除√"},
 	{"strStModify","{self}对已记录{pc}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
