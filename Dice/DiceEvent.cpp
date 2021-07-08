@@ -3928,21 +3928,28 @@ int FromMsg::CustomReply()
 			AddFrq(0, fromTime, fromChat);
 		return 1;
 	}
-	for (auto& re: CardDeck::mRegexReplyDeck)
-	{
-		std::smatch match;
-		std::regex exp(re.first, std::regex::ECMAScript | std::regex::icase);
-		if (std::regex_match(strKey, match, exp) || std::regex_match(strMsg, match, exp))
+	try {
+		for (auto& re: CardDeck::mRegexReplyDeck)
 		{
-			string strAns(match.format(CardDeck::drawCard(re.second, true)));
-			if (fromQQ == console.DiceMaid && strAns == strKey) return 0;
-			reply(strAns);
-			if (!isVirtual) AddFrq(fromQQ, fromTime, fromChat);
-			else
-				AddFrq(0, fromTime, fromChat);
-			return 1;
+			std::smatch match;
+			std::regex exp(re.first, std::regex::ECMAScript | std::regex::icase);
+			if (std::regex_match(strKey, match, exp) || std::regex_match(strMsg, match, exp))
+			{
+				string strAns(match.format(CardDeck::drawCard(re.second, true)));
+				if (fromQQ == console.DiceMaid && strAns == strKey) return 0;
+				reply(strAns);
+				if (!isVirtual) AddFrq(fromQQ, fromTime, fromChat);
+				else
+					AddFrq(0, fromTime, fromChat);
+				return 1;
+			}
 		}
 	}
+	catch (const std::exception& e)
+	{
+		reply(e.what());
+	}
+
 	return 0;
 }
 
