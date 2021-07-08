@@ -3934,7 +3934,7 @@ int FromMsg::CustomReply()
 		std::regex exp(re.first, std::regex::ECMAScript | std::regex::icase);
 		if (std::regex_match(strKey, match, exp) || std::regex_match(strMsg, match, exp))
 		{
-			string strAns(CardDeck::drawCard(re.second, true));
+			string strAns(match.format(CardDeck::drawCard(re.second, true)));
 			if (fromQQ == console.DiceMaid && strAns == strKey) return 0;
 			reply(strAns);
 			if (!isVirtual) AddFrq(fromQQ, fromTime, fromChat);
