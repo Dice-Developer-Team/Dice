@@ -165,6 +165,8 @@ void DiceScheduler::start() {
 	if (console["AutoFrameRemake"] > 0)
 		add_job_for(console["AutoFrameRemake"] * 60 * 60, "remake");
 	else add_job_for(60 * 60, "remake");
+	if (console["CloudBlackShare"] > 0)
+		add_job_for(12 * 60 * 60, "cloudblack");
 }
 void DiceScheduler::end() {
 }

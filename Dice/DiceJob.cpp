@@ -145,7 +145,7 @@ void auto_save(DiceJob& job) {
 	dataBackUp();
 	//console.log(GlobalMsg["strSelfName"] + "已自动保存", 0, printSTNow());
 	if (console["AutoSaveInterval"] > 0) {
-		sch.refresh_cold("autosave", time(NULL) + console["AutoSaveInterval"] * 60);
+		sch.refresh_cold("autosave", time(NULL) + console["AutoSaveInterval"] * (time_t)60);
 		sch.add_job_for(console["AutoSaveInterval"] * 60, "autosave");
 	}
 }
@@ -374,7 +374,7 @@ void dice_update(DiceJob& job) {
 //获取云不良记录
 void dice_cloudblack(DiceJob& job) {
 	bool isSuccess(false);
-	job.note("开始获取云端记录", 0);
+	job.note("开始获取云不良记录", 0);
 	string strURL("https://shiki.stringempty.xyz/blacklist/checked.json?" + to_string(job.fromTime));
 	switch (Cloud::DownloadFile(strURL.c_str(), DiceDir / "conf" / "CloudBlackList.json")) {
 	case -1: {
