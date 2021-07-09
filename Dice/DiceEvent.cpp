@@ -3940,9 +3940,9 @@ int FromMsg::CustomReply()
 		string strAns(CardDeck::drawCard(deck->second, true));
 		if (fromQQ == console.DiceMaid && strAns == strKey) return 0;
 		reply(strAns);
-		if (!isVirtual) AddFrq(fromQQ, fromTime, fromChat);
+		if (!isVirtual) AddFrq(fromQQ, fromTime, fromChat, strMsg);
 		else
-			AddFrq(0, fromTime, fromChat);
+			AddFrq(0, fromTime, fromChat, strMsg);
 		return 1;
 	}
 	try {
@@ -4011,12 +4011,12 @@ bool FromMsg::DiceFilter()
 	{
 		if (isAns) {
 			if (!isVirtual) {
-				AddFrq(fromQQ, fromTime, fromChat);
+				AddFrq(fromQQ, fromTime, fromChat, strMsg);
 				getUser(fromQQ).update(fromTime);
 				if (fromChat.second != msgtype::Private)chat(fromGroup).update(fromTime);
 			}
 			else {
-				AddFrq(0, fromTime, fromChat);
+				AddFrq(0, fromTime, fromChat, strMsg);
 			}
 		}
 		return 1;
@@ -4030,12 +4030,12 @@ bool FromMsg::DiceFilter()
 	if (!isDisabled && (isCalled || !pGrp->isset("Í£ÓÃÖ¸Áî"))) {
 		if (fmt->listen_order(this) || InnerOrder()) {
 			if (!isVirtual) {
-				AddFrq(fromQQ, fromTime, fromChat);
+				AddFrq(fromQQ, fromTime, fromChat, strMsg);
 				getUser(fromQQ).update(fromTime);
 				if (fromChat.second != msgtype::Private)chat(fromGroup).update(fromTime);
 			}
 			else {
-				AddFrq(0, fromTime, fromChat);
+				AddFrq(0, fromTime, fromChat, strMsg);
 			}
 			return true;
 		}

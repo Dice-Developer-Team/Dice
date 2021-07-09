@@ -21,12 +21,12 @@ std::queue<FrqMonitor*> EarliestMsgQueue;
 std::set<long long> setFrq;
 std::mutex FrqMutex;
 
-void AddFrq(long long QQ, time_t TT, chatType CT)
+void AddFrq(long long QQ, time_t TT, chatType CT, const string& msg)
 {
 	std::lock_guard<std::mutex> lock_queue(FrqMutex);
 	if (setFrq.count(QQ)) return;
 	setFrq.insert(QQ);
-	auto* newFrq = new FrqMonitor(QQ, TT, CT);
+	auto* newFrq = new FrqMonitor(QQ, TT, CT, msg);
 	EarlyMsgQueue.push(newFrq);
 	if (QQ) {
 		FrqMonitor::sumFrqTotal++;
@@ -77,7 +77,7 @@ void frqHandler()
 }
 
 
-FrqMonitor::FrqMonitor(long long QQ, time_t TT, chatType CT) : fromQQ(QQ), fromTime(TT) {
+FrqMonitor::FrqMonitor(long long QQ, time_t TT, chatType CT, const string& msg) : fromQQ(QQ), fromTime(TT) {
 	if (mFrequence.count(fromQQ)) {
 		mFrequence[fromQQ] += 10;
 		mCntOrder[fromQQ] += 1;
@@ -87,7 +87,8 @@ FrqMonitor::FrqMonitor(long long QQ, time_t TT, chatType CT) : fromQQ(QQ), fromT
 			const std::string strMsg = "提醒：\n" + (CT.second != msgtype::Private ? printChat(CT) : "私聊窗口") +
 				"监测到" + printQQ(fromQQ) + "高频发送指令达" + to_string(mCntOrder[fromQQ])
 				+ (mCntOrder[fromQQ] > 18 ? "/5min"
-				   : (mCntOrder[fromQQ] > 8 ? "/min" : "/30s"));
+				   : (mCntOrder[fromQQ] > 8 ? "/min" : "/30s"))
+				+ "\n最近指令: " + msg;
 			if(QQ!=console.DiceMaid)AddMsgToQueue(getMsg("strSpamFirstWarning"), CT);
 			console.log(strMsg, 1, printSTNow());
 		}
@@ -96,8 +97,9 @@ FrqMonitor::FrqMonitor(long long QQ, time_t TT, chatType CT) : fromQQ(QQ), fromT
 			const std::string strMsg = "警告：\n" + (CT.second != msgtype::Private ? printChat(CT) : "私聊窗口") +
 				printQQ(fromQQ) + "高频发送指令达" + to_string(mCntOrder[fromQQ])
 				+ (mCntOrder[fromQQ] > 36 ? "/5min"
-				   : (mCntOrder[fromQQ] > 15 ? "/min" : "/30s"));
-			if (QQ!=console.DiceMaid)AddMsgToQueue(getMsg("strSpamFinalWarning"), CT);
+				   : (mCntOrder[fromQQ] > 15 ? "/min" : "/30s"))
+				+ "\n最近指令: " + msg;
+			if (QQ != console.DiceMaid)AddMsgToQueue(getMsg("strSpamFinalWarning"), CT);
 			console.log(strMsg, 0b10, printSTNow());
 		}
 		else if (mFrequence[fromQQ] > 200 && mWarnLevel[fromQQ] < 200) {
@@ -107,11 +109,13 @@ FrqMonitor::FrqMonitor(long long QQ, time_t TT, chatType CT) : fromQQ(QQ), fromT
 				+ (mCntOrder[fromQQ] > 60 ? "/5min"
 				   : (mCntOrder[fromQQ] > 25 ? "/min" : "/30s"));
 			if (!QQ) {
-				console.log("警告：" + GlobalMsg["strSelfName"] + "高频处理虚拟指令达" + strFrq, 0b1000, strNow);
+				console.log("警告：" + GlobalMsg["strSelfName"] + "高频处理虚拟指令达" + strFrq
+							+ "\n最近指令: " + msg, 0b1000, strNow);
 				return;
 			}
 			std::string strNote = (CT.second != msgtype::Private ? printChat(CT) : "私聊窗口") + "监测到" +
-				printQQ(fromQQ) + "对" + printQQ(console.DiceMaid) + "高频发送指令达" + strFrq;
+				printQQ(fromQQ) + "对" + printQQ(console.DiceMaid) + "高频发送指令达" + strFrq
+				+ "\n最近指令: " + msg;
 			if (QQ==console.DiceMaid) {
 				console.set("ListenSelfEcho", 0);
 				console.set("ListenGroupEcho", 0);

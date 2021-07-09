@@ -27,7 +27,7 @@ public:
 	long long fromQQ = 0;
 	time_t fromTime = 0;
 
-	FrqMonitor(long long QQ, time_t TT, chatType CT);
+	FrqMonitor(long long QQ, time_t TT, chatType CT, const string& msg);
 
 	~FrqMonitor()
 	{
@@ -67,5 +67,5 @@ public:
 	}
 };
 
-void AddFrq(long long QQ, time_t TT, chatType CT);
+void AddFrq(long long QQ, time_t TT, chatType CT, const string& msg);
 void frqHandler();
