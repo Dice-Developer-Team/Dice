@@ -181,7 +181,7 @@ int loadLua(lua_State* L) {
 		if (c == '\\') c = '/';
 	}
 #endif
-	std::filesystem::path pathFile{ nameFile + ".lua" };
+	std::filesystem::path pathFile{ nameFile };
 	if (pathFile.extension() != ".lua")pathFile = nameFile + ".lua";
 	if (pathFile.is_relative())pathFile = DiceDir / "plugin" / pathFile;
 	if (!std::filesystem::exists(pathFile) && nameFile.find('\\') == string::npos && nameFile.find('/') == string::npos)
@@ -217,18 +217,37 @@ int getGroupConf(lua_State* L) {
 	long long id{ lua_to_int(L, 1) };
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (!id || item.empty())return 0;
-	Chat& grp{ chat(id) };
-	if (item == "name") {
-		lua_push_string(L, grp.Name);
+	if (lua_gettop(L) > 3)lua_settop(L, 3);
+	if (item == "size") {
+		lua_pushnumber(L, (double)DD::getGroupSize(id).siz);
 	}
-	else if (mChatConf.count(item)) {
-		lua_pushboolean(L, grp.boolConf.count(item));
+	else  if (item == "maxsize") {
+		lua_pushnumber(L, (double)DD::getGroupSize(id).cap);
 	}
-	else if (grp.intConf.count(item)) {
-		lua_pushnumber(L, (double)grp.intConf[item]);
+	else if (ChatList.count(id)) {
+		Chat& grp{ chat(id) }; 
+		if (item == "name") {
+			if (grp.Name.empty())lua_push_string(L, grp.Name = DD::getGroupName(id));
+			else lua_push_string(L, grp.Name);
+		}
+		else if (item == "firstCreate") {
+			lua_pushnumber(L, (double)grp.tCreated);
+		}
+		else if (item == "lastUpdate") {
+			lua_pushnumber(L, (double)grp.tUpdated);
+		}
+		else if (mChatConf.count(item)) {
+			lua_pushboolean(L, grp.boolConf.count(item));
+		}
+		else if (grp.intConf.count(item)) {
+			lua_pushnumber(L, (double)grp.intConf[item]);
+		}
+		else if (grp.strConf.count(item)) {
+			lua_push_string(L, grp.strConf[item]);
+		}
 	}
-	else if (grp.strConf.count(item)) {
-		lua_push_string(L, grp.strConf[item]);
+	else if (item == "name") {
+		lua_push_string(L, DD::getGroupName(id));
 	}
 	else {
 		lua_pushnil(L);
@@ -255,20 +274,34 @@ int setGroupConf(lua_State* L) {
 int getUserConf(lua_State* L) {
 	long long qq{ lua_to_int(L, 1) };
 	if (!qq)return 0;
+	if (lua_gettop(L) > 3)lua_settop(L, 3);
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
-	User& user{ getUser(qq) };
 	if (item == "nick" ) {
 		lua_push_string(L, getName(qq));
 	}
 	else if (item == "trust") {
 		lua_pushnumber(L, trustedQQ(qq));
 	}
-	else if (user.intConf.count(item)) {
-		lua_pushnumber(L, (double)user.intConf[item]);
-	}
-	else if (user.strConf.count(item)) {
-		lua_push_string(L, user.strConf[item]);
+	else if (UserList.count(qq)) {
+		User& user{ getUser(qq) };
+		if (item == "firstCreate") {
+			lua_pushnumber(L, (double)user.tCreated);
+		}
+		else  if (item == "lastUpdate") {
+			lua_pushnumber(L, (double)user.tUpdated);
+		}
+		else if (item == "nn") {
+			string nick;
+			user.getNick(nick, qq);
+			lua_push_string(L, nick);
+		}
+		else if (user.intConf.count(item)) {
+			lua_pushnumber(L, (double)user.intConf[item]);
+		}
+		else if (user.strConf.count(item)) {
+			lua_push_string(L, user.strConf[item]);
+		}
 	}
 	else {
 		lua_pushnil(L);
