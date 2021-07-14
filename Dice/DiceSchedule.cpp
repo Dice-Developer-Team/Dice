@@ -182,11 +182,12 @@ int DiceToday::getJrrp(long long qq) {
 		return cntUser[qq]["jrrp"] = stoi(res);
 	}
 	else {
-		if (!cntUser[qq].count("jrrp_local"))
+		if (!cntUser[qq].count("jrrp_local")) {
 			cntUser[qq]["jrrp_local"] = RandomGenerator::Randint(1, 100);
-		console.log(getMsg("strJrrpErr",
-						   { {"res", res} }
-		), 1);
+			console.log(getMsg("strJrrpErr",
+							   { {"res", res} }
+			), 1);
+		}
 		return cntUser[qq]["jrrp_local"];
 	}
 }
