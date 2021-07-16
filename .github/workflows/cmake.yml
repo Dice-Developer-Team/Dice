@@ -14,7 +14,7 @@ jobs:
         - link: https://musl.cc/x86_64-linux-musl-native.tgz
           cc: /opt/x86_64-linux-musl-native/bin/gcc
           cxx: /opt/x86_64-linux-musl-native/bin/g++
-          triplet: x64-linux
+          triplet: x64-linux-static
           mono: 'mono'
         
     runs-on: ubuntu-18.04
@@ -68,7 +68,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run:  CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/triplets -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_PREFIX_PATH=${{ matrix.path }}
+      run:  CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/triplets -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_PREFIX_PATH=${{ matrix.path }} -DLINK_STATIC_LIBC=TRUE
 
     - name: Build
       working-directory: ${{github.workspace}}/build

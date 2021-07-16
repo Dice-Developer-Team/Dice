@@ -40,6 +40,10 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     endif()
 endif()
 
+if(LINK_STATIC_LIBC)
+    set(CMAKE_SHARED_LINKER_FLAGS "-static ${CMAKE_SHARED_LINKER_FLAGS}")
+endif()
+
 include(CheckCSourceCompiles)
 
 list(APPEND CMAKE_REQUIRED_LIBRARIES "-Wl,-Bsymbolic-functions -Wl,-Bsymbolic")
