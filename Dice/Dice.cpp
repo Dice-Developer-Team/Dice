@@ -524,22 +524,26 @@ EVE_Enable(eventEnable)
 	{
 		if (!UserList.count(pl.first))getUser(pl.first).create(NEWYEAR);
 	}
+	DD::debugLog("-4");
 	dataInit();
+	DD::debugLog("-3");
 	// 确保线程执行结束
 	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
+	DD::debugLog("-2");
 	Aws::InitAPI(options);
 	Enabled = true;
+	DD::debugLog("-1");
 	threads(SendMsg);
 	threads(ConsoleTimer);
 	threads(warningHandler);
 	threads(frqHandler);
+	DD::debugLog("0");
 	sch.start();
 	DD::debugLog("1");
 	try
 	{
 		DD::debugLog("2");
 		ExtensionManagerInstance->refreshIndex();
-		DD::debugLog("3");
 		console.log("已成功刷新软件包缓存，" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用，"
 			+ to_string(ExtensionManagerInstance->getUpgradableCount()) + "个可升级", 0b1);
 	}
