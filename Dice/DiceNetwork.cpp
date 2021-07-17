@@ -228,6 +228,7 @@ namespace Network
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteToString);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &des);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 			
 			lastError = curl_easy_perform(curl);
 			if (lastError != CURLE_OK)
@@ -352,6 +353,7 @@ namespace Network
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteToString);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &des);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 			
 			lastError = curl_easy_perform(curl);
 			if (lastError != CURLE_OK)
