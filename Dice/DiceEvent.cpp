@@ -3955,9 +3955,9 @@ int FromMsg::CustomReply()
 				string strAns(match.format(CardDeck::drawCard(re.second, true)));
 				if (fromQQ == console.DiceMaid && strAns == strKey) return 0;
 				reply(strAns);
-				if (!isVirtual) AddFrq(fromQQ, fromTime, fromChat);
+				if (!isVirtual) AddFrq(fromQQ, fromTime, fromChat, strMsg);
 				else
-					AddFrq(0, fromTime, fromChat);
+					AddFrq(0, fromTime, fromChat, strMsg);
 				return 1;
 			}
 		}
