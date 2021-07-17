@@ -81,30 +81,32 @@ std::mutex mtJobWaited;
 void jobHandle() {
 	while (Enabled) {
 		//监听作业队列
-		if (std::unique_lock<std::mutex> lock_queue(mtQueueJob); !queueJob.empty()) {
-			DiceJob job(queueJob.front());
-			queueJob.pop();
-			lock_queue.unlock();
-			job.exec();
-			//cvJobWaited.notify_one();
+		{
+			std::unique_lock<std::mutex> lock_queue(mtQueueJob);
+			while (!queueJob.empty()) {
+				DiceJob job(queueJob.front());
+				queueJob.pop();
+				lock_queue.unlock();
+				job.exec();
+				//cvJobWaited.notify_one();
+			}
 		}
-		else{
-			//cvJob.wait_for(lock_queue, 2s, []() {return !Enabled || !queueJob.empty(); });
-			std::this_thread::sleep_for(1s); 
-		}
+		//cvJob.wait_for(lock_queue, 2s, []() {return !Enabled || !queueJob.empty(); });
+		std::this_thread::sleep_for(1s); 
 	}
 }
 void jobWait() {
 	while (Enabled) {
 		//检查定时作业
-		if (std::unique_lock<std::mutex> lock_queue(mtJobWaited); !queueJobWaited.empty() && queueJobWaited.top().first <= time(NULL)) {
-			sch.push_job(queueJobWaited.top().second);
-			queueJobWaited.pop();
+		{
+			std::unique_lock<std::mutex> lock_queue(mtJobWaited);
+			while (!queueJobWaited.empty() && queueJobWaited.top().first <= time(NULL)) {
+				sch.push_job(queueJobWaited.top().second);
+				queueJobWaited.pop();
+			}
 		}
-		else {
-			//cvJobWaited.wait_for(lock_queue, 1s);
-			std::this_thread::sleep_for(1s); 
-		}
+		//cvJobWaited.wait_for(lock_queue, 1s);
+		std::this_thread::sleep_for(1s); 
 		today->daily_clear();
 	}
 }
