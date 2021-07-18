@@ -1,6 +1,7 @@
 [submodule "vcpkg"]
 	path = vcpkg
-	url = https://github.com/w4123/vcpkg
+	url = https://github.com/microsoft/vcpkg
+	branch = master
 [submodule "libiconv"]
 	path = libiconv
 	url = https://github.com/w4123/libiconv-android-prebuilt
