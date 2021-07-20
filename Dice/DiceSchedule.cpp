@@ -83,7 +83,7 @@ void jobHandle() {
 		//监听作业队列
 		{
 			std::unique_lock<std::mutex> lock_queue(mtQueueJob);
-			while (!queueJob.empty()) {
+			while (Enabled && !queueJob.empty()) {
 				DiceJob job(queueJob.front());
 				queueJob.pop();
 				lock_queue.unlock();
@@ -100,7 +100,7 @@ void jobWait() {
 		//检查定时作业
 		{
 			std::unique_lock<std::mutex> lock_queue(mtJobWaited);
-			while (!queueJobWaited.empty() && queueJobWaited.top().first <= time(NULL)) {
+			while (Enabled && !queueJobWaited.empty() && queueJobWaited.top().first <= time(NULL)) {
 				sch.push_job(queueJobWaited.top().second);
 				queueJobWaited.pop();
 			}
