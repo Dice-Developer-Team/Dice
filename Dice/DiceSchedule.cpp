@@ -88,6 +88,7 @@ void jobHandle() {
 				queueJob.pop();
 				lock_queue.unlock();
 				job.exec();
+				lock_queue.lock();
 				//cvJobWaited.notify_one();
 			}
 		}
