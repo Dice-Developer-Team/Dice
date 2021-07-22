@@ -219,10 +219,10 @@ int getGroupConf(lua_State* L) {
 	if (!id || item.empty())return 0;
 	if (lua_gettop(L) > 3)lua_settop(L, 3);
 	if (item == "size") {
-		lua_pushnumber(L, (double)DD::getGroupSize(id).siz);
+		lua_pushnumber(L, (double)DD::getGroupSize(id).currSize);
 	}
 	else  if (item == "maxsize") {
-		lua_pushnumber(L, (double)DD::getGroupSize(id).cap);
+		lua_pushnumber(L, (double)DD::getGroupSize(id).maxSize);
 	}
 	else if (ChatList.count(id)) {
 		Chat& grp{ chat(id) }; 
