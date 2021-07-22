@@ -3450,6 +3450,12 @@ int FromMsg::InnerOrder() {
 			}
 			string strSkillName = readAttrName();
 			if (strSkillName.empty()) {
+				readSkipSpace();
+				while (strMsg[intMsgCnt] == '=' || strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '+' ||
+			           strMsg[intMsgCnt] == '-' || strMsg[intMsgCnt] == '*' || strMsg[intMsgCnt] == '/')
+				{
+					intMsgCnt++;
+				}
 				strVar["val"] = readDigit(false);
 				continue;
 			}
