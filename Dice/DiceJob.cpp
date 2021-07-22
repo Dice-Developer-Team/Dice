@@ -191,6 +191,7 @@ void clear_group(DiceJob& job) {
 				if (tLast < grpline)GrpDelete.push_back(id);
 				grp.leave(getMsg("strLeaveNoPower"));
 				intCnt++;
+				if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"])break;
 				this_thread::sleep_for(3s);
 			}
 		}
@@ -214,7 +215,8 @@ void clear_group(DiceJob& job) {
 				res << printGroup(id) + ":" + to_string(intDay) + "天\n";
 				grp.leave(getMsg("strLeaveUnused", job.strVar));
 				intCnt++;
-				this_thread::sleep_for(2s);
+				if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"])break;
+				this_thread::sleep_for(3s);
 			}
 		}
 		job.note(GlobalMsg["strSelfName"] + "已筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√" + res.show(), 0b10);
@@ -244,6 +246,10 @@ void clear_group(DiceJob& job) {
 							grp.leave("发现黑名单管理员" + printQQ(eachQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
 							intCnt++;
 							break;
+						}
+						else if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"]) {
+							if(intCnt == console["GroupClearLimit"])res << "*单次清退已达上限*";
+							res << printChat(grp) + "：" + printQQ(eachQQ);
 						}
 						else if (console["LeaveBlackQQ"]) {
 							if (grp.tUpdated < grpline)GrpDelete.push_back(id);
@@ -278,6 +284,7 @@ void clear_group(DiceJob& job) {
 			res << printChat(grp);
 			grp.leave(getMsg("strPreserve"));
 			intCnt++;
+			if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"])break;
 			this_thread::sleep_for(3s);
 		}
 		job.note(GlobalMsg["strSelfName"] + "筛除无许可群聊" + to_string(intCnt) + "个：" + res.show(), 1);
