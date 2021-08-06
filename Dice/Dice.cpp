@@ -819,6 +819,7 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 }
 
 EVE_GroupMemberKicked(eventGroupMemberKicked){
+	if (!Enabled) return 0;
 	if (fromQQ == 0)return 0; // 考虑Mirai在机器人自行退群时也会调用一次这个函数
 	Chat& grp = chat(fromGroup);
 	if (beingOperateQQ == console.DiceMaid)
@@ -856,6 +857,7 @@ EVE_GroupMemberKicked(eventGroupMemberKicked){
 
 EVE_GroupBan(eventGroupBan)
 {
+	if (!Enabled) return 0;
 	Chat& grp = chat(fromGroup);
 	if (grp.isset("忽略") || (beingOperateQQ != console.DiceMaid && !mDiceList.count(beingOperateQQ)) || !console[
 		"ListenGroupBan"])return 0;
@@ -921,6 +923,7 @@ EVE_GroupBan(eventGroupBan)
 
 EVE_GroupInvited(eventGroupInvited)
 {
+	if (!Enabled) return 0;
 	if (!console["ListenGroupRequest"])return 0;
 	if (groupset(fromGroup, "忽略") < 1)
 	{
@@ -993,6 +996,7 @@ EVE_GroupInvited(eventGroupInvited)
 	return 0;
 }
 EVE_FriendRequest(eventFriendRequest) {
+	if (!Enabled) return 0;
 	if (!console["ListenFriendRequest"])return 0;
 	string strMsg = "好友添加请求，来自 " + printQQ(fromQQ) + ":" + message;
 	this_thread::sleep_for(3s);
@@ -1024,6 +1028,7 @@ EVE_FriendRequest(eventFriendRequest) {
 	return 1;
 }
 EVE_FriendAdded(eventFriendAdd) {
+	if (!Enabled) return 0;
 	if (!console["ListenFriendAdd"])return 0;
 	this_thread::sleep_for(3s);
 	GlobalMsg["strAddFriendWhiteQQ"].empty()
@@ -1034,6 +1039,7 @@ EVE_FriendAdded(eventFriendAdd) {
 
 EVE_Menu(eventMasterMode)
 {
+	if (!Enabled) return 0;
 	if (console)
 	{
 		console.isMasterMode = false;
@@ -1056,6 +1062,7 @@ EVE_Menu(eventMasterMode)
 #ifdef _WIN32
 EVE_Menu(eventGUI)
 {
+	if (!Enabled) return 0;
 	return GUIMain();
 }
 #endif
@@ -1094,6 +1101,7 @@ EVE_Exit(eventExit)
 }
 
 EVE_Menu(eventGlobalSwitch) {
+	if (!Enabled) return 0;
 	if (console["DisabledGlobal"]) {
 		console.set("DisabledGlobal", 0);
 #ifdef _WIN32
