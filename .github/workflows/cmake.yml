@@ -91,7 +91,7 @@ jobs:
         path: "**/w4123.Dice.dll"
         
         
-  build-windows-cl:
+  build-windows-mingw:
     env:
       BUILD_TYPE: Release
       VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
@@ -99,14 +99,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - type: Win32
-          triplet: x86-windows-static
+        - triplet: x86-mingw-static
           mono: ''
-        - type: x64
-          triplet: x64-windows-static
+        - triplet: x64-mingw-static
           mono: ''
-        - type: ARM64
-          triplet: arm64-windows-static
+        - triplet: arm64-mingw-static
           mono: ''
           
     runs-on: windows-2019
@@ -155,7 +152,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: CC=clang-cl CXX=clang-cl cmake $GITHUB_WORKSPACE -A ${{ matrix.type }} -T ClangCl -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+      run: CC=gcc CXX=g++ cmake $GITHUB_WORKSPACE -G Ninja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
 
     - name: Build
       shell: bash
