@@ -17,6 +17,9 @@ jobs:
         - type: x64
           triplet: x64-windows-static
           mono: ''
+        - type: ARM64
+          triplet: arm64-windows-static
+          mono: ''
           
     runs-on: windows-2019
     
