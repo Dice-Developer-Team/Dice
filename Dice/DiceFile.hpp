@@ -987,3 +987,5 @@ void saveXML(const std::filesystem::path& fpPath, C& obj)
 	std::ofstream fout(fpPath);
 	fout << obj.writet();
 }
+
+std::string getNativePathString(const std::filesystem::path& fpPath);

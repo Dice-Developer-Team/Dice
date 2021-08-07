@@ -237,11 +237,8 @@ int DiceModManager::load(ResList* resLog)
 	vector<string> sLuaErr; 
 	msgorder.clear();
 	for (auto& pathFile : sLuaFile) {
-		// 这段代码会在某些系统上出问题
-		// string() 会调用系统的编码转换函数，在某些系统编码下会抛异常（比如英文系统+中文路径）
-		// 可能的解决方案：在Windows上用Short Path
-		string fileLua = pathFile.string();
-		if (fileLua.rfind(".lua") != fileLua.length() - 4) {
+		string fileLua = getNativePathString(pathFile);
+		if ((fileLua.rfind(".lua") != fileLua.length() - 4) && (fileLua.rfind(".LUA") != fileLua.length() - 4)) {
 			sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
 			continue;
 		}

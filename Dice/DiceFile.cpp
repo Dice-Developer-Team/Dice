@@ -9,6 +9,11 @@
 #include "StrExtern.hpp"
 #include "DiceFile.hpp"
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#endif
+
 int mkDir(const std::string& dir)
 {
 	std::error_code err;
@@ -269,4 +274,22 @@ int listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& fil
 		return _listDir<std::filesystem::recursive_directory_iterator>(dir, files);
 	}
 	return _listDir<std::filesystem::directory_iterator>(dir, files);
+}
+
+// 获取本地编码格式的文件名
+// 在Windows上不能直接调用string(), 因为文件名可能无法转换为本地ANSI编码，导致异常抛出
+// 使用8.3文件名绕过此问题
+std::string getNativePathString(const std::filesystem::path& fpPath)
+{
+#ifdef _WIN32
+	auto size = GetShortPathNameW(reinterpret_cast<const wchar_t*>(fpPath.u16string().c_str()), nullptr, 0);
+	if (size == 0) return {};
+	wchar_t* buf = new wchar_t[size + 1];
+	GetShortPathNameW(reinterpret_cast<const wchar_t*>(fpPath.u16string().c_str()), buf, size + 1);
+	std::string ret(convert_w2a(reinterpret_cast<char16_t*>(buf)));
+	delete[] buf;
+	return ret;
+#else
+	return fpPath.string();
+#endif
 }
