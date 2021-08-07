@@ -30,6 +30,8 @@
 #include <ctime>
 #include <mutex>
 #include <unordered_map>
+#include <exception>
+#include <stdexcept>
 #include "filesystem.hpp"
 #include <CivetServer.h>
 
@@ -80,56 +82,64 @@ constexpr auto msgInit{ R"(欢迎使用Dice!掷骰机器人！
 //加载数据
 void loadData()
 {
-	std::error_code ec;
-	std::filesystem::create_directory(DiceDir, ec);
-	ResList logList;
-	loadDir(loadXML<CardTemp>, DiceDir / "CardTemp", mCardTemplet, logList, true);
-	loadJMap(DiceDir / "conf" / "CustomRegexReply.json", CardDeck::mRegexReplyDeck);
-	if (loadJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck) < 0 && loadJMap(
-		fpFileLoc / "ReplyDeck.json", CardDeck::mReplyDeck) > 0)
+	try
 	{
-		logList << "迁移自定义回复" + to_string(CardDeck::mReplyDeck.size()) + "条";
-		saveJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck);
-	}
-	fmt->set_help("回复列表", "回复触发词列表:{list_reply_deck}");
-	if (loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList) < 1)
-	{
-		loadJMap(fpFileLoc / "PublicDeck.json", CardDeck::mExternPublicDeck);
-		loadJMap(fpFileLoc / "ExternDeck.json", CardDeck::mExternPublicDeck);
-	}
-	map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
-	//读取帮助文档
-	fmt->load(&logList);
-	if (int cnt; (cnt = loadJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp)) < 0)
-	{
-		if (cnt == -1)logList << UTF8toGBK((DiceDir / "conf" / "CustomHelp.json").u8string()) + "解析失败！";
-		ifstream ifstreamHelpDoc(fpFileLoc / "HelpDoc.txt");
-		if (ifstreamHelpDoc)
+		std::error_code ec;
+		std::filesystem::create_directory(DiceDir, ec);
+		ResList logList;
+		loadDir(loadXML<CardTemp>, DiceDir / "CardTemp", mCardTemplet, logList, true);
+		loadJMap(DiceDir / "conf" / "CustomRegexReply.json", CardDeck::mRegexReplyDeck);
+		if (loadJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck) < 0 && loadJMap(
+			fpFileLoc / "ReplyDeck.json", CardDeck::mReplyDeck) > 0)
 		{
-			string strName, strMsg;
-			while (getline(ifstreamHelpDoc, strName) && getline(ifstreamHelpDoc, strMsg))
-			{
-				while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
-				while (strMsg.find("\\s") != string::npos)strMsg.replace(strMsg.find("\\s"), 2, " ");
-				while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
-				CustomHelp[strName] = strMsg;
-			}
-			if (!CustomHelp.empty())
-			{
-				saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
-				logList << "初始化自定义帮助词条" + to_string(CustomHelp.size()) + "条";
-			}
+			logList << "迁移自定义回复" + to_string(CardDeck::mReplyDeck.size()) + "条";
+			saveJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck);
 		}
-		ifstreamHelpDoc.close();
+		fmt->set_help("回复列表", "回复触发词列表:{list_reply_deck}");
+		if (loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList) < 1)
+		{
+			loadJMap(fpFileLoc / "PublicDeck.json", CardDeck::mExternPublicDeck);
+			loadJMap(fpFileLoc / "ExternDeck.json", CardDeck::mExternPublicDeck);
+		}
+		map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
+		//读取帮助文档
+		fmt->load(&logList);
+		if (int cnt; (cnt = loadJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp)) < 0)
+		{
+			if (cnt == -1)logList << UTF8toGBK((DiceDir / "conf" / "CustomHelp.json").u8string()) + "解析失败！";
+			ifstream ifstreamHelpDoc(fpFileLoc / "HelpDoc.txt");
+			if (ifstreamHelpDoc)
+			{
+				string strName, strMsg;
+				while (getline(ifstreamHelpDoc, strName) && getline(ifstreamHelpDoc, strMsg))
+				{
+					while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
+					while (strMsg.find("\\s") != string::npos)strMsg.replace(strMsg.find("\\s"), 2, " ");
+					while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
+					CustomHelp[strName] = strMsg;
+				}
+				if (!CustomHelp.empty())
+				{
+					saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
+					logList << "初始化自定义帮助词条" + to_string(CustomHelp.size()) + "条";
+				}
+			}
+			ifstreamHelpDoc.close();
+		}
+		map_merge(fmt->helpdoc, CustomHelp);
+		//读取敏感词库
+		loadDir(load_words, DiceDir / "conf" / "censor", censor, logList, true);
+		loadJMap(DiceDir / "conf" / "CustomCensor.json", censor.CustomWords);
+		censor.build();
+		if (!logList.empty())
+		{
+			logList << "扩展配置读取完毕√";
+			console.log(logList.show(), 1, printSTNow());
+		}
 	}
-	map_merge(fmt->helpdoc, CustomHelp);
-	//读取敏感词库
-	loadDir(load_words, DiceDir / "conf" / "censor", censor, logList, true);
-	loadJMap(DiceDir / "conf" / "CustomCensor.json", censor.CustomWords);
-	censor.build();
-	if (!logList.empty())
+	catch (const std::exception& e)
 	{
-		logList << "扩展配置读取完毕√";
+		logList << "读取数据时遇到意外错误，程序可能无法正常运行。请尝试清空配置后重试。" << e.what();
 		console.log(logList.show(), 1, printSTNow());
 	}
 }
