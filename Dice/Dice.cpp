@@ -82,11 +82,11 @@ constexpr auto msgInit{ R"(欢迎使用Dice!掷骰机器人！
 //加载数据
 void loadData()
 {
+	ResList logList;
 	try
 	{
 		std::error_code ec;
-		std::filesystem::create_directory(DiceDir, ec);
-		ResList logList;
+		std::filesystem::create_directory(DiceDir, ec);	
 		loadDir(loadXML<CardTemp>, DiceDir / "CardTemp", mCardTemplet, logList, true);
 		loadJMap(DiceDir / "conf" / "CustomRegexReply.json", CardDeck::mRegexReplyDeck);
 		if (loadJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck) < 0 && loadJMap(
