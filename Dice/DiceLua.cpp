@@ -186,6 +186,9 @@ int loadLua(lua_State* L) {
 	if (pathFile.is_relative())pathFile = DiceDir / "plugin" / pathFile;
 	if (!std::filesystem::exists(pathFile) && nameFile.find('\\') == string::npos && nameFile.find('/') == string::npos)
 		pathFile = DiceDir / "plugin" / nameFile / "init.lua";
+	// 这段代码会在某些系统上出问题
+	// string() 会调用系统的编码转换函数，在某些系统编码下会抛异常（比如英文系统+中文路径）
+	// 可能的解决方案：在Windows上用Short Path
 	if (luaL_loadfile(L, pathFile.string().c_str())) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
 		console.log(GlobalMsg["strSelfName"] + "读取lua文件" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);

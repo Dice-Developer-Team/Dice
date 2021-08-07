@@ -244,7 +244,7 @@ int _listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& fi
 	std::error_code err;
 	for (const auto& file : T(dir, err))
 	{
-		if (std::filesystem::is_regular_file(file.status()) && file.path().filename().string().substr(0, 1) != ".")
+		if (std::filesystem::is_regular_file(file.status()) && file.path().filename().u8string().substr(0, 1) != ".")
 		{
 			intFile++;
 			files.push_back(file.path());

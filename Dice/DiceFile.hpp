@@ -562,7 +562,7 @@ int _loadDir(int (*load)(const std::filesystem::path&, T2&), const std::filesyst
 	std::error_code err;
 	for (const auto& p : T1(fpDir, err))
 	{
-		if (std::filesystem::is_regular_file(p.status()) && p.path().filename().string().substr(0, 1) != ".")
+		if (std::filesystem::is_regular_file(p.status()) && p.path().filename().u8string().substr(0, 1) != ".")
 		{
 			intFile++;
 			const int Cnt = load(p, tmp);

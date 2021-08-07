@@ -75,7 +75,7 @@ namespace Cloud
 	{
 #ifdef _WIN32
 		DeleteUrlCacheEntryA(url);
-		if (URLDownloadToFileA(nullptr, url, downloadPath.string().c_str(), 0, nullptr) != S_OK) return -1;
+		if (URLDownloadToFileW(nullptr, reinterpret_cast<const wchar_t*>(convert_a2w(url).c_str()), reinterpret_cast<const wchar_t*>(downloadPath.u16string().c_str()), 0, nullptr) != S_OK) return -1;
 		std::error_code ec;
 		if (!std::filesystem::exists(downloadPath, ec) || ec)return -2;
 		return 0;

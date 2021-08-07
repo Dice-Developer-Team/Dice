@@ -205,12 +205,12 @@ int DiceModManager::load(ResList* resLog)
 		for (auto& pathFile : sModFile) {
 			nlohmann::json j = freadJson(pathFile);
 			if (j.is_null()) {
-				sModErr.push_back(pathFile.filename().string());
+				sModErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
 				continue;
 			}
 			if (j.count("dice_build")) {
 				if (j["dice_build"] > Dice_Build) {
-					sModErr.push_back(pathFile.filename().string() + "(Dice版本过低)");
+					sModErr.push_back(UTF8toGBK(pathFile.filename().u8string()) + "(Dice版本过低)");
 					continue;
 				}
 			}
@@ -237,9 +237,12 @@ int DiceModManager::load(ResList* resLog)
 	vector<string> sLuaErr; 
 	msgorder.clear();
 	for (auto& pathFile : sLuaFile) {
+		// 这段代码会在某些系统上出问题
+		// string() 会调用系统的编码转换函数，在某些系统编码下会抛异常（比如英文系统+中文路径）
+		// 可能的解决方案：在Windows上用Short Path
 		string fileLua = pathFile.string();
 		if (fileLua.rfind(".lua") != fileLua.length() - 4) {
-			sLuaErr.push_back(pathFile.filename().string());
+			sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
 			continue;
 		}
 		std::unordered_map<std::string, std::string> mOrder;
@@ -251,7 +254,7 @@ int DiceModManager::load(ResList* resLog)
 			cntOrder += mOrder.size();
 		}
 		else if (cnt < 0) {
-			sLuaErr.push_back(pathFile.filename().string());
+			sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
 		}
 		std::unordered_map<std::string, std::string> mJob;
 		cnt = lua_readStringTable(fileLua.c_str(), "task_call", mJob);
@@ -262,8 +265,8 @@ int DiceModManager::load(ResList* resLog)
 			cntOrder += mJob.size();
 		}
 		else if (cnt < 0
-				 && *sLuaErr.rbegin() != pathFile.filename().string()) {
-			sLuaErr.push_back(pathFile.filename().string());
+				 && *sLuaErr.rbegin() != UTF8toGBK(pathFile.filename().u8string())) {
+			sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
 		}
 	}
 	*resLog << "读取/plugin/中的" + std::to_string(cntLuaFile) + "个脚本, 共" + std::to_string(cntOrder) + "个指令";
