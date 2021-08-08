@@ -328,6 +328,7 @@ EVE_Enable(eventEnable)
 			}
 		}
 	}
+	DD::debugLog("UserConf Loaded");
 	if (loadFile(DiceDir / "user" / "UserList.txt", UserList) < 1)
 	{
 		set<long long> WhiteQQ;
@@ -349,6 +350,7 @@ EVE_Enable(eventEnable)
 			saveFile(DiceDir / "user" / "UserList.txt", UserList);
 		}
 	}
+	DD::debugLog("UserList Loaded");
 	if (loadBFile(DiceDir / "user" / "ChatConf.RDconf", ChatList) < 1)
 	{
 		set<long long> GroupList;
@@ -437,6 +439,7 @@ EVE_Enable(eventEnable)
 		}
 		saveBFile(DiceDir / "user" / "ChatConf.RDconf", ChatList);
 	}
+	DD::debugLog("ChatConf Loaded");
 	if (loadFile(DiceDir / "user" / "ChatList.txt", ChatList) < 1)
 	{
 		std::map<long long, long long> mGroupInviter;
@@ -452,6 +455,7 @@ EVE_Enable(eventEnable)
 			saveFile(DiceDir / "user" / "ChatList.txt", ChatList);
 		}
 	}
+	DD::debugLog("ChatList Loaded");
 	for (auto gid : DD::getGroupIDList())
 	{
 		chat(gid).group().reset("Î´½ø").reset("ÒÑÍË");
