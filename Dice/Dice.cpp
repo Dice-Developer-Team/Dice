@@ -456,6 +456,7 @@ EVE_Enable(eventEnable)
 	{
 		chat(gid).group().reset("未进").reset("已退");
 	}
+	console.log("GroupList Loaded", 1);
 	blacklist = make_unique<DDBlackManager>();
 	if (blacklist->loadJson(DiceDir / "conf" / "BlackList.json") < 0)
 	{
@@ -469,7 +470,9 @@ EVE_Enable(eventEnable)
 	else {
 		blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true);
 	}
+	console.log("BlackList Loaded", 1);
 	fmt = make_unique<DiceModManager>();
+	console.log("ModManager Loaded", 1);
 	if (loadJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg) < 0)loadJMap(fpFileLoc / "CustomMsg.json", EditedMsg);
 	//预修改出场回复文本
 	if (EditedMsg.count("strSelfName"))GlobalMsg["strSelfName"] = EditedMsg["strSelfName"];
