@@ -393,6 +393,8 @@ void dice_cloudblack(DiceJob& job) {
 		job.echo("同步云不良记录同步失败!文件未找到");
 		break;
 	case 0:
+		isSuccess = true;
+		break;
 	default:
 		break;
 	}
