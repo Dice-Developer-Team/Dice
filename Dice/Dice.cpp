@@ -299,6 +299,7 @@ EVE_Enable(eventEnable)
 		console.loadNotice();
 		console.save();
 	}
+	console.log("Console Loaded", 1);
 	//读取聊天列表
 	if (loadBFile(DiceDir / "user"/ "UserConf.RDconf", UserList) < 1)
 	{
