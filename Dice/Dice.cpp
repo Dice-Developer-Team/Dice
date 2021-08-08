@@ -458,9 +458,10 @@ EVE_Enable(eventEnable)
 	DD::debugLog("ChatList Loaded");
 	for (auto gid : DD::getGroupIDList())
 	{
+		DD::debugLog("Process");
 		chat(gid).group().reset("Î´½ø").reset("ÒÑÍË");
 	}
-	console.log("GroupList Loaded", 1);
+	DD::debugLog("GroupList Loaded");
 	blacklist = make_unique<DDBlackManager>();
 	if (blacklist->loadJson(DiceDir / "conf" / "BlackList.json") < 0)
 	{
@@ -474,7 +475,7 @@ EVE_Enable(eventEnable)
 	else {
 		blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true);
 	}
-	console.log("BlackList Loaded", 1);
+	DD::debugLog("BlackList Loaded");
 	fmt = make_unique<DiceModManager>();
 	console.log("ModManager Loaded", 1);
 	if (loadJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg) < 0)loadJMap(fpFileLoc / "CustomMsg.json", EditedMsg);
