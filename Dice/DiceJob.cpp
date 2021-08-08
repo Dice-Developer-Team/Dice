@@ -373,7 +373,7 @@ void dice_cloudblack(DiceJob& job) {
 		blacklist->loadJson(DiceDir / "conf" / "CloudBlackList.json", true);
 	}
 	if (console["CloudBlackShare"])
-		sch.add_job_for(24 * 60 * 60, "cloudblack");
+		sch.add_job_for(60, "cloudblack");
 }
 
 void log_put(DiceJob& job) {
