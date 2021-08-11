@@ -72,6 +72,7 @@ std::filesystem::path fpFileLoc;
 std::unique_ptr<CivetServer> ManagerServer;
 IndexHandler h_index;
 CustomMsgApiHandler h_msgapi;
+AdminConfigHandler h_config;
 
 constexpr auto msgInit{ R"(欢迎使用Dice!掷骰机器人！
 请发送.system gui开启骰娘的后台面板
@@ -223,15 +224,19 @@ EVE_Enable(eventEnable)
 
 // 初始化服务器
 	mg_init_library(0);
-	/*
+	
 	std::vector<std::string> mg_options = {"listening_ports", "12315"};
 
 	ManagerServer = std::make_unique<CivetServer>(mg_options);
 
 	ManagerServer->addHandler("/", h_index);
 	ManagerServer->addHandler("/api/custommsg", h_msgapi);
-	DD::debugLog("Dice Manager Server running at localhost: 12315");
-	*/
+	ManagerServer->addHandler("/api/admin/config", h_config);
+	// ManagerServer->addHandler("/api/admin/master", h_master);
+	// ManagerServer->addHandler("/api/admin/user", h_user);
+	// ManagerServer->addHandler("/api/extension", h_extension);
+	DD::debugLog("Dice WebUI Manager Server running at localhost: 12315");
+	
 
 
 	mCardTemplet = {
