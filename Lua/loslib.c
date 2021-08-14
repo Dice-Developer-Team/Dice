@@ -139,7 +139,7 @@
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
-#if TARGET_IPHONE_SIMULATOR || TARGET_TARGET_OS_IPHONE
+#if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
 #define NO_OS_EXECUTE
 #endif
 #endif
