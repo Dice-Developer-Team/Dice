@@ -370,6 +370,68 @@ Dice!众筹计划: https://afdian.net/@suhuiw4123)"
 };
 
 std::map<std::string, std::string, less_ci> EditedMsg;
+std::map<std::string, std::string, less_ci> GlobalComment{
+	{"self", "自称，引用自strSelfCall"},
+	//{"strActionEmpty", "当前无用"},
+	{"strAddDiceValErr", "ww指令加骰值非法（过小）"},
+	{"strAddFriend", "通过申请后发送给好友的迎新词"},
+	{"strAddFriendWhiteQQ", "通过受信任用户好友后的迎新词"},
+	{"strAddGroup", "自身入群时群内发送的入场词"},
+	{"strAdminDismiss", "dismiss指令由管理使用时的退场词，默认一致"},
+	{"strAdminOptionEmpty", "admin指令参数为空"},
+	{"stranger", "昵称空白或无法获取时的代称"},
+	{"strBlackGroup", "识别到黑名单群的退场词"},
+	{"strBlackQQAddNotice", "新拉黑QQ为自身用户时发送通知"},
+	{"strBlackQQAddNoticeReason", "带理由的拉黑通知"},
+	{"strBlackQQDelNotice", "解黑通知"},
+	{"strBotMsg", "bot指令附于Dice信息后的文本"},
+	{"strBotOff", "bot指令群内关闭回执"},
+	{"strBotOffAlready", "bot指令群内已经关闭"},
+	{"strBotOn", "bot指令群内开启回执"},
+	{"strBotOnAlready", "bot指令群内已经开启"},
+	//
+	{"strCOCBuild", "coc指令回执"},
+	{"strCriticalSuccess", "多轮检定大成功"},
+	//
+	{"strDeckNew", "deck指令定义牌堆实例"},
+	{"strDeckSet", "deck指令设置公共牌堆为实例"},
+	//
+	{"strDismiss", "dismiss指令退场词"},
+	{"strDismissPrivate", "dismiss指令私聊且对象不明的回执"},
+	{"strDNDBuild", "dnd指令回执"},
+	{"strDrawCard", "draw指令回执"},
+	{"strDrawHidden", "draw暗抽时的公屏回执"},
+	//
+	{"strEnRoll", "en指令回执"},
+	//
+	{"strExtremeSuccess", "多轮检定极难成功"},
+	{"strFailure", "多轮检定与SC失败"},
+	{"strFriendDenyNoTrust", "AllowStranger=0时非信任用户的拒绝回执"},
+	{"strFriendDenyNotUser", "AllowStranger=1时无使用记录的拒绝回执"},
+	{"strFumble", "多轮检定大失败"},
+	{"strGlobalOff", "全局静默时对私聊指令或开启指令的回执"},
+	//
+	{"strGroupAuthorized", "group+许可使用后在目标群的回执"},
+	{"strGroupBan", "group ban禁言群员的回执"},
+	{"strGroupCardSet", "group card修改群名片的回执"},
+	//
+	{"strGroupUnBan", "group ban解除群员禁言的回执"},
+	//
+	{"strHardSuccess", "多轮检定困难成功"},
+	{"strHelpDisabledErr", "group+禁用help后群内help回执"},
+	{"strHelpNotFound", "help未找到近似词条"},
+	{"strHelpRedirect", "help找到唯一近似词条"},
+	{"strHelpSuggestion", "help找到多条近似词条"},
+	{"strHlpMsg", "help指令裸参数回执"},
+	//
+	{"strRollCriticalSuccess", "检定大成功"}, 
+	{"strRollExtremeSuccess", "检定极难成功"},
+	{"strRollHardSuccess", "检定困难成功"},
+	{"strRollRegularSuccess", "检定成功"},
+	{"strRollFailure", "检定失败"},
+	{"strRollFumble", "检定大失败"},
+	{"strSuccess", "多轮检定与SC成功"},
+};
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
 580:过期记录回收
@@ -691,4 +753,8 @@ std::string getMsg(const std::string& key, const std::unordered_map<std::string,
 	const auto it = GlobalMsg.find(key);
 	if (it != GlobalMsg.end())return format(it->second, GlobalMsg, maptmp);
 	return "";
+}
+std::string getComment(const std::string& key) {
+	if (auto it{ GlobalComment.find(key) };it!= GlobalComment.end())return it->second;
+	return {};
 }

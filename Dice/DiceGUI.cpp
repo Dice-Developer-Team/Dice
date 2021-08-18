@@ -150,7 +150,7 @@ public:
 	}
 
 	// 带宽度
-	void AddAllTextColumn(const std::map<std::string, int>& texts)
+	void AddAllTextColumn(const std::vector<std::pair<std::string, int>>& texts)
 	{
 		for (const auto& item : texts)
 		{
@@ -898,11 +898,11 @@ LRESULT DiceGUI::CreateCustomMsgPage()
 	ListViewCustomMsg.SetExtendedListViewStyle(
 		LVS_EX_DOUBLEBUFFER | LVS_EX_AUTOSIZECOLUMNS | LVS_EX_TWOCLICKACTIVATE | LVS_EX_UNDERLINEHOT);
 
-	ListViewCustomMsg.AddAllTextColumn(std::map<std::string, int>{{"标题", 150}, {"内容", 500}});
+	ListViewCustomMsg.AddAllTextColumn(std::vector<std::pair<std::string, int>>({ {"标题", 150}, {"内容", 500}, { "备注", 150 } }));
 	int index = 0;
 	for (const auto& item : GlobalMsg)
 	{
-		ListViewCustomMsg.AddTextRow({item.first, item.second}, index);
+		ListViewCustomMsg.AddTextRow({ item.first, item.second,getComment(item.first) }, index);
 		index++;
 	}
 
@@ -1116,8 +1116,16 @@ int WINAPI GUIMain()
 	std::unordered_map<long long, string> nicknameMp;
 
 	bool LoadStranger = true;
+	//用户记录过多时，仅加载活跃用户
+	bool LoadActiveUser = false;
 	
-	if (UserList.size() > 100)
+	if (UserList.size() > 1000)
+	{
+		LoadActiveUser = true;
+		LoadStranger = false;
+		MessageBox(nullptr, TEXT("用户数量超过1000，仅加载周活跃用户, 跳过非好友用户昵称加载"), TEXT("Dice! GUI"), MB_OK);
+	}
+	else if (UserList.size() > 100)
 	{
 		LoadStranger = false;
 		MessageBox(nullptr, TEXT("用户数量超过100, 跳过非好友用户昵称加载"), TEXT("Dice! GUI"), MB_OK);
@@ -1135,8 +1143,10 @@ int WINAPI GUIMain()
 	const std::set<long long> FriendMp{ DD::getFriendQQList() };
 
 	// 获取Nickname
+	time_t tLimit{ time(NULL) - 86400 * 7 };
 	for (const auto& item : UserList)
 	{
+		if (LoadActiveUser && item.second.tUpdated < tLimit)continue;
 		if (FriendMp.count(item.first) || LoadStranger) {
 			nicknameMp[item.first] = DD::getQQNick(item.first);
 		}

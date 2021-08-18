@@ -97,10 +97,13 @@ extern bool msgSendThreadRunning;
 extern std::map<std::string, std::string, less_ci> GlobalMsg;
 // 修改后的Global语句
 extern std::map<std::string, std::string, less_ci> EditedMsg;
+// 语句注释
+extern std::map<std::string, std::string, less_ci> GlobalComment;
 // 帮助文档
 extern const std::map<std::string, std::string, less_ci> HelpDoc;
 // 修改后的帮助文档
 inline std::map<std::string, std::string, less_ci> CustomHelp;
 std::string getMsg(const std::string& key, const std::unordered_map<std::string, std::string>& tmp = {});
+std::string getComment(const std::string& key);
 
 #endif /*DICE_GLOBAL_VAR*/
