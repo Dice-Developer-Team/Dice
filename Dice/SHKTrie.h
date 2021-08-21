@@ -72,6 +72,7 @@ public:
 	}
 	template<typename Con>
 	void build(const Con& dir) {
+		this->~TrieG();
 		new(this)TrieG(dir);
 	}
 	void insert(const string& key) {
