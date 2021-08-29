@@ -224,6 +224,8 @@ EVE_Enable(eventEnable)
 
 // 初始化服务器
 	mg_init_library(0);
+
+#ifdef ENABLE_WEBUI
 	
 	std::vector<std::string> mg_options = {"listening_ports", "12315"};
 
@@ -237,6 +239,7 @@ EVE_Enable(eventEnable)
 	// ManagerServer->addHandler("/api/extension", h_extension);
 	DD::debugLog("Dice WebUI Manager Server running at localhost: 12315");
 	
+#endif
 
 
 	mCardTemplet = {
