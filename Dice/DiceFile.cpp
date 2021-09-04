@@ -142,31 +142,6 @@ void fwrite(ofstream& fout, const std::string& s)
 	fout.write(reinterpret_cast<char*>(&len), sizeof(short));
 	fout.write(s.c_str(), sizeof(char) * s.length());
 }
-void fwrite(ofstream& fout, const var& val) {
-	short idx(-1);
-	switch (val.index()) {
-	case 0:
-		fout.write(reinterpret_cast<char*>(&idx), sizeof(short));
-		break;
-	case 1: {
-		idx = -2;
-		fout.write(reinterpret_cast<char*>(&idx), sizeof(short));
-		int i = std::get<int>(val);
-		fout.write(reinterpret_cast<char*>(&i), sizeof(int));
-		break;
-	}
-	case 2: {
-		idx = -3;
-		fout.write(reinterpret_cast<char*>(&idx), sizeof(short));
-		double f = std::get<double>(val);
-		fout.write(reinterpret_cast<char*>(&f), sizeof(double));
-		break;
-	}
-	case 3:
-		fwrite(fout, std::get<string>(val));
-		break;
-	}
-}
 
 void readini(ifstream& fin, std::string& s)
 {

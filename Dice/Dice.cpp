@@ -7,8 +7,8 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2020 w4123溯洄
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2018-2021 w4123溯洄
+ * Copyright (C) 2019-2021 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -148,6 +148,12 @@ void loadData()
 //初始化
 void dataInit()
 {
+	//仅启动时读取用户数据
+	loadBFile(DiceDir / "user" / "PlayerCards.RDconf", PList);
+	for (const auto& pl : PList)
+	{
+		if (!UserList.count(pl.first))getUser(pl.first);
+	}
 	gm = make_unique<DiceTableMaster>();
 	if (gm->load() < 0)
 	{
@@ -347,14 +353,14 @@ EVE_Enable(eventEnable)
 		if (loadFile(fpFileLoc / "Default.RDconf", DefaultDice) > 0)
 			for (auto p : DefaultDice)
 			{
-				getUser(p.first).create(NEWYEAR).intConf["默认骰"] = p.second;
+				getUser(p.first).intConf["默认骰"] = p.second;
 			}
 		map<long long, string> DefaultRule;
 		if (loadFile(fpFileLoc / "DefaultRule.RDconf", DefaultRule) > 0)
 			for (auto p : DefaultRule)
 			{
 				if (isdigit(static_cast<unsigned char>(p.second[0])))break;
-				getUser(p.first).create(NEWYEAR).strConf["默认规则"] = p.second;
+				getUser(p.first).strConf["默认规则"] = p.second;
 			}
 		ifstream ifName(fpFileLoc / "Name.dicedb");
 		if (ifName)
@@ -364,7 +370,7 @@ EVE_Enable(eventEnable)
 			while (ifName >> GroupID >> QQ >> name)
 			{
 				name = base64_decode(name);
-				getUser(QQ).create(NEWYEAR).setNick(GroupID, name);
+				getUser(QQ).setNick(GroupID, name);
 			}
 		}
 	}
@@ -374,16 +380,16 @@ EVE_Enable(eventEnable)
 		if (loadFile(fpFileLoc / "WhiteQQ.RDconf", WhiteQQ) > 0)
 			for (auto qq : WhiteQQ)
 			{
-				getUser(qq).create(NEWYEAR).trust(1);
+				getUser(qq).trust(1);
 			}
 		//读取管理员列表
 		set<long long> AdminQQ;
 		if (loadFile(fpFileLoc / "AdminQQ.RDconf", AdminQQ) > 0)
 			for (auto qq : AdminQQ)
 			{
-				getUser(qq).create(NEWYEAR).trust(4);
+				getUser(qq).trust(4);
 			}
-		if (console.master())getUser(console.master()).create(NEWYEAR).trust(5);
+		if (console.master())getUser(console.master()).trust(5);
 		if (UserList.size()){
 			console.log("初始化用户记录" + to_string(UserList.size()) + "条", 1);
 			saveFile(DiceDir / "user" / "UserList.txt", UserList);
@@ -427,8 +433,8 @@ EVE_Enable(eventEnable)
 			for (const auto& it : mDefault)
 			{
 				if (it.first.second == msgtype::Private)getUser(it.first.first)
-				                                        .create(NEWYEAR).setConf("rc房规", it.second);
-				else chat(it.first.first).create(NEWYEAR).setConf("rc房规", it.second);
+				                                        .setConf("rc房规", it.second);
+				else chat(it.first.first).setConf("rc房规", it.second);
 			}
 		if (loadFile(fpFileLoc / "DisabledGroup.RDconf", GroupList) > 0)
 			for (auto p : GroupList)
@@ -460,14 +466,6 @@ EVE_Enable(eventEnable)
 				chat(p).group().set("禁用ob");
 			}
 		GroupList.clear();
-		map<long long, string> WelcomeMsg;
-		if (loadFile(fpFileLoc / "WelcomeMsg.RDconf", WelcomeMsg) > 0)
-		{
-			for (const auto& p : WelcomeMsg)
-			{
-				chat(p.first).group().setText("入群欢迎", p.second);
-			}
-		}
 		if (loadFile(fpFileLoc / "WhiteGroup.RDconf", GroupList) > 0)
 		{
 			for (auto g : GroupList)
@@ -521,27 +519,6 @@ EVE_Enable(eventEnable)
 	}
 	DD::debugLog("Dice.loadData");
 	loadData();
-	if (loadBFile(DiceDir / "user" / "PlayerCards.RDconf", PList) < 1)
-	{
-		ifstream ifstreamCharacterProp(fpFileLoc / "CharacterProp.RDconf");
-		if (ifstreamCharacterProp)
-		{
-			long long QQ, GrouporDiscussID;
-			int Type, Value;
-			string SkillName;
-			while (ifstreamCharacterProp >> QQ >> Type >> GrouporDiscussID >> SkillName >> Value)
-			{
-				if (SkillName == "智力/灵感")SkillName = "智力";
-				getPlayer(QQ)[0].set(SkillName, Value);
-			}
-			console.log("初始化角色卡记录" + to_string(PList.size()) + "条", 1);
-		}
-		ifstreamCharacterProp.close();
-	}
-	for (const auto& pl : PList)
-	{
-		if (!UserList.count(pl.first))getUser(pl.first).create(NEWYEAR);
-	}
 	dataInit();
 	// 确保线程执行结束
 	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
@@ -692,7 +669,7 @@ bool eve_GroupAdd(Chat& grp)
 		}
 		if (!blacks.empty())
 		{
-			string strNote = "发现黑名单群员" + blacks.show();
+			string strNote = "\n发现黑名单群员" + blacks.show();
 			strMsg += strNote;
 		}
 		if (console["Private"] && !grp.isset("许可使用"))
@@ -830,7 +807,10 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 	}
 	else{
 		if (!grp.inviter)grp.inviter = operatorQQ;
-		if (!grp.tLastMsg)grp.set("未进");
+		{
+			unique_lock<std::mutex> lock_queue(GroupAddMutex);
+			if (!grp.tLastMsg)grp.set("未进");
+		}
 		return eve_GroupAdd(grp);
 	}
 	return 0;

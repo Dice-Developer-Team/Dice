@@ -31,6 +31,38 @@ using std::map;
 
 constexpr short NOT_FOUND = -32767;
 
+class AttrVar {
+public:
+	enum class AttrType { Nil, Boolean, Integer, Number, Text };
+	AttrType type{ 0 };
+	union {
+		bool bit;		//1
+		int attr{ 0 };		//2
+		double number;	//3
+		string text;	//4
+		//table;		//5
+		//function;		//6
+	};
+	AttrVar() {}
+	AttrVar(const AttrVar& other);
+	AttrVar(const string& s) :type(AttrType::Text), text(s) {}
+	void des() {
+		if (type == AttrType::Text)text.~string();
+	}
+	~AttrVar() {
+		des();
+	}
+	AttrVar& operator=(const AttrVar& other);
+	AttrVar& operator=(bool other);
+	AttrVar& operator=(int other);
+	AttrVar& operator=(double other);
+	AttrVar& operator=(const string& other);
+	int to_int()const;
+	string to_str()const;
+	void writeb(std::ofstream& fout) const;
+	void readb(std::ifstream& fin);
+};
+
 inline map<string, short> mTempletTag = {
 	{"name", 1},
 	{"type", 2},
@@ -48,10 +80,11 @@ inline map<string, short> mTempletTag = {
 inline map<string, short> mCardTag = {
 	{"Name", 1},
 	{"Type", 2},
-	{"Attr", 11},
+	{"Attrs", 3},
+	{"Attr", 11},	//older
 	{"DiceExp", 21},
-	{"Note", 101},
-	{"Info", 102},
+	{"Note", 101},	//older
+	{"Info", 102},	//older
 	{"End", 255}
 };
 
@@ -135,54 +168,7 @@ public:
 		readt(d);
 	}
 
-	void readt(const DDOM& d)
-	{
-		for (const auto& node : d.vChild)
-		{
-			switch (mTempletTag[node.tag])
-			{
-			case 2:
-				type = node.strValue;
-				break;
-			case 20:
-				readini(node.strValue, replaceName);
-				break;
-			case 31:
-				vBasicList.clear();
-				for (const auto& sub : node.vChild)
-				{
-					vBasicList.push_back(getLines(sub.strValue));
-				}
-				break;
-			case 102:
-				for (const auto& sub : getLines(node.strValue))
-				{
-					sInfoList.insert(sub);
-				}
-				break;
-			case 22:
-				readini(node.strValue, mAutoFill);
-				break;
-			case 23:
-				readini(node.strValue, mVariable);
-				break;
-			case 21:
-				readini(node.strValue, mExpression);
-				break;
-			case 12:
-				readini(node.strValue, defaultSkill);
-				break;
-			case 41:
-				for (const auto& sub : node.vChild)
-				{
-					mBuildOption[sub.strValue] = CardBuild(sub);
-				}
-				break;
-			default:
-				break;
-			}
-		}
-	}
+	void readt(const DDOM& d);
 
 	string getName()
 	{
@@ -206,13 +192,15 @@ struct lua_State;
 class CharaCard
 {
 private:
-	string Name = "角色卡";
+	string Name = "角色卡"; 
+	std::mutex cardMutex;
 public:
 	const string& getName()const { return Name; }
 	void setName(const string&);
+	void setType(const string&);
 	//string Type = "COC7";
-	map<string, short, less_ci> Attr{};
-	map<string, string, less_ci> Info{ {"__Type","COC7"} };
+	map<string, AttrVar, less_ci> Attr{ {"__Type",AttrVar("COC7")} };
+	//map<string, string, less_ci> Info{  };
 	map<string, string, less_ci> DiceExp{};
 	string Note;
 	CardTemp* pTemplet{ nullptr };
@@ -220,23 +208,39 @@ public:
 	CharaCard(){
 		pTemplet = &getCardTemplet("BRP");
 	}
+	CharaCard(const CharaCard& pc)
+	{
+		Name = pc.Name;
+		Attr = pc.Attr;
+		DiceExp = pc.DiceExp;
+		Note = pc.Note;
+		pTemplet = pc.pTemplet;
+	}
+	CharaCard& operator=(const CharaCard& pc)
+	{
+		Name = pc.Name;
+		Attr = pc.Attr;
+		DiceExp = pc.DiceExp;
+		Note = pc.Note;
+		pTemplet = pc.pTemplet;
+		return *this;
+	}
 
 	CharaCard(const string& name, const string& type = "COC7") : Name(name)
 	{
-		Info["__Type"] = type;
-		Info["__Name"] = name;
-		pTemplet = &getCardTemplet(type);
+		Attr["__Name"] = name;
+		setType(type);
 	}
 
-	short call(string& key)
+	int call(string& key)
 	{
-		if (Attr.count(key))return Attr.find(key)->second;
+		if (Attr.count(key))return Attr.find(key)->second.to_int();
 		key = standard(key);
-		if (Attr.count(key))return Attr.find(key)->second;
+		if (Attr.count(key))return Attr.find(key)->second.to_int();
 		if (pTemplet->mAutoFill.count(key))
 		{
 			Attr[key] = cal(pTemplet->mAutoFill.find(key)->second);
-			return Attr[key];
+			return Attr[key].to_int();
 		}
 		if (pTemplet->mVariable.count(key))
 		{
@@ -268,22 +272,7 @@ public:
 	}
 
 	//求key对应掷骰表达式
-	string getExp(string& key, set<string> sRef = {})
-	{
-		sRef.insert(key);
-		std::map<string, string>::const_iterator exp = DiceExp.find(key);
-		if (exp != DiceExp.end()) return escape(exp->second, sRef);
-		exp = pTemplet->mExpression.find(key);
-		if (exp != pTemplet->mExpression.end()) return escape(exp->second, sRef);
-		key = standard(key);
-		std::map<string, short>::const_iterator val = Attr.find(key);
-		if (val != Attr.end())return to_string(val->second);
-		exp = pTemplet->mVariable.find(key);
-		if (exp != pTemplet->mVariable.end())return to_string(cal(exp->second));
-		val = pTemplet->defaultSkill.find(key);
-		if (val != pTemplet->defaultSkill.end())return to_string(val->second);
-		return "0";
-	}
+	string getExp(string& key, set<string> sRef = {});
 
 	bool countExp(const string& key)
 	{
@@ -291,7 +280,7 @@ public:
 	}
 
 	//计算表达式
-	short cal(string exp)
+	int cal(string exp)
 	{
 		if (exp[0] == '&')
 		{
@@ -328,8 +317,8 @@ public:
 				//info
 			else if (pTemplet->sInfoList.count(it2.first))
 			{
-				if (Info.count(it2.first))continue;
-				Info[it2.first] = CardDeck::draw(it2.second);
+				if (Attr.count(it2.first))continue;
+				Attr[it2.first] = CardDeck::draw(it2.second);
 			}
 				//attr
 			else
@@ -370,7 +359,7 @@ public:
 		return key;
 	}
 
-	int set(string key, short val)
+	int set(string key, int val)
 	{
 		if (key.empty())return -1;
 		key = standard(key);
@@ -383,7 +372,7 @@ public:
 		return 0;
 	}
 
-	int setInfo(const string& key, const string& s);
+	int set(const string& key, const string& s);
 
 	int setExp(const string& key, const string& exp)
 	{
@@ -403,15 +392,6 @@ public:
 	bool erase(string& key, bool isExp = false)
 	{
 		const string strKey = standard(key);
-		if (pTemplet->sInfoList.count(key))
-		{
-			if (Info.count(key))
-			{
-				Info.erase(key);
-				return true;
-			}
-			return false;
-		}
 		if (!isExp && Attr.count(key))
 		{
 			Attr.erase(strKey);
@@ -446,13 +426,17 @@ public:
 		return Attr.count(key) || pTemplet->mAutoFill.count(key) || pTemplet->defaultSkill.count(key);
 	}
 
-	short& operator[](const string& key);
+	void cntRollStat(int die, int face);
+
+	void cntRcStat(int die, int rate);
+
+	AttrVar& operator[](const string& key);
 
 	void operator<<(const CharaCard& card)
 	{
 		const string name = Name;
-		(*this) = card;
-		Name = name;
+		*this = card;
+		Attr["__Name"] = Name = name;
 	}
 
 	void writeb(std::ofstream& fout) const;
@@ -467,13 +451,15 @@ class Player
 {
 private:
 	short indexMax = 0;
-	map<unsigned short, CharaCard> mCardList{{0, {"角色卡"}}};
+	map<unsigned short, CharaCard> mCardList;
 	map<string, unsigned short> mNameIndex;
 	map<unsigned long long, unsigned short> mGroupIndex{{0, 0}};
 	// 人物卡互斥
 	std::mutex cardMutex;
 public:
-	Player() = default;
+	Player() {
+		mCardList[0] = { "角色卡" };
+	}
 
 	Player(const Player& pl)
 	{
@@ -533,7 +519,7 @@ public:
 		//if (!getmCardTemplet().count(type))return -2;
 		if (mNameIndex.count(s))return -4;
 		if (s.find("=") != string::npos)return -6;
-		mCardList[++indexMax] = CharaCard(s, type);
+		mCardList.emplace(++indexMax, CharaCard{ s, type });
 		CharaCard& card = mCardList[indexMax];
 		// CardTemp& temp = mCardTemplet[type];
 		while (!vOption.empty())
@@ -649,7 +635,7 @@ public:
 			//人物卡数量上限
 			if (mCardList.size() > 16)return -1;
 			if (name1.find(":") != string::npos)return -6;
-			mCardList[++indexMax] = name1;
+			mCardList[++indexMax].setName(name1);
 			mNameIndex[name1] = indexMax;
 		}
 		(*this)[name1] << (*this)[name2];
@@ -737,7 +723,7 @@ public:
 			for (const auto& skill : it.second.Attr)
 			{
 				skills.add(skill.first);
-				skills.add(skill.second);
+				skills.add(skill.second.to_str());	//need fix
 			}
 			card.add(skills);
 			card.add(it.second.Note);
@@ -761,16 +747,7 @@ public:
 		fwrite(fout, mGroupIndex);
 	}
 
-	void readb(std::ifstream& fin)
-	{
-		indexMax = fread<short>(fin);
-		mCardList = fread<unsigned short, CharaCard>(fin);
-		for (const auto& card : mCardList)
-		{
-			mNameIndex[card.second.getName()] = card.first;
-		}
-		mGroupIndex = fread<unsigned long long, unsigned short>(fin);
-	}
+	void readb(std::ifstream& fin);
 };
 
 inline map<long long, Player> PList;

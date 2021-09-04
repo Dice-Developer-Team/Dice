@@ -12,6 +12,7 @@
 #include "DiceNetwork.h"
 #include "DiceCloud.h"
 #include "DiceGUI.h"
+#include "DiceStatic.hpp"
 #include <memory>
 #include <ctime>
 #include <regex>
@@ -1059,9 +1060,7 @@ int FromMsg::BasicOrder()
 			string strOption = readRest();
 			if (strOption == "public"){
 				console.set("BelieveDiceList", 1);
-				console.set("AllowStranger", 1);
 				console.set("LeaveBlackQQ", 1);
-				console.set("BannedLeave", 1);
 				console.set("BannedBanInviter", 1);
 				console.set("KickedBanInviter", 1);
 			}
@@ -1378,12 +1377,12 @@ int FromMsg::InnerOrder() {
 #endif
 		if (strOption == "save") {
 			dataBackUp();
-			note("已手动保存数据√", 0b1);
+			note("已手动保存{self}的数据√", 0b1);
 			return 1;
 		}
 		if (strOption == "load") {
 			loadData();
-			note("已手动加载数据√", 0b1);
+			note("已手动加载{self}的配置√", 0b1);
 			return 1;
 		}
 		if (strOption == "state")
@@ -2572,21 +2571,21 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en") {
-		intMsgCnt += 2;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
-		if (strMsg.length() == intMsgCnt) {
-			reply(fmt->get_help("en"));
-			return 1;
-		}
-		strVar["attr"] = readAttrName();
-		string strCurrentValue = readDigit(false);
-		short nCurrentVal;
-		short* pVal = &nCurrentVal;
+	intMsgCnt += 2;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+		intMsgCnt++;
+	if (strMsg.length() == intMsgCnt) {
+		reply(fmt->get_help("en"));
+		return 1;
+	}
+	string& strAttr = strVar["attr"] = readAttrName();
+	string strCurrentValue{ readDigit(false) };
+	CharaCard* pc{ PList.count(fromQQ) ? &getPlayer(fromQQ)[fromGroup] : nullptr };
+	int intVal{ 0 };
 		//获取技能原值
 		if (strCurrentValue.empty()) {
-			if (PList.count(fromQQ) && !strVar["attr"].empty() && (getPlayer(fromQQ)[fromGroup].stored(strVar["attr"]))) {
-				pVal = &getPlayer(fromQQ)[fromGroup][strVar["attr"]];
+			if (pc && !strAttr.empty() && (pc->stored(strAttr))) {
+				intVal = getPlayer(fromQQ)[fromGroup][strAttr].to_int();
 			}
 			else {
 				reply(GlobalMsg["strEnValEmpty"]);
@@ -2598,7 +2597,7 @@ int FromMsg::InnerOrder() {
 				reply(GlobalMsg["strEnValInvalid"]);
 				return 1;
 			}
-			nCurrentVal = stoi(strCurrentValue);
+			intVal = stoi(strCurrentValue);
 		}
 		readSkipSpace();
 		//可变成长值表达式
@@ -2615,11 +2614,12 @@ int FromMsg::InnerOrder() {
 			}
 			else strEnSuc = strEnChange;
 		}
-		if (strVar["attr"].empty())strVar["attr"] = GlobalMsg["strEnDefaultName"];
+		if (strAttr.empty())strAttr = GlobalMsg["strEnDefaultName"];
 		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
-		strVar["res"] = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(*pVal) + " ";
-
-		if (intTmpRollRes <= *pVal && intTmpRollRes <= 95) {
+		//成长检定仅计入掷骰统计，不计入检定统计
+		if (pc)pc->cntRollStat(intTmpRollRes, 100);
+		strVar["res"] = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(intVal) + " ";
+		if (intTmpRollRes <= intVal && intTmpRollRes <= 95) {
 			if (strEnFail.empty()) {
 				strVar["res"] += GlobalMsg["strFailure"];
 				reply(GlobalMsg["strEnRollNotChange"]);
@@ -2631,26 +2631,24 @@ int FromMsg::InnerOrder() {
 				reply(GlobalMsg["strValueErr"]);
 				return 1;
 			}
-			*pVal += rdEnFail.intTotal;
-			if (*pVal > 32767)*pVal = 32767;
-			if (*pVal < -32767)*pVal = -32767;
+			intVal = intVal + rdEnFail.intTotal;
 			strVar["change"] = rdEnFail.FormCompleteString();
-			strVar["final"] = to_string(*pVal);
+			strVar["final"] = to_string(intVal);
 			reply(GlobalMsg["strEnRollFailure"]);
-			return 1;
 		}
-		strVar["res"] += GlobalMsg["strSuccess"];
-		RD rdEnSuc(strEnSuc);
-		if (rdEnSuc.Roll()) {
-			reply(GlobalMsg["strValueErr"]);
-			return 1;
+		else {
+			strVar["res"] += GlobalMsg["strSuccess"];
+			RD rdEnSuc(strEnSuc);
+			if (rdEnSuc.Roll()) {
+				reply(GlobalMsg["strValueErr"]);
+				return 1;
+			}
+			intVal = intVal + rdEnSuc.intTotal;
+			strVar["change"] = rdEnSuc.FormCompleteString();
+			strVar["final"] = to_string(intVal);
+			reply(GlobalMsg["strEnRollSuccess"]);
 		}
-		*pVal += rdEnSuc.intTotal;
-		if (*pVal > 32767)*pVal = 32767;
-		if (*pVal < -32767)*pVal = -32767;
-		strVar["change"] = rdEnSuc.FormCompleteString();
-		strVar["final"] = to_string(*pVal);
-		reply(GlobalMsg["strEnRollSuccess"]);
+		if (pc)pc->set(strAttr, intVal);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "li") {
@@ -2846,7 +2844,7 @@ int FromMsg::InnerOrder() {
 		if (strOption == "show") {
 			string strName = readRest();
 			strVar["char"] = pl.getCard(strName, fromGroup).getName();
-			strVar["type"] = pl.getCard(strName, fromGroup).Info["__Type"];
+			strVar["type"] = pl.getCard(strName, fromGroup).Attr["__Type"].to_str();
 			strVar["show"] = pl[strVar["char"]].show(true);
 			reply(GlobalMsg["strPcCardShow"]);
 			return 1;
@@ -2856,7 +2854,7 @@ int FromMsg::InnerOrder() {
 			filter_CQcode(strVar["char"]);
 			switch (pl.newCard(strVar["char"], fromGroup)) {
 			case 0:
-				strVar["type"] = pl[fromGroup].Info["__Type"];
+				strVar["type"] = pl[fromGroup].Attr["__Type"].to_str();
 				strVar["show"] = pl[fromGroup].show(true);
 				if (strVar["show"].empty())reply(GlobalMsg["strPcNewEmptyCard"]);
 				else reply(GlobalMsg["strPcNewCardShow"]);
@@ -2983,6 +2981,61 @@ int FromMsg::InnerOrder() {
 			}
 			return 1;
 		}
+		if (strOption == "stat") {
+			CharaCard& pc{ pl[fromGroup] };
+			bool isEmpty{ true };
+			ResList res;
+			int intFace{ pc.count("__DefaultDice")
+				? pc.call(string("__DefaultDice"))
+				: get(getUser(fromQQ).intConf, string("默认骰"), 100) };
+			string strFace{ to_string(intFace) };
+			string keyStatCnt{ "__StatD" + strFace + "Cnt" };	//掷骰次数
+			if (intFace <= 100 && pc.count(keyStatCnt)) {
+				int cntRoll{ pc[keyStatCnt].to_int() };	
+				if (cntRoll > 0) {
+					isEmpty = false;
+					res << "D" + strFace + "统计次数: " + to_string(cntRoll);
+					int sumRes{ pc["__StatD" + strFace + "Sum"].to_int() };		//点数和
+					int sumResSqr{ pc["__StatD" + strFace + "SqrSum"].to_int() };	//点数平方和
+					DiceEst stat{ intFace,cntRoll,sumRes,sumResSqr };
+					if (stat.estMean > 0)
+						res << "均值: " + toString(stat.estMean, 2, true) + " [" + toString(stat.expMean) + "]";
+					if (stat.pNormDist) {
+						if (stat.pNormDist < 0.5)res << "均值低于" + toString(100 - stat.pNormDist * 100, 2) + "%的用户";
+						else res << "均值高于" + toString(stat.pNormDist * 100, 2) + "%的用户";
+					}
+					if (stat.estStd > 0) {
+						res << "标准差: " + toString(stat.estStd, 2) + " [" + toString(stat.expStd) + "]";
+					}
+					/*if (stat.pZtest > 0) {
+						res << "Z检验“偏心”水平: " + toString(stat.pZtest * 100, 2) + "%";
+					}*/
+				}
+			}
+			string keyRcCnt{ "__StatRcCnt" };	//rc/sc检定次数
+			if (pc.count(keyRcCnt)) {
+				int cntRc{ pc["__StatRcCnt"].to_int() };
+				if (cntRc > 0) {
+					isEmpty = false;
+					res << "检定统计次数: " + to_string(cntRc);
+					int sumRcSuc{ pc["__StatRcSumSuc"].to_int() };//实际成功数
+					int sumRcRate{ pc["__StatRcSumRate"].to_int() };//总成功率
+					res << "检定[期望]成功率: " + toString((double)sumRcSuc / cntRc * 100) + "%" + "(" + to_string(sumRcSuc) + ") [" + toString((double)sumRcRate / cntRc) + "%]";
+					if (pc.count("__StatRcCnt5") || pc.count("__StatRcCnt96"))
+						res << "5- | 96+ 出现率: " + toString((double)pc["__StatRcCnt5"].to_int() / cntRc * 100) + "%" + "(" + pc["__StatRcCnt5"].to_str() + ") | " + toString((double)pc["__StatRcCnt96"].to_int() / cntRc * 100) + "%" + "(" + pc["__StatRcCnt96"].to_str() + ")";
+					if(pc.count("__StatRcCnt1")|| pc.count("__StatRcCnt100"))
+						res << "1 | 100 出现次数: " + to_string(pc["__StatRcCnt1"].to_int()) + " | " + to_string(pc["__StatRcCnt100"].to_int());
+				}
+			}
+			if (isEmpty) {
+				reply(GlobalMsg["strPcStatEmpty"]);
+			}
+			else {
+				strVar["stat"] = res.show();
+				reply(GlobalMsg["strPcStatShow"]);
+			}
+			return 1;
+		}
 		if (strOption == "clr") {
 			PList.erase(fromQQ);
 			reply(GlobalMsg["strPcClr"]);
@@ -2992,16 +3045,16 @@ int FromMsg::InnerOrder() {
 			strVar["new_type"] = strip(readRest());
 			if (strVar["new_type"].empty()) {
 				strVar["attr"] = "模板类";
-				strVar["val"] = pl[fromGroup].Info["__Type"];
+				strVar["val"] = pl[fromGroup].Attr["__Type"].to_str();
 				reply(GlobalMsg["strProp"]);
 			}
 			else {
-				pl[fromGroup].setInfo("__Type", strVar["new_type"]);
+				pl[fromGroup].setType(strVar["new_type"]);
 				reply(GlobalMsg["strSetPropSuccess"]);
 			}
 			return 1;
 		}
-		else if (strOption == "temp") {
+		if (strOption == "temp") {
 			CardTemp& temp{ *pl[fromGroup].pTemplet};
 			reply(temp.show());
 			return 1;
@@ -3051,7 +3104,11 @@ int FromMsg::InnerOrder() {
 		int intSkillDivisor = 1;
 		//自动成功
 		bool isAutomatic = false;
+		//D100且有角色卡时计入统计
+		bool isStatic = PList.count(fromQQ);
+		CharaCard* pc{ isStatic ? &PList[fromQQ][fromGroup] : nullptr };
 		if ((strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') && strLowerMessage[intMsgCnt - 1] != ' ') {
+			isStatic = false;
 			strMainDice = strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
@@ -3070,8 +3127,6 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		strVar["attr"] = strMsg.substr(intMsgCnt);
-		if (PList.count(fromQQ) && PList[fromQQ][fromGroup].count(strVar["attr"]))intMsgCnt = strMsg.length();
-		else strVar["attr"] = readAttrName();
 		if (strVar["attr"].find("自动成功") == 0) {
 			strDifficulty = strVar["attr"].substr(0, 8);
 			strVar["attr"] = strVar["attr"].substr(8);
@@ -3082,6 +3137,8 @@ int FromMsg::InnerOrder() {
 			intDifficulty = (strVar["attr"].substr(0, 4) == "困难") ? 2 : 5;
 			strVar["attr"] = strVar["attr"].substr(4);
 		}
+		if (pc && pc->count(strVar["attr"]))intMsgCnt = strMsg.length();
+		else strVar["attr"] = readAttrName();
 		if (strLowerMessage[intMsgCnt] == '*' && isdigit(strLowerMessage[intMsgCnt + 1])) {
 			intMsgCnt++;
 			readNum(intSkillMultiple);
@@ -3113,14 +3170,14 @@ int FromMsg::InnerOrder() {
 		strVar["reason"] = readRest();
 		int intSkillVal;
 		if (strSkillVal.empty()) {
-			if (PList.count(fromQQ) && PList[fromQQ][fromGroup].count(strVar["attr"])) {
+			if (pc && pc->count(strVar["attr"])) {
 				intSkillVal = PList[fromQQ][fromGroup].call(strVar["attr"]);
 			}
 			else {
-				if (!PList.count(fromQQ) && SkillNameReplace.count(strVar["attr"])) {
+				if (!pc && SkillNameReplace.count(strVar["attr"])) {
 					strVar["attr"] = SkillNameReplace[strVar["attr"]];
 				}
-				if (!PList.count(fromQQ) && SkillDefaultVal.count(strVar["attr"])) {
+				if (!pc && SkillDefaultVal.count(strVar["attr"])) {
 					intSkillVal = SkillDefaultVal[strVar["attr"]];
 				}
 				else {
@@ -3136,6 +3193,7 @@ int FromMsg::InnerOrder() {
 		else {
 			intSkillVal = stoi(strSkillVal);
 		}
+		//最终成功率计入检定统计
 		int intFianlSkillVal = (intSkillVal * intSkillMultiple + intSkillModify) / intSkillDivisor / intDifficulty;
 		if (intFianlSkillVal < 0 || intFianlSkillVal > 1000) {
 			reply(GlobalMsg["strSuccessRateErr"]);
@@ -3166,6 +3224,10 @@ int FromMsg::InnerOrder() {
 		string strAns;
 		if (intTurnCnt == 1) {
 			rdMainDice.Roll();
+			if (isStatic) {
+				pc->cntRollStat(rdMainDice.intTotal, 100);
+				pc->cntRcStat(rdMainDice.intTotal, intFianlSkillVal);
+			}
 			strAns = rdMainDice.FormCompleteString() + "/" + to_string(intFianlSkillVal) + " ";
 			int intRes = RollSuccessLevel(rdMainDice.intTotal, intFianlSkillVal, intRule);
 			switch (intRes) {
@@ -3192,6 +3254,10 @@ int FromMsg::InnerOrder() {
 			Res.dot("\n");
 			while (intTurnCnt--) {
 				rdMainDice.Roll();
+				if (isStatic) {
+					pc->cntRollStat(rdMainDice.intTotal, 100);
+					pc->cntRcStat(rdMainDice.intTotal, intFianlSkillVal);
+				}
 				strAns = rdMainDice.FormCompleteString() + "/" + to_string(intFianlSkillVal) + " ";
 				int intRes = RollSuccessLevel(rdMainDice.intTotal, intFianlSkillVal, intRule);
 				switch (intRes) {
@@ -3301,10 +3367,10 @@ int FromMsg::InnerOrder() {
 		}
 		string attr = "理智";
 		int intSan = 0;
-		auto* pSan = (short*)&intSan;
+		CharaCard* pc{ PList.count(fromQQ) ? &getPlayer(fromQQ)[fromGroup] : nullptr };
 		if (readNum(intSan)) {
-			if (PList.count(fromQQ) && getPlayer(fromQQ)[fromGroup].count(attr)) {
-				pSan = &getPlayer(fromQQ)[fromGroup][attr];
+			if (pc && pc->count(attr)) {
+				intSan = pc->call(attr);
 			}
 			else {
 				reply(GlobalMsg["strSanEmpty"]);
@@ -3333,38 +3399,44 @@ int FromMsg::InnerOrder() {
 			reply(GlobalMsg["strSanCostInvalid"]);
 			return 1;
 		}
-		if (*pSan == 0) {
+		if (intSan <= 0) {
 			reply(GlobalMsg["strSanInvalid"]);
 			return 1;
 		}
 		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
-		strVar["res"] = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(*pSan) + " ";
+		//理智检定计入统计
+		if (pc) {
+			pc->cntRollStat(intTmpRollRes, 100);
+			pc->cntRcStat(intTmpRollRes, intSan);
+		}
+		strVar["res"] = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(intSan) + " ";
 		//调用房规
 		int intRule = fromGroup
 			? get(chat(fromGroup).intConf, string("rc房规"), 0)
 			: get(getUser(fromQQ).intConf, string("rc房规"), 0);
-		switch (RollSuccessLevel(intTmpRollRes, *pSan, intRule)) {
+		switch (RollSuccessLevel(intTmpRollRes, intSan, intRule)) {
 		case 5:
 		case 4:
 		case 3:
 		case 2:
 			strVar["res"] += GlobalMsg["strSuccess"];
 			strVar["change"] = rdSuc.FormCompleteString();
-			*pSan = max(0, *pSan - rdSuc.intTotal);
+			intSan = max(0, intSan - rdSuc.intTotal);
 			break;
 		case 1:
 			strVar["res"] += GlobalMsg["strFailure"];
 			strVar["change"] = rdFail.FormCompleteString();
-			*pSan = max(0, *pSan - rdFail.intTotal);
+			intSan = max(0, intSan - rdFail.intTotal);
 			break;
 		case 0:
 			strVar["res"] += GlobalMsg["strFumble"];
 			rdFail.Max();
 			strVar["change"] = rdFail.strDice + "最大值=" + to_string(rdFail.intTotal);
-			*pSan = max(0, *pSan - rdFail.intTotal);
+			intSan = max(0, intSan - rdFail.intTotal);
 			break;
 		}
-		strVar["final"] = to_string(*pSan);
+		strVar["final"] = to_string(intSan);
+		if (pc)pc->set(attr, intSan);
 		reply(GlobalMsg["strSanRollRes"]);
 		return 1;
 	}
@@ -3416,7 +3488,7 @@ int FromMsg::InnerOrder() {
 			strVar["attr"] = readAttrName();
 			if (strVar["attr"].empty()) {
 				strVar["char"] = pc.getName();
-				strVar["type"] = pc.Info["__Type"];
+				strVar["type"] = pc.Attr["__Type"].to_str();
 				strVar["show"] = pc.show(false);
 				reply(GlobalMsg["strPropList"]);
 				return 1;
@@ -3463,7 +3535,7 @@ int FromMsg::InnerOrder() {
 			if (pc.pTemplet->sInfoList.count(strSkillName)) {
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
 					   '=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
-				if (pc.setInfo(strSkillName, readUntilTab())) {
+				if (pc.set(strSkillName, readUntilTab())) {
 					reply(GlobalMsg["strPcTextTooLong"]);
 					return 1;
 				}
@@ -3483,8 +3555,8 @@ int FromMsg::InnerOrder() {
 			if ((strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+')) {
 				isDetail = true;
 				isModify = true;
-				short& nVal = pc[strSkillName];
-				RD Mod((nVal == 0 ? "" : to_string(nVal)) + readDice());
+				AttrVar& nVal{ pc[strSkillName] };
+				RD Mod((nVal.to_int() == 0 ? "" : nVal.to_str()) + readDice());
 				if (Mod.Roll()) {
 					reply(GlobalMsg["strValueErr"]);
 					return 1;
@@ -3756,15 +3828,16 @@ int FromMsg::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
 		string strMainDice;
-		strVar["reason"] = strMsg.substr(intMsgCnt);
-		if (strVar["reason"].empty()) {
+		CharaCard* pc{ PList.count(fromQQ) ? &getPlayer(fromQQ)[fromGroup] : nullptr };
+		string& strReason{ strVar["reason"] = strMsg.substr(intMsgCnt) };
+		if (strReason.empty()) {
 			string key{ "__DefaultDiceExp" };
-			if (PList.count(fromQQ) && getPlayer(fromQQ)[fromGroup].countExp(strVar[key])) {
-				strMainDice = getPlayer(fromQQ)[fromGroup].getExp(key);
+			if (pc && pc->countExp(strVar[key])) {
+				strMainDice = pc->getExp(key);
 			}
 		}
-		if (PList.count(fromQQ) && getPlayer(fromQQ)[fromGroup].countExp(strVar["reason"])) {
-			strMainDice = getPlayer(fromQQ)[fromGroup].getExp(strVar["reason"]);
+		if (pc && pc->countExp(strReason)) {
+			strMainDice = pc->getExp(strReason);
 		}
 		else {
 			strMainDice = readDice();
@@ -3779,8 +3852,8 @@ int FromMsg::InnerOrder() {
 			else strMainDice.clear();
 		}
 		int intTurnCnt = 1;
-		const int intDefaultDice = (PList.count(fromQQ) && PList[fromQQ][fromGroup].count("__DefaultDice")) 
-			? PList[fromQQ][fromGroup]["__DefaultDice"] 
+		const int intDefaultDice = (pc && pc->count("__DefaultDice")) 
+			? (*pc)["__DefaultDice"].to_int()
 			: get(getUser(fromQQ).intConf, string("默认骰"), 100);
 		if (strMainDice.find('#') != string::npos) {
 			strVar["turn"] = strMainDice.substr(0, strMainDice.find('#'));
@@ -3835,11 +3908,10 @@ int FromMsg::InnerOrder() {
 				}
 			}
 		}
-		if (strMainDice.empty() && PList.count(fromQQ) && getPlayer(fromQQ)[fromGroup].countExp(strVar["reason"])) {
-			strMainDice = getPlayer(fromQQ)[fromGroup].getExp(strVar["reason"]);
+		if (strMainDice.empty() && pc && pc->countExp(strReason)) {
+			strMainDice = pc->getExp(strReason);
 		}
 		RD rdMainDice(strMainDice, intDefaultDice);
-
 		const int intFirstTimeRes = rdMainDice.Roll();
 		switch (intFirstTimeRes) {
 		case 0: break;
@@ -3869,6 +3941,8 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		strVar["dice_exp"] = rdMainDice.strDice;
+		//仅统计与默认骰一致的掷骰
+		bool isStatic{ intDefaultDice <= 100 && pc && rdMainDice.strDice == ("D" + to_string(intDefaultDice)) };
 		string strType = (intTurnCnt != 1
 						  ? (strVar["reason"].empty() ? "strRollMultiDice" : "strRollMultiDiceReason")
 						  : (strVar["reason"].empty() ? "strRollDice" : "strRollDiceReason"));
@@ -3880,6 +3954,7 @@ int FromMsg::InnerOrder() {
 				// 此处返回值无用
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				rdMainDice.Roll();
+				if (isStatic)pc->cntRollStat(rdMainDice.intTotal, intDefaultDice);
 				strVar["res"] += to_string(rdMainDice.intTotal);
 				if (intTurnCnt != 0)
 					strVar["res"] += ",";
@@ -3908,6 +3983,7 @@ int FromMsg::InnerOrder() {
 			if (intTurnCnt > 1) {
 				while (intTurnCnt--) {
 					rdMainDice.Roll();
+					if (isStatic)pc->cntRollStat(rdMainDice.intTotal, intDefaultDice);
 					string strForm = to_string(rdMainDice.intTotal);
 					if (boolDetail) {
 						string strCombined = rdMainDice.FormStringCombined();
@@ -3920,7 +3996,10 @@ int FromMsg::InnerOrder() {
 				}
 				strVar["res"] = dices.dot(", ").line(7).show();
 			}
-			else strVar["res"] = boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString();
+			else {
+				if (isStatic)pc->cntRollStat(rdMainDice.intTotal, intDefaultDice);
+				strVar["res"] = boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString();
+			}
 			strReply = format(GlobalMsg[strType], { strVar["pc"], strVar["res"], strVar["reason"] });
 			if (!isHidden) {
 				reply();

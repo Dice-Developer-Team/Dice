@@ -110,6 +110,8 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strPcCardShow","{nick}的<{type}>{char}：{show}"},	//{nick}-用户昵称 {type}-角色卡类型 {char}-角色卡名
 	{"strPcCardRedo","{nick}的{char}重新生成：{show}"},
 	{"strPcGroupList","{nick}的各群角色列表：{show}"},
+	{"strPcStatShow","{pc}在{self}处的骰点统计:{stat}"},
+	{"strPcStatEmpty","{pc}在{self}处还没有检定被记录的样子×"},
 	{"strPcNotExistErr","{self}无{nick}的角色卡记录，无法删除×"},
 	{"strPcCardFull","{nick}在{self}处的角色卡已达上限，请先清理多余角色卡×"},
 	{"strPcTempInvalid","{self}无法识别的角色卡模板×"},
@@ -574,6 +576,7 @@ Master拥有最高权限，且可以调整任意信任)"},
 .pc list //列出全部角色卡
 .pc grp //列出各群绑定卡
 .pc build ([生成参数]:)(卡名) //根据模板填充生成属性（COC7为9项主属性）
+.pc stat //查看当前角色卡骰点统计
 .pc redo ([生成参数]:)(卡名) //清空原有属性后重新生成
 .pc clr //销毁全部角色卡记录
 )"

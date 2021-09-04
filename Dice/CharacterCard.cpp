@@ -13,8 +13,53 @@
  * -5:PcNameNotExist 卡名不存在
  * -6:PCNameInvalid 卡名无效
  * -7:PcInitDelErr 删除初始卡
+ * -8:PcNameSetErr 卡名非法更改
+ * -11:PcTextTooLong 文本过长
  */
 
+
+void CardTemp::readt(const DDOM& d) 	{
+	for (const auto& node : d.vChild) 		{
+		switch (mTempletTag[node.tag]) 			{
+		case 2:
+			type = node.strValue;
+			break;
+		case 20:
+			readini(node.strValue, replaceName);
+			break;
+		case 31:
+			vBasicList.clear();
+			for (const auto& sub : node.vChild) 				{
+				vBasicList.push_back(getLines(sub.strValue));
+			}
+			break;
+		case 102:
+			for (const auto& sub : getLines(node.strValue)) 				{
+				sInfoList.insert(sub);
+			}
+			break;
+		case 22:
+			readini(node.strValue, mAutoFill);
+			break;
+		case 23:
+			readini(node.strValue, mVariable);
+			break;
+		case 21:
+			readini(node.strValue, mExpression);
+			break;
+		case 12:
+			readini(node.strValue, defaultSkill);
+			break;
+		case 41:
+			for (const auto& sub : node.vChild) 				{
+				mBuildOption[sub.strValue] = CardBuild(sub);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+}
 
 string CardTemp::show() {
 	ResList res;
@@ -43,41 +88,25 @@ CardTemp& getCardTemplet(const string& type)
 
 void CharaCard::setName(const string& strName) {
 	Name = strName;
-	Info["__Name"] = strName;
+	Attr["__Name"] = strName;
 }
-void CharaCard::writeb(std::ofstream& fout) const {
-	fwrite(fout, string("Name"));
-	fwrite(fout, Name);
-	if (!Attr.empty()) {
-		fwrite(fout, string("Attr"));
-		fwrite(fout, Attr);
-	}
-	if (!Info.empty()) {
-		fwrite(fout, string("Info"));
-		fwrite(fout, Info);
-	}
-	if (!DiceExp.empty()) {
-		fwrite(fout, string("DiceExp"));
-		fwrite(fout, DiceExp);
-	}
-	if (!Note.empty()) {
-		fwrite(fout, string("Note"));
-		fwrite(fout, Note);
-	}
-	fwrite(fout, string("END"));
+void CharaCard::setType(const string& strType) {
+	Attr["__Type"] = strType;
+	pTemplet = &getCardTemplet(Attr["__Type"].to_str());
 }
-int CharaCard::setInfo(const string& key, const string& s) {
-	if (key.empty() || s.length() > 255)return -1;
-	Info[key] = s;
+int CharaCard::set(const string& key, const string& s) {
+	if (key.empty() || s.length() > 255)return -11;
+	Attr[key] = s;
+	if (key == "__Name")return -8;
 	if (key == "__Type")
 		pTemplet = &getCardTemplet(s);
 	return 0;
 }
 
 int CharaCard::show(string key, string& val) const {
-	if (Info.count(key)) {
-		val = Info.find(key)->second;
-		return 3;
+	if (Attr.count(key)) {
+		val = Attr.find(key)->second.to_str();
+		return 0;
 	}
 	if (key == "note") {
 		val = Note;
@@ -89,7 +118,7 @@ int CharaCard::show(string key, string& val) const {
 	}
 	key = standard(key);
 	if (Attr.count(key)) {
-		val = to_string(Attr.find(key)->second);
+		val = Attr.find(key)->second.to_str();
 		return 0;
 	}
 	return -1;
@@ -101,7 +130,7 @@ bool CharaCard::count(const string& strKey) const {
 	return Attr.count(key) || DiceExp.count(key) || pTemplet->mAutoFill.count(key) || pTemplet->mVariable.count(key)
 		|| pTemplet->defaultSkill.count(key);
 }
-short& CharaCard::operator[](const string& strKey) {
+AttrVar& CharaCard::operator[](const string& strKey) {
 	if (Attr.count(strKey))return Attr[strKey];
 	string key{ standard(strKey) };
 	if (!Attr.count(key)) {
@@ -111,10 +140,26 @@ short& CharaCard::operator[](const string& strKey) {
 	return Attr[key];
 }
 
+//求key对应掷骰表达式
+string CharaCard::getExp(string& key, std::set<string> sRef){
+	sRef.insert(key);
+	std::map<string, string>::const_iterator exp = DiceExp.find(key);
+	if (exp != DiceExp.end()) return escape(exp->second, sRef);
+	exp = pTemplet->mExpression.find(key);
+	if (exp != pTemplet->mExpression.end()) return escape(exp->second, sRef);
+	key = standard(key);
+	std::map<string, AttrVar>::const_iterator val = Attr.find(key);
+	if (val != Attr.end())return val->second.to_str();
+	exp = pTemplet->mVariable.find(key);
+	if (exp != pTemplet->mVariable.end())return to_string(cal(exp->second));
+	std::map<string, short>::const_iterator def{ pTemplet->defaultSkill.find(key) };
+	if (def != pTemplet->defaultSkill.end())return to_string(def->second);
+	return "0";
+}
+
 void CharaCard::clear() {
-	Attr.clear();
-	map<string, string, less_ci> info_new{ {"__Type",Info["__Type"]},{"__Name",Info["__Name"]} };
-	Info.swap(info_new);
+	map<string, AttrVar, less_ci> attr_new{ {"__Type",Attr["__Type"]},{"__Name",Attr["__Name"]} };
+	Attr.swap(attr_new);
 	DiceExp.clear();
 	Note.clear();
 }
@@ -147,16 +192,11 @@ void CharaCard::clear() {
 	}
 	string strAttrRest;
 	for (const auto& [key,val] : Attr) {
-		if (sDefault.count(key) ||
-			(key[0] == '_' && (key.length() < 2 || key[1] != '_' || !isWhole)))continue;
-		strAttrRest += key + ":" + to_string(val) + " ";
+		if (sDefault.count(key) || key[0] == '_'
+			|| (!isWhole && val.type == AttrVar::AttrType::Text))continue;
+		strAttrRest += key + ":" + val.to_str() + (val.type == AttrVar::AttrType::Text ? "\t" : " ");
 	}
 	Res << strAttrRest;
-	if (isWhole && !Info.empty())
-		for (const auto& it : Info) {
-			if (sDefault.count(it.first) || it.first[0] == '_')continue;
-			Res << it.first + ":" + it.second;
-		}
 	if (isWhole && !DiceExp.empty())
 		for (const auto& it : DiceExp) {
 			if (sDefault.count(it.first) || it.first[0] == '_')continue;
@@ -164,6 +204,24 @@ void CharaCard::clear() {
 		}
 	if (isWhole && !Note.empty())Res << "====================\n" + Note;
 	return Res.show();
+}
+
+void CharaCard::writeb(std::ofstream& fout) const {
+	fwrite(fout, string("Name"));
+	fwrite(fout, Name);
+	if (!Attr.empty()) {
+		fwrite(fout, string("Attrs"));
+		fwrite(fout, Attr);
+	}
+	if (!DiceExp.empty()) {
+		fwrite(fout, string("DiceExp"));
+		fwrite(fout, DiceExp);
+	}
+	if (!Note.empty()) {
+		fwrite(fout, string("Note"));
+		fwrite(fout, Note);
+	}
+	fwrite(fout, string("END"));
 }
 void CharaCard::readb(std::ifstream& fin) {
 	string tag = fread<string>(fin);
@@ -173,20 +231,32 @@ void CharaCard::readb(std::ifstream& fin) {
 			setName(fread<string>(fin));
 			break;
 		case 2:
-			Info["__Type"] = fread<string>(fin);
+			Attr["__Type"] = fread<string>(fin);
 			break;
-		case 11:
+		case 3:
 			fread(fin, Attr);
-			Attr.erase("");
+			break;
+		case 11: {
+			std::map<string, short>TempAttr;
+			fread(fin, TempAttr);
+			TempAttr.erase("");
+			for (auto& [key, val] : TempAttr) {
+				Attr[key] = val;
+			}
+		}
 			break;
 		case 21:
 			fread(fin, DiceExp);
 			DiceExp.erase("");
 			break;
-		case 102:
-			fread(fin, Info);
-			Info.erase("");
-			scanImage(Info, sReferencedImage);
+		case 102: {
+			std::map<string, string>TempInfo;
+			fread(fin, TempInfo);
+			TempInfo.erase("");
+			for (auto& [key, val] : TempInfo) {
+				Attr[key] = val;
+			}
+		}
 			break;
 		case 101:
 			Note = fread<string>(fin);
@@ -197,7 +267,31 @@ void CharaCard::readb(std::ifstream& fin) {
 		}
 		tag = fread<string>(fin);
 	}
-	pTemplet = &getCardTemplet(Info["__Type"]);
+	Name = Attr["__Name"].to_str();
+	pTemplet = &getCardTemplet(Attr["__Type"].to_str());
+}
+
+void CharaCard::cntRollStat(int die, int face) {
+	if (face <= 0 || die <= 0)return;
+	string strFace{ to_string(face) };
+	string keyStatCnt{ "__StatD" + strFace + "Cnt" };	//掷骰次数
+	string keyStatSum{ "__StatD" + strFace + "Sum" };	//掷骰点数和
+	string keyStatSqr{ "__StatD" + strFace + "SqrSum" };	//掷骰点数平方和
+	std::lock_guard<std::mutex> lock_queue(cardMutex);
+	Attr[keyStatCnt] = Attr[keyStatCnt].to_int() + 1;
+	Attr[keyStatSum] = Attr[keyStatSum].to_int() + die;
+	Attr[keyStatSqr] = Attr[keyStatSqr].to_int() + die * die;
+}
+void CharaCard::cntRcStat(int die, int rate) {
+	if (rate <= 0 || rate >= 100 || die <= 0 || die > 100)return;
+	std::lock_guard<std::mutex> lock_queue(cardMutex);
+	Attr["__StatRcCnt"] = Attr["__StatRcCnt"].to_int() + 1;
+	if(die <= rate)Attr["__StatRcSumSuc"] = Attr["__StatRcSumSuc"].to_int() + 1;	//实际成功数
+	if (die == 1)Attr["__StatRcCnt1"] = Attr["__StatRcCnt1"].to_int() + 1;	//统计出1
+	if (die <= 5)Attr["__StatRcCnt5"] = Attr["__StatRcCnt5"].to_int() + 1;	//统计出1-5
+	if (die >= 96)Attr["__StatRcCnt96"] = Attr["__StatRcCnt96"].to_int() + 1;	//统计出96-100
+	if (die == 100)Attr["__StatRcCnt100"] = Attr["__StatRcCnt100"].to_int() + 1;	//统计出100
+	Attr["__StatRcSumRate"] = Attr["__StatRcSumRate"].to_int() + rate;	//总成功率
 }
 
 Player& getPlayer(long long qq)
@@ -218,10 +312,22 @@ int Player::renameCard(const string& name, const string& name_new) 	{
 string Player::listCard() {
 	ResList Res;
 	for (auto& [idx, pc] : mCardList) {
-		Res << "[" + to_string(idx) + "]<" + getCardTemplet(pc.Info["__Type"]).type + ">" + pc.getName();
+		Res << "[" + to_string(idx) + "]<" + getCardTemplet(pc.Attr["__Type"].to_str()).type + ">" + pc.getName();
 	}
 	Res << "default:" + (*this)[0].getName();
 	return Res.show();
+}
+
+
+void Player::readb(std::ifstream& fin)
+{
+	indexMax = fread<short>(fin);
+	fread<unsigned short, CharaCard>(fin, mCardList);
+	for (const auto& card : mCardList)
+	{
+		mNameIndex[card.second.getName()] = card.first;
+	}
+	mGroupIndex = fread<unsigned long long, unsigned short>(fin);
 }
 
 void getPCName(FromMsg& msg)

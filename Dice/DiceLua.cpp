@@ -78,14 +78,31 @@ void lua_push_msg(lua_State* L, FromMsg* msg) {
 	lua_push_string(L, msg->strMsg);
 	lua_setfield(L, -2, "fromMsg");
 }
+
+void lua_push_attr(lua_State* L, const AttrVar& attr) {
+	switch (attr.type) {
+	case AttrVar::AttrType::Nil:
+		lua_pushnil(L);
+		break;
+	case AttrVar::AttrType::Boolean:
+		lua_pushboolean(L, attr.bit);
+		break;
+	case AttrVar::AttrType::Integer:
+		lua_pushnumber(L, attr.attr);
+		break;
+	case AttrVar::AttrType::Number:
+		lua_pushnumber(L, attr.number);
+		break;
+	case AttrVar::AttrType::Text:
+		lua_push_string(L, attr.text.c_str());
+		break;
+	}
+}
+
 void CharaCard::pushTable(lua_State* L) {
 	lua_newtable(L);
-	for (auto& [key, val] : Info) {
-		lua_push_string(L, val);
-		lua_set_field(L, -2, key.c_str());
-	}
-	for (auto& [key, val] : Attr) {
-		lua_pushnumber(L, val);
+	for (auto& [key, attr] : Attr) {
+		lua_push_attr(L, attr);
 		lua_set_field(L, -2, key.c_str());
 	}
 }
@@ -349,8 +366,8 @@ int getPlayerCardAttr(lua_State* L) {
 	string key{ lua_to_gb18030_string(L, 3) };
 	if (!plQQ || key.empty())return 0;
 	CharaCard& pc = getPlayer(plQQ)[group];
-	if (pc.Info.count(key)) {
-		lua_push_string(L, pc.Info.find(key)->second);
+	if (pc.Attr.count(key)) {
+		lua_push_attr(L, pc.Attr.find(key)->second);
 		return 3;
 	}
 	else if (key == "note") {
@@ -361,7 +378,7 @@ int getPlayerCardAttr(lua_State* L) {
 		lua_push_string(L, pc.DiceExp.find(key)->second);
 	}
 	else if (key = pc.standard(key); pc.Attr.count(key)) {
-		lua_pushnumber(L, (double)pc.Attr.find(key)->second);
+		lua_push_attr(L, pc.Attr.find(key)->second);
 	}
 	else {
 		lua_pushnil(L);
@@ -392,12 +409,15 @@ int setPlayerCardAttr(lua_State* L) {
 	else if (lua_isnoneornil(L, 4)) {
 		pc.erase(item);
 	}
+	else if (lua_isinteger(L, 4)) {
+		pc.set(item, (int)lua_tointeger(L, -1));
+	}
 	else if (lua_isnumber(L, 4)) {
-		pc.set(item, (int)lua_tonumber(L, -1));
+		pc.set(item, lua_tonumber(L, -1));
 	}
 	else if (lua_isstring(L, 4)) {
 		if (item[0] == '&')pc.setExp(item.substr(1), lua_to_gb18030_string(L, -1));
-		else pc.setInfo(item, lua_to_gb18030_string(L, -1));
+		else pc.set(item, lua_to_gb18030_string(L, -1));
 	}
 	return 0;
 }
