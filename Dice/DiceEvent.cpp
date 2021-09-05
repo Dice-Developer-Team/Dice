@@ -1261,16 +1261,20 @@ int FromMsg::InnerOrder() {
 		return 0;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 7) == "welcome") {
+		intMsgCnt += 7;
+		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
+			intMsgCnt++;
+		if (strMsg.length() == intMsgCnt) {
+			reply(fmt->get_help("welcome"));
+			return 1;
+		}
 		if (fromChat.second != msgtype::Group) {
 			reply(GlobalMsg["strWelcomePrivate"]);
 			return 1;
 		}
-		intMsgCnt += 7;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
 		if (isAuth) {
 			string strWelcomeMsg = strMsg.substr(intMsgCnt);
-			if (strWelcomeMsg.empty()) {
+			if (strWelcomeMsg == "clr") {
 				if (chat(fromGroup).strConf.count("入群欢迎")) {
 					chat(fromGroup).rmText("入群欢迎");
 					reply(GlobalMsg["strWelcomeMsgClearNotice"]);
@@ -1280,7 +1284,9 @@ int FromMsg::InnerOrder() {
 				}
 			}
 			else if (strWelcomeMsg == "show") {
-				reply(chat(fromGroup).strConf["入群欢迎"]);
+				string strWelcome{ chat(fromGroup).strConf["入群欢迎"] };
+				if (strWelcome.empty())reply(GlobalMsg["strWelcomeMsgEmpty"]);
+				else reply(strWelcome);
 			}
 			else {
 				chat(fromGroup).setText("入群欢迎", strWelcomeMsg);

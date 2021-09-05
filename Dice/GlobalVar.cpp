@@ -284,9 +284,10 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strRollTimeErr", "异常的掷骰轮数"},
 	{"strDismissPrivate", "滚！"},
 	{"strWelcomePrivate", "你在这欢迎谁呢？"},
-	{"strWelcomeMsgClearNotice", "已清除本群的入群欢迎词√"},
-	{"strWelcomeMsgClearErr", "没有设置入群欢迎词，清除失败×"},
+	{"strWelcomeMsgClearNotice", "{self}已清除本群的入群欢迎词√"},
+	{"strWelcomeMsgClearErr", "没有设置{self}入群欢迎词，清除失败×"},
 	{"strWelcomeMsgUpdateNotice", "{self}已更新本群的入群欢迎词√"},
+	{"strWelcomeMsgEmpty", "{self}当前未记录入群欢迎词" },
 	{"strPermissionDeniedErr", "请让群内管理对{self}发送该指令×"},
 	{"strSelfPermissionErr", "{self}权限不够无能为力呢×"},
 	{"strNameTooLongErr", "名称过长×(最多为50英文字符)"},
@@ -650,7 +651,12 @@ Master拥有最高权限，且可以调整任意信任)"},
 	{"入群欢迎词", "&welcome"},
 	{
 		"welcome",
-		"入群欢迎词：.welcome\n.welcome \\\\{at}欢迎\\\\{nick}入群！\t//\\\\{at}视为at入群者，\\\\{nick}会替换为新人的昵称\n.welcome\t//不带参数时清除欢迎词\n无论开关状态，只要有欢迎词时有人入群，都会响应"
+		R"(入群欢迎词：.welcome
+.welcome \\{at}欢迎\\{nick}入群~	//设置欢迎词
+//\\{at}视为at入群者，\\{nick}会替换为新人的昵称
+.welcome clr //清空欢迎词
+.welcome show //查看欢迎词
+无论指令是否停用，只要有欢迎词时有人入群，都会响应)"
 	},
 	{"group", "&群管"},
 	{
