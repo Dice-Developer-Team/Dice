@@ -232,7 +232,7 @@ public:
 		setType(type);
 	}
 
-	int call(string& key)
+	int call(string key)
 	{
 		if (Attr.count(key))return Attr.find(key)->second.to_int();
 		key = standard(key);
