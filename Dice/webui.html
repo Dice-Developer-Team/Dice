@@ -1,0 +1,352 @@
+﻿u8R"(
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <title>Dice WebUI</title>
+  <link rel="stylesheet" href="https://unpkg.com/layui@2.6.8/dist/css/layui.css">
+  <style>
+      .layui-layout-admin .layui-layout-left,
+      .layui-layout-admin .layui-body,
+      .layui-layout-admin .layui-footer{left: 0;}
+      .layui-layout-admin .layui-side{left: -300px;}
+  </style>
+</head>
+<body>
+
+<div class="layui-layout layui-layout-admin">
+  <div class="layui-header">
+    <div class="layui-logo layui-bg-black">Dice WebUI</div>
+    <ul class="layui-nav layui-layout-right">
+      <li class="layui-nav-item" id="bot-info">
+        <a href="javascript:;">
+          <img src="https://q1.qlogo.cn/g?b=qq&nk={{= d.qq }}&s=3" class="layui-nav-img" id="qq-avatar">
+          <span>{{= d.nick }}</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="layui-body" style="padding: 15px;">
+    <div class="layui-tab layui-tab-brief" lay-filter="main">
+      <ul class="layui-tab-title">
+        <li class="layui-this">主界面</li>
+        <li>Master设置</li>
+        <li>用户管理(还没写)</li>
+        <li>群管理(还没写)</li>
+        <li>自定义内置回复</li>
+        <li>关键词回复(还没写)</li>
+        <li>正则回复(还没写)</li>
+        <li>拓展管理(还没写)</li>
+        <li>更新日志</li>
+      </ul>
+      <div class="layui-tab-content">
+        <div class="layui-tab-item layui-show">
+          <div class="layui-row layui-col-space15">
+            <div class="layui-col-md6">
+              <div class="layui-panel" style="padding: 10px;">
+                <div class="layui-text">
+                  <h3>基础信息</h3>
+                  <p>
+                    欢迎使用Dice! WebUI面板
+                    <br>
+                    常用链接：<a href="https://forum.kokona.tech">论坛</a> <a href="https://v2docs.kokona.tech">文档</a>
+                    <br>
+                    <span id="basic-info">运行时间：{{= d.running_time }}
+                    <br>
+                    启动后指令数量：{{= d.cmd_count }}
+                    <br>
+                    今日指令数量：{{= d.cmd_count_today }}</span>
+                    <br>
+                  </p>
+                </div>
+              </div>   
+            </div>
+            <div class="layui-col-md6">
+              <div class="layui-panel" style="padding: 10px;">
+                <div class="layui-text">
+                  <h3>系统信息</h3>
+                  <p>
+                     还没写还没写还没写 
+                  </p>
+                </div>
+              </div>   
+            </div>
+          </div>    
+        </div>
+        <div class="layui-tab-item">
+          <form class="layui-form" action="">
+            <div class="layui-form-item">
+              <label class="layui-form-label">Master</label>
+              <div class="layui-input-block">
+                <input type="number" name="masterQQ" id="masterQQ" required lay-verify="required" placeholder="请输入QQ" autocomplete="off" class="layui-input">
+              </div>
+            </div>
+            <div class="layui-form-item">
+              <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="masterForm">确认</button>
+              </div>
+            </div>
+          </form>
+          <table id="admin-config-table" lay-filter="admin-config-table"></table>
+        </div>
+        <div class="layui-tab-item">
+
+        </div>
+        <div class="layui-tab-item">
+
+        </div>
+        <div class="layui-tab-item">
+          <table id="custom-msg-table" lay-filter="custom-msg-table"></table>
+        </div>
+        <div class="layui-tab-item">
+
+        </div>
+        <div class="layui-tab-item">
+
+        </div>
+        <div class="layui-tab-item">
+
+        </div>
+        <div class="layui-tab-item">
+          <ul class="layui-timeline">
+            <li class="layui-timeline-item">
+              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+              <div class="layui-timeline-content layui-text">
+                <h3 class="layui-timeline-title">2021年9月16日 版本2.6.0beta(583)</h3>
+                <p>
+                  基础WebUI
+                </p>
+              </div>
+            </li>
+            <li class="layui-timeline-item">
+              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+              <div class="layui-timeline-content layui-text">
+                <div class="layui-timeline-title">过去</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <blockquote class="layui-elem-quote layui-hide layui-text" id="footer">当前版本：{{= d.version }}</blockquote>
+  </div>
+</div>
+ 
+
+
+  
+<script src="https://unpkg.com/layui@2.6.8/dist/layui.js"></script>
+<script> 
+//加载模块  
+layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate', function(){
+  //得到各种内置组件
+  var layer = layui.layer //弹层
+  ,laypage = layui.laypage //分页
+  ,laydate = layui.laydate //日期
+  ,table = layui.table //表格
+  ,carousel = layui.carousel //轮播
+  ,upload = layui.upload //上传
+  ,element = layui.element //元素操作
+  ,slider = layui.slider //滑块
+  ,dropdown = layui.dropdown //下拉菜单
+  ,form = layui.form
+  ,$ = layui.$
+
+  $.get("/api/basicinfo")
+    .done(function(data) {
+      if (data.code == 0) {
+        var footerTpl = lay('#footer')[0].innerHTML;
+        lay('#footer').html(layui.laytpl(footerTpl).render(data.data))
+        .removeClass('layui-hide');
+
+        var botInfoTpl = lay('#bot-info')[0].innerHTML;
+        lay('#bot-info').html(layui.laytpl(botInfoTpl).render(data.data))
+        .removeClass('layui-hide');
+
+        var basicInfoTpl = lay('#basic-info')[0].innerHTML;
+        lay('#basic-info').html(layui.laytpl(basicInfoTpl).render(data.data))
+        .removeClass('layui-hide');
+
+      } else {
+        layer.msg("连接到Dice!后端失败: " + data.msg);
+      }
+    })
+    .fail(function(jqXHR, textStatus, error) {
+      layer.msg("连接到Dice!后端失败: " + error);
+    })
+  
+  //监听Tab切换
+  element.on('tab(main)', function(data){
+    layer.tips('切换了 '+ data.index +'：'+ this.innerHTML, this, {
+      tips: 1
+    });
+  });
+
+  //执行一个 table 实例
+  table.render({
+    elem: '#custom-msg-table'
+    ,height: 420
+    ,url: '/api/custommsg' //数据接口
+    ,title: '自定义回复'
+    ,contentType: 'application/json'
+    ,cols: [[ //表头
+      {type: 'checkbox', fixed: 'left'}
+      ,{field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
+      ,{field: 'value', title: '值', width:400, edit: 'text'}
+      ,{field: 'remark', title: '说明', width:400}
+    ]]
+  });
+
+  table.on('edit(custom-msg-table)', function(obj) { 
+    $.post("/api/custommsg", JSON.stringify({action: "set", data: [obj.data]}))
+    .done(function(data) {
+      if (data.code == 0) {
+        console.log("CustomMsg Save Success");
+      } else {
+        layer.msg("自定义回复保存失败: " + data.msg);
+      }
+    })
+    .fail(function(jqXHR, textStatus, error) {
+      layer.msg("自定义回复保存失败: " + error);
+    })
+  });
+
+  table.render({
+    elem: '#admin-config-table'
+    ,height: 420
+    ,url: '/api/adminconfig' //数据接口
+    ,title: '管理员设置'
+    ,contentType: 'application/json'
+    ,cols: [[ //表头
+      {type: 'checkbox', fixed: 'left'}
+      ,{field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
+      ,{field: 'value', title: '值', width:400, edit: 'text'}
+    ]]
+  });
+
+  table.on('edit(admin-config-table)', function(obj) { 
+    if (obj.data.value >>> 0 !== parseFloat(obj.data.value)) {
+      layer.msg("数据无效！值必须是整数");
+    } else {
+      obj.data.value = obj.data.value >>> 0;
+      $.post("/api/adminconfig", JSON.stringify({action: "set", data: [obj.data]}))
+      .done(function(data) {
+        if (data.code == 0) {
+          console.log("Settings Save Success");
+        } else {
+          layer.msg("设置保存失败: " + data.msg);
+        }
+      })
+      .fail(function(jqXHR, textStatus, error) {
+        layer.msg("设置保存失败: " + error);
+      })
+    }
+
+  });
+
+  $.get("/api/master")
+    .done(function(data) {
+      if (data.code == 0) {
+        $("#masterQQ").val(data.data.masterQQ);
+      }
+    })
+
+  form.on('submit(masterForm)', function(data){
+    data.field.masterQQ = parseInt(data.field.masterQQ, 10);
+    $.post("/api/master", JSON.stringify({action: "set", data: data.field}))
+      .done(function(data) {
+        if (data.code == 0) {
+          layer.msg("Master设置保存成功");
+        } else {
+          layer.msg("Master设置保存失败: " + data.msg);
+        }
+      })
+      .fail(function(jqXHR, textStatus, error) {
+        layer.msg("Master设置保存失败: " + error);
+      })
+    return false;
+  });
+
+  
+  //监听头工具栏事件
+  table.on('toolbar(custom-msg-table)', function(obj){
+    var checkStatus = table.checkStatus(obj.config.id)
+    ,data = checkStatus.data; //获取选中的数据
+    switch(obj.event){
+      case 'add':
+        layer.msg('添加');
+      break;
+      case 'update':
+        if(data.length === 0){
+          layer.msg('请选择一行');
+        } else if(data.length > 1){
+          layer.msg('只能同时编辑一个');
+        } else {
+          layer.alert('编辑 [id]：'+ checkStatus.data[0].id);
+        }
+      break;
+      case 'delete':
+        if(data.length === 0){
+          layer.msg('请选择一行');
+        } else {
+          layer.msg('删除');
+        }
+      break;
+    };
+  });
+  
+  //监听行工具事件
+  table.on('tool(test)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+    var data = obj.data //获得当前行数据
+    ,layEvent = obj.event; //获得 lay-event 对应的值
+    if(layEvent === 'detail'){
+      layer.msg('查看操作');
+    } else if(layEvent === 'more'){
+      //下拉菜单
+      dropdown.render({
+        elem: this //触发事件的 DOM 对象
+        ,show: true //外部事件触发即显示
+        ,data: [{
+          title: '编辑'
+          ,id: 'edit'
+        },{
+          title: '删除'
+          ,id: 'del'
+        }]
+        ,click: function(menudata){
+          if(menudata.id === 'del'){
+            layer.confirm('真的删除行么', function(index){
+              obj.del(); //删除对应行（tr）的DOM结构
+              layer.close(index);
+              //向服务端发送删除指令
+            });
+          } else if(menudata.id === 'edit'){
+            layer.msg('编辑操作，当前行 ID:'+ data.id);
+          }
+        }
+        ,align: 'right' //右对齐弹出（v2.6.8 新增）
+        ,style: 'box-shadow: 1px 1px 10px rgb(0 0 0 / 12%);' //设置额外样式
+      })
+    }
+  });
+  
+  //上传
+  upload.render({
+    elem: '#uploadDemo'
+    ,url: '' //此处配置你自己的上传接口即可
+    ,done: function(res){
+      layer.msg('上传成功');
+      layui.$('#uploadDemoView').removeClass('layui-hide').find('img').attr('src', res.files.file);
+      console.log(res)
+    }
+    ,before: function(){
+      layer.msg('上传中', {icon: 16, time: 0});
+    }
+  });
+});
+</script>
+</body>
+</html>        
+)"

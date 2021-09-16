@@ -56,7 +56,7 @@
 #include "DiceCensor.h"
 #include "EncodingConvert.h"
 #include "DiceManager.h"
-
+#define ENABLE_WEBUI
 #ifndef _WIN32
 #include <curl/curl.h>
 #endif
@@ -71,8 +71,10 @@ ThreadFactory threads;
 std::filesystem::path fpFileLoc;
 std::unique_ptr<CivetServer> ManagerServer;
 IndexHandler h_index;
+BasicInfoApiHandler h_basicinfoapi;
 CustomMsgApiHandler h_msgapi;
 AdminConfigHandler h_config;
+MasterHandler h_master;
 
 constexpr auto msgInit{ R"(欢迎使用Dice!掷骰机器人！
 请发送.system gui开启骰娘的后台面板
@@ -226,27 +228,6 @@ EVE_Enable(eventEnable)
 	}
 	Dice_Full_Ver_On = Dice_Full_Ver + " on\n" + DD::getDriVer();
 	DD::debugLog(Dice_Full_Ver_On);
-
-
-// 初始化服务器
-	mg_init_library(0);
-
-#ifdef ENABLE_WEBUI
-	
-	std::vector<std::string> mg_options = {"listening_ports", "12315"};
-
-	ManagerServer = std::make_unique<CivetServer>(mg_options);
-
-	ManagerServer->addHandler("/", h_index);
-	ManagerServer->addHandler("/api/custommsg", h_msgapi);
-	ManagerServer->addHandler("/api/admin/config", h_config);
-	// ManagerServer->addHandler("/api/admin/master", h_master);
-	// ManagerServer->addHandler("/api/admin/user", h_user);
-	// ManagerServer->addHandler("/api/extension", h_extension);
-	DD::debugLog("Dice WebUI Manager Server running at localhost: 12315");
-	
-#endif
-
 
 	mCardTemplet = {
 		{
@@ -517,6 +498,33 @@ EVE_Enable(eventEnable)
 		                                                                GlobalMsg["strSelfName"]);
 		GlobalMsg[it.first] = it.second;
 	}
+	// 初始化服务器
+	mg_init_library(0);
+
+#ifdef ENABLE_WEBUI
+	
+	std::vector<std::string> mg_options = {"listening_ports", "127.0.0.1:0"};
+
+	ManagerServer = std::make_unique<CivetServer>(mg_options);
+
+	ManagerServer->addHandler("/", h_index);
+	ManagerServer->addHandler("/api/basicinfo", h_basicinfoapi);
+	ManagerServer->addHandler("/api/custommsg", h_msgapi);
+	ManagerServer->addHandler("/api/adminconfig", h_config);
+	ManagerServer->addHandler("/api/master", h_master);
+
+	auto ports = ManagerServer->getListeningPorts();
+
+	if (ports.empty())
+	{
+		console.log("Dice! WebUI 启动失败！", 0b1);
+	}
+	else
+	{
+		console.log("Dice! WebUI 正于" + std::to_string(ports[0]) + "端口运行", 0b1);
+	}
+	
+#endif
 	DD::debugLog("Dice.loadData");
 	loadData();
 	dataInit();
