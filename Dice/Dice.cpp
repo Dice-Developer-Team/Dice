@@ -75,6 +75,7 @@ BasicInfoApiHandler h_basicinfoapi;
 CustomMsgApiHandler h_msgapi;
 AdminConfigHandler h_config;
 MasterHandler h_master;
+AuthHandler auth_handler;
 
 constexpr auto msgInit{ R"(欢迎使用Dice!掷骰机器人！
 请发送.system gui开启骰娘的后台面板
@@ -501,30 +502,32 @@ EVE_Enable(eventEnable)
 	// 初始化服务器
 	mg_init_library(0);
 
-#ifdef ENABLE_WEBUI
-	
-	std::vector<std::string> mg_options = {"listening_ports", "127.0.0.1:0"};
-
-	ManagerServer = std::make_unique<CivetServer>(mg_options);
-
-	ManagerServer->addHandler("/", h_index);
-	ManagerServer->addHandler("/api/basicinfo", h_basicinfoapi);
-	ManagerServer->addHandler("/api/custommsg", h_msgapi);
-	ManagerServer->addHandler("/api/adminconfig", h_config);
-	ManagerServer->addHandler("/api/master", h_master);
-
-	auto ports = ManagerServer->getListeningPorts();
-
-	if (ports.empty())
+	if (console["EnableWebUI"])
 	{
-		console.log("Dice! WebUI 启动失败！", 0b1);
+		const std::string port_option = std::string(console["WebUIAllowInternetAccess"] ? "0.0.0.0" : "127.0.0.1") + ":" + std::to_string(console["WebUIPort"]);
+
+		std::vector<std::string> mg_options = {"listening_ports", port_option.c_str()};
+
+		ManagerServer = std::make_unique<CivetServer>(mg_options);
+
+		ManagerServer->addHandler("/", h_index);
+		ManagerServer->addHandler("/api/basicinfo", h_basicinfoapi);
+		ManagerServer->addHandler("/api/custommsg", h_msgapi);
+		ManagerServer->addHandler("/api/adminconfig", h_config);
+		ManagerServer->addHandler("/api/master", h_master);
+		ManagerServer->addAuthHandler("/", auth_handler);
+		auto ports = ManagerServer->getListeningPorts();
+
+		if (ports.empty())
+		{
+			console.log("Dice! WebUI 启动失败！", 0b1);
+		}
+		else
+		{
+			console.log("Dice! WebUI 正于" + std::to_string(ports[0]) + "端口运行", 0b1);
+		}
 	}
-	else
-	{
-		console.log("Dice! WebUI 正于" + std::to_string(ports[0]) + "端口运行", 0b1);
-	}
-	
-#endif
+
 	DD::debugLog("Dice.loadData");
 	loadData();
 	dataInit();
