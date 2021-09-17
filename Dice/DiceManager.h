@@ -101,6 +101,7 @@ public:
         std::string ret;
         try
         {
+            std::shared_lock lock(GlobalMsgMutex);
             nlohmann::json j = nlohmann::json::object();
             j["code"] = 0;
             j["msg"] = "ok";

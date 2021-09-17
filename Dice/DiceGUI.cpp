@@ -901,6 +901,7 @@ LRESULT DiceGUI::CreateCustomMsgPage()
 
 	ListViewCustomMsg.AddAllTextColumn(std::vector<std::pair<std::string, int>>({ {"标题", 150}, {"内容", 500}, { "备注", 150 } }));
 	int index = 0;
+	std::shared_lock lock(GlobalMsgMutex);
 	for (const auto& item : GlobalMsg)
 	{
 		ListViewCustomMsg.AddTextRow({ item.first, item.second,getComment(item.first) }, index);
