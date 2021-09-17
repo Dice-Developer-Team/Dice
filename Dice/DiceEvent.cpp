@@ -147,12 +147,12 @@ int FromMsg::AdminEvent(const string& strOption)
 			<< "黑名单用户数：" + to_string(blacklist->mQQDanger.size())
 			<< "黑名单群数：" + to_string(blacklist->mGroupDanger.size())
 			<< (censor.size() ? "敏感词库规模：" + to_string(censor.size()) : "");
-		reply(GlobalMsg["strSelfName"] + "的当前情况" + res.show());
+		reply(getMsg("strSelfName") + "的当前情况" + res.show());
 		return 1;
 	}
 	if (trusted < 4)
 	{
-		reply(GlobalMsg["strNotAdmin"]);
+		reply(getMsg("strNotAdmin"));
 		return -1;
 	}
 	if (auto it = Console::intDefault.find(strOption);it != Console::intDefault.end())
@@ -162,10 +162,10 @@ int FromMsg::AdminEvent(const string& strOption)
 		{
 		case 0:
 			console.set(it->first, intSet);
-			note("已将" + GlobalMsg["strSelfName"] + "的" + it->first + "设置为" + to_string(intSet), 0b10);
+			note("已将" + getMsg("strSelfName") + "的" + it->first + "设置为" + to_string(intSet), 0b10);
 			break;
 		case -1:
-			reply(GlobalMsg["strSelfName"] + "该项为" + to_string(console[strOption.c_str()]));
+			reply(getMsg("strSelfName") + "该项为" + to_string(console[strOption.c_str()]));
 			break;
 		case -2:
 			reply("{nick}设置参数超出范围×");
@@ -185,11 +185,11 @@ int FromMsg::AdminEvent(const string& strOption)
 		if (console["DisabledGlobal"])
 		{
 			console.set("DisabledGlobal", 0);
-			note("已全局开启" + GlobalMsg["strSelfName"], 3);
+			note("已全局开启" + getMsg("strSelfName"), 3);
 		}
 		else
 		{
-			reply(GlobalMsg["strSelfName"] + "不在静默中！");
+			reply(getMsg("strSelfName") + "不在静默中！");
 		}
 		return 1;
 	}
@@ -197,12 +197,12 @@ int FromMsg::AdminEvent(const string& strOption)
 	{
 		if (console["DisabledGlobal"])
 		{
-			reply(GlobalMsg["strSelfName"] + "已经静默！");
+			reply(getMsg("strSelfName") + "已经静默！");
 		}
 		else
 		{
 			console.set("DisabledGlobal", 1);
-			note("已全局关闭" + GlobalMsg["strSelfName"], 0b10);
+			note("已全局关闭" + getMsg("strSelfName"), 0b10);
 		}
 		return 1;
 	}
@@ -268,12 +268,12 @@ int FromMsg::AdminEvent(const string& strOption)
 	{
 		if (console["Private"])
 		{
-			reply(GlobalMsg["strSelfName"] + "已成为私用骰娘！");
+			reply(getMsg("strSelfName") + "已成为私用骰娘！");
 		}
 		else
 		{
 			console.set("Private", 1);
-			note("已将" + GlobalMsg["strSelfName"] + "变为私用√", 0b10);
+			note("已将" + getMsg("strSelfName") + "变为私用√", 0b10);
 		}
 		return 1;
 	}
@@ -282,11 +282,11 @@ int FromMsg::AdminEvent(const string& strOption)
 		if (console["Private"])
 		{
 			console.set("Private", 0);
-			note("已将" + GlobalMsg["strSelfName"] + "变为公用√", 0b10);
+			note("已将" + getMsg("strSelfName") + "变为公用√", 0b10);
 		}
 		else
 		{
-			reply(GlobalMsg["strSelfName"] + "已成为公用骰娘！");
+			reply(getMsg("strSelfName") + "已成为公用骰娘！");
 		}
 		return 1;
 	}
@@ -306,7 +306,7 @@ int FromMsg::AdminEvent(const string& strOption)
 		string strType = readPara();
 		if (strType.empty())
 		{
-			reply(GlobalMsg["strSelfName"] + "的定时列表：" + console.listClock().show());
+			reply(getMsg("strSelfName") + "的定时列表：" + console.listClock().show());
 			return 1;
 		}
 		Console::Clock cc{0, 0};
@@ -316,20 +316,20 @@ int FromMsg::AdminEvent(const string& strOption)
 			if (isErase)
 			{
 				if (console.rmClock(cc, strType))reply(
-					GlobalMsg["strSelfName"] + "无此定时项目");
-				else note("已移除" + GlobalMsg["strSelfName"] + "在" + printClock(cc) + "的定时" + strType, 0b10);
+					getMsg("strSelfName") + "无此定时项目");
+				else note("已移除" + getMsg("strSelfName") + "在" + printClock(cc) + "的定时" + strType, 0b10);
 			}
 			else
 			{
 				console.setClock(cc, strType);
-				note("已设置" + GlobalMsg["strSelfName"] + "在" + printClock(cc) + "的定时" + strType, 0b10);
+				note("已设置" + getMsg("strSelfName") + "在" + printClock(cc) + "的定时" + strType, 0b10);
 			}
 			break;
 		case -1:
-			reply(GlobalMsg["strParaEmpty"]);
+			reply(getMsg("strParaEmpty"));
 			break;
 		case -2:
-			reply(GlobalMsg["strParaIllegal"]);
+			reply(getMsg("strParaIllegal"));
 			break;
 		default: break;
 		}
@@ -356,7 +356,7 @@ int FromMsg::AdminEvent(const string& strOption)
 			if (boolErase)
 			{
 				console.rmNotice(cTarget);
-				note("已将" + GlobalMsg["strSelfName"] + "的通知窗口" + printChat(cTarget) + "移除", 0b1);
+				note("已将" + getMsg("strSelfName") + "的通知窗口" + printChat(cTarget) + "移除", 0b1);
 				return 1;
 			}
 			readSkipSpace();
@@ -380,9 +380,9 @@ int FromMsg::AdminEvent(const string& strOption)
 				if (intAdd)console.addNotice(cTarget, intAdd);
 				if (intReduce)console.redNotice(cTarget, intReduce);
 				if (intAdd | intReduce)note(
-					"已将" + GlobalMsg["strSelfName"] + "对窗口" + printChat(cTarget) + "通知级别调整为" + to_binary(
+					"已将" + getMsg("strSelfName") + "对窗口" + printChat(cTarget) + "通知级别调整为" + to_binary(
 						console.showNotice(cTarget)), 0b1);
-				else reply(GlobalMsg["strParaIllegal"]);
+				else reply(getMsg("strParaIllegal"));
 				return 1;
 			}
 			int intLV;
@@ -391,18 +391,18 @@ int FromMsg::AdminEvent(const string& strOption)
 			case 0:
 				if (intLV < 0 || intLV > 63)
 				{
-					reply(GlobalMsg["strParaIllegal"]);
+					reply(getMsg("strParaIllegal"));
 					return 1;
 				}
 				console.setNotice(cTarget, intLV);
-				note("已将" + GlobalMsg["strSelfName"] + "对窗口" + printChat(cTarget) + "通知级别调整为" + to_string(intLV), 0b1);
+				note("已将" + getMsg("strSelfName") + "对窗口" + printChat(cTarget) + "通知级别调整为" + to_string(intLV), 0b1);
 				break;
 			case -1:
-				reply("窗口" + printChat(cTarget) + "在" + GlobalMsg["strSelfName"] + "处的通知级别为：" + to_binary(
+				reply("窗口" + printChat(cTarget) + "在" + getMsg("strSelfName") + "处的通知级别为：" + to_binary(
 					console.showNotice(cTarget)));
 				break;
 			case -2:
-				reply(GlobalMsg["strParaIllegal"]);
+				reply(getMsg("strParaIllegal"));
 				break;
 			}
 		}
@@ -642,25 +642,25 @@ int FromMsg::AdminEvent(const string& strOption)
 				if (groupset(llGroup, "许可使用") > 0 || groupset(llGroup, "免清") > 0)
 				{
 					chat(llGroup).reset("许可使用").reset("免清");
-					note("已移除" + printGroup(llGroup) + "在" + GlobalMsg["strSelfName"] + "的使用许可");
+					note("已移除" + printGroup(llGroup) + "在" + getMsg("strSelfName") + "的使用许可");
 				}
 				else
 				{
-					reply("该群未拥有" + GlobalMsg["strSelfName"] + "的使用许可！");
+					reply("该群未拥有" + getMsg("strSelfName") + "的使用许可！");
 				}
 			}
 			else
 			{
 				if (groupset(llGroup, "许可使用") > 0)
 				{
-					reply("该群已拥有" + GlobalMsg["strSelfName"] + "的使用许可！");
+					reply("该群已拥有" + getMsg("strSelfName") + "的使用许可！");
 				}
 				else
 				{
 					chat(llGroup).set("许可使用").reset("未审核");
 					if (!chat(llGroup).isset("已退") && !chat(llGroup).isset("未进"))AddMsgToQueue(
 						getMsg("strAuthorized"), llGroup, msgtype::Group);
-					note("已添加" + printGroup(llGroup) + "在" + GlobalMsg["strSelfName"] + "的使用许可");
+					note("已添加" + printGroup(llGroup) + "在" + getMsg("strSelfName") + "的使用许可");
 				}
 			}
 			return 1;
@@ -701,12 +701,12 @@ int FromMsg::AdminEvent(const string& strOption)
 		{
 			if (ChatList.count(llTargetID))
 			{
-				note("已令" + GlobalMsg["strSelfName"] + "退出" + printChat(chat(llTargetID)), 0b10);
+				note("已令" + getMsg("strSelfName") + "退出" + printChat(chat(llTargetID)), 0b10);
 				chat(llTargetID).reset("免清").leave();
 			}
 			else
 			{
-				reply(GlobalMsg["strGroupGetErr"]);
+				reply(getMsg("strGroupGetErr"));
 			}
 			return 1;
 		}
@@ -717,13 +717,13 @@ int FromMsg::AdminEvent(const string& strOption)
 				if (groupset(llTargetID, "停用指令") > 0)
 				{
 					chat(llTargetID).reset("停用指令");
-					note("已令" + GlobalMsg["strSelfName"] + "在" + printGroup(llTargetID) + "启用指令√");
+					note("已令" + getMsg("strSelfName") + "在" + printGroup(llTargetID) + "启用指令√");
 				}
-				else reply(GlobalMsg["strSelfName"] + "已在该群启用指令!");
+				else reply(getMsg("strSelfName") + "已在该群启用指令!");
 			}
 			else
 			{
-				reply(GlobalMsg["strGroupGetErr"]);
+				reply(getMsg("strGroupGetErr"));
 			}
 		}
 		else if (strOption == "botoff")
@@ -731,9 +731,9 @@ int FromMsg::AdminEvent(const string& strOption)
 			if (groupset(llTargetID, "停用指令") < 1)
 			{
 				chat(llTargetID).set("停用指令");
-				note("已令" + GlobalMsg["strSelfName"] + "在" + printGroup(llTargetID) + "停用指令√", 0b1);
+				note("已令" + getMsg("strSelfName") + "在" + printGroup(llTargetID) + "停用指令√", 0b1);
 			}
-			else reply(GlobalMsg["strSelfName"] + "已在该群停用指令!");
+			else reply(getMsg("strSelfName") + "已在该群停用指令!");
 			return 1;
 		}
 		else if (strOption == "blackgroup")
@@ -782,31 +782,31 @@ int FromMsg::AdminEvent(const string& strOption)
 					{
 						if (trusted <= trustedQQ(llTargetID))
 						{
-							reply(GlobalMsg["strUserTrustDenied"]);
+							reply(getMsg("strUserTrustDenied"));
 						}
 						else 
 						{
 							getUser(llTargetID).trust(0);
-							note("已收回" + GlobalMsg["strSelfName"] + "对" + printQQ(llTargetID) + "的信任√", 0b1);
+							note("已收回" + getMsg("strSelfName") + "对" + printQQ(llTargetID) + "的信任√", 0b1);
 						}
 					}
 					else
 					{
-						reply(printQQ(llTargetID) + "并不在" + GlobalMsg["strSelfName"] + "的白名单！");
+						reply(printQQ(llTargetID) + "并不在" + getMsg("strSelfName") + "的白名单！");
 					}
 				}
 				else 
 				{
 					if (trustedQQ(llTargetID))
 					{
-						reply(printQQ(llTargetID) + "已加入" + GlobalMsg["strSelfName"] + "的白名单!");
+						reply(printQQ(llTargetID) + "已加入" + getMsg("strSelfName") + "的白名单!");
 					}
 					else
 					{
 						getUser(llTargetID).trust(1);
-						note("已添加" + GlobalMsg["strSelfName"] + "对" + printQQ(llTargetID) + "的信任√", 0b1);
+						note("已添加" + getMsg("strSelfName") + "对" + printQQ(llTargetID) + "的信任√", 0b1);
 						strVar["user_nick"] = getName(llTargetID);
-						AddMsgToQueue(format(GlobalMsg["strWhiteQQAddNotice"], GlobalMsg, strVar), llTargetID);
+						AddMsgToQueue(format(getMsg("strWhiteQQAddNotice"), GlobalMsg, strVar), llTargetID);
 					}
 				}
 			}
@@ -840,7 +840,7 @@ int FromMsg::AdminEvent(const string& strOption)
 			while ((llTargetID = readID()));
 			return 1;
 		}
-		else reply(GlobalMsg["strAdminOptionEmpty"]);
+		else reply(getMsg("strAdminOptionEmpty"));
 		return 0;
 	}
 }
@@ -850,7 +850,7 @@ int FromMsg::MasterSet()
 	const std::string strOption = readPara();
 	if (strOption.empty())
 	{
-		reply(GlobalMsg["strAdminOptionEmpty"]);
+		reply(getMsg("strAdminOptionEmpty"));
 		return -1;
 	}
 	if (strOption == "groupclr")
@@ -864,10 +864,10 @@ int FromMsg::MasterSet()
 	{
 		if (console.master() != fromQQ)
 		{
-			reply(GlobalMsg["strNotMaster"]);
+			reply(getMsg("strNotMaster"));
 			return 1;
 		}
-		reply("你不再是" + GlobalMsg["strSelfName"] + "的Master！");
+		reply("你不再是" + getMsg("strSelfName") + "的Master！");
 		console.killMaster();
 		return 1;
 	}
@@ -875,7 +875,7 @@ int FromMsg::MasterSet()
 	{
 		if (console.master() != fromQQ)
 		{
-			reply(GlobalMsg["strNotMaster"]);
+			reply(getMsg("strNotMaster"));
 			return 1;
 		}
 		const string strMaster = readDigit();
@@ -907,7 +907,7 @@ int FromMsg::MasterSet()
 			{
 				if (trustedQQ(llAdmin) > 3)
 				{
-					note("已收回" + printQQ(llAdmin) + "对" + GlobalMsg["strSelfName"] + "的管理权限√", 0b100);
+					note("已收回" + printQQ(llAdmin) + "对" + getMsg("strSelfName") + "的管理权限√", 0b100);
 					console.rmNotice({llAdmin, msgtype::Private});
 					getUser(llAdmin).trust(0);
 				}
@@ -926,7 +926,7 @@ int FromMsg::MasterSet()
 				{
 					getUser(llAdmin).trust(4);
 					console.addNotice({llAdmin, msgtype::Private}, 0b1110);
-					note("已添加" + printQQ(llAdmin) + "对" + GlobalMsg["strSelfName"] + "的管理权限√", 0b100);
+					note("已添加" + printQQ(llAdmin) + "对" + getMsg("strSelfName") + "的管理权限√", 0b100);
 				}
 			}
 			return 1;
@@ -936,7 +936,7 @@ int FromMsg::MasterSet()
 		{
 			if (user.nTrust > 3)list << printQQ(qq);
 		}
-		reply(GlobalMsg["strSelfName"] + "的管理权限拥有者共" + to_string(list.size()) + "位：" + list.show());
+		reply(getMsg("strSelfName") + "的管理权限拥有者共" + to_string(list.size()) + "位：" + list.show());
 		return 1;
 	}
 	return AdminEvent(strOption);
@@ -967,7 +967,7 @@ int FromMsg::BasicOrder()
 			}
 			else
 			{
-				reply(GlobalMsg["strGroupIDEmpty"]);
+				reply(getMsg("strGroupIDEmpty"));
 				return 1;
 			}
 		}
@@ -984,7 +984,7 @@ int FromMsg::BasicOrder()
 			string strInfo = readRest();
 			if (strInfo.empty())console.log(printQQ(fromQQ) + "申请" + printGroup(pGrp->ID) + "许可使用", 0b10, printSTNow());
 			else console.log(printQQ(fromQQ) + "申请" + printGroup(pGrp->ID) + "许可使用；附言：" + strInfo, 0b100, printSTNow());
-			reply(GlobalMsg["strGroupLicenseApply"]);
+			reply(getMsg("strGroupLicenseApply"));
 		}
 		return 1;
 	}
@@ -996,31 +996,31 @@ int FromMsg::BasicOrder()
 			string QQNum = readDigit();
 			if (QQNum.empty())
 			{
-				reply(GlobalMsg["strDismissPrivate"]);
+				reply(getMsg("strDismissPrivate"));
 				return -1;
 			}
 			long long llGroup = stoll(QQNum);
 			if (!ChatList.count(llGroup))
 			{
-				reply(GlobalMsg["strGroupNotFound"]);
+				reply(getMsg("strGroupNotFound"));
 				return 1;
 			}
 			Chat& grp = chat(llGroup);
 			if (grp.isset("已退") || grp.isset("未进"))
 			{
-				reply(GlobalMsg["strGroupAway"]);
+				reply(getMsg("strGroupAway"));
 			}
 			if (trustedQQ(fromQQ) > 2) {
 				grp.leave(getMsg("strAdminDismiss", strVar));
-				reply(GlobalMsg["strGroupExit"]);
+				reply(getMsg("strGroupExit"));
 			}
 			else if(DD::isGroupAdmin(llGroup, fromQQ, true) || (grp.inviter == fromQQ))
 			{
-				reply(GlobalMsg["strDismiss"]);
+				reply(getMsg("strDismiss"));
 			}
 			else
 			{
-				reply(GlobalMsg["strPermissionDeniedErr"]);
+				reply(getMsg("strPermissionDeniedErr"));
 			}
 			return 1;
 		}
@@ -1034,12 +1034,12 @@ int FromMsg::BasicOrder()
 			if (pGrp->isset("协议无效"))return 0;
 			if (isAuth)
 			{
-				pGrp->leave(GlobalMsg["strDismiss"]);
+				pGrp->leave(getMsg("strDismiss"));
 			}
 			else
 			{
 				if (!isCalled && (pGrp->isset("停用指令") || DD::getGroupSize(fromGroup).currSize > 200))AddMsgToQueue(getMsg("strPermissionDeniedErr", strVar), fromQQ);
-				else reply(GlobalMsg["strPermissionDeniedErr"]);
+				else reply(getMsg("strPermissionDeniedErr"));
 			}
 			return 1;
 		}
@@ -1075,7 +1075,7 @@ int FromMsg::BasicOrder()
 		}
 		else
 		{
-			if (isCalled)reply(GlobalMsg["strNotMaster"]);
+			if (isCalled)reply(getMsg("strNotMaster"));
 			return 1;
 		}
 		return 1;
@@ -1097,8 +1097,8 @@ int FromMsg::BasicOrder()
 		{
 			if (Command == "on")
 			{
-				if (console["DisabledGlobal"])reply(GlobalMsg["strGlobalOff"]);
-				else if (intT == GroupT && ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用"))))reply(GlobalMsg["strGroupLicenseDeny"]);
+				if (console["DisabledGlobal"])reply(getMsg("strGlobalOff"));
+				else if (intT == GroupT && ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用"))))reply(getMsg("strGroupLicenseDeny"));
 				else if (intT)
 				{
 					if (isAuth || trusted >2)
@@ -1106,18 +1106,18 @@ int FromMsg::BasicOrder()
 						if (groupset(fromGroup, "停用指令") > 0)
 						{
 							chat(fromGroup).reset("停用指令");
-							reply(GlobalMsg["strBotOn"]);
+							reply(getMsg("strBotOn"));
 						}
 						else
 						{
-							reply(GlobalMsg["strBotOnAlready"]);
+							reply(getMsg("strBotOnAlready"));
 						}
 					}
 					else
 					{
 						if (groupset(fromGroup, "停用指令") > 0 && DD::getGroupSize(fromGroup).currSize > 200)AddMsgToQueue(
 							getMsg("strPermissionDeniedErr", strVar), fromQQ);
-						else reply(GlobalMsg["strPermissionDeniedErr"]);
+						else reply(getMsg("strPermissionDeniedErr"));
 					}
 				}
 			}
@@ -1128,18 +1128,18 @@ int FromMsg::BasicOrder()
 					if (groupset(fromGroup, "停用指令"))
 					{
 						if (!isCalled && QQNum.empty() && pGrp->isGroup && DD::getGroupSize(fromGroup).currSize > 200)AddMsgToQueue(getMsg("strBotOffAlready", strVar), fromQQ);
-						else reply(GlobalMsg["strBotOffAlready"]);
+						else reply(getMsg("strBotOffAlready"));
 					}
 					else 
 					{
 						chat(fromGroup).set("停用指令");
-						reply(GlobalMsg["strBotOff"]);
+						reply(getMsg("strBotOff"));
 					}
 				}
 				else
 				{
 					if (groupset(fromGroup, "停用指令"))AddMsgToQueue(getMsg("strPermissionDeniedErr", strVar), fromQQ);
-					else reply(GlobalMsg["strPermissionDeniedErr"]);
+					else reply(getMsg("strPermissionDeniedErr"));
 				}
 			}
 			else if (!Command.empty() && !isCalled && pGrp->isset("停用指令"))
@@ -1153,7 +1153,7 @@ int FromMsg::BasicOrder()
 			else
 			{
 				this_thread::sleep_for(1s);
-				reply(Dice_Full_Ver_On + GlobalMsg["strBotMsg"]);
+				reply(Dice_Full_Ver_On + getMsg("strBotMsg"));
 			}
 		}
 		return 1;
@@ -1162,7 +1162,7 @@ int FromMsg::BasicOrder()
 	{
 		if (intT == PrivateT)
 		{
-			reply(GlobalMsg["strGlobalOff"]);
+			reply(getMsg("strGlobalOff"));
 			return 1;
 		}
 		return 0;
@@ -1174,7 +1174,7 @@ int FromMsg::BasicOrder()
 			intMsgCnt++;
 		if (intMsgCnt == strMsg.length())
 		{
-			reply(GlobalMsg["strHlpNameEmpty"]);
+			reply(getMsg("strHlpNameEmpty"));
 			return true;
 		}
 		strVar["key"] = readUntilSpace();
@@ -1187,14 +1187,14 @@ int FromMsg::BasicOrder()
 				fmt->set_help(it->first, it->second);
 			else
 				fmt->rm_help(strVar["key"]);
-			reply(format(GlobalMsg["strHlpReset"], {strVar["key"]}));
+			reply(format(getMsg("strHlpReset"), {strVar["key"]}));
 		}
 		else
 		{
 			string strHelpdoc = strMsg.substr(intMsgCnt);
 			CustomHelp[strVar["key"]] = strHelpdoc;
 			fmt->set_help(strVar["key"], strHelpdoc);
-			reply(format(GlobalMsg["strHlpSet"], {strVar["key"]}));
+			reply(format(getMsg("strHlpSet"), {strVar["key"]}));
 		}
 		saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
 		return true;
@@ -1209,7 +1209,7 @@ int FromMsg::BasicOrder()
 		{
 			if (!isAuth && (strVar["help_word"] == "on" || strVar["help_word"] == "off"))
 			{
-				reply(GlobalMsg["strPermissionDeniedErr"]);
+				reply(getMsg("strPermissionDeniedErr"));
 				return 1;
 			}
 			strVar["option"] = "禁用help";
@@ -1218,11 +1218,11 @@ int FromMsg::BasicOrder()
 				if (groupset(fromGroup, strVar["option"]) < 1)
 				{
 					chat(fromGroup).set(strVar["option"]);
-					reply(GlobalMsg["strGroupSetOn"]);
+					reply(getMsg("strGroupSetOn"));
 				}
 				else
 				{
-					reply(GlobalMsg["strGroupSetOnAlready"]);
+					reply(getMsg("strGroupSetOnAlready"));
 				}
 				return 1;
 			}
@@ -1231,17 +1231,17 @@ int FromMsg::BasicOrder()
 				if (groupset(fromGroup, strVar["option"]) > 0)
 				{
 					chat(fromGroup).reset(strVar["option"]);
-					reply(GlobalMsg["strGroupSetOff"]);
+					reply(getMsg("strGroupSetOff"));
 				}
 				else
 				{
-					reply(GlobalMsg["strGroupSetOffAlready"]);
+					reply(getMsg("strGroupSetOffAlready"));
 				}
 				return 1;
 			}
 			if (groupset(fromGroup, strVar["option"]) > 0)
 			{
-				reply(GlobalMsg["strGroupSetOnAlready"]);
+				reply(getMsg("strGroupSetOnAlready"));
 				return 1;
 			}
 		}
@@ -1269,7 +1269,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (fromChat.second != msgtype::Group) {
-			reply(GlobalMsg["strWelcomePrivate"]);
+			reply(getMsg("strWelcomePrivate"));
 			return 1;
 		}
 		if (isAuth) {
@@ -1277,30 +1277,30 @@ int FromMsg::InnerOrder() {
 			if (strWelcomeMsg == "clr") {
 				if (chat(fromGroup).strConf.count("入群欢迎")) {
 					chat(fromGroup).rmText("入群欢迎");
-					reply(GlobalMsg["strWelcomeMsgClearNotice"]);
+					reply(getMsg("strWelcomeMsgClearNotice"));
 				}
 				else {
-					reply(GlobalMsg["strWelcomeMsgClearErr"]);
+					reply(getMsg("strWelcomeMsgClearErr"));
 				}
 			}
 			else if (strWelcomeMsg == "show") {
 				string strWelcome{ chat(fromGroup).strConf["入群欢迎"] };
-				if (strWelcome.empty())reply(GlobalMsg["strWelcomeMsgEmpty"]);
+				if (strWelcome.empty())reply(getMsg("strWelcomeMsgEmpty"));
 				else reply(strWelcome);
 			}
 			else {
 				chat(fromGroup).setText("入群欢迎", strWelcomeMsg);
-				reply(GlobalMsg["strWelcomeMsgUpdateNotice"]);
+				reply(getMsg("strWelcomeMsgUpdateNotice"));
 			}
 		}
 		else {
-			reply(GlobalMsg["strPermissionDeniedErr"]);
+			reply(getMsg("strPermissionDeniedErr"));
 		}
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 6) == "groups") {
 		if (trusted < 4) {
-			reply(GlobalMsg["strNotAdmin"]);
+			reply(getMsg("strNotAdmin"));
 			return 1;
 		}
 		intMsgCnt += 6;
@@ -1312,7 +1312,7 @@ int FromMsg::InnerOrder() {
 		}
 		else if (strOption == "clr") {
 			if (trusted < 5) {
-				reply(GlobalMsg["strNotMaster"]);
+				reply(getMsg("strNotMaster"));
 				return 1;
 			}
 			int cnt = clearGroup();
@@ -1322,45 +1322,45 @@ int FromMsg::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 6) == "setcoc") {
 		if (!isAuth) {
-			reply(GlobalMsg["strPermissionDeniedErr"]);
+			reply(getMsg("strPermissionDeniedErr"));
 			return 1;
 		}
 		string strRule = readDigit();
 		if (strRule.empty()) {
 			if (fromChat.second != msgtype::Private)chat(fromGroup).rmConf("rc房规");
 			else getUser(fromQQ).rmIntConf("rc房规");
-			reply(GlobalMsg["strDefaultCOCClr"]);
+			reply(getMsg("strDefaultCOCClr"));
 			return 1;
 		}
 		if (strRule.length() > 1) {
-			reply(GlobalMsg["strDefaultCOCNotFound"]);
+			reply(getMsg("strDefaultCOCNotFound"));
 			return 1;
 		}
 		int intRule = stoi(strRule);
 		switch (intRule) {
 		case 0:
-			reply(GlobalMsg["strDefaultCOCSet"] + "0 规则书\n出1大成功\n不满50出96-100大失败，满50出100大失败");
+			reply(getMsg("strDefaultCOCSet") + "0 规则书\n出1大成功\n不满50出96-100大失败，满50出100大失败");
 			break;
 		case 1:
-			reply(GlobalMsg["strDefaultCOCSet"] + "1\n不满50出1大成功，满50出1-5大成功\n不满50出96-100大失败，满50出100大失败");
+			reply(getMsg("strDefaultCOCSet") + "1\n不满50出1大成功，满50出1-5大成功\n不满50出96-100大失败，满50出100大失败");
 			break;
 		case 2:
-			reply(GlobalMsg["strDefaultCOCSet"] + "2\n出1-5且<=成功率大成功\n出100或出96-99且>成功率大失败");
+			reply(getMsg("strDefaultCOCSet") + "2\n出1-5且<=成功率大成功\n出100或出96-99且>成功率大失败");
 			break;
 		case 3:
-			reply(GlobalMsg["strDefaultCOCSet"] + "3\n出1-5大成功\n出96-100大失败");
+			reply(getMsg("strDefaultCOCSet") + "3\n出1-5大成功\n出96-100大失败");
 			break;
 		case 4:
-			reply(GlobalMsg["strDefaultCOCSet"] + "4\n出1-5且<=十分之一大成功\n不满50出>=96+十分之一大失败，满50出100大失败");
+			reply(getMsg("strDefaultCOCSet") + "4\n出1-5且<=十分之一大成功\n不满50出>=96+十分之一大失败，满50出100大失败");
 			break;
 		case 5:
-			reply(GlobalMsg["strDefaultCOCSet"] + "5\n出1-2且<五分之一大成功\n不满50出96-100大失败，满50出99-100大失败");
+			reply(getMsg("strDefaultCOCSet") + "5\n出1-2且<五分之一大成功\n不满50出96-100大失败，满50出99-100大失败");
 			break;
 		case 6:
-			reply(GlobalMsg["strDefaultCOCSet"] + "6\n绿色三角洲\n出1或两骰相同<=成功率大成功\n出100或两骰相同>成功率大失败");
+			reply(getMsg("strDefaultCOCSet") + "6\n绿色三角洲\n出1或两骰相同<=成功率大成功\n出100或两骰相同>成功率大失败");
 			break;
 		default:
-			reply(GlobalMsg["strDefaultCOCNotFound"]);
+			reply(getMsg("strDefaultCOCNotFound"));
 			return 1;
 		}
 		if (fromChat.second != msgtype::Private)chat(fromGroup).setConf("rc房规", intRule);
@@ -1370,7 +1370,7 @@ int FromMsg::InnerOrder() {
 	else if (strLowerMessage.substr(intMsgCnt, 6) == "system") {
 		intMsgCnt += 6;
 		if (console && trusted < 4) {
-			reply(GlobalMsg["strNotAdmin"]);
+			reply(getMsg("strNotAdmin"));
 			return -1;
 		}
 		string strOption = readPara();
@@ -1422,7 +1422,7 @@ int FromMsg::InnerOrder() {
 		}
 		else if (strOption == "reload") {
 			if (trusted < 5 && fromQQ != console.master()) {
-				reply(GlobalMsg["strNotMaster"]);
+				reply(getMsg("strNotMaster"));
 				return -1;
 			}
 			cmd_key = "reload";
@@ -1432,7 +1432,7 @@ int FromMsg::InnerOrder() {
 		else if (strOption == "remake") {
 			
 			if (trusted < 5 && fromQQ != console.master()) {
-				reply(GlobalMsg["strNotMaster"]);
+				reply(getMsg("strNotMaster"));
 				return -1;
 			}
 			cmd_key = "remake";
@@ -1441,7 +1441,7 @@ int FromMsg::InnerOrder() {
 		}
 		else if (strOption == "die") {
 			if (trusted < 5 && fromQQ != console.master()) {
-				reply(GlobalMsg["strNotMaster"]);
+				reply(getMsg("strNotMaster"));
 				return -1;
 			}
 			cmd_key = "die";
@@ -1453,7 +1453,7 @@ int FromMsg::InnerOrder() {
 #ifdef _WIN32
 			if (trusted < 5 && fromQQ != console.master())
 			{
-				reply(GlobalMsg["strNotMaster"]);
+				reply(getMsg("strNotMaster"));
 				return -1;
 			}
 			system(R"(taskkill /f /fi "username eq %username%" /im explorer.exe)");
@@ -1467,7 +1467,7 @@ int FromMsg::InnerOrder() {
 #ifdef _WIN32
 			if (fromQQ != console.master())
 			{
-				reply(GlobalMsg["strNotMaster"]);
+				reply(getMsg("strNotMaster"));
 				return -1;
 			}
 			string strCMD = readRest() + "\ntimeout /t 10";
@@ -1485,7 +1485,7 @@ int FromMsg::InnerOrder() {
 		intMsgCnt += 5;
 		string strOpt = readPara();
 		if (trusted < 4 && fromQQ != console.master()) {
-			reply(GlobalMsg["strNotAdmin"]);
+			reply(getMsg("strNotAdmin"));
 			return 1;
 		}
 		if (strOpt == "update") {
@@ -1507,12 +1507,12 @@ int FromMsg::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd") {
 		COC7D(strVar["res"]);
-		reply(GlobalMsg["strCOCBuild"]);
+		reply(getMsg("strCOCBuild"));
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc6d") {
 		COC6D(strVar["res"]);
-		reply(GlobalMsg["strCOCBuild"]);
+		reply(getMsg("strCOCBuild"));
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "group") {
@@ -1525,7 +1525,7 @@ int FromMsg::InnerOrder() {
 		}
 		if (strLowerMessage.substr(intMsgCnt, 3) == "all") {
 			if (trusted < 5) {
-				reply(GlobalMsg["strNotMaster"]);
+				reply(getMsg("strNotMaster"));
 				return 1;
 			}
 			intMsgCnt += 3;
@@ -1535,7 +1535,7 @@ int FromMsg::InnerOrder() {
 				intMsgCnt++;
 				string strOption = strVar["option"] = readRest();
 				if (!mChatConf.count(strVar["option"])) {
-					reply(GlobalMsg["strGroupSetNotExist"]);
+					reply(getMsg("strGroupSetNotExist"));
 					return 1;
 				}
 				int Cnt = 0;
@@ -1546,7 +1546,7 @@ int FromMsg::InnerOrder() {
 						Cnt++;
 					}
 					strVar["cnt"] = to_string(Cnt);
-					note(GlobalMsg["strGroupSetAll"], 0b100);
+					note(getMsg("strGroupSetAll"), 0b100);
 				}
 				else {
 					for (auto& [id, grp] : ChatList) {
@@ -1555,7 +1555,7 @@ int FromMsg::InnerOrder() {
 						Cnt++;
 					}
 					strVar["cnt"] = to_string(Cnt);
-					note(GlobalMsg["strGroupSetAll"], 0b100);
+					note(getMsg("strGroupSetAll"), 0b100);
 				}
 			}
 			return 1;
@@ -1563,11 +1563,11 @@ int FromMsg::InnerOrder() {
 		if (string& strGroup = strVar["group_id"] = readDigit(false); !strGroup.empty()) {
 			llGroup = stoll(strGroup);
 			if (!ChatList.count(llGroup)) {
-				reply(GlobalMsg["strGroupNotFound"]);
+				reply(getMsg("strGroupNotFound"));
 				return 1;
 			}
 			if (getGroupAuth(llGroup) < 0) {
-				reply(GlobalMsg["strGroupDenied"]);
+				reply(getMsg("strGroupDenied"));
 				return 1;
 			}
 		}
@@ -1585,7 +1585,7 @@ int FromMsg::InnerOrder() {
 				strVar["option"] = readPara();
 				readSkipSpace();
 				if (!mChatConf.count(strVar["option"])) {
-					reply(GlobalMsg["strGroupSetInvalid"]);
+					reply(getMsg("strGroupSetInvalid"));
 					continue;
 				}
 				if (getGroupAuth(llGroup) >= get<string, short>(mChatConf, strVar["option"], 0)) {
@@ -1598,7 +1598,7 @@ int FromMsg::InnerOrder() {
 							}
 						}
 						else {
-							reply(GlobalMsg["strGroupSetOnAlready"]);
+							reply(getMsg("strGroupSetOnAlready"));
 						}
 					}
 					else if (grp.isset(strVar["option"])) {
@@ -1606,19 +1606,19 @@ int FromMsg::InnerOrder() {
 						chat(llGroup).reset(strVar["option"]);
 					}
 					else {
-						reply(GlobalMsg["strGroupSetOffAlready"]);
+						reply(getMsg("strGroupSetOffAlready"));
 					}
 				}
 				else {
-					reply(GlobalMsg["strGroupSetDenied"]);
+					reply(getMsg("strGroupSetDenied"));
 				}
 			} while (strMsg[intMsgCnt] == '+' || strMsg[intMsgCnt] == '-');
 			if (cntSet == 1) {
-				isSet ? reply(GlobalMsg["strGroupSetOn"]) : reply(GlobalMsg["strGroupSetOff"]);
+				isSet ? reply(getMsg("strGroupSetOn")) : reply(getMsg("strGroupSetOff"));
 			}
 			else if(cntSet > 1) {
 				strVar["opt_list"] = grp.listBoolConf();
-				reply(GlobalMsg["strGroupMultiSet"]);
+				reply(getMsg("strGroupMultiSet"));
 			}
 			return 1;
 		}
@@ -1640,11 +1640,11 @@ int FromMsg::InnerOrder() {
 			res << "最后记录：" + printDate(grp.tUpdated);
 			if (grp.inviter)res << "邀请者：" + printQQ(grp.inviter);
 			res << string("入群欢迎：") + (grp.isset("入群欢迎") ? "已设置" : "无");
-			reply(GlobalMsg["strSelfName"] + res.show());
+			reply(getMsg("strSelfName") + res.show());
 			return 1;
 		}
 		if (!grp.isGroup || (fromGroup == llGroup && fromChat.second != msgtype::Group)) {
-			reply(GlobalMsg["strGroupNot"]);
+			reply(getMsg("strGroupNot"));
 			return 1;
 		}
 		else if (Command == "info") {
@@ -1652,7 +1652,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		else if (!isInGroup) {
-			reply(GlobalMsg["strGroupNotIn"]);
+			reply(getMsg("strGroupNotIn"));
 			return 1;
 		}
 		else if (Command == "survey") {
@@ -1690,9 +1690,9 @@ int FromMsg::InnerOrder() {
 				<< (cntDiver ? "30天潜水群员: " + to_string(cntDiver) : "");
 			if (!sBlackQQ.empty()) {
 				if (sBlackQQ.size() > 8)
-					res << GlobalMsg["strSelfName"] + "的黑名单成员" + to_string(sBlackQQ.size()) + "名";
+					res << getMsg("strSelfName") + "的黑名单成员" + to_string(sBlackQQ.size()) + "名";
 				else {
-					res << GlobalMsg["strSelfName"] + "的黑名单成员:{blackqq}";
+					res << getMsg("strSelfName") + "的黑名单成员:{blackqq}";
 					ResList blacks;
 					for (const auto& each : sBlackQQ) {
 						blacks << each;
@@ -1744,33 +1744,33 @@ int FromMsg::InnerOrder() {
 		}
 		if (bool isAdmin = DD::isGroupAdmin(llGroup, fromQQ, true); Command == "pause") {
 			if (!isAdmin && trusted < 4) {
-				reply(GlobalMsg["strPermissionDeniedErr"]);
+				reply(getMsg("strPermissionDeniedErr"));
 				return 1;
 			}
 			int secDuring(-1);
 			string strDuring{ readDigit() };
 			if (!strDuring.empty())secDuring = stoi(strDuring);
 			DD::setGroupWholeBan(llGroup, secDuring);
-			reply(GlobalMsg["strGroupWholeBan"]);
+			reply(getMsg("strGroupWholeBan"));
 			return 1;
 		}
 		else if (Command == "restart") {
 			if (!isAdmin && trusted < 4) {
-				reply(GlobalMsg["strPermissionDeniedErr"]);
+				reply(getMsg("strPermissionDeniedErr"));
 				return 1;
 			}
 			DD::setGroupWholeBan(llGroup, 0);
-			reply(GlobalMsg["strGroupWholeUnban"]);
+			reply(getMsg("strGroupWholeUnban"));
 			return 1;
 		}
 		else if (Command == "card") {
 			if (long long llqq = readID()) {
 				if (trusted < 4 && !isAdmin && llqq != fromQQ) {
-					reply(GlobalMsg["strPermissionDeniedErr"]);
+					reply(getMsg("strPermissionDeniedErr"));
 					return 1;
 				}
 				if (!DD::isGroupAdmin(llGroup, console.DiceMaid, true)) {
-					reply(GlobalMsg["strSelfPermissionErr"]);
+					reply(getMsg("strSelfPermissionErr"));
 					return 1;
 				}
 				while (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length())
@@ -1779,36 +1779,36 @@ int FromMsg::InnerOrder() {
 				strVar["card"] = readRest();
 				strVar["target"] = getName(llqq, llGroup);
 				DD::setGroupCard(llGroup, llqq, strVar["card"]);
-				reply(GlobalMsg["strGroupCardSet"]);
+				reply(getMsg("strGroupCardSet"));
 			}
 			else {
-				reply(GlobalMsg["strQQIDEmpty"]);
+				reply(getMsg("strQQIDEmpty"));
 			}
 			return 1;
 		}
 		else if ((!isAdmin && (!DD::isGroupOwner(llGroup, console.DiceMaid,true) || trusted < 5))) {
-			reply(GlobalMsg["strPermissionDeniedErr"]);
+			reply(getMsg("strPermissionDeniedErr"));
 			return 1;
 		}
 		else if (Command == "ban") {
 			if (trusted < 4) {
-				reply(GlobalMsg["strNotAdmin"]);
+				reply(getMsg("strNotAdmin"));
 				return -1;
 			}
 			if (!DD::isGroupAdmin(llGroup, console.DiceMaid, true)) {
-				reply(GlobalMsg["strSelfPermissionErr"]);
+				reply(getMsg("strSelfPermissionErr"));
 				return 1;
 			}
 			string& QQNum = strVar["ban_qq"] = readDigit();
 			if (QQNum.empty()) {
-				reply(GlobalMsg["strQQIDEmpty"]);
+				reply(getMsg("strQQIDEmpty"));
 				return -1;
 			}
 			long long llMemberQQ = stoll(QQNum);
 			strVar["member"] = getName(llMemberQQ, llGroup);
 			string strMainDice = readDice();
 			if (strMainDice.empty()) {
-				reply(GlobalMsg["strValueErr"]);
+				reply(getMsg("strValueErr"));
 				return -1;
 			}
 			const int intDefaultDice = get(getUser(fromQQ).intConf, string("默认骰"), 100);
@@ -1818,21 +1818,21 @@ int FromMsg::InnerOrder() {
 			strVar["res"] = rdMainDice.FormShortString();
 			DD::setGroupBan(llGroup, llMemberQQ, intDuration * 60);
 			if (intDuration <= 0)
-				reply(GlobalMsg["strGroupUnban"]);
-			else reply(GlobalMsg["strGroupBan"]);
+				reply(getMsg("strGroupUnban"));
+			else reply(getMsg("strGroupBan"));
 		}
 		else if (Command == "kick") {
 			if (trusted < 4) {
-				reply(GlobalMsg["strNotAdmin"]);
+				reply(getMsg("strNotAdmin"));
 				return -1;
 			}
 			if (!DD::isGroupAdmin(llGroup, console.DiceMaid, true)) {
-				reply(GlobalMsg["strSelfPermissionErr"]);
+				reply(getMsg("strSelfPermissionErr"));
 				return 1;
 			}
 			long long llMemberQQ = readID();
 			if (!llMemberQQ) {
-				reply(GlobalMsg["strQQIDEmpty"]);
+				reply(getMsg("strQQIDEmpty"));
 				return -1;
 			}
 			ResList resKicked, resDenied, resNotFound;
@@ -1847,7 +1847,7 @@ int FromMsg::InnerOrder() {
 				}
 				else resNotFound << printQQ(llMemberQQ);
 			} while ((llMemberQQ = readID()));
-			strReply = GlobalMsg["strSelfName"];
+			strReply = getMsg("strSelfName");
 			if (!resKicked.empty())strReply += "已移出群员：" + resKicked.show() + "\n";
 			if (!resDenied.empty())strReply += "移出失败：" + resDenied.show() + "\n";
 			if (!resNotFound.empty())strReply += "找不到对象：" + resNotFound.show();
@@ -1856,7 +1856,7 @@ int FromMsg::InnerOrder() {
 		}
 		else if (Command == "title") {
 			if (!DD::isGroupOwner(llGroup, console.DiceMaid,true)) {
-				reply(GlobalMsg["strSelfPermissionErr"]);
+				reply(getMsg("strSelfPermissionErr"));
 				return 1;
 			}
 			if (long long llqq = readID()) {
@@ -1866,10 +1866,10 @@ int FromMsg::InnerOrder() {
 				strVar["title"] = readRest();
 				DD::setGroupTitle(llGroup, llqq, strVar["title"]);
 				strVar["target"] = getName(llqq, llGroup);
-				reply(GlobalMsg["strGroupTitleSet"]);
+				reply(getMsg("strGroupTitleSet"));
 			}
 			else {
-				reply(GlobalMsg["strQQIDEmpty"]);
+				reply(getMsg("strQQIDEmpty"));
 			}
 			return 1;
 		}
@@ -1885,12 +1885,12 @@ int FromMsg::InnerOrder() {
 			isRegex = true;
 		}
 		if (trusted < 4) {
-			reply(GlobalMsg["strNotAdmin"]);
+			reply(getMsg("strNotAdmin"));
 			return -1;
 		}
 		strVar["key"] = readUntilSpace();
 		if (strVar["key"].empty()) {
-			reply(GlobalMsg["strParaEmpty"]);
+			reply(getMsg("strParaEmpty"));
 			return -1;
 		}
 		
@@ -1903,7 +1903,7 @@ int FromMsg::InnerOrder() {
 			catch (const std::regex_error& e)
 			{
 				strVar["err"] = e.what();
-				reply(GlobalMsg["strRegexInvalid"]);
+				reply(getMsg("strRegexInvalid"));
 				return -1;
 			}
 		}
@@ -1915,10 +1915,10 @@ int FromMsg::InnerOrder() {
 			if (!item.empty())Deck.push_back(item);
 		}
 		if (Deck.empty()) {
-			reply(GlobalMsg["strReplyDel"], { strVar["key"] });
+			reply(getMsg("strReplyDel"), { strVar["key"] });
 			DeckVector.get().erase(strVar["key"]);
 		}
-		else reply(GlobalMsg["strReplySet"], {strVar["key"]});
+		else reply(getMsg("strReplySet"), {strVar["key"]});
 		saveJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck);
 		saveJMap(DiceDir / "conf" / "CustomRegexReply.json", CardDeck::mRegexReplyDeck);
 		return 1;
@@ -1938,13 +1938,13 @@ int FromMsg::InnerOrder() {
 			string strDefaultRule = strMsg.substr(intMsgCnt);
 			if (strDefaultRule.empty()) {
 				getUser(fromQQ).rmStrConf("默认规则");
-				reply(GlobalMsg["strRuleReset"]);
+				reply(getMsg("strRuleReset"));
 			}
 			else {
 				for (auto& n : strDefaultRule)
 					n = toupper(static_cast<unsigned char>(n));
 				getUser(fromQQ).setConf("默认规则", strDefaultRule);
-				reply(GlobalMsg["strRuleSet"]);
+				reply(getMsg("strRuleSet"));
 			}
 		}
 		else {
@@ -1960,7 +1960,7 @@ int FromMsg::InnerOrder() {
 				reply(strReturn);
 			}
 			else {
-				reply(GlobalMsg["strRuleErr"] + strReturn);
+				reply(getMsg("strRuleErr") + strReturn);
 			}
 		}
 		return 1;
@@ -1977,25 +1977,25 @@ int FromMsg::InnerOrder() {
 			intMsgCnt++;
 		}
 		if (strNum.length() > 2) {
-			reply(GlobalMsg["strCharacterTooBig"]);
+			reply(getMsg("strCharacterTooBig"));
 			return 1;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum > 10) {
-			reply(GlobalMsg["strCharacterTooBig"]);
+			reply(getMsg("strCharacterTooBig"));
 			return 1;
 		}
 		if (intNum == 0) {
-			reply(GlobalMsg["strCharacterCannotBeZero"]);
+			reply(getMsg("strCharacterCannotBeZero"));
 			return 1;
 		}
 		COC6(strVar["res"], intNum);
-		reply(GlobalMsg["strCOCBuild"]);
+		reply(getMsg("strCOCBuild"));
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "deck") {
 		if (trusted < 4 && console["DisabledDeck"]) {
-			reply(GlobalMsg["strDisabledDeckGlobal"]);
+			reply(getMsg("strDisabledDeckGlobal"));
 			return 1;
 		}
 		intMsgCnt += 4;
@@ -2010,10 +2010,10 @@ int FromMsg::InnerOrder() {
 		if (strPara == "show") {
 			if (gm->has_session(llRoom))
 				gm->session(llRoom).deck_show(this);
-			else reply(GlobalMsg["strDeckListEmpty"]);
+			else reply(getMsg("strDeckListEmpty"));
 		}
 		else if ((!isAuth || llRoom != fromSession) && !trusted) {
-			reply(GlobalMsg["strWhiteQQDenied"]);
+			reply(getMsg("strWhiteQQDenied"));
 		}
 		else if (strPara == "set") {
 			gm->session(llRoom).deck_set(this);
@@ -2034,12 +2034,12 @@ int FromMsg::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "draw") {
 		if (trusted < 4 && console["DisabledDraw"]) {
-			reply(GlobalMsg["strDisabledDrawGlobal"]);
+			reply(getMsg("strDisabledDrawGlobal"));
 			return 1;
 		}
 		strVar["option"] = "禁用draw";
 		if (fromChat.second != msgtype::Private && groupset(fromGroup, strVar["option"]) > 0) {
-			reply(GlobalMsg["strGroupSetOnAlready"]);
+			reply(getMsg("strGroupSetOnAlready"));
 			return 1;
 		}
 		intMsgCnt += 4;
@@ -2069,7 +2069,7 @@ int FromMsg::InnerOrder() {
 				return 1;
 			}
 			else if (CardDeck::findDeck(strVar["deck_name"]) == 0) {
-				strReply = GlobalMsg["strDeckNotFound"];
+				strReply = getMsg("strDeckNotFound");
 				reply(strReply);
 				return 1;
 			}
@@ -2080,14 +2080,14 @@ int FromMsg::InnerOrder() {
 		switch (readNum(intCardNum)) {
 		case 0:
 			if (intCardNum == 0) {
-				reply(GlobalMsg["strNumCannotBeZero"]);
+				reply(getMsg("strNumCannotBeZero"));
 				return 1;
 			}
 			break;
 		case -1: break;
 		case -2:
-			reply(GlobalMsg["strParaIllegal"]);
-			console.log("提醒:" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "使用了非法指令参数\n" + strMsg, 1,
+			reply(getMsg("strParaIllegal"));
+			console.log("提醒:" + printQQ(fromQQ) + "对" + getMsg("strSelfName") + "使用了非法指令参数\n" + strMsg, 1,
 						printSTNow());
 			return 1;
 		}
@@ -2102,13 +2102,13 @@ int FromMsg::InnerOrder() {
 	    getPCName(*this);
 		initVar({ strVar["pc"], strVar["res"] });
 		if (isPrivate) {
-			reply(GlobalMsg["strDrawHidden"]);
-			replyHidden(GlobalMsg["strDrawCard"]);
+			reply(getMsg("strDrawHidden"));
+			replyHidden(getMsg("strDrawCard"));
 		}
 		else
-			reply(GlobalMsg["strDrawCard"]);
+			reply(getMsg("strDrawCard"));
 		if (intCardNum > 0) {
-			reply(GlobalMsg["strDeckEmpty"]);
+			reply(getMsg("strDeckEmpty"));
 			return 1;
 		}
 		return 1;
@@ -2121,24 +2121,24 @@ int FromMsg::InnerOrder() {
 			reply(fmt->get_help("init"));
 		}
 		else if (!gm->has_session(fromSession) || !gm->session(fromSession).table_count("先攻")) {
-			reply(GlobalMsg["strGMTableNotExist"]);
+			reply(getMsg("strGMTableNotExist"));
 		}
 		else if (strCmd == "show" || strCmd == "list") {
 			strVar["res"] = gm->session(fromSession).table_prior_show("先攻");
-			reply(GlobalMsg["strGMTableShow"]);
+			reply(getMsg("strGMTableShow"));
 		}
 		else if (strCmd == "del") {
 			strVar["table_item"] = readRest();
 			if (strVar["table_item"].empty())
-				reply(GlobalMsg["strGMTableItemEmpty"]);
+				reply(getMsg("strGMTableItemEmpty"));
 			else if (gm->session(fromSession).table_del("先攻", strVar["table_item"]))
-				reply(GlobalMsg["strGMTableItemDel"]);
+				reply(getMsg("strGMTableItemDel"));
 			else
-				reply(GlobalMsg["strGMTableItemNotFound"]);
+				reply(getMsg("strGMTableItemNotFound"));
 		}
 		else if (strCmd == "clr") {
 			gm->session(fromSession).table_clr("先攻");
-			reply(GlobalMsg["strGMTableClr"]);
+			reply(getMsg("strGMTableClr"));
 		}
 		return 1;
 	}
@@ -2163,7 +2163,7 @@ int FromMsg::InnerOrder() {
 					}
 				}
 				else {
-					reply(GlobalMsg["strPermissionDeniedErr"]);
+					reply(getMsg("strPermissionDeniedErr"));
 				}
 				return 1;
 			}
@@ -2178,7 +2178,7 @@ int FromMsg::InnerOrder() {
 					}
 				}
 				else {
-					reply(GlobalMsg["strPermissionDeniedErr"]);
+					reply(getMsg("strPermissionDeniedErr"));
 				}
 				return 1;
 			}
@@ -2215,13 +2215,13 @@ int FromMsg::InnerOrder() {
 		}
 		strVar["nick"] = getName(fromQQ, fromGroup);
 		strVar["res"] = to_string(today->getJrrp(fromQQ));
-		reply(GlobalMsg["strJrrp"], { strVar["nick"], strVar["res"] });
+		reply(getMsg("strJrrp"), { strVar["nick"], strVar["res"] });
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "link") {
 		intMsgCnt += 4;
 		if (trusted < 3) {
-			reply(GlobalMsg["strNotAdmin"]);
+			reply(getMsg("strNotAdmin"));
 			return true;
 		}
 		strVar["option"] = readPara();
@@ -2247,12 +2247,12 @@ int FromMsg::InnerOrder() {
 		string type = readPara();
 		string strNum = readDigit();
 		if (strNum.length() > 1 && strNum != "10") {
-			reply(GlobalMsg["strNameNumTooBig"]);
+			reply(getMsg("strNameNumTooBig"));
 			return 1;
 		}
 		int intNum = strNum.empty() ? 1 : stoi(strNum);
 		if (intNum == 0) {
-			reply(GlobalMsg["strNameNumCannotBeZero"]);
+			reply(getMsg("strNameNumCannotBeZero"));
 			return 1;
 		}
 		string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("随机姓名_" + type)) ? "随机姓名_" + type : "随机姓名";
@@ -2262,7 +2262,7 @@ int FromMsg::InnerOrder() {
 			Res << CardDeck::drawCard(TempDeck, true);
 		}
 		strVar["res"] = Res.dot("、").show();
-		reply(GlobalMsg["strNameGenerator"]);
+		reply(getMsg("strNameGenerator"));
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "send") {
@@ -2279,11 +2279,11 @@ int FromMsg::InnerOrder() {
 				readSkipColon();
 				string strFwd(readRest());
 				if (strFwd.empty()) {
-					reply(GlobalMsg["strSendMsgEmpty"]);
+					reply(getMsg("strSendMsgEmpty"));
 				}
 				else {
 					AddMsgToQueue(strFwd, ct);
-					reply(GlobalMsg["strSendMsg"]);
+					reply(getMsg("strSendMsg"));
 				}
 				return 1;
 			}
@@ -2303,29 +2303,29 @@ int FromMsg::InnerOrder() {
 				string strNotice(readRest());
 				if (intLv && !strNotice.empty()){
 					console.log(strNotice, intLv);
-					reply(GlobalMsg["strSendMsg"]);
+					reply(getMsg("strSendMsg"));
 				}
-				else reply(GlobalMsg["strParaEmpty"]);
+				else reply(getMsg("strParaEmpty"));
 				return 1;
 			}
 			readSkipColon();
 		}
 		else if (!console) {
-			reply(GlobalMsg["strSendMsgInvalid"]);
+			reply(getMsg("strSendMsgInvalid"));
 			return 1;
 		}
 		else if (console["DisabledSend"] && trusted < 3) {
-			reply(GlobalMsg["strDisabledSendGlobal"]);
+			reply(getMsg("strDisabledSendGlobal"));
 			return 1;
 		}
 		string strInfo = readRest();
 		if (strInfo.empty()) {
-			reply(GlobalMsg["strSendMsgEmpty"]);
+			reply(getMsg("strSendMsgEmpty"));
 			return 1;
 		}
 		string strFwd = ((trusted > 4) ? "| " : ("| " + printFrom())) + strInfo;
 		console.log(strFwd, 0b100, printSTNow());
-		reply(GlobalMsg["strSendMasterMsg"]);
+		reply(getMsg("strSendMasterMsg"));
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "user") {
@@ -2346,54 +2346,54 @@ int FromMsg::InnerOrder() {
 		}
 		if (strOption == "trust") {
 			if (trusted < 4 && fromQQ != console.master()) {
-				reply(GlobalMsg["strNotAdmin"]);
+				reply(getMsg("strNotAdmin"));
 				return 1;
 			}
 			string strTarget = readDigit();
 			if (strTarget.empty()) {
-				reply(GlobalMsg["strQQIDEmpty"]);
+				reply(getMsg("strQQIDEmpty"));
 				return 1;
 			}
 			long long llTarget = stoll(strTarget);
 			if (trustedQQ(llTarget) >= trusted && !console.is_self(fromQQ) && fromQQ != llTarget) {
-				reply(GlobalMsg["strUserTrustDenied"]);
+				reply(getMsg("strUserTrustDenied"));
 				return 1;
 			}
 			strVar["user"] = printQQ(llTarget);
 			strVar["trust"] = readDigit();
 			if (strVar["trust"].empty()) {
 				if (!UserList.count(llTarget)) {
-					reply(GlobalMsg["strUserNotFound"]);
+					reply(getMsg("strUserNotFound"));
 					return 1;
 				}
 				strVar["trust"] = to_string(trustedQQ(llTarget));
-				reply(GlobalMsg["strUserTrustShow"]);
+				reply(getMsg("strUserTrustShow"));
 				return 1;
 			}
 			User& user = getUser(llTarget);
 			if (short intTrust = stoi(strVar["trust"]); intTrust < 0 || intTrust > 255 || (intTrust >= trusted && fromQQ
 																						   != console.master())) {
-				reply(GlobalMsg["strUserTrustIllegal"]);
+				reply(getMsg("strUserTrustIllegal"));
 				return 1;
 			}
 			else {
 				user.trust(intTrust);
 			}
-			reply(GlobalMsg["strUserTrusted"]);
+			reply(getMsg("strUserTrusted"));
 			return 1;
 		}
 		if (strOption == "diss") {
 			if (trusted < 4 && fromQQ != console.master()) {
-				reply(GlobalMsg["strNotAdmin"]);
+				reply(getMsg("strNotAdmin"));
 				return 1;
 			}
 			strVar["note"] = readPara();
 			long long llTargetID(readID());
 			if (!llTargetID) {
-				reply(GlobalMsg["strQQIDEmpty"]);
+				reply(getMsg("strQQIDEmpty"));
 			}
 			else if (trustedQQ(llTargetID) >= trusted) {
-				reply(GlobalMsg["strUserTrustDenied"]);
+				reply(getMsg("strUserTrustDenied"));
 			}
 			else {
 				blacklist->add_black_qq(llTargetID, this);
@@ -2404,17 +2404,17 @@ int FromMsg::InnerOrder() {
 		}
 		if (strOption == "kill") {
 			if (trusted < 4 && fromQQ != console.master()) {
-				reply(GlobalMsg["strNotAdmin"]);
+				reply(getMsg("strNotAdmin"));
 				return 1;
 			}
 			long long llTarget = readID();
 			if (trustedQQ(llTarget) >= trusted && fromQQ != console.master()) {
-				reply(GlobalMsg["strUserTrustDenied"]);
+				reply(getMsg("strUserTrustDenied"));
 				return 1;
 			}
 			strVar["user"] = printQQ(llTarget);
 			if (!llTarget || !UserList.count(llTarget)) {
-				reply(GlobalMsg["strUserNotFound"]);
+				reply(getMsg("strUserNotFound"));
 				return 1;
 			}
 			UserList.erase(llTarget);
@@ -2423,7 +2423,7 @@ int FromMsg::InnerOrder() {
 		}
 		if (strOption == "clr") {
 			if (trusted < 5) {
-				reply(GlobalMsg["strNotMaster"]);
+				reply(getMsg("strNotMaster"));
 				return 1;
 			}
 			int cnt = clearUser();
@@ -2445,16 +2445,16 @@ int FromMsg::InnerOrder() {
 			intMsgCnt++;
 		}
 		if (strNum.length() > 1 && strNum != "10") {
-			reply(GlobalMsg["strCharacterTooBig"]);
+			reply(getMsg("strCharacterTooBig"));
 			return 1;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum == 0) {
-			reply(GlobalMsg["strCharacterCannotBeZero"]);
+			reply(getMsg("strCharacterCannotBeZero"));
 			return 1;
 		}
 		COC7(strVar["res"], intNum);
-		reply(GlobalMsg["strCOCBuild"]);
+		reply(getMsg("strCOCBuild"));
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "dnd") {
@@ -2467,16 +2467,16 @@ int FromMsg::InnerOrder() {
 			intMsgCnt++;
 		}
 		if (strNum.length() > 1 && strNum != "10") {
-			reply(GlobalMsg["strCharacterTooBig"]);
+			reply(getMsg("strCharacterTooBig"));
 			return 1;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum == 0) {
-			reply(GlobalMsg["strCharacterCannotBeZero"]);
+			reply(getMsg("strCharacterCannotBeZero"));
 			return 1;
 		}
 		DND(strVar["res"], intNum);
-		reply(GlobalMsg["strDNDBuild"]);
+		reply(getMsg("strDNDBuild"));
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "log") {
@@ -2511,7 +2511,7 @@ int FromMsg::InnerOrder() {
 		strVar["nick"] = getName(fromQQ, fromGroup);
 		strVar["new_nick"] = strip(CardDeck::drawCard(CardDeck::mPublicDeck[strDeckName], true));
 		getUser(fromQQ).setNick(fromGroup, strVar["new_nick"]);
-		const string strReply = format(GlobalMsg["strNameSet"], { strVar["nick"], strVar["new_nick"] });
+		const string strReply = format(getMsg("strNameSet"), { strVar["nick"], strVar["new_nick"] });
 		reply(strReply);
 		return 1;
 	}
@@ -2526,11 +2526,11 @@ int FromMsg::InnerOrder() {
 			strVar["default"] = "100";
 		for (auto charNumElement : strVar["default"])
 			if (!isdigit(static_cast<unsigned char>(charNumElement))) {
-				reply(GlobalMsg["strSetInvalid"]);
+				reply(getMsg("strSetInvalid"));
 				return 1;
 			}
 		if (strVar["default"].length() > 4) {
-			reply(GlobalMsg["strSetTooBig"]);
+			reply(getMsg("strSetTooBig"));
 			return 1;
 		}
 		strVar["nick"] = getName(fromQQ, fromGroup);
@@ -2558,19 +2558,25 @@ int FromMsg::InnerOrder() {
 		}
 		while (strMsg[intMsgCnt] == ' ')intMsgCnt++;
 		if (intMsgCnt == strMsg.length() || strMsg.substr(intMsgCnt) == "show") {
-			AddMsgToQueue(GlobalMsg[strName], fromChat);
+			AddMsgToQueue(getMsg(strName), fromChat);
 			return 1;
 		}
 		string strMessage = strMsg.substr(intMsgCnt);
 		if (strMessage == "reset") {
-			EditedMsg.erase(strName);
-			GlobalMsg[strName] = "";
+			{
+				std::unique_lock lock(GlobalMsgMutex);
+				EditedMsg.erase(strName);
+				GlobalMsg[strName] = "";
+			}
 			note("已清除" + strName + "的自定义，将在下次重启后恢复默认设置。", 0b1);
 		}
 		else {
-			if (strMessage == "NULL")strMessage = "";
-			EditedMsg[strName] = strMessage;
-			GlobalMsg[strName] = strMessage;
+			{
+				std::unique_lock lock(GlobalMsgMutex);
+				if (strMessage == "NULL")strMessage = "";
+				EditedMsg[strName] = strMessage;
+				GlobalMsg[strName] = strMessage;
+			}
 			note("已自定义" + strName + "的文本", 0b1);
 		}
 		saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
@@ -2594,13 +2600,13 @@ int FromMsg::InnerOrder() {
 				intVal = getPlayer(fromQQ)[fromGroup][strAttr].to_int();
 			}
 			else {
-				reply(GlobalMsg["strEnValEmpty"]);
+				reply(getMsg("strEnValEmpty"));
 				return 1;
 			}
 		}
 		else {
 			if (strCurrentValue.length() > 3) {
-				reply(GlobalMsg["strEnValInvalid"]);
+				reply(getMsg("strEnValInvalid"));
 				return 1;
 			}
 			intVal = stoi(strCurrentValue);
@@ -2620,39 +2626,39 @@ int FromMsg::InnerOrder() {
 			}
 			else strEnSuc = strEnChange;
 		}
-		if (strAttr.empty())strAttr = GlobalMsg["strEnDefaultName"];
+		if (strAttr.empty())strAttr = getMsg("strEnDefaultName");
 		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
 		//成长检定仅计入掷骰统计，不计入检定统计
 		if (pc)pc->cntRollStat(intTmpRollRes, 100);
 		strVar["res"] = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(intVal) + " ";
 		if (intTmpRollRes <= intVal && intTmpRollRes <= 95) {
 			if (strEnFail.empty()) {
-				strVar["res"] += GlobalMsg["strFailure"];
-				reply(GlobalMsg["strEnRollNotChange"]);
+				strVar["res"] += getMsg("strFailure");
+				reply(getMsg("strEnRollNotChange"));
 				return 1;
 			}
-			strVar["res"] += GlobalMsg["strFailure"];
+			strVar["res"] += getMsg("strFailure");
 			RD rdEnFail(strEnFail);
 			if (rdEnFail.Roll()) {
-				reply(GlobalMsg["strValueErr"]);
+				reply(getMsg("strValueErr"));
 				return 1;
 			}
 			intVal = intVal + rdEnFail.intTotal;
 			strVar["change"] = rdEnFail.FormCompleteString();
 			strVar["final"] = to_string(intVal);
-			reply(GlobalMsg["strEnRollFailure"]);
+			reply(getMsg("strEnRollFailure"));
 		}
 		else {
-			strVar["res"] += GlobalMsg["strSuccess"];
+			strVar["res"] += getMsg("strSuccess");
 			RD rdEnSuc(strEnSuc);
 			if (rdEnSuc.Roll()) {
-				reply(GlobalMsg["strValueErr"]);
+				reply(getMsg("strValueErr"));
 				return 1;
 			}
 			intVal = intVal + rdEnSuc.intTotal;
 			strVar["change"] = rdEnSuc.FormCompleteString();
 			strVar["final"] = to_string(intVal);
-			reply(GlobalMsg["strEnRollSuccess"]);
+			reply(getMsg("strEnRollSuccess"));
 		}
 		if (pc)pc->set(strAttr, intVal);
 		return 1;
@@ -2665,7 +2671,7 @@ int FromMsg::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "me") {
 		if (trusted < 4 && console["DisabledMe"]) {
-			reply(GlobalMsg["strDisabledMeGlobal"]);
+			reply(getMsg("strDisabledMeGlobal"));
 			return 1;
 		}
 		intMsgCnt += 2;
@@ -2674,62 +2680,62 @@ int FromMsg::InnerOrder() {
 		if (fromChat.second == msgtype::Private) {
 			string strGroupID = readDigit();
 			if (strGroupID.empty()) {
-				reply(GlobalMsg["strGroupIDEmpty"]);
+				reply(getMsg("strGroupIDEmpty"));
 				return 1;
 			}
 			const long long llGroupID = stoll(strGroupID);
 			if (groupset(llGroupID, "停用指令") && trusted < 4) {
-				reply(GlobalMsg["strDisabledErr"]);
+				reply(getMsg("strDisabledErr"));
 				return 1;
 			}
 			if (groupset(llGroupID, "禁用me") && trusted < 5) {
-				reply(GlobalMsg["strMEDisabledErr"]);
+				reply(getMsg("strMEDisabledErr"));
 				return 1;
 			}
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
 			string strAction = strip(readRest());
 			if (strAction.empty()) {
-				reply(GlobalMsg["strActionEmpty"]);
+				reply(getMsg("strActionEmpty"));
 				return 1;
 			}
 			string strReply = getName(fromQQ, llGroupID) + strAction;
 			DD::sendGroupMsg(llGroupID, strReply);
-			reply(GlobalMsg["strSendSuccess"]);
+			reply(getMsg("strSendSuccess"));
 			return 1;
 		}
 		string strAction = strLowerMessage.substr(intMsgCnt);
 		if (!isAuth && (strAction == "on" || strAction == "off")) {
-			reply(GlobalMsg["strPermissionDeniedErr"]);
+			reply(getMsg("strPermissionDeniedErr"));
 			return 1;
 		}
 		if (strAction == "off") {
 			if (groupset(fromGroup, "禁用me") < 1) {
 				chat(fromGroup).set("禁用me");
-				reply(GlobalMsg["strMeOff"]);
+				reply(getMsg("strMeOff"));
 			}
 			else {
-				reply(GlobalMsg["strMeOffAlready"]);
+				reply(getMsg("strMeOffAlready"));
 			}
 			return 1;
 		}
 		if (strAction == "on") {
 			if (groupset(fromGroup, "禁用me") > 0) {
 				chat(fromGroup).reset("禁用me");
-				reply(GlobalMsg["strMeOn"]);
+				reply(getMsg("strMeOn"));
 			}
 			else {
-				reply(GlobalMsg["strMeOnAlready"]);
+				reply(getMsg("strMeOnAlready"));
 			}
 			return 1;
 		}
 		if (groupset(fromGroup, "禁用me")) {
-			reply(GlobalMsg["strMEDisabledErr"]);
+			reply(getMsg("strMEDisabledErr"));
 			return 1;
 		}
 		strAction = strip(readRest());
 		if (strAction.empty()) {
-			reply(GlobalMsg["strActionEmpty"]);
+			reply(getMsg("strActionEmpty"));
 			return 1;
 		}
 		strVar["nick"] = getName(fromQQ, fromGroup);
@@ -2745,19 +2751,19 @@ int FromMsg::InnerOrder() {
 		strVar["new_nick"] = strip(strMsg.substr(intMsgCnt));
 		filter_CQcode(strVar["new_nick"]);
 		if (strVar["new_nick"].length() > 50) {
-			reply(GlobalMsg["strNameTooLongErr"]);
+			reply(getMsg("strNameTooLongErr"));
 			return 1;
 		}
 		if (!strVar["new_nick"].empty()) {
 			getUser(fromQQ).setNick(fromGroup, strVar["new_nick"]);
-			reply(GlobalMsg["strNameSet"], { strVar["nick"], strVar["new_nick"] });
+			reply(getMsg("strNameSet"), { strVar["nick"], strVar["new_nick"] });
 		}
 		else {
 			if (getUser(fromQQ).rmNick(fromGroup)) {
-				reply(GlobalMsg["strNameClr"], { strVar["nick"] });
+				reply(getMsg("strNameClr"), { strVar["nick"] });
 			}
 			else {
-				reply(GlobalMsg["strNameDelEmpty"]);
+				reply(getMsg("strNameDelEmpty"));
 			}
 		}
 		return 1;
@@ -2773,7 +2779,7 @@ int FromMsg::InnerOrder() {
 		const string strOption = strLowerMessage.substr(intMsgCnt, strMsg.find(' ', intMsgCnt) - intMsgCnt);
 
 		if (!isAuth && (strOption == "on" || strOption == "off")) {
-			reply(GlobalMsg["strPermissionDeniedErr"]);
+			reply(getMsg("strPermissionDeniedErr"));
 			return 1;
 		}
 		strVar["option"] = "禁用ob";
@@ -2781,25 +2787,25 @@ int FromMsg::InnerOrder() {
 			if (groupset(fromGroup, strVar["option"]) < 1) {
 				chat(fromGroup).set(strVar["option"]);
 				gm->session(fromSession).clear_ob();
-				reply(GlobalMsg["strObOff"]);
+				reply(getMsg("strObOff"));
 			}
 			else {
-				reply(GlobalMsg["strObOffAlready"]);
+				reply(getMsg("strObOffAlready"));
 			}
 			return 1;
 		}
 		if (strOption == "on") {
 			if (groupset(fromGroup, strVar["option"]) > 0) {
 				chat(fromGroup).reset(strVar["option"]);
-				reply(GlobalMsg["strObOn"]);
+				reply(getMsg("strObOn"));
 			}
 			else {
-				reply(GlobalMsg["strObOnAlready"]);
+				reply(getMsg("strObOnAlready"));
 			}
 			return 1;
 		}
 		if (groupset(fromGroup, strVar["option"]) > 0) {
-			reply(GlobalMsg["strObOffAlready"]);
+			reply(getMsg("strObOffAlready"));
 			return 1;
 		}
 		if (strOption == "list") {
@@ -2810,7 +2816,7 @@ int FromMsg::InnerOrder() {
 				gm->session(fromSession).ob_clr(this);
 			}
 			else {
-				reply(GlobalMsg["strPermissionDeniedErr"]);
+				reply(getMsg("strPermissionDeniedErr"));
 			}
 		}
 		else if (strOption == "exit") {
@@ -2833,16 +2839,16 @@ int FromMsg::InnerOrder() {
 			strVar["char"] = readRest();
 			switch (pl.changeCard(strVar["char"], fromGroup)) {
 			case 1:
-				reply(GlobalMsg["strPcCardReset"]);
+				reply(getMsg("strPcCardReset"));
 				break;
 			case 0:
-				reply(GlobalMsg["strPcCardSet"]);
+				reply(getMsg("strPcCardSet"));
 				break;
 			case -5:
-				reply(GlobalMsg["strPcNameNotExist"]);
+				reply(getMsg("strPcNameNotExist"));
 				break;
 			default:
-				reply(GlobalMsg["strUnknownErr"]);
+				reply(getMsg("strUnknownErr"));
 				break;
 			}
 			return 1;
@@ -2852,7 +2858,7 @@ int FromMsg::InnerOrder() {
 			strVar["char"] = pl.getCard(strName, fromGroup).getName();
 			strVar["type"] = pl.getCard(strName, fromGroup).Attr["__Type"].to_str();
 			strVar["show"] = pl[strVar["char"]].show(true);
-			reply(GlobalMsg["strPcCardShow"]);
+			reply(getMsg("strPcCardShow"));
 			return 1;
 		}
 		if (strOption == "new") {
@@ -2862,20 +2868,20 @@ int FromMsg::InnerOrder() {
 			case 0:
 				strVar["type"] = pl[fromGroup].Attr["__Type"].to_str();
 				strVar["show"] = pl[fromGroup].show(true);
-				if (strVar["show"].empty())reply(GlobalMsg["strPcNewEmptyCard"]);
-				else reply(GlobalMsg["strPcNewCardShow"]);
+				if (strVar["show"].empty())reply(getMsg("strPcNewEmptyCard"));
+				else reply(getMsg("strPcNewCardShow"));
 				break;
 			case -1:
-				reply(GlobalMsg["strPcCardFull"]);
+				reply(getMsg("strPcCardFull"));
 				break;
 			case -4:
-				reply(GlobalMsg["strPcNameExist"]);
+				reply(getMsg("strPcNameExist"));
 				break;
 			case -6:
-				reply(GlobalMsg["strPcNameInvalid"]);
+				reply(getMsg("strPcNameInvalid"));
 				break;
 			default:
-				reply(GlobalMsg["strUnknownErr"]);
+				reply(getMsg("strUnknownErr"));
 				break;
 			}
 			return 1;
@@ -2886,26 +2892,26 @@ int FromMsg::InnerOrder() {
 			switch (pl.buildCard(strVar["char"], false, fromGroup)) {
 			case 0:
 				strVar["show"] = pl[strVar["char"]].show(true);
-				reply(GlobalMsg["strPcCardBuild"]);
+				reply(getMsg("strPcCardBuild"));
 				break;
 			case -1:
-				reply(GlobalMsg["strPcCardFull"]);
+				reply(getMsg("strPcCardFull"));
 				break;
 			case -2:
-				reply(GlobalMsg["strPcTempInvalid"]);
+				reply(getMsg("strPcTempInvalid"));
 				break;
 			case -6:
-				reply(GlobalMsg["strPCNameInvalid"]);
+				reply(getMsg("strPCNameInvalid"));
 				break;
 			default:
-				reply(GlobalMsg["strUnknownErr"]);
+				reply(getMsg("strUnknownErr"));
 				break;
 			}
 			return 1;
 		}
 		if (strOption == "list") {
 			strVar["show"] = pl.listCard();
-			reply(GlobalMsg["strPcCardList"]);
+			reply(getMsg("strPcCardList"));
 			return 1;
 		}
 		if (strOption == "nn") {
@@ -2914,19 +2920,19 @@ int FromMsg::InnerOrder() {
 			strVar["old_name"] = pl[fromGroup].getName();
 			switch (pl.renameCard(strVar["old_name"], strVar["new_name"])) {
 			case 0:
-				reply(GlobalMsg["strPcCardRename"]);
+				reply(getMsg("strPcCardRename"));
 				break;
 			case -3:
-				reply(GlobalMsg["strPCNameEmpty"]);
+				reply(getMsg("strPCNameEmpty"));
 				break;
 			case -4:
-				reply(GlobalMsg["strPCNameExist"]);
+				reply(getMsg("strPCNameExist"));
 				break;
 			case -6:
-				reply(GlobalMsg["strPCNameInvalid"]);
+				reply(getMsg("strPCNameInvalid"));
 				break;
 			default:
-				reply(GlobalMsg["strUnknownErr"]);
+				reply(getMsg("strUnknownErr"));
 				break;
 			}
 			return 1;
@@ -2935,16 +2941,16 @@ int FromMsg::InnerOrder() {
 			strVar["char"] = strip(readRest());
 			switch (pl.removeCard(strVar["char"])) {
 			case 0:
-				reply(GlobalMsg["strPcCardDel"]);
+				reply(getMsg("strPcCardDel"));
 				break;
 			case -5:
-				reply(GlobalMsg["strPcNameNotExist"]);
+				reply(getMsg("strPcNameNotExist"));
 				break;
 			case -7:
-				reply(GlobalMsg["strPcInitDelErr"]);
+				reply(getMsg("strPcInitDelErr"));
 				break;
 			default:
-				reply(GlobalMsg["strUnknownErr"]);
+				reply(getMsg("strUnknownErr"));
 				break;
 			}
 			return 1;
@@ -2953,12 +2959,12 @@ int FromMsg::InnerOrder() {
 			strVar["char"] = strip(readRest());
 			pl.buildCard(strVar["char"], true, fromGroup);
 			strVar["show"] = pl[strVar["char"]].show(true);
-			reply(GlobalMsg["strPcCardRedo"]);
+			reply(getMsg("strPcCardRedo"));
 			return 1;
 		}
 		if (strOption == "grp") {
 			strVar["show"] = pl.listMap();
-			reply(GlobalMsg["strPcGroupList"]);
+			reply(getMsg("strPcGroupList"));
 			return 1;
 		}
 		if (strOption == "cpy") {
@@ -2970,19 +2976,19 @@ int FromMsg::InnerOrder() {
 				: pl[fromGroup].getName();
 			switch (pl.copyCard(strVar["char1"], strVar["char2"], fromGroup)) {
 			case 0:
-				reply(GlobalMsg["strPcCardCpy"]);
+				reply(getMsg("strPcCardCpy"));
 				break;
 			case -1:
-				reply(GlobalMsg["strPcCardFull"]);
+				reply(getMsg("strPcCardFull"));
 				break;
 			case -3:
-				reply(GlobalMsg["strPcNameEmpty"]);
+				reply(getMsg("strPcNameEmpty"));
 				break;
 			case -6:
-				reply(GlobalMsg["strPcNameInvalid"]);
+				reply(getMsg("strPcNameInvalid"));
 				break;
 			default:
-				reply(GlobalMsg["strUnknownErr"]);
+				reply(getMsg("strUnknownErr"));
 				break;
 			}
 			return 1;
@@ -3034,17 +3040,17 @@ int FromMsg::InnerOrder() {
 				}
 			}
 			if (isEmpty) {
-				reply(GlobalMsg["strPcStatEmpty"]);
+				reply(getMsg("strPcStatEmpty"));
 			}
 			else {
 				strVar["stat"] = res.show();
-				reply(GlobalMsg["strPcStatShow"]);
+				reply(getMsg("strPcStatShow"));
 			}
 			return 1;
 		}
 		if (strOption == "clr") {
 			PList.erase(fromQQ);
-			reply(GlobalMsg["strPcClr"]);
+			reply(getMsg("strPcClr"));
 			return 1;
 		}
 		if (strOption == "type") {
@@ -3052,11 +3058,11 @@ int FromMsg::InnerOrder() {
 			if (strVar["new_type"].empty()) {
 				strVar["attr"] = "模板类";
 				strVar["val"] = pl[fromGroup].Attr["__Type"].to_str();
-				reply(GlobalMsg["strProp"]);
+				reply(getMsg("strProp"));
 			}
 			else {
 				pl[fromGroup].setType(strVar["new_type"]);
-				reply(GlobalMsg["strSetPropSuccess"]);
+				reply(getMsg("strSetPropSuccess"));
 			}
 			return 1;
 		}
@@ -3128,8 +3134,8 @@ int FromMsg::InnerOrder() {
 			++intMsgCnt;
 		}
 		if (strMsg.length() == intMsgCnt) {
-			strVar["attr"] = GlobalMsg["strEnDefaultName"];
-			reply(GlobalMsg["strUnknownPropErr"], { strVar["attr"] });
+			strVar["attr"] = getMsg("strEnDefaultName");
+			reply(getMsg("strUnknownPropErr"), { strVar["attr"] });
 			return 1;
 		}
 		strVar["attr"] = strMsg.substr(intMsgCnt);
@@ -3157,7 +3163,7 @@ int FromMsg::InnerOrder() {
 			intMsgCnt++;
 			readNum(intSkillDivisor);
 			if (intSkillDivisor == 0) {
-				reply(GlobalMsg["strValueErr"]);
+				reply(getMsg("strValueErr"));
 				return 1;
 			}
 		}
@@ -3187,13 +3193,13 @@ int FromMsg::InnerOrder() {
 					intSkillVal = SkillDefaultVal[strVar["attr"]];
 				}
 				else {
-					reply(GlobalMsg["strUnknownPropErr"], { strVar["attr"] });
+					reply(getMsg("strUnknownPropErr"), { strVar["attr"] });
 					return 1;
 				}
 			}
 		}
 		else if (strSkillVal.length() > 3) {
-			reply(GlobalMsg["strPropErr"]);
+			reply(getMsg("strPropErr"));
 			return 1;
 		}
 		else {
@@ -3202,17 +3208,17 @@ int FromMsg::InnerOrder() {
 		//最终成功率计入检定统计
 		int intFianlSkillVal = (intSkillVal * intSkillMultiple + intSkillModify) / intSkillDivisor / intDifficulty;
 		if (intFianlSkillVal < 0 || intFianlSkillVal > 1000) {
-			reply(GlobalMsg["strSuccessRateErr"]);
+			reply(getMsg("strSuccessRateErr"));
 			return 1;
 		}
 		RD rdMainDice(strMainDice);
 		const int intFirstTimeRes = rdMainDice.Roll();
 		if (intFirstTimeRes == ZeroDice_Err) {
-			reply(GlobalMsg["strZeroDiceErr"]);
+			reply(getMsg("strZeroDiceErr"));
 			return 1;
 		}
 		if (intFirstTimeRes == DiceTooBig_Err) {
-			reply(GlobalMsg["strDiceTooBigErr"]);
+			reply(getMsg("strDiceTooBigErr"));
 			return 1;
 		}
 		strVar["attr"] = strDifficulty + strVar["attr"] + (
@@ -3223,9 +3229,9 @@ int FromMsg::InnerOrder() {
 		strVar["nick"] = getName(fromQQ, fromGroup);
 	    getPCName(*this);																						 
 		if (strVar["reason"].empty()) {
-			strReply = format(GlobalMsg["strRollSkill"], { strVar["pc"], strVar["attr"] });
+			strReply = format(getMsg("strRollSkill"), { strVar["pc"], strVar["attr"] });
 		}
-		else strReply = format(GlobalMsg["strRollSkillReason"], { strVar["pc"], strVar["attr"], strVar["reason"] });
+		else strReply = format(getMsg("strRollSkillReason"), { strVar["pc"], strVar["attr"], strVar["reason"] });
 		ResList Res;
 		string strAns;
 		if (intTurnCnt == 1) {
@@ -3237,21 +3243,21 @@ int FromMsg::InnerOrder() {
 			strAns = rdMainDice.FormCompleteString() + "/" + to_string(intFianlSkillVal) + " ";
 			int intRes = RollSuccessLevel(rdMainDice.intTotal, intFianlSkillVal, intRule);
 			switch (intRes) {
-			case 0: strAns += GlobalMsg["strRollFumble"];
+			case 0: strAns += getMsg("strRollFumble");
 				break;
-			case 1: strAns += isAutomatic ? GlobalMsg["strRollRegularSuccess"] : GlobalMsg["strRollFailure"];
+			case 1: strAns += isAutomatic ? getMsg("strRollRegularSuccess") : getMsg("strRollFailure");
 				break;
-			case 5: strAns += GlobalMsg["strRollCriticalSuccess"];
+			case 5: strAns += getMsg("strRollCriticalSuccess");
 				break;
 			case 4: if (intDifficulty == 1) {
-				strAns += GlobalMsg["strRollExtremeSuccess"];
+				strAns += getMsg("strRollExtremeSuccess");
 				break;
 			}
 			case 3: if (intDifficulty == 1) {
-				strAns += GlobalMsg["strRollHardSuccess"];
+				strAns += getMsg("strRollHardSuccess");
 				break;
 			}
-			case 2: strAns += GlobalMsg["strRollRegularSuccess"];
+			case 2: strAns += getMsg("strRollRegularSuccess");
 				break;
 			}
 			strReply += strAns;
@@ -3267,21 +3273,21 @@ int FromMsg::InnerOrder() {
 				strAns = rdMainDice.FormCompleteString() + "/" + to_string(intFianlSkillVal) + " ";
 				int intRes = RollSuccessLevel(rdMainDice.intTotal, intFianlSkillVal, intRule);
 				switch (intRes) {
-				case 0: strAns += GlobalMsg["strFumble"];
+				case 0: strAns += getMsg("strFumble");
 					break;
-				case 1: strAns += isAutomatic ? GlobalMsg["strSuccess"] : GlobalMsg["strFailure"];
+				case 1: strAns += isAutomatic ? getMsg("strSuccess") : getMsg("strFailure");
 					break;
-				case 5: strAns += GlobalMsg["strCriticalSuccess"];
+				case 5: strAns += getMsg("strCriticalSuccess");
 					break;
 				case 4: if (intDifficulty == 1) {
-					strAns += GlobalMsg["strExtremeSuccess"];
+					strAns += getMsg("strExtremeSuccess");
 					break;
 				}
 				case 3: if (intDifficulty == 1) {
-					strAns += GlobalMsg["strHardSuccess"];
+					strAns += getMsg("strHardSuccess");
 					break;
 				}
-				case 2: strAns += GlobalMsg["strSuccess"];
+				case 2: strAns += getMsg("strSuccess");
 					break;
 				}
 				Res << strAns;
@@ -3290,7 +3296,7 @@ int FromMsg::InnerOrder() {
 		}
 		if (isHidden) {
 			replyHidden();
-			reply(GlobalMsg["strRollSkillHidden"]);
+			reply(getMsg("strRollSkillHidden"));
 		}
 		else
 			reply();
@@ -3322,35 +3328,35 @@ int FromMsg::InnerOrder() {
 		RD initdice(strinit, 20);
 		const int intFirstTimeRes = initdice.Roll();
 		if (intFirstTimeRes == Value_Err) {
-			reply(GlobalMsg["strValueErr"]);
+			reply(getMsg("strValueErr"));
 			return 1;
 		}
 		if (intFirstTimeRes == Input_Err) {
-			reply(GlobalMsg["strInputErr"]);
+			reply(getMsg("strInputErr"));
 			return 1;
 		}
 		if (intFirstTimeRes == ZeroDice_Err) {
-			reply(GlobalMsg["strZeroDiceErr"]);
+			reply(getMsg("strZeroDiceErr"));
 			return 1;
 		}
 		if (intFirstTimeRes == ZeroType_Err) {
-			reply(GlobalMsg["strZeroTypeErr"]);
+			reply(getMsg("strZeroTypeErr"));
 			return 1;
 		}
 		if (intFirstTimeRes == DiceTooBig_Err) {
-			reply(GlobalMsg["strDiceTooBigErr"]);
+			reply(getMsg("strDiceTooBigErr"));
 			return 1;
 		}
 		if (intFirstTimeRes == TypeTooBig_Err) {
-			reply(GlobalMsg["strTypeTooBigErr"]);
+			reply(getMsg("strTypeTooBigErr"));
 			return 1;
 		}
 		if (intFirstTimeRes == AddDiceVal_Err) {
-			reply(GlobalMsg["strAddDiceValErr"]);
+			reply(getMsg("strAddDiceValErr"));
 			return 1;
 		}
 		if (intFirstTimeRes != 0) {
-			reply(GlobalMsg["strUnknownErr"]);
+			reply(getMsg("strUnknownErr"));
 			return 1;
 		}
 		gm->session(fromSession).table_add("先攻", initdice.intTotal, strname);
@@ -3368,7 +3374,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (SanCost.find('/') == string::npos) {
-			reply(GlobalMsg["strSanCostInvalid"]);
+			reply(getMsg("strSanCostInvalid"));
 			return 1;
 		}
 		string attr = "理智";
@@ -3379,7 +3385,7 @@ int FromMsg::InnerOrder() {
 				intSan = pc->call(attr);
 			}
 			else {
-				reply(GlobalMsg["strSanEmpty"]);
+				reply(getMsg("strSanEmpty"));
 				return 1;
 			}
 		}
@@ -3388,25 +3394,25 @@ int FromMsg::InnerOrder() {
 		for (const auto& character : strSanCostSuc) {
 			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character !=
 				'+' && character != '-') {
-				reply(GlobalMsg["strSanCostInvalid"]);
+				reply(getMsg("strSanCostInvalid"));
 				return 1;
 			}
 		}
 		for (const auto& character : SanCost.substr(SanCost.find('/') + 1)) {
 			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character !=
 				'+' && character != '-') {
-				reply(GlobalMsg["strSanCostInvalid"]);
+				reply(getMsg("strSanCostInvalid"));
 				return 1;
 			}
 		}
 		RD rdSuc(strSanCostSuc);
 		RD rdFail(strSanCostFail);
 		if (rdSuc.Roll() != 0 || rdFail.Roll() != 0) {
-			reply(GlobalMsg["strSanCostInvalid"]);
+			reply(getMsg("strSanCostInvalid"));
 			return 1;
 		}
 		if (intSan <= 0) {
-			reply(GlobalMsg["strSanInvalid"]);
+			reply(getMsg("strSanInvalid"));
 			return 1;
 		}
 		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
@@ -3425,17 +3431,17 @@ int FromMsg::InnerOrder() {
 		case 4:
 		case 3:
 		case 2:
-			strVar["res"] += GlobalMsg["strSuccess"];
+			strVar["res"] += getMsg("strSuccess");
 			strVar["change"] = rdSuc.FormCompleteString();
 			intSan = max(0, intSan - rdSuc.intTotal);
 			break;
 		case 1:
-			strVar["res"] += GlobalMsg["strFailure"];
+			strVar["res"] += getMsg("strFailure");
 			strVar["change"] = rdFail.FormCompleteString();
 			intSan = max(0, intSan - rdFail.intTotal);
 			break;
 		case 0:
-			strVar["res"] += GlobalMsg["strFumble"];
+			strVar["res"] += getMsg("strFumble");
 			rdFail.Max();
 			strVar["change"] = rdFail.strDice + "最大值=" + to_string(rdFail.intTotal);
 			intSan = max(0, intSan - rdFail.intTotal);
@@ -3443,7 +3449,7 @@ int FromMsg::InnerOrder() {
 		}
 		strVar["final"] = to_string(intSan);
 		if (pc)pc->set(attr, intSan);
-		reply(GlobalMsg["strSanRollRes"]);
+		reply(getMsg("strSanRollRes"));
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "st") {
@@ -3463,7 +3469,7 @@ int FromMsg::InnerOrder() {
 			}
 			getPlayer(fromQQ)[fromGroup].clear();
 			strVar["char"] = getPlayer(fromQQ)[fromGroup].getName();
-			reply(GlobalMsg["strPropCleared"], { strVar["char"] });
+			reply(getMsg("strPropCleared"), { strVar["char"] });
 			return 1;
 		}
 		if (strLowerMessage.substr(intMsgCnt, 3) == "del") {
@@ -3479,10 +3485,10 @@ int FromMsg::InnerOrder() {
 			}
 			strVar["attr"] = readAttrName();
 			if (getPlayer(fromQQ)[fromGroup].erase(strVar["attr"])) {
-				reply(GlobalMsg["strPropDeleted"], { strVar["pc"], strVar["attr"] });
+				reply(getMsg("strPropDeleted"), { strVar["pc"], strVar["attr"] });
 			}
 			else {
-				reply(GlobalMsg["strPropNotFound"], { strVar["attr"] });
+				reply(getMsg("strPropNotFound"), { strVar["attr"] });
 			}
 			return 1;
 		}
@@ -3496,14 +3502,14 @@ int FromMsg::InnerOrder() {
 				strVar["char"] = pc.getName();
 				strVar["type"] = pc.Attr["__Type"].to_str();
 				strVar["show"] = pc.show(false);
-				reply(GlobalMsg["strPropList"]);
+				reply(getMsg("strPropList"));
 				return 1;
 			}
 			if (pc.show(strVar["attr"], strVar["val"]) > -1) {
-				reply(format(GlobalMsg["strProp"], { strVar["pc"], strVar["attr"], strVar["val"] }));
+				reply(format(getMsg("strProp"), { strVar["pc"], strVar["attr"], strVar["val"] }));
 			}
 			else {
-				reply(GlobalMsg["strPropNotFound"], { strVar["attr"] });
+				reply(getMsg("strPropNotFound"), { strVar["attr"] });
 			}
 			return 1;
 		}
@@ -3521,7 +3527,7 @@ int FromMsg::InnerOrder() {
 					continue;
 				}
 				if (pc.setExp(strVar["attr"], readExp())) {
-					reply(GlobalMsg["strPcTextTooLong"]);
+					reply(getMsg("strPcTextTooLong"));
 					return 1;
 				}
 				continue;
@@ -3542,7 +3548,7 @@ int FromMsg::InnerOrder() {
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
 					   '=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
 				if (pc.set(strSkillName, readUntilTab())) {
-					reply(GlobalMsg["strPcTextTooLong"]);
+					reply(getMsg("strPcTextTooLong"));
 					return 1;
 				}
 				continue;
@@ -3551,7 +3557,7 @@ int FromMsg::InnerOrder() {
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
 					   '=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
 				if (pc.setNote(readRest())) {
-					reply(GlobalMsg["strPcNoteTooLong"]);
+					reply(getMsg("strPcNoteTooLong"));
 					return 1;
 				}
 				break;
@@ -3564,7 +3570,7 @@ int FromMsg::InnerOrder() {
 				AttrVar& nVal{ pc[strSkillName] };
 				RD Mod((nVal.to_int() == 0 ? "" : nVal.to_str()) + readDice());
 				if (Mod.Roll()) {
-					reply(GlobalMsg["strValueErr"]);
+					reply(getMsg("strValueErr"));
 					return 1;
 				}
 				strReply += "\n" + strSkillName + "：" + Mod.FormCompleteString();
@@ -3593,13 +3599,13 @@ int FromMsg::InnerOrder() {
 				intMsgCnt++;
 		}
 		if (boolError) {
-			reply(GlobalMsg["strPropErr"]);
+			reply(getMsg("strPropErr"));
 		}
 		else if (isModify) {
-			reply(format(GlobalMsg["strStModify"], { strVar["pc"] }) + strReply);
+			reply(format(getMsg("strStModify"), { strVar["pc"] }) + strReply);
 		}
 		else {
-			reply(GlobalMsg["strSetPropSuccess"]);
+			reply(getMsg("strSetPropSuccess"));
 		}
 		return 1;
 	}
@@ -3638,42 +3644,42 @@ int FromMsg::InnerOrder() {
 			const int intRdTurnCntRes = rdTurnCnt.Roll();
 			if (intRdTurnCntRes != 0) {
 				if (intRdTurnCntRes == Value_Err) {
-					reply(GlobalMsg["strValueErr"]);
+					reply(getMsg("strValueErr"));
 					return 1;
 				}
 				if (intRdTurnCntRes == Input_Err) {
-					reply(GlobalMsg["strInputErr"]);
+					reply(getMsg("strInputErr"));
 					return 1;
 				}
 				if (intRdTurnCntRes == ZeroDice_Err) {
-					reply(GlobalMsg["strZeroDiceErr"]);
+					reply(getMsg("strZeroDiceErr"));
 					return 1;
 				}
 				if (intRdTurnCntRes == ZeroType_Err) {
-					reply(GlobalMsg["strZeroTypeErr"]);
+					reply(getMsg("strZeroTypeErr"));
 					return 1;
 				}
 				if (intRdTurnCntRes == DiceTooBig_Err) {
-					reply(GlobalMsg["strDiceTooBigErr"]);
+					reply(getMsg("strDiceTooBigErr"));
 					return 1;
 				}
 				if (intRdTurnCntRes == TypeTooBig_Err) {
-					reply(GlobalMsg["strTypeTooBigErr"]);
+					reply(getMsg("strTypeTooBigErr"));
 					return 1;
 				}
 				if (intRdTurnCntRes == AddDiceVal_Err) {
-					reply(GlobalMsg["strAddDiceValErr"]);
+					reply(getMsg("strAddDiceValErr"));
 					return 1;
 				}
-				reply(GlobalMsg["strUnknownErr"]);
+				reply(getMsg("strUnknownErr"));
 				return 1;
 			}
 			if (rdTurnCnt.intTotal > 10) {
-				reply(GlobalMsg["strRollTimeExceeded"]);
+				reply(getMsg("strRollTimeExceeded"));
 				return 1;
 			}
 			if (rdTurnCnt.intTotal <= 0) {
-				reply(GlobalMsg["strRollTimeErr"]);
+				reply(getMsg("strRollTimeErr"));
 				return 1;
 			}
 			intTurnCnt = rdTurnCnt.intTotal;
@@ -3694,7 +3700,7 @@ int FromMsg::InnerOrder() {
 			}
 		}
 		if (strMainDice.empty()) {
-			reply(GlobalMsg["strEmptyWWDiceErr"]);
+			reply(getMsg("strEmptyWWDiceErr"));
 			return 1;
 		}
 		string strFirstDice = strMainDice.substr(0, strMainDice.find('+') < strMainDice.find('-')
@@ -3717,39 +3723,39 @@ int FromMsg::InnerOrder() {
 		const int intFirstTimeRes = rdMainDice.Roll();
 		if (intFirstTimeRes != 0) {
 			if (intFirstTimeRes == Value_Err) {
-				reply(GlobalMsg["strValueErr"]);
+				reply(getMsg("strValueErr"));
 				return 1;
 			}
 			if (intFirstTimeRes == Input_Err) {
-				reply(GlobalMsg["strInputErr"]);
+				reply(getMsg("strInputErr"));
 				return 1;
 			}
 			if (intFirstTimeRes == ZeroDice_Err) {
-				reply(GlobalMsg["strZeroDiceErr"]);
+				reply(getMsg("strZeroDiceErr"));
 				return 1;
 			}
 			if (intFirstTimeRes == ZeroType_Err) {
-				reply(GlobalMsg["strZeroTypeErr"]);
+				reply(getMsg("strZeroTypeErr"));
 				return 1;
 			}
 			if (intFirstTimeRes == DiceTooBig_Err) {
-				reply(GlobalMsg["strDiceTooBigErr"]);
+				reply(getMsg("strDiceTooBigErr"));
 				return 1;
 			}
 			if (intFirstTimeRes == TypeTooBig_Err) {
-				reply(GlobalMsg["strTypeTooBigErr"]);
+				reply(getMsg("strTypeTooBigErr"));
 				return 1;
 			}
 			if (intFirstTimeRes == AddDiceVal_Err) {
-				reply(GlobalMsg["strAddDiceValErr"]);
+				reply(getMsg("strAddDiceValErr"));
 				return 1;
 			}
-			reply(GlobalMsg["strUnknownErr"]);
+			reply(getMsg("strUnknownErr"));
 			return 1;
 		}
 		if (!boolDetail && intTurnCnt != 1) {
-			if (strVar["reason"].empty())strReply = GlobalMsg["strRollMuiltDice"];
-			else strReply = GlobalMsg["strRollMuiltDiceReason"];
+			if (strVar["reason"].empty())strReply = getMsg("strRollMuiltDice");
+			else strReply = getMsg("strRollMuiltDiceReason");
 			vector<int> vintExVal;
 			strVar["res"] = "{ ";
 			while (intTurnCnt--) {
@@ -3792,8 +3798,8 @@ int FromMsg::InnerOrder() {
 				rdMainDice.Roll();
 				strVar["res"] = boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString();
 				if (strVar["reason"].empty())
-					strReply = format(GlobalMsg["strRollDice"], { strVar["pc"], strVar["res"] });
-				else strReply = format(GlobalMsg["strRollDiceReason"], { strVar["pc"], strVar["res"], strVar["reason"] });
+					strReply = format(getMsg("strRollDice"), { strVar["pc"], strVar["res"] });
+				else strReply = format(getMsg("strRollDiceReason"), { strVar["pc"], strVar["res"], strVar["reason"] });
 				if (!isHidden) {
 					reply();
 				}
@@ -3810,7 +3816,7 @@ int FromMsg::InnerOrder() {
 			}
 		}
 		if (isHidden) {
-			reply(GlobalMsg["strRollHidden"], { strVar["pc"] });
+			reply(getMsg("strRollHidden"), { strVar["pc"] });
 		}
 		return 1;
 	}
@@ -3871,46 +3877,46 @@ int FromMsg::InnerOrder() {
 			switch (intRdTurnCntRes) {
 			case 0: break;
 			case Value_Err:
-				reply(GlobalMsg["strValueErr"]);
+				reply(getMsg("strValueErr"));
 				return 1;
 			case Input_Err:
-				reply(GlobalMsg["strInputErr"]);
+				reply(getMsg("strInputErr"));
 				return 1;
 			case ZeroDice_Err:
-				reply(GlobalMsg["strZeroDiceErr"]);
+				reply(getMsg("strZeroDiceErr"));
 				return 1;
 			case ZeroType_Err:
-				reply(GlobalMsg["strZeroTypeErr"]);
+				reply(getMsg("strZeroTypeErr"));
 				return 1;
 			case DiceTooBig_Err:
-				reply(GlobalMsg["strDiceTooBigErr"]);
+				reply(getMsg("strDiceTooBigErr"));
 				return 1;
 			case TypeTooBig_Err:
-				reply(GlobalMsg["strTypeTooBigErr"]);
+				reply(getMsg("strTypeTooBigErr"));
 				return 1;
 			case AddDiceVal_Err:
-				reply(GlobalMsg["strAddDiceValErr"]);
+				reply(getMsg("strAddDiceValErr"));
 				return 1;
 			default:
-				reply(GlobalMsg["strUnknownErr"]);
+				reply(getMsg("strUnknownErr"));
 				return 1;
 			}
 			if (rdTurnCnt.intTotal > 10) {
-				reply(GlobalMsg["strRollTimeExceeded"]);
+				reply(getMsg("strRollTimeExceeded"));
 				return 1;
 			}
 			if (rdTurnCnt.intTotal <= 0) {
-				reply(GlobalMsg["strRollTimeErr"]);
+				reply(getMsg("strRollTimeErr"));
 				return 1;
 			}
 			intTurnCnt = rdTurnCnt.intTotal;
 			if (strVar["turn"].find('d') != string::npos) {
 				strVar["turn"] = rdTurnCnt.FormShortString();
 				if (!isHidden) {
-					reply(GlobalMsg["strRollTurn"], { strVar["pc"], strVar["turn"] });
+					reply(getMsg("strRollTurn"), { strVar["pc"], strVar["turn"] });
 				}
 				else {
-					replyHidden(GlobalMsg["strRollTurn"]);
+					replyHidden(getMsg("strRollTurn"));
 				}
 			}
 		}
@@ -3922,28 +3928,28 @@ int FromMsg::InnerOrder() {
 		switch (intFirstTimeRes) {
 		case 0: break;
 		case Value_Err:
-			reply(GlobalMsg["strValueErr"]);
+			reply(getMsg("strValueErr"));
 			return 1;
 		case Input_Err:
-			reply(GlobalMsg["strInputErr"]);
+			reply(getMsg("strInputErr"));
 			return 1;
 		case ZeroDice_Err:
-			reply(GlobalMsg["strZeroDiceErr"]);
+			reply(getMsg("strZeroDiceErr"));
 			return 1;
 		case ZeroType_Err:
-			reply(GlobalMsg["strZeroTypeErr"]);
+			reply(getMsg("strZeroTypeErr"));
 			return 1;
 		case DiceTooBig_Err:
-			reply(GlobalMsg["strDiceTooBigErr"]);
+			reply(getMsg("strDiceTooBigErr"));
 			return 1;
 		case TypeTooBig_Err:
-			reply(GlobalMsg["strTypeTooBigErr"]);
+			reply(getMsg("strTypeTooBigErr"));
 			return 1;
 		case AddDiceVal_Err:
-			reply(GlobalMsg["strAddDiceValErr"]);
+			reply(getMsg("strAddDiceValErr"));
 			return 1;
 		default:
-			reply(GlobalMsg["strUnknownErr"]);
+			reply(getMsg("strUnknownErr"));
 			return 1;
 		}
 		strVar["dice_exp"] = rdMainDice.strDice;
@@ -3953,7 +3959,7 @@ int FromMsg::InnerOrder() {
 						  ? (strVar["reason"].empty() ? "strRollMultiDice" : "strRollMultiDiceReason")
 						  : (strVar["reason"].empty() ? "strRollDice" : "strRollDiceReason"));
 		if (!boolDetail && intTurnCnt != 1) {
-			strReply = GlobalMsg[strType];
+			strReply = getMsg(strType);
 			vector<int> vintExVal;
 			strVar["res"] = "{ ";
 			while (intTurnCnt--) {
@@ -4006,7 +4012,7 @@ int FromMsg::InnerOrder() {
 				if (isStatic)pc->cntRollStat(rdMainDice.intTotal, intDefaultDice);
 				strVar["res"] = boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString();
 			}
-			strReply = format(GlobalMsg[strType], { strVar["pc"], strVar["res"], strVar["reason"] });
+			strReply = format(getMsg(strType), { strVar["pc"], strVar["res"], strVar["reason"] });
 			if (!isHidden) {
 				reply();
 			}
@@ -4015,7 +4021,7 @@ int FromMsg::InnerOrder() {
 			}
 		}
 		if (isHidden) {
-			reply(GlobalMsg["strRollHidden"], { strVar["pc"] });
+			reply(getMsg("strRollHidden"), { strVar["pc"] });
 		}
 		return 1;
 	}
@@ -4151,27 +4157,27 @@ bool FromMsg::WordCensor() {
 		switch (int danger = censor.search(strMsg, sens_words) - 1) {
 		case 3:
 			if (trusted < danger++) {
-				console.log("警告:" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "发送了含敏感词指令:\n" + strMsg, 0b1000,
+				console.log("警告:" + printQQ(fromQQ) + "对" + getMsg("strSelfName") + "发送了含敏感词指令:\n" + strMsg, 0b1000,
 							printTTime(fromTime));
-				reply(GlobalMsg["strCensorDanger"]);
+				reply(getMsg("strCensorDanger"));
 				return 1;
 			}
 		case 2:
 			if (trusted < danger++) {
-				console.log("警告:" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "发送了含敏感词指令:\n" + strMsg, 0b10,
+				console.log("警告:" + printQQ(fromQQ) + "对" + getMsg("strSelfName") + "发送了含敏感词指令:\n" + strMsg, 0b10,
 							printTTime(fromTime));
-				reply(GlobalMsg["strCensorWarning"]);
+				reply(getMsg("strCensorWarning"));
 				break;
 			}
 		case 1:
 			if (trusted < danger++) {
-				console.log("提醒:" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "发送了含敏感词指令:\n" + strMsg, 0b10,
+				console.log("提醒:" + printQQ(fromQQ) + "对" + getMsg("strSelfName") + "发送了含敏感词指令:\n" + strMsg, 0b10,
 							printTTime(fromTime));
-				reply(GlobalMsg["strCensorCaution"]);
+				reply(getMsg("strCensorCaution"));
 				break;
 			}
 		case 0:
-			console.log("提醒:" + printQQ(fromQQ) + "对" + GlobalMsg["strSelfName"] + "发送了含敏感词指令:\n" + strMsg, 1,
+			console.log("提醒:" + printQQ(fromQQ) + "对" + getMsg("strSelfName") + "发送了含敏感词指令:\n" + strMsg, 1,
 						printTTime(fromTime));
 			break;
 		default:

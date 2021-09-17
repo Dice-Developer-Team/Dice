@@ -69,7 +69,7 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 			else if (authSelf > authBlack)
 			{
 				DD::sendGroupMsg(id, mark.warning());
-				grp.leave("发现新增黑名单管理员" + printQQ(llQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
+				grp.leave("发现新增黑名单管理员" + printQQ(llQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
 				strNotice += "对方群权限较高，已退群";
 				this_thread::sleep_for(1s);
 			}
@@ -82,7 +82,7 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 			else if (console["LeaveBlackQQ"])
 			{
 				DD::sendGroupMsg(id, mark.warning());
-				grp.leave("发现新增黑名单成员" + printQQ(llQQ) + "（同等群权限）\n" + GlobalMsg["strSelfName"] + "将预防性退群");
+				grp.leave("发现新增黑名单成员" + printQQ(llQQ) + "（同等群权限）\n" + getMsg("strSelfName") + "将预防性退群");
 				strNotice += "已退群";
 				this_thread::sleep_for(1s);
 			}
@@ -864,7 +864,7 @@ bool DDBlackManager::up_group_danger(long long llgroup, DDBlackMark& mark)
 	{
 		if (ChatList.count(llgroup) && !chat(llgroup).isset("已退"))chat(llgroup).leave(
 			mark.warning());
-		if(!isLoadingExtern)console.log(GlobalMsg["strSelfName"] + "已将" + printGroup(llgroup) + "危险等级提升至" + to_string(mark.danger), 0b10,
+		if(!isLoadingExtern)console.log(getMsg("strSelfName") + "已将" + printGroup(llgroup) + "危险等级提升至" + to_string(mark.danger), 0b10,
 		            printSTNow());
 	}
 	return true;
@@ -890,7 +890,7 @@ bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark)
 					                       {"0", mark.note}, {"reason", mark.note}, {"user_nick", getName(llqq)}
 				                       }), llqq);
 		if (!isLoadingExtern) {
-			console.log(GlobalMsg["strSelfName"] + "已将" + printQQ(llqq) + "危险等级提升至" + to_string(mark.danger), 0b10,
+			console.log(getMsg("strSelfName") + "已将" + printQQ(llqq) + "危险等级提升至" + to_string(mark.danger), 0b10,
 						printSTNow());
 			checkGroupWithBlackQQ(mark, llqq);
 		}
@@ -1055,7 +1055,7 @@ void DDBlackManager::add_black_group(long long llgroup, FromMsg* msg)
 {
 	if (groupset(llgroup, "免黑") > 0)
 	{
-		msg->reply(GlobalMsg["self"] + "不能拉黑免黑群！");
+		msg->reply(getMsg("self") + "不能拉黑免黑群！");
 		return;
 	}
 	DDBlackMark mark{0, llgroup};
@@ -1067,7 +1067,7 @@ void DDBlackManager::add_black_group(long long llgroup, FromMsg* msg)
 	}
 	if (mark.danger < get_qq_danger(llgroup))
 	{
-		msg->reply(GlobalMsg["strSelfName"] + "已拉黑群" + to_string(llgroup) + "！");
+		msg->reply(getMsg("strSelfName") + "已拉黑群" + to_string(llgroup) + "！");
 		return;
 	}
 	mark.time = msg->strVar["time"];
@@ -1082,7 +1082,7 @@ void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
 {
 	if (trustedQQ(llqq) > 1)
 	{
-		msg->reply(GlobalMsg["strSelfName"] + "不能拉黑受信任用户！");
+		msg->reply(getMsg("strSelfName") + "不能拉黑受信任用户！");
 		return;
 	}
 	DDBlackMark mark{llqq, 0};
@@ -1094,7 +1094,7 @@ void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
 	}
 	if (mark.danger < get_qq_danger(llqq))
 	{
-		msg->reply(GlobalMsg["strSelfName"] + "已拉黑用户" + printQQ(llqq) + "！");
+		msg->reply(getMsg("strSelfName") + "已拉黑用户" + printQQ(llqq) + "！");
 		return;
 	}
 	mark.time = msg->strVar["time"];
@@ -1179,7 +1179,7 @@ void DDBlackManager::verify(void* pJson, long long operatorQQ)
 			|| (mark.isType("spam") && !console["ListenSpam"]))return;
         if (mark.type == "local" || mark.type == "other" || mark.isSource(console.DiceMaid)) {
             if (credit > 0)console.log(
-				getName(operatorQQ) + "已通知" + GlobalMsg["strSelfName"] + "不良记录(未采用):\n!warning" + UTF8toGBK(
+				getName(operatorQQ) + "已通知" + getMsg("strSelfName") + "不良记录(未采用):\n!warning" + UTF8toGBK(
 					static_cast<json*>(pJson)->dump()), 1, printSTNow());
             return;
         }
@@ -1214,7 +1214,7 @@ void DDBlackManager::verify(void* pJson, long long operatorQQ)
         }
         if (mark.fromGroup.first && (groupset(mark.fromGroup.first, "忽略") > 0 || groupset(mark.fromGroup.first, "协议无效") > 0 || ExceptGroups.count(mark.fromGroup.first)))return;
         insert(mark);
-        console.log(getName(operatorQQ) + "已通知" + GlobalMsg["strSelfName"] + "不良记录" + to_string(vBlackList.size() - 1) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
+        console.log(getName(operatorQQ) + "已通知" + getMsg("strSelfName") + "不良记录" + to_string(vBlackList.size() - 1) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
     }
     else 
 	{ 
@@ -1244,7 +1244,7 @@ void DDBlackManager::verify(void* pJson, long long operatorQQ)
         if (mark.danger != old_mark.danger && credit < 3) { 
             mark.danger = old_mark.danger; 
         }
-        if(update(mark,index,credit))console.log(getName(operatorQQ) + "已更新" + GlobalMsg["strSelfName"] + "不良记录" + to_string(index) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
+        if(update(mark,index,credit))console.log(getName(operatorQQ) + "已更新" + getMsg("strSelfName") + "不良记录" + to_string(index) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
     }
 }
 

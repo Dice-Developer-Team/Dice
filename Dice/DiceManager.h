@@ -1,4 +1,5 @@
 #pragma once
+#include <regex>
 #include <CivetServer.h>
 #include <json.hpp>
 #include "GlobalVar.h"
@@ -72,7 +73,7 @@ public:
 			j["data"] = nlohmann::json::object();
             j["data"]["version"] = GBKtoUTF8(Dice_Full_Ver);
             j["data"]["qq"] = console.DiceMaid;
-            j["data"]["nick"] = GBKtoUTF8(GlobalMsg["strSelfName"]);
+            j["data"]["nick"] = GBKtoUTF8(getMsg("strSelfName"));
             j["data"]["running_time"] = GBKtoUTF8(printDuringTime(time(nullptr) - llStartTime));
             j["data"]["cmd_count"] = std::to_string(FrqMonitor::sumFrqTotal.load());
             j["data"]["cmd_count_today"] = std::to_string(today->get("frq"));
@@ -133,10 +134,13 @@ public:
             nlohmann::json j = nlohmann::json::parse(data);
             if (j["action"].get<std::string>() == "set")
             {
+                std::unique_lock lock(GlobalMsgMutex);
                 for(const auto& item: j["data"])
                 {
                     GlobalMsg[UTF8toGBK(item["name"].get<std::string>())] = UTF8toGBK(item["value"].get<std::string>());
+                    EditedMsg[UTF8toGBK(item["name"].get<std::string>())] = UTF8toGBK(item["value"].get<std::string>());
                 }
+                saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
             } 
             else
             {
@@ -218,6 +222,7 @@ public:
                         deck.push_back(UTF8toGBK(i));
                     }
                 }
+                saveJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck);
             } 
             else if (j["action"].get<std::string>() == "delete")
             {
@@ -225,6 +230,99 @@ public:
                 {
                     CardDeck::mReplyDeck.erase(UTF8toGBK(item["name"].get<std::string>()));
                 }
+                saveJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck);
+            }
+            else
+            {
+                throw std::runtime_error("Invalid Action");
+            }
+            nlohmann::json j2 = nlohmann::json::object();   
+            j2["code"] = 0;
+            j2["msg"] = "ok";
+            ret = j2.dump();
+        }
+        catch(const std::exception& e)
+        {
+            nlohmann::json j = nlohmann::json::object();
+            j["code"] = -1;
+            j["msg"] = GBKtoUTF8(e.what());
+            ret = j.dump();
+        }
+        mg_send_http_ok(conn, "application/json", ret.length());
+        mg_write(conn, ret.c_str(), ret.length());
+        return true;
+    }
+};
+
+class CustomRegexReplyApiHandler : public CivetHandler
+{
+public:
+    bool handleGet(CivetServer *server, struct mg_connection *conn)
+    {
+        std::string ret;
+        try
+        {
+            nlohmann::json j = nlohmann::json::object();
+            j["code"] = 0;
+            j["msg"] = "ok";
+            j["count"] = CardDeck::mRegexReplyDeck.size();
+			j["data"] = nlohmann::json::array();
+            for (const auto& [key,val] : CardDeck::mRegexReplyDeck)
+            {
+                string t;
+                for (const auto& item : val)
+                {
+                    t.append(GBKtoUTF8(item));
+                    t.append("|");
+                }
+                t = t.substr(0, t.size() - 1);
+                j["data"].push_back({{"name", GBKtoUTF8(key)}, {"value", t}});
+            }
+            ret = j.dump();
+        }
+        catch(const std::exception& e)
+        {
+            nlohmann::json j = nlohmann::json::object();
+            j["code"] = -1;
+            j["msg"] = GBKtoUTF8(e.what());
+            ret = j.dump();
+        }
+
+        mg_send_http_ok(conn, "application/json", ret.length());
+        mg_write(conn, ret.c_str(), ret.length());
+        return true;
+    }
+
+    bool handlePost(CivetServer *server, struct mg_connection *conn)
+    {
+        std::string ret;
+        try 
+        {
+            auto data = server->getPostData(conn);
+            nlohmann::json j = nlohmann::json::parse(data);
+            if (j["action"].get<std::string>() == "set")
+            {
+                for(const auto& item: j["data"])
+                {
+                    const std::string re = UTF8toGBK(item["name"].get<std::string>());
+                    const auto g = std::regex(re, std::regex::ECMAScript);
+                    auto& deck = CardDeck::mRegexReplyDeck[re];
+                    deck = {};
+                    auto v = item["value"].get<std::vector<std::string>>();
+                    for(const auto& i : v)
+                    {
+                        deck.push_back(UTF8toGBK(i));
+                    }
+                }
+                saveJMap(DiceDir / "conf" / "CustomRegexReply.json", CardDeck::mRegexReplyDeck);
+            } 
+            else if (j["action"].get<std::string>() == "delete")
+            {
+                for(const auto& item: j["data"])
+                {
+                    CardDeck::mRegexReplyDeck.erase(UTF8toGBK(item["name"].get<std::string>()));
+                }
+                saveJMap(DiceDir / "conf" / "CustomRegexReply.json", CardDeck::mRegexReplyDeck);
             }
             else
             {

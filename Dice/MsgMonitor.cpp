@@ -109,7 +109,7 @@ FrqMonitor::FrqMonitor(long long QQ, time_t TT, chatType CT, const string& msg) 
 				+ (mCntOrder[fromQQ] > 60 ? "/5min"
 				   : (mCntOrder[fromQQ] > 25 ? "/min" : "/30s"));
 			if (!QQ) {
-				console.log("警告：" + GlobalMsg["strSelfName"] + "高频处理虚拟指令达" + strFrq
+				console.log("警告：" + getMsg("strSelfName") + "高频处理虚拟指令达" + strFrq
 							+ "\n最近指令: " + msg, 0b1000, strNow);
 				return;
 			}

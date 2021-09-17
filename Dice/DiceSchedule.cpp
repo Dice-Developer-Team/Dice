@@ -292,7 +292,7 @@ void ConsoleTimer() 	{
 					break;
 				case 2:
 					dataBackUp();
-					console.log(GlobalMsg["strSelfName"] + "定时保存完成√", 1, printSTime(stTmp));
+					console.log(getMsg("strSelfName") + "定时保存完成√", 1, printSTime(stTmp));
 					break;
 				case 3:
 					sch.push_job("clrgroup", true, {

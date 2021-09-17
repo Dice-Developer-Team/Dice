@@ -108,7 +108,7 @@ string getName(long long QQ, long long GroupID)
 	if (GroupID && !(nick = DD::getGroupNick(GroupID, QQ)).empty()
 		&& !(nick = strip(msg_decode(nick))).empty())return nick;
 	if (nick = DD::getQQNick(QQ); !(nick = strip(msg_decode(nick))).empty())return nick;
-	return GlobalMsg["stranger"] + "(" + to_string(QQ) + ")";
+	return getMsg("stranger") + "(" + to_string(QQ) + ")";
 }
 void filter_CQcode(string& nick, long long fromGroup)
 {

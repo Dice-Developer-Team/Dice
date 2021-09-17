@@ -45,6 +45,8 @@ HMODULE hDllModule = nullptr;
 
 bool msgSendThreadRunning = false;
 
+std::shared_mutex GlobalMsgMutex;
+
 std::map<std::string, std::string, less_ci> GlobalMsg
 {
 	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
@@ -757,13 +759,18 @@ Danger //警告用户且拒绝指令，并在3级窗口警告
 	{"世界逆位", "未完成、失败、准备不足、盲目接受、一时不顺利、半途而废、精神颓废、饱和状态、合谋、态度不够融洽、感情受挫。"},
 };
 
-std::string getMsg(const std::string& key, const std::unordered_map<std::string, std::string>& maptmp)
+const std::string getMsg(const std::string& key, const std::unordered_map<std::string, std::string>& maptmp)
 {
-	const auto it = GlobalMsg.find(key);
-	if (it != GlobalMsg.end())return format(it->second, GlobalMsg, maptmp);
-	return "";
+	std::string msg;
+	{
+		std::shared_lock lock(GlobalMsgMutex);
+		const auto it = GlobalMsg.find(key);
+		if (it != GlobalMsg.end()) msg = it->second;
+		else return "";
+	}
+	return format(msg, GlobalMsg, maptmp);
 }
-std::string getComment(const std::string& key) {
+const std::string getComment(const std::string& key) {
 	if (auto it{ GlobalComment.find(key) };it!= GlobalComment.end())return it->second;
 	return {};
 }

@@ -95,6 +95,7 @@ extern bool msgSendThreadRunning;
 
 // 回复信息, 此内容可以通过CustomMsg功能修改而无需修改源代码
 extern std::map<std::string, std::string, less_ci> GlobalMsg;
+extern std::shared_mutex GlobalMsgMutex;
 // 修改后的Global语句
 extern std::map<std::string, std::string, less_ci> EditedMsg;
 // 语句注释
@@ -103,7 +104,7 @@ extern std::map<std::string, std::string, less_ci> GlobalComment;
 extern const std::map<std::string, std::string, less_ci> HelpDoc;
 // 修改后的帮助文档
 inline std::map<std::string, std::string, less_ci> CustomHelp;
-std::string getMsg(const std::string& key, const std::unordered_map<std::string, std::string>& tmp = {});
-std::string getComment(const std::string& key);
+const std::string getMsg(const std::string& key, const std::unordered_map<std::string, std::string>& tmp = {});
+const std::string getComment(const std::string& key);
 
 #endif /*DICE_GLOBAL_VAR*/

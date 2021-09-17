@@ -86,12 +86,12 @@ void check_system(DiceJob& job) {
 	if (console["SystemAlarmRAM"] > 0) {
 		perRAM = getRamPort();
 		if (perRAM > console["SystemAlarmRAM"] && perRAM > perLastRAM) {
-			console.log("警告：" + GlobalMsg["strSelfName"] + "所在系统内存占用达" + to_string(perRAM) + "%", 0b1000, printSTime(stNow));
+			console.log("警告：" + getMsg("strSelfName") + "所在系统内存占用达" + to_string(perRAM) + "%", 0b1000, printSTime(stNow));
 			perLastRAM = perRAM;
 			isAlarmRAM = true;
 		}
 		else if (perLastRAM > console["SystemAlarmRAM"] && perRAM < console["SystemAlarmRAM"]) {
-			console.log("提醒：" + GlobalMsg["strSelfName"] + "所在系统内存占用降至" + to_string(perRAM) + "%", 0b10, printSTime(stNow));
+			console.log("提醒：" + getMsg("strSelfName") + "所在系统内存占用降至" + to_string(perRAM) + "%", 0b10, printSTime(stNow));
 			perLastRAM = perRAM;
 			isAlarmRAM = false;
 		}
@@ -104,12 +104,12 @@ void check_system(DiceJob& job) {
 			perCPU = getWinCpuUsage() / 10.0;
 		}
 		if (perCPU > console["SystemAlarmCPU"] && (!isAlarmCPU || perCPU > perLastCPU + 1)) {
-			console.log("警告：" + GlobalMsg["strSelfName"] + "所在系统CPU占用达" + toString(perCPU) + "%", 0b1000, printSTime(stNow));
+			console.log("警告：" + getMsg("strSelfName") + "所在系统CPU占用达" + toString(perCPU) + "%", 0b1000, printSTime(stNow));
 			perLastCPU = perCPU;
 			isAlarmCPU = true;
 		}
 		else if (perLastCPU > console["SystemAlarmCPU"] && perCPU < console["SystemAlarmCPU"]) {
-			console.log("提醒：" + GlobalMsg["strSelfName"] + "所在系统CPU占用降至" + toString(perCPU) + "%", 0b10, printSTime(stNow));
+			console.log("提醒：" + getMsg("strSelfName") + "所在系统CPU占用降至" + toString(perCPU) + "%", 0b10, printSTime(stNow));
 			perLastCPU = perCPU;
 			isAlarmCPU = false;
 		}
@@ -118,12 +118,12 @@ void check_system(DiceJob& job) {
 	if (console["SystemAlarmRAM"] > 0) {
 		perDisk = getDiskUsage(mbFreeBytes, mbTotalBytes) / 10.0;
 		if (perDisk > console["SystemAlarmDisk"] && (!isAlarmDisk || perDisk > perLastDisk + 1)) {
-			console.log("警告：" + GlobalMsg["strSelfName"] + "所在系统硬盘占用达" + toString(perDisk) + "%", 0b1000, printSTime(stNow));
+			console.log("警告：" + getMsg("strSelfName") + "所在系统硬盘占用达" + toString(perDisk) + "%", 0b1000, printSTime(stNow));
 			perLastDisk = perDisk;
 			isAlarmDisk = true;
 		}
 		else if (perLastDisk > console["SystemAlarmDisk"] && perDisk < console["SystemAlarmDisk"]) {
-			console.log("提醒：" + GlobalMsg["strSelfName"] + "所在系统硬盘占用降至" + toString(perDisk) + "%", 0b10, printSTime(stNow));
+			console.log("提醒：" + getMsg("strSelfName") + "所在系统硬盘占用降至" + toString(perDisk) + "%", 0b10, printSTime(stNow));
 			perLastDisk = perDisk;
 			isAlarmDisk = false;
 		}
@@ -143,7 +143,7 @@ void auto_save(DiceJob& job) {
 	if (sch.is_job_cold("autosave"))return;
 	console.log("自动保存", 0, printSTNow());
 	dataBackUp();
-	//console.log(GlobalMsg["strSelfName"] + "已自动保存", 0, printSTNow());
+	//console.log(getMsg("strSelfName") + "已自动保存", 0, printSTNow());
 	if (console["AutoSaveInterval"] > 0) {
 		sch.refresh_cold("autosave", time(NULL) + console["AutoSaveInterval"] * (time_t)60);
 		sch.add_job_for(console["AutoSaveInterval"] * 60, "autosave");
@@ -167,7 +167,7 @@ void clear_image(DiceJob& job) {
 	for (auto it : ChatList) {
 		scanImage(it.second.strConf, sReferencedImage);
 	}
-	job.note("整理" + GlobalMsg["strSelfName"] + "被引用图片" + to_string(sReferencedImage.size()) + "项", 0b0);
+	job.note("整理" + getMsg("strSelfName") + "被引用图片" + to_string(sReferencedImage.size()) + "项", 0b0);
 	int cnt = clrDir("data/image/", sReferencedImage);
 	job.note("已清理image文件" + to_string(cnt) + "项", 1);
 	if (console["AutoClearImage"] > 0) {
@@ -196,7 +196,7 @@ void clear_group(DiceJob& job) {
 				this_thread::sleep_for(3s);
 			}
 		}
-		job.note(GlobalMsg["strSelfName"] + "筛除无群权限群聊" + to_string(intCnt) + "个:" + res.show(), 0b10);
+		job.note(getMsg("strSelfName") + "筛除无群权限群聊" + to_string(intCnt) + "个:" + res.show(), 0b10);
 	}
 	else if (isdigit(static_cast<unsigned char>(job.strVar["clear_mode"][0]))) {
 		int intDayLim = stoi(job.strVar["clear_mode"]);
@@ -220,7 +220,7 @@ void clear_group(DiceJob& job) {
 				this_thread::sleep_for(3s);
 			}
 		}
-		job.note(GlobalMsg["strSelfName"] + "已筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√" + res.show(), 0b10);
+		job.note(getMsg("strSelfName") + "已筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√" + res.show(), 0b10);
 	}
 	else if (job.strVar["clear_mode"] == "black") {
 		try {
@@ -244,7 +244,7 @@ void clear_group(DiceJob& job) {
 						else if (authBlack > authSelf) {
 							if (grp.tUpdated < grpline)GrpDelete.push_back(id);
 							res << printChat(grp) + "：" + printQQ(eachQQ) + "对方群权限较高";
-							grp.leave("发现黑名单管理员" + printQQ(eachQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
+							grp.leave("发现黑名单管理员" + printQQ(eachQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
 							intCnt++;
 							break;
 						}
@@ -255,7 +255,7 @@ void clear_group(DiceJob& job) {
 						else if (console["LeaveBlackQQ"]) {
 							if (grp.tUpdated < grpline)GrpDelete.push_back(id);
 							res << printChat(grp) + "：" + printQQ(eachQQ);
-							grp.leave("发现黑名单成员" + printQQ(eachQQ) + "\n" + GlobalMsg["strSelfName"] + "将预防性退群");
+							grp.leave("发现黑名单成员" + printQQ(eachQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
 							intCnt++;
 							break;
 						}
@@ -263,7 +263,7 @@ void clear_group(DiceJob& job) {
 				}
 			}
 		} 		catch (...) {
-			console.log("提醒：" + GlobalMsg["strSelfName"] + "清查黑名单群聊时出错！", 0b10, printSTNow());
+			console.log("提醒：" + getMsg("strSelfName") + "清查黑名单群聊时出错！", 0b10, printSTNow());
 		}
 		if (intCnt) {
 			job.note("已按" + getMsg("strSelfName") + "黑名单清查群聊" + to_string(intCnt) + "个：" + res.show(), 0b10);
@@ -288,7 +288,7 @@ void clear_group(DiceJob& job) {
 			if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"])break;
 			this_thread::sleep_for(3s);
 		}
-		job.note(GlobalMsg["strSelfName"] + "筛除无许可群聊" + to_string(intCnt) + "个：" + res.show(), 1);
+		job.note(getMsg("strSelfName") + "筛除无许可群聊" + to_string(intCnt) + "个：" + res.show(), 1);
 	}
 	else
 		job.echo("无法识别筛选参数×");

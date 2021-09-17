@@ -75,10 +75,10 @@ namespace Network
 					return ret;
 				}
 				delete[] szFormatBuffer;
-				return GlobalMsg["strUnableToGetErrorMsg"];
+				return getMsg("strUnableToGetErrorMsg");
 			}
 			delete[] szFormatBuffer;
-			return GlobalMsg["strUnableToGetErrorMsg"];
+			return getMsg("strUnableToGetErrorMsg");
 		}
 		wchar_t szFormatBuffer[512];
 		DWORD dwBaseLength = FormatMessageW(
@@ -108,7 +108,7 @@ namespace Network
 			while (ret[ret.length() - 1] == '\n' || ret[ret.length() - 1] == '\r')ret.erase(ret.length() - 1);
 			return ret;
 		}
-		return GlobalMsg["strUnableToGetErrorMsg"];
+		return getMsg("strUnableToGetErrorMsg");
 #else
 		return curl_easy_strerror(lastError);
 #endif
@@ -145,7 +145,7 @@ namespace Network
 			}
 			if (dwRetCode != 200)
 			{
-				des = format(GlobalMsg["strRequestRetCodeErr"], GlobalMsg, {{"error", std::to_string(dwRetCode)}});
+				des = format(getMsg("strRequestRetCodeErr"), GlobalMsg, {{"error", std::to_string(dwRetCode)}});
 				InternetCloseHandle(hRequest);
 				InternetCloseHandle(hConnect);
 				InternetCloseHandle(hInternet);
@@ -162,7 +162,7 @@ namespace Network
 			}
 			if (preRcvCnt == 0)
 			{
-				des = GlobalMsg["strRequestNoResponse"];
+				des = getMsg("strRequestNoResponse");
 				return false;
 			}
 			std::string finalRcvData;
@@ -186,7 +186,7 @@ namespace Network
 					InternetCloseHandle(hRequest);
 					InternetCloseHandle(hConnect);
 					InternetCloseHandle(hInternet);
-					des = GlobalMsg["strUnknownErr"];
+					des = getMsg("strUnknownErr");
 					delete[] rcvData;
 					return false;
 				}
@@ -271,7 +271,7 @@ namespace Network
 			}
 			if (dwRetCode != 200)
 			{
-				des = format(GlobalMsg["strRequestRetCodeErr"], GlobalMsg, {{"error", std::to_string(dwRetCode)}});
+				des = format(getMsg("strRequestRetCodeErr"), GlobalMsg, {{"error", std::to_string(dwRetCode)}});
 				InternetCloseHandle(hRequest);
 				InternetCloseHandle(hConnect);
 				InternetCloseHandle(hInternet);
@@ -288,7 +288,7 @@ namespace Network
 			}
 			if (preRcvCnt == 0)
 			{
-				des = GlobalMsg["strRequestNoResponse"];
+				des = getMsg("strRequestNoResponse");
 				return false;
 			}
 			std::string finalRcvData;
@@ -312,7 +312,7 @@ namespace Network
 					InternetCloseHandle(hRequest);
 					InternetCloseHandle(hConnect);
 					InternetCloseHandle(hInternet);
-					des = GlobalMsg["strUnknownErr"];
+					des = getMsg("strUnknownErr");
 					delete[] rcvData;
 					return false;
 				}

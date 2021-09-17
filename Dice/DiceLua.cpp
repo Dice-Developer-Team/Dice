@@ -132,14 +132,14 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 	lua_push_msg(L, msg);
 	if (lua_pcall(L, 1, 2, 0)) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
-		console.log(GlobalMsg["strSelfName"] + "调用" + fileGB18030 + "函数" + func + "失败!\n" + pErrorMsg, 1);
-		msg->reply(GlobalMsg["strOrderLuaErr"]);
+		console.log(getMsg("strSelfName") + "调用" + fileGB18030 + "函数" + func + "失败!\n" + pErrorMsg, 1);
+		msg->reply(getMsg("strOrderLuaErr"));
 		return false;
 	}
 	if (lua_gettop(L) && lua_type(L, 1) != LUA_TNIL) {
 		if (!lua_isstring(L, 1)) {
-			console.log(GlobalMsg["strSelfName"] + "调用" + fileGB18030 + "函数" + func + "返回值格式错误!", 1);
-			msg->reply(GlobalMsg["strOrderLuaErr"]);
+			console.log(getMsg("strSelfName") + "调用" + fileGB18030 + "函数" + func + "返回值格式错误!", 1);
+			msg->reply(getMsg("strOrderLuaErr"));
 			return false;
 		}
 		if (!(msg->strVar["msg_reply"] = lua_to_gb18030_string(L, 1)).empty()) {
@@ -147,7 +147,7 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 		}
 		if (lua_type(L, 2) != LUA_TNIL) {
 			if (!lua_isstring(L, 2)) {
-				console.log(GlobalMsg["strSelfName"] + "调用" + fileGB18030 + "函数" + func + "返回值格式错误!", 1);
+				console.log(getMsg("strSelfName") + "调用" + fileGB18030 + "函数" + func + "返回值格式错误!", 1);
 				return false;
 			}
 			if (!(msg->strVar["msg_hidden"] = lua_to_gb18030_string(L, 2)).empty()) {
@@ -178,7 +178,7 @@ bool lua_call_task(const char* file, const char* func) {
 #endif
 	if (lua_pcall(L, 0, 0, 0)) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
-		console.log(GlobalMsg["strSelfName"] + "调用" + fileGB18030 + "函数" + func + "失败!\n" + pErrorMsg, 1);
+		console.log(getMsg("strSelfName") + "调用" + fileGB18030 + "函数" + func + "失败!\n" + pErrorMsg, 1);
 		return false;
 	}
 	return true;
@@ -205,12 +205,12 @@ int loadLua(lua_State* L) {
 		pathFile = DiceDir / "plugin" / nameFile / "init.lua";
 	if (luaL_loadfile(L, getNativePathString(pathFile).c_str())) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
-		console.log(GlobalMsg["strSelfName"] + "读取lua文件" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "读取lua文件" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
 		return 0;
 	}
 	if (lua_pcall(L, 0, 1, 0)) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
-		console.log(GlobalMsg["strSelfName"] + "运行lua文件" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "运行lua文件" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
 		return 1;
 	}
 	return 1;
@@ -532,7 +532,7 @@ LuaState::LuaState(const char* file) {//:isValid(false) {
 	if (!state)return;
 	if (luaL_loadfile(state, file)) {
 		string pErrorMsg = lua_to_gb18030_string(state, -1);
-		console.log(GlobalMsg["strSelfName"] + "读取lua文件" + file + "失败:" + pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "读取lua文件" + file + "失败:" + pErrorMsg, 0b10);
 		lua_close(state);
 		state = nullptr;
 		return;
@@ -544,7 +544,7 @@ LuaState::LuaState(const char* file) {//:isValid(false) {
 	fs.close();
 	if (lua_pcall(state, 0, 0, 0)) {
 		string pErrorMsg = lua_to_gb18030_string(state, -1);
-		console.log(GlobalMsg["strSelfName"] + "运行lua文件" + file + "失败:" + pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "运行lua文件" + file + "失败:" + pErrorMsg, 0b10);
 		lua_close(state);
 		state = nullptr;
 		return;

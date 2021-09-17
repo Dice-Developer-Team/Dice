@@ -134,7 +134,7 @@ struct help_sorter {
 
 void DiceModManager::_help(const shared_ptr<DiceJobDetail>& job) {
 	if ((*job)["help_word"].empty()) {
-		job->reply(string(Dice_Short_Ver) + "\n" + GlobalMsg["strHlpMsg"]);
+		job->reply(string(Dice_Short_Ver) + "\n" + getMsg("strHlpMsg"));
 		return;
 	}
 	else if (const auto it = helpdoc.find((*job)["help_word"]); it != helpdoc.end()) {

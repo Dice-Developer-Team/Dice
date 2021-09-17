@@ -56,7 +56,7 @@
 #include "DiceCensor.h"
 #include "EncodingConvert.h"
 #include "DiceManager.h"
-#define ENABLE_WEBUI
+
 #ifndef _WIN32
 #include <curl/curl.h>
 #endif
@@ -76,6 +76,7 @@ CustomMsgApiHandler h_msgapi;
 AdminConfigHandler h_config;
 MasterHandler h_master;
 CustomReplyApiHandler h_customreply;
+CustomRegexReplyApiHandler h_customregexreply;
 AuthHandler auth_handler;
 
 constexpr auto msgInit{ R"(欢迎使用Dice!掷骰机器人！
@@ -285,10 +286,13 @@ EVE_Enable(eventEnable)
 	}
 	console.setPath(DiceDir / "conf" / "Console.xml");
 	fpFileLoc = DiceDir / "com.w4123.dice";
-	GlobalMsg["strSelfName"] = DD::getLoginNick();
-	if (GlobalMsg["strSelfName"].empty())
 	{
-		GlobalMsg["strSelfName"] = "骰娘[" + toString(console.DiceMaid % 10000, 4) + "]";
+		std::unique_lock lock(GlobalMsgMutex);
+		GlobalMsg["strSelfName"] = DD::getLoginNick();
+		if (GlobalMsg["strSelfName"].empty())
+		{
+			GlobalMsg["strSelfName"] = "骰娘[" + toString(console.DiceMaid % 10000, 4) + "]";
+		}
 	}
 	std::error_code ec;
 	std::filesystem::create_directory(DiceDir / "conf", ec);
@@ -491,15 +495,21 @@ EVE_Enable(eventEnable)
 		blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true);
 	}
 	fmt = make_unique<DiceModManager>();
-	if (loadJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg) < 0)loadJMap(fpFileLoc / "CustomMsg.json", EditedMsg);
-	//预修改出场回复文本
-	if (EditedMsg.count("strSelfName"))GlobalMsg["strSelfName"] = EditedMsg["strSelfName"];
-	for (auto it : EditedMsg)
 	{
-		while (it.second.find("本机器人") != string::npos)it.second.replace(it.second.find("本机器人"), 8,
-		                                                                GlobalMsg["strSelfName"]);
-		GlobalMsg[it.first] = it.second;
+		std::unique_lock lock(GlobalMsgMutex);
+		if (loadJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg) < 0)loadJMap(fpFileLoc / "CustomMsg.json", EditedMsg);
+		{	
+			//预修改出场回复文本
+			if (EditedMsg.count("strSelfName"))GlobalMsg["strSelfName"] = EditedMsg["strSelfName"];
+			for (auto it : EditedMsg)
+			{
+				while (it.second.find("本机器人") != string::npos)it.second.replace(it.second.find("本机器人"), 8,
+																				GlobalMsg["strSelfName"]);
+				GlobalMsg[it.first] = it.second;
+			}
+		}
 	}
+
 
 	DD::debugLog("Dice.loadData");
 	loadData();
@@ -542,6 +552,7 @@ EVE_Enable(eventEnable)
 			ManagerServer->addHandler("/api/adminconfig", h_config);
 			ManagerServer->addHandler("/api/master", h_master);
 			ManagerServer->addHandler("/api/customreply", h_customreply);
+			ManagerServer->addHandler("/api/customregexreply", h_customregexreply);
 			ManagerServer->addAuthHandler("/", auth_handler);
 			auto ports = ManagerServer->getListeningPorts();
 
@@ -560,7 +571,7 @@ EVE_Enable(eventEnable)
 		}
 	}
 
-	console.log(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string(time(nullptr) - llStartTime) + "秒", 0b1,
+	console.log(getMsg("strSelfName") + "初始化完成，用时" + to_string(time(nullptr) - llStartTime) + "秒", 0b1,
 				printSTNow());
 	//骰娘网络
 	getDiceList();
@@ -588,7 +599,7 @@ bool eve_GroupAdd(Chat& grp)
 	}
 	if (!console["ListenGroupAdd"] || grp.isset("忽略"))return 0;
 	string strNow = printSTNow();
-	string strMsg(GlobalMsg["strSelfName"]);
+	string strMsg(getMsg("strSelfName"));
 	try 
 	{
 		strMsg += "新加入:" + DD::printGroupInfo(grp.ID);
@@ -718,7 +729,7 @@ bool eve_GroupAdd(Chat& grp)
 		return true;
 	}
 	if (grp.isset("协议无效")) return 0;
-	if (!GlobalMsg["strAddGroup"].empty())
+	if (!getMsg("strAddGroup").empty())
 	{
 		this_thread::sleep_for(2s);
 		AddMsgToQueue(getMsg("strAddGroup"), {fromGroup, msgtype::Group});
@@ -811,7 +822,7 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 		if (blacklist->get_qq_danger(fromQQ))
 		{
 			const string strNow = printSTNow();
-			string strNote = printGroup(fromGroup) + "发现" + GlobalMsg["strSelfName"] + "的黑名单用户" + printQQ(
+			string strNote = printGroup(fromGroup) + "发现" + getMsg("strSelfName") + "的黑名单用户" + printQQ(
 				fromQQ) + "入群";
 			AddMsgToQueue(blacklist->list_self_qq_warning(fromQQ), fromGroup, msgtype::Group);
 			if (grp.isset("免清"))strNote += "（群免清）";
@@ -884,7 +895,7 @@ EVE_GroupBan(eventGroupBan)
 	{
 		if (beingOperateQQ == console.DiceMaid)
 		{
-			console.log(GlobalMsg["strSelfName"] + "在" + printGroup(fromGroup) + "中被解除禁言", 0b10, printSTNow());
+			console.log(getMsg("strSelfName") + "在" + printGroup(fromGroup) + "中被解除禁言", 0b10, printSTNow());
 			return 1;
 		}
 	}
@@ -1050,7 +1061,7 @@ EVE_FriendAdded(eventFriendAdd) {
 	if (!Enabled) return 0;
 	if (!console["ListenFriendAdd"])return 0;
 	this_thread::sleep_for(3s);
-	GlobalMsg["strAddFriendWhiteQQ"].empty()
+	getMsg("strAddFriendWhiteQQ").empty()
 		? AddMsgToQueue(getMsg("strAddFriend"), fromQQ)
 		: AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromQQ);
 	return 0;

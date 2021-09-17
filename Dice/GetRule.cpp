@@ -37,7 +37,7 @@ namespace GetRule
 	{
 		if (rawStr.empty())
 		{
-			des = GlobalMsg["strRulesFormatErr"];
+			des = getMsg("strRulesFormatErr");
 			return false;
 		}
 
@@ -48,13 +48,13 @@ namespace GetRule
 			const string name = rawStr.substr(rawStr.find(':') + 1);
 			if (name.empty())
 			{
-				des = GlobalMsg["strRulesFormatErr"];
+				des = getMsg("strRulesFormatErr");
 				return false;
 			}
 			const string rule = rawStr.substr(0, rawStr.find(':'));
 			if (name.empty())
 			{
-				des = GlobalMsg["strRulesFormatErr"];
+				des = getMsg("strRulesFormatErr");
 				return false;
 			}
 			return get(rule, name, des);
@@ -86,9 +86,9 @@ namespace GetRule
 			des = UTF8toGBK(temp);
 			return true;
 		}
-		if (temp == GlobalMsg["strRequestNoResponse"])
+		if (temp == getMsg("strRequestNoResponse"))
 		{
-			des = GlobalMsg["strRuleNotFound"];
+			des = getMsg("strRuleNotFound");
 		}
 		else
 		{

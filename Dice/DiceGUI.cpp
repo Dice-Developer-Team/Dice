@@ -646,6 +646,7 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					if (ListViewCustomMsgCurrentActivated == -1) return 0;
 					std::string curr = ListViewCustomMsg.GetItemText(ListViewCustomMsgCurrentActivated);
 					std::string str = EditCustomMsg.GetText();
+					std::unique_lock lock(GlobalMsgMutex);
 					GlobalMsg[curr] = str;
 					EditedMsg[curr] = str;
 					ListViewCustomMsg.SetItemText(str, ListViewCustomMsgCurrentActivated, 1);
@@ -805,7 +806,7 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 						{
 							std::string text = ListViewCustomMsg.GetItemText(lpnmitem->iItem);
 							ListViewCustomMsgCurrentActivated = lpnmitem->iItem;
-							EditCustomMsg.SetText(GlobalMsg[text]);
+							EditCustomMsg.SetText(getMsg(text));
 						}
 						return 0;
 					}
