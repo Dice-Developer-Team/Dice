@@ -521,11 +521,13 @@ EVE_Enable(eventEnable)
 
 	DD::debugLog("Dice.loadData");
 	loadData();
+	DD::debugLog("Dice.dataInit");
 	dataInit();
 	// 确保线程执行结束
 	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
 	Aws::InitAPI(options);
 	Enabled = true;
+	DD::debugLog("Dice.threadInit");
 	threads(SendMsg);
 	threads(ConsoleTimer);
 	threads(warningHandler);
