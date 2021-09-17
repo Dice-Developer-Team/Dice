@@ -33,12 +33,13 @@
       <ul class="layui-tab-title">
         <li class="layui-this">主界面</li>
         <li>Master设置</li>
-        <li>用户管理(还没写)</li>
-        <li>群管理(还没写)</li>
+        <li class="layui-hide">用户管理(还没写)</li>
+        <li class="layui-hide">群管理(还没写)</li>
         <li>自定义内置回复</li>
-        <li>关键词回复(还没写)</li>
+        <li>关键词回复</li>
         <li>正则回复(还没写)</li>
-        <li>拓展管理(还没写)</li>
+        <li class="layui-hide">拓展管理(还没写)</li>
+        <li>WebUI管理(还没写)</li>
         <li>更新日志</li>
       </ul>
       <div class="layui-tab-content">
@@ -101,7 +102,10 @@
           <table id="custom-msg-table" lay-filter="custom-msg-table"></table>
         </div>
         <div class="layui-tab-item">
-
+          <table id="custom-reply-table" lay-filter="custom-reply-table"></table>
+        </div>
+        <div class="layui-tab-item">
+          <table id="custom-replyre-table" lay-filter="custom-replyre-table"></table>
         </div>
         <div class="layui-tab-item">
 
@@ -114,9 +118,30 @@
             <li class="layui-timeline-item">
               <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
               <div class="layui-timeline-content layui-text">
+                <h3 class="layui-timeline-title">2021年9月17日 版本2.6.0beta(584)</h3>
+                <p>
+                  WebUI 验证
+                  <br>
+                  WebUI 基础设置
+                  <br>
+                  WebUI 关键词回复管理
+                  <br>
+                  WebUI 正则回复管理
+                </p>
+              </div>
+            </li>
+            <li class="layui-timeline-item">
+              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+              <div class="layui-timeline-content layui-text">
                 <h3 class="layui-timeline-title">2021年9月16日 版本2.6.0beta(583)</h3>
                 <p>
-                  基础WebUI
+                  基础WebUI框架
+                  <br>
+                  WebUI 基础信息
+                  <br>
+                  WebUI Master设置
+                  <br>
+                  WebUI 自定义内置回复
                 </p>
               </div>
             </li>
@@ -133,8 +158,39 @@
     <blockquote class="layui-elem-quote layui-hide layui-text" id="footer">当前版本：{{= d.version }}</blockquote>
   </div>
 </div>
- 
 
+<script type="text/html" id="basicToolbar">
+  <div class="layui-btn-container">
+    <button class="layui-btn layui-btn-sm" lay-event="delete">删除</button>
+  </div>
+</script>
+
+<script type="text/html" id="addToolbar">
+  <div class="layui-btn-container">
+    <button class="layui-btn layui-btn-sm" lay-event="add">添加</button>
+  </div>
+</script>
+
+
+<form class="layui-form layui-hide" id="addCustomReplyForm" action="" style="padding: 10px;">
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="width: 50px">关键词</label>
+    <div class="layui-input-block" style="margin-left: 80px">
+      <input type="text" name="name" required  lay-verify="required" placeholder="请输入关键词" autocomplete="off" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="width: 50px">回复</label>
+    <div class="layui-input-block" style="margin-left: 80px">
+      <input type="text" name="value" required  lay-verify="required" placeholder="请输入回复" autocomplete="off" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <div class="layui-input-block">
+      <button class="layui-btn" lay-submit lay-filter="addCustomReplyForm">添加</button>
+    </div>
+  </div>
+</form>
 
   
 <script src="https://unpkg.com/layui@2.6.8/dist/layui.js"></script>
@@ -153,6 +209,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
   ,dropdown = layui.dropdown //下拉菜单
   ,form = layui.form
   ,$ = layui.$
+
 
   $.get("/api/basicinfo")
     .done(function(data) {
@@ -190,12 +247,11 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     ,height: 420
     ,url: '/api/custommsg' //数据接口
     ,title: '自定义回复'
-    ,contentType: 'application/json'
     ,cols: [[ //表头
       {type: 'checkbox', fixed: 'left'}
       ,{field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
-      ,{field: 'value', title: '值', width:400, edit: 'text'}
-      ,{field: 'remark', title: '说明', width:400}
+      ,{field: 'value', title: '值', minwidth:250, edit: 'text'}
+      ,{field: 'remark', title: '说明', width:250}
     ]]
   });
 
@@ -218,11 +274,10 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     ,height: 420
     ,url: '/api/adminconfig' //数据接口
     ,title: '管理员设置'
-    ,contentType: 'application/json'
     ,cols: [[ //表头
       {type: 'checkbox', fixed: 'left'}
       ,{field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
-      ,{field: 'value', title: '值', width:400, edit: 'text'}
+      ,{field: 'value', title: '值', edit: 'text'}
     ]]
   });
 
@@ -269,67 +324,94 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     return false;
   });
 
+
   
-  //监听头工具栏事件
-  table.on('toolbar(custom-msg-table)', function(obj){
-    var checkStatus = table.checkStatus(obj.config.id)
-    ,data = checkStatus.data; //获取选中的数据
+  var addCustomReplyFormIndex = -1;
+
+  table.render({
+    elem: '#custom-reply-table'
+    ,height: 420
+    ,url: '/api/customreply' //数据接口
+    ,title: '关键词回复设置'
+    ,toolbar: "#addToolbar"
+    ,cols: [[ //表头
+      {type: 'checkbox', fixed: 'left'}
+      ,{field: 'name', title: '关键词', width:150, sort: true, fixed: 'left'}
+      ,{field: 'value', title: '回复', minwidth:250, edit: 'text'}
+      ,{fixed: 'right', width:150, align:'center', toolbar: '#basicToolbar'}
+    ]]
+  });
+
+  table.on('toolbar(custom-reply-table)', function(obj){
+    var checkStatus = table.checkStatus(obj.config.id);
     switch(obj.event){
       case 'add':
-        layer.msg('添加');
-      break;
-      case 'update':
-        if(data.length === 0){
-          layer.msg('请选择一行');
-        } else if(data.length > 1){
-          layer.msg('只能同时编辑一个');
-        } else {
-          layer.alert('编辑 [id]：'+ checkStatus.data[0].id);
-        }
-      break;
-      case 'delete':
-        if(data.length === 0){
-          layer.msg('请选择一行');
-        } else {
-          layer.msg('删除');
-        }
-      break;
-    };
+        addCustomReplyFormIndex = layer.open({
+          type: 1, 
+          content: $("#addCustomReplyForm").removeClass("layui-hide"), //这里content是一个普通的String
+          end: function() { $("#addCustomReplyForm").addClass("layui-hide"); }
+        });
+        break;
+    }
+  });
+
+  form.on('submit(addCustomReplyForm)', function(data){
+    layer.close(addCustomReplyFormIndex);
+    console.log(data);
+    
+    data.field.value = data.field.value.split("|");
+    $.post("/api/customreply", JSON.stringify({action: "set", data: [data.field]}))
+    .done(function(data) {
+      if (data.code == 0) {
+        console.log("CustomReply Save Success");
+        table.reload('custom-reply-table');
+      } else {
+        layer.msg("关键词回复保存失败: " + data.msg);
+      }
+    })
+    .fail(function(jqXHR, textStatus, error) {
+      layer.msg("关键词回复保存失败: " + error);
+    })
+    
+    return false;
   });
   
   //监听行工具事件
-  table.on('tool(test)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+  table.on('tool(custom-reply-table)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
     var data = obj.data //获得当前行数据
     ,layEvent = obj.event; //获得 lay-event 对应的值
-    if(layEvent === 'detail'){
-      layer.msg('查看操作');
-    } else if(layEvent === 'more'){
-      //下拉菜单
-      dropdown.render({
-        elem: this //触发事件的 DOM 对象
-        ,show: true //外部事件触发即显示
-        ,data: [{
-          title: '编辑'
-          ,id: 'edit'
-        },{
-          title: '删除'
-          ,id: 'del'
-        }]
-        ,click: function(menudata){
-          if(menudata.id === 'del'){
-            layer.confirm('真的删除行么', function(index){
-              obj.del(); //删除对应行（tr）的DOM结构
-              layer.close(index);
-              //向服务端发送删除指令
-            });
-          } else if(menudata.id === 'edit'){
-            layer.msg('编辑操作，当前行 ID:'+ data.id);
+    if (layEvent == "delete") {
+      layer.confirm('确认要删除此行吗？此操作不可撤销。', function(index){
+        layer.close(index);
+        $.post("/api/customreply", JSON.stringify({action: "delete", data: [obj.data]}))
+        .done(function(data) {
+          if (data.code == 0) {
+            obj.del();
+            console.log("CustomReply Delete Success");
+          } else {
+            layer.msg("关键词回复删除失败: " + data.msg);
           }
-        }
-        ,align: 'right' //右对齐弹出（v2.6.8 新增）
-        ,style: 'box-shadow: 1px 1px 10px rgb(0 0 0 / 12%);' //设置额外样式
-      })
+        })
+        .fail(function(jqXHR, textStatus, error) {
+          layer.msg("关键词回复删除失败: " + error);
+        })
+      });
     }
+  });
+
+  table.on('edit(custom-reply-table)', function(obj) { 
+    obj.data.value = obj.data.value.split("|");
+    $.post("/api/customreply", JSON.stringify({action: "set", data: [obj.data]}))
+    .done(function(data) {
+      if (data.code == 0) {
+        console.log("CustomReply Save Success");
+      } else {
+        layer.msg("关键词回复保存失败: " + data.msg);
+      }
+    })
+    .fail(function(jqXHR, textStatus, error) {
+      layer.msg("关键词回复保存失败: " + error);
+    })
   });
   
   //上传

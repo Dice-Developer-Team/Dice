@@ -7,6 +7,7 @@
 #include "DiceSchedule.h"
 #include "MsgMonitor.h"
 #include "CQTools.h"
+#include "CardDeck.h"
 
 class AuthHandler: public CivetAuthHandler
 {
@@ -137,6 +138,94 @@ public:
                     GlobalMsg[UTF8toGBK(item["name"].get<std::string>())] = UTF8toGBK(item["value"].get<std::string>());
                 }
             } 
+            else
+            {
+                throw std::runtime_error("Invalid Action");
+            }
+            nlohmann::json j2 = nlohmann::json::object();   
+            j2["code"] = 0;
+            j2["msg"] = "ok";
+            ret = j2.dump();
+        }
+        catch(const std::exception& e)
+        {
+            nlohmann::json j = nlohmann::json::object();
+            j["code"] = -1;
+            j["msg"] = GBKtoUTF8(e.what());
+            ret = j.dump();
+        }
+        mg_send_http_ok(conn, "application/json", ret.length());
+        mg_write(conn, ret.c_str(), ret.length());
+        return true;
+    }
+};
+
+class CustomReplyApiHandler : public CivetHandler
+{
+public:
+    bool handleGet(CivetServer *server, struct mg_connection *conn)
+    {
+        std::string ret;
+        try
+        {
+            nlohmann::json j = nlohmann::json::object();
+            j["code"] = 0;
+            j["msg"] = "ok";
+            j["count"] = CardDeck::mReplyDeck.size();
+			j["data"] = nlohmann::json::array();
+            for (const auto& [key,val] : CardDeck::mReplyDeck)
+            {
+                string t;
+                for (const auto& item : val)
+                {
+                    t.append(GBKtoUTF8(item));
+                    t.append("|");
+                }
+                t = t.substr(0, t.size() - 1);
+                j["data"].push_back({{"name", GBKtoUTF8(key)}, {"value", t}});
+            }
+            ret = j.dump();
+        }
+        catch(const std::exception& e)
+        {
+            nlohmann::json j = nlohmann::json::object();
+            j["code"] = -1;
+            j["msg"] = GBKtoUTF8(e.what());
+            ret = j.dump();
+        }
+
+        mg_send_http_ok(conn, "application/json", ret.length());
+        mg_write(conn, ret.c_str(), ret.length());
+        return true;
+    }
+
+    bool handlePost(CivetServer *server, struct mg_connection *conn)
+    {
+        std::string ret;
+        try 
+        {
+            auto data = server->getPostData(conn);
+            nlohmann::json j = nlohmann::json::parse(data);
+            if (j["action"].get<std::string>() == "set")
+            {
+                for(const auto& item: j["data"])
+                {
+                    auto& deck = CardDeck::mReplyDeck[UTF8toGBK(item["name"].get<std::string>())];
+                    deck = {};
+                    auto v = item["value"].get<std::vector<std::string>>();
+                    for(const auto& i : v)
+                    {
+                        deck.push_back(UTF8toGBK(i));
+                    }
+                }
+            } 
+            else if (j["action"].get<std::string>() == "delete")
+            {
+                for(const auto& item: j["data"])
+                {
+                    CardDeck::mReplyDeck.erase(UTF8toGBK(item["name"].get<std::string>()));
+                }
+            }
             else
             {
                 throw std::runtime_error("Invalid Action");

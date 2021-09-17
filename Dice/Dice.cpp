@@ -75,6 +75,7 @@ BasicInfoApiHandler h_basicinfoapi;
 CustomMsgApiHandler h_msgapi;
 AdminConfigHandler h_config;
 MasterHandler h_master;
+CustomReplyApiHandler h_customreply;
 AuthHandler auth_handler;
 
 constexpr auto msgInit{ R"(欢迎使用Dice!掷骰机器人！
@@ -499,34 +500,6 @@ EVE_Enable(eventEnable)
 		                                                                GlobalMsg["strSelfName"]);
 		GlobalMsg[it.first] = it.second;
 	}
-	// 初始化服务器
-	mg_init_library(0);
-
-	if (console["EnableWebUI"])
-	{
-		const std::string port_option = std::string(console["WebUIAllowInternetAccess"] ? "0.0.0.0" : "127.0.0.1") + ":" + std::to_string(console["WebUIPort"]);
-
-		std::vector<std::string> mg_options = {"listening_ports", port_option.c_str()};
-
-		ManagerServer = std::make_unique<CivetServer>(mg_options);
-
-		ManagerServer->addHandler("/", h_index);
-		ManagerServer->addHandler("/api/basicinfo", h_basicinfoapi);
-		ManagerServer->addHandler("/api/custommsg", h_msgapi);
-		ManagerServer->addHandler("/api/adminconfig", h_config);
-		ManagerServer->addHandler("/api/master", h_master);
-		ManagerServer->addAuthHandler("/", auth_handler);
-		auto ports = ManagerServer->getListeningPorts();
-
-		if (ports.empty())
-		{
-			console.log("Dice! WebUI 启动失败！", 0b1);
-		}
-		else
-		{
-			console.log("Dice! WebUI 正于" + std::to_string(ports[0]) + "端口运行", 0b1);
-		}
-	}
 
 	DD::debugLog("Dice.loadData");
 	loadData();
@@ -550,6 +523,43 @@ EVE_Enable(eventEnable)
 	{
 		console.log(std::string("刷新软件包缓存失败：") + e.what(), 0b1);
 	}
+
+	// 初始化服务器
+	mg_init_library(0);
+
+	if (console["EnableWebUI"])
+	{
+		try {
+			const std::string port_option = std::string(console["WebUIAllowInternetAccess"] ? "0.0.0.0" : "127.0.0.1") + ":" + std::to_string(console["WebUIPort"]);
+
+			std::vector<std::string> mg_options = {"listening_ports", port_option.c_str()};
+
+			ManagerServer = std::make_unique<CivetServer>(mg_options);
+
+			ManagerServer->addHandler("/", h_index);
+			ManagerServer->addHandler("/api/basicinfo", h_basicinfoapi);
+			ManagerServer->addHandler("/api/custommsg", h_msgapi);
+			ManagerServer->addHandler("/api/adminconfig", h_config);
+			ManagerServer->addHandler("/api/master", h_master);
+			ManagerServer->addHandler("/api/customreply", h_customreply);
+			ManagerServer->addAuthHandler("/", auth_handler);
+			auto ports = ManagerServer->getListeningPorts();
+
+			if (ports.empty())
+			{
+				console.log("Dice! WebUI 启动失败！端口已被使用？", 0b1);
+			}
+			else
+			{
+				console.log("Dice! WebUI 正于端口" + std::to_string(ports[0]) + "运行", 0b1);
+			}
+		} 
+		catch(const CivetException& e)
+		{
+			console.log("Dice! WebUI 启动失败！端口已被使用？", 0b1);
+		}
+	}
+
 	console.log(GlobalMsg["strSelfName"] + "初始化完成，用时" + to_string(time(nullptr) - llStartTime) + "秒", 0b1,
 				printSTNow());
 	//骰娘网络
