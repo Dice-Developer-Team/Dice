@@ -267,13 +267,6 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     .fail(function(jqXHR, textStatus, error) {
       layer.msg("连接到Dice!后端失败: " + error);
     })
-  
-  //监听Tab切换
-  element.on('tab(main)', function(data){
-    layer.tips('切换了 '+ data.index +'：'+ this.innerHTML, this, {
-      tips: 1
-    });
-  });
 
   //执行一个 table 实例
   table.render({
@@ -539,6 +532,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     .done(function(data) {
       if (data.code == 0) {
         layer.msg("密码更改成功");
+        location.reload();
       } else {
         layer.msg("密码更改失败: " + data.msg);
       }
@@ -552,8 +546,8 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
 
   form.verify({
     pass: [
-      /^[\S]{6,12}$/
-      ,'密码必须6到12位，且不能出现空格'
+      /^[\S]{6,20}$/
+      ,'密码必须6到20位，且不能出现空格'
     ],
     passsame: function(value, item) {
       if ($(item).parent().children("#password").val() != value) {

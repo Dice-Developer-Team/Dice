@@ -10,13 +10,15 @@
 #include "CQTools.h"
 #include "CardDeck.h"
 
+void setPassword(const std::string& password);
+
 class AuthHandler: public CivetAuthHandler
 {
     bool authorize(CivetServer *server, struct mg_connection *conn)
     {
         const char* auth = server->getHeader(conn, "Authorization");
         // Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
-        if (auth == nullptr || std::string(auth).substr(0, 5) != "Basic" || base64_decode(std::string(auth).substr(6)) != "admin:password")
+        if (auth == nullptr || std::string(auth).substr(0, 5) != "Basic" || base64_decode(std::string(auth).substr(6)) != "admin:" + WebUIPassword)
         {
             // 401 Unauthorised
             mg_response_header_start(conn, 401);
@@ -476,6 +478,43 @@ public:
                         console.isMasterMode = true;
                     }
                 }
+            } 
+            else
+            {
+                throw std::runtime_error("Invalid Action");
+            }
+            nlohmann::json j2 = nlohmann::json::object();   
+            j2["code"] = 0;
+            j2["msg"] = "ok";
+            ret = j2.dump();
+        }
+        catch(const std::exception& e)
+        {
+            nlohmann::json j = nlohmann::json::object();
+            j["code"] = -1;
+            j["msg"] = GBKtoUTF8(e.what());
+            ret = j.dump();
+        }
+        mg_send_http_ok(conn, "application/json", ret.length());
+        mg_write(conn, ret.c_str(), ret.length());
+        return true;
+    }
+};
+
+class WebUIPasswordHandler : public CivetHandler 
+{
+public:
+   
+    bool handlePost(CivetServer *server, struct mg_connection *conn)
+    {
+        std::string ret;
+        try 
+        {
+            auto data = server->getPostData(conn);
+            nlohmann::json j = nlohmann::json::parse(data);
+            if (j["action"].get<std::string>() == "set")
+            {
+                setPassword(j["data"]["password"].get<std::string>());
             } 
             else
             {

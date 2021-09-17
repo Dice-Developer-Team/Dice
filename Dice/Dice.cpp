@@ -77,6 +77,7 @@ AdminConfigHandler h_config;
 MasterHandler h_master;
 CustomReplyApiHandler h_customreply;
 CustomRegexReplyApiHandler h_customregexreply;
+WebUIPasswordHandler h_webuipassword;
 AuthHandler auth_handler;
 
 constexpr auto msgInit{ R"(欢迎使用Dice!掷骰机器人！
@@ -510,6 +511,13 @@ EVE_Enable(eventEnable)
 		}
 	}
 
+	ifstream passwordStream(DiceDir / "conf" / "WebUIPassword");
+	if (passwordStream)
+	{
+		passwordStream >> WebUIPassword;
+	}
+	passwordStream.close();
+	if (WebUIPassword.empty()) WebUIPassword = "password";
 
 	DD::debugLog("Dice.loadData");
 	loadData();
@@ -553,6 +561,7 @@ EVE_Enable(eventEnable)
 			ManagerServer->addHandler("/api/master", h_master);
 			ManagerServer->addHandler("/api/customreply", h_customreply);
 			ManagerServer->addHandler("/api/customregexreply", h_customregexreply);
+			ManagerServer->addHandler("/api/webuipassword", h_webuipassword);
 			ManagerServer->addAuthHandler("/", auth_handler);
 			auto ports = ManagerServer->getListeningPorts();
 

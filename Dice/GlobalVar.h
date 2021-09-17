@@ -106,5 +106,6 @@ extern const std::map<std::string, std::string, less_ci> HelpDoc;
 inline std::map<std::string, std::string, less_ci> CustomHelp;
 const std::string getMsg(const std::string& key, const std::unordered_map<std::string, std::string>& tmp = {});
 const std::string getComment(const std::string& key);
+extern std::string WebUIPassword;
 
 #endif /*DICE_GLOBAL_VAR*/
