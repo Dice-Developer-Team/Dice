@@ -39,7 +39,7 @@
         <li>关键词回复</li>
         <li>正则回复</li>
         <li class="layui-hide">拓展管理(还没写)</li>
-        <li>WebUI管理(还没写)</li>
+        <li>WebUI管理</li>
         <li>更新日志</li>
       </ul>
       <div class="layui-tab-content">
@@ -65,7 +65,7 @@
               </div>   
             </div>
             <div class="layui-col-md6">
-              <div class="layui-panel" style="padding: 10px;">
+              <div class="layui-panel layui-hide" style="padding: 10px;">
                 <div class="layui-text">
                   <h3>系统信息</h3>
                   <p>
@@ -81,7 +81,7 @@
             <div class="layui-form-item">
               <label class="layui-form-label">Master</label>
               <div class="layui-input-block">
-                <input type="number" name="masterQQ" id="masterQQ" required lay-verify="required" placeholder="请输入QQ" autocomplete="off" class="layui-input">
+                <input type="number" name="masterQQ" id="masterQQ" required lay-verify="required|number" placeholder="请输入QQ" autocomplete="off" class="layui-input">
               </div>
             </div>
             <div class="layui-form-item">
@@ -111,7 +111,20 @@
 
         </div>
         <div class="layui-tab-item">
-
+          <form class="layui-form" action="">
+            <div class="layui-form-item">
+              <label class="layui-form-label">WebUI密码</label>
+              <div class="layui-input-block">
+                <input type="password" name="password" id="password" required lay-verify="required|pass" placeholder="请输入新密码" autocomplete="off" class="layui-input">
+                <input type="password" required lay-verify="required|passsame" placeholder="请重复输入新密码" autocomplete="off" class="layui-input">
+              </div>
+            </div>
+            <div class="layui-form-item">
+              <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="passwordForm">确认</button>
+              </div>
+            </div>
+          </form>
         </div>
         <div class="layui-tab-item">
           <ul class="layui-timeline">
@@ -196,7 +209,7 @@
   <div class="layui-form-item">
     <label class="layui-form-label" style="width: 50px">正则</label>
     <div class="layui-input-block" style="margin-left: 80px">
-      <input type="text" name="name" required  lay-verify="required" placeholder="请输入正则表达式" autocomplete="off" class="layui-input">
+      <input type="text" name="name" required  lay-verify="required|regex" placeholder="请输入正则表达式" autocomplete="off" class="layui-input">
     </div>
   </div>
   <div class="layui-form-item">
@@ -464,12 +477,6 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
   });
 
   form.on('submit(addCustomRegexReplyForm)', function(data){
-    try {
-      new RegExp(data.field.name);
-    } catch (error) {
-      layer.msg("正则表达式无效");
-      return false;
-    }
     layer.close(addCustomRegexReplyFormIndex);
     
     data.field.value = data.field.value.split("|");
@@ -526,18 +533,39 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
       layer.msg("正则回复保存失败: " + error);
     })
   });
-  
-  //上传
-  upload.render({
-    elem: '#uploadDemo'
-    ,url: '' //此处配置你自己的上传接口即可
-    ,done: function(res){
-      layer.msg('上传成功');
-      layui.$('#uploadDemoView').removeClass('layui-hide').find('img').attr('src', res.files.file);
-      console.log(res)
-    }
-    ,before: function(){
-      layer.msg('上传中', {icon: 16, time: 0});
+
+  form.on('submit(passwordForm)', function(data){
+    $.post("/api/webuipassword", JSON.stringify({action: "set", data: data.field}))
+    .done(function(data) {
+      if (data.code == 0) {
+        layer.msg("密码更改成功");
+      } else {
+        layer.msg("密码更改失败: " + data.msg);
+      }
+    })
+    .fail(function(jqXHR, textStatus, error) {
+      layer.msg("密码更改失败: " + error);
+    })
+    
+    return false;
+  });
+
+  form.verify({
+    pass: [
+      /^[\S]{6,12}$/
+      ,'密码必须6到12位，且不能出现空格'
+    ],
+    passsame: function(value, item) {
+      if ($(item).parent().children("#password").val() != value) {
+        return "两次输入的密码不一致";
+      }
+    },
+    regex: function(value, item) {
+      try {
+        new RegExp(value);
+      } catch(error) {
+        return '正则表达式无效';
+      }
     }
   });
 });
