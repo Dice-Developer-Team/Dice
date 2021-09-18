@@ -381,6 +381,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
       case 'add':
         addCustomReplyFormIndex = layer.open({
           type: 1, 
+          title: '添加关键词回复',
           content: $("#addCustomReplyForm").removeClass("layui-hide"), //这里content是一个普通的String
           end: function() { $("#addCustomReplyForm").addClass("layui-hide"); }
         });
@@ -467,6 +468,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
       case 'add':
         addCustomRegexReplyFormIndex = layer.open({
           type: 1, 
+          title: '添加正则回复',
           content: $("#addCustomRegexReplyForm").removeClass("layui-hide"), //这里content是一个普通的String
           end: function() { $("#addCustomRegexReplyForm").addClass("layui-hide"); }
         });
