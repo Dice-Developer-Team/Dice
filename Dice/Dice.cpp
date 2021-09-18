@@ -570,15 +570,18 @@ EVE_Enable(eventEnable)
 
 			if (ports.empty())
 			{
+				DD::debugLog("Dice! WebUI 启动失败！端口已被使用？");
 				console.log("Dice! WebUI 启动失败！端口已被使用？", 0b1);
 			}
 			else
 			{
+				DD::debugLog("Dice! WebUI 正于端口" + std::to_string(ports[0]) + "运行");
 				console.log("Dice! WebUI 正于端口" + std::to_string(ports[0]) + "运行", 0b1);
 			}
 		} 
 		catch(const CivetException& e)
 		{
+			DD::debugLog("Dice! WebUI 启动失败！端口已被使用？");
 			console.log("Dice! WebUI 启动失败！端口已被使用？", 0b1);
 		}
 	}
