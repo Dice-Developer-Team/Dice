@@ -284,9 +284,8 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     ,url: '/api/custommsg' //数据接口
     ,title: '自定义回复'
     ,cols: [[ //表头
-      {type: 'checkbox', fixed: 'left'}
-      ,{field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
-      ,{field: 'value', title: '值', minwidth:250, edit: 'text'}
+      {field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
+      ,{field: 'value', title: '值', minWidth:250, edit: 'text'}
       ,{field: 'remark', title: '说明', width:250}
     ]]
   });
@@ -311,9 +310,8 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     ,url: '/api/adminconfig' //数据接口
     ,title: '管理员设置'
     ,cols: [[ //表头
-      {type: 'checkbox', fixed: 'left'}
-      ,{field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
-      ,{field: 'value', title: '值', edit: 'text'}
+      {field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
+      ,{field: 'value', title: '值', minWidth:250, edit: 'text'}
     ]]
   });
 
@@ -371,10 +369,9 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     ,title: '关键词回复设置'
     ,toolbar: "#addToolbar"
     ,cols: [[ //表头
-      {type: 'checkbox', fixed: 'left'}
-      ,{field: 'name', title: '关键词', width:150, sort: true, fixed: 'left'}
-      ,{field: 'value', title: '回复', minwidth:250, edit: 'text'}
-      ,{fixed: 'right', width:150, align:'center', toolbar: '#basicToolbar'}
+      {field: 'name', title: '关键词', width:150, sort: true, fixed: 'left'}
+      ,{field: 'value', title: '回复', minWidth:250, edit: 'text'}
+      ,{fixed: 'right', width:80, align:'center', toolbar: '#basicToolbar'}
     ]]
   });
 
@@ -458,10 +455,9 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     ,title: '正则回复设置'
     ,toolbar: "#addToolbar"
     ,cols: [[ //表头
-      {type: 'checkbox', fixed: 'left'}
-      ,{field: 'name', title: '正则表达式', width:150, sort: true, fixed: 'left'}
-      ,{field: 'value', title: '回复', minwidth:250, edit: 'text'}
-      ,{fixed: 'right', width:150, align:'center', toolbar: '#basicToolbar'}
+      {field: 'name', title: '正则表达式', width:150, sort: true, fixed: 'left'}
+      ,{field: 'value', title: '回复', minWidth:250, edit: 'text'}
+      ,{fixed: 'right', width:80, align:'center', toolbar: '#basicToolbar'}
     ]]
   });
 
