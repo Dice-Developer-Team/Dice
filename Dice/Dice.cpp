@@ -511,14 +511,6 @@ EVE_Enable(eventEnable)
 		}
 	}
 
-	ifstream passwordStream(DiceDir / "conf" / "WebUIPassword");
-	if (passwordStream)
-	{
-		passwordStream >> WebUIPassword;
-	}
-	passwordStream.close();
-	if (WebUIPassword.empty()) WebUIPassword = "password";
-
 	DD::debugLog("Dice.loadData");
 	loadData();
 	DD::debugLog("Dice.dataInit");
@@ -533,6 +525,8 @@ EVE_Enable(eventEnable)
 	threads(warningHandler);
 	threads(frqHandler);
 	sch.start();
+
+	DD::debugLog("Dice.extensionManagerInit");
 	try
 	{
 		ExtensionManagerInstance->refreshIndex();
@@ -542,6 +536,13 @@ EVE_Enable(eventEnable)
 	catch(const std::exception& e)
 	{
 		console.log(std::string("刷新软件包缓存失败：") + e.what(), 0b1);
+	}
+
+	DD::debugLog("Dice.webUIInit");
+	WebUIPasswordPath = DiceDir / "conf" / "WebUIPassword.digest";
+	if (!std::filesystem::exists(WebUIPasswordPath, ec) || std::filesystem::is_empty(WebUIPasswordPath, ec))
+	{		
+		setPassword("password");
 	}
 
 	// 初始化服务器

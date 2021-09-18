@@ -774,5 +774,3 @@ const std::string getComment(const std::string& key) {
 	if (auto it{ GlobalComment.find(key) };it!= GlobalComment.end())return it->second;
 	return {};
 }
-
-std::string WebUIPassword = "password";

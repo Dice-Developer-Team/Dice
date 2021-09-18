@@ -254,11 +254,22 @@ int listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& fil
 // 获取本地编码格式的文件名
 // 在Windows上不能直接调用string(), 因为文件名可能无法转换为本地ANSI编码，导致异常抛出
 // 使用8.3文件名绕过此问题
+// 在Windows上，如果文件不存在则无法正常获取短路径，会尝试返回ANSI编码的长路径
 std::string getNativePathString(const std::filesystem::path& fpPath)
 {
 #ifdef _WIN32
 	auto size = GetShortPathNameW(reinterpret_cast<const wchar_t*>(fpPath.u16string().c_str()), nullptr, 0);
-	if (size == 0) return {};
+	if (size == 0) 
+	{
+		try 
+		{
+			return fpPath.string();
+		}
+		catch (...)
+		{
+			return "";
+		}
+	}
 	wchar_t* buf = new wchar_t[size + 1];
 	GetShortPathNameW(reinterpret_cast<const wchar_t*>(fpPath.u16string().c_str()), buf, size + 1);
 	std::string ret(convert_w2a(reinterpret_cast<char16_t*>(buf)));

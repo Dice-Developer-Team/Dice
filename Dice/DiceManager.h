@@ -9,39 +9,23 @@
 #include "MsgMonitor.h"
 #include "CQTools.h"
 #include "CardDeck.h"
+#include "filesystem.hpp"
 
-void setPassword(const std::string& password);
+// init in EventEnable
+inline std::filesystem::path WebUIPasswordPath;
+
+// ÉèÖÃWebUIÃÜÂë
+bool setPassword(const std::string& password);
 
 class AuthHandler: public CivetAuthHandler
 {
     bool authorize(CivetServer *server, struct mg_connection *conn)
     {
-        const char* auth = server->getHeader(conn, "Authorization");
-        // Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
-        if (auth == nullptr || std::string(auth).substr(0, 5) != "Basic" || base64_decode(std::string(auth).substr(6)) != "admin:" + WebUIPassword)
+        if (mg_check_digest_access_authentication(conn, "DiceWebUI", WebUIPasswordPath.u8string().c_str()) == 0)
         {
-            // 401 Unauthorised
-            mg_response_header_start(conn, 401);
-
-            // Disable Cache
-            mg_response_header_add(conn,
-	                       "Cache-Control",
-	                       "no-cache, no-store, "
-	                       "must-revalidate, private, max-age=0",
-	                       -1);
-            mg_response_header_add(conn, "Expires", "0", -1);
-
-            // For HTTP 1.0
-            mg_response_header_add(conn, "Pragma", "no-cache", -1);
-
-            // Basic Auth Request
-            mg_response_header_add(conn, "WWW-Authenticate", "Basic realm=\"Dice WebUI\"", -1);
-
-            mg_response_header_send(conn);
-
+            mg_send_digest_access_authentication_request(conn, "DiceWebUI");
             return false;
         }
-
         return true;
     }
 };
@@ -514,7 +498,10 @@ public:
             nlohmann::json j = nlohmann::json::parse(data);
             if (j["action"].get<std::string>() == "set")
             {
-                setPassword(j["data"]["password"].get<std::string>());
+                if (!setPassword(j["data"]["password"].get<std::string>()))
+                {
+                    throw std::runtime_error("Set Password Failed");
+                }
             } 
             else
             {
