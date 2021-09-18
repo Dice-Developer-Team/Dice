@@ -198,13 +198,14 @@
   <div class="layui-form-item">
     <label class="layui-form-label" style="width: 50px">关键词</label>
     <div class="layui-input-block" style="margin-left: 80px">
-      <input type="text" name="name" required  lay-verify="required" placeholder="请输入关键词" autocomplete="off" class="layui-input">
+      <input type="text" name="name" required lay-verify="required" placeholder="请输入关键词" autocomplete="off" class="layui-input">
     </div>
   </div>
   <div class="layui-form-item">
     <label class="layui-form-label" style="width: 50px">回复</label>
     <div class="layui-input-block" style="margin-left: 80px">
-      <input type="text" name="value" required  lay-verify="required" placeholder="请输入回复" autocomplete="off" class="layui-input">
+      <!-- TODO: Multiline -->
+      <input type="text" name="value" required lay-verify="required" placeholder="请输入回复" autocomplete="off" class="layui-input">
     </div>
   </div>
   <div class="layui-form-item">
@@ -283,6 +284,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     ,height: 420
     ,url: '/api/custommsg' //数据接口
     ,title: '自定义回复'
+    ,request: {} 
     ,cols: [[ //表头
       {field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
       ,{field: 'value', title: '值', minWidth:250, edit: 'text'}
@@ -309,6 +311,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     ,height: 420
     ,url: '/api/adminconfig' //数据接口
     ,title: '管理员设置'
+    ,request: {} 
     ,cols: [[ //表头
       {field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
       ,{field: 'value', title: '值', minWidth:250, edit: 'text'}
@@ -368,6 +371,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     ,url: '/api/customreply' //数据接口
     ,title: '关键词回复设置'
     ,toolbar: "#addToolbar"
+    ,request: {} 
     ,cols: [[ //表头
       {field: 'name', title: '关键词', width:150, sort: true, fixed: 'left'}
       ,{field: 'value', title: '回复', minWidth:250, edit: 'text'}
@@ -455,6 +459,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     ,url: '/api/customregexreply' //数据接口
     ,title: '正则回复设置'
     ,toolbar: "#addToolbar"
+    ,request: {} 
     ,cols: [[ //表头
       {field: 'name', title: '正则表达式', width:150, sort: true, fixed: 'left'}
       ,{field: 'value', title: '回复', minWidth:250, edit: 'text'}
@@ -552,6 +557,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
   });
 
   form.verify({
+    // TODO: Better verification
     pass: [
       /^[\S]{6,20}$/
       ,'密码必须6到20位，且不能出现空格'
