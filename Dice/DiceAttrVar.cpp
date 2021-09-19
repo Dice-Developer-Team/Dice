@@ -44,7 +44,7 @@ AttrVar::AttrVar(const AttrVar& other) :type(other.type) {
 	}
 }
 AttrVar& AttrVar::operator=(const AttrVar& other) {
-	des();
+	this->~AttrVar();
 	new(this)AttrVar(other);
 	return *this;
 }
@@ -147,20 +147,24 @@ void AttrVar::readb(std::ifstream& fin) {
 	char tag{ fread<char>(fin) };
 	switch (tag){
 	case 1:
+		des();
 		type = AttrType::Boolean;
 		bit = fread<bool>(fin);
 		break;
 	case 2:
+		des();
 		type = AttrType::Integer;
 		attr = fread<int>(fin);
 		break;
 	case 3:
+		des();
 		type = AttrType::Number;
 		number = fread<double>(fin);
 		break;
 	case 4:
+		des();
 		type = AttrType::Text;
-		text = fread<string>(fin);
+		new(&text) string(fread<string>(fin));
 		break;
 	case 0:
 	default:
