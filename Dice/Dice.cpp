@@ -548,10 +548,39 @@ EVE_Enable(eventEnable)
 	// 初始化服务器
 	mg_init_library(0);
 
+	// 读取环境变量
+	bool AllowInternetAccess = console["WebUIAllowInternetAccess"];
+	int Port = console["WebUIPort"];
+
+	const char* envAllowInternetAccess = std::getenv("DICE_WEBUI_ALLOW_INTERNET_ACCESS");
+	std::string envStrAllowInternetAccess = envAllowInternetAccess ? envAllowInternetAccess : "";
+
+	if (envStrAllowInternetAccess == "1")
+	{
+		AllowInternetAccess = true;
+	}
+	else if (envStrAllowInternetAccess == "0")
+	{
+		AllowInternetAccess = false;
+	}
+
+	const char* alternateVariable = std::getenv("DICE_WEBUI_PORT_USE_VARIABLE");
+	std::string variable = alternateVariable ? alternateVariable : "DICE_WEBUI_PORT";
+	
+	try
+	{
+		const char* envPort = std::getenv(variable.c_str());
+		Port = std::stoi(envPort ? envPort : "");
+	}
+	catch(const std::exception& e)
+	{
+		;
+	}
+
 	if (console["EnableWebUI"])
 	{
 		try {
-			const std::string port_option = std::string(console["WebUIAllowInternetAccess"] ? "0.0.0.0" : "127.0.0.1") + ":" + std::to_string(console["WebUIPort"]);
+			const std::string port_option = std::string(AllowInternetAccess ? "0.0.0.0" : "127.0.0.1") + ":" + std::to_string(Port);
 
 			std::vector<std::string> mg_options = {"listening_ports", port_option.c_str()};
 
@@ -576,7 +605,7 @@ EVE_Enable(eventEnable)
 			else
 			{
 				DD::debugLog("Dice! WebUI 正于端口" + std::to_string(ports[0]) + "运行");
-				console.log("Dice! WebUI 正于端口" + std::to_string(ports[0]) + "运行", 0b1);
+				console.log("Dice! WebUI 正于端口" + std::to_string(ports[0]) + "运行，默认用户名为admin密码为password，详细教程请查看 https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming", 0b1);
 			}
 		} 
 		catch(const CivetException& e)
