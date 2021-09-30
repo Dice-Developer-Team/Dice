@@ -30,7 +30,63 @@
 #include "DiceEvent.h"
 #include "DiceLua.h"
 #include "RandomGenerator.h"
+#include "CardDeck.h"
+#include <regex>
 using std::set;
+
+
+enumap<string> DiceMsgReply::sType{ "Reply","Order" };
+enumap<string> DiceMsgReply::sMode{ "Match", "Search", "Regex" };
+enumap<string> DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
+bool DiceMsgReply::exec(FromMsg* msg) {
+	if (type == Type::Reply) {
+		if (msg->fromChat.second != msgtype::Private
+			&& (chat(msg->fromGroup).isset("禁用回复") || chat(msg->fromGroup).isset("认真模式")))
+			return false;
+	}
+	else {	//type == Type::Order
+		if (msg->fromChat.second != msgtype::Private
+			&& chat(msg->fromGroup).isset("停用指令"))
+			return false;
+	}
+
+	if (echo == Echo::Text) {
+		msg->reply(text);
+		return true;
+	}
+	else if (echo == Echo::Deck) {
+		msg->reply(CardDeck::drawCard(deck, true));
+		return true;
+	}
+	else if (echo == Echo::Lua) {
+		lua_msg_reply(msg, text.c_str());
+		return true;
+	}
+	return false;
+}
+string DiceMsgReply::show_ans()const {
+	return echo == DiceMsgReply::Echo::Deck ?
+		listDeck(deck) : text;
+}
+
+void DiceMsgReply::readJson(const json& j) {
+	if (j.count("type"))type = (Type)sType[j["type"].get<string>()];
+	if (j.count("mode"))mode = (Mode)sMode[j["mode"].get<string>()];
+	if (j.count("echo"))echo = (Echo)sEcho[j["echo"].get<string>()];
+	if (j.count("answer")) {
+		if (echo == Echo::Deck)deck = UTF8toGBK(j["answer"].get<vector<string>>());
+		else text = UTF8toGBK(j["answer"].get<string>());
+	}
+}
+json DiceMsgReply::writeJson()const {
+	json j;
+	j["type"] = sType[(int)type];
+	j["mode"] = sMode[(int)mode];
+	j["echo"] = sEcho[(int)echo];
+	if (echo == Echo::Deck)j["answer"] = GBKtoUTF8(deck);
+	else j["answer"] = GBKtoUTF8(text);
+	return j;
+}
 
 bool DiceMsgOrder::exec(FromMsg* msg) {
 	if (type == OrderType::Lua) {
@@ -158,10 +214,10 @@ void DiceModManager::_help(const shared_ptr<DiceJobDetail>& job) {
 				if (res.size() > 20)break;
 			}
 			(*job)["res"] = res.dot("/").show(1);
-			job->reply("{strHelpSuggestion}");
+			job->reply(getMsg("strHelpSuggestion"));
 		}
 	}
-	else job->reply("{strHelpNotFound}");
+	else job->reply(getMsg("strHelpNotFound"));
 	cntHelp[(*job)["help_word"]] += 1;
 	saveJMap(DiceDir / "user" / "HelpStatic.json",cntHelp);
 }
@@ -175,6 +231,94 @@ void DiceModManager::set_help(const string& key, const string& val)
 void DiceModManager::rm_help(const string& key)
 {
 	helpdoc.erase(key);
+}
+
+bool DiceModManager::listen_reply(FromMsg* msg) {
+	string& strMsg{ msg->strMsg };
+	if (msgreply.count(strMsg) && msgreply[strMsg].exec(msg)) {
+		return true;
+	}
+	//模糊匹配禁止自我触发
+	if (vector<string>res; msg->fromQQ != console.DiceMaid && gReplySearcher.search(strMsg, res)) {
+		for (const auto& key : res) {
+			if (!msgreply.count(key))continue;
+			DiceMsgReply& reply{ msgreply[key] };
+			if (reply.mode == DiceMsgReply::Mode::Search && reply.exec(msg))return true;
+		}
+	}
+	//regex
+	try {
+		for (auto& key : reply_regex)
+		{
+			if (!msgreply.count(key) || msgreply[key].mode != DiceMsgReply::Mode::Regex)continue;
+			// libstdc++ 使用了递归式 dfs 匹配正则表达式
+			// 递归层级很多，非常容易爆栈
+			// 然而，每个 Java Thread 在32位 Linux 下默认大小为320K，600字符的匹配即会爆栈
+			// 64位下还好，默认是1M，1800字符会爆栈
+			// 这里强制限制输入为400字符，以避免此问题
+			// @seealso https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86164
+
+			// 未来优化：预先构建regex并使用std::regex::optimize
+			std::regex exp(key, std::regex::ECMAScript | std::regex::icase);
+			if (strMsg.length() <= 400 && std::regex_match(strMsg, msg->msgMatch, exp))
+			{
+				if(msgreply[key].exec(msg))return true;
+			}
+		}
+	}
+	catch (const std::regex_error& e)
+	{
+		msg->reply(e.what());
+	}
+	return 0;
+}
+string DiceModManager::list_reply()const {
+	ResList listTotal, listMatch, listSearch, listRegex;
+	for (const auto& [key, reply] : msgreply) {
+		if (reply.mode == DiceMsgReply::Mode::Search)listSearch << key;
+		else if (reply.mode == DiceMsgReply::Mode::Regex)listRegex << key;
+		else listMatch << key;
+	}
+	if (!listMatch.empty())listTotal << "[完全匹配] " + listMatch.dot(" | ").show();
+	if (!listSearch.empty())listTotal << "[模糊匹配] " + listSearch.dot(" | ").show();
+	if (!listRegex.empty())listTotal << "[正则匹配] " + listRegex.dot(" | ").show();
+	return listTotal.show();
+}
+void DiceModManager::set_reply(const string& key, DiceMsgReply& reply) {
+	msgreply[key] = reply;
+	if (reply.mode == DiceMsgReply::Mode::Regex)
+		reply_regex.insert(key);
+	else reply_regex.erase(key);
+	if (reply.mode == DiceMsgReply::Mode::Search)gReplySearcher.insert(key);
+	save_reply();
+}
+bool DiceModManager::del_reply(const string& key) {
+	if (!msgreply.count(key))return false;
+	msgreply.erase(key);
+	save_reply();
+	return true;
+}
+void DiceModManager::save_reply() {
+	json j;
+	for (const auto& [word, reply] : msgreply) {
+		j[GBKtoUTF8(word)] = reply.writeJson();
+	}
+	fwriteJson(DiceDir / "conf" / "CustomMsgReply.json", j);
+}
+void DiceModManager::show_reply(const shared_ptr<DiceJobDetail>& msg) {
+	string key{ (*msg)["key"]};
+	if (msgreply.count(key)) {
+		DiceMsgReply& reply{ msgreply[key] };
+		ResList res;
+		res << "Type=" + DiceMsgReply::sType[(int)reply.type];
+		res << DiceMsgReply::sMode[(int)reply.mode] + "=" + key;
+		res << DiceMsgReply::sEcho[(int)reply.echo] + "=" + reply.show_ans();
+		(*msg)["res"] = res.dot("\n").show();
+		msg->reply(getMsg("strReplyShow"));
+	}
+	else {
+		msg->reply(getMsg("strReplyKeyNotFound"));
+	}
 }
 
 bool DiceModManager::listen_order(DiceJobDetail* msg) {
@@ -196,11 +340,49 @@ bool DiceModManager::call_task(const string& task) {
 
 int DiceModManager::load(ResList* resLog) 
 {
-	vector<std::filesystem::path> sModFile;
+	//读取reply
+	json jFile{ freadJson(DiceDir / "conf" / "CustomMsgReply.json") };
+	if (!jFile.empty()) {
+		for (auto reply = jFile.cbegin(); reply != jFile.cend(); ++reply) {
+			std::string key = UTF8toGBK(reply.key());
+			msgreply[key].readJson(reply.value());
+		}
+		*resLog << "读取/conf/CustomMsgReply中的" + std::to_string(msgreply.size()) + "条自定义回复";
+	}
+	else {
+		std::map<std::string, std::vector<std::string>, less_ci> mRegexReplyDeck;
+		std::map<std::string, std::vector<std::string>, less_ci> mReplyDeck;
+		if (loadJMap(DiceDir / "conf" / "CustomReply.json", mReplyDeck) < 0 
+			&& loadJMap(DiceDir / "com.w4123.dice" / "ReplyDeck.json", mReplyDeck) > 0)
+		{
+			*resLog << "迁移自定义回复" + to_string(mReplyDeck.size()) + "条";
+		}
+		else if(!mReplyDeck.empty()){
+			*resLog << "读取CustomReply" + to_string(mReplyDeck.size()) + "条";
+			for (auto& [key, deck] : mReplyDeck) {
+				DiceMsgReply& reply{ msgreply[key] };
+				reply.deck = deck;
+			}
+		}
+		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck)) {
+			*resLog << "读取正则Reply" + to_string(mRegexReplyDeck.size()) + "条";
+			for (auto& [key, deck] : mRegexReplyDeck) {
+				DiceMsgReply& reply{ msgreply[key] };
+				reply.mode = DiceMsgReply::Mode::Regex;
+				reply.deck = deck;
+			}
+		}
+		save_reply();
+	}
+	for (const auto& [key, reply] : msgreply) {
+		if (reply.mode == DiceMsgReply::Mode::Search)gReplySearcher.insert(key);
+		else if (reply.mode == DiceMsgReply::Mode::Regex)reply_regex.insert(key);
+	}
 	//读取mod
+	vector<std::filesystem::path> sModFile;
 	vector<string> sModErr;
 	int cntFile = listDir(DiceDir / "mod" , sModFile);
-	int cntItem{0};
+	int cntItem{ 0 };
 	if (cntFile > 0) {
 		for (auto& pathFile : sModFile) {
 			nlohmann::json j = freadJson(pathFile);
@@ -273,7 +455,8 @@ int DiceModManager::load(ResList* resLog)
 			*resLog << it;
 		}
 	}
-	std::thread factory(&DiceModManager::init,this);
+	//init
+	std::thread factory(&DiceModManager::init, this);
 	factory.detach();
 	if (cntHelp.empty()) {
 		cntHelp.reserve(helpdoc.size());

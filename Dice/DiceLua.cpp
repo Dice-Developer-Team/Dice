@@ -20,6 +20,7 @@ class LuaState {
 	//bool isValid;
 public:
 	LuaState(const char* file);
+	LuaState();
 	//operator bool()const { return isValid; }
 	operator lua_State* () { return state; }
 	~LuaState() {
@@ -157,6 +158,42 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 	}
 	return true;
 }
+
+//为msg直接调用lua语句回复
+bool lua_msg_reply(FromMsg* msg, const string& luas) {
+	LuaState L;
+	if (!L)return false; 
+	//UTF8Luas.insert(L);	//Win输入msg是GBK而调用UTF8文件会导致乱码，因此统一UTF8
+	lua_push_msg(L, msg);
+	lua_setglobal(L, "msg");
+	if (luaL_loadstring(L, luas.c_str()) || lua_pcall(L, 0, 2, 0)) {
+		string pErrorMsg = lua_to_gb18030_string(L, -1);
+		console.log(getMsg("strSelfName") + "调用回复lua语句失败!\n" + pErrorMsg, 1);
+		msg->reply(getMsg("strOrderLuaErr"));
+		return false;
+	}
+	if (lua_gettop(L) && lua_type(L, 1) != LUA_TNIL) {
+		if (!lua_isstring(L, 1)) {
+			console.log(getMsg("strSelfName") + "调用回复lua语句返回值格式错误!", 1);
+			msg->reply(getMsg("strOrderLuaErr"));
+			return false;
+		}
+		if (!(msg->strVar["msg_reply"] = lua_to_gb18030_string(L, 1)).empty()) {
+			msg->reply(msg->strVar["msg_reply"]);
+		}
+		if (lua_type(L, 2) != LUA_TNIL) {
+			if (!lua_isstring(L, 2)) {
+				console.log(getMsg("strSelfName") + "调用回复lua语句返回值格式错误!", 1);
+				return false;
+			}
+			if (!(msg->strVar["msg_hidden"] = lua_to_gb18030_string(L, 2)).empty()) {
+				msg->replyHidden(msg->strVar["msg_hidden"]);
+			}
+		}
+	}
+	return true;
+}
+
 bool lua_call_task(const char* file, const char* func) {
 #ifndef _WIN32
 	// 转换separator
@@ -191,8 +228,12 @@ bool lua_call_task(const char* file, const char* func) {
  //加载其他lua脚本
 int loadLua(lua_State* L) {
 	string nameFile{ lua_to_string(L, 1) };
-#ifndef _WIN32
-	// 转换separator
+#ifdef _WIN32 // 转换separator
+	for (auto& c : nameFile)
+	{
+		if (c == '/') c = '\\';
+	}
+#elif
 	for (auto& c : nameFile)
 	{
 		if (c == '\\') c = '/';
@@ -203,7 +244,27 @@ int loadLua(lua_State* L) {
 	if (pathFile.is_relative())pathFile = DiceDir / "plugin" / pathFile;
 	if (!std::filesystem::exists(pathFile) && nameFile.find('\\') == string::npos && nameFile.find('/') == string::npos)
 		pathFile = DiceDir / "plugin" / nameFile / "init.lua";
-	if (luaL_loadfile(L, getNativePathString(pathFile).c_str())) {
+	string strLua;
+	if (std::filesystem::exists(pathFile)) {
+		ifstream fs(pathFile);
+		std::stringstream buffer;
+		buffer << fs.rdbuf();
+		strLua = buffer.str();
+		bool isStateUTF8{ (bool)UTF8Luas.count(L) }, isLuaUTF8{ false };	//令文件加载入lua的编码保持一致
+		if (checkUTF8(strLua))isLuaUTF8 = true;
+		if (isStateUTF8 && !isLuaUTF8) {
+			strLua = GBKtoUTF8(strLua);
+		}
+		else if (!isStateUTF8 && isLuaUTF8) {
+			strLua = UTF8toGBK(strLua);
+		}
+		fs.close();
+	}
+	else {
+		DD::debugLog("待加载Lua文件未找到:"+ UTF8toGBK(pathFile.u8string()));
+		return 0;
+	}
+	if (luaL_loadstring(L, strLua.c_str())) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
 		console.log(getMsg("strSelfName") + "读取lua文件" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
 		return 0;
@@ -518,6 +579,12 @@ void LuaState::regist() {
 	lua_pop(state, 2);
 }
 
+LuaState::LuaState() {//:isValid(false) {
+	state = luaL_newstate();
+	if (!state)return;
+	luaL_openlibs(state);
+	regist();
+}
 LuaState::LuaState(const char* file) {//:isValid(false) {
 #ifndef _WIN32
 	// 转换separator

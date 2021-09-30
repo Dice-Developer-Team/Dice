@@ -76,7 +76,6 @@ CustomMsgApiHandler h_msgapi;
 AdminConfigHandler h_config;
 MasterHandler h_master;
 CustomReplyApiHandler h_customreply;
-CustomRegexReplyApiHandler h_customregexreply;
 WebUIPasswordHandler h_webuipassword;
 AuthHandler auth_handler;
 
@@ -95,13 +94,6 @@ void loadData()
 		std::error_code ec;
 		std::filesystem::create_directory(DiceDir, ec);	
 		loadDir(loadXML<CardTemp>, DiceDir / "CardTemp", mCardTemplet, logList, true);
-		loadJMap(DiceDir / "conf" / "CustomRegexReply.json", CardDeck::mRegexReplyDeck);
-		if (loadJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck) < 0 && loadJMap(
-			fpFileLoc / "ReplyDeck.json", CardDeck::mReplyDeck) > 0)
-		{
-			logList << "迁移自定义回复" + to_string(CardDeck::mReplyDeck.size()) + "条";
-			saveJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck);
-		}
 		fmt->set_help("回复列表", "回复触发词列表:{list_reply_deck}");
 		if (loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList) < 1)
 		{
@@ -592,7 +584,6 @@ EVE_Enable(eventEnable)
 			ManagerServer->addHandler("/api/adminconfig", h_config);
 			ManagerServer->addHandler("/api/master", h_master);
 			ManagerServer->addHandler("/api/customreply", h_customreply);
-			ManagerServer->addHandler("/api/customregexreply", h_customregexreply);
 			ManagerServer->addHandler("/api/webuipassword", h_webuipassword);
 			ManagerServer->addAuthHandler("/", auth_handler);
 			auto ports = ManagerServer->getListeningPorts();
@@ -861,7 +852,7 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 				strReply.replace(strReply.find("{qq}"), 4, to_string(fromQQ));
 			}
 			grp.update(time(nullptr));
-			AddMsgToQueue(strReply, fromGroup, msgtype::Group);
+			AddMsgToQueue(strip(strReply), fromGroup, msgtype::Group);
 		}
 		if (blacklist->get_qq_danger(fromQQ))
 		{

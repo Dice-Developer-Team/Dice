@@ -3,9 +3,7 @@
 #include <string>
 #include "filesystem.hpp"
 #include "STLExtern.hpp"
-#include <unordered_set>
 using std::string;
-using std::unordered_set;
 
 class Censor {
 	string dirWords;
@@ -27,7 +25,7 @@ public:
 	void build();
 	void save();
 	size_t size()const { return words.size(); }
-	int search(const string& text, unordered_set<string>& res);
+	int search(const string& text, vector<string>& res);
 };
 
 inline Censor censor;

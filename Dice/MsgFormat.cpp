@@ -44,7 +44,7 @@ std::map<string, GobalTex> strFuncs{
 	{"master_QQ",print_master},
 	{"list_extern_deck",list_extern_deck},
 	{"list_all_deck",list_deck},
-	{"list_reply_deck",[]() {return listKey(CardDeck::mReplyDeck) + "\n" +  listKey(CardDeck::mRegexReplyDeck); }},
+	{"list_reply_deck",[]() {return fmt->list_reply(); }},
 	{"list_extern_order",list_order_ex},
 	{"list_dice_sister",list_dice_sister},
 };
@@ -176,4 +176,14 @@ std::string ResList::show(size_t limPage)const {
 		lenPage += lenItem;
 	}
 	return s;
+}
+
+std::string listDeck(const std::vector<std::string>& v)
+{
+	ResList list;
+	list.setDot(" | ", "\n| ");
+	for (auto& val : v) {
+		list << val;
+	}
+	return list.show();
 }

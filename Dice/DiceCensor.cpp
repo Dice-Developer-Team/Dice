@@ -84,7 +84,7 @@ void Censor::save() {
 	saveJMap(DiceDir / "conf" / "CustomCensor.json", censor.CustomWords);
 }
 
-int Censor::search(const string& text, unordered_set<string>& res) {
+int Censor::search(const string& text, vector<string>& res) {
 	std::bitset<6> sens;
 	wordG.search(text, res);
 	for (auto& word : res) {

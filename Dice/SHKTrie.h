@@ -104,8 +104,9 @@ public:
 		}
 		return res.size();
 	}
-	//任意位置字串匹配
-	bool search(const string& s, unordered_set<string>& res)const {
+	//任意位置字串匹配，不重复记录
+	bool search(const string& s, vector<string>& res)const {
+		unordered_set<string> words;
 		const Node* p = &root;
 		for (const auto& ch : s) {
 			if (ignored(ch))continue;
@@ -119,8 +120,9 @@ public:
 				}
 				p = p->fail;
 			}
-			if (p->isleaf) {
-				res.insert(p->value);
+			if (p->isleaf && !words.count(p->value)) {
+				words.insert(p->value);
+				res.push_back(p->value);
 			}
 		}
 		return res.size();

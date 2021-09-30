@@ -2,7 +2,8 @@
 
 /*
  * 消息处理
- * Copyright (C) 2019 String.Empty
+ * Copyright (C) 2018-2021 w4123
+ * Copyright (C) 2019-2021 String.Empty
  */
 #ifndef DICE_EVENT
 #define DICE_EVENT
@@ -10,6 +11,7 @@
 #include <set>
 #include <utility>
 #include <string>
+#include <regex>
 #include "GlobalVar.h"
 #include "MsgMonitor.h"
 #include "DiceSchedule.h"
@@ -26,6 +28,7 @@ public:
 	long long fromSession;
 	Chat* pGrp = nullptr;
 	string strReply;
+	std::smatch msgMatch;
 	FromMsg(std::string message, long long qq) :DiceJobDetail(qq, { qq,msgtype::Private }, message){
 		fromSession = ~fromQQ;
 	}
@@ -90,7 +93,6 @@ public:
 	short trusted = 0;
 
 private:
-	bool isVirtual = false;
 	//是否响应
 	bool isAns = false;
 	bool isDisabled = false;
@@ -99,6 +101,7 @@ private:
 
 	int getGroupAuth(long long group = 0);
 public:
+	bool isVirtual = false;
 	unsigned int intMsgCnt = 0;
 	//跳过空格
 	void readSkipSpace()
@@ -333,17 +336,7 @@ public:
 	}
 
 	//读取分项
-	string readItem()
-	{
-		string strMum;
-		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == '|')intMsgCnt++;
-		while (strMsg[intMsgCnt] != '|' && intMsgCnt != strMsg.length())
-		{
-			strMum += strMsg[intMsgCnt];
-			intMsgCnt++;
-		}
-		return strMum;
-	}
+	string readItem();
 	void readItems(vector<string>&);
 };
 

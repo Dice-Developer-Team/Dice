@@ -37,7 +37,6 @@
         <li class="layui-hide">群管理(还没写)</li>
         <li>自定义内置回复</li>
         <li>关键词回复</li>
-        <li>正则回复</li>
         <li class="layui-hide">拓展管理(还没写)</li>
         <li>WebUI管理</li>
         <li>更新日志</li>
@@ -103,9 +102,6 @@
         </div>
         <div class="layui-tab-item">
           <table id="custom-reply-table" lay-filter="custom-reply-table"></table>
-        </div>
-        <div class="layui-tab-item">
-          <table id="custom-regex-reply-table" lay-filter="custom-regex-reply-table"></table>
         </div>
         <div class="layui-tab-item">
 
@@ -202,6 +198,24 @@
     </div>
   </div>
   <div class="layui-form-item">
+    <label class="layui-form-label" style="width: 50px">触发性质</label>
+    <div class="layui-input-block" style="margin-left: 80px">
+      <input type="text" name="type" required lay-verify="required" placeholder="Reply" value="Reply" autocomplete="on" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="width: 50px">匹配模式</label>
+    <div class="layui-input-block" style="margin-left: 80px">
+      <input type="text" name="mode" required lay-verify="required" placeholder="Match" value="Match" autocomplete="on" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="width: 50px">回复形式</label>
+    <div class="layui-input-block" style="margin-left: 80px">
+      <input type="text" name="echo" required lay-verify="required" placeholder="Deck" value="Deck" autocomplete="on" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
     <label class="layui-form-label" style="width: 50px">回复</label>
     <div class="layui-input-block" style="margin-left: 80px">
       <!-- TODO: Multiline -->
@@ -215,25 +229,6 @@
   </div>
 </form>
 
-<form class="layui-form layui-hide" id="addCustomRegexReplyForm" action="" style="padding: 10px;">
-  <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 50px">正则</label>
-    <div class="layui-input-block" style="margin-left: 80px">
-      <input type="text" name="name" required  lay-verify="required|regex" placeholder="请输入正则表达式" autocomplete="off" class="layui-input">
-    </div>
-  </div>
-  <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 50px">回复</label>
-    <div class="layui-input-block" style="margin-left: 80px">
-      <input type="text" name="value" required  lay-verify="required" placeholder="请输入回复" autocomplete="off" class="layui-input">
-    </div>
-  </div>
-  <div class="layui-form-item">
-    <div class="layui-input-block">
-      <button class="layui-btn" lay-submit lay-filter="addCustomRegexReplyForm">添加</button>
-    </div>
-  </div>
-</form>
 
 )") + u8R"(
   
@@ -374,6 +369,9 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     ,request: {} 
     ,cols: [[ //表头
       {field: 'name', title: '关键词', width:150, sort: true, fixed: 'left'}
+      ,{field: 'type', title: '触发性质', width:100, align: 'center', edit: 'text'}
+      ,{field: 'mode', title: '匹配模式', width:100, align: 'center', edit: 'text'}
+      ,{field: 'echo', title: '回复形式', width:100, align: 'center', edit: 'text'}
       ,{field: 'value', title: '回复', minWidth:250, edit: 'text'}
       ,{fixed: 'right', width:80, align:'center', toolbar: '#basicToolbar'}
     ]]
@@ -396,7 +394,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
   form.on('submit(addCustomReplyForm)', function(data){
     layer.close(addCustomReplyFormIndex);
     
-    data.field.value = data.field.value.split("|");
+    if(data.field.echo == "Deck"){data.field.value = data.field.value.split("|");}
     $.post("/api/customreply", JSON.stringify({action: "set", data: [data.field]}))
     .done(function(data) {
       if (data.code == 0) {
@@ -437,7 +435,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
   });
 
   table.on('edit(custom-reply-table)', function(obj) { 
-    obj.data.value = obj.data.value.split("|");
+    if(obj.data.echo == "Deck"){obj.data.value = obj.data.value.split("|");}
     $.post("/api/customreply", JSON.stringify({action: "set", data: [obj.data]}))
     .done(function(data) {
       if (data.code == 0) {
@@ -448,94 +446,6 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     })
     .fail(function(jqXHR, textStatus, error) {
       layer.msg("关键词回复保存失败: " + error);
-    })
-  });
-
-  var addCustomRegexReplyFormIndex = -1;
-
-  table.render({
-    elem: '#custom-regex-reply-table'
-    ,height: 420
-    ,url: '/api/customregexreply' //数据接口
-    ,title: '正则回复设置'
-    ,toolbar: "#addToolbar"
-    ,request: {} 
-    ,cols: [[ //表头
-      {field: 'name', title: '正则表达式', width:150, sort: true, fixed: 'left'}
-      ,{field: 'value', title: '回复', minWidth:250, edit: 'text'}
-      ,{fixed: 'right', width:80, align:'center', toolbar: '#basicToolbar'}
-    ]]
-  });
-
-  table.on('toolbar(custom-regex-reply-table)', function(obj){
-    var checkStatus = table.checkStatus(obj.config.id);
-    switch(obj.event){
-      case 'add':
-        addCustomRegexReplyFormIndex = layer.open({
-          type: 1, 
-          title: '添加正则回复',
-          content: $("#addCustomRegexReplyForm").removeClass("layui-hide"), //这里content是一个普通的String
-          end: function() { $("#addCustomRegexReplyForm").addClass("layui-hide"); }
-        });
-        break;
-    }
-  });
-
-  form.on('submit(addCustomRegexReplyForm)', function(data){
-    layer.close(addCustomRegexReplyFormIndex);
-    
-    data.field.value = data.field.value.split("|");
-    $.post("/api/customregexreply", JSON.stringify({action: "set", data: [data.field]}))
-    .done(function(data) {
-      if (data.code == 0) {
-        console.log("CustomRegexReply Save Success");
-        table.reload('custom-regex-reply-table');
-      } else {
-        layer.msg("正则回复保存失败: " + data.msg);
-      }
-    })
-    .fail(function(jqXHR, textStatus, error) {
-      layer.msg("正则回复保存失败: " + error);
-    })
-    
-    return false;
-  });
-  
-  //监听行工具事件
-  table.on('tool(custom-regex-reply-table)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
-    var data = obj.data //获得当前行数据
-    ,layEvent = obj.event; //获得 lay-event 对应的值
-    if (layEvent == "delete") {
-      layer.confirm('确认要删除此行吗？此操作不可撤销。', function(index){
-        layer.close(index);
-        $.post("/api/customregexreply", JSON.stringify({action: "delete", data: [obj.data]}))
-        .done(function(data) {
-          if (data.code == 0) {
-            obj.del();
-            console.log("CustomRegexReply Delete Success");
-          } else {
-            layer.msg("正则回复删除失败: " + data.msg);
-          }
-        })
-        .fail(function(jqXHR, textStatus, error) {
-          layer.msg("正则回复删除失败: " + error);
-        })
-      });
-    }
-  });
-
-  table.on('edit(custom-regex-reply-table)', function(obj) { 
-    obj.data.value = obj.data.value.split("|");
-    $.post("/api/customregexreply", JSON.stringify({action: "set", data: [obj.data]}))
-    .done(function(data) {
-      if (data.code == 0) {
-        console.log("CustomRegexReply Save Success");
-      } else {
-        layer.msg("正则回复保存失败: " + data.msg);
-      }
-    })
-    .fail(function(jqXHR, textStatus, error) {
-      layer.msg("正则回复保存失败: " + error);
     })
   });
 

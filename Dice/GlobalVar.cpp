@@ -133,8 +133,13 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strSpamFirstWarning","你短时间内对{self}指令次数过多！请善用多轮掷骰和复数生成指令（刷屏初次警告）"},
 	{"strSpamFinalWarning","请暂停你的一切指令，避免因高频指令被{self}拉黑！（刷屏最终警告）"},
 	{"strRegexInvalid","正则表达式{key}无效: {err}"},
+	{"strReplyOn","{self}现在本群启用关键词回复√"},
+	{"strReplyOff","{self}现在本群禁用关键词回复√"},
 	{"strReplySet","{self}对关键词{key}的回复已设置√"},
+	{"strReplyShow","{self}对关键词{key}的回复为:{res}"},
 	{"strReplyDel","{self}对关键词{key}的回复已清除√"},
+	{"strReplyKeyEmpty","{nick}请输入回复关键词×"},
+	{"strReplyKeyNotFound","{self}未找到回复关键词{key}×"},
 	{"strStModify","{self}对已记录{pc}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","{self}对已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
 	{"strStValEmpty","{self}未记录{attr}原值×"},		
@@ -142,8 +147,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strBlackQQAddNoticeReason","{user_nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{master_QQ}"},
 	{"strBlackQQDelNotice","{user_nick}，你已被{self}移出黑名单，现在可以继续使用了"},
 	{"strWhiteQQAddNotice","{user_nick}，您已获得{self}的信任，请尽情使用{self}√"},
-	{"strWhiteQQDenied","你不是{self}信任的用户×"},
-	{"strWhiteGroupDenied","本群聊不在白名单中×"},
+	{"strWhiteQQDenied","你不是{self}的信任用户或群管理×"},
 	{"strDeckNew","{self}已为{nick}自定义新牌堆<{deck_name}>√"},
 	{"strDeckSet","{nick}已用<{deck_name}>创建{self}的牌堆实例√"},
 	{"strDeckSetRename","{nick}已用<{deck_cited}>创建{self}的牌堆实例{deck_name}√"},
@@ -436,28 +440,27 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 	{"strRollFailure", "检定失败"},
 	{"strRollFumble", "检定大失败"},
 	{"strSuccess", "多轮检定与SC成功"},
+	//
+	{"strWhiteQQDenied","权限要求群管理或者信任1"},
 };
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+586:新版自定义回复
+585:WebUI
+581:角色掷骰统计
 580:过期记录回收
 579:允许转义文本多选一
 578:优化群设置读写
 577:窗口广播通知
 576:定时任务脚本
-575:设置自我响应
 574:默认骰机制优化
 573:角色卡机制优化
-572:允许脚本读写角色卡
-571:更新框架，允许多开
 570:允许.lua脚本自定义指令
 569:.rc/.draw暗骰暗抽
 568:.deck自定义牌堆重做
 567:敏感词检测
 566:.help查询建议
-565:.log日志记录
-562:新增GUI
-550:允许多轮检定
-549:新增刷屏监测)"},
+565:.log日志记录)"},
 {"协议","0.本协议是Dice!默认服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
 {"链接","Dice!论坛导航贴: https://kokona.tech \nDice!论坛: https://forum.kokona.tech \nDice!众筹计划: https://afdian.net/@suhuiw4123"},
 {"设定","Master：{master_QQ}\n好友申请：需要使用记录\n入群邀请：黑名单制，非黑即入\n讨论组使用：允许\n移出反制：拉黑群和操作者\n禁言反制：默认拉黑群和群主\n刷屏反制：警告\n邀请人责任：有限连带\n窥屏可能：{窥屏可能}\n其他插件：{其他插件}{姐妹骰}\n骰娘用户群:{骰娘用户群}\n私骰分享群：863062599 192499947\n开发交流群：1029435374"},
@@ -473,6 +476,7 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 .bot 版本信息
 .bot on 启用指令
 .bot off 停用指令
+.reply on/off 启用/禁用回复
 .group 群管
 .authorize 授权许可
 .send 向后台发送消息)"
@@ -543,6 +547,17 @@ Master拥有最高权限，且可以调整任意信任)"},
 {"rd","&r"},
 {"r","掷骰：.r [掷骰表达式] ([掷骰原因]) [掷骰表达式]：([掷骰轮数]#)[骰子个数]d骰子面数(p[惩罚骰个数])(k[取点数最大的骰子数])不带参数时视为掷一个默认骰\n合法参数要求掷骰轮数1-10，奖惩骰个数1-9，个数范围1-100，面数范围1-1000\n.r3#d\t//3轮掷骰\n.rh心理学 暗骰\n.rs1D10+1D6+3 沙鹰伤害\t//省略单个骰子的点数，直接给结果\n现版本开头的r均可用o或d代替，但群聊中.ob会被识别为旁观指令"},
 {"暗骰","群聊限定，掷骰指令后接h视为暗骰，结果将私发本人和群内ob的用户\n为了保证发送成功，请加骰娘好友"},
+{"reply",R"(自定义回复：.reply
+.reply on/off 开启/关闭群内回复
+//设置回复指令仅admin可用
+.reply set
+Type=[回复性质](Reply/Order)
+[触发模式](Match/Search/Regex)=[触发词]
+[回复模式](Deck/Text/Lua)=[回复词]
+*Type一行可省略，默认为Reply
+.reply show [触发词] 查看指定回复
+.reply del [触发词] 清除指定回复
+)"},
 {"旁观","&ob"},
 {"旁观模式","&ob"},
 {"ob","旁观模式：.ob (exit/list/clr/on/off)\n.ob\t//加入旁观可以看到他人暗骰结果\n.ob exit\t//退出旁观模式\n.ob list\t//查看群内旁观者\n.ob clr\t//清除所有旁观者\n.ob on\t//全群允许旁观模式\n.ob off\t//禁用旁观模式\n暗骰与旁观仅在群聊中有效"},

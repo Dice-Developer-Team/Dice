@@ -15,7 +15,6 @@
 #include "DiceStatic.hpp"
 #include <memory>
 #include <ctime>
-#include <regex>
 using namespace std;
 
 FromMsg& FromMsg::initVar(const std::initializer_list<const std::string>& replace_str) {
@@ -29,6 +28,7 @@ void FromMsg::formatReply() {
 	if (!strVar.count("nick") || strVar["nick"].empty())strVar["nick"] = getName(fromQQ, fromGroup);
 	if (!strVar.count("pc") || strVar["pc"].empty())getPCName(*this);
 	if (!strVar.count("at") || strVar["at"].empty())strVar["at"] = fromChat.second != msgtype::Private ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
+	if (msgMatch.ready())strReply = msgMatch.format(strReply);
 	strReply = format(strReply, GlobalMsg, strVar);
 }
 
@@ -1286,7 +1286,11 @@ int FromMsg::InnerOrder() {
 			else if (strWelcomeMsg == "show") {
 				string strWelcome{ chat(fromGroup).strConf["入群欢迎"] };
 				if (strWelcome.empty())reply(getMsg("strWelcomeMsgEmpty"));
-				else reply(strWelcome);
+				else reply(strWelcome, false);	//转义有注入风险
+			}
+			else if (readPara() == "set") {
+				chat(fromGroup).setText("入群欢迎", strip(readRest()));
+				reply(getMsg("strWelcomeMsgUpdateNotice"));
 			}
 			else {
 				chat(fromGroup).setText("入群欢迎", strWelcomeMsg);
@@ -1876,29 +1880,137 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "reply") {
-		bool isRegex = false;
 		intMsgCnt += 5;
-		auto DeckVector = std::ref(CardDeck::mReplyDeck);
+		if (strMsg.length() == intMsgCnt) {
+			reply(fmt->get_help("reply"));
+			return 1;
+		}
+		unsigned int intMsgTmpCnt{ intMsgCnt };
+		string action{ readPara() };
+		if (action == "on" && fromGroup) {
+			string& option{ strVar["option"] = "禁用回复" };
+			if (!chat(fromGroup).isset(option)) {
+				reply(getMsg("strGroupSetOffAlready"));
+			}
+			else if (trustedQQ > 0 || isAuth) {
+				chat(fromGroup).reset(option);
+				reply(getMsg("strReplyOn"));
+			}
+			else {
+				reply(getMsg("strWhiteQQDenied"));
+			}
+			return 1;
+		}
+		else if (action == "off" && fromGroup) {
+			string& option{ strVar["option"] = "禁用回复" };
+			if (chat(fromGroup).isset(option)) {
+				reply(getMsg("strGroupSetOnAlready"));
+			}
+			else if (trustedQQ > 0 || isAuth) {
+				chat(fromGroup).set(option);
+				reply(getMsg("strReplyOff"));
+			}
+			else {
+				reply(getMsg("strWhiteQQDenied"));
+			}
+			return 1;
+		}
+		else if (action == "show"){
+			if (trusted < 2) {
+				reply(getMsg("strNotAdmin"));
+				return -1;
+			}
+			strVar["key"] = readRest();
+			fmt->show_reply(shared_from_this());
+			return 1;
+		}
+		else if (action == "set") {
+			if (trusted < 4) {
+				reply(getMsg("strNotAdmin"));
+				return -1;
+			}
+			DiceMsgReply trigger;
+			string& key{ strVar["key"] };
+			string attr{ readToColon() };
+			while (!attr.empty()) {
+				if (intMsgCnt < strMsg.length() && (strMsg[intMsgCnt] == '=' || strMsg[intMsgCnt] == ':'))intMsgCnt++;
+				if (attr == "Type") {	//Type=Order|Reply
+					string type{ readUntilTab() };
+					if(DiceMsgReply::sType.count(type))trigger.type = (DiceMsgReply::Type)DiceMsgReply::sType[type];
+				}
+				else if (DiceMsgReply::sMode.count(attr)) {	//Mode=Key
+					trigger.mode = (DiceMsgReply::Mode)DiceMsgReply::sMode[attr];
+					if (trigger.mode == DiceMsgReply::Mode::Regex) {
+						try
+						{
+							std::regex re(strVar["key"], std::regex::ECMAScript);
+						}
+						catch (const std::regex_error& e)
+						{
+							strVar["err"] = e.what();
+							reply(getMsg("strRegexInvalid"));
+							return -1;
+						}
+					}
+					key = readUntilTab();
+				}
+				else if (DiceMsgReply::sEcho.count(attr)) {	//Echo=Reply
+					trigger.echo = (DiceMsgReply::Echo)DiceMsgReply::sEcho[attr];
+					if (trigger.echo == DiceMsgReply::Echo::Deck) {
+						while (intMsgCnt != strMsg.length()) {
+							string item = readItem();
+							if (!item.empty())trigger.deck.push_back(item);
+						}
+					}
+					else trigger.text = readRest();
+					break;
+				}
+				attr = readToColon();
+			}
+			if (key.empty()) {
+				reply(getMsg("strReplyKeyEmpty"));
+			}
+			else {
+				fmt->set_reply(key, trigger);
+				reply(getMsg("strReplySet"));
+			}
+			return 1;
+		}
+		else if (action == "del") {
+			if (trusted < 4) {
+				reply(getMsg("strNotAdmin"));
+				return -1;
+			}
+			string& key{ strVar["key"] = readRest() };
+			if (fmt->del_reply(key)) {
+				reply(getMsg("strReplyDel"));
+			}
+			else {
+				reply(getMsg("strReplyKeyNotFound"));
+			}
+			return 1;
+		}
+		intMsgCnt = intMsgTmpCnt;
+		DiceMsgReply rep;
 		if (strLowerMessage.substr(intMsgCnt, 2) == "re") {
 			intMsgCnt += 2;
-			DeckVector = std::ref(CardDeck::mRegexReplyDeck);
-			isRegex = true;
+			rep.mode = DiceMsgReply::Mode::Regex;
 		}
 		if (trusted < 4) {
 			reply(getMsg("strNotAdmin"));
 			return -1;
 		}
-		strVar["key"] = readUntilSpace();
-		if (strVar["key"].empty()) {
-			reply(getMsg("strParaEmpty"));
+		string& key{ strVar["key"] = readUntilSpace() };
+		if (key.empty()) {
+			reply(fmt->get_help("reply"));
 			return -1;
 		}
 		
-		if(isRegex)
+		if(rep.mode == DiceMsgReply::Mode::Regex)
 		{
 			try
 			{
-				std::regex re(strVar["key"], std::regex::ECMAScript);
+				std::regex re(key, std::regex::ECMAScript);
 			}
 			catch (const std::regex_error& e)
 			{
@@ -1907,20 +2019,15 @@ int FromMsg::InnerOrder() {
 				return -1;
 			}
 		}
-
-		DeckVector.get()[strVar["key"]] = {};
-		auto& Deck = DeckVector.get()[strVar["key"]];
-		while (intMsgCnt != strMsg.length()) {
-			string item = readItem();
-			if (!item.empty())Deck.push_back(item);
-		}
-		if (Deck.empty()) {
+		readItems(rep.deck);
+		if (rep.deck.empty()) {
+			fmt->del_reply(key);
 			reply(getMsg("strReplyDel"), { strVar["key"] });
-			DeckVector.get().erase(strVar["key"]);
 		}
-		else reply(getMsg("strReplySet"), {strVar["key"]});
-		saveJMap(DiceDir / "conf" / "CustomReply.json", CardDeck::mReplyDeck);
-		saveJMap(DiceDir / "conf" / "CustomRegexReply.json", CardDeck::mRegexReplyDeck);
+		else {
+			fmt->set_reply(key, rep);
+			reply(getMsg("strReplySet"), { strVar["key"] });
+		}
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules") {
@@ -4028,54 +4135,6 @@ int FromMsg::InnerOrder() {
 	return 0;
 }
 
-int FromMsg::CustomReply()
-{
-	const string strKey = readRest();
-	if (auto deck = CardDeck::mReplyDeck.find(strKey); deck != CardDeck::mReplyDeck.end()
-		|| (deck = CardDeck::mReplyDeck.find(strMsg)) != CardDeck::mReplyDeck.end())
-	{
-		string strAns(CardDeck::drawCard(deck->second, true));
-		if (fromQQ == console.DiceMaid && strAns == strKey) return 0;
-		reply(strAns);
-		if (!isVirtual) AddFrq(fromQQ, fromTime, fromChat, strMsg);
-		else
-			AddFrq(0, fromTime, fromChat, strMsg);
-		return 1;
-	}
-	try {
-		for (auto& re: CardDeck::mRegexReplyDeck)
-		{
-			// libstdc++ 使用了递归式 dfs 匹配正则表达式
-			// 递归层级很多，非常容易爆栈
-			// 然而，每个 Java Thread 在32位 Linux 下默认大小为320K，600字符的匹配即会爆栈
-			// 64位下还好，默认是1M，1800字符会爆栈
-			// 这里强制限制输入为400字符，以避免此问题
-			// @seealso https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86164
-			std::smatch match;
-			
-			// 未来优化：预先构建regex并使用std::regex::optimize
-			std::regex exp(re.first, std::regex::ECMAScript | std::regex::icase);
-			if ((strKey.length() <= 400 && std::regex_match(strKey, match, exp)) || 
-			    (strMsg.length() <= 400 && std::regex_match(strMsg, match, exp)))
-			{
-				string strAns(match.format(CardDeck::drawCard(re.second, true)));
-				if (fromQQ == console.DiceMaid && strAns == strKey) return 0;
-				reply(strAns);
-				if (!isVirtual) AddFrq(fromQQ, fromTime, fromChat, strMsg);
-				else
-					AddFrq(0, fromTime, fromChat, strMsg);
-				return 1;
-			}
-		}
-	}
-	catch (const std::regex_error& e)
-	{
-		reply(e.what());
-	}
-
-	return 0;
-}
-
 //判断是否响应
 bool FromMsg::DiceFilter()
 {
@@ -4146,14 +4205,14 @@ bool FromMsg::DiceFilter()
 			return true;
 		}
 	}
-	if (!isDisabled && (isCalled || !pGrp->isset("禁用回复")) && CustomReply())return true;
+	if (!isDisabled && fmt->listen_reply(this))return true;
 	if (isDisabled)return console["DisabledBlock"];
 	return false;
 }
 bool FromMsg::WordCensor() {
 	//信任小于4的用户进行敏感词检测
 	if (trusted < 4) {
-		unordered_set<string>sens_words;
+		vector<string>sens_words;
 		switch (int danger = censor.search(strMsg, sens_words) - 1) {
 		case 3:
 			if (trusted < danger++) {
@@ -4265,14 +4324,19 @@ int FromMsg::readChat(chatType& ct, bool isReroll)
 	return -2;
 }
 
+string FromMsg::readItem()
+{
+	while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == '|')intMsgCnt++;
+	unsigned int intBegin{ intMsgCnt };
+	unsigned int intEnd{ intMsgCnt };
+	do{
+		if (!isspace(static_cast<unsigned char>(strMsg[++intMsgCnt])))intEnd = intMsgCnt;
+	} while (strMsg[intMsgCnt] != '|' && intMsgCnt != strMsg.length());
+	return strMsg.substr(intBegin, intEnd - intBegin);
+}
 void FromMsg::readItems(vector<string>& vItem) {
-	while (intMsgCnt != strMsg.length()) {
-		string strItem;
-		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == '|')intMsgCnt++;
-		while (strMsg[intMsgCnt] != '|' && intMsgCnt != strMsg.length()) {
-			strItem += strMsg[intMsgCnt];
-			intMsgCnt++;
-		}
+	string strItem;
+	while (!(strItem = readItem()).empty()) {
 		vItem.push_back(strItem);
 	}
 }
