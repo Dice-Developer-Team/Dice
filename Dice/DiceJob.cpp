@@ -272,9 +272,9 @@ void clear_group(DiceJob& job) {
 	}
 	else if (job["clear_mode"] == "preserve") {
 		for (auto& [id, grp] : ChatList) {
-			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("使用许可") || grp.isset("免清") || grp.isset("协议无效"))continue;
+			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("许可使用") || grp.isset("免清") || grp.isset("协议无效"))continue;
 			if (grp.isGroup && DD::isGroupAdmin(id, console.master(), false)) {
-				grp.set("使用许可");
+				grp.set("许可使用");
 				continue;
 			}
 			time_t tLast{ grp.tUpdated };

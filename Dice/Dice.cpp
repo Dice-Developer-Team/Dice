@@ -645,7 +645,7 @@ bool eve_GroupAdd(Chat& grp)
 			console.log(strMsg, 0b10, printSTNow());
 			return true;
 		}
-		if (grp.isset("使用许可"))strMsg += "（已获使用许可）";
+		if (grp.isset("许可使用"))strMsg += "（已获使用许可）";
 		else if(grp.isset("协议无效"))strMsg += "（默认协议无效）";
 		if (grp.inviter) {
 			strMsg += ",邀请者" + printQQ(chat(fromGroup).inviter);
