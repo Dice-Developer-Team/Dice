@@ -292,7 +292,7 @@ jobs:
       run: cmake -E make_directory ${{github.workspace}}/build
       
     - name: Install Cross Compiler
-      run: sudo apt-get install ${{ matrix.apt }}
+      run: sudo apt-get update && sudo apt-get install ${{ matrix.apt }}
       
     - name: Cache
       uses: actions/cache@v2.1.4
