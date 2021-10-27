@@ -1892,7 +1892,7 @@ int FromMsg::InnerOrder() {
 			if (!chat(fromGroup).isset(option)) {
 				reply(getMsg("strGroupSetOffAlready"));
 			}
-			else if (trustedQQ > 0 || isAuth) {
+			else if (trusted > 0 || isAuth) {
 				chat(fromGroup).reset(option);
 				reply(getMsg("strReplyOn"));
 			}
@@ -1906,7 +1906,7 @@ int FromMsg::InnerOrder() {
 			if (chat(fromGroup).isset(option)) {
 				reply(getMsg("strGroupSetOnAlready"));
 			}
-			else if (trustedQQ > 0 || isAuth) {
+			else if (trusted > 0 || isAuth) {
 				chat(fromGroup).set(option);
 				reply(getMsg("strReplyOff"));
 			}

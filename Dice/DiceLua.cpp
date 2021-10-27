@@ -233,7 +233,7 @@ int loadLua(lua_State* L) {
 	{
 		if (c == '/') c = '\\';
 	}
-#elif
+#else
 	for (auto& c : nameFile)
 	{
 		if (c == '\\') c = '/';
