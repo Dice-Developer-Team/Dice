@@ -1108,6 +1108,12 @@ int WINAPI GUIMain()
 	// hDllModule不应为空
 	assert(hDllModule);
 
+	// Dice GUI已被弃用，提示迁移
+	if(MessageBox(nullptr, TEXT("Dice! GUI已被弃用，请使用Dice! WebUI。按确认键继续使用GUI，按取消键打开WebUI使用说明。"), TEXT("Dice! GUI"), MB_OKCANCEL) == IDCANCEL)
+	{
+		ShellExecute(nullptr, TEXT("open"), TEXT("https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming"), nullptr, nullptr, SW_SHOWDEFAULT);
+	}
+
 	// 初始化CommonControl
 	INITCOMMONCONTROLSEX icex; // Structure for control initialization.
 	icex.dwSize = sizeof(INITCOMMONCONTROLSEX);

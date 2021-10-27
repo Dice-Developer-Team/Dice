@@ -28,7 +28,7 @@ void FromMsg::formatReply() {
 	if (!strVar.count("nick") || strVar["nick"].empty())strVar["nick"] = getName(fromQQ, fromGroup);
 	if (!strVar.count("pc") || strVar["pc"].empty())getPCName(*this);
 	if (!strVar.count("at") || strVar["at"].empty())strVar["at"] = fromChat.second != msgtype::Private ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
-	if (msgMatch.ready())strReply = convert_w2a(msgMatch.format(convert_a2w(strReply.c_str())));
+	if (msgMatch.ready())strReply = convert_w2a(msgMatch.format(convert_a2w(strReply.c_str())).c_str());
 	strReply = format(strReply, GlobalMsg, strVar);
 }
 
@@ -1380,6 +1380,7 @@ int FromMsg::InnerOrder() {
 		string strOption = readPara();
 #ifdef _WIN32
 		if (strOption == "gui") {
+			reply("Dice! GUI已被弃用，请考虑使用Dice! WebUI https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming");
 			thread th(GUIMain);
 			th.detach();
 			return 1;
