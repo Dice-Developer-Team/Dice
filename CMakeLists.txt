@@ -65,7 +65,7 @@ check_ipo_supported(RESULT supported)
 if(supported)
     set_property(TARGET w4123.Dice PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
     if(CMAKE_SYSTEM_NAME STREQUAL Android)
-    	STRING(REGEX REPLACE "-fuse-ld=gold" "" CMAKE_CXX_LINK_OPTIONS_IPO ${CMAKE_CXX_LINK_OPTIONS_IPO})
+    	STRING(REGEX REPLACE "-fuse-ld=gold" "" CMAKE_CXX_LINK_OPTIONS_IPO "${CMAKE_CXX_LINK_OPTIONS_IPO}")
     endif()
 endif()
 
