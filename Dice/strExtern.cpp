@@ -82,7 +82,7 @@ string convert_realw2a(const wchar_t* wch)
 #if WCHAR_MAX == 0xFFFF || WCHAR_MAX == 0x7FFF
 	return convert_w2a((const char16_t*)wch);
 #elif WCHAR_MAX == 0xFFFFFFFF || WCHAR_MAX == 0x7FFFFFFF 
-	return ConvertEncoding<char, wchar_t>(wch, "utf-16le", "gb18030");
+	return ConvertEncoding<char, wchar_t>(wch, "utf-32le", "gb18030");
 #else
 #error Unsupported WCHAR length
 #endif
