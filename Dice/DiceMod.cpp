@@ -259,8 +259,8 @@ bool DiceModManager::listen_reply(FromMsg* msg) {
 			// @seealso https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86164
 
 			// 未来优化：预先构建regex并使用std::regex::optimize
-			std::basic_regex<char16_t> exp(convert_a2w(key.c_str()), std::regex::ECMAScript | std::regex::icase);
-			std::u16string LstrMsg = convert_a2w(strMsg.c_str());
+			std::wregex exp(convert_a2realw(key.c_str()), std::regex::ECMAScript | std::regex::icase);
+			std::wstring LstrMsg = convert_a2realw(strMsg.c_str());
 			if (strMsg.length() <= 400 && std::regex_match(LstrMsg, msg->msgMatch, exp))
 			{
 				if(msgreply[key].exec(msg))return true;

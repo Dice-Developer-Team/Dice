@@ -28,7 +28,7 @@ void FromMsg::formatReply() {
 	if (!strVar.count("nick") || strVar["nick"].empty())strVar["nick"] = getName(fromQQ, fromGroup);
 	if (!strVar.count("pc") || strVar["pc"].empty())getPCName(*this);
 	if (!strVar.count("at") || strVar["at"].empty())strVar["at"] = fromChat.second != msgtype::Private ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
-	if (msgMatch.ready())strReply = convert_w2a(msgMatch.format(convert_a2w(strReply.c_str())).c_str());
+	if (msgMatch.ready())strReply = convert_realw2a(msgMatch.format(convert_a2realw(strReply.c_str())).c_str());
 	strReply = format(strReply, GlobalMsg, strVar);
 }
 
@@ -1944,7 +1944,7 @@ int FromMsg::InnerOrder() {
 					if (trigger.mode == DiceMsgReply::Mode::Regex) {
 						try
 						{
-							std::basic_regex<char16_t> re(convert_a2w(strVar["key"].c_str()), std::regex::ECMAScript);
+							std::wregex re(convert_a2realw(strVar["key"].c_str()), std::regex::ECMAScript);
 						}
 						catch (const std::regex_error& e)
 						{
@@ -2011,7 +2011,7 @@ int FromMsg::InnerOrder() {
 		{
 			try
 			{
-				std::basic_regex<char16_t> re(convert_a2w(key.c_str()), std::regex::ECMAScript);
+				std::wregex re(convert_a2realw(key.c_str()), std::regex::ECMAScript);
 			}
 			catch (const std::regex_error& e)
 			{

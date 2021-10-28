@@ -28,7 +28,7 @@ public:
 	long long fromSession;
 	Chat* pGrp = nullptr;
 	string strReply;
-	std::match_results<std::u16string::const_iterator> msgMatch;
+	std::wsmatch msgMatch;
 	FromMsg(std::string message, long long qq) :DiceJobDetail(qq, { qq,msgtype::Private }, message){
 		fromSession = ~fromQQ;
 	}

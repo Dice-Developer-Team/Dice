@@ -8,6 +8,7 @@
 #include <vector>
 
 using std::string;
+using std::wstring;
 using std::u16string;
 using std::to_string;
 using std::vector;
@@ -43,6 +44,10 @@ vector<string> split(const string&, const string&);
 string convert_w2a(const char16_t* wch);
 
 u16string convert_a2w(const char* ch);
+
+string convert_realw2a(const wchar_t* wch);
+
+wstring convert_a2realw(const char* ch);
 
 string printDuringTime(long long);
 

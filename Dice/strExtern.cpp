@@ -1,6 +1,7 @@
 #include <string>
 #include <string_view>
 #include <algorithm>
+#include <cwchar>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -11,6 +12,7 @@
 #include "EncodingConvert.h"
 
 using std::string;
+using std::wstring;
 using std::u16string;
 using std::string_view;
 using std::to_string;
@@ -74,6 +76,30 @@ u16string convert_a2w(const char* ch)
 	return ConvertEncoding<char16_t, char>(ch, "gb18030", "utf-16le");
 #endif
 }
+ 
+string convert_realw2a(const wchar_t* wch)
+{
+#if WCHAR_MAX == 0xFFFF || WCHAR_MAX == 0x7FFF
+	return convert_w2a((const char16_t*)wch);
+#elif WCHAR_MAX == 0xFFFFFFFF || WCHAR_MAX == 0x7FFFFFFF 
+	return ConvertEncoding<char, wchar_t>(wch, "utf-16le", "gb18030");
+#else
+#error Unsupported WCHAR length
+#endif
+}
+
+wstring convert_a2realw(const char* ch)
+{
+#if WCHAR_MAX == 0xFFFF || WCHAR_MAX == 0x7FFF
+	return (const wchar_t*)convert_a2w(ch).c_str();
+#elif WCHAR_MAX == 0xFFFFFFFF || WCHAR_MAX == 0x7FFFFFFF 
+	return ConvertEncoding<wchar_t, char>(ch, "gb18030", "utf-32le");
+#else
+#error Unsupported WCHAR length
+#endif
+}
+
+
 size_t wstrlen(const char* ch) {
 #ifdef _WIN32
     return MultiByteToWideChar(CP_GBK, 0, ch, -1, nullptr, 0);
