@@ -3738,16 +3738,19 @@ int FromMsg::InnerOrder() {
 		strVar["nick"] = getName(fromQQ, fromGroup);
 		getPCName(*this);
 		if (!fromGroup)isHidden = false;
-		string strMainDice = readDice();
+		CharaCard* pc{ PList.count(fromQQ) ? &getPlayer(fromQQ)[fromGroup] : nullptr };
 		readSkipSpace();
-		strVar["reason"] = strMsg.substr(intMsgCnt);
+		string& strReason{ strVar["reason"] = strMsg.substr(intMsgCnt) };
+		string strMainDice{ strReason };
 		int intTurnCnt = 1;
 		const int intDefaultDice = get(getUser(fromQQ).intConf, string("默认骰"), 100);
-		if (strMainDice.find('#') != string::npos) {
-			string strTurnCnt = strMainDice.substr(0, strMainDice.find('#'));
+		//预处理.ww[次数]#[属性]
+		if (size_t pos{ strMainDice.find('#') };pos != string::npos) {
+			string strTurnCnt = strMainDice.substr(0, pos);
 			if (strTurnCnt.empty())
 				strTurnCnt = "1";
-			strMainDice = strMainDice.substr(strMainDice.find('#') + 1);
+			strReason = strMainDice = strMainDice.substr(pos + 1);
+			intMsgCnt += pos;
 			RD rdTurnCnt(strTurnCnt, intDefaultDice);
 			const int intRdTurnCntRes = rdTurnCnt.Roll();
 			if (intRdTurnCntRes != 0) {
@@ -3793,18 +3796,67 @@ int FromMsg::InnerOrder() {
 			intTurnCnt = rdTurnCnt.intTotal;
 			if (strTurnCnt.find('d') != string::npos) {
 				string strTurnNotice = strVar["pc"] + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
-				if (!isHidden) {
-					reply(strTurnNotice);
+				replyHidden(strTurnNotice);
+			}
+		}
+		if (pc && pc->count(strReason)) {	//调用角色卡属性或表达式
+			strMainDice = pc->getExp(strReason);
+		}
+		else {
+			strMainDice = readDice(); 	//ww的表达式可以是纯数字
+			strVar["reason"] = readRest();
+		}
+		if (size_t pos{ strMainDice.find('#') }; pos != string::npos) {
+			string strTurnCnt = strMainDice.substr(0, pos);
+			if (strTurnCnt.empty())
+				strTurnCnt = "1";
+			strMainDice = strMainDice.substr(pos + 1);
+			RD rdTurnCnt(strTurnCnt, intDefaultDice);
+			const int intRdTurnCntRes = rdTurnCnt.Roll();
+			if (intRdTurnCntRes != 0) {
+				if (intRdTurnCntRes == Value_Err) {
+					reply(getMsg("strValueErr"));
+					return 1;
 				}
-				else {
-					strTurnNotice = "在" + printChat(fromChat) + "中 " + strTurnNotice;
-					AddMsgToQueue(strTurnNotice, fromQQ, msgtype::Private);
-					for (auto qq : gm->session(fromSession).get_ob()) {
-						if (qq != fromQQ) {
-							AddMsgToQueue(strTurnNotice, qq, msgtype::Private);
-						}
-					}
+				if (intRdTurnCntRes == Input_Err) {
+					reply(getMsg("strInputErr"));
+					return 1;
 				}
+				if (intRdTurnCntRes == ZeroDice_Err) {
+					reply(getMsg("strZeroDiceErr"));
+					return 1;
+				}
+				if (intRdTurnCntRes == ZeroType_Err) {
+					reply(getMsg("strZeroTypeErr"));
+					return 1;
+				}
+				if (intRdTurnCntRes == DiceTooBig_Err) {
+					reply(getMsg("strDiceTooBigErr"));
+					return 1;
+				}
+				if (intRdTurnCntRes == TypeTooBig_Err) {
+					reply(getMsg("strTypeTooBigErr"));
+					return 1;
+				}
+				if (intRdTurnCntRes == AddDiceVal_Err) {
+					reply(getMsg("strAddDiceValErr"));
+					return 1;
+				}
+				reply(getMsg("strUnknownErr"));
+				return 1;
+			}
+			if (rdTurnCnt.intTotal > 10) {
+				reply(getMsg("strRollTimeExceeded"));
+				return 1;
+			}
+			if (rdTurnCnt.intTotal <= 0) {
+				reply(getMsg("strRollTimeErr"));
+				return 1;
+			}
+			intTurnCnt *= rdTurnCnt.intTotal;
+			if (strTurnCnt.find('d') != string::npos) {
+				string strTurnNotice = strVar["pc"] + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
+				replyHidden(strTurnNotice);
 			}
 		}
 		if (strMainDice.empty()) {
@@ -3862,7 +3914,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (!boolDetail && intTurnCnt != 1) {
-			if (strVar["reason"].empty())strReply = getMsg("strRollMuiltDice");
+			if (strReason.empty())strReply = getMsg("strRollMuiltDice");
 			else strReply = getMsg("strRollMuiltDiceReason");
 			vector<int> vintExVal;
 			strVar["res"] = "{ ";
@@ -3905,9 +3957,9 @@ int FromMsg::InnerOrder() {
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				rdMainDice.Roll();
 				strVar["res"] = boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString();
-				if (strVar["reason"].empty())
+				if (strReason.empty())
 					strReply = format(getMsg("strRollDice"), { strVar["pc"], strVar["res"] });
-				else strReply = format(getMsg("strRollDiceReason"), { strVar["pc"], strVar["res"], strVar["reason"] });
+				else strReply = format(getMsg("strRollDiceReason"), { strVar["pc"], strVar["res"], strReason });
 				if (!isHidden) {
 					reply();
 				}
