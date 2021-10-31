@@ -45,6 +45,7 @@ public:
 	};
 	AttrVar() {}
 	AttrVar(const AttrVar& other);
+	AttrVar(int n) :type(AttrType::Integer), attr(n) {}
 	AttrVar(const string& s) :type(AttrType::Text), text(s) {}
 	void des() {
 		if (type == AttrType::Text)text.~string();
@@ -198,8 +199,12 @@ public:
 	const string& getName()const { return Name; }
 	void setName(const string&);
 	void setType(const string&);
+	void update();
 	//string Type = "COC7";
-	map<string, AttrVar, less_ci> Attr{ {"__Type",AttrVar("COC7")} };
+	map<string, AttrVar, less_ci> Attr{ 
+		{"__Type",AttrVar("COC7")},
+		{"__UpdateLow",AttrVar(int(time(nullptr)))},
+	};
 	//map<string, string, less_ci> Info{  };
 	map<string, string, less_ci> DiceExp{};
 	string Note;
@@ -334,24 +339,7 @@ public:
 	}
 
 	//解析生成参数
-	void buildv(string para = "")
-	{
-		std::stack<string> vOption;
-		int Cnt;
-		vOption.push("_default");
-		while ((Cnt = para.rfind(':')) != string::npos)
-		{
-			vOption.push(para.substr(Cnt + 1));
-			para.erase(para.begin() + Cnt, para.end());
-		}
-		if (!para.empty())vOption.push(para);
-		while (!vOption.empty())
-		{
-			const string para2 = vOption.top();
-			vOption.pop();
-			build(para2);
-		}
-	}
+	void buildv(string para = "");
 
 	[[nodiscard]] string standard(const string& key) const
 	{
@@ -359,18 +347,7 @@ public:
 		return key;
 	}
 
-	int set(string key, int val)
-	{
-		if (key.empty())return -1;
-		key = standard(key);
-		if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.find(key)->second)
-		{
-			if (Attr.count(key)) Attr.erase(key);
-			return -1;
-		}
-		Attr[key] = val;
-		return 0;
-	}
+	int set(string key, int val);
 
 	int set(const string& key, const string& s);
 

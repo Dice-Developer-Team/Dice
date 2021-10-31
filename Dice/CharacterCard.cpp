@@ -86,6 +86,9 @@ CardTemp& getCardTemplet(const string& type)
 	return  mCardTemplet[type];
 }
 
+void CharaCard::update() {
+	Attr["__UpdateLow"] = int(time(nullptr));
+}
 void CharaCard::setName(const string& strName) {
 	Name = strName;
 	Attr["__Name"] = strName;
@@ -94,12 +97,26 @@ void CharaCard::setType(const string& strType) {
 	Attr["__Type"] = strType;
 	pTemplet = &getCardTemplet(Attr["__Type"].to_str());
 }
+int CharaCard::set(string key, int val)
+{
+	if (key.empty())return -1;
+	key = standard(key);
+	if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.find(key)->second)
+	{
+		if (Attr.count(key)) Attr.erase(key);
+		return -1;
+	}
+	Attr[key] = val;
+	update();
+	return 0;
+}
 int CharaCard::set(const string& key, const string& s) {
 	if (key.empty() || s.length() > 255)return -11;
-	Attr[key] = s;
 	if (key == "__Name")return -8;
+	Attr[key] = s;
 	if (key == "__Type")
 		pTemplet = &getCardTemplet(s);
+	update();
 	return 0;
 }
 
@@ -155,6 +172,26 @@ string CharaCard::getExp(string& key, std::set<string> sRef){
 	std::map<string, short>::const_iterator def{ pTemplet->defaultSkill.find(key) };
 	if (def != pTemplet->defaultSkill.end())return to_string(def->second);
 	return "0";
+}
+
+void CharaCard::buildv(string para)
+{
+	std::stack<string> vOption;
+	int Cnt;
+	vOption.push("_default");
+	while ((Cnt = para.rfind(':')) != string::npos)
+	{
+		vOption.push(para.substr(Cnt + 1));
+		para.erase(para.begin() + Cnt, para.end());
+	}
+	if (!para.empty())vOption.push(para);
+	while (!vOption.empty())
+	{
+		const string para2 = vOption.top();
+		vOption.pop();
+		build(para2);
+	}
+	update();
 }
 
 void CharaCard::clear() {
@@ -281,6 +318,7 @@ void CharaCard::cntRollStat(int die, int face) {
 	Attr[keyStatCnt] = Attr[keyStatCnt].to_int() + 1;
 	Attr[keyStatSum] = Attr[keyStatSum].to_int() + die;
 	Attr[keyStatSqr] = Attr[keyStatSqr].to_int() + die * die;
+	update();
 }
 void CharaCard::cntRcStat(int die, int rate) {
 	if (rate <= 0 || rate >= 100 || die <= 0 || die > 100)return;
@@ -292,6 +330,7 @@ void CharaCard::cntRcStat(int die, int rate) {
 	if (die >= 96)Attr["__StatRcCnt96"] = Attr["__StatRcCnt96"].to_int() + 1;	//统计出96-100
 	if (die == 100)Attr["__StatRcCnt100"] = Attr["__StatRcCnt100"].to_int() + 1;	//统计出100
 	Attr["__StatRcSumRate"] = Attr["__StatRcSumRate"].to_int() + rate;	//总成功率
+	update();
 }
 
 Player& getPlayer(long long qq)
