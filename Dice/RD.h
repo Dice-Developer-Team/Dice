@@ -33,6 +33,8 @@
 #include "RDConstant.h"
 #include "RandomGenerator.h"
 
+std::string to_circled(int num, int c = 8);
+
 class RD
 {
 private:
@@ -703,7 +705,7 @@ public:
 						{
 							if (Cnt[i2])
 							{
-								strReturnString.append("(" + std::to_string(i2) + ":" + std::to_string(Cnt[i2]) + "),");
+								strReturnString.append("(" + to_circled(i2) + ":" + std::to_string(Cnt[i2]) + "),");
 								c++;
 								if (c % 3 == 1)strReturnString += '\n';
 							}
@@ -714,7 +716,7 @@ public:
 					else
 						for (int a = intWWPos + 1; a <= intWWPos + (*i)[intWWPos]; a++)
 						{
-							strReturnString.append(std::to_string((*i)[a]));
+							strReturnString.append(to_circled((*i)[a]));
 							if (a != intWWPos + (*i)[intWWPos])
 								strReturnString.append(",");
 						}

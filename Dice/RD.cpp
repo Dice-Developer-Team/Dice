@@ -27,6 +27,12 @@
 #include "MsgFormat.h"
 using namespace std;
 
+string to_circled(int num, int c) {
+	if (num < 1 || num > 10)return "?";
+	if (num < c)return to_string(num);
+	return string{ char(0xA2),char(0xD8 + num) };
+}
+
 void init(string& msg)
 {
 	msg_decode(msg);
