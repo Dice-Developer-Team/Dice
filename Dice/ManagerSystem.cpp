@@ -68,6 +68,7 @@ int clearUser() {
 		}
 		else if (isClearInactive) {
 			time_t tLast{ user.tUpdated };
+			if (!tLast)tLast = user.tCreated;
 			if (gm->has_session(~qq) && gm->session(~qq).tUpdate > tLast)tLast = gm->session(~qq).tUpdate;
 			if (tLast >= userline)continue;
 			QQDelete.push_back(qq);

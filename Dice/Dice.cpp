@@ -65,6 +65,7 @@
 #pragma warning(disable:6031)
 
 using namespace std;
+namespace fs = std::filesystem;
 
 unordered_map<long long, User> UserList{};
 ThreadFactory threads;
@@ -143,11 +144,13 @@ void loadData()
 	}
 }
 
-//初始化
+//初始化用户数据
 void dataInit()
 {
 	//仅启动时读取用户数据
-	loadBFile(DiceDir / "user" / "PlayerCards.RDconf", PList);
+	std::error_code ec;
+	if (loadBFile(DiceDir / "user" / "PlayerCards.RDconf", PList) > 0)
+		fs::copy(DiceDir / "user" / "PlayerCards.RDconf", DiceDir / "user" / "PlayerCards.bak", ec);
 	for (const auto& pl : PList)
 	{
 		if (!UserList.count(pl.first))getUser(pl.first);
@@ -163,20 +166,7 @@ void dataInit()
 			gm->session(grp).sOB.insert(qq);
 			gm->session(grp).update();
 		}
-		ifstream ifINIT(fpFileLoc / "INIT.DiceDB");
-		if (ifINIT)
-		{
-			long long Group(0);
-			int value;
-			string nickname;
-			while (ifINIT >> Group >> nickname >> value)
-			{
-				gm->session(Group).mTable["先攻"].emplace(base64_decode(nickname), value);
-				gm->session(Group).update();
-			}
-		}
-		ifINIT.close();
-		if(gm->mSession.size())console.log("初始化旁观与先攻记录" + to_string(gm->mSession.size()) + "条", 1);
+		if(gm->mSession.size())console.log("初始化旁观记录" + to_string(gm->mSession.size()) + "条", 1);
 	}
 	today = make_unique<DiceToday>(DiceDir / "user" / "DiceToday.json");
 }
@@ -190,9 +180,7 @@ void dataBackUp()
 	std::filesystem::create_directory(DiceDir / "audit", ec);
 	//备份列表
 	saveBFile(DiceDir / "user" / "PlayerCards.RDconf", PList);
-	saveFile(DiceDir / "user" / "ChatList.txt", ChatList);
 	saveBFile(DiceDir / "user" / "ChatConf.RDconf", ChatList);
-	saveFile(DiceDir / "user" / "UserList.txt", UserList);
 	saveBFile(DiceDir / "user" / "UserConf.RDconf", UserList);
 }
 
@@ -291,31 +279,13 @@ EVE_Enable(eventEnable)
 	std::filesystem::create_directory(DiceDir / "conf", ec);
 	std::filesystem::create_directory(DiceDir / "user", ec);
 	std::filesystem::create_directory(DiceDir / "audit", ec);
+	std::filesystem::create_directory(DiceDir / "mod", ec);
+	std::filesystem::create_directory(DiceDir / "plugin", ec);
 
 	ExtensionManagerInstance = std::make_unique<ExtensionManager>();
 	if (!console.load())
 	{
-		ifstream ifstreamMaster(fpFileLoc / "Master.RDconf");
-		if (ifstreamMaster)
-		{
-			std::pair<int, int> ClockToWork{}, ClockOffWork{};
-			int iDisabledGlobal, iDisabledMe, iPrivate, iDisabledJrrp, iLeaveDiscuss;
-			ifstreamMaster >> console.masterQQ >> console.isMasterMode >> iDisabledGlobal >> iDisabledMe >> iPrivate >>
-				iDisabledJrrp >> iLeaveDiscuss
-				>> ClockToWork.first >> ClockToWork.second >> ClockOffWork.first >> ClockOffWork.second;
-			console.set("DisabledGlobal", iDisabledGlobal);
-			console.set("DisabledMe", iDisabledMe);
-			console.set("Private", iPrivate);
-			console.set("DisabledJrrp", iDisabledJrrp);
-			console.set("LeaveDiscuss", iLeaveDiscuss);
-			console.setClock(ClockToWork, "on");
-			console.setClock(ClockOffWork, "off");
-		}
-		else
-		{
-			DD::sendPrivateMsg(console.DiceMaid, msgInit);
-		}
-		ifstreamMaster.close();
+		DD::sendPrivateMsg(console.DiceMaid, msgInit);
 		std::map<string, int> boolConsole;
 		loadJMap(fpFileLoc / "boolConsole.json", boolConsole);
 		for (auto& [key, val] : boolConsole)
@@ -353,27 +323,29 @@ EVE_Enable(eventEnable)
 				getUser(QQ).setNick(GroupID, name);
 			}
 		}
-	}
-	if (loadFile(DiceDir / "user" / "UserList.txt", UserList) < 1)
-	{
-		set<long long> WhiteQQ;
-		if (loadFile(fpFileLoc / "WhiteQQ.RDconf", WhiteQQ) > 0)
-			for (auto qq : WhiteQQ)
-			{
-				getUser(qq).trust(1);
+		if (loadFile(DiceDir / "user" / "UserList.txt", UserList) < 1)
+		{
+			set<long long> WhiteQQ;
+			if (loadFile(fpFileLoc / "WhiteQQ.RDconf", WhiteQQ) > 0)
+				for (auto qq : WhiteQQ)
+				{
+					getUser(qq).trust(1);
+				}
+			//读取管理员列表
+			set<long long> AdminQQ;
+			if (loadFile(fpFileLoc / "AdminQQ.RDconf", AdminQQ) > 0)
+				for (auto qq : AdminQQ)
+				{
+					getUser(qq).trust(4);
+				}
+			if (console.master())getUser(console.master()).trust(5);
+			if (UserList.size()) {
+				console.log("初始化用户记录" + to_string(UserList.size()) + "条", 1);
 			}
-		//读取管理员列表
-		set<long long> AdminQQ;
-		if (loadFile(fpFileLoc / "AdminQQ.RDconf", AdminQQ) > 0)
-			for (auto qq : AdminQQ)
-			{
-				getUser(qq).trust(4);
-			}
-		if (console.master())getUser(console.master()).trust(5);
-		if (UserList.size()){
-			console.log("初始化用户记录" + to_string(UserList.size()) + "条", 1);
-			saveFile(DiceDir / "user" / "UserList.txt", UserList);
 		}
+	}
+	else {
+		fs::copy(DiceDir / "user" / "UserConf.RDconf", DiceDir / "user" / "UserConf.bak", ec);
 	}
 	if (loadBFile(DiceDir / "user" / "ChatConf.RDconf", ChatList) < 1)
 	{
@@ -434,12 +406,6 @@ EVE_Enable(eventEnable)
 				chat(p).group().set("禁用me");
 			}
 		GroupList.clear();
-		if (loadFile(fpFileLoc / "DisabledHELPGroup.RDconf", GroupList) > 0)
-			for (auto p : GroupList)
-			{
-				chat(p).group().set("禁用help");
-			}
-		GroupList.clear();
 		if (loadFile(fpFileLoc / "DisabledOBGroup.RDconf", GroupList) > 0)
 			for (auto p : GroupList)
 			{
@@ -453,22 +419,13 @@ EVE_Enable(eventEnable)
 				chat(g).group().set("许可使用").set("免清");
 			}
 		}
+		if (loadFile(DiceDir / "user" / "ChatList.txt", ChatList) < 1 && ChatList.size()) {
+			console.log("初始化群记录" + to_string(ChatList.size()) + "条", 1);
+		}
 		saveBFile(DiceDir / "user" / "ChatConf.RDconf", ChatList);
 	}
-	if (loadFile(DiceDir / "user" / "ChatList.txt", ChatList) < 1)
-	{
-		std::map<long long, long long> mGroupInviter;
-		if (loadFile(fpFileLoc / "GroupInviter.RDconf", mGroupInviter) < 1)
-		{
-			for (const auto& it : mGroupInviter)
-			{
-				chat(it.first).group().inviter = it.second;
-			}
-		}
-		if(ChatList.size()){
-			console.log("初始化群记录" + to_string(ChatList.size()) + "条", 1);
-			saveFile(DiceDir / "user" / "ChatList.txt", ChatList);
-		}
+	else {
+		fs::copy(DiceDir / "user" / "ChatConf.RDconf", DiceDir / "user" / "ChatConf.bak", ec);
 	}
 	for (auto gid : DD::getGroupIDList())
 	{
@@ -502,10 +459,7 @@ EVE_Enable(eventEnable)
 			}
 		}
 	}
-
-	DD::debugLog("Dice.loadData");
 	loadData();
-	DD::debugLog("Dice.dataInit");
 	dataInit();
 	// 确保线程执行结束
 	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
