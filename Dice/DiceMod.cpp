@@ -310,11 +310,10 @@ void DiceModManager::show_reply(const shared_ptr<DiceJobDetail>& msg) {
 	string key{ (*msg)["key"]};
 	if (msgreply.count(key)) {
 		DiceMsgReply& reply{ msgreply[key] };
-		ResList res;
-		res << "Type=" + DiceMsgReply::sType[(int)reply.type];
-		res << DiceMsgReply::sMode[(int)reply.mode] + "=" + key;
-		res << DiceMsgReply::sEcho[(int)reply.echo] + "=" + reply.show_ans();
-		(*msg)["res"] = res.dot("\n").show();
+		string& strRes{ (*msg)["res"]
+			= "Type=" + DiceMsgReply::sType[(int)reply.type] };
+		strRes += "\n" + DiceMsgReply::sMode[(int)reply.mode] + "=" + key;
+		strRes += "\n" + DiceMsgReply::sEcho[(int)reply.echo] + "=" + reply.show_ans();
 		msg->reply(getMsg("strReplyShow"));
 	}
 	else {

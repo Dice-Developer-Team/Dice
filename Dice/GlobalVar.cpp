@@ -137,6 +137,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strReplyOff","{self}现在本群禁用关键词回复√"},
 	{"strReplySet","{self}对关键词{key}的回复已设置√"},
 	{"strReplyShow","{self}对关键词{key}的回复为:{res}"},
+	{"strReplyList","{self}的触发词共有:{res}"},
 	{"strReplyDel","{self}对关键词{key}的回复已清除√"},
 	{"strReplyKeyEmpty","{nick}请输入回复关键词×"},
 	{"strReplyKeyNotFound","{self}未找到回复关键词{key}×"},
@@ -549,13 +550,15 @@ Master拥有最高权限，且可以调整任意信任)"},
 {"暗骰","群聊限定，掷骰指令后接h视为暗骰，结果将私发本人和群内ob的用户\n为了保证发送成功，请加骰娘好友"},
 {"reply",R"(自定义回复：.reply
 .reply on/off 开启/关闭群内回复
-//设置回复指令仅admin可用
+回复触发顺序：指令->完全->模糊->正则
+//以下操作回复指令仅admin可用
 .reply set
 Type=[回复性质](Reply/Order)
 [触发模式](Match/Search/Regex)=[触发词]
 [回复模式](Deck/Text/Lua)=[回复词]
 *Type一行可省略，默认为Reply
 .reply show [触发词] 查看指定回复
+.reply list 查看全部回复
 .reply del [触发词] 清除指定回复
 )"},
 {"旁观","&ob"},

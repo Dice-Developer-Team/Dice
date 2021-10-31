@@ -1977,6 +1977,15 @@ int FromMsg::InnerOrder() {
 			}
 			return 1;
 		}
+		else if (action == "list") {
+			if (trusted < 4) {
+				reply(getMsg("strNotAdmin"));
+				return -1;
+			}
+			strVar["res"] = fmt->list_reply();
+			reply(getMsg("strReplyList"));
+			return 1;
+		}
 		else if (action == "del") {
 			if (trusted < 4) {
 				reply(getMsg("strNotAdmin"));
