@@ -23,6 +23,7 @@
 #include "MsgFormat.h"
 #include "CardDeck.h"
 #include "DiceEvent.h"
+#include "DiceAttrVar.h"
 
 using std::string;
 using std::to_string;
@@ -30,39 +31,6 @@ using std::vector;
 using std::map;
 
 constexpr short NOT_FOUND = -32767;
-
-class AttrVar {
-public:
-	enum class AttrType { Nil, Boolean, Integer, Number, Text };
-	AttrType type{ 0 };
-	union {
-		bool bit;		//1
-		int attr{ 0 };		//2
-		double number;	//3
-		string text;	//4
-		//table;		//5
-		//function;		//6
-	};
-	AttrVar() {}
-	AttrVar(const AttrVar& other);
-	AttrVar(int n) :type(AttrType::Integer), attr(n) {}
-	AttrVar(const string& s) :type(AttrType::Text), text(s) {}
-	void des() {
-		if (type == AttrType::Text)text.~string();
-	}
-	~AttrVar() {
-		des();
-	}
-	AttrVar& operator=(const AttrVar& other);
-	AttrVar& operator=(bool other);
-	AttrVar& operator=(int other);
-	AttrVar& operator=(double other);
-	AttrVar& operator=(const string& other);
-	int to_int()const;
-	string to_str()const;
-	void writeb(std::ofstream& fout) const;
-	void readb(std::ifstream& fin);
-};
 
 inline map<string, short> mTempletTag = {
 	{"name", 1},
