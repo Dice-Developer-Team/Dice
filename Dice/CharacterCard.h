@@ -600,13 +600,7 @@ public:
 		return Res.show();
 	}
 
-	CharaCard& getCard(const string& name, long long group = 0)
-	{
-		if (mNameIndex.count(name))return mCardList[mNameIndex[name]];
-		if (mGroupIndex.count(group))return mCardList[mGroupIndex[group]];
-		if (mGroupIndex.count(0))return mCardList[mGroupIndex[0]];
-		return mCardList[0];
-	}
+	CharaCard& getCard(const string& name, long long group = 0);
 
 	CharaCard& operator[](long long id)
 	{

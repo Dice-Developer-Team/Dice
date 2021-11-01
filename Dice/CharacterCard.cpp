@@ -348,6 +348,13 @@ int Player::renameCard(const string& name, const string& name_new) 	{
 	mCardList[i].setName(name_new);
 	return 0;
 }
+CharaCard& Player::getCard(const string& name, long long group)
+{
+	if (!name.empty() && mNameIndex.count(name))return mCardList[mNameIndex[name]];
+	if (mGroupIndex.count(group))return mCardList[mGroupIndex[group]];
+	if (mGroupIndex.count(0))return mCardList[mGroupIndex[0]];
+	return mCardList[0];
+}
 string Player::listCard() {
 	ResList Res;
 	for (auto& [idx, pc] : mCardList) {
@@ -364,7 +371,7 @@ void Player::readb(std::ifstream& fin)
 	fread<unsigned short, CharaCard>(fin, mCardList);
 	for (const auto& card : mCardList)
 	{
-		mNameIndex[card.second.getName()] = card.first;
+		if(!card.second.getName().empty())mNameIndex[card.second.getName()] = card.first;
 	}
 	mGroupIndex = fread<unsigned long long, unsigned short>(fin);
 }
