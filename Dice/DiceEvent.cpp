@@ -3648,6 +3648,7 @@ int FromMsg::InnerOrder() {
 					reply(getMsg("strPcTextTooLong"));
 					return 1;
 				}
+				++cntInput;
 				continue;
 			}
 			//读取属性名
@@ -3722,7 +3723,7 @@ int FromMsg::InnerOrder() {
 				break;
 			}
 			int intSkillVal = std::clamp(stoi(strSkillVal), -32767, 32767);
-			//录入
+			//录入纯数值
 			pc.set(strSkillName, intSkillVal);
 			++cntInput;
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')
