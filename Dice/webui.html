@@ -127,6 +127,15 @@
             <li class="layui-timeline-item">
               <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
               <div class="layui-timeline-content layui-text">
+                <h3 class="layui-timeline-title">2021年10月1日 版本2.6.0(586)</h3>
+                <p>
+                  新版触发词回复
+                </p>
+              </div>
+            </li>
+            <li class="layui-timeline-item">
+              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+              <div class="layui-timeline-content layui-text">
                 <h3 class="layui-timeline-title">2021年9月18日 版本2.6.0(585)</h3>
                 <p>
                   WebUI 验证增强
@@ -198,21 +207,32 @@
     </div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 50px">触发性质</label>
-    <div class="layui-input-block" style="margin-left: 80px">
-      <input type="text" name="type" required lay-verify="required" placeholder="Reply" value="Reply" autocomplete="on" class="layui-input">
+    <label class="layui-form-label" style="width: 60px">触发性质</label>
+    <div class="layui-input-block" style="margin-left: 90px">
+    <select name="type">
+      <option value ="Reply">回复</option>
+      <option value ="Order">指令</option>
+    </select>
     </div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 50px">匹配模式</label>
-    <div class="layui-input-block" style="margin-left: 80px">
-      <input type="text" name="mode" required lay-verify="required" placeholder="Match" value="Match" autocomplete="on" class="layui-input">
+    <label class="layui-form-label" style="width: 60px">匹配模式</label>
+    <div class="layui-input-block" style="margin-left: 90px">
+    <select name="mode">
+      <option value ="Match">完全</option>
+      <option value ="Search">模糊</option>
+      <option value ="Regex">正则</option>
+    </select>
     </div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 50px">回复形式</label>
-    <div class="layui-input-block" style="margin-left: 80px">
-      <input type="text" name="echo" required lay-verify="required" placeholder="Deck" value="Deck" autocomplete="on" class="layui-input">
+    <label class="layui-form-label" style="width: 60px">回复形式</label>
+    <div class="layui-input-block" style="margin-left: 90px">
+    <select name="echo">
+      <option value ="Deck">牌堆</option>
+      <option value ="Text">文本</option>
+      <option value ="Lua">Lua</option>
+    </select>
     </div>
   </div>
   <div class="layui-form-item">
