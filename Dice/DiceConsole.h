@@ -15,6 +15,7 @@
 #include <thread>
 #include <chrono>
 #include <array>
+#include <CivetServer.h>
 #include "STLExtern.hpp"
 #include "DiceXMLTree.h"
 #include "DiceFile.hpp"
@@ -26,6 +27,7 @@ using std::to_string;
 
 extern std::filesystem::path dirExe;
 extern std::filesystem::path DiceDir;
+extern std::unique_ptr<CivetServer> ManagerServer;
 
 //enum class ClockEvent { off, on, save, clear };
 

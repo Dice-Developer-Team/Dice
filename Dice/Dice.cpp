@@ -21,6 +21,7 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+#define UNICODE
 #include <string>
 #include <iostream>
 #include <map>
@@ -33,7 +34,6 @@
 #include <exception>
 #include <stdexcept>
 #include "filesystem.hpp"
-#include <CivetServer.h>
 
 #include "APPINFO.h"
 #include "DiceFile.hpp"
@@ -1050,10 +1050,12 @@ EVE_Menu(eventMasterMode)
 }
 
 #ifdef _WIN32
+#include <shellapi.h>
 EVE_Menu(eventGUI)
 {
 	if (!Enabled) return 0;
-	return GUIMain();
+	auto port{ ManagerServer->getListeningPorts()[0] };
+	ShellExecute(nullptr, TEXT("open"), (TEXT("http://127.0.0.1:") + std::to_wstring(port)).c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
 }
 #endif
 
