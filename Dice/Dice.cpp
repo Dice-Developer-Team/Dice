@@ -178,25 +178,25 @@ void readUserData()
 				getUser(QQ).setNick(GroupID, name);
 			}
 		}
-		if (loadFile(DiceDir / "user" / "UserList.txt", UserList) < 1)
-		{
-			set<long long> WhiteQQ;
-			if (loadFile(fpFileLoc / "WhiteQQ.RDconf", WhiteQQ) > 0)
-				for (auto qq : WhiteQQ)
-				{
-					getUser(qq).trust(1);
-				}
-			//读取管理员列表
-			set<long long> AdminQQ;
-			if (loadFile(fpFileLoc / "AdminQQ.RDconf", AdminQQ) > 0)
-				for (auto qq : AdminQQ)
-				{
-					getUser(qq).trust(4);
-				}
-			if (console.master())getUser(console.master()).trust(5);
-			if (UserList.size()) {
-				console.log("初始化用户记录" + to_string(UserList.size()) + "条", 1);
+	}
+	if (loadFile(dir / "UserList.txt", UserList) < 1)
+	{
+		set<long long> WhiteQQ;
+		if (loadFile(fpFileLoc / "WhiteQQ.RDconf", WhiteQQ) > 0)
+			for (auto qq : WhiteQQ)
+			{
+				getUser(qq).trust(1);
 			}
+		//读取管理员列表
+		set<long long> AdminQQ;
+		if (loadFile(fpFileLoc / "AdminQQ.RDconf", AdminQQ) > 0)
+			for (auto qq : AdminQQ)
+			{
+				getUser(qq).trust(4);
+			}
+		if (console.master())getUser(console.master()).trust(5);
+		if (UserList.size()) {
+			console.log("初始化用户记录" + to_string(UserList.size()) + "条", 1);
 		}
 	}
 	//读取角色记录
@@ -246,10 +246,10 @@ void readUserData()
 				chat(g).group().set("许可使用").set("免清");
 			}
 		}
-		if (loadFile(DiceDir / "user" / "ChatList.txt", ChatList) < 1 && ChatList.size()) {
-			console.log("初始化群记录" + to_string(ChatList.size()) + "条", 1);
-		}
-		saveBFile(DiceDir / "user" / "ChatConf.RDconf", ChatList);
+		saveBFile(dir / "ChatConf.RDconf", ChatList);
+	}
+	if (loadFile(dir / "ChatList.txt", ChatList) < 1 && ChatList.size()) {
+		console.log("初始化群记录" + to_string(ChatList.size()) + "条", 1);
 	}
 	//读取房间记录
 	if (gm->load() < 0)
@@ -276,9 +276,11 @@ void dataBackUp()
 	std::filesystem::create_directory(DiceDir / "user", ec);
 	std::filesystem::create_directory(DiceDir / "audit", ec);
 	//备份列表
+	saveBFile(DiceDir / "user" / "UserConf.RDconf", UserList);
+	saveFile(DiceDir / "user" / "UserList.text", UserList);
 	saveBFile(DiceDir / "user" / "PlayerCards.RDconf", PList);
 	saveBFile(DiceDir / "user" / "ChatConf.RDconf", ChatList);
-	saveBFile(DiceDir / "user" / "UserConf.RDconf", UserList);
+	saveFile(DiceDir / "user" / "ChatList.text", ChatList);
 }
 
 bool isIniting{ false };
@@ -1056,6 +1058,7 @@ EVE_Menu(eventGUI)
 	if (!Enabled) return 0;
 	auto port{ ManagerServer->getListeningPorts()[0] };
 	ShellExecute(nullptr, TEXT("open"), (TEXT("http://127.0.0.1:") + std::to_wstring(port)).c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
+	return 1;
 }
 #endif
 
