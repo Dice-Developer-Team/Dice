@@ -899,7 +899,7 @@ LRESULT DiceGUI::CreateCustomMsgPage()
 	ListViewCustomMsg.SetExtendedListViewStyle(
 		LVS_EX_DOUBLEBUFFER | LVS_EX_AUTOSIZECOLUMNS | LVS_EX_TWOCLICKACTIVATE | LVS_EX_UNDERLINEHOT);
 
-	ListViewCustomMsg.AddAllTextColumn(std::vector<std::pair<std::string, int>>({ {"标题", 150}, {"内容", 500}, { "备注", 150 } }));
+	ListViewCustomMsg.AddAllTextColumn(std::vector<std::pair<std::string, int>>{ {"标题", 150}, { "内容", 500 }, { "备注", 150 } });
 	int index = 0;
 	std::shared_lock lock(GlobalMsgMutex);
 	for (const auto& item : GlobalMsg)
@@ -1108,10 +1108,11 @@ int WINAPI GUIMain()
 	// hDllModule不应为空
 	assert(hDllModule);
 
+	auto port{ ManagerServer->getListeningPorts()[0] };
 	// Dice GUI已被弃用，提示迁移
-	if(MessageBox(nullptr, TEXT("Dice! GUI已被弃用，请使用Dice! WebUI。按确认键继续使用GUI，按取消键打开WebUI使用说明。"), TEXT("Dice! GUI"), MB_OKCANCEL) == IDCANCEL)
+	if(MessageBox(nullptr, TEXT("Dice! GUI已被弃用，请使用Dice! WebUI。按确认键继续使用GUI，按取消键打开WebUI。"), TEXT("Dice! GUI"), MB_OKCANCEL) == IDCANCEL)
 	{
-		ShellExecute(nullptr, TEXT("open"), TEXT("https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming"), nullptr, nullptr, SW_SHOWDEFAULT);
+		ShellExecute(nullptr, TEXT("open"), (TEXT("http://127.0.0.1:") + std::to_wstring(port)).c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
 	}
 
 	// 初始化CommonControl
