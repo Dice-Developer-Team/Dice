@@ -14,6 +14,7 @@ using std::vector;
 using std::map;
 using std::multimap;
 using std::set;
+namespace fs = std::filesystem;
 
 class FromMsg;
 class DiceTableMaster;
@@ -74,7 +75,7 @@ public:
 		tUpdate = tCreate = time(nullptr);
 	}
 
-	friend void dataInit();
+	friend void readUserData();
 	friend class DiceTableMaster;
 
 	//记录创建时间

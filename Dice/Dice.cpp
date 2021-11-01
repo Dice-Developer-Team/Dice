@@ -65,7 +65,6 @@
 #pragma warning(disable:6031)
 
 using namespace std;
-namespace fs = std::filesystem;
 
 unordered_map<long long, User> UserList{};
 ThreadFactory threads;
@@ -145,17 +144,114 @@ void loadData()
 }
 
 //初始化用户数据
-void dataInit()
+void readUserData()
 {
-	//仅启动时读取用户数据
 	std::error_code ec;
-	if (loadBFile(DiceDir / "user" / "PlayerCards.RDconf", PList) > 0)
-		fs::copy(DiceDir / "user" / "PlayerCards.RDconf", DiceDir / "user" / "PlayerCards.bak", ec);
+	fs::path dir{ DiceDir / "user" };
+	//读取用户记录
+	if (loadBFile(dir / "UserConf.RDconf", UserList) > 0) {
+		fs::copy(dir / "UserConf.RDconf", dir / "UserConf.bak", ec);
+	}
+	else
+	{
+		map<long long, int> DefaultDice;
+		if (loadFile(fpFileLoc / "Default.RDconf", DefaultDice) > 0)
+			for (auto p : DefaultDice)
+			{
+				getUser(p.first).intConf["默认骰"] = p.second;
+			}
+		map<long long, string> DefaultRule;
+		if (loadFile(fpFileLoc / "DefaultRule.RDconf", DefaultRule) > 0)
+			for (auto p : DefaultRule)
+			{
+				if (isdigit(static_cast<unsigned char>(p.second[0])))break;
+				getUser(p.first).strConf["默认规则"] = p.second;
+			}
+		ifstream ifName(fpFileLoc / "Name.dicedb");
+		if (ifName)
+		{
+			long long GroupID = 0, QQ = 0;
+			string name;
+			while (ifName >> GroupID >> QQ >> name)
+			{
+				name = base64_decode(name);
+				getUser(QQ).setNick(GroupID, name);
+			}
+		}
+		if (loadFile(DiceDir / "user" / "UserList.txt", UserList) < 1)
+		{
+			set<long long> WhiteQQ;
+			if (loadFile(fpFileLoc / "WhiteQQ.RDconf", WhiteQQ) > 0)
+				for (auto qq : WhiteQQ)
+				{
+					getUser(qq).trust(1);
+				}
+			//读取管理员列表
+			set<long long> AdminQQ;
+			if (loadFile(fpFileLoc / "AdminQQ.RDconf", AdminQQ) > 0)
+				for (auto qq : AdminQQ)
+				{
+					getUser(qq).trust(4);
+				}
+			if (console.master())getUser(console.master()).trust(5);
+			if (UserList.size()) {
+				console.log("初始化用户记录" + to_string(UserList.size()) + "条", 1);
+			}
+		}
+	}
+	//读取角色记录
+	if (loadBFile(dir / "PlayerCards.RDconf", PList) > 0)
+		fs::copy(dir / "PlayerCards.RDconf", dir / "PlayerCards.bak", ec);
 	for (const auto& pl : PList)
 	{
 		if (!UserList.count(pl.first))getUser(pl.first);
 	}
-	gm = make_unique<DiceTableMaster>();
+	//读取群聊记录
+	if (loadBFile(DiceDir / "user" / "ChatConf.RDconf", ChatList) > 0) {
+		fs::copy(DiceDir / "user" / "ChatConf.RDconf", DiceDir / "user" / "ChatConf.bak", ec);
+	}
+	else
+	{
+		set<long long> GroupList;
+		map<chatType, int> mDefault;
+		if (loadFile(fpFileLoc / "DefaultCOC.MYmap", mDefault) > 0)
+			for (const auto& it : mDefault)
+			{
+				if (it.first.second == msgtype::Private)getUser(it.first.first)
+					.setConf("rc房规", it.second);
+				else chat(it.first.first).setConf("rc房规", it.second);
+			}
+		if (loadFile(fpFileLoc / "DisabledGroup.RDconf", GroupList) > 0)
+			for (auto p : GroupList)
+			{
+				chat(p).group().set("停用指令");
+			}
+		GroupList.clear();
+		if (loadFile(fpFileLoc / "DisabledJRRPGroup.RDconf", GroupList) > 0)
+			for (auto p : GroupList)
+			{
+				chat(p).group().set("禁用jrrp");
+			}
+		GroupList.clear();
+		if (loadFile(fpFileLoc / "DisabledOBGroup.RDconf", GroupList) > 0)
+			for (auto p : GroupList)
+			{
+				chat(p).group().set("禁用ob");
+			}
+		GroupList.clear();
+		if (loadFile(fpFileLoc / "WhiteGroup.RDconf", GroupList) > 0)
+		{
+			for (auto g : GroupList)
+			{
+				chat(g).group().set("许可使用").set("免清");
+			}
+		}
+		if (loadFile(DiceDir / "user" / "ChatList.txt", ChatList) < 1 && ChatList.size()) {
+			console.log("初始化群记录" + to_string(ChatList.size()) + "条", 1);
+		}
+		saveBFile(DiceDir / "user" / "ChatConf.RDconf", ChatList);
+	}
+	//读取房间记录
 	if (gm->load() < 0)
 	{
 		multimap<long long, long long> ObserveGroup;
@@ -168,7 +264,8 @@ void dataInit()
 		}
 		if(gm->mSession.size())console.log("初始化旁观记录" + to_string(gm->mSession.size()) + "条", 1);
 	}
-	today = make_unique<DiceToday>(DiceDir / "user" / "DiceToday.json");
+	//读取当日数据
+	today = make_unique<DiceToday>(dir / "DiceToday.json");
 }
 
 //备份数据
@@ -296,141 +393,7 @@ EVE_Enable(eventEnable)
 		console.loadNotice();
 		console.save();
 	}
-	//读取聊天列表
-	if (loadBFile(DiceDir / "user"/ "UserConf.RDconf", UserList) < 1)
-	{
-		map<long long, int> DefaultDice;
-		if (loadFile(fpFileLoc / "Default.RDconf", DefaultDice) > 0)
-			for (auto p : DefaultDice)
-			{
-				getUser(p.first).intConf["默认骰"] = p.second;
-			}
-		map<long long, string> DefaultRule;
-		if (loadFile(fpFileLoc / "DefaultRule.RDconf", DefaultRule) > 0)
-			for (auto p : DefaultRule)
-			{
-				if (isdigit(static_cast<unsigned char>(p.second[0])))break;
-				getUser(p.first).strConf["默认规则"] = p.second;
-			}
-		ifstream ifName(fpFileLoc / "Name.dicedb");
-		if (ifName)
-		{
-			long long GroupID = 0, QQ = 0;
-			string name;
-			while (ifName >> GroupID >> QQ >> name)
-			{
-				name = base64_decode(name);
-				getUser(QQ).setNick(GroupID, name);
-			}
-		}
-		if (loadFile(DiceDir / "user" / "UserList.txt", UserList) < 1)
-		{
-			set<long long> WhiteQQ;
-			if (loadFile(fpFileLoc / "WhiteQQ.RDconf", WhiteQQ) > 0)
-				for (auto qq : WhiteQQ)
-				{
-					getUser(qq).trust(1);
-				}
-			//读取管理员列表
-			set<long long> AdminQQ;
-			if (loadFile(fpFileLoc / "AdminQQ.RDconf", AdminQQ) > 0)
-				for (auto qq : AdminQQ)
-				{
-					getUser(qq).trust(4);
-				}
-			if (console.master())getUser(console.master()).trust(5);
-			if (UserList.size()) {
-				console.log("初始化用户记录" + to_string(UserList.size()) + "条", 1);
-			}
-		}
-	}
-	else {
-		fs::copy(DiceDir / "user" / "UserConf.RDconf", DiceDir / "user" / "UserConf.bak", ec);
-	}
-	if (loadBFile(DiceDir / "user" / "ChatConf.RDconf", ChatList) < 1)
-	{
-		set<long long> GroupList;
-		if (loadFile(fpFileLoc / "DisabledDiscuss.RDconf", GroupList) > 0)
-			for (auto p : GroupList)
-			{
-				chat(p).discuss().set("停用指令");
-			}
-		GroupList.clear();
-		if (loadFile(fpFileLoc / "DisabledJRRPDiscuss.RDconf", GroupList) > 0)
-			for (auto p : GroupList)
-			{
-				chat(p).discuss().set("禁用jrrp");
-			}
-		GroupList.clear();
-		if (loadFile(fpFileLoc / "DisabledMEGroup.RDconf", GroupList) > 0)
-			for (auto p : GroupList)
-			{
-				chat(p).discuss().set("禁用me");
-			}
-		GroupList.clear();
-		if (loadFile(fpFileLoc / "DisabledHELPDiscuss.RDconf", GroupList) > 0)
-			for (auto p : GroupList)
-			{
-				chat(p).discuss().set("禁用help");
-			}
-		GroupList.clear();
-		if (loadFile(fpFileLoc / "DisabledOBDiscuss.RDconf", GroupList) > 0)
-			for (auto p : GroupList)
-			{
-				chat(p).discuss().set("禁用ob");
-			}
-		GroupList.clear();
-		map<chatType, int> mDefault;
-		if (loadFile(fpFileLoc / "DefaultCOC.MYmap", mDefault) > 0)
-			for (const auto& it : mDefault)
-			{
-				if (it.first.second == msgtype::Private)getUser(it.first.first)
-				                                        .setConf("rc房规", it.second);
-				else chat(it.first.first).setConf("rc房规", it.second);
-			}
-		if (loadFile(fpFileLoc / "DisabledGroup.RDconf", GroupList) > 0)
-			for (auto p : GroupList)
-			{
-				chat(p).group().set("停用指令");
-			}
-		GroupList.clear();
-		if (loadFile(fpFileLoc / "DisabledJRRPGroup.RDconf", GroupList) > 0)
-			for (auto p : GroupList)
-			{
-				chat(p).group().set("禁用jrrp");
-			}
-		GroupList.clear();
-		if (loadFile(fpFileLoc / "DisabledMEDiscuss.RDconf", GroupList) > 0)
-			for (auto p : GroupList)
-			{
-				chat(p).group().set("禁用me");
-			}
-		GroupList.clear();
-		if (loadFile(fpFileLoc / "DisabledOBGroup.RDconf", GroupList) > 0)
-			for (auto p : GroupList)
-			{
-				chat(p).group().set("禁用ob");
-			}
-		GroupList.clear();
-		if (loadFile(fpFileLoc / "WhiteGroup.RDconf", GroupList) > 0)
-		{
-			for (auto g : GroupList)
-			{
-				chat(g).group().set("许可使用").set("免清");
-			}
-		}
-		if (loadFile(DiceDir / "user" / "ChatList.txt", ChatList) < 1 && ChatList.size()) {
-			console.log("初始化群记录" + to_string(ChatList.size()) + "条", 1);
-		}
-		saveBFile(DiceDir / "user" / "ChatConf.RDconf", ChatList);
-	}
-	else {
-		fs::copy(DiceDir / "user" / "ChatConf.RDconf", DiceDir / "user" / "ChatConf.bak", ec);
-	}
-	for (auto gid : DD::getGroupIDList())
-	{
-		chat(gid).group().reset("未进").reset("已退");
-	}
+	//初始化黑名单
 	blacklist = make_unique<DDBlackManager>();
 	if (blacklist->loadJson(DiceDir / "conf" / "BlackList.json") < 0)
 	{
@@ -460,7 +423,13 @@ EVE_Enable(eventEnable)
 		}
 	}
 	loadData();
-	dataInit();
+	//读取用户数据
+	gm = make_unique<DiceTableMaster>();
+	readUserData();
+	for (auto gid : DD::getGroupIDList())
+	{
+		chat(gid).group().reset("未进").reset("已退");
+	}
 	// 确保线程执行结束
 	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
 	Aws::InitAPI(options);
