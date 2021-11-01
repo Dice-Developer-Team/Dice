@@ -2972,9 +2972,10 @@ int FromMsg::InnerOrder() {
 		}
 		if (strOption == "show") {
 			string strName = readRest();
-			strVar["char"] = pl.getCard(strName, fromGroup).getName();
-			strVar["type"] = pl.getCard(strName, fromGroup).Attr["__Type"].to_str();
-			strVar["show"] = pl[strVar["char"]].show(true);
+			CharaCard& pc{ pl.getCard(strName, fromGroup) };
+			strVar["char"] = pc.getName();
+			strVar["type"] = pc.Attr["__Type"].to_str();
+			strVar["show"] = pc.show(true);
 			reply(getMsg("strPcCardShow"));
 			return 1;
 		}
@@ -3634,21 +3635,22 @@ int FromMsg::InnerOrder() {
 		bool isDetail = false;
 		bool isModify = false;
 		//循环录入
+		int cntInput{ 0 };
 		while (intMsgCnt != strLowerMessage.length()) {
-			//读取属性名
 			readSkipSpace();
+			//判定录入表达式
 			if (strMsg[intMsgCnt] == '&') {
-				intMsgCnt++;
 				strVar["attr"] = readToColon(); 
 				if (strVar["attr"].empty()) {
 					continue;
 				}
-				if (pc.setExp(strVar["attr"], readExp())) {
+				if (pc.set(strVar["attr"], readExp())) {
 					reply(getMsg("strPcTextTooLong"));
 					return 1;
 				}
 				continue;
 			}
+			//读取属性名
 			string strSkillName = readAttrName();
 			if (strSkillName.empty()) {
 				readSkipSpace();
@@ -3657,30 +3659,39 @@ int FromMsg::InnerOrder() {
 				{
 					intMsgCnt++;
 				}
-				strVar["val"] = readDigit(false);
+				readDigit(false);
 				continue;
 			}
 			strSkillName = pc.standard(strSkillName);
-			if (pc.pTemplet->sInfoList.count(strSkillName)) {
-				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
-					   '=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
-				if (pc.set(strSkillName, readUntilTab())) {
+			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
+				'=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
+			//判定所录入为文本
+			if (bool isSqr{ strMsg.substr(intMsgCnt, 2) == "【" }; pc.pTemplet->sInfoList.count(strSkillName) || isSqr) {
+				string strVal;
+				if (auto pos{ strMsg.find("】",intMsgCnt) }; pos != string::npos) {
+					strVal = strMsg.substr(intMsgCnt + 2, pos - intMsgCnt - 2);
+					intMsgCnt = pos + 2;
+				}
+				else {
+					strVal = readUntilTab();
+				}
+				if (pc.set(strSkillName, strVal)) {
 					reply(getMsg("strPcTextTooLong"));
 					return 1;
 				}
+				++cntInput;
 				continue;
 			}
 			if (strSkillName == "note") {
-				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
-					   '=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
 				if (pc.setNote(readRest())) {
 					reply(getMsg("strPcNoteTooLong"));
 					return 1;
 				}
+				++cntInput;
 				break;
 			}
-			//读取属性值
 			readSkipSpace();
+			//判定数值修改
 			if ((strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+')) {
 				isDetail = true;
 				isModify = true;
@@ -3702,6 +3713,7 @@ int FromMsg::InnerOrder() {
 				else nVal = Mod.intTotal;
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
 					   '|')intMsgCnt++;
+				++cntInput;
 				continue;
 			}
 			string strSkillVal = readDigit();
@@ -3712,6 +3724,7 @@ int FromMsg::InnerOrder() {
 			int intSkillVal = std::clamp(stoi(strSkillVal), -32767, 32767);
 			//录入
 			pc.set(strSkillName, intSkillVal);
+			++cntInput;
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')
 				intMsgCnt++;
 		}
@@ -3721,8 +3734,12 @@ int FromMsg::InnerOrder() {
 		else if (isModify) {
 			reply(format(getMsg("strStModify"), { strVar["pc"] }) + strReply);
 		}
-		else {
+		else if(cntInput){
+			strVar["cnt"] = to_string(cntInput);
 			reply(getMsg("strSetPropSuccess"));
+		}
+		else {
+			reply(fmt->get_help("st"));
 		}
 		return 1;
 	}
@@ -3744,22 +3761,49 @@ int FromMsg::InnerOrder() {
 			isHidden = true;
 			intMsgCnt += 1;
 		}
+		readSkipSpace();
+		const unsigned int len{ strMsg.length() };
+		if (intMsgCnt == len) {
+			reply(fmt->get_help("ww"));
+			return 1;
+		}
 		strVar["nick"] = getName(fromQQ, fromGroup);
 		getPCName(*this);
 		if (!fromGroup)isHidden = false;
 		CharaCard* pc{ PList.count(fromQQ) ? &getPlayer(fromQQ)[fromGroup] : nullptr };
-		readSkipSpace();
-		string& strReason{ strVar["reason"] = strMsg.substr(intMsgCnt) };
-		string strMainDice{ strReason };
+		string strMainDice;
+		string& strReason{ strVar["reason"] };
+		string strAttr;
+		if (pc) {	//调用角色卡属性或表达式
+			while (intMsgCnt < len && !isspace(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
+				if (isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))
+					|| strMsg[intMsgCnt] == 'a'
+					|| strMsg[intMsgCnt] == '+' || strMsg[intMsgCnt] == '-'
+					|| strMsg[intMsgCnt] == '*' || strMsg[intMsgCnt] == '/') {
+					strMainDice += strMsg[intMsgCnt++];
+				}
+				else if (strMsg[intMsgCnt] == '=' || strMsg[intMsgCnt] == ':') {
+					intMsgCnt++;
+				}
+				else {
+					strAttr = readAttrName();
+					strMainDice += pc->getExp(strAttr);
+					if (!pc->count("&" + strAttr) && (*pc)[strAttr].type == AttrVar::AttrType::Integer)strMainDice += 'a';
+				}
+			}
+		}
+		else {
+			strMainDice = readDice(); 	//ww的表达式可以是纯数字
+		}
+		strReason = readRest();
 		int intTurnCnt = 1;
 		const int intDefaultDice = get(getUser(fromQQ).intConf, string("默认骰"), 100);
-		//预处理.ww[次数]#[属性]
-		if (size_t pos{ strMainDice.find('#') };pos != string::npos) {
+		//处理.ww[次数]#[表达式]
+		if (size_t pos{ strMainDice.find('#') }; pos != string::npos) {
 			string strTurnCnt = strMainDice.substr(0, pos);
 			if (strTurnCnt.empty())
 				strTurnCnt = "1";
-			strReason = strMainDice = strMainDice.substr(pos + 1);
-			intMsgCnt += pos;
+			strMainDice = strMainDice.substr(pos + 1);
 			RD rdTurnCnt(strTurnCnt, intDefaultDice);
 			const int intRdTurnCntRes = rdTurnCnt.Roll();
 			if (intRdTurnCntRes != 0) {
@@ -3808,68 +3852,8 @@ int FromMsg::InnerOrder() {
 				replyHidden(strTurnNotice);
 			}
 		}
-		if (pc && pc->count(strReason)) {	//调用角色卡属性或表达式
-			strMainDice = pc->getExp(strReason);
-		}
-		else {
-			strMainDice = readDice(); 	//ww的表达式可以是纯数字
-			strVar["reason"] = readRest();
-		}
-		if (size_t pos{ strMainDice.find('#') }; pos != string::npos) {
-			string strTurnCnt = strMainDice.substr(0, pos);
-			if (strTurnCnt.empty())
-				strTurnCnt = "1";
-			strMainDice = strMainDice.substr(pos + 1);
-			RD rdTurnCnt(strTurnCnt, intDefaultDice);
-			const int intRdTurnCntRes = rdTurnCnt.Roll();
-			if (intRdTurnCntRes != 0) {
-				if (intRdTurnCntRes == Value_Err) {
-					reply(getMsg("strValueErr"));
-					return 1;
-				}
-				if (intRdTurnCntRes == Input_Err) {
-					reply(getMsg("strInputErr"));
-					return 1;
-				}
-				if (intRdTurnCntRes == ZeroDice_Err) {
-					reply(getMsg("strZeroDiceErr"));
-					return 1;
-				}
-				if (intRdTurnCntRes == ZeroType_Err) {
-					reply(getMsg("strZeroTypeErr"));
-					return 1;
-				}
-				if (intRdTurnCntRes == DiceTooBig_Err) {
-					reply(getMsg("strDiceTooBigErr"));
-					return 1;
-				}
-				if (intRdTurnCntRes == TypeTooBig_Err) {
-					reply(getMsg("strTypeTooBigErr"));
-					return 1;
-				}
-				if (intRdTurnCntRes == AddDiceVal_Err) {
-					reply(getMsg("strAddDiceValErr"));
-					return 1;
-				}
-				reply(getMsg("strUnknownErr"));
-				return 1;
-			}
-			if (rdTurnCnt.intTotal > 10) {
-				reply(getMsg("strRollTimeExceeded"));
-				return 1;
-			}
-			if (rdTurnCnt.intTotal <= 0) {
-				reply(getMsg("strRollTimeErr"));
-				return 1;
-			}
-			intTurnCnt *= rdTurnCnt.intTotal;
-			if (strTurnCnt.find('d') != string::npos) {
-				string strTurnNotice = strVar["pc"] + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
-				replyHidden(strTurnNotice);
-			}
-		}
 		if (strMainDice.empty()) {
-			reply(getMsg("strEmptyWWDiceErr"));
+			reply(fmt->get_help("ww"));
 			return 1;
 		}
 		string strFirstDice = strMainDice.substr(0, strMainDice.find('+') < strMainDice.find('-')
@@ -3934,9 +3918,6 @@ int FromMsg::InnerOrder() {
 				strVar["res"] += to_string(rdMainDice.intTotal);
 				if (intTurnCnt != 0)
 					strVar["res"] = ",";
-				if ((rdMainDice.strDice == "D100" || rdMainDice.strDice == "1D100") && (rdMainDice.intTotal <= 5 ||
-																						rdMainDice.intTotal >= 96))
-					vintExVal.push_back(rdMainDice.intTotal);
 			}
 			strVar["res"] += " }";
 			if (!vintExVal.empty()) {

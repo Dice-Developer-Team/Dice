@@ -301,9 +301,8 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strNameClr", "已将{nick}的名称删除√"},
 	{"strNameSet", "已将{nick}的名称更改为{new_nick}√"},
 	{"strUnknownPropErr", "未设定{attr}成功率，请先.st {attr} 技能值 或查看.help rc×"},
-	{"strEmptyWWDiceErr", "格式错误:正确格式为.w(w)XaY!其中X≥1, 5≤Y≤10"},
-	{"strPropErr", "请认真的输入你的属性哦~"},
-	{"strSetPropSuccess", "属性设置成功√"},
+	{"strPropErr", "请{pc}认真输入属性哦~"},
+	{"strSetPropSuccess", "已为{pc}录入{cnt}条属性√"},
 	{"strPropCleared", "已清空{char}的所有属性√"},
 	{"strRuleReset", "已重置默认规则√"},
 	{"strRuleSet", "已设置默认规则√"},
@@ -446,6 +445,7 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 };
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+587:ww调用优化
 586:新版自定义回复
 585:WebUI
 581:角色掷骰统计
@@ -654,7 +654,11 @@ Type=[回复性质](Reply/Order)
 	{"先攻列表", "&init"},
 	{"init", "先攻列表：\n.init list\t//查看先攻列表\n.init clr\t//清除先攻列表\n.init del [项目名]\t//从先攻列表移除项目"},
 	{"骰池", "&ww"},
-	{"ww", "骰池：.w(w) [骰子个数]a[加骰参数]\n.w会直接给出结果而.ww会给出每个骰子的点数\n固定10面骰，每有一个骰子点数达到加骰参数，则加骰一次，最后计算点数达到8的骰子数\n具体用法请参考相关游戏规则"},
+	{"ww", R"(骰池：.w(w) [骰子个数]a[加骰参数]
+.w会直接给出结果而.ww会给出每个骰子的点数
+固定10面骰，每有一个骰子点数达到加骰参数，则加骰一次，最后计算点数达到8的骰子数
+其中5≤加骰参数≤10
+具体用法请参考相关游戏规则)"},
 	{"第三人称", "&me"},
 	{"第三人称动作", "&me"},
 	{

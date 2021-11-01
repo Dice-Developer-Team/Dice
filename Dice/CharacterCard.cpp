@@ -129,10 +129,6 @@ int CharaCard::show(string key, string& val) const {
 		val = Note;
 		return 2;
 	}
-	if (DiceExp.count(key)) {
-		val = DiceExp.find(key)->second;
-		return 1;
-	}
 	key = standard(key);
 	if (Attr.count(key)) {
 		val = Attr.find(key)->second.to_str();
@@ -144,7 +140,8 @@ int CharaCard::show(string key, string& val) const {
 bool CharaCard::count(const string& strKey) const {
 	if (Attr.count(strKey))return true;
 	string key{ standard(strKey) };
-	return Attr.count(key) || DiceExp.count(key) || pTemplet->mAutoFill.count(key) || pTemplet->mVariable.count(key)
+	return Attr.count(key) || Attr.count("&" + key)
+		|| pTemplet->mAutoFill.count(key) || pTemplet->mVariable.count(key)
 		|| pTemplet->defaultSkill.count(key);
 }
 AttrVar& CharaCard::operator[](const string& strKey) {
@@ -160,13 +157,13 @@ AttrVar& CharaCard::operator[](const string& strKey) {
 //求key对应掷骰表达式
 string CharaCard::getExp(string& key, std::set<string> sRef){
 	sRef.insert(key);
-	std::map<string, string>::const_iterator exp = DiceExp.find(key);
-	if (exp != DiceExp.end()) return escape(exp->second, sRef);
-	exp = pTemplet->mExpression.find(key);
-	if (exp != pTemplet->mExpression.end()) return escape(exp->second, sRef);
 	key = standard(key);
-	std::map<string, AttrVar>::const_iterator val = Attr.find(key);
-	if (val != Attr.end())return val->second.to_str();
+	std::map<string, AttrVar>::const_iterator val = Attr.find("&" + key);
+	if (val != Attr.end())return escape(val->second.to_str(), sRef);
+	auto exp = pTemplet->mExpression.find(key);
+	if (exp != pTemplet->mExpression.end()) return escape(exp->second, sRef);
+	val = Attr.find(key);
+	if (val != Attr.end())return escape(val->second.to_str(), sRef);
 	exp = pTemplet->mVariable.find(key);
 	if (exp != pTemplet->mVariable.end())return to_string(cal(exp->second));
 	std::map<string, short>::const_iterator def{ pTemplet->defaultSkill.find(key) };
@@ -197,7 +194,6 @@ void CharaCard::buildv(string para)
 void CharaCard::clear() {
 	map<string, AttrVar, less_ci> attr_new{ {"__Type",Attr["__Type"]},{"__Name",Attr["__Name"]} };
 	Attr.swap(attr_new);
-	DiceExp.clear();
 	Note.clear();
 }
 [[nodiscard]] string CharaCard::show(bool isWhole) const {
@@ -207,22 +203,11 @@ void CharaCard::clear() {
 		ResList subList;
 		string strVal;
 		for (const auto& it : list) {
-			switch (show(it, strVal)) {
-			case 0:
+			if (!show(it, strVal)) {
 				sDefault.insert(it);
-				subList << it + ":" + strVal;
-				break;
-			case 1:
-				sDefault.insert(it);
-				subList << "&" + it + "=" + strVal;
-				break;
-			case 3:
-				sDefault.insert(it);
-				subList.dot("\t");
-				subList << it + ":" + strVal;
-				break;
-			default:
-				continue;
+				if (it[0] == '&')subList << it + "=" + strVal;
+				else if (Attr.find(it)->second.type == AttrVar::AttrType::Text)subList << it + ":【" + strVal + "】";
+				else subList << it + ":" + strVal;
 			}
 		}
 		Res << subList.show();
@@ -234,11 +219,6 @@ void CharaCard::clear() {
 		strAttrRest += key + ":" + val.to_str() + (val.type == AttrVar::AttrType::Text ? "\t" : " ");
 	}
 	Res << strAttrRest;
-	if (isWhole && !DiceExp.empty())
-		for (const auto& it : DiceExp) {
-			if (sDefault.count(it.first) || it.first[0] == '_')continue;
-			Res << "&" + it.first + "=" + it.second;
-		}
 	if (isWhole && !Note.empty())Res << "====================\n" + Note;
 	return Res.show();
 }
@@ -249,10 +229,6 @@ void CharaCard::writeb(std::ofstream& fout) const {
 	if (!Attr.empty()) {
 		fwrite(fout, string("Attrs"));
 		fwrite(fout, Attr);
-	}
-	if (!DiceExp.empty()) {
-		fwrite(fout, string("DiceExp"));
-		fwrite(fout, DiceExp);
 	}
 	if (!Note.empty()) {
 		fwrite(fout, string("Note"));
@@ -282,9 +258,14 @@ void CharaCard::readb(std::ifstream& fin) {
 			}
 		}
 			break;
-		case 21:
-			fread(fin, DiceExp);
-			DiceExp.erase("");
+		case 21: {
+			std::map<string, string>TempExp;
+			fread(fin, TempExp);
+			TempExp.erase("");
+			for (auto& [key, val] : TempExp) {
+				Attr["&" + key] = val;
+			}
+		}
 			break;
 		case 102: {
 			std::map<string, string>TempInfo;

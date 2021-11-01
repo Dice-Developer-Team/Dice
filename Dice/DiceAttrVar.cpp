@@ -22,6 +22,9 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "DiceAttrVar.h"
+#include "StrExtern.hpp"
+#include "DiceFile.hpp"
+using std::to_string;
 
 
 AttrVar::AttrVar(const AttrVar& other) :type(other.type) {

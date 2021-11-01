@@ -7,8 +7,8 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123ËÝä§
- * Copyright (C) 2019 String.Empty
+ * Copyright (C) 2018-2021 w4123ËÝä§
+ * Copyright (C) 2019-2021 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -32,12 +32,54 @@
 #include <map>
 #include "RDConstant.h"
 #include "RandomGenerator.h"
+#include "DDAPI.h"
 
 std::string to_circled(int num, int c = 8);
 
 class RD
 {
 private:
+
+	mutable int intWWCnt{ 0 };
+	mutable int intWWAdd{ 10 };
+	int_errno RollWW() const
+	{
+		std::vector<int> vintTmpRes;
+		int intTmpRes = 0;
+		bool boolNegative{ false };
+		if (intWWCnt < 0) {
+			boolNegative = true;
+			intWWCnt = -intWWCnt;
+		}
+		while (intWWCnt != 0)
+		{
+			vintTmpRes.push_back(intWWCnt);
+			int AddNum = 0;
+			int intCnt = intWWCnt;
+			while (intCnt--)
+			{
+				int intTmpResOnce = RandomGenerator::Randint(1, 10);
+				vintTmpRes.push_back(intTmpResOnce);
+				if (intTmpResOnce >= 8)
+					intTmpRes++;
+				if (intTmpResOnce >= intWWAdd)
+					AddNum++;
+			}
+			if (intWWCnt > 10)sort(vintTmpRes.end() - intCnt, vintTmpRes.end());
+			intWWCnt = AddNum;
+		}
+		if (boolNegative)
+			intTotal -= intTmpRes;
+		else
+			intTotal += intTmpRes;
+		vBnP.insert(vBnP.begin(), WW_Dice);
+		vboolNegative.insert(vboolNegative.begin(), boolNegative);
+		vvintRes.insert(vvintRes.begin(),vintTmpRes);
+		vintRes.insert(vintRes.begin(), intTmpRes);
+		vintMultiplier.insert(vintMultiplier.begin(), 1);
+		vintDivider.insert(vintDivider.begin(), 1);
+		return 0;
+	}
 
 	int_errno RollDice(std::string dice) const
 	{
@@ -66,50 +108,30 @@ private:
 		vintMultiplier.push_back(intMultiplier);
 		if (dice.find('a') != std::string::npos)
 		{
-			vBnP.push_back(WW_Dice);
 			std::string strDiceCnt = dice.substr(0, dice.find('a'));
 			for (auto i : strDiceCnt)
 				if (!isdigit(static_cast<unsigned char>(i)))
 					return Input_Err;
 			if (strDiceCnt.length() > 3)
 				return DiceTooBig_Err;
+			int intDiceCnt = stoi(strDiceCnt);
+			if (intDiceCnt == 0)
+				return ZeroDice_Err;
+			if (boolNegative)intDiceCnt = -intDiceCnt;
+			intWWCnt += intDiceCnt;
+			//AddVal
 			std::string strAddVal = dice.substr(dice.find('a') + 1);
+			if (strAddVal.length() > 2)
+				return AddDiceVal_Err;
 			for (auto i : strAddVal)
 				if (!isdigit(static_cast<unsigned char>(i)))
 					return Input_Err;
-			if (strAddVal.length() > 2)
-				return AddDiceVal_Err;
-			int intDiceCnt = stoi(strDiceCnt);
-			const int AddDiceVal = stoi(strAddVal);
-			if (intDiceCnt == 0)
-				return ZeroDice_Err;
-			if (AddDiceVal < 5 || AddDiceVal > 11)
-				return AddDiceVal_Err;
-			std::vector<int> vintTmpRes;
-			int intTmpRes = 0;
-			while (intDiceCnt != 0)
-			{
-				vintTmpRes.push_back(intDiceCnt);
-				int AddNum = 0;
-				int intCnt = intDiceCnt;
-				while (intDiceCnt--)
-				{
-					int intTmpResOnce = RandomGenerator::Randint(1, 10);
-					vintTmpRes.push_back(intTmpResOnce);
-					if (intTmpResOnce >= 8)
-						intTmpRes++;
-					if (intTmpResOnce >= AddDiceVal)
-						AddNum++;
-				}
-				if (intCnt > 10)sort(vintTmpRes.end() - intCnt, vintTmpRes.end());
-				intDiceCnt = AddNum;
+			if (!strAddVal.empty()) {
+				intWWAdd = stoi(strAddVal);
+				if (intWWAdd < 5 || intWWAdd > 11)
+					return AddDiceVal_Err;
 			}
-			if (boolNegative)
-				intTotal -= intTmpRes;
-			else
-				intTotal += intTmpRes;
-			vvintRes.push_back(vintTmpRes);
-			vintRes.push_back(intTmpRes);
+			vboolNegative.erase(vboolNegative.end() - 1);
 			return 0;
 		}
 		if (dice[dice.length() - 1] == 'F')
@@ -464,7 +486,6 @@ public:
 		}
 		if (strDice.empty())
 			strDice.append("D" + (std::to_string(defaultDice)));
-		if (strDice[0] == 'a')strDice.insert(0, "10");
 		if (strDice[0] == 'D' && strDice[1] == 'F')
 			strDice.insert(0, "4");
 		if (strDice[0] == 'F')
@@ -498,21 +519,12 @@ public:
 			strDice.insert(strDice.find("K+") + 1, "1");
 		while (strDice.find("K-") != std::string::npos)
 			strDice.insert(strDice.find("K-") + 1, "1");
-		while (strDice.find("a-") != std::string::npos)
-			strDice.insert(strDice.find("a-") + 1, "10");
-		while (strDice.find("a+") != std::string::npos)
-			strDice.insert(strDice.find("a+") + 1, "10");
-		while (strDice.find("-a") != std::string::npos)
-			strDice.insert(strDice.find("-a") + 1, "10");
-		while (strDice.find("+a") != std::string::npos)
-			strDice.insert(strDice.find("+a") + 1, "10");
 		if (*(strDice.end() - 1) == 'D')
 			strDice.append(std::to_string(defaultDice));
 		if (*(strDice.end() - 1) == 'K')
 			strDice.append("1");
 		if (*strDice.begin() == '+')
 			strDice.erase(strDice.begin());
-		if (strDice[strDice.length() - 1] == 'a')strDice.append("10");
 	}
 
 	mutable std::vector<std::vector<int>> vvintRes{};
@@ -560,9 +572,12 @@ public:
 			else
 				vboolNegative.push_back(true);
 		}
-		const int intFinalRDRes = RollDice(dice.substr(intReadDiceLoc));
-		if (intFinalRDRes != 0)
+		if (const int intFinalRDRes = RollDice(dice.substr(intReadDiceLoc)))
 			return intFinalRDRes;
+		if (intWWCnt > 0) {
+			if (const int intWWRes = RollWW())
+				return intWWRes;
+		}
 		return 0;
 	}
 
@@ -640,16 +655,22 @@ public:
 
 	std::string FormStringSeparate() const
 	{
+		DD::debugLog("¿ªÊ¼ÁÐÊ½:"+ std::to_string(vvintRes.size())+"/"
+			+ std::to_string(vintRes.size()) + "/"
+			+ std::to_string(vboolNegative.size()) + "/"
+			+ std::to_string(vintMultiplier.size()) + "/"
+			+ std::to_string(vintDivider.size()));
 		std::string strReturnString;
+		unsigned int idx{ 0 };
 		for (auto i = vvintRes.begin(); i != vvintRes.end(); ++i)
 		{
-			strReturnString.append(vboolNegative[distance(vvintRes.begin(), i)]
+			strReturnString.append(vboolNegative[idx]
 				                       ? "-"
-				                       : (i == vvintRes.begin() ? "" : "+"));
-			if (vBnP[distance(vvintRes.begin(), i)] == Normal_Dice)
+				                       : (idx ? "+" : ""));
+			if (vBnP[idx] == Normal_Dice)
 			{
-				if (i->size() != 1 && (vvintRes.size() != 1 || vintMultiplier[distance(vvintRes.begin(), i)] != 1 ||
-					vintDivider[distance(vvintRes.begin(), i)] != 1 || vboolNegative[distance(vvintRes.begin(), i)]))
+				if (i->size() != 1 && (vvintRes.size() != 1 || vintMultiplier[idx] != 1 ||
+					vintDivider[idx] != 1 || vboolNegative[idx]))
 					strReturnString.append("(");
 				for (auto j = i->begin(); j != i->end(); ++j)
 				{
@@ -657,19 +678,19 @@ public:
 						strReturnString.append("+");
 					strReturnString.append(std::to_string(*j));
 				}
-				if (i->size() != 1 && (vvintRes.size() != 1 || vintMultiplier[distance(vvintRes.begin(), i)] != 1 ||
-					vintDivider[distance(vvintRes.begin(), i)] != 1 || vboolNegative[distance(vvintRes.begin(), i)]))
+				if (i->size() != 1 && (vvintRes.size() != 1 || vintMultiplier[idx] != 1 ||
+					vintDivider[idx] != 1 || vboolNegative[idx]))
 					strReturnString.append(")");
-				if (vintMultiplier[distance(vvintRes.begin(), i)] != 1)
+				if (vintMultiplier[idx] != 1)
 				{
-					strReturnString += "¡Á" + std::to_string(vintMultiplier[distance(vvintRes.begin(), i)]);
+					strReturnString += "¡Á" + std::to_string(vintMultiplier[idx]);
 				}
-				if (vintDivider[distance(vvintRes.begin(), i)] != 1)
+				if (vintDivider[idx] != 1)
 				{
-					strReturnString += "/" + std::to_string(vintDivider[distance(vvintRes.begin(), i)]);
+					strReturnString += "/" + std::to_string(vintDivider[idx]);
 				}
 			}
-			else if (vBnP[distance(vvintRes.begin(), i)] == Fudge_Dice)
+			else if (vBnP[idx] == Fudge_Dice)
 			{
 				strReturnString.append("[");
 				for (auto j = i->begin(); j != i->end(); ++j)
@@ -680,7 +701,7 @@ public:
 				}
 				strReturnString.append("]");
 			}
-			else if (vBnP[distance(vvintRes.begin(), i)] == WW_Dice)
+			else if (vBnP[idx] == WW_Dice)
 			{
 				bool isCnt = false;
 				if (i->size() >= 100)isCnt = true;
@@ -733,13 +754,14 @@ public:
 			else
 			{
 				strReturnString.append(std::to_string((*i)[0]));
-				strReturnString.append(vBnP[distance(vvintRes.begin(), i)] == B_Dice ? "[½±Àø÷»:" : "[³Í·£÷»:");
+				strReturnString.append(vBnP[idx] == B_Dice ? "[½±Àø÷»:" : "[³Í·£÷»:");
 				for (auto it = i->begin() + 1; it != i->end(); ++it)
 				{
 					strReturnString.append(std::to_string(*it) + ((it == i->end() - 1) ? "" : " "));
 				}
 				strReturnString.append("]");
 			}
+			++idx;
 		}
 		return strReturnString;
 	}

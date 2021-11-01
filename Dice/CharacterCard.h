@@ -174,7 +174,7 @@ public:
 		{"__UpdateLow",AttrVar(int(time(nullptr)))},
 	};
 	//map<string, string, less_ci> Info{  };
-	map<string, string, less_ci> DiceExp{};
+	//map<string, string, less_ci> DiceExp{};
 	string Note;
 	CardTemp* pTemplet{ nullptr };
 
@@ -185,7 +185,6 @@ public:
 	{
 		Name = pc.Name;
 		Attr = pc.Attr;
-		DiceExp = pc.DiceExp;
 		Note = pc.Note;
 		pTemplet = pc.pTemplet;
 	}
@@ -193,7 +192,6 @@ public:
 	{
 		Name = pc.Name;
 		Attr = pc.Attr;
-		DiceExp = pc.DiceExp;
 		Note = pc.Note;
 		pTemplet = pc.pTemplet;
 		return *this;
@@ -249,7 +247,9 @@ public:
 
 	bool countExp(const string& key)
 	{
-		return DiceExp.count(key) || pTemplet->mExpression.count(key);
+		return (Attr.count(key) && Attr[key].type == AttrVar::AttrType::Text)
+			|| (Attr.count("&" + key))
+			|| pTemplet->mExpression.count(key);
 	}
 
 	//计算表达式
@@ -283,9 +283,8 @@ public:
 			//exp
 			if (it2.first[0] == '&')
 			{
-				it2.first.erase(it2.first.begin());
-				if (DiceExp.count(it2.first))continue;
-				DiceExp[it2.first] = it2.second;
+				if (Attr.count(it2.first))continue;
+				Attr[it2.first] = it2.second;
 			}
 				//info
 			else if (pTemplet->sInfoList.count(it2.first))
@@ -319,13 +318,6 @@ public:
 
 	int set(const string& key, const string& s);
 
-	int setExp(const string& key, const string& exp)
-	{
-		if (key.empty() || exp.length() > 48)return -1;
-		DiceExp[key] = exp;
-		return 0;
-	}
-
 	int setNote(const string& note)
 	{
 		if (note.length() > 255)return -11;
@@ -347,11 +339,6 @@ public:
 		{
 			Attr.erase(strKey);
 			key = strKey;
-			return true;
-		}
-		if (DiceExp.count(key))
-		{
-			DiceExp.erase(key);
 			return true;
 		}
 		return false;

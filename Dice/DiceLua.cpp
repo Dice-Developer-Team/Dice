@@ -431,15 +431,15 @@ int getPlayerCardAttr(lua_State* L) {
 		lua_push_attr(L, pc.Attr.find(key)->second);
 		return 3;
 	}
+	else if (key = pc.standard(key); pc.Attr.count(key)) {
+		lua_push_attr(L, pc.Attr.find(key)->second);
+	}
 	else if (key == "note") {
 		lua_push_string(L, pc.Note);
 		return 2;
 	}
-	else if (pc.DiceExp.count(key)) {
-		lua_push_string(L, pc.DiceExp.find(key)->second);
-	}
-	else if (key = pc.standard(key); pc.Attr.count(key)) {
-		lua_push_attr(L, pc.Attr.find(key)->second);
+	else if (pc.Attr.count("&" + key)) {
+		lua_push_string(L, pc.Attr.find("&" + key)->second.to_str());
 	}
 	else {
 		lua_pushnil(L);
@@ -477,8 +477,7 @@ int setPlayerCardAttr(lua_State* L) {
 		pc.set(item, lua_tonumber(L, -1));
 	}
 	else if (lua_isstring(L, 4)) {
-		if (item[0] == '&')pc.setExp(item.substr(1), lua_to_gb18030_string(L, -1));
-		else pc.set(item, lua_to_gb18030_string(L, -1));
+		pc.set(item, lua_to_gb18030_string(L, -1));
 	}
 	return 0;
 }
