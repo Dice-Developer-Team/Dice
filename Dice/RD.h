@@ -32,7 +32,6 @@
 #include <map>
 #include "RDConstant.h"
 #include "RandomGenerator.h"
-#include "DDAPI.h"
 
 std::string to_circled(int num, int c = 8);
 
@@ -486,6 +485,7 @@ public:
 		}
 		if (strDice.empty())
 			strDice.append("D" + (std::to_string(defaultDice)));
+		if (strDice[0] == 'a')strDice.insert(0, "1");
 		if (strDice[0] == 'D' && strDice[1] == 'F')
 			strDice.insert(0, "4");
 		if (strDice[0] == 'F')
@@ -496,6 +496,10 @@ public:
 			if (strDice[ReadCnt] == 'F' && (isdigit(strDice[ReadCnt - 1]) || strDice[ReadCnt - 1] == '+' || strDice[
 				ReadCnt - 1] == '-'))
 				strDice.insert(ReadCnt, "D");
+		while (strDice.find("-a") != std::string::npos)
+			strDice.insert(strDice.find("-a") + 1, "1");
+		while (strDice.find("+a") != std::string::npos)
+			strDice.insert(strDice.find("+a") + 1, "1");
 		while (strDice.find("+DF") != std::string::npos)
 			strDice.insert(strDice.find("+DF") + 1, "4");
 		while (strDice.find("-DF") != std::string::npos)
@@ -655,11 +659,6 @@ public:
 
 	std::string FormStringSeparate() const
 	{
-		DD::debugLog("开始列式:"+ std::to_string(vvintRes.size())+"/"
-			+ std::to_string(vintRes.size()) + "/"
-			+ std::to_string(vboolNegative.size()) + "/"
-			+ std::to_string(vintMultiplier.size()) + "/"
-			+ std::to_string(vintDivider.size()));
 		std::string strReturnString;
 		unsigned int idx{ 0 };
 		for (auto i = vvintRes.begin(); i != vvintRes.end(); ++i)
