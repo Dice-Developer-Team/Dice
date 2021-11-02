@@ -2675,7 +2675,9 @@ int FromMsg::InnerOrder() {
 		}
 		while (strMsg[intMsgCnt] == ' ')intMsgCnt++;
 		if (intMsgCnt == strMsg.length() || strMsg.substr(intMsgCnt) == "show") {
-			AddMsgToQueue(getMsg(strName), fromChat);
+			std::shared_lock lock(GlobalMsgMutex);
+			const auto it = GlobalMsg.find(strName);
+			if (it != GlobalMsg.end())AddMsgToQueue(it->second, fromChat);
 			return 1;
 		}
 		string strMessage = strMsg.substr(intMsgCnt);
