@@ -64,7 +64,7 @@ private:
 				if (intTmpResOnce >= intWWAdd)
 					AddNum++;
 			}
-			if (intWWCnt > 10)sort(vintTmpRes.end() - intCnt, vintTmpRes.end());
+			if (intWWCnt > 10)sort(vintTmpRes.end() - intWWCnt, vintTmpRes.end());
 			intWWCnt = AddNum;
 		}
 		if (boolNegative)
@@ -578,7 +578,7 @@ public:
 		}
 		if (const int intFinalRDRes = RollDice(dice.substr(intReadDiceLoc)))
 			return intFinalRDRes;
-		if (intWWCnt > 0) {
+		if (intWWCnt) {
 			if (const int intWWRes = RollWW())
 				return intWWRes;
 		}
