@@ -954,6 +954,7 @@ int FromMsg::BasicOrder()
 	//strVar["at"] = intT ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
 	isAuth = trusted > 3 || intT != GroupT || DD::isGroupAdmin(fromGroup, fromQQ, true) || pGrp->inviter == fromQQ;
 	//Ö¸ÁîÆ¥Åä
+	if(console["DebugMode"])console.log("listen:" + strMsg, 0, printSTNow());
 	if (strLowerMessage.substr(intMsgCnt, 9) == "authorize")
 	{
 		intMsgCnt += 9;
@@ -3765,7 +3766,7 @@ int FromMsg::InnerOrder() {
 			intMsgCnt += 1;
 		}
 		readSkipSpace();
-		const unsigned int len{ strMsg.length() };
+		const unsigned int len{ (unsigned int)strMsg.length() };
 		if (intMsgCnt == len) {
 			reply(fmt->get_help("ww"));
 			return 1;

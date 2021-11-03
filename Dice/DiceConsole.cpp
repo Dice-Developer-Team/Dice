@@ -62,6 +62,7 @@ const std::map<std::string, int, less_ci>Console::intDefault{
 {"ListenGroupEcho",0},{"ListenSelfEcho",0},
 {"EnableWebUI",1},{"WebUIAllowInternetAccess",0},
 {"WebUIPort",0},
+{"DebugMode",0},
 };
 const enumap<string> Console::mClockEvent{ "off", "on", "save", "clear" };
 
