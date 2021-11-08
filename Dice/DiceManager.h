@@ -198,8 +198,9 @@ public:
             if (j["action"].get<std::string>() == "set")
             {
                 for(const auto& item: j["data"])
-                {
-                    DiceMsgReply& trigger{ fmt->msgreply[UTF8toGBK(item["name"].get<std::string>())] };
+                {   
+                    string key{ UTF8toGBK(item["name"].get<std::string>()) };
+                    DiceMsgReply trigger;
                     trigger.type = (DiceMsgReply::Type)DiceMsgReply::sType[item["type"].get<std::string>()];
                     trigger.mode = (DiceMsgReply::Mode)DiceMsgReply::sMode[item["mode"].get<std::string>()];
                     trigger.echo = (DiceMsgReply::Echo)DiceMsgReply::sEcho[item["echo"].get<std::string>()];
@@ -215,8 +216,8 @@ public:
                     else {
                         trigger.text = item["value"].get<std::string>();
                     }
+                    fmt->set_reply(key, trigger);
                 }
-                fmt->save_reply();
             } 
             else if (j["action"].get<std::string>() == "delete")
             {
