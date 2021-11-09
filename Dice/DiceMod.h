@@ -119,10 +119,10 @@ class DiceModManager
     map<string, DiceMsgOrder, less_ci> msgorder;
     map<string, DiceMsgOrder, less_ci> taskcall;
     WordQuerier querier;
-    TrieG<less_ci> gOrder;
+    TrieG<char, less_ci> gOrder;
     map<string, DiceMsgReply, less_ci> msgreply;
     set<string, less_ci> reply_regex;
-    TrieG<less_ci> gReplySearcher;
+    TrieG<wchar_t, less_ci> gReplySearcher;
 public:
 	DiceModManager();
 	friend void loadData();

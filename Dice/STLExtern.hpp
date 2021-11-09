@@ -20,6 +20,9 @@ struct less_ci
 	bool operator()(const char& ch1, const char& ch2) const {
 		return tolower(static_cast<unsigned char>(ch1)) < tolower(static_cast<unsigned char>(ch2));
 	}
+	bool operator()(const wchar_t& ch1, const wchar_t& ch2) const {
+		return towlower(static_cast<unsigned short>(ch1)) < towlower(static_cast<unsigned short>(ch2));
+	}
 	bool operator()(const string& str1, const string& str2) const
 	{
 		string::const_iterator it1 = str1.cbegin(), it2 = str2.cbegin();

@@ -239,7 +239,7 @@ bool DiceModManager::listen_reply(FromMsg* msg) {
 		return true;
 	}
 	//模糊匹配禁止自我触发
-	if (vector<string>res; msg->fromQQ != console.DiceMaid && gReplySearcher.search(strMsg, res)) {
+	if (vector<string>res; msg->fromQQ != console.DiceMaid && gReplySearcher.search(convert_a2realw(strMsg.c_str()), res)) {
 		for (const auto& key : res) {
 			if (!msgreply.count(key))continue;
 			DiceMsgReply& reply{ msgreply[key] };
@@ -290,7 +290,7 @@ void DiceModManager::set_reply(const string& key, DiceMsgReply& reply) {
 	if (reply.mode == DiceMsgReply::Mode::Regex)
 		reply_regex.insert(key);
 	else reply_regex.erase(key);
-	if (reply.mode == DiceMsgReply::Mode::Search)gReplySearcher.insert(key);
+	if (reply.mode == DiceMsgReply::Mode::Search)gReplySearcher.insert(convert_a2realw(key.c_str()), key);
 	save_reply();
 }
 bool DiceModManager::del_reply(const string& key) {
@@ -375,9 +375,10 @@ int DiceModManager::load(ResList* resLog)
 		save_reply();
 	}
 	for (const auto& [key, reply] : msgreply) {
-		if (reply.mode == DiceMsgReply::Mode::Search)gReplySearcher.insert(key);
+		if (reply.mode == DiceMsgReply::Mode::Search)gReplySearcher.add(convert_a2realw(key.c_str()), key);
 		else if (reply.mode == DiceMsgReply::Mode::Regex)reply_regex.insert(key);
 	}
+	gReplySearcher.make_fail();
 	//读取mod
 	vector<std::filesystem::path> sModFile;
 	vector<string> sModErr;
@@ -469,7 +470,9 @@ void DiceModManager::init() {
 	for (auto& [key, word] : helpdoc) {
 		querier.insert(key);
 	}
-	gOrder.build(msgorder);
+	for (const auto& [key, order] : msgorder) {
+		gOrder.insert(key, key);
+	}
 	isIniting = false;
 }
 void DiceModManager::clear()

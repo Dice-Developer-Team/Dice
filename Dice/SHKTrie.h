@@ -9,20 +9,20 @@
 #include <cstring>
 using std::map;
 using std::unordered_set;
-using std::string;
 
-template<class sort>
+template<class _Char, class sort>
 class TrieNode {
 public:
-	map<char, TrieNode, sort> next{};
+	map<_Char, TrieNode, sort> next{};
 	TrieNode* fail = nullptr;
 	bool isleaf = false;
-	string value{};
+	std::string value{};
 };
 
-template<class sort>
+template<class _Char, class sort>
 class TrieG {
-	using Node = TrieNode<sort>;
+	using Node = TrieNode<_Char, sort>;
+	using _String = std::basic_string<_Char>;
 	Node root{};
 	string chsException;
 	//是为目标节点的子节点匹配fail
@@ -46,41 +46,40 @@ class TrieG {
 			make_fail(kid);
 		}
 	}
-	static bool ignored(char ch) {
-		static const char* dot{ "~!@#$%^&*()-=`_+[]\\{}|;':\",./<>?" };
-		return isspace(static_cast<unsigned char>(ch)) || strchr(dot, ch);
-	}
-	void add(const string& s) {
-		Node* p = &root;
-		for (auto ch : s) {
-			if (!p->next.count(ch)) {
-				p->next[ch] = Node();
-			}
-			p = &(p->next[ch]);
-		}
-		p->value = s;
-		p->isleaf = true;
-	}
 public:
 	TrieG(){}
-	template<typename Con>
+	/*template<typename Con>
 	TrieG(const Con& dir) {
 		for (const auto& [key,val]: dir) {
 			add(key);
 		}
 		make_fail(root);
-	}
-	template<typename Con>
+	}*/
+	/*template<typename Con>
 	void build(const Con& dir) {
 		this->~TrieG();
 		new(this)TrieG(dir);
+	}*/
+	void add(const _String s, const string& val) {
+		Node* p = &root;
+		for (_Char ch : s) {
+			if (!p->next.count(ch)) {
+				p->next[ch] = Node();
+			}
+			p = &(p->next[ch]);
+		}
+		p->value = val;
+		p->isleaf = true;
 	}
-	void insert(const string& key) {
-		add(key);
+	void make_fail() {
+		make_fail(root);
+	}
+	void insert(const _String& key, const string& val) {
+		add(key, val);
 		make_fail(root);
 	}
 	//前缀匹配
-	bool match_head(const string& s, string& res)const {
+	bool match_head(const _String& s, _String& res)const {
 		const Node* p = &root;
 		for (const auto& ch : s) {
 			//if (ignored(ch))continue;
@@ -92,10 +91,10 @@ public:
 		}
 		return !res.empty();
 	}
-	bool match_head(const string& s, unordered_set<string>& res)const {
+	bool match_head(const _String& s, unordered_set<_String>& res)const {
 		const Node* p = &root;
 		for (const auto& ch : s) {
-			if (ignored(ch))continue;
+			//if (ignored(ch))continue;
 			if (!p->next.count(ch))break;
 			p = &(p->next.find(ch)->second);
 			if (p->isleaf) {
@@ -105,11 +104,11 @@ public:
 		return res.size();
 	}
 	//任意位置字串匹配，不重复记录
-	bool search(const string& s, vector<string>& res)const {
+	bool search(const _String& s, vector<string>& res, bool(* _Filter)(_Char) = [](_Char) {return false; })const {
 		unordered_set<string> words;
 		const Node* p = &root;
 		for (const auto& ch : s) {
-			if (ignored(ch))continue;
+			if (_Filter(ch))continue;
 			while (1) {
 				if (auto it = p->next.find(ch); it != p->next.end()) {
 					p = &(it->second);

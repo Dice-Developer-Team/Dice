@@ -9,7 +9,7 @@
 #include <cstring>
 #include "filesystem.hpp"
 
-TrieG<less_ci> wordG;
+TrieG<wchar_t, less_ci> wordG;
 
 enumap<string> sens{ "Ignore","Notice","Caution","Warning","Danger" };
 
@@ -47,7 +47,7 @@ void Censor::insert(const string& word, Level danger = Level::Warning) {
 }
 void Censor::add_word(const string& word, Level danger = Level::Warning) {
 	CustomWords[word] = danger;
-	if (!words.count(word))wordG.insert(word);
+	if (!words.count(word))wordG.insert(convert_a2realw(word.c_str()),word);
 	words[word] = danger;
 	save();
 }
@@ -78,15 +78,23 @@ Censor::Level Censor::get_level(const string& lv) {
 
 void Censor::build() {
 	map_merge(words, CustomWords);
-	wordG.build(words);
+	for (const auto& [word,lv] : words) {
+		wordG.add(convert_a2realw(word.c_str()), word);
+	}
+	wordG.make_fail();
 }
 void Censor::save() {
 	saveJMap(DiceDir / "conf" / "CustomCensor.json", censor.CustomWords);
 }
 
+bool ignored(wchar_t ch) {
+	static const wchar_t* dot{ L"~!@#$%^&*()-=`_+[]\\{}|;':\",./<>?" };
+	return isspace(static_cast<unsigned char>(ch)) || wcschr(dot, ch);
+}
+
 int Censor::search(const string& text, vector<string>& res) {
 	std::bitset<6> sens;
-	wordG.search(text, res);
+	wordG.search(convert_a2realw(text.c_str()), res, ignored);
 	for (auto& word : res) {
 		sens.set((size_t)words[word]);
 	}
