@@ -160,7 +160,8 @@ int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 } 
 void Console::newMaster(long long qq)
 {
-	masterQQ = qq; 
+	masterQQ = qq;
+	isMasterMode = true;
 	if (trustedQQ(qq) < 5)getUser(qq).trust(5);
 	setNotice({qq, msgtype::Private}, 0b111111);
 	save(); 

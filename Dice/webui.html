@@ -4,13 +4,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-  <title>Dice WebUI</title>
+  <title>{{= d.nick }}的Dice WebUI</title>
   <link rel="stylesheet" href="https://unpkg.com/layui@2.6.8/dist/css/layui.css">
   <style>
       .layui-layout-admin .layui-layout-left,
       .layui-layout-admin .layui-body,
       .layui-layout-admin .layui-footer{left: 0;}
       .layui-layout-admin .layui-side{left: -300px;}
+      .layui-table-cell{
+        height: auto;
+        white-space: pre-wrap;
+      }
   </style>
 </head>
 <body>
@@ -127,6 +131,15 @@
             <li class="layui-timeline-item">
               <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
               <div class="layui-timeline-content layui-text">
+                <h3 class="layui-timeline-title">2021年11月3日 版本2.6.0(587)</h3>
+                <p>
+                  更新ww指令机制
+                </p>
+              </div>
+            </li>
+            <li class="layui-timeline-item">
+              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+              <div class="layui-timeline-content layui-text">
                 <h3 class="layui-timeline-title">2021年10月1日 版本2.6.0(586)</h3>
                 <p>
                   新版触发词回复
@@ -239,7 +252,7 @@
     <label class="layui-form-label" style="width: 50px">回复</label>
     <div class="layui-input-block" style="margin-left: 80px">
       <!-- TODO: Multiline -->
-      <input type="text" name="value" required lay-verify="required" placeholder="请输入回复" autocomplete="off" class="layui-input">
+      <textarea type="text" name="value" required lay-verify="required" placeholder="请输入回复" autocomplete="off" class="layui-textarea"></textarea>
     </div>
   </div>
   <div class="layui-form-item">
@@ -273,6 +286,9 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
   $.get("/api/basicinfo")
     .done(function(data) {
       if (data.code == 0) {
+        var titleTpl = lay('title')[0].innerHTML;
+        lay('title').html(layui.laytpl(titleTpl).render(data.data));
+
         var footerTpl = lay('#footer')[0].innerHTML;
         lay('#footer').html(layui.laytpl(footerTpl).render(data.data))
         .removeClass('layui-hide');
@@ -308,6 +324,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
   });
 
   table.on('edit(custom-msg-table)', function(obj) { 
+    obj.data.value = obj.data.value.replace(/<br>/g,"\n");
     $.post("/api/custommsg", JSON.stringify({action: "set", data: [obj.data]}))
     .done(function(data) {
       if (data.code == 0) {
@@ -455,6 +472,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
   });
 
   table.on('edit(custom-reply-table)', function(obj) { 
+    obj.data.value = obj.data.value.replace(/<br>/g,"\n");
     if(obj.data.echo == "Deck"){obj.data.value = obj.data.value.split("|");}
     $.post("/api/customreply", JSON.stringify({action: "set", data: [obj.data]}))
     .done(function(data) {
