@@ -954,7 +954,7 @@ int FromMsg::BasicOrder()
 	//strVar["at"] = intT ? "[CQ:at,qq=" + to_string(fromQQ) + "]" : strVar["nick"];
 	isAuth = trusted > 3 || intT != GroupT || DD::isGroupAdmin(fromGroup, fromQQ, true) || pGrp->inviter == fromQQ;
 	//指令匹配
-	if(console["DebugMode"])console.log("listen:" + strMsg, 0, printSTNow());
+	if (console["DebugMode"])console.log("listen:" + strMsg, 0, printSTNow());
 	if (strLowerMessage.substr(intMsgCnt, 9) == "authorize")
 	{
 		intMsgCnt += 9;
@@ -2269,7 +2269,7 @@ int FromMsg::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		const string Command = strLowerMessage.substr(intMsgCnt, strMsg.find(' ', intMsgCnt) - intMsgCnt);
-		if (fromChat.second == msgtype::Group) {
+		if (fromChat.second != msgtype::Private) {
 			if (Command == "on") {
 				if (isAuth) {
 					if (groupset(fromGroup, "禁用jrrp") > 0) {
@@ -2302,32 +2302,6 @@ int FromMsg::InnerOrder() {
 			}
 			if (groupset(fromGroup, "禁用jrrp") > 0) {
 				reply("在本群中JRRP功能已被禁用");
-				return 1;
-			}
-		}
-		else if (fromChat.second != msgtype::Discuss) {
-			if (Command == "on") {
-				if (groupset(fromGroup, "禁用jrrp") > 0) {
-					chat(fromGroup).reset("禁用jrrp");
-					reply("成功在此多人聊天中启用JRRP!");
-				}
-				else {
-					reply("在此多人聊天中JRRP没有被禁用!");
-				}
-				return 1;
-			}
-			if (Command == "off") {
-				if (groupset(fromGroup, "禁用jrrp") < 1) {
-					chat(fromGroup).set("禁用jrrp");
-					reply("成功在此多人聊天中禁用JRRP!");
-				}
-				else {
-					reply("在此多人聊天中JRRP没有被启用!");
-				}
-				return 1;
-			}
-			if (groupset(fromGroup, "禁用jrrp") > 0) {
-				reply("在此多人聊天中JRRP已被禁用!");
 				return 1;
 			}
 		}

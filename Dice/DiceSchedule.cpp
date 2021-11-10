@@ -187,7 +187,7 @@ int DiceToday::getJrrp(long long qq) {
 			cntUser[qq]["jrrp_local"] = RandomGenerator::Randint(1, 100);
 			console.log(getMsg("strJrrpErr",
 							   { {"res", res} }
-			), 1);
+			), 0);
 		}
 		return cntUser[qq]["jrrp_local"];
 	}
