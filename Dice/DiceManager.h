@@ -214,7 +214,7 @@ public:
                         }
                     }
                     else {
-                        trigger.text = item["value"].get<std::string>();
+                        trigger.text = UTF8toGBK(item["value"].get<std::string>());
                     }
                     fmt->set_reply(key, trigger);
                 }
@@ -357,25 +357,13 @@ public:
                 {
                     if (console)
                     {
-						console.killMaster();
+                        console.killMaster();
                         console.isMasterMode = false;
                     }
-                } 
-                else
+                }
+                else if (console.masterQQ != masterQQ)
                 {
-                    if (console)
-					{
-						if (console.masterQQ != masterQQ)
-						{
-							console.killMaster();
-							console.newMaster(masterQQ);
-						}
-					}
-                    else
-                    {
-                        console.newMaster(masterQQ);
-                        console.isMasterMode = true;
-                    }
+                    console.newMaster(masterQQ);
                 }
             } 
             else

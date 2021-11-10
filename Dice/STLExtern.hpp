@@ -1,6 +1,6 @@
 /*
  * ×Ô¶¨ÒåÈÝÆ÷
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2019-2021 String.Empty
  */
 #pragma once
 #include <string>
@@ -18,10 +18,12 @@ using std::to_string;
 struct less_ci
 {
 	bool operator()(const char& ch1, const char& ch2) const {
-		return tolower(static_cast<unsigned char>(ch1)) < tolower(static_cast<unsigned char>(ch2));
+		return ((ch1 & ~(unsigned char)0xff) | tolower(static_cast<unsigned char>(ch1)))
+			< ((ch2 & ~(unsigned char)0xff) | tolower(static_cast<unsigned char>(ch2)));
 	}
-	bool operator()(const wchar_t& ch1, const wchar_t& ch2) const {
-		return towlower(static_cast<unsigned short>(ch1)) < towlower(static_cast<unsigned short>(ch2));
+	template<typename _Char>
+	bool operator()(const _Char& ch1, const _Char& ch2) const {
+		return tolower(static_cast<unsigned char>(ch1 & 0xff)) < tolower(static_cast<unsigned char>(ch2 & 0xff));
 	}
 	bool operator()(const string& str1, const string& str2) const
 	{
