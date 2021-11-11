@@ -52,6 +52,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
 	{"strParaIllegal","参数非法×"},			//偷懒用万能回复
 	{"stranger","用户"},			//{nick}无法获取非空昵称时的称呼
+	{"strCallUser", "用户"},
 	{"strAdminOptionEmpty","找{self}有什么事么？{nick}"},			//
 	{"strLogNew","{self}开始新日志记录√\n请适时用.log off暂停或.log end完成记录"},
 	{"strLogOn","{self}开始日志记录√\n可使用.log off暂停记录"},
@@ -123,7 +124,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strPcNameInvalid","非法的角色卡名（存在冒号）×"},
 	{"strPcInitDelErr","{nick}的初始卡不可删除×"},
 	{"strPcNoteTooLong","备注长度不能超过255×"},
-	{"strPcTextTooLong","文本长度不能超过48×"},
+	{"strPcTextTooLong","文本长度不能超过255×"},
 	{"strCOCBuild","{pc}的调查员作成:{res}"},
 	{"strDNDBuild","{pc}的英雄作成:{res}"},
 	{"strCensorCaution","提醒：{nick}的指令包含敏感词，{self}已上报"},
@@ -136,7 +137,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strReplyOn","{self}现在本群启用关键词回复√"},
 	{"strReplyOff","{self}现在本群禁用关键词回复√"},
 	{"strReplySet","{self}对关键词{key}的回复已设置√"},
-	{"strReplyShow","{self}对关键词{key}的回复为:{res}"},
+	{"strReplyShow","{self}对关键词{key}的回复为:{show}"},
 	{"strReplyList","{self}的触发词共有:{res}"},
 	{"strReplyDel","{self}对关键词{key}的回复已清除√"},
 	{"strReplyKeyEmpty","{nick}请输入回复关键词×"},
@@ -164,7 +165,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strDeckListFull","{self}处牌堆实例已达上限，请先清理无用实例×"},
 	{"strDeckNotFound","{self}找不到牌堆{deck_name}×"},
 	{"strDeckCiteNotFound","{self}找不到公共牌堆{deck_cited}×" },
-	{"strDeckNameEmpty","未指定牌堆名×"},
+	{"strDeckNameEmpty","{nick}未指定牌堆名×"},
 	{"strRangeEmpty","{self}没法对着空气数数×" },
 	{"strOutRange","{nick}定义的数列超出{self}允许范围×" },
 	{"strRollDice","{pc}掷骰: {res}"},
@@ -259,9 +260,9 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strCharacterInvalid", "人物作成次数无效!请输入1-10之间的数字!"},
 	{"strSanRoll", "{pc}的San Check：\n{res}"},
 	{"strSanRollRes", "{strSanRoll}\n{pc}的San值减少{change}点,当前剩余{final}点"},
-	{"strSanCostInvalid", "SC表达式输入不正确,格式为成功扣San/失败扣San,如1/1d6!"},
-	{"strSanInvalid", "San值输入不正确,请输入1-99范围内的整数!"},
-	{"strSanEmpty", "未设定San值，请先.st san 或查看.help sc×"},
+	{"strSanCostInvalid", "{pc}输入SC表达式不正确,格式为成功扣San/失败扣San,如1/1d6!"},
+	{"strSanInvalid", "San值输入不正确,请{pc}输入1-99范围内的整数!"},
+	{"strSanEmpty", "未设定San值，请{pc}先.st san 或查看.help sc×"},
 	{"strSuccessRateErr", "这成功率还需要检定吗？"},
 	{"strGroupIDInvalid", "无效的群号!"},
 	{"strSendErr", "消息发送失败!"},
@@ -269,19 +270,19 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strDisabledErr", "命令无法执行:机器人已在此群中被关闭!"},
 	{"strActionEmpty", "动作不能为空×"},
 	{"strMEDisabledErr", "管理员已在此群中禁用.me命令!"},
-	{"strDisabledMeGlobal", "恕不提供.me服务×"},
-	{"strDisabledJrrpGlobal", "恕不提供.jrrp服务×"},
-	{"strDisabledDeckGlobal", "恕不提供.deck服务×"},
-	{"strDisabledDrawGlobal", "恕不提供.draw服务×"},
-	{"strDisabledSendGlobal", "恕不提供.send服务×"},
+	{"strDisabledMeGlobal", "{self}恕不提供.me服务×"},
+	{"strDisabledJrrpGlobal", "{self}恕不提供.jrrp服务×"},
+	{"strDisabledDeckGlobal", "{self}恕不提供.deck服务×"},
+	{"strDisabledDrawGlobal", "{self}恕不提供.draw服务×"},
+	{"strDisabledSendGlobal", "{self}恕不提供.send服务×"},
 	{"strHELPDisabledErr", "管理员已在此群中禁用.help命令!"},
-	{"strNameDelEmpty", "{nick}没有设置名称,无法删除!"},
+	{"strNameDelEmpty", "{nick}未设置名称,无法删除!"},
 	{"strValueErr", "掷骰表达式输入错误!"},
 	{"strInputErr", "命令或掷骰表达式输入错误!"},
 	{"strUnknownErr", "发生了未知错误!"},
 	{"strUnableToGetErrorMsg", "无法获取错误信息!"},
 	{"strDiceTooBigErr", "{self}被你扔出的骰子淹没了×"},
-	{"strRequestRetCodeErr", "访问服务器时出现错误! HTTP状态码: {error}"},
+	{"strRequestRetCodeErr", "{self}访问服务器时出现错误! HTTP状态码: {error}"},
 	{"strRequestNoResponse", "服务器未返回任何信息×"},
 	{"strTypeTooBigErr", "哇!让我数数骰子有多少面先~1...2..."},
 	{"strZeroTypeErr", "这是...!!时空裂({self}被骰子产生的时空裂缝卷走了)"},
@@ -289,8 +290,8 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strZeroDiceErr", "咦?我的骰子呢?"},
 	{"strRollTimeExceeded", "掷骰轮数超过了最大轮数限制!"},
 	{"strRollTimeErr", "异常的掷骰轮数"},
-	{"strDismissPrivate", "滚！"},
-	{"strWelcomePrivate", "你在这欢迎谁呢？"},
+	{"strDismissPrivate", "你在私聊窗口想我走哪呢？"},
+	{"strWelcomePrivate", "你在私聊窗口想欢迎谁呢？"},
 	{"strWelcomeMsgClearNotice", "{self}已清除本群的入群欢迎词√"},
 	{"strWelcomeMsgClearErr", "没有设置{self}入群欢迎词，清除失败×"},
 	{"strWelcomeMsgUpdateNotice", "{self}已更新本群的入群欢迎词√"},
@@ -360,8 +361,9 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 .me功能默认不可用，需要手动开启；
 切换公用请使用.admin public，但不会初始化相应设置；
 可在.master delete后使用.master public来重新初始化；)" },
-	{"strSelfName", ""},
 	{"strSelfCall", "&strSelfName"},
+	{"strSelfName", "" },
+	{"strSelfNick", "&strSelfName" },
 	{"self", "&strSelfCall"},
 	{"strBotMsg", "\n使用.help更新 查看{self}更新内容"},
 	{
@@ -398,6 +400,8 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 	{"strBotOffAlready", "bot指令群内已经关闭"},
 	{"strBotOn", "bot指令群内开启回执"},
 	{"strBotOnAlready", "bot指令群内已经开启"},
+	//
+	{"strCallUser", "对用户的称呼"},
 	//
 	{"strCOCBuild", "coc指令回执"},
 	{"strCriticalSuccess", "多轮检定大成功"},
@@ -439,6 +443,12 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 	{"strRollRegularSuccess", "检定成功"},
 	{"strRollFailure", "检定失败"},
 	{"strRollFumble", "检定大失败"},
+	//
+	{"strSanRollRes", ".sc指令回执"},
+	{"strSelfCall", "自称，多用于回执"},
+	{"strSelfName", "名称，用于自我展示场合"},
+	{"strSelfNick", "用户对自己的昵称，用于扩展指令"},
+	//
 	{"strSuccess", "多轮检定与SC成功"},
 	//
 	{"strWhiteQQDenied","权限要求群管理或者信任1"},
@@ -561,6 +571,7 @@ Type=[回复性质](Reply/Order)
 .reply list 查看全部回复
 .reply del [触发词] 清除指定回复
 )"},
+{"回复列表","{strSelfName}的回复触发词列表:{list_reply_deck}"},
 {"旁观","&ob"},
 {"旁观模式","&ob"},
 {"ob","旁观模式：.ob (exit/list/clr/on/off)\n.ob\t//加入旁观可以看到他人暗骰结果\n.ob exit\t//退出旁观模式\n.ob list\t//查看群内旁观者\n.ob clr\t//清除所有旁观者\n.ob on\t//全群允许旁观模式\n.ob off\t//禁用旁观模式\n暗骰与旁观仅在群聊中有效"},

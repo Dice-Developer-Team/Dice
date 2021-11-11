@@ -94,7 +94,6 @@ void loadData()
 		std::error_code ec;
 		std::filesystem::create_directory(DiceDir, ec);	
 		loadDir(loadXML<CardTemp>, DiceDir / "CardTemp", mCardTemplet, logList, true);
-		fmt->set_help("回复列表", "{strSelfName}的回复触发词列表:{list_reply_deck}");
 		if (loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList) < 1)
 		{
 			loadJMap(fpFileLoc / "PublicDeck.json", CardDeck::mExternPublicDeck);

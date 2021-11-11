@@ -31,7 +31,9 @@
 #include "RandomGenerator.h"
 using std::string;
 
-std::map<string, string> GlobalChar{ 
+std::map<string, string> GlobalChar{
+	{"br","\n"},
+	{"sp"," "},
 	{"FormFeed","\f"},
 	{"Vertical","|"},
 	{"LBrace","{"},

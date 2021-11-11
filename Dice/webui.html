@@ -39,7 +39,7 @@
         <li>Master设置</li>
         <li class="layui-hide">用户管理(还没写)</li>
         <li class="layui-hide">群管理(还没写)</li>
-        <li>自定义内置回复</li>
+        <li>自定义回执</li>
         <li>关键词回复</li>
         <li class="layui-hide">拓展管理(还没写)</li>
         <li>WebUI管理</li>
@@ -181,7 +181,7 @@
                   <br>
                   WebUI Master设置
                   <br>
-                  WebUI 自定义内置回复
+                  WebUI 自定义内置回执
                 </p>
               </div>
             </li>
@@ -314,27 +314,32 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     elem: '#custom-msg-table'
     ,height: 420
     ,url: '/api/custommsg' //数据接口
-    ,title: '自定义回复'
+    ,title: '自定义回执'
     ,request: {} 
     ,cols: [[ //表头
       {field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
       ,{field: 'value', title: '值', minWidth:250, edit: 'text'}
       ,{field: 'remark', title: '说明', width:250}
     ]]
+    /*,done: function(){
+      $(".layui-table-cell").each(function(){
+        $(this).html(this.innerHTML.replace(/\n/g,"{br}<br>"));
+      })
+    }*/
   });
 
   table.on('edit(custom-msg-table)', function(obj) { 
-    obj.data.value = obj.data.value.replace(/<br>/g,"\n");
+    obj.data.value = obj.data.value.replace(/<br>/g,"\n").replace(/\{br\}/g,"\n");
     $.post("/api/custommsg", JSON.stringify({action: "set", data: [obj.data]}))
     .done(function(data) {
       if (data.code == 0) {
-        console.log("CustomMsg Save Success");
+        layer.msg("回执" + obj.data.name + "保存成功√");
       } else {
-        layer.msg("自定义回复保存失败: " + data.msg);
+        layer.msg("自定义回执保存失败: " + data.msg);
       }
     })
     .fail(function(jqXHR, textStatus, error) {
-      layer.msg("自定义回复保存失败: " + error);
+      layer.msg("自定义回执保存失败: " + error);
     })
   });
 
@@ -358,7 +363,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
       $.post("/api/adminconfig", JSON.stringify({action: "set", data: [obj.data]}))
       .done(function(data) {
         if (data.code == 0) {
-          console.log("Settings Save Success");
+          layer.msg("配置项" + obj.data.name + "保存成功√");
         } else {
           layer.msg("设置保存失败: " + data.msg);
         }
@@ -412,6 +417,11 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
       ,{field: 'value', title: '回复', minWidth:250, edit: 'text'}
       ,{fixed: 'right', width:80, align:'center', toolbar: '#basicToolbar'}
     ]]
+    /*,done: function(){
+      $(".layui-table-cell").each(function(){
+        $(this).html(this.innerHTML.replace(/\n/g,"{br}<br>"));
+      })
+    }*/
   });
 
   table.on('toolbar(custom-reply-table)', function(obj){
@@ -472,12 +482,12 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
   });
 
   table.on('edit(custom-reply-table)', function(obj) { 
-    obj.data.value = obj.data.value.replace(/<br>/g,"\n");
+    obj.data.value = obj.data.value.replace(/<br>/g,"\n").replace(/\{br\}/g,"\n");
     if(obj.data.echo == "Deck"){obj.data.value = obj.data.value.split("|");}
     $.post("/api/customreply", JSON.stringify({action: "set", data: [obj.data]}))
     .done(function(data) {
       if (data.code == 0) {
-        console.log("CustomReply Save Success");
+        layer.msg("回复关键词" + obj.data.name + "保存成功√");
       } else {
         layer.msg("关键词回复保存失败: " + data.msg);
       }
