@@ -27,7 +27,7 @@ using std::string;
 
 class AttrVar {
 public:
-	enum class AttrType { Nil, Boolean, Integer, Number, Text };
+	enum class AttrType { Nil, Boolean, Integer, Number, Text, ID };
 	AttrType type{ 0 };
 	union {
 		bool bit;		//1
@@ -36,11 +36,13 @@ public:
 		string text;	//4
 		//table;		//5
 		//function;		//6
+		long long id;		//7
 	};
 	AttrVar() {}
 	AttrVar(const AttrVar& other);
 	AttrVar(int n) :type(AttrType::Integer), attr(n) {}
 	AttrVar(const string& s) :type(AttrType::Text), text(s) {}
+	explicit AttrVar(long long n) :type(AttrType::ID), id(n) {}
 	void des() {
 		if (type == AttrType::Text)text.~string();
 	}
@@ -52,7 +54,9 @@ public:
 	AttrVar& operator=(int other);
 	AttrVar& operator=(double other);
 	AttrVar& operator=(const string& other);
+	AttrVar& operator=(long long other);
 	int to_int()const;
+	long long to_ll()const;
 	string to_str()const;
 	void writeb(std::ofstream& fout) const;
 	void readb(std::ifstream& fin);

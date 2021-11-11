@@ -87,7 +87,7 @@ CardTemp& getCardTemplet(const string& type)
 }
 
 void CharaCard::update() {
-	Attr["__UpdateLow"] = int(time(nullptr));
+	Attr["__Update"] = time(nullptr);
 }
 void CharaCard::setName(const string& strName) {
 	Name = strName;

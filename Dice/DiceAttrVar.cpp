@@ -75,6 +75,12 @@ AttrVar& AttrVar::operator=(const string& other) {
 	new(&text)string(other);
 	return *this;
 }
+AttrVar& AttrVar::operator=(long long other) {
+	des();
+	type = AttrType::ID;
+	id = other;
+	return *this;
+}
 
 int AttrVar::to_int()const {
 	switch (type) {
@@ -86,6 +92,37 @@ int AttrVar::to_int()const {
 		break;
 	case AttrType::Integer:
 		return attr;
+		break;
+	case AttrType::ID:
+		return (int)id;
+		break;
+	case AttrType::Number:
+		return number;
+		break;
+	case AttrType::Text:
+		try {
+			return stoi(text);
+		}
+		catch (...) {
+			return 0;
+		}
+		break;
+	}
+	return 0;
+}
+long long AttrVar::to_ll()const {
+	switch (type) {
+	case AttrType::Nil:
+		return 0;
+		break;
+	case AttrType::Boolean:
+		return bit;
+		break;
+	case AttrType::Integer:
+		return attr;
+		break;
+	case AttrType::ID:
+		return id;
 		break;
 	case AttrType::Number:
 		return number;
@@ -118,6 +155,9 @@ string AttrVar::to_str()const {
 	case AttrType::Text:
 		return text;
 		break;
+	case AttrType::ID:
+		return to_string(id);
+		break;
 	}
 	return {};
 }
@@ -144,6 +184,10 @@ void AttrVar::writeb(std::ofstream& fout) const {
 		fwrite(fout, (char)4);
 		fwrite(fout, text);
 		break;
+	case AttrType::ID:
+		fwrite(fout, (char)7);
+		fwrite(fout, id);
+		break;
 	}
 }
 void AttrVar::readb(std::ifstream& fin) {
@@ -168,6 +212,11 @@ void AttrVar::readb(std::ifstream& fin) {
 		des();
 		type = AttrType::Text;
 		new(&text) string(fread<string>(fin));
+		break;
+	case 7:
+		des();
+		type = AttrType::ID;
+		id = fread<long long>(fin);
 		break;
 	case 0:
 	default:

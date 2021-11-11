@@ -171,7 +171,7 @@ public:
 	//string Type = "COC7";
 	map<string, AttrVar, less_ci> Attr{ 
 		{"__Type",AttrVar("COC7")},
-		{"__UpdateLow",AttrVar(int(time(nullptr)))},
+		{"__Update",AttrVar(time(nullptr))},
 	};
 	//map<string, string, less_ci> Info{  };
 	//map<string, string, less_ci> DiceExp{};
