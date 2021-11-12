@@ -572,8 +572,10 @@ void LuaState::regist() {
 	}
 	lua_getglobal(state, "package");
 	lua_getfield(state, -1, "path");
-	string strPath((DiceDir / "plugin" / "?.lua").u8string() + lua_tostring(state, -1));
-	lua_pushstring(state, strPath.c_str());
+	string strPath((DiceDir / "plugin" / "?.lua").string() + ";"
+		+ (DiceDir / "plugin" / "?" / "init.lua").string() + "; "
+		+ lua_tostring(state, -1));
+	lua_push_string(state, strPath.c_str());
 	lua_setfield(state, -3, "path");
 	lua_pop(state, 2);
 }
