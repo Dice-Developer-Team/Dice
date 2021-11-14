@@ -96,6 +96,7 @@ int Censor::search(const string& text, vector<string>& res) {
 	std::bitset<6> sens;
 	wordG.search(convert_a2w(text.c_str()), res, ignored);
 	for (auto& word : res) {
+		if (text.find(word) == string::npos)continue;
 		sens.set((size_t)words[word]);
 	}
 	return sens[5] ? 5

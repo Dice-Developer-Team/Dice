@@ -241,7 +241,7 @@ bool DiceModManager::listen_reply(FromMsg* msg) {
 	//模糊匹配禁止自我触发
 	if (vector<string>res; msg->fromQQ != console.DiceMaid && gReplySearcher.search(convert_a2w(strMsg.c_str()), res)) {
 		for (const auto& key : res) {
-			if (!msgreply.count(key))continue;
+			if (!msgreply.count(key) || msg->strMsg.find(key) == string::npos)continue;
 			DiceMsgReply& reply{ msgreply[key] };
 			if (reply.mode == DiceMsgReply::Mode::Search && reply.exec(msg))return true;
 		}
@@ -364,7 +364,7 @@ int DiceModManager::load(ResList* resLog)
 				reply.deck = deck;
 			}
 		}
-		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck)) {
+		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck) > 0) {
 			*resLog << "读取正则Reply" + to_string(mRegexReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mRegexReplyDeck) {
 				DiceMsgReply& reply{ msgreply[key] };
