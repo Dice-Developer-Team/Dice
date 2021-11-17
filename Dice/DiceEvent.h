@@ -24,19 +24,17 @@ using std::string;
 class FromMsg : public DiceJobDetail {
 public:
 	string strLowerMessage;
-	long long fromGroup = 0;
 	long long fromSession;
 	Chat* pGrp = nullptr;
 	string strReply;
 	std::wsmatch msgMatch;
-	FromMsg(std::string message, long long qq) :DiceJobDetail(qq, { qq,msgtype::Private }, message){
-		fromSession = ~fromQQ;
-	}
-	FromMsg(std::string message, long long fromGroup, msgtype msgType, long long qq) :DiceJobDetail(qq, { fromGroup,msgType }, message), fromGroup(fromGroup), fromSession(fromGroup){
-		pGrp = &chat(fromGroup);
-	}
+	FromMsg(const AttrVars& var, const chatInfo& ct);
 
 	bool isBlock = false;
+
+	bool isPrivate()const;
+	bool isChannel()const;
+	bool isFromMaster()const;
 
 	void formatReply();
 
@@ -52,31 +50,10 @@ public:
 	void replyHidden();
 
 	//通知
-	void note(std::string strMsg, int note_lv = 0b1)
-	{
-		strMsg = format(strMsg, GlobalMsg, strVar);
-		ofstream fout(DiceDir / "audit" / ("log" + to_string(console.DiceMaid) + "_" + printDate() + ".txt"),
-		              ios::out | ios::app);
-		fout << printSTNow() << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
-		fout.close();
-		reply(strMsg);
-		const string note = getName(fromQQ) + strMsg;
-		for (const auto& [ct,level] : console.NoticeList) 
-		{
-			if (!(level & note_lv) || pair(fromQQ, msgtype::Private) == ct || ct == fromChat)continue;
-			AddMsgToQueue(note, ct);
-		}
-	}
+	void note(std::string strMsg, int note_lv = 0b1);
 
 	//打印消息来源
-	std::string printFrom()
-	{
-		std::string strFwd;
-		if (fromChat.second == msgtype::Group)strFwd += "[群:" + to_string(fromGroup) + "]";
-		if (fromChat.second == msgtype::Discuss)strFwd += "[讨论组:" + to_string(fromGroup) + "]";
-		strFwd += getName(fromQQ, fromGroup) + "(" + to_string(fromQQ) + "):";
-		return strFwd;
-	}
+	std::string printFrom();
 
 	//转发消息
 	void fwdMsg();
@@ -85,7 +62,7 @@ public:
 	int BasicOrder();
 	int InnerOrder();
 	//int CustomOrder();
-	int CustomReply();
+	//int CustomReply();
 	//判断是否响应
 	bool DiceFilter();
 	bool WordCensor();
@@ -311,7 +288,7 @@ public:
 	}
 
 	//
-	int readChat(chatType& ct, bool isReroll = false);
+	int readChat(chatInfo& ct, bool isReroll = false);
 
 	int readClock(Console::Clock& cc)
 	{

@@ -9,7 +9,8 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123溯洄
+ * Copyright (C) 2018-2021 w4123溯洄
+ * Copyright (C) 2019-2021 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -27,11 +28,18 @@
 #define DICE_MSG_SEND
 #include <string>
 
-enum class msgtype : int { Private = 0, Group = 1, Discuss = 2 };
-using chatType = std::pair<long long, msgtype>;
+enum class msgtype : int { Private = 0, Group = 1, Discuss = 2, ChannelPrivate = 3, Channel = 4};
+struct chatInfo {
+	long long uid{ 0 };
+	long long gid{ 0 };
+	long long chid{ 0 };
+	msgtype type{ 0 };
+	chatInfo() {}
+	chatInfo(long long, long long = 0, long long = 0);
+	bool operator<(const chatInfo&)const;
+};
 std::ifstream& operator>>(std::ifstream& fin, msgtype& t);
-std::ifstream& operator>>(std::ifstream& fin, chatType& ct);
-std::ofstream& operator<<(std::ofstream& fout, const chatType& ct);
+std::ifstream& operator>>(std::ifstream& fin, chatInfo& ct);
 /*
  *  加锁并将消息存入消息发送队列
  *  Param:
@@ -39,8 +47,8 @@ std::ofstream& operator<<(std::ofstream& fout, const chatType& ct);
  *  long long target_id 目标ID(QQ,群号或讨论组uin)
  *  MsgType msg_type 消息类型
  */
-void AddMsgToQueue(const std::string& msg, long long target_id, msgtype msg_type = msgtype::Private);
-void AddMsgToQueue(const std::string& msg, chatType ct);
+void AddMsgToQueue(const std::string& msg, long long target_id);
+void AddMsgToQueue(const std::string& msg, chatInfo ct);
 
 /*
  * 消息发送线程函数

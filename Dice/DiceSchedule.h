@@ -12,6 +12,7 @@
 #include "DiceMsgSend.h"
 #include "Jsonio.h"
 #include "json.hpp"
+#include "DiceAttrVar.h"
 
 using std::string;
 using std::map;
@@ -19,22 +20,19 @@ using std::unordered_map;
 using std::shared_ptr;
 
 struct DiceJobDetail : public std::enable_shared_from_this<DiceJobDetail> {
-    long long fromQQ = 0;
-    chatType fromChat;
+    chatInfo fromChat;
     string cmd_key;
     string strMsg;
     time_t fromTime = time(nullptr);
     size_t cntExec{ 0 };
     //¡Ÿ ±±‰¡øø‚
-    unordered_map<string, string> strVar = {};
-    DiceJobDetail(const char* cmd, bool isFromSelf = false, unordered_map<string, string> vars = {});
-    DiceJobDetail(long long qq, chatType ct, std::string msg = "", const char* cmd = "") 
-        :fromQQ(qq), fromChat(ct), strMsg(msg),cmd_key(cmd) {
-    }
+    unordered_map<string, AttrVar> vars = {};
+    DiceJobDetail(const char* cmd, bool isFromSelf = false, const AttrVars& vars = {});
+    DiceJobDetail(const  unordered_map<string, AttrVar>& var, chatInfo ct = {}) :vars(var), fromChat(ct){}
     virtual void reply(const char*, bool = true) {}
     virtual void reply(const string&, bool = true) {}
-    string& operator[](const char* key){
-        return strVar[key];
+    AttrVar& operator[](const char* key){
+        return vars[key];
     }
     bool operator<(const DiceJobDetail& other)const {
         return cmd_key < other.cmd_key;
@@ -59,7 +57,7 @@ public:
     void start();
     void end();
     void push_job(const DiceJobDetail&);
-    void push_job(const char*, bool = false, unordered_map<string, string> = {});
+    void push_job(const char*, bool = false, const AttrVars& = {});
     void add_job_for(unsigned int, const DiceJobDetail&);
     void add_job_for(unsigned int, const char*);
     void add_job_until(time_t, const DiceJobDetail&);

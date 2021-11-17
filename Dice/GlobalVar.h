@@ -35,15 +35,16 @@
 #include <unordered_map>
 #include "STLExtern.hpp"
 #include "DiceExtensionManager.h"
+#include "DiceAttrVar.h"
 
 /*
  * 版本信息
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-const unsigned short Dice_Build = 587u;
-inline const std::string Dice_Ver_Without_Build = "2.6.0";
-constexpr auto DiceRequestHeader = "Dice/2.6.0";
+const unsigned short Dice_Build = 588u;
+inline const std::string Dice_Ver_Without_Build = "2.6.1beta";
+constexpr auto DiceRequestHeader = "Dice/2.6.1";
 inline const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 inline const std::string Dice_Short_Ver = "Dice! by 溯洄 & Shiki Ver " + Dice_Ver;
 
@@ -104,7 +105,7 @@ extern std::map<std::string, std::string, less_ci> GlobalComment;
 extern const std::map<std::string, std::string, less_ci> HelpDoc;
 // 修改后的帮助文档
 inline std::map<std::string, std::string, less_ci> CustomHelp;
-const std::string getMsg(const std::string& key, const std::unordered_map<std::string, std::string>& tmp = {});
+const std::string getMsg(const std::string& key, const AttrVars& tmp = {});
 const std::string getComment(const std::string& key);
 
 #endif /*DICE_GLOBAL_VAR*/

@@ -1,7 +1,7 @@
 /**
  * lua脚本嵌入
  * 用于自定义前缀指令等
- * Copyright (C) 2020 String.Empty
+ * Copyright (C) 2019-2021 String.Empty
  */
 #pragma once
 #include <string>

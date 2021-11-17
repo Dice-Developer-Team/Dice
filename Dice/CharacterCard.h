@@ -680,4 +680,4 @@ inline map<long long, Player> PList;
 
 Player& getPlayer(long long qq);
 
-void getPCName(FromMsg&);
+void getPCName(AttrVars&);

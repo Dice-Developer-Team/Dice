@@ -72,7 +72,7 @@ public:
 
 	void killMaster()
 	{
-		rmNotice({masterQQ, msgtype::Private});
+		rmNotice({ masterQQ, 0,0 });
 		masterQQ = 0;
 		save();
 	}
@@ -88,7 +88,7 @@ public:
 	int rmClock(Clock c, const string&);
 	[[nodiscard]] ResList listClock() const;
 	[[nodiscard]] ResList listNotice() const;
-	[[nodiscard]] int showNotice(chatType ct) const;
+	[[nodiscard]] int showNotice(chatInfo ct) const;
 	void setPath(const std::filesystem::path& path) { fpPath = path; }
 
 	void set(const std::string& key, int val)
@@ -97,10 +97,10 @@ public:
 		save();
 	}
 
-	void addNotice(chatType ct, int lv);
-	void redNotice(chatType ct, int lv);
-	void setNotice(chatType ct, int lv);
-	void rmNotice(chatType ct);
+	void addNotice(chatInfo ct, int lv);
+	void redNotice(chatInfo ct, int lv);
+	void setNotice(chatInfo ct, int lv);
+	void rmNotice(chatInfo ct);
 	void reset();
 
 	bool load();
@@ -139,7 +139,7 @@ private:
 	std::filesystem::path fpPath;
 	std::map<std::string, int, less_ci> intConf;
 	std::multimap<Clock, string> mWorkClock{};
-	std::map<chatType, int> NoticeList{};
+	std::map<chatInfo, int> NoticeList{};
 };
 	extern Console console;
 	//extern DiceModManager modules;
@@ -154,11 +154,11 @@ void getExceptGroup();
 	struct fromMsg
 	{
 		std::string strMsg;
-		long long fromQQ = 0;
-		long long fromGroup = 0;
+		long long fromUID = 0;
+		long long fromGID = 0;
 		fromMsg() = default;
 
-		fromMsg(std::string msg, long long QQ, long long Group) : strMsg(std::move(msg)), fromQQ(QQ), fromGroup(Group)
+		fromMsg(std::string msg, long long QQ, long long Group) : strMsg(std::move(msg)), fromUID(QQ), fromGID(Group)
 		{
 		};
 	};
@@ -172,9 +172,9 @@ void getExceptGroup();
 	std::string printSTNow(); 
 	std::string printDate();
 	std::string printDate(time_t tt);
-	std::string printQQ(long long);
+	std::string printUser(long long);
 	std::string printGroup(long long);
-	std::string printChat(chatType);
+	std::string printChat(chatInfo);
 void ConsoleTimer();
 
 class ThreadFactory

@@ -70,11 +70,11 @@ void lua_set_field(lua_State* L, int idx, const string& str) {
 
 void lua_push_msg(lua_State* L, FromMsg* msg) {
 	lua_newtable(L);
-	//lua_pushnumber(L, (double)msg->fromQQ);
-	lua_push_string(L, to_string(msg->fromQQ));
+	//lua_pushnumber(L, (double)msg->fromChat.uid);
+	lua_push_string(L, to_string(msg->fromChat.uid));
 	lua_setfield(L, -2, "fromQQ");
-	//lua_pushnumber(L, (double)msg->fromGroup);
-	lua_push_string(L, to_string(msg->fromGroup));
+	//lua_pushnumber(L, (double)msg->fromGID);
+	lua_push_string(L, to_string(msg->fromChat.gid));
 	lua_setfield(L, -2, "fromGroup");
 	lua_push_string(L, msg->strMsg);
 	lua_setfield(L, -2, "fromMsg");
@@ -143,16 +143,16 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 			msg->reply(getMsg("strOrderLuaErr"));
 			return false;
 		}
-		if (!(msg->strVar["msg_reply"] = lua_to_gb18030_string(L, 1)).empty()) {
-			msg->reply(msg->strVar["msg_reply"]);
+		if (!(msg->vars["msg_reply"] = lua_to_gb18030_string(L, 1)).str_empty()) {
+			msg->reply(msg->vars["msg_reply"].to_str());
 		}
 		if (lua_type(L, 2) != LUA_TNIL) {
 			if (!lua_isstring(L, 2)) {
 				console.log(getMsg("strSelfName") + "调用" + fileGB18030 + "函数" + func + "返回值格式错误!", 1);
 				return false;
 			}
-			if (!(msg->strVar["msg_hidden"] = lua_to_gb18030_string(L, 2)).empty()) {
-				msg->replyHidden(msg->strVar["msg_hidden"]);
+			if (!(msg->vars["msg_hidden"] = lua_to_gb18030_string(L, 2)).str_empty()) {
+				msg->replyHidden(msg->vars["msg_hidden"].to_str());
 			}
 		}
 	}
@@ -178,16 +178,16 @@ bool lua_msg_reply(FromMsg* msg, const string& luas) {
 			msg->reply(getMsg("strOrderLuaErr"));
 			return false;
 		}
-		if (!(msg->strVar["msg_reply"] = lua_to_gb18030_string(L, 1)).empty()) {
-			msg->reply(msg->strVar["msg_reply"]);
+		if (!(msg->vars["msg_reply"] = lua_to_gb18030_string(L, 1)).str_empty()) {
+			msg->reply(msg->vars["msg_reply"].to_str());
 		}
 		if (lua_type(L, 2) != LUA_TNIL) {
 			if (!lua_isstring(L, 2)) {
 				console.log(getMsg("strSelfName") + "调用回复lua语句返回值格式错误!", 1);
 				return false;
 			}
-			if (!(msg->strVar["msg_hidden"] = lua_to_gb18030_string(L, 2)).empty()) {
-				msg->replyHidden(msg->strVar["msg_hidden"]);
+			if (!(msg->vars["msg_hidden"] = lua_to_gb18030_string(L, 2)).str_empty()) {
+				msg->replyHidden(msg->vars["msg_hidden"].to_str());
 			}
 		}
 	}
@@ -350,19 +350,19 @@ int setGroupConf(lua_State* L) {
 	return 0;
 }
 int getUserConf(lua_State* L) {
-	long long qq{ lua_to_int(L, 1) };
-	if (!qq)return 0;
+	long long uid{ lua_to_int(L, 1) };
+	if (!uid)return 0;
 	if (lua_gettop(L) > 3)lua_settop(L, 3);
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
 	if (item == "nick" ) {
-		lua_push_string(L, getName(qq));
+		lua_push_string(L, getName(uid));
 	}
 	else if (item == "trust") {
-		lua_pushnumber(L, trustedQQ(qq));
+		lua_pushnumber(L, trustedQQ(uid));
 	}
-	else if (UserList.count(qq)) {
-		User& user{ getUser(qq) };
+	else if (UserList.count(uid)) {
+		User& user{ getUser(uid) };
 		if (item == "firstCreate") {
 			lua_pushnumber(L, (double)user.tCreated);
 		}
@@ -371,7 +371,7 @@ int getUserConf(lua_State* L) {
 		}
 		else if (item == "nn") {
 			string nick;
-			user.getNick(nick, qq);
+			user.getNick(nick, uid);
 			lua_push_string(L, nick);
 		}
 		else if (user.intConf.count(item)) {
@@ -388,36 +388,36 @@ int getUserConf(lua_State* L) {
 	return 1;
 }
 int setUserConf(lua_State* L) {
-	long long qq{ lua_to_int(L, 1) };
-	if (!qq)return 0;
+	long long uid{ lua_to_int(L, 1) };
+	if (!uid)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
 	if (lua_isnumber(L, 3)) {
-		getUser(qq).setConf(item, (int)lua_tonumber(L, 3));
+		getUser(uid).setConf(item, (int)lua_tonumber(L, 3));
 	}
 	else if (lua_isstring(L, 3)) {
-		getUser(qq).setConf(item, lua_to_gb18030_string(L, 3));
+		getUser(uid).setConf(item, lua_to_gb18030_string(L, 3));
 	}
 	return 0;
 }
 int getUserToday(lua_State* L) {
-	long long qq{ lua_to_int(L, 1) };
-	if (!qq)return 0;
+	long long uid{ lua_to_int(L, 1) };
+	if (!uid)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
 	if (item == "jrrp")
-		lua_pushnumber(L, today->getJrrp(qq));
+		lua_pushnumber(L, today->getJrrp(uid));
 	else
-		lua_pushnumber(L, today->get(qq, item));
+		lua_pushnumber(L, today->get(uid, item));
 	return 1;
 }
 int setUserToday(lua_State* L) {
-	long long qq{ lua_to_int(L, 1) };
-	if (!qq)return 0;
+	long long uid{ lua_to_int(L, 1) };
+	if (!uid)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
 	int val{ (int)lua_to_number(L, 3) };
-	today->set(qq, item, val);
+	today->set(uid, item, val);
 	return 0;
 }
 
@@ -498,12 +498,12 @@ int sleepTime(lua_State* L) {
 }
 
 int drawDeck(lua_State* L) {
-	long long fromGroup{ lua_to_int(L, 1) };
-	long long fromQQ{ lua_to_int(L, 2) };
-	if (!fromGroup && !fromQQ)return 0;
+	long long fromGID{ lua_to_int(L, 1) };
+	long long fromUID{ lua_to_int(L, 2) };
+	if (!fromGID && !fromUID)return 0;
 	string nameDeck{ lua_to_gb18030_string(L, 3) };
 	if (nameDeck.empty())return 0;
-	long long fromSession{ fromGroup ? fromGroup : ~fromQQ };
+	long long fromSession{ fromGID ? fromGID : ~fromUID };
 	if (gm->has_session(fromSession)) {
 		lua_push_string(L, gm->session(fromSession).deck_draw(nameDeck));
 	}
@@ -519,26 +519,28 @@ int drawDeck(lua_State* L) {
 
 int sendMsg(lua_State* L) {
 	string fromMsg{ lua_to_gb18030_string(L, 1) };
-	long long fromGroup{ lua_to_int(L, 2) };
-	long long fromQQ{ lua_to_int(L, 3) };
-	if (!fromGroup && !fromQQ)return 0;
-	msgtype type{ fromGroup ?
-		chat(fromGroup).isGroup ? msgtype::Group : msgtype::Discuss
+	long long fromGID{ lua_to_int(L, 2) };
+	long long fromUID{ lua_to_int(L, 3) };
+	if (!fromGID && !fromUID)return 0;
+	msgtype type{ fromGID ?
+		chat(fromGID).isGroup ? msgtype::Group : msgtype::Discuss
 		: msgtype::Private };
-	AddMsgToQueue(format(fromMsg, GlobalMsg), 
-				  fromGroup ? fromGroup : fromQQ, type);
+	AddMsgToQueue(format(fromMsg, GlobalMsg),
+		{ fromUID,fromGID });
 	return 0;
 }
 int eventMsg(lua_State* L) {
 	string fromMsg{ lua_to_gb18030_string(L, 1) };
-	long long fromGroup{ lua_to_int(L, 2) };
-	long long fromQQ{ lua_to_int(L, 3) };
-	msgtype type{ fromGroup ?
-		chat(fromGroup).isGroup ? msgtype::Group : msgtype::Discuss
+	long long fromGID{ lua_to_int(L, 2) };
+	long long fromUID{ lua_to_int(L, 3) };
+	msgtype type{ fromGID ?
+		chat(fromGID).isGroup ? msgtype::Group : msgtype::Discuss
 		: msgtype::Private };
-	std::thread th([=](){
-		FromMsg msg(fromGroup ? FromMsg(fromMsg, fromGroup, type, fromQQ)
-							   : FromMsg(fromMsg, fromQQ));
+	std::thread th([=]() {
+		FromMsg msg(fromGID
+			? FromMsg(AttrVars{ {"fromMsg",fromMsg},{"gid",fromGID}, {"uid", fromUID} }
+				, { fromUID ,fromGID,0 })
+			: FromMsg(AttrVars{ {"fromMsg",fromMsg}, {"uid", fromUID} }, { fromUID ,0,0 }));
 		msg.virtualCall();
 	});
 	th.detach();

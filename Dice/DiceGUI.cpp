@@ -674,19 +674,19 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 						MessageBox(m_hwnd, TEXT("QQ号无效!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
 						return 0;
 					}
-					long long qq = std::stoll(str);
-					StaticMasterLabel.SetText("当前的Master为" + to_string(qq) + "(设置QQ为0以关闭Master模式)");
+					long long uid = std::stoll(str);
+					StaticMasterLabel.SetText("当前的Master为" + to_string(uid) + "(设置QQ为0以关闭Master模式)");
 					if (console)
 					{
-						if (console.masterQQ != qq)
+						if (console.masterQQ != uid)
 						{
 							console.killMaster();
-							console.newMaster(qq);
+							console.newMaster(uid);
 						}
 					}
 					else {
 						MessageBox(nullptr, reinterpret_cast<wchar_t*>(const_cast<char16_t*>(convert_a2w(console["Private"] ? getMsg("strNewMasterPrivate").c_str() : getMsg("strNewMasterPublic").c_str()).c_str())), TEXT("Master模式初始化"), MB_OK | MB_ICONINFORMATION);
-						console.newMaster(qq);
+						console.newMaster(uid);
 						console.isMasterMode = true;
 					}
 				}
@@ -700,9 +700,9 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 						MessageBox(m_hwnd, TEXT("QQ号无效!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
 						return 0;
 					}
-					long long qq = std::stoll(str);
+					long long uid = std::stoll(str);
 					int ret = ListViewUserTrust.GetItemIndexByText(str);
-					if (ret == -1 && !UserList.count(qq))
+					if (ret == -1 && !UserList.count(uid))
 					{
 						MessageBox(m_hwnd, TEXT("找不到此用户"), TEXT("Dice GUI!"), MB_OK | MB_ICONWARNING);
 					}
@@ -710,7 +710,7 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					{
 						if (ret != -1)
 							ListView_DeleteItem(ListViewUserTrust.Window(), ret);
-						if (UserList.count(qq)) UserList.erase(qq);
+						if (UserList.count(uid)) UserList.erase(uid);
 					}
 				}
 				return 0;
@@ -723,7 +723,7 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 						MessageBox(m_hwnd, TEXT("QQ号无效!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
 						return 0;
 					}
-					long long qq = std::stoll(str);
+					long long uid = std::stoll(str);
 					int ret = ListViewUserTrust.GetItemIndexByText(str);
 
 					string trust = EditUserTrustLevel.GetText();
@@ -738,11 +738,11 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 						MessageBox(m_hwnd, TEXT("信任等级无效!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
 						return 0;
 					}
-					UserList[qq].trust(trustlevel);
+					UserList[uid].trust(trustlevel);
 
 					if (ret == -1)
 					{
-						string nickname = DD::getQQNick(qq);
+						string nickname = DD::getQQNick(uid);
 						ListViewUserTrust.AddTextRow({str, nickname, trust});
 					}
 					else

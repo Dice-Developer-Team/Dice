@@ -123,15 +123,7 @@ public:
 		strConf.erase(key);
 	}
 
-	bool getNick(string& nick, long long group = 0) const
-	{
-		if (auto it = strNick.find(group); it != strNick.end() || (it = strNick.find(0)) != strNick.end())
-		{
-			nick = it->second;
-			return true;
-		}
-		return false;
-	}
+	bool getNick(string& nick, long long group = 0) const;
 
 	void setNick(long long group, string val)
 	{
@@ -178,7 +170,7 @@ int clearUser();
 int clearGroup();
 
 string getName(long long QQ, long long GroupID = 0);
-void filter_CQcode(string&, long long fromGroup = 0);
+void filter_CQcode(string&, long long fromGID = 0);
 
 extern const map<string, short> mChatConf;
 

@@ -68,15 +68,15 @@ std::string format(std::string str, const std::initializer_list<const std::strin
 	return str;
 }
 std::string format(std::string s, const std::map<std::string, std::string, less_ci>& replace_str,
-				   const std::unordered_map<std::string, std::string>& str_tmp) {
+				   const std::unordered_map<std::string, AttrVar>& vars) {
 	if (s[0] == '&') 	{
 		string key = s.substr(1);
 		auto it = replace_str.find(key);
 		if (it != replace_str.end()) 		{
-			return format(it->second, replace_str, str_tmp);
+			return format(it->second, replace_str, vars);
 		}
-		if (auto uit = str_tmp.find(key); uit != str_tmp.end()) 		{
-			return uit->second;
+		if (auto uit = vars.find(key); uit != vars.end()) 		{
+			return uit->second.to_str();
 		}
 	}
 	int l = 0, r = 0;
@@ -92,19 +92,19 @@ std::string format(std::string s, const std::map<std::string, std::string, less_
 			key = key.substr(5);
 			val = fmt->format(fmt->get_help(key), replace_str);
 		}
-		else if (auto uit = str_tmp.find(key); uit != str_tmp.end()) {
-			if (key == "res")val = format(uit->second, replace_str, str_tmp);
-			else val = uit->second;
+		else if (auto uit = vars.find(key); uit != vars.end()) {
+			if (key == "res")val = format(uit->second.to_str(), replace_str, vars);
+			else val = uit->second.to_str();
 		}
 		else if (key.find("sample:") == 0) {
 			key = key.substr(7);
 			vector<string> samples{ split(key,"|") };
 			if (samples.empty())val = "";
 			else
-				val = format(samples[RandomGenerator::Randint(0, samples.size() - 1)], replace_str, str_tmp);
+				val = format(samples[RandomGenerator::Randint(0, samples.size() - 1)], replace_str, vars);
 		}
 		else if (auto it = replace_str.find(key); it != replace_str.end()) 		{
-			val = format(it->second, replace_str, str_tmp);
+			val = format(it->second, replace_str, vars);
 		}
 		else if ((it = GlobalChar.find(key)) != GlobalChar.end()) {
 			val = it->second;

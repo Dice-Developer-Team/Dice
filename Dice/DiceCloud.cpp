@@ -31,44 +31,10 @@ namespace Cloud
 	void heartbeat()
 	{
 		const string strVer = GBKtoUTF8(string(Dice_Ver));
-		const string data = "&masterQQ=" + to_string(console.master()) + "&Ver=" +
+		const string data = "&masterID=" + to_string(console.master()) + "&Ver=" +
 			strVer + "&isGlobalOn=" + to_string(!console["DisabledGlobal"]) + "&isPublic=" +
 			to_string(!console["Private"]) + "&isVisible=" + to_string(console["CloudVisible"]);
 		DD::heartbeat(data);
-	}
-
-	int checkWarning(const char* warning)
-	{
-		char* frmdata = new char[strlen(warning) + 1];
-#ifdef _MSC_VER
-		strcpy_s(frmdata, strlen(warning) + 1, warning);
-#else
-		strcpy(frmdata, warning);
-#endif
-		string temp;
-		Network::POST("shiki.stringempty.xyz", "/DiceCloud/warning_check.php", 80, frmdata, temp);
-		delete[] frmdata;
-		if (temp == "exist")
-		{
-			return 1;
-		}
-		if (temp == "erased")
-		{
-			return -1;
-		}
-		return 0;
-	}
-
-	[[deprecated]] int DownloadFile(const char* url, const char* downloadPath)
-	{
-#ifdef _WIN32
-		DeleteUrlCacheEntryA(url);
-		if (URLDownloadToFileA(nullptr, url, downloadPath, 0, nullptr) != S_OK) return -1;
-		if (_access(downloadPath, 0))return -2;
-		return 0;
-#else
-		return -1;
-#endif
 	}
 	
 	int DownloadFile(const char* url, const std::filesystem::path& downloadPath)

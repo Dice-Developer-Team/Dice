@@ -12,6 +12,7 @@ DDAPI(Reload, bool);
 DDAPI(Remake, bool);
 DDAPI(Killme, void);
 DDAPI(DebugLog, void, const std::string&);
+DDAPI(DebugMsg, void, long long, const std::string&);
 DDAPI(IsDiceMaid, bool, long long);
 DDAPI(GetDiceSisters, const std::set<long long>&);
 DDAPI(DiceHeartbeat, void, long long, const std::string&);
@@ -20,6 +21,7 @@ DDAPI(DiceUpdate, bool, const std::string&, std::string&);
 DDAPI(GetNick, const std::string&, long long, long long);
 DDAPI(SendPrivateMsg, void, long long, long long, const std::string&);
 DDAPI(SendGroupMsg, void, long long, long long, const std::string&);
+DDAPI(SendChannelMsg, void, long long, long long, long long, const std::string&);
 DDAPI(SendDiscussMsg, void, long long, long long, const std::string&);
 DDAPI(GetFriendQQList, const std::set<long long>&, long long);
 DDAPI(GetGroupIDList, const std::set<long long>&, long long);
@@ -69,6 +71,9 @@ namespace DD {
 	void debugLog(const std::string& log) {
 		CALLVOID(DebugLog, log);
 	}
+	void debugMsg(const std::string& log) {
+		CALLVOID(DebugMsg, loginQQ, log);
+	}
 	bool isDiceMaid(long long aimQQ){
 		return CALLGET(IsDiceMaid, aimQQ) :false;
 	}
@@ -78,9 +83,9 @@ namespace DD {
 	void heartbeat(const string& info) {
 		CALLVOID(DiceHeartbeat, loginQQ, info);
 	}
-	int uploadBlack(long long DiceMaid, long long fromQQ, long long fromGroup, 
+	int uploadBlack(long long DiceMaid, long long fromUID, long long fromGID, 
 					 const std::string& type, std::string& info) {
-		return CALLGET(DiceUploadBlack, DiceMaid, fromQQ, fromGroup, type, info) :-2;
+		return CALLGET(DiceUploadBlack, DiceMaid, fromUID, fromGID, type, info) :-2;
 	}
 	bool updateDice(const std::string& ver, std::string& ret) {
 		ret = "更新接口不存在";
@@ -96,6 +101,10 @@ namespace DD {
 	void sendGroupMsg(long long rcvChat, const std::string& msg) {
 		if (msg.empty())return;
 		CALLVOID(SendGroupMsg, loginQQ, rcvChat, msg);
+	}
+	void sendChannelMsg(long long rcvGID, long long rcvChID, const std::string& msg) {
+		if (msg.empty())return;
+		CALLVOID(SendChannelMsg, loginQQ, rcvGID, rcvChID, msg);
 	}
 	void sendDiscussMsg(long long rcvChat, const std::string& msg) {
 		if (msg.empty())return;
@@ -126,11 +135,11 @@ namespace DD {
 	bool isGroupMember(long long llgroup, long long llQQ, bool bDefault) {
 		return CALLGET(IsGroupMember, loginQQ, llgroup, llQQ, bDefault) :bDefault;
 	}
-	void answerFriendRequest(long long fromQQ, int respon, const std::string& msg) {
-		CALLVOID(AnswerFriendRequest, loginQQ, fromQQ, respon, msg);
+	void answerFriendRequest(long long fromUID, int respon, const std::string& msg) {
+		CALLVOID(AnswerFriendRequest, loginQQ, fromUID, respon, msg);
 	}
-	void answerGroupInvited(long long fromGroup, int respon) {
-		CALLVOID(AnswerGroupInvited, loginQQ, fromGroup, respon);
+	void answerGroupInvited(long long fromGID, int respon) {
+		CALLVOID(AnswerGroupInvited, loginQQ, fromGID, respon);
 	}
 	GroupSize_t getGroupSize(long long aimGroup) {
 		return CALLGET(GetGroupSize, loginQQ, aimGroup) :GroupSize_t();

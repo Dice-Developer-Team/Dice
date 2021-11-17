@@ -829,11 +829,11 @@ public:
 
 void init(std::string&);
 void init2(std::string&);
-void COC6D(std::string&);
-void COC6(std::string&, int);
-void COC7D(std::string&);
-void COC7(std::string&, int);
-void DND(std::string&, int);
+std::string COC6D();
+std::string COC6(int);
+std::string COC7D();
+std::string COC7(int);
+std::string DND(int);
 void LongInsane(std::string&);
 void TempInsane(std::string&);
 int RollSuccessLevel(int, int, int);

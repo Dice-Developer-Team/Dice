@@ -24,17 +24,17 @@ using Manager = DDBlackManager;
 using Factory = DDBlackMarkFactory;
 
 //判断信任
-int isReliable(long long QQID)
+int isReliable(long long uid)
 {
-	if (!QQID)return 0;
-	if (QQID == console.master())return 255;
-	if (trustedQQ(QQID) > 2)return trustedQQ(QQID) - 1;
-	if (mDiceList.count(QQID))
+	if (!uid)return 0;
+	if (uid == console.master())return 255;
+	if (trustedQQ(uid) > 2)return trustedQQ(uid) - 1;
+	if (mDiceList.count(uid))
 	{
-		if (trustedQQ(mDiceList[QQID]) > 2)return trustedQQ(mDiceList[QQID]) - 1;
-		if (console["BelieveDiceList"] || mDiceList[QQID] == QQID)return 1;
+		if (trustedQQ(mDiceList[uid]) > 2)return trustedQQ(mDiceList[uid]) - 1;
+		if (console["BelieveDiceList"] || mDiceList[uid] == uid)return 1;
 	}
-	if (blacklist->get_qq_danger(QQID))return -1;
+	if (blacklist->get_qq_danger(uid))return -1;
 	return 0;
 }
 
@@ -63,37 +63,37 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 			}
 			else if (authBlack < authSelf) {
 				if (mark.isSource(console.DiceMaid && !mark.isType("local")))AddMsgToQueue(
-					mark.warning(), id, msgtype::Group);
+					mark.warning(), { 0,id });
 				strNotice += "对方群权限较低";
 			}
 			else if (authSelf > authBlack)
 			{
 				DD::sendGroupMsg(id, mark.warning());
-				grp.leave("发现新增黑名单管理员" + printQQ(llQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
+				grp.leave("发现新增黑名单管理员" + printUser(llQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
 				strNotice += "对方群权限较高，已退群";
 				this_thread::sleep_for(1s);
 			}
 			else if (grp.isset("免清"))
 			{
 				if (mark.isSource(console.DiceMaid) && !mark.isType("local"))AddMsgToQueue(
-					mark.warning(), id, msgtype::Group);
+					mark.warning(), { 0, id });
 				strNotice += "群免清";
 			}
 			else if (console["LeaveBlackQQ"])
 			{
 				DD::sendGroupMsg(id, mark.warning());
-				grp.leave("发现新增黑名单成员" + printQQ(llQQ) + "（同等群权限）\n" + getMsg("strSelfName") + "将预防性退群");
+				grp.leave("发现新增黑名单成员" + printUser(llQQ) + "（同等群权限）\n" + getMsg("strSelfName") + "将预防性退群");
 				strNotice += "已退群";
 				this_thread::sleep_for(1s);
 			}
 			else if (mark.isSource(console.DiceMaid) && !mark.isType("local"))AddMsgToQueue(
-				mark.warning(), id, msgtype::Group);
+				mark.warning(), { 0, id });
 			list << strNotice;
 		}
 	}
 	if (!list.empty())
 	{
-		strNotice = "已清查与" + printQQ(llQQ) + "共同群聊" + to_string(list.size()) + "个：" + list.show();
+		strNotice = "已清查与" + printUser(llQQ) + "共同群聊" + to_string(list.size()) + "个：" + list.show();
 		console.log(strNotice, 0b100, printSTNow());
 	}
 }
@@ -105,10 +105,10 @@ mutex warningMutex;
 
 bool isLoadingExtern = false;
 
-void AddWarning(const string& msg, long long DiceQQ, long long fromGroup)
+void AddWarning(const string& msg, long long DiceQQ, long long fromGID)
 {
 	lock_guard<std::mutex> lock_queue(warningMutex);
-	warningQueue.emplace(msg, DiceQQ, fromGroup);
+	warningQueue.emplace(msg, DiceQQ, fromGID);
 }
 
 void warningHandler()
@@ -124,7 +124,7 @@ void warningHandler()
 				warningQueue.pop();
 			}
 			if (warning.strMsg.empty())continue;
-			if (warning.fromQQ)console.log("接收来自" + printQQ(warning.fromQQ) + "的warning:" + warning.strMsg, 0,
+			if (warning.fromUID)console.log("接收来自" + printUser(warning.fromUID) + "的warning:" + warning.strMsg, 0,
 			                               printSTNow());
 			try
 			{
@@ -133,12 +133,12 @@ void warningHandler()
 				{
 					for (auto it : j)
 					{
-						blacklist->verify(&it, warning.fromQQ);
+						blacklist->verify(&it, warning.fromUID);
 					}
 				}
 				else
 				{
-					blacklist->verify(&j, warning.fromQQ);
+					blacklist->verify(&j, warning.fromUID);
 				}
 				std::this_thread::sleep_for(100ms);
 			}
@@ -171,10 +171,10 @@ map<string, int> credit_limit{
 	{"other", 3}, {"local", 3}, {"invite", 3}
 };
 
-DDBlackMark::DDBlackMark(long long qq, long long group) : type("local"), danger(2), comment("本地黑名单记录")
+DDBlackMark::DDBlackMark(long long uid, long long group) : type("local"), danger(2), comment("本地黑名单记录")
 {
-	if (qq)fromQQ = {qq, true};
-	if (group)fromGroup = {group, true};
+	if (uid)fromUID = { uid, true};
+	if (group)fromGID = {group, true};
 }
 
 DDBlackMark::DDBlackMark(void* pJson)
@@ -200,8 +200,8 @@ DDBlackMark::DDBlackMark(void* pJson)
 				isAdd = !isClear;
 			}
 		}
-		if (j.count("fromGroup"))fromGroup = {j["fromGroup"].get<long long>(), isAdd};
-		if (j.count("fromQQ"))fromQQ = {j["fromQQ"].get<long long>(), isAdd};
+		if (j.count("fromGID"))fromGID = {j["fromGID"].get<long long>(), isAdd};
+		if (j.count("fromUID"))fromUID = {j["fromUID"].get<long long>(), isAdd};
 		if (j.count("inviterQQ"))inviterQQ = {j["inviterQQ"].get<long long>(), isAdd};
 		if (j.count("ownerQQ"))ownerQQ = {j["ownerQQ"].get<long long>(), isAdd};
 
@@ -225,12 +225,12 @@ DDBlackMark::DDBlackMark(void* pJson)
 			isClear = true;
 			for (auto& key : j["erase"])
 			{
-				if (key.get<string>() == "fromGroup")fromGroup.second = false;
-				else if (key.get<string>() == "fromQQ")fromQQ.second = false;
+				if (key.get<string>() == "fromGID")fromGID.second = false;
+				else if (key.get<string>() == "fromUID")fromUID.second = false;
 				else if (key.get<string>() == "inviterQQ")inviterQQ.second = false;
 				else if (key.get<string>() == "ownerQQ")ownerQQ.second = false;
 			}
-			if (fromGroup.second || fromQQ.second || inviterQQ.second || ownerQQ.second)isClear = false;
+			if (fromGID.second || fromUID.second || inviterQQ.second || ownerQQ.second)isClear = false;
 		}
 		isValid = true;
 		return;
@@ -263,15 +263,15 @@ string DDBlackMark::printJson(int tab = 0) const
 	j["type"] = type;
 	j["danger"] = danger;
 	vector<string> eraseID;
-	if (fromGroup.first)
+	if (fromGID.first)
 	{
-		j["fromGroup"] = fromGroup.first;
-		if (!fromGroup.second)eraseID.push_back("fromGroup");
+		j["fromGID"] = fromGID.first;
+		if (!fromGID.second)eraseID.push_back("fromGID");
 	}
-	if (fromQQ.first)
+	if (fromUID.first)
 	{
-		j["fromQQ"] = fromQQ.first;
-		if (!fromQQ.second)eraseID.push_back("fromQQ");
+		j["fromUID"] = fromUID.first;
+		if (!fromUID.second)eraseID.push_back("fromUID");
 	}
 	if (inviterQQ.first)
 	{
@@ -299,8 +299,8 @@ string DDBlackMark::warning() const
 	if (wid)j["wid"] = wid;
 	j["type"] = type;
 	j["danger"] = danger;
-	if (fromGroup.second)j["fromGroup"] = fromGroup.first;
-	if (fromQQ.second)j["fromQQ"] = fromQQ.first;
+	if (fromGID.second)j["fromGID"] = fromGID.first;
+	if (fromUID.second)j["fromUID"] = fromUID.first;
 	if (inviterQQ.second)j["inviterQQ"] = inviterQQ.first;
 	if (ownerQQ.second)j["ownerQQ"] = ownerQQ.first;
 	if (!time.empty())j["time"] = GBKtoUTF8(time);
@@ -313,7 +313,7 @@ string DDBlackMark::warning() const
 
 std::string DDBlackMark::getData() const
 {
-	std::string data = "fromQQ=" + std::to_string(fromQQ.first) + "&fromGroup=" + std::to_string(fromGroup.first) +
+	std::string data = "fromChat.uid=" + std::to_string(fromUID.first) + "&fromGID=" + std::to_string(fromGID.first) +
 		"&DiceMaid=" + std::to_string(DiceMaid) + "&masterQQ=" + std::to_string(masterQQ) + "&time=" + time;
 	return data;
 }
@@ -323,17 +323,17 @@ void DDBlackMark::fill_note()
 	if (!note.empty())return;
 	if (type == "kick")
 	{
-		note = time + " " + (fromQQ.first ? printQQ(fromQQ.first) : "") + "将" + printQQ(DiceMaid) + "移出了群" + (
-			fromGroup.first ? to_string(fromGroup.first) : "");
+		note = time + " " + (fromUID.first ? printUser(fromUID.first) : "") + "将" + printUser(DiceMaid) + "移出了群" + (
+			fromGID.first ? to_string(fromGID.first) : "");
 	}
 	else if (type == "ban")
 	{
-		note = time + " " + (fromGroup.first ? "在" + printGroup(fromGroup.first) + "中" : "") + (
-			fromQQ.first ? printQQ(fromQQ.first) : "") + "将" + printQQ(DiceMaid) + "禁言";
+		note = time + " " + (fromGID.first ? "在" + printGroup(fromGID.first) + "中" : "") + (
+			fromUID.first ? printUser(fromUID.first) : "") + "将" + printUser(DiceMaid) + "禁言";
 	}
 	else if (type == "spam")
 	{
-		note = time + " " + (fromQQ.first ? printQQ(fromQQ.first) : "") + "对" + printQQ(DiceMaid) + "高频发送指令";
+		note = time + " " + (fromUID.first ? printUser(fromUID.first) : "") + "对" + printUser(DiceMaid) + "高频发送指令";
 	}
 }
 
@@ -357,14 +357,14 @@ bool DDBlackMark::isSame(const DDBlackMark& other) const
 		if (time != other.time)return false;
 		isLike = true;
 	}
-	if (fromGroup.first && other.fromGroup.first)
+	if (fromGID.first && other.fromGID.first)
 	{
-		if (fromGroup.first != other.fromGroup.first)return false;
+		if (fromGID.first != other.fromGID.first)return false;
 		isLike = true;
 	}
-	if (fromQQ.first && other.fromQQ.first)
+	if (fromUID.first && other.fromUID.first)
 	{
-		if (fromQQ.first != other.fromQQ.first)return false;
+		if (fromUID.first != other.fromUID.first)return false;
 		isLike = true;
 	}
 	if (inviterQQ.first && other.inviterQQ.first)
@@ -382,28 +382,28 @@ bool DDBlackMark::isSame(const DDBlackMark& other) const
 	return isLike;
 }
 
-bool DDBlackMark::isSource(long long qq) const
+bool DDBlackMark::isSource(long long uid) const
 {
-	return DiceMaid == qq || masterQQ == qq;
+	return DiceMaid == uid || masterQQ == uid;
 }
 void DDBlackMark::check_remit()
 {
-    if (fromGroup.first && groupset(fromGroup.first, "免黑") > 0)erase();
-    if (fromQQ.first && trustedQQ(fromQQ.first) > 1)erase();
+    if (fromGID.first && groupset(fromGID.first, "免黑") > 0)erase();
+    if (fromUID.first && trustedQQ(fromUID.first) > 1)erase();
 	if (inviterQQ.first && trustedQQ(inviterQQ.first) > 1)inviterQQ = { 0,false };
     if (ownerQQ.first && trustedQQ(ownerQQ.first) > 1)ownerQQ = { 0,false };
 }
 
 void DDBlackMark::erase()
 {
-	fromGroup.second = fromQQ.second = inviterQQ.second = ownerQQ.second = false;
+	fromGID.second = fromUID.second = inviterQQ.second = ownerQQ.second = false;
 	isClear = true;
 }
 
 void DDBlackMark::upload()
 {
-	std::string info = "&masterQQ=" + std::to_string(masterQQ) + "&time=" +	time + "&note=" + UrlEncode(GBKtoUTF8(note));
-	int res{ DD::uploadBlack(console.DiceMaid, fromQQ.first, fromGroup.first, type, info) };
+	std::string info = "&masterID=" + std::to_string(masterQQ) + "&time=" +	time + "&note=" + UrlEncode(GBKtoUTF8(note));
+	int res{ DD::uploadBlack(console.DiceMaid, fromUID.first, fromGID.first, type, info) };
 	if (!res) {
 		erase();
 	}
@@ -417,8 +417,8 @@ void DDBlackMark::upload()
 
 int DDBlackMark::check_cloud()
 {
-	std::string frmdata = "fromQQ=" + std::to_string(fromQQ.first) + "&fromGroup=" + std::to_string(fromGroup.first) +
-		"&DiceMaid=" + std::to_string(DiceMaid) + "&masterQQ=" + std::to_string(masterQQ) + "&time=" + time;
+	std::string frmdata = "fromUID=" + std::to_string(fromUID.first) + "&fromGID=" + std::to_string(fromGID.first) +
+		"&DiceMaid=" + std::to_string(DiceMaid) + "&masterID=" + std::to_string(masterQQ) + "&time=" + time;
 	string temp;
 	const bool reqRes = Network::POST("shiki.stringempty.xyz", "/blacklist/check.php", 80, frmdata.data(), temp);
 	if (!reqRes)
@@ -483,10 +483,10 @@ int DDBlackManager::find(const DDBlackMark& mark)
             sRange.swap(sInter);
         }
     }
-    if (mark.fromGroup.first)
+    if (mark.fromGID.first)
 	{
         unordered_set<unsigned int> sGroupRange = sGroupEmpty;
-        for (auto& [key, id] : multi_range(mGroupIndex, mark.fromGroup.first))
+        for (auto& [key, id] : multi_range(mGroupIndex, mark.fromGID.first))
 		{
             sGroupRange.insert(id);
         }
@@ -512,10 +512,10 @@ int DDBlackManager::find(const DDBlackMark& mark)
             sRange.swap(sInter);
         }
     }
-    if (mark.fromQQ.first)
+    if (mark.fromUID.first)
 	{
         unordered_set<unsigned int> sQQRange = sQQEmpty;
-        for (auto& [key, id] : multi_range(mQQIndex, mark.fromQQ.first)) 
+        for (auto& [key, id] : multi_range(mQQIndex, mark.fromUID.first)) 
 		{
             if (Enabled)console.log("匹配用户记录" + to_string(id), 0);
             sQQRange.insert(id);
@@ -562,13 +562,13 @@ DDBlackMark& DDBlackMark::operator<<(const DDBlackMark& mark)
 	{
         note = mark.note;
     }
-    if (mark.fromGroup.first)
+    if (mark.fromGID.first)
 	{
-        fromGroup = mark.fromGroup;
+        fromGID = mark.fromGID;
     }
-    if (mark.fromQQ.first)
+    if (mark.fromUID.first)
 	{
-        fromQQ = mark.fromQQ;
+		fromUID = mark.fromUID;
     }
     if (mark.inviterQQ.first)
 	{
@@ -598,24 +598,24 @@ bool DDBlackManager::insert(DDBlackMark& ex_mark)
     else sIDEmpty.insert(id);
     if (mark.time.length() == 19)mTimeIndex.emplace(mark.time, id);
     else sTimeEmpty.insert(id);
-    if (mark.fromGroup.first)
+    if (mark.fromGID.first)
 	{
-        mGroupIndex.emplace(mark.fromGroup.first, id);
-        if (mark.fromGroup.second)
+        mGroupIndex.emplace(mark.fromGID.first, id);
+        if (mark.fromGID.second)
 		{
-            up_group_danger(mark.fromGroup.first, mark); 
+            up_group_danger(mark.fromGID.first, mark); 
         }
     }
     else
 	{
         sGroupEmpty.insert(id);
     }
-    if (mark.fromQQ.first) 
+    if (mark.fromUID.first) 
 	{
-        mQQIndex.emplace(mark.fromQQ.first, id);
-        if (mark.fromQQ.second)
+        mQQIndex.emplace(mark.fromUID.first, id);
+        if (mark.fromUID.second)
 		{
-            up_qq_danger(mark.fromQQ.first, mark); 
+            up_qq_danger(mark.fromUID.first, mark); 
         }
     }
     else
@@ -673,60 +673,60 @@ bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5)
 	{
         old_mark.note = mark.note;
     }
-    if (mark.fromGroup.first)
+    if (mark.fromGID.first)
 	{
-        if (!old_mark.fromGroup.first) 
+        if (!old_mark.fromGID.first) 
 		{
             sGroupEmpty.erase(id);
-            mGroupIndex.emplace(mark.fromGroup.first, id);
-            if (mark.fromGroup.second)
+            mGroupIndex.emplace(mark.fromGID.first, id);
+            if (mark.fromGID.second)
 			{
-                up_group_danger(mark.fromGroup.first, mark);
+                up_group_danger(mark.fromGID.first, mark);
             }
-            old_mark.fromGroup = mark.fromGroup;
+            old_mark.fromGID = mark.fromGID;
             isUpdated = true;
         }
-        else if (mark.fromGroup.second != old_mark.fromGroup.second)
+        else if (mark.fromGID.second != old_mark.fromGID.second)
 		{
-            if (old_mark.fromGroup.second)
+            if (old_mark.fromGID.second)
 			{
-                old_mark.fromGroup.second = false;
-                reset_group_danger(mark.fromGroup.first);
+                old_mark.fromGID.second = false;
+                reset_group_danger(mark.fromGID.first);
                 isUpdated = true;
             }
             else if (delta_danger > 0 || credit > 2)
 			{
-                old_mark.fromGroup.second = true;
-                up_group_danger(mark.fromGroup.first, mark);
+                old_mark.fromGID.second = true;
+                up_group_danger(mark.fromGID.first, mark);
                 isUpdated = true;
             }
         }
     }
-    if (mark.fromQQ.first) 
+    if (mark.fromUID.first) 
 	{
-        if (!old_mark.fromQQ.first) 
+        if (!old_mark.fromUID.first) 
 		{
             sQQEmpty.erase(id);
-            mQQIndex.emplace(mark.fromQQ.first, id);
-            old_mark.fromQQ = mark.fromQQ;
-            if (mark.fromQQ.second)
+            mQQIndex.emplace(mark.fromUID.first, id);
+            old_mark.fromUID = mark.fromUID;
+            if (mark.fromUID.second)
 			{
-                up_qq_danger(mark.fromQQ.first, mark);
+                up_qq_danger(mark.fromUID.first, mark);
             }
             isUpdated = true;
         }
-        else if (mark.fromQQ.second != old_mark.fromQQ.second)
+        else if (mark.fromUID.second != old_mark.fromUID.second)
 		{
-            if (old_mark.fromQQ.second)
+            if (old_mark.fromUID.second)
 			{
-                old_mark.fromQQ.second = false;
-                reset_qq_danger(mark.fromQQ.first);
+                old_mark.fromUID.second = false;
+                reset_qq_danger(mark.fromUID.first);
                 isUpdated = true;
             }
             else if (delta_danger > 0 || credit > 2)
 			{
-                old_mark.fromQQ.second = true;
-                up_qq_danger(mark.fromQQ.first, mark);
+                old_mark.fromUID.second = true;
+                up_qq_danger(mark.fromUID.first, mark);
                 isUpdated = true;
             }
         }
@@ -807,7 +807,7 @@ void DDBlackManager::reset_group_danger(long long llgroup)
 	int max_danger = 0;
 	for (auto [group, id] : multi_range(mGroupIndex, llgroup))
 	{
-		if (vBlackList[id].fromGroup.second && vBlackList[id].danger > max_danger)max_danger = vBlackList[id].danger;
+		if (vBlackList[id].fromGID.second && vBlackList[id].danger > max_danger)max_danger = vBlackList[id].danger;
 	}
 	if (max_danger == mGroupDanger[llgroup])return;
 	if (max_danger)
@@ -825,9 +825,9 @@ void DDBlackManager::reset_group_danger(long long llgroup)
 void DDBlackManager::reset_qq_danger(long long llqq)
 {
 	int max_danger = 0;
-	for (auto [qq, id] : multi_range(mQQIndex, llqq))
+	for (auto [uid, id] : multi_range(mQQIndex, llqq))
 	{
-		if (vBlackList[id].fromQQ.first == llqq && vBlackList[id].fromQQ.second && vBlackList[id].danger > max_danger)
+		if (vBlackList[id].fromUID.first == llqq && vBlackList[id].fromUID.second && vBlackList[id].danger > max_danger)
 			max_danger = vBlackList[id].danger;
 		if (vBlackList[id].inviterQQ.first == llqq && vBlackList[id].inviterQQ.second && vBlackList[id].danger >
 			max_danger)max_danger = vBlackList[id].danger;
@@ -838,14 +838,14 @@ void DDBlackManager::reset_qq_danger(long long llqq)
 	if (max_danger)
 	{
 		mQQDanger[llqq] = max_danger;
-		console.log("已调整" + printQQ(llqq) + "的危险等级为" + to_string(max_danger), 0b10, printSTNow());
+		console.log("已调整" + printUser(llqq) + "的危险等级为" + to_string(max_danger), 0b10, printSTNow());
 	}
 	else
 	{
 		mQQDanger.erase(llqq);
 		if (Enabled)
 		{
-			if (!isLoadingExtern)console.log("已消除" + printQQ(llqq) + "的危险等级", 0b10, printSTNow());
+			if (!isLoadingExtern)console.log("已消除" + printUser(llqq) + "的危险等级", 0b10, printSTNow());
 			if (UserList.count(llqq))AddMsgToQueue(getMsg("strBlackQQDelNotice", {{"user_nick", getName(llqq)}}), llqq);
 		}
 	}
@@ -874,7 +874,7 @@ bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark)
 {
 	if (trustedQQ(llqq) > 1 || llqq == console.master() || llqq == console.DiceMaid)
 	{
-		if (mark.fromQQ.first == llqq)mark.erase();
+		if (mark.fromUID.first == llqq)mark.erase();
 		if (mark.inviterQQ.first == llqq)mark.inviterQQ.second = false;
 		if (mark.ownerQQ.first == llqq)mark.ownerQQ.second = false;
 		return false;
@@ -890,7 +890,7 @@ bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark)
 					                       {"0", mark.note}, {"reason", mark.note}, {"user_nick", getName(llqq)}
 				                       }), llqq);
 		if (!isLoadingExtern) {
-			console.log(getMsg("strSelfName") + "已将" + printQQ(llqq) + "危险等级提升至" + to_string(mark.danger), 0b10,
+			console.log(getMsg("strSelfName") + "已将" + printUser(llqq) + "危险等级提升至" + to_string(mark.danger), 0b10,
 						printSTNow());
 			checkGroupWithBlackQQ(mark, llqq);
 		}
@@ -919,14 +919,14 @@ void DDBlackManager::rm_black_group(long long llgroup, FromMsg* msg)
 		msg->reply(printGroup(llgroup) + "无未注销记录！");
 		return;
 	}
-	if (mGroupDanger[llgroup] >= msg->trusted && msg->fromQQ != console.master())
+	if (mGroupDanger[llgroup] >= msg->trusted && !msg->isFromMaster())
 	{
 		msg->reply("你注销目标黑名单的权限不足×");
 		return;
 	}
 	for (auto [key,index] : multi_range(mGroupIndex, llgroup))
 	{
-		vBlackList[index].fromGroup.second = false;
+		vBlackList[index].fromGID.second = false;
 	}
 	mGroupDanger.erase(llgroup);
 	msg->note("已注销" + printGroup(llgroup) + "的黑名单记录√");
@@ -938,33 +938,33 @@ void DDBlackManager::rm_black_qq(long long llqq, FromMsg* msg)
 	std::lock_guard<std::mutex> lock_queue(blacklistMutex);
 	if (!mQQDanger.count(llqq))
 	{
-		msg->reply(printQQ(llqq) + "无未注销记录！");
+		msg->reply(printUser(llqq) + "无未注销记录！");
 		return;
 	}
-	if (mQQDanger[llqq] >= msg->trusted && msg->fromQQ != console.master())
+	if (mQQDanger[llqq] >= msg->trusted && !msg->isFromMaster())
 	{
 		msg->reply("你注销目标黑名单的权限不足×");
 		return;
 	}
 	for (auto [key, index] : multi_range(mQQIndex, llqq))
 	{
-		if (vBlackList[index].fromQQ.first == llqq)vBlackList[index].fromQQ.second = false;
+		if (vBlackList[index].fromUID.first == llqq)vBlackList[index].fromUID.second = false;
 		if (vBlackList[index].inviterQQ.first == llqq)vBlackList[index].inviterQQ.second = false;
 		if (vBlackList[index].ownerQQ.first == llqq)vBlackList[index].ownerQQ.second = false;
 	}
 	reset_qq_danger(llqq);
-	msg->note("已注销" + printQQ(llqq) + "的黑名单记录√");
+	msg->note("已注销" + printUser(llqq) + "的黑名单记录√");
 	blacklist->saveJson(DiceDir / "conf" / "BlackList.json");
 }
 
 void DDBlackManager::isban(FromMsg* msg)
 {
-	if (msg->strVar["target"].empty())
+	if (!msg->vars["target"].to_ll())
 	{
 		msg->reply("请给出查询对象的ID×");
 		return;
 	}
-	long long llID = stoll(msg->strVar["target"]);
+	long long llID{ msg->vars["target"].to_ll() };
 	bool isGet = false;
 	if (mGroupIndex.count(llID))
 	{
@@ -996,7 +996,7 @@ void DDBlackManager::isban(FromMsg* msg)
 	}
 	if (!isGet)
 	{
-		msg->reply(msg->strVar["target"] + "无黑名单记录");
+		msg->reply(msg->vars["target"].to_str() + "无黑名单记录");
 	}
 }
 
@@ -1005,7 +1005,7 @@ string DDBlackManager::list_group_warning(long long llgroup)
 	for (auto [group, index] : multi_range(mGroupIndex, llgroup))
 	{
 		const DDBlackMark& mark = vBlackList[index];
-		if (mark.fromGroup.second && mark.danger == mGroupDanger[llgroup] && !mark.isType("local"))return mark.
+		if (mark.fromGID.second && mark.danger == mGroupDanger[llgroup] && !mark.isType("local"))return mark.
 			warning();
 	}
 	return "";
@@ -1013,11 +1013,11 @@ string DDBlackManager::list_group_warning(long long llgroup)
 
 string DDBlackManager::list_qq_warning(long long llqq)
 {
-	for (auto [qq, index] : multi_range(mQQIndex, llqq))
+	for (auto [uid, index] : multi_range(mQQIndex, llqq))
 	{
 		const DDBlackMark& mark = vBlackList[index];
 		if (mark.danger != mQQDanger[llqq] || mark.isType("local"))continue;
-		if ((mark.fromQQ.first == llqq && mark.fromQQ.second)
+		if ((mark.fromUID.first == llqq && mark.fromUID.second)
 			|| (mark.inviterQQ.first == llqq && mark.inviterQQ.second)
 			|| (mark.ownerQQ.first == llqq && mark.ownerQQ.second))
 			return mark.warning();
@@ -1030,7 +1030,7 @@ string DDBlackManager::list_self_group_warning(long long llgroup)
 	for (auto [group, index] : multi_range(mGroupIndex, llgroup))
 	{
 		const DDBlackMark& mark = vBlackList[index];
-		if (mark.isSource(console.DiceMaid) && mark.fromGroup.second && mark.danger == mGroupDanger[llgroup] && !mark.
+		if (mark.isSource(console.DiceMaid) && mark.fromGID.second && mark.danger == mGroupDanger[llgroup] && !mark.
 			isType("local"))return mark.warning();
 	}
 	return "";
@@ -1038,12 +1038,12 @@ string DDBlackManager::list_self_group_warning(long long llgroup)
 
 string DDBlackManager::list_self_qq_warning(long long llqq)
 {
-	for (auto [qq, index] : multi_range(mQQIndex, llqq))
+	for (auto [uid, index] : multi_range(mQQIndex, llqq))
 	{
 		const DDBlackMark& mark = vBlackList[index];
 		if (mark.danger != mQQDanger[llqq] || mark.isType("local"))continue;
 		if (mark.isSource(console.DiceMaid) &&
-			((mark.fromQQ.first == llqq && mark.fromQQ.second)
+			((mark.fromUID.first == llqq && mark.fromUID.second)
 				|| (mark.inviterQQ.first == llqq && mark.inviterQQ.second)
 				|| (mark.ownerQQ.first == llqq && mark.ownerQQ.second)))
 			return mark.warning();
@@ -1060,7 +1060,7 @@ void DDBlackManager::add_black_group(long long llgroup, FromMsg* msg)
 	}
 	DDBlackMark mark{0, llgroup};
 	mark.danger = 1;
-	mark.note = msg->strVar["note"];
+	mark.note = msg->vars["note"].to_str();
 	if (!mark.note.empty()) {
 		mark.danger = 2;
 		mark.type = "other";
@@ -1070,10 +1070,10 @@ void DDBlackManager::add_black_group(long long llgroup, FromMsg* msg)
 		msg->reply(getMsg("strSelfName") + "已拉黑群" + to_string(llgroup) + "！");
 		return;
 	}
-	mark.time = msg->strVar["time"];
+	mark.time = msg->vars["time"].to_str();
 	mark.DiceMaid = console.DiceMaid;
 	mark.masterQQ = console.masterQQ;
-	mark.comment = printSTNow() + " 由" + printQQ(msg->fromQQ) + "拉黑";
+	mark.comment = printSTNow() + " 由" + printUser(msg->vars["uid"].to_ll()) + "拉黑";
 	insert(mark);
 	msg->note("已添加" + printGroup(llgroup) + "的黑名单记录√");
 }
@@ -1087,22 +1087,22 @@ void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
 	}
 	DDBlackMark mark{llqq, 0};
 	mark.danger = 1;
-	mark.note = msg->strVar["note"];
-	if (!mark.note.empty() && !msg->strVar.count("user")) {
+	mark.note = msg->vars["note"].to_str();
+	if (!mark.note.empty() && !msg->vars.count("user")) {
 		mark.danger = 2;
 		mark.type = "other";
 	}
 	if (mark.danger < get_qq_danger(llqq))
 	{
-		msg->reply(getMsg("strSelfName") + "已拉黑用户" + printQQ(llqq) + "！");
+		msg->reply(getMsg("strSelfName") + "已拉黑用户" + printUser(llqq) + "！");
 		return;
 	}
-	mark.time = msg->strVar["time"];
+	mark.time = msg->vars["time"].to_str();
 	mark.DiceMaid = console.DiceMaid;
 	mark.masterQQ = console.masterQQ;
-	mark.comment = printSTNow() + " 由" + printQQ(msg->fromQQ) + "拉黑";
+	mark.comment = printSTNow() + " 由" + printUser(msg->fromChat.uid) + "拉黑";
 	insert(mark);
-	msg->note("已添加" + printQQ(llqq) + "的本地黑名单记录√");
+	msg->note("已添加" + printUser(llqq) + "的本地黑名单记录√");
 }
 
 void DDBlackManager::verify(void* pJson, long long operatorQQ)
@@ -1124,21 +1124,21 @@ void DDBlackManager::verify(void* pJson, long long operatorQQ)
                     nlohmann::json j = nlohmann::json::parse(strInfo);
                     if (j["isErased"].get<int>())is_cloud = 0;
                     else if (j["isCheck"].get<int>())is_cloud = 2;
-                    if (mark.fromQQ.first) 
+                    if (mark.fromUID.first) 
 					{
-                        if (mark.fromQQ.first != j["fromQQ"].get<long long>())return;
+                        if (mark.fromUID.first != j["fromUID"].get<long long>())return;
                     }
                     else
 					{
-                        if (!mark.isClear)mark.fromQQ = {j["fromQQ"].get<long long>(), true};
+                        if (!mark.isClear)mark.fromUID = {j["fromUID"].get<long long>(), true};
                     }
-                    if (mark.fromGroup.first)
+                    if (mark.fromGID.first)
 					{
-                        if (mark.fromGroup.first != j["fromGroup"].get<long long>())return;
+                        if (mark.fromGID.first != j["fromGID"].get<long long>())return;
                     }
                     else
 					{
-                        if (!mark.isClear)mark.fromGroup = {j["fromGroup"].get<long long>(), true};
+                        if (!mark.isClear)mark.fromGID = {j["fromGID"].get<long long>(), true};
                     }
                     mark.DiceMaid = j["DiceMaid"].get<long long>();
                     mark.masterQQ = j["masterQQ"].get<long long>();
@@ -1212,7 +1212,7 @@ void DDBlackManager::verify(void* pJson, long long operatorQQ)
 		{
             if (mark.type == "local" && credit < 4)return;
         }
-        if (mark.fromGroup.first && (groupset(mark.fromGroup.first, "忽略") > 0 || groupset(mark.fromGroup.first, "协议无效") > 0 || ExceptGroups.count(mark.fromGroup.first)))return;
+        if (mark.fromGID.first && (groupset(mark.fromGID.first, "忽略") > 0 || groupset(mark.fromGID.first, "协议无效") > 0 || ExceptGroups.count(mark.fromGID.first)))return;
         insert(mark);
         console.log(getName(operatorQQ) + "已通知" + getMsg("strSelfName") + "不良记录" + to_string(vBlackList.size() - 1) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
     }
@@ -1226,8 +1226,8 @@ void DDBlackManager::verify(void* pJson, long long operatorQQ)
             if (old_mark.danger != 2)return;
             //当事人权利
             if (isSource) {
-                mark.fromQQ.second &= old_mark.fromQQ.second;
-                mark.fromGroup.second &= old_mark.fromGroup.second;
+                mark.fromUID.second &= old_mark.fromUID.second;
+                mark.fromGID.second &= old_mark.fromGID.second;
             }
             //同步云端注销
             else if (!is_cloud) {

@@ -94,7 +94,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strGroupWholeBanErr","{self}开启全局禁言失败×"},
 	{"strGroupUnban","{self}裁定:{member}解除禁言√"},
 	{"strGroupBan","{self}裁定:{member}禁言{res}分钟√"},
-	{"strGroupNotFound","{self}无该群记录×"},
+	{"strGroupNotFound","{self}无群{group_id}记录×"},
 	{"strGroupNot","{group}不是群！"},
 	{"strGroupNotIn","{self}当前不在{group}内×"},
 	{"strGroupExit","{self}已退出该群√"},
@@ -125,6 +125,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strPcInitDelErr","{nick}的初始卡不可删除×"},
 	{"strPcNoteTooLong","备注长度不能超过255×"},
 	{"strPcTextTooLong","文本长度不能超过255×"},
+	{"strSetDefaultDice","{self}已将{pc}的默认骰设置为D{default}√"},
 	{"strCOCBuild","{pc}的调查员作成:{res}"},
 	{"strDNDBuild","{pc}的英雄作成:{res}"},
 	{"strCensorCaution","提醒：{nick}的指令包含敏感词，{self}已上报"},
@@ -142,7 +143,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strReplyDel","{self}对关键词{key}的回复已清除√"},
 	{"strReplyKeyEmpty","{nick}请输入回复关键词×"},
 	{"strReplyKeyNotFound","{self}未找到回复关键词{key}×"},
-	{"strStModify","{self}对已记录{pc}的属性变化:"},		//存在技能值变化情况时，优先使用此文本
+	{"strStModify","{self}对已记录{pc}的属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","{self}对已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
 	{"strStValEmpty","{self}未记录{attr}原值×"},		
 	{"strBlackQQAddNotice","{user_nick}，你已被{self}加入黑名单，详情请联系Master:{master_QQ}"},				
@@ -228,7 +229,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strObExit", "{nick}成功退出{self}的旁观√"},
 	{"strObEnterAlready", "{nick}已经处于{self}的旁观模式!"},
 	{"strObExitAlready", "{nick}没有加入{self}的旁观模式!"},
-	{"strQQIDEmpty", "QQ号不能为空×"},
+	{"struidEmpty", "QQ号不能为空×"},
 	{"strGroupIDEmpty", "群号不能为空×"},
 	{"strBlackGroup", "该群在黑名单中，如有疑问请联系master"},
 	{"strBotOn", "成功开启{self}√"},
@@ -365,11 +366,12 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strSelfName", "" },
 	{"strSelfNick", "&strSelfName" },
 	{"self", "&strSelfCall"},
+	{"strBotHeader", "量产型 " },
 	{"strBotMsg", "\n使用.help更新 查看{self}更新内容"},
 	{
 		"strHlpMsg",
-		R"(请使用.dismiss QQ号（或后四位） 使{self}退群退讨论组
-.bot on/off QQ号（或后四位） //开启或关闭指令
+		R"(请使用.dismiss ID（或后四位） 使{self}退群退讨论组
+.bot on/off ID（或后四位） //开启或关闭指令
 .help协议 确认服务协议
 .help指令 查看指令列表
 .help群管 查看群管指令
@@ -392,7 +394,7 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 	{"strAdminOptionEmpty", "admin指令参数为空"},
 	{"stranger", "昵称空白或无法获取时的代称"},
 	{"strBlackGroup", "识别到黑名单群的退场词"},
-	{"strBlackQQAddNotice", "新拉黑QQ为自身用户时发送通知"},
+	{"strBlackQQAddNotice", "新拉黑对象有使用记录时发送通知"},
 	{"strBlackQQAddNoticeReason", "带理由的拉黑通知"},
 	{"strBlackQQDelNotice", "解黑通知"},
 	{"strBotMsg", "bot指令附于Dice信息后的文本"},
@@ -718,7 +720,7 @@ Type=[回复性质](Reply/Order)
 .link close 关闭链接
 .link start 开启上次关闭的链接
 [转发方向]:to=转发本窗口消息到对象窗口;from=转发对象窗口消息到本窗口;with=双向转发
-[对象窗口]:群/讨论组=[群号];私聊窗口=q[QQ号]
+[对象窗口]:群/讨论组=[群号];私聊窗口=q[uid号]
 例:.link with q1605271653 //建立双向私聊链接
 .link from 754494359 //接收目标群的消息转发)"},
 	{ "敏感词检测","&censor" },
@@ -792,7 +794,7 @@ Danger //警告用户且拒绝指令，并在3级窗口警告
 	{"世界逆位", "未完成、失败、准备不足、盲目接受、一时不顺利、半途而废、精神颓废、饱和状态、合谋、态度不够融洽、感情受挫。"},
 };
 
-const std::string getMsg(const std::string& key, const std::unordered_map<std::string, std::string>& maptmp)
+const std::string getMsg(const std::string& key, const AttrVars& maptmp)
 {
 	std::string msg;
 	{

@@ -28,17 +28,17 @@ using std::unordered_set;
 
 class FromMsg;
 
-enum class BlackID { fromGroup, fromQQ, inviterQQ, ownerQQ };
+enum class BlackID { fromGID, fromUID, inviterQQ, ownerQQ };
 
 class DDBlackMark
 {
 	//不良记录类型:null,kick,ban,spam,other,ruler,local,extern;枚举之外一律非法
 	string type = "null";
 	string time;
-	//fromGroup,fromQQ,inviterQQ,ownerQQ
+	//fromGID,fromUID,inviterQQ,ownerQQ
 	using item = pair<long long, bool>;
-	item fromGroup{0, false};
-	item fromQQ{0, false};
+	item fromGID{0, false};
+	item fromUID{0, false};
 	item inviterQQ{0, false};
 	item ownerQQ{0, false};
 	//
@@ -167,9 +167,9 @@ public:
 		return *this;
 	}
 
-	Factory& fromQQ(long long qq)
+	Factory& fromUID(long long qq)
 	{
-		mark.fromQQ = {qq, true};
+		mark.fromUID = {qq, true};
 		return *this;
 	}
 
@@ -199,5 +199,5 @@ public:
 	}
 };
 
-void AddWarning(const std::string& msg, long long DiceQQ, long long fromGroup);
+void AddWarning(const std::string& msg, long long DiceQQ, long long fromGID);
 void warningHandler();

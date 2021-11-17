@@ -40,13 +40,13 @@ enumap<string> DiceMsgReply::sMode{ "Match", "Search", "Regex" };
 enumap<string> DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
 bool DiceMsgReply::exec(FromMsg* msg) {
 	if (type == Type::Reply) {
-		if (msg->fromChat.second != msgtype::Private
-			&& (chat(msg->fromGroup).isset("禁用回复") || chat(msg->fromGroup).isset("认真模式")))
+		if (msg->isPrivate()
+			&& (chat(msg->fromChat.gid).isset("禁用回复") || chat(msg->fromChat.gid).isset("认真模式")))
 			return false;
 	}
 	else {	//type == Type::Order
-		if (msg->fromChat.second != msgtype::Private
-			&& chat(msg->fromGroup).isset("停用指令"))
+		if (msg->isPrivate()
+			&& chat(msg->fromChat.gid).isset("停用指令"))
 			return false;
 	}
 
@@ -189,14 +189,14 @@ struct help_sorter {
 };
 
 void DiceModManager::_help(const shared_ptr<DiceJobDetail>& job) {
-	if ((*job)["help_word"].empty()) {
-		job->reply(string(Dice_Short_Ver) + "\n" + getMsg("strHlpMsg"));
+	if ((*job)["help_word"].str_empty()) {
+		job->reply(getMsg("strBotHeader") + Dice_Short_Ver + "\n" + getMsg("strHlpMsg"));
 		return;
 	}
-	else if (const auto it = helpdoc.find((*job)["help_word"]); it != helpdoc.end()) {
+	else if (const auto it = helpdoc.find((*job)["help_word"].to_str()); it != helpdoc.end()) {
 		job->reply(format(it->second, helpdoc));
 	}
-	else if (unordered_set<string> keys = querier.search((*job)["help_word"]);!keys.empty()) {
+	else if (unordered_set<string> keys = querier.search((*job)["help_word"].to_str());!keys.empty()) {
 		if (keys.size() == 1) {
 			(*job)["redirect_key"] = *keys.begin();
 			(*job)["redirect_res"] = get_help(*keys.begin());
@@ -218,7 +218,7 @@ void DiceModManager::_help(const shared_ptr<DiceJobDetail>& job) {
 		}
 	}
 	else job->reply(getMsg("strHelpNotFound"));
-	cntHelp[(*job)["help_word"]] += 1;
+	cntHelp[(*job)["help_word"].to_str()] += 1;
 	saveJMap(DiceDir / "user" / "HelpStatic.json",cntHelp);
 }
 
@@ -239,7 +239,7 @@ bool DiceModManager::listen_reply(FromMsg* msg) {
 		return true;
 	}
 	//模糊匹配禁止自我触发
-	if (vector<string>res; msg->fromQQ != console.DiceMaid && gReplySearcher.search(convert_a2w(strMsg.c_str()), res)) {
+	if (vector<string>res; (*msg)["uid"] != console.DiceMaid && gReplySearcher.search(convert_a2w(strMsg.c_str()), res)) {
 		for (const auto& key : res) {
 			if (!msgreply.count(key) || msg->strMsg.find(key) == string::npos)continue;
 			DiceMsgReply& reply{ msgreply[key] };
@@ -307,13 +307,12 @@ void DiceModManager::save_reply() {
 	fwriteJson(DiceDir / "conf" / "CustomMsgReply.json", j);
 }
 void DiceModManager::show_reply(const shared_ptr<DiceJobDetail>& msg) {
-	string key{ (*msg)["key"]};
+	string key{ (*msg)["key"].to_str()};
 	if (msgreply.count(key)) {
 		DiceMsgReply& reply{ msgreply[key] };
-		string& strRes{ (*msg)["show"]
-			= "Type=" + DiceMsgReply::sType[(int)reply.type] };
-		strRes += "\n" + DiceMsgReply::sMode[(int)reply.mode] + "=" + key;
-		strRes += "\n" + DiceMsgReply::sEcho[(int)reply.echo] + "=" + reply.show_ans();
+		(*msg)["show"] = "Type=" + DiceMsgReply::sType[(int)reply.type]
+			+ "\n" + DiceMsgReply::sMode[(int)reply.mode] + "=" + key
+			+ "\n" + DiceMsgReply::sEcho[(int)reply.echo] + "=" + reply.show_ans();
 		msg->reply(getMsg("strReplyShow"));
 	}
 	else {

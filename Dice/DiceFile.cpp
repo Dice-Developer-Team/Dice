@@ -162,18 +162,15 @@ std::ifstream& operator>>(std::ifstream& fin, msgtype& t)
 	return fin;
 }
 
-std::ifstream& operator>>(std::ifstream& fin, chatType& ct)
+std::ifstream& operator>>(std::ifstream& fin, chatInfo& ct)
 {
+	long long id;
 	int t;
-	fin >> ct.first >> t;
-	ct.second = static_cast<msgtype>(t);
+	fin >> id >> t;
+	ct.type = static_cast<msgtype>(t);
+	if (ct.type == msgtype::Private || ct.type == msgtype::ChannelPrivate)ct.uid = id;
+	else ct.gid = id;
 	return fin;
-}
-
-std::ofstream& operator<<(std::ofstream& fout, const chatType& ct)
-{
-	fout << ct.first << "\t" << static_cast<int>(ct.second);
-	return fout;
 }
 
 ifstream& operator>>(ifstream& fin, User& user)

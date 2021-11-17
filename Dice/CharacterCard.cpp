@@ -314,10 +314,10 @@ void CharaCard::cntRcStat(int die, int rate) {
 	update();
 }
 
-Player& getPlayer(long long qq)
+Player& getPlayer(long long uid)
 {
-	if (!PList.count(qq))PList[qq] = {};
-	return PList[qq];
+	if (!PList.count(uid))PList[uid] = {};
+	return PList[uid];
 }
 int Player::renameCard(const string& name, const string& name_new) 	{
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
@@ -357,10 +357,10 @@ void Player::readb(std::ifstream& fin)
 	mGroupIndex = fread<unsigned long long, unsigned short>(fin);
 }
 
-void getPCName(FromMsg& msg)
+void getPCName(AttrVars& msg)
 {
-	msg["pc"] = (PList.count(msg.fromQQ) && PList[msg.fromQQ][msg.fromGroup].getName() != "½ÇÉ«¿¨")
-		? PList[msg.fromQQ][msg.fromGroup].getName()
-		: ((!msg.strVar.count("nick") || msg["nick"].empty())
-		   ? msg["nick"] = getName(msg.fromQQ, msg.fromGroup) : msg["nick"]);
+	msg["pc"] = (PList.count(msg["uid"].to_ll()) && PList[msg["uid"].to_ll()][msg["gid"].to_ll()].getName() != "½ÇÉ«¿¨")
+		? PList[msg["uid"].to_ll()][msg["gid"].to_ll()].getName()
+		: ((msg["nick"]) ? msg["nick"]
+			: msg["nick"] = getName(msg["uid"].to_ll(), msg["gid"].to_ll()));
 }

@@ -48,13 +48,13 @@ bool DiceSession::table_clr(const string& key)
 
 void DiceSession::ob_enter(FromMsg* msg)
 {
-	if (sOB.count(msg->fromQQ))
+	if (sOB.count(msg->fromChat.uid))
 	{
 		msg->reply(getMsg("strObEnterAlready"));
 	}
 	else
 	{
-		sOB.insert(msg->fromQQ);
+		sOB.insert(msg->fromChat.uid);
 		msg->reply(getMsg("strObEnter"));
 		update();
 	}
@@ -62,9 +62,9 @@ void DiceSession::ob_enter(FromMsg* msg)
 
 void DiceSession::ob_exit(FromMsg* msg)
 {
-	if (sOB.count(msg->fromQQ))
+	if (sOB.count(msg->fromChat.uid))
 	{
-		sOB.erase(msg->fromQQ);
+		sOB.erase(msg->fromChat.uid);
 		msg->reply(getMsg("strObExit"));
 	}
 	else
@@ -80,9 +80,9 @@ void DiceSession::ob_list(FromMsg* msg) const
 	else
 	{
 		ResList res;
-		for (auto qq : sOB)
+		for (auto uid : sOB)
 		{
-			res << printQQ(qq);
+			res << printUser(uid);
 		}
 		msg->reply(getMsg("strObList") + res.linebreak().show());
 	}
@@ -105,8 +105,8 @@ void DiceSession::log_new(FromMsg* msg) {
 	logger.tStart = time(nullptr);
 	logger.isLogging = true;
 	logger.fileLog = (type == "solo")
-		? ("qq_" + to_string(msg->fromQQ) + "_" + to_string(logger.tStart) + ".txt")
-		: ("group_" + to_string(msg->fromGroup) + "_" + to_string(logger.tStart) + ".txt");
+		? ("qq_" + to_string(msg->fromChat.uid) + "_" + to_string(logger.tStart) + ".txt")
+		: ("group_" + to_string(msg->fromChat.gid) + "_" + to_string(logger.tStart) + ".txt");
 	logger.pathLog = DiceDir / logger.dirLog / logger.fileLog;
 	//先发消息后插入
 	msg->reply(getMsg("strLogNew"));
@@ -154,8 +154,8 @@ void DiceSession::log_end(FromMsg* msg) {
 		msg->reply(getMsg("strLogEndEmpty"));
 		return;
 	}
-	msg->strVar["log_file"] = logger.fileLog;
-	msg->strVar["log_path"] = UTF8toGBK(log_path().u8string());
+	msg->vars["log_file"] = logger.fileLog;
+	msg->vars["log_path"] = UTF8toGBK(log_path().u8string());
 	msg->reply(getMsg("strLogEnd"));
 	update();
 	msg->cmd_key = "uplog"; 
@@ -195,7 +195,7 @@ void DiceSession::link_new(FromMsg* msg) {
 		msg->reply(getMsg("strLinkBusy"));
 	}
 	else {
-		linker.typeLink = msg->strVar["option"];
+		linker.typeLink = msg->vars["option"].to_str();
 		LinkList[room] = { linker.linkFwd ,linker.typeLink != "from" };
 		LinkList[linker.linkFwd] = { room ,linker.typeLink != "to" };
 		linker.isLinking = true;
@@ -274,9 +274,9 @@ string DeckInfo::draw() {
 }
 
 void DiceSession::deck_set(FromMsg* msg) {
-	string& key{ msg->strVar["deck_name"] = msg->readAttrName() };
+	const string key{ (msg->vars["deck_name"] = msg->readAttrName()).to_str() };
 	size_t pos = msg->strMsg.find('=', msg->intMsgCnt);
-	string& strCiteDeck{ msg->strVar["deck_cited"] = pos == string::npos 
+	AttrVar& strCiteDeck{ msg->vars["deck_cited"] = pos == string::npos 
 		? key 
 		: (++msg->intMsgCnt, msg->readAttrName()) };
 	if (key.empty()) {
@@ -287,13 +287,13 @@ void DiceSession::deck_set(FromMsg* msg) {
 	}
 	else {
 		vector<string> DeckSet = {};
-		if ((strCiteDeck == "群成员" || (strCiteDeck == "member" && !(strCiteDeck = "群成员").empty())) && msg->fromChat.second == msgtype::Group) {
+		if ((strCiteDeck == "群成员" || (strCiteDeck == "member" && !(strCiteDeck = "群成员").str_empty())) && !msg->isPrivate()) {
 			
-			if (auto list{ DD::getGroupMemberList(msg->fromGroup) }; list.empty()) {
+			if (auto list{ DD::getGroupMemberList(msg->fromChat.gid) }; list.empty()) {
 				msg->reply("群成员列表获取失败×");
 			}
 			else for (auto each : list) {
-				DeckSet.push_back(printQQ(each));
+				DeckSet.push_back(printUser(each));
 			}
 			decks[key] = DeckSet;
 		}
@@ -330,23 +330,23 @@ void DiceSession::deck_set(FromMsg* msg) {
 					DeckSet.emplace_back(to_string(card));
 				}
 				decks[key] = DeckSet;
-				strCiteDeck += to_string(llBegin) + "~" + *(--DeckSet.end());
+				strCiteDeck = strCiteDeck.to_str() + to_string(llBegin) + "~" + *(--DeckSet.end());
 			}
 		}
-		else if (!CardDeck::mPublicDeck.count(strCiteDeck) || strCiteDeck[0] == '_') {
+		else if (!CardDeck::mPublicDeck.count(strCiteDeck.to_str()) || strCiteDeck.to_str()[0] == '_') {
 			msg->reply(getMsg("strDeckCiteNotFound"));
 			return;
 		}
 		else {
-			decks[key] = CardDeck::mPublicDeck[strCiteDeck];
+			decks[key] = CardDeck::mPublicDeck[strCiteDeck.to_str()];
 		}
-		if (key == strCiteDeck)msg->reply(getMsg("strDeckSet"), { msg->strVar["deck_name"] });
+		if (key == strCiteDeck.to_str())msg->reply(getMsg("strDeckSet"));
 		else msg->reply(getMsg("strDeckSetRename"));
 		update();
 	}
 }
 void DiceSession::deck_new(FromMsg* msg) {
-	string& key{ msg->strVar["deck_name"] };
+	AttrVar& key{ msg->vars["deck_name"] };
 	size_t pos = msg->strMsg.find('=', msg->intMsgCnt);
 	if (pos == string::npos) {
 		key = "new";
@@ -355,7 +355,7 @@ void DiceSession::deck_new(FromMsg* msg) {
 		key = msg->readAttrName();
 		msg->intMsgCnt = pos + 1;
 	}
-	if (decks.size() > 9 && !decks.count(key)) {
+	if (decks.size() > 9 && !decks.count(key.to_str())) {
 		msg->reply(getMsg("strDeckListFull"));
 	}
 	else {
@@ -374,7 +374,7 @@ void DiceSession::deck_new(FromMsg* msg) {
 			msg->reply(getMsg("strDeckOversize"));
 			return;
 		}
-		decks[key] = std::move(deck);
+		decks[key.to_str()] = std::move(deck);
 		msg->reply(getMsg("strDeckNew"));
 		update();
 	}
@@ -392,8 +392,8 @@ string DiceSession::deck_draw(const string& key) {
 }
 void DiceSession::_draw(FromMsg* msg) {
 	shared_ptr<DiceJobDetail> job{ msg->shared_from_this() };
-	if ((*job)["deck_name"].empty())(*job)["deck_name"] = msg->readAttrName();
-	DeckInfo& deck = decks[(*job)["deck_name"]];
+	if ((*job)["deck_name"].str_empty())(*job)["deck_name"] = msg->readAttrName();
+	DeckInfo& deck = decks[(*job)["deck_name"].to_str()];
 	int intCardNum = 1;
 	switch (msg->readNum(intCardNum)) {
 	case 0:
@@ -405,7 +405,7 @@ void DiceSession::_draw(FromMsg* msg) {
 	case -1: break;
 	case -2:
 		msg->reply(getMsg("strParaIllegal"));
-		console.log("提醒:" + printQQ(msg->fromQQ) + "对" + getMsg("strSelfName") + "使用了非法指令参数\n" + msg->strMsg, 1,
+		console.log("提醒:" + printUser(msg->fromChat.uid) + "对" + getMsg("strSelfName") + "使用了非法指令参数\n" + msg->strMsg, 1,
 					printSTNow());
 		return;
 	}
@@ -417,8 +417,7 @@ void DiceSession::_draw(FromMsg* msg) {
 	if(!Res.empty()){
 		(*job)["res"] = Res.dot("|").show();
 		(*job)["cnt"] = to_string(Res.size());
-		msg->initVar({ (*job)["pc"], (*job)["res"] });
-		if (msg->strVar.count("hidden")) {
+		if (msg->vars.count("hidden")) {
 			msg->reply(getMsg("strDrawHidden"));
 			msg->replyHidden(getMsg("strDrawCard"));
 		}
@@ -435,14 +434,14 @@ void DiceSession::deck_show(FromMsg* msg) {
 		msg->reply(getMsg("strDeckListEmpty"));
 		return;
 	}
-	string& strDeckName{ msg->strVar["deck_name"] = msg->readAttrName() };
+	const string strDeckName{ (msg->vars["deck_name"] = msg->readAttrName()).to_str() };
 	//默认列出所有牌堆
 	if (strDeckName.empty()) {
 		ResList res;
 		for (auto& [key, val] : decks) {
 			res << key + "[" + to_string(val.sizRes) + "/" + to_string(val.idxs.size()) + "]";
 		}
-		msg->strVar["res"] = res.show();
+		msg->vars["res"] = res.show();
 		msg->reply(getMsg("strDeckListShow"));
 	}
 	else {
@@ -453,7 +452,7 @@ void DiceSession::deck_show(FromMsg* msg) {
 			while (idx < deck.sizRes) {
 				residxs << deck.meta[deck.idxs[idx++]];
 			}
-			msg->strVar["deck_rest"] = residxs.dot(" | ").show();
+			msg->vars["deck_rest"] = residxs.dot(" | ").show();
 			msg->reply(getMsg("strDeckRestShow"));
 		}
 		else {
@@ -462,31 +461,31 @@ void DiceSession::deck_show(FromMsg* msg) {
 	}
 }
 void DiceSession::deck_reset(FromMsg* msg) {
-	string& key{ msg->strVar["deck_name"] = msg->readAttrName() };
-	if (key.empty())key = msg->readDigit();
-	if (key.empty()) {
+	AttrVar& key{ msg->vars["deck_name"] = msg->readAttrName() };
+	if (key.str_empty())key = msg->readDigit();
+	if (key.str_empty()) {
 		msg->reply(getMsg("strDeckNameEmpty"));
 	}
-	else if (!decks.count(key)) {
+	else if (!decks.count(key.to_str())) {
 		msg->reply(getMsg("strDeckNotFound"));
 	}
 	else {
-		decks[key].reset();
+		decks[key.to_str()].reset();
 		msg->reply(getMsg("strDeckRestReset"));
 		update();
 	}
 }
 void DiceSession::deck_del(FromMsg* msg) {
-	string& key{ msg->strVar["deck_name"] = msg->readAttrName() };
-	if (key.empty())key = msg->readDigit();
-	if (key.empty()) {
+	AttrVar& key{ msg->vars["deck_name"] = msg->readAttrName() };
+	if (key.str_empty())key = msg->readDigit();
+	if (key.str_empty()) {
 		msg->reply(getMsg("strDeckNameEmpty"));
 	}
-	else if (!decks.count(key)) {
+	else if (!decks.count(key.to_str())) {
 		msg->reply(getMsg("strDeckNotFound"));
 	}
 	else {
-		decks.erase(key);
+		decks.erase(key.to_str());
 		msg->reply(getMsg("strDeckDelete"));
 		update();
 	}

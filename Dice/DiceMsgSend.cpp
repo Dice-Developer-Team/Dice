@@ -31,17 +31,33 @@
 #include "DiceConsole.h"
 using namespace std;
 
-
+chatInfo::chatInfo(long long u, long long g, long long c) :uid(u), gid(g), chid(c) {
+	if (gid) {
+		if (chid)type = msgtype::Channel;
+		else type = msgtype::Group;
+	}
+	else {
+		if(chid)type = msgtype::ChannelPrivate;
+		else type = msgtype::Private;
+	}
+}
+bool chatInfo::operator<(const chatInfo& other)const {
+	return type == other.type
+		? uid == other.uid
+		? gid == other.gid
+		? chid < other.chid
+		: gid < other.gid
+		: uid < other.uid
+		: type < other.type;
+}
 // 消息发送存储结构体
 struct msg_t
 {
 	string msg;
-	long long target_id = 0;
-	msgtype msg_type{};
+	chatInfo target{};
 	msg_t() = default;
 
-	msg_t(string msg, long long target_id, msgtype msg_type) : msg(move(msg)), target_id(target_id),
-	                                                           msg_type(msg_type)
+	msg_t(string msg, chatInfo ct) : msg(move(msg)),target(ct)
 	{
 	}
 };
@@ -52,15 +68,16 @@ std::queue<msg_t> msgQueue;
 // 消息发送队列锁
 mutex msgQueueMutex;
 
-void AddMsgToQueue(const string& msg, long long target_id, msgtype msg_type)
+void AddMsgToQueue(const string& msg, long long target_id)
 {
 	lock_guard<std::mutex> lock_queue(msgQueueMutex);
-	msgQueue.emplace(msg_t(msg, target_id, msg_type));
+	msgQueue.emplace(msg_t(msg, { target_id }));
 }
 
-void AddMsgToQueue(const std::string& msg, chatType ct)
+void AddMsgToQueue(const std::string& msg, chatInfo ct)
 {
-	AddMsgToQueue(msg, ct.first, ct.second);
+	lock_guard<std::mutex> lock_queue(msgQueueMutex);
+	msgQueue.emplace(msg_t(msg, ct));
 }
 
 
@@ -85,20 +102,20 @@ void SendMsg()
 			}
 			if (int pos = msg.msg.find('\f'); pos != string::npos) 
 			{
-				AddMsgToQueue(msg.msg.substr(pos + 1), msg.target_id, msg.msg_type);
+				AddMsgToQueue(msg.msg.substr(pos + 1), msg.target);
 				msg.msg = msg.msg.substr(0, pos);
 			}
-			if (msg.msg_type == msgtype::Private)
+			if (msg.target.type == msgtype::Private)
 			{
-				DD::sendPrivateMsg(msg.target_id, msg.msg);
+				DD::sendPrivateMsg(msg.target.uid, msg.msg);
 			}
-			else if (msg.msg_type == msgtype::Group)
+			else if (msg.target.type == msgtype::Group)
 			{
-				DD::sendGroupMsg(msg.target_id, msg.msg);
+				DD::sendGroupMsg(msg.target.gid, msg.msg);
 			}
-			else
+			else if (msg.target.type == msgtype::Channel)
 			{
-				DD::sendDiscussMsg(msg.target_id, msg.msg);
+				DD::sendChannelMsg(msg.target.gid, msg.target.chid, msg.msg);
 			}
 		}
 		if (msgQueue.size() > 2)this_thread::sleep_for(chrono::milliseconds(console["SendIntervalBusy"]));

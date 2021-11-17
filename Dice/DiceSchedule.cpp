@@ -29,8 +29,8 @@ unordered_map<string, cmd> mCommand = {
 	{"uplog",log_put}
 };
 
-DiceJobDetail::DiceJobDetail(const char* cmd, bool isFromSelf, unordered_map<string, string> vars) :cmd_key(cmd), strVar(vars) {
-	if (isFromSelf)fromQQ = console.DiceMaid;
+DiceJobDetail::DiceJobDetail(const char* cmd, bool isFromSelf, const AttrVars& vars) :cmd_key(cmd), vars(vars) {
+	if (isFromSelf)fromChat.uid = console.DiceMaid;
 }
 
 void DiceJob::exec() {
@@ -40,30 +40,26 @@ void DiceJob::exec() {
 	else return;
 }
 void DiceJob::echo(const std::string& msg) {
-	if (!fromChat.first)return;
-	switch (fromChat.second) {
-	case msgtype::Private:
-		DD::sendPrivateMsg(fromQQ, msg);
-		break;
-	case msgtype::Group:
-		DD::sendGroupMsg(fromChat.first, msg);
-		break;
-	case msgtype::Discuss:
-		DD::sendDiscussMsg(fromChat.first, msg);
-		break;
+	if (fromChat.chid) {
+		//Warning:Temporary
+	}
+	else {
+		if(fromChat.gid)DD::sendGroupMsg(fromChat.gid, msg);
+		else if(fromChat.uid)DD::sendPrivateMsg(fromChat.uid, msg);
 	}
 }
 void DiceJob::reply(const std::string& msg) {
-	AddMsgToQueue(format(msg, GlobalMsg, strVar), fromChat);
+	AddMsgToQueue(format(msg, GlobalMsg, vars), fromChat);
 }
 void DiceJob::note(const std::string& strMsg, int note_lv = 0b1) {
 	ofstream fout(DiceDir / "audit" / ("log" + to_string(console.DiceMaid) + "_" + printDate() + ".txt"), ios::out | ios::app);
 	fout << printSTNow() << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 	fout.close();
 	echo(strMsg);
-	string note = fromQQ ? getName(fromQQ) + strMsg : strMsg;
+	string note = fromChat.uid ? getName(fromChat.uid) + strMsg : strMsg;
 	for (const auto& [ct, level] : console.NoticeList) {
-		if (!(level & note_lv) || pair(fromQQ, msgtype::Private) == ct || ct == fromChat)continue;
+		if (!(level & note_lv) || ct.uid == fromChat.uid
+			|| (ct.gid == fromChat.gid && ct.chid == fromChat.chid))continue;
 		AddMsgToQueue(note, ct);
 	}
 }
@@ -121,7 +117,7 @@ void DiceScheduler::push_job(const DiceJobDetail& job) {
 	}
 	//cvJob.notify_one();
 }
-void DiceScheduler::push_job(const char* job_name, bool isSelf, unordered_map<string,string>vars) {
+void DiceScheduler::push_job(const char* job_name, bool isSelf, const AttrVars& vars) {
 	if (!Enabled)return; 
 	{
 		std::unique_lock<std::mutex> lock_queue(mtQueueJob);
@@ -174,22 +170,22 @@ void DiceScheduler::start() {
 void DiceScheduler::end() {
 }
 
-int DiceToday::getJrrp(long long qq) {
-	if (cntUser.count(qq) && cntUser[qq].count("jrrp"))
-		return cntUser[qq]["jrrp"];
-	string frmdata = "QQ=" + to_string(console.DiceMaid) + "&v=20190114" + "&QueryQQ=" + to_string(qq);
+int DiceToday::getJrrp(long long uid) {
+	if (cntUser.count(uid) && cntUser[uid].count("jrrp"))
+		return cntUser[uid]["jrrp"];
+	string frmdata = "QQ=" + to_string(console.DiceMaid) + "&v=20190114" + "&QueryQQ=" + to_string(uid);
 	string res;
 	if (Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata.data(), res)) {
-		return cntUser[qq]["jrrp"] = stoi(res);
+		return cntUser[uid]["jrrp"] = stoi(res);
 	}
 	else {
-		if (!cntUser[qq].count("jrrp_local")) {
-			cntUser[qq]["jrrp_local"] = RandomGenerator::Randint(1, 100);
+		if (!cntUser[uid].count("jrrp_local")) {
+			cntUser[uid]["jrrp_local"] = RandomGenerator::Randint(1, 100);
 			console.log(getMsg("strJrrpErr",
 							   { {"res", res} }
 			), 0);
 		}
-		return cntUser[qq]["jrrp_local"];
+		return cntUser[uid]["jrrp_local"];
 	}
 }
 
@@ -295,9 +291,9 @@ void ConsoleTimer() 	{
 					console.log(getMsg("strSelfName") + "定时保存完成√", 1, printSTime(stTmp));
 					break;
 				case 3:
-					sch.push_job("clrgroup", true, {
-						{"clear_mode","black"}
-								 });
+					sch.push_job("clrgroup", true, AttrVars({
+						{"clear_mode",AttrVar("black")},
+								 }));
 					if (int cnt{ clearGroup() }) {
 						console.log("已清理过期群记录" + to_string(cnt) + "条", 1, printSTime(stTmp));
 					}

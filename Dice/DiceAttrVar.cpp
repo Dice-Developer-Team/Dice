@@ -41,10 +41,17 @@ AttrVar::AttrVar(const AttrVar& other) :type(other.type) {
 	case AttrType::Text:
 		new(&text)string(other.text);
 		break;
+	case AttrType::ID:
+		id = other.id;
+		break;
 	case AttrType::Nil:
 	default:
 		break;
 	}
+}
+AttrVar::operator bool()const {
+	return type != AttrType::Nil
+		&& (type != AttrType::Boolean || bit == true);
 }
 AttrVar& AttrVar::operator=(const AttrVar& other) {
 	this->~AttrVar();
@@ -80,6 +87,14 @@ AttrVar& AttrVar::operator=(long long other) {
 	type = AttrType::ID;
 	id = other;
 	return *this;
+}
+bool AttrVar::operator==(const long long other)const {
+	return (type == AttrType::ID && id == other)
+		|| (type == AttrType::Integer && attr == other)
+		|| (type == AttrType::Number && number == other);
+}
+bool AttrVar::operator==(const string& other)const {
+	return (type == AttrType::Text && text == other);
 }
 
 int AttrVar::to_int()const {
@@ -160,6 +175,9 @@ string AttrVar::to_str()const {
 		break;
 	}
 	return {};
+}
+bool AttrVar::str_empty()const{
+	return type == AttrType::Text && text.empty();
 }
 
 

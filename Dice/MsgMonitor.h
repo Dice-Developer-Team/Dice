@@ -24,22 +24,22 @@ public:
 	static std::map<long long, int>mCntOrder;
 	static std::atomic<unsigned int> sumFrqTotal;
 	static int getFrqTotal();
-	long long fromQQ = 0;
+	long long fromUID = 0;
 	time_t fromTime = 0;
 
-	FrqMonitor(long long QQ, time_t TT, chatType CT, const string& msg);
+	FrqMonitor(chatInfo CT, time_t TT, const string& msg);
 
 	~FrqMonitor()
 	{
-		if (mWarnLevel[fromQQ])mWarnLevel[fromQQ] -= 10;
+		if (mWarnLevel[fromUID])mWarnLevel[fromUID] -= 10;
 	}
 
 	bool isEarliest()
 	{
 		if (time(nullptr) - fromTime > earliestTime)
 		{
-			mFrequence[fromQQ] -= 2;
-			mCntOrder[fromQQ] -= 1;
+			mFrequence[fromUID] -= 2;
+			mCntOrder[fromUID] -= 1;
 			delete this;
 			return true;
 		}
@@ -50,7 +50,7 @@ public:
 	{
 		if (time(nullptr) - fromTime > earlierTime)
 		{
-			mFrequence[fromQQ] -= 4;
+			mFrequence[fromUID] -= 4;
 			return true;
 		}
 		return false;
@@ -60,12 +60,12 @@ public:
 	{
 		if (time(nullptr) - fromTime > earlyTime)
 		{
-			mFrequence[fromQQ] -= 4;
+			mFrequence[fromUID] -= 4;
 			return true;
 		}
 		return false;
 	}
 };
 
-void AddFrq(long long QQ, time_t TT, chatType CT, const string& msg);
+void AddFrq(chatInfo CT, time_t TT, const string& msg);
 void frqHandler();

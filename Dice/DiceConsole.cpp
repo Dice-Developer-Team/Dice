@@ -55,11 +55,12 @@ const std::map<std::string, int, less_ci>Console::intDefault{
 {"SystemAlarmCPU",90},{"SystemAlarmRAM",90},{"SystemAlarmDisk",90},
 {"SendIntervalIdle",500},{"SendIntervalBusy",100},
 //自动保存事件间隔[min],自动图片清理间隔[h],自动重启框架间隔[h]
-{"AutoSaveInterval",5},{"AutoClearImage",0},{"AutoFrameRemake",0},
+{"AutoSaveInterval",5},/*{"AutoClearImage",0},{"AutoFrameRemake",0},*/
 //用户记录清理期限[Day],群记录清理期限[Day]
 {"InactiveUserLine",360},{"InactiveGroupLine",360},
-//接收群内自己的消息，接受自己私聊消息
-{"ListenGroupEcho",0},{"ListenSelfEcho",0},
+//接收群内回音消息，接受频道内回音消息，接受自己私聊消息
+{"ListenGroupEcho",0},{"ListenChannelEcho",1},{"ListenSelfEcho",0},
+{"ReferMsgReply",1},
 {"EnableWebUI",1},{"WebUIAllowInternetAccess",0},
 {"WebUIPort",0},
 {"DebugMode",0},
@@ -106,31 +107,31 @@ ResList Console::listNotice() const
 	return list;
 }
 
-int Console::showNotice(chatType ct) const
+int Console::showNotice(chatInfo ct) const
 {
 	if (const auto it = NoticeList.find(ct); it != NoticeList.end())return it->second;
 	return 0;
 }
 
-void Console::addNotice(chatType ct, int lv)
+void Console::addNotice(chatInfo ct, int lv)
 {
 	NoticeList[ct] |= lv;
 	saveNotice();
 }
 
-void Console::redNotice(chatType ct, int lv)
+void Console::redNotice(chatInfo ct, int lv)
 {
 	NoticeList[ct] &= (~lv);
 	saveNotice();
 }
 
-void Console::setNotice(chatType ct, int lv)
+void Console::setNotice(chatInfo ct, int lv)
 {
 	NoticeList[ct] = lv;
 	saveNotice();
 }
 
-void Console::rmNotice(chatType ct)
+void Console::rmNotice(chatInfo ct)
 {
 	NoticeList.erase(ct);
 	saveNotice();
@@ -155,18 +156,18 @@ int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 		}
 		if (!Cnt)DD::sendPrivateMsg(DiceMaid, note);
 	}
-	else DD::debugLog(note);
+	else DD::debugMsg(note);
 	return Cnt;
 } 
-void Console::newMaster(long long qq)
+void Console::newMaster(long long uid)
 {
-	masterQQ = qq;
+	masterQQ = uid;
 	isMasterMode = true;
-	if (trustedQQ(qq) < 5)getUser(qq).trust(5);
-	setNotice({qq, msgtype::Private}, 0b111111);
+	if (trustedQQ(uid) < 5)getUser(uid).trust(5);
+	setNotice({ uid, 0,0 }, 0b111111);
 	save(); 
-	AddMsgToQueue(getMsg("strNewMaster"), qq);
-	AddMsgToQueue(intConf["Private"] ? getMsg("strNewMasterPrivate") : getMsg("strNewMasterPublic"), qq);
+	AddMsgToQueue(getMsg("strNewMaster"), uid);
+	AddMsgToQueue(intConf["Private"] ? getMsg("strNewMasterPrivate") : getMsg("strNewMasterPublic"), uid);
 }
 
 void Console::reset()
@@ -178,7 +179,6 @@ void Console::reset()
 
 bool Console::load() 	{
 	string s;
-	//DSens.build({ {"nn老公",2 } });
 	if (!rdbuf(fpPath, s))return false;
 	DDOM xml(s);
 	if (xml.count("mode"))isMasterMode = stoi(xml["mode"].strValue);
@@ -202,34 +202,16 @@ void Console::loadNotice()
 {
 	if (loadFile(DiceDir / "conf" / "NoticeList.txt", NoticeList) < 1)
 	{
-		std::set<chatType> sChat;
-		if (loadFile(DiceDir / "com.w4123.dice" / "MonitorList.RDconf", sChat) > 0)
-			for (const auto& it : sChat)
-			{
-				console.setNotice(it, 0b100000);
-			}
-		sChat.clear();
-		if (loadFile(DiceDir / "conf" / "RecorderList.RDconf", sChat) > 0)
-			for (const auto& it : sChat)
-			{
-				console.setNotice(it, 0b11011);
-			}
-		console.setNotice({863062599, msgtype::Group}, 0b100000);
-		console.setNotice({192499947, msgtype::Group}, 0b100000);
-		console.setNotice({754494359, msgtype::Group}, 0b100000);
-		for (auto& [ct, lv] : NoticeList)
-		{
-			if (ct.second != msgtype::Private)
-			{
-				chat(ct.first).set("许可使用").set("免清").set("免黑");
-			}
-		}
+		console.setNotice({ 0,863062599, 0 }, 0b100000);
+		console.setNotice({ 0,192499947, 0 }, 0b100000);
+		console.setNotice({ 0,754494359, 0 }, 0b100000);
 	}
 }
 
 void Console::saveNotice() const
 {
-	saveFile(DiceDir / "conf" / "NoticeList.txt", NoticeList);
+	//Warning:Temporary
+	//saveFile(DiceDir / "conf" / "NoticeList.txt", NoticeList);
 }
 
 Console console;
@@ -300,7 +282,7 @@ std::string printSTime(const tm st)
 		to_string(st.tm_sec);
 }
 	//打印用户昵称QQ
-	string printQQ(long long llqq)
+	string printUser(long long llqq)
 	{
 		string nick = DD::getQQNick(llqq);
 		if (nick.empty())return getMsg("stranger") + "[" + to_string(llqq) + "]";
@@ -315,16 +297,18 @@ std::string printSTime(const tm st)
 		return "群(" + to_string(llgroup) + ")";
 	}
 	//打印聊天窗口
-	string printChat(chatType ct)
+	string printChat(chatInfo ct)
 	{
-		switch (ct.second)
+		switch (ct.type)
 		{
 		case msgtype::Private:
-			return printQQ(ct.first);
+			return printUser(ct.uid);
 		case msgtype::Group:
-			return printGroup(ct.first);
+			return printGroup(ct.gid);
 		case msgtype::Discuss:
-			return "讨论组(" + to_string(ct.first) + ")";
+			return "讨论组(" + to_string(ct.gid) + ")";
+		case msgtype::Channel: //Warning:Temporary
+			return "频道(" + to_string(ct.gid) + ")";
 		default:
 			break;
 		}
@@ -349,7 +333,7 @@ bool operator==(const tm& st, const Console::Clock clock)
 
 bool operator<(const Console::Clock clock, const tm& st)
 {
-	return st.tm_hour == clock.first && st.tm_hour == clock.second;
+	return st.tm_hour < clock.first || st.tm_min < clock.second;
 }
 
 	void ThreadFactory::exit() {

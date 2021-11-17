@@ -42,46 +42,59 @@ const map<string, short> mChatConf{
 	{"ÒÑÍË", 5}
 };
 
-User& getUser(long long qq)
+User& getUser(long long uid)
 {
-	if (!UserList.count(qq))UserList[qq].id(qq);
-	return UserList[qq];
+	if (!UserList.count(uid))UserList[uid].id(uid);
+	return UserList[uid];
 }
-short trustedQQ(long long qq) 
+bool User::getNick(string& nick, long long group) const
 {
-	if (qq == console.master())return 256;
-	if (qq == console.DiceMaid)return 255;
-	else if (!UserList.count(qq))return 0;
-	else return UserList[qq].nTrust;
+	if (auto it = strNick.find(group); it != strNick.end() 
+		|| (it = strNick.find(0)) != strNick.end())
+	{
+		nick = it->second;
+		return true;
+	}
+	else if (strNick.size() == 1) {
+		nick = strNick.begin()->second;
+	}
+	return false;
+}
+short trustedQQ(long long uid) 
+{
+	if (uid == console.master())return 256;
+	if (uid == console.DiceMaid)return 255;
+	else if (!UserList.count(uid))return 0;
+	else return UserList[uid].nTrust;
 }
 
 
 int clearUser() {
-	vector<long long> QQDelete;
+	vector<long long> UserDelete;
 	time_t tNow{ time(nullptr) };
 	time_t userline{ tNow - console["InactiveUserLine"] * (time_t)86400 };
 	bool isClearInactive{ console["InactiveUserLine"] > 0 };
-	for (const auto& [qq, user] : UserList) {
+	for (const auto& [uid, user] : UserList) {
 		if (user.nTrust > 0)continue;
 		if (user.empty()) {
-			QQDelete.push_back(qq);
+			UserDelete.push_back(uid);
 		}
 		else if (isClearInactive) {
 			time_t tLast{ user.tUpdated };
 			if (!tLast)tLast = user.tCreated;
-			if (gm->has_session(~qq) && gm->session(~qq).tUpdate > tLast)tLast = gm->session(~qq).tUpdate;
+			if (gm->has_session(~uid) && gm->session(~uid).tUpdate > tLast)tLast = gm->session(~uid).tUpdate;
 			if (tLast >= userline)continue;
-			QQDelete.push_back(qq);
-			if (PList.count(qq)) {
-				PList.erase(qq);
+			UserDelete.push_back(uid);
+			if (PList.count(uid)) {
+				PList.erase(uid);
 			}
 		}
 	}
-	for (const auto& qq : QQDelete) {
-		UserList.erase(qq);
-		if (gm->has_session(~qq))gm->session_end(~qq);
+	for (const auto& uid : UserDelete) {
+		UserList.erase(uid);
+		if (gm->has_session(~uid))gm->session_end(~uid);
 	}
-	return QQDelete.size();
+	return UserDelete.size();
 }
 int clearGroup() {
 	if (console["InactiveGroupLine"] <= 0)return 0;
@@ -101,17 +114,17 @@ int clearGroup() {
 
 }
 
-string getName(long long QQ, long long GroupID)
+string getName(long long uid, long long GroupID)
 {
-	if (QQ == console.DiceMaid)return getMsg("strSelfCall");
+	if (uid == console.DiceMaid)return getMsg("strSelfCall");
 	string nick;
-	if (UserList.count(QQ) && getUser(QQ).getNick(nick, GroupID))return nick;
-	if (GroupID && !(nick = DD::getGroupNick(GroupID, QQ)).empty()
+	if (UserList.count(uid) && getUser(uid).getNick(nick, GroupID))return nick;
+	if (GroupID && !(nick = DD::getGroupNick(GroupID, uid)).empty()
 		&& !(nick = strip(msg_decode(nick))).empty())return nick;
-	if (nick = DD::getQQNick(QQ); !(nick = strip(msg_decode(nick))).empty())return nick;
-	return getMsg("stranger") + "(" + to_string(QQ) + ")";
+	if (nick = DD::getQQNick(uid); !(nick = strip(msg_decode(nick))).empty())return nick;
+	return getMsg("stranger") + "(" + to_string(uid) + ")";
 }
-void filter_CQcode(string& nick, long long fromGroup)
+void filter_CQcode(string& nick, long long fromGID)
 {
 	size_t posL(0);
 	while ((posL = nick.find(CQ_AT)) != string::npos)
@@ -134,7 +147,7 @@ void filter_CQcode(string& nick, long long fromGroup)
 			//×ªÒå
 			if (isDig && posR - posL < 29) 
 			{
-				nick.replace(posL, posR - posL + 1, "@" + getName(stoll(string(stvQQ)), fromGroup));
+				nick.replace(posL, posR - posL + 1, "@" + getName(stoll(string(stvQQ)), fromGID));
 			}
 			else if (stvQQ == "all") 
 			{

@@ -9,7 +9,8 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123ËÝä§
+ * Copyright (C) 2018-2021 w4123ËÝä§
+ * Copyright (C) 2019-2021 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -31,6 +32,7 @@
 #include <utility>
 #include <vector>
 #include "STLExtern.hpp"
+#include "DiceAttrVar.h"
 using std::string;
 
 extern std::map<string, string> GlobalChar;
@@ -40,7 +42,7 @@ extern std::map<string, GobalTex> strFuncs;
 std::string format(std::string str, const std::initializer_list<const std::string>& replace_str);
 
 std::string format(std::string s, const std::map<std::string, std::string, less_ci>& replace_str,
-				   const std::unordered_map<std::string, std::string>& str_tmp = {});
+				   const std::unordered_map<std::string, AttrVar>& vars = {});
 
 class ResList
 {

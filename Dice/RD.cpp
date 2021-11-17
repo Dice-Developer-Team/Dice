@@ -57,8 +57,9 @@ void init2(string& msg)
 	}
 }
 
-void COC7D(string& strMAns)
+string COC7D()
 {
+	string strMAns;
 	RD rd3D6("3D6");
 	RD rd2D6p6("2D6+6");
 	strMAns += '\n';
@@ -169,10 +170,12 @@ void COC7D(string& strMAns)
 	else
 		MOV = 8;
 	strMAns += "\n移动力MOV=" + to_string(MOV);
+	return strMAns;
 }
 
-void COC6D(string& strMAns)
+string COC6D()
 {
+	string strMAns;
 	RD rd3D6("3D6");
 	RD rd2D6p6("2D6+6");
 	RD rd3D6p3("3D6+3");
@@ -267,10 +270,12 @@ void COC6D(string& strMAns)
 	rd1D10.Roll();
 	const int PRO = rd1D10.intTotal;
 	strMAns += to_string(PRO);
+	return strMAns;
 }
 
-void COC7(string& strMAns, int intNum)
+string COC7(int intNum)
 {
+	string strMAns;
 	string strProperty[] = {"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育", "幸运"};
 	string strRoll[] = {"3D6", "3D6", "2D6+6", "3D6", "3D6", "2D6+6", "3D6", "2D6+6", "3D6"};
 	int intAllTotal = 0;
@@ -289,10 +294,12 @@ void COC7(string& strMAns, int intNum)
 		strMAns += "共计:" + to_string(intAllTotal - intLuc) + "/" + to_string(intAllTotal);
 		intAllTotal = 0;
 	}
+	return strMAns;
 }
 
-void COC6(string& strMAns, int intNum)
+string COC6(int intNum)
 {
+	string strMAns;
 	string strProperty[] = {"力量", "体质", "体型", "敏捷", "外貌", "智力", "意志", "教育", "资产"};
 	string strRoll[] = {"3D6", "3D6", "2D6+6", "3D6", "3D6", "2D6+6", "3D6", "3D6+3", "1D10"};
 	const bool boolAddSpace = intNum != 1;
@@ -315,10 +322,12 @@ void COC6(string& strMAns, int intNum)
 		rdCOC.Roll();
 		strMAns += " " + strProperty[8] + ":" + to_string(rdCOC.intTotal);
 	}
+	return strMAns;
 }
 
-void DND(string& strOutput, int intNum)
+string DND(int intNum)
 {
+	string strOutput;
 	const RD rdDND("4D6K3");
 	string strDNDName[6] = {"力量", "体质", "敏捷", "智力", "感知", "魅力"};
 	const bool boolAddSpace = intNum != 1;
@@ -337,6 +346,7 @@ void DND(string& strOutput, int intNum)
 		strOutput += "共计:" + to_string(intAllTotal);
 		intAllTotal = 0;
 	}
+	return strOutput;
 }
 
 void TempInsane(string& strAns)

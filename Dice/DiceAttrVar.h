@@ -23,6 +23,7 @@
  */
 #pragma once
 #include <string>
+#include <unordered_map>
 using std::string;
 
 class AttrVar {
@@ -49,15 +50,22 @@ public:
 	~AttrVar() {
 		des();
 	}
+	explicit operator bool()const;
 	AttrVar& operator=(const AttrVar& other);
 	AttrVar& operator=(bool other);
 	AttrVar& operator=(int other);
 	AttrVar& operator=(double other);
 	AttrVar& operator=(const string& other);
-	AttrVar& operator=(long long other);
+	AttrVar& operator=(const long long other);
+	template<typename T>
+	bool operator!=(const T other)const { return !(*this == other); }
+	bool operator==(const long long other)const;
+	bool operator==(const string& other)const;
 	int to_int()const;
 	long long to_ll()const;
 	string to_str()const;
+	bool str_empty()const;
 	void writeb(std::ofstream& fout) const;
 	void readb(std::ifstream& fin);
 };
+using AttrVars = std::unordered_map<string, AttrVar>;
