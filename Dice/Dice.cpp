@@ -148,35 +148,29 @@ void readUserData()
 	std::error_code ec;
 	fs::path dir{ DiceDir / "user" };
 	//读取用户记录
-	if (loadBFile(dir / "UserConf.RDconf", UserList) > 0) {
-		fs::copy(dir / "UserConf.RDconf", dir / "UserConf.bak", ec);
+	if (loadBFile(dir / "UserConf.dat", UserList) > 0) {
+		fs::copy(dir / "UserConf.dat", dir / "UserConf.bak", ec);
 	}
-	loadFile(dir / "UserList.txt", UserList);
+	else {
+		loadBFile<long long, User, &User::old_readb>(dir / "UserConf.RDconf", UserList);
+		loadFile(dir / "UserList.txt", UserList);
+	}
 	//读取角色记录
 	if (loadBFile(dir / "PlayerCards.RDconf", PList) > 0)
 		fs::copy(dir / "PlayerCards.RDconf", dir / "PlayerCards.bak", ec);
+	else if(fs::exists(dir / "PlayerCards.bak"))
+		loadBFile(dir / "PlayerCards.bak", PList);
 	for (const auto& pl : PList)
 	{
 		if (!UserList.count(pl.first))getUser(pl.first);
 	}
 	//读取群聊记录
-	if (loadBFile(DiceDir / "user" / "ChatConf.RDconf", ChatList) > 0) {
-		fs::copy(DiceDir / "user" / "ChatConf.RDconf", DiceDir / "user" / "ChatConf.bak", ec);
+	if (loadBFile(dir / "ChatConf.dat", ChatList) > 0) {
+		fs::copy(dir / "ChatConf.dat", dir / "ChatConf.bak", ec);
 	}
-	else
-	{
-		set<long long> GroupList;
-		map<chatInfo, int> mDefault;
-		if (loadFile(fpFileLoc / "DisabledGroup.RDconf", GroupList) > 0)
-			for (auto p : GroupList)
-			{
-				chat(p).group().set("停用指令");
-			}
-		GroupList.clear();
-		saveBFile(dir / "ChatConf.RDconf", ChatList);
-	}
-	if (loadFile(dir / "ChatList.txt", ChatList) < 1 && ChatList.size()) {
-		console.log("初始化群记录" + to_string(ChatList.size()) + "条", 1);
+	else {
+		loadBFile(dir / "ChatConf.RDconf", ChatList);
+		loadFile(dir / "ChatList.txt", ChatList);
 	}
 	//读取房间记录
 	gm->load();
@@ -192,11 +186,9 @@ void dataBackUp()
 	std::filesystem::create_directory(DiceDir / "user", ec);
 	std::filesystem::create_directory(DiceDir / "audit", ec);
 	//备份列表
-	saveBFile(DiceDir / "user" / "UserConf.RDconf", UserList);
-	saveFile(DiceDir / "user" / "UserList.txt", UserList);
+	saveBFile(DiceDir / "user" / "UserConf.dat", UserList);
 	saveBFile(DiceDir / "user" / "PlayerCards.RDconf", PList);
-	saveBFile(DiceDir / "user" / "ChatConf.RDconf", ChatList);
-	saveFile(DiceDir / "user" / "ChatList.txt", ChatList);
+	saveBFile(DiceDir / "user" / "ChatConf.dat", ChatList);
 }
 
 bool isIniting{ false };
@@ -472,7 +464,7 @@ bool eve_GroupAdd(Chat& grp)
 	if (grp.Name.empty())
 		grp.Name = DD::getGroupName(fromGID);
 	GroupSize_t gsize(DD::getGroupSize(fromGID));
-	if (console["GroupInvalidSize"] > 0 && grp.boolConf.empty() && gsize.currSize > (size_t)console["GroupInvalidSize"]) {
+	if (console["GroupInvalidSize"] > 0 && grp.confs.empty() && gsize.currSize > (size_t)console["GroupInvalidSize"]) {
 		grp.set("协议无效");
 	}
 	if (!console["ListenGroupAdd"] || grp.isset("忽略"))return 0;
@@ -705,9 +697,9 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 	if (grp.isset("忽略"))return 0;
 	if (fromUID != console.DiceMaid)
 	{
-		if (chat(fromGID).strConf.count("入群欢迎"))
+		if (chat(fromGID).confs.count("入群欢迎"))
 		{
-			string strReply = chat(fromGID).strConf["入群欢迎"];
+			string strReply = chat(fromGID).confs["入群欢迎"].to_str();
 			while (strReply.find("{at}") != string::npos)
 			{
 				strReply.replace(strReply.find("{at}"), 4, "[CQ:at,qq=" + to_string(fromUID) + "]");

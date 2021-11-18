@@ -121,10 +121,17 @@ std::map<T1, T2> fread(ifstream& fin)
 	while (len--)
 	{
 		T1 key = fread<T1>(fin);
-		T2 val = fread<T2>(fin);
-		m[key] = val;
+		fread<T2>(fin, m[key]);
 	}
 	return m;
+}
+template <typename T>
+std::enable_if_t<std::is_fundamental_v<T> || std::is_same_v<T, std::string>, void> fread(ifstream& fin, T& ref) {
+	ref = fread<T>(fin);
+}
+template <class C, void(C::* U)(std::ifstream&) = &C::readb>
+void fread(ifstream& fin, C& ref) {
+	ref.readb(fin);
 }
 template <typename T1, typename T2, typename sort>
 void fread(ifstream& fin, std::map<T1, T2, sort>& dir) {
@@ -132,11 +139,18 @@ void fread(ifstream& fin, std::map<T1, T2, sort>& dir) {
 	if (len < 0)return;
 	while (len--) {
 		T1 key = fread<T1>(fin);
-		T2 val = fread<T2>(fin);
-		dir[key] = std::move(val);
+		fread(fin, dir[key]);
 	}
 }
-
+template <typename T1, typename T2>
+void fread(ifstream& fin, std::unordered_map<T1, T2>& dir) {
+	short len = fread<short>(fin);
+	if (len < 0)return;
+	while (len--) {
+		T1 key = fread<T1>(fin);
+		fread<T2>(fin, dir[key]);
+	}
+}
 // 读取二进制文件——std::set重载
 template <typename T, bool isLib>
 std::set<T> fread(ifstream& fin)
@@ -377,24 +391,6 @@ void loadFile(const std::filesystem::path& fpPath, std::multimap<T1, T2>& mapTmp
 }
 
 template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
-[[deprecated]] int loadBFile(const std::string& strPath, std::map<T, C>& m)
-{
-	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
-	if (!fin)return -1;
-	const int len = fread<int>(fin);
-	int Cnt = 0;
-	T key;
-	C val;
-	while (fin.peek() != EOF && len > Cnt++)
-	{
-		key = fread<T>(fin);
-		m[key].readb(fin);
-	}
-	fin.close();
-	return Cnt;
-}
-
-template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
 int loadBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
 {
 	std::ifstream fin(fpPath, std::ios::in | std::ios::binary);
@@ -402,11 +398,10 @@ int loadBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
 	const int len = fread<int>(fin);
 	int Cnt = 0;
 	T key;
-	C val;
 	while (fin.peek() != EOF && len > Cnt++)
 	{
 		key = fread<T>(fin);
-		m[key].readb(fin);
+		m[key] = fread<C>(fin);
 	}
 	fin.close();
 	return Cnt;
@@ -420,7 +415,6 @@ template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
 	const int len = fread<int>(fin);
 	int Cnt = 0;
 	T key;
-	C val;
 	while (fin.peek() != EOF && len > Cnt++)
 	{
 		key = fread<T>(fin);
@@ -442,7 +436,7 @@ int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 	while (fin.peek() != EOF && len > Cnt++)
 	{
 		key = fread<T>(fin);
-		m[key].readb(fin);
+		(m[key].*U)(fin);
 	}
 	fin.close();
 	return Cnt;
@@ -726,6 +720,18 @@ void fwrite(ofstream& fout, C& obj)
 
 template <typename T1, typename T2, typename sort>
 void fwrite(ofstream& fout, const std::map<T1, T2, sort>& m)
+{
+	const auto len = static_cast<short>(m.size());
+	fwrite(fout, len);
+	for (const auto& it : m)
+	{
+		fwrite(fout, it.first);
+		fwrite(fout, it.second);
+	}
+}
+
+template <typename T1, typename T2>
+void fwrite(ofstream& fout, const std::unordered_map<T1, T2>& m)
 {
 	const auto len = static_cast<short>(m.size());
 	fwrite(fout, len);

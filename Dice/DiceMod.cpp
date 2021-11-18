@@ -39,14 +39,15 @@ enumap<string> DiceMsgReply::sType{ "Reply","Order" };
 enumap<string> DiceMsgReply::sMode{ "Match", "Search", "Regex" };
 enumap<string> DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
 bool DiceMsgReply::exec(FromMsg* msg) {
+	int chon{ msg->pGrp->getChConf(msg->fromChat.chid,"order",0) };
 	if (type == Type::Reply) {
-		if (msg->isPrivate()
-			&& (chat(msg->fromChat.gid).isset("禁用回复") || chat(msg->fromChat.gid).isset("认真模式")))
+		if (!msg->isCalled && (chon < 0 ||
+			(!chon && (msg->pGrp->isset("禁用回复") || msg->pGrp->isset("认真模式")))))
 			return false;
 	}
 	else {	//type == Type::Order
-		if (msg->isPrivate()
-			&& chat(msg->fromChat.gid).isset("停用指令"))
+		if (!msg->isCalled && (chon < 0 ||
+			(!chon && msg->pGrp->isset("停用指令"))))
 			return false;
 	}
 

@@ -162,9 +162,6 @@ void clear_image(DiceJob& job) {
 	scanImage(GlobalMsg, sReferencedImage);
 	scanImage(HelpDoc, sReferencedImage);
 	scanImage(CardDeck::mPublicDeck, sReferencedImage);
-	for (auto it : ChatList) {
-		scanImage(it.second.strConf, sReferencedImage);
-	}
 	job.note("整理" + getMsg("strSelfName") + "被引用图片" + to_string(sReferencedImage.size()) + "项", 0b0);
 	int cnt = clrDir("data/image/", sReferencedImage);
 	job.note("已清理image文件" + to_string(cnt) + "项", 1);

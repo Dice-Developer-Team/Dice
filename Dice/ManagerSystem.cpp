@@ -47,6 +47,32 @@ User& getUser(long long uid)
 	if (!UserList.count(uid))UserList[uid].id(uid);
 	return UserList[uid];
 }
+
+[[nodiscard]] bool User::empty() const {
+	return (!nTrust) && (!tUpdated) && confs.empty() && strNick.empty();
+}
+[[nodiscard]] string User::show() const {
+	ResList res;
+	for (auto& [key, val] : confs)
+	{
+		res << key + ":" + val.to_str();
+	}
+	return res.show();
+}
+void User::setConf(const string& key, const AttrVar& val)
+{
+	if (key.empty())return;
+	std::lock_guard<std::mutex> lock_queue(ex_user);
+	if (val)confs[key] = val;
+	else confs.erase(key);
+}
+void User::rmConf(const string& key)
+{
+	if (key.empty())return;
+	std::lock_guard<std::mutex> lock_queue(ex_user);
+	confs.erase(key);
+}
+
 bool User::getNick(string& nick, long long group) const
 {
 	if (auto it = strNick.find(group); it != strNick.end() 
@@ -60,7 +86,52 @@ bool User::getNick(string& nick, long long group) const
 	}
 	return false;
 }
-short trustedQQ(long long uid) 
+void User::writeb(std::ofstream& fout)
+{
+	std::lock_guard<std::mutex> lock_queue(ex_user);
+	confs["trust"] = (int)nTrust;
+	confs["tCreated"] = (long long)tCreated;
+	confs["tUpdated"] = (long long)tUpdated;
+	fwrite(fout, string("ID"));
+	fwrite(fout, ID);
+	if (!confs.empty()) {
+		fwrite(fout, string("Conf"));
+		fwrite(fout, confs);
+	}
+	if (!strNick.empty()) {
+		fwrite(fout, string("Nick"));
+		fwrite(fout, strNick);
+	}
+	fwrite(fout, string("END"));
+}
+void User::old_readb(std::ifstream& fin)
+{
+	std::lock_guard<std::mutex> lock_queue(ex_user);
+	ID = fread<long long>(fin);
+	map<string, int> intConf{ fread<string, int>(fin) };
+	for (auto& [key, val] : intConf) {
+		confs[key] = val;
+	}
+	map<string, string> strConf{ fread<string, string>(fin) };
+	for (auto& [key, val] : strConf) {
+		confs[key] = val;
+	}
+	strNick = fread<long long, string>(fin);
+}
+void User::readb(std::ifstream& fin)
+{
+	std::lock_guard<std::mutex> lock_queue(ex_user);
+	string tag;
+	while ((tag = fread<string>(fin)) != "END") {
+		if (tag == "ID")ID = fread<long long>(fin);
+		else if (tag == "Conf")fread(fin, confs);
+		else if (tag == "Nick")strNick = fread<long long, string>(fin);
+	}
+	if (confs.count("trust"))nTrust = confs["trust"].to_int();
+	if (confs.count("tCreated"))tCreated = confs["tCreated"].to_ll();
+	if (confs.count("tUpdated"))tUpdated = confs["tUpdated"].to_ll();
+}
+int trustedQQ(long long uid)
 {
 	if (uid == console.master())return 256;
 	if (uid == console.DiceMaid)return 255;
@@ -190,7 +261,7 @@ Chat& Chat::id(long long grp) {
 		isGroup = true;
 	}
 	else {
-		boolConf.insert("未进");
+		set("未进");
 	}
 	return *this;
 }
@@ -205,9 +276,74 @@ void Chat::leave(const string& msg) {
 	set("已退");
 }
 bool Chat::is_except()const {
-	return boolConf.count("免黑") || boolConf.count("协议无效");
+	return confs.count("免黑") || confs.count("协议无效");
 }
-
+void Chat::writeb(std::ofstream& fout)
+{
+	confs["Name"] = Name;
+	confs["inviter"] = (long long)inviter;
+	confs["tCreated"] = (long long)tCreated;
+	confs["tUpdated"] = (long long)tUpdated;
+	fwrite(fout, ID);
+	if (!Name.empty())
+	{
+		fwrite(fout, static_cast<short>(0));
+		fwrite(fout, Name);
+	}
+	if (!confs.empty())
+	{
+		fwrite(fout, static_cast<short>(10));
+		fwrite(fout, confs);
+	}
+	if (!ChConf.empty())
+	{
+		fwrite(fout, static_cast<short>(20));
+		fwrite(fout, ChConf);
+	}
+	fwrite(fout, static_cast<short>(-1));
+}
+void Chat::readb(std::ifstream& fin)
+{
+	ID = fread<long long>(fin);
+	short tag = fread<short>(fin);
+	while (tag != -1)
+	{
+		switch (tag)
+		{
+		case 0:
+			Name = fread<string>(fin);
+			break;
+		case 1:
+			for (auto& key : fread<string, true>(fin)) {
+				confs[key] = true;
+			}
+			break;
+		case 2:
+			for (auto& [key, val] : fread<string, int>(fin)) {
+				confs[key] = val;
+			}
+			break;
+		case 3:
+			for (auto& [key, val] : fread<string, string>(fin)) {
+				confs[key] = val;
+			}
+			break;
+		case 10:
+			fread(fin, confs);
+			break;
+		case 20:
+			fread(fin, ChConf);
+			break;
+		default:
+			return;
+		}
+		tag = fread<short>(fin);
+	}
+	if (confs.count("Name"))Name = confs["Name"].to_str();
+	if (confs.count("inviter"))inviter = confs["inviter"].to_ll();
+	if (confs.count("tCreated"))tCreated = confs["tCreated"].to_ll();
+	if (confs.count("tUpdated"))tUpdated = confs["tUpdated"].to_ll();
+}
 int groupset(long long id, const string& st)
 {
 	if (!ChatList.count(id))return -1;

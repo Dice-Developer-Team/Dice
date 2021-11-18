@@ -28,7 +28,7 @@ using std::map;
 using std::vector;
 using std::unordered_map;
 constexpr auto CQ_IMAGE = "[CQ:image,file=";
-constexpr auto CQ_AT = "[CQ:at,qq=";
+constexpr auto CQ_AT = "[CQ:at,id=";
 
 //加载数据
 void loadData();
@@ -41,7 +41,7 @@ class User
 public:
 	long long ID = 0;
 	//1-私用信任，2-拉黑豁免，3-加黑退群，4-后台管理，5-Master
-	short nTrust = 0;
+	int nTrust = 0;
 	time_t tCreated = time(nullptr);
 	time_t tUpdated = 0;
 
@@ -49,8 +49,7 @@ public:
 	{
 	}
 
-	map<string, int> intConf{};
-	map<string, string> strConf{};
+	AttrVars confs;
 	map<long long, string> strNick{};
 	std::mutex ex_user;
 
@@ -78,53 +77,18 @@ public:
 		return *this;
 	}
 
-	[[nodiscard]] bool empty() const
-	{
-		return (!nTrust) && (!tUpdated) && intConf.empty() && strConf.empty() && strNick.empty();
-	}
+	[[nodiscard]] bool empty() const;
 
-	[[nodiscard]] string show() const
-	{
-		ResList res;
-		//res << "昵称记录数:" + to_string(strNick.size());
-		for (auto& [key, val] : strConf)
-		{
-			res << key + ":" + val;
-		}
-		for (auto& [key, val] : intConf)
-		{
-			res << key + ":" + to_string(val);
-		}
-		return res.show();
-	}
+	[[nodiscard]] string show() const;
 
-	void setConf(const string& key, int val)
-	{
-		if (key.empty())return;
-		std::lock_guard<std::mutex> lock_queue(ex_user);
-		intConf[key] = val;
-	}
-
-	void setConf(const string& key, const string& val)
-	{
-		std::lock_guard<std::mutex> lock_queue(ex_user);
-		strConf[key] = val;
-	}
-
-	void rmIntConf(const string& key)
-	{
-		std::lock_guard<std::mutex> lock_queue(ex_user);
-		intConf.erase(key);
-	}
-
-	void rmStrConf(const string& key)
-	{
-		std::lock_guard<std::mutex> lock_queue(ex_user);
-		strConf.erase(key);
+	void setConf(const string& key, const AttrVar& val);
+	void rmConf(const string& key);
+	int getConf(const string& key, int def = 0) {
+		if (confs.count(key))return confs[key].to_int();
+		return def;
 	}
 
 	bool getNick(string& nick, long long group = 0) const;
-
 	void setNick(long long group, string val)
 	{
 		std::lock_guard<std::mutex> lock_queue(ex_user);
@@ -142,30 +106,17 @@ public:
 		return false;
 	}
 
-	void writeb(std::ofstream& fout)
-	{
-		std::lock_guard<std::mutex> lock_queue(ex_user);
-		fwrite(fout, ID);
-		fwrite(fout, intConf);
-		fwrite(fout, strConf);
-		fwrite(fout, strNick);
-	}
+	void writeb(std::ofstream& fout);
 
-	void readb(std::ifstream& fin)
-	{
-		std::lock_guard<std::mutex> lock_queue(ex_user);
-		ID = fread<long long>(fin);
-		intConf = fread<string, int>(fin);
-		strConf = fread<string, string>(fin);
-		strNick = fread<long long, string>(fin);
-	}
+	void old_readb(std::ifstream& fin);
+	void readb(std::ifstream& fin);
 };
 
 ifstream& operator>>(ifstream& fin, User& user);
 ofstream& operator<<(ofstream& fout, const User& user);
 extern unordered_map<long long, User> UserList;
 User& getUser(long long qq);
-short trustedQQ(long long qq);
+int trustedQQ(long long qq);
 int clearUser();
 int clearGroup();
 
@@ -186,13 +137,10 @@ public:
 	time_t tUpdated = 0;
 	time_t tLastMsg = 0;
 
-	Chat()
-	{
-	}
+	Chat() {}
 
-	set<string> boolConf{};
-	map<string, int> intConf{};
-	map<string, string> strConf{};
+	AttrVars confs;
+	map<long long, AttrVars>ChConf;
 
 	Chat& id(long long grp);
 
@@ -232,110 +180,53 @@ public:
 		return *this;
 	}
 
-	Chat& set(const string& item)
-	{
-		if (mChatConf.count(item))boolConf.insert(item);
+	Chat& set(const string& item){
+		confs[item] = true;
 		return *this;
+	}
+	void set(const string& key, const AttrVar& val) {
+		confs[key] = val;
 	}
 
 	Chat& reset(const string& item)
 	{
-		boolConf.erase(item);
+		confs.erase(item);
 		return *this;
+	}
+	int getConf(const string& key, int def = 0) {
+		if (confs.count(key))return confs[key].to_int();
+		return def;
+	}
+	int getChConf(long long chid, const string& key, int def = 0) {
+		if (ChConf.count(chid) && ChConf[chid].count(key))return ChConf[chid][key].to_int();
+		return def;
+	}
+	void setChConf(long long chid, const string& key, const AttrVar& val) {
+		ChConf[chid][key] = val;
 	}
 
 	void leave(const string& msg = "");
 
 	[[nodiscard]] bool isset(const string& key) const
 	{
-		return boolConf.count(key) || intConf.count(key) || strConf.count(key);
+		return confs.count(key);
 	}
 
 	bool is_except()const;
 
-	void setConf(const string& key, int val)
-	{
-		intConf[key] = val;
-	}
-
-	void rmConf(const string& key)
-	{
-		intConf.erase(key);
-	}
 
 	string listBoolConf()
 	{
 		ResList res;
-		for (const auto& it : boolConf)
-		{
-			res << it;
+		for (const auto& [it,n] : mChatConf) {
+			if (confs.count(it))res << it;
 		}
 		return res.dot("+").show();
 	}
 
-	void setText(const string& key, string val)
-	{
-		strConf[key] = std::move(val);
-	}
+	void writeb(std::ofstream& fout);
 
-	void rmText(const string& key)
-	{
-		strConf.erase(key);
-	}
-
-	void writeb(std::ofstream& fout)
-	{
-		fwrite(fout, ID);
-		if (!Name.empty())
-		{
-			fwrite(fout, static_cast<short>(0));
-			fwrite(fout, Name);
-		}
-		if (!boolConf.empty())
-		{
-			fwrite(fout, static_cast<short>(1));
-			fwrite(fout, boolConf);
-		}
-		if (!intConf.empty())
-		{
-			fwrite(fout, static_cast<short>(2));
-			fwrite(fout, intConf);
-		}
-		if (!strConf.empty())
-		{
-			fwrite(fout, static_cast<short>(3));
-			fwrite(fout, strConf);
-		}
-		fwrite(fout, static_cast<short>(-1));
-	}
-
-	void readb(std::ifstream& fin)
-	{
-		ID = fread<long long>(fin);
-		short tag = fread<short>(fin);
-		while (tag != -1)
-		{
-			switch (tag)
-			{
-			case 0:
-				Name = fread<string>(fin);
-				break;
-			case 1:
-				boolConf = fread<string, true>(fin);
-				break;
-			case 2:
-				intConf = fread<string, int>(fin);
-				break;
-			case 3:
-				strConf = fread<string, string>(fin);
-				break;
-			default:
-				return;
-			}
-			tag = fread<short>(fin);
-		}
-		//strConf = fread<string, string>(fin);
-	}
+	void readb(std::ifstream& fin);
 };
 
 inline unordered_map<long long, Chat> ChatList;

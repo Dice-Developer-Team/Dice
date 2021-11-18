@@ -236,6 +236,8 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strBotOff", "成功关闭{self}√"},
 	{"strBotOnAlready", "{self}已经处于开启状态!"},
 	{"strBotOffAlready", "{self}已经处于关闭状态!"},
+	{"strBotChannelOn", "已在频道内开启{self}√" },
+	{"strBotChannelOff", "已在频道内关闭{self}√" },
 	{"strRollCriticalSuccess", "大成功！"}, //一般检定用
 	{"strRollExtremeSuccess", "极难成功"},
 	{"strRollHardSuccess", "困难成功"},

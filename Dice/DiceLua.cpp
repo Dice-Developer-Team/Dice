@@ -314,14 +314,8 @@ int getGroupConf(lua_State* L) {
 		else if (item == "lastUpdate") {
 			lua_pushnumber(L, (double)grp.tUpdated);
 		}
-		else if (mChatConf.count(item)) {
-			lua_pushboolean(L, grp.boolConf.count(item));
-		}
-		else if (grp.intConf.count(item)) {
-			lua_pushnumber(L, (double)grp.intConf[item]);
-		}
-		else if (grp.strConf.count(item)) {
-			lua_push_string(L, grp.strConf[item]);
+		else if (grp.confs.count(item)) {
+			lua_push_attr(L, grp.confs.find(item)->second);
 		}
 	}
 	else if (item == "name") {
@@ -338,14 +332,20 @@ int setGroupConf(lua_State* L) {
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (!id || item.empty())return 0;
 	Chat& grp{ chat(id) };
-	if (mChatConf.count(item)) {
-		lua_toboolean(L, 3) ? grp.set(item) : grp.reset(item);
+	if (lua_isnil(L, 3)) {
+		grp.reset(item);
+	}
+	else if (lua_isboolean(L,3)) {
+		grp.set(item, lua_toboolean(L, 3));
+	}
+	else if (lua_isinteger(L, 3)) {
+		grp.set(item, (int)lua_tonumber(L, 3));
 	}
 	else if (lua_isnumber(L, 3)) {
-		grp.setConf(item, (int)lua_tonumber(L, 3));
+		grp.set(item, lua_tonumber(L, 3));
 	}
 	else if (lua_isstring(L, 3)) {
-		grp.setText(item, lua_to_gb18030_string(L, 3));
+		grp.set(item, lua_to_gb18030_string(L, 3));
 	}
 	return 0;
 }
@@ -374,11 +374,8 @@ int getUserConf(lua_State* L) {
 			user.getNick(nick, uid);
 			lua_push_string(L, nick);
 		}
-		else if (user.intConf.count(item)) {
-			lua_pushnumber(L, (double)user.intConf[item]);
-		}
-		else if (user.strConf.count(item)) {
-			lua_push_string(L, user.strConf[item]);
+		else if (user.confs.count(item)) {
+			lua_push_attr(L, user.confs[item]);
 		}
 	}
 	else {

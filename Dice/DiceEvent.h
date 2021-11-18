@@ -68,12 +68,12 @@ public:
 	bool WordCensor();
 	void virtualCall();
 	short trusted = 0;
+	bool isCalled = false;
 
 private:
 	// «∑ÒœÏ”¶
 	bool isAns = false;
 	bool isDisabled = false;
-	bool isCalled = false;
 	bool isAuth = false;
 
 	int getGroupAuth(long long group = 0);
