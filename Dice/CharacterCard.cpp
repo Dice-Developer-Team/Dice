@@ -350,7 +350,6 @@ string Player::listCard() {
 void Player::readb(std::ifstream& fin)
 {
 	indexMax = fread<short>(fin);
-	DD::debugLog("∂¡»°Player");
 	fread<unsigned short, CharaCard>(fin, mCardList);
 	for (const auto& card : mCardList)
 	{

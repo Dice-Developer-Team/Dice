@@ -2,7 +2,8 @@
 
 /*
  * ÎÄ¼þ¶ÁÐ´
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2018-2021 w4123
+ * Copyright (C) 2019-2021 String.Empty
  */
 
 #include <fstream>
@@ -121,7 +122,7 @@ std::map<T1, T2> fread(ifstream& fin)
 	while (len--)
 	{
 		T1 key = fread<T1>(fin);
-		fread<T2>(fin, m[key]);
+		fread(fin, m[key]);
 	}
 	return m;
 }
