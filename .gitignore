@@ -32,7 +32,13 @@
 *.app
 
 # Directories for temporary file
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.cmake
 /.vs
+/build
 /Dice/Release
 /Dice/Debug
 /Dice/x64
@@ -44,6 +50,7 @@
 /x64
 /Dice-cppcheck-build-dir
 /w4123.Dice.dir
-
+CMakeCache.txt
 /CMakeFiles
 /vcpkg_installed
+*.log

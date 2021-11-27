@@ -72,7 +72,7 @@ namespace DD {
 		CALLVOID(DebugLog, log);
 	}
 	void debugMsg(const std::string& log) {
-		CALLVOID(DebugMsg, loginQQ, log);
+		CALLVOID(DebugMsg, loginID, log);
 	}
 	bool isDiceMaid(long long aimQQ){
 		return CALLGET(IsDiceMaid, aimQQ) :false;
@@ -81,7 +81,7 @@ namespace DD {
 		return CALLGET(GetDiceSisters) :std::set<long long>();
 	}
 	void heartbeat(const string& info) {
-		CALLVOID(DiceHeartbeat, loginQQ, info);
+		CALLVOID(DiceHeartbeat, loginID, info);
 	}
 	int uploadBlack(long long DiceMaid, long long fromUID, long long fromGID, 
 					 const std::string& type, std::string& info) {
@@ -92,92 +92,92 @@ namespace DD {
 		return CALLGET(DiceUpdate, ver, ret) :false;
 	}
 	std::string getQQNick(long long aimQQ) {
-		return CALLGET(GetNick, loginQQ, aimQQ) :"";
+		return CALLGET(GetNick, loginID, aimQQ) :"";
 	}
 	void sendPrivateMsg(long long rcvQQ, const std::string& msg) {
 		if (msg.empty())return;
-		CALLVOID(SendPrivateMsg, loginQQ, rcvQQ, msg);
+		CALLVOID(SendPrivateMsg, loginID, rcvQQ, msg);
 	}
 	void sendGroupMsg(long long rcvChat, const std::string& msg) {
 		if (msg.empty())return;
-		CALLVOID(SendGroupMsg, loginQQ, rcvChat, msg);
+		CALLVOID(SendGroupMsg, loginID, rcvChat, msg);
 	}
 	void sendChannelMsg(long long rcvGID, long long rcvChID, const std::string& msg) {
 		if (msg.empty())return;
-		CALLVOID(SendChannelMsg, loginQQ, rcvGID, rcvChID, msg);
+		CALLVOID(SendChannelMsg, loginID, rcvGID, rcvChID, msg);
 	}
 	void sendDiscussMsg(long long rcvChat, const std::string& msg) {
 		if (msg.empty())return;
-		CALLVOID(SendDiscussMsg, loginQQ, rcvChat, msg);
+		CALLVOID(SendDiscussMsg, loginID, rcvChat, msg);
 	}
 	std::set<long long> getFriendQQList() {
-		return CALLGET(GetFriendQQList, loginQQ) :std::set<long long>();
+		return CALLGET(GetFriendQQList, loginID) :std::set<long long>();
 	}
 	std::set<long long> getGroupIDList() {
-		return CALLGET(GetGroupIDList, loginQQ) :std::set<long long>();
+		return CALLGET(GetGroupIDList, loginID) :std::set<long long>();
 	}
 	std::set<long long> getGroupMemberList(long long aimGroup) {
-		return CALLGET(GetGroupMemberList, loginQQ, aimGroup) :std::set<long long>();
+		return CALLGET(GetGroupMemberList, loginID, aimGroup) :std::set<long long>();
 	}
 	std::set<long long> getGroupAdminList(long long aimGroup) {
-		return CALLGET(GetGroupAdminList, loginQQ, aimGroup) :std::set<long long>();
+		return CALLGET(GetGroupAdminList, loginID, aimGroup) :std::set<long long>();
 	}
 	int getGroupAuth(long long llgroup, long long llQQ, int iDefault) {
-		int auth{ CALLGET(GetGroupAuth, loginQQ, llgroup, llQQ) : iDefault };
+		int auth{ CALLGET(GetGroupAuth, loginID, llgroup, llQQ) : iDefault };
 		return auth < 0 ? iDefault : auth;
 	}
 	bool isGroupAdmin(long long llgroup, long long llQQ, bool bDefault) {
-		return CALLGET(IsGroupAdmin, loginQQ, llgroup, llQQ, bDefault) :bDefault;
+		return CALLGET(IsGroupAdmin, loginID, llgroup, llQQ, bDefault) :bDefault;
 	}
 	bool isGroupOwner(long long llgroup, long long llQQ, bool bDefault) {
-		return CALLGET(IsGroupOwner, loginQQ, llgroup, llQQ, bDefault) :bDefault;
+		return CALLGET(IsGroupOwner, loginID, llgroup, llQQ, bDefault) :bDefault;
 	}
 	bool isGroupMember(long long llgroup, long long llQQ, bool bDefault) {
-		return CALLGET(IsGroupMember, loginQQ, llgroup, llQQ, bDefault) :bDefault;
+		return CALLGET(IsGroupMember, loginID, llgroup, llQQ, bDefault) :bDefault;
 	}
 	void answerFriendRequest(long long fromUID, int respon, const std::string& msg) {
-		CALLVOID(AnswerFriendRequest, loginQQ, fromUID, respon, msg);
+		CALLVOID(AnswerFriendRequest, loginID, fromUID, respon, msg);
 	}
 	void answerGroupInvited(long long fromGID, int respon) {
-		CALLVOID(AnswerGroupInvited, loginQQ, fromGID, respon);
+		CALLVOID(AnswerGroupInvited, loginID, fromGID, respon);
 	}
 	GroupSize_t getGroupSize(long long aimGroup) {
-		return CALLGET(GetGroupSize, loginQQ, aimGroup) :GroupSize_t();
+		return CALLGET(GetGroupSize, loginID, aimGroup) :GroupSize_t();
 	}
 	std::string getGroupName(long long aimGroup) {
-		return CALLGET(GetGroupName, loginQQ, aimGroup) :"";
+		return CALLGET(GetGroupName, loginID, aimGroup) :"";
 	}
 	std::string getGroupNick(long long aimGroup, long long aimQQ) {
-		return CALLGET(GetGroupNick, loginQQ, aimGroup, aimQQ) :"";
+		return CALLGET(GetGroupNick, loginID, aimGroup, aimQQ) :"";
 	}
 	long long getGroupLastMsg(long long aimGroup, long long aimQQ) {
-		return CALLGET(GetGroupLastMsg, loginQQ, aimGroup, aimQQ) :-1;
+		return CALLGET(GetGroupLastMsg, loginID, aimGroup, aimQQ) :-1;
 	}
 	std::string printGroupInfo(long long aimGroup) {
-		return CALLGET(PrintGroupInfo, loginQQ, aimGroup) :"[" + getGroupName(aimGroup) + "](" + std::to_string(aimGroup) + ")[" + getGroupSize(aimGroup).tostring() + "]";
+		return CALLGET(PrintGroupInfo, loginID, aimGroup) :"[" + getGroupName(aimGroup) + "](" + std::to_string(aimGroup) + ")[" + getGroupSize(aimGroup).tostring() + "]";
 	}
 	void setGroupKick(long long llGroup, long long llQQ) {
-		CALLVOID(SetGroupKick, loginQQ, llGroup, llQQ);
+		CALLVOID(SetGroupKick, loginID, llGroup, llQQ);
 	}
 	void setGroupBan(long long llGroup, long long llQQ, int intTime) {
-		CALLVOID(SetGroupBan, loginQQ, llGroup, llQQ, intTime);
+		CALLVOID(SetGroupBan, loginID, llGroup, llQQ, intTime);
 	}
 	void setGroupAdmin(long long llGroup, long long llQQ, bool bSet) {
-		CALLVOID(SetGroupAdmin, loginQQ, llGroup, llQQ, bSet);
+		CALLVOID(SetGroupAdmin, loginID, llGroup, llQQ, bSet);
 	}
 	void setGroupCard(long long llGroup, long long llQQ, const string& card) {
-		CALLVOID(SetGroupCard, loginQQ, llGroup, llQQ, card);
+		CALLVOID(SetGroupCard, loginID, llGroup, llQQ, card);
 	}
 	void setGroupTitle(long long llGroup, long long llQQ, const string& card){
-		CALLVOID(SetGroupTitle, loginQQ, llGroup, llQQ, card);
+		CALLVOID(SetGroupTitle, loginID, llGroup, llQQ, card);
 	}
 	void setGroupWholeBan(long long llGroup, int intTime){
-		CALLVOID(SetGroupWholeBan, loginQQ, llGroup, intTime);
+		CALLVOID(SetGroupWholeBan, loginID, llGroup, intTime);
 	}
 	void setGroupLeave(long long llGroup){
-		CALLVOID(SetGroupLeave, loginQQ, llGroup);
+		CALLVOID(SetGroupLeave, loginID, llGroup);
 	}
 	void setDiscussLeave(long long llGroup){
-		CALLVOID(SetDiscussLeave, loginQQ, llGroup);
+		CALLVOID(SetDiscussLeave, loginID, llGroup);
 	}
 }

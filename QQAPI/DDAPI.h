@@ -3,7 +3,7 @@
 #include <set>
 #include <unordered_map>
 
-inline long long loginQQ{ 0 };
+inline long long loginID{ 0 };
 
 struct GroupSize_t
 {
@@ -25,9 +25,9 @@ namespace DD {
 	bool updateDice(const std::string&, std::string&);
 	inline api_list ApiList;
 	const std::string& getRootDir();
-	inline long long getLoginQQ() { return loginQQ; }
+	inline long long getLoginID() { return loginID; }
 	std::string getQQNick(long long);
-	inline std::string getLoginNick() { return getQQNick(loginQQ); }
+	inline std::string getLoginNick() { return getQQNick(loginID); }
 	void debugLog(const std::string&);
 	void debugMsg(const std::string&);
 	bool isDiceMaid(long long);

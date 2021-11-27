@@ -67,7 +67,7 @@ namespace GetRule
 		const string ruleName = GBKtoUTF8(rule);
 		const string itemName = GBKtoUTF8(name);
 
-		string data = "Name=" + UrlEncode(itemName) + "&QQ=" + to_string(DD::getLoginQQ()) + "&v=20190114";
+		string data = "Name=" + UrlEncode(itemName) + "&QQ=" + to_string(DD::getLoginID()) + "&v=20190114";
 		if (!ruleName.empty())
 		{
 			data += "&Type=Rules-" + UrlEncode(ruleName);

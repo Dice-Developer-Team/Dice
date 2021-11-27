@@ -21,7 +21,7 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define CP_GBK (936)
+#define CP_GBK (54936)
 #include "EncodingConvert.h"
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN

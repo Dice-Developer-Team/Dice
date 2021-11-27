@@ -24,7 +24,7 @@
 using namespace std;
 
 int sendSelf(const string& msg) {
-	static long long selfQQ = DD::getLoginQQ();
+	static long long selfQQ = DD::getLoginID();
 	DD::sendPrivateMsg(selfQQ, msg);
 	return 0;
 }

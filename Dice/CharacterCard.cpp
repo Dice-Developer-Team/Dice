@@ -350,12 +350,12 @@ string Player::listCard() {
 void Player::readb(std::ifstream& fin)
 {
 	indexMax = fread<short>(fin);
-	fread<unsigned short, CharaCard>(fin, mCardList);
+	fread(fin, mCardList);
 	for (const auto& card : mCardList)
 	{
 		if(!card.second.getName().empty())mNameIndex[card.second.getName()] = card.first;
 	}
-	mGroupIndex = fread<unsigned long long, unsigned short>(fin);
+	fread<unsigned long long, unsigned short>(fin, mGroupIndex);
 }
 
 void getPCName(AttrVars& msg)

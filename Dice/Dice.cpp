@@ -94,35 +94,12 @@ void loadData()
 		std::error_code ec;
 		std::filesystem::create_directory(DiceDir, ec);	
 		loadDir(loadXML<CardTemp>, DiceDir / "CardTemp", mCardTemplet, logList, true);
-		if (loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList) < 1)
-		{
-			loadJMap(fpFileLoc / "PublicDeck.json", CardDeck::mExternPublicDeck);
-			loadJMap(fpFileLoc / "ExternDeck.json", CardDeck::mExternPublicDeck);
-		}
+		loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList);
 		map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
 		//读取帮助文档
 		fmt->load(&logList);
-		if (int cnt; (cnt = loadJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp)) < 0)
-		{
+		if (int cnt; (cnt = loadJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp)) < 0){
 			if (cnt == -1)logList << UTF8toGBK((DiceDir / "conf" / "CustomHelp.json").u8string()) + "解析失败！";
-			ifstream ifstreamHelpDoc(fpFileLoc / "HelpDoc.txt");
-			if (ifstreamHelpDoc)
-			{
-				string strName, strMsg;
-				while (getline(ifstreamHelpDoc, strName) && getline(ifstreamHelpDoc, strMsg))
-				{
-					while (strMsg.find("\\n") != string::npos)strMsg.replace(strMsg.find("\\n"), 2, "\n");
-					while (strMsg.find("\\s") != string::npos)strMsg.replace(strMsg.find("\\s"), 2, " ");
-					while (strMsg.find("\\t") != string::npos)strMsg.replace(strMsg.find("\\t"), 2, "	");
-					CustomHelp[strName] = strMsg;
-				}
-				if (!CustomHelp.empty())
-				{
-					saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
-					logList << "初始化自定义帮助词条" + to_string(CustomHelp.size()) + "条";
-				}
-			}
-			ifstreamHelpDoc.close();
 		}
 		map_merge(fmt->helpdoc, CustomHelp);
 		//读取敏感词库
@@ -147,35 +124,56 @@ void readUserData()
 {
 	std::error_code ec;
 	fs::path dir{ DiceDir / "user" };
+	ResList log;
 	//读取用户记录
-	if (loadBFile(dir / "UserConf.dat", UserList) > 0) {
+	if (int cnt{ loadBFile(dir / "UserConf.dat", UserList) };cnt > 0) {
 		fs::copy(dir / "UserConf.dat", dir / "UserConf.bak", ec);
+		log << "读取用户记录" + to_string(cnt) + "条";
+	}
+	else if (fs::exists(dir / "UserConf.bak")) {
+		cnt = loadBFile(dir / "UserConf.bak", UserList);
+		log << "恢复用户记录" + to_string(cnt) + "条";
 	}
 	else {
-		loadBFile<long long, User, &User::old_readb>(dir / "UserConf.RDconf", UserList);
+		cnt = loadBFile<long long, User, &User::old_readb>(dir / "UserConf.RDconf", UserList);
 		loadFile(dir / "UserList.txt", UserList);
+		log << "迁移用户记录" + to_string(cnt) + "条";
 	}
 	//读取角色记录
-	if (loadBFile(dir / "PlayerCards.RDconf", PList) > 0)
+	if (int cnt{ loadBFile(dir / "PlayerCards.RDconf", PList) }; cnt > 0) {
 		fs::copy(dir / "PlayerCards.RDconf", dir / "PlayerCards.bak", ec);
-	else if(fs::exists(dir / "PlayerCards.bak"))
-		loadBFile(dir / "PlayerCards.bak", PList);
+		log << "读取玩家记录" + to_string(cnt) + "条";
+	}
+	else if (fs::exists(dir / "PlayerCards.bak")) {
+		cnt = loadBFile(dir / "PlayerCards.bak", PList);
+		log << "恢复玩家记录" + to_string(cnt) + "条";
+	}
 	for (const auto& pl : PList)
 	{
 		if (!UserList.count(pl.first))getUser(pl.first);
 	}
 	//读取群聊记录
-	if (loadBFile(dir / "ChatConf.dat", ChatList) > 0) {
+	if (int cnt{ loadBFile(dir / "ChatConf.dat", ChatList) };cnt > 0) {
 		fs::copy(dir / "ChatConf.dat", dir / "ChatConf.bak", ec);
+		log << "读取群聊记录" + to_string(cnt) + "条";
+	}
+	else if (fs::exists(dir / "ChatConf.bak")) {
+		cnt = loadBFile(dir / "ChatConf.bak", ChatList);
+		log << "恢复群聊记录" + to_string(cnt) + "条";
 	}
 	else {
-		loadBFile(dir / "ChatConf.RDconf", ChatList);
+		cnt = loadBFile(dir / "ChatConf.RDconf", ChatList);
 		loadFile(dir / "ChatList.txt", ChatList);
+		log << "迁移群聊记录" + to_string(cnt) + "条";
 	}
 	//读取房间记录
 	gm->load();
 	//读取当日数据
 	today = make_unique<DiceToday>(dir / "DiceToday.json");
+	if (!log.empty()) {
+		log << "用户数据读取完毕";
+		console.log(log.show(), 0b1, printSTNow());
+	}
 }
 
 //备份数据
@@ -263,7 +261,7 @@ EVE_Enable(eventEnable)
 				}
 		}},
 	};
-	if ((console.DiceMaid = DD::getLoginQQ()))
+	if ((console.DiceMaid = DD::getLoginID()))
 	{
 		DiceDir = dirExe / ("Dice" + to_string(console.DiceMaid));
 		if (!exists(DiceDir)) {

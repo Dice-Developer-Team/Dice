@@ -76,7 +76,7 @@ void FromMsg::reply(bool isFormat) {
 		strReply.erase(strReply.begin());
 	if (isFormat)
 		formatReply();
-	if (console["ReferMsgReply"] && vars["msgid"])strReply = "[CQ:refer,id=" + vars["msgid"].to_str() + "]" + strReply;
+	if (console["ReferMsgReply"] && vars["msgid"])strReply = "[CQ:reply,id=" + vars["msgid"].to_str() + "]" + strReply;
 	AddMsgToQueue(strReply, fromChat);
 	if (LogList.count(fromSession) && gm->session(fromSession).is_logging()) {
 		filter_CQcode(strReply, fromChat.gid);
@@ -1061,7 +1061,8 @@ int FromMsg::BasicOrder()
 			return 1;
 		}
 		string QQNum = readDigit();
-		if (QQNum.empty() || QQNum == to_string(console.DiceMaid) || (QQNum.length() == 4 && stoll(QQNum) == DD::getLoginQQ() % 10000)){
+		if (QQNum.empty() || QQNum == to_string(console.DiceMaid)
+			|| (QQNum.length() == 4 && stoll(QQNum) == console.DiceMaid % 10000)){
 			if (trusted > 2) 
 			{
 				pGrp->leave(getMsg("strAdminDismiss", vars));
@@ -1128,8 +1129,8 @@ int FromMsg::BasicOrder()
 		intMsgCnt += 3;
 		string Command = readPara();
 		string QQNum = readDigit();
-		if (QQNum.empty() || QQNum == to_string(DD::getLoginQQ()) || (QQNum.length() == 4 && stoll(QQNum) == DD::getLoginQQ() %
-			10000))
+		if (QQNum.empty() || QQNum == to_string(console.DiceMaid) 
+			|| (QQNum.length() == 4 && stoll(QQNum) == console.DiceMaid % 10000))
 		{
 			if (Command == "on")
 			{
@@ -1199,8 +1200,8 @@ int FromMsg::BasicOrder()
 		intMsgCnt += 4;
 		string strPara{ readPara() };
 		string QQNum = readDigit();
-		if (!QQNum.empty() && QQNum != to_string(DD::getLoginQQ()) && (QQNum.length() == 4 && stoll(QQNum) != DD::getLoginQQ() %
-			10000))return 0;
+		if (!QQNum.empty() && QQNum != to_string(console.DiceMaid)
+			&& (QQNum.length() != 4 || stoll(QQNum) != console.DiceMaid % 10000))return 0;
 		if (strPara == "on") {
 			pGrp->ChConf[fromChat.chid]["order"] = 1;
 			reply(getMsg("strBotChannelOn"));
@@ -2719,6 +2720,66 @@ int FromMsg::InnerOrder() {
 		saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
 		return 1;
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 2) == "ak") {
+	intMsgCnt += 2;
+	readSkipSpace();
+	if (intMsgCnt == strMsg.length()) {
+		reply(fmt->get_help("ak"));
+		return 1;
+	}
+	Session& room{ gm->session(fromSession) };
+	if (strMsg[intMsgCnt] == '+') {
+		++intMsgCnt;
+		std::vector<string>& deck{ room.get_deck()["__Ank"].meta };
+		readItems(deck);
+		ResList list;
+		list.order().dot("\n");
+		for (auto& val : deck) {
+			list << val;
+		}
+		vars["li"] = list.show();
+		reply(getMsg("strAkAdd"));
+	}
+	else if (strMsg[intMsgCnt] == '-') {
+		++intMsgCnt;
+		std::vector<string>& deck{ room.get_deck()["__Ank"].meta };
+		int nNo{ 0 };
+		if (readNum(nNo) || nNo <= 0 || nNo > deck.size()) {
+			reply(getMsg("strAkNumErr"));
+			return 1;
+		}
+		deck.erase(deck.begin() + nNo - 1);
+		ResList list;
+		list.order().dot("\n");
+		for (auto& val : deck) {
+			list << val;
+		}
+		vars["li"] = list.show();
+		reply(getMsg("strAkDel"));
+	}
+	else if (strMsg[intMsgCnt] == '=') {
+		std::vector<string>& deck{ room.get_deck()["__Ank"].meta };
+		size_t res{ (size_t)RandomGenerator::Randint(0,deck.size()-1) };
+		vars["ed"] = to_string(res + 1) + ". " + deck[res];
+		room.get_deck().erase("__Ank");
+		reply(getMsg("strAkRes"));
+	}
+	else if (string action{ readPara() }; action == "show") {
+		std::vector<string>& deck{ room.get_deck()["__Ank"].meta };
+		ResList list;
+		list.order().dot("\n");
+		for (auto& val : deck) {
+			list << val;
+		}
+		vars["li"] = list.show();
+		reply(getMsg("strAkShow"));
+	}
+	else if (action == "clr") {
+		room.get_deck().erase("__Ank");
+		reply(getMsg("strAkClr"));
+	}
+	return 1;
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en") {
 	intMsgCnt += 2;
 	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
@@ -4197,7 +4258,7 @@ bool FromMsg::DiceFilter()
 		strMsg.erase(strMsg.begin());
 	init(strMsg);
 	bool isOtherCalled = false;
-	string strAt = CQ_AT + to_string(DD::getLoginQQ()) + "]";
+	string strAt{ CQ_AT + to_string(console.DiceMaid) + "]" };
 	while (strMsg.find(CQ_AT) == 0)
 	{
 		if (strMsg.find(strAt) == 0)
@@ -4245,7 +4306,7 @@ bool FromMsg::DiceFilter()
 	}
 	if (blacklist->get_qq_danger(fromChat.uid))isDisabled = true;
 	if (isDisabled)return console["DisabledBlock"];
-	if (int chon{pGrp->getChConf(fromChat.chid,"order",0)}; isCalled || chon > 0 ||
+	if (int chon{isChannel() && pGrp->getChConf(fromChat.chid,"order",0)}; isCalled || chon > 0 ||
 		!(chon || pGrp->isset("Í£ÓÃÖ¸Áî"))) {
 		if (fmt->listen_order(this) || InnerOrder()) {
 			if (!isVirtual) {

@@ -43,7 +43,7 @@ std::map<string, string> GlobalChar{
 };
 
 std::map<string, GobalTex> strFuncs{
-	{"master_QQ",print_master},
+	{"master_ID",print_master},
 	{"list_extern_deck",list_extern_deck},
 	{"list_all_deck",list_deck},
 	{"list_reply_deck",[]() {return fmt->list_reply(); }},
@@ -148,6 +148,7 @@ unsigned int ResList::intPageLen = 512;
 ResList& ResList::operator<<(std::string s) {
 	while (isspace(static_cast<unsigned char>(s[0])))s.erase(s.begin());
 	if (s.empty())return *this;
+	if (isOrder)s = to_string(vRes.size() + 1) + ". " + s;
 	vRes.push_back(s);
 	if (size_t len = wstrlen(s.c_str());len > intMaxLen)intMaxLen = len;
 	return *this;

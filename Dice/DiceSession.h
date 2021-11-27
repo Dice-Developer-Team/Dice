@@ -136,6 +136,7 @@ public:
 	[[nodiscard]] bool is_linking() const { return linker.isLinking; }
 
 	//deck÷∏¡Ó
+	map<string, DeckInfo, less_ci>& get_deck() { return decks; }
 	void deck_set(FromMsg*);
 	string deck_draw(const string&);
 	void _draw(FromMsg*);

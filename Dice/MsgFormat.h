@@ -49,6 +49,7 @@ class ResList
 	std::vector<std::string> vRes;
 	unsigned int intMaxLen = 0;
 	bool isLineBreak = false;
+	bool isOrder = false;
 	unsigned int intLineLen = 10;
 	static unsigned int intPageLen;
 	string sHead = "";
@@ -67,13 +68,17 @@ public:
 
 	std::string show(size_t = 0)const;
 
+	ResList& order() {
+		isOrder = true;
+		return *this;
+	}
 	ResList& head(string s) {
 		sHead = s;
 		return *this;
 	}
-	ResList& dot(string s)
+	ResList& dot(const string& s)
 	{
-		sDot = std::move(s);
+		sDot = s;
 		return *this;
 	}
 

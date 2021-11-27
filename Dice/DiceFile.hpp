@@ -433,7 +433,6 @@ int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 	const int len = fread<int>(fin);
 	int Cnt = 0;
 	T key;
-	C val;
 	while (fin.peek() != EOF && len > Cnt++)
 	{
 		key = fread<T>(fin);
