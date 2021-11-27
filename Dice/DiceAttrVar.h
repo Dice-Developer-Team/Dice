@@ -24,7 +24,9 @@
 #pragma once
 #include <string>
 #include <unordered_map>
+#include "json.hpp"
 using std::string;
+using json = nlohmann::json;
 
 class AttrVar {
 public:
@@ -57,6 +59,7 @@ public:
 	AttrVar& operator=(double other);
 	AttrVar& operator=(const string& other);
 	AttrVar& operator=(const long long other);
+	AttrVar& operator=(const json&);
 	template<typename T>
 	bool operator!=(const T other)const { return !(*this == other); }
 	bool operator==(const long long other)const;
@@ -65,6 +68,7 @@ public:
 	long long to_ll()const;
 	string to_str()const;
 	bool str_empty()const;
+	json to_json()const;
 	void writeb(std::ofstream& fout) const;
 	void readb(std::ifstream& fin);
 };

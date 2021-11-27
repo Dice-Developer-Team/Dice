@@ -6,6 +6,7 @@
 #include "filesystem.hpp"
 #include <memory>
 #include "STLExtern.hpp"
+#include "DiceAttrVar.h"
 
 using std::pair;
 using std::string;
@@ -69,6 +70,8 @@ public:
 	string type;
 	//»∫∫≈
 	long long room;
+	//…Ë÷√
+	AttrVars conf;
 
 	DiceSession(long long group, string t = "simple") : room(group),type(t)
 	{
@@ -101,6 +104,18 @@ public:
 		save();
 		return *this;
 	}
+	void setConf(const string& key, const AttrVar& val) {
+		conf[key] = val;
+		update();
+	}
+	void rmConf(const string& key) {
+		if (conf.count(key)) {
+			conf.erase(key);
+			update();
+		}
+	}
+
+
 
 	[[nodiscard]] bool table_count(const string& key) const { return mTable.count(key); }
 	bool table_del(const string&, const string&);

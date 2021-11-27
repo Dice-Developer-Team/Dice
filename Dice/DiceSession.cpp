@@ -506,6 +506,12 @@ void DiceSession::save() const
 		? (DiceDir / "user" / "session" / ("Q" + to_string(~room) + ".json") )
 		: (DiceDir / "user" / "session" / (to_string(room) + ".json"));
 	nlohmann::json jData;
+	if (!conf.empty()) {
+		json& jConf{ jData["conf"] };
+		for (auto& [key, val] : conf) {
+			jConf[GBKtoUTF8(key)] = val.to_json();
+		}
+	}
 	if (!sOB.empty())jData["observer"] = sOB;
 	if (!mTable.empty())
 		for (auto& [key, table] : mTable)
@@ -613,6 +619,12 @@ int DiceTableMaster::load()
 		auto pSession(std::make_shared<Session>(j["room"]));
 		j["type"].get_to(pSession->type);
 		pSession->create(j["create_time"]).update(j["update_time"]);
+		if (j.count("conf")) {
+			json& jConf{ j["conf"] };
+			for (auto it = jConf.cbegin(); it != jConf.cend(); ++it) {
+				pSession->conf[UTF8toGBK(it.key())] = it.value();
+			}
+		}
 		if (j.count("log")) {
 			json& jLog = j["log"];
 			jLog["start"].get_to(pSession->logger.tStart);

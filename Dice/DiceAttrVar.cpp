@@ -26,7 +26,6 @@
 #include "DiceFile.hpp"
 using std::to_string;
 
-
 AttrVar::AttrVar(const AttrVar& other) :type(other.type) {
 	switch (type) {
 	case AttrType::Boolean:
@@ -180,6 +179,57 @@ bool AttrVar::str_empty()const{
 	return type == AttrType::Text && text.empty();
 }
 
+AttrVar& AttrVar::operator=(const json& j) {
+	des();
+	switch (j.type()) {
+	case json::value_t::null:
+		type = AttrType::Nil;
+		break;
+	case json::value_t::boolean:
+		type = AttrType::Boolean;
+		j.get_to(bit);
+		break;
+	case json::value_t::number_integer:
+		type = AttrType::Integer;
+		j.get_to(attr);
+		break;
+	case json::value_t::number_float:
+		type = AttrType::Number;
+		j.get_to(number);
+		break;
+	case json::value_t::string:
+		type = AttrType::Text;
+		new(&text)string(UTF8toGBK(j.get<string>()));
+		break;
+	case json::value_t::number_unsigned:
+		type = AttrType::ID;
+		j.get_to(id);
+		break;
+	}
+}
+json AttrVar::to_json()const {
+	switch (type) {
+	case AttrType::Nil:
+		return nlohmann::json();
+		break;
+	case AttrType::Boolean:
+		return bit;
+		break;
+	case AttrType::Integer:
+		return attr;
+		break;
+	case AttrType::Number:
+		return number;
+		break;
+	case AttrType::Text:
+		return GBKtoUTF8(text);
+		break;
+	case AttrType::ID:
+		return id;
+		break;
+	}
+	return {};
+}
 
 void AttrVar::writeb(std::ofstream& fout) const {
 	switch (type) {

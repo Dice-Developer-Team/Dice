@@ -36,7 +36,7 @@
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
-*.cmake
+cmake_install.cmake
 /.vs
 /build
 /Dice/Release
