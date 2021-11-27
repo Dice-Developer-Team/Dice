@@ -2731,7 +2731,10 @@ int FromMsg::InnerOrder() {
 	if (strMsg[intMsgCnt] == '+') {
 		++intMsgCnt;
 		std::vector<string>& deck{ room.get_deck()["__Ank"].meta };
-		readItems(deck);
+		if (!readItems(deck)) {
+			reply(getMsg("strAkAddEmpty"));
+			return 1;
+		}
 		ResList list;
 		list.order().dot("\n");
 		for (auto& val : deck) {
@@ -2739,6 +2742,7 @@ int FromMsg::InnerOrder() {
 		}
 		vars["li"] = list.show();
 		reply(getMsg("strAkAdd"));
+		room.save();
 	}
 	else if (strMsg[intMsgCnt] == '-') {
 		++intMsgCnt;
@@ -2756,13 +2760,19 @@ int FromMsg::InnerOrder() {
 		}
 		vars["li"] = list.show();
 		reply(getMsg("strAkDel"));
+		room.save();
 	}
 	else if (strMsg[intMsgCnt] == '=') {
-		std::vector<string>& deck{ room.get_deck()["__Ank"].meta };
-		size_t res{ (size_t)RandomGenerator::Randint(0,deck.size()-1) };
-		vars["ed"] = to_string(res + 1) + ". " + deck[res];
-		room.get_deck().erase("__Ank");
-		reply(getMsg("strAkRes"));
+		if (DeckInfo& deck{ room.get_deck("__Ank") }; !deck.meta.empty()) {
+			size_t res{ (size_t)RandomGenerator::Randint(0,deck.meta.size() - 1) };
+			vars["ed"] = to_string(res + 1) + ". " + deck.meta[res];
+			room.get_deck().erase("__Ank");
+			reply(getMsg("strAkRes"));
+		}
+		else {
+			reply(getMsg("strAkOptEmptyErr"));
+		}
+		room.save();
 	}
 	else if (string action{ readPara() }; action == "show") {
 		std::vector<string>& deck{ room.get_deck()["__Ank"].meta };
@@ -2777,6 +2787,7 @@ int FromMsg::InnerOrder() {
 	else if (action == "clr") {
 		room.get_deck().erase("__Ank");
 		reply(getMsg("strAkClr"));
+		room.save();
 	}
 	return 1;
 	}
@@ -4259,14 +4270,17 @@ bool FromMsg::DiceFilter()
 	init(strMsg);
 	bool isOtherCalled = false;
 	string strAt{ CQ_AT + to_string(console.DiceMaid) + "]" };
-	while (strMsg.find(CQ_AT) == 0)
+	string strQQAt{ CQ_QQAT + to_string(console.DiceMaid) + "]" };
+	while (strMsg.find(CQ_AT) == 0 || strMsg.find(CQ_QQAT) == 0)
 	{
-		if (strMsg.find(strAt) == 0)
+		if (strMsg.find(strAt) == 0
+			|| strMsg.find(strQQAt) == 0)
 		{
 			strMsg = strMsg.substr(strAt.length());
 			isCalled = true;
 		}
-		else if (strMsg.find("[CQ:at,id=all]") == 0) 
+		else if (strMsg.find("[CQ:at,id=all]") == 0
+			|| strMsg.find("[CQ:at,qq=all]") == 0)
 		{
 			strMsg = strMsg.substr(14);
 			isCalled = true;
@@ -4439,11 +4453,14 @@ string FromMsg::readItem()
 	} while (strMsg[intMsgCnt] != '|' && intMsgCnt != strMsg.length());
 	return strMsg.substr(intBegin, intEnd - intBegin);
 }
-void FromMsg::readItems(vector<string>& vItem) {
+int FromMsg::readItems(vector<string>& vItem) {
+	int cnt{ 0 };
 	string strItem;
 	while (!(strItem = readItem()).empty()) {
 		vItem.push_back(strItem);
+		++cnt;
 	}
+	return cnt;
 }
 
 std::string FromMsg::printFrom()

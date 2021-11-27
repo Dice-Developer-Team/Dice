@@ -53,12 +53,14 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strParaIllegal","参数非法×"},			//偷懒用万能回复
 	{"stranger","用户"},			//{nick}无法获取非空昵称时的称呼
 	{"strCallUser", "用户"},
-	{"strAkAdd","{self}已加入新选项√当前列表:{li}"},			//
-	{"strAkDel","{self}已删除指定选项√当前列表:{li}"},			//
-	{"strAkNumErr","请{nick}选择合法的选项序号×"},			//
-	{"strAkRes","{self}给出的最终选择是：\n{ed}"},			//
-	{"strAkShow","{self}的当前分歧列表:{li}"},			//
-	{"strAkClr","{self}已清除本轮分歧√"},			//
+	{"strAkAdd","{self}已加入新选项√当前列表:{li}"},
+	{"strAkAddEmpty","给完{nick}的选项，就像{self}没看到这句话之前一样×"},
+	{"strAkDel","{self}已删除指定选项√当前列表:{li}"},	
+	{"strAkOptEmptyErr","备选项为空×\n{nick}想让{self}编出一个选项吗？"},
+	{"strAkNumErr","请{nick}选择合法的选项序号×"},
+	{"strAkRes","{self}给出的最终选择是：\n{ed}"},
+	{"strAkShow","{self}的当前分歧列表:{li}"},
+	{"strAkClr","{self}已清除本轮分歧√"},
 	{"strAdminOptionEmpty","找{self}有什么事么？{nick}"},			//
 	{"strLogNew","{self}开始新日志记录√\n请适时用.log off暂停或.log end完成记录"},
 	{"strLogOn","{self}开始日志记录√\n可使用.log off暂停记录"},

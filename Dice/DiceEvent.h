@@ -314,7 +314,7 @@ public:
 
 	//∂¡»°∑÷œÓ
 	string readItem();
-	void readItems(vector<string>&);
+	int readItems(vector<string>&);
 };
 
 #endif /*DICE_EVENT*/

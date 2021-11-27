@@ -29,6 +29,7 @@ using std::vector;
 using std::unordered_map;
 constexpr auto CQ_IMAGE = "[CQ:image,file=";
 constexpr auto CQ_AT = "[CQ:at,id=";
+constexpr auto CQ_QQAT = "[CQ:at,qq=";
 
 //МгдиЪ§Он
 void loadData();

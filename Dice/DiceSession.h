@@ -137,6 +137,7 @@ public:
 
 	//deck÷∏¡Ó
 	map<string, DeckInfo, less_ci>& get_deck() { return decks; }
+	DeckInfo& get_deck(const string& key) { return decks[key]; }
 	void deck_set(FromMsg*);
 	string deck_draw(const string&);
 	void _draw(FromMsg*);
