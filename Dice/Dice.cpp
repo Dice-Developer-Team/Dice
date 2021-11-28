@@ -127,7 +127,8 @@ void readUserData()
 	ResList log;
 	//读取用户记录
 	if (int cnt{ loadBFile(dir / "UserConf.dat", UserList) };cnt > 0) {
-		fs::copy(dir / "UserConf.dat", dir / "UserConf.bak", ec);
+		fs::copy(dir / "UserConf.dat", dir / "UserConf.bak",
+			fs::copy_options::overwrite_existing, ec);
 		log << "读取用户记录" + to_string(cnt) + "条";
 	}
 	else if (fs::exists(dir / "UserConf.bak")) {
@@ -141,7 +142,8 @@ void readUserData()
 	}
 	//读取角色记录
 	if (int cnt{ loadBFile(dir / "PlayerCards.RDconf", PList) }; cnt > 0) {
-		fs::copy(dir / "PlayerCards.RDconf", dir / "PlayerCards.bak", ec);
+		fs::copy(dir / "PlayerCards.RDconf", dir / "PlayerCards.bak",
+			fs::copy_options::overwrite_existing, ec);
 		log << "读取玩家记录" + to_string(cnt) + "条";
 	}
 	else if (fs::exists(dir / "PlayerCards.bak")) {
@@ -154,7 +156,8 @@ void readUserData()
 	}
 	//读取群聊记录
 	if (int cnt{ loadBFile(dir / "ChatConf.dat", ChatList) };cnt > 0) {
-		fs::copy(dir / "ChatConf.dat", dir / "ChatConf.bak", ec);
+		fs::copy(dir / "ChatConf.dat", dir / "ChatConf.bak",
+			fs::copy_options::overwrite_existing, ec);
 		log << "读取群聊记录" + to_string(cnt) + "条";
 	}
 	else if (fs::exists(dir / "ChatConf.bak")) {
