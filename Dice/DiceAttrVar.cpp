@@ -206,6 +206,7 @@ AttrVar& AttrVar::operator=(const json& j) {
 		j.get_to(id);
 		break;
 	}
+	return *this;
 }
 json AttrVar::to_json()const {
 	switch (type) {

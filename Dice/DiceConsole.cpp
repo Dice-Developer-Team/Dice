@@ -55,7 +55,7 @@ const std::map<std::string, int, less_ci>Console::intDefault{
 {"SystemAlarmCPU",90},{"SystemAlarmRAM",90},{"SystemAlarmDisk",90},
 {"SendIntervalIdle",500},{"SendIntervalBusy",100},
 //自动保存事件间隔[min],自动图片清理间隔[h],自动重启框架间隔[h]
-{"AutoSaveInterval",1},/*{"AutoClearImage",0},{"AutoFrameRemake",0},*/
+{"AutoSaveInterval",2},/*{"AutoClearImage",0},{"AutoFrameRemake",0},*/
 //用户记录清理期限[Day],群记录清理期限[Day]
 {"InactiveUserLine",360},{"InactiveGroupLine",360},
 //接收群内回音消息，接受频道内回音消息，接受自己私聊消息

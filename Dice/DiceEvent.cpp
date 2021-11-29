@@ -2728,13 +2728,26 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	Session& room{ gm->session(fromSession) };
+	bool isNew{};
+	if (strMsg[intMsgCnt] == '#') {
+		++intMsgCnt;
+		if (string strTitle{ strMsg.substr(intMsgCnt,strMsg.find('+') - intMsgCnt) }; strTitle.empty()) {}
+		else {
+			intMsgCnt += strTitle.length();
+			room.setConf("AkFork", vars["fork"] = strTitle);
+			if (intMsgCnt == strMsg.length()) {
+				reply(getMsg("strAkForkNew"));
+			}
+		}
+	}
 	if (strMsg[intMsgCnt] == '+') {
 		++intMsgCnt;
-		std::vector<string>& deck{ room.get_deck()["__Ank"].meta };
+		std::vector<string>& deck{ room.get_deck("__Ank").meta };
 		if (!readItems(deck)) {
 			reply(getMsg("strAkAddEmpty"));
 			return 1;
 		}
+		vars["fork"] = room.conf["AkFork"];
 		ResList list;
 		list.order().dot("\n");
 		for (auto& val : deck) {
@@ -2746,13 +2759,14 @@ int FromMsg::InnerOrder() {
 	}
 	else if (strMsg[intMsgCnt] == '-') {
 		++intMsgCnt;
-		std::vector<string>& deck{ room.get_deck()["__Ank"].meta };
+		std::vector<string>& deck{ room.get_deck("__Ank").meta };
 		int nNo{ 0 };
 		if (readNum(nNo) || nNo <= 0 || nNo > deck.size()) {
 			reply(getMsg("strAkNumErr"));
 			return 1;
 		}
 		deck.erase(deck.begin() + nNo - 1);
+		vars["fork"] = room.conf["AkFork"];
 		ResList list;
 		list.order().dot("\n");
 		for (auto& val : deck) {
@@ -2767,6 +2781,8 @@ int FromMsg::InnerOrder() {
 			size_t res{ (size_t)RandomGenerator::Randint(0,deck.meta.size() - 1) };
 			vars["ed"] = to_string(res + 1) + ". " + deck.meta[res];
 			room.get_deck().erase("__Ank");
+			vars["fork"] = room.conf["AkFork"];
+			room.rmConf("AkFork");
 			reply(getMsg("strAkRes"));
 		}
 		else {
@@ -2775,7 +2791,8 @@ int FromMsg::InnerOrder() {
 		room.save();
 	}
 	else if (string action{ readPara() }; action == "show") {
-		std::vector<string>& deck{ room.get_deck()["__Ank"].meta };
+		std::vector<string>& deck{ room.get_deck("__Ank").meta };
+		vars["fork"] = room.conf["AkFork"];
 		ResList list;
 		list.order().dot("\n");
 		for (auto& val : deck) {
@@ -2786,9 +2803,12 @@ int FromMsg::InnerOrder() {
 	}
 	else if (action == "clr") {
 		room.get_deck().erase("__Ank");
+		vars["fork"] = room.conf["AkFork"];
+		room.rmConf("AkFork");
 		reply(getMsg("strAkClr"));
 		room.save();
 	}
+	if(strReply.empty())reply(fmt->get_help("ak"));
 	return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en") {
