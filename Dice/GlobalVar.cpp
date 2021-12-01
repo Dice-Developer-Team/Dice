@@ -53,13 +53,13 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strParaIllegal","参数非法×"},			//偷懒用万能回复
 	{"stranger","用户"},			//{nick}无法获取非空昵称时的称呼
 	{"strCallUser", "用户"},
-	{"strAkForkNew","{self}已创建分歧#{fork}"},
-	{"strAkAdd","{self}已加入新选项√\n当前分歧:{fork} {li}"},
+	{"strAkForkNew","{self}已创建分歧\n#{fork}"},
+	{"strAkAdd","{self}已加入新选项√\n当前分歧:{fork}{li}"},
 	{"strAkAddEmpty","给完{nick}的选项，就像{self}没看到这句话之前一样×"},
-	{"strAkDel","{self}已删除指定选项√\n当前分歧:{fork} {li}"},	
+	{"strAkDel","{self}已删除指定选项√\n当前分歧:{fork}{li}"},	
 	{"strAkOptEmptyErr","备选项为空×\n{nick}想让{self}编出一个选项吗？"},
 	{"strAkNumErr","请{nick}选择合法的选项序号×"},
-	{"strAkRes","{self}给出的最终选择是：{fork}\n{ed}"},
+	{"strAkGet","#{fork}{li}\n\n{self}的选择：{get}"},
 	{"strAkShow","{self}的当前分歧:{fork} {li}"},
 	{"strAkClr","{self}已清除本轮分歧{fork}√"},
 	{"strAdminOptionEmpty","找{self}有什么事么？{nick}"},			//
@@ -539,11 +539,11 @@ R"([第三页]其他指令
 R"({help:扩展指令})"},
 {"master",R"(当前Master:{master_ID}
 Master拥有最高权限，且可以调整任意信任)"},
-{"ak",R"(安科/安价指令.ak
-.ak#[标题] 为本轮分歧设置标题（可为空）
-.ak+[选项] 为本轮分歧添加新选项，用|分隔可一次添加多个选项
-.ak-[选项序号] 移除指定序号的选项
-.ak= 均等随机抽取一个选项并结束本轮分歧
+{"ak",R"(安科+安价指令.ak
+.ak#[标题]或.ak new [标题] 新建分歧并设置标题（可为空）
+.ak+[选项]或.ak add [选项] 为本轮分歧添加新选项，用|分隔可一次添加多个选项
+.ak-[选项序号]或.ak del [选项序号] 移除指定序号的选项
+.ak= 或.ak get 均等随机抽取一个选项并结束本轮分歧
 .ak show 查看分歧选项
 .ak clr 清除本轮分歧)"},
 {"log",R"(跑团日志记录.log

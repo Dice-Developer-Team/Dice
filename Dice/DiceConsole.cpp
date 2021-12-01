@@ -60,7 +60,7 @@ const std::map<std::string, int, less_ci>Console::intDefault{
 {"InactiveUserLine",360},{"InactiveGroupLine",360},
 //接收群内回音消息，接受频道内回音消息，接受自己私聊消息
 {"ListenGroupEcho",0},{"ListenChannelEcho",1},{"ListenSelfEcho",0},
-{"ReferMsgReply",1},
+{"ReferMsgReply",0},
 {"EnableWebUI",1},{"WebUIAllowInternetAccess",0},
 {"WebUIPort",0},
 {"DebugMode",0},

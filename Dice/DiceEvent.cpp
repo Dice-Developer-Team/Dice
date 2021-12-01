@@ -2728,20 +2728,24 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	Session& room{ gm->session(fromSession) };
-	bool isNew{};
-	if (strMsg[intMsgCnt] == '#') {
-		++intMsgCnt;
-		if (string strTitle{ strMsg.substr(intMsgCnt,strMsg.find('+') - intMsgCnt) }; strTitle.empty()) {}
-		else {
+	char sign{ strMsg[intMsgCnt] };
+	string action{ readPara() };
+	if (sign == '#' || action == "new") {
+		if (sign == '#')++intMsgCnt;
+		room.get_deck().erase("__Ank");
+		if (string strTitle{ strMsg.substr(intMsgCnt,strMsg.find('+') - intMsgCnt) }; !strTitle.empty()) {
 			intMsgCnt += strTitle.length();
 			room.setConf("AkFork", vars["fork"] = strTitle);
-			if (intMsgCnt == strMsg.length()) {
-				reply(getMsg("strAkForkNew"));
-			}
+		}
+		if (intMsgCnt == strMsg.length()) {
+			reply(getMsg("strAkForkNew"));
+		}
+		else {
+			sign = strMsg[intMsgCnt];
 		}
 	}
-	if (strMsg[intMsgCnt] == '+') {
-		++intMsgCnt;
+	if (sign == '+' || action == "add") {
+		if (sign == '+')++intMsgCnt;
 		std::vector<string>& deck{ room.get_deck("__Ank").meta };
 		if (!readItems(deck)) {
 			reply(getMsg("strAkAddEmpty"));
@@ -2749,16 +2753,16 @@ int FromMsg::InnerOrder() {
 		}
 		vars["fork"] = room.conf["AkFork"];
 		ResList list;
-		list.order().dot("\n");
+		list.order();
 		for (auto& val : deck) {
 			list << val;
 		}
-		vars["li"] = list.show();
+		vars["li"] = list.linebreak().show();
 		reply(getMsg("strAkAdd"));
 		room.save();
 	}
-	else if (strMsg[intMsgCnt] == '-') {
-		++intMsgCnt;
+	else if (sign == '-' || action == "del") {
+		if (sign == '-')++intMsgCnt;
 		std::vector<string>& deck{ room.get_deck("__Ank").meta };
 		int nNo{ 0 };
 		if (readNum(nNo) || nNo <= 0 || nNo > deck.size()) {
@@ -2768,37 +2772,43 @@ int FromMsg::InnerOrder() {
 		deck.erase(deck.begin() + nNo - 1);
 		vars["fork"] = room.conf["AkFork"];
 		ResList list;
-		list.order().dot("\n");
+		list.order();
 		for (auto& val : deck) {
 			list << val;
 		}
-		vars["li"] = list.show();
+		vars["li"] = list.linebreak().show();
 		reply(getMsg("strAkDel"));
 		room.save();
 	}
-	else if (strMsg[intMsgCnt] == '=') {
+	else if (sign == '=' || action == "get") {
 		if (DeckInfo& deck{ room.get_deck("__Ank") }; !deck.meta.empty()) {
-			size_t res{ (size_t)RandomGenerator::Randint(0,deck.meta.size() - 1) };
-			vars["ed"] = to_string(res + 1) + ". " + deck.meta[res];
-			room.get_deck().erase("__Ank");
 			vars["fork"] = room.conf["AkFork"];
 			room.rmConf("AkFork");
-			reply(getMsg("strAkRes"));
+			size_t res{ (size_t)RandomGenerator::Randint(0,deck.meta.size() - 1) };
+			vars["get"] = to_string(res + 1) + ". " + deck.meta[res];
+			ResList list;
+			list.order();
+			for (auto& val : deck.meta) {
+				list << val;
+			}
+			vars["li"] = list.linebreak().show();
+			room.get_deck().erase("__Ank");
+			reply(getMsg("strAkGet"));
 		}
 		else {
 			reply(getMsg("strAkOptEmptyErr"));
 		}
 		room.save();
 	}
-	else if (string action{ readPara() }; action == "show") {
+	else if (action == "show") {
 		std::vector<string>& deck{ room.get_deck("__Ank").meta };
 		vars["fork"] = room.conf["AkFork"];
 		ResList list;
-		list.order().dot("\n");
+		list.order();
 		for (auto& val : deck) {
 			list << val;
 		}
-		vars["li"] = list.show();
+		vars["li"] = list.linebreak().show();
 		reply(getMsg("strAkShow"));
 	}
 	else if (action == "clr") {

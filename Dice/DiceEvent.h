@@ -132,6 +132,7 @@ public:
 			&& (strLowerMessage[intMsgCnt] != '-') && (strLowerMessage[intMsgCnt] != '+') 
 			&& (strLowerMessage[intMsgCnt] != '[') && (strLowerMessage[intMsgCnt] != ']') 
 			&& (strLowerMessage[intMsgCnt] != '=') && (strLowerMessage[intMsgCnt] != ':')
+			&& (strLowerMessage[intMsgCnt] != '#')
 			&& intMsgCnt != strLowerMessage.length()) {
 			strPara += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
