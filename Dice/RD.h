@@ -834,7 +834,7 @@ std::string COC6(int);
 std::string COC7D();
 std::string COC7(int);
 std::string DND(int);
-void LongInsane(std::string&);
-void TempInsane(std::string&);
+std::string LongInsane();
+std::string TempInsane();
 int RollSuccessLevel(int, int, int);
 #endif /*DICE_RD*/

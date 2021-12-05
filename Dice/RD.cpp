@@ -349,10 +349,10 @@ string DND(int intNum)
 	return strOutput;
 }
 
-void TempInsane(string& strAns)
+string TempInsane()
 {
 	const int intSymRes = RandomGenerator::Randint(1, 10);
-	std::string strTI = "1D10=" + to_string(intSymRes) + "\n֢״: " + TempInsanity[intSymRes];
+	std::string strTI{ "1D10=" + to_string(intSymRes) + "\n֢״: " + TempInsanity[intSymRes] };
 	if (intSymRes == 9)
 	{
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
@@ -373,13 +373,13 @@ void TempInsane(string& strAns)
 	{
 		strTI = format(strTI, {"1D10=" + to_string(RandomGenerator::Randint(1, 10))});
 	}
-	strAns += strTI;
+	return strTI;
 }
 
-void LongInsane(string& strAns)
+string LongInsane()
 {
 	const int intSymRes = RandomGenerator::Randint(1, 10);
-	std::string strLI = "1D10=" + to_string(intSymRes) + "\n֢״: " + LongInsanity[intSymRes];
+	std::string strLI{ "1D10=" + to_string(intSymRes) + "\n֢״: " + LongInsanity[intSymRes] };
 	if (intSymRes == 9)
 	{
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
@@ -400,7 +400,7 @@ void LongInsane(string& strAns)
 	{
 		strLI = format(strLI, {"1D10=" + to_string(RandomGenerator::Randint(1, 10))});
 	}
-	strAns += strLI;
+	return strLI;
 }
 
 //�ɹ��ȼ�

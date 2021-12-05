@@ -2903,9 +2903,8 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "li") {
-		string strAns = "{pc}的疯狂发作-总结症状:\n";
-		LongInsane(strAns);
-		reply(strAns);
+		vars["res"] = LongInsane();
+		reply(getMsg("strLongInsane"));
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "me") {
@@ -3559,14 +3558,14 @@ int FromMsg::InnerOrder() {
 			strinit = readDice();
 		}
 		readSkipSpace();
-		string strname = strip(strMsg.substr(intMsgCnt));
-		if (strname.empty()) {
+		vars["char"] = strip(strMsg.substr(intMsgCnt));
+		if (vars["char"].str_empty()) {
 			
 			if (!vars.count("pc") || vars["pc"].str_empty()) {
 				vars["nick"] = getName(fromChat.uid, fromChat.gid);
 				getPCName(vars);
 			}
-			strname = vars["pc"].to_str();
+			vars["char"] = vars["pc"].to_str();
 		}
 		RD initdice(strinit, 20);
 		const int intFirstTimeRes = initdice.Roll();
@@ -3602,9 +3601,9 @@ int FromMsg::InnerOrder() {
 			reply(getMsg("strUnknownErr"));
 			return 1;
 		}
-		gm->session(fromSession).table_add("先攻", initdice.intTotal, strname);
-		const string strReply = strname + "的先攻骰点：" + initdice.FormCompleteString();
-		reply(strReply);
+		gm->session(fromSession).table_add("先攻", initdice.intTotal, vars["char"].to_str());
+		vars["res"] = initdice.FormCompleteString();
+		reply(getMsg("strRollInit"));
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "sc") {
@@ -3872,9 +3871,8 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ti") {
-		string strAns = "{pc}的疯狂发作-临时症状:\n";
-		TempInsane(strAns);
-		reply(strAns);
+		vars["res"] = TempInsane();
+		reply(getMsg("strTempInsane"));
 		return 1;
 	}
 	else if (strLowerMessage[intMsgCnt] == 'w') {
@@ -4112,7 +4110,7 @@ int FromMsg::InnerOrder() {
 				strMainDice = pc->getExp(key);
 			}
 		}
-		if (pc && pc->countExp(strReason)) {
+		else if (pc && pc->countExp(strReason)) {
 			strMainDice = pc->getExp(strReason);
 		}
 		else {
