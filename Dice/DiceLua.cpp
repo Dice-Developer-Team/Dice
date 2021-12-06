@@ -133,7 +133,7 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 	lua_push_msg(L, msg);
 	if (lua_pcall(L, 1, 2, 0)) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
-		console.log(getMsg("strSelfName") + "调用" + fileGB18030 + "函数" + func + "失败!\n" + pErrorMsg, 1);
+		console.log(getMsg("strSelfName") + "调用" + fileGB18030 + "函数" + func + "失败!\n" + pErrorMsg, 0b10);
 		msg->reply(getMsg("strOrderLuaErr"));
 		return false;
 	}
@@ -168,13 +168,13 @@ bool lua_msg_reply(FromMsg* msg, const string& luas) {
 	lua_setglobal(L, "msg");
 	if (luaL_loadstring(L, luas.c_str()) || lua_pcall(L, 0, 2, 0)) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
-		console.log(getMsg("strSelfName") + "调用回复lua语句失败!\n" + pErrorMsg, 1);
+		console.log(getMsg("strSelfName") + "调用回复lua语句失败!\n" + pErrorMsg, 0b10);
 		msg->reply(getMsg("strOrderLuaErr"));
 		return false;
 	}
 	if (lua_gettop(L) && lua_type(L, 1) != LUA_TNIL) {
 		if (!lua_isstring(L, 1)) {
-			console.log(getMsg("strSelfName") + "调用回复lua语句返回值格式错误!", 1);
+			console.log(getMsg("strSelfName") + "调用回复lua语句返回值格式错误!", 0b10);
 			msg->reply(getMsg("strOrderLuaErr"));
 			return false;
 		}
@@ -215,7 +215,7 @@ bool lua_call_task(const char* file, const char* func) {
 #endif
 	if (lua_pcall(L, 0, 0, 0)) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
-		console.log(getMsg("strSelfName") + "调用" + fileGB18030 + "函数" + func + "失败!\n" + pErrorMsg, 1);
+		console.log(getMsg("strSelfName") + "调用" + fileGB18030 + "函数" + func + "失败!\n" + pErrorMsg, 0b10);
 		return false;
 	}
 	return true;
@@ -571,11 +571,20 @@ void LuaState::regist() {
 	}
 	lua_getglobal(state, "package");
 	lua_getfield(state, -1, "path");
-	string strPath((DiceDir / "plugin" / "?.lua").string() + ";"
-		+ (DiceDir / "plugin" / "?" / "init.lua").string() + "; "
-		+ lua_tostring(state, -1));
+	static string strPath{ (DiceDir / "plugin" / "?.lua").string() + ";"
+		+ (DiceDir / "plugin" / "?" / "init.lua").string() + ";"
+		+ (dirExe / "Diceki" / "lua" / "?.lua").string() + ";"
+		+ (dirExe / "Diceki" / "lua" / "?" / "init.lua").string() + ";"
+		+ lua_tostring(state, -1) };
 	lua_push_string(state, strPath.c_str());
 	lua_setfield(state, -3, "path");
+	lua_pop(state, 1);
+	lua_getfield(state, -1, "cpath");
+	static string strCPath{ (dirExe / "Diceki" / "lua" / "?.dll").string() + ";"
+		+ (dirExe / "Diceki" / "lib" / "?.dll").string() + ";"
+		+ lua_tostring(state, -1) };
+	lua_push_string(state, strCPath.c_str());
+	lua_setfield(state, -3, "cpath");
 	lua_pop(state, 2);
 }
 

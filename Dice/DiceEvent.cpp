@@ -4348,7 +4348,7 @@ bool FromMsg::DiceFilter()
 	}
 	if (blacklist->get_qq_danger(fromChat.uid))isDisabled = true;
 	if (isDisabled)return console["DisabledBlock"];
-	if (int chon{isChannel() && pGrp->getChConf(fromChat.chid,"order",0)}; isCalled || chon > 0 ||
+	if (int chon{ isChannel() && pGrp ? pGrp->getChConf(fromChat.chid,"order",0):0 }; isCalled || chon > 0 ||
 		!(chon || pGrp->isset("Í£ÓÃÖ¸Áî"))) {
 		if (fmt->listen_order(this) || InnerOrder()) {
 			if (!isVirtual) {

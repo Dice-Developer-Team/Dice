@@ -39,7 +39,7 @@ enumap<string> DiceMsgReply::sType{ "Reply","Order" };
 enumap<string> DiceMsgReply::sMode{ "Match", "Search", "Regex" };
 enumap<string> DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
 bool DiceMsgReply::exec(FromMsg* msg) {
-	int chon{ msg->pGrp->getChConf(msg->fromChat.chid,"order",0) };
+	int chon{ msg->pGrp ? msg->pGrp->getChConf(msg->fromChat.chid,"order",0) : 0 };
 	if (type == Type::Reply) {
 		if (!msg->isCalled && (chon < 0 ||
 			(!chon && (msg->pGrp->isset("禁用回复") || msg->pGrp->isset("认真模式")))))
