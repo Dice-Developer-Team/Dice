@@ -412,34 +412,22 @@ int loadBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
 }
 
 template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
-[[deprecated]] int loadBFile(const std::string& strPath, std::unordered_map<T, C>& m)
-{
-	std::ifstream fin(strPath, std::ios::in | std::ios::binary);
-	if (!fin)return -1;
-	const int len = fread<int>(fin);
-	int Cnt = 0;
-	T key;
-	while (fin.peek() != EOF && len > Cnt++)
-	{
-		key = fread<T>(fin);
-		m[key].readb(fin);
-	}
-	fin.close();
-	return Cnt;
-}
-
-template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
 int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 {
 	std::ifstream fin(fpPath, std::ios::in | std::ios::binary);
 	if (!fin)return -1;
-	const int len = fread<int>(fin);
 	int Cnt = 0;
-	T key;
-	while (fin.peek() != EOF && len > Cnt++)
-	{
-		key = fread<T>(fin);
-		(m[key].*U)(fin);
+	try{
+		const int len = fread<int>(fin);
+		T key;
+		while (fin.peek() != EOF && len > Cnt++)
+		{
+			key = fread<T>(fin);
+			(m[key].*U)(fin);
+		}
+	}
+	catch (...) {
+
 	}
 	fin.close();
 	return Cnt;

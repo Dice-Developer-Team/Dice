@@ -133,12 +133,12 @@ void readUserData()
 	}
 	else if (fs::exists(dir / "UserConf.bak")) {
 		cnt = loadBFile(dir / "UserConf.bak", UserList);
-		log << "恢复用户记录" + to_string(cnt) + "条";
+		if (cnt > 0)log << "恢复用户记录" + to_string(cnt) + "条";
 	}
 	else {
 		cnt = loadBFile<long long, User, &User::old_readb>(dir / "UserConf.RDconf", UserList);
 		loadFile(dir / "UserList.txt", UserList);
-		log << "迁移用户记录" + to_string(cnt) + "条";
+		if (cnt > 0)log << "迁移用户记录" + to_string(cnt) + "条";
 	}
 	//读取角色记录
 	if (int cnt{ loadBFile(dir / "PlayerCards.RDconf", PList) }; cnt > 0) {
@@ -148,7 +148,7 @@ void readUserData()
 	}
 	else if (fs::exists(dir / "PlayerCards.bak")) {
 		cnt = loadBFile(dir / "PlayerCards.bak", PList);
-		log << "恢复玩家记录" + to_string(cnt) + "条";
+		if (cnt > 0)log << "恢复玩家记录" + to_string(cnt) + "条";
 	}
 	for (const auto& pl : PList)
 	{
@@ -162,12 +162,12 @@ void readUserData()
 	}
 	else if (fs::exists(dir / "ChatConf.bak")) {
 		cnt = loadBFile(dir / "ChatConf.bak", ChatList);
-		log << "恢复群聊记录" + to_string(cnt) + "条";
+		if (cnt > 0)log << "恢复群聊记录" + to_string(cnt) + "条";
 	}
 	else {
 		cnt = loadBFile(dir / "ChatConf.RDconf", ChatList);
 		loadFile(dir / "ChatList.txt", ChatList);
-		log << "迁移群聊记录" + to_string(cnt) + "条";
+		if (cnt > 0)log << "迁移群聊记录" + to_string(cnt) + "条";
 	}
 	//读取房间记录
 	gm->load();
