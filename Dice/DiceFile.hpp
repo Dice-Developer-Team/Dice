@@ -112,6 +112,16 @@ C fread(ifstream& fin)
 	return obj;
 }
 
+template <typename T>
+std::enable_if_t<std::is_fundamental_v<T> || std::is_same_v<T, std::string>, void> fread(ifstream& fin, T& ref) {
+	ref = fread<T>(fin);
+}
+
+template <class C, void(C::* U)(std::ifstream&) = &C::readb>
+void fread(ifstream& fin, C& ref) {
+	ref.readb(fin);
+}
+
 // 读取二进制文件——std::map重载
 template <typename T1, typename T2>
 std::map<T1, T2> fread(ifstream& fin)
@@ -126,14 +136,7 @@ std::map<T1, T2> fread(ifstream& fin)
 	}
 	return m;
 }
-template <typename T>
-std::enable_if_t<std::is_fundamental_v<T> || std::is_same_v<T, std::string>, void> fread(ifstream& fin, T& ref) {
-	ref = fread<T>(fin);
-}
-template <class C, void(C::* U)(std::ifstream&) = &C::readb>
-void fread(ifstream& fin, C& ref) {
-	ref.readb(fin);
-}
+
 template <typename T1, typename T2, typename sort>
 void fread(ifstream& fin, std::map<T1, T2, sort>& dir) {
 	short len = fread<short>(fin);
