@@ -252,9 +252,9 @@ namespace Network
 		{
 			struct curl_slist* header = NULL;
 			header = curl_slist_append(header, strHeader.c_str());
-			curl_easy_setopt(curl, CURLOPT_URL, url);
+			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 			curl_easy_setopt(curl, CURLOPT_USERAGENT, DiceRequestHeader);
-			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postContent);
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postContent.c_str());
 			curl_easy_setopt(curl, CURLOPT_POST, 1L);
 			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -407,7 +407,7 @@ namespace Network
 		curl = curl_easy_init();
 		if (curl)
 		{
-			curl_easy_setopt(curl, CURLOPT_URL, url);
+			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 			curl_easy_setopt(curl, CURLOPT_USERAGENT, DiceRequestHeader);
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteToString);
