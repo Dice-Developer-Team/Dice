@@ -321,7 +321,7 @@ void getDiceList()
 //获取骰娘列表
 void getExceptGroup() {
 	std::string list;
-	if (Network::GET("shiki.stringempty.xyz", "/DiceCloud/except_group.json", 80, list))
+	if (Network::GET("http://shiki.stringempty.xyz/DiceCloud/except_group.json", list))
 		readJson(list, ExceptGroups);
 }
 

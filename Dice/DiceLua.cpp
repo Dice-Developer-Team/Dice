@@ -567,7 +567,7 @@ int httpPost(lua_State* L) {
 		return 0;
 	}
 	string ret;
-	lua_pushboolean(L, Network::POST(url, json, ret));
+	lua_pushboolean(L, Network::POST(url, json, "application/json", ret));
 	lua_push_string(L, ret);
 	return 2;
 }

@@ -79,7 +79,7 @@ namespace GetRule
 		strcpy(frmdata, data.c_str());
 #endif
 		string temp;
-		const bool reqRes = Network::POST("api.kokona.tech", "/rules", 5555, frmdata, temp);
+		const bool reqRes = Network::POST("http://api.kokona.tech:5555/rules", frmdata, "", temp);
 		delete[] frmdata;
 		if (reqRes)
 		{

@@ -383,7 +383,7 @@ void dice_cloudblack(DiceJob& job) {
 	switch (Cloud::DownloadFile(strURL.c_str(), DiceDir / "conf" / "CloudBlackList.json")) {
 	case -1: {
 		string des;
-		if (Network::GET("shiki.stringempty.xyz", "/blacklist/checked.json", 80, des)) {
+		if (Network::GET("http://shiki.stringempty.xyz/blacklist/checked.json", des)) {
 			ofstream fout(DiceDir / "conf" / "CloudBlackList.json");
 			fout << des << endl;
 			isSuccess = true;

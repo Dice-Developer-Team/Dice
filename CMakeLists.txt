@@ -75,9 +75,11 @@ if(NOT ((CMAKE_SYSTEM_NAME STREQUAL Windows) OR (CMAKE_SYSTEM_NAME STREQUAL Andr
     target_link_libraries(w4123.Dice PRIVATE Iconv::Iconv)
 endif()
 
+if(NOT (CMAKE_SYSTEM_NAME STREQUAL Windows))
+    find_package(CURL REQUIRED)
+    target_link_libraries(w4123.Dice PRIVATE CURL::libcurl)
+endif()
 
-find_package(CURL REQUIRED)
-target_link_libraries(w4123.Dice PRIVATE CURL::libcurl)
 find_package(OpenSSL REQUIRED)
 target_link_libraries(w4123.Dice PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 find_package(AWSSDK CONFIG COMPONENTS core s3 REQUIRED)

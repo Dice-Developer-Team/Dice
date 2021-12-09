@@ -175,7 +175,7 @@ int DiceToday::getJrrp(long long uid) {
 		return cntUser[uid]["jrrp"];
 	string frmdata = "QQ=" + to_string(console.DiceMaid) + "&v=20190114" + "&QueryQQ=" + to_string(uid);
 	string res;
-	if (Network::POST("api.kokona.tech", "/jrrp", 5555, frmdata.data(), res)) {
+	if (Network::POST("http://api.kokona.tech:5555/jrrp", frmdata, "", res)) {
 		return cntUser[uid]["jrrp"] = stoi(res);
 	}
 	else {

@@ -9,10 +9,12 @@
       "features": [ "s3" ]
     },
     {
-      "name": "openssl"
+      "name": "openssl",
+      "platform" : "!windows"
     },
     {
       "name": "curl",
+      "platform" : "!windows",
       "default-features": false,
       "features": [ "openssl" ]
     },

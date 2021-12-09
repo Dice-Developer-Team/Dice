@@ -53,7 +53,7 @@ namespace Cloud
 	int checkUpdate(FromMsg* msg)
 	{
 		std::string strVerInfo;
-		if (!Network::GET("shiki.stringempty.xyz", "/DiceVer/update", 80, strVerInfo))
+		if (!Network::GET("http://shiki.stringempty.xyz/DiceVer/update", strVerInfo))
 		{
 			msg->reply("{self}获取版本信息时遇到错误: \n" + strVerInfo);
 			return -1;

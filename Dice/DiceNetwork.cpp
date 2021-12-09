@@ -25,8 +25,9 @@
 #include <Windows.h>
 #include <WinInet.h>
 #pragma comment(lib, "WinInet.lib")
-#endif
+#else
 #include <curl/curl.h>
+#endif
 
 #include <string>
 #include "GlobalVar.h"
@@ -109,20 +110,44 @@ namespace Network
 #endif
 	}
 
-
-	bool POST(const char* const serverName, const char* const objectName, const unsigned short port,
-	          char* const frmdata, std::string& des, bool useHttps)
+	bool POST(const string& url, const string& postContent, const string& contentType, std::string& des)
 	{
+		std::string strHeader = "Content-Type: " + (contentType.empty() ? "application/x-www-form-urlencoded" : contentType);
 #ifdef _WIN32
+		URL_COMPONENTSA urlComponents;
+		urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
+		urlComponents.dwHostNameLength = 1024;
+		urlComponents.dwPasswordLength = 0;
+		urlComponents.dwSchemeLength = 1024;
+		urlComponents.dwUrlPathLength = 1024;
+		urlComponents.dwUserNameLength = 0;
+		urlComponents.dwExtraInfoLength = 1024;
+		urlComponents.lpszHostName = nullptr;
+		urlComponents.lpszPassword = nullptr;
+		urlComponents.lpszScheme = nullptr;
+		urlComponents.lpszUrlPath = nullptr;
+		urlComponents.lpszUserName = nullptr;
+		urlComponents.lpszExtraInfo = nullptr;
+		if (!InternetCrackUrlA(url.c_str(), 0, 0, &urlComponents))
+		{
+			des = getLastErrorMsg();
+			return false;
+		}
+
+		if (urlComponents.nScheme != INTERNET_SCHEME_HTTP && urlComponents.nScheme != INTERNET_SCHEME_HTTPS)
+		{
+			des = "Unknown URL Scheme";
+			return false;
+		}
+
 		const char* acceptTypes[] = {"*/*", nullptr};
-		const char* header = "Content-Type: application/x-www-form-urlencoded";
 
 		const HINTERNET hInternet = InternetOpenA(DiceRequestHeader, INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
-		const HINTERNET hConnect = InternetConnectA(hInternet, serverName, port, nullptr, nullptr, 
+		const HINTERNET hConnect = InternetConnectA(hInternet, std::string(urlComponents.lpszHostName, urlComponents.dwHostNameLength).c_str(), urlComponents.nPort, nullptr, nullptr, 
 			INTERNET_SERVICE_HTTP, 0, 0);
-		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "POST", objectName, "HTTP/1.1", nullptr, acceptTypes, 
-			(useHttps ? INTERNET_FLAG_SECURE : 0), 0);
-		const BOOL res = HttpSendRequestA(hRequest, header, strlen(header), frmdata, strlen(frmdata));
+		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "POST", (std::string(urlComponents.lpszUrlPath, urlComponents.dwUrlPathLength) + std::string(urlComponents.lpszExtraInfo, urlComponents.dwExtraInfoLength)).c_str(), "HTTP/1.1", nullptr, acceptTypes,
+			(urlComponents.nScheme == INTERNET_SCHEME_HTTPS ? INTERNET_FLAG_SECURE : 0), 0);
+		const BOOL res = HttpSendRequestA(hRequest, strHeader.c_str(), strHeader.length(), (void*)postContent.c_str(), postContent.length());
 
 
 		if (res)
@@ -213,44 +238,20 @@ namespace Network
 		InternetCloseHandle(hConnect);
 		InternetCloseHandle(hInternet);
 		return false;
-#else
-		CURL *curl;
-		curl = curl_easy_init();
-		if (curl)
-		{
-			curl_easy_setopt(curl, CURLOPT_URL, ((useHttps ? std::string("https://") : std::string("http://")) + serverName + ":" + std::to_string(port) + objectName).c_str());
-			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, frmdata);
-			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteToString);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &des);
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-			
-			lastError = curl_easy_perform(curl);
-			if (lastError != CURLE_OK)
-			{
-				des = getLastErrorMsg();
-			}
-			
-			curl_easy_cleanup(curl);
-			return lastError == CURLE_OK;
-		}
-		return false;
-#endif
-	}
 
-	bool POST(const string& url, const string& postJson, std::string& des){
+#else
+		
 		CURL* curl;
 		curl = curl_easy_init();
 		if (curl)
 		{
-			string DiceHeader = string("User-Agent: ") + DiceRequestHeader;
 			struct curl_slist* header = NULL;
-			header = curl_slist_append(header, DiceHeader.c_str());
-			header = curl_slist_append(header, "Content-Type: application/json");
-			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
+			header = curl_slist_append(header, strHeader.c_str());
 			curl_easy_setopt(curl, CURLOPT_URL, url);
-			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postJson);
+			curl_easy_setopt(curl, CURLOPT_USERAGENT, DiceRequestHeader.c_str());
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postContent);
 			curl_easy_setopt(curl, CURLOPT_POST, 1L);
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteToString);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &des);
@@ -266,17 +267,45 @@ namespace Network
 			return lastError == CURLE_OK;
 		}
 		return false;
+#endif
+
 	}
-	bool GET(const char* const serverName, const char* const objectName, const unsigned short port, std::string& des, bool useHttps)
-	{
+
+	bool GET(const string& url, std::string& des) {
 #ifdef _WIN32
+		URL_COMPONENTSA urlComponents;
+		urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
+		urlComponents.dwHostNameLength = 1024;
+		urlComponents.dwPasswordLength = 0;
+		urlComponents.dwSchemeLength = 1024;
+		urlComponents.dwUrlPathLength = 1024;
+		urlComponents.dwUserNameLength = 0;
+		urlComponents.dwExtraInfoLength = 1024;
+		urlComponents.lpszHostName = nullptr;
+		urlComponents.lpszPassword = nullptr;
+		urlComponents.lpszScheme = nullptr;
+		urlComponents.lpszUrlPath = nullptr;
+		urlComponents.lpszUserName = nullptr;
+		urlComponents.lpszExtraInfo = nullptr;
+		if (!InternetCrackUrlA(url.c_str(), 0, 0, &urlComponents))
+		{
+			des = getLastErrorMsg();
+			return false;
+		}
+
+		if (urlComponents.nScheme != INTERNET_SCHEME_HTTP && urlComponents.nScheme != INTERNET_SCHEME_HTTPS)
+		{
+			des = "Unknown URL Scheme";
+			return false;
+		}
+
 		const char* acceptTypes[] = {"*/*", nullptr};
 
 		const HINTERNET hInternet = InternetOpenA(DiceRequestHeader, INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
-		const HINTERNET hConnect = InternetConnectA(hInternet, serverName, port, nullptr, nullptr, 
+		const HINTERNET hConnect = InternetConnectA(hInternet, std::string(urlComponents.lpszHostName, urlComponents.dwHostNameLength).c_str(), urlComponents.nPort, nullptr, nullptr, 
 			INTERNET_SERVICE_HTTP, 0, 0);
-		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "GET", objectName, "HTTP/1.1", nullptr, acceptTypes,
-			(useHttps ? INTERNET_FLAG_SECURE : 0) | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD, 0);
+		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "GET", (std::string(urlComponents.lpszUrlPath, urlComponents.dwUrlPathLength) + std::string(urlComponents.lpszExtraInfo, urlComponents.dwExtraInfoLength)).c_str(), "HTTP/1.1", nullptr, acceptTypes,
+			(urlComponents.nScheme == INTERNET_SCHEME_HTTPS ? INTERNET_FLAG_SECURE : 0) | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD, 0);
 		const BOOL res = HttpSendRequestA(hRequest, nullptr, 0, nullptr, 0);
 
 
@@ -369,29 +398,6 @@ namespace Network
 		InternetCloseHandle(hInternet);
 		return false;
 #else
-		CURL *curl;
-		curl = curl_easy_init();
-		if (curl)
-		{
-			curl_easy_setopt(curl, CURLOPT_URL, ((useHttps ? std::string("https://") : std::string("http://")) + serverName + ":" + std::to_string(port) + objectName).c_str());
-			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteToString);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &des);
-			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-			
-			lastError = curl_easy_perform(curl);
-			if (lastError != CURLE_OK)
-			{
-				des = getLastErrorMsg();
-			}
-			
-			curl_easy_cleanup(curl);
-			return lastError == CURLE_OK;
-		}
-		return false;
-#endif
-	}
-	bool GET(const string& url, std::string& des) {
 		CURL* curl;
 		curl = curl_easy_init();
 		if (curl)
@@ -412,6 +418,7 @@ namespace Network
 			return lastError == CURLE_OK;
 		}
 		return false;
+#endif
 	}
 
 }

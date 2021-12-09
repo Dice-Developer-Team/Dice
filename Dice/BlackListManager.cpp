@@ -153,9 +153,8 @@ void warningHandler()
 
 int getCloudBlackMark(int wid, string& res)
 {
-	string strObj{"/blacklist/warning.php?wid=" + to_string(wid)};
 	string temp;
-	const bool reqRes = Network::GET("shiki.stringempty.xyz", strObj.c_str(), 80, temp);
+	const bool reqRes = Network::GET("http://shiki.stringempty.xyz/blacklist/warning.php?wid=" + to_string(wid), temp);
 	if (!reqRes)return -1;
 	if (temp == "null")return -2;
 	res = temp;
@@ -420,7 +419,7 @@ int DDBlackMark::check_cloud()
 	std::string frmdata = "fromUID=" + std::to_string(fromUID.first) + "&fromGID=" + std::to_string(fromGID.first) +
 		"&DiceMaid=" + std::to_string(DiceMaid) + "&masterID=" + std::to_string(masterQQ) + "&time=" + time;
 	string temp;
-	const bool reqRes = Network::POST("shiki.stringempty.xyz", "/blacklist/check.php", 80, frmdata.data(), temp);
+	const bool reqRes = Network::POST("http://shiki.stringempty.xyz/blacklist/check.php", frmdata, "", temp);
 	if (!reqRes)
 	{
 		console.log("‘∆º«¬º∑√Œ  ß∞‹" + temp, 0);
