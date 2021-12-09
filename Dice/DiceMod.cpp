@@ -342,12 +342,17 @@ int DiceModManager::load(ResList* resLog)
 {
 	//读取reply
 	json jFile{ freadJson(DiceDir / "conf" / "CustomMsgReply.json") };
-	if (!jFile.empty()) {
-		for (auto reply = jFile.cbegin(); reply != jFile.cend(); ++reply) {
-			std::string key = UTF8toGBK(reply.key());
-			msgreply[key].readJson(reply.value());
+	if (!jFile.empty() || !jFile.is_object()) {
+		try {
+			for (auto reply = jFile.cbegin(); reply != jFile.cend(); ++reply) {
+				std::string key = UTF8toGBK(reply.key());
+				msgreply[key].readJson(reply.value());
+			}
+			*resLog << "读取/conf/CustomMsgReply.json中的" + std::to_string(msgreply.size()) + "条自定义回复";
 		}
-		*resLog << "读取/conf/CustomMsgReply中的" + std::to_string(msgreply.size()) + "条自定义回复";
+		catch (const std::exception& e) {
+			*resLog << "解析/conf/CustomMsgReply.json出错:" << e.what();
+		}
 	}
 	else {
 		std::map<std::string, std::vector<std::string>, less_ci> mRegexReplyDeck;
