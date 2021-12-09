@@ -71,12 +71,13 @@ endif()
 
 
 if(NOT ((CMAKE_SYSTEM_NAME STREQUAL Windows) OR (CMAKE_SYSTEM_NAME STREQUAL Android)))
-    find_package(CURL REQUIRED)
-    target_link_libraries(w4123.Dice PRIVATE CURL::libcurl)
     find_package(Iconv REQUIRED)
     target_link_libraries(w4123.Dice PRIVATE Iconv::Iconv)
 endif()
 
+
+find_package(CURL REQUIRED)
+target_link_libraries(w4123.Dice PRIVATE CURL::libcurl)
 find_package(OpenSSL REQUIRED)
 target_link_libraries(w4123.Dice PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 find_package(AWSSDK CONFIG COMPONENTS core s3 REQUIRED)

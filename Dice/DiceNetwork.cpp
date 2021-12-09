@@ -25,9 +25,8 @@
 #include <Windows.h>
 #include <WinInet.h>
 #pragma comment(lib, "WinInet.lib")
-#else
-#include <curl/curl.h>
 #endif
+#include <curl/curl.h>
 
 #include <string>
 #include "GlobalVar.h"
@@ -36,17 +35,13 @@
 #include "StrExtern.hpp"
 
 namespace Network
-{
-#ifndef _WIN32
-	CURLcode lastError;
-	
+{	
 	size_t curlWriteToString(void *contents, size_t size, size_t nmemb, std::string *s)
 	{
 		size_t newLength = size*nmemb;
 		s->append((char*)contents, newLength);
 		return newLength;
 	}
-#endif
 	std::string getLastErrorMsg()
 	{
 #ifdef _WIN32
@@ -243,6 +238,35 @@ namespace Network
 #endif
 	}
 
+	bool POST(const string& url, const string& postJson, std::string& des){
+		CURL* curl;
+		curl = curl_easy_init();
+		if (curl)
+		{
+			string DiceHeader = string("User-Agent: ") + DiceRequestHeader;
+			struct curl_slist* header = NULL;
+			header = curl_slist_append(header, DiceHeader.c_str());
+			header = curl_slist_append(header, "Content-Type: application/json");
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
+			curl_easy_setopt(curl, CURLOPT_URL, url);
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postJson);
+			curl_easy_setopt(curl, CURLOPT_POST, 1L);
+			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteToString);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &des);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+
+			CURLcode lastError = curl_easy_perform(curl);
+			if (lastError != CURLE_OK)
+			{
+				des = getLastErrorMsg();
+			}
+			curl_slist_free_all(header);
+			curl_easy_cleanup(curl);
+			return lastError == CURLE_OK;
+		}
+		return false;
+	}
 	bool GET(const char* const serverName, const char* const objectName, const unsigned short port, std::string& des, bool useHttps)
 	{
 #ifdef _WIN32
@@ -366,6 +390,28 @@ namespace Network
 		}
 		return false;
 #endif
+	}
+	bool GET(const string& url, std::string& des) {
+		CURL* curl;
+		curl = curl_easy_init();
+		if (curl)
+		{
+			curl_easy_setopt(curl, CURLOPT_URL, url);
+			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteToString);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &des);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+
+			CURLcode lastError = curl_easy_perform(curl);
+			if (lastError != CURLE_OK)
+			{
+				des = getLastErrorMsg();
+			}
+
+			curl_easy_cleanup(curl);
+			return lastError == CURLE_OK;
+		}
+		return false;
 	}
 
 }

@@ -1,6 +1,6 @@
 {
   "name": "dice",
-  "version-string": "2.5.0",
+  "version-string": "2.6.0",
   "dependencies": [
     "openssl",
     {
@@ -9,14 +9,12 @@
       "features": [ "s3" ]
     },
     {
-      "name": "openssl",
-      "platform": "!windows"
+      "name": "openssl"
     },
     {
       "name": "curl",
       "default-features": false,
-      "features": [ "openssl" ],
-      "platform" : "!windows"
+      "features": [ "openssl" ]
     },
     {
       "name": "libiconv",

@@ -37,13 +37,21 @@ namespace Network
 	// @param des 存储返回数据
 	// @param useHttps 是否进行https请求
 	bool POST(const char* serverName, const char* objectName, unsigned short port, char* frmdata, std::string& des, bool useHttps = false);
-	
+	// 发出一个HTTP POST 请求
+	// @param url 
+	// @param frmdata 编码后的表单数据
+	// @param des 存储返回数据
+	bool POST(const string& url, const string& postJson, std::string& des);
 	// 发出一个HTTP GET 请求
 	// @param serverName 服务器FQDN或IP
 	// @param objectName 请求Path
 	// @param port 端口号
 	// @param des 存储返回数据
 	// @param useHttps 是否进行https请求
-	bool GET(const char* serverName, const char* objectName, unsigned short port, std::string& des, bool useHttps = false);
+	bool GET(const char* serverName, const char* objectName, unsigned short port, std::string& des, bool useHttps = false);	
+	// 发出一个HTTP GET 请求
+	// @param url 
+	// @param des 存储返回数据
+	bool GET(const string& url, std::string& des);
 }
 #endif /*DICE_NETWORK*/

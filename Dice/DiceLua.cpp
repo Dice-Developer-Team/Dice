@@ -352,7 +352,9 @@ int setGroupConf(lua_State* L) {
 int getUserConf(lua_State* L) {
 	long long uid{ lua_to_int(L, 1) };
 	if (!uid)return 0;
-	if (lua_gettop(L) > 3)lua_settop(L, 3);
+	if (int argc{ lua_gettop(L) }; argc > 3)lua_settop(L, 3);
+	else if (argc == 2)lua_pushnil(L);
+	else if (argc < 2)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
 	if (item == "nick" ) {
@@ -376,6 +378,10 @@ int getUserConf(lua_State* L) {
 		}
 		else if (user.confs.count(item)) {
 			lua_push_attr(L, user.confs[item]);
+		}
+		else {
+			lua_pushnil(L);
+			lua_insert(L, 3);
 		}
 	}
 	else {
@@ -544,8 +550,53 @@ int eventMsg(lua_State* L) {
 	return 0;
 }
 
+int httpGet(lua_State* L) {
+	string url{ lua_to_string(L,1) };
+	if (url.empty()) {
+		return 0;
+	}
+	string ret;
+	lua_pushboolean(L, Network::GET(url, ret));
+	lua_push_string(L, ret);
+	return 2;
+}
+int httpPost(lua_State* L) {
+	string url{ lua_tostring(L,1) };
+	string json{ lua_tostring(L,2) };
+	if (url.empty() || json.empty()) {
+		return 0;
+	}
+	string ret;
+	lua_pushboolean(L, Network::POST(url, json, ret));
+	lua_push_string(L, ret);
+	return 2;
+}
+int httpUrlEncode(lua_State* L) {
+	string url{ lua_to_string(L,1) };
+	lua_push_string(L, UrlEncode(url));
+	return 1;
+}
+int httpUrlDecode(lua_State* L) {
+	string url{ lua_to_string(L,1) };
+	lua_push_string(L, UrlDecode(url));
+	return 1;
+}
+
+static const luaL_Reg http_funcs[] = {
+  {"get", httpGet},
+  {"post", httpPost},
+  {"urlencode", httpUrlEncode},
+  {"urldecode", httpUrlDecode},
+  {NULL, NULL}
+};
+
+int luaopen_http(lua_State* L) {
+	luaL_newlib(L, http_funcs);
+	return 1;
+}
+
 void LuaState::regist() {
-	const luaL_Reg Dicelibs[] = {
+	static const luaL_Reg DiceFucs[] = {
 		{"loadLua", loadLua},
 		{"getDiceQQ", getDiceQQ},
 		{"getDiceDir", getDiceDir},
@@ -566,8 +617,16 @@ void LuaState::regist() {
 		{"eventMsg", eventMsg},
 		{nullptr, nullptr},
 	};
-	for (const luaL_Reg* lib = Dicelibs; lib->func; lib++) {
+	for (const luaL_Reg* lib = DiceFucs; lib->func; lib++) {
 		lua_register(state, lib->name, lib->func);
+	}
+	static const luaL_Reg Dicelibs[] = {
+	  {"http", luaopen_http},
+	  {NULL, NULL}
+	};
+	for (const luaL_Reg* lib = Dicelibs; lib->func; lib++) {
+		luaL_requiref(state, lib->name, lib->func, 1);
+		lua_pop(state, 1);  /* remove lib */
 	}
 	lua_getglobal(state, "package");
 	lua_getfield(state, -1, "path");

@@ -231,7 +231,7 @@ void DiceSession::link_close(FromMsg* msg) {
 			gm->session(link->second.first).update();
 		}
 		LinkList.erase(link->second.first);
-		LinkList.erase(link);
+		LinkList.erase(link->first);
 		msg->reply(getMsg("strLinkClose"));
 		update();
 	}

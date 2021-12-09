@@ -471,6 +471,7 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 };
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+590:lua内置http
 589:ak安科安价指令
 588:适配频道消息
 587:ww调用优化
