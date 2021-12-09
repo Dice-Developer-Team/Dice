@@ -36,13 +36,18 @@
 #include "StrExtern.hpp"
 
 namespace Network
-{	
+{
+#ifndef _WIN32
+	thread_local CURLcode lastError;
+
 	size_t curlWriteToString(void *contents, size_t size, size_t nmemb, std::string *s)
 	{
 		size_t newLength = size*nmemb;
 		s->append((char*)contents, newLength);
 		return newLength;
 	}
+#endif
+
 	std::string getLastErrorMsg()
 	{
 #ifdef _WIN32
@@ -257,7 +262,7 @@ namespace Network
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &des);
 			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 
-			CURLcode lastError = curl_easy_perform(curl);
+			lastError = curl_easy_perform(curl);
 			if (lastError != CURLE_OK)
 			{
 				des = getLastErrorMsg();
@@ -408,7 +413,7 @@ namespace Network
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &des);
 			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 
-			CURLcode lastError = curl_easy_perform(curl);
+			lastError = curl_easy_perform(curl);
 			if (lastError != CURLE_OK)
 			{
 				des = getLastErrorMsg();
