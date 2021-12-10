@@ -341,8 +341,8 @@ bool DiceModManager::call_task(const string& task) {
 int DiceModManager::load(ResList* resLog) 
 {
 	//∂¡»°reply
-	json jFile{ freadJson(DiceDir / "conf" / "CustomMsgReply.json") };
-	if (!jFile.empty() || !jFile.is_object()) {
+	json jFile = freadJson(DiceDir / "conf" / "CustomMsgReply.json");
+	if (!jFile.empty()) {
 		try {
 			for (auto reply = jFile.cbegin(); reply != jFile.cend(); ++reply) {
 				std::string key = UTF8toGBK(reply.key());
