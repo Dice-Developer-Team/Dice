@@ -53,6 +53,8 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strParaIllegal","参数非法×"},			//偷懒用万能回复
 	{"stranger","用户"},			//{nick}无法获取非空昵称时的称呼
 	{"strCallUser", "用户"},
+	{"strSummonWord", ""},
+	{"strSummonEmpty", "召唤{self}，{nick}有何事么？"},
 	{"strAkForkNew","{self}已创建分歧\n#{fork}"},
 	{"strAkAdd","{self}已加入新选项√\n当前分歧:{fork}{li}"},
 	{"strAkAddEmpty","给完{nick}的选项，就像{self}没看到这句话之前一样×"},
@@ -466,6 +468,8 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 	{"strSelfNick", "用户对自己的昵称，用于扩展指令"},
 	//
 	{"strSuccess", "多轮检定与SC成功"},
+	//
+	{"strSummonWord", "自定义召唤词，等效于at指名"},
 	//
 	{"strWhiteQQDenied","权限要求群管理或者信任1"},
 };

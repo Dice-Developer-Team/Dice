@@ -4297,6 +4297,7 @@ bool FromMsg::DiceFilter()
 		strMsg.erase(strMsg.begin());
 	init(strMsg);
 	bool isOtherCalled = false;
+	bool isSummoned{ false };
 	string strAt{ CQ_AT + to_string(console.DiceMaid) + "]" };
 	string strQQAt{ CQ_QQAT + to_string(console.DiceMaid) + "]" };
 	while (strMsg.find(CQ_AT) == 0 || strMsg.find(CQ_QQAT) == 0)
@@ -4320,6 +4321,11 @@ bool FromMsg::DiceFilter()
 		}
 		while (isspace(static_cast<unsigned char>(strMsg[0])))
 			strMsg.erase(strMsg.begin());
+	}
+	string strSummon{ getMsg("strSummonWord") };
+	if (!strSummon.empty() && strMsg.find(strSummon) == 0) {
+		isSummoned = true;
+		if(isChannel())strMsg = strMsg.substr(strSummon.length());
 	}
 	init2(strMsg);
 	strLowerMessage = strMsg;
@@ -4360,6 +4366,7 @@ bool FromMsg::DiceFilter()
 		}
 	}
 	if (fmt->listen_reply(this))return true;
+	if (isSummoned && (strMsg.empty() || strMsg == strSummon))reply(getMsg("strSummonEmpty"));
 	return false;
 }
 bool FromMsg::WordCensor() {
