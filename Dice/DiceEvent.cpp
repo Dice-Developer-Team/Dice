@@ -4478,18 +4478,22 @@ int FromMsg::readChat(chatInfo& ct, bool isReroll)
 
 string FromMsg::readItem()
 {
-	while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == '|')intMsgCnt++;
-	unsigned int intBegin{ intMsgCnt };
-	unsigned int intEnd{ intMsgCnt };
-	do{
-		if (!isspace(static_cast<unsigned char>(strMsg[++intMsgCnt])))intEnd = intMsgCnt;
-	} while (strMsg[intMsgCnt] != '|' && intMsgCnt != strMsg.length());
+	size_t len{ strMsg.length() };
+	if (intMsgCnt >= len)return{};
+	while (intMsgCnt < len &&
+		(isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == '|'))intMsgCnt++;
+	size_t intBegin{ intMsgCnt };
+	size_t intEnd{ strMsg.find('|',intMsgCnt) };
+	if (intEnd > len)intEnd = len;
+	intMsgCnt = intEnd + 1;
+	intEnd = strMsg.find_last_not_of(" \t\r\n", intEnd - 1) + 1;
+	//while (isspace(static_cast<unsigned char>(strMsg[intEnd - 1])))--intEnd;
 	return strMsg.substr(intBegin, intEnd - intBegin);
 }
 int FromMsg::readItems(vector<string>& vItem) {
 	int cnt{ 0 };
 	string strItem;
-	while (!(strItem = readItem()).empty()) {
+	while (intMsgCnt < strMsg.length() && !(strItem = readItem()).empty()) {
 		vItem.push_back(strItem);
 		++cnt;
 	}
