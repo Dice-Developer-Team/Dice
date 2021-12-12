@@ -40,13 +40,7 @@ void DiceJob::exec() {
 	else return;
 }
 void DiceJob::echo(const std::string& msg) {
-	if (fromChat.chid) {
-		//Warning:Temporary
-	}
-	else {
-		if(fromChat.gid)DD::sendGroupMsg(fromChat.gid, msg);
-		else if(fromChat.uid)DD::sendPrivateMsg(fromChat.uid, msg);
-	}
+	AddMsgToQueue(msg, fromChat);
 }
 void DiceJob::reply(const std::string& msg) {
 	AddMsgToQueue(format(msg, GlobalMsg, vars), fromChat);

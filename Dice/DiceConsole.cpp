@@ -200,7 +200,23 @@ bool Console::load() 	{
 }
 void Console::loadNotice()
 {
-	if (loadFile(DiceDir / "conf" / "NoticeList.txt", NoticeList) < 1)
+	json jFile = freadJson(DiceDir / "conf" / "NoticeList.json");
+	if (!jFile.empty()) {
+		try {
+			for (auto note : jFile) {
+				long long uid{ 0 }, gid{ 0 }, chid{ 0 };
+				if (note.count("uid"))note["uid"].get_to(uid);
+				if (note.count("gid"))note["gid"].get_to(uid);
+				if (note.count("chid"))note["chid"].get_to(uid);
+				if (note.count("type"))NoticeList.emplace(chatInfo{ uid,gid,chid }, note["type"].get<int>());
+			}
+			return;
+		}
+		catch (const std::exception& e) {
+			console.log(string("½âÎö/conf/CustomMsgReply.json³ö´í:") + e.what(), 1);
+		}
+	}
+	if (NoticeList.empty() && loadFile(DiceDir / "conf" / "NoticeList.txt", NoticeList) < 1)
 	{
 		console.setNotice({ 0,863062599, 0 }, 0b100000);
 		console.setNotice({ 0,192499947, 0 }, 0b100000);
@@ -210,8 +226,19 @@ void Console::loadNotice()
 
 void Console::saveNotice() const
 {
-	//Warning:Temporary
-	//saveFile(DiceDir / "conf" / "NoticeList.txt", NoticeList);
+	if (NoticeList.empty())filesystem::remove(DiceDir / "conf" / "NoticeList.json");
+	ofstream fout(DiceDir / "conf" / "NoticeList.json");
+	if (!fout)return;
+	json jList = json::array();
+	for (auto& [chat, lv] : NoticeList) {
+		json j{ json::object() };
+		if (chat.chid)j["chid"] = chat.chid;
+		if (chat.gid)j["gid"] = chat.gid;
+		else if (chat.uid)j["uid"] = chat.uid;
+		j["type"] = lv;
+		jList.push_back(j);
+	}
+	fout << jList.dump();
 }
 
 Console console;

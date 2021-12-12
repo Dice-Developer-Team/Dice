@@ -1,7 +1,7 @@
 /**
  * 黑名单明细
  * 更数据库式的管理
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2019-2021 String.Empty
  */
 #include <mutex>
 #include <thread>
@@ -199,9 +199,12 @@ DDBlackMark::DDBlackMark(void* pJson)
 				isAdd = !isClear;
 			}
 		}
+		if (j.count("fromGroup"))fromGID = { j["fromGroup"].get<long long>(), isAdd };
+		if (j.count("fromQQ"))fromUID = { j["fromQQ"].get<long long>(), isAdd };
 		if (j.count("fromGID"))fromGID = {j["fromGID"].get<long long>(), isAdd};
 		if (j.count("fromUID"))fromUID = {j["fromUID"].get<long long>(), isAdd};
 		if (j.count("inviterQQ"))inviterQQ = {j["inviterQQ"].get<long long>(), isAdd};
+		if (j.count("inviter"))inviterQQ = { j["inviter"].get<long long>(), isAdd };
 		if (j.count("ownerQQ"))ownerQQ = {j["ownerQQ"].get<long long>(), isAdd};
 
 		if (j.count("DiceMaid"))DiceMaid = j["DiceMaid"].get<long long>();
@@ -224,9 +227,9 @@ DDBlackMark::DDBlackMark(void* pJson)
 			isClear = true;
 			for (auto& key : j["erase"])
 			{
-				if (key.get<string>() == "fromGID")fromGID.second = false;
-				else if (key.get<string>() == "fromUID")fromUID.second = false;
-				else if (key.get<string>() == "inviterQQ")inviterQQ.second = false;
+				if (key.get<string>() == "fromGID"|| key.get<string>() == "fromGroup")fromGID.second = false;
+				else if (key.get<string>() == "fromUID"|| key.get<string>() == "fromQQ")fromUID.second = false;
+				else if (key.get<string>() == "inviter"|| key.get<string>() == "inviterQQ")inviterQQ.second = false;
 				else if (key.get<string>() == "ownerQQ")ownerQQ.second = false;
 			}
 			if (fromGID.second || fromUID.second || inviterQQ.second || ownerQQ.second)isClear = false;
@@ -1125,19 +1128,19 @@ void DDBlackManager::verify(void* pJson, long long operatorQQ)
                     else if (j["isCheck"].get<int>())is_cloud = 2;
                     if (mark.fromUID.first) 
 					{
-                        if (mark.fromUID.first != j["fromUID"].get<long long>())return;
+                        if (mark.fromUID.first != j["fromQQ"].get<long long>())return;
                     }
                     else
 					{
-                        if (!mark.isClear)mark.fromUID = {j["fromUID"].get<long long>(), true};
+                        if (!mark.isClear)mark.fromUID = {j["fromQQ"].get<long long>(), true};
                     }
                     if (mark.fromGID.first)
 					{
-                        if (mark.fromGID.first != j["fromGID"].get<long long>())return;
+                        if (mark.fromGID.first != j["fromGroup"].get<long long>())return;
                     }
                     else
 					{
-                        if (!mark.isClear)mark.fromGID = {j["fromGID"].get<long long>(), true};
+                        if (!mark.isClear)mark.fromGID = {j["fromGroup"].get<long long>(), true};
                     }
                     mark.DiceMaid = j["DiceMaid"].get<long long>();
                     mark.masterQQ = j["masterQQ"].get<long long>();
@@ -1227,17 +1230,18 @@ void DDBlackManager::verify(void* pJson, long long operatorQQ)
             if (isSource) {
                 mark.fromUID.second &= old_mark.fromUID.second;
                 mark.fromGID.second &= old_mark.fromGID.second;
+				mark.inviterQQ.second &= old_mark.inviterQQ.second;
+				mark.ownerQQ.second &= old_mark.ownerQQ.second;
             }
             //同步云端注销
             else if (!is_cloud) {
                 mark.erase();
             }
             else return;
-        }
-        //无信任
-        if (credit < 1) {
-            mark.inviterQQ = { 0,false };
-            mark.ownerQQ = { 0,false };
+			if (!isSource) {
+				mark.inviterQQ = { 0,false };
+				mark.ownerQQ = { 0,false };
+			}
         }
         //无权调整危险等级
         if (mark.danger != old_mark.danger && credit < 3) { 

@@ -37,7 +37,7 @@ chatInfo::chatInfo(long long u, long long g, long long c) :uid(u), gid(g), chid(
 		else type = msgtype::Group;
 	}
 	else {
-		if(chid)type = msgtype::ChannelPrivate;
+		if (chid)type = msgtype::ChannelPrivate;
 		else type = msgtype::Private;
 	}
 }

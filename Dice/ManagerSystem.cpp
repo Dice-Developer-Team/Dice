@@ -187,11 +187,10 @@ int clearGroup() {
 
 string getName(long long uid, long long GroupID)
 {
-	if (uid == console.DiceMaid)return getMsg("strSelfCall");
+	if (uid == console.DiceMaid)return getMsg("strSelfName");
 	string nick;
 	if (UserList.count(uid) && getUser(uid).getNick(nick, GroupID))return nick;
-	if (GroupID && !(nick = DD::getGroupNick(GroupID, uid)).empty()
-		&& !(nick = strip(msg_decode(nick))).empty())return nick;
+	if (GroupID	&& !(nick = strip(msg_decode(DD::getGroupNick(GroupID, uid)))).empty())return nick;
 	if (nick = DD::getQQNick(uid); !(nick = strip(msg_decode(nick))).empty())return nick;
 	return getMsg("stranger") + "(" + to_string(uid) + ")";
 }
