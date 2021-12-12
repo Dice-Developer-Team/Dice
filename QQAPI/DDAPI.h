@@ -26,6 +26,7 @@ namespace DD {
 	inline api_list ApiList;
 	const std::string& getRootDir();
 	inline long long getLoginID() { return loginID; }
+	long long getTinyID();
 	std::string getQQNick(long long);
 	inline std::string getLoginNick() { return getQQNick(loginID); }
 	void debugLog(const std::string&);

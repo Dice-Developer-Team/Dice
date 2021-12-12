@@ -19,6 +19,7 @@ DDAPI(DiceHeartbeat, void, long long, const std::string&);
 DDAPI(DiceUploadBlack, int, long long, long long, long long, const std::string&, std::string&);
 DDAPI(DiceUpdate, bool, const std::string&, std::string&);
 DDAPI(GetNick, const std::string&, long long, long long);
+DDAPI(GetTinyID, long long, long long);
 DDAPI(SendPrivateMsg, void, long long, long long, const std::string&);
 DDAPI(SendGroupMsg, void, long long, long long, const std::string&);
 DDAPI(SendChannelMsg, void, long long, long long, long long, const std::string&);
@@ -90,6 +91,10 @@ namespace DD {
 	bool updateDice(const std::string& ver, std::string& ret) {
 		ret = "更新接口不存在";
 		return CALLGET(DiceUpdate, ver, ret) :false;
+	}
+	long long getTinyID() {
+		return CALLGET(GetTinyID, loginID) :0;
+
 	}
 	std::string getQQNick(long long aimQQ) {
 		return CALLGET(GetNick, loginID, aimQQ) :"";

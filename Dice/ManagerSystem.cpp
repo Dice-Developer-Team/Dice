@@ -44,6 +44,7 @@ const map<string, short> mChatConf{
 
 User& getUser(long long uid)
 {
+	if (TinyList.count(uid))uid = TinyList[uid];
 	if (!UserList.count(uid))UserList[uid].id(uid);
 	return UserList[uid];
 }
@@ -130,9 +131,11 @@ void User::readb(std::ifstream& fin)
 	if (confs.count("trust"))nTrust = confs["trust"].to_int();
 	if (confs.count("tCreated"))tCreated = confs["tCreated"].to_ll();
 	if (confs.count("tUpdated"))tUpdated = confs["tUpdated"].to_ll();
+	if (confs.count("tinyID"))TinyList.emplace(confs["tinyID"].to_ll(), ID);
 }
 int trustedQQ(long long uid)
 {
+	if (TinyList.count(uid))uid = TinyList[uid];
 	if (uid == console.master())return 256;
 	if (uid == console.DiceMaid)return 255;
 	else if (!UserList.count(uid))return 0;

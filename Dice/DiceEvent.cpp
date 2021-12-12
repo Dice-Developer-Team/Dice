@@ -4299,26 +4299,24 @@ bool FromMsg::DiceFilter()
 	bool isOtherCalled = false;
 	bool isSummoned{ false };
 	string strAt{ CQ_AT + to_string(console.DiceMaid) + "]" };
-	string strQQAt{ CQ_QQAT + to_string(console.DiceMaid) + "]" };
-	while (strMsg.find(CQ_AT) == 0 || strMsg.find(CQ_QQAT) == 0)
+	size_t r{ 0 };
+	while ((r = strMsg.find(']')) != string::npos && strMsg.find(CQ_AT) == 0 || strMsg.find(CQ_QQAT) == 0)
 	{
-		if (strMsg.find(strAt) == 0
-			|| strMsg.find(strQQAt) == 0)
-		{
-			strMsg = strMsg.substr(strAt.length());
+		if (string strTarget{ strMsg.substr(10,r - 10) }; strTarget == "all") {
 			isCalled = true;
 		}
-		else if (strMsg.find("[CQ:at,id=all]") == 0
-			|| strMsg.find("[CQ:at,qq=all]") == 0)
+		else if (strTarget == to_string(console.DiceMaid))
 		{
-			strMsg = strMsg.substr(14);
 			isCalled = true;
 		}
-		else if (strMsg.find(']') != string::npos)
+		else if (User& self{ getUser(console.DiceMaid) }; self.confs.count("tinyID") && self.confs["tinyID"] == strTarget)
 		{
-			strMsg = strMsg.substr(strMsg.find(']') + 1);
+			isCalled = true;
+		}
+		else {
 			isOtherCalled = true;
 		}
+		strMsg = strMsg.substr(r + 1);
 		while (isspace(static_cast<unsigned char>(strMsg[0])))
 			strMsg.erase(strMsg.begin());
 	}

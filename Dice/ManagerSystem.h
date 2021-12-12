@@ -116,6 +116,7 @@ public:
 ifstream& operator>>(ifstream& fin, User& user);
 ofstream& operator<<(ofstream& fout, const User& user);
 extern unordered_map<long long, User> UserList;
+extern unordered_map<long long, long long> TinyList;
 User& getUser(long long qq);
 int trustedQQ(long long qq);
 int clearUser();

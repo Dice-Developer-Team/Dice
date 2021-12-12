@@ -67,6 +67,7 @@
 using namespace std;
 
 unordered_map<long long, User> UserList{};
+unordered_map<long long, long long> TinyList{};
 ThreadFactory threads;
 std::filesystem::path fpFileLoc;
 std::unique_ptr<CivetServer> ManagerServer;
@@ -139,6 +140,13 @@ void readUserData()
 		cnt = loadBFile<long long, User, &User::old_readb>(dir / "UserConf.RDconf", UserList);
 		loadFile(dir / "UserList.txt", UserList);
 		if (cnt > 0)log << "迁移用户记录" + to_string(cnt) + "条";
+	}
+	//for QQ Channel
+	if (User& self{ UserList[console.DiceMaid] }; !self.confs.count("tinyID") || self.confs["tinyID"] == 0) {
+		if (long long tiny{ DD::getTinyID() }) {
+			DD::debugMsg("获取分身ID:" + to_string(tiny));
+			self.setConf("tinyID", tiny);
+		}
 	}
 	//读取角色记录
 	if (int cnt{ loadBFile(dir / "PlayerCards.RDconf", PList) }; cnt > 0) {
