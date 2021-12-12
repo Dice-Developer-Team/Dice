@@ -81,6 +81,12 @@ AttrVar& AttrVar::operator=(const string& other) {
 	new(&text)string(other);
 	return *this;
 }
+AttrVar& AttrVar::operator=(const char* other) {
+	des();
+	type = AttrType::Text;
+	new(&text)string(other);
+	return *this;
+}
 AttrVar& AttrVar::operator=(long long other) {
 	des();
 	type = AttrType::ID;

@@ -58,6 +58,7 @@ public:
 	AttrVar& operator=(int other);
 	AttrVar& operator=(double other);
 	AttrVar& operator=(const string& other);
+	AttrVar& operator=(const char* other);
 	AttrVar& operator=(const long long other);
 	AttrVar& operator=(const json&);
 	template<typename T>
