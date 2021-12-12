@@ -14,6 +14,7 @@ extern "C"{
 #include "DDAPI.h"
 
 unordered_set<lua_State*> UTF8Luas;
+constexpr const char* chDigit{ "0123456789" };
 
 class LuaState {
 	lua_State* state;
@@ -295,12 +296,21 @@ int getGroupConf(lua_State* L) {
 	long long id{ lua_to_int(L, 1) };
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (!id || item.empty())return 0;
-	if (lua_gettop(L) > 3)lua_settop(L, 3);
+	int top{ lua_gettop(L) };
+	if (top > 3)lua_settop(L, top = 3);
 	if (item == "size") {
 		lua_pushnumber(L, (double)DD::getGroupSize(id).currSize);
 	}
 	else  if (item == "maxsize") {
 		lua_pushnumber(L, (double)DD::getGroupSize(id).maxSize);
+	}
+	else if (item.find("card#") == 0) {
+		long long uid{ 0 };
+		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+		}
+		string card{ DD::getGroupNick(id, uid) };
+		if (!card.empty())lua_push_string(L, card);
 	}
 	else if (ChatList.count(id)) {
 		Chat& grp{ chat(id) }; 
@@ -321,7 +331,7 @@ int getGroupConf(lua_State* L) {
 	else if (item == "name") {
 		lua_push_string(L, DD::getGroupName(id));
 	}
-	else {
+	if (lua_gettop(L) == top) {
 		lua_pushnil(L);
 		lua_insert(L, 3);
 	}
@@ -332,6 +342,15 @@ int setGroupConf(lua_State* L) {
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (!id || item.empty())return 0;
 	Chat& grp{ chat(id) };
+	if (item.find("card#") == 0) {
+		long long uid{ 0 };
+		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+		}
+		string card{ lua_to_gb18030_string(L, 3) };
+		DD::setGroupCard(id, uid, card);
+		return 0;
+	}
 	if (lua_isnil(L, 3)) {
 		grp.reset(item);
 	}
@@ -360,6 +379,13 @@ int getUserConf(lua_State* L) {
 	if (item == "nick" ) {
 		lua_push_string(L, getName(uid));
 	}
+	else if (item.find("nick#") == 0) {
+		long long gid{ 0 };
+		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+			gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+		}
+		lua_push_string(L, getName(uid, gid));
+	}
 	else if (item == "trust") {
 		lua_pushnumber(L, trustedQQ(uid));
 	}
@@ -373,8 +399,17 @@ int getUserConf(lua_State* L) {
 		}
 		else if (item == "nn") {
 			string nick;
-			user.getNick(nick, uid);
+			user.getNick(nick);
 			lua_push_string(L, nick);
+		}
+		else if (item.find("nn#") == 0) {
+			string nick;
+			long long gid{ 0 };
+			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+				gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+			}
+			user.getNick(nick, gid);
+			lua_push_string(L, getName(uid, gid));
 		}
 		else if (user.confs.count(item)) {
 			lua_push_attr(L, user.confs[item]);
@@ -585,8 +620,8 @@ int httpUrlDecode(lua_State* L) {
 static const luaL_Reg http_funcs[] = {
   {"get", httpGet},
   {"post", httpPost},
-  {"urlencode", httpUrlEncode},
-  {"urldecode", httpUrlDecode},
+  {"urlEncode", httpUrlEncode},
+  {"urlDecode", httpUrlDecode},
   {NULL, NULL}
 };
 
