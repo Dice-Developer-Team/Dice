@@ -190,13 +190,30 @@ int clearGroup() {
 
 string getName(long long uid, long long GroupID)
 {
-	if (uid == console.DiceMaid)return getMsg("strSelfName");
+	// Self
+	if (uid == console.DiceMaid) return getMsg("strSelfName");
+
+	// nn
 	string nick;
-	if (UserList.count(uid) && getUser(uid).getNick(nick, GroupID))return nick;
-	if (GroupID	&& !(nick = strip(msg_decode(DD::getGroupNick(GroupID, uid)))).empty())return nick;
-	if (nick = DD::getQQNick(uid); !(nick = strip(msg_decode(nick))).empty())return nick;
+	if (UserList.count(uid) && getUser(uid).getNick(nick, GroupID)) return nick;
+
+	// GroupCard
+	if (GroupID)
+	{
+		nick = DD::getGroupNick(GroupID, uid);
+		nick = strip(msg_decode(nick));
+		if (!nick.empty()) return nick;
+	}
+
+	// QQNick
+	nick = DD::getQQNick(uid);
+	nick = strip(msg_decode(nick));
+	if (!nick.empty()) return nick;
+
+	// Unknown
 	return getMsg("stranger") + "(" + to_string(uid) + ")";
 }
+
 void filter_CQcode(string& nick, long long fromGID)
 {
 	size_t posL(0);
