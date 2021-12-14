@@ -231,7 +231,7 @@ void Console::saveNotice() const
 	if (!fout)return;
 	json jList = json::array();
 	for (auto& [chat, lv] : NoticeList) {
-		json j{ json::object() };
+		json j = json::object();
 		if (chat.chid)j["chid"] = chat.chid;
 		if (chat.gid)j["gid"] = chat.gid;
 		else if (chat.uid)j["uid"] = chat.uid;
