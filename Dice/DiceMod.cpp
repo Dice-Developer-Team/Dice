@@ -36,7 +36,7 @@ using std::set;
 
 
 enumap<string> DiceMsgReply::sType{ "Reply","Order" };
-enumap<string> DiceMsgReply::sMode{ "Match", "Search", "Regex" };
+enumap<string> DiceMsgReply::sMode{ "Match", "Prefix", "Search", "Regex" };
 enumap<string> DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
 bool DiceMsgReply::exec(FromMsg* msg) {
 	int chon{ msg->pGrp ? msg->pGrp->getChConf(msg->fromChat.chid,"order",0) : 0 };
@@ -239,6 +239,15 @@ bool DiceModManager::listen_reply(FromMsg* msg) {
 	if (msgreply.count(strMsg) && msgreply[strMsg].exec(msg)) {
 		return true;
 	}
+	if (stack<string> sPrefix; gReplyPrefix.match_head(msg->strMsg, sPrefix)) {
+		while (!sPrefix.empty()){
+			string key{ sPrefix.top() };
+			sPrefix.pop();
+			if (!msgreply.count(key))continue;
+			DiceMsgReply& reply{ msgreply[key] };
+			if (reply.mode == DiceMsgReply::Mode::Prefix && reply.exec(msg))return true;
+		}
+	}
 	//模糊匹配禁止自我触发
 	if (vector<string>res; (*msg)["uid"] != console.DiceMaid && gReplySearcher.search(convert_a2w(strMsg.c_str()), res)) {
 		for (const auto& key : res) {
@@ -275,13 +284,15 @@ bool DiceModManager::listen_reply(FromMsg* msg) {
 	return 0;
 }
 string DiceModManager::list_reply()const {
-	ResList listTotal, listMatch, listSearch, listRegex;
+	ResList listTotal, listMatch, listSearch, listPrefix, listRegex;
 	for (const auto& [key, reply] : msgreply) {
 		if (reply.mode == DiceMsgReply::Mode::Search)listSearch << key;
+		else if (reply.mode == DiceMsgReply::Mode::Prefix)listPrefix << key;
 		else if (reply.mode == DiceMsgReply::Mode::Regex)listRegex << key;
 		else listMatch << key;
 	}
 	if (!listMatch.empty())listTotal << "[完全匹配] " + listMatch.dot(" | ").show();
+	if (!listPrefix.empty())listTotal << "[前缀匹配] " + listPrefix.dot(" | ").show();
 	if (!listSearch.empty())listTotal << "[模糊匹配] " + listSearch.dot(" | ").show();
 	if (!listRegex.empty())listTotal << "[正则匹配] " + listRegex.dot(" | ").show();
 	return listTotal.show();
@@ -292,6 +303,7 @@ void DiceModManager::set_reply(const string& key, DiceMsgReply& reply) {
 		reply_regex.insert(key);
 	else reply_regex.erase(key);
 	if (reply.mode == DiceMsgReply::Mode::Search)gReplySearcher.insert(convert_a2w(key.c_str()), key);
+	if (reply.mode == DiceMsgReply::Mode::Prefix)gReplyPrefix.insert(key, key);
 	save_reply();
 }
 bool DiceModManager::del_reply(const string& key) {
@@ -311,9 +323,9 @@ void DiceModManager::show_reply(const shared_ptr<DiceJobDetail>& msg) {
 	string key{ (*msg)["key"].to_str()};
 	if (msgreply.count(key)) {
 		DiceMsgReply& reply{ msgreply[key] };
-		(*msg)["show"] = "Type=" + DiceMsgReply::sType[(int)reply.type]
-			+ "\n" + DiceMsgReply::sMode[(int)reply.mode] + "=" + key
-			+ "\n" + DiceMsgReply::sEcho[(int)reply.echo] + "=" + reply.show_ans();
+		(*msg)["show"] = "Type=" + reply.sType[(int)reply.type]
+			+ "\n" + reply.sMode[(int)reply.mode] + "=" + key
+			+ "\n" + reply.sEcho[(int)reply.echo] + "=" + reply.show_ans();
 		msg->reply(getMsg("strReplyShow"));
 	}
 	else {
@@ -345,8 +357,8 @@ int DiceModManager::load(ResList* resLog)
 	if (!jFile.empty()) {
 		try {
 			for (auto reply = jFile.cbegin(); reply != jFile.cend(); ++reply) {
-				std::string key = UTF8toGBK(reply.key());
-				msgreply[key].readJson(reply.value());
+				if(std::string key = UTF8toGBK(reply.key());!key.empty())
+					msgreply[key].readJson(reply.value());
 			}
 			*resLog << "读取/conf/CustomMsgReply.json中的" + std::to_string(msgreply.size()) + "条自定义回复";
 		}
@@ -357,12 +369,7 @@ int DiceModManager::load(ResList* resLog)
 	else {
 		std::map<std::string, std::vector<std::string>, less_ci> mRegexReplyDeck;
 		std::map<std::string, std::vector<std::string>, less_ci> mReplyDeck;
-		if (loadJMap(DiceDir / "conf" / "CustomReply.json", mReplyDeck) < 0 
-			&& loadJMap(DiceDir / "com.w4123.dice" / "ReplyDeck.json", mReplyDeck) > 0)
-		{
-			*resLog << "迁移自定义回复" + to_string(mReplyDeck.size()) + "条";
-		}
-		else if(!mReplyDeck.empty()){
+		if (loadJMap(DiceDir / "conf" / "CustomReply.json", mReplyDeck) > 0) {
 			*resLog << "读取CustomReply" + to_string(mReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mReplyDeck) {
 				DiceMsgReply& reply{ msgreply[key] };

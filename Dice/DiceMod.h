@@ -43,7 +43,7 @@ class DiceMsgReply {
 public:
     enum class Type { Reply, Order };   //决定受控制的开关类型
     static enumap<string> sType;
-    enum class Mode { Match, Search, Regex };    //匹配模式
+    enum class Mode { Match, Prefix, Search, Regex };    //匹配模式
     static enumap<string> sMode;
     enum class Echo { Text, Deck, Lua };    //回复形式
     static enumap<string> sEcho;
@@ -123,6 +123,7 @@ class DiceModManager
     map<string, DiceMsgReply, less_ci> msgreply;
     set<string, less_ci> reply_regex;
     TrieG<char16_t, less_ci> gReplySearcher;
+    TrieG<char, less_ci> gReplyPrefix;
 public:
 	DiceModManager();
 	friend void loadData();

@@ -475,6 +475,7 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 };
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+592:reply新增前缀匹配
 590:lua内置http
 589:ak安科安价指令
 588:适配频道消息
@@ -591,11 +592,11 @@ Master拥有最高权限，且可以调整任意信任)"},
 {"暗骰","群聊限定，掷骰指令后接h视为暗骰，结果将私发本人和群内ob的用户\n为了保证发送成功，请加骰娘好友"},
 {"reply",R"(自定义回复：.reply
 .reply on/off 开启/关闭群内回复
-回复触发顺序：指令->完全->模糊->正则
+回复触发顺序：指令->完全Match->前缀Prefix->模糊Search->正则Regex
 //以下操作回复指令仅admin可用
 .reply set
 Type=[回复性质](Reply/Order)
-[触发模式](Match/Search/Regex)=[触发词]
+[触发模式](Match/Prefix/Search/Regex)=[触发词]
 [回复模式](Deck/Text/Lua)=[回复词]
 *Type一行可省略，默认为Reply
 .reply show [触发词] 查看指定回复

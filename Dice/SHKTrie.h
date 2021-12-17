@@ -7,8 +7,10 @@
 #include <unordered_set>
 #include <string>
 #include <cstring>
+#include <stack>
 using std::map;
 using std::unordered_set;
+using std::stack;
 
 template<class _Char, class sort>
 class TrieNode {
@@ -91,14 +93,14 @@ public:
 		}
 		return !res.empty();
 	}
-	bool match_head(const _String& s, unordered_set<_String>& res)const {
+	bool match_head(const _String& s, stack<_String>& res)const {
 		const Node* p = &root;
 		for (const auto& ch : s) {
 			//if (ignored(ch))continue;
 			if (!p->next.count(ch))break;
 			p = &(p->next.find(ch)->second);
 			if (p->isleaf) {
-				res.insert(p->value);
+				res.push(p->value);
 			}
 		}
 		return res.size();
