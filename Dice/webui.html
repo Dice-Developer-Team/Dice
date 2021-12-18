@@ -12,7 +12,7 @@
       .layui-layout-admin .layui-footer{left: 0;}
       .layui-layout-admin .layui-side{left: -300px;}
       .layui-table-cell{
-        height: auto;
+        height: 100%;
         white-space: pre-wrap;
       }
   </style>
@@ -539,6 +539,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
         content: $("#addCustomReplyForm").removeClass("layui-hide"), //这里content是一个普通的String
         success: function() {
           $("#addCustomReplyForm").find("input[name='name']").val(obj.data.name);
+          $("#addCustomReplyForm").find("select[name='type']").val(obj.data.type);
           $("#addCustomReplyForm").find("select[name='mode']").val(obj.data.mode);
           $("#addCustomReplyForm").find("select[name='echo']").val(obj.data.echo);
           $("#addCustomReplyForm").find("textarea[name='value']").val(obj.data.value);
