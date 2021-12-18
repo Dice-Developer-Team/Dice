@@ -244,7 +244,13 @@
   </div>
 </div>
 
-<script type="text/html" id="basicToolbar">
+<script type="text/html" id="editToolbar">
+  <div class="layui-btn-container">
+    <button class="layui-btn layui-btn-sm" lay-event="edit">编辑</button>
+  </div>
+</script>
+
+<script type="text/html" id="delToolbar">
   <div class="layui-btn-container">
     <button class="layui-btn layui-btn-sm" lay-event="delete">删除</button>
   </div>
@@ -268,8 +274,8 @@
     <label class="layui-form-label" style="width: 60px">触发性质</label>
     <div class="layui-input-block" style="margin-left: 90px">
     <select name="type">
-      <option value ="Reply">回复</option>
-      <option value ="Order">指令</option>
+      <option value="Reply">回复</option>
+      <option value="Order">指令</option>
     </select>
     </div>
   </div>
@@ -277,10 +283,10 @@
     <label class="layui-form-label" style="width: 60px">匹配模式</label>
     <div class="layui-input-block" style="margin-left: 90px">
     <select name="mode">
-      <option value ="Match">完全</option>
-      <option value ="Search">模糊</option>
-      <option value ="Prefix">前缀</option>
-      <option value ="Regex">正则</option>
+      <option value="Match">完全</option>
+      <option value="Search">模糊</option>
+      <option value="Prefix">前缀</option>
+      <option value="Regex">正则</option>
     </select>
     </div>
   </div>
@@ -461,7 +467,8 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
       ,{field: 'mode', title: '匹配模式', width:100, align: 'center', edit: 'text'}
       ,{field: 'echo', title: '回复形式', width:100, align: 'center', edit: 'text'}
       ,{field: 'value', title: '回复', minWidth:250, edit: 'text'}
-      ,{fixed: 'right', width:80, align:'center', toolbar: '#basicToolbar'}
+      ,{fixed: 'right', width:80, align:'center', toolbar: '#editToolbar'}
+      ,{fixed: 'right', width:80, align:'center', toolbar: '#delToolbar'}
     ]]
     /*,done: function(){
       $(".layui-table-cell").each(function(){
@@ -491,7 +498,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     $.post("/api/customreply", JSON.stringify({action: "set", data: [data.field]}))
     .done(function(data) {
       if (data.code == 0) {
-        console.log("CustomReply Save Success");
+        layer.msg("关键词回复编辑成功");
         table.reload('custom-reply-table');
       } else {
         layer.msg("关键词回复保存失败: " + data.msg);
@@ -523,6 +530,22 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
         .fail(function(jqXHR, textStatus, error) {
           layer.msg("关键词回复删除失败: " + error);
         })
+      });
+    }
+    else if (layEvent == "edit") {
+      addCustomReplyFormIndex = layer.open({
+        type: 1, 
+        title: '编辑关键词回复',
+        content: $("#addCustomReplyForm").removeClass("layui-hide"), //这里content是一个普通的String
+        success: function() {
+          $("#addCustomReplyForm").find("input[name='name']").val(obj.data.name);
+          $("#addCustomReplyForm").find("select[name='mode']").val(obj.data.mode);
+          $("#addCustomReplyForm").find("select[name='echo']").val(obj.data.echo);
+          $("#addCustomReplyForm").find("textarea[name='value']").val(obj.data.value);
+          $("#addCustomReplyForm").find("button").html("编辑");
+          layui.form.render('select');
+        },
+        end: function() { $("#addCustomReplyForm").addClass("layui-hide"); }
       });
     }
   });
