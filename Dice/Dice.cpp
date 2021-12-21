@@ -465,7 +465,7 @@ bool eve_GroupAdd(Chat& grp)
 {
 	{
 		unique_lock<std::mutex> lock_queue(GroupAddMutex);
-		if (grp.lastmsg(time(nullptr)).isset("未进") || grp.isset("已退"))grp.reset("未进").reset("已退");
+		if (!grp.lastmsg(time(nullptr)).isset("已入群"))grp.set("已入群").reset("未进").reset("已退");
 		else return false;
 		if (ChatList.size() == 1 && !console.isMasterMode)DD::sendGroupMsg(grp.ID, msgInit);
 	}
@@ -591,7 +591,7 @@ bool eve_GroupAdd(Chat& grp)
 				grp.set("许可使用");
 				strMsg += "\n已自动追加使用许可";
 			}
-			else 
+			else if(!grp.isset("协议无效"))
 			{
 				strMsg += "\n无许可使用，已退群";
 				console.log(strMsg, 1, strNow);
@@ -640,7 +640,7 @@ EVE_GroupMsg(eventGroupMsg)
 	if (!Enabled)return 0;
 	Chat& grp = chat(fromGID).group().lastmsg(time(nullptr));
 	if (fromUID == console.DiceMaid && !console["ListenGroupEcho"])return 0;
-	if (grp.isset("未进") || grp.isset("已退"))eve_GroupAdd(grp);
+	if (!grp.isset("已入群"))eve_GroupAdd(grp);
 	if (!grp.isset("忽略"))
 	{
 		shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
@@ -750,7 +750,7 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 		if (!grp.inviter)grp.inviter = operatorQQ;
 		{
 			unique_lock<std::mutex> lock_queue(GroupAddMutex);
-			if (!grp.tLastMsg)grp.set("未进");
+			if (grp.isset("已入群"))return 0;
 		}
 		return eve_GroupAdd(grp);
 	}
@@ -763,7 +763,7 @@ EVE_GroupMemberKicked(eventGroupMemberKicked){
 	Chat& grp = chat(fromGID);
 	if (beingOperateQQ == console.DiceMaid)
 	{
-		grp.set("已退");
+		grp.set("已退").reset("已入群");
 		if (!console || grp.isset("忽略"))return 0;
 		string strNow = printSTime(stNow);
 		string strNote = printUser(fromUID) + "将" + printUser(beingOperateQQ) + "移出了" + printChat(grp);

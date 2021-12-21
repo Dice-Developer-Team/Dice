@@ -292,7 +292,7 @@ void Chat::leave(const string& msg) {
 		std::this_thread::sleep_for(500ms);
 	}
 	isGroup ? DD::setGroupLeave(ID) : DD::setDiscussLeave(ID);
-	set("已退");
+	set("已退").reset("已入群");
 }
 bool Chat::is_except()const {
 	return confs.count("免黑") || confs.count("协议无效");
