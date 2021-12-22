@@ -92,6 +92,9 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 	case AttrVar::AttrType::Integer:
 		lua_pushnumber(L, attr.attr);
 		break;
+	case AttrVar::AttrType::ID:
+		lua_pushnumber(L, attr.id);
+		break;
 	case AttrVar::AttrType::Number:
 		lua_pushnumber(L, attr.number);
 		break;
@@ -460,6 +463,9 @@ int setUserToday(lua_State* L) {
 }
 
 int getPlayerCardAttr(lua_State* L) {
+	if (int argc{ lua_gettop(L) }; argc > 4)lua_settop(L, 4);
+	else if (argc == 3)lua_pushnil(L);
+	else if (argc < 3)return 0;
 	long long plQQ{ lua_to_int(L, 1) };
 	long long group{ lua_to_int(L, 2) };
 	string key{ lua_to_gb18030_string(L, 3) };
@@ -467,14 +473,12 @@ int getPlayerCardAttr(lua_State* L) {
 	CharaCard& pc = getPlayer(plQQ)[group];
 	if (pc.Attr.count(key)) {
 		lua_push_attr(L, pc.Attr.find(key)->second);
-		return 3;
 	}
 	else if (key = pc.standard(key); pc.Attr.count(key)) {
 		lua_push_attr(L, pc.Attr.find(key)->second);
 	}
 	else if (key == "note") {
 		lua_push_string(L, pc.Note);
-		return 2;
 	}
 	else if (pc.Attr.count("&" + key)) {
 		lua_push_string(L, pc.Attr.find("&" + key)->second.to_str());
