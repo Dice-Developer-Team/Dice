@@ -206,8 +206,8 @@ void Console::loadNotice()
 			for (auto note : jFile) {
 				long long uid{ 0 }, gid{ 0 }, chid{ 0 };
 				if (note.count("uid"))note["uid"].get_to(uid);
-				if (note.count("gid"))note["gid"].get_to(uid);
-				if (note.count("chid"))note["chid"].get_to(uid);
+				if (note.count("gid"))note["gid"].get_to(gid);
+				if (note.count("chid"))note["chid"].get_to(chid);
 				if (note.count("type"))NoticeList.emplace(chatInfo{ uid,gid,chid }, note["type"].get<int>());
 			}
 			return;
