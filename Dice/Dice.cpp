@@ -347,7 +347,7 @@ EVE_Enable(eventEnable)
 	readUserData();
 	for (auto gid : DD::getGroupIDList())
 	{
-		chat(gid).group().reset("未进").reset("已退");
+		chat(gid).group().reset("未进").reset("已退").set("已入群");
 	}
 	// 确保线程执行结束
 	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
@@ -640,7 +640,7 @@ EVE_GroupMsg(eventGroupMsg)
 	if (!Enabled)return 0;
 	Chat& grp = chat(fromGID).group().lastmsg(time(nullptr));
 	if (fromUID == console.DiceMaid && !console["ListenGroupEcho"])return 0;
-	if (!grp.isset("已入群"))eve_GroupAdd(grp);
+	if (!grp.isset("已入群") && (grp.isset("未进") || grp.isset("已退")))eve_GroupAdd(grp);
 	if (!grp.isset("忽略"))
 	{
 		shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
