@@ -7,8 +7,8 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2018-2022 w4123溯洄
+ * Copyright (C) 2019-2022 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -382,7 +382,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strSelfName", "" },
 	{"strSelfNick", "&strSelfName" },
 	{"self", "&strSelfCall"},
-	{"strBotHeader", "试作型 " },
+	{"strBotHeader", "标准型 " },
 	{"strBotMsg", "\n使用.help更新 查看{self}更新内容"},
 	{
 		"strHlpMsg",
