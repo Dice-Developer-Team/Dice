@@ -1415,7 +1415,7 @@ int FromMsg::InnerOrder() {
 			reply(getMsg("strDefaultCOCSet") + "5\n出1-2且<五分之一大成功\n不满50出96-100大失败，满50出99-100大失败");
 			break;
 		case 6:
-			reply(getMsg("strDefaultCOCSet") + "6\n绿色三角洲\n出1或两骰相同<=成功率大成功\n出100或两骰相同>成功率大失败");
+			reply(getMsg("strDefaultCOCSet") + "6\n绿色三角洲\n出1或出个位十位相同且<=成功率大成功\n出100或出个位十位相同且>成功率大失败");
 			break;
 		default:
 			reply(getMsg("strDefaultCOCNotFound"));
@@ -2009,7 +2009,7 @@ int FromMsg::InnerOrder() {
 				else if (DiceMsgReply::sEcho.count(attr)) {	//Echo=Reply
 					trigger.echo = (DiceMsgReply::Echo)DiceMsgReply::sEcho[attr];
 					if (trigger.echo == DiceMsgReply::Echo::Deck) {
-						while (intMsgCnt != strMsg.length()) {
+						while (intMsgCnt < strMsg.length()) {
 							string item = readItem();
 							if (!item.empty())trigger.deck.push_back(item);
 						}
@@ -4484,8 +4484,10 @@ string FromMsg::readItem()
 		(isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == '|'))intMsgCnt++;
 	size_t intBegin{ intMsgCnt };
 	size_t intEnd{ strMsg.find('|',intMsgCnt) };
-	if (intEnd > len)intEnd = len;
-	intMsgCnt = intEnd + 1;
+	if (intEnd > len) {
+		intMsgCnt = intEnd = len;
+	}
+	else intMsgCnt = intEnd + 1;
 	intEnd = strMsg.find_last_not_of(" \t\r\n", intEnd - 1) + 1;
 	//while (isspace(static_cast<unsigned char>(strMsg[intEnd - 1])))--intEnd;
 	return strMsg.substr(intBegin, intEnd - intBegin);
