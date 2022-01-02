@@ -149,7 +149,7 @@ long long AttrVar::to_ll()const {
 		break;
 	case AttrType::Text:
 		try {
-			return stoi(text);
+			return stoll(text);
 		}
 		catch (...) {
 			return 0;

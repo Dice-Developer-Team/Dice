@@ -963,7 +963,7 @@ void DDBlackManager::isban(FromMsg* msg)
 {
 	if (!msg->vars["target"].to_ll())
 	{
-		msg->reply("请给出查询对象的ID×");
+		msg->reply("请{nick}给出查询对象的ID×");
 		return;
 	}
 	long long llID{ msg->vars["target"].to_ll() };
