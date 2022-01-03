@@ -170,6 +170,7 @@ public:
                 j["data"].push_back({ {"name", GBKtoUTF8(key)} ,
                     {"type", GBKtoUTF8(val.sType[(int)val.type])},
                     {"mode", GBKtoUTF8(val.sMode[(int)val.mode])},
+                    {"limit", GBKtoUTF8(val.limit.show())},
                     {"echo", GBKtoUTF8(val.sEcho[(int)val.echo])},
                     {"value", GBKtoUTF8(val.show_ans())} });
             }
@@ -203,6 +204,7 @@ public:
                     DiceMsgReply trigger;
                     trigger.type = (DiceMsgReply::Type)DiceMsgReply::sType[item["type"].get<std::string>()];
                     trigger.mode = (DiceMsgReply::Mode)DiceMsgReply::sMode[item["mode"].get<std::string>()];
+                    trigger.limit.parse(UTF8toGBK(item["limit"].get<std::string>()));
                     trigger.echo = (DiceMsgReply::Echo)DiceMsgReply::sEcho[item["echo"].get<std::string>()];
                     if (trigger.echo == DiceMsgReply::Echo::Deck) {
                         auto& deck = trigger.deck;

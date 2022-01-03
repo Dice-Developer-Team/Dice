@@ -1,7 +1,7 @@
 #pragma once
 /**
  * ×Ö·û´®¸¨Öúº¯Êý
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2019-2022 String.Empty
  */
 
 #include <string>
@@ -40,6 +40,18 @@ string to_signed_string(Dig num)
 int count_char(const string& s, char ch);
 
 vector<string> split(const string&, const string&);
+
+template<typename Con>
+void splitID(const string&str , Con& list) {
+    const char digits[]{ "0123456789" };
+    const char* p = strpbrk(str.c_str(), digits);
+    size_t len;
+    while (p) {
+        list.emplace(atoll(p));
+        len = strspn(p, digits);
+        p = strpbrk(p + len, digits);
+    }
+}
 
 string convert_w2a(const char16_t* wch);
 

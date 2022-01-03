@@ -1990,6 +1990,10 @@ int FromMsg::InnerOrder() {
 					string type{ readUntilTab() };
 					if(DiceMsgReply::sType.count(type))trigger.type = (DiceMsgReply::Type)DiceMsgReply::sType[type];
 				}
+				else if (attr == "Limit") { //trigger limit
+					string content{ readUntilTab() };
+					trigger.limit.parse(content);
+				}
 				else if (DiceMsgReply::sMode.count(attr)) {	//Mode=Key
 					trigger.mode = (DiceMsgReply::Mode)DiceMsgReply::sMode[attr];
 					key = readUntilTab();

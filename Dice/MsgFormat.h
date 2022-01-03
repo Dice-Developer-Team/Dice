@@ -94,10 +94,10 @@ public:
 		return *this;
 	}
 
-	void setDot(string s, string sLong)
-	{
-		sDot = std::move(s);
-		strLongSepa = std::move(sLong);
+	ResList& setDot(const string& s, const string& sLong){
+		sDot = s;
+		strLongSepa = sLong;
+		return *this;
 	}
 
 	[[nodiscard]] bool empty() const
@@ -140,6 +140,14 @@ std::string listKey(std::map<std::string, T, sort> m)
 }
 
 std::string listDeck(const std::vector<std::string>& v);
+template<class Con>
+std::string listID(const Con& list) {
+	ResList res;
+	for (auto id : list) {
+		res << to_string(id);
+	}
+	return res.setDot("|", "|").show();
+}
 
 std::string to_binary(int b);
 std::string strip(std::string);

@@ -475,6 +475,7 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 };
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+593:reply新增触发限制
 592:reply新增前缀匹配
 590:lua内置http
 589:ak安科安价指令
@@ -485,8 +486,6 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 581:角色掷骰统计
 580:过期记录回收
 579:允许转义文本多选一
-578:优化群设置读写
-577:窗口广播通知
 576:定时任务脚本
 574:默认骰机制优化
 573:角色卡机制优化

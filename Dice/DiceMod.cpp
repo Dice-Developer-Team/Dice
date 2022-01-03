@@ -7,8 +7,8 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2018-2022 w4123溯洄
+ * Copyright (C) 2019-2022 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -34,12 +34,32 @@
 #include <regex>
 using std::set;
 
+DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
+	if (content == raw)return *this;
+	new(this)DiceTriggerLimit();
+	vector<string> list{ split(raw,";") };
+	size_t colon{ 0 };
+	for (auto& item : list) {
+		if (item.empty())continue;
+		if (!content.empty())content += ";";
+		string key{ item.substr(0,colon = item.find(":")) };
+		if (key == "user_id") {
+			if (colon == string::npos)continue;
+			splitID(item.substr(colon), user_id);
+			if (!user_id.empty()) {
+				content += "user_id:" + listID(user_id);
+			}
+		}
+	}
+	return *this;
+}
 
 enumap<string> DiceMsgReply::sType{ "Reply","Order" };
 enumap<string> DiceMsgReply::sMode{ "Match", "Prefix", "Search", "Regex" };
 enumap<string> DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
 bool DiceMsgReply::exec(FromMsg* msg) {
 	int chon{ msg->pGrp ? msg->pGrp->getChConf(msg->fromChat.chid,"order",0) : 0 };
+	if (!limit.user_id.empty() && !limit.user_id.count(msg->fromChat.uid))return false;
 	if (type == Type::Reply) {
 		if (!msg->isCalled && (chon < 0 ||
 			(!chon && (msg->pGrp->isset("禁用回复") || msg->pGrp->isset("认真模式")))))
@@ -73,6 +93,7 @@ string DiceMsgReply::show_ans()const {
 void DiceMsgReply::readJson(const json& j) {
 	if (j.count("type"))type = (Type)sType[j["type"].get<string>()];
 	if (j.count("mode"))mode = (Mode)sMode[j["mode"].get<string>()];
+	if (j.count("limit"))limit.parse(UTF8toGBK(j["limit"].get<string>()));
 	if (j.count("echo"))echo = (Echo)sEcho[j["echo"].get<string>()];
 	if (j.count("answer")) {
 		if (echo == Echo::Deck)deck = UTF8toGBK(j["answer"].get<vector<string>>());
@@ -84,6 +105,7 @@ json DiceMsgReply::writeJson()const {
 	j["type"] = sType[(int)type];
 	j["mode"] = sMode[(int)mode];
 	j["echo"] = sEcho[(int)echo];
+	if(!limit.empty())j["limit"] = GBKtoUTF8(limit.show());
 	if (echo == Echo::Deck)j["answer"] = GBKtoUTF8(deck);
 	else j["answer"] = GBKtoUTF8(text);
 	return j;
@@ -324,6 +346,7 @@ void DiceModManager::show_reply(const shared_ptr<DiceJobDetail>& msg) {
 	if (msgreply.count(key)) {
 		DiceMsgReply& reply{ msgreply[key] };
 		(*msg)["show"] = "Type=" + reply.sType[(int)reply.type]
+			+ (reply.limit.show().empty() ? "" : ("\nLimit=" + reply.limit.show()))
 			+ "\n" + reply.sMode[(int)reply.mode] + "=" + key
 			+ "\n" + reply.sEcho[(int)reply.echo] + "=" + reply.show_ans();
 		msg->reply(getMsg("strReplyShow"));
