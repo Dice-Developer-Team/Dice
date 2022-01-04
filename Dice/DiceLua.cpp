@@ -433,7 +433,15 @@ int setUserConf(lua_State* L) {
 	if (!uid)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
-	if (lua_isnumber(L, 3)) {
+	if (item == "trust") {
+		if (!lua_isnumber(L, 3))return 0;
+		int trust{ (int)lua_tonumber(L, 3) };
+		if (trust > 4 || trust < 0)return 0;
+		User& user{ getUser(uid) };
+		if (user.nTrust > 4)return 0;
+		user.trust(trust);
+	}
+	else if (lua_isnumber(L, 3)) {
 		getUser(uid).setConf(item, (int)lua_tonumber(L, 3));
 	}
 	else if (lua_isstring(L, 3)) {

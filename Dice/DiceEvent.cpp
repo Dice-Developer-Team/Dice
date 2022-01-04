@@ -2018,7 +2018,13 @@ int FromMsg::InnerOrder() {
 							if (!item.empty())trigger.deck.push_back(item);
 						}
 					}
-					else trigger.text = readRest();
+					else {
+						if(trigger.echo== DiceMsgReply::Echo::Lua && trusted < 5) {
+							reply(getMsg("strNotMaster"));
+							return -1;
+						}
+						trigger.text = readRest();
+					}
 					break;
 				}
 				attr = readToColon();
@@ -2483,8 +2489,7 @@ int FromMsg::InnerOrder() {
 			rep << "信任级别：" + to_string(trusted)
 				<< "和{nick}的第一印象大约是在" + printDate(user.tCreated)
 				<< (!(user.strNick.empty()) ? "正记录{nick}的" + to_string(user.strNick.size()) + "个称呼" : "没有记录{nick}的称呼")
-				<< ((PList.count(fromChat.uid)) ? "这里有{nick}的" + to_string(PList[fromChat.uid].size()) + "张角色卡" : "无角色卡记录")
-				<< user.show();
+				<< ((PList.count(fromChat.uid)) ? "这里有{nick}的" + to_string(PList[fromChat.uid].size()) + "张角色卡" : "无角色卡记录");
 			reply("{user}" + rep.show());
 			return 1;
 		}

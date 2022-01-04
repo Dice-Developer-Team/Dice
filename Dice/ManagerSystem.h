@@ -72,9 +72,10 @@ public:
 		return *this;
 	}
 
-	User& trust(short n)
+	User& trust(int n)
 	{
 		nTrust = n;
+		confs["trust"] = n;
 		return *this;
 	}
 
