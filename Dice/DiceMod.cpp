@@ -34,16 +34,53 @@
 #include "DDAPI.h"
 #include <regex>
 using std::set;
+void parse_vary(string& raw, unordered_map<string, pair<double, AttrVar::CMPR>>& vary) {
+	ShowList vars;
+	for (auto& var : split(raw, "&")) {
+		pair<string, string>conf;
+		readini(var, conf);
+		if (conf.first.empty())continue;
+		string strCMPR;
+		AttrVar::CMPR cmpr{ &AttrVar::equal };
+		if ('+' == *--conf.second.end()) {
+			strCMPR = "+";
+			cmpr = &AttrVar::equal_or_more;
+			conf.second.erase(conf.second.end() - 1);
+		}
+		else if ('-' == *--conf.second.end()) {
+			strCMPR = "-";
+			cmpr = &AttrVar::equal_or_less;
+			conf.second.erase(conf.second.end() - 1);
+		}
+		//only number
+		if (!isNumeric(conf.second))continue;
+		double val{ stod(conf.second) };
+		vary[conf.first] = { val,cmpr };
+		vars << conf.first + "=" + toString(val, 4) + strCMPR;
+	}
+	raw = vars.show("&");
+}
 
 DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 	if (content == raw)return *this;
 	new(this)DiceTriggerLimit();
 	ShowList limits;
 	size_t colon{ 0 };
+	std::istringstream sin;
 	for (auto& item : split(raw, ";")) {
 		if (item.empty())continue;
 		string key{ item.substr(0,colon = item.find(":")) };
-		if (key == "user_id") {
+		if (key == "prob") {
+			if (colon == string::npos)continue;
+			sin.str(item.substr(colon + 1));
+			sin >> prob;
+			if (prob <= 0 || prob >= 100) {
+				prob = 0;
+				continue;
+			}
+			limits << "prob:" + to_string(prob);
+		}
+		else if (key == "user_id") {
 			if (colon == string::npos)continue;
 			splitID(item.substr(colon), user_id);
 			if (!user_id.empty()) {
@@ -52,34 +89,37 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 		}
 		else if (key == "user_var") {
 			if (colon == string::npos)continue;
-			ShowList vars;
-			for (auto& var : split(item.substr(colon + 1), "&")) {
-				pair<string, string>conf;
-				readini(var, conf);
-				if (conf.first.empty())continue;
-				string strCMPR;
-				AttrVar::CMPR cmpr{ &AttrVar::equal };
-				if ('+' == *--conf.second.end()) {
-					strCMPR = "+";
-					cmpr = &AttrVar::equal_or_more;
-					conf.second.erase(conf.second.end() - 1);
-				}
-				else if ('-' == *--conf.second.end()) {
-					strCMPR = "-";
-					cmpr = &AttrVar::equal_or_less;
-					conf.second.erase(conf.second.end() - 1);
-				}
-				//only number
-				if (!isNumeric(conf.second))continue;
-				double val{ stod(conf.second) };
-				user_vary[conf.first] = { val,cmpr };
-				vars << conf.first + "=" + toString(val, 4) + strCMPR;
-			}
-			if (!vars.empty())limits << "user_var:" + vars.show("&");
+			string code{ item.substr(colon + 1) };
+			parse_vary(code, user_vary);
+			if (!code.empty())limits << "user_var:" + code;
+		}
+		else if (key == "self_var") {
+			if (colon == string::npos)continue;
+			string code{ item.substr(colon + 1) };
+			parse_vary(code, self_vary);
+			if (!code.empty())limits << "self_var:" + code;
 		}
 	}
 	content = limits.show(";");
 	return *this;
+}
+bool DiceTriggerLimit::check(FromMsg* msg)const {
+	if (!user_id.empty() && !user_id.count(msg->fromChat.uid))return false;
+	if (prob && RandomGenerator::Randint(1, 100) > prob)return false;
+	if (!user_vary.empty()) {
+		if (!UserList.count(msg->fromChat.uid))return false;
+		User& user{ getUser(msg->fromChat.uid) };
+		for (auto& [key, cmpr] : user_vary) {
+			if (!user.confs.count(key) || !(user.confs[key].*cmpr.second)(cmpr.first))return false;
+		}
+	}
+	if (!self_vary.empty()) {
+		User& user{ getUser(console.DiceMaid) };
+		for (auto& [key, cmpr] : self_vary) {
+			if (!user.confs.count(key) || !(user.confs[key].*cmpr.second)(cmpr.first))return false;
+		}
+	}
+	return true;
 }
 
 enumap<string> DiceMsgReply::sType{ "Reply","Order" };
@@ -88,14 +128,7 @@ enumap<string> DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
 bool DiceMsgReply::exec(FromMsg* msg) {
 	int chon{ msg->pGrp ? msg->pGrp->getChConf(msg->fromChat.chid,"order",0) : 0 };
 	//limit
-	if (!limit.user_id.empty() && !limit.user_id.count(msg->fromChat.uid))return false;
-	if (!limit.user_vary.empty()) {
-		if (!UserList.count(msg->fromChat.uid))return false;
-		User& user{ getUser(msg->fromChat.uid) };
-		for (auto& [key, cmpr] : limit.user_vary) {
-			if (!user.confs.count(key) || !(user.confs[key].*cmpr.second)(cmpr.first))return false;
-		}
-	}
+	if (!limit.check(msg))return false;
 	if (type == Type::Reply) {
 		if (!msg->isCalled && (chon < 0 ||
 			(!chon && (msg->pGrp->isset("禁用回复") || msg->pGrp->isset("认真模式")))))

@@ -20,14 +20,19 @@ using std::vector;
 using std::map;
 using std::set;
 
+class FromMsg;
+
 class DiceTriggerLimit {
     string content;
+    int prob;
+    set<long long>user_id;
+    unordered_map<string, pair<double, AttrVar::CMPR>>user_vary;
+    unordered_map<string, pair<double, AttrVar::CMPR>>self_vary;
 public:
     DiceTriggerLimit& parse(const string&);
     const string& show()const { return content; }
     bool empty()const { return content.empty(); }
-    set<long long>user_id;
-    unordered_map<string, pair<double, AttrVar::CMPR>>user_vary;
+    bool check(FromMsg*)const;
 };
 
 class DiceGenerator
@@ -48,7 +53,6 @@ public:
 	vector<string> cards;
 };
 
-class FromMsg;
 class DiceMsgReply {
 public:
     enum class Type { Reply, Order };   //决定受控制的开关类型
