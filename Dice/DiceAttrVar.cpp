@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2022 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -158,6 +158,34 @@ long long AttrVar::to_ll()const {
 	}
 	return 0;
 }
+double AttrVar::to_num()const {
+	switch (type) {
+	case AttrType::Nil:
+		return 0;
+		break;
+	case AttrType::Boolean:
+		return bit;
+		break;
+	case AttrType::Integer:
+		return attr;
+		break;
+	case AttrType::ID:
+		return id;
+		break;
+	case AttrType::Number:
+		return number;
+		break;
+	case AttrType::Text:
+		try {
+			return stod(text);
+		}
+		catch (...) {
+			return 0;
+		}
+		break;
+	}
+	return 0;
+}
 string AttrVar::to_str()const {
 	switch (type) {
 	case AttrType::Nil:
@@ -183,6 +211,39 @@ string AttrVar::to_str()const {
 }
 bool AttrVar::str_empty()const{
 	return type == AttrType::Text && text.empty();
+}
+
+bool AttrVar::is_numberic()const {
+	switch (type) {
+	case AttrType::Nil:
+		return false;
+		break;
+	case AttrType::Boolean:
+		return true;
+		break;
+	case AttrType::Integer:
+		return true;
+		break;
+	case AttrType::ID:
+		return true;
+		break;
+	case AttrType::Number:
+		return true; 
+		break;
+	case AttrType::Text:
+		return isNumeric(text);
+		break;
+	}
+	return false;
+}
+bool AttrVar::equal(double num)const {
+	return is_numberic() && to_num() == num;
+}
+bool AttrVar::equal_or_more(double num)const {
+	return is_numberic() && to_num() >= num;
+}
+bool AttrVar::equal_or_less(double num)const {
+	return is_numberic() && to_num() <= num;
 }
 
 AttrVar& AttrVar::operator=(const json& j) {

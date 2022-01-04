@@ -106,6 +106,32 @@ typename multimap<K, V>::iterator match(multimap<K, V>& mmp, K key, V val)
 	return mmp.end();
 }
 
+class ShowList {
+	vector<string>list;
+public:
+	ShowList& operator<<(const string& item) {
+		list.push_back(item);
+		return *this;
+	}
+	bool empty()const { return list.empty(); }
+	string show(const string& sepa = "|") {
+		string res;
+		for (auto it = list.begin(); it != list.end(); ++it) {
+			if (it != list.begin())res += sepa;
+			res += *it;
+		}
+		return res;
+	}
+};
+template<class Con>
+std::string listID(const Con& list, const string& sepa = "|") {
+	ShowList res;
+	for (auto id : list) {
+		res << to_string(id);
+	}
+	return res.show(sepa);
+}
+
 using prior_item = std::pair<int, string>;
 
 //按优先级输出项目

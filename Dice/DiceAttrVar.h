@@ -67,9 +67,17 @@ public:
 	bool operator==(const string& other)const;
 	int to_int()const;
 	long long to_ll()const;
+	double to_num()const;
 	string to_str()const;
 	bool str_empty()const;
 	json to_json()const;
+
+	using CMPR = bool(AttrVar::*)(double)const;
+	bool is_numberic()const;
+	bool equal(double)const;
+	bool equal_or_more(double)const;
+	bool equal_or_less(double)const;
+
 	void writeb(std::ofstream& fout) const;
 	void readb(std::ifstream& fin);
 };

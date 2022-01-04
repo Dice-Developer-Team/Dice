@@ -15,6 +15,7 @@ using std::vector;
 
 #define CP_GBK (936)
 
+bool isNumeric(const string&);
 string toString(int num, unsigned short size = 0);
 
 template<typename F>

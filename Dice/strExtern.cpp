@@ -19,6 +19,21 @@ using std::to_string;
 
 #define CP_GBK (936)
 
+bool isNumeric(const string& s) {
+    bool hasDot{ false };
+    size_t len{ s.length() };
+    for (size_t i = 0; i < len; i++) {
+        if (isdigit(s[i]))continue;
+        if ((s[i] == '+' || s[i] == '-') && 0 == i)continue;
+        if (s[i] == '.' && !hasDot&&i!=i-1) {
+            hasDot = true;
+            continue;
+        }
+        return false;
+    }
+    return true;
+}
+
 string toString(int num, unsigned short size)
 {
 	string res = to_string(num);

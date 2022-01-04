@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2022 w4123溯洄
+ * Copyright (C) 2018-2021 w4123溯洄
  * Copyright (C) 2019-2022 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -31,26 +31,54 @@
 #include "DiceLua.h"
 #include "RandomGenerator.h"
 #include "CardDeck.h"
+#include "DDAPI.h"
 #include <regex>
 using std::set;
 
 DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 	if (content == raw)return *this;
 	new(this)DiceTriggerLimit();
-	vector<string> list{ split(raw,";") };
+	ShowList limits;
 	size_t colon{ 0 };
-	for (auto& item : list) {
+	for (auto& item : split(raw, ";")) {
 		if (item.empty())continue;
-		if (!content.empty())content += ";";
 		string key{ item.substr(0,colon = item.find(":")) };
 		if (key == "user_id") {
 			if (colon == string::npos)continue;
 			splitID(item.substr(colon), user_id);
 			if (!user_id.empty()) {
-				content += "user_id:" + listID(user_id);
+				limits << "user_id:" + listID(user_id);
 			}
 		}
+		else if (key == "user_var") {
+			if (colon == string::npos)continue;
+			ShowList vars;
+			for (auto& var : split(item.substr(colon + 1), "&")) {
+				pair<string, string>conf;
+				readini(var, conf);
+				if (conf.first.empty())continue;
+				string strCMPR;
+				AttrVar::CMPR cmpr{ &AttrVar::equal };
+				if ('+' == *--conf.second.end()) {
+					strCMPR = "+";
+					cmpr = &AttrVar::equal_or_more;
+					conf.second.erase(conf.second.end() - 1);
+				}
+				else if ('-' == *--conf.second.end()) {
+					strCMPR = "-";
+					cmpr = &AttrVar::equal_or_less;
+					conf.second.erase(conf.second.end() - 1);
+				}
+				//only number
+				if (!isNumeric(conf.second))continue;
+				double val{ stod(conf.second) };
+				user_vary[conf.first] = { val,cmpr };
+				vars << conf.first + "=" + toString(val, 4) + strCMPR;
+			}
+			if (!vars.empty())limits << "user_var:" + vars.show("&");
+		}
 	}
+	content = limits.show(";");
 	return *this;
 }
 
@@ -59,7 +87,15 @@ enumap<string> DiceMsgReply::sMode{ "Match", "Prefix", "Search", "Regex" };
 enumap<string> DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
 bool DiceMsgReply::exec(FromMsg* msg) {
 	int chon{ msg->pGrp ? msg->pGrp->getChConf(msg->fromChat.chid,"order",0) : 0 };
+	//limit
 	if (!limit.user_id.empty() && !limit.user_id.count(msg->fromChat.uid))return false;
+	if (!limit.user_vary.empty()) {
+		if (!UserList.count(msg->fromChat.uid))return false;
+		User& user{ getUser(msg->fromChat.uid) };
+		for (auto& [key, cmpr] : limit.user_vary) {
+			if (!user.confs.count(key) || !(user.confs[key].*cmpr.second)(cmpr.first))return false;
+		}
+	}
 	if (type == Type::Reply) {
 		if (!msg->isCalled && (chon < 0 ||
 			(!chon && (msg->pGrp->isset("禁用回复") || msg->pGrp->isset("认真模式")))))
@@ -69,6 +105,9 @@ bool DiceMsgReply::exec(FromMsg* msg) {
 		if (!msg->isCalled && (chon < 0 ||
 			(!chon && msg->pGrp->isset("停用指令"))))
 			return false;
+	}
+	if (msg->WordCensor()) {
+		return true;
 	}
 
 	if (echo == Echo::Text) {

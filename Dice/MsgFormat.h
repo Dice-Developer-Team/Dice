@@ -140,14 +140,6 @@ std::string listKey(std::map<std::string, T, sort> m)
 }
 
 std::string listDeck(const std::vector<std::string>& v);
-template<class Con>
-std::string listID(const Con& list) {
-	ResList res;
-	for (auto id : list) {
-		res << to_string(id);
-	}
-	return res.setDot("|", "|").show();
-}
 
 std::string to_binary(int b);
 std::string strip(std::string);

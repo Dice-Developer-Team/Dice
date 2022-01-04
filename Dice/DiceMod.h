@@ -2,7 +2,7 @@
 
 /*
  * ×ÊÔ´Ä£¿é
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2022 String.Empty
  */
 
 #include <string>
@@ -19,6 +19,16 @@ using std::string;
 using std::vector;
 using std::map;
 using std::set;
+
+class DiceTriggerLimit {
+    string content;
+public:
+    DiceTriggerLimit& parse(const string&);
+    const string& show()const { return content; }
+    bool empty()const { return content.empty(); }
+    set<long long>user_id;
+    unordered_map<string, pair<double, AttrVar::CMPR>>user_vary;
+};
 
 class DiceGenerator
 {
@@ -50,6 +60,7 @@ public:
     Type type{ Type::Reply };
     Mode mode{ Mode::Match };
     Echo echo{ Echo::Deck };
+    DiceTriggerLimit limit;
     string text;
     std::vector<string> deck;
     string show_ans()const;
@@ -84,8 +95,6 @@ protected:
     using dir = map<string, string, less_ci>;
     dir mod_helpdoc;
     map<string, vector<string>> mod_public_deck;
-    using orders = map<string, DiceMsgOrder, less_ci>;
-    orders mod_msg_order;
     using replys = map<string, DiceMsgReply>;
     replys mod_msg_reply;
     /*map<string, DiceGenerator> m_generator;*/
@@ -107,14 +116,20 @@ public:
     MOD_BUILD(unsigned int, build)
     MOD_BUILD(unsigned int, Dice_build)
     MOD_BUILD(dir, helpdoc)
-    MOD_BUILD(orders, msg_order)
     MOD_BUILD(replys, msg_reply)
+};
+
+class DiceModConf {
+public:
+    bool active{ true };
+    int index{ 0 };
 };
 
 class ResList;
 class DiceModManager
 {
-	map<string, DiceMod> mNameIndex;
+	map<string, DiceMod, less_ci> modList;
+    vector<pair<string, bool>>modIndex;
 	map<string, string, less_ci> helpdoc;
     map<string, DiceMsgOrder, less_ci> msgorder;
     map<string, DiceMsgOrder, less_ci> taskcall;
