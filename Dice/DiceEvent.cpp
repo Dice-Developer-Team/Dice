@@ -1382,11 +1382,34 @@ int FromMsg::InnerOrder() {
 			reply(getMsg("strPermissionDeniedErr"));
 			return 1;
 		}
+		intMsgCnt += 6;
+		string action{ readPara() };
+		if (action == "show") {
+			if (isPrivate()) {
+				if (User& user{ getUser(fromChat.uid) }; user.confs.count("rc房规"))
+				vars["rule"] = user.confs["rc房规"];
+			}
+			else if (pGrp->isset("rc房规")) {
+				vars["rule"] = pGrp->confs["rc房规"];
+			}
+			if (vars.count("rule")) {
+				reply(getMsg("strDefaultCOCShow"));
+			}
+			else {
+				vars["rule"] = console["DefaultCOCRoomRule"];
+				reply(getMsg("strDefaultCOCShowDefault"));
+			}
+			return 1;
+		}
+		else if (action == "clr") {
+			if (isPrivate())getUser(fromChat.uid).rmConf("rc房规");
+			else chat(fromChat.gid).reset("rc房规");
+			reply(getMsg("strDefaultCOCClr"));
+			return 1;
+		}
 		string strRule = readDigit();
 		if (strRule.empty()) {
-			if (isPrivate())chat(fromChat.gid).reset("rc房规");
-			else getUser(fromChat.uid).rmConf("rc房规");
-			reply(getMsg("strDefaultCOCClr"));
+			reply(fmt->get_help("setcoc"));
 			return 1;
 		}
 		if (strRule.length() > 1) {
@@ -1420,8 +1443,8 @@ int FromMsg::InnerOrder() {
 			reply(getMsg("strDefaultCOCNotFound"));
 			return 1;
 		}
-		if (isPrivate())chat(fromChat.gid).set("rc房规", intRule);
-		else getUser(fromChat.uid).setConf("rc房规", intRule);
+		if (isPrivate())getUser(fromChat.uid).setConf("rc房规", intRule); 
+		else chat(fromChat.gid).set("rc房规", intRule);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 6) == "system") {
@@ -2326,7 +2349,7 @@ int FromMsg::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		const string Command = strLowerMessage.substr(intMsgCnt, strMsg.find(' ', intMsgCnt) - intMsgCnt);
-		if (isPrivate()) {
+		if (!isPrivate()) {
 			if (Command == "on") {
 				if (isAuth) {
 					if (groupset(fromChat.gid, "禁用jrrp") > 0) {
@@ -4348,7 +4371,7 @@ bool FromMsg::DiceFilter()
 			if (!isVirtual) {
 				AddFrq(fromChat, fromTime, strMsg);
 				getUser(fromChat.uid).update(fromTime);
-				if (isPrivate())chat(fromChat.gid).update(fromTime);
+				if (!isPrivate())chat(fromChat.gid).update(fromTime);
 			}
 		}
 		return 1;
