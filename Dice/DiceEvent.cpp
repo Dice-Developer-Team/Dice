@@ -1132,12 +1132,11 @@ int FromMsg::BasicOrder()
 		if (QQNum.empty() || QQNum == to_string(console.DiceMaid) 
 			|| (QQNum.length() == 4 && stoll(QQNum) == console.DiceMaid % 10000))
 		{
-			if (Command == "on")
+			if (Command == "on" && !isPrivate())
 			{
-				if (console["DisabledGlobal"])reply(getMsg("strGlobalOff"));
-				else if (!isPrivate() && ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用"))))reply(getMsg("strGroupLicenseDeny"));
-				else if (!isPrivate())
-				{
+				if ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")))
+					reply(getMsg("strGroupLicenseDeny"));
+				else {
 					if (isAuth || trusted >2)
 					{
 						if (groupset(fromChat.gid, "停用指令") > 0)
@@ -1158,7 +1157,7 @@ int FromMsg::BasicOrder()
 					}
 				}
 			}
-			else if (Command == "off")
+			else if (Command == "off" && !isPrivate())
 			{
 				if (isAuth || trusted > 2)
 				{
