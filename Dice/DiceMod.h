@@ -26,8 +26,12 @@ class DiceTriggerLimit {
     string content;
     int prob;
     set<long long>user_id;
-    unordered_map<string, pair<double, AttrVar::CMPR>>user_vary;
+    bool user_id_negative{ false };
+    set<long long>grp_id;
+    bool grp_id_negative{ false };
     unordered_map<string, pair<double, AttrVar::CMPR>>self_vary;
+    unordered_map<string, pair<double, AttrVar::CMPR>>user_vary;
+    unordered_map<string, pair<double, AttrVar::CMPR>>grp_vary;
 public:
     DiceTriggerLimit& parse(const string&);
     const string& show()const { return content; }

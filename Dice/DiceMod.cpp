@@ -81,10 +81,21 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			limits << "prob:" + to_string(prob);
 		}
 		else if (key == "user_id") {
-			if (colon == string::npos)continue;
-			splitID(item.substr(colon), user_id);
-			if (!user_id.empty()) {
-				limits << "user_id:" + listID(user_id);
+			size_t pos{ item.find_first_not_of(" ",colon + 1) };
+			if (pos == string::npos)continue;
+			if (item[pos] == '!')user_id_negative = true;
+			splitID(item.substr(pos), user_id);
+			if (!grp_id.empty()) {
+				limits << (user_id_negative ? "user_id:!" : "user_id:") + listID(user_id);
+			}
+		}
+		else if (key == "grp_id") {
+			size_t pos{ item.find_first_not_of(" ",colon + 1) };
+			if (pos == string::npos)continue;
+			if (item[pos] == '!')grp_id_negative = true;
+			splitID(item.substr(pos), grp_id);
+			if (!grp_id.empty()) {
+				limits << (grp_id_negative ? "grp_id:!" : "grp_id:") + listID(grp_id);
 			}
 		}
 		else if (key == "user_var") {
@@ -92,6 +103,12 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			string code{ item.substr(colon + 1) };
 			parse_vary(code, user_vary);
 			if (!code.empty())limits << "user_var:" + code;
+		}
+		else if (key == "grp_var") {
+			if (colon == string::npos)continue;
+			string code{ item.substr(colon + 1) };
+			parse_vary(code, grp_vary);
+			if (!code.empty())limits << "grp_var:" + code;
 		}
 		else if (key == "self_var") {
 			if (colon == string::npos)continue;
@@ -105,12 +122,19 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 }
 bool DiceTriggerLimit::check(FromMsg* msg)const {
 	if (!user_id.empty() && !user_id.count(msg->fromChat.uid))return false;
+	if (!grp_id.empty() && (!grp_id.count(msg->fromChat.gid) ^ grp_id_negative))return false;
 	if (prob && RandomGenerator::Randint(1, 100) > prob)return false;
 	if (!user_vary.empty()) {
 		if (!UserList.count(msg->fromChat.uid))return false;
 		User& user{ getUser(msg->fromChat.uid) };
 		for (auto& [key, cmpr] : user_vary) {
 			if (!user.confs.count(key) || !(user.confs[key].*cmpr.second)(cmpr.first))return false;
+		}
+	}
+	if (!grp_vary.empty()) {
+		Chat& grp{ chat(msg->fromChat.gid) };
+		for (auto& [key, cmpr] : grp_vary) {
+			if (!grp.confs.count(key) || !(grp.confs[key].*cmpr.second)(cmpr.first))return false;
 		}
 	}
 	if (!self_vary.empty()) {
