@@ -315,6 +315,20 @@ int getGroupConf(lua_State* L) {
 		string card{ DD::getGroupNick(id, uid) };
 		if (!card.empty())lua_push_string(L, card);
 	}
+	else if (item.find("auth#") == 0) {
+		long long uid{ 0 };
+		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+		}
+		lua_pushnumber(L, DD::getGroupAuth(id, uid, 0));
+	}
+	else if (item.find("lst#") == 0) {
+		long long uid{ 0 };
+		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+		}
+		lua_pushnumber(L, DD::getGroupLastMsg(id, uid));
+	}
 	else if (ChatList.count(id)) {
 		Chat& grp{ chat(id) }; 
 		if (item == "name") {
