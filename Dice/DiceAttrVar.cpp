@@ -24,7 +24,42 @@
 #include "DiceAttrVar.h"
 #include "StrExtern.hpp"
 #include "DiceFile.hpp"
+#include "DDAPI.h"
 using std::to_string;
+VarTable::VarTable(const unordered_map<string, AttrVar>& m) {
+	for (auto& [key, val] : m) {
+		dict[key] = std::make_shared<AttrVar>(val);
+	}
+	init_idx();
+}
+void VarTable::init_idx() {
+	int idx{ 1 };
+	string strI{ to_string(idx) };
+	while (dict.count(strI)) {
+		idxs.push_back(dict[strI]);
+		strI = to_string(++idx);
+	}
+}
+void VarTable::writeb(std::ofstream& fout) const {
+	fwrite(fout, static_cast<int>(dict.size()));
+	for (auto& [key, val] : dict) {
+		fwrite(fout, key);
+		val->writeb(fout);
+	}
+}
+void VarTable::readb(std::ifstream& fin) {
+	int len = fread<int>(fin);
+	if (len < 0)return;
+	DD::debugLog("¶ÁÈ¡VarTableÏîÄ¿" + to_string(len));
+	while (len--) {
+		string key{ fread<string>(fin) };
+		AttrVar val;
+		val.readb(fin);
+		if (key.empty())continue;
+		dict[key] = std::make_shared<AttrVar>(val);
+	}
+	init_idx();
+}
 
 AttrVar::AttrVar(const AttrVar& other) :type(other.type) {
 	switch (type) {
@@ -39,6 +74,9 @@ AttrVar::AttrVar(const AttrVar& other) :type(other.type) {
 		break;
 	case AttrType::Text:
 		new(&text)string(other.text);
+		break;
+	case AttrType::Table:
+		new(&table)VarTable(other.table);
 		break;
 	case AttrType::ID:
 		id = other.id;
@@ -203,6 +241,9 @@ string AttrVar::to_str()const {
 	case AttrType::Text:
 		return text;
 		break;
+	case AttrType::Table: 
+		return UTF8toGBK(to_json().dump());
+		break;
 	case AttrType::ID:
 		return to_string(id);
 		break;
@@ -257,8 +298,14 @@ AttrVar& AttrVar::operator=(const json& j) {
 		j.get_to(bit);
 		break;
 	case json::value_t::number_integer:
-		type = AttrType::Integer;
-		j.get_to(attr);
+		if (long long num{ j.get<long long>() }; num > 10000000 || num < -10000000) {
+			type = AttrType::ID;
+			id=num;
+		}
+		else {
+			type = AttrType::Integer;
+			j.get_to(attr);
+		}
 		break;
 	case json::value_t::number_float:
 		type = AttrType::Number;
@@ -271,6 +318,15 @@ AttrVar& AttrVar::operator=(const json& j) {
 	case json::value_t::number_unsigned:
 		type = AttrType::ID;
 		j.get_to(id);
+		break;
+	case json::value_t::object:
+		type = AttrType::Table; {
+			AttrVars vars;
+			for (auto it = j.cbegin(); it != j.cend(); ++it) {
+				vars[it.key()] = it.value();
+			}
+			new(&table)VarTable(vars);
+		}
 		break;
 	}
 	return *this;
@@ -294,6 +350,14 @@ json AttrVar::to_json()const {
 		break;
 	case AttrType::ID:
 		return id;
+		break;
+	case AttrType::Table: {
+		json j = json::object();
+		for (auto& [key, val] : table.dict) {
+			j[GBKtoUTF8(key)] = val->to_json();
+		}
+		return j;
+	}
 		break;
 	}
 	return {};
@@ -319,6 +383,10 @@ void AttrVar::writeb(std::ofstream& fout) const {
 	case AttrType::Text:
 		fwrite(fout, (char)4);
 		fwrite(fout, text);
+		break;
+	case AttrType::Table:
+		fwrite(fout, (char)5);
+		table.writeb(fout);
 		break;
 	case AttrType::ID:
 		fwrite(fout, (char)7);
@@ -348,6 +416,12 @@ void AttrVar::readb(std::ifstream& fin) {
 		des();
 		type = AttrType::Text;
 		new(&text) string(fread<string>(fin));
+		break;
+	case 5:
+		des();
+		type = AttrType::Table;
+		new(&table) VarTable();
+		table.readb(fin);
 		break;
 	case 7:
 		des();

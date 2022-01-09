@@ -101,7 +101,42 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 	case AttrVar::AttrType::Text:
 		lua_push_string(L, attr.text.c_str());
 		break;
+	case AttrVar::AttrType::Table:
+		lua_newtable(L);
+		for (auto& [key, val] : attr.table.dict) {
+			lua_push_attr(L, *val.get());
+			lua_set_field(L, -2, key.c_str());
+		}
+		break;
 	}
+}
+AttrVar lua_to_attr(lua_State* L, int idx = -1) {
+	switch (lua_type(L, idx)) {
+	case LUA_TBOOLEAN:
+		return (bool)lua_toboolean(L, idx);
+		break;
+	case LUA_TNUMBER:
+		if (lua_isinteger(L, idx)) {
+			return lua_tointeger(L, idx);
+		}
+		else {
+			return lua_tonumber(L, idx);
+		}
+		break;
+	case LUA_TSTRING:
+		return lua_to_gb18030_string(L, idx);
+		break;
+	case LUA_TTABLE:
+		AttrVars tab;
+		lua_pushnil(L);
+		while (lua_next(L, idx)) {
+			tab[lua_to_gb18030_string(L, -2)] = lua_to_attr(L, -1);
+			lua_pop(L, 1);
+		}
+		return AttrVar(tab);
+		break;
+	}
+	return {};
 }
 
 void CharaCard::pushTable(lua_State* L) {
@@ -368,21 +403,10 @@ int setGroupConf(lua_State* L) {
 		DD::setGroupCard(id, uid, card);
 		return 0;
 	}
-	if (lua_isnil(L, 3)) {
+	else if (lua_isnoneornil(L, 3)) {
 		grp.reset(item);
 	}
-	else if (lua_isboolean(L,3)) {
-		grp.set(item, lua_toboolean(L, 3));
-	}
-	else if (lua_isinteger(L, 3)) {
-		grp.set(item, (int)lua_tonumber(L, 3));
-	}
-	else if (lua_isnumber(L, 3)) {
-		grp.set(item, lua_tonumber(L, 3));
-	}
-	else if (lua_isstring(L, 3)) {
-		grp.set(item, lua_to_gb18030_string(L, 3));
-	}
+	else grp.set(item, lua_to_attr(L, 3));
 	return 0;
 }
 int getUserConf(lua_State* L) {
@@ -455,12 +479,10 @@ int setUserConf(lua_State* L) {
 		if (user.nTrust > 4)return 0;
 		user.trust(trust);
 	}
-	else if (lua_isnumber(L, 3)) {
-		getUser(uid).setConf(item, (int)lua_tonumber(L, 3));
+	else if (lua_isnoneornil(L, 3)) {
+		getUser(uid).rmConf(item);
 	}
-	else if (lua_isstring(L, 3)) {
-		getUser(uid).setConf(item, lua_to_gb18030_string(L, 3));
-	}
+	else getUser(uid).setConf(item, lua_to_attr(L, 3));
 	return 0;
 }
 int getUserToday(lua_State* L) {
@@ -532,17 +554,9 @@ int setPlayerCardAttr(lua_State* L) {
 		getPlayer(plQQ).renameCard(pc.getName(), lua_to_gb18030_string(L, 4));
 	}
 	else if (lua_isnoneornil(L, 4)) {
-		pc.erase(item);
+		pc.erase(item); 
 	}
-	else if (lua_isinteger(L, 4)) {
-		pc.set(item, (int)lua_tointeger(L, -1));
-	}
-	else if (lua_isnumber(L, 4)) {
-		pc.set(item, lua_tonumber(L, -1));
-	}
-	else if (lua_isstring(L, 4)) {
-		pc.set(item, lua_to_gb18030_string(L, -1));
-	}
+	else pc.set(item, lua_to_attr(L, 4));
 	return 0;
 }
 

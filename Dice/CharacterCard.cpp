@@ -98,6 +98,19 @@ void CharaCard::setType(const string& strType) {
 	Attr["__Type"] = strType;
 	pTemplet = &getCardTemplet(Attr["__Type"].to_str());
 }
+int CharaCard::set(string key, const AttrVar& val) {
+	if (key.empty())return -1;
+	key = standard(key);
+	if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.find(key)->second){
+		if (Attr.count(key)) Attr.erase(key);
+		else return -1;
+	}
+	else {
+		Attr[key] = val;
+	}
+	update();
+	return 0;
+}
 int CharaCard::set(string key, int val)
 {
 	if (key.empty())return -1;
@@ -105,9 +118,11 @@ int CharaCard::set(string key, int val)
 	if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.find(key)->second)
 	{
 		if (Attr.count(key)) Attr.erase(key);
-		return -1;
+		else return -1;
 	}
-	Attr[key] = val;
+	else {
+		Attr[key] = val;
+	}
 	update();
 	return 0;
 }

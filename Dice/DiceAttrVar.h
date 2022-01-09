@@ -28,16 +28,32 @@
 using std::string;
 using json = nlohmann::json;
 
+class AttrVar;
+using AttrVars = std::unordered_map<string, AttrVar>;
+class lua_State;
+class VarTable {
+	friend class AttrVar;
+	friend void lua_push_attr(lua_State* L, const AttrVar& attr);
+	std::unordered_map<string, std::shared_ptr<AttrVar>>dict;
+	std::vector<std::shared_ptr<AttrVar>>idxs;
+	void init_idx();
+public:
+	VarTable(){}
+	VarTable(const AttrVars&);
+	void writeb(std::ofstream& fout) const;
+	void readb(std::ifstream& fin);
+};
+
 class AttrVar {
 public:
-	enum class AttrType { Nil, Boolean, Integer, Number, Text, ID };
+	enum class AttrType { Nil, Boolean, Integer, Number, Text, Table, ID };
 	AttrType type{ 0 };
 	union {
 		bool bit;		//1
 		int attr{ 0 };		//2
 		double number;	//3
 		string text;	//4
-		//table;		//5
+		VarTable table;		//5
 		//function;		//6
 		long long id;		//7
 	};
@@ -46,8 +62,10 @@ public:
 	AttrVar(int n) :type(AttrType::Integer), attr(n) {}
 	AttrVar(const string& s) :type(AttrType::Text), text(s) {}
 	explicit AttrVar(long long n) :type(AttrType::ID), id(n) {}
+	explicit AttrVar(const AttrVars& vars) :type(AttrType::Table), table(vars) {}
 	void des() {
 		if (type == AttrType::Text)text.~string();
+		else if (type == AttrType::Table)table.~VarTable();
 	}
 	~AttrVar() {
 		des();
@@ -81,4 +99,3 @@ public:
 	void writeb(std::ofstream& fout) const;
 	void readb(std::ifstream& fin);
 };
-using AttrVars = std::unordered_map<string, AttrVar>;

@@ -314,6 +314,7 @@ public:
 		return key;
 	}
 
+	int set(string key, const AttrVar& val);
 	int set(string key, int val);
 
 	int set(const string& key, const string& s);

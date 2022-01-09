@@ -477,6 +477,8 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 };
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+596:角色卡/Conf允许读写table
+595:lua可获取群名片/权限/最后发言
 594:setcoc优化
 593:reply新增触发限制
 592:reply新增前缀匹配
