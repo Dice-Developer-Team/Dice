@@ -323,7 +323,17 @@ AttrVar& AttrVar::operator=(const json& j) {
 		type = AttrType::Table; {
 			AttrVars vars;
 			for (auto it = j.cbegin(); it != j.cend(); ++it) {
-				vars[it.key()] = it.value();
+				if(!it.value().is_null())vars[it.key()] = it.value();
+			}
+			new(&table)VarTable(vars);
+		}
+		break;
+	case json::value_t::array:
+		type = AttrType::Table; {
+			AttrVars vars;
+			int idx{ 0 };
+			for (auto it :j) {
+				vars[to_string(++idx)] = it;
 			}
 			new(&table)VarTable(vars);
 		}
@@ -352,11 +362,20 @@ json AttrVar::to_json()const {
 		return id;
 		break;
 	case AttrType::Table: {
-		json j = json::object();
-		for (auto& [key, val] : table.dict) {
-			j[GBKtoUTF8(key)] = val->to_json();
+		if (table.dict.size() == table.idxs.size()) {
+			json j = json::array();
+			for (auto& val : table.idxs) {
+				j.push_back(val ? val->to_json() : json());
+			}
+			return j;
 		}
-		return j;
+		else {
+			json j = json::object();
+			for (auto& [key, val] : table.dict) {
+				if (val)j[GBKtoUTF8(key)] = val->to_json();
+			}
+			return j;
+		}
 	}
 		break;
 	}

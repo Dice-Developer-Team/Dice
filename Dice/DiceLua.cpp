@@ -103,8 +103,16 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 		break;
 	case AttrVar::AttrType::Table:
 		lua_newtable(L);
+		int idx{ 0 };
+		unordered_set<string> idxs;
+		for (auto& val : attr.table.idxs) {
+			val ? lua_push_attr(L, *val.get()) : lua_pushnil(L);
+			lua_seti(L, -2, ++idx);
+			idxs.insert(to_string(idx));
+		}
 		for (auto& [key, val] : attr.table.dict) {
-			lua_push_attr(L, *val.get());
+			if (idxs.count(key))continue;
+			val ? lua_push_attr(L, *val.get()) : lua_pushnil(L);
 			lua_set_field(L, -2, key.c_str());
 		}
 		break;
@@ -130,7 +138,12 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 		AttrVars tab;
 		lua_pushnil(L);
 		while (lua_next(L, idx)) {
-			tab[lua_to_gb18030_string(L, -2)] = lua_to_attr(L, -1);
+			if (lua_type(L, -2) == LUA_TNUMBER) {
+				tab[to_string(lua_tointeger(L, -2))] = lua_to_attr(L, -1);
+			}
+			else {
+				tab[lua_to_gb18030_string(L, -2)] = lua_to_attr(L, -1);
+			}
 			lua_pop(L, 1);
 		}
 		return AttrVar(tab);
