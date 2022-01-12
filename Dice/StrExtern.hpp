@@ -40,6 +40,7 @@ string to_signed_string(Dig num)
 
 int count_char(const string& s, char ch);
 
+vector<string> getLines(const string& s, char delim = '\n');
 vector<string> split(const string&, const string&);
 
 template<typename Con>

@@ -170,7 +170,7 @@ public:
                 j["data"].push_back({ {"name", GBKtoUTF8(key)} ,
                     {"type", GBKtoUTF8(val.sType[(int)val.type])},
                     {"mode", GBKtoUTF8(val.sMode[(int)val.mode])},
-                    {"limit", GBKtoUTF8(val.limit.show())},
+                    {"limit", GBKtoUTF8(val.limit.print())},
                     {"echo", GBKtoUTF8(val.sEcho[(int)val.echo])},
                     {"value", GBKtoUTF8(val.show_ans())} });
             }
@@ -207,8 +207,7 @@ public:
                     trigger.limit.parse(UTF8toGBK(item["limit"].get<std::string>()));
                     trigger.echo = (DiceMsgReply::Echo)DiceMsgReply::sEcho[item["echo"].get<std::string>()];
                     if (trigger.echo == DiceMsgReply::Echo::Deck) {
-                        auto& deck = trigger.deck;
-                        deck = {};
+                        auto& deck = trigger.deck = {};
                         auto v = item["value"].get<std::vector<std::string>>();
                         for (const auto& i : v)
                         {

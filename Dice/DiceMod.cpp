@@ -61,32 +61,37 @@ void parse_vary(string& raw, unordered_map<string, pair<double, AttrVar::CMPR>>&
 	raw = vars.show("&");
 }
 
+enumap<string> LimitTreat{ "ignore","only","off" };
 DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 	if (content == raw)return *this;
 	new(this)DiceTriggerLimit();
 	ShowList limits;
+	ShowList notes;
 	size_t colon{ 0 };
 	std::istringstream sin;
-	for (auto& item : split(raw, ";")) {
+	for (auto& item : getLines(raw, ';')) {
 		if (item.empty())continue;
 		string key{ item.substr(0,colon = item.find(":")) };
 		if (key == "prob") {
 			if (colon == string::npos)continue;
 			sin.str(item.substr(colon + 1));
 			sin >> prob;
+			sin.clear();
 			if (prob <= 0 || prob >= 100) {
 				prob = 0;
 				continue;
 			}
 			limits << "prob:" + to_string(prob);
+			notes << "- 以概率触发: " + to_string(prob) + "%";
 		}
 		else if (key == "user_id") {
 			size_t pos{ item.find_first_not_of(" ",colon + 1) };
 			if (pos == string::npos)continue;
 			if (item[pos] == '!')user_id_negative = true;
 			splitID(item.substr(pos), user_id);
-			if (!grp_id.empty()) {
+			if (!user_id.empty()) {
 				limits << (user_id_negative ? "user_id:!" : "user_id:") + listID(user_id);
+				notes << (user_id_negative ? "- 以下用户不触发" : "- 仅以下用户触发: ") + listID(user_id);
 			}
 		}
 		else if (key == "grp_id") {
@@ -96,28 +101,60 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			splitID(item.substr(pos), grp_id);
 			if (!grp_id.empty()) {
 				limits << (grp_id_negative ? "grp_id:!" : "grp_id:") + listID(grp_id);
+				notes << (grp_id_negative ? "- 以下群聊不触发" : "- 仅以下群聊触发: ") + listID(grp_id);
 			}
 		}
 		else if (key == "user_var") {
 			if (colon == string::npos)continue;
 			string code{ item.substr(colon + 1) };
 			parse_vary(code, user_vary);
-			if (!code.empty())limits << "user_var:" + code;
+			if (code.empty())continue;
+			limits << "user_var:" + code;
+			ShowList vars;
+			for (auto& [key, cmpr] : user_vary) {
+				vars << key + (cmpr.second == &AttrVar::equal_or_more ? "达到"
+					: cmpr.second == &AttrVar::equal ? "等于" : "不超过") + toString(cmpr.first);
+			}
+			notes << "- 用户触发阈值: " + vars.show();
 		}
 		else if (key == "grp_var") {
 			if (colon == string::npos)continue;
 			string code{ item.substr(colon + 1) };
 			parse_vary(code, grp_vary);
-			if (!code.empty())limits << "grp_var:" + code;
+			if (code.empty())continue; 
+			limits << "grp_var:" + code;
+			ShowList vars;
+			for (auto& [key, cmpr] : grp_vary) {
+				vars << key + (cmpr.second == &AttrVar::equal_or_more ? "达到"
+					: cmpr.second == &AttrVar::equal ? "等于" : "不超过") + toString(cmpr.first);
+			}
+			notes << "- 群聊触发阈值: " + vars.show();
 		}
 		else if (key == "self_var") {
 			if (colon == string::npos)continue;
 			string code{ item.substr(colon + 1) };
 			parse_vary(code, self_vary);
-			if (!code.empty())limits << "self_var:" + code;
+			if (code.empty())continue; 
+			limits << "self_var:" + code;
+			ShowList vars;
+			for (auto& [key, cmpr] : self_vary) {
+				vars << key + (cmpr.second == &AttrVar::equal_or_more ? "达到"
+					: cmpr.second == &AttrVar::equal ? "等于" : "不超过") + toString(cmpr.first);
+			}
+			notes << "- 自身触发阈值: " + vars.show();
+		}
+		else if (key == "dicemaid") {
+			if (colon == string::npos)continue;
+			string val{ item.substr(colon + 1) };
+			if (Treat t{ LimitTreat[val] }; t != Treat::Ignore) {
+				to_dice = t;
+				limits << "dicemaid:" + LimitTreat[(size_t)t];
+				notes << (to_dice == Treat::Only ? "- 识别Dice骰娘: 才触发" : "- 识别Dice骰娘: 不触发");
+			}
 		}
 	}
 	content = limits.show(";");
+	comment = notes.show("\n");
 	return *this;
 }
 bool DiceTriggerLimit::check(FromMsg* msg)const {
@@ -143,12 +180,18 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 			if (!user.confs.count(key) || !(user.confs[key].*cmpr.second)(cmpr.first))return false;
 		}
 	}
+	if (to_dice != Treat::Ignore && console.DiceMaid != msg->fromChat.uid) {
+		if (DD::isDiceMaid(msg->fromChat.uid) ^ (to_dice == Treat::Only))return false;
+	}
 	return true;
 }
 
 enumap<string> DiceMsgReply::sType{ "Reply","Order" };
 enumap<string> DiceMsgReply::sMode{ "Match", "Prefix", "Search", "Regex" };
 enumap<string> DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
+enumap<string> strType{ "回复","指令" };
+enumap<string> strMode{ "完全", "前缀", "模糊", "正则" };
+enumap<string> strEcho{ "纯文本", "牌堆（多选一）", "Lua" };
 bool DiceMsgReply::exec(FromMsg* msg) {
 	int chon{ msg->pGrp ? msg->pGrp->getChConf(msg->fromChat.chid,"order",0) : 0 };
 	//limit
@@ -181,6 +224,19 @@ bool DiceMsgReply::exec(FromMsg* msg) {
 	}
 	return false;
 }
+string DiceMsgReply::show()const {
+	return "\n触发性质: " + strType[(int)type]
+		+ (limit.print().empty() ? "" : ("\n限制条件:\n" + limit.note()))
+		+ "\n匹配模式: " + strMode[(int)mode]
+		+ "\n回复形式: " + strEcho[(int)echo]
+		+ "\n回复内容:\n" + show_ans();
+}
+string DiceMsgReply::print(const string& key)const {
+	return "Type=" + sType[(int)type]
+		+ (limit.print().empty() ? "" : ("\nLimit=" + limit.print()))
+		+ "\n" + sMode[(int)mode] + "=" + key
+		+ "\n" + sEcho[(int)echo] + "=" + show_ans();
+}
 string DiceMsgReply::show_ans()const {
 	return echo == DiceMsgReply::Echo::Deck ?
 		listDeck(deck) : text;
@@ -201,7 +257,7 @@ json DiceMsgReply::writeJson()const {
 	j["type"] = sType[(int)type];
 	j["mode"] = sMode[(int)mode];
 	j["echo"] = sEcho[(int)echo];
-	if(!limit.empty())j["limit"] = GBKtoUTF8(limit.show());
+	if(!limit.empty())j["limit"] = GBKtoUTF8(limit.print());
 	if (echo == Echo::Deck)j["answer"] = GBKtoUTF8(deck);
 	else j["answer"] = GBKtoUTF8(text);
 	return j;
@@ -437,14 +493,20 @@ void DiceModManager::save_reply() {
 	}
 	fwriteJson(DiceDir / "conf" / "CustomMsgReply.json", j);
 }
-void DiceModManager::show_reply(const shared_ptr<DiceJobDetail>& msg) {
+void DiceModManager::reply_get(const shared_ptr<DiceJobDetail>& msg) {
+	string key{ (*msg)["key"].to_str() };
+	if (msgreply.count(key)) {
+		(*msg)["show"] = msgreply[key].print(key);
+		msg->reply(getMsg("strReplyShow"));
+	}
+	else {
+		msg->reply(getMsg("strReplyKeyNotFound"));
+	}
+}
+void DiceModManager::reply_show(const shared_ptr<DiceJobDetail>& msg) {
 	string key{ (*msg)["key"].to_str()};
 	if (msgreply.count(key)) {
-		DiceMsgReply& reply{ msgreply[key] };
-		(*msg)["show"] = "Type=" + reply.sType[(int)reply.type]
-			+ (reply.limit.show().empty() ? "" : ("\nLimit=" + reply.limit.show()))
-			+ "\n" + reply.sMode[(int)reply.mode] + "=" + key
-			+ "\n" + reply.sEcho[(int)reply.echo] + "=" + reply.show_ans();
+		(*msg)["show"] = msgreply[key].show();
 		msg->reply(getMsg("strReplyShow"));
 	}
 	else {

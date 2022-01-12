@@ -57,8 +57,6 @@ TVal get(const map<TKey, TVal>& m, TKey key, TVal def)
 	else return it->second;*/
 }
 
-vector<string> getLines(const string& s);
-
 string printLine(string s);
 
 template <typename T>

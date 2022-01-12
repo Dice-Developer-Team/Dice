@@ -62,24 +62,6 @@ int clrDir(const std::string& dir, const std::unordered_set<std::string>& except
 	return nCnt;*/
 }
 
-vector<string> getLines(const string& s)
-{
-	vector<string> vLine;
-	stringstream ss(s);
-	string line;
-	while (getline(ss, line))
-	{
-		int r = line.length();
-		while (r && isspace(static_cast<unsigned char>(line[r - 1])))r--;
-		int l = 0;
-		while (l < r && isspace(static_cast<unsigned char>(line[l])))l++;
-		line = line.substr(l, r - l);
-		if (line.empty())continue;
-		vLine.push_back(std::move(line));
-	}
-	return vLine;
-}
-
 string printLine(string s)
 {
 	while (s.find('\t') != std::string::npos)s.replace(s.find('\t'), 1, "\\t");

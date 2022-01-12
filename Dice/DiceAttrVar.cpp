@@ -24,7 +24,6 @@
 #include "DiceAttrVar.h"
 #include "StrExtern.hpp"
 #include "DiceFile.hpp"
-#include "DDAPI.h"
 using std::to_string;
 VarTable::VarTable(const unordered_map<string, AttrVar>& m) {
 	for (auto& [key, val] : m) {
@@ -50,7 +49,6 @@ void VarTable::writeb(std::ofstream& fout) const {
 void VarTable::readb(std::ifstream& fin) {
 	int len = fread<int>(fin);
 	if (len < 0)return;
-	DD::debugLog("¶ÁÈ¡VarTableÏîÄ¿" + to_string(len));
 	while (len--) {
 		string key{ fread<string>(fin) };
 		AttrVar val;

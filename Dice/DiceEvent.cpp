@@ -1995,7 +1995,16 @@ int FromMsg::InnerOrder() {
 				return -1;
 			}
 			vars["key"] = readRest();
-			fmt->show_reply(shared_from_this());
+			fmt->reply_show(shared_from_this());
+			return 1;
+		}
+		else if (action == "get") {
+			if (trusted < 2) {
+				reply(getMsg("strNotAdmin"));
+				return -1;
+			}
+			vars["key"] = readRest();
+			fmt->reply_get(shared_from_this());
 			return 1;
 		}
 		else if (action == "set") {

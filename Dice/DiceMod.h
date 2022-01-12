@@ -24,6 +24,7 @@ class FromMsg;
 
 class DiceTriggerLimit {
     string content;
+    string comment;
     int prob;
     set<long long>user_id;
     bool user_id_negative{ false };
@@ -32,9 +33,12 @@ class DiceTriggerLimit {
     unordered_map<string, pair<double, AttrVar::CMPR>>self_vary;
     unordered_map<string, pair<double, AttrVar::CMPR>>user_vary;
     unordered_map<string, pair<double, AttrVar::CMPR>>grp_vary;
+    enum class Treat :size_t { Ignore, Only, Off };
+    Treat to_dice{ Treat::Ignore };
 public:
     DiceTriggerLimit& parse(const string&);
-    const string& show()const { return content; }
+    const string& print()const { return content; }
+    const string& note()const { return comment; }
     bool empty()const { return content.empty(); }
     bool check(FromMsg*)const;
 };
@@ -71,7 +75,9 @@ public:
     DiceTriggerLimit limit;
     string text;
     std::vector<string> deck;
+    string show()const;
     string show_ans()const;
+    string print(const string&)const;
     bool exec(FromMsg*);
     void readJson(const json&);
     json writeJson()const;
@@ -165,7 +171,8 @@ public:
     void set_reply(const string&, DiceMsgReply& reply);
     bool del_reply(const string&);
     void save_reply();
-    void show_reply(const shared_ptr<DiceJobDetail>&);
+    void reply_get(const shared_ptr<DiceJobDetail>&);
+    void reply_show(const shared_ptr<DiceJobDetail>&);
     bool call_task(const string&);
     string list_order();
 	int load(ResList*);

@@ -1,5 +1,6 @@
 #include <string>
 #include <string_view>
+#include <sstream>
 #include <algorithm>
 #include <cwchar>
 #ifdef _WIN32
@@ -51,6 +52,19 @@ string toString(int num, unsigned short size)
 int count_char(const string& s, char ch)
 {
 	return std::count(s.begin(), s.end(), ch);
+}
+
+vector<string> getLines(const string& s, char delim){
+    vector<string> vLine;
+    std::stringstream ss(s);
+    string line;
+    static char* space{ " \t\r\n" };
+    while (std::getline(ss, line, delim)){
+        if (size_t l{ line.find_first_not_of(space) }; l != string::npos) {
+            vLine.push_back(line.substr(l, line.find_last_not_of(space) + 1 - l));
+        }
+    }
+    return vLine;
 }
 vector<string> split(const string& str, const string& sep) {
     vector<string> res;
