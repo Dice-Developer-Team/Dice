@@ -260,13 +260,17 @@ public:
             nlohmann::json j = nlohmann::json::object();
             j["code"] = 0;
             j["msg"] = "ok";
-            j["count"] = GlobalMsg.size();
 			j["data"] = nlohmann::json::array();
             for (const auto& item : console.intDefault)
             {
                 const int value = console[item.first.c_str()];
-                j["data"].push_back({{"name", GBKtoUTF8(item.first)}, {"value", value}});
+                j["data"].push_back({
+                    {"name", GBKtoUTF8(item.first)},
+                    {"value", value},
+                    {"remark", GBKtoUTF8(console.confComment.find(item.first)->second)},
+                    });
             }
+            j["count"] = j["data"].size();
             ret = j.dump();
         }
         catch(const std::exception& e)

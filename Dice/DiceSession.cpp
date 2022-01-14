@@ -583,7 +583,7 @@ Session& DiceTableMaster::session(long long group)
 void DiceTableMaster::session_end(long long group)
 {
 	std::unique_lock<std::shared_mutex> lock(sessionMutex);
-	remove(DiceDir / "user" / "session" / to_string(group));
+	remove(DiceDir / "user" / "session" / (to_string(group) + ".json"));
 	mSession.erase(group);
 }
 
