@@ -14,6 +14,8 @@
 #include <condition_variable>
 #include <chrono>
 
+enumap<string> CDConfig::eType{ "chat","user","global" };
+
 unordered_map<string, cmd> mCommand = {
 	{"syscheck",check_system},
 	{"autosave",auto_save},
@@ -147,6 +149,24 @@ bool DiceScheduler::is_job_cold(const char* cmd) {
 }
 void DiceScheduler::refresh_cold(const char* cmd, time_t until) {
 	untilJobs[cmd] = until;
+}
+
+
+std::mutex mtCDQuery;
+bool DiceScheduler::query_cd(const vector<CDQuest>& timers) {
+	std::unique_lock<std::mutex> lock_queue(mtCDQuery);
+	time_t tNow{ time(nullptr) };
+	for (auto& quest : timers) {
+		if (cd_timer.count(quest.chat)
+			&& cd_timer[quest.chat].count(quest.key)
+			&& cd_timer[quest.chat][quest.key] > tNow) {
+			return false;
+		}
+	}
+	for (auto& quest : timers) {
+		cd_timer[quest.chat][quest.key] = tNow + quest.cd;
+	}
+	return true;
 }
 
 void DiceScheduler::start() {

@@ -2027,7 +2027,7 @@ int FromMsg::InnerOrder() {
 				}
 				else if (DiceMsgReply::sMode.count(attr)) {	//Mode=Key
 					trigger.mode = (DiceMsgReply::Mode)DiceMsgReply::sMode[attr];
-					key = readUntilTab();
+					trigger.keyword = format(key = readUntilTab(), GlobalMsg);
 					if (trigger.mode == DiceMsgReply::Mode::Regex) {
 						try
 						{

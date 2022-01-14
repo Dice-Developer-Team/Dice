@@ -37,6 +37,15 @@ struct chatInfo {
 	chatInfo() {}
 	chatInfo(long long, long long = 0, long long = 0);
 	bool operator<(const chatInfo&)const;
+	bool operator==(const chatInfo&)const;
+};
+template<>
+struct std::hash<chatInfo> {
+	size_t operator()(const chatInfo& chat)const {
+		return std::hash<long long>()(chat.uid)
+			^ std::hash<long long>()(chat.gid)
+			^ std::hash<long long>()(chat.chid);
+	}
 };
 std::ifstream& operator>>(std::ifstream& fin, msgtype& t);
 std::ifstream& operator>>(std::ifstream& fin, chatInfo& ct);

@@ -30,6 +30,7 @@ class DiceTriggerLimit {
     bool user_id_negative{ false };
     set<long long>grp_id;
     bool grp_id_negative{ false };
+    vector<CDConfig>cd_conf;
     unordered_map<string, pair<double, AttrVar::CMPR>>self_vary;
     unordered_map<string, pair<double, AttrVar::CMPR>>user_vary;
     unordered_map<string, pair<double, AttrVar::CMPR>>grp_vary;
@@ -63,6 +64,7 @@ public:
 
 class DiceMsgReply {
 public:
+    string keyword;
     enum class Type { Reply, Order };   //决定受控制的开关类型
     static enumap<string> sType;
     enum class Mode { Match, Prefix, Search, Regex };    //匹配模式
@@ -77,7 +79,7 @@ public:
     std::vector<string> deck;
     string show()const;
     string show_ans()const;
-    string print(const string&)const;
+    string print()const;
     bool exec(FromMsg*);
     void readJson(const json&);
     json writeJson()const;

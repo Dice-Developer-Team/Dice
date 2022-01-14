@@ -91,7 +91,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			splitID(item.substr(pos), user_id);
 			if (!user_id.empty()) {
 				limits << (user_id_negative ? "user_id:!" : "user_id:") + listID(user_id);
-				notes << (user_id_negative ? "- 以下用户不触发" : "- 仅以下用户触发: ") + listID(user_id);
+				notes << (user_id_negative ? "- 以下用户不触发: " : "- 仅以下用户触发: ") + listID(user_id);
 			}
 		}
 		else if (key == "grp_id") {
@@ -101,8 +101,39 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			splitID(item.substr(pos), grp_id);
 			if (!grp_id.empty()) {
 				limits << (grp_id_negative ? "grp_id:!" : "grp_id:") + listID(grp_id);
-				notes << (grp_id_negative ? "- 以下群聊不触发" : "- 仅以下群聊触发: ") + listID(grp_id);
+				notes << (grp_id_negative ? "- 以下群聊不触发: " : "- 仅以下群聊触发: ") + listID(grp_id);
 			}
+		}
+		else if (key == "cd") {
+			if (colon == string::npos)continue;
+			ShowList cds;
+			ShowList cdnotes;
+			for (auto& cd : split(item.substr(colon + 1), "&")) {
+				string key;
+				string type{ "chat" };
+				if (cd.find('=') != string::npos) {
+					pair<string, string>conf;
+					readini(cd, conf);
+					if (size_t pos{ conf.first.find('@') }; pos != string::npos) {
+						key = conf.first.substr(0, pos);
+						type = conf.first.substr(pos + 1);
+					}
+					else key = conf.first;
+					cd = conf.second;
+				}
+				CDType cd_type{ (CDType)CDConfig::eType[type] };
+				if (!isNumeric(cd))continue;
+				time_t val{ (time_t)stoll(cd) };
+				cd_conf.emplace_back(cd_type, key, val);
+				cds << key + ((key.empty() && cd_type == CDType::Chat) ? ""
+					: ("@" + CDConfig::eType[(size_t)cd_type] + "="))
+					+ to_string(val);
+				cdnotes << (cd_type == CDType::Chat ? "窗口"
+					: cd_type == CDType::User ? "用户" : "全局") + key + "计" + to_string(val) + "秒";
+			}
+			if (cds.empty())continue;
+			limits << "cd:" + cds.show("&");
+			notes << "- 冷却计时: " + cdnotes.show();
 		}
 		else if (key == "user_var") {
 			if (colon == string::npos)continue;
@@ -158,8 +189,8 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 	return *this;
 }
 bool DiceTriggerLimit::check(FromMsg* msg)const {
-	if (!user_id.empty() && !user_id.count(msg->fromChat.uid))return false;
-	if (!grp_id.empty() && (!grp_id.count(msg->fromChat.gid) ^ grp_id_negative))return false;
+	if (!user_id.empty() && (user_id_negative ^ !user_id.count(msg->fromChat.uid)))return false;
+	if (!grp_id.empty() && (grp_id_negative ^ !grp_id.count(msg->fromChat.gid)))return false;
 	if (prob && RandomGenerator::Randint(1, 100) > prob)return false;
 	if (!user_vary.empty()) {
 		if (!UserList.count(msg->fromChat.uid))return false;
@@ -183,6 +214,21 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 	if (to_dice != Treat::Ignore && console.DiceMaid != msg->fromChat.uid) {
 		if (DD::isDiceMaid(msg->fromChat.uid) ^ (to_dice == Treat::Only))return false;
 	}
+	//冷却最后处理
+	if (!cd_conf.empty()) {
+		vector<CDQuest>timers;
+		chatInfo chat{ msg->fromChat.gid ? chatInfo(0,msg->fromChat.gid,msg->fromChat.chid)
+			: msg->fromChat };
+		for (auto& conf : cd_conf) {
+			string key{ conf.key };
+			if (key.empty())key = msg->vars["keyword"].to_str();
+			chatInfo chattype{ conf.type == CDType::Chat ? chat :
+				conf.type == CDType::User ? chatInfo(msg->fromChat.uid) : chatInfo()
+			};
+			timers.emplace_back(chattype, key, conf.cd);
+		}
+		if (!sch.query_cd(timers))return false;
+	}
 	return true;
 }
 
@@ -194,6 +240,7 @@ enumap<string> strMode{ "完全", "前缀", "模糊", "正则" };
 enumap<string> strEcho{ "纯文本", "牌堆（多选一）", "Lua" };
 bool DiceMsgReply::exec(FromMsg* msg) {
 	int chon{ msg->pGrp ? msg->pGrp->getChConf(msg->fromChat.chid,"order",0) : 0 };
+	msg->vars["keyword"] = keyword;
 	//limit
 	if (!limit.check(msg))return false;
 	if (type == Type::Reply) {
@@ -229,12 +276,12 @@ string DiceMsgReply::show()const {
 		+ (limit.print().empty() ? "" : ("\n限制条件:\n" + limit.note()))
 		+ "\n匹配模式: " + strMode[(int)mode]
 		+ "\n回复形式: " + strEcho[(int)echo]
-		+ "\n回复内容:\n" + show_ans();
+		+ "\n回复内容: " + show_ans();
 }
-string DiceMsgReply::print(const string& key)const {
+string DiceMsgReply::print()const {
 	return "Type=" + sType[(int)type]
 		+ (limit.print().empty() ? "" : ("\nLimit=" + limit.print()))
-		+ "\n" + sMode[(int)mode] + "=" + key
+		+ "\n" + sMode[(int)mode] + "=" + keyword
 		+ "\n" + sEcho[(int)echo] + "=" + show_ans();
 }
 string DiceMsgReply::show_ans()const {
@@ -243,6 +290,7 @@ string DiceMsgReply::show_ans()const {
 }
 
 void DiceMsgReply::readJson(const json& j) {
+	if (j.count("key"))keyword = format(UTF8toGBK(j["key"].get<string>()), GlobalMsg);
 	if (j.count("type"))type = (Type)sType[j["type"].get<string>()];
 	if (j.count("mode"))mode = (Mode)sMode[j["mode"].get<string>()];
 	if (j.count("limit"))limit.parse(UTF8toGBK(j["limit"].get<string>()));
@@ -254,6 +302,7 @@ void DiceMsgReply::readJson(const json& j) {
 }
 json DiceMsgReply::writeJson()const {
 	json j;
+	j["key"] = GBKtoUTF8(keyword);
 	j["type"] = sType[(int)type];
 	j["mode"] = sMode[(int)mode];
 	j["echo"] = sEcho[(int)echo];
@@ -496,7 +545,7 @@ void DiceModManager::save_reply() {
 void DiceModManager::reply_get(const shared_ptr<DiceJobDetail>& msg) {
 	string key{ (*msg)["key"].to_str() };
 	if (msgreply.count(key)) {
-		(*msg)["show"] = msgreply[key].print(key);
+		(*msg)["show"] = msgreply[key].print();
 		msg->reply(getMsg("strReplyShow"));
 	}
 	else {
@@ -538,8 +587,10 @@ int DiceModManager::load(ResList* resLog)
 	if (!jFile.empty()) {
 		try {
 			for (auto reply = jFile.cbegin(); reply != jFile.cend(); ++reply) {
-				if(std::string key = UTF8toGBK(reply.key());!key.empty())
+				if (std::string key = UTF8toGBK(reply.key()); !key.empty()) {
 					msgreply[key].readJson(reply.value());
+					if (msgreply[key].keyword.empty())msgreply[key].keyword = key;
+				}
 			}
 			*resLog << "读取/conf/CustomMsgReply.json中的" + std::to_string(msgreply.size()) + "条自定义回复";
 		}

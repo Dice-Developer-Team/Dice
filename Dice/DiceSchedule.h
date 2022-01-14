@@ -1,18 +1,20 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2019-2022 String.Empty
  * 处理定时事件
  * 处理不能即时完成的指令
+ * 2022/1/13: 冷却计时
  */
 
 #include <string>
 #include <map>
 #include <unordered_map>
+#include <filesystem>
 #include "DiceMsgSend.h"
-#include "Jsonio.h"
 #include "json.hpp"
 #include "DiceAttrVar.h"
+#include "STLExtern.hpp"
 
 using std::string;
 using std::map;
@@ -50,9 +52,25 @@ public:
     void note(const std::string&, int);
 };
 
+struct CDQuest {
+    chatInfo chat;
+    string key;
+    time_t cd;
+    CDQuest(const chatInfo& ct, const string& k, time_t t) :chat(ct), key(k), cd(t) {}
+};
+enum class CDType :size_t { Chat, User, Global };
+struct CDConfig {
+    CDType type;
+    string key;
+    time_t cd;
+    CDConfig(const CDType& ct, const string& k, time_t t) :type(ct), key(k), cd(t) {}
+    static enumap<string> eType;
+};
+
 class DiceScheduler {
     //事件冷却期
     unordered_map<string, time_t> untilJobs;
+    unordered_map<chatInfo, unordered_map<string, time_t>> cd_timer;
 public:
     void start();
     void end();
@@ -64,6 +82,7 @@ public:
     void add_job_until(time_t, const char*);
     bool is_job_cold(const char*);
     void refresh_cold(const char*, time_t);
+    bool query_cd(const vector<CDQuest>&);
 };
 inline DiceScheduler sch;
 

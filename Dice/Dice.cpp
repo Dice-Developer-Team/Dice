@@ -645,6 +645,7 @@ EVE_GroupMsg(eventGroupMsg)
 	{
 		shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
 			AttrVars({ { "fromMsg", AttrVar(message) },
+				{ "msgid",AttrVar(msgId) },
 				{ "uid",AttrVar(fromUID) },
 				{ "gid",AttrVar(fromGID) }
 				}), chatInfo{ fromUID,fromGID,0 }));

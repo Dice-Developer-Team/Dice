@@ -40,6 +40,7 @@ std::map<string, string> GlobalChar{
 	{"RBrace","}"},
 	{"LBracket","["},
 	{"RBracket","]"},
+	{"Equal","]"},
 };
 
 std::map<string, GobalTex> strFuncs{

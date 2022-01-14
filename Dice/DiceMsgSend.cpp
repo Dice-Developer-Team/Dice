@@ -50,6 +50,11 @@ bool chatInfo::operator<(const chatInfo& other)const {
 		: uid < other.uid
 		: type < other.type;
 }
+bool chatInfo::operator==(const chatInfo& other)const {
+	return uid == other.uid
+		&& gid == other.gid
+		&& chid == other.chid;
+}
 // 消息发送存储结构体
 struct msg_t
 {
