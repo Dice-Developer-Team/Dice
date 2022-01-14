@@ -47,6 +47,8 @@ DDAPI(SetGroupTitle, void, long long, long long, long long, const string&);
 DDAPI(SetGroupWholeBan, void, long long, long long, int);
 DDAPI(SetGroupLeave, void, long long, long long);
 DDAPI(SetDiscussLeave, void, long long, long long);
+DDAPI(UploadGroupFile, bool, long long, long long, const string&);
+DDAPI(SendPrivateFile, bool, long long, long long, const string&);
 
 #define CALLVOID(Name, ...) if(ApiList.count(#Name))reinterpret_cast<Name##_TYPE>(ApiList[#Name])(__VA_ARGS__)
 #define CALLGET(Name, ...) ApiList.count(#Name) ? reinterpret_cast<Name##_TYPE>(ApiList[#Name])(__VA_ARGS__)
@@ -127,18 +129,18 @@ namespace DD {
 	std::set<long long> getGroupAdminList(long long aimGroup) {
 		return CALLGET(GetGroupAdminList, loginID, aimGroup) :std::set<long long>();
 	}
-	int getGroupAuth(long long llgroup, long long llQQ, int iDefault) {
-		int auth{ CALLGET(GetGroupAuth, loginID, llgroup, llQQ) : iDefault };
-		return auth < 0 ? iDefault : auth;
+	int getGroupAuth(long long llgroup, long long aimID, int iDefault) {
+		int auth{ CALLGET(GetGroupAuth, loginID, llgroup, aimID) : iDefault };
+		return auth <= 0 ? iDefault : auth;
 	}
-	bool isGroupAdmin(long long llgroup, long long llQQ, bool bDefault) {
-		return CALLGET(IsGroupAdmin, loginID, llgroup, llQQ, bDefault) :bDefault;
+	bool isGroupAdmin(long long llgroup, long long aimID, bool bDefault) {
+		return CALLGET(IsGroupAdmin, loginID, llgroup, aimID, bDefault) :bDefault;
 	}
-	bool isGroupOwner(long long llgroup, long long llQQ, bool bDefault) {
-		return CALLGET(IsGroupOwner, loginID, llgroup, llQQ, bDefault) :bDefault;
+	bool isGroupOwner(long long llgroup, long long aimID, bool bDefault) {
+		return CALLGET(IsGroupOwner, loginID, llgroup, aimID, bDefault) :bDefault;
 	}
-	bool isGroupMember(long long llgroup, long long llQQ, bool bDefault) {
-		return CALLGET(IsGroupMember, loginID, llgroup, llQQ, bDefault) :bDefault;
+	bool isGroupMember(long long llgroup, long long aimID, bool bDefault) {
+		return CALLGET(IsGroupMember, loginID, llgroup, aimID, bDefault) :bDefault;
 	}
 	void answerFriendRequest(long long fromUID, int respon, const std::string& msg) {
 		CALLVOID(AnswerFriendRequest, loginID, fromUID, respon, msg);
@@ -161,20 +163,20 @@ namespace DD {
 	std::string printGroupInfo(long long aimGroup) {
 		return CALLGET(PrintGroupInfo, loginID, aimGroup) :"[" + getGroupName(aimGroup) + "](" + std::to_string(aimGroup) + ")[" + getGroupSize(aimGroup).tostring() + "]";
 	}
-	void setGroupKick(long long llGroup, long long llQQ) {
-		CALLVOID(SetGroupKick, loginID, llGroup, llQQ);
+	void setGroupKick(long long llGroup, long long aimID) {
+		CALLVOID(SetGroupKick, loginID, llGroup, aimID);
 	}
-	void setGroupBan(long long llGroup, long long llQQ, int intTime) {
-		CALLVOID(SetGroupBan, loginID, llGroup, llQQ, intTime);
+	void setGroupBan(long long llGroup, long long aimID, int intTime) {
+		CALLVOID(SetGroupBan, loginID, llGroup, aimID, intTime);
 	}
-	void setGroupAdmin(long long llGroup, long long llQQ, bool bSet) {
-		CALLVOID(SetGroupAdmin, loginID, llGroup, llQQ, bSet);
+	void setGroupAdmin(long long llGroup, long long aimID, bool bSet) {
+		CALLVOID(SetGroupAdmin, loginID, llGroup, aimID, bSet);
 	}
-	void setGroupCard(long long llGroup, long long llQQ, const string& card) {
-		CALLVOID(SetGroupCard, loginID, llGroup, llQQ, card);
+	void setGroupCard(long long llGroup, long long aimID, const string& card) {
+		CALLVOID(SetGroupCard, loginID, llGroup, aimID, card);
 	}
-	void setGroupTitle(long long llGroup, long long llQQ, const string& card){
-		CALLVOID(SetGroupTitle, loginID, llGroup, llQQ, card);
+	void setGroupTitle(long long llGroup, long long aimID, const string& card){
+		CALLVOID(SetGroupTitle, loginID, llGroup, aimID, card);
 	}
 	void setGroupWholeBan(long long llGroup, int intTime){
 		CALLVOID(SetGroupWholeBan, loginID, llGroup, intTime);
@@ -184,5 +186,11 @@ namespace DD {
 	}
 	void setDiscussLeave(long long llGroup){
 		CALLVOID(SetDiscussLeave, loginID, llGroup);
+	}
+	bool uploadGroupFile(long long aimGroup, const std::string& path) {
+		return CALLGET(UploadGroupFile, loginID, aimGroup, path) :false;
+	}
+	bool sendFriendFile(long long aimID, const std::string& path) {
+		return CALLGET(SendPrivateFile, loginID, aimID, path) :false;
 	}
 }

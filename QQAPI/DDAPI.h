@@ -62,5 +62,7 @@ namespace DD {
 	void setGroupWholeBan(long long, int);
 	void setGroupLeave(long long);
 	void setDiscussLeave(long long);
+	bool uploadGroupFile(long long, const std::string&);
+	bool sendFriendFile(long long, const std::string&);
 }
 //enum class msgtype : int { Private = 0, Group = 1, Discuss = 2 };

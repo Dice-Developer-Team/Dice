@@ -410,6 +410,13 @@ void dice_cloudblack(DiceJob& job) {
 }
 
 void log_put(DiceJob& job) {
+	if (!job.cntExec) {
+		DD::debugLog("·¢ËÍlogÎÄ¼þ:" + job.vars["log_path"].to_str());
+		if ((!job.fromChat.gid || !DD::uploadGroupFile(job.fromChat.gid, job.vars["log_path"].to_str()))
+			&& job.fromChat.uid) {
+			DD::sendFriendFile(job.fromChat.uid, job.vars["log_path"].to_str());
+		}
+	}
 	job["ret"] = put_s3_object("dicelogger",
 							   job.vars["log_file"].to_str().c_str(),
 							   job.vars["log_path"].to_str().c_str(),
