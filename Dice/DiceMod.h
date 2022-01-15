@@ -157,7 +157,6 @@ class DiceModManager
     TrieG<char, less_ci> gReplyPrefix;
 public:
 	DiceModManager();
-	friend void loadData();
     friend class CustomReplyApiHandler;
     bool isIniting{ false };
 	string format(string, const map<string, string, less_ci>&, const char* mod_name = "") const;
@@ -177,7 +176,7 @@ public:
     void reply_show(const shared_ptr<DiceJobDetail>&);
     bool call_task(const string&);
     string list_order();
-	int load(ResList*);
+	int load(ResList&);
     void init();
 	void clear();
 };

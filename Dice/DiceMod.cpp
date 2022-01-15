@@ -199,7 +199,7 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 			if (!user.confs.count(key) || !(user.confs[key].*cmpr.second)(cmpr.first))return false;
 		}
 	}
-	if (!grp_vary.empty()) {
+	if (!grp_vary.empty() && msg->fromChat.gid) {
 		Chat& grp{ chat(msg->fromChat.gid) };
 		for (auto& [key, cmpr] : grp_vary) {
 			if (!grp.confs.count(key) || !(grp.confs[key].*cmpr.second)(cmpr.first))return false;
@@ -580,7 +580,7 @@ bool DiceModManager::call_task(const string& task) {
 	return taskcall[task].exec();
 }
 
-int DiceModManager::load(ResList* resLog) 
+int DiceModManager::load(ResList& resLog)
 {
 	//读取reply
 	json jFile = freadJson(DiceDir / "conf" / "CustomMsgReply.json");
@@ -592,24 +592,24 @@ int DiceModManager::load(ResList* resLog)
 					if (msgreply[key].keyword.empty())msgreply[key].keyword = key;
 				}
 			}
-			*resLog << "读取/conf/CustomMsgReply.json中的" + std::to_string(msgreply.size()) + "条自定义回复";
+			resLog << "读取/conf/CustomMsgReply.json中的" + std::to_string(msgreply.size()) + "条自定义回复";
 		}
 		catch (const std::exception& e) {
-			*resLog << "解析/conf/CustomMsgReply.json出错:" << e.what();
+			resLog << "解析/conf/CustomMsgReply.json出错:" << e.what();
 		}
 	}
 	else {
 		std::map<std::string, std::vector<std::string>, less_ci> mRegexReplyDeck;
 		std::map<std::string, std::vector<std::string>, less_ci> mReplyDeck;
 		if (loadJMap(DiceDir / "conf" / "CustomReply.json", mReplyDeck) > 0) {
-			*resLog << "读取CustomReply" + to_string(mReplyDeck.size()) + "条";
+			resLog << "读取CustomReply" + to_string(mReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mReplyDeck) {
 				DiceMsgReply& reply{ msgreply[key] };
 				reply.deck = deck;
 			}
 		}
 		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck) > 0) {
-			*resLog << "读取正则Reply" + to_string(mRegexReplyDeck.size()) + "条";
+			resLog << "读取正则Reply" + to_string(mRegexReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mRegexReplyDeck) {
 				DiceMsgReply& reply{ msgreply[key] };
 				reply.mode = DiceMsgReply::Mode::Regex;
@@ -648,11 +648,11 @@ int DiceModManager::load(ResList* resLog)
 				cntItem += readJMap(j["global_char"], GlobalChar);
 			}
 		}
-		*resLog << "读取/mod/中的" + std::to_string(cntFile) + "个文件, 共" + std::to_string(cntItem) + "个条目";
+		resLog << "读取/mod/中的" + std::to_string(cntFile) + "个文件, 共" + std::to_string(cntItem) + "个条目";
 		if (!sModErr.empty()) {
-			*resLog << "读取失败" + std::to_string(sModErr.size()) + "个:";
+			resLog << "读取失败" + std::to_string(sModErr.size()) + "个:";
 			for (auto& it : sModErr) {
-				*resLog << it;
+				resLog << it;
 			}
 		}
 	}
@@ -660,45 +660,53 @@ int DiceModManager::load(ResList* resLog)
 	vector<std::filesystem::path> sLuaFile;
 	int cntLuaFile = listDir(DiceDir / "plugin", sLuaFile);
 	int cntOrder{ 0 };
-	if (cntLuaFile <= 0)return cntLuaFile;
-	vector<string> sLuaErr; 
 	msgorder.clear();
-	for (auto& pathFile : sLuaFile) {
-		string fileLua = getNativePathString(pathFile);
-		if ((fileLua.rfind(".lua") != fileLua.length() - 4) && (fileLua.rfind(".LUA") != fileLua.length() - 4)) {
-			sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
-			continue;
-		}
-		std::unordered_map<std::string, std::string> mOrder;
-		int cnt = lua_readStringTable(fileLua.c_str(), "msg_order", mOrder);
-		if (cnt > 0) {
-			for (auto& [key, func] : mOrder) {
-				msgorder[::format(key, GlobalMsg)] = { fileLua,func };
+	if (cntLuaFile > 0) {
+		vector<string> sLuaErr;
+		for (auto& pathFile : sLuaFile) {
+			string fileLua = getNativePathString(pathFile);
+			if ((fileLua.rfind(".lua") != fileLua.length() - 4) && (fileLua.rfind(".LUA") != fileLua.length() - 4)) {
+				sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
+				continue;
 			}
-			cntOrder += mOrder.size();
-		}
-		else if (cnt < 0) {
-			sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
-		}
-		std::unordered_map<std::string, std::string> mJob;
-		cnt = lua_readStringTable(fileLua.c_str(), "task_call", mJob);
-		if (cnt > 0) {
-			for (auto& [key, func] : mJob) {
-				taskcall[key] = { fileLua,func };
+			std::unordered_map<std::string, std::string> mOrder;
+			int cnt = lua_readStringTable(fileLua.c_str(), "msg_order", mOrder);
+			if (cnt > 0) {
+				for (auto& [key, func] : mOrder) {
+					msgorder[::format(key, GlobalMsg)] = { fileLua,func };
+				}
+				cntOrder += mOrder.size();
 			}
-			cntOrder += mJob.size();
+			else if (cnt < 0) {
+				sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
+			}
+			std::unordered_map<std::string, std::string> mJob;
+			cnt = lua_readStringTable(fileLua.c_str(), "task_call", mJob);
+			if (cnt > 0) {
+				for (auto& [key, func] : mJob) {
+					taskcall[key] = { fileLua,func };
+				}
+				cntOrder += mJob.size();
+			}
+			else if (cnt < 0
+				&& *sLuaErr.rbegin() != UTF8toGBK(pathFile.filename().u8string())) {
+				sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
+			}
 		}
-		else if (cnt < 0
-				 && *sLuaErr.rbegin() != UTF8toGBK(pathFile.filename().u8string())) {
-			sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
+		resLog << "读取/plugin/中的" + std::to_string(cntLuaFile) + "个脚本, 共" + std::to_string(cntOrder) + "个指令";
+		if (!sLuaErr.empty()) {
+			resLog << "读取失败" + std::to_string(sLuaErr.size()) + "个:";
+			for (auto& it : sLuaErr) {
+				resLog << it;
+			}
 		}
 	}
-	*resLog << "读取/plugin/中的" + std::to_string(cntLuaFile) + "个脚本, 共" + std::to_string(cntOrder) + "个指令";
-	if (!sLuaErr.empty()) {
-		*resLog << "读取失败" + std::to_string(sLuaErr.size()) + "个:";
-		for (auto& it : sLuaErr) {
-			*resLog << it;
-		}
+	//custom
+	if (loadJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp) < 0) {
+		resLog << UTF8toGBK((DiceDir / "conf" / "CustomHelp.json").u8string()) + "解析失败！";
+	}
+	else {
+		map_merge(helpdoc, CustomHelp);
 	}
 	//init
 	std::thread factory(&DiceModManager::init, this);

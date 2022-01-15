@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123À›‰ß
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2022 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -98,11 +98,7 @@ void loadData()
 		loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList);
 		map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
 		//∂¡»°∞Ô÷˙Œƒµµ
-		fmt->load(&logList);
-		if (int cnt; (cnt = loadJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp)) < 0){
-			if (cnt == -1)logList << UTF8toGBK((DiceDir / "conf" / "CustomHelp.json").u8string()) + "Ω‚Œˆ ß∞‹£°";
-		}
-		map_merge(fmt->helpdoc, CustomHelp);
+		fmt->load(logList);
 		//∂¡»°√Ù∏–¥ ø‚
 		loadDir(load_words, DiceDir / "conf" / "censor", censor, logList, true);
 		loadJMap(DiceDir / "conf" / "CustomCensor.json", censor.CustomWords);
