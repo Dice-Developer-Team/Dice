@@ -277,24 +277,42 @@ bool lua_call_task(const char* file, const char* func) {
  * 供lua调用的函数
  */
 
+ //输出日志
+int log(lua_State* L) {
+	string info{ lua_to_string(L, 1) };
+	if (info.empty())return 0;
+	int note_lv{ 0 };
+	for (int idx = lua_gettop(L); idx > 1; --idx) {
+		auto type{ lua_to_int(L,idx) };
+		if (type < 0 || type > 9)continue;
+		else{
+			note_lv |= (1 << type);
+		}
+	}
+	console.log(info, note_lv);
+	return 0;
+}
  //加载其他lua脚本
 int loadLua(lua_State* L) {
 	string nameFile{ lua_to_string(L, 1) };
+	if (nameFile.empty())return 0;
 #ifdef _WIN32 // 转换separator
 	for (auto& c : nameFile)
 	{
 		if (c == '/') c = '\\';
 	}
+	bool hasSlash{ nameFile.find('\\') != string::npos };
 #else
 	for (auto& c : nameFile)
 	{
 		if (c == '\\') c = '/';
 	}
+	bool hasSlash{ nameFile.find('/') != string::npos };
 #endif
 	std::filesystem::path pathFile{ nameFile };
 	if ((pathFile.extension() != ".lua") && (pathFile.extension() != ".LUA"))pathFile = nameFile + ".lua";
 	if (pathFile.is_relative())pathFile = DiceDir / "plugin" / pathFile;
-	if (!std::filesystem::exists(pathFile) && nameFile.find('\\') == string::npos && nameFile.find('/') == string::npos)
+	if (!std::filesystem::exists(pathFile) && !hasSlash)
 		pathFile = DiceDir / "plugin" / nameFile / "init.lua";
 	string strLua;
 	if (std::filesystem::exists(pathFile)) {
@@ -302,8 +320,7 @@ int loadLua(lua_State* L) {
 		std::stringstream buffer;
 		buffer << fs.rdbuf();
 		strLua = buffer.str();
-		bool isStateUTF8{ (bool)UTF8Luas.count(L) }, isLuaUTF8{ false };	//令文件加载入lua的编码保持一致
-		if (checkUTF8(strLua))isLuaUTF8 = true;
+		bool isStateUTF8{ (bool)UTF8Luas.count(L) }, isLuaUTF8{ checkUTF8(strLua) };	//令文件加载入lua的编码保持一致
 		if (isStateUTF8 && !isLuaUTF8) {
 			strLua = GBKtoUTF8(strLua);
 		}
@@ -324,7 +341,7 @@ int loadLua(lua_State* L) {
 	if (lua_pcall(L, 0, 1, 0)) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
 		console.log(getMsg("strSelfName") + "运行lua文件" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
-		return 1;
+		return 0;
 	}
 	return 1;
 }
@@ -344,11 +361,12 @@ int mkDirs(lua_State* L) {
 	return 0;
 }
 int getGroupConf(lua_State* L) {
+	int top{ lua_gettop(L) };
+	if (top > 3)lua_settop(L, top = 3);
+	else if (top < 2)return 0;
 	long long id{ lua_to_int(L, 1) };
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (!id || item.empty())return 0;
-	int top{ lua_gettop(L) };
-	if (top > 3)lua_settop(L, top = 3);
 	if (item == "size") {
 		lua_pushnumber(L, (double)DD::getGroupSize(id).currSize);
 	}
@@ -423,14 +441,18 @@ int setGroupConf(lua_State* L) {
 	return 0;
 }
 int getUserConf(lua_State* L) {
+	int top{ lua_gettop(L) };
+	if (top > 3)lua_settop(L, top = 3);
+	else if (top < 2)return 0;
 	long long uid{ lua_to_int(L, 1) };
 	if (!uid)return 0;
-	if (int argc{ lua_gettop(L) }; argc > 3)lua_settop(L, 3);
-	else if (argc == 2)lua_pushnil(L);
-	else if (argc < 2)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
-	if (item == "nick" ) {
+	if (item == "name") {
+		if (string name{ DD::getQQNick(uid) };!name.empty())
+			lua_push_string(L, name);
+	}
+	else if (item == "nick" ) {
 		lua_push_string(L, getName(uid));
 	}
 	else if (item.find("nick#") == 0) {
@@ -463,17 +485,13 @@ int getUserConf(lua_State* L) {
 				gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
 			}
 			user.getNick(nick, gid);
-			lua_push_string(L, getName(uid, gid));
+			lua_push_string(L, nick);
 		}
 		else if (user.confs.count(item)) {
 			lua_push_attr(L, user.confs[item]);
 		}
-		else {
-			lua_pushnil(L);
-			lua_insert(L, 3);
-		}
 	}
-	else {
+	if (lua_gettop(L) == top) {
 		lua_pushnil(L);
 		lua_insert(L, 3);
 	}
@@ -683,26 +701,29 @@ int luaopen_http(lua_State* L) {
 	return 1;
 }
 
+#define REGIST(func) {#func, func},
+
 void LuaState::regist() {
 	static const luaL_Reg DiceFucs[] = {
-		{"loadLua", loadLua},
-		{"getDiceQQ", getDiceQQ},
-		{"getDiceDir", getDiceDir},
-		{"mkDirs", mkDirs},
-		{"getGroupConf", getGroupConf},
-		{"setGroupConf", setGroupConf},
-		{"getUserConf", getUserConf},
-		{"setUserConf", setUserConf},
-		{"getUserToday", getUserToday},
-		{"setUserToday", setUserToday},
-		{"getPlayerCardAttr", getPlayerCardAttr},
-		{"setPlayerCardAttr", setPlayerCardAttr},
-		{"getPlayerCard", getPlayerCard},
-		{"ranint", ranint},
-		{"sleepTime", sleepTime},
-		{"drawDeck", drawDeck},
-		{"sendMsg", sendMsg},
-		{"eventMsg", eventMsg},
+		REGIST(log)
+		REGIST(loadLua)
+		REGIST(getDiceQQ)
+		REGIST(getDiceDir)
+		REGIST(mkDirs)
+		REGIST(getGroupConf)
+		REGIST(setGroupConf)
+		REGIST(getUserConf)
+		REGIST(setUserConf)
+		REGIST(getUserToday)
+		REGIST(setUserToday)
+		REGIST(getPlayerCardAttr)
+		REGIST(setPlayerCardAttr)
+		REGIST(getPlayerCard)
+		REGIST(ranint)
+		REGIST(sleepTime)
+		REGIST(drawDeck)
+		REGIST(sendMsg)
+		REGIST(eventMsg)
 		{nullptr, nullptr},
 	};
 	for (const luaL_Reg* lib = DiceFucs; lib->func; lib++) {

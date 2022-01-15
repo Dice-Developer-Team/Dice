@@ -193,8 +193,7 @@ int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 	fout.close();
 	int Cnt = 0;
 	const string note = strTime.empty() ? strMsg : (strTime + " " + strMsg);
-	if (note_lv)
-	{
+	if (note_lv){
 		for (auto& [ct, level] : NoticeList)
 		{
 			if (!(level & note_lv))continue;
@@ -202,9 +201,9 @@ int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 			Cnt++; 
 			if(strTime.empty())this_thread::sleep_for(chrono::milliseconds(console["SendIntervalIdle"]));
 		}
-		if (!Cnt)DD::sendPrivateMsg(DiceMaid, note);
 	}
-	else DD::debugMsg(note);
+	if (!Cnt)DD::debugMsg(note);
+	else DD::debugLog(note);
 	return Cnt;
 } 
 void Console::newMaster(long long uid)

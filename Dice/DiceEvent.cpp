@@ -4493,7 +4493,7 @@ int FromMsg::readChat(chatInfo& ct, bool isReroll)
 	}
 	else if (strT == "this")
 	{
-		ct = fromChat;
+		ct = fromChat.gid ? chatInfo(0, fromChat.gid, fromChat.chid) : fromChat;
 		return 0;
 	}
 	else if (const long long llID{ readID() }; !llID) {
