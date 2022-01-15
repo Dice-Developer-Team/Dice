@@ -124,7 +124,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 				CDType cd_type{ (CDType)CDConfig::eType[type] };
 				if (!isNumeric(cd))continue;
 				time_t val{ (time_t)stoll(cd) };
-				cd_conf.emplace_back(cd_type, key, val);
+				cd_timer.emplace_back(cd_type, key, val);
 				cds << key + ((key.empty() && cd_type == CDType::Chat) ? ""
 					: ("@" + CDConfig::eType[(size_t)cd_type] + "="))
 					+ to_string(val);
@@ -134,6 +134,37 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			if (cds.empty())continue;
 			limits << "cd:" + cds.show("&");
 			notes << "- 冷却计时: " + cdnotes.show();
+		}
+		else if (key == "today") {
+			if (colon == string::npos)continue;
+			ShowList sub;
+			ShowList subnotes;
+			for (auto& cd : split(item.substr(colon + 1), "&")) {
+				string key;
+				string type{ "chat" };
+				if (cd.find('=') != string::npos) {
+					pair<string, string>conf;
+					readini(cd, conf);
+					if (size_t pos{ conf.first.find('@') }; pos != string::npos) {
+						key = conf.first.substr(0, pos);
+						type = conf.first.substr(pos + 1);
+					}
+					else key = conf.first;
+					cd = conf.second;
+				}
+				CDType cd_type{ (CDType)CDConfig::eType[type] };
+				if (!isNumeric(cd))continue;
+				time_t val{ (time_t)stoll(cd) };
+				today_cnt.emplace_back(cd_type, key, val);
+				sub << key + ((key.empty() && cd_type == CDType::Chat) ? ""
+					: ("@" + CDConfig::eType[(size_t)cd_type] + "="))
+					+ to_string(val);
+				subnotes << (cd_type == CDType::Chat ? "窗口"
+					: cd_type == CDType::User ? "用户" : "全局") + key + "计" + to_string(val) + "次";
+			}
+			if (sub.empty())continue;
+			limits << "today:" + sub.show("&");
+			notes << "- 当日计数: " + subnotes.show();
 		}
 		else if (key == "user_var") {
 			if (colon == string::npos)continue;
@@ -214,12 +245,13 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 	if (to_dice != Treat::Ignore && console.DiceMaid != msg->fromChat.uid) {
 		if (DD::isDiceMaid(msg->fromChat.uid) ^ (to_dice == Treat::Only))return false;
 	}
-	//冷却最后处理
-	if (!cd_conf.empty()) {
+	//冷却与上限最后处理
+	if (!cd_timer.empty() || !today_cnt.empty()) {
 		vector<CDQuest>timers;
+		vector<CDQuest>counters;
 		chatInfo chat{ msg->fromChat.gid ? chatInfo(0,msg->fromChat.gid,msg->fromChat.chid)
 			: msg->fromChat };
-		for (auto& conf : cd_conf) {
+		for (auto& conf : cd_timer) {
 			string key{ conf.key };
 			if (key.empty())key = msg->vars["keyword"].to_str();
 			chatInfo chattype{ conf.type == CDType::Chat ? chat :
@@ -227,7 +259,15 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 			};
 			timers.emplace_back(chattype, key, conf.cd);
 		}
-		if (!sch.query_cd(timers))return false;
+		for (auto& conf : today_cnt) {
+			string key{ conf.key };
+			if (key.empty())key = msg->vars["keyword"].to_str();
+			chatInfo chattype{ conf.type == CDType::Chat ? chat :
+				conf.type == CDType::User ? chatInfo(msg->fromChat.uid) : chatInfo()
+			};
+			counters.emplace_back(chattype, key, conf.cd);
+		}
+		if (!sch.cnt_cd(timers, counters))return false;
 	}
 	return true;
 }

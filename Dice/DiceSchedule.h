@@ -82,7 +82,7 @@ public:
     void add_job_until(time_t, const char*);
     bool is_job_cold(const char*);
     void refresh_cold(const char*, time_t);
-    bool query_cd(const vector<CDQuest>&);
+    bool cnt_cd(const vector<CDQuest>&, const vector<CDQuest>&);
 };
 inline DiceScheduler sch;
 
@@ -95,6 +95,7 @@ class DiceToday {
     unordered_map<string, int>cntGlobal;
     unordered_map<long long, unordered_map<string, int>>cntUser;
 public:
+    unordered_map<chatInfo, unordered_map<string, int>> counter;
     DiceToday(const std::filesystem::path& path) :pathFile(path) {
         load();
     }

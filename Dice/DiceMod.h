@@ -30,7 +30,8 @@ class DiceTriggerLimit {
     bool user_id_negative{ false };
     set<long long>grp_id;
     bool grp_id_negative{ false };
-    vector<CDConfig>cd_conf;
+    vector<CDConfig>cd_timer;
+    vector<CDConfig>today_cnt;
     unordered_map<string, pair<double, AttrVar::CMPR>>self_vary;
     unordered_map<string, pair<double, AttrVar::CMPR>>user_vary;
     unordered_map<string, pair<double, AttrVar::CMPR>>grp_vary;
