@@ -47,7 +47,7 @@ bool msgSendThreadRunning = false;
 
 std::shared_mutex GlobalMsgMutex;
 
-std::map<std::string, std::string, less_ci> GlobalMsg
+std::map<std::string, std::string, less_ci> PlainMsg
 {
 	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
 	{"strParaIllegal","参数非法×"},			//偷懒用万能回复
@@ -399,6 +399,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 Dice!众筹计划: https://afdian.net/@suhuiw4123)"
 	}
 };
+std::map<std::string, std::string, less_ci> GlobalMsg{ PlainMsg };
 
 std::map<std::string, std::string, less_ci> EditedMsg;
 std::map<std::string, std::string, less_ci> GlobalComment{
@@ -477,6 +478,8 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 };
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+598:当日计数器
+597:冷却计时器
 596:角色卡/Conf允许读写table
 595:lua可获取群名片/权限/最后发言
 594:setcoc优化
@@ -492,11 +495,7 @@ const std::map<std::string, std::string, less_ci> HelpDoc = {
 580:过期记录回收
 579:允许转义文本多选一
 576:定时任务脚本
-574:默认骰机制优化
-573:角色卡机制优化
-570:允许.lua脚本自定义指令
 569:.rc/.draw暗骰暗抽
-568:.deck自定义牌堆重做
 567:敏感词检测
 566:.help查询建议
 565:.log日志记录)"},
@@ -601,12 +600,25 @@ Master拥有最高权限，且可以调整任意信任)"},
 .reply set
 Type=[回复性质](Reply/Order)
 [触发模式](Match/Prefix/Search/Regex)=[触发词]
+(Limit=[触发条件])
 [回复模式](Deck/Text/Lua)=[回复词]
 *Type一行可省略，默认为Reply
 .reply show [触发词] 查看指定回复
 .reply list 查看全部回复
 .reply del [触发词] 清除指定回复
 )"},
+{"回复触发限制",R"(
+每项关键词回复可以有零或多项触发条件，只要一项不满足就不触发
+用户名单`user_id:账号列表` 指定账号触发，账号以|分隔
+- 反向名单：冒号后加!表示指定账号不触发
+群聊名单`grp_id:群号列表` 指定群聊触发，grp_id:0表示私聊可以触发
+概率`prob:百分比` 依概率触发
+冷却计时`cd:秒数` 非冷却状态触发，触发后计算冷却
+当日计数`today:上限` 未达上限触发，触发后计数+1
+骰娘识别`dicemaid:only` 仅Dice!骰娘触发
+阈值`user_var``grp_var``self_var`变量满足指定条件触发
+`dicemaid:off` Dice!骰娘不触发
+)" },
 {"回复列表","{strSelfName}的回复触发词列表:{list_reply_deck}"},
 {"旁观","&ob"},
 {"旁观模式","&ob"},

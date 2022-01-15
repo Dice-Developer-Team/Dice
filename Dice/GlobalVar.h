@@ -42,8 +42,8 @@
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-const unsigned short Dice_Build = 596u;
-inline const std::string Dice_Ver_Without_Build = "2.6.2beta4";
+const unsigned short Dice_Build = 598u;
+inline const std::string Dice_Ver_Without_Build = "2.6.2";
 constexpr auto DiceRequestHeader = "Dice/2.6.2";
 inline const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 inline const std::string Dice_Short_Ver = "Dice! by 溯洄 & Shiki Ver " + Dice_Ver;
@@ -96,6 +96,7 @@ extern bool msgSendThreadRunning;
 
 // 回复信息, 此内容可以通过CustomMsg功能修改而无需修改源代码
 extern std::map<std::string, std::string, less_ci> GlobalMsg;
+extern std::map<std::string, std::string, less_ci> PlainMsg;
 extern std::shared_mutex GlobalMsgMutex;
 // 修改后的Global语句
 extern std::map<std::string, std::string, less_ci> EditedMsg;

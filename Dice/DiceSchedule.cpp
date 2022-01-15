@@ -222,6 +222,7 @@ void DiceToday::daily_clear() {
 #endif
 	if (stToday.tm_mday != stNow.tm_mday) {
 		stToday.tm_mday = stNow.tm_mday;
+		counter.clear();
 		cntGlobal.clear();
 		cntUser.clear();
 	}

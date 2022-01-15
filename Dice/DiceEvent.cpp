@@ -2744,9 +2744,10 @@ int FromMsg::InnerOrder() {
 			{
 				std::unique_lock lock(GlobalMsgMutex);
 				EditedMsg.erase(strName);
-				GlobalMsg[strName] = "";
+				if (PlainMsg.count(strName))GlobalMsg[strName] = PlainMsg[strName];
+				else GlobalMsg.erase(strName);
 			}
-			note("已清除" + strName + "的自定义，将在下次重启后恢复默认设置。", 0b1);
+			note("已重置" + strName + "的自定义。", 0b1);
 		}
 		else {
 			{
