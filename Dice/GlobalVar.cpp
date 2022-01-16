@@ -384,7 +384,7 @@ std::map<std::string, std::string, less_ci> PlainMsg
 	{"strSelfName", "" },
 	{"strSelfNick", "&strSelfName" },
 	{"self", "&strSelfCall"},
-	{"strBotHeader", "试作型 " },
+	{"strBotHeader", "标准型 " },
 	{"strBotMsg", "\n使用.help更新 查看{self}更新内容"},
 	{
 		"strHlpMsg",
