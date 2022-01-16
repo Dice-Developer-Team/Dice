@@ -3361,8 +3361,8 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		int intRule = isPrivate()
-			? chat(fromChat.gid).getConf("rc房规")
-			: getUser(fromChat.uid).getConf("rc房规");
+			? getUser(fromChat.uid).getConf("rc房规")
+			: chat(fromChat.gid).getConf("rc房规");
 		int intTurnCnt = 1;
 		bool isHidden(false);
 		if (strMsg[intMsgCnt] == 'h' && isspace(static_cast<unsigned char>(strMsg[intMsgCnt + 1]))) {
