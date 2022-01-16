@@ -580,7 +580,8 @@ void DiceModManager::save_reply() {
 	for (const auto& [word, reply] : msgreply) {
 		j[GBKtoUTF8(word)] = reply.writeJson();
 	}
-	fwriteJson(DiceDir / "conf" / "CustomMsgReply.json", j);
+	if (j.empty()) std::filesystem::remove(DiceDir / "conf" / "CustomMsgReply.json");
+	else fwriteJson(DiceDir / "conf" / "CustomMsgReply.json", j);
 }
 void DiceModManager::reply_get(const shared_ptr<DiceJobDetail>& msg) {
 	string key{ (*msg)["key"].to_str() };
@@ -699,9 +700,9 @@ int DiceModManager::load(ResList& resLog)
 	//∂¡»°plugin
 	vector<std::filesystem::path> sLuaFile;
 	int cntLuaFile = listDir(DiceDir / "plugin", sLuaFile);
-	int cntOrder{ 0 };
 	msgorder.clear();
 	if (cntLuaFile > 0) {
+		int cntOrder{ 0 };
 		vector<string> sLuaErr;
 		for (auto& pathFile : sLuaFile) {
 			string fileLua = getNativePathString(pathFile);
@@ -742,11 +743,13 @@ int DiceModManager::load(ResList& resLog)
 		}
 	}
 	//custom
-	if (loadJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp) < 0) {
-		resLog << UTF8toGBK((DiceDir / "conf" / "CustomHelp.json").u8string()) + "Ω‚Œˆ ß∞‹£°";
-	}
-	else {
-		map_merge(helpdoc, CustomHelp);
+	if (std::filesystem::path fCustomHelp{ DiceDir / "conf" / "CustomHelp.json" }; std::filesystem::exists(fCustomHelp)) {
+		if (loadJMap(fCustomHelp, CustomHelp) == -1) {
+			resLog << UTF8toGBK(fCustomHelp.u8string()) + "Ω‚Œˆ ß∞‹£°";
+		}
+		else {
+			map_merge(helpdoc, CustomHelp);
+		}
 	}
 	//init
 	std::thread factory(&DiceModManager::init, this);
@@ -759,7 +762,7 @@ int DiceModManager::load(ResList& resLog)
 }
 void DiceModManager::init() {
 	isIniting = true;
-	for (auto& [key, word] : helpdoc) {
+	for (const auto& [key, word] : helpdoc) {
 		querier.insert(key);
 	}
 	for (const auto& [key, order] : msgorder) {
@@ -770,6 +773,7 @@ void DiceModManager::init() {
 void DiceModManager::clear()
 {
 	helpdoc.clear();
+	querier.clear();
 	msgorder.clear();
 	taskcall.clear();
 }

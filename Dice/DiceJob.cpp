@@ -75,7 +75,7 @@ void frame_reload(DiceJob& job) {
 }
 
 void check_system(DiceJob& job) {
-	console.log("检查系统负载", 0, printSTNow());
+	DD::debugLog(printSTNow() + " 检查系统负载");
 #ifdef _WIN32
 	static int perRAM(0), perLastRAM(0);
 	static double  perLastCPU(0), perLastDisk(0),
@@ -141,7 +141,7 @@ void check_system(DiceJob& job) {
 
 void auto_save(DiceJob& job) {
 	if (sch.is_job_cold("autosave"))return;
-	console.log("自动保存", 0, printSTNow());
+	DD::debugLog(printSTNow() + " 自动保存");
 	dataBackUp();
 	//console.log(getMsg("strSelfName") + "已自动保存", 0, printSTNow());
 	if (console["AutoSaveInterval"] > 0) {
