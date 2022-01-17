@@ -173,8 +173,11 @@ bool DiceScheduler::cnt_cd(const vector<CDQuest>& cd_list, const vector<CDQuest>
 	for (auto& quest : cd_list) {
 		cd_timer[quest.chat][quest.key] = tNow + quest.cd;
 	}
-	for (auto& quest : cnt_list) {
-		++today->counter[quest.chat][quest.key];
+	if (!cnt_list.empty()) {
+		for (auto& quest : cnt_list) {
+			++today->counter[quest.chat][quest.key];
+		}
+		today->save();
 	}
 	return true;
 }
@@ -234,13 +237,22 @@ void DiceToday::save() {
 		jFile["date"] = { stToday.tm_year + 1900,stToday.tm_mon + 1,stToday.tm_mday };
 		jFile["global"] = GBKtoUTF8(cntGlobal);
 		jFile["user_cnt"] = GBKtoUTF8(cntUser);
-		fwriteJson(pathFile, jFile);
+		if (!counter.empty()) {
+			json& jCnt{ jFile["cnt_list"] = json::array() };
+			for (auto& [chat, cnt_list] : counter) {
+				json j;
+				j["chat"] = to_json(chat);
+				j["cnt"] = GBKtoUTF8(cnt_list);
+				jCnt.push_back(j);
+			}
+		}
+		fwriteJson(DiceDir / "user" / "DiceToday.json", jFile);
 	} catch (...) {
 		console.log("每日记录保存失败:json错误!", 0b10);
 	}
 }
 void DiceToday::load() {
-	json jFile = freadJson(pathFile);
+	json jFile = freadJson(DiceDir / "user" / "DiceToday.json");
 	if (jFile.is_null()) {
 		time_t tt = time(nullptr);
 #ifdef _MSC_VER
@@ -256,6 +268,13 @@ void DiceToday::load() {
 		jFile["date"][1].get_to(stToday.tm_mon);
 		stToday.tm_mon -= 1;
 		jFile["date"][2].get_to(stToday.tm_mday);
+	}
+	if (jFile.count("cnt_list")) {
+		for (auto& j : jFile["cnt_list"]) {
+			chatInfo chat{ from_json(j["chat"]) };
+			if (j.count("cnt"))j["cnt"].get_to(counter[chat]);
+			counter[chat] = UTF8toGBK(counter[chat]);
+		}
 	}
 	if (jFile.count("global")) { 
 		jFile["global"].get_to(cntGlobal); 

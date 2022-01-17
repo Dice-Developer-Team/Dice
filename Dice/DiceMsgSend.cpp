@@ -55,6 +55,22 @@ bool chatInfo::operator==(const chatInfo& other)const {
 		&& gid == other.gid
 		&& chid == other.chid;
 }
+nlohmann::json to_json(const chatInfo& chat) {
+	nlohmann::json j = nlohmann::json::object();
+	if (chat.chid)j["chid"] = chat.chid;
+	if (chat.gid)j["gid"] = chat.gid;
+	else if (chat.uid)j["uid"] = chat.uid;
+	return j;
+}
+chatInfo from_json(const nlohmann::json& chat) {
+	if (chat.is_null())return {};
+	long long uid{ 0 }, gid{ 0 }, chid{ 0 };
+	if (chat.count("uid"))chat["uid"].get_to(uid);
+	if (chat.count("gid"))chat["gid"].get_to(gid);
+	if (chat.count("chid"))chat["chid"].get_to(chid);
+	return chatInfo{ uid,gid,chid };
+}
+
 // 消息发送存储结构体
 struct msg_t
 {

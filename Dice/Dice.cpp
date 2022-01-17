@@ -176,7 +176,7 @@ void readUserData()
 	//读取房间记录
 	gm->load();
 	//读取当日数据
-	today = make_unique<DiceToday>(dir / "DiceToday.json");
+	today = make_unique<DiceToday>();
 	if (!log.empty()) {
 		log << "用户数据读取完毕";
 		console.log(log.show(), 0b1, printSTNow());
@@ -708,11 +708,11 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 			string strReply = chat(fromGID).confs["入群欢迎"].to_str();
 			while (strReply.find("{at}") != string::npos)
 			{
-				strReply.replace(strReply.find("{at}"), 4, "[CQ:at,qq=" + to_string(fromUID) + "]");
+				strReply.replace(strReply.find("{at}"), 4, "[CQ:at,id=" + to_string(fromUID) + "]");
 			}
 			while (strReply.find("{@}") != string::npos)
 			{
-				strReply.replace(strReply.find("{@}"), 3, "[CQ:at,qq=" + to_string(fromUID) + "]");
+				strReply.replace(strReply.find("{@}"), 3, "[CQ:at,id=" + to_string(fromUID) + "]");
 			}
 			while (strReply.find("{nick}") != string::npos)
 			{

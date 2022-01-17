@@ -10,7 +10,6 @@
 #include <string>
 #include <map>
 #include <unordered_map>
-#include <filesystem>
 #include "DiceMsgSend.h"
 #include "json.hpp"
 #include "DiceAttrVar.h"
@@ -91,12 +90,11 @@ typedef void (*cmd)(DiceJob&);
 //½ñÈÕ¼ÇÂ¼
 class DiceToday {
     tm stToday;
-    std::filesystem::path pathFile;
     unordered_map<string, int>cntGlobal;
     unordered_map<long long, unordered_map<string, int>>cntUser;
 public:
     unordered_map<chatInfo, unordered_map<string, int>> counter;
-    DiceToday(const std::filesystem::path& path) :pathFile(path) {
+    DiceToday() {
         load();
     }
     void load();

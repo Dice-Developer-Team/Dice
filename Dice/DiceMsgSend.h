@@ -27,6 +27,7 @@
 #ifndef DICE_MSG_SEND
 #define DICE_MSG_SEND
 #include <string>
+#include "json.hpp"
 
 enum class msgtype : int { Private = 0, Group = 1, Discuss = 2, ChannelPrivate = 3, Channel = 4};
 struct chatInfo {
@@ -38,7 +39,11 @@ struct chatInfo {
 	chatInfo(long long, long long = 0, long long = 0);
 	bool operator<(const chatInfo&)const;
 	bool operator==(const chatInfo&)const;
+	operator bool()const { return uid || gid || chid; }
 };
+
+nlohmann::json to_json(const chatInfo& chat);
+chatInfo from_json(const nlohmann::json& chat);
 template<>
 struct std::hash<chatInfo> {
 	size_t operator()(const chatInfo& chat)const {

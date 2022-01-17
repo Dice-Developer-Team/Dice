@@ -251,11 +251,8 @@ void Console::loadNotice()
 	if (!jFile.empty()) {
 		try {
 			for (auto note : jFile) {
-				long long uid{ 0 }, gid{ 0 }, chid{ 0 };
-				if (note.count("uid"))note["uid"].get_to(uid);
-				if (note.count("gid"))note["gid"].get_to(gid);
-				if (note.count("chid"))note["chid"].get_to(chid);
-				if (note.count("type"))NoticeList.emplace(chatInfo{ uid,gid,chid }, note["type"].get<int>());
+				if (chatInfo chat(from_json(note)); chat && note.count("type"))
+					NoticeList.emplace(chat, note["type"].get<int>());
 			}
 			return;
 		}
@@ -278,10 +275,7 @@ void Console::saveNotice() const
 	if (!fout)return;
 	json jList = json::array();
 	for (auto& [chat, lv] : NoticeList) {
-		json j = json::object();
-		if (chat.chid)j["chid"] = chat.chid;
-		if (chat.gid)j["gid"] = chat.gid;
-		else if (chat.uid)j["uid"] = chat.uid;
+		json j = to_json(chat);
 		j["type"] = lv;
 		jList.push_back(j);
 	}
