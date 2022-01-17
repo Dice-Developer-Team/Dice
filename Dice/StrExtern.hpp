@@ -44,8 +44,9 @@ vector<string> getLines(const string& s, char delim = '\n');
 vector<string> split(const string&, const string&);
 
 template<typename Con>
-void splitID(const string&str , Con& list) {
+void splitID(const string& str , Con& list) {
     const char digits[]{ "0123456789" };
+#ifndef linux
     const char* p = strpbrk(str.c_str(), digits);
     size_t len;
     while (p) {
@@ -53,6 +54,13 @@ void splitID(const string&str , Con& list) {
         len = strspn(p, digits);
         p = strpbrk(p + len, digits);
     }
+#else
+    size_t p{ str.find_first_of(digits) };
+    while (p != string::npos) {
+        list.emplace(atoll(str.c_str() + p));
+        p = str.find_first_of(digits, str.find_first_not_of(digits, p));
+    }
+#endif
 }
 
 string convert_w2a(const char16_t* wch);
