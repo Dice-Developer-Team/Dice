@@ -39,7 +39,7 @@ struct less_ci
 	}
 };
 struct hash_ci {
-	_NODISCARD size_t operator()(const string& str)const {
+	[[nodiscard]] size_t operator()(const string& str)const {
 		size_t seed = 131;
 		size_t hash = 0;
 		for (char ch : str) {
