@@ -490,15 +490,13 @@ bool eve_GroupAdd(Chat& grp)
 		if (grp.inviter) {
 			strMsg += ",邀请者" + printUser(chat(fromGID).inviter);
 		}
-		console.log(strMsg, 0, strNow);
 		int max_trust = 0;
 		float ave_trust(0);
 		//int max_danger = 0;
 		long long ownerQQ = 0;
 		ResList blacks;
 		std::set<long long> list = DD::getGroupMemberList(fromGID);
-		if (list.empty())
-		{
+		if (list.empty()){
 			strMsg += "，群员名单未加载；";
 		}
 		else 

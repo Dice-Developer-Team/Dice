@@ -478,13 +478,13 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 };
 const std::map<std::string, std::string, less_ci> HelpDoc = {
 {"更新",R"(
+599:mod新增script
 598:当日计数器
 597:冷却计时器
 596:角色卡/Conf允许读写table
 595:lua可获取群名片/权限/最后发言
 594:setcoc优化
 593:reply新增触发限制
-592:reply新增前缀匹配
 590:lua内置http
 589:ak安科安价指令
 588:适配频道消息
@@ -563,7 +563,7 @@ Master拥有最高权限，且可以调整任意信任)"},
 .log on 开始记录
 .log off 暂停记录
 .log end 完成记录并发送日志文件
-日志上传存在失败可能，届时请联系后台管理索取)"},
+日志上传存在失败可能，届时请联系{self}后台管理索取)"},
 {"deck",R"(牌堆实例.deck
 该指令可以在群内自设牌堆，使用.draw时，牌堆实例优先级高于同名公共对象
 抽牌不会放回直到抽空
