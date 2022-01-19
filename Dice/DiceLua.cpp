@@ -11,6 +11,7 @@ extern "C"{
 #include "CharacterCard.h"
 #include "CardDeck.h"
 #include "DiceSession.h"
+#include "DiceMod.h"
 #include "DDAPI.h"
 
 unordered_set<lua_State*> UTF8Luas;
@@ -181,6 +182,11 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 #else
 	string fileGB18030(UTF8toGBK(file, true));
 #endif
+	if (lua_pcall(L, 0, 0, 0)) {
+		string pErrorMsg = lua_to_gb18030_string(L, -1);
+		console.log(getMsg("strSelfName") + "运行lua文件" + fileGB18030 + "失败:" + pErrorMsg, 0b10);
+		return 0;
+	}
 	lua_getglobal(L, func); 
 	lua_push_msg(L, msg);
 	if (lua_pcall(L, 1, 2, 0)) {
@@ -213,12 +219,19 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 
 //为msg直接调用lua语句回复
 bool lua_msg_reply(FromMsg* msg, const string& luas) {
-	LuaState L;
-	if (!L)return false; 
-	//UTF8Luas.insert(L);	//Win输入msg是GBK而调用UTF8文件会导致乱码，因此统一UTF8
+	bool isFile{ fmt->script_has(luas) };
+	LuaState L{ isFile ? fmt->script_path(luas).c_str() : nullptr };
+	if (!L)return false;
 	lua_push_msg(L, msg);
 	lua_setglobal(L, "msg");
-	if (luaL_loadstring(L, luas.c_str()) || lua_pcall(L, 0, 2, 0)) {
+	if (isFile) {
+		if (lua_pcall(L, 0, 2, 0)) {
+			string pErrorMsg = lua_to_gb18030_string(L, -1);
+			console.log(getMsg("strSelfName") + "运行lua脚本" + luas + "失败:" + pErrorMsg, 0b10);
+			return 0;
+		}
+	}
+	else if (luaL_loadstring(L, luas.c_str()) || lua_pcall(L, 0, 2, 0)) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
 		console.log(getMsg("strSelfName") + "调用回复lua语句失败!\n" + pErrorMsg, 0b10);
 		msg->reply(getMsg("strOrderLuaErr"));
@@ -258,13 +271,18 @@ bool lua_call_task(const char* file, const char* func) {
 #endif
 	LuaState L(file);
 	if (!L)return false;
-	lua_getglobal(L, func);
 #ifdef _WIN32
 	// 转换为GB18030
 	string fileGB18030(file);
 #else
 	string fileGB18030(UTF8toGBK(file, true));
 #endif
+	if (lua_pcall(L, 0, 0, 0)) {
+		string pErrorMsg = lua_to_gb18030_string(L, -1);
+		console.log(getMsg("strSelfName") + "运行lua文件" + fileGB18030 + "失败:" + pErrorMsg, 0b10);
+		return 0;
+	}
+	lua_getglobal(L, func);
 	if (lua_pcall(L, 0, 0, 0)) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
 		console.log(getMsg("strSelfName") + "调用" + fileGB18030 + "函数" + func + "失败!\n" + pErrorMsg, 0b10);
@@ -294,32 +312,34 @@ int log(lua_State* L) {
 }
  //加载其他lua脚本
 int loadLua(lua_State* L) {
-	string nameFile{ lua_to_string(L, 1) };
-	if (nameFile.empty())return 0;
+	string nameLua{ lua_to_string(L, 1) };
+	if (nameLua.empty())return 0;
 #ifdef _WIN32 // 转换separator
-	for (auto& c : nameFile)
+	for (auto& c : nameLua)
 	{
 		if (c == '/') c = '\\';
 	}
-	bool hasSlash{ nameFile.find('\\') != string::npos };
+	bool hasSlash{ nameLua.find('\\') != string::npos };
 #else
-	for (auto& c : nameFile)
+	for (auto& c : nameLua)
 	{
 		if (c == '\\') c = '/';
 	}
-	bool hasSlash{ nameFile.find('/') != string::npos };
+	bool hasSlash{ nameLua.find('/') != string::npos };
 #endif
-	std::filesystem::path pathFile{ nameFile };
-	if ((pathFile.extension() != ".lua") && (pathFile.extension() != ".LUA"))pathFile = nameFile + ".lua";
-	if (pathFile.is_relative())pathFile = DiceDir / "plugin" / pathFile;
-	if (!std::filesystem::exists(pathFile) && !hasSlash)
-		pathFile = DiceDir / "plugin" / nameFile / "init.lua";
+	std::filesystem::path pathFile{ nameLua };
+	if (fmt->script_has(nameLua)) {
+		pathFile = fmt->script_path(nameLua);
+	}
+	else {
+		if ((pathFile.extension() != ".lua") && (pathFile.extension() != ".LUA"))pathFile = nameLua + ".lua";
+		if (pathFile.is_relative())pathFile = DiceDir / "plugin" / pathFile;
+		if (!std::filesystem::exists(pathFile) && !hasSlash)
+			pathFile = DiceDir / "plugin" / nameLua / "init.lua";
+	}
 	string strLua;
 	if (std::filesystem::exists(pathFile)) {
-		ifstream fs(pathFile);
-		std::stringstream buffer;
-		buffer << fs.rdbuf();
-		strLua = buffer.str();
+		readFile(pathFile, strLua);
 		bool isStateUTF8{ (bool)UTF8Luas.count(L) }, isLuaUTF8{ checkUTF8(strLua) };	//令文件加载入lua的编码保持一致
 		if (isStateUTF8 && !isLuaUTF8) {
 			strLua = GBKtoUTF8(strLua);
@@ -327,10 +347,9 @@ int loadLua(lua_State* L) {
 		else if (!isStateUTF8 && isLuaUTF8) {
 			strLua = UTF8toGBK(strLua);
 		}
-		fs.close();
 	}
 	else {
-		DD::debugLog("待加载Lua文件未找到:"+ UTF8toGBK(pathFile.u8string()));
+		DD::debugLog("待加载Lua未找到:"+ UTF8toGBK(pathFile.u8string()));
 		return 0;
 	}
 	if (luaL_loadstring(L, strLua.c_str())) {
@@ -762,7 +781,7 @@ LuaState::LuaState() {//:isValid(false) {
 	luaL_openlibs(state);
 	regist();
 }
-LuaState::LuaState(const char* file) {//:isValid(false) {
+LuaState::LuaState(const char* file) {
 #ifndef _WIN32
 	// 转换separator
 	string fileStr(file);
@@ -774,25 +793,19 @@ LuaState::LuaState(const char* file) {//:isValid(false) {
 #endif
 	state = luaL_newstate();
 	if (!state)return;
-	if (luaL_loadfile(state, file)) {
-		string pErrorMsg = lua_to_gb18030_string(state, -1);
-		console.log(getMsg("strSelfName") + "读取lua文件" + file + "失败:" + pErrorMsg, 0b10);
-		lua_close(state);
-		state = nullptr;
-		return;
+	if (file) {
+		if (luaL_loadfile(state, file)) {
+			string pErrorMsg = lua_to_gb18030_string(state, -1);
+			console.log(getMsg("strSelfName") + "读取lua文件" + file + "失败:" + pErrorMsg, 0b10);
+			lua_close(state);
+			state = nullptr;
+			return;
+		}
+		ifstream fs(file);
+		if (checkUTF8(fs))UTF8Luas.insert(state);
 	}
 	luaL_openlibs(state);
 	regist();
-	ifstream fs(file);
-	if (checkUTF8(fs))UTF8Luas.insert(state);
-	fs.close();
-	if (lua_pcall(state, 0, 0, 0)) {
-		string pErrorMsg = lua_to_gb18030_string(state, -1);
-		console.log(getMsg("strSelfName") + "运行lua文件" + file + "失败:" + pErrorMsg, 0b10);
-		lua_close(state);
-		state = nullptr;
-		return;
-	}
 }
 
 int lua_readStringTable(const char* file, const char* var, std::unordered_map<std::string, std::string>& tab) {
@@ -807,6 +820,11 @@ int lua_readStringTable(const char* file, const char* var, std::unordered_map<st
 #endif
 	LuaState L(file);
 	if (!L)return -1;
+	if (lua_pcall(L, 0, 0, 0)) {
+		string pErrorMsg = lua_to_gb18030_string(L, -1);
+		console.log(getMsg("strSelfName") + "运行lua文件" + file + "失败:" + pErrorMsg, 0b10);
+		return 0;
+	}
 	lua_getglobal(L, var);
 	if (lua_type(L, 1) == LUA_TNIL) {
 		return 0;

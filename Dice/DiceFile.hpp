@@ -39,6 +39,16 @@ int mkDir(const std::string& dir);
 
 int clrDir(const std::string& dir, const unordered_set<std::string>& exceptList);
 
+template <typename Char, typename Trait, typename Alloc>
+bool readFile(const std::filesystem::path& p, std::basic_string<Char, Trait, Alloc>& str) {
+	ifstream fs(p);
+	if (!fs)return false;
+	std::basic_stringstream<Char, Trait, Alloc> buffer;
+	buffer << fs.rdbuf();
+	str = buffer.str();
+	return true;
+}
+
 template <typename TKey, typename TVal, typename sort>
 void map_merge(map<TKey, TVal, sort>& m1, const map<TKey, TVal, sort>& m2)
 {

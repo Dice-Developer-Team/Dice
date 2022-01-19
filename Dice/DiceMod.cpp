@@ -34,6 +34,7 @@
 #include "DDAPI.h"
 #include <regex>
 using std::set;
+namespace fs = std::filesystem;
 void parse_vary(string& raw, unordered_map<string, pair<double, AttrVar::CMPR>>& vary) {
 	ShowList vars;
 	for (auto& var : split(raw, "&")) {
@@ -306,7 +307,7 @@ bool DiceMsgReply::exec(FromMsg* msg) {
 		return true;
 	}
 	else if (echo == Echo::Lua) {
-		lua_msg_reply(msg, text.c_str());
+		lua_msg_reply(msg, text);
 		return true;
 	}
 	return false;
@@ -621,6 +622,13 @@ bool DiceModManager::call_task(const string& task) {
 	return taskcall[task].exec();
 }
 
+string DiceModManager::script_path(const string& name)const {
+	if (auto it{ scripts.find(name) }; it != scripts.end()) {
+		return it->second;
+	}
+	return {};
+}
+
 int DiceModManager::load(ResList& resLog)
 {
 	//读取reply
@@ -678,7 +686,8 @@ int DiceModManager::load(ResList& resLog)
 			}
 			if (j.count("dice_build")) {
 				if (j["dice_build"] > Dice_Build) {
-					sModErr.push_back(UTF8toGBK(pathFile.filename().u8string()) + "(Dice版本过低)");
+					sModErr.push_back(UTF8toGBK(pathFile.filename().u8string())
+						+ "(build低于" + to_string(j["dice_build"].get<int>()) + ")");
 					continue;
 				}
 			}
@@ -688,8 +697,19 @@ int DiceModManager::load(ResList& resLog)
 			if (j.count("global_char")) {
 				cntItem += readJMap(j["global_char"], GlobalChar);
 			}
+			if (fs::path dirMod{ pathFile.replace_extension() }; fs::exists(dirMod)) {
+				DD::debugLog("遍历读取" + dirMod.string());
+				if (fs::exists(dirMod / "script")) {
+					vector<std::filesystem::path> fScripts;
+					listDir(dirMod / "script", fScripts);
+					for (auto& p : fScripts) {
+						scripts[p.stem().string()] = getNativePathString(p);
+					}
+				}
+			}
 		}
-		resLog << "读取/mod/中的" + std::to_string(cntFile) + "个文件, 共" + std::to_string(cntItem) + "个条目";
+		cntItem += scripts.size();
+		resLog << "读取/mod/中的" + std::to_string(cntFile) + "个文件, 共" + std::to_string(cntItem) + "项";
 		if (!sModErr.empty()) {
 			resLog << "读取失败" + std::to_string(sModErr.size()) + "个:";
 			for (auto& it : sModErr) {

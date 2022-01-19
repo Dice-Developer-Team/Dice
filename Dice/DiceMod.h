@@ -147,9 +147,12 @@ class DiceModManager
 {
 	map<string, DiceMod, less_ci> modList;
     vector<pair<string, bool>>modIndex;
+    //global
 	map<string, string, less_ci> helpdoc;
     map<string, DiceMsgOrder, less_ci> msgorder;
     map<string, DiceMsgOrder, less_ci> taskcall;
+    unordered_map<string, string, hash_ci, equal_ci> scripts;
+
     WordQuerier querier;
     TrieG<char, less_ci> gOrder;
     map<string, DiceMsgReply, less_ci> msgreply;
@@ -177,6 +180,10 @@ public:
     void reply_show(const shared_ptr<DiceJobDetail>&);
     bool call_task(const string&);
     string list_order();
+
+    bool script_has(const string& name)const { return scripts.count(name); }
+    string script_path(const string& name)const;
+
 	int load(ResList&);
     void init();
 	void clear();
