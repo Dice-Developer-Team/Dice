@@ -62,6 +62,7 @@ public:
 		this->~TrieG();
 		new(this)TrieG(dir);
 	}*/
+	void clear() { root = {}; }
 	void add(const _String s, const string& val) {
 		Node* p = &root;
 		for (_Char ch : s) {

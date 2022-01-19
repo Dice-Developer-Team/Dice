@@ -631,47 +631,6 @@ string DiceModManager::script_path(const string& name)const {
 
 int DiceModManager::load(ResList& resLog)
 {
-	//读取reply
-	json jFile = freadJson(DiceDir / "conf" / "CustomMsgReply.json");
-	if (!jFile.empty()) {
-		try {
-			for (auto reply = jFile.cbegin(); reply != jFile.cend(); ++reply) {
-				if (std::string key = UTF8toGBK(reply.key()); !key.empty()) {
-					msgreply[key].readJson(reply.value());
-					if (msgreply[key].keyword.empty())msgreply[key].keyword = key;
-				}
-			}
-			resLog << "读取/conf/CustomMsgReply.json中的" + std::to_string(msgreply.size()) + "条自定义回复";
-		}
-		catch (const std::exception& e) {
-			resLog << "解析/conf/CustomMsgReply.json出错:" << e.what();
-		}
-	}
-	else {
-		std::map<std::string, std::vector<std::string>, less_ci> mRegexReplyDeck;
-		std::map<std::string, std::vector<std::string>, less_ci> mReplyDeck;
-		if (loadJMap(DiceDir / "conf" / "CustomReply.json", mReplyDeck) > 0) {
-			resLog << "读取CustomReply" + to_string(mReplyDeck.size()) + "条";
-			for (auto& [key, deck] : mReplyDeck) {
-				DiceMsgReply& reply{ msgreply[key] };
-				reply.deck = deck;
-			}
-		}
-		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck) > 0) {
-			resLog << "读取正则Reply" + to_string(mRegexReplyDeck.size()) + "条";
-			for (auto& [key, deck] : mRegexReplyDeck) {
-				DiceMsgReply& reply{ msgreply[key] };
-				reply.mode = DiceMsgReply::Mode::Regex;
-				reply.deck = deck;
-			}
-		}
-		save_reply();
-	}
-	for (const auto& [key, reply] : msgreply) {
-		if (reply.mode == DiceMsgReply::Mode::Search)gReplySearcher.add(convert_a2w(key.c_str()), key);
-		else if (reply.mode == DiceMsgReply::Mode::Regex)reply_regex.insert(key);
-	}
-	gReplySearcher.make_fail();
 	//读取mod
 	vector<std::filesystem::path> sModFile;
 	vector<string> sModErr;
@@ -771,6 +730,42 @@ int DiceModManager::load(ResList& resLog)
 			map_merge(helpdoc, CustomHelp);
 		}
 	}
+	//读取reply
+	json jFile = freadJson(DiceDir / "conf" / "CustomMsgReply.json");
+	if (!jFile.empty()) {
+		try {
+			for (auto reply = jFile.cbegin(); reply != jFile.cend(); ++reply) {
+				if (std::string key = UTF8toGBK(reply.key()); !key.empty()) {
+					msgreply[key].readJson(reply.value());
+					if (msgreply[key].keyword.empty())msgreply[key].keyword = key;
+				}
+			}
+			resLog << "读取/conf/CustomMsgReply.json中的" + std::to_string(msgreply.size()) + "条自定义回复";
+		}
+		catch (const std::exception& e) {
+			resLog << "解析/conf/CustomMsgReply.json出错:" << e.what();
+		}
+	}
+	else {
+		std::map<std::string, std::vector<std::string>, less_ci> mRegexReplyDeck;
+		std::map<std::string, std::vector<std::string>, less_ci> mReplyDeck;
+		if (loadJMap(DiceDir / "conf" / "CustomReply.json", mReplyDeck) > 0) {
+			resLog << "读取CustomReply" + to_string(mReplyDeck.size()) + "条";
+			for (auto& [key, deck] : mReplyDeck) {
+				DiceMsgReply& reply{ msgreply[key] };
+				reply.deck = deck;
+			}
+		}
+		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck) > 0) {
+			resLog << "读取正则Reply" + to_string(mRegexReplyDeck.size()) + "条";
+			for (auto& [key, deck] : mRegexReplyDeck) {
+				DiceMsgReply& reply{ msgreply[key] };
+				reply.mode = DiceMsgReply::Mode::Regex;
+				reply.deck = deck;
+			}
+		}
+		save_reply();
+	}
 	//init
 	std::thread factory(&DiceModManager::init, this);
 	factory.detach();
@@ -788,6 +783,13 @@ void DiceModManager::init() {
 	for (const auto& [key, order] : msgorder) {
 		gOrder.insert(key, key);
 	}
+	for (const auto& [key, reply] : msgreply) {
+		if (reply.mode == DiceMsgReply::Mode::Search)gReplySearcher.add(convert_a2w(key.c_str()), key);
+		else if(reply.mode == DiceMsgReply::Mode::Prefix)gReplyPrefix.add(key, key);
+		else if (reply.mode == DiceMsgReply::Mode::Regex)reply_regex.insert(key);
+	}
+	gReplySearcher.make_fail();
+	gReplyPrefix.make_fail();
 	isIniting = false;
 }
 void DiceModManager::clear()
@@ -795,5 +797,8 @@ void DiceModManager::clear()
 	helpdoc.clear();
 	querier.clear();
 	msgorder.clear();
+	gOrder.clear();
 	taskcall.clear();
+	gReplySearcher.clear();
+	gReplyPrefix.clear();
 }
