@@ -6,11 +6,13 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <queue>
 using std::initializer_list;
 using std::pair;
 using std::vector;
 using std::map;
+using std::unordered_map;
 using std::multimap;
 using std::string;
 using std::to_string;
@@ -68,6 +70,15 @@ struct equal_ci
 		return str1.length() == str2.length();
 	}
 };
+
+template <typename TKey, typename TVal, typename Hash, typename Equal>
+void merge(unordered_map<TKey, TVal, Hash, Equal>& m1, const unordered_map<TKey, TVal, Hash, Equal>& m2)
+{
+	for (auto& [k, v] : m2)
+	{
+		m1[k] = v;
+	}
+}
 
 template <typename T>
 class enumap

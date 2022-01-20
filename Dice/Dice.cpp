@@ -33,9 +33,8 @@
 #include <unordered_map>
 #include <exception>
 #include <stdexcept>
-#include "filesystem.hpp"
+#include <filesystem>
 
-#include "APPINFO.h"
 #include "DiceFile.hpp"
 #include "Jsonio.h"
 #include "QQEvent.h"
@@ -281,10 +280,10 @@ EVE_Enable(eventEnable)
 	fpFileLoc = DiceDir / "com.w4123.dice";
 	{
 		std::unique_lock lock(GlobalMsgMutex);
-		GlobalMsg["strSelfName"] = DD::getLoginNick();
-		if (GlobalMsg["strSelfName"].empty())
+		string& strSelfName{ GlobalMsg["strSelfName"] = DD::getLoginNick() };
+		if (strSelfName.empty())
 		{
-			GlobalMsg["strSelfName"] = "骰娘[" + toString(console.DiceMaid % 10000, 4) + "]";
+			strSelfName = "骰娘[" + toString(console.DiceMaid % 10000, 4) + "]";
 		}
 	}
 	std::error_code ec;
@@ -327,14 +326,7 @@ EVE_Enable(eventEnable)
 		std::unique_lock lock(GlobalMsgMutex);
 		if (loadJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg) < 0)loadJMap(fpFileLoc / "CustomMsg.json", EditedMsg);
 		{	
-			//预修改出场回复文本
-			if (EditedMsg.count("strSelfName"))GlobalMsg["strSelfName"] = EditedMsg["strSelfName"];
-			for (auto it : EditedMsg)
-			{
-				while (it.second.find("本机器人") != string::npos)it.second.replace(it.second.find("本机器人"), 8,
-																				GlobalMsg["strSelfName"]);
-				GlobalMsg[it.first] = it.second;
-			}
+			merge(GlobalMsg, EditedMsg);
 		}
 	}
 	loadData();
