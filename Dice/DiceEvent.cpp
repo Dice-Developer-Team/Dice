@@ -50,7 +50,7 @@ void FromMsg::formatReply() {
 	if (!vars.count("pc") || vars["pc"].str_empty())getPCName(vars);
 	if (!vars.count("at") || vars["at"].str_empty())vars["at"] = !isPrivate() ? "[CQ:at,id=" + to_string(fromChat.uid) + "]" : vars["nick"];
 	if (msgMatch.ready())strReply = convert_realw2a(msgMatch.format(convert_a2realw(strReply.c_str())).c_str());
-	strReply = format(strReply, GlobalMsg, vars);
+	strReply = fmt->format(strReply, std::make_shared<AttrVars>(vars));
 }
 
 void FromMsg::reply(const std::string& msgReply, bool isFormat) {
@@ -140,7 +140,7 @@ void FromMsg::fwdMsg()
 
 void FromMsg::note(std::string strMsg, int note_lv)
 {
-	strMsg = format(strMsg, GlobalMsg, vars);
+	strMsg = fmt->format(strMsg, std::make_shared<AttrVars>(vars));
 	ofstream fout(DiceDir / "audit" / ("log" + to_string(console.DiceMaid) + "_" + printDate() + ".txt"),
 		ios::out | ios::app);
 	fout << printSTNow() << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
@@ -843,7 +843,7 @@ int FromMsg::AdminEvent(const string& strOption)
 						getUser(llTargetID).trust(1);
 						note("已添加" + getMsg("strSelfName") + "对" + printUser(llTargetID) + "的信任√", 0b1);
 						vars["user_nick"] = getName(llTargetID);
-						AddMsgToQueue(format(getMsg("strWhiteQQAddNotice"), GlobalMsg, vars), llTargetID);
+						AddMsgToQueue(getMsg("strWhiteQQAddNotice", vars), llTargetID);
 					}
 				}
 			}
@@ -1860,7 +1860,7 @@ int FromMsg::InnerOrder() {
 				reply(getMsg("strGroupCardSet"));
 			}
 			else {
-				reply(getMsg("struidEmpty"));
+				reply(getMsg("strUidEmpty"));
 			}
 			return 1;
 		}
@@ -1879,7 +1879,7 @@ int FromMsg::InnerOrder() {
 			}
 			string QQNum = readDigit();
 			if (QQNum.empty()) {
-				reply(getMsg("struidEmpty"));
+				reply(getMsg("strUidEmpty"));
 				return -1;
 			}
 			long long llMemberQQ = stoll(QQNum);
@@ -1910,7 +1910,7 @@ int FromMsg::InnerOrder() {
 			}
 			long long llMemberQQ = readID();
 			if (!llMemberQQ) {
-				reply(getMsg("struidEmpty"));
+				reply(getMsg("strUidEmpty"));
 				return -1;
 			}
 			ResList resKicked, resDenied, resNotFound;
@@ -1947,7 +1947,7 @@ int FromMsg::InnerOrder() {
 				reply(getMsg("strGroupTitleSet"));
 			}
 			else {
-				reply(getMsg("struidEmpty"));
+				reply(getMsg("strUidEmpty"));
 			}
 			return 1;
 		}
@@ -2027,7 +2027,7 @@ int FromMsg::InnerOrder() {
 				}
 				else if (DiceMsgReply::sMode.count(attr)) {	//Mode=Key
 					trigger.mode = (DiceMsgReply::Mode)DiceMsgReply::sMode[attr];
-					trigger.keyword = format(key = readUntilTab(), GlobalMsg);
+					trigger.keyword = fmt->format(key = readUntilTab());
 					if (trigger.mode == DiceMsgReply::Mode::Regex) {
 						try
 						{
@@ -2531,7 +2531,7 @@ int FromMsg::InnerOrder() {
 			}
 			string strTarget = readDigit();
 			if (strTarget.empty()) {
-				reply(getMsg("struidEmpty"));
+				reply(getMsg("strUidEmpty"));
 				return 1;
 			}
 			long long llTarget = stoll(strTarget);
@@ -2570,7 +2570,7 @@ int FromMsg::InnerOrder() {
 			vars["note"] = readPara();
 			long long llTargetID(readID());
 			if (!llTargetID) {
-				reply(getMsg("struidEmpty"));
+				reply(getMsg("strUidEmpty"));
 			}
 			else if (trustedQQ(llTargetID) >= trusted) {
 				reply(getMsg("strUserTrustDenied"));
@@ -2734,18 +2734,14 @@ int FromMsg::InnerOrder() {
 		}
 		while (strMsg[intMsgCnt] == ' ')intMsgCnt++;
 		if (intMsgCnt == strMsg.length() || strMsg.substr(intMsgCnt) == "show") {
-			std::shared_lock lock(GlobalMsgMutex);
-			const auto it = GlobalMsg.find(strName);
-			if (it != GlobalMsg.end())AddMsgToQueue(it->second, fromChat);
+			AddMsgToQueue(fmt->msg_get(strName), fromChat);
 			return 1;
 		}
 		string strMessage = strMsg.substr(intMsgCnt);
 		if (strMessage == "reset") {
 			{
 				std::unique_lock lock(GlobalMsgMutex);
-				EditedMsg.erase(strName);
-				if (PlainMsg.count(strName))GlobalMsg[strName] = PlainMsg[strName];
-				else GlobalMsg.erase(strName);
+				fmt->msg_reset(strName);
 			}
 			note("已重置" + strName + "的自定义。", 0b1);
 		}
@@ -2753,12 +2749,10 @@ int FromMsg::InnerOrder() {
 			{
 				std::unique_lock lock(GlobalMsgMutex);
 				if (strMessage == "NULL")strMessage = "";
-				EditedMsg[strName] = strMessage;
-				GlobalMsg[strName] = strMessage;
+				fmt->msg_edit(strName, strMessage);
 			}
 			note("已自定义" + strName + "的文本", 0b1);
 		}
-		saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ak") {
@@ -2944,7 +2938,7 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "li") {
-		vars["res"] = LongInsane();
+		LongInsane(vars);
 		reply(getMsg("strLongInsane"));
 		return 1;
 	}
@@ -3912,7 +3906,7 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ti") {
-		vars["res"] = TempInsane();
+		TempInsane(vars);
 		reply(getMsg("strTempInsane"));
 		return 1;
 	}

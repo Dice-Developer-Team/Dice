@@ -42,9 +42,9 @@
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-const unsigned short Dice_Build = 599u;
-inline const std::string Dice_Ver_Without_Build = "2.6.2fixed";
-constexpr auto DiceRequestHeader = "Dice/2.6.2";
+const unsigned short Dice_Build = 600u;
+inline const std::string Dice_Ver_Without_Build = "2.6.3beta1";
+constexpr auto DiceRequestHeader = "Dice/2.6.3";
 inline const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 inline const std::string Dice_Short_Ver = "Dice! by 溯洄 & Shiki Ver " + Dice_Ver;
 
@@ -95,18 +95,20 @@ extern std::string Dice_Full_Ver_On;
 extern bool msgSendThreadRunning;
 
 // 回复信息, 此内容可以通过CustomMsg功能修改而无需修改源代码
-extern std::map<std::string, std::string, less_ci> GlobalMsg;
-extern std::map<std::string, std::string, less_ci> PlainMsg;
 extern std::shared_mutex GlobalMsgMutex;
+using dict_ci = std::unordered_map<string, string, hash_ci, equal_ci>;
+extern dict_ci GlobalMsg;
+extern const dict_ci PlainMsg;
 // 修改后的Global语句
-extern std::map<std::string, std::string, less_ci> EditedMsg;
+extern dict_ci EditedMsg;
 // 语句注释
-extern std::map<std::string, std::string, less_ci> GlobalComment;
+extern const dict_ci GlobalComment;
 // 帮助文档
-extern const std::map<std::string, std::string, less_ci> HelpDoc;
+extern const dict_ci HelpDoc;
 // 修改后的帮助文档
-inline std::map<std::string, std::string, less_ci> CustomHelp;
-const std::string getMsg(const std::string& key, const AttrVars& tmp = {});
+inline dict_ci CustomHelp;
+const std::string getMsg(const std::string& key, const AttrVars& tmp);
+const std::string getMsg(const std::string& key, std::shared_ptr<AttrVars> tmp = {});
 const std::string getComment(const std::string& key);
 
 #endif /*DICE_GLOBAL_VAR*/

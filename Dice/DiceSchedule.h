@@ -27,7 +27,7 @@ struct DiceJobDetail : public std::enable_shared_from_this<DiceJobDetail> {
     time_t fromTime = time(nullptr);
     size_t cntExec{ 0 };
     //¡Ÿ ±±‰¡øø‚
-    unordered_map<string, AttrVar> vars = {};
+    AttrVars vars = {};
     DiceJobDetail(const char* cmd, bool isFromSelf = false, const AttrVars& vars = {});
     DiceJobDetail(const  unordered_map<string, AttrVar>& var, chatInfo ct = {}) :vars(var), fromChat(ct){}
     virtual void reply(const char*, bool = true) {}

@@ -331,7 +331,7 @@ string DiceMsgReply::show_ans()const {
 }
 
 void DiceMsgReply::readJson(const json& j) {
-	if (j.count("key"))keyword = format(UTF8toGBK(j["key"].get<string>()), GlobalMsg);
+	if (j.count("key"))keyword = fmt->format(UTF8toGBK(j["key"].get<string>()));
 	if (j.count("type"))type = (Type)sType[j["type"].get<string>()];
 	if (j.count("mode"))mode = (Mode)sMode[j["mode"].get<string>()];
 	if (j.count("limit"))limit.parse(UTF8toGBK(j["limit"].get<string>()));
@@ -372,11 +372,10 @@ bool DiceMsgOrder::exec() {
 	return false;
 }
 
-DiceModManager::DiceModManager() : helpdoc(HelpDoc)
-{
+DiceModManager::DiceModManager() : helpdoc(HelpDoc){
 }
 
-string DiceModManager::format(string s, const map<string, string, less_ci>& dict, const char* mod_name) const
+string DiceModManager::format(string s, std::shared_ptr<AttrVars> context, const dict_ci& dict) const
 {
 	//直接重定向
 	if (s[0] == '&')
@@ -385,36 +384,44 @@ string DiceModManager::format(string s, const map<string, string, less_ci>& dict
 		const auto it = dict.find(key);
 		if (it != dict.end())
 		{
-			return format(it->second, dict, mod_name);
+			return format(it->second, context, dict);
 		}
-		//调用本mod词条
+		if (context){
+			if (auto uit = context->find(key); uit != context->end()) {
+				return uit->second.to_str();
+			}
+		}
 	}
 	int l = 0, r = 0;
 	int len = s.length();
-	while ((l = s.find('{', r)) != string::npos && (r = s.find('}', l)) != string::npos)
-	{
-		if (s[l - 1] == 0x5c)
-		{
+	while ((l = s.find('{', r)) != string::npos && (r = s.find('}', l)) != string::npos){
+		//左括号前加‘\’表示该括号内容不转义
+		if (s[l - 1] == 0x5c){
 			s.replace(l - 1, 1, "");
 			continue;
 		}
 		string key = s.substr(l + 1, r - l - 1), val;
-		if (key.find("help:") == 0) {
+		if (context && context->find(key) != context->end()) {
+			auto uit = context->find(key);
+			if (key == "res")val = format(uit->second.to_str(), context, dict);
+			else val = uit->second.to_str();
+		}
+		else if (key.find("help:") == 0) {
 			key = key.substr(5);
-			val = fmt->format(fmt->get_help(key), dict);
+			val = fmt->format(fmt->get_help(key), {}, dict);
 		}
 		else if (key.find("sample:") == 0) {
 			key = key.substr(7);
 			vector<string> samples{ split(key,"|") };
 			if (samples.empty())val = "";
 			else
-				val = fmt->format(samples[RandomGenerator::Randint(0, samples.size() - 1)], dict);
+				val = fmt->format(samples[RandomGenerator::Randint(0, samples.size() - 1)], {}, dict);
 		}
-		else if (auto it = dict.find(key); it != dict.end()){
-			val = format(it->second, dict, mod_name);
+		else if (auto cit = dict.find(key); cit != dict.end()) {
+			val = format(cit->second, context, dict);
 		}
 		//局部屏蔽全局
-		else if ((it = GlobalChar.find(key)) != GlobalChar.end()) {
+		else if (auto it = GlobalChar.find(key);it != GlobalChar.end()) {
 			val = it->second;
 		}
 		else if (auto func = strFuncs.find(key); func != strFuncs.end())
@@ -428,12 +435,35 @@ string DiceModManager::format(string s, const map<string, string, less_ci>& dict
 	}
 	return s;
 }
+std::shared_mutex GlobalMsgMutex;
+string DiceModManager::msg_get(const string& key)const {
+	std::shared_lock lock(GlobalMsgMutex);
+	const auto it = GlobalMsg.find(key);
+	if (it != GlobalMsg.end()) return it->second;
+	else return "";
+}
+void DiceModManager::msg_reset(const string& key)const {
+	std::shared_lock lock(GlobalMsgMutex);
+	const auto it = GlobalMsg.find(key);
+	if (it != GlobalMsg.end()) {
+		EditedMsg.erase(key);
+		if (PlainMsg.count(key))it->second = PlainMsg.find(key)->second;
+		else GlobalMsg.erase(it);
+		saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
+	}
+}
+void DiceModManager::msg_edit(const string& key, const string& val)const {
+	std::shared_lock lock(GlobalMsgMutex);
+	EditedMsg[key] = val;
+	GlobalMsg[key] = val;
+	saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
+}
 
 string DiceModManager::get_help(const string& key) const
 {
 	if (const auto it = helpdoc.find(key); it != helpdoc.end())
 	{
-		return format(it->second, helpdoc);
+		return format(it->second, {}, helpdoc);
 	}
 	return "{strHelpNotFound}";
 }
@@ -459,7 +489,7 @@ void DiceModManager::_help(const shared_ptr<DiceJobDetail>& job) {
 		return;
 	}
 	else if (const auto it = helpdoc.find((*job)["help_word"].to_str()); it != helpdoc.end()) {
-		job->reply(format(it->second, helpdoc));
+		job->reply(format(it->second, {}, helpdoc));
 	}
 	else if (unordered_set<string> keys = querier.search((*job)["help_word"].to_str());!keys.empty()) {
 		if (keys.size() == 1) {
@@ -693,7 +723,7 @@ int DiceModManager::load(ResList& resLog)
 			int cnt = lua_readStringTable(fileLua.c_str(), "msg_order", mOrder);
 			if (cnt > 0) {
 				for (auto& [key, func] : mOrder) {
-					msgorder[::format(key, GlobalMsg)] = { fileLua,func };
+					msgorder[format(key)] = { fileLua,func };
 				}
 				cntOrder += mOrder.size();
 			}
@@ -727,7 +757,7 @@ int DiceModManager::load(ResList& resLog)
 			resLog << UTF8toGBK(fCustomHelp.u8string()) + "解析失败！";
 		}
 		else {
-			map_merge(helpdoc, CustomHelp);
+			merge(helpdoc, CustomHelp);
 		}
 	}
 	//读取reply

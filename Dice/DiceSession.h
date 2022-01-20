@@ -1,12 +1,9 @@
 #pragma once
-#include <string>
-#include <vector>
-#include <map>
 #include <set>
 #include "filesystem.hpp"
-#include <memory>
 #include "STLExtern.hpp"
 #include "DiceAttrVar.h"
+#include "DiceMsgSend.h"
 
 using std::pair;
 using std::string;
@@ -46,7 +43,7 @@ struct DeckInfo {
 	vector<string> meta;
 	// £”‡≈∆
 	vector<size_t> idxs;
-	size_t sizRes;
+	size_t sizRes{ 0 };
 	DeckInfo() = default;
 	DeckInfo(const vector<string>& deck);
 	void init();
@@ -168,14 +165,18 @@ public:
 
 using Session = DiceSession;
 
-class DiceFullSession : public DiceSession
-{
-	set<long long> sGM;
-	set<long long> sPL;
+class DiceRoom {
+	unsigned int id{ std::stoul("5")};
+	set<long long>gm_list;
+	set<long long>pl_list;
+	set<long long>ob_list;
+	AttrVars confs;
+public:
+	chatInfo mainTable;
 };
 
-class DiceTableMaster
-{
+class DiceTableMaster{
+	std::unordered_map<long long, DiceRoom>RoomList;
 public:
 	map<long long, std::shared_ptr<Session>> mSession;
 	Session& session(long long group);

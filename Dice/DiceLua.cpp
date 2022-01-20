@@ -653,7 +653,7 @@ int sendMsg(lua_State* L) {
 	msgtype type{ fromGID ?
 		chat(fromGID).isGroup ? msgtype::Group : msgtype::Discuss
 		: msgtype::Private };
-	AddMsgToQueue(format(fromMsg, GlobalMsg),
+	AddMsgToQueue(fmt->format(fromMsg),
 		{ fromUID,fromGID });
 	return 0;
 }

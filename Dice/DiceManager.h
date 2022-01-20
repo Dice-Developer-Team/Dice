@@ -123,8 +123,7 @@ public:
             if (j["action"].get<std::string>() == "set")
             {
                 std::unique_lock lock(GlobalMsgMutex);
-                for(const auto& item: j["data"])
-                {
+                for(const auto& item: j["data"]){
                     GlobalMsg[UTF8toGBK(item["name"].get<std::string>())] = UTF8toGBK(item["value"].get<std::string>());
                     EditedMsg[UTF8toGBK(item["name"].get<std::string>())] = UTF8toGBK(item["value"].get<std::string>());
                 }

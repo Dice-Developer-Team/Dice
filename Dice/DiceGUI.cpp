@@ -22,6 +22,7 @@
 #include "Jsonio.h"
 #include "resource.h"
 #include "DDAPI.h"
+#include "DiceMod.h"
 
 #pragma comment(lib, "comctl32.lib")
 
@@ -646,11 +647,8 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					if (ListViewCustomMsgCurrentActivated == -1) return 0;
 					std::string curr = ListViewCustomMsg.GetItemText(ListViewCustomMsgCurrentActivated);
 					std::string str = EditCustomMsg.GetText();
-					std::unique_lock lock(GlobalMsgMutex);
-					GlobalMsg[curr] = str;
-					EditedMsg[curr] = str;
+					fmt->msg_edit(curr, str);
 					ListViewCustomMsg.SetItemText(str, ListViewCustomMsgCurrentActivated, 1);
-					saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
 				}
 				return 0;
 			case ID_MASTER_BUTTONMASTER:

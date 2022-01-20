@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2022 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -30,6 +30,7 @@
 #include <vector>
 #include <numeric>
 #include <map>
+#include <unordered_map>
 #include "RDConstant.h"
 #include "RandomGenerator.h"
 
@@ -834,7 +835,9 @@ std::string COC6(int);
 std::string COC7D();
 std::string COC7(int);
 std::string DND(int);
-std::string LongInsane();
-std::string TempInsane();
+class AttrVar;
+using AttrVars = std::unordered_map<std::string, AttrVar>;
+void LongInsane(AttrVars&);
+void TempInsane(AttrVars&);
 int RollSuccessLevel(int, int, int);
 #endif /*DICE_RD*/

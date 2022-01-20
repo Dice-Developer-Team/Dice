@@ -39,11 +39,6 @@ extern std::map<string, string> GlobalChar;
 typedef string(*GobalTex)();
 extern std::map<string, GobalTex> strFuncs;
 
-std::string format(std::string str, const std::initializer_list<const std::string>& replace_str);
-
-std::string format(std::string s, const std::map<std::string, std::string, less_ci>& replace_str,
-				   const std::unordered_map<std::string, AttrVar>& vars = {});
-
 class ResList
 {
 	std::vector<std::string> vRes;

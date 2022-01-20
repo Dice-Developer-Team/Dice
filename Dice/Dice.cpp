@@ -33,7 +33,7 @@
 #include <unordered_map>
 #include <exception>
 #include <stdexcept>
-#include <filesystem>
+#include "filesystem.hpp"
 
 #include "DiceFile.hpp"
 #include "Jsonio.h"
@@ -224,6 +224,8 @@ EVE_Enable(eventEnable)
 	Dice_Full_Ver_On = Dice_Full_Ver + " on\n" + DD::getDriVer();
 	DD::debugLog(Dice_Full_Ver_On);
 
+	fmt = make_unique<DiceModManager>();
+
 	mCardTemplet = {
 		{
 			"COC7", {
@@ -321,12 +323,11 @@ EVE_Enable(eventEnable)
 	else {
 		blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true);
 	}
-	fmt = make_unique<DiceModManager>();
 	{
 		std::unique_lock lock(GlobalMsgMutex);
 		if (loadJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg) < 0)loadJMap(fpFileLoc / "CustomMsg.json", EditedMsg);
 		{	
-			map_merge(GlobalMsg, EditedMsg);
+			merge(GlobalMsg, EditedMsg);
 		}
 	}
 	loadData();

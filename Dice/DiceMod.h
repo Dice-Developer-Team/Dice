@@ -15,6 +15,7 @@
 #include "SHKQuerier.h"
 #include "SHKTrie.h"
 #include "DiceSchedule.h"
+#include "GlobalVar.h"
 using std::string;
 using std::vector;
 using std::map;
@@ -25,7 +26,7 @@ class FromMsg;
 class DiceTriggerLimit {
     string content;
     string comment;
-    int prob;
+    int prob{ 0 };
     set<long long>user_id;
     bool user_id_negative{ false };
     set<long long>grp_id;
@@ -148,7 +149,7 @@ class DiceModManager
 	map<string, DiceMod, less_ci> modList;
     vector<pair<string, bool>>modIndex;
     //global
-	map<string, string, less_ci> helpdoc;
+    unordered_map<string, string, hash_ci, equal_ci> helpdoc;
     map<string, DiceMsgOrder, less_ci> msgorder;
     map<string, DiceMsgOrder, less_ci> taskcall;
     unordered_map<string, string, hash_ci, equal_ci> scripts;
@@ -163,7 +164,12 @@ public:
 	DiceModManager();
     friend class CustomReplyApiHandler;
     bool isIniting{ false };
-	string format(string, const map<string, string, less_ci>&, const char* mod_name = "") const;
+    //std::unordered_map<string, string, hash_ci, equal_ci>& custom_msg() { return GlobalMsg; }
+	string format(string, std::shared_ptr<AttrVars> = {}, const unordered_map<string, string, hash_ci, equal_ci>& = GlobalMsg) const;
+    string msg_get(const string& key)const;
+    void msg_reset(const string& key)const;
+    void msg_edit(const string& key, const string& val)const;
+
     unordered_map<string, size_t>cntHelp;
 	[[nodiscard]] string get_help(const string&) const;
     void _help(const shared_ptr<DiceJobDetail>&);

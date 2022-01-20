@@ -349,58 +349,36 @@ string DND(int intNum)
 	return strOutput;
 }
 
-string TempInsane()
-{
+void TempInsane(AttrVars& vars) {
 	const int intSymRes = RandomGenerator::Randint(1, 10);
-	std::string strTI{ "1D10=" + to_string(intSymRes) + "\n֢״: " + TempInsanity[intSymRes] };
-	if (intSymRes == 9)
-	{
+	vars["res"] = "1D10=" + to_string(intSymRes) + "\n֢״: " + TempInsanity[intSymRes];
+	vars["dur"] = "1D10=" + to_string(RandomGenerator::Randint(1, 10));
+	if (intSymRes == 9) {
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
-		strTI = format(strTI, {
-			               "1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes),
-			               strFear[intDetailSymRes]
-		               });
+		vars["detail_roll"] = "1D100=" + to_string(intDetailSymRes);
+		vars["detail"] = strFear[intDetailSymRes];
 	}
-	else if (intSymRes == 10)
-	{
+	else if (intSymRes == 10) {
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
-		strTI = format(strTI, {
-			               "1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes),
-			               strPanic[intDetailSymRes]
-		               });
+		vars["detail_roll"] = "1D100=" + to_string(intDetailSymRes);
+		vars["detail"] = strPanic[intDetailSymRes];
 	}
-	else
-	{
-		strTI = format(strTI, {"1D10=" + to_string(RandomGenerator::Randint(1, 10))});
-	}
-	return strTI;
 }
 
-string LongInsane()
-{
+void LongInsane(AttrVars& vars) {
 	const int intSymRes = RandomGenerator::Randint(1, 10);
-	std::string strLI{ "1D10=" + to_string(intSymRes) + "\n֢״: " + LongInsanity[intSymRes] };
-	if (intSymRes == 9)
-	{
+	vars["res"] = "1D10=" + to_string(intSymRes) + "\n֢״: " + LongInsanity[intSymRes];
+	vars["dur"] = "1D10=" + to_string(RandomGenerator::Randint(1, 10));
+	if (intSymRes == 9) {
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
-		strLI = format(strLI, {
-			               "1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes),
-			               strFear[intDetailSymRes]
-		               });
+		vars["detail_roll"] = "1D100=" + to_string(intDetailSymRes);
+		vars["detail"] = strFear[intDetailSymRes];
 	}
-	else if (intSymRes == 10)
-	{
+	else if (intSymRes == 10) {
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
-		strLI = format(strLI, {
-			               "1D10=" + to_string(RandomGenerator::Randint(1, 10)), "1D100=" + to_string(intDetailSymRes),
-			               strPanic[intDetailSymRes]
-		               });
+		vars["detail_roll"] = "1D100=" + to_string(intDetailSymRes);
+		vars["detail"] = strPanic[intDetailSymRes];
 	}
-	else
-	{
-		strLI = format(strLI, {"1D10=" + to_string(RandomGenerator::Randint(1, 10))});
-	}
-	return strLI;
 }
 
 //�ɹ��ȼ�

@@ -28,6 +28,7 @@
 #include "GlobalVar.h"
 #include "MsgFormat.h"
 #include "DiceExtensionManager.h"
+#include "DiceMod.h"
 
 bool Enabled = false;
 
@@ -45,9 +46,7 @@ HMODULE hDllModule = nullptr;
 
 bool msgSendThreadRunning = false;
 
-std::shared_mutex GlobalMsgMutex;
-
-std::map<std::string, std::string, less_ci> PlainMsg
+const dict_ci PlainMsg
 {
 	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
 	{"strParaIllegal","参数非法×"},			//偷懒用万能回复
@@ -243,8 +242,8 @@ std::map<std::string, std::string, less_ci> PlainMsg
 	{"strObExit", "{nick}成功退出{self}的旁观√"},
 	{"strObEnterAlready", "{nick}已经处于{self}的旁观模式!"},
 	{"strObExitAlready", "{nick}没有加入{self}的旁观模式!"},
-	{"struidEmpty", "QQ号不能为空×"},
-	{"strGroupIDEmpty", "群号不能为空×"},
+	{"strUIDEmpty", "请{nick}写出账号×"},
+	{"strGroupIDEmpty", "请{nick}写出群号×"},
 	{"strBlackGroup", "该群在黑名单中，如有疑问请联系master"},
 	{"strBotOn", "成功开启{self}√"},
 	{"strBotOff", "成功关闭{self}√"},
@@ -399,10 +398,10 @@ std::map<std::string, std::string, less_ci> PlainMsg
 Dice!众筹计划: https://afdian.net/@suhuiw4123)"
 	}
 };
-std::map<std::string, std::string, less_ci> GlobalMsg{ PlainMsg };
+dict_ci GlobalMsg{ PlainMsg };
 
-std::map<std::string, std::string, less_ci> EditedMsg;
-std::map<std::string, std::string, less_ci> GlobalComment{
+dict_ci EditedMsg;
+const dict_ci GlobalComment{
 	{"self", "自称，引用自strSelfCall"},
 	//{"strActionEmpty", "当前无用"},
 	{"strAddDiceValErr", "ww指令加骰值非法（过小）"},
@@ -476,7 +475,7 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 	//
 	{"strWhiteQQDenied","权限要求群管理或者信任1"},
 };
-const std::map<std::string, std::string, less_ci> HelpDoc = {
+const dict_ci HelpDoc = {
 {"更新",R"(
 599:mod新增script
 598:当日计数器
@@ -865,16 +864,11 @@ Danger //警告用户且拒绝指令，并在3级窗口警告
 	{"世界逆位", "未完成、失败、准备不足、盲目接受、一时不顺利、半途而废、精神颓废、饱和状态、合谋、态度不够融洽、感情受挫。"},
 };
 
-const std::string getMsg(const std::string& key, const AttrVars& maptmp)
-{
-	std::string msg;
-	{
-		std::shared_lock lock(GlobalMsgMutex);
-		const auto it = GlobalMsg.find(key);
-		if (it != GlobalMsg.end()) msg = it->second;
-		else return "";
-	}
-	return format(msg, GlobalMsg, maptmp);
+const std::string getMsg(const std::string& key, const AttrVars& maptmp){
+	return fmt->format(fmt->msg_get(key), std::make_shared<AttrVars>(maptmp));
+}
+const std::string getMsg(const std::string& key, std::shared_ptr<AttrVars> maptmp){
+	return fmt->format(fmt->msg_get(key), maptmp);
 }
 const std::string getComment(const std::string& key) {
 	if (auto it{ GlobalComment.find(key) };it!= GlobalComment.end())return it->second;
