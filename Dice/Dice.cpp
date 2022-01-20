@@ -326,7 +326,7 @@ EVE_Enable(eventEnable)
 		std::unique_lock lock(GlobalMsgMutex);
 		if (loadJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg) < 0)loadJMap(fpFileLoc / "CustomMsg.json", EditedMsg);
 		{	
-			merge(GlobalMsg, EditedMsg);
+			map_merge(GlobalMsg, EditedMsg);
 		}
 	}
 	loadData();

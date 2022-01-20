@@ -79,6 +79,14 @@ void merge(unordered_map<TKey, TVal, Hash, Equal>& m1, const unordered_map<TKey,
 		m1[k] = v;
 	}
 }
+template <typename TKey, typename TVal, typename sort>
+void merge(map<TKey, TVal, sort>& m1, const map<TKey, TVal, sort>& m2)
+{
+	for (auto& [k, v] : m2)
+	{
+		m1[k] = v;
+	}
+}
 
 template <typename T>
 class enumap
