@@ -166,7 +166,7 @@ public:
 using Session = DiceSession;
 
 class DiceRoom {
-	unsigned int id{ std::stoul("5")};
+	unsigned int id{};
 	set<long long>gm_list;
 	set<long long>pl_list;
 	set<long long>ob_list;
