@@ -1,9 +1,9 @@
-//#pragma comment(lib, "lua.lib")  
+//#pragma comment(lib, "lua.lib")
 extern "C"{
-#include <lua.h>  
-#include <lualib.h>  
-#include <lauxlib.h>  
-#include <lobject.h>  
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+#include <lobject.h>
 };
 #include "ManagerSystem.h"
 #include "DiceEvent.h"
@@ -133,7 +133,7 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 #else
 	string fileGB18030(UTF8toGBK(file, true));
 #endif
-	lua_getglobal(L, func); 
+	lua_getglobal(L, func);
 	lua_push_msg(L, msg);
 	if (lua_pcall(L, 1, 2, 0)) {
 		string pErrorMsg = lua_to_gb18030_string(L, -1);
@@ -155,9 +155,6 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 				console.log(getMsg("strSelfName") + "调用" + fileGB18030 + "函数" + func + "返回值格式错误!", 1);
 				return false;
 			}
-			if (!(msg->vars["msg_hidden"] = lua_to_gb18030_string(L, 2)).str_empty()) {
-				msg->replyHidden(msg->vars["msg_hidden"].to_str());
-			}
 		}
 	}
 	return true;
@@ -166,7 +163,7 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 //为msg直接调用lua语句回复
 bool lua_msg_reply(FromMsg* msg, const string& luas) {
 	LuaState L;
-	if (!L)return false; 
+	if (!L)return false;
 	//UTF8Luas.insert(L);	//Win输入msg是GBK而调用UTF8文件会导致乱码，因此统一UTF8
 	lua_push_msg(L, msg);
 	lua_setglobal(L, "msg");
@@ -189,9 +186,6 @@ bool lua_msg_reply(FromMsg* msg, const string& luas) {
 			if (!lua_isstring(L, 2)) {
 				console.log(getMsg("strSelfName") + "调用回复lua语句返回值格式错误!", 1);
 				return false;
-			}
-			if (!(msg->vars["msg_hidden"] = lua_to_gb18030_string(L, 2)).str_empty()) {
-				msg->replyHidden(msg->vars["msg_hidden"].to_str());
 			}
 		}
 	}
@@ -316,7 +310,7 @@ int getGroupConf(lua_State* L) {
 		if (!card.empty())lua_push_string(L, card);
 	}
 	else if (ChatList.count(id)) {
-		Chat& grp{ chat(id) }; 
+		Chat& grp{ chat(id) };
 		if (item == "name") {
 			if (grp.Name.empty())lua_push_string(L, grp.Name = DD::getGroupName(id));
 			else lua_push_string(L, grp.Name);

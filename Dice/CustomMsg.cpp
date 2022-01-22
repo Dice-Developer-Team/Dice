@@ -29,7 +29,6 @@
 std::map<std::string, std::string>strKeyReplace = {
 	{"strWelcomeMsgIsEmptyErr","strWelcomeMsgClearErr"},
 	{"strTurnNoticeReplyMsg", "strRollTurn"},
-	{"strHiddenDiceReplyMsg", "strRollHidden"},
 	{"strRollDiceReplyMsg", "strRollDice"},
 	{"strObListReplyMsg", "strObList"},
 	{"strObListEmptyNotice", "strObListEmpty"},

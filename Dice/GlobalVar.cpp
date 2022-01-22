@@ -58,7 +58,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strAkForkNew","{self}已创建分歧\n#{fork}"},
 	{"strAkAdd","{self}已加入新选项√\n当前分歧:{fork}{li}"},
 	{"strAkAddEmpty","给完{nick}的选项，就像{self}没看到这句话之前一样×"},
-	{"strAkDel","{self}已删除指定选项√\n当前分歧:{fork}{li}"},	
+	{"strAkDel","{self}已删除指定选项√\n当前分歧:{fork}{li}"},
 	{"strAkOptEmptyErr","备选项为空×\n{nick}想让{self}编出一个选项吗？"},
 	{"strAkNumErr","请{nick}选择合法的选项序号×"},
 	{"strAkGet","#{fork}{li}\n\n{self}的选择：{get}"},
@@ -91,8 +91,8 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strGroupLicenseDeny","本群未获{self}许可使用，自动在群内静默。\n请先.help协议 阅读并同意协议后向运营方申请许可使用，\n否则请管理员使用!dismiss送出{self}\n可按以下格式填写并发送申请:\n!authorize 申请用途:[ **请写入理由** ] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[ **请写入指令** ]，用后使用[ **请写入指令** ]送出群" },
 	{"strGroupLicenseApply","此群未通过自助授权×\n许可申请已发送√" },
 	{"strGroupSetOn","现已开启{self}在此群的“{option}”选项√"},			//群内开关和遥控开关通用此文本
-	{"strGroupSetOnAlready","{self}已在此群设置了{option}！"},			
-	{"strGroupSetOff","现已关闭{self}在此群的“{option}”选项√"},			
+	{"strGroupSetOnAlready","{self}已在此群设置了{option}！"},
+	{"strGroupSetOff","现已关闭{self}在此群的“{option}”选项√"},
 	{"strGroupSetOffAlready","{self}未在此群设置{option}！"},
 	{"strGroupMultiSet","{self}已将此群的选项修改为:{opt_list}"},
 	{"strGroupSetAll","{self}已修改记录中{cnt}个群的“{option}”选项√"},
@@ -156,8 +156,8 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strReplyKeyNotFound","{self}未找到回复关键词{key}×"},
 	{"strStModify","{self}对已记录{pc}的属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","{self}对已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
-	{"strStValEmpty","{self}未记录{attr}原值×"},		
-	{"strBlackQQAddNotice","{user_nick}，你已被{self}加入黑名单，详情请联系Master:{master_ID}"},				
+	{"strStValEmpty","{self}未记录{attr}原值×"},
+	{"strBlackQQAddNotice","{user_nick}，你已被{self}加入黑名单，详情请联系Master:{master_ID}"},
 	{"strBlackQQAddNoticeReason","{user_nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{master_ID}"},
 	{"strBlackQQDelNotice","{user_nick}，你已被{self}移出黑名单，现在可以继续使用了"},
 	{"strWhiteQQAddNotice","{user_nick}，您已获得{self}的信任，请尽情使用{self}√"},
@@ -165,7 +165,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strDeckNew","{self}已为{nick}自定义新牌堆<{deck_name}>√"},
 	{"strDeckSet","{nick}已用<{deck_name}>创建{self}的牌堆实例√"},
 	{"strDeckSetRename","{nick}已用<{deck_cited}>创建{self}的牌堆实例{deck_name}√"},
-	{"strDeckRestEmpty","牌堆<{deck_name}>已抽空，请使用.deck reset {deck_name}手动重置牌堆"},		
+	{"strDeckRestEmpty","牌堆<{deck_name}>已抽空，请使用.deck reset {deck_name}手动重置牌堆"},
 	{"strDeckOversize","{nick}定义的牌太多，{self}装不下啦×"},
 	{"strDeckRestShow","当前牌堆<{deck_name}>剩余卡牌:{deck_rest}"},
 	{"strDeckRestReset","{self}已重置牌堆实例<{deck_name}>√"},
@@ -182,14 +182,12 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strOutRange","{nick}定义的数列超出{self}允许范围×" },
 	{"strRollDice","{pc}掷骰: {res}"},
 	{"strRollDiceReason","{pc}掷骰 {reason}: {res}"},
-	{"strRollHidden","{pc}进行了一次暗骰"},
 	{"strRollTurn","{pc}的掷骰轮数: {turn}轮"},
 	{"strRollMultiDice","{pc}掷骰{turn}次: {dice_exp}={res}"},
 	{"strRollMultiDiceReason","{pc}掷骰{turn}次{reason}: {dice_exp}={res}"},
 	{"strRollInit","{char}的先攻骰点：{res}" },
 	{"strRollSkill","{pc}进行{attr}检定："},
 	{"strRollSkillReason","由于{reason} {pc}进行{attr}检定："},
-	{"strRollSkillHidden","{pc}进行了一次暗中{attr}检定√" },
 	{"strEnRoll","{pc}的{attr}增强或成长检定：\n{res}"},//{attr}在用户省略技能名后替换为{strEnDefaultName}
 	{"strEnRollNotChange","{strEnRoll}\n{pc}的{attr}值没有变化"},
 	{"strEnRollFailure","{strEnRoll}\n{pc}的{attr}变化{change}点，当前为{final}点"},
@@ -225,7 +223,6 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 	{"strClockOffWork","{self}已按时关闭√"},
 	{"strNameGenerator","{pc}的随机名称：{res}"},
 	{"strDrawCard", "来看看{pc}抽到了什么：{res}"},
-	{"strDrawHidden", "{pc}抽了{cnt}张手牌√" },
 	{"strMeOn", "成功在这里启用{self}的.me命令√"},
 	{"strMeOff", "成功在这里禁用{self}的.me命令√"},
 	{"strMeOnAlready", "在这里{self}的.me命令没有被禁用!"},
@@ -363,7 +360,7 @@ std::map<std::string, std::string, less_ci> GlobalMsg
 .help设定 确认骰娘设定
 .help链接 查看源码文档
 邀请入群默认视为同意服务协议，知晓禁言或移出的后果)"
-	}, 
+	},
 	{ "strNewMaster","试问，你就是{strSelfName}的Master√\n请认真阅读当前版本Master手册以及用户手册。请注意版本号对应: https://v2docs.kokona.tech\f{strSelfName}默认开启对群移出、禁言、刷屏事件的监听，如要关闭请手动调整；\n请注意云黑系统默认开启，如无需此功能请关闭CloudBlackShare；" },
 	{ "strNewMasterPublic",R"({strSelfName}初始化开启公骰模式：
 自动开启BelieveDiceList响应来自骰娘列表的warning；
@@ -455,7 +452,7 @@ std::map<std::string, std::string, less_ci> GlobalComment{
 	{"strHelpSuggestion", "help找到多条近似词条"},
 	{"strHlpMsg", "help指令裸参数回执"},
 	//
-	{"strRollCriticalSuccess", "检定大成功"}, 
+	{"strRollCriticalSuccess", "检定大成功"},
 	{"strRollExtremeSuccess", "检定极难成功"},
 	{"strRollHardSuccess", "检定困难成功"},
 	{"strRollRegularSuccess", "检定成功"},
@@ -626,9 +623,9 @@ Type=[回复性质](Reply/Order)
 {"属性记录","&st"},
 {"st","属性记录：.st (del/clr/show) ([属性名]:[属性值])\n用户默认所有群使用同一张卡，pl如需多开请使用.pc指令切卡\n.st力量:50 体质:55 体型:65 敏捷:45 外貌:70 智力:75 意志:35 教育:65 幸运:75\n.st hp-1 后接+/-时视为从原值上变化\n.st san+1d6 修改属性时可使用掷骰表达式\n.st del kp裁决\t//删除已保存的属性\n.st clr\t//清空当前卡\n.st show 灵感\t//查看指定属性\n.st show\t//无参数时查看所有属性，请使用只st加点过技能的半自动人物卡！\n部分COC属性会被视为同义词，如智力/灵感、理智/san、侦查/侦察"},
 {"角色卡","&pc"},
-{"pc",R"(角色卡：.pc 
+{"pc",R"(角色卡：.pc
 每名用户最多可同时保存16张角色卡
-.pc new ([模板]:([生成参数]:))([卡名]) 
+.pc new ([模板]:([生成参数]:))([卡名])
 完全省略参数将生成一张COC7模板的随机姓名卡
 .pc tag ([卡名]) //为当前群绑定指定卡，为空则解绑使用默认卡
 所有群默认使用私聊绑定卡，未绑定则使用0号卡
@@ -681,7 +678,7 @@ Type=[回复性质](Reply/Order)
 	{"抽牌", "&draw"},
 	{
 		"draw",
-		R"(抽牌：.draw [牌堆名称] ([抽牌数量])	
+		R"(抽牌：.draw [牌堆名称] ([抽牌数量])
 .draw _[牌堆名称] ([抽牌数量])	//暗抽，结果私聊发送
 .drawh [牌堆名称] ([抽牌数量])	//暗抽，参数h后必须留空格
 .draw _狼人杀	//抽牌结果通过私聊获取，可ob

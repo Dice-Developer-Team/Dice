@@ -43,11 +43,8 @@ public:
 
 	FromMsg& initVar(const std::initializer_list<const std::string>& replace_str);
 	void reply(const std::string& strReply, const std::initializer_list<const std::string>& replace_str);
-	void replyHidden(const std::string& strReply);
 
 	void reply(bool isFormat = true);
-
-	void replyHidden();
 
 	//֪ͨ
 	void note(std::string strMsg, int note_lv = 0b1);
@@ -91,7 +88,7 @@ public:
 	string readUntilSpace()
 	{
 		string strPara;
-		readSkipSpace(); 
+		readSkipSpace();
 		while (intMsgCnt < strMsg.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		{
 			strPara += strMsg[intMsgCnt];
@@ -129,8 +126,8 @@ public:
 		string strPara;
 		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
 		while (intMsgCnt < strMsg.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
-			&& (strLowerMessage[intMsgCnt] != '-') && (strLowerMessage[intMsgCnt] != '+') 
-			&& (strLowerMessage[intMsgCnt] != '[') && (strLowerMessage[intMsgCnt] != ']') 
+			&& (strLowerMessage[intMsgCnt] != '-') && (strLowerMessage[intMsgCnt] != '+')
+			&& (strLowerMessage[intMsgCnt] != '[') && (strLowerMessage[intMsgCnt] != ']')
 			&& (strLowerMessage[intMsgCnt] != '=') && (strLowerMessage[intMsgCnt] != ':')
 			&& (strLowerMessage[intMsgCnt] != '#')
 			&& intMsgCnt != strLowerMessage.length()) {

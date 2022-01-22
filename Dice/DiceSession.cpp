@@ -158,11 +158,11 @@ void DiceSession::log_end(FromMsg* msg) {
 	msg->vars["log_path"] = UTF8toGBK(log_path().u8string());
 	msg->reply(getMsg("strLogEnd"));
 	update();
-	msg->cmd_key = "uplog"; 
+	msg->cmd_key = "uplog";
 	sch.push_job(*msg);
 }
 std::filesystem::path DiceSession::log_path()const {
-	return logger.pathLog; 
+	return logger.pathLog;
 }
 
 
@@ -276,8 +276,8 @@ string DeckInfo::draw() {
 void DiceSession::deck_set(FromMsg* msg) {
 	const string key{ (msg->vars["deck_name"] = msg->readAttrName()).to_str() };
 	size_t pos = msg->strMsg.find('=', msg->intMsgCnt);
-	AttrVar& strCiteDeck{ msg->vars["deck_cited"] = pos == string::npos 
-		? key 
+	AttrVar& strCiteDeck{ msg->vars["deck_cited"] = pos == string::npos
+		? key
 		: (++msg->intMsgCnt, msg->readAttrName()) };
 	if (key.empty()) {
 		msg->reply(getMsg("strDeckNameEmpty"));
@@ -288,7 +288,7 @@ void DiceSession::deck_set(FromMsg* msg) {
 	else {
 		vector<string> DeckSet = {};
 		if ((strCiteDeck == "群成员" || (strCiteDeck == "member" && !(strCiteDeck = "群成员").str_empty())) && !msg->isPrivate()) {
-			
+
 			if (auto list{ DD::getGroupMemberList(msg->fromChat.gid) }; list.empty()) {
 				msg->reply("群成员列表获取失败×");
 			}
@@ -417,12 +417,7 @@ void DiceSession::_draw(FromMsg* msg) {
 	if(!Res.empty()){
 		(*job)["res"] = Res.dot("|").show();
 		(*job)["cnt"] = to_string(Res.size());
-		if (msg->vars.count("hidden")) {
-			msg->reply(getMsg("strDrawHidden"));
-			msg->replyHidden(getMsg("strDrawCard"));
-		}
-		else
-			msg->reply(getMsg("strDrawCard"));
+    msg->reply(getMsg("strDrawCard"));
 		update();
 	}
 	if (!deck.sizRes) {
@@ -601,7 +596,7 @@ void DiceTableMaster::save()
 }
 */
 
-int DiceTableMaster::load() 
+int DiceTableMaster::load()
 {
     string strLog;
     std::unique_lock<std::shared_mutex> lock(sessionMutex);

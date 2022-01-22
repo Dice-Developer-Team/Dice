@@ -17,9 +17,9 @@ jobs:
         - type: x64
           triplet: x64-windows-static
           mono: ''
-          
+
     runs-on: windows-2019
-    
+
     steps:
     - uses: actions/checkout@v2
       with:
@@ -29,7 +29,7 @@ jobs:
       # Some projects don't allow in-source building, so create a separate build directory
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
-      
+
     - name: Cache
       uses: actions/cache@v2.1.4
       id: cache
@@ -45,7 +45,7 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: bootstrap-vcpkg.bat
-      
+
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name
@@ -55,14 +55,14 @@ jobs:
         -source "https://nuget.pkg.github.com/Dice-Developer-Team/index.json"
         -storepasswordincleartext
         -name "GitHub"
-        -username "Dice-Developer-Team"
+        -username "dkwingsmt"
         -password "${{ secrets.GITHUB_TOKEN }}"
 
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
+      # Note the current convention is to use the -S and -B options here to specify source
+      # and build directories, but this is only available with CMake 3.13 and higher.
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: cmake $GITHUB_WORKSPACE -A ${{ matrix.type }} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
 
@@ -75,10 +75,10 @@ jobs:
     - name: Test
       shell: bash
       working-directory: ${{github.workspace}}/build
-      # Execute tests defined by the CMake configuration.  
+      # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C $BUILD_TYPE
-      
+
     - name: Upload
       uses: actions/upload-artifact@v2.2.2
       with:
@@ -101,19 +101,19 @@ jobs:
         - arch: arm64
           triplet: arm64-osx
           mono: 'mono'
-          
+
     runs-on: 	macos-latest
-    
+
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: 'recursive'
-  
+
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
-      
+
     - name: Cache
       uses: actions/cache@v2.1.4
       id: cache
@@ -123,13 +123,13 @@ jobs:
         # An explicit key for restoring and saving the cache
         key: ${{ runner.os }}-${{ matrix.triplet }}-20211209
         restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20211209
-        
+
     - name: Setup Vcpkg
       shell: bash
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
-      
+
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name
@@ -139,13 +139,13 @@ jobs:
         -source "https://nuget.pkg.github.com/Dice-Developer-Team/index.json"
         -storepasswordincleartext
         -name "GitHub"
-        -username "Dice-Developer-Team"
+        -username "dkwingsmt"
         -password "${{ secrets.GITHUB_TOKEN }}"
 
     - name: Configure CMake
       working-directory: ${{github.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
+      # Note the current convention is to use the -S and -B options here to specify source
+      # and build directories, but this is only available with CMake 3.13 and higher.
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: cmake ${{github.workspace}} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }}
 
@@ -156,10 +156,10 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}/build
-      # Execute tests defined by the CMake configuration.  
+      # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C $BUILD_TYPE
-      
+
     - name: Upload
       uses: actions/upload-artifact@v2.2.2
       with:
@@ -167,8 +167,8 @@ jobs:
         name: ${{ matrix.triplet }}
         # A file, directory or wildcard pattern that describes what to upload
         path: "**/w4123.Dice.dll"
-        
-        
+
+
   build-ios:
     env:
       BUILD_TYPE: Release
@@ -180,19 +180,19 @@ jobs:
         - arch: arm64
           triplet: arm64-ios
           mono: 'mono'
-          
+
     runs-on: 	macos-latest
-    
+
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: 'recursive'
-  
+
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
-      
+
     - name: Cache
       uses: actions/cache@v2.1.4
       id: cache
@@ -202,13 +202,13 @@ jobs:
         # An explicit key for restoring and saving the cache
         key: ${{ runner.os }}-${{ matrix.triplet }}-20211209
         restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20211209
-        
+
     - name: Setup Vcpkg
       shell: bash
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
-      
+
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name
@@ -218,13 +218,13 @@ jobs:
         -source "https://nuget.pkg.github.com/Dice-Developer-Team/index.json"
         -storepasswordincleartext
         -name "GitHub"
-        -username "Dice-Developer-Team"
+        -username "dkwingsmt"
         -password "${{ secrets.GITHUB_TOKEN }}"
 
     - name: Configure CMake
       working-directory: ${{github.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
+      # Note the current convention is to use the -S and -B options here to specify source
+      # and build directories, but this is only available with CMake 3.13 and higher.
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: cmake ${{github.workspace}} -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }} -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0
 
@@ -235,10 +235,10 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}/build
-      # Execute tests defined by the CMake configuration.  
+      # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C $BUILD_TYPE
-      
+
     - name: Upload
       uses: actions/upload-artifact@v2.2.2
       with:
@@ -246,7 +246,7 @@ jobs:
         name: ${{ matrix.triplet }}
         # A file, directory or wildcard pattern that describes what to upload
         path: "**/w4123.Dice.dll"
-        
+
   build-linux:
     env:
       BUILD_TYPE: Release
@@ -278,9 +278,9 @@ jobs:
           cxx: arm-linux-gnueabihf-g++
           triplet: arm-linux
           mono: 'mono'
-        
+
     runs-on: ubuntu-18.04
-    
+
     steps:
     - uses: actions/checkout@v2
       with:
@@ -290,10 +290,10 @@ jobs:
       # Some projects don't allow in-source building, so create a separate build directory
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
-      
+
     - name: Install Cross Compiler
       run: sudo apt-get update && sudo apt-get install ${{ matrix.apt }}
-      
+
     - name: Cache
       uses: actions/cache@v2.1.4
       id: cache
@@ -303,13 +303,13 @@ jobs:
         # An explicit key for restoring and saving the cache
         key: ${{ runner.os }}-${{ matrix.triplet }}-20211209
         restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20211209
-        
+
     - name: Setup Vcpkg
       shell: bash
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
-      
+
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name
@@ -319,7 +319,7 @@ jobs:
         -source "https://nuget.pkg.github.com/Dice-Developer-Team/index.json"
         -storepasswordincleartext
         -name "GitHub"
-        -username "Dice-Developer-Team"
+        -username "dkwingsmt"
         -password "${{ secrets.GITHUB_TOKEN }}"
 
     - name: Configure CMake
@@ -327,8 +327,8 @@ jobs:
       # access regardless of the host operating system
       shell: bash
       working-directory: ${{github.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
+      # Note the current convention is to use the -S and -B options here to specify source
+      # and build directories, but this is only available with CMake 3.13 and higher.
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run:  CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/triplets -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_PREFIX_PATH=${{ matrix.path }}
 
@@ -341,10 +341,10 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       shell: bash
-      # Execute tests defined by the CMake configuration.  
+      # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C $BUILD_TYPE
-    
+
     - name: Upload
       uses: actions/upload-artifact@v2.2.2
       with:
@@ -352,7 +352,7 @@ jobs:
         name: ${{ matrix.triplet }}
         # A file, directory or wildcard pattern that describes what to upload
         path: "**/w4123.Dice.dll"
-      
+
   build-android:
     env:
       ANDROID_NDK: $ANDROID_NDK_HOME
@@ -374,9 +374,9 @@ jobs:
         - abi: x86_64
           triplet: x64-android-static
           mono: 'mono'
-        
+
     runs-on: ubuntu-20.04
-    
+
     steps:
     - uses: actions/checkout@v2
       with:
@@ -386,7 +386,7 @@ jobs:
       # Some projects don't allow in-source building, so create a separate build directory
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
-      
+
     - name: Cache
       uses: actions/cache@v2.1.4
       id: cache
@@ -396,13 +396,13 @@ jobs:
         # An explicit key for restoring and saving the cache
         key: ${{ runner.os }}-${{ matrix.triplet }}-20211209
         restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20211209
-        
+
     - name: Setup Vcpkg
       shell: bash
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
-      
+
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name
@@ -412,9 +412,9 @@ jobs:
         -source "https://nuget.pkg.github.com/Dice-Developer-Team/index.json"
         -storepasswordincleartext
         -name "GitHub"
-        -username "Dice-Developer-Team"
+        -username "dkwingsmt"
         -password "${{ secrets.GITHUB_TOKEN }}"
-        
+
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
@@ -429,10 +429,10 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       shell: bash
-      # Execute tests defined by the CMake configuration.  
+      # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C $BUILD_TYPE
-      
+
     - name: Upload
       uses: actions/upload-artifact@v2.2.2
       with:
@@ -440,4 +440,3 @@ jobs:
         name: ${{ matrix.triplet }}
         # A file, directory or wildcard pattern that describes what to upload
         path: "**/w4123.Dice.dll"
-
