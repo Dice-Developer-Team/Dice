@@ -128,6 +128,7 @@ void SendMsg()
 			}
 			if (msg.target.type == msgtype::Private)
 			{
+				if (console["DisableStrangerChat"] && !DD::isFriend(msg.target.uid, true))continue;
 				DD::sendPrivateMsg(msg.target.uid, msg.msg);
 			}
 			else if (msg.target.type == msgtype::Group)

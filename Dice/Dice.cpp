@@ -431,9 +431,6 @@ EVE_Enable(eventEnable)
 			console.log("Dice! WebUI 启动失败！端口已被使用？", 0b1);
 		}
 	}
-
-	console.log(getMsg("strSelfName") + "初始化完成，用时" + to_string(time(nullptr) - llStartTime) + "秒", 0b1,
-				printSTNow());
 	//骰娘网络
 	getDiceList();
 	getExceptGroup();
@@ -446,6 +443,9 @@ EVE_Enable(eventEnable)
 	threads(warningHandler);
 	threads(frqHandler);
 	sch.start();
+
+	console.log(getMsg("strSelfName") + "初始化完成，用时" + to_string(time(nullptr) - llStartTime) + "秒", 0b1,
+		printSTNow());
 }
 
 mutex GroupAddMutex;
@@ -615,6 +615,7 @@ EVE_PrivateMsg(eventPrivateMsg)
 {
 	if (!Enabled)return 0;
 	if (fromUID == console.DiceMaid && !console["ListenSelfEcho"])return 0;
+	else if (console["DisableStrangerChat"] && !DD::isFriend(fromUID, true))return 0;
 	shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
 		AttrVars({ { "fromMsg", AttrVar(message) },
 			{ "uid",AttrVar(fromUID) },

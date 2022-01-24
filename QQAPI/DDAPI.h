@@ -39,6 +39,7 @@ namespace DD {
 	void sendGroupMsg(long long, const std::string& msg);
 	void sendChannelMsg(long long, long long, const std::string& msg);
 	void sendDiscussMsg(long long, const std::string& msg);
+	bool isFriend(long long, bool);
 	std::set<long long> getFriendQQList();
 	std::set<long long> getGroupIDList();
 	std::set<long long> getGroupMemberList(long long);

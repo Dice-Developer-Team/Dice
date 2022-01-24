@@ -47,6 +47,7 @@ const std::map<std::string, int, less_ci>Console::intDefault{
 {"Private",0},{"CheckGroupLicense",0},{"LeaveDiscuss",0},
 {"ListenGroupRequest",1},{"ListenGroupAdd",1},
 {"ListenFriendRequest",1},{"ListenFriendAdd",1},{"AllowStranger",1},
+{"DisableStrangerChat",1},
 {"AutoClearBlack",1},{"LeaveBlackQQ",0},
 {"ListenGroupKick",1},{"ListenGroupBan",1},{"ListenSpam",1},
 {"BannedBanInviter",0},{"KickedBanInviter",0},
@@ -55,7 +56,7 @@ const std::map<std::string, int, less_ci>Console::intDefault{
 {"SystemAlarmCPU",90},{"SystemAlarmRAM",90},{"SystemAlarmDisk",90},
 {"SendIntervalIdle",500},{"SendIntervalBusy",100},
 //自动保存事件间隔[min],自动图片清理间隔[h],自动重启框架间隔[h]
-{"AutoSaveInterval",2},/*{"AutoClearImage",0},{"AutoFrameRemake",0},*/
+{"AutoSaveInterval",5},/*{"AutoClearImage",0},{"AutoFrameRemake",0},*/
 //用户记录清理期限[Day],群记录清理期限[Day]
 {"InactiveUserLine",360},{"InactiveGroupLine",360},
 //接收群内回音消息，接受频道内回音消息，接受自己私聊消息
@@ -83,6 +84,7 @@ const std::unordered_map<std::string,string>Console::confComment{
 	{"ListenFriendRequest","监听好友申请"},
 	{"ListenFriendAdd","监听好友添加事件"},
 	{"AllowStranger","2-允许任何人;1-需要有使用记录;0-仅允许信任用户"},
+	{"DisableStrangerChat","开启后不处理非好友私聊消息"},
 	{"AutoClearBlack","自动清查黑名单"},
 	{"LeaveBlackQQ","与黑名单用户群权限同级是否退群"},
 	{"ListenGroupKick","监听群被踢事件"},

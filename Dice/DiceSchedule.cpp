@@ -188,9 +188,9 @@ void DiceScheduler::start() {
 	push_job("heartbeat");
 	add_job_for(60, "syscheck");
 	if (console["AutoSaveInterval"] > 0)add_job_for(console["AutoSaveInterval"] * 60, "autosave");
-	if (console["AutoFrameRemake"] > 0)
+	/*if (console["AutoFrameRemake"] > 0)
 		add_job_for(console["AutoFrameRemake"] * 60 * 60, "remake");
-	else add_job_for(60 * 60, "remake");
+	else add_job_for(60 * 60, "remake");*/
 	if (console["CloudBlackShare"] > 0)
 		add_job_for(12 * 60 * 60, "cloudblack");
 }

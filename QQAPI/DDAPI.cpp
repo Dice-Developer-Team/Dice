@@ -24,6 +24,7 @@ DDAPI(SendPrivateMsg, void, long long, long long, const std::string&);
 DDAPI(SendGroupMsg, void, long long, long long, const std::string&);
 DDAPI(SendChannelMsg, void, long long, long long, long long, const std::string&);
 DDAPI(SendDiscussMsg, void, long long, long long, const std::string&);
+DDAPI(IsFriend, bool, long long, long long, bool);
 DDAPI(GetFriendQQList, const std::set<long long>&, long long);
 DDAPI(GetGroupIDList, const std::set<long long>&, long long);
 DDAPI(GetGroupMemberList, const std::set<long long>&, long long, long long);
@@ -116,6 +117,9 @@ namespace DD {
 	void sendDiscussMsg(long long rcvChat, const std::string& msg) {
 		if (msg.empty())return;
 		CALLVOID(SendDiscussMsg, loginID, rcvChat, msg);
+	}
+	bool isFriend(long long aimID, bool bDefault) {
+		return CALLGET(IsFriend, loginID, aimID, bDefault) :bDefault;
 	}
 	std::set<long long> getFriendQQList() {
 		return CALLGET(GetFriendQQList, loginID) :std::set<long long>();

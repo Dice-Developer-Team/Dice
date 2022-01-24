@@ -283,12 +283,6 @@ Chat& Chat::id(long long grp) {
 	ID = grp;
 	Name = DD::getGroupName(grp);
 	if (!Enabled)return *this;
-	if (DD::getGroupIDList().count(grp)) {
-		isGroup = true;
-	}
-	else {
-		set("Î´½ø");
-	}
 	return *this;
 }
 
