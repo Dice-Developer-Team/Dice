@@ -195,11 +195,10 @@ void dataBackUp()
 	saveBFile(DiceDir / "user" / "ChatConf.dat", ChatList);
 }
 
-bool isIniting{ false };
-EVE_Enable(eventEnable)
-{
-	if (isIniting || Enabled)return;
-	isIniting = true;
+atomic_flag isIniting{ ATOMIC_FLAG_INIT };
+EVE_Enable(eventEnable){
+	if (!isIniting.test_and_set())return;
+	if (Enabled)return;
 	llStartTime = time(nullptr);
 	#ifndef _WIN32
 	CURLcode err;
@@ -434,8 +433,6 @@ EVE_Enable(eventEnable)
 	//骰娘网络
 	getDiceList();
 	getExceptGroup();
-	llStartTime = time(nullptr);
-	isIniting = false;
 	DD::debugLog("Dice.threadInit");
 	Enabled = true;
 	threads(SendMsg);
@@ -446,6 +443,8 @@ EVE_Enable(eventEnable)
 
 	console.log(getMsg("strSelfName") + "初始化完成，用时" + to_string(time(nullptr) - llStartTime) + "秒", 0b1,
 		printSTNow());
+	llStartTime = time(nullptr);
+	isIniting.clear();
 }
 
 mutex GroupAddMutex;
