@@ -50,7 +50,7 @@ const dict_ci PlainMsg
 {
 	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
 	{"strParaIllegal","参数非法×"},			//偷懒用万能回复
-	{"stranger","用户"},			//{nick}无法获取非空昵称时的称呼
+	{"stranger","陌生人"},			//{nick}无法获取非空昵称时的称呼
 	{"strCallUser", "用户"},
 	{"strSummonWord", ""},
 	{"strSummonEmpty", "召唤{self}，{nick}有何事么？"},
@@ -317,8 +317,8 @@ const dict_ci PlainMsg
 	{"strPermissionDeniedErr", "请让群内管理对{self}发送该指令×"},
 	{"strSelfPermissionErr", "{self}权限不够无能为力呢×"},
 	{"strNameTooLongErr", "名称过长×(最多为50英文字符)"},
-	{"strNameClr", "已将{nick}的名称删除√"},
-	{"strNameSet", "已将{nick}的名称更改为{new_nick}√"},
+	{"strNameClr", "已将{old_nick}的名称删除√"},
+	{"strNameSet", "已将{old_nick}的名称更改为{new_nick}√"},
 	{"strUnknownPropErr", "未设定{attr}成功率，请先.st {attr} 技能值 或查看.help rc×"},
 	{"strPropErr", "请{pc}认真输入属性哦~"},
 	{"strSetPropSuccess", "已为{pc}录入{cnt}条属性√"},

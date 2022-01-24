@@ -2,7 +2,7 @@
 
 /*
  * Íæ¼ÒÈËÎï¿¨
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2022 String.Empty
  */
 
 #include <fstream>
@@ -681,4 +681,4 @@ inline map<long long, Player> PList;
 
 Player& getPlayer(long long qq);
 
-void getPCName(AttrVars&);
+AttrVar idx_pc(AttrVars&);

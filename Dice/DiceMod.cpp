@@ -375,8 +375,7 @@ bool DiceMsgOrder::exec() {
 DiceModManager::DiceModManager() : helpdoc(HelpDoc){
 }
 
-string DiceModManager::format(string s, std::shared_ptr<AttrVars> context, const dict_ci& dict) const
-{
+string DiceModManager::format(string s, std::shared_ptr<AttrVars> context, const AttrIndexs& indexs, const dict_ci& dict) const{
 	//直接重定向
 	if (s[0] == '&')
 	{
@@ -384,7 +383,7 @@ string DiceModManager::format(string s, std::shared_ptr<AttrVars> context, const
 		const auto it = dict.find(key);
 		if (it != dict.end())
 		{
-			return format(it->second, context, dict);
+			return format(it->second, context, indexs, dict);
 		}
 		if (context){
 			if (auto uit = context->find(key); uit != context->end()) {
@@ -403,22 +402,25 @@ string DiceModManager::format(string s, std::shared_ptr<AttrVars> context, const
 		string key = s.substr(l + 1, r - l - 1), val;
 		if (context && context->find(key) != context->end()) {
 			auto uit = context->find(key);
-			if (key == "res")val = format(uit->second.to_str(), context, dict);
+			if (key == "res")val = format(uit->second.to_str(), context, indexs, dict);
 			else val = uit->second.to_str();
+		}
+		else if (auto idx = indexs.find(key); context && idx != indexs.end()) {
+			val = idx->second(*context).to_str();
 		}
 		else if (key.find("help:") == 0) {
 			key = key.substr(5);
-			val = fmt->format(fmt->get_help(key), {}, dict);
+			val = fmt->format(fmt->get_help(key), {}, {}, dict);
 		}
 		else if (key.find("sample:") == 0) {
 			key = key.substr(7);
 			vector<string> samples{ split(key,"|") };
 			if (samples.empty())val = "";
 			else
-				val = fmt->format(samples[RandomGenerator::Randint(0, samples.size() - 1)], {}, dict);
+				val = fmt->format(samples[RandomGenerator::Randint(0, samples.size() - 1)], {}, {}, dict);
 		}
 		else if (auto cit = dict.find(key); cit != dict.end()) {
-			val = format(cit->second, context, dict);
+			val = format(cit->second, context, indexs, dict);
 		}
 		//局部屏蔽全局
 		else if (auto it = GlobalChar.find(key);it != GlobalChar.end()) {
@@ -463,7 +465,7 @@ string DiceModManager::get_help(const string& key) const
 {
 	if (const auto it = helpdoc.find(key); it != helpdoc.end())
 	{
-		return format(it->second, {}, helpdoc);
+		return format(it->second, {}, {}, helpdoc);
 	}
 	return "{strHelpNotFound}";
 }
@@ -489,7 +491,7 @@ void DiceModManager::_help(const shared_ptr<DiceJobDetail>& job) {
 		return;
 	}
 	else if (const auto it = helpdoc.find((*job)["help_word"].to_str()); it != helpdoc.end()) {
-		job->reply(format(it->second, {}, helpdoc));
+		job->reply(format(it->second, {}, {}, helpdoc));
 	}
 	else if (unordered_set<string> keys = querier.search((*job)["help_word"].to_str());!keys.empty()) {
 		if (keys.size() == 1) {

@@ -373,10 +373,8 @@ void Player::readb(std::ifstream& fin)
 	fread<unsigned long long, unsigned short>(fin, mGroupIndex);
 }
 
-void getPCName(AttrVars& msg)
-{
-	msg["pc"] = (PList.count(msg["uid"].to_ll()) && PList[msg["uid"].to_ll()][msg["gid"].to_ll()].getName() != "½ÇÉ«¿¨")
+AttrVar idx_pc(AttrVars& msg){
+	return msg["pc"] = (PList.count(msg["uid"].to_ll()) && PList[msg["uid"].to_ll()][msg["gid"].to_ll()].getName() != "½ÇÉ«¿¨")
 		? PList[msg["uid"].to_ll()][msg["gid"].to_ll()].getName()
-		: ((msg["nick"]) ? msg["nick"]
-			: msg["nick"] = getName(msg["uid"].to_ll(), msg["gid"].to_ll()));
+		: idx_pc(msg);
 }

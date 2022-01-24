@@ -211,7 +211,14 @@ string getName(long long uid, long long GroupID)
 	if (!nick.empty()) return nick;
 
 	// Unknown
-	return getMsg("stranger") + "(" + to_string(uid) + ")";
+	return (UserList.count(uid) ? getMsg("strCallUser") : getMsg("stranger")) + "(" + to_string(uid) + ")";
+}
+AttrVar idx_nick(AttrVars& eve) {
+	if (eve.count("nick"))return eve["nick"];
+	if (!eve.count("uid"))return {};
+	long long uid{ eve["uid"].to_ll() };
+	long long gid{ eve.count("gid") ? eve["gid"].to_ll() : 0 };
+	return eve["nick"] = getName(uid, gid);
 }
 
 void filter_CQcode(string& nick, long long fromGID)

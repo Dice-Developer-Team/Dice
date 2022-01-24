@@ -165,7 +165,9 @@ public:
     friend class CustomReplyApiHandler;
     bool isIniting{ false };
     //std::unordered_map<string, string, hash_ci, equal_ci>& custom_msg() { return GlobalMsg; }
-	string format(string, std::shared_ptr<AttrVars> = {}, const unordered_map<string, string, hash_ci, equal_ci>& = GlobalMsg) const;
+	string format(string, std::shared_ptr<AttrVars> = {},
+        const AttrIndexs& = MsgIndexs,
+        const unordered_map<string, string, hash_ci, equal_ci>& = GlobalMsg) const;
     string msg_get(const string& key)const;
     void msg_reset(const string& key)const;
     void msg_edit(const string& key, const string& val)const;

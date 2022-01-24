@@ -30,6 +30,8 @@ using json = nlohmann::json;
 
 class AttrVar;
 using AttrVars = std::unordered_map<string, AttrVar>;
+using AttrIndex = AttrVar(*)(AttrVars&);
+using AttrIndexs = std::unordered_map<string, AttrIndex>;
 class lua_State;
 class VarTable {
 	friend class AttrVar;

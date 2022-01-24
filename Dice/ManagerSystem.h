@@ -105,6 +105,10 @@ public:
 			strNick.erase(it);
 			return true;
 		}
+		else if (strNick.size() == 1) {
+			strNick.clear();
+			return true;
+		}
 		return false;
 	}
 
@@ -124,6 +128,7 @@ int clearUser();
 int clearGroup();
 
 string getName(long long QQ, long long GroupID = 0);
+AttrVar idx_nick(AttrVars&);
 void filter_CQcode(string&, long long fromGID = 0);
 
 extern const map<string, short> mChatConf;

@@ -17,6 +17,20 @@
 #include <ctime>
 using namespace std;
 
+AttrVar idx_at(AttrVars& eve) {
+	if (eve.count("at"))return eve["at"];
+	if (!eve.count("uid"))return {};
+	return eve["at"] = eve.count("gid")
+		? "[CQ:at,id=" + eve["uid"].to_str() + "]"
+		: idx_nick(eve);
+}
+
+AttrIndexs MsgIndexs{
+	{"nick", idx_nick},
+	{"pc", idx_pc},
+	{"at", idx_at},
+};
+
 FromMsg::FromMsg(const AttrVars& var, const chatInfo& ct) :DiceJobDetail(var, ct) {
 	strMsg = vars["fromMsg"].to_str();
 	if (fromChat.gid) {
@@ -46,9 +60,6 @@ FromMsg& FromMsg::initVar(const std::initializer_list<const std::string>& replac
 	return *this;
 }
 void FromMsg::formatReply() {
-	if (!vars.count("nick") || vars["nick"].str_empty())vars["nick"] = getName(fromChat.uid, fromChat.gid);
-	if (!vars.count("pc") || vars["pc"].str_empty())getPCName(vars);
-	if (!vars.count("at") || vars["at"].str_empty())vars["at"] = !isPrivate() ? "[CQ:at,id=" + to_string(fromChat.uid) + "]" : vars["nick"];
 	if (msgMatch.ready())strReply = convert_realw2a(msgMatch.format(convert_a2realw(strReply.c_str())).c_str());
 	strReply = fmt->format(strReply, std::make_shared<AttrVars>(vars));
 }
@@ -131,9 +142,7 @@ void FromMsg::fwdMsg()
 		string msg = strMsg;
 		filter_CQcode(msg, fromChat.gid);
 		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
-		if (!vars["nick"])vars["nick"] = getName(fromChat.uid, fromChat.gid);
-		if (!vars["pc"])getPCName(vars);
-		logout << GBKtoUTF8(vars["pc"].to_str()) + "(" + to_string(fromChat.uid) + ") " + printTTime(fromTime) << endl
+		logout << GBKtoUTF8(idx_pc(vars).to_str()) + "(" + to_string(fromChat.uid) + ") " + printTTime(fromTime) << endl
 			<< GBKtoUTF8(msg) << endl << endl;
 	}
 }
@@ -2392,7 +2401,6 @@ int FromMsg::InnerOrder() {
 				return 1;
 			}
 		}
-		vars["nick"] = getName(fromChat.uid, fromChat.gid);
 		vars["res"] = to_string(today->getJrrp(fromChat.uid));
 		reply(getMsg("strJrrp"));
 		return 1;
@@ -2686,7 +2694,7 @@ int FromMsg::InnerOrder() {
 			intMsgCnt++;
 		string type = readPara();
 		string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("随机姓名_" + type)) ? "随机姓名_" + type : "随机姓名";
-		vars["nick"] = getName(fromChat.uid, fromChat.gid);
+		vars["old_nick"] = idx_nick(vars);
 		vars["new_nick"] = strip(CardDeck::drawCard(CardDeck::mPublicDeck[strDeckName], true));
 		getUser(fromChat.uid).setNick(fromChat.gid, vars["new_nick"].to_str());
 		reply(getMsg("strNameSet"));
@@ -3009,16 +3017,14 @@ int FromMsg::InnerOrder() {
 			reply(getMsg("strActionEmpty"));
 			return 1;
 		}
-		vars["nick"] = getName(fromChat.uid, fromChat.gid);
-	    getPCName(vars);
-		trusted > 4 ? reply(strAction) : reply(vars["pc"].to_str() + strAction);
+		trusted > 4 ? reply(strAction, false) : reply(idx_pc(vars).to_str() + strAction, false);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn") {
 		intMsgCnt += 2;
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
-		vars["nick"] = getName(fromChat.uid, fromChat.gid);
+		vars["old_nick"] = idx_nick(vars);
 		string& strNN{ (vars["new_nick"] = strip(strMsg.substr(intMsgCnt))).text };
 		filter_CQcode(strNN);
 		if (strNN.length() > 50) {
@@ -3500,9 +3506,7 @@ int FromMsg::InnerOrder() {
 			(intSkillMultiple != 1) ? "×" + to_string(intSkillMultiple) : "") + strSkillModify + ((intSkillDivisor != 1)
 																								  ? "/" + to_string(
 																									  intSkillDivisor)
-																								  : "");
-		vars["nick"] = getName(fromChat.uid, fromChat.gid);
-	    getPCName(vars);																						 
+																								  : "");				 
 		if (vars["reason"].str_empty()) {
 			strReply = getMsg("strRollSkill", vars);
 		}
@@ -3593,12 +3597,7 @@ int FromMsg::InnerOrder() {
 		readSkipSpace();
 		vars["char"] = strip(strMsg.substr(intMsgCnt));
 		if (vars["char"].str_empty()) {
-			
-			if (!vars.count("pc") || vars["pc"].str_empty()) {
-				vars["nick"] = getName(fromChat.uid, fromChat.gid);
-				getPCName(vars);
-			}
-			vars["char"] = vars["pc"].to_str();
+			vars["char"] = idx_pc(vars).to_str();
 		}
 		RD initdice(strinit, 20);
 		const int intFirstTimeRes = initdice.Roll();
@@ -3735,8 +3734,6 @@ int FromMsg::InnerOrder() {
 			reply(fmt->get_help("st"));
 			return 1;
 		}
-		vars["nick"] = getName(fromChat.uid, fromChat.gid);
-		getPCName(vars);
 		if (strLowerMessage.substr(intMsgCnt, 3) == "clr") {
 			if (!PList.count(fromChat.uid)) {
 				reply(getMsg("strPcNotExistErr"));
@@ -3926,8 +3923,6 @@ int FromMsg::InnerOrder() {
 			reply(fmt->get_help("ww"));
 			return 1;
 		}
-		vars["nick"] = getName(fromChat.uid, fromChat.gid);
-		getPCName(vars);
 		if (!fromChat.gid)isHidden = false;
 		CharaCard* pc{ PList.count(fromChat.uid) ? &getPlayer(fromChat.uid)[fromChat.gid] : nullptr };
 		string strMainDice;
@@ -4007,8 +4002,8 @@ int FromMsg::InnerOrder() {
 			}
 			intTurnCnt = rdTurnCnt.intTotal;
 			if (strTurnCnt.find('d') != string::npos) {
-				string strTurnNotice = vars["pc"].to_str() + "的掷骰轮数: " + rdTurnCnt.FormShortString() + "轮";
-				replyHidden(strTurnNotice);
+				vars["turn"] = rdTurnCnt.FormShortString();
+				replyHidden(getMsg("strRollTurn", vars));
 			}
 		}
 		if (strMainDice.empty()) {
@@ -4116,8 +4111,6 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'h') {
-		vars["nick"] = getName(fromChat.uid, fromChat.gid);
-		getPCName(vars);
 		bool isHidden = false;
 		if (strLowerMessage[intMsgCnt] == 'h')
 			isHidden = true;

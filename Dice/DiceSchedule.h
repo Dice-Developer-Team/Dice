@@ -39,6 +39,7 @@ struct DiceJobDetail : public std::enable_shared_from_this<DiceJobDetail> {
         return cmd_key < other.cmd_key;
     }
 };
+extern AttrIndexs MsgIndexs;
 
 class DiceJob : public DiceJobDetail {
     enum class Renum { NIL, Retry_For, Retry_Until };
