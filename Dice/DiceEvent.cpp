@@ -126,8 +126,9 @@ void FromMsg::replyHidden() {
 
 void FromMsg::fwdMsg()
 {
-	if (LinkList.count(fromSession) && LinkList[fromSession].second && isFromMaster() && strLowerMessage.find(".link") != 0)
-	{
+	if (LinkList.count(fromSession) && LinkList[fromSession].second
+		&& fromChat.uid != console.DiceMaid
+		&& strLowerMessage.find(".link") != 0){
 		string strFwd;
 		if (trusted < 5)strFwd += printFrom();
 		strFwd += strMsg;
