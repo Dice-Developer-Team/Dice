@@ -380,5 +380,5 @@ AttrVar idx_pc(AttrVars& eve){
 	long long gid{ eve.count("gid") ? eve["gid"].to_ll() : 0 };
 	return eve["pc"] = (PList.count(uid) && PList[uid][gid].getName() != "½ÇÉ«¿¨")
 		? PList[uid][gid].getName()
-		: idx_pc(eve);
+		: idx_nick(eve);
 }

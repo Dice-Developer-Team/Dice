@@ -197,7 +197,7 @@ void dataBackUp()
 
 atomic_flag isIniting{ ATOMIC_FLAG_INIT };
 EVE_Enable(eventEnable){
-	if (!isIniting.test_and_set())return;
+	if (isIniting.test_and_set())return;
 	if (Enabled)return;
 	llStartTime = time(nullptr);
 	#ifndef _WIN32
@@ -223,7 +223,6 @@ EVE_Enable(eventEnable){
 	Dice_Full_Ver_On = Dice_Full_Ver + " on\n" + DD::getDriVer();
 	DD::debugLog(Dice_Full_Ver_On);
 
-	fmt = make_unique<DiceModManager>();
 
 	mCardTemplet = {
 		{
@@ -277,6 +276,12 @@ EVE_Enable(eventEnable){
 			else filesystem::create_directory(DiceDir);
 		}
 	}
+	std::error_code ec;
+	std::filesystem::create_directory(DiceDir / "conf", ec);
+	std::filesystem::create_directory(DiceDir / "user", ec);
+	std::filesystem::create_directory(DiceDir / "audit", ec);
+	std::filesystem::create_directory(DiceDir / "mod", ec);
+	std::filesystem::create_directory(DiceDir / "plugin", ec);
 	console.setPath(DiceDir / "conf" / "Console.xml");
 	fpFileLoc = DiceDir / "com.w4123.dice";
 	{
@@ -287,12 +292,7 @@ EVE_Enable(eventEnable){
 			strSelfName = "÷»Äï[" + toString(console.DiceMaid % 10000, 4) + "]";
 		}
 	}
-	std::error_code ec;
-	std::filesystem::create_directory(DiceDir / "conf", ec);
-	std::filesystem::create_directory(DiceDir / "user", ec);
-	std::filesystem::create_directory(DiceDir / "audit", ec);
-	std::filesystem::create_directory(DiceDir / "mod", ec);
-	std::filesystem::create_directory(DiceDir / "plugin", ec);
+	fmt = make_unique<DiceModManager>();
 
 	ExtensionManagerInstance = std::make_unique<ExtensionManager>();
 	if (!console.load())
