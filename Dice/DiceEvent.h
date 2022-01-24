@@ -74,7 +74,7 @@ private:
 	// «∑ÒœÏ”¶
 	bool isAns = false;
 	bool isDisabled = false;
-	bool isAuth = false;
+	bool canRoomHost();
 
 	int getGroupAuth(long long group = 0);
 public:

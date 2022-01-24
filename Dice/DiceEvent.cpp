@@ -985,9 +985,6 @@ int FromMsg::BasicOrder()
 	intMsgCnt++;
 	while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 		intMsgCnt++;
-	//Warning:Temporary
-	isAuth = trusted > 3 
-		|| isChannel() || isPrivate() || DD::isGroupAdmin(fromChat.gid, fromChat.uid, true) || pGrp->inviter == fromChat.uid;
 	//指令匹配
 	if (console["DebugMode"])console.log("listen:" + strMsg, 0, printSTNow());
 	if (strLowerMessage.substr(intMsgCnt, 9) == "authorize")
@@ -1061,15 +1058,16 @@ int FromMsg::BasicOrder()
 			return 1;
 		}
 		string QQNum = readDigit();
-		if (QQNum.empty() || QQNum == to_string(console.DiceMaid)
-			|| (QQNum.length() == 4 && stoll(QQNum) == console.DiceMaid % 10000)){
+		bool isTarget{ QQNum == to_string(console.DiceMaid)
+			|| (QQNum.length() == 4 && stoll(QQNum) == console.DiceMaid % 10000) };
+		if (QQNum.empty() || isTarget){
 			if (trusted > 2) 
 			{
 				pGrp->leave(getMsg("strAdminDismiss", vars));
 				return 1;
 			}
-			if (pGrp->isset("协议无效"))return 0;
-			if (isAuth)
+			if (pGrp->isset("协议无效") && !isTarget)return 0;
+			if (canRoomHost())
 			{
 				pGrp->leave(getMsg("strDismiss"));
 			}
@@ -1137,7 +1135,7 @@ int FromMsg::BasicOrder()
 				if ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")))
 					reply(getMsg("strGroupLicenseDeny"));
 				else {
-					if (isAuth || trusted >2)
+					if (canRoomHost() || trusted > 2)
 					{
 						if (groupset(fromChat.gid, "停用指令") > 0)
 						{
@@ -1159,7 +1157,7 @@ int FromMsg::BasicOrder()
 			}
 			else if (Command == "off" && !isPrivate())
 			{
-				if (isAuth || trusted > 2)
+				if (canRoomHost() || trusted > 2)
 				{
 					if (groupset(fromChat.gid, "停用指令"))
 					{
@@ -1260,7 +1258,7 @@ int FromMsg::BasicOrder()
 		vars["help_word"] = readRest();
 		if (!isPrivate())
 		{
-			if (!isAuth && (vars["help_word"] == "on" || vars["help_word"] == "off"))
+			if (!canRoomHost() && (vars["help_word"] == "on" || vars["help_word"] == "off"))
 			{
 				reply(getMsg("strPermissionDeniedErr"));
 				return 1;
@@ -1325,7 +1323,7 @@ int FromMsg::InnerOrder() {
 			reply(getMsg("strWelcomePrivate"));
 			return 1;
 		}
-		if (isAuth) {
+		if (canRoomHost()) {
 			string strWelcomeMsg = strMsg.substr(intMsgCnt);
 			if (strWelcomeMsg == "clr") {
 				if (chat(fromChat.gid).confs.count("入群欢迎")) {
@@ -1378,7 +1376,7 @@ int FromMsg::InnerOrder() {
 		}
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 6) == "setcoc") {
-		if (!isAuth) {
+		if (!canRoomHost()) {
 			reply(getMsg("strPermissionDeniedErr"));
 			return 1;
 		}
@@ -1966,7 +1964,7 @@ int FromMsg::InnerOrder() {
 			if (!chat(fromChat.gid).isset(option)) {
 				reply(getMsg("strGroupSetOffAlready"));
 			}
-			else if (trusted > 0 || isAuth) {
+			else if (trusted > 0 || canRoomHost()) {
 				chat(fromChat.gid).reset(option);
 				reply(getMsg("strReplyOn"));
 			}
@@ -1980,7 +1978,7 @@ int FromMsg::InnerOrder() {
 			if (chat(fromChat.gid).isset(option)) {
 				reply(getMsg("strGroupSetOnAlready"));
 			}
-			else if (trusted > 0 || isAuth) {
+			else if (trusted > 0 || canRoomHost()) {
 				chat(fromChat.gid).set(option);
 				reply(getMsg("strReplyOff"));
 			}
@@ -2222,7 +2220,7 @@ int FromMsg::InnerOrder() {
 				gm->session(llRoom).deck_show(this);
 			else reply(getMsg("strDeckListEmpty"));
 		}
-		else if ((!isAuth || llRoom != fromSession) && !trusted) {
+		else if ((!canRoomHost() || llRoom != fromSession) && !trusted) {
 			reply(getMsg("strWhiteQQDenied"));
 		}
 		else if (strPara == "set") {
@@ -2360,7 +2358,7 @@ int FromMsg::InnerOrder() {
 		const string Command = strLowerMessage.substr(intMsgCnt, strMsg.find(' ', intMsgCnt) - intMsgCnt);
 		if (!isPrivate()) {
 			if (Command == "on") {
-				if (isAuth) {
+				if (canRoomHost()) {
 					if (groupset(fromChat.gid, "禁用jrrp") > 0) {
 						chat(fromChat.gid).reset("禁用jrrp");
 						reply("成功在本群中启用JRRP!");
@@ -2375,7 +2373,7 @@ int FromMsg::InnerOrder() {
 				return 1;
 			}
 			if (Command == "off") {
-				if (isAuth) {
+				if (canRoomHost()) {
 					if (groupset(fromChat.gid, "禁用jrrp") < 1) {
 						chat(fromChat.gid).set("禁用jrrp");
 						reply("成功在本群中禁用JRRP!");
@@ -2978,7 +2976,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		string strAction = strLowerMessage.substr(intMsgCnt);
-		if (!isAuth && (strAction == "on" || strAction == "off")) {
+		if (!canRoomHost() && (strAction == "on" || strAction == "off")) {
 			reply(getMsg("strPermissionDeniedErr"));
 			return 1;
 		}
@@ -3051,7 +3049,7 @@ int FromMsg::InnerOrder() {
 			intMsgCnt++;
 		const string strOption = strLowerMessage.substr(intMsgCnt, strMsg.find(' ', intMsgCnt) - intMsgCnt);
 
-		if (!isAuth && (strOption == "on" || strOption == "off")) {
+		if (!canRoomHost() && (strOption == "on" || strOption == "off")) {
 			reply(getMsg("strPermissionDeniedErr"));
 			return 1;
 		}
@@ -3085,7 +3083,7 @@ int FromMsg::InnerOrder() {
 			gm->session(fromSession).ob_list(this);
 		}
 		else if (strOption == "clr") {
-			if (isAuth) {
+			if (canRoomHost()) {
 				gm->session(fromSession).ob_clr(this);
 			}
 			else {
@@ -4443,6 +4441,14 @@ void FromMsg::virtualCall() {
 	isVirtual = true;
 	isCalled = true;
 	DiceFilter();
+}
+bool FromMsg::canRoomHost() {
+	if (!vars.count("canRoomHost")) {
+		return bool(vars["canRoomHost"] = trusted > 3
+			|| isChannel() || isPrivate()
+			|| DD::isGroupAdmin(fromChat.gid, fromChat.uid, true) || pGrp->inviter == fromChat.uid);
+	}
+	return bool(vars["canRoomHost"]);
 }
 
 int FromMsg::getGroupAuth(long long group) {
