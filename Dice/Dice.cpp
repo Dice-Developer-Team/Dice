@@ -341,13 +341,6 @@ EVE_Enable(eventEnable)
 	// 确保线程执行结束
 	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
 	Aws::InitAPI(options);
-	Enabled = true;
-	DD::debugLog("Dice.threadInit");
-	threads(SendMsg);
-	threads(ConsoleTimer);
-	threads(warningHandler);
-	threads(frqHandler);
-	sch.start();
 
 	DD::debugLog("Dice.extensionManagerInit");
 	try
@@ -446,6 +439,13 @@ EVE_Enable(eventEnable)
 	getExceptGroup();
 	llStartTime = time(nullptr);
 	isIniting = false;
+	DD::debugLog("Dice.threadInit");
+	Enabled = true;
+	threads(SendMsg);
+	threads(ConsoleTimer);
+	threads(warningHandler);
+	threads(frqHandler);
+	sch.start();
 }
 
 mutex GroupAddMutex;

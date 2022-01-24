@@ -373,8 +373,12 @@ void Player::readb(std::ifstream& fin)
 	fread<unsigned long long, unsigned short>(fin, mGroupIndex);
 }
 
-AttrVar idx_pc(AttrVars& msg){
-	return msg["pc"] = (PList.count(msg["uid"].to_ll()) && PList[msg["uid"].to_ll()][msg["gid"].to_ll()].getName() != "½ÇÉ«¿¨")
-		? PList[msg["uid"].to_ll()][msg["gid"].to_ll()].getName()
-		: idx_pc(msg);
+AttrVar idx_pc(AttrVars& eve){
+	if (eve.count("pc"))return eve["pc"];
+	if (!eve.count("uid"))return {};
+	long long uid{ eve["uid"].to_ll() };
+	long long gid{ eve.count("gid") ? eve["gid"].to_ll() : 0 };
+	return eve["pc"] = (PList.count(uid) && PList[uid][gid].getName() != "½ÇÉ«¿¨")
+		? PList[uid][gid].getName()
+		: idx_pc(eve);
 }
