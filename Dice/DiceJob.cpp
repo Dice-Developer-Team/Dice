@@ -217,7 +217,8 @@ void clear_group(DiceJob& job) {
 	}
 	else if (job.vars["clear_mode"] == "black") {
 		try {
-			for (auto id : DD::getGroupIDList()) {
+			set<long long> grps{ DD::getGroupIDList() };
+			for (auto id : grps) {
 				Chat& grp = chat(id).group().name(DD::getGroupName(id));
 				if (grp.isset("忽略") || grp.isset("免清") || grp.isset("免黑") || grp.isset("协议无效"))continue;
 				if (blacklist->get_group_danger(id)) {

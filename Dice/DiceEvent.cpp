@@ -658,7 +658,8 @@ int FromMsg::AdminEvent(const string& strOption)
 	if (strOption == "blackfriend")
 	{
 		ResList res;
-		for(long long uid: DD::getFriendQQList()){
+		set<long long> uids{ DD::getFriendQQList() };
+		for(long long uid: uids){
 			if (blacklist->get_qq_danger(uid))
 				res << printUser(uid);
 		}

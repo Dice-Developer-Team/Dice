@@ -333,7 +333,8 @@ EVE_Enable(eventEnable){
 	//读取用户数据
 	gm = make_unique<DiceTableMaster>();
 	readUserData();
-	for (auto gid : DD::getGroupIDList())
+	set<long long> grps{ DD::getGroupIDList() };
+	for (auto gid : grps)
 	{
 		chat(gid).group().reset("未进").reset("已退").set("已入群");
 	}
