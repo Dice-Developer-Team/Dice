@@ -226,7 +226,7 @@ void clear_group(DiceJob& job) {
 					if (gm->has_session(id) && gm->session(id).tUpdate > grp.tUpdated)tLast = gm->session(id).tUpdate;
 					if (tLast < grpline)GrpDelete.push_back(id);
 					res << printGroup(id) + "£ººÚÃûµ¥Èº";
-					if (console["LeaveBlackGroup"])grp.leave(getMsg("strBlackGroup"));
+					grp.leave(getMsg("strBlackGroup"));
 				}
 				set<long long> MemberList{ DD::getGroupMemberList(id) };
 				int authSelf{ DD::getGroupAuth(id, console.DiceMaid, 1) };

@@ -32,11 +32,7 @@
 
 bool Enabled = false;
 
-//QQFrame frame{ QQFrame::CoolQ };
-
 std::string Dice_Full_Ver_On;
-
-//std::string strModulePath;
 
 std::unique_ptr<ExtensionManager> ExtensionManagerInstance;
 
@@ -477,7 +473,7 @@ const dict_ci GlobalComment{
 };
 const dict_ci HelpDoc = {
 {"更新",R"(
-599:mod新增script
+601:新增禁用非好友会话
 598:当日计数器
 597:冷却计时器
 596:角色卡/Conf允许读写table
@@ -488,10 +484,8 @@ const dict_ci HelpDoc = {
 589:ak安科安价指令
 588:适配频道消息
 587:ww调用优化
-586:新版自定义回复
 585:WebUI
 581:角色掷骰统计
-580:过期记录回收
 579:允许转义文本多选一
 576:定时任务脚本
 569:.rc/.draw暗骰暗抽
