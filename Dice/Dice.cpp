@@ -342,18 +342,6 @@ EVE_Enable(eventEnable){
 	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
 	Aws::InitAPI(options);
 
-	DD::debugLog("Dice.extensionManagerInit");
-	try
-	{
-		ExtensionManagerInstance->refreshIndex();
-		console.log("已成功刷新软件包缓存，" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用，"
-			+ to_string(ExtensionManagerInstance->getUpgradableCount()) + "个可升级", 0b1);
-	}
-	catch(const std::exception& e)
-	{
-		console.log(std::string("刷新软件包缓存失败：") + e.what(), 0b1);
-	}
-
 	DD::debugLog("Dice.webUIInit");
 	WebUIPasswordPath = DiceDir / "conf" / "WebUIPassword.digest";
 	if (!std::filesystem::exists(WebUIPasswordPath, ec) || std::filesystem::is_empty(WebUIPasswordPath, ec))
@@ -445,6 +433,18 @@ EVE_Enable(eventEnable){
 	console.log(getMsg("strSelfName") + "初始化完成，用时" + to_string(time(nullptr) - llStartTime) + "秒", 0b1,
 		printSTNow());
 	llStartTime = time(nullptr);
+
+	DD::debugLog("Dice.extensionManagerInit");
+	try
+	{
+		ExtensionManagerInstance->refreshIndex();
+		console.log("已成功刷新软件包缓存，" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用，"
+			+ to_string(ExtensionManagerInstance->getUpgradableCount()) + "个可升级", 0b1);
+	}
+	catch (const std::exception& e)
+	{
+		console.log(std::string("刷新软件包缓存失败：") + e.what(), 0);
+	}
 	isIniting.clear();
 }
 
