@@ -89,7 +89,9 @@ void FromMsg::reply(bool isFormat) {
 		formatReply();
 	if (console["ReferMsgReply"] && vars["msgid"])strReply = "[CQ:reply,id=" + vars["msgid"].to_str() + "]" + strReply;
 	AddMsgToQueue(strReply, fromChat);
-	if (LogList.count(fromSession) && gm->session(fromSession).is_logging()) {
+	if (LogList.count(fromSession) && gm->session(fromSession).is_logging()
+		&& (isPrivate()
+			|| (isChannel() ? !console["ListenChannelEcho"] : !console["ListenGroupEcho"]))) {
 		filter_CQcode(strReply, fromChat.gid);
 		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime(fromTime) << endl
@@ -106,8 +108,7 @@ void FromMsg::replyHidden() {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	formatReply();
-	if (LogList.count(fromSession) && gm->session(fromSession).is_logging()
-		&& (isPrivate() || !console["ListenGroupEcho"])) {
+	if (LogList.count(fromSession) && gm->session(fromSession).is_logging()) {
 		filter_CQcode(strReply, fromChat.gid);
 		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime(fromTime) << endl
