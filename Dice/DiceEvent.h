@@ -44,6 +44,7 @@ public:
 	void replyHidden(const std::string& strReply);
 
 	void reply(bool isFormat = true);
+	void replyMsg(const std::string& key);
 
 	void replyHidden();
 
@@ -55,6 +56,7 @@ public:
 
 	//转发消息
 	void fwdMsg();
+	void logEcho();
 	int AdminEvent(const string& strOption);
 	int MasterSet();
 	int BasicOrder();

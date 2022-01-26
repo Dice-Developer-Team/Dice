@@ -74,15 +74,16 @@ void FromMsg::reply(bool isFormat) {
 		strReply.erase(strReply.begin());
 	if (isFormat)
 		formatReply();
-	if (LogList.count(fromSession) && gm->session(fromSession).is_logging()
-		&& (isPrivate()
-			|| (isChannel() ? !console["ListenChannelEcho"] : !console["ListenGroupEcho"]))) {
-		filter_CQcode(strReply, fromChat.gid);
-		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
-		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime(fromTime) << endl
-			<< GBKtoUTF8(strReply) << endl << endl;
-	}
-	if (console["ReferMsgReply"] && vars["msgid"])strReply = "[CQ:reply,id=" + vars["msgid"].to_str() + "]" + strReply;
+	logEcho();
+	if (console["ReferMsgReply"] && vars.has("msgid"))strReply = "[CQ:reply,id=" + vars.get_str("msgid") + "]" + strReply;
+	AddMsgToQueue(strReply, fromChat);
+}
+void FromMsg::replyMsg(const std::string& key) {
+	if (isVirtual && fromChat.uid == console.DiceMaid && isPrivate())return;
+	isAns = true;
+	strReply = getMsg(key, vars);
+	logEcho();
+	if (console["ReferMsgReply"] && vars.has("msgid"))strReply = "[CQ:reply,id=" + vars.get_str("msgid") + "]" + strReply;
 	AddMsgToQueue(strReply, fromChat);
 }
 
@@ -112,6 +113,28 @@ void FromMsg::replyHidden() {
 	}
 }
 
+void FromMsg::logEcho(){
+	if (!isPrivate()
+		&& (isChannel() ? console["ListenChannelEcho"] : console["ListenGroupEcho"]))return;
+	if (LinkList.count(fromSession) && LinkList[fromSession].second
+		&& strLowerMessage.find(".link") != 0) {
+		string strFwd{ getMsg("strSelfCall") + ":"
+			+ strReply };
+		if (long long aim = LinkList[fromSession].first; aim < 0) {
+			AddMsgToQueue(strFwd, ~aim);
+		}
+		else if (ChatList.count(aim)) {
+			AddMsgToQueue(strFwd, { 0,aim });
+		}
+	}
+	if (LogList.count(fromSession)
+		&& strLowerMessage.find(".log") != 0) {
+		filter_CQcode(strReply, fromChat.gid);
+		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
+		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime(fromTime) << endl
+			<< GBKtoUTF8(strReply) << endl << endl;
+	}
+}
 void FromMsg::fwdMsg()
 {
 	if (LinkList.count(fromSession) && LinkList[fromSession].second
@@ -187,7 +210,7 @@ int FromMsg::AdminEvent(const string& strOption)
 	}
 	if (trusted < 4)
 	{
-		reply(getMsg("strNotAdmin"));
+		replyMsg("strNotAdmin");
 		return -1;
 	}
 	if (auto it = Console::intDefault.find(strOption);it != Console::intDefault.end())
@@ -361,10 +384,10 @@ int FromMsg::AdminEvent(const string& strOption)
 			}
 			break;
 		case -1:
-			reply(getMsg("strParaEmpty"));
+			replyMsg("strParaEmpty");
 			break;
 		case -2:
-			reply(getMsg("strParaIllegal"));
+			replyMsg("strParaIllegal");
 			break;
 		default: break;
 		}
@@ -417,7 +440,7 @@ int FromMsg::AdminEvent(const string& strOption)
 				if (intAdd | intReduce)note(
 					"已将" + getMsg("strSelfName") + "对窗口" + printChat(cTarget) + "通知级别调整为" + to_binary(
 						console.showNotice(cTarget)), 0b1);
-				else reply(getMsg("strParaIllegal"));
+				else replyMsg("strParaIllegal");
 				return 1;
 			}
 			int intLV;
@@ -426,7 +449,7 @@ int FromMsg::AdminEvent(const string& strOption)
 			case 0:
 				if (intLV < 0 || intLV > 63)
 				{
-					reply(getMsg("strParaIllegal"));
+					replyMsg("strParaIllegal");
 					return 1;
 				}
 				console.setNotice(cTarget, intLV);
@@ -437,7 +460,7 @@ int FromMsg::AdminEvent(const string& strOption)
 					console.showNotice(cTarget)));
 				break;
 			case -2:
-				reply(getMsg("strParaIllegal"));
+				replyMsg("strParaIllegal");
 				break;
 			}
 		}
@@ -742,7 +765,7 @@ int FromMsg::AdminEvent(const string& strOption)
 			}
 			else
 			{
-				reply(getMsg("strGroupGetErr"));
+				replyMsg("strGroupGetErr");
 			}
 			return 1;
 		}
@@ -759,7 +782,7 @@ int FromMsg::AdminEvent(const string& strOption)
 			}
 			else
 			{
-				reply(getMsg("strGroupGetErr"));
+				replyMsg("strGroupGetErr");
 			}
 		}
 		else if (strOption == "botoff")
@@ -818,7 +841,7 @@ int FromMsg::AdminEvent(const string& strOption)
 					{
 						if (trusted <= trustedQQ(llTargetID))
 						{
-							reply(getMsg("strUserTrustDenied"));
+							replyMsg("strUserTrustDenied");
 						}
 						else 
 						{
@@ -876,7 +899,7 @@ int FromMsg::AdminEvent(const string& strOption)
 			while ((llTargetID = readID()));
 			return 1;
 		}
-		else reply(getMsg("strAdminOptionEmpty"));
+		else replyMsg("strAdminOptionEmpty");
 		return 0;
 	}
 }
@@ -886,7 +909,7 @@ int FromMsg::MasterSet()
 	const std::string strOption = readPara();
 	if (strOption.empty())
 	{
-		reply(getMsg("strAdminOptionEmpty"));
+		replyMsg("strAdminOptionEmpty");
 		return -1;
 	}
 	if (strOption == "groupclr")
@@ -900,7 +923,7 @@ int FromMsg::MasterSet()
 	{
 		if (console.master() != fromChat.uid)
 		{
-			reply(getMsg("strNotMaster"));
+			replyMsg("strNotMaster");
 			return 1;
 		}
 		reply("你不再是" + getMsg("strSelfName") + "的Master！");
@@ -911,7 +934,7 @@ int FromMsg::MasterSet()
 	{
 		if (console.master() != fromChat.uid)
 		{
-			reply(getMsg("strNotMaster"));
+			replyMsg("strNotMaster");
 			return 1;
 		}
 		const string strMaster = readDigit();
@@ -999,7 +1022,7 @@ int FromMsg::BasicOrder()
 			}
 			else
 			{
-				reply(getMsg("strGroupIDEmpty"));
+				replyMsg("strGroupIDEmpty");
 				return 1;
 			}
 		}
@@ -1016,7 +1039,7 @@ int FromMsg::BasicOrder()
 			string strInfo = readRest();
 			if (strInfo.empty())console.log(printUser(fromChat.uid) + "申请" + printGroup(pGrp->ID) + "许可使用", 0b10, printSTNow());
 			else console.log(printUser(fromChat.uid) + "申请" + printGroup(pGrp->ID) + "许可使用；附言：" + strInfo, 0b100, printSTNow());
-			reply(getMsg("strGroupLicenseApply"));
+			replyMsg("strGroupLicenseApply");
 		}
 		return 1;
 	}
@@ -1028,31 +1051,31 @@ int FromMsg::BasicOrder()
 			string QQNum = readDigit();
 			if (QQNum.empty())
 			{
-				reply(getMsg("strDismissPrivate"));
+				replyMsg("strDismissPrivate");
 				return -1;
 			}
 			long long llGroup = stoll(QQNum);
 			if (!ChatList.count(llGroup))
 			{
-				reply(getMsg("strGroupNotFound"));
+				replyMsg("strGroupNotFound");
 				return 1;
 			}
 			Chat& grp = chat(llGroup);
 			if (grp.isset("已退") || grp.isset("未进"))
 			{
-				reply(getMsg("strGroupAway"));
+				replyMsg("strGroupAway");
 			}
 			if (trustedQQ(fromChat.uid) > 2) {
 				grp.leave(getMsg("strAdminDismiss", vars));
-				reply(getMsg("strGroupExit"));
+				replyMsg("strGroupExit");
 			}
 			else if(DD::isGroupAdmin(llGroup, fromChat.uid, true) || (grp.inviter == fromChat.uid))
 			{
-				reply(getMsg("strDismiss"));
+				replyMsg("strDismiss");
 			}
 			else
 			{
-				reply(getMsg("strPermissionDeniedErr"));
+				replyMsg("strPermissionDeniedErr");
 			}
 			return 1;
 		}
@@ -1073,7 +1096,7 @@ int FromMsg::BasicOrder()
 			else
 			{
 				if (!isCalled && (pGrp->isset("停用指令") || DD::getGroupSize(fromChat.gid).currSize > 200))AddMsgToQueue(getMsg("strPermissionDeniedErr", vars), fromChat.uid);
-				else reply(getMsg("strPermissionDeniedErr"));
+				else replyMsg("strPermissionDeniedErr");
 			}
 			return 1;
 		}
@@ -1109,7 +1132,7 @@ int FromMsg::BasicOrder()
 		}
 		else
 		{
-			if (isCalled)reply(getMsg("strNotMaster"));
+			if (isCalled)replyMsg("strNotMaster");
 			return 1;
 		}
 		return 1;
@@ -1132,25 +1155,25 @@ int FromMsg::BasicOrder()
 			if (Command == "on" && !isPrivate())
 			{
 				if ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")))
-					reply(getMsg("strGroupLicenseDeny"));
+					replyMsg("strGroupLicenseDeny");
 				else {
 					if (canRoomHost() || trusted > 2)
 					{
 						if (groupset(fromChat.gid, "停用指令") > 0)
 						{
 							chat(fromChat.gid).reset("停用指令");
-							reply(getMsg("strBotOn"));
+							replyMsg("strBotOn");
 						}
 						else
 						{
-							reply(getMsg("strBotOnAlready"));
+							replyMsg("strBotOnAlready");
 						}
 					}
 					else
 					{
 						if (groupset(fromChat.gid, "停用指令") > 0 && DD::getGroupSize(fromChat.gid).currSize > 200)AddMsgToQueue(
 							getMsg("strPermissionDeniedErr", vars), fromChat.uid);
-						else reply(getMsg("strPermissionDeniedErr"));
+						else replyMsg("strPermissionDeniedErr");
 					}
 				}
 			}
@@ -1161,18 +1184,18 @@ int FromMsg::BasicOrder()
 					if (groupset(fromChat.gid, "停用指令"))
 					{
 						if (!isCalled && QQNum.empty() && pGrp->isGroup && DD::getGroupSize(fromChat.gid).currSize > 200)AddMsgToQueue(getMsg("strBotOffAlready", vars), fromChat.uid);
-						else reply(getMsg("strBotOffAlready"));
+						else replyMsg("strBotOffAlready");
 					}
 					else 
 					{
 						chat(fromChat.gid).set("停用指令");
-						reply(getMsg("strBotOff"));
+						replyMsg("strBotOff");
 					}
 				}
 				else
 				{
 					if (groupset(fromChat.gid, "停用指令"))AddMsgToQueue(getMsg("strPermissionDeniedErr", vars), fromChat.uid);
-					else reply(getMsg("strPermissionDeniedErr"));
+					else replyMsg("strPermissionDeniedErr");
 				}
 			}
 			else if (!Command.empty() && !isCalled && pGrp->isset("停用指令"))
@@ -1200,18 +1223,18 @@ int FromMsg::BasicOrder()
 			&& (QQNum.length() != 4 || stoll(QQNum) != console.DiceMaid % 10000))return 0;
 		if (strPara == "on") {
 			pGrp->ChConf[fromChat.chid]["order"] = 1;
-			reply(getMsg("strBotChannelOn"));
+			replyMsg("strBotChannelOn");
 		}
 		else if (strPara == "off") {
 			pGrp->ChConf[fromChat.chid]["order"] = -1;
-			reply(getMsg("strBotChannelOff"));
+			replyMsg("strBotChannelOff");
 		}
 	}
 	if (isDisabled || (!isCalled || !console["DisabledListenAt"]) && (groupset(fromChat.gid, "停用指令") > 0))
 	{
 		if (isPrivate())
 		{
-			reply(getMsg("strGlobalOff"));
+			replyMsg("strGlobalOff");
 			return 1;
 		}
 		return 0;
@@ -1223,7 +1246,7 @@ int FromMsg::BasicOrder()
 			intMsgCnt++;
 		if (intMsgCnt == strMsg.length())
 		{
-			reply(getMsg("strHlpNameEmpty"));
+			replyMsg("strHlpNameEmpty");
 			return true;
 		}
 		string key{ readUntilSpace() };
@@ -1237,14 +1260,14 @@ int FromMsg::BasicOrder()
 				fmt->set_help(it->first, it->second);
 			else
 				fmt->rm_help(key);
-			reply(getMsg("strHlpReset"));
+			replyMsg("strHlpReset");
 		}
 		else
 		{
 			string strHelpdoc = strMsg.substr(intMsgCnt);
 			CustomHelp[key] = strHelpdoc;
 			fmt->set_help(key, strHelpdoc);
-			reply(getMsg("strHlpSet"));
+			replyMsg("strHlpSet");
 		}
 		saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
 		return true;
@@ -1259,7 +1282,7 @@ int FromMsg::BasicOrder()
 		{
 			if (!canRoomHost() && (vars["help_word"] == "on" || vars["help_word"] == "off"))
 			{
-				reply(getMsg("strPermissionDeniedErr"));
+				replyMsg("strPermissionDeniedErr");
 				return 1;
 			}
 			vars["option"] = "禁用help";
@@ -1268,11 +1291,11 @@ int FromMsg::BasicOrder()
 				if (groupset(fromChat.gid, vars["option"].to_str()) < 1)
 				{
 					chat(fromChat.gid).set(vars["option"].to_str());
-					reply(getMsg("strGroupSetOn"));
+					replyMsg("strGroupSetOn");
 				}
 				else
 				{
-					reply(getMsg("strGroupSetOnAlready"));
+					replyMsg("strGroupSetOnAlready");
 				}
 				return 1;
 			}
@@ -1281,17 +1304,17 @@ int FromMsg::BasicOrder()
 				if (groupset(fromChat.gid, vars["option"].to_str()) > 0)
 				{
 					chat(fromChat.gid).reset(vars["option"].to_str());
-					reply(getMsg("strGroupSetOff"));
+					replyMsg("strGroupSetOff");
 				}
 				else
 				{
-					reply(getMsg("strGroupSetOffAlready"));
+					replyMsg("strGroupSetOffAlready");
 				}
 				return 1;
 			}
 			if (groupset(fromChat.gid, vars["option"].to_str()) > 0)
 			{
-				reply(getMsg("strGroupSetOnAlready"));
+				replyMsg("strGroupSetOnAlready");
 				return 1;
 			}
 		}
@@ -1319,7 +1342,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (isPrivate()) {
-			reply(getMsg("strWelcomePrivate"));
+			replyMsg("strWelcomePrivate");
 			return 1;
 		}
 		if (canRoomHost()) {
@@ -1327,34 +1350,34 @@ int FromMsg::InnerOrder() {
 			if (strWelcomeMsg == "clr") {
 				if (chat(fromChat.gid).confs.count("入群欢迎")) {
 					chat(fromChat.gid).reset("入群欢迎");
-					reply(getMsg("strWelcomeMsgClearNotice"));
+					replyMsg("strWelcomeMsgClearNotice");
 				}
 				else {
-					reply(getMsg("strWelcomeMsgClearErr"));
+					replyMsg("strWelcomeMsgClearErr");
 				}
 			}
 			else if (strWelcomeMsg == "show") {
 				string strWelcome{ chat(fromChat.gid).confs["入群欢迎"].to_str() };
-				if (strWelcome.empty())reply(getMsg("strWelcomeMsgEmpty"));
+				if (strWelcome.empty())replyMsg("strWelcomeMsgEmpty");
 				else reply(strWelcome, false);	//转义有注入风险
 			}
 			else if (readPara() == "set") {
 				chat(fromChat.gid).set("入群欢迎", strip(readRest()));
-				reply(getMsg("strWelcomeMsgUpdateNotice"));
+				replyMsg("strWelcomeMsgUpdateNotice");
 			}
 			else {
 				chat(fromChat.gid).set("入群欢迎", strWelcomeMsg);
-				reply(getMsg("strWelcomeMsgUpdateNotice"));
+				replyMsg("strWelcomeMsgUpdateNotice");
 			}
 		}
 		else {
-			reply(getMsg("strPermissionDeniedErr"));
+			replyMsg("strPermissionDeniedErr");
 		}
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 6) == "groups") {
 		if (trusted < 4) {
-			reply(getMsg("strNotAdmin"));
+			replyMsg("strNotAdmin");
 			return 1;
 		}
 		intMsgCnt += 6;
@@ -1366,7 +1389,7 @@ int FromMsg::InnerOrder() {
 		}
 		else if (strOption == "clr") {
 			if (trusted < 5) {
-				reply(getMsg("strNotMaster"));
+				replyMsg("strNotMaster");
 				return 1;
 			}
 			int cnt = clearGroup();
@@ -1376,7 +1399,7 @@ int FromMsg::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 6) == "setcoc") {
 		if (!canRoomHost()) {
-			reply(getMsg("strPermissionDeniedErr"));
+			replyMsg("strPermissionDeniedErr");
 			return 1;
 		}
 		intMsgCnt += 6;
@@ -1390,18 +1413,18 @@ int FromMsg::InnerOrder() {
 				vars["rule"] = pGrp->confs["rc房规"];
 			}
 			if (vars.has("rule")) {
-				reply(getMsg("strDefaultCOCShow"));
+				replyMsg("strDefaultCOCShow");
 			}
 			else {
 				vars["rule"] = console["DefaultCOCRoomRule"];
-				reply(getMsg("strDefaultCOCShowDefault"));
+				replyMsg("strDefaultCOCShowDefault");
 			}
 			return 1;
 		}
 		else if (action == "clr") {
 			if (isPrivate())getUser(fromChat.uid).rmConf("rc房规");
 			else chat(fromChat.gid).reset("rc房规");
-			reply(getMsg("strDefaultCOCClr"));
+			replyMsg("strDefaultCOCClr");
 			return 1;
 		}
 		string strRule = readDigit();
@@ -1410,7 +1433,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (strRule.length() > 1) {
-			reply(getMsg("strDefaultCOCNotFound"));
+			replyMsg("strDefaultCOCNotFound");
 			return 1;
 		}
 		int intRule = stoi(strRule);
@@ -1437,7 +1460,7 @@ int FromMsg::InnerOrder() {
 			reply(getMsg("strDefaultCOCSet") + "6\n绿色三角洲\n出1或出个位十位相同且<=成功率大成功\n出100或出个位十位相同且>成功率大失败");
 			break;
 		default:
-			reply(getMsg("strDefaultCOCNotFound"));
+			replyMsg("strDefaultCOCNotFound");
 			return 1;
 		}
 		if (isPrivate())getUser(fromChat.uid).setConf("rc房规", intRule); 
@@ -1447,7 +1470,7 @@ int FromMsg::InnerOrder() {
 	else if (strLowerMessage.substr(intMsgCnt, 6) == "system") {
 		intMsgCnt += 6;
 		if (console && trusted < 4) {
-			reply(getMsg("strNotAdmin"));
+			replyMsg("strNotAdmin");
 			return -1;
 		}
 		string strOption = readPara();
@@ -1500,7 +1523,7 @@ int FromMsg::InnerOrder() {
 		}
 		else if (strOption == "reload") {
 			if (trusted < 5 && fromChat.uid != console.master()) {
-				reply(getMsg("strNotMaster"));
+				replyMsg("strNotMaster");
 				return -1;
 			}
 			cmd_key = "reload";
@@ -1510,7 +1533,7 @@ int FromMsg::InnerOrder() {
 		else if (strOption == "remake") {
 			
 			if (trusted < 5 && fromChat.uid != console.master()) {
-				reply(getMsg("strNotMaster"));
+				replyMsg("strNotMaster");
 				return -1;
 			}
 			cmd_key = "remake";
@@ -1519,7 +1542,7 @@ int FromMsg::InnerOrder() {
 		}
 		else if (strOption == "die") {
 			if (trusted < 5 && fromChat.uid != console.master()) {
-				reply(getMsg("strNotMaster"));
+				replyMsg("strNotMaster");
 				return -1;
 			}
 			cmd_key = "die";
@@ -1531,7 +1554,7 @@ int FromMsg::InnerOrder() {
 #ifdef _WIN32
 			if (trusted < 5 && fromChat.uid != console.master())
 			{
-				reply(getMsg("strNotMaster"));
+				replyMsg("strNotMaster");
 				return -1;
 			}
 			system(R"(taskkill /f /fi "username eq %username%" /im explorer.exe)");
@@ -1545,7 +1568,7 @@ int FromMsg::InnerOrder() {
 #ifdef _WIN32
 			if (fromChat.uid != console.master())
 			{
-				reply(getMsg("strNotMaster"));
+				replyMsg("strNotMaster");
 				return -1;
 			}
 			string strCMD = readRest() + "\ntimeout /t 10";
@@ -1563,7 +1586,7 @@ int FromMsg::InnerOrder() {
 		intMsgCnt += 5;
 		string strOpt = readPara();
 		if (trusted < 4 && fromChat.uid != console.master()) {
-			reply(getMsg("strNotAdmin"));
+			replyMsg("strNotAdmin");
 			return 1;
 		}
 		if (strOpt == "update") {
@@ -1585,12 +1608,12 @@ int FromMsg::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd") {
 		vars["res"] = COC7D();
-		reply(getMsg("strCOCBuild"));
+		replyMsg("strCOCBuild");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc6d") {
 		vars["res"] = COC6D();
-		reply(getMsg("strCOCBuild"));
+		replyMsg("strCOCBuild");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "group") {
@@ -1603,7 +1626,7 @@ int FromMsg::InnerOrder() {
 		}
 		if (strLowerMessage.substr(intMsgCnt, 3) == "all") {
 			if (trusted < 5) {
-				reply(getMsg("strNotMaster"));
+				replyMsg("strNotMaster");
 				return 1;
 			}
 			intMsgCnt += 3;
@@ -1613,7 +1636,7 @@ int FromMsg::InnerOrder() {
 				intMsgCnt++;
 				string strOption{ (vars["option"] = readRest()).to_str() };
 				if (!mChatConf.count(vars["option"].to_str())) {
-					reply(getMsg("strGroupSetNotExist"));
+					replyMsg("strGroupSetNotExist");
 					return 1;
 				}
 				int Cnt = 0;
@@ -1641,11 +1664,11 @@ int FromMsg::InnerOrder() {
 		if (!(vars["group_id"] = readDigit(false)).str_empty()) {
 			llGroup = stoll(vars["group_id"].to_str());
 			if (!ChatList.count(llGroup)) {
-				reply(getMsg("strGroupNotFound"));
+				replyMsg("strGroupNotFound");
 				return 1;
 			}
 			if (getGroupAuth(llGroup) < 0) {
-				reply(getMsg("strGroupDenied"));
+				replyMsg("strGroupDenied");
 				return 1;
 			}
 		}
@@ -1663,7 +1686,7 @@ int FromMsg::InnerOrder() {
 				const string option{ (vars["option"] = readPara()).to_str() };
 				readSkipSpace();
 				if (!mChatConf.count(vars["option"].to_str())) {
-					reply(getMsg("strGroupSetInvalid"));
+					replyMsg("strGroupSetInvalid");
 					continue;
 				}
 				if (getGroupAuth(llGroup) >= get<string, short>(mChatConf, option, 0)) {
@@ -1676,7 +1699,7 @@ int FromMsg::InnerOrder() {
 							}
 						}
 						else {
-							reply(getMsg("strGroupSetOnAlready"));
+							replyMsg("strGroupSetOnAlready");
 						}
 					}
 					else if (grp.isset(vars["option"].to_str())) {
@@ -1684,19 +1707,19 @@ int FromMsg::InnerOrder() {
 						chat(llGroup).reset(vars["option"].to_str());
 					}
 					else {
-						reply(getMsg("strGroupSetOffAlready"));
+						replyMsg("strGroupSetOffAlready");
 					}
 				}
 				else {
-					reply(getMsg("strGroupSetDenied"));
+					replyMsg("strGroupSetDenied");
 				}
 			} while (strMsg[intMsgCnt] == '+' || strMsg[intMsgCnt] == '-');
 			if (cntSet == 1) {
-				isSet ? reply(getMsg("strGroupSetOn")) : reply(getMsg("strGroupSetOff"));
+				isSet ? replyMsg("strGroupSetOn") : replyMsg("strGroupSetOff");
 			}
 			else if(cntSet > 1) {
 				vars["opt_list"] = grp.listBoolConf();
-				reply(getMsg("strGroupMultiSet"));
+				replyMsg("strGroupMultiSet");
 			}
 			return 1;
 		}
@@ -1719,7 +1742,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (!grp.isGroup || (fromChat.gid == llGroup && isPrivate())) {
-			reply(getMsg("strGroupNot"));
+			replyMsg("strGroupNot");
 			return 1;
 		}
 		else if (Command == "info") {
@@ -1727,7 +1750,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		else if (!isInGroup) {
-			reply(getMsg("strGroupNotIn"));
+			replyMsg("strGroupNotIn");
 			return 1;
 		}
 		else if (Command == "survey") {
@@ -1819,33 +1842,33 @@ int FromMsg::InnerOrder() {
 		}
 		if (bool isAdmin = DD::isGroupAdmin(llGroup, fromChat.uid, true); Command == "pause") {
 			if (!isAdmin && trusted < 4) {
-				reply(getMsg("strPermissionDeniedErr"));
+				replyMsg("strPermissionDeniedErr");
 				return 1;
 			}
 			int secDuring(-1);
 			string strDuring{ readDigit() };
 			if (!strDuring.empty())secDuring = stoi(strDuring);
 			DD::setGroupWholeBan(llGroup, secDuring);
-			reply(getMsg("strGroupWholeBan"));
+			replyMsg("strGroupWholeBan");
 			return 1;
 		}
 		else if (Command == "restart") {
 			if (!isAdmin && trusted < 4) {
-				reply(getMsg("strPermissionDeniedErr"));
+				replyMsg("strPermissionDeniedErr");
 				return 1;
 			}
 			DD::setGroupWholeBan(llGroup, 0);
-			reply(getMsg("strGroupWholeUnban"));
+			replyMsg("strGroupWholeUnban");
 			return 1;
 		}
 		else if (Command == "card") {
 			if (long long llqq = readID()) {
 				if (trusted < 4 && !isAdmin && llqq != fromChat.uid) {
-					reply(getMsg("strPermissionDeniedErr"));
+					replyMsg("strPermissionDeniedErr");
 					return 1;
 				}
 				if (!DD::isGroupAdmin(llGroup, console.DiceMaid, true)) {
-					reply(getMsg("strSelfPermissionErr"));
+					replyMsg("strSelfPermissionErr");
 					return 1;
 				}
 				while (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) && intMsgCnt != strMsg.length())
@@ -1854,36 +1877,36 @@ int FromMsg::InnerOrder() {
 				vars["card"] = readRest();
 				vars["target"] = getName(llqq, llGroup);
 				DD::setGroupCard(llGroup, llqq, vars["card"].to_str());
-				reply(getMsg("strGroupCardSet"));
+				replyMsg("strGroupCardSet");
 			}
 			else {
-				reply(getMsg("strUidEmpty"));
+				replyMsg("strUidEmpty");
 			}
 			return 1;
 		}
 		else if ((!isAdmin && (!DD::isGroupOwner(llGroup, console.DiceMaid,true) || trusted < 5))) {
-			reply(getMsg("strPermissionDeniedErr"));
+			replyMsg("strPermissionDeniedErr");
 			return 1;
 		}
 		else if (Command == "ban") {
 			if (trusted < 4) {
-				reply(getMsg("strNotAdmin"));
+				replyMsg("strNotAdmin");
 				return -1;
 			}
 			if (!DD::isGroupAdmin(llGroup, console.DiceMaid, true)) {
-				reply(getMsg("strSelfPermissionErr"));
+				replyMsg("strSelfPermissionErr");
 				return 1;
 			}
 			string QQNum = readDigit();
 			if (QQNum.empty()) {
-				reply(getMsg("strUidEmpty"));
+				replyMsg("strUidEmpty");
 				return -1;
 			}
 			long long llMemberQQ = stoll(QQNum);
 			vars["member"] = getName(llMemberQQ, llGroup);
 			string strMainDice = readDice();
 			if (strMainDice.empty()) {
-				reply(getMsg("strValueErr"));
+				replyMsg("strValueErr");
 				return -1;
 			}
 			const int intDefaultDice = getUser(fromChat.uid).getConf("默认骰", 100);
@@ -1893,21 +1916,21 @@ int FromMsg::InnerOrder() {
 			vars["res"] = rdMainDice.FormShortString();
 			DD::setGroupBan(llGroup, llMemberQQ, intDuration * 60);
 			if (intDuration <= 0)
-				reply(getMsg("strGroupUnban"));
-			else reply(getMsg("strGroupBan"));
+				replyMsg("strGroupUnban");
+			else replyMsg("strGroupBan");
 		}
 		else if (Command == "kick") {
 			if (trusted < 4) {
-				reply(getMsg("strNotAdmin"));
+				replyMsg("strNotAdmin");
 				return -1;
 			}
 			if (!DD::isGroupAdmin(llGroup, console.DiceMaid, true)) {
-				reply(getMsg("strSelfPermissionErr"));
+				replyMsg("strSelfPermissionErr");
 				return 1;
 			}
 			long long llMemberQQ = readID();
 			if (!llMemberQQ) {
-				reply(getMsg("strUidEmpty"));
+				replyMsg("strUidEmpty");
 				return -1;
 			}
 			ResList resKicked, resDenied, resNotFound;
@@ -1931,7 +1954,7 @@ int FromMsg::InnerOrder() {
 		}
 		else if (Command == "title") {
 			if (!DD::isGroupOwner(llGroup, console.DiceMaid,true)) {
-				reply(getMsg("strSelfPermissionErr"));
+				replyMsg("strSelfPermissionErr");
 				return 1;
 			}
 			if (long long llqq = readID()) {
@@ -1941,10 +1964,10 @@ int FromMsg::InnerOrder() {
 				vars["title"] = readRest();
 				DD::setGroupTitle(llGroup, llqq, vars["title"].to_str());
 				vars["target"] = getName(llqq, llGroup);
-				reply(getMsg("strGroupTitleSet"));
+				replyMsg("strGroupTitleSet");
 			}
 			else {
-				reply(getMsg("strUidEmpty"));
+				replyMsg("strUidEmpty");
 			}
 			return 1;
 		}
@@ -1961,34 +1984,34 @@ int FromMsg::InnerOrder() {
 		if (action == "on" && fromChat.gid) {
 			const string option{ (vars["option"] = "禁用回复").to_str() };
 			if (!chat(fromChat.gid).isset(option)) {
-				reply(getMsg("strGroupSetOffAlready"));
+				replyMsg("strGroupSetOffAlready");
 			}
 			else if (trusted > 0 || canRoomHost()) {
 				chat(fromChat.gid).reset(option);
-				reply(getMsg("strReplyOn"));
+				replyMsg("strReplyOn");
 			}
 			else {
-				reply(getMsg("strWhiteQQDenied"));
+				replyMsg("strWhiteQQDenied");
 			}
 			return 1;
 		}
 		else if (action == "off" && fromChat.gid) {
 			const string option{ (vars["option"] = "禁用回复").to_str() };
 			if (chat(fromChat.gid).isset(option)) {
-				reply(getMsg("strGroupSetOnAlready"));
+				replyMsg("strGroupSetOnAlready");
 			}
 			else if (trusted > 0 || canRoomHost()) {
 				chat(fromChat.gid).set(option);
-				reply(getMsg("strReplyOff"));
+				replyMsg("strReplyOff");
 			}
 			else {
-				reply(getMsg("strWhiteQQDenied"));
+				replyMsg("strWhiteQQDenied");
 			}
 			return 1;
 		}
 		else if (action == "show"){
 			if (trusted < 2) {
-				reply(getMsg("strNotAdmin"));
+				replyMsg("strNotAdmin");
 				return -1;
 			}
 			vars["key"] = readRest();
@@ -1997,7 +2020,7 @@ int FromMsg::InnerOrder() {
 		}
 		else if (action == "get") {
 			if (trusted < 2) {
-				reply(getMsg("strNotAdmin"));
+				replyMsg("strNotAdmin");
 				return -1;
 			}
 			vars["key"] = readRest();
@@ -2006,7 +2029,7 @@ int FromMsg::InnerOrder() {
 		}
 		else if (action == "set") {
 			if (trusted < 4) {
-				reply(getMsg("strNotAdmin"));
+				replyMsg("strNotAdmin");
 				return -1;
 			}
 			DiceMsgReply trigger;
@@ -2033,7 +2056,7 @@ int FromMsg::InnerOrder() {
 						catch (const std::regex_error& e)
 						{
 							vars["err"] = e.what();
-							reply(getMsg("strRegexInvalid"));
+							replyMsg("strRegexInvalid");
 							return -1;
 						}
 					}
@@ -2048,7 +2071,7 @@ int FromMsg::InnerOrder() {
 					}
 					else {
 						if(trigger.echo== DiceMsgReply::Echo::Lua && trusted < 5) {
-							reply(getMsg("strNotMaster"));
+							replyMsg("strNotMaster");
 							return -1;
 						}
 						trigger.text = readRest();
@@ -2058,35 +2081,35 @@ int FromMsg::InnerOrder() {
 				attr = readToColon();
 			}
 			if (key.empty()) {
-				reply(getMsg("strReplyKeyEmpty"));
+				replyMsg("strReplyKeyEmpty");
 			}
 			else {
 				vars["key"] = key;
 				fmt->set_reply(key, trigger);
-				reply(getMsg("strReplySet"));
+				replyMsg("strReplySet");
 			}
 			return 1;
 		}
 		else if (action == "list") {
 			if (trusted < 4) {
-				reply(getMsg("strNotAdmin"));
+				replyMsg("strNotAdmin");
 				return -1;
 			}
 			vars["res"] = fmt->list_reply();
-			reply(getMsg("strReplyList"));
+			replyMsg("strReplyList");
 			return 1;
 		}
 		else if (action == "del") {
 			if (trusted < 4) {
-				reply(getMsg("strNotAdmin"));
+				replyMsg("strNotAdmin");
 				return -1;
 			}
 			vars["key"] = readRest();
 			if (fmt->del_reply(vars["key"].to_str())) {
-				reply(getMsg("strReplyDel"));
+				replyMsg("strReplyDel");
 			}
 			else {
-				reply(getMsg("strReplyKeyNotFound"));
+				replyMsg("strReplyKeyNotFound");
 			}
 			return 1;
 		}
@@ -2097,7 +2120,7 @@ int FromMsg::InnerOrder() {
 			rep.mode = DiceMsgReply::Mode::Regex;
 		}
 		if (trusted < 4) {
-			reply(getMsg("strNotAdmin"));
+			replyMsg("strNotAdmin");
 			return -1;
 		}
 		const string& key{ (vars["key"] = readUntilSpace()).text };
@@ -2115,18 +2138,18 @@ int FromMsg::InnerOrder() {
 			catch (const std::regex_error& e)
 			{
 				vars["err"] = e.what();
-				reply(getMsg("strRegexInvalid"));
+				replyMsg("strRegexInvalid");
 				return -1;
 			}
 		}
 		readItems(rep.deck);
 		if (rep.deck.empty()) {
 			fmt->del_reply(key);
-			reply(getMsg("strReplyDel"));
+			replyMsg("strReplyDel");
 		}
 		else {
 			fmt->set_reply(key, rep);
-			reply(getMsg("strReplySet"));
+			replyMsg("strReplySet");
 		}
 		return 1;
 	}
@@ -2145,13 +2168,13 @@ int FromMsg::InnerOrder() {
 			string strDefaultRule = strMsg.substr(intMsgCnt);
 			if (strDefaultRule.empty()) {
 				getUser(fromChat.uid).rmConf("默认规则");
-				reply(getMsg("strRuleReset"));
+				replyMsg("strRuleReset");
 			}
 			else {
 				for (auto& n : strDefaultRule)
 					n = toupper(static_cast<unsigned char>(n));
 				getUser(fromChat.uid).setConf("默认规则", strDefaultRule);
-				reply(getMsg("strRuleSet"));
+				replyMsg("strRuleSet");
 			}
 		}
 		else {
@@ -2184,25 +2207,25 @@ int FromMsg::InnerOrder() {
 			intMsgCnt++;
 		}
 		if (strNum.length() > 2) {
-			reply(getMsg("strCharacterTooBig"));
+			replyMsg("strCharacterTooBig");
 			return 1;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum > 10) {
-			reply(getMsg("strCharacterTooBig"));
+			replyMsg("strCharacterTooBig");
 			return 1;
 		}
 		if (intNum == 0) {
-			reply(getMsg("strCharacterCannotBeZero"));
+			replyMsg("strCharacterCannotBeZero");
 			return 1;
 		}
 		vars["res"] = COC6(intNum);
-		reply(getMsg("strCOCBuild"));
+		replyMsg("strCOCBuild");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "deck") {
 		if (trusted < 4 && console["DisabledDeck"]) {
-			reply(getMsg("strDisabledDeckGlobal"));
+			replyMsg("strDisabledDeckGlobal");
 			return 1;
 		}
 		intMsgCnt += 4;
@@ -2217,10 +2240,10 @@ int FromMsg::InnerOrder() {
 		if (strPara == "show") {
 			if (gm->has_session(llRoom))
 				gm->session(llRoom).deck_show(this);
-			else reply(getMsg("strDeckListEmpty"));
+			else replyMsg("strDeckListEmpty");
 		}
 		else if ((!canRoomHost() || llRoom != fromSession) && !trusted) {
-			reply(getMsg("strWhiteQQDenied"));
+			replyMsg("strWhiteQQDenied");
 		}
 		else if (strPara == "set") {
 			gm->session(llRoom).deck_set(this);
@@ -2241,12 +2264,12 @@ int FromMsg::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "draw") {
 		if (trusted < 4 && console["DisabledDraw"]) {
-			reply(getMsg("strDisabledDrawGlobal"));
+			replyMsg("strDisabledDrawGlobal");
 			return 1;
 		}
 		vars["option"] = "禁用draw";
 		if (isPrivate() && groupset(fromChat.gid, vars["option"].to_str()) > 0) {
-			reply(getMsg("strGroupSetOnAlready"));
+			replyMsg("strGroupSetOnAlready");
 			return 1;
 		}
 		intMsgCnt += 4;
@@ -2287,13 +2310,13 @@ int FromMsg::InnerOrder() {
 		switch (readNum(intCardNum)) {
 		case 0:
 			if (intCardNum == 0) {
-				reply(getMsg("strNumCannotBeZero"));
+				replyMsg("strNumCannotBeZero");
 				return 1;
 			}
 			break;
 		case -1: break;
 		case -2:
-			reply(getMsg("strParaIllegal"));
+			replyMsg("strParaIllegal");
 			console.log("提醒:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName") + "使用了非法指令参数\n" + strMsg, 1,
 						printSTNow());
 			return 1;
@@ -2306,13 +2329,13 @@ int FromMsg::InnerOrder() {
 		vars["res"] = Res.dot("|").show();
 		vars["cnt"] = to_string(Res.size());
 		if (isPrivate) {
-			reply(getMsg("strDrawHidden"));
+			replyMsg("strDrawHidden");
 			replyHidden(getMsg("strDrawCard"));
 		}
 		else
-			reply(getMsg("strDrawCard"));
+			replyMsg("strDrawCard");
 		if (intCardNum > 0) {
-			reply(getMsg("strDeckEmpty"));
+			replyMsg("strDeckEmpty");
 			return 1;
 		}
 		return 1;
@@ -2325,24 +2348,24 @@ int FromMsg::InnerOrder() {
 			reply(fmt->get_help("init"));
 		}
 		else if (!gm->has_session(fromSession) || !gm->session(fromSession).table_count("先攻")) {
-			reply(getMsg("strGMTableNotExist"));
+			replyMsg("strGMTableNotExist");
 		}
 		else if (strCmd == "show" || strCmd == "list") {
 			vars["res"] = gm->session(fromSession).table_prior_show("先攻");
-			reply(getMsg("strGMTableShow"));
+			replyMsg("strGMTableShow");
 		}
 		else if (strCmd == "del") {
 			vars["table_item"] = readRest();
 			if (vars["table_item"].str_empty())
-				reply(getMsg("strGMTableItemEmpty"));
+				replyMsg("strGMTableItemEmpty");
 			else if (gm->session(fromSession).table_del("先攻", vars["table_item"].to_str()))
-				reply(getMsg("strGMTableItemDel"));
+				replyMsg("strGMTableItemDel");
 			else
-				reply(getMsg("strGMTableItemNotFound"));
+				replyMsg("strGMTableItemNotFound");
 		}
 		else if (strCmd == "clr") {
 			gm->session(fromSession).table_clr("先攻");
-			reply(getMsg("strGMTableClr"));
+			replyMsg("strGMTableClr");
 		}
 		return 1;
 	}
@@ -2367,7 +2390,7 @@ int FromMsg::InnerOrder() {
 					}
 				}
 				else {
-					reply(getMsg("strPermissionDeniedErr"));
+					replyMsg("strPermissionDeniedErr");
 				}
 				return 1;
 			}
@@ -2382,7 +2405,7 @@ int FromMsg::InnerOrder() {
 					}
 				}
 				else {
-					reply(getMsg("strPermissionDeniedErr"));
+					replyMsg("strPermissionDeniedErr");
 				}
 				return 1;
 			}
@@ -2392,13 +2415,13 @@ int FromMsg::InnerOrder() {
 			}
 		}
 		vars["res"] = to_string(today->getJrrp(fromChat.uid));
-		reply(getMsg("strJrrp"));
+		replyMsg("strJrrp");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "link") {
 		intMsgCnt += 4;
 		if (trusted < 3) {
-			reply(getMsg("strNotAdmin"));
+			replyMsg("strNotAdmin");
 			return true;
 		}
 		vars["option"] = readPara();
@@ -2424,12 +2447,12 @@ int FromMsg::InnerOrder() {
 		string type = readPara();
 		string strNum = readDigit();
 		if (strNum.length() > 1 && strNum != "10") {
-			reply(getMsg("strNameNumTooBig"));
+			replyMsg("strNameNumTooBig");
 			return 1;
 		}
 		int intNum = strNum.empty() ? 1 : stoi(strNum);
 		if (intNum == 0) {
-			reply(getMsg("strNameNumCannotBeZero"));
+			replyMsg("strNameNumCannotBeZero");
 			return 1;
 		}
 		string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("随机姓名_" + type)) ? "随机姓名_" + type : "随机姓名";
@@ -2439,7 +2462,7 @@ int FromMsg::InnerOrder() {
 			Res << CardDeck::drawCard(TempDeck, true);
 		}
 		vars["res"] = Res.dot("、").show();
-		reply(getMsg("strNameGenerator"));
+		replyMsg("strNameGenerator");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "send") {
@@ -2456,11 +2479,11 @@ int FromMsg::InnerOrder() {
 				readSkipColon();
 				string strFwd(readRest());
 				if (strFwd.empty()) {
-					reply(getMsg("strSendMsgEmpty"));
+					replyMsg("strSendMsgEmpty");
 				}
 				else {
 					AddMsgToQueue(strFwd, ct);
-					reply(getMsg("strSendMsg"));
+					replyMsg("strSendMsg");
 				}
 				return 1;
 			}
@@ -2480,29 +2503,29 @@ int FromMsg::InnerOrder() {
 				string strNotice(readRest());
 				if (intLv && !strNotice.empty()){
 					console.log(strNotice, intLv);
-					reply(getMsg("strSendMsg"));
+					replyMsg("strSendMsg");
 				}
-				else reply(getMsg("strParaEmpty"));
+				else replyMsg("strParaEmpty");
 				return 1;
 			}
 			readSkipColon();
 		}
 		else if (!console) {
-			reply(getMsg("strSendMsgInvalid"));
+			replyMsg("strSendMsgInvalid");
 			return 1;
 		}
 		else if (console["DisabledSend"] && trusted < 3) {
-			reply(getMsg("strDisabledSendGlobal"));
+			replyMsg("strDisabledSendGlobal");
 			return 1;
 		}
 		string strInfo = readRest();
 		if (strInfo.empty()) {
-			reply(getMsg("strSendMsgEmpty"));
+			replyMsg("strSendMsgEmpty");
 			return 1;
 		}
 		string strFwd = ((trusted > 4) ? "| " : ("| " + printFrom())) + strInfo;
 		console.log(strFwd, 0b100, printSTNow());
-		reply(getMsg("strSendMasterMsg"));
+		replyMsg("strSendMasterMsg");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "user") {
@@ -2522,45 +2545,45 @@ int FromMsg::InnerOrder() {
 		}
 		if (strOption == "trust") {
 			if (trusted < 4 && fromChat.uid != console.master()) {
-				reply(getMsg("strNotAdmin"));
+				replyMsg("strNotAdmin");
 				return 1;
 			}
 			string strTarget = readDigit();
 			if (strTarget.empty()) {
-				reply(getMsg("strUidEmpty"));
+				replyMsg("strUidEmpty");
 				return 1;
 			}
 			long long llTarget = stoll(strTarget);
 			if (trustedQQ(llTarget) >= trusted && !console.is_self(fromChat.uid) && fromChat.uid != llTarget) {
-				reply(getMsg("strUserTrustDenied"));
+				replyMsg("strUserTrustDenied");
 				return 1;
 			}
 			vars["user"] = printUser(llTarget);
 			vars["trust"] = readDigit();
 			if (vars["trust"].str_empty()) {
 				if (!UserList.count(llTarget)) {
-					reply(getMsg("strUserNotFound"));
+					replyMsg("strUserNotFound");
 					return 1;
 				}
 				vars["trust"] = trustedQQ(llTarget);
-				reply(getMsg("strUserTrustShow"));
+				replyMsg("strUserTrustShow");
 				return 1;
 			}
 			User& user = getUser(llTarget);
 			if (int intTrust = vars["trust"].to_int(); intTrust < 0 || intTrust > 255 || (intTrust >= trusted && fromChat.uid
 																						   != console.master())) {
-				reply(getMsg("strUserTrustIllegal"));
+				replyMsg("strUserTrustIllegal");
 				return 1;
 			}
 			else {
 				user.trust(intTrust);
 			}
-			reply(getMsg("strUserTrusted"));
+			replyMsg("strUserTrusted");
 			return 1;
 		}
 		if (strOption == "tojson") {
 			if (trusted < 1 && !console.is_self(fromChat.uid)) {
-				reply(getMsg("strWhiteQQDenied"));
+				replyMsg("strWhiteQQDenied");
 				return 1;
 			}
 			reply(UTF8toGBK(to_json(getUser(fromChat.uid).confs).dump()), false);
@@ -2568,16 +2591,16 @@ int FromMsg::InnerOrder() {
 		}
 		if (strOption == "diss") {
 			if (trusted < 4 && fromChat.uid != console.master()) {
-				reply(getMsg("strNotAdmin"));
+				replyMsg("strNotAdmin");
 				return 1;
 			}
 			vars["note"] = readPara();
 			long long llTargetID(readID());
 			if (!llTargetID) {
-				reply(getMsg("strUidEmpty"));
+				replyMsg("strUidEmpty");
 			}
 			else if (trustedQQ(llTargetID) >= trusted) {
-				reply(getMsg("strUserTrustDenied"));
+				replyMsg("strUserTrustDenied");
 			}
 			else {
 				blacklist->add_black_qq(llTargetID, this);
@@ -2588,17 +2611,17 @@ int FromMsg::InnerOrder() {
 		}
 		if (strOption == "kill") {
 			if (trusted < 4 && fromChat.uid != console.master()) {
-				reply(getMsg("strNotAdmin"));
+				replyMsg("strNotAdmin");
 				return 1;
 			}
 			long long llTarget = readID();
 			if (trustedQQ(llTarget) >= trusted && fromChat.uid != console.master()) {
-				reply(getMsg("strUserTrustDenied"));
+				replyMsg("strUserTrustDenied");
 				return 1;
 			}
 			vars["user"] = printUser(llTarget);
 			if (!llTarget || !UserList.count(llTarget)) {
-				reply(getMsg("strUserNotFound"));
+				replyMsg("strUserNotFound");
 				return 1;
 			}
 			UserList.erase(llTarget);
@@ -2607,7 +2630,7 @@ int FromMsg::InnerOrder() {
 		}
 		if (strOption == "clr") {
 			if (trusted < 5) {
-				reply(getMsg("strNotMaster"));
+				replyMsg("strNotMaster");
 				return 1;
 			}
 			int cnt = clearUser();
@@ -2629,16 +2652,16 @@ int FromMsg::InnerOrder() {
 			intMsgCnt++;
 		}
 		if (strNum.length() > 1 && strNum != "10") {
-			reply(getMsg("strCharacterTooBig"));
+			replyMsg("strCharacterTooBig");
 			return 1;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum == 0) {
-			reply(getMsg("strCharacterCannotBeZero"));
+			replyMsg("strCharacterCannotBeZero");
 			return 1;
 		}
 		vars["res"] = COC7(intNum);
-		reply(getMsg("strCOCBuild"));
+		replyMsg("strCOCBuild");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "dnd") {
@@ -2651,16 +2674,16 @@ int FromMsg::InnerOrder() {
 			intMsgCnt++;
 		}
 		if (strNum.length() > 1 && strNum != "10") {
-			reply(getMsg("strCharacterTooBig"));
+			replyMsg("strCharacterTooBig");
 			return 1;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
 		if (intNum == 0) {
-			reply(getMsg("strCharacterCannotBeZero"));
+			replyMsg("strCharacterCannotBeZero");
 			return 1;
 		}
 		vars["res"] = DND(intNum);
-		reply(getMsg("strDNDBuild"));
+		replyMsg("strDNDBuild");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "log") {
@@ -2695,7 +2718,7 @@ int FromMsg::InnerOrder() {
 		vars["old_nick"] = idx_nick(vars);
 		vars["new_nick"] = strip(CardDeck::drawCard(CardDeck::mPublicDeck[strDeckName], true));
 		getUser(fromChat.uid).setNick(fromChat.gid, vars["new_nick"].to_str());
-		reply(getMsg("strNameSet"));
+		replyMsg("strNameSet");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "set") {
@@ -2709,24 +2732,24 @@ int FromMsg::InnerOrder() {
 			strDice = "100";
 		for (auto charNumElement : strDice)
 			if (!isdigit(static_cast<unsigned char>(charNumElement))) {
-				reply(getMsg("strSetInvalid"));
+				replyMsg("strSetInvalid");
 				return 1;
 			}
 		if (strDice.length() > 4) {
-			reply(getMsg("strSetTooBig"));
+			replyMsg("strSetTooBig");
 			return 1;
 		}
 		const int intDefaultDice = stoi(strDice);
 		if (PList.count(fromChat.uid)) {
 			PList[fromChat.uid][fromChat.gid]["__DefaultDice"] = intDefaultDice;
-			reply(getMsg("strSetDefaultDice"));
+			replyMsg("strSetDefaultDice");
 			return 1;
 		}
 		if (intDefaultDice == 100)
 			getUser(fromChat.uid).rmConf("默认骰");
 		else
 			getUser(fromChat.uid).setConf("默认骰", intDefaultDice);
-		reply(getMsg("strSetDefaultDice"));
+		replyMsg("strSetDefaultDice");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "str" && trusted > 3) {
@@ -2777,7 +2800,7 @@ int FromMsg::InnerOrder() {
 			room.setConf("AkFork", vars["fork"] = strTitle);
 		}
 		if (intMsgCnt == strMsg.length()) {
-			reply(getMsg("strAkForkNew"));
+			replyMsg("strAkForkNew");
 		}
 		else {
 			sign = strMsg[intMsgCnt];
@@ -2787,7 +2810,7 @@ int FromMsg::InnerOrder() {
 		if (sign == '+')++intMsgCnt;
 		std::vector<string>& deck{ room.get_deck("__Ank").meta };
 		if (!readItems(deck)) {
-			reply(getMsg("strAkAddEmpty"));
+			replyMsg("strAkAddEmpty");
 			return 1;
 		}
 		vars["fork"] = room.conf["AkFork"];
@@ -2797,7 +2820,7 @@ int FromMsg::InnerOrder() {
 			list << val;
 		}
 		vars["li"] = list.linebreak().show();
-		reply(getMsg("strAkAdd"));
+		replyMsg("strAkAdd");
 		room.save();
 	}
 	else if (sign == '-' || action == "del") {
@@ -2805,7 +2828,7 @@ int FromMsg::InnerOrder() {
 		std::vector<string>& deck{ room.get_deck("__Ank").meta };
 		int nNo{ 0 };
 		if (readNum(nNo) || nNo <= 0 || nNo > deck.size()) {
-			reply(getMsg("strAkNumErr"));
+			replyMsg("strAkNumErr");
 			return 1;
 		}
 		deck.erase(deck.begin() + nNo - 1);
@@ -2816,7 +2839,7 @@ int FromMsg::InnerOrder() {
 			list << val;
 		}
 		vars["li"] = list.linebreak().show();
-		reply(getMsg("strAkDel"));
+		replyMsg("strAkDel");
 		room.save();
 	}
 	else if (sign == '=' || action == "get") {
@@ -2832,10 +2855,10 @@ int FromMsg::InnerOrder() {
 			}
 			vars["li"] = list.linebreak().show();
 			room.get_deck().erase("__Ank");
-			reply(getMsg("strAkGet"));
+			replyMsg("strAkGet");
 		}
 		else {
-			reply(getMsg("strAkOptEmptyErr"));
+			replyMsg("strAkOptEmptyErr");
 		}
 		room.save();
 	}
@@ -2848,13 +2871,13 @@ int FromMsg::InnerOrder() {
 			list << val;
 		}
 		vars["li"] = list.linebreak().show();
-		reply(getMsg("strAkShow"));
+		replyMsg("strAkShow");
 	}
 	else if (action == "clr") {
 		room.get_deck().erase("__Ank");
 		vars["fork"] = room.conf["AkFork"];
 		room.rmConf("AkFork");
-		reply(getMsg("strAkClr"));
+		replyMsg("strAkClr");
 		room.save();
 	}
 	if(strReply.empty())reply(fmt->get_help("ak"));
@@ -2878,13 +2901,13 @@ int FromMsg::InnerOrder() {
 				intVal = getPlayer(fromChat.uid)[fromChat.gid][strAttr].to_int();
 			}
 			else {
-				reply(getMsg("strEnValEmpty"));
+				replyMsg("strEnValEmpty");
 				return 1;
 			}
 		}
 		else {
 			if (strCurrentValue.length() > 3) {
-				reply(getMsg("strEnValInvalid"));
+				replyMsg("strEnValInvalid");
 				return 1;
 			}
 			intVal = stoi(strCurrentValue);
@@ -2912,43 +2935,43 @@ int FromMsg::InnerOrder() {
 		if (intTmpRollRes <= intVal && intTmpRollRes <= 95) {
 			if (strEnFail.empty()) {
 				res += getMsg("strFailure");
-				reply(getMsg("strEnRollNotChange"));
+				replyMsg("strEnRollNotChange");
 				return 1;
 			}
 			res += getMsg("strFailure");
 			RD rdEnFail(strEnFail);
 			if (rdEnFail.Roll()) {
-				reply(getMsg("strValueErr"));
+				replyMsg("strValueErr");
 				return 1;
 			}
 			intVal = intVal + rdEnFail.intTotal;
 			vars["change"] = rdEnFail.FormCompleteString();
 			vars["final"] = to_string(intVal);
-			reply(getMsg("strEnRollFailure"));
+			replyMsg("strEnRollFailure");
 		}
 		else {
 			res += getMsg("strSuccess");
 			RD rdEnSuc(strEnSuc);
 			if (rdEnSuc.Roll()) {
-				reply(getMsg("strValueErr"));
+				replyMsg("strValueErr");
 				return 1;
 			}
 			intVal = intVal + rdEnSuc.intTotal;
 			vars["change"] = rdEnSuc.FormCompleteString();
 			vars["final"] = to_string(intVal);
-			reply(getMsg("strEnRollSuccess"));
+			replyMsg("strEnRollSuccess");
 		}
 		if (pc)pc->set(strAttr, intVal);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "li") {
 		LongInsane(*vars);
-		reply(getMsg("strLongInsane"));
+		replyMsg("strLongInsane");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "me") {
 		if (trusted < 4 && console["DisabledMe"]) {
-			reply(getMsg("strDisabledMeGlobal"));
+			replyMsg("strDisabledMeGlobal");
 			return 1;
 		}
 		intMsgCnt += 2;
@@ -2957,62 +2980,62 @@ int FromMsg::InnerOrder() {
 		if (isPrivate()) {
 			string strGroupID = readDigit();
 			if (strGroupID.empty()) {
-				reply(getMsg("strGroupIDEmpty"));
+				replyMsg("strGroupIDEmpty");
 				return 1;
 			}
 			const long long llGroupID = stoll(strGroupID);
 			if (groupset(llGroupID, "停用指令") && trusted < 4) {
-				reply(getMsg("strDisabledErr"));
+				replyMsg("strDisabledErr");
 				return 1;
 			}
 			if (groupset(llGroupID, "禁用me") && trusted < 5) {
-				reply(getMsg("strMEDisabledErr"));
+				replyMsg("strMEDisabledErr");
 				return 1;
 			}
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
 			string strAction = strip(readRest());
 			if (strAction.empty()) {
-				reply(getMsg("strActionEmpty"));
+				replyMsg("strActionEmpty");
 				return 1;
 			}
 			string strReply = (trusted > 4 ? getName(fromChat.uid, llGroupID) : "") + strAction;
 			DD::sendGroupMsg(llGroupID, strReply);
-			reply(getMsg("strSendSuccess"));
+			replyMsg("strSendSuccess");
 			return 1;
 		}
 		string strAction = strLowerMessage.substr(intMsgCnt);
 		if (!canRoomHost() && (strAction == "on" || strAction == "off")) {
-			reply(getMsg("strPermissionDeniedErr"));
+			replyMsg("strPermissionDeniedErr");
 			return 1;
 		}
 		if (strAction == "off") {
 			if (groupset(fromChat.gid, "禁用me") < 1) {
 				chat(fromChat.gid).set("禁用me");
-				reply(getMsg("strMeOff"));
+				replyMsg("strMeOff");
 			}
 			else {
-				reply(getMsg("strMeOffAlready"));
+				replyMsg("strMeOffAlready");
 			}
 			return 1;
 		}
 		if (strAction == "on") {
 			if (groupset(fromChat.gid, "禁用me") > 0) {
 				chat(fromChat.gid).reset("禁用me");
-				reply(getMsg("strMeOn"));
+				replyMsg("strMeOn");
 			}
 			else {
-				reply(getMsg("strMeOnAlready"));
+				replyMsg("strMeOnAlready");
 			}
 			return 1;
 		}
 		if (groupset(fromChat.gid, "禁用me")) {
-			reply(getMsg("strMEDisabledErr"));
+			replyMsg("strMEDisabledErr");
 			return 1;
 		}
 		strAction = strip(readRest());
 		if (strAction.empty()) {
-			reply(getMsg("strActionEmpty"));
+			replyMsg("strActionEmpty");
 			return 1;
 		}
 		trusted > 4 ? reply(strAction, false) : reply(idx_pc(vars).to_str() + strAction, false);
@@ -3026,19 +3049,19 @@ int FromMsg::InnerOrder() {
 		string& strNN{ (vars["new_nick"] = strip(strMsg.substr(intMsgCnt))).text };
 		filter_CQcode(strNN);
 		if (strNN.length() > 50) {
-			reply(getMsg("strNameTooLongErr"));
+			replyMsg("strNameTooLongErr");
 			return 1;
 		}
 		if (!strNN.empty()) {
 			getUser(fromChat.uid).setNick(fromChat.gid, strNN);
-			reply(getMsg("strNameSet"));
+			replyMsg("strNameSet");
 		}
 		else {
 			if (getUser(fromChat.uid).rmNick(fromChat.gid)) {
-				reply(getMsg("strNameClr"));
+				replyMsg("strNameClr");
 			}
 			else {
-				reply(getMsg("strNameDelEmpty"));
+				replyMsg("strNameDelEmpty");
 			}
 		}
 		return 1;
@@ -3054,7 +3077,7 @@ int FromMsg::InnerOrder() {
 		const string strOption = strLowerMessage.substr(intMsgCnt, strMsg.find(' ', intMsgCnt) - intMsgCnt);
 
 		if (!canRoomHost() && (strOption == "on" || strOption == "off")) {
-			reply(getMsg("strPermissionDeniedErr"));
+			replyMsg("strPermissionDeniedErr");
 			return 1;
 		}
 		vars["option"] = "禁用ob";
@@ -3062,25 +3085,25 @@ int FromMsg::InnerOrder() {
 			if (groupset(fromChat.gid, vars["option"].to_str()) < 1) {
 				chat(fromChat.gid).set(vars["option"].to_str());
 				gm->session(fromSession).clear_ob();
-				reply(getMsg("strObOff"));
+				replyMsg("strObOff");
 			}
 			else {
-				reply(getMsg("strObOffAlready"));
+				replyMsg("strObOffAlready");
 			}
 			return 1;
 		}
 		if (strOption == "on") {
 			if (groupset(fromChat.gid, vars["option"].to_str()) > 0) {
 				chat(fromChat.gid).reset(vars["option"].to_str());
-				reply(getMsg("strObOn"));
+				replyMsg("strObOn");
 			}
 			else {
-				reply(getMsg("strObOnAlready"));
+				replyMsg("strObOnAlready");
 			}
 			return 1;
 		}
 		if (groupset(fromChat.gid, vars["option"].to_str()) > 0) {
-			reply(getMsg("strObOffAlready"));
+			replyMsg("strObOffAlready");
 			return 1;
 		}
 		if (strOption == "list") {
@@ -3091,7 +3114,7 @@ int FromMsg::InnerOrder() {
 				gm->session(fromSession).ob_clr(this);
 			}
 			else {
-				reply(getMsg("strPermissionDeniedErr"));
+				replyMsg("strPermissionDeniedErr");
 			}
 		}
 		else if (strOption == "exit") {
@@ -3114,16 +3137,16 @@ int FromMsg::InnerOrder() {
 			vars["char"] = readRest();
 			switch (pl.changeCard(vars["char"].to_str(), fromChat.gid)) {
 			case 1:
-				reply(getMsg("strPcCardReset"));
+				replyMsg("strPcCardReset");
 				break;
 			case 0:
-				reply(getMsg("strPcCardSet"));
+				replyMsg("strPcCardSet");
 				break;
 			case -5:
-				reply(getMsg("strPcNameNotExist"));
+				replyMsg("strPcNameNotExist");
 				break;
 			default:
-				reply(getMsg("strUnknownErr"));
+				replyMsg("strUnknownErr");
 				break;
 			}
 			return 1;
@@ -3134,7 +3157,7 @@ int FromMsg::InnerOrder() {
 			vars["char"] = pc.getName();
 			vars["type"] = pc.Attr["__Type"].to_str();
 			vars["show"] = pc.show(true);
-			reply(getMsg("strPcCardShow"));
+			replyMsg("strPcCardShow");
 			return 1;
 		}
 		if (strOption == "new") {
@@ -3144,20 +3167,20 @@ int FromMsg::InnerOrder() {
 			case 0:
 				vars["type"] = pl[fromChat.gid].Attr["__Type"].to_str();
 				vars["show"] = pl[fromChat.gid].show(true);
-				if (vars["show"].str_empty())reply(getMsg("strPcNewEmptyCard"));
-				else reply(getMsg("strPcNewCardShow"));
+				if (vars["show"].str_empty())replyMsg("strPcNewEmptyCard");
+				else replyMsg("strPcNewCardShow");
 				break;
 			case -1:
-				reply(getMsg("strPcCardFull"));
+				replyMsg("strPcCardFull");
 				break;
 			case -4:
-				reply(getMsg("strPcNameExist"));
+				replyMsg("strPcNameExist");
 				break;
 			case -6:
-				reply(getMsg("strPcNameInvalid"));
+				replyMsg("strPcNameInvalid");
 				break;
 			default:
-				reply(getMsg("strUnknownErr"));
+				replyMsg("strUnknownErr");
 				break;
 			}
 			return 1;
@@ -3168,26 +3191,26 @@ int FromMsg::InnerOrder() {
 			switch (pl.buildCard(strPC, false, fromChat.gid)) {
 			case 0:
 				vars["show"] = pl[strPC].show(true);
-				reply(getMsg("strPcCardBuild"));
+				replyMsg("strPcCardBuild");
 				break;
 			case -1:
-				reply(getMsg("strPcCardFull"));
+				replyMsg("strPcCardFull");
 				break;
 			case -2:
-				reply(getMsg("strPcTempInvalid"));
+				replyMsg("strPcTempInvalid");
 				break;
 			case -6:
-				reply(getMsg("strPCNameInvalid"));
+				replyMsg("strPCNameInvalid");
 				break;
 			default:
-				reply(getMsg("strUnknownErr"));
+				replyMsg("strUnknownErr");
 				break;
 			}
 			return 1;
 		}
 		if (strOption == "list") {
 			vars["show"] = pl.listCard();
-			reply(getMsg("strPcCardList"));
+			replyMsg("strPcCardList");
 			return 1;
 		}
 		if (strOption == "nn") {
@@ -3196,19 +3219,19 @@ int FromMsg::InnerOrder() {
 			vars["old_name"] = pl[fromChat.gid].getName();
 			switch (pl.renameCard(vars["old_name"].to_str(), strPC)) {
 			case 0:
-				reply(getMsg("strPcCardRename"));
+				replyMsg("strPcCardRename");
 				break;
 			case -3:
-				reply(getMsg("strPCNameEmpty"));
+				replyMsg("strPCNameEmpty");
 				break;
 			case -4:
-				reply(getMsg("strPCNameExist"));
+				replyMsg("strPCNameExist");
 				break;
 			case -6:
-				reply(getMsg("strPCNameInvalid"));
+				replyMsg("strPCNameInvalid");
 				break;
 			default:
-				reply(getMsg("strUnknownErr"));
+				replyMsg("strUnknownErr");
 				break;
 			}
 			return 1;
@@ -3217,16 +3240,16 @@ int FromMsg::InnerOrder() {
 			vars["char"] = strip(readRest());
 			switch (pl.removeCard(vars["char"].to_str())) {
 			case 0:
-				reply(getMsg("strPcCardDel"));
+				replyMsg("strPcCardDel");
 				break;
 			case -5:
-				reply(getMsg("strPcNameNotExist"));
+				replyMsg("strPcNameNotExist");
 				break;
 			case -7:
-				reply(getMsg("strPcInitDelErr"));
+				replyMsg("strPcInitDelErr");
 				break;
 			default:
-				reply(getMsg("strUnknownErr"));
+				replyMsg("strUnknownErr");
 				break;
 			}
 			return 1;
@@ -3235,12 +3258,12 @@ int FromMsg::InnerOrder() {
 			vars["char"] = strip(readRest());
 			pl.buildCard(vars["char"].text, true, fromChat.gid);
 			vars["show"] = pl[vars["char"].to_str()].show(true);
-			reply(getMsg("strPcCardRedo"));
+			replyMsg("strPcCardRedo");
 			return 1;
 		}
 		if (strOption == "grp") {
 			vars["show"] = pl.listMap();
-			reply(getMsg("strPcGroupList"));
+			replyMsg("strPcGroupList");
 			return 1;
 		}
 		if (strOption == "cpy") {
@@ -3252,19 +3275,19 @@ int FromMsg::InnerOrder() {
 				: pl[fromChat.gid].getName();
 			switch (pl.copyCard(strPC1, vars["char2"].to_str(), fromChat.gid)) {
 			case 0:
-				reply(getMsg("strPcCardCpy"));
+				replyMsg("strPcCardCpy");
 				break;
 			case -1:
-				reply(getMsg("strPcCardFull"));
+				replyMsg("strPcCardFull");
 				break;
 			case -3:
-				reply(getMsg("strPcNameEmpty"));
+				replyMsg("strPcNameEmpty");
 				break;
 			case -6:
-				reply(getMsg("strPcNameInvalid"));
+				replyMsg("strPcNameInvalid");
 				break;
 			default:
-				reply(getMsg("strUnknownErr"));
+				replyMsg("strUnknownErr");
 				break;
 			}
 			return 1;
@@ -3316,17 +3339,17 @@ int FromMsg::InnerOrder() {
 				}
 			}
 			if (isEmpty) {
-				reply(getMsg("strPcStatEmpty"));
+				replyMsg("strPcStatEmpty");
 			}
 			else {
 				vars["stat"] = res.show();
-				reply(getMsg("strPcStatShow"));
+				replyMsg("strPcStatShow");
 			}
 			return 1;
 		}
 		if (strOption == "clr") {
 			PList.erase(fromChat.uid);
-			reply(getMsg("strPcClr"));
+			replyMsg("strPcClr");
 			return 1;
 		}
 		if (strOption == "type") {
@@ -3334,11 +3357,11 @@ int FromMsg::InnerOrder() {
 			if (vars["new_type"].str_empty()) {
 				vars["attr"] = "模板类";
 				vars["val"] = pl[fromChat.gid].Attr["__Type"].to_str();
-				reply(getMsg("strProp"));
+				replyMsg("strProp");
 			}
 			else {
 				pl[fromChat.gid].setType(vars["new_type"].to_str());
-				reply(getMsg("strSetPropSuccess"));
+				replyMsg("strSetPropSuccess");
 			}
 			return 1;
 		}
@@ -3411,7 +3434,7 @@ int FromMsg::InnerOrder() {
 		}
 		if (strMsg.length() == intMsgCnt) {
 			vars["attr"] = getMsg("strEnDefaultName");
-			reply(getMsg("strUnknownPropErr"));
+			replyMsg("strUnknownPropErr");
 			return 1;
 		}
 		string attr{ strMsg.substr(intMsgCnt) };
@@ -3442,7 +3465,7 @@ int FromMsg::InnerOrder() {
 			intMsgCnt++;
 			readNum(intSkillDivisor);
 			if (intSkillDivisor == 0) {
-				reply(getMsg("strValueErr"));
+				replyMsg("strValueErr");
 				return 1;
 			}
 		}
@@ -3472,13 +3495,13 @@ int FromMsg::InnerOrder() {
 					intSkillVal = SkillDefaultVal[attr];
 				}
 				else {
-					reply(getMsg("strUnknownPropErr"));
+					replyMsg("strUnknownPropErr");
 					return 1;
 				}
 			}
 		}
 		else if (strSkillVal.length() > 3) {
-			reply(getMsg("strPropErr"));
+			replyMsg("strPropErr");
 			return 1;
 		}
 		else {
@@ -3487,17 +3510,17 @@ int FromMsg::InnerOrder() {
 		//最终成功率计入检定统计
 		int intFianlSkillVal = (intSkillVal * intSkillMultiple + intSkillModify) / intSkillDivisor / intDifficulty;
 		if (intFianlSkillVal < 0 || intFianlSkillVal > 1000) {
-			reply(getMsg("strSuccessRateErr"));
+			replyMsg("strSuccessRateErr");
 			return 1;
 		}
 		RD rdMainDice(strMainDice);
 		const int intFirstTimeRes = rdMainDice.Roll();
 		if (intFirstTimeRes == ZeroDice_Err) {
-			reply(getMsg("strZeroDiceErr"));
+			replyMsg("strZeroDiceErr");
 			return 1;
 		}
 		if (intFirstTimeRes == DiceTooBig_Err) {
-			reply(getMsg("strDiceTooBigErr"));
+			replyMsg("strDiceTooBigErr");
 			return 1;
 		}
 		vars["attr"] = strDifficulty + attr + (
@@ -3573,7 +3596,7 @@ int FromMsg::InnerOrder() {
 		}
 		if (isHidden) {
 			replyHidden();
-			reply(getMsg("strRollSkillHidden"));
+			replyMsg("strRollSkillHidden");
 		}
 		else
 			reply();
@@ -3600,40 +3623,40 @@ int FromMsg::InnerOrder() {
 		RD initdice(strinit, 20);
 		const int intFirstTimeRes = initdice.Roll();
 		if (intFirstTimeRes == Value_Err) {
-			reply(getMsg("strValueErr"));
+			replyMsg("strValueErr");
 			return 1;
 		}
 		if (intFirstTimeRes == Input_Err) {
-			reply(getMsg("strInputErr"));
+			replyMsg("strInputErr");
 			return 1;
 		}
 		if (intFirstTimeRes == ZeroDice_Err) {
-			reply(getMsg("strZeroDiceErr"));
+			replyMsg("strZeroDiceErr");
 			return 1;
 		}
 		if (intFirstTimeRes == ZeroType_Err) {
-			reply(getMsg("strZeroTypeErr"));
+			replyMsg("strZeroTypeErr");
 			return 1;
 		}
 		if (intFirstTimeRes == DiceTooBig_Err) {
-			reply(getMsg("strDiceTooBigErr"));
+			replyMsg("strDiceTooBigErr");
 			return 1;
 		}
 		if (intFirstTimeRes == TypeTooBig_Err) {
-			reply(getMsg("strTypeTooBigErr"));
+			replyMsg("strTypeTooBigErr");
 			return 1;
 		}
 		if (intFirstTimeRes == AddDiceVal_Err) {
-			reply(getMsg("strAddDiceValErr"));
+			replyMsg("strAddDiceValErr");
 			return 1;
 		}
 		if (intFirstTimeRes != 0) {
-			reply(getMsg("strUnknownErr"));
+			replyMsg("strUnknownErr");
 			return 1;
 		}
 		gm->session(fromSession).table_add("先攻", initdice.intTotal, vars["char"].to_str());
 		vars["res"] = initdice.FormCompleteString();
-		reply(getMsg("strRollInit"));
+		replyMsg("strRollInit");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "sc") {
@@ -3646,7 +3669,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (SanCost.find('/') == string::npos) {
-			reply(getMsg("strSanCostInvalid"));
+			replyMsg("strSanCostInvalid");
 			return 1;
 		}
 		string attr = "理智";
@@ -3657,7 +3680,7 @@ int FromMsg::InnerOrder() {
 				intSan = pc->call(attr);
 			}
 			else {
-				reply(getMsg("strSanEmpty"));
+				replyMsg("strSanEmpty");
 				return 1;
 			}
 		}
@@ -3666,25 +3689,25 @@ int FromMsg::InnerOrder() {
 		for (const auto& character : strSanCostSuc) {
 			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character !=
 				'+' && character != '-') {
-				reply(getMsg("strSanCostInvalid"));
+				replyMsg("strSanCostInvalid");
 				return 1;
 			}
 		}
 		for (const auto& character : SanCost.substr(SanCost.find('/') + 1)) {
 			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character !=
 				'+' && character != '-') {
-				reply(getMsg("strSanCostInvalid"));
+				replyMsg("strSanCostInvalid");
 				return 1;
 			}
 		}
 		RD rdSuc(strSanCostSuc);
 		RD rdFail(strSanCostFail);
 		if (rdSuc.Roll() != 0 || rdFail.Roll() != 0) {
-			reply(getMsg("strSanCostInvalid"));
+			replyMsg("strSanCostInvalid");
 			return 1;
 		}
 		if (intSan <= 0) {
-			reply(getMsg("strSanInvalid"));
+			replyMsg("strSanInvalid");
 			return 1;
 		}
 		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
@@ -3721,7 +3744,7 @@ int FromMsg::InnerOrder() {
 		}
 		vars["final"] = to_string(intSan);
 		if (pc)pc->set(attr, intSan);
-		reply(getMsg("strSanRollRes"));
+		replyMsg("strSanRollRes");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "st") {
@@ -3734,17 +3757,17 @@ int FromMsg::InnerOrder() {
 		}
 		if (strLowerMessage.substr(intMsgCnt, 3) == "clr") {
 			if (!PList.count(fromChat.uid)) {
-				reply(getMsg("strPcNotExistErr"));
+				replyMsg("strPcNotExistErr");
 				return 1;
 			}
 			getPlayer(fromChat.uid)[fromChat.gid].clear();
 			vars["char"] = getPlayer(fromChat.uid)[fromChat.gid].getName();
-			reply(getMsg("strPropCleared"));
+			replyMsg("strPropCleared");
 			return 1;
 		}
 		if (strLowerMessage.substr(intMsgCnt, 3) == "del") {
 			if (!PList.count(fromChat.uid)) {
-				reply(getMsg("strPcNotExistErr"));
+				replyMsg("strPcNotExistErr");
 				return 1;
 			}
 			intMsgCnt += 3;
@@ -3755,10 +3778,10 @@ int FromMsg::InnerOrder() {
 			}
 			vars["attr"] = readAttrName();
 			if (getPlayer(fromChat.uid)[fromChat.gid].erase(vars["attr"].text)) {
-				reply(getMsg("strPropDeleted"));
+				replyMsg("strPropDeleted");
 			}
 			else {
-				reply(getMsg("strPropNotFound"));
+				replyMsg("strPropNotFound");
 			}
 			return 1;
 		}
@@ -3772,15 +3795,15 @@ int FromMsg::InnerOrder() {
 				vars["char"] = pc.getName();
 				vars["type"] = pc.Attr["__Type"].to_str();
 				vars["show"] = pc.show(false);
-				reply(getMsg("strPropList"));
+				replyMsg("strPropList");
 				return 1;
 			}
 			if (string val; pc.show(vars["attr"].to_str(), val) > -1) {
 				vars["val"] = val;
-				reply(getMsg("strProp"));
+				replyMsg("strProp");
 			}
 			else {
-				reply(getMsg("strPropNotFound"));
+				replyMsg("strPropNotFound");
 			}
 			return 1;
 		}
@@ -3798,7 +3821,7 @@ int FromMsg::InnerOrder() {
 					continue;
 				}
 				if (pc.set(vars["attr"].to_str(), readExp())) {
-					reply(getMsg("strPcTextTooLong"));
+					replyMsg("strPcTextTooLong");
 					return 1;
 				}
 				++cntInput;
@@ -3830,7 +3853,7 @@ int FromMsg::InnerOrder() {
 					strVal = readUntilTab();
 				}
 				if (pc.set(strSkillName, strVal)) {
-					reply(getMsg("strPcTextTooLong"));
+					replyMsg("strPcTextTooLong");
 					return 1;
 				}
 				++cntInput;
@@ -3838,7 +3861,7 @@ int FromMsg::InnerOrder() {
 			}
 			if (strSkillName == "note") {
 				if (pc.setNote(readRest())) {
-					reply(getMsg("strPcNoteTooLong"));
+					replyMsg("strPcNoteTooLong");
 					return 1;
 				}
 				++cntInput;
@@ -3852,7 +3875,7 @@ int FromMsg::InnerOrder() {
 				AttrVar& nVal{ pc[strSkillName] };
 				RD Mod((nVal.to_int() == 0 ? "" : nVal.to_str()) + readDice());
 				if (Mod.Roll()) {
-					reply(getMsg("strValueErr"));
+					replyMsg("strValueErr");
 					return 1;
 				}
 				strReply += "\n" + strSkillName + "：" + Mod.FormCompleteString();
@@ -3883,15 +3906,15 @@ int FromMsg::InnerOrder() {
 				intMsgCnt++;
 		}
 		if (boolError) {
-			reply(getMsg("strPropErr"));
+			replyMsg("strPropErr");
 		}
 		else if (isModify) {
 			vars["change"] = strReply;
-			reply(getMsg("strStModify"));
+			replyMsg("strStModify");
 		}
 		else if(cntInput){
 			vars["cnt"] = to_string(cntInput);
-			reply(getMsg("strSetPropSuccess"));
+			replyMsg("strSetPropSuccess");
 		}
 		else {
 			reply(fmt->get_help("st"));
@@ -3900,7 +3923,7 @@ int FromMsg::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ti") {
 		TempInsane(*vars);
-		reply(getMsg("strTempInsane"));
+		replyMsg("strTempInsane");
 		return 1;
 	}
 	else if (strLowerMessage[intMsgCnt] == 'w') {
@@ -3960,42 +3983,42 @@ int FromMsg::InnerOrder() {
 			const int intRdTurnCntRes = rdTurnCnt.Roll();
 			if (intRdTurnCntRes != 0) {
 				if (intRdTurnCntRes == Value_Err) {
-					reply(getMsg("strValueErr"));
+					replyMsg("strValueErr");
 					return 1;
 				}
 				if (intRdTurnCntRes == Input_Err) {
-					reply(getMsg("strInputErr"));
+					replyMsg("strInputErr");
 					return 1;
 				}
 				if (intRdTurnCntRes == ZeroDice_Err) {
-					reply(getMsg("strZeroDiceErr"));
+					replyMsg("strZeroDiceErr");
 					return 1;
 				}
 				if (intRdTurnCntRes == ZeroType_Err) {
-					reply(getMsg("strZeroTypeErr"));
+					replyMsg("strZeroTypeErr");
 					return 1;
 				}
 				if (intRdTurnCntRes == DiceTooBig_Err) {
-					reply(getMsg("strDiceTooBigErr"));
+					replyMsg("strDiceTooBigErr");
 					return 1;
 				}
 				if (intRdTurnCntRes == TypeTooBig_Err) {
-					reply(getMsg("strTypeTooBigErr"));
+					replyMsg("strTypeTooBigErr");
 					return 1;
 				}
 				if (intRdTurnCntRes == AddDiceVal_Err) {
-					reply(getMsg("strAddDiceValErr"));
+					replyMsg("strAddDiceValErr");
 					return 1;
 				}
-				reply(getMsg("strUnknownErr"));
+				replyMsg("strUnknownErr");
 				return 1;
 			}
 			if (rdTurnCnt.intTotal > 10) {
-				reply(getMsg("strRollTimeExceeded"));
+				replyMsg("strRollTimeExceeded");
 				return 1;
 			}
 			if (rdTurnCnt.intTotal <= 0) {
-				reply(getMsg("strRollTimeErr"));
+				replyMsg("strRollTimeErr");
 				return 1;
 			}
 			intTurnCnt = rdTurnCnt.intTotal;
@@ -4028,34 +4051,34 @@ int FromMsg::InnerOrder() {
 		const int intFirstTimeRes = rdMainDice.Roll();
 		if (intFirstTimeRes != 0) {
 			if (intFirstTimeRes == Value_Err) {
-				reply(getMsg("strValueErr"));
+				replyMsg("strValueErr");
 				return 1;
 			}
 			if (intFirstTimeRes == Input_Err) {
-				reply(getMsg("strInputErr"));
+				replyMsg("strInputErr");
 				return 1;
 			}
 			if (intFirstTimeRes == ZeroDice_Err) {
-				reply(getMsg("strZeroDiceErr"));
+				replyMsg("strZeroDiceErr");
 				return 1;
 			}
 			if (intFirstTimeRes == ZeroType_Err) {
-				reply(getMsg("strZeroTypeErr"));
+				replyMsg("strZeroTypeErr");
 				return 1;
 			}
 			if (intFirstTimeRes == DiceTooBig_Err) {
-				reply(getMsg("strDiceTooBigErr"));
+				replyMsg("strDiceTooBigErr");
 				return 1;
 			}
 			if (intFirstTimeRes == TypeTooBig_Err) {
-				reply(getMsg("strTypeTooBigErr"));
+				replyMsg("strTypeTooBigErr");
 				return 1;
 			}
 			if (intFirstTimeRes == AddDiceVal_Err) {
-				reply(getMsg("strAddDiceValErr"));
+				replyMsg("strAddDiceValErr");
 				return 1;
 			}
-			reply(getMsg("strUnknownErr"));
+			replyMsg("strUnknownErr");
 			return 1;
 		}
 		if (!boolDetail && intTurnCnt != 1) {
@@ -4104,7 +4127,7 @@ int FromMsg::InnerOrder() {
 			}
 		}
 		if (isHidden) {
-			reply(getMsg("strRollHidden"));
+			replyMsg("strRollHidden");
 		}
 		return 1;
 	}
@@ -4163,43 +4186,43 @@ int FromMsg::InnerOrder() {
 			switch (intRdTurnCntRes) {
 			case 0: break;
 			case Value_Err:
-				reply(getMsg("strValueErr"));
+				replyMsg("strValueErr");
 				return 1;
 			case Input_Err:
-				reply(getMsg("strInputErr"));
+				replyMsg("strInputErr");
 				return 1;
 			case ZeroDice_Err:
-				reply(getMsg("strZeroDiceErr"));
+				replyMsg("strZeroDiceErr");
 				return 1;
 			case ZeroType_Err:
-				reply(getMsg("strZeroTypeErr"));
+				replyMsg("strZeroTypeErr");
 				return 1;
 			case DiceTooBig_Err:
-				reply(getMsg("strDiceTooBigErr"));
+				replyMsg("strDiceTooBigErr");
 				return 1;
 			case TypeTooBig_Err:
-				reply(getMsg("strTypeTooBigErr"));
+				replyMsg("strTypeTooBigErr");
 				return 1;
 			case AddDiceVal_Err:
-				reply(getMsg("strAddDiceValErr"));
+				replyMsg("strAddDiceValErr");
 				return 1;
 			default:
-				reply(getMsg("strUnknownErr"));
+				replyMsg("strUnknownErr");
 				return 1;
 			}
 			if (rdTurnCnt.intTotal > 10) {
-				reply(getMsg("strRollTimeExceeded"));
+				replyMsg("strRollTimeExceeded");
 				return 1;
 			}
 			if (rdTurnCnt.intTotal <= 0) {
-				reply(getMsg("strRollTimeErr"));
+				replyMsg("strRollTimeErr");
 				return 1;
 			}
 			intTurnCnt = rdTurnCnt.intTotal;
 			if (turn.find('d') != string::npos) {
 				turn = rdTurnCnt.FormShortString();
 				if (!isHidden) {
-					reply(getMsg("strRollTurn"));
+					replyMsg("strRollTurn");
 				}
 				else {
 					replyHidden(getMsg("strRollTurn"));
@@ -4214,28 +4237,28 @@ int FromMsg::InnerOrder() {
 		switch (intFirstTimeRes) {
 		case 0: break;
 		case Value_Err:
-			reply(getMsg("strValueErr"));
+			replyMsg("strValueErr");
 			return 1;
 		case Input_Err:
-			reply(getMsg("strInputErr"));
+			replyMsg("strInputErr");
 			return 1;
 		case ZeroDice_Err:
-			reply(getMsg("strZeroDiceErr"));
+			replyMsg("strZeroDiceErr");
 			return 1;
 		case ZeroType_Err:
-			reply(getMsg("strZeroTypeErr"));
+			replyMsg("strZeroTypeErr");
 			return 1;
 		case DiceTooBig_Err:
-			reply(getMsg("strDiceTooBigErr"));
+			replyMsg("strDiceTooBigErr");
 			return 1;
 		case TypeTooBig_Err:
-			reply(getMsg("strTypeTooBigErr"));
+			replyMsg("strTypeTooBigErr");
 			return 1;
 		case AddDiceVal_Err:
-			reply(getMsg("strAddDiceValErr"));
+			replyMsg("strAddDiceValErr");
 			return 1;
 		default:
-			reply(getMsg("strUnknownErr"));
+			replyMsg("strUnknownErr");
 			return 1;
 		}
 		vars["dice_exp"] = rdMainDice.strDice;
@@ -4307,7 +4330,7 @@ int FromMsg::InnerOrder() {
 			}
 		}
 		if (isHidden) {
-			reply(getMsg("strRollHidden"));
+			replyMsg("strRollHidden");
 		}
 		return 1;
 	}
@@ -4395,7 +4418,7 @@ bool FromMsg::DiceFilter()
 		}
 		return true;
 	}
-	if (isSummoned && (strMsg.empty() || strMsg == strSummon))reply(getMsg("strSummonEmpty"));
+	if (isSummoned && (strMsg.empty() || strMsg == strSummon))replyMsg("strSummonEmpty");
 	return false;
 }
 bool FromMsg::WordCensor() {
@@ -4407,21 +4430,21 @@ bool FromMsg::WordCensor() {
 			if (trusted < danger++) {
 				console.log("警告:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName") + "发送了含敏感词指令:\n" + strMsg, 0b1000,
 							printTTime(fromTime));
-				reply(getMsg("strCensorDanger"));
+				replyMsg("strCensorDanger");
 				return 1;
 			}
 		case 2:
 			if (trusted < danger++) {
 				console.log("警告:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName") + "发送了含敏感词指令:\n" + strMsg, 0b10,
 							printTTime(fromTime));
-				reply(getMsg("strCensorWarning"));
+				replyMsg("strCensorWarning");
 				break;
 			}
 		case 1:
 			if (trusted < danger++) {
 				console.log("提醒:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName") + "发送了含敏感词指令:\n" + strMsg, 0b10,
 							printTTime(fromTime));
-				reply(getMsg("strCensorCaution"));
+				replyMsg("strCensorCaution");
 				break;
 			}
 		case 0:
