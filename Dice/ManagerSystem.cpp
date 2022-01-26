@@ -183,9 +183,9 @@ int clearGroup() {
 	}
 	for (const auto& id : GrpDelete) {
 		ChatList.erase(id);
+		if (gm->has_session(id))gm->session_end(id);
 	}
 	return GrpDelete.size();
-
 }
 
 string getName(long long uid, long long GroupID){

@@ -580,11 +580,12 @@ Session& DiceTableMaster::session(long long group)
 	return *mSession[group];
 }
 
-void DiceTableMaster::session_end(long long group)
+void DiceTableMaster::session_end(long long room)
 {
 	std::unique_lock<std::shared_mutex> lock(sessionMutex);
-	remove(DiceDir / "user" / "session" / (to_string(group) + ".json"));
-	mSession.erase(group);
+	remove(DiceDir / "user" / "session" /
+		(room < 0 ? "Q" + to_string(~room) : to_string(~room) + ".json"));
+	mSession.erase(room);
 }
 
 const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
