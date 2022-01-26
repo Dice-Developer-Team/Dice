@@ -188,8 +188,8 @@ int clearGroup() {
 
 }
 
-string getName(long long uid, long long GroupID)
-{
+string getName(long long uid, long long GroupID){
+	if (!uid)return {};
 	// Self
 	if (uid == console.DiceMaid) return getMsg("strSelfName");
 
@@ -215,9 +215,9 @@ string getName(long long uid, long long GroupID)
 }
 AttrVar idx_nick(AttrObject& eve) {
 	if (eve.has("nick"))return eve["nick"];
+	long long uid{ eve.get_ll("uid") };
 	if (!eve.has("uid"))return {};
-	long long uid{ eve["uid"].to_ll() };
-	long long gid{ eve.has("gid") ? eve["gid"].to_ll() : 0 };
+	long long gid{ eve.get_ll("gid") };
 	return eve["nick"] = getName(uid, gid);
 }
 

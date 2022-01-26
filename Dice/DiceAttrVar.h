@@ -102,6 +102,7 @@ public:
 	void writeb(std::ofstream& fout) const;
 	void readb(std::ifstream& fin);
 };
+json to_json(AttrVars& vars);
 
 class AttrObject {
 	std::shared_ptr<AttrVars>obj;
@@ -114,6 +115,9 @@ public:
 	}
 	AttrVar& operator[](const string& key) {
 		return (*obj)[key];
+	}
+	bool empty()const {
+		return obj->empty();
 	}
 	bool has(const string& key)const {
 		return obj->count(key) && !obj->find(key)->second.is_null();

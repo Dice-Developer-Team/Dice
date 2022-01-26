@@ -402,7 +402,7 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 			if (key == "res")val = format(context.get_str(key), context, indexs, dict);
 			else val = context.get_str(key);
 		}
-		else if (auto idx = indexs.find(key); idx != indexs.end()) {
+		else if (auto idx = indexs.find(key); !context.empty() && idx != indexs.end()) {
 			val = idx->second(context).to_str();
 		}
 		else if (key.find("help:") == 0) {

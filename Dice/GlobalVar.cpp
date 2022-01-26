@@ -156,7 +156,7 @@ const dict_ci PlainMsg
 	{"strBlackQQAddNoticeReason","{user_nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{master_ID}"},
 	{"strBlackQQDelNotice","{user_nick}，你已被{self}移出黑名单，现在可以继续使用了"},
 	{"strWhiteQQAddNotice","{user_nick}，您已获得{self}的信任，请尽情使用{self}√"},
-	{"strWhiteQQDenied","你不是{self}的信任用户或群管理×"},
+	{"strWhiteQQDenied","你不是{self}的信任用户×"},
 	{"strDeckNew","{self}已为{nick}自定义新牌堆<{deck_name}>√"},
 	{"strDeckSet","{nick}已用<{deck_name}>创建{self}的牌堆实例√"},
 	{"strDeckSetRename","{nick}已用<{deck_cited}>创建{self}的牌堆实例{deck_name}√"},

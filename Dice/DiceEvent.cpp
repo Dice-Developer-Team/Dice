@@ -21,7 +21,7 @@ AttrVar idx_at(AttrObject& eve) {
 	if (eve.has("at"))return eve["at"];
 	if (!eve.has("uid"))return {};
 	return eve["at"] = eve.has("gid")
-		? "[CQ:at,id=" + eve["uid"].to_str() + "]"
+		? "[CQ:at,id=" + eve.get_str("uid") + "]"
 		: idx_nick(eve);
 }
 
@@ -2558,6 +2558,14 @@ int FromMsg::InnerOrder() {
 			reply(getMsg("strUserTrusted"));
 			return 1;
 		}
+		if (strOption == "tojson") {
+			if (trusted < 1 && !console.is_self(fromChat.uid)) {
+				reply(getMsg("strWhiteQQDenied"));
+				return 1;
+			}
+			reply(UTF8toGBK(to_json(getUser(fromChat.uid).confs).dump()), false);
+			return 1;
+		}
 		if (strOption == "diss") {
 			if (trusted < 4 && fromChat.uid != console.master()) {
 				reply(getMsg("strNotAdmin"));
@@ -4237,7 +4245,7 @@ int FromMsg::InnerOrder() {
 						  ? (vars["reason"].str_empty() ? "strRollMultiDice" : "strRollMultiDiceReason")
 						  : (vars["reason"].str_empty() ? "strRollDice" : "strRollDiceReason"));
 		if (!boolDetail && intTurnCnt != 1) {
-			strReply = getMsg(strType);
+			strReply = getMsg(strType, vars);
 			vector<int> vintExVal;
 			string& res{ (vars["res"] = "{ ").text };
 			while (intTurnCnt--) {
