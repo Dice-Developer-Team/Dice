@@ -198,8 +198,11 @@ void clear_group(DiceJob& job) {
 		for (auto& [id, grp] : ChatList) {
 			if (grp.isset("忽略") || grp.isset("免清") || grp.isset("协议无效"))continue;
 			time_t tLast{ grp.tUpdated };
-			if (long long tLMT; grp.isGroup && ((tLMT = DD::getGroupLastMsg(id, console.DiceMaid)) > 0 && tLMT > tLast))tLast = tLMT;
 			if (gm->has_session(id) && gm->session(id).tUpdate > tLast)tLast = gm->session(id).tUpdate;
+			if (tLast > grpline)continue;
+			if (long long tLMT; grp.isGroup
+				&& DD::isGroupMember(id, console.DiceMaid, false)
+				&& (tLMT = DD::getGroupLastMsg(id, console.DiceMaid)) > tLast)tLast = tLMT;
 			if (!tLast)continue;
 			if (tLast < grpline && !grp.isset("免黑"))GrpDelete.push_back(id);
 			if (grp.isset("已退") || grp.isset("未进"))continue;
