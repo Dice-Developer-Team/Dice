@@ -74,12 +74,6 @@ void FromMsg::reply(const char* msgReply, bool isFormat) {
 	reply(isFormat);
 }
 
-void FromMsg::reply(const std::string& msgReply, const std::initializer_list<const std::string>& replace_str) {
-	initVar(replace_str);
-	strReply = msgReply;
-	reply();
-}
-
 void FromMsg::reply(bool isFormat) {
 	if (isVirtual && fromChat.uid == console.DiceMaid && isPrivate())return;
 	isAns = true;
@@ -87,8 +81,6 @@ void FromMsg::reply(bool isFormat) {
 		strReply.erase(strReply.begin());
 	if (isFormat)
 		formatReply();
-	if (console["ReferMsgReply"] && vars["msgid"])strReply = "[CQ:reply,id=" + vars["msgid"].to_str() + "]" + strReply;
-	AddMsgToQueue(strReply, fromChat);
 	if (LogList.count(fromSession) && gm->session(fromSession).is_logging()
 		&& (isPrivate()
 			|| (isChannel() ? !console["ListenChannelEcho"] : !console["ListenGroupEcho"]))) {
@@ -97,6 +89,8 @@ void FromMsg::reply(bool isFormat) {
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime(fromTime) << endl
 			<< GBKtoUTF8(strReply) << endl << endl;
 	}
+	if (console["ReferMsgReply"] && vars["msgid"])strReply = "[CQ:reply,id=" + vars["msgid"].to_str() + "]" + strReply;
+	AddMsgToQueue(strReply, fromChat);
 }
 
 void FromMsg::replyHidden(const std::string& msgReply) {
@@ -4554,4 +4548,16 @@ std::string FromMsg::printFrom()
 		: ("[Ⱥ:" + to_string(fromChat.gid) + "]");
 	strFwd += getName(fromChat.uid, fromChat.gid) + "(" + to_string(fromChat.uid) + "):";
 	return strFwd;
+}
+
+void reply(AttrVars& msg, string strReply) {
+	while (isspace(static_cast<unsigned char>(strReply[0])))
+		strReply.erase(strReply.begin());
+	strReply = fmt->format(strReply, std::make_shared<AttrVars>(msg));
+	if (console["ReferMsgReply"] && msg["msgid"])strReply = "[CQ:reply,id=" + msg["msgid"].to_str() + "]" + strReply;
+	long long uid{ msg.count("uid") ? msg["uid"].to_ll() : 0 };
+	long long gid{ msg.count("gid") ? msg["gid"].to_ll() : 0 };
+	long long chid{ msg.count("chid") ? msg["chid"].to_ll() : 0 };
+	if (uid || gid || chid)
+		AddMsgToQueue(strReply, chatInfo{ uid,gid,chid });
 }

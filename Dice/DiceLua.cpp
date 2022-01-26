@@ -671,10 +671,22 @@ int eventMsg(lua_State* L) {
 	return 0;
 }
 
-int Context_index(lua_State* L) {
+int Msg_echo(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	AttrVars& vars{ **(AttrVars**)luaL_checkudata(L, 1, "Context") };
+	string msg{ lua_to_string(L, 2) };
+	reply(vars, msg);
+	return 0;
+}
+
+int Context_index(lua_State* L) {
+	if (lua_gettop(L) < 2)return 0;
 	string key{ lua_to_string(L, 2) };
+	if (key == "echo") {
+		lua_pushcfunction(L, Msg_echo);
+		return 1;
+	}
+	AttrVars& vars{ **(AttrVars**)luaL_checkudata(L, 1, "Context") }; 
 	if (vars.count(key)) {
 		lua_push_attr(L, vars[key]);
 		return 1;
