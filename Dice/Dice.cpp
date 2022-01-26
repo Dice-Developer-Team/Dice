@@ -963,9 +963,9 @@ EVE_FriendAdded(eventFriendAdd) {
 	if (!Enabled) return 0;
 	if (!console["ListenFriendAdd"])return 0;
 	this_thread::sleep_for(3s);
-	getMsg("strAddFriendWhiteQQ").empty()
-		? AddMsgToQueue(getMsg("strAddFriend"), fromUID)
-		: AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromUID);
+	(trustedQQ(fromUID) > 0 && !getMsg("strAddFriendWhiteQQ").empty())
+		? AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromUID)
+		: AddMsgToQueue(getMsg("strAddFriend"), fromUID);
 	return 0;
 }
 
