@@ -278,6 +278,12 @@ bool AttrVar::is_numberic()const {
 bool AttrVar::equal(double num)const {
 	return is_numberic() && to_num() == num;
 }
+bool AttrVar::more(double num)const {
+	return is_numberic() && to_num() > num;
+}
+bool AttrVar::less(double num)const {
+	return is_numberic() && to_num() < num;
+}
 bool AttrVar::equal_or_more(double num)const {
 	return is_numberic() && to_num() >= num;
 }

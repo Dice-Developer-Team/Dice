@@ -229,13 +229,14 @@ void clear_group(DiceJob& job) {
 					grp.leave(getMsg("strBlackGroup"));
 				}
 				set<long long> MemberList{ DD::getGroupMemberList(id) };
-				int authSelf{ DD::getGroupAuth(id, console.DiceMaid, 1) };
+				AttrVar authSelf;
 				for (auto eachQQ : MemberList) {
 					if (blacklist->get_qq_danger(eachQQ) > 1) {
-						if (auto authBlack{ DD::getGroupAuth(id, eachQQ, 1) }; authBlack < authSelf) {
+						if (authSelf.is_null())authSelf = DD::getGroupAuth(id, console.DiceMaid, 1);
+						if (auto authBlack{ DD::getGroupAuth(id, eachQQ, 1) }; authSelf.more(authBlack)) {
 							continue;
 						}
-						else if (authBlack > authSelf) {
+						else if (authSelf.less(authBlack)) {
 							if (grp.tUpdated < grpline)GrpDelete.push_back(id);
 							res << printChat(grp) + "：" + printUser(eachQQ) + "对方群权限较高";
 							grp.leave("发现黑名单管理员" + printUser(eachQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");

@@ -93,8 +93,11 @@ public:
 	json to_json()const;
 
 	using CMPR = bool(AttrVar::*)(double)const;
+	bool is_null()const { return type == AttrType::Nil; }
 	bool is_numberic()const;
 	bool equal(double)const;
+	bool more(double)const;
+	bool less(double)const;
 	bool equal_or_more(double)const;
 	bool equal_or_less(double)const;
 
