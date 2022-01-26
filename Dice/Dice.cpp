@@ -617,7 +617,8 @@ EVE_PrivateMsg(eventPrivateMsg)
 	if (fromUID == console.DiceMaid && !console["ListenSelfEcho"])return 0;
 	else if (console["DisableStrangerChat"] && !DD::isFriend(fromUID, true))return 0;
 	shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
-		AttrVars({ { "fromMsg", AttrVar(message) },
+		AttrVars({ { "type", AttrVar("Message")},
+			{ "fromMsg", AttrVar(message) },
 			{ "uid",AttrVar(fromUID) },
 			}), chatInfo{ fromUID,0,0 }));
 	return Msg->DiceFilter();
@@ -632,7 +633,8 @@ EVE_GroupMsg(eventGroupMsg)
 	if (!grp.isset("ºöÂÔ"))
 	{
 		shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
-			AttrVars({ { "fromMsg", AttrVar(message) },
+			AttrVars({ { "type", AttrVar("Message")},
+				{ "fromMsg", AttrVar(message) },
 				{ "msgid",AttrVar(msgId) },
 				{ "uid",AttrVar(fromUID) },
 				{ "gid",AttrVar(fromGID) }
@@ -649,7 +651,8 @@ EVE_ChannelMsg(eventChannelMsg)
 	//if (!grp.isset("ºöÂÔ"))
 	{
 		shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
-			AttrVars({ { "fromMsg", AttrVar(message) },
+			AttrVars({ { "type", AttrVar("Message")},
+				{ "fromMsg", AttrVar(message) },
 				{ "msgid",AttrVar(msgId) },
 				{ "uid",AttrVar(fromUID) },
 				{ "gid",AttrVar(fromGID) },
@@ -681,7 +684,8 @@ EVE_DiscussMsg(eventDiscussMsg)
 		return 1;
 	}
 	shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
-		AttrVars({ { "fromMsg", AttrVar(message) },
+		AttrVars({ { "type", AttrVar("Message")},
+			{ "fromMsg", AttrVar(message) },
 			{ "uid",AttrVar(fromUID) },
 			{ "gid",AttrVar(fromDiscuss) }
 			}), chatInfo{ fromUID,fromDiscuss,0 }));

@@ -4384,7 +4384,7 @@ bool FromMsg::DiceFilter()
 	if (int chon{ isChannel() && pGrp ? pGrp->getChConf(fromChat.chid,"order",0):0 }; isCalled || chon > 0 ||
 		!(chon || pGrp->isset("Í£ÓÃÖ¸Áî"))) {
 		if (fmt->listen_order(this) || InnerOrder()) {
-			if (!isVirtual) {
+			if (!isVirtual && !vars["ignored"]) {
 				AddFrq(fromChat, fromTime,  strMsg);
 				getUser(fromChat.uid).update(fromTime);
 				if (!isPrivate())chat(fromChat.gid).update(fromTime);
@@ -4392,7 +4392,14 @@ bool FromMsg::DiceFilter()
 			return true;
 		}
 	}
-	if (fmt->listen_reply(this))return true;
+	if (fmt->listen_reply(this)) {
+		if (!isVirtual && !vars["ignored"]) {
+			AddFrq(fromChat, fromTime, strMsg);
+			getUser(fromChat.uid).update(fromTime);
+			if (!isPrivate())chat(fromChat.gid).update(fromTime);
+		}
+		return true;
+	}
 	if (isSummoned && (strMsg.empty() || strMsg == strSummon))reply(getMsg("strSummonEmpty"));
 	return false;
 }

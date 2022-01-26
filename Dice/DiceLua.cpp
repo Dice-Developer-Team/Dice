@@ -71,15 +71,11 @@ void lua_set_field(lua_State* L, int idx, const string& str) {
 }
 
 void lua_push_msg(lua_State* L, FromMsg* msg) {
-	lua_newtable(L);
-	//lua_pushnumber(L, (double)msg->fromChat.uid);
-	lua_push_string(L, to_string(msg->fromChat.uid));
-	lua_setfield(L, -2, "fromQQ");
-	//lua_pushnumber(L, (double)msg->fromGID);
-	lua_push_string(L, to_string(msg->fromChat.gid));
-	lua_setfield(L, -2, "fromGroup");
-	lua_push_string(L, msg->strMsg);
-	lua_setfield(L, -2, "fromMsg");
+	msg->vars["fromQQ"] = to_string(msg->fromChat.uid);
+	msg->vars["fromGroup"] = to_string(msg->fromChat.gid);
+	AttrVars** p{ (AttrVars**)lua_newuserdata(L, sizeof(AttrVars*)) };
+	*p = &msg->vars;
+	luaL_setmetatable(L, "Context");
 }
 
 void lua_push_attr(lua_State* L, const AttrVar& attr) {
@@ -675,6 +671,42 @@ int eventMsg(lua_State* L) {
 	return 0;
 }
 
+int Context_index(lua_State* L) {
+	if (lua_gettop(L) < 2)return 0;
+	AttrVars& vars{ **(AttrVars**)luaL_checkudata(L, 1, "Context") };
+	string key{ lua_to_string(L, 2) };
+	if (vars.count(key)) {
+		lua_push_attr(L, vars[key]);
+		return 1;
+	}
+	return 0;
+}
+int Context_newindex(lua_State* L) {
+	if (lua_gettop(L) < 2)return 0;
+	AttrVars& vars{ **(AttrVars**)luaL_checkudata(L, 1, "Context") };
+	string key{ lua_to_string(L, 2) };
+	if (lua_gettop(L) < 3) {
+		vars.erase(key);
+	}
+	else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {
+		vars.erase(key);
+	}
+	else {
+		vars[key] = val;
+	}
+	return 0;
+}
+static const luaL_Reg Context_funcs[] = {
+	{"__index", Context_index},
+	{"__newindex", Context_newindex},
+	{NULL, NULL}
+};
+int luaopen_Context(lua_State* L) {
+	luaL_newmetatable(L, "Context");
+	luaL_setfuncs(L, Context_funcs, 0);
+	return 1;
+}
+
 int httpGet(lua_State* L) {
 	string url{ lua_to_string(L,1) };
 	if (url.empty()) {
@@ -708,13 +740,12 @@ int httpUrlDecode(lua_State* L) {
 }
 
 static const luaL_Reg http_funcs[] = {
-  {"get", httpGet},
-  {"post", httpPost},
-  {"urlEncode", httpUrlEncode},
-  {"urlDecode", httpUrlDecode},
-  {NULL, NULL}
+	{"get", httpGet},
+	{"post", httpPost},
+	{"urlEncode", httpUrlEncode},
+	{"urlDecode", httpUrlDecode},
+	{NULL, NULL}
 };
-
 int luaopen_http(lua_State* L) {
 	luaL_newlib(L, http_funcs);
 	return 1;
@@ -749,13 +780,15 @@ void LuaState::regist() {
 		lua_register(state, lib->name, lib->func);
 	}
 	static const luaL_Reg Dicelibs[] = {
-	  {"http", luaopen_http},
-	  {NULL, NULL}
+		{"Context", luaopen_Context},
+		{"http", luaopen_http},
+		{NULL, NULL}
 	};
 	for (const luaL_Reg* lib = Dicelibs; lib->func; lib++) {
 		luaL_requiref(state, lib->name, lib->func, 1);
 		lua_pop(state, 1);  /* remove lib */
 	}
+	//modify package.path
 	lua_getglobal(state, "package");
 	lua_getfield(state, -1, "path");
 	static string strPath{ (DiceDir / "plugin" / "?.lua").string() + ";"
