@@ -213,11 +213,11 @@ string getName(long long uid, long long GroupID)
 	// Unknown
 	return (UserList.count(uid) ? getMsg("strCallUser") : getMsg("stranger")) + "(" + to_string(uid) + ")";
 }
-AttrVar idx_nick(AttrVars& eve) {
-	if (eve.count("nick"))return eve["nick"];
-	if (!eve.count("uid"))return {};
+AttrVar idx_nick(AttrObject& eve) {
+	if (eve.has("nick"))return eve["nick"];
+	if (!eve.has("uid"))return {};
 	long long uid{ eve["uid"].to_ll() };
-	long long gid{ eve.count("gid") ? eve["gid"].to_ll() : 0 };
+	long long gid{ eve.has("gid") ? eve["gid"].to_ll() : 0 };
 	return eve["nick"] = getName(uid, gid);
 }
 

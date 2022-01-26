@@ -417,7 +417,7 @@ void DiceSession::_draw(FromMsg* msg) {
 	if(!Res.empty()){
 		(*job)["res"] = Res.dot("|").show();
 		(*job)["cnt"] = to_string(Res.size());
-		if (msg->vars.count("hidden")) {
+		if (msg->vars.has("hidden")) {
 			msg->reply(getMsg("strDrawHidden"));
 			msg->replyHidden(getMsg("strDrawCard"));
 		}

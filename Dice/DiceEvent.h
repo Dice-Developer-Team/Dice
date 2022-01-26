@@ -41,7 +41,6 @@ public:
 	void reply(const char* strReply, bool isFormat = true) override;
 	void reply(const std::string& strReply, bool isFormat = true) override;
 
-	FromMsg& initVar(const std::initializer_list<const std::string>& replace_str);
 	void replyHidden(const std::string& strReply);
 
 	void reply(bool isFormat = true);
@@ -316,6 +315,6 @@ public:
 	string readItem();
 	int readItems(vector<string>&);
 };
-void reply(AttrVars&, string);
+void reply(AttrObject&, string);
 
 #endif /*DICE_EVENT*/

@@ -30,8 +30,6 @@ using json = nlohmann::json;
 
 class AttrVar;
 using AttrVars = std::unordered_map<string, AttrVar>;
-using AttrIndex = AttrVar(*)(AttrVars&);
-using AttrIndexs = std::unordered_map<string, AttrIndex>;
 class lua_State;
 class VarTable {
 	friend class AttrVar;
@@ -104,3 +102,28 @@ public:
 	void writeb(std::ofstream& fout) const;
 	void readb(std::ifstream& fin);
 };
+
+class AttrObject {
+	std::shared_ptr<AttrVars>obj;
+public:
+	AttrObject():obj(std::make_shared<AttrVars>()) {}
+	AttrObject(const AttrVars& vars) :obj(std::make_shared<AttrVars>(vars)) {}
+	AttrObject(const AttrObject& other) :obj(other.obj) {}
+	AttrVars& operator*() {
+		return *obj;
+	}
+	AttrVar& operator[](const string& key) {
+		return (*obj)[key];
+	}
+	bool has(const string& key)const {
+		return obj->count(key) && !obj->find(key)->second.is_null();
+	}
+	string get_str(const string& key)const {
+		return obj->count(key) ? obj->find(key)->second.to_str() : "";
+	}
+	long long get_ll(const string& key)const {
+		return obj->count(key) ? obj->find(key)->second.to_ll() : 0;
+	}
+};
+using AttrIndex = AttrVar(*)(AttrObject&);
+using AttrIndexs = std::unordered_map<string, AttrIndex>;

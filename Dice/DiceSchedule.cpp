@@ -45,7 +45,7 @@ void DiceJob::echo(const std::string& msg) {
 	AddMsgToQueue(msg, fromChat);
 }
 void DiceJob::reply(const std::string& msg) {
-	AddMsgToQueue(fmt->format(msg, std::make_shared<AttrVars>(vars)), fromChat);
+	AddMsgToQueue(fmt->format(msg, vars), fromChat);
 }
 void DiceJob::note(const std::string& strMsg, int note_lv = 0b1) {
 	ofstream fout(DiceDir / "audit" / ("log" + to_string(console.DiceMaid) + "_" + printDate() + ".txt"), ios::out | ios::app);

@@ -17,10 +17,10 @@
 #include <ctime>
 using namespace std;
 
-AttrVar idx_at(AttrVars& eve) {
-	if (eve.count("at"))return eve["at"];
-	if (!eve.count("uid"))return {};
-	return eve["at"] = eve.count("gid")
+AttrVar idx_at(AttrObject& eve) {
+	if (eve.has("at"))return eve["at"];
+	if (!eve.has("uid"))return {};
+	return eve["at"] = eve.has("gid")
 		? "[CQ:at,id=" + eve["uid"].to_str() + "]"
 		: idx_nick(eve);
 }
@@ -52,16 +52,9 @@ bool FromMsg::isChannel()const {
 	return fromChat.chid;
 }
 
-FromMsg& FromMsg::initVar(const std::initializer_list<const std::string>& replace_str) {
-	int index = 0;
-	for (const auto& s : replace_str) {
-		vars[to_string(index++)] = s;
-	}
-	return *this;
-}
 void FromMsg::formatReply() {
 	if (msgMatch.ready())strReply = convert_realw2a(msgMatch.format(convert_a2realw(strReply.c_str())).c_str());
-	strReply = fmt->format(strReply, std::make_shared<AttrVars>(vars));
+	strReply = fmt->format(strReply, vars);
 }
 
 void FromMsg::reply(const std::string& msgReply, bool isFormat) {
@@ -145,7 +138,7 @@ void FromMsg::fwdMsg()
 
 void FromMsg::note(std::string strMsg, int note_lv)
 {
-	strMsg = fmt->format(strMsg, std::make_shared<AttrVars>(vars));
+	strMsg = fmt->format(strMsg, vars);
 	ofstream fout(DiceDir / "audit" / ("log" + to_string(console.DiceMaid) + "_" + printDate() + ".txt"),
 		ios::out | ios::app);
 	fout << printSTNow() << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
@@ -1396,7 +1389,7 @@ int FromMsg::InnerOrder() {
 			else if (pGrp->isset("rc房规")) {
 				vars["rule"] = pGrp->confs["rc房规"];
 			}
-			if (vars.count("rule")) {
+			if (vars.has("rule")) {
 				reply(getMsg("strDefaultCOCShow"));
 			}
 			else {
@@ -2941,7 +2934,7 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "li") {
-		LongInsane(vars);
+		LongInsane(*vars);
 		reply(getMsg("strLongInsane"));
 		return 1;
 	}
@@ -3898,7 +3891,7 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ti") {
-		TempInsane(vars);
+		TempInsane(*vars);
 		reply(getMsg("strTempInsane"));
 		return 1;
 	}
@@ -4440,7 +4433,7 @@ void FromMsg::virtualCall() {
 	DiceFilter();
 }
 bool FromMsg::canRoomHost() {
-	if (!vars.count("canRoomHost")) {
+	if (!vars.has("canRoomHost")) {
 		return bool(vars["canRoomHost"] = trusted > 3
 			|| isChannel() || isPrivate()
 			|| DD::isGroupAdmin(fromChat.gid, fromChat.uid, true) || pGrp->inviter == fromChat.uid);
@@ -4550,14 +4543,14 @@ std::string FromMsg::printFrom()
 	return strFwd;
 }
 
-void reply(AttrVars& msg, string strReply) {
+void reply(AttrObject& msg, string strReply) {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
-	strReply = fmt->format(strReply, std::make_shared<AttrVars>(msg));
+	strReply = fmt->format(strReply, msg);
 	if (console["ReferMsgReply"] && msg["msgid"])strReply = "[CQ:reply,id=" + msg["msgid"].to_str() + "]" + strReply;
-	long long uid{ msg.count("uid") ? msg["uid"].to_ll() : 0 };
-	long long gid{ msg.count("gid") ? msg["gid"].to_ll() : 0 };
-	long long chid{ msg.count("chid") ? msg["chid"].to_ll() : 0 };
+	long long uid{ msg.get_ll("uid") };
+	long long gid{ msg.get_ll("gid") };
+	long long chid{ msg.get_ll("chid") };
 	if (uid || gid || chid)
 		AddMsgToQueue(strReply, chatInfo{ uid,gid,chid });
 }

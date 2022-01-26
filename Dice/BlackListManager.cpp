@@ -848,7 +848,7 @@ void DDBlackManager::reset_qq_danger(long long llqq)
 		if (Enabled)
 		{
 			if (!isLoadingExtern)console.log("已消除" + printUser(llqq) + "的危险等级", 0b10, printSTNow());
-			if (UserList.count(llqq))AddMsgToQueue(getMsg("strBlackQQDelNotice", {{"user_nick", getName(llqq)}}), llqq);
+			if (UserList.count(llqq))AddMsgToQueue(getMsg("strBlackQQDelNotice", AttrObject({{"user_nick", getName(llqq)}})), llqq);
 		}
 	}
 }
@@ -887,10 +887,10 @@ bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark)
 	{
 		if (!mQQDanger.count(llqq) && UserList.count(llqq) && mark.danger == 2)
 			mark.note.empty()
-				? AddMsgToQueue(getMsg("strBlackQQAddNotice", {{"user_nick", getName(llqq)}}), llqq)
-				: AddMsgToQueue(getMsg("strBlackQQAddNoticeReason", {
-					                       {"0", mark.note}, {"reason", mark.note}, {"user_nick", getName(llqq)}
-				                       }), llqq);
+				? AddMsgToQueue(getMsg("strBlackQQAddNotice", AttrObject({{"user_nick", getName(llqq)}})), llqq)
+				: AddMsgToQueue(getMsg("strBlackQQAddNoticeReason", AttrObject({
+					                       {"reason", mark.note}, {"user_nick", getName(llqq)}
+				                       })), llqq);
 		if (!isLoadingExtern) {
 			console.log(getMsg("strSelfName") + "已将" + printUser(llqq) + "危险等级提升至" + to_string(mark.danger), 0b10,
 						printSTNow());
@@ -1090,7 +1090,7 @@ void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
 	DDBlackMark mark{llqq, 0};
 	mark.danger = 1;
 	mark.note = msg->vars["note"].to_str();
-	if (!mark.note.empty() && !msg->vars.count("user")) {
+	if (!mark.note.empty() && !msg->vars.has("user")) {
 		mark.danger = 2;
 		mark.type = "other";
 	}

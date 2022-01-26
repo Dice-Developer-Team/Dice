@@ -375,7 +375,7 @@ bool DiceMsgOrder::exec() {
 DiceModManager::DiceModManager() : helpdoc(HelpDoc){
 }
 
-string DiceModManager::format(string s, std::shared_ptr<AttrVars> context, const AttrIndexs& indexs, const dict_ci& dict) const{
+string DiceModManager::format(string s, AttrObject context, const AttrIndexs& indexs, const dict_ci& dict) const{
 	//直接重定向
 	if (s[0] == '&')
 	{
@@ -385,10 +385,8 @@ string DiceModManager::format(string s, std::shared_ptr<AttrVars> context, const
 		{
 			return format(it->second, context, indexs, dict);
 		}
-		if (context){
-			if (auto uit = context->find(key); uit != context->end()) {
-				return uit->second.to_str();
-			}
+		if (context.has(key)) {
+			return context.get_str(key);
 		}
 	}
 	int l = 0, r = 0;
@@ -400,13 +398,12 @@ string DiceModManager::format(string s, std::shared_ptr<AttrVars> context, const
 			continue;
 		}
 		string key = s.substr(l + 1, r - l - 1), val;
-		if (context && context->find(key) != context->end()) {
-			auto uit = context->find(key);
-			if (key == "res")val = format(uit->second.to_str(), context, indexs, dict);
-			else val = uit->second.to_str();
+		if (context.has(key)) {
+			if (key == "res")val = format(context.get_str(key), context, indexs, dict);
+			else val = context.get_str(key);
 		}
-		else if (auto idx = indexs.find(key); context && idx != indexs.end()) {
-			val = idx->second(*context).to_str();
+		else if (auto idx = indexs.find(key); idx != indexs.end()) {
+			val = idx->second(context).to_str();
 		}
 		else if (key.find("help:") == 0) {
 			key = key.substr(5);
@@ -440,9 +437,10 @@ string DiceModManager::format(string s, std::shared_ptr<AttrVars> context, const
 std::shared_mutex GlobalMsgMutex;
 string DiceModManager::msg_get(const string& key)const {
 	std::shared_lock lock(GlobalMsgMutex);
-	const auto it = GlobalMsg.find(key);
-	if (it != GlobalMsg.end()) return it->second;
-	else return "";
+	if (const auto it = GlobalMsg.find(key); it != GlobalMsg.end())
+		return it->second;
+	else 
+		return "";
 }
 void DiceModManager::msg_reset(const string& key)const {
 	std::shared_lock lock(GlobalMsgMutex);

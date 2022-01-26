@@ -128,7 +128,7 @@ int clearUser();
 int clearGroup();
 
 string getName(long long QQ, long long GroupID = 0);
-AttrVar idx_nick(AttrVars&);
+AttrVar idx_nick(AttrObject&);
 void filter_CQcode(string&, long long fromGID = 0);
 
 extern const map<string, short> mChatConf;

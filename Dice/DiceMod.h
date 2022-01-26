@@ -19,6 +19,7 @@
 using std::string;
 using std::vector;
 using std::map;
+using std::unordered_multimap;
 using std::set;
 
 class FromMsg;
@@ -153,6 +154,9 @@ class DiceModManager
     map<string, DiceMsgOrder, less_ci> msgorder;
     map<string, DiceMsgOrder, less_ci> taskcall;
     unordered_map<string, string, hash_ci, equal_ci> scripts;
+    //Trigger
+    unordered_map<string, AttrObject> triggers; //triggers by id
+    unordered_multimap<string, AttrObject> trigger_by_event;
 
     WordQuerier querier;
     TrieG<char, less_ci> gOrder;
@@ -165,7 +169,7 @@ public:
     friend class CustomReplyApiHandler;
     bool isIniting{ false };
     //std::unordered_map<string, string, hash_ci, equal_ci>& custom_msg() { return GlobalMsg; }
-	string format(string, std::shared_ptr<AttrVars> = {},
+	string format(string, AttrObject = {},
         const AttrIndexs& = MsgIndexs,
         const unordered_map<string, string, hash_ci, equal_ci>& = GlobalMsg) const;
     string msg_get(const string& key)const;

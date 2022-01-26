@@ -681,4 +681,4 @@ inline map<long long, Player> PList;
 
 Player& getPlayer(long long qq);
 
-AttrVar idx_pc(AttrVars&);
+AttrVar idx_pc(AttrObject&);

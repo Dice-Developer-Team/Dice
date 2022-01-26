@@ -73,7 +73,7 @@ void lua_set_field(lua_State* L, int idx, const string& str) {
 void lua_push_msg(lua_State* L, FromMsg* msg) {
 	msg->vars["fromQQ"] = to_string(msg->fromChat.uid);
 	msg->vars["fromGroup"] = to_string(msg->fromChat.gid);
-	AttrVars** p{ (AttrVars**)lua_newuserdata(L, sizeof(AttrVars*)) };
+	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrVars*)) };
 	*p = &msg->vars;
 	luaL_setmetatable(L, "Context");
 }
@@ -673,7 +673,7 @@ int eventMsg(lua_State* L) {
 
 int Msg_echo(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
-	AttrVars& vars{ **(AttrVars**)luaL_checkudata(L, 1, "Context") };
+	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
 	string msg{ lua_to_string(L, 2) };
 	reply(vars, msg);
 	return 0;
@@ -686,8 +686,8 @@ int Context_index(lua_State* L) {
 		lua_pushcfunction(L, Msg_echo);
 		return 1;
 	}
-	AttrVars& vars{ **(AttrVars**)luaL_checkudata(L, 1, "Context") }; 
-	if (vars.count(key)) {
+	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
+	if (vars.has(key)) {
 		lua_push_attr(L, vars[key]);
 		return 1;
 	}
