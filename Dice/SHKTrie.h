@@ -8,62 +8,33 @@
 #include <string>
 #include <cstring>
 #include <stack>
+#include <deque>
+#include <memory>
 using std::map;
+using std::unordered_map;
 using std::unordered_set;
 using std::stack;
+using std::deque;
+using std::shared_ptr;
 
-template<class _Char, class sort>
+template<class _Char, class sort, class Val = std::string>
 class TrieNode {
 public:
-	map<_Char, TrieNode, sort> next{};
+	map<_Char, TrieNode, sort> next;
 	TrieNode* fail = nullptr;
-	bool isleaf = false;
-	std::string value{};
+	shared_ptr<Val> value;
 };
 
-template<class _Char, class sort>
+template<class _Char, class sort, class Val = std::string>
 class TrieG {
-	using Node = TrieNode<_Char, sort>;
+	using Node = TrieNode<_Char, sort, Val>;
 	using _String = std::basic_string<_Char>;
 	Node root{};
 	string chsException;
-	//是为目标节点的子节点匹配fail
-	void make_fail(Node& node) {
-		if (&node == &root) {
-			for (auto& [ch, kid] : node.next) {
-				kid.fail = &node;
-			}
-		}
-		else {
-			for (auto& [ch,kid] : node.next) {
-				if (auto it = node.fail->next.find(ch); it != node.fail->next.end()) {
-					kid.fail = &(it->second);
-				}
-				else {
-					kid.fail = &root;
-				}
-			}
-		}
-		for (auto& [ch, kid] : node.next) {
-			make_fail(kid);
-		}
-	}
 public:
 	TrieG(){}
-	/*template<typename Con>
-	TrieG(const Con& dir) {
-		for (const auto& [key,val]: dir) {
-			add(key);
-		}
-		make_fail(root);
-	}*/
-	/*template<typename Con>
-	void build(const Con& dir) {
-		this->~TrieG();
-		new(this)TrieG(dir);
-	}*/
 	void clear() { root = {}; }
-	void add(const _String s, const string& val) {
+	void add(const _String s, const Val& val) {
 		Node* p = &root;
 		for (_Char ch : s) {
 			if (!p->next.count(ch)) {
@@ -71,44 +42,68 @@ public:
 			}
 			p = &(p->next[ch]);
 		}
-		p->value = val;
-		p->isleaf = true;
+		p->value = std::make_shared<Val>(val);
 	}
 	void make_fail() {
-		make_fail(root);
+		deque<Node*> queue{};
+		Node* node{ root.fail = &root };
+		for (auto& [ch, kid] : node->next) {
+			kid.fail = &root;
+			queue.push_back(&kid);
+		}
+		while (!queue.empty()) {
+			node = queue.front();
+			queue.pop_front();
+			for (auto& [ch, kid] : node->next) {
+				Node* p{ node->fail };
+				while (p != &root && !p->next.count(ch)) {
+					p = p->fail;
+				}
+				kid.fail = p;
+				if (auto it = p->next.find(ch); node != &root && it != p->next.end()) {
+					kid.fail = &(it->second);
+					if (kid.fail->value && !kid.value)kid.value = kid.fail->value;
+				}
+				else {
+					kid.fail = &root;
+				}
+				queue.push_back(&kid);
+			}
+		} 
 	}
 	void insert(const _String& key, const string& val) {
 		add(key, val);
-		make_fail(root);
+		make_fail();
 	}
 	//前缀匹配
-	bool match_head(const _String& s, _String& res)const {
+	shared_ptr<Val> match_head(const _String& s)const {
 		const Node* p = &root;
+		const Node* leaf{ nullptr };
 		for (const auto& ch : s) {
 			//if (ignored(ch))continue;
 			if (!p->next.count(ch))break;
 			p = &(p->next.find(ch)->second);
-			if (p->isleaf) {
-				res = p->value;
+			if (p->value) {
+				leaf = p;
 			}
 		}
-		return !res.empty();
+		return leaf ? leaf->value : std::make_shared<Val>();
 	}
-	bool match_head(const _String& s, stack<_String>& res)const {
+	bool match_head(const _String& s, stack<Val>& res)const {
 		const Node* p = &root;
 		for (const auto& ch : s) {
 			//if (ignored(ch))continue;
 			if (!p->next.count(ch))break;
 			p = &(p->next.find(ch)->second);
-			if (p->isleaf) {
-				res.push(p->value);
+			if (p->value) {
+				res.push(*p->value);
 			}
 		}
 		return res.size();
 	}
 	//任意位置字串匹配，不重复记录
-	bool search(const _String& s, vector<string>& res, bool(* _Filter)(_Char) = [](_Char) {return false; })const {
-		unordered_set<string> words;
+	bool search(const _String& s, vector<Val>& res, bool(* _Filter)(_Char) = [](_Char) {return false; })const {
+		unordered_set<Val> words;
 		const Node* p = &root;
 		for (const auto& ch : s) {
 			if (_Filter(ch))continue;
@@ -122,9 +117,9 @@ public:
 				}
 				p = p->fail;
 			}
-			if (p->isleaf && !words.count(p->value)) {
-				words.insert(p->value);
-				res.push_back(p->value);
+			if (p->value && !words.count(*p->value)) {
+				words.insert(*p->value);
+				res.push_back(*p->value);
 			}
 		}
 		return res.size();

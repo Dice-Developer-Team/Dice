@@ -636,13 +636,11 @@ void DiceModManager::reply_show(const shared_ptr<DiceJobDetail>& msg) {
 }
 
 bool DiceModManager::listen_order(DiceJobDetail* msg) {
-	string nameOrder;
-	if(!gOrder.match_head(msg->strMsg, nameOrder))return false;
-	if (((FromMsg*)msg)->WordCensor()) {
-		return true;
+	if (shared_ptr<string> nameOrder; nameOrder = gOrder.match_head(msg->strMsg)) {
+		return ((FromMsg*)msg)->WordCensor()
+			|| msgorder[*nameOrder].exec((FromMsg*)msg);
 	}
-	msgorder[nameOrder].exec((FromMsg*)msg);
-	return true;
+	return false;
 }
 string DiceModManager::list_order() {
 	return msgorder.empty() ? "" : "¿©’π÷∏¡Ó:" + listKey(msgorder);

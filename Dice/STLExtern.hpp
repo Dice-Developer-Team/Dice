@@ -180,6 +180,14 @@ std::string listID(const Con& list, const string& sepa = "|") {
 	}
 	return res.show(sepa);
 }
+template<class Con>
+std::string listItem(const Con& list, const string& sepa = "|") {
+	ShowList res;
+	for (auto id : list) {
+		res << id;
+	}
+	return res.show(sepa);
+}
 
 using prior_item = std::pair<int, string>;
 

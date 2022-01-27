@@ -4428,27 +4428,29 @@ bool FromMsg::WordCensor() {
 		switch (int danger = censor.search(strMsg, sens_words) - 1) {
 		case 3:
 			if (trusted < danger++) {
-				console.log("警告:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName") + "发送了含敏感词指令:\n" + strMsg, 0b1000,
+				console.log("警告:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName") + "发送了含敏感词消息:\n" + strMsg, 0b1000,
 							printTTime(fromTime));
 				replyMsg("strCensorDanger");
 				return 1;
 			}
 		case 2:
 			if (trusted < danger++) {
-				console.log("警告:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName") + "发送了含敏感词指令:\n" + strMsg, 0b10,
-							printTTime(fromTime));
+				console.log("警告:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName")
+					+ "发送了含敏感词消息(" + listItem(sens_words) + "):\n" + strMsg, 0b10, printTTime(fromTime));
 				replyMsg("strCensorWarning");
 				break;
 			}
 		case 1:
 			if (trusted < danger++) {
-				console.log("提醒:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName") + "发送了含敏感词指令:\n" + strMsg, 0b10,
+				console.log("提醒:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName")
+					+ "发送了含敏感词消息("	+ listItem(sens_words) + "):\n" + strMsg, 0b10,
 							printTTime(fromTime));
 				replyMsg("strCensorCaution");
 				break;
 			}
 		case 0:
-			console.log("提醒:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName") + "发送了含敏感词指令:\n" + strMsg, 1,
+			console.log("提醒:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName")
+				+ "发送了含敏感词消息(" + listItem(sens_words) +"):\n" + strMsg, 1,
 						printTTime(fromTime));
 			break;
 		default:
