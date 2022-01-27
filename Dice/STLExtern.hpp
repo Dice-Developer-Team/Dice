@@ -25,7 +25,7 @@ struct less_ci
 	}
 	template<typename _Char>
 	bool operator()(const _Char& ch1, const _Char& ch2) const {
-		return tolower(static_cast<unsigned char>(ch1 & 0xff)) < tolower(static_cast<unsigned char>(ch2 & 0xff));
+		return tolower(ch1) < tolower(ch2);
 	}
 	bool operator()(const string& str1, const string& str2) const
 	{
