@@ -97,12 +97,11 @@ void FromMsg::replyHidden() {
 		strReply.erase(strReply.begin());
 	formatReply();
 	if (LogList.count(fromSession) && gm->session(fromSession).is_logging()) {
-		filter_CQcode(strReply, fromChat.gid);
 		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime(fromTime) << endl
-			<< '*' << GBKtoUTF8(strReply) << endl << endl;
+			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
 	}
-	strReply = "在" + printChat(fromChat) + "中 " + strReply;
+	strReply = "在" + printChat(fromChat) + "中 " + forward_filter(strReply);
 	AddMsgToQueue(strReply, fromChat.uid);
 	if (gm->has_session(fromSession)) {
 		for (auto qq : gm->session(fromSession).get_ob()) {
@@ -119,7 +118,7 @@ void FromMsg::logEcho(){
 	if (LinkList.count(fromSession) && LinkList[fromSession].second
 		&& strLowerMessage.find(".link") != 0) {
 		string strFwd{ getMsg("strSelfCall") + ":"
-			+ strReply };
+			+ forward_filter(strReply) };
 		if (long long aim = LinkList[fromSession].first; aim < 0) {
 			AddMsgToQueue(strFwd, ~aim);
 		}
@@ -129,10 +128,9 @@ void FromMsg::logEcho(){
 	}
 	if (LogList.count(fromSession)
 		&& strLowerMessage.find(".log") != 0) {
-		filter_CQcode(strReply, fromChat.gid);
 		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime(fromTime) << endl
-			<< GBKtoUTF8(strReply) << endl << endl;
+			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
 	}
 }
 void FromMsg::fwdMsg()
@@ -142,7 +140,7 @@ void FromMsg::fwdMsg()
 		&& strLowerMessage.find(".link") != 0){
 		string strFwd;
 		if (trusted < 5)strFwd += printFrom();
-		strFwd += strMsg;
+		strFwd += forward_filter(strMsg);
 		if (long long aim = LinkList[fromSession].first;aim < 0) {
 			AddMsgToQueue(strFwd, ~aim);
 		}
@@ -151,11 +149,9 @@ void FromMsg::fwdMsg()
 		}
 	}
 	if (LogList.count(fromSession) && strLowerMessage.find(".log") != 0) {
-		string msg = strMsg;
-		filter_CQcode(msg, fromChat.gid);
 		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(idx_pc(vars).to_str()) + "(" + to_string(fromChat.uid) + ") " + printTTime(fromTime) << endl
-			<< GBKtoUTF8(msg) << endl << endl;
+			<< GBKtoUTF8(filter_CQcode(strMsg, fromChat.gid)) << endl << endl;
 	}
 }
 
@@ -3046,8 +3042,7 @@ int FromMsg::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
 		vars["old_nick"] = idx_nick(vars);
-		string& strNN{ (vars["new_nick"] = strip(strMsg.substr(intMsgCnt))).text };
-		filter_CQcode(strNN);
+		string& strNN{ (vars["new_nick"] = strip(filter_CQcode(strMsg.substr(intMsgCnt),fromChat.gid))).text };
 		if (strNN.length() > 50) {
 			replyMsg("strNameTooLongErr");
 			return 1;
@@ -3161,8 +3156,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "new") {
-			string& strPC{ (vars["char"] = strip(readRest())).text };
-			filter_CQcode(strPC);
+			string& strPC{ (vars["char"] = strip(filter_CQcode(readRest(), fromChat.gid))).text };
 			switch (pl.newCard(strPC, fromChat.gid)) {
 			case 0:
 				vars["type"] = pl[fromChat.gid].Attr["__Type"].to_str();
@@ -3186,8 +3180,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "build") {
-			string& strPC{ (vars["char"] = strip(readRest())).text };
-			filter_CQcode(strPC);
+			string& strPC{ (vars["char"] = strip(filter_CQcode(readRest(), fromChat.gid))).text };
 			switch (pl.buildCard(strPC, false, fromChat.gid)) {
 			case 0:
 				vars["show"] = pl[strPC].show(true);
@@ -3214,8 +3207,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "nn") {
-			string& strPC{ (vars["new_name"] = strip(readRest())).text };
-			filter_CQcode(strPC);
+			string& strPC{ (vars["new_name"] = strip(filter_CQcode(readRest(),fromChat.gid))).text };
 			vars["old_name"] = pl[fromChat.gid].getName();
 			switch (pl.renameCard(vars["old_name"].to_str(), strPC)) {
 			case 0:
@@ -3267,8 +3259,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "cpy") {
-			string strName = strip(readRest());
-			filter_CQcode(strName);
+			string strName = strip(filter_CQcode(readRest(), fromChat.gid));
 			string& strPC1{ (vars["char1"] = strName.substr(0, strName.find('='))).text };
 			vars["char2"] = (strPC1.length() + 1 < strName.length())
 				? strip(strName.substr(strPC1.length() + 1))

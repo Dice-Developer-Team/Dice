@@ -30,6 +30,7 @@ using std::unordered_map;
 constexpr auto CQ_IMAGE = "[CQ:image,file=";
 constexpr auto CQ_AT = "[CQ:at,id=";
 constexpr auto CQ_QQAT = "[CQ:at,qq=";
+constexpr auto CQ_POKE = "[CQ:poke,id=";
 
 //º”‘ÿ ˝æ›
 void loadData();
@@ -129,7 +130,9 @@ int clearGroup();
 
 string getName(long long QQ, long long GroupID = 0);
 AttrVar idx_nick(AttrObject&);
-void filter_CQcode(string&, long long fromGID = 0);
+string filter_CQcode(const string&, long long fromGID = 0);
+//forward msg
+string forward_filter(const string&, long long fromGID = 0);
 
 extern const map<string, short> mChatConf;
 

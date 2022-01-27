@@ -221,15 +221,15 @@ AttrVar idx_nick(AttrObject& eve) {
 	return eve["nick"] = getName(uid, gid);
 }
 
-void filter_CQcode(string& nick, long long fromGID)
-{
+string filter_CQcode(const string& raw, long long fromGID){
+	string msg{ raw };
 	size_t posL(0);
-	while ((posL = nick.find(CQ_AT)) != string::npos)
+	while ((posL = msg.find(CQ_AT)) != string::npos)
 	{
 		//检查at格式
-		if (size_t posR = nick.find(']',posL); posR != string::npos) 
+		if (size_t posR = msg.find(']',posL); posR != string::npos) 
 		{
-			std::string_view stvQQ(nick);
+			std::string_view stvQQ(msg);
 			stvQQ = stvQQ.substr(posL + 10, posR - posL - 10);
 			//检查QQ号格式
 			bool isDig = true;
@@ -244,34 +244,87 @@ void filter_CQcode(string& nick, long long fromGID)
 			//转义
 			if (isDig && posR - posL < 29) 
 			{
-				nick.replace(posL, posR - posL + 1, "@" + getName(stoll(string(stvQQ)), fromGID));
+				msg.replace(posL, posR - posL + 1, "@" + getName(stoll(string(stvQQ)), fromGID));
 			}
 			else if (stvQQ == "all") 
 			{
-				nick.replace(posL, posR - posL + 1, "@全体成员");
+				msg.replace(posL, posR - posL + 1, "@全体成员");
 			}
 			else
 			{
-				nick.replace(posL, posR - posL + 1, "@");
+				msg.replace(posL + 1, 9, "@");
 			}
 		}
-		else return;
+		else return msg;
 	}
-	while ((posL = nick.find(CQ_IMAGE)) != string::npos) {
+	while ((posL = msg.find(CQ_IMAGE)) != string::npos) {
 		//检查at格式
-		if (size_t posR = nick.find(']', posL); posR != string::npos) {
-			nick.replace(posL, posR - posL + 1, "[图片]");
+		if (size_t posR = msg.find(']', posL); posR != string::npos) {
+			msg.replace(posL, posR - posL + 1, "[图片]");
 		}
-		else return;
+		else return msg;
 	}
-	while ((posL = nick.find("[CQ:")) != string::npos)
+	while ((posL = msg.find(CQ_POKE)) != string::npos) {
+		//检查at格式
+		if (size_t posR = msg.find(']', posL); posR != string::npos) {
+			msg.replace(posL+1, 11, "戳一戳");
+		}
+		else return msg;
+	}
+	while ((posL = msg.find("[CQ:")) != string::npos)
 	{
-		if (size_t posR = nick.find(']', posL); posR != string::npos) 
+		if (size_t posR = msg.find(']', posL); posR != string::npos) 
 		{
-			nick.erase(posL, posR - posL + 1);
+			msg.erase(posL, posR - posL + 1);
 		}
-		else return;
+		else return msg;
 	}
+	return msg;
+}
+string forward_filter(const string& raw, long long fromGID) {
+	string msg{ raw };
+	size_t posL(0);
+	while ((posL = msg.find(CQ_AT)) != string::npos)
+	{
+		//检查at格式
+		if (size_t posR = msg.find(']', posL); posR != string::npos)
+		{
+			std::string_view stvQQ(msg);
+			stvQQ = stvQQ.substr(posL + 10, posR - posL - 10);
+			//检查QQ号格式
+			bool isDig = true;
+			for (auto ch : stvQQ)
+			{
+				if (!isdigit(static_cast<unsigned char>(ch)))
+				{
+					isDig = false;
+					break;
+				}
+			}
+			//转义
+			if (isDig && posR - posL < 29)
+			{
+				msg.replace(posL, posR - posL + 1, "@" + getName(stoll(string(stvQQ)), fromGID));
+			}
+			else if (stvQQ == "all")
+			{
+				msg.replace(posL, posR - posL + 1, "@全体成员");
+			}
+			else
+			{
+				msg.replace(posL + 1, 9, "@");
+			}
+		}
+		else return msg;
+	}
+	while ((posL = msg.find(CQ_POKE)) != string::npos) {
+		//检查at格式
+		if (size_t posR = msg.find(']', posL); posR != string::npos) {
+			msg.replace(posL + 1, 11, "戳一戳");
+		}
+		else return msg;
+	}
+	return msg;
 }
 
 Chat& chat(long long id)
