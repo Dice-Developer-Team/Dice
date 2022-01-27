@@ -1472,7 +1472,7 @@ int FromMsg::InnerOrder() {
 		string strOption = readPara();
 #ifdef _WIN32
 		if (strOption == "gui") {
-			reply("Dice! GUI已被弃用，请考虑使用Dice! WebUI https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming");
+			reply("Dice! GUI已停止更新，请考虑使用Dice! WebUI https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming");
 			thread th(GUIMain);
 			th.detach();
 			return 1;
@@ -2531,11 +2531,10 @@ int FromMsg::InnerOrder() {
 		if (strOption == "state") {
 			User& user = getUser(fromChat.uid);
 			vars["user"] = printUser(fromChat.uid);
-			vars["cntNick"] = user.strNick.size();
 			ResList rep;
 			rep << "信任级别：" + to_string(trusted)
 				<< "和{nick}的第一印象大约是在" + printDate(user.tCreated)
-				<< (!(user.strNick.empty()) ? "正记录{nick}的{cntNick}个称呼" : "没有记录{nick}的称呼")
+				<< (!(user.strNick.empty()) ? "正记录{nick}的" + to_string(user.strNick.size()) + "个称呼" : "没有记录{nick}的称呼")
 				<< ((PList.count(fromChat.uid)) ? "这里有{nick}的" + to_string(PList[fromChat.uid].size()) + "张角色卡" : "无角色卡记录");
 			reply("{user}" + rep.show());
 			return 1;

@@ -909,7 +909,7 @@ EVE_GroupInvited(eventGroupInvited)
 		}
 		else if (console && console["Private"])
 		{
-			DD::sendPrivateMsg(fromUID, getMsg("strPreserve"));
+			AddMsgToQueue(getMsg("strPreserve"), fromUID);
 			strMsg += "\n已拒绝（当前在私用模式）";
 			console.log(strMsg, 1, strNow);
 			DD::answerGroupInvited(fromGID, 2);
