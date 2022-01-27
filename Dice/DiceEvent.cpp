@@ -290,7 +290,7 @@ int FromMsg::AdminEvent(const string& strOption)
 				reply("{nick}未输入待添加敏感词！");
 			}
 			else {
-				note("{nick}已添加{danger_level}级敏感词" + to_string(res.size()) + "个:" + res.show(), 1);
+				note("已添加{danger_level}级敏感词" + to_string(res.size()) + "个:" + res.show(), 1);
 			}
 		}
 		else if (strMsg[intMsgCnt] == '-') {
@@ -309,7 +309,7 @@ int FromMsg::AdminEvent(const string& strOption)
 				reply("{nick}未输入待移除敏感词！");
 			}
 			else {
-				note("{nick}已移除敏感词" + to_string(res.size()) + "个:" + res.show(), 1);
+				note("已移除敏感词" + to_string(res.size()) + "个:" + res.show(), 1);
 			}
 			if (!resErr.empty())
 				reply("{nick}移除不存在敏感词" + to_string(resErr.size()) + "个:" + resErr.show());
@@ -2531,10 +2531,11 @@ int FromMsg::InnerOrder() {
 		if (strOption == "state") {
 			User& user = getUser(fromChat.uid);
 			vars["user"] = printUser(fromChat.uid);
+			vars["cntNick"] = user.strNick.size();
 			ResList rep;
 			rep << "信任级别：" + to_string(trusted)
 				<< "和{nick}的第一印象大约是在" + printDate(user.tCreated)
-				<< (!(user.strNick.empty()) ? "正记录{nick}的" + to_string(user.strNick.size()) + "个称呼" : "没有记录{nick}的称呼")
+				<< (!(user.strNick.empty()) ? "正记录{nick}的{cntNick}个称呼" : "没有记录{nick}的称呼")
 				<< ((PList.count(fromChat.uid)) ? "这里有{nick}的" + to_string(PList[fromChat.uid].size()) + "张角色卡" : "无角色卡记录");
 			reply("{user}" + rep.show());
 			return 1;
