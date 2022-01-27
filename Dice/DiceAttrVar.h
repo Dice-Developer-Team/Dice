@@ -120,13 +120,13 @@ public:
 		return obj->empty();
 	}
 	bool has(const string& key)const {
-		return obj->count(key) && !obj->find(key)->second.is_null();
+		return obj->count(key) && !obj->at(key).is_null();
 	}
 	string get_str(const string& key)const {
-		return obj->count(key) ? obj->find(key)->second.to_str() : "";
+		return obj->count(key) ? obj->at(key).to_str() : "";
 	}
 	long long get_ll(const string& key)const {
-		return obj->count(key) ? obj->find(key)->second.to_ll() : 0;
+		return obj->count(key) ? obj->at(key).to_ll() : 0;
 	}
 };
 using AttrIndex = AttrVar(*)(AttrObject&);

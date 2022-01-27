@@ -30,9 +30,8 @@ int DiceSession::table_add(const string& key, int prior, const string& item)
 	return 0;
 }
 
-string DiceSession::table_prior_show(const string& key) const
-{
-	return PriorList(mTable.find(key)->second).show();
+string DiceSession::table_prior_show(const string& key) const{
+	return mTable.count(key) ? PriorList(mTable.at(key)).show() : "";
 }
 
 bool DiceSession::table_clr(const string& key)

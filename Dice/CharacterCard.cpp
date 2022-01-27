@@ -101,7 +101,7 @@ void CharaCard::setType(const string& strType) {
 int CharaCard::set(string key, const AttrVar& val) {
 	if (key.empty())return -1;
 	key = standard(key);
-	if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.find(key)->second){
+	if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.at(key)){
 		if (Attr.count(key)) Attr.erase(key);
 		else return -1;
 	}
@@ -115,7 +115,7 @@ int CharaCard::set(string key, int val)
 {
 	if (key.empty())return -1;
 	key = standard(key);
-	if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.find(key)->second)
+	if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.at(key))
 	{
 		if (Attr.count(key)) Attr.erase(key);
 		else return -1;
@@ -138,7 +138,7 @@ int CharaCard::set(const string& key, const string& s) {
 
 int CharaCard::show(string key, string& val) const {
 	if (Attr.count(key)) {
-		val = Attr.find(key)->second.to_str();
+		val = Attr.at(key).to_str();
 		return 0;
 	}
 	if (key == "note") {
@@ -147,7 +147,7 @@ int CharaCard::show(string key, string& val) const {
 	}
 	key = standard(key);
 	if (Attr.count(key)) {
-		val = Attr.find(key)->second.to_str();
+		val = Attr.at(key).to_str();
 		return 0;
 	}
 	return -1;
@@ -164,8 +164,8 @@ AttrVar& CharaCard::operator[](const string& strKey) {
 	if (Attr.count(strKey))return Attr[strKey];
 	string key{ standard(strKey) };
 	if (!Attr.count(key)) {
-		if (pTemplet->mAutoFill.count(key))Attr[key] = cal(pTemplet->mAutoFill.find(key)->second);
-		if (pTemplet->defaultSkill.count(key))Attr[key] = pTemplet->defaultSkill.find(key)->second;
+		if (pTemplet->mAutoFill.count(key))Attr[key] = cal(pTemplet->mAutoFill.at(key));
+		if (pTemplet->defaultSkill.count(key))Attr[key] = pTemplet->defaultSkill.at(key);
 	}
 	return Attr[key];
 }
@@ -222,7 +222,7 @@ void CharaCard::clear() {
 			if (!show(it, strVal)) {
 				sDefault.insert(it);
 				if (it[0] == '&')subList << it + "=" + strVal;
-				else if (Attr.find(it)->second.type == AttrVar::AttrType::Text)subList << it + ":¡¾" + strVal + "¡¿";
+				else if (Attr.at(it).type == AttrVar::AttrType::Text)subList << it + ":¡¾" + strVal + "¡¿";
 				else subList << it + ":" + strVal;
 			}
 		}

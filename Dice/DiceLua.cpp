@@ -562,10 +562,10 @@ int getPlayerCardAttr(lua_State* L) {
 	if (!plQQ || key.empty())return 0;
 	CharaCard& pc = getPlayer(plQQ)[group];
 	if (pc.Attr.count(key)) {
-		lua_push_attr(L, pc.Attr.find(key)->second);
+		lua_push_attr(L, pc.Attr.at(key));
 	}
 	else if (key = pc.standard(key); pc.Attr.count(key)) {
-		lua_push_attr(L, pc.Attr.find(key)->second);
+		lua_push_attr(L, pc.Attr.at(key));
 	}
 	else if (key == "note") {
 		lua_push_string(L, pc.Note);

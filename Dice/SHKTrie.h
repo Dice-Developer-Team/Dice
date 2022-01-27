@@ -1,6 +1,6 @@
 /*
  * ×ÖµäÊ÷
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2019-2022 String.Empty
  */
 #pragma once
 #include <map>
@@ -19,7 +19,11 @@ using std::shared_ptr;
 
 template<class _Char, class sort, class Val = std::string>
 class TrieNode {
+	//using _String = std::basic_string<_Char>;
 public:
+	//_String word;
+	//TrieNode(){}
+	//TrieNode(const _String& s) :word(s){}
 	map<_Char, TrieNode, sort> next;
 	TrieNode* fail = nullptr;
 	shared_ptr<Val> value;
@@ -37,32 +41,33 @@ public:
 	void add(const _String s, const Val& val) {
 		Node* p = &root;
 		for (_Char ch : s) {
-			if (!p->next.count(ch)) {
-				p->next[ch] = Node();
-			}
+			//if (!p->next.count(ch)) {
+			//	p->next[ch] = Node(p->word + ch);
+			//}
 			p = &(p->next[ch]);
 		}
 		p->value = std::make_shared<Val>(val);
 	}
 	void make_fail() {
 		deque<Node*> queue{};
-		Node* node{ root.fail = &root };
-		for (auto& [ch, kid] : node->next) {
+		Node* parent{ root.fail = &root };
+		for (auto& [ch, kid] : parent->next) {
 			kid.fail = &root;
 			queue.push_back(&kid);
 		}
 		while (!queue.empty()) {
-			node = queue.front();
+			parent = queue.front();
 			queue.pop_front();
-			for (auto& [ch, kid] : node->next) {
-				Node* p{ node->fail };
+			for (auto& [ch, kid] : parent->next) {
+				Node* p{ parent->fail };
 				while (p != &root && !p->next.count(ch)) {
 					p = p->fail;
 				}
-				kid.fail = p;
-				if (auto it = p->next.find(ch); node != &root && it != p->next.end()) {
+				if (auto it = p->next.find(ch); it != p->next.end()) {
 					kid.fail = &(it->second);
-					if (kid.fail->value && !kid.value)kid.value = kid.fail->value;
+					if (kid.fail->value && !kid.value) {
+						kid.value = kid.fail->value;
+					}
 				}
 				else {
 					kid.fail = &root;
@@ -82,7 +87,7 @@ public:
 		for (const auto& ch : s) {
 			//if (ignored(ch))continue;
 			if (!p->next.count(ch))break;
-			p = &(p->next.find(ch)->second);
+			p = &(p->next.at(ch));
 			if (p->value) {
 				leaf = p;
 			}
@@ -94,7 +99,7 @@ public:
 		for (const auto& ch : s) {
 			//if (ignored(ch))continue;
 			if (!p->next.count(ch))break;
-			p = &(p->next.find(ch)->second);
+			p = &(p->next.at(ch));
 			if (p->value) {
 				res.push(*p->value);
 			}
