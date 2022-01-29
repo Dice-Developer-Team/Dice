@@ -341,9 +341,6 @@ void ConsoleTimer() 	{
 					if (int cnt{ clearUser() }) {
 						console.log("已清理无效或过期用户记录" + to_string(cnt) + "条", 1, printSTime(stTmp));
 					}
-					sch.push_job("clrgroup", true, {
-						{"clear_mode",AttrVar("black")},
-						});
 					break;
 				default:
 					fmt->call_task(eve_type);
