@@ -23,6 +23,7 @@
  */
 #pragma once
 #include <string>
+#include <vector>
 #include <unordered_map>
 #include "json.hpp"
 using std::string;
@@ -30,6 +31,7 @@ using json = nlohmann::json;
 
 class AttrVar;
 using AttrVars = std::unordered_map<string, AttrVar>;
+using VarArray = std::vector<AttrVar>;
 class lua_State;
 class VarTable {
 	friend class AttrVar;
@@ -40,6 +42,10 @@ class VarTable {
 public:
 	VarTable(){}
 	VarTable(const AttrVars&);
+	AttrVars to_dict()const;
+	VarArray to_list()const;
+	std::unordered_map<string, std::shared_ptr<AttrVar>>& get_dict() { return dict; };
+	std::vector<std::shared_ptr<AttrVar>>& get_list() { return idxs; };
 	void writeb(std::ofstream& fout) const;
 	void readb(std::ifstream& fin);
 };
@@ -88,11 +94,16 @@ public:
 	double to_num()const;
 	string to_str()const;
 	bool str_empty()const;
+	VarTable to_table()const;
+	AttrVars to_dict()const;
+	VarArray to_list()const;
 	json to_json()const;
 
 	using CMPR = bool(AttrVar::*)(double)const;
 	bool is_null()const { return type == AttrType::Nil; }
 	bool is_numberic()const;
+	bool is_character()const { return type != AttrType::Nil && type != AttrType::Table; }
+	bool is_table()const { return type == AttrType::Table; }
 	bool equal(double)const;
 	bool more(double)const;
 	bool less(double)const;
@@ -128,6 +139,10 @@ public:
 	long long get_ll(const string& key)const {
 		return obj->count(key) ? obj->at(key).to_ll() : 0;
 	}
+	VarTable get_tab(const string& key)const {
+		return obj->count(key) ? obj->at(key).to_table() : VarTable();
+	}
 };
+using AttrObjects = std::unordered_map<string, AttrObject>;
 using AttrIndex = AttrVar(*)(AttrObject&);
 using AttrIndexs = std::unordered_map<string, AttrIndex>;

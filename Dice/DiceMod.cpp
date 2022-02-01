@@ -61,6 +61,43 @@ void parse_vary(string& raw, unordered_map<string, pair<double, AttrVar::CMPR>>&
 	}
 	raw = vars.show("&");
 }
+string parse_vary(VarTable& raw, unordered_map<string, pair<double, AttrVar::CMPR>>& vary) {
+	ShowList vars;
+	for (auto& [var, exp] : raw.get_dict()) {
+		if (exp->is_numberic()) {
+			vary[var] = { exp->to_num(), &AttrVar::equal };
+			vars << var + "=" + exp->to_str();
+		}
+		else if (!exp->is_table()) {
+			//skip
+			continue;
+		}
+		else {
+			AttrVars tab{ exp->to_dict() };
+			if (tab.count("equal")) {
+				vary[var] = { tab["equal"].to_num(),&AttrVar::equal };
+				vars << var + "=" + tab["less"].to_str();
+			}
+			else if (tab.count("at_least")) {
+				vary[var] = { tab["at_least"].to_num(),&AttrVar::equal_or_more };
+				vars << var + "=" + tab["less"].to_str() + "+";
+			}
+			else if (tab.count("at_most")) {
+				vary[var] = { tab["at_most"].to_num(),&AttrVar::equal_or_less };
+				vars << var + "=" + tab["less"].to_str() + "-";
+			}
+			else if (tab.count("more")) {
+				vary[var] = { tab["more"].to_num(),&AttrVar::more };
+				vars << var + "=" + tab["less"].to_str() + "++";
+			}
+			else if (tab.count("less")) {
+				vary[var] = { tab["less"].to_num(),&AttrVar::less };
+				vars << var + "=" + tab["less"].to_str() + "--";
+			}
+		}
+	}
+	return vars.show("&");
+}
 
 enumap<string> LimitTreat{ "ignore","only","off" };
 DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
@@ -220,6 +257,174 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 	comment = notes.show("\n");
 	return *this;
 }
+DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
+	if (var.type == AttrVar::AttrType::Text) {
+		return parse(var.to_str());
+	}
+	else if(var.type != AttrVar::AttrType::Table) {
+		return *this;
+	}
+	new(this)DiceTriggerLimit();
+	ShowList limits;
+	ShowList notes;
+	for (auto& [key,item] : var.to_dict()) {
+		if (key == "prob") {
+			if (int prob{ item.to_int() }) {
+				limits << "prob:" + to_string(prob);
+				notes << "- 以概率触发: " + to_string(prob) + "%";
+			}
+		}
+		else if (key == "user_id") {
+			if (!item.is_table())continue;
+			VarTable tab{ item.to_table() };
+			if (tab.get_dict().count("not")) {
+				user_id_negative = true;
+				tab = tab.get_dict()["not"]->to_table();
+			}
+			for (auto id : tab.get_list()) {
+				user_id.emplace(id->to_ll());
+			}
+			if (!user_id.empty()) {
+				limits << (user_id_negative ? "user_id:!" : "user_id:") + listID(user_id);
+				notes << (user_id_negative ? "- 以下用户不触发: " : "- 仅以下用户触发: ") + listID(user_id);
+			}
+		}
+		else if (key == "grp_id") {
+			if (!item.is_table())continue;
+			VarTable tab{ item.to_table() };
+			if (tab.get_dict().count("not")) {
+				grp_id_negative = true;
+				tab = tab.get_dict()["not"]->to_table();
+			}
+			for (auto id : tab.get_list()) {
+				grp_id.emplace(id->to_ll());
+			}
+			if (!grp_id.empty()) {
+				limits << (grp_id_negative ? "grp_id:!" : "grp_id:") + listID(grp_id);
+				notes << (grp_id_negative ? "- 以下群聊不触发: " : "- 仅以下群聊触发: ") + listID(grp_id);
+			}
+		}
+		else if (key == "cd") {
+			ShowList cds;
+			ShowList cdnotes;
+			string name;
+			CDType type{ CDType::Chat };
+			if (item.is_numberic()) {
+				cd_timer.emplace_back(type, name, (time_t)item.to_ll());
+				continue;
+			}
+			else if (!item.is_table())continue;
+			else if (VarArray v{ item.to_list() }; !v.empty()) {
+				cd_timer.emplace_back(type, name, (time_t)v[0].to_ll());
+				continue;
+			}
+			for (auto& [subkey, value] : item.to_dict()) {
+				if (CDConfig::eType.count(subkey)) {
+					type = (CDType)CDConfig::eType[subkey];
+					for (auto& [name, ct] : value.to_dict()) {
+						cd_timer.emplace_back(type, name, (time_t)ct.to_num());
+					}
+					continue;
+				}
+				cd_timer.emplace_back(CDType::Chat, subkey, (time_t)value.to_num());
+			}
+			if (!cd_timer.empty()) {
+				for (auto& it : cd_timer) {
+					cds << it.key + ((it.key.empty() && it.type == CDType::Chat) ? ""
+						: ("@" + CDConfig::eType[(size_t)it.type] + "="))
+						+ to_string(it.cd);
+					cdnotes << (it.type == CDType::Chat ? "窗口"
+						: it.type == CDType::User ? "用户" : "全局") + key + "计" + to_string(it.cd) + "秒";
+				}
+				limits << "cd:" + cds.show("&");
+				notes << "- 冷却计时: " + cdnotes.show();
+			}
+		}
+		else if (key == "today") {
+			ShowList sub;
+			ShowList subnotes;
+			string name;
+			CDType type{ CDType::Chat };
+			if (item.is_numberic()) {
+				today_cnt.emplace_back(type, name, (time_t)item.to_ll());
+				continue;
+			}
+			else if (!item.is_table())continue;
+			else if (VarArray v{ item.to_list() }; !v.empty()) {
+				today_cnt.emplace_back(type, name, (time_t)v[0].to_ll());
+				continue;
+			}
+			for (auto& [subkey, value] : item.to_dict()) {
+				if (CDConfig::eType.count(subkey)) {
+					type = (CDType)CDConfig::eType[subkey];
+					for (auto& [name, ct] : value.to_dict()) {
+						today_cnt.emplace_back(type, name, (time_t)ct.to_num());
+					}
+					continue;
+				}
+				today_cnt.emplace_back(CDType::Chat, subkey, (time_t)value.to_num());
+			}
+			if (!today_cnt.empty()) {
+				for (auto& it : today_cnt) {
+					sub << it.key + ((it.key.empty() && it.type == CDType::Chat) ? ""
+						: ("@" + CDConfig::eType[(size_t)it.type] + "="))
+						+ to_string(it.cd);
+					subnotes << (it.type == CDType::Chat ? "窗口"
+						: it.type == CDType::User ? "用户" : "全局") + key + "计" + to_string(it.cd) + "次";
+				}
+				limits << "today:" + sub.show("&");
+				notes << "- 当日计数: " + subnotes.show();
+			}
+		}
+		else if (key == "user_var") {
+			if (!item.is_table())continue;
+			string code{ parse_vary(item.to_table(), user_vary) };
+			if (user_vary.empty())continue;
+			limits << "user_var:" + code;
+			ShowList vars;
+			for (auto& [key, cmpr] : user_vary) {
+				vars << key + (cmpr.second == &AttrVar::equal_or_more ? "达到"
+					: cmpr.second == &AttrVar::equal ? "等于" : "不超过") + toString(cmpr.first);
+			}
+			notes << "- 用户触发阈值: " + vars.show();
+		}
+		else if (key == "grp_var") {
+			if (!item.is_table())continue;
+			string code{ parse_vary(item.to_table(), grp_vary) };
+			if (code.empty())continue;
+			limits << "grp_var:" + code;
+			ShowList vars;
+			for (auto& [key, cmpr] : grp_vary) {
+				vars << key + (cmpr.second == &AttrVar::equal_or_more ? "达到"
+					: cmpr.second == &AttrVar::equal ? "等于" : "不超过") + toString(cmpr.first);
+			}
+			notes << "- 群聊触发阈值: " + vars.show();
+		}
+		else if (key == "self_var") {
+			if (!item.is_table())continue;
+			string code{ parse_vary(item.to_table(), self_vary) };
+			if (code.empty())continue;
+			limits << "self_var:" + code;
+			ShowList vars;
+			for (auto& [key, cmpr] : self_vary) {
+				vars << key + (cmpr.second == &AttrVar::equal_or_more ? "达到"
+					: cmpr.second == &AttrVar::equal ? "等于" : "不超过") + toString(cmpr.first);
+			}
+			notes << "- 自身触发阈值: " + vars.show();
+		}
+		else if (key == "dicemaid") {
+			string val{ item.to_str() };
+			if (Treat t{ LimitTreat[val] }; t != Treat::Ignore) {
+				to_dice = t;
+				limits << "dicemaid:" + LimitTreat[(size_t)t];
+				notes << (to_dice == Treat::Only ? "- 识别Dice骰娘: 才触发" : "- 识别Dice骰娘: 不触发");
+			}
+		}
+	}
+	content = limits.show(";");
+	comment = notes.show("\n");
+	return *this;
+}
 bool DiceTriggerLimit::check(FromMsg* msg)const {
 	if (!user_id.empty() && (user_id_negative ^ !user_id.count(msg->fromChat.uid)))return false;
 	if (!grp_id.empty() && (grp_id_negative ^ !grp_id.count(msg->fromChat.gid)))return false;
@@ -330,6 +535,33 @@ string DiceMsgReply::show_ans()const {
 		listDeck(deck) : text;
 }
 
+void DiceMsgReply::from_obj(AttrObject obj) {
+	if (obj.has("keyword")) {
+		for (auto& [match, word] : obj.get_tab("keyword").to_dict()) {
+			mode = (Mode)sMode[match];
+			keyword = word.to_str();
+		}
+	}
+	if (obj.has("type"))type = (Type)sType[obj.get_str("type")];
+	if (obj.has("limit"))limit.parse(obj["limit"]);
+	if (obj.has("echo")) {
+		AttrVar& answer{ obj["echo"]};
+		if (answer.is_character()) {
+			echo = Echo::Text;
+			text = answer.to_str();
+		}
+		else if (AttrVars tab{ answer.to_dict() }; tab.count("lua")) {
+			echo = Echo::Lua;
+			text = tab["lua"].to_str();
+		}
+		else{
+			deck = {};
+			for (auto& item : answer.to_list()) {
+				deck.push_back(item.to_str());
+			}
+		}
+	}
+}
 void DiceMsgReply::readJson(const json& j) {
 	if (j.count("key"))keyword = fmt->format(UTF8toGBK(j["key"].get<string>()));
 	if (j.count("type"))type = (Type)sType[j["type"].get<string>()];
@@ -657,14 +889,14 @@ string DiceModManager::script_path(const string& name)const {
 	return {};
 }
 
-int DiceModManager::load(ResList& resLog)
-{
+int DiceModManager::load(ResList& resLog){
 	//读取mod
 	vector<std::filesystem::path> sModFile;
 	vector<string> sModErr;
-	int cntFile = listDir(DiceDir / "mod" , sModFile);
-	int cntItem{ 0 };
-	if (cntFile > 0) {
+	int cntMod = listDir(DiceDir / "mod" , sModFile);
+	int cntHelpItem{ 0 };
+	if (cntMod > 0) {
+		vector<std::filesystem::path> ModLuaFiles;
 		for (auto& pathFile : sModFile) {
 			nlohmann::json j = freadJson(pathFile);
 			if (j.is_null()) {
@@ -679,13 +911,13 @@ int DiceModManager::load(ResList& resLog)
 				}
 			}
 			if (j.count("helpdoc")) {
-				cntItem += readJMap(j["helpdoc"], helpdoc);
+				cntHelpItem += readJMap(j["helpdoc"], helpdoc);
 			}
 			if (j.count("global_char")) {
-				cntItem += readJMap(j["global_char"], GlobalChar);
+				readJMap(j["global_char"], GlobalChar);
 			}
 			if (fs::path dirMod{ pathFile.replace_extension() }; fs::exists(dirMod)) {
-				DD::debugLog("遍历读取" + dirMod.string());
+				listDir(dirMod / "reply", ModLuaFiles);
 				if (fs::exists(dirMod / "script")) {
 					vector<std::filesystem::path> fScripts;
 					listDir(dirMod / "script", fScripts);
@@ -695,8 +927,10 @@ int DiceModManager::load(ResList& resLog)
 				}
 			}
 		}
-		cntItem += scripts.size();
-		resLog << "读取/mod/中的" + std::to_string(cntFile) + "个文件, 共" + std::to_string(cntItem) + "项";
+		resLog << "读取/mod/中的" + std::to_string(cntMod) + "个mod";
+		loadLuaMod(ModLuaFiles, resLog);
+		if (!scripts.empty())resLog << "注册script" + to_string(scripts.size()) + "份";
+		if (cntHelpItem)resLog << "录入help词条" + to_string(cntHelpItem) + "项";
 		if (!sModErr.empty()) {
 			resLog << "读取失败" + std::to_string(sModErr.size()) + "个:";
 			for (auto& it : sModErr) {
@@ -729,8 +963,7 @@ int DiceModManager::load(ResList& resLog)
 				sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
 			}
 			std::unordered_map<std::string, std::string> mJob;
-			cnt = lua_readStringTable(fileLua.c_str(), "task_call", mJob);
-			if (cnt > 0) {
+			if ((cnt = lua_readStringTable(fileLua.c_str(), "task_call", mJob)) > 0) {
 				for (auto& [key, func] : mJob) {
 					taskcall[key] = { fileLua,func };
 				}
@@ -801,7 +1034,7 @@ int DiceModManager::load(ResList& resLog)
 		cntHelp.reserve(helpdoc.size());
 		loadJMap(DiceDir / "user" / "HelpStatic.json", cntHelp);
 	}
-	return cntFile;
+	return cntMod;
 }
 void DiceModManager::init() {
 	isIniting = true;
@@ -810,6 +1043,13 @@ void DiceModManager::init() {
 	}
 	for (const auto& [key, order] : msgorder) {
 		gOrder.insert(key, key);
+	}
+	for (const auto & [key, val] : mod_reply_list) {
+		DiceMsgReply reply;
+		reply.from_obj(val);
+		if (!reply.keyword.empty()) {
+			msgreply[reply.keyword] = reply;
+		}
 	}
 	for (const auto& [key, reply] : msgreply) {
 		if (reply.mode == DiceMsgReply::Mode::Search)gReplySearcher.add(convert_a2w(key.c_str()), key);

@@ -41,6 +41,7 @@ class DiceTriggerLimit {
     Treat to_dice{ Treat::Ignore };
 public:
     DiceTriggerLimit& parse(const string&);
+    DiceTriggerLimit& parse(const AttrVar&);
     const string& print()const { return content; }
     const string& note()const { return comment; }
     bool empty()const { return content.empty(); }
@@ -84,6 +85,7 @@ public:
     string show_ans()const;
     string print()const;
     bool exec(FromMsg*);
+    void from_obj(AttrObject);
     void readJson(const json&);
     json writeJson()const;
 };
@@ -161,6 +163,7 @@ class DiceModManager
     WordQuerier querier;
     TrieG<char, less_ci> gOrder;
     map<string, DiceMsgReply, less_ci> msgreply;
+    AttrObjects mod_reply_list;
     set<string, less_ci> reply_regex;
     TrieG<char16_t, less_ci> gReplySearcher;
     TrieG<char, less_ci> gReplyPrefix;
@@ -196,6 +199,7 @@ public:
     bool script_has(const string& name)const { return scripts.count(name); }
     string script_path(const string& name)const;
 
+    void loadLuaMod(const vector<std::filesystem::path>&, ResList&);
 	int load(ResList&);
     void init();
 	void clear();

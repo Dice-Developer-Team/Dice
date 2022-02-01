@@ -30,23 +30,30 @@ public:
 		UTF8Luas.erase(state);
 	}
 	void regist();
+	void reboot() {
+		lua_close(state);
+		state = luaL_newstate();
+		if (!state)return;
+		luaL_openlibs(state);
+		regist();
+	}
 };
-double lua_to_number(lua_State* L, int idx) {
+double lua_to_number(lua_State* L, int idx = -1) {
 	return luaL_checknumber(L, idx);
 }
-long long lua_to_int(lua_State* L, int idx) {
+long long lua_to_int(lua_State* L, int idx = -1) {
 	return luaL_checkinteger(L, idx);
 }
 
 // Return a GB18030 string
-string lua_to_gb18030_string(lua_State* L, int idx) {
+string lua_to_gb18030_string(lua_State* L, int idx = -1) {
 	const char* str{ luaL_checkstring(L, idx) };
 	if (!str) return {};
 	return UTF8toGBK(str, true);
 }
 
 // Return a GB18030 string on Windows and a UTF-8 string on other platforms
-string lua_to_string(lua_State* L, int idx) {
+string lua_to_string(lua_State* L, int idx = -1) {
 	const char* str{ luaL_checkstring(L, idx) };
 	if (!str) return {};
 #ifdef _WIN32
@@ -133,6 +140,7 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 		break;
 	case LUA_TTABLE:
 		AttrVars tab;
+		if (idx < 0)idx = lua_gettop(L) + idx + 1;
 		lua_pushnil(L);
 		while (lua_next(L, idx)) {
 			if (lua_type(L, -2) == LUA_TNUMBER) {
@@ -147,6 +155,19 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 		break;
 	}
 	return {};
+}
+AttrVars lua_to_dict(lua_State* L, int idx = -1) {
+	AttrVars tab;
+	if (idx < 0)idx = lua_gettop(L) + idx + 1;
+	lua_pushnil(L);
+	while (lua_next(L, idx)) {
+		if (lua_isstring(L, -2) && !lua_isnil(L, -1)) {
+			tab[lua_to_gb18030_string(L, -2)] = lua_to_attr(L, -1);
+		}
+		lua_pop(L, 1);
+	}
+	lua_pop(L, 1);
+	return tab;
 }
 
 void CharaCard::pushTable(lua_State* L) {
@@ -345,7 +366,7 @@ int loadLua(lua_State* L) {
 		}
 	}
 	else {
-		DD::debugLog("待加载Lua未找到:"+ UTF8toGBK(pathFile.u8string()));
+		console.log("待加载Lua未找到:" + UTF8toGBK(pathFile.u8string()), 1);
 		return 0;
 	}
 	if (luaL_loadstring(L, strLua.c_str())) {
@@ -891,5 +912,40 @@ int lua_readStringTable(const char* file, const char* var, std::unordered_map<st
 		return tab.size();
 	} catch (...) {
 		return -3;
+	}
+}
+
+void lua_preLoadMod(lua_State* L) {
+	lua_newtable(L);
+	lua_setglobal(L, "msg_reply");
+}
+
+void DiceModManager::loadLuaMod(const vector<fs::path>& files, ResList& res) {
+	LuaState L;
+	ShowList err;
+	for (auto file : files) {
+		lua_preLoadMod(L);
+		if (luaL_dofile(L, getNativePathString(file).c_str())) {
+			string pErrorMsg = lua_to_gb18030_string(L, -1);
+			err << pErrorMsg;
+			L.reboot();
+			continue;
+		}
+		else {
+			lua_getglobal(L, "msg_reply");
+			if (lua_type(L, 1) != LUA_TTABLE) {
+				err << "数据格式错误:" + UTF8toGBK(file.filename().u8string());
+				continue;
+			}
+			for (auto& [key, val] : lua_to_attr(L).to_dict()) {
+				mod_reply_list[key] = val.to_dict();
+			}
+		}
+	}
+	if (!mod_reply_list.empty()) {
+		res << "注册reply" + to_string(mod_reply_list.size()) + "项";
+	}
+	if (!err.empty()) {
+		res << "mod文件读取错误:" + err.show("\n");
 	}
 }

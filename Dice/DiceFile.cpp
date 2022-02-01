@@ -223,6 +223,7 @@ int _listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& fi
 
 int listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& files, bool isSub)
 {
+	if (!std::filesystem::exists(dir))return 0;
 	if (isSub)
 	{
 		return _listDir<std::filesystem::recursive_directory_iterator>(dir, files);

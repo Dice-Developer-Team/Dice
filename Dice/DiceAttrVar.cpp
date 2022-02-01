@@ -39,6 +39,20 @@ void VarTable::init_idx() {
 		strI = to_string(++idx);
 	}
 }
+AttrVars VarTable::to_dict()const {
+	AttrVars vars;
+	for (auto& [key, val] : dict) {
+		if (val && !val->is_null())vars[key] = *val;
+	}
+	return vars;
+}
+VarArray VarTable::to_list()const {
+	VarArray vars;
+	for (auto& val : idxs) {
+		vars.push_back(val ? *val : AttrVar());
+	}
+	return vars;
+}
 void VarTable::writeb(std::ofstream& fout) const {
 	fwrite(fout, static_cast<int>(dict.size()));
 	for (auto& [key, val] : dict) {
@@ -251,6 +265,20 @@ string AttrVar::to_str()const {
 bool AttrVar::str_empty()const{
 	return type == AttrType::Text && text.empty();
 }
+VarTable AttrVar::to_table()const {
+	if (type != AttrType::Table)return {};
+	return table;
+}
+AttrVars AttrVar::to_dict()const {
+	if (type != AttrType::Table)return {};
+	return table.to_dict();
+}
+
+VarArray AttrVar::to_list()const {
+	if (type != AttrType::Table)return {};
+	return table.to_list();
+}
+
 
 bool AttrVar::is_numberic()const {
 	switch (type) {

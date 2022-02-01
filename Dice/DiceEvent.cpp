@@ -1880,7 +1880,7 @@ int FromMsg::InnerOrder() {
 			}
 			return 1;
 		}
-		else if ((!isAdmin && (!DD::isGroupOwner(llGroup, console.DiceMaid,true) || trusted < 5))) {
+		else if ((!isAdmin && (!DD::isGroupOwner(llGroup, console.DiceMaid, true) || trusted < 5))) {
 			replyMsg("strPermissionDeniedErr");
 			return 1;
 		}
