@@ -35,7 +35,7 @@
 #include <regex>
 using std::set;
 namespace fs = std::filesystem;
-void parse_vary(string& raw, unordered_map<string, pair<double, AttrVar::CMPR>>& vary) {
+void parse_vary(string& raw, unordered_map<string, pair<AttrVar::CMPR, AttrVar>>& vary) {
 	ShowList vars;
 	for (auto& var : split(raw, "&")) {
 		pair<string, string>conf;
@@ -55,43 +55,38 @@ void parse_vary(string& raw, unordered_map<string, pair<double, AttrVar::CMPR>>&
 		}
 		//only number
 		if (!isNumeric(conf.second))continue;
-		double val{ stod(conf.second) };
-		vary[conf.first] = { val,cmpr };
-		vars << conf.first + "=" + toString(val, 4) + strCMPR;
+		vary[conf.first] = { cmpr ,conf.second };
+		vars << conf.first + "=" + conf.second + strCMPR;
 	}
 	raw = vars.show("&");
 }
-string parse_vary(VarTable& raw, unordered_map<string, pair<double, AttrVar::CMPR>>& vary) {
+string parse_vary(const VarTable& raw, unordered_map<string, pair<AttrVar::CMPR, AttrVar>>& vary) {
 	ShowList vars;
 	for (auto& [var, exp] : raw.get_dict()) {
-		if (exp->is_numberic()) {
-			vary[var] = { exp->to_num(), &AttrVar::equal };
+		if (!exp->is_table()) {
+			vary[var] = { &AttrVar::equal,*exp };
 			vars << var + "=" + exp->to_str();
-		}
-		else if (!exp->is_table()) {
-			//skip
-			continue;
 		}
 		else {
 			AttrVars tab{ exp->to_dict() };
 			if (tab.count("equal")) {
-				vary[var] = { tab["equal"].to_num(),&AttrVar::equal };
-				vars << var + "=" + tab["less"].to_str();
+				vary[var] = { &AttrVar::equal,tab["equal"] };
+				vars << var + "=" + tab["equal"].to_str();
 			}
 			else if (tab.count("at_least")) {
-				vary[var] = { tab["at_least"].to_num(),&AttrVar::equal_or_more };
-				vars << var + "=" + tab["less"].to_str() + "+";
+				vary[var] = { &AttrVar::equal_or_more , tab["at_least"] };
+				vars << var + "=" + tab["at_least"].to_str() + "+";
 			}
 			else if (tab.count("at_most")) {
-				vary[var] = { tab["at_most"].to_num(),&AttrVar::equal_or_less };
-				vars << var + "=" + tab["less"].to_str() + "-";
+				vary[var] = { &AttrVar::equal_or_less , tab["at_most"] };
+				vars << var + "=" + tab["at_most"].to_str() + "-";
 			}
 			else if (tab.count("more")) {
-				vary[var] = { tab["more"].to_num(),&AttrVar::more };
-				vars << var + "=" + tab["less"].to_str() + "++";
+				vary[var] = { &AttrVar::more , tab["more"] };
+				vars << var + "=" + tab["more"].to_str() + "++";
 			}
 			else if (tab.count("less")) {
-				vary[var] = { tab["less"].to_num(),&AttrVar::less };
+				vary[var] = { &AttrVar::less , tab["less"] };
 				vars << var + "=" + tab["less"].to_str() + "--";
 			}
 		}
@@ -212,8 +207,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			limits << "user_var:" + code;
 			ShowList vars;
 			for (auto& [key, cmpr] : user_vary) {
-				vars << key + (cmpr.second == &AttrVar::equal_or_more ? "达到"
-					: cmpr.second == &AttrVar::equal ? "等于" : "不超过") + toString(cmpr.first);
+				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.to_str();
 			}
 			notes << "- 用户触发阈值: " + vars.show();
 		}
@@ -225,8 +219,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			limits << "grp_var:" + code;
 			ShowList vars;
 			for (auto& [key, cmpr] : grp_vary) {
-				vars << key + (cmpr.second == &AttrVar::equal_or_more ? "达到"
-					: cmpr.second == &AttrVar::equal ? "等于" : "不超过") + toString(cmpr.first);
+				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.to_str();
 			}
 			notes << "- 群聊触发阈值: " + vars.show();
 		}
@@ -238,8 +231,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			limits << "self_var:" + code;
 			ShowList vars;
 			for (auto& [key, cmpr] : self_vary) {
-				vars << key + (cmpr.second == &AttrVar::equal_or_more ? "达到"
-					: cmpr.second == &AttrVar::equal ? "等于" : "不超过") + toString(cmpr.first);
+				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.to_str();
 			}
 			notes << "- 自身触发阈值: " + vars.show();
 		}
@@ -383,8 +375,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			limits << "user_var:" + code;
 			ShowList vars;
 			for (auto& [key, cmpr] : user_vary) {
-				vars << key + (cmpr.second == &AttrVar::equal_or_more ? "达到"
-					: cmpr.second == &AttrVar::equal ? "等于" : "不超过") + toString(cmpr.first);
+				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.to_str();
 			}
 			notes << "- 用户触发阈值: " + vars.show();
 		}
@@ -395,8 +386,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			limits << "grp_var:" + code;
 			ShowList vars;
 			for (auto& [key, cmpr] : grp_vary) {
-				vars << key + (cmpr.second == &AttrVar::equal_or_more ? "达到"
-					: cmpr.second == &AttrVar::equal ? "等于" : "不超过") + toString(cmpr.first);
+				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.to_str();
 			}
 			notes << "- 群聊触发阈值: " + vars.show();
 		}
@@ -407,8 +397,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			limits << "self_var:" + code;
 			ShowList vars;
 			for (auto& [key, cmpr] : self_vary) {
-				vars << key + (cmpr.second == &AttrVar::equal_or_more ? "达到"
-					: cmpr.second == &AttrVar::equal ? "等于" : "不超过") + toString(cmpr.first);
+				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.to_str();
 			}
 			notes << "- 自身触发阈值: " + vars.show();
 		}
@@ -433,19 +422,19 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 		if (!UserList.count(msg->fromChat.uid))return false;
 		User& user{ getUser(msg->fromChat.uid) };
 		for (auto& [key, cmpr] : user_vary) {
-			if (!user.confs.count(key) || !(user.confs[key].*cmpr.second)(cmpr.first))return false;
+			if (!user.confs.count(key) || !(user.confs[key].*cmpr.first)(cmpr.second))return false;
 		}
 	}
 	if (!grp_vary.empty() && msg->fromChat.gid) {
 		Chat& grp{ chat(msg->fromChat.gid) };
 		for (auto& [key, cmpr] : grp_vary) {
-			if (!grp.confs.count(key) || !(grp.confs[key].*cmpr.second)(cmpr.first))return false;
+			if (!grp.confs.count(key) || !(grp.confs[key].*cmpr.first)(cmpr.second))return false;
 		}
 	}
 	if (!self_vary.empty()) {
 		User& user{ getUser(console.DiceMaid) };
 		for (auto& [key, cmpr] : self_vary) {
-			if (!user.confs.count(key) || !(user.confs[key].*cmpr.second)(cmpr.first))return false;
+			if (!user.confs.count(key) || !(user.confs[key].*cmpr.first)(cmpr.second))return false;
 		}
 	}
 	if (to_dice != Treat::Ignore && console.DiceMaid != msg->fromChat.uid) {

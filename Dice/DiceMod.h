@@ -34,9 +34,9 @@ class DiceTriggerLimit {
     bool grp_id_negative{ false };
     vector<CDConfig>cd_timer;
     vector<CDConfig>today_cnt;
-    unordered_map<string, pair<double, AttrVar::CMPR>>self_vary;
-    unordered_map<string, pair<double, AttrVar::CMPR>>user_vary;
-    unordered_map<string, pair<double, AttrVar::CMPR>>grp_vary;
+    unordered_map<string, pair<AttrVar::CMPR, AttrVar>>self_vary;
+    unordered_map<string, pair<AttrVar::CMPR, AttrVar>>user_vary;
+    unordered_map<string, pair<AttrVar::CMPR, AttrVar>>grp_vary;
     enum class Treat :size_t { Ignore, Only, Off };
     Treat to_dice{ Treat::Ignore };
 public:

@@ -45,7 +45,9 @@ public:
 	AttrVars to_dict()const;
 	VarArray to_list()const;
 	std::unordered_map<string, std::shared_ptr<AttrVar>>& get_dict() { return dict; };
+	const std::unordered_map<string, std::shared_ptr<AttrVar>>& get_dict()const { return dict; };
 	std::vector<std::shared_ptr<AttrVar>>& get_list() { return idxs; };
+	const std::vector<std::shared_ptr<AttrVar>>& get_list()const { return idxs; };
 	void writeb(std::ofstream& fout) const;
 	void readb(std::ifstream& fin);
 };
@@ -99,21 +101,22 @@ public:
 	VarArray to_list()const;
 	json to_json()const;
 
-	using CMPR = bool(AttrVar::*)(double)const;
+	using CMPR = bool(AttrVar::*)(const AttrVar&)const;
 	bool is_null()const { return type == AttrType::Nil; }
 	bool is_numberic()const;
 	bool is_character()const { return type != AttrType::Nil && type != AttrType::Table; }
 	bool is_table()const { return type == AttrType::Table; }
-	bool equal(double)const;
-	bool more(double)const;
-	bool less(double)const;
-	bool equal_or_more(double)const;
-	bool equal_or_less(double)const;
+	bool equal(const AttrVar&)const;
+	bool more(const AttrVar&)const;
+	bool less(const AttrVar&)const;
+	bool equal_or_more(const AttrVar&)const;
+	bool equal_or_less(const AttrVar&)const;
 
 	void writeb(std::ofstream& fout) const;
 	void readb(std::ifstream& fin);
 };
 json to_json(AttrVars& vars);
+string showAttrCMPR(AttrVar::CMPR);
 
 class AttrObject {
 	std::shared_ptr<AttrVars>obj;

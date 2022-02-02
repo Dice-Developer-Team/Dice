@@ -303,20 +303,32 @@ bool AttrVar::is_numberic()const {
 	}
 	return false;
 }
-bool AttrVar::equal(double num)const {
-	return is_numberic() && to_num() == num;
+bool AttrVar::equal(const AttrVar& other)const{
+	if (other.type == AttrType::Nil) {
+		return is_null();
+	}
+	else if (other.type == AttrType::Boolean) {
+		return bool() ^ !other;
+	}
+	else if (other.type == AttrType::Text) {
+		return type == AttrType::Text && text == other.text;
+	}
+	else if (other.is_numberic() && is_numberic()) {
+		return to_num() == other.to_num();
+	}
+	return false;
 }
-bool AttrVar::more(double num)const {
-	return is_numberic() && to_num() > num;
+bool AttrVar::more(const AttrVar& other)const {
+	return is_numberic() && to_num() > other.to_num();
 }
-bool AttrVar::less(double num)const {
-	return is_numberic() && to_num() < num;
+bool AttrVar::less(const AttrVar& other)const {
+	return is_numberic() && to_num() < other.to_num();
 }
-bool AttrVar::equal_or_more(double num)const {
-	return is_numberic() && to_num() >= num;
+bool AttrVar::equal_or_more(const AttrVar& other)const {
+	return is_numberic() && to_num() >= other.to_num();
 }
-bool AttrVar::equal_or_less(double num)const {
-	return is_numberic() && to_num() <= num;
+bool AttrVar::equal_or_less(const AttrVar& other)const {
+	return is_numberic() && to_num() <= other.to_num();
 }
 
 AttrVar& AttrVar::operator=(const json& j) {
@@ -490,4 +502,23 @@ void AttrVar::readb(std::ifstream& fin) {
 	default:
 		break;
 	}
+}
+
+string showAttrCMPR(AttrVar::CMPR cmpr) {
+	if (cmpr == &AttrVar::equal) {
+		return "等于";
+	}
+	else if (cmpr == &AttrVar::equal_or_more) {
+		return "不低于";
+	}
+	else if(cmpr == &AttrVar::equal_or_less) {
+		return "不高于";
+	}
+	else if(cmpr == &AttrVar::more) {
+		return "高于";
+	}
+	else if (cmpr == &AttrVar::less) {
+		return "低于";
+	}
+	return {};
 }
