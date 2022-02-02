@@ -35,7 +35,6 @@
 #include "DiceAttrVar.h"
 using std::string;
 
-extern std::map<string, string> GlobalChar;
 typedef string(*GobalTex)();
 extern std::map<string, GobalTex> strFuncs;
 

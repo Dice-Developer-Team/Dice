@@ -71,8 +71,8 @@ struct equal_ci
 	}
 };
 
-template <typename TKey, typename TVal, typename Hash, typename Equal>
-void merge(unordered_map<TKey, TVal, Hash, Equal>& m1, const unordered_map<TKey, TVal, Hash, Equal>& m2)
+template <typename TKey, typename TVal1, typename TVal2, typename Hash, typename Equal>
+void merge(unordered_map<TKey, TVal1, Hash, Equal>& m1, const unordered_map<TKey, TVal2, Hash, Equal>& m2)
 {
 	for (auto& [k, v] : m2)
 	{

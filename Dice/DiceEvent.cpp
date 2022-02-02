@@ -4253,7 +4253,6 @@ int FromMsg::InnerOrder() {
 						  ? (vars["reason"].str_empty() ? "strRollMultiDice" : "strRollMultiDiceReason")
 						  : (vars["reason"].str_empty() ? "strRollDice" : "strRollDiceReason"));
 		if (!boolDetail && intTurnCnt != 1) {
-			strReply = getMsg(strType, vars);
 			vector<int> vintExVal;
 			string& res{ (vars["res"] = "{ ").text };
 			while (intTurnCnt--) {
@@ -4278,10 +4277,10 @@ int FromMsg::InnerOrder() {
 				}
 			}
 			if (!isHidden) {
-				reply();
+				replyMsg(strType);
 			}
 			else {
-				replyHidden(strReply);
+				replyHidden(getMsg(strType, vars));
 			}
 		}
 		else {
@@ -4306,12 +4305,11 @@ int FromMsg::InnerOrder() {
 				if (isStatic)pc->cntRollStat(rdMainDice.intTotal, intDefaultDice);
 				vars["res"] = boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString();
 			}
-			strReply = getMsg(strType);
 			if (!isHidden) {
-				reply();
+				replyMsg(strType);
 			}
 			else {
-				replyHidden();
+				replyHidden(getMsg(strType,vars));
 			}
 		}
 		if (isHidden) {

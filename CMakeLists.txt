@@ -6,14 +6,15 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15"
   CACHE STRING "Minimum OS X deployment version")
 project(Dice)
 
-include_directories(CQSDK Dice Lua QQAPI)
+include_directories(CQSDK Dice Lua QQAPI yaml)
 
 aux_source_directory(Dice Dice_SRC)
 aux_source_directory(Lua Lua_SRC)
 aux_source_directory(CQSDKCPP CQSDK_SRC)
 aux_source_directory(QQAPI QQAPI_SRC)
+aux_source_directory(yaml Yaml_SRC)
 
-add_library(w4123.Dice SHARED ${Dice_SRC} ${Lua_SRC} ${CQSDK_SRC} ${QQAPI_SRC})
+add_library(w4123.Dice SHARED ${Dice_SRC} ${Lua_SRC} ${CQSDK_SRC} ${QQAPI_SRC} ${Yaml_SRC})
 
 set_property(TARGET w4123.Dice PROPERTY CXX_STANDARD 17)
 set_property(TARGET w4123.Dice PROPERTY CXX_STANDARD_REQUIRED ON)

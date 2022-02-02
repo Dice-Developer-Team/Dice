@@ -11,6 +11,8 @@
 #include <map>
 #include <set>
 #include <memory>
+#include <variant>
+#include "yaml-cpp/node/node.h"
 #include "STLExtern.hpp"
 #include "SHKQuerier.h"
 #include "SHKTrie.h"
@@ -21,6 +23,7 @@ using std::vector;
 using std::map;
 using std::unordered_multimap;
 using std::set;
+using std::variant;
 
 class FromMsg;
 
@@ -105,6 +108,17 @@ public:
     bool exec();
 };
 
+class DiceSpeech {
+    variant<string, vector<string>> speech;
+public:
+    DiceSpeech(){}
+    DiceSpeech(const string& s):speech(s) {}
+    DiceSpeech(const vector<string>& v) :speech(v) {}
+    DiceSpeech(const YAML::Node& yaml);
+    DiceSpeech(const json& j);
+    string express()const;
+};
+
 class DiceMod
 {
 protected:
@@ -152,6 +166,7 @@ class DiceModManager
 	map<string, DiceMod, less_ci> modList;
     vector<pair<string, bool>>modIndex;
     //global
+    unordered_map<string, DiceSpeech, hash_ci, equal_ci> global_speech;
     unordered_map<string, string, hash_ci, equal_ci> helpdoc;
     map<string, DiceMsgOrder, less_ci> msgorder;
     map<string, DiceMsgOrder, less_ci> taskcall;
@@ -174,7 +189,7 @@ public:
     //std::unordered_map<string, string, hash_ci, equal_ci>& custom_msg() { return GlobalMsg; }
 	string format(string, AttrObject = {},
         const AttrIndexs& = MsgIndexs,
-        const unordered_map<string, string, hash_ci, equal_ci>& = GlobalMsg) const;
+        const unordered_map<string, string, hash_ci, equal_ci>& = EditedMsg) const;
     string msg_get(const string& key)const;
     void msg_reset(const string& key)const;
     void msg_edit(const string& key, const string& val)const;

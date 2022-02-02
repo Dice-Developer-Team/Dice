@@ -32,6 +32,7 @@
 #include "RandomGenerator.h"
 #include "CardDeck.h"
 #include "DDAPI.h"
+#include "yaml-cpp/yaml.h"
 #include <regex>
 using std::set;
 namespace fs = std::filesystem;
@@ -607,6 +608,28 @@ bool DiceMsgOrder::exec() {
 	return false;
 }
 
+DiceSpeech::DiceSpeech(const YAML::Node& yaml) {
+	if (yaml.IsScalar())speech = UTF8toGBK(yaml.Scalar());
+	else if (yaml.IsSequence()) {
+		speech = UTF8toGBK(yaml.as<vector<string>>());
+	}
+}
+DiceSpeech::DiceSpeech(const json& j) {
+	if (j.is_string())speech = UTF8toGBK(j.get<string>());
+	else if (j.is_array()) {
+		speech = UTF8toGBK(j.get<vector<string>>());
+	}
+}
+string DiceSpeech::express()const {
+	if (std::holds_alternative<string>(speech)) {
+		return std::get<string>(speech);
+	}
+	else if (const auto p{ std::get_if<vector<string>>(&speech) }) {
+		return p->at(RandomGenerator::Randint(0, p->size() - 1));
+	}
+	return {};
+}
+
 DiceModManager::DiceModManager() : helpdoc(HelpDoc){
 }
 
@@ -655,8 +678,8 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 			val = format(cit->second, context, indexs, dict);
 		}
 		//局部屏蔽全局
-		else if (auto it = GlobalChar.find(key);it != GlobalChar.end()) {
-			val = it->second;
+		else if (auto sp = global_speech.find(key);sp != global_speech.end()) {
+			val = fmt->format(sp->second.express(), context, indexs, dict);
 		}
 		else if (auto func = strFuncs.find(key); func != strFuncs.end())
 		{
@@ -672,17 +695,18 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 std::shared_mutex GlobalMsgMutex;
 string DiceModManager::msg_get(const string& key)const {
 	std::shared_lock lock(GlobalMsgMutex);
-	if (const auto it = GlobalMsg.find(key); it != GlobalMsg.end())
+	if (const auto it = EditedMsg.find(key); it != EditedMsg.end())
 		return it->second;
-	else 
+	else if (const auto sp = global_speech.find(key); sp != global_speech.end())
+		return sp->second.express();
+	else
 		return "";
 }
 void DiceModManager::msg_reset(const string& key)const {
 	std::shared_lock lock(GlobalMsgMutex);
-	const auto it = GlobalMsg.find(key);
-	if (it != GlobalMsg.end()) {
+	if (const auto it = EditedMsg.find(key); it != EditedMsg.end()) {
 		EditedMsg.erase(key);
-		if (PlainMsg.count(key))it->second = PlainMsg.find(key)->second;
+		if (PlainMsg.count(key))GlobalMsg[key] = PlainMsg.find(key)->second;
 		else GlobalMsg.erase(it);
 		saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
 	}
@@ -893,11 +917,13 @@ string DiceModManager::script_path(const string& name)const {
 }
 
 int DiceModManager::load(ResList& resLog){
+	merge(global_speech, PlainMsg);
 	//读取mod
 	vector<std::filesystem::path> sModFile;
 	vector<string> sModErr;
 	int cntMod = listDir(DiceDir / "mod" , sModFile);
 	int cntHelpItem{ 0 };
+	int cntSpeech{ 0 };
 	if (cntMod > 0) {
 		vector<std::filesystem::path> ModLuaFiles;
 		for (auto& pathFile : sModFile) {
@@ -916,14 +942,31 @@ int DiceModManager::load(ResList& resLog){
 			if (j.count("helpdoc")) {
 				cntHelpItem += readJMap(j["helpdoc"], helpdoc);
 			}
-			if (j.count("global_char")) {
-				readJMap(j["global_char"], GlobalChar);
+			if (j.count("speech")) {
+				for (auto it = j["speech"].cbegin(); it != j["speech"].cend(); ++it){
+					global_speech[UTF8toGBK(it.key())] = it.value();
+				}
 			}
 			if (fs::path dirMod{ pathFile.replace_extension() }; fs::exists(dirMod)) {
 				listDir(dirMod / "reply", ModLuaFiles);
+				if (fs::exists(dirMod / "speech")) {
+					vector<std::filesystem::path> fSpeech;
+					listDir(dirMod / "speech", fSpeech, true);
+					for (auto& p : fSpeech) {
+						YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) };
+						if (!yaml.IsMap()) {
+							continue;
+						}
+						for (auto it = yaml.begin(); it != yaml.end();++it) {
+							global_speech[UTF8toGBK(it->first.Scalar())] = it->second;
+							DD::debugLog("录入speech:" + it->first.Scalar());
+							++cntSpeech;
+						}
+					}
+				}
 				if (fs::exists(dirMod / "script")) {
 					vector<std::filesystem::path> fScripts;
-					listDir(dirMod / "script", fScripts);
+					listDir(dirMod / "script", fScripts, true);
 					for (auto& p : fScripts) {
 						scripts[p.stem().string()] = getNativePathString(p);
 					}
@@ -931,6 +974,7 @@ int DiceModManager::load(ResList& resLog){
 			}
 		}
 		resLog << "读取/mod/中的" + std::to_string(cntMod) + "个mod";
+		if (cntSpeech)resLog << "录入speech" + to_string(cntSpeech) + "项";
 		loadLuaMod(ModLuaFiles, resLog);
 		if (!scripts.empty())resLog << "注册script" + to_string(scripts.size()) + "份";
 		if (cntHelpItem)resLog << "录入help词条" + to_string(cntHelpItem) + "项";
