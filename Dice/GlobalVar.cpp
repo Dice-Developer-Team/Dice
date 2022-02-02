@@ -379,7 +379,7 @@ const dict_ci PlainMsg
 	{"strSelfName", "" },
 	{"strSelfNick", "&strSelfName" },
 	{"self", "&strSelfCall"},
-	{"strBotHeader", "标准型 " },
+	{"strBotHeader", "泛用型 " },
 	{"strBotMsg", "\n使用.help更新 查看{self}更新内容"},
 	{
 		"strHlpMsg",
