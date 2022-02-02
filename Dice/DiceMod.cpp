@@ -313,12 +313,19 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			for (auto& [subkey, value] : item.to_dict()) {
 				if (CDConfig::eType.count(subkey)) {
 					type = (CDType)CDConfig::eType[subkey];
+					if (value.is_numberic()) {
+						cd_timer.emplace_back(type, name, (time_t)value.to_ll());
+						continue;
+					}
+					if (VarArray v{ value.to_list() }; !v.empty()) {
+						cd_timer.emplace_back(type, name, (time_t)v[0].to_ll());
+					}
 					for (auto& [name, ct] : value.to_dict()) {
-						cd_timer.emplace_back(type, name, (time_t)ct.to_num());
+						cd_timer.emplace_back(type, name, (time_t)ct.to_ll());
 					}
 					continue;
 				}
-				cd_timer.emplace_back(CDType::Chat, subkey, (time_t)value.to_num());
+				cd_timer.emplace_back(CDType::Chat, subkey, (time_t)value.to_ll());
 			}
 			if (!cd_timer.empty()) {
 				for (auto& it : cd_timer) {
@@ -349,12 +356,19 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			for (auto& [subkey, value] : item.to_dict()) {
 				if (CDConfig::eType.count(subkey)) {
 					type = (CDType)CDConfig::eType[subkey];
+					if (value.is_numberic()) {
+						today_cnt.emplace_back(type, name, (time_t)value.to_ll());
+						continue;
+					}
+					if (VarArray v{ value.to_list() }; !v.empty()) {
+						today_cnt.emplace_back(type, name, (time_t)v[0].to_ll());
+					}
 					for (auto& [name, ct] : value.to_dict()) {
-						today_cnt.emplace_back(type, name, (time_t)ct.to_num());
+						today_cnt.emplace_back(type, name, (time_t)ct.to_ll());
 					}
 					continue;
 				}
-				today_cnt.emplace_back(CDType::Chat, subkey, (time_t)value.to_num());
+				today_cnt.emplace_back(CDType::Chat, subkey, (time_t)value.to_ll());
 			}
 			if (!today_cnt.empty()) {
 				for (auto& it : today_cnt) {
