@@ -31,8 +31,8 @@ AttrIndexs MsgIndexs{
 	{"at", idx_at},
 };
 
-FromMsg::FromMsg(const AttrVars& var, const chatInfo& ct) :DiceJobDetail(var, ct) {
-	strMsg = vars["fromMsg"].to_str();
+FromMsg::FromMsg(const AttrVars& var, const chatInfo& ct)
+	:DiceJobDetail(var, ct), strMsg(vars["fromMsg"].text) {
 	if (fromChat.gid) {
 		pGrp = &chat(fromChat.gid);
 		fromSession = fromChat.gid;

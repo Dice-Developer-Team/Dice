@@ -26,6 +26,7 @@ public:
 	string strLowerMessage;
 	long long fromSession;
 	Chat* pGrp = nullptr;
+	string& strMsg;
 	string strReply;
 	std::wsmatch msgMatch;
 	FromMsg(const AttrVars& var, const chatInfo& ct);

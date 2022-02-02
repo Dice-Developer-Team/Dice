@@ -23,7 +23,6 @@ using std::shared_ptr;
 struct DiceJobDetail : public std::enable_shared_from_this<DiceJobDetail> {
     chatInfo fromChat;
     string cmd_key;
-    string strMsg;
     time_t fromTime = time(nullptr);
     size_t cntExec{ 0 };
     //¡Ÿ ±±‰¡øø‚
