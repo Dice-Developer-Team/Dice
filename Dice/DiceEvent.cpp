@@ -2762,18 +2762,12 @@ int FromMsg::InnerOrder() {
 		}
 		string strMessage = strMsg.substr(intMsgCnt);
 		if (strMessage == "reset") {
-			{
-				std::unique_lock lock(GlobalMsgMutex);
-				fmt->msg_reset(strName);
-			}
+			fmt->msg_reset(strName);
 			note("已重置" + strName + "的自定义。", 0b1);
 		}
 		else {
-			{
-				std::unique_lock lock(GlobalMsgMutex);
-				if (strMessage == "NULL")strMessage = "";
-				fmt->msg_edit(strName, strMessage);
-			}
+			if (strMessage == "NULL")strMessage = "";
+			fmt->msg_edit(strName, strMessage);
 			note("已自定义" + strName + "的文本", 0b1);
 		}
 		return 1;
@@ -2809,7 +2803,7 @@ int FromMsg::InnerOrder() {
 			replyMsg("strAkAddEmpty");
 			return 1;
 		}
-		vars["fork"] = room.conf["AkFork"];
+		vars["fork"] = room.conf["AkFork"].to_str();
 		ResList list;
 		list.order();
 		for (auto& val : deck) {
