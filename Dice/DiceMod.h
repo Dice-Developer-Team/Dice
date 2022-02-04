@@ -113,6 +113,7 @@ class DiceSpeech {
 public:
     DiceSpeech(){}
     DiceSpeech(const string& s):speech(s) {}
+    DiceSpeech(const char* s) :speech(s) {}
     DiceSpeech(const vector<string>& v) :speech(v) {}
     DiceSpeech(const YAML::Node& yaml);
     DiceSpeech(const json& j);

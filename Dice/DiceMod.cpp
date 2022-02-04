@@ -630,7 +630,16 @@ string DiceSpeech::express()const {
 	return {};
 }
 
-DiceModManager::DiceModManager() : helpdoc(HelpDoc){
+DiceModManager::DiceModManager() : helpdoc(HelpDoc),global_speech({
+	{ "br","\n" },
+	{ "sp"," " },
+	{ "FormFeed","\f" },
+	{ "Vertical","|" },
+	{ "LBrace","{" },
+	{ "RBrace","}" },
+	{ "LBracket","[" },
+	{ "RBracket","]" },
+	{ "Equal","]" }, }){
 }
 
 string DiceModManager::format(string s, AttrObject context, const AttrIndexs& indexs, const dict_ci& dict) const{

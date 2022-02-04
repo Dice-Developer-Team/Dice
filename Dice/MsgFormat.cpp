@@ -28,20 +28,7 @@
 #include "EncodingConvert.h"
 #include "StrExtern.hpp"
 #include "CardDeck.h"
-#include "RandomGenerator.h"
 using std::string;
-
-std::map<string, string> GlobalChar{
-	{"br","\n"},
-	{"sp"," "},
-	{"FormFeed","\f"},
-	{"Vertical","|"},
-	{"LBrace","{"},
-	{"RBrace","}"},
-	{"LBracket","["},
-	{"RBracket","]"},
-	{"Equal","]"},
-};
 
 std::map<string, GobalTex> strFuncs{
 	{"master_ID",print_master},
