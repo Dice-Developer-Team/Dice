@@ -136,6 +136,9 @@ public:
 	bool has(const string& key)const {
 		return obj->count(key) && !obj->at(key).is_null();
 	}
+	void reset(const string& key)const {
+		obj->erase(key);
+	}
 	string get_str(const string& key)const {
 		return obj->count(key) ? obj->at(key).to_str() : "";
 	}

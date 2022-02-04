@@ -716,13 +716,13 @@ int Context_index(lua_State* L) {
 }
 int Context_newindex(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
-	AttrVars& vars{ **(AttrVars**)luaL_checkudata(L, 1, "Context") };
+	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
 	string key{ lua_to_string(L, 2) };
 	if (lua_gettop(L) < 3) {
-		vars.erase(key);
+		vars.reset(key);
 	}
 	else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {
-		vars.erase(key);
+		vars.reset(key);
 	}
 	else {
 		vars[key] = val;
