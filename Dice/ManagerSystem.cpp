@@ -223,11 +223,11 @@ AttrVar idx_nick(AttrObject& eve) {
 
 string filter_CQcode(const string& raw, long long fromGID){
 	string msg{ raw };
-	size_t posL(0);
+	size_t posL(0), posR(0);
 	while ((posL = msg.find(CQ_AT)) != string::npos)
 	{
 		//检查at格式
-		if (size_t posR = msg.find(']',posL); posR != string::npos) 
+		if ((posR = msg.find(']', posL)) != string::npos)
 		{
 			std::string_view stvQQ(msg);
 			stvQQ = stvQQ.substr(posL + 10, posR - posL - 10);
@@ -259,15 +259,22 @@ string filter_CQcode(const string& raw, long long fromGID){
 	}
 	while ((posL = msg.find(CQ_IMAGE)) != string::npos) {
 		//检查at格式
-		if (size_t posR = msg.find(']', posL); posR != string::npos) {
-			msg.replace(posL, posR - posL + 1, "[图片]");
+		if ((posR = msg.find(']', posL)) != string::npos) {
+			msg.replace(posL + 1, posR - posL - 1, "图片");
+		}
+		else return msg;
+	}
+	while ((posL = msg.find(CQ_FACE)) != string::npos) {
+		//检查at格式
+		if ((posR = msg.find(']', posL)) != string::npos) {
+			msg.replace(posL + 1, posR - posL - 1, "表情");
 		}
 		else return msg;
 	}
 	while ((posL = msg.find(CQ_POKE)) != string::npos) {
 		//检查at格式
-		if (size_t posR = msg.find(']', posL); posR != string::npos) {
-			msg.replace(posL+1, 11, "戳一戳");
+		if ((posR = msg.find(']', posL)) != string::npos) {
+			msg.replace(posL + 1, 11, "戳一戳");
 		}
 		else return msg;
 	}

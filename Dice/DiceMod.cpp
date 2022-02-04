@@ -959,7 +959,6 @@ int DiceModManager::load(ResList& resLog){
 						}
 						for (auto it = yaml.begin(); it != yaml.end();++it) {
 							global_speech[UTF8toGBK(it->first.Scalar())] = it->second;
-							DD::debugLog("Â¼Èëspeech:" + it->first.Scalar());
 							++cntSpeech;
 						}
 					}

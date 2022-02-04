@@ -2,7 +2,7 @@
 
 /*
  * 后台系统
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2019-2022 String.Empty
  * 控制清理用户/群聊记录，清理图片，监控系统
  */
 
@@ -30,6 +30,7 @@ using std::unordered_map;
 constexpr auto CQ_IMAGE = "[CQ:image,file=";
 constexpr auto CQ_AT = "[CQ:at,id=";
 constexpr auto CQ_QQAT = "[CQ:at,qq=";
+constexpr auto CQ_FACE = "[CQ:face,id=";
 constexpr auto CQ_POKE = "[CQ:poke,id=";
 
 //加载数据
