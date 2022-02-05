@@ -432,6 +432,11 @@ json to_json(AttrVars& vars) {
 	}
 	return j;
 }
+void from_json(AttrVars& vars, const json& j) {
+	for (auto& [key, val] : j.items()) {
+		vars[GBKtoUTF8(key)] = val;
+	}
+}
 
 void AttrVar::writeb(std::ofstream& fout) const {
 	switch (type) {

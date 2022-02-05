@@ -30,7 +30,7 @@ void AddFrq(chatInfo CT, time_t TT, const string& msg)
 	EarlyMsgQueue.push(newFrq);
 	FrqMonitor::sumFrqTotal++;
 	today->inc("frq");
-	today->inc(CT.uid, "frq");
+	today->set(CT.uid, "frq", today->get(CT.uid, "frq").to_int() + 1);
 }
 
 void frqHandler()

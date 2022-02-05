@@ -198,21 +198,21 @@ void DiceScheduler::end() {
 }
 
 int DiceToday::getJrrp(long long uid) {
-	if (cntUser.count(uid) && cntUser[uid].count("jrrp"))
-		return cntUser[uid]["jrrp"];
+	if (UserInfo.count(uid) && UserInfo[uid].count("jrrp"))
+		return UserInfo[uid]["jrrp"].to_int();
 	string frmdata = "QQ=" + to_string(console.DiceMaid) + "&v=20190114" + "&QueryQQ=" + to_string(uid);
 	string res;
 	if (Network::POST("http://api.kokona.tech:5555/jrrp", frmdata, "", res)) {
-		return cntUser[uid]["jrrp"] = stoi(res);
+		return (UserInfo[uid]["jrrp"] = stoi(res)).to_int();
 	}
 	else {
-		if (!cntUser[uid].count("jrrp_local")) {
-			cntUser[uid]["jrrp_local"] = RandomGenerator::Randint(1, 100);
+		if (!UserInfo[uid].count("jrrp_local")) {
+			UserInfo[uid]["jrrp_local"] = RandomGenerator::Randint(1, 100);
 			console.log(getMsg("strJrrpErr",
 							   { {"res", res} }
 			), 0);
 		}
-		return cntUser[uid]["jrrp_local"];
+		return (UserInfo[uid]["jrrp_local"]).to_int();
 	}
 }
 
@@ -227,7 +227,7 @@ void DiceToday::daily_clear() {
 		stToday.tm_mday = stNow.tm_mday;
 		counter.clear();
 		cntGlobal.clear();
-		cntUser.clear();
+		UserInfo.clear();
 	}
 }
 
@@ -236,7 +236,12 @@ void DiceToday::save() {
 	try {
 		jFile["date"] = { stToday.tm_year + 1900,stToday.tm_mon + 1,stToday.tm_mday };
 		jFile["global"] = GBKtoUTF8(cntGlobal);
-		jFile["user_cnt"] = GBKtoUTF8(cntUser);
+		if (!UserInfo.empty()) {
+			json& jCnt{ jFile["user"] = json::object() };
+			for (auto& [id, user] : UserInfo) {
+				jCnt[to_string(id)] = to_json(user);
+			}
+		}
 		if (!counter.empty()) {
 			json& jCnt{ jFile["cnt_list"] = json::array() };
 			for (auto& [chat, cnt_list] : counter) {
@@ -280,9 +285,10 @@ void DiceToday::load() {
 		jFile["global"].get_to(cntGlobal); 
 		cntGlobal = UTF8toGBK(cntGlobal);
 	}
-	if (jFile.count("user_cnt")) { 
-		jFile["user_cnt"].get_to(cntUser);
-		cntUser = UTF8toGBK(cntUser);
+	if (jFile.count("user")) {
+		for (auto& [key,val]: jFile["user"].items()) {
+			from_json(UserInfo[std::stoll(key)], val);
+		}
 	}
 }
 

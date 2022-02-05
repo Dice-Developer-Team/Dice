@@ -560,7 +560,7 @@ int getUserToday(lua_State* L) {
 	if (item == "jrrp")
 		lua_pushnumber(L, today->getJrrp(uid));
 	else
-		lua_pushnumber(L, today->get(uid, item));
+		lua_push_attr(L, today->get(uid, item));
 	return 1;
 }
 int setUserToday(lua_State* L) {
