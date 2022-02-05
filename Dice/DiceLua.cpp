@@ -553,14 +553,21 @@ int setUserConf(lua_State* L) {
 	return 0;
 }
 int getUserToday(lua_State* L) {
+	int top{ lua_gettop(L) };
+	if (top > 3)lua_settop(L, top = 3);
+	else if (top < 2)return 0;
 	long long uid{ lua_to_int(L, 1) };
 	if (!uid)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
 	if (item == "jrrp")
 		lua_pushnumber(L, today->getJrrp(uid));
-	else
-		lua_push_attr(L, today->get(uid, item));
+	else if (AttrVar* p{ today->get_if(uid, item) })
+		lua_push_attr(L, *p);
+	else {
+		lua_pushnil(L);
+		lua_insert(L, 3);
+	}
 	return 1;
 }
 int setUserToday(lua_State* L) {
@@ -568,8 +575,7 @@ int setUserToday(lua_State* L) {
 	if (!uid)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
-	int val{ (int)lua_to_number(L, 3) };
-	today->set(uid, item, val);
+	today->set(uid, item, lua_to_attr(L, 3));
 	return 0;
 }
 

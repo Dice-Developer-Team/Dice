@@ -105,6 +105,11 @@ public:
     //void inc(long long qq, const string& key, int cnt = 1) { cntUser[qq][key] += cnt; save(); }
     int& get(const string& key) { return cntGlobal[key]; }
     AttrVar& get(long long qq, const string& key) { return UserInfo[qq][key]; }
+    AttrVar* get_if(long long qq, const string& key) {
+        if (UserInfo.count(qq) && UserInfo[qq].count(key))
+            return &UserInfo[qq][key];
+        else return nullptr;
+    }
     int getJrrp(long long qq);
     size_t cntUser() { return UserInfo.size(); }
     void daily_clear();

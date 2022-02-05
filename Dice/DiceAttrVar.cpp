@@ -428,7 +428,7 @@ json AttrVar::to_json()const {
 json to_json(AttrVars& vars) {
 	json j;
 	for (auto& [key, val] : vars) {
-		j[GBKtoUTF8(key)] = val.to_json();
+		if(val)j[GBKtoUTF8(key)] = val.to_json();
 	}
 	return j;
 }
