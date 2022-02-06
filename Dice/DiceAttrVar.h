@@ -98,6 +98,7 @@ public:
 	long long to_ll()const;
 	double to_num()const;
 	string to_str()const;
+	string show()const;
 	bool str_empty()const;
 	VarTable to_table()const;
 	AttrVars to_dict()const;
@@ -106,6 +107,7 @@ public:
 
 	using CMPR = bool(AttrVar::*)(const AttrVar&)const;
 	bool is_null()const { return type == AttrType::Nil; }
+	bool is_true()const { return operator bool(); }
 	bool is_numberic()const;
 	bool is_character()const { return type != AttrType::Nil && type != AttrType::Table; }
 	bool is_table()const { return type == AttrType::Table; }

@@ -262,6 +262,32 @@ string AttrVar::to_str()const {
 	}
 	return {};
 }
+string AttrVar::show()const {
+	switch (type) {
+	case AttrType::Nil:
+		return {};
+		break;
+	case AttrType::Boolean:
+		return bit ? "Õæ" : "¼Ù";
+		break;
+	case AttrType::Integer:
+		return to_string(attr);
+		break;
+	case AttrType::Number:
+		return toString(number);
+		break;
+	case AttrType::Text:
+		return text;
+		break;
+	case AttrType::Table:
+		return UTF8toGBK(to_json().dump());
+		break;
+	case AttrType::ID:
+		return to_string(id);
+		break;
+	}
+	return {};
+}
 bool AttrVar::str_empty()const{
 	return type == AttrType::Text && text.empty();
 }
@@ -308,7 +334,7 @@ bool AttrVar::equal(const AttrVar& other)const{
 		return is_null();
 	}
 	else if (other.type == AttrType::Boolean) {
-		return bool() ^ !other;
+		return is_true() ^ !other;
 	}
 	else if (other.type == AttrType::Text) {
 		return type == AttrType::Text && text == other.text;
