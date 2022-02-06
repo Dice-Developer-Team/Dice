@@ -67,9 +67,12 @@ public:
 	};
 	AttrVar() {}
 	AttrVar(const AttrVar& other);
+	AttrVar(bool b) :type(AttrType::Boolean), bit(b) {}
 	AttrVar(int n) :type(AttrType::Integer), attr(n) {}
+	AttrVar(double n) :type(AttrType::Number), number(n) {}
+	AttrVar(const char* s) :type(AttrType::Text), text(s) {}
 	AttrVar(const string& s) :type(AttrType::Text), text(s) {}
-	explicit AttrVar(long long n) :type(AttrType::ID), id(n) {}
+	AttrVar(long long n) :type(AttrType::ID), id(n) {}
 	explicit AttrVar(const AttrVars& vars) :type(AttrType::Table), table(vars) {}
 	void des() {
 		if (type == AttrType::Text)text.~string();

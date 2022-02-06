@@ -334,7 +334,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 						: ("@" + CDConfig::eType[(size_t)it.type] + "="))
 						+ to_string(it.cd);
 					cdnotes << (it.type == CDType::Chat ? "窗口"
-						: it.type == CDType::User ? "用户" : "全局") + key + "计" + to_string(it.cd) + "秒";
+						: it.type == CDType::User ? "用户" : "全局") + it.key + "计" + to_string(it.cd) + "秒";
 				}
 				limits << "cd:" + cds.show("&");
 				notes << "- 冷却计时: " + cdnotes.show();
@@ -377,7 +377,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 						: ("@" + CDConfig::eType[(size_t)it.type] + "="))
 						+ to_string(it.cd);
 					subnotes << (it.type == CDType::Chat ? "窗口"
-						: it.type == CDType::User ? "用户" : "全局") + key + "计" + to_string(it.cd) + "次";
+						: it.type == CDType::User ? "用户" : "全局") + it.key + "计" + to_string(it.cd) + "次";
 				}
 				limits << "today:" + sub.show("&");
 				notes << "- 当日计数: " + subnotes.show();
@@ -706,6 +706,12 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 					val = fmt->format(fmt->get_help(para), context, indexs, dict);
 				}
 				else if (method == "sample") {
+					vector<string> samples{ split(para,"|") };
+					if (samples.empty())val = "";
+					else
+						val = fmt->format(samples[RandomGenerator::Randint(0, samples.size() - 1)], context, indexs, dict);
+				}
+				else if (method == "vary") {
 					vector<string> samples{ split(para,"|") };
 					if (samples.empty())val = "";
 					else

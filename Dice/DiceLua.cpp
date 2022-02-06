@@ -94,10 +94,10 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 		lua_pushboolean(L, attr.bit);
 		break;
 	case AttrVar::AttrType::Integer:
-		lua_pushnumber(L, attr.attr);
+		lua_pushinteger(L, attr.attr);
 		break;
 	case AttrVar::AttrType::ID:
-		lua_pushnumber(L, attr.id);
+		lua_pushinteger(L, attr.id);
 		break;
 	case AttrVar::AttrType::Number:
 		lua_pushnumber(L, attr.number);
