@@ -661,52 +661,60 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 	size_t lastL{ 0 }, lastR{ 0 };
 	while ((lastR = s.find('}', ++lastR)) != string::npos
 		&& (lastL = s.rfind('{', lastR)) != string::npos) {
+		string key;
 		//左括号前加‘\’表示该括号内容不转义
 		if (lastL > 0 && s[lastL - 1] == 0x5c) {
-			s.replace(--lastL, 1, "");
-			continue;
+			lastR = lastL--;
+			key = "{";
 		}
-		string key = s.substr(lastL + 1, lastR - lastL - 1), val;
-		if (context.has(key)) {
-			if (key == "res")val = format(context.get_str(key), context, indexs, dict);
-			else val = context.get_str(key);
+		else if (s[lastR - 1] == 0x5c) {
+			lastL = lastR - 1;
+			key = "}";
 		}
-		else if (auto idx = indexs.find(key); !context.empty() && idx != indexs.end()) {
-			val = idx->second(context).to_str();
-		}
-		else if (key.find("help:") == 0) {
-			key = key.substr(5);
-			val = fmt->format(fmt->get_help(key), {}, {}, dict);
-		}
-		else if (key.find("sample:") == 0) {
-			key = key.substr(7);
-			vector<string> samples{ split(key,"|") };
-			if (samples.empty())val = "";
-			else
-				val = fmt->format(samples[RandomGenerator::Randint(0, samples.size() - 1)], {}, {}, dict);
-		}
-		else if (auto cit = dict.find(key); cit != dict.end()) {
-			val = format(cit->second, context, indexs, dict);
-		}
-		//局部屏蔽全局
-		else if (auto sp = global_speech.find(key); sp != global_speech.end()) {
-			val = fmt->format(sp->second.express(), context, indexs, dict);
-		}
-		else if (auto func = strFuncs.find(key); func != strFuncs.end())
-		{
-			val = func->second();
-		}
-		else continue;
-		nodes.push(val);
+		else key = s.substr(lastL + 1, lastR - lastL - 1);
+		nodes.push(key);
 		++chSign[1];
 		s.replace(lastL, lastR - lastL + 1, chSign);
-		DD::debugLog("插入标号" + to_string((unsigned char)s[lastL + 1]) + ":" + val);
 		lastR = lastL + 1;
 	}
 	while(!nodes.empty()) {
-		DD::debugLog("搜索标号" + to_string((unsigned char)chSign[1]) + ":" + nodes.top());
 		if (size_t pos{ s.find(chSign) }; pos != string::npos) {
-			s.replace(pos, 2, nodes.top());
+			string& key{ nodes.top() };
+			string val;
+			if (key == "{" || key == "}") {
+				val = key;
+			}
+			else if (context.has(key)) {
+				if (key == "res")val = format(context.get_str(key), context, indexs, dict);
+				else val = context.get_str(key);
+			}
+			else if (auto idx = indexs.find(key); !context.empty() && idx != indexs.end()) {
+				val = idx->second(context).to_str();
+			}
+			else if (key.find("help:") == 0) {
+				key = key.substr(5);
+				val = fmt->format(fmt->get_help(key), {}, {}, dict);
+			}
+			else if (key.find("sample:") == 0) {
+				key = key.substr(7);
+				vector<string> samples{ split(key,"|") };
+				if (samples.empty())val = "";
+				else
+					val = fmt->format(samples[RandomGenerator::Randint(0, samples.size() - 1)], {}, {}, dict);
+			}
+			else if (auto cit = dict.find(key); cit != dict.end()) {
+				val = format(cit->second, context, indexs, dict);
+			}
+			//局部屏蔽全局
+			else if (auto sp = global_speech.find(key); sp != global_speech.end()) {
+				val = fmt->format(sp->second.express(), context, indexs, dict);
+			}
+			else if (auto func = strFuncs.find(key); func != strFuncs.end())
+			{
+				val = func->second();
+			}
+			else val = "{" + key + "}";
+			s.replace(pos, 2, val);
 		}
 		--chSign[1];
 		nodes.pop();
