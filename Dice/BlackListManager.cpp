@@ -1263,6 +1263,7 @@ int DDBlackManager::loadJson(const std::filesystem::path& fpPath, bool isExtern)
 {
 	json j = freadJson(fpPath);
 	if (j.is_null())return -1;
+	if (j.empty())return 0;
 	if (j.size() > vBlackList.capacity())vBlackList.reserve(j.size() * 2);
 	int cnt(0);
 	for (auto& item : j)
@@ -1288,7 +1289,7 @@ int DDBlackManager::loadJson(const std::filesystem::path& fpPath, bool isExtern)
 	}
 	if (isExtern) {
 		filesystem::remove(fpPath);
-		console.log("更新外源不良记录条目" + to_string(cnt) + "条", 1, printSTNow());
+		if(cnt)console.log("更新外源不良记录条目" + to_string(cnt) + "条", 1, printSTNow());
 		blacklist->saveJson(DiceDir / "conf" / "BlackList.json");
 	}
 	return cnt;
