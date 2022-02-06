@@ -24,6 +24,8 @@ using std::map;
 using std::unordered_multimap;
 using std::set;
 using std::variant;
+template<typename T>
+using ptr = std::shared_ptr<T>;
 
 class FromMsg;
 
@@ -164,13 +166,16 @@ public:
 class ResList;
 class DiceModManager
 {
-	map<string, DiceMod, less_ci> modList;
+    unordered_map<string, DiceMod, less_ci> modList;
     vector<pair<string, bool>>modIndex;
+    //custom
+    unordered_map<string, std::shared_ptr<DiceMsgReply>, hash_ci, equal_ci> custom_reply;
     //global
     unordered_map<string, DiceSpeech, hash_ci, equal_ci> global_speech;
     unordered_map<string, string, hash_ci, equal_ci> helpdoc;
-    map<string, DiceMsgOrder, less_ci> msgorder;
-    map<string, DiceMsgOrder, less_ci> taskcall;
+    unordered_map<string, DiceMsgOrder, hash_ci, equal_ci> msgorder;
+    unordered_map<string, std::shared_ptr<DiceMsgReply>, hash_ci, equal_ci> msgreply;
+    unordered_map<string, DiceMsgOrder, hash_ci, equal_ci> taskcall;
     unordered_map<string, string, hash_ci, equal_ci> scripts;
     //Trigger
     unordered_map<string, AttrObject> triggers; //triggers by id
@@ -178,7 +183,6 @@ class DiceModManager
 
     WordQuerier querier;
     TrieG<char, less_ci> gOrder;
-    map<string, DiceMsgReply, less_ci> msgreply;
     AttrObjects mod_reply_list;
     set<string, less_ci> reply_regex;
     TrieG<char16_t, less_ci> gReplySearcher;

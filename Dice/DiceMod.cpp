@@ -826,7 +826,7 @@ void DiceModManager::rm_help(const string& key)
 
 bool DiceModManager::listen_reply(FromMsg* msg) {
 	string& strMsg{ msg->strMsg };
-	if (msgreply.count(strMsg) && msgreply[strMsg].exec(msg)) {
+	if (msgreply.count(strMsg) && msgreply[strMsg]->exec(msg)) {
 		return true;
 	}
 	if (stack<string> sPrefix; gReplyPrefix.match_head(msg->strMsg, sPrefix)) {
@@ -834,23 +834,23 @@ bool DiceModManager::listen_reply(FromMsg* msg) {
 			string key{ sPrefix.top() };
 			sPrefix.pop();
 			if (!msgreply.count(key))continue;
-			DiceMsgReply& reply{ msgreply[key] };
-			if (reply.mode == DiceMsgReply::Mode::Prefix && reply.exec(msg))return true;
+			ptr<DiceMsgReply> reply{ msgreply[key] };
+			if (reply->mode == DiceMsgReply::Mode::Prefix && reply->exec(msg))return true;
 		}
 	}
 	//模糊匹配禁止自我触发
 	if (vector<string>res; (*msg)["uid"] != console.DiceMaid && gReplySearcher.search(convert_a2w(strMsg.c_str()), res)) {
 		for (const auto& key : res) {
 			if (!msgreply.count(key) || msg->strMsg.find(key) == string::npos)continue;
-			DiceMsgReply& reply{ msgreply[key] };
-			if (reply.mode == DiceMsgReply::Mode::Search && reply.exec(msg))return true;
+			ptr<DiceMsgReply> reply{ msgreply[key] };
+			if (reply->mode == DiceMsgReply::Mode::Search && reply->exec(msg))return true;
 		}
 	}
 	//regex
 	try {
 		for (auto& key : reply_regex)
 		{
-			if (!msgreply.count(key) || msgreply[key].mode != DiceMsgReply::Mode::Regex)continue;
+			if (!msgreply.count(key) || msgreply[key]->mode != DiceMsgReply::Mode::Regex)continue;
 			// libstdc++ 使用了递归式 dfs 匹配正则表达式
 			// 递归层级很多，非常容易爆栈
 			// 然而，每个 Java Thread 在32位 Linux 下默认大小为320K，600字符的匹配即会爆栈
@@ -863,7 +863,7 @@ bool DiceModManager::listen_reply(FromMsg* msg) {
 			std::wstring LstrMsg = convert_a2realw(strMsg.c_str());
 			if (strMsg.length() <= 400 && std::regex_match(LstrMsg, msg->msgMatch, exp))
 			{
-				if(msgreply[key].exec(msg))return true;
+				if(msgreply[key]->exec(msg))return true;
 			}
 		}
 	}
@@ -876,9 +876,9 @@ bool DiceModManager::listen_reply(FromMsg* msg) {
 string DiceModManager::list_reply()const {
 	ResList listTotal, listMatch, listSearch, listPrefix, listRegex;
 	for (const auto& [key, reply] : msgreply) {
-		if (reply.mode == DiceMsgReply::Mode::Search)listSearch << key;
-		else if (reply.mode == DiceMsgReply::Mode::Prefix)listPrefix << key;
-		else if (reply.mode == DiceMsgReply::Mode::Regex)listRegex << key;
+		if (reply->mode == DiceMsgReply::Mode::Search)listSearch << key;
+		else if (reply->mode == DiceMsgReply::Mode::Prefix)listPrefix << key;
+		else if (reply->mode == DiceMsgReply::Mode::Regex)listRegex << key;
 		else listMatch << key;
 	}
 	if (!listMatch.empty())listTotal << "[完全匹配] " + listMatch.dot(" | ").show();
@@ -888,7 +888,8 @@ string DiceModManager::list_reply()const {
 	return listTotal.show();
 }
 void DiceModManager::set_reply(const string& key, DiceMsgReply& reply) {
-	msgreply[key] = reply;
+	
+	msgreply[key] = custom_reply[key] = std::make_shared<DiceMsgReply>(reply);
 	if (reply.mode == DiceMsgReply::Mode::Regex)
 		reply_regex.insert(key);
 	else reply_regex.erase(key);
@@ -897,15 +898,16 @@ void DiceModManager::set_reply(const string& key, DiceMsgReply& reply) {
 	save_reply();
 }
 bool DiceModManager::del_reply(const string& key) {
-	if (!msgreply.count(key))return false;
+	if (!custom_reply.count(key))return false;
 	msgreply.erase(key);
+	custom_reply.erase(key);
 	save_reply();
 	return true;
 }
 void DiceModManager::save_reply() {
 	json j;
-	for (const auto& [word, reply] : msgreply) {
-		j[GBKtoUTF8(word)] = reply.writeJson();
+	for (const auto& [word, reply] : custom_reply) {
+		j[GBKtoUTF8(word)] = reply->writeJson();
 	}
 	if (j.empty()) std::filesystem::remove(DiceDir / "conf" / "CustomMsgReply.json");
 	else fwriteJson(DiceDir / "conf" / "CustomMsgReply.json", j);
@@ -913,7 +915,7 @@ void DiceModManager::save_reply() {
 void DiceModManager::reply_get(const shared_ptr<DiceJobDetail>& msg) {
 	string key{ (*msg)["key"].to_str() };
 	if (msgreply.count(key)) {
-		(*msg)["show"] = msgreply[key].print();
+		(*msg)["show"] = msgreply[key]->print();
 		msg->reply(getMsg("strReplyShow"));
 	}
 	else {
@@ -923,7 +925,7 @@ void DiceModManager::reply_get(const shared_ptr<DiceJobDetail>& msg) {
 void DiceModManager::reply_show(const shared_ptr<DiceJobDetail>& msg) {
 	string key{ (*msg)["key"].to_str()};
 	if (msgreply.count(key)) {
-		(*msg)["show"] = msgreply[key].show();
+		(*msg)["show"] = msgreply[key]->show();
 		msg->reply(getMsg("strReplyShow"));
 	}
 	else {
@@ -1074,17 +1076,18 @@ int DiceModManager::load(ResList& resLog){
 			merge(helpdoc, CustomHelp);
 		}
 	}
-	//读取reply
+	//custom_reply
 	json jFile = freadJson(DiceDir / "conf" / "CustomMsgReply.json");
 	if (!jFile.empty()) {
 		try {
 			for (auto reply = jFile.cbegin(); reply != jFile.cend(); ++reply) {
 				if (std::string key = UTF8toGBK(reply.key()); !key.empty()) {
-					msgreply[key].readJson(reply.value());
-					if (msgreply[key].keyword.empty())msgreply[key].keyword = key;
+					ptr<DiceMsgReply> p{ msgreply[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
+					p->readJson(reply.value());
+					if (p->keyword.empty())p->keyword = key;
 				}
 			}
-			resLog << "读取/conf/CustomMsgReply.json中的" + std::to_string(msgreply.size()) + "条自定义回复";
+			resLog << "读取/conf/CustomMsgReply.json中的" + std::to_string(custom_reply.size()) + "条自定义回复";
 		}
 		catch (const std::exception& e) {
 			resLog << "解析/conf/CustomMsgReply.json出错:" << e.what();
@@ -1096,16 +1099,16 @@ int DiceModManager::load(ResList& resLog){
 		if (loadJMap(DiceDir / "conf" / "CustomReply.json", mReplyDeck) > 0) {
 			resLog << "读取CustomReply" + to_string(mReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mReplyDeck) {
-				DiceMsgReply& reply{ msgreply[key] };
-				reply.deck = deck;
+				ptr<DiceMsgReply> reply{ msgreply[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
+				reply->deck = deck;
 			}
 		}
 		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck) > 0) {
 			resLog << "读取正则Reply" + to_string(mRegexReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mRegexReplyDeck) {
-				DiceMsgReply& reply{ msgreply[key] };
-				reply.mode = DiceMsgReply::Mode::Regex;
-				reply.deck = deck;
+				ptr<DiceMsgReply> reply{ msgreply[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
+				reply->mode = DiceMsgReply::Mode::Regex;
+				reply->deck = deck;
 			}
 		}
 		save_reply();
@@ -1131,13 +1134,13 @@ void DiceModManager::init() {
 		DiceMsgReply reply;
 		reply.from_obj(val);
 		if (!reply.keyword.empty()) {
-			msgreply[reply.keyword] = reply;
+			msgreply[reply.keyword] = std::make_shared<DiceMsgReply>(reply);
 		}
 	}
 	for (const auto& [key, reply] : msgreply) {
-		if (reply.mode == DiceMsgReply::Mode::Search)gReplySearcher.add(convert_a2w(key.c_str()), key);
-		else if(reply.mode == DiceMsgReply::Mode::Prefix)gReplyPrefix.add(key, key);
-		else if (reply.mode == DiceMsgReply::Mode::Regex)reply_regex.insert(key);
+		if (reply->mode == DiceMsgReply::Mode::Search)gReplySearcher.add(convert_a2w(key.c_str()), key);
+		else if(reply->mode == DiceMsgReply::Mode::Prefix)gReplyPrefix.add(key, key);
+		else if (reply->mode == DiceMsgReply::Mode::Regex)reply_regex.insert(key);
 	}
 	gReplySearcher.make_fail();
 	gReplyPrefix.make_fail();

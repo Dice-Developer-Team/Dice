@@ -120,17 +120,15 @@ public:
 	}
 };
 
-template <typename T, typename sort>
-std::string listKey(std::map<std::string, T, sort> m)
-{
-	ResList list;
-	list.setDot("/", "/");
+template <typename T>
+std::string listKey(T& m){
+	ShowList list;
 	for (auto& [key,val] : m)
 	{
 		if (key[0] == '_')continue;
 		list << key;
 	}
-	return list.show();
+	return list.show("/");
 }
 
 std::string listDeck(const std::vector<std::string>& v);

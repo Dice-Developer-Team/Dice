@@ -167,11 +167,11 @@ public:
             for (const auto& [key,val] : fmt->msgreply)
             {
                 j["data"].push_back({ {"name", GBKtoUTF8(key)} ,
-                    {"type", GBKtoUTF8(val.sType[(int)val.type])},
-                    {"mode", GBKtoUTF8(val.sMode[(int)val.mode])},
-                    {"limit", GBKtoUTF8(val.limit.print())},
-                    {"echo", GBKtoUTF8(val.sEcho[(int)val.echo])},
-                    {"value", GBKtoUTF8(val.show_ans())} });
+                    {"type", GBKtoUTF8(val->sType[(int)val->type])},
+                    {"mode", GBKtoUTF8(val->sMode[(int)val->mode])},
+                    {"limit", GBKtoUTF8(val->limit.print())},
+                    {"echo", GBKtoUTF8(val->sEcho[(int)val->echo])},
+                    {"value", GBKtoUTF8(val->show_ans())} });
             }
             ret = j.dump();
         }
