@@ -287,7 +287,7 @@ void DiceToday::load() {
 	}
 	if (jFile.count("user")) {
 		for (auto& [key,val]: jFile["user"].items()) {
-			from_json(UserInfo[std::stoll(key)], val);
+			from_json(val, UserInfo[std::stoll(key)]);
 		}
 	}
 }

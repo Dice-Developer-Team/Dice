@@ -639,7 +639,8 @@ DiceModManager::DiceModManager() : helpdoc(HelpDoc),global_speech({
 	{ "RBrace","}" },
 	{ "LBracket","[" },
 	{ "RBracket","]" },
-	{ "Equal","]" }, }){
+	{ "Question","?" },
+	{ "Equal","=" }, }){
 }
 
 string DiceModManager::format(string s, AttrObject context, const AttrIndexs& indexs, const dict_ci& dict) const{
@@ -680,7 +681,7 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 	while(!nodes.empty()) {
 		if (size_t pos{ s.find(chSign) }; pos != string::npos) {
 			string& key{ nodes.top() };
-			string val;
+			string val{ "{" + key + "}" };
 			if (key == "{" || key == "}") {
 				val = key;
 			}
@@ -691,17 +692,6 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 			else if (auto idx = indexs.find(key); !context.empty() && idx != indexs.end()) {
 				val = idx->second(context).to_str();
 			}
-			else if (key.find("help:") == 0) {
-				key = key.substr(5);
-				val = fmt->format(fmt->get_help(key), {}, {}, dict);
-			}
-			else if (key.find("sample:") == 0) {
-				key = key.substr(7);
-				vector<string> samples{ split(key,"|") };
-				if (samples.empty())val = "";
-				else
-					val = fmt->format(samples[RandomGenerator::Randint(0, samples.size() - 1)], {}, {}, dict);
-			}
 			else if (auto cit = dict.find(key); cit != dict.end()) {
 				val = format(cit->second, context, indexs, dict);
 			}
@@ -709,11 +699,23 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 			else if (auto sp = global_speech.find(key); sp != global_speech.end()) {
 				val = fmt->format(sp->second.express(), context, indexs, dict);
 			}
+			else if (size_t colon{ key.find(':') }; colon != string::npos) {
+				string method{ key.substr(0,colon) };
+				string para{ key.substr(colon + 1) };
+				if (method == "help") {
+					val = fmt->format(fmt->get_help(para), context, indexs, dict);
+				}
+				else if (method == "sample") {
+					vector<string> samples{ split(para,"|") };
+					if (samples.empty())val = "";
+					else
+						val = fmt->format(samples[RandomGenerator::Randint(0, samples.size() - 1)], context, indexs, dict);
+				}
+			}
 			else if (auto func = strFuncs.find(key); func != strFuncs.end())
 			{
 				val = func->second();
 			}
-			else val = "{" + key + "}";
 			s.replace(pos, 2, val);
 		}
 		--chSign[1];

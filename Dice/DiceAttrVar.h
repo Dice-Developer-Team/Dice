@@ -116,7 +116,7 @@ public:
 	void readb(std::ifstream& fin);
 };
 json to_json(AttrVars& vars);
-void from_json(AttrVars& ,const json& j);
+void from_json(const json& j, AttrVars&);
 string showAttrCMPR(AttrVar::CMPR);
 
 class AttrObject {

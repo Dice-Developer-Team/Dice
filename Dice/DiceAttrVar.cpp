@@ -432,7 +432,7 @@ json to_json(AttrVars& vars) {
 	}
 	return j;
 }
-void from_json(AttrVars& vars, const json& j) {
+void from_json(const json& j, AttrVars& vars) {
 	for (auto& [key, val] : j.items()) {
 		vars[GBKtoUTF8(key)] = val;
 	}

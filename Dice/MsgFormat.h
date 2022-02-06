@@ -10,7 +10,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2022 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -36,7 +36,7 @@
 using std::string;
 
 typedef string(*GobalTex)();
-extern std::map<string, GobalTex> strFuncs;
+extern std::unordered_map<string, GobalTex> strFuncs;
 
 class ResList
 {
