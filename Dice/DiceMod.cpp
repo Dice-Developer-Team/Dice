@@ -644,27 +644,29 @@ DiceModManager::DiceModManager() : helpdoc(HelpDoc),global_speech({
 
 string DiceModManager::format(string s, AttrObject context, const AttrIndexs& indexs, const dict_ci& dict) const{
 	//直接重定向
-	if (s[0] == '&')
-	{
+	if (s[0] == '&'){
 		const string key = s.substr(1);
-		const auto it = dict.find(key);
-		if (it != dict.end())
-		{
-			return format(it->second, context, indexs, dict);
-		}
 		if (context.has(key)) {
 			return context.get_str(key);
 		}
+		if (const auto it = dict.find(key); it != dict.end()){
+			return format(it->second, context, indexs, dict);
+		}
+		if (const auto it = global_speech.find(key); it != global_speech.end()) {
+			return fmt->format(it->second.express(), context, indexs, dict);
+		}
 	}
-	int l = 0, r = 0;
-	int len = s.length();
-	while ((l = s.find('{', r)) != string::npos && (r = s.find('}', l)) != string::npos){
+	stack<string>nodes;
+	char chSign[3]{ char(0xAA),char(0xA0),'\0' };
+	size_t lastL{ 0 }, lastR{ 0 };
+	while ((lastR = s.find('}', ++lastR)) != string::npos
+		&& (lastL = s.rfind('{', lastR)) != string::npos) {
 		//左括号前加‘\’表示该括号内容不转义
-		if (s[l - 1] == 0x5c){
-			s.replace(l - 1, 1, "");
+		if (lastL > 0 && s[lastL - 1] == 0x5c) {
+			s.replace(--lastL, 1, "");
 			continue;
 		}
-		string key = s.substr(l + 1, r - l - 1), val;
+		string key = s.substr(lastL + 1, lastR - lastL - 1), val;
 		if (context.has(key)) {
 			if (key == "res")val = format(context.get_str(key), context, indexs, dict);
 			else val = context.get_str(key);
@@ -687,7 +689,7 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 			val = format(cit->second, context, indexs, dict);
 		}
 		//局部屏蔽全局
-		else if (auto sp = global_speech.find(key);sp != global_speech.end()) {
+		else if (auto sp = global_speech.find(key); sp != global_speech.end()) {
 			val = fmt->format(sp->second.express(), context, indexs, dict);
 		}
 		else if (auto func = strFuncs.find(key); func != strFuncs.end())
@@ -695,9 +697,19 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 			val = func->second();
 		}
 		else continue;
-		s.replace(l, r - l + 1, val);
-		r = l + val.length();
-		//调用本mod词条
+		nodes.push(val);
+		++chSign[1];
+		s.replace(lastL, lastR - lastL + 1, chSign);
+		DD::debugLog("插入标号" + to_string((unsigned char)s[lastL + 1]) + ":" + val);
+		lastR = lastL + 1;
+	}
+	while(!nodes.empty()) {
+		DD::debugLog("搜索标号" + to_string((unsigned char)chSign[1]) + ":" + nodes.top());
+		if (size_t pos{ s.find(chSign) }; pos != string::npos) {
+			s.replace(pos, 2, nodes.top());
+		}
+		--chSign[1];
+		nodes.pop();
 	}
 	return s;
 }

@@ -267,7 +267,7 @@ EVE_Enable(eventEnable){
 				}
 		}},
 	};
-	if ((console.DiceMaid = DD::getLoginID()))
+	if (console.DiceMaid = DD::getLoginID())
 	{
 		DiceDir = dirExe / ("Dice" + to_string(console.DiceMaid));
 		if (!exists(DiceDir)) {
