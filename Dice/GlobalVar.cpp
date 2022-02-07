@@ -42,7 +42,7 @@ HMODULE hDllModule = nullptr;
 
 bool msgSendThreadRunning = false;
 
-const dict_ci PlainMsg
+const dict_ci<string> PlainMsg
 {
 	{"strParaEmpty","参数不能为空×"},			//偷懒用万能回复
 	{"strParaIllegal","参数非法×"},			//偷懒用万能回复
@@ -394,10 +394,10 @@ const dict_ci PlainMsg
 Dice!众筹计划: https://afdian.net/@suhuiw4123)"
 	}
 };
-dict_ci GlobalMsg{ PlainMsg };
+dict_ci<string> GlobalMsg{ PlainMsg };
 
-dict_ci EditedMsg;
-const dict_ci GlobalComment{
+dict_ci<string> EditedMsg;
+const dict_ci<string> GlobalComment{
 	{"self", "自称，引用自strSelfCall"},
 	//{"strActionEmpty", "当前无用"},
 	{"strAddDiceValErr", "ww指令加骰值非法（过小）"},
@@ -471,7 +471,7 @@ const dict_ci GlobalComment{
 	//
 	{"strWhiteQQDenied","权限要求群管理或者信任1"},
 };
-const dict_ci HelpDoc = {
+const dict_ci<string> HelpDoc = {
 {"更新",R"(
 604:{转义嵌套}优化
 603:支持yaml读取
