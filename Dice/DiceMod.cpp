@@ -643,7 +643,7 @@ DiceModManager::DiceModManager() : helpdoc(HelpDoc),global_speech({
 	{ "Equal","=" }, }){
 }
 
-string DiceModManager::format(string s, AttrObject context, const AttrIndexs& indexs, const dict_ci& dict) const{
+string DiceModManager::format(string s, AttrObject context, const AttrIndexs& indexs, const dict_ci<string>& dict) const{
 	//直接重定向
 	if (s[0] == '&'){
 		const string key = s.substr(1);

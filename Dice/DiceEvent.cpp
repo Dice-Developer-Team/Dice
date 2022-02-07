@@ -2578,11 +2578,18 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "tojson") {
-			if (trusted < 1 && !console.is_self(fromChat.uid)) {
-				replyMsg("strWhiteQQDenied");
+			if (trusted < 4 && !console.is_self(fromChat.uid)) {
+				replyMsg("strNotAdmin");
 				return 1;
 			}
-			reply(UTF8toGBK(to_json(getUser(fromChat.uid).confs).dump()), false);
+			long long target{ readID() };
+			if (!target)target = fromChat.uid;
+			if(UserList.count(target)){
+				reply(UTF8toGBK(to_json(getUser(target).confs).dump()), false);
+			}
+			else {
+				reply("{self}无" + printUser(target) + "的用户记录×");
+			}
 			return 1;
 		}
 		if (strOption == "diss") {

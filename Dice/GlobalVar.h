@@ -96,17 +96,18 @@ extern bool msgSendThreadRunning;
 
 // 回复信息, 此内容可以通过CustomMsg功能修改而无需修改源代码
 extern std::shared_mutex GlobalMsgMutex;
-using dict_ci = std::unordered_map<string, string, hash_ci, equal_ci>;
-extern dict_ci GlobalMsg;
-extern const dict_ci PlainMsg;
+template<typename T = std::string>
+using dict_ci = std::unordered_map<string, T, hash_ci, equal_ci>;
+extern dict_ci<string> GlobalMsg;
+extern const dict_ci<string> PlainMsg;
 // 修改后的Global语句
-extern dict_ci EditedMsg;
+extern dict_ci<string> EditedMsg;
 // 语句注释
-extern const dict_ci GlobalComment;
+extern const dict_ci<string> GlobalComment;
 // 帮助文档
-extern const dict_ci HelpDoc;
+extern const dict_ci<string> HelpDoc;
 // 修改后的帮助文档
-inline dict_ci CustomHelp;
+inline dict_ci<string> CustomHelp;
 const std::string getMsg(const std::string& key, const AttrVars& tmp);
 const std::string getMsg(const std::string& key, AttrObject tmp = {});
 const std::string getComment(const std::string& key);

@@ -166,19 +166,19 @@ public:
 class ResList;
 class DiceModManager
 {
-    unordered_map<string, DiceMod, less_ci> modList;
+    dict_ci<DiceMod> modList;
     vector<pair<string, bool>>modIndex;
     //custom
-    unordered_map<string, std::shared_ptr<DiceMsgReply>, hash_ci, equal_ci> custom_reply;
+    dict_ci<ptr<DiceMsgReply>> custom_reply;
     //global
-    unordered_map<string, DiceSpeech, hash_ci, equal_ci> global_speech;
-    unordered_map<string, string, hash_ci, equal_ci> helpdoc;
-    unordered_map<string, DiceMsgOrder, hash_ci, equal_ci> msgorder;
-    unordered_map<string, std::shared_ptr<DiceMsgReply>, hash_ci, equal_ci> msgreply;
-    unordered_map<string, DiceMsgOrder, hash_ci, equal_ci> taskcall;
-    unordered_map<string, string, hash_ci, equal_ci> scripts;
+    dict_ci<DiceSpeech> global_speech;
+    dict_ci<string> helpdoc;
+    dict_ci<DiceMsgOrder> msgorder;
+    dict_ci<std::shared_ptr<DiceMsgReply>> msgreply;
+    dict_ci<DiceMsgOrder> taskcall;
+    dict_ci<string> scripts;
     //Trigger
-    unordered_map<string, AttrObject> triggers; //triggers by id
+    dict_ci<AttrObject> triggers; //triggers by id
     unordered_multimap<string, AttrObject> trigger_by_event;
 
     WordQuerier querier;
@@ -191,15 +191,14 @@ public:
 	DiceModManager();
     friend class CustomReplyApiHandler;
     bool isIniting{ false };
-    //std::unordered_map<string, string, hash_ci, equal_ci>& custom_msg() { return GlobalMsg; }
 	string format(string, AttrObject = {},
         const AttrIndexs& = MsgIndexs,
-        const unordered_map<string, string, hash_ci, equal_ci>& = EditedMsg) const;
+        const dict_ci<string>& = EditedMsg) const;
     string msg_get(const string& key)const;
     void msg_reset(const string& key)const;
     void msg_edit(const string& key, const string& val)const;
 
-    unordered_map<string, size_t>cntHelp;
+    dict_ci<size_t>cntHelp;
 	[[nodiscard]] string get_help(const string&) const;
     void _help(const shared_ptr<DiceJobDetail>&);
 	void set_help(const string&, const string&);
