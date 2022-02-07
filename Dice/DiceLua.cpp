@@ -564,9 +564,12 @@ int getUserToday(lua_State* L) {
 		lua_pushnumber(L, today->getJrrp(uid));
 	else if (AttrVar* p{ today->get_if(uid, item) })
 		lua_push_attr(L, *p);
-	else {
+	else if (top == 3) {
 		lua_pushnil(L);
 		lua_insert(L, 3);
+	}
+	else {
+		lua_pushinteger(L, 0);
 	}
 	return 1;
 }
