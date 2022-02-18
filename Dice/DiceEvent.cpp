@@ -1326,10 +1326,7 @@ int FromMsg::InnerOrder() {
 	if (WordCensor()) {
 		return 1;
 	}
-	if (strLowerMessage.substr(intMsgCnt, 8) == "setreply") {
-		return 0;
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 7) == "welcome") {
+	if (strLowerMessage.substr(intMsgCnt, 7) == "welcome") {
 		intMsgCnt += 7;
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
@@ -4409,6 +4406,9 @@ bool FromMsg::DiceFilter()
 		return true;
 	}
 	if (isSummoned && (strMsg.empty() || strMsg == strSummon))replyMsg("strSummonEmpty");
+	if (isCalled && WordCensor()) {
+		return true;
+	}
 	return false;
 }
 bool FromMsg::WordCensor() {

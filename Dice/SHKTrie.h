@@ -92,7 +92,7 @@ public:
 				leaf = p;
 			}
 		}
-		return leaf ? leaf->value : std::make_shared<Val>();
+		return leaf ? leaf->value : shared_ptr<Val>();
 	}
 	bool match_head(const _String& s, stack<Val>& res)const {
 		const Node* p = &root;

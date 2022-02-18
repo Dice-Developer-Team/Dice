@@ -934,7 +934,7 @@ void DiceModManager::reply_show(const shared_ptr<DiceJobDetail>& msg) {
 }
 
 bool DiceModManager::listen_order(DiceJobDetail* msg) {
-	if (shared_ptr<string> nameOrder; nameOrder = gOrder.match_head(msg->vars.get_str("fromMsg"))) {
+	if (shared_ptr<string> nameOrder{ gOrder.match_head(msg->vars.get_str("fromMsg")) }) {
 		return ((FromMsg*)msg)->WordCensor()
 			|| msgorder[*nameOrder].exec((FromMsg*)msg);
 	}

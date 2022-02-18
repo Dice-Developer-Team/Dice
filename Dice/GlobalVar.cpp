@@ -611,8 +611,8 @@ Type=[回复性质](Reply/Order)
 概率`prob:百分比` 依概率触发
 冷却计时`cd:秒数` 非冷却状态触发，触发后计算冷却
 当日计数`today:上限` 未达上限触发，触发后计数+1
-骰娘识别`dicemaid:only` 仅Dice!骰娘触发
 阈值`user_var``grp_var``self_var`变量满足指定条件触发
+骰娘识别`dicemaid:only` 仅Dice!骰娘触发
 `dicemaid:off` Dice!骰娘不触发
 )" },
 {"回复列表","{strSelfName}的回复触发词列表:{list_reply_deck}"},
