@@ -77,6 +77,19 @@ vector<string> split(const string& str, const string& sep) {
     if (l < str.length()) res.push_back(str.substr(l));
     return res;
 }
+std::unordered_map<string, string> splitPairs(const string& s, char delim, char br) {
+    std::unordered_map<string, string>dict;
+    std::stringstream ss(s);
+    string line;
+    size_t pos{ 0 };
+    while (std::getline(ss, line, br)) {
+        if ((pos = line.find(delim)) != string::npos) {
+            dict[line.substr(0, pos)] = line.substr(pos + 1);
+        }
+        else dict[line] = {};
+    }
+    return dict;
+}
 
 string convert_w2a(const char16_t* wch)
 {

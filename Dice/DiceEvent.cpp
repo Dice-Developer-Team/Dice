@@ -2043,6 +2043,7 @@ int FromMsg::InnerOrder() {
 				}
 				else if (DiceMsgReply::sMode.count(attr)) {	//Mode=Key
 					size_t mode{ DiceMsgReply::sMode[attr] };
+					keyword = readUntilTab();
 					if (mode == 3) {
 						try
 						{
@@ -2056,7 +2057,7 @@ int FromMsg::InnerOrder() {
 						}
 					}
 					trigger->keyMatch[mode] = std::make_unique<vector<string>>(
-						getLines(readUntilTab(),'|'));
+						getLines(keyword, '|'));
 				}
 				else if (DiceMsgReply::sEcho.count(attr)) {	//Echo=Reply
 					trigger->echo = (DiceMsgReply::Echo)DiceMsgReply::sEcho[attr];

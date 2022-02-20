@@ -179,15 +179,27 @@ std::set<T> fread(ifstream& fin)
 }
 
 template <typename T1, typename T2>
-void readini(string& line, std::pair<T1, T2>& p)
+void readini(string& line, std::pair<T1, T2>& p, char delim = '=')
 {
-	const int pos = line.find('=');
+	const size_t pos = line.find(delim);
 	if (pos == std::string::npos)return;
 	std::istringstream sin(line.substr(0, pos));
 	sin >> p.first;
 	sin.clear();
 	sin.str(line.substr(pos + 1));
 	sin >> p.second;
+}
+template <typename T1 = std::string, typename T2 = std::string>
+std::pair<T1, T2> readini(string& line, char delim = '='){
+	const size_t pos = line.find(delim);
+	std::pair<T1, T2> p;
+	std::istringstream sin(line.substr(0, pos));
+	sin >> p.first;
+	if (pos == std::string::npos)return p;
+	sin.clear();
+	sin.str(line.substr(pos + 1));
+	sin >> p.second;
+	return p;
 }
 
 void readini(ifstream& fin, std::string& s);

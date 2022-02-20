@@ -722,7 +722,8 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 		lastR = lastL + 1;
 	}
 	while(!nodes.empty()) {
-		if (size_t pos{ s.find(chSign) }; pos != string::npos) {
+		size_t pos{ 0 };
+		while ((pos = s.find(chSign)) != string::npos) {
 			string& key{ nodes.top() };
 			string val{ "{" + key + "}" };
 			if (key == "{" || key == "}") {
@@ -740,25 +741,47 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 			}
 			//局部屏蔽全局
 			else if (auto sp = global_speech.find(key); sp != global_speech.end()) {
-				val = fmt->format(sp->second.express(), context, indexs, dict);
+				val = format(sp->second.express(), context, indexs, dict);
 			}
 			else if (size_t colon{ key.find(':') }; colon != string::npos) {
 				string method{ key.substr(0,colon) };
 				string para{ key.substr(colon + 1) };
 				if (method == "help") {
-					val = fmt->format(fmt->get_help(para), context, indexs, dict);
+					val = format(get_help(para), context, indexs, dict);
 				}
 				else if (method == "sample") {
 					vector<string> samples{ split(para,"|") };
 					if (samples.empty())val = "";
 					else
-						val = fmt->format(samples[RandomGenerator::Randint(0, samples.size() - 1)], context, indexs, dict);
+						val = format(samples[RandomGenerator::Randint(0, samples.size() - 1)], context, indexs, dict);
+				}
+				else if (method == "print") {
+					unordered_map<string, string>paras{ splitPairs(para,'=','&') };
+					if (paras.count("uid")) {
+						if (paras["uid"].empty())val = printUser(context.get_ll("uid"));
+						else val = printUser(AttrVar(paras["uid"]).to_ll());
+					}
+					else if (paras.count("gid")) {
+						if (paras["gid"].empty())val = printGroup(context.get_ll("gid"));
+						else val = printGroup(AttrVar(paras["gid"]).to_ll());
+					}
+					else val = {};
 				}
 				else if (method == "vary") {
-					vector<string> samples{ split(para,"|") };
-					if (samples.empty())val = "";
-					else
-						val = fmt->format(samples[RandomGenerator::Randint(0, samples.size() - 1)], context, indexs, dict);
+					DD::debugLog("method:vary");
+					auto [head, strVary] = readini<string, string>(para, '?');
+					if (head == "uid") {
+						DD::debugLog("switch:uid");
+						unordered_map<string, string>paras{ splitPairs(strVary,'=','&') };
+						if (auto it{ paras.find(context.get_str("uid"))}; it != paras.end()) {
+							val = format(it->second);
+						}
+						else if ((it = paras.find("else")) != paras.end()) {
+							val = format(it->second);
+						}
+						else val = {};
+					}
+					else val = {};
 				}
 			}
 			else if (auto func = strFuncs.find(key); func != strFuncs.end())

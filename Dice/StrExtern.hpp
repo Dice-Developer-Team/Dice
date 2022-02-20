@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 using std::string;
 using std::wstring;
@@ -42,6 +43,7 @@ int count_char(const string& s, char ch);
 
 vector<string> getLines(const string& s, char delim = '\n');
 vector<string> split(const string&, const string&);
+std::unordered_map<string,string> splitPairs(const string&, char delim = '=', char br = '\n');
 
 template<typename Con>
 void splitID(const string& str , Con& list) {
