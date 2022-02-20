@@ -73,15 +73,14 @@ public:
 
 class DiceMsgReply {
 public:
-    string keyword;
+    string title;
     enum class Type { Reply, Order };   //决定受控制的开关类型
     static enumap<string> sType;
-    enum class Mode { Match, Prefix, Search, Regex };    //匹配模式
-    static enumap<string> sMode;
+    std::unique_ptr<vector<string>>keyMatch[4];
+    static enumap_ci sMode;
     enum class Echo { Text, Deck, Lua };    //回复形式
     static enumap<string> sEcho;
     Type type{ Type::Reply };
-    Mode mode{ Mode::Match };
     Echo echo{ Echo::Deck };
     DiceTriggerLimit limit;
     string text;
@@ -130,10 +129,9 @@ protected:
     string mod_ver;
     unsigned int mod_build{ 0 };
     unsigned int mod_Dice_build{ 0 };
-    using dir = map<string, string, less_ci>;
-    dir mod_helpdoc;
-    map<string, vector<string>> mod_public_deck;
-    using replys = map<string, DiceMsgReply>;
+    dict_ci<string> mod_helpdoc;
+    dict_ci<vector<string>> mod_public_deck;
+    using replys = dict_ci<DiceMsgReply>;
     replys mod_msg_reply;
     /*map<string, DiceGenerator> m_generator;*/
 public:
@@ -153,8 +151,8 @@ public:
     MOD_BUILD(string, ver)
     MOD_BUILD(unsigned int, build)
     MOD_BUILD(unsigned int, Dice_build)
-    MOD_BUILD(dir, helpdoc)
-    MOD_BUILD(replys, msg_reply)
+    //MOD_BUILD(dict_ci<string>, helpdoc)
+   // MOD_BUILD(replys, msg_reply)
 };
 
 class DiceModConf {
@@ -174,7 +172,7 @@ class DiceModManager
     dict_ci<DiceSpeech> global_speech;
     dict_ci<string> helpdoc;
     dict_ci<DiceMsgOrder> msgorder;
-    dict_ci<std::shared_ptr<DiceMsgReply>> msgreply;
+    dict_ci<ptr<DiceMsgReply>> final_msgreply;
     dict_ci<DiceMsgOrder> taskcall;
     dict_ci<string> scripts;
     //Trigger
@@ -184,9 +182,12 @@ class DiceModManager
     WordQuerier querier;
     TrieG<char, less_ci> gOrder;
     AttrObjects mod_reply_list;
-    set<string, less_ci> reply_regex;
-    TrieG<char16_t, less_ci> gReplySearcher;
+    dict_ci<ptr<DiceMsgReply>> reply_match;
+    dict_ci<ptr<DiceMsgReply>> reply_prefix;
+    dict_ci<ptr<DiceMsgReply>> reply_search;
+    dict<ptr<DiceMsgReply>> reply_regex;
     TrieG<char, less_ci> gReplyPrefix;
+    TrieG<char16_t, less_ci> gReplySearcher;
 public:
 	DiceModManager();
     friend class CustomReplyApiHandler;
@@ -207,7 +208,9 @@ public:
     bool listen_order(DiceJobDetail*);
     bool listen_reply(FromMsg*);
     string list_reply()const;
-    void set_reply(const string&, DiceMsgReply& reply);
+    void set_reply(const string&, ptr<DiceMsgReply> reply);
+    void reply_insert(const string&, ptr<DiceMsgReply> reply);
+    void reply_erase(ptr<DiceMsgReply> reply);
     bool del_reply(const string&);
     void save_reply();
     void reply_get(const shared_ptr<DiceJobDetail>&);

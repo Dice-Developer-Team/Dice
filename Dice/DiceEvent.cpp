@@ -2025,26 +2025,28 @@ int FromMsg::InnerOrder() {
 				replyMsg("strNotAdmin");
 				return -1;
 			}
-			DiceMsgReply trigger;
-			string key;
+			ptr<DiceMsgReply> trigger{ make_shared<DiceMsgReply>() };
+			string keyword;
 			string attr{ readToColon() };
 			while (!attr.empty()) {
 				if (intMsgCnt < strMsg.length() && (strMsg[intMsgCnt] == '=' || strMsg[intMsgCnt] == ':'))intMsgCnt++;
-				if (attr == "Type") {	//Type=Order|Reply
+				if (attr == "Title") {
+					trigger->title = readUntilTab();
+				}
+				else if (attr == "Type") {	//Type=Order|Reply
 					string type{ readUntilTab() };
-					if(DiceMsgReply::sType.count(type))trigger.type = (DiceMsgReply::Type)DiceMsgReply::sType[type];
+					if(DiceMsgReply::sType.count(type))trigger->type = (DiceMsgReply::Type)DiceMsgReply::sType[type];
 				}
 				else if (attr == "Limit") { //trigger limit
 					string content{ readUntilTab() };
-					trigger.limit.parse(content);
+					trigger->limit.parse(content);
 				}
 				else if (DiceMsgReply::sMode.count(attr)) {	//Mode=Key
-					trigger.mode = (DiceMsgReply::Mode)DiceMsgReply::sMode[attr];
-					trigger.keyword = fmt->format(key = readUntilTab());
-					if (trigger.mode == DiceMsgReply::Mode::Regex) {
+					size_t mode{ DiceMsgReply::sMode[attr] };
+					if (mode == 3) {
 						try
 						{
-							std::wregex re(convert_a2realw(key.c_str()), std::regex::ECMAScript);
+							std::wregex re(convert_a2realw(keyword.c_str()), std::regex::ECMAScript);
 						}
 						catch (const std::regex_error& e)
 						{
@@ -2053,32 +2055,35 @@ int FromMsg::InnerOrder() {
 							return -1;
 						}
 					}
+					trigger->keyMatch[mode] = std::make_unique<vector<string>>(
+						getLines(readUntilTab(),'|'));
 				}
 				else if (DiceMsgReply::sEcho.count(attr)) {	//Echo=Reply
-					trigger.echo = (DiceMsgReply::Echo)DiceMsgReply::sEcho[attr];
-					if (trigger.echo == DiceMsgReply::Echo::Deck) {
+					trigger->echo = (DiceMsgReply::Echo)DiceMsgReply::sEcho[attr];
+					if (trigger->echo == DiceMsgReply::Echo::Deck) {
 						while (intMsgCnt < strMsg.length()) {
 							string item = readItem();
-							if (!item.empty())trigger.deck.push_back(item);
+							if (!item.empty())trigger->deck.push_back(item);
 						}
 					}
 					else {
-						if(trigger.echo== DiceMsgReply::Echo::Lua && trusted < 5) {
+						if(trigger->echo== DiceMsgReply::Echo::Lua && trusted < 5) {
 							replyMsg("strNotMaster");
 							return -1;
 						}
-						trigger.text = readRest();
+						trigger->text = readRest();
 					}
 					break;
 				}
 				attr = readToColon();
 			}
-			if (key.empty()) {
+			if (keyword.empty()) {
 				replyMsg("strReplyKeyEmpty");
 			}
 			else {
-				vars["key"] = key;
-				fmt->set_reply(key, trigger);
+				if (trigger->title.empty())trigger->title = keyword;
+				vars["key"] = keyword;
+				fmt->set_reply(trigger->title, trigger);
 				replyMsg("strReplySet");
 			}
 			return 1;
@@ -2107,10 +2112,11 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		intMsgCnt = intMsgTmpCnt;
-		DiceMsgReply rep;
+		ptr<DiceMsgReply> rep{ make_shared<DiceMsgReply>() };
+		int MatchMode{ 0 };
 		if (strLowerMessage.substr(intMsgCnt, 2) == "re") {
 			intMsgCnt += 2;
-			rep.mode = DiceMsgReply::Mode::Regex;
+			MatchMode = 3;
 		}
 		if (trusted < 4) {
 			replyMsg("strNotAdmin");
@@ -2121,8 +2127,8 @@ int FromMsg::InnerOrder() {
 			reply(fmt->get_help("reply"));
 			return -1;
 		}
-		
-		if(rep.mode == DiceMsgReply::Mode::Regex)
+		rep->keyMatch[MatchMode] = std::make_unique<vector<string>>(getLines(key, '|'));
+		if(MatchMode == 3)
 		{
 			try
 			{
@@ -2135,8 +2141,8 @@ int FromMsg::InnerOrder() {
 				return -1;
 			}
 		}
-		readItems(rep.deck);
-		if (rep.deck.empty()) {
+		readItems(rep->deck);
+		if (rep->deck.empty()) {
 			fmt->del_reply(key);
 			replyMsg("strReplyDel");
 		}

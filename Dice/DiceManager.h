@@ -162,13 +162,15 @@ public:
             nlohmann::json j = nlohmann::json::object();
             j["code"] = 0;
             j["msg"] = "ok";
-            j["count"] = fmt->msgreply.size();
+            j["count"] = fmt->custom_reply.size();
 			j["data"] = nlohmann::json::array();
-            for (const auto& [key,val] : fmt->msgreply)
+            for (const auto& [key,val] : fmt->custom_reply)
             {
                 j["data"].push_back({ {"name", GBKtoUTF8(key)} ,
                     {"type", GBKtoUTF8(val->sType[(int)val->type])},
-                    {"mode", GBKtoUTF8(val->sMode[(int)val->mode])},
+                    {"mode", val->keyMatch[0] ? "Match" :
+                    val->keyMatch[1] ? "Prefix" :
+                    val->keyMatch[2] ? "Search" : "Regex"},
                     {"limit", GBKtoUTF8(val->limit.print())},
                     {"echo", GBKtoUTF8(val->sEcho[(int)val->echo])},
                     {"value", GBKtoUTF8(val->show_ans())} });
@@ -200,22 +202,9 @@ public:
                 for(const auto& item: j["data"])
                 {   
                     string key{ UTF8toGBK(item["name"].get<std::string>()) };
-                    DiceMsgReply trigger;
-                    trigger.type = (DiceMsgReply::Type)DiceMsgReply::sType[item["type"].get<std::string>()];
-                    trigger.mode = (DiceMsgReply::Mode)DiceMsgReply::sMode[item["mode"].get<std::string>()];
-                    trigger.limit.parse(UTF8toGBK(item["limit"].get<std::string>()));
-                    trigger.echo = (DiceMsgReply::Echo)DiceMsgReply::sEcho[item["echo"].get<std::string>()];
-                    if (trigger.echo == DiceMsgReply::Echo::Deck) {
-                        auto& deck = trigger.deck = {};
-                        auto v = item["value"].get<std::vector<std::string>>();
-                        for (const auto& i : v)
-                        {
-                            deck.push_back(UTF8toGBK(i));
-                        }
-                    }
-                    else {
-                        trigger.text = UTF8toGBK(item["value"].get<std::string>());
-                    }
+                    ptr<DiceMsgReply> trigger{ std::make_shared<DiceMsgReply>() };
+                    trigger->title = key;
+                    trigger->readJson(item);
                     fmt->set_reply(key, trigger);
                 }
             } 

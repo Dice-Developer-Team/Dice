@@ -1,6 +1,6 @@
 /*
  * ×Ô¶¨ÒåÈÝÆ÷
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2022 String.Empty
  */
 #pragma once
 #include <string>
@@ -70,6 +70,10 @@ struct equal_ci
 		return str1.length() == str2.length();
 	}
 };
+template<typename T = std::string>
+using dict = std::unordered_map<string, T>;
+template<typename T = std::string>
+using dict_ci = std::unordered_map<string, T, hash_ci, equal_ci>;
 
 template <typename TKey, typename TVal1, typename TVal2, typename Hash, typename Equal>
 void merge(unordered_map<TKey, TVal1, Hash, Equal>& m1, const unordered_map<TKey, TVal2, Hash, Equal>& m2)
@@ -92,7 +96,7 @@ template <typename T>
 class enumap
 {
 public:
-	typedef map<T, int> mapT;
+	typedef unordered_map<T, int> mapT;
 	typedef std::initializer_list<T> initlist;
 	vector<T> ary;
 	mapT mVal;
@@ -118,6 +122,38 @@ public:
 	}
 
 	const T& operator[](size_t index) const
+	{
+		return ary[index];
+	}
+};
+class enumap_ci
+{
+public:
+	typedef std::initializer_list<string> initlist;
+	vector<string> ary;
+	dict_ci<int> mVal;
+
+	enumap_ci(initlist items) : ary{ items }
+	{
+		int index = 0;
+		for (auto& it : items)
+		{
+			mVal.emplace(it, index++);
+		}
+	}
+
+	[[nodiscard]] bool count(const string& val) const
+	{
+		return mVal.find(val) != mVal.end();
+	}
+
+	size_t operator[](const string& val) const
+	{
+		if (auto it = mVal.find(val); it != mVal.end())return it->second;
+		return -1;
+	}
+
+	const string& operator[](size_t index) const
 	{
 		return ary[index];
 	}

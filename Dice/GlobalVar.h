@@ -96,8 +96,6 @@ extern bool msgSendThreadRunning;
 
 // 回复信息, 此内容可以通过CustomMsg功能修改而无需修改源代码
 extern std::shared_mutex GlobalMsgMutex;
-template<typename T = std::string>
-using dict_ci = std::unordered_map<string, T, hash_ci, equal_ci>;
 extern dict_ci<string> GlobalMsg;
 extern const dict_ci<string> PlainMsg;
 // 修改后的Global语句

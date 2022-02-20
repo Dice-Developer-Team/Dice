@@ -473,6 +473,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
+605:关键词回复多对一
 604:{转义嵌套}优化
 603:支持yaml读取
 602:lua支持元表读写与方法

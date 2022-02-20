@@ -259,14 +259,14 @@ void Console::loadNotice()
 			return;
 		}
 		catch (const std::exception& e) {
-			console.log(string("解析/conf/CustomMsgReply.json出错:") + e.what(), 1);
+			console.log(string("解析/conf/NoticeList.json出错:") + e.what(), 1);
 		}
 	}
 	if (NoticeList.empty() && loadFile(DiceDir / "conf" / "NoticeList.txt", NoticeList) < 1)
 	{
-		console.setNotice({ 0,863062599, 0 }, 0b100000);
-		console.setNotice({ 0,192499947, 0 }, 0b100000);
-		console.setNotice({ 0,754494359, 0 }, 0b100000);
+		console.setNotice({ 0,863062599 }, 0b100000);
+		console.setNotice({ 0,192499947 }, 0b100000);
+		console.setNotice({ 0,754494359 }, 0b100000);
 	}
 }
 
