@@ -902,8 +902,8 @@ bool DiceModManager::listen_reply(FromMsg* msg) {
 		}
 	}
 	//模糊匹配禁止自我触发
-	if (vector<string>res; (*msg)["uid"] != console.DiceMaid && gReplySearcher.search(convert_a2w(strMsg.c_str()), res)) {
-		for (const auto& word : res) {
+	if (vector<string>vSearch; msg->vars.get_ll("uid") != console.DiceMaid && gReplySearcher.search(convert_a2w(strMsg.c_str()), vSearch)) {
+		for (const auto& word : vSearch) {
 			if (reply_search.count(word)
 				&& reply_search[word]->exec(msg))return true;
 		}
@@ -960,14 +960,16 @@ void DiceModManager::reply_insert(const string& key, ptr<DiceMsgReply> reply) {
 	}
 	if (reply->keyMatch[1]) {
 		for (auto& word : *reply->keyMatch[1]) {
-			reply_prefix[fmt->format(word)] = reply;
-			gReplyPrefix.add(fmt->format(word), key);
+			string kw{ fmt->format(word) };
+			reply_prefix[kw] = reply;
+			gReplyPrefix.add(kw, kw);
 		}
 	}
 	if (reply->keyMatch[2]) {
 		for (auto& word : *reply->keyMatch[2]) {
-			reply_search[fmt->format(word)] = reply;
-			gReplySearcher.add(convert_a2w(fmt->format(word).c_str()), key);
+			string kw{ fmt->format(word) };
+			reply_search[kw] = reply;
+			gReplySearcher.add(convert_a2w(kw.c_str()), kw);
 		}
 	}
 	if (reply->keyMatch[3]) {
