@@ -309,7 +309,6 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			else if (!item.is_table())continue;
 			else if (VarArray v{ item.to_list() }; !v.empty()) {
 				cd_timer.emplace_back(type, name, (time_t)v[0].to_ll());
-				continue;
 			}
 			for (auto& [subkey, value] : item.to_dict()) {
 				if (CDConfig::eType.count(subkey)) {
@@ -352,7 +351,6 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			else if (!item.is_table())continue;
 			else if (VarArray v{ item.to_list() }; !v.empty()) {
 				today_cnt.emplace_back(type, name, (time_t)v[0].to_ll());
-				continue;
 			}
 			for (auto& [subkey, value] : item.to_dict()) {
 				if (CDConfig::eType.count(subkey)) {
@@ -701,7 +699,7 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 		}
 	}
 	stack<string>nodes;
-	char chSign[3]{ char(0xAA),char(0xA0),'\0' };
+	char chSign[3]{ char(0xAA),char(0xAA),'\0' };
 	size_t lastL{ 0 }, lastR{ 0 };
 	while ((lastR = s.find('}', ++lastR)) != string::npos
 		&& (lastL = s.rfind('{', lastR)) != string::npos) {
@@ -1243,14 +1241,6 @@ void DiceModManager::init() {
 	}
 	for (const auto& [key, order] : msgorder) {
 		gOrder.insert(key, key);
-	}
-	for (const auto & [key, val] : mod_reply_list) {
-		ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
-		reply->title = key;
-		reply->from_obj(val);
-		if (!reply->title.empty()) {
-			final_msgreply[key] = reply;
-		}
 	}
 	for (const auto& [key, reply] : final_msgreply) {
 		reply_insert(key, reply);

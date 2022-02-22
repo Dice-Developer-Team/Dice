@@ -953,6 +953,14 @@ void DiceModManager::loadLuaMod(const vector<fs::path>& files, ResList& res) {
 	}
 	if (!mod_reply_list.empty()) {
 		res << "注册reply" + to_string(mod_reply_list.size()) + "项";
+		for (const auto& [key, val] : mod_reply_list) {
+			if (!key.empty()) {
+				ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
+				reply->title = key;
+				reply->from_obj(val);
+				final_msgreply[key] = reply;
+			}
+		}
 	}
 	if (!err.empty()) {
 		res << "mod文件读取错误:" + err.show("\n");
