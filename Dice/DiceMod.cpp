@@ -463,7 +463,7 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 			: msg->fromChat };
 		for (auto& conf : cd_timer) {
 			string key{ conf.key };
-			if (key.empty())key = msg->vars["keyword"].to_str();
+			if (key.empty())key = msg->vars.get_str("reply_title");
 			chatInfo chattype{ conf.type == CDType::Chat ? chat :
 				conf.type == CDType::User ? chatInfo(msg->fromChat.uid) : chatInfo()
 			};
@@ -471,7 +471,7 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 		}
 		for (auto& conf : today_cnt) {
 			string key{ conf.key };
-			if (key.empty())key = msg->vars["keyword"].to_str();
+			if (key.empty())key = msg->vars.get_str("reply_title");
 			chatInfo chattype{ conf.type == CDType::Chat ? chat :
 				conf.type == CDType::User ? chatInfo(msg->fromChat.uid) : chatInfo()
 			};
@@ -723,9 +723,10 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 	}
 	while(!nodes.empty()) {
 		size_t pos{ 0 };
-		while ((pos = s.find(chSign)) != string::npos) {
+		string val;
+		if ((pos = s.find(chSign)) != string::npos) {
 			string& key{ nodes.top() };
-			string val{ "{" + key + "}" };
+			val = "{" + key + "}";
 			if (key == "{" || key == "}") {
 				val = key;
 			}
@@ -784,11 +785,12 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 					else val = {};
 				}
 			}
-			else if (auto func = strFuncs.find(key); func != strFuncs.end())
-			{
+			else if (auto func = strFuncs.find(key); func != strFuncs.end()){
 				val = func->second();
 			}
-			s.replace(pos, 2, val);
+			do{
+				s.replace(pos, 2, val);
+			} while ((pos = s.find(chSign)) != string::npos);
 		}
 		--chSign[1];
 		nodes.pop();
@@ -821,8 +823,7 @@ void DiceModManager::msg_edit(const string& key, const string& val)const {
 	saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
 }
 
-string DiceModManager::get_help(const string& key) const
-{
+string DiceModManager::get_help(const string& key) const{
 	if (const auto it = helpdoc.find(key); it != helpdoc.end())
 	{
 		return format(it->second, {}, {}, helpdoc);
@@ -892,24 +893,21 @@ void DiceModManager::rm_help(const string& key)
 
 bool DiceModManager::listen_reply(FromMsg* msg) {
 	string& strMsg{ msg->strMsg };
-	if (final_msgreply.count(strMsg) && final_msgreply[strMsg]->exec(msg)) {
+	if (reply_match.count(strMsg) && reply_match[strMsg]->exec(msg)) {
 		return true;
 	}
 	if (stack<string> sPrefix; gReplyPrefix.match_head(msg->strMsg, sPrefix)) {
 		while (!sPrefix.empty()){
-			string key{ sPrefix.top() };
+			if (reply_prefix.count(sPrefix.top())
+				&& reply_prefix[sPrefix.top()]->exec(msg))return true;
 			sPrefix.pop();
-			if (!final_msgreply.count(key))continue;
-			ptr<DiceMsgReply> reply{ final_msgreply[key] };
-			if (reply->exec(msg))return true;
 		}
 	}
 	//模糊匹配禁止自我触发
 	if (vector<string>res; (*msg)["uid"] != console.DiceMaid && gReplySearcher.search(convert_a2w(strMsg.c_str()), res)) {
-		for (const auto& key : res) {
-			if (!final_msgreply.count(key) || msg->strMsg.find(key) == string::npos)continue;
-			ptr<DiceMsgReply> reply{ final_msgreply[key] };
-			if (reply->exec(msg))return true;
+		for (const auto& word : res) {
+			if (reply_search.count(word)
+				&& reply_search[word]->exec(msg))return true;
 		}
 	}
 	//regex
@@ -1184,6 +1182,7 @@ int DiceModManager::load(ResList& resLog){
 		}
 	}
 	//custom
+	merge(global_speech, EditedMsg);
 	if (std::filesystem::path fCustomHelp{ DiceDir / "conf" / "CustomHelp.json" }; std::filesystem::exists(fCustomHelp)) {
 		if (loadJMap(fCustomHelp, CustomHelp) == -1) {
 			resLog << UTF8toGBK(fCustomHelp.u8string()) + "解析失败！";
@@ -1193,8 +1192,7 @@ int DiceModManager::load(ResList& resLog){
 		}
 	}
 	//custom_reply
-	json jFile = freadJson(DiceDir / "conf" / "CustomMsgReply.json");
-	if (!jFile.empty()) {
+	if (json jFile = freadJson(DiceDir / "conf" / "CustomMsgReply.json"); !jFile.empty()) {
 		try {
 			for (auto reply = jFile.cbegin(); reply != jFile.cend(); ++reply) {
 				if (std::string key = UTF8toGBK(reply.key()); !key.empty()) {
