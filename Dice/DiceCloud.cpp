@@ -30,7 +30,7 @@ namespace Cloud
 {
 	void heartbeat()
 	{
-		const string strVer = GBKtoUTF8(string(Dice_Ver));
+		static const string strVer = GBKtoUTF8(string(Dice_Ver));
 		const string data = "&masterID=" + to_string(console.master()) + "&Ver=" +
 			strVer + "&isGlobalOn=" + to_string(!console["DisabledGlobal"]) + "&isPublic=" +
 			to_string(!console["Private"]) + "&isVisible=" + to_string(console["CloudVisible"]);

@@ -760,13 +760,15 @@ int httpGet(lua_State* L) {
 	return 2;
 }
 int httpPost(lua_State* L) {
+	if (lua_gettop(L) < 2)return 0;
 	string url{ lua_tostring(L,1) };
-	string json{ lua_tostring(L,2) };
+	string json{ lua_to_string(L,2) };
 	if (url.empty() || json.empty()) {
 		return 0;
 	}
+	string type{ lua_gettop(L) > 2 ? lua_tostring(L,3) : "application/json" };
 	string ret;
-	lua_pushboolean(L, Network::POST(url, json, "application/json", ret));
+	lua_pushboolean(L, Network::POST(url, json, type, ret));
 	lua_push_string(L, ret);
 	return 2;
 }
