@@ -270,31 +270,31 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 		else if (key == "user_id") {
 			if (!item.is_table())continue;
 			VarTable tab{ item.to_table() };
-			if (tab.get_dict().count("not")) {
+			if (tab.get_dict().count("nor")) {
 				user_id_negative = true;
-				tab = tab.get_dict()["not"]->to_table();
+				tab = tab.get_dict()["nor"]->to_table();
 			}
 			for (auto id : tab.get_list()) {
 				user_id.emplace(id->to_ll());
 			}
 			if (!user_id.empty()) {
 				limits << (user_id_negative ? "user_id:!" : "user_id:") + listID(user_id);
-				notes << (user_id_negative ? "- 以下用户不触发: " : "- 仅以下用户触发: ") + listID(user_id);
+				notes << (user_id_negative ? "- 不触发用户名单: " : "- 仅触发用户名单: ") + listID(user_id);
 			}
 		}
 		else if (key == "grp_id") {
 			if (!item.is_table())continue;
 			VarTable tab{ item.to_table() };
-			if (tab.get_dict().count("not")) {
+			if (tab.get_dict().count("nor")) {
 				grp_id_negative = true;
-				tab = tab.get_dict()["not"]->to_table();
+				tab = tab.get_dict()["nor"]->to_table();
 			}
 			for (auto id : tab.get_list()) {
 				grp_id.emplace(id->to_ll());
 			}
 			if (!grp_id.empty()) {
 				limits << (grp_id_negative ? "grp_id:!" : "grp_id:") + listID(grp_id);
-				notes << (grp_id_negative ? "- 以下群聊不触发: " : "- 仅以下群聊触发: ") + listID(grp_id);
+				notes << (grp_id_negative ? "- 不触发群聊名单: " : "- 仅触发群聊名单: ") + listID(grp_id);
 			}
 		}
 		else if (key == "cd") {
