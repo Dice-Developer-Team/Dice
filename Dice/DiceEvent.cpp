@@ -2044,18 +2044,6 @@ int FromMsg::InnerOrder() {
 				else if (DiceMsgReply::sMode.count(attr)) {	//Mode=Key
 					size_t mode{ DiceMsgReply::sMode[attr] };
 					keyword = readUntilTab();
-					if (mode == 3) {
-						try
-						{
-							std::wregex re(convert_a2realw(keyword.c_str()), std::regex::ECMAScript);
-						}
-						catch (const std::regex_error& e)
-						{
-							vars["err"] = e.what();
-							replyMsg("strRegexInvalid");
-							return -1;
-						}
-					}
 					trigger->keyMatch[mode] = std::make_unique<vector<string>>(
 						getLines(keyword, '|'));
 				}
@@ -3670,9 +3658,10 @@ int FromMsg::InnerOrder() {
 		}
 		string attr = "ÀíÖÇ";
 		int intSan = 0;
-		CharaCard* pc{ PList.count(fromChat.uid) ? &getPlayer(fromChat.uid)[fromChat.gid] : nullptr };
+		CharaCard* pc{ nullptr };
 		if (readNum(intSan)) {
-			if (pc && pc->count(attr)) {
+			if (PList.count(fromChat.uid)
+				&& (pc = &getPlayer(fromChat.uid)[fromChat.gid])->count(attr)) {
 				intSan = pc->call(attr);
 			}
 			else {
