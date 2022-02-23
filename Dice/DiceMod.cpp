@@ -585,7 +585,7 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 }
 void DiceMsgReply::readJson(const json& j) {
 	try{
-		if (j.count("key"))title = fmt->format(UTF8toGBK(j["key"].get<string>()));
+		if (j.count("key"))title = UTF8toGBK(j["key"].get<string>());
 		if (j.count("type"))type = (Type)sType[j["type"].get<string>()];
 		if (j.count("mode"))keyMatch[sMode[j["mode"].get<string>()]]
 			= std::make_unique<vector<string>>(getLines(title, '|'));
