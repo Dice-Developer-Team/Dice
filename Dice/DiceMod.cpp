@@ -674,7 +674,7 @@ string DiceSpeech::express()const {
 	return {};
 }
 
-DiceModManager::DiceModManager() : helpdoc(HelpDoc),global_speech({
+DiceModManager::DiceModManager() : global_speech({
 	{ "br","\n" },
 	{ "sp"," " },
 	{ "FormFeed","\f" },
@@ -1080,6 +1080,7 @@ string DiceModManager::script_path(const string& name)const {
 
 int DiceModManager::load(ResList& resLog){
 	merge(global_speech, PlainMsg);
+	helpdoc = HelpDoc;
 	//∂¡»°mod
 	vector<std::filesystem::path> sModFile;
 	vector<string> sModErr;
@@ -1260,13 +1261,17 @@ void DiceModManager::init() {
 	gReplyPrefix.make_fail();
 	isIniting = false;
 }
-void DiceModManager::clear()
-{
+void DiceModManager::clear(){
 	helpdoc.clear();
 	querier.clear();
 	msgorder.clear();
 	gOrder.clear();
 	taskcall.clear();
+	final_msgreply.clear();
+	reply_match.clear();
+	reply_prefix.clear();
+	reply_search.clear();
+	reply_prefix.clear();
 	gReplySearcher.clear();
 	gReplyPrefix.clear();
 }
