@@ -2044,8 +2044,22 @@ int FromMsg::InnerOrder() {
 				else if (DiceMsgReply::sMode.count(attr)) {	//Mode=Key
 					size_t mode{ DiceMsgReply::sMode[attr] };
 					keyword = readUntilTab();
-					trigger->keyMatch[mode] = std::make_unique<vector<string>>(
-						getLines(keyword, '|'));
+					if (mode == 3) {
+						try {
+							std::wregex re(convert_a2realw(keyword.c_str()), std::regex::ECMAScript);
+						}
+						catch (const std::regex_error& e) {
+							vars["err"] = e.what();
+							replyMsg("strRegexInvalid");
+							return -1;
+						}
+						trigger->keyMatch[mode] = std::make_unique<vector<string>>(
+							vector<string>{ keyword });
+					}
+					else {
+						trigger->keyMatch[mode] = std::make_unique<vector<string>>(
+							getLines(keyword, '|'));
+					}
 				}
 				else if (DiceMsgReply::sEcho.count(attr)) {	//Echo=Reply
 					trigger->echo = (DiceMsgReply::Echo)DiceMsgReply::sEcho[attr];

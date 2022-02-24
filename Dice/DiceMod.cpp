@@ -523,10 +523,10 @@ string DiceMsgReply::show()const {
 	return "\n触发性质: " + strType[(int)type]
 		+ (limit.print().empty() ? "" : ("\n限制条件:\n" + limit.note()))
 		+ "\n匹配模式: " 
-		+ (keyMatch[0] ? ("\n- 完全匹配:" + listDeck(*keyMatch[0])) : "")
-		+ (keyMatch[1] ? ("\n- 前缀匹配:" + listDeck(*keyMatch[1])) : "")
-		+ (keyMatch[2] ? ("\n- 模糊匹配:" + listDeck(*keyMatch[2])) : "")
-		+ (keyMatch[3] ? ("\n- 正则匹配:" + listDeck(*keyMatch[3])) : "")
+		+ (keyMatch[0] ? ("\n- 完全匹配: " + listDeck(*keyMatch[0])) : "")
+		+ (keyMatch[1] ? ("\n- 前缀匹配: " + listDeck(*keyMatch[1])) : "")
+		+ (keyMatch[2] ? ("\n- 模糊匹配: " + listDeck(*keyMatch[2])) : "")
+		+ (keyMatch[3] ? ("\n- 正则匹配: " + listDeck(*keyMatch[3])) : "")
 		+ "\n回复形式: " + strEcho[(int)echo]
 		+ "\n回复内容: " + show_ans();
 }
@@ -587,8 +587,11 @@ void DiceMsgReply::readJson(const json& j) {
 	try{
 		if (j.count("key"))title = UTF8toGBK(j["key"].get<string>());
 		if (j.count("type"))type = (Type)sType[j["type"].get<string>()];
-		if (j.count("mode"))keyMatch[sMode[j["mode"].get<string>()]]
-			= std::make_unique<vector<string>>(getLines(title, '|'));
+		if (j.count("mode")) {
+			size_t mode{ sMode[j["mode"].get<string>()] };
+			keyMatch[mode] = std::make_unique<vector<string>>
+				(mode == 3 ? vector<string>{title} : getLines(title, '|'));
+		}
 		if (j.count("match")) {
 			keyMatch[0] = std::make_unique<vector<string>>(UTF8toGBK(j["match"].get<vector<string>>()));
 		}
@@ -892,6 +895,12 @@ void DiceModManager::rm_help(const string& key)
 bool DiceModManager::listen_reply(FromMsg* msg) {
 	string& strMsg{ msg->strMsg };
 	if (reply_match.count(strMsg) && reply_match[strMsg]->exec(msg)) {
+		return true;
+	}
+	else if (reply_prefix.count(strMsg) && reply_prefix[strMsg]->exec(msg)) {
+		return true;
+	}
+	else if (reply_search.count(strMsg) && reply_search[strMsg]->exec(msg)) {
 		return true;
 	}
 	if (stack<string> sPrefix; gReplyPrefix.match_head(msg->strMsg, sPrefix)) {
