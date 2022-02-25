@@ -2085,7 +2085,7 @@ int FromMsg::InnerOrder() {
 			}
 			else {
 				if (trigger->title.empty())trigger->title = keyword;
-				vars["key"] = keyword;
+				vars["key"] = trigger->title;
 				fmt->set_reply(trigger->title, trigger);
 				replyMsg("strReplySet");
 			}
