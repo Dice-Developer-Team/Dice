@@ -480,9 +480,9 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 	return true;
 }
 
-enumap<string> DiceMsgReply::sType{ "Reply","Order" };
+enumap_ci DiceMsgReply::sType{ "Reply","Order" };
 enumap_ci DiceMsgReply::sMode{ "Match", "Prefix", "Search", "Regex" };
-enumap<string> DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
+enumap_ci DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
 enumap<string> strType{ "回复","指令" };
 enumap<string> strMode{ "完全", "前缀", "模糊", "正则" };
 enumap<string> strEcho{ "纯文本", "牌堆（多选一）", "Lua" };

@@ -75,11 +75,11 @@ class DiceMsgReply {
 public:
     string title;
     enum class Type { Reply, Order };   //决定受控制的开关类型
-    static enumap<string> sType;
+    static enumap_ci sType;
     std::unique_ptr<vector<string>>keyMatch[4];
     static enumap_ci sMode;
     enum class Echo { Text, Deck, Lua };    //回复形式
-    static enumap<string> sEcho;
+    static enumap_ci sEcho;
     Type type{ Type::Reply };
     Echo echo{ Echo::Deck };
     DiceTriggerLimit limit;
