@@ -393,7 +393,7 @@ AttrVar& AttrVar::operator=(const json& j) {
 		type = AttrType::Table; {
 			AttrVars vars;
 			for (auto it = j.cbegin(); it != j.cend(); ++it) {
-				if(!it.value().is_null())vars[it.key()] = it.value();
+				if(!it.value().is_null())vars[UTF8toGBK(it.key())] = it.value();
 			}
 			new(&table)VarTable(vars);
 		}
@@ -460,7 +460,7 @@ json to_json(AttrVars& vars) {
 }
 void from_json(const json& j, AttrVars& vars) {
 	for (auto& [key, val] : j.items()) {
-		vars[GBKtoUTF8(key)] = val;
+		vars[UTF8toGBK(key)] = val;
 	}
 }
 

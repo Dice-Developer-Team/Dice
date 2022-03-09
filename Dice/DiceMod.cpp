@@ -770,10 +770,8 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 					else val = {};
 				}
 				else if (method == "vary") {
-					DD::debugLog("method:vary");
 					auto [head, strVary] = readini<string, string>(para, '?');
 					if (head == "uid") {
-						DD::debugLog("switch:uid");
 						unordered_map<string, string>paras{ splitPairs(strVary,'=','&') };
 						if (auto it{ paras.find(context.get_str("uid"))}; it != paras.end()) {
 							val = format(it->second);

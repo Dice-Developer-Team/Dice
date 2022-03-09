@@ -97,6 +97,7 @@ void loadData()
 		loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList);
 		map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
 		//∂¡»°∞Ô÷˙Œƒµµ
+		fmt->clear();
 		fmt->load(logList);
 		//∂¡»°√Ù∏–¥ ø‚
 		loadDir(load_words, DiceDir / "conf" / "censor", censor, logList, true);
