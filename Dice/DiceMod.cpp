@@ -806,19 +806,23 @@ string DiceModManager::msg_get(const string& key)const {
 	else
 		return "";
 }
-void DiceModManager::msg_reset(const string& key)const {
+void DiceModManager::msg_reset(const string& key){
 	std::shared_lock lock(GlobalMsgMutex);
 	if (const auto it = EditedMsg.find(key); it != EditedMsg.end()) {
 		EditedMsg.erase(key);
-		if (PlainMsg.count(key))GlobalMsg[key] = PlainMsg.find(key)->second;
-		else GlobalMsg.erase(it);
+		if (PlainMsg.count(key)) {
+			global_speech[key] = GlobalMsg[key] = PlainMsg.find(key)->second;
+		}
+		else {
+			global_speech.erase(key);
+			GlobalMsg.erase(it);
+		}
 		saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
 	}
 }
-void DiceModManager::msg_edit(const string& key, const string& val)const {
+void DiceModManager::msg_edit(const string& key, const string& val){
 	std::shared_lock lock(GlobalMsgMutex);
-	EditedMsg[key] = val;
-	GlobalMsg[key] = val;
+	global_speech[key] = GlobalMsg[key] = EditedMsg[key] = val;
 	saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
 }
 

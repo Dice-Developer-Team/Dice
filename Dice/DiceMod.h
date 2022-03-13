@@ -196,8 +196,8 @@ public:
         const AttrIndexs& = MsgIndexs,
         const dict_ci<string>& = EditedMsg) const;
     string msg_get(const string& key)const;
-    void msg_reset(const string& key)const;
-    void msg_edit(const string& key, const string& val)const;
+    void msg_reset(const string& key);
+    void msg_edit(const string& key, const string& val);
 
     dict_ci<size_t>cntHelp;
 	[[nodiscard]] string get_help(const string&) const;
