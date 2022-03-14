@@ -1081,7 +1081,7 @@ string DiceModManager::script_path(const string& name)const {
 }
 
 int DiceModManager::load(ResList& resLog){
-	merge(global_speech, PlainMsg);
+	merge(global_speech, GlobalMsg);
 	helpdoc = HelpDoc;
 	//∂¡»°mod
 	vector<std::filesystem::path> sModFile;
