@@ -445,10 +445,10 @@ string print_master() {
 }
 
 string list_deck() {
-	return listKey(CardDeck::mPublicDeck);
+	return showKey(CardDeck::mPublicDeck);
 }
 string list_extern_deck() {
-	return listKey(CardDeck::mExternPublicDeck);
+	return showKey(CardDeck::mExternPublicDeck);
 }
 string list_order_ex() {
 	return fmt->list_order();

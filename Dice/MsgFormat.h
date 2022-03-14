@@ -52,7 +52,7 @@ class ResList
 public:
 	ResList() = default;
 
-	ResList(const std::string& s, std::string dot) : sDot(std::move(dot))
+	ResList(const std::string& s, const  std::string& dot) : sDot(dot)
 	{
 		vRes.push_back(s);
 		intMaxLen = s.length();
@@ -120,6 +120,16 @@ public:
 	}
 };
 
+template <typename T>
+std::string showKey(T& m) {
+	ResList list;
+	for (auto& [key, val] : m)
+	{
+		if (key[0] == '_')continue;
+		list << key;
+	}
+	return list.setDot("/", "/").show();
+}
 template <typename T>
 std::string listKey(T& m){
 	ShowList list;
