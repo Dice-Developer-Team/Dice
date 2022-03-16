@@ -3961,15 +3961,20 @@ int FromMsg::InnerOrder() {
 				}
 				else {
 					strAttr = readAttrName();
-					strMainDice += pc->getExp(strAttr);
-					if (!pc->count("&" + strAttr) && (*pc)[strAttr].type == AttrVar::AttrType::Integer)strMainDice += 'a';
+					if (pc->count(strAttr)) {
+						strMainDice += pc->getExp(strAttr);
+						if (!pc->count("&" + strAttr) && (*pc)[strAttr].type == AttrVar::AttrType::Integer)strMainDice += 'a';
+					}
+					else {
+						strReason = strAttr;
+					}
 				}
 			}
 		}
 		else {
 			strMainDice = readDice(); 	//ww的表达式可以是纯数字
 		}
-		strReason = readRest();
+		strReason += readRest();
 		int intTurnCnt = 1;
 		const int intDefaultDice = getUser(fromChat.uid).getConf("默认骰", 100);
 		//处理.ww[次数]#[表达式]
