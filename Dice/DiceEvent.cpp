@@ -2270,7 +2270,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		vars["option"] = "½ûÓÃdraw";
-		if (isPrivate() && groupset(fromChat.gid, vars["option"].to_str()) > 0) {
+		if (!isPrivate() && groupset(fromChat.gid, vars["option"].to_str()) > 0) {
 			replyMsg("strGroupSetOnAlready");
 			return 1;
 		}
