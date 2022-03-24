@@ -1024,6 +1024,7 @@ void DiceModManager::set_reply(const string& key, ptr<DiceMsgReply> reply) {
 }
 bool DiceModManager::del_reply(const string& key) {
 	if (!custom_reply.count(key))return false;
+	reply_erase(custom_reply[key]);
 	final_msgreply.erase(key);
 	custom_reply.erase(key);
 	save_reply();
