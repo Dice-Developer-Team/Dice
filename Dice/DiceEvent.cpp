@@ -3797,7 +3797,7 @@ int FromMsg::InnerOrder() {
 				replyMsg("strPropList");
 				return 1;
 			}
-			if (string val; pc.show(vars["attr"].to_str(), val) > -1) {
+			if (string val; pc.show(vars.get_str("attr"), val) > -1) {
 				vars["val"] = val;
 				replyMsg("strProp");
 			}

@@ -63,10 +63,8 @@ class CardBuild
 public:
 	CardBuild() = default;
 
-	CardBuild(vector<std::pair<string, string>> attr, vector<string> name, vector<string> note):
-		vBuildList(std::move(attr)), vNameList(
-			std::move(name)), vNoteList(
-			std::move(note))
+	CardBuild(const vector<std::pair<string, string>>& attr, const vector<string>& name, const vector<string>& note):
+		vBuildList(attr), vNameList(name), vNoteList(note)
 	{
 	}
 
@@ -161,7 +159,7 @@ struct lua_State;
 class CharaCard
 {
 private:
-	string Name = "½ÇÉ«¿¨"; 
+	string Name = "½ÇÉ«¿¨";
 	std::mutex cardMutex;
 public:
 	const string& getName()const { return Name; }
@@ -169,10 +167,10 @@ public:
 	void setType(const string&);
 	void update();
 	//string Type = "COC7";
-	map<string, AttrVar, less_ci> Attr{ 
+	AttrObject Attr{ {
 		{"__Type",AttrVar("COC7")},
 		{"__Update",AttrVar((long long)time(nullptr))},
-	};
+	} };
 	//map<string, string, less_ci> Info{  };
 	//map<string, string, less_ci> DiceExp{};
 	string Note;
@@ -205,9 +203,9 @@ public:
 
 	int call(string key)
 	{
-		if (Attr.count(key))return Attr.find(key)->second.to_int();
+		if (Attr.has(key))return Attr.get_int(key);
 		key = standard(key);
-		if (Attr.count(key))return Attr.find(key)->second.to_int();
+		if (Attr.has(key))return Attr.get_int(key);
 		if (pTemplet->mAutoFill.count(key))
 		{
 			Attr[key] = cal(pTemplet->mAutoFill.find(key)->second);
@@ -247,8 +245,8 @@ public:
 
 	bool countExp(const string& key)
 	{
-		return (Attr.count(key) && Attr[key].type == AttrVar::AttrType::Text)
-			|| (Attr.count("&" + key))
+		return (Attr.has(key) && Attr[key].type == AttrVar::AttrType::Text)
+			|| (Attr.has("&" + key))
 			|| pTemplet->mExpression.count(key);
 	}
 
@@ -283,19 +281,19 @@ public:
 			//exp
 			if (it2.first[0] == '&')
 			{
-				if (Attr.count(it2.first))continue;
+				if (Attr.has(it2.first))continue;
 				Attr[it2.first] = it2.second;
 			}
 				//info
 			else if (pTemplet->sInfoList.count(it2.first))
 			{
-				if (Attr.count(it2.first))continue;
+				if (Attr.has(it2.first))continue;
 				Attr[it2.first] = CardDeck::draw(it2.second);
 			}
 				//attr
 			else
 			{
-				if (Attr.count(it2.first))continue;
+				if (Attr.has(it2.first))continue;
 				Attr[it2.first] = cal(it2.second);
 			}
 		}
@@ -315,7 +313,6 @@ public:
 	}
 
 	int set(string key, const AttrVar& val);
-	int set(string key, int val);
 
 	int set(const string& key, const string& s);
 
@@ -327,24 +324,7 @@ public:
 		return 0;
 	}
 
-	bool erase(string& key, bool isExp = false)
-	{
-		const string strKey = standard(key);
-		if (!isExp && Attr.count(key))
-		{
-			Attr.erase(strKey);
-			key = strKey;
-			return true;
-		}
-		if (!isExp && Attr.count(strKey))
-		{
-			Attr.erase(strKey);
-			key = strKey;
-			return true;
-		}
-		return false;
-	}
-
+	bool erase(string& key, bool isExp = false);
 	void clear();
 
 	int show(string key, string& val) const;
@@ -356,7 +336,7 @@ public:
 	bool stored(string& key) const
 	{
 		key = standard(key);
-		return Attr.count(key) || pTemplet->mAutoFill.count(key) || pTemplet->defaultSkill.count(key);
+		return Attr.has(key) || pTemplet->mAutoFill.count(key) || pTemplet->defaultSkill.count(key);
 	}
 
 	void cntRollStat(int die, int face);
@@ -376,7 +356,6 @@ public:
 
 	void readb(std::ifstream& fin);
 
-	void pushTable(lua_State*);
 	void toCard(lua_State*);
 };
 
@@ -647,7 +626,7 @@ public:
 			card.add(it.first);
 			card.add(it.second.getName());
 			Unpack skills;
-			for (const auto& skill : it.second.Attr)
+			for (const auto& skill : *it.second.Attr)
 			{
 				skills.add(skill.first);
 				skills.add(skill.second.to_str());	//need fix

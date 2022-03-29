@@ -130,10 +130,13 @@ public:
 	AttrObject():obj(std::make_shared<AttrVars>()) {}
 	AttrObject(const AttrVars& vars) :obj(std::make_shared<AttrVars>(vars)) {}
 	AttrObject(const AttrObject& other) :obj(other.obj) {}
-	AttrVars& operator*() {
+	AttrVars* operator->()const {
+		return obj.get();
+	}
+	AttrVars& operator*()const {
 		return *obj;
 	}
-	AttrVar& operator[](const string& key) {
+	AttrVar& operator[](const string& key)const {
 		return (*obj)[key];
 	}
 	bool empty()const {
@@ -147,6 +150,9 @@ public:
 	}
 	string get_str(const string& key)const {
 		return obj->count(key) ? obj->at(key).to_str() : "";
+	}
+	int get_int(const string& key)const {
+		return obj->count(key) ? obj->at(key).to_int() : 0;
 	}
 	long long get_ll(const string& key)const {
 		return obj->count(key) ? obj->at(key).to_ll() : 0;

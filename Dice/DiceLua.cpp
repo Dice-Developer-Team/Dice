@@ -80,7 +80,7 @@ void lua_set_field(lua_State* L, int idx, const string& str) {
 void lua_push_msg(lua_State* L, FromMsg* msg) {
 	msg->vars["fromQQ"] = to_string(msg->fromChat.uid);
 	msg->vars["fromGroup"] = to_string(msg->fromChat.gid);
-	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrVars*)) };
+	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
 	*p = &msg->vars;
 	luaL_setmetatable(L, "Context");
 }
@@ -170,13 +170,6 @@ AttrVars lua_to_dict(lua_State* L, int idx = -1) {
 	return tab;
 }
 
-void CharaCard::pushTable(lua_State* L) {
-	lua_newtable(L);
-	for (auto& [key, attr] : Attr) {
-		lua_push_attr(L, attr);
-		lua_set_field(L, -2, key.c_str());
-	}
-}
 void CharaCard::toCard(lua_State* L) {
 
 }
@@ -591,17 +584,17 @@ int getPlayerCardAttr(lua_State* L) {
 	string key{ lua_to_gb18030_string(L, 3) };
 	if (!plQQ || key.empty())return 0;
 	CharaCard& pc = getPlayer(plQQ)[group];
-	if (pc.Attr.count(key)) {
-		lua_push_attr(L, pc.Attr.at(key));
+	if (pc.Attr.has(key)) {
+		lua_push_attr(L, pc.Attr[key]);
 	}
-	else if (key = pc.standard(key); pc.Attr.count(key)) {
-		lua_push_attr(L, pc.Attr.at(key));
+	else if (key = pc.standard(key); pc.Attr.has(key)) {
+		lua_push_attr(L, pc.Attr[key]);
 	}
 	else if (key == "note") {
 		lua_push_string(L, pc.Note);
 	}
-	else if (pc.Attr.count("&" + key)) {
-		lua_push_string(L, pc.Attr.find("&" + key)->second.to_str());
+	else if (pc.Attr.has("&" + key)) {
+		lua_push_string(L, pc.Attr.get_str("&" + key));
 	}
 	else {
 		lua_pushnil(L);
@@ -614,7 +607,9 @@ int getPlayerCard(lua_State* L) {
 	if (!plQQ)return 0;
 	long long group{ lua_to_int(L, 2) };
 	if (PList.count(plQQ)) {
-		getPlayer(plQQ)[group].pushTable(L);
+		AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
+		*p = &getPlayer(plQQ)[group].Attr;
+		luaL_setmetatable(L, "Actor");
 		return 1;
 	}
 	return 0;
@@ -748,6 +743,44 @@ int luaopen_Context(lua_State* L) {
 	luaL_setfuncs(L, Context_funcs, 0);
 	return 1;
 }
+int Actor_index(lua_State* L) {
+	if (lua_gettop(L) < 2)return 0;
+	string key{ lua_to_string(L, 2) };
+	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Actor") };
+	if (vars.has(key)) {
+		lua_push_attr(L, vars[key]);
+		return 1;
+	}
+	return 0;
+}
+int Actor_newindex(lua_State* L) {
+	if (lua_gettop(L) < 2)return 0;
+	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Actor") };
+	string key{ lua_to_string(L, 2) };
+	if (key == "__Name") {
+		return 0;
+	}
+	else if (lua_gettop(L) < 3) {
+		vars.reset(key);
+	}
+	else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {
+		vars.reset(key);
+	}
+	else {
+		vars[key] = val;
+	}
+	return 0;
+}
+static const luaL_Reg Actor_funcs[] = {
+	{"__index", Actor_index},
+	{"__newindex", Actor_newindex},
+	{NULL, NULL}
+};
+int luaopen_Actor(lua_State* L) {
+	luaL_newmetatable(L, "Actor");
+	luaL_setfuncs(L, Actor_funcs, 0);
+	return 1;
+}
 
 int httpGet(lua_State* L) {
 	string url{ lua_to_string(L,1) };
@@ -825,6 +858,7 @@ void LuaState::regist() {
 	}
 	static const luaL_Reg Dicelibs[] = {
 		{"Context", luaopen_Context},
+		{"Actor", luaopen_Actor},
 		{"http", luaopen_http},
 		{NULL, NULL}
 	};

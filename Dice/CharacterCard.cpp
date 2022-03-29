@@ -102,22 +102,7 @@ int CharaCard::set(string key, const AttrVar& val) {
 	if (key.empty())return -1;
 	key = standard(key);
 	if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.at(key)){
-		if (Attr.count(key)) Attr.erase(key);
-		else return -1;
-	}
-	else {
-		Attr[key] = val;
-	}
-	update();
-	return 0;
-}
-int CharaCard::set(string key, int val)
-{
-	if (key.empty())return -1;
-	key = standard(key);
-	if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.at(key))
-	{
-		if (Attr.count(key)) Attr.erase(key);
+		if (Attr.has(key)) Attr.reset(key);
 		else return -1;
 	}
 	else {
@@ -137,8 +122,8 @@ int CharaCard::set(const string& key, const string& s) {
 }
 
 int CharaCard::show(string key, string& val) const {
-	if (Attr.count(key)) {
-		val = Attr.at(key).to_str();
+	if (Attr.has(key)) {
+		val = Attr.get_str(key);
 		return 0;
 	}
 	if (key == "note") {
@@ -146,24 +131,30 @@ int CharaCard::show(string key, string& val) const {
 		return 2;
 	}
 	key = standard(key);
-	if (Attr.count(key)) {
-		val = Attr.at(key).to_str();
+	if (Attr.has(key)) {
+		val = Attr.get_str(key);
 		return 0;
+	}
+	else if (pTemplet) {
+		if (pTemplet->defaultSkill.count(key)) {
+			val = to_string(pTemplet->defaultSkill[key]);
+			return 0;
+		}
 	}
 	return -1;
 }
 
 bool CharaCard::count(const string& strKey) const {
-	if (Attr.count(strKey))return true;
+	if (Attr.has(strKey))return true;
 	string key{ standard(strKey) };
-	return Attr.count(key) || Attr.count("&" + key)
+	return Attr.has(key) || Attr.has("&" + key)
 		|| pTemplet->mAutoFill.count(key) || pTemplet->mVariable.count(key)
 		|| pTemplet->defaultSkill.count(key);
 }
 AttrVar& CharaCard::operator[](const string& strKey) {
-	if (Attr.count(strKey))return Attr[strKey];
+	if (Attr.has(strKey))return Attr[strKey];
 	string key{ standard(strKey) };
-	if (!Attr.count(key)) {
+	if (!Attr.has(key)) {
 		if (pTemplet->mAutoFill.count(key))Attr[key] = cal(pTemplet->mAutoFill.at(key));
 		if (pTemplet->defaultSkill.count(key))Attr[key] = pTemplet->defaultSkill.at(key);
 	}
@@ -174,12 +165,12 @@ AttrVar& CharaCard::operator[](const string& strKey) {
 string CharaCard::getExp(string& key, std::set<string> sRef){
 	sRef.insert(key);
 	key = standard(key);
-	std::map<string, AttrVar>::const_iterator val = Attr.find("&" + key);
-	if (val != Attr.end())return escape(val->second.to_str(), sRef);
+	auto val = Attr->find("&" + key);
+	if (val != Attr->end())return escape(val->second.to_str(), sRef);
 	auto exp = pTemplet->mExpression.find(key);
 	if (exp != pTemplet->mExpression.end()) return escape(exp->second, sRef);
-	val = Attr.find(key);
-	if (val != Attr.end())return escape(val->second.to_str(), sRef);
+	val = Attr->find(key);
+	if (val != Attr->end())return escape(val->second.to_str(), sRef);
 	exp = pTemplet->mVariable.find(key);
 	if (exp != pTemplet->mVariable.end())return to_string(cal(exp->second));
 	std::map<string, short>::const_iterator def{ pTemplet->defaultSkill.find(key) };
@@ -208,8 +199,7 @@ void CharaCard::buildv(string para)
 }
 
 void CharaCard::clear() {
-	map<string, AttrVar, less_ci> attr_new{ {"__Type",Attr["__Type"]},{"__Name",Attr["__Name"]} };
-	Attr.swap(attr_new);
+	Attr = AttrObject{ {{"__Type",Attr["__Type"]},{"__Name",Attr["__Name"]}} };
 	Note.clear();
 }
 [[nodiscard]] string CharaCard::show(bool isWhole) const {
@@ -222,14 +212,14 @@ void CharaCard::clear() {
 			if (!show(it, strVal)) {
 				sDefault.insert(it);
 				if (it[0] == '&')subList << it + "=" + strVal;
-				else if (Attr.at(it).type == AttrVar::AttrType::Text)subList << it + ":¡¾" + strVal + "¡¿";
+				else if (Attr[it].type == AttrVar::AttrType::Text)subList << it + ":¡¾" + strVal + "¡¿";
 				else subList << it + ":" + strVal;
 			}
 		}
 		Res << subList.show();
 	}
 	string strAttrRest;
-	for (const auto& [key,val] : Attr) {
+	for (const auto& [key,val] : *Attr) {
 		if (sDefault.count(key) || key[0] == '_'
 			|| (!isWhole && val.type == AttrVar::AttrType::Text))continue;
 		strAttrRest += key + ":" + val.to_str() + (val.type == AttrVar::AttrType::Text ? "\t" : " ");
@@ -239,12 +229,29 @@ void CharaCard::clear() {
 	return Res.show();
 }
 
+bool CharaCard::erase(string& key, bool isExp)
+{
+	if (Attr.has(key)) {
+		Attr.reset(key);
+		return true;
+	}
+	key = standard(key);
+	if (Attr.has(key)) {
+		Attr.reset(key);
+		return true;
+	}
+	else if (Attr.has("&" + key)) {
+		Attr.reset("&" + key);
+		return true;
+	}
+	return false;
+}
 void CharaCard::writeb(std::ofstream& fout) const {
 	fwrite(fout, string("Name"));
 	fwrite(fout, Name);
 	if (!Attr.empty()) {
 		fwrite(fout, string("Attrs"));
-		fwrite(fout, Attr);
+		fwrite(fout, *Attr);
 	}
 	if (!Note.empty()) {
 		fwrite(fout, string("Note"));
@@ -263,7 +270,7 @@ void CharaCard::readb(std::ifstream& fin) {
 			Attr["__Type"] = fread<string>(fin);
 			break;
 		case 3:
-			fread(fin, Attr);
+			fread(fin, *Attr);
 			break;
 		case 11: {
 			std::map<string, short>TempAttr;
