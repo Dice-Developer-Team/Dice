@@ -435,19 +435,25 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 		if (!UserList.count(msg->fromChat.uid))return false;
 		User& user{ getUser(msg->fromChat.uid) };
 		for (auto& [key, cmpr] : user_vary) {
-			if (!user.confs.count(key) || !(user.confs[key].*cmpr.first)(cmpr.second))return false;
+			if (user.confs.count(key)
+				? !(user.confs[key].*cmpr.first)(cmpr.second)
+				: !(AttrVar().*cmpr.first)(cmpr.second))return false;
 		}
 	}
 	if (!grp_vary.empty() && msg->fromChat.gid) {
 		Chat& grp{ chat(msg->fromChat.gid) };
 		for (auto& [key, cmpr] : grp_vary) {
-			if (!grp.confs.count(key) || !(grp.confs[key].*cmpr.first)(cmpr.second))return false;
+			if (grp.confs.count(key) 
+				? !(grp.confs[key].*cmpr.first)(cmpr.second)
+				: !(AttrVar().*cmpr.first)(cmpr.second))return false;
 		}
 	}
 	if (!self_vary.empty()) {
 		User& user{ getUser(console.DiceMaid) };
 		for (auto& [key, cmpr] : self_vary) {
-			if (!user.confs.count(key) || !(user.confs[key].*cmpr.first)(cmpr.second))return false;
+			if (user.confs.count(key)
+				? !(user.confs[key].*cmpr.first)(cmpr.second)
+				: !(AttrVar().*cmpr.first)(cmpr.second))return false;
 		}
 	}
 	if (to_dice != Treat::Ignore && console.DiceMaid != msg->fromChat.uid) {
