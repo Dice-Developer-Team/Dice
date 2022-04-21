@@ -610,6 +610,9 @@ void DiceMsgReply::readJson(const json& j) {
 		if (j.count("regex")) {
 			keyMatch[3] = std::make_unique<vector<string>>(UTF8toGBK(j["regex"].get<vector<string>>()));
 		}
+		if (!(keyMatch[0] || keyMatch[1] || keyMatch[2] || keyMatch[3])) {
+			keyMatch[0] = std::make_unique<vector<string>>(getLines(title, '|'));
+		}
 		if (j.count("limit"))limit.parse(UTF8toGBK(j["limit"].get<string>()));
 		if (j.count("echo"))echo = (Echo)sEcho[j["echo"].get<string>()];
 		if (j.count("answer")) {
@@ -1233,6 +1236,8 @@ int DiceModManager::load(ResList& resLog){
 			resLog << "读取CustomReply" + to_string(mReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mReplyDeck) {
 				ptr<DiceMsgReply> reply{ final_msgreply[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
+				reply->title = key;
+				reply->keyMatch[0] = std::make_unique<vector<string>>(vector<string>{ key });
 				reply->deck = deck;
 			}
 		}
@@ -1240,6 +1245,7 @@ int DiceModManager::load(ResList& resLog){
 			resLog << "读取正则Reply" + to_string(mRegexReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mRegexReplyDeck) {
 				ptr<DiceMsgReply> reply{ final_msgreply[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
+				reply->title = key;
 				reply->keyMatch[3] = std::make_unique<vector<string>>(vector<string>{ key });
 				reply->deck = deck;
 			}
