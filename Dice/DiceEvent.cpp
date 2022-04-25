@@ -1120,10 +1120,7 @@ int FromMsg::BasicOrder()
 		{
 			string strOption = readRest();
 			if (strOption == "public"){
-				console.set("BelieveDiceList", 1);
-				console.set("LeaveBlackQQ", 1);
-				console.set("BannedBanInviter", 1);
-				console.set("KickedBanInviter", 1);
+				console.set("Private", 0);
 			}
 			else{
 				console.set("Private", 1);
@@ -2278,7 +2275,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		vars["option"] = "½ûÓÃdraw";
-		if (!isPrivate() && groupset(fromChat.gid, vars["option"].to_str()) > 0) {
+		if (!isPrivate() && groupset(fromChat.gid, "½ûÓÃdraw") > 0) {
 			replyMsg("strGroupSetOnAlready");
 			return 1;
 		}

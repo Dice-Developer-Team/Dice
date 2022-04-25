@@ -365,7 +365,7 @@ const dict_ci<string> PlainMsg
 	{ "strNewMaster","试问，你就是{strSelfName}的Master√\n请认真阅读当前版本Master手册以及用户手册。请注意版本号对应: https://v2docs.kokona.tech\f{strSelfName}默认开启对群移出、禁言、刷屏事件的监听，如要关闭请手动调整；\n请注意云黑系统默认开启，如无需此功能请关闭CloudBlackShare；" },
 	{ "strNewMasterPublic",R"({strSelfName}初始化开启公骰模式：
 自动开启BelieveDiceList响应来自骰娘列表的warning；
-公骰模式默认同意有掷骰记录用户的好友邀请，如要改为同意任何人请使用.admin AllowStranger=2；
+已开启自动通过非黑名单好友申请；
 已开启黑名单自动清理，拉黑时及每日定时会自动清理与黑名单用户的共同群聊，黑名单用户群权限不低于自己时自动退群；
 已开启拉黑群时连带邀请人；
 已启用send功能接收用户发送的消息；)" },

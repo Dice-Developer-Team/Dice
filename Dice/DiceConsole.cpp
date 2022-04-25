@@ -41,7 +41,7 @@
 
 using namespace std;
 
-const std::map<std::string, int, less_ci>Console::intDefault{
+const dict<int>Console::intDefault{
 {"DisabledGlobal",0},{"DisabledBlock",0},{"DisabledListenAt",1},
 {"DisabledMe",1},{"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
 {"Private",0},{"CheckGroupLicense",0},{"LeaveDiscuss",0},
@@ -213,6 +213,13 @@ void Console::newMaster(long long uid)
 	masterQQ = uid;
 	isMasterMode = true;
 	if (trustedQQ(uid) < 5)getUser(uid).trust(5);
+	if (!intConf["Private"]) {
+		if (!intConf.count("BelieveDiceList"))intConf["BelieveDiceList"] = 1;
+		if (!intConf.count("LeaveBlackQQ"))intConf["LeaveBlackQQ"] = 1;
+		if (!intConf.count("BannedBanInviter"))intConf["BannedBanInviter"] = 1;
+		if (!intConf.count("KickedBanInviter"))intConf["KickedBanInviter"] = 1;
+		if (!intConf.count("AllowStanger"))intConf["AllowStanger"] = 2;
+	}
 	setNotice({ uid, 0,0 }, 0b111111);
 	save(); 
 	AddMsgToQueue(getMsg("strNewMaster"), uid);
