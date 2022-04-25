@@ -46,6 +46,7 @@ public:
 
 	void reply(bool isFormat = true);
 	void replyMsg(const std::string& key);
+	void replyHelp(const std::string& key);
 
 	void replyHidden();
 

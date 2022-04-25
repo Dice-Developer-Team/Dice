@@ -313,8 +313,9 @@ const dict_ci<string> PlainMsg
 	{"strPermissionDeniedErr", "请让群内管理对{self}发送该指令×"},
 	{"strSelfPermissionErr", "{self}权限不够无能为力呢×"},
 	{"strNameTooLongErr", "名称过长×(最多为50英文字符)"},
-	{"strNameClr", "已将{old_nick}的名称删除√"},
-	{"strNameSet", "已将{old_nick}的名称更改为{new_nick}√"},
+	{"strNameSet", "{self}已将{old_nick}的改称为{new_nick}√"},
+	{"strNameDel", "{self}已删除{old_nick}在当前窗口的称呼√" },
+	{"strNameClr", "{self}已清空{old_nick}的所有称呼√" },
 	{"strUnknownPropErr", "未设定{attr}成功率，请先.st {attr} 技能值 或查看.help rc×"},
 	{"strPropErr", "请{pc}认真输入属性哦~"},
 	{"strSetPropSuccess", "已为{pc}录入{cnt}条属性√"},
@@ -473,6 +474,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
+607:修改.nn语法
 606:完善.sc/http.post/reply
 605:关键词回复多对一
 604:{转义嵌套}优化
@@ -536,7 +538,7 @@ R"([第二页]跑团指令
 .ww 骰池)"
 "\f"
 R"([第三页]其他指令
-.nn 设置昵称
+.nn 设置称呼
 .draw 抽牌
 .deck 牌堆实例
 .name 随机姓名
@@ -633,7 +635,7 @@ Type=[回复性质](Reply/Order)
 {"name","随机姓名：.name (cn/jp/en)([生成数量])\n.name 10\t//默认4类名称随机生成\n.name en\t//后接cn/jp/en/enzh则限定生成中文/日文/英文/英文中译名\n名称生成个数范围1-10，太多容易发现姓名库的寒酸"},
 {"设置昵称","&nn"},
 {"昵称","&nn"},
-{"nn","设置昵称：.nn [昵称] / .nn / .nnn(cn/jp/en) \n.nn kp\t//昵称前的./！等符号会被自动忽略\n.nn\t//视为删除昵称\n.nnn\t//设置为随机昵称\n.nnn jp\t/设置限定随机昵称\n私聊.nn视为操作全局昵称\n优先级：群昵称>全局昵称>群名片>QQ昵称"},
+{"nn","设置群内称呼：.nn [昵称] / .nn / .nnn(cn/jp/en) \n.nn kp\t//昵称前的./！等符号会被自动忽略\n.nn del\t//删除当前窗口称呼\n.nn clr\t//删除所有记录的称呼\n.nnn\t//从随机姓名牌堆设置随机称呼\n.nnn jp\t/从指定子牌堆随机昵称\n私聊.nn视为操作全局称呼\n该称呼用于\\{nick}的显示，优先级：群内称呼>全局称呼>群名片>QQ昵称"},
 {"人物作成","该版本人物作成支持COC7(.coc、.draw调查员背景/英雄天赋)、COC6(.coc6、.draw煤气灯)、DND(.dnd)、AMGC(.draw AMGC)"},
 {"coc","克苏鲁的呼唤(COC)人物作成：.coc([7/6])(d)([生成数量])\n.coc 10\t//默认生成7版人物\n.coc6d\t//接d为详细作成，一次只能作成一个\n仅用作骰点法人物作成，可应用变体规则，参考.rules创建调查员的其他选项"},
 {"dnd","龙与地下城(DND)人物作成：.dnd([生成数量])\n.dnd 5\t//仅作参考，可自行应用变体规则"},

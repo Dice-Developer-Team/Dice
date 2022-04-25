@@ -113,6 +113,10 @@ public:
 		}
 		return false;
 	}
+	void clrNick(){
+		std::lock_guard<std::mutex> lock_queue(ex_user);
+		strNick.clear();
+	}
 
 	void writeb(std::ofstream& fout);
 

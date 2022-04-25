@@ -716,12 +716,12 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 	while ((lastR = s.find('}', ++lastR)) != string::npos
 		&& (lastL = s.rfind('{', lastR)) != string::npos) {
 		string key;
-		//左括号前加‘\’表示该括号内容不转义
-		if (lastL > 0 && s[lastL - 1] == 0x5c) {
+		//括号前加‘\’表示该括号内容不转义
+		if (lastL > 0 && s[lastL - 1] == '\\') {
 			lastR = lastL--;
 			key = "{";
 		}
-		else if (s[lastR - 1] == 0x5c) {
+		else if (s[lastR - 1] == '\\') {
 			lastL = lastR - 1;
 			key = "}";
 		}
@@ -835,12 +835,11 @@ void DiceModManager::msg_edit(const string& key, const string& val){
 	saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
 }
 
-string DiceModManager::get_help(const string& key) const{
-	if (const auto it = helpdoc.find(key); it != helpdoc.end())
-	{
-		return format(it->second, {}, {}, helpdoc);
+string DiceModManager::get_help(const string& key, AttrObject context) const{
+	if (const auto it = helpdoc.find(key); it != helpdoc.end()){
+		return format(it->second, context, {}, helpdoc);
 	}
-	return "{strHelpNotFound}";
+	return format("{strHelpNotFound}", context);
 }
 
 struct help_sorter {

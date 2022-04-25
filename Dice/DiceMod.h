@@ -200,7 +200,7 @@ public:
     void msg_edit(const string& key, const string& val);
 
     dict_ci<size_t>cntHelp;
-	[[nodiscard]] string get_help(const string&) const;
+	[[nodiscard]] string get_help(const string&, AttrObject = {}) const;
     void _help(const shared_ptr<DiceJobDetail>&);
 	void set_help(const string&, const string&);
 	void rm_help(const string&);

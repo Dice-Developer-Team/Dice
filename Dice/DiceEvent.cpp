@@ -86,6 +86,14 @@ void FromMsg::replyMsg(const std::string& key) {
 	if (console["ReferMsgReply"] && vars.has("msgid"))strReply = "[CQ:reply,id=" + vars.get_str("msgid") + "]" + strReply;
 	AddMsgToQueue(strReply, fromChat);
 }
+void FromMsg::replyHelp(const std::string& key) {
+	if (isVirtual && fromChat.uid == console.DiceMaid && isPrivate())return;
+	isAns = true;
+	strReply = fmt->get_help(key);
+	logEcho();
+	if (console["ReferMsgReply"] && vars.has("msgid"))strReply = "[CQ:reply,id=" + vars.get_str("msgid") + "]" + strReply;
+	AddMsgToQueue(strReply, fromChat);
+}
 
 void FromMsg::replyHidden(const std::string& msgReply) {
 	strReply = msgReply;
@@ -201,7 +209,7 @@ int FromMsg::AdminEvent(const string& strOption)
 			<< "黑名单群数：" + to_string(blacklist->mGroupDanger.size())
 			<< (censor.size() ? "敏感词库规模：" + to_string(censor.size()) : "")
 			<< console.listClock().dot("\t").show();
-		reply(getMsg("strSelfName") + "的当前情况" + res.show());
+		reply(res.show(), false);
 		return 1;
 	}
 	if (trusted < 4)
@@ -315,7 +323,7 @@ int FromMsg::AdminEvent(const string& strOption)
 				reply("{nick}移除不存在敏感词" + to_string(resErr.size()) + "个:" + resErr.show());
 		}
 		else
-			reply(fmt->get_help("censor"));
+			replyHelp("censor");
 		return 1;
 	}
 	if (strOption == "only")
@@ -1331,7 +1339,7 @@ int FromMsg::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		if (strMsg.length() == intMsgCnt) {
-			reply(fmt->get_help("welcome"));
+			replyHelp("welcome");
 			return 1;
 		}
 		if (isPrivate()) {
@@ -1422,7 +1430,7 @@ int FromMsg::InnerOrder() {
 		}
 		string strRule = readDigit();
 		if (strRule.empty()) {
-			reply(fmt->get_help("setcoc"));
+			replyHelp("setcoc");
 			return 1;
 		}
 		if (strRule.length() > 1) {
@@ -1614,7 +1622,7 @@ int FromMsg::InnerOrder() {
 		long long llGroup(fromChat.gid);
 		readSkipSpace();
 		if (strMsg.length() == intMsgCnt) {
-			reply(fmt->get_help("group"));
+			replyHelp("group");
 			return 1;
 		}
 		if (strLowerMessage.substr(intMsgCnt, 3) == "all") {
@@ -1720,7 +1728,7 @@ int FromMsg::InnerOrder() {
 		string Command = readPara();
 		vars["group"] = DD::printGroupInfo(llGroup);
 		if (Command.empty()) {
-			reply(fmt->get_help("group"));
+			replyHelp("group");
 			return 1;
 		}
 		else if (Command == "state") {
@@ -1969,7 +1977,7 @@ int FromMsg::InnerOrder() {
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "reply") {
 		intMsgCnt += 5;
 		if (strMsg.length() == intMsgCnt) {
-			reply(fmt->get_help("reply"));
+			replyHelp("reply");
 			return 1;
 		}
 		unsigned int intMsgTmpCnt{ intMsgCnt };
@@ -2127,7 +2135,7 @@ int FromMsg::InnerOrder() {
 		}
 		const string& key{ (vars["key"] = readUntilSpace()).text };
 		if (key.empty()) {
-			reply(fmt->get_help("reply"));
+			replyHelp("reply");
 			return -1;
 		}
 		rep->keyMatch[MatchMode] = std::make_unique<vector<string>>(getLines(key, '|'));
@@ -2160,7 +2168,7 @@ int FromMsg::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
 		if (strMsg.length() == intMsgCnt) {
-			reply(fmt->get_help("rules"));
+			replyHelp("rules");
 			return 1;
 		}
 		if (strLowerMessage.substr(intMsgCnt, 3) == "set") {
@@ -2235,7 +2243,7 @@ int FromMsg::InnerOrder() {
 		long long llRoom = strRoom.empty() ? fromSession : stoll(strRoom);
 		if (llRoom == 0)llRoom = fromSession;
 		if (strMsg.length() == intMsgCnt) {
-			reply(fmt->get_help("deck"));
+			replyHelp("deck");
 			return 1;
 		}
 		string strPara = readPara();
@@ -2292,7 +2300,7 @@ int FromMsg::InnerOrder() {
 			key.erase(key.begin());
 		}
 		if (key.empty()) {
-			reply(fmt->get_help("draw"));
+			replyHelp("draw");
 			return 1;
 		}
 		else {
@@ -2347,7 +2355,7 @@ int FromMsg::InnerOrder() {
 		vars["table_name"] = "先攻";
 		string strCmd = readPara();
 		if (strCmd.empty()|| isPrivate()) {
-			reply(fmt->get_help("init"));
+			replyHelp("init");
 		}
 		else if (!gm->has_session(fromSession) || !gm->session(fromSession).table_count("先攻")) {
 			replyMsg("strGMTableNotExist");
@@ -2437,7 +2445,7 @@ int FromMsg::InnerOrder() {
 			gm->session(fromSession).link_new(this);
 		}
 		else {
-			reply(fmt->get_help("link"));
+			replyHelp("link");
 		}
 		return 1;
 	}
@@ -2471,7 +2479,7 @@ int FromMsg::InnerOrder() {
 		intMsgCnt += 4;
 		readSkipSpace();
 		if (strMsg.length() == intMsgCnt) {
-			reply(fmt->get_help("send"));
+			replyHelp("send");
 			return 1;
 		}
 		//先考虑Master带参数向指定目标发送
@@ -2699,7 +2707,7 @@ int FromMsg::InnerOrder() {
 		intMsgCnt += 3;
 		string strPara = readPara();
 		if (strPara.empty()) {
-			reply(fmt->get_help("log"));
+			replyHelp("log");
 		}
 		else if (DiceSession& game = gm->session(fromSession); strPara == "new") {
 			game.log_new(this);
@@ -2714,7 +2722,7 @@ int FromMsg::InnerOrder() {
 			game.log_end(this);
 		}
 		else {
-			reply(fmt->get_help("log"));
+			replyHelp("log");
 		}
 		return 1;
 	}
@@ -2789,7 +2797,7 @@ int FromMsg::InnerOrder() {
 	intMsgCnt += 2;
 	readSkipSpace();
 	if (intMsgCnt == strMsg.length()) {
-		reply(fmt->get_help("ak"));
+		replyHelp("ak");
 		return 1;
 	}
 	Session& room{ gm->session(fromSession) };
@@ -2883,7 +2891,7 @@ int FromMsg::InnerOrder() {
 		replyMsg("strAkClr");
 		room.save();
 	}
-	if(strReply.empty())reply(fmt->get_help("ak"));
+	if(strReply.empty())replyHelp("ak");
 	return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "en") {
@@ -2891,7 +2899,7 @@ int FromMsg::InnerOrder() {
 	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		intMsgCnt++;
 	if (strMsg.length() == intMsgCnt) {
-		reply(fmt->get_help("en"));
+		replyHelp("en");
 		return 1;
 	}
 	string& strAttr{ (vars["attr"] = readAttrName()).text };
@@ -3046,31 +3054,41 @@ int FromMsg::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn") {
 		intMsgCnt += 2;
-		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
-			intMsgCnt++;
+		readSkipSpace();
+		if (intMsgCnt == strMsg.length()) {
+			replyHelp("nn");
+			return 1;
+		}
 		vars["old_nick"] = idx_nick(vars);
 		string& strNN{ (vars["new_nick"] = strip(filter_CQcode(strMsg.substr(intMsgCnt),fromChat.gid))).text };
 		if (strNN.length() > 50) {
 			replyMsg("strNameTooLongErr");
 			return 1;
 		}
-		if (!strNN.empty()) {
-			getUser(fromChat.uid).setNick(fromChat.gid, strNN);
-			replyMsg("strNameSet");
+		if (strNN.empty()) {
+			replyHelp("nn");
 		}
-		else {
+		else if(strNN == "del") {
 			if (getUser(fromChat.uid).rmNick(fromChat.gid)) {
-				replyMsg("strNameClr");
+				replyMsg("strNameDel");
 			}
 			else {
 				replyMsg("strNameDelEmpty");
 			}
 		}
+		else if (strNN == "clr") {
+			getUser(fromChat.uid).clrNick();
+			replyMsg("strNameClr");
+		}
+		else {
+			getUser(fromChat.uid).setNick(fromChat.gid, strNN);
+			replyMsg("strNameSet");
+		}
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ob") {
 		if (isPrivate()) {
-			reply(fmt->get_help("ob"));
+			replyHelp("ob");
 			return 1;
 		}
 		intMsgCnt += 2;
@@ -3131,7 +3149,7 @@ int FromMsg::InnerOrder() {
 		intMsgCnt += 2;
 		string strOption = readPara();
 		if (strOption.empty()) {
-			reply(fmt->get_help("pc"));
+			replyHelp("pc");
 			return 1;
 		}
 		Player& pl = getPlayer(fromChat.uid);
@@ -3368,13 +3386,13 @@ int FromMsg::InnerOrder() {
 			reply(temp.show());
 			return 1;
 		}
-		reply(fmt->get_help("pc"));
+		replyHelp("pc");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ra" || strLowerMessage.substr(intMsgCnt, 2) == "rc") {
 		intMsgCnt += 2;
 		if (strMsg.length() == intMsgCnt) {
-			reply(fmt->get_help("rc"));
+			replyHelp("rc");
 			return 1;
 		}
 		int intRule = isPrivate()
@@ -3602,7 +3620,7 @@ int FromMsg::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ri") {
 		if (isPrivate()) {
-			reply(fmt->get_help("ri"));
+			replyHelp("ri");
 			return 1;
 		}
 		intMsgCnt += 2;
@@ -3663,7 +3681,7 @@ int FromMsg::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		if (SanCost.empty()) {
-			reply(fmt->get_help("sc"));
+			replyHelp("sc");
 			return 1;
 		}
 		if (SanCost.find('/') == string::npos) {
@@ -3751,7 +3769,7 @@ int FromMsg::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		if (intMsgCnt == strLowerMessage.length()) {
-			reply(fmt->get_help("st"));
+			replyHelp("st");
 			return 1;
 		}
 		if (strLowerMessage.substr(intMsgCnt, 3) == "clr") {
@@ -3916,7 +3934,7 @@ int FromMsg::InnerOrder() {
 			replyMsg("strSetPropSuccess");
 		}
 		else {
-			reply(fmt->get_help("st"));
+			replyHelp("st");
 		}
 		return 1;
 	}
@@ -3940,7 +3958,7 @@ int FromMsg::InnerOrder() {
 		readSkipSpace();
 		const unsigned int len{ (unsigned int)strMsg.length() };
 		if (intMsgCnt == len) {
-			reply(fmt->get_help("ww"));
+			replyHelp("ww");
 			return 1;
 		}
 		if (!fromChat.gid)isHidden = false;
@@ -4032,7 +4050,7 @@ int FromMsg::InnerOrder() {
 			}
 		}
 		if (strMainDice.empty()) {
-			reply(fmt->get_help("ww"));
+			replyHelp("ww");
 			return 1;
 		}
 		string strFirstDice = strMainDice.substr(0, strMainDice.find('+') < strMainDice.find('-')
