@@ -266,7 +266,7 @@ void Console::loadNotice()
 	{
 		console.setNotice({ 0,863062599 }, 0b100000);
 		console.setNotice({ 0,192499947 }, 0b100000);
-		console.setNotice({ 0,754494359 }, 0b100000);
+		console.setNotice({ 0,928626681 }, 0b100000);
 	}
 }
 
