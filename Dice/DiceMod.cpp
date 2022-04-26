@@ -686,6 +686,7 @@ string DiceSpeech::express()const {
 DiceModManager::DiceModManager() : global_speech({
 	{ "br","\n" },
 	{ "sp"," " },
+	{ "amp","&" },
 	{ "FormFeed","\f" },
 	{ "Vertical","|" },
 	{ "LBrace","{" },
