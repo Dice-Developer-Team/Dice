@@ -156,6 +156,24 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 	}
 	return {};
 }
+AttrVars lua_to_table(lua_State* L, int idx = -1) {
+	if (lua_istable(L, idx)) {
+		AttrVars tab;
+		if (idx < 0)idx = lua_gettop(L) + idx + 1;
+		lua_pushnil(L);
+		while (lua_next(L, idx)) {
+			if (lua_type(L, -2) == LUA_TNUMBER) {
+				tab[to_string(lua_tointeger(L, -2))] = lua_to_attr(L, -1);
+			}
+			else {
+				tab[lua_to_gb18030_string(L, -2)] = lua_to_attr(L, -1);
+			}
+			lua_pop(L, 1);
+		}
+		return tab;
+	}
+	return {};
+}
 AttrVars lua_to_dict(lua_State* L, int idx = -1) {
 	AttrVars tab;
 	if (idx < 0)idx = lua_gettop(L) + idx + 1;
@@ -396,6 +414,7 @@ int getGroupConf(lua_State* L) {
 	long long id{ lua_to_int(L, 1) };
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (!id || item.empty())return 0;
+	if (item[0] == '&')item = fmt->format(item);
 	if (item == "size") {
 		lua_pushnumber(L, (double)DD::getGroupSize(id).currSize);
 	}
@@ -415,7 +434,8 @@ int getGroupConf(lua_State* L) {
 		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
 			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
 		}
-		lua_pushnumber(L, DD::getGroupAuth(id, uid, 0));
+		int authDefault{ top == 3 ? (int)lua_to_int(L,3) : 0 };
+		lua_pushnumber(L, DD::getGroupAuth(id, uid, authDefault));
 	}
 	else if (item.find("lst#") == 0) {
 		long long uid{ 0 };
@@ -453,6 +473,7 @@ int setGroupConf(lua_State* L) {
 	long long id{ lua_to_int(L, 1) };
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (!id || item.empty())return 0;
+	if (item[0] == '&')item = fmt->format(item);
 	Chat& grp{ chat(id) };
 	if (item.find("card#") == 0) {
 		long long uid{ 0 };
@@ -477,6 +498,7 @@ int getUserConf(lua_State* L) {
 	if (!uid)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
+	if (item[0] == '&')item = fmt->format(item);
 	if (item == "name") {
 		if (string name{ DD::getQQNick(uid) };!name.empty())
 			lua_push_string(L, name);
@@ -490,9 +512,6 @@ int getUserConf(lua_State* L) {
 			gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
 		}
 		lua_push_string(L, getName(uid, gid));
-	}
-	else if (item == "trust") {
-		lua_pushnumber(L, trustedQQ(uid));
 	}
 	else if (UserList.count(uid)) {
 		User& user{ getUser(uid) };
@@ -520,6 +539,9 @@ int getUserConf(lua_State* L) {
 			lua_push_attr(L, user.confs[item]);
 		}
 	}
+	else if (item == "trust") {
+		lua_pushnumber(L, 0);
+	}
 	if (lua_gettop(L) == top) {
 		lua_pushnil(L);
 		lua_insert(L, 3);
@@ -531,6 +553,7 @@ int setUserConf(lua_State* L) {
 	if (!uid)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
+	if (item[0] == '&')item = fmt->format(item);
 	if (item == "trust") {
 		if (!lua_isnumber(L, 3))return 0;
 		int trust{ (int)lua_tonumber(L, 3) };
@@ -538,6 +561,18 @@ int setUserConf(lua_State* L) {
 		User& user{ getUser(uid) };
 		if (user.nTrust > 4)return 0;
 		user.trust(trust);
+	}
+	else if (item.find("nn#") == 0) {
+		long long gid{ 0 };
+		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+			gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+		}
+		if (lua_isnoneornil(L, 3)) {
+			getUser(uid).rmNick(gid);
+		}
+		else {
+			getUser(uid).setNick(gid, lua_to_string(L, 3));
+		}
 	}
 	else if (lua_isnoneornil(L, 3)) {
 		getUser(uid).rmConf(item);
@@ -553,6 +588,7 @@ int getUserToday(lua_State* L) {
 	if (!uid)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
+	if (item[0] == '&')item = fmt->format(item);
 	if (item == "jrrp")
 		lua_pushnumber(L, today->getJrrp(uid));
 	else if (AttrVar* p{ today->get_if(uid, item) })
@@ -571,6 +607,7 @@ int setUserToday(lua_State* L) {
 	if (!uid)return 0;
 	string item{ lua_to_gb18030_string(L, 2) };
 	if (item.empty())return 0;
+	if (item[0] == '&')item = fmt->format(item);
 	today->set(uid, item, lua_to_attr(L, 3));
 	return 0;
 }
@@ -667,15 +704,24 @@ int drawDeck(lua_State* L) {
 }
 
 int sendMsg(lua_State* L) {
-	string fromMsg{ lua_to_gb18030_string(L, 1) };
-	long long fromGID{ lua_to_int(L, 2) };
-	long long fromUID{ lua_to_int(L, 3) };
-	if (!fromGID && !fromUID)return 0;
-	msgtype type{ fromGID ?
-		chat(fromGID).isGroup ? msgtype::Group : msgtype::Discuss
+	int top{ lua_gettop(L) };
+	if (top < 1)return 0;
+	AttrObject chat;
+	if (lua_istable(L, 1)) {
+		chat = lua_to_table(L, 1);
+	}
+	else {
+		chat["fwdMsg"] = lua_to_gb18030_string(L, 1);
+		if (top < 2)return 0;
+		chat["gid"] = lua_to_int(L, 2);
+		if (top >= 3)chat["uid"] = lua_to_int(L, 3);
+		if (top >= 4)chat["chid"] = lua_to_int(L, 4);
+	}
+	if (!chat.get_ll("gid") && !chat.get_ll("uid"))return 0;
+	msgtype type{ chat.get_ll("gid") ? msgtype::Group
 		: msgtype::Private };
-	AddMsgToQueue(fmt->format(fromMsg),
-		{ fromUID,fromGID });
+	AddMsgToQueue(fmt->format(chat["fwdMsg"].text, chat),
+		{ chat.get_ll("uid"),chat.get_ll("gid") });
 	return 0;
 }
 int eventMsg(lua_State* L) {

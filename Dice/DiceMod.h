@@ -121,6 +121,7 @@ public:
     string express()const;
 };
 
+/*
 class DiceMod
 {
 protected:
@@ -133,7 +134,6 @@ protected:
     dict_ci<vector<string>> mod_public_deck;
     using replys = dict_ci<DiceMsgReply>;
     replys mod_msg_reply;
-    /*map<string, DiceGenerator> m_generator;*/
 public:
     DiceMod() = default;
     friend class DiceModFactory;
@@ -154,18 +154,21 @@ public:
     //MOD_BUILD(dict_ci<string>, helpdoc)
    // MOD_BUILD(replys, msg_reply)
 };
+*/
 
 class DiceModConf {
 public:
+    string name;
+    unsigned int index{ 0 };
     bool active{ true };
-    int index{ 0 };
+    bool loaded{ false };
 };
 
 class ResList;
 class DiceModManager
 {
-    dict_ci<DiceMod> modList;
-    vector<pair<string, bool>>modIndex;
+    dict_ci<ptr<DiceModConf>> modList;
+    vector<ptr<DiceModConf>> modIndex;
     //custom
     dict_ci<ptr<DiceMsgReply>> custom_reply;
     //global
@@ -192,6 +195,11 @@ public:
 	DiceModManager();
     friend class CustomReplyApiHandler;
     bool isIniting{ false };
+
+    string list_mod()const;
+    void mod_on(FromMsg*);
+    void mod_off(FromMsg*);
+
 	string format(string, AttrObject = {},
         const AttrIndexs& = MsgIndexs,
         const dict_ci<string>& = EditedMsg) const;
@@ -225,6 +233,8 @@ public:
 	int load(ResList&);
     void init();
 	void clear();
+    void reload();
+    void save();
 };
 
 inline std::shared_ptr<DiceModManager> fmt;

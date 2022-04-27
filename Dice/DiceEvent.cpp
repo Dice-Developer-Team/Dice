@@ -1520,7 +1520,7 @@ int FromMsg::InnerOrder() {
 			return -1;
 		}
 		else if (strOption == "reload") {
-			if (trusted < 5 && fromChat.uid != console.master()) {
+			if (trusted < 5) {
 				replyMsg("strNotMaster");
 				return -1;
 			}
@@ -1530,7 +1530,7 @@ int FromMsg::InnerOrder() {
 		}
 		else if (strOption == "remake") {
 			
-			if (trusted < 5 && fromChat.uid != console.master()) {
+			if (trusted < 5) {
 				replyMsg("strNotMaster");
 				return -1;
 			}
@@ -1539,7 +1539,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		else if (strOption == "die") {
-			if (trusted < 5 && fromChat.uid != console.master()) {
+			if (trusted < 5) {
 				replyMsg("strNotMaster");
 				return -1;
 			}
@@ -1550,7 +1550,7 @@ int FromMsg::InnerOrder() {
 		if (strOption == "rexplorer")
 		{
 #ifdef _WIN32
-			if (trusted < 5 && fromChat.uid != console.master())
+			if (trusted < 5)
 			{
 				replyMsg("strNotMaster");
 				return -1;
@@ -1583,7 +1583,7 @@ int FromMsg::InnerOrder() {
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "cloud") {
 		intMsgCnt += 5;
 		string strOpt = readPara();
-		if (trusted < 4 && fromChat.uid != console.master()) {
+		if (trusted < 4) {
 			replyMsg("strNotAdmin");
 			return 1;
 		}
@@ -2551,7 +2551,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "trust") {
-			if (trusted < 4 && fromChat.uid != console.master()) {
+			if (trusted < 4) {
 				replyMsg("strNotAdmin");
 				return 1;
 			}
@@ -2604,7 +2604,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "diss") {
-			if (trusted < 4 && fromChat.uid != console.master()) {
+			if (trusted < 4) {
 				replyMsg("strNotAdmin");
 				return 1;
 			}
@@ -2624,7 +2624,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "kill") {
-			if (trusted < 4 && fromChat.uid != console.master()) {
+			if (trusted < 4) {
 				replyMsg("strNotAdmin");
 				return 1;
 			}
@@ -2723,6 +2723,35 @@ int FromMsg::InnerOrder() {
 		}
 		return 1;
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 3) == "mod") {
+	if (trusted < 4) {
+		replyMsg("strNotAdmin");
+		return 1;
+	}
+	intMsgCnt += 3;
+	string strPara = readPara();
+	if (strPara.empty()) {
+		replyHelp("mod");
+	}
+	else if (strPara == "list") {
+		vars["li"] = fmt->list_mod();
+		replyMsg("strModList");
+	}
+	else if (strPara == "on") {
+		string& modName{ (vars["mod"] = readRest()).text };
+		if (modName.empty()) {
+			replyMsg("strModNameEmpty");
+		}
+		else fmt->mod_on(this);
+	}
+	else if (strPara == "off") {
+		string& modName{ (vars["mod"] = readRest()).text };
+		if (modName.empty()) {
+			replyMsg("strModNameEmpty");
+		}
+		else fmt->mod_off(this);
+	}
+}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "nnn") {
 		intMsgCnt += 3;
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))

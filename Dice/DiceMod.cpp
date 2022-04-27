@@ -683,8 +683,8 @@ string DiceSpeech::express()const {
 	return {};
 }
 
-DiceModManager::DiceModManager() : global_speech({
-	{ "br","\n" },
+dict_ci<DiceSpeech> transpeech{
+	{ "br", "\n" },
 	{ "sp"," " },
 	{ "amp","&" },
 	{ "FormFeed","\f" },
@@ -694,7 +694,53 @@ DiceModManager::DiceModManager() : global_speech({
 	{ "LBracket","[" },
 	{ "RBracket","]" },
 	{ "Question","?" },
-	{ "Equal","=" }, }){
+	{ "Equal","=" },
+};
+
+DiceModManager::DiceModManager() :global_speech(transpeech) {
+}
+string DiceModManager::list_mod()const {
+	ResList list;
+	for (auto& mod : modIndex) {
+		list << to_string(mod->index) + ". " + mod->name + (mod->active 
+			? (mod->loaded ? " √" : " ?") 
+			: " ×");
+	}
+	return list.show();
+}
+void DiceModManager::mod_on(FromMsg* msg) {
+	string modName{ msg->vars.get_str("mod") };
+	if (modList.count(modName)) {
+		if (modList[modName]->active) {
+			msg->replyMsg("strModOnAlready");
+		}
+		else {
+			modList[modName]->active = true;
+			save();
+			reload();
+			msg->note("{strModOn}", 1);
+		}
+	}
+	else {
+		msg->replyMsg("strModNotFound");
+	}
+}
+void DiceModManager::mod_off(FromMsg* msg) {
+	string modName{ msg->vars.get_str("mod") };
+	if (modList.count(modName)) {
+		if (!modList[modName]->active) {
+			msg->replyMsg("strModOffAlready");
+		}
+		else {
+			modList[modName]->active = false;
+			save();
+			reload();
+			msg->note("{strModOff}", 1);
+		}
+	}
+	else {
+		msg->replyMsg("strModNotFound");
+	}
 }
 
 string DiceModManager::format(string s, AttrObject context, const AttrIndexs& indexs, const dict_ci<string>& dict) const{
@@ -1093,15 +1139,46 @@ string DiceModManager::script_path(const string& name)const {
 int DiceModManager::load(ResList& resLog){
 	merge(global_speech, GlobalMsg);
 	helpdoc = HelpDoc;
+	//读取mod管理文件
+	if (auto jFile{ freadJson(DiceDir / "conf" / "ModList.json") };!jFile.empty()) {
+		for (auto j : jFile) {
+			string modName{ UTF8toGBK(j["name"].get<string>()) };
+			auto mod{ std::make_shared<DiceModConf>(DiceModConf{ modName,modIndex.size(),j["active"].get<bool>()}) };
+			modList[modName] = mod;
+			modIndex.push_back(mod);
+		}
+	}
 	//读取mod
-	vector<std::filesystem::path> sModFile;
+	vector<std::filesystem::path> ModFile;
+	vector<std::filesystem::path> ModLoadList(modIndex.size());
 	vector<string> sModErr;
-	int cntMod = listDir(DiceDir / "mod" , sModFile);
-	int cntHelpItem{ 0 };
-	int cntSpeech{ 0 };
-	if (cntMod > 0) {
+	auto dirMod{ DiceDir / "mod" };
+	if (int cntMod{ listDir(dirMod, ModFile) }; cntMod > 0) {
+		bool newMod{ false };
+		for (auto& pathMod : ModFile) {
+			if (pathMod.extension() != ".json")continue;
+			if (string modName{ UTF8toGBK(pathMod.stem().u8string()) }; modList.count(modName)) {
+				auto mod{ modList[modName] };
+				if (mod->active) {
+					mod->loaded = true;
+					ModLoadList[mod->index] = pathMod;
+				}
+			}
+			else {
+				auto mod{ std::make_shared<DiceModConf>(DiceModConf{ modName,modIndex.size(),true }) };
+				modList[modName] = mod;
+				modIndex.push_back(mod);
+				ModLoadList.push_back(pathMod);
+				newMod = true;
+			}
+		}
+		if (newMod)save();
+	}
+	if (!ModLoadList.empty()) {
+		int cntMod{ 0 }, cntHelpItem{ 0 }, cntSpeech{ 0 };
 		vector<std::filesystem::path> ModLuaFiles;
-		for (auto& pathFile : sModFile) {
+		for (auto& pathFile : ModLoadList) {
+			if (pathFile.empty())continue;
 			nlohmann::json j = freadJson(pathFile);
 			if (j.is_null()) {
 				sModErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
@@ -1114,6 +1191,7 @@ int DiceModManager::load(ResList& resLog){
 					continue;
 				}
 			}
+			++cntMod;
 			if (j.count("helpdoc")) {
 				cntHelpItem += readJMap(j["helpdoc"], helpdoc);
 			}
@@ -1259,7 +1337,7 @@ int DiceModManager::load(ResList& resLog){
 		cntHelp.reserve(helpdoc.size());
 		loadJMap(DiceDir / "user" / "HelpStatic.json", cntHelp);
 	}
-	return cntMod;
+	return ModLoadList.size();
 }
 void DiceModManager::init() {
 	isIniting = true;
@@ -1277,6 +1355,7 @@ void DiceModManager::init() {
 	isIniting = false;
 }
 void DiceModManager::clear(){
+	global_speech = transpeech;
 	helpdoc.clear();
 	querier.clear();
 	msgorder.clear();
@@ -1289,4 +1368,28 @@ void DiceModManager::clear(){
 	reply_prefix.clear();
 	gReplySearcher.clear();
 	gReplyPrefix.clear();
+	modList.clear();
+	modIndex.clear();
+}
+
+void DiceModManager::save() {
+	json jFile = json::array();
+	for (auto& mod : modIndex) {
+		json j;
+		j["name"] = GBKtoUTF8(mod->name);
+		j["active"] = mod->active;
+		jFile.push_back(j);
+	}
+	if (!jFile.empty()) {
+		fwriteJson(DiceDir / "conf" / "ModList.json", jFile);
+	}
+}
+void DiceModManager::reload() {
+	ResList logList;
+	fmt->clear();
+	fmt->load(logList);
+	if (!logList.empty()){
+		logList << "模块重载完毕√";
+		console.log(logList.show(), 1, printSTNow());
+	}
 }

@@ -50,6 +50,13 @@ const dict_ci<string> PlainMsg
 	{"strCallUser", "用户"},
 	{"strSummonWord", ""},
 	{"strSummonEmpty", "召唤{self}，{nick}有何事么？"},
+	{"strModList", "{self}的模块加载列表:{li}"},
+	{"strModOn", "已将记忆体【{mod}】插入{self}√"},
+	{"strModOnAlready", "{self}的记忆体【{mod}】已激活！"},
+	{"strModOff", "已弹出{self}的记忆体【{mod}】√"},
+	{"strModOffAlready", "{self}的记忆体【{mod}】已停用！"},
+	{"strModNameEmpty", "请{nick}输入模块名"},
+	{"strModNotFound", "{self}未找到输入模块【{mod}】!"},
 	{"strAkForkNew","{self}已创建分歧\n#{fork}"},
 	{"strAkAdd","{self}已加入新选项√\n当前分歧:{fork}{li}"},
 	{"strAkAddEmpty","给完{nick}的选项，就像{self}没看到这句话之前一样×"},
@@ -474,6 +481,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
+608:新增.mod指令
 607:修改.nn语法
 606:完善.sc/http.post/reply
 605:关键词回复多对一
@@ -500,7 +508,7 @@ const dict_ci<string> HelpDoc = {
 566:.help查询建议
 565:.log日志记录)"},
 {"协议","0.本协议是Dice!默认服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
-{"链接","Dice!论坛导航贴: https://kokona.tech \nDice!论坛: https://forum.kokona.tech \nDice!众筹计划: https://afdian.net/@suhuiw4123"},
+{"链接","Dice!论坛导航贴: https://kokona.tech \nDice!论坛: https://forum.kokona.tech \n支持Shiki: https://afdian.net/@dice_shiki"},
 {"设定","Master：{master_ID}\n好友申请：需要使用记录\n入群邀请：黑名单制，非黑即入\n讨论组使用：允许\n移出反制：拉黑群和操作者\n禁言反制：默认拉黑群和群主\n刷屏反制：警告\n邀请人责任：有限连带\n窥屏可能：{窥屏可能}\n其他插件：{其他插件}{姐妹骰}\n骰娘用户群:{骰娘用户群}\n私骰分享群：863062599 192499947\n开发交流群：1029435374"},
 {"骰娘用户群","【未设置】"},
 {"窥屏可能","无"},
@@ -517,7 +525,8 @@ const dict_ci<string> HelpDoc = {
 .reply on/off 启用/禁用回复
 .group 群管
 .authorize 授权许可
-.send 向后台发送消息)"
+.send 向后台发送消息
+.mod 模块操作)"
 "\f"
 R"([第二页]跑团指令
 .rules 规则速查
@@ -551,6 +560,12 @@ R"([第三页]其他指令
 R"({help:扩展指令})"},
 {"master",R"(当前Master:{master_ID}
 Master拥有最高权限，且可以调整任意信任)"},
+{"mod",R"(模块指令.mod
+本指令限信任4使用
+`.mod list` 查看已加载mod列表
+`.mod on 模块名` 启用指定模块
+`.mod off 模块名` 停用指定模块
+mod按列表顺序读取内容，并从后向前覆盖)"},
 {"ak",R"(安科+安价指令.ak
 .ak#[标题]或.ak new [标题] 新建分歧并设置标题（可为空）
 .ak+[选项]或.ak add [选项] 为本轮分歧添加新选项，用|分隔可一次添加多个选项
