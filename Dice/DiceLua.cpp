@@ -286,6 +286,28 @@ bool lua_msg_reply(FromMsg* msg, const string& luas) {
 	}
 	return true;
 }
+bool lua_call_event(AttrObject eve, const string& luas) {
+	bool isFile{ fmt->script_has(luas) };
+	LuaState L{ isFile ? fmt->script_path(luas).c_str() : nullptr };
+	if (!L)return false;
+	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
+	*p = &eve;
+	luaL_setmetatable(L, "Context");
+	lua_setglobal(L, "event");
+	if (isFile) {
+		if (lua_pcall(L, 0, 2, 0)) {
+			string pErrorMsg = lua_to_gb18030_string(L, -1);
+			console.log(getMsg("strSelfName") + "运行lua脚本" + luas + "失败:" + pErrorMsg, 0b10);
+			return 0;
+}
+	}
+	else if (luaL_loadstring(L, luas.c_str()) || lua_pcall(L, 0, 2, 0)) {
+		string pErrorMsg = lua_to_gb18030_string(L, -1);
+		console.log(getMsg("strSelfName") + "调用事件lua语句失败!\n" + pErrorMsg, 0b10);
+		return false;
+	}
+	return true;
+}
 
 bool lua_call_task(const char* file, const char* func) {
 #ifndef _WIN32
@@ -335,7 +357,7 @@ int log(lua_State* L) {
 			note_lv |= (1 << type);
 		}
 	}
-	console.log(info, note_lv);
+	console.log(fmt->format(info), note_lv);
 	return 0;
 }
  //加载其他lua脚本
@@ -1009,6 +1031,8 @@ int lua_readStringTable(const char* file, const char* var, std::unordered_map<st
 void lua_preLoadMod(lua_State* L) {
 	lua_newtable(L);
 	lua_setglobal(L, "msg_reply");
+	lua_newtable(L);
+	lua_setglobal(L, "event");
 }
 
 void DiceModManager::loadLuaMod(const vector<fs::path>& files, ResList& res) {
@@ -1024,12 +1048,25 @@ void DiceModManager::loadLuaMod(const vector<fs::path>& files, ResList& res) {
 		}
 		else {
 			lua_getglobal(L, "msg_reply");
-			if (lua_type(L, 1) != LUA_TTABLE) {
-				err << "数据格式错误:" + UTF8toGBK(file.filename().u8string());
-				continue;
+			if (!lua_isnil(L, 1)) {
+				if (lua_type(L, 1) != LUA_TTABLE) {
+					err << "数据格式错误:" + UTF8toGBK(file.filename().u8string());
+					continue;
+				}
+				for (auto& [key, val] : lua_to_attr(L).to_dict()) {
+					mod_reply_list[key] = val.to_dict();
+				}
 			}
-			for (auto& [key, val] : lua_to_attr(L).to_dict()) {
-				mod_reply_list[key] = val.to_dict();
+			lua_pop(L, 1);
+			lua_getglobal(L, "event");
+			if (!lua_isnil(L, 1)) {
+				if (lua_type(L, 1) != LUA_TTABLE) {
+					err << "数据格式错误:" + UTF8toGBK(file.filename().u8string());
+					continue;
+				}
+				for (auto& [key, val] : lua_to_attr(L).to_dict()) {
+					events[key] = val.to_dict();
+				}
 			}
 		}
 	}
@@ -1043,6 +1080,7 @@ void DiceModManager::loadLuaMod(const vector<fs::path>& files, ResList& res) {
 				final_msgreply[key] = reply;
 			}
 		}
+		res << "注册event" + to_string(events.size()) + "项";
 	}
 	if (!err.empty()) {
 		res << "mod文件读取错误:" + err.show("\n");

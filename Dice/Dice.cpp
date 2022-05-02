@@ -618,9 +618,9 @@ EVE_PrivateMsg(eventPrivateMsg)
 	if (fromUID == console.DiceMaid && !console["ListenSelfEcho"])return 0;
 	else if (console["DisableStrangerChat"] && !DD::isFriend(fromUID, true))return 0;
 	shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
-		AttrVars({ { "Event", AttrVar("Message")},
-			{ "fromMsg", AttrVar(message) },
-			{ "uid",AttrVar(fromUID) },
+		AttrVars({ { "Event", "Message" },
+			{ "fromMsg", message },
+			{ "uid", fromUID },
 			}), chatInfo{ fromUID,0,0 }));
 	return Msg->DiceFilter();
 }
@@ -634,11 +634,11 @@ EVE_GroupMsg(eventGroupMsg)
 	if (!grp.isset("ºöÂÔ"))
 	{
 		shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
-			AttrVars({ { "Event", AttrVar("Message")},
-				{ "fromMsg", AttrVar(message) },
-				{ "msgid",AttrVar(msgId) },
-				{ "uid",AttrVar(fromUID) },
-				{ "gid",AttrVar(fromGID) }
+			AttrVars({ { "Event", "Message" },
+				{ "fromMsg", message },
+				{ "msgid",msgId },
+				{ "uid",fromUID },
+				{ "gid",fromGID }
 				}), chatInfo{ fromUID,fromGID,0 }));
 		return Msg->DiceFilter();
 	}
@@ -653,11 +653,11 @@ EVE_ChannelMsg(eventChannelMsg)
 	{
 		shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
 			AttrVars({ { "Event", AttrVar("Message")},
-				{ "fromMsg", AttrVar(message) },
-				{ "msgid",AttrVar(msgId) },
-				{ "uid",AttrVar(fromUID) },
-				{ "gid",AttrVar(fromGID) },
-				{ "chid",AttrVar(fromChID) }
+				{ "fromMsg", message },
+				{ "msgid", msgId },
+				{ "uid", fromUID },
+				{ "gid", fromGID },
+				{ "chid", fromChID }
 				}), chatInfo{ fromUID,fromGID,fromChID }));
 		return Msg->DiceFilter();
 	}
@@ -685,10 +685,10 @@ EVE_DiscussMsg(eventDiscussMsg)
 		return 1;
 	}
 	shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
-		AttrVars({ { "Event", AttrVar("Message")},
-			{ "fromMsg", AttrVar(message) },
-			{ "uid",AttrVar(fromUID) },
-			{ "gid",AttrVar(fromDiscuss) }
+		AttrVars({ { "Event", "Message"},
+			{ "fromMsg", message },
+			{ "uid", fromUID },
+			{ "gid", fromDiscuss }
 			}), chatInfo{ fromUID,fromDiscuss,0 }));
 	return Msg->DiceFilter() || grp.isset("À¹½ØÏûÏ¢");
 }

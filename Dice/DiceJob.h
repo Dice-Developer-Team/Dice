@@ -5,26 +5,26 @@ inline time_t tNow = time(NULL);
 
 int sendSelf(const string& msg);
 
-void cq_exit(DiceJob& job);
-void frame_restart(DiceJob& job);
-void frame_reload(DiceJob& job);
+void cq_exit(AttrObject& job);
+void frame_restart(AttrObject& job);
+void frame_reload(AttrObject& job);
 
-void auto_save(DiceJob& job);
+void auto_save(AttrObject& job);
 
-void check_system(DiceJob& job);
+void check_system(AttrObject& job);
 
 
-void clear_image(DiceJob& job);
+void clear_image(AttrObject& job);
 
-void clear_group(DiceJob& job);
+void clear_group(AttrObject& job);
 
-void list_group(DiceJob& job);
+void list_group(AttrObject& job);
 
-void cloud_beat(DiceJob& job);
-void dice_update(DiceJob& job);
-void dice_cloudblack(DiceJob& job);
+void cloud_beat(AttrObject& job);
+void dice_update(AttrObject& job);
+void dice_cloudblack(AttrObject& job);
 
-void log_put(DiceJob& job); 
+void log_put(AttrObject& job); 
 void global_exit();
 
 

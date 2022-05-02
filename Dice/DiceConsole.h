@@ -41,6 +41,7 @@ public:
 	friend void ConsoleTimer();
 	friend class FromMsg;
 	friend class DiceJob;
+	friend void MsgNote(AttrObject&, string, int);
 	//DiceSens DSens;
 	using Clock = std::pair<unsigned short, unsigned short>;
 	static const enumap<string> mClockEvent;

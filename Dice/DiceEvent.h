@@ -320,5 +320,6 @@ public:
 	int readItems(vector<string>&);
 };
 void reply(AttrObject&, string);
+void MsgNote(AttrObject&, string, int);
 
 #endif /*DICE_EVENT*/

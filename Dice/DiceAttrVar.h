@@ -48,6 +48,7 @@ public:
 	const std::unordered_map<string, std::shared_ptr<AttrVar>>& get_dict()const { return dict; };
 	std::vector<std::shared_ptr<AttrVar>>& get_list() { return idxs; };
 	const std::vector<std::shared_ptr<AttrVar>>& get_list()const { return idxs; };
+	bool empty()const { return dict.empty(); }
 	void writeb(std::ofstream& fout) const;
 	void readb(std::ifstream& fin);
 };
@@ -139,6 +140,9 @@ public:
 	AttrVar& operator[](const string& key)const {
 		return (*obj)[key];
 	}
+	bool operator<(const AttrObject& other)const {
+		return obj < other.obj;
+	}
 	bool empty()const {
 		return obj->empty();
 	}
@@ -159,6 +163,9 @@ public:
 	}
 	VarTable get_tab(const string& key)const {
 		return obj->count(key) ? obj->at(key).to_table() : VarTable();
+	}
+	AttrVars get_dict(const string& key)const {
+		return obj->count(key) ? obj->at(key).to_dict() : AttrVars();
 	}
 };
 using AttrObjects = std::unordered_map<string, AttrObject>;

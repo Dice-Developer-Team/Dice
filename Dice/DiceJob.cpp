@@ -18,6 +18,7 @@
 #include "DiceMod.h"
 #include "DiceNetwork.h"
 #include "DiceSession.h"
+#include "DiceEvent.h"
 #include "S3PutObject.h"
 #pragma warning(disable:28159)
 
@@ -29,9 +30,9 @@ int sendSelf(const string& msg) {
 	return 0;
 }
 
-void cq_exit(DiceJob& job) {
+void cq_exit(AttrObject& job) {
 #ifdef _WIN32
-	job.note("已令" + getMsg("self") + "在5秒后自杀", 1);
+	MsgNote(job, "已令" + getMsg("self") + "在5秒后自杀", 1);
 	std::this_thread::sleep_for(5s);
 	dataBackUp();
 	DD::killme();
@@ -48,9 +49,9 @@ inline PROCESSENTRY32 getProcess(int pid) {
 }
 #endif
 
-void frame_restart(DiceJob& job) {
+void frame_restart(AttrObject& job) {
 #ifdef _WIN32
-	if (!job.fromChat.uid) {
+	if (!job.get_ll("uid")) {
 		if (console["AutoFrameRemake"] <= 0) {
 			sch.add_job_for(60 * 60, job);
 			return;
@@ -67,14 +68,14 @@ void frame_restart(DiceJob& job) {
 #endif
 }
 
-void frame_reload(DiceJob& job) {
+void frame_reload(AttrObject& job) {
 	if (DD::reload())
-		job.note("重载" + getMsg("self") + "完成√", 1);
+		MsgNote(job, "重载" + getMsg("self") + "完成√", 1);
 	else
-		job.note("重载" + getMsg("self") + "失败×", 0b10);
+		MsgNote(job, "重载" + getMsg("self") + "失败×", 0b10);
 }
 
-void check_system(DiceJob& job) {
+void check_system(AttrObject& job) {
 	DD::debugLog(printSTNow() + " 检查系统负载");
 #ifdef _WIN32
 	static int perRAM(0), perLastRAM(0);
@@ -139,7 +140,7 @@ void check_system(DiceJob& job) {
 
 
 
-void auto_save(DiceJob& job) {
+void auto_save(AttrObject& job) {
 	if (sch.is_job_cold("autosave"))return;
 	DD::debugLog(printSTNow() + " 自动保存");
 	dataBackUp();
@@ -151,8 +152,8 @@ void auto_save(DiceJob& job) {
 }
 
 //被引用的图片列表
-void clear_image(DiceJob& job) {
-	if (!job.fromChat.uid) {
+void clear_image(AttrObject& job) {
+	if (!job.has("uid")) {
 		if (sch.is_job_cold("clrimage"))return;
 		if (console["AutoClearImage"] <= 0) {
 			sch.add_job_for(60 * 60, job);
@@ -160,22 +161,22 @@ void clear_image(DiceJob& job) {
 		}
 	}
 	scanImage(CardDeck::mPublicDeck, sReferencedImage);
-	job.note("整理" + getMsg("strSelfName") + "被引用图片" + to_string(sReferencedImage.size()) + "项", 0b0);
+	MsgNote(job, "整理" + getMsg("strSelfName") + "被引用图片" + to_string(sReferencedImage.size()) + "项", 0b0);
 	int cnt = clrDir("data/image/", sReferencedImage);
-	job.note("已清理image文件" + to_string(cnt) + "项", 1);
+	MsgNote(job, "已清理image文件" + to_string(cnt) + "项", 1);
 	if (console["AutoClearImage"] > 0) {
 		sch.refresh_cold("clrimage", time(NULL) + console["AutoClearImage"]);
 		sch.add_job_for(console["AutoClearImage"] * 60 * 60, "clrimage");
 	}
 }
 
-void clear_group(DiceJob& job) {
+void clear_group(AttrObject& job) {
 	console.log("开始清查群聊", 0, printSTNow());
 	int intCnt = 0;
 	ResList res;
 	vector<long long> GrpDelete;
 	time_t grpline{ console["InactiveGroupLine"] > 0 ? (tNow - console["InactiveGroupLine"] * (time_t)86400) : 0 };
-	if (job.vars["clear_mode"] == "unpower") {
+	if (job["clear_mode"] == "unpower") {
 		for (auto& [id, grp] : ChatList) {
 			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("协议无效"))continue;
 			if (grp.isGroup && !DD::isGroupAdmin(id, console.DiceMaid, true)) {
@@ -189,10 +190,10 @@ void clear_group(DiceJob& job) {
 				this_thread::sleep_for(3s);
 			}
 		}
-		job.note(getMsg("strSelfName") + "筛除无群权限群聊" + to_string(intCnt) + "个:" + res.show(), 0b10);
+		MsgNote(job, getMsg("strSelfName") + "筛除无群权限群聊" + to_string(intCnt) + "个:" + res.show(), 0b10);
 	}
-	else if (isdigit(static_cast<unsigned char>(job.vars["clear_mode"].to_str()[0]))) {
-		int intDayLim = stoi(job.vars["clear_mode"].to_str());
+	else if (isdigit(static_cast<unsigned char>(job.get_str("clear_mode")[0]))) {
+		int intDayLim{ job.get_int("clear_mode") };
 		string strDayLim = to_string(intDayLim);
 		time_t tNow = time(NULL);
 		for (auto& [id, grp] : ChatList) {
@@ -210,15 +211,15 @@ void clear_group(DiceJob& job) {
 			if (intDay > intDayLim) {
 				job["day"] = to_string(intDay);
 				res << printGroup(id) + ":" + to_string(intDay) + "天\n";
-				grp.leave(getMsg("strLeaveUnused", job.vars));
+				grp.leave(getMsg("strLeaveUnused", job));
 				intCnt++;
 				if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"])break;
 				this_thread::sleep_for(3s);
 			}
 		}
-		job.note(getMsg("strSelfName") + "已筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√" + res.show(), 0b10);
+		MsgNote(job, getMsg("strSelfName") + "已筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√" + res.show(), 0b10);
 	}
-	else if (job.vars["clear_mode"] == "black") {
+	else if (job["clear_mode"] == "black") {
 		try {
 			set<long long> grps{ DD::getGroupIDList() };
 			for (auto id : grps) {
@@ -264,10 +265,10 @@ void clear_group(DiceJob& job) {
 			console.log("提醒：" + getMsg("strSelfName") + "清查黑名单群聊时出错！", 0b10, printSTNow());
 		}
 		if (intCnt) {
-			job.note("已按" + getMsg("strSelfName") + "黑名单清查群聊" + to_string(intCnt) + "个：" + res.show(), 0b10);
+			MsgNote(job, "已按" + getMsg("strSelfName") + "黑名单清查群聊" + to_string(intCnt) + "个：" + res.show(), 0b10);
 		}
-		else if (job.fromChat.uid) {
-			job.echo(getMsg("strSelfName") + "按黑名单未发现待清查群聊");
+		else if (job.has("uid")) {
+			reply(job, getMsg("strSelfName") + "按黑名单未发现待清查群聊");
 		}
 	}
 	else if (job["clear_mode"] == "preserve") {
@@ -286,23 +287,23 @@ void clear_group(DiceJob& job) {
 			if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"])break;
 			this_thread::sleep_for(3s);
 		}
-		job.note(getMsg("strSelfName") + "筛除无许可群聊" + to_string(intCnt) + "个：" + res.show(), 1);
+		MsgNote(job, getMsg("strSelfName") + "筛除无许可群聊" + to_string(intCnt) + "个：" + res.show(), 1);
 	}
 	else
-		job.echo("无法识别筛选参数×");
+		reply(job, "{无法识别筛选参数×}");
 	if (!GrpDelete.empty()) {
 		for (const auto& id : GrpDelete) {
 			ChatList.erase(id);
 			if (gm->has_session(id))gm->session_end(id);
 		}
-		job.note("清查群聊时回收不活跃记录" + to_string(GrpDelete.size()) + "条", 0b1);
+		MsgNote(job, "清查群聊时回收不活跃记录" + to_string(GrpDelete.size()) + "条", 0b1);
 	}
 }
-void list_group(DiceJob& job) {
+void list_group(AttrObject& job) {
 	console.log("遍历群列表", 0, printSTNow());
 	string mode{ job["list_mode"].to_str() };
 	if (mode.empty()) {
-		job.reply(fmt->get_help("groups_list"));
+		reply(job, fmt->get_help("groups_list"));
 	}
 	if (mChatConf.count(mode)) {
 		ResList res;
@@ -311,7 +312,7 @@ void list_group(DiceJob& job) {
 				res << printChat(grp);
 			}
 		}
-		job.reply("{self}含词条" + mode + "群记录" + to_string(res.size()) + "条" + res.head(":").show());
+		reply(job, "{self}含词条" + mode + "群记录" + to_string(res.size()) + "条" + res.head(":").show());
 	}
 	else if (set<long long> grps(DD::getGroupIDList()); mode == "idle") {
 		std::priority_queue<std::pair<time_t, string>> qDiver;
@@ -326,7 +327,7 @@ void list_group(DiceJob& job) {
 			qDiver.emplace(intDay, printGroup(id));
 		}
 		if (qDiver.empty()) {
-			job.reply("{self}无群聊或群信息加载失败！");
+			reply(job, "{self}无群聊或群信息加载失败！");
 		}
 		size_t intCnt(0);
 		ResList res;
@@ -335,7 +336,7 @@ void list_group(DiceJob& job) {
 			qDiver.pop();
 			if (++intCnt > 32 || qDiver.top().first < 7)break;
 		}
-		job.reply("{self}所在闲置群列表:" + res.show(1));
+		reply(job, "{self}所在闲置群列表:" + res.show(1));
 	}
 	else if (job["list_mode"] == "size") {
 		std::priority_queue<std::pair<time_t, string>> qSize;
@@ -348,7 +349,7 @@ void list_group(DiceJob& job) {
 			qSize.emplace(size.currSize, DD::printGroupInfo(id));
 		}
 		if (qSize.empty()) {
-			job.reply("{self}无群聊或群信息加载失败！");
+			reply(job, "{self}无群聊或群信息加载失败！");
 		}
 		size_t intCnt(0);
 		ResList res;
@@ -357,32 +358,32 @@ void list_group(DiceJob& job) {
 			qSize.pop();
 			if (++intCnt > 32 || qSize.top().first < 7)break;
 		}
-		job.reply("{self}所在大群列表:" + res.show(1));
+		reply(job, "{self}所在大群列表:" + res.show(1));
 	}
 }
 
 //心跳检测
-void cloud_beat(DiceJob& job) {
+void cloud_beat(AttrObject& job) {
 	Cloud::heartbeat();
 	sch.add_job_for(5 * 60, job);
 }
 
-void dice_update(DiceJob& job) {
-	job.note("开始更新Dice\n版本:" + job.vars["ver"].to_str(), 1);
+void dice_update(AttrObject& job) {
+	MsgNote(job, "开始更新Dice\n版本:" + job.get_str("ver"), 1);
 	string ret;
-	if (DD::updateDice(job.vars["ver"].to_str(), ret)) {
-		job.note("更新Dice!" + job.vars["ver"].to_str() + "版成功√", 1);
+	if (DD::updateDice(job.get_str("ver"), ret)) {
+		MsgNote(job, "更新Dice!" + job.get_str("ver") + "版成功√", 1);
 	}
 	else {
-		job.echo("更新失败:" + ret);
+		reply(job,  "更新失败:" + ret);
 	}
 }
 
 //获取云不良记录
-void dice_cloudblack(DiceJob& job) {
+void dice_cloudblack(AttrObject& job) {
 	bool isSuccess(false);
-	job.note("开始获取云不良记录", 0);
-	string strURL("https://shiki.stringempty.xyz/blacklist/checked.json?" + to_string(job.fromTime));
+	MsgNote(job, "开始获取云不良记录", 0);
+	string strURL("https://shiki.stringempty.xyz/blacklist/checked.json?" + to_string(time(nullptr)));
 	switch (Cloud::DownloadFile(strURL.c_str(), DiceDir / "conf" / "CloudBlackList.json")) {
 	case -1: {
 		string des;
@@ -392,11 +393,11 @@ void dice_cloudblack(DiceJob& job) {
 			isSuccess = true;
 		}
 		else
-			job.echo("同步云不良记录同步失败:" + des);
+			reply(job, "同步云不良记录同步失败:" + des);
 	}
 		   break;
 	case -2:
-		job.echo("同步云不良记录同步失败!文件未找到");
+		reply(job, "{同步云不良记录同步失败!文件未找到}");
 		break;
 	case 0:
 		isSuccess = true;
@@ -405,35 +406,36 @@ void dice_cloudblack(DiceJob& job) {
 		break;
 	}
 	if (isSuccess) {
-		if (job["uid"])job.note("同步云不良记录成功，" + getMsg("self") + "开始读取", 1);
+		if (job["uid"])MsgNote(job, "同步云不良记录成功，" + getMsg("self") + "开始读取", 1);
 		blacklist->loadJson(DiceDir / "conf" / "CloudBlackList.json", true);
 	}
 	if (console["CloudBlackShare"])
 		sch.add_job_for(24 * 60 * 60, "cloudblack");
 }
 
-void log_put(DiceJob& job) {
-	if (!job.cntExec) {
-		DD::debugLog("发送log文件:" + job.vars["log_path"].to_str());
-		if ((!job.fromChat.gid || !DD::uploadGroupFile(job.fromChat.gid, job.vars["log_path"].to_str()))
-			&& job.fromChat.uid) {
-			DD::sendFriendFile(job.fromChat.uid, job.vars["log_path"].to_str());
+void log_put(AttrObject& job) {
+	int cntExec{ job.get_int("retry") };
+	if (!cntExec) {
+		DD::debugLog("发送log文件:" + job.get_str("log_path"));
+		if ((!job.get_ll("gid") || !DD::uploadGroupFile(job.get_ll("gid"), job.get_str("log_path")))
+			&& job.get_ll("uid")) {
+			DD::sendFriendFile(job.get_ll("uid"), job.get_str("log_path"));
 		}
 	}
 	job["ret"] = put_s3_object("dicelogger",
-							   job.vars["log_file"].to_str().c_str(),
-							   job.vars["log_path"].to_str().c_str(),
-							   "ap-southeast-1");
+		job.get_str("log_file").c_str(),
+		job.get_str("log_path").c_str(),
+		"ap-southeast-1");
 	if (job["ret"] == "SUCCESS") {
-		job.echo(getMsg("strLogUpSuccess", job.vars));
+		reply(job, "{strLogUpSuccess}");
 	}
-	else if (job.cntExec++ > 2) {
-		job.echo(getMsg("strLogUpFailureEnd", job.vars));
+	else if (++cntExec > 2) {
+		reply(job, "{strLogUpFailureEnd}");
 	}
 	else {
-		job["retry"] = to_string(job.cntExec);
-		job.echo(getMsg("strLogUpFailure", job.vars));
-		console.log(getMsg("strLogUpFailure", job.vars), 1);
+		job["retry"] = cntExec;
+		reply(job, "{strLogUpFailure}");
+		console.log(getMsg("strLogUpFailure", job), 1);
 		sch.add_job_for(2 * 60, job);
 	}
 }

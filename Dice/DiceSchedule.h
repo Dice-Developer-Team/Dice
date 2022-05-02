@@ -41,6 +41,7 @@ struct DiceJobDetail : public std::enable_shared_from_this<DiceJobDetail> {
 };
 extern AttrIndexs MsgIndexs;
 
+/*
 class DiceJob : public DiceJobDetail {
     enum class Renum { NIL, Retry_For, Retry_Until };
 public:
@@ -51,6 +52,7 @@ public:
     void reply(const std::string&);
     void note(const std::string&, int);
 };
+*/
 
 struct CDQuest {
     chatInfo chat;
@@ -74,11 +76,11 @@ class DiceScheduler {
 public:
     void start();
     void end();
-    void push_job(const DiceJobDetail&);
+    void push_job(const AttrObject&);
     void push_job(const char*, bool = false, const AttrVars& = {});
-    void add_job_for(unsigned int, const DiceJobDetail&);
+    void add_job_for(unsigned int, const AttrObject&);
     void add_job_for(unsigned int, const char*);
-    void add_job_until(time_t, const DiceJobDetail&);
+    void add_job_until(time_t, const AttrObject&);
     void add_job_until(time_t, const char*);
     bool is_job_cold(const char*);
     void refresh_cold(const char*, time_t);
@@ -86,7 +88,7 @@ public:
 };
 inline DiceScheduler sch;
 
-typedef void (*cmd)(DiceJob&);
+typedef void (*cmd)(AttrObject&);
 
 //½ñÈÕ¼ÇÂ¼
 class DiceToday {

@@ -34,7 +34,7 @@ unordered_map<string, cmd> mCommand = {
 DiceJobDetail::DiceJobDetail(const char* cmd, bool isFromSelf, const AttrVars& vars) :cmd_key(cmd), vars(vars) {
 	if (isFromSelf)fromChat.uid = console.DiceMaid;
 }
-
+/*
 void DiceJob::exec() {
 	if (auto it = mCommand.find(cmd_key); it != mCommand.end()) {
 		it->second(*this);
@@ -59,27 +59,38 @@ void DiceJob::note(const std::string& strMsg, int note_lv = 0b1) {
 		AddMsgToQueue(note, ct);
 	}
 }
+*/
 
 // 待处理任务队列
-std::queue<DiceJobDetail> queueJob;
+std::queue<AttrObject> queueJob;
 std::mutex mtQueueJob;
 //std::condition_variable cvJob;
 //std::condition_variable cvJobWaited;
 //延时任务队列
-using waited_job = pair<time_t, DiceJobDetail>;
+using waited_job = pair<time_t, AttrObject>;
 std::priority_queue<waited_job, std::deque<waited_job>,std::greater<waited_job>> queueJobWaited;
 std::mutex mtJobWaited;
 
+void exec(AttrObject& job) {
+	if (job.has("cmd")) {
+		if (auto it = mCommand.find(job.get_str("cmd")); it != mCommand.end()) {
+			it->second(job);
+		}
+	}
+	else if (job.has("id")) {
+		fmt->call_event(job.get_str("id"));
+	}
+}
 void jobHandle() {
 	while (Enabled) {
 		//监听作业队列
 		{
 			std::unique_lock<std::mutex> lock_queue(mtQueueJob);
 			while (Enabled && !queueJob.empty()) {
-				DiceJob job(queueJob.front());
+				AttrObject job(queueJob.front());
 				queueJob.pop();
 				lock_queue.unlock();
-				job.exec();
+				exec(job);
 				lock_queue.lock();
 				//cvJobWaited.notify_one();
 			}
@@ -105,7 +116,7 @@ void jobWait() {
 }
 
 //将任务加入执行队列
-void DiceScheduler::push_job(const DiceJobDetail& job) {
+void DiceScheduler::push_job(const AttrObject& job) {
 	if (!Enabled)return;
 	{
 		std::unique_lock<std::mutex> lock_queue(mtQueueJob);
@@ -117,31 +128,29 @@ void DiceScheduler::push_job(const char* job_name, bool isSelf, const AttrVars& 
 	if (!Enabled)return; 
 	{
 		std::unique_lock<std::mutex> lock_queue(mtQueueJob);
-		queueJob.emplace(job_name, isSelf, vars);
+		AttrObject obj{ vars };
+		obj["cmd"] = job_name;
+		queueJob.emplace(obj);
 	}
 	//cvJob.notify_one();
 }
 //将任务加入等待队列
-void DiceScheduler::add_job_for(unsigned int waited, const DiceJobDetail& job) {
-	if (!Enabled)return;
+void DiceScheduler::add_job_for(unsigned int waited, const AttrObject& job) {
 	std::unique_lock<std::mutex> lock_queue(mtJobWaited);
 	queueJobWaited.emplace(time(nullptr) + waited, job);
 }
 void DiceScheduler::add_job_for(unsigned int waited, const char* job_name) {
-	if (!Enabled)return;
 	std::unique_lock<std::mutex> lock_queue(mtJobWaited);
-	queueJobWaited.emplace(time(nullptr) + waited, job_name);
+	queueJobWaited.emplace(time(nullptr) + waited, AttrObject{ {{ "cmd" , job_name }} });
 }
 
-void DiceScheduler::add_job_until(time_t cloc, const DiceJobDetail& job) {
-	if (!Enabled)return;
+void DiceScheduler::add_job_until(time_t cloc, const AttrObject& job) {
 	std::unique_lock<std::mutex> lock_queue(mtJobWaited);
 	queueJobWaited.emplace(cloc, job);
 }
 void DiceScheduler::add_job_until(time_t cloc, const char* job_name) {
-	if (!Enabled)return;
 	std::unique_lock<std::mutex> lock_queue(mtJobWaited);
-	queueJobWaited.emplace(cloc, job_name);
+	queueJobWaited.emplace(cloc, AttrObject{ {{ "cmd" , job_name }} });
 }
 
 bool DiceScheduler::is_job_cold(const char* cmd) {

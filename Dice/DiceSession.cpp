@@ -158,7 +158,7 @@ void DiceSession::log_end(FromMsg* msg) {
 	msg->reply(getMsg("strLogEnd"));
 	update();
 	msg->cmd_key = "uplog"; 
-	sch.push_job(*msg);
+	sch.push_job(msg->vars);
 }
 std::filesystem::path DiceSession::log_path()const {
 	return logger.pathLog; 

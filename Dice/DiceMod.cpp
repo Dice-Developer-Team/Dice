@@ -949,6 +949,26 @@ void DiceModManager::rm_help(const string& key)
 	helpdoc.erase(key);
 }
 
+time_t parse_seconds(const AttrVar& time) {
+	if (time.is_numberic())return time.to_int();
+	if (AttrObject t{ time.to_dict() }; !t.empty())
+		return t.get_ll("second") + t.get_ll("minute") * 60 + t.get_ll("hour") * 3600 + t.get_ll("day") * 86400;
+	return 0;
+}
+
+void DiceModManager::call_event(const string& id) {
+	if (id.empty() || !events.count(id))return;
+	AttrObject eve{ events[id] };
+	auto action{ eve.get_dict("action") };
+	if (action.count("lua")) {
+		lua_call_event(eve, action["lua"].to_str());
+	}
+	auto trigger{ eve.get_dict("trigger") };
+	if (trigger.count("cycle")) {
+		sch.add_job_for(parse_seconds(trigger["cycle"]), eve);
+	}
+}
+
 bool DiceModManager::listen_reply(FromMsg* msg) {
 	string& strMsg{ msg->strMsg };
 	if (reply_match.count(strMsg) && reply_match[strMsg]->exec(msg)) {
@@ -1202,6 +1222,7 @@ int DiceModManager::load(ResList& resLog){
 			}
 			if (fs::path dirMod{ pathFile.replace_extension() }; fs::exists(dirMod)) {
 				listDir(dirMod / "reply", ModLuaFiles);
+				listDir(dirMod / "event", ModLuaFiles);
 				if (fs::exists(dirMod / "speech")) {
 					vector<std::filesystem::path> fSpeech;
 					listDir(dirMod / "speech", fSpeech, true);
@@ -1352,6 +1373,17 @@ void DiceModManager::init() {
 	}
 	gReplySearcher.make_fail();
 	gReplyPrefix.make_fail();
+	unordered_set<string> cycle;
+	for (auto& [id, eve] : events) {
+		eve["id"] = id;
+		if (eve.get_dict("trigger").count("cycle")) {
+			if (!cycle_events.count(id)) {
+				call_event(id);
+			}
+			cycle.insert(id);
+		}
+	}
+	cycle_events.swap(cycle);
 	isIniting = false;
 }
 void DiceModManager::clear(){
@@ -1368,6 +1400,7 @@ void DiceModManager::clear(){
 	reply_prefix.clear();
 	gReplySearcher.clear();
 	gReplyPrefix.clear();
+	events.clear();
 	modList.clear();
 	modIndex.clear();
 }

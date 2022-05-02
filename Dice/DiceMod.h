@@ -109,6 +109,19 @@ public:
     bool exec();
 };
 
+class DiceEvent {
+    enum class Mode { Nil, Clock, Cycle, Trigger };
+    enum class ActType { Nil, Lua };
+    //仅支持lua
+    ActType type{ ActType::Nil };
+    string script;
+public:
+    DiceEvent() = default;
+    DiceEvent(const AttrObject&);
+    bool exec(FromMsg*);
+    bool exec();
+};
+
 class DiceSpeech {
     variant<string, vector<string>> speech;
 public:
@@ -178,9 +191,9 @@ class DiceModManager
     dict_ci<ptr<DiceMsgReply>> final_msgreply;
     dict_ci<DiceMsgOrder> taskcall;
     dict_ci<string> scripts;
-    //Trigger
-    dict_ci<AttrObject> triggers; //triggers by id
-    unordered_multimap<string, AttrObject> trigger_by_event;
+    //Event
+    dict_ci<AttrObject> events; //events by id
+    unordered_set<string> cycle_events; //重载时唯一性检查
 
     WordQuerier querier;
     TrieG<char, less_ci> gOrder;
@@ -212,6 +225,8 @@ public:
     void _help(const shared_ptr<DiceJobDetail>&);
 	void set_help(const string&, const string&);
 	void rm_help(const string&);
+
+    void call_event(const string&);
 
     bool listen_order(DiceJobDetail*);
     bool listen_reply(FromMsg*);

@@ -920,7 +920,7 @@ int FromMsg::MasterSet()
 	{
 		vars["clear_mode"] = readRest();
 		cmd_key = "clrgroup";
-		sch.push_job(*this);
+		sch.push_job(vars);
 		return 1;
 	}
 	if (strOption == "delete")
@@ -1383,7 +1383,7 @@ int FromMsg::InnerOrder() {
 		if (strOption == "list") {
 			vars["list_mode"] = readPara();
 			cmd_key = "lsgroup";
-			sch.push_job(*this);
+			sch.push_job(vars);
 		}
 		else if (strOption == "clr") {
 			if (trusted < 5) {
@@ -1525,7 +1525,7 @@ int FromMsg::InnerOrder() {
 				return -1;
 			}
 			cmd_key = "reload";
-			sch.push_job(*this);
+			sch.push_job(vars);
 			return 1;
 		}
 		else if (strOption == "remake") {
@@ -1535,7 +1535,7 @@ int FromMsg::InnerOrder() {
 				return -1;
 			}
 			cmd_key = "remake";
-			sch.push_job(*this);
+			sch.push_job(vars);
 			return 1;
 		}
 		else if (strOption == "die") {
@@ -1544,7 +1544,7 @@ int FromMsg::InnerOrder() {
 				return -1;
 			}
 			cmd_key = "die";
-			sch.push_job(*this);
+			sch.push_job(vars);
 			return 1;
 		}
 		if (strOption == "rexplorer")
@@ -1594,13 +1594,13 @@ int FromMsg::InnerOrder() {
 			}
 			else if (vars["ver"] == "dev" || vars["ver"] == "release") {
 				cmd_key = "update";
-				sch.push_job(*this);
+				sch.push_job(vars);
 			}
 			return 1;
 		}
 		else if (strOpt == "black") {
 			cmd_key = "cloudblack";
-			sch.push_job(*this);
+			sch.push_job(vars);
 			return 1;
 		}
 	}
@@ -4635,4 +4635,21 @@ void reply(AttrObject& msg, string strReply) {
 	long long chid{ msg.get_ll("chid") };
 	if (uid || gid || chid)
 		AddMsgToQueue(strReply, chatInfo{ uid,gid,chid });
+}
+void MsgNote(AttrObject& msg, string strReply, int note_lv) {
+	while (isspace(static_cast<unsigned char>(strReply[0])))
+		strReply.erase(strReply.begin());
+	strReply = fmt->format(strReply, msg);
+	if (console["ReferMsgReply"] && msg["msgid"])strReply = "[CQ:reply,id=" + msg["msgid"].to_str() + "]" + strReply;
+	long long uid{ msg.get_ll("uid") };
+	long long gid{ msg.get_ll("gid") };
+	long long chid{ msg.get_ll("chid") };
+	if (uid || gid || chid)
+		AddMsgToQueue(strReply, chatInfo{ uid,gid,chid });
+	strReply = getName(uid) + strReply;
+	for (const auto& [ct, level] : console.NoticeList)
+	{
+		if (!(level & note_lv) || ct.uid == uid || ct.gid == gid)continue;
+		AddMsgToQueue(strReply, ct);
+	}
 }
