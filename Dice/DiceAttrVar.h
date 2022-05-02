@@ -152,6 +152,9 @@ public:
 	void reset(const string& key)const {
 		obj->erase(key);
 	}
+	bool is(const string& key)const {
+		return obj->count(key) ? bool(obj->at(key)) :false;
+	}
 	string get_str(const string& key)const {
 		return obj->count(key) ? obj->at(key).to_str() : "";
 	}

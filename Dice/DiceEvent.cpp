@@ -1231,10 +1231,8 @@ int FromMsg::BasicOrder()
 			replyMsg("strBotChannelOff");
 		}
 	}
-	if (isDisabled || (!isCalled || !console["DisabledListenAt"]) && (groupset(fromChat.gid, "停用指令") > 0))
-	{
-		if (isPrivate())
-		{
+	if (vars.is("order_off")) {
+		if (isPrivate()){
 			replyMsg("strGlobalOff");
 			return 1;
 		}
@@ -4426,7 +4424,15 @@ bool FromMsg::DiceFilter()
 	fwdMsg();
 	if (isOtherCalled && !isCalled)return false;
 	if (isPrivate()) isCalled = true;
-	isDisabled = ((console["DisabledGlobal"] && trusted < 4) || groupset(fromChat.gid, "协议无效") > 0);
+	if (!(vars["order_off"] = isDisabled 
+		= ((console["DisabledGlobal"] && (trusted < 4 || !isCalled)) || groupset(fromChat.gid, "协议无效") > 0))) {
+		if (int chon{ isChannel() && pGrp ? pGrp->getChConf(fromChat.chid,"order",0) : 0 }) {
+			vars["order_off"] = chon < 0 && !(isCalled && console["DisabledListenAt"]);
+		}
+		else {
+			vars["order_off"] = !(isCalled && console["DisabledListenAt"]) && groupset(fromChat.gid, "停用指令") < 1;
+		}
+	}
 	if (BasicOrder()) 
 	{
 		if (isAns) {
@@ -4445,16 +4451,13 @@ bool FromMsg::DiceFilter()
 	}
 	if (blacklist->get_qq_danger(fromChat.uid))isDisabled = true;
 	if (isDisabled)return console["DisabledBlock"];
-	if (int chon{ isChannel() && pGrp ? pGrp->getChConf(fromChat.chid,"order",0):0 }; isCalled || chon > 0 ||
-		!(chon || pGrp->isset("停用指令"))) {
-		if (fmt->listen_order(this) || InnerOrder()) {
-			if (!isVirtual && !vars["ignored"]) {
-				AddFrq(fromChat, fromTime,  strMsg);
-				getUser(fromChat.uid).update(fromTime);
-				if (!isPrivate())chat(fromChat.gid).update(fromTime);
-			}
-			return true;
+	if (!vars.is("order_off") && (fmt->listen_order(this) || InnerOrder())) {
+		if (!isVirtual && !vars["ignored"]) {
+			AddFrq(fromChat, fromTime, strMsg);
+			getUser(fromChat.uid).update(fromTime);
+			if (!isPrivate())chat(fromChat.gid).update(fromTime);
 		}
+		return true;
 	}
 	if (fmt->listen_reply(this)) {
 		if (!isVirtual && !vars["ignored"]) {
