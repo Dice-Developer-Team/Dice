@@ -4425,12 +4425,14 @@ bool FromMsg::DiceFilter()
 	if (isOtherCalled && !isCalled)return false;
 	if (isPrivate()) isCalled = true;
 	if (!(vars["order_off"] = isDisabled 
-		= ((console["DisabledGlobal"] && (trusted < 4 || !isCalled)) || groupset(fromChat.gid, "协议无效") > 0))) {
+		= ((console["DisabledGlobal"] && (trusted < 4 || !isCalled))
+			|| groupset(fromChat.gid, "协议无效") > 0))
+		&& !(isCalled && console["DisabledListenAt"])) {
 		if (int chon{ isChannel() && pGrp ? pGrp->getChConf(fromChat.chid,"order",0) : 0 }) {
-			vars["order_off"] = chon < 0 && !(isCalled && console["DisabledListenAt"]);
+			vars["order_off"] = chon < 0;
 		}
 		else {
-			vars["order_off"] = !(isCalled && console["DisabledListenAt"]) && groupset(fromChat.gid, "停用指令") < 1;
+			vars["order_off"] = groupset(fromChat.gid, "停用指令") > 0;
 		}
 	}
 	if (BasicOrder()) 
