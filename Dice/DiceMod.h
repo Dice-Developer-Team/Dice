@@ -172,7 +172,7 @@ public:
 class DiceModConf {
 public:
     string name;
-    unsigned int index{ 0 };
+    size_t index{ 0 };
     bool active{ true };
     bool loaded{ false };
 };
