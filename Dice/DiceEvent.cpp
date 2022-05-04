@@ -178,8 +178,7 @@ void FromMsg::note(std::string strMsg, int note_lv)
 		AddMsgToQueue(note, ct);
 	}
 }
-int FromMsg::AdminEvent(const string& strOption)
-{
+int FromMsg::AdminEvent(const string& strOption){
 	if (strOption == "isban")
 	{
 		vars["target"] = readDigit();

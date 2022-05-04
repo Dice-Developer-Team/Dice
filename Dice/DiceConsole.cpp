@@ -41,7 +41,7 @@
 
 using namespace std;
 
-const dict<int>Console::intDefault{
+const dict_ci<int>Console::intDefault{
 {"DisabledGlobal",0},{"DisabledBlock",0},{"DisabledListenAt",1},
 {"DisabledMe",1},{"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
 {"Private",0},{"CheckGroupLicense",0},{"LeaveDiscuss",0},

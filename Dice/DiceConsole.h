@@ -64,7 +64,7 @@ public:
 		return {stoi(sHour), stoi(sMin)};
 	}
 
-	static const dict<int> intDefault;
+	static const dict_ci<int> intDefault;
 	static const std::unordered_map<std::string, string> confComment;
 	//通知列表 1-日常活动/2-提醒事件/4-接收消息/8-警告内容/16-用户推送/32-骰娘广播
 	int log(const std::string& msg, int lv, const std::string& strTime = "");
