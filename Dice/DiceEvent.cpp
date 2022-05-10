@@ -2277,10 +2277,8 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		intMsgCnt += 4;
-		bool isPrivate(false);
 		if (strMsg[intMsgCnt] == 'h' && isspace(static_cast<unsigned char>(strMsg[intMsgCnt + 1]))) {
-			vars["hidden"];
-			isPrivate = true;
+			vars["hidden"] = true;
 			++intMsgCnt;
 		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
@@ -2289,8 +2287,7 @@ int FromMsg::InnerOrder() {
 		vector<string>* TempDeck = nullptr;
 		string& key{ (vars["deck_name"] = readAttrName()).text };
 		while (!key.empty() && key[0] == '_') {
-			isPrivate = true;
-			vars["hidden"];
+			vars["hidden"] = true;
 			key.erase(key.begin());
 		}
 		if (key.empty()) {
@@ -2332,7 +2329,7 @@ int FromMsg::InnerOrder() {
 		}
 		vars["res"] = Res.dot("|").show();
 		vars["cnt"] = to_string(Res.size());
-		if (isPrivate) {
+		if (vars.is("hidden")) {
 			replyMsg("strDrawHidden");
 			replyHidden(getMsg("strDrawCard"));
 		}
@@ -3422,13 +3419,12 @@ int FromMsg::InnerOrder() {
 			? getUser(fromChat.uid).getConf("rc房规")
 			: chat(fromChat.gid).getConf("rc房规");
 		int intTurnCnt = 1;
-		bool isHidden(false);
 		if (strMsg[intMsgCnt] == 'h' && isspace(static_cast<unsigned char>(strMsg[intMsgCnt + 1]))) {
-			isHidden = true;
+			vars["hidden"] = true;
 			++intMsgCnt;
 		}
 		else if (readSkipSpace(); strMsg[intMsgCnt] == '_') {
-			isHidden = true;
+			vars["hidden"] = true;
 			++intMsgCnt;
 		}
 		readSkipSpace();
@@ -3468,7 +3464,7 @@ int FromMsg::InnerOrder() {
 		}
 		readSkipSpace();
 		if (strMsg[intMsgCnt] == '_') {
-			isHidden = true;
+			vars["hidden"] = true;
 			++intMsgCnt;
 		}
 		if (strMsg.length() == intMsgCnt) {
@@ -3633,7 +3629,7 @@ int FromMsg::InnerOrder() {
 			}
 			strReply += Res.show();
 		}
-		if (isHidden) {
+		if (vars.is("hidden")) {
 			replyHidden();
 			replyMsg("strRollSkillHidden");
 		}
@@ -4147,7 +4143,7 @@ int FromMsg::InnerOrder() {
 					if (it != vintExVal.cend() - 1)strRes += ",";
 				}
 			}
-			if (!isHidden) {
+			if (!vars.is("hidden")) {
 				reply();
 			}
 			else {
@@ -4163,7 +4159,7 @@ int FromMsg::InnerOrder() {
 				if (strReason.empty())
 					strReply = getMsg("strRollDice");
 				else strReply = getMsg("strRollDiceReason");
-				if (!isHidden) {
+				if (!vars.is("hidden")) {
 					reply();
 				}
 				else {
@@ -4177,9 +4173,8 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'h') {
-		bool isHidden = false;
 		if (strLowerMessage[intMsgCnt] == 'h')
-			isHidden = true;
+			vars["hidden"] = true;
 		intMsgCnt += 1;
 		bool boolDetail = true;
 		if (strMsg[intMsgCnt] == 's') {
@@ -4187,10 +4182,10 @@ int FromMsg::InnerOrder() {
 			intMsgCnt++;
 		}
 		if (strLowerMessage[intMsgCnt] == 'h') {
-			isHidden = true;
+			vars["hidden"] = true;
 			intMsgCnt += 1;
 		}
-		if (!fromChat.gid)isHidden = false;
+		if (!fromChat.gid)vars["hidden"] = false;
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
 		string strMainDice;
@@ -4266,7 +4261,7 @@ int FromMsg::InnerOrder() {
 			intTurnCnt = rdTurnCnt.intTotal;
 			if (turn.find('d') != string::npos) {
 				turn = rdTurnCnt.FormShortString();
-				if (!isHidden) {
+				if (!vars.is("hidden")) {
 					replyMsg("strRollTurn");
 				}
 				else {
@@ -4336,7 +4331,7 @@ int FromMsg::InnerOrder() {
 						res += ",";
 				}
 			}
-			if (!isHidden) {
+			if (!vars.is("hidden")) {
 				replyMsg(strType);
 			}
 			else {
@@ -4365,14 +4360,14 @@ int FromMsg::InnerOrder() {
 				if (isStatic)pc->cntRollStat(rdMainDice.intTotal, intDefaultDice);
 				vars["res"] = boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString();
 			}
-			if (!isHidden) {
+			if (!vars.is("hidden")) {
 				replyMsg(strType);
 			}
 			else {
 				replyHidden(getMsg(strType,vars));
 			}
 		}
-		if (isHidden) {
+		if (!vars.is("hidden")) {
 			replyMsg("strRollHidden");
 		}
 		return 1;
