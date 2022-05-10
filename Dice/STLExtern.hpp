@@ -159,14 +159,14 @@ public:
 	}
 };
 
-template <typename TKey, typename TVal>
+template <typename TKey, typename TCon>
 class multi_range
 {
 public:
-	typedef typename multimap<TKey, TVal>::const_iterator iterator;
+	typedef typename TCon::const_iterator iterator;
 	std::pair<iterator, iterator> range;
 
-	multi_range(const multimap<TKey, TVal>& mmap, const TKey& key) : range(mmap.equal_range(key))
+	multi_range(const TCon& mmap, const TKey& key) : range(mmap.equal_range(key))
 	{
 	}
 

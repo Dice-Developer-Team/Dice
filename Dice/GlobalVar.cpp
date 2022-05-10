@@ -362,7 +362,7 @@ const dict_ci<string> PlainMsg
 		R"(欢迎选择{strSelfName}的免费掷骰服务！
 请使用.dismiss QQ号（或后四位） 使{self}退群退讨论组
 .bot on/off QQ号（或后四位） //开启或关闭指令
-.group +/-禁用回复 //禁用或启用回复
+.reply on/off 启用/禁用回复 //禁用或启用回复
 .help协议 确认服务协议
 .help指令 查看指令列表
 .help设定 确认骰娘设定
@@ -481,7 +481,8 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
-609:新增mod定时事件
+610:新增mod定时事件
+609:新增mod循环事件
 608:新增.mod指令
 607:修改.nn语法
 606:完善.sc/http.post/reply

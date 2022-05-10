@@ -955,8 +955,16 @@ time_t parse_seconds(const AttrVar& time) {
 		return t.get_ll("second") + t.get_ll("minute") * 60 + t.get_ll("hour") * 3600 + t.get_ll("day") * 86400;
 	return 0;
 }
+Clock parse_clock(const AttrVar& time) {
+	Clock clock{ 0,0 };
+	if (AttrObject t{ time.to_dict() }; !t.empty()) {
+		clock.first = t.get_int("hour");
+		clock.second = t.get_int("minute");
+	}
+	return clock;
+}
 
-void DiceModManager::call_event(const string& id) {
+void DiceModManager::call_cycle_event(const string& id) {
 	if (id.empty() || !events.count(id))return;
 	AttrObject eve{ events[id] };
 	auto action{ eve.get_dict("action") };
@@ -966,6 +974,14 @@ void DiceModManager::call_event(const string& id) {
 	auto trigger{ eve.get_dict("trigger") };
 	if (trigger.count("cycle")) {
 		sch.add_job_for(parse_seconds(trigger["cycle"]), eve);
+	}
+}
+void DiceModManager::call_clock_event(const string& id) {
+	if (id.empty() || !events.count(id))return;
+	AttrObject eve{ events[id] };
+	auto action{ eve.get_dict("action") };
+	if (action.count("lua")) {
+		lua_call_event(eve, action["lua"].to_str());
 	}
 }
 
@@ -1376,11 +1392,23 @@ void DiceModManager::init() {
 	unordered_set<string> cycle;
 	for (auto& [id, eve] : events) {
 		eve["id"] = id;
-		if (eve.get_dict("trigger").count("cycle")) {
+		auto trigger{ eve.get_dict("trigger") };
+		if (trigger.count("cycle")) {
 			if (!cycle_events.count(id)) {
-				call_event(id);
+				call_cycle_event(id);
 			}
 			cycle.insert(id);
+		}
+		if (trigger.count("clock")) {
+			auto& clock{ trigger["clock"] };
+			if (auto list{ clock.to_list() }; !list.empty()) {
+				for (auto& clc : list) {
+					clock_events.emplace(parse_clock(clc), id);
+				}
+			}
+			else {
+				clock_events.emplace(parse_clock(clock), id);
+			}
 		}
 	}
 	cycle_events.swap(cycle);
@@ -1400,6 +1428,7 @@ void DiceModManager::clear(){
 	reply_prefix.clear();
 	gReplySearcher.clear();
 	gReplyPrefix.clear();
+	clock_events.clear();
 	events.clear();
 	modList.clear();
 	modIndex.clear();

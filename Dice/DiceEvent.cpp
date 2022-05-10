@@ -370,7 +370,7 @@ int FromMsg::AdminEvent(const string& strOption){
 			reply(getMsg("strSelfName") + "的定时列表：" + console.listClock().show());
 			return 1;
 		}
-		Console::Clock cc{0, 0};
+		Clock cc{0, 0};
 		switch (readClock(cc))
 		{
 		case 0:

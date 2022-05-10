@@ -177,6 +177,7 @@ public:
     bool loaded{ false };
 };
 
+using Clock = std::pair<unsigned short, unsigned short>;
 class ResList;
 class DiceModManager
 {
@@ -206,6 +207,7 @@ class DiceModManager
     TrieG<char16_t, less_ci> gReplySearcher;
 public:
 	DiceModManager();
+    multimap<Clock, string> clock_events;
     friend class CustomReplyApiHandler;
     bool isIniting{ false };
 
@@ -226,7 +228,8 @@ public:
 	void set_help(const string&, const string&);
 	void rm_help(const string&);
 
-    void call_event(const string&);
+    void call_cycle_event(const string&);
+    void call_clock_event(const string&);
 
     bool listen_order(DiceJobDetail*);
     bool listen_reply(FromMsg*);

@@ -293,7 +293,7 @@ public:
 	//
 	int readChat(chatInfo& ct, bool isReroll = false);
 
-	int readClock(Console::Clock& cc)
+	int readClock(Clock& cc)
 	{
 		const string strHour = readDigit();
 		if (strHour.empty())return -1;

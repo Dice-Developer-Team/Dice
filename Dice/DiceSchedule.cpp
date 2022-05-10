@@ -78,7 +78,7 @@ void exec(AttrObject& job) {
 		}
 	}
 	else if (job.has("id")) {
-		fmt->call_event(job.get_str("id"));
+		fmt->call_cycle_event(job.get_str("id"));
 	}
 }
 void jobHandle() {
@@ -319,7 +319,7 @@ string printTTime(time_t tt) {
 //¼òÒ×¼ÆÊ±Æ÷
 tm stTmp{};
 void ConsoleTimer() 	{
-	Console::Clock clockNow{ stNow.tm_hour,stNow.tm_min };
+	Clock clockNow{ stNow.tm_hour,stNow.tm_min };
 	while (Enabled) 		{
 		time_t tt = time(nullptr);
 #ifdef _MSC_VER
@@ -361,6 +361,9 @@ void ConsoleTimer() 	{
 					fmt->call_task(eve_type);
 					break;
 				}
+			}
+			for (const auto& [clock, eve] : multi_range(fmt->clock_events, clockNow)) {
+				fmt->call_clock_event(eve);
 			}
 		}
 		std::this_thread::sleep_for(100ms);

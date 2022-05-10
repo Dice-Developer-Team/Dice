@@ -403,12 +403,12 @@ void getExceptGroup() {
 }
 
 
-bool operator==(const tm& st, const Console::Clock clock)
+bool operator==(const tm& st, const Clock clock)
 {
 	return st.tm_hour == clock.first && st.tm_hour == clock.second;
 }
 
-bool operator<(const Console::Clock clock, const tm& st)
+bool operator<(const Clock clock, const tm& st)
 {
 	return st.tm_hour < clock.first || st.tm_min < clock.second;
 }
