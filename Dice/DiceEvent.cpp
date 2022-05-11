@@ -3389,15 +3389,14 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "type") {
-			vars["new_type"] = strip(readRest());
-			if (vars["new_type"].str_empty()) {
+			if ((vars["new_type"] = strip(readRest())).str_empty()) {
 				vars["attr"] = "Ä£°åÀà";
 				vars["val"] = pl[fromChat.gid].Attr["__Type"].to_str();
 				replyMsg("strProp");
 			}
 			else {
 				pl[fromChat.gid].setType(vars["new_type"].to_str());
-				replyMsg("strSetPropSuccess");
+				replyMsg("strPcTempChange");
 			}
 			return 1;
 		}
