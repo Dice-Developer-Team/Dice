@@ -918,7 +918,7 @@ int FromMsg::MasterSet()
 	if (strOption == "groupclr")
 	{
 		vars["clear_mode"] = readRest();
-		cmd_key = "clrgroup";
+		vars["cmd"] = "clrgroup";
 		sch.push_job(vars);
 		return 1;
 	}
@@ -1379,7 +1379,7 @@ int FromMsg::InnerOrder() {
 		string strOption = readPara();
 		if (strOption == "list") {
 			vars["list_mode"] = readPara();
-			cmd_key = "lsgroup";
+			vars["cmd"] = "lsgroup";
 			sch.push_job(vars);
 		}
 		else if (strOption == "clr") {
@@ -1521,7 +1521,7 @@ int FromMsg::InnerOrder() {
 				replyMsg("strNotMaster");
 				return -1;
 			}
-			cmd_key = "reload";
+			vars["cmd"] = "reload";
 			sch.push_job(vars);
 			return 1;
 		}
@@ -1531,7 +1531,7 @@ int FromMsg::InnerOrder() {
 				replyMsg("strNotMaster");
 				return -1;
 			}
-			cmd_key = "remake";
+			vars["cmd"] = "remake";
 			sch.push_job(vars);
 			return 1;
 		}
@@ -1540,7 +1540,7 @@ int FromMsg::InnerOrder() {
 				replyMsg("strNotMaster");
 				return -1;
 			}
-			cmd_key = "die";
+			vars["cmd"] = "die";
 			sch.push_job(vars);
 			return 1;
 		}
@@ -1590,13 +1590,13 @@ int FromMsg::InnerOrder() {
 				Cloud::checkUpdate(this);
 			}
 			else if (vars["ver"] == "dev" || vars["ver"] == "release") {
-				cmd_key = "update";
+				vars["cmd"] = "update";
 				sch.push_job(vars);
 			}
 			return 1;
 		}
 		else if (strOpt == "black") {
-			cmd_key = "cloudblack";
+			vars["cmd"] = "cloudblack";
 			sch.push_job(vars);
 			return 1;
 		}
@@ -4366,7 +4366,7 @@ int FromMsg::InnerOrder() {
 				replyHidden(getMsg(strType,vars));
 			}
 		}
-		if (!vars.is("hidden")) {
+		if (vars.is("hidden")) {
 			replyMsg("strRollHidden");
 		}
 		return 1;

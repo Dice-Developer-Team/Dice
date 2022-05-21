@@ -31,7 +31,7 @@ unordered_map<string, cmd> mCommand = {
 	{"uplog",log_put}
 };
 
-DiceJobDetail::DiceJobDetail(const char* cmd, bool isFromSelf, const AttrVars& vars) :cmd_key(cmd), vars(vars) {
+DiceJobDetail::DiceJobDetail(const AttrVars& vars, bool isFromSelf) :vars(vars) {
 	if (isFromSelf)fromChat.uid = console.DiceMaid;
 }
 /*

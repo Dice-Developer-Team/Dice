@@ -157,7 +157,7 @@ void DiceSession::log_end(FromMsg* msg) {
 	msg->vars["log_path"] = UTF8toGBK(log_path().u8string());
 	msg->reply(getMsg("strLogEnd"));
 	update();
-	msg->cmd_key = "uplog"; 
+	msg->vars["cmd"] = "uplog";
 	sch.push_job(msg->vars);
 }
 std::filesystem::path DiceSession::log_path()const {
