@@ -1,6 +1,6 @@
 {
   "name": "dice",
-  "version-string": "2.6.0",
+  "version-string": "2.6.4",
   "dependencies": [
     "openssl",
     {

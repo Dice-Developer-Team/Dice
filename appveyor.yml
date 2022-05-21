@@ -1,7 +1,7 @@
 version: 2.{build}
 skip_tags: true
 image:
-- Visual Studio 2019
+- Visual Studio 2022
 before_build:
 - cmd: nuget restore
 configuration:
