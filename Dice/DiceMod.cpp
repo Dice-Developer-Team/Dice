@@ -1253,11 +1253,17 @@ int DiceModManager::load(ResList& resLog){
 						}
 					}
 				}
-				if (fs::exists(dirMod / "script")) {
+				if (auto dirScript{ dirMod / "script" }; fs::exists(dirScript)) {
 					vector<std::filesystem::path> fScripts;
-					listDir(dirMod / "script", fScripts, true);
-					for (auto& p : fScripts) {
-						scripts[p.stem().string()] = getNativePathString(p);
+					listDir(dirScript, fScripts, true);
+					for (auto p : fScripts) {
+						if (p.extension() != ".lua")continue;
+						string script_name{ p.stem().string() };
+						string strPath{ getNativePathString(p) };
+						while ((p = p.parent_path()) != dirScript) {
+							script_name = p.filename().string() + "."+ script_name;
+						}
+						scripts[script_name] = strPath;
 					}
 				}
 			}
