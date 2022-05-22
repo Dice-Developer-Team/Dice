@@ -164,7 +164,7 @@ int clearUser() {
 			}
 		}
 	}
-	for (const auto& uid : UserDelete) {
+	for (auto uid : UserDelete) {
 		UserList.erase(uid);
 		if (gm->has_session(~uid))gm->session_end(~uid);
 	}
@@ -181,7 +181,7 @@ int clearGroup() {
 		if (gm->has_session(id) && gm->session(id).tUpdate > grp.tUpdated)tLast = gm->session(id).tUpdate;
 		if (tLast < grpline)GrpDelete.push_back(id);
 	}
-	for (const auto& id : GrpDelete) {
+	for (auto id : GrpDelete) {
 		ChatList.erase(id);
 		if (gm->has_session(id))gm->session_end(id);
 	}
@@ -198,8 +198,7 @@ string getName(long long uid, long long GroupID){
 	if (UserList.count(uid) && getUser(uid).getNick(nick, GroupID)) return nick;
 
 	// GroupCard
-	if (GroupID)
-	{
+	if (GroupID){
 		nick = DD::getGroupNick(GroupID, uid);
 		nick = strip(msg_decode(nick));
 		if (!nick.empty()) return nick;
