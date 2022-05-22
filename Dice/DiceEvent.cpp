@@ -4432,7 +4432,7 @@ bool FromMsg::DiceFilter()
 	{
 		if (isAns) {
 			if (!isVirtual) {
-				AddFrq(fromChat, fromTime, strMsg);
+				AddFrq(*this);
 				getUser(fromChat.uid).update(fromTime);
 				if (!isPrivate())chat(fromChat.gid).update(fromTime);
 			}
@@ -4448,7 +4448,7 @@ bool FromMsg::DiceFilter()
 	if (isDisabled)return console["DisabledBlock"];
 	if (!vars.is("order_off") && (fmt->listen_order(this) || InnerOrder())) {
 		if (!isVirtual && !vars["ignored"]) {
-			AddFrq(fromChat, fromTime, strMsg);
+			AddFrq(*this);
 			getUser(fromChat.uid).update(fromTime);
 			if (!isPrivate())chat(fromChat.gid).update(fromTime);
 		}
@@ -4456,7 +4456,7 @@ bool FromMsg::DiceFilter()
 	}
 	if (fmt->listen_reply(this)) {
 		if (!isVirtual && !vars["ignored"]) {
-			AddFrq(fromChat, fromTime, strMsg);
+			AddFrq(*this);
 			getUser(fromChat.uid).update(fromTime);
 			if (!isPrivate())chat(fromChat.gid).update(fromTime);
 		}

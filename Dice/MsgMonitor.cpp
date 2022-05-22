@@ -21,16 +21,16 @@ std::queue<FrqMonitor*> EarliestMsgQueue;
 std::set<long long> setFrq;
 std::mutex FrqMutex;
 
-void AddFrq(chatInfo CT, time_t TT, const string& msg)
+void AddFrq(DiceJobDetail& msg)
 {
 	std::lock_guard<std::mutex> lock_queue(FrqMutex);
-	if (!CT.uid || setFrq.count(CT.uid)) return;
-	setFrq.insert(CT.uid);
-	auto* newFrq = new FrqMonitor(CT, TT, msg);
+	if (!msg.fromChat.uid || setFrq.count(msg.fromChat.uid)) return;
+	setFrq.insert(msg.fromChat.uid);
+	auto* newFrq = new FrqMonitor(msg);
 	EarlyMsgQueue.push(newFrq);
 	FrqMonitor::sumFrqTotal++;
 	today->inc("frq");
-	today->set(CT.uid, "frq", today->get(CT.uid, "frq").to_int() + 1);
+	today->set(msg.fromChat.uid, "frq", today->get(msg.fromChat.uid, "frq").to_int() + 1);
 }
 
 void frqHandler()
@@ -75,29 +75,29 @@ void frqHandler()
 }
 
 
-FrqMonitor::FrqMonitor(chatInfo CT, time_t TT,  const string& msg) : fromUID(CT.uid), fromTime(TT) {
+FrqMonitor::FrqMonitor(DiceJobDetail& msg) : fromUID(msg.fromChat.uid), fromTime(msg.fromTime) {
 	if (mFrequence.count(fromUID)) {
 		mFrequence[fromUID] += 10;
 		mCntOrder[fromUID] += 1;
 		if ((!console["ListenSpam"] || trustedQQ(fromUID) > 1) && fromUID != console.DiceMaid)return;
 		if (mFrequence[fromUID] > 60 && mWarnLevel[fromUID] < 60 && fromUID) {
 			mWarnLevel[fromUID] = mFrequence[fromUID];
-			const std::string strMsg = "提醒：\n" + (CT.gid ? printChat(CT) : "私聊窗口") +
+			const std::string strMsg = "提醒：\n" + (msg.fromChat.gid ? printChat(msg.fromChat) : "私聊窗口") +
 				"监测到" + printUser(fromUID) + "高频发送指令达" + to_string(mCntOrder[fromUID])
 				+ (mCntOrder[fromUID] > 18 ? "/5min"
 				   : (mCntOrder[fromUID] > 8 ? "/min" : "/30s"))
-				+ "\n最近指令: " + msg;
-			if (fromUID != console.DiceMaid)AddMsgToQueue(getMsg("strSpamFirstWarning"), CT);
+				+ "\n最近指令: " + msg["FromMsg"].to_str();
+			if (fromUID != console.DiceMaid)AddMsgToQueue(getMsg("strSpamFirstWarning",msg.vars), msg.fromChat);
 			console.log(strMsg, 1, printSTNow());
 		}
 		else if (mFrequence[fromUID] > 120 && mWarnLevel[fromUID] < 120 && fromUID) {
 			mWarnLevel[fromUID] = mFrequence[fromUID];
-			const std::string strMsg = "警告：\n" + (CT.gid ? printChat(CT) : "私聊窗口") +
+			const std::string strMsg = "警告：\n" + (msg.fromChat.gid ? printChat(msg.fromChat) : "私聊窗口") +
 				printUser(fromUID) + "高频发送指令达" + to_string(mCntOrder[fromUID])
 				+ (mCntOrder[fromUID] > 36 ? "/5min"
 				   : (mCntOrder[fromUID] > 15 ? "/min" : "/30s"))
-				+ "\n最近指令: " + msg;
-			if (fromUID != console.DiceMaid)AddMsgToQueue(getMsg("strSpamFinalWarning"), CT);
+				+ "\n最近指令: " + msg["FromMsg"].to_str();
+			if (fromUID != console.DiceMaid)AddMsgToQueue(getMsg("strSpamFinalWarning", msg.vars), msg.fromChat);
 			console.log(strMsg, 0b10, printSTNow());
 		}
 		else if (mFrequence[fromUID] > 200 && mWarnLevel[fromUID] < 200) {
@@ -108,12 +108,12 @@ FrqMonitor::FrqMonitor(chatInfo CT, time_t TT,  const string& msg) : fromUID(CT.
 				   : (mCntOrder[fromUID] > 25 ? "/min" : "/30s"));
 			if (!fromUID) {
 				console.log("警告：" + getMsg("strSelfName") + "高频处理虚拟指令达" + strFrq
-							+ "\n最近指令: " + msg, 0b1000, strNow);
+							+ "\n最近指令: " + msg["FromMsg"].to_str(), 0b1000, strNow);
 				return;
 			}
-			std::string strNote = (CT.gid ? printChat(CT) : "私聊窗口") + "监测到" +
+			std::string strNote = (msg.fromChat.gid ? printChat(msg.fromChat) : "私聊窗口") + "监测到" +
 				printUser(fromUID) + "对" + printUser(console.DiceMaid) + "高频发送指令达" + strFrq
-				+ "\n最近指令: " + msg;
+				+ "\n最近指令: " + msg["FromMsg"].to_str();
 			if (fromUID == console.DiceMaid) {
 				console.set("ListenSelfEcho", 0);
 				console.set("ListenGroupEcho", 0);

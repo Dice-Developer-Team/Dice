@@ -12,6 +12,7 @@
 #include "BlackListManager.h"
 #include "DiceEvent.h"
 
+class DiceJobDetail;
 class FrqMonitor
 {
 public:
@@ -27,7 +28,7 @@ public:
 	long long fromUID = 0;
 	time_t fromTime = 0;
 
-	FrqMonitor(chatInfo CT, time_t TT, const string& msg);
+	FrqMonitor(DiceJobDetail&);
 
 	~FrqMonitor()
 	{
@@ -67,5 +68,5 @@ public:
 	}
 };
 
-void AddFrq(chatInfo CT, time_t TT, const string& msg);
+void AddFrq(DiceJobDetail& msg);
 void frqHandler();
