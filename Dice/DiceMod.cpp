@@ -591,10 +591,12 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 }
 void DiceMsgReply::readJson(const json& j) {
 	try{
-		if (j.count("key"))title = UTF8toGBK(j["key"].get<string>());
 		if (j.count("type"))type = (Type)sType[j["type"].get<string>()];
 		if (j.count("mode")) {
 			size_t mode{ sMode[j["mode"].get<string>()] };
+			string keyword{ j.count("keyword") ?
+				UTF8toGBK(j["keyword"].get<string>()) : title
+			};
 			keyMatch[mode] = std::make_unique<vector<string>>
 				(mode == 3 ? vector<string>{title} : getLines(title, '|'));
 		}
@@ -611,6 +613,7 @@ void DiceMsgReply::readJson(const json& j) {
 			keyMatch[3] = std::make_unique<vector<string>>(UTF8toGBK(j["regex"].get<vector<string>>()));
 		}
 		if (!(keyMatch[0] || keyMatch[1] || keyMatch[2] || keyMatch[3])) {
+			int idx{ 0 };
 			keyMatch[0] = std::make_unique<vector<string>>(getLines(title, '|'));
 		}
 		if (j.count("limit"))limit.parse(UTF8toGBK(j["limit"].get<string>()));
@@ -618,10 +621,6 @@ void DiceMsgReply::readJson(const json& j) {
 		if (j.count("answer")) {
 			if (echo == Echo::Deck)deck = UTF8toGBK(j["answer"].get<vector<string>>());
 			else text = UTF8toGBK(j["answer"].get<string>());
-		}
-		if (j.count("value")) {
-			if (echo == Echo::Deck)deck = UTF8toGBK(j["value"].get<vector<string>>());
-			else text = UTF8toGBK(j["value"].get<string>());
 		}
 	}
 	catch (std::exception& e) {

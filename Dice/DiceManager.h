@@ -167,13 +167,18 @@ public:
             for (const auto& [key,val] : fmt->custom_reply)
             {
                 j["data"].push_back({ {"name", GBKtoUTF8(key)} ,
-                    {"type", GBKtoUTF8(val->sType[(int)val->type])},
+                    {"keyword", GBKtoUTF8(val->keyMatch[0] ? listItem(*val->keyMatch[0]) :
+                        val->keyMatch[1] ? listItem(*val->keyMatch[1]) :
+                        val->keyMatch[2] ? listItem(*val->keyMatch[2]) :
+                        val->keyMatch[3] ? listItem(*val->keyMatch[3]) : "")},
+                    {"type", GBKtoUTF8(DiceMsgReply::sType[(int)val->type])},
                     {"mode", val->keyMatch[0] ? "Match" :
-                    val->keyMatch[1] ? "Prefix" :
-                    val->keyMatch[2] ? "Search" : "Regex"},
+                        val->keyMatch[1] ? "Prefix" :
+                        val->keyMatch[2] ? "Search" : "Regex"},
                     {"limit", GBKtoUTF8(val->limit.print())},
-                    {"echo", GBKtoUTF8(val->sEcho[(int)val->echo])},
-                    {"value", GBKtoUTF8(val->show_ans())} });
+                    {"echo", GBKtoUTF8(DiceMsgReply::sEcho[(int)val->echo])},
+                    {"answer", GBKtoUTF8(val->echo == DiceMsgReply::Echo::Deck ?
+                        listItem(val->deck) : val->text)} });
             }
             ret = j.dump();
         }
