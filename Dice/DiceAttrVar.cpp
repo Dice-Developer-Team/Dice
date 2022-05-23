@@ -312,14 +312,8 @@ bool AttrVar::is_numberic()const {
 		return false;
 		break;
 	case AttrType::Boolean:
-		return true;
-		break;
 	case AttrType::Integer:
-		return true;
-		break;
 	case AttrType::ID:
-		return true;
-		break;
 	case AttrType::Number:
 		return true; 
 		break;
@@ -329,6 +323,7 @@ bool AttrVar::is_numberic()const {
 	}
 	return false;
 }
+#include "DDAPI.h"
 bool AttrVar::equal(const AttrVar& other)const{
 	if (other.type == AttrType::Nil) {
 		return is_null();
@@ -337,7 +332,8 @@ bool AttrVar::equal(const AttrVar& other)const{
 		return is_true() ^ !other;
 	}
 	else if (other.type == AttrType::Text) {
-		return type == AttrType::Text && text == other.text;
+		if(type == AttrType::Text)return text == other.text;
+		else return to_str() == other.text;
 	}
 	else if (other.is_numberic() && is_numberic()) {
 		return to_num() == other.to_num();
@@ -370,7 +366,7 @@ AttrVar& AttrVar::operator=(const json& j) {
 	case json::value_t::number_integer:
 		if (long long num{ j.get<long long>() }; num > 10000000 || num < -10000000) {
 			type = AttrType::ID;
-			id=num;
+			id = num;
 		}
 		else {
 			type = AttrType::Integer;

@@ -129,7 +129,8 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 		break;
 	case LUA_TNUMBER:
 		if (lua_isinteger(L, idx)) {
-			return lua_tointeger(L, idx);
+			auto i{ lua_tointeger(L, idx) };
+			return (i > 10000000 || i < -10000000) ? AttrVar(i) : AttrVar((int)i);
 		}
 		else {
 			return lua_tonumber(L, idx);
