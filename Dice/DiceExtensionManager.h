@@ -112,7 +112,7 @@ public:
 
         // get&parse
         std::string des;
-        if (!Network::GET("https://cdn.jsdelivr.net/gh/Dice-Developer-Team/DiceExtensions@main/index.json", des))
+        if (!Network::GET("https://raw.sevencdn.com/Dice-Developer-Team/DiceExtensions/main/index.json", des))
         {
             throw IndexRefreshFailedException("Network: " + des);
         }
@@ -231,7 +231,7 @@ public:
         catch (const ExtensionNotFoundException&) {}
         std::string des;
 
-        if (!Network::GET("https://cdn.jsdelivr.net/gh/Dice-Developer-Team/DiceExtensions@main/" + UrlEncode(ext.name) + ".zip", des))
+        if (!Network::GET("https://raw.sevencdn.com/Dice-Developer-Team/DiceExtensions/main/" + UrlEncode(ext.name) + ".zip", des))
         {
             throw PackageInstallFailedException("Network: " + des);
         }
