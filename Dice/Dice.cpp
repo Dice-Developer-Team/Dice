@@ -66,8 +66,7 @@
 using namespace std;
 
 unordered_map<long long, User> UserList{};
-unordered_map<long long, long long> TinyList{}; 
-unordered_map<long long, Chat> ChatList;
+unordered_map<long long, long long> TinyList{};
 ThreadFactory threads;
 std::filesystem::path fpFileLoc;
 std::unique_ptr<CivetServer> ManagerServer;

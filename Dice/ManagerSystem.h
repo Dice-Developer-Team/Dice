@@ -245,7 +245,7 @@ public:
 	void readb(std::ifstream& fin);
 };
 
-extern unordered_map<long long, Chat> ChatList;
+inline unordered_map<long long, Chat> ChatList;
 Chat& chat(long long id);
 int groupset(long long id, const string& st);
 string printChat(Chat& grp);
