@@ -449,7 +449,7 @@ const dict_ci<string> GlobalComment{
 	{"strFumble", "多轮检定大失败"},
 	{"strGlobalOff", "全局静默时对私聊指令或开启指令的回执"},
 	//
-	{"strGroupAuthorized", "group+许可使用后在目标群的回执"},
+	{"strGroupAuthorized", "!authorize+群号授权成功后在目标群的回执"},
 	{"strGroupBan", "group ban禁言群员的回执"},
 	{"strGroupCardSet", "group card修改群名片的回执"},
 	//

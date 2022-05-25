@@ -427,6 +427,33 @@
 </script>
 
 
+<form class="layui-form layui-hide" id="editCustomMsgForm" action="" style="padding: 10px;">
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="width: 40px">条目</label>
+    <div class="layui-input-block" style="margin-left: 70px">
+      <input type="text" name="name" required lay-verify="required" placeholder="回执条目" autocomplete="off" class="layui-input">
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="width: 40px">文本</label>
+    <div class="layui-input-block" style="margin-left: 70px">
+      <!-- TODO: Multiline -->
+      <textarea type="text" name="value" placeholder="发送时显示的文本内容" autocomplete="on" class="layui-textarea"></textarea>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="width: 40px">说明</label>
+    <div class="layui-input-block" style="margin-left: 70px">
+      <textarea type="text" name="remark" placeholder="略" autocomplete="off" class="layui-textarea"></textarea>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <div class="layui-input-block">
+      <button class="layui-btn" lay-submit lay-filter="editCustomMsgForm">编辑</button>
+    </div>
+  </div>
+</form>
+
 <form class="layui-form layui-hide" id="addCustomReplyForm" action="" style="padding: 10px;">
   <div class="layui-form-item">
     <label class="layui-form-label" style="width: 50px">名称</label>
@@ -538,24 +565,93 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
       layer.msg("连接到Dice!后端失败: " + error);
     })
 
-  //执行一个 table 实例
+  //CustomMsg
   table.render({
     elem: '#custom-msg-table'
     ,height: 420
-    ,width: 'full-20'
+    //,width: 'full-20'
     ,url: '/api/custommsg' //数据接口
     ,title: '自定义回执'
+    ,toolbar: "#addToolbar"
     ,request: {} 
     ,cols: [[ //表头
-      {field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
-      ,{field: 'value', title: '值', minWidth:250, edit: 'text'}
+      {field: 'name', title: '条目', width:150, sort: true, fixed: 'left'}
+      ,{field: 'value', title: '文本', minWidth:250, edit: 'text'}
       ,{field: 'remark', title: '说明', width:250, fixed: 'right'}
+      ,{fixed: 'right', width:60, align:'center', toolbar: '#editToolbar'}
+      ,{fixed: 'right', width:60, align:'center', toolbar: '#delToolbar'}
     ]]
-    /*,done: function(){
-      $(".layui-table-cell").each(function(){
-        $(this).html(this.innerHTML.replace(/\n/g,"{br}<br>"));
-      })
-    }*/
+  });
+
+  var editCustomMsgFormIndex = -1;
+  table.on('toolbar(custom-msg-table)', function(obj){
+    var checkStatus = table.checkStatus(obj.config.id);
+    switch(obj.event){
+      case 'add':
+        editCustomMsgFormIndex = layer.open({
+          type: 1, 
+          title: '编辑自定义回执',
+          content: $("#editCustomMsgForm").removeClass("layui-hide"), //这里content是一个普通的String
+          end: function() { $("#editCustomMsgForm").addClass("layui-hide"); }
+        });
+        break;
+    }
+  });
+
+  form.on('submit(editCustomMsgForm)', function(data){
+    layer.close(editCustomMsgFormIndex);
+    $.post("/api/custommsg", JSON.stringify({action: "set", data: [data.field]}))
+    .done(function(data) {
+      if (data.code == 0) {
+        layer.msg("自定义回执编辑成功");
+        table.reload('custom-msg-table');
+      } else {
+        layer.msg("自定义回执保存失败: " + data.msg);
+      }
+    })
+    .fail(function(jqXHR, textStatus, error) {
+      layer.msg("自定义回执保存失败: " + error);
+    })
+    
+    return false;
+  });
+  
+  //监听行工具事件
+  table.on('tool(custom-msg-table)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+    var data = obj.data //获得当前行数据
+    ,layEvent = obj.event; //获得 lay-event 对应的值
+    if (layEvent == "delete") {
+      layer.confirm('确认要删除此行吗？内置语句删除后会重置。', function(index){
+        layer.close(index);
+        $.post("/api/custommsg", JSON.stringify({action: "reset", data: [obj.data]}))
+        .done(function(data) {
+          if (data.code == 0) {
+            obj.del();
+            console.log("CustomMsg Delete Success");
+          } else {
+            layer.msg("关键词回复删除失败: " + data.msg);
+          }
+        })
+        .fail(function(jqXHR, textStatus, error) {
+          layer.msg("关键词回复删除失败: " + error);
+        })
+      });
+    }
+    else if (layEvent == "edit") {
+      editCustomMsgFormIndex = layer.open({
+        type: 1, 
+        title: '编辑自定义回执',
+        content: $("#editCustomMsgForm").removeClass("layui-hide"), //这里content是一个普通的String
+        success: function() {
+          $("#editCustomMsgForm").find("input[name='name']").val(obj.data.name);
+          $("#editCustomMsgForm").find("textarea[name='value']").val(obj.data.value);
+          $("#editCustomMsgForm").find("textarea[name='remark']").val(obj.data.remark);
+          $("#editCustomMsgForm").find("button").html("修改");
+          layui.form.render('select');
+        },
+        end: function() { $("#editCustomMsgForm").addClass("layui-hide"); }
+      });
+    }
   });
 
   table.on('edit(custom-msg-table)', function(obj) { 
@@ -629,10 +725,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     return false;
   });
 
-
-  
-  var addCustomReplyFormIndex = -1;
-
+  //CustomReply
   table.render({
     elem: '#custom-reply-table'
     ,height: 420
@@ -651,13 +744,9 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
       ,{fixed: 'right', width:60, align:'center', toolbar: '#editToolbar'}
       ,{fixed: 'right', width:60, align:'center', toolbar: '#delToolbar'}
     ]]
-    /*,done: function(){
-      $(".layui-table-cell").each(function(){
-        $(this).html(this.innerHTML.replace(/\n/g,"{br}<br>"));
-      })
-    }*/
   });
 
+  var addCustomReplyFormIndex = -1;
   table.on('toolbar(custom-reply-table)', function(obj){
     var checkStatus = table.checkStatus(obj.config.id);
     switch(obj.event){
@@ -674,7 +763,6 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
 
   form.on('submit(addCustomReplyForm)', function(data){
     layer.close(addCustomReplyFormIndex);
-    
     if(data.field.echo == "Deck"){data.field.value = data.field.value.split("|");}
     $.post("/api/customreply", JSON.stringify({action: "set", data: [data.field]}))
     .done(function(data) {
@@ -691,8 +779,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
     
     return false;
   });
-  
-  //监听行工具事件
+
   table.on('tool(custom-reply-table)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
     var data = obj.data //获得当前行数据
     ,layEvent = obj.event; //获得 lay-event 对应的值
@@ -726,7 +813,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
           $("#addCustomReplyForm").find("textarea[name='limit']").val(obj.data.limit);
           $("#addCustomReplyForm").find("select[name='echo']").val(obj.data.echo);
           $("#addCustomReplyForm").find("textarea[name='answer']").val(obj.data.answer);
-          $("#addCustomReplyForm").find("button").html("编辑");
+          $("#addCustomReplyForm").find("button").html("修改");
           layui.form.render('select');
         },
         end: function() { $("#addCustomReplyForm").addClass("layui-hide"); }

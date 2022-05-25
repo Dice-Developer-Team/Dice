@@ -128,7 +128,10 @@ public:
                     EditedMsg[UTF8toGBK(item["name"].get<std::string>())] = UTF8toGBK(item["value"].get<std::string>());
                 }
                 saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
-            } 
+            }
+            else if (j["action"].get<std::string>() == "reset") {
+                fmt->msg_reset(UTF8toGBK(j["data"]["name"].get<std::string>()));
+            }
             else
             {
                 throw std::runtime_error("Invalid Action");
