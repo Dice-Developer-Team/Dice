@@ -482,6 +482,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
+611:更新WebUI自定义回执
 610:新增mod定时事件
 609:新增mod循环事件
 608:新增.mod指令
@@ -496,16 +497,13 @@ const dict_ci<string> HelpDoc = {
 597:冷却计时器
 596:角色卡/Conf允许读写table
 595:lua可获取群名片/权限/最后发言
-594:setcoc优化
 593:reply新增触发限制
 590:lua内置http
 589:ak安科安价指令
 588:适配频道消息
-587:ww调用优化
 585:WebUI
 581:角色掷骰统计
 579:允许转义文本多选一
-576:定时任务脚本
 569:.rc/.draw暗骰暗抽
 567:敏感词检测
 566:.help查询建议

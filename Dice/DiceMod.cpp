@@ -1174,7 +1174,7 @@ string DiceModManager::script_path(const string& name)const {
 }
 
 int DiceModManager::load(ResList& resLog){
-	merge(global_speech, GlobalMsg);
+	merge(global_speech = transpeech, GlobalMsg);
 	helpdoc = HelpDoc;
 	//读取mod管理文件
 	if (auto jFile{ freadJson(DiceDir / "conf" / "ModList.json") };!jFile.empty()) {
@@ -1422,7 +1422,6 @@ void DiceModManager::init() {
 	isIniting = false;
 }
 void DiceModManager::clear(){
-	global_speech = transpeech;
 	helpdoc.clear();
 	querier.clear();
 	msgorder.clear();
