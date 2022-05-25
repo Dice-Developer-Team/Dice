@@ -184,6 +184,7 @@ void DiceChatLink::load() {
 			LinkFromChat[link.linkFwd] = { ct ,link.typeLink != "to" };
 		}
 	}
+	if (jFile.empty() && LinkList.empty())save();
 }
 void DiceChatLink::save() {
 	if (LinkList.empty()) {
@@ -214,7 +215,7 @@ void DiceChatLink::build(FromMsg* msg) {
 		return;
 	}
 	//占线不可用
-	if (LinkFromChat.count(here)) {
+	if (LinkFromChat.count(here) && LinkFromChat[here] == pair<chatInfo, bool>{target, true}) {
 		msg->replyMsg("strLinkingAlready");
 	}
 	else if (LinkFromChat.count(target)) {
@@ -597,18 +598,6 @@ void DiceSessionManager::end(chatInfo ct){
 
 const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
 
-/*
-void DiceTableMaster::save()
-{
-	mkDir(DiceDir + "/user/session");
-	std::shared_lock<std::shared_mutex> lock(sessionMutex);
-	for (auto [grp, pSession] : mSession)
-	{
-		pSession->save();
-	}
-}
-*/
-
 shared_ptr<Session> DiceSessionManager::get(const chatInfo& ct) {
 	if (auto here{ ct.locate() }; SessionByChat.count(here)) 
 		return SessionByChat[ct];
@@ -632,14 +621,13 @@ int DiceSessionManager::load()
     std::unique_lock<std::shared_mutex> lock(sessionMutex);
     vector<std::filesystem::path> sFile;
     int cnt = listDir(DiceDir / "user" / "session", sFile);
-    if (cnt <= 0)return cnt;
-    for (auto& filename : sFile){
-        nlohmann::json j = freadJson(filename);
-        if (j.is_null()){
+    if (cnt > 0)for (auto& filename : sFile) {
+		nlohmann::json j = freadJson(filename);
+		if (j.is_null()) {
 			remove(filename);
-            cnt--;
-            continue;
-        }
+			cnt--;
+			continue;
+		}
 		auto pSession(std::make_shared<Session>(filename.stem().string()));
 		pSession->create(j["create_time"]).update(j["update_time"]);
 		if (j.count("room")) {
@@ -676,9 +664,11 @@ int DiceSessionManager::load()
 		if (j.count("link")) {
 			json& jLink = j["link"];
 			const auto& ct{ *pSession->windows.begin() };
+			long long gid{ jLink["target"].get<long long>() };
+			chatInfo target{ gid > 0 ? chatInfo{0,gid} : chatInfo{~gid} };
 			LinkInfo& link{ linker.LinkList[ct] = {jLink["linking"].get<bool>(),
 				jLink["type"].get<string>(),
-				chatInfo::from_json(jLink["target"]) } };
+				target } };
 			if (link.isLinking) {
 				linker.LinkFromChat[ct] = { link.linkFwd ,link.typeLink != "from" };
 				linker.LinkFromChat[link.linkFwd] = { ct ,link.typeLink != "to" };
@@ -687,8 +677,10 @@ int DiceSessionManager::load()
 		if (j.count("decks")) {
 			json& jDecks = j["decks"];
 			for (auto it = jDecks.cbegin(); it != jDecks.cend(); ++it) {
+				if (it.value()["meta"].empty())continue;
 				std::string key = UTF8toGBK(it.key());
-				pSession->decks[key].meta = UTF8toGBK(it.value()["meta"].get<vector<string>>());
+				auto& deck{ pSession->decks[key] };
+				deck.meta = UTF8toGBK(it.value()["meta"].get<vector<string>>());
 				if (it.value().count("rest")) {
 					it.value()["rest"].get_to(pSession->decks[key].idxs);
 					pSession->decks[key].sizRes = pSession->decks[key].meta.size();
@@ -699,24 +691,22 @@ int DiceSessionManager::load()
 				}
 			}
 		}
-        if (j["type"] == "simple"){
-            if (j.count("observer")) j["observer"].get_to(pSession->sOB);
-            if (j.count("tables"))
+		if (j.count("observer")) j["observer"].get_to(pSession->sOB);
+		if (j.count("tables")){
+			for (nlohmann::json::iterator itTable = j["tables"].begin(); itTable != j["tables"].end(); ++itTable)
 			{
-                for (nlohmann::json::iterator itTable = j["tables"].begin(); itTable != j["tables"].end(); ++itTable)
+				string strTable = UTF8toGBK(itTable.key());
+				for (nlohmann::json::iterator itItem = itTable.value().begin(); itItem != itTable.value().end(); ++itItem)
 				{
-                    string strTable = UTF8toGBK(itTable.key());
-                    for (nlohmann::json::iterator itItem = itTable.value().begin(); itItem != itTable.value().end(); ++itItem)
-					{
-                        pSession->mTable[strTable].emplace(UTF8toGBK(itItem.key()), itItem.value());
-                    }
-                }
-            }
+					pSession->mTable[strTable].emplace(UTF8toGBK(itItem.key()), itItem.value());
+				}
+			}
 		}
 		SessionByName[UTF8toGBK(filename.u8string())] = pSession;
 		for (const auto& chat : pSession->windows) {
 			SessionByChat[chat] = pSession;
 		}
-    }
+	}
+	linker.load();
     return cnt;
 }

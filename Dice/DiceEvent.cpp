@@ -4554,7 +4554,7 @@ int FromMsg::readNum(int& num)
 int FromMsg::readChat(chatInfo& ct, bool isReroll)
 {
 	const int intFormor = intMsgCnt;
-	if (const string strT = readPara(); strT == "me"){
+	if (string strT{ readPara() }; strT == "me") {
 		ct = { fromChat.uid, 0,0 };
 		return 0;
 	}
@@ -4566,12 +4566,12 @@ int FromMsg::readChat(chatInfo& ct, bool isReroll)
 		if (isReroll)intMsgCnt = intFormor;
 		return -2;
 	}
-	else if (strT == "group"){
+	else if (strT == "group" || strT == "g"){
 		ct.type = msgtype::Group;
 		ct.gid = llID;
 		return 0;
 	}
-	else if (strT == "qq" || strT.empty()){
+	else if (strT == "qq" || strT == "u" || strT.empty()){
 		ct.type = msgtype::Private;
 		ct.uid = llID;
 		return 0;

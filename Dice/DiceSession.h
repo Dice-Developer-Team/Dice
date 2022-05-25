@@ -179,14 +179,16 @@ class DiceSessionManager {
 public:
 	DiceChatLink linker;
 	[[nodiscard]] bool is_linking(const chatInfo& ct) {
-		return linker.LinkFromChat.count(ct) && linker.LinkFromChat[ct].second;
+		auto chat{ ct.locate() };
+		return chat && linker.LinkFromChat.count(chat) && linker.LinkFromChat[chat].second;
 	}
 
 	int load();
 	void clear() { SessionByName.clear(); SessionByChat.clear(); linker = {}; }
 	shared_ptr<Session> get(const chatInfo& ct);
 	shared_ptr<Session> get_if(const chatInfo& ct) {
-		return SessionByChat.count(ct.locate()) ? SessionByChat[ct] : shared_ptr<Session>();
+		auto chat{ ct.locate() };
+		return chat && SessionByChat.count(chat) ? SessionByChat[chat] : shared_ptr<Session>();
 	}
 	bool has_session(const chatInfo& ct)const {
 		return SessionByChat.count(ct.locate());
