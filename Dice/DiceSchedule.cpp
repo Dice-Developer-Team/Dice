@@ -285,7 +285,7 @@ void DiceToday::load() {
 	}
 	if (jFile.count("cnt_list")) {
 		for (auto& j : jFile["cnt_list"]) {
-			chatInfo chat{ from_json(j["chat"]) };
+			chatInfo chat{ chatInfo::from_json(j["chat"]) };
 			if (j.count("cnt"))j["cnt"].get_to(counter[chat]);
 			counter[chat] = UTF8toGBK(counter[chat]);
 		}

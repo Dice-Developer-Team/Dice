@@ -36,6 +36,8 @@
 #include <regex>
 using std::set;
 namespace fs = std::filesystem;
+
+std::shared_ptr<DiceModManager> fmt;
 void parse_vary(string& raw, unordered_map<string, pair<AttrVar::CMPR, AttrVar>>& vary) {
 	ShowList vars;
 	for (auto& var : split(raw, "&")) {

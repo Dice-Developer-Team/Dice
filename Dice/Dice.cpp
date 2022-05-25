@@ -175,7 +175,7 @@ void readUserData()
 		if (cnt > 0)log << "迁移群聊记录" + to_string(cnt) + "条";
 	}
 	//读取房间记录
-	gm->load();
+	sessions.load();
 	//读取当日数据
 	today = make_unique<DiceToday>();
 	if (!log.empty()) {
@@ -333,7 +333,6 @@ EVE_Enable(eventEnable){
 	}
 	loadData();
 	//读取用户数据
-	gm = make_unique<DiceTableMaster>();
 	readUserData();
 	set<long long> grps{ DD::getGroupIDList() };
 	for (auto gid : grps)
@@ -383,12 +382,24 @@ EVE_Enable(eventEnable){
 		;
 	}
 
+	DD::debugLog("Dice.threadInit");
+	Enabled = true;
+	threads(SendMsg);
+	threads(ConsoleTimer);
+	threads(warningHandler);
+	threads(frqHandler);
+	sch.start();
+
+	console.log(getMsg("strSelfName") + "初始化完成，用时" + to_string(time(nullptr) - llStartTime) + "秒", 0b1,
+		printSTNow());
+	llStartTime = time(nullptr);
+	DD::debugLog("Dice.WebInit");
 	if (console["EnableWebUI"])
 	{
 		try {
 			const std::string port_option = std::string(AllowInternetAccess ? "0.0.0.0" : "127.0.0.1") + ":" + std::to_string(Port);
 
-			std::vector<std::string> mg_options = {"listening_ports", port_option.c_str()};
+			std::vector<std::string> mg_options = { "listening_ports", port_option.c_str() };
 
 			ManagerServer = std::make_unique<CivetServer>(mg_options);
 
@@ -410,12 +421,12 @@ EVE_Enable(eventEnable){
 			else
 			{
 				DD::debugLog("Dice! WebUI 正于端口" + std::to_string(ports[0]) + "运行");
-				console.log("Dice! WebUI 正于端口" + std::to_string(ports[0]) 
+				console.log("Dice! WebUI 正于端口" + std::to_string(ports[0])
 					+ "运行，本地可通过浏览器访问localhost:" + std::to_string(ports[0])
 					+ "\n默认用户名为admin密码为password，详细教程请查看 https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming", 0b1);
 			}
-		} 
-		catch(const CivetException& e)
+		}
+		catch (const CivetException& e)
 		{
 			DD::debugLog("Dice! WebUI 启动失败！端口已被使用？");
 			console.log("Dice! WebUI 启动失败！端口已被使用？", 0b1);
@@ -424,19 +435,6 @@ EVE_Enable(eventEnable){
 	//骰娘网络
 	getDiceList();
 	getExceptGroup();
-	DD::debugLog("Dice.threadInit");
-	Enabled = true;
-	threads(SendMsg);
-	threads(ConsoleTimer);
-	threads(warningHandler);
-	threads(frqHandler);
-	sch.start();
-
-	console.log(getMsg("strSelfName") + "初始化完成，用时" + to_string(time(nullptr) - llStartTime) + "秒", 0b1,
-		printSTNow());
-	llStartTime = time(nullptr);
-
-	DD::debugLog("Dice.extensionManagerInit");
 	try
 	{
 		ExtensionManagerInstance->refreshIndex();
@@ -1013,7 +1011,7 @@ void global_exit() {
 	sch.end();
 	censor = {};
 	fmt.reset();
-	gm.reset();
+	sessions.clear();
 	PList.clear();
 	ChatList.clear();
 	UserList.clear();

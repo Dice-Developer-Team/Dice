@@ -40,10 +40,11 @@ struct chatInfo {
 	bool operator<(const chatInfo&)const;
 	bool operator==(const chatInfo&)const;
 	operator bool()const { return uid || gid || chid; }
+	chatInfo locate()const { return gid ? chatInfo{ 0,gid,chid } : *this; }
+	static chatInfo from_json(const nlohmann::json& chat);
 };
 
 nlohmann::json to_json(const chatInfo& chat);
-chatInfo from_json(const nlohmann::json& chat);
 template<>
 struct std::hash<chatInfo> {
 	size_t operator()(const chatInfo& chat)const {

@@ -35,10 +35,6 @@ FromMsg::FromMsg(const AttrVars& var, const chatInfo& ct)
 	:DiceJobDetail(var, ct), strMsg(vars["fromMsg"].text) {
 	if (fromChat.gid) {
 		pGrp = &chat(fromChat.gid);
-		fromSession = fromChat.gid;
-	}
-	else {
-		fromSession = ~fromChat.uid;
 	}
 	
 }
@@ -104,15 +100,17 @@ void FromMsg::replyHidden() {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	formatReply();
-	if (LogList.count(fromSession) && gm->session(fromSession).is_logging()) {
-		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
+	auto here{ fromChat.locate() };
+	auto session{ sessions.get_if(here) };
+	if (session && session->is_logging()) {
+		ofstream logout(session->log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime(fromTime) << endl
 			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
 	}
 	strReply = "在" + printChat(fromChat) + "中 " + forward_filter(strReply);
 	AddMsgToQueue(strReply, fromChat.uid);
-	if (gm->has_session(fromSession)) {
-		for (auto qq : gm->session(fromSession).get_ob()) {
+	if (session) {
+		for (auto qq : session->get_ob()) {
 			if (qq != fromChat.uid) {
 				AddMsgToQueue(strReply, qq);
 			}
@@ -123,41 +121,33 @@ void FromMsg::replyHidden() {
 void FromMsg::logEcho(){
 	if (!isPrivate()
 		&& (isChannel() ? console["ListenChannelEcho"] : console["ListenGroupEcho"]))return;
-	if (LinkList.count(fromSession) && LinkList[fromSession].second
+	auto here{ fromChat.locate() };
+	if (sessions.is_linking(here)
 		&& strLowerMessage.find(".link") != 0) {
 		string strFwd{ getMsg("strSelfCall") + ":"
 			+ forward_filter(strReply) };
-		if (long long aim = LinkList[fromSession].first; aim < 0) {
-			AddMsgToQueue(strFwd, ~aim);
-		}
-		else if (ChatList.count(aim)) {
-			AddMsgToQueue(strFwd, { 0,aim });
-		}
+		AddMsgToQueue(strFwd, sessions.linker.get_aim(here).first);
 	}
-	if (LogList.count(fromSession)
+	if (auto session{sessions.get_if(here)}; session && session->is_logging()
 		&& strLowerMessage.find(".log") != 0) {
-		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
+		ofstream logout(session->log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime(fromTime) << endl
 			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
 	}
 }
-void FromMsg::fwdMsg()
-{
-	if (LinkList.count(fromSession) && LinkList[fromSession].second
+void FromMsg::fwdMsg(){
+	auto here{ fromChat.locate() };
+	if (sessions.is_linking(here)
 		&& fromChat.uid != console.DiceMaid
 		&& strLowerMessage.find(".link") != 0){
 		string strFwd;
 		if (trusted < 5)strFwd += printFrom();
 		strFwd += forward_filter(strMsg);
-		if (long long aim = LinkList[fromSession].first;aim < 0) {
-			AddMsgToQueue(strFwd, ~aim);
-		}
-		else if (ChatList.count(aim)) {
-			AddMsgToQueue(strFwd, { 0,aim });
-		}
+		AddMsgToQueue(strFwd, sessions.linker.get_aim(here).first);
 	}
-	if (LogList.count(fromSession) && strLowerMessage.find(".log") != 0) {
-		ofstream logout(gm->session(fromSession).log_path(), ios::out | ios::app);
+	if (auto session{ sessions.get_if(here) }; session && session->is_logging()
+		&& strLowerMessage.find(".log") != 0) {
+		ofstream logout(session->log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(idx_pc(vars).to_str()) + "(" + to_string(fromChat.uid) + ") " + printTTime(fromTime) << endl
 			<< GBKtoUTF8(filter_CQcode(strMsg, fromChat.gid)) << endl << endl;
 	}
@@ -2233,36 +2223,35 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		intMsgCnt += 4;
-		string strRoom = readDigit(false);
-		long long llRoom = strRoom.empty() ? fromSession : stoll(strRoom);
-		if (llRoom == 0)llRoom = fromSession;
 		if (strMsg.length() == intMsgCnt) {
 			replyHelp("deck");
 			return 1;
 		}
 		string strPara = readPara();
-		if (strPara == "show") {
-			if (gm->has_session(llRoom))
-				gm->session(llRoom).deck_show(this);
+		if (auto s{ sessions.get_if(fromChat) }; strPara == "show") {
+			if (s)s->deck_show(this);
 			else replyMsg("strDeckListEmpty");
 		}
-		else if ((!canRoomHost() || llRoom != fromSession) && !trusted) {
+		else if (!canRoomHost()  && !trusted) {
 			replyMsg("strWhiteQQDenied");
 		}
+		else if (strPara == "new") {
+			s->deck_new(this);
+		}
+		else if (!s) {
+			replyMsg("strDeckListEmpty");
+		}
 		else if (strPara == "set") {
-			gm->session(llRoom).deck_set(this);
+			s->deck_set(this);
 		}
 		else if (strPara == "reset") {
-			gm->session(llRoom).deck_reset(this);
+			s->deck_reset(this);
 		}
 		else if (strPara == "del") {
-			gm->session(llRoom).deck_del(this);
+			s->deck_del(this);
 		}
 		else if (strPara == "clr") {
-			gm->session(llRoom).deck_clr(this);
-		}
-		else if (strPara == "new") {
-			gm->session(llRoom).deck_new(this);
+			s->deck_clr(this);
 		}
 		return 1;
 	}
@@ -2295,8 +2284,8 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		else {
-			if (gm->has_session(fromSession) && gm->session(fromSession).has_deck(key)) {
-				gm->session(fromSession)._draw(this);
+			if (auto s{ sessions.get_if(fromChat) }; s && s->has_deck(key)) {
+				s->_draw(this);
 				return 1;
 			}
 			else if (CardDeck::findDeck(key) == 0) {
@@ -2348,24 +2337,24 @@ int FromMsg::InnerOrder() {
 		if (strCmd.empty()|| isPrivate()) {
 			replyHelp("init");
 		}
-		else if (!gm->has_session(fromSession) || !gm->session(fromSession).table_count("先攻")) {
+		else if (auto s{ sessions.get_if(fromChat) }; !s || !s->table_count("先攻")) {
 			replyMsg("strGMTableNotExist");
 		}
 		else if (strCmd == "show" || strCmd == "list") {
-			vars["res"] = gm->session(fromSession).table_prior_show("先攻");
+			vars["res"] = s->table_prior_show("先攻");
 			replyMsg("strGMTableShow");
 		}
 		else if (strCmd == "del") {
 			vars["table_item"] = readRest();
 			if (vars["table_item"].str_empty())
 				replyMsg("strGMTableItemEmpty");
-			else if (gm->session(fromSession).table_del("先攻", vars["table_item"].to_str()))
+			else if (s->table_del("先攻", vars["table_item"].to_str()))
 				replyMsg("strGMTableItemDel");
 			else
 				replyMsg("strGMTableItemNotFound");
 		}
 		else if (strCmd == "clr") {
-			gm->session(fromSession).table_clr("先攻");
+			s->table_clr("先攻");
 			replyMsg("strGMTableClr");
 		}
 		return 1;
@@ -2427,13 +2416,13 @@ int FromMsg::InnerOrder() {
 		}
 		vars["option"] = readPara();
 		if (vars["option"] == "close") {
-			gm->session(fromSession).link_close(this);
+			sessions.linker.close(this);
 		}
 		else if (vars["option"] == "start") {
-			gm->session(fromSession).link_start(this);
+			sessions.linker.start(this);
 		}
 		else if (vars["option"] == "with" || vars["option"] == "from" || vars["option"] == "to") {
-			gm->session(fromSession).link_new(this);
+			sessions.linker.build(this);
 		}
 		else {
 			replyHelp("link");
@@ -2700,17 +2689,17 @@ int FromMsg::InnerOrder() {
 		if (strPara.empty()) {
 			replyHelp("log");
 		}
-		else if (DiceSession& game = gm->session(fromSession); strPara == "new") {
-			game.log_new(this);
+		else if (strPara == "new") {
+			sessions.get(fromChat)->log_new(this);
 		}
 		else if (strPara == "on") {
-			game.log_on(this);
+			sessions.get(fromChat)->log_on(this);
 		}
 		else if (strPara == "off") {
-			game.log_off(this);
+			sessions.get(fromChat)->log_off(this);
 		}
 		else if (strPara == "end") {
-			game.log_end(this);
+			sessions.get(fromChat)->log_end(this);
 		}
 		else {
 			replyHelp("log");
@@ -2820,15 +2809,15 @@ int FromMsg::InnerOrder() {
 		replyHelp("ak");
 		return 1;
 	}
-	Session& room{ gm->session(fromSession) };
+	auto s{ sessions.get(fromChat) };
 	char sign{ strMsg[intMsgCnt] };
 	string action{ readPara() };
 	if (sign == '#' || action == "new") {
 		if (sign == '#')++intMsgCnt;
-		room.get_deck().erase("__Ank");
+		s->get_deck().erase("__Ank");
 		if (string strTitle{ strMsg.substr(intMsgCnt,strMsg.find('+') - intMsgCnt) }; !strTitle.empty()) {
 			intMsgCnt += strTitle.length();
-			room.setConf("AkFork", vars["fork"] = strTitle);
+			s->setConf("AkFork", vars["fork"] = strTitle);
 		}
 		if (intMsgCnt == strMsg.length()) {
 			replyMsg("strAkForkNew");
@@ -2839,12 +2828,12 @@ int FromMsg::InnerOrder() {
 	}
 	if (sign == '+' || action == "add") {
 		if (sign == '+')++intMsgCnt;
-		std::vector<string>& deck{ room.get_deck("__Ank").meta };
+		std::vector<string>& deck{ s->get_deck("__Ank").meta };
 		if (!readItems(deck)) {
 			replyMsg("strAkAddEmpty");
 			return 1;
 		}
-		vars["fork"] = room.conf["AkFork"].to_str();
+		vars["fork"] = s->conf["AkFork"].to_str();
 		ResList list;
 		list.order();
 		for (auto& val : deck) {
@@ -2852,18 +2841,18 @@ int FromMsg::InnerOrder() {
 		}
 		vars["li"] = list.linebreak().show();
 		replyMsg("strAkAdd");
-		room.save();
+		s->save();
 	}
 	else if (sign == '-' || action == "del") {
 		if (sign == '-')++intMsgCnt;
-		std::vector<string>& deck{ room.get_deck("__Ank").meta };
+		std::vector<string>& deck{ s->get_deck("__Ank").meta };
 		int nNo{ 0 };
 		if (readNum(nNo) || nNo <= 0 || nNo > deck.size()) {
 			replyMsg("strAkNumErr");
 			return 1;
 		}
 		deck.erase(deck.begin() + nNo - 1);
-		vars["fork"] = room.conf["AkFork"];
+		vars["fork"] = s->conf["AkFork"];
 		ResList list;
 		list.order();
 		for (auto& val : deck) {
@@ -2871,12 +2860,12 @@ int FromMsg::InnerOrder() {
 		}
 		vars["li"] = list.linebreak().show();
 		replyMsg("strAkDel");
-		room.save();
+		s->save();
 	}
 	else if (sign == '=' || action == "get") {
-		if (DeckInfo& deck{ room.get_deck("__Ank") }; !deck.meta.empty()) {
-			vars["fork"] = room.conf["AkFork"];
-			room.rmConf("AkFork");
+		if (DeckInfo& deck{ s->get_deck("__Ank") }; !deck.meta.empty()) {
+			vars["fork"] = s->conf["AkFork"];
+			s->rmConf("AkFork");
 			size_t res{ (size_t)RandomGenerator::Randint(0,deck.meta.size() - 1) };
 			vars["get"] = to_string(res + 1) + ". " + deck.meta[res];
 			ResList list;
@@ -2885,17 +2874,17 @@ int FromMsg::InnerOrder() {
 				list << val;
 			}
 			vars["li"] = list.linebreak().show();
-			room.get_deck().erase("__Ank");
+			s->get_deck().erase("__Ank");
 			replyMsg("strAkGet");
 		}
 		else {
 			replyMsg("strAkOptEmptyErr");
 		}
-		room.save();
+		s->save();
 	}
 	else if (action == "show") {
-		std::vector<string>& deck{ room.get_deck("__Ank").meta };
-		vars["fork"] = room.conf["AkFork"];
+		std::vector<string>& deck{ s->get_deck("__Ank").meta };
+		vars["fork"] = s->conf["AkFork"];
 		ResList list;
 		list.order();
 		for (auto& val : deck) {
@@ -2905,11 +2894,11 @@ int FromMsg::InnerOrder() {
 		replyMsg("strAkShow");
 	}
 	else if (action == "clr") {
-		room.get_deck().erase("__Ank");
-		vars["fork"] = room.conf["AkFork"];
-		room.rmConf("AkFork");
+		s->get_deck().erase("__Ank");
+		vars["fork"] = s->conf["AkFork"];
+		s->rmConf("AkFork");
 		replyMsg("strAkClr");
-		room.save();
+		s->save();
 	}
 	if(strReply.empty())replyHelp("ak");
 	return 1;
@@ -3124,7 +3113,8 @@ int FromMsg::InnerOrder() {
 		if (strOption == "off") {
 			if (groupset(fromChat.gid, vars["option"].to_str()) < 1) {
 				chat(fromChat.gid).set(vars["option"].to_str());
-				gm->session(fromSession).clear_ob();
+				if (auto s{ sessions.get_if(fromChat)})
+					s->clear_ob();
 				replyMsg("strObOff");
 			}
 			else {
@@ -3146,22 +3136,29 @@ int FromMsg::InnerOrder() {
 			replyMsg("strObOffAlready");
 			return 1;
 		}
-		if (strOption == "list") {
-			gm->session(fromSession).ob_list(this);
+		auto s{ sessions.get_if(fromChat) };
+		if (strOption == "join") {
+			sessions.get_if(fromChat)->ob_enter(this);
+		}
+		else if (!s) {
+			replyMsg("strObListEmpty");
+		}
+		else if (strOption == "list") {
+			s->ob_list(this);
 		}
 		else if (strOption == "clr") {
 			if (canRoomHost()) {
-				gm->session(fromSession).ob_clr(this);
+				s->ob_clr(this);
 			}
 			else {
 				replyMsg("strPermissionDeniedErr");
 			}
 		}
 		else if (strOption == "exit") {
-			gm->session(fromSession).ob_exit(this);
+			s->ob_exit(this);
 		}
 		else {
-			gm->session(fromSession).ob_enter(this);
+			replyHelp("ob");
 		}
 		return 1;
 	}
@@ -3688,7 +3685,7 @@ int FromMsg::InnerOrder() {
 			replyMsg("strUnknownErr");
 			return 1;
 		}
-		gm->session(fromSession).table_add("先攻", initdice.intTotal, vars["char"].to_str());
+		sessions.get(fromChat)->table_add("先攻", initdice.intTotal, vars["char"].to_str());
 		vars["res"] = initdice.FormCompleteString();
 		replyMsg("strRollInit");
 		return 1;
@@ -4557,30 +4554,26 @@ int FromMsg::readNum(int& num)
 int FromMsg::readChat(chatInfo& ct, bool isReroll)
 {
 	const int intFormor = intMsgCnt;
-	if (const string strT = readPara(); strT == "me")
-	{
+	if (const string strT = readPara(); strT == "me"){
 		ct = { fromChat.uid, 0,0 };
 		return 0;
 	}
-	else if (strT == "this")
-	{
-		ct = fromChat.gid ? chatInfo(0, fromChat.gid, fromChat.chid) : fromChat;
+	else if (strT == "this"){
+		ct = fromChat.locate();
 		return 0;
 	}
 	else if (const long long llID{ readID() }; !llID) {
 		if (isReroll)intMsgCnt = intFormor;
 		return -2;
 	}
-	else if (strT == "qq") 
-	{
-		ct.type = msgtype::Private;
-		ct.uid = llID;
-		return 0;
-	}
-	else if (strT == "group")
-	{
+	else if (strT == "group"){
 		ct.type = msgtype::Group;
 		ct.gid = llID;
+		return 0;
+	}
+	else if (strT == "qq" || strT.empty()){
+		ct.type = msgtype::Private;
+		ct.uid = llID;
 		return 0;
 	}
 	if (isReroll)intMsgCnt = intFormor;

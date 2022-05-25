@@ -705,11 +705,11 @@ int drawDeck(lua_State* L) {
 	long long fromGID{ lua_to_int(L, 1) };
 	long long fromUID{ lua_to_int(L, 2) };
 	if (!fromGID && !fromUID)return 0;
+	chatInfo fromChat{ fromUID,fromGID };
 	string nameDeck{ lua_to_gbstring(L, 3) };
 	if (nameDeck.empty())return 0;
-	long long fromSession{ fromGID ? fromGID : ~fromUID };
-	if (gm->has_session(fromSession)) {
-		lua_push_string(L, gm->session(fromSession).deck_draw(nameDeck));
+	if (auto s{ sessions.has_session(fromChat) }) {
+		lua_push_string(L, sessions.get_if(fromChat)->deck_draw(nameDeck));
 	}
 	else if (CardDeck::findDeck(nameDeck)) {
 		vector<string>& deck = CardDeck::mPublicDeck[nameDeck];

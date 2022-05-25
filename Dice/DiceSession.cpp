@@ -1,7 +1,7 @@
 /**
- * 黑名单明细
- * 更数据库式的管理
- * Copyright (C) 2019-2020 String.Empty
+ * 会话管理
+ * 抽象于聊天窗口的单位
+ * Copyright (C) 2019-2022 String.Empty
  */
 #include <shared_mutex>
 #include "filesystem.hpp"
@@ -14,7 +14,9 @@
 #include "RandomGenerator.h"
 #include "DDAPI.h"
 
+DiceSessionManager sessions;
 std::shared_mutex sessionMutex;
+set<chatInfo>LogList;
 
 bool DiceSession::table_del(const string& tab, const string& item) {
 	if (!mTable.count(tab) || !mTable[tab].count(item))return false;
@@ -49,12 +51,12 @@ void DiceSession::ob_enter(FromMsg* msg)
 {
 	if (sOB.count(msg->fromChat.uid))
 	{
-		msg->reply(getMsg("strObEnterAlready"));
+		msg->replyMsg("strObEnterAlready");
 	}
 	else
 	{
 		sOB.insert(msg->fromChat.uid);
-		msg->reply(getMsg("strObEnter"));
+		msg->replyMsg("strObEnter");
 		update();
 	}
 }
@@ -64,18 +66,18 @@ void DiceSession::ob_exit(FromMsg* msg)
 	if (sOB.count(msg->fromChat.uid))
 	{
 		sOB.erase(msg->fromChat.uid);
-		msg->reply(getMsg("strObExit"));
+		msg->replyMsg("strObExit");
 	}
 	else
 	{
-		msg->reply(getMsg("strObExitAlready"));
+		msg->replyMsg("strObExitAlready");
 	}
 	update();
 }
 
 void DiceSession::ob_list(FromMsg* msg) const
 {
-	if (sOB.empty())msg->reply(getMsg("strObListEmpty"));
+	if (sOB.empty())msg->replyMsg("strObListEmpty");
 	else
 	{
 		ResList res;
@@ -89,11 +91,11 @@ void DiceSession::ob_list(FromMsg* msg) const
 
 void DiceSession::ob_clr(FromMsg* msg)
 {
-	if (sOB.empty())msg->reply(getMsg("strObListEmpty"));
+	if (sOB.empty())msg->replyMsg("strObListEmpty");
 	else
 	{
 		sOB.clear();
-		msg->reply(getMsg("strObListClr"));
+		msg->replyMsg("strObListClr");
 	}
 	update();
 }
@@ -103,13 +105,13 @@ void DiceSession::log_new(FromMsg* msg) {
 	std::filesystem::create_directory(DiceDir / logger.dirLog, ec);
 	logger.tStart = time(nullptr);
 	logger.isLogging = true;
-	logger.fileLog = (type == "solo")
-		? ("qq_" + to_string(msg->fromChat.uid) + "_" + to_string(logger.tStart) + ".txt")
-		: ("group_" + to_string(msg->fromChat.gid) + "_" + to_string(logger.tStart) + ".txt");
+	logger.fileLog = name + "_" + to_string(logger.tStart) + ".txt";
 	logger.pathLog = DiceDir / logger.dirLog / logger.fileLog;
 	//先发消息后插入
-	msg->reply(getMsg("strLogNew"));
-	LogList.insert(room);
+	msg->replyMsg("strLogNew");
+	for (const auto& ct : windows) {
+		LogList.insert(ct);
+	}
 	update();
 }
 void DiceSession::log_on(FromMsg* msg) {
@@ -118,44 +120,50 @@ void DiceSession::log_on(FromMsg* msg) {
 		return;
 	}
 	if (logger.isLogging) {
-		msg->reply(getMsg("strLogOnAlready"));
+		msg->replyMsg("strLogOnAlready");
 		return;
 	}
 	logger.isLogging = true;
-	msg->reply(getMsg("strLogOn"));
-	LogList.insert(room);
+	msg->replyMsg("strLogOn");
+	for (const auto& ct : windows) {
+		LogList.insert(ct);
+	}
 	update();
 }
 void DiceSession::log_off(FromMsg* msg) {
 	if (!logger.tStart) {
-		msg->reply(getMsg("strLogNullErr"));
+		msg->replyMsg("strLogNullErr");
 		return;
 	}
 	if (!logger.isLogging) {
-		msg->reply(getMsg("strLogOffAlready"));
+		msg->replyMsg("strLogOffAlready");
 		return;
 	}
 	logger.isLogging = false;
 	//先擦除后发消息
-	LogList.erase(room);
-	msg->reply(getMsg("strLogOff"));
+	for (const auto& ct : windows) {
+		LogList.erase(ct);
+	}
+	msg->replyMsg("strLogOff");
 	update();
 }
 void DiceSession::log_end(FromMsg* msg) {
 	if (!logger.tStart) {
-		msg->reply(getMsg("strLogNullErr"));
+		msg->replyMsg("strLogNullErr");
 		return;
 	}
-	LogList.erase(room);
+	for (const auto& ct : windows) {
+		LogList.erase(ct);
+	}
 	logger.isLogging = false;
 	logger.tStart = 0;
 	if (std::filesystem::path pathFile(log_path()); !std::filesystem::exists(pathFile)) {
-		msg->reply(getMsg("strLogEndEmpty"));
+		msg->replyMsg("strLogEndEmpty");
 		return;
 	}
 	msg->vars["log_file"] = logger.fileLog;
 	msg->vars["log_path"] = UTF8toGBK(log_path().u8string());
-	msg->reply(getMsg("strLogEnd"));
+	msg->replyMsg("strLogEnd");
 	update();
 	msg->vars["cmd"] = "uplog";
 	sch.push_job(msg->vars);
@@ -164,78 +172,97 @@ std::filesystem::path DiceSession::log_path()const {
 	return logger.pathLog; 
 }
 
-
-void DiceSession::link_new(FromMsg* msg) {
+void DiceChatLink::load() {
+	json jFile{ freadJson(DiceDir / "conf" / "LinkList.json") };
+	for (auto& jLink : jFile) {
+		auto ct{ chatInfo::from_json(jLink["origin"]) };
+		LinkInfo& link{ LinkList[ct] = { jLink["linking"].get<bool>(),
+			jLink["type"].get<string>(),
+			chatInfo::from_json(jLink["target"]) } };
+		if (link.isLinking) {
+			LinkFromChat[ct] = { link.linkFwd ,link.typeLink != "from" };
+			LinkFromChat[link.linkFwd] = { ct ,link.typeLink != "to" };
+		}
+	}
+}
+void DiceChatLink::save() {
+	if (LinkList.empty()) {
+		remove(DiceDir / "conf" / "LinkList.json");
+		return;
+	}
+	json jFile{ json::array() };
+	for (auto& [ct, linker] : LinkList) {
+		json jLink;
+		jLink["type"] = linker.typeLink;
+		jLink["origin"] = to_json(ct);
+		jLink["target"] = to_json(linker.linkFwd);
+		jLink["linking"] = linker.isLinking;
+		jFile.push_back(jLink);
+	}
+	fwriteJson(DiceDir / "conf" / "LinkList.json", jFile);
+}
+void DiceChatLink::build(FromMsg* msg) {
+	auto here{ msg->fromChat.locate() };
 	string strType = msg->readPara();
-	string strID = msg->readDigit();
-	if (strID.empty()) {
-		msg->reply(getMsg("strLinkNotFound"));
+	chatInfo target;
+	if (msg->readChat(target)) {
+		msg->replyMsg("strLinkNotFound");
 		return;
 	}
-	long long id = stoll(strID);
-	if (strType == "qq" || strType == "q") {
-		id = ~id;
-	}
-	else if (!ChatList.count(id)) {
-		msg->reply(getMsg("strLinkNotFound"));
+	else if (target.gid && !ChatList.count(target.gid)) {
+		msg->replyMsg("strLinkNotFound");
 		return;
-	}
-	linker.linkFwd = id;
-	//重置已存在的链接
-	if (linker.isLinking) {
-		LinkList.erase(room);
-		LinkList.erase(linker.linkFwd);
 	}
 	//占线不可用
-	if (LinkList.count(room)) {
-		msg->reply(getMsg("strLinkedAlready"));
+	if (LinkFromChat.count(here)) {
+		msg->replyMsg("strLinkingAlready");
 	}
-	else if (LinkList.count(linker.linkFwd)) {
-		msg->reply(getMsg("strLinkBusy"));
+	else if (LinkFromChat.count(target)) {
+		msg->replyMsg("strLinkBusy");
 	}
 	else {
-		linker.typeLink = msg->vars["option"].to_str();
-		LinkList[room] = { linker.linkFwd ,linker.typeLink != "from" };
-		LinkList[linker.linkFwd] = { room ,linker.typeLink != "to" };
-		linker.isLinking = true;
-		msg->reply(getMsg("strLinked"));
-		update();
+		LinkInfo& link{ LinkList[here] };
+		//重置已存在的链接
+		LinkFromChat.erase(link.linkFwd);
+		LinkFromChat[here] = { target ,link.typeLink != "from" };
+		LinkFromChat[target] = { here ,link.typeLink != "to" };
+		link = { true ,msg->vars["option"].to_str(),target };
+		msg->replyMsg("strLinked");
+		save();
 	}
 }
-void DiceSession::link_start(FromMsg* msg) {
-	if (linker.linkFwd) {
-		if (LinkList.count(room)) {
-			msg->reply(getMsg("strLinkingAlready"));
+void DiceChatLink::start(FromMsg* msg) {
+	auto here{ msg->fromChat.locate() };
+	if (LinkList.count(here)) {
+		if (LinkFromChat.count(here)) {
+			msg->replyMsg("strLinkingAlready");
 		}
-		else if (LinkList.count(linker.linkFwd)) {
-			msg->reply(getMsg("strLinkBusy"));
+		else if (LinkInfo& link{ LinkList[here] }; LinkFromChat.count(link.linkFwd)) {
+			msg->replyMsg("strLinkBusy");
 		}
 		else {
-			LinkList[room] = { linker.linkFwd ,linker.typeLink != "from" };
-			LinkList[linker.linkFwd] = { room ,linker.typeLink != "to" };
-			linker.isLinking = true;
-			msg->reply(getMsg("strLinked"));
-			update();
+			LinkFromChat[here] = { link.linkFwd ,link.typeLink != "from" };
+			LinkFromChat[link.linkFwd] = { here ,link.typeLink != "to" };
+			link.isLinking = true;
+			msg->replyMsg("strLinked");
+			save();
 		}
 	}
 	else {
-		msg->reply(getMsg("strLinkNotFound"));
+		msg->replyMsg("strLinkNotFound");
 	}
 }
-void DiceSession::link_close(FromMsg* msg) {
-	if (auto link = LinkList.find(room); link != LinkList.end()) {
-		linker.isLinking = false;
-		if (gm->mSession.count(link->second.first)) {
-			gm->session(link->second.first).linker.isLinking = false;
-			gm->session(link->second.first).update();
-		}
-		LinkList.erase(link->second.first);
-		LinkList.erase(link->first);
-		msg->reply(getMsg("strLinkClose"));
-		update();
+void DiceChatLink::close(FromMsg* msg) {
+	auto here{ msg->fromChat.locate() };
+	if (auto link{ LinkFromChat.find(here) }; link != LinkFromChat.end()) {
+		LinkFromChat.erase(link->first);
+		LinkFromChat.erase(here);
+		LinkList[here].isLinking = false;
+		msg->replyMsg("strLinkClose");
+		save();
 	}
 	else {
-		msg->reply(getMsg("strLinkCloseAlready"));
+		msg->replyMsg("strLinkCloseAlready");
 	}
 }
 
@@ -279,10 +306,10 @@ void DiceSession::deck_set(FromMsg* msg) {
 		? key 
 		: (++msg->intMsgCnt, msg->readAttrName()) };
 	if (key.empty()) {
-		msg->reply(getMsg("strDeckNameEmpty"));
+		msg->replyMsg("strDeckNameEmpty");
 	}
 	else if (decks.size() > 9 && !decks.count(key)) {
-		msg->reply(getMsg("strDeckListFull"));
+		msg->replyMsg("strDeckListFull");
 	}
 	else {
 		vector<string> DeckSet = {};
@@ -301,11 +328,11 @@ void DiceSession::deck_set(FromMsg* msg) {
 			string strR = msg->readDigit();
 			string strStep = msg->readDigit();	//步长，不支持反向
 			if (strL.empty()) {
-				msg->reply(getMsg("strRangeEmpty"));
+				msg->replyMsg("strRangeEmpty");
 				return;
 			}
 			else if (strL.length() > 16 || strR.length() > 16) {
-				msg->reply(getMsg("strOutRange"));
+				msg->replyMsg("strOutRange");
 				return;
 			}
 			else {
@@ -313,7 +340,7 @@ void DiceSession::deck_set(FromMsg* msg) {
 				long long llEnd{ strR.empty() ? 0 : stoll(strR) };
 				long long llStep{ strStep.empty() ? 1 : stoll(strStep) };
 				if (llBegin == llEnd) {
-					msg->reply(getMsg("strRangeEmpty"));
+					msg->replyMsg("strRangeEmpty");
 					return;
 				}
 				else if (llBegin > llEnd) {
@@ -322,7 +349,7 @@ void DiceSession::deck_set(FromMsg* msg) {
 					llEnd = temp;
 				}
 				if ((llEnd - llBegin) > 1000 * llStep) {
-					msg->reply(getMsg("strOutRange"));
+					msg->replyMsg("strOutRange");
 					return;
 				}
 				for (long long card = llBegin; card <= llEnd; card += llStep) {
@@ -333,14 +360,14 @@ void DiceSession::deck_set(FromMsg* msg) {
 			}
 		}
 		else if (!CardDeck::mPublicDeck.count(strCiteDeck.to_str()) || strCiteDeck.to_str()[0] == '_') {
-			msg->reply(getMsg("strDeckCiteNotFound"));
+			msg->replyMsg("strDeckCiteNotFound");
 			return;
 		}
 		else {
 			decks[key] = CardDeck::mPublicDeck[strCiteDeck.to_str()];
 		}
-		if (key == strCiteDeck.to_str())msg->reply(getMsg("strDeckSet"));
-		else msg->reply(getMsg("strDeckSetRename"));
+		if (key == strCiteDeck.to_str())msg->replyMsg("strDeckSet");
+		else msg->replyMsg("strDeckSetRename");
 		update();
 	}
 }
@@ -355,26 +382,26 @@ void DiceSession::deck_new(FromMsg* msg) {
 		msg->intMsgCnt = pos + 1;
 	}
 	if (decks.size() > 9 && !decks.count(key.to_str())) {
-		msg->reply(getMsg("strDeckListFull"));
+		msg->replyMsg("strDeckListFull");
 	}
 	else {
 		vector<string> DeckSet = {};
 		msg->readItems(DeckSet);
 		if (DeckSet.empty()) {
-			msg->reply(getMsg("strDeckNewEmpty"));
+			msg->replyMsg("strDeckNewEmpty");
 			return;
 		}
 		else if (DeckSet.size() > 256) {
-			msg->reply(getMsg("strDeckOversize"));
+			msg->replyMsg("strDeckOversize");
 			return;
 		}
 		DeckInfo deck{ DeckSet };
 		if (deck.idxs.size() > 1024) {
-			msg->reply(getMsg("strDeckOversize"));
+			msg->replyMsg("strDeckOversize");
 			return;
 		}
 		decks[key.to_str()] = std::move(deck);
-		msg->reply(getMsg("strDeckNew"));
+		msg->replyMsg("strDeckNew");
 		update();
 	}
 }
@@ -397,13 +424,13 @@ void DiceSession::_draw(FromMsg* msg) {
 	switch (msg->readNum(intCardNum)) {
 	case 0:
 		if (intCardNum == 0) {
-			msg->reply(getMsg("strNumCannotBeZero"));
+			msg->replyMsg("strNumCannotBeZero");
 			return;
 		}
 		break;
 	case -1: break;
 	case -2:
-		msg->reply(getMsg("strParaIllegal"));
+		msg->replyMsg("strParaIllegal");
 		console.log("提醒:" + printUser(msg->fromChat.uid) + "对" + getMsg("strSelfName") + "使用了非法指令参数\n" + msg->strMsg, 1,
 					printSTNow());
 		return;
@@ -417,20 +444,20 @@ void DiceSession::_draw(FromMsg* msg) {
 		(*job)["res"] = Res.dot("|").show();
 		(*job)["cnt"] = to_string(Res.size());
 		if (msg->vars.is("hidden")) {
-			msg->reply(getMsg("strDrawHidden"));
+			msg->replyMsg("strDrawHidden");
 			msg->replyHidden(getMsg("strDrawCard"));
 		}
 		else
-			msg->reply(getMsg("strDrawCard"));
+			msg->replyMsg("strDrawCard");
 		update();
 	}
 	if (!deck.sizRes) {
-		msg->reply(getMsg("strDeckRestEmpty"));
+		msg->replyMsg("strDeckRestEmpty");
 	}
 }
 void DiceSession::deck_show(FromMsg* msg) {
 	if (decks.empty()) {
-		msg->reply(getMsg("strDeckListEmpty"));
+		msg->replyMsg("strDeckListEmpty");
 		return;
 	}
 	const string strDeckName{ (msg->vars["deck_name"] = msg->readAttrName()).to_str() };
@@ -441,7 +468,7 @@ void DiceSession::deck_show(FromMsg* msg) {
 			res << key + "[" + to_string(val.sizRes) + "/" + to_string(val.idxs.size()) + "]";
 		}
 		msg->vars["res"] = res.show();
-		msg->reply(getMsg("strDeckListShow"));
+		msg->replyMsg("strDeckListShow");
 	}
 	else {
 		if (decks.count(strDeckName)) {
@@ -452,10 +479,10 @@ void DiceSession::deck_show(FromMsg* msg) {
 				residxs << deck.meta[deck.idxs[idx++]];
 			}
 			msg->vars["deck_rest"] = residxs.dot(" | ").show();
-			msg->reply(getMsg("strDeckRestShow"));
+			msg->replyMsg("strDeckRestShow");
 		}
 		else {
-			msg->reply(getMsg("strDeckNotFound"));
+			msg->replyMsg("strDeckNotFound");
 		}
 	}
 }
@@ -463,14 +490,14 @@ void DiceSession::deck_reset(FromMsg* msg) {
 	AttrVar& key{ msg->vars["deck_name"] = msg->readAttrName() };
 	if (key.str_empty())key = msg->readDigit();
 	if (key.str_empty()) {
-		msg->reply(getMsg("strDeckNameEmpty"));
+		msg->replyMsg("strDeckNameEmpty");
 	}
 	else if (!decks.count(key.to_str())) {
-		msg->reply(getMsg("strDeckNotFound"));
+		msg->replyMsg("strDeckNotFound");
 	}
 	else {
 		decks[key.to_str()].reset();
-		msg->reply(getMsg("strDeckRestReset"));
+		msg->replyMsg("strDeckRestReset");
 		update();
 	}
 }
@@ -478,20 +505,20 @@ void DiceSession::deck_del(FromMsg* msg) {
 	AttrVar& key{ msg->vars["deck_name"] = msg->readAttrName() };
 	if (key.str_empty())key = msg->readDigit();
 	if (key.str_empty()) {
-		msg->reply(getMsg("strDeckNameEmpty"));
+		msg->replyMsg("strDeckNameEmpty");
 	}
 	else if (!decks.count(key.to_str())) {
-		msg->reply(getMsg("strDeckNotFound"));
+		msg->replyMsg("strDeckNotFound");
 	}
 	else {
 		decks.erase(key.to_str());
-		msg->reply(getMsg("strDeckDelete"));
+		msg->replyMsg("strDeckDelete");
 		update();
 	}
 }
 void DiceSession::deck_clr(FromMsg* msg) {
 	decks.clear();
-	msg->reply(getMsg("strDeckListClr"));
+	msg->replyMsg("strDeckListClr");
 	update();
 }
 
@@ -501,9 +528,7 @@ void DiceSession::save() const
 {
 	std::error_code ec;
 	std::filesystem::create_directories(DiceDir / "user" / "session", ec);
-	std::filesystem::path fpFile = (type == "solo")
-		? (DiceDir / "user" / "session" / ("Q" + to_string(~room) + ".json") )
-		: (DiceDir / "user" / "session" / (to_string(room) + ".json"));
+	std::filesystem::path fpFile{ DiceDir / "user" / "session" / (name + ".json") };
 	nlohmann::json jData;
 	if (!conf.empty()) {
 		json& jConf{ jData["conf"] };
@@ -529,13 +554,6 @@ void DiceSession::save() const
 		jLog["logging"] = logger.isLogging;
 		jData["log"] = jLog;
 	}
-	if (linker.linkFwd) {
-		json jLink;
-		jLink["type"] = linker.typeLink;
-		jLink["target"] = linker.linkFwd;
-		jLink["linking"] = linker.isLinking;
-		jData["link"] = jLink;
-	}
 	if (!decks.empty()) {
 		json jDecks;
 		for (auto& [key,deck]:decks) {
@@ -552,8 +570,10 @@ void DiceSession::save() const
 		remove(fpFile);
 		return;
 	}
-	jData["type"] = type;
-	jData["room"] = room;
+	auto& jChat{ jData["room"] = json::array() };
+	for (const auto& chat : windows) {
+		jChat.push_back(to_json(chat));
+	}
 	jData["create_time"] = tCreate;
 	jData["update_time"] = tUpdate;
 	ofstream fout(fpFile);
@@ -564,27 +584,15 @@ void DiceSession::save() const
 	fout << jData.dump(1);
 }
 
-bool DiceTableMaster::has_session(long long group) {
-	return mSession.count(group);
-}
-
-Session& DiceTableMaster::session(long long group)
-{
-	if (!mSession.count(group))
-	{
-		std::unique_lock<std::shared_mutex> lock(sessionMutex);
-		if (group < 0)mSession.emplace(group, std::make_shared<Session>(group, "solo"));
-		else mSession.emplace(group, std::make_shared<Session>(group));
-	}
-	return *mSession[group];
-}
-
-void DiceTableMaster::session_end(long long room)
-{
+void DiceSessionManager::end(chatInfo ct){
+	auto session{ get_if(ct = ct.locate()) };
+	if (!session)return;
 	std::unique_lock<std::shared_mutex> lock(sessionMutex);
-	remove(DiceDir / "user" / "session" /
-		(room < 0 ? "Q" + to_string(~room) : to_string(~room) + ".json"));
-	mSession.erase(room);
+	SessionByName.erase(session->name);
+	if (session->windows.erase(ct); session->windows.empty()) {
+		SessionByChat.erase(ct);
+		remove(DiceDir / "user" / "session" / (session->name + ".json"));
+	}
 }
 
 const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
@@ -601,24 +609,50 @@ void DiceTableMaster::save()
 }
 */
 
-int DiceTableMaster::load() 
+shared_ptr<Session> DiceSessionManager::get(const chatInfo& ct) {
+	if (auto here{ ct.locate() }; SessionByChat.count(here)) 
+		return SessionByChat[ct];
+	else {
+		string name{ ct.chid ? "ch" + to_string(ct.chid)
+			: ct.gid ? "g" + to_string(ct.gid)
+			: "usr" + to_string(ct.uid) };
+		while (SessionByName.count(name)) {
+			name += '+';
+		}
+		std::unique_lock<std::shared_mutex> lock(sessionMutex);
+		auto ptr{ std::make_shared<Session>(name)};
+		SessionByName[name] = ptr;
+		SessionByChat[here] = ptr;
+		return ptr;
+	}
+}
+int DiceSessionManager::load() 
 {
     string strLog;
     std::unique_lock<std::shared_mutex> lock(sessionMutex);
     vector<std::filesystem::path> sFile;
     int cnt = listDir(DiceDir / "user" / "session", sFile);
     if (cnt <= 0)return cnt;
-    for (auto& filename : sFile)
-	{
+    for (auto& filename : sFile){
         nlohmann::json j = freadJson(filename);
-        if (j.is_null())
-		{
+        if (j.is_null()){
+			remove(filename);
             cnt--;
             continue;
         }
-		auto pSession(std::make_shared<Session>(j["room"]));
-		j["type"].get_to(pSession->type);
+		auto pSession(std::make_shared<Session>(filename.stem().string()));
 		pSession->create(j["create_time"]).update(j["update_time"]);
+		if (j.count("room")) {
+			if (j["room"].is_number()) {
+				long long id{ j["room"].get<long long>() };
+				pSession->windows.insert(id > 0 ? chatInfo{ 0, id } : chatInfo{ ~id });
+			}
+			else if (j["room"].is_array()) {
+				for (auto& ct : j["room"]) {
+					pSession->windows.insert(chatInfo::from_json(ct));
+				}
+			}
+		}
 		if (j.count("conf")) {
 			json& jConf{ j["conf"] };
 			for (auto it = jConf.cbegin(); it != jConf.cend(); ++it) {
@@ -634,17 +668,20 @@ int DiceTableMaster::load()
 			pSession->logger.update();
 			pSession->logger.pathLog = DiceDir / pSession->logger.dirLog / pSession->logger.fileLog;
 			if (pSession->logger.isLogging) {
-				LogList.insert(pSession->room);
+				for (const auto& chat : pSession->windows) {
+					LogList.insert(chat);
+				}
 			}
 		}
 		if (j.count("link")) {
 			json& jLink = j["link"];
-			jLink["type"].get_to(pSession->linker.typeLink);
-			jLink["target"].get_to(pSession->linker.linkFwd);
-			jLink["linking"].get_to(pSession->linker.isLinking);
-			if (pSession->linker.isLinking) {
-				LinkList[pSession->room] = { pSession->linker.linkFwd,pSession->linker.typeLink != "from" };
-				LinkList[pSession->linker.linkFwd] = { pSession->room,pSession->linker.typeLink != "to" };
+			const auto& ct{ *pSession->windows.begin() };
+			LinkInfo& link{ linker.LinkList[ct] = {jLink["linking"].get<bool>(),
+				jLink["type"].get<string>(),
+				chatInfo::from_json(jLink["target"]) } };
+			if (link.isLinking) {
+				linker.LinkFromChat[ct] = { link.linkFwd ,link.typeLink != "from" };
+				linker.LinkFromChat[link.linkFwd] = { ct ,link.typeLink != "to" };
 			}
 		}
 		if (j.count("decks")) {
@@ -662,9 +699,8 @@ int DiceTableMaster::load()
 				}
 			}
 		}
-        if (j["type"] == "simple")
-		{
-            if (j.count("observer")) pSession->sOB = j["observer"].get<set<long long>>();
+        if (j["type"] == "simple"){
+            if (j.count("observer")) j["observer"].get_to(pSession->sOB);
             if (j.count("tables"))
 			{
                 for (nlohmann::json::iterator itTable = j["tables"].begin(); itTable != j["tables"].end(); ++itTable)
@@ -677,7 +713,10 @@ int DiceTableMaster::load()
                 }
             }
 		}
-		mSession[pSession->room] = std::move(pSession);
+		SessionByName[UTF8toGBK(filename.u8string())] = pSession;
+		for (const auto& chat : pSession->windows) {
+			SessionByChat[chat] = pSession;
+		}
     }
     return cnt;
 }

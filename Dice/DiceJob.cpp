@@ -182,7 +182,8 @@ void clear_group(AttrObject& job) {
 			if (grp.isGroup && !DD::isGroupAdmin(id, console.DiceMaid, true)) {
 				res << printGroup(id);
 				time_t tLast{ grp.tUpdated };
-				if (gm->has_session(id) && gm->session(id).tUpdate > grp.tUpdated)tLast = gm->session(id).tUpdate;
+				if (auto s{ sessions.get_if({ 0,id }) })
+					tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 				if (tLast < grpline)GrpDelete.push_back(id);
 				grp.leave(getMsg("strLeaveNoPower"));
 				intCnt++;
@@ -199,7 +200,8 @@ void clear_group(AttrObject& job) {
 		for (auto& [id, grp] : ChatList) {
 			if (grp.isset("忽略") || grp.isset("免清") || grp.isset("协议无效"))continue;
 			time_t tLast{ grp.tUpdated };
-			if (gm->has_session(id) && gm->session(id).tUpdate > tLast)tLast = gm->session(id).tUpdate;
+			if (auto s{ sessions.get_if({ 0,id }) })
+				tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 			if (tLast > grpline)continue;
 			if (long long tLMT; grp.isGroup
 				&& DD::isGroupMember(id, console.DiceMaid, false)
@@ -227,7 +229,8 @@ void clear_group(AttrObject& job) {
 				if (grp.isset("忽略") || grp.isset("免清") || grp.isset("免黑") || grp.isset("协议无效"))continue;
 				if (blacklist->get_group_danger(id)) {
 					time_t tLast{ grp.tUpdated };
-					if (gm->has_session(id) && gm->session(id).tUpdate > grp.tUpdated)tLast = gm->session(id).tUpdate;
+					if (auto s{ sessions.get_if({ 0,id }) })
+						tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 					if (tLast < grpline)GrpDelete.push_back(id);
 					res << printGroup(id) + "：黑名单群";
 					grp.leave(getMsg("strBlackGroup"));
@@ -279,7 +282,8 @@ void clear_group(AttrObject& job) {
 				continue;
 			}
 			time_t tLast{ grp.tUpdated };
-			if (gm->has_session(id) && gm->session(id).tUpdate > grp.tUpdated)tLast = gm->session(id).tUpdate;
+			if (auto s{ sessions.get_if({ 0,id }) })
+				tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 			if (tLast < grpline)GrpDelete.push_back(id);
 			res << printChat(grp);
 			grp.leave(getMsg("strPreserve"));
@@ -294,7 +298,7 @@ void clear_group(AttrObject& job) {
 	if (!GrpDelete.empty()) {
 		for (const auto& id : GrpDelete) {
 			ChatList.erase(id);
-			if (gm->has_session(id))gm->session_end(id);
+			if (sessions.has_session({ 0,id }))sessions.end({ 0,id });
 		}
 		MsgNote(job, "清查群聊时回收不活跃记录" + to_string(GrpDelete.size()) + "条", 0b1);
 	}

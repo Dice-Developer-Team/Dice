@@ -24,7 +24,6 @@ using std::string;
 class FromMsg : public DiceJobDetail {
 public:
 	string strLowerMessage;
-	long long fromSession;
 	Chat* pGrp = nullptr;
 	string& strMsg;
 	string strReply;

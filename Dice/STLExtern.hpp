@@ -232,7 +232,8 @@ class PriorList
 {
 	std::priority_queue<prior_item> qItem;
 public:
-	PriorList(const map<string, int>& mItem)
+	template<class Con>
+	PriorList(const Con& mItem)
 	{
 		for (auto& [key, prior] : mItem)
 		{

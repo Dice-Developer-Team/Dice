@@ -260,7 +260,7 @@ void Console::loadNotice()
 	if (!jFile.empty()) {
 		try {
 			for (auto note : jFile) {
-				if (chatInfo chat(from_json(note)); chat && note.count("type"))
+				if (chatInfo chat(chatInfo::from_json(note)); chat && note.count("type"))
 					NoticeList.emplace(chat, note["type"].get<int>());
 			}
 			return;

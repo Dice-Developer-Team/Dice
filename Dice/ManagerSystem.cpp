@@ -156,7 +156,8 @@ int clearUser() {
 		else if (isClearInactive) {
 			time_t tLast{ user.tUpdated };
 			if (!tLast)tLast = user.tCreated;
-			if (gm->has_session(~uid) && gm->session(~uid).tUpdate > tLast)tLast = gm->session(~uid).tUpdate;
+			if (auto s{ sessions.get_if({ uid }) })
+				tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 			if (tLast >= userline)continue;
 			UserDelete.push_back(uid);
 			if (PList.count(uid)) {
@@ -166,7 +167,7 @@ int clearUser() {
 	}
 	for (auto uid : UserDelete) {
 		UserList.erase(uid);
-		if (gm->has_session(~uid))gm->session_end(~uid);
+		if (sessions.has_session(uid))sessions.end(uid);
 	}
 	return UserDelete.size();
 }
@@ -178,12 +179,13 @@ int clearGroup() {
 	for (const auto& [id, grp] : ChatList) {
 		if (grp.is_except() || grp.isset("ÃâÇå") || grp.isset("ºöÂÔ"))continue;
 		time_t tLast{ grp.tUpdated };
-		if (gm->has_session(id) && gm->session(id).tUpdate > grp.tUpdated)tLast = gm->session(id).tUpdate;
+		if (auto s{ sessions.get_if({ 0,id }) })
+			tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 		if (tLast < grpline)GrpDelete.push_back(id);
 	}
 	for (auto id : GrpDelete) {
 		ChatList.erase(id);
-		if (gm->has_session(id))gm->session_end(id);
+		if (sessions.has_session({ 0,id }))sessions.end({ 0,id });
 	}
 	return GrpDelete.size();
 }

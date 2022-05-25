@@ -62,7 +62,7 @@ nlohmann::json to_json(const chatInfo& chat) {
 	else if (chat.uid)j["uid"] = chat.uid;
 	return j;
 }
-chatInfo from_json(const nlohmann::json& chat) {
+chatInfo chatInfo::from_json(const nlohmann::json& chat) {
 	if (chat.is_null())return {};
 	long long uid{ 0 }, gid{ 0 }, chid{ 0 };
 	if (chat.count("uid"))chat["uid"].get_to(uid);

@@ -1,5 +1,5 @@
 #pragma once
-#include <set>
+#include <unordered_set>
 #include "filesystem.hpp"
 #include "STLExtern.hpp"
 #include "DiceAttrVar.h"
@@ -11,7 +11,8 @@ using std::to_string;
 using std::vector;
 using std::map;
 using std::multimap;
-using std::set;
+using std::unordered_set;
+using std::shared_ptr;
 namespace fs = std::filesystem;
 
 class FromMsg;
@@ -35,7 +36,23 @@ struct LinkInfo {
 	bool isLinking{ false };
 	string typeLink;
 	//对象窗口，为0则不存在
-	long long linkFwd{ 0 };
+	chatInfo linkFwd{ 0 };
+};
+class DiceChatLink {
+	unordered_map<chatInfo, LinkInfo>LinkList;
+	//禁止桥接等花哨操作
+	unordered_map<chatInfo, pair<chatInfo, bool>>LinkFromChat;
+public:
+	friend class DiceSessionManager;
+	pair<chatInfo, bool> get_aim(const chatInfo& ct) {
+		return LinkFromChat.count(ct) ? LinkFromChat[ct] : pair<chatInfo, bool>();
+	}
+	//link指令
+	void build(FromMsg*);
+	void start(FromMsg*);
+	void close(FromMsg*);
+	void load();
+	void save();
 };
 
 struct DeckInfo {
@@ -51,32 +68,28 @@ struct DeckInfo {
 	string draw();
 };
 
-class DiceSession
-{
+class DiceSession{
 	//数值表
-	map<string, map<string, int>> mTable;
+	dict<dict<int>> mTable;
 	//旁观者
-	set<long long> sOB;
+	unordered_set<long long> sOB;
 	//日志
 	LogInfo logger;
-	//链接
-	LinkInfo linker;
 	//牌堆
 	map<string, DeckInfo, less_ci> decks;
 public:
-	string type;
-	//群号
-	long long room;
+	//native filename
+	const string name;
+	unordered_set<chatInfo> windows;
 	//设置
 	AttrVars conf;
 
-	DiceSession(long long group, string t = "simple") : room(group),type(t)
-	{
+	DiceSession(const string& s) : name(s) {
 		tUpdate = tCreate = time(nullptr);
 	}
 
 	friend void readUserData();
-	friend class DiceTableMaster;
+	friend class DiceSessionManager;
 
 	//记录创建时间
 	time_t tCreate;
@@ -125,7 +138,7 @@ public:
 	void ob_exit(FromMsg*);
 	void ob_list(FromMsg*) const;
 	void ob_clr(FromMsg*);
-	[[nodiscard]] set<long long> get_ob() const { return sOB; }
+	[[nodiscard]] unordered_set<long long> get_ob() const { return sOB; }
 
 	DiceSession& clear_ob()
 	{
@@ -140,12 +153,6 @@ public:
 	void log_end(FromMsg*);
 	[[nodiscard]] std::filesystem::path log_path()const;
 	[[nodiscard]] bool is_logging() const { return logger.isLogging; }
-
-	//link指令
-	void link_new(FromMsg*);
-	void link_start(FromMsg*);
-	void link_close(FromMsg*);
-	[[nodiscard]] bool is_linking() const { return linker.isLinking; }
 
 	//deck指令
 	map<string, DeckInfo, less_ci>& get_deck() { return decks; }
@@ -165,28 +172,26 @@ public:
 
 using Session = DiceSession;
 
-class DiceRoom {
-	unsigned int id{};
-	set<long long>gm_list;
-	set<long long>pl_list;
-	set<long long>ob_list;
-	AttrVars confs;
+class DiceSessionManager {
+	dict_ci<shared_ptr<Session>> SessionByName;
+	//聊天窗口对Session，允许多对一
+	unordered_map<chatInfo, shared_ptr<Session>> SessionByChat;
 public:
-	chatInfo mainTable;
-};
+	DiceChatLink linker;
+	[[nodiscard]] bool is_linking(const chatInfo& ct) {
+		return linker.LinkFromChat.count(ct) && linker.LinkFromChat[ct].second;
+	}
 
-class DiceTableMaster{
-	std::unordered_map<long long, DiceRoom>RoomList;
-public:
-	map<long long, std::shared_ptr<Session>> mSession;
-	Session& session(long long group);
-	bool has_session(long long group);
-	void session_end(long long group);
-	//void save();
 	int load();
-};
+	void clear() { SessionByName.clear(); SessionByChat.clear(); linker = {}; }
+	shared_ptr<Session> get(const chatInfo& ct);
+	shared_ptr<Session> get_if(const chatInfo& ct) {
+		return SessionByChat.count(ct.locate()) ? SessionByChat[ct] : shared_ptr<Session>();
+	}
+	bool has_session(const chatInfo& ct)const {
+		return SessionByChat.count(ct.locate());
+	}
+	void end(chatInfo ct);
 
-inline std::unique_ptr<DiceTableMaster> gm;
-inline set<long long>LogList;
-//禁止桥接等花哨操作
-inline map<long long, pair<long long,bool>>LinkList;
+};
+extern DiceSessionManager sessions;
