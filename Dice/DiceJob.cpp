@@ -426,7 +426,7 @@ void log_put(AttrObject& job) {
 			DD::sendFriendFile(job.get_ll("uid"), job.get_str("log_path"));
 		}
 	}
-	string nameLog{ base64_encode(job.get_str("log_file")) };
+	string nameLog{ Base64urlEncode(job.get_str("log_file")) };
 	job["ret"] = put_s3_object("dicelogger",
 		nameLog.c_str(),
 		GBKtoLocal(job.get_str("log_path")).c_str(),

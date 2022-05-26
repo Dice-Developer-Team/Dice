@@ -77,6 +77,7 @@ std::unordered_map<K, V> UTF8toGBK(const std::unordered_map<K, V>& TUTF8) {
 
 std::string UrlEncode(const std::string& str);
 std::string UrlDecode(const std::string& str);
+std::string Base64urlEncode(const std::string& str);
 #ifndef _WIN32
 template <typename T, typename Q>
 std::basic_string<T> ConvertEncoding(const std::basic_string<Q>& in, const std::string& InEnc, const std::string& OutEnc, const double CapFac = 4.0)
