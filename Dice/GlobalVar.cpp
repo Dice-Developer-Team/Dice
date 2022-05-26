@@ -482,6 +482,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
+612:新增mod代理事件
 611:更新WebUI自定义回执
 610:新增mod定时事件
 609:新增mod循环事件

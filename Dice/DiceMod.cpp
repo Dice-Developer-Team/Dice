@@ -985,6 +985,17 @@ void DiceModManager::call_clock_event(const string& id) {
 		lua_call_event(eve, action["lua"].to_str());
 	}
 }
+bool DiceModManager::call_hook_event(AttrObject eve) {
+	string hookEvent{ eve.get_str("Event") };
+	if (hookEvent.empty())return false;
+	for (auto [id, hook] : multi_range(hook_events, hookEvent)) {
+		auto action{ hook.get_dict("action") };
+		if (action.count("lua")) {
+			lua_call_event(eve, action["lua"].to_str());
+		}
+	}
+	return eve.is("blocked");
+}
 
 bool DiceModManager::listen_reply(FromMsg* msg) {
 	string& strMsg{ msg->strMsg };
@@ -1417,6 +1428,10 @@ void DiceModManager::init() {
 				clock_events.emplace(parse_clock(clock), id);
 			}
 		}
+		if (trigger.count("hook")) {
+			string nameEvent{ trigger["hook"].to_str() };
+			hook_events.emplace(nameEvent, eve);
+		}
 	}
 	cycle_events.swap(cycle);
 	isIniting = false;
@@ -1435,6 +1450,8 @@ void DiceModManager::clear(){
 	gReplySearcher.clear();
 	gReplyPrefix.clear();
 	clock_events.clear();
+	cycle_events.clear();
+	hook_events.clear();
 	events.clear();
 	modList.clear();
 	modIndex.clear();

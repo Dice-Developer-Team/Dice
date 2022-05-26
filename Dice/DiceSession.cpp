@@ -13,6 +13,7 @@
 #include "CardDeck.h"
 #include "RandomGenerator.h"
 #include "DDAPI.h"
+#include "DiceMod.h"
 
 DiceSessionManager sessions;
 std::shared_mutex sessionMutex;
@@ -168,8 +169,12 @@ void DiceSession::log_end(FromMsg* msg) {
 	msg->vars["log_path"] = log_path().string();
 	msg->replyMsg("strLogEnd");
 	update();
-	msg->vars["cmd"] = "uplog";
-	sch.push_job(msg->vars);
+	AttrObject eve{ *msg->vars };
+	eve["Event"] = "LogEnd";
+	if (!fmt->call_hook_event(eve)) {
+		eve["cmd"] = "uplog";
+		sch.push_job(eve);
+	}
 }
 std::filesystem::path DiceSession::log_path()const {
 	return logger.pathLog; 

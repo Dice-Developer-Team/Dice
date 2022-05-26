@@ -74,6 +74,8 @@ template<typename T = std::string>
 using dict = std::unordered_map<string, T>;
 template<typename T = std::string>
 using dict_ci = std::unordered_map<string, T, hash_ci, equal_ci>;
+template<typename T = std::string>
+using multidict_ci = std::unordered_multimap<string, T, hash_ci, equal_ci>;
 
 template <typename TKey, typename TVal1, typename TVal2, typename Hash, typename Equal>
 void merge(unordered_map<TKey, TVal1, Hash, Equal>& m1, const unordered_map<TKey, TVal2, Hash, Equal>& m2)

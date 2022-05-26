@@ -194,6 +194,7 @@ class DiceModManager
 	//Event
 	dict_ci<AttrObject> events; //events by id
 	unordered_set<string> cycle_events; //重载时唯一性检查
+	multidict_ci<AttrObject> hook_events;
 
 	WordQuerier querier;
 	TrieG<char, less_ci> gOrder;
@@ -229,6 +230,8 @@ public:
 
 	void call_cycle_event(const string&);
 	void call_clock_event(const string&);
+	//return if event is blocked
+	bool call_hook_event(AttrObject);
 
 	bool listen_order(DiceJobDetail*);
 	bool listen_reply(FromMsg*);

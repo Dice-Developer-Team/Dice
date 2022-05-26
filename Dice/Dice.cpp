@@ -446,6 +446,7 @@ EVE_Enable(eventEnable){
 		console.log(std::string("刷新软件包缓存失败：") + e.what(), 0);
 	}
 	isIniting.clear();
+	fmt->call_hook_event({ {{"Event","StartUp"}} });
 }
 
 mutex GroupAddMutex;
@@ -468,6 +469,11 @@ bool eve_GroupAdd(Chat& grp)
 	if (!console["ListenGroupAdd"] || grp.isset("忽略"))return 0;
 	string strNow = printSTNow();
 	string strMsg(getMsg("strSelfName"));
+	AttrObject eve{ {
+		{"Event","GroupAdd"},
+		{"fromGroup",to_string(fromGID)},
+		{"gid",fromGID},
+	} };
 	try 
 	{
 		strMsg += "新加入:" + DD::printGroupInfo(grp.ID);
@@ -481,7 +487,7 @@ bool eve_GroupAdd(Chat& grp)
 		if (grp.isset("许可使用"))strMsg += "（已获使用许可）";
 		else if(grp.isset("协议无效"))strMsg += "（默认协议无效）";
 		if (grp.inviter) {
-			strMsg += ",邀请者" + printUser(chat(fromGID).inviter);
+			strMsg += ",邀请者" + printUser(grp.inviter);
 		}
 		int max_trust = 0;
 		float ave_trust(0);
@@ -547,9 +553,8 @@ bool eve_GroupAdd(Chat& grp)
 					++cntDiceMaid;
 				}
 			}
-			if (!chat(fromGID).inviter && list.size() == 2 && ownerQQ)
-			{
-				chat(fromGID).inviter = ownerQQ;
+			if (!grp.inviter && list.size() <= 2 && ownerQQ){
+				grp.inviter = ownerQQ;
 				strMsg += "邀请者" + printUser(ownerQQ);
 			}
 			if (!cntMember) 
@@ -569,6 +574,10 @@ bool eve_GroupAdd(Chat& grp)
 		{
 			string strNote = "\n发现黑名单群员" + blacks.show();
 			strMsg += strNote;
+		}
+		if (fmt->call_hook_event(eve)) {
+			console.log(strMsg, 1, strNow);
+			return 0;
 		}
 		if (console["Private"] && !grp.isset("许可使用"))
 		{	
@@ -594,7 +603,7 @@ bool eve_GroupAdd(Chat& grp)
 		console.log(strMsg + "\n群" + to_string(fromGID) + "信息获取失败！", 0b1, printSTNow());
 		return true;
 	}
-	if (grp.isset("协议无效")) return 0;
+	if (grp.isset("协议无效"))return 0;
 	if (!getMsg("strAddGroup").empty())
 	{
 		this_thread::sleep_for(2s);
@@ -754,14 +763,21 @@ EVE_GroupMemberKicked(eventGroupMemberKicked){
 	if (!Enabled) return 0;
 	if (fromUID == 0)return 0; // 考虑Mirai在机器人自行退群时也会调用一次这个函数
 	Chat& grp = chat(fromGID);
-	if (beingOperateQQ == console.DiceMaid)
-	{
+	if (beingOperateQQ == console.DiceMaid){
 		grp.set("已退").reset("已入群");
 		if (!console || grp.isset("忽略"))return 0;
 		string strNow = printSTime(stNow);
 		string strNote = printUser(fromUID) + "将" + printUser(beingOperateQQ) + "移出了" + printChat(grp);
 		console.log(strNote, 0b1000, strNow);
 		if (!console["ListenGroupKick"] || trustedQQ(fromUID) > 1 || grp.isset("免黑") || grp.isset("协议无效") || ExceptGroups.count(fromGID)) return 0;
+		AttrObject eve{ {
+			{"Event","GroupKicked"},
+			{"fromUser",to_string(fromUID)},
+			{"fromGroup",to_string(fromGID)},
+			{"uid",fromUID},
+			{"gid",fromGID},
+		} };
+		if (fmt->call_hook_event(eve))return 1;
 		DDBlackMarkFactory mark{fromUID, fromGID};
 		mark.sign().type("kick").time(strNow).note(strNow + " " + strNote).comment(getMsg("strSelfCall") + "原生记录");
 		if (grp.inviter && trustedQQ(grp.inviter) < 2)
@@ -811,6 +827,14 @@ EVE_GroupBan(eventGroupBan)
 			console.log(strNote, 0b10, strNow);
 			return 1;
 		}
+		AttrObject eve{ {
+			{"Event","GroupBanned"},
+			{"fromUser",to_string(operatorQQ)},
+			{"fromGroup",to_string(fromGID)},
+			{"uid",operatorQQ},
+			{"gid",fromGID},
+		} };
+		if (fmt->call_hook_event(eve))return 1;
 		DDBlackMarkFactory mark{operatorQQ, fromGID};
 		mark.type("ban").time(strNow).note(strNow + " " + strNote);
 		if (mDiceList.count(operatorQQ))mark.fromUID(0);
@@ -860,6 +884,24 @@ EVE_GroupInvited(eventGroupInvited)
 	if (groupset(fromGID, "忽略") < 1)
 	{
 		this_thread::sleep_for(3s);
+		AttrObject eve{ {
+			{"Event","GroupRequest"},
+			{"fromUser",to_string(fromUID)},
+			{"fromGroup",to_string(fromGID)},
+			{"uid",fromUID},
+			{"gid",fromGID},
+		} };
+		bool isBlocked{ fmt->call_hook_event(eve) };
+		if (eve.has("approval")) {
+			if (eve.is("approval")) {
+				chat(fromGID).inviter = fromUID;
+				DD::answerFriendRequest(fromUID, 1);
+			}
+			else {
+				DD::answerFriendRequest(fromUID, 2);
+			}
+		}
+		if (isBlocked)return 1;
 		const string strNow = printSTNow();
 		string strMsg = "群添加请求，来自：" + printUser(fromUID) + ",群:" +
 			DD::printGroupInfo(fromGID);
@@ -930,8 +972,19 @@ EVE_GroupInvited(eventGroupInvited)
 EVE_FriendRequest(eventFriendRequest) {
 	if (!Enabled) return 0;
 	if (!console["ListenFriendRequest"])return 0;
-	string strMsg = "好友添加请求，来自 " + printUser(fromUID) + ":" + message;
 	this_thread::sleep_for(3s);
+	AttrObject eve{{
+		{"Event","FriendRequest"},
+		{"fromUser",to_string(fromUID)},
+		{"fromMsg",message},
+		{"uid",fromUID},
+	} };
+	bool isBlocked{ fmt->call_hook_event(eve) };
+	if (eve.has("approval")) {
+		DD::answerFriendRequest(fromUID, eve.is("approval") ? 1 : 2, eve.get_str("msg_reply"));
+	}
+	if (isBlocked)return 1;
+	string strMsg = "好友添加请求，来自 " + printUser(fromUID) + ":" + message;
 	if (blacklist->get_qq_danger(fromUID)) {
 		strMsg += "\n已拒绝（用户在黑名单中）";
 		DD::answerFriendRequest(fromUID, 2, "");
@@ -963,6 +1016,12 @@ EVE_FriendAdded(eventFriendAdd) {
 	if (!Enabled) return 0;
 	if (!console["ListenFriendAdd"])return 0;
 	this_thread::sleep_for(3s);
+	AttrObject eve{ {
+		{"Event","FriendAdd"},
+		{"fromUser",to_string(fromUID)},
+		{"uid",fromUID},
+	} };
+	if(fmt->call_hook_event(eve))return 1;
 	(trustedQQ(fromUID) > 0 && !getMsg("strAddFriendWhiteQQ").empty())
 		? AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromUID)
 		: AddMsgToQueue(getMsg("strAddFriend"), fromUID);
