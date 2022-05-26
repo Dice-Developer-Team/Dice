@@ -16,7 +16,7 @@
 
 DiceSessionManager sessions;
 std::shared_mutex sessionMutex;
-set<chatInfo>LogList;
+unordered_set<chatInfo>LogList;
 
 bool DiceSession::table_del(const string& tab, const string& item) {
 	if (!mTable.count(tab) || !mTable[tab].count(item))return false;
@@ -103,10 +103,13 @@ void DiceSession::ob_clr(FromMsg* msg)
 void DiceSession::log_new(FromMsg* msg) {
 	std::error_code ec;
 	std::filesystem::create_directory(DiceDir / logger.dirLog, ec);
+	string nameLog{ msg->readFileName() };
+	if (nameLog.empty())nameLog = to_string(logger.tStart);
+	msg->vars["log_name"] = nameLog;
 	logger.tStart = time(nullptr);
 	logger.isLogging = true;
-	logger.fileLog = name + "_" + to_string(logger.tStart) + ".txt";
-	logger.pathLog = DiceDir / logger.dirLog / logger.fileLog;
+	logger.fileLog = LocaltoGBK(name) + "_" + nameLog + ".txt";
+	logger.pathLog = DiceDir / logger.dirLog / GBKtoLocal(logger.fileLog);
 	//先发消息后插入
 	msg->replyMsg("strLogNew");
 	for (const auto& ct : windows) {
@@ -162,7 +165,7 @@ void DiceSession::log_end(FromMsg* msg) {
 		return;
 	}
 	msg->vars["log_file"] = logger.fileLog;
-	msg->vars["log_path"] = UTF8toGBK(log_path().u8string());
+	msg->vars["log_path"] = log_path().string();
 	msg->replyMsg("strLogEnd");
 	update();
 	msg->vars["cmd"] = "uplog";
@@ -551,7 +554,7 @@ void DiceSession::save() const
 		json jLog;
 		jLog["start"] = logger.tStart;
 		jLog["lastMsg"] = logger.tLastMsg;
-		jLog["file"] = logger.fileLog;
+		jLog["file"] = GBKtoUTF8(logger.fileLog);
 		jLog["logging"] = logger.isLogging;
 		jData["log"] = jLog;
 	}
@@ -571,7 +574,7 @@ void DiceSession::save() const
 		remove(fpFile);
 		return;
 	}
-	auto& jChat{ jData["room"] = json::array() };
+	auto& jChat{ jData["chats"] = json::array() };
 	for (const auto& chat : windows) {
 		jChat.push_back(to_json(chat));
 	}
@@ -599,8 +602,8 @@ void DiceSessionManager::end(chatInfo ct){
 const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
 
 shared_ptr<Session> DiceSessionManager::get(const chatInfo& ct) {
-	if (auto here{ ct.locate() }; SessionByChat.count(here)) 
-		return SessionByChat[ct];
+	if (const auto here{ ct.locate() }; SessionByChat.count(here)) 
+		return SessionByChat[here];
 	else {
 		string name{ ct.chid ? "ch" + to_string(ct.chid)
 			: ct.gid ? "g" + to_string(ct.gid)
@@ -641,6 +644,11 @@ int DiceSessionManager::load()
 				}
 			}
 		}
+		if (j.count("chats")) {
+			for (auto& ct : j["chats"]) {
+				pSession->windows.insert(chatInfo::from_json(ct));
+			}
+		}
 		if (j.count("conf")) {
 			json& jConf{ j["conf"] };
 			for (auto it = jConf.cbegin(); it != jConf.cend(); ++it) {
@@ -652,9 +660,10 @@ int DiceSessionManager::load()
 			jLog["start"].get_to(pSession->logger.tStart);
 			jLog["lastMsg"].get_to(pSession->logger.tLastMsg);
 			jLog["file"].get_to(pSession->logger.fileLog);
+			pSession->logger.fileLog = UTF8toGBK(pSession->logger.fileLog);
 			jLog["logging"].get_to(pSession->logger.isLogging);
 			pSession->logger.update();
-			pSession->logger.pathLog = DiceDir / pSession->logger.dirLog / pSession->logger.fileLog;
+			pSession->logger.pathLog = DiceDir / pSession->logger.dirLog / GBKtoLocal(pSession->logger.fileLog);
 			if (pSession->logger.isLogging) {
 				for (const auto& chat : pSession->windows) {
 					LogList.insert(chat);

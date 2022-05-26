@@ -43,6 +43,8 @@ template <typename T,
 	T GBKtoUTF8(const T& TGBK) {
 	return TGBK;
 }
+std::string GBKtoLocal(const std::string& strGBK);
+std::string LocaltoGBK(const std::string& str);
 std::string GBKtoUTF8(const std::string& strGBK, bool isTrial = false);
 std::vector<std::string> GBKtoUTF8(const std::vector<std::string>& strGBK);
 template <typename K, typename V>

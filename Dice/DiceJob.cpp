@@ -7,9 +7,9 @@
 #include <TlHelp32.h>
 #include <Psapi.h>
 #endif
-
 #include "StrExtern.hpp"
 #include "DDAPI.h"
+#include "CQTools.h"
 #include "ManagerSystem.h"
 #include "DiceCloud.h"
 #include "BlackListManager.h"
@@ -426,11 +426,14 @@ void log_put(AttrObject& job) {
 			DD::sendFriendFile(job.get_ll("uid"), job.get_str("log_path"));
 		}
 	}
+	string nameLog{ base64_encode(job.get_str("log_file")) };
 	job["ret"] = put_s3_object("dicelogger",
-		job.get_str("log_file").c_str(),
-		job.get_str("log_path").c_str(),
+		nameLog.c_str(),
+		GBKtoLocal(job.get_str("log_path")).c_str(),
 		"ap-southeast-1");
 	if (job["ret"] == "SUCCESS") {
+		job["log_file"] = nameLog;
+		job["log_url"] = "https://logpainter.kokona.tech/?s3=" + nameLog;
 		reply(job, "{strLogUpSuccess}");
 	}
 	else if (++cntExec > 2) {

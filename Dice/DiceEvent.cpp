@@ -4550,7 +4550,18 @@ int FromMsg::readNum(int& num)
 	num = stoi(strNum);
 	return 0;
 }
-
+string FromMsg::readFileName(){
+	while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
+	const size_t intBegin{ intMsgCnt }, len{ strMsg.length() };
+	while (intMsgCnt < len
+		&& strMsg[intMsgCnt] != '<' && strMsg[intMsgCnt] != '>'
+		&& strMsg[intMsgCnt] != ':' && strMsg[intMsgCnt] != '"'
+		&& strMsg[intMsgCnt] != '*' && strMsg[intMsgCnt] != '|' && strMsg[intMsgCnt] != '?'
+		&& strMsg[intMsgCnt] != '/' && strMsg[intMsgCnt] != '\\'){
+		intMsgCnt++;
+	}
+	return strMsg.substr(intBegin, intMsgCnt - intBegin);
+}
 int FromMsg::readChat(chatInfo& ct, bool isReroll)
 {
 	const int intFormor = intMsgCnt;

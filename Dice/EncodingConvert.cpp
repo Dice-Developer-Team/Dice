@@ -126,6 +126,20 @@ std::string GBKtoUTF8(const std::string& strGBK, bool isTrial)
 	return ConvertEncoding<char>(strGBK, "gb18030", "utf-8");
 #endif
 }
+std::string GBKtoLocal(const std::string& strGBK){
+#ifdef _WIN32
+	return strGBK;
+#else
+	return ConvertEncoding<char>(strGBK, "gb18030", "utf-8");
+#endif
+}
+std::string LocaltoGBK(const std::string& str) {
+#ifdef _WIN32
+	return str;
+#else
+	return ConvertEncoding<char>(str, "utf-8", "gb18030");
+#endif
+}
 
 std::vector<std::string> GBKtoUTF8(const std::vector<std::string>& strGBK)
 {

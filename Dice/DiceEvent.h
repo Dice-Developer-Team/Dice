@@ -273,8 +273,8 @@ public:
 		const unsigned int len = strMsg.length();
 		while (intMsgCnt < len && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))
 			&& strMsg[intMsgCnt] != '=' && strMsg[intMsgCnt] != ':'
-			&& strMsg[intMsgCnt] != '+' && strMsg[intMsgCnt] != '-' && strMsg[intMsgCnt] != '*' && strMsg[intMsgCnt] !=
-			'/')
+			&& strMsg[intMsgCnt] != '+' && strMsg[intMsgCnt] != '-' && strMsg[intMsgCnt] != '*'
+			&& strMsg[intMsgCnt] !=	'/')
 		{
 			if (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || (!isspace(
 				static_cast<unsigned char>(strMsg[intEnd]))))intEnd = intMsgCnt;
@@ -288,7 +288,7 @@ public:
 		else if (isspace(static_cast<unsigned char>(strMsg[intEnd])))intMsgCnt = intEnd;
 		return strMsg.substr(intBegin, intMsgCnt - intBegin);
 	}
-
+	string readFileName();
 	//
 	int readChat(chatInfo& ct, bool isReroll = false);
 
