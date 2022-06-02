@@ -465,8 +465,7 @@ int getGroupConf(lua_State* L) {
 	else if (ChatList.count(id)) {
 		Chat& grp{ chat(id) }; 
 		if (item == "name") {
-			if (grp.Name.empty())lua_push_string(L, grp.Name = DD::getGroupName(id));
-			else lua_push_string(L, grp.Name);
+			lua_push_string(L, grp.Name = DD::getGroupName(id));
 		}
 		else if (item == "firstCreate") {
 			lua_pushnumber(L, (double)grp.tCreated);

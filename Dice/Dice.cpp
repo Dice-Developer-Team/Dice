@@ -833,6 +833,7 @@ EVE_GroupBan(eventGroupBan)
 			{"fromGroup",to_string(fromGID)},
 			{"uid",operatorQQ},
 			{"gid",fromGID},
+			{"duration",duration},
 		} };
 		if (fmt->call_hook_event(eve))return 1;
 		DDBlackMarkFactory mark{operatorQQ, fromGID};

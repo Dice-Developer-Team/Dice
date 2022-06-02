@@ -1020,6 +1020,18 @@ int FromMsg::BasicOrder()
 			}
 		}
 		if (pGrp->isset("许可使用") && !pGrp->isset("未审核") && !pGrp->isset("协议无效"))return 0;
+		string strInfo = readRest();
+		AttrObject eve{ {
+			{"Event","Authorize"},
+			{"fromUser",to_string(fromChat.uid)},
+			{"fromGroup",to_string(fromChat.gid)},
+			{"aimGroup",to_string(pGrp->ID)},
+			{"fromMsg",strInfo},
+			{"uid",fromChat.uid},
+			{"gid",fromChat.gid},
+			{"aim_gid",fromChat.gid},
+		} };
+		if (fmt->call_hook_event(eve))return 1;
 		if (trusted > 0)
 		{
 			pGrp->set("许可使用").reset("未审核").reset("协议无效");
@@ -1029,7 +1041,6 @@ int FromMsg::BasicOrder()
 		else
 		{
 			if (!console["CheckGroupLicense"] && !console["Private"] && !isCalled)return 0;
-			string strInfo = readRest();
 			if (strInfo.empty())console.log(printUser(fromChat.uid) + "申请" + printGroup(pGrp->ID) + "许可使用", 0b10, printSTNow());
 			else console.log(printUser(fromChat.uid) + "申请" + printGroup(pGrp->ID) + "许可使用；附言：" + strInfo, 0b100, printSTNow());
 			replyMsg("strGroupLicenseApply");

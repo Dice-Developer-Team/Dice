@@ -26,7 +26,7 @@ bool isNumeric(const string& s) {
     for (size_t i = 0; i < len; i++) {
         if (isdigit(s[i]))continue;
         if ((s[i] == '+' || s[i] == '-') && 0 == i)continue;
-        if (s[i] == '.' && !hasDot&&i!=i-1) {
+        if (s[i] == '.' && !hasDot && i != i - 1) {
             hasDot = true;
             continue;
         }

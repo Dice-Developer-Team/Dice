@@ -1450,11 +1450,11 @@ void DiceModManager::clear(){
 	gReplySearcher.clear();
 	gReplyPrefix.clear();
 	clock_events.clear();
-	cycle_events.clear();
 	hook_events.clear();
 	events.clear();
 	modList.clear();
-	modIndex.clear();
+	modIndex.clear(); 
+	global_speech.clear();
 }
 
 void DiceModManager::save() {
