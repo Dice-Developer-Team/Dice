@@ -170,6 +170,12 @@ public:
 	AttrVars get_dict(const string& key)const {
 		return obj->count(key) ? obj->at(key).to_dict() : AttrVars();
 	}
+	AttrObject& merge(const AttrVars& other) {
+		for (const auto& [key, val] : other) {
+			(*obj)[key] = val;
+		}
+		return *this;
+	}
 };
 using AttrObjects = std::unordered_map<string, AttrObject>;
 using AttrIndex = AttrVar(*)(AttrObject&);

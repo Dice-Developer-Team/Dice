@@ -523,6 +523,9 @@ int getUserConf(lua_State* L) {
 	else if (item == "nick" ) {
 		lua_push_string(L, getName(uid));
 	}
+	else if (item == "trust") {
+		lua_pushnumber(L, trustedQQ(uid));
+	}
 	else if (item.find("nick#") == 0) {
 		long long gid{ 0 };
 		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
@@ -555,9 +558,6 @@ int getUserConf(lua_State* L) {
 		else if (user.confs.count(item)) {
 			lua_push_attr(L, user.confs[item]);
 		}
-	}
-	else if (item == "trust") {
-		lua_pushnumber(L, 0);
 	}
 	if (lua_gettop(L) == top) {
 		lua_pushnil(L);

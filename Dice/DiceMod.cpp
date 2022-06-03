@@ -986,7 +986,7 @@ void DiceModManager::call_clock_event(const string& id) {
 	}
 }
 bool DiceModManager::call_hook_event(AttrObject eve) {
-	string hookEvent{ eve.get_str("Event") };
+	string hookEvent{ eve.has("hook") ? eve.get_str("hook") : eve.get_str("Event") };
 	if (hookEvent.empty())return false;
 	for (auto [id, hook] : multi_range(hook_events, hookEvent)) {
 		auto action{ hook.get_dict("action") };

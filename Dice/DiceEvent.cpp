@@ -1021,17 +1021,14 @@ int FromMsg::BasicOrder()
 		}
 		if (pGrp->isset("许可使用") && !pGrp->isset("未审核") && !pGrp->isset("协议无效"))return 0;
 		string strInfo = readRest();
-		AttrObject eve{ {
-			{"Event","Authorize"},
+		if (fmt->call_hook_event(vars.merge({
+			{"hook","GroupAuthorize"},
 			{"fromUser",to_string(fromChat.uid)},
 			{"fromGroup",to_string(fromChat.gid)},
 			{"aimGroup",to_string(pGrp->ID)},
-			{"fromMsg",strInfo},
-			{"uid",fromChat.uid},
-			{"gid",fromChat.gid},
+			{"AttachInfo",strInfo},
 			{"aim_gid",fromChat.gid},
-		} };
-		if (fmt->call_hook_event(eve))return 1;
+			})))return 1;
 		if (trusted > 0)
 		{
 			pGrp->set("许可使用").reset("未审核").reset("协议无效");
@@ -2247,6 +2244,7 @@ int FromMsg::InnerOrder() {
 			replyMsg("strWhiteQQDenied");
 		}
 		else if (strPara == "new") {
+			if (!s)s = sessions.get(fromChat);
 			s->deck_new(this);
 		}
 		else if (!s) {
@@ -3149,7 +3147,7 @@ int FromMsg::InnerOrder() {
 		}
 		auto s{ sessions.get_if(fromChat) };
 		if (strOption == "join") {
-			sessions.get_if(fromChat)->ob_enter(this);
+			sessions.get(fromChat)->ob_enter(this);
 		}
 		else if (!s) {
 			replyMsg("strObListEmpty");
