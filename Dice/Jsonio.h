@@ -62,7 +62,7 @@ std::enable_if_t<std::is_arithmetic_v<T>, T> readJKey(const std::string& strJson
 [[deprecated]] nlohmann::json freadJson(const std::string& strPath);
 nlohmann::json freadJson(const std::filesystem::path& path);
 [[deprecated]] void fwriteJson(const std::string& strPath, const json& j);
-void fwriteJson(const std::filesystem::path& strPath, const json& j);
+void fwriteJson(const std::filesystem::path& strPath, const json& j, const int indent = -1);
 
 template <class Map>
 int readJMap(const nlohmann::json& j, Map& mapTmp)

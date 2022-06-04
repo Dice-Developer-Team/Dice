@@ -626,11 +626,14 @@ EVE_PrivateMsg(eventPrivateMsg)
 	if (fromUID == console.DiceMaid && !console["ListenSelfEcho"])return 0;
 	else if (console["DisableStrangerChat"] && !DD::isFriend(fromUID, true))return 0;
 	shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
-		AttrVars({ { "Event", "Message" },
+		AttrVars{ { "Event", "Message" },
 			{ "fromMsg", message },
 			{ "uid", fromUID },
-			}), chatInfo{ fromUID,0,0 }));
-	return Msg->DiceFilter();
+		}, chatInfo{ fromUID,0,0 }));
+	return Msg->DiceFilter() || fmt->call_hook_event(Msg->vars.merge({
+		{"hook","WhisperIgnored"},
+		{"fromUser",to_string(fromUID)},
+		}));
 }
 
 EVE_GroupMsg(eventGroupMsg)

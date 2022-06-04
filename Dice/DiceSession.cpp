@@ -585,12 +585,7 @@ void DiceSession::save() const
 	}
 	jData["create_time"] = tCreate;
 	jData["update_time"] = tUpdate;
-	ofstream fout(fpFile);
-	if (!fout) {
-		console.log("开团信息保存失败:" + UTF8toGBK(fpFile.u8string()), 1);
-		return;
-	}
-	fout << jData.dump(1);
+	fwriteJson(fpFile, jData, 1);
 }
 
 void DiceSessionManager::end(chatInfo ct){
