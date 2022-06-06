@@ -36,7 +36,7 @@ struct LinkInfo {
 	bool isLinking{ false };
 	string typeLink;
 	//对象窗口，为0则不存在
-	chatInfo linkFwd{ 0 };
+	chatInfo target{ 0 };
 };
 class DiceChatLink {
 	unordered_map<chatInfo, LinkInfo>LinkList;
@@ -44,12 +44,15 @@ class DiceChatLink {
 	unordered_map<chatInfo, pair<chatInfo, bool>>LinkFromChat;
 public:
 	friend class DiceSessionManager;
-	pair<chatInfo, bool> get_aim(const chatInfo& ct) {
-		return LinkFromChat.count(ct) ? LinkFromChat[ct] : pair<chatInfo, bool>();
+	pair<chatInfo, bool> get_aim(chatInfo ct)const {
+		return LinkFromChat.count(ct = ct.locate()) ? LinkFromChat.find(ct)->second : pair<chatInfo, bool>();
 	}
 	//link指令
 	void build(FromMsg*);
 	void start(FromMsg*);
+	string show(const chatInfo& ct);
+	string list();
+	void show(FromMsg*);
 	void close(FromMsg*);
 	void load();
 	void save();

@@ -187,12 +187,14 @@ void DiceChatLink::load() {
 		LinkInfo& link{ LinkList[ct] = { jLink["linking"].get<bool>(),
 			jLink["type"].get<string>(),
 			chatInfo::from_json(jLink["target"]) } };
+	}
+	for (auto& [ct,link] : LinkList) {
 		if (link.isLinking) {
-			LinkFromChat[ct] = { link.linkFwd ,link.typeLink != "from" };
-			LinkFromChat[link.linkFwd] = { ct ,link.typeLink != "to" };
+			LinkFromChat[ct] = { link.target ,link.typeLink != "from" };
+			LinkFromChat[link.target] = { ct ,link.typeLink != "to" };
 		}
 	}
-	if (jFile.empty() && LinkList.empty())save();
+	if (jFile.empty() && !LinkList.empty())save();
 }
 void DiceChatLink::save() {
 	if (LinkList.empty()) {
@@ -204,11 +206,11 @@ void DiceChatLink::save() {
 		json jLink;
 		jLink["type"] = linker.typeLink;
 		jLink["origin"] = to_json(ct);
-		jLink["target"] = to_json(linker.linkFwd);
+		jLink["target"] = to_json(linker.target);
 		jLink["linking"] = linker.isLinking;
 		jFile.push_back(jLink);
 	}
-	fwriteJson(DiceDir / "conf" / "LinkList.json", jFile);
+	fwriteJson(DiceDir / "conf" / "LinkList.json", jFile, 0);
 }
 void DiceChatLink::build(FromMsg* msg) {
 	auto here{ msg->fromChat.locate() };
@@ -222,20 +224,17 @@ void DiceChatLink::build(FromMsg* msg) {
 		msg->replyMsg("strLinkNotFound");
 		return;
 	}
-	//占线不可用
-	if (LinkFromChat.count(here) && LinkFromChat[here] == pair<chatInfo, bool>{target, true}) {
-		msg->replyMsg("strLinkingAlready");
-	}
-	else if (LinkFromChat.count(target)) {
+	if (LinkFromChat.count(target)) {
 		msg->replyMsg("strLinkBusy");
 	}
 	else {
 		LinkInfo& link{ LinkList[here] };
 		//重置已存在的链接
-		LinkFromChat.erase(link.linkFwd);
+		LinkFromChat.erase(link.target);
+		link = { true ,msg->vars.get_str("option"),target };
 		LinkFromChat[here] = { target ,link.typeLink != "from" };
 		LinkFromChat[target] = { here ,link.typeLink != "to" };
-		link = { true ,msg->vars["option"].to_str(),target };
+		msg->vars["target"] = printChat(target);
 		msg->replyMsg("strLinked");
 		save();
 	}
@@ -246,13 +245,14 @@ void DiceChatLink::start(FromMsg* msg) {
 		if (LinkFromChat.count(here)) {
 			msg->replyMsg("strLinkingAlready");
 		}
-		else if (LinkInfo& link{ LinkList[here] }; LinkFromChat.count(link.linkFwd)) {
+		else if (LinkInfo& link{ LinkList[here] }; LinkFromChat.count(link.target)) {
 			msg->replyMsg("strLinkBusy");
 		}
 		else {
-			LinkFromChat[here] = { link.linkFwd ,link.typeLink != "from" };
-			LinkFromChat[link.linkFwd] = { here ,link.typeLink != "to" };
+			LinkFromChat[here] = { link.target ,link.typeLink != "from" };
+			LinkFromChat[link.target] = { here ,link.typeLink != "to" };
 			link.isLinking = true;
+			msg->vars["target"] = printChat(link.target);
 			msg->replyMsg("strLinked");
 			save();
 		}
@@ -261,12 +261,58 @@ void DiceChatLink::start(FromMsg* msg) {
 		msg->replyMsg("strLinkNotFound");
 	}
 }
+string DiceChatLink::show(const chatInfo& here) {
+	string info{ "[无]" };
+	static dict<> prep{
+		{"to","->"},
+		{"from","<-"},
+		{"with","<->"},
+	};
+	if (LinkList.count(here)) {
+		const auto& link{ LinkList[here] };
+		info = printChat(here) + prep[link.typeLink] + printChat(link.target)
+			+ (link.isLinking ? "√" : "×");
+	}
+	else if (!LinkFromChat.count(here)) {
+		return info;
+	}
+	if (auto link{ LinkList.find(LinkFromChat[here].first) }; link != LinkList.end()) {
+		return printChat(LinkFromChat[here].first) + prep[link->second.typeLink] + printChat(here)
+			+ (link->second.isLinking ? "√" : "×");
+	}
+	return info;
+}
+string DiceChatLink::list() {
+	static dict<> prep{
+		{"to","->"},
+		{"from","<-"},
+		{"with","<->"},
+	};
+	ShowList li;
+	for (auto& [here,link]:LinkList) {
+		li << printChat(here) + prep[link.typeLink] + printChat(link.target)
+			+ (link.isLinking ? "√" : "×");
+	}
+	return li.show("\n");
+}
+void DiceChatLink::show(FromMsg* msg) {
+	auto here{ msg->fromChat.locate() };
+	if (LinkFromChat.count(here) || LinkList.count(here)) {
+		msg->vars["link_info"] = show(here);
+		msg->replyMsg("strLinkState");
+	}
+	else {
+		msg->replyMsg("strLinkNotFound");
+	}
+}
 void DiceChatLink::close(FromMsg* msg) {
 	auto here{ msg->fromChat.locate() };
 	if (auto link{ LinkFromChat.find(here) }; link != LinkFromChat.end()) {
-		LinkFromChat.erase(link->first);
-		LinkFromChat.erase(here);
-		LinkList[here].isLinking = false;
+		auto there{ link->second.first };
+		if(LinkList.count(here))LinkList[here].isLinking = false;
+		else if (LinkList.count(there))LinkList[there].isLinking = false;
+		LinkFromChat.erase(link);
+		LinkFromChat.erase(there);
 		msg->replyMsg("strLinkClose");
 		save();
 	}
@@ -632,6 +678,7 @@ int DiceSessionManager::load()
 			continue;
 		}
 		auto pSession(std::make_shared<Session>(filename.stem().string()));
+		bool isUpgrated{ false };
 		pSession->create(j["create_time"]).update(j["update_time"]);
 		if (j.count("room")) {
 			if (j["room"].is_number()) {
@@ -674,14 +721,10 @@ int DiceSessionManager::load()
 			json& jLink = j["link"];
 			const auto& ct{ *pSession->windows.begin() };
 			long long gid{ jLink["target"].get<long long>() };
-			chatInfo target{ gid > 0 ? chatInfo{0,gid} : chatInfo{~gid} };
 			LinkInfo& link{ linker.LinkList[ct] = {jLink["linking"].get<bool>(),
 				jLink["type"].get<string>(),
-				target } };
-			if (link.isLinking) {
-				linker.LinkFromChat[ct] = { link.linkFwd ,link.typeLink != "from" };
-				linker.LinkFromChat[link.linkFwd] = { ct ,link.typeLink != "to" };
-			}
+				gid > 0 ? chatInfo{0,gid} : chatInfo{~gid} } };
+			isUpgrated = true;
 		}
 		if (j.count("decks")) {
 			json& jDecks = j["decks"];
@@ -715,6 +758,7 @@ int DiceSessionManager::load()
 		for (const auto& chat : pSession->windows) {
 			SessionByChat[chat] = pSession;
 		}
+		if (isUpgrated)pSession->save();
 	}
 	linker.load();
     return cnt;

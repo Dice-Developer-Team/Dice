@@ -2247,11 +2247,12 @@ int FromMsg::InnerOrder() {
 			if (!s)s = sessions.get(fromChat);
 			s->deck_new(this);
 		}
+		else if (strPara == "set") {
+			if (!s)s = sessions.get(fromChat);
+			s->deck_set(this);
+		}
 		else if (!s) {
 			replyMsg("strDeckListEmpty");
-		}
-		else if (strPara == "set") {
-			s->deck_set(this);
 		}
 		else if (strPara == "reset") {
 			s->deck_reset(this);
@@ -2432,6 +2433,13 @@ int FromMsg::InnerOrder() {
 		}
 		else if (vars["option"] == "with" || vars["option"] == "from" || vars["option"] == "to") {
 			sessions.linker.build(this);
+		}
+		else if (vars["option"] == "list") {
+			vars["link_list"] = sessions.linker.list();
+			replyMsg("strLinkList");
+		}
+		else if (vars["option"] == "state") {
+			sessions.linker.show(this);
 		}
 		else {
 			replyHelp("link");

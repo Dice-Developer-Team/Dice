@@ -209,9 +209,11 @@ const dict_ci<string> PlainMsg
 	{"strDefaultCOCClr","默认检定房规已清除√"},
 	{"strDefaultCOCNotFound","默认检定房规不存在×"},
 	{"strDefaultCOCSet","默认检定房规已设置:"},
-	{"strLinked","{self}已为对象建立链接√"},
+	{"strLinked","{self}已为对象{target}建立链接√"},
 	{"strLinkClose","{self}已断开与对象的链接√" },
 	{"strLinkBusy","{nick}的目标已经有对象啦×\n{self}不支持多边关系" },
+	{"strLinkState","{self}当前链接状态:{link_info}" },
+	{"strLinkList","{self}当前链接列表:{link_list}" },
 	{"strLinkedAlready","{self}正在被其他对象链接×\n请{nick}先断绝当前关系" },
 	{"strLinkingAlready","{self}已经开启链接啦!" },
 	{"strLinkCloseAlready","{self}断开链接失败：{nick}当前本就没有对象！" },
@@ -390,9 +392,7 @@ const dict_ci<string> PlainMsg
 	{"self", "&strSelfCall"},
 	{"strBotHeader", "泛用型 " },
 	{"strBotMsg", "\n使用.help 查看{self}帮助文档"},
-	{
-		"strHlpMsg",
-		R"(请使用.dismiss ID（或后四位） 使{self}退群退讨论组
+	{"strHlpMsg", R"(请使用.dismiss ID（或后四位） 使{self}退群退讨论组
 .bot on/off ID（或后四位） //开启或关闭指令
 .help协议 确认服务协议
 .help指令 查看指令列表
@@ -814,12 +814,14 @@ Type=[回复性质](Reply/Order)
 	{"消息链接","&link"},
 	{"link",R"(消息链接.link
 .link [转发方向] [对象窗口] 建立本窗口与对象窗口的转发
-.link close 关闭链接
 .link start 开启上次关闭的链接
+.link close 关闭链接
 [转发方向]:to=转发本窗口消息到对象窗口;from=转发对象窗口消息到本窗口;with=双向转发
 [对象窗口]:群/讨论组=[群号];私聊窗口=q[uid号]
 例:.link with q1605271653 //建立双向私聊链接
-.link from 928626681 //接收目标群的消息转发)"},
+.link from 928626681 //接收目标群的消息转发
+.link state 查看当前链接状态
+.link list 列出所有链接)"},
 	{ "敏感词检测","&censor" },
 	{"censor",R"(敏感词检测.admin censor
 .admin censor +([触发等级])=[敏感词0](|[敏感词1]...) //添加敏感词
