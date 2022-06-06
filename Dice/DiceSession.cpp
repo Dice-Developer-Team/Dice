@@ -214,7 +214,6 @@ void DiceChatLink::save() {
 }
 void DiceChatLink::build(FromMsg* msg) {
 	auto here{ msg->fromChat.locate() };
-	string strType = msg->readPara();
 	chatInfo target;
 	if (msg->readChat(target)) {
 		msg->replyMsg("strLinkNotFound");
