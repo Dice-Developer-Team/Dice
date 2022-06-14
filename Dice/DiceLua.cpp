@@ -68,6 +68,9 @@ string lua_to_native_string(lua_State* L, int idx = -1) {
 void lua_push_string(lua_State* L, const string& str) {
 	lua_pushstring(L, UTF8Luas.count(L) ? GBKtoUTF8(str).c_str() : str.c_str());
 }
+void lua_push_raw_string(lua_State* L, const string& str) {
+	lua_pushstring(L, str.c_str());
+}
 void lua_set_field(lua_State* L, int idx, const string& str) {
 	lua_setfield(L, idx, UTF8Luas.count(L) ? GBKtoUTF8(str).c_str() : str.c_str());
 }
@@ -852,7 +855,7 @@ int httpGet(lua_State* L) {
 	}
 	string ret;
 	lua_pushboolean(L, Network::GET(url, ret));
-	lua_push_string(L, ret);
+	lua_push_raw_string(L, ret);
 	return 2;
 }
 int httpPost(lua_State* L) {
@@ -865,17 +868,17 @@ int httpPost(lua_State* L) {
 	string type{ lua_gettop(L) > 2 ? lua_tostring(L,3) : "application/json" };
 	string ret;
 	lua_pushboolean(L, Network::POST(url, json, type, ret));
-	lua_push_string(L, ret);
+	lua_push_raw_string(L, ret);
 	return 2;
 }
 int httpUrlEncode(lua_State* L) {
 	string url{ lua_to_raw_string(L,1) };
-	lua_push_string(L, UrlEncode(url));
+	lua_push_raw_string(L, UrlEncode(url));
 	return 1;
 }
 int httpUrlDecode(lua_State* L) {
 	string url{ lua_to_raw_string(L,1) };
-	lua_push_string(L, UrlDecode(url));
+	lua_push_raw_string(L, UrlDecode(url));
 	return 1;
 }
 

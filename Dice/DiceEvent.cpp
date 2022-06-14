@@ -108,7 +108,9 @@ void FromMsg::replyHidden() {
 			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
 	}
 	strReply = "ÔÚ" + printChat(fromChat) + "ÖÐ " + forward_filter(strReply);
-	AddMsgToQueue(strReply, fromChat.uid);
+	if (!pGrp || !pGrp->isset("RhÃ¤÷»")) {
+		AddMsgToQueue(strReply, fromChat.uid);
+	}
 	if (session) {
 		for (auto qq : session->get_ob()) {
 			if (qq != fromChat.uid) {
@@ -3121,7 +3123,10 @@ int FromMsg::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		const string strOption = strLowerMessage.substr(intMsgCnt, strMsg.find(' ', intMsgCnt) - intMsgCnt);
-
+		if (strOption.empty()) {
+			replyHelp("ob");
+			return 1;
+		}
 		if (!canRoomHost() && (strOption == "on" || strOption == "off")) {
 			replyMsg("strPermissionDeniedErr");
 			return 1;

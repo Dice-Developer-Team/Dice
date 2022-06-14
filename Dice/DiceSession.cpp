@@ -658,6 +658,7 @@ shared_ptr<Session> DiceSessionManager::get(const chatInfo& ct) {
 		}
 		std::unique_lock<std::shared_mutex> lock(sessionMutex);
 		auto ptr{ std::make_shared<Session>(name)};
+		ptr->windows.insert(here);
 		SessionByName[name] = ptr;
 		SessionByChat[here] = ptr;
 		return ptr;
@@ -665,11 +666,11 @@ shared_ptr<Session> DiceSessionManager::get(const chatInfo& ct) {
 }
 int DiceSessionManager::load() 
 {
-    string strLog;
-    std::unique_lock<std::shared_mutex> lock(sessionMutex);
-    vector<std::filesystem::path> sFile;
-    int cnt = listDir(DiceDir / "user" / "session", sFile);
-    if (cnt > 0)for (auto& filename : sFile) {
+	string strLog;
+	std::unique_lock<std::shared_mutex> lock(sessionMutex);
+	vector<std::filesystem::path> sFile;
+	int cnt = listDir(DiceDir / "user" / "session", sFile);
+	if (cnt > 0)for (auto& filename : sFile) {
 		nlohmann::json j = freadJson(filename);
 		if (j.is_null()) {
 			remove(filename);
@@ -760,5 +761,5 @@ int DiceSessionManager::load()
 		if (isUpgrated)pSession->save();
 	}
 	linker.load();
-    return cnt;
+	return cnt;
 }

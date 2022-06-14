@@ -821,7 +821,8 @@ Type=[回复性质](Reply/Order)
 例:.link with q1605271653 //建立双向私聊链接
 .link from 928626681 //接收目标群的消息转发
 .link state 查看当前链接状态
-.link list 列出所有链接)"},
+.link list 列出全部窗口的链接
+每个窗口为起点只能链接一个对象)"},
 	{ "敏感词检测","&censor" },
 	{"censor",R"(敏感词检测.admin censor
 .admin censor +([触发等级])=[敏感词0](|[敏感词1]...) //添加敏感词
