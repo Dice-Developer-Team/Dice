@@ -86,7 +86,7 @@ FrqMonitor::FrqMonitor(DiceJobDetail& msg) : fromUID(msg.fromChat.uid), fromTime
 				"监测到" + printUser(fromUID) + "高频发送指令达" + to_string(mCntOrder[fromUID])
 				+ (mCntOrder[fromUID] > 18 ? "/5min"
 				   : (mCntOrder[fromUID] > 8 ? "/min" : "/30s"))
-				+ "\n最近指令: " + msg["FromMsg"].to_str();
+				+ "\n最近指令: " + msg.vars.get_str("fromMsg");
 			if (fromUID != console.DiceMaid)AddMsgToQueue(getMsg("strSpamFirstWarning",msg.vars), msg.fromChat);
 			console.log(strMsg, 1, printSTNow());
 		}
@@ -96,7 +96,7 @@ FrqMonitor::FrqMonitor(DiceJobDetail& msg) : fromUID(msg.fromChat.uid), fromTime
 				printUser(fromUID) + "高频发送指令达" + to_string(mCntOrder[fromUID])
 				+ (mCntOrder[fromUID] > 36 ? "/5min"
 				   : (mCntOrder[fromUID] > 15 ? "/min" : "/30s"))
-				+ "\n最近指令: " + msg["FromMsg"].to_str();
+				+ "\n最近指令: " + msg.vars.get_str("fromMsg");
 			if (fromUID != console.DiceMaid)AddMsgToQueue(getMsg("strSpamFinalWarning", msg.vars), msg.fromChat);
 			console.log(strMsg, 0b10, printSTNow());
 		}
@@ -108,12 +108,12 @@ FrqMonitor::FrqMonitor(DiceJobDetail& msg) : fromUID(msg.fromChat.uid), fromTime
 				   : (mCntOrder[fromUID] > 25 ? "/min" : "/30s"));
 			if (!fromUID) {
 				console.log("警告：" + getMsg("strSelfName") + "高频处理虚拟指令达" + strFrq
-							+ "\n最近指令: " + msg["FromMsg"].to_str(), 0b1000, strNow);
+							+ "\n最近指令: " + msg.vars.get_str("fromMsg"), 0b1000, strNow);
 				return;
 			}
 			std::string strNote = (msg.fromChat.gid ? printChat(msg.fromChat) : "私聊窗口") + "监测到" +
 				printUser(fromUID) + "对" + printUser(console.DiceMaid) + "高频发送指令达" + strFrq
-				+ "\n最近指令: " + msg["FromMsg"].to_str();
+				+ "\n最近指令: " + msg.vars.get_str("fromMsg");
 			if (fromUID == console.DiceMaid) {
 				console.set("ListenSelfEcho", 0);
 				console.set("ListenGroupEcho", 0);
