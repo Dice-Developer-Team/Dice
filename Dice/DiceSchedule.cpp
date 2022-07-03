@@ -207,7 +207,7 @@ void DiceScheduler::end() {
 }
 
 int DiceToday::getJrrp(long long uid) {
-	if (UserInfo.count(uid) && UserInfo[uid].count("jrrp"))
+	if (UserInfo.count(uid) && UserInfo[uid].has("jrrp"))
 		return UserInfo[uid]["jrrp"].to_int();
 	string frmdata = "QQ=" + to_string(console.DiceMaid) + "&v=20190114" + "&QueryQQ=" + to_string(uid);
 	string res;
@@ -215,7 +215,7 @@ int DiceToday::getJrrp(long long uid) {
 		return (UserInfo[uid]["jrrp"] = stoi(res)).to_int();
 	}
 	else {
-		if (!UserInfo[uid].count("jrrp_local")) {
+		if (!UserInfo[uid].has("jrrp_local")) {
 			UserInfo[uid]["jrrp_local"] = RandomGenerator::Randint(1, 100);
 			console.log(getMsg("strJrrpErr",
 							   { {"res", res} }
@@ -248,7 +248,7 @@ void DiceToday::save() {
 		if (!UserInfo.empty()) {
 			json& jCnt{ jFile["user"] = json::object() };
 			for (auto& [id, user] : UserInfo) {
-				jCnt[to_string(id)] = to_json(user);
+				jCnt[to_string(id)] = to_json(*user);
 			}
 		}
 		if (!counter.empty()) {
@@ -296,7 +296,7 @@ void DiceToday::load() {
 	}
 	if (jFile.count("user")) {
 		for (auto& [key,val]: jFile["user"].items()) {
-			from_json(val, UserInfo[std::stoll(key)]);
+			from_json(val, *UserInfo[std::stoll(key)]);
 		}
 	}
 }
@@ -328,19 +328,19 @@ void ConsoleTimer() 	{
 		localtime_r(&tt, &stNow);
 #endif
 		//分钟时点变动
-		if (stTmp.tm_min != stNow.tm_min) 			{
+		if (stTmp.tm_min != stNow.tm_min) {
 			stTmp = stNow;
 			clockNow = { stNow.tm_hour, stNow.tm_min };
 			for (const auto& [clock, eve_type] : multi_range(console.mWorkClock, clockNow)){
-				switch (Console::mClockEvent[eve_type]) 					{
+				switch (Console::mClockEvent[eve_type]) {
 				case 1:
-					if (console["DisabledGlobal"]) 						{
+					if (console["DisabledGlobal"]) {
 						console.set("DisabledGlobal", 0);
 						console.log(getMsg("strClockToWork"), 0b10000, "");
 					}
 					break;
 				case 0:
-					if (!console["DisabledGlobal"]) 						{
+					if (!console["DisabledGlobal"]) {
 						console.set("DisabledGlobal", 1);
 						console.log(getMsg("strClockOffWork"), 0b10000, "");
 					}

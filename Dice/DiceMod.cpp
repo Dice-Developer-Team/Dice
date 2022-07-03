@@ -437,7 +437,7 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 		if (!UserList.count(msg->fromChat.uid))return false;
 		User& user{ getUser(msg->fromChat.uid) };
 		for (auto& [key, cmpr] : user_vary) {
-			if (user.confs.count(key)
+			if (user.isset(key)
 				? !(user.confs[key].*cmpr.first)(cmpr.second)
 				: !(AttrVar().*cmpr.first)(cmpr.second))return false;
 		}
@@ -445,7 +445,7 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 	if (!grp_vary.empty() && msg->fromChat.gid) {
 		Chat& grp{ chat(msg->fromChat.gid) };
 		for (auto& [key, cmpr] : grp_vary) {
-			if (grp.confs.count(key) 
+			if (grp.isset(key) 
 				? !(grp.confs[key].*cmpr.first)(cmpr.second)
 				: !(AttrVar().*cmpr.first)(cmpr.second))return false;
 		}
@@ -453,7 +453,7 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 	if (!self_vary.empty()) {
 		User& user{ getUser(console.DiceMaid) };
 		for (auto& [key, cmpr] : self_vary) {
-			if (user.confs.count(key)
+			if (user.isset(key)
 				? !(user.confs[key].*cmpr.first)(cmpr.second)
 				: !(AttrVar().*cmpr.first)(cmpr.second))return false;
 		}

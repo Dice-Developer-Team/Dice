@@ -139,7 +139,7 @@ void readUserData()
 		if (cnt > 0)log << "迁移用户记录" + to_string(cnt) + "条";
 	}
 	//for QQ Channel
-	if (User& self{ UserList[console.DiceMaid] }; !self.confs.count("tinyID") || self.confs["tinyID"] == 0) {
+	if (User& self{ UserList[console.DiceMaid] }; !self.confs.has("tinyID") || self.confs["tinyID"] == 0) {
 		if (long long tiny{ DD::getTinyID() }) {
 			DD::debugMsg("获取分身ID:" + to_string(tiny));
 			self.setConf("tinyID", tiny);
@@ -711,7 +711,7 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 	if (grp.isset("忽略"))return 0;
 	if (fromUID != console.DiceMaid)
 	{
-		if (chat(fromGID).confs.count("入群欢迎"))
+		if (chat(fromGID).confs.has("入群欢迎"))
 		{
 			string strReply = chat(fromGID).confs["入群欢迎"].to_str();
 			while (strReply.find("{at}") != string::npos)

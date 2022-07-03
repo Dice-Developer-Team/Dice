@@ -176,6 +176,8 @@ public:
 		}
 		return *this;
 	}
+	void writeb(std::ofstream&)const;
+	void readb(std::ifstream&);
 };
 using AttrObjects = std::unordered_map<string, AttrObject>;
 using AttrIndex = AttrVar(*)(AttrObject&);

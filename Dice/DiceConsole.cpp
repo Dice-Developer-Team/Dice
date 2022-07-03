@@ -110,7 +110,7 @@ const std::unordered_map<std::string,string>Console::confComment{
 	{"ListenSelfEcho","接受自己私聊消息，需要框架支持"},
 	{"ReferMsgReply","响应消息时回复该消息，需要框架支持"},
 	{"EnableWebUI","是否启用WebUI，重启生效"},
-	{"WebUIAllowInternetAccess","是否允许远程访问WebUI，重启生效"},
+	{"WebUIAllowInternetAccess","是否允许远程访问WebUI（端口须对外开放）重启生效"},
 	{"WebUIPort","固定WebUI端口，重启生效"},
 	{"DebugMode","调试模式：将所有接受的指令写入文件"},
 	{"DefaultCOCRoomRule","未设置rc房规时调用的检定规则"},

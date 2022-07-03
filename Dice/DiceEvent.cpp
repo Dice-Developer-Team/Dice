@@ -1343,7 +1343,7 @@ int FromMsg::InnerOrder() {
 		if (canRoomHost()) {
 			string strWelcomeMsg = strMsg.substr(intMsgCnt);
 			if (strWelcomeMsg == "clr") {
-				if (chat(fromChat.gid).confs.count("入群欢迎")) {
+				if (chat(fromChat.gid).isset("入群欢迎")) {
 					chat(fromChat.gid).reset("入群欢迎");
 					replyMsg("strWelcomeMsgClearNotice");
 				}
@@ -1401,7 +1401,7 @@ int FromMsg::InnerOrder() {
 		string action{ readPara() };
 		if (action == "show") {
 			if (isPrivate()) {
-				if (User& user{ getUser(fromChat.uid) }; user.confs.count("rc房规"))
+				if (User& user{ getUser(fromChat.uid) }; user.isset("rc房规"))
 				vars["rule"] = user.confs["rc房规"];
 			}
 			else if (pGrp->isset("rc房规")) {
@@ -2186,7 +2186,7 @@ int FromMsg::InnerOrder() {
 			for (auto& n : strSearch)
 				n = toupper(static_cast<unsigned char>(n));
 			string strReturn;
-			if (getUser(fromChat.uid).confs.count("默认规则") && strSearch.find(':') == string::npos &&
+			if (getUser(fromChat.uid).isset("默认规则") && strSearch.find(':') == string::npos &&
 				GetRule::get(getUser(fromChat.uid).confs["默认规则"].to_str(), strSearch, strReturn)) {
 				reply(strReturn);
 			}
@@ -2598,7 +2598,7 @@ int FromMsg::InnerOrder() {
 			long long target{ readID() };
 			if (!target)target = fromChat.uid;
 			if(UserList.count(target)){
-				reply(UTF8toGBK(to_json(getUser(target).confs).dump()), false);
+				reply(UTF8toGBK(to_json(*getUser(target).confs).dump()), false);
 			}
 			else {
 				reply("{self}无" + printUser(target) + "的用户记录×");
@@ -4412,7 +4412,7 @@ bool FromMsg::DiceFilter()
 		{
 			isCalled = true;
 		}
-		else if (User& self{ getUser(console.DiceMaid) }; self.confs.count("tinyID") && self.confs["tinyID"] == strTarget)
+		else if (User& self{ getUser(console.DiceMaid) }; self.isset("tinyID") && self.confs["tinyID"] == strTarget)
 		{
 			isCalled = true;
 		}

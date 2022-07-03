@@ -93,7 +93,7 @@ typedef void (*cmd)(AttrObject&);
 class DiceToday {
 	tm stToday;
 	unordered_map<string, int>cntGlobal;
-	unordered_map<long long, AttrVars>UserInfo;
+	unordered_map<long long, AttrObject>UserInfo;
 public:
 	unordered_map<chatInfo, unordered_map<string, int>> counter;
 	DiceToday() {
@@ -104,10 +104,12 @@ public:
 	void set(long long qq, const string& key, const AttrVar& val) { UserInfo[qq][key] = val; save(); }
 	void inc(const string& key) { cntGlobal[key]++; save(); }
 	//void inc(long long qq, const string& key, int cnt = 1) { cntUser[qq][key] += cnt; save(); }
+	unordered_map<long long, AttrObject>& getUserInfo() { return UserInfo; }
 	int& get(const string& key) { return cntGlobal[key]; }
-	AttrVar& get(long long qq, const string& key) { return UserInfo[qq][key]; }
+	AttrObject get(long long uid) { return UserInfo[uid]; }
+	AttrVar& get(long long uid, const string& key) { return UserInfo[uid][key]; }
 	AttrVar* get_if(long long qq, const string& key) {
-		if (UserInfo.count(qq) && UserInfo[qq].count(key))
+		if (UserInfo.count(qq) && UserInfo[qq].has(key))
 			return &UserInfo[qq][key];
 		else return nullptr;
 	}

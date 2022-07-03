@@ -52,7 +52,7 @@ public:
 	{
 	}
 
-	AttrVars confs;
+	AttrObject confs;
 	map<long long, string> strNick{};
 	std::mutex ex_user;
 
@@ -85,10 +85,13 @@ public:
 
 	[[nodiscard]] string show() const;
 
+	[[nodiscard]] bool isset(const string& key) const{
+		return confs.has(key);
+	}
 	void setConf(const string& key, const AttrVar& val);
 	void rmConf(const string& key);
 	int getConf(const string& key, int def = 0) {
-		if (confs.count(key))return confs[key].to_int();
+		if (confs.has(key))return confs[key].to_int();
 		return def;
 	}
 
@@ -155,8 +158,8 @@ public:
 
 	Chat() {}
 
-	AttrVars confs;
-	map<long long, AttrVars>ChConf;
+	AttrObject confs;
+	map<long long, AttrObject>ChConf;
 
 	Chat& id(long long grp);
 
@@ -206,15 +209,15 @@ public:
 
 	Chat& reset(const string& item)
 	{
-		confs.erase(item);
+		confs.reset(item);
 		return *this;
 	}
 	int getConf(const string& key, int def = 0) {
-		if (confs.count(key))return confs[key].to_int();
+		if (confs.has(key))return confs[key].to_int();
 		return def;
 	}
 	int getChConf(long long chid, const string& key, int def = 0) {
-		if (ChConf.count(chid) && ChConf[chid].count(key))return ChConf[chid][key].to_int();
+		if (ChConf.count(chid) && ChConf[chid].has(key))return ChConf[chid][key].to_int();
 		return def;
 	}
 	void setChConf(long long chid, const string& key, const AttrVar& val) {
@@ -225,7 +228,7 @@ public:
 
 	[[nodiscard]] bool isset(const string& key) const
 	{
-		return confs.count(key);
+		return confs.has(key);
 	}
 
 	bool is_except()const;
@@ -235,7 +238,7 @@ public:
 	{
 		ResList res;
 		for (const auto& [it,n] : mChatConf) {
-			if (confs.count(it))res << it;
+			if (confs.has(it))res << it;
 		}
 		return res.dot("+").show();
 	}

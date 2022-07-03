@@ -75,12 +75,15 @@ void lua_set_field(lua_State* L, int idx, const string& str) {
 	lua_setfield(L, idx, UTF8Luas.count(L) ? GBKtoUTF8(str).c_str() : str.c_str());
 }
 
+void lua_push_Context(lua_State* L, AttrObject& vars) {
+	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
+	*p = &vars;
+	luaL_setmetatable(L, "Context");
+}
 void lua_push_msg(lua_State* L, FromMsg* msg) {
 	msg->vars["fromQQ"] = to_string(msg->fromChat.uid);
 	msg->vars["fromGroup"] = to_string(msg->fromChat.gid);
-	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
-	*p = &msg->vars;
-	luaL_setmetatable(L, "Context");
+	lua_push_Context(L, msg->vars);
 }
 
 void lua_push_attr(lua_State* L, const AttrVar& attr) {
@@ -155,6 +158,14 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 	}
 	return {};
 }
+int lua_push_table(lua_State* L, const AttrVars& tab) {
+	lua_newtable(L);
+	for (auto& [key, val] : tab) {
+		val ? lua_push_attr(L, val) : lua_pushnil(L);
+		lua_set_field(L, -2, key.c_str());
+	}
+	return 1;
+}
 AttrVars lua_to_table(lua_State* L, int idx = -1) {
 	if (lua_istable(L, idx)) {
 		AttrVars tab;
@@ -173,6 +184,7 @@ AttrVars lua_to_table(lua_State* L, int idx = -1) {
 	}
 	return {};
 }
+
 AttrVars lua_to_dict(lua_State* L, int idx = -1) {
 	AttrVars tab;
 	if (idx < 0)idx = lua_gettop(L) + idx + 1;
@@ -289,9 +301,7 @@ bool lua_call_event(AttrObject eve, const string& luas) {
 	bool isFile{ fmt->script_has(luas) };
 	LuaState L{ isFile ? fmt->script_path(luas).c_str() : nullptr };
 	if (!L)return false;
-	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
-	*p = &eve;
-	luaL_setmetatable(L, "Context");
+	lua_push_Context(L, eve);
 	lua_setglobal(L, "event");
 	if (isFile) {
 		if (lua_pcall(L, 0, 2, 0)) {
@@ -431,11 +441,24 @@ int mkDirs(lua_State* L) {
 int getGroupConf(lua_State* L) {
 	int top{ lua_gettop(L) };
 	if (top > 3)lua_settop(L, top = 3);
-	else if (top < 2)return 0;
+	else if (top < 1)return 0;
+	string item;
+	if (lua_isstring(L, 2)) {
+		if ((item = lua_to_gbstring(L, 2))[0] == '&')item = fmt->format(item);
+	}
+	if (lua_isnil(L, 1)) {
+		if (item.empty())return 0;
+		lua_newtable(L);
+		for (auto& [uid, data] : UserList) {
+			if (data.confs.has(item)) {
+				lua_push_attr(L, data.confs[item]);
+				lua_set_field(L, -2, to_string(uid));
+			}
+		}
+		return 1;
+	}
 	long long id{ lua_to_int(L, 1) };
-	string item{ lua_to_gbstring(L, 2) };
-	if (!id || item.empty())return 0;
-	if (item[0] == '&')item = fmt->format(item);
+	if (!id)return 0;
 	if (item == "size") {
 		lua_pushnumber(L, (double)DD::getGroupSize(id).currSize);
 	}
@@ -467,7 +490,11 @@ int getGroupConf(lua_State* L) {
 	}
 	else if (ChatList.count(id)) {
 		Chat& grp{ chat(id) }; 
-		if (item == "name") {
+		if (item.empty()) {
+			lua_push_Context(L, grp.confs);
+			return 1;
+		}
+		else if (item == "name") {
 			lua_push_string(L, grp.Name = DD::getGroupName(id));
 		}
 		else if (item == "firstCreate") {
@@ -476,8 +503,8 @@ int getGroupConf(lua_State* L) {
 		else if (item == "lastUpdate") {
 			lua_pushnumber(L, (double)grp.tUpdated);
 		}
-		else if (grp.confs.count(item)) {
-			lua_push_attr(L, grp.confs.find(item)->second);
+		else if (grp.confs.has(item)) {
+			lua_push_attr(L, grp.confs[item]);
 		}
 	}
 	else if (item == "name") {
@@ -513,12 +540,24 @@ int setGroupConf(lua_State* L) {
 int getUserConf(lua_State* L) {
 	int top{ lua_gettop(L) };
 	if (top > 3)lua_settop(L, top = 3);
-	else if (top < 2)return 0;
+	else if (top < 1)return 0;
+	string item;
+	if (lua_isstring(L, 2)) {
+		if ((item = lua_to_gbstring(L, 2))[0] == '&')item = fmt->format(item);
+	}
+	if (lua_isnil(L, 1)) {
+		if (item.empty())return 0;
+		lua_newtable(L);
+		for (auto& [uid, data] : ChatList) {
+			if (data.confs.has(item)) {
+				lua_push_attr(L, data.confs[item]);
+				lua_set_field(L, -2, to_string(uid));
+			}
+		}
+		return 1;
+	}
 	long long uid{ lua_to_int(L, 1) };
 	if (!uid)return 0;
-	string item{ lua_to_gbstring(L, 2) };
-	if (item.empty())return 0;
-	if (item[0] == '&')item = fmt->format(item);
 	if (item == "name") {
 		if (string name{ DD::getQQNick(uid) };!name.empty())
 			lua_push_string(L, name);
@@ -538,7 +577,11 @@ int getUserConf(lua_State* L) {
 	}
 	else if (UserList.count(uid)) {
 		User& user{ getUser(uid) };
-		if (item == "firstCreate") {
+		if (item.empty()) {
+			lua_push_Context(L, user.confs);
+			return 1;
+		}
+		else if (item == "firstCreate") {
 			lua_pushnumber(L, (double)user.tCreated);
 		}
 		else  if (item == "lastUpdate") {
@@ -558,7 +601,7 @@ int getUserConf(lua_State* L) {
 			user.getNick(nick, gid);
 			lua_push_string(L, nick);
 		}
-		else if (user.confs.count(item)) {
+		else if (user.confs.has(item)) {
 			lua_push_attr(L, user.confs[item]);
 		}
 	}
@@ -603,13 +646,29 @@ int setUserConf(lua_State* L) {
 int getUserToday(lua_State* L) {
 	int top{ lua_gettop(L) };
 	if (top > 3)lua_settop(L, top = 3);
-	else if (top < 2)return 0;
+	else if (top < 1)return 0;
+	string item;
+	if (lua_isstring(L, 2)) {
+		if ((item = lua_to_gbstring(L, 2))[0] == '&')item = fmt->format(item);
+	}
+	if (lua_isnil(L, 1)) {
+		if (item.empty())return 0;
+		lua_newtable(L);
+		for (auto& [uid,data] : today->getUserInfo()) {
+			if (data.has(item)) {
+				lua_push_attr(L,data[item]);
+				lua_set_field(L, -2, to_string(uid));
+			}
+		}
+		return 1;
+	}
 	long long uid{ lua_to_int(L, 1) };
 	if (!uid)return 0;
-	string item{ lua_to_gbstring(L, 2) };
-	if (item.empty())return 0;
-	if (item[0] == '&')item = fmt->format(item);
-	if (item == "jrrp")
+	if (item.empty()) {
+		lua_push_Context(L, today->get(uid));
+		return 1;
+	}
+	else if (item == "jrrp")
 		lua_pushnumber(L, today->getJrrp(uid));
 	else if (AttrVar* p{ today->get_if(uid, item) })
 		lua_push_attr(L, *p);

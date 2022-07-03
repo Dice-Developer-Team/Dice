@@ -549,3 +549,6 @@ string showAttrCMPR(AttrVar::CMPR cmpr) {
 	}
 	return {};
 }
+
+void AttrObject::writeb(std::ofstream& fout)const { fwrite(fout, *obj); }
+void AttrObject::readb(std::ifstream& fs) { fread(fs, *obj); }

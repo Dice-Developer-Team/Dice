@@ -54,7 +54,7 @@ User& getUser(long long uid)
 }
 [[nodiscard]] string User::show() const {
 	ResList res;
-	for (auto& [key, val] : confs)
+	for (auto& [key, val] : *confs)
 	{
 		res << key + ":" + val.to_str();
 	}
@@ -65,13 +65,13 @@ void User::setConf(const string& key, const AttrVar& val)
 	if (key.empty())return;
 	std::lock_guard<std::mutex> lock_queue(ex_user);
 	if (val)confs[key] = val;
-	else confs.erase(key);
+	else confs.reset(key);
 }
 void User::rmConf(const string& key)
 {
 	if (key.empty())return;
 	std::lock_guard<std::mutex> lock_queue(ex_user);
-	confs.erase(key);
+	confs.reset(key);
 }
 
 bool User::getNick(string& nick, long long group) const
@@ -97,7 +97,7 @@ void User::writeb(std::ofstream& fout)
 	fwrite(fout, ID);
 	if (!confs.empty()) {
 		fwrite(fout, string("Conf"));
-		fwrite(fout, confs);
+		fwrite(fout, *confs);
 	}
 	if (!strNick.empty()) {
 		fwrite(fout, string("Nick"));
@@ -123,15 +123,17 @@ void User::readb(std::ifstream& fin)
 {
 	std::lock_guard<std::mutex> lock_queue(ex_user);
 	string tag;
+	AttrVars conf;
 	while ((tag = fread<string>(fin)) != "END") {
 		if (tag == "ID")ID = fread<long long>(fin);
-		else if (tag == "Conf")fread(fin, confs);
+		else if (tag == "Conf")fread(fin, conf);
 		else if (tag == "Nick")strNick = fread<long long, string>(fin);
 	}
-	if (confs.count("trust"))nTrust = confs["trust"].to_int();
-	if (confs.count("tCreated"))tCreated = confs["tCreated"].to_ll();
-	if (confs.count("tUpdated"))tUpdated = confs["tUpdated"].to_ll();
-	if (confs.count("tinyID"))TinyList.emplace(confs["tinyID"].to_ll(), ID);
+	confs = conf;
+	if (confs.has("trust"))nTrust = confs["trust"].to_int();
+	if (confs.has("tCreated"))tCreated = confs["tCreated"].to_ll();
+	if (confs.has("tUpdated"))tUpdated = confs["tUpdated"].to_ll();
+	if (confs.has("tinyID"))TinyList.emplace(confs["tinyID"].to_ll(), ID);
 }
 int trustedQQ(long long uid)
 {
@@ -357,7 +359,7 @@ void Chat::leave(const string& msg) {
 	set("已退").reset("已入群");
 }
 bool Chat::is_except()const {
-	return confs.count("免黑") || confs.count("协议无效");
+	return confs.has("免黑") || confs.has("协议无效");
 }
 void Chat::writeb(std::ofstream& fout)
 {
@@ -374,7 +376,7 @@ void Chat::writeb(std::ofstream& fout)
 	if (!confs.empty())
 	{
 		fwrite(fout, static_cast<short>(10));
-		fwrite(fout, confs);
+		fwrite(fout, *confs);
 	}
 	if (!ChConf.empty())
 	{
@@ -387,6 +389,7 @@ void Chat::readb(std::ifstream& fin)
 {
 	ID = fread<long long>(fin);
 	short tag = fread<short>(fin);
+	AttrVars conf;
 	while (tag != -1)
 	{
 		switch (tag)
@@ -410,7 +413,7 @@ void Chat::readb(std::ifstream& fin)
 			}
 			break;
 		case 10:
-			fread(fin, confs);
+			fread(fin, conf);
 			break;
 		case 20:
 			fread(fin, ChConf);
@@ -420,10 +423,11 @@ void Chat::readb(std::ifstream& fin)
 		}
 		tag = fread<short>(fin);
 	}
-	if (confs.count("Name"))Name = confs["Name"].to_str();
-	if (confs.count("inviter"))inviter = confs["inviter"].to_ll();
-	if (confs.count("tCreated"))tCreated = confs["tCreated"].to_ll();
-	if (confs.count("tUpdated"))tUpdated = confs["tUpdated"].to_ll();
+	confs = conf;
+	if (confs.has("Name"))Name = confs["Name"].to_str();
+	if (confs.has("inviter"))inviter = confs["inviter"].to_ll();
+	if (confs.has("tCreated"))tCreated = confs["tCreated"].to_ll();
+	if (confs.has("tUpdated"))tUpdated = confs["tUpdated"].to_ll();
 }
 int groupset(long long id, const string& st)
 {
