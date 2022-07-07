@@ -44,6 +44,9 @@ double lua_to_number(lua_State* L, int idx = -1) {
 long long lua_to_int(lua_State* L, int idx = -1) {
 	return luaL_checkinteger(L, idx);
 }
+long long lua_to_int_or_zero(lua_State* L, int idx = -1) {
+	return lua_isnoneornil(L, idx) ? 0 : luaL_checkinteger(L, idx);
+}
 
 // Return string without convert
 string lua_to_raw_string(lua_State* L, int idx = -1) {
@@ -696,7 +699,7 @@ int getPlayerCardAttr(lua_State* L) {
 	else if (argc == 3)lua_pushnil(L);
 	else if (argc < 3)return 0;
 	long long plQQ{ lua_to_int(L, 1) };
-	long long group{ lua_to_int(L, 2) };
+	long long group{ lua_to_int_or_zero(L, 2) };
 	string key{ lua_to_gbstring(L, 3) };
 	if (!plQQ || key.empty())return 0;
 	CharaCard& pc = getPlayer(plQQ)[group];
@@ -721,18 +724,15 @@ int getPlayerCardAttr(lua_State* L) {
 int getPlayerCard(lua_State* L) {
 	long long plQQ{ lua_to_int(L, 1) };
 	if (!plQQ)return 0;
-	long long group{ lua_to_int(L, 2) };
-	if (PList.count(plQQ)) {
-		AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
-		*p = &getPlayer(plQQ)[group].Attr;
-		luaL_setmetatable(L, "Actor");
-		return 1;
-	}
-	return 0;
+	long long group{ lua_to_int_or_zero(L, 2) };
+	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
+	*p = &getPlayer(plQQ)[group].Attr;
+	luaL_setmetatable(L, "Actor");
+	return 1;
 }
 int setPlayerCardAttr(lua_State* L) {
 	long long plQQ{ lua_to_int(L, 1) };
-	long long group{ lua_to_int(L, 2) };
+	long long group{ lua_to_int_or_zero(L, 2) };
 	string item{ lua_to_gbstring(L, 3) };
 	if (!plQQ || item.empty())return 0;
 	//参数4为空则视为删除,__Name除外
@@ -892,6 +892,7 @@ int Actor_newindex(lua_State* L) {
 		vars.reset(key);
 	}
 	else {
+		vars["__Update"] = (long long)time(nullptr);
 		vars[key] = val;
 	}
 	return 0;

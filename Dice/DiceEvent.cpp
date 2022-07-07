@@ -3365,17 +3365,14 @@ int FromMsg::InnerOrder() {
 					int sumResSqr{ pc["__StatD" + strFace + "SqrSum"].to_int() };	//点数平方和
 					DiceEst stat{ intFace,cntRoll,sumRes,sumResSqr };
 					if (stat.estMean > 0)
-						res << "均值: " + toString(stat.estMean, 2, true) + " [" + toString(stat.expMean) + "]";
+						res << "均值[期望]: " + toString(stat.estMean, 2, true) + " [" + toString(stat.expMean) + "]";
 					if (stat.pNormDist) {
 						if (stat.pNormDist < 0.5)res << "均值低于" + toString(100 - stat.pNormDist * 100, 2) + "%的用户";
 						else res << "均值高于" + toString(stat.pNormDist * 100, 2) + "%的用户";
 					}
 					if (stat.estStd > 0) {
-						res << "标准差: " + toString(stat.estStd, 2) + " [" + toString(stat.expStd) + "]";
+						res << "标准差[期望]: " + toString(stat.estStd, 2) + " [" + toString(stat.expStd) + "]";
 					}
-					/*if (stat.pZtest > 0) {
-						res << "Z检验“偏心”水平: " + toString(stat.pZtest * 100, 2) + "%";
-					}*/
 				}
 			}
 			string keyRcCnt{ "__StatRcCnt" };	//rc/sc检定次数
