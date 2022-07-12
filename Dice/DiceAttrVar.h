@@ -29,6 +29,22 @@
 using std::string;
 using json = nlohmann::json;
 
+struct ByteS {
+	char* bytes{ nullptr };
+	size_t len{ 0 };
+	bool isUTF8{ true };
+	ByteS() {}
+	ByteS(const char* s, size_t l, bool b = true) :len(l), isUTF8(b) {
+		bytes = new char[len + 1];
+		memcpy(bytes, s, len);
+	}
+	ByteS(const ByteS& other) :len(other.len), isUTF8(other.isUTF8) {
+		bytes = new char[len + 1];
+		memcpy(bytes, other.bytes, len);
+	}
+	~ByteS() { if (bytes)delete bytes; }
+};
+
 class AttrVar;
 using AttrVars = std::unordered_map<string, AttrVar>;
 using VarArray = std::vector<AttrVar>;
@@ -55,7 +71,7 @@ public:
 
 class AttrVar {
 public:
-	enum class AttrType { Nil, Boolean, Integer, Number, Text, Table, ID };
+	enum class AttrType { Nil, Boolean, Integer, Number, Text, Table, Function, ID };
 	AttrType type{ 0 };
 	union {
 		bool bit;		//1
@@ -63,7 +79,7 @@ public:
 		double number;	//3
 		string text;	//4
 		VarTable table;		//5
-		//function;		//6
+		ByteS chunk;		//6
 		long long id;		//7
 	};
 	AttrVar() {}
@@ -73,11 +89,14 @@ public:
 	AttrVar(double n) :type(AttrType::Number), number(n) {}
 	AttrVar(const char* s) :type(AttrType::Text), text(s) {}
 	AttrVar(const string& s) :type(AttrType::Text), text(s) {}
+	AttrVar(const char* s,size_t len) :type(AttrType::Function), chunk(s,len) {}
+	AttrVar(ByteS&& fun) :type(AttrType::Function), chunk(fun) {}
 	AttrVar(long long n) :type(AttrType::ID), id(n) {}
 	explicit AttrVar(const AttrVars& vars) :type(AttrType::Table), table(vars) {}
 	void des() {
 		if (type == AttrType::Text)text.~string();
 		else if (type == AttrType::Table)table.~VarTable();
+		else if (type == AttrType::Function)chunk.~ByteS();
 	}
 	~AttrVar() {
 		des();
@@ -99,6 +118,7 @@ public:
 	long long to_ll()const;
 	double to_num()const;
 	string to_str()const;
+	ByteS to_bytes()const;
 	string show()const;
 	bool str_empty()const;
 	VarTable to_table()const;
@@ -110,8 +130,9 @@ public:
 	bool is_null()const { return type == AttrType::Nil; }
 	bool is_true()const { return operator bool(); }
 	bool is_numberic()const;
-	bool is_character()const { return type != AttrType::Nil && type != AttrType::Table; }
+	bool is_character()const { return type != AttrType::Nil && type != AttrType::Table && type != AttrType::Function; }
 	bool is_table()const { return type == AttrType::Table; }
+	bool is_function()const { return type == AttrType::Function; }
 	bool equal(const AttrVar&)const;
 	bool more(const AttrVar&)const;
 	bool less(const AttrVar&)const;

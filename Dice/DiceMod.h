@@ -82,7 +82,7 @@ public:
 	Type type{ Type::Reply };
 	Echo echo{ Echo::Deck };
 	DiceTriggerLimit limit;
-	string text;
+	AttrVar text;
 	std::vector<string> deck;
 	string show()const;
 	string show_ans()const;

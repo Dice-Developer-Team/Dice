@@ -181,7 +181,7 @@ public:
                     {"limit", GBKtoUTF8(val->limit.print())},
                     {"echo", GBKtoUTF8(DiceMsgReply::sEcho[(int)val->echo])},
                     {"answer", GBKtoUTF8(val->echo == DiceMsgReply::Echo::Deck ?
-                        listItem(val->deck) : val->text)} });
+                        listItem(val->deck) : val->text.to_str())} });
             }
             ret = j.dump();
         }

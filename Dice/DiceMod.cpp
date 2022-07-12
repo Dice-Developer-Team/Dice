@@ -514,7 +514,7 @@ bool DiceMsgReply::exec(FromMsg* msg) {
 	}
 
 	if (echo == Echo::Text) {
-		msg->reply(text);
+		msg->reply(text.to_str());
 		return true;
 	}
 	else if (echo == Echo::Deck) {
@@ -549,8 +549,10 @@ string DiceMsgReply::print()const {
 		+ "\n" + sEcho[(int)echo] + "=" + show_ans();
 }
 string DiceMsgReply::show_ans()const {
-	return echo == DiceMsgReply::Echo::Deck ?
-		listDeck(deck) : text;
+	return echo == DiceMsgReply::Echo::Deck ? listDeck(deck)
+		: text.is_character() ? text.to_str()
+		: text.is_function() ? ("Function#" + to_string(text.chunk.len))
+		: "";
 }
 
 void DiceMsgReply::from_obj(AttrObject obj) {
@@ -577,11 +579,15 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 		AttrVar& answer{ obj["echo"]};
 		if (answer.is_character()) {
 			echo = Echo::Text;
-			text = answer.to_str();
+			text = answer;
+		}
+		else if (answer.is_function()) {
+			echo = Echo::Lua;
+			text = answer;
 		}
 		else if (AttrVars tab{ answer.to_dict() }; tab.count("lua")) {
 			echo = Echo::Lua;
-			text = tab["lua"].to_str();
+			text = tab["lua"];
 		}
 		else{
 			deck = {};
@@ -639,7 +645,7 @@ json DiceMsgReply::writeJson()const {
 	if (keyMatch[3])j["regex"] = GBKtoUTF8(*keyMatch[3]);
 	if(!limit.empty())j["limit"] = GBKtoUTF8(limit.print());
 	if (echo == Echo::Deck)j["answer"] = GBKtoUTF8(deck);
-	else j["answer"] = GBKtoUTF8(text);
+	else j["answer"] = GBKtoUTF8(text.to_str());
 	return j;
 }
 
@@ -968,9 +974,11 @@ Clock parse_clock(const AttrVar& time) {
 void DiceModManager::call_cycle_event(const string& id) {
 	if (id.empty() || !events.count(id))return;
 	AttrObject eve{ events[id] };
-	auto action{ eve.get_dict("action") };
-	if (action.count("lua")) {
-		lua_call_event(eve, action["lua"].to_str());
+	if (eve["action"].is_function()) {
+		lua_call_event(eve, eve["action"]);
+	}
+	else if (auto action{ eve.get_dict("action") }; action.count("lua")) {
+		lua_call_event(eve, action["lua"]);
 	}
 	auto trigger{ eve.get_dict("trigger") };
 	if (trigger.count("cycle")) {
@@ -980,18 +988,22 @@ void DiceModManager::call_cycle_event(const string& id) {
 void DiceModManager::call_clock_event(const string& id) {
 	if (id.empty() || !events.count(id))return;
 	AttrObject eve{ events[id] };
-	auto action{ eve.get_dict("action") };
-	if (action.count("lua")) {
-		lua_call_event(eve, action["lua"].to_str());
+	if (eve["action"].is_function()) {
+		lua_call_event(eve, eve["action"]);
+	}
+	else if (auto action{ eve.get_dict("action") }; action.count("lua")) {
+		lua_call_event(eve, action["lua"]);
 	}
 }
 bool DiceModManager::call_hook_event(AttrObject eve) {
 	string hookEvent{ eve.has("hook") ? eve.get_str("hook") : eve.get_str("Event") };
 	if (hookEvent.empty())return false;
 	for (auto [id, hook] : multi_range(hook_events, hookEvent)) {
-		auto action{ hook.get_dict("action") };
-		if (action.count("lua")) {
-			lua_call_event(eve, action["lua"].to_str());
+		if (hook["action"].is_function()) {
+			lua_call_event(eve, hook["action"]);
+		}
+		else if (auto action{ hook.get_dict("action") }; action.count("lua")) {
+			lua_call_event(eve, action["lua"]);
 		}
 	}
 	return eve.is("blocked");

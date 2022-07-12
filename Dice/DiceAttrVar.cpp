@@ -90,6 +90,9 @@ AttrVar::AttrVar(const AttrVar& other) :type(other.type) {
 	case AttrType::Table:
 		new(&table)VarTable(other.table);
 		break;
+	case AttrType::Function:
+		new(&chunk)ByteS(other.chunk);
+		break;
 	case AttrType::ID:
 		id = other.id;
 		break;
@@ -256,8 +259,32 @@ string AttrVar::to_str()const {
 	case AttrType::Table: 
 		return UTF8toGBK(to_json().dump());
 		break;
+	case AttrType::Function:
+		return {};
+		break;
 	case AttrType::ID:
 		return to_string(id);
+		break;
+	}
+	return {};
+}
+ByteS AttrVar::to_bytes()const {
+	switch (type) {
+	case AttrType::Text:
+		return { text.c_str(),text.length()};
+		break;
+	case AttrType::Function:
+		return chunk;
+		break;
+	case AttrType::Nil:
+		return {};
+		break;
+	case AttrType::Boolean:
+	case AttrType::Integer:
+	case AttrType::Number:
+	case AttrType::ID:
+	case AttrType::Table:
+		return {};
 		break;
 	}
 	return {};
