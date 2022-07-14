@@ -128,9 +128,6 @@ ByteS lua_to_chunk(lua_State* L, int idx = -1) {
 }
 void lua_push_attr(lua_State* L, const AttrVar& attr) {
 	switch (attr.type) {
-	case AttrVar::AttrType::Nil:
-		lua_pushnil(L);
-		break;
 	case AttrVar::AttrType::Boolean:
 		lua_pushboolean(L, attr.bit);
 		break;
@@ -144,22 +141,27 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 		lua_pushnumber(L, attr.number);
 		break;
 	case AttrVar::AttrType::Text:
-		lua_push_string(L, attr.text.c_str());
+		lua_push_string(L, attr.text);
 		break;
 	case AttrVar::AttrType::Table:
 		lua_newtable(L);
-		int idx{ 0 };
-		unordered_set<string> idxs;
-		for (auto& val : attr.table.idxs) {
-			val ? lua_push_attr(L, *val.get()) : lua_pushnil(L);
-			lua_seti(L, -2, ++idx);
-			idxs.insert(to_string(idx));
+		if (unordered_set<string> idxs; !attr.table.dict.empty()) {
+			int idx{ 0 };
+			for (auto& val : attr.table.idxs) {
+				val ? lua_push_attr(L, *val.get()) : lua_pushnil(L);
+				lua_seti(L, -2, ++idx);
+				idxs.insert(to_string(idx));
+			}
+			for (auto& [key, val] : attr.table.dict) {
+				if (idxs.count(key))continue;
+				val ? lua_push_attr(L, *val.get()) : lua_pushnil(L);
+				lua_set_field(L, -2, key.c_str());
+			}
 		}
-		for (auto& [key, val] : attr.table.dict) {
-			if (idxs.count(key))continue;
-			val ? lua_push_attr(L, *val.get()) : lua_pushnil(L);
-			lua_set_field(L, -2, key.c_str());
-		}
+		break;
+	case AttrVar::AttrType::Nil:
+	default:
+		lua_pushnil(L);
 		break;
 	}
 }
@@ -613,8 +615,8 @@ int getUserConf(lua_State* L) {
 	if (lua_isnil(L, 1)) {
 		if (item.empty())return 0;
 		lua_newtable(L);
-		for (auto& [uid, data] : ChatList) {
-			if (data.confs.has(item)) {
+		for (auto& [uid, data] : UserList) {
+			if (data.isset(item)) {
 				lua_push_attr(L, data.confs[item]);
 				lua_set_field(L, -2, to_string(uid));
 			}
@@ -666,7 +668,7 @@ int getUserConf(lua_State* L) {
 			user.getNick(nick, gid);
 			lua_push_string(L, nick);
 		}
-		else if (user.confs.has(item)) {
+		else if (user.isset(item)) {
 			lua_push_attr(L, user.confs[item]);
 		}
 	}
@@ -747,8 +749,7 @@ int getUserToday(lua_State* L) {
 	return 1;
 }
 int setUserToday(lua_State* L) {
-	long long uid{ lua_to_int(L, 1) };
-	if (!uid)return 0;
+	long long uid{ lua_to_int_or_zero(L, 1) };
 	string item{ lua_to_gbstring(L, 2) };
 	if (item.empty())return 0;
 	if (item[0] == '&')item = fmt->format(item);
@@ -1157,6 +1158,7 @@ void lua_preLoadMod(lua_State* L) {
 
 void DiceModManager::loadLuaMod(const vector<fs::path>& files, ResList& res) {
 	LuaState L;
+	UTF8Luas.insert(L);
 	ShowList err;
 	for (auto file : files) {
 		lua_preLoadMod(L);
