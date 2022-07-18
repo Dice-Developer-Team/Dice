@@ -209,11 +209,10 @@ public:
             {
                 for(const auto& item: j["data"])
                 {   
-                    string key{ UTF8toGBK(item["name"].get<std::string>()) };
                     ptr<DiceMsgReply> trigger{ std::make_shared<DiceMsgReply>() };
-                    trigger->title = key;
+                    trigger->title = UTF8toGBK(item["name"].get<std::string>());
                     trigger->readJson(item);
-                    fmt->set_reply(key, trigger);
+                    fmt->set_reply(trigger->title, trigger);
                 }
             } 
             else if (j["action"].get<std::string>() == "delete")

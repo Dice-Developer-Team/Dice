@@ -1378,7 +1378,7 @@ int DiceModManager::load(ResList& resLog){
 		std::map<std::string, std::vector<std::string>, less_ci> mRegexReplyDeck;
 		std::map<std::string, std::vector<std::string>, less_ci> mReplyDeck;
 		if (loadJMap(DiceDir / "conf" / "CustomReply.json", mReplyDeck) > 0) {
-			resLog << "读取CustomReply" + to_string(mReplyDeck.size()) + "条";
+			resLog << "迁移CustomReply" + to_string(mReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mReplyDeck) {
 				ptr<DiceMsgReply> reply{ final_msgreply[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;
@@ -1387,7 +1387,7 @@ int DiceModManager::load(ResList& resLog){
 			}
 		}
 		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck) > 0) {
-			resLog << "读取正则Reply" + to_string(mRegexReplyDeck.size()) + "条";
+			resLog << "迁移正则Reply" + to_string(mRegexReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mRegexReplyDeck) {
 				ptr<DiceMsgReply> reply{ final_msgreply[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;

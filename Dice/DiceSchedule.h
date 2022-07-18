@@ -101,7 +101,7 @@ public:
 	}
 	void load();
 	void save();
-	void set(long long qq, const string& key, const AttrVar& val) { UserInfo[qq][key] = val; save(); }
+	void set(long long qq, const string& key, const AttrVar& val);
 	void inc(const string& key) { cntGlobal[key]++; save(); }
 	//void inc(long long qq, const string& key, int cnt = 1) { cntUser[qq][key] += cnt; save(); }
 	unordered_map<long long, AttrObject>& getUserInfo() { return UserInfo; }

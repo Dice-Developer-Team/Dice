@@ -84,11 +84,6 @@ void lua_push_Context(lua_State* L, AttrObject& vars) {
 	*p = &vars;
 	luaL_setmetatable(L, "Context");
 }
-void lua_push_msg(lua_State* L, FromMsg* msg) {
-	msg->vars["fromQQ"] = to_string(msg->fromChat.uid);
-	msg->vars["fromGroup"] = to_string(msg->fromChat.gid);
-	lua_push_Context(L, msg->vars);
-}
 
 static int lua_writer(lua_State* L, const void* b, size_t size, void* B) {
 	ByteS* buffer{ (ByteS*)B };
@@ -271,7 +266,7 @@ bool lua_msg_order(FromMsg* msg, const char* file, const char* func) {
 		return 0;
 	}
 	lua_getglobal(L, func); 
-	lua_push_msg(L, msg);
+	lua_push_Context(L, msg->vars);
 	if (lua_pcall(L, 1, 2, 0)) {
 		string pErrorMsg = lua_to_gbstring(L, -1);
 		console.log(getMsg("strSelfName") + "µ÷ÓÃ" + fileGB18030 + "º¯Êý" + func + "Ê§°Ü!\n" + pErrorMsg, 0b10);
@@ -306,7 +301,7 @@ bool lua_msg_reply(FromMsg* msg, const AttrVar& lua) {
 	bool isFile{ lua.is_character() && fmt->script_has(luas) };
 	LuaState L{ isFile ? fmt->script_path(luas).c_str() : nullptr };
 	if (!L)return false;
-	lua_push_msg(L, msg);
+	lua_push_Context(L, msg->vars);
 	lua_setglobal(L, "msg");
 	if (isFile) {
 		if (lua_pcall(L, 0, 2, 0)) {
@@ -903,6 +898,18 @@ int Context_index(lua_State* L) {
 	if (vars.has(key)) {
 		lua_push_attr(L, vars[key]);
 		return 1;
+	}
+	else if (key == "fromQQ" || key == "fromUser") {
+		if (vars.has("uid")) {
+			lua_push_string(L, vars["uid"].to_str());
+			return 1;
+		}
+	}
+	else if (key == "fromGroup") {
+		if (vars.has("gid")) {
+			lua_push_string(L, vars["gid"].to_str());
+			return 1;
+		}
 	}
 	return 0;
 }

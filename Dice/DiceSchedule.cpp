@@ -233,11 +233,22 @@ void DiceToday::daily_clear() {
 	localtime_r(&tt, &stNow);
 #endif
 	if (stToday.tm_mday != stNow.tm_mday) {
+		stToday.tm_year = stNow.tm_year;
+		stToday.tm_mon = stNow.tm_mon;
 		stToday.tm_mday = stNow.tm_mday;
 		counter.clear();
 		cntGlobal.clear();
 		UserInfo.clear();
 	}
+}
+void DiceToday::set(long long qq, const string& key, const AttrVar& val) {
+	if (val)
+		UserInfo[qq].set(key, val);
+	else if (UserInfo.count(qq)&& UserInfo[qq].has(key)) {
+		UserInfo[qq].reset(key);
+	}
+	else return;
+	save();
 }
 
 void DiceToday::save() {

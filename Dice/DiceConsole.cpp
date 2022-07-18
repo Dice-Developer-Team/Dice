@@ -269,9 +269,7 @@ void Console::loadNotice()
 			console.log(string("½âÎö/conf/NoticeList.json³ö´í:") + e.what(), 1);
 		}
 	}
-	if (NoticeList.empty() && loadFile(DiceDir / "conf" / "NoticeList.txt", NoticeList) < 1)
-	{
-		console.setNotice({ 0,863062599 }, 0b100000);
+	if (NoticeList.empty() && loadFile(DiceDir / "conf" / "NoticeList.txt", NoticeList) < 1){
 		console.setNotice({ 0,192499947 }, 0b100000);
 		console.setNotice({ 0,928626681 }, 0b100000);
 	}

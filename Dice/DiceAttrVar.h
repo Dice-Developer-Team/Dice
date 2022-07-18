@@ -170,6 +170,10 @@ public:
 	bool has(const string& key)const {
 		return obj->count(key) && !obj->at(key).is_null();
 	}
+	void set(const string& key, const AttrVar& val)const {
+		if (!val)obj->erase(key);
+		else (*obj)[key] = val;
+	}
 	void reset(const string& key)const {
 		obj->erase(key);
 	}

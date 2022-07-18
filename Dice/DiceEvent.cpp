@@ -1744,6 +1744,21 @@ int FromMsg::InnerOrder() {
 			reply(DD::printGroupInfo(llGroup), false);
 			return 1;
 		}
+		else if (Command == "tojson") {
+			if (trusted < 4 && !console.is_self(fromChat.uid)) {
+				replyMsg("strNotAdmin");
+				return 1;
+			}
+			long long target{ readID() };
+			if (!target)target = fromChat.uid;
+			if (ChatList.count(target)) {
+				reply(UTF8toGBK(to_json(*chat(target).confs).dump()), false);
+			}
+			else {
+				reply("{self}无" + printGroup(target) + "的群聊记录×");
+			}
+			return 1;
+		}
 		else if (!isInGroup) {
 			replyMsg("strGroupNotIn");
 			return 1;
