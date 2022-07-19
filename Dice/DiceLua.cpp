@@ -979,7 +979,7 @@ int luaopen_Actor(lua_State* L) {
 }
 
 int httpGet(lua_State* L) {
-	string url{ lua_to_native_string(L,1) };
+	string url{ lua_to_raw_string(L,1) };
 	if (url.empty()) {
 		return 0;
 	}
@@ -991,7 +991,7 @@ int httpGet(lua_State* L) {
 int httpPost(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	string url{ lua_tostring(L,1) };
-	string json{ lua_to_native_string(L,2) };
+	string json{ lua_to_raw_string(L,2) };
 	if (url.empty() || json.empty()) {
 		return 0;
 	}

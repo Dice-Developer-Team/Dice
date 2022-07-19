@@ -180,8 +180,10 @@ int AttrVar::to_int()const {
 			return 0;
 		}
 		break;
+	default:
+		return 0;
+		break;
 	}
-	return 0;
 }
 long long AttrVar::to_ll()const {
 	switch (type) {
@@ -208,8 +210,10 @@ long long AttrVar::to_ll()const {
 			return 0;
 		}
 		break;
+	default:
+		return 0;
+		break;
 	}
-	return 0;
 }
 double AttrVar::to_num()const {
 	switch (type) {
@@ -236,8 +240,10 @@ double AttrVar::to_num()const {
 			return 0;
 		}
 		break;
+	default:
+		return 0;
+		break;
 	}
-	return 0;
 }
 string AttrVar::to_str()const {
 	switch (type) {
@@ -265,8 +271,10 @@ string AttrVar::to_str()const {
 	case AttrType::ID:
 		return to_string(id);
 		break;
+	default:
+		return {};
+		break;
 	}
-	return {};
 }
 ByteS AttrVar::to_bytes()const {
 	switch (type) {

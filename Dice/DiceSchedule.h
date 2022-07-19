@@ -106,7 +106,7 @@ public:
 	//void inc(long long qq, const string& key, int cnt = 1) { cntUser[qq][key] += cnt; save(); }
 	unordered_map<long long, AttrObject>& getUserInfo() { return UserInfo; }
 	int& get(const string& key) { return cntGlobal[key]; }
-	AttrObject get(long long uid) { return UserInfo[uid]; }
+	AttrObject& get(long long uid) { return UserInfo[uid]; }
 	AttrVar& get(long long uid, const string& key) { return UserInfo[uid][key]; }
 	AttrVar* get_if(long long qq, const string& key) {
 		if (UserInfo.count(qq) && UserInfo[qq].has(key))
