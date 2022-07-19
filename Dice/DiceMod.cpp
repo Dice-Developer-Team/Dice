@@ -1146,7 +1146,7 @@ bool DiceModManager::del_reply(const string& key) {
 	return true;
 }
 void DiceModManager::save_reply() {
-	json j;
+	json j = json::object();
 	for (const auto& [word, reply] : custom_reply) {
 		j[GBKtoUTF8(word)] = reply->writeJson();
 	}
@@ -1239,57 +1239,64 @@ int DiceModManager::load(ResList& resLog){
 		vector<std::filesystem::path> ModLuaFiles;
 		for (auto& pathFile : ModLoadList) {
 			if (pathFile.empty())continue;
-			nlohmann::json j = freadJson(pathFile);
-			if (j.is_null()) {
-				sModErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
-				continue;
-			}
-			if (j.count("dice_build")) {
-				if (j["dice_build"] > Dice_Build) {
-					sModErr.push_back(UTF8toGBK(pathFile.filename().u8string())
-						+ "(build低于" + to_string(j["dice_build"].get<int>()) + ")");
+			try {
+				nlohmann::json j = freadJson(pathFile);
+				if (j.is_null()) {
+					sModErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
 					continue;
 				}
-			}
-			++cntMod;
-			if (j.count("helpdoc")) {
-				cntHelpItem += readJMap(j["helpdoc"], helpdoc);
-			}
-			if (j.count("speech")) {
-				for (auto it = j["speech"].cbegin(); it != j["speech"].cend(); ++it){
-					global_speech[UTF8toGBK(it.key())] = it.value();
+				if (j.count("dice_build")) {
+					if (j["dice_build"] > Dice_Build) {
+						sModErr.push_back(UTF8toGBK(pathFile.filename().u8string())
+							+ "(build低于" + to_string(j["dice_build"].get<int>()) + ")");
+						continue;
+					}
 				}
-			}
-			if (fs::path dirMod{ pathFile.replace_extension() }; fs::exists(dirMod)) {
-				listDir(dirMod / "reply", ModLuaFiles);
-				listDir(dirMod / "event", ModLuaFiles);
-				if (fs::exists(dirMod / "speech")) {
-					vector<std::filesystem::path> fSpeech;
-					listDir(dirMod / "speech", fSpeech, true);
-					for (auto& p : fSpeech) {
-						YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) };
-						if (!yaml.IsMap()) {
-							continue;
+				++cntMod;
+				if (j.count("helpdoc")) {
+					cntHelpItem += readJMap(j["helpdoc"], helpdoc);
+				}
+				if (j.count("speech")) {
+					for (auto it = j["speech"].cbegin(); it != j["speech"].cend(); ++it) {
+						global_speech[UTF8toGBK(it.key())] = it.value();
+					}
+				}
+				if (fs::path dirMod{ pathFile.replace_extension() }; fs::exists(dirMod)) {
+					listDir(dirMod / "reply", ModLuaFiles);
+					listDir(dirMod / "event", ModLuaFiles);
+					if (fs::exists(dirMod / "speech")) {
+						vector<std::filesystem::path> fSpeech;
+						listDir(dirMod / "speech", fSpeech, true);
+						for (auto& p : fSpeech) {
+							YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) };
+							if (!yaml.IsMap()) {
+								continue;
+							}
+							for (auto it = yaml.begin(); it != yaml.end(); ++it) {
+								global_speech[UTF8toGBK(it->first.Scalar())] = it->second;
+								++cntSpeech;
+							}
 						}
-						for (auto it = yaml.begin(); it != yaml.end();++it) {
-							global_speech[UTF8toGBK(it->first.Scalar())] = it->second;
-							++cntSpeech;
+					}
+					if (auto dirScript{ dirMod / "script" }; fs::exists(dirScript)) {
+						vector<std::filesystem::path> fScripts;
+						listDir(dirScript, fScripts, true);
+						for (auto p : fScripts) {
+							if (p.extension() != ".lua")continue;
+							string script_name{ p.stem().string() };
+							string strPath{ getNativePathString(p) };
+							while ((p = p.parent_path()) != dirScript) {
+								script_name = p.filename().string() + "." + script_name;
+							}
+							scripts[script_name] = strPath;
 						}
 					}
 				}
-				if (auto dirScript{ dirMod / "script" }; fs::exists(dirScript)) {
-					vector<std::filesystem::path> fScripts;
-					listDir(dirScript, fScripts, true);
-					for (auto p : fScripts) {
-						if (p.extension() != ".lua")continue;
-						string script_name{ p.stem().string() };
-						string strPath{ getNativePathString(p) };
-						while ((p = p.parent_path()) != dirScript) {
-							script_name = p.filename().string() + "."+ script_name;
-						}
-						scripts[script_name] = strPath;
-					}
-				}
+
+			}
+			catch (json::exception& e) {
+				sModErr.push_back(UTF8toGBK(pathFile.filename().u8string())+ "(解析错误)");
+				continue;
 			}
 		}
 		resLog << "读取/mod/中的" + std::to_string(cntMod) + "个mod";
@@ -1395,7 +1402,7 @@ int DiceModManager::load(ResList& resLog){
 				reply->deck = deck;
 			}
 		}
-		save_reply();
+		if(!custom_reply.empty())save_reply();
 	}
 	//init
 	std::thread factory(&DiceModManager::init, this);
@@ -1472,13 +1479,16 @@ void DiceModManager::clear(){
 void DiceModManager::save() {
 	json jFile = json::array();
 	for (auto& mod : modIndex) {
-		json j;
+		json j = json::object();
 		j["name"] = GBKtoUTF8(mod->name);
 		j["active"] = mod->active;
 		jFile.push_back(j);
 	}
 	if (!jFile.empty()) {
 		fwriteJson(DiceDir / "conf" / "ModList.json", jFile);
+	}
+	else {
+		remove(DiceDir / "conf" / "ModList.json");
 	}
 }
 void DiceModManager::reload() {

@@ -901,13 +901,13 @@ int Context_index(lua_State* L) {
 	}
 	else if (key == "fromQQ" || key == "fromUser") {
 		if (vars.has("uid")) {
-			lua_push_string(L, vars["uid"].to_str());
+			lua_push_string(L, (vars[key] = vars["uid"].to_str()).to_str());
 			return 1;
 		}
 	}
 	else if (key == "fromGroup") {
 		if (vars.has("gid")) {
-			lua_push_string(L, vars["gid"].to_str());
+			lua_push_string(L, (vars[key] = vars["gid"].to_str()).to_str());
 			return 1;
 		}
 	}

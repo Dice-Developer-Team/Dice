@@ -471,7 +471,6 @@ bool eve_GroupAdd(Chat& grp)
 	string strMsg(getMsg("strSelfName"));
 	AttrObject eve{ {
 		{"Event","GroupAdd"},
-		{"fromGroup",to_string(fromGID)},
 		{"gid",fromGID},
 	} };
 	try 
@@ -632,7 +631,6 @@ EVE_PrivateMsg(eventPrivateMsg)
 		}, chatInfo{ fromUID,0,0 }));
 	return Msg->DiceFilter() || fmt->call_hook_event(Msg->vars.merge({
 		{"hook","WhisperIgnored"},
-		{"fromUser",to_string(fromUID)},
 		}));
 }
 
@@ -775,8 +773,6 @@ EVE_GroupMemberKicked(eventGroupMemberKicked){
 		if (!console["ListenGroupKick"] || trustedQQ(fromUID) > 1 || grp.isset("免黑") || grp.isset("协议无效") || ExceptGroups.count(fromGID)) return 0;
 		AttrObject eve{ {
 			{"Event","GroupKicked"},
-			{"fromUser",to_string(fromUID)},
-			{"fromGroup",to_string(fromGID)},
 			{"uid",fromUID},
 			{"gid",fromGID},
 		} };
@@ -890,8 +886,6 @@ EVE_GroupInvited(eventGroupInvited)
 		this_thread::sleep_for(3s);
 		AttrObject eve{ {
 			{"Event","GroupRequest"},
-			{"fromUser",to_string(fromUID)},
-			{"fromGroup",to_string(fromGID)},
 			{"uid",fromUID},
 			{"gid",fromGID},
 		} };
@@ -979,7 +973,6 @@ EVE_FriendRequest(eventFriendRequest) {
 	this_thread::sleep_for(3s);
 	AttrObject eve{{
 		{"Event","FriendRequest"},
-		{"fromUser",to_string(fromUID)},
 		{"fromMsg",message},
 		{"uid",fromUID},
 	} };
@@ -1022,7 +1015,6 @@ EVE_FriendAdded(eventFriendAdd) {
 	this_thread::sleep_for(3s);
 	AttrObject eve{ {
 		{"Event","FriendAdd"},
-		{"fromUser",to_string(fromUID)},
 		{"uid",fromUID},
 	} };
 	if(fmt->call_hook_event(eve))return 1;

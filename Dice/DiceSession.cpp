@@ -170,7 +170,7 @@ void DiceSession::log_end(FromMsg* msg) {
 	msg->replyMsg("strLogEnd");
 	update();
 	AttrObject eve{ *msg->vars };
-	eve["Event"] = "LogEnd";
+	eve["hook"] = "LogEnd";
 	if (!fmt->call_hook_event(eve)) {
 		eve["cmd"] = "uplog";
 		sch.push_job(eve);

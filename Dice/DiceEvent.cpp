@@ -1025,8 +1025,6 @@ int FromMsg::BasicOrder()
 		string strInfo = readRest();
 		if (fmt->call_hook_event(vars.merge({
 			{"hook","GroupAuthorize"},
-			{"fromUser",to_string(fromChat.uid)},
-			{"fromGroup",to_string(fromChat.gid)},
 			{"aimGroup",to_string(pGrp->ID)},
 			{"AttachInfo",strInfo},
 			{"aim_gid",fromChat.gid},
