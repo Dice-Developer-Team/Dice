@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <list>
 #include <memory>
 #include <variant>
 #include "yaml-cpp/node/node.h"
@@ -25,6 +26,8 @@ using std::set;
 using std::variant;
 template<typename T>
 using ptr = std::shared_ptr<T>;
+using lock = ptr<std::unique_lock<std::mutex>>;
+using chat_locks = std::list<lock>;
 
 class FromMsg;
 
@@ -36,6 +39,7 @@ class DiceTriggerLimit {
 	bool user_id_negative{ false };
 	set<long long>grp_id;
 	bool grp_id_negative{ false };
+	vector<CDConfig>locks;
 	vector<CDConfig>cd_timer;
 	vector<CDConfig>today_cnt;
 	unordered_map<string, pair<AttrVar::CMPR, AttrVar>>self_vary;
@@ -49,7 +53,7 @@ public:
 	const string& print()const { return content; }
 	const string& note()const { return comment; }
 	bool empty()const { return content.empty(); }
-	bool check(FromMsg*)const;
+	bool check(FromMsg*, chat_locks&)const;
 };
 
 class DiceGenerator

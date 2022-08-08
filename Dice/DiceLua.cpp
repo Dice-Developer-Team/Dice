@@ -821,16 +821,18 @@ int sleepTime(lua_State* L) {
 }
 
 int drawDeck(lua_State* L) {
-	long long fromGID{ lua_to_int(L, 1) };
-	long long fromUID{ lua_to_int(L, 2) };
-	if (!fromGID && !fromUID)return 0;
-	chatInfo fromChat{ fromUID,fromGID };
 	string nameDeck{ lua_to_gbstring(L, 3) };
 	if (nameDeck.empty())return 0;
-	if (auto s{ sessions.has_session(fromChat) }) {
-		lua_push_string(L, sessions.get_if(fromChat)->deck_draw(nameDeck));
+	long long fromGID{ lua_to_int_or_zero(L, 1) };
+	long long fromUID{ lua_to_int_or_zero(L, 2) };
+	if (fromGID || fromUID) {
+		chatInfo fromChat{ fromUID,fromGID };
+		if (auto s{ sessions.has_session(fromChat) }) {
+			lua_push_string(L, sessions.get_if(fromChat)->deck_draw(nameDeck));
+			return 1;
+		}
 	}
-	else if (CardDeck::findDeck(nameDeck)) {
+	if (CardDeck::findDeck(nameDeck)) {
 		vector<string>& deck = CardDeck::mPublicDeck[nameDeck];
 		lua_push_string(L, CardDeck::draw(deck[RandomGenerator::Randint(0, deck.size() - 1)]));
 	}

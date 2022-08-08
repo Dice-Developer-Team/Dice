@@ -140,6 +140,29 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 				notes << (grp_id_negative ? "- 以下群聊不触发: " : "- 仅以下群聊触发: ") + listID(grp_id);
 			}
 		}
+		else if (key == "lock") {
+			ShowList sub;
+			ShowList subnotes;
+			if (colon == string::npos) {
+				locks.emplace_back(CDType::Global, "", 1);
+			}
+			for (auto& key : split(item.substr(colon + 1), "&")) {
+				string type{ "chat" };
+				if (size_t pos{ key.find('@') }; pos != string::npos) {
+					type = key.substr(pos + 1);
+					key = key.substr(0, pos);
+				}
+				CDType cd_type{ (CDType)CDConfig::eType[type] };
+				locks.emplace_back(cd_type, key, 1);
+				sub << key + ((key.empty() && cd_type == CDType::Chat) ? ""
+					: ("@" + CDConfig::eType[(size_t)cd_type]));
+				subnotes << (cd_type == CDType::Chat ? "窗口锁"
+					: cd_type == CDType::User ? "用户锁" : "全局锁") + key;
+			}
+			if (sub.empty())continue;
+			limits << "today:" + sub.show("&");
+			notes << "- 当日计数: " + subnotes.show();
+		}
 		else if (key == "cd") {
 			if (colon == string::npos)continue;
 			ShowList cds;
@@ -306,7 +329,6 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			CDType type{ CDType::Chat };
 			if (item.is_numberic()) {
 				cd_timer.emplace_back(type, name, (time_t)item.to_ll());
-				continue;
 			}
 			else if (!item.is_table())continue;
 			else if (VarArray v{ item.to_list() }; !v.empty()) {
@@ -348,7 +370,6 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			CDType type{ CDType::Chat };
 			if (item.is_numberic()) {
 				today_cnt.emplace_back(type, name, (time_t)item.to_ll());
-				continue;
 			}
 			else if (!item.is_table())continue;
 			else if (VarArray v{ item.to_list() }; !v.empty()) {
@@ -381,6 +402,47 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 				}
 				limits << "today:" + sub.show("&");
 				notes << "- 当日计数: " + subnotes.show();
+			}
+		}
+		else if (key == "lock") {
+			ShowList sub;
+			ShowList subnotes;
+			string name;
+			CDType type{ CDType::Global };
+			if (item.is_boolean()) {
+				if(item)locks.emplace_back(type, name, 1);
+			}
+			else if (item.is_character()) {
+				locks.emplace_back(type, item.to_str(), 1);
+			}
+			else if (!item.is_table())continue;
+			else if (VarArray v{ item.to_list() }; !v.empty()) {
+				for (auto& k : v) {
+					locks.emplace_back(type, k.to_str(), 1);
+				}
+			}
+			for (auto& [subkey, value] : item.to_dict()) {
+				if (CDConfig::eType.count(subkey)) {
+					type = (CDType)CDConfig::eType[subkey];
+					if (value.is_character()) {
+						locks.emplace_back(type, value.to_str(), 1);
+					}
+					else if (VarArray v{ value.to_list() }; !v.empty()) {
+						for (auto& k : v) {
+							locks.emplace_back(type, k.to_str(), 1);
+						}
+					}
+				}
+			}
+			if (!locks.empty()) {
+				for (auto& it : locks) {
+					sub << it.key + ((it.key.empty() && it.type == CDType::Chat) ? ""
+						: ("@" + CDConfig::eType[(size_t)it.type] + "="));
+					subnotes << (it.type == CDType::Chat ? "窗口锁"
+						: it.type == CDType::User ? "用户锁" : "全局锁") + it.key;
+				}
+				limits << "lock:" + sub.show("&");
+				notes << "- 同步锁: " + subnotes.show();
 			}
 		}
 		else if (key == "user_var") {
@@ -429,10 +491,21 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 	comment = notes.show("\n");
 	return *this;
 }
-bool DiceTriggerLimit::check(FromMsg* msg)const {
+bool DiceTriggerLimit::check(FromMsg* msg, chat_locks& lock_list)const {
 	if (!user_id.empty() && (user_id_negative ^ !user_id.count(msg->fromChat.uid)))return false;
 	if (!grp_id.empty() && (grp_id_negative ^ !grp_id.count(msg->fromChat.gid)))return false;
 	if (prob && RandomGenerator::Randint(1, 100) > prob)return false;
+	if (!locks.empty()) {
+		chatInfo chat{ msg->fromChat.locate()};
+		for (auto& conf : locks) {
+			string key{ conf.key };
+			if (key.empty())key = msg->vars.get_str("reply_title");
+			chatInfo ct{ conf.type == CDType::Chat ? chat :
+				conf.type == CDType::User ? chatInfo(msg->fromChat.uid) : chatInfo()
+			};
+			lock_list.emplace_back(std::make_shared<std::unique_lock<std::mutex>>(sch.locker[ct][key]));
+		}
+	}
 	if (!user_vary.empty()) {
 		if (!UserList.count(msg->fromChat.uid))return false;
 		User& user{ getUser(msg->fromChat.uid) };
@@ -459,7 +532,7 @@ bool DiceTriggerLimit::check(FromMsg* msg)const {
 		}
 	}
 	if (to_dice != Treat::Ignore && console.DiceMaid != msg->fromChat.uid) {
-		if (DD::isDiceMaid(msg->fromChat.uid) ^ (to_dice == Treat::Only))return false;
+		if (DD::isDiceMaid(msg->fromChat.uid) != (to_dice == Treat::Only))return false;
 	}
 	//冷却与上限最后处理
 	if (!cd_timer.empty() || !today_cnt.empty()) {
@@ -498,7 +571,8 @@ bool DiceMsgReply::exec(FromMsg* msg) {
 	int chon{ msg->pGrp ? msg->pGrp->getChConf(msg->fromChat.chid,"order",0) : 0 };
 	msg->vars["reply_title"] = title;
 	//limit
-	if (!limit.check(msg))return false;
+	chat_locks lock_list;
+	if (!limit.check(msg, lock_list))return false;
 	if (type == Type::Reply) {
 		if (!msg->isCalled && (chon < 0 ||
 			(!chon && (msg->pGrp->isset("禁用回复") || msg->pGrp->isset("认真模式")))))
@@ -1202,6 +1276,7 @@ int DiceModManager::load(ResList& resLog){
 	//读取mod管理文件
 	if (auto jFile{ freadJson(DiceDir / "conf" / "ModList.json") };!jFile.empty()) {
 		for (auto j : jFile) {
+			if (!j.count("name"))continue;
 			string modName{ UTF8toGBK(j["name"].get<string>()) };
 			auto mod{ std::make_shared<DiceModConf>(DiceModConf{ modName,modIndex.size(),j["active"].get<bool>()}) };
 			modList[modName] = mod;
@@ -1299,7 +1374,7 @@ int DiceModManager::load(ResList& resLog){
 				continue;
 			}
 		}
-		resLog << "读取/mod/中的" + std::to_string(cntMod) + "个mod";
+		if (cntMod)resLog << "读取/mod/中的" + std::to_string(cntMod) + "个mod";
 		if (cntSpeech)resLog << "录入speech" + to_string(cntSpeech) + "项";
 		loadLuaMod(ModLuaFiles, resLog);
 		if (!scripts.empty())resLog << "注册script" + to_string(scripts.size()) + "份";
@@ -1319,11 +1394,10 @@ int DiceModManager::load(ResList& resLog){
 		int cntOrder{ 0 };
 		vector<string> sLuaErr;
 		for (auto& pathFile : sLuaFile) {
-			string fileLua = getNativePathString(pathFile);
-			if ((fileLua.rfind(".lua") != fileLua.length() - 4) && (fileLua.rfind(".LUA") != fileLua.length() - 4)) {
-				sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
+			if ((pathFile.extension() != ".lua")) {
 				continue;
 			}
+			string fileLua = getNativePathString(pathFile);
 			std::unordered_map<std::string, std::string> mOrder;
 			int cnt = lua_readStringTable(fileLua.c_str(), "msg_order", mOrder);
 			if (cnt > 0) {

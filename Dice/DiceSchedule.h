@@ -1,16 +1,17 @@
 #pragma once
-
 /*
  * Copyright (C) 2019-2022 String.Empty
  * 处理定时事件
  * 处理不能即时完成的指令
  * 2022/1/13: 冷却计时
  * 2022/2/05: 今日数据类型扩展
+ * 2022/8/08: 互斥锁
  */
 
 #include <string>
 #include <map>
 #include <unordered_map>
+#include <mutex>
 #include "DiceMsgSend.h"
 #include "json.hpp"
 #include "DiceAttrVar.h"
@@ -73,6 +74,7 @@ class DiceScheduler {
 	unordered_map<string, time_t> untilJobs;
 	unordered_map<chatInfo, unordered_map<string, time_t>> cd_timer;
 public:
+	unordered_map<chatInfo, unordered_map<string, std::mutex>> locker;
 	void start();
 	void end();
 	void push_job(const AttrObject&);

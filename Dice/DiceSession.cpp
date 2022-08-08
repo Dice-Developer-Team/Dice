@@ -181,12 +181,14 @@ std::filesystem::path DiceSession::log_path()const {
 }
 
 void DiceChatLink::load() {
-	json jFile{ freadJson(DiceDir / "conf" / "LinkList.json") };
-	for (auto& jLink : jFile) {
-		auto ct{ chatInfo::from_json(jLink["origin"]) };
-		LinkInfo& link{ LinkList[ct] = { jLink["linking"].get<bool>(),
-			jLink["type"].get<string>(),
-			chatInfo::from_json(jLink["target"]) } };
+	if (json jFile{ freadJson(DiceDir / "conf" / "LinkList.json") }; jFile.empty()){
+		for (auto& jLink : jFile) {
+			auto ct{ chatInfo::from_json(jLink["origin"]) };
+			LinkInfo& link{ LinkList[ct] = { jLink["linking"].get<bool>(),
+				jLink["type"].get<string>(),
+				chatInfo::from_json(jLink["target"]) } };
+		}
+		if (jFile.empty() && !LinkList.empty())save();
 	}
 	for (auto& [ct,link] : LinkList) {
 		if (link.isLinking) {
@@ -194,7 +196,6 @@ void DiceChatLink::load() {
 			LinkFromChat[link.target] = { ct ,link.typeLink != "to" };
 		}
 	}
-	if (jFile.empty() && !LinkList.empty())save();
 }
 void DiceChatLink::save() {
 	if (LinkList.empty()) {

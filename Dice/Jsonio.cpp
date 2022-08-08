@@ -25,12 +25,10 @@ nlohmann::json freadJson(const std::filesystem::path& path)
 	std::ifstream fin(path);
 	if (!fin)return nlohmann::json();
 	nlohmann::json j;
-	try
-	{
+	try {
 		fin >> j;
 	}
-	catch (...)
-	{
+	catch (...) {
 		return nlohmann::json();
 	}
 	return j;
