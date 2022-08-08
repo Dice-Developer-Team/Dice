@@ -25,6 +25,13 @@
 #include "StrExtern.hpp"
 #include "DiceFile.hpp"
 using std::to_string;
+
+ByteS::ByteS(std::ifstream& fin) {
+	len = fread<size_t>(fin);
+	bytes = new char[len + 1];
+	fin.read(bytes, len);
+}
+
 VarTable::VarTable(const unordered_map<string, AttrVar>& m) {
 	for (auto& [key, val] : m) {
 		dict[key] = std::make_shared<AttrVar>(val);
@@ -320,6 +327,9 @@ string AttrVar::show()const {
 	case AttrType::ID:
 		return to_string(id);
 		break;
+	case AttrType::Function:
+		return "Function#" + to_string(chunk.len);
+		break;
 	}
 	return {};
 }
@@ -355,6 +365,8 @@ bool AttrVar::is_numberic()const {
 	case AttrType::Text:
 		return isNumeric(text);
 		break;
+	default:
+		return false;
 	}
 	return false;
 }
@@ -439,6 +451,9 @@ AttrVar& AttrVar::operator=(const json& j) {
 			new(&table)VarTable(vars);
 		}
 		break;
+	case json::value_t::binary:
+	case json::value_t::discarded:
+		return *this;
 	}
 	return *this;
 }
@@ -478,6 +493,9 @@ json AttrVar::to_json()const {
 			return j;
 		}
 	}
+		break;
+	case AttrType::Function:
+		return {};
 		break;
 	}
 	return {};
@@ -520,6 +538,11 @@ void AttrVar::writeb(std::ofstream& fout) const {
 		fwrite(fout, (char)5);
 		table.writeb(fout);
 		break;
+	case AttrType::Function:
+		fwrite(fout, (char)6);
+		fwrite(fout, chunk.len);
+		fout.write(chunk.bytes, chunk.len);
+		break;
 	case AttrType::ID:
 		fwrite(fout, (char)7);
 		fwrite(fout, id);
@@ -554,6 +577,11 @@ void AttrVar::readb(std::ifstream& fin) {
 		type = AttrType::Table;
 		new(&table) VarTable();
 		table.readb(fin);
+		break;
+	case 6:
+		des();
+		type = AttrType::Function;
+		new(&chunk) ByteS(fin);
 		break;
 	case 7:
 		des();

@@ -714,11 +714,11 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 			string strReply = chat(fromGID).confs["»Î»∫ª∂”≠"].to_str();
 			while (strReply.find("{at}") != string::npos)
 			{
-				strReply.replace(strReply.find("{at}"), 4, "[CQ:at,id=" + to_string(fromUID) + "]");
+				strReply.replace(strReply.find("{at}"), 4, "[CQ:at,qq=" + to_string(fromUID) + "]");
 			}
 			while (strReply.find("{@}") != string::npos)
 			{
-				strReply.replace(strReply.find("{@}"), 3, "[CQ:at,id=" + to_string(fromUID) + "]");
+				strReply.replace(strReply.find("{@}"), 3, "[CQ:at,qq=" + to_string(fromUID) + "]");
 			}
 			while (strReply.find("{nick}") != string::npos)
 			{

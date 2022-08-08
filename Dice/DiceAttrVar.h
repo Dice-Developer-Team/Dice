@@ -42,6 +42,7 @@ struct ByteS {
 		bytes = new char[len + 1];
 		memcpy(bytes, other.bytes, len);
 	}
+	ByteS(std::ifstream& fin);
 	~ByteS() { if (bytes)delete bytes; }
 };
 
