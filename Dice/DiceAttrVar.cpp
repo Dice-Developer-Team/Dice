@@ -411,6 +411,7 @@ AttrVar& AttrVar::operator=(const json& j) {
 		j.get_to(bit);
 		break;
 	case json::value_t::number_integer:
+	case json::value_t::number_unsigned:
 		if (long long num{ j.get<long long>() }; num > 10000000 || num < -10000000) {
 			type = AttrType::ID;
 			id = num;
@@ -427,10 +428,6 @@ AttrVar& AttrVar::operator=(const json& j) {
 	case json::value_t::string:
 		type = AttrType::Text;
 		new(&text)string(UTF8toGBK(j.get<string>()));
-		break;
-	case json::value_t::number_unsigned:
-		type = AttrType::ID;
-		j.get_to(id);
 		break;
 	case json::value_t::object:
 		type = AttrType::Table; {

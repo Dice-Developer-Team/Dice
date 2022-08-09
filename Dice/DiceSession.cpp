@@ -680,80 +680,85 @@ int DiceSessionManager::load()
 		}
 		auto pSession(std::make_shared<Session>(filename.stem().string()));
 		bool isUpgrated{ false };
-		pSession->create(j["create_time"]).update(j["update_time"]);
-		if (j.count("room")) {
-			if (j["room"].is_number()) {
-				long long id{ j["room"].get<long long>() };
-				pSession->windows.insert(id > 0 ? chatInfo{ 0, id } : chatInfo{ ~id });
+		try {
+			pSession->create(j["create_time"]).update(j["update_time"]);
+			if (j.count("room")) {
+				if (j["room"].is_number()) {
+					long long id{ j["room"].get<long long>() };
+					pSession->windows.insert(id > 0 ? chatInfo{ 0, id } : chatInfo{ ~id });
+				}
+				else if (j["room"].is_array()) {
+					for (auto& ct : j["room"]) {
+						pSession->windows.insert(chatInfo::from_json(ct));
+					}
+				}
 			}
-			else if (j["room"].is_array()) {
-				for (auto& ct : j["room"]) {
+			if (j.count("chats")) {
+				for (auto& ct : j["chats"]) {
 					pSession->windows.insert(chatInfo::from_json(ct));
 				}
 			}
-		}
-		if (j.count("chats")) {
-			for (auto& ct : j["chats"]) {
-				pSession->windows.insert(chatInfo::from_json(ct));
-			}
-		}
-		if (j.count("conf")) {
-			json& jConf{ j["conf"] };
-			for (auto it = jConf.cbegin(); it != jConf.cend(); ++it) {
-				pSession->conf[UTF8toGBK(it.key())] = it.value();
-			}
-		}
-		if (j.count("log")) {
-			json& jLog = j["log"];
-			jLog["start"].get_to(pSession->logger.tStart);
-			jLog["lastMsg"].get_to(pSession->logger.tLastMsg);
-			jLog["file"].get_to(pSession->logger.fileLog);
-			pSession->logger.fileLog = UTF8toGBK(pSession->logger.fileLog);
-			jLog["logging"].get_to(pSession->logger.isLogging);
-			pSession->logger.update();
-			pSession->logger.pathLog = DiceDir / pSession->logger.dirLog / GBKtoLocal(pSession->logger.fileLog);
-			if (pSession->logger.isLogging) {
-				for (const auto& chat : pSession->windows) {
-					LogList.insert(chat);
+			if (j.count("conf")) {
+				json& jConf{ j["conf"] };
+				for (auto it = jConf.cbegin(); it != jConf.cend(); ++it) {
+					pSession->conf[UTF8toGBK(it.key())] = it.value();
 				}
 			}
-		}
-		if (j.count("link")) {
-			json& jLink = j["link"];
-			const auto& ct{ *pSession->windows.begin() };
-			long long gid{ jLink["target"].get<long long>() };
-			LinkInfo& link{ linker.LinkList[ct] = {jLink["linking"].get<bool>(),
-				jLink["type"].get<string>(),
-				gid > 0 ? chatInfo{0,gid} : chatInfo{~gid} } };
-			isUpgrated = true;
-		}
-		if (j.count("decks")) {
-			json& jDecks = j["decks"];
-			for (auto it = jDecks.cbegin(); it != jDecks.cend(); ++it) {
-				if (it.value()["meta"].empty())continue;
-				std::string key = UTF8toGBK(it.key());
-				auto& deck{ pSession->decks[key] };
-				deck.meta = UTF8toGBK(it.value()["meta"].get<vector<string>>());
-				if (it.value().count("rest")) {
-					it.value()["rest"].get_to(pSession->decks[key].idxs);
-					pSession->decks[key].sizRes = pSession->decks[key].meta.size();
-				}
-				else {
-					it.value()["idxs"].get_to(pSession->decks[key].idxs);
-					it.value()["size"].get_to(pSession->decks[key].sizRes);
+			if (j.count("log")) {
+				json& jLog = j["log"];
+				jLog["start"].get_to(pSession->logger.tStart);
+				jLog["lastMsg"].get_to(pSession->logger.tLastMsg);
+				jLog["file"].get_to(pSession->logger.fileLog);
+				pSession->logger.fileLog = UTF8toGBK(pSession->logger.fileLog);
+				jLog["logging"].get_to(pSession->logger.isLogging);
+				pSession->logger.update();
+				pSession->logger.pathLog = DiceDir / pSession->logger.dirLog / GBKtoLocal(pSession->logger.fileLog);
+				if (pSession->logger.isLogging) {
+					for (const auto& chat : pSession->windows) {
+						LogList.insert(chat);
+					}
 				}
 			}
-		}
-		if (j.count("observer")) j["observer"].get_to(pSession->sOB);
-		if (j.count("tables")){
-			for (nlohmann::json::iterator itTable = j["tables"].begin(); itTable != j["tables"].end(); ++itTable)
-			{
-				string strTable = UTF8toGBK(itTable.key());
-				for (nlohmann::json::iterator itItem = itTable.value().begin(); itItem != itTable.value().end(); ++itItem)
+			if (j.count("link")) {
+				json& jLink = j["link"];
+				const auto& ct{ *pSession->windows.begin() };
+				long long gid{ jLink["target"].get<long long>() };
+				LinkInfo& link{ linker.LinkList[ct] = {jLink["linking"].get<bool>(),
+					jLink["type"].get<string>(),
+					gid > 0 ? chatInfo{0,gid} : chatInfo{~gid} } };
+				isUpgrated = true;
+			}
+			if (j.count("decks")) {
+				json& jDecks = j["decks"];
+				for (auto it = jDecks.cbegin(); it != jDecks.cend(); ++it) {
+					if (it.value()["meta"].empty())continue;
+					std::string key = UTF8toGBK(it.key());
+					auto& deck{ pSession->decks[key] };
+					deck.meta = UTF8toGBK(it.value()["meta"].get<vector<string>>());
+					if (it.value().count("rest")) {
+						it.value()["rest"].get_to(pSession->decks[key].idxs);
+						pSession->decks[key].sizRes = pSession->decks[key].idxs.size();
+					}
+					else {
+						it.value()["idxs"].get_to(pSession->decks[key].idxs);
+						it.value()["size"].get_to(pSession->decks[key].sizRes);
+					}
+				}
+			}
+			if (j.count("observer")) j["observer"].get_to(pSession->sOB);
+			if (j.count("tables")) {
+				for (nlohmann::json::iterator itTable = j["tables"].begin(); itTable != j["tables"].end(); ++itTable)
 				{
-					pSession->mTable[strTable].emplace(UTF8toGBK(itItem.key()), itItem.value());
+					string strTable = UTF8toGBK(itTable.key());
+					for (nlohmann::json::iterator itItem = itTable.value().begin(); itItem != itTable.value().end(); ++itItem)
+					{
+						pSession->mTable[strTable].emplace(UTF8toGBK(itItem.key()), itItem.value());
+					}
 				}
 			}
+		}
+		catch (std::exception& e) {
+			console.log("读取session文件" + UTF8toGBK(filename.u8string()) + "出错!" + e.what(), 1);
 		}
 		SessionByName[UTF8toGBK(filename.u8string())] = pSession;
 		for (const auto& chat : pSession->windows) {

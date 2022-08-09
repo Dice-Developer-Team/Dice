@@ -155,8 +155,7 @@ void readUserData()
 		cnt = loadBFile(dir / "PlayerCards.bak", PList);
 		if (cnt > 0)log << "恢复玩家记录" + to_string(cnt) + "条";
 	}
-	for (const auto& pl : PList)
-	{
+	for (const auto& pl : PList)	{
 		if (!UserList.count(pl.first))getUser(pl.first);
 	}
 	//读取群聊记录
