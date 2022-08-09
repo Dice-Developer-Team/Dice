@@ -105,9 +105,9 @@ void DiceSession::log_new(FromMsg* msg) {
 	std::error_code ec;
 	std::filesystem::create_directory(DiceDir / logger.dirLog, ec);
 	string nameLog{ msg->readFileName() };
+	logger.tStart = time(nullptr);
 	if (nameLog.empty())nameLog = to_string(logger.tStart);
 	msg->vars["log_name"] = nameLog;
-	logger.tStart = time(nullptr);
 	logger.isLogging = true;
 	logger.fileLog = LocaltoGBK(name) + "_" + nameLog + ".txt";
 	logger.pathLog = DiceDir / logger.dirLog / GBKtoLocal(logger.fileLog);

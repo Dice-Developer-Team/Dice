@@ -58,7 +58,7 @@ vector<string> getLines(const string& s, char delim){
     vector<string> vLine;
     std::stringstream ss(s);
     string line;
-    static char* space{ " \t\r\n" };
+    static const char* space{ " \t\r\n" };
     while (std::getline(ss, line, delim)){
         if (size_t l{ line.find_first_not_of(space) }; l != string::npos) {
             vLine.push_back(line.substr(l, line.find_last_not_of(space) + 1 - l));

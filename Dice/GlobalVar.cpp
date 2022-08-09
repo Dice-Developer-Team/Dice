@@ -482,6 +482,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
+614:更新reply:limit:lock
 613:更新lua交互机制
 612:新增mod代理事件
 611:更新WebUI自定义回执
@@ -579,7 +580,7 @@ mod按列表顺序读取内容，并从后向前覆盖)"},
 `.log on` 开始记录
 `.log off` 暂停记录
 `.log end` 完成记录并发送日志文件
-*日志名须为合法文件名，可省略*
+*日志名须为合法文件名，省略则为创建时间戳*
 日志上传存在失败可能，届时请.send联系{self}后台管理索取)"},
 {"deck",R"(牌堆实例.deck
 `.deck set (牌堆名=)公共牌堆名` //从公共牌堆创建实例
