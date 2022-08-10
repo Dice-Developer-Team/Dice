@@ -431,7 +431,7 @@ public:
 				from_json(freadJson(pathFile), *data);
 				break;
 			case SelfData::Bin:
-				data.readb(ifstream(pathFile));
+				data.readb(pathFile);
 				break;
 			default:
 				break;
@@ -445,7 +445,7 @@ public:
 			fwriteJson(pathFile,to_json(*data), 0);
 			break;
 		case SelfData::Bin:
-			data.writeb(ofstream(pathFile));
+			data.writeb(pathFile);
 			break;
 		default:
 			break;

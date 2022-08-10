@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <filesystem>
 #include "json.hpp"
 using std::string;
 using json = nlohmann::json;
@@ -205,7 +206,9 @@ public:
 		return *this;
 	}
 	void writeb(std::ofstream&)const;
+	void writeb(const std::filesystem::path&)const;
 	void readb(std::ifstream&);
+	void readb(const std::filesystem::path&);
 };
 using AttrObjects = std::unordered_map<string, AttrObject>;
 using AttrIndex = AttrVar(*)(AttrObject&);

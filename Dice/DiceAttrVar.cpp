@@ -627,4 +627,12 @@ string showAttrCMPR(AttrVar::CMPR cmpr) {
 }
 
 void AttrObject::writeb(std::ofstream& fout)const { fwrite(fout, *obj); }
-void AttrObject::readb(std::ifstream& fs) { fread(fs, *obj); }
+void AttrObject::writeb(const std::filesystem::path& p)const {
+	if(std::ofstream fs{ p })fwrite(fs, *obj);
+}
+void AttrObject::readb(std::ifstream& fs) {
+	fread(fs, *obj);
+}
+void AttrObject::readb(const std::filesystem::path& p) {
+	if (std::ifstream fs{ p })fread(fs, *obj);
+}
