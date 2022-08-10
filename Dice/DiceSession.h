@@ -24,6 +24,7 @@ struct LogInfo{
 	//创建时间，为0则不存在
 	time_t tStart{ 0 };
 	time_t tLastMsg{ 0 };
+	string name;
 	string fileLog;
 	//路径不保存，初始化时生成
 	std::filesystem::path pathLog;

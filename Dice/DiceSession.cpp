@@ -109,10 +109,10 @@ void DiceSession::log_new(FromMsg* msg) {
 	logger.tStart = time(nullptr);
 	string nameLog{ msg->readFileName() };
 	if (nameLog.empty())nameLog = to_string(logger.tStart);
-	msg->vars["log_name"] = nameLog;
-	logger.isLogging = true;
+	msg->vars["log_name"] = logger.name = nameLog;
 	logger.fileLog = LocaltoGBK(name) + "_" + nameLog + ".txt";
 	logger.pathLog = DiceDir / logger.dirLog / GBKtoLocal(logger.fileLog);
+	logger.isLogging = true;
 	//先发消息后插入
 	msg->replyMsg("strLogNew");
 	for (const auto& ct : windows) {
@@ -125,10 +125,17 @@ void DiceSession::log_on(FromMsg* msg) {
 		log_new(msg);
 		return;
 	}
-	if (logger.isLogging) {
+	if (string nameLog{ msg->readFileName() }; nameLog != logger.name) {
+		logger.tStart = time(nullptr);
+		logger.name = nameLog;
+		logger.fileLog = LocaltoGBK(name) + "_" + nameLog + ".txt";
+		logger.pathLog = DiceDir / logger.dirLog / GBKtoLocal(logger.fileLog);
+	}
+	else if (logger.isLogging) {
 		msg->replyMsg("strLogOnAlready");
 		return;
 	}
+	msg->vars["log_name"] = logger.name;
 	logger.isLogging = true;
 	msg->replyMsg("strLogOn");
 	for (const auto& ct : windows) {
@@ -607,6 +614,7 @@ void DiceSession::save() const
 		json jLog;
 		jLog["start"] = logger.tStart;
 		jLog["lastMsg"] = logger.tLastMsg;
+		jLog["name"] = GBKtoUTF8(logger.name);
 		jLog["file"] = GBKtoUTF8(logger.fileLog);
 		jLog["logging"] = logger.isLogging;
 		jData["log"] = jLog;
@@ -710,8 +718,9 @@ int DiceSessionManager::load()
 				json& jLog = j["log"];
 				jLog["start"].get_to(pSession->logger.tStart);
 				jLog["lastMsg"].get_to(pSession->logger.tLastMsg);
-				jLog["file"].get_to(pSession->logger.fileLog);
-				pSession->logger.fileLog = UTF8toGBK(pSession->logger.fileLog);
+				if (jLog.count("name"))pSession->logger.name = jLog["name"].get<string>();
+				else pSession->logger.name = to_string(pSession->logger.tStart);
+				pSession->logger.fileLog = jLog["file"].get<string>();
 				jLog["logging"].get_to(pSession->logger.isLogging);
 				pSession->logger.update();
 				pSession->logger.pathLog = DiceDir / pSession->logger.dirLog / GBKtoLocal(pSession->logger.fileLog);
