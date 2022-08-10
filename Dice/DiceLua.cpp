@@ -13,6 +13,7 @@ extern "C"{
 #include "DiceSession.h"
 #include "DiceMod.h"
 #include "DDAPI.h"
+#include "Jsonio.h"
 
 unordered_set<lua_State*> UTF8Luas;
 constexpr const char* chDigit{ "0123456789" };
@@ -413,6 +414,83 @@ bool lua_call_task(const char* file, const char* func) {
 }
 
 /**
+ * 供lua调用的类
+ */
+class SelfData {
+	enum FileType { Bin, Json };
+	FileType type{ Bin };
+	std::filesystem::path pathFile;
+public:
+	std::mutex exWrite;
+	AttrObject data;
+	void init(const std::filesystem::path& p) {
+		if (p.extension() == ".json")type = SelfData::Json;
+		if (std::filesystem::exists(pathFile = p)) {
+			switch (type) {
+			case SelfData::Json:
+				from_json(freadJson(pathFile), *data);
+				break;
+			case SelfData::Bin:
+				data.readb(ifstream(pathFile));
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	void save() {
+		std::lock_guard<std::mutex> lock(exWrite);
+		switch (type) {
+		case SelfData::Json:
+			fwriteJson(pathFile,to_json(*data), 0);
+			break;
+		case SelfData::Bin:
+			data.writeb(ofstream(pathFile));
+			break;
+		default:
+			break;
+		}
+	}
+};
+dict<SelfData> selfdata_list;
+int SelfData_index(lua_State* L) {
+	if (lua_gettop(L) < 2)return 0;
+	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
+	string key{ lua_to_gbstring(L, 2) };
+	if (file.data.has(key)) {
+		lua_push_attr(L, file.data[key]);
+		return 1;
+	}
+	return 0;
+}
+int SelfData_newindex(lua_State* L) {
+	if (lua_gettop(L) < 2)return 0;
+	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
+	string key{ lua_to_gbstring(L, 2) };
+	if (std::lock_guard<std::mutex> lock(file.exWrite); lua_gettop(L) < 3) {
+		file.data.reset(key);
+	}
+	else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {
+		file.data.reset(key);
+	}
+	else {
+		file.data[key] = val;
+	}
+	file.save();
+	return 0;
+}
+static const luaL_Reg SelfData_funcs[] = {
+	{"__index", SelfData_index},
+	{"__newindex", SelfData_newindex},
+	{NULL, NULL}
+};
+int luaopen_SelfData(lua_State* L) {
+	luaL_newmetatable(L, "SelfData");
+	luaL_setfuncs(L, SelfData_funcs, 0);
+	return 1;
+}
+
+/**
  * 供lua调用的函数
  */
 
@@ -499,6 +577,17 @@ int mkDirs(lua_State* L) {
 	string dir{ lua_to_native_string(L, 1) };
 	mkDir(dir);
 	return 0;
+}
+int getSelfData(lua_State* L) {
+	string file{ lua_to_native_string(L, 1) };
+	if (!selfdata_list.count(file)) {
+		mkDir(DiceDir / "selfdata");
+		selfdata_list[file].init(DiceDir / "selfdata" / file);
+	}
+	SelfData** p{ (SelfData**)lua_newuserdata(L, sizeof(SelfData*)) };
+	*p = &selfdata_list[file];
+	luaL_setmetatable(L, "SelfData");
+	return 1;
 }
 int getGroupConf(lua_State* L) {
 	int top{ lua_gettop(L) };
@@ -956,6 +1045,7 @@ int luaopen_Context(lua_State* L) {
 	luaL_setfuncs(L, Context_funcs, 0);
 	return 1;
 }
+//metatable Actor
 int Actor_index(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	string key{ lua_to_gbstring(L, 2) };
@@ -1051,6 +1141,7 @@ void LuaState::regist() {
 		REGIST(getDiceQQ)
 		REGIST(getDiceDir)
 		REGIST(mkDirs)
+		REGIST(getSelfData)
 		REGIST(getGroupConf)
 		REGIST(setGroupConf)
 		REGIST(getUserConf)
@@ -1072,6 +1163,7 @@ void LuaState::regist() {
 	}
 	static const luaL_Reg Dicelibs[] = {
 		{"Context", luaopen_Context},
+		{"SelfData", luaopen_SelfData},
 		{"Actor", luaopen_Actor},
 		{"http", luaopen_http},
 		{NULL, NULL}

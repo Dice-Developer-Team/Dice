@@ -62,7 +62,7 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 				strNotice += "群权限获取失败";
 			}
 			else if (authBlack < authSelf) {
-				if (mark.isSource(console.DiceMaid && !mark.isType("local")))AddMsgToQueue(
+				if (mark.isSource(console.DiceMaid) && !mark.isType("local"))AddMsgToQueue(
 					mark.warning(), { 0,id });
 				strNotice += "对方群权限较低";
 			}

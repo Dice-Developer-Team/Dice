@@ -19,6 +19,8 @@ DiceSessionManager sessions;
 std::shared_mutex sessionMutex;
 unordered_set<chatInfo>LogList;
 
+const std::filesystem::path LogInfo::dirLog{ std::filesystem::path("user") / "log" };
+
 bool DiceSession::table_del(const string& tab, const string& item) {
 	if (!mTable.count(tab) || !mTable[tab].count(item))return false;
 	mTable[tab].erase(item);
@@ -104,8 +106,8 @@ void DiceSession::ob_clr(FromMsg* msg)
 void DiceSession::log_new(FromMsg* msg) {
 	std::error_code ec;
 	std::filesystem::create_directory(DiceDir / logger.dirLog, ec);
-	string nameLog{ msg->readFileName() };
 	logger.tStart = time(nullptr);
+	string nameLog{ msg->readFileName() };
 	if (nameLog.empty())nameLog = to_string(logger.tStart);
 	msg->vars["log_name"] = nameLog;
 	logger.isLogging = true;

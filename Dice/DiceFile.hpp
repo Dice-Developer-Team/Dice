@@ -35,7 +35,7 @@ using std::set;
 using std::unordered_set;
 using std::unordered_map;
 
-int mkDir(const std::string& dir);
+int mkDir(const std::filesystem::path& dir);
 
 int clrDir(const std::string& dir, const unordered_set<std::string>& exceptList);
 
@@ -484,21 +484,9 @@ int loadINI(const std::filesystem::path& fpPath, std::map<std::string, C>& m)
 	return 1;
 }
 
-[[deprecated]] bool rdbuf(const string& strPath, string& s);
 bool rdbuf(const std::filesystem::path& fpPath, string& s);
 
 //∂¡»°Œ±xml
-template <class C, std::string(C::* U)() = &C::getName>
-[[deprecated]] int loadXML(const std::string& strPath, std::map<std::string, C>& m)
-{
-	string s;
-	if (!rdbuf(strPath, s))return -1;
-	DDOM xml(s);
-	C obj(xml);
-	m[obj.getName()].readt(xml);
-	return 1;
-}
-
 template <class C, std::string(C::* U)() = &C::getName>
 int loadXML(const std::filesystem::path& fpPath, std::map<std::string, C>& m)
 {

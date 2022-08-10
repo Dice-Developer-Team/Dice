@@ -19,7 +19,7 @@ class FromMsg;
 class DiceTableMaster;
 
 struct LogInfo{
-	const std::filesystem::path dirLog = std::filesystem::path("user") / "log";
+	static const std::filesystem::path dirLog;
 	bool isLogging{ false };
 	//创建时间，为0则不存在
 	time_t tStart{ 0 };

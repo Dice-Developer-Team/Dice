@@ -14,7 +14,7 @@
 #include <Windows.h>
 #endif
 
-int mkDir(const std::string& dir)
+int mkDir(const std::filesystem::path& dir)
 {
 	std::error_code err;
 	std::filesystem::create_directories(dir, err);

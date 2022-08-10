@@ -67,8 +67,8 @@ const dict_ci<string> PlainMsg
 	{"strAkShow","{self}的当前分歧:{fork} {li}"},
 	{"strAkClr","{self}已清除本轮分歧{fork}√"},
 	{"strAdminOptionEmpty","找{self}有什么事么？{nick}"},			//
-	{"strLogNew","{self}开始记录新日志{log_name}√\n请适时用.log off暂停或.log end完成记录"},
-	{"strLogOn","{self}开始日志记录√\n可使用.log off暂停记录"},
+	{"strLogNew","{self}已新开记录日志{log_name}√\n请适时用.log off暂停或.log end完成记录"},
+	{"strLogOn","{self}开始日志记录{log_name}√\n可使用.log off暂停记录"},
 	{"strLogOnAlready","{self}正在记录中！"},
 	{"strLogOff","{self}已暂停日志记录√\n可使用.log on恢复记录"},
 	{"strLogOffAlready","{self}已经暂停记录！"},
@@ -482,6 +482,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
+615:支持自定义数据读写
 614:更新reply:limit:lock
 613:更新lua交互机制
 612:新增mod代理事件
@@ -496,11 +497,7 @@ const dict_ci<string> HelpDoc = {
 603:支持yaml读取
 602:lua支持元表读写与方法
 601:新增禁用非好友会话
-598:当日计数器
-597:冷却计时器
-596:角色卡/Conf允许读写table
 593:reply新增触发限制
-590:lua内置http
 589:ak安科安价指令
 585:WebUI
 581:角色掷骰统计
@@ -576,12 +573,12 @@ mod按列表顺序读取内容，并从后向前覆盖)"},
 .ak show 查看分歧选项
 .ak clr 清除本轮分歧)"},
 {"log",R"(跑团日志记录.log
-`.log new 日志名` 新建日志并开始记录
-`.log on` 开始记录
+`.log new 日志名` 另开日志并开始记录
+`.log on` 继续记录
 `.log off` 暂停记录
 `.log end` 完成记录并发送日志文件
-*日志名须为合法文件名，省略则为创建时间戳*
-日志上传存在失败可能，届时请.send联系{self}后台管理索取)"},
+日志名须作为文件名合法，省略则使用创建时间戳
+日志有上传失败风险，届时请.send联系{self}后台管理索取)"},
 {"deck",R"(牌堆实例.deck
 `.deck set (牌堆名=)公共牌堆名` //从公共牌堆创建实例
 `.deck set (牌堆名=)member` //从群成员列表创建实例
