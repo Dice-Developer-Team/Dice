@@ -136,6 +136,7 @@ public:
 	bool is_table()const { return type == AttrType::Table; }
 	bool is_function()const { return type == AttrType::Function; }
 	bool equal(const AttrVar&)const;
+	bool not_equal(const AttrVar&)const;
 	bool more(const AttrVar&)const;
 	bool less(const AttrVar&)const;
 	bool equal_or_more(const AttrVar&)const;

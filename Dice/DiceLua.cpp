@@ -524,8 +524,24 @@ int getGroupConf(lua_State* L) {
 	if (item == "size") {
 		lua_pushnumber(L, (double)DD::getGroupSize(id).currSize);
 	}
-	else  if (item == "maxsize") {
+	else if (item == "maxsize") {
 		lua_pushnumber(L, (double)DD::getGroupSize(id).maxSize);
+	}
+	else if (item == "members") {
+		lua_newtable(L);
+		long long i{ 0 };
+		for (auto id : DD::getGroupMemberList(id)) {
+			lua_push_raw_string(L, to_string(id));
+			lua_rawseti(L, -2, ++i);
+		}
+	}
+	else  if (item == "admins") {
+		lua_newtable(L);
+		long long i{ 0 };
+		for (auto id : DD::getGroupAdminList(id)) {
+			lua_push_raw_string(L, to_string(id));
+			lua_rawseti(L, -2, ++i);
+		}
 	}
 	else if (item.find("card#") == 0) {
 		long long uid{ 0 };

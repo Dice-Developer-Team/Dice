@@ -387,6 +387,22 @@ bool AttrVar::equal(const AttrVar& other)const{
 	}
 	return false;
 }
+bool AttrVar::not_equal(const AttrVar& other)const {
+	if (other.type == AttrType::Nil) {
+		return !is_null();
+	}
+	else if (other.type == AttrType::Boolean) {
+		return is_true() != other.is_true();
+	}
+	else if (other.type == AttrType::Text) {
+		if (type == AttrType::Text)return text != other.text;
+		else return to_str() != other.text;
+	}
+	else if (other.is_numberic() && is_numberic()) {
+		return to_num() != other.to_num();
+	}
+	return true;
+}
 bool AttrVar::more(const AttrVar& other)const {
 	return is_numberic() && to_num() > other.to_num();
 }

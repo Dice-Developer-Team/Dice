@@ -76,6 +76,10 @@ string parse_vary(const VarTable& raw, unordered_map<string, pair<AttrVar::CMPR,
 				vary[var] = { &AttrVar::equal,tab["equal"] };
 				vars << var + "=" + tab["equal"].to_str();
 			}
+			else if (tab.count("neq")) {
+				vary[var] = { &AttrVar::not_equal , tab["neq"] };
+				vars << var + "=" + tab["neq"].to_str() + "+";
+			}
 			else if (tab.count("at_least")) {
 				vary[var] = { &AttrVar::equal_or_more , tab["at_least"] };
 				vars << var + "=" + tab["at_least"].to_str() + "+";
@@ -293,11 +297,18 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			}
 		}
 		else if (key == "user_id") {
-			if (!item.is_table())continue;
+			if (item.is_numberic()) {
+				user_id = { item.to_ll() };
+			}
+			else if (!item.is_table())continue;
 			VarTable tab{ item.to_table() };
 			if (tab.get_dict().count("nor")) {
 				user_id_negative = true;
-				tab = tab.get_dict()["nor"]->to_table();
+				item = *tab.get_dict()["nor"];
+				if (item.is_numberic()) {
+					user_id = { item.to_ll() };
+				}
+				else tab = item.to_table();
 			}
 			for (auto id : tab.get_list()) {
 				user_id.emplace(id->to_ll());
@@ -308,11 +319,18 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			}
 		}
 		else if (key == "grp_id") {
-			if (!item.is_table())continue;
+			if (item.is_numberic()) {
+				grp_id = { item.to_ll() };
+			}
+			else if (!item.is_table())continue;
 			VarTable tab{ item.to_table() };
 			if (tab.get_dict().count("nor")) {
 				grp_id_negative = true;
-				tab = tab.get_dict()["nor"]->to_table();
+				item = *tab.get_dict()["nor"];
+				if (item.is_numberic()) {
+					grp_id = { item.to_ll() };
+				}
+				else tab = item.to_table();
 			}
 			for (auto id : tab.get_list()) {
 				grp_id.emplace(id->to_ll());
