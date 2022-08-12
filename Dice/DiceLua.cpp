@@ -144,13 +144,13 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 		if (unordered_set<string> idxs; !attr.table.dict.empty()) {
 			int idx{ 0 };
 			for (auto& val : attr.table.idxs) {
-				val ? lua_push_attr(L, *val.get()) : lua_pushnil(L);
+				val ? lua_push_attr(L, *val) : lua_pushnil(L);
 				lua_seti(L, -2, ++idx);
 				idxs.insert(to_string(idx));
 			}
 			for (auto& [key, val] : attr.table.dict) {
 				if (idxs.count(key))continue;
-				val ? lua_push_attr(L, *val.get()) : lua_pushnil(L);
+				val ? lua_push_attr(L, *val) : lua_pushnil(L);
 				lua_set_field(L, -2, key.c_str());
 			}
 		}
@@ -424,6 +424,7 @@ public:
 	std::mutex exWrite;
 	AttrObject data;
 	void init(const std::filesystem::path& p) {
+		mkDir(p.parent_path());
 		if (p.extension() == ".json")type = SelfData::Json;
 		if (std::filesystem::exists(pathFile = p)) {
 			switch (type) {
@@ -453,11 +454,53 @@ public:
 	}
 };
 dict<SelfData> selfdata_list;
+int selfData_get(lua_State* L) {
+	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
+	if (lua_isnoneornil(L, 2)) {
+		lua_push_table(L, *file.data);
+	}
+	else {
+		string key{ lua_to_gbstring(L, 2) };
+		if (file.data.has(key)) {
+			lua_push_attr(L, file.data[key]);
+		}
+		else if (lua_gettop(L) > 2) {
+			lua_pushnil(L);
+			lua_insert(L, 3);
+		}
+		else return 0;
+	}
+	return 1;
+}
+int selfData_set(lua_State* L) {
+	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
+	if (lua_istable(L, 2)) {
+		file.data = lua_to_table(L, 2);
+		file.save();
+	}
+	else if(lua_isstring(L, 2)) {
+		string key{ lua_to_gbstring(L, 2) };
+		if (lua_isnoneornil(L, 3)) {
+			file.data.reset(key); 
+		}
+		else file.data[key] = lua_to_attr(L, 3);
+		file.save();
+	}
+	return 0;
+}
 int SelfData_index(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
 	string key{ lua_to_gbstring(L, 2) };
-	if (file.data.has(key)) {
+	if (key == "get") {
+		lua_pushcfunction(L, selfData_get);
+		return 1;
+	}
+	else if (key == "set") {
+		lua_pushcfunction(L, selfData_set);
+		return 1;
+	}
+	else if (file.data.has(key)) {
 		lua_push_attr(L, file.data[key]);
 		return 1;
 	}
@@ -479,9 +522,15 @@ int SelfData_newindex(lua_State* L) {
 	file.save();
 	return 0;
 }
+int SelfData_totable(lua_State* L) {
+	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
+	lua_push_table(L, *file.data);
+	return 1;
+}
 static const luaL_Reg SelfData_funcs[] = {
 	{"__index", SelfData_index},
 	{"__newindex", SelfData_newindex},
+	{"__totable", SelfData_totable},
 	{NULL, NULL}
 };
 int luaopen_SelfData(lua_State* L) {
@@ -581,7 +630,6 @@ int mkDirs(lua_State* L) {
 int getSelfData(lua_State* L) {
 	string file{ lua_to_native_string(L, 1) };
 	if (!selfdata_list.count(file)) {
-		mkDir(DiceDir / "selfdata");
 		selfdata_list[file].init(DiceDir / "selfdata" / file);
 	}
 	SelfData** p{ (SelfData**)lua_newuserdata(L, sizeof(SelfData*)) };

@@ -718,9 +718,9 @@ int DiceSessionManager::load()
 				json& jLog = j["log"];
 				jLog["start"].get_to(pSession->logger.tStart);
 				jLog["lastMsg"].get_to(pSession->logger.tLastMsg);
-				if (jLog.count("name"))pSession->logger.name = jLog["name"].get<string>();
+				if (jLog.count("name"))pSession->logger.name = UTF8toGBK(jLog["name"].get<string>());
 				else pSession->logger.name = to_string(pSession->logger.tStart);
-				pSession->logger.fileLog = jLog["file"].get<string>();
+				pSession->logger.fileLog = UTF8toGBK(jLog["file"].get<string>());
 				jLog["logging"].get_to(pSession->logger.isLogging);
 				pSession->logger.update();
 				pSession->logger.pathLog = DiceDir / pSession->logger.dirLog / GBKtoLocal(pSession->logger.fileLog);
