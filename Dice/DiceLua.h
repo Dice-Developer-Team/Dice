@@ -9,8 +9,7 @@
 
 class Lua_State;
 class FromMsg;
-bool lua_msg_order(FromMsg*, const char*, const char*);
-bool lua_msg_reply(FromMsg*, const AttrVar&);
+bool lua_msg_call(FromMsg*, const AttrVar&);
 bool lua_call_event(AttrObject eve, const AttrVar&);
-bool lua_call_task(const char*, const char*);
-int lua_readStringTable(const char*, const char*, std::unordered_map<std::string, std::string>&);
+bool lua_call_task(const AttrVars&);
+int lua_readStringTable(const char*, const char*, std::unordered_map<std::string, AttrVar>&);

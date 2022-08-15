@@ -392,6 +392,7 @@ int loadXML(const std::filesystem::path& fpPath, std::map<std::string, C>& m)
 
 //±éÀúÎÄ¼ş¼Ğ
 int listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& files, bool isSub = false);
+size_t cntDirFile(const std::filesystem::path& dir);
 
 template <typename T1, typename T2>
 int _loadDir(int (*load)(const std::filesystem::path&, T2&), const std::filesystem::path& fpDir, T2& tmp, int& intFile, int& intFailure,

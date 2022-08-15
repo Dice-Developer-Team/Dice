@@ -97,21 +97,6 @@ public:
 	json writeJson()const;
 };
 
-class DiceMsgOrder {
-	enum class OrderType { Nil, Lua };
-	//½öÖ§³Ölua
-	OrderType type{ OrderType::Nil };
-	string fileLua;
-	string funcLua;
-public:
-	DiceMsgOrder() = default;
-	DiceMsgOrder(const string& file, const string& func): fileLua(file), funcLua(func){
-		type = OrderType::Lua;
-	}
-	bool exec(FromMsg*);
-	bool exec();
-};
-
 class DiceEvent {
 	enum class Mode { Nil, Clock, Cycle, Trigger };
 	enum class ActType { Nil, Lua };
@@ -191,9 +176,9 @@ class DiceModManager
 	//global
 	dict_ci<DiceSpeech> global_speech;
 	dict_ci<string> helpdoc;
-	dict_ci<DiceMsgOrder> msgorder;
+	dict_ci<AttrVar> msgorder;
 	dict_ci<ptr<DiceMsgReply>> final_msgreply;
-	dict_ci<DiceMsgOrder> taskcall;
+	dict_ci<AttrVars> taskcall;
 	dict_ci<string> scripts;
 	//Event
 	dict_ci<AttrObject> events; //events by id

@@ -32,7 +32,7 @@ ByteS::ByteS(std::ifstream& fin) {
 	fin.read(bytes, len);
 }
 
-VarTable::VarTable(const unordered_map<string, AttrVar>& m) {
+VarTable::VarTable(const AttrVars& m) {
 	for (auto& [key, val] : m) {
 		dict[key] = std::make_shared<AttrVar>(val);
 	}

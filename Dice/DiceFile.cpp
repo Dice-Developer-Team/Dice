@@ -195,6 +195,17 @@ int listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& fil
 	}
 	return _listDir<std::filesystem::directory_iterator>(dir, files);
 }
+size_t cntDirFile(const std::filesystem::path& dir) {
+	if (!std::filesystem::exists(dir))return 0;
+	size_t nFile{ 0 };
+	std::error_code err;
+	for (const auto& file : std::filesystem::recursive_directory_iterator(dir, err)){
+		if (std::filesystem::is_regular_file(file.status())){
+			++nFile;
+		}
+	}
+	return err ? 0 : nFile;
+}
 
 // 获取本地编码格式的文件名
 // 在Windows上不能直接调用string(), 因为文件名可能无法转换为本地ANSI编码，导致异常抛出

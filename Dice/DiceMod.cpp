@@ -614,7 +614,7 @@ bool DiceMsgReply::exec(FromMsg* msg) {
 		return true;
 	}
 	else if (echo == Echo::Lua) {
-		lua_msg_reply(msg, text);
+		lua_msg_call(msg, text);
 		return true;
 	}
 	return false;
@@ -739,25 +739,6 @@ json DiceMsgReply::writeJson()const {
 	if (echo == Echo::Deck)j["answer"] = GBKtoUTF8(deck);
 	else j["answer"] = GBKtoUTF8(text.to_str());
 	return j;
-}
-
-bool DiceMsgOrder::exec(FromMsg* msg) {
-	if (type == OrderType::Lua) {
-		//std::thread th(lua_msg_order, msg, fileLua.c_str(), funcLua.c_str());
-		//th.detach();
-		lua_msg_order(msg, fileLua.c_str(), funcLua.c_str());
-		return true;
-	}
-	return false;
-}
-bool DiceMsgOrder::exec() {
-	if (type == OrderType::Lua) {
-		std::thread th(lua_call_task, fileLua.c_str(), funcLua.c_str());
-		th.detach();
-		//lua_call_task(fileLua.c_str(), funcLua.c_str());
-		return true;
-	}
-	return false;
 }
 
 DiceSpeech::DiceSpeech(const YAML::Node& yaml) {
@@ -1268,8 +1249,9 @@ void DiceModManager::reply_show(const shared_ptr<DiceJobDetail>& msg) {
 
 bool DiceModManager::listen_order(DiceJobDetail* msg) {
 	if (shared_ptr<string> nameOrder{ gOrder.match_head(msg->vars.get_str("fromMsg")) }) {
+		msg->vars["reply_title"] = *nameOrder;
 		return ((FromMsg*)msg)->WordCensor()
-			|| msgorder[*nameOrder].exec((FromMsg*)msg);
+			|| lua_msg_call((FromMsg*)msg, msgorder[*nameOrder]);
 	}
 	return false;
 }
@@ -1278,7 +1260,12 @@ string DiceModManager::list_order() {
 }
 
 bool DiceModManager::call_task(const string& task) {
-	return taskcall[task].exec();
+	if (auto it{ taskcall.find(task) }; it != taskcall.end()) {
+		std::thread th(lua_call_task, it->second);
+		th.detach();
+		return true;
+	}
+	return false;
 }
 
 string DiceModManager::script_path(const string& name)const {
@@ -1328,7 +1315,7 @@ int DiceModManager::load(ResList& resLog){
 		if (newMod)save();
 	}
 	if (!ModLoadList.empty()) {
-		int cntMod{ 0 }, cntHelpItem{ 0 }, cntSpeech{ 0 };
+		int cntMod{ 0 }, cntHelpItem{ 0 }, cntSpeech{ 0 }, cntImage{ 0 }, cntRecord{ 0 };
 		vector<std::filesystem::path> ModLuaFiles;
 		for (auto& pathFile : ModLoadList) {
 			if (pathFile.empty())continue;
@@ -1384,6 +1371,16 @@ int DiceModManager::load(ResList& resLog){
 							scripts[script_name] = strPath;
 						}
 					}
+					if (fs::exists(dirMod / "image")) {
+						std::filesystem::copy(dirMod / "image", dirExe / "data" / "image",
+							std::filesystem::copy_options::recursive); 
+						cntImage += cntDirFile(dirMod / "image");
+					}
+					if (fs::exists(dirMod / "audio")) {
+						std::filesystem::copy(dirMod / "audio", dirExe / "data" / "record",
+							std::filesystem::copy_options::recursive);
+						cntRecord += cntDirFile(dirMod / "audio");
+					}
 				}
 
 			}
@@ -1394,6 +1391,8 @@ int DiceModManager::load(ResList& resLog){
 		}
 		if (cntMod)resLog << "读取/mod/中的" + std::to_string(cntMod) + "个mod";
 		if (cntSpeech)resLog << "录入speech" + to_string(cntSpeech) + "项";
+		if (cntImage)resLog << "录入图像" + to_string(cntImage) + "张";
+		if (cntSpeech)resLog << "录入音频" + to_string(cntSpeech) + "份";
 		loadLuaMod(ModLuaFiles, resLog);
 		if (!scripts.empty())resLog << "注册script" + to_string(scripts.size()) + "份";
 		if (cntHelpItem)resLog << "录入help词条" + to_string(cntHelpItem) + "项";
@@ -1416,21 +1415,22 @@ int DiceModManager::load(ResList& resLog){
 				continue;
 			}
 			string fileLua = getNativePathString(pathFile);
-			std::unordered_map<std::string, std::string> mOrder;
+			AttrVars mOrder;
 			int cnt = lua_readStringTable(fileLua.c_str(), "msg_order", mOrder);
 			if (cnt > 0) {
 				for (auto& [key, func] : mOrder) {
-					msgorder[format(key)] = { fileLua,func };
+					msgorder[format(key)] = func.is_character() ?
+						AttrVar(AttrVars{ {"file",fileLua},{"func",func} }) : func;
 				}
 				cntOrder += mOrder.size();
 			}
 			else if (cnt < 0) {
 				sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
 			}
-			std::unordered_map<std::string, std::string> mJob;
+			AttrVars mJob;
 			if ((cnt = lua_readStringTable(fileLua.c_str(), "task_call", mJob)) > 0) {
 				for (auto& [key, func] : mJob) {
-					taskcall[key] = { fileLua,func };
+					taskcall[key] = { {"file",fileLua},{"func",func} };
 				}
 				cntOrder += mJob.size();
 			}

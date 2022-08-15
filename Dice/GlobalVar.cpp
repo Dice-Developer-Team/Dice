@@ -157,6 +157,7 @@ const dict_ci<string> PlainMsg
 	{"strReplyDel","{self}已移除回复关键词条目{key}√"},
 	{"strReplyKeyEmpty","{nick}请输入回复关键词×"},
 	{"strReplyKeyNotFound","{self}未找到回复关键词{key}×"},
+	{"strReplyLuaErr","似乎出了点问题，请{nick}耐心等待（Lua脚本运行出错）" },
 	{"strStModify","{self}对已记录{pc}的属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","{self}对已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
 	{"strStValEmpty","{self}未记录{attr}原值×"},		
