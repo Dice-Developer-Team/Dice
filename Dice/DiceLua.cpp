@@ -23,7 +23,7 @@ class LuaState {
 	lua_State* state;
 	//bool isValid;
 public:
-	LuaState(const string& file);
+	LuaState(string file);
 	LuaState();
 	//operator bool()const { return isValid; }
 	operator lua_State* () { return state; }
@@ -266,7 +266,7 @@ bool lua_msg_call(FromMsg* msg, const AttrObject& lua) {
 		// ×ª»»ÎªGB18030
 		string fileGBK(luaFile);
 #else
-		string fileGBK(UTF8toGBK(file, true));
+		string fileGBK(UTF8toGBK(luaFile, true));
 #endif
 		if (!lua.has("func")) {
 			if (lua_pcall(L, 0, 2, 0)) {
@@ -1236,15 +1236,12 @@ LuaState::LuaState() {//:isValid(false) {
 	luaL_openlibs(state);
 	regist();
 }
-LuaState::LuaState(const string& file) {
+LuaState::LuaState(string file) {
 #ifndef _WIN32
 	// ×ª»»separator
-	string fileStr(file);
-	for (auto& c : fileStr)
-	{
+	for (auto& c : file) {
 		if (c == '\\') c = '/';
 	}
-	file = fileStr.c_str();
 #endif
 	state = luaL_newstate();
 	if (!state)return;
