@@ -614,7 +614,7 @@ bool DiceMsgReply::exec(FromMsg* msg) {
 		return true;
 	}
 	else if (echo == Echo::Lua) {
-		lua_msg_call(msg, text);
+		lua_msg_call(msg, text.to_dict());
 		return true;
 	}
 	return false;
@@ -675,11 +675,11 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 		}
 		else if (answer.is_function()) {
 			echo = Echo::Lua;
-			text = answer;
+			text = AttrVar(AttrVars{ {"lang","lua"},{"script",answer} });
 		}
 		else if (AttrVars tab{ answer.to_dict() }; tab.count("lua")) {
 			echo = Echo::Lua;
-			text = tab["lua"];
+			text = AttrVar(AttrVars{ {"lang","lua"},{"script",tab["lua"]} });
 		}
 		else{
 			deck = {};
@@ -720,6 +720,7 @@ void DiceMsgReply::readJson(const json& j) {
 		if (j.count("echo"))echo = (Echo)sEcho[j["echo"].get<string>()];
 		if (j.count("answer")) {
 			if (echo == Echo::Deck)deck = UTF8toGBK(j["answer"].get<vector<string>>());
+			else if (echo == Echo::Lua)text = AttrVar(AttrVars{ {"lang","lua"},{"script",UTF8toGBK(j["answer"].get<string>())} });
 			else text = UTF8toGBK(j["answer"].get<string>());
 		}
 	}
@@ -1315,7 +1316,7 @@ int DiceModManager::load(ResList& resLog){
 		if (newMod)save();
 	}
 	if (!ModLoadList.empty()) {
-		int cntMod{ 0 }, cntHelpItem{ 0 }, cntSpeech{ 0 }, cntImage{ 0 }, cntRecord{ 0 };
+		int cntMod{ 0 }, cntHelpItem{ 0 }, cntSpeech{ 0 }, cntImage{ 0 }, cntAudio{ 0 };
 		vector<std::filesystem::path> ModLuaFiles;
 		for (auto& pathFile : ModLoadList) {
 			if (pathFile.empty())continue;
@@ -1379,7 +1380,7 @@ int DiceModManager::load(ResList& resLog){
 					if (fs::exists(dirMod / "audio")) {
 						std::filesystem::copy(dirMod / "audio", dirExe / "data" / "record",
 							std::filesystem::copy_options::recursive);
-						cntRecord += cntDirFile(dirMod / "audio");
+						cntAudio += cntDirFile(dirMod / "audio");
 					}
 				}
 
@@ -1392,7 +1393,7 @@ int DiceModManager::load(ResList& resLog){
 		if (cntMod)resLog << "读取/mod/中的" + std::to_string(cntMod) + "个mod";
 		if (cntSpeech)resLog << "录入speech" + to_string(cntSpeech) + "项";
 		if (cntImage)resLog << "录入图像" + to_string(cntImage) + "张";
-		if (cntSpeech)resLog << "录入音频" + to_string(cntSpeech) + "份";
+		if (cntAudio)resLog << "录入音频" + to_string(cntAudio) + "份";
 		loadLuaMod(ModLuaFiles, resLog);
 		if (!scripts.empty())resLog << "注册script" + to_string(scripts.size()) + "份";
 		if (cntHelpItem)resLog << "录入help词条" + to_string(cntHelpItem) + "项";
@@ -1419,8 +1420,7 @@ int DiceModManager::load(ResList& resLog){
 			int cnt = lua_readStringTable(fileLua.c_str(), "msg_order", mOrder);
 			if (cnt > 0) {
 				for (auto& [key, func] : mOrder) {
-					msgorder[format(key)] = func.is_character() ?
-						AttrVar(AttrVars{ {"file",fileLua},{"func",func} }) : func;
+					msgorder[format(key)] = { {"file",fileLua},{"func",func} };
 				}
 				cntOrder += mOrder.size();
 			}

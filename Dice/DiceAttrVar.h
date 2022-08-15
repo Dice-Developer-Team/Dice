@@ -183,6 +183,9 @@ public:
 	bool is(const string& key)const {
 		return obj->count(key) ? bool(obj->at(key)) :false;
 	}
+	AttrVar get(const string& key, const AttrVar& val = {})const {
+		return obj->count(key) ? obj->at(key) : val;
+	}
 	string get_str(const string& key)const {
 		return obj->count(key) ? obj->at(key).to_str() : "";
 	}

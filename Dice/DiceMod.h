@@ -176,7 +176,7 @@ class DiceModManager
 	//global
 	dict_ci<DiceSpeech> global_speech;
 	dict_ci<string> helpdoc;
-	dict_ci<AttrVar> msgorder;
+	dict_ci<AttrVars> msgorder;
 	dict_ci<ptr<DiceMsgReply>> final_msgreply;
 	dict_ci<AttrVars> taskcall;
 	dict_ci<string> scripts;

@@ -2085,9 +2085,12 @@ int FromMsg::InnerOrder() {
 						}
 					}
 					else {
-						if(trigger->echo== DiceMsgReply::Echo::Lua && trusted < 5) {
-							replyMsg("strNotMaster");
-							return -1;
+						if(trigger->echo == DiceMsgReply::Echo::Lua) {
+							if (trusted < 5) {
+								replyMsg("strNotMaster");
+								return -1;
+							}
+							trigger->text = AttrVar(AttrVars{ {"lang","lua"},{"script",readRest()} });
 						}
 						trigger->text = readRest();
 					}
