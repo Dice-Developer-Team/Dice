@@ -125,7 +125,7 @@ void DiceSession::log_on(FromMsg* msg) {
 		log_new(msg);
 		return;
 	}
-	if (string nameLog{ msg->readFileName() }; nameLog != logger.name) {
+	if (string nameLog{ msg->readFileName() }; !nameLog.empty() && nameLog != logger.name) {
 		logger.tStart = time(nullptr);
 		logger.name = nameLog;
 		logger.fileLog = LocaltoGBK(name) + "_" + nameLog + ".txt";
