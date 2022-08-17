@@ -139,7 +139,7 @@ void readUserData()
 		if (cnt > 0)log << "迁移用户记录" + to_string(cnt) + "条";
 	}
 	//for QQ Channel
-	if (User& self{ UserList[console.DiceMaid] }; !self.confs.has("tinyID") || self.confs["tinyID"] == 0) {
+	if (User& self{ UserList[console.DiceMaid] }; !self.confs.get_ll("tinyID")) {
 		if (long long tiny{ DD::getTinyID() }) {
 			DD::debugMsg("获取分身ID:" + to_string(tiny));
 			self.setConf("tinyID", tiny);

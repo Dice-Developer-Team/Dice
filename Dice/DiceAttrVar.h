@@ -113,13 +113,15 @@ public:
 	AttrVar& operator=(const json&);
 	template<typename T>
 	bool operator!=(const T other)const { return !(*this == other); }
-	bool operator==(const long long other)const;
+	//bool operator==(const long long other)const;
 	bool operator==(const string& other)const;
+	bool operator==(const char* other)const;
 	int to_int()const;
 	long long to_ll()const;
 	double to_num()const;
 	string to_str()const;
 	ByteS to_bytes()const;
+	string print()const;
 	string show()const;
 	bool str_empty()const;
 	VarTable to_table()const;
@@ -136,11 +138,17 @@ public:
 	bool is_table()const { return type == AttrType::Table; }
 	bool is_function()const { return type == AttrType::Function; }
 	bool equal(const AttrVar&)const;
+	bool operator==(const AttrVar& other)const { return equal(other); }
 	bool not_equal(const AttrVar&)const;
+	bool operator!=(const AttrVar& other)const { return not_equal(other); }
 	bool more(const AttrVar&)const;
+	bool operator>(const AttrVar& other)const { return more(other); }
 	bool less(const AttrVar&)const;
+	bool operator<(const AttrVar& other)const { return less(other); }
 	bool equal_or_more(const AttrVar&)const;
+	bool operator>=(const AttrVar& other)const { return equal_or_more(other); }
 	bool equal_or_less(const AttrVar&)const;
+	bool operator<=(const AttrVar& other)const { return equal_or_less(other); }
 
 	void writeb(std::ofstream& fout) const;
 	void readb(std::ifstream& fin);

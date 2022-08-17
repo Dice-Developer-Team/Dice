@@ -153,12 +153,17 @@ AttrVar& AttrVar::operator=(long long other) {
 	id = other;
 	return *this;
 }
+/*
 bool AttrVar::operator==(const long long other)const {
 	return (type == AttrType::ID && id == other)
 		|| (type == AttrType::Integer && attr == other)
 		|| (type == AttrType::Number && number == other);
 }
+*/
 bool AttrVar::operator==(const string& other)const {
+	return (type == AttrType::Text && text == other);
+}
+bool AttrVar::operator==(const char* other)const {
 	return (type == AttrType::Text && text == other);
 }
 
@@ -304,10 +309,39 @@ ByteS AttrVar::to_bytes()const {
 	}
 	return {};
 }
+string AttrVar::print()const {
+	switch (type) {
+	case AttrType::Nil:
+		return "null";
+		break;
+	case AttrType::Boolean:
+		return bit ? "true" : "false";
+		break;
+	case AttrType::Integer:
+		return to_string(attr);
+		break;
+	case AttrType::Number:
+		return toString(number);
+		break;
+	case AttrType::Text:
+		return text;
+		break;
+	case AttrType::Table:
+		return UTF8toGBK(to_json().dump());
+		break;
+	case AttrType::ID:
+		return to_string(id);
+		break;
+	case AttrType::Function:
+		return "Function#" + to_string(chunk.len);
+		break;
+	}
+	return {};
+}
 string AttrVar::show()const {
 	switch (type) {
 	case AttrType::Nil:
-		return {};
+		return "ÎÞ";
 		break;
 	case AttrType::Boolean:
 		return bit ? "Õæ" : "¼Ù";
