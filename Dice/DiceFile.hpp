@@ -690,3 +690,5 @@ void saveXML(const std::filesystem::path& fpPath, C& obj)
 }
 
 std::string getNativePathString(const std::filesystem::path& fpPath);
+std::string cut_stem(std::filesystem::path branch, const std::filesystem::path& main = {});
+std::filesystem::path cut_relative(std::filesystem::path branch, const std::filesystem::path& main = {});

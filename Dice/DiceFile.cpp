@@ -235,3 +235,17 @@ std::string getNativePathString(const std::filesystem::path& fpPath)
 	return fpPath.string();
 #endif
 }
+string cut_stem(std::filesystem::path branch, const std::filesystem::path& main) {
+	string p{ branch.stem().u8string()};
+	while ((branch = branch.parent_path()) != main && !branch.empty()) {
+		p = branch.filename().u8string() + "." + p;
+	}
+	return UTF8toGBK(p);
+}
+std::filesystem::path cut_relative(std::filesystem::path branch, const std::filesystem::path& main) {
+	std::filesystem::path p{ branch.filename() };
+	while ((branch = branch.parent_path()) != main && !branch.empty()) {
+		p = branch.filename() / p;
+	}
+	return p;
+}

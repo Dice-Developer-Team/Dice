@@ -27,7 +27,7 @@ AttrVar idx_at(AttrObject& eve) {
 AttrVar idx_gAuth(AttrObject& eve) {
 	if (!eve.has("uid")|| !eve.has("gid"))return {};
 	if (int auth{ DD::getGroupAuth(eve.get_ll("gid"),eve.get_ll("uid"),0) })
-		return eve["gAuth"] = auth;
+		return eve["grpAuth"] = auth;
 	return {};
 }
 
@@ -35,7 +35,7 @@ AttrIndexs MsgIndexs{
 	{"nick", idx_nick},
 	{"pc", idx_pc},
 	{"at", idx_at},
-	{"gAuth", idx_gAuth},
+	{"grpAuth", idx_gAuth},
 };
 
 FromMsg::FromMsg(const AttrVars& var, const chatInfo& ct)

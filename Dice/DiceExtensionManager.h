@@ -13,7 +13,6 @@
 #include "filesystem.hpp"
 #include "DiceNetwork.h"
 #include "DiceZip.h"
-#include "DiceExtensionManager.h"
 #include "EncodingConvert.h"
 
 extern std::filesystem::path DiceDir;

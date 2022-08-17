@@ -16,11 +16,10 @@
 #include "DDAPI.h"
 #include "CQTools.h"
 #include "DiceSession.h"
+#include "DiceSelfData.h"
 
 std::filesystem::path dirExe;
 std::filesystem::path DiceDir("DiceData");
- //被引用的图片列表
-unordered_set<string> sReferencedImage;
 
 const map<string, short> mChatConf{
 	//0-群管理员，2-信任2级，3-信任3级，4-管理员，5-系统操作
@@ -70,12 +69,10 @@ AttrVar getUserItem(long long uid, const string& item) {
 	}
 	else if (UserList.count(uid)) {
 		User& user{ getUser(uid) };
-		if (item == "firstCreate") return user.tCreated;
-		else  if (item == "lastUpdate") return user.tUpdated;
+		if (item == "firstCreate") return (long long)user.tCreated;
+		else  if (item == "lastUpdate") return (long long)user.tUpdated;
 		else if (item == "nn") {
-			string nick;
-			user.getNick(nick);
-			return nick;
+			if (string nick; user.getNick(nick))return nick;
 		}
 		else if (item.find("nn#") == 0) {
 			string nick;
@@ -83,13 +80,13 @@ AttrVar getUserItem(long long uid, const string& item) {
 			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
 				gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
 			}
-			user.getNick(nick, gid);
-			return nick;
+			if (user.getNick(nick, gid))return nick;
 		}
 		else if (user.isset(item)) {
 			return user.confs[item];
 		}
 	}
+	return {};
 }
 AttrVar getGroupItem(long long id, const string& item) {
 	if (!id)return {};
@@ -140,17 +137,39 @@ AttrVar getGroupItem(long long id, const string& item) {
 	}
 	return {};
 }
-AttrVar getContextItem(AttrObject context, string item) {
-	if (context.empty())return {};
-	if (context.has(item))return context.get(item);
-	if (MsgIndexs.count(item))return MsgIndexs[item](context);
-	if (string sub{ splitOnce(item) }; !sub.empty()) {
-		if (context.has(sub) && context[sub].is_table())
-			return getContextItem(context[sub].to_dict(), item);
-		if (sub == "user")return getUserItem(context.get_ll("uid"), item);
-		if (sub == "grp" || sub == "group")return getGroupItem(context.get_ll("gid"), item);
+AttrVar getSelfItem(string item) {
+	AttrVar var;
+	if (var = getUserItem(console.DiceMaid, item))return var;
+	string file,sub;
+	while (!(sub = splitOnce(item)).empty()) {
+		file += sub;
+		if (selfdata_byStem.count(file)
+			&& (var = selfdata_byStem[file]->data.index(item))) {
+			return var;
+		}
+		file += ".";
 	}
-	return {};
+	return var;
+}
+AttrVar getContextItem(AttrObject context, string item) {
+	AttrVar var;
+	string sub;
+	if (!context.empty()) {
+		if (context.has(item))return context.get(item);
+		if (MsgIndexs.count(item))return MsgIndexs[item](context);
+		if (item.find(':') <= item.find('.'))return var;
+		if (!(sub = splitOnce(item)).empty()) {
+			if (context.has(sub) && context[sub].is_table())
+				return getContextItem(context[sub].to_dict(), item);
+			if (sub == "user")return getUserItem(context.get_ll("uid"), item);
+			if (sub == "grp" || sub == "group")return getGroupItem(context.get_ll("gid"), item);
+		}
+	}
+	if (sub.empty())sub = splitOnce(item);
+	if (sub == "self") {
+		return getSelfItem(item);
+	}
+	return var;
 }
 
 [[nodiscard]] bool User::empty() const {
@@ -546,24 +565,6 @@ string printChat(Chat& grp)
 	if (!grp.Name.empty())return "[" + grp.Name + "](" + to_string(grp.ID) + ")";
 	if (grp.isGroup) return "群(" + to_string(grp.ID) + ")";
 	return "讨论组(" + to_string(grp.ID) + ")";
-}
-
-void scanImage(const string& s, unordered_set<string>& list) {
-	int l = 0, r = 0;
-	while ((l = s.find('[', r)) != string::npos && (r = s.find(']', l)) != string::npos)
-	{
-		if (s.substr(l, 15) != CQ_IMAGE)continue;
-		string strFile = s.substr(l + 15, r - l - 15);
-		if (strFile.length() > 35)strFile += ".cqimg";
-		list.insert(strFile);
-	}
-}
-
-void scanImage(const vector<string>& v, unordered_set<string>& list) {
-	for (const auto& it : v)
-	{
-		scanImage(it, sReferencedImage);
-	}
 }
 
 #ifdef _WIN32

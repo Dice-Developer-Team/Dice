@@ -14,6 +14,7 @@ extern "C"{
 #include "DiceMod.h"
 #include "DDAPI.h"
 #include "Jsonio.h"
+#include "DiceSelfData.h"
 
 unordered_set<lua_State*> UTF8Luas;
 constexpr const char* chDigit{ "0123456789" };
@@ -256,7 +257,6 @@ bool lua_msg_call(FromMsg* msg, const AttrObject& lua) {
 			lua["func"] = luaScript;
 		}
 	}
-	DD::debugLog("lua:file:" + luaFile);
 	LuaState L{ luaFile };
 	if (!L)return false;
 	lua_push_Context(L, msg->vars);
@@ -403,47 +403,6 @@ bool lua_call_task(const AttrVars& task) {
 	return true;
 }
 
-/**
- * 供lua调用的类
- */
-class SelfData {
-	enum FileType { Bin, Json };
-	FileType type{ Bin };
-	std::filesystem::path pathFile;
-public:
-	std::mutex exWrite;
-	AttrObject data;
-	void init(const std::filesystem::path& p) {
-		mkDir(p.parent_path());
-		if (p.extension() == ".json")type = SelfData::Json;
-		if (std::filesystem::exists(pathFile = p)) {
-			switch (type) {
-			case SelfData::Json:
-				from_json(freadJson(pathFile), *data);
-				break;
-			case SelfData::Bin:
-				if (std::ifstream fs{ pathFile })data.readb(fs);
-				break;
-			default:
-				break;
-			}
-		}
-	}
-	void save() {
-		std::lock_guard<std::mutex> lock(exWrite);
-		switch (type) {
-		case SelfData::Json:
-			fwriteJson(pathFile,to_json(*data), 0);
-			break;
-		case SelfData::Bin:
-			if (std::ofstream fs{ pathFile })data.writeb(fs);
-			break;
-		default:
-			break;
-		}
-	}
-};
-dict<SelfData> selfdata_list;
 int selfData_get(lua_State* L) {
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
 	if (lua_isnoneornil(L, 2)) {
@@ -619,11 +578,14 @@ int mkDirs(lua_State* L) {
 }
 int getSelfData(lua_State* L) {
 	string file{ lua_to_native_string(L, 1) };
-	if (!selfdata_list.count(file)) {
-		selfdata_list[file].init(DiceDir / "selfdata" / file);
+	if (!selfdata_byFile.count(file)) {
+		auto& data{ selfdata_byFile[file] = std::make_shared<SelfData>(DiceDir / "selfdata" / file) };
+		if (string name{ cut_stem(std::filesystem::path(file).stem()) }; !selfdata_byStem.count(name)) {
+			selfdata_byStem[name] = data;
+		}
 	}
 	SelfData** p{ (SelfData**)lua_newuserdata(L, sizeof(SelfData*)) };
-	*p = &selfdata_list[file];
+	*p = selfdata_byFile[file].get();
 	luaL_setmetatable(L, "SelfData");
 	return 1;
 }

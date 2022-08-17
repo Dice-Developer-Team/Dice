@@ -28,6 +28,10 @@
 #include "json.hpp"
 using std::string;
 using json = nlohmann::json;
+template<typename T>
+using dict = std::unordered_map<string, T>;
+template<typename T>
+using ptr = std::shared_ptr<T>;
 
 struct ByteS {
 	char* bytes{ nullptr };
@@ -47,22 +51,22 @@ struct ByteS {
 };
 
 class AttrVar;
-using AttrVars = std::unordered_map<string, AttrVar>;
+using AttrVars = dict<AttrVar>;
 using VarArray = std::vector<AttrVar>;
 class lua_State;
 class VarTable {
 	friend class AttrVar;
 	friend void lua_push_attr(lua_State* L, const AttrVar& attr);
-	std::unordered_map<string, std::shared_ptr<AttrVar>>dict;
-	std::vector<std::shared_ptr<AttrVar>>idxs;
+	dict<ptr<AttrVar>>dict;
+	std::vector<ptr<AttrVar>>idxs;
 	void init_idx();
 public:
 	VarTable(){}
 	VarTable(const AttrVars&);
 	AttrVars to_dict()const;
 	VarArray to_list()const;
-	std::unordered_map<string, std::shared_ptr<AttrVar>>& get_dict() { return dict; };
-	const std::unordered_map<string, std::shared_ptr<AttrVar>>& get_dict()const { return dict; };
+	std::unordered_map<string, ptr<AttrVar>>& get_dict() { return dict; };
+	const std::unordered_map<string, ptr<AttrVar>>& get_dict()const { return dict; };
 	std::vector<std::shared_ptr<AttrVar>>& get_list() { return idxs; };
 	const std::vector<std::shared_ptr<AttrVar>>& get_list()const { return idxs; };
 	bool empty()const { return dict.empty(); }
@@ -191,6 +195,10 @@ public:
 	bool is(const string& key)const {
 		return obj->count(key) ? bool(obj->at(key)) :false;
 	}
+	bool is_table(const string& key)const {
+		return obj->count(key) && obj->at(key).is_table();
+	}
+	AttrVar index(const string& key)const;
 	AttrVar get(const string& key, const AttrVar& val = {})const {
 		return obj->count(key) ? obj->at(key) : val;
 	}
@@ -218,6 +226,6 @@ public:
 	void writeb(std::ofstream&)const;
 	void readb(std::ifstream&);
 };
-using AttrObjects = std::unordered_map<string, AttrObject>;
+using AttrObjects = dict<AttrObject>;
 using AttrIndex = AttrVar(*)(AttrObject&);
-using AttrIndexs = std::unordered_map<string, AttrIndex>;
+using AttrIndexs = dict<AttrIndex>;

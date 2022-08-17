@@ -659,7 +659,23 @@ string showAttrCMPR(AttrVar::CMPR cmpr) {
 	}
 	return {};
 }
+AttrVar Vars_index(const AttrVars& tab, const string& key) {
+	if (tab.count(key))return tab.at(key);
+	AttrVar var;
+	size_t dot{ 0 };
+	while ((dot = key.find('.', ++dot)) != string::npos) {
+		string sub{ key.substr(0,dot) };
+		if (tab.count(sub) && tab.at(sub).is_table()
+			&& (var = Vars_index(tab.at(sub).to_dict(), key.substr(dot + 1)))) {
+			break;
+		}
+	}
+	return var;
+}
 
+AttrVar AttrObject::index(const string& key)const {
+	return Vars_index(*obj, key);
+}
 void AttrObject::writeb(std::ofstream& fout)const { fwrite(fout, *obj); }
 void AttrObject::readb(std::ifstream& fs) {
 	fread(fs, *obj);

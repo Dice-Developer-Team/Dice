@@ -301,7 +301,6 @@ void CharaCard::readb(std::ifstream& fin) {
 			break;
 		case 101:
 			Note = fread<string>(fin);
-			scanImage(Note, sReferencedImage);
 			break;
 		default:
 			break;

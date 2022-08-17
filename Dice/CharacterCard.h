@@ -320,7 +320,6 @@ public:
 	{
 		if (note.length() > 255)return -11;
 		Note = note;
-		scanImage(note, sReferencedImage);
 		return 0;
 	}
 

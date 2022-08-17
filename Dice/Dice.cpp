@@ -55,6 +55,7 @@
 #include "DiceCensor.h"
 #include "EncodingConvert.h"
 #include "DiceManager.h"
+#include "DiceSelfData.h"
 
 #ifndef _WIN32
 #include <curl/curl.h>
@@ -330,6 +331,19 @@ EVE_Enable(eventEnable){
 			merge(GlobalMsg, EditedMsg);
 		}
 	}
+	if (const auto dirSelfData{ DiceDir / "selfdata" }; std::filesystem::exists(dirSelfData)) {
+		std::error_code err;
+		for (const auto& file : std::filesystem::recursive_directory_iterator(dirSelfData, err)) {
+			if (std::filesystem::is_regular_file(file.status())) {
+				const auto p{ file.path() };
+				auto& data{ selfdata_byFile[getNativePathString(cut_relative(p, dirSelfData))]
+					= make_shared<SelfData>(p) };
+				if (string file{ cut_stem(p, DiceDir / "selfdata") }; !selfdata_byStem.count(file)) {
+					selfdata_byStem[file] = data;
+				}
+			}
+		}
+	}
 	loadData();
 	//读取用户数据
 	readUserData();
@@ -359,12 +373,10 @@ EVE_Enable(eventEnable){
 	const char* envAllowInternetAccess = std::getenv("DICE_WEBUI_ALLOW_INTERNET_ACCESS");
 	std::string envStrAllowInternetAccess = envAllowInternetAccess ? envAllowInternetAccess : "";
 
-	if (envStrAllowInternetAccess == "1")
-	{
+	if (envStrAllowInternetAccess == "1") {
 		AllowInternetAccess = true;
 	}
-	else if (envStrAllowInternetAccess == "0")
-	{
+	else if (envStrAllowInternetAccess == "0") {
 		AllowInternetAccess = false;
 	}
 
@@ -393,8 +405,7 @@ EVE_Enable(eventEnable){
 		printSTNow());
 	llStartTime = time(nullptr);
 	DD::debugLog("Dice.WebInit");
-	if (console["EnableWebUI"])
-	{
+	if (console["EnableWebUI"]) {
 		try {
 			const std::string port_option = std::string(AllowInternetAccess ? "0.0.0.0" : "127.0.0.1") + ":" + std::to_string(Port);
 
@@ -909,13 +920,12 @@ EVE_GroupInvited(eventGroupInvited)
 		}
 		else if (blacklist->get_group_danger(fromGID))
 		{
-			strMsg += "\n已拒绝（群在黑名单中）";
+			strMsg += "\n已拒绝（黑名单群）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 2);
 		}
-		else if (blacklist->get_qq_danger(fromUID))
-		{
-			strMsg += "\n已拒绝（用户在黑名单中）";
+		else if (blacklist->get_qq_danger(fromUID)){
+			strMsg += "\n已拒绝（黑名单用户）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 2);
 		}

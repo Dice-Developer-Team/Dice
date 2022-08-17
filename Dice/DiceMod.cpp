@@ -715,7 +715,7 @@ void DiceMsgReply::readJson(const json& j) {
 		if (j.count("answer")) {
 			if (echo == Echo::Deck)deck = UTF8toGBK(j["answer"].get<vector<string>>());
 			else if (echo == Echo::Lua)text = AttrVar(AttrVars{ {"lang","lua"},{"script",UTF8toGBK(j["answer"].get<string>())} });
-			else text = UTF8toGBK(j["answer"].get<string>());
+			else text = j["answer"];
 		}
 	}
 	catch (std::exception& e) {
@@ -732,6 +732,7 @@ json DiceMsgReply::writeJson()const {
 	if (keyMatch[3])j["regex"] = GBKtoUTF8(*keyMatch[3]);
 	if(!limit.empty())j["limit"] = GBKtoUTF8(limit.print());
 	if (echo == Echo::Deck)j["answer"] = GBKtoUTF8(deck);
+	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(text.to_dict()["script"].to_str());
 	else j["answer"] = GBKtoUTF8(text.to_str());
 	return j;
 }
@@ -866,10 +867,10 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 				if (key == "res")val = format(context.get_str(key), context, indexs, dict);
 				else val = context.get_str(key);
 			}
-			else if (auto res{getContextItem(context,key)}) {
+			else if (auto res{ getContextItem(context,key) }) {
 				val = format(res.show(), context, indexs, dict);
 			}
-			//局部屏蔽全局
+			//局部优先于全局
 			else if (auto sp = global_speech.find(key); sp != global_speech.end()) {
 				val = format(sp->second.express(), context, indexs, dict);
 			}
@@ -901,7 +902,6 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 					auto [head, strVary] = readini<string, string>(para, '?');
 					unordered_map<string, string>paras{ splitPairs(strVary,'=','&') };
 					auto itemVal{ getContextItem(context,head) };
-					DD::debugLog("vary:" + itemVal.print());
 					if (auto it{ paras.find(itemVal.print()) }; it != paras.end()) {
 						val = format(it->second);
 					}
@@ -1052,23 +1052,27 @@ void DiceModManager::call_cycle_event(const string& id) {
 void DiceModManager::call_clock_event(const string& id) {
 	if (id.empty() || !events.count(id))return;
 	AttrObject eve{ events[id] };
-	if (eve["action"].is_function()) {
-		lua_call_event(eve, eve["action"]);
+	auto action{ eve["action"] };
+	if (!action)return;
+	else if (action.is_table() && action.to_dict().count("lua")) {
+		action = action.to_dict()["lua"];
 	}
-	else if (auto action{ eve.get_dict("action") }; action.count("lua")) {
-		lua_call_event(eve, action["lua"]);
-	}
+	lua_call_event(eve, action);
 }
 bool DiceModManager::call_hook_event(AttrObject eve) {
 	string hookEvent{ eve.has("hook") ? eve.get_str("hook") : eve.get_str("Event") };
 	if (hookEvent.empty())return false;
-	for (auto [id, hook] : multi_range(hook_events, hookEvent)) {
-		if (hook["action"].is_function()) {
-			lua_call_event(eve, hook["action"]);
+	for (auto& [id, hook] : multi_range(hook_events, hookEvent)) {
+		auto action{ hook["action"] };
+		if (!action)continue;
+		else if (action.is_table() && action.to_dict().count("lua")) {
+			action = action.to_dict()["lua"];
 		}
-		else if (auto action{ hook.get_dict("action") }; action.count("lua")) {
-			lua_call_event(eve, action["lua"]);
+		if (hookEvent == "StartUp") {
+			std::thread th(lua_call_event, eve, action);
+			th.detach();
 		}
+		else lua_call_event(eve, action);
 	}
 	return eve.is("blocked");
 }
@@ -1215,7 +1219,7 @@ void DiceModManager::save_reply() {
 		j[GBKtoUTF8(word)] = reply->writeJson();
 	}
 	if (j.empty()) std::filesystem::remove(DiceDir / "conf" / "CustomMsgReply.json");
-	else fwriteJson(DiceDir / "conf" / "CustomMsgReply.json", j);
+	else fwriteJson(DiceDir / "conf" / "CustomMsgReply.json", j, 0);
 }
 void DiceModManager::reply_get(const shared_ptr<DiceJobDetail>& msg) {
 	string key{ (*msg)["key"].to_str() };
@@ -1354,12 +1358,9 @@ int DiceModManager::load(ResList& resLog){
 						listDir(dirScript, fScripts, true);
 						for (auto p : fScripts) {
 							if (p.extension() != ".lua")continue;
-							string script_name{ p.stem().string() };
+							string script_name{ cut_stem(p,dirScript) };
 							string strPath{ getNativePathString(p) };
-							while ((p = p.parent_path()) != dirScript) {
-								script_name = p.filename().string() + "." + script_name;
-							}
-							scripts[script_name] = strPath;
+							scripts[cut_stem(p,dirScript)] = strPath;
 						}
 					}
 					if (fs::exists(dirMod / "image")) {

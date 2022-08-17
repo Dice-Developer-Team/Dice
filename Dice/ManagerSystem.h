@@ -134,6 +134,7 @@ extern unordered_map<long long, long long> TinyList;
 User& getUser(long long qq); 
 AttrVar getUserItem(long long uid, const string& item);
 AttrVar getGroupItem(long long uid, const string& item);
+AttrVar getSelfItem(string item);
 AttrVar getContextItem(AttrObject context, string item);
 int trustedQQ(long long qq);
 int clearUser();
@@ -257,41 +258,6 @@ int groupset(long long id, const string& st);
 string printChat(Chat& grp);
 ifstream& operator>>(ifstream& fin, Chat& grp);
 ofstream& operator<<(ofstream& fout, const Chat& grp);
-
-extern unordered_set<std::string>sReferencedImage;
-
-void scanImage(const string& s, unordered_set<string>& list);
-
-void scanImage(const vector<string>& v, unordered_set<string>& list);
-
-template <typename TVal, typename sort>
-void scanImage(const map<string, TVal, sort>& m, unordered_set<string>& list)
-{
-	for (const auto& it : m)
-	{
-		scanImage(it.first, sReferencedImage);
-		scanImage(it.second, sReferencedImage);
-	}
-}
-
-template <typename TVal>
-void scanImage(const map<string, TVal>& m, unordered_set<string>& list)
-{
-	for (const auto& it : m)
-	{
-		scanImage(it.first, sReferencedImage);
-		scanImage(it.second, sReferencedImage);
-	}
-}
-
-template <typename TKey, typename TVal>
-void scanImage(const map<TKey, TVal>& m, unordered_set<string>& list)
-{
-	for (const auto& it : m) 
-	{
-		scanImage(it.second, sReferencedImage);
-	}
-}
 
 #ifdef _WIN32
 DWORD getRamPort();

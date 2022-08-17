@@ -153,6 +153,7 @@ void auto_save(AttrObject& job) {
 
 //被引用的图片列表
 void clear_image(AttrObject& job) {
+	return;
 	if (!job.has("uid")) {
 		if (sch.is_job_cold("clrimage"))return;
 		if (console["AutoClearImage"] <= 0) {
@@ -160,10 +161,7 @@ void clear_image(AttrObject& job) {
 			return;
 		}
 	}
-	scanImage(CardDeck::mPublicDeck, sReferencedImage);
-	MsgNote(job, "整理" + getMsg("strSelfName") + "被引用图片" + to_string(sReferencedImage.size()) + "项", 0b0);
-	int cnt = clrDir("data/image/", sReferencedImage);
-	MsgNote(job, "已清理image文件" + to_string(cnt) + "项", 1);
+	//MsgNote(job, "已清理image文件" + to_string(cnt) + "项", 1);
 	if (console["AutoClearImage"] > 0) {
 		sch.refresh_cold("clrimage", time(NULL) + console["AutoClearImage"]);
 		sch.add_job_for(console["AutoClearImage"] * 60 * 60, "clrimage");
