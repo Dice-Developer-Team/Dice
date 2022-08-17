@@ -525,20 +525,14 @@ bool DiceTriggerLimit::check(FromMsg* msg, chat_locks& lock_list)const {
 		}
 	}
 	if (!user_vary.empty()) {
-		if (!UserList.count(msg->fromChat.uid))return false;
-		User& user{ getUser(msg->fromChat.uid) };
 		for (auto& [key, cmpr] : user_vary) {
-			if (user.isset(key)
-				? !(user.confs[key].*cmpr.first)(cmpr.second)
-				: !(AttrVar().*cmpr.first)(cmpr.second))return false;
+			if (!(getUserItem(msg->fromChat.uid, key).*cmpr.first)(cmpr.second))return false;
 		}
 	}
 	if (!grp_vary.empty() && msg->fromChat.gid) {
 		Chat& grp{ chat(msg->fromChat.gid) };
 		for (auto& [key, cmpr] : grp_vary) {
-			if (grp.isset(key) 
-				? !(grp.confs[key].*cmpr.first)(cmpr.second)
-				: !(AttrVar().*cmpr.first)(cmpr.second))return false;
+			if (!(getGroupItem(msg->fromChat.uid, key).*cmpr.first)(cmpr.second))return false;
 		}
 	}
 	if (!self_vary.empty()) {
@@ -872,11 +866,8 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 				if (key == "res")val = format(context.get_str(key), context, indexs, dict);
 				else val = context.get_str(key);
 			}
-			else if (auto idx = indexs.find(key); !context.empty() && idx != indexs.end()) {
-				val = idx->second(context).to_str();
-			}
-			else if (auto cit = dict.find(key); cit != dict.end()) {
-				val = format(cit->second, context, indexs, dict);
+			else if (auto res{getContextItem(context,key)}) {
+				val = format(res.show(), context, indexs, dict);
 			}
 			//局部屏蔽全局
 			else if (auto sp = global_speech.find(key); sp != global_speech.end()) {
@@ -908,15 +899,14 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 				}
 				else if (method == "vary") {
 					auto [head, strVary] = readini<string, string>(para, '?');
-					if (head == "uid") {
-						unordered_map<string, string>paras{ splitPairs(strVary,'=','&') };
-						if (auto it{ paras.find(context.get_str("uid"))}; it != paras.end()) {
-							val = format(it->second);
-						}
-						else if ((it = paras.find("else")) != paras.end()) {
-							val = format(it->second);
-						}
-						else val = {};
+					unordered_map<string, string>paras{ splitPairs(strVary,'=','&') };
+					auto itemVal{ getContextItem(context,head) };
+					DD::debugLog("vary:" + itemVal.print());
+					if (auto it{ paras.find(itemVal.print()) }; it != paras.end()) {
+						val = format(it->second);
+					}
+					else if ((it = paras.find("else")) != paras.end()) {
+						val = format(it->second);
 					}
 					else val = {};
 				}

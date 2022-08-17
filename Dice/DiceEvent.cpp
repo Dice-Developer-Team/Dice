@@ -21,14 +21,21 @@ AttrVar idx_at(AttrObject& eve) {
 	if (eve.has("at"))return eve["at"];
 	if (!eve.has("uid"))return {};
 	return eve["at"] = eve.has("gid")
-		? "[CQ:at,id=" + eve.get_str("uid") + "]"
+		? "[CQ:at,qq=" + eve.get_str("uid") + "]"
 		: idx_nick(eve);
+}
+AttrVar idx_gAuth(AttrObject& eve) {
+	if (!eve.has("uid")|| !eve.has("gid"))return {};
+	if (int auth{ DD::getGroupAuth(eve.get_ll("gid"),eve.get_ll("uid"),0) })
+		return eve["gAuth"] = auth;
+	return {};
 }
 
 AttrIndexs MsgIndexs{
 	{"nick", idx_nick},
 	{"pc", idx_pc},
 	{"at", idx_at},
+	{"gAuth", idx_gAuth},
 };
 
 FromMsg::FromMsg(const AttrVars& var, const chatInfo& ct)
@@ -1660,7 +1667,7 @@ int FromMsg::InnerOrder() {
 				replyMsg("strGroupNotFound");
 				return 1;
 			}
-			if (getGroupAuth(llGroup) < 0) {
+			if (getGroupTrust(llGroup) < 0) {
 				replyMsg("strGroupDenied");
 				return 1;
 			}
@@ -1682,7 +1689,7 @@ int FromMsg::InnerOrder() {
 					replyMsg("strGroupSetInvalid");
 					continue;
 				}
-				if (getGroupAuth(llGroup) >= get<string, short>(mChatConf, option, 0)) {
+				if (getGroupTrust(llGroup) >= get<string, short>(mChatConf, option, 0)) {
 					if (isSet) {
 						if (groupset(llGroup, vars["option"].to_str()) < 1) {
 							chat(llGroup).set(vars["option"].to_str());
@@ -4553,7 +4560,7 @@ bool FromMsg::canRoomHost() {
 	return bool(vars["canRoomHost"]);
 }
 
-int FromMsg::getGroupAuth(long long group) {
+int FromMsg::getGroupTrust(long long group) {
 	if (trusted > 0)return trusted;
 	if (ChatList.count(group)) {
 		return DD::isGroupAdmin(group, fromChat.uid, true) ? 0 : -1;

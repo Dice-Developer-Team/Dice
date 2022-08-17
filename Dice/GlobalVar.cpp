@@ -483,6 +483,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
+616:转义支持取用户/群配置
 615:支持自定义数据读写
 614:更新reply:limit:lock
 613:更新lua交互机制

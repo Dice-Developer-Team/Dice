@@ -77,7 +77,7 @@ private:
 	bool isDisabled = false;
 	bool canRoomHost();
 
-	int getGroupAuth(long long group = 0);
+	int getGroupTrust(long long group = 0);
 public:
 	bool isVirtual = false;
 	unsigned int intMsgCnt = 0;

@@ -638,21 +638,19 @@ int getGroupConf(lua_State* L) {
 	if (lua_isnil(L, 1)) {
 		if (item.empty())return 0;
 		lua_newtable(L);
-		for (auto& [uid, data] : UserList) {
+		for (auto& [id, data] : ChatList) {
 			if (data.confs.has(item)) {
 				lua_push_attr(L, data.confs[item]);
-				lua_set_field(L, -2, to_string(uid));
+				lua_set_field(L, -2, to_string(id));
 			}
 		}
 		return 1;
 	}
 	long long id{ lua_to_int(L, 1) };
 	if (!id)return 0;
-	if (item == "size") {
-		lua_pushnumber(L, (double)DD::getGroupSize(id).currSize);
-	}
-	else if (item == "maxsize") {
-		lua_pushnumber(L, (double)DD::getGroupSize(id).maxSize);
+	if (item.empty()) {
+		lua_push_Context(L, chat(id).confs);
+		return 1;
 	}
 	else if (item == "members") {
 		lua_newtable(L);
@@ -661,8 +659,9 @@ int getGroupConf(lua_State* L) {
 			lua_push_raw_string(L, to_string(id));
 			lua_rawseti(L, -2, ++i);
 		}
+		return 1;
 	}
-	else  if (item == "admins") {
+	else if (item == "admins") {
 		lua_newtable(L);
 		long long i{ 0 };
 		for (auto id : DD::getGroupAdminList(id)) {
@@ -670,52 +669,9 @@ int getGroupConf(lua_State* L) {
 			lua_rawseti(L, -2, ++i);
 		}
 	}
-	else if (item.find("card#") == 0) {
-		long long uid{ 0 };
-		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
-			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
-		}
-		string card{ DD::getGroupNick(id, uid) };
-		if (!card.empty())lua_push_string(L, card);
-	}
-	else if (item.find("auth#") == 0) {
-		long long uid{ 0 };
-		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
-			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
-		}
-		int authDefault{ top == 3 ? (int)lua_to_int(L,3) : 0 };
-		lua_pushnumber(L, DD::getGroupAuth(id, uid, authDefault));
-	}
-	else if (item.find("lst#") == 0) {
-		long long uid{ 0 };
-		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
-			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
-		}
-		lua_pushnumber(L, DD::getGroupLastMsg(id, uid));
-	}
-	else if (ChatList.count(id)) {
-		Chat& grp{ chat(id) }; 
-		if (item.empty()) {
-			lua_push_Context(L, grp.confs);
-			return 1;
-		}
-		else if (item == "name") {
-			lua_push_string(L, grp.Name = DD::getGroupName(id));
-		}
-		else if (item == "firstCreate") {
-			lua_pushnumber(L, (double)grp.tCreated);
-		}
-		else if (item == "lastUpdate") {
-			lua_pushnumber(L, (double)grp.tUpdated);
-		}
-		else if (grp.confs.has(item)) {
-			lua_push_attr(L, grp.confs[item]);
-		}
-	}
-	else if (item == "name") {
-		lua_push_string(L, DD::getGroupName(id));
-	}
-	if (lua_gettop(L) == top) {
+	auto val{ getGroupItem(id,item) };
+	if (val)lua_push_attr(L, val);
+	else {
 		lua_pushnil(L);
 		lua_insert(L, 3);
 	}
@@ -763,54 +719,13 @@ int getUserConf(lua_State* L) {
 	}
 	long long uid{ lua_to_int(L, 1) };
 	if (!uid)return 0;
-	if (item == "name") {
-		if (string name{ DD::getQQNick(uid) };!name.empty())
-			lua_push_string(L, name);
+	if (UserList.count(uid) && item.empty()) {
+		lua_push_Context(L, getUser(uid).confs);
+		return 1;
 	}
-	else if (item == "nick" ) {
-		lua_push_string(L, getName(uid));
-	}
-	else if (item == "trust") {
-		lua_pushnumber(L, trustedQQ(uid));
-	}
-	else if (item.find("nick#") == 0) {
-		long long gid{ 0 };
-		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
-			gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
-		}
-		lua_push_string(L, getName(uid, gid));
-	}
-	else if (UserList.count(uid)) {
-		User& user{ getUser(uid) };
-		if (item.empty()) {
-			lua_push_Context(L, user.confs);
-			return 1;
-		}
-		else if (item == "firstCreate") {
-			lua_pushnumber(L, (double)user.tCreated);
-		}
-		else  if (item == "lastUpdate") {
-			lua_pushnumber(L, (double)user.tUpdated);
-		}
-		else if (item == "nn") {
-			string nick;
-			user.getNick(nick);
-			lua_push_string(L, nick);
-		}
-		else if (item.find("nn#") == 0) {
-			string nick;
-			long long gid{ 0 };
-			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
-				gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
-			}
-			user.getNick(nick, gid);
-			lua_push_string(L, nick);
-		}
-		else if (user.isset(item)) {
-			lua_push_attr(L, user.confs[item]);
-		}
-	}
-	if (lua_gettop(L) == top) {
+	auto val{ getUserItem(uid,item) };
+	if (val)lua_push_attr(L, val);
+	else {
 		lua_pushnil(L);
 		lua_insert(L, 3);
 	}

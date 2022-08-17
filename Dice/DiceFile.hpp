@@ -190,7 +190,7 @@ void readini(string& line, std::pair<T1, T2>& p, char delim = '=')
 	sin >> p.second;
 }
 template <typename T1 = std::string, typename T2 = std::string>
-std::pair<T1, T2> readini(string& line, char delim = '='){
+std::pair<T1, T2> readini(const string& line, char delim = '='){
 	const size_t pos = line.find(delim);
 	std::pair<T1, T2> p;
 	std::istringstream sin(line.substr(0, pos));

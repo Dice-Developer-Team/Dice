@@ -77,6 +77,14 @@ vector<string> split(const string& str, const string& sep) {
     if (l < str.length()) res.push_back(str.substr(l));
     return res;
 }
+string splitOnce(string& str, const string& sep) {
+    string head;
+    if (auto pos{ str.find(sep) }; pos != string::npos) {
+        head = str.substr(0, pos);
+        str = str.substr(pos + 1);
+    }
+    return head;
+}
 std::unordered_map<string, string> splitPairs(const string& s, char delim, char br) {
     std::unordered_map<string, string>dict;
     std::stringstream ss(s);

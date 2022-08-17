@@ -42,11 +42,115 @@ const map<string, short> mChatConf{
 	{"рямк", 5}
 };
 
-User& getUser(long long uid)
-{
+User& getUser(long long uid){
 	if (TinyList.count(uid))uid = TinyList[uid];
 	if (!UserList.count(uid))UserList[uid].id(uid);
 	return UserList[uid];
+}
+constexpr const char* chDigit{ "0123456789" };
+AttrVar getUserItem(long long uid, const string& item) {
+	if (!uid)return {};
+	if (TinyList.count(uid))uid = TinyList[uid];
+	if (item == "name") {
+		if (string name{ DD::getQQNick(uid) }; !name.empty())
+			return name;
+	}
+	else if (item == "nick") {
+		return getName(uid);
+	}
+	else if (item == "trust") {
+		return trustedQQ(uid);
+	}
+	else if (item.find("nick#") == 0) {
+		long long gid{ 0 };
+		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+			gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+		}
+		return getName(uid, gid);
+	}
+	else if (UserList.count(uid)) {
+		User& user{ getUser(uid) };
+		if (item == "firstCreate") return user.tCreated;
+		else  if (item == "lastUpdate") return user.tUpdated;
+		else if (item == "nn") {
+			string nick;
+			user.getNick(nick);
+			return nick;
+		}
+		else if (item.find("nn#") == 0) {
+			string nick;
+			long long gid{ 0 };
+			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+				gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+			}
+			user.getNick(nick, gid);
+			return nick;
+		}
+		else if (user.isset(item)) {
+			return user.confs[item];
+		}
+	}
+}
+AttrVar getGroupItem(long long id, const string& item) {
+	if (!id)return {};
+	if (item == "size") {
+		return (int)DD::getGroupSize(id).currSize;
+	}
+	else if (item == "maxsize") {
+		return (int)DD::getGroupSize(id).maxSize;
+	}
+	else if (item.find("card#") == 0) {
+		long long uid{ 0 };
+		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+		}
+		if (string card{ DD::getGroupNick(id, uid) }; !card.empty())return card;
+	}
+	else if (item.find("auth#") == 0) {
+		long long uid{ 0 };
+		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+		}
+		if (int auth{ DD::getGroupAuth(id, uid, 0) }; auth)return auth;
+	}
+	else if (item.find("lst#") == 0) {
+		long long uid{ 0 };
+		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+		}
+		return DD::getGroupLastMsg(id, uid);
+	}
+	else if (ChatList.count(id)) {
+		Chat& grp{ chat(id) };
+		if (item == "name") {
+			if (string name{ DD::getGroupName(id) };!name.empty())return grp.Name = name;
+		}
+		else if (item == "firstCreate") {
+			return (long long)grp.tCreated;
+		}
+		else if (item == "lastUpdate") {
+			return (long long)grp.tUpdated;
+		}
+		else if (grp.confs.has(item)) {
+			return grp.confs[item];
+		}
+	}
+	else if (item == "name") {
+		if (string name{ DD::getGroupName(id) }; !name.empty())return name;
+	}
+	return {};
+}
+AttrVar getContextItem(AttrObject context, string item) {
+	if (context.empty())return {};
+	if (context.has(item))return context.get(item);
+	if (MsgIndexs.count(item))return MsgIndexs[item](context);
+	if (string sub{ splitOnce(item) }; !sub.empty()) {
+		if (context.has(sub) && context[sub].is_table())
+			return getContextItem(context[sub].to_dict(), item);
+		if (sub == "user")return getUserItem(context.get_ll("uid"), item);
+		if (sub == "grp" || sub == "group")return getGroupItem(context.get_ll("gid"), item);
+	}
+	return {};
 }
 
 [[nodiscard]] bool User::empty() const {
