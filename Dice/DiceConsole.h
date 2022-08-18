@@ -78,10 +78,12 @@ public:
 		save();
 	}
 
-	int operator[](const char* key) const
-	{
-		auto it = intConf.find(key);
-		if (it != intConf.end() || (it = intDefault.find(key)) != intDefault.end())return it->second;
+	int operator[](const string& key) const	{
+		if (auto it = intConf.find(key); it != intConf.end() || (it = intDefault.find(key)) != intDefault.end())return it->second;
+		return 0;
+	}
+	int operator[](const char* key) const {
+		if (auto it = intConf.find(key); it != intConf.end() || (it = intDefault.find(key)) != intDefault.end())return it->second;
 		return 0;
 	}
 

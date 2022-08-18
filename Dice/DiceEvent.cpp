@@ -1245,17 +1245,14 @@ int FromMsg::BasicOrder()
 	if (strLowerMessage.substr(intMsgCnt, 7) == "helpdoc" && trusted > 3)
 	{
 		intMsgCnt += 7;
-		while (strMsg[intMsgCnt] == ' ')
-			intMsgCnt++;
+		readSkipSpace();
 		if (intMsgCnt == strMsg.length())
 		{
 			replyMsg("strHlpNameEmpty");
 			return true;
 		}
-		string key{ readUntilSpace() };
-		vars["key"] = key;
-		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
-			intMsgCnt++;
+		string& key{ (vars["key"] = readUntilSpace()).text };
+		readSkipSpace();
 		if (intMsgCnt == strMsg.length())
 		{
 			CustomHelp.erase(key);

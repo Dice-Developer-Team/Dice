@@ -139,6 +139,7 @@ AttrVar getGroupItem(long long id, const string& item) {
 }
 AttrVar getSelfItem(string item) {
 	AttrVar var;
+	if (console.intDefault.count(item))return console[item];
 	if (!(var = getUserItem(console.DiceMaid, item))) {
 		string file, sub;
 		while (!(sub = splitOnce(item)).empty()) {
