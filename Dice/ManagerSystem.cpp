@@ -139,15 +139,16 @@ AttrVar getGroupItem(long long id, const string& item) {
 }
 AttrVar getSelfItem(string item) {
 	AttrVar var;
-	if (var = getUserItem(console.DiceMaid, item))return var;
-	string file,sub;
-	while (!(sub = splitOnce(item)).empty()) {
-		file += sub;
-		if (selfdata_byStem.count(file)
-			&& (var = selfdata_byStem[file]->data.index(item))) {
-			return var;
+	if (!(var = getUserItem(console.DiceMaid, item))) {
+		string file, sub;
+		while (!(sub = splitOnce(item)).empty()) {
+			file += sub;
+			if (selfdata_byStem.count(file)
+				&& (var = selfdata_byStem[file]->data.index(item))) {
+				return var;
+			}
+			file += ".";
 		}
-		file += ".";
 	}
 	return var;
 }
