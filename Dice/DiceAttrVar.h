@@ -29,8 +29,6 @@
 using std::string;
 using json = nlohmann::json;
 template<typename T>
-using dict = std::unordered_map<string, T>;
-template<typename T>
 using ptr = std::shared_ptr<T>;
 
 struct ByteS {
@@ -51,13 +49,13 @@ struct ByteS {
 };
 
 class AttrVar;
-using AttrVars = dict<AttrVar>;
+using AttrVars = std::unordered_map<string, AttrVar>;
 using VarArray = std::vector<AttrVar>;
 class lua_State;
 class VarTable {
 	friend class AttrVar;
 	friend void lua_push_attr(lua_State* L, const AttrVar& attr);
-	dict<ptr<AttrVar>>dict;
+	std::unordered_map<string, ptr<AttrVar>>dict;
 	std::vector<ptr<AttrVar>>idxs;
 	void init_idx();
 public:
@@ -226,6 +224,6 @@ public:
 	void writeb(std::ofstream&)const;
 	void readb(std::ifstream&);
 };
-using AttrObjects = dict<AttrObject>;
+using AttrObjects = std::unordered_map<string, AttrObject>;
 using AttrIndex = AttrVar(*)(AttrObject&);
-using AttrIndexs = dict<AttrIndex>;
+using AttrIndexs = std::unordered_map<string, AttrIndex>;

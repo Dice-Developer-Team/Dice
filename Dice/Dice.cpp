@@ -119,68 +119,74 @@ void loadData()
 }
 
 //初始化用户数据
-void readUserData()
-{
+void readUserData(){
 	std::error_code ec;
 	fs::path dir{ DiceDir / "user" };
-	ResList log;
-	//读取用户记录
-	if (int cnt{ loadBFile(dir / "UserConf.dat", UserList) };cnt > 0) {
-		fs::copy(dir / "UserConf.dat", dir / "UserConf.bak",
-			fs::copy_options::overwrite_existing, ec);
-		log << "读取用户记录" + to_string(cnt) + "条";
-	}
-	else if (fs::exists(dir / "UserConf.bak")) {
-		cnt = loadBFile(dir / "UserConf.bak", UserList);
-		if (cnt > 0)log << "恢复用户记录" + to_string(cnt) + "条";
-	}
-	else {
-		cnt = loadBFile<long long, User, &User::old_readb>(dir / "UserConf.RDconf", UserList);
-		loadFile(dir / "UserList.txt", UserList);
-		if (cnt > 0)log << "迁移用户记录" + to_string(cnt) + "条";
-	}
-	//for QQ Channel
-	if (User& self{ UserList[console.DiceMaid] }; !self.confs.get_ll("tinyID")) {
-		if (long long tiny{ DD::getTinyID() }) {
-			DD::debugMsg("获取分身ID:" + to_string(tiny));
-			self.setConf("tinyID", tiny);
+	ResList log; 
+	try {
+		//读取用户记录
+		if (int cnt{ loadBFile(dir / "UserConf.dat", UserList) }; cnt > 0) {
+			fs::copy(dir / "UserConf.dat", dir / "UserConf.bak",
+				fs::copy_options::overwrite_existing, ec);
+			log << "读取用户记录" + to_string(cnt) + "条";
+		}
+		else if (fs::exists(dir / "UserConf.bak")) {
+			cnt = loadBFile(dir / "UserConf.bak", UserList);
+			if (cnt > 0)log << "恢复用户记录" + to_string(cnt) + "条";
+		}
+		else {
+			cnt = loadBFile<long long, User, &User::old_readb>(dir / "UserConf.RDconf", UserList);
+			loadFile(dir / "UserList.txt", UserList);
+			if (cnt > 0)log << "迁移用户记录" + to_string(cnt) + "条";
+		}
+		//for QQ Channel
+		if (User& self{ getUser(console.DiceMaid) }; !self.confs.get_ll("tinyID")) {
+			if (long long tiny{ DD::getTinyID() }) {
+				DD::debugMsg("获取分身ID:" + to_string(tiny));
+				self.setConf("tinyID", tiny);
+			}
+		}
+		//读取角色记录
+		if (int cnt{ loadBFile(dir / "PlayerCards.RDconf", PList) }; cnt > 0) {
+			fs::copy(dir / "PlayerCards.RDconf", dir / "PlayerCards.bak",
+				fs::copy_options::overwrite_existing, ec);
+			log << "读取玩家记录" + to_string(cnt) + "条";
+		}
+		else if (fs::exists(dir / "PlayerCards.bak")) {
+			cnt = loadBFile(dir / "PlayerCards.bak", PList);
+			if (cnt > 0)log << "恢复玩家记录" + to_string(cnt) + "条";
+		}
+		for (const auto& pl : PList) {
+			if (!UserList.count(pl.first))getUser(pl.first);
+		}
+		//读取群聊记录
+		if (int cnt{ loadBFile(dir / "ChatConf.dat", ChatList) }; cnt > 0) {
+			fs::copy(dir / "ChatConf.dat", dir / "ChatConf.bak",
+				fs::copy_options::overwrite_existing, ec);
+			log << "读取群聊记录" + to_string(cnt) + "条";
+		}
+		else if (fs::exists(dir / "ChatConf.bak")) {
+			cnt = loadBFile(dir / "ChatConf.bak", ChatList);
+			if (cnt > 0)log << "恢复群聊记录" + to_string(cnt) + "条";
+		}
+		else {
+			cnt = loadBFile(dir / "ChatConf.RDconf", ChatList);
+			loadFile(dir / "ChatList.txt", ChatList);
+			if (cnt > 0)log << "迁移群聊记录" + to_string(cnt) + "条";
+		}
+		//读取房间记录
+		sessions.load();
+		//读取当日数据
+		today = make_unique<DiceToday>();
+		if (!log.empty()) {
+			log << "用户数据读取完毕";
+			console.log(log.show(), 0b1, printSTNow());
 		}
 	}
-	//读取角色记录
-	if (int cnt{ loadBFile(dir / "PlayerCards.RDconf", PList) }; cnt > 0) {
-		fs::copy(dir / "PlayerCards.RDconf", dir / "PlayerCards.bak",
-			fs::copy_options::overwrite_existing, ec);
-		log << "读取玩家记录" + to_string(cnt) + "条";
-	}
-	else if (fs::exists(dir / "PlayerCards.bak")) {
-		cnt = loadBFile(dir / "PlayerCards.bak", PList);
-		if (cnt > 0)log << "恢复玩家记录" + to_string(cnt) + "条";
-	}
-	for (const auto& pl : PList)	{
-		if (!UserList.count(pl.first))getUser(pl.first);
-	}
-	//读取群聊记录
-	if (int cnt{ loadBFile(dir / "ChatConf.dat", ChatList) };cnt > 0) {
-		fs::copy(dir / "ChatConf.dat", dir / "ChatConf.bak",
-			fs::copy_options::overwrite_existing, ec);
-		log << "读取群聊记录" + to_string(cnt) + "条";
-	}
-	else if (fs::exists(dir / "ChatConf.bak")) {
-		cnt = loadBFile(dir / "ChatConf.bak", ChatList);
-		if (cnt > 0)log << "恢复群聊记录" + to_string(cnt) + "条";
-	}
-	else {
-		cnt = loadBFile(dir / "ChatConf.RDconf", ChatList);
-		loadFile(dir / "ChatList.txt", ChatList);
-		if (cnt > 0)log << "迁移群聊记录" + to_string(cnt) + "条";
-	}
-	//读取房间记录
-	sessions.load();
-	//读取当日数据
-	today = make_unique<DiceToday>();
-	if (!log.empty()) {
-		log << "用户数据读取完毕";
-		console.log(log.show(), 0b1, printSTNow());
+	catch (const std::exception& e)
+	{
+		log << "读取用户数据时遇到意外错误，程序可能无法正常运行。请尝试清空配置后重试。" << e.what();
+		console.log(log.show(), 1, printSTNow());
 	}
 }
 
@@ -197,7 +203,11 @@ void dataBackUp()
 	saveBFile(DiceDir / "user" / "ChatConf.dat", ChatList);
 }
 
+#ifdef _WIN32
+atomic_flag isIniting{ ATOMIC_FLAG_INIT };
+#else
 atomic_flag isIniting = ATOMIC_FLAG_INIT;
+#endif
 EVE_Enable(eventEnable){
 	if (isIniting.test_and_set())return;
 	if (Enabled)return;
@@ -269,14 +279,12 @@ EVE_Enable(eventEnable){
 				}
 		}},
 	};
-	if (console.DiceMaid = DD::getLoginID())
-	{
-		DiceDir = dirExe / ("Dice" + to_string(console.DiceMaid));
-		if (!exists(DiceDir)) {
-			filesystem::path DiceDirOld(dirExe / "DiceData");
-			if (exists(DiceDirOld))rename(DiceDirOld, DiceDir);
-			else filesystem::create_directory(DiceDir);
-		}
+	console.DiceMaid = DD::getLoginID();
+	DiceDir = dirExe / ("Dice" + to_string(console.DiceMaid));
+	if (!exists(DiceDir)) {
+		filesystem::path DiceDirOld(dirExe / "DiceData");
+		if (exists(DiceDirOld))rename(DiceDirOld, DiceDir);
+		else filesystem::create_directory(DiceDir);
 	}
 	std::error_code ec;
 	std::filesystem::create_directory(DiceDir / "conf", ec);
@@ -312,17 +320,19 @@ EVE_Enable(eventEnable){
 	}
 	//初始化黑名单
 	blacklist = make_unique<DDBlackManager>();
-	if (blacklist->loadJson(DiceDir / "conf" / "BlackList.json") < 0)
+	if (auto cnt = blacklist->loadJson(DiceDir / "conf" / "BlackList.json");cnt < 0)
 	{
 		blacklist->loadJson(fpFileLoc / "BlackMarks.json");
-		int cnt = blacklist->loadHistory(fpFileLoc);
+		cnt = blacklist->loadHistory(fpFileLoc);
 		if (cnt) {
 			blacklist->saveJson(DiceDir / "conf" / "BlackList.json");
 			console.log("初始化不良记录" + to_string(cnt) + "条", 1);
 		}
 	}
 	else {
-		blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true);
+		DD::debugLog("读取不良记录" + to_string(cnt) + "条");
+		if ((cnt = blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true)) > 0)
+			DD::debugLog("读取外源不良记录" + to_string(cnt) + "条");
 	}
 	{
 		std::unique_lock lock(GlobalMsgMutex);
@@ -344,14 +354,13 @@ EVE_Enable(eventEnable){
 			}
 		}
 	}
-	loadData();
 	//读取用户数据
 	readUserData();
 	set<long long> grps{ DD::getGroupIDList() };
-	for (auto gid : grps)
-	{
+	for (auto gid : grps){
 		chat(gid).group().reset("未进").reset("已退").set("已入群");
 	}
+	loadData();
 	// 确保线程执行结束
 	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
 	Aws::InitAPI(options);
@@ -911,15 +920,14 @@ EVE_GroupInvited(eventGroupInvited)
 		}
 		if (isBlocked)return 1;
 		const string strNow = printSTNow();
-		string strMsg = "群添加请求，来自：" + printUser(fromUID) + ",群:" +
+		string strMsg = "来自" + printUser(fromUID) + "的入群邀请:" +
 			DD::printGroupInfo(fromGID);
 		if (ExceptGroups.count(fromGID)) {
 			strMsg += "\n已忽略（默认协议无效）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 3);
 		}
-		else if (blacklist->get_group_danger(fromGID))
-		{
+		else if (blacklist->get_group_danger(fromGID)){
 			strMsg += "\n已拒绝（黑名单群）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 2);

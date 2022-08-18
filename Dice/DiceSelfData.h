@@ -6,6 +6,7 @@
 #include <mutex>
 #include <filesystem>
 #include "DiceAttrVar.h"
+#include "STLExtern.hpp"
 class SelfData : public std::enable_shared_from_this<SelfData> {
 	enum FileType { Bin, Json };
 	FileType type{ Bin };
