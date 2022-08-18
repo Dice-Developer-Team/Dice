@@ -536,11 +536,8 @@ bool DiceTriggerLimit::check(FromMsg* msg, chat_locks& lock_list)const {
 		}
 	}
 	if (!self_vary.empty()) {
-		User& user{ getUser(console.DiceMaid) };
 		for (auto& [key, cmpr] : self_vary) {
-			if (user.isset(key)
-				? !(user.confs[key].*cmpr.first)(cmpr.second)
-				: !(AttrVar().*cmpr.first)(cmpr.second))return false;
+			if (!(getSelfItem(key).*cmpr.first)(cmpr.second))return false;
 		}
 	}
 	if (to_dice != Treat::Ignore && console.DiceMaid != msg->fromChat.uid) {
