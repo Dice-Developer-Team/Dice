@@ -907,6 +907,21 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 					}
 					else val = {};
 				}
+				else if (method == "grade") {
+					auto [head, strVary] = readini<string, string>(para, '?');
+					unordered_map<string, string>paras{ splitPairs(strVary,'=','&') };
+					auto itemVal{ getContextItem(context,head) };
+					grad_map<double, string>grade;
+					for (auto& [step, value] : paras) {
+						if (step == "else")grade.set_else(value);
+						else if(isNumeric(step))
+							grade.set_step(stod(step), value);
+						else if (auto stepVal{ getContextItem(context,step) }; stepVal.is_numberic())
+							grade.set_step(stepVal.to_num(), value);
+					}
+					if(itemVal.is_numberic())val = grade[itemVal.to_num()];
+					else val = grade.get_else();
+				}
 			}
 			else if (auto func = strFuncs.find(key); func != strFuncs.end()){
 				val = func->second();

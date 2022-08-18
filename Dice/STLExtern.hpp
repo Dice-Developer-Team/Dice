@@ -1,6 +1,7 @@
 /*
  * 自定义容器
  * Copyright (C) 2019-2022 String.Empty
+ * 2022/08/18 添加grad_map
  */
 #pragma once
 #include <string>
@@ -93,7 +94,29 @@ void merge(map<TKey, TVal, sort>& m1, const map<TKey, TVal, sort>& m2)
 		m1[k] = v;
 	}
 }
-
+template <typename TKey, typename TVal>
+class grad_map {
+	map<TKey, TVal>grades;
+	TVal valElse;
+public:
+	grad_map& set_else(const TVal& val) {
+		valElse = val;
+		return *this;
+	}
+	TVal& get_else() {
+		return valElse;
+	}
+	grad_map& set_step(TKey key, const TVal& val) {
+		grades[key] = val;
+		return *this;
+	}
+	TVal& operator[](TKey key) {
+		if (auto it{ grades.upper_bound(key) }; it != grades.begin()) {
+			return (--it)->second;
+		}
+		else return valElse;
+	}
+};
 template <typename T>
 class enumap
 {

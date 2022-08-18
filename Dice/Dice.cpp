@@ -197,7 +197,7 @@ void dataBackUp()
 	saveBFile(DiceDir / "user" / "ChatConf.dat", ChatList);
 }
 
-atomic_flag isIniting{ ATOMIC_FLAG_INIT };
+atomic_flag isIniting = ATOMIC_FLAG_INIT;
 EVE_Enable(eventEnable){
 	if (isIniting.test_and_set())return;
 	if (Enabled)return;
