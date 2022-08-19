@@ -483,6 +483,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
+618:支持reply(Order形式)覆盖指令
 617:更新grade分档转义
 616:转义&vary支持取用户/群配置
 615:支持自定义数据读写
@@ -498,8 +499,6 @@ const dict_ci<string> HelpDoc = {
 605:关键词回复多对一
 604:{转义嵌套}优化
 603:支持yaml读取
-602:lua支持元表读写与方法
-601:新增禁用非好友会话
 593:reply新增触发限制
 589:ak安科安价指令
 585:WebUI

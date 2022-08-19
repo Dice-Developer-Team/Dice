@@ -21,7 +21,6 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <set>
 #include "DiceMod.h"
 #include "GlobalVar.h"
 #include "ManagerSystem.h"
@@ -34,7 +33,6 @@
 #include "DDAPI.h"
 #include "yaml-cpp/yaml.h"
 #include <regex>
-using std::set;
 namespace fs = std::filesystem;
 
 std::shared_ptr<DiceModManager> fmt;
@@ -632,10 +630,13 @@ string DiceMsgReply::print()const {
 		+ "\n" + sEcho[(int)echo] + "=" + show_ans();
 }
 string DiceMsgReply::show_ans()const {
+	if (echo == DiceMsgReply::Echo::Lua) {
+		auto tab{ text.to_dict() };
+		return tab.count("script") ? tab["script"].to_str()
+			: tab["func"].to_str();
+	}
 	return echo == DiceMsgReply::Echo::Deck ? listDeck(deck)
-		: text.is_character() ? text.to_str()
-		: text.is_function() ? ("Function#" + to_string(text.chunk.len))
-		: "";
+		: text.to_str();
 }
 
 void DiceMsgReply::from_obj(AttrObject obj) {
@@ -734,6 +735,46 @@ json DiceMsgReply::writeJson()const {
 	return j;
 }
 
+void DiceReplyUnit::add(const string& key, ptr<DiceMsgReply> reply) {
+	items[key] = reply;
+}
+void DiceReplyUnit::add_order(const string& key, AttrVars order) {
+	auto reply{ std::make_shared<DiceMsgReply>() };
+	reply->title = key;
+	reply->type = DiceMsgReply::Type::Order;
+	reply->echo = DiceMsgReply::Echo::Lua;
+	reply->text = AttrVar(order);
+}
+void DiceReplyUnit::build() {
+	for (auto& [key, reply] : items) {
+		if (reply->keyMatch[0]) {
+			for (auto& word : *reply->keyMatch[0]) {
+				match_items[fmt->format(word)] = reply;
+			}
+		}
+		if (reply->keyMatch[1]) {
+			for (auto& word : *reply->keyMatch[1]) {
+				string kw{ fmt->format(word) };
+				prefix_items[kw] = reply;
+				gPrefix.add(kw, kw);
+			}
+		}
+		if (reply->keyMatch[2]) {
+			for (auto& word : *reply->keyMatch[2]) {
+				string kw{ fmt->format(word) };
+				search_items[kw] = reply;
+				gSearcher.add(convert_a2w(kw.c_str()), kw);
+			}
+		}
+		if (reply->keyMatch[3]) {
+			for (auto& word : *reply->keyMatch[3]) {
+				regex_items[fmt->format(word)] = reply;
+			}
+		}
+	}
+	gPrefix.make_fail();
+	gSearcher.make_fail();
+}
 DiceSpeech::DiceSpeech(const YAML::Node& yaml) {
 	if (yaml.IsScalar())speech = UTF8toGBK(yaml.Scalar());
 	else if (yaml.IsSequence()) {
@@ -1102,34 +1143,35 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 	return eve.is("blocked");
 }
 
-bool DiceModManager::listen_reply(FromMsg* msg) {
+bool DiceReplyUnit::listen(FromMsg* msg, int type) {
 	string& strMsg{ msg->strMsg };
-	if (reply_match.count(strMsg) && reply_match[strMsg]->exec(msg)) {
-		return true;
-	}
-	else if (reply_prefix.count(strMsg) && reply_prefix[strMsg]->exec(msg)) {
-		return true;
-	}
-	else if (reply_search.count(strMsg) && reply_search[strMsg]->exec(msg)) {
-		return true;
-	}
-	if (stack<string> sPrefix; gReplyPrefix.match_head(msg->strMsg, sPrefix)) {
+	if (auto it{ match_items.find(strMsg) };
+		(it != match_items.end() || (it = prefix_items.find(strMsg)) != prefix_items.end())
+		&& (type & (int)it->second->type)
+		&& it->second->exec(msg))
+			return true;
+	if (stack<string> sPrefix; gPrefix.match_head(strMsg, sPrefix)) {
 		while (!sPrefix.empty()){
-			if (reply_prefix.count(sPrefix.top())
-				&& reply_prefix[sPrefix.top()]->exec(msg))return true;
+			DD::debugLog("匹配前缀词:" + sPrefix.top());
+			if (auto it{ prefix_items.find(sPrefix.top()) }; it != prefix_items.end()
+				&& (type & (int)it->second->type)
+				&& it->second->exec(msg))return true;
 			sPrefix.pop();
 		}
 	}
 	//模糊匹配禁止自我触发
-	if (vector<string>vSearch; msg->vars.get_ll("uid") != console.DiceMaid && gReplySearcher.search(convert_a2w(strMsg.c_str()), vSearch)) {
+	if (vector<string>vSearch; msg->fromChat.uid != console.DiceMaid
+		&& gSearcher.search(convert_a2w(strMsg.c_str()), vSearch)) {
 		for (const auto& word : vSearch) {
-			if (reply_search.count(word)
-				&& reply_search[word]->exec(msg))return true;
+			if (auto it{ search_items.find(word) }; it != search_items.end()
+				&& (type & (int)it->second->type)
+				&& it->second->exec(msg))return true;
 		}
 	}
 	//regex
 	try {
-		for (auto& [key, reply] : reply_regex){
+		for (auto& [key, reply] : regex_items){
+			if (!(type & (int)reply->type))continue;
 			// libstdc++ 使用了递归式 dfs 匹配正则表达式
 			// 递归层级很多，非常容易爆栈
 			// 然而，每个 Java Thread 在32位 Linux 下默认大小为320K，600字符的匹配即会爆栈
@@ -1151,19 +1193,19 @@ bool DiceModManager::listen_reply(FromMsg* msg) {
 	}
 	return 0;
 }
-string DiceModManager::list_reply()const {
+string DiceModManager::list_reply(int type)const {
 	ResList listTotal, listMatch, listSearch, listPrefix, listRegex;
-	for (const auto& [key, reply] : reply_match) {
-		listMatch << key;
+	for (const auto& [key, reply] : final_reply.match_items) {
+		if (type & (int)reply->type)listMatch << key;
 	}
-	for (const auto& [key, reply] : reply_prefix) {
-		listPrefix << key;
+	for (const auto& [key, reply] : final_reply.prefix_items) {
+		if (type & (int)reply->type)listPrefix << key;
 	}
-	for (const auto& [key, reply] : reply_search) {
-		listSearch << key;
+	for (const auto& [key, reply] : final_reply.search_items) {
+		if (type & (int)reply->type)listSearch << key;
 	}
-	for (const auto& [key, reply] : reply_regex) {
-		listRegex << key;
+	for (const auto& [key, reply] : final_reply.regex_items) {
+		if (type & (int)reply->type)listRegex << key;
 	}
 	if (!listMatch.empty())listTotal << "[完全匹配] " + listMatch.dot(" | ").show();
 	if (!listPrefix.empty())listTotal << "[前缀匹配] " + listPrefix.dot(" | ").show();
@@ -1171,69 +1213,67 @@ string DiceModManager::list_reply()const {
 	if (!listRegex.empty())listTotal << "[正则匹配] " + listRegex.dot(" | ").show();
 	return listTotal.show();
 }
-void DiceModManager::reply_insert(const string& key, ptr<DiceMsgReply> reply) {
+void DiceReplyUnit::insert(const string& key, ptr<DiceMsgReply> reply) {
+	erase(key);
 	if (reply->keyMatch[0]) {
 		for (auto& word : *reply->keyMatch[0]) {
-			reply_match[fmt->format(word)] = reply;
+			match_items[fmt->format(word)] = reply;
 		}
 	}
 	if (reply->keyMatch[1]) {
 		for (auto& word : *reply->keyMatch[1]) {
-			string kw{ fmt->format(word) };
-			reply_prefix[kw] = reply;
-			gReplyPrefix.add(kw, kw);
+			for (auto& word : *reply->keyMatch[1]) {
+				string kw{ fmt->format(word) };
+				prefix_items[kw] = reply;
+				gPrefix.add(kw, kw);
+			}
 		}
+		gPrefix.make_fail();
 	}
 	if (reply->keyMatch[2]) {
 		for (auto& word : *reply->keyMatch[2]) {
 			string kw{ fmt->format(word) };
-			reply_search[kw] = reply;
-			gReplySearcher.add(convert_a2w(kw.c_str()), kw);
+			search_items[kw] = reply;
+			gSearcher.add(convert_a2w(kw.c_str()), kw);
 		}
+		gSearcher.make_fail();
 	}
 	if (reply->keyMatch[3]) {
 		for (auto& word : *reply->keyMatch[3]) {
-			reply_regex[fmt->format(word)] = reply;
+			regex_items[fmt->format(word)] = reply;
 		}
 	}
+	items[key] = reply;
 }
-void DiceModManager::reply_erase(ptr<DiceMsgReply> reply) {
+void DiceReplyUnit::erase(ptr<DiceMsgReply> reply) {
 	if (reply->keyMatch[0]) {
 		for (auto& word : *reply->keyMatch[0]) {
-			reply_match.erase(word);
+			match_items.erase(word);
 		}
 	}
 	if (reply->keyMatch[1]) {
 		for (auto& word : *reply->keyMatch[1]) {
-			reply_prefix.erase(word);
+			prefix_items.erase(word);
 		}
 	}
 	if (reply->keyMatch[2]) {
 		for (auto& word : *reply->keyMatch[2]) {
-			reply_search.erase(word);
+			search_items.erase(word);
 		}
 	}
 	if (reply->keyMatch[3]) {
 		for (auto& word : *reply->keyMatch[3]) {
-			reply_regex.erase(word);
+			regex_items.erase(word);
 		}
 	}
 }
 void DiceModManager::set_reply(const string& key, ptr<DiceMsgReply> reply) {
-	if (final_msgreply.count(key))reply_erase(final_msgreply[key]);
-	reply_insert(key, final_msgreply[key] = custom_reply[key] = reply);
-	if (reply->keyMatch[1]) {
-		gReplyPrefix.make_fail();
-	}
-	if (reply->keyMatch[2]) {
-		gReplySearcher.make_fail();
-	}
+	final_reply.insert(key, custom_reply[key] = reply);
 	save_reply();
 }
 bool DiceModManager::del_reply(const string& key) {
 	if (!custom_reply.count(key))return false;
-	reply_erase(custom_reply[key]);
-	final_msgreply.erase(key);
+	final_reply.erase(key);
 	custom_reply.erase(key);
 	save_reply();
 	return true;
@@ -1248,8 +1288,8 @@ void DiceModManager::save_reply() {
 }
 void DiceModManager::reply_get(const shared_ptr<DiceJobDetail>& msg) {
 	string key{ (*msg)["key"].to_str() };
-	if (final_msgreply.count(key)) {
-		(*msg)["show"] = final_msgreply[key]->print();
+	if (final_reply.items.count(key)) {
+		(*msg)["show"] = final_reply.items[key]->print();
 		msg->reply(getMsg("strReplyShow"));
 	}
 	else {
@@ -1258,25 +1298,13 @@ void DiceModManager::reply_get(const shared_ptr<DiceJobDetail>& msg) {
 }
 void DiceModManager::reply_show(const shared_ptr<DiceJobDetail>& msg) {
 	string key{ (*msg)["key"].to_str()};
-	if (final_msgreply.count(key)) {
-		(*msg)["show"] = final_msgreply[key]->show();
+	if (final_reply.items.count(key)) {
+		(*msg)["show"] = final_reply.items[key]->show();
 		msg->reply(getMsg("strReplyShow"));
 	}
 	else {
 		msg->reply(getMsg("strReplyKeyNotFound"));
 	}
-}
-
-bool DiceModManager::listen_order(DiceJobDetail* msg) {
-	if (shared_ptr<string> nameOrder{ gOrder.match_head(msg->vars.get_str("fromMsg")) }) {
-		msg->vars["reply_title"] = *nameOrder;
-		return ((FromMsg*)msg)->WordCensor()
-			|| lua_msg_call((FromMsg*)msg, msgorder[*nameOrder]);
-	}
-	return false;
-}
-string DiceModManager::list_order() {
-	return msgorder.empty() ? "" : "扩展指令:" + listKey(msgorder);
 }
 
 bool DiceModManager::call_task(const string& task) {
@@ -1423,7 +1451,6 @@ int DiceModManager::load(ResList& resLog){
 	//读取plugin
 	vector<std::filesystem::path> sLuaFile;
 	int cntLuaFile = listDir(DiceDir / "plugin", sLuaFile);
-	msgorder.clear();
 	if (cntLuaFile > 0) {
 		int cntOrder{ 0 };
 		vector<string> sLuaErr;
@@ -1436,7 +1463,7 @@ int DiceModManager::load(ResList& resLog){
 			int cnt = lua_readStringTable(fileLua.c_str(), "msg_order", mOrder);
 			if (cnt > 0) {
 				for (auto& [key, func] : mOrder) {
-					msgorder[format(key)] = { {"file",fileLua},{"func",func} };
+					final_reply.add_order(format(key), { {"file",fileLua},{"func",func} });
 				}
 				cntOrder += mOrder.size();
 			}
@@ -1478,7 +1505,7 @@ int DiceModManager::load(ResList& resLog){
 		try {
 			for (auto reply = jFile.cbegin(); reply != jFile.cend(); ++reply) {
 				if (std::string key = UTF8toGBK(reply.key()); !key.empty()) {
-					ptr<DiceMsgReply> p{ final_msgreply[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
+					ptr<DiceMsgReply> p{ final_reply.items[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
 					p->title = key; 
 					p->readJson(reply.value());
 				}
@@ -1495,7 +1522,7 @@ int DiceModManager::load(ResList& resLog){
 		if (loadJMap(DiceDir / "conf" / "CustomReply.json", mReplyDeck) > 0) {
 			resLog << "迁移CustomReply" + to_string(mReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mReplyDeck) {
-				ptr<DiceMsgReply> reply{ final_msgreply[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
+				ptr<DiceMsgReply> reply{ final_reply.items[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;
 				reply->keyMatch[0] = std::make_unique<vector<string>>(vector<string>{ key });
 				reply->deck = deck;
@@ -1504,7 +1531,7 @@ int DiceModManager::load(ResList& resLog){
 		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck) > 0) {
 			resLog << "迁移正则Reply" + to_string(mRegexReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mRegexReplyDeck) {
-				ptr<DiceMsgReply> reply{ final_msgreply[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
+				ptr<DiceMsgReply> reply{ final_reply.items[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;
 				reply->keyMatch[3] = std::make_unique<vector<string>>(vector<string>{ key });
 				reply->deck = deck;
@@ -1526,14 +1553,7 @@ void DiceModManager::init() {
 	for (const auto& [key, word] : helpdoc) {
 		querier.insert(key);
 	}
-	for (const auto& [key, order] : msgorder) {
-		gOrder.insert(key, key);
-	}
-	for (const auto& [key, reply] : final_msgreply) {
-		reply_insert(key, reply);
-	}
-	gReplySearcher.make_fail();
-	gReplyPrefix.make_fail();
+	final_reply.build();
 	unordered_set<string> cycle;
 	for (auto& [id, eve] : events) {
 		eve["id"] = id;
@@ -1566,16 +1586,8 @@ void DiceModManager::init() {
 void DiceModManager::clear(){
 	helpdoc.clear();
 	querier.clear();
-	msgorder.clear();
-	gOrder.clear();
 	taskcall.clear();
-	final_msgreply.clear();
-	reply_match.clear();
-	reply_prefix.clear();
-	reply_search.clear();
-	reply_prefix.clear();
-	gReplySearcher.clear();
-	gReplyPrefix.clear();
+	final_reply = {};
 	clock_events.clear();
 	hook_events.clear();
 	events.clear();

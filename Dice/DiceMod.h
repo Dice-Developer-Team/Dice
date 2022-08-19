@@ -26,8 +26,8 @@ using std::set;
 using std::variant;
 template<typename T>
 using ptr = std::shared_ptr<T>;
-using lock = ptr<std::unique_lock<std::mutex>>;
-using chat_locks = std::list<lock>;
+using ex_lock = ptr<std::unique_lock<std::mutex>>;
+using chat_locks = std::list<ex_lock>;
 
 class FromMsg;
 
@@ -77,7 +77,7 @@ public:
 class DiceMsgReply {
 public:
 	string title;
-	enum class Type { Reply, Order };   //决定受控制的开关类型
+	enum class Type { Nor, Order, Reply, Both };   //决定受控制的开关类型
 	static enumap_ci sType;
 	std::unique_ptr<vector<string>>keyMatch[4];
 	static enumap_ci sMode;
@@ -96,7 +96,23 @@ public:
 	void readJson(const json&);
 	json writeJson()const;
 };
-
+class DiceReplyUnit {
+	TrieG<char, less_ci> gPrefix;
+	TrieG<char16_t, less_ci> gSearcher;
+public:
+	dict<ptr<DiceMsgReply>> items;
+	dict_ci<ptr<DiceMsgReply>> match_items;
+	dict_ci<ptr<DiceMsgReply>> prefix_items;
+	dict_ci<ptr<DiceMsgReply>> search_items;
+	dict<ptr<DiceMsgReply>> regex_items;
+	void add(const string& key, ptr<DiceMsgReply> reply);
+	void add_order(const string& key, AttrVars);
+	void build();
+	void erase(ptr<DiceMsgReply> reply);
+	void erase(const string& key) { if (items.count(key))erase(items[key]); }
+	void insert(const string&, ptr<DiceMsgReply> reply);
+	bool listen(FromMsg*, int);
+};
 class DiceEvent {
 	enum class Mode { Nil, Clock, Cycle, Trigger };
 	enum class ActType { Nil, Lua };
@@ -176,8 +192,7 @@ class DiceModManager
 	//global
 	dict_ci<DiceSpeech> global_speech;
 	dict_ci<string> helpdoc;
-	dict_ci<AttrVars> msgorder;
-	dict_ci<ptr<DiceMsgReply>> final_msgreply;
+	DiceReplyUnit final_reply;
 	dict_ci<AttrVars> taskcall;
 	dict_ci<string> scripts;
 	//Event
@@ -186,14 +201,7 @@ class DiceModManager
 	multidict_ci<AttrObject> hook_events;
 
 	WordQuerier querier;
-	TrieG<char, less_ci> gOrder;
 	AttrObjects mod_reply_list;
-	dict_ci<ptr<DiceMsgReply>> reply_match;
-	dict_ci<ptr<DiceMsgReply>> reply_prefix;
-	dict_ci<ptr<DiceMsgReply>> reply_search;
-	dict<ptr<DiceMsgReply>> reply_regex;
-	TrieG<char, less_ci> gReplyPrefix;
-	TrieG<char16_t, less_ci> gReplySearcher;
 public:
 	DiceModManager();
 	multimap<Clock, string> clock_events;
@@ -222,18 +230,15 @@ public:
 	//return if event is blocked
 	bool call_hook_event(AttrObject);
 
-	bool listen_order(DiceJobDetail*);
-	bool listen_reply(FromMsg*);
-	string list_reply()const;
+	bool listen_order(FromMsg* msg) { return final_reply.listen(msg, 1); }
+	bool listen_reply(FromMsg* msg) { return final_reply.listen(msg, 2); }
+	string list_reply(int type)const;
 	void set_reply(const string&, ptr<DiceMsgReply> reply);
-	void reply_insert(const string&, ptr<DiceMsgReply> reply);
-	void reply_erase(ptr<DiceMsgReply> reply);
 	bool del_reply(const string&);
 	void save_reply();
 	void reply_get(const shared_ptr<DiceJobDetail>&);
 	void reply_show(const shared_ptr<DiceJobDetail>&);
 	bool call_task(const string&);
-	string list_order();
 
 	bool script_has(const string& name)const { return scripts.count(name); }
 	string script_path(const string& name)const;

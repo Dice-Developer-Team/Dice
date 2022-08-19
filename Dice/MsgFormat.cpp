@@ -35,8 +35,8 @@ std::unordered_map<string, GobalTex> strFuncs{
 	{"master_ID",print_master},
 	{"list_extern_deck",list_extern_deck},
 	{"list_all_deck",list_deck},
-	{"list_reply_deck",[]() {return fmt->list_reply(); }},
-	{"list_extern_order",list_order_ex},
+	{"list_reply_deck",[]() {return fmt->list_reply(2); }},
+	{"list_extern_order",[]() {return fmt->list_reply(1); }},
 	{"list_dice_sister",list_dice_sister},
 };
 

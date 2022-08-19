@@ -1237,12 +1237,11 @@ void DiceModManager::loadLuaMod(const vector<fs::path>& files, ResList& res) {
 	if (!mod_reply_list.empty()) {
 		res << "×¢²áreply" + to_string(mod_reply_list.size()) + "Ïî";
 		for (const auto& [key, val] : mod_reply_list) {
-			if (!key.empty()) {
-				ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
-				reply->title = key;
-				reply->from_obj(val);
-				final_msgreply[key] = reply;
-			}
+			if (key.empty())continue;
+			ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
+			reply->title = key;
+			reply->from_obj(val);
+			final_reply.add(key, reply);
 		}
 		res << "×¢²áevent" + to_string(events.size()) + "Ïî";
 	}

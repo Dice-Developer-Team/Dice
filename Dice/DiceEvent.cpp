@@ -2096,7 +2096,7 @@ int FromMsg::InnerOrder() {
 							}
 							trigger->text = AttrVar(AttrVars{ {"lang","lua"},{"script",readRest()} });
 						}
-						trigger->text = readRest();
+						else trigger->text = readRest();
 					}
 					break;
 				}
@@ -2118,7 +2118,7 @@ int FromMsg::InnerOrder() {
 				replyMsg("strNotAdmin");
 				return -1;
 			}
-			vars["res"] = fmt->list_reply();
+			vars["res"] = fmt->list_reply(2);
 			replyMsg("strReplyList");
 			return 1;
 		}

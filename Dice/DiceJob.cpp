@@ -456,9 +456,6 @@ string list_deck() {
 string list_extern_deck() {
 	return showKey(CardDeck::mExternPublicDeck);
 }
-string list_order_ex() {
-	return fmt->list_order();
-}
 string list_dice_sister() {
 	std::set<long long>list{ DD::getDiceSisters() };
 	if (list.size() <= 1)return {};
