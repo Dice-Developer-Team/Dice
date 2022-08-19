@@ -199,15 +199,14 @@ void clear_group(AttrObject& job) {
 			if (grp.isset("忽略") || grp.isset("免清") || grp.isset("协议无效"))continue;
 			time_t tLast{ grp.tUpdated };
 			if (auto s{ sessions.get_if({ 0,id }) })
-				tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
-			if (tLast > grpline)continue;
-			if (long long tLMT; grp.isGroup
-				&& DD::isGroupMember(id, console.DiceMaid, false)
-				&& (tLMT = DD::getGroupLastMsg(id, console.DiceMaid)) > tLast)tLast = tLMT;
+				tLast = (s->tUpdate > tLast) ? s->tUpdate : tLast;
+			if (tNow - 86400LL * intDayLim < tLast)continue;
+			if (long long tLMT{ DD::getGroupLastMsg(id, console.DiceMaid) };
+				tLMT> tLast)tLast = tLMT;
 			if (!tLast)continue;
 			if (tLast < grpline && !grp.isset("免黑"))GrpDelete.push_back(id);
 			if (grp.isset("已退") || grp.isset("未进"))continue;
-			int intDay = (int)(tNow - tLast) / 86400;
+			int intDay{ (int)(tNow - tLast) / 86400 };
 			if (intDay > intDayLim) {
 				job["day"] = to_string(intDay);
 				res << printGroup(id) + ":" + to_string(intDay) + "天\n";
