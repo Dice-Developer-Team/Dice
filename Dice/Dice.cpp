@@ -176,8 +176,6 @@ void readUserData(){
 		}
 		//读取房间记录
 		sessions.load();
-		//读取当日数据
-		today = make_unique<DiceToday>();
 		if (!log.empty()) {
 			log << "用户数据读取完毕";
 			console.log(log.show(), 0b1, printSTNow());
@@ -203,11 +201,7 @@ void dataBackUp()
 	saveBFile(DiceDir / "user" / "ChatConf.dat", ChatList);
 }
 
-#ifdef _WIN32
-atomic_flag isIniting{ ATOMIC_FLAG_INIT };
-#else
 atomic_flag isIniting = ATOMIC_FLAG_INIT;
-#endif
 EVE_Enable(eventEnable){
 	if (isIniting.test_and_set())return;
 	if (Enabled)return;
@@ -354,6 +348,8 @@ EVE_Enable(eventEnable){
 			}
 		}
 	}
+	//读取当日数据
+	today = make_unique<DiceToday>();
 	//读取用户数据
 	readUserData();
 	set<long long> grps{ DD::getGroupIDList() };

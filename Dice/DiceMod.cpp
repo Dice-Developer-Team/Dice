@@ -775,8 +775,8 @@ DiceModManager::DiceModManager() :global_speech(transpeech) {
 string DiceModManager::list_mod()const {
 	ResList list;
 	for (auto& mod : modIndex) {
-		list << to_string(mod->index) + ". " + mod->name + (mod->active 
-			? (mod->loaded ? " √" : " ?") 
+		list << to_string(mod->index) + ". " + mod->name + (mod->active
+			? (mod->loaded ? " √" : " ?")
 			: " ×");
 	}
 	return list.show();
@@ -816,14 +816,14 @@ void DiceModManager::mod_off(FromMsg* msg) {
 	}
 }
 
-string DiceModManager::format(string s, AttrObject context, const AttrIndexs& indexs, const dict_ci<string>& dict) const{
+string DiceModManager::format(string s, AttrObject context, const AttrIndexs& indexs, const dict_ci<string>& dict) const {
 	//直接重定向
-	if (s[0] == '&'){
+	if (s[0] == '&') {
 		const string key = s.substr(1);
 		if (context.has(key)) {
 			return context.get_str(key);
 		}
-		if (const auto it = dict.find(key); it != dict.end()){
+		if (const auto it = dict.find(key); it != dict.end()) {
 			return format(it->second, context, indexs, dict);
 		}
 		if (const auto it = global_speech.find(key); it != global_speech.end()) {
@@ -837,19 +837,29 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 		&& (lastL = s.rfind('{', lastR)) != string::npos) {
 		string key;
 		//括号前加‘\’表示该括号内容不转义
-		if (lastL > 0 && s[lastL - 1] == '\\') {
-			lastR = lastL--;
-			key = "{";
-		}
-		else if (s[lastR - 1] == '\\') {
+		if (s[lastR - 1] == '\\') {
 			lastL = lastR - 1;
 			key = "}";
+		}
+		else if (lastL > 0 && s[lastL - 1] == '\\') {
+			lastR = lastL--;
+			key = "{";
 		}
 		else key = s.substr(lastL + 1, lastR - lastL - 1);
 		nodes.push(key);
 		++chSign[1];
 		s.replace(lastL, lastR - lastL + 1, chSign);
 		lastR = lastL + 1;
+	}
+	while ((lastL = s.find("\\{")) != string::npos) {
+		nodes.push("{");
+		++chSign[1];
+		s.replace(lastL, 2, chSign);
+	}
+	while ((lastR = s.find("\\}")) != string::npos) {
+		nodes.push("}");
+		++chSign[1];
+		s.replace(lastL, 2, chSign);
 	}
 	while(!nodes.empty()) {
 		size_t pos{ 0 };
@@ -865,7 +875,10 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 				else val = context.get_str(key);
 			}
 			else if (auto res{ getContextItem(context,key) }) {
-				val = format(res.show(), context, indexs, dict);
+				val = res.show();
+			}
+			else if (auto cit = dict.find(key); cit != dict.end()) {
+				val = format(cit->second, context, indexs, dict);
 			}
 			//局部优先于全局
 			else if (auto sp = global_speech.find(key); sp != global_speech.end()) {
@@ -875,7 +888,7 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 				string method{ key.substr(0,colon) };
 				string para{ key.substr(colon + 1) };
 				if (method == "help") {
-					val = format(get_help(para), context, indexs, dict);
+					val = get_help(para, context);
 				}
 				else if (method == "sample") {
 					vector<string> samples{ split(para,"|") };
@@ -969,7 +982,7 @@ string DiceModManager::get_help(const string& key, AttrObject context) const{
 	if (const auto it = helpdoc.find(key); it != helpdoc.end()){
 		return format(it->second, context, {}, helpdoc);
 	}
-	return format("{strHelpNotFound}", context);
+	return {};
 }
 
 struct help_sorter {

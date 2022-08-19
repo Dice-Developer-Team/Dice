@@ -909,11 +909,24 @@ int Msg_echo(lua_State* L) {
 	return 0;
 }
 
+int Context_format(lua_State* L) {
+	if (lua_gettop(L) < 2)return 0;
+	AttrObject vars{ lua_isuserdata(L,1) ? **(AttrObject**)luaL_checkudata(L, 1, "Context")
+		: lua_istable(L,1) ? lua_to_dict(L,1)
+		: AttrObject{} };
+	string msg{ lua_to_gbstring(L, 2) };
+	lua_push_string(L, fmt->format(msg, vars));
+	return 1;
+}
 int Context_index(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	string key{ lua_to_gbstring(L, 2) };
 	if (key == "echo") {
 		lua_pushcfunction(L, Msg_echo);
+		return 1;
+	}
+	else if (key == "format") {
+		lua_pushcfunction(L, Context_format);
 		return 1;
 	}
 	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
@@ -953,6 +966,7 @@ int Context_newindex(lua_State* L) {
 static const luaL_Reg Context_funcs[] = {
 	{"__index", Context_index},
 	{"__newindex", Context_newindex},
+	{"format", Context_format},
 	{NULL, NULL}
 };
 int luaopen_Context(lua_State* L) {
