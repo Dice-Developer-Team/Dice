@@ -3451,8 +3451,8 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		int intRule = isPrivate()
-			? getUser(fromChat.uid).getConf("rc房规")
-			: chat(fromChat.gid).getConf("rc房规");
+			? getUser(fromChat.uid).getConf("rc房规", console["DefaultCOCRoomRule"])
+			: chat(fromChat.gid).getConf("rc房规", console["DefaultCOCRoomRule"]);
 		int intTurnCnt = 1;
 		if (strMsg[intMsgCnt] == 'h' && isspace(static_cast<unsigned char>(strMsg[intMsgCnt + 1]))) {
 			vars["hidden"] = true;
