@@ -872,7 +872,7 @@ int sendMsg(lua_State* L) {
 	else {
 		chat["fwdMsg"] = lua_to_gbstring(L, 1);
 		if (top < 2)return 0;
-		chat["gid"] = lua_to_int(L, 2);
+		chat["gid"] = lua_to_int_or_zero(L, 2);
 		if (top >= 3)chat["uid"] = lua_to_int(L, 3);
 		if (top >= 4)chat["chid"] = lua_to_int(L, 4);
 	}
@@ -885,8 +885,8 @@ int sendMsg(lua_State* L) {
 }
 int eventMsg(lua_State* L) {
 	string fromMsg{ lua_to_gbstring(L, 1) };
-	long long fromGID{ lua_to_int(L, 2) };
-	long long fromUID{ lua_to_int(L, 3) };
+	long long fromGID{ lua_to_int_or_zero(L, 2) };
+	long long fromUID{ lua_to_int_or_zero(L, 3) };
 	msgtype type{ fromGID ?
 		chat(fromGID).isGroup ? msgtype::Group : msgtype::Discuss
 		: msgtype::Private };
@@ -1163,6 +1163,8 @@ int lua_readStringTable(const char* file, const char* var, std::unordered_map<st
 #endif
 	LuaState L(file);
 	if (!L)return -1;
+	lua_newtable(L);
+	lua_setglobal(L, var);
 	if (lua_pcall(L, 0, 0, 0)) {
 		string pErrorMsg = lua_to_gbstring(L, -1);
 		console.log(getMsg("strSelfName") + "运行lua文件" + file + "失败:" + pErrorMsg, 0b10);

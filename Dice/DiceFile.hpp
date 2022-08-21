@@ -464,7 +464,7 @@ int loadDir(int (*load)(const std::filesystem::path&, T&), const std::filesystem
 	}
 
 	if (!intFile)return 0;
-	logList << "读取" + UTF8toGBK(fpDir.u8string()) + "中的" + std::to_string(intFile) + "个文件, 共" + std::to_string(intItem) + "个条目";
+	logList << "读取" + UTF8toGBK(fpDir.filename().u8string()) + "/中的" + std::to_string(intFile) + "个文件, 共" + std::to_string(intItem) + "个条目";
 	if (intFailure)
 	{
 		logList << "读取失败" + std::to_string(intFailure) + "个:";

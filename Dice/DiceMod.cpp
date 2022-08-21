@@ -568,7 +568,7 @@ bool DiceTriggerLimit::check(FromMsg* msg, chat_locks& lock_list)const {
 	return true;
 }
 
-enumap_ci DiceMsgReply::sType{ "Reply","Order" };
+enumap_ci DiceMsgReply::sType{ "Nor","Order","Reply","Both", };
 enumap_ci DiceMsgReply::sMode{ "Match", "Prefix", "Search", "Regex" };
 enumap_ci DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
 enumap<string> strType{ "ªÿ∏¥","÷∏¡Ó" };
@@ -742,8 +742,10 @@ void DiceReplyUnit::add_order(const string& key, AttrVars order) {
 	auto reply{ std::make_shared<DiceMsgReply>() };
 	reply->title = key;
 	reply->type = DiceMsgReply::Type::Order;
+	reply->keyMatch[1] = std::make_unique<vector<string>>(vector<string>{fmt->format(key)});
 	reply->echo = DiceMsgReply::Echo::Lua;
 	reply->text = AttrVar(order);
+	items[key] = reply;
 }
 void DiceReplyUnit::build() {
 	for (auto& [key, reply] : items) {
