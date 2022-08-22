@@ -43,7 +43,13 @@ FromMsg::FromMsg(const AttrVars& var, const chatInfo& ct)
 	if (fromChat.gid) {
 		pGrp = &chat(fromChat.gid);
 	}
-	
+}
+FromMsg::FromMsg(const AttrVars& var)
+	:DiceJobDetail(var), strMsg(vars["fromMsg"].text) {
+	fromChat = { vars.get_ll("uid") ,vars.get_ll("gid") ,vars.get_ll("chid") };
+	if (fromChat.gid) {
+		pGrp = &chat(fromChat.gid);
+	}
 }
 bool FromMsg::isPrivate()const {
 	return !fromChat.gid;
@@ -1953,6 +1959,7 @@ int FromMsg::InnerOrder() {
 						continue;
 					}
 					DD::setGroupKick(llGroup, llMemberQQ);
+					this_thread::sleep_for(1s);
 					resKicked << printUser(llMemberQQ);
 				}
 				else resNotFound << printUser(llMemberQQ);
@@ -4666,10 +4673,10 @@ std::string FromMsg::printFrom()
 	return strFwd;
 }
 
-void reply(AttrObject& msg, string strReply) {
+void reply(AttrObject& msg, string strReply, bool isFormat) {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
-	strReply = fmt->format(strReply, msg);
+	if(isFormat)strReply = fmt->format(strReply, msg);
 	if (console["ReferMsgReply"] && msg["msgid"])strReply = "[CQ:reply,id=" + msg["msgid"].to_str() + "]" + strReply;
 	long long uid{ msg.get_ll("uid") };
 	long long gid{ msg.get_ll("gid") };

@@ -159,7 +159,7 @@ namespace DD {
 		return CALLGET(GetGroupName, loginID, aimGroup) :"Ⱥ";
 	}
 	std::string getGroupNick(long long aimGroup, long long aimQQ) {
-		return CALLGET(GetGroupNick, loginID, aimGroup, aimQQ) :"";
+		return CALLGET(GetGroupNick, loginID, aimGroup, aimQQ) :"ȺԱ";
 	}
 	long long getGroupLastMsg(long long aimGroup, long long aimQQ) {
 		return CALLGET(GetGroupLastMsg, loginID, aimGroup, aimQQ) :-1;

@@ -29,6 +29,7 @@ public:
 	string strReply;
 	std::wsmatch msgMatch;
 	FromMsg(const AttrVars& var, const chatInfo& ct);
+	FromMsg(const AttrVars& var);
 
 	bool isBlock = false;
 
@@ -318,7 +319,7 @@ public:
 	string readItem();
 	int readItems(vector<string>&);
 };
-void reply(AttrObject&, string);
+void reply(AttrObject&, string, bool isFormat = false);
 void MsgNote(AttrObject&, string, int);
 
 #endif /*DICE_EVENT*/

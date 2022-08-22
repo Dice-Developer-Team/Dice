@@ -25,11 +25,10 @@ using std::shared_ptr;
 struct DiceJobDetail : public std::enable_shared_from_this<DiceJobDetail> {
 	chatInfo fromChat;
 	time_t fromTime = time(nullptr);
-	size_t cntExec{ 0 };
 	//¡Ÿ ±±‰¡øø‚
 	AttrObject vars;
 	DiceJobDetail(const AttrVars& vars, bool isFromSelf = false);
-	DiceJobDetail(const AttrVars& var, chatInfo ct = {}) :vars(var), fromChat(ct){}
+	DiceJobDetail(const AttrVars& var, chatInfo ct) :vars(var), fromChat(ct){}
 	virtual void reply(const char*, bool = true) {}
 	virtual void reply(const string&, bool = true) {}
 	AttrVar& operator[](const char* key){

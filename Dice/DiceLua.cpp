@@ -591,8 +591,7 @@ int getSelfData(lua_State* L) {
 }
 int getGroupConf(lua_State* L) {
 	int top{ lua_gettop(L) };
-	if (top > 3)lua_settop(L, top = 3);
-	else if (top < 1)return 0;
+	if (top < 1)return 0;
 	string item;
 	if (lua_isstring(L, 2)) {
 		if ((item = lua_to_gbstring(L, 2))[0] == '&')item = fmt->format(item);
@@ -617,10 +616,38 @@ int getGroupConf(lua_State* L) {
 	else if (item == "members") {
 		lua_newtable(L);
 		long long i{ 0 };
-		for (auto id : DD::getGroupMemberList(id)) {
-			lua_push_raw_string(L, to_string(id));
-			lua_rawseti(L, -2, ++i);
+		string subitem{ top > 2 ? lua_to_raw_string(L,3) : "" };
+		if (subitem.empty()) {
+			for (auto uid : DD::getGroupMemberList(id)) {
+				lua_push_raw_string(L, to_string(id));
+				lua_rawseti(L, -2, ++i);
+			}
 		}
+		else if (subitem == "card") {
+			for (auto uid : DD::getGroupMemberList(id)) {
+				lua_push_string(L, DD::getGroupNick(id, uid));
+				lua_set_field(L, -2, to_string(uid));
+			}
+		}
+		else if (subitem == "lst") {
+			for (auto uid : DD::getGroupMemberList(id)) {
+				if (auto lst{ DD::getGroupLastMsg(id, uid) }) {
+					lua_pushnumber(L, lst);
+				}
+				else lua_pushboolean(L, false);
+				lua_set_field(L, -2, to_string(uid));
+			}
+		}
+		else if (subitem == "auth") {
+			for (auto uid : DD::getGroupMemberList(id)) {
+				if (auto auth{ DD::getGroupAuth(id, uid, 0) }) {
+					lua_pushnumber(L, auth);
+				}
+				else lua_pushboolean(L, false);
+				lua_set_field(L, -2, to_string(uid));
+			}
+		}
+		DD::debugLog("getGroupMembers.done");
 		return 1;
 	}
 	else if (item == "admins") {
@@ -879,22 +906,27 @@ int sendMsg(lua_State* L) {
 	if (!chat.get_ll("gid") && !chat.get_ll("uid"))return 0;
 	msgtype type{ chat.get_ll("gid") ? msgtype::Group
 		: msgtype::Private };
-	AddMsgToQueue(fmt->format(chat["fwdMsg"].text, chat),
-		{ chat.get_ll("uid"),chat.get_ll("gid") });
+	AddMsgToQueue(fmt->format(chat.get_str("fwdMsg"), chat),
+		{ chat.get_ll("uid"),chat.get_ll("gid"),chat.get_ll("chid") });
 	return 0;
 }
 int eventMsg(lua_State* L) {
-	string fromMsg{ lua_to_gbstring(L, 1) };
-	long long fromGID{ lua_to_int_or_zero(L, 2) };
-	long long fromUID{ lua_to_int_or_zero(L, 3) };
-	msgtype type{ fromGID ?
-		chat(fromGID).isGroup ? msgtype::Group : msgtype::Discuss
-		: msgtype::Private };
+	int top{ lua_gettop(L) };
+	if (top < 1)return 0;
+	AttrVars vars;
+	if (lua_istable(L, 1)) {
+		vars = lua_to_table(L, 1);
+	}
+	else {
+		string fromMsg{ lua_to_gbstring(L, 1) };
+		long long fromGID{ lua_to_int_or_zero(L, 2) };
+		long long fromUID{ lua_to_int_or_zero(L, 3) };
+		vars = fromGID
+			? AttrVars{ {"fromMsg",fromMsg},{"gid",fromGID}, {"uid", fromUID} }
+			: AttrVars{ {"fromMsg",fromMsg}, {"uid", fromUID} };
+	}
 	std::thread th([=]() {
-		FromMsg msg(fromGID
-			? FromMsg(AttrVars{ {"fromMsg",fromMsg},{"gid",fromGID}, {"uid", fromUID} }
-				, { fromUID ,fromGID,0 })
-			: FromMsg(AttrVars{ {"fromMsg",fromMsg}, {"uid", fromUID} }, { fromUID ,0,0 }));
+		FromMsg msg(vars);
 		msg.virtualCall();
 	});
 	th.detach();
@@ -902,10 +934,10 @@ int eventMsg(lua_State* L) {
 }
 
 int Msg_echo(lua_State* L) {
-	if (lua_gettop(L) < 2)return 0;
 	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
 	string msg{ lua_to_gbstring(L, 2) };
-	reply(vars, msg);
+	if (lua_isboolean(L, 3))reply(vars, msg, !lua_toboolean(L,3));
+	else reply(vars, msg);
 	return 0;
 }
 
