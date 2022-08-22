@@ -52,24 +52,47 @@ class AttrVar;
 using AttrVars = std::unordered_map<string, AttrVar>;
 using VarArray = std::vector<AttrVar>;
 class lua_State;
-class VarTable {
+class AttrObject {
+	ptr<AttrVars>dict;
+	ptr<VarArray>list;
 	friend class AttrVar;
-	friend void lua_push_attr(lua_State* L, const AttrVar& attr);
-	std::unordered_map<string, ptr<AttrVar>>dict;
-	std::vector<ptr<AttrVar>>idxs;
-	void init_idx();
+	friend AttrVar lua_to_attr(lua_State*, int);
+	friend void lua_push_attr(lua_State*, const AttrVar&);
 public:
-	VarTable(){}
-	VarTable(const AttrVars&);
-	AttrVars to_dict()const;
-	VarArray to_list()const;
-	std::unordered_map<string, ptr<AttrVar>>& get_dict() { return dict; };
-	const std::unordered_map<string, ptr<AttrVar>>& get_dict()const { return dict; };
-	std::vector<std::shared_ptr<AttrVar>>& get_list() { return idxs; };
-	const std::vector<std::shared_ptr<AttrVar>>& get_list()const { return idxs; };
-	bool empty()const { return dict.empty(); }
-	void writeb(std::ofstream& fout) const;
-	void readb(std::ifstream& fin);
+	AttrObject() :dict(std::make_shared<AttrVars>()) {}
+	AttrObject(const AttrVars& vars) :dict(std::make_shared<AttrVars>(vars)) {}
+	explicit AttrObject(const VarArray& vars) :dict(std::make_shared<AttrVars>()), list(std::make_shared<VarArray>(vars)) {}
+	AttrObject(const AttrObject& other) :dict(other.dict), list(other.list) {}
+	ptr<AttrVars> to_dict()const { return dict; }
+	ptr<VarArray> to_list()const { return list; }
+	AttrVars* operator->()const {
+		return dict.get();
+	}
+	AttrVar& at(const string& key)const;
+	AttrVar& operator[](const string& key)const;
+	bool operator<(const AttrObject other)const;
+	//bool operator<(const AttrObject& other)const { return dict < other.dict; }
+	bool empty()const {
+		return dict->empty() && (!list || list->empty());
+	}
+	bool has(const string& key)const;
+	void set(const string& key, const AttrVar& val)const;
+	void reset(const string& key)const {
+		dict->erase(key);
+	}
+	bool is(const string& key)const;
+	bool is_table(const string& key)const;
+	AttrVar index(const string& key)const;
+	AttrVar get(const string& key, ptr<AttrVar> val = {})const;
+	string get_str(const string& key)const;
+	int get_int(const string& key)const;
+	long long get_ll(const string& key)const;
+	AttrObject get_obj(const string& key)const;
+	ptr<AttrVars> get_dict(const string& key)const;
+	AttrObject& merge(const AttrVars& other);
+	json to_json()const;
+	void writeb(std::ofstream&)const;
+	void readb(std::ifstream&);
 };
 
 class AttrVar {
@@ -81,7 +104,7 @@ public:
 		int attr{ 0 };		//2
 		double number;	//3
 		string text;	//4
-		VarTable table;		//5
+		AttrObject table;		//5
 		ByteS chunk;		//6
 		long long id;		//7
 	};
@@ -95,10 +118,12 @@ public:
 	AttrVar(const char* s,size_t len) :type(AttrType::Function), chunk(s,len) {}
 	AttrVar(ByteS&& fun) :type(AttrType::Function), chunk(fun) {}
 	AttrVar(long long n) :type(AttrType::ID), id(n) {}
+	AttrVar(const json&);
+	AttrVar(const AttrObject& vars) :type(AttrType::Table), table(vars) {}
 	explicit AttrVar(const AttrVars& vars) :type(AttrType::Table), table(vars) {}
 	void des() {
 		if (type == AttrType::Text)text.~string();
-		else if (type == AttrType::Table)table.~VarTable();
+		else if (type == AttrType::Table)table.~AttrObject();
 		else if (type == AttrType::Function)chunk.~ByteS();
 	}
 	~AttrVar() {
@@ -112,7 +137,7 @@ public:
 	AttrVar& operator=(const string& other);
 	AttrVar& operator=(const char* other);
 	AttrVar& operator=(const long long other);
-	AttrVar& operator=(const json&);
+	AttrVar& operator=(const json& other) { new(this)AttrVar(other); return *this; };
 	template<typename T>
 	bool operator!=(const T other)const { return !(*this == other); }
 	//bool operator==(const long long other)const;
@@ -126,9 +151,9 @@ public:
 	string print()const;
 	string show()const;
 	bool str_empty()const;
-	VarTable to_table()const;
-	AttrVars to_dict()const;
-	VarArray to_list()const;
+	AttrObject to_obj()const;
+	std::shared_ptr<AttrVars> to_dict()const;
+	std::shared_ptr<VarArray> to_list()const;
 	json to_json()const;
 
 	using CMPR = bool(AttrVar::*)(const AttrVar&)const;
@@ -159,71 +184,6 @@ json to_json(AttrVars& vars);
 void from_json(const json& j, AttrVars&);
 string showAttrCMPR(AttrVar::CMPR);
 
-class AttrObject {
-	std::shared_ptr<AttrVars>obj;
-public:
-	AttrObject():obj(std::make_shared<AttrVars>()) {}
-	AttrObject(const AttrVars& vars) :obj(std::make_shared<AttrVars>(vars)) {}
-	AttrObject(const AttrObject& other) :obj(other.obj) {}
-	AttrVars* operator->()const {
-		return obj.get();
-	}
-	AttrVars& operator*()const {
-		return *obj;
-	}
-	AttrVar& operator[](const string& key)const {
-		return (*obj)[key];
-	}
-	bool operator<(const AttrObject& other)const {
-		return obj < other.obj;
-	}
-	bool empty()const {
-		return obj->empty();
-	}
-	bool has(const string& key)const {
-		return obj->count(key) && !obj->at(key).is_null();
-	}
-	void set(const string& key, const AttrVar& val)const {
-		if (!val)obj->erase(key);
-		else (*obj)[key] = val;
-	}
-	void reset(const string& key)const {
-		obj->erase(key);
-	}
-	bool is(const string& key)const {
-		return obj->count(key) ? bool(obj->at(key)) :false;
-	}
-	bool is_table(const string& key)const {
-		return obj->count(key) && obj->at(key).is_table();
-	}
-	AttrVar index(const string& key)const;
-	AttrVar get(const string& key, const AttrVar& val = {})const {
-		return obj->count(key) ? obj->at(key) : val;
-	}
-	string get_str(const string& key)const {
-		return obj->count(key) ? obj->at(key).to_str() : "";
-	}
-	int get_int(const string& key)const {
-		return obj->count(key) ? obj->at(key).to_int() : 0;
-	}
-	long long get_ll(const string& key)const {
-		return obj->count(key) ? obj->at(key).to_ll() : 0;
-	}
-	VarTable get_tab(const string& key)const {
-		return obj->count(key) ? obj->at(key).to_table() : VarTable();
-	}
-	AttrVars get_dict(const string& key)const {
-		return obj->count(key) ? obj->at(key).to_dict() : AttrVars();
-	}
-	AttrObject& merge(const AttrVars& other) {
-		for (const auto& [key, val] : other) {
-			(*obj)[key] = val;
-		}
-		return *this;
-	}
-	void writeb(std::ofstream&)const;
-	void readb(std::ifstream&);
-};
 using AttrObjects = std::unordered_map<string, AttrObject>;
 using AttrIndex = AttrVar(*)(AttrObject&);
 using AttrIndexs = std::unordered_map<string, AttrIndex>;

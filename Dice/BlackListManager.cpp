@@ -848,7 +848,7 @@ void DDBlackManager::reset_qq_danger(long long llqq)
 		if (Enabled)
 		{
 			if (!isLoadingExtern)console.log("已消除" + printUser(llqq) + "的危险等级", 0b10, printSTNow());
-			if (UserList.count(llqq))AddMsgToQueue(getMsg("strBlackQQDelNotice", {{"user_nick", getName(llqq)}}), llqq);
+			if (UserList.count(llqq))AddMsgToQueue(getMsg("strBlackQQDelNotice", AttrVars{{"user_nick", getName(llqq)}}), llqq);
 		}
 	}
 }
@@ -887,8 +887,8 @@ bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark)
 	{
 		if (!mQQDanger.count(llqq) && UserList.count(llqq) && mark.danger == 2)
 			mark.note.empty()
-				? AddMsgToQueue(getMsg("strBlackQQAddNotice", {{"user_nick", getName(llqq)}}), llqq)
-				: AddMsgToQueue(getMsg("strBlackQQAddNoticeReason", {
+				? AddMsgToQueue(getMsg("strBlackQQAddNotice", AttrVars{{"user_nick", getName(llqq)}}), llqq)
+				: AddMsgToQueue(getMsg("strBlackQQAddNoticeReason", AttrVars{
 					                       {"reason", mark.note}, {"user_nick", getName(llqq)}
 				                       }), llqq);
 		if (!isLoadingExtern) {

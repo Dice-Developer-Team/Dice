@@ -1769,7 +1769,7 @@ int FromMsg::InnerOrder() {
 			long long target{ readID() };
 			if (!target)target = fromChat.gid;
 			if (ChatList.count(target)) {
-				reply(UTF8toGBK(to_json(*chat(target).confs).dump()), false);
+				reply(UTF8toGBK(chat(target).confs.to_json().dump()), false);
 			}
 			else {
 				reply("{self}无" + printGroup(target) + "的群聊记录×");
@@ -2634,7 +2634,7 @@ int FromMsg::InnerOrder() {
 			long long target{ readID() };
 			if (!target)target = fromChat.uid;
 			if(UserList.count(target)){
-				reply(UTF8toGBK(to_json(*getUser(target).confs).dump()), false);
+				reply(UTF8toGBK(getUser(target).confs.to_json().dump()), false);
 			}
 			else {
 				reply("{self}无" + printUser(target) + "的用户记录×");
@@ -3040,7 +3040,7 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "li") {
-		LongInsane(*vars);
+		LongInsane(vars);
 		replyMsg("strLongInsane");
 		return 1;
 	}
@@ -4009,7 +4009,7 @@ int FromMsg::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ti") {
-		TempInsane(*vars);
+		TempInsane(vars);
 		replyMsg("strTempInsane");
 		return 1;
 	}

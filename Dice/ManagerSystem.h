@@ -83,8 +83,6 @@ public:
 
 	[[nodiscard]] bool empty() const;
 
-	[[nodiscard]] string show() const;
-
 	[[nodiscard]] bool isset(const string& key) const{
 		return confs.has(key);
 	}

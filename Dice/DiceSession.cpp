@@ -178,7 +178,7 @@ void DiceSession::log_end(FromMsg* msg) {
 	msg->vars["log_path"] = log_path().string();
 	msg->replyMsg("strLogEnd");
 	update();
-	AttrObject eve{ *msg->vars };
+	AttrObject& eve{ msg->vars };
 	eve["hook"] = "LogEnd";
 	if (!fmt->call_hook_event(eve)) {
 		eve["cmd"] = "uplog";
@@ -471,7 +471,7 @@ void DiceSession::deck_new(FromMsg* msg) {
 }
 string DiceSession::deck_draw(const string& key) {
 	if (decks.count(key)) {
-		if (!decks[key].sizRes)return getMsg("strDeckRestEmpty", { {"deck_name",key} });
+		if (!decks[key].sizRes)return getMsg("strDeckRestEmpty", AttrVars{ {"deck_name",key} });
 		return decks[key].draw();
 	}
 	else if (CardDeck::mPublicDeck.count(key)) {
@@ -711,7 +711,7 @@ int DiceSessionManager::load()
 			if (j.count("conf")) {
 				json& jConf{ j["conf"] };
 				for (auto it = jConf.cbegin(); it != jConf.cend(); ++it) {
-					pSession->conf[UTF8toGBK(it.key())] = it.value();
+					pSession->conf.emplace(UTF8toGBK(it.key()), it.value());
 				}
 			}
 			if (j.count("log")) {

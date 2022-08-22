@@ -902,9 +902,6 @@ Danger //警告用户且拒绝指令，并在3级窗口警告
 	{"世界逆位", "未完成、失败、准备不足、盲目接受、一时不顺利、半途而废、精神颓废、饱和状态、合谋、态度不够融洽、感情受挫。"},
 };
 
-const std::string getMsg(const std::string& key, const AttrVars& maptmp){
-	return getMsg(key, AttrObject(maptmp));
-}
 const std::string getMsg(const std::string& key, AttrObject maptmp){
 	return fmt->format(fmt->msg_get(key), maptmp);
 }

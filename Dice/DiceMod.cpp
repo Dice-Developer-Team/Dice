@@ -47,12 +47,17 @@ void parse_vary(string& raw, unordered_map<string, pair<AttrVar::CMPR, AttrVar>>
 		if ('+' == *--conf.second.end()) {
 			strCMPR = "+";
 			cmpr = &AttrVar::equal_or_more;
-			conf.second.erase(conf.second.end() - 1);
+			conf.second.pop_back();
 		}
 		else if ('-' == *--conf.second.end()) {
 			strCMPR = "-";
 			cmpr = &AttrVar::equal_or_less;
-			conf.second.erase(conf.second.end() - 1);
+			conf.second.pop_back();
+		}
+		else if ('!' == *--conf.second.end()) {
+			strCMPR = "!";
+			cmpr = &AttrVar::not_equal;
+			conf.second.pop_back();
 		}
 		//only number
 		if (!isNumeric(conf.second))continue;
@@ -61,15 +66,15 @@ void parse_vary(string& raw, unordered_map<string, pair<AttrVar::CMPR, AttrVar>>
 	}
 	raw = vars.show("&");
 }
-string parse_vary(const VarTable& raw, unordered_map<string, pair<AttrVar::CMPR, AttrVar>>& vary) {
+string parse_vary(const AttrVars& raw, unordered_map<string, pair<AttrVar::CMPR, AttrVar>>& vary) {
 	ShowList vars;
-	for (auto& [var, exp] : raw.get_dict()) {
-		if (!exp->is_table()) {
-			vary[var] = { &AttrVar::equal,*exp };
-			vars << var + "=" + exp->to_str();
+	for (auto& [var, exp] : raw) {
+		if (!exp.is_table()) {
+			vary[var] = { &AttrVar::equal,exp };
+			vars << var + "=" + exp.to_str();
 		}
 		else {
-			AttrVars tab{ exp->to_dict() };
+			AttrVars& tab{ *exp.to_dict() };
 			if (tab.count("equal")) {
 				vary[var] = { &AttrVar::equal,tab["equal"] };
 				vars << var + "=" + tab["equal"].to_str();
@@ -287,7 +292,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 	new(this)DiceTriggerLimit();
 	ShowList limits;
 	ShowList notes;
-	for (auto& [key,item] : var.to_dict()) {
+	for (auto& [key,item] : *var.to_dict()) {
 		if (key == "prob") {
 			if (int prob{ item.to_int() }) {
 				limits << "prob:" + to_string(prob);
@@ -299,17 +304,19 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 				user_id = { item.to_ll() };
 			}
 			else if (!item.is_table())continue;
-			VarTable tab{ item.to_table() };
-			if (tab.get_dict().count("nor")) {
+			AttrObject& tab{ item.table };
+			if (tab.has("nor")) {
 				user_id_negative = true;
-				item = *tab.get_dict()["nor"];
+				item = tab.to_dict()->at("nor");
 				if (item.is_numberic()) {
 					user_id = { item.to_ll() };
 				}
-				else tab = item.to_table();
+				else for (auto id : *item.to_list()) {
+					user_id.emplace(id.to_ll());
+				}
 			}
-			for (auto id : tab.get_list()) {
-				user_id.emplace(id->to_ll());
+			else for (auto id : *tab.to_list()) {
+				user_id.emplace(id.to_ll());
 			}
 			if (!user_id.empty()) {
 				limits << (user_id_negative ? "user_id:!" : "user_id:") + listID(user_id);
@@ -321,17 +328,19 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 				grp_id = { item.to_ll() };
 			}
 			else if (!item.is_table())continue;
-			VarTable tab{ item.to_table() };
-			if (tab.get_dict().count("nor")) {
+			AttrObject& tab{ item.table };
+			if (tab.has("nor")) {
 				grp_id_negative = true;
-				item = *tab.get_dict()["nor"];
+				item = tab.to_dict()->at("nor");
 				if (item.is_numberic()) {
 					grp_id = { item.to_ll() };
 				}
-				else tab = item.to_table();
+				else if (tab.to_list()) for (auto id : *item.to_list()) {
+					user_id.emplace(id.to_ll());
+				}
 			}
-			for (auto id : tab.get_list()) {
-				grp_id.emplace(id->to_ll());
+			else if(tab.to_list())for (auto id : *tab.to_list()) {
+				user_id.emplace(id.to_ll());
 			}
 			if (!grp_id.empty()) {
 				limits << (grp_id_negative ? "grp_id:!" : "grp_id:") + listID(grp_id);
@@ -347,25 +356,27 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 				cd_timer.emplace_back(type, name, (time_t)item.to_ll());
 			}
 			else if (!item.is_table())continue;
-			else if (VarArray v{ item.to_list() }; !v.empty()) {
-				cd_timer.emplace_back(type, name, (time_t)v[0].to_ll());
-			}
-			for (auto& [subkey, value] : item.to_dict()) {
-				if (CDConfig::eType.count(subkey)) {
-					type = (CDType)CDConfig::eType[subkey];
-					if (value.is_numberic()) {
-						cd_timer.emplace_back(type, name, (time_t)value.to_ll());
+			else {
+				if (auto v{ item.to_list() }) {
+					cd_timer.emplace_back(type, name, (time_t)v->begin()->to_ll());
+				}
+				for (auto& [subkey, value] : *item.to_dict()) {
+					if (CDConfig::eType.count(subkey)) {
+						type = (CDType)CDConfig::eType[subkey];
+						if (value.is_numberic()) {
+							cd_timer.emplace_back(type, name, (time_t)value.to_ll());
+							continue;
+						}
+						if (auto v{ value.to_list() }) {
+							cd_timer.emplace_back(type, name, (time_t)v->begin()->to_ll());
+						}
+						if (value.is_table())for (auto& [name, ct] : *value.to_dict()) {
+							cd_timer.emplace_back(type, name, (time_t)ct.to_ll());
+						}
 						continue;
 					}
-					if (VarArray v{ value.to_list() }; !v.empty()) {
-						cd_timer.emplace_back(type, name, (time_t)v[0].to_ll());
-					}
-					for (auto& [name, ct] : value.to_dict()) {
-						cd_timer.emplace_back(type, name, (time_t)ct.to_ll());
-					}
-					continue;
+					cd_timer.emplace_back(CDType::Chat, subkey, (time_t)value.to_ll());
 				}
-				cd_timer.emplace_back(CDType::Chat, subkey, (time_t)value.to_ll());
 			}
 			if (!cd_timer.empty()) {
 				for (auto& it : cd_timer) {
@@ -388,25 +399,27 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 				today_cnt.emplace_back(type, name, (time_t)item.to_ll());
 			}
 			else if (!item.is_table())continue;
-			else if (VarArray v{ item.to_list() }; !v.empty()) {
-				today_cnt.emplace_back(type, name, (time_t)v[0].to_ll());
-			}
-			for (auto& [subkey, value] : item.to_dict()) {
-				if (CDConfig::eType.count(subkey)) {
-					type = (CDType)CDConfig::eType[subkey];
-					if (value.is_numberic()) {
-						today_cnt.emplace_back(type, name, (time_t)value.to_ll());
+			else {
+				if (auto v{ item.to_list() }) {
+					today_cnt.emplace_back(type, name, (time_t)v->begin()->to_ll());
+				}
+				for (auto& [subkey, value] : *item.to_dict()) {
+					if (CDConfig::eType.count(subkey)) {
+						type = (CDType)CDConfig::eType[subkey];
+						if (value.is_numberic()) {
+							today_cnt.emplace_back(type, name, (time_t)value.to_ll());
+							continue;
+						}
+						if (auto v{ value.to_list() }) {
+							today_cnt.emplace_back(type, name, (time_t)v->begin()->to_ll());
+						}
+						if (value.is_table())for (auto& [name, ct] : *value.to_dict()) {
+							today_cnt.emplace_back(type, name, (time_t)ct.to_ll());
+						}
 						continue;
 					}
-					if (VarArray v{ value.to_list() }; !v.empty()) {
-						today_cnt.emplace_back(type, name, (time_t)v[0].to_ll());
-					}
-					for (auto& [name, ct] : value.to_dict()) {
-						today_cnt.emplace_back(type, name, (time_t)ct.to_ll());
-					}
-					continue;
+					today_cnt.emplace_back(CDType::Chat, subkey, (time_t)value.to_ll());
 				}
-				today_cnt.emplace_back(CDType::Chat, subkey, (time_t)value.to_ll());
 			}
 			if (!today_cnt.empty()) {
 				for (auto& it : today_cnt) {
@@ -432,20 +445,22 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 				locks.emplace_back(type, item.to_str(), 1);
 			}
 			else if (!item.is_table())continue;
-			else if (VarArray v{ item.to_list() }; !v.empty()) {
-				for (auto& k : v) {
-					locks.emplace_back(type, k.to_str(), 1);
-				}
-			}
-			for (auto& [subkey, value] : item.to_dict()) {
-				if (CDConfig::eType.count(subkey)) {
-					type = (CDType)CDConfig::eType[subkey];
-					if (value.is_character()) {
-						locks.emplace_back(type, value.to_str(), 1);
+			else {
+				if (auto v{ item.to_list() }) {
+					for (auto& k : *v) {
+						locks.emplace_back(type, k.to_str(), 1);
 					}
-					else if (VarArray v{ value.to_list() }; !v.empty()) {
-						for (auto& k : v) {
-							locks.emplace_back(type, k.to_str(), 1);
+				}
+				for (auto& [subkey, value] : *item.to_dict()) {
+					if (CDConfig::eType.count(subkey)) {
+						type = (CDType)CDConfig::eType[subkey];
+						if (value.is_character()) {
+							locks.emplace_back(type, value.to_str(), 1);
+						}
+						else if (auto v{ value.to_list() }) {
+							for (auto& k : *v) {
+								locks.emplace_back(type, k.to_str(), 1);
+							}
 						}
 					}
 				}
@@ -463,7 +478,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 		}
 		else if (key == "user_var") {
 			if (!item.is_table())continue;
-			string code{ parse_vary(item.to_table(), user_vary) };
+			string code{ parse_vary(*item.to_dict(), user_vary) };
 			if (user_vary.empty())continue;
 			limits << "user_var:" + code;
 			ShowList vars;
@@ -474,7 +489,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 		}
 		else if (key == "grp_var") {
 			if (!item.is_table())continue;
-			string code{ parse_vary(item.to_table(), grp_vary) };
+			string code{ parse_vary(*item.to_dict(), grp_vary) };
 			if (code.empty())continue;
 			limits << "grp_var:" + code;
 			ShowList vars;
@@ -485,7 +500,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 		}
 		else if (key == "self_var") {
 			if (!item.is_table())continue;
-			string code{ parse_vary(item.to_table(), self_vary) };
+			string code{ parse_vary(*item.to_dict(), self_vary) };
 			if (code.empty())continue;
 			limits << "self_var:" + code;
 			ShowList vars;
@@ -528,9 +543,9 @@ bool DiceTriggerLimit::check(FromMsg* msg, chat_locks& lock_list)const {
 		}
 	}
 	if (!grp_vary.empty() && msg->fromChat.gid) {
-		Chat& grp{ chat(msg->fromChat.gid) };
 		for (auto& [key, cmpr] : grp_vary) {
-			if (!(getGroupItem(msg->fromChat.uid, key).*cmpr.first)(cmpr.second))return false;
+			DD::debugLog("compare group item:" + key + "=" + getGroupItem(msg->fromChat.gid, key).print());
+			if (!(getGroupItem(msg->fromChat.gid, key).*cmpr.first)(cmpr.second))return false;
 		}
 	}
 	if (!self_vary.empty()) {
@@ -571,7 +586,7 @@ bool DiceTriggerLimit::check(FromMsg* msg, chat_locks& lock_list)const {
 enumap_ci DiceMsgReply::sType{ "Nor","Order","Reply","Both", };
 enumap_ci DiceMsgReply::sMode{ "Match", "Prefix", "Search", "Regex" };
 enumap_ci DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
-enumap<string> strType{ "回复","指令" };
+std::array<string, 4> strType{ "无","指令","回复","同时" };
 enumap<string> strMode{ "完全", "前缀", "模糊", "正则" };
 enumap<string> strEcho{ "纯文本", "牌堆（多选一）", "Lua" };
 bool DiceMsgReply::exec(FromMsg* msg) {
@@ -603,7 +618,7 @@ bool DiceMsgReply::exec(FromMsg* msg) {
 		return true;
 	}
 	else if (echo == Echo::Lua) {
-		lua_msg_call(msg, text.to_dict());
+		lua_msg_call(msg, text.to_obj());
 		return true;
 	}
 	return false;
@@ -630,27 +645,27 @@ string DiceMsgReply::print()const {
 		+ "\n" + sEcho[(int)echo] + "=" + show_ans();
 }
 string DiceMsgReply::show_ans()const {
+	DD::debugLog("reply::show_ans");
 	if (echo == DiceMsgReply::Echo::Lua) {
-		auto tab{ text.to_dict() };
-		return tab.count("script") ? tab["script"].to_str()
-			: tab["func"].to_str();
+		auto tab{ text.to_obj() };
+		return tab.has("script") ? tab.get_str("script")
+			: tab.get_str("func");
 	}
 	return echo == DiceMsgReply::Echo::Deck ? listDeck(deck)
 		: text.to_str();
 }
 
 void DiceMsgReply::from_obj(AttrObject obj) {
-	if (obj.has("keyword")) {
-		for (auto& [match, word] : obj.get_tab("keyword").to_dict()) {
+	if (obj.is_table("keyword")) {
+		for (auto& [match, word] : *obj.get_dict("keyword")) {
 			if (!sMode.count(match))continue;
 			if (word.is_character()) {
 				keyMatch[sMode[match]] = std::make_unique<vector<string>>(vector<string>{ word.to_str() });
 			}
-			else if (word.is_table()) {
-				auto ary{ word.to_list() };
+			else if (auto ary{ word.to_list() }) {
 				vector<string> words;
-				words.reserve(ary.size());
-				for (auto& val : ary) {
+				words.reserve(ary->size());
+				for (auto& val : *ary) {
 					words.push_back(val.to_str());
 				}
 				keyMatch[sMode[match]] = std::make_unique<vector<string>>(words);
@@ -660,7 +675,7 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 	if (obj.has("type"))type = (Type)sType[obj.get_str("type")];
 	if (obj.has("limit"))limit.parse(obj["limit"]);
 	if (obj.has("echo")) {
-		AttrVar& answer{ obj["echo"]};
+		AttrVar& answer{ obj["echo"] };
 		if (answer.is_character()) {
 			echo = Echo::Text;
 			text = answer;
@@ -669,13 +684,13 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 			echo = Echo::Lua;
 			text = AttrVar(AttrVars{ {"lang","lua"},{"script",answer} });
 		}
-		else if (AttrVars tab{ answer.to_dict() }; tab.count("lua")) {
+		else if (AttrVars& tab{ *answer.to_dict() }; tab.count("lua")) {
 			echo = Echo::Lua;
 			text = AttrVar(AttrVars{ {"lang","lua"},{"script",tab["lua"]} });
 		}
-		else{
+		else if (auto v{ answer.to_list() }) {
 			deck = {};
-			for (auto& item : answer.to_list()) {
+			for (auto& item : *v) {
 				deck.push_back(item.to_str());
 			}
 		}
@@ -730,7 +745,7 @@ json DiceMsgReply::writeJson()const {
 	if (keyMatch[3])j["regex"] = GBKtoUTF8(*keyMatch[3]);
 	if(!limit.empty())j["limit"] = GBKtoUTF8(limit.print());
 	if (echo == Echo::Deck)j["answer"] = GBKtoUTF8(deck);
-	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(text.to_dict()["script"].to_str());
+	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(text.to_obj().get_str("script"));
 	else j["answer"] = GBKtoUTF8(text.to_str());
 	return j;
 }
@@ -1090,13 +1105,13 @@ void DiceModManager::rm_help(const string& key)
 
 time_t parse_seconds(const AttrVar& time) {
 	if (time.is_numberic())return time.to_int();
-	if (AttrObject t{ time.to_dict() }; !t.empty())
+	if (AttrObject t{ time.to_obj() }; !t.empty())
 		return t.get_ll("second") + t.get_ll("minute") * 60 + t.get_ll("hour") * 3600 + t.get_ll("day") * 86400;
 	return 0;
 }
 Clock parse_clock(const AttrVar& time) {
 	Clock clock{ 0,0 };
-	if (AttrObject t{ time.to_dict() }; !t.empty()) {
+	if (AttrObject t{ time.to_obj() }; !t.empty()) {
 		clock.first = t.get_int("hour");
 		clock.second = t.get_int("minute");
 	}
@@ -1109,12 +1124,12 @@ void DiceModManager::call_cycle_event(const string& id) {
 	if (eve["action"].is_function()) {
 		lua_call_event(eve, eve["action"]);
 	}
-	else if (auto action{ eve.get_dict("action") }; action.count("lua")) {
-		lua_call_event(eve, action["lua"]);
+	else if (auto action{ eve.get_dict("action") }; action->count("lua")) {
+		lua_call_event(eve, action->at("lua"));
 	}
 	auto trigger{ eve.get_dict("trigger") };
-	if (trigger.count("cycle")) {
-		sch.add_job_for(parse_seconds(trigger["cycle"]), eve);
+	if (trigger->count("cycle")) {
+		sch.add_job_for(parse_seconds(trigger->at("cycle")), eve);
 	}
 }
 void DiceModManager::call_clock_event(const string& id) {
@@ -1122,8 +1137,8 @@ void DiceModManager::call_clock_event(const string& id) {
 	AttrObject eve{ events[id] };
 	auto action{ eve["action"] };
 	if (!action)return;
-	else if (action.is_table() && action.to_dict().count("lua")) {
-		action = action.to_dict()["lua"];
+	else if (action.is_table() && action.to_dict()->count("lua")) {
+		action = action.to_dict()->at("lua");
 	}
 	lua_call_event(eve, action);
 }
@@ -1133,8 +1148,8 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 	for (auto& [id, hook] : multi_range(hook_events, hookEvent)) {
 		auto action{ hook["action"] };
 		if (!action)continue;
-		else if (action.is_table() && action.to_dict().count("lua")) {
-			action = action.to_dict()["lua"];
+		else if (action.is_table() && action.to_dict()->count("lua")) {
+			action = action.to_obj()["lua"];
 		}
 		if (hookEvent == "StartUp") {
 			std::thread th(lua_call_event, eve, action);
@@ -1299,8 +1314,10 @@ void DiceModManager::reply_get(const shared_ptr<DiceJobDetail>& msg) {
 	}
 }
 void DiceModManager::reply_show(const shared_ptr<DiceJobDetail>& msg) {
+	DD::debugLog("reply_show");
 	string key{ (*msg)["key"].to_str()};
 	if (final_reply.items.count(key)) {
+		DD::debugLog("final_reply.show");
 		(*msg)["show"] = final_reply.items[key]->show();
 		msg->reply(getMsg("strReplyShow"));
 	}
@@ -1560,16 +1577,16 @@ void DiceModManager::init() {
 	for (auto& [id, eve] : events) {
 		eve["id"] = id;
 		auto trigger{ eve.get_dict("trigger") };
-		if (trigger.count("cycle")) {
+		if (trigger->count("cycle")) {
 			if (!cycle_events.count(id)) {
 				call_cycle_event(id);
 			}
 			cycle.insert(id);
 		}
-		if (trigger.count("clock")) {
-			auto& clock{ trigger["clock"] };
-			if (auto list{ clock.to_list() }; !list.empty()) {
-				for (auto& clc : list) {
+		if (trigger->count("clock")) {
+			auto& clock{ trigger->at("clock") };
+			if (auto list{ clock.to_list() }) {
+				for (auto& clc : *list) {
 					clock_events.emplace(parse_clock(clc), id);
 				}
 			}
@@ -1577,8 +1594,8 @@ void DiceModManager::init() {
 				clock_events.emplace(parse_clock(clock), id);
 			}
 		}
-		if (trigger.count("hook")) {
-			string nameEvent{ trigger["hook"].to_str() };
+		if (trigger->count("hook")) {
+			string nameEvent{ trigger->at("hook").to_str() };
 			hook_events.emplace(nameEvent, eve);
 		}
 	}

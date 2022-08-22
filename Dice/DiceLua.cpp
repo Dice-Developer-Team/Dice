@@ -142,16 +142,18 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 		break;
 	case AttrVar::AttrType::Table:
 		lua_newtable(L);
-		if (unordered_set<string> idxs; !attr.table.dict.empty()) {
-			int idx{ 0 };
-			for (auto& val : attr.table.idxs) {
-				val ? lua_push_attr(L, *val) : lua_pushnil(L);
-				lua_seti(L, -2, ++idx);
-				idxs.insert(to_string(idx));
+		if (unordered_set<string> idxs; !attr.table.dict->empty() || attr.table.list) {
+			if (attr.table.list) {
+				int idx{ 1 };
+				for (auto& val : *attr.table.list) {
+					lua_push_attr(L, val);
+					lua_seti(L, -2, ++idx);
+					idxs.insert(to_string(idx));
+				}
 			}
-			for (auto& [key, val] : attr.table.dict) {
+			for (auto& [key, val] : *attr.table.dict) {
 				if (idxs.count(key))continue;
-				val ? lua_push_attr(L, *val) : lua_pushnil(L);
+				val ? lua_push_attr(L, val) : lua_pushnil(L);
 				lua_set_field(L, -2, key.c_str());
 			}
 		}
@@ -183,19 +185,24 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 		return lua_to_chunk(L, idx);
 		break;
 	case LUA_TTABLE:
-		AttrVars tab;
+		AttrObject tab;
 		if (idx < 0)idx = lua_gettop(L) + idx + 1;
 		lua_pushnil(L);
 		while (lua_next(L, idx)) {
 			if (lua_type(L, -2) == LUA_TNUMBER) {
-				tab[to_string(lua_tointeger(L, -2))] = lua_to_attr(L, -1);
+				if (!tab.list)tab.list = std::make_shared<VarArray>();
+				size_t idx{ (size_t)lua_tointeger(L,-2) };
+				while (idx > tab.list->size()) {
+					tab.list->push_back({});
+				}
+				tab.list->push_back(lua_to_attr(L, -1));
 			}
 			else {
-				tab[lua_to_gbstring(L, -2)] = lua_to_attr(L, -1);
+				tab.dict->emplace(lua_to_gbstring(L, -2), lua_to_attr(L, -1));
 			}
 			lua_pop(L, 1);
 		}
-		return AttrVar(tab);
+		return tab;
 		break;
 	}
 	return {};
@@ -207,24 +214,6 @@ int lua_push_table(lua_State* L, const AttrVars& tab) {
 		lua_set_field(L, -2, key.c_str());
 	}
 	return 1;
-}
-AttrVars lua_to_table(lua_State* L, int idx = -1) {
-	if (lua_istable(L, idx)) {
-		AttrVars tab;
-		if (idx < 0)idx = lua_gettop(L) + idx + 1;
-		lua_pushnil(L);
-		while (lua_next(L, idx)) {
-			if (lua_type(L, -2) == LUA_TNUMBER) {
-				tab[to_string(lua_tointeger(L, -2))] = lua_to_attr(L, -1);
-			}
-			else {
-				tab[lua_to_gbstring(L, -2)] = lua_to_attr(L, -1);
-			}
-			lua_pop(L, 1);
-		}
-		return tab;
-	}
-	return {};
 }
 
 AttrVars lua_to_dict(lua_State* L, int idx = -1) {
@@ -406,7 +395,7 @@ bool lua_call_task(const AttrVars& task) {
 int selfData_get(lua_State* L) {
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
 	if (lua_isnoneornil(L, 2)) {
-		lua_push_table(L, *file.data);
+		lua_push_attr(L, file.data);
 	}
 	else {
 		string key{ lua_to_gbstring(L, 2) };
@@ -424,7 +413,7 @@ int selfData_get(lua_State* L) {
 int selfData_set(lua_State* L) {
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
 	if (lua_istable(L, 2)) {
-		file.data = lua_to_table(L, 2);
+		file.data = lua_to_dict(L, 2);
 		file.save();
 	}
 	else if(lua_isstring(L, 2)) {
@@ -473,7 +462,7 @@ int SelfData_newindex(lua_State* L) {
 }
 int SelfData_totable(lua_State* L) {
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
-	lua_push_table(L, *file.data);
+	lua_push_attr(L, file.data);
 	return 1;
 }
 static const luaL_Reg SelfData_funcs[] = {
@@ -894,7 +883,7 @@ int sendMsg(lua_State* L) {
 	if (top < 1)return 0;
 	AttrObject chat;
 	if (lua_istable(L, 1)) {
-		chat = lua_to_table(L, 1);
+		chat = lua_to_dict(L, 1);
 	}
 	else {
 		chat["fwdMsg"] = lua_to_gbstring(L, 1);
@@ -915,7 +904,7 @@ int eventMsg(lua_State* L) {
 	if (top < 1)return 0;
 	AttrVars vars;
 	if (lua_istable(L, 1)) {
-		vars = lua_to_table(L, 1);
+		vars = lua_to_dict(L, 1);
 	}
 	else {
 		string fromMsg{ lua_to_gbstring(L, 1) };
@@ -1240,7 +1229,7 @@ void DiceModManager::loadLuaMod(const vector<fs::path>& files, ResList& res) {
 					continue;
 				}
 				for (auto& [key, val] : lua_to_dict(L)) {
-					mod_reply_list[key] = val.to_dict();
+					mod_reply_list[key] = val.to_obj();
 				}
 			}
 			lua_pop(L, 1);
@@ -1251,7 +1240,7 @@ void DiceModManager::loadLuaMod(const vector<fs::path>& files, ResList& res) {
 					continue;
 				}
 				for (auto& [key, val] : lua_to_dict(L)) {
-					events[key] = val.to_dict();
+					events[key] = val.to_obj();
 				}
 			}
 		}

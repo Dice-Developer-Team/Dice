@@ -212,14 +212,14 @@ void CharaCard::clear() {
 			if (!show(it, strVal)) {
 				sDefault.insert(it);
 				if (it[0] == '&')subList << it + "=" + strVal;
-				else if (Attr[it].type == AttrVar::AttrType::Text)subList << it + ":【" + strVal + "】";
+				else if (Attr.at(it).type == AttrVar::AttrType::Text)subList << it + ":【" + strVal + "】";
 				else subList << it + ":" + strVal;
 			}
 		}
 		Res << subList.show();
 	}
 	string strAttrRest;
-	for (const auto& [key,val] : *Attr) {
+	for (const auto& [key,val] : *Attr.to_dict()) {
 		if (sDefault.count(key) || key[0] == '_'
 			|| (!isWhole && val.type == AttrVar::AttrType::Text))continue;
 		strAttrRest += key + ":" + val.to_str() + (val.type == AttrVar::AttrType::Text ? "\t" : " ");
@@ -251,7 +251,7 @@ void CharaCard::writeb(std::ofstream& fout) const {
 	fwrite(fout, Name);
 	if (!Attr.empty()) {
 		fwrite(fout, string("Attrs"));
-		fwrite(fout, *Attr);
+		Attr.writeb(fout);
 	}
 	if (!Note.empty()) {
 		fwrite(fout, string("Note"));
@@ -270,7 +270,7 @@ void CharaCard::readb(std::ifstream& fin) {
 			Attr["__Type"] = fread<string>(fin);
 			break;
 		case 3:
-			fread(fin, *Attr);
+			Attr.readb(fin);
 			break;
 		case 11: {
 			std::map<string, short>TempAttr;
@@ -327,12 +327,12 @@ void CharaCard::cntRcStat(int die, int rate) {
 	if (rate <= 0 || rate >= 100 || die <= 0 || die > 100)return;
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
 	Attr["__StatRcCnt"] = Attr["__StatRcCnt"].to_int() + 1;
-	if(die <= rate)Attr["__StatRcSumSuc"] = Attr["__StatRcSumSuc"].to_int() + 1;	//实际成功数
-	if (die == 1)Attr["__StatRcCnt1"] = Attr["__StatRcCnt1"].to_int() + 1;	//统计出1
-	if (die <= 5)Attr["__StatRcCnt5"] = Attr["__StatRcCnt5"].to_int() + 1;	//统计出1-5
-	if (die >= 96)Attr["__StatRcCnt96"] = Attr["__StatRcCnt96"].to_int() + 1;	//统计出96-100
-	if (die == 100)Attr["__StatRcCnt100"] = Attr["__StatRcCnt100"].to_int() + 1;	//统计出100
-	Attr["__StatRcSumRate"] = Attr["__StatRcSumRate"].to_int() + rate;	//总成功率
+	if(die <= rate)Attr["__StatRcSumSuc"] = Attr.get_int("__StatRcSumSuc") + 1;	//实际成功数
+	if (die == 1)Attr["__StatRcCnt1"] = Attr.get_int("__StatRcCnt1") + 1;	//统计出1
+	if (die <= 5)Attr["__StatRcCnt5"] = Attr.get_int("__StatRcCnt5") + 1;	//统计出1-5
+	if (die >= 96)Attr["__StatRcCnt96"] = Attr.get_int("__StatRcCnt96") + 1;	//统计出96-100
+	if (die == 100)Attr["__StatRcCnt100"] = Attr.get_int("__StatRcCnt100") + 1;	//统计出100
+	Attr["__StatRcSumRate"] = Attr.get_int("__StatRcSumRate") + rate;	//总成功率
 	update();
 }
 

@@ -582,69 +582,6 @@ public:
 		return mCardList[0];
 	}
 
-	bool load(std::ifstream& fin)
-	{
-		string s;
-		if (!(fin >> s))return false;
-		Unpack pack(base64_decode(s));
-		indexMax = pack.getInt();
-		Unpack cards = pack.getUnpack();
-		while (cards.len() > 0)
-		{
-			Unpack card = cards.getUnpack();
-			const int nIndex = card.getInt();
-			string name = card.getstring();
-			const string type = card.getstring();
-			mCardList[nIndex] = CharaCard(name, type);
-			mNameIndex[name] = nIndex;
-			Unpack skills = card.getUnpack();
-			string skillname;
-			while (skills.len() > 0)
-			{
-				skillname = skills.getstring();
-				mCardList[nIndex][skillname] = skills.getInt();
-			}
-			mCardList[nIndex].Note = card.getstring();
-		}
-		Unpack groups = pack.getUnpack();
-		while (groups.len() > 0)
-		{
-			mGroupIndex[groups.getLong()] = groups.getInt();
-		}
-		return true;
-	}
-
-	void save(std::ofstream& fout)
-	{
-		Unpack pack;
-		pack.add(indexMax);
-		Unpack cards;
-		for (const auto& it : mCardList)
-		{
-			Unpack card;
-			card.add(it.first);
-			card.add(it.second.getName());
-			Unpack skills;
-			for (const auto& skill : *it.second.Attr)
-			{
-				skills.add(skill.first);
-				skills.add(skill.second.to_str());	//need fix
-			}
-			card.add(skills);
-			card.add(it.second.Note);
-			cards.add(card);
-		}
-		pack.add(cards);
-		Unpack groups;
-		for (const auto& it : mGroupIndex)
-		{
-			groups.add(static_cast<long long>(it.first));
-			groups.add(it.second);
-		}
-		pack.add(groups);
-		fout << base64_encode(pack.getAll());
-	}
-
 	void writeb(std::ofstream& fout) const
 	{
 		fwrite(fout, indexMax);

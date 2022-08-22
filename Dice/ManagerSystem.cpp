@@ -162,7 +162,7 @@ AttrVar getContextItem(AttrObject context, string item) {
 		if (item.find(':') <= item.find('.'))return var;
 		if (!(sub = splitOnce(item)).empty()) {
 			if (context.has(sub) && context[sub].is_table())
-				return getContextItem(context[sub].to_dict(), item);
+				return getContextItem(context[sub].to_obj(), item);
 			if (sub == "user")return getUserItem(context.get_ll("uid"), item);
 			if (sub == "grp" || sub == "group")return getGroupItem(context.get_ll("gid"), item);
 		}
@@ -176,14 +176,6 @@ AttrVar getContextItem(AttrObject context, string item) {
 
 [[nodiscard]] bool User::empty() const {
 	return (!nTrust) && (!tUpdated) && confs.empty() && strNick.empty();
-}
-[[nodiscard]] string User::show() const {
-	ResList res;
-	for (auto& [key, val] : *confs)
-	{
-		res << key + ":" + val.to_str();
-	}
-	return res.show();
 }
 void User::setConf(const string& key, const AttrVar& val)
 {
@@ -222,7 +214,7 @@ void User::writeb(std::ofstream& fout)
 	fwrite(fout, ID);
 	if (!confs.empty()) {
 		fwrite(fout, string("Conf"));
-		fwrite(fout, *confs);
+		confs.writeb(fout);
 	}
 	if (!strNick.empty()) {
 		fwrite(fout, string("Nick"));
@@ -501,7 +493,7 @@ void Chat::writeb(std::ofstream& fout)
 	if (!confs.empty())
 	{
 		fwrite(fout, static_cast<short>(10));
-		fwrite(fout, *confs);
+		confs.writeb(fout);
 	}
 	if (!ChConf.empty())
 	{

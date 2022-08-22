@@ -89,7 +89,7 @@ void Censor::save() {
 
 bool ignored(char16_t ch) {
 	static u16string dot{ u"~!@#$%^&*()-=`_+[]\\{}|;':\",./<>?" };
-	return isspace(ch) || dot.find(ch) != u16string::npos;
+	return iswspace(static_cast<unsigned short>(ch)) || dot.find(ch) != u16string::npos;
 }
 
 int Censor::search(const string& text, vector<string>& res) {

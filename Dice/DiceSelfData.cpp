@@ -11,7 +11,7 @@ SelfData::SelfData(const std::filesystem::path& p) :pathFile(p) {
 	if (std::filesystem::exists(pathFile = p)) {
 		switch (type) {
 		case Json:
-			from_json(freadJson(pathFile), *data);
+			data = AttrVar(freadJson(pathFile)).to_obj();
 			break;
 		case Bin:
 			if (std::ifstream fs{ pathFile })data.readb(fs);
@@ -25,7 +25,7 @@ void SelfData::save() {
 	std::lock_guard<std::mutex> lock(exWrite);
 	switch (type) {
 	case Json:
-		fwriteJson(pathFile, to_json(*data), 0);
+		fwriteJson(pathFile, data.to_json(), 0);
 		break;
 	case Bin:
 		if (std::ofstream fs{ pathFile })data.writeb(fs);

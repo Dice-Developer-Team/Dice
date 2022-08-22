@@ -461,7 +461,7 @@ EVE_Enable(eventEnable){
 		console.log(std::string("刷新软件包缓存失败：") + e.what(), 0);
 	}
 	isIniting.clear();
-	fmt->call_hook_event({ {{"Event","StartUp"}} });
+	fmt->call_hook_event(AttrVars{ {{"Event","StartUp"}} });
 }
 
 mutex GroupAddMutex;
@@ -916,7 +916,7 @@ EVE_GroupInvited(eventGroupInvited)
 		}
 		if (isBlocked)return 1;
 		const string strNow = printSTNow();
-		string strMsg = "来自" + printUser(fromUID) + "的入群邀请:" +
+		string strMsg = "收到" + printUser(fromUID) + "的入群邀请:" +
 			DD::printGroupInfo(fromGID);
 		if (ExceptGroups.count(fromGID)) {
 			strMsg += "\n已忽略（默认协议无效）";

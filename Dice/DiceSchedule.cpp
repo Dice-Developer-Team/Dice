@@ -141,7 +141,7 @@ void DiceScheduler::add_job_for(unsigned int waited, const AttrObject& job) {
 }
 void DiceScheduler::add_job_for(unsigned int waited, const char* job_name) {
 	std::unique_lock<std::mutex> lock_queue(mtJobWaited);
-	queueJobWaited.emplace(time(nullptr) + waited, AttrObject{ {{ "cmd" , job_name }} });
+	queueJobWaited.emplace(time(nullptr) + waited, AttrVars{ { "cmd" , job_name } });
 }
 
 void DiceScheduler::add_job_until(time_t cloc, const AttrObject& job) {
@@ -150,7 +150,7 @@ void DiceScheduler::add_job_until(time_t cloc, const AttrObject& job) {
 }
 void DiceScheduler::add_job_until(time_t cloc, const char* job_name) {
 	std::unique_lock<std::mutex> lock_queue(mtJobWaited);
-	queueJobWaited.emplace(cloc, AttrObject{ {{ "cmd" , job_name }} });
+	queueJobWaited.emplace(cloc, AttrVars{ { "cmd" , job_name } });
 }
 
 bool DiceScheduler::is_job_cold(const char* cmd) {
@@ -218,7 +218,7 @@ int DiceToday::getJrrp(long long uid) {
 		if (!UserInfo[uid].has("jrrp_local")) {
 			UserInfo[uid]["jrrp_local"] = RandomGenerator::Randint(1, 100);
 			console.log(getMsg("strJrrpErr",
-							   { {"res", res} }
+				AttrVars{ {"res", res} }
 			), 0);
 		}
 		return (UserInfo[uid]["jrrp_local"]).to_int();
@@ -259,7 +259,7 @@ void DiceToday::save() {
 		if (!UserInfo.empty()) {
 			json& jCnt{ jFile["user"] = json::object() };
 			for (auto& [id, user] : UserInfo) {
-				jCnt[to_string(id)] = to_json(*user);
+				jCnt[to_string(id)] = user.to_json();
 			}
 		}
 		if (!counter.empty()) {
@@ -307,7 +307,7 @@ void DiceToday::load() {
 	}
 	if (jFile.count("user")) {
 		for (auto& [key,val]: jFile["user"].items()) {
-			from_json(val, *UserInfo[std::stoll(key)]);
+			UserInfo[std::stoll(key)] = AttrVar(val).to_obj();
 		}
 	}
 }

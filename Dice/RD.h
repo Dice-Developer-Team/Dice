@@ -835,9 +835,8 @@ std::string COC6(int);
 std::string COC7D();
 std::string COC7(int);
 std::string DND(int);
-class AttrVar;
-using AttrVars = std::unordered_map<std::string, AttrVar>;
-void LongInsane(AttrVars&);
-void TempInsane(AttrVars&);
+class AttrObject;
+void LongInsane(AttrObject&);
+void TempInsane(AttrObject&);
 int RollSuccessLevel(int, int, int);
 #endif /*DICE_RD*/
