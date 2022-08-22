@@ -1767,7 +1767,7 @@ int FromMsg::InnerOrder() {
 				return 1;
 			}
 			long long target{ readID() };
-			if (!target)target = fromChat.uid;
+			if (!target)target = fromChat.gid;
 			if (ChatList.count(target)) {
 				reply(UTF8toGBK(to_json(*chat(target).confs).dump()), false);
 			}
@@ -2010,7 +2010,7 @@ int FromMsg::InnerOrder() {
 		unsigned int intMsgTmpCnt{ intMsgCnt };
 		string action{ readPara() };
 		if (action == "on" && fromChat.gid) {
-			const string option{ (vars["option"] = "禁用回复").to_str() };
+			const string& option{ (vars["option"] = "禁用回复").text };
 			if (!chat(fromChat.gid).isset(option)) {
 				replyMsg("strGroupSetOffAlready");
 			}
@@ -2024,7 +2024,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		else if (action == "off" && fromChat.gid) {
-			const string option{ (vars["option"] = "禁用回复").to_str() };
+			const string& option{ (vars["option"] = "禁用回复").text };
 			if (chat(fromChat.gid).isset(option)) {
 				replyMsg("strGroupSetOnAlready");
 			}

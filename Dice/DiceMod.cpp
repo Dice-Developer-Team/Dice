@@ -162,8 +162,8 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 					: cd_type == CDType::User ? "用户锁" : "全局锁") + key;
 			}
 			if (sub.empty())continue;
-			limits << "today:" + sub.show("&");
-			notes << "- 当日计数: " + subnotes.show();
+			limits << "lock:" + sub.show("&");
+			notes << "- 同步锁: " + subnotes.show();
 		}
 		else if (key == "cd") {
 			if (colon == string::npos)continue;
@@ -1289,7 +1289,7 @@ void DiceModManager::save_reply() {
 	else fwriteJson(DiceDir / "conf" / "CustomMsgReply.json", j, 0);
 }
 void DiceModManager::reply_get(const shared_ptr<DiceJobDetail>& msg) {
-	string key{ (*msg)["key"].to_str() };
+	string key{ msg->vars.get_str("key")};
 	if (final_reply.items.count(key)) {
 		(*msg)["show"] = final_reply.items[key]->print();
 		msg->reply(getMsg("strReplyShow"));

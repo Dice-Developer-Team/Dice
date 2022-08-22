@@ -619,7 +619,7 @@ int getGroupConf(lua_State* L) {
 		string subitem{ top > 2 ? lua_to_raw_string(L,3) : "" };
 		if (subitem.empty()) {
 			for (auto uid : DD::getGroupMemberList(id)) {
-				lua_push_raw_string(L, to_string(id));
+				lua_push_raw_string(L, to_string(uid));
 				lua_rawseti(L, -2, ++i);
 			}
 		}
