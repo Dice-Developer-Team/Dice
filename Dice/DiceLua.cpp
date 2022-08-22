@@ -962,21 +962,9 @@ int Context_index(lua_State* L) {
 		return 1;
 	}
 	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
-	if (vars.has(key)) {
-		lua_push_attr(L, vars[key]);
+	if (auto val{ getContextItem(vars,key) }) {
+		lua_push_attr(L, val);
 		return 1;
-	}
-	else if (key == "fromQQ" || key == "fromUser") {
-		if (vars.has("uid")) {
-			lua_push_string(L, (vars[key] = vars["uid"].to_str()).to_str());
-			return 1;
-		}
-	}
-	else if (key == "fromGroup") {
-		if (vars.has("gid")) {
-			lua_push_string(L, (vars[key] = vars["gid"].to_str()).to_str());
-			return 1;
-		}
 	}
 	return 0;
 }
@@ -998,7 +986,7 @@ int Context_newindex(lua_State* L) {
 static const luaL_Reg Context_funcs[] = {
 	{"__index", Context_index},
 	{"__newindex", Context_newindex},
-	{"format", Context_format},
+	//{"format", Context_format},
 	{NULL, NULL}
 };
 int luaopen_Context(lua_State* L) {

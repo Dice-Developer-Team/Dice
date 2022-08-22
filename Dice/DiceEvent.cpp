@@ -36,6 +36,15 @@ AttrIndexs MsgIndexs{
 	{"pc", idx_pc},
 	{"at", idx_at},
 	{"grpAuth", idx_gAuth},
+	{"fromUser", [](AttrObject& vars) {
+		return vars.has("uid") ? vars["fromUser"] = vars.get_str("uid") : AttrVar();
+	}},
+	{"fromQQ", [](AttrObject& vars) {
+		return vars.has("uid") ? vars["fromQQ"] = vars.get_str("uid") : AttrVar();
+	}},
+	{"fromGroup", [](AttrObject& vars) {
+		return vars.has("gid") ? vars["fromGroup"] = vars.get_str("gid") : AttrVar();
+	}},
 };
 
 FromMsg::FromMsg(const AttrVars& var, const chatInfo& ct)
