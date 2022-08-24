@@ -144,7 +144,7 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 		lua_newtable(L);
 		if (unordered_set<string> idxs; !attr.table.dict->empty() || attr.table.list) {
 			if (attr.table.list) {
-				int idx{ 1 };
+				int idx{ 0 };
 				for (auto& val : *attr.table.list) {
 					lua_push_attr(L, val);
 					lua_seti(L, -2, ++idx);
@@ -192,7 +192,7 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 			if (lua_type(L, -2) == LUA_TNUMBER) {
 				if (!tab.list)tab.list = std::make_shared<VarArray>();
 				size_t idx{ (size_t)lua_tointeger(L,-2) };
-				while (idx > tab.list->size()) {
+				while (idx > tab.list->size() + 1) {
 					tab.list->push_back({});
 				}
 				tab.list->push_back(lua_to_attr(L, -1));
@@ -206,14 +206,6 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 		break;
 	}
 	return {};
-}
-int lua_push_table(lua_State* L, const AttrVars& tab) {
-	lua_newtable(L);
-	for (auto& [key, val] : tab) {
-		val ? lua_push_attr(L, val) : lua_pushnil(L);
-		lua_set_field(L, -2, key.c_str());
-	}
-	return 1;
 }
 
 AttrVars lua_to_dict(lua_State* L, int idx = -1) {
@@ -400,7 +392,7 @@ int selfData_get(lua_State* L) {
 	else {
 		string key{ lua_to_gbstring(L, 2) };
 		if (file.data.has(key)) {
-			lua_push_attr(L, file.data[key]);
+			lua_push_attr(L, file.data.get(key));
 		}
 		else if (lua_gettop(L) > 2) {
 			lua_pushnil(L);
@@ -419,9 +411,9 @@ int selfData_set(lua_State* L) {
 	else if(lua_isstring(L, 2)) {
 		string key{ lua_to_gbstring(L, 2) };
 		if (lua_isnoneornil(L, 3)) {
-			file.data.reset(key); 
+			file.data.reset(key);
 		}
-		else file.data[key] = lua_to_attr(L, 3);
+		else file.data.set(key, lua_to_attr(L, 3));
 		file.save();
 	}
 	return 0;
@@ -439,7 +431,7 @@ int SelfData_index(lua_State* L) {
 		return 1;
 	}
 	else if (file.data.has(key)) {
-		lua_push_attr(L, file.data[key]);
+		lua_push_attr(L, file.data.get(key));
 		return 1;
 	}
 	return 0;
@@ -455,7 +447,7 @@ int SelfData_newindex(lua_State* L) {
 		file.data.reset(key);
 	}
 	else {
-		file.data[key] = val;
+		file.data.set(key,val);
 	}
 	file.save();
 	return 0;
@@ -590,7 +582,7 @@ int getGroupConf(lua_State* L) {
 		lua_newtable(L);
 		for (auto& [id, data] : ChatList) {
 			if (data.confs.has(item)) {
-				lua_push_attr(L, data.confs[item]);
+				lua_push_attr(L, data.confs.get(item));
 				lua_set_field(L, -2, to_string(id));
 			}
 		}
@@ -689,7 +681,7 @@ int getUserConf(lua_State* L) {
 		lua_newtable(L);
 		for (auto& [uid, data] : UserList) {
 			if (data.isset(item)) {
-				lua_push_attr(L, data.confs[item]);
+				lua_push_attr(L, data.confs.get(item));
 				lua_set_field(L, -2, to_string(uid));
 			}
 		}
@@ -754,7 +746,7 @@ int getUserToday(lua_State* L) {
 		lua_newtable(L);
 		for (auto& [uid,data] : today->getUserInfo()) {
 			if (data.has(item)) {
-				lua_push_attr(L,data[item]);
+				lua_push_attr(L,data.get(item));
 				lua_set_field(L, -2, to_string(uid));
 			}
 		}
@@ -798,13 +790,10 @@ int getPlayerCardAttr(lua_State* L) {
 	if (!plQQ || key.empty())return 0;
 	CharaCard& pc = getPlayer(plQQ)[group];
 	if (pc.Attr.has(key)) {
-		lua_push_attr(L, pc.Attr[key]);
+		lua_push_attr(L, pc.Attr.get(key));
 	}
 	else if (key = pc.standard(key); pc.Attr.has(key)) {
-		lua_push_attr(L, pc.Attr[key]);
-	}
-	else if (key == "note") {
-		lua_push_string(L, pc.Note);
+		lua_push_attr(L, pc.Attr.get(key));
 	}
 	else if (pc.Attr.has("&" + key)) {
 		lua_push_string(L, pc.Attr.get_str("&" + key));
@@ -951,7 +940,15 @@ int Context_index(lua_State* L) {
 		return 1;
 	}
 	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
-	if (auto val{ getContextItem(vars,key) }) {
+	if (key == "user" && vars.has("uid")) {
+		lua_push_Context(L, getUser(vars.get_ll("uid")).confs);
+		return 1;
+	}
+	else if(key == "grp" && vars.has("grp")) {
+		lua_push_Context(L, chat(vars.get_ll("gid")).confs);
+		return 1;
+	}
+	else if (auto val{ getContextItem(vars,key) }) {
 		lua_push_attr(L, val);
 		return 1;
 	}
@@ -964,11 +961,8 @@ int Context_newindex(lua_State* L) {
 	if (lua_gettop(L) < 3) {
 		vars.reset(key);
 	}
-	else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {
-		vars.reset(key);
-	}
 	else {
-		vars[key] = val;
+		vars.set(key, lua_to_attr(L, 3));
 	}
 	return 0;
 }
@@ -989,7 +983,7 @@ int Actor_index(lua_State* L) {
 	string key{ lua_to_gbstring(L, 2) };
 	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Actor") };
 	if (vars.has(key)) {
-		lua_push_attr(L, vars[key]);
+		lua_push_attr(L, vars.get(key));
 		return 1;
 	}
 	return 0;
@@ -1009,7 +1003,7 @@ int Actor_newindex(lua_State* L) {
 	}
 	else {
 		vars["__Update"] = (long long)time(nullptr);
-		vars[key] = val;
+		vars.set(key,val);
 	}
 	return 0;
 }

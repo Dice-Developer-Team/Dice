@@ -89,7 +89,7 @@ public:
 	void setConf(const string& key, const AttrVar& val);
 	void rmConf(const string& key);
 	int getConf(const string& key, int def = 0) {
-		if (confs.has(key))return confs[key].to_int();
+		if (confs.has(key))return confs.get_int(key);
 		return def;
 	}
 
@@ -202,11 +202,11 @@ public:
 	}
 
 	Chat& set(const string& item){
-		confs[item] = true;
+		confs.set(item, true);
 		return *this;
 	}
-	void set(const string& key, const AttrVar& val) {
-		confs[key] = val;
+	void set(const string& item, const AttrVar& val) {
+		confs.set(item, val);
 	}
 
 	Chat& reset(const string& item)
@@ -215,15 +215,15 @@ public:
 		return *this;
 	}
 	int getConf(const string& key, int def = 0) {
-		if (confs.has(key))return confs[key].to_int();
+		if (confs.has(key))return confs.get_int(key);
 		return def;
 	}
 	int getChConf(long long chid, const string& key, int def = 0) {
-		if (ChConf.count(chid) && ChConf[chid].has(key))return ChConf[chid][key].to_int();
+		if (ChConf.count(chid) && ChConf[chid].has(key))return ChConf[chid].get_int(key);
 		return def;
 	}
 	void setChConf(long long chid, const string& key, const AttrVar& val) {
-		ChConf[chid][key] = val;
+		ChConf[chid].set(key, val);
 	}
 
 	void leave(const string& msg = "");

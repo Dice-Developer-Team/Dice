@@ -83,7 +83,7 @@ AttrVar getUserItem(long long uid, const string& item) {
 			if (user.getNick(nick, gid))return nick;
 		}
 		else if (user.isset(item)) {
-			return user.confs[item];
+			return user.confs.get(item);
 		}
 	}
 	return {};
@@ -129,7 +129,7 @@ AttrVar getGroupItem(long long id, const string& item) {
 			return (long long)grp.tUpdated;
 		}
 		else if (grp.confs.has(item)) {
-			return grp.confs[item];
+			return grp.confs.get(item);
 		}
 	}
 	else if (item == "name") {
@@ -161,8 +161,8 @@ AttrVar getContextItem(AttrObject context, string item) {
 		if (MsgIndexs.count(item))return MsgIndexs[item](context);
 		if (item.find(':') <= item.find('.'))return var;
 		if (!(sub = splitOnce(item)).empty()) {
-			if (context.has(sub) && context[sub].is_table())
-				return getContextItem(context[sub].to_obj(), item);
+			if (context.has(sub) && context.is_table(sub))
+				return getContextItem(context.get_obj(sub), item);
 			if (sub == "user")return getUserItem(context.get_ll("uid"), item);
 			if (sub == "grp" || sub == "group")return getGroupItem(context.get_ll("gid"), item);
 		}
@@ -181,7 +181,7 @@ void User::setConf(const string& key, const AttrVar& val)
 {
 	if (key.empty())return;
 	std::lock_guard<std::mutex> lock_queue(ex_user);
-	if (val)confs[key] = val;
+	if (val)confs.set(key, val);
 	else confs.reset(key);
 }
 void User::rmConf(const string& key)
@@ -207,9 +207,9 @@ bool User::getNick(string& nick, long long group) const
 void User::writeb(std::ofstream& fout)
 {
 	std::lock_guard<std::mutex> lock_queue(ex_user);
-	confs["trust"] = (int)nTrust;
-	confs["tCreated"] = (long long)tCreated;
-	confs["tUpdated"] = (long long)tUpdated;
+	confs.set("trust", (int)nTrust);
+	confs.set("tCreated", (long long)tCreated);
+	confs.set("tUpdated", (long long)tUpdated);
 	fwrite(fout, string("ID"));
 	fwrite(fout, ID);
 	if (!confs.empty()) {
@@ -228,11 +228,11 @@ void User::old_readb(std::ifstream& fin)
 	ID = fread<long long>(fin);
 	map<string, int> intConf{ fread<string, int>(fin) };
 	for (auto& [key, val] : intConf) {
-		confs[key] = val;
+		confs.set(key, val);
 	}
 	map<string, string> strConf{ fread<string, string>(fin) };
 	for (auto& [key, val] : strConf) {
-		confs[key] = val;
+		confs.set(key, val);
 	}
 	strNick = fread<long long, string>(fin);
 }
@@ -240,17 +240,15 @@ void User::readb(std::ifstream& fin)
 {
 	std::lock_guard<std::mutex> lock_queue(ex_user);
 	string tag;
-	AttrVars conf;
 	while ((tag = fread<string>(fin)) != "END") {
 		if (tag == "ID")ID = fread<long long>(fin);
-		else if (tag == "Conf")fread(fin, conf);
+		else if (tag == "Conf")confs.readb(fin);
 		else if (tag == "Nick")strNick = fread<long long, string>(fin);
 	}
-	confs = conf;
-	if (confs.has("trust"))nTrust = confs["trust"].to_int();
-	if (confs.has("tCreated"))tCreated = confs["tCreated"].to_ll();
-	if (confs.has("tUpdated"))tUpdated = confs["tUpdated"].to_ll();
-	if (confs.has("tinyID"))TinyList.emplace(confs["tinyID"].to_ll(), ID);
+	if (confs.has("trust"))nTrust = confs.get_int("trust");
+	if (confs.has("tCreated"))tCreated = confs.get_ll("tCreated");
+	if (confs.has("tUpdated"))tUpdated = confs.get_ll("tUpdated");
+	if (confs.has("tinyID"))TinyList.emplace(confs.get_ll("tinyID"), ID);
 }
 int trustedQQ(long long uid)
 {
@@ -516,21 +514,21 @@ void Chat::readb(std::ifstream& fin)
 			break;
 		case 1:
 			for (auto& key : fread<string, true>(fin)) {
-				confs[key] = true;
+				confs.set(key, true);
 			}
 			break;
 		case 2:
 			for (auto& [key, val] : fread<string, int>(fin)) {
-				confs[key] = val;
+				confs.set(key, val);
 			}
 			break;
 		case 3:
 			for (auto& [key, val] : fread<string, string>(fin)) {
-				confs[key] = val;
+				confs.set(key, val);
 			}
 			break;
 		case 10:
-			fread(fin, conf);
+			confs.readb(fin);
 			break;
 		case 20:
 			fread(fin, ChConf);
@@ -540,11 +538,10 @@ void Chat::readb(std::ifstream& fin)
 		}
 		tag = fread<short>(fin);
 	}
-	confs = conf;
-	if (confs.has("Name"))Name = confs["Name"].to_str();
-	if (confs.has("inviter"))inviter = confs["inviter"].to_ll();
-	if (confs.has("tCreated"))tCreated = confs["tCreated"].to_ll();
-	if (confs.has("tUpdated"))tUpdated = confs["tUpdated"].to_ll();
+	if (confs.has("Name"))Name = confs.get_str("Name");
+	if (confs.has("inviter"))inviter = confs.get_ll("inviter");
+	if (confs.has("tCreated"))tCreated = confs.get_ll("tCreated");
+	if (confs.has("tUpdated"))tUpdated = confs.get_ll("tUpdated");
 }
 int groupset(long long id, const string& st)
 {

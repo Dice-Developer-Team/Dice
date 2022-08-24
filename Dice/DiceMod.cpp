@@ -544,7 +544,6 @@ bool DiceTriggerLimit::check(FromMsg* msg, chat_locks& lock_list)const {
 	}
 	if (!grp_vary.empty() && msg->fromChat.gid) {
 		for (auto& [key, cmpr] : grp_vary) {
-			DD::debugLog("compare group item:" + key + "=" + getGroupItem(msg->fromChat.gid, key).print());
 			if (!(getGroupItem(msg->fromChat.gid, key).*cmpr.first)(cmpr.second))return false;
 		}
 	}
@@ -645,7 +644,6 @@ string DiceMsgReply::print()const {
 		+ "\n" + sEcho[(int)echo] + "=" + show_ans();
 }
 string DiceMsgReply::show_ans()const {
-	DD::debugLog("reply::show_ans");
 	if (echo == DiceMsgReply::Echo::Lua) {
 		auto tab{ text.to_obj() };
 		return tab.has("script") ? tab.get_str("script")
@@ -732,7 +730,7 @@ void DiceMsgReply::readJson(const json& j) {
 		}
 	}
 	catch (std::exception& e) {
-		DD::debugLog(string("reply½âÎöjson´íÎó:") + e.what());
+		console.log(string("reply½âÎöjson´íÎó:") + e.what(), 0b1000);
 	}
 }
 json DiceMsgReply::writeJson()const {
@@ -1169,7 +1167,6 @@ bool DiceReplyUnit::listen(FromMsg* msg, int type) {
 			return true;
 	if (stack<string> sPrefix; gPrefix.match_head(strMsg, sPrefix)) {
 		while (!sPrefix.empty()){
-			DD::debugLog("Æ¥ÅäÇ°×º´Ê:" + sPrefix.top());
 			if (auto it{ prefix_items.find(sPrefix.top()) }; it != prefix_items.end()
 				&& (type & (int)it->second->type)
 				&& it->second->exec(msg))return true;
@@ -1314,10 +1311,8 @@ void DiceModManager::reply_get(const shared_ptr<DiceJobDetail>& msg) {
 	}
 }
 void DiceModManager::reply_show(const shared_ptr<DiceJobDetail>& msg) {
-	DD::debugLog("reply_show");
 	string key{ (*msg)["key"].to_str()};
 	if (final_reply.items.count(key)) {
-		DD::debugLog("final_reply.show");
 		(*msg)["show"] = final_reply.items[key]->show();
 		msg->reply(getMsg("strReplyShow"));
 	}

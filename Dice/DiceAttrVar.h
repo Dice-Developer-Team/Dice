@@ -63,13 +63,13 @@ public:
 	AttrObject(const AttrVars& vars) :dict(std::make_shared<AttrVars>(vars)) {}
 	explicit AttrObject(const VarArray& vars) :dict(std::make_shared<AttrVars>()), list(std::make_shared<VarArray>(vars)) {}
 	AttrObject(const AttrObject& other) :dict(other.dict), list(other.list) {}
-	ptr<AttrVars> to_dict()const { return dict; }
-	ptr<VarArray> to_list()const { return list; }
+	const ptr<AttrVars>& to_dict()const { return dict; }
+	const ptr<VarArray>& to_list()const { return list; }
 	AttrVars* operator->()const {
 		return dict.get();
 	}
 	AttrVar& at(const string& key)const;
-	AttrVar& operator[](const string& key)const;
+	AttrVar& operator[](const char* key)const;
 	bool operator<(const AttrObject other)const;
 	//bool operator<(const AttrObject& other)const { return dict < other.dict; }
 	bool empty()const {
@@ -87,6 +87,7 @@ public:
 	string get_str(const string& key)const;
 	int get_int(const string& key)const;
 	long long get_ll(const string& key)const;
+	double get_num(const string& key)const;
 	AttrObject get_obj(const string& key)const;
 	ptr<AttrVars> get_dict(const string& key)const;
 	AttrObject& merge(const AttrVars& other);

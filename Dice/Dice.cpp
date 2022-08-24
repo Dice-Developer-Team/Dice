@@ -91,8 +91,10 @@ constexpr auto msgInit{ R"(欢迎使用Dice!掷骰机器人！
 void loadData()
 {
 	ResList logList;
+#ifndef _DEBUG
 	try
 	{
+#endif
 		std::error_code ec;
 		std::filesystem::create_directory(DiceDir, ec);	
 		loadDir(loadXML<CardTemp>, DiceDir / "CardTemp", mCardTemplet, logList, true);
@@ -110,19 +112,21 @@ void loadData()
 			logList << "扩展配置读取完毕√";
 			console.log(logList.show(), 1, printSTNow());
 		}
+#ifndef _DEBUG
 	}
 	catch (const std::exception& e)
 	{
 		logList << "读取数据时遇到意外错误，程序可能无法正常运行。请尝试清空配置后重试。" << e.what();
 		console.log(logList.show(), 1, printSTNow());
 	}
+#endif
 }
 
 //初始化用户数据
 void readUserData(){
 	std::error_code ec;
 	fs::path dir{ DiceDir / "user" };
-	ResList log; 
+	ResList log;
 	try {
 		//读取用户记录
 		if (int cnt{ loadBFile(dir / "UserConf.dat", UserList) }; cnt > 0) {
@@ -146,6 +150,12 @@ void readUserData(){
 				self.setConf("tinyID", tiny);
 			}
 		}
+	}
+	catch (const std::exception& e) {
+		console.log(string("读取用户记录时遇到意外错误，请尝试删除UserConf.dat启用备份.bak文件!")
+			+ e.what(), 0b1000, printSTNow());
+	}
+	try {
 		//读取角色记录
 		if (int cnt{ loadBFile(dir / "PlayerCards.RDconf", PList) }; cnt > 0) {
 			fs::copy(dir / "PlayerCards.RDconf", dir / "PlayerCards.bak",
@@ -159,6 +169,12 @@ void readUserData(){
 		for (const auto& pl : PList) {
 			if (!UserList.count(pl.first))getUser(pl.first);
 		}
+	}
+	catch (const std::exception& e)	{
+		console.log("读取玩家记录时遇到意外错误，请尝试删除PlayerCards.RDconf启用备份.bak文件!"
+			+ string(e.what()), 0b1000, printSTNow());
+	}
+	try {
 		//读取群聊记录
 		if (int cnt{ loadBFile(dir / "ChatConf.dat", ChatList) }; cnt > 0) {
 			fs::copy(dir / "ChatConf.dat", dir / "ChatConf.bak",
@@ -174,17 +190,16 @@ void readUserData(){
 			loadFile(dir / "ChatList.txt", ChatList);
 			if (cnt > 0)log << "迁移群聊记录" + to_string(cnt) + "条";
 		}
-		//读取房间记录
-		sessions.load();
-		if (!log.empty()) {
-			log << "用户数据读取完毕";
-			console.log(log.show(), 0b1, printSTNow());
-		}
 	}
-	catch (const std::exception& e)
-	{
-		log << "读取用户数据时遇到意外错误，程序可能无法正常运行。请尝试清空配置后重试。" << e.what();
-		console.log(log.show(), 1, printSTNow());
+	catch (const std::exception& e)	{
+		console.log("读取群聊记录时遇到意外错误，请尝试删除ChatConf.dat启用备份.bak文件!"
+			+ string(e.what()), 0b1000, printSTNow());
+	}
+	//读取房间记录
+	sessions.load();
+	if (!log.empty()) {
+		log << "用户数据读取完毕";
+		console.log(log.show(), 0b1, printSTNow());
 	}
 }
 
@@ -430,12 +445,10 @@ EVE_Enable(eventEnable){
 
 			if (ports.empty())
 			{
-				DD::debugLog("Dice! WebUI 启动失败！端口已被使用？");
 				console.log("Dice! WebUI 启动失败！端口已被使用？", 0b1);
 			}
 			else
 			{
-				DD::debugLog("Dice! WebUI 正于端口" + std::to_string(ports[0]) + "运行");
 				console.log("Dice! WebUI 正于端口" + std::to_string(ports[0])
 					+ "运行，本地可通过浏览器访问localhost:" + std::to_string(ports[0])
 					+ "\n默认用户名为admin密码为password，详细教程请查看 https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming", 0b1);
@@ -443,7 +456,6 @@ EVE_Enable(eventEnable){
 		}
 		catch (const CivetException& e)
 		{
-			DD::debugLog("Dice! WebUI 启动失败！端口已被使用？");
 			console.log("Dice! WebUI 启动失败！端口已被使用？", 0b1);
 		}
 	}

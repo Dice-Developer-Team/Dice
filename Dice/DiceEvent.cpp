@@ -2822,7 +2822,7 @@ int FromMsg::InnerOrder() {
 		}
 		const int intDefaultDice = stoi(strDice);
 		if (PList.count(fromChat.uid)) {
-			PList[fromChat.uid][fromChat.gid]["__DefaultDice"] = intDefaultDice;
+			PList[fromChat.uid][fromChat.gid].set("__DefaultDice", intDefaultDice);
 			replyMsg("strSetDefaultDice");
 			return 1;
 		}
@@ -2973,7 +2973,7 @@ int FromMsg::InnerOrder() {
 		//获取技能原值
 		if (strCurrentValue.empty()) {
 			if (pc && !strAttr.empty() && (pc->stored(strAttr))) {
-				intVal = getPlayer(fromChat.uid)[fromChat.gid][strAttr].to_int();
+				intVal = getPlayer(fromChat.uid)[fromChat.gid].get(strAttr).to_int();
 			}
 			else {
 				replyMsg("strEnValEmpty");
@@ -3393,12 +3393,12 @@ int FromMsg::InnerOrder() {
 			string strFace{ to_string(intFace) };
 			string keyStatCnt{ "__StatD" + strFace + "Cnt" };	//掷骰次数
 			if (intFace <= 100 && pc.count(keyStatCnt)) {
-				int cntRoll{ pc[keyStatCnt].to_int() };	
+				int cntRoll{ pc.Attr.get_int(keyStatCnt) };	
 				if (cntRoll > 0) {
 					isEmpty = false;
 					res << "D" + strFace + "统计次数: " + to_string(cntRoll);
-					int sumRes{ pc["__StatD" + strFace + "Sum"].to_int() };		//点数和
-					int sumResSqr{ pc["__StatD" + strFace + "SqrSum"].to_int() };	//点数平方和
+					int sumRes{ pc.Attr.get_int("__StatD" + strFace + "Sum") };		//点数和
+					int sumResSqr{ pc.Attr.get_int("__StatD" + strFace + "SqrSum") };	//点数平方和
 					DiceEst stat{ intFace,cntRoll,sumRes,sumResSqr };
 					if (stat.estMean > 0)
 						res << "均值[期望]: " + toString(stat.estMean, 2, true) + " [" + toString(stat.expMean) + "]";
@@ -3413,17 +3413,18 @@ int FromMsg::InnerOrder() {
 			}
 			string keyRcCnt{ "__StatRcCnt" };	//rc/sc检定次数
 			if (pc.count(keyRcCnt)) {
-				int cntRc{ pc["__StatRcCnt"].to_int() };
+				int cntRc{ pc.Attr.get_int("__StatRcCnt") };
 				if (cntRc > 0) {
 					isEmpty = false;
 					res << "检定统计次数: " + to_string(cntRc);
-					int sumRcSuc{ pc["__StatRcSumSuc"].to_int() };//实际成功数
-					int sumRcRate{ pc["__StatRcSumRate"].to_int() };//总成功率
+					int sumRcSuc{ pc.Attr.get_int("__StatRcSumSuc") };//实际成功数
+					int sumRcRate{ pc.Attr.get_int("__StatRcSumRate") };//总成功率
 					res << "检定[期望]成功率: " + toString((double)sumRcSuc / cntRc * 100) + "%" + "(" + to_string(sumRcSuc) + ") [" + toString((double)sumRcRate / cntRc) + "%]";
 					if (pc.count("__StatRcCnt5") || pc.count("__StatRcCnt96"))
-						res << "5- | 96+ 出现率: " + toString((double)pc["__StatRcCnt5"].to_int() / cntRc * 100) + "%" + "(" + pc["__StatRcCnt5"].to_str() + ") | " + toString((double)pc["__StatRcCnt96"].to_int() / cntRc * 100) + "%" + "(" + pc["__StatRcCnt96"].to_str() + ")";
+						res << "5- | 96+ 出现率: " + toString(pc.Attr.get_num("__StatRcCnt5") / cntRc * 100) + "%" + "(" + pc.Attr.get_str("__StatRcCnt5")
+						+ ") | " + toString(pc.Attr.get_num("__StatRcCnt96") / cntRc * 100) + "%" + "(" + pc.Attr.get_str("__StatRcCnt96") + ")";
 					if(pc.count("__StatRcCnt1")|| pc.count("__StatRcCnt100"))
-						res << "1 | 100 出现次数: " + to_string(pc["__StatRcCnt1"].to_int()) + " | " + to_string(pc["__StatRcCnt100"].to_int());
+						res << "1 | 100 出现次数: " + pc.Attr.get_str("__StatRcCnt1") + " | " + pc.Attr.get_str("__StatRcCnt100");
 				}
 			}
 			if (isEmpty) {
@@ -3946,35 +3947,19 @@ int FromMsg::InnerOrder() {
 				++cntInput;
 				continue;
 			}
-			if (strSkillName == "note") {
-				if (pc.setNote(readRest())) {
-					replyMsg("strPcNoteTooLong");
-					return 1;
-				}
-				++cntInput;
-				break;
-			}
 			readSkipSpace();
 			//判定数值修改
 			if ((strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+')) {
 				isDetail = true;
 				isModify = true;
-				AttrVar& nVal{ pc[strSkillName] };
-				RD Mod((nVal.to_int() == 0 ? "" : nVal.to_str()) + readDice());
+				AttrVar nVal{ pc.get(strSkillName)};
+				RD Mod(nVal.to_str() + readDice());
 				if (Mod.Roll()) {
 					replyMsg("strValueErr");
 					return 1;
 				}
 				strReply += "\n" + strSkillName + "：" + Mod.FormCompleteString();
-				if (Mod.intTotal < -32767) {
-					strReply += "→-32767";
-					nVal = -32767;
-				}
-				else if (Mod.intTotal > 32767) {
-					strReply += "→32767";
-					nVal = 32767;
-				}
-				else nVal = Mod.intTotal;
+				pc.set(strSkillName, Mod.intTotal);
 				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
 					   '|')intMsgCnt++;
 				++cntInput;
@@ -3985,7 +3970,7 @@ int FromMsg::InnerOrder() {
 				boolError = true;
 				break;
 			}
-			int intSkillVal = std::clamp(stoi(strSkillVal), -32767, 32767);
+			int intSkillVal = stoi(strSkillVal);
 			//录入纯数值
 			pc.set(strSkillName, intSkillVal);
 			++cntInput;
@@ -4050,8 +4035,9 @@ int FromMsg::InnerOrder() {
 				else {
 					strAttr = readAttrName();
 					if (pc->count(strAttr)) {
+						auto attr{ pc->get(strAttr) };
 						strMainDice += pc->getExp(strAttr);
-						if (!pc->count("&" + strAttr) && (*pc)[strAttr].type == AttrVar::AttrType::Integer)strMainDice += 'a';
+						if (!pc->count("&" + strAttr) && pc->get(strAttr).type == AttrVar::AttrType::Integer)strMainDice += 'a';
 					}
 					else {
 						strReason = strAttr;
@@ -4265,7 +4251,7 @@ int FromMsg::InnerOrder() {
 		}
 		int intTurnCnt = 1;
 		const int intDefaultDice = (pc && pc->count("__DefaultDice")) 
-			? (*pc)["__DefaultDice"].to_int()
+			? pc->Attr.get_int("__DefaultDice")
 			: getUser(fromChat.uid).getConf("默认骰", 100);
 		if (strMainDice.find('#') != string::npos) {
 			string& turn{ (vars["turn"] = strMainDice.substr(0, strMainDice.find('#'))).text };
@@ -4502,7 +4488,7 @@ bool FromMsg::DiceFilter()
 		if (!isVirtual && !vars["ignored"]) {
 			AddFrq(*this);
 			getUser(fromChat.uid).update(fromTime);
-			if (!isPrivate())chat(fromChat.gid).update(fromTime);
+			if (pGrp)pGrp->update(fromTime);
 		}
 		return true;
 	}
@@ -4510,7 +4496,7 @@ bool FromMsg::DiceFilter()
 		if (!isVirtual && !vars["ignored"]) {
 			AddFrq(*this);
 			getUser(fromChat.uid).update(fromTime);
-			if (!isPrivate())chat(fromChat.gid).update(fromTime);
+			if (pGrp)pGrp->update(fromTime);
 		}
 		return true;
 	}

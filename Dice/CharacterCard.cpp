@@ -91,32 +91,40 @@ void CharaCard::update() {
 	Attr["__Update"] = (long long)time(nullptr);
 }
 void CharaCard::setName(const string& strName) {
-	Name = strName;
-	Attr["__Name"] = strName;
+	Attr["__Name"] = Name = strName;
 }
 void CharaCard::setType(const string& strType) {
 	Attr["__Type"] = strType;
 	pTemplet = &getCardTemplet(Attr["__Type"].to_str());
 }
+AttrVar CharaCard::get(string key)const {
+	if (Attr.has(key)) return Attr.get(key);
+	key = standard(key);
+	if (Attr.has(key)) return Attr.get(key);
+	if (pTemplet->defaultSkill.count(key))return pTemplet->defaultSkill.find(key)->second;
+	if (pTemplet->mAutoFill.count(key)){
+		Attr.set(key, cal(pTemplet->mAutoFill.find(key)->second));
+		return Attr.get(key);
+	}
+	if (pTemplet->mVariable.count(key)){
+		return cal(pTemplet->mVariable.find(key)->second);
+	}
+	return {};
+}
 int CharaCard::set(string key, const AttrVar& val) {
 	if (key.empty())return -1;
+	if (key == "__Name")return -8;
 	key = standard(key);
 	if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.at(key)){
 		if (Attr.has(key)) Attr.reset(key);
 		else return -1;
 	}
 	else {
-		Attr[key] = val;
+		Attr.set(key, val);
 	}
-	update();
-	return 0;
-}
-int CharaCard::set(const string& key, const string& s) {
-	if (key.empty() || s.length() > 255)return -11;
-	if (key == "__Name")return -8;
-	Attr[key] = s;
-	if (key == "__Type")
-		pTemplet = &getCardTemplet(s);
+	if (key == "__Type") {
+		pTemplet = &getCardTemplet(val.to_str());
+	}
 	update();
 	return 0;
 }
@@ -125,10 +133,6 @@ int CharaCard::show(string key, string& val) const {
 	if (Attr.has(key)) {
 		val = Attr.get_str(key);
 		return 0;
-	}
-	if (key == "note") {
-		val = Note;
-		return 2;
 	}
 	key = standard(key);
 	if (Attr.has(key)) {
@@ -150,15 +154,6 @@ bool CharaCard::count(const string& strKey) const {
 	return Attr.has(key) || Attr.has("&" + key)
 		|| pTemplet->mAutoFill.count(key) || pTemplet->mVariable.count(key)
 		|| pTemplet->defaultSkill.count(key);
-}
-AttrVar& CharaCard::operator[](const string& strKey) {
-	if (Attr.has(strKey))return Attr[strKey];
-	string key{ standard(strKey) };
-	if (!Attr.has(key)) {
-		if (pTemplet->mAutoFill.count(key))Attr[key] = cal(pTemplet->mAutoFill.at(key));
-		if (pTemplet->defaultSkill.count(key))Attr[key] = pTemplet->defaultSkill.at(key);
-	}
-	return Attr[key];
 }
 
 //求key对应掷骰表达式
@@ -200,7 +195,6 @@ void CharaCard::buildv(string para)
 
 void CharaCard::clear() {
 	Attr = AttrObject{ {{"__Type",Attr["__Type"]},{"__Name",Attr["__Name"]}} };
-	Note.clear();
 }
 [[nodiscard]] string CharaCard::show(bool isWhole) const {
 	std::set<string> sDefault;
@@ -225,7 +219,6 @@ void CharaCard::clear() {
 		strAttrRest += key + ":" + val.to_str() + (val.type == AttrVar::AttrType::Text ? "\t" : " ");
 	}
 	Res << strAttrRest;
-	if (isWhole && !Note.empty())Res << "====================\n" + Note;
 	return Res.show();
 }
 
@@ -253,10 +246,6 @@ void CharaCard::writeb(std::ofstream& fout) const {
 		fwrite(fout, string("Attrs"));
 		Attr.writeb(fout);
 	}
-	if (!Note.empty()) {
-		fwrite(fout, string("Note"));
-		fwrite(fout, Note);
-	}
 	fwrite(fout, string("END"));
 }
 void CharaCard::readb(std::ifstream& fin) {
@@ -277,7 +266,7 @@ void CharaCard::readb(std::ifstream& fin) {
 			fread(fin, TempAttr);
 			TempAttr.erase("");
 			for (auto& [key, val] : TempAttr) {
-				Attr[key] = val;
+				Attr.set(key, val);
 			}
 		}
 			break;
@@ -286,7 +275,7 @@ void CharaCard::readb(std::ifstream& fin) {
 			fread(fin, TempExp);
 			TempExp.erase("");
 			for (auto& [key, val] : TempExp) {
-				Attr["&" + key] = val;
+				Attr.set("&" + key, val);
 			}
 		}
 			break;
@@ -295,12 +284,12 @@ void CharaCard::readb(std::ifstream& fin) {
 			fread(fin, TempInfo);
 			TempInfo.erase("");
 			for (auto& [key, val] : TempInfo) {
-				Attr[key] = val;
+				Attr.set(key, val);
 			}
 		}
 			break;
 		case 101:
-			Note = fread<string>(fin);
+			Attr["note"] = fread<string>(fin);
 			break;
 		default:
 			break;
@@ -318,9 +307,9 @@ void CharaCard::cntRollStat(int die, int face) {
 	string keyStatSum{ "__StatD" + strFace + "Sum" };	//掷骰点数和
 	string keyStatSqr{ "__StatD" + strFace + "SqrSum" };	//掷骰点数平方和
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
-	Attr[keyStatCnt] = Attr[keyStatCnt].to_int() + 1;
-	Attr[keyStatSum] = Attr[keyStatSum].to_int() + die;
-	Attr[keyStatSqr] = Attr[keyStatSqr].to_int() + die * die;
+	Attr.set(keyStatCnt,Attr.get_int(keyStatCnt) + 1);
+	Attr.set(keyStatSum,Attr.get_int(keyStatSum) + die);
+	Attr.set(keyStatSqr,Attr.get_int(keyStatSqr) + die * die);
 	update();
 }
 void CharaCard::cntRcStat(int die, int rate) {

@@ -156,7 +156,7 @@ namespace DD {
 		return CALLGET(GetGroupSize, loginID, aimGroup) :GroupSize_t();
 	}
 	std::string getGroupName(long long aimGroup) {
-		return CALLGET(GetGroupName, loginID, aimGroup) :"Ⱥ";
+		return CALLGET(GetGroupName, loginID, aimGroup) :"";
 	}
 	std::string getGroupNick(long long aimGroup, long long aimQQ) {
 		return CALLGET(GetGroupNick, loginID, aimGroup, aimQQ) :"ȺԱ";

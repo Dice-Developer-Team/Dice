@@ -108,10 +108,10 @@ public:
 	unordered_map<long long, AttrObject>& getUserInfo() { return UserInfo; }
 	int& get(const string& key) { return cntGlobal[key]; }
 	AttrObject& get(long long uid) { return UserInfo[uid]; }
-	AttrVar& get(long long uid, const string& key) { return UserInfo[uid][key]; }
+	//AttrVar& get(long long uid, const string& key) { return UserInfo[uid].to_dict()[key]; }
 	AttrVar* get_if(long long qq, const string& key) {
 		if (UserInfo.count(qq) && UserInfo[qq].has(key))
-			return &UserInfo[qq][key];
+			return &UserInfo[qq].at(key);
 		else return nullptr;
 	}
 	int getJrrp(long long qq);

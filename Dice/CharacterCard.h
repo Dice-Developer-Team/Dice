@@ -173,7 +173,6 @@ public:
 	} };
 	//map<string, string, less_ci> Info{  };
 	//map<string, string, less_ci> DiceExp{};
-	string Note;
 	CardTemp* pTemplet{ nullptr };
 
 	CharaCard(){
@@ -183,14 +182,12 @@ public:
 	{
 		Name = pc.Name;
 		Attr = pc.Attr;
-		Note = pc.Note;
 		pTemplet = pc.pTemplet;
 	}
 	CharaCard& operator=(const CharaCard& pc)
 	{
 		Name = pc.Name;
 		Attr = pc.Attr;
-		Note = pc.Note;
 		pTemplet = pc.pTemplet;
 		return *this;
 	}
@@ -201,15 +198,14 @@ public:
 		setType(type);
 	}
 
-	int call(string key)
-	{
+	int call(string key)const {
 		if (Attr.has(key))return Attr.get_int(key);
 		key = standard(key);
 		if (Attr.has(key))return Attr.get_int(key);
 		if (pTemplet->mAutoFill.count(key))
 		{
-			Attr[key] = cal(pTemplet->mAutoFill.find(key)->second);
-			return Attr[key].to_int();
+			Attr.set(key, cal(pTemplet->mAutoFill.find(key)->second));
+			return Attr.get_int(key);
 		}
 		if (pTemplet->mVariable.count(key))
 		{
@@ -245,13 +241,13 @@ public:
 
 	bool countExp(const string& key)
 	{
-		return (Attr.has(key) && Attr[key].type == AttrVar::AttrType::Text)
+		return (Attr.has(key) && Attr.at(key).type == AttrVar::AttrType::Text)
 			|| (Attr.has("&" + key))
 			|| pTemplet->mExpression.count(key);
 	}
 
 	//计算表达式
-	int cal(string exp)
+	int cal(string exp)const
 	{
 		if (exp[0] == '&')
 		{
@@ -282,24 +278,20 @@ public:
 			if (it2.first[0] == '&')
 			{
 				if (Attr.has(it2.first))continue;
-				Attr[it2.first] = it2.second;
+				Attr.set(it2.first, it2.second);
 			}
 				//info
 			else if (pTemplet->sInfoList.count(it2.first))
 			{
 				if (Attr.has(it2.first))continue;
-				Attr[it2.first] = CardDeck::draw(it2.second);
+				Attr.set(it2.first, CardDeck::draw(it2.second));
 			}
 				//attr
 			else
 			{
 				if (Attr.has(it2.first))continue;
-				Attr[it2.first] = cal(it2.second);
+				Attr.set(it2.first, cal(it2.second));
 			}
-		}
-		while (Note.empty() && !build.vNoteList.empty())
-		{
-			Note = CardDeck::drawCard(build.vNoteList);
 		}
 	}
 
@@ -312,16 +304,9 @@ public:
 		return key;
 	}
 
+	AttrVar get(string key)const;
+
 	int set(string key, const AttrVar& val);
-
-	int set(const string& key, const string& s);
-
-	int setNote(const string& note)
-	{
-		if (note.length() > 255)return -11;
-		Note = note;
-		return 0;
-	}
 
 	bool erase(string& key, bool isExp = false);
 	void clear();
@@ -341,8 +326,6 @@ public:
 	void cntRollStat(int die, int face);
 
 	void cntRcStat(int die, int rate);
-
-	AttrVar& operator[](const string& key);
 
 	void operator<<(const CharaCard& card)
 	{

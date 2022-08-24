@@ -76,7 +76,6 @@ void frame_reload(AttrObject& job) {
 }
 
 void check_system(AttrObject& job) {
-	DD::debugLog(printSTNow() + " 检查系统负载");
 #ifdef _WIN32
 	static int perRAM(0), perLastRAM(0);
 	static double  perLastCPU(0), perLastDisk(0),
@@ -101,7 +100,7 @@ void check_system(AttrObject& job) {
 	if (console["SystemAlarmCPU"] > 0) {
 		perCPU = getWinCpuUsage() / 10.0;
 		if (perCPU > 99.9) {
-			this_thread::sleep_for(10s);
+			this_thread::sleep_for(30s);
 			perCPU = getWinCpuUsage() / 10.0;
 		}
 		if (perCPU > console["SystemAlarmCPU"] && (!isAlarmCPU || perCPU > perLastCPU + 1)) {

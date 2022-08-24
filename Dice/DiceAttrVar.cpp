@@ -41,13 +41,14 @@ bool AttrObject::has(const string& key)const {
 	return dict->count(key) && !dict->at(key).is_null();
 }
 void AttrObject::set(const string& key, const AttrVar& val)const {
+	if (key.empty())return;
 	if (!val)dict->erase(key);
 	else (*dict)[key] = val;
 }
 AttrVar& AttrObject::at(const string& key)const {
-	return (*dict)[key];
+	return dict->at(key);
 }
-AttrVar& AttrObject::operator[](const string& key)const {
+AttrVar& AttrObject::operator[](const char* key)const {
 	return (*dict)[key];
 }
 AttrVar AttrObject::get(const string& key, ptr<AttrVar> val)const {
@@ -62,6 +63,9 @@ int AttrObject::get_int(const string& key)const {
 }
 long long AttrObject::get_ll(const string& key)const {
 	return dict->count(key) ? dict->at(key).to_ll() : 0;
+}
+double AttrObject::get_num(const string& key)const {
+	return dict->count(key) ? dict->at(key).to_num() : 0;
 }
 AttrObject AttrObject::get_obj(const string& key)const {
 	return dict->count(key) ? dict->at(key).to_obj() : AttrObject();
@@ -85,14 +89,20 @@ void AttrObject::writeb(std::ofstream& fout) const {
 			if (val)vars[to_string(idx)] = val.to_json();
 		}
 	}
-	fwrite(fout, *dict);
+	fwrite(fout, vars);
 }
 void AttrObject::readb(std::ifstream& fs) {
-	fread(fs, *dict);
-	if (dict->count("1")) {
+	short len = fread<short>(fs);
+	if (len < 0)return;
+	if (!fs.peek()) {
+		fs.ignore(2);
+	}
+	while (len--) {
+		(*dict)[fread<string>(fs)].readb(fs);
+	}
+	if (string strI{ "1" }; dict->count(strI)) {
 		list = std::make_shared<VarArray>();
 		int idx{ 1 };
-		string strI{ "1" };
 		do {
 			list->push_back(dict->at(strI));
 			dict->erase(strI);
