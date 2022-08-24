@@ -28,6 +28,7 @@ template<typename T>
 using ptr = std::shared_ptr<T>;
 using ex_lock = ptr<std::unique_lock<std::mutex>>;
 using chat_locks = std::list<ex_lock>;
+namespace fs = std::filesystem;
 
 class FromMsg;
 
@@ -243,7 +244,8 @@ public:
 	bool script_has(const string& name)const { return scripts.count(name); }
 	string script_path(const string& name)const;
 
-	void loadLuaMod(const vector<std::filesystem::path>&, ResList&);
+	void loadLuaMod(const vector<fs::path>&, ResList&);
+	void loadPlugin(ResList& res);
 	int load(ResList&);
 	void init();
 	void clear();

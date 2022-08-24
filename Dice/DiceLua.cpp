@@ -1154,61 +1154,76 @@ LuaState::LuaState(string file) {
 	regist();
 }
 
-int lua_readStringTable(const char* file, const char* var, std::unordered_map<std::string, AttrVar>& tab) {
-#ifndef _WIN32
-	// 转换separator
-	string fileStr(file);
-	for (auto& c : fileStr)
-	{
-		if (c == '\\') c = '/';
-	}
-	file = fileStr.c_str();
-#endif
-	LuaState L(file);
-	if (!L)return -1;
-	lua_newtable(L);
-	lua_setglobal(L, var);
-	if (lua_pcall(L, 0, 0, 0)) {
-		string pErrorMsg = lua_to_gbstring(L, -1);
-		console.log(getMsg("strSelfName") + "运行lua文件" + file + "失败:" + pErrorMsg, 0b10);
-		return 0;
-	}
-	lua_getglobal(L, var);
-	if (lua_type(L, 1) == LUA_TNIL) {
-		return 0;
-	}
-	if (lua_type(L, 1) != LUA_TTABLE) {
-		return -2;
-	}
-	try {
-		lua_pushnil(L);
-		while (lua_next(L, -2)) {
-			if (!lua_isstring(L, -2)) {
-				return -1;
-			}
-			string key = lua_to_gbstring(L, -2);
-			tab[key] = lua_to_attr(L, -1);
-			lua_pop(L, 1);
+void DiceModManager::loadPlugin(ResList& res) {
+	vector<std::filesystem::path> files;
+	if (listDir(DiceDir / "plugin", files) <= 0)return;
+	ShowList err;
+	int cntPlugin{ 0 };
+	int cntOrder{ 0 };
+	int cntTask{ 0 };
+	for (const auto& pathFile : files) {
+		if ((pathFile.extension() != ".lua")) {
+			continue;
 		}
-		return tab.size();
-	} catch (...) {
-		return -3;
+		string file{ getNativePathString(pathFile) };
+		LuaState L(file.c_str());
+		lua_newtable(L);
+		lua_setglobal(L, "msg_order");
+		lua_newtable(L);
+		lua_setglobal(L, "task_kill");
+		if (luaL_dofile(L, file.c_str())) {
+			string pErrorMsg = lua_to_gbstring(L, -1);
+			err << pErrorMsg;
+			L.reboot();
+			continue;
+		}
+		else {
+			lua_getglobal(L, "msg_order");
+			if (!lua_isnoneornil(L, 1)) {
+				if (lua_type(L, 1) != LUA_TTABLE) {
+					err << "msg_order类型错误:" + file;
+					continue;
+				}
+				for (auto& [key, val] : lua_to_dict(L)) {
+					if (val.is_table()) {
+						mod_reply_list[key] = val.to_obj();
+					}
+					else {
+						final_reply.add_order(format(key), { {"file",file},{"func",val} });
+					}
+					++cntOrder;
+				}
+			}
+			lua_pop(L, 1);
+			lua_getglobal(L, "task_kill");
+			if (!lua_isnoneornil(L, 1)) {
+				if (lua_type(L, 1) != LUA_TTABLE) {
+					err << "task_kill类型错误:" + file;
+					continue;
+				}
+				for (auto& [key, val] : lua_to_dict(L)) {
+					taskcall[key] = { {"file",file},{"func",val} };
+					++cntTask;
+				}
+			}
+		}
+	}
+	res << "读取/plugin/中的" + std::to_string(cntPlugin) + "个脚本, 共" + to_string(cntOrder) + "个指令"
+		+ (cntTask ? "，" + to_string(cntOrder) + "个脚本" : "");
+	if (!err.empty()) {
+		res << "plugin文件读取错误" + to_string(err.size()) + "次:" + err.show("\n");
 	}
 }
 
-void lua_preLoadMod(lua_State* L) {
-	lua_newtable(L);
-	lua_setglobal(L, "msg_reply");
-	lua_newtable(L);
-	lua_setglobal(L, "event");
-}
-
-void DiceModManager::loadLuaMod(const vector<fs::path>& files, ResList& res) {
+void DiceModManager::loadLuaMod(const vector<std::filesystem::path>& files, ResList& res) {
 	LuaState L;
 	UTF8Luas.insert(L);
 	ShowList err;
 	for (auto file : files) {
-		lua_preLoadMod(L);
+		lua_newtable(L);
+		lua_setglobal(L, "msg_reply");
+		lua_newtable(L);
+		lua_setglobal(L, "event");
 		if (luaL_dofile(L, getNativePathString(file).c_str())) {
 			string pErrorMsg = lua_to_gbstring(L, -1);
 			err << pErrorMsg;

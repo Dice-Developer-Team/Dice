@@ -37,6 +37,9 @@ bool AttrObject::is(const string& key)const {
 bool AttrObject::is_table(const string& key)const {
 	return dict->count(key) && dict->at(key).is_table();
 }
+bool AttrObject::empty()const {
+	return dict->empty() && (!list || list->empty());
+}
 bool AttrObject::has(const string& key)const {
 	return dict->count(key) && !dict->at(key).is_null();
 }

@@ -224,6 +224,7 @@ public:
 		return *this;
 	}
 	bool empty()const { return list.empty(); }
+	size_t size()const { return list.size(); }
 	string show(const string& sepa = "|") {
 		string res;
 		for (auto it = list.begin(); it != list.end(); ++it) {

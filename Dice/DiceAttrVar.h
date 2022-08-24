@@ -72,9 +72,7 @@ public:
 	AttrVar& operator[](const char* key)const;
 	bool operator<(const AttrObject other)const;
 	//bool operator<(const AttrObject& other)const { return dict < other.dict; }
-	bool empty()const {
-		return dict->empty() && (!list || list->empty());
-	}
+	bool empty()const;
 	bool has(const string& key)const;
 	void set(const string& key, const AttrVar& val)const;
 	void reset(const string& key)const {

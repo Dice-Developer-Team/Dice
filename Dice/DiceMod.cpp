@@ -1463,47 +1463,7 @@ int DiceModManager::load(ResList& resLog){
 		}
 	}
 	//读取plugin
-	vector<std::filesystem::path> sLuaFile;
-	int cntLuaFile = listDir(DiceDir / "plugin", sLuaFile);
-	if (cntLuaFile > 0) {
-		int cntOrder{ 0 };
-		vector<string> sLuaErr;
-		for (auto& pathFile : sLuaFile) {
-			if ((pathFile.extension() != ".lua")) {
-				continue;
-			}
-			string fileLua = getNativePathString(pathFile);
-			AttrVars mOrder;
-			int cnt = lua_readStringTable(fileLua.c_str(), "msg_order", mOrder);
-			if (cnt > 0) {
-				for (auto& [key, func] : mOrder) {
-					final_reply.add_order(format(key), { {"file",fileLua},{"func",func} });
-				}
-				cntOrder += mOrder.size();
-			}
-			else if (cnt < 0) {
-				sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
-			}
-			AttrVars mJob;
-			if ((cnt = lua_readStringTable(fileLua.c_str(), "task_call", mJob)) > 0) {
-				for (auto& [key, func] : mJob) {
-					taskcall[key] = { {"file",fileLua},{"func",func} };
-				}
-				cntOrder += mJob.size();
-			}
-			else if (cnt < 0
-				&& *sLuaErr.rbegin() != UTF8toGBK(pathFile.filename().u8string())) {
-				sLuaErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
-			}
-		}
-		resLog << "读取/plugin/中的" + std::to_string(cntLuaFile) + "个脚本, 共" + std::to_string(cntOrder) + "个指令";
-		if (!sLuaErr.empty()) {
-			resLog << "读取失败" + std::to_string(sLuaErr.size()) + "个:";
-			for (auto& it : sLuaErr) {
-				resLog << it;
-			}
-		}
-	}
+	loadPlugin(resLog);
 	//custom
 	merge(global_speech, EditedMsg);
 	if (std::filesystem::path fCustomHelp{ DiceDir / "conf" / "CustomHelp.json" }; std::filesystem::exists(fCustomHelp)) {
