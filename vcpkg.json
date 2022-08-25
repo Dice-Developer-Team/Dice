@@ -13,6 +13,9 @@
       "platform" : "!windows"
     },
     {
+      "name": "yaml-cpp"
+    },
+    {
       "name": "curl",
       "platform" : "!windows",
       "default-features": false,

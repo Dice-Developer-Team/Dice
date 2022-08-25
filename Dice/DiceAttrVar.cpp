@@ -48,6 +48,9 @@ void AttrObject::set(const string& key, const AttrVar& val)const {
 	if (!val)dict->erase(key);
 	else (*dict)[key] = val;
 }
+void AttrObject::reset(const string& key)const {
+	dict->erase(key);
+}
 AttrVar& AttrObject::at(const string& key)const {
 	return dict->at(key);
 }

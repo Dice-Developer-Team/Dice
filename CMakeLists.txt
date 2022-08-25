@@ -83,6 +83,8 @@ endif()
 
 find_package(OpenSSL REQUIRED)
 target_link_libraries(w4123.Dice PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+find_package(yaml-cpp CONFIG REQUIRED)
+target_link_libraries(w4123.Dice PRIVATE yaml-cpp)
 find_package(AWSSDK CONFIG COMPONENTS core s3 REQUIRED)
 target_include_directories(w4123.Dice PRIVATE ${AWSSDK_INCLUDE_DIRS})
 target_link_libraries(w4123.Dice PRIVATE ${AWSSDK_LIBRARIES})

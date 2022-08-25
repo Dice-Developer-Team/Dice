@@ -75,9 +75,7 @@ public:
 	bool empty()const;
 	bool has(const string& key)const;
 	void set(const string& key, const AttrVar& val)const;
-	void reset(const string& key)const {
-		dict->erase(key);
-	}
+	void reset(const string& key)const;
 	bool is(const string& key)const;
 	bool is_table(const string& key)const;
 	AttrVar index(const string& key)const;
