@@ -1,10 +1,4 @@
-//#pragma comment(lib, "lua.lib")  
-extern "C"{
-#include <lua.h>  
-#include <lualib.h>  
-#include <lauxlib.h>  
-#include <lobject.h>  
-};
+#include <lua.hpp>  
 #include "ManagerSystem.h"
 #include "DiceEvent.h"
 #include "RandomGenerator.h"

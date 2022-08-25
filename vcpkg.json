@@ -2,6 +2,8 @@
   "name": "dice",
   "version-string": "2.6.4",
   "dependencies": [
+    "lua",
+    "yaml-cpp",
     "openssl",
     {
       "name": "aws-sdk-cpp",
@@ -11,9 +13,6 @@
     {
       "name": "openssl",
       "platform" : "!windows"
-    },
-    {
-      "name": "yaml-cpp"
     },
     {
       "name": "curl",

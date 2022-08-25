@@ -6,15 +6,12 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15"
   CACHE STRING "Minimum OS X deployment version")
 project(Dice)
 
-include_directories(CQSDK Dice Lua QQAPI yaml)
+include_directories(Dice QQAPI)
 
 aux_source_directory(Dice Dice_SRC)
-aux_source_directory(Lua Lua_SRC)
-aux_source_directory(CQSDKCPP CQSDK_SRC)
 aux_source_directory(QQAPI QQAPI_SRC)
-aux_source_directory(yaml Yaml_SRC)
 
-add_library(w4123.Dice SHARED ${Dice_SRC} ${Lua_SRC} ${CQSDK_SRC} ${QQAPI_SRC} ${Yaml_SRC})
+add_library(w4123.Dice SHARED ${Dice_SRC} ${QQAPI_SRC})
 
 set_property(TARGET w4123.Dice PROPERTY CXX_STANDARD 17)
 set_property(TARGET w4123.Dice PROPERTY CXX_STANDARD_REQUIRED ON)
@@ -81,10 +78,13 @@ if(NOT (CMAKE_SYSTEM_NAME STREQUAL Windows))
     target_link_libraries(w4123.Dice PRIVATE CURL::libcurl)
 endif()
 
-find_package(OpenSSL REQUIRED)
-target_link_libraries(w4123.Dice PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+find_package(Lua REQUIRED)
+target_include_directories(w4123.Dice PRIVATE ${LUA_INCLUDE_DIR})
+target_link_libraries(w4123.Dice PRIVATE ${LUA_LIBRARIES})
 find_package(yaml-cpp CONFIG REQUIRED)
 target_link_libraries(w4123.Dice PRIVATE yaml-cpp)
+find_package(OpenSSL REQUIRED)
+target_link_libraries(w4123.Dice PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 find_package(AWSSDK CONFIG COMPONENTS core s3 REQUIRED)
 target_include_directories(w4123.Dice PRIVATE ${AWSSDK_INCLUDE_DIRS})
 target_link_libraries(w4123.Dice PRIVATE ${AWSSDK_LIBRARIES})
