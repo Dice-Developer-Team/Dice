@@ -95,7 +95,7 @@ void CharaCard::setName(const string& strName) {
 }
 void CharaCard::setType(const string& strType) {
 	Attr["__Type"] = strType;
-	pTemplet = &getCardTemplet(Attr["__Type"].to_str());
+	pTemplet = &getCardTemplet(Attr.get_str("__Type"));
 }
 AttrVar CharaCard::get(string key)const {
 	if (Attr.has(key)) return Attr.get(key);
@@ -296,8 +296,8 @@ void CharaCard::readb(std::ifstream& fin) {
 		}
 		tag = fread<string>(fin);
 	}
-	Name = Attr["__Name"].to_str();
-	pTemplet = &getCardTemplet(Attr["__Type"].to_str());
+	Name = Attr.get_str("__Name");
+	pTemplet = &getCardTemplet(Attr.get_str("__Type"));
 }
 
 void CharaCard::cntRollStat(int die, int face) {
@@ -350,7 +350,7 @@ CharaCard& Player::getCard(const string& name, long long group)
 string Player::listCard() {
 	ResList Res;
 	for (auto& [idx, pc] : mCardList) {
-		Res << "[" + to_string(idx) + "]<" + getCardTemplet(pc.Attr["__Type"].to_str()).type + ">" + pc.getName();
+		Res << "[" + to_string(idx) + "]<" + getCardTemplet(pc.Attr.get_str("__Type")).type + ">" + pc.getName();
 	}
 	Res << "default:" + (*this)[0].getName();
 	return Res.show();

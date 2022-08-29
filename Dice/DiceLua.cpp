@@ -296,7 +296,7 @@ bool lua_msg_call(FromMsg* msg, const AttrObject& lua) {
 				return false;
 			}
 			else if (!(msg->vars["msg_reply"] = lua_to_gbstring(L, 1)).str_empty()) {
-				msg->reply(msg->vars["msg_reply"].to_str());
+				msg->reply(msg->vars.get_str("msg_reply"));
 			}
 		}
 		if (!lua_isnoneornil(L, 2)) {
@@ -306,7 +306,7 @@ bool lua_msg_call(FromMsg* msg, const AttrObject& lua) {
 				return false;
 			}
 			else if (!(msg->vars["msg_hidden"] = lua_to_gbstring(L, 2)).str_empty()) {
-				msg->replyHidden(msg->vars["msg_hidden"].to_str());
+				msg->replyHidden(msg->vars.get_str("msg_hidden"));
 			}
 		}
 	}

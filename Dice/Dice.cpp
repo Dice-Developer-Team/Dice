@@ -738,7 +738,7 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 	{
 		if (chat(fromGID).confs.has("入群欢迎"))
 		{
-			string strReply = chat(fromGID).confs["入群欢迎"].to_str();
+			string strReply = chat(fromGID).confs.get_str("入群欢迎");
 			while (strReply.find("{at}") != string::npos)
 			{
 				strReply.replace(strReply.find("{at}"), 4, "[CQ:at,qq=" + to_string(fromUID) + "]");

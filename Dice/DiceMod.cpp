@@ -769,21 +769,19 @@ void DiceReplyUnit::build() {
 		}
 		if (reply->keyMatch[1]) {
 			for (auto& word : *reply->keyMatch[1]) {
-				string kw{ fmt->format(word) };
-				prefix_items[kw] = reply;
-				gPrefix.add(kw, kw);
+				prefix_items[word] = reply;
+				gPrefix.add(fmt->format(word), word);
 			}
 		}
 		if (reply->keyMatch[2]) {
 			for (auto& word : *reply->keyMatch[2]) {
-				string kw{ fmt->format(word) };
-				search_items[kw] = reply;
-				gSearcher.add(convert_a2w(kw.c_str()), kw);
+				search_items[word] = reply;
+				gSearcher.add(convert_a2w(fmt->format(word).c_str()), word);
 			}
 		}
 		if (reply->keyMatch[3]) {
 			for (auto& word : *reply->keyMatch[3]) {
-				regex_items[fmt->format(word)] = reply;
+				regex_items[word] = reply;
 			}
 		}
 	}
@@ -964,7 +962,7 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 					}
 					else val = {};
 				}
-				else if (method == "vary") {
+				else if (method == "case" || method == "vary") {
 					auto [head, strVary] = readini<string, string>(para, '?');
 					unordered_map<string, string>paras{ splitPairs(strVary,'=','&') };
 					auto itemVal{ getContextItem(context,head) };
@@ -1160,11 +1158,12 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 
 bool DiceReplyUnit::listen(FromMsg* msg, int type) {
 	string& strMsg{ msg->strMsg };
-	if (auto it{ match_items.find(strMsg) };
-		(it != match_items.end() || (it = prefix_items.find(strMsg)) != prefix_items.end())
-		&& (type & (int)it->second->type)
-		&& it->second->exec(msg))
-			return true;
+	if (auto it{ match_items.find(strMsg) }; it != match_items.end()) {
+		if (!items.count(it->second->title))
+			match_items.erase(it);
+		else if((type & (int)it->second->type)
+			&& it->second->exec(msg))return true;
+	}
 	if (stack<string> sPrefix; gPrefix.match_head(strMsg, sPrefix)) {
 		while (!sPrefix.empty()){
 			if (auto it{ prefix_items.find(sPrefix.top()) }; it != prefix_items.end()
@@ -1237,34 +1236,27 @@ void DiceReplyUnit::insert(const string& key, ptr<DiceMsgReply> reply) {
 	if (reply->keyMatch[1]) {
 		for (auto& word : *reply->keyMatch[1]) {
 			for (auto& word : *reply->keyMatch[1]) {
-				string kw{ fmt->format(word) };
-				prefix_items[kw] = reply;
-				gPrefix.add(kw, kw);
+				prefix_items[word] = reply;
+				gPrefix.add(fmt->format(word), word);
 			}
 		}
 		gPrefix.make_fail();
 	}
 	if (reply->keyMatch[2]) {
 		for (auto& word : *reply->keyMatch[2]) {
-			string kw{ fmt->format(word) };
-			search_items[kw] = reply;
-			gSearcher.add(convert_a2w(kw.c_str()), kw);
+			search_items[word] = reply;
+			gSearcher.add(convert_a2w(fmt->format(word).c_str()), word);
 		}
 		gSearcher.make_fail();
 	}
 	if (reply->keyMatch[3]) {
 		for (auto& word : *reply->keyMatch[3]) {
-			regex_items[fmt->format(word)] = reply;
+			regex_items[word] = reply;
 		}
 	}
 	items[key] = reply;
 }
 void DiceReplyUnit::erase(ptr<DiceMsgReply> reply) {
-	if (reply->keyMatch[0]) {
-		for (auto& word : *reply->keyMatch[0]) {
-			match_items.erase(word);
-		}
-	}
 	if (reply->keyMatch[1]) {
 		for (auto& word : *reply->keyMatch[1]) {
 			prefix_items.erase(word);

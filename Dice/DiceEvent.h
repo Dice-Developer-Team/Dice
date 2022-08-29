@@ -319,7 +319,7 @@ public:
 	string readItem();
 	int readItems(vector<string>&);
 };
-void reply(AttrObject&, string, bool isFormat = false);
+void reply(AttrObject&, string, bool isFormat = true);
 void MsgNote(AttrObject&, string, int);
 
 #endif /*DICE_EVENT*/

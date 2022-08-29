@@ -998,7 +998,7 @@ void DDBlackManager::isban(FromMsg* msg)
 	}
 	if (!isGet)
 	{
-		msg->reply(msg->vars["target"].to_str() + "无黑名单记录");
+		msg->reply(msg->vars.get_str("target") + "无黑名单记录");
 	}
 }
 
@@ -1062,7 +1062,7 @@ void DDBlackManager::add_black_group(long long llgroup, FromMsg* msg)
 	}
 	DDBlackMark mark{0, llgroup};
 	mark.danger = 1;
-	mark.note = msg->vars["note"].to_str();
+	mark.note = msg->vars.get_str("note");
 	if (!mark.note.empty()) {
 		mark.danger = 2;
 		mark.type = "other";
@@ -1072,7 +1072,7 @@ void DDBlackManager::add_black_group(long long llgroup, FromMsg* msg)
 		msg->reply(getMsg("strSelfName") + "已拉黑群" + to_string(llgroup) + "！");
 		return;
 	}
-	mark.time = msg->vars["time"].to_str();
+	mark.time = msg->vars.get_str("time");
 	mark.DiceMaid = console.DiceMaid;
 	mark.masterQQ = console.masterQQ;
 	mark.comment = printSTNow() + " 由" + printUser(msg->vars["uid"].to_ll()) + "拉黑";
@@ -1089,7 +1089,7 @@ void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
 	}
 	DDBlackMark mark{llqq, 0};
 	mark.danger = 1;
-	mark.note = msg->vars["note"].to_str();
+	mark.note = msg->vars.get_str("note");
 	if (!mark.note.empty() && !msg->vars.has("user")) {
 		mark.danger = 2;
 		mark.type = "other";
@@ -1099,7 +1099,7 @@ void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
 		msg->reply(getMsg("strSelfName") + "已拉黑用户" + printUser(llqq) + "！");
 		return;
 	}
-	mark.time = msg->vars["time"].to_str();
+	mark.time = msg->vars.get_str("time");
 	mark.DiceMaid = console.DiceMaid;
 	mark.masterQQ = console.masterQQ;
 	mark.comment = printSTNow() + " 由" + printUser(msg->fromChat.uid) + "拉黑";

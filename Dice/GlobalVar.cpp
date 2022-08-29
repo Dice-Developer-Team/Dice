@@ -486,7 +486,7 @@ const dict_ci<string> HelpDoc = {
 619:统一reply与order格式
 618:支持reply(Order形式)覆盖指令
 617:更新grade分档转义
-616:转义&vary支持取用户/群配置
+616:转义&case支持取用户/群配置
 615:支持自定义数据读写
 614:更新reply:limit:lock
 613:更新lua交互机制
@@ -512,11 +512,11 @@ const dict_ci<string> HelpDoc = {
 {"协议","0.本协议是Dice!默认服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
 {"链接","Dice!论坛导航贴: https://kokona.tech \nDice!论坛: https://forum.kokona.tech \n支持Shiki: https://afdian.net/@dice_shiki"},
 {"设定",R"(Master：{master_ID}
-群内使用：{vary:self.Private?else=白名单制，需预申请&0={vary:self.CheckGroupLicense?2=审核制，需申请后使用&1=审核制，入新群需申请&else=黑名单制，自由使用}}
-好友申请：{vary:self.AllowStanger?2=允许任何人&1=需要使用记录&else=仅白名单}
-移出反制：{vary:self.ListenGroupKicked?0=无&else=拉黑{vary:self.KickedBanInviter?1=并连带邀请人}}
-禁言反制：{vary:self.ListenGroupBanned?0=无&else=拉黑{vary:self.BannedBanInviter?1=并连带邀请人}}
-刷屏反制：{vary:self.ListenSpam?0=关闭&else=开启}
+群内使用：{case:self.Private?else=白名单制，需预申请&0={case:self.CheckGroupLicense?2=审核制，需申请后使用&1=审核制，入新群需申请&else=黑名单制，自由使用}}
+好友申请：{case:self.AllowStanger?2=允许任何人&1=需要使用记录&else=仅白名单}
+移出反制：{case:self.ListenGroupKicked?0=无&else=拉黑{case:self.KickedBanInviter?1=并连带邀请人}}
+禁言反制：{case:self.ListenGroupBanned?0=无&else=拉黑{case:self.BannedBanInviter?1=并连带邀请人}}
+刷屏反制：{case:self.ListenSpam?0=关闭&else=开启}
 窥屏可能：{窥屏可能}
 其他插件：{其他插件}{姐妹骰}
 骰娘用户群:{骰娘用户群}
@@ -795,8 +795,8 @@ Type=[回复性质](Reply/Order)
 	{
 		"welcome",
 		R"(入群欢迎词：.welcome
-.welcome \\{at}欢迎\\{nick}入群~	//设置欢迎词
-//\\{at}视为at入群者，\\{nick}会替换为新人的昵称
+.welcome \{at}欢迎\{nick}入群~	//设置欢迎词
+//\{at}视为at入群者，\{nick}会替换为新人的昵称
 .welcome clr //清空欢迎词
 .welcome show //查看欢迎词
 无论指令是否停用，只要有欢迎词时有人入群，都会响应)"

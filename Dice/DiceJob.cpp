@@ -301,7 +301,7 @@ void clear_group(AttrObject& job) {
 }
 void list_group(AttrObject& job) {
 	console.log("遍历群列表", 0, printSTNow());
-	string mode{ job["list_mode"].to_str() };
+	string mode{ job.get_str("list_mode") };
 	if (mode.empty()) {
 		reply(job, fmt->get_help("groups_list"));
 	}

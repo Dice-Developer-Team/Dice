@@ -102,9 +102,13 @@ class DiceReplyUnit {
 	TrieG<char16_t, less_ci> gSearcher;
 public:
 	dict<ptr<DiceMsgReply>> items;
+	//formated kw of match, remove while matched
 	dict_ci<ptr<DiceMsgReply>> match_items;
+	//raw kw of prefix, remove while erase
 	dict_ci<ptr<DiceMsgReply>> prefix_items;
+	//raw kw of search, remove while erase
 	dict_ci<ptr<DiceMsgReply>> search_items;
+	//regex mode without formating
 	dict<ptr<DiceMsgReply>> regex_items;
 	void add(const string& key, ptr<DiceMsgReply> reply);
 	void add_order(const string& key, AttrVars);

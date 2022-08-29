@@ -297,7 +297,7 @@ int FromMsg::AdminEvent(const string& strOption){
 		if (strMsg[intMsgCnt] == '+') {
 			intMsgCnt++;
 			vars["danger_level"] = readToColon();
-			Censor::Level danger_level = censor.get_level(vars["danger_level"].to_str());
+			Censor::Level danger_level = censor.get_level(vars.get_str("danger_level"));
 			readSkipColon();
 			ResList res;
 			while (intMsgCnt != strMsg.length()) {
@@ -1303,9 +1303,9 @@ int FromMsg::BasicOrder()
 			vars["option"] = "禁用help";
 			if (vars["help_word"] == "off")
 			{
-				if (groupset(fromChat.gid, vars["option"].to_str()) < 1)
+				if (groupset(fromChat.gid, vars.get_str("option")) < 1)
 				{
-					chat(fromChat.gid).set(vars["option"].to_str());
+					chat(fromChat.gid).set(vars.get_str("option"));
 					replyMsg("strGroupSetOn");
 				}
 				else
@@ -1316,9 +1316,9 @@ int FromMsg::BasicOrder()
 			}
 			if (vars["help_word"] == "on")
 			{
-				if (groupset(fromChat.gid, vars["option"].to_str()) > 0)
+				if (groupset(fromChat.gid, vars.get_str("option")) > 0)
 				{
-					chat(fromChat.gid).reset(vars["option"].to_str());
+					chat(fromChat.gid).reset(vars.get_str("option"));
 					replyMsg("strGroupSetOff");
 				}
 				else
@@ -1327,7 +1327,7 @@ int FromMsg::BasicOrder()
 				}
 				return 1;
 			}
-			if (groupset(fromChat.gid, vars["option"].to_str()) > 0)
+			if (groupset(fromChat.gid, vars.get_str("option")) > 0)
 			{
 				replyMsg("strGroupSetOnAlready");
 				return 1;
@@ -1369,7 +1369,7 @@ int FromMsg::InnerOrder() {
 				}
 			}
 			else if (strWelcomeMsg == "show") {
-				string strWelcome{ chat(fromChat.gid).confs["入群欢迎"].to_str() };
+				string strWelcome{ chat(fromChat.gid).confs.get_str("入群欢迎") };
 				if (strWelcome.empty())replyMsg("strWelcomeMsgEmpty");
 				else reply(strWelcome, false);	//转义有注入风险
 			}
@@ -1647,7 +1647,7 @@ int FromMsg::InnerOrder() {
 				bool isSet = strMsg[intMsgCnt] == '+';
 				intMsgCnt++;
 				string strOption{ (vars["option"] = readRest()).to_str() };
-				if (!mChatConf.count(vars["option"].to_str())) {
+				if (!mChatConf.count(vars.get_str("option"))) {
 					replyMsg("strGroupSetNotExist");
 					return 1;
 				}
@@ -1674,7 +1674,7 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (!(vars["group_id"] = readDigit(false)).str_empty()) {
-			llGroup = stoll(vars["group_id"].to_str());
+			llGroup = stoll(vars.get_str("group_id"));
 			if (!ChatList.count(llGroup)) {
 				replyMsg("strGroupNotFound");
 				return 1;
@@ -1697,14 +1697,14 @@ int FromMsg::InnerOrder() {
 				intMsgCnt++;
 				const string option{ (vars["option"] = readPara()).to_str() };
 				readSkipSpace();
-				if (!mChatConf.count(vars["option"].to_str())) {
+				if (!mChatConf.count(vars.get_str("option"))) {
 					replyMsg("strGroupSetInvalid");
 					continue;
 				}
 				if (getGroupTrust(llGroup) >= get<string, short>(mChatConf, option, 0)) {
 					if (isSet) {
-						if (groupset(llGroup, vars["option"].to_str()) < 1) {
-							chat(llGroup).set(vars["option"].to_str());
+						if (groupset(llGroup, vars.get_str("option")) < 1) {
+							chat(llGroup).set(vars.get_str("option"));
 							++cntSet;
 							if (vars["Option"] == "许可使用") {
 								AddMsgToQueue(getMsg("strGroupAuthorized", vars), { 0, fromChat.uid });
@@ -1714,9 +1714,9 @@ int FromMsg::InnerOrder() {
 							replyMsg("strGroupSetOnAlready");
 						}
 					}
-					else if (grp.isset(vars["option"].to_str())) {
+					else if (grp.isset(vars.get_str("option"))) {
 						++cntSet;
-						chat(llGroup).reset(vars["option"].to_str());
+						chat(llGroup).reset(vars.get_str("option"));
 					}
 					else {
 						replyMsg("strGroupSetOffAlready");
@@ -1903,7 +1903,7 @@ int FromMsg::InnerOrder() {
 				while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
 				vars["card"] = readRest();
 				vars["target"] = getName(llqq, llGroup);
-				DD::setGroupCard(llGroup, llqq, vars["card"].to_str());
+				DD::setGroupCard(llGroup, llqq, vars.get_str("card"));
 				replyMsg("strGroupCardSet");
 			}
 			else {
@@ -1990,7 +1990,7 @@ int FromMsg::InnerOrder() {
 					intMsgCnt++;
 				while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
 				vars["title"] = readRest();
-				DD::setGroupTitle(llGroup, llqq, vars["title"].to_str());
+				DD::setGroupTitle(llGroup, llqq, vars.get_str("title"));
 				vars["target"] = getName(llqq, llGroup);
 				replyMsg("strGroupTitleSet");
 			}
@@ -2144,7 +2144,7 @@ int FromMsg::InnerOrder() {
 				return -1;
 			}
 			vars["key"] = readRest();
-			if (fmt->del_reply(vars["key"].to_str())) {
+			if (fmt->del_reply(vars.get_str("key"))) {
 				replyMsg("strReplyDel");
 			}
 			else {
@@ -2223,7 +2223,7 @@ int FromMsg::InnerOrder() {
 				n = toupper(static_cast<unsigned char>(n));
 			string strReturn;
 			if (getUser(fromChat.uid).isset("默认规则") && strSearch.find(':') == string::npos &&
-				GetRule::get(getUser(fromChat.uid).confs["默认规则"].to_str(), strSearch, strReturn)) {
+				GetRule::get(getUser(fromChat.uid).confs.get_str("默认规则"), strSearch, strReturn)) {
 				reply(strReturn);
 			}
 			else if (GetRule::analyze(strSearch, strReturn)) {
@@ -2396,7 +2396,7 @@ int FromMsg::InnerOrder() {
 			vars["table_item"] = readRest();
 			if (vars["table_item"].str_empty())
 				replyMsg("strGMTableItemEmpty");
-			else if (s->table_del("先攻", vars["table_item"].to_str()))
+			else if (s->table_del("先攻", vars.get_str("table_item")))
 				replyMsg("strGMTableItemDel");
 			else
 				replyMsg("strGMTableItemNotFound");
@@ -2798,7 +2798,7 @@ int FromMsg::InnerOrder() {
 		string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("随机姓名_" + type)) ? "随机姓名_" + type : "随机姓名";
 		vars["old_nick"] = idx_nick(vars);
 		vars["new_nick"] = strip(CardDeck::drawCard(CardDeck::mPublicDeck[strDeckName], true));
-		getUser(fromChat.uid).setNick(fromChat.gid, vars["new_nick"].to_str());
+		getUser(fromChat.uid).setNick(fromChat.gid, vars.get_str("new_nick"));
 		replyMsg("strNameSet");
 		return 1;
 	}
@@ -2888,7 +2888,7 @@ int FromMsg::InnerOrder() {
 			replyMsg("strAkAddEmpty");
 			return 1;
 		}
-		vars["fork"] = s->conf["AkFork"].to_str();
+		vars["fork"] = s->conf["AkFork"];
 		ResList list;
 		list.order();
 		for (auto& val : deck) {
@@ -3169,8 +3169,8 @@ int FromMsg::InnerOrder() {
 		}
 		vars["option"] = "禁用ob";
 		if (strOption == "off") {
-			if (groupset(fromChat.gid, vars["option"].to_str()) < 1) {
-				chat(fromChat.gid).set(vars["option"].to_str());
+			if (groupset(fromChat.gid, vars.get_str("option")) < 1) {
+				chat(fromChat.gid).set(vars.get_str("option"));
 				if (auto s{ sessions.get_if(fromChat)})
 					s->clear_ob();
 				replyMsg("strObOff");
@@ -3181,8 +3181,8 @@ int FromMsg::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "on") {
-			if (groupset(fromChat.gid, vars["option"].to_str()) > 0) {
-				chat(fromChat.gid).reset(vars["option"].to_str());
+			if (groupset(fromChat.gid, vars.get_str("option")) > 0) {
+				chat(fromChat.gid).reset(vars.get_str("option"));
 				replyMsg("strObOn");
 			}
 			else {
@@ -3190,7 +3190,7 @@ int FromMsg::InnerOrder() {
 			}
 			return 1;
 		}
-		if (groupset(fromChat.gid, vars["option"].to_str()) > 0) {
+		if (groupset(fromChat.gid, vars.get_str("option")) > 0) {
 			replyMsg("strObOffAlready");
 			return 1;
 		}
@@ -3230,7 +3230,7 @@ int FromMsg::InnerOrder() {
 		Player& pl = getPlayer(fromChat.uid);
 		if (strOption == "tag") {
 			vars["char"] = readRest();
-			switch (pl.changeCard(vars["char"].to_str(), fromChat.gid)) {
+			switch (pl.changeCard(vars.get_str("char"), fromChat.gid)) {
 			case 1:
 				replyMsg("strPcCardReset");
 				break;
@@ -3250,7 +3250,7 @@ int FromMsg::InnerOrder() {
 			string strName = readRest();
 			CharaCard& pc{ pl.getCard(strName, fromChat.gid) };
 			vars["char"] = pc.getName();
-			vars["type"] = pc.Attr["__Type"].to_str();
+			vars["type"] = pc.Attr.get_str("__Type");
 			vars["show"] = pc.show(true);
 			replyMsg("strPcCardShow");
 			return 1;
@@ -3259,7 +3259,7 @@ int FromMsg::InnerOrder() {
 			string& strPC{ (vars["char"] = strip(filter_CQcode(readRest(), fromChat.gid))).text };
 			switch (pl.newCard(strPC, fromChat.gid)) {
 			case 0:
-				vars["type"] = pl[fromChat.gid].Attr["__Type"].to_str();
+				vars["type"] = pl[fromChat.gid].Attr.get_str("__Type");
 				vars["show"] = pl[fromChat.gid].show(true);
 				if (vars["show"].str_empty())replyMsg("strPcNewEmptyCard");
 				else replyMsg("strPcNewCardShow");
@@ -3309,7 +3309,7 @@ int FromMsg::InnerOrder() {
 		if (strOption == "nn") {
 			string& strPC{ (vars["new_name"] = strip(filter_CQcode(readRest(),fromChat.gid))).text };
 			vars["old_name"] = pl[fromChat.gid].getName();
-			switch (pl.renameCard(vars["old_name"].to_str(), strPC)) {
+			switch (pl.renameCard(vars.get_str("old_name"), strPC)) {
 			case 0:
 				replyMsg("strPcCardRename");
 				break;
@@ -3330,7 +3330,7 @@ int FromMsg::InnerOrder() {
 		}
 		if (strOption == "del") {
 			vars["char"] = strip(readRest());
-			switch (pl.removeCard(vars["char"].to_str())) {
+			switch (pl.removeCard(vars.get_str("char"))) {
 			case 0:
 				replyMsg("strPcCardDel");
 				break;
@@ -3349,7 +3349,7 @@ int FromMsg::InnerOrder() {
 		if (strOption == "redo") {
 			vars["char"] = strip(readRest());
 			pl.buildCard(vars["char"].text, true, fromChat.gid);
-			vars["show"] = pl[vars["char"].to_str()].show(true);
+			vars["show"] = pl[vars.get_str("char")].show(true);
 			replyMsg("strPcCardRedo");
 			return 1;
 		}
@@ -3364,7 +3364,7 @@ int FromMsg::InnerOrder() {
 			vars["char2"] = (strPC1.length() + 1 < strName.length())
 				? strip(strName.substr(strPC1.length() + 1))
 				: pl[fromChat.gid].getName();
-			switch (pl.copyCard(strPC1, vars["char2"].to_str(), fromChat.gid)) {
+			switch (pl.copyCard(strPC1, vars.get_str("char2"), fromChat.gid)) {
 			case 0:
 				replyMsg("strPcCardCpy");
 				break;
@@ -3444,11 +3444,11 @@ int FromMsg::InnerOrder() {
 		if (strOption == "type") {
 			if ((vars["new_type"] = strip(readRest())).str_empty()) {
 				vars["attr"] = "模板类";
-				vars["val"] = pl[fromChat.gid].Attr["__Type"].to_str();
+				vars["val"] = pl[fromChat.gid].Attr.get_str("__Type");
 				replyMsg("strProp");
 			}
 			else {
-				pl[fromChat.gid].setType(vars["new_type"].to_str());
+				pl[fromChat.gid].setType(vars.get_str("new_type"));
 				replyMsg("strPcTempChange");
 			}
 			return 1;
@@ -3741,7 +3741,7 @@ int FromMsg::InnerOrder() {
 			replyMsg("strUnknownErr");
 			return 1;
 		}
-		sessions.get(fromChat)->table_add("先攻", initdice.intTotal, vars["char"].to_str());
+		sessions.get(fromChat)->table_add("先攻", initdice.intTotal, vars.get_str("char"));
 		vars["res"] = initdice.FormCompleteString();
 		replyMsg("strRollInit");
 		return 1;
@@ -3881,7 +3881,7 @@ int FromMsg::InnerOrder() {
 			vars["attr"] = readAttrName();
 			if (vars["attr"].str_empty()) {
 				vars["char"] = pc.getName();
-				vars["type"] = pc.Attr["__Type"].to_str();
+				vars["type"] = pc.Attr.get_str("__Type");
 				vars["show"] = pc.show(false);
 				replyMsg("strPropList");
 				return 1;
@@ -3908,7 +3908,7 @@ int FromMsg::InnerOrder() {
 				if (vars["attr"].str_empty()) {
 					continue;
 				}
-				if (pc.set(vars["attr"].to_str(), readExp())) {
+				if (pc.set(vars.get_str("attr"), readExp())) {
 					replyMsg("strPcTextTooLong");
 					return 1;
 				}
@@ -4672,7 +4672,7 @@ void reply(AttrObject& msg, string strReply, bool isFormat) {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	if(isFormat)strReply = fmt->format(strReply, msg);
-	if (console["ReferMsgReply"] && msg["msgid"])strReply = "[CQ:reply,id=" + msg["msgid"].to_str() + "]" + strReply;
+	if (console["ReferMsgReply"] && msg["msgid"])strReply = "[CQ:reply,id=" + msg.get_str("msgid") + "]" + strReply;
 	long long uid{ msg.get_ll("uid") };
 	long long gid{ msg.get_ll("gid") };
 	long long chid{ msg.get_ll("chid") };
@@ -4683,7 +4683,7 @@ void MsgNote(AttrObject& msg, string strReply, int note_lv) {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	strReply = fmt->format(strReply, msg);
-	if (console["ReferMsgReply"] && msg["msgid"])strReply = "[CQ:reply,id=" + msg["msgid"].to_str() + "]" + strReply;
+	if (console["ReferMsgReply"] && msg["msgid"])strReply = "[CQ:reply,id=" + msg.get_str("msgid") + "]" + strReply;
 	long long uid{ msg.get_ll("uid") };
 	long long gid{ msg.get_ll("gid") };
 	long long chid{ msg.get_ll("chid") };
