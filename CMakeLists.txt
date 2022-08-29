@@ -16,7 +16,7 @@ add_library(w4123.Dice SHARED ${Dice_SRC} ${QQAPI_SRC})
 set_property(TARGET w4123.Dice PROPERTY CXX_STANDARD 17)
 set_property(TARGET w4123.Dice PROPERTY CXX_STANDARD_REQUIRED ON)
 set_property(TARGET w4123.Dice PROPERTY PREFIX "")
-set_property(TARGET w4123.Dice PROPERTY SUFFIX ".dll")
+set_property(TARGET w4123.Dice PROPERTY SUFFIX "${DLL_SUFFIX}.dll")
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "-fpermissive ${CMAKE_CXX_FLAGS}")
