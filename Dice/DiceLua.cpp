@@ -1164,7 +1164,7 @@ void DiceModManager::loadPlugin(ResList& res) {
 		lua_newtable(L);
 		lua_setglobal(L, "msg_order");
 		lua_newtable(L);
-		lua_setglobal(L, "task_kill");
+		lua_setglobal(L, "task_call");
 		if (luaL_dofile(L, file.c_str())) {
 			string pErrorMsg = lua_to_gbstring(L, -1);
 			err << pErrorMsg;
@@ -1173,9 +1173,9 @@ void DiceModManager::loadPlugin(ResList& res) {
 		}
 		else {
 			lua_getglobal(L, "msg_order");
-			if (!lua_isnoneornil(L, 1)) {
-				if (lua_type(L, 1) != LUA_TTABLE) {
-					err << "msg_order类型错误:" + file;
+			if (!lua_isnoneornil(L, -1)) {
+				if (lua_type(L, -1) != LUA_TTABLE) {
+					err << "msg_order类型错误(" + string(LuaTypes[lua_type(L, -1)]) + "):" + file;
 					continue;
 				}
 				for (auto& [key, val] : lua_to_dict(L)) {
@@ -1189,10 +1189,10 @@ void DiceModManager::loadPlugin(ResList& res) {
 				}
 			}
 			lua_pop(L, 1);
-			lua_getglobal(L, "task_kill");
-			if (!lua_isnoneornil(L, 1)) {
-				if (lua_type(L, 1) != LUA_TTABLE) {
-					err << "task_kill类型错误:" + file;
+			lua_getglobal(L, "task_call");
+			if (!lua_isnoneornil(L, -1)) {
+				if (lua_type(L, -1) != LUA_TTABLE) {
+					err << "task_kill类型错误(" + string(LuaTypes[lua_type(L, -1)]) + "):" + file;
 					continue;
 				}
 				for (auto& [key, val] : lua_to_dict(L)) {
@@ -1200,10 +1200,11 @@ void DiceModManager::loadPlugin(ResList& res) {
 					++cntTask;
 				}
 			}
+			++cntPlugin;
 		}
 	}
 	res << "读取/plugin/中的" + std::to_string(cntPlugin) + "个脚本, 共" + to_string(cntOrder) + "个指令"
-		+ (cntTask ? "，" + to_string(cntOrder) + "个脚本" : "");
+		+ (cntTask ? "，" + to_string(cntTask) + "个任务" : "");
 	if (!err.empty()) {
 		res << "plugin文件读取错误" + to_string(err.size()) + "次:" + err.show("\n");
 	}
@@ -1226,9 +1227,9 @@ void DiceModManager::loadLuaMod(const vector<std::filesystem::path>& files, ResL
 		}
 		else {
 			lua_getglobal(L, "msg_reply");
-			if (!lua_isnoneornil(L, 1)) {
-				if (lua_type(L, 1) != LUA_TTABLE) {
-					err << "msg_reply数据格式错误:" + UTF8toGBK(file.filename().u8string());
+			if (!lua_isnoneornil(L, -1)) {
+				if (lua_type(L, -1) != LUA_TTABLE) {
+					err << "msg_reply数据格式错误(" + string(LuaTypes[lua_type(L, -1)]) + "):" + UTF8toGBK(file.filename().u8string());
 					continue;
 				}
 				for (auto& [key, val] : lua_to_dict(L)) {
@@ -1237,9 +1238,9 @@ void DiceModManager::loadLuaMod(const vector<std::filesystem::path>& files, ResL
 			}
 			lua_pop(L, 1);
 			lua_getglobal(L, "event");
-			if (!lua_isnoneornil(L, 1)) {
-				if (lua_type(L, 1) != LUA_TTABLE) {
-					err << "event数据格式错误:" + UTF8toGBK(file.filename().u8string());
+			if (!lua_isnoneornil(L, -1)) {
+				if (lua_type(L, -1) != LUA_TTABLE) {
+					err << "event数据格式错误(" + string(LuaTypes[lua_type(L, -1)]) + "):" + UTF8toGBK(file.filename().u8string());
 					continue;
 				}
 				for (auto& [key, val] : lua_to_dict(L)) {

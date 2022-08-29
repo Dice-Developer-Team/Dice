@@ -483,6 +483,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
+619:统一reply与order格式
 618:支持reply(Order形式)覆盖指令
 617:更新grade分档转义
 616:转义&vary支持取用户/群配置
