@@ -761,7 +761,7 @@ void DiceReplyUnit::add_order(const string& key, AttrVars order) {
 	items[key] = reply;
 }
 void DiceReplyUnit::build() {
-	for (auto& [key, reply] : items) {
+	for (auto& [title, reply] : items) {
 		if (reply->keyMatch[0]) {
 			for (auto& word : *reply->keyMatch[0]) {
 				match_items[fmt->format(word)] = reply;
@@ -781,7 +781,15 @@ void DiceReplyUnit::build() {
 		}
 		if (reply->keyMatch[3]) {
 			for (auto& word : *reply->keyMatch[3]) {
-				regex_items[word] = reply;
+				try {
+					std::wregex exp(convert_a2realw(word.c_str()),
+						std::regex::ECMAScript | std::regex::icase | std::regex::optimize);
+					regex_exp.emplace(title,exp);
+					regex_items[word] = reply;
+				}
+				catch (const std::regex_error& e) {
+					console.log("正则关键词解析错误，表达式:\n" + word + "\n" + e.what(), 0b10);
+				}
 			}
 		}
 	}
@@ -1183,7 +1191,9 @@ bool DiceReplyUnit::listen(FromMsg* msg, int type) {
 	}
 	//regex
 	try {
-		for (auto& [key, reply] : regex_items){
+		for (auto& [title, exp] : regex_exp){
+			if (!items.count(title))continue;
+			auto reply{ items[title] };
 			if (!(type & (int)reply->type))continue;
 			// libstdc++ 使用了递归式 dfs 匹配正则表达式
 			// 递归层级很多，非常容易爆栈
@@ -1193,7 +1203,6 @@ bool DiceReplyUnit::listen(FromMsg* msg, int type) {
 			// @seealso https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86164
 
 			// 未来优化：预先构建regex并使用std::regex::optimize
-			std::wregex exp(convert_a2realw(key.c_str()), std::regex::ECMAScript | std::regex::icase);
 			std::wstring LstrMsg = convert_a2realw(strMsg.c_str());
 			if (strMsg.length() <= 400 && std::regex_match(LstrMsg, msg->msgMatch, exp)){
 				if(reply->exec(msg))return true;
@@ -1251,7 +1260,15 @@ void DiceReplyUnit::insert(const string& key, ptr<DiceMsgReply> reply) {
 	}
 	if (reply->keyMatch[3]) {
 		for (auto& word : *reply->keyMatch[3]) {
-			regex_items[word] = reply;
+			try {
+				std::wregex exp(convert_a2realw(word.c_str()),
+					std::regex::ECMAScript | std::regex::icase | std::regex::optimize);
+				regex_exp.emplace(key, exp);
+				regex_items[word] = reply;
+			}
+			catch (const std::regex_error& e) {
+				console.log("正则关键词解析错误，表达式:\n" + word + "\n" + e.what(), 0b10);
+			}
 		}
 	}
 	items[key] = reply;
@@ -1270,6 +1287,7 @@ void DiceReplyUnit::erase(ptr<DiceMsgReply> reply) {
 	if (reply->keyMatch[3]) {
 		for (auto& word : *reply->keyMatch[3]) {
 			regex_items.erase(word);
+			regex_exp.erase(word);
 		}
 	}
 }

@@ -8,18 +8,12 @@
  * 2022/8/08: »¥³âËø
  */
 
-#include <string>
-#include <map>
-#include <unordered_map>
 #include <mutex>
 #include "DiceMsgSend.h"
 #include "json.hpp"
 #include "DiceAttrVar.h"
 #include "STLExtern.hpp"
 
-using std::string;
-using std::map;
-using std::unordered_map;
 using std::shared_ptr;
 
 struct DiceJobDetail : public std::enable_shared_from_this<DiceJobDetail> {

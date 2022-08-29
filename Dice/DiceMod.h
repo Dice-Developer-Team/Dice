@@ -4,25 +4,17 @@
  * Copyright (C) 2019-2022 String.Empty
  */
 
-#include <string>
 #include <utility>
-#include <vector>
-#include <map>
-#include <set>
 #include <list>
-#include <memory>
 #include <variant>
+#include <regex>
 #include "yaml-cpp/node/node.h"
 #include "STLExtern.hpp"
 #include "SHKQuerier.h"
 #include "SHKTrie.h"
 #include "DiceSchedule.h"
 #include "GlobalVar.h"
-using std::string;
-using std::vector;
-using std::map;
 using std::unordered_multimap;
-using std::set;
 using std::variant;
 template<typename T>
 using ptr = std::shared_ptr<T>;
@@ -36,9 +28,9 @@ class DiceTriggerLimit {
 	string content;
 	string comment;
 	int prob{ 0 };
-	set<long long>user_id;
+	unordered_set<long long>user_id;
 	bool user_id_negative{ false };
-	set<long long>grp_id;
+	unordered_set<long long>grp_id;
 	bool grp_id_negative{ false };
 	vector<CDConfig>locks;
 	vector<CDConfig>cd_timer;
@@ -110,6 +102,7 @@ public:
 	dict_ci<ptr<DiceMsgReply>> search_items;
 	//regex mode without formating
 	dict<ptr<DiceMsgReply>> regex_items;
+	unordered_multimap<string, std::wregex> regex_exp;
 	void add(const string& key, ptr<DiceMsgReply> reply);
 	void add_order(const string& key, AttrVars);
 	void build();
