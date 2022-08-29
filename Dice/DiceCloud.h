@@ -7,12 +7,12 @@
 
 #include "filesystem.hpp"
 
-class FromMsg;
+class DiceEvent;
 
 namespace Cloud
 {
 	void heartbeat();
 	[[deprecated]] int DownloadFile(const char* url, const char* downloadPath);
 	int DownloadFile(const char* url, const std::filesystem::path& downloadPath);
-	int checkUpdate(FromMsg* msg);
+	int checkUpdate(DiceEvent* msg);
 }

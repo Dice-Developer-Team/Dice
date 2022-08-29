@@ -15,7 +15,7 @@ using std::unordered_set;
 using std::shared_ptr;
 namespace fs = std::filesystem;
 
-class FromMsg;
+class DiceEvent;
 class DiceTableMaster;
 
 struct LogInfo{
@@ -49,12 +49,12 @@ public:
 		return LinkFromChat.count(ct = ct.locate()) ? LinkFromChat.find(ct)->second : pair<chatInfo, bool>();
 	}
 	//link指令
-	void build(FromMsg*);
-	void start(FromMsg*);
+	void build(DiceEvent*);
+	void start(DiceEvent*);
 	string show(const chatInfo& ct);
 	string list();
-	void show(FromMsg*);
-	void close(FromMsg*);
+	void show(DiceEvent*);
+	void close(DiceEvent*);
 	void load();
 	void save();
 };
@@ -138,10 +138,10 @@ public:
 	bool table_clr(const string& key);
 
 	//旁观指令
-	void ob_enter(FromMsg*);
-	void ob_exit(FromMsg*);
-	void ob_list(FromMsg*) const;
-	void ob_clr(FromMsg*);
+	void ob_enter(DiceEvent*);
+	void ob_exit(DiceEvent*);
+	void ob_list(DiceEvent*) const;
+	void ob_clr(DiceEvent*);
 	[[nodiscard]] unordered_set<long long> get_ob() const { return sOB; }
 
 	DiceSession& clear_ob()
@@ -151,24 +151,24 @@ public:
 	}
 	
 	//log指令
-	void log_new(FromMsg*);
-	void log_on(FromMsg*);
-	void log_off(FromMsg*);
-	void log_end(FromMsg*);
+	void log_new(DiceEvent*);
+	void log_on(DiceEvent*);
+	void log_off(DiceEvent*);
+	void log_end(DiceEvent*);
 	[[nodiscard]] std::filesystem::path log_path()const;
 	[[nodiscard]] bool is_logging() const { return logger.isLogging; }
 
 	//deck指令
 	map<string, DeckInfo, less_ci>& get_deck() { return decks; }
 	DeckInfo& get_deck(const string& key) { return decks[key]; }
-	void deck_set(FromMsg*);
+	void deck_set(DiceEvent*);
 	string deck_draw(const string&);
-	void _draw(FromMsg*);
-	void deck_show(FromMsg*);
-	void deck_reset(FromMsg*);
-	void deck_del(FromMsg*);
-	void deck_clr(FromMsg*);
-	void deck_new(FromMsg*);
+	void _draw(DiceEvent*);
+	void deck_show(DiceEvent*);
+	void deck_reset(DiceEvent*);
+	void deck_del(DiceEvent*);
+	void deck_clr(DiceEvent*);
+	void deck_new(DiceEvent*);
 	[[nodiscard]] bool has_deck(const string& key) const { return decks.count(key); }
 
 	void save() const;

@@ -28,7 +28,7 @@ public:
 	long long fromUID = 0;
 	time_t fromTime = 0;
 
-	FrqMonitor(DiceJobDetail&);
+	FrqMonitor(DiceEvent&);
 
 	~FrqMonitor()
 	{
@@ -68,5 +68,5 @@ public:
 	}
 };
 
-void AddFrq(DiceJobDetail& msg);
+void AddFrq(DiceEvent& msg);
 void frqHandler();

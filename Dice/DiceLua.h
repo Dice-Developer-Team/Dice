@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 class Lua_State;
-class FromMsg;
-bool lua_msg_call(FromMsg*, const AttrObject&);
+class DiceEvent;
+bool lua_msg_call(DiceEvent*, const AttrObject&);
 bool lua_call_event(AttrObject eve, const AttrVar&);
 bool lua_call_task(const AttrVars&);

@@ -22,7 +22,7 @@ using ex_lock = ptr<std::unique_lock<std::mutex>>;
 using chat_locks = std::list<ex_lock>;
 namespace fs = std::filesystem;
 
-class FromMsg;
+class DiceEvent;
 
 class DiceTriggerLimit {
 	string content;
@@ -46,7 +46,7 @@ public:
 	const string& print()const { return content; }
 	const string& note()const { return comment; }
 	bool empty()const { return content.empty(); }
-	bool check(FromMsg*, chat_locks&)const;
+	bool check(DiceEvent*, chat_locks&)const;
 };
 
 class DiceGenerator
@@ -84,7 +84,7 @@ public:
 	string show()const;
 	string show_ans()const;
 	string print()const;
-	bool exec(FromMsg*);
+	bool exec(DiceEvent*);
 	void from_obj(AttrObject);
 	void readJson(const json&);
 	json writeJson()const;
@@ -109,18 +109,18 @@ public:
 	void erase(ptr<DiceMsgReply> reply);
 	void erase(const string& key) { if (items.count(key))erase(items[key]); }
 	void insert(const string&, ptr<DiceMsgReply> reply);
-	bool listen(FromMsg*, int);
+	bool listen(DiceEvent*, int);
 };
-class DiceEvent {
+class DiceEventTrigger {
 	enum class Mode { Nil, Clock, Cycle, Trigger };
 	enum class ActType { Nil, Lua };
 	//½öÖ§³Ölua
 	ActType type{ ActType::Nil };
 	string script;
 public:
-	DiceEvent() = default;
-	DiceEvent(const AttrObject&);
-	bool exec(FromMsg*);
+	DiceEventTrigger() = default;
+	DiceEventTrigger(const AttrObject&);
+	bool exec(DiceEvent*);
 	bool exec();
 };
 
@@ -207,8 +207,8 @@ public:
 	bool isIniting{ false };
 
 	string list_mod()const;
-	void mod_on(FromMsg*);
-	void mod_off(FromMsg*);
+	void mod_on(DiceEvent*);
+	void mod_off(DiceEvent*);
 
 	string format(string, AttrObject = {},
 		const AttrIndexs& = MsgIndexs,
@@ -219,7 +219,7 @@ public:
 
 	dict_ci<size_t>cntHelp;
 	[[nodiscard]] string get_help(const string&, AttrObject = {}) const;
-	void _help(const shared_ptr<DiceJobDetail>&);
+	void _help(DiceEvent*);
 	void set_help(const string&, const string&);
 	void rm_help(const string&);
 
@@ -228,14 +228,14 @@ public:
 	//return if event is blocked
 	bool call_hook_event(AttrObject);
 
-	bool listen_order(FromMsg* msg) { return final_reply.listen(msg, 1); }
-	bool listen_reply(FromMsg* msg) { return final_reply.listen(msg, 2); }
+	bool listen_order(DiceEvent* msg) { return final_reply.listen(msg, 1); }
+	bool listen_reply(DiceEvent* msg) { return final_reply.listen(msg, 2); }
 	string list_reply(int type)const;
 	void set_reply(const string&, ptr<DiceMsgReply> reply);
 	bool del_reply(const string&);
 	void save_reply();
-	void reply_get(const shared_ptr<DiceJobDetail>&);
-	void reply_show(const shared_ptr<DiceJobDetail>&);
+	void reply_get(DiceEvent*);
+	void reply_show(DiceEvent*);
 	bool call_task(const string&);
 
 	bool script_has(const string& name)const { return scripts.count(name); }

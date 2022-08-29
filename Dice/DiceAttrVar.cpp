@@ -34,6 +34,12 @@ ByteS::ByteS(std::ifstream& fin) {
 bool AttrObject::is(const string& key)const {
 	return dict->count(key) ? bool(dict->at(key)) : false;
 }
+bool AttrObject::is_empty(const string& key)const {
+	auto it{ dict->find(key) };
+	return (it == dict->end())
+		|| (it->second.type == AttrVar::AttrType::Text && it->second.text.empty())
+		|| (it->second.type == AttrVar::AttrType::Table && it->second.table.empty());
+}
 bool AttrObject::is_table(const string& key)const {
 	return dict->count(key) && dict->at(key).is_table();
 }
@@ -52,7 +58,7 @@ void AttrObject::reset(const string& key)const {
 	dict->erase(key);
 }
 AttrVar& AttrObject::at(const string& key)const {
-	return dict->at(key);
+	return (*dict)[key];
 }
 AttrVar& AttrObject::operator[](const char* key)const {
 	return (*dict)[key];

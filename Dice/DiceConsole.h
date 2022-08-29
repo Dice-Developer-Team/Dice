@@ -40,7 +40,7 @@ public:
 	long long DiceMaid = 0;
 	bool is_self(long long qq)const { return masterQQ == qq || DiceMaid == qq; }
 	friend void ConsoleTimer();
-	friend class FromMsg;
+	friend class DiceEvent;
 	friend void MsgNote(AttrObject&, string, int);
 	//DiceSens DSens;
 	static const enumap<string> mClockEvent;

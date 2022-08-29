@@ -53,6 +53,7 @@ using AttrVars = std::unordered_map<string, AttrVar>;
 using VarArray = std::vector<AttrVar>;
 class lua_State;
 class AttrObject {
+protected:
 	ptr<AttrVars>dict;
 	ptr<VarArray>list;
 	friend class AttrVar;
@@ -77,6 +78,7 @@ public:
 	void set(const string& key, const AttrVar& val)const;
 	void reset(const string& key)const;
 	bool is(const string& key)const;
+	bool is_empty(const string& key)const;
 	bool is_table(const string& key)const;
 	AttrVar index(const string& key)const;
 	AttrVar get(const string& key, ptr<AttrVar> val = {})const;

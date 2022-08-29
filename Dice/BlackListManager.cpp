@@ -913,7 +913,7 @@ short DDBlackManager::get_qq_danger(long long id) const
 	return 0;
 }
 
-void DDBlackManager::rm_black_group(long long llgroup, FromMsg* msg)
+void DDBlackManager::rm_black_group(long long llgroup, DiceEvent* msg)
 {
 	std::lock_guard<std::mutex> lock_queue(blacklistMutex);
 	if (!mGroupDanger.count(llgroup))
@@ -935,7 +935,7 @@ void DDBlackManager::rm_black_group(long long llgroup, FromMsg* msg)
 	blacklist->saveJson(DiceDir / "conf" / "BlackList.json");
 }
 
-void DDBlackManager::rm_black_qq(long long llqq, FromMsg* msg)
+void DDBlackManager::rm_black_qq(long long llqq, DiceEvent* msg)
 {
 	std::lock_guard<std::mutex> lock_queue(blacklistMutex);
 	if (!mQQDanger.count(llqq))
@@ -959,14 +959,14 @@ void DDBlackManager::rm_black_qq(long long llqq, FromMsg* msg)
 	blacklist->saveJson(DiceDir / "conf" / "BlackList.json");
 }
 
-void DDBlackManager::isban(FromMsg* msg)
+void DDBlackManager::isban(DiceEvent* msg)
 {
-	if (!msg->vars["target"].to_ll())
+	if (!msg->get_ll("target"))
 	{
 		msg->reply("请{nick}给出查询对象的ID×");
 		return;
 	}
-	long long llID{ msg->vars["target"].to_ll() };
+	long long llID{ msg->get_ll("target") };
 	bool isGet = false;
 	if (mGroupIndex.count(llID))
 	{
@@ -998,7 +998,7 @@ void DDBlackManager::isban(FromMsg* msg)
 	}
 	if (!isGet)
 	{
-		msg->reply(msg->vars.get_str("target") + "无黑名单记录");
+		msg->reply(msg->get_str("target") + "无黑名单记录");
 	}
 }
 
@@ -1053,7 +1053,7 @@ string DDBlackManager::list_self_qq_warning(long long llqq)
 	return "";
 }
 
-void DDBlackManager::add_black_group(long long llgroup, FromMsg* msg)
+void DDBlackManager::add_black_group(long long llgroup, DiceEvent* msg)
 {
 	if (groupset(llgroup, "免黑") > 0)
 	{
@@ -1062,7 +1062,7 @@ void DDBlackManager::add_black_group(long long llgroup, FromMsg* msg)
 	}
 	DDBlackMark mark{0, llgroup};
 	mark.danger = 1;
-	mark.note = msg->vars.get_str("note");
+	mark.note = msg->get_str("note");
 	if (!mark.note.empty()) {
 		mark.danger = 2;
 		mark.type = "other";
@@ -1072,15 +1072,15 @@ void DDBlackManager::add_black_group(long long llgroup, FromMsg* msg)
 		msg->reply(getMsg("strSelfName") + "已拉黑群" + to_string(llgroup) + "！");
 		return;
 	}
-	mark.time = msg->vars.get_str("time");
+	mark.time = msg->get_str("time");
 	mark.DiceMaid = console.DiceMaid;
 	mark.masterQQ = console.masterQQ;
-	mark.comment = printSTNow() + " 由" + printUser(msg->vars["uid"].to_ll()) + "拉黑";
+	mark.comment = printSTNow() + " 由" + printUser(msg->get_ll("uid")) + "拉黑";
 	insert(mark);
 	msg->note("已添加" + printGroup(llgroup) + "的黑名单记录√");
 }
 
-void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
+void DDBlackManager::add_black_qq(long long llqq, DiceEvent* msg)
 {
 	if (trustedQQ(llqq) > 1)
 	{
@@ -1089,8 +1089,8 @@ void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
 	}
 	DDBlackMark mark{llqq, 0};
 	mark.danger = 1;
-	mark.note = msg->vars.get_str("note");
-	if (!mark.note.empty() && !msg->vars.has("user")) {
+	mark.note = msg->get_str("note");
+	if (!mark.note.empty() && !msg->has("user")) {
 		mark.danger = 2;
 		mark.type = "other";
 	}
@@ -1099,7 +1099,7 @@ void DDBlackManager::add_black_qq(long long llqq, FromMsg* msg)
 		msg->reply(getMsg("strSelfName") + "已拉黑用户" + printUser(llqq) + "！");
 		return;
 	}
-	mark.time = msg->vars.get_str("time");
+	mark.time = msg->get_str("time");
 	mark.DiceMaid = console.DiceMaid;
 	mark.masterQQ = console.masterQQ;
 	mark.comment = printSTNow() + " 由" + printUser(msg->fromChat.uid) + "拉黑";

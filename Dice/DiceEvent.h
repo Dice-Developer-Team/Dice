@@ -21,15 +21,19 @@
 using std::string;
 
 //打包待处理消息
-class FromMsg : public DiceJobDetail {
+class DiceEvent : public AttrObject {
 public:
+	chatInfo fromChat;
 	string strLowerMessage;
 	Chat* pGrp = nullptr;
 	string& strMsg;
 	string strReply;
 	std::wsmatch msgMatch;
-	FromMsg(const AttrVars& var, const chatInfo& ct);
-	FromMsg(const AttrVars& var);
+	DiceEvent(const AttrVars& var, const chatInfo& ct);
+	DiceEvent(const AttrVars& var);
+	AttrVar& operator[](const char* key) {
+		return (*dict)[key];
+	}
 
 	bool isBlock = false;
 
@@ -39,8 +43,8 @@ public:
 
 	void formatReply();
 
-	void reply(const char* strReply, bool isFormat = true) override;
-	void reply(const std::string& strReply, bool isFormat = true) override;
+	void reply(const char* strReply, bool isFormat = true) ;
+	void reply(const std::string& strReply, bool isFormat = true) ;
 
 	void replyHidden(const std::string& strReply);
 

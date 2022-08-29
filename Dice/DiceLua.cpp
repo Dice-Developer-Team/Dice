@@ -220,7 +220,7 @@ void CharaCard::toCard(lua_State* L) {
 }
 
 //为msg直接调用lua语句
-bool lua_msg_call(FromMsg* msg, const AttrObject& lua) {
+bool lua_msg_call(DiceEvent* msg, const AttrObject& lua) {
 	//enum class LuaType { String, File, File_Func, Chunk};
 	//LuaType typeLua{ LuaType::String };
 	string luaFile{ lua.get_str("file") };
@@ -234,7 +234,7 @@ bool lua_msg_call(FromMsg* msg, const AttrObject& lua) {
 	}
 	LuaState L{ luaFile };
 	if (!L)return false;
-	lua_push_Context(L, msg->vars);
+	lua_push_Context(L, *msg);
 	lua_setglobal(L, "msg");
 	if (!luaFile.empty()) {
 #ifdef _WIN32
@@ -261,7 +261,7 @@ bool lua_msg_call(FromMsg* msg, const AttrObject& lua) {
 			
 			string func{ lua.get_str("func") };
 			lua_getglobal(L, func.c_str());
-			lua_push_Context(L, msg->vars);
+			lua_push_Context(L, *msg);
 			if (lua_pcall(L, 1, 2, 0)) {
 				string pErrorMsg = lua_to_gbstring(L, -1);
 				console.log(getMsg("strSelfName") + "调用" + fileGBK + "函数" + func + "失败!\n" + pErrorMsg, 0b10);
@@ -273,10 +273,10 @@ bool lua_msg_call(FromMsg* msg, const AttrObject& lua) {
 	if (lua["func"].is_function()) {
 		ByteS bytes{ lua["func"].to_bytes() };
 		if (bytes.isUTF8)UTF8Luas.insert(L);
-		if (lua_load(L, lua_reader, &bytes, msg->vars.get_str("reply_title").c_str(), "bt")
-			|| (lua_push_Context(L, msg->vars), lua_pcall(L, 1, 2, 0))) {
+		if (lua_load(L, lua_reader, &bytes, msg->get_str("reply_title").c_str(), "bt")
+			|| (lua_push_Context(L, *msg), lua_pcall(L, 1, 2, 0))) {
 			string pErrorMsg = lua_to_gbstring(L, -1);
-			console.log(getMsg("strSelfName") + "运行" + msg->vars.get_str("reply_title") + "Lua字节码失败!\n" + pErrorMsg, 0b10);
+			console.log(getMsg("strSelfName") + "运行" + msg->get_str("reply_title") + "Lua字节码失败!\n" + pErrorMsg, 0b10);
 			msg->reply(getMsg("strReplyLuaErr"));
 			return false;
 		}
@@ -284,29 +284,29 @@ bool lua_msg_call(FromMsg* msg, const AttrObject& lua) {
 	else if (luaFile.empty() &&
 		(luaL_loadstring(L, lua.get_str("func").c_str()) || lua_pcall(L, 0, 2, 0))) {
 		string pErrorMsg = lua_to_gbstring(L, -1);
-		console.log(getMsg("strSelfName") + "调用" + msg->vars.get_str("reply_title") + "Lua代码失败!\n" + pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "调用" + msg->get_str("reply_title") + "Lua代码失败!\n" + pErrorMsg, 0b10);
 		msg->reply(getMsg("strReplyLuaErr"));
 		return false;
 	}
 	if (lua_gettop(L)) {
 		if (!lua_isnoneornil(L, 1)) {
 			if (!lua_isstring(L, 1)) {
-				console.log(getMsg("strSelfName") + "调用" + msg->vars.get_str("reply_title") + "脚本返回值格式错误(" + LuaTypes[lua_type(L, 1)] + ")!", 0b10);
+				console.log(getMsg("strSelfName") + "调用" + msg->get_str("reply_title") + "脚本返回值格式错误(" + LuaTypes[lua_type(L, 1)] + ")!", 0b10);
 				msg->reply(getMsg("strReplyLuaErr"));
 				return false;
 			}
-			else if (!(msg->vars["msg_reply"] = lua_to_gbstring(L, 1)).str_empty()) {
-				msg->reply(msg->vars.get_str("msg_reply"));
+			else if (!((*msg)["msg_reply"] = lua_to_gbstring(L, 1)).str_empty()) {
+				msg->reply(msg->get_str("msg_reply"));
 			}
 		}
 		if (!lua_isnoneornil(L, 2)) {
 			if (!lua_isstring(L, 2)) {
-				console.log(getMsg("strSelfName") + "调用" + msg->vars.get_str("reply_title") + "脚本返回值格式错误("+ LuaTypes[lua_type(L, 2)] + ")!", 1);
+				console.log(getMsg("strSelfName") + "调用" + msg->get_str("reply_title") + "脚本返回值格式错误("+ LuaTypes[lua_type(L, 2)] + ")!", 1);
 				msg->reply(getMsg("strReplyLuaErr"));
 				return false;
 			}
-			else if (!(msg->vars["msg_hidden"] = lua_to_gbstring(L, 2)).str_empty()) {
-				msg->replyHidden(msg->vars.get_str("msg_hidden"));
+			else if (!((*msg)["msg_hidden"] = lua_to_gbstring(L, 2)).str_empty()) {
+				msg->replyHidden(msg->get_str("msg_hidden"));
 			}
 		}
 	}
@@ -898,7 +898,7 @@ int eventMsg(lua_State* L) {
 			: AttrVars{ {"fromMsg",fromMsg}, {"uid", fromUID} };
 	}
 	std::thread th([=]() {
-		FromMsg msg(vars);
+		DiceEvent msg(vars);
 		msg.virtualCall();
 	});
 	th.detach();

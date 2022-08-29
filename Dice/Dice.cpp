@@ -651,12 +651,12 @@ EVE_PrivateMsg(eventPrivateMsg)
 	if (!Enabled)return 0;
 	if (fromUID == console.DiceMaid && !console["ListenSelfEcho"])return 0;
 	else if (console["DisableStrangerChat"] && !DD::isFriend(fromUID, true))return 0;
-	shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
+	shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
 		AttrVars{ { "Event", "Message" },
 			{ "fromMsg", message },
 			{ "uid", fromUID },
 		}, chatInfo{ fromUID,0,0 }));
-	return Msg->DiceFilter() || fmt->call_hook_event(Msg->vars.merge({
+	return Msg->DiceFilter() || fmt->call_hook_event(Msg->merge({
 		{"hook","WhisperIgnored"},
 		}));
 }
@@ -669,7 +669,7 @@ EVE_GroupMsg(eventGroupMsg)
 	if (!grp.isset("已入群") && (grp.isset("未进") || grp.isset("已退")))eve_GroupAdd(grp);
 	if (!grp.isset("忽略"))
 	{
-		shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
+		shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
 			AttrVars({ { "Event", "Message" },
 				{ "fromMsg", message },
 				{ "msgid",msgId },
@@ -687,7 +687,7 @@ EVE_ChannelMsg(eventChannelMsg)
 	if (fromUID == console.DiceMaid && !console["ListenChannelEcho"])return 0;
 	//if (!grp.isset("忽略"))
 	{
-		shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
+		shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
 			AttrVars({ { "Event", AttrVar("Message")},
 				{ "fromMsg", message },
 				{ "msgid", msgId },
@@ -720,7 +720,7 @@ EVE_DiscussMsg(eventDiscussMsg)
 		grp.leave(strMsg);
 		return 1;
 	}
-	shared_ptr<FromMsg> Msg(make_shared<FromMsg>(
+	shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
 		AttrVars({ { "Event", "Message"},
 			{ "fromMsg", message },
 			{ "uid", fromUID },

@@ -11,27 +11,11 @@
 #include <mutex>
 #include "DiceMsgSend.h"
 #include "json.hpp"
-#include "DiceAttrVar.h"
+#include "DiceEvent.h"
 #include "STLExtern.hpp"
 
 using std::shared_ptr;
 
-struct DiceJobDetail : public std::enable_shared_from_this<DiceJobDetail> {
-	chatInfo fromChat;
-	time_t fromTime = time(nullptr);
-	//¡Ÿ ±±‰¡øø‚
-	AttrObject vars;
-	DiceJobDetail(const AttrVars& vars, bool isFromSelf = false);
-	DiceJobDetail(const AttrVars& var, chatInfo ct) :vars(var), fromChat(ct){}
-	virtual void reply(const char*, bool = true) {}
-	virtual void reply(const string&, bool = true) {}
-	AttrVar& operator[](const char* key){
-		return vars[key];
-	}
-	bool operator<(const DiceJobDetail& other)const {
-		return vars.get_str("cmd") < other.vars.get_str("cmd");
-	}
-};
 extern AttrIndexs MsgIndexs;
 
 /*

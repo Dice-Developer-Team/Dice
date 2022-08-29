@@ -50,7 +50,7 @@ namespace Cloud
 #endif
 	}
 
-	int checkUpdate(FromMsg* msg)
+	int checkUpdate(DiceEvent* msg)
 	{
 		std::string strVerInfo;
 		if (!Network::GET("http://shiki.stringempty.xyz/DiceVer/update", strVerInfo))

@@ -31,9 +31,6 @@ unordered_map<string, cmd> mCommand = {
 	{"uplog",log_put}
 };
 
-DiceJobDetail::DiceJobDetail(const AttrVars& vars, bool isFromSelf) :vars(vars) {
-	if (isFromSelf)fromChat.uid = console.DiceMaid;
-}
 /*
 void DiceJob::exec() {
 	if (auto it = mCommand.find(cmd_key); it != mCommand.end()) {

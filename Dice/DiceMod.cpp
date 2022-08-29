@@ -522,7 +522,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 	comment = notes.show("\n");
 	return *this;
 }
-bool DiceTriggerLimit::check(FromMsg* msg, chat_locks& lock_list)const {
+bool DiceTriggerLimit::check(DiceEvent* msg, chat_locks& lock_list)const {
 	if (!user_id.empty() && (user_id_negative ^ !user_id.count(msg->fromChat.uid)))return false;
 	if (!grp_id.empty() && (grp_id_negative ^ !grp_id.count(msg->fromChat.gid)))return false;
 	if (prob && RandomGenerator::Randint(1, 100) > prob)return false;
@@ -530,7 +530,7 @@ bool DiceTriggerLimit::check(FromMsg* msg, chat_locks& lock_list)const {
 		chatInfo chat{ msg->fromChat.locate()};
 		for (auto& conf : locks) {
 			string key{ conf.key };
-			if (key.empty())key = msg->vars.get_str("reply_title");
+			if (key.empty())key = msg->get_str("reply_title");
 			chatInfo ct{ conf.type == CDType::Chat ? chat :
 				conf.type == CDType::User ? chatInfo(msg->fromChat.uid) : chatInfo()
 			};
@@ -563,7 +563,7 @@ bool DiceTriggerLimit::check(FromMsg* msg, chat_locks& lock_list)const {
 			: msg->fromChat };
 		for (auto& conf : cd_timer) {
 			string key{ conf.key };
-			if (key.empty())key = msg->vars.get_str("reply_title");
+			if (key.empty())key = msg->get_str("reply_title");
 			chatInfo chattype{ conf.type == CDType::Chat ? chat :
 				conf.type == CDType::User ? chatInfo(msg->fromChat.uid) : chatInfo()
 			};
@@ -571,7 +571,7 @@ bool DiceTriggerLimit::check(FromMsg* msg, chat_locks& lock_list)const {
 		}
 		for (auto& conf : today_cnt) {
 			string key{ conf.key };
-			if (key.empty())key = msg->vars.get_str("reply_title");
+			if (key.empty())key = msg->get_str("reply_title");
 			chatInfo chattype{ conf.type == CDType::Chat ? chat :
 				conf.type == CDType::User ? chatInfo(msg->fromChat.uid) : chatInfo()
 			};
@@ -588,9 +588,9 @@ enumap_ci DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
 std::array<string, 4> strType{ "无","指令","回复","同时" };
 enumap<string> strMode{ "完全", "前缀", "模糊", "正则" };
 enumap<string> strEcho{ "纯文本", "牌堆（多选一）", "Lua" };
-bool DiceMsgReply::exec(FromMsg* msg) {
+bool DiceMsgReply::exec(DiceEvent* msg) {
 	int chon{ msg->pGrp ? msg->pGrp->getChConf(msg->fromChat.chid,"order",0) : 0 };
-	msg->vars["reply_title"] = title;
+	msg->set("reply_title", title);
 	//limit
 	chat_locks lock_list;
 	if (!limit.check(msg, lock_list))return false;
@@ -843,8 +843,8 @@ string DiceModManager::list_mod()const {
 	}
 	return list.show();
 }
-void DiceModManager::mod_on(FromMsg* msg) {
-	string modName{ msg->vars.get_str("mod") };
+void DiceModManager::mod_on(DiceEvent* msg) {
+	string modName{ msg->get_str("mod") };
 	if (modList.count(modName)) {
 		if (modList[modName]->active) {
 			msg->replyMsg("strModOnAlready");
@@ -860,8 +860,8 @@ void DiceModManager::mod_on(FromMsg* msg) {
 		msg->replyMsg("strModNotFound");
 	}
 }
-void DiceModManager::mod_off(FromMsg* msg) {
-	string modName{ msg->vars.get_str("mod") };
+void DiceModManager::mod_off(DiceEvent* msg) {
+	string modName{ msg->get_str("mod") };
 	if (modList.count(modName)) {
 		if (!modList[modName]->active) {
 			msg->replyMsg("strModOffAlready");
@@ -1062,8 +1062,8 @@ struct help_sorter {
 	}
 };
 
-void DiceModManager::_help(const shared_ptr<DiceJobDetail>& job) {
-	if ((*job)["help_word"].str_empty()) {
+void DiceModManager::_help(DiceEvent* job) {
+	if (job->is_empty("help_word")) {
 		job->reply(getMsg("strBotHeader") + Dice_Short_Ver + "\n" + getMsg("strHlpMsg"));
 		return;
 	}
@@ -1164,7 +1164,7 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 	return eve.is("blocked");
 }
 
-bool DiceReplyUnit::listen(FromMsg* msg, int type) {
+bool DiceReplyUnit::listen(DiceEvent* msg, int type) {
 	string& strMsg{ msg->strMsg };
 	if (auto it{ match_items.find(strMsg) }; it != match_items.end()) {
 		if (!items.count(it->second->title))
@@ -1310,20 +1310,20 @@ void DiceModManager::save_reply() {
 	if (j.empty()) std::filesystem::remove(DiceDir / "conf" / "CustomMsgReply.json");
 	else fwriteJson(DiceDir / "conf" / "CustomMsgReply.json", j, 0);
 }
-void DiceModManager::reply_get(const shared_ptr<DiceJobDetail>& msg) {
-	string key{ msg->vars.get_str("key")};
+void DiceModManager::reply_get(DiceEvent* msg) {
+	string key{ msg->get_str("key")};
 	if (final_reply.items.count(key)) {
-		(*msg)["show"] = final_reply.items[key]->print();
+		msg->set("show",final_reply.items[key]->print());
 		msg->reply(getMsg("strReplyShow"));
 	}
 	else {
 		msg->reply(getMsg("strReplyKeyNotFound"));
 	}
 }
-void DiceModManager::reply_show(const shared_ptr<DiceJobDetail>& msg) {
-	string key{ (*msg)["key"].to_str()};
+void DiceModManager::reply_show(DiceEvent* msg) {
+	string key{ msg->get_str("key") };
 	if (final_reply.items.count(key)) {
-		(*msg)["show"] = final_reply.items[key]->show();
+		msg->set("show", final_reply.items[key]->show());
 		msg->reply(getMsg("strReplyShow"));
 	}
 	else {

@@ -50,7 +50,7 @@ bool DiceSession::table_clr(const string& key)
 	return false;
 }
 
-void DiceSession::ob_enter(FromMsg* msg)
+void DiceSession::ob_enter(DiceEvent* msg)
 {
 	if (sOB.count(msg->fromChat.uid))
 	{
@@ -64,7 +64,7 @@ void DiceSession::ob_enter(FromMsg* msg)
 	}
 }
 
-void DiceSession::ob_exit(FromMsg* msg)
+void DiceSession::ob_exit(DiceEvent* msg)
 {
 	if (sOB.count(msg->fromChat.uid))
 	{
@@ -78,7 +78,7 @@ void DiceSession::ob_exit(FromMsg* msg)
 	update();
 }
 
-void DiceSession::ob_list(FromMsg* msg) const
+void DiceSession::ob_list(DiceEvent* msg) const
 {
 	if (sOB.empty())msg->replyMsg("strObListEmpty");
 	else
@@ -92,7 +92,7 @@ void DiceSession::ob_list(FromMsg* msg) const
 	}
 }
 
-void DiceSession::ob_clr(FromMsg* msg)
+void DiceSession::ob_clr(DiceEvent* msg)
 {
 	if (sOB.empty())msg->replyMsg("strObListEmpty");
 	else
@@ -103,13 +103,13 @@ void DiceSession::ob_clr(FromMsg* msg)
 	update();
 }
 
-void DiceSession::log_new(FromMsg* msg) {
+void DiceSession::log_new(DiceEvent* msg) {
 	std::error_code ec;
 	std::filesystem::create_directory(DiceDir / logger.dirLog, ec);
 	logger.tStart = time(nullptr);
 	string nameLog{ msg->readFileName() };
 	if (nameLog.empty())nameLog = to_string(logger.tStart);
-	msg->vars["log_name"] = logger.name = nameLog;
+	(*msg)["log_name"] = logger.name = nameLog;
 	logger.fileLog = LocaltoGBK(name) + "_" + nameLog + ".txt";
 	logger.pathLog = DiceDir / logger.dirLog / GBKtoLocal(logger.fileLog);
 	logger.isLogging = true;
@@ -120,7 +120,7 @@ void DiceSession::log_new(FromMsg* msg) {
 	}
 	update();
 }
-void DiceSession::log_on(FromMsg* msg) {
+void DiceSession::log_on(DiceEvent* msg) {
 	if (!logger.tStart) {
 		log_new(msg);
 		return;
@@ -135,7 +135,7 @@ void DiceSession::log_on(FromMsg* msg) {
 		msg->replyMsg("strLogOnAlready");
 		return;
 	}
-	msg->vars["log_name"] = logger.name;
+	(*msg)["log_name"] = logger.name;
 	logger.isLogging = true;
 	msg->replyMsg("strLogOn");
 	for (const auto& ct : windows) {
@@ -143,7 +143,7 @@ void DiceSession::log_on(FromMsg* msg) {
 	}
 	update();
 }
-void DiceSession::log_off(FromMsg* msg) {
+void DiceSession::log_off(DiceEvent* msg) {
 	if (!logger.tStart) {
 		msg->replyMsg("strLogNullErr");
 		return;
@@ -160,7 +160,7 @@ void DiceSession::log_off(FromMsg* msg) {
 	msg->replyMsg("strLogOff");
 	update();
 }
-void DiceSession::log_end(FromMsg* msg) {
+void DiceSession::log_end(DiceEvent* msg) {
 	if (!logger.tStart) {
 		msg->replyMsg("strLogNullErr");
 		return;
@@ -174,15 +174,14 @@ void DiceSession::log_end(FromMsg* msg) {
 		msg->replyMsg("strLogEndEmpty");
 		return;
 	}
-	msg->vars["log_file"] = logger.fileLog;
-	msg->vars["log_path"] = log_path().string();
+	(*msg)["log_file"] = logger.fileLog;
+	(*msg)["log_path"] = log_path().string();
 	msg->replyMsg("strLogEnd");
 	update();
-	AttrObject& eve{ msg->vars };
-	eve["hook"] = "LogEnd";
-	if (!fmt->call_hook_event(eve)) {
-		eve["cmd"] = "uplog";
-		sch.push_job(eve);
+	msg->set("hook","LogEnd");
+	if (!fmt->call_hook_event(*msg)) {
+		msg->set("cmd", "uplog");
+		sch.push_job(*msg);
 	}
 }
 std::filesystem::path DiceSession::log_path()const {
@@ -222,7 +221,7 @@ void DiceChatLink::save() {
 	}
 	fwriteJson(DiceDir / "conf" / "LinkList.json", jFile, 0);
 }
-void DiceChatLink::build(FromMsg* msg) {
+void DiceChatLink::build(DiceEvent* msg) {
 	auto here{ msg->fromChat.locate() };
 	chatInfo target;
 	if (msg->readChat(target)) {
@@ -240,15 +239,15 @@ void DiceChatLink::build(FromMsg* msg) {
 		LinkInfo& link{ LinkList[here] };
 		//重置已存在的链接
 		LinkFromChat.erase(link.target);
-		link = { true ,msg->vars.get_str("option"),target };
+		link = { true ,msg->get_str("option"),target };
 		LinkFromChat[here] = { target ,link.typeLink != "from" };
 		LinkFromChat[target] = { here ,link.typeLink != "to" };
-		msg->vars["target"] = printChat(target);
+		(*msg)["target"] = printChat(target);
 		msg->replyMsg("strLinked");
 		save();
 	}
 }
-void DiceChatLink::start(FromMsg* msg) {
+void DiceChatLink::start(DiceEvent* msg) {
 	auto here{ msg->fromChat.locate() };
 	if (LinkList.count(here)) {
 		if (LinkFromChat.count(here)) {
@@ -261,7 +260,7 @@ void DiceChatLink::start(FromMsg* msg) {
 			LinkFromChat[here] = { link.target ,link.typeLink != "from" };
 			LinkFromChat[link.target] = { here ,link.typeLink != "to" };
 			link.isLinking = true;
-			msg->vars["target"] = printChat(link.target);
+			(*msg)["target"] = printChat(link.target);
 			msg->replyMsg("strLinked");
 			save();
 		}
@@ -304,17 +303,17 @@ string DiceChatLink::list() {
 	}
 	return li.show("\n");
 }
-void DiceChatLink::show(FromMsg* msg) {
+void DiceChatLink::show(DiceEvent* msg) {
 	auto here{ msg->fromChat.locate() };
 	if (LinkFromChat.count(here) || LinkList.count(here)) {
-		msg->vars["link_info"] = show(here);
+		(*msg)["link_info"] = show(here);
 		msg->replyMsg("strLinkState");
 	}
 	else {
 		msg->replyMsg("strLinkNotFound");
 	}
 }
-void DiceChatLink::close(FromMsg* msg) {
+void DiceChatLink::close(DiceEvent* msg) {
 	auto here{ msg->fromChat.locate() };
 	if (auto link{ LinkFromChat.find(here) }; link != LinkFromChat.end()) {
 		auto there{ link->second.first };
@@ -363,10 +362,10 @@ string DeckInfo::draw() {
 	return CardDeck::draw(meta[res]);
 }
 
-void DiceSession::deck_set(FromMsg* msg) {
-	const string key{ (msg->vars["deck_name"] = msg->readAttrName()).to_str() };
+void DiceSession::deck_set(DiceEvent* msg) {
+	const string key{ ((*msg)["deck_name"] = msg->readAttrName()).to_str() };
 	size_t pos = msg->strMsg.find('=', msg->intMsgCnt);
-	AttrVar& strCiteDeck{ msg->vars["deck_cited"] = pos == string::npos 
+	AttrVar& strCiteDeck{ (*msg)["deck_cited"] = pos == string::npos 
 		? key 
 		: (++msg->intMsgCnt, msg->readAttrName()) };
 	if (key.empty()) {
@@ -435,8 +434,8 @@ void DiceSession::deck_set(FromMsg* msg) {
 		update();
 	}
 }
-void DiceSession::deck_new(FromMsg* msg) {
-	AttrVar& key{ msg->vars["deck_name"] };
+void DiceSession::deck_new(DiceEvent* msg) {
+	AttrVar& key{ (*msg)["deck_name"] };
 	size_t pos = msg->strMsg.find('=', msg->intMsgCnt);
 	if (pos == string::npos) {
 		key = "new";
@@ -480,10 +479,9 @@ string DiceSession::deck_draw(const string& key) {
 	}
 	return "{key}";
 }
-void DiceSession::_draw(FromMsg* msg) {
-	shared_ptr<DiceJobDetail> job{ msg->shared_from_this() };
-	if ((*job)["deck_name"].str_empty())(*job)["deck_name"] = msg->readAttrName();
-	DeckInfo& deck = decks[(*job)["deck_name"].to_str()];
+void DiceSession::_draw(DiceEvent* msg) {
+	if (msg->is_empty("deck_name"))msg->set("deck_name",msg->readAttrName());
+	DeckInfo& deck = decks[msg->get_str("deck_name")];
 	int intCardNum = 1;
 	switch (msg->readNum(intCardNum)) {
 	case 0:
@@ -505,9 +503,9 @@ void DiceSession::_draw(FromMsg* msg) {
 		if (!deck.sizRes)break;
 	}
 	if(!Res.empty()){
-		(*job)["res"] = Res.dot("|").show();
-		(*job)["cnt"] = to_string(Res.size());
-		if (msg->vars.is("hidden")) {
+		msg->set("res",Res.dot("|").show());
+		msg->set("cnt",to_string(Res.size()));
+		if (msg->is("hidden")) {
 			msg->replyMsg("strDrawHidden");
 			msg->replyHidden(getMsg("strDrawCard"));
 		}
@@ -519,19 +517,19 @@ void DiceSession::_draw(FromMsg* msg) {
 		msg->replyMsg("strDeckRestEmpty");
 	}
 }
-void DiceSession::deck_show(FromMsg* msg) {
+void DiceSession::deck_show(DiceEvent* msg) {
 	if (decks.empty()) {
 		msg->replyMsg("strDeckListEmpty");
 		return;
 	}
-	const string strDeckName{ (msg->vars["deck_name"] = msg->readAttrName()).to_str() };
+	const string& strDeckName{ ((*msg)["deck_name"] = msg->readAttrName()).text };
 	//默认列出所有牌堆
 	if (strDeckName.empty()) {
 		ResList res;
 		for (auto& [key, val] : decks) {
 			res << key + "[" + to_string(val.sizRes) + "/" + to_string(val.idxs.size()) + "]";
 		}
-		msg->vars["res"] = res.show();
+		msg->set("res", res.show());
 		msg->replyMsg("strDeckListShow");
 	}
 	else {
@@ -542,7 +540,7 @@ void DiceSession::deck_show(FromMsg* msg) {
 			while (idx < deck.sizRes) {
 				residxs << deck.meta[deck.idxs[idx++]];
 			}
-			msg->vars["deck_rest"] = residxs.dot(" | ").show();
+			msg->set("deck_rest", residxs.dot(" | ").show());
 			msg->replyMsg("strDeckRestShow");
 		}
 		else {
@@ -550,8 +548,8 @@ void DiceSession::deck_show(FromMsg* msg) {
 		}
 	}
 }
-void DiceSession::deck_reset(FromMsg* msg) {
-	AttrVar& key{ msg->vars["deck_name"] = msg->readAttrName() };
+void DiceSession::deck_reset(DiceEvent* msg) {
+	AttrVar& key{ (*msg)["deck_name"] = msg->readAttrName() };
 	if (key.str_empty())key = msg->readDigit();
 	if (key.str_empty()) {
 		msg->replyMsg("strDeckNameEmpty");
@@ -565,8 +563,8 @@ void DiceSession::deck_reset(FromMsg* msg) {
 		update();
 	}
 }
-void DiceSession::deck_del(FromMsg* msg) {
-	AttrVar& key{ msg->vars["deck_name"] = msg->readAttrName() };
+void DiceSession::deck_del(DiceEvent* msg) {
+	AttrVar& key{ (*msg)["deck_name"] = msg->readAttrName() };
 	if (key.str_empty())key = msg->readDigit();
 	if (key.str_empty()) {
 		msg->replyMsg("strDeckNameEmpty");
@@ -580,7 +578,7 @@ void DiceSession::deck_del(FromMsg* msg) {
 		update();
 	}
 }
-void DiceSession::deck_clr(FromMsg* msg) {
+void DiceSession::deck_clr(DiceEvent* msg) {
 	decks.clear();
 	msg->replyMsg("strDeckListClr");
 	update();

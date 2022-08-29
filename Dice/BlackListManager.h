@@ -26,7 +26,7 @@ using std::set;
 using std::unordered_map;
 using std::unordered_set;
 
-class FromMsg;
+class DiceEvent;
 
 enum class BlackID { fromGID, fromUID, inviterQQ, ownerQQ };
 
@@ -107,15 +107,15 @@ public:
 	unordered_map<long long, short> mGroupDanger;
 	[[nodiscard]] short get_group_danger(long long) const;
 	[[nodiscard]] short get_qq_danger(long long) const;
-	void isban(FromMsg*);
+	void isban(DiceEvent*);
 	string list_group_warning(long long);
 	string list_qq_warning(long long);
 	string list_self_group_warning(long long);
 	string list_self_qq_warning(long long);
-	void add_black_group(long long, FromMsg*);
-	void add_black_qq(long long, FromMsg*);
-	void rm_black_group(long long, FromMsg*);
-	void rm_black_qq(long long, FromMsg*);
+	void add_black_group(long long, DiceEvent*);
+	void add_black_qq(long long, DiceEvent*);
+	void rm_black_group(long long, DiceEvent*);
+	void rm_black_qq(long long, DiceEvent*);
 	void verify(void*, long long);
 	void create(DDBlackMark&);
 	//读取json格式黑名单记录
