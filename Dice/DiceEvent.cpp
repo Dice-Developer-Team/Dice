@@ -3859,7 +3859,7 @@ int DiceEvent::InnerOrder() {
 				intMsgCnt++;
 			}
 			set("attr",readAttrName());
-			if (getPlayer(fromChat.uid)[fromChat.gid].erase(get_str("attr"))) {
+			if (getPlayer(fromChat.uid)[fromChat.gid].erase(at("attr").text)) {
 				replyMsg("strPropDeleted");
 			}
 			else {
