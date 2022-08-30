@@ -88,7 +88,6 @@ void DiceEvent::reply(const char* msgReply, bool isFormat) {
 
 void DiceEvent::reply(bool isFormat) {
 	if (isVirtual && fromChat.uid == console.DiceMaid && isPrivate())return;
-	isAns = true;
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	if (isFormat)
@@ -99,7 +98,6 @@ void DiceEvent::reply(bool isFormat) {
 }
 void DiceEvent::replyMsg(const std::string& key) {
 	if (isVirtual && fromChat.uid == console.DiceMaid && isPrivate())return;
-	isAns = true;
 	strReply = getMsg(key, *this);
 	logEcho();
 	if (console["ReferMsgReply"] && has("msgid"))strReply = "[CQ:reply,id=" + get_str("msgid") + "]" + strReply;
@@ -107,7 +105,6 @@ void DiceEvent::replyMsg(const std::string& key) {
 }
 void DiceEvent::replyHelp(const std::string& key) {
 	if (isVirtual && fromChat.uid == console.DiceMaid && isPrivate())return;
-	isAns = true;
 	strReply = fmt->get_help(key);
 	logEcho();
 	if (console["ReferMsgReply"] && has("msgid"))strReply = "[CQ:reply,id=" + get_str("msgid") + "]" + strReply;
@@ -119,7 +116,6 @@ void DiceEvent::replyHidden(const std::string& msgReply) {
 	replyHidden();
 }
 void DiceEvent::replyHidden() {
-	isAns = true;
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	formatReply();
@@ -1159,14 +1155,14 @@ int DiceEvent::BasicOrder()
 		return 1;
 	}
 	else if (!isPrivate() && pGrp->isset("协议无效")){
-		return 1;
+		set("ignored", true);
+		return 0;
 	}
-	if (blacklist->get_qq_danger(fromChat.uid) || (!isPrivate() && blacklist->get_group_danger(fromChat.gid)))
-	{
-		return 1;
+	if (blacklist->get_qq_danger(fromChat.uid) || (!isPrivate() && blacklist->get_group_danger(fromChat.gid))){
+		set("ignored", true);
+		return 0;
 	}
-	if (strLowerMessage.substr(intMsgCnt, 3) == "bot")
-	{
+	if (strLowerMessage.substr(intMsgCnt, 3) == "bot"){
 		intMsgCnt += 3;
 		string Command = readPara();
 		string QQNum = readDigit();
@@ -4459,17 +4455,15 @@ bool DiceEvent::DiceFilter()
 			set("order_off",groupset(fromChat.gid, "停用指令") > 0);
 		}
 	}
-	if (BasicOrder()) 
-	{
-		if (isAns) {
-			if (!isVirtual) {
-				AddFrq(*this);
-				getUser(fromChat.uid).update((time_t)get_ll("fromTime"));
-				if (!isPrivate())chat(fromChat.gid).update((time_t)get_ll("fromTime"));
-			}
+	if (BasicOrder()) {
+		if (!isVirtual) {
+			AddFrq(*this);
+			getUser(fromChat.uid).update((time_t)get_ll("fromTime"));
+			if (!isPrivate())chat(fromChat.gid).update((time_t)get_ll("fromTime"));
 		}
 		return 1;
 	}
+	else if (is("ignored"))return 1;
 	if (!isPrivate() && ((console["CheckGroupLicense"] > 0 && pGrp->isset("未审核"))
 											  || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")) 
 											  || blacklist->get_group_danger(fromChat.gid))) {
@@ -4549,7 +4543,7 @@ bool DiceEvent::canRoomHost() {
 			|| isChannel() || isPrivate()
 			|| DD::isGroupAdmin(fromChat.gid, fromChat.uid, true) || pGrp->inviter == fromChat.uid);
 	}
-	return bool(is("canRoomHost"));
+	return is("canRoomHost");
 }
 
 int DiceEvent::getGroupTrust(long long group) {

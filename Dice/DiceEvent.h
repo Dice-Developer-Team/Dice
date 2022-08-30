@@ -77,8 +77,6 @@ public:
 	bool isCalled = false;
 
 private:
-	//ÊÇ·ñÏìÓ¦
-	bool isAns = false;
 	bool isDisabled = false;
 	bool canRoomHost();
 

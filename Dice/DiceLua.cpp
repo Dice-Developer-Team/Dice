@@ -622,7 +622,6 @@ int getGroupConf(lua_State* L) {
 				lua_set_field(L, -2, to_string(uid));
 			}
 		}
-		DD::debugLog("getGroupMembers.done");
 		return 1;
 	}
 	else if (item == "admins") {
