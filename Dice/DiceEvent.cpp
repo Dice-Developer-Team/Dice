@@ -1520,7 +1520,7 @@ int DiceEvent::InnerOrder() {
 				<< "硬盘占用:" + toString(milDisk / 10.0) + "%(空余:" + toString(mbFreeBytes) + "GB/ " + toString(mbTotalBytes) + "GB)"
 #endif
 				<< "运行时长:" + printDuringTime(time(nullptr) - llStartTime)
-				<< "今日指令量:" + today->get("frq").to_int()
+				<< "今日指令量:" + today->get("frq").to_str()
 				<< "启动后指令量:" + to_string(FrqMonitor::sumFrqTotal);
 			reply(res.show());
 			return 1;

@@ -919,10 +919,30 @@ int Msg_echo(lua_State* L) {
 int Context_format(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	AttrObject vars{ lua_isuserdata(L,1) ? **(AttrObject**)luaL_checkudata(L, 1, "Context")
-		: lua_istable(L,1) ? lua_to_dict(L,1)
+		: lua_istable(L, 1) ? lua_to_dict(L,1)
 		: AttrObject{} };
 	string msg{ lua_to_gbstring(L, 2) };
 	lua_push_string(L, fmt->format(msg, vars));
+	return 1;
+}
+int Context_get(lua_State* L) {
+	AttrObject obj{ lua_isuserdata(L,1) ? **(AttrObject**)luaL_checkudata(L, 1, "Context")
+		: lua_istable(L, 1) ? lua_to_dict(L,1)
+		: AttrObject{} };
+	if (lua_isnoneornil(L, 2)) {
+		lua_push_attr(L, obj);
+	}
+	else {
+		string key{ fmt->format(lua_to_gbstring(L, 2),obj) };
+		if (auto val{ getContextItem(obj, key) }) {
+			lua_push_attr(L, val);
+		}
+		else if (lua_gettop(L) > 2) {
+			lua_pushnil(L);
+			lua_insert(L, 3);
+		}
+		else return 0;
+	}
 	return 1;
 }
 int Context_index(lua_State* L) {
@@ -936,12 +956,16 @@ int Context_index(lua_State* L) {
 		lua_pushcfunction(L, Context_format);
 		return 1;
 	}
+	else if (key == "get") {
+		lua_pushcfunction(L, Context_get);
+		return 1;
+	}
 	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
 	if (key == "user" && vars.has("uid")) {
 		lua_push_Context(L, getUser(vars.get_ll("uid")).confs);
 		return 1;
 	}
-	else if(key == "grp" && vars.has("grp")) {
+	else if((key == "grp" || key == "group") && vars.has("gid")) {
 		lua_push_Context(L, chat(vars.get_ll("gid")).confs);
 		return 1;
 	}
@@ -954,8 +978,8 @@ int Context_index(lua_State* L) {
 int Context_newindex(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
-	string key{ lua_to_gbstring(L, 2) };
-	if (lua_gettop(L) < 3) {
+	string key{ fmt->format(lua_to_gbstring(L, 2), vars) };
+	if (lua_isnoneornil(L, 3)) {
 		vars.reset(key);
 	}
 	else {
