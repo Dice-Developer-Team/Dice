@@ -68,36 +68,37 @@ void parse_vary(string& raw, unordered_map<string, pair<AttrVar::CMPR, AttrVar>>
 }
 string parse_vary(const AttrVars& raw, unordered_map<string, pair<AttrVar::CMPR, AttrVar>>& vary) {
 	ShowList vars;
-	for (auto& [var, exp] : raw) {
+	for (auto& [key, exp] : raw) {
+		string var{ fmt->format(key) };
 		if (!exp.is_table()) {
 			vary[var] = { &AttrVar::equal,exp };
 			vars << var + "=" + exp.to_str();
 		}
 		else {
-			AttrVars& tab{ *exp.to_dict() };
-			if (tab.count("equal")) {
+			auto& tab{ exp.table };
+			if (tab.has("equal")) {
 				vary[var] = { &AttrVar::equal,tab["equal"] };
-				vars << var + "=" + tab["equal"].to_str();
+				vars << var + "=" + tab.get_str("equal");
 			}
-			else if (tab.count("neq")) {
+			else if (tab.has("neq")) {
 				vary[var] = { &AttrVar::not_equal , tab["neq"] };
-				vars << var + "=" + tab["neq"].to_str() + "+";
+				vars << var + "=" + tab.get_str("neq") + "!";
 			}
-			else if (tab.count("at_least")) {
+			else if (tab.has("at_least")) {
 				vary[var] = { &AttrVar::equal_or_more , tab["at_least"] };
-				vars << var + "=" + tab["at_least"].to_str() + "+";
+				vars << var + "=" + tab.get_str("at_least") + "+";
 			}
-			else if (tab.count("at_most")) {
+			else if (tab.has("at_most")) {
 				vary[var] = { &AttrVar::equal_or_less , tab["at_most"] };
-				vars << var + "=" + tab["at_most"].to_str() + "-";
+				vars << var + "=" + tab.get_str("at_most") + "-";
 			}
-			else if (tab.count("more")) {
+			else if (tab.has("more")) {
 				vary[var] = { &AttrVar::more , tab["more"] };
-				vars << var + "=" + tab["more"].to_str() + "++";
+				vars << var + "=" + tab.get_str("more") + "++";
 			}
-			else if (tab.count("less")) {
+			else if (tab.has("less")) {
 				vary[var] = { &AttrVar::less , tab["less"] };
-				vars << var + "=" + tab["less"].to_str() + "--";
+				vars << var + "=" + tab.get_str("less") + "--";
 			}
 		}
 	}
@@ -311,11 +312,11 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 				if (item.is_numberic()) {
 					user_id = { item.to_ll() };
 				}
-				else for (auto id : *item.to_list()) {
+				else for (auto& id : *item.to_list()) {
 					user_id.emplace(id.to_ll());
 				}
 			}
-			else for (auto id : *tab.to_list()) {
+			else for (auto& id : *tab.to_list()) {
 				user_id.emplace(id.to_ll());
 			}
 			if (!user_id.empty()) {
@@ -335,11 +336,11 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 				if (item.is_numberic()) {
 					grp_id = { item.to_ll() };
 				}
-				else if (tab.to_list()) for (auto id : *item.to_list()) {
+				else if (tab.to_list()) for (auto& id : *item.to_list()) {
 					user_id.emplace(id.to_ll());
 				}
 			}
-			else if(tab.to_list())for (auto id : *tab.to_list()) {
+			else if(tab.to_list())for (auto& id : *tab.to_list()) {
 				user_id.emplace(id.to_ll());
 			}
 			if (!grp_id.empty()) {
@@ -1155,7 +1156,7 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 		else if (action.is_table() && action.to_dict()->count("lua")) {
 			action = action.to_obj()["lua"];
 		}
-		if (hookEvent == "StartUp") {
+		if (hookEvent == "StartUp" || hookEvent == "DayEnd" || hookEvent == "DayNew") {
 			std::thread th(lua_call_event, eve, action);
 			th.detach();
 		}
@@ -1191,6 +1192,7 @@ bool DiceReplyUnit::listen(DiceEvent* msg, int type) {
 	}
 	//regex
 	try {
+		bool isAns{ false };
 		for (auto& [title, exp] : regex_exp){
 			if (!items.count(title))continue;
 			auto reply{ items[title] };
@@ -1205,9 +1207,10 @@ bool DiceReplyUnit::listen(DiceEvent* msg, int type) {
 			// 未来优化：预先构建regex并使用std::regex::optimize
 			std::wstring LstrMsg = convert_a2realw(strMsg.c_str());
 			if (strMsg.length() <= 400 && std::regex_match(LstrMsg, msg->msgMatch, exp)){
-				if(reply->exec(msg))return true;
+				if(reply->exec(msg))isAns = true;
 			}
 		}
+		return isAns;
 	}
 	catch (const std::regex_error& e)
 	{

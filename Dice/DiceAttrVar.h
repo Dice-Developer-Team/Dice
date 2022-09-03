@@ -88,6 +88,7 @@ public:
 	double get_num(const string& key)const;
 	AttrObject get_obj(const string& key)const;
 	ptr<AttrVars> get_dict(const string& key)const;
+	void inc(const string& key)const;
 	AttrObject& merge(const AttrVars& other);
 	json to_json()const;
 	void writeb(std::ofstream&)const;
@@ -142,6 +143,7 @@ public:
 	//bool operator==(const long long other)const;
 	bool operator==(const string& other)const;
 	bool operator==(const char* other)const;
+	AttrVar& operator++();
 	int to_int()const;
 	long long to_ll()const;
 	double to_num()const;

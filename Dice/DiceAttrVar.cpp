@@ -85,6 +85,11 @@ AttrObject AttrObject::get_obj(const string& key)const {
 ptr<AttrVars> AttrObject::get_dict(const string& key)const {
 	return dict->count(key) ? dict->at(key).to_dict() : ptr<AttrVars>();
 }
+void AttrObject::inc(const string& key)const {
+	if (key.empty())return;
+	if (dict->count(key))++dict->at(key);
+	else dict->emplace(key, 1);
+}
 AttrObject& AttrObject::merge(const AttrVars& other) {
 	for (const auto& [key, val] : other) {
 		(*dict)[key] = val;
@@ -208,6 +213,20 @@ bool AttrVar::operator==(const string& other)const {
 }
 bool AttrVar::operator==(const char* other)const {
 	return (type == AttrType::Text && text == other);
+}
+AttrVar& AttrVar::operator++() {
+	switch (type) {
+	case AttrType::Integer:
+		++attr;
+		break;
+	case AttrType::ID:
+		++id;
+		break;
+	case AttrType::Number:
+		++number;
+		break;
+	}
+	return *this;
 }
 
 int AttrVar::to_int()const {

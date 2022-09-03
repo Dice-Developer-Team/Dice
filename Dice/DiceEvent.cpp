@@ -37,13 +37,13 @@ AttrIndexs MsgIndexs{
 	{"at", idx_at},
 	{"grpAuth", idx_gAuth},
 	{"fromUser", [](AttrObject& vars) {
-		return vars.has("uid") ? vars["fromUser"] = vars.get_str("uid") : AttrVar();
+		return vars.has("uid") ? vars["fromUser"] = vars.get_str("uid") : "";
 	}},
 	{"fromQQ", [](AttrObject& vars) {
-		return vars.has("uid") ? vars["fromQQ"] = vars.get_str("uid") : AttrVar();
+		return vars.has("uid") ? vars["fromQQ"] = vars.get_str("uid") : "";
 	}},
 	{"fromGroup", [](AttrObject& vars) {
-		return vars.has("gid") ? vars["fromGroup"] = vars.get_str("gid") : AttrVar();
+		return vars.has("gid") ? vars["fromGroup"] = vars.get_str("gid") : "";
 	}},
 };
 
@@ -1520,7 +1520,7 @@ int DiceEvent::InnerOrder() {
 				<< "硬盘占用:" + toString(milDisk / 10.0) + "%(空余:" + toString(mbFreeBytes) + "GB/ " + toString(mbTotalBytes) + "GB)"
 #endif
 				<< "运行时长:" + printDuringTime(time(nullptr) - llStartTime)
-				<< "今日指令量:" + to_string(today->get("frq"))
+				<< "今日指令量:" + today->get("frq").to_int()
 				<< "启动后指令量:" + to_string(FrqMonitor::sumFrqTotal);
 			reply(res.show());
 			return 1;

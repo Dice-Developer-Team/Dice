@@ -230,18 +230,31 @@ void DiceToday::daily_clear() {
 	localtime_r(&tt, &stNow);
 #endif
 	if (stToday.tm_mday != stNow.tm_mday) {
+		fmt->call_hook_event(AttrVars{ {
+			{"Event","DayEnd"},
+			{"year",stNow.tm_year + 1900},
+			{"month",stNow.tm_mon + 1},
+			{"day",stNow.tm_mday},
+			} });
 		stToday.tm_year = stNow.tm_year;
 		stToday.tm_mon = stNow.tm_mon;
 		stToday.tm_mday = stNow.tm_mday;
 		counter.clear();
-		cntGlobal.clear();
 		UserInfo.clear();
+		pathFile = DiceDir / "user" / "daily" /
+			("daily_" + printDate() + ".json");
+		fmt->call_hook_event(AttrVars{ {
+			{"Event","DayNew"},
+			{"year",stNow.tm_year + 1900},
+			{"month",stNow.tm_mon + 1},
+			{"day",stNow.tm_mday},
+			} });
 	}
 }
 void DiceToday::set(long long qq, const string& key, const AttrVar& val) {
 	if (val)
 		UserInfo[qq].set(key, val);
-	else if (UserInfo.count(qq)&& UserInfo[qq].has(key)) {
+	else if (UserInfo.count(qq) && UserInfo[qq].has(key)) {
 		UserInfo[qq].reset(key);
 	}
 	else return;
@@ -252,7 +265,6 @@ void DiceToday::save() {
 	json jFile;
 	try {
 		jFile["date"] = { stToday.tm_year + 1900,stToday.tm_mon + 1,stToday.tm_mday };
-		jFile["global"] = GBKtoUTF8(cntGlobal);
 		if (!UserInfo.empty()) {
 			json& jCnt{ jFile["user"] = json::object() };
 			for (auto& [id, user] : UserInfo) {
@@ -274,15 +286,27 @@ void DiceToday::save() {
 	}
 }
 void DiceToday::load() {
-	json jFile = freadJson(DiceDir / "user" / "DiceToday.json");
-	if (jFile.is_null()) {
-		time_t tt = time(nullptr);
+	time_t tt{ time(nullptr) };
 #ifdef _MSC_VER
-		localtime_s(&stToday, &tt);
+	localtime_s(&stToday, &tt);
 #else
-		localtime_r(&tt, &stToday);
+	localtime_r(&tt, &stToday);
 #endif
-		return;
+	pathFile = DiceDir / "user" / "daily" /
+		("daily_" + printDate() + ".json");
+	std::filesystem::create_directory(pathFile.parent_path());
+	json jFile = freadJson(pathFile);
+	if (jFile.is_null()) {
+		if ((jFile = freadJson(DiceDir / "user" / "DiceToday.json")).is_null()) return; 
+		else {
+			if (jFile["date"][2] != stToday.tm_mday
+				|| jFile["date"][1] != (stToday.tm_mon + 1)
+				|| jFile["date"][0] != (stToday.tm_year + 1900)) {
+				std::filesystem::remove(DiceDir / "user" / "DiceToday.json");
+				return;
+			}
+			else std::filesystem::rename(DiceDir / "user" / "DiceToday.json", pathFile);
+		}
 	}
 	if (jFile.count("date")) {
 		jFile["date"][0].get_to(stToday.tm_year);
@@ -299,8 +323,7 @@ void DiceToday::load() {
 		}
 	}
 	if (jFile.count("global")) { 
-		jFile["global"].get_to(cntGlobal); 
-		cntGlobal = UTF8toGBK(cntGlobal);
+		UserInfo[0] = AttrVar(jFile["global"]).to_obj();
 	}
 	if (jFile.count("user")) {
 		for (auto& [key,val]: jFile["user"].items()) {

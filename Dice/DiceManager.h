@@ -63,7 +63,7 @@ public:
             j["data"]["nick"] = GBKtoUTF8(getMsg("strSelfName"));
             j["data"]["running_time"] = GBKtoUTF8(printDuringTime(time(nullptr) - llStartTime));
             j["data"]["cmd_count"] = std::to_string(FrqMonitor::sumFrqTotal.load());
-            j["data"]["cmd_count_today"] = std::to_string(today->get("frq"));
+            j["data"]["cmd_count_today"] = today->get("frq").to_str();
             ret = j.dump();
         }
         catch(const std::exception& e)

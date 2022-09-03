@@ -71,8 +71,8 @@ typedef void (*cmd)(AttrObject&);
 //½ñÈÕ¼ÇÂ¼
 class DiceToday {
 	tm stToday;
-	unordered_map<string, int>cntGlobal;
 	unordered_map<long long, AttrObject>UserInfo;
+	std::filesystem::path pathFile;
 public:
 	unordered_map<chatInfo, unordered_map<string, int>> counter;
 	DiceToday() {
@@ -81,10 +81,10 @@ public:
 	void load();
 	void save();
 	void set(long long qq, const string& key, const AttrVar& val);
-	void inc(const string& key) { cntGlobal[key]++; save(); }
+	void inc(const string& key) { UserInfo[0].inc(key); save(); }
 	//void inc(long long qq, const string& key, int cnt = 1) { cntUser[qq][key] += cnt; save(); }
 	unordered_map<long long, AttrObject>& getUserInfo() { return UserInfo; }
-	int& get(const string& key) { return cntGlobal[key]; }
+	AttrVar& get(const string& key) { return UserInfo[0].at(key); }
 	AttrObject& get(long long uid) { return UserInfo[uid]; }
 	//AttrVar& get(long long uid, const string& key) { return UserInfo[uid].to_dict()[key]; }
 	AttrVar* get_if(long long qq, const string& key) {
