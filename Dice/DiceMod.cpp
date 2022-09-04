@@ -1427,8 +1427,8 @@ int DiceModManager::load(ResList& resLog){
 							if (!yaml.IsMap()) {
 								continue;
 							}
-							for (auto it = yaml.begin(); it != yaml.end(); ++it) {
-								global_speech[UTF8toGBK(it->first.Scalar())] = it->second;
+							for (auto it : yaml) {
+								global_speech[UTF8toGBK(it.first.Scalar())] = it.second;
 								++cntSpeech;
 							}
 						}
