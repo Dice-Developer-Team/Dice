@@ -49,18 +49,6 @@ public:
 	bool check(DiceEvent*, chat_locks&)const;
 };
 
-class DiceGenerator
-{
-	//冷却时间
-	//int cold_time;
-	//单次抽取上限
-	//int draw_limit = 1;
-	string expression;
-	//string cold_msg = "冷却时间中×";
-public:
-	string getExp() { return expression; }
-};
-
 class BaseDeck
 {
 public:

@@ -1048,6 +1048,17 @@ EVE_FriendAdded(eventFriendAdd) {
 		: AddMsgToQueue(getMsg("strAddFriend"), fromUID);
 	return 0;
 }
+EVE_Extra(eventExtra) {
+	if (!Enabled) return 0;
+	try {
+		AttrObject eve{ AttrObject(json::parse(jsonData)) };
+		if (fmt->call_hook_event(eve))return 1;
+	}
+	catch (std::exception& e) {
+		DD::debugLog("eventExtra¥¶¿Ì“Ï≥£!" + string(e.what()));
+	}
+	return 0;
+}
 
 EVE_Menu(eventMasterMode)
 {

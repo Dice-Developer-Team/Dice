@@ -483,6 +483,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
+621:支持扩展代理事件
 620:留档每日数据，新增每日清算事件
 619:统一reply与order格式
 618:支持reply(Order形式)覆盖指令
@@ -578,7 +579,7 @@ Master拥有最高权限，且可以调整任意信任)"},
 `.mod list` 查看已加载mod列表
 `.mod on 模块名` 启用指定模块
 `.mod off 模块名` 停用指定模块
-mod按列表顺序读取内容，并从后向前覆盖)"},
+mod按顺序读取，且从后向前覆盖)"},
 {"ak",R"(安科+安价指令.ak
 .ak#[标题]或.ak new [标题] 新建分歧并设置标题（可为空）
 .ak+[选项]或.ak add [选项] 为本轮分歧添加新选项，用|分隔可一次添加多个选项

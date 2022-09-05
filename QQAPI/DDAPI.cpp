@@ -50,6 +50,7 @@ DDAPI(SetGroupLeave, void, long long, long long);
 DDAPI(SetDiscussLeave, void, long long, long long);
 DDAPI(UploadGroupFile, bool, long long, long long, const string&);
 DDAPI(SendPrivateFile, bool, long long, long long, const string&);
+DDAPI(GetExtra, bool, const string&, string&);
 
 #define CALLVOID(Name, ...) if(ApiList.count(#Name))reinterpret_cast<Name##_TYPE>(ApiList[#Name])(__VA_ARGS__)
 #define CALLGET(Name, ...) ApiList.count(#Name) ? reinterpret_cast<Name##_TYPE>(ApiList[#Name])(__VA_ARGS__)
@@ -196,5 +197,8 @@ namespace DD {
 	}
 	bool sendFriendFile(long long aimID, const std::string& path) {
 		return CALLGET(SendPrivateFile, loginID, aimID, path) :false;
+	}
+	bool getExtra(const string& data, string& ret) {
+		return CALLGET(GetExtra, data, ret) :false;
 	}
 }

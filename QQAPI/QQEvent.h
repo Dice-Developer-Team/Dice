@@ -41,6 +41,7 @@ namespace QQ {
 #define EVE_GroupInvited(Name) QQEVENT(int, Name, 16)(long long fromGID, long long fromUID)
 #define EVE_FriendRequest(Name) QQEVENT(int, Name, 12)(long long fromUID, const char* message)
 #define EVE_FriendAdded(Name) QQEVENT(int, Name, 8)(long long fromUID)
+#define EVE_Extra(Name) QQEVENT(int, Name, 4)(const char* jsonData)
 
 //≤Àµ•£¨¥˝…Ë÷√
 #define EVE_Menu(Name) QQEVENT(int, Name, 0)()

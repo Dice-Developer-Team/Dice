@@ -1207,7 +1207,10 @@ void DiceModManager::loadPlugin(ResList& res) {
 				}
 				for (auto& [key, val] : lua_to_dict(L)) {
 					if (val.is_table()) {
-						mod_reply_list[key] = val.to_obj();
+						ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
+						reply->title = key;
+						reply->from_obj(val.to_obj());
+						final_reply.add(key, reply);
 					}
 					else {
 						final_reply.add_order(format(key), { {"file",file},{"func",val} });
@@ -1285,6 +1288,8 @@ void DiceModManager::loadLuaMod(const vector<std::filesystem::path>& files, ResL
 			reply->from_obj(val);
 			final_reply.add(key, reply);
 		}
+	}
+	if (!events.empty()) {
 		res << "×¢²áevent" + to_string(events.size()) + "Ïî";
 	}
 	if (!err.empty()) {

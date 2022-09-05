@@ -65,5 +65,6 @@ namespace DD {
 	void setDiscussLeave(long long);
 	bool uploadGroupFile(long long, const std::string&);
 	bool sendFriendFile(long long, const std::string&);
+	bool getExtra(const std::string&, std::string&);
 }
 //enum class msgtype : int { Private = 0, Group = 1, Discuss = 2 };

@@ -870,6 +870,7 @@ void DiceModManager::mod_off(DiceEvent* msg) {
 		else {
 			modList[modName]->active = false;
 			save();
+			DD::debugLog("mod reload");
 			reload();
 			msg->note("{strModOff}", 1);
 		}
@@ -1575,6 +1576,7 @@ void DiceModManager::clear(){
 	querier.clear();
 	taskcall.clear();
 	final_reply = {};
+	mod_reply_list.clear();
 	clock_events.clear();
 	hook_events.clear();
 	events.clear();
@@ -1600,8 +1602,8 @@ void DiceModManager::save() {
 }
 void DiceModManager::reload() {
 	ResList logList;
-	fmt->clear();
-	fmt->load(logList);
+	clear();
+	load(logList);
 	if (!logList.empty()){
 		logList << "Ä£¿éÖØÔØÍê±Ï¡Ì";
 		console.log(logList.show(), 1, printSTNow());
