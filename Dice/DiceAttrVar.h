@@ -26,8 +26,8 @@
 using std::string;
 template<typename T>
 using ptr = std::shared_ptr<T>;
-template<typename T = string>
-using fifo_dict = nlohmann::fifo_map<string, T>;
+template<typename T>
+using fifo_dict = nlohmann::fifo_map<std::string, T>;
 
 struct ByteS {
 	char* bytes{ nullptr };
