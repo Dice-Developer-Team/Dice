@@ -318,13 +318,12 @@ string getName(long long uid, long long GroupID){
 
 	// GroupCard
 	if (GroupID){
-		nick = DD::getGroupNick(GroupID, uid);
-		nick = strip(msg_decode(nick));
+		nick = strip(msg_decode(nick = DD::getGroupNick(GroupID, uid)));
 		if (!nick.empty()) return nick;
 	}
 
 	// QQNick
-	nick = strip(msg_decode(DD::getQQNick(uid)));
+	nick = strip(msg_decode(nick = DD::getQQNick(uid)));
 	if (!nick.empty()) return nick;
 
 	// Unknown
