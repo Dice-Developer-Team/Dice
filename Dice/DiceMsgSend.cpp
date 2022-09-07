@@ -55,14 +55,14 @@ bool chatInfo::operator==(const chatInfo& other)const {
 		&& gid == other.gid
 		&& chid == other.chid;
 }
-nlohmann::json to_json(const chatInfo& chat) {
-	nlohmann::json j = nlohmann::json::object();
+fifo_json to_json(const chatInfo& chat) {
+	fifo_json j = fifo_json::object();
 	if (chat.chid)j["chid"] = chat.chid;
 	if (chat.gid)j["gid"] = chat.gid;
 	else if (chat.uid)j["uid"] = chat.uid;
 	return j;
 }
-chatInfo chatInfo::from_json(const nlohmann::json& chat) {
+chatInfo chatInfo::from_json(const fifo_json& chat) {
 	if (chat.is_null())return {};
 	long long uid{ 0 }, gid{ 0 }, chid{ 0 };
 	if (chat.count("uid"))chat["uid"].get_to(uid);

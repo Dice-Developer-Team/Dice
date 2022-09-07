@@ -598,7 +598,7 @@ fifo_json AttrObject::to_json()const {
 fifo_json AttrVar::to_json()const {
 	switch (type) {
 	case AttrType::Nil:
-		return nlohmann::json();
+		return fifo_json();
 		break;
 	case AttrType::Boolean:
 		return bit;

@@ -22,9 +22,6 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <string>
-#include <vector>
-#include <unordered_map>
 #include "fifo_json.hpp"
 using std::string;
 template<typename T>

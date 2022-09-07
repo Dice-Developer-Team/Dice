@@ -407,6 +407,7 @@ Dice!众筹计划: https://afdian.net/@suhuiw4123)"
 dict_ci<string> GlobalMsg{ PlainMsg };
 
 fifo_dict_ci<string> EditedMsg;
+fifo_dict_ci<string> CustomHelp;
 const dict_ci<string> GlobalComment{
 	{"self", "自称，引用自strSelfCall"},
 	//{"strActionEmpty", "当前无用"},
@@ -483,7 +484,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
-621:支持扩展代理事件，补全
+621:扩展代理事件及ex接口
 620:留档每日数据，新增每日清算事件
 619:统一reply与order格式
 618:支持reply(Order形式)覆盖指令

@@ -105,7 +105,7 @@ extern const dict_ci<string> GlobalComment;
 // 帮助文档
 extern const dict_ci<string> HelpDoc;
 // 修改后的帮助文档
-inline dict_ci<string> CustomHelp;
+extern fifo_dict_ci<string> CustomHelp;
 const std::string getMsg(const std::string& key, AttrObject tmp = {});
 const std::string getComment(const std::string& key);
 

@@ -1123,7 +1123,7 @@ void DDBlackManager::verify(void* pJson, long long operatorQQ)
 			{
                 try
 				{
-                    nlohmann::json j = nlohmann::json::parse(strInfo);
+					fifo_json j = fifo_json::parse(strInfo);
                     if (j["isErased"].get<int>())is_cloud = 0;
                     else if (j["isCheck"].get<int>())is_cloud = 2;
                     if (mark.fromUID.first) 

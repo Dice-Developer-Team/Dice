@@ -92,8 +92,7 @@ void loadData()
 {
 	ResList logList;
 #ifndef _DEBUG
-	try
-	{
+	try	{
 #endif
 		std::error_code ec;
 		std::filesystem::create_directory(DiceDir, ec);
