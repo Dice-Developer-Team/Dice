@@ -96,8 +96,8 @@ void loadData()
 	{
 #endif
 		std::error_code ec;
-		std::filesystem::create_directory(DiceDir, ec);	
-		loadDir(loadXML<CardTemp>, DiceDir / "CardTemp", mCardTemplet, logList, true);
+		std::filesystem::create_directory(DiceDir, ec);
+		loadDir(loadXML<CardTemp, fifo_cmpr_ci>, DiceDir / "CardTemp", mCardTemplet, logList, true);
 		loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList);
 		map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
 		//读取帮助文档
@@ -247,7 +247,7 @@ EVE_Enable(eventEnable){
 
 	mCardTemplet = {
 		{
-			"COC7", {
+			"COC7", CardTemp{
 				"COC7", SkillNameReplace, BasicCOC7, InfoCOC7, AutoFillCOC7, mVariableCOC7, ExpressionCOC7,
 				SkillDefaultVal, {
 					{"_default", CardBuild({BuildCOC7},  {"{随机姓名}"}, {})},
@@ -345,9 +345,9 @@ EVE_Enable(eventEnable){
 	}
 	{
 		std::unique_lock lock(GlobalMsgMutex);
-		if (loadJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg) < 0)loadJMap(fpFileLoc / "CustomMsg.json", EditedMsg);
-		{	
-			merge(GlobalMsg, EditedMsg);
+		if (loadJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg) >= 0
+			|| loadJMap(fpFileLoc / "CustomMsg.json", EditedMsg)){	
+			map_merge(GlobalMsg, EditedMsg);
 		}
 	}
 	if (const auto dirSelfData{ DiceDir / "selfdata" }; std::filesystem::exists(dirSelfData)) {
@@ -1051,7 +1051,7 @@ EVE_FriendAdded(eventFriendAdd) {
 EVE_Extra(eventExtra) {
 	if (!Enabled) return 0;
 	try {
-		AttrObject eve{ AttrObject(json::parse(jsonData)) };
+		AttrObject eve{ AttrObject(fifo_json::parse(jsonData)) };
 		if (fmt->call_hook_event(eve))return 1;
 	}
 	catch (std::exception& e) {

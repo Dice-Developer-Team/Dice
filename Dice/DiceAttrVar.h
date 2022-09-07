@@ -25,11 +25,12 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include "json.hpp"
+#include "fifo_json.hpp"
 using std::string;
-using json = nlohmann::json;
 template<typename T>
 using ptr = std::shared_ptr<T>;
+template<typename T = string>
+using fifo_dict = nlohmann::fifo_map<string, T>;
 
 struct ByteS {
 	char* bytes{ nullptr };
@@ -49,7 +50,7 @@ struct ByteS {
 };
 
 class AttrVar;
-using AttrVars = std::unordered_map<string, AttrVar>;
+using AttrVars = fifo_dict<AttrVar>;
 using VarArray = std::vector<AttrVar>;
 class lua_State;
 class AttrObject {
@@ -90,7 +91,7 @@ public:
 	ptr<AttrVars> get_dict(const string& key)const;
 	void inc(const string& key)const;
 	AttrObject& merge(const AttrVars& other);
-	json to_json()const;
+	fifo_json to_json()const;
 	void writeb(std::ofstream&)const;
 	void readb(std::ifstream&);
 };
@@ -118,7 +119,7 @@ public:
 	AttrVar(const char* s,size_t len) :type(AttrType::Function), chunk(s,len) {}
 	AttrVar(ByteS&& fun) :type(AttrType::Function), chunk(fun) {}
 	AttrVar(long long n) :type(AttrType::ID), id(n) {}
-	AttrVar(const json&);
+	AttrVar(const fifo_json&);
 	AttrVar(const AttrObject& vars) :type(AttrType::Table), table(vars) {}
 	explicit AttrVar(const AttrVars& vars) :type(AttrType::Table), table(vars) {}
 	void des() {
@@ -137,7 +138,7 @@ public:
 	AttrVar& operator=(const string& other);
 	AttrVar& operator=(const char* other);
 	AttrVar& operator=(const long long other);
-	AttrVar& operator=(const json& other) { new(this)AttrVar(other); return *this; };
+	AttrVar& operator=(const fifo_json& other) { new(this)AttrVar(other); return *this; };
 	template<typename T>
 	bool operator!=(const T other)const { return !(*this == other); }
 	//bool operator==(const long long other)const;
@@ -155,7 +156,7 @@ public:
 	AttrObject to_obj()const;
 	std::shared_ptr<AttrVars> to_dict()const;
 	std::shared_ptr<VarArray> to_list()const;
-	json to_json()const;
+	fifo_json to_json()const;
 
 	using CMPR = bool(AttrVar::*)(const AttrVar&)const;
 	bool is_null()const { return type == AttrType::Nil; }
@@ -181,8 +182,9 @@ public:
 	void writeb(std::ofstream& fout) const;
 	void readb(std::ifstream& fin);
 };
-json to_json(AttrVars& vars);
-void from_json(const json& j, AttrVars&);
+string to_string(const AttrVar& var);
+fifo_json to_json(AttrVars& vars);
+void from_json(const fifo_json& j, AttrVars&);
 string showAttrCMPR(AttrVar::CMPR);
 
 using AttrObjects = std::unordered_map<string, AttrObject>;

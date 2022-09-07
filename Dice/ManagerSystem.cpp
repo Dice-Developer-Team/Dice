@@ -324,8 +324,7 @@ string getName(long long uid, long long GroupID){
 	}
 
 	// QQNick
-	nick = DD::getQQNick(uid);
-	nick = strip(msg_decode(nick));
+	nick = strip(msg_decode(DD::getQQNick(uid)));
 	if (!nick.empty()) return nick;
 
 	// Unknown
@@ -333,8 +332,8 @@ string getName(long long uid, long long GroupID){
 }
 AttrVar idx_nick(AttrObject& eve) {
 	if (eve.has("nick"))return eve["nick"];
-	long long uid{ eve.get_ll("uid") };
 	if (!eve.has("uid"))return {};
+	long long uid{ eve.get_ll("uid") };
 	long long gid{ eve.get_ll("gid") };
 	return eve["nick"] = getName(uid, gid);
 }

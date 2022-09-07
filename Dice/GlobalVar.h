@@ -99,7 +99,7 @@ extern std::shared_mutex GlobalMsgMutex;
 extern dict_ci<string> GlobalMsg;
 extern const dict_ci<string> PlainMsg;
 // ĞŞ¸ÄºóµÄGlobalÓï¾ä
-extern dict_ci<string> EditedMsg;
+extern fifo_dict_ci<string> EditedMsg;
 // Óï¾ä×¢ÊÍ
 extern const dict_ci<string> GlobalComment;
 // °ïÖúÎÄµµ

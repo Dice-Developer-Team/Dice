@@ -4,43 +4,43 @@
 #include "StrExtern.hpp"
 #include "Jsonio.h"
 
-[[deprecated]] nlohmann::json freadJson(const std::string& strPath)
+[[deprecated]] fifo_json freadJson(const std::string& strPath)
 {
 	std::ifstream fin(strPath);
-	if (!fin)return nlohmann::json();
-	nlohmann::json j;
+	if (!fin)return fifo_json();
+	fifo_json j;
 	try
 	{
 		fin >> j;
 	}
 	catch (...)
 	{
-		return nlohmann::json();
+		return fifo_json();
 	}
 	return j;
 }
 
-nlohmann::json freadJson(const std::filesystem::path& path)
+fifo_json freadJson(const std::filesystem::path& path)
 {
 	std::ifstream fin(path);
-	if (!fin)return nlohmann::json();
-	nlohmann::json j;
+	if (!fin)return fifo_json();
+	fifo_json j;
 	try {
 		fin >> j;
 	}
 	catch (...) {
-		return nlohmann::json();
+		return fifo_json();
 	}
 	return j;
 }
 
-[[deprecated]] void fwriteJson(const std::string& strPath, const json& j) 
+[[deprecated]] void fwriteJson(const std::string& strPath, const fifo_json& j)
 {
 	std::ofstream fout(strPath);
 	fout << std::setw(2) << j;
 }
 
-void fwriteJson(const std::filesystem::path& fpPath, const json& j, const int indent) 
+void fwriteJson(const std::filesystem::path& fpPath, const fifo_json& j, const int indent)
 {
 	std::ofstream fout(fpPath);
 	fout << std::setw(2) << j.dump(indent);

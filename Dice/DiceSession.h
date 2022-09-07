@@ -74,7 +74,7 @@ struct DeckInfo {
 
 class DiceSession{
 	//数值表
-	dict<dict<int>> mTable;
+	dict<AttrObject> mTable;
 	//旁观者
 	unordered_set<long long> sOB;
 	//日志

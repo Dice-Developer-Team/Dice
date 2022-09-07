@@ -16,8 +16,8 @@ public:
 		Danger,		//警告用户且拒绝指令，并3级通知
 		Critical,		//仅占位，不启用
 	};
-	map<string, Level, less_ci> words;
-	map<string, Level, less_ci> CustomWords;
+	dict_ci<Level> words;
+	fifo_dict_ci<Level> CustomWords;
 	Level get_level(const string&);
 	void insert(const string& word, Level);
 	void add_word(const string& word, Level);

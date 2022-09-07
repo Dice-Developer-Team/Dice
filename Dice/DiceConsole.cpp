@@ -256,7 +256,7 @@ bool Console::load() 	{
 }
 void Console::loadNotice()
 {
-	json jFile = freadJson(DiceDir / "conf" / "NoticeList.json");
+	fifo_json jFile = freadJson(DiceDir / "conf" / "NoticeList.json");
 	if (!jFile.empty()) {
 		try {
 			for (auto note : jFile) {
@@ -280,9 +280,9 @@ void Console::saveNotice() const
 	if (NoticeList.empty())filesystem::remove(DiceDir / "conf" / "NoticeList.json");
 	ofstream fout(DiceDir / "conf" / "NoticeList.json");
 	if (!fout)return;
-	json jList = json::array();
+	fifo_json jList = fifo_json::array();
 	for (auto& [chat, lv] : NoticeList) {
-		json j = to_json(chat);
+		fifo_json j = to_json(chat);
 		j["type"] = lv;
 		jList.push_back(j);
 	}

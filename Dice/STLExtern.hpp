@@ -2,6 +2,7 @@
  * 自定义容器
  * Copyright (C) 2019-2022 String.Empty
  * 2022/08/18 添加grad_map
+ * 2022/09/07 添加fifo_map&fifo_cmpr_ci
  */
 #pragma once
 #include <string>
@@ -9,6 +10,7 @@
 #include <map>
 #include <unordered_map>
 #include <queue>
+#include "fifo_map.hpp"
 using std::initializer_list;
 using std::pair;
 using std::vector;
@@ -17,6 +19,11 @@ using std::unordered_map;
 using std::multimap;
 using std::string;
 using std::to_string;
+using nlohmann::fifo_map;
+inline string toLower(string s) {
+	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return tolower(c); });
+	return s;
+}
 
 struct less_ci
 {
@@ -78,22 +85,63 @@ using dict_ci = std::unordered_map<string, T, hash_ci, equal_ci>;
 template<typename T = std::string>
 using multidict_ci = std::unordered_multimap<string, T, hash_ci, equal_ci>;
 
-template <typename TKey, typename TVal1, typename TVal2, typename Hash, typename Equal>
-void merge(unordered_map<TKey, TVal1, Hash, Equal>& m1, const unordered_map<TKey, TVal2, Hash, Equal>& m2)
-{
-	for (auto& [k, v] : m2)
+class fifo_cmpr_ci {
+public:
+	fifo_cmpr_ci(
+		dict<size_t>* keys,
+		std::size_t timestamp = 1)
+		:
+		m_timestamp(timestamp),
+		m_keys(keys)
+	{}
+	bool operator()(const string & lhs, const string & rhs) const
 	{
-		m1[k] = v;
+		// look up timestamps for both keys
+		const auto timestamp_lhs = m_keys->find(toLower(lhs));
+		const auto timestamp_rhs = m_keys->find(toLower(rhs));
+
+		if (timestamp_lhs == m_keys->end())
+		{
+			// timestamp for lhs not found - cannot be smaller than for rhs
+			return false;
+		}
+
+		if (timestamp_rhs == m_keys->end())
+		{
+			// timestamp for rhs not found - timestamp for lhs is smaller
+			return true;
+		}
+
+		// compare timestamps
+		return timestamp_lhs->second < timestamp_rhs->second;
 	}
-}
-template <typename TKey, typename TVal, typename sort>
-void merge(map<TKey, TVal, sort>& m1, const map<TKey, TVal, sort>& m2)
-{
-	for (auto& [k, v] : m2)
+
+	void add_key(const string& key){
+		m_keys->insert({ toLower(key), m_timestamp++ });
+	}
+
+	void remove_key(const string& key)
 	{
-		m1[k] = v;
+		m_keys->erase(toLower(key));
 	}
-}
+private:
+	template <
+		class MapKey,
+		class MapT,
+		class MapCompare,
+		class MapAllocator
+	> friend class nlohmann::fifo_map;
+	/// the next valid insertion timestamp
+	std::size_t m_timestamp = 1;
+
+	/// pointer to a mapping from keys to insertion timestamps
+	dict<size_t>* m_keys = nullptr;
+};
+template<typename T = std::string>
+using fifo_dict = fifo_map<string, T>;
+template<typename T = std::string>
+using fifo_dict_ci = fifo_map<string, T, fifo_cmpr_ci>;
+
 template <typename TKey, typename TVal>
 class grad_map {
 	map<TKey, TVal>grades;
@@ -251,12 +299,11 @@ std::string listItem(const Con& list, const string& sepa = "|") {
 	return res.show(sepa);
 }
 
-using prior_item = std::pair<int, string>;
 
 //按优先级输出项目
-class PriorList
-{
-	std::priority_queue<prior_item> qItem;
+template<typename Elem>
+class PriorList{
+	std::priority_queue<std::pair<Elem, string>> qItem;
 public:
 	template<class Con>
 	PriorList(const Con& mItem)

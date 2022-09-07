@@ -262,19 +262,19 @@ void DiceToday::set(long long qq, const string& key, const AttrVar& val) {
 }
 
 void DiceToday::save() {
-	json jFile;
+	fifo_json jFile;
 	try {
 		jFile["date"] = { stToday.tm_year + 1900,stToday.tm_mon + 1,stToday.tm_mday };
 		if (!UserInfo.empty()) {
-			json& jCnt{ jFile["user"] = json::object() };
+			fifo_json& jCnt{ jFile["user"] = fifo_json::object() };
 			for (auto& [id, user] : UserInfo) {
 				jCnt[to_string(id)] = user.to_json();
 			}
 		}
 		if (!counter.empty()) {
-			json& jCnt{ jFile["cnt_list"] = json::array() };
+			fifo_json& jCnt{ jFile["cnt_list"] = fifo_json::array() };
 			for (auto& [chat, cnt_list] : counter) {
-				json j;
+				fifo_json j;
 				j["chat"] = to_json(chat);
 				j["cnt"] = GBKtoUTF8(cnt_list);
 				jCnt.push_back(j);
@@ -295,7 +295,7 @@ void DiceToday::load() {
 	pathFile = DiceDir / "user" / "daily" /
 		("daily_" + printDate() + ".json");
 	std::filesystem::create_directory(pathFile.parent_path());
-	json jFile = freadJson(pathFile);
+	fifo_json jFile = freadJson(pathFile);
 	if (jFile.is_null()) {
 		if ((jFile = freadJson(DiceDir / "user" / "DiceToday.json")).is_null()) return; 
 		else {

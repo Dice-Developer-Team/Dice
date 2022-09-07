@@ -512,17 +512,17 @@ bool AttrVar::equal_or_less(const AttrVar& other)const {
 	return is_numberic() && to_num() <= other.to_num();
 }
 
-AttrVar::AttrVar(const json& j) {
+AttrVar::AttrVar(const fifo_json& j) {
 	switch (j.type()) {
-	case json::value_t::null:
+	case fifo_json::value_t::null:
 		type = AttrType::Nil;
 		break;
-	case json::value_t::boolean:
+	case fifo_json::value_t::boolean:
 		type = AttrType::Boolean;
 		j.get_to(bit);
 		break;
-	case json::value_t::number_integer:
-	case json::value_t::number_unsigned:
+	case fifo_json::value_t::number_integer:
+	case fifo_json::value_t::number_unsigned:
 		if (long long num{ j.get<long long>() }; num > 10000000 || num < -10000000) {
 			type = AttrType::ID;
 			id = num;
@@ -532,15 +532,15 @@ AttrVar::AttrVar(const json& j) {
 			j.get_to(attr);
 		}
 		break;
-	case json::value_t::number_float:
+	case fifo_json::value_t::number_float:
 		type = AttrType::Number;
 		j.get_to(number);
 		break;
-	case json::value_t::string:
+	case fifo_json::value_t::string:
 		type = AttrType::Text;
 		new(&text)string(UTF8toGBK(j.get<string>()));
 		break;
-	case json::value_t::object:
+	case fifo_json::value_t::object:
 		type = AttrType::Table; {
 			new(&table)AttrObject();
 			unordered_set<string> idxs;
@@ -559,7 +559,7 @@ AttrVar::AttrVar(const json& j) {
 			}
 		}
 		break;
-	case json::value_t::array:
+	case fifo_json::value_t::array:
 		type = AttrType::Table; {
 			new(&table)AttrObject(VarArray());
 			for (auto it :j) {
@@ -567,21 +567,21 @@ AttrVar::AttrVar(const json& j) {
 			}
 		}
 		break;
-	case json::value_t::binary:
-	case json::value_t::discarded:
+	case fifo_json::value_t::binary:
+	case fifo_json::value_t::discarded:
 		break;
 	}
 }
-json AttrObject::to_json()const {
+fifo_json AttrObject::to_json()const {
 	if (dict->empty() && list) {
-		json j = json::array();
+		fifo_json j = fifo_json::array();
 		for (auto& val : *list) {
-			j.push_back(val ? val.to_json() : json());
+			j.push_back(val ? val.to_json() : fifo_json());
 		}
 		return j;
 	}
 	else {
-		json j = json::object();
+		fifo_json j = fifo_json::object();
 		for (auto& [key, val] : *dict) {
 			if (val)j[GBKtoUTF8(key)] = val.to_json();
 		}
@@ -595,7 +595,7 @@ json AttrObject::to_json()const {
 		return j;
 	}
 }
-json AttrVar::to_json()const {
+fifo_json AttrVar::to_json()const {
 	switch (type) {
 	case AttrType::Nil:
 		return nlohmann::json();
@@ -625,14 +625,17 @@ json AttrVar::to_json()const {
 	}
 	return {};
 }
-json to_json(AttrVars& vars) {
-	json j;
+string to_string(const AttrVar& var) {
+	return var.to_str();
+}
+fifo_json to_json(AttrVars& vars) {
+	fifo_json j;
 	for (auto& [key, val] : vars) {
 		if(val)j[GBKtoUTF8(key)] = val.to_json();
 	}
 	return j;
 }
-void from_json(const json& j, AttrVars& vars) {
+void from_json(const fifo_json& j, AttrVars& vars) {
 	for (auto& [key, val] : j.items()) {
 		vars[UTF8toGBK(key)] = AttrVar(val);
 	}

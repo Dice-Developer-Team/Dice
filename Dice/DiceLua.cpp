@@ -907,6 +907,36 @@ int eventMsg(lua_State* L) {
 	th.detach();
 	return 0;
 }
+int askExtra(lua_State* L) {
+	string action{ lua_to_raw_string(L,1) };
+	if (action.empty())return 0;
+	try {
+		if (action == "isOnline") {
+			string ret;
+			if (long long uid{ lua_to_int(L,2)}; !uid){
+				return 0;
+			}
+			else if (string data{ fifo_json{
+				{ "action","isOnline" },
+				{ "sid",console.DiceMaid },
+				{ "uid",uid },
+				}.dump() }; DD::getExtra(data.c_str(), ret)) {
+				lua_pushboolean(L, fifo_json::parse(ret));
+				return 1;
+			}
+		}
+		else if (action == "isDiceMaid") {
+			if (long long uid{ lua_to_int(L,2) }) {
+				lua_pushboolean(L, DD::isDiceMaid(uid));
+				return 1;
+			}
+		}
+	}
+	catch (std::exception& e) {
+		DD::debugLog("askExtraÅ×³öÒì³£!" + string(e.what()));
+	}
+	return 0;
+}
 
 int Msg_echo(lua_State* L) {
 	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
@@ -1052,13 +1082,13 @@ int httpGet(lua_State* L) {
 int httpPost(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	string url{ lua_tostring(L,1) };
-	string json{ lua_to_raw_string(L,2) };
-	if (url.empty() || json.empty()) {
+	string fifo_json{ lua_to_raw_string(L,2) };
+	if (url.empty() || fifo_json.empty()) {
 		return 0;
 	}
 	string type{ lua_gettop(L) > 2 ? lua_tostring(L,3) : "application/json" };
 	string ret;
-	lua_pushboolean(L, Network::POST(url, json, type, ret));
+	lua_pushboolean(L, Network::POST(url, fifo_json, type, ret));
 	lua_push_raw_string(L, ret);
 	return 2;
 }
@@ -1109,6 +1139,7 @@ void LuaState::regist() {
 		REGIST(drawDeck)
 		REGIST(sendMsg)
 		REGIST(eventMsg)
+		REGIST(askExtra)
 		{nullptr, nullptr},
 	};
 	for (const luaL_Reg* lib = DiceFucs; lib->func; lib++) {

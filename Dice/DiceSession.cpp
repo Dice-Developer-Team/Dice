@@ -22,21 +22,21 @@ unordered_set<chatInfo>LogList;
 const std::filesystem::path LogInfo::dirLog{ std::filesystem::path("user") / "log" };
 
 bool DiceSession::table_del(const string& tab, const string& item) {
-	if (!mTable.count(tab) || !mTable[tab].count(item))return false;
-	mTable[tab].erase(item);
+	if (!mTable.count(tab) || !mTable[tab].has(item))return false;
+	mTable[tab].reset(item);
 	update();
 	return true;
 }
 
 int DiceSession::table_add(const string& key, int prior, const string& item)
 {
-	mTable[key][item] = prior;
+	mTable[key].set(item,prior);
 	update();
 	return 0;
 }
 
 string DiceSession::table_prior_show(const string& key) const{
-	return mTable.count(key) ? PriorList(mTable.at(key)).show() : "";
+	return mTable.count(key) ? PriorList<AttrVar>(*mTable.at(key).to_dict()).show() : "";
 }
 
 bool DiceSession::table_clr(const string& key)
@@ -189,7 +189,7 @@ std::filesystem::path DiceSession::log_path()const {
 }
 
 void DiceChatLink::load() {
-	if (json jFile{ freadJson(DiceDir / "conf" / "LinkList.json") }; jFile.empty()){
+	if (fifo_json jFile{ freadJson(DiceDir / "conf" / "LinkList.json") }; jFile.empty()){
 		for (auto& jLink : jFile) {
 			auto ct{ chatInfo::from_json(jLink["origin"]) };
 			LinkInfo& link{ LinkList[ct] = { jLink["linking"].get<bool>(),
@@ -210,9 +210,9 @@ void DiceChatLink::save() {
 		remove(DiceDir / "conf" / "LinkList.json");
 		return;
 	}
-	json jFile{ json::array() };
+	fifo_json jFile{ fifo_json::array() };
 	for (auto& [ct, linker] : LinkList) {
-		json jLink;
+		fifo_json jLink;
 		jLink["type"] = linker.typeLink;
 		jLink["origin"] = to_json(ct);
 		jLink["target"] = to_json(linker.target);
@@ -591,9 +591,9 @@ void DiceSession::save() const
 	std::error_code ec;
 	std::filesystem::create_directories(DiceDir / "user" / "session", ec);
 	std::filesystem::path fpFile{ DiceDir / "user" / "session" / (name + ".json") };
-	nlohmann::json jData;
+	fifo_json jData;
 	if (!conf.empty()) {
-		json& jConf{ jData["conf"] };
+		fifo_json& jConf{ jData["conf"] };
 		for (auto& [key, val] : conf) {
 			jConf[GBKtoUTF8(key)] = val.to_json();
 		}
@@ -603,13 +603,10 @@ void DiceSession::save() const
 		for (auto& [key, table] : mTable)
 		{
 			string strTable = GBKtoUTF8(key);
-			for (auto& [item, val] : table)
-			{
-				jData["tables"][strTable][GBKtoUTF8(item)] = val;
-			}
+			jData["tables"][strTable] = table.to_json();
 		}
 	if (logger.tStart || !logger.fileLog.empty()) {
-		json jLog;
+		fifo_json jLog;
 		jLog["start"] = logger.tStart;
 		jLog["lastMsg"] = logger.tLastMsg;
 		jLog["name"] = GBKtoUTF8(logger.name);
@@ -618,7 +615,7 @@ void DiceSession::save() const
 		jData["log"] = jLog;
 	}
 	if (!decks.empty()) {
-		json jDecks;
+		fifo_json jDecks;
 		for (auto& [key,deck]:decks) {
 			jDecks[GBKtoUTF8(key)] = {
 				{"meta",GBKtoUTF8(deck.meta)},
@@ -633,7 +630,7 @@ void DiceSession::save() const
 		remove(fpFile);
 		return;
 	}
-	auto& jChat{ jData["chats"] = json::array() };
+	auto& jChat{ jData["chats"] = fifo_json::array() };
 	for (const auto& chat : windows) {
 		jChat.push_back(to_json(chat));
 	}
@@ -680,7 +677,7 @@ int DiceSessionManager::load()
 	vector<std::filesystem::path> sFile;
 	int cnt = listDir(DiceDir / "user" / "session", sFile);
 	if (cnt > 0)for (auto& filename : sFile) {
-		nlohmann::json j = freadJson(filename);
+		fifo_json j = freadJson(filename);
 		if (j.is_null()) {
 			remove(filename);
 			cnt--;
@@ -707,13 +704,13 @@ int DiceSessionManager::load()
 				}
 			}
 			if (j.count("conf")) {
-				json& jConf{ j["conf"] };
+				fifo_json& jConf{ j["conf"] };
 				for (auto it = jConf.cbegin(); it != jConf.cend(); ++it) {
 					pSession->conf.emplace(UTF8toGBK(it.key()), it.value());
 				}
 			}
 			if (j.count("log")) {
-				json& jLog = j["log"];
+				fifo_json& jLog = j["log"];
 				jLog["start"].get_to(pSession->logger.tStart);
 				jLog["lastMsg"].get_to(pSession->logger.tLastMsg);
 				if (jLog.count("name"))pSession->logger.name = UTF8toGBK(jLog["name"].get<string>());
@@ -729,7 +726,7 @@ int DiceSessionManager::load()
 				}
 			}
 			if (j.count("link")) {
-				json& jLink = j["link"];
+				fifo_json& jLink = j["link"];
 				const auto& ct{ *pSession->windows.begin() };
 				long long gid{ jLink["target"].get<long long>() };
 				LinkInfo& link{ linker.LinkList[ct] = {jLink["linking"].get<bool>(),
@@ -738,7 +735,7 @@ int DiceSessionManager::load()
 				isUpgrated = true;
 			}
 			if (j.count("decks")) {
-				json& jDecks = j["decks"];
+				fifo_json& jDecks = j["decks"];
 				for (auto it = jDecks.cbegin(); it != jDecks.cend(); ++it) {
 					if (it.value()["meta"].empty())continue;
 					std::string key = UTF8toGBK(it.key());
@@ -756,13 +753,10 @@ int DiceSessionManager::load()
 			}
 			if (j.count("observer")) j["observer"].get_to(pSession->sOB);
 			if (j.count("tables")) {
-				for (nlohmann::json::iterator itTable = j["tables"].begin(); itTable != j["tables"].end(); ++itTable)
+				for (auto itTable : j["tables"].items())
 				{
-					string strTable = UTF8toGBK(itTable.key());
-					for (nlohmann::json::iterator itItem = itTable.value().begin(); itItem != itTable.value().end(); ++itItem)
-					{
-						pSession->mTable[strTable].emplace(UTF8toGBK(itItem.key()), itItem.value());
-					}
+					string strTable = UTF8toGBK(itTable.key()); 
+					pSession->mTable.emplace(strTable,itTable.value());
 				}
 			}
 		}

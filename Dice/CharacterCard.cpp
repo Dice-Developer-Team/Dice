@@ -1,9 +1,8 @@
 /*
  * 玩家人物卡
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2022 String.Empty
  */
 #include "CharacterCard.h"
-#include "DDAPI.h"
 
 /**
  * 错误返回值
@@ -168,8 +167,8 @@ string CharaCard::getExp(string& key, std::set<string> sRef){
 	if (val != Attr->end())return escape(val->second.to_str(), sRef);
 	exp = pTemplet->mVariable.find(key);
 	if (exp != pTemplet->mVariable.end())return to_string(cal(exp->second));
-	std::map<string, short>::const_iterator def{ pTemplet->defaultSkill.find(key) };
-	if (def != pTemplet->defaultSkill.end())return to_string(def->second);
+	if (auto def{ pTemplet->defaultSkill.find(key) };
+		def != pTemplet->defaultSkill.end())return to_string(def->second);
 	return "0";
 }
 
@@ -357,6 +356,12 @@ string Player::listCard() {
 }
 
 
+void Player::writeb(std::ofstream& fout) const
+{
+	fwrite(fout, indexMax);
+	fwrite(fout, mCardList);
+	fwrite(fout, mGroupIndex);
+}
 void Player::readb(std::ifstream& fin)
 {
 	indexMax = fread<short>(fin);

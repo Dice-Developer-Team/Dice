@@ -128,7 +128,7 @@ void warningHandler()
 			                               printSTNow());
 			try
 			{
-				json j = json::parse(GBKtoUTF8(warning.strMsg));
+				fifo_json j = fifo_json::parse(GBKtoUTF8(warning.strMsg));
 				if (j.is_array())
 				{
 					for (auto it : j)
@@ -180,7 +180,7 @@ DDBlackMark::DDBlackMark(void* pJson)
 {
 	try
 	{
-		json& j = *static_cast<json*>(pJson);
+		fifo_json& j = *static_cast<fifo_json*>(pJson);
 		bool isAdd = true;
 		if (j.count("type"))
 		{
@@ -248,7 +248,7 @@ DDBlackMark::DDBlackMark(const string& strWarning)
 {
 	try
 	{
-		json j = json::parse(strWarning);
+		fifo_json j = fifo_json::parse(strWarning);
 		new(this)DDBlackMark(&j);
 	}
 	catch (...)
@@ -260,7 +260,7 @@ DDBlackMark::DDBlackMark(const string& strWarning)
 
 string DDBlackMark::printJson(int tab = 0) const
 {
-	json j;
+	fifo_json j;
 	if (wid)j["wid"] = wid;
 	j["type"] = type;
 	j["danger"] = danger;
@@ -297,7 +297,7 @@ string DDBlackMark::printJson(int tab = 0) const
 
 string DDBlackMark::warning() const
 {
-	json j;
+	fifo_json j;
 	if (wid)j["wid"] = wid;
 	j["type"] = type;
 	j["danger"] = danger;
@@ -1261,7 +1261,7 @@ void DDBlackManager::create(DDBlackMark& mark)
 
 int DDBlackManager::loadJson(const std::filesystem::path& fpPath, bool isExtern)
 {
-	json j = freadJson(fpPath);
+	fifo_json j = freadJson(fpPath);
 	if (j.is_null())return -1;
 	if (j.empty())return 0;
 	if (j.size() > vBlackList.capacity())vBlackList.reserve(j.size() * 2);

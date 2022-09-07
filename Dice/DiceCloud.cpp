@@ -4,7 +4,6 @@
  */
 #include <cstring>
 #include "filesystem.hpp"
-#include "json.hpp"
 #include "DiceCloud.h"
 #include "GlobalVar.h"
 #include "EncodingConvert.h"
@@ -60,7 +59,7 @@ namespace Cloud
 		}
 		try
 		{
-			json jInfo(json::parse(strVerInfo, nullptr, false));
+			fifo_json jInfo(json::parse(strVerInfo, nullptr, false));
 			unsigned short nBuild = jInfo["release"]["build"];
 			if (nBuild > Dice_Build)
 			{

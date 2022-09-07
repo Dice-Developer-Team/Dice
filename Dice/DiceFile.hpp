@@ -17,6 +17,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <cstdio>
+#include "fifo_map.hpp"
 #include "DiceXMLTree.h"
 #include "StrExtern.hpp"
 #include "DiceMsgSend.h"
@@ -49,8 +50,8 @@ bool readFile(const std::filesystem::path& p, std::basic_string<Char, Trait, All
 	return true;
 }
 
-template <typename TKey, typename TVal, typename sort>
-void map_merge(map<TKey, TVal, sort>& m1, const map<TKey, TVal, sort>& m2)
+template <typename Map1, typename Map2>
+void map_merge(Map1& m1, const Map2& m2)
 {
 	for (auto& [k,v] : m2)
 	{
@@ -204,8 +205,8 @@ std::pair<T1, T2> readini(const string& line, char delim = '='){
 
 void readini(ifstream& fin, std::string& s);
 
-template <typename T1, typename T2>
-void readini(string s, std::map<T1, T2>& m)
+template <typename T1, typename T2, class Sorter>
+void readini(string s, fifo_map<T1, T2, Sorter>& m)
 {
 	std::pair<T1, T2> p;
 	string line;
@@ -286,9 +287,26 @@ int loadFile(const std::filesystem::path& fpPath, std::map<T1, T2>& mapTmp)
 	fin.close();
 	return -1;
 }
-
 template <typename T1, typename T2>
 int loadFile(const std::filesystem::path& fpPath, std::unordered_map<T1, T2>& mapTmp) 
+{
+	std::ifstream fin(fpPath);
+	if (fin)
+	{
+		int Cnt = 0;
+		T1 key;
+		while (fin >> key)
+		{
+			fscan(fin, mapTmp[key]);
+			Cnt++;
+		}
+		return Cnt;
+	}
+	fin.close();
+	return -1;
+}
+template <typename T1, typename T2>
+int loadFile(const std::filesystem::path& fpPath, nlohmann::fifo_map<T1, T2>& mapTmp)
 {
 	std::ifstream fin(fpPath);
 	if (fin)
@@ -379,8 +397,8 @@ int loadINI(const std::filesystem::path& fpPath, std::map<std::string, C>& m)
 bool rdbuf(const std::filesystem::path& fpPath, string& s);
 
 //∂¡»°Œ±xml
-template <class C, std::string(C::* U)() = &C::getName>
-int loadXML(const std::filesystem::path& fpPath, std::map<std::string, C>& m)
+template <class C, class Sorter, std::string(C::* U)() = &C::getName>
+int loadXML(const std::filesystem::path& fpPath, nlohmann::fifo_map<string, C, Sorter>& m)
 {
 	string s;
 	if (!rdbuf(fpPath, s))return -1;
@@ -538,8 +556,19 @@ void fwrite(ofstream& fout, C& obj)
 }
 
 
-template <typename T1, typename T2, typename sort>
-void fwrite(ofstream& fout, const std::map<T1, T2, sort>& m)
+template <typename T1, typename T2>
+void fwrite(ofstream& fout, const std::map<T1, T2>&m)
+{
+	const auto len = static_cast<short>(m.size());
+	fwrite(fout, len);
+	for (const auto& it : m)
+	{
+		fwrite(fout, it.first);
+		fwrite(fout, it.second);
+	}
+}
+template <typename T1, typename T2>
+void fwrite(ofstream& fout, const nlohmann::fifo_map<T1, T2>& m)
 {
 	const auto len = static_cast<short>(m.size());
 	fwrite(fout, len);
@@ -550,17 +579,6 @@ void fwrite(ofstream& fout, const std::map<T1, T2, sort>& m)
 	}
 }
 
-template <typename T1, typename T2>
-void fwrite(ofstream& fout, const std::unordered_map<T1, T2>& m)
-{
-	const auto len = static_cast<short>(m.size());
-	fwrite(fout, len);
-	for (const auto& it : m)
-	{
-		fwrite(fout, it.first);
-		fwrite(fout, it.second);
-	}
-}
 
 template <typename T>
 void fwrite(ofstream& fout, const std::set<T>& s)

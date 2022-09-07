@@ -4437,9 +4437,7 @@ bool DiceEvent::DiceFilter()
 		if(isChannel())strMsg = strMsg.substr(strSummon.length());
 	}
 	init2(strMsg);
-	strLowerMessage = strMsg;
-	std::transform(strLowerMessage.begin(), strLowerMessage.end(), strLowerMessage.begin(),
-				   [](unsigned char c) { return tolower(c); });
+	strLowerMessage = toLower(strMsg);
 	trusted = trustedQQ(fromChat.uid);
 	fwdMsg();
 	if (isOtherCalled && !isCalled)return false;

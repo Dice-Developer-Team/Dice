@@ -7,10 +7,8 @@
 #include <vector>
 #include <set>
 #include "filesystem.hpp"
-#include "json.hpp"
 #include "EncodingConvert.h"
-
-using nlohmann::json;
+#include "fifo_json.hpp"
 
 class JsonList
 {
@@ -59,11 +57,11 @@ std::enable_if_t<std::is_arithmetic_v<T>, T> readJKey(const std::string& strJson
 	return stoll(strJson);
 }
 
-nlohmann::json freadJson(const std::filesystem::path& path);
-void fwriteJson(const std::filesystem::path& strPath, const json& j, const int indent = -1);
+fifo_json freadJson(const std::filesystem::path& path);
+void fwriteJson(const std::filesystem::path& strPath, const fifo_json& j, const int indent = -1);
 
 template <class Map>
-int readJMap(const nlohmann::json& j, Map& mapTmp)
+int readJMap(const fifo_json& j, Map& mapTmp)
 {
 	int intCnt = 0;
 	for (auto it = j.cbegin(); it != j.cend(); ++it)
@@ -78,7 +76,7 @@ int readJMap(const nlohmann::json& j, Map& mapTmp)
 template <typename T>
 int readJson(const std::string& strJson, std::set<T>& setTmp) {
 	try {
-		nlohmann::json j(nlohmann::json::parse(strJson));
+		fifo_json j(fifo_json::parse(strJson));
 		j.get_to(setTmp);
 		return j.size();
 	} catch (...) {
@@ -90,7 +88,7 @@ int readJson(const std::string& strJson, std::map<T1, T2>& mapTmp)
 {
 	try
 	{
-		nlohmann::json j = nlohmann::json::parse(strJson);
+		fifo_json j = fifo_json::parse(strJson);
 		return readJMap(j, mapTmp);
 	}
 	catch (...)
@@ -101,7 +99,7 @@ int readJson(const std::string& strJson, std::map<T1, T2>& mapTmp)
 
 template<class Map>
 [[deprecated]] int loadJMap(const std::string& strLoc, Map& mapTmp) {
-	nlohmann::json j = freadJson(strLoc);
+	fifo_json j = freadJson(strLoc);
 	if (j.is_null())return -2;
 	try 
 	{
@@ -115,7 +113,7 @@ template<class Map>
 
 template<class Map>
 int loadJMap(const std::filesystem::path& fpLoc, Map& mapTmp) {
-	nlohmann::json j = freadJson(fpLoc);
+	fifo_json j = freadJson(fpLoc);
 	if (j.is_null())return -2;
 	try 
 	{
@@ -139,7 +137,7 @@ template <class C>
 	std::ofstream fout(strLoc);
 	if (fout)
 	{
-		nlohmann::json j;
+		fifo_json j;
 		for (auto& [key,val] : mapTmp)
 		{
 			j[GBKtoUTF8(key)] = GBKtoUTF8(val);
@@ -159,7 +157,7 @@ void saveJMap(const std::filesystem::path& fpLoc, const C& mapTmp)
 	std::ofstream fout(fpLoc);
 	if (fout)
 	{
-		nlohmann::json j;
+		fifo_json j;
 		for (auto& [key,val] : mapTmp)
 		{
 			j[GBKtoUTF8(key)] = GBKtoUTF8(val);

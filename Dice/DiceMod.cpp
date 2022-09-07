@@ -695,7 +695,7 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 		}
 	}
 }
-void DiceMsgReply::readJson(const json& j) {
+void DiceMsgReply::readJson(const fifo_json& j) {
 	try{
 		if (j.count("type"))type = (Type)sType[j["type"].get<string>()];
 		if (j.count("mode")) {
@@ -734,8 +734,8 @@ void DiceMsgReply::readJson(const json& j) {
 		console.log(string("reply解析json错误:") + e.what(), 0b1000);
 	}
 }
-json DiceMsgReply::writeJson()const {
-	json j;
+fifo_json DiceMsgReply::writeJson()const {
+	fifo_json j;
 	j["type"] = sType[(int)type];
 	j["echo"] = sEcho[(int)echo];
 	if (keyMatch[0])j["match"] = GBKtoUTF8(*keyMatch[0]);
@@ -803,7 +803,7 @@ DiceSpeech::DiceSpeech(const YAML::Node& yaml) {
 		speech = UTF8toGBK(yaml.as<vector<string>>());
 	}
 }
-DiceSpeech::DiceSpeech(const json& j) {
+DiceSpeech::DiceSpeech(const fifo_json& j) {
 	if (j.is_string())speech = UTF8toGBK(j.get<string>());
 	else if (j.is_array()) {
 		speech = UTF8toGBK(j.get<vector<string>>());
@@ -1031,7 +1031,7 @@ void DiceModManager::msg_reset(const string& key){
 		}
 		else {
 			global_speech.erase(key);
-			GlobalMsg.erase(it);
+			GlobalMsg.erase(it->first);
 		}
 		saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
 	}
@@ -1307,7 +1307,7 @@ bool DiceModManager::del_reply(const string& key) {
 	return true;
 }
 void DiceModManager::save_reply() {
-	json j = json::object();
+	fifo_json j = fifo_json::object();
 	for (const auto& [word, reply] : custom_reply) {
 		j[GBKtoUTF8(word)] = reply->writeJson();
 	}
@@ -1352,7 +1352,7 @@ string DiceModManager::script_path(const string& name)const {
 }
 
 int DiceModManager::load(ResList& resLog){
-	merge(global_speech = transpeech, GlobalMsg);
+	map_merge(global_speech = transpeech, GlobalMsg);
 	helpdoc = HelpDoc;
 	//读取mod管理文件
 	if (auto jFile{ freadJson(DiceDir / "conf" / "ModList.json") };!jFile.empty()) {
@@ -1396,7 +1396,7 @@ int DiceModManager::load(ResList& resLog){
 		for (auto& pathFile : ModLoadList) {
 			if (pathFile.empty())continue;
 			try {
-				nlohmann::json j = freadJson(pathFile);
+				fifo_json j = freadJson(pathFile);
 				if (j.is_null()) {
 					sModErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
 					continue;
@@ -1457,7 +1457,7 @@ int DiceModManager::load(ResList& resLog){
 				}
 
 			}
-			catch (json::exception& e) {
+			catch (fifo_json::exception& e) {
 				sModErr.push_back(UTF8toGBK(pathFile.filename().u8string())+ "(解析错误)");
 				continue;
 			}
@@ -1479,17 +1479,17 @@ int DiceModManager::load(ResList& resLog){
 	//读取plugin
 	loadPlugin(resLog);
 	//custom
-	merge(global_speech, EditedMsg);
+	map_merge(global_speech, EditedMsg);
 	if (std::filesystem::path fCustomHelp{ DiceDir / "conf" / "CustomHelp.json" }; std::filesystem::exists(fCustomHelp)) {
 		if (loadJMap(fCustomHelp, CustomHelp) == -1) {
 			resLog << UTF8toGBK(fCustomHelp.u8string()) + "解析失败！";
 		}
 		else {
-			merge(helpdoc, CustomHelp);
+			map_merge(helpdoc, CustomHelp);
 		}
 	}
 	//custom_reply
-	if (json jFile = freadJson(DiceDir / "conf" / "CustomMsgReply.json"); !jFile.empty()) {
+	if (fifo_json jFile = freadJson(DiceDir / "conf" / "CustomMsgReply.json"); !jFile.empty()) {
 		try {
 			for (auto reply = jFile.cbegin(); reply != jFile.cend(); ++reply) {
 				if (std::string key = UTF8toGBK(reply.key()); !key.empty()) {
@@ -1586,9 +1586,9 @@ void DiceModManager::clear(){
 }
 
 void DiceModManager::save() {
-	json jFile = json::array();
+	fifo_json jFile = fifo_json::array();
 	for (auto& mod : modIndex) {
-		json j = json::object();
+		fifo_json j = fifo_json::object();
 		j["name"] = GBKtoUTF8(mod->name);
 		j["active"] = mod->active;
 		jFile.push_back(j);

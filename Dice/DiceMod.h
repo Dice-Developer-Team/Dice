@@ -74,8 +74,8 @@ public:
 	string print()const;
 	bool exec(DiceEvent*);
 	void from_obj(AttrObject);
-	void readJson(const json&);
-	json writeJson()const;
+	void readJson(const fifo_json&);
+	fifo_json writeJson()const;
 };
 class DiceReplyUnit {
 	TrieG<char, less_ci> gPrefix;
@@ -120,7 +120,7 @@ public:
 	DiceSpeech(const char* s) :speech(s) {}
 	DiceSpeech(const vector<string>& v) :speech(v) {}
 	DiceSpeech(const YAML::Node& yaml);
-	DiceSpeech(const json& j);
+	DiceSpeech(const fifo_json& j);
 	string express()const;
 };
 
@@ -200,7 +200,7 @@ public:
 
 	string format(string, AttrObject = {},
 		const AttrIndexs& = MsgIndexs,
-		const dict_ci<string>& = EditedMsg) const;
+		const dict_ci<string>& = {}) const;
 	string msg_get(const string& key)const;
 	void msg_reset(const string& key);
 	void msg_edit(const string& key, const string& val);

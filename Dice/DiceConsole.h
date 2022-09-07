@@ -142,7 +142,7 @@ private:
 	std::filesystem::path fpPath;
 	dict_ci<int> intConf;
 	std::multimap<Clock, string> mWorkClock{};
-	std::map<chatInfo, int> NoticeList{};
+	fifo_map<chatInfo, int> NoticeList{};
 };
 	extern Console console;
 	//extern DiceModManager modules;

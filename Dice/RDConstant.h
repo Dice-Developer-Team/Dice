@@ -24,10 +24,8 @@
 #pragma once
 #ifndef DICE_RD_CONSTANT
 #define DICE_RD_CONSTANT
-#include <string>
-#include <vector>
-#include <set>
-#include <map>
+#include "STLExtern.hpp"
+#include <unordered_set>
 
 //Error Handle
 #define Value_Err (-1)
@@ -54,7 +52,7 @@
 
 typedef int int_errno;
 
-inline std::map<std::string, std::string> SkillNameReplace = {
+inline fifo_dict_ci<std::string> SkillNameReplace = {
 	{"str", "力量"},
 	{"dex", "敏捷"},
 	{"pow", "意志"},
@@ -124,7 +122,7 @@ inline std::vector<std::vector<std::string>> BasicCOC7 = {
 	{"身体状态", "精神状态"},
 	{"DB", "闪避", "护甲"}
 };
-inline std::set<std::string> InfoCOC7 = {
+inline std::unordered_set<std::string> InfoCOC7 = {
 	"职业", "性别", "住地", "出身", "时代",
 	"身体状态", "精神状态",
 	"个人描述", "思想信念", "重要之人", "意义非凡之地", "宝贵之物", "特质", "特点", "伤口疤痕", "恐惧躁狂"
@@ -142,13 +140,13 @@ inline std::vector<std::pair<std::string, std::string>> BuildCOC7 = {
 	{"生命", "[体质体型和]/10"},
 	{"魔法", "[意志]/5"},
 };
-inline std::map<std::string, std::string> mVariableCOC7 = {
+inline fifo_dict_ci<std::string> mVariableCOC7 = {
 	{"灵感", "&智力"},
 	{"知识", "&教育"},
 	{"体质体型和", "[体质]+[体型]"},
 	{"取悦", "&魅惑"},
 };
-static std::map<std::string, std::string> ExpressionCOC7 = {
+static fifo_dict_ci<std::string> ExpressionCOC7 = {
 	{"__DefaultDiceExp", "1D"},
 	{"医学回复", "1D3"},
 	{"精神分析回复", "1D3"},
@@ -270,14 +268,14 @@ static std::map<std::string, std::string> ExpressionCOC7 = {
 	{"火焰喷射器", "2D6"},
 	{"轻型反坦克炮", "8D10"}
 };
-inline std::map<std::string, std::string> AutoFillCOC7 = {
+inline fifo_dict_ci<std::string> AutoFillCOC7 = {
 	{"生命", "[体质体型和]/10"},
 	{"理智", "&意志"},
 	{"魔法", "[意志]/5"},
 	{"母语", "&教育"},
 	{"闪避", "[敏捷]/2"}
 };
-static std::map<std::string, short> SkillDefaultVal = {
+static fifo_dict_ci<int> SkillDefaultVal = {
 	{"__DefaultDice", 100},
 	{"会计", 5},
 	{"人类学", 1},

@@ -10,7 +10,6 @@
 #include <utility>
 #include <vector>
 #include <map>
-#include <set>
 #include <stack>
 #include <mutex>
 #include "CQTools.h"
@@ -31,7 +30,7 @@ using std::map;
 
 constexpr short NOT_FOUND = -32767;
 
-inline map<string, short> mTempletTag = {
+inline unordered_map<string, short> mTempletTag = {
 	{"name", 1},
 	{"type", 2},
 	{"alias", 20},
@@ -45,7 +44,7 @@ inline map<string, short> mTempletTag = {
 	{"generate", 24},
 	{"note", 101},
 };
-inline map<string, short> mCardTag = {
+inline unordered_map<string, short> mCardTag = {
 	{"Name", 1},
 	{"Type", 2},
 	{"Attrs", 3},
@@ -99,33 +98,33 @@ class CardTemp
 {
 public:
 	string type;
-	map<string, string> replaceName = {};
+	fifo_dict_ci<> replaceName = {};
 	//作成时生成
 	vector<vector<string>> vBasicList = {};
-	set<string> sInfoList = {};
+	unordered_set<string> sInfoList = {};
 	//调用时生成
-	map<string, string> mAutoFill = {};
+	fifo_dict_ci<> mAutoFill = {};
 	//动态引用
-	map<string, string> mVariable = {};
+	fifo_dict_ci<> mVariable = {};
 	//表达式
-	map<string, string> mExpression = {};
+	fifo_dict_ci<> mExpression = {};
 	//默认值
-	map<string, short> defaultSkill = {};
+	fifo_dict_ci<int> defaultSkill = {};
 	//生成参数
-	map<string, CardBuild> mBuildOption = {};
+	fifo_dict_ci<CardBuild> mBuildOption = {};
 	CardTemp() = default;
 
-	CardTemp(string type, map<string, string> replace, vector<vector<string>> basic, set<string> info,
-	         map<string, string> autofill, map<string, string> dynamic, map<string, string> exp,
-	         map<string, short> skill, map<string, CardBuild> option) : type(std::move(type)), 
-			                                                            replaceName(std::move(replace)), 
-		                                                                vBasicList(std::move(basic)), 
-		                                                                sInfoList(std::move(info)), 
-		                                                                mAutoFill(std::move(autofill)), 
-		                                                                mVariable(std::move(dynamic)), 
-		                                                                mExpression(std::move(exp)), 
-		                                                                defaultSkill(std::move(skill)), 
-		                                                                mBuildOption(std::move(option))
+	CardTemp(const string& type, const fifo_dict_ci<>& replace, vector<vector<string>> basic, unordered_set<string> info,
+		const fifo_dict_ci<>& autofill, const fifo_dict_ci<>& dynamic, const fifo_dict_ci<>& exp,
+		const fifo_dict_ci<int>& skill, const fifo_dict_ci<CardBuild>& option) : type(type),
+			                                                            replaceName(replace), 
+		                                                                vBasicList(basic), 
+		                                                                sInfoList(info), 
+		                                                                mAutoFill(autofill), 
+		                                                                mVariable(dynamic), 
+		                                                                mExpression(exp), 
+		                                                                defaultSkill(skill), 
+		                                                                mBuildOption(option)
 	{
 	}
 
@@ -151,7 +150,7 @@ public:
 };
 
 // 由于依赖于其他全局变量，为了避免全局变量初始化顺序冲突，这个变量会在eventEnable中被初始化
-inline map<string, CardTemp> mCardTemplet;
+inline fifo_dict_ci<CardTemp> mCardTemplet;
 CardTemp& getCardTemplet(const string& type);
 
 struct lua_State;
@@ -564,12 +563,7 @@ public:
 		return mCardList[0];
 	}
 
-	void writeb(std::ofstream& fout) const
-	{
-		fwrite(fout, indexMax);
-		fwrite(fout, mCardList);
-		fwrite(fout, mGroupIndex);
-	}
+	void writeb(std::ofstream& fout) const;
 
 	void readb(std::ifstream& fin);
 };
