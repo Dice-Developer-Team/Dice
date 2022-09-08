@@ -31,33 +31,6 @@ unordered_map<string, cmd> mCommand = {
 	{"uplog",log_put}
 };
 
-/*
-void DiceJob::exec() {
-	if (auto it = mCommand.find(cmd_key); it != mCommand.end()) {
-		it->second(*this);
-	}
-	else return;
-}
-void DiceJob::echo(const std::string& msg) {
-	AddMsgToQueue(msg, fromChat);
-}
-void DiceJob::reply(const std::string& msg) {
-	AddMsgToQueue(fmt->format(msg, vars), fromChat);
-}
-void DiceJob::note(const std::string& strMsg, int note_lv = 0b1) {
-	ofstream fout(DiceDir / "audit" / ("log" + to_string(console.DiceMaid) + "_" + printDate() + ".txt"), ios::out | ios::app);
-	fout << printSTNow() << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
-	fout.close();
-	echo(strMsg);
-	string note = fromChat.uid ? getName(fromChat.uid) + strMsg : strMsg;
-	for (const auto& [ct, level] : console.NoticeList) {
-		if (!(level & note_lv) || ct.uid == fromChat.uid
-			|| (ct.gid == fromChat.gid && ct.chid == fromChat.chid))continue;
-		AddMsgToQueue(note, ct);
-	}
-}
-*/
-
 // 待处理任务队列
 std::queue<AttrObject> queueJob;
 std::mutex mtQueueJob;
@@ -223,7 +196,7 @@ int DiceToday::getJrrp(long long uid) {
 }
 
 void DiceToday::daily_clear() {
-	time_t tt = time(nullptr);
+	time_t tt = time(nullptr) + time_t(console["TimeZoneLag"]) * 3600;
 #ifdef _MSC_VER
 	localtime_s(&stNow, &tt);
 #else
@@ -280,55 +253,55 @@ void DiceToday::save() {
 				jCnt.push_back(j);
 			}
 		}
-		fwriteJson(DiceDir / "user" / "DiceToday.json", jFile);
+		fwriteJson(pathFile, jFile);
 	} catch (...) {
 		console.log("每日记录保存失败:json错误!", 0b10);
 	}
 }
 void DiceToday::load() {
-	time_t tt{ time(nullptr) };
+	time_t tt{ time(nullptr) + time_t(console["TimeZoneLag"]) * 3600 };
 #ifdef _MSC_VER
 	localtime_s(&stToday, &tt);
 #else
 	localtime_r(&tt, &stToday);
 #endif
+	std::filesystem::create_directories(DiceDir / "user" / "daily");
 	pathFile = DiceDir / "user" / "daily" /
 		("daily_" + printDate() + ".json");
-	std::filesystem::create_directory(pathFile.parent_path());
-	fifo_json jFile = freadJson(pathFile);
-	if (jFile.is_null()) {
-		if ((jFile = freadJson(DiceDir / "user" / "DiceToday.json")).is_null()) return; 
-		else {
-			if (jFile["date"][2] != stToday.tm_mday
+	try{
+		fifo_json jFile;
+		if (!std::filesystem::exists(pathFile)) {
+			std::filesystem::path fileToday{ DiceDir / "user" / "DiceToday.json" };
+			if (!std::filesystem::exists(fileToday) || (jFile = freadJson(fileToday)).is_null()) return;
+			else if (jFile["date"][2] != stToday.tm_mday
 				|| jFile["date"][1] != (stToday.tm_mon + 1)
 				|| jFile["date"][0] != (stToday.tm_year + 1900)) {
-				std::filesystem::remove(DiceDir / "user" / "DiceToday.json");
+				std::filesystem::remove(fileToday);
 				return;
 			}
-			else std::filesystem::rename(DiceDir / "user" / "DiceToday.json", pathFile);
+			else std::filesystem::rename(fileToday, pathFile);
+		}
+		else if ((jFile = freadJson(pathFile)).is_null()) {
+			return;
+		}
+		if (jFile.count("cnt_list")) {
+			for (auto& j : jFile["cnt_list"]) {
+				chatInfo chat{ chatInfo::from_json(j["chat"]) };
+				if (j.count("cnt"))j["cnt"].get_to(counter[chat]);
+				counter[chat] = UTF8toGBK(counter[chat]);
+			}
+		}
+		if (jFile.count("global")) {
+			UserInfo[0] = AttrVar(jFile["global"]).to_obj();
+		}
+		if (jFile.count("user")) {
+			for (auto& [key, val] : jFile["user"].items()) {
+				UserInfo[std::stoll(key)] = AttrVar(val).to_obj();
+			}
 		}
 	}
-	if (jFile.count("date")) {
-		jFile["date"][0].get_to(stToday.tm_year);
-		stToday.tm_year -= 1900;
-		jFile["date"][1].get_to(stToday.tm_mon);
-		stToday.tm_mon -= 1;
-		jFile["date"][2].get_to(stToday.tm_mday);
-	}
-	if (jFile.count("cnt_list")) {
-		for (auto& j : jFile["cnt_list"]) {
-			chatInfo chat{ chatInfo::from_json(j["chat"]) };
-			if (j.count("cnt"))j["cnt"].get_to(counter[chat]);
-			counter[chat] = UTF8toGBK(counter[chat]);
-		}
-	}
-	if (jFile.count("global")) { 
-		UserInfo[0] = AttrVar(jFile["global"]).to_obj();
-	}
-	if (jFile.count("user")) {
-		for (auto& [key,val]: jFile["user"].items()) {
-			UserInfo[std::stoll(key)] = AttrVar(val).to_obj();
-		}
+	catch (std::exception& e) {
+		console.log("解析每日数据错误:" + string(e.what()), 0b10);
 	}
 }
 

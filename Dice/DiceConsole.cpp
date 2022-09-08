@@ -41,7 +41,7 @@
 
 using namespace std;
 
-const dict_ci<int>Console::intDefault{
+const fifo_dict_ci<int>Console::intDefault{
 {"DisabledGlobal",0},{"DisabledBlock",0},{"DisabledListenAt",1},
 {"DisabledMe",1},{"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
 {"Private",0},{"CheckGroupLicense",0},{"LeaveDiscuss",0},
@@ -54,6 +54,7 @@ const dict_ci<int>Console::intDefault{
 {"GroupInvalidSize",500},{"GroupClearLimit",20},
 {"CloudBlackShare",1},{"BelieveDiceList",0},{"CloudVisible",1},
 {"SystemAlarmCPU",90},{"SystemAlarmRAM",90},{"SystemAlarmDisk",90},
+{"TimeZoneLag",0},
 {"SendIntervalIdle",500},{"SendIntervalBusy",100},
 //自动保存事件间隔[min],自动图片清理间隔[h],自动重启框架间隔[h]
 {"AutoSaveInterval",5},/*{"AutoClearImage",0},{"AutoFrameRemake",0},*/
@@ -100,6 +101,7 @@ const std::unordered_map<std::string,string>Console::confComment{
 	{"SystemAlarmCPU","引起警报的CPU占用百分比，正数生效"},
 	{"SystemAlarmRAM","引起警报的内存占用百分比，正数生效"},
 	{"SystemAlarmDisk","引起警报的磁盘占用百分比，正数生效"},
+	{"TimeZoneLag","相对本机时区偏移[h]"},
 	{"SendIntervalIdle","队列空闲时消息发送间隔[ms]"},
 	{"SendIntervalBusy","队列繁忙时消息发送间隔[ms]"},
 	{"AutoSaveInterval","自动保存事件间隔[min]"},
@@ -303,9 +305,8 @@ long long llStartTime = time(nullptr);
 //当前时间
 tm stNow{};
 
-std::string printSTNow()
-{
-	time_t tt = time(nullptr);
+std::string printSTNow(){
+	time_t tt = time(nullptr) + time_t(console["TimeZoneLag"]) * 3600;
 #ifdef _MSC_VER
 	localtime_s(&stNow, &tt);
 #else
@@ -314,8 +315,13 @@ std::string printSTNow()
 	return printSTime(stNow);
 }
 
-std::string printDate()
-{
+std::string printDate(){
+	time_t tt = time(nullptr) + time_t(console["TimeZoneLag"]) * 3600;
+#ifdef _MSC_VER
+	localtime_s(&stNow, &tt);
+#else
+	localtime_r(&tt, &stNow);
+#endif
 	return to_string(stNow.tm_year + 1900) + "-" + (stNow.tm_mon + 1 < 10 ? "0" : "") + to_string(stNow.tm_mon + 1) + "-" + (
 		stNow.tm_mday < 10 ? "0" : "") + to_string(stNow.tm_mday);
 }

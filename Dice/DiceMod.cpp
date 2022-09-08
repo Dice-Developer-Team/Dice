@@ -1439,9 +1439,9 @@ int DiceModManager::load(ResList& resLog){
 						listDir(dirScript, fScripts, true);
 						for (auto p : fScripts) {
 							if (p.extension() != ".lua")continue;
-							string script_name{ cut_stem(p,dirScript) };
+							string script_name{ cut_stem(p.stem() == "init" ? p.parent_path() : p,dirScript) };
 							string strPath{ getNativePathString(p) };
-							scripts[cut_stem(p,dirScript)] = strPath;
+							scripts[script_name] = strPath;
 						}
 					}
 					if (fs::exists(dirMod / "image")) {

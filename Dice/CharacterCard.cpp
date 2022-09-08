@@ -17,6 +17,50 @@
  * -11:PcTextTooLong 文本过长
  */
 
+fifo_dict_ci<CardTemp> CharaCard::mCardTemplet{
+	{
+		"COC7", CardTemp{
+			"COC7", SkillNameReplace, BasicCOC7, InfoCOC7, AutoFillCOC7, mVariableCOC7, ExpressionCOC7,
+			SkillDefaultVal, {
+				{"_default", CardBuild({BuildCOC7},  {"{随机姓名}"}, {})},
+				{
+					"bg", CardBuild({
+										{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
+										{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
+										{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
+									}, {"{随机姓名}"}, {})
+				}
+			}
+		}
+	},
+	{"BRP", {
+			"BRP", {}, {}, {}, {}, {}, {}, {
+				{"__DefaultDice",100}
+			}, {
+				{"_default", CardBuild({},  {"{随机姓名}"}, {})},
+				{
+					"bg", CardBuild({
+										{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
+										{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
+										{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
+									}, {"{随机姓名}"}, {})
+				}
+			}
+	}},
+	{"DND", {
+			"DND", {}, {}, {}, {}, {}, {}, {
+				{"__DefaultDice",20}
+			}, {
+				{"_default", CardBuild({}, {"{随机姓名}"}, {})},
+				{
+					"bg", CardBuild({
+										{"性别", "{性别}"},
+									},  {"{随机姓名}"}, {})
+				}
+			}
+	}},
+};
+
 
 void CardTemp::readt(const DDOM& d) 	{
 	for (const auto& node : d.vChild) 		{
@@ -80,10 +124,11 @@ string CardTemp::show() {
 	return "pc模板:" + type + res.show();
 }
 
-CardTemp& getCardTemplet(const string& type)
-{
-	if (type.empty() || !mCardTemplet.count(type))return mCardTemplet["BRP"];
-	return  mCardTemplet[type];
+CardTemp& CharaCard::getTemplet()const{
+	if (string type{Attr.get_str("__Type")};
+		!type.empty() && !mCardTemplet.count(type))return mCardTemplet[type]; 
+	return mCardTemplet["BRP"];
+	
 }
 
 void CharaCard::update() {
@@ -94,19 +139,18 @@ void CharaCard::setName(const string& strName) {
 }
 void CharaCard::setType(const string& strType) {
 	Attr["__Type"] = strType;
-	pTemplet = &getCardTemplet(Attr.get_str("__Type"));
 }
 AttrVar CharaCard::get(string key)const {
 	if (Attr.has(key)) return Attr.get(key);
 	key = standard(key);
 	if (Attr.has(key)) return Attr.get(key);
-	if (pTemplet->defaultSkill.count(key))return pTemplet->defaultSkill.find(key)->second;
-	if (pTemplet->mAutoFill.count(key)){
-		Attr.set(key, cal(pTemplet->mAutoFill.find(key)->second));
+	if (auto& temp{ getTemplet() };temp.defaultSkill.count(key))return getTemplet().defaultSkill.find(key)->second;
+	if (getTemplet().mAutoFill.count(key)){
+		Attr.set(key, cal(getTemplet().mAutoFill.find(key)->second));
 		return Attr.get(key);
 	}
-	if (pTemplet->mVariable.count(key)){
-		return cal(pTemplet->mVariable.find(key)->second);
+	if (getTemplet().mVariable.count(key)){
+		return cal(getTemplet().mVariable.find(key)->second);
 	}
 	return {};
 }
@@ -114,15 +158,12 @@ int CharaCard::set(string key, const AttrVar& val) {
 	if (key.empty())return -1;
 	if (key == "__Name")return -8;
 	key = standard(key);
-	if (pTemplet->defaultSkill.count(key) && val == pTemplet->defaultSkill.at(key)){
+	if (getTemplet().defaultSkill.count(key) && val == getTemplet().defaultSkill.at(key)){
 		if (Attr.has(key)) Attr.reset(key);
 		else return -1;
 	}
 	else {
 		Attr.set(key, val);
-	}
-	if (key == "__Type") {
-		pTemplet = &getCardTemplet(val.to_str());
 	}
 	update();
 	return 0;
@@ -138,37 +179,53 @@ int CharaCard::show(string key, string& val) const {
 		val = Attr.get_str(key);
 		return 0;
 	}
-	else if (pTemplet) {
-		if (pTemplet->defaultSkill.count(key)) {
-			val = to_string(pTemplet->defaultSkill[key]);
-			return 0;
-		}
+	else if (getTemplet().defaultSkill.count(key)) {
+		val = to_string(getTemplet().defaultSkill[key]);
+		return 0;
 	}
 	return -1;
 }
 
+int CharaCard::call(string key)const {
+	if (Attr.has(key))return Attr.get_int(key);
+	key = standard(key);
+	if (Attr.has(key))return Attr.get_int(key);
+	if (auto& templet{ getTemplet() }; templet.mAutoFill.count(key))
+	{
+		Attr.set(key, cal(templet.mAutoFill.find(key)->second));
+		return Attr.get_int(key);
+	}
+	else if (templet.mVariable.count(key))
+	{
+		return cal(templet.mVariable.find(key)->second);
+	}
+	else if (templet.defaultSkill.count(key))return templet.defaultSkill.find(key)->second;
+	return 0;
+}
 bool CharaCard::count(const string& strKey) const {
 	if (Attr.has(strKey))return true;
 	string key{ standard(strKey) };
+	auto& temp{ getTemplet() };
 	return Attr.has(key) || Attr.has("&" + key)
-		|| pTemplet->mAutoFill.count(key) || pTemplet->mVariable.count(key)
-		|| pTemplet->defaultSkill.count(key);
+		|| temp.mAutoFill.count(key) || temp.mVariable.count(key)
+		|| temp.defaultSkill.count(key);
 }
 
 //求key对应掷骰表达式
 string CharaCard::getExp(string& key, std::set<string> sRef){
 	sRef.insert(key);
 	key = standard(key);
+	auto& temp{ getTemplet() };
 	auto val = Attr->find("&" + key);
 	if (val != Attr->end())return escape(val->second.to_str(), sRef);
-	auto exp = pTemplet->mExpression.find(key);
-	if (exp != pTemplet->mExpression.end()) return escape(exp->second, sRef);
+	auto exp = temp.mExpression.find(key);
+	if (exp != temp.mExpression.end()) return escape(exp->second, sRef);
 	val = Attr->find(key);
 	if (val != Attr->end())return escape(val->second.to_str(), sRef);
-	exp = pTemplet->mVariable.find(key);
-	if (exp != pTemplet->mVariable.end())return to_string(cal(exp->second));
-	if (auto def{ pTemplet->defaultSkill.find(key) };
-		def != pTemplet->defaultSkill.end())return to_string(def->second);
+	exp = temp.mVariable.find(key);
+	if (exp != temp.mVariable.end())return to_string(cal(exp->second));
+	if (auto def{ temp.defaultSkill.find(key) };
+		def != temp.defaultSkill.end())return to_string(def->second);
 	return "0";
 }
 
@@ -198,7 +255,7 @@ void CharaCard::clear() {
 [[nodiscard]] string CharaCard::show(bool isWhole) const {
 	std::set<string> sDefault;
 	ResList Res;
-	for (const auto& list : pTemplet->vBasicList) {
+	for (const auto& list : getTemplet().vBasicList) {
 		ResList subList;
 		string strVal;
 		for (const auto& it : list) {
@@ -296,7 +353,6 @@ void CharaCard::readb(std::ifstream& fin) {
 		tag = fread<string>(fin);
 	}
 	Name = Attr.get_str("__Name");
-	pTemplet = &getCardTemplet(Attr.get_str("__Type"));
 }
 
 void CharaCard::cntRollStat(int die, int face) {
@@ -349,7 +405,7 @@ CharaCard& Player::getCard(const string& name, long long group)
 string Player::listCard() {
 	ResList Res;
 	for (auto& [idx, pc] : mCardList) {
-		Res << "[" + to_string(idx) + "]<" + getCardTemplet(pc.Attr.get_str("__Type")).type + ">" + pc.getName();
+		Res << "[" + to_string(idx) + "]<" + pc.Attr.get_str("__Type") + ">" + pc.getName();
 	}
 	Res << "default:" + (*this)[0].getName();
 	return Res.show();

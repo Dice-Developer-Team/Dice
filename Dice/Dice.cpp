@@ -96,7 +96,7 @@ void loadData()
 #endif
 		std::error_code ec;
 		std::filesystem::create_directory(DiceDir, ec);
-		loadDir(loadXML<CardTemp, fifo_cmpr_ci>, DiceDir / "CardTemp", mCardTemplet, logList, true);
+		loadDir(loadXML<CardTemp, fifo_cmpr_ci>, DiceDir / "CardTemp", CharaCard::mCardTemplet, logList, true);
 		loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList);
 		map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
 		//读取帮助文档
@@ -219,7 +219,7 @@ atomic_flag isIniting = ATOMIC_FLAG_INIT;
 EVE_Enable(eventEnable){
 	if (isIniting.test_and_set())return;
 	if (Enabled)return;
-	llStartTime = time(nullptr);
+	clock_t clockStart = clock();
 	#ifndef _WIN32
 	CURLcode err;
 	err = curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -243,50 +243,6 @@ EVE_Enable(eventEnable){
 	Dice_Full_Ver_On = Dice_Full_Ver + " on\n" + DD::getDriVer();
 	DD::debugLog(Dice_Full_Ver_On);
 
-
-	mCardTemplet = {
-		{
-			"COC7", CardTemp{
-				"COC7", SkillNameReplace, BasicCOC7, InfoCOC7, AutoFillCOC7, mVariableCOC7, ExpressionCOC7,
-				SkillDefaultVal, {
-					{"_default", CardBuild({BuildCOC7},  {"{随机姓名}"}, {})},
-					{
-						"bg", CardBuild({
-											{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
-											{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
-											{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
-										}, {"{随机姓名}"}, {})
-					}
-				}
-			}
-		},
-		{"BRP", {
-				"BRP", {}, {}, {}, {}, {}, {}, {
-					{"__DefaultDice",100}
-				}, {
-					{"_default", CardBuild({},  {"{随机姓名}"}, {})},
-					{
-						"bg", CardBuild({
-											{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
-											{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
-											{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
-										}, {"{随机姓名}"}, {})
-					}
-				}
-		}},
-		{"DND", {
-				"DND", {}, {}, {}, {}, {}, {}, {
-					{"__DefaultDice",20}
-				}, {
-					{"_default", CardBuild({}, {"{随机姓名}"}, {})},
-					{
-						"bg", CardBuild({
-											{"性别", "{性别}"},
-										},  {"{随机姓名}"}, {})
-					}
-				}
-		}},
-	};
 	console.DiceMaid = DD::getLoginID();
 	DiceDir = dirExe / ("Dice" + to_string(console.DiceMaid));
 	if (!exists(DiceDir)) {
@@ -351,16 +307,17 @@ EVE_Enable(eventEnable){
 	}
 	if (const auto dirSelfData{ DiceDir / "selfdata" }; std::filesystem::exists(dirSelfData)) {
 		std::error_code err;
-		for (const auto& file : std::filesystem::recursive_directory_iterator(dirSelfData, err)) {
-			if (std::filesystem::is_regular_file(file.status())) {
+		for (const auto& file : std::filesystem::directory_iterator(dirSelfData, err)) {
+			if (file.is_regular_file()) {
 				const auto p{ file.path() };
-				auto& data{ selfdata_byFile[getNativePathString(cut_relative(p, dirSelfData))]
+				auto& data{ selfdata_byFile[getNativePathString(p.filename())]
 					= make_shared<SelfData>(p) };
-				if (string file{ cut_stem(p, DiceDir / "selfdata") }; !selfdata_byStem.count(file)) {
+				if (string file{ UTF8toGBK(p.stem().u8string())}; !selfdata_byStem.count(file)) {
 					selfdata_byStem[file] = data;
 				}
 			}
 		}
+		DD::debugLog("预加载selfdata" + to_string(selfdata_byStem.size()) + "条");
 	}
 	//读取当日数据
 	today = make_unique<DiceToday>();
@@ -420,7 +377,7 @@ EVE_Enable(eventEnable){
 	threads(frqHandler);
 	sch.start();
 
-	console.log(getMsg("strSelfName") + "初始化完成，用时" + to_string(time(nullptr) - llStartTime) + "秒", 0b1,
+	console.log(getMsg("strSelfName") + "初始化完成，用时" + to_string(clock() - clockStart) + "毫秒", 0b1,
 		printSTNow());
 	llStartTime = time(nullptr);
 	DD::debugLog("Dice.WebInit");

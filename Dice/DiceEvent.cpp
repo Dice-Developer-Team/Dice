@@ -3445,7 +3445,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "temp") {
-			CardTemp& temp{ *pl[fromChat.gid].pTemplet};
+			CardTemp& temp{ pl[fromChat.gid].getTemplet()};
 			reply(temp.show());
 			return 1;
 		}
@@ -3921,7 +3921,7 @@ int DiceEvent::InnerOrder() {
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
 				'=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
 			//判定所录入为文本
-			if (bool isSqr{ strMsg.substr(intMsgCnt, 2) == "【" }; pc.pTemplet->sInfoList.count(strSkillName) || isSqr) {
+			if (bool isSqr{ strMsg.substr(intMsgCnt, 2) == "【" }; pc.getTemplet().sInfoList.count(strSkillName) || isSqr) {
 				string strVal;
 				if (auto pos{ strMsg.find("】",intMsgCnt) }; pos != string::npos) {
 					strVal = strMsg.substr(intMsgCnt + 2, pos - intMsgCnt - 2);

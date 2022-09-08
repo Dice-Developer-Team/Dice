@@ -150,8 +150,6 @@ public:
 };
 
 // 由于依赖于其他全局变量，为了避免全局变量初始化顺序冲突，这个变量会在eventEnable中被初始化
-inline fifo_dict_ci<CardTemp> mCardTemplet;
-CardTemp& getCardTemplet(const string& type);
 
 struct lua_State;
 class CharaCard
@@ -160,6 +158,8 @@ private:
 	string Name = "角色卡";
 	std::mutex cardMutex;
 public:
+	static fifo_dict_ci<CardTemp> mCardTemplet;
+	CardTemp& getTemplet()const;
 	const string& getName()const { return Name; }
 	void setName(const string&);
 	void setType(const string&);
@@ -171,22 +171,16 @@ public:
 	} };
 	//map<string, string, less_ci> Info{  };
 	//map<string, string, less_ci> DiceExp{};
-	CardTemp* pTemplet{ nullptr };
 
-	CharaCard(){
-		pTemplet = &getCardTemplet("BRP");
-	}
-	CharaCard(const CharaCard& pc)
-	{
+	CharaCard() = default;
+	CharaCard(const CharaCard& pc){
 		Name = pc.Name;
 		Attr = pc.Attr;
-		pTemplet = pc.pTemplet;
 	}
 	CharaCard& operator=(const CharaCard& pc)
 	{
 		Name = pc.Name;
 		Attr = pc.Attr;
-		pTemplet = pc.pTemplet;
 		return *this;
 	}
 
@@ -196,22 +190,7 @@ public:
 		setType(type);
 	}
 
-	int call(string key)const {
-		if (Attr.has(key))return Attr.get_int(key);
-		key = standard(key);
-		if (Attr.has(key))return Attr.get_int(key);
-		if (pTemplet->mAutoFill.count(key))
-		{
-			Attr.set(key, cal(pTemplet->mAutoFill.find(key)->second));
-			return Attr.get_int(key);
-		}
-		if (pTemplet->mVariable.count(key))
-		{
-			return cal(pTemplet->mVariable.find(key)->second);
-		}
-		if (pTemplet->defaultSkill.count(key))return pTemplet->defaultSkill.find(key)->second;
-		return 0;
-	}
+	int call(string key)const;
 
 	//表达式转义
 	string escape(string exp, const set<string>& sRef)
@@ -241,7 +220,7 @@ public:
 	{
 		return (Attr.has(key) && Attr.at(key).type == AttrVar::AttrType::Text)
 			|| (Attr.has("&" + key))
-			|| pTemplet->mExpression.count(key);
+			|| getTemplet().mExpression.count(key);
 	}
 
 	//计算表达式
@@ -267,8 +246,8 @@ public:
 
 	void build(const string& para = "")
 	{
-		const auto it = pTemplet->mBuildOption.find(para);
-		if (it == pTemplet->mBuildOption.end())return;
+		const auto it = getTemplet().mBuildOption.find(para);
+		if (it == getTemplet().mBuildOption.end())return;
 		CardBuild build = it->second;
 		for (auto it2 : build.vBuildList)
 		{
@@ -279,7 +258,7 @@ public:
 				Attr.set(it2.first, it2.second);
 			}
 				//info
-			else if (pTemplet->sInfoList.count(it2.first))
+			else if (getTemplet().sInfoList.count(it2.first))
 			{
 				if (Attr.has(it2.first))continue;
 				Attr.set(it2.first, CardDeck::draw(it2.second));
@@ -298,7 +277,7 @@ public:
 
 	[[nodiscard]] string standard(const string& key) const
 	{
-		if (pTemplet->replaceName.count(key))return pTemplet->replaceName.find(key)->second;
+		if (getTemplet().replaceName.count(key))return getTemplet().replaceName.find(key)->second;
 		return key;
 	}
 
@@ -318,7 +297,7 @@ public:
 	bool stored(string& key) const
 	{
 		key = standard(key);
-		return Attr.has(key) || pTemplet->mAutoFill.count(key) || pTemplet->defaultSkill.count(key);
+		return Attr.has(key) || getTemplet().mAutoFill.count(key) || getTemplet().defaultSkill.count(key);
 	}
 
 	void cntRollStat(int die, int face);
@@ -397,7 +376,7 @@ public:
 			s.erase(s.begin(), s.begin() + Cnt + 1);
 			if (type == "COC")type = "COC7";
 		}
-		else if (mCardTemplet.count(s))
+		else if (CharaCard::mCardTemplet.count(s))
 		{
 			type = s;
 			s.clear();
@@ -421,7 +400,7 @@ public:
 			card.build(para);
 			if (card.getName().empty())
 			{
-				std::vector<string> list = getCardTemplet(type).mBuildOption[para].vNameList;
+				std::vector<string> list = CharaCard::mCardTemplet[type].mBuildOption[para].vNameList;
 				while (!list.empty())
 				{
 					s = CardDeck::draw(list[0]);
@@ -436,7 +415,7 @@ public:
 		}
 		if (card.getName().empty())
 		{
-			std::vector<string> list = getCardTemplet(type).mBuildOption["_default"].vNameList;
+			std::vector<string> list = CharaCard::mCardTemplet[type].mBuildOption["_default"].vNameList;
 			while (!list.empty())
 			{
 				s = CardDeck::draw(list[0]);
