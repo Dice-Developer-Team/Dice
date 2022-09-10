@@ -484,6 +484,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<string> HelpDoc = {
 {"更新",R"(
+622:支持手动时差
 621:扩展代理事件及ex接口
 620:留档每日数据，新增每日清算事件
 619:统一reply与order格式
@@ -500,8 +501,6 @@ const dict_ci<string> HelpDoc = {
 608:新增.mod指令
 607:修改.nn语法
 606:完善.sc/http.post/reply
-605:关键词回复多对一
-604:{转义嵌套}优化
 603:支持yaml读取
 593:reply新增触发限制
 589:ak安科安价指令

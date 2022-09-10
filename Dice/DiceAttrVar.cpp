@@ -225,6 +225,8 @@ AttrVar& AttrVar::operator++() {
 	case AttrType::Number:
 		++number;
 		break;
+	default:
+		break;
 	}
 	return *this;
 }

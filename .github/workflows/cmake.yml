@@ -308,7 +308,7 @@ jobs:
           mono: 'mono'
           dll_sfx: android.amd64
         
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     
     steps:
     - uses: actions/checkout@v2
@@ -327,8 +327,8 @@ jobs:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ matrix.triplet }}-20220810
-        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20220810
+        key: ${{ runner.os }}-${{ matrix.triplet }}-20220910
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20220910
         
     - name: Setup Vcpkg
       shell: bash
