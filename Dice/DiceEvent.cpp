@@ -3516,7 +3516,6 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		string attr{ strMsg.substr(intMsgCnt) };
-		set("attr", attr);
 		if (attr.find("自动成功") == 0) {
 			strDifficulty = attr.substr(0, 8);
 			attr = attr.substr(8);
@@ -3527,10 +3526,14 @@ int DiceEvent::InnerOrder() {
 			intDifficulty = (attr.substr(0, 4) == "困难") ? 2 : 5;
 			attr = attr.substr(4);
 		}
-		if (pc && pc->count(attr))intMsgCnt = strMsg.length();
-		else {
-			set("attr",attr = readAttrName());
+		if (pc && pc->count(attr)) {
+			intMsgCnt = strMsg.length();
+			attr = pc->standard(attr);
 		}
+		else {
+			if (SkillNameReplace.count(attr = readAttrName()))attr = SkillNameReplace[attr];
+		}
+		set("attr", attr);
 		if (strLowerMessage[intMsgCnt] == '*' && isdigit(strLowerMessage[intMsgCnt + 1])) {
 			intMsgCnt++;
 			readNum(intSkillMultiple);

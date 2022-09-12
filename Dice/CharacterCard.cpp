@@ -126,7 +126,7 @@ string CardTemp::show() {
 
 CardTemp& CharaCard::getTemplet()const{
 	if (string type{Attr.get_str("__Type")};
-		!type.empty() && !mCardTemplet.count(type))return mCardTemplet[type]; 
+		!type.empty() && mCardTemplet.count(type))return mCardTemplet[type]; 
 	return mCardTemplet["BRP"];
 	
 }

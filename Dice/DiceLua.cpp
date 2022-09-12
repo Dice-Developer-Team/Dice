@@ -908,29 +908,10 @@ int eventMsg(lua_State* L) {
 	return 0;
 }
 int askExtra(lua_State* L) {
+	return 0;
 	string action{ lua_to_raw_string(L,1) };
 	if (action.empty())return 0;
 	try {
-		if (action == "isOnline") {
-			string ret;
-			if (long long uid{ lua_to_int(L,2)}; !uid){
-				return 0;
-			}
-			else if (string data{ fifo_json{
-				{ "action","isOnline" },
-				{ "sid",console.DiceMaid },
-				{ "uid",uid },
-				}.dump() }; DD::getExtra(data.c_str(), ret)) {
-				lua_pushboolean(L, fifo_json::parse(ret));
-				return 1;
-			}
-		}
-		else if (action == "isDiceMaid") {
-			if (long long uid{ lua_to_int(L,2) }) {
-				lua_pushboolean(L, DD::isDiceMaid(uid));
-				return 1;
-			}
-		}
 	}
 	catch (std::exception& e) {
 		DD::debugLog("askExtraÅ×³öÒì³£!" + string(e.what()));

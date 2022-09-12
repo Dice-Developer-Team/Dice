@@ -60,6 +60,9 @@ AttrVar getUserItem(long long uid, const string& item) {
 	else if (item == "trust") {
 		return trustedQQ(uid);
 	}
+	else if (item == "isDiceMaid") {
+		return DD::isDiceMaid(uid);
+	}
 	else if (item.find("nick#") == 0) {
 		long long gid{ 0 };
 		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
