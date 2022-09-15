@@ -2796,18 +2796,12 @@ int DiceEvent::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "set") {
 		intMsgCnt += 3;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
+		readSkipSpace();
 		string& strDice{ (at("default") = readDigit()).text};
 		while (strDice[0] == '0')
 			strDice.erase(strDice.begin());
 		if (strDice.empty())
 			strDice = "100";
-		for (auto charNumElement : strDice)
-			if (!isdigit(static_cast<unsigned char>(charNumElement))) {
-				replyMsg("strSetInvalid");
-				return 1;
-			}
 		if (strDice.length() > 4) {
 			replyMsg("strSetTooBig");
 			return 1;
@@ -4243,7 +4237,7 @@ int DiceEvent::InnerOrder() {
 		}
 		int intTurnCnt = 1;
 		const int intDefaultDice = (pc && pc->count("__DefaultDice")) 
-			? pc->Attr.get_int("__DefaultDice")
+			? pc->call("__DefaultDice")
 			: getUser(fromChat.uid).getConf("Ä¬ÈÏ÷»", 100);
 		if (strMainDice.find('#') != string::npos) {
 			string& turn{ (at("turn") = strMainDice.substr(0, strMainDice.find('#'))).text };

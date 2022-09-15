@@ -275,7 +275,7 @@ const dict_ci<string> PlainMsg
 	{"strDeckEmpty", "{self}已经一张也不剩了！"},
 	{"strNameNumTooBig", "生成数量过多!请输入1-10之间的数字!"},
 	{"strNameNumCannotBeZero", "生成数量不能为零!请输入1-10之间的数字!"},
-	{"strSetInvalid", "无效的默认骰!请输入1-9999之间的数字!"},
+	//{"strSetInvalid", "无效的默认骰!请输入1-9999之间的数字!"},
 	{"strSetTooBig", "这面数……让我丢个球啊!请输入1-9999之间的数字!"},
 	{"strSetCannotBeZero", "默认骰不能为零!请输入1-9999之间的数字!"},
 	{"strCharacterCannotBeZero", "人物作成次数不能为零!请输入1-10之间的数字!"},
