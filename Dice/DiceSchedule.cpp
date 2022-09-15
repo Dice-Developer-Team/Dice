@@ -253,9 +253,9 @@ void DiceToday::save() {
 				jCnt.push_back(j);
 			}
 		}
-		fwriteJson(pathFile, jFile);
-	} catch (...) {
-		console.log("每日记录保存失败:json错误!", 0b10);
+		fwriteJson(pathFile, jFile, 0);
+	} catch (std::exception& e) {
+		console.log("每日记录保存失败:" + string(e.what()), 0b10);
 	}
 }
 void DiceToday::load() {
