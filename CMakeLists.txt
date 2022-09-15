@@ -103,7 +103,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Android)
     target_include_directories(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/libiconv/${ANDROID_ABI}/include)
     target_link_libraries(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/libiconv/${ANDROID_ABI}/lib/libiconv.a)
     target_include_directories(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/prebuilt/${ANDROID_ABI}/include)
-    target_link_libraries(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/prebuilt/${ANDROID_ABI}/lib)
+    target_link_libraries(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/prebuilt/${ANDROID_ABI}/lib/libaws-c-common.a)
 endif()
 
 if(NOT ((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") OR (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")))
