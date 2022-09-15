@@ -9,7 +9,8 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123溯洄
+ * Copyright (C) 2018-2021 w4123溯洄
+ * Copyright (C) 2019-2022 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -29,6 +30,9 @@
 
 namespace Network
 {
+#ifndef _Win32
+	size_t curlWriteToString(void* contents, size_t size, size_t nmemb, std::string* s);
+#endif //  Win32
 	// 发出一个HTTP POST 请求
 	// @param url 
 	// @param postContent 编码后的数据

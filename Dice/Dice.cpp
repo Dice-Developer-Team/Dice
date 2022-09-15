@@ -51,13 +51,14 @@
 #include "DiceEvent.h"
 #include "DiceSession.h"
 #include "DiceGUI.h"
-#include "S3PutObject.h"
 #include "DiceCensor.h"
 #include "EncodingConvert.h"
 #include "DiceManager.h"
 #include "DiceSelfData.h"
 
-#ifndef _WIN32
+#ifdef _WIN32
+#include "S3PutObject.h"
+#else
 #include <curl/curl.h>
 #endif
 
@@ -220,13 +221,15 @@ EVE_Enable(eventEnable){
 	if (isIniting.test_and_set())return;
 	if (Enabled)return;
 	clock_t clockStart = clock();
-	#ifndef _WIN32
+#ifndef _WIN32
 	CURLcode err;
 	err = curl_global_init(CURL_GLOBAL_DEFAULT);
 	if (err != CURLE_OK)
 	{
 		console.log("错误: 加载libcurl失败！", 1);
 	}
+#else
+	Aws::InitAPI(options);
 #endif
 	std::string RootDir = DD::getRootDir();
 	if (RootDir.empty()) {	
@@ -330,7 +333,6 @@ EVE_Enable(eventEnable){
 	loadData();
 	// 确保线程执行结束
 	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
-	Aws::InitAPI(options);
 
 	DD::debugLog("Dice.webUIInit");
 	WebUIPasswordPath = DiceDir / "conf" / "WebUIPassword.digest";
@@ -1065,9 +1067,10 @@ void global_exit() {
 	console.reset();
 	EditedMsg.clear();
 	blacklist.reset();
-	Aws::ShutdownAPI(options);
 #ifndef _WIN32
 	curl_global_cleanup();
+#else
+	Aws::ShutdownAPI(options);
 #endif
 	threads.exit();
 }

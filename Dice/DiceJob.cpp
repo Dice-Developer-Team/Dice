@@ -6,6 +6,9 @@
 #include <Windows.h>
 #include <TlHelp32.h>
 #include <Psapi.h>
+#include "S3PutObject.h"
+#else
+#include <curl/curl.h>
 #endif
 #include "StrExtern.hpp"
 #include "DDAPI.h"
@@ -19,7 +22,6 @@
 #include "DiceNetwork.h"
 #include "DiceSession.h"
 #include "DiceEvent.h"
-#include "S3PutObject.h"
 #pragma warning(disable:28159)
 
 using namespace std;
@@ -423,11 +425,38 @@ void log_put(AttrObject& job) {
 		}
 	}
 	string nameLog{ Base64urlEncode(job.get_str("log_file")) };
+#ifndef _WIN32
+	auto curl = curl_easy_init();
+	curl_slist* headers = NULL;
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	curl_httppost* pFormPost = NULL;
+	curl_httppost* pLastElem = NULL;
+	curl_formadd(&pFormPost, &pLastElem,
+		CURLFORM_COPYNAME, "key",
+		CURLFORM_COPYCONTENTS, nameLog.c_str(),
+		CURLFORM_END);
+	curl_formadd(&pFormPost, &pLastElem,
+		CURLFORM_COPYNAME, "file",
+		CURLFORM_FILE, GBKtoLocal(job.get_str("log_path")).c_str(),
+		CURLFORM_FILENAME, nameLog.c_str(),
+		CURLFORM_END); 
+	curl_easy_setopt(curl, CURLOPT_URL, "http://dicelogger.s3.ap-southeast-1.amazonaws.com");
+	curl_easy_setopt(curl, CURLOPT_HTTPPOST, pFormPost);
+	string ret;
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Network::curlWriteToString);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ret);
+	auto res = curl_easy_perform(curl);
+	if (res != CURLE_OK)job.set("ret", curl_easy_strerror(res));
+	curl_formfree(pFormPost);
+	curl_easy_cleanup(curl);
+	if (res == CURLE_OK) {
+#else
 	job["ret"] = put_s3_object("dicelogger",
 		nameLog.c_str(),
 		GBKtoLocal(job.get_str("log_path")).c_str(),
 		"ap-southeast-1");
 	if (job["ret"] == "SUCCESS") {
+#endif //_Win32
 		job["log_file"] = nameLog;
 		job["log_url"] = "https://logpainter.kokona.tech/?s3=" + nameLog;
 		reply(job, "{strLogUpSuccess}");
@@ -436,7 +465,7 @@ void log_put(AttrObject& job) {
 		reply(job, "{strLogUpFailureEnd}");
 	}
 	else {
-		job["retry"] = cntExec;
+		++job["retry"];
 		reply(job, "{strLogUpFailure}");
 		console.log(getMsg("strLogUpFailure", job), 1);
 		sch.add_job_for(2 * 60, job);

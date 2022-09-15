@@ -8,7 +8,7 @@
     "civetweb",
     {
       "name": "aws-sdk-cpp",
-      "platform" : "!android",
+      "platform" : "windows",
       "default-features": false,
       "features": [ "s3" ]
     },
