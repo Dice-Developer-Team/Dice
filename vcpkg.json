@@ -5,8 +5,10 @@
     "lua",
     "yaml-cpp",
     "openssl",
+    "civetweb",
     {
       "name": "aws-sdk-cpp",
+      "platform" : "!android",
       "default-features": false,
       "features": [ "s3" ]
     },
@@ -23,9 +25,6 @@
     {
       "name": "libiconv",
       "platform" : "!windows & !android"
-    },
-    {
-      "name": "civetweb"
     },
     {
       "name": "libzip",
