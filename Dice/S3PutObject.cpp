@@ -1,3 +1,4 @@
+#ifdef _WIN32
 #include <fstream>
 #include "filesystem.hpp"
 
@@ -63,3 +64,4 @@ std::string put_s3_object(const Aws::String& s3_bucket_name,
 	}
 	return "SUCCESS";
 }
+#endif //Win32
