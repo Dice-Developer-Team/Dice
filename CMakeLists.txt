@@ -78,6 +78,11 @@ if(NOT (CMAKE_SYSTEM_NAME STREQUAL Windows))
     find_package(CURL REQUIRED)
     target_link_libraries(w4123.Dice PRIVATE CURL::libcurl)
 endif()
+if(NOT (CMAKE_SYSTEM_NAME STREQUAL Android))
+    find_package(AWSSDK CONFIG COMPONENTS core s3 REQUIRED)
+    target_include_directories(w4123.Dice PRIVATE ${AWSSDK_INCLUDE_DIRS})
+    target_link_libraries(w4123.Dice PRIVATE ${AWSSDK_LIBRARIES})
+endif()
 
 find_package(Lua REQUIRED)
 target_include_directories(w4123.Dice PRIVATE ${LUA_INCLUDE_DIR})
@@ -91,18 +96,15 @@ target_link_libraries(w4123.Dice PRIVATE civetweb::civetweb civetweb::civetweb-c
 find_package(libzip CONFIG REQUIRED)
 target_link_libraries(w4123.Dice PRIVATE libzip::zip)
 
+set_target_properties(w4123.Dice PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(w4123.Dice PROPERTIES C_VISIBILITY_PRESET hidden)
+
 if(CMAKE_SYSTEM_NAME STREQUAL Android)
     target_include_directories(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/libiconv/${ANDROID_ABI}/include)
     target_link_libraries(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/libiconv/${ANDROID_ABI}/lib/libiconv.a)
-    find_package(AWSSDK CONFIG COMPONENTS core s3 REQUIRED)
-    target_include_directories(w4123.Dice PRIVATE ${AWSSDK_INCLUDE_DIRS})
-    target_link_libraries(w4123.Dice PRIVATE ${AWSSDK_LIBRARIES})
     target_include_directories(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/prebuilt/${ANDROID_ABI}/include)
     target_link_libraries(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/prebuilt/${ANDROID_ABI}/lib)
 endif()
-
-set_target_properties(w4123.Dice PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(w4123.Dice PROPERTIES C_VISIBILITY_PRESET hidden)
 
 if(NOT ((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") OR (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")))
     set_target_properties(w4123.Dice PROPERTIES LINK_FLAGS_RELEASE "-s -Wl,--exclude-libs,ALL")
