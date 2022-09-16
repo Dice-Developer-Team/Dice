@@ -431,10 +431,10 @@ void Player::readb(std::ifstream& fin)
 
 AttrVar idx_pc(AttrObject& eve){
 	if (eve.has("pc"))return eve["pc"];
-	long long uid{ eve.get_ll("uid") };
 	if (!eve.has("uid"))return {};
+	long long uid{ eve.get_ll("uid") };
 	long long gid{ eve.get_ll("gid") };
-	return eve["pc"] = (PList.count(uid) && PList[uid][gid].getName() != "½ÇÉ«¿¨")
-		? PList[uid][gid].getName()
-		: idx_nick(eve);
+	if (PList.count(uid) && PList[uid][gid].getName() != "½ÇÉ«¿¨")
+		return eve["pc"] = PList[uid][gid].getName();
+	return idx_nick(eve);
 }
