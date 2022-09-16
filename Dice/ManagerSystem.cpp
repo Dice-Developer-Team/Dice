@@ -174,6 +174,9 @@ AttrVar getContextItem(AttrObject context, string item) {
 	if (sub == "self") {
 		return getSelfItem(item);
 	}
+	else if (selfdata_byStem.count(sub)) {
+		var = selfdata_byStem[sub]->data.index(item);
+	}
 	return var;
 }
 

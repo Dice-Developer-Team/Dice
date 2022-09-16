@@ -4,9 +4,6 @@ set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/
   CACHE STRING "Vcpkg toolchain file")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" 
   CACHE STRING "Minimum OS X deployment version")
-if(ANDROID_ABI STREQUAL armeabi-v7a)
-  set(ANDROID_ARM_NEON TRUE)
-endif()
 project(Dice)
 
 include_directories(Dice QQAPI)

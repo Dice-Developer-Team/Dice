@@ -42,7 +42,7 @@ long long lua_to_int(lua_State* L, int idx = -1) {
 	return luaL_checkinteger(L, idx);
 }
 long long lua_to_int_or_zero(lua_State* L, int idx = -1) {
-	return lua_isnoneornil(L, idx) ? 0 : luaL_checkinteger(L, idx);
+	return lua_isnoneornil(L, idx) ? 0 : lua_tointeger(L, idx);
 }
 
 // Return string without convert
