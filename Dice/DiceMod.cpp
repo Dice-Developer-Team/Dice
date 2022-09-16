@@ -589,6 +589,15 @@ enumap_ci DiceMsgReply::sEcho{ "Text", "Deck", "Lua" };
 std::array<string, 4> strType{ "无","指令","回复","同时" };
 enumap<string> strMode{ "完全", "前缀", "模糊", "正则" };
 enumap<string> strEcho{ "纯文本", "牌堆（多选一）", "Lua" };
+ptr<DiceMsgReply> DiceMsgReply::set_order(const string& key, const AttrVars& order) {
+	auto reply{ std::make_shared<DiceMsgReply>() };
+	reply->title = key;
+	reply->type = DiceMsgReply::Type::Order;
+	reply->keyMatch[1] = std::make_unique<vector<string>>(vector<string>{fmt->format(key)});
+	reply->echo = DiceMsgReply::Echo::Lua;
+	reply->text = AttrVar(order);
+	return reply;
+}
 bool DiceMsgReply::exec(DiceEvent* msg) {
 	int chon{ msg->pGrp ? msg->pGrp->getChConf(msg->fromChat.chid,"order",0) : 0 };
 	msg->set("reply_title", title);
@@ -752,15 +761,6 @@ fifo_json DiceMsgReply::writeJson()const {
 void DiceReplyUnit::add(const string& key, ptr<DiceMsgReply> reply) {
 	items[key] = reply;
 }
-void DiceReplyUnit::add_order(const string& key, AttrVars order) {
-	auto reply{ std::make_shared<DiceMsgReply>() };
-	reply->title = key;
-	reply->type = DiceMsgReply::Type::Order;
-	reply->keyMatch[1] = std::make_unique<vector<string>>(vector<string>{fmt->format(key)});
-	reply->echo = DiceMsgReply::Echo::Lua;
-	reply->text = AttrVar(order);
-	items[key] = reply;
-}
 void DiceReplyUnit::build() {
 	for (auto& [title, reply] : items) {
 		if (reply->keyMatch[0]) {
@@ -837,7 +837,7 @@ DiceModManager::DiceModManager() :global_speech(transpeech) {
 }
 string DiceModManager::list_mod()const {
 	ResList list;
-	for (auto& mod : modIndex) {
+	for (auto& mod : modOrder) {
 		list << to_string(mod->index) + ". " + mod->name + (mod->active
 			? (mod->loaded ? " √" : " ?")
 			: " ×");
@@ -852,6 +852,7 @@ void DiceModManager::mod_on(DiceEvent* msg) {
 		}
 		else {
 			modList[modName]->active = true;
+			modList[modName]->load();
 			save();
 			reload();
 			msg->note("{strModOn}", 1);
@@ -870,7 +871,6 @@ void DiceModManager::mod_off(DiceEvent* msg) {
 		else {
 			modList[modName]->active = false;
 			save();
-			DD::debugLog("mod reload");
 			reload();
 			msg->note("{strModOff}", 1);
 		}
@@ -1043,8 +1043,8 @@ void DiceModManager::msg_edit(const string& key, const string& val){
 }
 
 string DiceModManager::get_help(const string& key, AttrObject context) const{
-	if (const auto it = helpdoc.find(key); it != helpdoc.end()){
-		return format(it->second, context, {}, helpdoc);
+	if (const auto it = global_helpdoc.find(key); it != global_helpdoc.end()){
+		return format(it->second, context, {}, global_helpdoc);
 	}
 	return {};
 }
@@ -1069,10 +1069,11 @@ void DiceModManager::_help(DiceEvent* job) {
 		job->reply(getMsg("strBotHeader") + Dice_Short_Ver + "\n" + getMsg("strHlpMsg"));
 		return;
 	}
-	else if (const auto it = helpdoc.find((*job)["help_word"].to_str()); it != helpdoc.end()) {
-		job->reply(format(it->second, {}, {}, helpdoc));
+	else if (const auto it = global_helpdoc.find((*job)["help_word"].to_str());
+		it != global_helpdoc.end()) {
+		job->reply(format(it->second, {}, {}, global_helpdoc));
 	}
-	else if (unordered_set<string> keys = querier.search((*job)["help_word"].to_str());!keys.empty()) {
+	else if (auto keys = querier.search((*job)["help_word"].to_str());!keys.empty()) {
 		if (keys.size() == 1) {
 			(*job)["redirect_key"] = *keys.begin();
 			(*job)["redirect_res"] = get_help(*keys.begin());
@@ -1080,7 +1081,7 @@ void DiceModManager::_help(DiceEvent* job) {
 		}
 		else {
 			std::priority_queue<string, vector<string>, help_sorter> qKey;
-			for (auto key : keys) {
+			for (auto& key : keys) {
 				qKey.emplace(".help " + key);
 			}
 			ResList res;
@@ -1098,15 +1099,18 @@ void DiceModManager::_help(DiceEvent* job) {
 	saveJMap(DiceDir / "user" / "HelpStatic.json",cntHelp);
 }
 
-void DiceModManager::set_help(const string& key, const string& val)
-{
-	if (!helpdoc.count(key))querier.insert(key);
-	helpdoc[key] = val;
+void DiceModManager::set_help(const string& key, const string& val){
+	CustomHelp[key] = val;
+	saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
+	if (!global_helpdoc.count(key))querier.insert(key);
+	global_helpdoc[key] = val;
 }
 
-void DiceModManager::rm_help(const string& key)
-{
-	helpdoc.erase(key);
+void DiceModManager::rm_help(const string& key){
+	if(CustomHelp.erase(key)){
+		saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
+		global_helpdoc.erase(key);
+	}
 }
 
 time_t parse_seconds(const AttrVar& time) {
@@ -1125,8 +1129,8 @@ Clock parse_clock(const AttrVar& time) {
 }
 
 void DiceModManager::call_cycle_event(const string& id) {
-	if (id.empty() || !events.count(id))return;
-	AttrObject eve{ events[id] };
+	if (id.empty() || !global_events.count(id))return;
+	AttrObject eve{ global_events[id] };
 	if (eve["action"].is_function()) {
 		lua_call_event(eve, eve["action"]);
 	}
@@ -1139,8 +1143,8 @@ void DiceModManager::call_cycle_event(const string& id) {
 	}
 }
 void DiceModManager::call_clock_event(const string& id) {
-	if (id.empty() || !events.count(id))return;
-	AttrObject eve{ events[id] };
+	if (id.empty() || !global_events.count(id))return;
+	AttrObject eve{ global_events[id] };
 	auto action{ eve["action"] };
 	if (!action)return;
 	else if (action.is_table() && action.to_dict()->count("lua")) {
@@ -1300,11 +1304,12 @@ void DiceModManager::set_reply(const string& key, ptr<DiceMsgReply> reply) {
 	save_reply();
 }
 bool DiceModManager::del_reply(const string& key) {
-	if (!custom_reply.count(key))return false;
-	final_reply.erase(key);
-	custom_reply.erase(key);
-	save_reply();
-	return true;
+	if (custom_reply.erase(key)) {
+		final_reply.erase(key);
+		save_reply();
+		return true;
+	}
+	return false;
 }
 void DiceModManager::save_reply() {
 	fifo_json j = fifo_json::object();
@@ -1345,28 +1350,66 @@ bool DiceModManager::call_task(const string& task) {
 }
 
 string DiceModManager::script_path(const string& name)const {
-	if (auto it{ scripts.find(name) }; it != scripts.end()) {
+	if (auto it{ global_scripts.find(name) }; it != global_scripts.end()) {
 		return it->second;
 	}
 	return {};
 }
 
+void DiceMod::load() {
+	if (loaded)return;
+	if (fs::path dirMod{ pathJson }; fs::exists(dirMod.replace_extension())) {
+		listDir(dirMod / "reply", luaFiles, true);
+		listDir(dirMod / "event", luaFiles, true);
+		loadLua();
+		if (fs::exists(dirMod / "speech")) {
+			vector<std::filesystem::path> fSpeech;
+			listDir(dirMod / "speech", fSpeech, true);
+			for (auto& p : fSpeech) {
+				YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) };
+				if (!yaml.IsMap()) {
+					continue;
+				}
+				for (auto it : yaml) {
+					speech[UTF8toGBK(it.first.Scalar())] = it.second;
+				}
+			}
+		}
+		if (auto dirScript{ dirMod / "script" }; fs::exists(dirScript)) {
+			vector<std::filesystem::path> fScripts;
+			listDir(dirScript, fScripts, true);
+			for (auto p : fScripts) {
+				if (p.extension() != ".lua")continue;
+				string script_name{ cut_stem(p.stem() == "init" ? p.parent_path() : p,dirScript) };
+				string strPath{ getNativePathString(p) };
+				scripts[script_name] = strPath;
+			}
+		}
+		if (fs::exists(dirMod / "image")) {
+			std::filesystem::copy(dirMod / "image", dirExe / "data" / "image",
+				std::filesystem::copy_options::recursive);
+		}
+		if (fs::exists(dirMod / "audio")) {
+			std::filesystem::copy(dirMod / "audio", dirExe / "data" / "record",
+				std::filesystem::copy_options::recursive);
+		}
+	}
+	loaded = true;
+}
 int DiceModManager::load(ResList& resLog){
-	map_merge(global_speech = transpeech, GlobalMsg);
-	helpdoc = HelpDoc;
 	//读取mod管理文件
-	if (auto jFile{ freadJson(DiceDir / "conf" / "ModList.json") };!jFile.empty()) {
+	auto jFile{ freadJson(DiceDir / "conf" / "ModList.json") };
+	if (!jFile.empty()) {
 		for (auto j : jFile) {
 			if (!j.count("name"))continue;
 			string modName{ UTF8toGBK(j["name"].get<string>()) };
-			auto mod{ std::make_shared<DiceModConf>(DiceModConf{ modName,modIndex.size(),j["active"].get<bool>()}) };
+			auto mod{ std::make_shared<DiceMod>(DiceMod{ modName,modOrder.size(),j["active"].get<bool>()}) };
 			modList[modName] = mod;
-			modIndex.push_back(mod);
+			modOrder.push_back(mod);
 		}
 	}
 	//读取mod
 	vector<std::filesystem::path> ModFile;
-	vector<std::filesystem::path> ModLoadList(modIndex.size());
 	vector<string> sModErr;
 	auto dirMod{ DiceDir / "mod" };
 	if (int cntMod{ listDir(dirMod, ModFile) }; cntMod > 0) {
@@ -1375,130 +1418,99 @@ int DiceModManager::load(ResList& resLog){
 			if (pathMod.extension() != ".json")continue;
 			if (string modName{ UTF8toGBK(pathMod.stem().u8string()) }; modList.count(modName)) {
 				auto mod{ modList[modName] };
-				if (mod->active) {
-					mod->loaded = true;
-					ModLoadList[mod->index] = pathMod;
-				}
+				mod->file(pathMod);
 			}
 			else {
-				auto mod{ std::make_shared<DiceModConf>(DiceModConf{ modName,modIndex.size(),true }) };
+				auto mod{ std::make_shared<DiceMod>(DiceMod{ modName,modOrder.size(),true}) };
 				modList[modName] = mod;
-				modIndex.push_back(mod);
-				ModLoadList.push_back(pathMod);
+				modOrder.push_back(mod);
+				mod->file(pathMod);
 				newMod = true;
 			}
 		}
 		if (newMod)save();
 	}
-	if (!ModLoadList.empty()) {
-		int cntMod{ 0 }, cntHelpItem{ 0 }, cntSpeech{ 0 }, cntImage{ 0 }, cntAudio{ 0 };
-		vector<std::filesystem::path> ModLuaFiles;
-		for (auto& pathFile : ModLoadList) {
-			if (pathFile.empty())continue;
+	if (!modList.empty()) {
+		int cntMod{ 0 };
+		for (auto& mod : modOrder) {
+			if (mod->pathJson.empty())continue;
 			try {
-				fifo_json j = freadJson(pathFile);
+				fifo_json j = freadJson(mod->pathJson);
 				if (j.is_null()) {
-					sModErr.push_back(UTF8toGBK(pathFile.filename().u8string()));
+					sModErr.push_back(mod->name);
 					continue;
 				}
 				if (j.count("dice_build")) {
 					if (j["dice_build"] > Dice_Build) {
-						sModErr.push_back(UTF8toGBK(pathFile.filename().u8string())
+						sModErr.push_back(mod->name
 							+ "(build低于" + to_string(j["dice_build"].get<int>()) + ")");
 						continue;
 					}
 				}
+				if (j.count("require")) {
+					ShowList fault;
+					ShowList post;
+					for (auto& depend : j["require"]) {
+						if (!modList.count(depend)) {
+							fault << depend;
+						}
+						else if (modList[depend]->index > mod->index) {
+							post << depend;
+						}
+					}
+					if (!fault.empty()) {
+						sModErr.push_back(mod->name
+							+ "(缺少前置mod:" + fault.show() + ")");
+						continue;
+					}
+					else if (!post.empty()) {
+						console.log("警告：" + mod->name
+							+ "与前置mod[" + post.show() + "]顺序倒置", 1);
+					}
+				}
 				++cntMod;
+				mod->author = UTF8toGBK(j["author"].get<string>());
 				if (j.count("helpdoc")) {
-					cntHelpItem += readJMap(j["helpdoc"], helpdoc);
+					readJMap(j["helpdoc"], mod->helpdoc);
 				}
 				if (j.count("speech")) {
-					for (auto it = j["speech"].cbegin(); it != j["speech"].cend(); ++it) {
-						global_speech[UTF8toGBK(it.key())] = it.value();
+					for (auto& it : j["speech"].items()) {
+						mod->speech[UTF8toGBK(it.key())] = it.value();
 					}
 				}
-				if (fs::path dirMod{ pathFile.replace_extension() }; fs::exists(dirMod)) {
-					listDir(dirMod / "reply", ModLuaFiles);
-					listDir(dirMod / "event", ModLuaFiles);
-					if (fs::exists(dirMod / "speech")) {
-						vector<std::filesystem::path> fSpeech;
-						listDir(dirMod / "speech", fSpeech, true);
-						for (auto& p : fSpeech) {
-							YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) };
-							if (!yaml.IsMap()) {
-								continue;
-							}
-							for (auto it : yaml) {
-								global_speech[UTF8toGBK(it.first.Scalar())] = it.second;
-								++cntSpeech;
-							}
-						}
-					}
-					if (auto dirScript{ dirMod / "script" }; fs::exists(dirScript)) {
-						vector<std::filesystem::path> fScripts;
-						listDir(dirScript, fScripts, true);
-						for (auto p : fScripts) {
-							if (p.extension() != ".lua")continue;
-							string script_name{ cut_stem(p.stem() == "init" ? p.parent_path() : p,dirScript) };
-							string strPath{ getNativePathString(p) };
-							scripts[script_name] = strPath;
-						}
-					}
-					if (fs::exists(dirMod / "image")) {
-						std::filesystem::copy(dirMod / "image", dirExe / "data" / "image",
-							std::filesystem::copy_options::recursive); 
-						cntImage += cntDirFile(dirMod / "image");
-					}
-					if (fs::exists(dirMod / "audio")) {
-						std::filesystem::copy(dirMod / "audio", dirExe / "data" / "record",
-							std::filesystem::copy_options::recursive);
-						cntAudio += cntDirFile(dirMod / "audio");
-					}
-				}
-
+				mod->load();
 			}
 			catch (fifo_json::exception& e) {
-				sModErr.push_back(UTF8toGBK(pathFile.filename().u8string())+ "(解析错误)");
+				sModErr.push_back(mod->name + "(.json解析错误)");
 				continue;
 			}
 		}
-		if (cntMod)resLog << "读取/mod/中的" + std::to_string(cntMod) + "个mod";
-		if (cntSpeech)resLog << "录入speech" + to_string(cntSpeech) + "项";
-		if (cntImage)resLog << "录入图像" + to_string(cntImage) + "张";
-		if (cntAudio)resLog << "录入音频" + to_string(cntAudio) + "份";
-		loadLuaMod(ModLuaFiles, resLog);
-		if (!scripts.empty())resLog << "注册script" + to_string(scripts.size()) + "份";
-		if (cntHelpItem)resLog << "录入help词条" + to_string(cntHelpItem) + "项";
+		if (cntMod)resLog << "读取/mod/中的" + std::to_string(cntMod) + "枚mod";
 		if (!sModErr.empty()) {
-			resLog << "读取失败" + std::to_string(sModErr.size()) + "个:";
+			resLog << "读取失败" + std::to_string(sModErr.size()) + "项:";
 			for (auto& it : sModErr) {
 				resLog << it;
 			}
 		}
 	}
-	//读取plugin
-	loadPlugin(resLog);
-	//custom
-	map_merge(global_speech, EditedMsg);
-	if (std::filesystem::path fCustomHelp{ DiceDir / "conf" / "CustomHelp.json" }; std::filesystem::exists(fCustomHelp)) {
-		if (loadJMap(fCustomHelp, CustomHelp) == -1) {
-			resLog << UTF8toGBK(fCustomHelp.u8string()) + "解析失败！";
-		}
-		else {
-			map_merge(helpdoc, CustomHelp);
-		}
-	}
+	//custom_help
+	if (loadJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp) == -1)
+		resLog << "解析/conf/CustomHelp.json失败！";
+	else if(!CustomHelp.empty())
+		resLog << "读取/conf/CustomHelp.json中的" + std::to_string(CustomHelp.size()) + "条帮助词条";
+	loadJMap(DiceDir / "user" / "HelpStatic.json", cntHelp);
 	//custom_reply
+	loadPlugin(resLog);
 	if (fifo_json jFile = freadJson(DiceDir / "conf" / "CustomMsgReply.json"); !jFile.empty()) {
 		try {
-			for (auto reply = jFile.cbegin(); reply != jFile.cend(); ++reply) {
+			for (auto& reply : jFile.items()) {
 				if (std::string key = UTF8toGBK(reply.key()); !key.empty()) {
-					ptr<DiceMsgReply> p{ final_reply.items[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
+					ptr<DiceMsgReply> p{ custom_reply[key] = std::make_shared<DiceMsgReply>() };
 					p->title = key; 
 					p->readJson(reply.value());
 				}
 			}
-			resLog << "读取/conf/CustomMsgReply.json中的" + std::to_string(custom_reply.size()) + "条自定义回复";
+			resLog << "读取/conf/CustomMsgReply.json中的" + std::to_string(jFile.size()) + "条自定义回复";
 		}
 		catch (const std::exception& e) {
 			resLog << "解析/conf/CustomMsgReply.json出错:" << e.what();
@@ -1510,7 +1522,7 @@ int DiceModManager::load(ResList& resLog){
 		if (loadJMap(DiceDir / "conf" / "CustomReply.json", mReplyDeck) > 0) {
 			resLog << "迁移CustomReply" + to_string(mReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mReplyDeck) {
-				ptr<DiceMsgReply> reply{ final_reply.items[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
+				ptr<DiceMsgReply> reply{ custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;
 				reply->keyMatch[0] = std::make_unique<vector<string>>(vector<string>{ key });
 				reply->deck = deck;
@@ -1519,7 +1531,7 @@ int DiceModManager::load(ResList& resLog){
 		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck) > 0) {
 			resLog << "迁移正则Reply" + to_string(mRegexReplyDeck.size()) + "条";
 			for (auto& [key, deck] : mRegexReplyDeck) {
-				ptr<DiceMsgReply> reply{ final_reply.items[key] = custom_reply[key] = std::make_shared<DiceMsgReply>() };
+				ptr<DiceMsgReply> reply{ custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;
 				reply->keyMatch[3] = std::make_unique<vector<string>>(vector<string>{ key });
 				reply->deck = deck;
@@ -1528,66 +1540,89 @@ int DiceModManager::load(ResList& resLog){
 		if(!custom_reply.empty())save_reply();
 	}
 	//init
-	std::thread factory(&DiceModManager::init, this);
-	factory.detach();
-	if (cntHelp.empty()) {
-		cntHelp.reserve(helpdoc.size());
-		loadJMap(DiceDir / "user" / "HelpStatic.json", cntHelp);
-	}
-	return ModLoadList.size();
+	build();
+	return 0;
 }
-void DiceModManager::init() {
-	isIniting = true;
-	for (const auto& [key, word] : helpdoc) {
+void DiceModManager::build() {
+	isIniting = true; 
+	ShowList resLog;
+	size_t cntSpeech{ 0 }, cntHelp{ 0 };
+	//init
+	map_merge(global_speech = transpeech, GlobalMsg);
+	global_helpdoc = HelpDoc;
+	//merge mod
+	for (auto& mod : modOrder) {
+		if (!mod->active || !mod->loaded)continue;
+		cntSpeech += map_merge(global_speech, mod->speech);
+		cntHelp += map_merge(global_helpdoc, mod->helpdoc);
+		map_merge(global_scripts, mod->scripts);
+		map_merge(final_reply.items, mod->reply_list);
+		map_merge(global_events, mod->events);
+	}
+	//merge custom
+	if (cntSpeech += map_merge(global_speech, EditedMsg))
+		resLog << "注册speech" + to_string(cntSpeech) + "项";
+	if (cntHelp += map_merge(global_helpdoc, CustomHelp))
+		resLog << "注册help" + to_string(cntHelp) + "项";
+	for (const auto& [key, word] : global_helpdoc) {
 		querier.insert(key);
 	}
-	final_reply.build();
-	unordered_set<string> cycle;
-	for (auto& [id, eve] : events) {
-		eve["id"] = id;
-		auto trigger{ eve.get_dict("trigger") };
-		if (trigger->count("cycle")) {
-			if (!cycle_events.count(id)) {
-				call_cycle_event(id);
+	map_merge(final_reply.items, plugin_reply);
+	map_merge(final_reply.items, custom_reply);
+	if (!final_reply.items.empty()) {
+		resLog << "注册reply" + to_string(final_reply.items.size()) + "项";
+		final_reply.build();
+	}
+	if (!global_scripts.empty())resLog << "注册script" + to_string(global_scripts.size()) + "份";
+	if (!global_events.empty()) {
+		resLog << "注册event" + to_string(global_events.size()) + "项";
+		unordered_set<string> cycle;
+		for (auto& [id, eve] : global_events) {
+			eve["id"] = id;
+			auto trigger{ eve.get_dict("trigger") };
+			if (trigger->count("cycle")) {
+				if (!cycle_events.count(id)) {
+					call_cycle_event(id);
+				}
+				cycle.insert(id);
 			}
-			cycle.insert(id);
-		}
-		if (trigger->count("clock")) {
-			auto& clock{ trigger->at("clock") };
-			if (auto list{ clock.to_list() }) {
-				for (auto& clc : *list) {
-					clock_events.emplace(parse_clock(clc), id);
+			if (trigger->count("clock")) {
+				auto& clock{ trigger->at("clock") };
+				if (auto list{ clock.to_list() }) {
+					for (auto& clc : *list) {
+						clock_events.emplace(parse_clock(clc), id);
+					}
+				}
+				else {
+					clock_events.emplace(parse_clock(clock), id);
 				}
 			}
-			else {
-				clock_events.emplace(parse_clock(clock), id);
+			if (trigger->count("hook")) {
+				string nameEvent{ trigger->at("hook").to_str() };
+				hook_events.emplace(nameEvent, eve);
 			}
 		}
-		if (trigger->count("hook")) {
-			string nameEvent{ trigger->at("hook").to_str() };
-			hook_events.emplace(nameEvent, eve);
-		}
+		cycle_events.swap(cycle);
 	}
-	cycle_events.swap(cycle);
+	if (!resLog.empty()) {
+		resLog << "模块加载完毕√";
+		console.log(getMsg("strSelfName") + "\n" + resLog.show("\n"), 1, printSTNow());
+	}
 	isIniting = false;
 }
 void DiceModManager::clear(){
-	helpdoc.clear();
-	querier.clear();
 	taskcall.clear();
-	final_reply = {};
-	mod_reply_list.clear();
 	clock_events.clear();
 	hook_events.clear();
-	events.clear();
-	modList.clear();
-	modIndex.clear(); 
-	global_speech.clear();
+	global_events.clear();
+	final_reply = {};
+	global_scripts.clear();
+	querier.clear();
 }
 
 void DiceModManager::save() {
 	fifo_json jFile = fifo_json::array();
-	for (auto& mod : modIndex) {
+	for (auto& mod : modOrder) {
 		fifo_json j = fifo_json::object();
 		j["name"] = GBKtoUTF8(mod->name);
 		j["active"] = mod->active;
@@ -1601,11 +1636,6 @@ void DiceModManager::save() {
 	}
 }
 void DiceModManager::reload() {
-	ResList logList;
 	clear();
-	load(logList);
-	if (!logList.empty()){
-		logList << "模块重载完毕√";
-		console.log(logList.show(), 1, printSTNow());
-	}
+	build();
 }

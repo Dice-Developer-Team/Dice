@@ -391,7 +391,7 @@ const dict_ci<string> PlainMsg
 	{"strSelfName", "" },
 	{"strSelfNick", "&strSelfName" },
 	{"self", "&strSelfCall"},
-	{"strBotHeader", "泛用型 " },
+	{"strBotHeader", "试作型 " },
 	{"strBotMsg", "\n使用.help 查看{self}帮助文档"},
 	{"strHlpMsg", R"(请使用.dismiss ID（或后四位） 使{self}退群退讨论组
 .bot on/off ID（或后四位） //开启或关闭指令
@@ -422,7 +422,8 @@ const dict_ci<string> GlobalComment{
 	{"strBlackQQAddNotice", "新拉黑对象有使用记录时发送通知"},
 	{"strBlackQQAddNoticeReason", "带理由的拉黑通知"},
 	{"strBlackQQDelNotice", "解黑通知"},
-	{"strBotMsg", "bot指令附于Dice信息后的文本"},
+	{"strBotHeader", "bot回执开头附加文本"},
+	{"strBotMsg", "bot回执附于Dice信息后的文本"},
 	{"strBotOff", "bot指令群内关闭回执"},
 	{"strBotOffAlready", "bot指令群内已经关闭"},
 	{"strBotOn", "bot指令群内开启回执"},
@@ -482,8 +483,9 @@ const dict_ci<string> GlobalComment{
 	//
 	{"strWhiteQQDenied","权限要求群管理或者信任1"},
 };
-const dict_ci<string> HelpDoc = {
+const dict_ci<> HelpDoc = {
 {"更新",R"(
+623:优化mod热插拔
 622:支持手动时差
 621:扩展代理事件及ex接口
 620:留档每日数据，新增每日清算事件

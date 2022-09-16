@@ -1264,24 +1264,16 @@ int DiceEvent::BasicOrder()
 			return true;
 		}
 		string& key{ (at("key") = readUntilSpace()).text };
-		readSkipSpace();
-		if (intMsgCnt == strMsg.length())
-		{
-			CustomHelp.erase(key);
-			if (auto it = HelpDoc.find(key); it != HelpDoc.end())
-				fmt->set_help(it->first, it->second);
-			else
-				fmt->rm_help(key);
+		string strHelp = readRest();
+		if (strHelp.empty()){
+			fmt->rm_help(key);
 			replyMsg("strHlpReset");
 		}
-		else
-		{
-			string strHelpdoc = strMsg.substr(intMsgCnt);
-			CustomHelp[key] = strHelpdoc;
-			fmt->set_help(key, strHelpdoc);
+		else{
+			fmt->set_help(key, strHelp);
 			replyMsg("strHlpSet");
 		}
-		saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
+		
 		return true;
 	}
 	if (strLowerMessage.substr(intMsgCnt, 4) == "help")

@@ -430,7 +430,6 @@ EVE_Enable(eventEnable){
 	{
 		console.log(std::string("Ë¢ÐÂÈí¼þ°ü»º´æÊ§°Ü£º") + e.what(), 0);
 	}
-	isIniting.clear();
 	fmt->call_hook_event(AttrVars{ {{"Event","StartUp"}} });
 }
 

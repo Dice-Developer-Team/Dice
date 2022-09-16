@@ -113,8 +113,9 @@ template<class Map>
 
 template<class Map>
 int loadJMap(const std::filesystem::path& fpLoc, Map& mapTmp) {
+	if (!std::filesystem::exists(fpLoc))return -2;
 	fifo_json j = freadJson(fpLoc);
-	if (j.is_null())return -2;
+	if (j.is_null())return 0;
 	try 
 	{
 		return readJMap(j, mapTmp);

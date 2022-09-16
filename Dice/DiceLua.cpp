@@ -560,7 +560,7 @@ int getSelfData(lua_State* L) {
 	string file{ lua_to_native_string(L, 1) };
 	if (!selfdata_byFile.count(file)) {
 		auto& data{ selfdata_byFile[file] = std::make_shared<SelfData>(DiceDir / "selfdata" / file) };
-		if (string name{ cut_stem(std::filesystem::path(file).stem()) }; !selfdata_byStem.count(name)) {
+		if (string name{ cut_stem(file) }; !selfdata_byStem.count(name)) {
 			selfdata_byStem[name] = data;
 		}
 	}
@@ -1192,7 +1192,6 @@ void DiceModManager::loadPlugin(ResList& res) {
 	if (listDir(DiceDir / "plugin", files) <= 0)return;
 	ShowList err;
 	int cntPlugin{ 0 };
-	int cntOrder{ 0 };
 	int cntTask{ 0 };
 	for (const auto& pathFile : files) {
 		if ((pathFile.extension() != ".lua")) {
@@ -1207,7 +1206,6 @@ void DiceModManager::loadPlugin(ResList& res) {
 		if (luaL_dofile(L, file.c_str())) {
 			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
 			err << pErrorMsg;
-			L.reboot();
 			continue;
 		}
 		else {
@@ -1222,12 +1220,11 @@ void DiceModManager::loadPlugin(ResList& res) {
 						ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
 						reply->title = key;
 						reply->from_obj(val.to_obj());
-						final_reply.add(key, reply);
+						plugin_reply.emplace(key, reply);
 					}
 					else {
-						final_reply.add_order(format(key), { {"file",file},{"func",val} });
+						plugin_reply.emplace(key, DiceMsgReply::set_order(key, { {"file",file},{"func",val} }));
 					}
-					++cntOrder;
 				}
 			}
 			lua_pop(L, 1);
@@ -1245,18 +1242,19 @@ void DiceModManager::loadPlugin(ResList& res) {
 			++cntPlugin;
 		}
 	}
-	res << "读取/plugin/中的" + std::to_string(cntPlugin) + "个脚本, 共" + to_string(cntOrder) + "个指令"
-		+ (cntTask ? "，" + to_string(cntTask) + "个任务" : "");
+	res << "读取/plugin/中的" + std::to_string(cntPlugin) + "个脚本, 共"
+		+ to_string(plugin_reply.size()) + "条指令"
+		+ (cntTask ? "，" + to_string(cntTask) + "项任务" : "");
 	if (!err.empty()) {
 		res << "plugin文件读取错误" + to_string(err.size()) + "次:" + err.show("\n");
 	}
 }
 
-void DiceModManager::loadLuaMod(const vector<std::filesystem::path>& files, ResList& res) {
+void DiceMod::loadLua() {
 	LuaState L;
 	UTF8Luas.insert(L);
 	ShowList err;
-	for (auto file : files) {
+	for (auto& file : luaFiles) {
 		lua_newtable(L);
 		lua_setglobal(L, "msg_reply");
 		lua_newtable(L);
@@ -1275,7 +1273,10 @@ void DiceModManager::loadLuaMod(const vector<std::filesystem::path>& files, ResL
 					continue;
 				}
 				for (auto& [key, val] : lua_to_dict(L)) {
-					mod_reply_list[key] = val.to_obj();
+					ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
+					reply->title = key;
+					reply->from_obj(val.to_obj());
+					reply_list[key] = reply;
 				}
 			}
 			lua_pop(L, 1);
@@ -1291,20 +1292,7 @@ void DiceModManager::loadLuaMod(const vector<std::filesystem::path>& files, ResL
 			}
 		}
 	}
-	if (!mod_reply_list.empty()) {
-		res << "注册reply" + to_string(mod_reply_list.size()) + "项";
-		for (const auto& [key, val] : mod_reply_list) {
-			if (key.empty())continue;
-			ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
-			reply->title = key;
-			reply->from_obj(val);
-			final_reply.add(key, reply);
-		}
-	}
-	if (!events.empty()) {
-		res << "注册event" + to_string(events.size()) + "项";
-	}
 	if (!err.empty()) {
-		res << "mod文件读取错误:" + err.show("\n");
+		console.log("mod读取错误:" + err.show("\n"), 1);
 	}
 }

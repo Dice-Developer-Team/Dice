@@ -69,6 +69,7 @@ public:
 	DiceTriggerLimit limit;
 	AttrVar text;
 	std::vector<string> deck;
+	static ptr<DiceMsgReply> set_order(const string& key, const AttrVars&);
 	string show()const;
 	string show_ans()const;
 	string print()const;
@@ -91,8 +92,8 @@ public:
 	//regex mode without formating
 	dict<ptr<DiceMsgReply>> regex_items;
 	unordered_multimap<string, std::wregex> regex_exp;
+	//ptr<DiceMsgReply>& operator[](const string& key) { return items[key]; }
 	void add(const string& key, ptr<DiceMsgReply> reply);
-	void add_order(const string& key, AttrVars);
 	void build();
 	void erase(ptr<DiceMsgReply> reply);
 	void erase(const string& key) { if (items.count(key))erase(items[key]); }
@@ -124,70 +125,60 @@ public:
 	string express()const;
 };
 
-/*
-class DiceMod
-{
-protected:
-	string mod_name;
-	string mod_author;
-	string mod_ver;
-	unsigned int mod_build{ 0 };
-	unsigned int mod_Dice_build{ 0 };
-	dict_ci<string> mod_helpdoc;
-	dict_ci<vector<string>> mod_public_deck;
-	using replys = dict_ci<DiceMsgReply>;
-	replys mod_msg_reply;
-public:
-	DiceMod() = default;
-	friend class DiceModFactory;
-};
-
-#define MOD_BUILD(TYPE, MEM) DiceModFactory& MEM(const TYPE& val){ \
-		mod_##MEM = val;  \
-		return *this; \
-	} 
-class DiceModFactory :public DiceMod {
-public:
-	DiceModFactory() {}
-	MOD_BUILD(string, name)
-	MOD_BUILD(string, author)
-	MOD_BUILD(string, ver)
-	MOD_BUILD(unsigned int, build)
-	MOD_BUILD(unsigned int, Dice_build)
-	//MOD_BUILD(dict_ci<string>, helpdoc)
-   // MOD_BUILD(replys, msg_reply)
-};
-*/
-
-class DiceModConf {
-public:
-	string name;
+class DiceMod {
 	size_t index{ 0 };
+	fs::path pathJson;
+	DiceMod& file(const fs::path& p) {
+		pathJson = p;
+		return *this;
+	}
+	friend class DiceModManager;
+public:
+	DiceMod(const string& mod, size_t i, bool b) :name(mod), index(i), active(b) {}
+	string name;
+	string author;
+	string ver;
 	bool active{ true };
+	DiceMod& on() {
+		active = true;
+		return *this;
+	}
+	DiceMod& off() {
+		active = false;
+		return *this;
+	}
 	bool loaded{ false };
+	void load();
+	void loadLua();
+private:
+	dict<>helpdoc;
+	dict<DiceSpeech>speech;
+	dict_ci<string>scripts;
+	vector<fs::path>luaFiles;
+	dict<ptr<DiceMsgReply>>reply_list;
+	AttrObjects events;
 };
 
 using Clock = std::pair<unsigned short, unsigned short>;
 class ResList;
-class DiceModManager
-{
-	dict_ci<ptr<DiceModConf>> modList;
-	vector<ptr<DiceModConf>> modIndex;
+class DiceModManager {
+	dict_ci<ptr<DiceMod>> modList;
+	vector<ptr<DiceMod>> modOrder;
 	//custom
+	dict_ci<ptr<DiceMsgReply>> plugin_reply;
 	dict_ci<ptr<DiceMsgReply>> custom_reply;
 	//global
 	dict_ci<DiceSpeech> global_speech;
-	dict_ci<string> helpdoc;
+	dict_ci<> global_helpdoc;
 	DiceReplyUnit final_reply;
+	dict_ci<string> global_scripts;
 	dict_ci<AttrVars> taskcall;
-	dict_ci<string> scripts;
+	AttrObjects global_events; //events by id
 	//Event
-	dict_ci<AttrObject> events; //events by id
 	unordered_set<string> cycle_events; //重载时唯一性检查
 	multidict_ci<AttrObject> hook_events;
 
 	WordQuerier querier;
-	AttrObjects mod_reply_list;
 public:
 	DiceModManager();
 	multimap<Clock, string> clock_events;
@@ -226,13 +217,12 @@ public:
 	void reply_show(DiceEvent*);
 	bool call_task(const string&);
 
-	bool script_has(const string& name)const { return scripts.count(name); }
+	bool script_has(const string& name)const { return global_scripts.count(name); }
 	string script_path(const string& name)const;
 
-	void loadLuaMod(const vector<fs::path>&, ResList&);
 	void loadPlugin(ResList& res);
 	int load(ResList&);
-	void init();
+	void build();
 	void clear();
 	void reload();
 	void save();

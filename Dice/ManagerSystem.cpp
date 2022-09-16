@@ -172,7 +172,7 @@ AttrVar getContextItem(AttrObject context, string item) {
 	}
 	if (sub.empty())sub = splitOnce(item);
 	if (sub == "self") {
-		return getSelfItem(item);
+		return item.empty() ? getMsg("strSelfCall") : getSelfItem(item);
 	}
 	else if (selfdata_byStem.count(sub)) {
 		var = selfdata_byStem[sub]->data.index(item);
