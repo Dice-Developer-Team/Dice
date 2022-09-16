@@ -351,7 +351,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DDLL_SUFFIX=.${{matrix.dll_sfx}} -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DANDROID_ABI="${{ matrix.abi }}" -DCMAKE_SYSTEM_NAME=ANDROID -DANDROID_PLATFORM=21 -DVCPKG_LIBRARY_LINKAGE=static
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DDLL_SUFFIX=.${{matrix.dll_sfx}} -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DANDROID_ABI="${{ matrix.abi }}" -DCMAKE_SYSTEM_NAME=ANDROID -DANDROID_PLATFORM=21 -DCMAKE_SYSTEM_VERSION=21
 
     - name: Build
       working-directory: ${{github.workspace}}/build
