@@ -308,12 +308,12 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			AttrObject& tab{ item.table };
 			if (tab.has("nor")) {
 				user_id_negative = true;
-				item = tab.to_dict()->at("nor");
-				if (item.is_numberic()) {
+				auto id{ tab.get("nor") };
+				if (id.is_numberic()) {
 					user_id = { item.to_ll() };
 				}
-				else for (auto& id : *item.to_list()) {
-					user_id.emplace(id.to_ll());
+				else if (id.to_list())for (auto& i : *id.to_list()) {
+					user_id.emplace(i.to_ll());
 				}
 			}
 			else for (auto& id : *tab.to_list()) {
@@ -332,16 +332,16 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			AttrObject& tab{ item.table };
 			if (tab.has("nor")) {
 				grp_id_negative = true;
-				item = tab.to_dict()->at("nor");
-				if (item.is_numberic()) {
+				auto id{ tab.get("nor") };
+				if (id.is_numberic()) {
 					grp_id = { item.to_ll() };
 				}
-				else if (tab.to_list()) for (auto& id : *item.to_list()) {
-					user_id.emplace(id.to_ll());
+				else if (id.to_list()) for (auto& i : *id.to_list()) {
+					grp_id.emplace(i.to_ll());
 				}
 			}
 			else if(tab.to_list())for (auto& id : *tab.to_list()) {
-				user_id.emplace(id.to_ll());
+				grp_id.emplace(id.to_ll());
 			}
 			if (!grp_id.empty()) {
 				limits << (grp_id_negative ? "grp_id:!" : "grp_id:") + listID(grp_id);

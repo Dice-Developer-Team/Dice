@@ -85,6 +85,9 @@ AttrObject AttrObject::get_obj(const string& key)const {
 ptr<AttrVars> AttrObject::get_dict(const string& key)const {
 	return dict->count(key) ? dict->at(key).to_dict() : ptr<AttrVars>();
 }
+ptr<VarArray> AttrObject::get_list(const string& key)const {
+	return dict->count(key) ? dict->at(key).to_list() : ptr<VarArray>();
+}
 void AttrObject::inc(const string& key)const {
 	if (key.empty())return;
 	if (dict->count(key))++dict->at(key);

@@ -86,6 +86,7 @@ public:
 	double get_num(const string& key)const;
 	AttrObject get_obj(const string& key)const;
 	ptr<AttrVars> get_dict(const string& key)const;
+	ptr<VarArray> get_list(const string& key)const;
 	void inc(const string& key)const;
 	AttrObject& merge(const AttrVars& other);
 	fifo_json to_json()const;
