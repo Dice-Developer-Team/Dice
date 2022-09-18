@@ -18,8 +18,6 @@ using std::u16string;
 using std::string_view;
 using std::to_string;
 
-#define CP_GBK (936)
-
 bool isNumeric(const string& s) {
     bool hasDot{ false };
     size_t len{ s.length() };

@@ -457,7 +457,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 				else replyMsg("strParaIllegal");
 				return 1;
 			}
-			int intLV;
+			int intLV{ 0 };
 			switch (readNum(intLV))
 			{
 			case 0:
@@ -814,7 +814,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 			if (llTargetID == 0)
 			{
 				ResList res;
-				for (auto [each, danger] : blacklist->mGroupDanger) {
+				for (auto& [each, danger] : blacklist->mGroupDanger) {
 					res << printGroup(each) + ":" + to_string(danger);
 				}
 				reply(res.show(), false);
@@ -891,7 +891,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 			if (llTargetID == 0) 
 			{
 				ResList res;
-				for (auto [each, danger] : blacklist->mQQDanger) 
+				for (auto& [each, danger] : blacklist->mQQDanger) 
 				{
 					res << printUser(each) + ":" + to_string(danger);
 				}
@@ -1946,7 +1946,7 @@ int DiceEvent::InnerOrder() {
 			}
 			ResList resKicked, resDenied, resNotFound;
 			do {
-				if (int auth{ DD::getGroupAuth(llGroup, llMemberQQ,0) }) {
+				if (int auth{ DD::getGroupAuth(llGroup, llMemberQQ,1) }) {
 					if (auth > 1) {
 						resDenied << printUser(llMemberQQ);
 						continue;
@@ -2759,20 +2759,30 @@ int DiceEvent::InnerOrder() {
 		set("li",fmt->list_mod());
 		replyMsg("strModList");
 	}
+	else if (string& modName{ (at("mod") = readRest()).text }; modName.empty()) {
+		replyMsg("strModNameEmpty");
+	}
 	else if (strPara == "on") {
-		string& modName{ (at("mod") = readRest()).text };
-		if (modName.empty()) {
-			replyMsg("strModNameEmpty");
-		}
-		else fmt->mod_on(this);
+		fmt->mod_on(this);
 	}
 	else if (strPara == "off") {
-		string& modName{ (at("mod") = readRest()).text};
-		if (modName.empty()) {
-			replyMsg("strModNameEmpty");
-		}
-		else fmt->mod_off(this);
+		fmt->mod_off(this);
 	}
+	else if (strPara == "get") {
+		fmt->mod_install(*this);
+	}
+	else if (!fmt->has_mod(modName)) {
+		replyMsg("strModNotFound");
+	}
+	else if (strPara == "info") {
+		set("mod_desc", fmt->get_mod(modName)->desc());
+		replyMsg("strModDescLocal");
+	}
+	else if (strPara == "detail") {
+		set("mod_detail", fmt->get_mod(modName)->detail());
+		replyMsg("strModDetail");
+	}
+	return 1;
 }
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "nnn") {
 		intMsgCnt += 3;
@@ -2804,7 +2814,7 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strSetDefaultDice");
 			return 1;
 		}
-		if (intDefaultDice == 100)
+		else if (intDefaultDice == 100)
 			getUser(fromChat.uid).rmConf("Ä¬ÈÏ÷»");
 		else
 			getUser(fromChat.uid).setConf("Ä¬ÈÏ÷»", intDefaultDice);

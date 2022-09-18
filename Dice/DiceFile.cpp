@@ -99,20 +99,11 @@ bool rdbuf(const std::filesystem::path& fpPath, string& s)
 	return true;
 }
 
-void fprint(std::ofstream& fout, std::string s)
-{
-	while (s.find(' ') != std::string::npos)s.replace(s.find(' '), 1, "{space}");
-	while (s.find('\t') != std::string::npos)s.replace(s.find('\t'), 1, "{tab}");
-	while (s.find('\n') != std::string::npos)s.replace(s.find('\n'), 1, "{endl}");
-	while (s.find('\r') != std::string::npos)s.replace(s.find('\r'), 1, "{enter}");
-	fout << s;
-}
-
 void fwrite(ofstream& fout, const std::string& s)
 {
 	auto len = static_cast<short>(s.length());
 	fout.write(reinterpret_cast<char*>(&len), sizeof(short));
-	fout.write(s.c_str(), sizeof(char) * s.length());
+	fout.write(s.c_str(), (std::streamsize)s.length() * sizeof(char));
 }
 
 void readini(ifstream& fin, std::string& s)

@@ -230,7 +230,7 @@ public:
 
 	[[nodiscard]] bool isset(const string& key) const
 	{
-		return confs.has(key);
+		return confs.is(key);
 	}
 
 	bool is_except()const;

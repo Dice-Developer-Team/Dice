@@ -94,7 +94,7 @@ public:
 		res += printTab(nTab) + '<' + tag + '>';
 		if (vChild.empty() && strValue.find('\n') == string::npos)return res + strValue + "</" + tag + '>';
 		if (!strValue.empty())res += "\n" + printTab(nTab) + strValue;
-		for (auto child : vChild)
+		for (auto& child : vChild)
 		{
 			res += "\n" + child.dump(nTab + 1);
 		}

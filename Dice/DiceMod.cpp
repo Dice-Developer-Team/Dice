@@ -33,7 +33,6 @@
 #include "DDAPI.h"
 #include "yaml-cpp/yaml.h"
 #include <regex>
-namespace fs = std::filesystem;
 
 std::shared_ptr<DiceModManager> fmt;
 void parse_vary(string& raw, unordered_map<string, pair<AttrVar::CMPR, AttrVar>>& vary) {
@@ -833,14 +832,18 @@ dict_ci<DiceSpeech> transpeech{
 	{ "Equal","=" },
 };
 
-DiceModManager::DiceModManager() :global_speech(transpeech) {
+DiceModManager::DiceModManager() {
+	git_libgit2_init();
 }
 string DiceModManager::list_mod()const {
 	ResList list;
 	for (auto& mod : modOrder) {
-		list << to_string(mod->index) + ". " + mod->name + (mod->active
-			? (mod->loaded ? " √" : " ?")
-			: " ×");
+		list << to_string(mod->index) + ". "
+			+ (mod->title.empty() || mod->title == mod->name ? mod->name
+				: (mod->title + "/" + mod->name))
+			+ (mod->active
+				? (mod->loaded ? " √" : " ?")
+				: " ×");
 	}
 	return list.show();
 }
@@ -852,7 +855,7 @@ void DiceModManager::mod_on(DiceEvent* msg) {
 		}
 		else {
 			modList[modName]->active = true;
-			modList[modName]->load();
+			modList[modName]->loadDir();
 			save();
 			reload();
 			msg->note("{strModOn}", 1);
@@ -878,6 +881,46 @@ void DiceModManager::mod_off(DiceEvent* msg) {
 	else {
 		msg->replyMsg("strModNotFound");
 	}
+}
+void DiceModManager::mod_install(DiceEvent& msg) {
+	std::string desc;
+	string name{ msg.get_str("mod") };
+	if (modList.count(name) && modList[name]->loaded) {
+		msg.set("mod_desc", modList[name]->desc());
+		msg.replyMsg("strModDescLocal");
+		return;
+	}
+	for (auto& url : sourceList) {
+		if (!Network::GET(url + name, desc)) {
+			console.log("访问"+ url + name + "失败:" + desc, 0);
+			msg.set("err", "\n访问" + url + name + "失败:" + desc);
+			continue;
+		}
+		try {
+			fifo_json j = fifo_json::parse(desc);
+			//todo: dice_build check
+			if (!j.count("repo")) {
+				console.log("安装" + url + name + "失败:未写出仓库地址(repo)！", 0b01);
+				msg.set("err", "\n未写出仓库地址(repo):" + url + name);
+				continue;
+			}
+			string repo{ j["repo"] };
+			auto mod{ std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),repo}) };
+			modList[name] = mod;
+			modOrder.push_back(mod);
+			if (!mod->loaded)break;
+			save();
+			reload();
+			msg.replyMsg("strModInstalled");
+			return;
+		}
+		catch (std::exception& e) {
+			console.log("安装" + url + name + "失败:" + e.what(), 0b01);
+			msg.set("err", url + name + ":" + e.what());
+		}
+	}
+	if (!msg.has("err"))msg.set("err", "\n未找到Mod源");
+	msg.replyMsg("strModInstalledErr");
 }
 
 string DiceModManager::format(string s, AttrObject context, const AttrIndexs& indexs, const dict_ci<string>& dict) const {
@@ -1051,16 +1094,20 @@ string DiceModManager::get_help(const string& key, AttrObject context) const{
 
 struct help_sorter {
 	bool operator()(const string& _Left, const string& _Right) const {
-		if (fmt->cntHelp.count(_Right) && !fmt->cntHelp.count(_Left))
-			return true;
-		else if (fmt->cntHelp.count(_Left) && !fmt->cntHelp.count(_Right))
-			return false;
-		else if (fmt->cntHelp.count(_Left) && fmt->cntHelp.count(_Right) && fmt->cntHelp[_Left] != fmt->cntHelp[_Right])
-			return fmt->cntHelp[_Left] < fmt->cntHelp[_Right];
+		auto lit = fmt->cntHelp.find(_Left),
+			rit = fmt->cntHelp.find(_Right);
+		if (lit != rit) {
+			if (rit != fmt->cntHelp.end())
+				return true;
+			else if (lit != fmt->cntHelp.end())
+				return false;
+			else if (lit->second != rit->second)
+				return lit->second < rit->second;
+		}
 		else if (_Left.length() != _Right.length()) {
 			return _Left.length() > _Right.length();
 		}
-		else return _Left > _Right;
+		return _Left < _Right;
 	}
 };
 
@@ -1069,11 +1116,11 @@ void DiceModManager::_help(DiceEvent* job) {
 		job->reply(getMsg("strBotHeader") + Dice_Short_Ver + "\n" + getMsg("strHlpMsg"));
 		return;
 	}
-	else if (const auto it = global_helpdoc.find((*job)["help_word"].to_str());
+	else if (const auto it = global_helpdoc.find(job->get_str("help_word"));
 		it != global_helpdoc.end()) {
 		job->reply(format(it->second, {}, {}, global_helpdoc));
 	}
-	else if (auto keys = querier.search((*job)["help_word"].to_str());!keys.empty()) {
+	else if (auto keys = querier.search(job->get_str("help_word"));!keys.empty()) {
 		if (keys.size() == 1) {
 			(*job)["redirect_key"] = *keys.begin();
 			(*job)["redirect_res"] = get_help(*keys.begin());
@@ -1090,12 +1137,12 @@ void DiceModManager::_help(DiceEvent* job) {
 				qKey.pop();
 				if (res.size() > 20)break;
 			}
-			(*job)["res"] = res.dot("/").show(1);
+			job->set("res", res.dot("/").show(1));
 			job->reply(getMsg("strHelpSuggestion"));
 		}
 	}
 	else job->reply(getMsg("strHelpNotFound"));
-	cntHelp[(*job)["help_word"].to_str()] += 1;
+	cntHelp[job->get_str("help_word")] += 1;
 	saveJMap(DiceDir / "user" / "HelpStatic.json",cntHelp);
 }
 
@@ -1105,7 +1152,6 @@ void DiceModManager::set_help(const string& key, const string& val){
 	if (!global_helpdoc.count(key))querier.insert(key);
 	global_helpdoc[key] = val;
 }
-
 void DiceModManager::rm_help(const string& key){
 	if(CustomHelp.erase(key)){
 		saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
@@ -1356,15 +1402,109 @@ string DiceModManager::script_path(const string& name)const {
 	return {};
 }
 
-void DiceMod::load() {
+DiceMod::DiceMod(const string& mod, size_t i, const string& url) :name(mod), index(i), pathDir(DiceDir / "mod" / mod),
+repo(std::make_shared<DiceRepo>(pathDir, url)) {
+	if (!repo) {
+		console.log(getMsg("strSelfNick") + "安装mod「" + mod + "」仓库失败！", 0);
+	}
+	else if (!fs::exists(pathDir / "descriptor.json")) {
+		console.log(getMsg("strSelfNick") + "安装mod「" + mod + "」异常:找不到descriptor.json", 1);
+	}
+	else {
+		pathJson = DiceDir / "mod" / (mod + ".json");
+		fs::copy_file(pathDir / "descriptor.json", pathJson, fs::copy_options::overwrite_existing);
+		string reason;
+		if (!loadDesc(reason)) {
+			console.log(getMsg("strSelfNick") + "安装安装「" + mod + "」失败:" + reason, 0);
+		}
+	}
+}
+
+string DiceMod::desc()const {
+	ShowList li;
+	li << "[" + to_string(index) + "]" + (title.empty() ? name : title);
+	if (!ver.empty())li << "- 版本: " + ver;
+	if (!author.empty())li << "- 作者: " + author;
+	if (!brief.empty())li << "- 简介: " + brief;
+	return "\n" + li.show("\n");
+}
+string DiceMod::detail()const {
+	ShowList li;
+	if (!events.empty())li << "- 事件: " + to_string(events.size()) + "条";
+	if (!reply_list.empty())li << "- 回复: " + to_string(reply_list.size()) + "项";
+	if (!scripts.empty())li << "- 脚本: " + to_string(scripts.size()) + "份";
+	if (!helpdoc.empty())li << "- 帮助: " + to_string(helpdoc.size()) + "条";
+	if (!speech.empty())li << "- 台词: " + to_string(speech.size()) + "项";
+	if (cntImage)li << "- 图像: " + to_string(cntImage) + "份";
+	if (cntAudio)li << "- 音频: " + to_string(cntAudio) + "份";
+	return desc() + "\n" + li.show("\n");
+}
+bool DiceMod::loadDesc(string& cb) {
+	try {
+		fifo_json j = freadJson(pathJson);
+		if (j.is_null()) {
+			cb = "(未读取到json)";
+			return false;
+		}
+		if (j.count("dice_build")) {
+			if (j["dice_build"] > Dice_Build) {
+				cb = "(Dice!build低于所需" + to_string(j["dice_build"].get<int>()) + ")";
+				return false;
+			}
+		}
+		if (j.count("require")) {
+			ShowList fault;
+			ShowList post;
+			for (auto& depend : j["require"]) {
+				if (!fmt->modList.count(depend)) {
+					fault << depend;
+				}
+				else if (fmt->modList[depend]->index > index) {
+					post << depend;
+				}
+			}
+			if (!fault.empty()) {
+				cb = "(缺少前置mod:" + fault.show() + ")";
+				return false;
+			}
+			else if (!post.empty()) {
+				console.log("警告：" + name
+					+ "与前置mod[" + post.show() + "]顺序倒置", 1);
+			}
+		}
+		if (!repo && j.count("repo")) {
+			(repo = std::make_shared<DiceRepo>(pathDir))->url(j["repo"]);
+		}
+		if (j.count("title"))title = UTF8toGBK(j["title"].get<string>());
+		else if (j.count("mod"))title = UTF8toGBK(j["mod"].get<string>());
+		if (j.count("ver"))ver = UTF8toGBK(j["ver"].get<string>());
+		if (j.count("author"))author = UTF8toGBK(j["author"].get<string>());
+		if (j.count("brief"))brief = UTF8toGBK(j["brief"].get<string>());
+		if (j.count("helpdoc")) {
+			readJMap(j["helpdoc"], helpdoc);
+		}
+		if (j.count("speech")) {
+			for (auto& it : j["speech"].items()) {
+				speech[UTF8toGBK(it.key())] = it.value();
+			}
+		}
+		loadDir();
+	}
+	catch (fifo_json::exception& e) {
+		cb = "(json解析错误)";
+		return false;
+	}
+	return true;
+}
+void DiceMod::loadDir() {
 	if (loaded)return;
-	if (fs::path dirMod{ pathJson }; fs::exists(dirMod.replace_extension())) {
-		listDir(dirMod / "reply", luaFiles, true);
-		listDir(dirMod / "event", luaFiles, true);
-		loadLua();
-		if (fs::exists(dirMod / "speech")) {
+	if (fs::exists(pathDir)) {
+		if (!repo && fs::exists(pathDir / ".git")) {
+			repo = std::make_shared<DiceRepo>(pathDir);
+		}
+		if (fs::exists(pathDir / "speech")) {
 			vector<std::filesystem::path> fSpeech;
-			listDir(dirMod / "speech", fSpeech, true);
+			listDir(pathDir / "speech", fSpeech, true);
 			for (auto& p : fSpeech) {
 				YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) };
 				if (!yaml.IsMap()) {
@@ -1375,7 +1515,17 @@ void DiceMod::load() {
 				}
 			}
 		}
-		if (auto dirScript{ dirMod / "script" }; fs::exists(dirScript)) {
+		if (fs::exists(pathDir / "image")) {
+			std::filesystem::copy(pathDir / "image", dirExe / "data" / "image",
+				std::filesystem::copy_options::recursive);
+			cntImage = cntDirFile(pathDir / "image");
+		}
+		if (fs::exists(pathDir / "audio")) {
+			std::filesystem::copy(pathDir / "audio", dirExe / "data" / "record",
+				std::filesystem::copy_options::recursive);
+			cntAudio = cntDirFile(pathDir / "audio");
+		}
+		if (auto dirScript{ pathDir / "script" }; fs::exists(dirScript)) {
 			vector<std::filesystem::path> fScripts;
 			listDir(dirScript, fScripts, true);
 			for (auto p : fScripts) {
@@ -1385,14 +1535,9 @@ void DiceMod::load() {
 				scripts[script_name] = strPath;
 			}
 		}
-		if (fs::exists(dirMod / "image")) {
-			std::filesystem::copy(dirMod / "image", dirExe / "data" / "image",
-				std::filesystem::copy_options::recursive);
-		}
-		if (fs::exists(dirMod / "audio")) {
-			std::filesystem::copy(dirMod / "audio", dirExe / "data" / "record",
-				std::filesystem::copy_options::recursive);
-		}
+		listDir(pathDir / "reply", luaFiles, true);
+		listDir(pathDir / "event", luaFiles, true);
+		loadLua();
 	}
 	loaded = true;
 }
@@ -1432,53 +1577,13 @@ int DiceModManager::load(ResList& resLog){
 	}
 	if (!modList.empty()) {
 		int cntMod{ 0 };
+		string reason;
 		for (auto& mod : modOrder) {
 			if (mod->pathJson.empty())continue;
 			try {
-				fifo_json j = freadJson(mod->pathJson);
-				if (j.is_null()) {
-					sModErr.push_back(mod->name);
-					continue;
-				}
-				if (j.count("dice_build")) {
-					if (j["dice_build"] > Dice_Build) {
-						sModErr.push_back(mod->name
-							+ "(build低于" + to_string(j["dice_build"].get<int>()) + ")");
-						continue;
-					}
-				}
-				if (j.count("require")) {
-					ShowList fault;
-					ShowList post;
-					for (auto& depend : j["require"]) {
-						if (!modList.count(depend)) {
-							fault << depend;
-						}
-						else if (modList[depend]->index > mod->index) {
-							post << depend;
-						}
-					}
-					if (!fault.empty()) {
-						sModErr.push_back(mod->name
-							+ "(缺少前置mod:" + fault.show() + ")");
-						continue;
-					}
-					else if (!post.empty()) {
-						console.log("警告：" + mod->name
-							+ "与前置mod[" + post.show() + "]顺序倒置", 1);
-					}
-				}
-				++cntMod;
-				mod->author = UTF8toGBK(j["author"].get<string>());
-				if (j.count("helpdoc")) {
-					readJMap(j["helpdoc"], mod->helpdoc);
-				}
-				if (j.count("speech")) {
-					for (auto& it : j["speech"].items()) {
-						mod->speech[UTF8toGBK(it.key())] = it.value();
-					}
-				}
-				mod->load();
+				if (mod->loadDesc(reason))
+					++cntMod;
+				else sModErr.push_back(mod->name + reason);
 			}
 			catch (fifo_json::exception& e) {
 				sModErr.push_back(mod->name + "(.json解析错误)");
@@ -1540,8 +1645,21 @@ int DiceModManager::load(ResList& resLog){
 		if(!custom_reply.empty())save_reply();
 	}
 	//init
+	std::thread th{ &DiceModManager::initCloud,this };
+	th.detach();
 	build();
 	return 0;
+}
+void DiceModManager::initCloud() {
+	if (auto p{ DiceDir / "conf" / "mod" / "source.list" }; fs::exists(p)) {
+		std::ifstream fin{ p };
+		sourceList.clear();
+		string url;
+		while (getline(fin>> std::skipws, url)) {
+			if (0 == url.find("#"))break;
+			sourceList.push_back(url);
+		}
+	}
 }
 void DiceModManager::build() {
 	isIniting = true; 
@@ -1550,12 +1668,14 @@ void DiceModManager::build() {
 	//init
 	map_merge(global_speech = transpeech, GlobalMsg);
 	global_helpdoc = HelpDoc;
+	global_scripts = {};
+	final_reply = {};
 	//merge mod
 	for (auto& mod : modOrder) {
 		if (!mod->active || !mod->loaded)continue;
+		map_merge(global_scripts, mod->scripts);
 		cntSpeech += map_merge(global_speech, mod->speech);
 		cntHelp += map_merge(global_helpdoc, mod->helpdoc);
-		map_merge(global_scripts, mod->scripts);
 		map_merge(final_reply.items, mod->reply_list);
 		map_merge(global_events, mod->events);
 	}
@@ -1615,8 +1735,6 @@ void DiceModManager::clear(){
 	clock_events.clear();
 	hook_events.clear();
 	global_events.clear();
-	final_reply = {};
-	global_scripts.clear();
 	querier.clear();
 }
 
@@ -1629,7 +1747,7 @@ void DiceModManager::save() {
 		jFile.push_back(j);
 	}
 	if (!jFile.empty()) {
-		fwriteJson(DiceDir / "conf" / "ModList.json", jFile);
+		fwriteJson(DiceDir / "conf" / "ModList.json", jFile, 0);
 	}
 	else {
 		remove(DiceDir / "conf" / "ModList.json");

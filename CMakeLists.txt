@@ -94,6 +94,8 @@ find_package(civetweb CONFIG REQUIRED)
 target_link_libraries(w4123.Dice PRIVATE civetweb::civetweb civetweb::civetweb-cpp)
 find_package(libzip CONFIG REQUIRED)
 target_link_libraries(w4123.Dice PRIVATE libzip::zip)
+find_package(unofficial-git2 CONFIG REQUIRED)
+target_link_libraries(w4123.Dice PRIVATE unofficial::git2::git2)
 
 set_target_properties(w4123.Dice PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(w4123.Dice PROPERTIES C_VISIBILITY_PRESET hidden)

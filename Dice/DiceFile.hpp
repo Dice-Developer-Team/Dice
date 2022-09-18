@@ -508,8 +508,6 @@ void fprint(std::ofstream& fout, C obj)
 	obj.save(fout);
 }
 
-void fprint(std::ofstream& fout, std::string s);
-
 template <typename T1, typename T2>
 void fprint(std::ofstream& fout, std::pair<T1, T2> t)
 {

@@ -51,12 +51,17 @@ const dict_ci<string> PlainMsg
 	{"strSummonWord", ""},
 	{"strSummonEmpty", "召唤{self}，{nick}有何事么？"},
 	{"strModList", "{self}的模块加载列表:{li}"},
-	{"strModOn", "已将记忆体【{mod}】插入{self}√"},
-	{"strModOnAlready", "{self}的记忆体【{mod}】已激活！"},
-	{"strModOff", "已弹出{self}的记忆体【{mod}】√"},
-	{"strModOffAlready", "{self}的记忆体【{mod}】已停用！"},
-	{"strModNameEmpty", "请{nick}输入模块名"},
-	{"strModNotFound", "{self}未找到输入模块【{mod}】!"},
+	{"strModOn", "已将记忆体「{mod}」插入{self}√"},
+	{"strModOnAlready", "{self}的记忆体「{mod}」已激活！"},
+	{"strModOff", "已弹出{self}的记忆体「{mod}」√"},
+	{"strModOffAlready", "{self}的记忆体「{mod}」已停用！"},
+	{"strModNameEmpty", "请{nick}输入模块名！"},
+	{"strModDescLocal", "{self}已装载模块:{mod_desc}"},
+	{"strModDescCloud", "{self}已获取源模块信息:{mod_desc}"},
+	{"strModDetail", "{self}所载模块详细信息:{mod_detail}"},
+	{"strModInstalled", "{self}成功装载模块「{mod}」√"},
+	{"strModInstalledErr", "{self}装载模块「{mod}」失败×{err}"},
+	{"strModNotFound", "{self}未找到指定模块「{mod}」!"},
 	{"strAkForkNew","{self}已创建分歧\n#{fork}"},
 	{"strAkAdd","{self}已加入新选项√\n当前分歧:{fork}{li}"},
 	{"strAkAddEmpty","给完{nick}的选项，就像{self}没看到这句话之前一样×"},
@@ -226,9 +231,9 @@ const dict_ci<string> PlainMsg
 	{"strHlpSet","已为{key}设置词条√"},
 	{"strHlpReset","已清除{key}的词条√"},
 	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
-	{"strHelpNotFound","{self}未找到【{help_word}】相关的词条×"},
+	{"strHelpNotFound","{self}未找到「{help_word}」相关的词条×"},
 	{"strHelpSuggestion","{self}猜{nick}想要查找的是:{res}"},
-	{"strHelpRedirect","{self}仅找到相近词条【{redirect_key}】:\n{redirect_res}" },
+	{"strHelpRedirect","{self}仅找到相近词条「{redirect_key}」:\n{redirect_res}" },
 	{"strClockToWork","{self}已按时启用√"},
 	{"strClockOffWork","{self}已按时关闭√"},
 	{"strNameGenerator","{pc}的随机名称：{res}"},
@@ -485,6 +490,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+624:支持mod远程安装/详细信息
 623:优化mod热插拔
 622:支持手动时差
 621:扩展代理事件及ex接口

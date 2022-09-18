@@ -14,6 +14,7 @@
 #include "SHKTrie.h"
 #include "DiceSchedule.h"
 #include "GlobalVar.h"
+#include "DiceGit.h"
 using std::unordered_multimap;
 using std::variant;
 template<typename T>
@@ -128,16 +129,22 @@ public:
 class DiceMod {
 	size_t index{ 0 };
 	fs::path pathJson;
+	fs::path pathDir;
 	DiceMod& file(const fs::path& p) {
 		pathJson = p;
+		(pathDir = p).replace_extension();
 		return *this;
 	}
 	friend class DiceModManager;
+	ptr<DiceRepo> repo;
 public:
 	DiceMod(const string& mod, size_t i, bool b) :name(mod), index(i), active(b) {}
+	DiceMod(const string& mod, size_t i, const string& url);
 	string name;
+	string title;
 	string author;
 	string ver;
+	string brief;
 	bool active{ true };
 	DiceMod& on() {
 		active = true;
@@ -148,8 +155,11 @@ public:
 		return *this;
 	}
 	bool loaded{ false };
-	void load();
+	bool loadDesc(string&);
+	void loadDir();
 	void loadLua();
+	string desc()const;
+	string detail()const;
 private:
 	dict<>helpdoc;
 	dict<DiceSpeech>speech;
@@ -157,6 +167,8 @@ private:
 	vector<fs::path>luaFiles;
 	dict<ptr<DiceMsgReply>>reply_list;
 	AttrObjects events;
+	size_t cntImage{ 0 };
+	size_t cntAudio{ 0 };
 };
 
 using Clock = std::pair<unsigned short, unsigned short>;
@@ -164,6 +176,7 @@ class ResList;
 class DiceModManager {
 	dict_ci<ptr<DiceMod>> modList;
 	vector<ptr<DiceMod>> modOrder;
+	vector<string> sourceList = { "https://raw.sevencdn.com/Dice-Developer-Team/DiceModIndex/main/" };
 	//custom
 	dict_ci<ptr<DiceMsgReply>> plugin_reply;
 	dict_ci<ptr<DiceMsgReply>> custom_reply;
@@ -179,15 +192,24 @@ class DiceModManager {
 	multidict_ci<AttrObject> hook_events;
 
 	WordQuerier querier;
+	friend class DiceMod;
 public:
 	DiceModManager();
+	~DiceModManager() {
+		git_libgit2_shutdown();
+	}
 	multimap<Clock, string> clock_events;
 	friend class CustomReplyApiHandler;
 	bool isIniting{ false };
 
 	string list_mod()const;
+	bool has_mod(const string& name)const { return modList.count(name); }
+	ptr<DiceMod> get_mod(const string& name)const {
+		return modList.count(name) ? modList.at(name) : ptr<DiceMod>();
+	}
 	void mod_on(DiceEvent*);
 	void mod_off(DiceEvent*);
+	void mod_install(DiceEvent&);
 
 	string format(string, AttrObject = {},
 		const AttrIndexs& = MsgIndexs,
@@ -196,7 +218,7 @@ public:
 	void msg_reset(const string& key);
 	void msg_edit(const string& key, const string& val);
 
-	dict_ci<size_t>cntHelp;
+	fifo_dict_ci<size_t>cntHelp;
 	[[nodiscard]] string get_help(const string&, AttrObject = {}) const;
 	void _help(DiceEvent*);
 	void set_help(const string&, const string&);
@@ -222,6 +244,7 @@ public:
 
 	void loadPlugin(ResList& res);
 	int load(ResList&);
+	void initCloud();
 	void build();
 	void clear();
 	void reload();

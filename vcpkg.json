@@ -5,6 +5,7 @@
     "lua",
     "yaml-cpp",
     "openssl",
+    "libgit2",
     "civetweb",
     {
       "name": "aws-sdk-cpp",
