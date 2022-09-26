@@ -833,7 +833,9 @@ dict_ci<DiceSpeech> transpeech{
 };
 
 DiceModManager::DiceModManager() {
+#ifndef __ANDROID__
 	git_libgit2_init();
+#endif
 }
 string DiceModManager::list_mod()const {
 	ResList list;

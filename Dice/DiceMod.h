@@ -200,7 +200,9 @@ class DiceModManager {
 public:
 	DiceModManager();
 	~DiceModManager() {
+#ifndef __ANDROID__
 		git_libgit2_shutdown();
+#endif
 	}
 	multimap<Clock, string> clock_events;
 	friend class CustomReplyApiHandler;
