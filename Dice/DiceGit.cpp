@@ -1,3 +1,4 @@
+#ifndef __ANDROID__
 #include "DiceGit.h"
 #include "DiceFile.hpp"
 #include "DiceConsole.h"
@@ -39,3 +40,4 @@ DiceRepo& DiceRepo::url(const string& link) {
 DiceRepo& DiceRepo::update() {
 	return *this;
 }
+#endif //__ANDROID__

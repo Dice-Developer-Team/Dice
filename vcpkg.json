@@ -1,11 +1,14 @@
 {
   "name": "dice",
-  "version-string": "2.6.4",
+  "version-string": "2.6.5",
   "dependencies": [
     "lua",
     "yaml-cpp",
     "openssl",
-    "libgit2",
+    {
+      "name": "libgit2",
+      "platform" : "!android"
+    },
     "civetweb",
     {
       "name": "aws-sdk-cpp",

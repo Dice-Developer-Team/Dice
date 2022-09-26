@@ -1193,6 +1193,7 @@ void DiceModManager::loadPlugin(ResList& res) {
 	ShowList err;
 	int cntPlugin{ 0 };
 	int cntTask{ 0 };
+	taskcall.clear();
 	for (const auto& pathFile : files) {
 		if ((pathFile.extension() != ".lua")) {
 			continue;

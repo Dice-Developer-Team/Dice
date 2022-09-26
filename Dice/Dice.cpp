@@ -231,7 +231,9 @@ EVE_Enable(eventEnable){
 #else
 	Aws::InitAPI(options);
 #endif
+#ifndef __ANDROID__
 	git_libgit2_init();
+#endif
 	std::string RootDir = DD::getRootDir();
 	if (RootDir.empty()) {	
 #ifdef _WIN32
@@ -1072,7 +1074,9 @@ void global_exit() {
 #else
 	Aws::ShutdownAPI(options);
 #endif
+#ifndef __ANDROID__
 	git_libgit2_shutdown();
+#endif
 	threads.exit();
 }
 

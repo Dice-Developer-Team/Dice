@@ -14,7 +14,9 @@
 #include "SHKTrie.h"
 #include "DiceSchedule.h"
 #include "GlobalVar.h"
+#ifndef __ANDROID__
 #include "DiceGit.h"
+#endif //ANDROID
 using std::unordered_multimap;
 using std::variant;
 template<typename T>
@@ -136,10 +138,12 @@ class DiceMod {
 		return *this;
 	}
 	friend class DiceModManager;
+#ifndef __ANDROID__
 	ptr<DiceRepo> repo;
+	DiceMod(const string& mod, size_t i, const string& url);
+#endif //ANDROID
 public:
 	DiceMod(const string& mod, size_t i, bool b) :name(mod), index(i), active(b) {}
-	DiceMod(const string& mod, size_t i, const string& url);
 	string name;
 	string title;
 	string author;
@@ -247,7 +251,6 @@ public:
 	void initCloud();
 	void build();
 	void clear();
-	void reload();
 	void save();
 };
 
