@@ -4,8 +4,6 @@ set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/
   CACHE STRING "Vcpkg toolchain file")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" 
   CACHE STRING "Minimum OS X deployment version")
-set(CMAKE_C_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(Dice)
 
 include_directories(Dice QQAPI)
@@ -15,6 +13,8 @@ aux_source_directory(QQAPI QQAPI_SRC)
 
 add_library(w4123.Dice SHARED ${Dice_SRC} ${QQAPI_SRC})
 
+set_property(TARGET w4123.Dice PROPERTY CXX_STANDARD 17)
+set_property(TARGET w4123.Dice PROPERTY CXX_STANDARD_REQUIRED ON)
 set_property(TARGET w4123.Dice PROPERTY PREFIX "")
 set_property(TARGET w4123.Dice PROPERTY SUFFIX ".dll")
 set_property(TARGET w4123.Dice PROPERTY RELEASE_POSTFIX "${DLL_SUFFIX}")
