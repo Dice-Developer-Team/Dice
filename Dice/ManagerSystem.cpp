@@ -90,6 +90,16 @@ AttrVar getUserItem(long long uid, const string& item) {
 			return user.confs.get(item);
 		}
 	}
+	if (item == "gender") {
+		string ret;
+		if (string data{ fifo_json{
+			{ "action","getGender" },
+			{ "sid",console.DiceMaid },
+			{ "uid",uid },
+		}.dump() }; DD::getExtra(data, ret)) {
+			return fifo_json::parse(ret, nullptr, false);
+		}
+	}
 	return {};
 }
 AttrVar getGroupItem(long long id, const string& item) {

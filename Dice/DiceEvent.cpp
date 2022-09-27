@@ -36,6 +36,9 @@ AttrIndexs MsgIndexs{
 	{"pc", idx_pc},
 	{"at", idx_at},
 	{"@", idx_at},
+	{"gender",  [](AttrObject& vars) {
+		return vars.has("uid") ? vars["gender"] = getUserItem(vars.get_ll("uid"),"gender") : AttrVar();
+	}},
 	{"grpAuth", idx_gAuth},
 	{"fromUser", [](AttrObject& vars) {
 		return vars.has("uid") ? vars["fromUser"] = vars.get_str("uid") : "";

@@ -806,7 +806,7 @@ Type=[回复性质](Reply/Order)
 		"welcome",
 		R"(入群欢迎词：.welcome
 .welcome \{at}欢迎\{nick}入群~	//设置欢迎词
-//\{at}视为at入群者，\{nick}会替换为新人的昵称
+//\{at}视为at入群者，\{nick}会替换为新人的昵称，更多转义见手册
 .welcome clr //清空欢迎词
 .welcome show //查看欢迎词
 无论指令是否停用，只要有欢迎词时有人入群，都会响应)"
