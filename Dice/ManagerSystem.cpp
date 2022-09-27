@@ -304,7 +304,7 @@ int clearGroup() {
 		time_t tLast{ grp.tUpdated };
 		if (auto s{ sessions.get_if({ 0,id }) })
 			tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
-		if (tLast < grpline)GrpDelete.push_back(id);
+		if (tLast && tLast < grpline)GrpDelete.push_back(id);
 	}
 	for (auto id : GrpDelete) {
 		ChatList.erase(id);

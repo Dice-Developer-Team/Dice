@@ -55,6 +55,7 @@ const dict_ci<string> PlainMsg
 	{"strModOnAlready", "{self}的记忆体「{mod}」已激活！"},
 	{"strModOff", "已将记忆体「{mod}」弹出{self}人格√"},
 	{"strModOffAlready", "{self}的记忆体「{mod}」已停用！"},
+	{"strModDelete", "已将记忆体「{mod}」从{self}的人格排空√"},
 	{"strModNameEmpty", "请{nick}输入模块名！"},
 	{"strModDescLocal", "{self}已装载模块:{mod_desc}"},
 	{"strModDescCloud", "{self}已获取源模块信息:{mod_desc}"},

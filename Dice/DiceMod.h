@@ -140,6 +140,7 @@ public:
 	void mod_on(DiceEvent*);
 	void mod_off(DiceEvent*);
 	void mod_install(DiceEvent&);
+	void mod_delete(DiceEvent&);
 
 	string format(string, AttrObject = {},
 		const AttrIndexs& = MsgIndexs,

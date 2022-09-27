@@ -1392,8 +1392,7 @@ int DiceEvent::InnerOrder() {
 				replyMsg("strNotMaster");
 				return 1;
 			}
-			int cnt = clearGroup();
-			note("已清理过期群记录" + to_string(cnt) + "条", 0b10);
+			note("已清理过期群记录" + to_string(clearGroup()) + "条", 0b10);
 			return 1;
 		}
 	}
@@ -2762,17 +2761,20 @@ int DiceEvent::InnerOrder() {
 	else if (string& modName{ (at("mod") = readRest()).text }; modName.empty()) {
 		replyMsg("strModNameEmpty");
 	}
+	else if (strPara == "get") {
+		fmt->mod_install(*this);
+	}
+	else if (!fmt->has_mod(modName)) {
+		replyMsg("strModNotFound");
+	}
 	else if (strPara == "on") {
 		fmt->mod_on(this);
 	}
 	else if (strPara == "off") {
 		fmt->mod_off(this);
 	}
-	else if (strPara == "get") {
-		fmt->mod_install(*this);
-	}
-	else if (!fmt->has_mod(modName)) {
-		replyMsg("strModNotFound");
+	else if (strPara == "del") {
+		fmt->mod_delete(*this);
 	}
 	else if (strPara == "info") {
 		set("mod_desc", fmt->get_mod(modName)->desc());

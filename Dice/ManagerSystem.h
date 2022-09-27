@@ -156,7 +156,6 @@ public:
 	string Name = "";
 	time_t tCreated = time(nullptr);
 	time_t tUpdated = 0;
-	time_t tLastMsg = 0;
 
 	Chat() {}
 
@@ -189,15 +188,14 @@ public:
 		return *this;
 	}
 
+	Chat& update()
+	{
+		tUpdated = time(nullptr);
+		return *this;
+	}
 	Chat& update(time_t tt)
 	{
 		tUpdated = tt;
-		return *this;
-	}
-
-	Chat& lastmsg(time_t tt)
-	{
-		tLastMsg = tt;
 		return *this;
 	}
 
@@ -207,11 +205,13 @@ public:
 	}
 	void set(const string& item, const AttrVar& val) {
 		confs.set(item, val);
+		update();
 	}
 
 	Chat& reset(const string& item)
 	{
 		confs.reset(item);
+		update();
 		return *this;
 	}
 	int getConf(const string& key, int def = 0) {
@@ -224,6 +224,7 @@ public:
 	}
 	void setChConf(long long chid, const string& key, const AttrVar& val) {
 		ChConf[chid].set(key, val);
+		update();
 	}
 
 	void leave(const string& msg = "");

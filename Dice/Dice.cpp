@@ -444,7 +444,7 @@ bool eve_GroupAdd(Chat& grp)
 {
 	{
 		unique_lock<std::mutex> lock_queue(GroupAddMutex);
-		if (!grp.lastmsg(time(nullptr)).isset("已入群"))grp.set("已入群").reset("未进").reset("已退");
+		if (!grp.isset("已入群"))grp.set("已入群").reset("未进").reset("已退");
 		else return false;
 		if (ChatList.size() == 1 && !console.isMasterMode)DD::sendGroupMsg(grp.ID, msgInit);
 	}
@@ -626,7 +626,7 @@ EVE_PrivateMsg(eventPrivateMsg)
 EVE_GroupMsg(eventGroupMsg)
 {
 	if (!Enabled)return 0;
-	Chat& grp = chat(fromGID).group().lastmsg(time(nullptr));
+	Chat& grp = chat(fromGID).group();
 	if (fromUID == console.DiceMaid && !console["ListenGroupEcho"])return 0;
 	if (!grp.isset("已入群") && (grp.isset("未进") || grp.isset("已退")))eve_GroupAdd(grp);
 	if (!grp.isset("忽略"))
@@ -674,7 +674,7 @@ EVE_DiscussMsg(eventDiscussMsg)
 		DD::setDiscussLeave(fromDiscuss);
 		return 1;
 	}
-	Chat& grp = chat(fromDiscuss).discuss().lastmsg(time(nullptr));
+	Chat& grp = chat(fromDiscuss).discuss();
 	if (blacklist->get_qq_danger(fromUID) && console["AutoClearBlack"])
 	{
 		const string strMsg = "发现黑名单用户" + printUser(fromUID) + "，自动执行退群";

@@ -77,7 +77,9 @@ DiceModManager::DiceModManager() {
 	git_libgit2_init();
 #endif
 }
+std::mutex ModMutex;
 string DiceModManager::list_mod()const {
+	std::lock_guard lock(ModMutex);
 	ResList list;
 	for (auto& mod : modOrder) {
 		list << to_string(mod->index) + ". "
@@ -91,40 +93,31 @@ string DiceModManager::list_mod()const {
 }
 void DiceModManager::mod_on(DiceEvent* msg) {
 	string modName{ msg->get_str("mod") };
-	if (modList.count(modName)) {
-		if (modList[modName]->active) {
-			msg->replyMsg("strModOnAlready");
-		}
-		else {
-			modList[modName]->active = true;
-			modList[modName]->loadDir();
-			save();
-			build();
-			msg->note("{strModOn}", 1);
-		}
+	if (modList[modName]->active) {
+		msg->replyMsg("strModOnAlready");
 	}
 	else {
-		msg->replyMsg("strModNotFound");
+		modList[modName]->active = true;
+		modList[modName]->loadDir();
+		save();
+		build();
+		msg->note("{strModOn}", 1);
 	}
 }
 void DiceModManager::mod_off(DiceEvent* msg) {
 	string modName{ msg->get_str("mod") };
-	if (modList.count(modName)) {
-		if (!modList[modName]->active) {
-			msg->replyMsg("strModOffAlready");
-		}
-		else {
-			modList[modName]->active = false;
-			save();
-			build();
-			msg->note("{strModOff}", 1);
-		}
+	if (!modList[modName]->active) {
+		msg->replyMsg("strModOffAlready");
 	}
 	else {
-		msg->replyMsg("strModNotFound");
+		modList[modName]->active = false;
+		save();
+		build();
+		msg->note("{strModOff}", 1);
 	}
 }
 void DiceModManager::mod_install(DiceEvent& msg) {
+	std::lock_guard lock(ModMutex);
 	std::string desc;
 	string name{ msg.get_str("mod") };
 	if (modList.count(name) && modList[name]->loaded) {
@@ -185,6 +178,19 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 	}
 	if (!msg.has("err"))msg.set("err", "\nÎ´ÕÒµ½ModÔ´");
 	msg.replyMsg("strModInstalledErr");
+}
+void DiceModManager::mod_delete(DiceEvent& msg) {
+	std::lock_guard lock(ModMutex);
+	string modName{ msg.get_str("mod") };
+	auto idx{ modList[modName]->index };
+	modList.erase(modName);
+	for (auto it{ modOrder.erase(modOrder.begin() + idx) };
+		it != modOrder.end(); ++it) {
+		--(*it)->index;
+	}
+	save();
+	build();
+	msg.note("{strModDelete}", 1);
 }
 
 string DiceModManager::format(string s, AttrObject context, const AttrIndexs& indexs, const dict_ci<string>& dict) const {

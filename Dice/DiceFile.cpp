@@ -150,14 +150,13 @@ ofstream& operator<<(ofstream& fout, const User& user)
 
 ifstream& operator>>(ifstream& fin, Chat& grp)
 {
-	fin >> grp.ID >> grp.isGroup >> grp.inviter >> grp.tCreated >> grp.tUpdated >> grp.tLastMsg;
+	fin >> grp.ID >> grp.isGroup >> grp.inviter >> grp.tCreated >> grp.tUpdated;
 	return fin;
 }
 
 ofstream& operator<<(ofstream& fout, const Chat& grp)
 {
-	fout << grp.ID << '\t' << grp.isGroup << '\t' << grp.inviter << '\t' << grp.tCreated << '\t' << grp.tUpdated << '\t'
-		<< grp.tLastMsg;
+	fout << grp.ID << '\t' << grp.isGroup << '\t' << grp.inviter << '\t' << grp.tCreated << '\t' << grp.tUpdated;
 	return fout;
 }
 
