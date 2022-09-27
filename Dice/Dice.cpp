@@ -423,8 +423,13 @@ EVE_Enable(eventEnable){
 	try
 	{
 		ExtensionManagerInstance->refreshIndex();
-		console.log("已成功刷新软件包缓存，" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用，"
-			+ to_string(ExtensionManagerInstance->getUpgradableCount()) + "个可升级", 0b1);
+		if (auto cnt{ ExtensionManagerInstance->getUpgradableCount() }) {
+			console.log("已成功刷新软件包缓存：" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用，"
+				+ to_string(cnt) + "个可升级", 0b1);
+		}
+		else {
+			console.log("已成功刷新软件包缓存：" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用", 0);
+		}
 	}
 	catch (const std::exception& e)
 	{
@@ -911,14 +916,13 @@ EVE_GroupInvited(eventGroupInvited)
 		}
 		else if (trustedQQ(fromUID))
 		{
-			grp.set("许可使用").set("未进").reset("未审核").reset("协议无效");
+			grp.set("许可使用").reset("未审核").reset("协议无效");
 			grp.inviter = fromUID;
-			strMsg += "\n已同意（受信任用户）";
+			strMsg += "\n已同意（信任用户）";
 			console.log(strMsg, 1, strNow);
 			DD::answerGroupInvited(fromGID, 1);
 		}
 		else if (grp.isset("协议无效")) {
-			grp.set("未进");
 			strMsg += "\n已忽略（协议无效）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 3);

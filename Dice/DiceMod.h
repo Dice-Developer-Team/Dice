@@ -5,52 +5,21 @@
  */
 
 #include <utility>
-#include <list>
 #include <variant>
-#include <regex>
 #include "yaml-cpp/node/node.h"
-#include "STLExtern.hpp"
 #include "SHKQuerier.h"
-#include "SHKTrie.h"
 #include "DiceSchedule.h"
+#include "DiceMsgReply.h"
 #include "GlobalVar.h"
 #ifndef __ANDROID__
 #include "DiceGit.h"
 #endif //ANDROID
-using std::unordered_multimap;
 using std::variant;
 template<typename T>
 using ptr = std::shared_ptr<T>;
-using ex_lock = ptr<std::unique_lock<std::mutex>>;
-using chat_locks = std::list<ex_lock>;
 namespace fs = std::filesystem;
 
 class DiceEvent;
-
-class DiceTriggerLimit {
-	string content;
-	string comment;
-	int prob{ 0 };
-	unordered_set<long long>user_id;
-	bool user_id_negative{ false };
-	unordered_set<long long>grp_id;
-	bool grp_id_negative{ false };
-	vector<CDConfig>locks;
-	vector<CDConfig>cd_timer;
-	vector<CDConfig>today_cnt;
-	unordered_map<string, pair<AttrVar::CMPR, AttrVar>>self_vary;
-	unordered_map<string, pair<AttrVar::CMPR, AttrVar>>user_vary;
-	unordered_map<string, pair<AttrVar::CMPR, AttrVar>>grp_vary;
-	enum class Treat :size_t { Ignore, Only, Off };
-	Treat to_dice{ Treat::Ignore };
-public:
-	DiceTriggerLimit& parse(const string&);
-	DiceTriggerLimit& parse(const AttrVar&);
-	const string& print()const { return content; }
-	const string& note()const { return comment; }
-	bool empty()const { return content.empty(); }
-	bool check(DiceEvent*, chat_locks&)const;
-};
 
 class BaseDeck
 {
@@ -58,51 +27,6 @@ public:
 	vector<string> cards;
 };
 
-class DiceMsgReply {
-public:
-	string title;
-	enum class Type { Nor, Order, Reply, Both };   //决定受控制的开关类型
-	static enumap_ci sType;
-	std::unique_ptr<vector<string>>keyMatch[4];
-	static enumap_ci sMode;
-	enum class Echo { Text, Deck, Lua };    //回复形式
-	static enumap_ci sEcho;
-	Type type{ Type::Reply };
-	Echo echo{ Echo::Deck };
-	DiceTriggerLimit limit;
-	AttrVar text;
-	std::vector<string> deck;
-	static ptr<DiceMsgReply> set_order(const string& key, const AttrVars&);
-	string show()const;
-	string show_ans()const;
-	string print()const;
-	bool exec(DiceEvent*);
-	void from_obj(AttrObject);
-	void readJson(const fifo_json&);
-	fifo_json writeJson()const;
-};
-class DiceReplyUnit {
-	TrieG<char, less_ci> gPrefix;
-	TrieG<char16_t, less_ci> gSearcher;
-public:
-	dict<ptr<DiceMsgReply>> items;
-	//formated kw of match, remove while matched
-	dict_ci<ptr<DiceMsgReply>> match_items;
-	//raw kw of prefix, remove while erase
-	dict_ci<ptr<DiceMsgReply>> prefix_items;
-	//raw kw of search, remove while erase
-	dict_ci<ptr<DiceMsgReply>> search_items;
-	//regex mode without formating
-	dict<ptr<DiceMsgReply>> regex_items;
-	unordered_multimap<string, std::wregex> regex_exp;
-	//ptr<DiceMsgReply>& operator[](const string& key) { return items[key]; }
-	void add(const string& key, ptr<DiceMsgReply> reply);
-	void build();
-	void erase(ptr<DiceMsgReply> reply);
-	void erase(const string& key) { if (items.count(key))erase(items[key]); }
-	void insert(const string&, ptr<DiceMsgReply> reply);
-	bool listen(DiceEvent*, int);
-};
 class DiceEventTrigger {
 	enum class Mode { Nil, Clock, Cycle, Trigger };
 	enum class ActType { Nil, Lua };

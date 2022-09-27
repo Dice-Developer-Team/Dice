@@ -2782,6 +2782,7 @@ int DiceEvent::InnerOrder() {
 		set("mod_detail", fmt->get_mod(modName)->detail());
 		replyMsg("strModDetail");
 	}
+	else replyHelp("mod");
 	return 1;
 }
 	else if (strLowerMessage.substr(intMsgCnt, 3) == "nnn") {
@@ -3691,9 +3692,8 @@ int DiceEvent::InnerOrder() {
 		else if (isRollDice()) {
 			strinit = readDice();
 		}
-		readSkipSpace();
-		set("char",strip(strMsg.substr(intMsgCnt)));
-		if (!is_empty("char")) {
+		set("char",strip(readRest()));
+		if (is_empty("char")) {
 			set("char",idx_pc(*this));
 		}
 		RD initdice(strinit, 20);
