@@ -28,6 +28,6 @@ public:
 	int search(const string& text, vector<string>& res);
 };
 
-inline Censor censor;
+extern Censor censor;
 
 int load_words(const std::filesystem::path& path, Censor& cens);

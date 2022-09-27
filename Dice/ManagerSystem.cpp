@@ -17,6 +17,7 @@
 #include "CQTools.h"
 #include "DiceSession.h"
 #include "DiceSelfData.h"
+#include "DiceCensor.h"
 
 std::filesystem::path dirExe;
 std::filesystem::path DiceDir("DiceData");
@@ -323,13 +324,36 @@ string getName(long long uid, long long GroupID){
 	if (UserList.count(uid) && getUser(uid).getNick(nick, GroupID)) return nick;
 
 	// GroupCard
+	static unordered_map<long long, unordered_map<long long, std::pair<time_t, string>>>skipCards;
 	if (GroupID){
-		nick = strip(msg_decode(nick = DD::getGroupNick(GroupID, uid)));
+		if (auto& card{ skipCards[GroupID][uid] };
+				time(nullptr) < card.first){
+			nick = card.second;
+		}
+		else {
+			vector<string>kw;
+			nick = strip(msg_decode(nick = DD::getGroupNick(GroupID, uid)));
+			if (censor.search(nick, kw) > trustedQQ(uid)) {
+				nick.clear();
+			}
+			card = { time(nullptr) + 600 ,nick };
+		}
 		if (!nick.empty()) return nick;
 	}
 
 	// QQNick
-	nick = strip(msg_decode(nick = DD::getQQNick(uid)));
+	if (auto& card{ skipCards[0][uid] };
+		time(nullptr) < card.first) {
+		nick = card.second;
+	}
+	else {
+		vector<string>kw;
+		nick = strip(msg_decode(nick = DD::getQQNick(uid)));
+		if (censor.search(nick, kw) > trustedQQ(uid)) {
+			nick = getMsg("stranger") + "(" + to_string(uid) + ")";
+		}
+		card = { time(nullptr) + 600 ,nick };
+	}
 	if (!nick.empty()) return nick;
 
 	// Unknown

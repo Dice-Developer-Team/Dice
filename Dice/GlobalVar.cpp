@@ -117,20 +117,20 @@ const dict_ci<string> PlainMsg
 	{"strGroupNot","{group}不是群！"},
 	{"strGroupNotIn","{self}当前不在{group}内×"},
 	{"strGroupExit","{self}已退出该群√"},
-	{"strGroupCardSet","{self}已将{target}的群名片修改为{card}√"},
-	{"strGroupTitleSet","{self}已将{target}的头衔修改为{title}√"},
-	{"strPcNewEmptyCard","已为{nick}新建{type}空白卡{char}√"},
-	{"strPcNewCardShow","已为{nick}新建{type}卡{char}：{show}"},//由于预生成选项而存在属性
-	{"strPcCardSet","已将{nick}当前角色卡绑定为{char}√"},//{nick}-用户昵称 {pc}-原角色卡名 {char}-新角色卡名
+	{"strGroupCardSet","{self}已将{target}的群名片修改为「{card}」√"},
+	{"strGroupTitleSet","{self}已将{target}的头衔修改为「{title}」√"},
+	{"strPcNewEmptyCard","已为{nick}新建{type}空白卡「{char}」√"},
+	{"strPcNewCardShow","已为{nick}新建{type}卡「{char}」：{show}"},//由于预生成选项而存在属性
+	{"strPcCardSet","已将{nick}当前角色卡绑定为「{char}」√"},//{nick}-用户昵称 {pc}-原角色卡名 {char}-新角色卡名
 	{"strPcCardReset","已解绑{nick}当前的默认卡√"},//{nick}-用户昵称 {pc}-原角色卡名
-	{"strPcCardRename","已将{old_name}重命名为{new_name}√"},
-	{"strPcCardDel","已将角色卡{char}删除√"},
-	{"strPcCardCpy","已将{char2}的属性复制到{char1}√"},
+	{"strPcCardRename","已将{old_name}重命名为「{new_name}」√"},
+	{"strPcCardDel","已将角色卡「{char}」删除√"},
+	{"strPcCardCpy","已将「{char2}」的属性复制到「{char1}」√"},
 	{"strPcClr","已清空{nick}的角色卡记录√"},
 	{"strPcCardList","{nick}的角色列表：{show}"},
-	{"strPcCardBuild","{nick}的{char}生成：{show}"},
+	{"strPcCardBuild","{nick}的「{char}」生成：{show}"},
 	{"strPcCardShow","{nick}的<{type}>{char}：{show}"},	//{nick}-用户昵称 {type}-角色卡类型 {char}-角色卡名
-	{"strPcCardRedo","{nick}的{char}重新生成：{show}"},
+	{"strPcCardRedo","{nick}的「{char}」重新生成：{show}"},
 	{"strPcGroupList","{nick}的各群角色列表：{show}"},
 	{"strPcStatShow","{pc}在{self}处的骰点统计:{stat}"},
 	{"strPcStatEmpty","{pc}在{self}处还没有检定被记录的样子×"},
@@ -537,7 +537,7 @@ const dict_ci<> HelpDoc = {
 {"窥屏可能","无"},
 {"其他插件","【未设置】"},
 {"姐妹骰","{list_dice_sister}"},
-{"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2021 String.Empty"},
+{"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2022 String.Empty\nGithub@Dice-Developer-Team"},
 {"指令",R"(at骰娘后接指令可以指定骰娘单独响应，如at骰娘.bot off
 多数指令需要后接参数，请.help对应指令 获取详细信息，如.help jrrp
 控制指令:
@@ -562,9 +562,9 @@ R"([第二页]跑团指令
 .st 属性记录
 .pc 角色卡记录
 .rc 检定
-.setcoc 设置检定房规
+.setcoc 设置rc房规
 .sc 理智检定
-.en 成长检定
+.en 成长/增强检定
 .ri 先攻
 .init 先攻列表
 .ww 骰池)"

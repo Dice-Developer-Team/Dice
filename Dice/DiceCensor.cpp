@@ -10,7 +10,7 @@
 #include "filesystem.hpp"
 
 TrieG<char16_t, less_ci> wordG;
-
+Censor censor;
 enumap<string> sens{ "Ignore","Notice","Caution","Warning","Danger" };
 
 int load_words(const std::filesystem::path& path, Censor& cens) {
