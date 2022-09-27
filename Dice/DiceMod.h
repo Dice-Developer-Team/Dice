@@ -143,8 +143,9 @@ public:
 	void mod_delete(DiceEvent&);
 
 	string format(string, AttrObject = {},
-		const AttrIndexs& = MsgIndexs,
+		bool isTrust = true,
 		const dict_ci<string>& = {}) const;
+	string format_guest(string, AttrObject)const;
 	string msg_get(const string& key)const;
 	void msg_reset(const string& key);
 	void msg_edit(const string& key, const string& val);

@@ -650,7 +650,7 @@ EVE_ChannelMsg(eventChannelMsg)
 	//if (!grp.isset("忽略"))
 	{
 		shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
-			AttrVars({ { "Event", AttrVar("Message")},
+			AttrVars({ { "Event","Message"},
 				{ "fromMsg", message },
 				{ "msgid", msgId },
 				{ "uid", fromUID },
@@ -696,29 +696,14 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 	if (!Enabled)return 0;
 	Chat& grp = chat(fromGID);
 	if (grp.isset("忽略"))return 0;
-	if (fromUID != console.DiceMaid)
-	{
-		if (chat(fromGID).confs.has("入群欢迎"))
-		{
-			string strReply = chat(fromGID).confs.get_str("入群欢迎");
-			while (strReply.find("{at}") != string::npos)
-			{
-				strReply.replace(strReply.find("{at}"), 4, "[CQ:at,qq=" + to_string(fromUID) + "]");
-			}
-			while (strReply.find("{@}") != string::npos)
-			{
-				strReply.replace(strReply.find("{@}"), 3, "[CQ:at,qq=" + to_string(fromUID) + "]");
-			}
-			while (strReply.find("{nick}") != string::npos)
-			{
-				strReply.replace(strReply.find("{nick}"), 6, DD::getQQNick(fromUID));
-			}
-			while (strReply.find("{qq}") != string::npos)
-			{
-				strReply.replace(strReply.find("{qq}"), 4, to_string(fromUID));
-			}
-			grp.update(time(nullptr));
-			AddMsgToQueue(strip(strReply), { 0,fromGID });
+	if (fromUID != console.DiceMaid){
+		if (chat(fromGID).confs.has("入群欢迎")){
+			AttrObject eve{ {{ "Event","GroupWelcome"},
+				{"gid",fromGID},
+				{"uid",fromUID},
+			} };
+			AddMsgToQueue(strip(fmt->format(grp.update().confs.get_str("入群欢迎"), eve, false)),
+				{ 0,fromGID });
 		}
 		if (blacklist->get_qq_danger(fromUID))
 		{

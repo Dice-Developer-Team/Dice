@@ -170,7 +170,7 @@ namespace Network
 			}
 			if (dwRetCode != 200)
 			{
-				des = getMsg("strRequestRetCodeErr", AttrObject{{"error", std::to_string(dwRetCode)}});
+				des = getMsg("strRequestRetCodeErr", AttrVars{ {"error", std::to_string(dwRetCode)} });
 				InternetCloseHandle(hRequest);
 				InternetCloseHandle(hConnect);
 				InternetCloseHandle(hInternet);

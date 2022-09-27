@@ -35,6 +35,7 @@ AttrIndexs MsgIndexs{
 	{"nick", idx_nick},
 	{"pc", idx_pc},
 	{"at", idx_at},
+	{"@", idx_at},
 	{"grpAuth", idx_gAuth},
 	{"fromUser", [](AttrObject& vars) {
 		return vars.has("uid") ? vars["fromUser"] = vars.get_str("uid") : "";

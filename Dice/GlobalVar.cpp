@@ -491,6 +491,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+625:支持welcome转义
 624:支持mod远程安装/详细信息
 623:优化mod热插拔
 622:支持手动时差
@@ -509,8 +510,6 @@ const dict_ci<> HelpDoc = {
 609:新增mod循环事件
 608:新增.mod指令
 607:修改.nn语法
-606:完善.sc/http.post/reply
-603:支持yaml读取
 593:reply新增触发限制
 589:ak安科安价指令
 585:WebUI

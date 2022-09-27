@@ -83,8 +83,8 @@ string splitOnce(string& str, const string& sep) {
     }
     return head;
 }
-std::unordered_map<string, string> splitPairs(const string& s, char delim, char br) {
-    std::unordered_map<string, string>dict;
+fifo_dict<> splitPairs(const string& s, char delim, char br) {
+    fifo_dict<>dict;
     std::stringstream ss(s);
     string line;
     size_t pos{ 0 };

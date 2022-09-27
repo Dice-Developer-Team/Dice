@@ -192,19 +192,21 @@ void DiceModManager::mod_delete(DiceEvent& msg) {
 	build();
 	msg.note("{strModDelete}", 1);
 }
+static enumap<string> methods{ "print","help","sample","case","vary","grade" };
+enum class FmtMethod { Print, Help, Sample, Case, Vary, Grade };
 
-string DiceModManager::format(string s, AttrObject context, const AttrIndexs& indexs, const dict_ci<string>& dict) const {
+string DiceModManager::format(string s, AttrObject context, bool isTrust, const dict_ci<string>& dict) const {
 	//直接重定向
 	if (s[0] == '&') {
 		const string key = s.substr(1);
-		if (context.has(key)) {
-			return context.get_str(key);
+		if (auto val{ getContextItem(context,key, isTrust) }) {
+			return val.print();
 		}
-		if (const auto it = dict.find(key); it != dict.end()) {
-			return format(it->second, context, indexs, dict);
+		else if (const auto it = dict.find(key); it != dict.end()) {
+			return format(it->second, context, isTrust, dict);
 		}
-		if (const auto it = global_speech.find(key); it != global_speech.end()) {
-			return fmt->format(it->second.express(), context, indexs, dict);
+		else if (const auto it = global_speech.find(key); it != global_speech.end()) {
+			return fmt->format(it->second.express(), context, isTrust, dict);
 		}
 	}
 	stack<string>nodes;
@@ -240,78 +242,84 @@ string DiceModManager::format(string s, AttrObject context, const AttrIndexs& in
 	}
 	while(!nodes.empty()) {
 		size_t pos{ 0 };
-		string val;
 		if ((pos = s.find(chSign)) != string::npos) {
+			string val;
 			string& key{ nodes.top() };
 			val = "{" + key + "}";
 			if (key == "{" || key == "}") {
 				val = key;
 			}
 			else if (context.has(key)) {
-				if (key == "res")val = format(context.get_str(key), context, indexs, dict);
-				else val = context.get_str(key);
+				if (key == "res")val = format(context.print(key), context, isTrust, dict);
+				else val = context.print(key);
 			}
-			else if (auto res{ getContextItem(context,key) }) {
-				val = res.show();
+			else if (AttrVar res{ getContextItem(context, key, isTrust) }) {
+				val = res.print();
 			}
 			else if (auto cit = dict.find(key); cit != dict.end()) {
-				val = format(cit->second, context, indexs, dict);
+				val = format(cit->second, context, isTrust, dict);
 			}
 			//局部优先于全局
 			else if (auto sp = global_speech.find(key); sp != global_speech.end()) {
-				val = format(sp->second.express(), context, indexs, dict);
+				val = format(sp->second.express(), context, isTrust, dict);
 			}
 			else if (size_t colon{ key.find(':') }; colon != string::npos) {
 				string method{ key.substr(0,colon) };
 				string para{ key.substr(colon + 1) };
-				if (method == "help") {
-					val = get_help(para, context);
-				}
-				else if (method == "sample") {
-					vector<string> samples{ split(para,"|") };
-					if (samples.empty())val = "";
-					else
-						val = format(samples[RandomGenerator::Randint(0, samples.size() - 1)], context, indexs, dict);
-				}
-				else if (method == "print") {
-					unordered_map<string, string>paras{ splitPairs(para,'=','&') };
-					if (paras.count("uid")) {
-						if (paras["uid"].empty())val = printUser(context.get_ll("uid"));
-						else val = printUser(AttrVar(paras["uid"]).to_ll());
+				if (methods.count(method))
+					switch ((FmtMethod)methods[method]) {
+					case FmtMethod::Help:
+						val = get_help(para, context);
+						break;
+					case FmtMethod::Sample:
+						if (vector<string> samples{ split(para,"|") }; samples.empty())val = "";
+						else
+							val = format(samples[RandomGenerator::Randint(0, samples.size() - 1)],
+								context, isTrust, dict);
+						break;
+					case FmtMethod::Print:
+						if (auto paras{ splitPairs(para,'=','&') }; paras.count("uid")) {
+							if (isTrust && paras["uid"].empty())val = printUser(context.get_ll("uid"));
+							else val = printUser(AttrVar(paras["uid"]).to_ll());
+						}
+						else if (paras.count("gid")) {
+							if (isTrust && paras["gid"].empty())val = printGroup(context.get_ll("gid"));
+							else val = printGroup(AttrVar(paras["gid"]).to_ll());
+						}
+						else val = {};
+						break;
+					case FmtMethod::Case:
+					case FmtMethod::Vary: {
+						auto& [item, strVary] = readini<string, string>(para, '?');
+						auto paras{ splitPairs(strVary,'=','&') };
+						auto itemVal{ getContextItem(context, item, isTrust) };
+						if (auto it{ paras.find(itemVal.print()) }; it != paras.end()
+							|| (it = paras.find("else")) != paras.end()) {
+							val = format(it->second, context, isTrust);
+						}
+						else val = {};
 					}
-					else if (paras.count("gid")) {
-						if (paras["gid"].empty())val = printGroup(context.get_ll("gid"));
-						else val = printGroup(AttrVar(paras["gid"]).to_ll());
+						break;
+					case FmtMethod::Grade: {
+						auto [item, strVary] = readini<string, string>(para, '?');
+						auto paras{ splitPairs(strVary,'=','&') };
+						auto itemVal{ getContextItem(context, item, isTrust) };
+						grad_map<double, string>grade;
+						for (auto& [step, value] : paras) {
+							if (step == "else")grade.set_else(value);
+							else if (isNumeric(step))
+								grade.set_step(stod(step), value);
+							else if (auto stepVal{ getContextItem(context,step, isTrust) }; stepVal.is_numberic())
+								grade.set_step(stepVal.to_num(), value);
+						}
+						if (itemVal.is_numberic())val = grade[itemVal.to_num()];
+						else val = grade.get_else();
+						val = format(val, context, isTrust);
 					}
-					else val = {};
-				}
-				else if (method == "case" || method == "vary") {
-					auto [head, strVary] = readini<string, string>(para, '?');
-					unordered_map<string, string>paras{ splitPairs(strVary,'=','&') };
-					auto itemVal{ getContextItem(context,head) };
-					if (auto it{ paras.find(itemVal.print()) }; it != paras.end()) {
-						val = format(it->second);
+						break;
+					default:
+						break;
 					}
-					else if ((it = paras.find("else")) != paras.end()) {
-						val = format(it->second);
-					}
-					else val = {};
-				}
-				else if (method == "grade") {
-					auto [head, strVary] = readini<string, string>(para, '?');
-					unordered_map<string, string>paras{ splitPairs(strVary,'=','&') };
-					auto itemVal{ getContextItem(context,head) };
-					grad_map<double, string>grade;
-					for (auto& [step, value] : paras) {
-						if (step == "else")grade.set_else(value);
-						else if(isNumeric(step))
-							grade.set_step(stod(step), value);
-						else if (auto stepVal{ getContextItem(context,step) }; stepVal.is_numberic())
-							grade.set_step(stepVal.to_num(), value);
-					}
-					if(itemVal.is_numberic())val = grade[itemVal.to_num()];
-					else val = grade.get_else();
-				}
 			}
 			else if (auto func = strFuncs.find(key); func != strFuncs.end()){
 				val = func->second();

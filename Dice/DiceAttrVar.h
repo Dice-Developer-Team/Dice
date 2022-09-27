@@ -60,7 +60,7 @@ protected:
 public:
 	AttrObject() :dict(std::make_shared<AttrVars>()) {}
 	AttrObject(const AttrVars& vars) :dict(std::make_shared<AttrVars>(vars)) {}
-	explicit AttrObject(const VarArray& vars) :dict(std::make_shared<AttrVars>()), list(std::make_shared<VarArray>(vars)) {}
+	//explicit AttrObject(const VarArray& vars) :dict(std::make_shared<AttrVars>()), list(std::make_shared<VarArray>(vars)) {}
 	AttrObject(const AttrObject& other) :dict(other.dict), list(other.list) {}
 	const ptr<AttrVars>& to_dict()const { return dict; }
 	const ptr<VarArray>& to_list()const { return list; }
@@ -81,6 +81,7 @@ public:
 	AttrVar index(const string& key)const;
 	AttrVar get(const string& key, ptr<AttrVar> val = {})const;
 	string get_str(const string& key)const;
+	string print(const string& key)const;
 	int get_int(const string& key)const;
 	long long get_ll(const string& key)const;
 	double get_num(const string& key)const;
@@ -148,8 +149,8 @@ public:
 	double to_num()const;
 	string to_str()const;
 	ByteS to_bytes()const;
+	static AttrVar parse(const string& s);
 	string print()const;
-	string show()const;
 	bool str_empty()const;
 	AttrObject to_obj()const;
 	std::shared_ptr<AttrVars> to_dict()const;

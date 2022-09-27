@@ -157,7 +157,7 @@ AttrVar getSelfItem(string item) {
 	}
 	return var;
 }
-AttrVar getContextItem(AttrObject context, string item) {
+AttrVar getContextItem(AttrObject context, string item, bool isTrust) {
 	AttrVar var;
 	string sub;
 	if (!context.empty()) {
@@ -168,15 +168,17 @@ AttrVar getContextItem(AttrObject context, string item) {
 			if (context.has(sub) && context.is_table(sub))
 				return getContextItem(context.get_obj(sub), item);
 			if (sub == "user")return getUserItem(context.get_ll("uid"), item);
-			if (sub == "grp" || sub == "group")return getGroupItem(context.get_ll("gid"), item);
+			if (isTrust && (sub == "grp" || sub == "group"))return getGroupItem(context.get_ll("gid"), item);
 		}
 	}
-	if (sub.empty())sub = splitOnce(item);
-	if (sub == "self") {
-		return item.empty() ? getMsg("strSelfCall") : getSelfItem(item);
-	}
-	else if (selfdata_byStem.count(sub)) {
-		var = selfdata_byStem[sub]->data.index(item);
+	if (isTrust) {
+		if (sub.empty())sub = splitOnce(item);
+		if (sub == "self") {
+			return item.empty() ? getMsg("strSelfCall") : getSelfItem(item);
+		}
+		else if (selfdata_byStem.count(sub)) {
+			var = selfdata_byStem[sub]->data.index(item);
+		}
 	}
 	return var;
 }

@@ -70,6 +70,9 @@ AttrVar AttrObject::get(const string& key, ptr<AttrVar> val)const {
 string AttrObject::get_str(const string& key)const {
 	return dict->count(key) ? dict->at(key).to_str() : "";
 }
+string AttrObject::print(const string& key)const {
+	return dict->count(key) ? dict->at(key).print() : "";
+}
 int AttrObject::get_int(const string& key)const {
 	return dict->count(key) ? dict->at(key).to_int() : 0;
 }
@@ -376,6 +379,30 @@ ByteS AttrVar::to_bytes()const {
 	}
 	return {};
 }
+enumap<string> reserved{ "null","true","false" };
+AttrVar AttrVar::parse(const string& s) {
+	if (reserved.count(s)) {
+		switch (reserved[s]){
+		case 0:
+			return AttrVar();
+			break;
+		case 1:
+			return true;
+			break;
+		case 2:
+			return false;
+			break;
+		default:
+			break;
+		}
+	}
+	if (isNumeric(s)) {
+		if (s.find('.') != string::npos)return stod(s);
+		else if (s.length() < 10)return stoi(s);
+		else return stoll(s);
+	}
+	return s;
+}
 string AttrVar::print()const {
 	switch (type) {
 	case AttrType::Nil:
@@ -383,35 +410,6 @@ string AttrVar::print()const {
 		break;
 	case AttrType::Boolean:
 		return bit ? "true" : "false";
-		break;
-	case AttrType::Integer:
-		return to_string(attr);
-		break;
-	case AttrType::Number:
-		return toString(number);
-		break;
-	case AttrType::Text:
-		return text;
-		break;
-	case AttrType::Table:
-		return UTF8toGBK(to_json().dump());
-		break;
-	case AttrType::ID:
-		return to_string(id);
-		break;
-	case AttrType::Function:
-		return "Function#" + to_string(chunk.len);
-		break;
-	}
-	return {};
-}
-string AttrVar::show()const {
-	switch (type) {
-	case AttrType::Nil:
-		return "ÎŞ";
-		break;
-	case AttrType::Boolean:
-		return bit ? "Õæ" : "¼Ù";
 		break;
 	case AttrType::Integer:
 		return to_string(attr);
@@ -471,7 +469,6 @@ bool AttrVar::is_numberic()const {
 	}
 	return false;
 }
-#include "DDAPI.h"
 bool AttrVar::equal(const AttrVar& other)const{
 	if (other.type == AttrType::Nil) {
 		return is_null();
@@ -566,8 +563,9 @@ AttrVar::AttrVar(const fifo_json& j) {
 		break;
 	case fifo_json::value_t::array:
 		type = AttrType::Table; {
-			new(&table)AttrObject(VarArray());
-			for (auto it :j) {
+			new(&table)AttrObject();
+			table.list = std::make_shared<VarArray>();
+			for (auto& it :j) {
 				table.list->push_back(it);
 			}
 		}

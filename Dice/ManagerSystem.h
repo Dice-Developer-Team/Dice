@@ -133,7 +133,7 @@ User& getUser(long long qq);
 AttrVar getUserItem(long long uid, const string& item);
 AttrVar getGroupItem(long long uid, const string& item);
 AttrVar getSelfItem(string item);
-AttrVar getContextItem(AttrObject context, string item);
+AttrVar getContextItem(AttrObject context, string item, bool isTrust = true);
 int trustedQQ(long long qq);
 int clearUser();
 int clearGroup();

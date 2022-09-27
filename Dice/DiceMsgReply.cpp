@@ -451,7 +451,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			limits << "user_var:" + code;
 			ShowList vars;
 			for (auto& [key, cmpr] : user_vary) {
-				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.show();
+				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
 			}
 			notes << "- 用户触发阈值: " + vars.show();
 		}
@@ -462,7 +462,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			limits << "grp_var:" + code;
 			ShowList vars;
 			for (auto& [key, cmpr] : grp_vary) {
-				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.show();
+				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
 			}
 			notes << "- 群聊触发阈值: " + vars.show();
 		}
@@ -473,7 +473,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			limits << "self_var:" + code;
 			ShowList vars;
 			for (auto& [key, cmpr] : self_vary) {
-				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.show();
+				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
 			}
 			notes << "- 自身触发阈值: " + vars.show();
 		}
