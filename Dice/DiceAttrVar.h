@@ -89,6 +89,7 @@ public:
 	ptr<AttrVars> get_dict(const string& key)const;
 	ptr<VarArray> get_list(const string& key)const;
 	void inc(const string& key)const;
+	void add(const string& key, const AttrVar&)const;
 	AttrObject& merge(const AttrVars& other);
 	fifo_json to_json()const;
 	void writeb(std::ofstream&)const;
@@ -144,6 +145,7 @@ public:
 	bool operator==(const string& other)const;
 	bool operator==(const char* other)const;
 	AttrVar& operator++();
+	AttrVar operator+(const AttrVar& other);
 	int to_int()const;
 	long long to_ll()const;
 	double to_num()const;

@@ -725,6 +725,60 @@ fifo_json DiceMsgReply::writeJson()const {
 	return j;
 }
 
+bool DiceReplyUnit::listen(DiceEvent* msg, int type) {
+	string& strMsg{ msg->strMsg };
+	if (auto it{ match_items.find(strMsg) }; it != match_items.end()) {
+		if (!items.count(it->second->title))
+			match_items.erase(it);
+		else if ((type & (int)it->second->type)
+			&& it->second->exec(msg))return true;
+	}
+	if (stack<std::pair<size_t,string>> sPrefix; gPrefix.match_head(strMsg, sPrefix)) {
+		while (!sPrefix.empty()) {
+			msg->set("suffix", strMsg.substr(sPrefix.top().first));
+			if (auto it{ prefix_items.find(sPrefix.top().second) }; it != prefix_items.end()
+				&& (type & (int)it->second->type)
+				&& (it->second->exec(msg)))return true;
+			sPrefix.pop();
+		}
+	}
+	//模糊匹配禁止自我触发
+	if (vector<string>vSearch; msg->fromChat.uid != console.DiceMaid
+		&& gSearcher.search(convert_a2w(strMsg.c_str()), vSearch)) {
+		for (const auto& word : vSearch) {
+			if (auto it{ search_items.find(word) }; it != search_items.end()
+				&& (type & (int)it->second->type)
+				&& it->second->exec(msg))return true;
+		}
+	}
+	//regex
+	try {
+		bool isAns{ false };
+		for (auto& [title, exp] : regex_exp) {
+			if (!items.count(title))continue;
+			auto reply{ items[title] };
+			if (!(type & (int)reply->type))continue;
+			// libstdc++ 使用了递归式 dfs 匹配正则表达式
+			// 递归层级很多，非常容易爆栈
+			// 然而，每个 Java Thread 在32位 Linux 下默认大小为320K，600字符的匹配即会爆栈
+			// 64位下还好，默认是1M，1800字符会爆栈
+			// 这里强制限制输入为400字符，以避免此问题
+			// @seealso https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86164
+
+			// 未来优化：预先构建regex并使用std::regex::optimize
+			std::wstring LstrMsg = convert_a2realw(strMsg.c_str());
+			if (strMsg.length() <= 400 && std::regex_match(LstrMsg, msg->msgMatch, exp)) {
+				if (reply->exec(msg))isAns = true;
+			}
+		}
+		return isAns;
+	}
+	catch (const std::regex_error& e)
+	{
+		msg->reply(e.what());
+	}
+	return 0;
+}
 void DiceReplyUnit::add(const string& key, ptr<DiceMsgReply> reply) {
 	items[key] = reply;
 }

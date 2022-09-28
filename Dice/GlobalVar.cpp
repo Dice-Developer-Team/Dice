@@ -491,6 +491,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+626:前缀匹配记录后缀
 625:支持welcome转义
 624:支持mod远程安装/详细信息
 623:优化mod热插拔

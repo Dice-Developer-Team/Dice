@@ -96,6 +96,10 @@ void AttrObject::inc(const string& key)const {
 	if (dict->count(key))++dict->at(key);
 	else dict->emplace(key, 1);
 }
+void AttrObject::add(const string& key, const AttrVar& val)const {
+	if (key.empty())return;
+	(*dict)[key] = (*dict)[key] + val;
+}
 AttrObject& AttrObject::merge(const AttrVars& other) {
 	for (const auto& [key, val] : other) {
 		(*dict)[key] = val;
@@ -222,6 +226,9 @@ bool AttrVar::operator==(const char* other)const {
 }
 AttrVar& AttrVar::operator++() {
 	switch (type) {
+	case AttrType::Boolean:
+		bit = true;
+		break;
 	case AttrType::Integer:
 		++attr;
 		break;
@@ -235,6 +242,16 @@ AttrVar& AttrVar::operator++() {
 		break;
 	}
 	return *this;
+}
+AttrVar AttrVar::operator+(const AttrVar& other) {
+	if (type == AttrType::Text && other.type == AttrType::Text)
+		return text + other.text;
+	else if (is_numberic() && other.is_numberic()) {
+		double sum{ to_num() + other.to_num() };
+		return (sum == (int)sum) ? (int)sum :
+			((sum == (long long)sum) ? (long long)sum : sum);
+	}
+	return other ? AttrVar() : *this;
 }
 
 int AttrVar::to_int()const {

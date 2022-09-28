@@ -587,7 +587,7 @@ int getGroupConf(lua_State* L) {
 		}
 		return 1;
 	}
-	long long id{ lua_to_int(L, 1) };
+	long long id{ lua_to_int_or_zero(L, 1) };
 	if (!id)return 0;
 	if (item.empty()) {
 		lua_push_Context(L, chat(id).confs);
@@ -646,7 +646,7 @@ int getGroupConf(lua_State* L) {
 	return 1;
 }
 int setGroupConf(lua_State* L) {
-	long long id{ lua_to_int(L, 1) };
+	long long id{ lua_to_int_or_zero(L, 1) };
 	string item{ lua_to_gbstring(L, 2) };
 	if (!id || item.empty())return 0;
 	if (item[0] == '&')item = fmt->format(item);
@@ -685,7 +685,7 @@ int getUserConf(lua_State* L) {
 		}
 		return 1;
 	}
-	long long uid{ lua_to_int(L, 1) };
+	long long uid{ lua_to_int_or_zero(L, 1) };
 	if (!uid)return 0;
 	if (UserList.count(uid) && item.empty()) {
 		lua_push_Context(L, getUser(uid).confs);
@@ -700,7 +700,7 @@ int getUserConf(lua_State* L) {
 	return 1;
 }
 int setUserConf(lua_State* L) {
-	long long uid{ lua_to_int(L, 1) };
+	long long uid{ lua_to_int_or_zero(L, 1) };
 	if (!uid)return 0;
 	string item{ lua_to_gbstring(L, 2) };
 	if (item.empty())return 0;
@@ -750,7 +750,7 @@ int getUserToday(lua_State* L) {
 		}
 		return 1;
 	}
-	long long uid{ lua_to_int(L, 1) };
+	long long uid{ lua_to_int_or_zero(L, 1) };
 	if (item.empty()) {
 		lua_push_Context(L, today->get(uid));
 		return 1;
@@ -781,7 +781,7 @@ int getPlayerCardAttr(lua_State* L) {
 	if (int argc{ lua_gettop(L) }; argc > 4)lua_settop(L, 4);
 	else if (argc == 3)lua_pushnil(L);
 	else if (argc < 3)return 0;
-	long long plQQ{ lua_to_int(L, 1) };
+	long long plQQ{ lua_to_int_or_zero(L, 1) };
 	long long group{ lua_to_int_or_zero(L, 2) };
 	string key{ lua_to_gbstring(L, 3) };
 	if (!plQQ || key.empty())return 0;
@@ -802,7 +802,7 @@ int getPlayerCardAttr(lua_State* L) {
 	return 1;
 }
 int getPlayerCard(lua_State* L) {
-	long long plQQ{ lua_to_int(L, 1) };
+	long long plQQ{ lua_to_int_or_zero(L, 1) };
 	if (!plQQ)return 0;
 	long long group{ lua_to_int_or_zero(L, 2) };
 	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
@@ -811,7 +811,7 @@ int getPlayerCard(lua_State* L) {
 	return 1;
 }
 int setPlayerCardAttr(lua_State* L) {
-	long long plQQ{ lua_to_int(L, 1) };
+	long long plQQ{ lua_to_int_or_zero(L, 1) };
 	long long group{ lua_to_int_or_zero(L, 2) };
 	string item{ lua_to_gbstring(L, 3) };
 	if (!plQQ || item.empty())return 0;
@@ -875,8 +875,8 @@ int sendMsg(lua_State* L) {
 		chat["fwdMsg"] = lua_to_gbstring(L, 1);
 		if (top < 2)return 0;
 		chat["gid"] = lua_to_int_or_zero(L, 2);
-		if (top >= 3)chat["uid"] = lua_to_int(L, 3);
-		if (top >= 4)chat["chid"] = lua_to_int(L, 4);
+		if (top >= 3)chat["uid"] = lua_to_int_or_zero(L, 3);
+		if (top >= 4)chat["chid"] = lua_to_int_or_zero(L, 4);
 	}
 	if (!chat.get_ll("gid") && !chat.get_ll("uid"))return 0;
 	msgtype type{ chat.get_ll("gid") ? msgtype::Group
@@ -956,6 +956,18 @@ int Context_get(lua_State* L) {
 	}
 	return 1;
 }
+int Context_add(lua_State* L) {
+	if (lua_gettop(L) < 2)return 0;
+	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
+	string key{ fmt->format(lua_to_gbstring(L, 2), vars) };
+	if (lua_isnoneornil(L, 3)) {
+		vars.inc(key);
+	}
+	else {
+		vars.add(key, lua_to_attr(L, 3));
+	}
+	return 0;
+}
 int Context_index(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	string key{ lua_to_gbstring(L, 2) };
@@ -969,6 +981,10 @@ int Context_index(lua_State* L) {
 	}
 	else if (key == "get") {
 		lua_pushcfunction(L, Context_get);
+		return 1;
+	}
+	else if (key == "inc") {
+		lua_pushcfunction(L, Context_add);
 		return 1;
 	}
 	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };

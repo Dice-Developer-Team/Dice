@@ -97,11 +97,23 @@ public:
 	bool match_head(const _String& s, stack<Val>& res)const {
 		const Node* p = &root;
 		for (const auto& ch : s) {
-			//if (ignored(ch))continue;
 			if (!p->next.count(ch))break;
 			p = &(p->next.at(ch));
 			if (p->value) {
 				res.push(*p->value);
+			}
+		}
+		return res.size();
+	}
+	bool match_head(const _String& s, stack<std::pair<size_t, Val>>& res)const {
+		const Node* p = &root;
+		size_t prf{ 0 };
+		for (auto ch : s) {
+			if (!p->next.count(ch))break;
+			++prf;
+			p = &(p->next.at(ch));
+			if (p->value) {
+				res.emplace(prf, *p->value);
 			}
 		}
 		return res.size();
