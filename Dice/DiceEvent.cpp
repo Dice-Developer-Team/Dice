@@ -2777,8 +2777,16 @@ int DiceEvent::InnerOrder() {
 	else if (strPara == "off") {
 		fmt->mod_off(this);
 	}
-	else if (strPara == "del") {
-		fmt->mod_delete(*this);
+	else if (strPara == "reload") {
+		string err;
+		if (fmt->get_mod(modName)->reload(err)) {
+			fmt->build();
+			replyMsg("strModReload");
+		}
+		else {
+			set("err", err);
+			replyMsg("strModLoadErr");
+		}
 	}
 	else if (strPara == "info") {
 		set("mod_desc", fmt->get_mod(modName)->desc());
@@ -2787,6 +2795,9 @@ int DiceEvent::InnerOrder() {
 	else if (strPara == "detail") {
 		set("mod_detail", fmt->get_mod(modName)->detail());
 		replyMsg("strModDetail");
+	}
+	else if (strPara == "del") {
+		fmt->mod_delete(*this);
 	}
 	else replyHelp("mod");
 	return 1;

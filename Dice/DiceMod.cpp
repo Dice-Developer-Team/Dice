@@ -177,7 +177,7 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 		}
 	}
 	if (!msg.has("err"))msg.set("err", "\n未找到Mod源");
-	msg.replyMsg("strModInstalledErr");
+	msg.replyMsg("strModInstallErr");
 }
 void DiceModManager::mod_delete(DiceEvent& msg) {
 	std::lock_guard lock(ModMutex);
@@ -290,7 +290,7 @@ string DiceModManager::format(string s, AttrObject context, bool isTrust, const 
 						break;
 					case FmtMethod::Case:
 					case FmtMethod::Vary: {
-						auto& [item, strVary] = readini<string, string>(para, '?');
+						auto [item, strVary] = readini<string, string>(para, '?');
 						auto paras{ splitPairs(strVary,'=','&') };
 						auto itemVal{ getContextItem(context, item, isTrust) };
 						if (auto it{ paras.find(itemVal.print()) }; it != paras.end()
@@ -771,6 +771,16 @@ void DiceMod::loadDir() {
 		loadLua();
 	}
 	loaded = true;
+}
+bool DiceMod::reload(string& cb) {
+	helpdoc.clear();
+	speech.clear();
+	scripts.clear();
+	luaFiles.clear();
+	reply_list.clear();
+	events.clear();
+	cntAudio = cntImage = 0;
+	return loadDesc(cb);
 }
 int DiceModManager::load(ResList& resLog){
 	//读取mod管理文件

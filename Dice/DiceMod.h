@@ -85,6 +85,7 @@ public:
 	bool loaded{ false };
 	bool loadDesc(string&);
 	void loadDir();
+	bool reload(string& cb);
 	void loadLua();
 	string desc()const;
 	string detail()const;
@@ -145,7 +146,6 @@ public:
 	string format(string, AttrObject = {},
 		bool isTrust = true,
 		const dict_ci<string>& = {}) const;
-	string format_guest(string, AttrObject)const;
 	string msg_get(const string& key)const;
 	void msg_reset(const string& key);
 	void msg_edit(const string& key, const string& val);
