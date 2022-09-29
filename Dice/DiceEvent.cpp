@@ -85,11 +85,6 @@ void DiceEvent::reply(const std::string& msgReply, bool isFormat) {
 	reply(isFormat);
 }
 
-void DiceEvent::reply(const char* msgReply, bool isFormat) {
-	strReply = msgReply;
-	reply(isFormat);
-}
-
 void DiceEvent::reply(bool isFormat) {
 	if (isVirtual && fromChat.uid == console.DiceMaid && isPrivate())return;
 	while (isspace(static_cast<unsigned char>(strReply[0])))

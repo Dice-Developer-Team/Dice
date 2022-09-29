@@ -43,7 +43,6 @@ public:
 
 	void formatReply();
 
-	void reply(const char* strReply, bool isFormat = true) ;
 	void reply(const std::string& strReply, bool isFormat = true) ;
 
 	void replyHidden(const std::string& strReply);

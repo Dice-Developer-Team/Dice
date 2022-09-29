@@ -3,7 +3,7 @@
 #include "CardDeck.h"
 #include "RandomGenerator.h"
 #include "DDAPI.h"
-void parse_vary(string& raw, unordered_map<string, pair<AttrVar::CMPR, AttrVar>>& vary) {
+void parse_vary(string& raw, fifo_dict_ci<pair<AttrVar::CMPR, AttrVar>>& vary) {
 	ShowList vars;
 	for (auto& var : split(raw, "&")) {
 		pair<string, string>conf;
@@ -26,46 +26,44 @@ void parse_vary(string& raw, unordered_map<string, pair<AttrVar::CMPR, AttrVar>>
 			cmpr = &AttrVar::not_equal;
 			conf.second.pop_back();
 		}
-		//only number
-		if (!isNumeric(conf.second))continue;
-		vary[conf.first] = { cmpr ,conf.second };
+		vary[conf.first] = { cmpr ,AttrVar::parse(conf.second) };
 		vars << conf.first + "=" + conf.second + strCMPR;
 	}
 	raw = vars.show("&");
 }
-string parse_vary(const AttrVars& raw, unordered_map<string, pair<AttrVar::CMPR, AttrVar>>& vary) {
+string parse_vary(const AttrVars& raw, fifo_dict_ci<pair<AttrVar::CMPR, AttrVar>>& vary) {
 	ShowList vars;
 	for (auto& [key, exp] : raw) {
 		string var{ fmt->format(key) };
 		if (!exp.is_table()) {
 			vary[var] = { &AttrVar::equal,exp };
-			vars << var + "=" + exp.to_str();
+			vars << var + "=" + exp.print();
 		}
 		else {
 			auto& tab{ exp.table };
 			if (tab.has("equal")) {
 				vary[var] = { &AttrVar::equal,tab["equal"] };
-				vars << var + "=" + tab.get_str("equal");
+				vars << var + "=" + tab.print("equal");
 			}
 			else if (tab.has("neq")) {
 				vary[var] = { &AttrVar::not_equal , tab["neq"] };
-				vars << var + "=" + tab.get_str("neq") + "!";
+				vars << var + "=" + tab.print("neq") + "!";
 			}
 			else if (tab.has("at_least")) {
 				vary[var] = { &AttrVar::equal_or_more , tab["at_least"] };
-				vars << var + "=" + tab.get_str("at_least") + "+";
+				vars << var + "=" + tab.print("at_least") + "+";
 			}
 			else if (tab.has("at_most")) {
 				vary[var] = { &AttrVar::equal_or_less , tab["at_most"] };
-				vars << var + "=" + tab.get_str("at_most") + "-";
+				vars << var + "=" + tab.print("at_most") + "-";
 			}
 			else if (tab.has("more")) {
 				vary[var] = { &AttrVar::more , tab["more"] };
-				vars << var + "=" + tab.get_str("more") + "++";
+				vars << var + "=" + tab.print("more") + "++";
 			}
 			else if (tab.has("less")) {
 				vary[var] = { &AttrVar::less , tab["less"] };
-				vars << var + "=" + tab.get_str("less") + "--";
+				vars << var + "=" + tab.print("less") + "--";
 			}
 		}
 	}
@@ -208,7 +206,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			limits << "user_var:" + code;
 			ShowList vars;
 			for (auto& [key, cmpr] : user_vary) {
-				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.to_str();
+				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
 			}
 			notes << "- 用户触发阈值: " + vars.show();
 		}
@@ -220,7 +218,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			limits << "grp_var:" + code;
 			ShowList vars;
 			for (auto& [key, cmpr] : grp_vary) {
-				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.to_str();
+				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
 			}
 			notes << "- 群聊触发阈值: " + vars.show();
 		}
@@ -232,7 +230,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			limits << "self_var:" + code;
 			ShowList vars;
 			for (auto& [key, cmpr] : self_vary) {
-				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.to_str();
+				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
 			}
 			notes << "- 自身触发阈值: " + vars.show();
 		}

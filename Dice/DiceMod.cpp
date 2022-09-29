@@ -182,7 +182,8 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 void DiceModManager::mod_delete(DiceEvent& msg) {
 	std::lock_guard lock(ModMutex);
 	string modName{ msg.get_str("mod") };
-	auto idx{ modList[modName]->index };
+	auto mod{ modList[modName] };
+	auto idx{ mod->index };
 	modList.erase(modName);
 	for (auto it{ modOrder.erase(modOrder.begin() + idx) };
 		it != modOrder.end(); ++it) {
@@ -190,6 +191,8 @@ void DiceModManager::mod_delete(DiceEvent& msg) {
 	}
 	save();
 	build();
+	remove(mod->pathJson);
+	remove(mod->pathDir);
 	msg.note("{strModDelete}", 1);
 }
 static enumap<string> methods{ "print","help","sample","case","vary","grade" };
@@ -780,6 +783,7 @@ bool DiceMod::reload(string& cb) {
 	reply_list.clear();
 	events.clear();
 	cntAudio = cntImage = 0;
+	loaded = false;
 	return loadDesc(cb);
 }
 int DiceModManager::load(ResList& resLog){

@@ -18,9 +18,9 @@ class DiceTriggerLimit {
 	vector<CDConfig>locks;
 	vector<CDConfig>cd_timer;
 	vector<CDConfig>today_cnt;
-	unordered_map<string, pair<AttrVar::CMPR, AttrVar>>self_vary;
-	unordered_map<string, pair<AttrVar::CMPR, AttrVar>>user_vary;
-	unordered_map<string, pair<AttrVar::CMPR, AttrVar>>grp_vary;
+	fifo_dict_ci<pair<AttrVar::CMPR, AttrVar>>self_vary;
+	fifo_dict_ci<pair<AttrVar::CMPR, AttrVar>>user_vary;
+	fifo_dict_ci<pair<AttrVar::CMPR, AttrVar>>grp_vary;
 	enum class Treat :size_t { Ignore, Only, Off };
 	Treat to_dice{ Treat::Ignore };
 public:

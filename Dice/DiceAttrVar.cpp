@@ -51,7 +51,7 @@ bool AttrObject::has(const string& key)const {
 }
 void AttrObject::set(const string& key, const AttrVar& val)const {
 	if (key.empty())return;
-	if (!val)dict->erase(key);
+	if (val.is_null())dict->erase(key);
 	else (*dict)[key] = val;
 }
 void AttrObject::reset(const string& key)const {
@@ -412,6 +412,11 @@ AttrVar AttrVar::parse(const string& s) {
 		default:
 			break;
 		}
+	}
+	if (s.find_first_of("\"[{") == 0) {
+		try {
+			return fifo_json::parse(s);
+		}catch(...){}
 	}
 	if (isNumeric(s)) {
 		if (s.find('.') != string::npos)return stod(s);

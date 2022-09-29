@@ -200,7 +200,7 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 				tab.list->push_back(lua_to_attr(L, -1));
 			}
 			else {
-				tab.set(lua_to_gbstring(L, -2), lua_to_attr(L, -1));
+				tab.dict->emplace(lua_to_gbstring(L, -2), lua_to_attr(L, -1));
 			}
 			lua_pop(L, 1);
 		}
