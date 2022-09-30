@@ -3403,8 +3403,8 @@ int DiceEvent::InnerOrder() {
 					if (stat.estMean > 0)
 						res << "均值[期望]: " + toString(stat.estMean, 2, true) + " [" + toString(stat.expMean) + "]";
 					if (stat.pNormDist) {
-						if (stat.pNormDist < 0.5)res << "均值低于" + toString(100 - stat.pNormDist * 100, 2) + "%的用户";
-						else res << "均值高于" + toString(stat.pNormDist * 100, 2) + "%的用户";
+						if (stat.pNormDist < 0.5)res << "低于" + toString(100 - stat.pNormDist * 100, 2) + "%的用户";
+						else res << "高于" + toString(stat.pNormDist * 100, 2) + "%的用户";
 					}
 					if (stat.estStd > 0) {
 						res << "标准差[期望]: " + toString(stat.estStd, 2) + " [" + toString(stat.expStd) + "]";

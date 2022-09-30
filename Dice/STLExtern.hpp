@@ -266,13 +266,16 @@ typename multimap<K, V>::iterator match(multimap<K, V>& mmp, K key, V val)
 
 class ShowList {
 	vector<string>list;
+	size_t len{ 0 };
 public:
 	ShowList& operator<<(const string& item) {
 		list.push_back(item);
+		len += item.length();
 		return *this;
 	}
 	bool empty()const { return list.empty(); }
 	size_t size()const { return list.size(); }
+	size_t length()const { return len; }
 	string show(const string& sepa = "|") {
 		string res;
 		for (auto it = list.begin(); it != list.end(); ++it) {

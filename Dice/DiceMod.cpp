@@ -498,7 +498,8 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 }
 
 string DiceModManager::list_reply(int type)const {
-	ResList listTotal, listMatch, listSearch, listPrefix, listRegex;
+	ShowList listTotal;
+	ResList listMatch, listSearch, listPrefix, listRegex;
 	for (const auto& [key, reply] : final_reply.match_items) {
 		if (type & (int)reply->type)listMatch << key;
 	}
@@ -515,7 +516,8 @@ string DiceModManager::list_reply(int type)const {
 	if (!listPrefix.empty())listTotal << "[Ç°×ºÆ¥Åä] " + listPrefix.dot(" | ").show();
 	if (!listSearch.empty())listTotal << "[Ä£ºýÆ¥Åä] " + listSearch.dot(" | ").show();
 	if (!listRegex.empty())listTotal << "[ÕýÔòÆ¥Åä] " + listRegex.dot(" | ").show();
-	return listTotal.show();
+	return "\n" + ((listTotal.size() > 1 && listTotal.length() > 256)
+		? listTotal.show("\f") : listTotal.show("\n"));
 }
 void DiceReplyUnit::insert(const string& key, ptr<DiceMsgReply> reply) {
 	erase(key);
