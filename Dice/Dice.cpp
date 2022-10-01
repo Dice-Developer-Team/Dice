@@ -408,7 +408,7 @@ EVE_Enable(eventEnable){
 			else
 			{
 				console.log("Dice! WebUI 正于端口" + std::to_string(ports[0])
-					+ "运行，本地可通过浏览器访问localhost:" + std::to_string(ports[0])
+					+ "运行，本地可通过浏览器访问http://localhost:" + std::to_string(ports[0])
 					+ "\n默认用户名为admin密码为password，详细教程请查看 https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming", 0b1);
 			}
 		}

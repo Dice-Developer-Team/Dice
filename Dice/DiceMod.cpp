@@ -127,7 +127,7 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 	}
 	for (auto& url : sourceList) {
 		if (!Network::GET(url + name, desc)) {
-			console.log("访问"+ url + name + "失败:" + desc, 0);
+			console.log("访问" + url + name + "失败:" + desc, 0);
 			msg.set("err", msg.get_str("err") + "\n访问" + url + name + "失败:" + desc);
 			continue;
 		}
@@ -156,18 +156,24 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 				}
 				std::error_code ec1;
 				Zip::extractZip(des, DiceDir / "mod");
-				if (!fs::exists(DiceDir / "mod" / (name + ".json"))) {
+				auto pathJson{ DiceDir / "mod" / (name + ".json") };
+				if (!fs::exists(pathJson)) {
 					msg.set("err", msg.get_str("err") + "\npkg解压无文件" + name + ".json");
 					continue;
 				}
 				auto mod{ std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),true}) };
 				modList[name] = mod;
 				modOrder.push_back(mod);
-				if (!mod->loaded)break;
-				save();
-				build();
-				msg.replyMsg("strModInstalled");
-				return;
+				string err;
+				if (mod->file(pathJson).loadDesc(err)) {
+					save();
+					build();
+					msg.replyMsg("strModInstalled");
+					return;
+				}
+				else {
+					msg.set("err", msg.get_str("err") + "\n" + err + "(" + url + name + ")");
+				}
 			}
 			msg.set("err", msg.get_str("err") + "\n未写出mod地址(repo/pkg):" + url + name);
 		}
@@ -902,8 +908,8 @@ void DiceModManager::initCloud() {
 		std::ifstream fin{ p };
 		sourceList.clear();
 		string url;
-		while (getline(fin>> std::skipws, url)) {
-			if (0 == url.find("#"))break;
+		while (getline(fin >> std::skipws, url)) {
+			if (0 == url.find("#"))continue;
 			sourceList.push_back(url);
 		}
 	}
