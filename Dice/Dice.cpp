@@ -949,7 +949,8 @@ EVE_FriendRequest(eventFriendRequest) {
 	} };
 	bool isBlocked{ fmt->call_hook_event(eve) };
 	if (eve.has("approval")) {
-		DD::answerFriendRequest(fromUID, eve.is("approval") ? 1 : 2, eve.get_str("msg_reply"));
+		DD::answerFriendRequest(fromUID, eve.is("approval") ? 1 : 2,
+			fmt->format(eve.get_str("msg_reply"), eve));
 	}
 	if (isBlocked)return 1;
 	string strMsg = "好友添加请求，来自 " + printUser(fromUID) + ":" + message;
@@ -960,7 +961,7 @@ EVE_FriendRequest(eventFriendRequest) {
 	}
 	else if (trustedQQ(fromUID)) {
 		strMsg += "\n已同意（受信任用户）";
-		DD::answerFriendRequest(fromUID, 1, getMsg("strAddFriendWhiteQQ"));
+		DD::answerFriendRequest(fromUID, 1, getMsg("strAddFriendWhiteQQ", eve));
 		console.log(strMsg, 1, printSTNow());
 	}
 	else if (console["AllowStranger"] < 2 && !UserList.count(fromUID)) {
@@ -975,7 +976,7 @@ EVE_FriendRequest(eventFriendRequest) {
 	}
 	else {
 		strMsg += "\n已同意";
-		DD::answerFriendRequest(fromUID, 1, getMsg("strAddFriend"));
+		DD::answerFriendRequest(fromUID, 1, getMsg("strAddFriend",eve));
 		console.log(strMsg, 1, printSTNow());
 	}
 	return 1;
@@ -989,9 +990,9 @@ EVE_FriendAdded(eventFriendAdd) {
 		{"uid",fromUID},
 	} };
 	if(fmt->call_hook_event(eve))return 1;
-	(trustedQQ(fromUID) > 0 && !getMsg("strAddFriendWhiteQQ").empty())
-		? AddMsgToQueue(getMsg("strAddFriendWhiteQQ"), fromUID)
-		: AddMsgToQueue(getMsg("strAddFriend"), fromUID);
+	(trustedQQ(fromUID) > 0 && !getMsg("strAddFriendWhiteQQ", eve).empty())
+		? AddMsgToQueue(getMsg("strAddFriendWhiteQQ", eve), fromUID)
+		: AddMsgToQueue(getMsg("strAddFriend", eve), fromUID);
 	return 0;
 }
 EVE_Extra(eventExtra) {
