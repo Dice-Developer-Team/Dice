@@ -17,7 +17,6 @@
 #include "DiceNetwork.h"
 
 using namespace std;
-using namespace nlohmann;
 
 using Mark = DDBlackMark;
 using Manager = DDBlackManager;
@@ -131,14 +130,14 @@ void warningHandler()
 				fifo_json j = fifo_json::parse(GBKtoUTF8(warning.strMsg));
 				if (j.is_array())
 				{
-					for (auto it : j)
+					for (auto& it : j)
 					{
-						blacklist->verify(&it, warning.fromUID);
+						blacklist->verify(it, warning.fromUID);
 					}
 				}
 				else
 				{
-					blacklist->verify(&j, warning.fromUID);
+					blacklist->verify(j, warning.fromUID);
 				}
 				std::this_thread::sleep_for(100ms);
 			}
@@ -176,11 +175,9 @@ DDBlackMark::DDBlackMark(long long uid, long long group) : type("local"), danger
 	if (group)fromGID = {group, true};
 }
 
-DDBlackMark::DDBlackMark(void* pJson)
-{
+DDBlackMark::DDBlackMark(const fifo_json& j){
 	try
 	{
-		fifo_json& j = *static_cast<fifo_json*>(pJson);
 		bool isAdd = true;
 		if (j.count("type"))
 		{
@@ -249,7 +246,7 @@ DDBlackMark::DDBlackMark(const string& strWarning)
 	try
 	{
 		fifo_json j = fifo_json::parse(strWarning);
-		new(this)DDBlackMark(&j);
+		new(this)DDBlackMark(j);
 	}
 	catch (...)
 	{
@@ -1107,7 +1104,7 @@ void DDBlackManager::add_black_qq(long long llqq, DiceEvent* msg)
 	msg->note("已添加" + printUser(llqq) + "的本地黑名单记录√");
 }
 
-void DDBlackManager::verify(void* pJson, long long operatorQQ)
+void DDBlackManager::verify(const fifo_json& pJson, long long operatorQQ)
 {
     DDBlackMark mark{pJson};
     if (!mark.isValid)return;
@@ -1182,7 +1179,7 @@ void DDBlackManager::verify(void* pJson, long long operatorQQ)
         if (mark.type == "local" || mark.type == "other" || mark.isSource(console.DiceMaid)) {
             if (credit > 0)console.log(
 				getName(operatorQQ) + "已通知" + getMsg("strSelfName") + "不良记录(未采用):\n!warning" + UTF8toGBK(
-					static_cast<json*>(pJson)->dump()), 1, printSTNow());
+					pJson.dump()), 1, printSTNow());
             return;
         }
     }
@@ -1216,7 +1213,7 @@ void DDBlackManager::verify(void* pJson, long long operatorQQ)
         }
         if (mark.fromGID.first && (groupset(mark.fromGID.first, "忽略") > 0 || groupset(mark.fromGID.first, "协议无效") > 0 || ExceptGroups.count(mark.fromGID.first)))return;
         insert(mark);
-        console.log(getName(operatorQQ) + "已通知" + getMsg("strSelfName") + "不良记录" + to_string(vBlackList.size() - 1) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
+        console.log(getName(operatorQQ) + "已通知" + getMsg("strSelfName") + "不良记录" + to_string(vBlackList.size() - 1) + ":\n!warning" + UTF8toGBK(pJson.dump()), 1, printSTNow());
     }
     else 
 	{ 
@@ -1247,7 +1244,7 @@ void DDBlackManager::verify(void* pJson, long long operatorQQ)
         if (mark.danger != old_mark.danger && credit < 3) { 
             mark.danger = old_mark.danger; 
         }
-        if(update(mark,index,credit))console.log(getName(operatorQQ) + "已更新" + getMsg("strSelfName") + "不良记录" + to_string(index) + ":\n!warning" + UTF8toGBK(((json*)pJson)->dump()), 1, printSTNow());
+        if(update(mark,index,credit))console.log(getName(operatorQQ) + "已更新" + getMsg("strSelfName") + "不良记录" + to_string(index) + ":\n!warning" + UTF8toGBK(pJson.dump()), 1, printSTNow());
     }
 }
 
@@ -1268,7 +1265,7 @@ int DDBlackManager::loadJson(const std::filesystem::path& fpPath, bool isExtern)
 	int cnt(0);
 	for (auto& item : j)
 	{
-		DDBlackMark mark{&item};
+		DDBlackMark mark{item};
 		if (!mark.isValid)continue;
 		if (!mark.danger)mark.danger = 2;
 		//新插入或更新

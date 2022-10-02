@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "filesystem.hpp"
+#include "fifo_json.hpp"
 
 using std::pair;
 using std::string;
@@ -57,7 +58,7 @@ class DDBlackMark
 	int check_cloud();
 public:
 	DDBlackMark(long long, long long);
-	DDBlackMark(void*);
+	DDBlackMark(const fifo_json&);
 	DDBlackMark(const string&);
 	friend class DDBlackManager;
 	friend class DDBlackMarkFactory;
@@ -116,7 +117,7 @@ public:
 	void add_black_qq(long long, DiceEvent*);
 	void rm_black_group(long long, DiceEvent*);
 	void rm_black_qq(long long, DiceEvent*);
-	void verify(void*, long long);
+	void verify(const fifo_json&, long long);
 	void create(DDBlackMark&);
 	//读取json格式黑名单记录
 	int loadJson(const std::filesystem::path& fpPath, bool isExtern = false);

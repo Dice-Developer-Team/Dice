@@ -888,20 +888,20 @@ int sendMsg(lua_State* L) {
 int eventMsg(lua_State* L) {
 	int top{ lua_gettop(L) };
 	if (top < 1)return 0;
-	AttrVars vars;
+	AttrVars eve;
 	if (lua_istable(L, 1)) {
-		vars = lua_to_dict(L, 1);
+		eve = lua_to_dict(L, 1);
 	}
 	else {
 		string fromMsg{ lua_to_gbstring(L, 1) };
 		long long fromGID{ lua_to_int_or_zero(L, 2) };
 		long long fromUID{ lua_to_int_or_zero(L, 3) };
-		vars = fromGID
+		eve = fromGID
 			? AttrVars{ {"fromMsg",fromMsg},{"gid",fromGID}, {"uid", fromUID} }
 			: AttrVars{ {"fromMsg",fromMsg}, {"uid", fromUID} };
 	}
 	std::thread th([=]() {
-		DiceEvent msg(vars);
+		DiceEvent msg(eve);
 		msg.virtualCall();
 	});
 	th.detach();

@@ -173,6 +173,7 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 				}
 				else {
 					msg.set("err", msg.get_str("err") + "\n" + err + "(" + url + name + ")");
+					continue;
 				}
 			}
 			msg.set("err", msg.get_str("err") + "\nÎ´Ğ´³ömodµØÖ·(repo/pkg):" + url + name);
