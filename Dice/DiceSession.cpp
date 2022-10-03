@@ -189,11 +189,10 @@ std::filesystem::path DiceSession::log_path()const {
 }
 
 void DiceChatLink::load() {
-	if (fifo_json jFile{ freadJson(DiceDir / "conf" / "LinkList.json") }; jFile.empty()){
+	if (fifo_json jFile{ freadJson(DiceDir / "conf" / "LinkList.json") }; !jFile.empty()){
 		for (auto& jLink : jFile) {
-			auto ct{ chatInfo::from_json(jLink["origin"]) };
-			LinkInfo& link{ LinkList[ct] = { jLink["linking"].get<bool>(),
-				jLink["type"].get<string>(),
+			LinkInfo& link{ LinkList[chatInfo::from_json(jLink["origin"])]
+				= { jLink["linking"], jLink["type"],
 				chatInfo::from_json(jLink["target"]) } };
 		}
 		if (jFile.empty() && !LinkList.empty())save();
@@ -219,7 +218,7 @@ void DiceChatLink::save() {
 		jLink["linking"] = linker.isLinking;
 		jFile.push_back(jLink);
 	}
-	fwriteJson(DiceDir / "conf" / "LinkList.json", jFile, 0);
+	fwriteJson(DiceDir / "conf" / "LinkList.json", jFile, 1);
 }
 void DiceChatLink::build(DiceEvent* msg) {
 	auto here{ msg->fromChat.locate() };
