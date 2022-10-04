@@ -235,18 +235,26 @@ void Console::reset()
 
 bool Console::load() {
 	if (std::filesystem::exists(DiceDir / "conf" / "console.yaml")) {
-		YAML::Node yaml{ YAML::LoadFile(getNativePathString(DiceDir / "conf" / "console.yaml")) };
-		if (yaml["master"])master = yaml["master"].as<long long>();
-		if (yaml["config"]) {
-			for (auto& cfg : yaml["config"]) {
-				intConf[cfg.first.as<string>()] = cfg.second.as<int>();
+		try {
+			YAML::Node yaml{ YAML::LoadFile(getNativePathString(DiceDir / "conf" / "console.yaml")) };
+			if (yaml["master"])master = yaml["master"].as<long long>();
+			if (yaml["config"]) {
+				for (auto& cfg : yaml["config"]) {
+					intConf[cfg.first.as<string>()] = cfg.second.as<int>();
+				}
 			}
-		}
-		if (yaml["clock"]) {
-			for (auto& task : yaml["clock"]) {
-				mWorkClock.insert({ scanClock(task["moment"].as<string>()),
-					task["task"].as<string>() });
+			if (yaml["clock"]) {
+				for (auto& task : yaml["clock"]) {
+					mWorkClock.insert({ scanClock(task["moment"].as<string>()),
+						task["task"].as<string>() });
+				}
 			}
+			if (yaml["git"]) {
+				git_user = yaml["git"]["user"].as<string>();
+				git_pw = yaml["git"]["password"].as<string>();
+			}
+		} catch (std::exception& e) {
+			DD::debugLog("/conf/console.yaml∂¡»° ß∞‹!" + string(e.what()));
 		}
 	}
 	else if (string s; !rdbuf(DiceDir / "conf" / "console.xml", s))return false;

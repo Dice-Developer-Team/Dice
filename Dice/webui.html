@@ -92,7 +92,7 @@
 				  <div class="layui-input-inline">
 					  <input type="number" name="master" id="master" required lay-verify="required|number" placeholder="输入主人账号完成认主" autocomplete="off" class="layui-input">
 				  </div>
-				  <div class="layui-input-inline" id="mode">
+				  <div class="layui-input-inline" id="mastermode">
 					  <input type="radio" name="mode" id="public" value="public" title="公骰" checked>
 					  <input type="radio" name="mode" id="private" value="private" title="私骰">
 				  </div>
@@ -733,7 +733,12 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
   $.get("/api/master")
 	.done(function(data) {
 	  if (data.code == 0) {
-		$("#master").val(data.data.master);
+          $("#master").val(data.data.master);
+          if (data.data.mode == "private") {
+              $("input#public").attr('checked', false);
+              $("input#private").attr('checked', true);
+              form.render('radio');
+          }
 	  }
 	})
 

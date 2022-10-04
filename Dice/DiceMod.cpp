@@ -645,7 +645,7 @@ string DiceModManager::script_path(const string& name)const {
 #ifndef __ANDROID__
 DiceMod::DiceMod(const string& mod, size_t i, const string& url) :name(mod), index(i), pathDir(DiceDir / "mod" / mod),
 repo(std::make_shared<DiceRepo>(pathDir, url)) {
-	if (!repo) {
+	if (!fs::exists(pathDir)) {
 		console.log(getMsg("strSelfNick") + "°²×°mod¡¸" + mod + "¡¹²Ö¿âÊ§°Ü£¡", 0);
 	}
 	else if (!fs::exists(pathDir / "descriptor.json")) {
