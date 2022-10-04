@@ -85,7 +85,7 @@ const dict_ci<string> PlainMsg
 	{"strLogNullErr","{self}无日志记录或已结束！"},
 	{"strLogUpSuccess","{self}已完成日志上传√\n请访问 {log_url} 以查看记录"},
 	{"strLogUpFailure","{self}上传日志文件失败，正在第{retry}次重传{log_file}…{ret}"},
-	{"strLogUpFailureEnd","很遗憾，{self}无法成功上传日志文件×\n{ret}\n如需获取可联系Master:{master_ID}\n文件名:{log_file}"},
+	{"strLogUpFailureEnd","很遗憾，{self}无法成功上传日志文件×\n{ret}\n如需获取可联系Master:{print:master}\n文件名:{log_file}"},
 	{"strGMTableShow","{self}记录的{table_name}列表: {res}"},
 	{"strGMTableClr","{self}已清除{table_name}表√"},
 	{"strGMTableItemDel","{self}已移除{table_name}表的项目{table_item}√"},
@@ -169,8 +169,8 @@ const dict_ci<string> PlainMsg
 	{"strStModify","{self}对已记录{pc}的属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","{self}对已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
 	{"strStValEmpty","{self}未记录{attr}原值×"},		
-	{"strBlackQQAddNotice","{user_nick}，你已被{self}加入黑名单，详情请联系Master:{master_ID}"},				
-	{"strBlackQQAddNoticeReason","{user_nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{master_ID}"},
+	{"strBlackQQAddNotice","{user_nick}，你已被{self}加入黑名单，详情请联系Master:{print:master}"},				
+	{"strBlackQQAddNoticeReason","{user_nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{print:master}"},
 	{"strBlackQQDelNotice","{user_nick}，你已被{self}移出黑名单，现在可以继续使用了"},
 	{"strWhiteQQAddNotice","{user_nick}，您已获得{self}的信任，请尽情使用{self}√"},
 	{"strWhiteQQDenied","你不是{self}的信任用户×"},
@@ -358,7 +358,7 @@ const dict_ci<string> PlainMsg
 	{"strJrrp", "{nick}今天的人品值是: {res}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{res}"},
 	{ "strFriendDenyNotUser", "很遗憾，你没有对{self}使用指令的记录" },
-	{ "strFriendDenyNoTrust", "很遗憾，你不是{self}信任的用户，如需使用可联系{master_ID}" },
+	{ "strFriendDenyNoTrust", "很遗憾，你不是{self}信任的用户，如需使用可联系{print:master}" },
 	{"strAddFriendWhiteQQ", "{strAddFriend}"}, //白名单用户添加好友时回复此句
 	{
 		"strAddFriend",
@@ -382,13 +382,13 @@ const dict_ci<string> PlainMsg
 邀请入群默认视为同意服务协议，知晓禁言或移出的后果)"
 	}, 
 	{ "strNewMaster","试问，你就是{strSelfName}的Master√\n请认真阅读当前版本Master手册以及用户手册。请注意版本号对应: https://v2docs.kokona.tech\f{strSelfName}默认开启对群移出、禁言、刷屏事件的监听，如要关闭请手动调整；\n请注意云黑系统默认开启，如无需此功能请关闭CloudBlackShare；" },
-	{ "strNewMasterPublic",R"({strSelfName}初始化开启公骰模式：
+	{ "strNewMasterPublic",R"({strSelfName}以公骰模式认主：
 自动开启BelieveDiceList响应来自骰娘列表的warning；
 已开启自动通过非黑名单好友申请；
 已开启黑名单自动清理，拉黑时及每日定时会自动清理与黑名单用户的共同群聊，黑名单用户群权限不低于自己时自动退群；
 已开启拉黑群时连带邀请人；
 已启用send功能接收用户发送的消息；)" },
-	{ "strNewMasterPrivate",R"({strSelfName}默认开启私骰模式：
+	{ "strNewMasterPrivate",R"({strSelfName}以私骰模式认主：
 默认拒绝陌生人的群邀请，只同意来自管理员、受信任用户的邀请；
 默认拒绝陌生人的好友邀请，如要同意请开启AllowStranger；
 已开启黑名单自动清理，拉黑时及每日定时会自动清理与黑名单用户的共同群聊，黑名单用户群权限高于自己时自动退群；
@@ -493,6 +493,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+627:更新认主口令
 626:前缀匹配记录后缀
 625:支持welcome转义
 624:支持mod远程安装/详细信息
@@ -524,7 +525,7 @@ const dict_ci<> HelpDoc = {
 565:.log日志记录)"},
 {"协议","0.本协议是Dice!默认服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已事先得到群内同意，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
 {"链接","Dice!论坛导航贴: https://kokona.tech \nDice!论坛: https://forum.kokona.tech \n支持Shiki: https://afdian.net/@dice_shiki"},
-{"设定",R"(Master：{master_ID}
+{"设定",R"(Master：{print:master}
 群内使用：{case:self.Private?else=白名单制，需预申请&0={case:self.CheckGroupLicense?2=审核制，需申请后使用&1=审核制，入新群需申请&else=黑名单制，自由使用}}
 好友申请：{case:self.AllowStanger?2=允许任何人&1=需要使用记录&else=仅白名单}
 移出反制：{case:self.ListenGroupKicked?0=无&else=拉黑{case:self.KickedBanInviter?1=并连带邀请人}}
@@ -583,7 +584,7 @@ R"([第三页]其他指令
 为了避免未预料到的指令误判，请尽可能在参数之间使用空格)"
 "\f"
 R"({help:扩展指令})"},
-{"master",R"(当前Master:{master_ID}
+{"master",R"(当前Master:{print:master}
 Master拥有最高权限，且可以调整任意信任)"},
 {"mod",R"(模块指令.mod
 本指令限信任4使用

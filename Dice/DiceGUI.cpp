@@ -655,14 +655,11 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				{
 					std::string str = EditMaster.GetText();
 					while (str.length() > 1 && str[0] == '0')str.erase(str.begin());
-					if (str == "0")
-					{
-						if (console)
-						{
+					if (str == "0") {
+						if (console) {
 							console.killMaster();
 							StaticMasterLabel.SetText("Master模式已关闭");
 							MessageBox(nullptr, TEXT("Master模式已关闭√\nmaster已清除"), TEXT("Master模式切换"), MB_OK | MB_ICONINFORMATION);
-							console.isMasterMode = false;
 						}
 						return 0;
 					}
@@ -676,7 +673,7 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					StaticMasterLabel.SetText("当前的Master为" + to_string(uid) + "(设置QQ为0以关闭Master模式)");
 					if (console)
 					{
-						if (console.masterQQ != uid)
+						if (console != uid)
 						{
 							console.killMaster();
 							console.newMaster(uid);
@@ -685,7 +682,6 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					else {
 						MessageBox(nullptr, reinterpret_cast<wchar_t*>(const_cast<char16_t*>(convert_a2w(console["Private"] ? getMsg("strNewMasterPrivate").c_str() : getMsg("strNewMasterPublic").c_str()).c_str())), TEXT("Master模式初始化"), MB_OK | MB_ICONINFORMATION);
 						console.newMaster(uid);
-						console.isMasterMode = true;
 					}
 				}
 				return 0;
@@ -922,7 +918,7 @@ LRESULT DiceGUI::CreateMasterPage()
 	                    m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_BUTTONMASTER));
 
 	StaticMasterLabel.Create(
-		reinterpret_cast<wchar_t*>(const_cast<char16_t*>(convert_a2w(!console ? "Master模式已关闭" : ("当前的Master为" + to_string(console.masterQQ) + "(设置QQ为0以关闭Master模式)").c_str()).c_str())),
+		reinterpret_cast<wchar_t*>(const_cast<char16_t*>(convert_a2w(!console ? "Master模式已关闭" : ("当前的Master为" + to_string(console) + "(设置QQ为0以关闭Master模式)").c_str()).c_str())),
 		WS_CHILD | WS_VISIBLE | SS_CENTERIMAGE, 0, 30, 40, 450, 30,
 		m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_LABELMASTER));
 

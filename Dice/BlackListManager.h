@@ -44,7 +44,7 @@ class DDBlackMark
 	item ownerQQ{0, false};
 	//
 	long long DiceMaid = 0;
-	long long masterQQ = 0;
+	long long masterID = 0;
 	//危险等级
 	short danger = 0;
 	//唯一云端编号（0表示不对应云端）
@@ -180,9 +180,9 @@ public:
 		return *this;
 	}
 
-	Factory& masterQQ(long long qq)
+	Factory& master(long long qq)
 	{
-		mark.masterQQ = qq;
+		mark.masterID = qq;
 		return *this;
 	}
 

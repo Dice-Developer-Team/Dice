@@ -8,7 +8,7 @@
 
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
 using std::string;
 using std::vector;
 
@@ -32,7 +32,7 @@ public:
 	}
 
 	vector<DDOM> vChild{};
-	std::map<string, size_t> mChild{};
+	std::unordered_map<string, size_t> mChild{};
 	string strValue{};
 
 	static string printTab(unsigned short cnt)
@@ -42,20 +42,13 @@ public:
 		return s;
 	}
 
-	void push(DDOM dom)
+	void push(const DDOM& dom)
 	{
 		mChild.insert({dom.tag, vChild.size()});
-		vChild.push_back(std::move(dom));
+		vChild.push_back(dom);
 	}
-
-	[[nodiscard]] bool count(const string& key) const
-	{
-		return mChild.count(key);
-	}
-
-	DDOM& operator[](const string& key)
-	{
-		return vChild[mChild[key]];
+	DDOM* getTag(const string& sub) {
+		return mChild.count(sub) ? &vChild[mChild[sub]] : nullptr;
 	}
 
 	void parse(string& s)

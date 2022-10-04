@@ -69,7 +69,7 @@ bool DiceEvent::isPrivate()const {
 	return !fromChat.gid;
 }
 bool DiceEvent::isFromMaster()const {
-	return fromChat.uid == console.master();
+	return fromChat.uid == console;
 }
 bool DiceEvent::isChannel()const {
 	return fromChat.chid;
@@ -199,7 +199,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 	{
 		ResList res;
 		res << "Servant:" + printUser(console.DiceMaid)
-			<< "Master:" + printUser(console.master())
+			<< "Master:" + printUser(console)
 			<< (console["Private"] ? "私用模式" : "公用模式");
 		if (console["LeaveDiscuss"])res << "禁用讨论组";
 		if (console["DisabledGlobal"])res << "全局静默中";
@@ -934,7 +934,7 @@ int DiceEvent::MasterSet()
 	}
 	if (strOption == "delete")
 	{
-		if (console.master() != fromChat.uid)
+		if (console != fromChat.uid)
 		{
 			replyMsg("strNotMaster");
 			return 1;
@@ -945,20 +945,20 @@ int DiceEvent::MasterSet()
 	}
 	else if (strOption == "reset")
 	{
-		if (console.master() != fromChat.uid)
+		if (console != fromChat.uid)
 		{
 			replyMsg("strNotMaster");
 			return 1;
 		}
 		const string strMaster = readDigit();
-		if (strMaster.empty() || stoll(strMaster) == console.master())
+		if (strMaster.empty() || stoll(strMaster) == console)
 		{
 			reply("Master不要消遣{strSelfCall}!");
 		}
 		else
 		{
 			console.newMaster(stoll(strMaster));
-			note("已将Master转让给" + printUser(console.master()));
+			note("已将Master转让给" + printUser(console));
 		}
 		return 1;
 	}
@@ -1128,28 +1128,29 @@ int DiceEvent::BasicOrder()
 		AddWarning(strWarning, fromChat.uid, fromChat.gid);
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 6) == "master" && console.isMasterMode)
+	else if (strLowerMessage.substr(intMsgCnt, 6) == "master")
 	{
 		intMsgCnt += 6;
-		if (!console.master())
+		if (!console)
 		{
 			string strOption = readRest();
-			if (strOption == "public"){
+			if (strOption == console.authkey_pub){
 				console.set("Private", 0);
+				console.newMaster(fromChat.uid);
 			}
-			else{
+			else if(strOption == console.authkey_pri) {
 				console.set("Private", 1);
+				console.newMaster(fromChat.uid);
 			}
-			console.newMaster(fromChat.uid);
+			else {
+				reply("请{nick}以{strSelfCall}初始化时提供的口令完成认主！");
+			}
 		}
-		else if (trusted > 4 || console.master() == fromChat.uid)
-		{
+		else if (trusted > 4 || isFromMaster()) {
 			return MasterSet();
 		}
-		else
-		{
+		else {
 			if (isCalled)replyMsg("strNotMaster");
-			return 1;
 		}
 		return 1;
 	}
@@ -1564,7 +1565,7 @@ int DiceEvent::InnerOrder() {
 		else if (strOption == "cmd")
 		{
 #ifdef _WIN32
-			if (fromChat.uid != console.master())
+			if (isFromMaster())
 			{
 				replyMsg("strNotMaster");
 				return -1;
@@ -2597,8 +2598,7 @@ int DiceEvent::InnerOrder() {
 				return 1;
 			}
 			User& user = getUser(llTarget);
-			if (int intTrust = get_int("trust"); intTrust < 0 || intTrust > 255 || (intTrust >= trusted && fromChat.uid
-																						   != console.master())) {
+			if (int intTrust = get_int("trust"); intTrust < 0 || intTrust > 255 || (intTrust >= trusted && isFromMaster())) {
 				replyMsg("strUserTrustIllegal");
 				return 1;
 			}
@@ -2649,7 +2649,7 @@ int DiceEvent::InnerOrder() {
 				return 1;
 			}
 			long long llTarget = readID();
-			if (trustedQQ(llTarget) >= trusted && fromChat.uid != console.master()) {
+			if (trustedQQ(llTarget) >= trusted && isFromMaster()) {
 				replyMsg("strUserTrustDenied");
 				return 1;
 			}

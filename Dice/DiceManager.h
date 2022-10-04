@@ -329,7 +329,8 @@ public:
             j["code"] = 0;
             j["msg"] = "ok";
 			j["data"] = nlohmann::json::object();
-            j["data"]["masterQQ"] = console.master();
+            j["data"]["master"] = (long long)console;
+            j["data"]["mode"] = console["Private"] ? "private" : "public";
             ret = j.dump();
         }
         catch(const std::exception& e)
@@ -353,18 +354,15 @@ public:
             nlohmann::json j = nlohmann::json::parse(data);
             if (j["action"].get<std::string>() == "set")
             {
-                const long long masterQQ = j["data"]["masterQQ"].get<long long>();
-                if (masterQQ == 0)
-                {
-                    if (console)
-                    {
+                const long long master = j["data"]["master"];
+                if (master == 0) {
+                    if (console){
                         console.killMaster();
-                        console.isMasterMode = false;
                     }
                 }
-                else if (console.masterQQ != masterQQ)
-                {
-                    console.newMaster(masterQQ);
+                else if (console != master){
+                    console.set("private", j["data"]["mode"] == "private" ? 1 : 0);
+                    console.newMaster(master);
                 }
             } 
             else

@@ -296,6 +296,9 @@ string DiceModManager::format(string s, AttrObject context, bool isTrust, const 
 							if (isTrust && paras["gid"].empty())val = printGroup(context.get_ll("gid"));
 							else val = printGroup(AttrVar(paras["gid"]).to_ll());
 						}
+						else if (paras.count("master")) {
+							val = console ? printUser(console) : "[ÎÞÖ÷]";
+						}
 						else val = {};
 						break;
 					case FmtMethod::Case:

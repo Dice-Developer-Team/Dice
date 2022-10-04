@@ -7,7 +7,8 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123ËÝä§
+ * Copyright (C) 2018-2021 w4123ËÝä§
+ * Copyright (C) 2019-2022 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -23,10 +24,12 @@
 #pragma once
 #ifndef DICE_RANDOM_GENERATOR
 #define DICE_RANDOM_GENERATOR
+#include <string>
 
-namespace RandomGenerator
-{
+namespace RandomGenerator {
 	unsigned long long GetCycleCount();
 	int Randint(int lowest, int highest);
+	enum class Code { Decimal, Hex, Alpha, Alnum, Base64, UrlBase64};
+	std::string genKey(size_t len, Code = Code::Decimal);
 }
 #endif /*DICE_RANDOM_GENERATOR*/

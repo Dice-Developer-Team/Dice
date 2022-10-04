@@ -26,7 +26,7 @@ using Factory = DDBlackMarkFactory;
 int isReliable(long long uid)
 {
 	if (!uid)return 0;
-	if (uid == console.master())return 255;
+	if (uid == console)return 255;
 	if (trustedQQ(uid) > 2)return trustedQQ(uid) - 1;
 	if (mDiceList.count(uid))
 	{
@@ -196,16 +196,18 @@ DDBlackMark::DDBlackMark(const fifo_json& j){
 				isAdd = !isClear;
 			}
 		}
-		if (j.count("fromGroup"))fromGID = { j["fromGroup"].get<long long>(), isAdd };
-		if (j.count("fromQQ"))fromUID = { j["fromQQ"].get<long long>(), isAdd };
-		if (j.count("fromGID"))fromGID = {j["fromGID"].get<long long>(), isAdd};
-		if (j.count("fromUID"))fromUID = {j["fromUID"].get<long long>(), isAdd};
+		if (j.count("fromGID"))fromGID = { j["fromGID"].get<long long>(), isAdd };
+		else if (j.count("fromGroup"))fromGID = { j["fromGroup"].get<long long>(), isAdd };
+		if (j.count("fromUID"))fromUID = { j["fromUID"].get<long long>(), isAdd };
+		else if (j.count("fromQQ"))fromUID = { j["fromQQ"].get<long long>(), isAdd };
 		if (j.count("inviterQQ"))inviterQQ = {j["inviterQQ"].get<long long>(), isAdd};
+		else if (j.count("inviter"))inviterQQ = { j["inviter"].get<long long>(), isAdd };
 		if (j.count("inviter"))inviterQQ = { j["inviter"].get<long long>(), isAdd };
 		if (j.count("ownerQQ"))ownerQQ = {j["ownerQQ"].get<long long>(), isAdd};
 
 		if (j.count("DiceMaid"))DiceMaid = j["DiceMaid"].get<long long>();
-		if (j.count("masterQQ"))masterQQ = j["masterQQ"].get<long long>();
+		if (j.count("masterQQ"))masterID = j["masterQQ"].get<long long>();
+		else if (j.count("master"))masterID = j["master"].get<long long>();
 
 		if (j.count("danger"))
 		{
@@ -286,7 +288,7 @@ string DDBlackMark::printJson(int tab = 0) const
 	if (!time.empty())j["time"] = GBKtoUTF8(time);
 	if (!note.empty())j["note"] = GBKtoUTF8(note);
 	if (DiceMaid)j["DiceMaid"] = DiceMaid;
-	if (masterQQ)j["masterQQ"] = masterQQ;
+	if (masterID)j["masterQQ"] = masterID;
 	if (!comment.empty())j["comment"] = GBKtoUTF8(comment);
 	if (tab)return UTF8toGBK(j.dump(tab));
 	return UTF8toGBK(j.dump());
@@ -305,7 +307,7 @@ string DDBlackMark::warning() const
 	if (!time.empty())j["time"] = GBKtoUTF8(time);
 	if (!note.empty())j["note"] = GBKtoUTF8(note);
 	if (DiceMaid)j["DiceMaid"] = DiceMaid;
-	if (masterQQ)j["masterQQ"] = masterQQ;
+	if (masterID)j["masterQQ"] = masterID;
 	if (!comment.empty())j["comment"] = GBKtoUTF8(comment);
 	return "!warning" + UTF8toGBK(j.dump(2));
 }
@@ -313,7 +315,7 @@ string DDBlackMark::warning() const
 std::string DDBlackMark::getData() const
 {
 	std::string data = "fromChat.uid=" + std::to_string(fromUID.first) + "&fromGID=" + std::to_string(fromGID.first) +
-		"&DiceMaid=" + std::to_string(DiceMaid) + "&masterQQ=" + std::to_string(masterQQ) + "&time=" + time;
+		"&DiceMaid=" + std::to_string(DiceMaid) + "&masterQQ=" + std::to_string(masterID) + "&time=" + time;
 	return data;
 }
 
@@ -383,7 +385,7 @@ bool DDBlackMark::isSame(const DDBlackMark& other) const
 
 bool DDBlackMark::isSource(long long uid) const
 {
-	return DiceMaid == uid || masterQQ == uid;
+	return DiceMaid == uid || masterID == uid;
 }
 void DDBlackMark::check_remit()
 {
@@ -401,7 +403,7 @@ void DDBlackMark::erase()
 
 void DDBlackMark::upload()
 {
-	std::string info = "&masterID=" + std::to_string(masterQQ) + "&time=" +	time + "&note=" + UrlEncode(GBKtoUTF8(note));
+	std::string info = "&masterID=" + std::to_string(masterID) + "&time=" +	time + "&note=" + UrlEncode(GBKtoUTF8(note));
 	int res{ DD::uploadBlack(console.DiceMaid, fromUID.first, fromGID.first, type, info) };
 	if (!res) {
 		erase();
@@ -417,7 +419,7 @@ void DDBlackMark::upload()
 int DDBlackMark::check_cloud()
 {
 	std::string frmdata = "fromUID=" + std::to_string(fromUID.first) + "&fromGID=" + std::to_string(fromGID.first) +
-		"&DiceMaid=" + std::to_string(DiceMaid) + "&masterID=" + std::to_string(masterQQ) + "&time=" + time;
+		"&DiceMaid=" + std::to_string(DiceMaid) + "&masterID=" + std::to_string(masterID) + "&time=" + time;
 	string temp;
 	const bool reqRes = Network::POST("http://shiki.stringempty.xyz/blacklist/check.php", frmdata, "", temp);
 	if (!reqRes)
@@ -578,7 +580,7 @@ DDBlackMark& DDBlackMark::operator<<(const DDBlackMark& mark)
         ownerQQ = mark.ownerQQ;
     }
     if (!DiceMaid && mark.DiceMaid)DiceMaid = mark.DiceMaid;
-    if (!masterQQ && mark.masterQQ)masterQQ = mark.masterQQ;
+    if (!masterID && mark.masterID)masterID = mark.masterID;
     //save comment if the mark changed at this update
     if (!mark.comment.empty())
 	{
@@ -788,7 +790,7 @@ bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5)
         }
     }
     if (!old_mark.DiceMaid && mark.DiceMaid)old_mark.DiceMaid = mark.DiceMaid;
-    if (!old_mark.masterQQ && mark.masterQQ)old_mark.masterQQ = mark.masterQQ;
+    if (!old_mark.masterID && mark.masterID)old_mark.masterID = mark.masterID;
     //save comment if the mark changed at this update
     if (isUpdated)
 	{
@@ -871,7 +873,7 @@ bool DDBlackManager::up_group_danger(long long llgroup, DDBlackMark& mark)
 
 bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark)
 {
-	if (trustedQQ(llqq) > 1 || llqq == console.master() || llqq == console.DiceMaid)
+	if (trustedQQ(llqq) > 1 || llqq == console || llqq == console.DiceMaid)
 	{
 		if (mark.fromUID.first == llqq)mark.erase();
 		if (mark.inviterQQ.first == llqq)mark.inviterQQ.second = false;
@@ -1071,7 +1073,7 @@ void DDBlackManager::add_black_group(long long llgroup, DiceEvent* msg)
 	}
 	mark.time = msg->get_str("time");
 	mark.DiceMaid = console.DiceMaid;
-	mark.masterQQ = console.masterQQ;
+	mark.masterID = console;
 	mark.comment = printSTNow() + " 由" + printUser(msg->get_ll("uid")) + "拉黑";
 	insert(mark);
 	msg->note("已添加" + printGroup(llgroup) + "的黑名单记录√");
@@ -1079,8 +1081,7 @@ void DDBlackManager::add_black_group(long long llgroup, DiceEvent* msg)
 
 void DDBlackManager::add_black_qq(long long llqq, DiceEvent* msg)
 {
-	if (trustedQQ(llqq) > 1)
-	{
+	if (trustedQQ(llqq) > 1){
 		msg->reply(getMsg("strSelfName") + "不能拉黑受信任用户！");
 		return;
 	}
@@ -1098,7 +1099,7 @@ void DDBlackManager::add_black_qq(long long llqq, DiceEvent* msg)
 	}
 	mark.time = msg->get_str("time");
 	mark.DiceMaid = console.DiceMaid;
-	mark.masterQQ = console.masterQQ;
+	mark.masterID = console;
 	mark.comment = printSTNow() + " 由" + printUser(msg->fromChat.uid) + "拉黑";
 	insert(mark);
 	msg->note("已添加" + printUser(llqq) + "的本地黑名单记录√");
@@ -1140,7 +1141,7 @@ void DDBlackManager::verify(const fifo_json& pJson, long long operatorQQ)
                         if (!mark.isClear)mark.fromGID = {j["fromGroup"].get<long long>(), true};
                     }
                     mark.DiceMaid = j["DiceMaid"].get<long long>();
-                    mark.masterQQ = j["masterQQ"].get<long long>();
+                    mark.masterID = j["masterQQ"].get<long long>();
                     mark.type = j["type"].get<string>();
                     mark.time = j["time"].get<string>();
                     if (mark.note.empty())
@@ -1191,7 +1192,7 @@ void DDBlackManager::verify(const fifo_json& pJson, long long operatorQQ)
     if (index < 0)
 	{
         //发送者或当事人任一有黑名单
-        if (credit < 0 || get_qq_danger(mark.DiceMaid) || get_qq_danger(mark.masterQQ))return;
+        if (credit < 0 || get_qq_danger(mark.DiceMaid) || get_qq_danger(mark.masterID))return;
         if (!mark.isType())return;
         //无云端确认记录且不受信任
         if (is_cloud < 0 || is_cloud == 1) 
@@ -1219,7 +1220,7 @@ void DDBlackManager::verify(const fifo_json& pJson, long long operatorQQ)
 	{ 
 		//已有记录
         DDBlackMark& old_mark = vBlackList[index];
-        bool isSource = operatorQQ == old_mark.DiceMaid || operatorQQ == old_mark.masterQQ;
+        bool isSource = operatorQQ == old_mark.DiceMaid || operatorQQ == old_mark.masterID;
         //低于危险等级无权修改
         if (old_mark.danger > credit && credit < 255) {
             if (old_mark.danger != 2)return;
@@ -1334,6 +1335,6 @@ void DDBlackManager::saveJson(const std::filesystem::path& fpPath) const
 Factory& DDBlackMarkFactory::sign()
 {
 	mark.DiceMaid = console.DiceMaid;
-	mark.masterQQ = console.master();
+	mark.masterID = console;
 	return *this;
 }

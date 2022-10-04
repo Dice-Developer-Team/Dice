@@ -7,538 +7,542 @@
   <title>{{= d.nick }}的Dice WebUI</title>
   <link rel="stylesheet" href="https://unpkg.com/layui@2.6.8/dist/css/layui.css">
   <style>
-      .layui-layout-admin .layui-layout-left,
-      .layui-layout-admin .layui-body,
-      .layui-layout-admin .layui-footer{left: 0;}
-      .layui-layout-admin .layui-side{left: -300px;}
-      .layui-table-cell{
-        height: 24px;
-        white-space: nowrap;
-        line-height: 24px;
-        padding: 0 10px;
-      }
-      .layui-btn-container .layui-btn {
-        margin-bottom: 1px;
-        margin-left: 1px;
-      }
+	  .layui-layout-admin .layui-layout-left,
+	  .layui-layout-admin .layui-body,
+	  .layui-layout-admin .layui-footer{left: 0;}
+	  .layui-layout-admin .layui-side{left: -300px;}
+	  .layui-table-cell{
+		height: 24px;
+		white-space: nowrap;
+		line-height: 24px;
+		padding: 0 10px;
+	  }
+	  .layui-btn-container .layui-btn {
+		margin-bottom: 1px;
+		margin-left: 1px;
+	  }
   </style>
 </head>
 <body>
 
 <div class="layui-layout layui-layout-admin">
   <div class="layui-header">
-    <div class="layui-logo layui-hide-xs layui-bg-black">Dice WebUI</div>
-    <ul class="layui-nav layui-layout-right">
-      <li class="layui-nav-item layui-hide" id="bot-info">
-        <a href="javascript:;">
-          <img src="https://q1.qlogo.cn/g?b=qq&nk={{= d.qq }}&s=3" class="layui-nav-img" id="qq-avatar">
-          <span>{{= d.nick }}</span>
-        </a>
-      </li>
-    </ul>
+	<div class="layui-logo layui-hide-xs layui-bg-black">Dice WebUI</div>
+	<ul class="layui-nav layui-layout-right">
+	  <li class="layui-nav-item layui-hide" id="bot-info">
+		<a href="javascript:;">
+		  <img src="https://q1.qlogo.cn/g?b=qq&nk={{= d.qq }}&s=3" class="layui-nav-img" id="qq-avatar">
+		  <span>{{= d.nick }}</span>
+		</a>
+	  </li>
+	</ul>
   </div>
 
   <div class="layui-body" style="padding: 15px;">
-    <div class="layui-tab layui-tab-brief" lay-filter="main">
-      <ul class="layui-tab-title">
-        <li class="layui-this">主界面</li>
-        <li>Master设置</li>
-        <li class="layui-hide">用户管理(还没写)</li>
-        <li class="layui-hide">群管理(还没写)</li>
-        <li>自定义回执</li>
-        <li>关键词回复</li>
-        <li class="layui-hide">拓展管理(还没写)</li>
-        <li>WebUI管理</li>
-        <li>更新日志</li>
-      </ul>
-      <div class="layui-tab-content">
-        <div class="layui-tab-item layui-show">
-          <div class="layui-row layui-col-space15">
-            <div class="layui-col-md6">
-              <div class="layui-panel" style="padding: 10px;">
-                <div class="layui-text">
-                  <h3>基础信息</h3>
-                  <p>
-                    欢迎使用Dice! WebUI面板
-                    <br>
-                    常用链接：<a href="https://forum.kokona.tech">论坛</a> <a href="https://v2docs.kokona.tech">文档</a>
-                    <br>
-                    <span id="basic-info">运行时间：{{= d.running_time }}
-                    <br>
-                    启动后指令数量：{{= d.cmd_count }}
-                    <br>
-                    今日指令数量：{{= d.cmd_count_today }}</span>
-                    <br>
-                  </p>
-                </div>
-              </div>   
-            </div>
-            <div class="layui-col-md6">
-              <div class="layui-panel layui-hide" style="padding: 10px;">
-                <div class="layui-text">
-                  <h3>系统信息</h3>
-                  <p>
-                     还没写还没写还没写 
-                  </p>
-                </div>
-              </div>   
-            </div>
-          </div>    
-        </div>
-        <div class="layui-tab-item">
-          <form class="layui-form" action="">
-            <div class="layui-form-item">
-              <label class="layui-form-label">Master</label>
-              <div class="layui-input-inline">
-                <input type="number" name="masterQQ" id="masterQQ" required lay-verify="required|number" placeholder="输入主人账号完成认主" autocomplete="off" class="layui-input">
-              </div>
-              <div class="layui-input-inline">
-                <button class="layui-btn layui-btn-warm" lay-submit lay-filter="masterForm">认主</button>
-              </div>
-            </div>
-          </form>
-          <table id="admin-config-table" lay-filter="admin-config-table"></table>
-        </div>
-        <div class="layui-tab-item">
+	<div class="layui-tab layui-tab-brief" lay-filter="main">
+	  <ul class="layui-tab-title">
+		<li class="layui-this">主界面</li>
+		<li>Master设置</li>
+		<li class="layui-hide">用户管理(还没写)</li>
+		<li class="layui-hide">群管理(还没写)</li>
+		<li>自定义回执</li>
+		<li>关键词回复</li>
+		<li class="layui-hide">拓展管理(还没写)</li>
+		<li>WebUI管理</li>
+		<li>更新日志</li>
+	  </ul>
+	  <div class="layui-tab-content">
+		<div class="layui-tab-item layui-show">
+		  <div class="layui-row layui-col-space15">
+			<div class="layui-col-md6">
+			  <div class="layui-panel" style="padding: 10px;">
+				<div class="layui-text">
+				  <h3>基础信息</h3>
+				  <p>
+					欢迎使用Dice! WebUI面板
+					<br>
+					常用链接：<a href="https://forum.kokona.tech">论坛</a> <a href="https://v2docs.kokona.tech">文档</a>
+					<br>
+					<span id="basic-info">运行时间：{{= d.running_time }}
+					<br>
+					启动后指令数量：{{= d.cmd_count }}
+					<br>
+					今日指令数量：{{= d.cmd_count_today }}</span>
+					<br>
+				  </p>
+				</div>
+			  </div>   
+			</div>
+			<div class="layui-col-md6">
+			  <div class="layui-panel layui-hide" style="padding: 10px;">
+				<div class="layui-text">
+				  <h3>系统信息</h3>
+				  <p>
+					 还没写还没写还没写 
+				  </p>
+				</div>
+			  </div>   
+			</div>
+		  </div>    
+		</div>
+		<div class="layui-tab-item">
+		  <form class="layui-form" action="">
+			  <div class="layui-form-item">
+				  <label class="layui-form-label">Master</label>
+				  <div class="layui-input-inline">
+					  <input type="number" name="master" id="master" required lay-verify="required|number" placeholder="输入主人账号完成认主" autocomplete="off" class="layui-input">
+				  </div>
+				  <div class="layui-input-inline" id="mode">
+					  <input type="radio" name="mode" id="public" value="public" title="公骰" checked>
+					  <input type="radio" name="mode" id="private" value="private" title="私骰">
+				  </div>
+				  <div class="layui-input-inline">
+					  <button class="layui-btn layui-btn-warm" lay-submit lay-filter="masterForm">认主</button>
+				  </div>
+			  </div>
+		  </form>
+		  <table id="admin-config-table" lay-filter="admin-config-table"></table>
+		</div>
+		<div class="layui-tab-item">
 
-        </div>
-        <div class="layui-tab-item">
+		</div>
+		<div class="layui-tab-item">
 
-        </div>
-        <div class="layui-tab-item">
-          <table id="custom-msg-table" lay-filter="custom-msg-table"></table>
-        </div>
-        <div class="layui-tab-item">
-          <table id="custom-reply-table" lay-filter="custom-reply-table"></table>
-        </div>
-        <div class="layui-tab-item">
+		</div>
+		<div class="layui-tab-item">
+		  <table id="custom-msg-table" lay-filter="custom-msg-table"></table>
+		</div>
+		<div class="layui-tab-item">
+		  <table id="custom-reply-table" lay-filter="custom-reply-table"></table>
+		</div>
+		<div class="layui-tab-item">
 
-        </div>
-        <div class="layui-tab-item">
-          <form class="layui-form" action="">
-            <div class="layui-form-item">
-              <label class="layui-form-label">WebUI密码</label>
-              <div class="layui-input-block">
-                <input type="password" name="password" id="password" required lay-verify="required|pass" placeholder="请输入新密码" autocomplete="off" class="layui-input">
-                <input type="password" required lay-verify="required|passsame" placeholder="请重复输入新密码" autocomplete="off" class="layui-input">
-              </div>
-            </div>
-            <div class="layui-form-item">
-              <div class="layui-input-block">
-                <button class="layui-btn" lay-submit lay-filter="passwordForm">确认</button>
-              </div>
-            </div>
-          </form>
-        </div>
+		</div>
+		<div class="layui-tab-item">
+		  <form class="layui-form" action="">
+			<div class="layui-form-item">
+			  <label class="layui-form-label">WebUI密码</label>
+			  <div class="layui-input-block">
+				<input type="password" name="password" id="password" required lay-verify="required|pass" placeholder="请输入新密码" autocomplete="off" class="layui-input">
+				<input type="password" required lay-verify="required|passsame" placeholder="请重复输入新密码" autocomplete="off" class="layui-input">
+			  </div>
+			</div>
+			<div class="layui-form-item">
+			  <div class="layui-input-block">
+				<button class="layui-btn" lay-submit lay-filter="passwordForm">确认</button>
+			  </div>
+			</div>
+		  </form>
+		</div>
 )") + u8R"(
-        <div class="layui-tab-item">
-          <ul class="layui-timeline">
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe604;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">最新版本开发中</h3>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe617;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年6月6日 版本2.6.4rc(612)</h3>
-                <p>session问题优化&新增link state</p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年5月26日 版本2.6.4(612)</h3>
-                <p>event支持hook代理事件</p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年5月25日 版本2.6.4beta5(611)</h3>
-                <p>WebUI更新自定义回执跨行编辑&reply匹配一对多</p>
-                <p>优化session代码</p>
-                <p>尝试修复与lua虚拟机的编码转换</p>
-                <p>修复清群与log的一些问题</p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年5月10日 版本2.6.4beta4(610)</h3>
-                <p>event支持每日定时事件</p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年5月2日 版本2.6.4beta3(609)</h3>
-                <p>mod新增子目录event,支持计时循环事件</p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年4月27日 版本2.6.4beta2(608)</h3>
-                <p>新增.mod指令以在运行中插拔</p>
-                <p>支持用setUserConf修改nn称呼</p>
-                <p>更新认主机制，公骰作成允许任何人好友申请</p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年4月26日 版本2.6.4beta1(607)</h3>
-                <p>更新.nn指令格式</p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe617;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年2月23日 版本2.6.3(606)</h3>
-                <p>修复.sc使用给定理智值时，剩余理智存入角色卡的bug</p>
-                <p>优化关键词回复的解析</p>
-                <p>http.post支持定义contentType</p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年2月19日 版本2.6.3beta6(605)</h3>
-                <p>关键词回复优化为一个回复对应多个关键词</p>
-                <p>修复敏感词检测时点</p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年2月6日 版本2.6.3beta5(604)</h3>
-                <p>优化转义机制，允许花括号多层嵌套</p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年2月2日 版本2.6.3beta4(603)</h3>
-                <p>支持yaml读取</p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年1月26日 版本2.6.3beta3(602)</h3>
-                <p>msg支持元表，允许msg:echo方法</p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年1月25日 版本2.6.3beta2(601)</h3>
-                <p>新增DisableStrangerChat禁用非好友私聊</p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年1月21日 版本2.6.3beta1(600)</h3>
-                <p>
-                  优化回复转义
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe617;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年1月19日 版本2.6.2fixed(599)</h3>
-                <p>
-                  修复从文件读取的前缀匹配回复无法正常匹配的问题
-                </p>
-                <p>
-                  mod新增script项，允许被reply lua直接调用
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年1月16日 版本2.6.2(598)</h3>
-                <p>
-                  新增当日计数器
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年1月13日 版本2.6.2(597)</h3>
-                <p>
-                  新增冷却计时器
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年1月12日 版本2.6.2beta4(596)</h3>
-                <p>
-                  PlayerCard/UserConf/GroupConf支持读写table
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年1月8日 版本2.6.2beta3(595)</h3>
-                <p>
-                  lua可通过getGroupConf获取群名片card/权限auth/最后发言lst
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年1月5日 版本2.6.2beta2(594)</h3>
-                <p>
-                  setcoc优化，允许查看房规
-                  <br>
-                  修复房规设置错误
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2022年1月3日 版本2.6.2beta1(593)</h3>
-                <p>
-                  新增回复触发限制
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe617;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2021年12月17日 版本2.6.1(592)</h3>
-                <p>
-                  新增回复前缀匹配
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2021年12月12日 版本2.6.1beta4(591)</h3>
-                <p>
-                  新增获取群内nn/群名片/设置群名片
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2021年12月6日 版本2.6.1beta3(590)</h3>
-                <p>
-                  lua内置http相关函数（get/post）
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2021年11月27日 版本2.6.1beta2(589)</h3>
-                <p>
-                  新增安科/安价指令.ak
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2021年11月17日 版本2.6.1beta1(588)</h3>
-                <p>
-                  适配频道消息
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe617;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2021年11月3日 版本2.6.0(587)</h3>
-                <p>
-                  更新ww指令机制
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2021年10月1日 版本2.6.0(586)</h3>
-                <p>
-                  新版触发词回复
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2021年9月18日 版本2.6.0(585)</h3>
-                <p>
-                  WebUI 验证增强
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2021年9月17日 版本2.6.0beta(584)</h3>
-                <p>
-                  WebUI 验证
-                  <br>
-                  WebUI 基础设置
-                  <br>
-                  WebUI 关键词回复管理
-                  <br>
-                  WebUI 正则回复管理
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <h3 class="layui-timeline-title">2021年9月16日 版本2.6.0beta(583)</h3>
-                <p>
-                  基础WebUI框架
-                  <br>
-                  WebUI 基础信息
-                  <br>
-                  WebUI Master设置
-                  <br>
-                  WebUI 自定义内置回执
-                </p>
-              </div>
-            </li>
-            <li class="layui-timeline-item">
-              <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-              <div class="layui-timeline-content layui-text">
-                <div class="layui-timeline-title">过去</div>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-    <blockquote class="layui-elem-quote layui-hide layui-text" id="footer">当前版本：{{= d.version }}</blockquote>
+		<div class="layui-tab-item">
+		  <ul class="layui-timeline">
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe604;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">最新版本开发中</h3>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe617;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年6月6日 版本2.6.4rc(612)</h3>
+				<p>session问题优化&新增link state</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年5月26日 版本2.6.4(612)</h3>
+				<p>event支持hook代理事件</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年5月25日 版本2.6.4beta5(611)</h3>
+				<p>WebUI更新自定义回执跨行编辑&reply匹配一对多</p>
+				<p>优化session代码</p>
+				<p>尝试修复与lua虚拟机的编码转换</p>
+				<p>修复清群与log的一些问题</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年5月10日 版本2.6.4beta4(610)</h3>
+				<p>event支持每日定时事件</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年5月2日 版本2.6.4beta3(609)</h3>
+				<p>mod新增子目录event,支持计时循环事件</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年4月27日 版本2.6.4beta2(608)</h3>
+				<p>新增.mod指令以在运行中插拔</p>
+				<p>支持用setUserConf修改nn称呼</p>
+				<p>更新认主机制，公骰作成允许任何人好友申请</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年4月26日 版本2.6.4beta1(607)</h3>
+				<p>更新.nn指令格式</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe617;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年2月23日 版本2.6.3(606)</h3>
+				<p>修复.sc使用给定理智值时，剩余理智存入角色卡的bug</p>
+				<p>优化关键词回复的解析</p>
+				<p>http.post支持定义contentType</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年2月19日 版本2.6.3beta6(605)</h3>
+				<p>关键词回复优化为一个回复对应多个关键词</p>
+				<p>修复敏感词检测时点</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年2月6日 版本2.6.3beta5(604)</h3>
+				<p>优化转义机制，允许花括号多层嵌套</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年2月2日 版本2.6.3beta4(603)</h3>
+				<p>支持yaml读取</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年1月26日 版本2.6.3beta3(602)</h3>
+				<p>msg支持元表，允许msg:echo方法</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年1月25日 版本2.6.3beta2(601)</h3>
+				<p>新增DisableStrangerChat禁用非好友私聊</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年1月21日 版本2.6.3beta1(600)</h3>
+				<p>
+				  优化回复转义
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe617;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年1月19日 版本2.6.2fixed(599)</h3>
+				<p>
+				  修复从文件读取的前缀匹配回复无法正常匹配的问题
+				</p>
+				<p>
+				  mod新增script项，允许被reply lua直接调用
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年1月16日 版本2.6.2(598)</h3>
+				<p>
+				  新增当日计数器
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年1月13日 版本2.6.2(597)</h3>
+				<p>
+				  新增冷却计时器
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年1月12日 版本2.6.2beta4(596)</h3>
+				<p>
+				  PlayerCard/UserConf/GroupConf支持读写table
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年1月8日 版本2.6.2beta3(595)</h3>
+				<p>
+				  lua可通过getGroupConf获取群名片card/权限auth/最后发言lst
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年1月5日 版本2.6.2beta2(594)</h3>
+				<p>
+				  setcoc优化，允许查看房规
+				  <br>
+				  修复房规设置错误
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2022年1月3日 版本2.6.2beta1(593)</h3>
+				<p>
+				  新增回复触发限制
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe617;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2021年12月17日 版本2.6.1(592)</h3>
+				<p>
+				  新增回复前缀匹配
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2021年12月12日 版本2.6.1beta4(591)</h3>
+				<p>
+				  新增获取群内nn/群名片/设置群名片
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2021年12月6日 版本2.6.1beta3(590)</h3>
+				<p>
+				  lua内置http相关函数（get/post）
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2021年11月27日 版本2.6.1beta2(589)</h3>
+				<p>
+				  新增安科/安价指令.ak
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2021年11月17日 版本2.6.1beta1(588)</h3>
+				<p>
+				  适配频道消息
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe617;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2021年11月3日 版本2.6.0(587)</h3>
+				<p>
+				  更新ww指令机制
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2021年10月1日 版本2.6.0(586)</h3>
+				<p>
+				  新版触发词回复
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2021年9月18日 版本2.6.0(585)</h3>
+				<p>
+				  WebUI 验证增强
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2021年9月17日 版本2.6.0beta(584)</h3>
+				<p>
+				  WebUI 验证
+				  <br>
+				  WebUI 基础设置
+				  <br>
+				  WebUI 关键词回复管理
+				  <br>
+				  WebUI 正则回复管理
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<h3 class="layui-timeline-title">2021年9月16日 版本2.6.0beta(583)</h3>
+				<p>
+				  基础WebUI框架
+				  <br>
+				  WebUI 基础信息
+				  <br>
+				  WebUI Master设置
+				  <br>
+				  WebUI 自定义内置回执
+				</p>
+			  </div>
+			</li>
+			<li class="layui-timeline-item">
+			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+			  <div class="layui-timeline-content layui-text">
+				<div class="layui-timeline-title">过去</div>
+			  </div>
+			</li>
+		  </ul>
+		</div>
+	  </div>
+	</div>
+	<blockquote class="layui-elem-quote layui-hide layui-text" id="footer">当前版本：{{= d.version }}</blockquote>
   </div>
 </div>
 )" + u8R"(
 
 <script type="text/html" id="editToolbar">
   <div class="layui-btn-container">
-    <button class="layui-btn layui-btn-xs layui-btn-normal" lay-event="edit">编辑</button>
+	<button class="layui-btn layui-btn-xs layui-btn-normal" lay-event="edit">编辑</button>
   </div>
 </script>
 
 <script type="text/html" id="delToolbar">
   <div class="layui-btn-container">
-    <button class="layui-btn layui-btn-xs layui-btn-danger" lay-event="delete">删除</button>
+	<button class="layui-btn layui-btn-xs layui-btn-danger" lay-event="delete">删除</button>
   </div>
 </script>
 
 <script type="text/html" id="addToolbar">
   <div class="layui-btn-container">
-    <button class="layui-btn layui-btn-sm" lay-event="add">添加</button>
+	<button class="layui-btn layui-btn-sm" lay-event="add">添加</button>
   </div>
 </script>
 
 
 <form class="layui-form layui-hide" id="editCustomMsgForm" action="" style="padding: 10px;">
   <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 40px">条目</label>
-    <div class="layui-input-block" style="margin-left: 70px">
-      <input type="text" name="name" required lay-verify="required" placeholder="回执条目" autocomplete="off" class="layui-input">
-    </div>
+	<label class="layui-form-label" style="width: 40px">条目</label>
+	<div class="layui-input-block" style="margin-left: 70px">
+	  <input type="text" name="name" required lay-verify="required" placeholder="回执条目" autocomplete="off" class="layui-input">
+	</div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 40px">文本</label>
-    <div class="layui-input-block" style="margin-left: 70px">
-      <!-- TODO: Multiline -->
-      <textarea type="text" name="value" placeholder="发送时显示的文本内容" autocomplete="on" class="layui-textarea"></textarea>
-    </div>
+	<label class="layui-form-label" style="width: 40px">文本</label>
+	<div class="layui-input-block" style="margin-left: 70px">
+	  <!-- TODO: Multiline -->
+	  <textarea type="text" name="value" placeholder="发送时显示的文本内容" autocomplete="on" class="layui-textarea"></textarea>
+	</div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 40px">说明</label>
-    <div class="layui-input-block" style="margin-left: 70px">
-      <textarea type="text" name="remark" placeholder="略" autocomplete="off" class="layui-textarea"></textarea>
-    </div>
+	<label class="layui-form-label" style="width: 40px">说明</label>
+	<div class="layui-input-block" style="margin-left: 70px">
+	  <textarea type="text" name="remark" placeholder="略" autocomplete="off" class="layui-textarea"></textarea>
+	</div>
   </div>
   <div class="layui-form-item">
-    <div class="layui-input-block">
-      <button class="layui-btn" lay-submit lay-filter="editCustomMsgForm">编辑</button>
-    </div>
+	<div class="layui-input-block">
+	  <button class="layui-btn" lay-submit lay-filter="editCustomMsgForm">编辑</button>
+	</div>
   </div>
 </form>
 
 <form class="layui-form layui-hide" id="addCustomReplyForm" action="" style="padding: 10px;">
   <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 50px">名称</label>
-    <div class="layui-input-block" style="margin-left: 80px">
-      <input type="text" name="name" required lay-verify="required" placeholder="条目唯一标识ID" autocomplete="off" class="layui-input">
-    </div>
+	<label class="layui-form-label" style="width: 50px">名称</label>
+	<div class="layui-input-block" style="margin-left: 80px">
+	  <input type="text" name="name" required lay-verify="required" placeholder="条目唯一标识ID" autocomplete="off" class="layui-input">
+	</div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 50px">关键词</label>
-    <div class="layui-input-block" style="margin-left: 80px">
-      <input type="text" name="keyword" required lay-verify="required" placeholder="多关键词用|分隔" autocomplete="off" class="layui-input">
-    </div>
+	<label class="layui-form-label" style="width: 50px">关键词</label>
+	<div class="layui-input-block" style="margin-left: 80px">
+	  <input type="text" name="keyword" required lay-verify="required" placeholder="多关键词用|分隔" autocomplete="off" class="layui-input">
+	</div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 60px">触发性质</label>
-    <div class="layui-input-block" style="margin-left: 90px">
-    <select name="type">
-      <option value="Reply">回复</option>
-      <option value="Order">指令</option>
-    </select>
-    </div>
+	<label class="layui-form-label" style="width: 60px">触发性质</label>
+	<div class="layui-input-block" style="margin-left: 90px">
+	<select name="type">
+	  <option value="Reply">回复</option>
+	  <option value="Order">指令</option>
+	</select>
+	</div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 60px">匹配模式</label>
-    <div class="layui-input-block" style="margin-left: 90px">
-    <select name="mode">
-      <option value="Match">完全</option>
-      <option value="Search">模糊</option>
-      <option value="Prefix">前缀</option>
-      <option value="Regex">正则</option>
-    </select>
-    </div>
+	<label class="layui-form-label" style="width: 60px">匹配模式</label>
+	<div class="layui-input-block" style="margin-left: 90px">
+	<select name="mode">
+	  <option value="Match">完全</option>
+	  <option value="Search">模糊</option>
+	  <option value="Prefix">前缀</option>
+	  <option value="Regex">正则</option>
+	</select>
+	</div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 60px">触发限制</label>
-    <div class="layui-input-block" style="margin-left: 90px">
-      <!-- TODO: Multiline -->
-      <textarea type="text" name="limit" placeholder="默认为空" autocomplete="off" class="layui-textarea"></textarea>
-    </div>
+	<label class="layui-form-label" style="width: 60px">触发限制</label>
+	<div class="layui-input-block" style="margin-left: 90px">
+	  <!-- TODO: Multiline -->
+	  <textarea type="text" name="limit" placeholder="默认为空" autocomplete="off" class="layui-textarea"></textarea>
+	</div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 60px">回复形式</label>
-    <div class="layui-input-block" style="margin-left: 90px">
-    <select name="echo">
-      <option value ="Deck">牌堆</option>
-      <option value ="Text">文本</option>
-      <option value ="Lua">Lua</option>
-    </select>
-    </div>
+	<label class="layui-form-label" style="width: 60px">回复形式</label>
+	<div class="layui-input-block" style="margin-left: 90px">
+	<select name="echo">
+	  <option value ="Deck">牌堆</option>
+	  <option value ="Text">文本</option>
+	  <option value ="Lua">Lua</option>
+	</select>
+	</div>
   </div>
   <div class="layui-form-item">
-    <label class="layui-form-label" style="width: 50px">回复内容</label>
-    <div class="layui-input-block" style="margin-left: 80px">
-      <!-- TODO: Multiline -->
-      <textarea type="text" name="answer" required lay-verify="required" placeholder="请输入内容，牌堆形式以|分隔" autocomplete="off" class="layui-textarea"></textarea>
-    </div>
+	<label class="layui-form-label" style="width: 50px">回复内容</label>
+	<div class="layui-input-block" style="margin-left: 80px">
+	  <!-- TODO: Multiline -->
+	  <textarea type="text" name="answer" required lay-verify="required" placeholder="请输入内容，牌堆形式以|分隔" autocomplete="off" class="layui-textarea"></textarea>
+	</div>
   </div>
   <div class="layui-form-item">
-    <div class="layui-input-block">
-      <button class="layui-btn" lay-submit lay-filter="addCustomReplyForm">添加</button>
-    </div>
+	<div class="layui-input-block">
+	  <button class="layui-btn" lay-submit lay-filter="addCustomReplyForm">添加</button>
+	</div>
   </div>
 </form>
 
@@ -564,338 +568,338 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
 
 
   $.get("/api/basicinfo")
-    .done(function(data) {
-      if (data.code == 0) {
-        var titleTpl = lay('title')[0].innerHTML;
-        lay('title').html(layui.laytpl(titleTpl).render(data.data));
+	.done(function(data) {
+	  if (data.code == 0) {
+		var titleTpl = lay('title')[0].innerHTML;
+		lay('title').html(layui.laytpl(titleTpl).render(data.data));
 
-        var footerTpl = lay('#footer')[0].innerHTML;
-        lay('#footer').html(layui.laytpl(footerTpl).render(data.data))
-        .removeClass('layui-hide');
+		var footerTpl = lay('#footer')[0].innerHTML;
+		lay('#footer').html(layui.laytpl(footerTpl).render(data.data))
+		.removeClass('layui-hide');
 
-        var botInfoTpl = lay('#bot-info')[0].innerHTML;
-        lay('#bot-info').html(layui.laytpl(botInfoTpl).render(data.data))
-        .removeClass('layui-hide');
+		var botInfoTpl = lay('#bot-info')[0].innerHTML;
+		lay('#bot-info').html(layui.laytpl(botInfoTpl).render(data.data))
+		.removeClass('layui-hide');
 
-        var basicInfoTpl = lay('#basic-info')[0].innerHTML;
-        lay('#basic-info').html(layui.laytpl(basicInfoTpl).render(data.data))
-        .removeClass('layui-hide');
+		var basicInfoTpl = lay('#basic-info')[0].innerHTML;
+		lay('#basic-info').html(layui.laytpl(basicInfoTpl).render(data.data))
+		.removeClass('layui-hide');
 
-      } else {
-        layer.msg("连接到Dice!后端失败: " + data.msg);
-      }
-    })
-    .fail(function(jqXHR, textStatus, error) {
-      layer.msg("连接到Dice!后端失败: " + error);
-    })
+	  } else {
+		layer.msg("连接到Dice!后端失败: " + data.msg);
+	  }
+	})
+	.fail(function(jqXHR, textStatus, error) {
+	  layer.msg("连接到Dice!后端失败: " + error);
+	})
 
   //CustomMsg
   table.render({
-    elem: '#custom-msg-table'
-    ,height: 420
-    //,width: 'full-20'
-    ,url: '/api/custommsg' //数据接口
-    ,title: '自定义回执'
-    ,toolbar: "#addToolbar"
-    ,request: {} 
-    ,cols: [[ //表头
-      {field: 'name', title: '条目', width:150, sort: true, fixed: 'left'}
-      ,{field: 'value', title: '文本', minWidth:250, edit: 'text'}
-      ,{field: 'remark', title: '说明', width:250, fixed: 'right'}
-      ,{fixed: 'right', width:60, align:'center', toolbar: '#editToolbar'}
-      ,{fixed: 'right', width:60, align:'center', toolbar: '#delToolbar'}
-    ]]
+	elem: '#custom-msg-table'
+	,height: 420
+	//,width: 'full-20'
+	,url: '/api/custommsg' //数据接口
+	,title: '自定义回执'
+	,toolbar: "#addToolbar"
+	,request: {} 
+	,cols: [[ //表头
+	  {field: 'name', title: '条目', width:150, sort: true, fixed: 'left'}
+	  ,{field: 'value', title: '文本', minWidth:250, edit: 'text'}
+	  ,{field: 'remark', title: '说明', width:250, fixed: 'right'}
+	  ,{fixed: 'right', width:60, align:'center', toolbar: '#editToolbar'}
+	  ,{fixed: 'right', width:60, align:'center', toolbar: '#delToolbar'}
+	]]
   });
 
   var editCustomMsgFormIndex = -1;
   table.on('toolbar(custom-msg-table)', function(obj){
-    var checkStatus = table.checkStatus(obj.config.id);
-    switch(obj.event){
-      case 'add':
-        editCustomMsgFormIndex = layer.open({
-          type: 1, 
-          title: '编辑自定义回执',
-          content: $("#editCustomMsgForm").removeClass("layui-hide"), //这里content是一个普通的String
-          end: function() { $("#editCustomMsgForm").addClass("layui-hide"); }
-        });
-        break;
-    }
+	var checkStatus = table.checkStatus(obj.config.id);
+	switch(obj.event){
+	  case 'add':
+		editCustomMsgFormIndex = layer.open({
+		  type: 1, 
+		  title: '编辑自定义回执',
+		  content: $("#editCustomMsgForm").removeClass("layui-hide"), //这里content是一个普通的String
+		  end: function() { $("#editCustomMsgForm").addClass("layui-hide"); }
+		});
+		break;
+	}
   });
 
   form.on('submit(editCustomMsgForm)', function(data){
-    layer.close(editCustomMsgFormIndex);
-    $.post("/api/custommsg", JSON.stringify({action: "set", data: [data.field]}))
-    .done(function(data) {
-      if (data.code == 0) {
-        layer.msg("自定义回执编辑成功");
-        table.reload('custom-msg-table');
-      } else {
-        layer.msg("自定义回执保存失败: " + data.msg);
-      }
-    })
-    .fail(function(jqXHR, textStatus, error) {
-      layer.msg("自定义回执保存失败: " + error);
-    })
-    
-    return false;
+	layer.close(editCustomMsgFormIndex);
+	$.post("/api/custommsg", JSON.stringify({action: "set", data: [data.field]}))
+	.done(function(data) {
+	  if (data.code == 0) {
+		layer.msg("自定义回执编辑成功");
+		table.reload('custom-msg-table');
+	  } else {
+		layer.msg("自定义回执保存失败: " + data.msg);
+	  }
+	})
+	.fail(function(jqXHR, textStatus, error) {
+	  layer.msg("自定义回执保存失败: " + error);
+	})
+	
+	return false;
   });
   
   //监听行工具事件
   table.on('tool(custom-msg-table)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
-    var data = obj.data //获得当前行数据
-    ,layEvent = obj.event; //获得 lay-event 对应的值
-    if (layEvent == "delete") {
-      layer.confirm('确认要删除此行吗？内置语句删除后会重置。', function(index){
-        layer.close(index);
-        $.post("/api/custommsg", JSON.stringify({action: "reset", data: [obj.data]}))
-        .done(function(data) {
-          if (data.code == 0) {
-            obj.del();
-            console.log("CustomMsg Delete Success");
-          } else {
-            layer.msg("关键词回复删除失败: " + data.msg);
-          }
-        })
-        .fail(function(jqXHR, textStatus, error) {
-          layer.msg("关键词回复删除失败: " + error);
-        })
-      });
-    }
-    else if (layEvent == "edit") {
-      editCustomMsgFormIndex = layer.open({
-        type: 1, 
-        title: '编辑自定义回执',
-        content: $("#editCustomMsgForm").removeClass("layui-hide"), //这里content是一个普通的String
-        success: function() {
-          $("#editCustomMsgForm").find("input[name='name']").val(obj.data.name);
-          $("#editCustomMsgForm").find("textarea[name='value']").val(obj.data.value);
-          $("#editCustomMsgForm").find("textarea[name='remark']").val(obj.data.remark);
-          $("#editCustomMsgForm").find("button").html("修改");
-          layui.form.render('select');
-        },
-        end: function() { $("#editCustomMsgForm").addClass("layui-hide"); }
-      });
-    }
+	var data = obj.data //获得当前行数据
+	,layEvent = obj.event; //获得 lay-event 对应的值
+	if (layEvent == "delete") {
+	  layer.confirm('确认要删除此行吗？内置语句删除后会重置。', function(index){
+		layer.close(index);
+		$.post("/api/custommsg", JSON.stringify({action: "reset", data: [obj.data]}))
+		.done(function(data) {
+		  if (data.code == 0) {
+			obj.del();
+			console.log("CustomMsg Delete Success");
+		  } else {
+			layer.msg("关键词回复删除失败: " + data.msg);
+		  }
+		})
+		.fail(function(jqXHR, textStatus, error) {
+		  layer.msg("关键词回复删除失败: " + error);
+		})
+	  });
+	}
+	else if (layEvent == "edit") {
+	  editCustomMsgFormIndex = layer.open({
+		type: 1, 
+		title: '编辑自定义回执',
+		content: $("#editCustomMsgForm").removeClass("layui-hide"), //这里content是一个普通的String
+		success: function() {
+		  $("#editCustomMsgForm").find("input[name='name']").val(obj.data.name);
+		  $("#editCustomMsgForm").find("textarea[name='value']").val(obj.data.value);
+		  $("#editCustomMsgForm").find("textarea[name='remark']").val(obj.data.remark);
+		  $("#editCustomMsgForm").find("button").html("修改");
+		  layui.form.render('select');
+		},
+		end: function() { $("#editCustomMsgForm").addClass("layui-hide"); }
+	  });
+	}
   });
 
   table.on('edit(custom-msg-table)', function(obj) { 
-    obj.data.value = obj.data.value.replace(/<br>/g,"\n").replace(/\{br\}/g,"\n");
-    $.post("/api/custommsg", JSON.stringify({action: "set", data: [obj.data]}))
-    .done(function(data) {
-      if (data.code == 0) {
-        layer.msg("回执" + obj.data.name + "保存成功√");
-      } else {
-        layer.msg("自定义回执保存失败: " + data.msg);
-      }
-    })
-    .fail(function(jqXHR, textStatus, error) {
-      layer.msg("自定义回执保存失败: " + error);
-    })
+	obj.data.value = obj.data.value.replace(/<br>/g,"\n").replace(/\{br\}/g,"\n");
+	$.post("/api/custommsg", JSON.stringify({action: "set", data: [obj.data]}))
+	.done(function(data) {
+	  if (data.code == 0) {
+		layer.msg("回执" + obj.data.name + "保存成功√");
+	  } else {
+		layer.msg("自定义回执保存失败: " + data.msg);
+	  }
+	})
+	.fail(function(jqXHR, textStatus, error) {
+	  layer.msg("自定义回执保存失败: " + error);
+	})
   });
 
   table.render({
-    elem: '#admin-config-table'
-    ,height: 420
-    ,url: '/api/adminconfig' //数据接口
-    ,title: '管理员设置'
-    ,request: {} 
-    ,cols: [[ //表头
-      {field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
-      ,{field: 'value', title: '值', minWidth:100, edit: 'text'}
-      ,{field: 'remark', title: '说明', width:300, fixed: 'right'}
-    ]]
+	elem: '#admin-config-table'
+	,height: 420
+	,url: '/api/adminconfig' //数据接口
+	,title: '管理员设置'
+	,request: {} 
+	,cols: [[ //表头
+	  {field: 'name', title: '名称', width:150, sort: true, fixed: 'left'}
+	  ,{field: 'value', title: '值', minWidth:100, edit: 'text'}
+	  ,{field: 'remark', title: '说明', width:300, fixed: 'right'}
+	]]
   });
 
   table.on('edit(admin-config-table)', function(obj) { 
-    if (obj.data.value >>> 0 !== parseFloat(obj.data.value)) {
-      layer.msg("数据无效！值必须是整数");
-    } else {
-      obj.data.value = obj.data.value >>> 0;
-      $.post("/api/adminconfig", JSON.stringify({action: "set", data: [obj.data]}))
-      .done(function(data) {
-        if (data.code == 0) {
-          layer.msg("配置项" + obj.data.name + "保存成功√");
-        } else {
-          layer.msg("设置保存失败: " + data.msg);
-        }
-      })
-      .fail(function(jqXHR, textStatus, error) {
-        layer.msg("设置保存失败: " + error);
-      })
-    }
+	if (obj.data.value >>> 0 !== parseFloat(obj.data.value)) {
+	  layer.msg("数据无效！值必须是整数");
+	} else {
+	  obj.data.value = obj.data.value >>> 0;
+	  $.post("/api/adminconfig", JSON.stringify({action: "set", data: [obj.data]}))
+	  .done(function(data) {
+		if (data.code == 0) {
+		  layer.msg("配置项" + obj.data.name + "保存成功√");
+		} else {
+		  layer.msg("设置保存失败: " + data.msg);
+		}
+	  })
+	  .fail(function(jqXHR, textStatus, error) {
+		layer.msg("设置保存失败: " + error);
+	  })
+	}
 
   });
 
   $.get("/api/master")
-    .done(function(data) {
-      if (data.code == 0) {
-        $("#masterQQ").val(data.data.masterQQ);
-      }
-    })
+	.done(function(data) {
+	  if (data.code == 0) {
+		$("#master").val(data.data.master);
+	  }
+	})
 
   form.on('submit(masterForm)', function(data){
-    data.field.masterQQ = parseInt(data.field.masterQQ, 10);
-    $.post("/api/master", JSON.stringify({action: "set", data: data.field}))
-      .done(function(data) {
-        if (data.code == 0) {
-          layer.msg("Master设置保存成功");
-        } else {
-          layer.msg("Master设置保存失败: " + data.msg);
-        }
-      })
-      .fail(function(jqXHR, textStatus, error) {
-        layer.msg("Master设置保存失败: " + error);
-      })
-    return false;
+	data.field.master = parseInt(data.field.master, 10);
+	$.post("/api/master", JSON.stringify({action: "set", data: data.field}))
+	  .done(function(data) {
+		if (data.code == 0) {
+		  layer.msg("Master设置保存成功");
+		} else {
+		  layer.msg("Master设置保存失败: " + data.msg);
+		}
+	  })
+	  .fail(function(jqXHR, textStatus, error) {
+		layer.msg("Master设置保存失败: " + error);
+	  })
+	return false;
   });
 
   //CustomReply
   table.render({
-    elem: '#custom-reply-table'
-    ,height: 420
-    ,url: '/api/customreply' //数据接口
-    ,title: '关键词回复设置'
-    ,toolbar: "#addToolbar"
-    ,request: {} 
-    ,cols: [[ //表头
-      {field: 'name', title: '名称', width:100, sort: true, fixed: 'left'}
-      ,{field: 'keyword', title: '关键词', width:150}
-      ,{field: 'type', title: '触发性质', width:90, align: 'center', edit: 'text'}
-      ,{field: 'mode', title: '匹配模式', width:90, align: 'center', edit: 'text'}
-      ,{field: 'limit', title: '触发限制', width:100, align: 'center', edit: 'text'}
-      ,{field: 'echo', title: '回复形式', width:90, align: 'center', edit: 'text'}
-      ,{field: 'answer', title: '回复', minWidth:250, edit: 'text'}
-      ,{fixed: 'right', width:60, align:'center', toolbar: '#editToolbar'}
-      ,{fixed: 'right', width:60, align:'center', toolbar: '#delToolbar'}
-    ]]
+	elem: '#custom-reply-table'
+	,height: 420
+	,url: '/api/customreply' //数据接口
+	,title: '关键词回复设置'
+	,toolbar: "#addToolbar"
+	,request: {} 
+	,cols: [[ //表头
+	  {field: 'name', title: '名称', width:100, sort: true, fixed: 'left'}
+	  ,{field: 'keyword', title: '关键词', width:150}
+	  ,{field: 'type', title: '触发性质', width:90, align: 'center', edit: 'text'}
+	  ,{field: 'mode', title: '匹配模式', width:90, align: 'center', edit: 'text'}
+	  ,{field: 'limit', title: '触发限制', width:100, align: 'center', edit: 'text'}
+	  ,{field: 'echo', title: '回复形式', width:90, align: 'center', edit: 'text'}
+	  ,{field: 'answer', title: '回复', minWidth:250, edit: 'text'}
+	  ,{fixed: 'right', width:60, align:'center', toolbar: '#editToolbar'}
+	  ,{fixed: 'right', width:60, align:'center', toolbar: '#delToolbar'}
+	]]
   });
 
   var addCustomReplyFormIndex = -1;
   table.on('toolbar(custom-reply-table)', function(obj){
-    var checkStatus = table.checkStatus(obj.config.id);
-    switch(obj.event){
-      case 'add':
-        addCustomReplyFormIndex = layer.open({
-          type: 1, 
-          title: '添加关键词回复',
-          content: $("#addCustomReplyForm").removeClass("layui-hide"), //这里content是一个普通的String
-          end: function() { $("#addCustomReplyForm").addClass("layui-hide"); }
-        });
-        break;
-    }
+	var checkStatus = table.checkStatus(obj.config.id);
+	switch(obj.event){
+	  case 'add':
+		addCustomReplyFormIndex = layer.open({
+		  type: 1, 
+		  title: '添加关键词回复',
+		  content: $("#addCustomReplyForm").removeClass("layui-hide"), //这里content是一个普通的String
+		  end: function() { $("#addCustomReplyForm").addClass("layui-hide"); }
+		});
+		break;
+	}
   });
 
   form.on('submit(addCustomReplyForm)', function(data){
-    layer.close(addCustomReplyFormIndex);
-    if(data.field.echo == "Deck"){data.field.answer = data.field.answer.split("|");}
-    $.post("/api/customreply", JSON.stringify({action: "set", data: [data.field]}))
-    .done(function(data) {
-      if (data.code == 0) {
-        layer.msg("关键词回复编辑成功");
-        table.reload('custom-reply-table');
-      } else {
-        layer.msg("关键词回复保存失败: " + data.msg);
-      }
-    })
-    .fail(function(jqXHR, textStatus, error) {
-      layer.msg("关键词回复保存失败: " + error);
-    })
-    
-    return false;
+	layer.close(addCustomReplyFormIndex);
+	if(data.field.echo == "Deck"){data.field.answer = data.field.answer.split("|");}
+	$.post("/api/customreply", JSON.stringify({action: "set", data: [data.field]}))
+	.done(function(data) {
+	  if (data.code == 0) {
+		layer.msg("关键词回复编辑成功");
+		table.reload('custom-reply-table');
+	  } else {
+		layer.msg("关键词回复保存失败: " + data.msg);
+	  }
+	})
+	.fail(function(jqXHR, textStatus, error) {
+	  layer.msg("关键词回复保存失败: " + error);
+	})
+	
+	return false;
   });
 
   table.on('tool(custom-reply-table)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
-    var data = obj.data //获得当前行数据
-    ,layEvent = obj.event; //获得 lay-event 对应的值
-    if (layEvent == "delete") {
-      layer.confirm('确认要删除此行吗？此操作不可撤销。', function(index){
-        layer.close(index);
-        $.post("/api/customreply", JSON.stringify({action: "delete", data: [obj.data]}))
-        .done(function(data) {
-          if (data.code == 0) {
-            obj.del();
-            console.log("CustomReply Delete Success");
-          } else {
-            layer.msg("关键词回复删除失败: " + data.msg);
-          }
-        })
-        .fail(function(jqXHR, textStatus, error) {
-          layer.msg("关键词回复删除失败: " + error);
-        })
-      });
-    }
-    else if (layEvent == "edit") {
-      addCustomReplyFormIndex = layer.open({
-        type: 1, 
-        title: '编辑关键词回复',
-        content: $("#addCustomReplyForm").removeClass("layui-hide"), //这里content是一个普通的String
-        success: function() {
-          $("#addCustomReplyForm").find("input[name='name']").val(obj.data.name);
-          $("#addCustomReplyForm").find("input[name='keyword']").val(obj.data.keyword);
-          $("#addCustomReplyForm").find("select[name='type']").val(obj.data.type);
-          $("#addCustomReplyForm").find("select[name='mode']").val(obj.data.mode);
-          $("#addCustomReplyForm").find("textarea[name='limit']").val(obj.data.limit);
-          $("#addCustomReplyForm").find("select[name='echo']").val(obj.data.echo);
-          $("#addCustomReplyForm").find("textarea[name='answer']").val(obj.data.answer);
-          $("#addCustomReplyForm").find("button").html("修改");
-          layui.form.render('select');
-        },
-        end: function() { $("#addCustomReplyForm").addClass("layui-hide"); }
-      });
-    }
+	var data = obj.data //获得当前行数据
+	,layEvent = obj.event; //获得 lay-event 对应的值
+	if (layEvent == "delete") {
+	  layer.confirm('确认要删除此行吗？此操作不可撤销。', function(index){
+		layer.close(index);
+		$.post("/api/customreply", JSON.stringify({action: "delete", data: [obj.data]}))
+		.done(function(data) {
+		  if (data.code == 0) {
+			obj.del();
+			console.log("CustomReply Delete Success");
+		  } else {
+			layer.msg("关键词回复删除失败: " + data.msg);
+		  }
+		})
+		.fail(function(jqXHR, textStatus, error) {
+		  layer.msg("关键词回复删除失败: " + error);
+		})
+	  });
+	}
+	else if (layEvent == "edit") {
+	  addCustomReplyFormIndex = layer.open({
+		type: 1, 
+		title: '编辑关键词回复',
+		content: $("#addCustomReplyForm").removeClass("layui-hide"), //这里content是一个普通的String
+		success: function() {
+		  $("#addCustomReplyForm").find("input[name='name']").val(obj.data.name);
+		  $("#addCustomReplyForm").find("input[name='keyword']").val(obj.data.keyword);
+		  $("#addCustomReplyForm").find("select[name='type']").val(obj.data.type);
+		  $("#addCustomReplyForm").find("select[name='mode']").val(obj.data.mode);
+		  $("#addCustomReplyForm").find("textarea[name='limit']").val(obj.data.limit);
+		  $("#addCustomReplyForm").find("select[name='echo']").val(obj.data.echo);
+		  $("#addCustomReplyForm").find("textarea[name='answer']").val(obj.data.answer);
+		  $("#addCustomReplyForm").find("button").html("修改");
+		  layui.form.render('select');
+		},
+		end: function() { $("#addCustomReplyForm").addClass("layui-hide"); }
+	  });
+	}
   });
 
   table.on('edit(custom-reply-table)', function(obj) { 
-    obj.data.answer = obj.data.answer.replace(/<br>/g,"\n").replace(/\{br\}/g,"\n");
-    if(obj.data.echo == "Deck"){obj.data.answer = obj.data.answer.split("|");}
-    $.post("/api/customreply", JSON.stringify({action: "set", data: [obj.data]}))
-    .done(function(data) {
-      if (data.code == 0) {
-        layer.msg("回复关键词" + obj.data.name + "保存成功√");
-      } else {
-        layer.msg("关键词回复保存失败: " + data.msg);
-      }
-    })
-    .fail(function(jqXHR, textStatus, error) {
-      layer.msg("关键词回复保存失败: " + error);
-    })
+	obj.data.answer = obj.data.answer.replace(/<br>/g,"\n").replace(/\{br\}/g,"\n");
+	if(obj.data.echo == "Deck"){obj.data.answer = obj.data.answer.split("|");}
+	$.post("/api/customreply", JSON.stringify({action: "set", data: [obj.data]}))
+	.done(function(data) {
+	  if (data.code == 0) {
+		layer.msg("回复关键词" + obj.data.name + "保存成功√");
+	  } else {
+		layer.msg("关键词回复保存失败: " + data.msg);
+	  }
+	})
+	.fail(function(jqXHR, textStatus, error) {
+	  layer.msg("关键词回复保存失败: " + error);
+	})
   });
 
   form.on('submit(passwordForm)', function(data){
-    $.post("/api/webuipassword", JSON.stringify({action: "set", data: data.field}))
-    .done(function(data) {
-      if (data.code == 0) {
-        layer.msg("密码更改成功");
-        location.reload();
-      } else {
-        layer.msg("密码更改失败: " + data.msg);
-      }
-    })
-    .fail(function(jqXHR, textStatus, error) {
-      layer.msg("密码更改失败: " + error);
-    })
-    
-    return false;
+	$.post("/api/webuipassword", JSON.stringify({action: "set", data: data.field}))
+	.done(function(data) {
+	  if (data.code == 0) {
+		layer.msg("密码更改成功");
+		location.reload();
+	  } else {
+		layer.msg("密码更改失败: " + data.msg);
+	  }
+	})
+	.fail(function(jqXHR, textStatus, error) {
+	  layer.msg("密码更改失败: " + error);
+	})
+	
+	return false;
   });
 
   form.verify({
-    // TODO: Better verification
-    pass: [
-      /^[\S]{6,20}$/
-      ,'密码必须6到20位，且不能出现空格'
-    ],
-    passsame: function(value, item) {
-      if ($(item).parent().children("#password").val() != value) {
-        return "两次输入的密码不一致";
-      }
-    },
-    regex: function(value, item) {
-      try {
-        new RegExp(value);
-      } catch(error) {
-        return '正则表达式无效';
-      }
-    }
+	// TODO: Better verification
+	pass: [
+	  /^[\S]{6,20}$/
+	  ,'密码必须6到20位，且不能出现空格'
+	],
+	passsame: function(value, item) {
+	  if ($(item).parent().children("#password").val() != value) {
+		return "两次输入的密码不一致";
+	  }
+	},
+	regex: function(value, item) {
+	  try {
+		new RegExp(value);
+	  } catch(error) {
+		return '正则表达式无效';
+	  }
+	}
   });
 });
 </script>

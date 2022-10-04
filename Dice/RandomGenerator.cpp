@@ -31,6 +31,12 @@
 #include <x86intrin.h>
 #endif
 #endif
+constexpr const char digit_chars[]{"0123456789"};
+constexpr const char hex_chars[]{"0123456789abcdef"};
+constexpr const char alpha_chars[]{"abcdefghijklmnopqrstuvwxyz"};
+constexpr const char alnum_chars[]{ "abcdefghijklmnopqrstuvwxyz0123456789" };
+constexpr const char base64_chars[]{"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
+constexpr const char base64url_chars[]{"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"};
 
 namespace RandomGenerator
 {
@@ -58,4 +64,35 @@ namespace RandomGenerator
 		return dis(gen);
 	}
 #endif
+	std::string genKey(size_t len, Code mode) {
+		std::string res;
+		std::string charset;
+		switch (mode) {
+		case RandomGenerator::Code::Decimal:
+			charset = digit_chars;
+			break;
+		case RandomGenerator::Code::Hex:
+			charset = hex_chars;
+			break;
+		case RandomGenerator::Code::Alpha:
+			charset = alpha_chars;
+			break;
+		case RandomGenerator::Code::Alnum:
+			charset = alnum_chars;
+			break;
+		case RandomGenerator::Code::Base64:
+			charset = base64_chars;
+			break;
+		case RandomGenerator::Code::UrlBase64:
+			charset = base64url_chars;
+			break;
+		default:
+			break;
+		}
+		size_t size{ charset.length() - 1 };
+		for (size_t i = 0; i < len; ++i) {
+			res += charset[Randint(0, size)];
+		}
+		return res;
+	}
 }

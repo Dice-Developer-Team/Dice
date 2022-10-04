@@ -21,6 +21,7 @@
 #include "DiceFile.hpp"
 #include "MsgFormat.h"
 #include "DiceMsgSend.h"
+#include "RandomGenerator.h"
 using namespace std::literals::chrono_literals;
 using std::string;
 using std::to_string;
@@ -32,13 +33,16 @@ extern std::unique_ptr<CivetServer> ManagerServer;
 //enum class ClockEvent { off, on, save, clear };
 
 using Clock = std::pair<unsigned short, unsigned short>;
-class Console
-{
+class Console {
+	long long master = 0;
 public:
-	bool isMasterMode = false;
-	long long masterQQ = 0;
 	long long DiceMaid = 0;
-	bool is_self(long long qq)const { return masterQQ == qq || DiceMaid == qq; }
+	bool is_self(long long qq)const { return master == qq || DiceMaid == qq; }
+	string git_user;
+	string git_pw;
+	string authkey_pub{ RandomGenerator::genKey(8,RandomGenerator::Code::Alnum) };
+	string authkey_pri{ RandomGenerator::genKey(8,RandomGenerator::Code::Alnum) };
+
 	friend void ConsoleTimer();
 	friend class DiceEvent;
 	friend void MsgNote(AttrObject&, string, int);
@@ -67,14 +71,13 @@ public:
 	static const std::unordered_map<std::string, string> confComment;
 	//通知列表 1-日常活动/2-提醒事件/4-接收消息/8-警告内容/16-用户推送/32-骰娘广播
 	int log(const std::string& msg, int lv, const std::string& strTime = "");
-	operator bool() const { return isMasterMode && masterQQ; }
-	[[nodiscard]] long long master() const { return masterQQ; }
+	operator long long() const { return master; }
 	void newMaster(long long);
 
 	void killMaster()
 	{
-		rmNotice({ masterQQ, 0,0 });
-		masterQQ = 0;
+		rmNotice({ master });
+		master = 0;
 		save();
 	}
 
@@ -92,7 +95,6 @@ public:
 	[[nodiscard]] ResList listClock() const;
 	[[nodiscard]] ResList listNotice() const;
 	[[nodiscard]] int showNotice(chatInfo ct) const;
-	void setPath(const std::filesystem::path& path) { fpPath = path; }
 
 	void set(const std::string& key, int val)
 	{
@@ -107,45 +109,16 @@ public:
 	void reset();
 
 	bool load();
-	void save() 
-	{
-		std::error_code ec;
-		std::filesystem::create_directories(DiceDir / "conf", ec);
-		DDOM xml("console","");
-		xml.push(DDOM("mode", to_string(isMasterMode)));
-		xml.push(DDOM("master", to_string(masterQQ)));
-		if (!mWorkClock.empty())
-		{
-			DDOM clocks("clock", "");
-			for (auto& [clock, type] : mWorkClock)
-			{
-				clocks.push(DDOM(type, printClock(clock)));
-			}
-			xml.push(clocks);
-		}
-		if (!intConf.empty())
-		{
-			DDOM conf("conf", "");
-			for (auto& [item, val] : intConf)
-			{
-				conf.push(DDOM("n", item + "=" + to_string(val)));
-			}
-			xml.push(conf);
-		}
-		std::ofstream fout(fpPath);
-		if (fout) fout << xml.dump();
-	}
+	void save();
 
 	void loadNotice();
 	void saveNotice() const;
 private:
-	std::filesystem::path fpPath;
 	fifo_dict_ci<int> intConf;
 	std::multimap<Clock, string> mWorkClock{};
 	fifo_map<chatInfo, int> NoticeList{};
 };
-	extern Console console;
-	//extern DiceModManager modules;
+extern Console console;
 
 extern std::set<long long> ExceptGroups;
 void getExceptGroup();

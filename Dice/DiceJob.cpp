@@ -275,7 +275,7 @@ void clear_group(AttrObject& job) {
 	else if (job["clear_mode"] == "preserve") {
 		for (auto& [id, grp] : ChatList) {
 			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("许可使用") || grp.isset("免清") || grp.isset("协议无效"))continue;
-			if (grp.isGroup && DD::isGroupAdmin(id, console.master(), false)) {
+			if (grp.isGroup && DD::isGroupAdmin(id, console, false)) {
 				grp.set("许可使用");
 				continue;
 			}
@@ -472,10 +472,9 @@ void log_put(AttrObject& job) {
 	}
 }
 
-
 string print_master() {
-	if (!console.master())return "（无主）";
-	return printUser(console.master());
+	if (!console)return "（无主）";
+	return printUser(console);
 }
 
 string list_deck() {

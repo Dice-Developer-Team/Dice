@@ -82,10 +82,12 @@ CustomReplyApiHandler h_customreply;
 WebUIPasswordHandler h_webuipassword;
 AuthHandler auth_handler;
 
-constexpr auto msgInit{ R"(欢迎使用Dice!掷骰机器人！
-请发送.system gui开启骰娘的后台面板
-开启Master模式通过认主后即可成为我的主人~
+string msgInit{ R"(欢迎使用Dice!掷骰机器人！
+请发送.master )"
++ console.authkey_pub +" //公骰作成 或\n.master " + console.authkey_pri + " //私骰作成\n"
+R"(即刻成为我的主人~
 可发送.help查看帮助
+发送.system gui开启DiceMaid后台面板
 参考文档参看.help链接)" };
 
 //加载数据
@@ -259,7 +261,6 @@ EVE_Enable(eventEnable){
 	std::filesystem::create_directory(DiceDir / "audit", ec);
 	std::filesystem::create_directory(DiceDir / "mod", ec);
 	std::filesystem::create_directory(DiceDir / "plugin", ec);
-	console.setPath(DiceDir / "conf" / "Console.xml");
 	fpFileLoc = DiceDir / "com.w4123.dice";
 	{
 		std::unique_lock lock(GlobalMsgMutex);
@@ -446,7 +447,7 @@ bool eve_GroupAdd(Chat& grp)
 		unique_lock<std::mutex> lock_queue(GroupAddMutex);
 		if (!grp.isset("已入群"))grp.set("已入群").reset("未进").reset("已退");
 		else return false;
-		if (ChatList.size() == 1 && !console.isMasterMode)DD::sendGroupMsg(grp.ID, msgInit);
+		if (ChatList.size() == 1 && !console)DD::sendGroupMsg(grp.ID, msgInit);
 	}
 	long long fromGID = grp.ID;
 	if (grp.Name.empty())
@@ -769,7 +770,7 @@ EVE_GroupMemberKicked(eventGroupMemberKicked){
 		console.log(strNote, 0b1000, strNow);
 		if (trustedQQ(fromUID) > 1 || grp.isset("免黑") || grp.isset("协议无效") || ExceptGroups.count(fromGID)) return 0;
 		DDBlackMarkFactory mark{fromUID, fromGID};
-		mark.type("kick").time(strNow).note(strNow + " " + strNote).DiceMaid(beingOperateQQ).masterQQ(mDiceList[beingOperateQQ]).comment(strNow + " " + printUser(console.DiceMaid) + "目击");
+		mark.type("kick").time(strNow).note(strNow + " " + strNote).DiceMaid(beingOperateQQ).master(mDiceList[beingOperateQQ]).comment(strNow + " " + printUser(console.DiceMaid) + "目击");
 		grp.reset("许可使用").reset("免清");
 		blacklist->create(mark.product());
 	}
@@ -819,7 +820,7 @@ EVE_GroupBan(eventGroupBan)
 		}
 		else
 		{
-			mark.DiceMaid(beingOperateQQ).masterQQ(mDiceList[beingOperateQQ]).comment(strNow + " " + printUser(console.DiceMaid) + "目击");
+			mark.DiceMaid(beingOperateQQ).master(mDiceList[beingOperateQQ]).comment(strNow + " " + printUser(console.DiceMaid) + "目击");
 		}
 		//统计群内管理
 		int intAuthCnt = 0;
@@ -921,7 +922,7 @@ EVE_GroupInvited(eventGroupInvited)
 		else if (console && console["Private"])
 		{
 			AddMsgToQueue(getMsg("strPreserve"), fromUID);
-			strMsg += "\n已拒绝（当前在私用模式）";
+			strMsg += "\n已拒绝（私用模式）";
 			console.log(strMsg, 1, strNow);
 			DD::answerGroupInvited(fromGID, 2);
 		}
@@ -1010,20 +1011,15 @@ EVE_Extra(eventExtra) {
 EVE_Menu(eventMasterMode)
 {
 	if (!Enabled) return 0;
-	if (console)
-	{
-		console.isMasterMode = false;
+	if (console) {
 		console.killMaster();
 #ifdef _WIN32
-		MessageBoxA(nullptr, "Master模式已关闭√\nmaster已清除", "Master模式切换", MB_OK | MB_ICONINFORMATION);
+		MessageBoxA(nullptr, "master已清除", "关闭Master模式", MB_OK | MB_ICONINFORMATION);
 #endif
 	}
-	else
-	{
-		console.isMasterMode = true;
-		console.save();
+	else {
 #ifdef _WIN32
-		MessageBoxA(nullptr, "Master模式已开启√\n认主请对骰娘发送.master public/private", "Master模式切换", MB_OK | MB_ICONINFORMATION);
+		MessageBoxA(nullptr, "Master模式已不再另设开关，请使用口令或在UI界面直接认主", "Master模式已弃用", MB_OK | MB_ICONINFORMATION);
 #endif
 	}
 	return 0;

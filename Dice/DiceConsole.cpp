@@ -23,7 +23,6 @@
  */
 #include <ctime>
 #include <queue>
-#include <mutex>
 #include <chrono>
 #include "DiceConsole.h"
 #include "GlobalVar.h"
@@ -38,13 +37,14 @@
 #include <Windows.h>
 #endif	
 #include "DDAPI.h"
+#include "yaml-cpp/yaml.h"
 
 using namespace std;
 
 const fifo_dict_ci<int>Console::intDefault{
 {"DisabledGlobal",0},{"DisabledBlock",0},{"DisabledListenAt",1},
 {"DisabledMe",1},{"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
-{"Private",0},{"CheckGroupLicense",0},{"LeaveDiscuss",0},
+{"Private",0},{"CheckGroupLicense",0},
 {"ListenGroupRequest",1},{"ListenGroupAdd",1},
 {"ListenFriendRequest",1},{"ListenFriendAdd",1},{"AllowStranger",1},
 {"DisableStrangerChat",1},
@@ -72,14 +72,13 @@ const std::unordered_map<std::string,string>Console::confComment{
 	{"DisabledGlobal","全局停用指令，对trust4不起效"},
 	{"DisabledBlock","框架多插件时，关闭状态开启拦截，阻止其他插件处理消息"},
 	{"DisabledListenAt","关闭状态下，自身被at时也响应"},
-	{"DisabledMe","全局禁用.me，对trust4不起效"},
-	{"DisabledJrrp","全局禁用.jrrp，对trust4不起效"},
-	{"DisabledDeck","全局禁用.deck，对trust4不起效"},
-	{"DisabledDraw","全局禁用.draw，对trust4不起效"},
-	{"DisabledSend","全局禁用.send，对trust4不起效"},
+	{"DisabledMe","全局禁用.me，对trust4+不起效"},
+	{"DisabledJrrp","全局禁用.jrrp，对trust4+不起效"},
+	{"DisabledDeck","全局禁用.deck，对trust4+不起效"},
+	{"DisabledDraw","全局禁用.draw，对trust4+不起效"},
+	{"DisabledSend","全局禁用.send，对trust4+不起效"},
 	{"Private","私用模式：1-群无许可使用自动退出;0-关闭"},
 	{"CheckGroupLicense","公用审核模式：2-任何群必须许可使用;1-新加群须许可使用;0-关闭"},
-	{"LeaveDiscuss","自动退出讨论组"},
 	{"ListenGroupRequest","监听加群邀请"},
 	{"ListenGroupAdd","监听入群事件"},
 	{"ListenFriendRequest","监听好友申请"},
@@ -98,9 +97,9 @@ const std::unordered_map<std::string,string>Console::confComment{
 	{"CloudBlackShare","云端同步黑名单"},
 	{"BelieveDiceList","信任骰娘（已停用）"},
 	{"CloudVisible","是否允许Dice信息可被查询"},
-	{"SystemAlarmCPU","引起警报的CPU占用百分比，正数生效"},
-	{"SystemAlarmRAM","引起警报的内存占用百分比，正数生效"},
-	{"SystemAlarmDisk","引起警报的磁盘占用百分比，正数生效"},
+	{"SystemAlarmCPU","引起警报的CPU占用百分比(1~100生效)"},
+	{"SystemAlarmRAM","引起警报的内存占用百分比(1~100生效)"},
+	{"SystemAlarmDisk","引起警报的磁盘占用百分比(1~100生效)"},
 	{"TimeZoneLag","相对本机时区偏移[h]"},
 	{"SendIntervalIdle","队列空闲时消息发送间隔[ms]"},
 	{"SendIntervalBusy","队列繁忙时消息发送间隔[ms]"},
@@ -171,9 +170,9 @@ void Console::addNotice(chatInfo ct, int lv)
 	saveNotice();
 }
 
-void Console::redNotice(chatInfo ct, int lv)
-{
-	NoticeList[ct] &= (~lv);
+void Console::redNotice(chatInfo ct, int lv) {
+	if (NoticeList[ct] == lv)NoticeList.erase(ct);
+	else NoticeList[ct] &= (~lv);
 	saveNotice();
 }
 
@@ -210,17 +209,16 @@ int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 	else DD::debugLog(note);
 	return Cnt;
 } 
-void Console::newMaster(long long uid)
-{
-	masterQQ = uid;
-	isMasterMode = true;
+
+void Console::newMaster(long long uid) {
+	master = uid;
 	if (trustedQQ(uid) < 5)getUser(uid).trust(5);
 	if (!intConf["Private"]) {
 		if (!intConf.count("BelieveDiceList"))intConf["BelieveDiceList"] = 1;
 		if (!intConf.count("LeaveBlackQQ"))intConf["LeaveBlackQQ"] = 1;
 		if (!intConf.count("BannedBanInviter"))intConf["BannedBanInviter"] = 1;
 		if (!intConf.count("KickedBanInviter"))intConf["KickedBanInviter"] = 1;
-		if (!intConf.count("AllowStanger"))intConf["AllowStanger"] = 2;
+		if (!intConf.count("AllowStranger"))intConf["AllowStranger"] = 2;
 	}
 	setNotice({ uid, 0,0 }, 0b111111);
 	save(); 
@@ -235,26 +233,70 @@ void Console::reset()
 	NoticeList.clear();
 }
 
-bool Console::load() 	{
-	string s;
-	if (!rdbuf(fpPath, s))return false;
-	DDOM xml(s);
-	if (xml.count("mode"))isMasterMode = stoi(xml["mode"].strValue);
-	if (xml.count("master"))masterQQ = stoll(xml["master"].strValue);
-	if (xml.count("clock"))
-		for (auto& child : xml["clock"].vChild) {
-			mWorkClock.insert({
-				scanClock(child.strValue), child.tag
-							  });
+bool Console::load() {
+	if (std::filesystem::exists(DiceDir / "conf" / "console.yaml")) {
+		YAML::Node yaml{ YAML::LoadFile(getNativePathString(DiceDir / "conf" / "console.yaml")) };
+		if (yaml["master"])master = yaml["master"].as<long long>();
+		if (yaml["config"]) {
+			for (auto& cfg : yaml["config"]) {
+				intConf[cfg.first.as<string>()] = cfg.second.as<int>();
+			}
 		}
-	if (xml.count("conf"))
-		for (auto& child : xml["conf"].vChild) 			{
-			std::pair<string, int> conf;
-			readini(child.strValue, conf);
-			if (intDefault.count(conf.first))intConf.insert(conf);
+		if (yaml["clock"]) {
+			for (auto& task : yaml["clock"]) {
+				mWorkClock.insert({ scanClock(task["moment"].as<string>()),
+					task["task"].as<string>() });
+			}
 		}
+	}
+	else if (string s; !rdbuf(DiceDir / "conf" / "console.xml", s))return false;
+	else {
+		DDOM xml(s);
+		for (auto& node : xml.vChild) {
+			if (node.tag == "master")master = stoll(node.strValue);
+			else if (node.tag == "clock")
+				for (auto& child : node.vChild) {
+					mWorkClock.insert({
+						scanClock(child.strValue), child.tag
+						});
+				}
+			else if (node.tag == "conf")
+				for (auto& child : node.vChild) {
+					std::pair<string, int> conf;
+					readini(child.strValue, conf);
+					if (intDefault.count(conf.first))intConf.insert(conf);
+				}
+		}
+	}
 	loadNotice();
 	return true;
+}
+void Console::save() {
+	std::error_code ec;
+	std::filesystem::create_directories(DiceDir / "conf", ec);
+	YAML::Node yaml;
+	yaml["master"] = master;
+	if (!intConf.empty()){
+		YAML::Node& cfg{ yaml["config"] };
+		for (auto& [item, val] : intConf){
+			cfg[item] = val;
+		}
+	}
+	if (!mWorkClock.empty()) {
+		YAML::Node& clocks{ yaml["clock"] };
+		for (auto& [clock, task] : mWorkClock) {
+			YAML::Node item;
+			item["moment"] = printClock(clock);
+			item["task"] = task;
+			clocks.push_back(item);
+		}
+	}
+	if (!git_user.empty()) {
+		YAML::Node& git{ yaml["git"] };
+		git["user"] = git_user;
+		git["password"] = git_pw;
+	}
+	if (std::ofstream fout{ DiceDir / "conf" / "console.yaml" }) fout << yaml;
 }
 void Console::loadNotice()
 {

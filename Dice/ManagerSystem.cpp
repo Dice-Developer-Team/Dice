@@ -269,10 +269,9 @@ void User::readb(std::ifstream& fin)
 	if (confs.has("tUpdated"))tUpdated = confs.get_ll("tUpdated");
 	if (confs.has("tinyID"))TinyList.emplace(confs.get_ll("tinyID"), ID);
 }
-int trustedQQ(long long uid)
-{
+int trustedQQ(long long uid){
 	if (TinyList.count(uid))uid = TinyList[uid];
-	if (uid == console.master())return 256;
+	if (uid == console)return 256;
 	if (uid == console.DiceMaid)return 255;
 	else if (!UserList.count(uid))return 0;
 	else return UserList[uid].nTrust;
