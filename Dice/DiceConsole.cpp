@@ -285,24 +285,27 @@ void Console::save() {
 	YAML::Node yaml;
 	yaml["master"] = master;
 	if (!intConf.empty()){
-		YAML::Node& cfg{ yaml["config"] };
+		YAML::Node cfg;
 		for (auto& [item, val] : intConf){
 			cfg[item] = val;
 		}
+		yaml["config"] = cfg;
 	}
 	if (!mWorkClock.empty()) {
-		YAML::Node& clocks{ yaml["clock"] };
+		YAML::Node clocks;
 		for (auto& [clock, task] : mWorkClock) {
 			YAML::Node item;
 			item["moment"] = printClock(clock);
 			item["task"] = task;
 			clocks.push_back(item);
 		}
+		yaml["clock"] = clocks;
 	}
 	if (!git_user.empty()) {
-		YAML::Node& git{ yaml["git"] };
+		YAML::Node& git;
 		git["user"] = git_user;
 		git["password"] = git_pw;
+		yaml["git"] = git;
 	}
 	if (std::ofstream fout{ DiceDir / "conf" / "console.yaml" }) fout << yaml;
 }
