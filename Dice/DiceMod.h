@@ -46,7 +46,7 @@ struct Version {
 		if (major != other.major)return major < other.major;
 		if (minor != other.minor)return minor < other.minor;
 		if (revision != other.revision)return revision < other.revision;
-		if (build && other.build)return build < other.build;
+		return (build && other.build) ? build < other.build : false;
 	}
 };
 
