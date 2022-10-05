@@ -6,6 +6,7 @@
 
 #include <utility>
 #include <variant>
+#include <regex>
 #include "yaml-cpp/node/node.h"
 #include "SHKQuerier.h"
 #include "DiceSchedule.h"
@@ -20,11 +21,33 @@ using ptr = std::shared_ptr<T>;
 namespace fs = std::filesystem;
 
 class DiceEvent;
-
-class BaseDeck
-{
-public:
-	vector<string> cards;
+struct Version {
+	string exp;
+	int major{ 0 };
+	int minor{ 0 };
+	int revision{ 0 };
+	int build{ 0 };
+	Version(){}
+	Version(const string& strVer):exp(strVer) {
+		static std::regex re{ R"((\d{1,9})\.?(\d{0,9})\.?(\d{0,9})\w*\(?(\d{0,9}))" };
+		std::smatch match;
+		if (auto res{ std::regex_search(exp,match,re) }) {
+			major = stoi(match[1].str());
+			if (match.size() > 2){
+				minor = stoi(match[2].str());
+				if (match.size() > 3){
+					revision = stoi(match[3].str());
+					if (match.size() > 4 && match[4].length())build = stoi(match[4].str());
+				}
+			}
+		}
+	}
+	bool operator<(const Version& other)const {
+		if (major != other.major)return major < other.major;
+		if (minor != other.minor)return minor < other.minor;
+		if (revision != other.revision)return revision < other.revision;
+		if (build && other.build)return build < other.build;
+	}
 };
 
 class DiceEventTrigger {
@@ -71,7 +94,7 @@ public:
 	string name;
 	string title;
 	string author;
-	string ver;
+	Version ver;
 	string brief;
 	bool active{ true };
 	DiceMod& on() {
@@ -141,6 +164,7 @@ public:
 	void mod_on(DiceEvent*);
 	void mod_off(DiceEvent*);
 	void mod_install(DiceEvent&);
+	void mod_update(DiceEvent&);
 	void mod_delete(DiceEvent&);
 
 	string format(string, AttrObject = {},

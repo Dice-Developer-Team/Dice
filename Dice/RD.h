@@ -112,7 +112,7 @@ private:
 			for (auto i : strDiceCnt)
 				if (!isdigit(static_cast<unsigned char>(i)))
 					return Input_Err;
-			if (strDiceCnt.length() > 3)
+			if (strDiceCnt.length() > 4)
 				return DiceTooBig_Err;
 			int intDiceCnt = stoi(strDiceCnt);
 			if (intDiceCnt == 0)

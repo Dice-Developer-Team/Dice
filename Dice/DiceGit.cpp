@@ -24,11 +24,15 @@ DiceRepo& DiceRepo::open(const string& dir) {
 	git_repository_open(&repo, dir.c_str());
 	return *this;
 }
+int cred_acquire_cb(git_cred** cred, const char* url, const char* username_from_url, unsigned int allowed_types, void* payload){
+	return git_credential_userpass_plaintext_new(cred,
+		console.git_user.c_str(), console.git_pw.c_str());
+}
 DiceRepo& DiceRepo::clone(const string& local_path, const string& url) {
 	git_clone_options options = GIT_CLONE_OPTIONS_INIT;
-	//options.fetch_opts.callbacks.credentials = cred_acquire_cb;
+	options.fetch_opts.callbacks.credentials = cred_acquire_cb;
 	if (git_clone(&repo, url.c_str(), local_path.c_str(), &options))
-		console.log("git_clone_err:" + string(git_error_last()->message), 1);
+		console.log("git_clone_err " + to_string(git_error_last()->klass) + ":" + UTF8toGBK(git_error_last()->message), 1);
 	return *this;
 }
 DiceRepo& DiceRepo::url(const string& link) {

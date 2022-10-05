@@ -186,6 +186,76 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 	if (!msg.has("err"))msg.set("err", "\n未找到Mod源");
 	msg.replyMsg("strModInstallErr");
 }
+void DiceModManager::mod_update(DiceEvent& msg) {
+	std::lock_guard lock(ModMutex);
+	std::string desc;
+	string name{ msg.get_str("mod") };
+	if (modList.count(name) && modList[name]->loaded) {
+		msg.set("mod_desc", modList[name]->desc());
+		msg.replyMsg("strModDescLocal");
+		return;
+	}
+	for (auto& url : sourceList) {
+		if (!Network::GET(url + name, desc)) {
+			console.log("访问" + url + name + "失败:" + desc, 0);
+			msg.set("err", msg.get_str("err") + "\n访问" + url + name + "失败:" + desc);
+			continue;
+		}
+		try {
+			fifo_json j = fifo_json::parse(desc);
+			//todo: dice_build check
+#ifndef __ANDROID__
+			if (j.count("repo")) {
+				string repo{ j["repo"] };
+				auto mod{ std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),repo}) };
+				modList[name] = mod;
+				modOrder.push_back(mod);
+				if (!mod->loaded)break;
+				save();
+				build();
+				msg.replyMsg("strModInstalled");
+				return;
+			}
+#endif //ANDROID
+			if (j.count("pkg")) {
+				string pkg{ j["pkg"] };
+				std::string des;
+				if (!Network::GET(pkg, des)) {
+					msg.set("err", msg.get_str("err") + "\n下载失败(" + pkg + "):" + des);
+					continue;
+				}
+				std::error_code ec1;
+				Zip::extractZip(des, DiceDir / "mod");
+				auto pathJson{ DiceDir / "mod" / (name + ".json") };
+				if (!fs::exists(pathJson)) {
+					msg.set("err", msg.get_str("err") + "\npkg解压无文件" + name + ".json");
+					continue;
+				}
+				auto mod{ std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),true}) };
+				modList[name] = mod;
+				modOrder.push_back(mod);
+				string err;
+				if (mod->file(pathJson).loadDesc(err)) {
+					save();
+					build();
+					msg.replyMsg("strModInstalled");
+					return;
+				}
+				else {
+					msg.set("err", msg.get_str("err") + "\n" + err + "(" + url + name + ")");
+					continue;
+				}
+			}
+			msg.set("err", msg.get_str("err") + "\n未写出mod地址(repo/pkg):" + url + name);
+		} catch (std::exception& e) {
+			console.log("安装" + url + name + "失败:" + e.what(), 0b01);
+			msg.set("err", msg.get_str("err") + "\n" + url + name + ":" + e.what());
+		}
+	}
+	if (!msg.has("err"))msg.set("err", "\n未找到Mod源");
+	msg.replyMsg("strModInstallErr");
+}
+
 void DiceModManager::mod_delete(DiceEvent& msg) {
 	std::lock_guard lock(ModMutex);
 	string modName{ msg.get_str("mod") };
@@ -665,7 +735,7 @@ repo(std::make_shared<DiceRepo>(pathDir, url)) {
 string DiceMod::desc()const {
 	ShowList li;
 	li << "[" + to_string(index) + "]" + (title.empty() ? name : title);
-	if (!ver.empty())li << "- 版本: " + ver;
+	if (!ver.exp.empty())li << "- 版本: " + ver.exp;
 	if (!author.empty())li << "- 作者: " + author;
 	if (!brief.empty())li << "- 简介: " + brief;
 	return li.show("\n");

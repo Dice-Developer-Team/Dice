@@ -302,7 +302,7 @@ void Console::save() {
 		yaml["clock"] = clocks;
 	}
 	if (!git_user.empty()) {
-		YAML::Node& git;
+		YAML::Node git;
 		git["user"] = git_user;
 		git["password"] = git_pw;
 		yaml["git"] = git;
