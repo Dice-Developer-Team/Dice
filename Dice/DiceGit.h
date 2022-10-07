@@ -13,8 +13,8 @@ class DiceRepo {
 public:
 	DiceRepo(const std::filesystem::path&);
 	DiceRepo(const std::filesystem::path&, const string&);
-	~DiceRepo() { if (repo)git_repository_free(repo); }
+	~DiceRepo();
 	operator bool()const { return repo; }
 	DiceRepo& url(const string&);
-	DiceRepo& update();
+	bool update(string&);
 };

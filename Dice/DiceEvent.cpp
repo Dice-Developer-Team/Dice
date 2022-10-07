@@ -2763,6 +2763,9 @@ int DiceEvent::InnerOrder() {
 	else if (strPara == "get") {
 		fmt->mod_install(*this);
 	}
+	else if (strPara == "update") {
+		fmt->has_mod(modName) ? fmt->mod_update(*this) : fmt->mod_install(*this);
+	}
 	else if (!fmt->has_mod(modName)) {
 		replyMsg("strModNotFound");
 	}
@@ -2779,9 +2782,6 @@ int DiceEvent::InnerOrder() {
 	else if (strPara == "detail") {
 		set("mod_detail", fmt->get_mod(modName)->detail());
 		replyMsg("strModDetail");
-	}
-	else if (strPara == "update") {
-		fmt->mod_update(*this);
 	}
 	else if (strPara == "reload") {
 		string err;
@@ -4476,6 +4476,7 @@ bool DiceEvent::DiceFilter()
 		return 1;
 	}
 	else if (is("ignored"))return 1;
+	if (isCalled)set("called");
 	if (!isPrivate() && ((console["CheckGroupLicense"] > 0 && pGrp->isset("未审核"))
 											  || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")) 
 											  || blacklist->get_group_danger(fromChat.gid))) {

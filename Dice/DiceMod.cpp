@@ -135,12 +135,15 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 			fifo_json j = fifo_json::parse(desc);
 			//todo: dice_build check
 #ifndef __ANDROID__
-			if (j.count("repo")) {
+			if (j.count("repo") && !j["repo"].empty()) {
 				string repo{ j["repo"] };
 				auto mod{ std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),repo}) };
 				modList[name] = mod;
 				modOrder.push_back(mod);
-				if (!mod->loaded)break;
+				if (!mod->loaded) {
+					msg.set("err", msg.get_str("err") + "\ngit clone失败:" + repo);
+					continue;
+				}
 				save();
 				build();
 				msg.replyMsg("strModInstalled");
@@ -188,13 +191,24 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 }
 void DiceModManager::mod_update(DiceEvent& msg) {
 	std::lock_guard lock(ModMutex);
-	std::string desc;
 	string name{ msg.get_str("mod") };
-	if (modList.count(name) && modList[name]->loaded) {
-		msg.set("mod_desc", modList[name]->desc());
-		msg.replyMsg("strModDescLocal");
+	auto mod{ get_mod(name) };
+	std::string des;
+#ifndef __ANDROID__
+	if (mod->repo) {
+		if (mod->repo->update(des)&&
+			(fs::copy_file(mod->pathDir / "descriptor.json", mod->pathJson, fs::copy_options::overwrite_existing),
+				mod->reload(des))) {
+			msg.set("mod_ver", mod->ver.exp);
+			msg.replyMsg("strModUpdated");
+			return;
+		}
+		msg.set("err", des);
+		msg.replyMsg("strModUpdateErr");
 		return;
 	}
+#endif //ANDROID
+	string desc;
 	for (auto& url : sourceList) {
 		if (!Network::GET(url + name, desc)) {
 			console.log("访问" + url + name + "失败:" + desc, 0);
@@ -203,42 +217,27 @@ void DiceModManager::mod_update(DiceEvent& msg) {
 		}
 		try {
 			fifo_json j = fifo_json::parse(desc);
-			//todo: dice_build check
-#ifndef __ANDROID__
-			if (j.count("repo")) {
-				string repo{ j["repo"] };
-				auto mod{ std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),repo}) };
-				modList[name] = mod;
-				modOrder.push_back(mod);
-				if (!mod->loaded)break;
-				save();
-				build();
-				msg.replyMsg("strModInstalled");
-				return;
-			}
-#endif //ANDROID
-			if (j.count("pkg")) {
+			if (!j.count("ver") || !j.count("pkg"))continue;
+			Version ver{ j["ver"] };
+			if (mod->ver < ver) {
 				string pkg{ j["pkg"] };
-				std::string des;
 				if (!Network::GET(pkg, des)) {
 					msg.set("err", msg.get_str("err") + "\n下载失败(" + pkg + "):" + des);
 					continue;
 				}
 				std::error_code ec1;
+				fs::remove_all(DiceDir / "mod" / name, ec1);
 				Zip::extractZip(des, DiceDir / "mod");
 				auto pathJson{ DiceDir / "mod" / (name + ".json") };
 				if (!fs::exists(pathJson)) {
 					msg.set("err", msg.get_str("err") + "\npkg解压无文件" + name + ".json");
 					continue;
 				}
-				auto mod{ std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),true}) };
-				modList[name] = mod;
-				modOrder.push_back(mod);
 				string err;
-				if (mod->file(pathJson).loadDesc(err)) {
-					save();
+				if (mod->loadDesc(err)) {
 					build();
-					msg.replyMsg("strModInstalled");
+					msg.set("mod_ver", mod->ver.exp);
+					msg.replyMsg("strModUpdated");
 					return;
 				}
 				else {
@@ -246,7 +245,9 @@ void DiceModManager::mod_update(DiceEvent& msg) {
 					continue;
 				}
 			}
-			msg.set("err", msg.get_str("err") + "\n未写出mod地址(repo/pkg):" + url + name);
+			else {
+				msg.set("err", "无更新于" + mod->ver.exp + "的版本!");
+			}
 		} catch (std::exception& e) {
 			console.log("安装" + url + name + "失败:" + e.what(), 0b01);
 			msg.set("err", msg.get_str("err") + "\n" + url + name + ":" + e.what());
@@ -267,13 +268,13 @@ void DiceModManager::mod_delete(DiceEvent& msg) {
 		--(*it)->index;
 	}
 	save();
-	build();
 	remove(mod->pathJson);
-	remove(mod->pathDir);
+	remove_all(mod->pathDir);
+	build();
 	msg.note("{strModDelete}", 1);
 }
-static enumap<string> methods{ "print","help","sample","case","vary","grade" };
-enum class FmtMethod { Print, Help, Sample, Case, Vary, Grade };
+static enumap<string> methods{ "print","help","sample","case","vary","grade","at"};
+enum class FmtMethod { Print, Help, Sample, Case, Vary, Grade, At };
 
 string DiceModManager::format(string s, AttrObject context, bool isTrust, const dict_ci<string>& dict) const {
 	//直接重定向
@@ -356,6 +357,18 @@ string DiceModManager::format(string s, AttrObject context, bool isTrust, const 
 						else
 							val = format(samples[RandomGenerator::Randint(0, samples.size() - 1)],
 								context, isTrust, dict);
+						break;
+					case FmtMethod::At:
+						if (para == "self") {
+							val = "[CQ:at,qq=" + to_string(console.DiceMaid) + "]";
+						}
+						else if (!para.empty()) {
+							val = "[CQ:at,qq=" + para + "]";
+						}
+						else if (context.has("uid")) {
+							val = "[CQ:at,qq=" + context.get_str("uid") + "]";
+						}
+						else val = {};
 						break;
 					case FmtMethod::Print:
 						if (auto paras{ splitPairs(para,'=','&') }; paras.count("uid")) {
@@ -784,11 +797,6 @@ bool DiceMod::loadDesc(string& cb) {
 					+ "与前置mod[" + post.show() + "]顺序倒置", 1);
 			}
 		}
-#ifndef __ANDROID__
-		if (!repo && j.count("repo")) {
-			(repo = std::make_shared<DiceRepo>(pathDir))->url(j["repo"]);
-		}
-#endif //ANDROID
 		if (j.count("title"))title = UTF8toGBK(j["title"].get<string>());
 		else if (j.count("mod"))title = UTF8toGBK(j["mod"].get<string>());
 		if (j.count("ver"))ver = UTF8toGBK(j["ver"].get<string>());

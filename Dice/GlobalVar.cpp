@@ -63,6 +63,8 @@ const dict_ci<string> PlainMsg
 	{"strModDetail", "{self}所载模块详细信息:{mod_detail}"},
 	{"strModInstalled", "{self}成功注入记忆体「{mod}」√"},
 	{"strModInstallErr", "{self}注入记忆体「{mod}」失败×{err}"},
+	{"strModUpdated", "更新{self}记忆体「{mod}」->{mod_ver}√"},
+	{"strModUpdateErr", "更新{self}记忆体「{mod}」失败×{err}"},
 	{"strModLoadErr", "{self}读取模块「{mod}」失败×{err}"},
 	{"strModNotFound", "{self}未找到指定模块「{mod}」!"},
 	{"strAkForkNew","{self}已创建分歧\n#{fork}"},
@@ -467,6 +469,7 @@ const dict_ci<string> GlobalComment{
 	{"strGroupUnBan", "group ban解除群员禁言的回执"},
 	//
 	{"strHardSuccess", "多轮检定困难成功"},
+	{"strHardSuccess", "多轮检定困难成功"},
 	{"strHelpDisabledErr", "group+禁用help后群内help回执"},
 	{"strHelpNotFound", "help未找到近似词条"},
 	{"strHelpRedirect", "help找到唯一近似词条"},
@@ -493,6 +496,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+628:支持mod更新
 627:更新认主口令
 626:前缀匹配记录后缀
 625:支持welcome转义
@@ -541,13 +545,13 @@ const dict_ci<> HelpDoc = {
 {"其他插件","【未设置】"},
 {"姐妹骰","{list_dice_sister}"},
 {"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2022 String.Empty\nGithub@Dice-Developer-Team"},
-{"指令",R"(at骰娘后接指令可以指定骰娘单独响应，如at骰娘.bot off
-多数指令需要后接参数，请.help对应指令 获取详细信息，如.help jrrp
+{"指令",R"(at骰娘接指令可以指定骰娘单独响应，如
+{at:self}.bot off
+多数指令需要后接参数，请.help对应指令 获取详细信息，如.help r
 控制指令:
 .dismiss 退群
 .bot 版本信息
-.bot on 启用指令
-.bot off 停用指令
+.bot on/off 启用/停用指令
 .reply on/off 启用/禁用回复
 .group 群管
 .authorize 授权许可
