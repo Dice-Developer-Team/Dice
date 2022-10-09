@@ -239,12 +239,12 @@ bool Console::load() {
 			YAML::Node yaml{ YAML::LoadFile(getNativePathString(DiceDir / "conf" / "console.yaml")) };
 			if (yaml["master"])master = yaml["master"].as<long long>();
 			if (yaml["config"]) {
-				for (auto& cfg : yaml["config"]) {
+				for (auto cfg : yaml["config"]) {
 					intConf[cfg.first.as<string>()] = cfg.second.as<int>();
 				}
 			}
 			if (yaml["clock"]) {
-				for (auto& task : yaml["clock"]) {
+				for (auto task : yaml["clock"]) {
 					mWorkClock.insert({ scanClock(task["moment"].as<string>()),
 						task["task"].as<string>() });
 				}

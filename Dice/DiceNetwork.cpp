@@ -119,13 +119,13 @@ namespace Network
 	bool POST(const string& url, const string& postContent, const string& postHeader, std::string& des)
 	{
 		std::string strHeader = postHeader.empty() ? "Content-Type: application/x-www-form-urlencoded" : postHeader;
+#ifdef _WIN32
 		std::string UserAgent{ DiceRequestHeader };
-		static std::regex re{R"(User-Agent: ([^\r\n]*))"};
+		static std::regex re{ R"(User-Agent: ([^\r\n]*))" };
 		std::smatch match;
 		if (std::regex_search(strHeader, match, re)) {
 			UserAgent = match[1].str();
 		}
-#ifdef _WIN32
 		URL_COMPONENTSA urlComponents;
 		urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
 		urlComponents.dwHostNameLength = 1024;
@@ -241,7 +241,7 @@ InternetClose:
 			struct curl_slist* header = NULL;
 			header = curl_slist_append(header, strHeader.c_str());
 			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, UserAgent.c_str());
+			curl_easy_setopt(curl, CURLOPT_USERAGENT, DiceRequestHeader);
 			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postContent.c_str());
 			curl_easy_setopt(curl, CURLOPT_POST, 1L);
 			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
