@@ -435,6 +435,13 @@ string filter_CQcode(const string& raw, long long fromGID){
 		}
 		else return msg;
 	}
+	while ((posL = msg.find(CQ_FILE)) != string::npos) {
+		//检查at格式
+		if ((posR = msg.find(']', posL)) != string::npos) {
+			msg.replace(posL + 1, posR - posL - 1, "文件");
+		}
+		else return msg;
+	}
 	while ((posL = msg.find("[CQ:")) != string::npos)
 	{
 		if (size_t posR = msg.find(']', posL); posR != string::npos) 

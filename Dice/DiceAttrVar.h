@@ -165,6 +165,7 @@ public:
 	bool is_boolean()const { return type == AttrType::Boolean; }
 	bool is_true()const { return operator bool(); }
 	bool is_numberic()const;
+	bool is_text()const { return type == AttrType::Text; }
 	bool is_character()const { return type != AttrType::Nil && type != AttrType::Boolean && type != AttrType::Table && type != AttrType::Function; }
 	bool is_table()const { return type == AttrType::Table; }
 	bool is_function()const { return type == AttrType::Function; }

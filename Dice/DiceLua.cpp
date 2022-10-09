@@ -1079,13 +1079,28 @@ int httpGet(lua_State* L) {
 int httpPost(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	string url{ lua_tostring(L,1) };
-	string fifo_json{ lua_to_raw_string(L,2) };
-	if (url.empty() || fifo_json.empty()) {
+	string content{ lua_to_raw_string(L,2) };
+	if (url.empty() || content.empty()) {
 		return 0;
 	}
-	string type{ lua_gettop(L) > 2 ? lua_tostring(L,3) : "application/json" };
+	string type{ "Content-Type: application/json" };
+	if (lua_gettop(L) > 2) {
+		if (lua_istable(L,3)) {
+			ShowList li;
+			lua_pushnil(L);
+			while (lua_next(L, 3)) {
+				if (lua_isstring(L, -2) && lua_isstring(L, -1)) {
+					li << lua_to_raw_string(L, -2) + ": " + lua_tostring(L, -1);
+				}
+				lua_pop(L, 1);
+			}
+			type = li.show("\r\n");
+			DD::debugLog(type);
+		}
+		else if (lua_isstring(L,3))type = lua_tostring(L, 3);
+	}
 	string ret;
-	lua_pushboolean(L, Network::POST(url, fifo_json, type, ret));
+	lua_pushboolean(L, Network::POST(url, content, type, ret));
 	lua_push_raw_string(L, ret);
 	return 2;
 }

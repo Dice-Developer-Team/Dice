@@ -27,11 +27,12 @@ using std::set;
 using std::map;
 using std::vector;
 using std::unordered_map;
-constexpr auto CQ_IMAGE = "[CQ:image,file=";
+constexpr auto CQ_IMAGE = "[CQ:image,";
 constexpr auto CQ_AT = "[CQ:at,id=";
 constexpr auto CQ_QQAT = "[CQ:at,qq=";
 constexpr auto CQ_FACE = "[CQ:face,id=";
 constexpr auto CQ_POKE = "[CQ:poke,id=";
+constexpr auto CQ_FILE = "[CQ:file,";
 
 //МгдиЪ§Он
 void loadData();

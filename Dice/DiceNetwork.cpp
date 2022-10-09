@@ -30,6 +30,7 @@
 #endif
 
 #include <string>
+#include <regex>
 #include "GlobalVar.h"
 #include "MsgFormat.h"
 #include "DiceNetwork.h"
@@ -115,9 +116,15 @@ namespace Network
 #endif
 	}
 
-	bool POST(const string& url, const string& postContent, const string& contentType, std::string& des)
+	bool POST(const string& url, const string& postContent, const string& postHeader, std::string& des)
 	{
-		std::string strHeader = "Content-Type: " + (contentType.empty() ? "application/x-www-form-urlencoded" : contentType);
+		std::string strHeader = postHeader.empty() ? "Content-Type: application/x-www-form-urlencoded" : postHeader;
+		std::string UserAgent{ DiceRequestHeader };
+		static std::regex re{R"(User-Agent: ([^\r\n]*))"};
+		std::smatch match;
+		if (std::regex_search(strHeader, match, re)) {
+			UserAgent = match[1].str();
+		}
 #ifdef _WIN32
 		URL_COMPONENTSA urlComponents;
 		urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
@@ -147,7 +154,7 @@ namespace Network
 
 		const char* acceptTypes[] = {"*/*", nullptr};
 
-		const HINTERNET hInternet = InternetOpenA(DiceRequestHeader, INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
+		const HINTERNET hInternet = InternetOpenA(UserAgent.c_str(), INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
 		const HINTERNET hConnect = InternetConnectA(hInternet, std::string(urlComponents.lpszHostName, urlComponents.dwHostNameLength).c_str(), urlComponents.nPort, nullptr, nullptr, 
 			INTERNET_SERVICE_HTTP, 0, 0);
 		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "POST", (std::string(urlComponents.lpszUrlPath, urlComponents.dwUrlPathLength) + std::string(urlComponents.lpszExtraInfo, urlComponents.dwExtraInfoLength)).c_str(), "HTTP/1.1", nullptr, acceptTypes,
@@ -163,27 +170,18 @@ namespace Network
 			                    nullptr))
 			{
 				des = getLastErrorMsg();
-				InternetCloseHandle(hRequest);
-				InternetCloseHandle(hConnect);
-				InternetCloseHandle(hInternet);
-				return false;
+				goto InternetClose;
 			}
 			if (dwRetCode != 200)
 			{
 				des = getMsg("strRequestRetCodeErr", AttrVars{ {"error", std::to_string(dwRetCode)} });
-				InternetCloseHandle(hRequest);
-				InternetCloseHandle(hConnect);
-				InternetCloseHandle(hInternet);
-				return false;
+				goto InternetClose;
 			}
 			DWORD preRcvCnt;
 			if (!InternetQueryDataAvailable(hRequest, &preRcvCnt, 0, 0))
 			{
 				des = getLastErrorMsg();
-				InternetCloseHandle(hRequest);
-				InternetCloseHandle(hConnect);
-				InternetCloseHandle(hInternet);
-				return false;
+				goto InternetClose;
 			}
 			if (preRcvCnt == 0)
 			{
@@ -199,33 +197,22 @@ namespace Network
 				if (!InternetReadFile(hRequest, rcvData, preRcvCnt, &rcvCnt))
 				{
 					des = getLastErrorMsg();
-					InternetCloseHandle(hRequest);
-					InternetCloseHandle(hConnect);
-					InternetCloseHandle(hInternet);
 					delete[] rcvData;
-					return false;
+					goto InternetClose;
 				}
 
-				if (rcvCnt != preRcvCnt)
-				{
-					InternetCloseHandle(hRequest);
-					InternetCloseHandle(hConnect);
-					InternetCloseHandle(hInternet);
+				if (rcvCnt != preRcvCnt){
 					des = getMsg("strUnknownErr");
 					delete[] rcvData;
-					return false;
+					goto InternetClose;
 				}
 
 				finalRcvData += std::string(rcvData, rcvCnt);
 
-				if (!InternetQueryDataAvailable(hRequest, &preRcvCnt, 0, 0))
-				{
+				if (!InternetQueryDataAvailable(hRequest, &preRcvCnt, 0, 0))	{
 					des = getLastErrorMsg();
-					InternetCloseHandle(hRequest);
-					InternetCloseHandle(hConnect);
-					InternetCloseHandle(hInternet);
 					delete[] rcvData;
-					return false;
+					goto InternetClose;
 				}
 
 				delete[] rcvData;
@@ -239,6 +226,7 @@ namespace Network
 			return true;
 		}
 		des = getLastErrorMsg();
+InternetClose:
 		InternetCloseHandle(hRequest);
 		InternetCloseHandle(hConnect);
 		InternetCloseHandle(hInternet);
@@ -253,7 +241,7 @@ namespace Network
 			struct curl_slist* header = NULL;
 			header = curl_slist_append(header, strHeader.c_str());
 			curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, DiceRequestHeader);
+			curl_easy_setopt(curl, CURLOPT_USERAGENT, UserAgent.c_str());
 			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postContent.c_str());
 			curl_easy_setopt(curl, CURLOPT_POST, 1L);
 			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header);
