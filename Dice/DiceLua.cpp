@@ -1079,7 +1079,7 @@ int httpGet(lua_State* L) {
 int httpPost(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	string url{ lua_tostring(L,1) };
-	string content{ lua_to_raw_string(L,2) };
+	string content{ lua_istable(L,3) ? to_json(lua_to_dict(L,3)).dump() : lua_to_raw_string(L,2) };
 	if (url.empty() || content.empty()) {
 		return 0;
 	}

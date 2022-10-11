@@ -46,7 +46,7 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 	for (auto& [id, grp] : ChatList)
 	{
 		int authSelf;
-		if (grp.isset("已退") || grp.isset("未进") || grp.isset("忽略") || !grp.isGroup 
+		if (!grp.getLst() || grp.isset("忽略") || !grp.isGroup
 			|| !(authSelf = DD::getGroupAuth(id, console.DiceMaid, 0)))continue;
 		if (DD::isGroupMember(grp.ID, llQQ, false))	{
 			strNotice = printGroup(id);
@@ -863,7 +863,7 @@ bool DDBlackManager::up_group_danger(long long llgroup, DDBlackMark& mark)
 	mGroupDanger[llgroup] = mark.danger;
 	if (Enabled)
 	{
-		if (ChatList.count(llgroup) && !chat(llgroup).isset("已退"))chat(llgroup).leave(
+		if (ChatList.count(llgroup) && chat(llgroup).getLst())chat(llgroup).leave(
 			mark.warning());
 		if(!isLoadingExtern)console.log(getMsg("strSelfName") + "已将" + printGroup(llgroup) + "危险等级提升至" + to_string(mark.danger), 0b10,
 		            printSTNow());

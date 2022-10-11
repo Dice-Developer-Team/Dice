@@ -194,6 +194,7 @@ void DiceModManager::mod_update(DiceEvent& msg) {
 	string name{ msg.get_str("mod") };
 	auto mod{ get_mod(name) };
 	std::string des;
+	msg.set("ex_ver", mod->ver.exp);
 #ifndef __ANDROID__
 	if (mod->repo) {
 		if (mod->repo->update(des)&&

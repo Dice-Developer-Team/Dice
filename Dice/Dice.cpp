@@ -329,7 +329,8 @@ EVE_Enable(eventEnable){
 	readUserData();
 	set<long long> grps{ DD::getGroupIDList() };
 	for (auto gid : grps){
-		chat(gid).group().reset("未进").reset("已退").set("已入群");
+		if (auto grp{ chat(gid).group().reset("未进").reset("已退").set("已入群") };
+			!grp.isset("lastMsg"))grp.setLst(-1);
 	}
 	loadData();
 	// 确保线程执行结束
@@ -440,9 +441,7 @@ EVE_Enable(eventEnable){
 }
 
 mutex GroupAddMutex;
-
-bool eve_GroupAdd(Chat& grp)
-{
+bool eve_GroupAdd(Chat& grp) {
 	{
 		unique_lock<std::mutex> lock_queue(GroupAddMutex);
 		if (!grp.isset("已入群"))grp.set("已入群").reset("未进").reset("已退");
@@ -451,7 +450,7 @@ bool eve_GroupAdd(Chat& grp)
 	}
 	long long fromGID = grp.ID;
 	if (grp.Name.empty())
-		grp.Name = DD::getGroupName(fromGID);
+		grp.set("Name", grp.Name = DD::getGroupName(fromGID));
 	GroupSize_t gsize(DD::getGroupSize(fromGID));
 	if (console["GroupInvalidSize"] > 0 && grp.confs.empty() && gsize.currSize > (size_t)console["GroupInvalidSize"]) {
 		grp.set("协议无效");
@@ -629,7 +628,7 @@ EVE_GroupMsg(eventGroupMsg)
 	if (!Enabled)return 0;
 	Chat& grp = chat(fromGID).group();
 	if (fromUID == console.DiceMaid && !console["ListenGroupEcho"])return 0;
-	if (!grp.isset("已入群") && (grp.isset("未进") || grp.isset("已退")))eve_GroupAdd(grp);
+	if (!grp.isset("已入群") && grp.getLst())eve_GroupAdd(grp);
 	if (!grp.isset("忽略"))
 	{
 		shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
@@ -646,7 +645,7 @@ EVE_GroupMsg(eventGroupMsg)
 EVE_ChannelMsg(eventChannelMsg)
 {
 	if (!Enabled)return 0;
-	//Chat& grp = chat(fromGID).group().lastmsg(time(nullptr));
+	Chat& grp = chat(fromGID).channel();
 	if (fromUID == console.DiceMaid && !console["ListenChannelEcho"])return 0;
 	//if (!grp.isset("忽略"))
 	{
@@ -675,7 +674,7 @@ EVE_DiscussMsg(eventDiscussMsg)
 		DD::setDiscussLeave(fromDiscuss);
 		return 1;
 	}
-	Chat& grp = chat(fromDiscuss).discuss();
+	Chat& grp = chat(fromDiscuss);
 	if (blacklist->get_qq_danger(fromUID) && console["AutoClearBlack"])
 	{
 		const string strMsg = "发现黑名单用户" + printUser(fromUID) + "，自动执行退群";
@@ -740,7 +739,7 @@ EVE_GroupMemberKicked(eventGroupMemberKicked){
 	if (fromUID == 0)return 0; // 考虑Mirai在机器人自行退群时也会调用一次这个函数
 	Chat& grp = chat(fromGID);
 	if (beingOperateQQ == console.DiceMaid){
-		grp.set("已退").reset("已入群");
+		grp.reset("已入群").rmLst();
 		if (!console || grp.isset("忽略"))return 0;
 		string strNow = printSTime(stNow);
 		string strNote = printUser(fromUID) + "将" + printUser(beingOperateQQ) + "移出了" + printChat(grp);
@@ -894,7 +893,7 @@ EVE_GroupInvited(eventGroupInvited)
 			DD::answerGroupInvited(fromGID, 2);
 		}
 		else if (Chat& grp = chat(fromGID).group(); grp.isset("许可使用")) {
-			grp.set("未进");
+			grp.setLst(0);
 			grp.inviter = fromUID;
 			strMsg += "\n已同意（群已许可使用）";
 			console.log(strMsg, 1, strNow);
@@ -928,7 +927,7 @@ EVE_GroupInvited(eventGroupInvited)
 		}
 		else
 		{
-			grp.set("未进");
+			grp.setLst(0);
 			grp.inviter = fromUID;
 			strMsg += "已同意";
 			this_thread::sleep_for(2s);

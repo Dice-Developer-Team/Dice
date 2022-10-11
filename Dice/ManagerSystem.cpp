@@ -38,8 +38,6 @@ const map<string, short> mChatConf{
 	{"免清", 2},
 	{"免黑", 4},
 	{"协议无效", 3},
-	{"未进", 5},
-	{"已退", 5}
 };
 
 User& getUser(long long uid){
@@ -74,7 +72,7 @@ AttrVar getUserItem(long long uid, const string& item) {
 	else if (UserList.count(uid)) {
 		User& user{ getUser(uid) };
 		if (item == "firstCreate") return (long long)user.tCreated;
-		else  if (item == "lastUpdate") return (long long)user.tUpdated;
+		else  if (item == "lastUpdate") return (long long)user.updated();
 		else if (item == "nn") {
 			if (string nick; user.getNick(nick))return nick;
 		}
@@ -140,7 +138,7 @@ AttrVar getGroupItem(long long id, const string& item) {
 			return (long long)grp.tCreated;
 		}
 		else if (item == "lastUpdate") {
-			return (long long)grp.tUpdated;
+			return (long long)grp.updated();
 		}
 		else if (grp.confs.has(item)) {
 			return grp.confs.get(item);
@@ -194,7 +192,7 @@ AttrVar getContextItem(AttrObject context, string item, bool isTrust) {
 }
 
 [[nodiscard]] bool User::empty() const {
-	return (!nTrust) && (!tUpdated) && confs.empty() && strNick.empty();
+	return (!nTrust) && (!updated()) && confs.empty() && strNick.empty();
 }
 void User::setConf(const string& key, const AttrVar& val)
 {
@@ -228,7 +226,6 @@ void User::writeb(std::ofstream& fout)
 	std::lock_guard<std::mutex> lock_queue(ex_user);
 	confs.set("trust", (int)nTrust);
 	confs.set("tCreated", (long long)tCreated);
-	confs.set("tUpdated", (long long)tUpdated);
 	fwrite(fout, string("ID"));
 	fwrite(fout, ID);
 	if (!confs.empty()) {
@@ -264,9 +261,8 @@ void User::readb(std::ifstream& fin)
 		else if (tag == "Conf")confs.readb(fin);
 		else if (tag == "Nick")strNick = fread<long long, string>(fin);
 	}
-	if (confs.has("trust"))nTrust = confs.get_int("trust");
+	nTrust = confs.get_int("trust");
 	if (confs.has("tCreated"))tCreated = confs.get_ll("tCreated");
-	if (confs.has("tUpdated"))tUpdated = confs.get_ll("tUpdated");
 	if (confs.has("tinyID"))TinyList.emplace(confs.get_ll("tinyID"), ID);
 }
 int trustedQQ(long long uid){
@@ -289,7 +285,7 @@ int clearUser() {
 			UserDelete.push_back(uid);
 		}
 		else if (isClearInactive) {
-			time_t tLast{ user.tUpdated };
+			time_t tLast{ user.updated() };
 			if (!tLast)tLast = user.tCreated;
 			if (auto s{ sessions.get_if({ uid }) })
 				tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
@@ -313,7 +309,7 @@ int clearGroup() {
 	time_t grpline{ tNow - console["InactiveGroupLine"] * (time_t)86400 };
 	for (const auto& [id, grp] : ChatList) {
 		if (grp.is_except() || grp.isset("免清") || grp.isset("忽略"))continue;
-		time_t tLast{ grp.tUpdated };
+		time_t tLast{ grp.updated() };
 		if (auto s{ sessions.get_if({ 0,id }) })
 			tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 		if (tLast && tLast < grpline)GrpDelete.push_back(id);
@@ -517,7 +513,7 @@ void Chat::leave(const string& msg) {
 		std::this_thread::sleep_for(500ms);
 	}
 	isGroup ? DD::setGroupLeave(ID) : DD::setDiscussLeave(ID);
-	set("已退").reset("已入群");
+	reset("已入群").rmLst();
 }
 bool Chat::is_except()const {
 	return confs.has("免黑") || confs.has("协议无效");
@@ -527,7 +523,6 @@ void Chat::writeb(std::ofstream& fout)
 	confs["Name"] = Name;
 	confs["inviter"] = (long long)inviter;
 	confs["tCreated"] = (long long)tCreated;
-	confs["tUpdated"] = (long long)tUpdated;
 	fwrite(fout, ID);
 	if (!Name.empty())
 	{
@@ -585,9 +580,8 @@ void Chat::readb(std::ifstream& fin)
 		tag = fread<short>(fin);
 	}
 	if (confs.has("Name"))Name = confs.get_str("Name");
-	if (confs.has("inviter"))inviter = confs.get_ll("inviter");
+	inviter = confs.get_ll("inviter");
 	if (confs.has("tCreated"))tCreated = confs.get_ll("tCreated");
-	if (confs.has("tUpdated"))tUpdated = confs.get_ll("tUpdated");
 }
 int groupset(long long id, const string& st)
 {

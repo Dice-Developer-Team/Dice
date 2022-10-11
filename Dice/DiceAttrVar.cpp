@@ -660,7 +660,7 @@ string to_string(const AttrVar& var) {
 fifo_json to_json(AttrVars& vars) {
 	fifo_json j;
 	for (auto& [key, val] : vars) {
-		if(val)j[GBKtoUTF8(key)] = val.to_json();
+		j[GBKtoUTF8(key)] = val.to_json();
 	}
 	return j;
 }

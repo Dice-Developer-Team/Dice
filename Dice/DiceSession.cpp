@@ -669,8 +669,7 @@ shared_ptr<Session> DiceSessionManager::get(const chatInfo& ct) {
 		return ptr;
 	}
 }
-int DiceSessionManager::load() 
-{
+int DiceSessionManager::load() {
 	string strLog;
 	std::unique_lock<std::shared_mutex> lock(sessionMutex);
 	vector<std::filesystem::path> sFile;
@@ -679,7 +678,7 @@ int DiceSessionManager::load()
 		fifo_json j = freadJson(filename);
 		if (j.is_null()) {
 			remove(filename);
-			cnt--;
+			--cnt;
 			continue;
 		}
 		auto pSession(std::make_shared<Session>(filename.stem().string()));

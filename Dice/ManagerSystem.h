@@ -47,11 +47,8 @@ public:
 	//1-私用信任，2-拉黑豁免，3-加黑退群，4-后台管理，5-Master
 	int nTrust = 0;
 	time_t tCreated = time(nullptr);
-	time_t tUpdated = 0;
 
-	User()
-	{
-	}
+	User(){}
 
 	AttrObject confs;
 	map<long long, string> strNick{};
@@ -69,11 +66,11 @@ public:
 		return *this;
 	}
 
-	User& update(time_t tt)
-	{
-		tUpdated = tt;
+	User& update(time_t tt) {
+		confs.set("tUpdated", (long long)tt);
 		return *this;
 	}
+	time_t updated()const { return confs.get_ll("tUpdated"); }
 
 	User& trust(int n)
 	{
@@ -127,7 +124,6 @@ public:
 };
 
 ifstream& operator>>(ifstream& fin, User& user);
-ofstream& operator<<(ofstream& fout, const User& user);
 extern unordered_map<long long, User> UserList;
 extern unordered_map<long long, long long> TinyList;
 User& getUser(long long qq); 
@@ -156,7 +152,6 @@ public:
 	long long ID = 0;
 	string Name = "";
 	time_t tCreated = time(nullptr);
-	time_t tUpdated = 0;
 
 	Chat() {}
 
@@ -171,11 +166,14 @@ public:
 		return *this;
 	}
 
-	Chat& discuss()
+	Chat& channel()
 	{
 		isGroup = false;
 		return *this;
 	}
+	time_t getLst()const { return (time_t)confs.get_ll("lastMsg"); }
+	void rmLst()const { confs.reset("lastMsg"); }
+	void setLst(time_t t)const { confs.set("lastMsg", (long long)t); }
 
 	Chat& name(string s)
 	{
@@ -189,19 +187,18 @@ public:
 		return *this;
 	}
 
-	Chat& update()
-	{
-		tUpdated = time(nullptr);
+	Chat& update(){
+		confs.set("tUpdated", (long long)time(nullptr));
 		return *this;
 	}
-	Chat& update(time_t tt)
-	{
-		tUpdated = tt;
+	Chat& update(time_t tt)	{
+		confs.set("tUpdated", (long long)tt);
 		return *this;
 	}
+	time_t updated()const { return confs.get_ll("tUpdated"); }
 
 	Chat& set(const string& item){
-		confs.set(item, true);
+		confs.set(item);
 		return *this;
 	}
 	void set(const string& item, const AttrVar& val) {

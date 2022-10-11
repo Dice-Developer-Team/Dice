@@ -1146,10 +1146,10 @@ int WINAPI GUIMain()
 	const std::set<long long> FriendMp{ DD::getFriendQQList() };
 
 	// ªÒ»°Nickname
-	time_t tLimit{ time(NULL) - 86400 * 7 };
+	time_t tLimit{ time(NULL) - (time_t)86400 * 7 };
 	for (const auto& item : UserList)
 	{
-		if (LoadActiveUser && item.second.tUpdated < tLimit)continue;
+		if (LoadActiveUser && item.second.updated() < tLimit)continue;
 		if (FriendMp.count(item.first) || LoadStranger) {
 			nicknameMp[item.first] = DD::getQQNick(item.first);
 		}

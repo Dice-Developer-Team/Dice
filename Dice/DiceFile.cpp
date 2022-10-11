@@ -135,29 +135,15 @@ std::ifstream& operator>>(std::ifstream& fin, chatInfo& ct)
 	else ct.gid = id;
 	return fin;
 }
-
-ifstream& operator>>(ifstream& fin, User& user)
-{
-	fin >> user.ID >> user.nTrust >> user.tCreated >> user.tUpdated;
+long long tUpdated{ 0 };
+ifstream& operator>>(ifstream& fin, User& user) {
+	fin >> user.ID >> user.nTrust >> user.tCreated >> tUpdated;
 	return fin;
 }
 
-ofstream& operator<<(ofstream& fout, const User& user)
-{
-	fout << user.ID << '\t' << user.nTrust << '\t' << user.tCreated << '\t' << user.tUpdated;
-	return fout;
-}
-
-ifstream& operator>>(ifstream& fin, Chat& grp)
-{
-	fin >> grp.ID >> grp.isGroup >> grp.inviter >> grp.tCreated >> grp.tUpdated;
+ifstream& operator>>(ifstream& fin, Chat& grp) {
+	fin >> grp.ID >> grp.isGroup >> grp.inviter >> grp.tCreated >> tUpdated;
 	return fin;
-}
-
-ofstream& operator<<(ofstream& fout, const Chat& grp)
-{
-	fout << grp.ID << '\t' << grp.isGroup << '\t' << grp.inviter << '\t' << grp.tCreated << '\t' << grp.tUpdated;
-	return fout;
 }
 
 template <typename T>

@@ -730,7 +730,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 				else
 				{
 					chat(llGroup).set("许可使用").reset("未审核");
-					if (!chat(llGroup).isset("已退") && !chat(llGroup).isset("未进"))AddMsgToQueue(
+					if (chat(llGroup).getLst())AddMsgToQueue(
 						getMsg("strAuthorized"), { 0,llGroup });
 					note("已添加" + printGroup(llGroup) + "在" + getMsg("strSelfName") + "的使用许可");
 				}
@@ -1080,8 +1080,7 @@ int DiceEvent::BasicOrder()
 				return 1;
 			}
 			Chat& grp = chat(llGroup);
-			if (grp.isset("已退") || grp.isset("未进"))
-			{
+			if (!grp.getLst()) {
 				replyMsg("strGroupAway");
 			}
 			if (trustedQQ(fromChat.uid) > 2) {
@@ -1174,7 +1173,7 @@ int DiceEvent::BasicOrder()
 				if ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")))
 					replyMsg("strGroupLicenseDeny");
 				else {
-					if (canRoomHost() || trusted > 2)
+					if (canRoomHost())
 					{
 						if (groupset(fromChat.gid, "停用指令") > 0)
 						{
@@ -1196,7 +1195,7 @@ int DiceEvent::BasicOrder()
 			}
 			else if (Command == "off" && !isPrivate())
 			{
-				if (canRoomHost() || trusted > 2)
+				if (canRoomHost())
 				{
 					if (groupset(fromChat.gid, "停用指令"))
 					{
@@ -1734,7 +1733,7 @@ int DiceEvent::InnerOrder() {
 			res << "在{group}：";
 			res << grp.listBoolConf();
 			res << "记录创建：" + printDate(grp.tCreated);
-			res << "最后记录：" + printDate(grp.tUpdated);
+			res << "最后记录：" + printDate(grp.updated());
 			if (grp.inviter)res << "邀请者：" + printUser(grp.inviter);
 			res << string("入群欢迎：") + (grp.isset("入群欢迎") ? "已设置" : "无");
 			reply(getMsg("strSelfName") + res.show());
@@ -1753,13 +1752,11 @@ int DiceEvent::InnerOrder() {
 				replyMsg("strNotAdmin");
 				return 1;
 			}
-			long long target{ readID() };
-			if (!target)target = fromChat.gid;
-			if (ChatList.count(target)) {
-				reply(UTF8toGBK(chat(target).confs.to_json().dump()), false);
+			if (ChatList.count(llGroup)) {
+				reply(UTF8toGBK(chat(llGroup).confs.to_json().dump()), false);
 			}
 			else {
-				reply("{self}无" + printGroup(target) + "的群聊记录×");
+				reply("{self}无" + printGroup(llGroup) + "的群聊记录×");
 			}
 			return 1;
 		}
@@ -3811,8 +3808,8 @@ int DiceEvent::InnerOrder() {
 		string& strRes{ (at("res") = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(intSan) + " ").text};
 		//调用房规
 		int intRule = fromChat.gid
-			? chat(fromChat.gid).getConf("rc房规")
-			: getUser(fromChat.uid).getConf("rc房规");
+			? chat(fromChat.gid).getConf("rc房规", console["DefaultCOCRoomRule"])
+			: getUser(fromChat.uid).getConf("rc房规", console["DefaultCOCRoomRule"]);
 		switch (RollSuccessLevel(intTmpRollRes, intSan, intRule)) {
 		case 5:
 		case 4:

@@ -91,8 +91,6 @@ public:
 	DiceSession(const string& s) : name(s) {
 		tUpdate = tCreate = time(nullptr);
 	}
-
-	friend void readUserData();
 	friend class DiceSessionManager;
 
 	//记录创建时间
@@ -100,14 +98,12 @@ public:
 	//最后更新时间
 	time_t tUpdate;
 
-	DiceSession& create(time_t tt)
-	{
+	DiceSession& create(time_t tt) {
 		tCreate = tt;
 		return *this;
 	}
 
-	DiceSession& update(time_t tt)
-	{
+	DiceSession& update(time_t tt) {
 		tUpdate = tt;
 		return *this;
 	}
@@ -128,8 +124,6 @@ public:
 			update();
 		}
 	}
-
-
 
 	[[nodiscard]] bool table_count(const string& key) const { return mTable.count(key); }
 	bool table_del(const string&, const string&);

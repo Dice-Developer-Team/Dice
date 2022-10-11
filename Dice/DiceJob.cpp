@@ -175,12 +175,12 @@ void clear_group(AttrObject& job) {
 	ResList res;
 	vector<long long> GrpDelete;
 	time_t grpline{ console["InactiveGroupLine"] > 0 ? (tNow - console["InactiveGroupLine"] * (time_t)86400) : 0 };
-	if (job["clear_mode"] == "unpower") {
+	if (string mode{ job.get_str("clear_mode") };mode == "unpower") {
 		for (auto& [id, grp] : ChatList) {
-			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("免清") || grp.isset("协议无效"))continue;
+			if (grp.isset("忽略") || !grp.getLst() || grp.isset("免清") || grp.isset("协议无效"))continue;
 			if (grp.isGroup && !DD::isGroupAdmin(id, console.DiceMaid, true)) {
 				res << printGroup(id);
-				time_t tLast{ grp.tUpdated };
+				time_t tLast{ grp.updated() };
 				if (auto s{ sessions.get_if({ 0,id }) })
 					tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 				if (tLast < grpline)GrpDelete.push_back(id);
@@ -190,24 +190,22 @@ void clear_group(AttrObject& job) {
 				this_thread::sleep_for(3s);
 			}
 		}
-		MsgNote(job, getMsg("strSelfName") + "筛除无群权限群聊" + to_string(intCnt) + "个:" + res.show(), 0b10);
+		MsgNote(job, "筛除{strSelfName}非群管群聊" + to_string(intCnt) + "个:" + res.show(), 0b10);
 	}
-	else if (isdigit(static_cast<unsigned char>(job.get_str("clear_mode")[0]))) {
+	else if (!mode.empty() && isdigit(static_cast<unsigned char>(mode[0]))) {
 		int intDayLim{ job.get_int("clear_mode") };
-		string strDayLim = to_string(intDayLim);
-		time_t tNow = time(NULL);
+		time_t tNow{ time(nullptr) };
 		for (auto& [id, grp] : ChatList) {
 			if (grp.isset("忽略") || grp.isset("免清") || grp.isset("协议无效"))continue;
-			time_t tLast{ grp.tUpdated };
-			if (auto s{ sessions.get_if({ 0,id }) })
-				tLast = (s->tUpdate > tLast) ? s->tUpdate : tLast;
+			time_t tLast{ grp.getLst() };
+			if (auto s{ sessions.get_if({ 0,id }) };s && s->tUpdate > tLast)
+				tLast = s->tUpdate;
 			if (tNow - 86400LL * intDayLim < tLast)continue;
 			if (long long tLMT{ DD::getGroupLastMsg(id, console.DiceMaid) };
-				tLMT> tLast)tLast = tLMT;
-			if (!tLast)continue;
+				tLMT > tLast)grp.setLst(tLast = tLMT);
+			if (tLast <= 0)continue;
 			if (tLast < grpline && !grp.isset("免黑"))GrpDelete.push_back(id);
-			if (grp.isset("已退") || grp.isset("未进"))continue;
-			int intDay{ (int)(tNow - tLast) / 86400 };
+			int intDay{ int((tNow - tLast) / 86400) };
 			if (intDay > intDayLim) {
 				job["day"] = to_string(intDay);
 				res << printGroup(id) + ":" + to_string(intDay) + "天\n";
@@ -217,16 +215,16 @@ void clear_group(AttrObject& job) {
 				this_thread::sleep_for(3s);
 			}
 		}
-		MsgNote(job, getMsg("strSelfName") + "已筛除潜水" + strDayLim + "天群聊" + to_string(intCnt) + "个√" + res.show(), 0b10);
+		MsgNote(job, "已筛除{strSelfName}潜水{clear_mode}天群聊" + to_string(intCnt) + "个√" + res.show(), 0b10);
 	}
-	else if (job["clear_mode"] == "black") {
+	else if (mode == "black") {
 		try {
 			set<long long> grps{ DD::getGroupIDList() };
 			for (auto id : grps) {
 				Chat& grp = chat(id).group().name(DD::getGroupName(id));
 				if (grp.isset("忽略") || grp.isset("免清") || grp.isset("免黑") || grp.isset("协议无效"))continue;
 				if (blacklist->get_group_danger(id)) {
-					time_t tLast{ grp.tUpdated };
+					time_t tLast{ grp.updated() };
 					if (auto s{ sessions.get_if({ 0,id }) })
 						tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 					if (tLast < grpline)GrpDelete.push_back(id);
@@ -242,7 +240,7 @@ void clear_group(AttrObject& job) {
 							continue;
 						}
 						else if (authSelf.less(authBlack)) {
-							if (grp.tUpdated < grpline)GrpDelete.push_back(id);
+							if (grp.updated() < grpline)GrpDelete.push_back(id);
 							res << printChat(grp) + "：" + printUser(eachQQ) + "对方群权限较高";
 							grp.leave("发现黑名单管理员" + printUser(eachQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
 							intCnt++;
@@ -253,7 +251,7 @@ void clear_group(AttrObject& job) {
 							res << printChat(grp) + "：" + printUser(eachQQ);
 						}
 						else if (console["LeaveBlackQQ"]) {
-							if (grp.tUpdated < grpline)GrpDelete.push_back(id);
+							if (grp.updated() < grpline)GrpDelete.push_back(id);
 							res << printChat(grp) + "：" + printUser(eachQQ);
 							grp.leave("发现黑名单成员" + printUser(eachQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
 							intCnt++;
@@ -266,20 +264,20 @@ void clear_group(AttrObject& job) {
 			console.log("提醒：" + getMsg("strSelfName") + "清查黑名单群聊时出错！", 0b10, printSTNow());
 		}
 		if (intCnt) {
-			MsgNote(job, "已按" + getMsg("strSelfName") + "黑名单清查群聊" + to_string(intCnt) + "个：" + res.show(), 0b10);
+			MsgNote(job, "已按{strSelfName}黑名单清查群聊" + to_string(intCnt) + "个：" + res.show(), 0b10);
 		}
 		else if (job.has("uid")) {
 			reply(job, getMsg("strSelfName") + "按黑名单未发现待清查群聊");
 		}
 	}
-	else if (job["clear_mode"] == "preserve") {
+	else if (mode == "preserve") {
 		for (auto& [id, grp] : ChatList) {
-			if (grp.isset("忽略") || grp.isset("已退") || grp.isset("未进") || grp.isset("许可使用") || grp.isset("免清") || grp.isset("协议无效"))continue;
+			if (grp.isset("忽略") || !grp.getLst() || grp.isset("许可使用") || grp.isset("免清") || grp.isset("协议无效"))continue;
 			if (grp.isGroup && DD::isGroupAdmin(id, console, false)) {
 				grp.set("许可使用");
 				continue;
 			}
-			time_t tLast{ grp.tUpdated };
+			time_t tLast{ grp.updated() };
 			if (auto s{ sessions.get_if({ 0,id }) })
 				tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 			if (tLast < grpline)GrpDelete.push_back(id);
@@ -289,7 +287,7 @@ void clear_group(AttrObject& job) {
 			if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"])break;
 			this_thread::sleep_for(3s);
 		}
-		MsgNote(job, getMsg("strSelfName") + "筛除无许可群聊" + to_string(intCnt) + "个：" + res.show(), 1);
+		MsgNote(job, "筛除{strSelfName}无许可群聊" + to_string(intCnt) + "个：" + res.show(), 1);
 	}
 	else
 		reply(job, "{无法识别筛选参数×}");
@@ -320,16 +318,20 @@ void list_group(AttrObject& job) {
 		std::priority_queue<std::pair<time_t, string>> qDiver;
 		time_t tNow = time(NULL);
 		for (auto& [id, grp] : ChatList) {
-			if (grp.isGroup && !grps.empty() && !grps.count(id))grp.set("已退");
-			if (grp.isset("已退") || grp.isset("未进"))continue;
-			time_t tLast = grp.tUpdated;
-			if (long long tLMT; grp.isGroup && (tLMT = DD::getGroupLastMsg(grp.ID, console.DiceMaid)) > 0 && tLMT > tLast)tLast = tLMT;
+			//if (grp.isGroup && !grps.empty() && !grps.count(id))grp.rmLst();
+			if (!grp.getLst())continue;
+			time_t tLast{ grp.updated() };
+			if (grp.isGroup) {
+				if (long long tLMT{ DD::getGroupLastMsg(grp.ID, console.DiceMaid) };
+					tLMT > 0 && tLMT > tLast)tLast = tLMT;
+			}
 			if (!tLast)continue;
-			int intDay = (int)(tNow - tLast) / 86400;
+			int intDay{ int((tNow - tLast) / 86400) };
 			qDiver.emplace(intDay, printGroup(id));
 		}
 		if (qDiver.empty()) {
 			reply(job, "{self}无群聊或群信息加载失败！");
+			return;
 		}
 		size_t intCnt(0);
 		ResList res;
@@ -344,8 +346,7 @@ void list_group(AttrObject& job) {
 		std::priority_queue<std::pair<time_t, string>> qSize;
 		time_t tNow = time(NULL);
 		for (auto& [id, grp] : ChatList) {
-			if (grp.isGroup && !grps.empty() && !grps.count(id))grp.set("已退");
-			if (grp.isset("已退") || grp.isset("未进") || !grp.isGroup)continue;
+			if (!grp.getLst() || !grp.isGroup)continue;
 			GroupSize_t size(DD::getGroupSize(id));
 			if (!size.currSize)continue;
 			qSize.emplace(size.currSize, DD::printGroupInfo(id));

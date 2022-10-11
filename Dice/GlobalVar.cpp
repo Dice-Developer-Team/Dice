@@ -63,7 +63,7 @@ const dict_ci<string> PlainMsg
 	{"strModDetail", "{self}所载模块详细信息:{mod_detail}"},
 	{"strModInstalled", "{self}成功注入记忆体「{mod}」√"},
 	{"strModInstallErr", "{self}注入记忆体「{mod}」失败×{err}"},
-	{"strModUpdated", "更新{self}记忆体「{mod}」->{mod_ver}√"},
+	{"strModUpdated", "更新{self}记忆体「{mod}」{ex_ver}->{mod_ver}√"},
 	{"strModUpdateErr", "更新{self}记忆体「{mod}」失败×{err}"},
 	{"strModLoadErr", "{self}读取模块「{mod}」失败×{err}"},
 	{"strModNotFound", "{self}未找到指定模块「{mod}」!"},
