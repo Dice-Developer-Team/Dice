@@ -93,10 +93,11 @@ bool DiceRepo::update(string& err) {
 			console.log(err = git_lasterr(), 1);
 		}
 		//index
-		/*git_index* index = nullptr;
+		git_index* index = nullptr;
 		git_repository_index(&index, repo);
 		git_index_update_all(index, nullptr, nullptr, nullptr);
-		git_index_write(index);*/
+		git_index_write(index);
+		git_index_free(index);
 		//rebase
 		/*git_rebase* prebase = nullptr;
 		git_rebase_options rebase_opt = GIT_REBASE_OPTIONS_INIT;

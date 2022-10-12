@@ -164,6 +164,7 @@ public:
 	void mod_on(DiceEvent*);
 	void mod_off(DiceEvent*);
 	void mod_install(DiceEvent&);
+	void mod_reinstall(DiceEvent&);
 	void mod_update(DiceEvent&);
 	void mod_delete(DiceEvent&);
 

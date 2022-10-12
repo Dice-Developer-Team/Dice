@@ -186,7 +186,7 @@ public:
 	void readb(std::ifstream& fin);
 };
 string to_string(const AttrVar& var);
-fifo_json to_json(AttrVars& vars);
+fifo_json to_json(const AttrVars& vars);
 void from_json(const fifo_json& j, AttrVars&);
 string showAttrCMPR(AttrVar::CMPR);
 

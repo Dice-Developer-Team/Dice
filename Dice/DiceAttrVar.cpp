@@ -657,7 +657,7 @@ fifo_json AttrVar::to_json()const {
 string to_string(const AttrVar& var) {
 	return var.to_str();
 }
-fifo_json to_json(AttrVars& vars) {
+fifo_json to_json(const AttrVars& vars) {
 	fifo_json j;
 	for (auto& [key, val] : vars) {
 		j[GBKtoUTF8(key)] = val.to_json();

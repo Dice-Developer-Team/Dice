@@ -127,7 +127,6 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 	}
 	for (auto& url : sourceList) {
 		if (!Network::GET(url + name, desc)) {
-			console.log("访问" + url + name + "失败:" + desc, 0);
 			msg.set("err", msg.get_str("err") + "\n访问" + url + name + "失败:" + desc);
 			continue;
 		}
@@ -146,6 +145,7 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 				}
 				save();
 				build();
+				msg.set("mod_ver", mod->ver.exp);
 				msg.replyMsg("strModInstalled");
 				return;
 			}
@@ -171,6 +171,7 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 				if (mod->file(pathJson).loadDesc(err)) {
 					save();
 					build();
+					msg.set("mod_ver", mod->ver.exp);
 					msg.replyMsg("strModInstalled");
 					return;
 				}
@@ -182,6 +183,73 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 			msg.set("err", msg.get_str("err") + "\n未写出mod地址(repo/pkg):" + url + name);
 		}
 		catch (std::exception& e) {
+			console.log("安装" + url + name + "失败:" + e.what(), 0b01);
+			msg.set("err", msg.get_str("err") + "\n" + url + name + ":" + e.what());
+		}
+	}
+	if (!msg.has("err"))msg.set("err", "\n未找到Mod源");
+	msg.replyMsg("strModInstallErr");
+}
+void DiceModManager::mod_reinstall(DiceEvent& msg) {
+	std::lock_guard lock(ModMutex);
+	std::string desc;
+	string name{ msg.get_str("mod") };
+	auto mod{ modList[name] };
+	msg.set("ex_ver", mod->ver.exp);
+	for (auto& url : sourceList) {
+		if (!Network::GET(url + name, desc)) {
+			msg.set("err", msg.get_str("err") + "\n访问" + url + name + "失败:" + desc);
+			continue;
+		}
+		try {
+			fifo_json j = fifo_json::parse(desc);
+			//todo: dice_build check
+#ifndef __ANDROID__
+			if (j.count("repo") && !j["repo"].empty()) {
+				string repo{ j["repo"] };
+				auto idx{ mod->index };
+				mod = std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),repo});
+				modList[name] = mod;
+				modOrder[idx] = mod;
+				if (!mod->loaded) {
+					msg.set("err", msg.get_str("err") + "\ngit clone失败:" + repo);
+					continue;
+				}
+				save();
+				build();
+				msg.replyMsg("strModReinstalled");
+				return;
+			}
+#endif //ANDROID
+			if (j.count("pkg")) {
+				string pkg{ j["pkg"] };
+				std::string des;
+				if (!Network::GET(pkg, des)) {
+					msg.set("err", msg.get_str("err") + "\n下载失败(" + pkg + "):" + des);
+					continue;
+				}
+				std::error_code ec1;
+				fs::remove_all(DiceDir / "mod" / name, ec1);
+				Zip::extractZip(des, DiceDir / "mod");
+				auto pathJson{ DiceDir / "mod" / (name + ".json") };
+				if (!fs::exists(pathJson)) {
+					msg.set("err", msg.get_str("err") + "\npkg解压无文件" + name + ".json");
+					continue;
+				}
+				string err;
+				if (mod->loadDesc(err)) {
+					save();
+					build();
+					msg.replyMsg("strModReinstalled");
+					return;
+				}
+				else {
+					msg.set("err", msg.get_str("err") + "\n" + err + "(" + url + name + ")");
+					continue;
+				}
+			}
+			msg.set("err", msg.get_str("err") + "\n未写出mod地址(repo/pkg):" + url + name);
+		} catch (std::exception& e) {
 			console.log("安装" + url + name + "失败:" + e.what(), 0b01);
 			msg.set("err", msg.get_str("err") + "\n" + url + name + ":" + e.what());
 		}
