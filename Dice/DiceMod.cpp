@@ -193,6 +193,7 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 void DiceModManager::mod_reinstall(DiceEvent& msg) {
 	std::lock_guard lock(ModMutex);
 	std::string desc;
+	std::error_code ec1;
 	string name{ msg.get_str("mod") };
 	auto mod{ modList[name] };
 	msg.set("ex_ver", mod->ver.exp);
@@ -208,6 +209,7 @@ void DiceModManager::mod_reinstall(DiceEvent& msg) {
 			if (j.count("repo") && !j["repo"].empty()) {
 				string repo{ j["repo"] };
 				auto idx{ mod->index };
+				fs::remove_all(DiceDir / "mod" / name, ec1);
 				mod = std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),repo});
 				modList[name] = mod;
 				modOrder[idx] = mod;
@@ -217,6 +219,7 @@ void DiceModManager::mod_reinstall(DiceEvent& msg) {
 				}
 				save();
 				build();
+				msg.set("mod_ver", mod->ver.exp);
 				msg.replyMsg("strModReinstalled");
 				return;
 			}
@@ -228,7 +231,6 @@ void DiceModManager::mod_reinstall(DiceEvent& msg) {
 					msg.set("err", msg.get_str("err") + "\nÏÂÔØÊ§°Ü(" + pkg + "):" + des);
 					continue;
 				}
-				std::error_code ec1;
 				fs::remove_all(DiceDir / "mod" / name, ec1);
 				Zip::extractZip(des, DiceDir / "mod");
 				auto pathJson{ DiceDir / "mod" / (name + ".json") };
@@ -240,6 +242,7 @@ void DiceModManager::mod_reinstall(DiceEvent& msg) {
 				if (mod->loadDesc(err)) {
 					save();
 					build();
+					msg.set("mod_ver", mod->ver.exp);
 					msg.replyMsg("strModReinstalled");
 					return;
 				}
