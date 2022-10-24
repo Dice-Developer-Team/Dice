@@ -162,7 +162,7 @@ public:
 		return *this;
 	}
 
-	Factory& inviterQQ(long long qq)
+	Factory& inviter(long long qq)
 	{
 		mark.inviterQQ = {qq, true};
 		return *this;

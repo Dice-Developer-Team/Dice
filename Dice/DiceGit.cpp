@@ -52,12 +52,12 @@ DiceRepo& DiceRepo::url(const string& link) {
 	return *this;
 }
 bool DiceRepo::update(string& err) {
-	git_reference* local_head = nullptr;  //'HEAD'
+	git_reference* local_head = nullptr;  //refs/heads/master 'HEAD'
 	try {
 		git_repository_head(&local_head, repo);
 		const char* branch_name{ nullptr };
 		if (git_branch_name(&branch_name, local_head)) {
-			console.log("git_branch_name:" + err = git_lasterr(), 1);
+			console.log("git_branch_name:" + (err = git_lasterr()), 1);
 			goto Clean;
 		}
 		//string head{ git_reference_name(local_head) };
@@ -68,12 +68,11 @@ bool DiceRepo::update(string& err) {
 		fetch_opts.callbacks.credentials = cred_acquire_cb;
 		fetch_opts.prune = GIT_FETCH_PRUNE;
 		if (git_remote_fetch(remote, nullptr, &fetch_opts, nullptr)) {
-			console.log("git_remote_fetch:" + err = git_lasterr(), 1);
+			console.log("git_remote_fetch:" + (err = git_lasterr()), 1);
 			goto Clean;
 		}
 		//set head
-		//git_branch_lookup(&local_head, repo, branch_name, GIT_BRANCH_LOCAL);
-		git_reference* origin_head = nullptr;
+		git_reference* origin_head = nullptr; //refs/remotes/origin/master
 		string remote_branch{ "origin/" + string(branch_name) };
 		git_branch_lookup(&origin_head, repo,
 			remote_branch.c_str(), GIT_BRANCH_REMOTE);
@@ -81,23 +80,39 @@ bool DiceRepo::update(string& err) {
 		const git_oid* local_id{ git_reference_target(local_head) };
 		const git_oid* origin_id{ git_reference_target(origin_head) };
 		if (!strcmp((char*)local_id, (char*)origin_id)) {
-			err = "并无更新";
+			err = "up to date already";
 			goto Clean;
 		}
 		//merge
 		git_merge_options merge_opt = GIT_MERGE_OPTIONS_INIT;
 		git_checkout_options checkout_opt = GIT_CHECKOUT_OPTIONS_INIT;
-		const git_annotated_commit* their_head[10]{ nullptr };
-		git_annotated_commit_from_ref((git_annotated_commit**)their_head, repo, origin_head);
-		if (git_merge(repo, their_head, 1, &merge_opt, &checkout_opt)) {
-			console.log(err = git_lasterr(), 1);
+		git_annotated_commit* their_head[10]{ nullptr };
+		git_annotated_commit_from_ref(their_head, repo, origin_head);
+		if (git_merge(repo, (const git_annotated_commit**)their_head, 1, &merge_opt, &checkout_opt)) {
+			console.log("git_merge_err:" + (err = git_lasterr()), 1);
 		}
+		git_annotated_commit_free(their_head[0]);
+		//set_target
+		git_reference* new_target_ref{ nullptr };
+		/* Grab the reference HEAD should be pointing to */
+		git_reference* target_ref{ nullptr };
+		if (git_reference_set_target(&new_target_ref, local_head, origin_id, nullptr)) {
+			console.log("git_set_target_err:" + (err = git_lasterr()), 1);
+		}
+		git_reference_free(new_target_ref);
 		//index
-		git_index* index = nullptr;
+		/*git_index* index = nullptr;
 		git_repository_index(&index, repo);
 		git_index_update_all(index, nullptr, nullptr, nullptr);
 		git_index_write(index);
-		git_index_free(index);
+		git_oid new_tree_id;
+		git_tree* new_tree = nullptr;
+		git_index_write_tree(&new_tree_id, index);
+		git_tree_lookup(&new_tree, repo, &new_tree_id);
+		git_index_free(index);*/
+		if (git_checkout_head(repo, &checkout_opt)) {
+			console.log("git_checkout_err:" + (err = git_lasterr()), 1);
+		}
 		//rebase
 		/*git_rebase* prebase = nullptr;
 		git_rebase_options rebase_opt = GIT_REBASE_OPTIONS_INIT;
@@ -108,7 +123,7 @@ bool DiceRepo::update(string& err) {
 		git_rebase_operation* operation = nullptr;
 		while (git_rebase_next(&operation, prebase) != GIT_ITEROVER);*/
 	} catch (std::exception& e) {
-		console.log(err = e.what(), 1);
+		console.log("exception:" + (err = e.what()), 1);
 	}
 Clean:	//clean
 	git_reference_free(local_head);

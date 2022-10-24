@@ -88,6 +88,8 @@ class DiceMod {
 #ifndef __ANDROID__
 	ptr<DiceRepo> repo;
 	DiceMod(const string& mod, size_t i, const string& url);
+	void free() { repo.reset(); }
+	void remote(const string& url);
 #endif //ANDROID
 public:
 	DiceMod(const string& mod, size_t i, bool b) :name(mod), index(i), active(b) {}

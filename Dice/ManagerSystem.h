@@ -173,7 +173,7 @@ public:
 	}
 	time_t getLst()const { return (time_t)confs.get_ll("lastMsg"); }
 	void rmLst()const { confs.reset("lastMsg"); }
-	void setLst(time_t t)const { confs.set("lastMsg", (long long)t); }
+	Chat& setLst(time_t t) { confs.set("lastMsg", (long long)t); return *this; }
 
 	Chat& name(string s)
 	{

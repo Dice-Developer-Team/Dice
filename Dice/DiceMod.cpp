@@ -209,6 +209,7 @@ void DiceModManager::mod_reinstall(DiceEvent& msg) {
 			if (j.count("repo") && !j["repo"].empty()) {
 				string repo{ j["repo"] };
 				auto idx{ mod->index };
+				mod->free();
 				fs::remove_all(DiceDir / "mod" / name, ec1);
 				mod = std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),repo});
 				modList[name] = mod;
@@ -275,7 +276,7 @@ void DiceModManager::mod_update(DiceEvent& msg) {
 			msg.replyMsg("strModUpdated");
 			return;
 		}
-		msg.set("err", des);
+		msg.set("err", "\n" + des);
 		msg.replyMsg("strModUpdateErr");
 		return;
 	}
@@ -814,6 +815,10 @@ repo(std::make_shared<DiceRepo>(pathDir, url)) {
 			console.log(getMsg("strSelfNick") + "安装安装「" + mod + "」失败:" + reason, 0);
 		}
 	}
+}
+void DiceMod::remote(const string& url) {
+	if (repo)repo.reset();
+	repo = std::make_shared<DiceRepo>(pathDir, url);
 }
 #endif //ANDROID
 

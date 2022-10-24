@@ -493,8 +493,7 @@ bool eve_GroupAdd(Chat& grp) {
 			{
 				if (each == console.DiceMaid)continue;
 				cntMember++;
-				if (UserList.count(each)) 
-				{
+				if (UserList.count(each)) {
 					cntUser++;
 					ave_trust += getUser(each).nTrust;
 				}
@@ -504,8 +503,7 @@ bool eve_GroupAdd(Chat& grp) {
 					if (blacklist->get_qq_danger(each) > 1)
 					{
 						strMsg += ",发现黑名单管理员" + printUser(each);
-						if (grp.isset("免黑"))
-						{
+						if (grp.isset("免黑")) {
 							strMsg += "（群免黑）";
 						}
 						else
@@ -629,8 +627,7 @@ EVE_GroupMsg(eventGroupMsg)
 	Chat& grp = chat(fromGID).group();
 	if (fromUID == console.DiceMaid && !console["ListenGroupEcho"])return 0;
 	if (!grp.isset("已入群") && grp.getLst())eve_GroupAdd(grp);
-	if (!grp.isset("忽略"))
-	{
+	if (!grp.isset("忽略"))	{
 		shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
 			AttrVars({ { "Event", "Message" },
 				{ "fromMsg", message },
@@ -640,7 +637,7 @@ EVE_GroupMsg(eventGroupMsg)
 				}), chatInfo{ fromUID,fromGID,0 }));
 		return Msg->DiceFilter();
 	}
-	return grp.isset("拦截消息");
+	return grp.setLst(time(nullptr)).isset("拦截消息");
 }
 EVE_ChannelMsg(eventChannelMsg)
 {
@@ -756,7 +753,7 @@ EVE_GroupMemberKicked(eventGroupMemberKicked){
 		if (grp.inviter && trustedQQ(grp.inviter) < 2)
 		{
 			strNote += ";入群邀请者：" + printUser(grp.inviter);
-			if (console["KickedBanInviter"])mark.inviterQQ(grp.inviter).note(strNow + " " + strNote);
+			if (console["KickedBanInviter"])mark.inviter(grp.inviter).note(strNow + " " + strNote);
 		}
 		grp.reset("许可使用").reset("免清");
 		blacklist->create(mark.product());
@@ -840,7 +837,7 @@ EVE_GroupBan(eventGroupBan)
 		if (grp.inviter && beingOperateQQ == console.DiceMaid && trustedQQ(grp.inviter) < 2)
 		{
 			strNote += ";入群邀请者：" + printUser(grp.inviter);
-			if (console["BannedBanInviter"])mark.inviterQQ(grp.inviter);
+			if (console["BannedBanInviter"])mark.inviter(grp.inviter);
 			mark.note(strNow + " " + strNote);
 		}
 		grp.reset("免清").reset("许可使用").leave();

@@ -3419,10 +3419,10 @@ int DiceEvent::InnerOrder() {
 				int cntRc{ pc.Attr.get_int("__StatRcCnt") };
 				if (cntRc > 0) {
 					isEmpty = false;
-					res << "检定统计次数: " + to_string(cntRc);
 					int sumRcSuc{ pc.Attr.get_int("__StatRcSumSuc") };//实际成功数
+					res << "检定成功统计: " + to_string(sumRcSuc) + "/" + to_string(cntRc);
 					int sumRcRate{ pc.Attr.get_int("__StatRcSumRate") };//总成功率
-					res << "检定[期望]成功率: " + toString((double)sumRcSuc / cntRc * 100) + "%" + "(" + to_string(sumRcSuc) + ") [" + toString((double)sumRcRate / cntRc) + "%]";
+					res << "成功率[期望]: " + toString((double)sumRcSuc / cntRc * 100) + "% [" + toString((double)sumRcRate / cntRc) + "%]";
 					if (pc.count("__StatRcCnt5") || pc.count("__StatRcCnt96"))
 						res << "5- | 96+ 出现率: " + toString(pc.Attr.get_num("__StatRcCnt5") / cntRc * 100) + "%" + "(" + pc.Attr.get_str("__StatRcCnt5")
 						+ ") | " + toString(pc.Attr.get_num("__StatRcCnt96") / cntRc * 100) + "%" + "(" + pc.Attr.get_str("__StatRcCnt96") + ")";
