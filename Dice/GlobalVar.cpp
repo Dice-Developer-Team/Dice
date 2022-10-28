@@ -497,6 +497,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+629:恢复远程更新
 628:支持mod更新
 627:更新认主口令
 626:前缀匹配记录后缀

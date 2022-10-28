@@ -90,38 +90,20 @@ bool DiceRepo::update(string& err) {
 		git_annotated_commit_from_ref(their_head, repo, origin_head);
 		if (git_merge(repo, (const git_annotated_commit**)their_head, 1, &merge_opt, &checkout_opt)) {
 			console.log("git_merge_err:" + (err = git_lasterr()), 1);
+			git_annotated_commit_free(their_head[0]);
+			goto Clean;
 		}
 		git_annotated_commit_free(their_head[0]);
-		//set_target
 		git_reference* new_target_ref{ nullptr };
-		/* Grab the reference HEAD should be pointing to */
-		git_reference* target_ref{ nullptr };
 		if (git_reference_set_target(&new_target_ref, local_head, origin_id, nullptr)) {
 			console.log("git_set_target_err:" + (err = git_lasterr()), 1);
+			git_reference_free(new_target_ref);
+			goto Clean;
 		}
 		git_reference_free(new_target_ref);
-		//index
-		/*git_index* index = nullptr;
-		git_repository_index(&index, repo);
-		git_index_update_all(index, nullptr, nullptr, nullptr);
-		git_index_write(index);
-		git_oid new_tree_id;
-		git_tree* new_tree = nullptr;
-		git_index_write_tree(&new_tree_id, index);
-		git_tree_lookup(&new_tree, repo, &new_tree_id);
-		git_index_free(index);*/
 		if (git_checkout_head(repo, &checkout_opt)) {
 			console.log("git_checkout_err:" + (err = git_lasterr()), 1);
 		}
-		//rebase
-		/*git_rebase* prebase = nullptr;
-		git_rebase_options rebase_opt = GIT_REBASE_OPTIONS_INIT;
-		git_annotated_commit* onto = nullptr;
-		git_annotated_commit_from_ref(&onto, repo, local_head);
-		git_rebase_init(&prebase, repo, nullptr, nullptr
-			, onto, &rebase_opt);
-		git_rebase_operation* operation = nullptr;
-		while (git_rebase_next(&operation, prebase) != GIT_ITEROVER);*/
 	} catch (std::exception& e) {
 		console.log("exception:" + (err = e.what()), 1);
 	}

@@ -372,13 +372,40 @@ void cloud_beat(AttrObject& job) {
 }
 
 void dice_update(AttrObject& job) {
-	MsgNote(job, "开始更新Dice\n版本:" + job.get_str("ver"), 1);
 	string ret;
-	if (DD::updateDice(job.get_str("ver"), ret)) {
-		MsgNote(job, "更新Dice!" + job.get_str("ver") + "版成功√", 1);
+	if (!Network::GET("http://shiki.stringempty.xyz/DiceVer/update", ret)) {
+		reply(job, "{self}获取版本信息时出错: \n" + ret);
+		return;
 	}
-	else {
-		reply(job,  "更新失败:" + ret);
+	string ver{ job.get_str("ver","release")};
+	try {
+		fifo_json jInfo(fifo_json::parse(ret));
+		if (unsigned short nBuild{ jInfo[ver]["build"] }; ver != "dev" && nBuild > Dice_Build) {
+			MsgNote(job, "发现Dice!的{ver}版本更新:" + jInfo["release"]["ver"].get<string>() + "(" + to_string(nBuild) + ")\n更新说明：" +
+				UTF8toGBK(jInfo["release"]["changelog"].get<string>()), 1);
+			if (DD::updateDice(job.get_str("ver"), ret)) {
+				MsgNote(job, "更新Dice!" + job.get_str("ver") + "版本成功√", 1);
+			}
+			else if(jInfo[ver].count("pkg")) {
+				string pkg{ jInfo[ver]["pkg"] };
+				if (!Network::GET(pkg, ret)) {
+					reply(job, "更新失败:" + ret);
+					return;
+				}
+				std::error_code ec1;
+				Zip::extractZip(ret, dirExe / "Diceki");
+				MsgNote(job, "更新Dice!" + job.get_str("ver") + "版本成功√", 1);
+			}
+			else {
+				reply(job, "更新失败:" + ret);
+			}
+		}
+		else {
+			reply(job, "{self}未发现更新{ver}版本");
+		}
+	} catch (std::exception& e) {
+		job.set("err", e.what());
+		reply(job, "{self}获取更新失败！{err}");
 	}
 }
 

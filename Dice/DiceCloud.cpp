@@ -77,9 +77,9 @@ namespace Cloud
 			msg->reply("未发现版本更新。");
 			return 0;
 		}
-		catch (...)
-		{
-			msg->reply("{self}解析json失败！");
+		catch (std::exception& e){
+			msg->set("err", e.what());
+			msg->reply("{self}获取更新失败！{err}");
 			return -2;
 		}
 		return 0;

@@ -274,10 +274,11 @@ void DiceModManager::mod_update(DiceEvent& msg) {
 				mod->reload(des))) {
 			msg.set("mod_ver", mod->ver.exp);
 			msg.replyMsg("strModUpdated");
-			return;
 		}
-		msg.set("err", "\n" + des);
-		msg.replyMsg("strModUpdateErr");
+		else {
+			msg.set("err", "\n" + des);
+			msg.replyMsg("strModUpdateErr");
+		}
 		return;
 	}
 #endif //ANDROID

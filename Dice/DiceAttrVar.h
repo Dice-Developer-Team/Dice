@@ -82,6 +82,7 @@ public:
 	AttrVar index(const string& key)const;
 	AttrVar get(const string& key, ptr<AttrVar> val = {})const;
 	string get_str(const string& key)const;
+	string get_str(const string& key, const string& val)const;
 	string print(const string& key)const;
 	int get_int(const string& key)const;
 	long long get_ll(const string& key)const;

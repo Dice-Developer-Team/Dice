@@ -1589,13 +1589,8 @@ int DiceEvent::InnerOrder() {
 		}
 		if (strOpt == "update") {
 			set("ver", readPara());
-			if (is_empty("ver")) {
-				Cloud::checkUpdate(this);
-			}
-			else if (at("ver") == "dev" || at("ver") == "release") {
-				set("cmd", "update");
-				sch.push_job(*this);
-			}
+			set("cmd", "update");
+			sch.push_job(*this);
 			return 1;
 		}
 		else if (strOpt == "black") {

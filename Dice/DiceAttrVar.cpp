@@ -74,6 +74,9 @@ AttrVar AttrObject::get(const string& key, ptr<AttrVar> val)const {
 string AttrObject::get_str(const string& key)const {
 	return dict->count(key) ? dict->at(key).to_str() : "";
 }
+string AttrObject::get_str(const string& key, const string& val)const {
+	return dict->count(key) ? dict->at(key).to_str() : val;
+}
 string AttrObject::print(const string& key)const {
 	return dict->count(key) ? dict->at(key).print() : "";
 }
