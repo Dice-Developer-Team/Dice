@@ -136,298 +136,443 @@
 		</div>
 )") + u8R"(
 		<div class="layui-tab-item">
-		  <ul class="layui-timeline">
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe604;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">最新版本开发中</h3>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe617;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年6月6日 版本2.6.4rc(612)</h3>
-				<p>session问题优化&新增link state</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年5月26日 版本2.6.4(612)</h3>
-				<p>event支持hook代理事件</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年5月25日 版本2.6.4beta5(611)</h3>
-				<p>WebUI更新自定义回执跨行编辑&reply匹配一对多</p>
-				<p>优化session代码</p>
-				<p>尝试修复与lua虚拟机的编码转换</p>
-				<p>修复清群与log的一些问题</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年5月10日 版本2.6.4beta4(610)</h3>
-				<p>event支持每日定时事件</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年5月2日 版本2.6.4beta3(609)</h3>
-				<p>mod新增子目录event,支持计时循环事件</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年4月27日 版本2.6.4beta2(608)</h3>
-				<p>新增.mod指令以在运行中插拔</p>
-				<p>支持用setUserConf修改nn称呼</p>
-				<p>更新认主机制，公骰作成允许任何人好友申请</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年4月26日 版本2.6.4beta1(607)</h3>
-				<p>更新.nn指令格式</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe617;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年2月23日 版本2.6.3(606)</h3>
-				<p>修复.sc使用给定理智值时，剩余理智存入角色卡的bug</p>
-				<p>优化关键词回复的解析</p>
-				<p>http.post支持定义contentType</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年2月19日 版本2.6.3beta6(605)</h3>
-				<p>关键词回复优化为一个回复对应多个关键词</p>
-				<p>修复敏感词检测时点</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年2月6日 版本2.6.3beta5(604)</h3>
-				<p>优化转义机制，允许花括号多层嵌套</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年2月2日 版本2.6.3beta4(603)</h3>
-				<p>支持yaml读取</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年1月26日 版本2.6.3beta3(602)</h3>
-				<p>msg支持元表，允许msg:echo方法</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年1月25日 版本2.6.3beta2(601)</h3>
-				<p>新增DisableStrangerChat禁用非好友私聊</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年1月21日 版本2.6.3beta1(600)</h3>
-				<p>
-				  优化回复转义
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe617;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年1月19日 版本2.6.2fixed(599)</h3>
-				<p>
-				  修复从文件读取的前缀匹配回复无法正常匹配的问题
-				</p>
-				<p>
-				  mod新增script项，允许被reply lua直接调用
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年1月16日 版本2.6.2(598)</h3>
-				<p>
-				  新增当日计数器
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年1月13日 版本2.6.2(597)</h3>
-				<p>
-				  新增冷却计时器
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年1月12日 版本2.6.2beta4(596)</h3>
-				<p>
-				  PlayerCard/UserConf/GroupConf支持读写table
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年1月8日 版本2.6.2beta3(595)</h3>
-				<p>
-				  lua可通过getGroupConf获取群名片card/权限auth/最后发言lst
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年1月5日 版本2.6.2beta2(594)</h3>
-				<p>
-				  setcoc优化，允许查看房规
-				  <br>
-				  修复房规设置错误
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2022年1月3日 版本2.6.2beta1(593)</h3>
-				<p>
-				  新增回复触发限制
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe617;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2021年12月17日 版本2.6.1(592)</h3>
-				<p>
-				  新增回复前缀匹配
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2021年12月12日 版本2.6.1beta4(591)</h3>
-				<p>
-				  新增获取群内nn/群名片/设置群名片
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2021年12月6日 版本2.6.1beta3(590)</h3>
-				<p>
-				  lua内置http相关函数（get/post）
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2021年11月27日 版本2.6.1beta2(589)</h3>
-				<p>
-				  新增安科/安价指令.ak
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2021年11月17日 版本2.6.1beta1(588)</h3>
-				<p>
-				  适配频道消息
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe617;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2021年11月3日 版本2.6.0(587)</h3>
-				<p>
-				  更新ww指令机制
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2021年10月1日 版本2.6.0(586)</h3>
-				<p>
-				  新版触发词回复
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2021年9月18日 版本2.6.0(585)</h3>
-				<p>
-				  WebUI 验证增强
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2021年9月17日 版本2.6.0beta(584)</h3>
-				<p>
-				  WebUI 验证
-				  <br>
-				  WebUI 基础设置
-				  <br>
-				  WebUI 关键词回复管理
-				  <br>
-				  WebUI 正则回复管理
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<h3 class="layui-timeline-title">2021年9月16日 版本2.6.0beta(583)</h3>
-				<p>
-				  基础WebUI框架
-				  <br>
-				  WebUI 基础信息
-				  <br>
-				  WebUI Master设置
-				  <br>
-				  WebUI 自定义内置回执
-				</p>
-			  </div>
-			</li>
-			<li class="layui-timeline-item">
-			  <i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-			  <div class="layui-timeline-content layui-text">
-				<div class="layui-timeline-title">过去</div>
-			  </div>
-			</li>
-		  </ul>
+			<ul class="layui-timeline">
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe604;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">最新版本开发中</h3>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年10月29日 版本2.6.5rc(629)</h3>
+						<p>恢复cloud update远程更新</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年10月24日 版本2.6.5beta14(628)</h3>
+						<p>支持mod update更新/reinstall重装</p>
+						<p>http.post参数3重写为请求头header</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年10月4日 版本2.6.5beta14(627)</h3>
+						<p>更新认主口令</p>
+						<p>支持mod reload重载</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年9月28日 版本2.6.5beta13(626)</h3>
+						<p>reply前缀匹配记录余项msg.suffix</p>
+						<p>支持获取user.gender</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年9月27日 版本2.6.5beta13(625)</h3>
+						<p>支持welcome有限转义</p>
+						<p>添加对{nick}的敏感词检测</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年9月19日 版本2.6.5beta12(624)</h3>
+						<p>支持mod get安装/info信息/detail详细信息</p>
+						<p>支持mod delete卸载</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年9月17日 版本2.6.5beta11(623)</h3>
+						<p>优化mod on/off热插拔</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年9月9日 版本2.6.5beta10(622)</h3>
+						<p>支持TimeZoneLag项手动调整时差</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年9月8日 版本2.6.5beta9(621)</h3>
+						<p>扩展代理事件及ex接口</p>
+						<p>json等数据结构采用fifo特性</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年8月19日 版本2.6.5beta8(620)</h3>
+						<p>留档每日数据至/user/daily/</p>
+						<p>修复DefaultCOCRoomRule不生效的bug</p>
+						<p>支持msg:echo参数2可选是否转义</p>
+						<p>取members支持参数3指定获取权限/名片/最后消息列表</p>
+						<p>新增代理事件DayEnd、DayNew</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年8月19日 版本2.6.5beta7(619)</h3>
+						<p>合并msg_order与reply的order，时点先于内置指令</p>
+						<p>支持msg:format</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年8月18日 版本2.6.5beta5(617)</h3>
+						<p>转义支持grade分档输出</p>
+						<p>转义支持master配置项</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年8月10日 版本2.6.5beta4(616)</h3>
+						<p>优化转义，支持case条件输出</p>
+						<p>优化log on/new 直接切换日志文件</p>
+						<p>mod支持子目录image,audio</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年8月10日 版本2.6.5beta3(615)</h3>
+						<p>getGroupConf允许取群成员/群管理列表</p>
+						<p>新增SelfData类，在内存中读写自定义数据</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年8月8日 版本2.6.5beta2(614)</h3>
+						<p>reply limit新增lock项</p>
+						<p>支持reply页echo项直接存入lua函数</p>
+						<p>修复匿名log的文件名错误</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年8月8日 版本2.6.5beta2(614)</h3>
+						<p>reply limit新增lock项</p>
+						<p>支持reply页echo项直接存入lua函数</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年7月3日 版本2.6.5beta(613)</h3>
+						<p>getUserConf/getGroupConf新增遍历记录中指定属性的特性</p>
+					</div>
+				</li>
+)" + u8R"(
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe617;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年6月6日 版本2.6.4rc(612)</h3>
+						<p>session问题优化&新增link state</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年5月26日 版本2.6.4(612)</h3>
+						<p>event支持hook代理事件</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年5月26日 版本2.6.4(612)</h3>
+						<p>event支持hook代理事件</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年5月25日 版本2.6.4beta5(611)</h3>
+						<p>WebUI更新自定义回执跨行编辑&reply匹配一对多</p>
+						<p>优化session代码</p>
+						<p>尝试修复与lua虚拟机的编码转换</p>
+						<p>修复清群与log的一些问题</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年5月10日 版本2.6.4beta4(610)</h3>
+						<p>event支持每日定时事件</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年5月2日 版本2.6.4beta3(609)</h3>
+						<p>mod新增子目录event,支持计时循环事件</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年4月27日 版本2.6.4beta2(608)</h3>
+						<p>新增.mod指令以在运行中插拔</p>
+						<p>支持用setUserConf修改nn称呼</p>
+						<p>更新认主机制，公骰作成允许任何人好友申请</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年4月26日 版本2.6.4beta1(607)</h3>
+						<p>更新.nn指令格式</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe617;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年2月23日 版本2.6.3(606)</h3>
+						<p>修复.sc使用给定理智值时，剩余理智存入角色卡的bug</p>
+						<p>优化关键词回复的解析</p>
+						<p>http.post支持定义contentType</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年2月19日 版本2.6.3beta6(605)</h3>
+						<p>关键词回复优化为一个回复对应多个关键词</p>
+						<p>修复敏感词检测时点</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年2月6日 版本2.6.3beta5(604)</h3>
+						<p>优化转义机制，允许花括号多层嵌套</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年2月2日 版本2.6.3beta4(603)</h3>
+						<p>支持yaml读取</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年1月26日 版本2.6.3beta3(602)</h3>
+						<p>msg支持元表，允许msg:echo方法</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年1月25日 版本2.6.3beta2(601)</h3>
+						<p>新增DisableStrangerChat禁用非好友私聊</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年1月21日 版本2.6.3beta1(600)</h3>
+						<p>
+							优化回复转义
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe617;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年1月19日 版本2.6.2fixed(599)</h3>
+						<p>
+							修复从文件读取的前缀匹配回复无法正常匹配的问题
+						</p>
+						<p>
+							mod新增script项，允许被reply lua直接调用
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年1月16日 版本2.6.2(598)</h3>
+						<p>
+							新增当日计数器
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年1月13日 版本2.6.2(597)</h3>
+						<p>
+							新增冷却计时器
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年1月12日 版本2.6.2beta4(596)</h3>
+						<p>
+							PlayerCard/UserConf/GroupConf支持读写table
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年1月8日 版本2.6.2beta3(595)</h3>
+						<p>
+							lua可通过getGroupConf获取群名片card/权限auth/最后发言lst
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年1月5日 版本2.6.2beta2(594)</h3>
+						<p>
+							setcoc优化，允许查看房规
+							<br>
+							修复房规设置错误
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年1月3日 版本2.6.2beta1(593)</h3>
+						<p>
+							新增回复触发限制
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe617;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2021年12月17日 版本2.6.1(592)</h3>
+						<p>
+							新增回复前缀匹配
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2021年12月12日 版本2.6.1beta4(591)</h3>
+						<p>
+							新增获取群内nn/群名片/设置群名片
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2021年12月6日 版本2.6.1beta3(590)</h3>
+						<p>
+							lua内置http相关函数（get/post）
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2021年11月27日 版本2.6.1beta2(589)</h3>
+						<p>
+							新增安科/安价指令.ak
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2021年11月17日 版本2.6.1beta1(588)</h3>
+						<p>
+							适配频道消息
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe617;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2021年11月3日 版本2.6.0(587)</h3>
+						<p>
+							更新ww指令机制
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2021年10月1日 版本2.6.0(586)</h3>
+						<p>
+							新版触发词回复
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2021年9月18日 版本2.6.0(585)</h3>
+						<p>
+							WebUI 验证增强
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2021年9月17日 版本2.6.0beta(584)</h3>
+						<p>
+							WebUI 验证
+							<br>
+							WebUI 基础设置
+							<br>
+							WebUI 关键词回复管理
+							<br>
+							WebUI 正则回复管理
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2021年9月16日 版本2.6.0beta(583)</h3>
+						<p>
+							基础WebUI框架
+							<br>
+							WebUI 基础信息
+							<br>
+							WebUI Master设置
+							<br>
+							WebUI 自定义内置回执
+						</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<div class="layui-timeline-title">过去</div>
+					</div>
+				</li>
+			</ul>
 		</div>
 	  </div>
 	</div>
