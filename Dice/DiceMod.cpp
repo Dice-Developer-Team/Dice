@@ -161,8 +161,13 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 				Zip::extractZip(des, DiceDir / "mod");
 				auto pathJson{ DiceDir / "mod" / (name + ".json") };
 				if (!fs::exists(pathJson)) {
-					msg.set("err", msg.get_str("err") + "\npkg解压无文件" + name + ".json");
-					continue;
+					if (fs::path desc{ DiceDir / "mod" / name / "descriptor.json" }; fs::exists(desc)) {
+						fs::copy(desc, pathJson);
+					}
+					else {
+						msg.set("err", msg.get_str("err") + "\npkg解压无文件" + name + ".json");
+						continue;
+					}
 				}
 				auto mod{ std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),true}) };
 				modList[name] = mod;

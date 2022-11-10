@@ -270,8 +270,7 @@ EVE_Enable(eventEnable){
 	if (!console.load()){
 		std::map<string, int> boolConsole;
 		loadJMap(fpFileLoc / "boolConsole.json", boolConsole);
-		for (auto& [key, val] : boolConsole)
-		{
+		for (auto& [key, val] : boolConsole){
 			console.set(key, val);
 		}
 		console.setClock({ 11, 45 }, "clear");
