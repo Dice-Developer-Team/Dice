@@ -417,6 +417,7 @@ string DiceModManager::format(string s, AttrObject context, bool isTrust, const 
 			//局部优先于全局
 			else if (auto sp = global_speech.find(key); sp != global_speech.end()) {
 				val = format(sp->second.express(), context, isTrust, dict);
+				if (!isTrust && val == "\f")val = "\f< ";
 			}
 			else if (size_t colon{ key.find(':') }; colon != string::npos) {
 				string method{ key.substr(0,colon) };

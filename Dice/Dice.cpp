@@ -82,13 +82,7 @@ CustomReplyApiHandler h_customreply;
 WebUIPasswordHandler h_webuipassword;
 AuthHandler auth_handler;
 
-string msgInit{ R"(欢迎使用Dice!掷骰机器人！
-请发送.master )"
-+ console.authkey_pub +" //公骰作成 或\n.master " + console.authkey_pri + " //私骰作成\n"
-R"(即刻成为我的主人~
-可发送.help查看帮助
-发送.system gui开启DiceMaid后台面板
-参考文档参看.help链接)" };
+string msgInit;
 
 //加载数据
 void loadData()
@@ -273,9 +267,7 @@ EVE_Enable(eventEnable){
 	fmt = make_unique<DiceModManager>();
 
 	ExtensionManagerInstance = std::make_unique<ExtensionManager>();
-	if (!console.load())
-	{
-		DD::sendPrivateMsg(console.DiceMaid, msgInit);
+	if (!console.load()){
 		std::map<string, int> boolConsole;
 		loadJMap(fpFileLoc / "boolConsole.json", boolConsole);
 		for (auto& [key, val] : boolConsole)
@@ -286,6 +278,17 @@ EVE_Enable(eventEnable){
 		console.loadNotice();
 		console.save();
 	}
+	if (!console) {
+		msgInit = R"(欢迎使用Dice!掷骰机器人！
+请发送.master )"
++ (console.authkey_pub = RandomGenerator::genKey(8)) + " //公骰作成 或\n.master "
++ (console.authkey_pri = RandomGenerator::genKey(8)) + 
+R"( //私骰作成 即可成为我的主人~
+可发送.help查看帮助
+发送.system gui开启DiceMaid后台面板
+参考文档参看.help链接)";
+	}
+		DD::sendPrivateMsg(console.DiceMaid, msgInit);
 	//初始化黑名单
 	blacklist = make_unique<DDBlackManager>();
 	if (auto cnt = blacklist->loadJson(DiceDir / "conf" / "BlackList.json");cnt < 0)

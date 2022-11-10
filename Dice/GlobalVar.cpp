@@ -497,6 +497,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+630:修复初始认主
 629:恢复远程更新
 628:支持mod更新
 627:更新认主口令
@@ -524,7 +525,6 @@ const dict_ci<> HelpDoc = {
 589:ak安科安价指令
 585:WebUI
 581:角色掷骰统计
-579:允许转义文本多选一
 569:.rc/.draw暗骰暗抽
 567:敏感词检测
 566:.help查询建议
@@ -534,8 +534,8 @@ const dict_ci<> HelpDoc = {
 {"设定",R"(Master：{print:master}
 群内使用：{case:self.Private?else=白名单制，需预申请&0={case:self.CheckGroupLicense?2=审核制，需申请后使用&1=审核制，入新群需申请&else=黑名单制，自由使用}}
 好友申请：{case:self.AllowStanger?2=允许任何人&1=需要使用记录&else=仅白名单}
-移出反制：{case:self.ListenGroupKicked?0=无&else=拉黑{case:self.KickedBanInviter?1=并连带邀请人}}
-禁言反制：{case:self.ListenGroupBanned?0=无&else=拉黑{case:self.BannedBanInviter?1=并连带邀请人}}
+移出反制：{case:self.ListenGroupKicked?0=无&else=拉黑{case:self.KickedBanInviter?1=连带邀请人}}
+禁言反制：{case:self.ListenGroupBanned?0=无&else=拉黑{case:self.BannedBanInviter?1=连带邀请人}}
 刷屏反制：{case:self.ListenSpam?0=关闭&else=开启}
 窥屏可能：{窥屏可能}
 其他插件：{其他插件}{姐妹骰}
@@ -547,8 +547,8 @@ const dict_ci<> HelpDoc = {
 {"其他插件","【未设置】"},
 {"姐妹骰","{list_dice_sister}"},
 {"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2022 String.Empty\nGithub@Dice-Developer-Team"},
-{"指令",R"(at骰娘接指令可以指定骰娘单独响应，如
-{at:self}.bot off
+{"指令",R"(指令前接at可以指定骰娘响应，如
+{at:self}.bot on
 多数指令需要后接参数，请.help对应指令 获取详细信息，如.help r
 控制指令:
 .dismiss 退群

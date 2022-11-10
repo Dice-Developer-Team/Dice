@@ -299,10 +299,6 @@ jobs:
           triplet: arm64-android
           mono: 'mono'
           dll_sfx: android.aarch64
-        - abi: x86
-          triplet: x86-android
-          mono: 'mono'
-          dll_sfx: android.i386
         - abi: x86_64
           triplet: x64-android
           mono: 'mono'

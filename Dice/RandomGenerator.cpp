@@ -68,9 +68,6 @@ namespace RandomGenerator
 		std::string res;
 		std::string charset;
 		switch (mode) {
-		case RandomGenerator::Code::Decimal:
-			charset = digit_chars;
-			break;
 		case RandomGenerator::Code::Hex:
 			charset = hex_chars;
 			break;
@@ -86,7 +83,9 @@ namespace RandomGenerator
 		case RandomGenerator::Code::UrlBase64:
 			charset = base64url_chars;
 			break;
+		case RandomGenerator::Code::Decimal:
 		default:
+			charset = digit_chars;
 			break;
 		}
 		size_t size{ charset.length() - 1 };
