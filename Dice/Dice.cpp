@@ -592,10 +592,10 @@ bool eve_GroupAdd(Chat& grp) {
 		return true;
 	}
 	if (grp.isset("协议无效"))return 0;
-	if (!getMsg("strAddGroup").empty())
-	{
+	if (string selfIntro{ getMsg("strAddGroup", AttrVars{{"gid",fromGID}}) };
+		!selfIntro.empty()) {
 		this_thread::sleep_for(2s);
-		AddMsgToQueue(getMsg("strAddGroup"), { 0,fromGID, 0 });
+		AddMsgToQueue(selfIntro, { 0,fromGID, 0 });
 	}
 	if (console["CheckGroupLicense"] && !grp.isset("许可使用"))
 	{
@@ -913,7 +913,7 @@ EVE_GroupInvited(eventGroupInvited)
 		}
 		else if (console["GroupInvalidSize"] > 0 && DD::getGroupSize(grp.ID).currSize > (size_t)console["GroupInvalidSize"]) {
 			grp.set("协议无效");
-			strMsg += "\n已忽略（大群默认协议无效）";
+			strMsg += "\n已忽略（群规模超标）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 3);
 		}

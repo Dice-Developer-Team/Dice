@@ -50,8 +50,8 @@ public:
 	void insert(const string& key) {
 		vector<string> words = cutter(key);
 		if (words.empty())return;
-		word_list[words[0]].keys.insert(key);
-		size_t idx(1);
+		size_t idx(0);
+		word_list[words[++idx]].keys.insert(key);
 		while (idx < words.size()) {
 			word_list[words[idx - 1]].next[words[idx]].insert(key);
 			word_list[words[idx++]].keys.insert(key);
@@ -84,7 +84,7 @@ public:
 				last_word = &word_list.find(word)->second;
 				continue;
 			}
-			for (auto& w : word_list.find(word)->second.keys) {
+			for (auto& w : word_list.find(word)->second.keys) { 
 				if (res.count(w))sInter.insert(w);
 			}
 			if (!sInter.empty()) {

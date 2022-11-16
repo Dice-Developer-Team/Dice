@@ -1230,6 +1230,193 @@ int DiceEvent::BasicOrder()
 		}
 		return 1;
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 5) == "reply") {
+		intMsgCnt += 5;
+		if (strMsg.length() == intMsgCnt) {
+			replyHelp("reply");
+			return 1;
+		}
+		unsigned int intMsgTmpCnt{ intMsgCnt };
+		string action{ readPara() };
+		if (action == "on" && fromChat.gid) {
+			const string& option{ (at("option") = "禁用回复").text };
+			if (!chat(fromChat.gid).isset(option)) {
+				replyMsg("strGroupSetOffAlready");
+			}
+			else if (trusted > 0 || canRoomHost()) {
+				chat(fromChat.gid).reset(option);
+				replyMsg("strReplyOn");
+			}
+			else {
+				replyMsg("strWhiteQQDenied");
+			}
+			return 1;
+		}
+		else if (action == "off" && fromChat.gid) {
+			const string& option{ (at("option") = "禁用回复").text };
+			if (chat(fromChat.gid).isset(option)) {
+				replyMsg("strGroupSetOnAlready");
+			}
+			else if (trusted > 0 || canRoomHost()) {
+				chat(fromChat.gid).set(option);
+				replyMsg("strReplyOff");
+			}
+			else {
+				replyMsg("strWhiteQQDenied");
+			}
+			return 1;
+		}
+		else if (action == "show") {
+			if (trusted < 2) {
+				replyMsg("strNotAdmin");
+				return -1;
+			}
+			set("key", readRest());
+			fmt->reply_show(this);
+			return 1;
+		}
+		else if (action == "get") {
+			if (trusted < 2) {
+				replyMsg("strNotAdmin");
+				return -1;
+			}
+			set("key", readRest());
+			fmt->reply_get(this);
+			return 1;
+		}
+		else if (action == "set") {
+			if (trusted < 4) {
+				replyMsg("strNotAdmin");
+				return -1;
+			}
+			ptr<DiceMsgReply> trigger{ make_shared<DiceMsgReply>() };
+			string keyword;
+			string attr{ readToColon() };
+			while (!attr.empty()) {
+				if (intMsgCnt < strMsg.length() && (strMsg[intMsgCnt] == '=' || strMsg[intMsgCnt] == ':'))intMsgCnt++;
+				if (attr == "Title") {
+					trigger->title = readUntilTab();
+				}
+				else if (attr == "Type") {	//Type=Order|Reply
+					string type{ readUntilTab() };
+					if (DiceMsgReply::sType.count(type))trigger->type = (DiceMsgReply::Type)DiceMsgReply::sType[type];
+				}
+				else if (attr == "Limit") { //trigger limit
+					string content{ readUntilTab() };
+					trigger->limit.parse(content);
+				}
+				else if (DiceMsgReply::sMode.count(attr)) {	//Mode=Key
+					size_t mode{ DiceMsgReply::sMode[attr] };
+					keyword = readUntilTab();
+					if (mode == 3) {
+						try {
+							std::wregex re(convert_a2realw(keyword.c_str()), std::regex::ECMAScript);
+						} catch (const std::regex_error& e) {
+							set("err", e.what());
+							replyMsg("strRegexInvalid");
+							return -1;
+						}
+						trigger->keyMatch[mode] = std::make_unique<vector<string>>(
+							vector<string>{ keyword });
+					}
+					else {
+						trigger->keyMatch[mode] = std::make_unique<vector<string>>(
+							getLines(keyword, '|'));
+					}
+				}
+				else if (DiceMsgReply::sEcho.count(attr)) {	//Echo=Reply
+					trigger->echo = (DiceMsgReply::Echo)DiceMsgReply::sEcho[attr];
+					if (trigger->echo == DiceMsgReply::Echo::Deck) {
+						while (intMsgCnt < strMsg.length()) {
+							string item = readItem();
+							if (!item.empty())trigger->deck.push_back(item);
+						}
+					}
+					else {
+						if (trigger->echo == DiceMsgReply::Echo::Lua) {
+							if (trusted < 5) {
+								replyMsg("strNotMaster");
+								return -1;
+							}
+							trigger->text = AttrVar(AttrVars{ {"lang","lua"},{"script",readRest()} });
+						}
+						else trigger->text = readRest();
+					}
+					break;
+				}
+				attr = readToColon();
+			}
+			if (keyword.empty()) {
+				replyMsg("strReplyKeyEmpty");
+			}
+			else {
+				if (trigger->title.empty())trigger->title = keyword;
+				set("key", trigger->title);
+				fmt->set_reply(trigger->title, trigger);
+				replyMsg("strReplySet");
+			}
+			return 1;
+		}
+		else if (action == "list") {
+			if (trusted < 4) {
+				replyMsg("strNotAdmin");
+				return -1;
+			}
+			set("res", fmt->list_reply(2));
+			replyMsg("strReplyList");
+			return 1;
+		}
+		else if (action == "del") {
+			if (trusted < 4) {
+				replyMsg("strNotAdmin");
+				return -1;
+			}
+			set("key", readRest());
+			if (fmt->del_reply(get_str("key"))) {
+				replyMsg("strReplyDel");
+			}
+			else {
+				replyMsg("strReplyKeyNotFound");
+			}
+			return 1;
+		}
+		intMsgCnt = intMsgTmpCnt;
+		ptr<DiceMsgReply> rep{ make_shared<DiceMsgReply>() };
+		int MatchMode{ 0 };
+		if (strLowerMessage.substr(intMsgCnt, 2) == "re") {
+			intMsgCnt += 2;
+			MatchMode = 3;
+		}
+		if (trusted < 4) {
+			replyMsg("strNotAdmin");
+			return -1;
+		}
+		const string& key{ (at("key") = readUntilSpace()).text };
+		if (key.empty()) {
+			replyHelp("reply");
+			return -1;
+		}
+		rep->keyMatch[MatchMode] = std::make_unique<vector<string>>(getLines(key, '|'));
+		if (MatchMode == 3) {
+			try {
+				std::wregex re(convert_a2realw(key.c_str()), std::regex::ECMAScript);
+			} catch (const std::regex_error& e) {
+				set("err", e.what());
+				replyMsg("strRegexInvalid");
+				return -1;
+			}
+		}
+		readItems(rep->deck);
+		if (rep->deck.empty()) {
+			fmt->del_reply(key);
+			replyMsg("strReplyDel");
+		}
+		else {
+			fmt->set_reply(key, rep);
+			replyMsg("strReplySet");
+		}
+		return 1;
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "chan") {
 		if (isPrivate())return 0;
 		intMsgCnt += 4;
@@ -1973,198 +2160,6 @@ int DiceEvent::InnerOrder() {
 				replyMsg("strUidEmpty");
 			}
 			return 1;
-		}
-		return 1;
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "reply") {
-		intMsgCnt += 5;
-		if (strMsg.length() == intMsgCnt) {
-			replyHelp("reply");
-			return 1;
-		}
-		unsigned int intMsgTmpCnt{ intMsgCnt };
-		string action{ readPara() };
-		if (action == "on" && fromChat.gid) {
-			const string& option{ (at("option") = "禁用回复").text };
-			if (!chat(fromChat.gid).isset(option)) {
-				replyMsg("strGroupSetOffAlready");
-			}
-			else if (trusted > 0 || canRoomHost()) {
-				chat(fromChat.gid).reset(option);
-				replyMsg("strReplyOn");
-			}
-			else {
-				replyMsg("strWhiteQQDenied");
-			}
-			return 1;
-		}
-		else if (action == "off" && fromChat.gid) {
-			const string& option{ (at("option") = "禁用回复").text };
-			if (chat(fromChat.gid).isset(option)) {
-				replyMsg("strGroupSetOnAlready");
-			}
-			else if (trusted > 0 || canRoomHost()) {
-				chat(fromChat.gid).set(option);
-				replyMsg("strReplyOff");
-			}
-			else {
-				replyMsg("strWhiteQQDenied");
-			}
-			return 1;
-		}
-		else if (action == "show"){
-			if (trusted < 2) {
-				replyMsg("strNotAdmin");
-				return -1;
-			}
-			set("key",readRest());
-			fmt->reply_show(this);
-			return 1;
-		}
-		else if (action == "get") {
-			if (trusted < 2) {
-				replyMsg("strNotAdmin");
-				return -1;
-			}
-			set("key",readRest());
-			fmt->reply_get(this);
-			return 1;
-		}
-		else if (action == "set") {
-			if (trusted < 4) {
-				replyMsg("strNotAdmin");
-				return -1;
-			}
-			ptr<DiceMsgReply> trigger{ make_shared<DiceMsgReply>() };
-			string keyword;
-			string attr{ readToColon() };
-			while (!attr.empty()) {
-				if (intMsgCnt < strMsg.length() && (strMsg[intMsgCnt] == '=' || strMsg[intMsgCnt] == ':'))intMsgCnt++;
-				if (attr == "Title") {
-					trigger->title = readUntilTab();
-				}
-				else if (attr == "Type") {	//Type=Order|Reply
-					string type{ readUntilTab() };
-					if(DiceMsgReply::sType.count(type))trigger->type = (DiceMsgReply::Type)DiceMsgReply::sType[type];
-				}
-				else if (attr == "Limit") { //trigger limit
-					string content{ readUntilTab() };
-					trigger->limit.parse(content);
-				}
-				else if (DiceMsgReply::sMode.count(attr)) {	//Mode=Key
-					size_t mode{ DiceMsgReply::sMode[attr] };
-					keyword = readUntilTab();
-					if (mode == 3) {
-						try {
-							std::wregex re(convert_a2realw(keyword.c_str()), std::regex::ECMAScript);
-						}
-						catch (const std::regex_error& e) {
-							set("err",e.what());
-							replyMsg("strRegexInvalid");
-							return -1;
-						}
-						trigger->keyMatch[mode] = std::make_unique<vector<string>>(
-							vector<string>{ keyword });
-					}
-					else {
-						trigger->keyMatch[mode] = std::make_unique<vector<string>>(
-							getLines(keyword, '|'));
-					}
-				}
-				else if (DiceMsgReply::sEcho.count(attr)) {	//Echo=Reply
-					trigger->echo = (DiceMsgReply::Echo)DiceMsgReply::sEcho[attr];
-					if (trigger->echo == DiceMsgReply::Echo::Deck) {
-						while (intMsgCnt < strMsg.length()) {
-							string item = readItem();
-							if (!item.empty())trigger->deck.push_back(item);
-						}
-					}
-					else {
-						if(trigger->echo == DiceMsgReply::Echo::Lua) {
-							if (trusted < 5) {
-								replyMsg("strNotMaster");
-								return -1;
-							}
-							trigger->text = AttrVar(AttrVars{ {"lang","lua"},{"script",readRest()} });
-						}
-						else trigger->text = readRest();
-					}
-					break;
-				}
-				attr = readToColon();
-			}
-			if (keyword.empty()) {
-				replyMsg("strReplyKeyEmpty");
-			}
-			else {
-				if (trigger->title.empty())trigger->title = keyword;
-				set("key",trigger->title);
-				fmt->set_reply(trigger->title, trigger);
-				replyMsg("strReplySet");
-			}
-			return 1;
-		}
-		else if (action == "list") {
-			if (trusted < 4) {
-				replyMsg("strNotAdmin");
-				return -1;
-			}
-			set("res",fmt->list_reply(2));
-			replyMsg("strReplyList");
-			return 1;
-		}
-		else if (action == "del") {
-			if (trusted < 4) {
-				replyMsg("strNotAdmin");
-				return -1;
-			}
-			set("key",readRest());
-			if (fmt->del_reply(get_str("key"))) {
-				replyMsg("strReplyDel");
-			}
-			else {
-				replyMsg("strReplyKeyNotFound");
-			}
-			return 1;
-		}
-		intMsgCnt = intMsgTmpCnt;
-		ptr<DiceMsgReply> rep{ make_shared<DiceMsgReply>() };
-		int MatchMode{ 0 };
-		if (strLowerMessage.substr(intMsgCnt, 2) == "re") {
-			intMsgCnt += 2;
-			MatchMode = 3;
-		}
-		if (trusted < 4) {
-			replyMsg("strNotAdmin");
-			return -1;
-		}
-		const string& key{ (at("key") = readUntilSpace()).text };
-		if (key.empty()) {
-			replyHelp("reply");
-			return -1;
-		}
-		rep->keyMatch[MatchMode] = std::make_unique<vector<string>>(getLines(key, '|'));
-		if(MatchMode == 3)
-		{
-			try
-			{
-				std::wregex re(convert_a2realw(key.c_str()), std::regex::ECMAScript);
-			}
-			catch (const std::regex_error& e)
-			{
-				set("err",e.what());
-				replyMsg("strRegexInvalid");
-				return -1;
-			}
-		}
-		readItems(rep->deck);
-		if (rep->deck.empty()) {
-			fmt->del_reply(key);
-			replyMsg("strReplyDel");
-		}
-		else {
-			fmt->set_reply(key, rep);
-			replyMsg("strReplySet");
 		}
 		return 1;
 	}

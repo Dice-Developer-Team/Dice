@@ -172,9 +172,9 @@ const dict_ci<string> PlainMsg
 	{"strStModify","{self}对已记录{pc}的属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","{self}对已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
 	{"strStValEmpty","{self}未记录{attr}原值×"},		
-	{"strBlackQQAddNotice","{user_nick}，你已被{self}加入黑名单，详情请联系Master:{print:master}"},				
-	{"strBlackQQAddNoticeReason","{user_nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{print:master}"},
-	{"strBlackQQDelNotice","{user_nick}，你已被{self}移出黑名单，现在可以继续使用了"},
+	{"strBlackQQAddNotice","{nick}，你已被{self}加入黑名单，详情请联系Master:{print:master}"},				
+	{"strBlackQQAddNoticeReason","{nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{print:master}"},
+	{"strBlackQQDelNotice","{nick}，你已被{self}移出黑名单，现在可以继续使用了"},
 	{"strWhiteQQAddNotice","{user_nick}，您已获得{self}的信任，请尽情使用{self}√"},
 	{"strWhiteQQDenied","你不是{self}的信任用户×"},
 	{"strDeckNew","{self}已为{nick}自定义新牌堆<{deck_name}>√"},
@@ -549,7 +549,7 @@ const dict_ci<> HelpDoc = {
 {"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2022 String.Empty\nGithub@Dice-Developer-Team"},
 {"指令",R"(指令前接at可以指定骰娘响应，如
 {at:self}.bot on
-多数指令需要后接参数，请.help对应指令 获取详细信息，如.help r
+指令多需要后接参数，请.help对应指令 获取详细信息，如.help r
 控制指令:
 .dismiss 退群
 .bot 版本信息

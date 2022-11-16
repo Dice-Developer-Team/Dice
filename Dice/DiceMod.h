@@ -31,11 +31,11 @@ struct Version {
 	Version(const string& strVer):exp(strVer) {
 		static std::regex re{ R"((\d{1,9})\.?(\d{0,9})\.?(\d{0,9})\w*\(?(\d{0,9}))" };
 		std::smatch match;
-		if (auto res{ std::regex_search(exp,match,re) }) {
+		if (std::regex_search(exp,match,re)) {
 			major = stoi(match[1].str());
-			if (match.size() > 2){
+			if (match.size() > 2 && match[2].length()) {
 				minor = stoi(match[2].str());
-				if (match.size() > 3){
+				if (match.size() > 3 && match[3].length()){
 					revision = stoi(match[3].str());
 					if (match.size() > 4 && match[4].length())build = stoi(match[4].str());
 				}
@@ -130,7 +130,10 @@ class ResList;
 class DiceModManager {
 	dict_ci<ptr<DiceMod>> modList;
 	vector<ptr<DiceMod>> modOrder;
-	vector<string> sourceList = { "https://raw.sevencdn.com/Dice-Developer-Team/DiceModIndex/main/" };
+	vector<string> sourceList = {
+		"https://raw.sevencdn.com/Dice-Developer-Team/DiceModIndex/main/",
+		"https://gitee.com/diceki/DiceModIndex/raw/main/",
+	};
 	//custom
 	dict_ci<ptr<DiceMsgReply>> plugin_reply;
 	dict_ci<ptr<DiceMsgReply>> custom_reply;
