@@ -126,7 +126,7 @@ namespace Network
 		if (std::regex_search(strHeader, match, re)) {
 			UserAgent = match[1].str();
 		}
-		URL_COMPONENTSA urlComponents;
+		URL_COMPONENTSA urlComponents{};
 		urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
 		urlComponents.dwHostNameLength = 1024;
 		urlComponents.dwPasswordLength = 0;
@@ -266,7 +266,7 @@ InternetClose:
 
 	bool GET(const string& url, std::string& des) {
 #ifdef _WIN32
-		URL_COMPONENTSA urlComponents;
+		URL_COMPONENTSA urlComponents{};
 		urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
 		urlComponents.dwHostNameLength = 1024;
 		urlComponents.dwPasswordLength = 0;

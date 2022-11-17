@@ -139,8 +139,6 @@ void check_system(AttrObject& job) {
 #endif
 }
 
-
-
 void auto_save(AttrObject& job) {
 	if (sch.is_job_cold("autosave"))return;
 	DD::debugLog(printSTNow() + " ×Ô¶¯±£´æ");

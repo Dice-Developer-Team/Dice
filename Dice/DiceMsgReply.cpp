@@ -678,7 +678,7 @@ void DiceMsgReply::readJson(const fifo_json& j) {
 				UTF8toGBK(j["keyword"].get<string>()) : title
 			};
 			keyMatch[mode] = std::make_unique<vector<string>>
-				(mode == 3 ? vector<string>{title} : getLines(title, '|'));
+				(mode == 3 ? vector<string>{keyword} : getLines(keyword, '|'));
 		}
 		if (j.count("match")) {
 			keyMatch[0] = std::make_unique<vector<string>>(UTF8toGBK(j["match"].get<vector<string>>()));

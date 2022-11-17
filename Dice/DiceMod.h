@@ -31,15 +31,18 @@ struct Version {
 	Version(const string& strVer):exp(strVer) {
 		static std::regex re{ R"((\d{1,9})\.?(\d{0,9})\.?(\d{0,9})\w*\(?(\d{0,9}))" };
 		std::smatch match;
-		if (std::regex_search(exp,match,re)) {
-			major = stoi(match[1].str());
-			if (match.size() > 2 && match[2].length()) {
-				minor = stoi(match[2].str());
-				if (match.size() > 3 && match[3].length()){
-					revision = stoi(match[3].str());
-					if (match.size() > 4 && match[4].length())build = stoi(match[4].str());
-				}
+		try {
+			if (std::regex_search(exp, match, re)) {
+				major = stoi(match[1].str());
 			}
+			if (match.size() > 2 && match[2].length()){
+				minor = stoi(match[2].str());
+				if (match.size() > 3 && match[3].length())revision = stoi(match[3].str());
+			}
+			if (match.size() > 4 && match[4].length())build = stoi(match[4].str());
+		}
+		catch (std::exception& e) {
+			console.log("mod∞Ê±æ’˝‘Ú∆•≈‰ ß∞‹!" + string(e.what()), 1);
 		}
 	}
 	bool operator<(const Version& other)const {
@@ -158,7 +161,8 @@ public:
 #endif
 	}
 	multimap<Clock, string> clock_events;
-	friend class CustomReplyApiHandler;
+	friend class CustomReplyApiHandler; 
+	friend class ModListApiHandler;
 	bool isIniting{ false };
 
 	string list_mod()const;
@@ -171,7 +175,8 @@ public:
 	void mod_install(DiceEvent&);
 	void mod_reinstall(DiceEvent&);
 	void mod_update(DiceEvent&);
-	void mod_delete(DiceEvent&);
+	void turn_over(size_t);
+	void uninstall(const string& name);
 
 	string format(string, AttrObject = {},
 		bool isTrust = true,

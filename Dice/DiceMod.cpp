@@ -336,10 +336,10 @@ void DiceModManager::mod_update(DiceEvent& msg) {
 	msg.replyMsg("strModInstallErr");
 }
 
-void DiceModManager::mod_delete(DiceEvent& msg) {
+void DiceModManager::uninstall(const string& modName) {
 	std::lock_guard lock(ModMutex);
-	string modName{ msg.get_str("mod") };
 	auto mod{ modList[modName] };
+	if (!mod)return;
 	auto idx{ mod->index };
 	modList.erase(modName);
 	for (auto it{ modOrder.erase(modOrder.begin() + idx) };
@@ -350,7 +350,14 @@ void DiceModManager::mod_delete(DiceEvent& msg) {
 	remove(mod->pathJson);
 	remove_all(mod->pathDir);
 	build();
-	msg.note("{strModDelete}", 1);
+}
+void DiceModManager::turn_over(size_t idx) {
+	std::lock_guard lock(ModMutex);
+	if (idx >= modOrder.size())return;
+	auto mod{ modOrder[idx] };
+	mod->active = !mod->active;
+	save();
+	build();
 }
 static enumap<string> methods{ "print","help","sample","case","vary","grade","at"};
 enum class FmtMethod { Print, Help, Sample, Case, Vary, Grade, At };
@@ -572,30 +579,32 @@ void DiceModManager::_help(DiceEvent* job) {
 	}
 	else if (const auto it = global_helpdoc.find(job->get_str("help_word"));
 		it != global_helpdoc.end()) {
-		job->reply(format(it->second, {}, {}, global_helpdoc));
+		job->reply(format(it->second, *job, {}, global_helpdoc));
 	}
 	else if (auto keys = querier.search(job->get_str("help_word"));!keys.empty()) {
 		if (keys.size() == 1) {
-			(*job)["redirect_key"] = *keys.begin();
-			(*job)["redirect_res"] = get_help(*keys.begin());
-			job->reply("{strHelpRedirect}");
+			auto word{ *keys.begin() };
+			job->set("redirect_key", word);
+			job->set("redirect_res", get_help(word, *job));
+			console.log("½üËÆÆ¥Åä" + word + ":"+job->get_str("redirect_res"), 0);
+			job->replyMsg("strHelpRedirect");
 		}
 		else {
 			std::priority_queue<string, vector<string>, help_sorter> qKey;
 			for (auto& key : keys) {
 				qKey.emplace(".help " + key);
 			}
-			ResList res;
+			ShowList res;
 			while (!qKey.empty()) {
 				res << qKey.top();
 				qKey.pop();
 				if (res.size() > 20)break;
 			}
-			job->set("res", res.dot("/").show(1));
-			job->reply(getMsg("strHelpSuggestion"));
+			job->set("res", res.show("\n"));
+			job->replyMsg("strHelpSuggestion");
 		}
 	}
-	else job->reply(getMsg("strHelpNotFound"));
+	else job->replyMsg("strHelpNotFound");
 	cntHelp[job->get_str("help_word")] += 1;
 	saveJMap(DiceDir / "user" / "HelpStatic.json",cntHelp);
 }
@@ -629,7 +638,7 @@ Clock parse_clock(const AttrVar& time) {
 }
 
 void DiceModManager::call_cycle_event(const string& id) {
-	if (id.empty() || !global_events.count(id))return;
+	if (!Enabled || id.empty() || !global_events.count(id))return;
 	AttrObject eve{ global_events[id] };
 	if (eve["action"].is_function()) {
 		lua_call_event(eve, eve["action"]);
@@ -643,7 +652,7 @@ void DiceModManager::call_cycle_event(const string& id) {
 	}
 }
 void DiceModManager::call_clock_event(const string& id) {
-	if (id.empty() || !global_events.count(id))return;
+	if (!Enabled || id.empty() || !global_events.count(id))return;
 	AttrObject eve{ global_events[id] };
 	auto action{ eve["action"] };
 	if (!action)return;
@@ -653,6 +662,7 @@ void DiceModManager::call_clock_event(const string& id) {
 	lua_call_event(eve, action);
 }
 bool DiceModManager::call_hook_event(AttrObject eve) {
+	if (!Enabled)return true;
 	string hookEvent{ eve.has("hook") ? eve.get_str("hook") : eve.get_str("Event") };
 	if (hookEvent.empty())return false;
 	for (auto& [id, hook] : multi_range(hook_events, hookEvent)) {

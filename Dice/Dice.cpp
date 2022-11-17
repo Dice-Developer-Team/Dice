@@ -79,6 +79,7 @@ CustomMsgApiHandler h_msgapi;
 AdminConfigHandler h_config;
 MasterHandler h_master;
 CustomReplyApiHandler h_customreply;
+ModListApiHandler h_modlist;
 WebUIPasswordHandler h_webuipassword;
 AuthHandler auth_handler;
 
@@ -401,6 +402,7 @@ R"( //私骰作成 即可成为我的主人~
 			ManagerServer->addHandler("/api/adminconfig", h_config);
 			ManagerServer->addHandler("/api/master", h_master);
 			ManagerServer->addHandler("/api/customreply", h_customreply);
+			ManagerServer->addHandler("/api/mod/list", h_modlist);
 			ManagerServer->addHandler("/api/webuipassword", h_webuipassword);
 			ManagerServer->addAuthHandler("/", auth_handler);
 			auto ports = ManagerServer->getListeningPorts();
@@ -475,7 +477,7 @@ bool eve_GroupAdd(Chat& grp) {
 			return true;
 		}
 		if (grp.isset("许可使用"))strMsg += "（已获使用许可）";
-		else if(grp.isset("协议无效"))strMsg += "（默认协议无效）";
+		else if(grp.isset("协议无效"))strMsg += "（已标记协议无效）";
 		if (grp.inviter) {
 			strMsg += ",邀请者" + printUser(grp.inviter);
 		}
@@ -913,8 +915,7 @@ EVE_GroupInvited(eventGroupInvited)
 		}
 		else if (console["GroupInvalidSize"] > 0 && DD::getGroupSize(grp.ID).currSize > (size_t)console["GroupInvalidSize"]) {
 			grp.set("协议无效");
-			strMsg += "\n已忽略（群规模超标）";
-			console.log(strMsg, 0b10, strNow);
+			console.log(strMsg + "\n已忽略（群规模超标）", 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 3);
 		}
 		else if (console && console["Private"])

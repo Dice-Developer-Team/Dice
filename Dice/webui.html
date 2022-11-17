@@ -12,15 +12,18 @@
 	  .layui-layout-admin .layui-footer{left: 0;}
 	  .layui-layout-admin .layui-side{left: -300px;}
 	  .layui-table-cell{
-		height: 24px;
+		height: 26px;
 		white-space: nowrap;
-		line-height: 24px;
+		line-height: 26px;
 		padding: 0 10px;
 	  }
 	  .layui-btn-container .layui-btn {
 		margin-bottom: 1px;
 		margin-left: 1px;
 	  }
+      .layui-form-switch {
+          height: 22px;
+      }
   </style>
 </head>
 <body>
@@ -47,7 +50,7 @@
 		<li class="layui-hide">群管理(还没写)</li>
 		<li>自定义回执</li>
 		<li>关键词回复</li>
-		<li class="layui-hide">拓展管理(还没写)</li>
+		<li>模块管理</li>
 		<li>WebUI管理</li>
 		<li>更新日志</li>
 	  </ul>
@@ -116,7 +119,7 @@
 		  <table id="custom-reply-table" lay-filter="custom-reply-table"></table>
 		</div>
 		<div class="layui-tab-item">
-
+		  <table id="playset-table" lay-filter="playset-table"></table>
 		</div>
 		<div class="layui-tab-item">
 		  <form class="layui-form" action="">
@@ -141,6 +144,15 @@
 					<i class="layui-icon layui-timeline-axis">&#xe604;</i>
 					<div class="layui-timeline-content layui-text">
 						<h3 class="layui-timeline-title">最新版本开发中</h3>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe617;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年11月17日 版本2.6.5rc3(631)</h3>
+						<p>WebUI增加mod页</p>
+						<p>优化help模糊推荐</p>
+						<p>修复在错误时点刷新每日的bug</p>
 					</div>
 				</li>
 				<li class="layui-timeline-item">
@@ -885,12 +897,12 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
   $.get("/api/master")
 	.done(function(data) {
 	  if (data.code == 0) {
-          $("#master").val(data.data.master);
-          if (data.data.mode == "private") {
-              $("input#public").attr('checked', false);
-              $("input#private").attr('checked', true);
-              form.render('radio');
-          }
+		  $("#master").val(data.data.master);
+		  if (data.data.mode == "private") {
+			  $("input#public").attr('checked', false);
+			  $("input#private").attr('checked', true);
+			  form.render('radio');
+		  }
 	  }
 	})
 
@@ -1021,6 +1033,59 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
 	  layer.msg("关键词回复保存失败: " + error);
 	})
   });
+  //Mod
+  table.render({
+        elem: '#playset-table'
+        , height: 420
+        , url: '/api/mod/list' //数据接口
+        , title: '关键词回复设置'
+        , toolbar: "#addToolbar"
+        , request: {}
+        , cols: [[ //表头
+            { field: 'title', title: '模块', width: 100, fixed: 'left' },
+            { field: 'ver', title: '版本', width: 100, align: 'center' },
+            { field: 'author', title: '作者', width: 100, align: 'center' },
+            { field: 'brief', title: '简介', minWidth: 200 },
+            { field: 'active', title: '开关', width: 80, align: 'center', templet: function (row) { return "<input type='checkbox' lay-skin='switch' lay-filter='modSwitch' lay-text='开|关' value=" + row.LAY_TABLE_INDEX + " mod='" + row.name + "'" + (row.active ? " checked >" : ">")}},
+            { title: '卸载', fixed: 'right', width: 60, align: 'center', toolbar: '#delToolbar' }
+        ]]
+  });
+    form.on('switch(modSwitch)', function (eve) {
+        $.post("/api/mod/list", JSON.stringify({ action: "switch", data: parseInt(eve.value) }))
+            .done(function (data) {
+                if (data.code == 0) {
+					layer.msg("Mod开关成功");
+                } else {
+                    layer.msg("Mod开关失败: " + data.msg);
+                }
+            })
+            .fail(function (jqXHR, textStatus, error) {
+                layer.msg("Mod开关失败: " + error);
+            })
+        return false;
+    });
+    table.on('tool(playset-table)', function (obj) { //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+        var data = obj.data //获得当前行数据
+            , layEvent = obj.event; //获得 lay-event 对应的值
+        if (layEvent == "delete") {
+            layer.confirm('确认卸载「' + data.title +'」吗？此操作不可撤销。', function (index) {
+                layer.close(index);
+                $.post("/api/mod/list", JSON.stringify({ action: "delete", data: [data] }))
+                    .done(function (data) {
+                        if (data.code == 0) {
+                            obj.del();
+                            console.log("Mod Uninstall Success");
+                        } else {
+                            layer.msg("卸载「" + data.title +"」失败: " + data.msg);
+                        }
+                    })
+                    .fail(function (jqXHR, textStatus, error) {
+                        layer.msg("卸载「" + data.title +"」失败: " + error);
+                    })
+            });
+        }
+    });
+
 
   form.on('submit(passwordForm)', function(data){
 	$.post("/api/webuipassword", JSON.stringify({action: "set", data: data.field}))

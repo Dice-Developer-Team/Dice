@@ -321,6 +321,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrObject& lua) {
 	return true;
 }
 bool lua_call_event(AttrObject eve, const AttrVar& lua) {
+	if (!Enabled)return false;
 	string luas{ lua.to_str() };
 	bool isFile{ lua.is_character() && fmt->script_has(luas) };
 	LuaState L{ fmt->script_path(luas) };

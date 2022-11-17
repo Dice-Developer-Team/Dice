@@ -245,6 +245,77 @@ public:
     }
 };
 
+class ModListApiHandler : public CivetHandler
+{
+public:
+    bool handleGet(CivetServer* server, struct mg_connection* conn)
+    {
+        std::string ret;
+        try {
+            nlohmann::json j = nlohmann::json::object();
+            j["code"] = 0;
+            j["msg"] = "ok";
+            j["count"] = fmt->modOrder.size();
+            j["data"] = nlohmann::json::array();
+            for (const auto& mod : fmt->modOrder) {
+                j["data"].push_back({ {"name", GBKtoUTF8(mod->name)} ,
+                    {"title", GBKtoUTF8(mod->title)},
+                    {"ver", GBKtoUTF8(mod->ver.exp)},
+                    {"author", GBKtoUTF8(mod->author)},
+                    {"brief", GBKtoUTF8(mod->brief)},
+                    {"active", mod->active},
+                    });
+            }
+            ret = j.dump();
+        }
+        catch (const std::exception& e)
+        {
+            nlohmann::json j = nlohmann::json::object();
+            j["code"] = -1;
+            j["msg"] = GBKtoUTF8(e.what());
+            ret = j.dump();
+        }
+
+        mg_send_http_ok(conn, "application/json", ret.length());
+        mg_write(conn, ret.c_str(), ret.length());
+        return true;
+    }
+
+    bool handlePost(CivetServer* server, struct mg_connection* conn)
+    {
+        std::string ret;
+        try {
+            auto data = server->getPostData(conn);
+            nlohmann::json j = nlohmann::json::parse(data);
+            if (j["action"] == "switch") {
+                fmt->turn_over(j["data"]);
+            }
+            else if(j["action"] == "delete") {
+                for (const auto& item : j["data"]) {
+                    fmt->uninstall(UTF8toGBK(item["name"].get<std::string>()));
+                }
+            }
+            else {
+                throw std::runtime_error("Invalid Action");
+            }
+            nlohmann::json j2 = nlohmann::json::object();
+            j2["code"] = 0;
+            j2["msg"] = "ok";
+            ret = j2.dump();
+        }
+        catch (const std::exception& e)
+        {
+            nlohmann::json j = nlohmann::json::object();
+            j["code"] = -1;
+            j["msg"] = GBKtoUTF8(e.what());
+            ret = j.dump();
+        }
+        mg_send_http_ok(conn, "application/json", ret.length());
+        mg_write(conn, ret.c_str(), ret.length());
+        return true;
+    }
+};
+
 class AdminConfigHandler : public CivetHandler 
 {
 public:

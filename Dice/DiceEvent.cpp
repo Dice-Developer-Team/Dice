@@ -2782,7 +2782,8 @@ int DiceEvent::InnerOrder() {
 		}
 	}
 	else if (strPara == "del") {
-		fmt->mod_delete(*this);
+		fmt->uninstall(modName);
+		note("{strModDelete}", 1);
 	}
 	else if (strPara == "reinstall") {
 		fmt->mod_reinstall(*this);

@@ -79,9 +79,8 @@ void jobWait() {
 				queueJobWaited.pop();
 			}
 		}
-		//cvJobWaited.wait_for(lock_queue, 1s);
-		std::this_thread::sleep_for(1s); 
 		today->daily_clear();
+		std::this_thread::sleep_for(1s); 
 	}
 }
 
@@ -196,31 +195,34 @@ int DiceToday::getJrrp(long long uid) {
 }
 
 void DiceToday::daily_clear() {
+	if (!Enabled)return;
 	time_t tt = time(nullptr) + time_t(console["TimeZoneLag"]) * 3600;
+	static tm newDay{};
 #ifdef _MSC_VER
-	localtime_s(&stNow, &tt);
+	localtime_s(&newDay, &tt);
 #else
-	localtime_r(&tt, &stNow);
+	localtime_r(&tt, &newDay);
 #endif
-	if (stToday.tm_mday != stNow.tm_mday) {
+	if (stToday.tm_mday != newDay.tm_mday) {
 		fmt->call_hook_event(AttrVars{ {
 			{"Event","DayEnd"},
-			{"year",stNow.tm_year + 1900},
-			{"month",stNow.tm_mon + 1},
-			{"day",stNow.tm_mday},
+			{"year",stToday.tm_year + 1900},
+			{"month",stToday.tm_mon + 1},
+			{"day",stToday.tm_mday},
 			} });
-		stToday.tm_year = stNow.tm_year;
-		stToday.tm_mon = stNow.tm_mon;
-		stToday.tm_mday = stNow.tm_mday;
+		console.log("Today:" + printDate(stToday) + "->" + printDate(), 0);
+		stToday.tm_year = newDay.tm_year;
+		stToday.tm_mon = newDay.tm_mon;
+		stToday.tm_mday = newDay.tm_mday;
 		counter.clear();
 		UserInfo.clear();
 		pathFile = DiceDir / "user" / "daily" /
 			("daily_" + printDate() + ".json");
 		fmt->call_hook_event(AttrVars{ {
 			{"Event","DayNew"},
-			{"year",stNow.tm_year + 1900},
-			{"month",stNow.tm_mon + 1},
-			{"day",stNow.tm_mday},
+			{"year",newDay.tm_year + 1900},
+			{"month",newDay.tm_mon + 1},
+			{"day",newDay.tm_mday},
 			} });
 	}
 }

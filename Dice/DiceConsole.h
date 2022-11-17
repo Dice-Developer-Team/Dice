@@ -146,6 +146,7 @@ void getExceptGroup();
 	std::string printClock(std::pair<int, int> clock);
 	std::string printSTime(tm st);
 	std::string printSTNow(); 
+	std::string printDate(tm st);
 	std::string printDate();
 	std::string printDate(time_t tt);
 	std::string printUser(long long);

@@ -368,6 +368,10 @@ std::string printSTNow(){
 	return printSTime(stNow);
 }
 
+std::string printDate(tm st) {
+	return to_string(st.tm_year + 1900) + "-" + (st.tm_mon + 1 < 10 ? "0" : "") + to_string(st.tm_mon + 1) + "-" + (
+		st.tm_mday < 10 ? "0" : "") + to_string(st.tm_mday);
+}
 std::string printDate(){
 	time_t tt = time(nullptr) + time_t(console["TimeZoneLag"]) * 3600;
 #ifdef _MSC_VER

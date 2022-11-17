@@ -497,6 +497,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+631:WebUI新增mod页
 630:修复初始认主
 629:恢复远程更新
 628:支持mod更新
@@ -549,7 +550,7 @@ const dict_ci<> HelpDoc = {
 {"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2022 String.Empty\nGithub@Dice-Developer-Team"},
 {"指令",R"(指令前接at可以指定骰娘响应，如
 {at:self}.bot on
-指令多需要后接参数，请.help对应指令 获取详细信息，如.help r
+请.help对应指令 获取详细信息，如.help r
 控制指令:
 .dismiss 退群
 .bot 版本信息
