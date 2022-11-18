@@ -196,18 +196,18 @@ DDBlackMark::DDBlackMark(const fifo_json& j){
 				isAdd = !isClear;
 			}
 		}
-		if (j.count("fromGID"))fromGID = { j["fromGID"].get<long long>(), isAdd };
-		else if (j.count("fromGroup"))fromGID = { j["fromGroup"].get<long long>(), isAdd };
-		if (j.count("fromUID"))fromUID = { j["fromUID"].get<long long>(), isAdd };
-		else if (j.count("fromQQ"))fromUID = { j["fromQQ"].get<long long>(), isAdd };
-		if (j.count("inviterQQ"))inviterQQ = {j["inviterQQ"].get<long long>(), isAdd};
-		else if (j.count("inviter"))inviterQQ = { j["inviter"].get<long long>(), isAdd };
-		if (j.count("inviter"))inviterQQ = { j["inviter"].get<long long>(), isAdd };
-		if (j.count("ownerQQ"))ownerQQ = {j["ownerQQ"].get<long long>(), isAdd};
+		if (j.count("fromGID"))fromGID = { j["fromGID"], isAdd };
+		else if (j.count("fromGroup"))fromGID = { j["fromGroup"], isAdd };
+		if (j.count("fromUID"))fromUID = { j["fromUID"], isAdd };
+		else if (j.count("fromQQ"))fromUID = { j["fromQQ"], isAdd };
+		if (j.count("inviterQQ"))inviterQQ = {j["inviterQQ"], isAdd};
+		else if (j.count("inviter"))inviterQQ = { j["inviter"], isAdd };
+		if (j.count("inviter"))inviterQQ = { j["inviter"], isAdd };
+		if (j.count("ownerQQ"))ownerQQ = {j["ownerQQ"], isAdd};
 
-		if (j.count("DiceMaid"))DiceMaid = j["DiceMaid"].get<long long>();
-		if (j.count("masterQQ"))masterID = j["masterQQ"].get<long long>();
-		else if (j.count("master"))masterID = j["master"].get<long long>();
+		if (j.count("DiceMaid"))DiceMaid = j["DiceMaid"];
+		if (j.count("masterQQ"))masterID = j["masterQQ"];
+		else if (j.count("master"))masterID = j["master"];
 
 		if (j.count("danger"))
 		{
@@ -1126,22 +1126,22 @@ void DDBlackManager::verify(const fifo_json& pJson, long long operatorQQ)
                     else if (j["isCheck"].get<int>())is_cloud = 2;
                     if (mark.fromUID.first) 
 					{
-                        if (mark.fromUID.first != j["fromQQ"].get<long long>())return;
+                        if (mark.fromUID.first != j["fromQQ"])return;
                     }
                     else
 					{
-                        if (!mark.isClear)mark.fromUID = {j["fromQQ"].get<long long>(), true};
+                        if (!mark.isClear)mark.fromUID = {j["fromQQ"], true};
                     }
                     if (mark.fromGID.first)
 					{
-                        if (mark.fromGID.first != j["fromGroup"].get<long long>())return;
+                        if (mark.fromGID.first != j["fromGroup"])return;
                     }
                     else
 					{
-                        if (!mark.isClear)mark.fromGID = {j["fromGroup"].get<long long>(), true};
+                        if (!mark.isClear)mark.fromGID = {j["fromGroup"], true};
                     }
-                    mark.DiceMaid = j["DiceMaid"].get<long long>();
-                    mark.masterID = j["masterQQ"].get<long long>();
+                    mark.DiceMaid = j["DiceMaid"];
+                    mark.masterID = j["masterQQ"];
                     mark.type = j["type"].get<string>();
                     mark.time = j["time"].get<string>();
                     if (mark.note.empty())

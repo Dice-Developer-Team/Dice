@@ -1266,6 +1266,9 @@ int DiceEvent::BasicOrder()
 			}
 			return 1;
 		}
+		else if (is("order_off")) {
+			return 0;
+		}
 		else if (action == "show") {
 			if (trusted < 2) {
 				replyMsg("strNotAdmin");

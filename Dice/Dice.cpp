@@ -86,12 +86,9 @@ AuthHandler auth_handler;
 string msgInit;
 
 //加载数据
-void loadData()
-{
+void loadData(){
 	ResList logList;
-#ifndef _DEBUG
 	try	{
-#endif
 		std::error_code ec;
 		std::filesystem::create_directory(DiceDir, ec);
 		loadDir(loadXML<CardTemp, fifo_cmpr_ci>, DiceDir / "CardTemp", CharaCard::mCardTemplet, logList, true);
@@ -109,14 +106,12 @@ void loadData()
 			logList << "扩展配置读取完毕√";
 			console.log(logList.show(), 1, printSTNow());
 		}
-#ifndef _DEBUG
 	}
 	catch (const std::exception& e)
 	{
 		logList << "读取数据时遇到意外错误，程序可能无法正常运行。请尝试清空配置后重试。" << e.what();
 		console.log(logList.show(), 1, printSTNow());
 	}
-#endif
 }
 
 //初始化用户数据
@@ -269,14 +264,8 @@ EVE_Enable(eventEnable){
 
 	ExtensionManagerInstance = std::make_unique<ExtensionManager>();
 	if (!console.load()){
-		std::map<string, int> boolConsole;
-		loadJMap(fpFileLoc / "boolConsole.json", boolConsole);
-		for (auto& [key, val] : boolConsole){
-			console.set(key, val);
-		}
 		console.setClock({ 11, 45 }, "clear");
 		console.loadNotice();
-		console.save();
 	}
 	if (!console) {
 		msgInit = R"(欢迎使用Dice!掷骰机器人！
@@ -288,7 +277,7 @@ R"( //私骰作成 即可成为我的主人~
 发送.system gui开启DiceMaid后台面板
 参考文档参看.help链接)";
 	}
-		DD::sendPrivateMsg(console.DiceMaid, msgInit);
+	DD::sendPrivateMsg(console.DiceMaid, msgInit);
 	//初始化黑名单
 	blacklist = make_unique<DDBlackManager>();
 	if (auto cnt = blacklist->loadJson(DiceDir / "conf" / "BlackList.json");cnt < 0)

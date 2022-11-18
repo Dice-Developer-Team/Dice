@@ -975,7 +975,7 @@ int DiceModManager::load(ResList& resLog){
 	//读取mod管理文件
 	auto jFile{ freadJson(DiceDir / "conf" / "ModList.json") };
 	if (!jFile.empty()) {
-		for (auto j : jFile) {
+		for (auto& j : jFile) {
 			if (!j.count("name"))continue;
 			string modName{ UTF8toGBK(j["name"].get<string>()) };
 			auto mod{ std::make_shared<DiceMod>(DiceMod{ modName,modOrder.size(),j["active"].get<bool>()}) };
@@ -1112,9 +1112,9 @@ void DiceModManager::build() {
 	}
 	//merge custom
 	if (cntSpeech += map_merge(global_speech, EditedMsg))
-		resLog << "注册speech" + to_string(cntSpeech) + "项";
+		resLog << "注册speech " + to_string(cntSpeech) + " 项";
 	if (cntHelp += map_merge(global_helpdoc, CustomHelp))
-		resLog << "注册help" + to_string(cntHelp) + "项";
+		resLog << "注册help " + to_string(cntHelp) + " 项";
 	querier = {};
 	for (const auto& [key, word] : global_helpdoc) {
 		querier.insert(key);
@@ -1122,12 +1122,12 @@ void DiceModManager::build() {
 	map_merge(final_reply.items, plugin_reply);
 	map_merge(final_reply.items, custom_reply);
 	if (!final_reply.items.empty()) {
-		resLog << "注册reply" + to_string(final_reply.items.size()) + "项";
+		resLog << "注册reply " + to_string(final_reply.items.size()) + " 项";
 		final_reply.build();
 	}
-	if (!global_scripts.empty())resLog << "注册script" + to_string(global_scripts.size()) + "份";
+	if (!global_scripts.empty())resLog << "注册script " + to_string(global_scripts.size()) + " 份";
 	if (!global_events.empty()) {
-		resLog << "注册event" + to_string(global_events.size()) + "项";
+		resLog << "注册event " + to_string(global_events.size()) + " 项";
 		clock_events.clear();
 		hook_events.clear();
 		unordered_set<string> cycle;
