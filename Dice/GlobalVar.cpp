@@ -402,7 +402,7 @@ const dict_ci<string> PlainMsg
 	{"strSelfName", "" },
 	{"strSelfNick", "&strSelfName" },
 	{"self", "&strSelfCall"},
-	{"strBotHeader", "试作型 " },
+	{"strBotHeader", "泛用型 " },
 	{"strBotMsg", "\n使用.help 查看{self}帮助文档"},
 	{"strHlpMsg", R"(请使用.dismiss ID（或后四位） 使{self}退群退讨论组
 .bot on/off ID（或后四位） //开启或关闭指令

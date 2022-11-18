@@ -369,6 +369,25 @@ void cloud_beat(AttrObject& job) {
 	sch.add_job_for(5 * 60, job);
 }
 
+void check_update(AttrObject& job) {
+	string ret;
+	if (!Network::GET("http://shiki.stringempty.xyz/DiceVer/update", ret)) {
+		console.log("获取版本信息时出错: \n" + ret, 0);
+		return;
+	}
+	string ver = isDev ? "dev" : "release";
+	try {
+		fifo_json jInfo(fifo_json::parse(ret));
+		if (unsigned short nBuild{ jInfo[ver]["build"] }; nBuild > Dice_Build) {
+			MsgNote(job, "发现Dice!的{ver}版本更新:" + jInfo["release"]["ver"].get<string>() + "(" + to_string(nBuild) + ")\n更新说明：" +
+				UTF8toGBK(jInfo["release"]["changelog"].get<string>()), 1);
+		}
+	}
+	catch (std::exception& e) {
+		console.log(string("获取更新失败:") + e.what(), 0);
+	}
+	sch.add_job_for(72 * 60 * 60, "check_update");
+}
 void dice_update(AttrObject& job) {
 	string ret;
 	if (!Network::GET("http://shiki.stringempty.xyz/DiceVer/update", ret)) {
@@ -376,7 +395,7 @@ void dice_update(AttrObject& job) {
 		return;
 	}
 	string ver{ job.get_str("ver")};
-	if (ver.empty())ver = "release";
+	if (ver.empty())ver = isDev ? "dev" : "release";
 	try {
 		fifo_json jInfo(fifo_json::parse(ret));
 		if (unsigned short nBuild{ jInfo[ver]["build"] }; ver != "dev" && nBuild > Dice_Build) {

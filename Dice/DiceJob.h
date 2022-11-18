@@ -21,6 +21,7 @@ void clear_group(AttrObject& job);
 void list_group(AttrObject& job);
 
 void cloud_beat(AttrObject& job);
+void check_update(AttrObject& job);
 void dice_update(AttrObject& job);
 void dice_cloudblack(AttrObject& job);
 

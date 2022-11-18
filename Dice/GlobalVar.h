@@ -47,6 +47,7 @@ inline const std::string Dice_Ver_Without_Build = "2.6.5rc3";
 constexpr auto DiceRequestHeader = "Dice/2.6.5";
 inline const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 inline const std::string Dice_Short_Ver = "Dice! by ËÝä§ & Shiki Ver " + Dice_Ver;
+constexpr bool isDev = false;
 
 #ifdef __clang__
 

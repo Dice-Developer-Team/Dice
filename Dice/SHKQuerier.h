@@ -9,7 +9,7 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include "strExtern.hpp"
+#include "StrExtern.hpp"
 using std::string;
 using std::u16string;
 using std::vector;
