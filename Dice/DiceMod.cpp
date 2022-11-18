@@ -277,6 +277,7 @@ void DiceModManager::mod_update(DiceEvent& msg) {
 		if (mod->repo->update(des)&&
 			(fs::copy_file(mod->pathDir / "descriptor.json", mod->pathJson, fs::copy_options::overwrite_existing),
 				mod->reload(des))) {
+			fmt->build();
 			msg.set("mod_ver", mod->ver.exp);
 			msg.replyMsg("strModUpdated");
 		}
