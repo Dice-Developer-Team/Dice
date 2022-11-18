@@ -401,7 +401,7 @@ void dice_update(AttrObject& job) {
 		if (unsigned short nBuild{ jInfo[ver]["build"] }; ver != "dev" && nBuild > Dice_Build) {
 			MsgNote(job, "发现Dice!的{ver}版本更新:" + jInfo["release"]["ver"].get<string>() + "(" + to_string(nBuild) + ")\n更新说明：" +
 				UTF8toGBK(jInfo["release"]["changelog"].get<string>()), 1);
-			if (DD::updateDice(job.get_str("ver"), ret)) {
+			if (DD::updateDice(ver, ret)) {
 				MsgNote(job, "更新Dice!{ver}版本成功，将在重载后应用√", 1);
 				return;
 			}

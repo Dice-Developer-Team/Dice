@@ -297,8 +297,9 @@ InternetClose:
 		const HINTERNET hInternet = InternetOpenA(DiceRequestHeader, INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
 		const HINTERNET hConnect = InternetConnectA(hInternet, std::string(urlComponents.lpszHostName, urlComponents.dwHostNameLength).c_str(), urlComponents.nPort, nullptr, nullptr, 
 			INTERNET_SERVICE_HTTP, 0, 0);
-		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "GET", (std::string(urlComponents.lpszUrlPath, urlComponents.dwUrlPathLength) + std::string(urlComponents.lpszExtraInfo, urlComponents.dwExtraInfoLength)).c_str(), "HTTP/1.1", nullptr, acceptTypes,
-			(urlComponents.nScheme == INTERNET_SCHEME_HTTPS ? INTERNET_FLAG_SECURE : 0) | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD, 0);
+		const HINTERNET hRequest = HttpOpenRequestA(hConnect, "GET",
+			(std::string(urlComponents.lpszUrlPath, urlComponents.dwUrlPathLength) + std::string(urlComponents.lpszExtraInfo, urlComponents.dwExtraInfoLength)).c_str(),
+			"HTTP/1.1", nullptr, acceptTypes, (urlComponents.nScheme == INTERNET_SCHEME_HTTPS ? INTERNET_FLAG_SECURE : 0) | INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_RELOAD, 0);
 		const BOOL res = HttpSendRequestA(hRequest, nullptr, 0, nullptr, 0);
 
 

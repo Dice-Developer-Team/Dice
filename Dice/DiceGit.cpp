@@ -4,17 +4,17 @@
 #include "DiceConsole.h"
 DiceRepo::DiceRepo(const std::filesystem::path& dir) {
 	if (!std::filesystem::exists(dir)) {
-		init(getNativePathString(dir));
+		init(dir.u8string());
 	}
 	else if (!std::filesystem::exists(dir / ".git")) {
-		init(getNativePathString(dir));
+		init(dir.u8string());
 	}
 	else {
-		open(getNativePathString(dir));
+		open(dir.u8string());
 	}
 }
 DiceRepo::DiceRepo(const std::filesystem::path& dir, const string& url) {
-	clone(getNativePathString(dir), url);
+	clone(dir.u8string(), url);
 }
 DiceRepo::~DiceRepo() {
 	if (repo)git_repository_free(repo);
