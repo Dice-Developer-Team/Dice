@@ -978,7 +978,8 @@ int DiceModManager::load(ResList& resLog){
 		for (auto& j : jFile) {
 			if (!j.count("name"))continue;
 			string modName{ UTF8toGBK(j["name"].get<string>()) };
-			auto mod{ std::make_shared<DiceMod>(DiceMod{ modName,modOrder.size(),j["active"].get<bool>()}) };
+			auto mod{ std::make_shared<DiceMod>(DiceMod{ modName,modOrder.size(),
+				j.count("active") ? bool(j["active"]) : true}) };
 			modList[modName] = mod;
 			modOrder.push_back(mod);
 		}

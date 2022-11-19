@@ -18,6 +18,7 @@
 #include "DiceSession.h"
 #include "DiceSelfData.h"
 #include "DiceCensor.h"
+#include "DiceMod.h"
 
 std::filesystem::path dirExe;
 std::filesystem::path DiceDir("DiceData");
@@ -151,6 +152,8 @@ AttrVar getGroupItem(long long id, const string& item) {
 }
 AttrVar getSelfItem(string item) {
 	AttrVar var;
+	if (item.empty())return var;
+	if (item[0] == '&')item = fmt->format(item);
 	if (console.intDefault.count(item))return console[item];
 	if (!(var = getUserItem(console.DiceMaid, item))) {
 		string file, sub;
@@ -166,7 +169,9 @@ AttrVar getSelfItem(string item) {
 	return var;
 }
 AttrVar getContextItem(AttrObject context, string item, bool isTrust) {
+	if (item.empty())return context;
 	AttrVar var;
+	if (item[0] == '&')item = fmt->format(item, context);
 	string sub;
 	if (!context.empty()) {
 		if (context.has(item))return context.get(item);

@@ -4416,7 +4416,6 @@ bool DiceEvent::DiceFilter()
 		strMsg.erase(strMsg.begin());
 	init(strMsg);
 	bool isOtherCalled = false;
-	bool isSummoned{ false };
 	string strAt{ CQ_AT + to_string(console.DiceMaid) + "]" };
 	size_t r{ 0 };
 	while ((r = strMsg.find(']')) != string::npos && strMsg.find(CQ_AT) == 0 || strMsg.find(CQ_QQAT) == 0)
@@ -4441,7 +4440,7 @@ bool DiceEvent::DiceFilter()
 	}
 	string strSummon{ getMsg("strSummonWord") };
 	if (!strSummon.empty() && strMsg.find(strSummon) == 0) {
-		isSummoned = true;
+		isCalled = true;
 		if(isChannel())strMsg = strMsg.substr(strSummon.length());
 	}
 	init2(strMsg);
@@ -4494,7 +4493,7 @@ bool DiceEvent::DiceFilter()
 		}
 		return true;
 	}
-	if (isSummoned && (strMsg.empty() || strMsg == strSummon))replyMsg("strSummonEmpty");
+	if (isCalled && (strMsg.empty() || strMsg == strSummon))replyMsg("strSummonEmpty");
 	if (isCalled && WordCensor()) {
 		return true;
 	}

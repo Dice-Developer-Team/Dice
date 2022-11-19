@@ -238,7 +238,7 @@ const dict_ci<string> PlainMsg
 	{"strHlpReset","已清除{key}的词条√"},
 	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
 	{"strHelpNotFound","{self}未找到「{help_word}」相关的词条×"},
-	{"strHelpSuggestion","{self}猜{nick}想要查找的是:{res}"},
+	{"strHelpSuggestion","{self}猜{nick}想要查找的是:\n{res}"},
 	{"strHelpRedirect","{self}仅找到相近词条「{redirect_key}」:\n{redirect_res}" },
 	{"strClockToWork","{self}已按时启用√"},
 	{"strClockOffWork","{self}已按时关闭√"},

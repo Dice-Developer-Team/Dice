@@ -241,7 +241,7 @@ void DiceChatLink::build(DiceEvent* msg) {
 		link = { true ,msg->get_str("option"),target };
 		LinkFromChat[here] = { target ,link.typeLink != "from" };
 		LinkFromChat[target] = { here ,link.typeLink != "to" };
-		(*msg)["target"] = printChat(target);
+		msg->set("target", printChat(target));
 		msg->replyMsg("strLinked");
 		save();
 	}
@@ -259,7 +259,7 @@ void DiceChatLink::start(DiceEvent* msg) {
 			LinkFromChat[here] = { link.target ,link.typeLink != "from" };
 			LinkFromChat[link.target] = { here ,link.typeLink != "to" };
 			link.isLinking = true;
-			(*msg)["target"] = printChat(link.target);
+			msg->set("target", printChat(link.target));
 			msg->replyMsg("strLinked");
 			save();
 		}
@@ -305,7 +305,7 @@ string DiceChatLink::list() {
 void DiceChatLink::show(DiceEvent* msg) {
 	auto here{ msg->fromChat.locate() };
 	if (LinkFromChat.count(here) || LinkList.count(here)) {
-		(*msg)["link_info"] = show(here);
+		msg->set("link_info", show(here));
 		msg->replyMsg("strLinkState");
 	}
 	else {
@@ -362,9 +362,9 @@ string DeckInfo::draw() {
 }
 
 void DiceSession::deck_set(DiceEvent* msg) {
-	const string key{ ((*msg)["deck_name"] = msg->readAttrName()).to_str() };
+	const string key{ (msg->at("deck_name") = msg->readAttrName()).to_str() };
 	size_t pos = msg->strMsg.find('=', msg->intMsgCnt);
-	AttrVar& strCiteDeck{ (*msg)["deck_cited"] = pos == string::npos 
+	AttrVar& strCiteDeck{ msg->at("deck_cited") = (pos == string::npos)
 		? key 
 		: (++msg->intMsgCnt, msg->readAttrName()) };
 	if (key.empty()) {
@@ -682,12 +682,12 @@ int DiceSessionManager::load() {
 			continue;
 		}
 		auto pSession(std::make_shared<Session>(filename.stem().string()));
-		bool isUpgrated{ false };
+		bool isUpdated{ false };
 		try {
 			pSession->create(j["create_time"]).update(j["update_time"]);
 			if (j.count("room")) {
 				if (j["room"].is_number()) {
-					long long id{ j["room"].get<long long>() };
+					long long id{ j["room"] };
 					pSession->windows.insert(id > 0 ? chatInfo{ 0, id } : chatInfo{ ~id });
 				}
 				else if (j["room"].is_array()) {
@@ -703,7 +703,7 @@ int DiceSessionManager::load() {
 			}
 			if (j.count("conf")) {
 				fifo_json& jConf{ j["conf"] };
-				for (auto it = jConf.cbegin(); it != jConf.cend(); ++it) {
+				for (auto& it : jConf.items()) {
 					pSession->conf.emplace(UTF8toGBK(it.key()), it.value());
 				}
 			}
@@ -730,7 +730,7 @@ int DiceSessionManager::load() {
 				LinkInfo& link{ linker.LinkList[ct] = {jLink["linking"].get<bool>(),
 					jLink["type"].get<string>(),
 					gid > 0 ? chatInfo{0,gid} : chatInfo{~gid} } };
-				isUpgrated = true;
+				isUpdated = true;
 			}
 			if (j.count("decks")) {
 				fifo_json& jDecks = j["decks"];
@@ -765,7 +765,7 @@ int DiceSessionManager::load() {
 		for (const auto& chat : pSession->windows) {
 			SessionByChat[chat] = pSession;
 		}
-		if (isUpgrated)pSession->save();
+		if (isUpdated)pSession->save();
 	}
 	linker.load();
 	return cnt;

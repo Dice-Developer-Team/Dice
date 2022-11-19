@@ -275,8 +275,12 @@ void DiceToday::load() {
 		fifo_json jFile;
 		if (!std::filesystem::exists(pathFile)) {
 			std::filesystem::path fileToday{ DiceDir / "user" / "DiceToday.json" };
-			if (!std::filesystem::exists(fileToday) || (jFile = freadJson(fileToday)).is_null()) return;
-			else if (jFile["date"][2] != stToday.tm_mday
+			if (!std::filesystem::exists(fileToday) || (jFile = freadJson(fileToday)).is_null()) {
+				save();
+				return;
+			}
+			else if (!jFile.count("date")
+				|| jFile["date"][2] != stToday.tm_mday
 				|| jFile["date"][1] != (stToday.tm_mon + 1)
 				|| jFile["date"][0] != (stToday.tm_year + 1900)) {
 				std::filesystem::remove(fileToday);
