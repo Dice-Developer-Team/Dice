@@ -1270,7 +1270,7 @@ int DiceEvent::BasicOrder()
 			return 0;
 		}
 		else if (action == "show") {
-			if (trusted < 2) {
+			if (trusted < 4) {
 				replyMsg("strNotAdmin");
 				return -1;
 			}
@@ -1394,15 +1394,15 @@ int DiceEvent::BasicOrder()
 			replyMsg("strNotAdmin");
 			return -1;
 		}
-		const string& key{ (at("key") = readUntilSpace()).text };
-		if (key.empty()) {
+		at("key") = rep->title = readUntilSpace();
+		if (rep->title.empty()) {
 			replyHelp("reply");
 			return -1;
 		}
-		rep->keyMatch[MatchMode] = std::make_unique<vector<string>>(getLines(key, '|'));
+		rep->keyMatch[MatchMode] = std::make_unique<vector<string>>(getLines(rep->title, '|'));
 		if (MatchMode == 3) {
 			try {
-				std::wregex re(convert_a2realw(key.c_str()), std::regex::ECMAScript);
+				std::wregex re(convert_a2realw(rep->title.c_str()), std::regex::ECMAScript);
 			} catch (const std::regex_error& e) {
 				set("err", e.what());
 				replyMsg("strRegexInvalid");
@@ -1411,11 +1411,11 @@ int DiceEvent::BasicOrder()
 		}
 		readItems(rep->deck);
 		if (rep->deck.empty()) {
-			fmt->del_reply(key);
+			fmt->del_reply(rep->title);
 			replyMsg("strReplyDel");
 		}
 		else {
-			fmt->set_reply(key, rep);
+			fmt->set_reply(rep->title, rep);
 			replyMsg("strReplySet");
 		}
 		return 1;

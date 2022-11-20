@@ -816,3 +816,59 @@ void DiceReplyUnit::build() {
 	gPrefix.make_fail();
 	gSearcher.make_fail();
 }
+void DiceReplyUnit::insert(const string& key, ptr<DiceMsgReply> reply) {
+	erase(key);
+	if (reply->keyMatch[0]) {
+		for (auto& word : *reply->keyMatch[0]) {
+			match_items[fmt->format(word)] = reply;
+		}
+	}
+	if (reply->keyMatch[1]) {
+		for (auto& word : *reply->keyMatch[1]) {
+			for (auto& word : *reply->keyMatch[1]) {
+				prefix_items[word] = reply;
+				gPrefix.add(fmt->format(word), word);
+			}
+		}
+		gPrefix.make_fail();
+	}
+	if (reply->keyMatch[2]) {
+		for (auto& word : *reply->keyMatch[2]) {
+			search_items[word] = reply;
+			gSearcher.add(convert_a2w(fmt->format(word).c_str()), word);
+		}
+		gSearcher.make_fail();
+	}
+	if (reply->keyMatch[3]) {
+		for (auto& word : *reply->keyMatch[3]) {
+			try {
+				std::wregex exp(convert_a2realw(word.c_str()),
+					std::regex::ECMAScript | std::regex::icase | std::regex::optimize);
+				regex_exp.emplace(key, exp);
+				regex_items[word] = reply;
+			}
+			catch (const std::regex_error& e) {
+				console.log("正则关键词解析错误，表达式:\n" + word + "\n" + e.what(), 0b10);
+			}
+		}
+	}
+	items[key] = reply;
+}
+void DiceReplyUnit::erase(ptr<DiceMsgReply> reply) {
+	if (reply->keyMatch[1]) {
+		for (auto& word : *reply->keyMatch[1]) {
+			prefix_items.erase(word);
+		}
+	}
+	if (reply->keyMatch[2]) {
+		for (auto& word : *reply->keyMatch[2]) {
+			search_items.erase(word);
+		}
+	}
+	if (reply->keyMatch[3]) {
+		for (auto& word : *reply->keyMatch[3]) {
+			regex_items.erase(word);
+			regex_exp.erase(word);
+		}
+	}
+}

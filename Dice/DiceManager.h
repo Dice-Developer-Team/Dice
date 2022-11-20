@@ -206,7 +206,7 @@ public:
         {
             auto data = server->getPostData(conn);
             nlohmann::json j = nlohmann::json::parse(data);
-            if (j["action"].get<std::string>() == "set")
+            if (j["action"] == "set")
             {
                 for(const auto& item: j["data"])
                 {   
@@ -216,7 +216,7 @@ public:
                     fmt->set_reply(trigger->title, trigger);
                 }
             } 
-            else if (j["action"].get<std::string>() == "delete")
+            else if (j["action"] == "delete")
             {
                 for(const auto& item: j["data"])
                 {

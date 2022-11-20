@@ -98,10 +98,11 @@ ptr<AttrVars> AttrObject::get_dict(const string& key)const {
 ptr<VarArray> AttrObject::get_list(const string& key)const {
 	return dict->count(key) ? dict->at(key).to_list() : ptr<VarArray>();
 }
-void AttrObject::inc(const string& key)const {
-	if (key.empty())return;
-	if (dict->count(key))++dict->at(key);
+int AttrObject::inc(const string& key)const {
+	if (key.empty())return 0;
+	if (dict->count(key))return (++dict->at(key)).to_int();
 	else dict->emplace(key, 1);
+	return 1;
 }
 void AttrObject::add(const string& key, const AttrVar& val)const {
 	if (key.empty())return;
@@ -233,6 +234,10 @@ bool AttrVar::operator==(const char* other)const {
 }
 AttrVar& AttrVar::operator++() {
 	switch (type) {
+	case AttrType::Nil:
+		type = AttrType::Integer;
+		attr = 1;
+		break;
 	case AttrType::Boolean:
 		bit = true;
 		break;

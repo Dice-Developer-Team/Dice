@@ -509,7 +509,7 @@ void log_put(AttrObject& job) {
 		reply(job, "{strLogUpFailureEnd}");
 	}
 	else {
-		++job["retry"];
+		job.inc("retry");
 		reply(job, "{strLogUpFailure}");
 		console.log(getMsg("strLogUpFailure", job), 1);
 		sch.add_job_for(2 * 60, job);

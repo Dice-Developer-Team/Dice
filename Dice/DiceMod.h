@@ -135,6 +135,7 @@ class DiceModManager {
 	vector<ptr<DiceMod>> modOrder;
 	vector<string> sourceList = {
 		"https://raw.sevencdn.com/Dice-Developer-Team/DiceModIndex/main/",
+		"https://raw.githubusercontent.com/Dice-Developer-Team/DiceModIndex/main/",
 		"https://gitee.com/diceki/DiceModIndex/raw/main/",
 	};
 	//custom
