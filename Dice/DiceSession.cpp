@@ -188,7 +188,7 @@ std::filesystem::path DiceSession::log_path()const {
 }
 
 void DiceChatLink::load() {
-	if (fifo_json jFile{ freadJson(DiceDir / "conf" / "LinkList.json") }; !jFile.empty()){
+	if (fifo_json jFile{ freadJson(DiceDir / "conf" / "LinkList.json") }; !jFile.is_null()){
 		for (auto& jLink : jFile) {
 			LinkInfo& link{ LinkList[chatInfo::from_json(jLink["origin"])]
 				= { jLink["linking"], jLink["type"],
@@ -208,7 +208,7 @@ void DiceChatLink::save() {
 		remove(DiceDir / "conf" / "LinkList.json");
 		return;
 	}
-	fifo_json jFile{ fifo_json::array() };
+	fifo_json jFile = fifo_json::array();
 	for (auto& [ct, linker] : LinkList) {
 		fifo_json jLink;
 		jLink["type"] = linker.typeLink;
@@ -755,6 +755,12 @@ int DiceSessionManager::load() {
 		}
 		if (isUpdated)pSession->save();
 	}
-	linker.load();
+	try {
+		linker.load();
+	}
+	catch (const std::exception& e) {
+		console.log("读取link记录时遇到意外错误，请尝试排除/conf/LinkList.json中的异常!"
+			+ string(e.what()), 0b1000, printSTNow());
+	}
 	return cnt;
 }

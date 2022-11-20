@@ -20,17 +20,14 @@
 	return j;
 }
 
-fifo_json freadJson(const std::filesystem::path& path)
-{
-	std::ifstream fin(path);
-	if (!fin)return fifo_json();
+fifo_json freadJson(const std::filesystem::path& path){
 	fifo_json j;
+	std::ifstream fin(path);
+	if (!fin)return j;
 	try {
 		fin >> j;
 	}
-	catch (...) {
-		return fifo_json();
-	}
+	catch (...) {}
 	return j;
 }
 

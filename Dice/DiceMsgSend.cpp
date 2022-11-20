@@ -59,7 +59,7 @@ fifo_json to_json(const chatInfo& chat) {
 	fifo_json j = fifo_json::object();
 	if (chat.chid)j["chid"] = chat.chid;
 	if (chat.gid)j["gid"] = chat.gid;
-	else if (chat.uid)j["uid"] = chat.uid;
+	if (chat.uid)j["uid"] = chat.uid;
 	return j;
 }
 chatInfo chatInfo::from_json(const fifo_json& chat) {

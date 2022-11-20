@@ -119,7 +119,6 @@ void readUserData(){
 	std::error_code ec;
 	fs::path dir{ DiceDir / "user" };
 	ResList log;
-	DD::debugLog("Dice.UserData");
 	try {
 		//读取用户记录
 		if (int cnt{ loadBFile(dir / "UserConf.dat", UserList) }; cnt > 0) {
@@ -148,7 +147,6 @@ void readUserData(){
 		console.log(string("读取用户记录时遇到意外错误，请尝试删除UserConf.dat启用备份.bak文件!")
 			+ e.what(), 0b1000, printSTNow());
 	}
-	DD::debugLog("Dice.PlayerData");
 	try {
 		//读取角色记录
 		if (int cnt{ loadBFile(dir / "PlayerCards.RDconf", PList) }; cnt > 0) {
@@ -168,7 +166,6 @@ void readUserData(){
 		console.log("读取玩家记录时遇到意外错误，请尝试删除PlayerCards.RDconf启用备份.bak文件!"
 			+ string(e.what()), 0b1000, printSTNow());
 	}
-	DD::debugLog("Dice.ChatData");
 	try {
 		//读取群聊记录
 		if (int cnt{ loadBFile(dir / "ChatConf.dat", ChatList) }; cnt > 0) {
@@ -191,14 +188,7 @@ void readUserData(){
 			+ string(e.what()), 0b1000, printSTNow());
 	}
 	//读取房间记录
-	DD::debugLog("Dice.RoomData");
-	try{
-		sessions.load();
-	}
-	catch (const std::exception& e) {
-		console.log("读取session记录时遇到意外错误，请尝试排除/user/session/中的异常项目!"
-			+ string(e.what()), 0b1000, printSTNow());
-	}
+	sessions.load();
 	if (!log.empty()) {
 		log << "用户数据读取完毕";
 		console.log(log.show(), 0b1, printSTNow());
@@ -297,7 +287,6 @@ R"( //私骰作成 即可成为我的主人~
 		console.log(string("读取/conf/CustomMsg.json失败!") + e.what(), 1, printSTNow());
 	}
 	loadData();
-	DD::debugLog("Dice.CustomData.load");
 	//初始化黑名单
 	blacklist = make_unique<DDBlackManager>();
 	if (auto cnt = blacklist->loadJson(DiceDir / "conf" / "BlackList.json");cnt < 0)
@@ -316,7 +305,6 @@ R"( //私骰作成 即可成为我的主人~
 	}
 	//selfdata
 	if (const auto dirSelfData{ DiceDir / "selfdata" }; std::filesystem::exists(dirSelfData)) {
-		DD::debugLog("Dice.preloadSelfData");
 		std::error_code err;
 		for (const auto& file : std::filesystem::directory_iterator(dirSelfData, err)) {
 			if (file.is_regular_file()) {
@@ -331,10 +319,8 @@ R"( //私骰作成 即可成为我的主人~
 		DD::debugLog("预加载selfdata" + to_string(selfdata_byStem.size()) + "条");
 	}
 	//读取用户数据
-	DD::debugLog("Dice.initUserData");
 	readUserData();
 	//读取当日数据
-	DD::debugLog("Dice.initToday");
 	today = make_unique<DiceToday>();
 	set<long long> grps{ DD::getGroupIDList() };
 	for (auto gid : grps){
