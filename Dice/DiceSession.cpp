@@ -22,28 +22,27 @@ unordered_set<chatInfo>LogList;
 const std::filesystem::path LogInfo::dirLog{ std::filesystem::path("user") / "log" };
 
 bool DiceSession::table_del(const string& tab, const string& item) {
-	if (!mTable.count(tab) || !mTable[tab].has(item))return false;
-	mTable[tab].reset(item);
+	if (!attrs.has(tab) || !attrs.get_obj(tab).has(item))return false;
+	attrs.get_obj(tab).reset(item);
 	update();
 	return true;
 }
 
-int DiceSession::table_add(const string& key, int prior, const string& item)
+int DiceSession::table_add(const string& tab, int prior, const string& item)
 {
-	mTable[key].set(item,prior);
+	attrs.get_obj(tab).set(item,prior);
 	update();
 	return 0;
 }
 
-string DiceSession::table_prior_show(const string& key) const{
-	return mTable.count(key) ? PriorList<AttrVar>(*mTable.at(key).to_dict()).show() : "";
+string DiceSession::table_prior_show(const string& tab) const{
+	return attrs.is_table(tab) ? PriorList<AttrVar>(*attrs.get_dict(tab)).show() : "";
 }
 
-bool DiceSession::table_clr(const string& key)
+bool DiceSession::table_clr(const string& tab)
 {
-	if (const auto it = mTable.find(key); it != mTable.end())
-	{
-		mTable.erase(it);
+	if (attrs.has(tab)){
+		attrs.reset(tab);
 		update();
 		return true;
 	}
@@ -195,8 +194,8 @@ void DiceChatLink::load() {
 				= { jLink["linking"], jLink["type"],
 				chatInfo::from_json(jLink["target"]) } };
 		}
-		if (jFile.empty() && !LinkList.empty())save();
 	}
+	else if (!LinkList.empty())save();
 	for (auto& [ct,link] : LinkList) {
 		if (link.isLinking) {
 			LinkFromChat[ct] = { link.target ,link.typeLink != "from" };
@@ -598,12 +597,7 @@ void DiceSession::save() const
 		}
 	}
 	if (!sOB.empty())jData["observer"] = sOB;
-	if (!mTable.empty())
-		for (auto& [key, table] : mTable)
-		{
-			string strTable = GBKtoUTF8(key);
-			jData["tables"][strTable] = table.to_json();
-		}
+	if (!attrs.empty())jData["tables"] = attrs.to_json();
 	if (logger.tStart || !logger.fileLog.empty()) {
 		fifo_json jLog;
 		jLog["start"] = logger.tStart;
@@ -726,10 +720,10 @@ int DiceSessionManager::load() {
 			if (j.count("link")) {
 				fifo_json& jLink = j["link"];
 				const auto& ct{ *pSession->windows.begin() };
-				long long gid{ jLink["target"].get<long long>() };
-				LinkInfo& link{ linker.LinkList[ct] = {jLink["linking"].get<bool>(),
-					jLink["type"].get<string>(),
-					gid > 0 ? chatInfo{0,gid} : chatInfo{~gid} } };
+				long long gid{ jLink["target"] };
+				LinkInfo& link{ linker.LinkList[ct] = {jLink["linking"],
+					jLink["type"],
+					(gid > 0) ? chatInfo{0,gid} : chatInfo{~gid} } };
 				isUpdated = true;
 			}
 			if (j.count("decks")) {
@@ -750,13 +744,7 @@ int DiceSessionManager::load() {
 				}
 			}
 			if (j.count("observer")) j["observer"].get_to(pSession->sOB);
-			if (j.count("tables")) {
-				for (auto itTable : j["tables"].items())
-				{
-					string strTable = UTF8toGBK(itTable.key()); 
-					pSession->mTable.emplace(strTable,itTable.value());
-				}
-			}
+			if (j.count("tables"))pSession->attrs = AttrVar(j["tables"]).to_obj();
 		}
 		catch (std::exception& e) {
 			console.log("读取session文件" + UTF8toGBK(filename.u8string()) + "出错!" + e.what(), 1);

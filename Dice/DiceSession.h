@@ -24,7 +24,7 @@ struct LogInfo{
 	//创建时间，为0则不存在
 	time_t tStart{ 0 };
 	time_t tLastMsg{ 0 };
-	string name;
+	string name; //gbk
 	string fileLog;
 	//路径不保存，初始化时生成
 	std::filesystem::path pathLog;
@@ -74,7 +74,7 @@ struct DeckInfo {
 
 class DiceSession{
 	//数值表
-	dict<AttrObject> mTable;
+	AttrObject attrs;
 	//旁观者
 	unordered_set<long long> sOB;
 	//日志
@@ -125,7 +125,7 @@ public:
 		}
 	}
 
-	[[nodiscard]] bool table_count(const string& key) const { return mTable.count(key); }
+	[[nodiscard]] bool table_count(const string& key) const { return attrs.has(key); }
 	bool table_del(const string&, const string&);
 	int table_add(const string&, int, const string&);
 	[[nodiscard]] string table_prior_show(const string& key) const;
