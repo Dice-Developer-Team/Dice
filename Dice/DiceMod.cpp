@@ -360,8 +360,8 @@ void DiceModManager::turn_over(size_t idx) {
 	save();
 	build();
 }
-static enumap<string> methods{ "print","help","sample","case","vary","grade","at"};
-enum class FmtMethod { Print, Help, Sample, Case, Vary, Grade, At };
+static enumap<string> methods{ "print","help","sample","case","vary","grade","at","ran" };
+enum class FmtMethod { Print, Help, Sample, Case, Vary, Grade, At, Ran};
 
 string DiceModManager::format(string s, AttrObject context, bool isTrust, const dict_ci<string>& dict) const {
 	//直接重定向
@@ -499,6 +499,13 @@ string DiceModManager::format(string s, AttrObject context, bool isTrust, const 
 						if (itemVal.is_numberic())val = grade[itemVal.to_num()];
 						else val = grade.get_else();
 						val = format(val, context, isTrust);
+					}break;
+					case FmtMethod::Ran: {
+						auto [min, max] = readini<string, string>(para, '~');
+						int l = AttrVar::parse(min).to_int(), r = AttrVar::parse(max).to_int();
+						val = (l == r) ? to_string(l)
+							: (l < r) ? to_string(RandomGenerator::Randint(l, r))
+							: to_string(RandomGenerator::Randint(r, l));
 					}
 						break;
 					default:

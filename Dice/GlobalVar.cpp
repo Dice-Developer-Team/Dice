@@ -497,6 +497,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+632:格式化新增ran
 631:WebUI新增mod页
 630:修复初始认主
 629:恢复远程更新
