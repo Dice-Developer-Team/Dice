@@ -887,12 +887,12 @@ void DiceMod::loadDir() {
 		}
 		if (fs::exists(pathDir / "image")) {
 			std::filesystem::copy(pathDir / "image", dirExe / "data" / "image",
-				std::filesystem::copy_options::recursive);
+				std::filesystem::copy_options::recursive| std::filesystem::copy_options::overwrite_existing);
 			cntImage = cntDirFile(pathDir / "image");
 		}
 		if (fs::exists(pathDir / "audio")) {
 			std::filesystem::copy(pathDir / "audio", dirExe / "data" / "record",
-				std::filesystem::copy_options::recursive);
+				std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
 			cntAudio = cntDirFile(pathDir / "audio");
 		}
 		if (auto dirScript{ pathDir / "script" }; fs::exists(dirScript)) {
