@@ -28,11 +28,11 @@ bool DiceSession::table_del(const string& tab, const string& item) {
 	return true;
 }
 
-int DiceSession::table_add(const string& tab, int prior, const string& item)
-{
+bool DiceSession::table_add(const string& tab, int prior, const string& item) {
+	if (!attrs.has(tab))attrs.set(tab, AttrObject());
 	attrs.get_obj(tab).set(item,prior);
 	update();
-	return 0;
+	return true;
 }
 
 string DiceSession::table_prior_show(const string& tab) const{

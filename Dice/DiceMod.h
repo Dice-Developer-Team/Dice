@@ -179,6 +179,7 @@ public:
 	void turn_over(size_t);
 	void uninstall(const string& name);
 
+	string& format_token(AttrObject , bool, const dict_ci<string>&, string&, char, stack<string>)const;
 	string format(string, AttrObject = {},
 		bool isTrust = true,
 		const dict_ci<string>& = {}) const;

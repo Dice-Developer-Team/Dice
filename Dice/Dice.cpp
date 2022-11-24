@@ -610,6 +610,7 @@ EVE_PrivateMsg(eventPrivateMsg)
 		AttrVars{ { "Event", "Message" },
 			{ "fromMsg", message },
 			{ "uid", fromUID },
+			{ "time",(long long)time(nullptr)},
 		}, chatInfo{ fromUID,0,0 }));
 	return Msg->DiceFilter() || fmt->call_hook_event(Msg->merge({
 		{"hook","WhisperIgnored"},
@@ -628,7 +629,8 @@ EVE_GroupMsg(eventGroupMsg)
 				{ "fromMsg", message },
 				{ "msgid",msgId },
 				{ "uid",fromUID },
-				{ "gid",fromGID }
+				{ "gid",fromGID },
+				{ "time",(long long)time(nullptr)},
 				}), chatInfo{ fromUID,fromGID,0 }));
 		return Msg->DiceFilter();
 	}
@@ -647,7 +649,8 @@ EVE_ChannelMsg(eventChannelMsg)
 				{ "msgid", msgId },
 				{ "uid", fromUID },
 				{ "gid", fromGID },
-				{ "chid", fromChID }
+				{ "chid", fromChID },
+				{ "time",(long long)time(nullptr)}
 				}), chatInfo{ fromUID,fromGID,fromChID }));
 		return Msg->DiceFilter();
 	}

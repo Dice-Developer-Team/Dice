@@ -1174,14 +1174,14 @@ void LuaState::regist() {
 	lua_getfield(state, -1, "path");
 	static string strPath{ (DiceDir / "plugin" / "?.lua").string() + ";"
 		+ (DiceDir / "plugin" / "?" / "init.lua").string() + ";"
-		+ (dirExe / "Diceki" / "lua" / "?.lua").string() + ";"
+		+ (dirExe / "Diceki" / "lua" / "?.lua").string() + ";Diceki/lua/?.lua;"
 		+ (dirExe / "Diceki" / "lua" / "?" / "init.lua").string() + ";"
 		+ lua_tostring(state, -1) };
 	lua_push_string(state, strPath.c_str());
 	lua_setfield(state, -3, "path");
 	lua_pop(state, 1);
 	lua_getfield(state, -1, "cpath");
-	static string strCPath{ (dirExe / "Diceki" / "lua" / "?.dll").string() + ";"
+	static string strCPath{ (dirExe / "Diceki" / "lua" / "?.dll").string() + ";Diceki/lua/?.dll;"
 		+ (dirExe / "Diceki" / "lib" / "?.dll").string() + ";"
 		+ lua_tostring(state, -1) };
 	lua_push_string(state, strCPath.c_str());
@@ -1225,6 +1225,7 @@ void DiceModManager::loadPlugin(ResList& res) {
 	ShowList err;
 	int cntPlugin{ 0 };
 	int cntTask{ 0 };
+	plugin_reply.clear();
 	taskcall.clear();
 	for (const auto& pathFile : files) {
 		if ((pathFile.extension() != ".lua")) {

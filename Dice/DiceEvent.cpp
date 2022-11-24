@@ -3384,12 +3384,12 @@ int DiceEvent::InnerOrder() {
 			CharaCard& pc{ pl[fromChat.gid] };
 			bool isEmpty{ true };
 			ResList res;
-			int intFace{ pc.count("__DefaultDice")
+			int intFace{ pc.available("__DefaultDice")
 				? pc.call(string("__DefaultDice"))
 				: getUser(fromChat.uid).getConf("默认骰",100) };
 			string strFace{ to_string(intFace) };
 			string keyStatCnt{ "__StatD" + strFace + "Cnt" };	//掷骰次数
-			if (intFace <= 100 && pc.count(keyStatCnt)) {
+			if (intFace <= 100 && pc.available(keyStatCnt)) {
 				int cntRoll{ pc.Attr.get_int(keyStatCnt) };	
 				if (cntRoll > 0) {
 					isEmpty = false;
@@ -3409,7 +3409,7 @@ int DiceEvent::InnerOrder() {
 				}
 			}
 			string keyRcCnt{ "__StatRcCnt" };	//rc/sc检定次数
-			if (pc.count(keyRcCnt)) {
+			if (pc.available(keyRcCnt)) {
 				int cntRc{ pc.Attr.get_int("__StatRcCnt") };
 				if (cntRc > 0) {
 					isEmpty = false;
@@ -3417,10 +3417,9 @@ int DiceEvent::InnerOrder() {
 					res << "检定成功统计: " + to_string(sumRcSuc) + "/" + to_string(cntRc);
 					int sumRcRate{ pc.Attr.get_int("__StatRcSumRate") };//总成功率
 					res << "成功率[期望]: " + toString((double)sumRcSuc / cntRc * 100) + "% [" + toString((double)sumRcRate / cntRc) + "%]";
-					if (pc.count("__StatRcCnt5") || pc.count("__StatRcCnt96"))
-						res << "5- | 96+ 出现率: " + toString(pc.Attr.get_num("__StatRcCnt5") / cntRc * 100) + "%" + "(" + pc.Attr.get_str("__StatRcCnt5")
-						+ ") | " + toString(pc.Attr.get_num("__StatRcCnt96") / cntRc * 100) + "%" + "(" + pc.Attr.get_str("__StatRcCnt96") + ")";
-					if(pc.count("__StatRcCnt1")|| pc.count("__StatRcCnt100"))
+					res << "5- | 96+ 出现率: " + toString(pc.Attr.get_num("__StatRcCnt5") / cntRc * 100) + "%(" + pc.Attr.get_str("__StatRcCnt5")
+						+ ") | " + toString(pc.Attr.get_num("__StatRcCnt96") / cntRc * 100) + "%(" + pc.Attr.get_str("__StatRcCnt96") + ")";
+					if(pc.available("__StatRcCnt1")|| pc.available("__StatRcCnt100"))
 						res << "1 | 100 出现次数: " + pc.Attr.get_str("__StatRcCnt1") + " | " + pc.Attr.get_str("__StatRcCnt100");
 				}
 			}
@@ -3450,9 +3449,18 @@ int DiceEvent::InnerOrder() {
 			}
 			return 1;
 		}
-		if (strOption == "temp") {
+		else if (strOption == "temp") {
 			CardTemp& temp{ pl[fromChat.gid].getTemplet()};
 			reply(temp.show());
+			return 1;
+		}
+		else if (strOption == "tojson") {
+			string strName = readRest();
+			CharaCard& pc{ pl.getCard(strName, fromChat.gid) };
+			set("char", pc.getName());
+			set("type", pc.Attr.get_str("__Type"));
+			set("show", UTF8toGBK(pc.Attr.to_json().dump()));
+			replyMsg("strPcCardShow");
 			return 1;
 		}
 		replyHelp("pc");
@@ -3469,7 +3477,7 @@ int DiceEvent::InnerOrder() {
 			: chat(fromChat.gid).getConf("rc房规", console["DefaultCOCRoomRule"]);
 		int intTurnCnt = 1;
 		if (strMsg[intMsgCnt] == 'h' && isspace(static_cast<unsigned char>(strMsg[intMsgCnt + 1]))) {
-			set("hidden",true);
+			set("hidden");
 			++intMsgCnt;
 		}
 		else if (readSkipSpace(); strMsg[intMsgCnt] == '_') {
@@ -3501,7 +3509,6 @@ int DiceEvent::InnerOrder() {
 		bool isAutomatic = false;
 		//D100且有角色卡时计入统计
 		bool isStatic = PList.count(fromChat.uid);
-		CharaCard* pc{ isStatic ? &PList[fromChat.uid][fromChat.gid] : nullptr };
 		if ((strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') && strLowerMessage[intMsgCnt - 1] != ' ') {
 			isStatic = false;
 			strMainDice = strLowerMessage[intMsgCnt];
@@ -3517,8 +3524,7 @@ int DiceEvent::InnerOrder() {
 			++intMsgCnt;
 		}
 		if (strMsg.length() == intMsgCnt) {
-			set("attr",getMsg("strEnDefaultName"));
-			replyMsg("strUnknownPropErr");
+			replyHelp("strUnknownPropErr");
 			return 1;
 		}
 		string attr{ strMsg.substr(intMsgCnt) };
@@ -3532,7 +3538,8 @@ int DiceEvent::InnerOrder() {
 			intDifficulty = (attr.substr(0, 4) == "困难") ? 2 : 5;
 			attr = attr.substr(4);
 		}
-		if (pc && pc->count(attr)) {
+		CharaCard* pc{ isStatic ? &PList[fromChat.uid][fromChat.gid] : nullptr };
+		if (pc && pc->available(attr)) {
 			intMsgCnt = strMsg.length();
 			attr = pc->standard(attr);
 		}
@@ -3560,18 +3567,11 @@ int DiceEvent::InnerOrder() {
 			   strLowerMessage[intMsgCnt] ==
 			   ':')
 			intMsgCnt++;
-		string strSkillVal;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
-			strSkillVal += strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-		}
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
-			intMsgCnt++;
-		}
+		string strSkillVal = readDigit();
 		set("reason",readRest());
 		int intSkillVal;
 		if (strSkillVal.empty()) {
-			if (pc && pc->count(attr)) {
+			if (pc && pc->available(attr)) {
 				intSkillVal = PList[fromChat.uid][fromChat.gid].call(attr);
 			}
 			else {
@@ -3762,7 +3762,7 @@ int DiceEvent::InnerOrder() {
 		CharaCard* pc{ nullptr };
 		if (readNum(intSan)) {
 			if (PList.count(fromChat.uid)
-				&& (pc = &getPlayer(fromChat.uid)[fromChat.gid])->count(attr)) {
+				&& (pc = &getPlayer(fromChat.uid)[fromChat.gid])->available(attr)) {
 				intSan = pc->call(attr);
 			}
 			else {
@@ -3835,8 +3835,7 @@ int DiceEvent::InnerOrder() {
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "st") {
 		intMsgCnt += 2;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-			intMsgCnt++;
+		readSkipSpace();
 		if (intMsgCnt == strLowerMessage.length()) {
 			replyHelp("st");
 			return 1;
@@ -3893,11 +3892,10 @@ int DiceEvent::InnerOrder() {
 			}
 			return 1;
 		}
-		bool boolError = false;
 		bool isDetail = false;
 		bool isModify = false;
+		bool hasError = false;
 		//循环录入
-		int cntInput{ 0 };
 		while (intMsgCnt != strLowerMessage.length()) {
 			readSkipSpace();
 			//判定录入表达式
@@ -3908,9 +3906,9 @@ int DiceEvent::InnerOrder() {
 				}
 				if (pc.set(get_str("attr"), readExp())) {
 					replyMsg("strPcTextTooLong");
-					return 1;
+					set("error");
 				}
-				++cntInput;
+				else inc("cnt");
 				continue;
 			}
 			//读取属性名
@@ -3918,34 +3916,15 @@ int DiceEvent::InnerOrder() {
 			if (strSkillName.empty()) {
 				readSkipSpace();
 				while (strMsg[intMsgCnt] == '=' || strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '+' ||
-			           strMsg[intMsgCnt] == '-' || strMsg[intMsgCnt] == '*' || strMsg[intMsgCnt] == '/')
-				{
+			           strMsg[intMsgCnt] == '-' || strMsg[intMsgCnt] == '*' || strMsg[intMsgCnt] == '/'){
 					intMsgCnt++;
 				}
 				readDigit(false);
 				continue;
 			}
 			strSkillName = pc.standard(strSkillName);
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
+			while (strLowerMessage[intMsgCnt] ==
 				'=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
-			//判定所录入为文本
-			if (bool isSqr{ strMsg.substr(intMsgCnt, 2) == "【" }; pc.getTemplet().sInfoList.count(strSkillName) || isSqr) {
-				string strVal;
-				if (auto pos{ strMsg.find("】",intMsgCnt) }; pos != string::npos) {
-					strVal = strMsg.substr(intMsgCnt + 2, pos - intMsgCnt - 2);
-					intMsgCnt = pos + 2;
-				}
-				else {
-					strVal = readUntilTab();
-				}
-				if (pc.set(strSkillName, strVal)) {
-					replyMsg("strPcTextTooLong");
-					return 1;
-				}
-				++cntInput;
-				continue;
-			}
-			readSkipSpace();
 			//判定数值修改
 			if ((strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+')) {
 				isDetail = true;
@@ -3956,37 +3935,47 @@ int DiceEvent::InnerOrder() {
 					replyMsg("strValueErr");
 					return 1;
 				}
-				strReply += "\n" + strSkillName + "：" + Mod.FormCompleteString();
-				pc.set(strSkillName, Mod.intTotal);
-				while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
-					   '|')intMsgCnt++;
-				++cntInput;
+				else {
+					strReply += "\n" + strSkillName + "：" + Mod.FormCompleteString();
+					pc.set(strSkillName, Mod.intTotal);
+					while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
+						'|')intMsgCnt++;
+					inc("cnt");
+				}
 				continue;
 			}
+			//判定录入文本
+			else if (!isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
+				&& !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+				if (string strVal{ readUntilSpace() };  pc.set(strSkillName, strVal)) {
+					hasError = true;
+					replyMsg("strPcTextTooLong");
+					break;
+				}
+				else
+					inc("cnt");
+				continue;
+			}
+			//录入纯数值
 			string strSkillVal = readDigit();
 			if (strSkillName.empty() || strSkillVal.empty() || strSkillVal.length() > 5) {
-				boolError = true;
+				hasError = true;
+				replyMsg("strPropErr");
 				break;
 			}
 			int intSkillVal = stoi(strSkillVal);
-			//录入纯数值
-			pc.set(strSkillName, intSkillVal);
-			++cntInput;
+			if (!pc.set(strSkillName, intSkillVal)) inc("cnt");
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')
 				intMsgCnt++;
 		}
-		if (boolError) {
-			replyMsg("strPropErr");
-		}
-		else if (isModify) {
+		if (isModify) {
 			set("change", strReply);
 			replyMsg("strStModify");
 		}
-		else if(cntInput){
-			set("cnt",to_string(cntInput));
+		else if (has("cnt")) {
 			replyMsg("strSetPropSuccess");
 		}
-		else {
+		else if (!hasError) {
 			replyHelp("st");
 		}
 		return 1;
@@ -4032,10 +4021,10 @@ int DiceEvent::InnerOrder() {
 				}
 				else {
 					strAttr = readAttrName();
-					if (pc->count(strAttr)) {
+					if (pc->available(strAttr)) {
 						auto attr{ pc->get(strAttr) };
 						strMainDice += pc->getExp(strAttr);
-						if (!pc->count("&" + strAttr) && pc->get(strAttr).type == AttrVar::AttrType::Integer)strMainDice += 'a';
+						if (!pc->available("&" + strAttr) && pc->get(strAttr).type == AttrVar::AttrType::Integer)strMainDice += 'a';
 					}
 					else {
 						strReason = strAttr;
@@ -4247,7 +4236,7 @@ int DiceEvent::InnerOrder() {
 			else strMainDice.clear();
 		}
 		int intTurnCnt = 1;
-		const int intDefaultDice = (pc && pc->count("__DefaultDice")) 
+		const int intDefaultDice = (pc && pc->available("__DefaultDice"))
 			? pc->call("__DefaultDice")
 			: getUser(fromChat.uid).getConf("默认骰", 100);
 		if (strMainDice.find('#') != string::npos) {

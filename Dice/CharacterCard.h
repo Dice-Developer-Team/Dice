@@ -101,7 +101,6 @@ public:
 	fifo_dict_ci<> replaceName = {};
 	//作成时生成
 	vector<vector<string>> vBasicList = {};
-	unordered_set<string> sInfoList = {};
 	//调用时生成
 	fifo_dict_ci<> mAutoFill = {};
 	//动态引用
@@ -114,12 +113,11 @@ public:
 	fifo_dict_ci<CardBuild> mBuildOption = {};
 	CardTemp() = default;
 
-	CardTemp(const string& type, const fifo_dict_ci<>& replace, vector<vector<string>> basic, unordered_set<string> info,
+	CardTemp(const string& type, const fifo_dict_ci<>& replace, vector<vector<string>> basic,
 		const fifo_dict_ci<>& autofill, const fifo_dict_ci<>& dynamic, const fifo_dict_ci<>& exp,
 		const fifo_dict_ci<int>& skill, const fifo_dict_ci<CardBuild>& option) : type(type),
 			                                                            replaceName(replace), 
 		                                                                vBasicList(basic), 
-		                                                                sInfoList(info), 
 		                                                                mAutoFill(autofill), 
 		                                                                mVariable(dynamic), 
 		                                                                mExpression(exp), 
@@ -249,19 +247,12 @@ public:
 		const auto it = getTemplet().mBuildOption.find(para);
 		if (it == getTemplet().mBuildOption.end())return;
 		CardBuild build = it->second;
-		for (auto it2 : build.vBuildList)
-		{
+		for (auto& it2 : build.vBuildList) {
 			//exp
 			if (it2.first[0] == '&')
 			{
 				if (Attr.has(it2.first))continue;
 				Attr.set(it2.first, it2.second);
-			}
-				//info
-			else if (getTemplet().sInfoList.count(it2.first))
-			{
-				if (Attr.has(it2.first))continue;
-				Attr.set(it2.first, CardDeck::draw(it2.second));
 			}
 				//attr
 			else
@@ -292,7 +283,8 @@ public:
 
 	[[nodiscard]] string show(bool isWhole) const;
 
-	bool count(const string& key) const;
+	//can get attr by card or temp
+	bool available(const string& key) const;
 
 	bool stored(string& key) const
 	{

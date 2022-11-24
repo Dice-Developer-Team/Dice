@@ -247,15 +247,17 @@ void User::old_readb(std::ifstream& fin)
 {
 	std::lock_guard<std::mutex> lock_queue(ex_user);
 	ID = fread<long long>(fin);
-	map<string, int> intConf{ fread<string, int>(fin) };
+	map<string, int> intConf;
+	fread(fin, intConf);
 	for (auto& [key, val] : intConf) {
 		confs.set(key, val);
 	}
-	map<string, string> strConf{ fread<string, string>(fin) };
+	map<string, string> strConf;
+	fread(fin, strConf);
 	for (auto& [key, val] : strConf) {
 		confs.set(key, val);
 	}
-	strNick = fread<long long, string>(fin);
+	fread(fin, strNick);
 }
 void User::readb(std::ifstream& fin)
 {
@@ -264,7 +266,7 @@ void User::readb(std::ifstream& fin)
 	while ((tag = fread<string>(fin)) != "END") {
 		if (tag == "ID")ID = fread<long long>(fin);
 		else if (tag == "Conf")confs.readb(fin);
-		else if (tag == "Nick")strNick = fread<long long, string>(fin);
+		else if (tag == "Nick")fread(fin, strNick);
 	}
 	nTrust = confs.get_int("trust");
 	if (confs.has("tCreated"))tCreated = confs.get_ll("tCreated");
@@ -277,7 +279,6 @@ int trustedQQ(long long uid){
 	else if (!UserList.count(uid))return 0;
 	else return UserList[uid].nTrust;
 }
-
 
 int clearUser() {
 	vector<long long> UserDelete;

@@ -127,7 +127,7 @@ public:
 
 	[[nodiscard]] bool table_count(const string& key) const { return attrs.has(key); }
 	bool table_del(const string&, const string&);
-	int table_add(const string&, int, const string&);
+	bool table_add(const string&, int, const string&);
 	[[nodiscard]] string table_prior_show(const string& key) const;
 	bool table_clr(const string& key);
 

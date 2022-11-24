@@ -132,38 +132,30 @@ void fread(ifstream& fin, C& ref) {
 	ref.readb(fin);
 }
 
-// 读取二进制文件——std::map重载
-template <typename T1, typename T2>
-std::map<T1, T2> fread(ifstream& fin)
-{
-	std::map<T1, T2> m;
-	short len = fread<short>(fin);
-	if (len < 0)return m;
-	while (len--)
-	{
-		T1 key = fread<T1>(fin);
-		fread(fin, m[key]);
-	}
-	return m;
-}
-
 template <typename T1, typename T2, typename sort>
-void fread(ifstream& fin, std::map<T1, T2, sort>& dir) {
-	short len = fread<short>(fin);
-	if (len < 0)return;
-	while (len--) {
+std::map<T1, T2, sort>& fread(ifstream& fin, std::map<T1, T2, sort>& dir) {
+	if (short len = fread<short>(fin); len > 0) while (len--) {
 		T1 key = fread<T1>(fin);
 		fread(fin, dir[key]);
 	}
+	return dir;
 }
 template <typename T1, typename T2>
-void fread(ifstream& fin, std::unordered_map<T1, T2>& dir) {
-	short len = fread<short>(fin);
-	if (len < 0)return;
-	while (len--) {
+std::unordered_map<T1, T2>& fread(ifstream& fin, std::unordered_map<T1, T2>& dir) {
+	if (short len = fread<short>(fin); len > 0) while (len--) {
 		T1 key = fread<T1>(fin);
 		fread<T2>(fin, dir[key]);
 	}
+	return dir;
+}
+template <typename T1, typename T2>
+fifo_map<T1, T2> fread(ifstream& fin) {
+	fifo_map<T1, T2> dir;
+	if (short len = fread<short>(fin); len > 0) while (len--) {
+		T1 key = fread<T1>(fin);
+		fread<T2>(fin, dir[key]);
+	}
+	return dir;
 }
 // 读取二进制文件——std::set重载
 template <typename T, bool isLib>
@@ -557,6 +549,17 @@ void fwrite(ofstream& fout, C& obj)
 
 template <typename T1, typename T2>
 void fwrite(ofstream& fout, const std::map<T1, T2>&m)
+{
+	const auto len = static_cast<short>(m.size());
+	fwrite(fout, len);
+	for (const auto& it : m)
+	{
+		fwrite(fout, it.first);
+		fwrite(fout, it.second);
+	}
+}
+template <typename T1, typename T2>
+void fwrite(ofstream& fout, const std::unordered_map<T1, T2>& m)
 {
 	const auto len = static_cast<short>(m.size());
 	fwrite(fout, len);

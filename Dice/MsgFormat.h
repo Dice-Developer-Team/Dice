@@ -123,9 +123,8 @@ public:
 template <typename T>
 std::string showKey(T& m) {
 	ResList list;
-	for (auto& [key, val] : m)
-	{
-		if (key[0] == '_')continue;
+	for (auto& [key, val] : m){
+		if (key.empty() || key[0] == '_')continue;
 		list << key;
 	}
 	return list.setDot("/", "/").show();
@@ -135,7 +134,7 @@ std::string listKey(T& m){
 	ShowList list;
 	for (auto& [key,val] : m)
 	{
-		if (key[0] == '_')continue;
+		if (key.empty() || key[0] == '_')continue;
 		list << key;
 	}
 	return list.show("/");

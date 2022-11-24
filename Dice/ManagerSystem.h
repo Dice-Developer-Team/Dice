@@ -51,7 +51,7 @@ public:
 	User(){}
 
 	AttrObject confs;
-	map<long long, string> strNick{};
+	unordered_map<long long, string> strNick{};
 	std::mutex ex_user;
 
 	User& id(long long qq)

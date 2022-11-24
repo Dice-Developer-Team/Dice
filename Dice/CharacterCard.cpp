@@ -20,7 +20,7 @@
 fifo_dict_ci<CardTemp> CharaCard::mCardTemplet{
 	{
 		"COC7", CardTemp{
-			"COC7", SkillNameReplace, BasicCOC7, InfoCOC7, AutoFillCOC7, mVariableCOC7, ExpressionCOC7,
+			"COC7", SkillNameReplace, BasicCOC7, AutoFillCOC7, mVariableCOC7, ExpressionCOC7,
 			SkillDefaultVal, {
 				{"_default", CardBuild({BuildCOC7},  {"{随机姓名}"}, {})},
 				{
@@ -34,7 +34,7 @@ fifo_dict_ci<CardTemp> CharaCard::mCardTemplet{
 		}
 	},
 	{"BRP", {
-			"BRP", {}, {}, {}, {}, {}, {}, {
+			"BRP", {}, {}, {}, {}, {}, {
 				{"__DefaultDice",100}
 			}, {
 				{"_default", CardBuild({},  {"{随机姓名}"}, {})},
@@ -48,7 +48,7 @@ fifo_dict_ci<CardTemp> CharaCard::mCardTemplet{
 			}
 	}},
 	{"DND", {
-			"DND", {}, {}, {}, {}, {}, {}, {
+			"DND", {}, {}, {}, {}, {}, {
 				{"__DefaultDice",20}
 			}, {
 				{"_default", CardBuild({}, {"{随机姓名}"}, {})},
@@ -77,11 +77,6 @@ void CardTemp::readt(const DDOM& d) 	{
 				vBasicList.push_back(getLines(sub.strValue));
 			}
 			break;
-		case 102:
-			for (const auto& sub : getLines(node.strValue)) 				{
-				sInfoList.insert(sub);
-			}
-			break;
 		case 22:
 			readini(node.strValue, mAutoFill);
 			break;
@@ -99,6 +94,7 @@ void CardTemp::readt(const DDOM& d) 	{
 				mBuildOption[sub.strValue] = CardBuild(sub);
 			}
 			break;
+		case 102:
 		default:
 			break;
 		}
@@ -157,6 +153,7 @@ AttrVar CharaCard::get(string key)const {
 int CharaCard::set(string key, const AttrVar& val) {
 	if (key.empty())return -1;
 	if (key == "__Name")return -8;
+	if (val.is_text()&&val.to_str().length()>256)return -11;
 	key = standard(key);
 	if (getTemplet().defaultSkill.count(key) && val == getTemplet().defaultSkill.at(key)){
 		if (Attr.has(key)) Attr.reset(key);
@@ -202,7 +199,7 @@ int CharaCard::call(string key)const {
 	else if (templet.defaultSkill.count(key))return templet.defaultSkill.find(key)->second;
 	return 0;
 }
-bool CharaCard::count(const string& strKey) const {
+bool CharaCard::available(const string& strKey) const {
 	if (Attr.has(strKey))return true;
 	string key{ standard(strKey) };
 	auto& temp{ getTemplet() };
