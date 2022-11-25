@@ -12,10 +12,14 @@ jobs:
       matrix:
         include:
         - type: Win32
+          cc: cl
+          cxx: cl
           triplet: x86-windows-static
           mono: ''
           dll_sfx: windows.i386
         - type: x64
+          cc: cl
+          cxx: cl
           triplet: x64-windows-static
           mono: ''
           dll_sfx: windows.amd64
