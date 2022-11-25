@@ -1073,14 +1073,15 @@ int httpGet(lua_State* L) {
 		return 0;
 	}
 	string ret;
-	lua_pushboolean(L, Network::GET(url, ret));
-	lua_push_raw_string(L, ret);
+	bool flag{ Network::GET(url, ret) };
+	lua_pushboolean(L, flag);
+	flag ? lua_push_raw_string(L, ret) : lua_push_string(L, ret);
 	return 2;
 }
 int httpPost(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	string url{ lua_tostring(L,1) };
-	string content{ lua_istable(L,3) ? to_json(lua_to_dict(L,3)).dump() : lua_to_raw_string(L,2) };
+	string content{ lua_istable(L,2) ? to_json(lua_to_dict(L,2)).dump() : lua_to_raw_string(L,2) };
 	if (url.empty() || content.empty()) {
 		return 0;
 	}
@@ -1096,13 +1097,13 @@ int httpPost(lua_State* L) {
 				lua_pop(L, 1);
 			}
 			type = li.show("\r\n");
-			DD::debugLog(type);
 		}
 		else if (lua_isstring(L,3))type = lua_tostring(L, 3);
 	}
 	string ret;
-	lua_pushboolean(L, Network::POST(url, content, type, ret));
-	lua_push_raw_string(L, ret);
+	bool flag{ Network::POST(url, content, type, ret) };
+	lua_pushboolean(L, flag);
+	flag ? lua_push_raw_string(L, ret) : lua_push_string(L, ret);
 	return 2;
 }
 int httpUrlEncode(lua_State* L) {
