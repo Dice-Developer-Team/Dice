@@ -655,12 +655,12 @@ void DiceModManager::call_cycle_event(const string& id) {
 		lua_call_event(eve, action->at("lua"));
 	}
 	auto trigger{ eve.get_dict("trigger") };
-	if (trigger->count("cycle") && !Enabled) {
+	if (trigger->count("cycle")) {
 		sch.add_job_for(parse_seconds(trigger->at("cycle")), eve);
 	}
 }
 void DiceModManager::call_clock_event(const string& id) {
-	if (!Enabled || id.empty() || !global_events.count(id))return;
+	if (id.empty() || !global_events.count(id))return;
 	AttrObject eve{ global_events[id] };
 	auto action{ eve["action"] };
 	if (!action)return;
@@ -670,7 +670,6 @@ void DiceModManager::call_clock_event(const string& id) {
 	lua_call_event(eve, action);
 }
 bool DiceModManager::call_hook_event(AttrObject eve) {
-	if (!Enabled)return true;
 	string hookEvent{ eve.has("hook") ? eve.get_str("hook") : eve.get_str("Event") };
 	if (hookEvent.empty())return false;
 	for (auto& [id, hook] : multi_range(hook_events, hookEvent)) {
