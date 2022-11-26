@@ -25,7 +25,7 @@ void SelfData::save() {
 	std::lock_guard<std::mutex> lock(exWrite);
 	switch (type) {
 	case Json:
-		fwriteJson(pathFile, data.to_json(), 0);
+		fwriteJson(pathFile, data.to_json(), 1);
 		break;
 	case Bin:
 		if (std::ofstream fs{ pathFile })data.writeb(fs);

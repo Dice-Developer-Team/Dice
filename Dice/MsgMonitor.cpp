@@ -75,7 +75,7 @@ void frqHandler()
 }
 
 
-FrqMonitor::FrqMonitor(DiceEvent& msg) : fromUID(msg.fromChat.uid), fromTime(msg.get_ll("fromTime")) {
+FrqMonitor::FrqMonitor(DiceEvent& msg) : fromUID(msg.fromChat.uid), fromTime(msg.get_ll("time")) {
 	if (mFrequence.count(fromUID)) {
 		mFrequence[fromUID] += 10;
 		mCntOrder[fromUID] += 1;

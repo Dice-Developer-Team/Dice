@@ -29,6 +29,7 @@
 #include "DiceEvent.h"
 #include "DiceLua.h"
 #include "DiceMsgReply.h"
+#include "DiceSelfData.h"
 #include "RandomGenerator.h"
 #include "DDAPI.h"
 #include "yaml-cpp/yaml.h"
@@ -1124,6 +1125,8 @@ void DiceModManager::build() {
 void DiceModManager::clear(){
 	modOrder.clear();
 	modList.clear();
+	selfdata_byFile.clear();
+	selfdata_byStem.clear();
 }
 
 void DiceModManager::save() {

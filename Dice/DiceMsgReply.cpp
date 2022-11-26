@@ -855,6 +855,7 @@ void DiceReplyUnit::insert(const string& key, ptr<DiceMsgReply> reply) {
 	items[key] = reply;
 }
 void DiceReplyUnit::erase(ptr<DiceMsgReply> reply) {
+	items.erase(reply->title);
 	if (reply->keyMatch[1]) {
 		for (auto& word : *reply->keyMatch[1]) {
 			prefix_items.erase(word);

@@ -53,7 +53,6 @@ AttrIndexs MsgIndexs{
 
 DiceEvent::DiceEvent(const AttrVars& var, const chatInfo& ct)
 	:AttrObject(var), strMsg(at("fromMsg").text), fromChat(ct) {
-	set("fromTime", (long long)time(nullptr));
 	if (fromChat.gid) {
 		pGrp = &chat(fromChat.gid);
 	}
@@ -122,7 +121,7 @@ void DiceEvent::replyHidden() {
 	auto session{ sessions.get_if(here) };
 	if (session && session->is_logging()) {
 		ofstream logout(session->log_path(), ios::out | ios::app);
-		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("fromTime")) << endl
+		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time")) << endl
 			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
 	}
 	strReply = "在" + printChat(fromChat) + "中 " + forward_filter(strReply);
@@ -151,7 +150,7 @@ void DiceEvent::logEcho(){
 	if (auto session{sessions.get_if(here)}; session && session->is_logging()
 		&& strLowerMessage.find(".log") != 0) {
 		ofstream logout(session->log_path(), ios::out | ios::app);
-		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("fromTime")) << endl
+		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time")) << endl
 			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
 	}
 }
@@ -168,7 +167,7 @@ void DiceEvent::fwdMsg(){
 	if (auto session{ sessions.get_if(here) }; session && session->is_logging()
 		&& strLowerMessage.find(".log") != 0) {
 		ofstream logout(session->log_path(), ios::out | ios::app);
-		logout << GBKtoUTF8(idx_pc(*this).to_str()) + "(" + to_string(fromChat.uid) + ") " + printTTime((time_t)get_ll("fromTime")) << endl
+		logout << GBKtoUTF8(idx_pc(*this).to_str()) + "(" + to_string(fromChat.uid) + ") " + printTTime((time_t)get_ll("time")) << endl
 			<< GBKtoUTF8(filter_CQcode(strMsg, fromChat.gid)) << endl << endl;
 	}
 }
@@ -4452,8 +4451,8 @@ bool DiceEvent::DiceFilter()
 	if (BasicOrder()) {
 		if (!isVirtual) {
 			AddFrq(*this);
-			getUser(fromChat.uid).update((time_t)get_ll("fromTime"));
-			if (!isPrivate())chat(fromChat.gid).update((time_t)get_ll("fromTime"));
+			getUser(fromChat.uid).update((time_t)get_ll("time"));
+			if (!isPrivate())chat(fromChat.gid).update((time_t)get_ll("time"));
 		}
 		return 1;
 	}
@@ -4469,22 +4468,22 @@ bool DiceEvent::DiceFilter()
 	if (!is("order_off") && (fmt->listen_order(this) || InnerOrder())) {
 		if (!isVirtual && !is("ignored")) {
 			AddFrq(*this);
-			getUser(fromChat.uid).update((time_t)get_ll("fromTime"));
-			if (pGrp)pGrp->update((time_t)get_ll("fromTime"));
+			getUser(fromChat.uid).update((time_t)get_ll("time"));
+			if (pGrp)pGrp->update((time_t)get_ll("time"));
 		}
 		return true;
 	}
 	if (fmt->listen_reply(this)) {
 		if (!isVirtual && !is("ignored")) {
 			AddFrq(*this);
-			getUser(fromChat.uid).update((time_t)get_ll("fromTime"));
-			if (pGrp)pGrp->update((time_t)get_ll("fromTime"));
+			getUser(fromChat.uid).update((time_t)get_ll("time"));
+			if (pGrp)pGrp->update((time_t)get_ll("time"));
 		}
 		return true;
 	}
 	if (isCalled && (strMsg.empty() || strMsg == strSummon))replyMsg("strSummonEmpty");
-	if (isCalled && WordCensor()) {
-		return true;
+	if (isCalled) {
+		WordCensor();
 	}
 	return false;
 }
@@ -4496,14 +4495,14 @@ bool DiceEvent::WordCensor() {
 		case 3:
 			if (trusted < danger++) {
 				console.log("警告:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName") + "发送了含敏感词消息:\n" + strMsg, 0b1000,
-							printTTime((time_t)get_ll("fromTime")));
+							printTTime((time_t)get_ll("time")));
 				replyMsg("strCensorDanger");
 				return 1;
 			}
 		case 2:
 			if (trusted < danger++) {
 				console.log("警告:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName")
-					+ "发送了含敏感词消息(" + listItem(sens_words) + "):\n" + strMsg, 0b10, printTTime((time_t)get_ll("fromTime")));
+					+ "发送了含敏感词消息(" + listItem(sens_words) + "):\n" + strMsg, 0b10, printTTime((time_t)get_ll("time")));
 				replyMsg("strCensorWarning");
 				break;
 			}
@@ -4511,14 +4510,14 @@ bool DiceEvent::WordCensor() {
 			if (trusted < danger++) {
 				console.log("提醒:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName")
 					+ "发送了含敏感词消息("	+ listItem(sens_words) + "):\n" + strMsg, 0b10,
-							printTTime((time_t)get_ll("fromTime")));
+							printTTime((time_t)get_ll("time")));
 				replyMsg("strCensorCaution");
 				break;
 			}
 		case 0:
 			console.log("提醒:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName")
 				+ "发送了含敏感词消息(" + listItem(sens_words) +"):\n" + strMsg, 1,
-						printTTime((time_t)get_ll("fromTime")));
+						printTTime((time_t)get_ll("time")));
 			break;
 		default:
 			break;

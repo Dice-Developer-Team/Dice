@@ -409,7 +409,6 @@ int selfData_set(lua_State* L) {
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
 	if (lua_istable(L, 2)) {
 		file.data = lua_to_dict(L, 2);
-		file.save();
 	}
 	else if(lua_isstring(L, 2)) {
 		string key{ lua_to_gbstring(L, 2) };
@@ -417,8 +416,8 @@ int selfData_set(lua_State* L) {
 			file.data.reset(key);
 		}
 		else file.data.set(key, lua_to_attr(L, 3));
-		file.save();
 	}
+	file.save();
 	return 0;
 }
 int SelfData_index(lua_State* L) {
