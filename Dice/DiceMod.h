@@ -142,7 +142,6 @@ class DiceModManager {
 	dict_ci<ptr<DiceMsgReply>> plugin_reply;
 	dict_ci<ptr<DiceMsgReply>> custom_reply;
 	//global
-	dict_ci<DiceSpeech> global_speech;
 	dict_ci<> global_helpdoc;
 	DiceReplyUnit final_reply;
 	dict_ci<string> global_scripts;
@@ -161,6 +160,7 @@ public:
 		git_libgit2_shutdown();
 #endif
 	}
+	dict_ci<DiceSpeech> global_speech;
 	multimap<Clock, string> clock_events;
 	friend class CustomReplyApiHandler; 
 	friend class ModListApiHandler;
@@ -179,8 +179,7 @@ public:
 	void turn_over(size_t);
 	void uninstall(const string& name);
 
-	string& format_token(AttrObject , bool, const dict_ci<string>&, string&, char, stack<string>)const;
-	string format(string, AttrObject = {},
+	string format(const string&, AttrObject = {},
 		bool isTrust = true,
 		const dict_ci<string>& = {}) const;
 	string msg_get(const string& key)const;

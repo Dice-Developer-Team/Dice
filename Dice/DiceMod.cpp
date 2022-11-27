@@ -363,135 +363,161 @@ void DiceModManager::turn_over(size_t idx) {
 }
 static enumap<string> methods{ "print","help","sample","case","vary","grade","at","ran","wait" };
 enum class FmtMethod { Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait};
-
-string& DiceModManager::format_token(AttrObject context, bool isTrust, const dict_ci<string>& dict, string& s, char idx, stack<string>nodes)const {
-	char chSign[3]{ char(0xAA),idx,'\0' };
-	while (!nodes.empty()) {
-		size_t pos{ 0 };
-		if ((pos = s.find(chSign)) != string::npos) {
-			string& key{ nodes.top() };
-			string val{ "{" + key + "}" };
-			if (key == "{" || key == "}") {
-				val = key;
+class Parser {
+	string exp;
+	AttrObject context;
+	bool isTrust{ true };
+	dict_ci<string> dict;
+	std::list<std::pair<string, char>> nodes;
+public:
+	Parser(const string& s, const AttrObject& obj, bool t = true, const dict_ci<string>& con = {}) :exp(s), context(obj), isTrust(t), dict(con) {
+		char chSign[3]{ char(0xAA),char(0xAA),'\0' };
+		size_t lastL{ 0 }, lastR{ 0 };
+		while ((lastR = exp.find('}', ++lastR)) != string::npos
+			&& (lastL = exp.rfind('{', lastR)) != string::npos) {
+			string key;
+			//括号前加‘\’表示该括号内容不转义
+			if (exp[lastR - 1] == '\\') {
+				lastL = lastR - 1;
+				key = "}";
 			}
-			else if (context.has(key)) {
-				if (key == "res")val = format(context.print(key), context, isTrust, dict);
-				else val = context.print(key);
+			else if (lastL > 0 && exp[lastL - 1] == '\\') {
+				lastR = lastL--;
+				key = "{";
 			}
-			else if (AttrVar res{ getContextItem(context, key, isTrust) }) {
-				val = res.print();
-			}
-			else if (auto cit = dict.find(key); cit != dict.end()) {
-				val = format(cit->second, context, isTrust, dict);
-			}
-			//语境优先于全局
-			else if (auto sp = global_speech.find(key); sp != global_speech.end()) {
-				val = format(sp->second.express(), context, isTrust, dict);
-				if (!isTrust && val == "\f")val = "\f< ";
-			}
-			else if (size_t colon{ key.find(':') }; colon != string::npos) {
-				string method{ key.substr(0,colon) };
-				string para{ key.substr(colon + 1) };
-				if (methods.count(method))
-					switch ((FmtMethod)methods[method]) {
-					case FmtMethod::Help:
-						val = get_help(format_token(context, isTrust, dict, para, chSign[1], nodes), context);
-						break;
-					case FmtMethod::Sample:
-						if (vector<string> samples{ split(para,"|") }; samples.empty())val = "";
-						else
-							val = format(samples[RandomGenerator::Randint(0, samples.size() - 1)],
-								context, isTrust, dict);
-						break;
-					case FmtMethod::At:
-						if (format_token(context, isTrust, dict, para, chSign[1], nodes) == "self") {
-							val = "[CQ:at,qq=" + to_string(console.DiceMaid) + "]";
-						}
-						else if (!para.empty()) {
-							val = "[CQ:at,qq=" + para + "]";
-						}
-						else if (context.has("uid")) {
-							val = "[CQ:at,qq=" + context.get_str("uid") + "]";
-						}
-						else val = {};
-						break;
-					case FmtMethod::Print:
-						if (auto paras{ splitPairs(para,'=','&') }; paras.count("uid")) {
-							if (isTrust && paras["uid"].empty())val = printUser(context.get_ll("uid"));
-							else val = printUser(AttrVar(paras["uid"]).to_ll());
-						}
-						else if (paras.count("gid")) {
-							if (isTrust && paras["gid"].empty())val = printGroup(context.get_ll("gid"));
-							else val = printGroup(AttrVar(paras["gid"]).to_ll());
-						}
-						else if (paras.count("master")) {
-							val = console ? printUser(console) : "[无主]";
-						}
-						else val = {};
-						break;
-					case FmtMethod::Case:
-					case FmtMethod::Vary: {
-						auto [item, strVary] = readini<string, string>(para, '?');
-						auto paras{ splitPairs(strVary,'=','&') };
-						auto itemVal{ getContextItem(context, format_token(context, isTrust, dict, item, chSign[1], nodes), isTrust) };
-						if (auto it{ paras.find(itemVal.print()) }; it != paras.end()
-							|| (it = paras.find("else")) != paras.end()) {
-							val = format(it->second, context, isTrust);
-						}
-						else val = {};
-					}
-					break;
-					case FmtMethod::Grade: {
-						auto [item, strVary] = readini<string, string>(para, '?');
-						auto paras{ splitPairs(strVary,'=','&') };
-						auto itemVal{ getContextItem(context, format_token(context, isTrust, dict, item, chSign[1], nodes), isTrust) };
-						grad_map<double, string>grade;
-						for (auto& [step, value] : paras) {
-							if (step == "else")grade.set_else(value);
-							else if (isNumeric(step))
-								grade.set_step(stod(step), value);
-							else if (auto stepVal{ getContextItem(context,step, isTrust) }; stepVal.is_numberic())
-								grade.set_step(stepVal.to_num(), value);
-						}
-						if (itemVal.is_numberic())val = grade[itemVal.to_num()];
-						else val = grade.get_else();
-						val = format(val, context, isTrust);
-					}break;
-					case FmtMethod::Ran: {
-						auto [min, max] = readini<string, string>(para, '~');
-						int l = AttrVar::parse(format_token(context, isTrust, dict, min, chSign[1], nodes)).to_int(),
-							r = AttrVar::parse(format_token(context, isTrust, dict, max, chSign[1], nodes)).to_int();
-						val = (l == r) ? to_string(l)
-							: (l < r) ? to_string(RandomGenerator::Randint(l, r))
-							: to_string(RandomGenerator::Randint(r, l));
-					}
-									   break;
-					case FmtMethod::Wait:
-						if (long long ms{ AttrVar::parse(format_token(context, isTrust, dict, para, chSign[1], nodes)).to_ll() }; 0 < ms && ms < 600000)
-							std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-						val = {};
-						break;
-					default:
-						break;
-					}
-			}
-			else if (auto func = strFuncs.find(key); func != strFuncs.end()) {
-				val = func->second();
-			}
-			do {
-				s.replace(pos, 2, val);
-			} while ((pos = s.find(chSign)) != string::npos);
+			else key = exp.substr(lastL + 1, lastR - lastL - 1);
+			nodes.emplace_back(key, ++chSign[1]);
+			exp.replace(lastL, lastR - lastL + 1, chSign);
+			lastR = lastL + 1;
 		}
-		--chSign[1];
-		nodes.pop();
+		if(!nodes.empty())format_token(exp, --nodes.rbegin());
 	}
-	return s;
-}
-string DiceModManager::format(string s, AttrObject context, bool isTrust, const dict_ci<string>& dict) const {
+	string& format_token(string& s, std::list<std::pair<string, char>>::reverse_iterator it) {
+		char chSign[3]{ char(0xAA),(++it)->second,'\0'};
+		size_t pos{ 0 };
+		while (chSign[1] > char(0xAA)) {
+			if ((pos = s.find(chSign)) != string::npos) {
+				string& key{ it->first };
+				string val{ "{" + key + "}" };
+				if (key == "{" || key == "}") {
+					val = key;
+				}
+				else if (context.has(key)) {
+					if (key == "res")val = fmt->format(context.print(key), context, isTrust, dict);
+					else val = context.print(key);
+				}
+				else if (AttrVar res{ getContextItem(context, key, isTrust) }) {
+					val = res.print();
+				}
+				else if (auto cit = dict.find(key); cit != dict.end()) {
+					val = fmt->format(cit->second, context, isTrust, dict);
+				}
+				//语境优先于全局
+				else if (auto sp = fmt->global_speech.find(key); sp != fmt->global_speech.end()) {
+					val = Parser(sp->second.express(), context, isTrust, dict);
+					if (!isTrust && val == "\f")val = "\f< ";
+				}
+				else if (size_t colon{ key.find(':') }; colon != string::npos) {
+					string method{ key.substr(0,colon) };
+					string para{ key.substr(colon + 1) };
+					if (methods.count(method))switch ((FmtMethod)methods[method]) {
+						case FmtMethod::Help:
+							val = fmt->get_help(format_token(para, it), context);
+							break;
+						case FmtMethod::Sample:
+							if (vector<string> samples{ split(para,"|") }; samples.empty())val = "";
+							else
+								val = samples[RandomGenerator::Randint(0, samples.size() - 1)];
+							break;
+						case FmtMethod::At:
+							if (format_token(para, it) == "self") {
+								val = "[CQ:at,qq=" + to_string(console.DiceMaid) + "]";
+							}
+							else if (!para.empty()) {
+								val = "[CQ:at,qq=" + para + "]";
+							}
+							else if (context.has("uid")) {
+								val = "[CQ:at,qq=" + context.get_str("uid") + "]";
+							}
+							else val = {};
+							break;
+						case FmtMethod::Print:
+							if (auto paras{ splitPairs(para,'=','&') }; paras.count("uid")) {
+								if (isTrust && paras["uid"].empty())val = printUser(context.get_ll("uid"));
+								else val = printUser(AttrVar(paras["uid"]).to_ll());
+							}
+							else if (paras.count("gid")) {
+								if (isTrust && paras["gid"].empty())val = printGroup(context.get_ll("gid"));
+								else val = printGroup(AttrVar(paras["gid"]).to_ll());
+							}
+							else if (paras.count("master")) {
+								val = console ? printUser(console) : "[无主]";
+							}
+							else val = {};
+							break;
+						case FmtMethod::Case:
+						case FmtMethod::Vary: {
+							auto [item, strVary] = readini<string, string>(para, '?');
+							auto paras{ splitPairs(strVary,'=','&') };
+							auto itemVal{ getContextItem(context, format_token(item, it), isTrust) };
+							if (auto it{ paras.find(itemVal.print()) }; it != paras.end()
+								|| (it = paras.find("else")) != paras.end()) {
+								val = it->second;
+							}
+							else val = {};
+						}break;
+						case FmtMethod::Grade: {
+							auto [item, strVary] = readini<string, string>(para, '?');
+							auto paras{ splitPairs(strVary,'=','&') };
+							auto itemVal{ getContextItem(context, format_token(item, it), isTrust) };
+							grad_map<double, string>grade;
+							for (auto& [step, value] : paras) {
+								if (step == "else")grade.set_else(value);
+								else if (isNumeric(step))
+									grade.set_step(stod(step), value);
+								else if (auto stepVal{ getContextItem(context,step, isTrust) }; stepVal.is_numberic())
+									grade.set_step(stepVal.to_num(), value);
+							}
+							if (itemVal.is_numberic())val = grade[itemVal.to_num()];
+							else val = grade.get_else();
+						}break;
+						case FmtMethod::Ran: {
+							auto [min, max] = readini<string, string>(para, '~');
+							int l = AttrVar::parse(format_token(min, it)).to_int(),
+								r = AttrVar::parse(format_token(max, it)).to_int();
+							val = (l == r) ? to_string(l)
+								: (l < r) ? to_string(RandomGenerator::Randint(l, r))
+								: to_string(RandomGenerator::Randint(r, l));
+						}break;
+						case FmtMethod::Wait:
+							if (long long ms{ AttrVar::parse(format_token(para, it)).to_ll() }; 0 < ms && ms < 600000)
+								std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+							val = {};
+							break;
+						default:
+							break;
+						}
+				}
+				else if (auto func = strFuncs.find(key); func != strFuncs.end()) {
+					val = func->second();
+				}
+				s.replace(pos, 2, val);
+			}
+			it++;
+			--chSign[1];
+		}
+		return s;
+	}
+	operator string() {
+		return exp;
+	}
+};
+
+string DiceModManager::format(const string& s, AttrObject context, bool isTrust, const dict_ci<string>& dict) const {
 	//直接重定向
 	if (s[0] == '&') {
 		const string key = s.substr(1);
-		if (auto val{ getContextItem(context,key, isTrust) }) {
+		if (auto val{ getContextItem(context, key, isTrust) }) {
 			return val.print();
 		}
 		else if (const auto it = dict.find(key); it != dict.end()) {
@@ -501,29 +527,8 @@ string DiceModManager::format(string s, AttrObject context, bool isTrust, const 
 			return fmt->format(it->second.express(), context, isTrust, dict);
 		}
 	}
-	stack<string>nodes;
-	char chSign[3]{ char(0xAA),char(0xAA),'\0' };
-	size_t lastL{ 0 }, lastR{ 0 };
-	while ((lastR = s.find('}', ++lastR)) != string::npos
-		&& (lastL = s.rfind('{', lastR)) != string::npos) {
-		string key;
-		//括号前加‘\’表示该括号内容不转义
-		if (s[lastR - 1] == '\\') {
-			lastL = lastR - 1;
-			key = "}";
-		}
-		else if (lastL > 0 && s[lastL - 1] == '\\') {
-			lastR = lastL--;
-			key = "{";
-		}
-		else key = s.substr(lastL + 1, lastR - lastL - 1);
-		nodes.push(key);
-		++chSign[1];
-		s.replace(lastL, lastR - lastL + 1, chSign);
-		lastR = lastL + 1;
-	}
-	format_token(context, isTrust, dict, s, chSign[1], nodes);
-	return s;
+	if (s.find('{') == string::npos)return s;
+	return Parser(s, context, isTrust, dict);
 }
 std::shared_mutex GlobalMsgMutex;
 string DiceModManager::msg_get(const string& key)const {
