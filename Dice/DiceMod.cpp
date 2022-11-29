@@ -392,13 +392,13 @@ public:
 		}
 		if(!nodes.empty())format_token(exp, --nodes.rbegin());
 	}
-	string& format_token(string& s, std::list<std::pair<string, char>>::reverse_iterator it) {
+	AttrVar format_token(string& s, std::list<std::pair<string, char>>::reverse_iterator it) {
 		char chSign[3]{ char(0xAA),(++it)->second,'\0'};
 		size_t pos{ 0 };
 		while (chSign[1] > char(0xAA)) {
 			if ((pos = s.find(chSign)) != string::npos) {
 				string& key{ it->first };
-				string val{ "{" + key + "}" };
+				AttrVar val{ "{" + key + "}" };
 				if (key == "{" || key == "}") {
 					val = key;
 				}
@@ -407,14 +407,14 @@ public:
 					else val = context.print(key);
 				}
 				else if (AttrVar res{ getContextItem(context, key, isTrust) }) {
-					val = res.print();
+					val = res;
 				}
 				else if (auto cit = dict.find(key); cit != dict.end()) {
 					val = fmt->format(cit->second, context, isTrust, dict);
 				}
 				//语境优先于全局
 				else if (auto sp = fmt->global_speech.find(key); sp != fmt->global_speech.end()) {
-					val = Parser(sp->second.express(), context, isTrust, dict);
+					val = fmt->format(sp->second.express(), context, isTrust, dict);
 					if (!isTrust && val == "\f")val = "\f< ";
 				}
 				else if (size_t colon{ key.find(':') }; colon != string::npos) {
@@ -422,7 +422,7 @@ public:
 					string para{ key.substr(colon + 1) };
 					if (methods.count(method))switch ((FmtMethod)methods[method]) {
 						case FmtMethod::Help:
-							val = fmt->get_help(format_token(para, it), context);
+							val = fmt->get_help(format_token(para, it).to_str(), context);
 							break;
 						case FmtMethod::Sample:
 							if (vector<string> samples{ split(para,"|") }; samples.empty())val = "";
@@ -439,7 +439,7 @@ public:
 							else if (context.has("uid")) {
 								val = "[CQ:at,qq=" + context.get_str("uid") + "]";
 							}
-							else val = {};
+							else val.des();
 							break;
 						case FmtMethod::Print:
 							if (auto paras{ splitPairs(para,'=','&') }; paras.count("uid")) {
@@ -453,7 +453,7 @@ public:
 							else if (paras.count("master")) {
 								val = console ? printUser(console) : "[无主]";
 							}
-							else val = {};
+							else val.des();
 							break;
 						case FmtMethod::Case:
 						case FmtMethod::Vary: {
@@ -464,7 +464,7 @@ public:
 								|| (it = paras.find("else")) != paras.end()) {
 								val = it->second;
 							}
-							else val = {};
+							else val.des();
 						}break;
 						case FmtMethod::Grade: {
 							auto [item, strVary] = readini<string, string>(para, '?');
@@ -492,7 +492,7 @@ public:
 						case FmtMethod::Wait:
 							if (long long ms{ AttrVar::parse(format_token(para, it)).to_ll() }; 0 < ms && ms < 600000)
 								std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-							val = {};
+							val.des();
 							break;
 						default:
 							break;
@@ -501,7 +501,8 @@ public:
 				else if (auto func = strFuncs.find(key); func != strFuncs.end()) {
 					val = func->second();
 				}
-				s.replace(pos, 2, val);
+				if (s == chSign && val.type != AttrVar::AttrType::Text)return val;
+				else s.replace(pos, 2, val.print());
 			}
 			it++;
 			--chSign[1];

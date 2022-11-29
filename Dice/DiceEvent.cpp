@@ -3946,7 +3946,8 @@ int DiceEvent::InnerOrder() {
 			//判定录入文本
 			else if (!isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
 				&& !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
-				if (string strVal{ readUntilSpace() };  pc.set(strSkillName, strVal)) {
+				if (string strVal{ trustedQQ(fromChat.uid) > 0 ? readUntilSpace() : filter_CQcode(readUntilSpace()) };
+					pc.set(strSkillName, strVal)) {
 					hasError = true;
 					replyMsg("strPcTextTooLong");
 					break;

@@ -128,11 +128,13 @@ public:
 		if (type == AttrType::Text)text.~string();
 		else if (type == AttrType::Table)table.~AttrObject();
 		else if (type == AttrType::Function)chunk.~ByteS();
+		type = AttrType::Nil;
 	}
 	~AttrVar() {
 		des();
 	}
 	explicit operator bool()const;
+	operator string() const { return to_str(); }
 	AttrVar& operator=(const AttrVar& other);
 	AttrVar& operator=(bool other);
 	AttrVar& operator=(int other);
