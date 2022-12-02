@@ -77,7 +77,6 @@ const dict_ci<string> PlainMsg
 	{"strAkGet","#{fork}{li}\n\n{self}的选择：{get}"},
 	{"strAkShow","{self}的当前分歧:{fork} {li}"},
 	{"strAkClr","{self}已清除本轮分歧{fork}√"},
-	{"strAdminOptionEmpty","找{self}有什么事么？{nick}"},			//
 	{"strLogNew","{self}已新开记录日志{log_name}√\n请适时用.log off暂停或.log end完成记录"},
 	{"strLogOn","{self}开始日志记录{log_name}√\n可使用.log off暂停记录"},
 	{"strLogOnAlready","{self}正在记录中！"},

@@ -259,7 +259,7 @@ void CharaCard::clear() {
 			if (!show(it, strVal)) {
 				sDefault.insert(it);
 				if (it[0] == '&')subList << it + "=" + strVal;
-				else if (Attr.at(it).type == AttrVar::AttrType::Text)subList << it + ":¡¾" + strVal + "¡¿";
+				//else if (Attr.at(it).type == AttrVar::AttrType::Text)subList << it + ":" + strVal;
 				else subList << it + ":" + strVal;
 			}
 		}

@@ -911,7 +911,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 			while ((llTargetID = readID()));
 			return 1;
 		}
-		else replyMsg("strAdminOptionEmpty");
+		else replyMsg("strSummonEmpty");
 		return 0;
 	}
 }
@@ -3508,14 +3508,12 @@ int DiceEvent::InnerOrder() {
 		bool isAutomatic = false;
 		//D100且有角色卡时计入统计
 		bool isStatic = PList.count(fromChat.uid);
+		CharaCard* pc{ isStatic ? &PList[fromChat.uid][fromChat.gid] : nullptr };
 		if ((strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') && strLowerMessage[intMsgCnt - 1] != ' ') {
 			isStatic = false;
 			strMainDice = strLowerMessage[intMsgCnt];
-			intMsgCnt++;
-			while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
-				strMainDice += strLowerMessage[intMsgCnt];
-				intMsgCnt++;
-			}
+			++intMsgCnt;
+			strMainDice += readDigit(false);
 		}
 		readSkipSpace();
 		if (strMsg[intMsgCnt] == '_') {
@@ -3523,10 +3521,10 @@ int DiceEvent::InnerOrder() {
 			++intMsgCnt;
 		}
 		if (strMsg.length() == intMsgCnt) {
-			replyHelp("strUnknownPropErr");
+			replyMsg("strUnknownPropErr");
 			return 1;
 		}
-		string attr{ strMsg.substr(intMsgCnt) };
+		string& attr{ (at("attr") = readAttrName()).text };
 		if (attr.find("自动成功") == 0) {
 			strDifficulty = attr.substr(0, 8);
 			attr = attr.substr(8);
@@ -3537,17 +3535,15 @@ int DiceEvent::InnerOrder() {
 			intDifficulty = (attr.substr(0, 4) == "困难") ? 2 : 5;
 			attr = attr.substr(4);
 		}
-		CharaCard* pc{ isStatic ? &PList[fromChat.uid][fromChat.gid] : nullptr };
-		if (pc && pc->available(attr)) {
-			intMsgCnt = strMsg.length();
+		if (pc) {
 			attr = pc->standard(attr);
 		}
 		else {
-			if (SkillNameReplace.count(attr = readAttrName()))attr = SkillNameReplace[attr];
+			if (SkillNameReplace.count(attr))attr = SkillNameReplace[attr];
 		}
-		set("attr", attr);
+		DD::debugLog("attr:" + get_str("attr"));
 		if (strLowerMessage[intMsgCnt] == '*' && isdigit(strLowerMessage[intMsgCnt + 1])) {
-			intMsgCnt++;
+			++intMsgCnt;
 			readNum(intSkillMultiple);
 		}
 		while ((strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') && isdigit(
@@ -3563,15 +3559,13 @@ int DiceEvent::InnerOrder() {
 			}
 		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' ||
-			   strLowerMessage[intMsgCnt] ==
-			   ':')
-			intMsgCnt++;
-		string strSkillVal = readDigit();
+			   strLowerMessage[intMsgCnt] == ':') intMsgCnt++;
+		string strSkillVal = readDigit(false);
 		set("reason",readRest());
 		int intSkillVal;
 		if (strSkillVal.empty()) {
 			if (pc && pc->available(attr)) {
-				intSkillVal = PList[fromChat.uid][fromChat.gid].call(attr);
+				intSkillVal = pc->call(attr);
 			}
 			else {
 				if (!pc && SkillNameReplace.count(attr)) {
