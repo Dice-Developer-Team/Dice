@@ -21,7 +21,7 @@ AttrVar idx_at(AttrObject& eve) {
 	if (eve.has("at"))return eve["at"];
 	if (!eve.has("uid"))return {};
 	return eve["at"] = eve.has("gid")
-		? "[CQ:at,qq=" + eve.get_str("uid") + "]"
+		? AttrVar("[CQ:at,qq=" + eve.get_str("uid") + "]")
 		: idx_nick(eve);
 }
 AttrVar idx_gAuth(AttrObject& eve) {
