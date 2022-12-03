@@ -187,7 +187,7 @@ AttrVar getContextItem(AttrObject context, string item, bool isTrust) {
 	if (isTrust) {
 		if (sub.empty())sub = splitOnce(item);
 		if (sub == "self") {
-			return item.empty() ? getMsg("strSelfCall") : getSelfItem(item);
+			return item.empty() ? AttrVar(getMsg("strSelfCall")) : getSelfItem(item);
 		}
 		else if (selfdata_byStem.count(sub)) {
 			var = selfdata_byStem[sub]->data.index(item);
@@ -327,6 +327,7 @@ int clearGroup() {
 	return GrpDelete.size();
 }
 
+unordered_map<long long, unordered_map<long long, std::pair<time_t, string>>>skipCards;
 string getName(long long uid, long long GroupID){
 	if (!uid)return {};
 	// Self
@@ -337,7 +338,6 @@ string getName(long long uid, long long GroupID){
 	if (UserList.count(uid) && getUser(uid).getNick(nick, GroupID)) return nick;
 
 	// GroupCard
-	static unordered_map<long long, unordered_map<long long, std::pair<time_t, string>>>skipCards;
 	if (GroupID){
 		if (auto& card{ skipCards[GroupID][uid] };
 				time(nullptr) < card.first){

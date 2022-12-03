@@ -592,92 +592,6 @@ int DiceEvent::AdminEvent(const string& strOption){
 		}
 		return 1;
 	}
-	if (strOption == "recorder")
-	{
-		bool boolErase = false;
-		readSkipSpace();
-		if (strMsg[intMsgCnt] == '-')
-		{
-			boolErase = true;
-			intMsgCnt++;
-		}
-		if (strMsg[intMsgCnt] == '+') { intMsgCnt++; }
-		chatInfo cTarget;
-		if (readChat(cTarget))
-		{
-			ResList list = console.listNotice();
-			reply("当前通知窗口" + to_string(list.size()) + "个：" + list.show());
-			return 1;
-		}
-		if (boolErase)
-		{
-			if (console.showNotice(cTarget) & 0b1)
-			{
-				note("已停止发送" + printChat(cTarget) + "√", 0b1);
-				console.redNotice(cTarget, 0b1);
-			}
-			else
-			{
-				reply("该窗口不接受日志通知！");
-			}
-		}
-		else
-		{
-			if (console.showNotice(cTarget) & 0b1)
-			{
-				reply("该窗口已接收日志通知！");
-			}
-			else
-			{
-				console.addNotice(cTarget, 0b11011);
-				reply("已添加日志窗口" + printChat(cTarget) + "√");
-			}
-		}
-		return 1;
-	}
-	if (strOption == "monitor")
-	{
-		bool boolErase = false;
-		readSkipSpace();
-		if (strMsg[intMsgCnt] == '-')
-		{
-			boolErase = true;
-			intMsgCnt++;
-		}
-		if (strMsg[intMsgCnt] == '+') { intMsgCnt++; }
-		chatInfo cTarget;
-		if (readChat(cTarget))
-		{
-			ResList list = console.listNotice();
-			reply("当前通知窗口" + to_string(list.size()) + "个：" + list.show());
-			return 1;
-		}
-		if (boolErase)
-		{
-			if (console.showNotice(cTarget) & 0b100000)
-			{
-				console.redNotice(cTarget, 0b100000);
-				note("已移除监视窗口" + printChat(cTarget) + "√", 0b1);
-			}
-			else
-			{
-				reply("该窗口不存在于监视列表！");
-			}
-		}
-		else
-		{
-			if (console.showNotice(cTarget) & 0b100000)
-			{
-				reply("该窗口已存在于监视列表！");
-			}
-			else
-			{
-				console.addNotice(cTarget, 0b100000);
-				note("已添加监视窗口" + printChat(cTarget) + "√", 0b1);
-			}
-		}
-		return 1;
-	}
 	if (strOption == "blackfriend")
 	{
 		ResList res;
@@ -2499,7 +2413,8 @@ int DiceEvent::InnerOrder() {
 					replyMsg("strSendMsgEmpty");
 				}
 				else {
-					AddMsgToQueue(strFwd, ct);
+					AddMsgToQueue(fmt->format(strFwd, ct.gid ?
+						AttrVars{ {"gid",ct.gid}} : AttrVars{ {"uid",ct.uid} }), ct);
 					replyMsg("strSendMsg");
 				}
 				return 1;
