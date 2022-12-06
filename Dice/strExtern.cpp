@@ -85,14 +85,16 @@ string splitOnce(string& str, const string& sep) {
 }
 fifo_dict<> splitPairs(const string& s, char delim, char br) {
     fifo_dict<>dict;
-    std::stringstream ss(s);
-    string line;
-    size_t pos{ 0 };
-    while (std::getline(ss, line, br)) {
-        if ((pos = line.find(delim)) != string::npos) {
-            dict[line.substr(0, pos)] = line.substr(pos + 1);
+    string_view sv(s),line;
+    size_t posDe{ 0 }, posBr{ 0 }, p{ 0 };
+    while (posBr != string::npos) {
+        posBr = sv.find(br);
+        line = sv.substr(p = sv.find_first_not_of(space_char, p), sv.find_last_not_of(space_char, posBr - 1) - p + 1);
+        if ((posDe = line.find(delim)) != string::npos) {
+            if(posDe)dict[string(line.substr(0, posDe))] = line.substr(posDe + 1);
         }
-        else dict[line] = {};
+        else dict[string(line)] = {};
+        sv.remove_prefix(posBr + 1);
     }
     return dict;
 }

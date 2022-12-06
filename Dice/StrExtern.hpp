@@ -16,6 +16,7 @@ using std::to_string;
 using std::vector;
 
 #define CP_GBK (936)
+constexpr auto space_char{ " \t\r\n" };
 
 bool isNumeric(const string&);
 string toString(int num, unsigned short size = 0);

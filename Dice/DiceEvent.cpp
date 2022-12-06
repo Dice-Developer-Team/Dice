@@ -2971,11 +2971,7 @@ int DiceEvent::InnerOrder() {
 				return 1;
 			}
 			const long long llGroupID = stoll(strGroupID);
-			if (groupset(llGroupID, "停用指令") && trusted < 4) {
-				replyMsg("strDisabledErr");
-				return 1;
-			}
-			if (groupset(llGroupID, "禁用me") && trusted < 5) {
+			if ((groupset(llGroupID, "停用指令") || groupset(llGroupID, "禁用me")) && trusted < 5) {
 				replyMsg("strMEDisabledErr");
 				return 1;
 			}

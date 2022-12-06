@@ -361,18 +361,30 @@ void DiceModManager::turn_over(size_t idx) {
 	save();
 	build();
 }
-static enumap<string> methods{ "print","help","sample","case","vary","grade","at","ran","wait" };
-enum class FmtMethod { Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait};
+static enumap<string> methods{ "var","print","help","sample","case","vary","grade","at","ran","wait" };
+enum class FmtMethod { Var, Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait};
+struct ParseNode {
+	string leaf;
+	size_t pos;
+	char token;
+	ParseNode(const string& s, size_t p, char t) :leaf(s), pos(p), token(t) {}
+	shared_ptr<ParseNode> next;
+	shared_ptr<ParseNode> first_kid;
+	//shared_ptr<ParseNode> last_kid;
+};
 class Parser {
-	string exp;
+	//string exp;
 	AttrObject context;
 	bool isTrust{ true };
 	dict_ci<string> dict;
-	std::list<std::pair<string, char>> nodes;
+	shared_ptr<ParseNode> root;
 public:
-	Parser(const string& s, const AttrObject& obj, bool t = true, const dict_ci<string>& con = {}) :exp(s), context(obj), isTrust(t), dict(con) {
+	Parser(const string& s, const AttrObject& obj, bool t = true, const dict_ci<string>& con = {})
+		:root(std::make_shared<ParseNode>(s, 0, char(0xAA))), context(obj), isTrust(t), dict(con) {
+		string& exp{ root->leaf };
+		auto parent{ root };
 		char chSign[3]{ char(0xAA),char(0xAA),'\0' };
-		size_t lastL{ 0 }, lastR{ 0 };
+		size_t preL{ 0 }, lastL{ 0 }, lastR{ 0 }; 
 		while ((lastR = exp.find('}', ++lastR)) != string::npos
 			&& (lastL = exp.rfind('{', lastR)) != string::npos) {
 			string key;
@@ -386,18 +398,43 @@ public:
 				key = "{";
 			}
 			else key = exp.substr(lastL + 1, lastR - lastL - 1);
-			nodes.emplace_back(key, ++chSign[1]);
+			auto node{ std::make_shared<ParseNode>(key,lastL,++chSign[1]) };
+			if (!root->first_kid){
+				parent = root->first_kid = node;
+			}
+			else if (lastL >= preL) {
+				parent = parent->next = node;
+			}
+			else if (lastL < root->first_kid->pos) {
+				node->first_kid = root->first_kid;
+				parent = root->first_kid = node;
+			}
+			else {
+				parent = root->first_kid;
+				while (parent->next) {
+					if (parent->next->pos < lastL) {
+						parent = parent->next;
+					}
+					else {
+						node->first_kid = parent->next;
+						parent = parent->next = node;
+						break;
+					}
+				}
+			}
 			exp.replace(lastL, lastR - lastL + 1, chSign);
-			lastR = lastL + 1;
+			lastR = (preL = lastL) + 1;
 		}
-		if(!nodes.empty())format_token(exp, --nodes.rbegin());
+		if(root->first_kid)format_token(exp, root);
 	}
-	AttrVar format_token(string& s, std::list<std::pair<string, char>>::reverse_iterator it) {
-		char chSign[3]{ char(0xAA),(++it)->second,'\0'};
+	AttrVar format_token(string& s, shared_ptr<ParseNode> it) {
+		char chSign[3]{ char(0xAA),char(0xAA),'\0' };
 		size_t pos{ 0 };
-		while (chSign[1] > char(0xAA)) {
+		it = it->first_kid;
+		while (it) {
+			chSign[1] = it->token;
 			if ((pos = s.find(chSign)) != string::npos) {
-				string& key{ it->first };
+				string& key{ it->leaf };
 				AttrVar val{ "{" + key + "}" };
 				if (key == "{" || key == "}") {
 					val = key;
@@ -421,6 +458,22 @@ public:
 					string method{ key.substr(0,colon) };
 					string para{ key.substr(colon + 1) };
 					if (methods.count(method))switch ((FmtMethod)methods[method]) {
+						case FmtMethod::Var:{
+							auto posQ = para.find('?'), posE = para.find('=');
+							if (posQ < posE) {
+								auto [field, exp] = readini<string, string>(para, '?');
+								field = format_token(field, it);
+								context.set(field, val = (exp[0] == char(0xAA)) ? format_token(exp, it) : AttrVar::parse(exp));
+							}
+							else {
+								auto exps{ splitPairs(para,'=','&') };
+								for (auto& [field, exp] : exps) {
+									if (exp.empty())context.set(field);
+									else context.set(field, (exp[0] == char(0xAA)) ? format_token(exp, it) : AttrVar::parse(exp));
+								}
+								val.des();
+							}
+						} break;
 						case FmtMethod::Help:
 							val = fmt->get_help(format_token(para, it).to_str(), context);
 							break;
@@ -502,15 +555,15 @@ public:
 					val = func->second();
 				}
 				if (s == chSign && val.type != AttrVar::AttrType::Text)return val;
+				else if (val.is_null()) s.erase(pos, 2);
 				else s.replace(pos, 2, val.print());
 			}
-			it++;
-			--chSign[1];
+			it = it->next;
 		}
 		return s;
 	}
 	operator string() {
-		return exp;
+		return root->leaf;
 	}
 };
 

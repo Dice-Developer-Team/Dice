@@ -261,7 +261,7 @@ const dict_ci<string> PlainMsg
 	{"strObExitAlready", "{nick}没有加入{self}的旁观模式!"},
 	{"strUIDEmpty", "请{nick}写出账号×"},
 	{"strGroupIDEmpty", "请{nick}写出群号×"},
-	{"strBlackGroup", "该群在黑名单中，如有疑问请联系master"},
+	{"strBlackGroup", "该群在黑名单中，如有疑问请联系{print:master}"},
 	{"strBotOn", "成功开启{self}√"},
 	{"strBotOff", "成功关闭{self}√"},
 	{"strBotOnAlready", "{self}已经处于开启状态!"},
@@ -302,7 +302,6 @@ const dict_ci<string> PlainMsg
 	{"strGroupIDInvalid", "无效的群号!"},
 	{"strSendErr", "消息发送失败!"},
 	{"strSendSuccess", "命令执行成功√"},
-	{"strDisabledErr", "命令无法执行:机器人已在此群中被关闭!"},
 	{"strActionEmpty", "动作不能为空×"},
 	{"strMEDisabledErr", "管理员已在此群中禁用.me命令!"},
 	{"strDisabledMeGlobal", "{self}恕不提供.me服务×"},
@@ -319,14 +318,14 @@ const dict_ci<string> PlainMsg
 	{"strDiceTooBigErr", "{self}被你扔出的骰子淹没了×（骰数过多）"},
 	{"strRequestRetCodeErr", "{self}访问服务器时出现错误! HTTP状态码: {error}"},
 	{"strRequestNoResponse", "服务器未返回任何信息×"},
-	{"strTypeTooBigErr", "哇!让我数数骰子有多少面先~1...2..."},
+	{"strTypeTooBigErr", "哇!让{self}数数骰子有多少面先~1...2..."},
 	{"strZeroTypeErr", "这是...!!时空裂*{self}被骰子产生的时空裂缝卷走了*（骰面为0）"},
 	{"strAddDiceValErr", "你这样要让{self}扔骰子扔到什么时候嘛~(请输入正确的加骰参数:5-10之内的整数)"},
-	{"strZeroDiceErr", "咦?我的骰子呢?（骰数为0）"},
+	{"strZeroDiceErr", "咦?{self}的骰子呢?（骰数为0）"},
 	{"strRollTimeExceeded", "{nick}的掷骰轮数超过了最大轮数限制×"},
 	{"strRollTimeErr", "{nick}的掷骰轮数异常×"},
-	{"strDismissPrivate", "你在私聊窗口想我走哪呢？"},
-	{"strWelcomePrivate", "你在私聊窗口想欢迎谁呢？"},
+	{"strDismissPrivate", "你在私聊窗口想{self}走哪呢？"},
+	{"strWelcomePrivate", "你在私聊窗口想{self}欢迎谁呢？"},
 	{"strWelcomeMsgClearNotice", "{self}已清除本群的入群欢迎词√"},
 	{"strWelcomeMsgClearErr", "没有设置{self}入群欢迎词，清除失败×"},
 	{"strWelcomeMsgUpdateNotice", "{self}已更新本群的入群欢迎词√"},
@@ -401,7 +400,7 @@ const dict_ci<string> PlainMsg
 	{"strSelfName", "" },
 	{"strSelfNick", "&strSelfName" },
 	{"self", "&strSelfCall"},
-	{"strBotHeader", "泛用型 " },
+	{"strBotHeader", "试验型 " },
 	{"strBotMsg", "\n使用.help 查看{self}帮助文档"},
 	{"strHlpMsg", R"(请使用.dismiss ID（或后四位） 使{self}退群退讨论组
 .bot on/off ID（或后四位） //开启或关闭指令
@@ -496,7 +495,8 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
-633:format新增wait,花括号嵌套优化
+634:转义优化，支持变量赋值
+633:format新增wait，花括号嵌套优化
 632:format新增ran
 631:WebUI新增mod页
 630:修复初始认主
