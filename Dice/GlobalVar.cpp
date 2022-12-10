@@ -495,6 +495,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+635:webui可自定义化
 634:转义优化，支持变量赋值
 633:format新增wait，花括号嵌套优化
 632:format新增ran

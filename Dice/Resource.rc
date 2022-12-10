@@ -44,6 +44,7 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
+ID_ADMIN_HTML           FILE                    "webui.html"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -52,7 +53,6 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON                ICON                    "Dice.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -79,12 +79,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Dice! Developer Group"
             VALUE "FileDescription", "Dice! Main Dll"
-            VALUE "FileVersion", "2.4.0.0"
+            VALUE "FileVersion", "2.6.6.635"
             VALUE "InternalName", "app.dll"
-            VALUE "LegalCopyright", "Copyright (C) 2020 溯洄 Shiki"
+            VALUE "LegalCopyright", "Copyright (C) 2020-2022 溯洄 & 安研色Shiki"
             VALUE "OriginalFilename", "app.dll"
             VALUE "ProductName", "Dice!"
-            VALUE "ProductVersion", "2.4.0.0"
+            VALUE "ProductVersion", "2.6.6.635"
         END
     END
     BLOCK "VarFileInfo"
@@ -98,8 +98,6 @@ END
 //
 // Bitmap
 //
-
-ID_BITMAP_DICELOGO      BITMAP                  "DiceLogo.bmp"
 
 #endif    // 中文(简体，中国) resources
 /////////////////////////////////////////////////////////////////////////////

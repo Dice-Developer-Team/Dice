@@ -31,21 +31,6 @@ class AuthHandler: public CivetAuthHandler
     }
 };
 
-class IndexHandler : public CivetHandler
-{
-public:
-    bool handleGet(CivetServer *server, struct mg_connection *conn)
-    {
-        std::string html = 
-			#include "webui.html"
-		;
-
-        mg_send_http_ok(conn, "text/html", html.length());
-        mg_write(conn, html.c_str(), html.length());
-        return true;
-    }
-};
-
 class BasicInfoApiHandler : public CivetHandler
 {
 public:
@@ -259,7 +244,7 @@ public:
             j["data"] = nlohmann::json::array();
             for (const auto& mod : fmt->modOrder) {
                 j["data"].push_back({ {"name", GBKtoUTF8(mod->name)} ,
-                    {"title", GBKtoUTF8(mod->title)},
+                    {"title", GBKtoUTF8(mod->title.empty() ? mod->name : mod->title)},
                     {"ver", GBKtoUTF8(mod->ver.exp)},
                     {"author", GBKtoUTF8(mod->author)},
                     {"brief", GBKtoUTF8(mod->brief)},

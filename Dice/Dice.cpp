@@ -58,8 +58,13 @@
 
 #ifdef _WIN32
 #include "S3PutObject.h"
+#include "resource.h"
 #else
 #include <curl/curl.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <unistd.h>
 #endif
 
 #pragma warning(disable:4996)
@@ -73,7 +78,6 @@ unordered_map<long long, Chat> ChatList;
 ThreadFactory threads;
 std::filesystem::path fpFileLoc;
 std::unique_ptr<CivetServer> ManagerServer;
-IndexHandler h_index;
 BasicInfoApiHandler h_basicinfoapi;
 CustomMsgApiHandler h_msgapi;
 AdminConfigHandler h_config;
@@ -384,11 +388,30 @@ R"( //私骰作成 即可成为我的主人~
 		try {
 			const std::string port_option = std::string(AllowInternetAccess ? "0.0.0.0" : "127.0.0.1") + ":" + std::to_string(Port);
 
-			std::vector<std::string> mg_options = { "listening_ports", port_option.c_str() };
+			std::vector<std::string> mg_options = { "document_root", (DiceDir / "webui").u8string(), "listening_ports", port_option.c_str() };
 
 			ManagerServer = std::make_unique<CivetServer>(mg_options);
-
-			ManagerServer->addHandler("/", h_index);
+#ifdef _WIN32
+			if (HRSRC hRsrcInfo = FindResource(hDllModule, MAKEINTRESOURCE(ID_ADMIN_HTML), TEXT("FILE"))) {
+				DWORD dwSize = SizeofResource(hDllModule, hRsrcInfo);
+				if (HGLOBAL hGlobal = LoadResource(hDllModule, hRsrcInfo)) {
+					LPVOID pBuffer = LockResource(hGlobal);  // 锁定资源
+					char* pByte = new char[dwSize + 1];
+					fs::create_directories(DiceDir / "webui");
+					ofstream fweb{ DiceDir / "webui" / "index.html" };
+					fweb.write((const char*)pBuffer, dwSize);
+					FreeResource(hGlobal);// 释放资源
+				}
+			}
+#else
+			if (string html; Network::Get("https://raw.sevencdn.com/Dice-Developer-Team/Dice/newdev/Dice/webui.html", html)) {
+				ofstream fweb{ DiceDir / "webui" / "index.html" };
+				fweb.write(html.c_str(), html.length());
+			}
+			else if (!fs::exists(DiceDir / "webui" / "index.html")) {
+				console.log("获取webui页面失败!相关功能无法使用!", 0b10);
+			}
+#endif
 			ManagerServer->addHandler("/api/basicinfo", h_basicinfoapi);
 			ManagerServer->addHandler("/api/custommsg", h_msgapi);
 			ManagerServer->addHandler("/api/adminconfig", h_config);

@@ -1,4 +1,3 @@
-﻿std::string(u8R"(
 <!DOCTYPE html>
 <html>
 <head>
@@ -25,6 +24,7 @@
           height: 22px;
       }
   </style>
+  <link rel="stylesheet" href="style/style.css">
 </head>
 <body>
 
@@ -137,7 +137,6 @@
 			</div>
 		  </form>
 		</div>
-)") + u8R"(
 		<div class="layui-tab-item">
 			<ul class="layui-timeline">
 				<li class="layui-timeline-item">
@@ -147,7 +146,39 @@
 					</div>
 				</li>
 				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年12月16日 版本2.6.6alpha(634)</h3>
+						<p>优化转义解析顺序，新增var赋值变量</p>
+						<p>为send定向发送添加转义</p>
+						<p>修复使用rc附带奖惩骰时无法正常调取角色卡属性的bug</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
 					<i class="layui-icon layui-timeline-axis">&#xe617;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年11月27日 版本2.6.5fix2(633)</h3>
+						<p>修复删除reply时不会清除对应完全匹配触发词的问题</p>
+						<p>优化system load时对selfdata的行为（清空重读）</p>
+						<p>st录入文本不再限定条目</p>
+						<p>修复.rc与.r的角色卡调用bug</p>
+						<p>修复system load时plugin中指令不会清空的问题</p>
+						<p>新增wait</p>
+						<p>修复先攻表为空时ri录入失败的bug</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年11月20日 版本2.6.5fix1(632)</h3>
+						<p>新增ran</p>
+						<p>修复log上传一次失败无限循环的bug</p>
+						<p>将召唤词与at等效</p>
+						<p>为context.index的参数插入转义</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
 					<div class="layui-timeline-content layui-text">
 						<h3 class="layui-timeline-title">2022年11月17日 版本2.6.5rc3(631)</h3>
 						<p>WebUI增加mod页</p>
@@ -299,7 +330,6 @@
 						<p>getUserConf/getGroupConf新增遍历记录中指定属性的特性</p>
 					</div>
 				</li>
-				)" + u8R"(
 				<li class="layui-timeline-item">
 					<i class="layui-icon layui-timeline-axis">&#xe617;</i>
 					<div class="layui-timeline-content layui-text">
@@ -598,7 +628,6 @@
 	<blockquote class="layui-elem-quote layui-hide layui-text" id="footer">当前版本：{{= d.version }}</blockquote>
   </div>
 </div>
-)" + u8R"(
 
 <script type="text/html" id="editToolbar">
   <div class="layui-btn-container">
@@ -709,9 +738,6 @@
 	</div>
   </div>
 </form>
-
-
-)" + u8R"(
   
 <script src="https://unpkg.com/layui@2.6.8/dist/layui.js"></script>
 <script> 
@@ -1126,5 +1152,4 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
 });
 </script>
 </body>
-</html>        
-)"
+</html>

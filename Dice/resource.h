@@ -1,10 +1,9 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ ���ɵİ����ļ���
-// �� Resource.rc ʹ��
 //
 #define IDI_ICON1                       108
 #define IDI_ICON                        108
 #define ID_BITMAP_DICELOGO              109
+#define ID_ADMIN_HTML					111
 #define IDB_BUTTON_SAVE                 201
 #define IDM_LIST_MSG                    301
 #define ID_EDIT                         501

@@ -554,10 +554,14 @@ public:
 				else if (auto func = strFuncs.find(key); func != strFuncs.end()) {
 					val = func->second();
 				}
-				if (s == chSign && val.type != AttrVar::AttrType::Text)return val;
+				if (s == chSign) {
+					s = val;
+					return val;
+				}
 				else if (val.is_null()) s.erase(pos, 2);
 				else s.replace(pos, 2, val.print());
 			}
+			format_token(s, it);
 			it = it->next;
 		}
 		return s;
