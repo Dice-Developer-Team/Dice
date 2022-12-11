@@ -391,32 +391,35 @@ int selfData_get(lua_State* L) {
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
 	if (lua_isnoneornil(L, 2)) {
 		lua_push_attr(L, file.data);
+		return 1;
 	}
-	else {
+	else if(file.data.is_table()){
 		string key{ lua_to_gbstring(L, 2) };
-		if (file.data.has(key)) {
-			lua_push_attr(L, file.data.get(key));
+		if (file.data.table.has(key)) {
+			lua_push_attr(L, file.data.table.get(key));
+			return 1;
 		}
 		else if (lua_gettop(L) > 2) {
 			lua_pushnil(L);
 			lua_insert(L, 3);
+			return 1;
 		}
-		else return 0;
 	}
-	return 1;
+	return 0;
 }
 int selfData_set(lua_State* L) {
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
 	if (lua_istable(L, 2)) {
-		file.data = lua_to_dict(L, 2);
+		file.data = lua_to_attr(L, 2);
 	}
-	else if(lua_isstring(L, 2)) {
+	else if (std::lock_guard<std::mutex> lock(file.exWrite); lua_isstring(L, 2) && file.data.is_table()) {
 		string key{ lua_to_gbstring(L, 2) };
 		if (lua_isnoneornil(L, 3)) {
-			file.data.reset(key);
+			file.data.table.reset(key);
 		}
-		else file.data.set(key, lua_to_attr(L, 3));
+		else file.data.table.set(key, lua_to_attr(L, 3));
 	}
+	else return 0;
 	file.save();
 	return 0;
 }
@@ -426,27 +429,27 @@ int SelfData_index(lua_State* L) {
 	string key{ lua_to_gbstring(L, 2) };
 	if (key == "get") {
 		lua_pushcfunction(L, selfData_get);
-		return 1;
 	}
 	else if (key == "set") {
 		lua_pushcfunction(L, selfData_set);
-		return 1;
 	}
-	else if (file.data.has(key)) {
-		lua_push_attr(L, file.data.get(key));
-		return 1;
+	else if (file.data.is_table() && file.data.table.has(key)) {
+		lua_push_attr(L, file.data.table.get(key));
 	}
-	return 0;
+	else return 0;
+	return 1;
 }
 int SelfData_newindex(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
 	string key{ lua_to_gbstring(L, 2) };
+	if (file.data.is_null())file.data = AttrVars();
+	else if (!file.data.is_table())return 0;
 	if (std::lock_guard<std::mutex> lock(file.exWrite); lua_isnoneornil(L,3)) {
-		file.data.reset(key);
+		file.data.table.reset(key);
 	}
 	else {
-		file.data.set(key, lua_to_attr(L, 3));
+		file.data.table.set(key, lua_to_attr(L, 3));
 	}
 	file.save();
 	return 0;
@@ -1299,6 +1302,21 @@ void DiceMod::loadLua() {
 	UTF8Luas.insert(L);
 	ShowList err;
 	for (auto& file : luaFiles) {
+		if (file.extension() != ".lua") {
+			if (file.extension() != ".toml")continue;
+			if (ifstream fs{ file }) {
+				auto tab{ AttrVar::parse_toml(fs).to_obj()};
+				if (auto items{ tab.get_dict("reply") })for (auto& [key, val] : *items) {
+					ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
+					reply->title = key;
+					reply->from_obj(val.to_obj());
+					reply_list[key] = reply;
+				}
+				if (auto items{ tab.get_dict("event") })for (auto& [key, val] : *items) {
+					events[key] = val.to_obj();
+				}
+			}
+		}
 		lua_newtable(L);
 		lua_setglobal(L, "msg_reply");
 		lua_newtable(L);

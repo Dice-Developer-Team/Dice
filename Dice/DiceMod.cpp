@@ -132,6 +132,7 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 			continue;
 		}
 		try {
+			if (desc.find("404") == 0)continue;
 			fifo_json j = fifo_json::parse(desc);
 			//todo: dice_build check
 #ifndef __ANDROID__

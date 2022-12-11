@@ -160,7 +160,7 @@ AttrVar getSelfItem(string item) {
 		while (!(sub = splitOnce(item)).empty()) {
 			file += sub;
 			if (selfdata_byStem.count(file)
-				&& (var = selfdata_byStem[file]->data.index(item))) {
+				&& (var = selfdata_byStem[file]->data.to_obj().index(item))) {
 				return var;
 			}
 			file += ".";
@@ -190,7 +190,7 @@ AttrVar getContextItem(AttrObject context, string item, bool isTrust) {
 			return item.empty() ? AttrVar(getMsg("strSelfCall")) : getSelfItem(item);
 		}
 		else if (selfdata_byStem.count(sub)) {
-			var = selfdata_byStem[sub]->data.index(item);
+			var = selfdata_byStem[sub]->data.to_obj().index(item);
 		}
 	}
 	return var;

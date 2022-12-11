@@ -437,6 +437,14 @@ AttrVar AttrVar::parse(const string& s) {
 	}
 	return s;
 }
+AttrVar AttrVar::parse_toml(std::ifstream& s) {
+	try	{
+		return toml::parse(s);
+	}
+	catch (const toml::parse_error& err){
+		return {};
+	}
+}
 string AttrVar::print()const {
 	switch (type) {
 	case AttrType::Nil:
@@ -553,6 +561,38 @@ AttrVar::AttrVar(const fifo_json& j) {
 	case fifo_json::value_t::null:
 		type = AttrType::Nil;
 		break;
+	case fifo_json::value_t::object:
+		type = AttrType::Table; {
+			new(&table)AttrObject();
+			unordered_set<string> idxs;
+			if (j.count("1")) {
+				table.list = std::make_shared<VarArray>();
+				int idx{ 1 };
+				string strI{ "1" };
+				do {
+					table.list->push_back(j[strI]);
+					idxs.insert(strI);
+				} while (j.count(strI = to_string(++idx)));
+			}
+			for (auto& it : j.items()) {
+				if (idxs.count(it.key()))continue;
+				if (!it.value().is_null())table.dict->emplace(UTF8toGBK(it.key()), it.value());
+			}
+		}
+		break;
+	case fifo_json::value_t::array:
+		type = AttrType::Table; {
+			new(&table)AttrObject();
+			table.list = std::make_shared<VarArray>();
+			for (auto& it : j) {
+				table.list->push_back(it);
+			}
+		}
+		break;
+	case fifo_json::value_t::string:
+		type = AttrType::Text;
+		new(&text)string(UTF8toGBK(j.get<string>()));
+		break;
 	case fifo_json::value_t::boolean:
 		type = AttrType::Boolean;
 		j.get_to(bit);
@@ -572,42 +612,38 @@ AttrVar::AttrVar(const fifo_json& j) {
 		type = AttrType::Number;
 		j.get_to(number);
 		break;
-	case fifo_json::value_t::string:
-		type = AttrType::Text;
-		new(&text)string(UTF8toGBK(j.get<string>()));
-		break;
-	case fifo_json::value_t::object:
-		type = AttrType::Table; {
-			new(&table)AttrObject();
-			unordered_set<string> idxs;
-			if (j.count("1")) {
-				table.list = std::make_shared<VarArray>();
-				int idx{ 1 };
-				string strI{ "1" };
-				do {
-					table.list->push_back(j[strI]);
-					idxs.insert(strI);
-				} while (j.count(strI = to_string(++idx)));
-			}
-			for (auto it : j.items()) {
-				if (idxs.count(it.key()))continue;
-				if (!it.value().is_null())table.dict->emplace(UTF8toGBK(it.key()), it.value());
-			}
-		}
-		break;
-	case fifo_json::value_t::array:
-		type = AttrType::Table; {
-			new(&table)AttrObject();
-			table.list = std::make_shared<VarArray>();
-			for (auto& it :j) {
-				table.list->push_back(it);
-			}
-		}
-		break;
 	case fifo_json::value_t::binary:
 	case fifo_json::value_t::discarded:
 		break;
 	}
+}
+fifo_json AttrVar::to_json()const {
+	switch (type) {
+	case AttrType::Nil:
+		return fifo_json();
+		break;
+	case AttrType::Boolean:
+		return bit;
+		break;
+	case AttrType::Integer:
+		return attr;
+		break;
+	case AttrType::Number:
+		return number;
+		break;
+	case AttrType::Text:
+		return GBKtoUTF8(text);
+		break;
+	case AttrType::ID:
+		return id;
+		break;
+	case AttrType::Table:
+		return table.to_json();
+		break;
+	case AttrType::Function:
+		return {};
+	}
+	return {};
 }
 fifo_json AttrObject::to_json()const {
 	if (dict->empty() && list) {
@@ -632,35 +668,96 @@ fifo_json AttrObject::to_json()const {
 		return j;
 	}
 }
-fifo_json AttrVar::to_json()const {
-	switch (type) {
-	case AttrType::Nil:
-		return fifo_json();
+AttrVar::AttrVar(const toml::node& t) {
+	switch (t.type()){
+	case toml::node_type::none:
+		type = AttrType::Nil;
 		break;
-	case AttrType::Boolean:
-		return bit;
+	case toml::node_type::table:
+		type = AttrType::Table; {
+			new(&table)AttrObject();
+			auto tab{ t.as_table() };
+			unordered_set<string> idxs;
+			if (tab->contains("1")) {
+				table.list = std::make_shared<VarArray>();
+				int idx{ 1 };
+				string strI{ "1" };
+				do {
+					table.list->push_back(AttrVar(*(*tab)[strI].node()));
+					idxs.insert(strI);
+				} while (tab->contains(strI = to_string(++idx)));
+			}
+			for (auto& [key,val] : *tab) {
+				if (idxs.count(string(key.str())))continue;
+				table.dict->emplace(UTF8toGBK(string(key.str())), val);
+			}
+		}
 		break;
-	case AttrType::Integer:
-		return attr;
+	case toml::node_type::array:
+		type = AttrType::Table; {
+			new(&table)AttrObject();
+			table.list = std::make_shared<VarArray>();
+			for (auto& it : *t.as_array()) {
+				table.list->push_back(it);
+			}
+		}
 		break;
-	case AttrType::Number:
-		return number;
+	case toml::node_type::string:
+		type = AttrType::Text;
+		new(&text)string(UTF8toGBK(string(*t.as_string())));
 		break;
-	case AttrType::Text:
-		return GBKtoUTF8(text);
+	case toml::node_type::integer:
+		if (long long num{ *t.as_integer() }; num > 10000000 || num < -10000000) {
+			type = AttrType::ID;
+			id = num;
+		}
+		else {
+			type = AttrType::Integer;
+			attr = num;
+		}
 		break;
-	case AttrType::ID:
-		return id;
+	case toml::node_type::floating_point:
+		type = AttrType::Number;
+		number = double(*t.as_floating_point());
 		break;
-	case AttrType::Table: {
-		return table.to_json();
+	case toml::node_type::boolean:
+		type = AttrType::Boolean;
+		bit = t.as_boolean();
+		break;
+	case toml::node_type::date:
+	case toml::node_type::time:
+	case toml::node_type::date_time:
+	default:
+		break; //Todo:parse time
 	}
-		break;
-	case AttrType::Function:
-		return {};
-		break;
+}
+toml::table AttrObject::to_toml()const {
+	toml::table tab;
+	for (auto& [key, val] : *dict) {
+		if (val)switch (val.type) {
+		case AttrVar::AttrType::Boolean:
+			tab.insert(GBKtoUTF8(key), val.bit);
+			break;
+		case AttrVar::AttrType::Integer:
+			tab.insert(GBKtoUTF8(key), val.attr);
+			break;
+		case AttrVar::AttrType::Number:
+			tab.insert(GBKtoUTF8(key), val.number);
+			break;
+		case AttrVar::AttrType::Text:
+			tab.insert(GBKtoUTF8(key), GBKtoUTF8(val.text));
+			break;
+		case AttrVar::AttrType::ID:
+			tab.insert(GBKtoUTF8(key), val.id);
+			break;
+		case AttrVar::AttrType::Table:
+			tab.insert(GBKtoUTF8(key), val.table.to_toml());
+			break;
+		default:
+			break;
+		}
 	}
-	return {};
+	return tab;
 }
 string to_string(const AttrVar& var) {
 	return var.to_str();

@@ -23,6 +23,7 @@
  */
 #pragma once
 #include "fifo_json.hpp"
+#include "toml.hpp"
 using std::string;
 template<typename T>
 using ptr = std::shared_ptr<T>;
@@ -94,6 +95,7 @@ public:
 	void add(const string& key, const AttrVar&)const;
 	AttrObject& merge(const AttrVars& other);
 	fifo_json to_json()const;
+	toml::table to_toml()const;
 	void writeb(std::ofstream&)const;
 	void readb(std::ifstream&);
 };
@@ -122,6 +124,7 @@ public:
 	AttrVar(ByteS&& fun) :type(AttrType::Function), chunk(fun) {}
 	AttrVar(long long n) :type(AttrType::ID), id(n) {}
 	AttrVar(const fifo_json&);
+	AttrVar(const toml::node&);
 	AttrVar(const AttrObject& vars) :type(AttrType::Table), table(vars) {}
 	explicit AttrVar(const AttrVars& vars) :type(AttrType::Table), table(vars) {}
 	void des() {
@@ -156,6 +159,7 @@ public:
 	string to_str()const;
 	ByteS to_bytes()const;
 	static AttrVar parse(const string& s);
+	static AttrVar parse_toml(std::ifstream& s);
 	string print()const;
 	bool str_empty()const;
 	AttrObject to_obj()const;

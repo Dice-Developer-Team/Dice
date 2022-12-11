@@ -105,6 +105,21 @@ void loadData(){
 		loadDir(load_words, DiceDir / "conf" / "censor", censor, logList, true);
 		loadJMap(DiceDir / "conf" / "CustomCensor.json", censor.CustomWords);
 		censor.build();
+		//selfdata
+		if (const auto dirSelfData{ DiceDir / "selfdata" }; std::filesystem::exists(dirSelfData)) {
+			std::error_code err;
+			for (const auto& file : std::filesystem::directory_iterator(dirSelfData, err)) {
+				if (file.is_regular_file()) {
+					const auto p{ file.path() };
+					auto& data{ selfdata_byFile[getNativePathString(p.filename())]
+						= make_shared<SelfData>(p) };
+					if (string file{ UTF8toGBK(p.stem().u8string()) }; !selfdata_byStem.count(file)) {
+						selfdata_byStem[file] = data;
+					}
+				}
+			}
+			DD::debugLog("预加载selfdata" + to_string(selfdata_byStem.size()) + "份");
+		}
 		if (!logList.empty())
 		{
 			logList << "扩展配置读取完毕√";
@@ -306,21 +321,6 @@ R"( //私骰作成 即可成为我的主人~
 		DD::debugLog("读取不良记录" + to_string(cnt) + "条");
 		if ((cnt = blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true)) > 0)
 			DD::debugLog("读取外源不良记录" + to_string(cnt) + "条");
-	}
-	//selfdata
-	if (const auto dirSelfData{ DiceDir / "selfdata" }; std::filesystem::exists(dirSelfData)) {
-		std::error_code err;
-		for (const auto& file : std::filesystem::directory_iterator(dirSelfData, err)) {
-			if (file.is_regular_file()) {
-				const auto p{ file.path() };
-				auto& data{ selfdata_byFile[getNativePathString(p.filename())]
-					= make_shared<SelfData>(p) };
-				if (string file{ UTF8toGBK(p.stem().u8string())}; !selfdata_byStem.count(file)) {
-					selfdata_byStem[file] = data;
-				}
-			}
-		}
-		DD::debugLog("预加载selfdata" + to_string(selfdata_byStem.size()) + "条");
 	}
 	//读取用户数据
 	readUserData();

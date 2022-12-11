@@ -3327,10 +3327,11 @@ int DiceEvent::InnerOrder() {
 					res << "检定成功统计: " + to_string(sumRcSuc) + "/" + to_string(cntRc);
 					int sumRcRate{ pc.Attr.get_int("__StatRcSumRate") };//总成功率
 					res << "成功率[期望]: " + toString((double)sumRcSuc / cntRc * 100) + "% [" + toString((double)sumRcRate / cntRc) + "%]";
-					res << "5- | 96+ 出现率: " + toString(pc.Attr.get_num("__StatRcCnt5") / cntRc * 100) + "%(" + pc.Attr.get_str("__StatRcCnt5")
-						+ ") | " + toString(pc.Attr.get_num("__StatRcCnt96") / cntRc * 100) + "%(" + pc.Attr.get_str("__StatRcCnt96") + ")";
+					double cnt5{ pc.Attr.get_num("__StatRcCnt5") }, cnt96{ pc.Attr.get_num("__StatRcCnt96") };
+					res << "5- | 96+ 出现率: " + (cnt5 ? toString(cnt5 / cntRc * 100) + "%(" + pc.Attr.get_str("__StatRcCnt5") + ")" : "0%")
+						+ " | " + (cnt96 ? toString(cnt96 / cntRc * 100) + "%(" + pc.Attr.get_str("__StatRcCnt96") + ")" : "0%");
 					if(pc.available("__StatRcCnt1")|| pc.available("__StatRcCnt100"))
-						res << "1 | 100 出现次数: " + pc.Attr.get_str("__StatRcCnt1") + " | " + pc.Attr.get_str("__StatRcCnt100");
+						res << "1 | 100 出现数: " + pc.Attr.get_str("__StatRcCnt1") + " | " + pc.Attr.get_str("__StatRcCnt100");
 				}
 			}
 			if (isEmpty) {
