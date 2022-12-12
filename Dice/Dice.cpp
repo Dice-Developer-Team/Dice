@@ -85,6 +85,7 @@ MasterHandler h_master;
 CustomReplyApiHandler h_customreply;
 ModListApiHandler h_modlist;
 WebUIPasswordHandler h_webuipassword;
+UrlApiHandler h_url;
 AuthHandler auth_handler;
 
 string msgInit;
@@ -419,6 +420,7 @@ R"( //私骰作成 即可成为我的主人~
 			ManagerServer->addHandler("/api/customreply", h_customreply);
 			ManagerServer->addHandler("/api/mod/list", h_modlist);
 			ManagerServer->addHandler("/api/webuipassword", h_webuipassword);
+			ManagerServer->addHandler("/api/url", h_url);
 			ManagerServer->addAuthHandler("/", auth_handler);
 			auto ports = ManagerServer->getListeningPorts();
 

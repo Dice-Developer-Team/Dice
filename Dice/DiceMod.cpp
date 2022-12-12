@@ -117,6 +117,46 @@ void DiceModManager::mod_off(DiceEvent* msg) {
 		msg->note("{strModOff}", 1);
 	}
 }
+#ifndef __ANDROID__
+bool DiceModManager::mod_clone(const string& name, const string& repo) {
+	auto mod{ std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),repo}) };
+	if (!mod->loaded)return false;
+	modList[name] = mod;
+	modOrder.push_back(mod);
+	save();
+	build();
+	return true;
+}
+#endif
+bool DiceModManager::mod_dlpkg(const string& name, const string& pkg, string& des) {
+	if (!Network::GET(pkg, des)) {
+		des = "\n下载失败(" + pkg + "):" + des;
+		return false;
+	}
+	std::error_code ec1;
+	Zip::extractZip(des, DiceDir / "mod");
+	auto pathJson{ DiceDir / "mod" / (name + ".json") };
+	if (!fs::exists(pathJson)) {
+		if (fs::path desc{ DiceDir / "mod" / name / "descriptor.json" }; fs::exists(desc)) {
+			fs::copy(desc, pathJson);
+		}
+		else {
+			des = "\npkg解压无文件" + name + ".json";
+			return false;
+		}
+	}
+	auto mod{ std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),true}) };
+	modList[name] = mod;
+	modOrder.push_back(mod);
+	if (string err; !mod->file(pathJson).loadDesc(err)) {
+		des = "\n" + err + "(" + pkg + ")";
+		return false;
+	}
+	save();
+	build();
+	des = mod->ver.exp;
+	return true;
+}
 void DiceModManager::mod_install(DiceEvent& msg) {
 	std::lock_guard lock(ModMutex);
 	std::string desc;
@@ -138,54 +178,25 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 #ifndef __ANDROID__
 			if (j.count("repo") && !j["repo"].empty()) {
 				string repo{ j["repo"] };
-				auto mod{ std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),repo}) };
-				modList[name] = mod;
-				modOrder.push_back(mod);
-				if (!mod->loaded) {
+				if (mod_clone(name, repo)) {
+					msg.set("mod_ver", modList[name]->ver.exp);
+					msg.replyMsg("strModInstalled");
+					return;
+				}
+				else {
 					msg.set("err", msg.get_str("err") + "\ngit clone失败:" + repo);
 					continue;
 				}
-				save();
-				build();
-				msg.set("mod_ver", mod->ver.exp);
-				msg.replyMsg("strModInstalled");
-				return;
 			}
 #endif //ANDROID
 			if (j.count("pkg")) {
 				string pkg{ j["pkg"] };
 				std::string des;
-				if (!Network::GET(pkg, des))	{
-					msg.set("err", msg.get_str("err") + "\n下载失败(" + pkg + "):" + des);
-					continue;
-				}
-				std::error_code ec1;
-				Zip::extractZip(des, DiceDir / "mod");
-				auto pathJson{ DiceDir / "mod" / (name + ".json") };
-				if (!fs::exists(pathJson)) {
-					if (fs::path desc{ DiceDir / "mod" / name / "descriptor.json" }; fs::exists(desc)) {
-						fs::copy(desc, pathJson);
-					}
-					else {
-						msg.set("err", msg.get_str("err") + "\npkg解压无文件" + name + ".json");
-						continue;
-					}
-				}
-				auto mod{ std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),true}) };
-				modList[name] = mod;
-				modOrder.push_back(mod);
-				string err;
-				if (mod->file(pathJson).loadDesc(err)) {
-					save();
-					build();
-					msg.set("mod_ver", mod->ver.exp);
+				if (mod_dlpkg(name, pkg, des)) {
+					msg.set("mod_ver", des);
 					msg.replyMsg("strModInstalled");
-					return;
 				}
-				else {
-					msg.set("err", msg.get_str("err") + "\n" + err + "(" + url + name + ")");
-					continue;
-				}
+				else msg.set("err", msg.get_str("err") + des);
 			}
 			msg.set("err", msg.get_str("err") + "\n未写出mod地址(repo/pkg):" + url + name);
 		}

@@ -1242,6 +1242,19 @@ void DiceModManager::loadPlugin(ResList& res) {
 	taskcall.clear();
 	for (const auto& pathFile : files) {
 		if ((pathFile.extension() != ".lua")) {
+			if (pathFile.extension() != ".toml")continue;
+			if (ifstream fs{ pathFile }) try {
+				auto tab{ AttrVar::parse_toml(fs).to_obj() };
+				if (auto items{ tab.get_dict("reply") })for (auto& [key, val] : *items) {
+					ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
+					reply->title = key;
+					reply->from_obj(val.to_obj());
+					plugin_reply[key] = reply;
+				}
+			}
+			catch (std::exception& e) {
+				console.log("∂¡»°" + pathFile.string() + " ß∞‹!" + e.what(), 0);
+			}
 			continue;
 		}
 		string file{ getNativePathString(pathFile) };
@@ -1267,10 +1280,10 @@ void DiceModManager::loadPlugin(ResList& res) {
 						ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
 						reply->title = key;
 						reply->from_obj(val.to_obj());
-						plugin_reply.emplace(key, reply);
+						plugin_reply[key] = reply;
 					}
 					else {
-						plugin_reply.emplace(key, DiceMsgReply::set_order(key, { {"file",file},{"func",val} }));
+						plugin_reply[key] = DiceMsgReply::set_order(key, { {"file",file},{"func",val} });
 					}
 				}
 			}
@@ -1304,7 +1317,7 @@ void DiceMod::loadLua() {
 	for (auto& file : luaFiles) {
 		if (file.extension() != ".lua") {
 			if (file.extension() != ".toml")continue;
-			if (ifstream fs{ file }) {
+			if (ifstream fs{ file }) try{
 				auto tab{ AttrVar::parse_toml(fs).to_obj()};
 				if (auto items{ tab.get_dict("reply") })for (auto& [key, val] : *items) {
 					ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
@@ -1316,6 +1329,10 @@ void DiceMod::loadLua() {
 					events[key] = val.to_obj();
 				}
 			}
+			catch (std::exception& e) {
+				console.log("∂¡»°" + file.string() + " ß∞‹!" + e.what(), 0);
+			}
+			continue;
 		}
 		lua_newtable(L);
 		lua_setglobal(L, "msg_reply");

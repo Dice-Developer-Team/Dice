@@ -280,9 +280,19 @@ public:
                     fmt->uninstall(UTF8toGBK(item["name"].get<std::string>()));
                 }
             }
+            else if (j["action"] == "install") {
+                string name{ UTF8toGBK(j["data"]["name"].get<std::string>()) };
+#ifndef __ANDROID__
+                if (j["data"].count("repo") && fmt->mod_clone(name, j["data"]["repo"]))goto Success;
+#endif
+                if (string res; j["data"].count("pkg") && fmt->mod_dlpkg(name, j["data"]["pkg"], res))goto Success;
+                else throw std::runtime_error(res);
+                throw std::runtime_error("No Available Url");
+            }
             else {
                 throw std::runtime_error("Invalid Action");
             }
+Success:
             nlohmann::json j2 = nlohmann::json::object();
             j2["code"] = 0;
             j2["msg"] = "ok";
@@ -431,6 +441,65 @@ public:
             ret = j2.dump();
         }
         catch(const std::exception& e)
+        {
+            nlohmann::json j = nlohmann::json::object();
+            j["code"] = -1;
+            j["msg"] = GBKtoUTF8(e.what());
+            ret = j.dump();
+        }
+        mg_send_http_ok(conn, "application/json", ret.length());
+        mg_write(conn, ret.c_str(), ret.length());
+        return true;
+    }
+};
+
+class UrlApiHandler : public CivetHandler {
+public:
+    bool handleGet(CivetServer* server, struct mg_connection* conn)
+    {
+        std::string ret;
+        try {
+            nlohmann::json j = nlohmann::json::object();
+            if (string url; server->getParam(conn, "url", url)) {
+                if (!Network::GET(url, ret)) {
+                    j["code"] = -1;
+                    j["msg"] = GBKtoUTF8(ret);
+                    ret = j.dump();
+                }
+            }
+            else {
+                j["code"] = -1;
+                j["msg"] = "unknown url";
+                ret = j.dump();
+            }
+        }
+        catch (const std::exception& e)
+        {
+            nlohmann::json j = nlohmann::json::object();
+            j["code"] = -1;
+            j["msg"] = GBKtoUTF8(e.what());
+            ret = j.dump();
+        }
+
+        mg_send_http_ok(conn, "application/json", ret.length());
+        mg_write(conn, ret.c_str(), ret.length());
+        return true;
+    }
+
+    bool handlePost(CivetServer* server, struct mg_connection* conn)
+    {
+        std::string ret;
+        try {
+            auto data = server->getPostData(conn);
+            nlohmann::json j = nlohmann::json::parse(data);
+            if (!Network::POST(j["url"], j["content"], j.count("header") ? j["header"] : "Content-Type: application/json", ret)) {
+                nlohmann::json j2 = nlohmann::json::object();
+                j2["code"] = -1;
+                j2["msg"] = GBKtoUTF8(ret);
+                ret = j2.dump();
+            }
+        }
+        catch (const std::exception& e)
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;

@@ -173,6 +173,10 @@ public:
 	}
 	void mod_on(DiceEvent*);
 	void mod_off(DiceEvent*);
+#ifndef __ANDROID__
+	bool mod_clone(const string& name, const string& url);
+#endif
+	bool mod_dlpkg(const string& name, const string& url, string& des);
 	void mod_install(DiceEvent&);
 	void mod_reinstall(DiceEvent&);
 	void mod_update(DiceEvent&);

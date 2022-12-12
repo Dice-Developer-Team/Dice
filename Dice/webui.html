@@ -44,15 +44,15 @@
   <div class="layui-body" style="padding: 15px;">
 	<div class="layui-tab layui-tab-brief" lay-filter="main">
 	  <ul class="layui-tab-title">
-		<li class="layui-this">主界面</li>
-		<li>Master设置</li>
+		<li class="layui-this" style="width: 12%">主界面</li>
+		<li style="width: 12%">Master设置</li>
 		<li class="layui-hide">用户管理(还没写)</li>
 		<li class="layui-hide">群管理(还没写)</li>
-		<li>自定义回执</li>
-		<li>关键词回复</li>
-		<li>模块管理</li>
-		<li>WebUI管理</li>
-		<li>更新日志</li>
+		<li style="width: 12%">自定义回执</li>
+		<li style="width: 12%">关键词回复</li>
+		<li style="width: 12%">模块管理</li>
+		<li style="width: 12%">WebUI管理</li>
+		<li style="width: 12%">更新日志</li>
 	  </ul>
 	  <div class="layui-tab-content">
 		<div class="layui-tab-item layui-show">
@@ -93,7 +93,7 @@
 			  <div class="layui-form-item">
 				  <label class="layui-form-label">Master</label>
 				  <div class="layui-input-inline">
-					  <input type="number" name="master" id="master" required lay-verify="required|number" placeholder="输入主人账号完成认主" autocomplete="off" class="layui-input">
+					  <input type="number" name="master" id="master" required lay-verify="required|number" placeholder="输入骰主账号完成认主" autocomplete="off" class="layui-input">
 				  </div>
 				  <div class="layui-input-inline" id="mastermode">
 					  <input type="radio" name="mode" id="public" value="public" title="公骰" checked>
@@ -119,7 +119,26 @@
 		  <table id="custom-reply-table" lay-filter="custom-reply-table"></table>
 		</div>
 		<div class="layui-tab-item">
-		  <table id="playset-table" lay-filter="playset-table"></table>
+			<div class="layui-tab layui-tab-brief" lay-filter="mod-tab">
+				<ul class="layui-tab-title">
+				  <li class="layui-this" style="width: 45%">本地列表</li>
+				  <li style="width: 45%">远程资源</li>
+				</ul>
+				<div class="layui-tab-content">
+				  <div class="layui-tab-item layui-show">
+					<table id="mod-local-table" lay-filter="mod-local-table"></table>
+				  </div>
+				  <div class="layui-tab-item">
+					<div class="layui-form-item">
+						<div class="layui-input-inline" style="width: 80%">
+							<input type="string" name="url" id="mod-source-url" value="https://raw.sevencdn.com/Dice-Developer-Team/DiceModIndex/main/index" autocomplete="on" class="layui-input">
+						</div>
+						<button class="layui-btn layui-btn-warm" lay-submit lay-filter="mod-source-get">访问资源</button>
+					</div>
+					<table id="mod-source-table" lay-filter="mod-source-table"></table>
+				  </div>
+				</div>
+			</div>
 		</div>
 		<div class="layui-tab-item">
 		  <form class="layui-form" action="">
@@ -148,16 +167,23 @@
 				<li class="layui-timeline-item">
 					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
 					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年12月12日 版本2.6.6beta3(637)</h3>
+						<p>新增: webui远程获取模块资源</p>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
+					<div class="layui-timeline-content layui-text">
 						<h3 class="layui-timeline-title">2022年12月11日 版本2.6.6beta2(636)</h3>
-						<p>支持toml读写</p>
+						<p>新增: toml读写</p>
 					</div>
 				</li>
 				<li class="layui-timeline-item">
 					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
 					<div class="layui-timeline-content layui-text">
 						<h3 class="layui-timeline-title">2022年12月10日 版本2.6.6beta(635)</h3>
-						<p>webui可定制化</p>
-						<p>修复：无法远程更新dev版本</p>
+						<p>优化: webui可定制化</p>
+						<p>修复: 无法远程更新dev版本</p>
 					</div>
 				</li>
 				<li class="layui-timeline-item">
@@ -1075,15 +1101,15 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
 	})
   });
   //Mod
+  mod_list = {}
   table.render({
-        elem: '#playset-table'
+        elem: '#mod-local-table'
         , height: 420
         , url: '/api/mod/list' //数据接口
-        , title: '关键词回复设置'
-        , toolbar: "#addToolbar"
+        , title: '本地模块列表'
         , request: {}
         , cols: [[ //表头
-            { field: 'title', title: '模块', width: 100, fixed: 'left' },
+            { field: 'title', title: '模块', width: 140, align: 'center', fixed: 'left' },
             { field: 'ver', title: '版本', width: 100, align: 'center' },
             { field: 'author', title: '作者', width: 100, align: 'center' },
             { field: 'brief', title: '简介', minWidth: 200 },
@@ -1105,7 +1131,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
             })
         return false;
     });
-    table.on('tool(playset-table)', function (obj) { //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+    table.on('tool(mod-local-table)', function (obj) { //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
         var data = obj.data //获得当前行数据
             , layEvent = obj.event; //获得 lay-event 对应的值
         if (layEvent == "delete") {
@@ -1117,11 +1143,56 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
                             obj.del();
                             console.log("Mod Uninstall Success");
                         } else {
-                            layer.msg("卸载「" + data.title +"」失败: " + data.msg);
+                            layer.msg("模块卸载失败: " + data.msg);
                         }
                     })
                     .fail(function (jqXHR, textStatus, error) {
                         layer.msg("卸载「" + data.title +"」失败: " + error);
+                    })
+            });
+        }
+    });
+  function get_mod_source(url){
+	table.render({
+        elem: '#mod-source-table'
+        , height: 420
+        , url:  '/api/url?url=' + url //数据接口
+        , title: '远程模块资源'
+        , request: {}
+        , cols: [[ //表头
+            { field: 'title', title: '模块', width: 140, align: 'center', fixed: 'left' },
+            { field: 'ver', title: '版本', width: 100, align: 'center' },
+            { field: 'author', title: '作者', width: 100, align: 'center' },
+            { field: 'brief', title: '简介', minWidth: 200 },
+            { field: 'dice_build', title: 'Dice要求', width: 80, align: 'center' },
+            //{ field: 'require', title: '前置', width: 100 },
+            { title: '安装', fixed: 'right', width: 60, align: 'center', toolbar: '#addToolbar' }
+        ]]
+  });
+  }
+  get_mod_source($("#mod-source-url").val());
+  form.on('submit(mod-source-get)', function(data){
+	get_mod_source(data.field.url);
+	return false;
+  });
+
+    table.on('tool(mod-source-table)', function (obj) { //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+        var row = obj.data //获得当前行数据
+            , layEvent = obj.event; //获得 lay-event 对应的值
+        if (layEvent == "add") {
+            layer.confirm('确认安装「' + row.title + '」吗？', function (index) {
+                layer.close(index);
+                $.post("/api/mod/list", JSON.stringify({ action: "install", data: row }))
+                    .done(function (data) {
+                        if (data.code == 0) {
+                            table.reload('mod-source-table');
+                            layer.msg("安装「" + row.title + "」成功√ ");
+                        } else {
+                            layer.msg("模块安装失败: " + data.msg);
+                        }
+                    })
+                    .fail(function (jqXHR, textStatus, error) {
+                        layer.msg("安装「" + row.title +"」失败: " + error);
                     })
             });
         }
