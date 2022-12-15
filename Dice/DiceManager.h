@@ -280,6 +280,10 @@ public:
                     fmt->uninstall(UTF8toGBK(item["name"].get<std::string>()));
                 }
             }
+            else if (j["action"] == "reorder") {
+                size_t oldIdx{ j["data"]["oldIndex"] }, newIndex{ j["data"]["newIndex"]};
+                if(!fmt->reorder(oldIdx,newIndex))throw std::runtime_error("Invalid Index");
+            }
             else if (j["action"] == "install") {
                 string name{ UTF8toGBK(j["data"]["name"].get<std::string>()) };
 #ifndef __ANDROID__

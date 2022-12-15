@@ -1142,7 +1142,7 @@ namespace CardDeck
 
 	std::string draw(std::string strExp)
 	{
-		fifo_map<std::string, std::vector<string>> TempDeckList;
+		thread_local fifo_map<std::string, std::vector<string>> TempDeckList;
 		int intCnt = 0;
 		int lq = 0, rq = 0;
 		while ((lq = strExp.find('{', intCnt)) != std::string::npos && (rq = strExp.find('}', lq)) != std::string::npos)
@@ -1164,17 +1164,21 @@ namespace CardDeck
 				intCnt = rq + 1;
 				continue;
 			}
-			if (TempDeckList.count(strTempName) == 0 || TempDeckList[strTempName].empty())
-			{
-				TempDeckList[strTempName] = mPublicDeck[strTempName];
+			string strRes;
+			if (isTmpBack && !TempDeckList.count(strTempName)) {
+				strRes = drawCard(mPublicDeck[strTempName], true);
 			}
-			string strRes = drawCard(TempDeckList[strTempName], isTmpBack);
-			strExp.replace(strExp.begin() + lq, strExp.begin() + rq + 1, strRes);
+			else {
+				if (!TempDeckList.count(strTempName) || TempDeckList[strTempName].empty()) {
+					TempDeckList[strTempName] = mPublicDeck[strTempName];
+				}
+				strRes = drawCard(TempDeckList[strTempName], isTmpBack);
+			}
+			strExp.replace(lq, rq - lq + 1, strRes);
 			intCnt = lq + strRes.length();
 		}
 		intCnt = 0;
-		while ((lq = strExp.find('[', intCnt)) != std::string::npos && (rq = strExp.find(']', lq)) != std::string::npos)
-		{
+		while ((lq = strExp.find('[', intCnt)) != std::string::npos && (rq = strExp.find(']', lq)) != std::string::npos){
 			if (lq > 0 && strExp[lq - 1] == '\\') {
 				strExp.erase(strExp.begin() + lq - 1);
 				intCnt = rq;

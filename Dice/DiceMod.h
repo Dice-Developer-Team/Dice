@@ -182,6 +182,7 @@ public:
 	void mod_update(DiceEvent&);
 	void turn_over(size_t);
 	void uninstall(const string& name);
+	bool reorder(size_t, size_t);
 
 	string format(const string&, AttrObject = {},
 		bool isTrust = true,

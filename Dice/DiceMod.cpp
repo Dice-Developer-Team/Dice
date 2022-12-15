@@ -365,6 +365,18 @@ void DiceModManager::uninstall(const string& modName) {
 	remove_all(mod->pathDir);
 	build();
 }
+bool DiceModManager::reorder(size_t oldIdx, size_t newIdx) {
+	if (oldIdx == newIdx || (oldIdx > newIdx ? oldIdx: newIdx) >= modOrder.size())return false;
+	auto mod{ modOrder[oldIdx] };
+	mod->index = newIdx;
+	int step{ oldIdx > newIdx ? -1 : 1 };
+	while (oldIdx != newIdx) {
+		(modOrder[oldIdx] = modOrder[oldIdx + step])->index = oldIdx;
+		oldIdx += step;
+	}
+	modOrder[newIdx] = mod;
+	return true;
+}
 void DiceModManager::turn_over(size_t idx) {
 	std::lock_guard lock(ModMutex);
 	if (idx >= modOrder.size())return;
@@ -464,7 +476,7 @@ public:
 				//语境优先于全局
 				else if (auto sp = fmt->global_speech.find(key); sp != fmt->global_speech.end()) {
 					val = fmt->format(sp->second.express(), context, isTrust, dict);
-					if (!isTrust && val == "\f")val = "\f< ";
+					if (!isTrust && val == "\f")val = "\f> ";
 				}
 				else if (size_t colon{ key.find(':') }; colon != string::npos) {
 					string method{ key.substr(0,colon) };
@@ -490,9 +502,9 @@ public:
 							val = fmt->get_help(format_token(para, it).to_str(), context);
 							break;
 						case FmtMethod::Sample:
-							if (vector<string> samples{ split(para,"|") }; samples.empty())val = "";
+							if (vector<string> samples{ split(para,"|") }; samples.empty())val.des();
 							else
-								val = samples[RandomGenerator::Randint(0, samples.size() - 1)];
+								val = format_token(samples[RandomGenerator::Randint(0, samples.size() - 1)], it);
 							break;
 						case FmtMethod::At:
 							if (format_token(para, it) == "self") {
@@ -525,9 +537,9 @@ public:
 							auto [item, strVary] = readini<string, string>(para, '?');
 							auto paras{ splitPairs(strVary,'=','&') };
 							auto itemVal{ getContextItem(context, format_token(item, it), isTrust) };
-							if (auto it{ paras.find(itemVal.print()) }; it != paras.end()
-								|| (it = paras.find("else")) != paras.end()) {
-								val = it->second;
+							if (auto i{ paras.find(itemVal.print()) }; i != paras.end()
+								|| (i = paras.find("else")) != paras.end()) {
+								val = format_token(i->second, it);
 							}
 							else val.des();
 						}break;
@@ -543,8 +555,7 @@ public:
 								else if (auto stepVal{ getContextItem(context,step, isTrust) }; stepVal.is_numberic())
 									grade.set_step(stepVal.to_num(), value);
 							}
-							if (itemVal.is_numberic())val = grade[itemVal.to_num()];
-							else val = grade.get_else();
+							val = format_token(itemVal.is_numberic() ? grade[itemVal.to_num()] : grade.get_else(), it);
 						}break;
 						case FmtMethod::Ran: {
 							auto [min, max] = readini<string, string>(para, '~');
@@ -632,7 +643,7 @@ void DiceModManager::msg_edit(const string& key, const string& val){
 
 string DiceModManager::get_help(const string& key, AttrObject context) const{
 	if (const auto it = global_helpdoc.find(key); it != global_helpdoc.end()){
-		return format(it->second, context, {}, global_helpdoc);
+		return format(it->second, context, true, global_helpdoc);
 	}
 	return {};
 }
@@ -663,7 +674,7 @@ void DiceModManager::_help(DiceEvent* job) {
 	}
 	else if (const auto it = global_helpdoc.find(job->get_str("help_word"));
 		it != global_helpdoc.end()) {
-		job->reply(format(it->second, *job, {}, global_helpdoc));
+		job->reply(format(it->second, *job, true, global_helpdoc));
 	}
 	else if (auto keys = querier.search(job->get_str("help_word"));!keys.empty()) {
 		if (keys.size() == 1) {
@@ -724,15 +735,14 @@ Clock parse_clock(const AttrVar& time) {
 void DiceModManager::call_cycle_event(const string& id) {
 	if (id.empty() || !global_events.count(id))return;
 	AttrObject eve{ global_events[id] };
+	if (auto trigger{ eve.get_dict("trigger") }; trigger->count("cycle")) {
+		sch.add_job_for(parse_seconds(trigger->at("cycle")), eve);
+	}
 	if (eve["action"].is_function()) {
 		lua_call_event(eve, eve["action"]);
 	}
 	else if (auto action{ eve.get_dict("action") }; action->count("lua")) {
 		lua_call_event(eve, action->at("lua"));
-	}
-	auto trigger{ eve.get_dict("trigger") };
-	if (trigger->count("cycle")) {
-		sch.add_job_for(parse_seconds(trigger->at("cycle")), eve);
 	}
 }
 void DiceModManager::call_clock_event(const string& id) {

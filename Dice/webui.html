@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
   <title>{{= d.nick }}的Dice WebUI</title>
   <link rel="stylesheet" href="https://unpkg.com/layui@2.6.8/dist/css/layui.css">
+  <link rel="stylesheet" href="https://unpkg.com/layui-soul-table@1.5.13/soulTable.css">
   <style>
 	  .layui-layout-admin .layui-layout-left,
 	  .layui-layout-admin .layui-body,
@@ -24,7 +25,7 @@
           height: 22px;
       }
   </style>
-  <link rel="stylesheet" href="style/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -130,8 +131,9 @@
 				  </div>
 				  <div class="layui-tab-item">
 					<div class="layui-form-item">
-						<div class="layui-input-inline" style="width: 80%">
-							<input type="string" name="url" id="mod-source-url" value="https://raw.sevencdn.com/Dice-Developer-Team/DiceModIndex/main/index" autocomplete="on" class="layui-input">
+						<label class="layui-form-label" style="width: 50px">远程库</label>
+						<div class="layui-input-inline" style="width: 70%">
+							<input name="url" id="mod-source-url" value="https://raw.sevencdn.com/Dice-Developer-Team/DiceModIndex/main/index" autocomplete="on" class="layui-input">
 						</div>
 						<button class="layui-btn layui-btn-warm" lay-submit lay-filter="mod-source-get">访问资源</button>
 					</div>
@@ -162,6 +164,13 @@
 					<i class="layui-icon layui-timeline-axis">&#xe604;</i>
 					<div class="layui-timeline-content layui-text">
 						<h3 class="layui-timeline-title">最新版本开发中</h3>
+					</div>
+				</li>
+				<li class="layui-timeline-item">
+					<i class="layui-icon layui-timeline-axis">&#xe617;</i>
+					<div class="layui-timeline-content layui-text">
+						<h3 class="layui-timeline-title">2022年12月15日 版本2.6.6rc(638)</h3>
+						<p>新增: webui模块调序</p>
 					</div>
 				</li>
 				<li class="layui-timeline-item">
@@ -781,14 +790,16 @@
 </form>
   
 <script src="https://unpkg.com/layui@2.6.8/dist/layui.js"></script>
+<script src="https://unpkg.com/layui-soul-table@1.5.13/ext/soulTable.slim.js"></script>
 <script> 
-//加载模块  
-layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate', function(){
+//加载模块 
+layui.use(['form', 'table','soulTable'], function(){ //亦可加载特定模块：layui.use(['layer', 'laydate', function(){
   //得到各种内置组件
   var layer = layui.layer //弹层
   ,laypage = layui.laypage //分页
   ,laydate = layui.laydate //日期
   ,table = layui.table //表格
+  ,soulTable = layui.soulTable//表格
   ,carousel = layui.carousel //轮播
   ,upload = layui.upload //上传
   ,element = layui.element //元素操作
@@ -833,6 +844,7 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
 	,title: '自定义回执'
 	,toolbar: "#addToolbar"
 	,request: {} 
+	, overflow: 'tips'
 	,cols: [[ //表头
 	  {field: 'name', title: '条目', width:150, sort: true, fixed: 'left'}
 	  ,{field: 'value', title: '文本', minWidth:250, edit: 'text'}
@@ -840,6 +852,9 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
 	  ,{fixed: 'right', width:60, align:'center', toolbar: '#editToolbar'}
 	  ,{fixed: 'right', width:60, align:'center', toolbar: '#delToolbar'}
 	]]
+    , done: function () {
+        soulTable.render(this)
+    }
   });
 
   var editCustomMsgFormIndex = -1;
@@ -996,7 +1011,8 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
 	,url: '/api/customreply' //数据接口
 	,title: '关键词回复设置'
 	,toolbar: "#addToolbar"
-	,request: {} 
+	,request: {}
+	, overflow: 'tips'
 	,cols: [[ //表头
 	  {field: 'name', title: '名称', width:100, sort: true, fixed: 'left'}
 	  ,{field: 'keyword', title: '关键词', width:150}
@@ -1008,6 +1024,9 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
 	  ,{fixed: 'right', width:60, align:'center', toolbar: '#editToolbar'}
 	  ,{fixed: 'right', width:60, align:'center', toolbar: '#delToolbar'}
 	]]
+    , done: function () {
+        soulTable.render(this)
+    }
   });
 
   var addCustomReplyFormIndex = -1;
@@ -1108,14 +1127,32 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
         , url: '/api/mod/list' //数据接口
         , title: '本地模块列表'
         , request: {}
+		, overflow: 'tips'
+        , rowDrag: {/*trigger: 'row',*/ done: function(eve) {
+            $.post("/api/mod/list", JSON.stringify({ action: "reorder", data: { oldIndex: eve.oldIndex, newIndex: eve.newIndex } }))
+                .done(function (data) {
+                    if (data.code == 0) {
+                        layer.msg("Mod调序成功");
+                    } else {
+                        layer.msg("Mod调序失败: " + data.msg);
+                    }
+                })
+                .fail(function (jqXHR, textStatus, error) {
+                    layer.msg("Mod调序失败: " + error);
+                })
+            return false;
+        }}
         , cols: [[ //表头
             { field: 'title', title: '模块', width: 140, align: 'center', fixed: 'left' },
             { field: 'ver', title: '版本', width: 100, align: 'center' },
             { field: 'author', title: '作者', width: 100, align: 'center' },
-            { field: 'brief', title: '简介', minWidth: 200 },
-            { field: 'active', title: '开关', width: 80, align: 'center', templet: function (row) { return "<input type='checkbox' lay-skin='switch' lay-filter='modSwitch' lay-text='开|关' value=" + row.LAY_TABLE_INDEX + " mod='" + row.name + "'" + (row.active ? " checked >" : ">")}},
+            { field: 'brief', title: '简介', minWidth: 200, overflow: 'tips'},
+            { field: 'active', title: '开关', width: 80, align: 'center', templet: function (row) { mod_list[row.name]=true; return "<input type='checkbox' lay-skin='switch' lay-filter='modSwitch' lay-text='开|关' value=" + row.LAY_TABLE_INDEX + " mod='" + row.name + "'" + (row.active ? " checked >" : ">")}},
             { title: '卸载', fixed: 'right', width: 60, align: 'center', toolbar: '#delToolbar' }
         ]]
+        , done: function () {
+            soulTable.render(this)
+        }
   });
     form.on('switch(modSwitch)', function (eve) {
         $.post("/api/mod/list", JSON.stringify({ action: "switch", data: parseInt(eve.value) }))
@@ -1159,15 +1196,19 @@ layui.use(function(){ //亦可加载特定模块：layui.use(['layer', 'laydate'
         , url:  '/api/url?url=' + url //数据接口
         , title: '远程模块资源'
         , request: {}
+		, overflow: 'tips'
         , cols: [[ //表头
             { field: 'title', title: '模块', width: 140, align: 'center', fixed: 'left' },
             { field: 'ver', title: '版本', width: 100, align: 'center' },
             { field: 'author', title: '作者', width: 100, align: 'center' },
             { field: 'brief', title: '简介', minWidth: 200 },
-            { field: 'dice_build', title: 'Dice要求', width: 80, align: 'center' },
-            //{ field: 'require', title: '前置', width: 100 },
-            { title: '安装', fixed: 'right', width: 60, align: 'center', toolbar: '#addToolbar' }
+            { field: 'dice_build', title: 'Dice要求', width: 80, align: 'center', filter: true },
+            { field: 'require', title: '前置', width: 60, templet: function (row) { return row.require ? row.require.join('|') :"无" } },
+            { title: '安装', fixed: 'right', width: 60, align: 'center', templet: function (row) { return mod_list[row.name]?"<button class='layui-btn layui-btn-xs layui-btn-warm' lay-event='add'>重装</button>":"<button class='layui-btn layui-btn-xs' lay-event='add'>安装</button>" } }
         ]]
+        , done: function () {
+            soulTable.render(this)
+        }
   });
   }
   get_mod_source($("#mod-source-url").val());

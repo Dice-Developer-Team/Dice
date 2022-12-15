@@ -406,6 +406,7 @@ R"( //私骰作成 即可成为我的主人~
 			}
 #else
 			if (string html; Network::GET("https://raw.sevencdn.com/Dice-Developer-Team/Dice/newdev/Dice/webui.html", html)) {
+				fs::create_directories(DiceDir / "webui");
 				ofstream fweb{ DiceDir / "webui" / "index.html" };
 				fweb.write(html.c_str(), html.length());
 			}

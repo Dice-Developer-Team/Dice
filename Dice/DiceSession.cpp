@@ -267,13 +267,13 @@ void DiceChatLink::start(DiceEvent* msg) {
 		msg->replyMsg("strLinkNotFound");
 	}
 }
-string DiceChatLink::show(const chatInfo& here) {
-	string info{ "[нч]" };
-	static dict<> prep{
+dict<> prep{
 		{"to","->"},
 		{"from","<-"},
 		{"with","<->"},
-	};
+};
+string DiceChatLink::show(const chatInfo& here) {
+	string info{ "[нч]" };
 	if (LinkList.count(here)) {
 		const auto& link{ LinkList[here] };
 		info = printChat(here) + prep[link.typeLink] + printChat(link.target)
@@ -289,11 +289,6 @@ string DiceChatLink::show(const chatInfo& here) {
 	return info;
 }
 string DiceChatLink::list() {
-	static dict<> prep{
-		{"to","->"},
-		{"from","<-"},
-		{"with","<->"},
-	};
 	ShowList li;
 	for (auto& [here,link]:LinkList) {
 		li << printChat(here) + prep[link.typeLink] + printChat(link.target)

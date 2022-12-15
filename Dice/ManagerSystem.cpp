@@ -155,12 +155,12 @@ AttrVar getSelfItem(string item) {
 	if (item.empty())return var;
 	if (item[0] == '&')item = fmt->format(item);
 	if (console.intDefault.count(item))return console[item];
-	if (!(var = getUserItem(console.DiceMaid, item))) {
+	if ((var = getUserItem(console.DiceMaid, item)).is_null()) {
 		string file, sub;
 		while (!(sub = splitOnce(item)).empty()) {
 			file += sub;
 			if (selfdata_byStem.count(file)
-				&& (var = selfdata_byStem[file]->data.to_obj().index(item))) {
+				&& !(var = selfdata_byStem[file]->data.to_obj().index(item)).is_null()) {
 				return var;
 			}
 			file += ".";
