@@ -106,7 +106,7 @@ jobs:
           mono: 'mono'
           dll_sfx: macos.aarch64
           
-    runs-on: 	macos-latest
+    runs-on: 	macos-11
     
     steps:
     - uses: actions/checkout@v3
@@ -208,7 +208,7 @@ jobs:
           mono: 'mono'
           dll_sfx: linux.arm
         
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     
     steps:
     - uses: actions/checkout@v3
@@ -304,7 +304,7 @@ jobs:
           mono: 'mono'
           dll_sfx: android.amd64
         
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-18.04
     
     steps:
     - uses: actions/checkout@v3

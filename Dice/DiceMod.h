@@ -120,7 +120,8 @@ public:
 private:
 	dict<>helpdoc;
 	dict<DiceSpeech>speech;
-	dict_ci<string>scripts;
+	dict_ci<string>lua_scripts;
+	dict_ci<string>py_scripts;
 	vector<fs::path>luaFiles;
 	dict<ptr<DiceMsgReply>>reply_list;
 	AttrObjects events;
@@ -144,7 +145,8 @@ class DiceModManager {
 	//global
 	dict_ci<> global_helpdoc;
 	DiceReplyUnit final_reply;
-	dict_ci<string> global_scripts;
+	dict_ci<string> global_lua_scripts;
+	dict_ci<string> global_py_scripts;
 	dict_ci<AttrVars> taskcall;
 	AttrObjects global_events; //events by id
 	//Event
@@ -212,8 +214,10 @@ public:
 	void reply_show(DiceEvent*);
 	bool call_task(const string&);
 
-	bool script_has(const string& name)const { return global_scripts.count(name); }
-	string script_path(const string& name)const;
+	bool has_lua(const string& name)const { return global_lua_scripts.count(name); }
+	bool has_py(const string& name)const { return global_py_scripts.count(name); }
+	string lua_path(const string& name)const;
+	string py_path(const string& name)const;
 
 	void loadPlugin(ResList& res);
 	int load(ResList&);
