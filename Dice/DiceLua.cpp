@@ -233,8 +233,8 @@ bool lua_msg_call(DiceEvent* msg, const AttrObject& lua) {
 	//LuaType typeLua{ LuaType::String };
 	string luaFile{ lua.get_str("file") };
 	if (AttrVar luaScript{ lua.get("script") }) {
-		if (luaFile.empty() && luaScript.is_character() && fmt->script_has(luaScript.to_str())) {
-			luaFile = fmt->script_path(luaScript.to_str());
+		if (luaFile.empty() && luaScript.is_character() && fmt->script_has(luaScript)) {
+			luaFile = fmt->script_path(luaScript);
 		}
 		else {
 			lua["func"] = luaScript;
@@ -266,7 +266,6 @@ bool lua_msg_call(DiceEvent* msg, const AttrObject& lua) {
 			return 0;
 		}
 		else if (lua["func"].is_character()) {
-			
 			string func{ lua.get_str("func") };
 			lua_getglobal(L, func.c_str());
 			lua_push_Context(L, *msg);

@@ -1,9 +1,10 @@
 {
   "name": "dice",
-  "version-string": "2.6.5",
+  "version-string": "2.7.0",
   "dependencies": [
     "lua",
     "yaml-cpp",
+    "python3",
     "openssl",
     {
       "name": "libgit2",

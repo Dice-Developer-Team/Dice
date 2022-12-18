@@ -38,7 +38,7 @@ public:
 	static enumap_ci sType;
 	std::unique_ptr<vector<string>>keyMatch[4];
 	static enumap_ci sMode;
-	enum class Echo { Text, Deck, Lua };    //回复形式
+	enum class Echo { Text, Deck, Lua, Python};    //回复形式
 	static enumap_ci sEcho;
 	Type type{ Type::Reply };
 	Echo echo{ Echo::Deck };

@@ -28,6 +28,7 @@
 #include "DiceFile.hpp"
 #include "DiceEvent.h"
 #include "DiceLua.h"
+#include "DicePython.h"
 #include "DiceMsgReply.h"
 #include "DiceSelfData.h"
 #include "RandomGenerator.h"
@@ -385,8 +386,8 @@ void DiceModManager::turn_over(size_t idx) {
 	save();
 	build();
 }
-static enumap<string> methods{ "var","print","help","sample","case","vary","grade","at","ran","wait" };
-enum class FmtMethod { Var, Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait};
+static enumap<string> methods{ "var","print","help","sample","case","vary","grade","at","ran","wait","py" };
+enum class FmtMethod { Var, Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait, Py};
 struct ParseNode {
 	string leaf;
 	size_t pos;
@@ -569,6 +570,9 @@ public:
 							if (long long ms{ AttrVar::parse(format_token(para, it)).to_ll() }; 0 < ms && ms < 600000)
 								std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 							val.des();
+							break;
+						case FmtMethod::Py:
+							val = py->evalString(format_token(para, it), context);
 							break;
 						default:
 							break;

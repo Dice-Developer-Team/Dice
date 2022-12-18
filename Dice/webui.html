@@ -768,11 +768,12 @@
   <div class="layui-form-item">
 	<label class="layui-form-label" style="width: 60px">回复形式</label>
 	<div class="layui-input-block" style="margin-left: 90px">
-	<select name="echo">
-	  <option value ="Deck">牌堆</option>
-	  <option value ="Text">文本</option>
-	  <option value ="Lua">Lua</option>
-	</select>
+		<select name="echo">
+			<option value="Deck">牌堆</option>
+			<option value="Text">文本</option>
+			<option value="Lua">Lua</option>
+			<option value="Py">Python</option>
+		</select>
 	</div>
   </div>
   <div class="layui-form-item">
@@ -1203,7 +1204,7 @@ layui.use(['form', 'table','soulTable'], function(){ //亦可加载特定模块�
             { field: 'author', title: '作者', width: 100, align: 'center' },
             { field: 'brief', title: '简介', minWidth: 200 },
             { field: 'dice_build', title: 'Dice要求', width: 80, align: 'center', filter: true },
-            { field: 'require', title: '前置', width: 60, templet: function (row) { return row.require ? row.require.join('|') :"无" } },
+            { field: 'require', title: '前置', width: 60, align: 'center', templet: function (row) { return row.require ? row.require.join('|') :"无" } },
             { title: '安装', fixed: 'right', width: 60, align: 'center', templet: function (row) { return mod_list[row.name]?"<button class='layui-btn layui-btn-xs layui-btn-warm' lay-event='add'>重装</button>":"<button class='layui-btn layui-btn-xs' lay-event='add'>安装</button>" } }
         ]]
         , done: function () {

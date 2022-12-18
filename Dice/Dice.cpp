@@ -55,6 +55,7 @@
 #include "EncodingConvert.h"
 #include "DiceManager.h"
 #include "DiceSelfData.h"
+#include "DicePython.h"
 
 #ifdef _WIN32
 #include "S3PutObject.h"
@@ -306,6 +307,7 @@ R"( //私骰作成 即可成为我的主人~
 	catch (const std::exception& e) {
 		console.log(string("读取/conf/CustomMsg.json失败!") + e.what(), 1, printSTNow());
 	}
+	py = make_unique<PyGlobal>();
 	loadData();
 	//初始化黑名单
 	blacklist = make_unique<DDBlackManager>();
@@ -1057,6 +1059,7 @@ void global_exit() {
 	sch.end();
 	censor = {};
 	fmt.reset();
+	py = {};
 	sessions.clear();
 	PList.clear();
 	ChatList.clear();
