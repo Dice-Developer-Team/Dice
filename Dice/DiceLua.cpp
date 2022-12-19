@@ -233,8 +233,8 @@ bool lua_msg_call(DiceEvent* msg, const AttrObject& lua) {
 	//LuaType typeLua{ LuaType::String };
 	string luaFile{ lua.get_str("file") };
 	if (AttrVar luaScript{ lua.get("script") }) {
-		if (luaFile.empty() && luaScript.is_character() && fmt->script_has(luaScript)) {
-			luaFile = fmt->script_path(luaScript);
+		if (luaFile.empty() && luaScript.is_character() && fmt->has_lua(luaScript)) {
+			luaFile = fmt->lua_path(luaScript);
 		}
 		else {
 			lua["func"] = luaScript;
@@ -322,8 +322,8 @@ bool lua_msg_call(DiceEvent* msg, const AttrObject& lua) {
 bool lua_call_event(AttrObject eve, const AttrVar& lua) {
 	if (!Enabled)return false;
 	string luas{ lua.to_str() };
-	bool isFile{ lua.is_character() && fmt->script_has(luas) };
-	LuaState L{ fmt->script_path(luas) };
+	bool isFile{ lua.is_character() && fmt->has_lua(luas) };
+	LuaState L{ fmt->lua_path(luas) };
 	if (!L)return false;
 	lua_push_Context(L, eve);
 	lua_setglobal(L, "event");
@@ -507,8 +507,8 @@ int loadLua(lua_State* L) {
 	bool hasSlash{ nameLua.find('/') != string::npos };
 #endif
 	std::filesystem::path pathFile{ nameLua };
-	if (fmt->script_has(nameLua)) {
-		pathFile = fmt->script_path(nameLua);
+	if (fmt->has_lua(nameLua)) {
+		pathFile = fmt->lua_path(nameLua);
 	}
 	else {
 		if ((pathFile.extension() != ".lua") && (pathFile.extension() != ".LUA"))pathFile = nameLua + ".lua";

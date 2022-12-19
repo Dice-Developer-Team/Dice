@@ -849,8 +849,14 @@ bool DiceModManager::call_task(const string& task) {
 	return false;
 }
 
-string DiceModManager::script_path(const string& name)const {
-	if (auto it{ global_scripts.find(name) }; it != global_scripts.end()) {
+string DiceModManager::lua_path(const string& name)const {
+	if (auto it{ global_lua_scripts.find(name) }; it != global_lua_scripts.end()) {
+		return it->second;
+	}
+	return {};
+}
+string DiceModManager::py_path(const string& name)const {
+	if (auto it{ global_py_scripts.find(name) }; it != global_py_scripts.end()) {
 		return it->second;
 	}
 	return {};
@@ -892,7 +898,8 @@ string DiceMod::detail()const {
 	ShowList li;
 	if (!events.empty())li << "- 事件: " + to_string(events.size()) + "条";
 	if (!reply_list.empty())li << "- 回复: " + to_string(reply_list.size()) + "项";
-	if (!scripts.empty())li << "- 脚本: " + to_string(scripts.size()) + "份";
+	if (!lua_scripts.empty())li << "- lua脚本: " + to_string(lua_scripts.size()) + "份";
+	if (!py_scripts.empty())li << "- py脚本: " + to_string(py_scripts.size()) + "份";
 	if (!helpdoc.empty())li << "- 帮助: " + to_string(helpdoc.size()) + "条";
 	if (!speech.empty())li << "- 台词: " + to_string(speech.size()) + "项";
 	if (cntImage)li << "- 图像: " + to_string(cntImage) + "份";
@@ -994,10 +1001,15 @@ void DiceMod::loadDir() {
 			vector<std::filesystem::path> fScripts;
 			listDir(dirScript, fScripts, true);
 			for (auto p : fScripts) {
-				if (p.extension() != ".lua")continue;
-				string script_name{ cut_stem((p.stem() == "init") ? p.parent_path() : p,dirScript) };
-				string strPath{ getNativePathString(p) };
-				scripts[script_name] = strPath;
+				if (p.extension() == ".lua") {
+					string script_name{ cut_stem((p.stem() == "init") ? p.parent_path() : p,dirScript) };
+					string strPath{ getNativePathString(p) };
+					lua_scripts[script_name] = strPath;
+				}else if (p.extension() == ".py") {
+					string script_name{ cut_stem(p,dirScript) };
+					string strPath{ p.u8string() };
+					py_scripts[script_name] = strPath;
+				}
 			}
 		}
 		listDir(pathDir / "reply", luaFiles, true);
@@ -1009,7 +1021,8 @@ void DiceMod::loadDir() {
 bool DiceMod::reload(string& cb) {
 	helpdoc.clear();
 	speech.clear();
-	scripts.clear();
+	lua_scripts.clear();
+	py_scripts.clear();
 	luaFiles.clear();
 	reply_list.clear();
 	events.clear();
@@ -1145,13 +1158,15 @@ void DiceModManager::build() {
 	//init
 	map_merge(global_speech = transpeech, GlobalMsg);
 	global_helpdoc = HelpDoc;
-	global_scripts.clear();
+	global_lua_scripts.clear();
+	global_py_scripts.clear();
 	global_events.clear();
 	final_reply = {};
 	//merge mod
 	for (auto& mod : modOrder) {
 		if (!mod->active || !mod->loaded)continue;
-		map_merge(global_scripts, mod->scripts);
+		map_merge(global_lua_scripts, mod->lua_scripts);
+		map_merge(global_py_scripts, mod->py_scripts);
 		cntSpeech += map_merge(global_speech, mod->speech);
 		cntHelp += map_merge(global_helpdoc, mod->helpdoc);
 		map_merge(final_reply.items, mod->reply_list);
@@ -1172,7 +1187,8 @@ void DiceModManager::build() {
 		resLog << "注册reply " + to_string(final_reply.items.size()) + " 项";
 		final_reply.build();
 	}
-	if (!global_scripts.empty())resLog << "注册script " + to_string(global_scripts.size()) + " 份";
+	if (!global_lua_scripts.empty())resLog << "注册lua script " + to_string(global_lua_scripts.size()) + " 份";
+	if (!global_py_scripts.empty())resLog << "注册py script " + to_string(global_py_scripts.size()) + " 份";
 	if (!global_events.empty()) {
 		resLog << "注册event " + to_string(global_events.size()) + " 项";
 		clock_events.clear();

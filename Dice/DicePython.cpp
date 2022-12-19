@@ -1,5 +1,6 @@
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
+#include <stdio.h>
 #include "DicePython.h"
 #include "DiceConsole.h"
 #include "EncodingConvert.h"
@@ -7,7 +8,7 @@
 #include "DiceMod.h"
 std::unique_ptr<PyGlobal> py;
 constexpr auto DiceModuleName = "dicemaid";
-char* empty = "";
+const char* empty = "";
 string py_args_to_gbstring(PyObject* o) {
     const char* s = empty;
     return (o && PyArg_ParseTuple(o, "s", &s)) ? UTF8toGBK(s) : empty;
@@ -31,6 +32,46 @@ AttrVar py_to_attr(PyObject* o) {
     else if (Py_IS_TYPE(o, &PyFloat_Type))return PyFloat_AsDouble(o);
     else if (Py_IS_TYPE(o, &PyUnicode_Type))return UTF8toGBK(PyUnicode_AsUTF8(o));
     else if (Py_IS_TYPE(o, &PyBytes_Type))return UTF8toGBK(PyBytes_AsString(o));
+    else if (Py_IS_TYPE(o, &PyDict_Type)) {
+        AttrVars tab;
+        int len = PyMapping_Length(o);
+        if (auto items{ PyMapping_Items(o) };items && len) {
+            PyObject* item = nullptr;
+            const char* key = empty;
+            PyObject* val = nullptr;
+            for (int i = 0; i < len; ++i) {
+                item = PySequence_GetItem(items, i);
+                PyArg_ParseTuple(item, "so", key, val);
+                tab[UTF8toGBK(key)] = py_to_attr(val);
+                Py_DECREF(item);
+            }
+        }
+        return AttrObject(tab);
+    }
+    else if (Py_IS_TYPE(o, &PyList_Type)) {
+        VarArray ary;
+        if (auto len = PySequence_Size(o)) {
+            PyObject* item = nullptr;
+            for (int i = 0; i < len; ++i) {
+                item = PySequence_GetItem(o, i);
+                ary.emplace_back(py_to_attr(item));
+                Py_DECREF(item);
+            }
+        }
+        return ary;
+    }
+    else if (Py_IS_TYPE(o, &PyTuple_Type)) {
+        VarArray ary;
+        if (auto len = PyTuple_Size(o)) {
+            PyObject* item = nullptr;
+            for (int i = 0; i < len; ++i) {
+                item = PyTuple_GetItem(o, i);
+                ary.emplace_back(py_to_attr(item));
+                Py_DECREF(item);
+            }
+        }
+        return ary;
+    }
     console.log("py type: " + string(o->ob_type->tp_name), 0);
     return {};
 }
@@ -46,16 +87,39 @@ PyObject* py_build_attr(const AttrVar& var) {
         return PyFloat_FromDouble(var.number);
         break;
     case AttrVar::AttrType::Text:
-        return Py_BuildValue("s", GBKtoUTF8(var.text).c_str());
+        return PyUnicode_FromString(GBKtoUTF8(var.text).c_str());
+        break;
+    case AttrVar::AttrType::Table:
+        if (!var.table.to_dict()->empty()) {
+            auto dict = PyDict_New();
+            if (var.table.to_list()) {
+                long idx{ 0 };
+                for (auto& val : *var.table.to_list()) {
+                    PyDict_SetItem(dict, PyLong_FromLong(idx++), py_build_attr(val));
+                }
+            }
+            for (auto& [key, val] : *var.table.to_dict()) {
+                PyDict_SetItem(dict, PyUnicode_FromString(GBKtoUTF8(key).c_str()), py_build_attr(val));
+            }
+            return dict;
+        }
+        else if (var.table.to_list()) {
+            auto ary = PyList_New(var.table.to_list()->size());
+            Py_ssize_t i{ 0 };
+            for (auto& val : *var.table.to_list()) {
+                PyList_SetItem(ary, i++, py_build_attr(val));
+            }
+            return ary;
+        }
         break;
     case AttrVar::AttrType::ID:
         return PyLong_FromLongLong(var.id);
         break;
     case AttrVar::AttrType::Nil:
     default:
-        return Py_BuildValue("");
         break;
     }
+    return Py_BuildValue("");
 }
 
 typedef struct{
@@ -122,10 +186,6 @@ static Py_ssize_t pyContext_size(PyObject* self) {
 static PyMappingMethods ContextMappingMethods = {
     pyContext_size, PyContext_getattro, PyContext_setattro,
 };
-static void* ContextMembers[] = {
-    //{"ptr", T_INT, offsetof(PyContextObject, obj), 0, NULL},
-    {NULL},
-};
 static PyTypeObject PyContextType = {
     PyVarObject_HEAD_INIT(nullptr, 0)
     "dicemaid.Context",                                 /* tp_name */
@@ -155,7 +215,7 @@ static PyTypeObject PyContextType = {
     nullptr,                                           /* tp_iter */
     nullptr,                                           /* tp_iternext */
     ContextMethods,                                    /* tp_methods */
-    (PyMemberDef*)ContextMembers,                                    /* tp_members */
+    nullptr,                                    /* tp_members */
     nullptr,                                          /* tp_getset */
     nullptr,                                           /* tp_base */
     nullptr,                                           /* tp_dict */
@@ -188,9 +248,9 @@ static PyObject* py_log(PyObject* self, PyObject* args) {
 static PyObject* py_sendMsg(PyObject* self, PyObject* args, PyObject* keys) {
     const char* msg = empty;
     long long uid = 0, gid = 0, chid = 0;
-    static char* kwlist[] = { "msg","uid","gid","chid",NULL };
+    static const char* kwlist[] = { "msg","uid","gid","chid", NULL };
     /* Parse arguments */
-    if (!PyArg_ParseTupleAndKeywords(args, keys, "s|LLL", kwlist, &msg, &uid, &gid, &chid))return NULL;
+    if (!PyArg_ParseTupleAndKeywords(args, keys, "s|LLL", (char**)kwlist, &msg, &uid, &gid, &chid))return NULL;
     AttrObject chat;
     if (uid)chat["uid"] = uid;
     if (gid)chat["gid"] = gid;
@@ -251,7 +311,7 @@ PyGlobal::~PyGlobal() {
 	Py_Finalize();
 }
 int PyGlobal::runFile(const std::filesystem::path& p) {
-	//PyRun_SimpleFile(p.c_str());
+    return 0;
 }
 int PyGlobal::runString(const std::string& s) {
 	return PyRun_SimpleString(GBKtoUTF8(s).c_str());
@@ -278,13 +338,21 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrObject& action) {
         PyObject* locals = PyDict_New();
         PyDict_SetItem(locals, Py_BuildValue("s", "msg"), py_newContext(*msg));
         string pyScript{ action.get_str("script") };
-        if (fmt->script_has(pyScript)) {
-            return false;
+        if (fmt->has_py(pyScript)) {
+            FILE* fp{ fopen(fmt->py_path(pyScript).c_str(),"r") };
+            if (auto res{ PyRun_File(fp, fmt->py_path(pyScript).c_str(), Py_file_input, dict, locals) }; !res) {
+                console.log(getMsg("self") + "运行" + pyScript + "异常!" + py_print_error(), 0b10);
+                PyErr_Clear();
+                fclose(fp);
+                return false;
+            }
+            fclose(fp);
         }
         else {
             if (auto res{ PyRun_String(GBKtoUTF8(pyScript).c_str(), Py_file_input, dict, locals) };!res) {
-                console.log(getMsg("self") + "运行python脚本异常!" + py_print_error(), 0b10);
+                console.log(getMsg("self") + "运行python语句异常!" + py_print_error(), 0b10);
                 PyErr_Clear();
+                return false;
             }
         }
         return true;
