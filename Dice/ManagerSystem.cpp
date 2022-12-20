@@ -46,7 +46,6 @@ User& getUser(long long uid){
 	if (!UserList.count(uid))UserList[uid].id(uid);
 	return UserList[uid];
 }
-constexpr const char* chDigit{ "0123456789" };
 AttrVar getUserItem(long long uid, const string& item) {
 	if (!uid)return {};
 	if (TinyList.count(uid))uid = TinyList[uid];

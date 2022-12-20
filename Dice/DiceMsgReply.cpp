@@ -596,8 +596,9 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 		lua_msg_call(msg, text.to_obj());
 		return true;
 	}
-	else if (echo == Echo::Python) {
+	else if (echo == Echo::Python && py) {
 		py->call_reply(msg, text.to_obj());
+		return true;
 	}
 	return false;
 }

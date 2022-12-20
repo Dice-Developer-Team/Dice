@@ -65,6 +65,7 @@ const fifo_dict_ci<int>Console::intDefault{
 {"ReferMsgReply",0},
 {"EnableWebUI",1},{"WebUIAllowInternetAccess",0},
 {"WebUIPort",0},
+{"EnablePython",0},
 {"DebugMode",0},
 {"DefaultCOCRoomRule",0},
 };

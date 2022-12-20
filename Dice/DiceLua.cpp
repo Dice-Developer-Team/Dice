@@ -11,7 +11,6 @@
 #include "DiceSelfData.h"
 
 unordered_set<lua_State*> UTF8Luas;
-constexpr const char* chDigit{ "0123456789" };
 const char* LuaTypes[]{ "nil","boolean","lightuserdata","number","string","table","function","userdata","thread","numtypes" };
 
 class LuaState {
@@ -639,8 +638,7 @@ int getGroupConf(lua_State* L) {
 			lua_rawseti(L, -2, ++i);
 		}
 	}
-	auto val{ getGroupItem(id,item) };
-	if (val)lua_push_attr(L, val);
+	if (auto val{ getGroupItem(id,item) }; !val.is_null())lua_push_attr(L, val);
 	else {
 		lua_pushnil(L);
 		lua_insert(L, 3);

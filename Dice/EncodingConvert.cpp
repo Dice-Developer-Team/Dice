@@ -174,6 +174,14 @@ std::vector<std::string> UTF8toGBK(const std::vector<std::string>& vUTF8)
 	std::transform(vUTF8.begin(), vUTF8.end(), std::back_inserter(vOutGBK), [](const std::string& s) { return UTF8toGBK(s); });
 	return vOutGBK;
 }
+std::string UtoGBK(const wchar_t* strUTF16) {
+	const int GBKlen = WideCharToMultiByte(CP_GBK, 0, strUTF16, -1, nullptr, 0, nullptr, nullptr);
+	auto* const strGBK = new char[GBKlen];
+	WideCharToMultiByte(CP_GBK, 0, strUTF16, -1, strGBK, GBKlen, nullptr, nullptr);
+	std::string strOutGBK(strGBK);
+	delete[] strGBK;
+	return strOutGBK;
+}
 
 unsigned char ToHex(const unsigned char x)
 {

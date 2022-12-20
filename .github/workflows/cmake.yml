@@ -230,8 +230,8 @@ jobs:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ matrix.triplet }}-20221125
-        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20221125
+        key: ${{ runner.os }}-${{ matrix.triplet }}-20221219
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20221219
         
     - name: Setup Vcpkg
       shell: bash
@@ -323,8 +323,8 @@ jobs:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ matrix.triplet }}-20221125
-        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20221125
+        key: ${{ runner.os }}-${{ matrix.triplet }}-20221219
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20221219
         
     - name: Setup Vcpkg
       shell: bash
