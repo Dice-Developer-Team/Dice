@@ -57,7 +57,7 @@ DiceEvent::DiceEvent(const AttrVars& var, const chatInfo& ct)
 		pGrp = &chat(fromChat.gid);
 	}
 }
-DiceEvent::DiceEvent(const AttrVars& var)
+DiceEvent::DiceEvent(const AttrObject& var)
 	:AttrObject(var), strMsg(at("fromMsg").text) {
 	fromChat = { get_ll("uid") ,get_ll("gid") ,get_ll("chid") };
 	if (fromChat.gid) {

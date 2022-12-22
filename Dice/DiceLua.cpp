@@ -742,7 +742,7 @@ int getUserToday(lua_State* L) {
 	if (lua_isnil(L, 1)) {
 		if (item.empty())return 0;
 		lua_newtable(L);
-		for (auto& [uid,data] : today->getUserInfo()) {
+		for (auto& [uid, data] : today->getUserInfo()) {
 			if (data.has(item) && uid) {
 				lua_push_attr(L,data.get(item));
 				lua_set_field(L, -2, to_string(uid));

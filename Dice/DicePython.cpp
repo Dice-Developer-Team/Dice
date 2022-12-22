@@ -26,12 +26,17 @@ string py_to_gbstring(PyObject* o) {
 	return Py_IS_TYPE(o, &PyUnicode_Type) ? UtoGBK(PyUnicode_AsUnicode(o)) : empty;
 }
 PyObject* py_from_gbstring(const string& strGBK) {
+#ifdef _WIN32
 	const int len = MultiByteToWideChar(54936, 0, strGBK.c_str(), -1, nullptr, 0);
 	auto* const strUnicode = new wchar_t[len];
 	MultiByteToWideChar(54936, 0, strGBK.c_str(), -1, strUnicode, len);
 	auto o{ PyUnicode_FromUnicode(strUnicode,len) };
 	delete[] strUnicode;
 	return o;
+#else
+	auto s{ ConvertEncoding<wchar_t, char>(strGBK, "gb18030", "utf-32le") };
+	return PyUnicode_FromUnicode(s.c_str(), s.length());
+#endif
 }
 AttrVar py_to_attr(PyObject* o) {
 	if (Py_IS_TYPE(o, &PyBool_Type))return bool(Py_IsTrue(o));
@@ -68,7 +73,7 @@ AttrVar py_to_attr(PyObject* o) {
 				Py_DECREF(item);
 			}
 		}
-		return ary;
+		return AttrObject(ary);
 	}
 	else if (Py_IS_TYPE(o, &PyTuple_Type)) {
 		VarArray ary;
@@ -80,7 +85,7 @@ AttrVar py_to_attr(PyObject* o) {
 				Py_DECREF(item);
 			}
 		}
-		return ary;
+		return AttrObject(ary);
 	}
 	console.log("py type: " + string(o->ob_type->tp_name), 0);
 	return {};
@@ -91,7 +96,7 @@ PyObject* py_build_attr(const AttrVar& var) {
 		return Py_BuildValue("p", var.bit);
 		break;
 	case AttrVar::AttrType::Integer:
-		return PyLong_FromLong((long)var.attr);
+		return PyLong_FromSsize_t(var.attr);
 		break;
 	case AttrVar::AttrType::Number:
 		return PyFloat_FromDouble(var.number);
@@ -241,6 +246,52 @@ PyObject* py_newContext(const AttrObject& obj) {
 	new(&context->obj) AttrObject(obj);
 	return (PyObject*)context;
 }
+AttrObject py_to_obj(PyObject* o) {
+	if (Py_IS_TYPE(o, &PyDict_Type)) {
+		AttrVars tab;
+		int len = PyMapping_Length(o);
+		if (auto items{ PyMapping_Items(o) }; items && len) {
+			PyObject* item = nullptr;
+			const char* key = empty;
+			PyObject* val = nullptr;
+			for (int i = 0; i < len; ++i) {
+				item = PySequence_GetItem(items, i);
+				PyArg_ParseTuple(item, "so", key, val);
+				tab[UTF8toGBK(key)] = py_to_attr(val);
+				Py_DECREF(item);
+			}
+		}
+		return AttrObject(tab);
+	}
+	else if (Py_IS_TYPE(o, &PyList_Type)) {
+		VarArray ary;
+		if (auto len = PySequence_Size(o)) {
+			PyObject* item = nullptr;
+			for (int i = 0; i < len; ++i) {
+				item = PySequence_GetItem(o, i);
+				ary.emplace_back(py_to_attr(item));
+				Py_DECREF(item);
+			}
+		}
+		return AttrObject(ary);
+	}
+	else if (Py_IS_TYPE(o, &PyTuple_Type)) {
+		VarArray ary;
+		if (auto len = PyTuple_Size(o)) {
+			PyObject* item = nullptr;
+			for (int i = 0; i < len; ++i) {
+				item = PyTuple_GetItem(o, i);
+				ary.emplace_back(py_to_attr(item));
+				Py_DECREF(item);
+			}
+		}
+		return AttrObject(ary);
+	}
+	else if (Py_IS_TYPE(o, &PyContextType)) {
+		return ((PyContextObject*)o)->obj;
+	}
+	return {};
+}
 
 static PyObject* py_log(PyObject* self, PyObject* args) {
 	int lv[10] = { -1 };
@@ -306,7 +357,7 @@ static PyObject* py_getGroupAttr(PyObject*, PyObject* args, PyObject* keys) {
 			else if (subitem == "auth") {
 				for (auto uid : DD::getGroupMemberList(gid)) {
 					if (auto auth{ DD::getGroupAuth(gid, uid, 0) }) {
-						PyDict_SetItem(items, PyLong_FromLongLong(uid), PyLong_FromLong((long)auth));
+						PyDict_SetItem(items, PyLong_FromLongLong(uid), PyLong_FromSsize_t(auth));
 					}
 					else PyDict_SetItem(items, PyLong_FromLongLong(uid), Py_BuildValue("p", false));
 				}
@@ -352,7 +403,6 @@ static PyObject* py_setGroupAttr(PyObject*, PyObject* args) {
 		}
 		string card{ py_to_gbstring(val) };
 		DD::setGroupCard(id, uid, card);
-		return 0;
 	}
 	else if (!val) {
 		grp.reset(item);
@@ -360,18 +410,162 @@ static PyObject* py_setGroupAttr(PyObject*, PyObject* args) {
 	else grp.set(item, py_to_attr(val));
 	return Py_BuildValue("");
 }
+static PyObject* py_getUserAttr(PyObject*, PyObject* args, PyObject* keys) {
+	static const char* kwlist[] = { "id","attr","sub", NULL };
+	PyObject* id{ nullptr }, * sub{ nullptr };
+	auto attr = wempty;
+	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OSO", (char**)kwlist, &id, &attr, &sub))return NULL;
+	string item;
+	if (attr && (item = UtoGBK(attr))[0] == '&')item = fmt->format(item);
+	if (!id) {
+		if (item.empty()) {
+			PyErr_SetString(PyExc_TypeError, "neither id and attr is none/empty");
+			return NULL;
+		}
+		auto items{ PyDict_New() };
+		for (auto& [uid, data] : UserList) {
+			if (data.confs.has(item))PyDict_SetItem(items, PyLong_FromLongLong(uid), py_build_attr(data.confs.get(item)));
+		}
+		return items;
+	}
+	long long uid{ PyLong_AsLongLong(id) };
+	if (!uid) {
+		PyErr_SetString(PyExc_ValueError, "uid can't be zero");
+		return NULL;
+	}
+	if (item.empty()) return py_newContext(getUser(uid).confs);
+	if (auto val{ getUserItem(uid,item) }; !val.is_null())return py_build_attr(val);
+	else if (sub) return sub;
+	return Py_BuildValue("");
+}
+static PyObject* py_setUserAttr(PyObject*, PyObject* args) {
+	long long id = 0;
+	auto attr = wempty;
+	PyObject* val{ nullptr };
+	if (!PyArg_ParseTuple(args, "LS|O", &id, &attr, &val))return NULL;
+	if (!id) {
+		PyErr_SetString(PyExc_ValueError, "User id can't be zero");
+		return NULL;
+	}
+	string item{ UtoGBK(attr) };
+	if (item[0] == '&')item = fmt->format(item);
+	if (item.empty())return 0;
+	if (item.find("nn#") == 0) {
+		long long gid{ 0 };
+		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+			gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+		}
+		if (!val) {
+			getUser(id).rmNick(gid);
+		}
+		else {
+			getUser(id).setNick(gid, py_to_attr(val));
+		}
+	}
+	else if (!val) {
+		getUser(id).rmConf(item);
+	}
+	else getUser(id).setConf(item, py_to_attr(val));
+	return Py_BuildValue("");
+}
+static PyObject* py_getUserToday(PyObject*, PyObject* args, PyObject* keys) {
+	static const char* kwlist[] = { "id","attr","sub", NULL };
+	PyObject* id{ nullptr }, * sub{ nullptr };
+	auto attr = wempty;
+	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OSO", (char**)kwlist, &id, &attr, &sub))return NULL;
+	string item;
+	if (attr && (item = UtoGBK(attr))[0] == '&')item = fmt->format(item);
+	if (!id) {
+		if (item.empty()) {
+			PyErr_SetString(PyExc_TypeError, "neither id and attr is none/empty");
+			return NULL;
+		}
+		auto items{ PyDict_New() };
+		for (auto& [uid, data] : today->getUserInfo()) {
+			if (data.has(item))PyDict_SetItem(items, PyLong_FromLongLong(uid), py_build_attr(data.get(item)));
+		}
+		return items;
+	}
+	long long uid{ PyLong_AsLongLong(id) };
+	if (!uid) {
+		PyErr_SetString(PyExc_ValueError, "uid can't be zero");
+		return NULL;
+	}
+	if (item.empty()) return py_newContext(today->get(uid));
+	else if (item == "jrrp")
+		return PyLong_FromSsize_t(today->getJrrp(uid));
+	else if (AttrVar * p{ today->get_if(uid, item) })
+		return py_build_attr(*p);
+	else if (sub) return sub;
+	return Py_BuildValue("");
+}
+static PyObject* py_setUserToday(PyObject*, PyObject* args) {
+	long long id = 0;
+	auto attr = wempty;
+	PyObject* val{ nullptr };
+	if (!PyArg_ParseTuple(args, "LS|O", &id, &attr, &val))return NULL;
+	if (!id) {
+		PyErr_SetString(PyExc_ValueError, "User id can't be zero");
+		return NULL;
+	}
+	string item{ UtoGBK(attr) };
+	if (item[0] == '&')item = fmt->format(item);
+	if (item.empty())return 0;
+	else if (!val) {
+		today->set(id, item, {});
+	}
+	else
+		today->set(id, item, py_to_attr(val));
+	return Py_BuildValue("");
+}
 static PyObject* py_sendMsg(PyObject* self, PyObject* args, PyObject* keys) {
-	const char* msg = empty;
+	PyObject* msg = nullptr;
 	long long uid = 0, gid = 0, chid = 0;
 	static const char* kwlist[] = { "msg","uid","gid","chid", NULL };
 	/* Parse arguments */
-	if (!PyArg_ParseTupleAndKeywords(args, keys, "s|LLL", (char**)kwlist, &msg, &uid, &gid, &chid))return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, keys, "O|LLL", (char**)kwlist, &msg, &uid, &gid, &chid))return NULL;
 	AttrObject chat;
-	if (uid)chat["uid"] = uid;
-	if (gid)chat["gid"] = gid;
-	if (chid)chat["chid"] = chid;
-	if (!gid && !uid)return 0;
-	AddMsgToQueue(fmt->format(UTF8toGBK(msg), chat), { uid,gid,chid });
+	if (Py_IS_TYPE(msg, &PyUnicode_Type)) {
+		chat = py_to_obj(msg);
+	}
+	else {
+		chat["fwdMsg"] = py_to_gbstring(msg);
+		if (!gid && !uid) {
+			PyErr_SetString(PyExc_ValueError, "chat id can't be zero");
+			return NULL;
+		}
+		if (uid)chat["uid"] = uid;
+		if (gid)chat["gid"] = gid;
+		if (chid)chat["chid"] = chid;
+	}
+	AddMsgToQueue(fmt->format(chat.get_str("fwdMsg"), chat), { uid,gid,chid });
+	return Py_BuildValue("");
+}
+static PyObject* py_eventMsg(PyObject* self, PyObject* args, PyObject* keys) {
+	PyObject* msg = nullptr;
+	long long uid = 0, gid = 0, chid = 0;
+	static const char* kwlist[] = { "msg","uid","gid","chid", NULL };
+	/* Parse arguments */
+	if (!PyArg_ParseTupleAndKeywords(args, keys, "O|LLL", (char**)kwlist, &msg, &uid, &gid, &chid))return NULL;
+	if (!msg) {
+		PyErr_SetString(PyExc_TypeError, "msg can't be none");
+		return NULL;
+	}
+	AttrObject eve;
+	if (Py_IS_TYPE(msg, &PyUnicode_Type)) {
+		eve = py_to_obj(msg);
+	}
+	else {
+		string fromMsg{ py_to_gbstring(msg)};
+		eve = gid
+			? AttrVars{ {"fromMsg",fromMsg},{"gid",gid}, {"uid", uid} }
+		: AttrVars{ {"fromMsg",fromMsg}, {"uid", uid} };
+	}
+	std::thread th([=]() {
+		DiceEvent msg(eve);
+		msg.virtualCall();
+		});
+	th.detach();
 	return Py_BuildValue("");
 }
 #define REG(name) #name,(PyCFunction)py_##name
@@ -381,7 +575,12 @@ static PyMethodDef DiceMethods[] = {
 	{REG(getDiceDir), METH_NOARGS, "return Dice data dir"},
 	{REG(getGroupAttr), METH_VARARGS | METH_KEYWORDS, NULL},
 	{REG(setGroupAttr), METH_VARARGS, NULL},
+	{REG(getUserAttr), METH_VARARGS | METH_KEYWORDS, NULL},
+	{REG(setUserAttr), METH_VARARGS, NULL},
+	{REG(getUserToday), METH_VARARGS | METH_KEYWORDS, NULL},
+	{REG(setUserToday), METH_VARARGS, NULL},
 	{REG(sendMsg), METH_VARARGS | METH_KEYWORDS, NULL},
+	{REG(eventMsg), METH_VARARGS | METH_KEYWORDS, NULL},
 	{NULL, NULL, 0, NULL}
 }; 
 static PyModuleDef DiceMaidDef = {
