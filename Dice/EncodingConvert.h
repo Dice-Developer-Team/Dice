@@ -33,6 +33,7 @@
 #endif
 #include <unordered_map>
 #include <fstream>
+constexpr const char* chDigit{ "0123456789" };
 
 bool checkUTF8(const std::string& strUTF8);
 bool checkUTF8(std::ifstream&);
@@ -74,6 +75,7 @@ std::unordered_map<K, V> UTF8toGBK(const std::unordered_map<K, V>& TUTF8) {
 	return TGBK;
 }
 
+std::string UtoGBK(const wchar_t*);
 
 std::string UrlEncode(const std::string& str);
 std::string UrlDecode(const std::string& str);

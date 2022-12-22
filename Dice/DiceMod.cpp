@@ -572,7 +572,7 @@ public:
 							val.des();
 							break;
 						case FmtMethod::Py:
-							val = py->evalString(format_token(para, it), context);
+							if (py)val = py->evalString(format_token(para, it), context);
 							break;
 						default:
 							break;
@@ -763,16 +763,22 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 	string hookEvent{ eve.has("hook") ? eve.get_str("hook") : eve.get_str("Event") };
 	if (hookEvent.empty())return false;
 	for (auto& [id, hook] : multi_range(hook_events, hookEvent)) {
-		auto action{ hook["action"] };
-		if (!action)continue;
-		else if (action.is_table() && action.to_dict()->count("lua")) {
-			action = action.to_obj()["lua"];
+		if (auto action{ hook["action"].to_dict()}) {
+			if (hookEvent == "StartUp" || hookEvent == "DayEnd" || hookEvent == "DayNew") {
+				if (action->count("lua")) {
+					std::thread th(lua_call_event, eve, action->at("lua"));
+					th.detach();
+				}
+				if (action->count("py")) {
+					std::thread th(py_call_event, eve, action->at("py"));
+					th.detach();
+				}
+			}
+			else {
+				if (action->count("lua"))lua_call_event(eve, action->at("lua"));
+				if (action->count("py"))lua_call_event(eve, action->at("py"));
+			}
 		}
-		if (hookEvent == "StartUp" || hookEvent == "DayEnd" || hookEvent == "DayNew") {
-			std::thread th(lua_call_event, eve, action);
-			th.detach();
-		}
-		else lua_call_event(eve, action);
 	}
 	return eve.is("blocked");
 }

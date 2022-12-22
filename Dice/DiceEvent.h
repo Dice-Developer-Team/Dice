@@ -30,7 +30,7 @@ public:
 	string strReply;
 	std::wsmatch msgMatch;
 	DiceEvent(const AttrVars& var, const chatInfo& ct);
-	DiceEvent(const AttrVars& var);
+	DiceEvent(const AttrObject& var);
 	AttrVar& operator[](const char* key) {
 		return (*dict)[key];
 	}
