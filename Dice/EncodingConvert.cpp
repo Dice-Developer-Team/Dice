@@ -183,7 +183,14 @@ std::string UtoGBK(const wchar_t* strUTF16){
 	delete[] strGBK;
 	return strOutGBK;
 #else
-	return ConvertEncoding<wchar_t, char>(strGBK, "gb18030", "utf-32le");
+	return ConvertEncoding<char, wchar_t>(strUTF16, "utf-32le", "gb18030");
+#endif
+}
+std::string UtoNative(const wchar_t* strUTF16) {
+#ifdef _WIN32
+	return UtoGBK(strUTF16);
+#else
+	return ConvertEncoding<char, wchar_t>(strUTF16, "utf-32le", "utf-8");
 #endif
 }
 

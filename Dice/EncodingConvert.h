@@ -76,6 +76,7 @@ std::unordered_map<K, V> UTF8toGBK(const std::unordered_map<K, V>& TUTF8) {
 }
 
 std::string UtoGBK(const wchar_t*);
+std::string UtoNative(const wchar_t*);
 
 std::string UrlEncode(const std::string& str);
 std::string UrlDecode(const std::string& str);
