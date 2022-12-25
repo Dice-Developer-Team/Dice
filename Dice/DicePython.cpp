@@ -93,7 +93,8 @@ AttrVar py_to_attr(PyObject* o) {
 PyObject* py_build_attr(const AttrVar& var) {
 	switch (var.type){
 	case AttrVar::AttrType::Boolean:
-		return Py_BuildValue("p", var.bit);
+		if (var.bit) Py_RETURN_TRUE;
+		else Py_RETURN_FALSE;
 		break;
 	case AttrVar::AttrType::Integer:
 		return PyLong_FromSsize_t(var.attr);
@@ -114,7 +115,7 @@ PyObject* py_build_attr(const AttrVar& var) {
 				}
 			}
 			for (auto& [key, val] : *var.table.to_dict()) {
-				PyDict_SetItem(dict, PyUnicode_FromString(GBKtoUTF8(key).c_str()), py_build_attr(val));
+				PyDict_SetItem(dict, py_from_gbstring(key), py_build_attr(val));
 			}
 			return dict;
 		}
@@ -295,7 +296,7 @@ AttrObject py_to_obj(PyObject* o) {
 
 static PyObject* py_log(PyObject* self, PyObject* args) {
 	int lv[10] = { -1 };
-	if (auto info = wempty; !PyArg_ParseTuple(args, "S|iiiiiiiiii", &info, lv, lv + 1, lv + 2, lv + 3, lv + 4, lv + 5, lv + 6, lv + 7, lv + 8, lv + 9))return NULL;
+	if (auto info = wempty; !PyArg_ParseTuple(args, "u|iiiiiiiiii", &info, lv, lv + 1, lv + 2, lv + 3, lv + 4, lv + 5, lv + 6, lv + 7, lv + 8, lv + 9))return NULL;
 	else {
 		int note_lv{ 0 };
 		for (int i = 0; i < 10;++i) {
@@ -317,7 +318,7 @@ static PyObject* py_getGroupAttr(PyObject*, PyObject* args, PyObject* keys) {
 	static const char* kwlist[] = { "id","attr","sub", NULL };
 	PyObject *id{ nullptr }, *sub{ nullptr };
 	auto attr = wempty;
-	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OSO", (char**)kwlist, &id, &attr, &sub))return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OuO", (char**)kwlist, &id, &attr, &sub))return NULL;
 	string item;
 	if (attr && (item = UtoGBK(attr))[0] == '&')item = fmt->format(item);
 	if (!id) {
@@ -387,7 +388,7 @@ static PyObject* py_setGroupAttr(PyObject*, PyObject* args) {
 	long long id = 0;
 	auto attr = wempty;
 	PyObject* val{ nullptr };
-	if (!PyArg_ParseTuple(args, "LS|O", &id, &attr, &val))return NULL;
+	if (!PyArg_ParseTuple(args, "Lu|O", &id, &attr, &val))return NULL;
 	if (!id) {
 		PyErr_SetString(PyExc_ValueError, "group id can't be zero");
 		return NULL;
@@ -414,7 +415,7 @@ static PyObject* py_getUserAttr(PyObject*, PyObject* args, PyObject* keys) {
 	static const char* kwlist[] = { "id","attr","sub", NULL };
 	PyObject* id{ nullptr }, * sub{ nullptr };
 	auto attr = wempty;
-	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OSO", (char**)kwlist, &id, &attr, &sub))return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OuO", (char**)kwlist, &id, &attr, &sub))return NULL;
 	string item;
 	if (attr && (item = UtoGBK(attr))[0] == '&')item = fmt->format(item);
 	if (!id) {
@@ -442,7 +443,7 @@ static PyObject* py_setUserAttr(PyObject*, PyObject* args) {
 	long long id = 0;
 	auto attr = wempty;
 	PyObject* val{ nullptr };
-	if (!PyArg_ParseTuple(args, "LS|O", &id, &attr, &val))return NULL;
+	if (!PyArg_ParseTuple(args, "Lu|O", &id, &attr, &val))return NULL;
 	if (!id) {
 		PyErr_SetString(PyExc_ValueError, "User id can't be zero");
 		return NULL;
@@ -472,7 +473,7 @@ static PyObject* py_getUserToday(PyObject*, PyObject* args, PyObject* keys) {
 	static const char* kwlist[] = { "id","attr","sub", NULL };
 	PyObject* id{ nullptr }, * sub{ nullptr };
 	auto attr = wempty;
-	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OSO", (char**)kwlist, &id, &attr, &sub))return NULL;
+	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OuO", (char**)kwlist, &id, &attr, &sub))return NULL;
 	string item;
 	if (attr && (item = UtoGBK(attr))[0] == '&')item = fmt->format(item);
 	if (!id) {
@@ -503,7 +504,7 @@ static PyObject* py_setUserToday(PyObject*, PyObject* args) {
 	long long id = 0;
 	auto attr = wempty;
 	PyObject* val{ nullptr };
-	if (!PyArg_ParseTuple(args, "LS|O", &id, &attr, &val))return NULL;
+	if (!PyArg_ParseTuple(args, "Lu|O", &id, &attr, &val))return NULL;
 	if (!id) {
 		PyErr_SetString(PyExc_ValueError, "User id can't be zero");
 		return NULL;
