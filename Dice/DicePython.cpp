@@ -363,9 +363,26 @@ static Py_ssize_t pySelfData_size(PyObject* self) {
 	auto& p{ ((PySelfDataObject*)self)->p };
 	return p && p->data.is_table() ? (Py_ssize_t)p->data.table->size() : 0;
 }
+PyObject* PySelfData_set(PyObject* self, PyObject* args) {
+	auto data{ ((PySelfDataObject*)self)->p };
+	PyObject* item{ nullptr }, * val{ nullptr };
+	if (PyArg_ParseTuple(args, "O|O", &item, &val)) {
+		if (Py_IS_TYPE(item, &PyUnicode_Type) && data->data.is_table()) {
+			data->data.table.set(py_to_gbstring(item), py_to_attr(val));
+			data->save();
+		}
+		else if (!val) {
+			data->data = py_to_attr(item);
+			data->save();
+		}
+		return Py_BuildValue("");
+	}
+	return NULL;
+}
 static PyMethodDef SelfDataMethods[] = {
-	{"get", PySelfData_getattro, METH_VARARGS, "get Context item"},
-	{"__getattr__", PySelfData_getattro, METH_VARARGS, "get Context item"},
+	{"set", PySelfData_set, METH_VARARGS, "set SelfData item"},
+	{"get", PySelfData_getattro, METH_VARARGS, "get SelfData item"},
+	{"__getattr__", PySelfData_getattro, METH_VARARGS, "get SelfData item"},
 	{NULL, NULL, 0, NULL},
 };
 static PyMappingMethods SelfDataMappingMethods = {
