@@ -481,7 +481,7 @@ void log_put(AttrObject& job) {
 		CURLFORM_END);
 	curl_formadd(&pFormPost, &pLastElem,
 		CURLFORM_COPYNAME, "file",
-		CURLFORM_FILE, GBKtoLocal(job.get_str("log_path")).c_str(),
+		CURLFORM_FILE, job.get_str("log_path").c_str(),
 		CURLFORM_FILENAME, nameLog.c_str(),
 		CURLFORM_END); 
 	curl_easy_setopt(curl, CURLOPT_URL, "http://dicelogger.s3.ap-southeast-1.amazonaws.com");
