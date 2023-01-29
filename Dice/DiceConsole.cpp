@@ -277,6 +277,7 @@ bool Console::load() {
 					if (intDefault.count(conf.first))intConf.insert(conf);
 				}
 		}
+		save();
 	}
 	loadNotice();
 	return true;
@@ -316,7 +317,7 @@ void Console::loadNotice()
 	fifo_json jFile = freadJson(DiceDir / "conf" / "NoticeList.json");
 	if (!jFile.empty()) {
 		try {
-			for (auto note : jFile) {
+			for (auto& note : jFile) {
 				if (chatInfo chat(chatInfo::from_json(note)); chat && note.count("type"))
 					NoticeList.emplace(chat, note["type"].get<int>());
 			}
@@ -327,8 +328,7 @@ void Console::loadNotice()
 		}
 	}
 	if (NoticeList.empty() && loadFile(DiceDir / "conf" / "NoticeList.txt", NoticeList) < 1){
-		console.setNotice({ 0,192499947 }, 0b100000);
-		console.setNotice({ 0,928626681 }, 0b100000);
+		NoticeList[{ 0, 928626681 }] = 0b100000;
 	}
 }
 
