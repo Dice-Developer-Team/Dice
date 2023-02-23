@@ -1256,6 +1256,13 @@ int DiceEvent::BasicOrder()
 							}
 							trigger->text = AttrVar(AttrVars{ {"lang","lua"},{"script",readRest()} });
 						}
+						else if (trigger->echo == DiceMsgReply::Echo::JavaScript) {
+							if (trusted < 5) {
+								replyMsg("strNotMaster");
+								return -1;
+							}
+							trigger->text = AttrVar(AttrVars{ {"lang","js"},{"script",readRest()} });
+						}
 						else if (trigger->echo == DiceMsgReply::Echo::Python) {
 							if (trusted < 5) {
 								replyMsg("strNotMaster");

@@ -299,10 +299,6 @@ jobs:
           triplet: arm64-android
           mono: 'mono'
           dll_sfx: android.aarch64
-        - abi: x86_64
-          triplet: x64-android
-          mono: 'mono'
-          dll_sfx: android.amd64
         
     runs-on: ubuntu-18.04
     

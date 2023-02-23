@@ -7,14 +7,16 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15"
 project(Dice)
 set(PROJECT_NAME w4123.Dice)
 
-include_directories(Dice QQAPI)
+include_directories(Dice QQAPI quickjspp)
 
 aux_source_directory(Dice Dice_SRC)
 aux_source_directory(QQAPI QQAPI_SRC)
+aux_source_directory(quickjspp JS_SRC)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    add_library(w4123.Dice SHARED ${Dice_SRC} ${QQAPI_SRC} Dice/Resource.rc)
+    include_directories(quickjspp/win)
+    add_library(w4123.Dice SHARED ${Dice_SRC} ${QQAPI_SRC} ${JS_SRC} Dice/Resource.rc)
 else()
-    add_library(w4123.Dice SHARED ${Dice_SRC} ${QQAPI_SRC})
+    add_library(w4123.Dice SHARED ${Dice_SRC} ${QQAPI_SRC} ${JS_SRC})
 endif()
 
 set_property(TARGET w4123.Dice PROPERTY CXX_STANDARD 17)

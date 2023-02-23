@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -28,6 +28,7 @@
 #include "DiceFile.hpp"
 #include "DiceEvent.h"
 #include "DiceLua.h"
+#include "DiceJS.h"
 #include "DicePython.h"
 #include "DiceMsgReply.h"
 #include "DiceSelfData.h"
@@ -769,6 +770,10 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 					std::thread th(lua_call_event, eve, action->at("lua"));
 					th.detach();
 				}
+				if (action->count("js")) {
+					std::thread th(js_call_event, eve, action->at("js"));
+					th.detach();
+				}
 				if (action->count("py")) {
 					std::thread th(py_call_event, eve, action->at("py"));
 					th.detach();
@@ -776,7 +781,8 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 			}
 			else {
 				if (action->count("lua"))lua_call_event(eve, action->at("lua"));
-				if (action->count("py"))lua_call_event(eve, action->at("py"));
+				if (action->count("js"))js_call_event(eve, action->at("js"));
+				if (action->count("py"))py_call_event(eve, action->at("py"));
 			}
 		}
 	}
@@ -857,6 +863,12 @@ bool DiceModManager::call_task(const string& task) {
 
 string DiceModManager::lua_path(const string& name)const {
 	if (auto it{ global_lua_scripts.find(name) }; it != global_lua_scripts.end()) {
+		return it->second;
+	}
+	return {};
+}
+string DiceModManager::js_path(const string& name)const {
+	if (auto it{ global_js_scripts.find(name) }; it != global_js_scripts.end()) {
 		return it->second;
 	}
 	return {};
@@ -1011,7 +1023,13 @@ void DiceMod::loadDir() {
 					string script_name{ cut_stem((p.stem() == "init") ? p.parent_path() : p,dirScript) };
 					string strPath{ getNativePathString(p) };
 					lua_scripts[script_name] = strPath;
-				}else if (p.extension() == ".py") {
+				}
+				else if (p.extension() == ".js") {
+					string script_name{ cut_stem(p,dirScript) };
+					string strPath{ p.u8string() };
+					js_scripts[script_name] = strPath;
+				}
+				else if (p.extension() == ".py") {
 					string script_name{ cut_stem(p,dirScript) };
 					string strPath{ p.u8string() };
 					py_scripts[script_name] = strPath;
@@ -1028,6 +1046,7 @@ bool DiceMod::reload(string& cb) {
 	helpdoc.clear();
 	speech.clear();
 	lua_scripts.clear();
+	js_scripts.clear();
 	py_scripts.clear();
 	luaFiles.clear();
 	reply_list.clear();
@@ -1165,6 +1184,7 @@ void DiceModManager::build() {
 	map_merge(global_speech = transpeech, GlobalMsg);
 	global_helpdoc = HelpDoc;
 	global_lua_scripts.clear();
+	global_js_scripts.clear();
 	global_py_scripts.clear();
 	global_events.clear();
 	final_reply = {};

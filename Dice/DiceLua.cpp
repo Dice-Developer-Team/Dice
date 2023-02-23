@@ -472,9 +472,9 @@ int luaopen_SelfData(lua_State* L) {
 /**
  * 供lua调用的函数
  */
-
+#define LUADEF(name) int lua_dice_##name(lua_State* L)
  //输出日志
-int log(lua_State* L) {
+LUADEF(log) {
 	string info{ lua_to_gbstring(L, 1) };
 	if (info.empty())return 0;
 	int note_lv{ 0 };
@@ -489,7 +489,7 @@ int log(lua_State* L) {
 	return 0;
 }
  //加载其他lua脚本
-int loadLua(lua_State* L) {
+LUADEF(loadLua) {
 	string nameLua{ lua_to_native_string(L, 1) };
 	if (nameLua.empty())return 0;
 #ifdef _WIN32 // 转换separator
@@ -543,21 +543,21 @@ int loadLua(lua_State* L) {
 	return 1;
 }
  //获取DiceMaid
-int getDiceQQ(lua_State* L) {
+LUADEF(getDiceQQ) {
 	lua_push_string(L, to_string(console.DiceMaid));
 	return 1;
 }
 //获取DiceDir存档目录
-int getDiceDir(lua_State* L) {
+LUADEF(getDiceDir) {
 	lua_push_string(L, DiceDir.u8string());
 	return 1;
 }
-int mkDirs(lua_State* L) {
+LUADEF(mkDirs) {
 	string dir{ lua_to_native_string(L, 1) };
 	mkDir(dir);
 	return 0;
 }
-int getSelfData(lua_State* L) {
+LUADEF(getSelfData) {
 	string file{ lua_to_native_string(L, 1) };
 	if (!selfdata_byFile.count(file)) {
 		auto& data{ selfdata_byFile[file] = std::make_shared<SelfData>(DiceDir / "selfdata" / file) };
@@ -570,7 +570,7 @@ int getSelfData(lua_State* L) {
 	luaL_setmetatable(L, "SelfData");
 	return 1;
 }
-int getGroupConf(lua_State* L) {
+LUADEF(getGroupConf) {
 	int top{ lua_gettop(L) };
 	if (top < 1)return 0;
 	string item;
@@ -645,7 +645,7 @@ int getGroupConf(lua_State* L) {
 	}
 	return 1;
 }
-int setGroupConf(lua_State* L) {
+LUADEF(setGroupConf) {
 	long long id{ lua_to_int_or_zero(L, 1) };
 	string item{ lua_to_gbstring(L, 2) };
 	if (!id || item.empty())return 0;
@@ -666,7 +666,7 @@ int setGroupConf(lua_State* L) {
 	else grp.set(item, lua_to_attr(L, 3));
 	return 0;
 }
-int getUserConf(lua_State* L) {
+LUADEF(getUserConf) {
 	int top{ lua_gettop(L) };
 	if (top > 3)lua_settop(L, top = 3);
 	else if (top < 1)return 0;
@@ -699,7 +699,7 @@ int getUserConf(lua_State* L) {
 	}
 	return 1;
 }
-int setUserConf(lua_State* L) {
+LUADEF(setUserConf) {
 	long long uid{ lua_to_int_or_zero(L, 1) };
 	if (!uid)return 0;
 	string item{ lua_to_gbstring(L, 2) };
@@ -731,7 +731,7 @@ int setUserConf(lua_State* L) {
 	else getUser(uid).setConf(item, lua_to_attr(L, 3));
 	return 0;
 }
-int getUserToday(lua_State* L) {
+LUADEF(getUserToday) {
 	int top{ lua_gettop(L) };
 	if (top > 3)lua_settop(L, top = 3);
 	else if (top < 1)return 0;
@@ -768,7 +768,7 @@ int getUserToday(lua_State* L) {
 	}
 	return 1;
 }
-int setUserToday(lua_State* L) {
+LUADEF(setUserToday) {
 	long long uid{ lua_to_int_or_zero(L, 1) };
 	string item{ lua_to_gbstring(L, 2) };
 	if (item.empty())return 0;
@@ -777,7 +777,7 @@ int setUserToday(lua_State* L) {
 	return 0;
 }
 
-int getPlayerCardAttr(lua_State* L) {
+LUADEF(getPlayerCardAttr) {
 	if (int argc{ lua_gettop(L) }; argc > 4)lua_settop(L, 4);
 	else if (argc == 3)lua_pushnil(L);
 	else if (argc < 3)return 0;
@@ -801,7 +801,7 @@ int getPlayerCardAttr(lua_State* L) {
 	}
 	return 1;
 }
-int getPlayerCard(lua_State* L) {
+LUADEF(getPlayerCard) {
 	long long plQQ{ lua_to_int_or_zero(L, 1) };
 	if (!plQQ)return 0;
 	long long group{ lua_to_int_or_zero(L, 2) };
@@ -810,7 +810,7 @@ int getPlayerCard(lua_State* L) {
 	luaL_setmetatable(L, "Actor");
 	return 1;
 }
-int setPlayerCardAttr(lua_State* L) {
+LUADEF(setPlayerCardAttr) {
 	long long plQQ{ lua_to_int_or_zero(L, 1) };
 	long long group{ lua_to_int_or_zero(L, 2) };
 	string item{ lua_to_gbstring(L, 3) };
@@ -828,21 +828,21 @@ int setPlayerCardAttr(lua_State* L) {
 }
 
 //取随机数
-int ranint(lua_State* L) {
+LUADEF(ranint) {
 	int l{ (int)lua_to_int(L, 1) };
 	int r{ (int)lua_to_int(L, 2) };
 	lua_pushnumber(L, RandomGenerator::Randint(l,r));
 	return 1;
 }
 //线程等待
-int sleepTime(lua_State* L) {
+LUADEF(sleepTime) {
 	int ms{ (int)lua_to_int(L, 1) };
 	if (ms <= 0)return 0;
 	std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 	return 0;
 }
 
-int drawDeck(lua_State* L) {
+LUADEF(drawDeck) {
 	string nameDeck{ lua_to_gbstring(L, 3) };
 	if (nameDeck.empty())return 0;
 	long long fromGID{ lua_to_int_or_zero(L, 1) };
@@ -864,7 +864,7 @@ int drawDeck(lua_State* L) {
 	return 1;
 }
 
-int sendMsg(lua_State* L) {
+LUADEF(sendMsg) {
 	int top{ lua_gettop(L) };
 	if (top < 1)return 0;
 	AttrObject chat;
@@ -885,7 +885,7 @@ int sendMsg(lua_State* L) {
 		{ chat.get_ll("uid"),chat.get_ll("gid"),chat.get_ll("chid") });
 	return 0;
 }
-int eventMsg(lua_State* L) {
+LUADEF(eventMsg) {
 	int top{ lua_gettop(L) };
 	if (top < 1)return 0;
 	AttrVars eve;
@@ -907,7 +907,7 @@ int eventMsg(lua_State* L) {
 	th.detach();
 	return 0;
 }
-int askExtra(lua_State* L) {
+LUADEF(askExtra) {
 	return 0;
 	string action{ lua_to_raw_string(L,1) };
 	if (action.empty())return 0;
@@ -1138,7 +1138,7 @@ int luaopen_http(lua_State* L) {
 	return 1;
 }
 
-#define REGIST(func) {#func, func},
+#define REGIST(func) {#func, lua_dice_##func},
 
 void LuaState::regist() {
 	static const luaL_Reg DiceFucs[] = {

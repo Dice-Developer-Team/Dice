@@ -317,7 +317,7 @@ static PyObject* py_log(PyObject* self, PyObject* args) {
 	}
 	return Py_BuildValue("");
 }
-static PyObject* py_getSelfID(PyObject* self) {
+static PyObject* py_getDiceID(PyObject* self) {
 	return PyLong_FromLongLong(console.DiceMaid);
 }
 static PyObject* py_getDiceDir(PyObject* self) {
@@ -702,7 +702,7 @@ static PyObject* py_eventMsg(PyObject* self, PyObject* args, PyObject* keys) {
 #define REG(name) #name,(PyCFunction)py_##name
 static PyMethodDef DiceMethods[] = {
 	{REG(log), METH_VARARGS, "output log to command&notice"},
-	{REG(getSelfID), METH_NOARGS, "return dicemaid account"},
+	{REG(getDiceID), METH_NOARGS, "return dicemaid account"},
 	{REG(getDiceDir), METH_NOARGS, "return Dice data dir"},
 	{REG(getSelfData), METH_VARARGS, "return selfdata by filename"},
 	{REG(getGroupAttr), METH_VARARGS | METH_KEYWORDS, NULL},
@@ -832,6 +832,8 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrObject& action) {
 				console.log(getMsg("self") + "运行" + pyScript + "异常!" + py_print_error(), 0b10);
 				PyErr_Clear();
 				fclose(fp);
+				msg->set("lang", "Python");
+				msg->reply(getMsg("strScriptRunErr"));
 				return false;
 			}
 			fclose(fp);
@@ -840,6 +842,8 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrObject& action) {
 			if (auto res{ PyRun_String(GBKtoUTF8(pyScript).c_str(), Py_file_input, dict, locals) };!res) {
 				console.log(getMsg("self") + "运行python语句异常!" + py_print_error(), 0b10);
 				PyErr_Clear();
+				msg->set("lang", "Python");
+				msg->reply(getMsg("strScriptRunErr"));
 				return false;
 			}
 		}
@@ -847,6 +851,8 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrObject& action) {
 	}
 	catch (std::exception& e) {
 		console.log(getMsg("self") + "运行python脚本异常!" + e.what(), 0b10);
+		msg->set("lang", "Python");
+		msg->reply(getMsg("strScriptRunErr"));
 		return false;
 	}
 }
