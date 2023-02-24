@@ -149,7 +149,7 @@ bool js_msg_call(DiceEvent* msg, const AttrObject& js) {
 	}
 	else if (!jScript.empty()) {
 		if (JSValue val{ rt.evalString(jScript, *msg) };JS_IsException(val)) {
-			console.log(getMsg("strSelfName") + "运行js语句" + jScript + "失败!\n" + rt.getException(), 0b10);
+			console.log(getMsg("strSelfName") + "执行js表达式" + jScript + "失败!\n" + rt.getException(), 0b10);
 			msg->set("lang", "JavaScript");
 			msg->reply(getMsg("strScriptRunErr"));
 			return false;
