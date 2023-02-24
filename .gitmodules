@@ -5,6 +5,3 @@
 [submodule "libiconv"]
 	path = libiconv
 	url = https://github.com/w4123/libiconv-android-prebuilt
-[submodule "quickjspp"]
-	path = quickjspp
-	url = https://github.com/c-smile/quickjspp.git
