@@ -58,15 +58,11 @@ public:
 			return JS_VALUE_GET_INT(val);
 			break;
 		case JS_TAG_BIG_INT:
-			if (long long l{ 0 }; JS_ToBigInt64(ctx, &l, val)) {
-				return l;
-			}
+			return js_toBigInt(ctx, val);
 			break;
 		case JS_TAG_BIG_FLOAT:
 		case JS_TAG_FLOAT64:
-			if (double num{ 0 }; JS_ToFloat64(ctx, &num, val)) {
-				return num;
-			}
+			return js_toDouble(ctx, val);
 			break;
 		case JS_TAG_STRING:
 			return getString(ctx, val);
@@ -96,16 +92,10 @@ public:
 	bool execFile(const std::string& s, const AttrObject& context) {
 		return true;
 	}
-	//int runString(const std::string&);
-	bool execString(const std::string& s, const AttrObject & = {}) {
-		string exp{ GBKtoUTF8(s) };
-		return JS_Eval(ctx, exp.c_str(), exp.length(), "", 0);
-	}
 	JSValue evalString(const std::string& s, const AttrObject & = {}) {
 		string exp{ GBKtoUTF8(s) };
 		return JS_Eval(ctx, exp.c_str(), exp.length(), "", JS_EVAL_TYPE_MODULE);
 	}
-	bool call_reply(DiceEvent*, const AttrObject&);
 };
 QJSDEF(log) {
 	string info{ getString(ctx, argv[0]) };
