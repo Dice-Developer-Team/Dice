@@ -1,3 +1,4 @@
+#define CONFIG_BIGNUM
 #include "quickjs-libc.h"
 #include "DiceQJS.h"
 

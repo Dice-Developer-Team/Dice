@@ -5,10 +5,10 @@
 extern "C" {
 #define CONFIG_BIGNUM
 #include "quickjs-libc.h"
-#include "cutils.h"
 }
 #include "DiceEvent.h"
 #include "DiceMod.h"
+#define countof(x) (sizeof(x) / sizeof((x)[0]))
 
 string getString(JSContext* ctx, JSValue val) {
 	auto s{ JS_ToCString(ctx, val) };
