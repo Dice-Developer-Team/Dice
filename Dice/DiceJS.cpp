@@ -2,13 +2,8 @@
 #include "filesystem.hpp"
 #include "DiceJS.h"
 #include "DiceQJS.h"
-extern "C" {
-#define CONFIG_BIGNUM
-#include "quickjs-libc.h"
-}
 #include "DiceEvent.h"
 #include "DiceMod.h"
-#define countof(x) (sizeof(x) / sizeof((x)[0]))
 
 string getString(JSContext* ctx, JSValue val) {
 	auto s{ JS_ToCString(ctx, val) };
@@ -16,35 +11,14 @@ string getString(JSContext* ctx, JSValue val) {
 	JS_FreeCString(ctx, s);
 	return ret;
 }
-static int js_dice_init(JSContext* ctx, JSModuleDef* m){
-	return JS_SetModuleExportList(ctx, m, js_dice_funcs,
-		countof(js_dice_funcs));
-}
-JSModuleDef* js_init_module_dice(JSContext* ctx, const char* module_name) {
-	if (JSModuleDef* m = JS_NewCModule(ctx, module_name, js_dice_init)) {
-		JS_AddModuleExportList(ctx, m, js_dice_funcs, countof(js_dice_funcs));
-		return m;
-	}
-	return NULL;
-}
 class js_runtime {
 	JSRuntime* rt;
 	JSContext* ctx;
 public:
 	js_runtime() :rt(JS_NewRuntime()), ctx(JS_NewContext(rt)) {
-		js_std_init_handlers(rt);
-
-		/* loader for ES6 modules */
-		JS_SetModuleLoaderFunc(rt, nullptr, js_module_loader, nullptr);
-
-		js_std_add_helpers(ctx, 0, nullptr);
-
-		/* system modules */
-		js_init_module_std(ctx, "std");
-		js_init_module_os(ctx, "os");
-		js_init_module_dice(ctx, "dice");
-		string expImport{ "import * as dice from 'dice'" };
-		JS_Eval(ctx, expImport.c_str(), expImport.length(), "", JS_EVAL_TYPE_MODULE|JS_EVAL_TYPE_INDIRECT);
+		js_init(rt, ctx);
+		//string expImport{ "import * as dice from 'dice'" };
+		//JS_Eval(ctx, expImport.c_str(), expImport.length(), "", JS_EVAL_TYPE_MODULE|JS_EVAL_TYPE_INDIRECT);
 	}
 	~js_runtime() {
 		js_std_free_handlers(rt);
@@ -112,7 +86,7 @@ QJSDEF(log) {
 	return js_newUndefined();
 }
 QJSDEF(getDiceID) {
-	return JS_NewInt64(ctx, console.DiceMaid);
+	return JS_NewInt64(ctx, (int64_t)console.DiceMaid);
 }
 
 bool js_call_event(AttrObject, const AttrVar&) {

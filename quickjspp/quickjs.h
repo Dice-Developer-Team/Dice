@@ -29,6 +29,8 @@
 #include <stdint.h>
 #include <math.h>
 #include "quickjs-version.h"
+#define CONFIG_BIGNUM
+#define JS_STRICT_NAN_BOXING
 
 #ifdef __cplusplus
 extern "C" {
