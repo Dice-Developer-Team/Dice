@@ -19,8 +19,8 @@
 
 // Aws SDK设置
 Aws::SDKOptions options;
-Aws::Auth::AWSCredentials awsCredentials("", "");
-
+std::shared_ptr<Aws::Auth::AnonymousAWSCredentialsProvider> awsCredProvider = std::make_shared<Aws::Auth::AnonymousAWSCredentialsProvider>();
+std::shared_ptr<Aws::S3::S3EndpointProvider> awsEProvider = std::make_shared<Aws::S3::S3EndpointProvider>();
 // 判断文件是否存在
 bool file_exists(const std::string& file_name)
 {
@@ -46,7 +46,7 @@ std::string put_s3_object(const Aws::String& s3_bucket_name,
 	clientConfig.verifySSL = false;
 	clientConfig.endpointOverride = "s3-accelerate.amazonaws.com";
 	// Set up request
-	Aws::S3::S3Client s3_client(awsCredentials, clientConfig);
+	Aws::S3::S3Client s3_client(awsCredProvider, awsEProvider, clientConfig);
 	Aws::S3::Model::PutObjectRequest object_request;
 	object_request.SetBucket(s3_bucket_name);
 	object_request.SetKey(s3_object_name);
