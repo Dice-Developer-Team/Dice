@@ -17,3 +17,9 @@ double js_toDouble(JSContext* ctx, JSValueConst val) {
 	JS_ToFloat64(ctx, &num, val);
 	return num;
 }
+JSValue js_newException() {
+	return JS_EXCEPTION;
+}
+JSValue js_newUndefined() {
+	return JS_UNDEFINED;
+}

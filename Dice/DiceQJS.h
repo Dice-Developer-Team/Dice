@@ -11,6 +11,8 @@ extern "C" {
 	QJSDEF(getDiceID);
 	QJSDEF(log);
 	extern const JSCFunctionListEntry js_dice_funcs[2];
+	JSValue js_newException();
+	JSValue js_newUndefined();
 	long long js_toBigInt(JSContext* ctx, JSValueConst);
 	double js_toDouble(JSContext* ctx, JSValueConst);
 #ifdef __cplusplus

@@ -103,13 +103,13 @@ QJSDEF(log) {
 	for (int idx = argc; idx > 1; --idx) {
 		int type{ 0 };
 		if (JS_ToInt32(ctx, &type, argv[idx]))
-			return JS_EXCEPTION;
+			return js_newException();
 		if (type >= 0 && type <10) {
 			note_lv |= (1 << type);
 		}
 	}
 	console.log(fmt->format(info), note_lv);
-	return JS_UNDEFINED;
+	return js_newUndefined();
 }
 QJSDEF(getDiceID) {
 	return JS_NewInt64(ctx, console.DiceMaid);
