@@ -108,8 +108,8 @@ void DiceSession::log_new(DiceEvent* msg) {
 	logger.tStart = time(nullptr);
 	string nameLog{ msg->readFileName() };
 	if (nameLog.empty())nameLog = to_string(logger.tStart);
-	(*msg)["log_name"] = logger.name = nameLog;
-	logger.fileLog = LocaltoGBK(name) + "_" + nameLog + ".txt";
+	msg->set("log_name", logger.name = nameLog);
+	logger.fileLog = name + "_" + nameLog + ".txt";
 	logger.pathLog = DiceDir / logger.dirLog / GBKtoLocal(logger.fileLog);
 	logger.isLogging = true;
 	//先发消息后插入

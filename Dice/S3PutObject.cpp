@@ -19,15 +19,22 @@
 
 // Aws SDK设置
 Aws::SDKOptions options;
-std::shared_ptr<Aws::Auth::AnonymousAWSCredentialsProvider> awsCredProvider = std::make_shared<Aws::Auth::AnonymousAWSCredentialsProvider>();
-std::shared_ptr<Aws::S3::S3EndpointProvider> awsEProvider = std::make_shared<Aws::S3::S3EndpointProvider>();
+std::shared_ptr<Aws::Auth::AnonymousAWSCredentialsProvider> awsCredProvider;
+std::shared_ptr<Aws::S3::S3EndpointProvider> awsEProvider;
 // 判断文件是否存在
 bool file_exists(const std::string& file_name)
 {
 	std::error_code ec;
 	return std::filesystem::is_regular_file(file_name, ec);
 }
-
+void aws_init() {
+	Aws::InitAPI(options);
+	awsCredProvider = std::make_shared<Aws::Auth::AnonymousAWSCredentialsProvider>();
+	awsEProvider = Aws::MakeShared<Aws::S3::S3EndpointProvider>(Aws::S3::S3Client::ALLOCATION_TAG);
+}
+void aws_shutdown() {
+	Aws::ShutdownAPI(options); 
+}
 // 上传文件至S3, 采用S3-accelerate
 // 成功时返回"SUCCESS", 否则返回错误信息
 std::string put_s3_object(const Aws::String& s3_bucket_name,

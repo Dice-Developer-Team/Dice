@@ -58,10 +58,10 @@ const dict_ci<string> PlainMsg
 	{"strModReload", "已为{self}人格重铸记忆体「{mod}」√"},
 	{"strModDelete", "已将记忆体「{mod}」从{self}的人格排空√"},
 	{"strModNameEmpty", "请{nick}输入模块名！"},
-	{"strModDescLocal", "{self}已装载模块:{mod_desc}"},
+	{"strModDescLocal", "{self}已植入模块:{mod_desc}"},
 	{"strModDescCloud", "{self}已获取源模块信息:{mod_desc}"},
 	{"strModDetail", "{self}所载模块详细信息:{mod_detail}"},
-	{"strModInstalled", "{self}成功注入记忆体「{mod}」{mod_ver}√"},
+	{"strModInstalled", "{self}成功植入记忆体「{mod}」{mod_ver}√"},
 	{"strModInstallErr", "{self}注入记忆体「{mod}」失败×{err}"},
 	{"strModUpdated", "更新{self}记忆体「{mod}」{ex_ver}->{mod_ver}√"},
 	{"strModUpdateErr", "更新{self}记忆体「{mod}」失败×{err}"},
@@ -167,7 +167,6 @@ const dict_ci<string> PlainMsg
 	{"strReplyDel","{self}已移除回复关键词条目{key}√"},
 	{"strReplyKeyEmpty","{nick}请输入回复关键词×"},
 	{"strReplyKeyNotFound","{self}未找到回复关键词{key}×"},
-	{"strReplyLuaErr","似乎出了点问题，请{nick}耐心等待（Lua脚本运行出错）" },
 	{"strScriptRunErr","{self}似乎出了点问题，请{nick}耐心等待（{lang}脚本运行出错）" },
 	{"strStModify","{self}已记录{pc}的属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","{self}已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
@@ -496,6 +495,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+640:支持调用JavaScript
 639:支持reply调用python
 638:webui模块调序
 637:模块资源远程访问

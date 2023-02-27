@@ -242,7 +242,7 @@ EVE_Enable(eventEnable){
 		console.log("错误: 加载libcurl失败！", 1);
 	}
 #else
-	Aws::InitAPI(options);
+	aws_init();
 #endif
 	std::string RootDir = DD::getRootDir();
 	if (RootDir.empty()) {	
@@ -307,7 +307,9 @@ R"( //私骰作成 即可成为我的主人~
 	catch (const std::exception& e) {
 		console.log(string("读取/conf/CustomMsg.json失败!") + e.what(), 1, printSTNow());
 	}
+#ifdef DICE_PYTHON
 	if (console["EnablePython"])py = make_unique<PyGlobal>();
+#endif //DICE_PYTHON
 	loadData();
 	//初始化黑名单
 	blacklist = make_unique<DDBlackManager>();
@@ -1059,7 +1061,9 @@ void global_exit() {
 	sch.end();
 	censor = {};
 	fmt.reset();
+#ifdef DICE_PYTHON
 	py = {};
+#endif
 	sessions.clear();
 	PList.clear();
 	ChatList.clear();
@@ -1070,7 +1074,7 @@ void global_exit() {
 #ifndef _WIN32
 	curl_global_cleanup();
 #else
-	Aws::ShutdownAPI(options);
+	aws_shutdown();
 #endif
 	threads.exit();
 }

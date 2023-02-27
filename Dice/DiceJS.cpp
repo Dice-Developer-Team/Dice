@@ -17,8 +17,8 @@ class js_runtime {
 public:
 	js_runtime() :rt(JS_NewRuntime()), ctx(JS_NewContext(rt)) {
 		js_init(rt, ctx);
-		//string expImport{ "import * as dice from 'dice'" };
-		//JS_Eval(ctx, expImport.c_str(), expImport.length(), "", JS_EVAL_TYPE_MODULE|JS_EVAL_TYPE_INDIRECT);
+		string expImport{ "import * as dice from 'dice'" };
+		JS_Eval(ctx, expImport.c_str(), expImport.length(), "", JS_EVAL_TYPE_GLOBAL|JS_EVAL_TYPE_INDIRECT);
 	}
 	~js_runtime() {
 		js_std_free_handlers(rt);
@@ -41,6 +41,7 @@ public:
 		case JS_TAG_STRING:
 			return getString(ctx, val);
 			break;
+		case JS_TAG_UNINITIALIZED:
 		case JS_TAG_NULL:
 		case JS_TAG_EXCEPTION:
 			return {};
@@ -50,6 +51,33 @@ public:
 			return {};
 		}
 		return {};
+	}
+	JSValue toVal(const AttrVar& var) {
+		switch (var.type) {
+		case AttrVar::AttrType::Boolean:
+			return JS_NewBool(ctx, var.bit);
+			break;
+		case AttrVar::AttrType::Integer:
+			return JS_NewInt32(ctx, (int32_t)var.attr);
+			break;
+		case AttrVar::AttrType::Number:
+			return JS_NewFloat64(ctx, var.number);
+			break;
+		case AttrVar::AttrType::Text:
+			return JS_NewString(ctx, GBKtoUTF8(var.text).c_str());
+			break;
+		case AttrVar::AttrType::Table:
+			return JS_NewArray(ctx);
+			break;
+		case AttrVar::AttrType::ID:
+			return JS_NewInt64(ctx, (int64_t)var.attr);
+			break;
+		case AttrVar::AttrType::Function:
+		case AttrVar::AttrType::Nil:
+		default:
+			break;
+		}
+		return JS_NULL;
 	}
 	string getException() {
 		auto e{ JS_GetException(ctx) };
@@ -62,15 +90,22 @@ public:
 		JS_FreeValue(ctx, e);
 		return err;
 	}
-	//int runFile(const std::filesystem::path&);
-	bool execFile(const std::string& s, const AttrObject& context) {
-		return true;
+	JSValue evalFile(const std::string& s, const AttrObject& context) {
+		size_t buf_len{ 0 };
+		if (uint8_t* buf{ js_load_file(ctx, &buf_len, s.c_str()) }) {
+			auto ret = JS_Eval(ctx, (char*)buf, buf_len, s.c_str(),
+				JS_EVAL_TYPE_GLOBAL);
+			js_free(ctx, buf);
+			return ret;
+		}
+		return JS_EXCEPTION;
 	}
-	JSValue evalString(const std::string& s, const AttrObject & = {}) {
+	JSValue evalString(const std::string& s, const string& title, const AttrObject & = {}) {
 		string exp{ GBKtoUTF8(s) };
-		return JS_Eval(ctx, exp.c_str(), exp.length(), "", JS_EVAL_TYPE_MODULE);
+		return JS_Eval(ctx, exp.c_str(), exp.length(), title.c_str(), JS_EVAL_TYPE_MODULE);
 	}
 };
+std::shared_ptr<js_runtime> jsMain = std::make_shared<js_runtime>();
 QJSDEF(log) {
 	string info{ getString(ctx, argv[0]) };
 	int note_lv{ 0 };
@@ -93,16 +128,12 @@ bool js_call_event(AttrObject, const AttrVar&) {
 	return true;
 }
 bool js_msg_call(DiceEvent* msg, const AttrObject& js) {
-	string jsFile{ js.get_str("file") };
 	string jScript{ js.get_str("script") };
-	if (jsFile.empty() && fmt->has_js(jScript)) {
-		jsFile = fmt->js_path(jScript);
-	}
 	js_runtime rt;
 	//lua_push_Context(L, *msg);
-	if (!jsFile.empty()) {
-		if (JSValue val{ rt.execFile(jsFile, *msg) }; JS_IsException(val)) {
-			console.log(getMsg("strSelfName") + "运行js文件" + jsFile + "失败!\n" + rt.getException(), 0b10);
+	if (fmt->has_js(jScript)) {
+		if (JSValue val{ rt.evalFile(fmt->js_path(jScript), *msg) }; JS_IsException(val)) {
+			console.log(getMsg("strSelfName") + "运行" + jScript + "失败!\n" + rt.getException(), 0b10);
 			msg->set("lang", "JavaScript");
 			msg->reply(getMsg("strScriptRunErr"));
 			return false;
@@ -112,7 +143,7 @@ bool js_msg_call(DiceEvent* msg, const AttrObject& js) {
 		return true;
 	}
 	else if (!jScript.empty()) {
-		if (JSValue val{ rt.evalString(jScript, *msg) };JS_IsException(val)) {
+		if (JSValue val{ rt.evalString(jScript, msg->get_str("reply_title"), *msg)}; JS_IsException(val)) {
 			console.log(getMsg("strSelfName") + "执行js表达式" + jScript + "失败!\n" + rt.getException(), 0b10);
 			msg->set("lang", "JavaScript");
 			msg->reply(getMsg("strScriptRunErr"));

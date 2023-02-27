@@ -56,7 +56,7 @@ string DiceSpeech::express()const {
 		return std::get<string>(speech);
 	}
 	else if (const auto p{ std::get_if<vector<string>>(&speech) }) {
-		return p->at(RandomGenerator::Randint(0, p->size() - 1));
+		return p->at((size_t)RandomGenerator::Randint(0, p->size() - 1));
 	}
 	return {};
 }
@@ -506,7 +506,7 @@ public:
 						case FmtMethod::Sample:
 							if (vector<string> samples{ split(para,"|") }; samples.empty())val.des();
 							else
-								val = format_token(samples[RandomGenerator::Randint(0, samples.size() - 1)], it);
+								val = format_token(samples[(size_t)RandomGenerator::Randint(0, samples.size() - 1)], it);
 							break;
 						case FmtMethod::At:
 							if (format_token(para, it) == "self") {
@@ -573,7 +573,9 @@ public:
 							val.des();
 							break;
 						case FmtMethod::Py:
+#ifdef DICE_PYTHON
 							if (py)val = py->evalString(format_token(para, it), context);
+#endif //DICE_PYTHON
 							break;
 						default:
 							break;
@@ -774,15 +776,19 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 					std::thread th(js_call_event, eve, action->at("js"));
 					th.detach();
 				}
+#ifdef DICE_PYTHON
 				if (action->count("py")) {
 					std::thread th(py_call_event, eve, action->at("py"));
 					th.detach();
 				}
+#endif //DICE_PYTHON
 			}
 			else {
 				if (action->count("lua"))lua_call_event(eve, action->at("lua"));
 				if (action->count("js"))js_call_event(eve, action->at("js"));
+#ifdef DICE_PYTHON
 				if (action->count("py"))py_call_event(eve, action->at("py"));
+#endif //DICE_PYTHON
 			}
 		}
 	}
@@ -917,6 +923,7 @@ string DiceMod::detail()const {
 	if (!events.empty())li << "- 事件: " + to_string(events.size()) + "条";
 	if (!reply_list.empty())li << "- 回复: " + to_string(reply_list.size()) + "项";
 	if (!lua_scripts.empty())li << "- lua脚本: " + to_string(lua_scripts.size()) + "份";
+	if (!js_scripts.empty())li << "- js脚本: " + to_string(js_scripts.size()) + "份";
 	if (!py_scripts.empty())li << "- py脚本: " + to_string(py_scripts.size()) + "份";
 	if (!helpdoc.empty())li << "- 帮助: " + to_string(helpdoc.size()) + "条";
 	if (!speech.empty())li << "- 台词: " + to_string(speech.size()) + "项";
@@ -1021,13 +1028,11 @@ void DiceMod::loadDir() {
 			for (auto p : fScripts) {
 				if (p.extension() == ".lua") {
 					string script_name{ cut_stem((p.stem() == "init") ? p.parent_path() : p,dirScript) };
-					string strPath{ getNativePathString(p) };
-					lua_scripts[script_name] = strPath;
+					lua_scripts[script_name] = getNativePathString(p);
 				}
 				else if (p.extension() == ".js") {
 					string script_name{ cut_stem(p,dirScript) };
-					string strPath{ p.u8string() };
-					js_scripts[script_name] = strPath;
+					js_scripts[script_name] = p.u8string();
 				}
 				else if (p.extension() == ".py") {
 					string script_name{ cut_stem(p,dirScript) };
@@ -1192,6 +1197,7 @@ void DiceModManager::build() {
 	for (auto& mod : modOrder) {
 		if (!mod->active || !mod->loaded)continue;
 		map_merge(global_lua_scripts, mod->lua_scripts);
+		map_merge(global_js_scripts, mod->js_scripts);
 		map_merge(global_py_scripts, mod->py_scripts);
 		cntSpeech += map_merge(global_speech, mod->speech);
 		cntHelp += map_merge(global_helpdoc, mod->helpdoc);
@@ -1213,8 +1219,9 @@ void DiceModManager::build() {
 		resLog << "注册reply " + to_string(final_reply.items.size()) + " 项";
 		final_reply.build();
 	}
-	if (!global_lua_scripts.empty())resLog << "注册lua script " + to_string(global_lua_scripts.size()) + " 份";
-	if (!global_py_scripts.empty())resLog << "注册py script " + to_string(global_py_scripts.size()) + " 份";
+	if (!global_lua_scripts.empty())resLog << "注册lua脚本 " + to_string(global_lua_scripts.size()) + " 份";
+	if (!global_js_scripts.empty())resLog << "注册js脚本 " + to_string(global_js_scripts.size()) + " 份";
+	if (!global_py_scripts.empty())resLog << "注册py脚本 " + to_string(global_py_scripts.size()) + " 份";
 	if (!global_events.empty()) {
 		resLog << "注册event " + to_string(global_events.size()) + " 项";
 		clock_events.clear();

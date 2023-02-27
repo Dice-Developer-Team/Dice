@@ -1,7 +1,8 @@
+#include "DicePython.h"
+#ifdef DICE_PYTHON
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include <stdio.h>
-#include "DicePython.h"
 #include "DiceConsole.h"
 #include "EncodingConvert.h"
 #include "DiceAttrVar.h"
@@ -862,3 +863,4 @@ bool py_call_event(AttrObject eve, const AttrVar& action) {
 	bool isFile{ action.is_character() && fmt->has_py(script) };
 	return isFile ? py->runFile(fmt->py_path(script), eve) : py->execString(script, eve);
 }
+#endif // #ifdef DICE_PYTHON

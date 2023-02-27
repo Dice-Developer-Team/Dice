@@ -22,6 +22,8 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#if !defined(DICE_PYTHON) && !defined(__ANDROID__)
+#define DICE_PYTHON
 #include <memory>
 #include "filesystem.hpp"
 #include "DiceAttrVar.h"
@@ -39,3 +41,4 @@ public:
 };
 extern std::unique_ptr<PyGlobal> py; 
 bool py_call_event(AttrObject eve, const AttrVar& py);
+#endif //DICE_PYTHON

@@ -82,10 +82,6 @@ extern std::unique_ptr<ExtensionManager> ExtensionManagerInstance;
 // 应用是否被启用
 extern bool Enabled;
 
-// 运行环境
-//enum class QQFrame { CoolQ, Mirai, XianQu };
-//extern QQFrame frame;
-
 // Dice最完整的版本字符串
 extern std::string Dice_Full_Ver_On;
 

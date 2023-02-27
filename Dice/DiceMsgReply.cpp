@@ -555,7 +555,13 @@ enumap_ci DiceMsgReply::sMode{ "Match", "Prefix", "Search", "Regex" };
 enumap_ci DiceMsgReply::sEcho{ "Text", "Deck", "Lua", "JS", "Py" };
 std::array<string, 4> strType{ "无","指令","回复","同时" };
 enumap<string> strMode{ "完全", "前缀", "模糊", "正则" };
-enumap<string> strEcho{ "纯文本", "牌堆（多选一）", "Lua", "JavaScript", "Python" };
+enumap<string> strEcho{ "纯文本", "牌堆（多选一）", "Lua", "JavaScript",
+#ifdef DICE_PYTHON
+"Python" };
+#else
+"Python（不支持）" };
+#endif // DICE_PYTHON
+
 ptr<DiceMsgReply> DiceMsgReply::set_order(const string& key, const AttrVars& order) {
 	auto reply{ std::make_shared<DiceMsgReply>() };
 	reply->title = key;
@@ -573,7 +579,7 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 	if (!limit.check(msg, lock_list))return false;
 	if (type == Type::Reply) {
 		if (!msg->isCalled && (chon < 0 ||
-			(!chon && (msg->pGrp->isset("禁用回复") || msg->pGrp->isset("认真模式")))))
+			(!chon && (msg->pGrp->isset("禁用回复") || msg->pGrp->isset("strict")))))
 			return false;
 	}
 	else {	//type == Type::Order
@@ -601,10 +607,12 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 		js_msg_call(msg, text.to_obj());
 		return true;
 	}
+#ifdef DICE_PYTHON
 	else if (echo == Echo::Python && py) {
 		py->call_reply(msg, text.to_obj());
 		return true;
 	}
+#endif //DICE_PYTHON
 	return false;
 }
 string DiceMsgReply::show()const {
@@ -667,19 +675,19 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 		}
 		else if (answer.is_function()) {
 			echo = Echo::Lua;
-			text = AttrVar(AttrVars{ {"lang","lua"},{"script",answer} });
+			text = AttrVars{ {"lang","lua"},{"script",answer} };
 		}
 		else if (AttrVars& tab{ *answer.to_dict() }; tab.count("lua")) {
 			echo = Echo::Lua;
-			text = AttrVar(AttrVars{ {"lang","lua"},{"script",tab["lua"]} });
+			text = AttrVars{ {"lang","lua"},{"script",tab["lua"]} };
 		}
 		else if (tab.count("js")) {
 			echo = Echo::JavaScript;
-			text = AttrVar(AttrVars{ {"lang","js"},{"script",tab["js"]} });
+			text = AttrVars{ {"lang","js"},{"script",tab["js"]} };
 		}
 		else if (tab.count("py")) {
 			echo = Echo::Python;
-			text = AttrVar(AttrVars{ {"lang","py"},{"script",tab["py"]} });
+			text = AttrVars{ {"lang","py"},{"script",tab["py"]} };
 		}
 		else if (auto v{ answer.to_list() }) {
 			deck = {};

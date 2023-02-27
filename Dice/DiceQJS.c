@@ -1,11 +1,6 @@
 #include "DiceQJS.h"
 #define countof(x) (sizeof(x) / sizeof((x)[0]))
 
-const JSCFunctionListEntry js_dice_funcs[] = {
-	JS_CFUNC_DEF("log",0,js_dice_log),
-	JS_CFUNC_DEF("getDiceID",0,js_dice_getDiceID),
-};
-
 long long js_toBigInt(JSContext* ctx, JSValueConst val) {
 	int64_t num = 0;
 	JS_ToBigInt64(ctx, &num, val);
@@ -17,6 +12,10 @@ double js_toDouble(JSContext* ctx, JSValueConst val) {
 	return num;
 }
 
+const JSCFunctionListEntry js_dice_funcs[] = {
+	JS_CFUNC_DEF("log",0,js_dice_log),
+	JS_CFUNC_DEF("getDiceID",2,js_dice_getDiceID),
+};
 static int js_dice_init(JSContext* ctx, JSModuleDef* m) {
 	return JS_SetModuleExportList(ctx, m, js_dice_funcs,
 		countof(js_dice_funcs));
