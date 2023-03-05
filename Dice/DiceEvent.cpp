@@ -4324,6 +4324,7 @@ bool DiceEvent::DiceFilter()
 	while (isspace(static_cast<unsigned char>(strMsg[0])))
 		strMsg.erase(strMsg.begin());
 	init(strMsg);
+	bool isSummoned = false;
 	bool isOtherCalled = false;
 	string strAt{ CQ_AT + to_string(console.DiceMaid) + "]" };
 	size_t r{ 0 };
@@ -4334,11 +4335,11 @@ bool DiceEvent::DiceFilter()
 		}
 		else if (strTarget == to_string(console.DiceMaid))
 		{
-			isCalled = true;
+			isCalled = isSummoned = true;
 		}
 		else if (User& self{ getUser(console.DiceMaid) }; self.isset("tinyID") && self.confs["tinyID"] == strTarget)
 		{
-			isCalled = true;
+			isCalled = isSummoned = true;
 		}
 		else {
 			isOtherCalled = true;
@@ -4349,7 +4350,7 @@ bool DiceEvent::DiceFilter()
 	}
 	string strSummon{ getMsg("strSummonWord") };
 	if (!strSummon.empty() && strMsg.find(strSummon) == 0) {
-		isCalled = true;
+		isCalled = isSummoned = true;
 		if(isChannel())strMsg = strMsg.substr(strSummon.length());
 	}
 	init2(strMsg);
@@ -4402,7 +4403,7 @@ bool DiceEvent::DiceFilter()
 		}
 		return true;
 	}
-	if (isCalled && (strMsg.empty() || strMsg == strSummon))replyMsg("strSummonEmpty");
+	if (isSummoned && (strMsg.empty() || strMsg == strSummon))replyMsg("strSummonEmpty");
 	if (isCalled) {
 		WordCensor();
 	}

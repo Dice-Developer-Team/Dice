@@ -915,13 +915,22 @@ LUADEF(eventMsg) {
 	return 0;
 }
 LUADEF(askExtra) {
-	return 0;
-	string action{ lua_to_raw_string(L,1) };
-	if (action.empty())return 0;
+	string data;	//utf-8
+	if (lua_istable(L, 1)) {
+		data = to_json(lua_to_dict(L, 1)).dump();
+	}
+	else {
+		data = lua_to_raw_string(L, 1);
+	}
+	if (data.empty())return 0;
 	try {
+		if (string ret; DD::getExtra(data, ret)) {
+			lua_push_attr(L, AttrVar(fifo_json::parse(ret)));
+			return 1;
+		}
 	}
 	catch (std::exception& e) {
-		DD::debugLog("askExtra抛出异常!" + string(e.what()));
+		console.log("askExtra抛出异常!" + string(e.what()), 0b10);
 	}
 	return 0;
 }
