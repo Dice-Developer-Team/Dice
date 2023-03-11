@@ -17,7 +17,6 @@
 #include "DiceSchedule.h"
 #include "DiceMsgSend.h"
 
-
 using std::string;
 
 //打包待处理消息
@@ -144,23 +143,7 @@ public:
 	}
 
 	//读取数字
-	string readDigit(bool isForce = true)
-	{
-		string strMum;
-		if (isForce)while (intMsgCnt < strMsg.length() && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])))
-		{
-			if (strMsg[intMsgCnt] < 0)intMsgCnt++;
-			intMsgCnt++;
-		}
-		else while(intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
-		while (intMsgCnt < strMsg.length() && isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])))
-		{
-			strMum += strMsg[intMsgCnt];
-			intMsgCnt++;
-		}
-		if (intMsgCnt < strMsg.length() && strMsg[intMsgCnt] == ']')intMsgCnt++;
-		return strMum;
-	}
+	string readDigit(bool isForce = true);
 
 	//读取数字并存入整型
 	int readNum(int&);
@@ -267,54 +250,12 @@ public:
 	}
 
 	//读取大小写不敏感的技能名
-	string readAttrName()
-	{
-		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
-		const int intBegin = intMsgCnt;
-		int intEnd = intBegin;
-		const unsigned int len = strMsg.length();
-		while (intMsgCnt < len && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))
-			&& strMsg[intMsgCnt] != '=' && strMsg[intMsgCnt] != ':'
-			&& strMsg[intMsgCnt] != '+' && strMsg[intMsgCnt] != '-' && strMsg[intMsgCnt] != '*'
-			&& strMsg[intMsgCnt] !=	'/')
-		{
-			if (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || (!isspace(
-				static_cast<unsigned char>(strMsg[intEnd]))))intEnd = intMsgCnt;
-			if (strMsg[intMsgCnt] < 0)intMsgCnt += 2;
-			else intMsgCnt++;
-		}
-		if (intMsgCnt == strLowerMessage.length() && strLowerMessage.find(' ', intBegin) != string::npos)
-		{
-			intMsgCnt = strLowerMessage.find(' ', intBegin);
-		}
-		else if (isspace(static_cast<unsigned char>(strMsg[intEnd])))intMsgCnt = intEnd;
-		return strMsg.substr(intBegin, intMsgCnt - intBegin);
-	}
+	string readAttrName();
 	string readFileName();
 	//
 	int readChat(chatInfo& ct, bool isReroll = false);
 
-	int readClock(Clock& cc)
-	{
-		const string strHour = readDigit();
-		if (strHour.empty())return -1;
-		const unsigned short nHour = stoi(strHour);
-		if (nHour > 23)return -2;
-		cc.first = nHour;
-		if (strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '.')intMsgCnt++;
-		if (strMsg.substr(intMsgCnt, 2) == "：")intMsgCnt += 2;
-		readSkipSpace();
-		if (intMsgCnt >= strMsg.length() || !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])))
-		{
-			cc.second = 0;
-			return 0;
-		}
-		const string strMin = readDigit();
-		const unsigned short nMin = stoi(strMin);
-		if (nMin > 59)return -2;
-		cc.second = nMin;
-		return 0;
-	}
+	int readClock(Clock& cc);
 
 	//读取分项
 	string readItem();

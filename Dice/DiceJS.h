@@ -23,6 +23,24 @@
  */
 #pragma once
 #include "DiceAttrVar.h"
+class JSRuntime;
+class JSContext;
+typedef uint64_t JSValue;
 class DiceEvent;
+class js_context {
+	JSContext* ctx;
+public:
+	js_context();
+	~js_context();
+	operator JSContext* () { return ctx; }
+	AttrVar getVal(JSValue);
+	string getException();
+	void setContext(const std::string&, const AttrObject& context);
+	JSValue evalString(const std::string& s, const string& title);
+	JSValue evalFile(const std::string& s);
+};
+JSValue js_toValue(JSContext*, const AttrVar& var);
+void js_global_init();
+void js_global_end();
 bool js_call_event(AttrObject, const AttrVar&); 
-bool js_msg_call(DiceEvent*, const AttrObject&);
+void js_msg_call(DiceEvent*, const AttrObject&);

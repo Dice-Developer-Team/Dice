@@ -63,6 +63,8 @@ typedef sig_t sighandler_t;
 #include <crt_externs.h>
 #define environ (*_NSGetEnviron())
 #endif
+#elif !defined(environ)
+#define environ _environ
 #endif /* __APPLE__ */
 
 #endif
@@ -1922,7 +1924,7 @@ static void os_signal_handler(int sig_num)
     os_pending_signals |= ((uint64_t)1 << sig_num);
 }
 
-#if defined(_WIN32)
+#ifndef __APPLE__
 typedef void (*sighandler_t)(int sig_num);
 #endif
 

@@ -53,7 +53,7 @@ AttrVar py_to_attr(PyObject* o) {
 	if (Py_IS_TYPE(o, &PyBool_Type))return bool(Py_IsTrue(o));
 	else if (Py_IS_TYPE(o, &PyLong_Type)) {
 		auto i{ PyLong_AsLongLong(o) };
-		return (i > 10000000 || i < -100000000) ? i : (int)i;
+		return (i == (int)i) ? (int)i : i;
 	}
 	else if (Py_IS_TYPE(o, &PyFloat_Type))return PyFloat_AsDouble(o);
 	else if (Py_IS_TYPE(o, &PyUnicode_Type))return UtoGBK(PyUnicode_AsUnicode(o));
@@ -752,12 +752,12 @@ PyGlobal::PyGlobal() {
 		Py_SetPythonHome(dirExe.wstring().c_str());
 		Py_SetPath((dirExe / "python310.zip").wstring().c_str());
 	}
-	if (PyImport_AppendInittab(DiceModuleName, PyInit_DiceMaid)) {
-		console.log("Ô¤ÔØdicemaidÄ£¿éÊ§°Ü!", 0b1000);
-	}
 	//Py_SetProgramName(L"DiceMaid");
 	try {
 		Py_Initialize();
+		if (PyImport_AppendInittab(DiceModuleName, PyInit_DiceMaid)) {
+			console.log("Ô¤ÔØdicemaidÄ£¿éÊ§°Ü!", 0b1000);
+		}
 		PyRun_SimpleString("import sys");
 		PyRun_SimpleString(("sys.path.append('" + (DiceDir / "plugin").u8string() + "/')").c_str());
 		PyRun_SimpleString(("sys.path.append('" + (dirExe / "Diceki" / "py").u8string() + "/')").c_str());
@@ -769,7 +769,8 @@ PyGlobal::PyGlobal() {
 	console.log("Python.Initialized", 0);
 }
 PyGlobal::~PyGlobal() {
-	Py_Finalize();
+	if(Py_IsInitialized())Py_Finalize();
+	console.log("Python.Finalized", 0);
 }
 int PyGlobal::runFile(const std::filesystem::path& p) {
 	return 0;

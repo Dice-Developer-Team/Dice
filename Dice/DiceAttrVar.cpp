@@ -707,13 +707,13 @@ AttrVar::AttrVar(const toml::node& t) {
 		new(&text)string(UTF8toGBK(string(*t.as_string())));
 		break;
 	case toml::node_type::integer:
-		if (int64_t num{ *t.as_integer() }; num > 10000000 || num < -10000000) {
-			type = AttrType::ID;
-			id = static_cast<long long>(num);
+		if (int64_t num{ *t.as_integer() }; num == (int)num) {
+			type = AttrType::Integer;
+			attr = (int)num;
 		}
 		else {
-			type = AttrType::Integer;
-			attr = static_cast<long long>(num);
+			type = AttrType::ID;
+			id = static_cast<long long>(num);
 		}
 		break;
 	case toml::node_type::floating_point:
