@@ -80,6 +80,7 @@ public:
 	bool is(const string& key)const;
 	bool is_empty(const string& key)const;
 	bool is_table(const string& key)const;
+	size_t size()const { return dict->size(); }
 	AttrVar index(const string& key)const;
 	AttrVar get(const string& key, ptr<AttrVar> val = {})const;
 	string get_str(const string& key)const;

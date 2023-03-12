@@ -6,10 +6,8 @@
  */
 
 #include <fstream>
-#include <string>
 #include <utility>
 #include <vector>
-#include <map>
 #include <stack>
 #include <mutex>
 #include "CQTools.h"
@@ -146,8 +144,6 @@ public:
 	}
 	string show();
 };
-
-// 由于依赖于其他全局变量，为了避免全局变量初始化顺序冲突，这个变量会在eventEnable中被初始化
 
 struct lua_State;
 class CharaCard
@@ -306,8 +302,6 @@ public:
 	void writeb(std::ofstream& fout) const;
 
 	void readb(std::ifstream& fin);
-
-	void toCard(lua_State*);
 };
 
 class Player

@@ -15,10 +15,17 @@ string getString(JSContext* ctx, JSValue val) {
 	return ret;
 }
 js_context::js_context() : ctx(JS_NewContext(rt)) {
-	js_init(rt, ctx);
+	js_std_add_helpers(ctx, 0, NULL);
+	/* system modules */
+	js_init_module_std(ctx, "std");
+	js_init_module_os(ctx, "os");
 	auto global = JS_GetGlobalObject(ctx);
 	JS_SetPropertyFunctionList(ctx, global, js_dice_funcs, countof(js_dice_funcs));
 	JS_FreeValue(ctx, global);
+	JSValue proto = JS_NewObject(ctx);
+	JS_SetPropertyFunctionList(ctx, proto, js_dice_context_proto_funcs,
+		countof(js_dice_context_proto_funcs));
+	JS_SetClassProto(ctx, js_dice_context_id, proto);
 }
 js_context::~js_context() {
 	JS_FreeContext(ctx);
@@ -40,6 +47,31 @@ AttrVar js_context::getVal(JSValue val) {
 		break;
 	case JS_TAG_STRING:
 		return getString(ctx, val);
+		break;
+	case JS_TAG_OBJECT:
+		if (JS_IsArray(ctx, val)) {
+			VarArray ary;
+			auto p = JS_VALUE_GET_OBJ(val);
+			return ary;
+		}
+		else {
+			AttrObject obj;
+			JSPropertyEnum* tab{ nullptr };
+			uint32_t len = 0;
+			if (!JS_GetOwnPropertyNames(ctx, &tab, &len, val, 0)) {
+				for (uint32_t i = 0; i < len; ++i) {
+					auto prop = JS_AtomToValue(ctx, tab[i].atom);
+					if (JS_IsString(prop)) {
+						auto str = JS_ToCString(ctx, prop);
+						obj.set(UTF8toGBK(str), getVal(JS_GetProperty(ctx, val, prop)));
+						JS_FreeCString(ctx, str);
+					}
+					JS_FreeValue(ctx, prop);
+				}
+				js_free_prop_enum(ctx, tab, len);
+			}
+			return obj;
+		}
 		break;
 	case JS_TAG_UNINITIALIZED:
 	case JS_TAG_NULL:
@@ -67,7 +99,27 @@ JSValue js_toValue(JSContext* ctx, const AttrVar& var) {
 		return JS_NewString(ctx, GBKtoUTF8(var.text).c_str());
 		break;
 	case AttrVar::AttrType::Table:
-		return JS_NewArray(ctx);
+		if (!var.table.to_dict()->empty()) {
+			auto dict = JS_NewObject(ctx);
+			if (var.table.to_list()) {
+				uint32_t idx{ 0 };
+				for (auto& val : *var.table.to_list()) {
+					JS_SetPropertyUint32(ctx, dict, idx++, js_toValue(ctx, val));
+				}
+			}
+			for (auto& [key, val] : *var.table.to_dict()) {
+				JS_SetPropertyStr(ctx, dict, GBKtoUTF8(key).c_str(), js_toValue(ctx, val));
+			}
+			return dict;
+		}
+		else if (var.table.to_list()) {
+			auto ary = JS_NewArray(ctx);
+			uint32_t idx{ 0 };
+			for (auto& val : *var.table.to_list()) {
+				JS_SetPropertyUint32(ctx, ary, idx++, js_toValue(ctx, val));
+			}
+			return ary;
+		}
 		break;
 	case AttrVar::AttrType::ID:
 		return JS_NewInt64(ctx, (int64_t)var.attr);
@@ -144,6 +196,9 @@ QJSDEF(log) {
 QJSDEF(getDiceID) {
 	return JS_NewInt64(ctx, (int64_t)console.DiceMaid);
 }
+QJSDEF(getDiceDir) {
+	return JS_NewString(ctx, DiceDir.u8string().c_str());;
+}
 #define JS2OBJ(val) AttrObject* obj = (AttrObject*)JS_GetOpaque(val, js_dice_context_id)
 
 void js_dice_context_finalizer(JSRuntime* rt, JSValue val) {
@@ -166,6 +221,27 @@ int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueC
 	}
 	return FALSE;
 }
+int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen, JSValueConst this_val) {
+	JS2OBJ(this_val);
+	if (!obj)return -1;
+	if (*plen = obj->size()) {
+		JSPropertyEnum* tab = (JSPropertyEnum*)js_malloc(ctx, sizeof(JSPropertyEnum) * (*plen));
+		for (const auto& [key, val] : *obj->to_dict()) {
+			if (auto atom = JS_NewAtom(ctx, GBKtoUTF8(key).c_str());
+				atom != JS_ATOM_NULL) {
+				tab[*plen].atom = atom;
+				tab[*plen].is_enumerable = FALSE;
+			}
+			else {
+				js_free_prop_enum(ctx, tab, *plen);
+				*plen = 0;
+				return -1;
+			}
+		}
+		ptab = &tab;
+	}
+	return 0;
+}
 int js_dice_context_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
 	JS2OBJ(this_val);
 	if (obj) {
@@ -181,7 +257,7 @@ JSValue js_dice_context_get(JSContext* ctx, JSValueConst this_val, JSAtom atom, 
 	auto str = JS_AtomToCString(ctx, atom);
 	string key{ UTF8toGBK(str) };
 	JS_FreeCString(ctx, str);
-	return js_toValue(ctx, obj->get(key));
+	return obj->has(key) ? js_toValue(ctx, obj->get(key)) : JS_UNDEFINED;
 }
 QJSDEF(context_echo) {
 	JS2OBJ(this_val);

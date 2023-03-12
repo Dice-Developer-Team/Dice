@@ -120,8 +120,10 @@ public:
 private:
 	dict<>helpdoc;
 	dict<DiceSpeech>speech;
+	//native path of .lua
 	dict_ci<string>lua_scripts;
 	dict_ci<string>js_scripts;
+	//utf8 path of .py
 	dict_ci<string>py_scripts;
 	vector<fs::path>luaFiles;
 	dict<ptr<DiceMsgReply>>reply_list;

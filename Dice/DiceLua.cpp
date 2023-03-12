@@ -222,10 +222,6 @@ AttrVars lua_to_dict(lua_State* L, int idx = -1) {
 	return tab;
 }
 
-void CharaCard::toCard(lua_State* L) {
-
-}
-
 //为msg直接调用lua语句
 bool lua_msg_call(DiceEvent* msg, const AttrObject& lua) {
 	//enum class LuaType { String, File, File_Func, Chunk};
