@@ -8,7 +8,11 @@
 #define countof(x) (sizeof(x) / sizeof((x)[0]))
 
 JSRuntime* rt{ nullptr };
-//string expImport{ "import * as dice from 'dice';\n" };
+int js_toInt(JSContext* ctx, JSValueConst val) {
+	int32_t num = 0;
+	JS_ToInt32(ctx, &num, val);
+	return (int)num;
+}
 string js_toGBK(JSContext* ctx, JSValue val) {
 	auto s{ JS_ToCString(ctx, val) };
 	string ret{ UTF8toGBK(s) };
@@ -59,7 +63,7 @@ AttrVar js_toAttr(JSContext* ctx, JSValue val) {
 		else if (JS_IsArray(ctx, val)) {
 			VarArray ary;
 			auto p = JS_VALUE_GET_OBJ(val);
-			return ary;
+			return AttrObject(ary);
 		}
 		else {
 			AttrObject obj;
@@ -164,6 +168,10 @@ JSValue js_context::evalString(const std::string& s, const string& title) {
 	string exp{ GBKtoUTF8(s) };
 	return JS_Eval(ctx, exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
 }
+JSValue js_context::evalStringLocal(const std::string& s, const string& title, const AttrObject& context) {
+	string exp{ GBKtoUTF8(s) };
+	return JS_EvalThis(ctx, js_newDiceContext(ctx, context), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
+}
 JSValue js_context::evalFile(const std::string& s) {
 	size_t buf_len{ 0 };
 	if (uint8_t * buf{ js_load_file(ctx, &buf_len, s.c_str()) }) {
@@ -174,7 +182,17 @@ JSValue js_context::evalFile(const std::string& s) {
 	}
 	return JS_EXCEPTION;
 }
-js_context* jsMain;
+JSValue js_context::evalFileLocal(const std::string& s, const AttrObject& context) {
+	size_t buf_len{ 0 };
+	if (uint8_t * buf{ js_load_file(ctx, &buf_len, s.c_str()) }) {
+		auto ret = JS_EvalThis(ctx, js_newDiceContext(ctx,context), (char*)buf, buf_len, s.c_str(),
+			JS_EVAL_TYPE_GLOBAL);
+		js_free(ctx, buf);
+		return ret;
+	}
+	return JS_EXCEPTION;
+}
+dict<js_context> js_event_pool;
 void js_global_init() {
 	rt = JS_NewRuntime();
 	js_std_init_handlers(rt);
@@ -469,7 +487,7 @@ int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueC
 int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen, JSValueConst this_val) {
 	JS2OBJ(this_val);
 	if (!obj)return -1;
-	if (*plen = obj->size()) {
+	if ((*plen = obj->size()) > 0) {
 		JSPropertyEnum* tab = (JSPropertyEnum*)js_malloc(ctx, sizeof(JSPropertyEnum) * (*plen));
 		for (const auto& [key, val] : *obj->to_dict()) {
 			if (auto atom = JS_NewAtom(ctx, GBKtoUTF8(key).c_str());
@@ -483,6 +501,7 @@ int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* pl
 				return -1;
 			}
 		}
+		js_free_prop_enum(ctx, tab, *plen);
 		ptab = &tab;
 	}
 	return 0;
@@ -497,23 +516,64 @@ int js_dice_context_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
 	}
 	return FALSE;
 }
-JSValue js_dice_context_get(JSContext* ctx, JSValueConst this_val, JSAtom atom, JSValueConst receiver) {
+QJSDEF(context_get) {
 	JS2OBJ(this_val);
-	auto str = JS_AtomToCString(ctx, atom);
-	string key{ UTF8toGBK(str) };
-	JS_FreeCString(ctx, str);
-	return obj->has(key) ? js_toValue(ctx, obj->get(key)) : JS_UNDEFINED;
+	if (argc > 0) {
+		string key{ js_toGBK(ctx, argv[0]) };
+		return obj->has(key) ? js_toValue(ctx, obj->get(key))
+			: (argc > 1 ? argv[1] : JS_UNDEFINED);
+	}
+	else {
+		return js_toValue(ctx, *obj);
+	}
+}
+QJSDEF(context_format) {
+	JS2OBJ(this_val);
+	if (argc > 0) {
+		return js_newGBK(ctx, fmt->format(js_toGBK(ctx, argv[0]), *obj));
+	}
+	else {
+		JS_ThrowTypeError(ctx, "undefined field");
+		return JS_EXCEPTION;
+	}
 }
 QJSDEF(context_echo) {
 	JS2OBJ(this_val);
-	if (!obj)return JS_FALSE;
-	string msg{ js_toGBK(ctx, argv[0]) };
-	bool isRaw = argc > 1 ? JS_ToBool(ctx, argv[1]) : false;
-	reply(*obj, UTF8toGBK(msg), !isRaw);
-	return JS_TRUE;
+	if (argc > 0) {
+		string msg{ js_toGBK(ctx, argv[0]) };
+		bool isRaw = argc > 1 ? JS_ToBool(ctx, argv[1]) : false;
+		reply(*obj, UTF8toGBK(msg), !isRaw);
+		return JS_TRUE;
+	}
+	else {
+		JS_ThrowTypeError(ctx, "undefined msg");
+		return JS_EXCEPTION;
+	}
+}
+QJSDEF(context_inc) {
+	JS2OBJ(this_val);
+	if (argc > 0) {
+		string key{ js_toGBK(ctx, argv[0]) };
+		return obj->inc(key) ? js_toValue(ctx, obj->get(key))
+			: (argc > 1 ? argv[1] : JS_UNDEFINED);
+		return argc > 1 ? obj->inc(key, js_toInt(ctx, argv[1])) : obj->inc(key);
+	}
+	else {
+		JS_ThrowTypeError(ctx, "undefined field");
+		return JS_EXCEPTION;
+	}
 }
 
-bool js_call_event(AttrObject, const AttrVar&) {
+bool js_call_event(AttrObject eve, const AttrVar& action) {
+	string title{ eve.has("hook") ? eve.get_str("hook") : eve.get_str("Event") };
+	string script{ action.to_str() };
+	bool isFile{ action.is_character() && fmt->has_js(script) };
+	if (auto ret = isFile ? js_event_pool[title].evalFileLocal(fmt->py_path(script), eve) 
+		: js_event_pool[title].evalStringLocal(script, title, eve);
+		JS_IsException(ret)) {
+		console.log(getMsg("strSelfName") + "ÊÂ¼þ¡¸" + title + "¡¹Ö´ÐÐjsÊ§°Ü!\n" + js_event_pool[title].getException(), 0b10);
+		return false;
+	}
 	return true;
 }
 void js_msg_call(DiceEvent* msg, const AttrObject& js) {

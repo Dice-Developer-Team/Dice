@@ -104,6 +104,12 @@ int AttrObject::inc(const string& key)const {
 	else dict->emplace(key, 1);
 	return 1;
 }
+int AttrObject::inc(const string& key, int i)const {
+	if (key.empty())return 0;
+	if (dict->count(key))return (dict->at(key) += i).to_int();
+	else dict->emplace(key, i);
+	return 1;
+}
 void AttrObject::add(const string& key, const AttrVar& val)const {
 	if (key.empty())return;
 	(*dict)[key] = (*dict)[key] + val;

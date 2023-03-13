@@ -37,8 +37,11 @@ JSClassDef js_dice_context_class = {
 	.finalizer = js_dice_context_finalizer,
 	.exotic = &js_dice_context_methods,
 }; 
-const JSCFunctionListEntry js_dice_context_proto_funcs[1] = {
+const JSCFunctionListEntry js_dice_context_proto_funcs[4] = {
+	JS_CFUNC_DEF("get",2,js_dice_context_get),
+	JS_CFUNC_DEF("format",2,js_dice_context_format),
 	JS_CFUNC_DEF("echo",2,js_dice_context_echo),
+	JS_CFUNC_DEF("inc",2,js_dice_context_inc),
 };
 /*
 static int js_dicemaid_init(JSContext* ctx, JSModuleDef* m) {

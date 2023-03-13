@@ -93,6 +93,7 @@ public:
 	ptr<AttrVars> get_dict(const string& key)const;
 	ptr<VarArray> get_list(const string& key)const;
 	int inc(const string& key)const;
+	int inc(const string& key, int i)const;
 	void add(const string& key, const AttrVar&)const;
 	AttrObject& merge(const AttrVars& other);
 	fifo_json to_json()const;
@@ -154,6 +155,7 @@ public:
 	bool operator==(const char* other)const;
 	AttrVar& operator++();
 	AttrVar operator+(const AttrVar& other);
+	AttrVar& operator+=(const AttrVar& other) { return *this = *this + other; }
 	int to_int()const;
 	long long to_ll()const;
 	double to_num()const;

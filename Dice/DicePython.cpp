@@ -198,11 +198,21 @@ static PyObject* pyContext_format(PyObject* self, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "s", &msg)) {
 		return nullptr;
 	}
-	return PyUnicode_FromString(GBKtoUTF8(fmt->format(UTF8toGBK(msg), obj, true)).c_str());
+	return PyUnicode_FromString(GBKtoUTF8(fmt->format(UTF8toGBK(msg), obj)).c_str());
+}
+static PyObject* pyContext_inc(PyObject* self, PyObject* args) {
+	AttrObject& obj{ ((PyContextObject*)self)->obj };
+	const char* field = empty;
+	int cnt = 0;
+	if (!PyArg_ParseTuple(args, "s|i", &field, &cnt)) {
+		return nullptr;
+	}
+	return PyLong_FromSsize_t(obj.inc(UTF8toGBK(field, cnt)));
 }
 static PyMethodDef ContextMethods[] = {
 	{"echo", pyContext_echo, METH_VARARGS, "echo message"},
 	{"format", pyContext_format, METH_VARARGS, "format text"},
+	{"inc", pyContext_inc, METH_VARARGS, "attr auto increase"},
 	{"__getattr__", PyContext_getattro, METH_VARARGS, "get Context item"},
 	{NULL, NULL, 0, NULL},
 };
