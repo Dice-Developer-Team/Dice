@@ -11,7 +11,15 @@ extern "C" {
 	QJSDEF(log);
 	QJSDEF(getDiceID);
 	QJSDEF(getDiceDir);
-	extern const JSCFunctionListEntry js_dice_funcs[3];
+	QJSDEF(eventMsg);
+	QJSDEF(sendMsg);
+	QJSDEF(getGroupAttr);
+	QJSDEF(setGroupAttr);
+	QJSDEF(getUserAttr);
+	QJSDEF(setUserAttr);
+	QJSDEF(getUserToday);
+	QJSDEF(setUserToday);
+	extern const JSCFunctionListEntry js_dice_funcs[11];
 	extern JSClassID js_dice_context_id;
 	extern JSClassDef js_dice_context_class;
 	QJSDEF(context_echo);
@@ -31,5 +39,6 @@ extern "C" {
 #define TRUE                1
 #endif
 #ifdef __cplusplus
+#define JS2OBJ(val) AttrObject* obj = (AttrObject*)JS_GetOpaque(val, js_dice_context_id)
 }
 #endif

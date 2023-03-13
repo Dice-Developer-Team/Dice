@@ -3,7 +3,7 @@
 
 long long js_toBigInt(JSContext* ctx, JSValueConst val) {
 	int64_t num = 0;
-	JS_ToBigInt64(ctx, &num, val);
+	JS_ToInt64(ctx, &num, val);
 	return (long long)num;
 }
 double js_toDouble(JSContext* ctx, JSValueConst val) {
@@ -16,13 +16,21 @@ const JSCFunctionListEntry js_dice_funcs[] = {
 	JS_DICEDEF(log,2),
 	JS_DICEDEF(getDiceID,0),
 	JS_DICEDEF(getDiceDir,0),
+	JS_DICEDEF(eventMsg,3),
+	JS_DICEDEF(sendMsg,3),
+	JS_DICEDEF(getGroupAttr,3),
+	JS_DICEDEF(setGroupAttr,3),
+	JS_DICEDEF(getUserAttr,3),
+	JS_DICEDEF(setUserAttr,3),
+	JS_DICEDEF(getUserToday,3),
+	JS_DICEDEF(setUserToday,3),
 };
 JSClassID js_dice_context_id;
 JSClassExoticMethods js_dice_context_methods = {
 	.get_own_property = js_dice_context_get_own,
 	.get_own_property_names = js_dice_context_get_keys,
 	.delete_property = js_dice_context_delete,
-	.get_property = js_dice_context_get,
+	//.get_property = js_dice_context_get,
 };
 JSClassDef js_dice_context_class = {
 	"Context",
@@ -32,13 +40,9 @@ JSClassDef js_dice_context_class = {
 const JSCFunctionListEntry js_dice_context_proto_funcs[1] = {
 	JS_CFUNC_DEF("echo",2,js_dice_context_echo),
 };
+/*
 static int js_dicemaid_init(JSContext* ctx, JSModuleDef* m) {
-	JSValue proto = JS_NewObject(ctx);
-	JS_SetPropertyFunctionList(ctx, proto, js_dice_context_proto_funcs,
-		countof(js_dice_context_proto_funcs));
-	JS_SetClassProto(ctx, js_dice_context_id, proto);
-	//return JS_SetModuleExportList(ctx, m, js_dice_funcs, countof(js_dice_funcs));
-	return 0;
+	return JS_SetModuleExportList(ctx, m, js_dice_funcs, countof(js_dice_funcs));
 }
 JSModuleDef* js_init_module_dice(JSContext* ctx, const char* module_name) {
 	JSModuleDef* m = JS_NewCModule(ctx, module_name, js_dicemaid_init);
@@ -49,3 +53,4 @@ JSModuleDef* js_init_module_dice(JSContext* ctx, const char* module_name) {
 	}
 	return NULL;
 }
+*/

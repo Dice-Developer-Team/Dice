@@ -567,8 +567,7 @@ static PyObject* py_getUserAttr(PyObject*, PyObject* args, PyObject* keys) {
 	}
 	if (item.empty()) return py_newContext(getUser(uid).confs);
 	if (auto val{ getUserItem(uid,item) }; !val.is_null())return py_build_attr(val);
-	else if (sub) return sub;
-	return Py_BuildValue("");
+	else return sub ? sub : Py_BuildValue("");
 }
 static PyObject* py_setUserAttr(PyObject*, PyObject* args) {
 	long long id = 0;
@@ -582,7 +581,18 @@ static PyObject* py_setUserAttr(PyObject*, PyObject* args) {
 	string item{ UtoGBK(attr) };
 	if (item[0] == '&')item = fmt->format(item);
 	if (item.empty())return 0;
-	if (item.find("nn#") == 0) {
+	if (item == "trust") {
+		int trust{ (int)PyLong_AsLongLong(val) };
+		User& user{ getUser(id) };
+		if (trust < 5 && trust >= 0 && user.nTrust < 5) {
+			user.trust(trust);
+		}
+		else {
+			PyErr_SetString(PyExc_ValueError, "User trust invalid");
+			return NULL;
+		}
+	}
+	else if (item.find("nn#") == 0) {
 		long long gid{ 0 };
 		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
 			gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
@@ -659,9 +669,9 @@ static PyObject* py_sendMsg(PyObject* self, PyObject* args, PyObject* keys) {
 	AttrObject chat;
 	if (Py_IS_TYPE(msg, &PyUnicode_Type)) {
 		chat = py_to_obj(msg);
+		AddMsgToQueue(fmt->format(chat.get_str("fwdMsg"), chat), chatInfo{ chat.get_ll("uid") ,chat.get_ll("gid") ,chat.get_ll("chid") });
 	}
 	else {
-		chat["fwdMsg"] = py_to_gbstring(msg);
 		if (!gid && !uid) {
 			PyErr_SetString(PyExc_ValueError, "chat id can't be zero");
 			return NULL;
@@ -669,8 +679,8 @@ static PyObject* py_sendMsg(PyObject* self, PyObject* args, PyObject* keys) {
 		if (uid)chat["uid"] = uid;
 		if (gid)chat["gid"] = gid;
 		if (chid)chat["chid"] = chid;
+		AddMsgToQueue(fmt->format(py_to_gbstring(msg), chat), { uid,gid,chid });
 	}
-	AddMsgToQueue(fmt->format(chat.get_str("fwdMsg"), chat), { uid,gid,chid });
 	return Py_BuildValue("");
 }
 static PyObject* py_eventMsg(PyObject* self, PyObject* args, PyObject* keys) {
