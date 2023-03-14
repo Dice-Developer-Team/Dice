@@ -4,6 +4,7 @@
 #include "DiceQJS.h"
 #include "DiceEvent.h"
 #include "DiceMod.h"
+#include "DiceSelfData.h"
 #include "DDAPI.h"
 #define countof(x) (sizeof(x) / sizeof((x)[0]))
 
@@ -19,6 +20,22 @@ string js_toGBK(JSContext* ctx, JSValue val) {
 	JS_FreeCString(ctx, s);
 	return ret;
 }
+string js_toNativeString(JSContext* ctx, JSValue val) {
+	auto s{ JS_ToCString(ctx, val) };
+#ifdef _WIN32
+	string ret{ UTF8toGBK(s) };
+#else
+	string ret{ s };
+#endif
+	JS_FreeCString(ctx, s);
+	return ret;
+}
+string js_AtomtoGBK(JSContext* ctx, JSAtom val) {
+	auto s{ JS_AtomToCString(ctx, val) };
+	string ret{ UTF8toGBK(s) };
+	JS_FreeCString(ctx, s);
+	return ret;
+}
 JSValue js_newGBK(JSContext* ctx, const string& val) {
 	return JS_NewString(ctx, GBKtoUTF8(val).c_str());
 }
@@ -30,10 +47,19 @@ js_context::js_context() : ctx(JS_NewContext(rt)) {
 	auto global = JS_GetGlobalObject(ctx);
 	JS_SetPropertyFunctionList(ctx, global, js_dice_funcs, countof(js_dice_funcs));
 	JS_FreeValue(ctx, global);
-	JSValue proto = JS_NewObject(ctx);
-	JS_SetPropertyFunctionList(ctx, proto, js_dice_context_proto_funcs,
+	JSValue pro_context = JS_NewObject(ctx);
+	JS_SetPropertyFunctionList(ctx, pro_context, js_dice_context_proto_funcs,
 		countof(js_dice_context_proto_funcs));
-	JS_SetClassProto(ctx, js_dice_context_id, proto);
+	JS_SetClassProto(ctx, js_dice_context_id, pro_context);
+	JSValue pro_selfdata = JS_NewObject(ctx);
+	JS_SetPropertyFunctionList(ctx, pro_selfdata, js_dice_selfdata_proto_funcs,
+		countof(js_dice_selfdata_proto_funcs));
+	auto selfdata_ctor = JS_NewCFunction2(ctx, js_dice_selfdata_constructor, "SelfData", 1,
+		JS_CFUNC_constructor, 0);
+	JS_SetConstructor(ctx, selfdata_ctor, pro_selfdata);
+	JS_SetClassProto(ctx, js_dice_selfdata_id, pro_selfdata);
+	JS_SetPropertyStr(ctx, global, "SelfData", selfdata_ctor);
+	JS_FreeValue(ctx, global);
 }
 js_context::~js_context() {
 	JS_FreeContext(ctx);
@@ -199,7 +225,9 @@ void js_global_init() {
 	/* loader for ES6 modules */
 	JS_SetModuleLoaderFunc(rt, NULL, js_module_loader, NULL);
 	JS_NewClassID(&js_dice_context_id);
-	JS_NewClass(rt, js_dice_context_id, &js_dice_context_class); 
+	JS_NewClass(rt, js_dice_context_id, &js_dice_context_class);
+	JS_NewClassID(&js_dice_selfdata_id);
+	JS_NewClass(rt, js_dice_selfdata_id, &js_dice_selfdata_class);
 }
 void js_global_end() {
 	js_std_free_handlers(rt);
@@ -471,9 +499,7 @@ void js_dice_context_finalizer(JSRuntime* rt, JSValue val) {
 int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst this_val, JSAtom prop) {
 	JS2OBJ(this_val);
 	if (obj && desc) {
-		auto str = JS_AtomToCString(ctx, prop);
-		string key{ UTF8toGBK(str) };
-		JS_FreeCString(ctx, str);
+		string key{ js_AtomtoGBK(ctx, prop) };
 		if (obj->has(key)) {
 			desc->flags = JS_PROP_NORMAL;
 			desc->value = js_toValue(ctx, obj->get(key));
@@ -509,9 +535,19 @@ int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* pl
 int js_dice_context_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
 	JS2OBJ(this_val);
 	if (obj) {
-		auto str = JS_AtomToCString(ctx, atom);
-		obj->reset(UTF8toGBK(str));
-		JS_FreeCString(ctx, str);
+		obj->reset(js_AtomtoGBK(ctx, atom));
+		return TRUE;
+	}
+	return FALSE;
+}
+int js_dice_context_define(JSContext* ctx, JSValueConst this_obj,
+	JSAtom prop, JSValueConst val,
+	JSValueConst getter, JSValueConst setter,
+	int flags) {
+	JS2OBJ(this_obj);
+	if (obj) {
+		auto str = js_AtomtoGBK(ctx, prop);
+		obj->set(str, js_toAttr(ctx, val));
 		return TRUE;
 	}
 	return FALSE;
@@ -562,6 +598,81 @@ QJSDEF(context_inc) {
 		JS_ThrowTypeError(ctx, "undefined field");
 		return JS_EXCEPTION;
 	}
+}
+QJSDEF(selfdata_constructor) {
+	if (argc > 0) {
+		string file{ js_toNativeString(ctx, argv[0]) };
+		if (!selfdata_byFile.count(file)) {
+			auto& data{ selfdata_byFile[file] = std::make_shared<SelfData>(DiceDir / "selfdata" / file) };
+			if (string name{ cut_stem(file) }; !selfdata_byStem.count(name)) {
+				selfdata_byStem[name] = data;
+			}
+		}
+		auto obj = JS_NewObjectClass(ctx, js_dice_selfdata_id);
+		ptr<SelfData>* data = new ptr<SelfData>(selfdata_byFile[file]);
+		JS_SetOpaque(obj, data);
+		return obj;
+	}
+	JS_ThrowTypeError(ctx, "undefined filename");
+	return JS_EXCEPTION;
+}
+void js_dice_selfdata_finalizer(JSRuntime* rt, JSValue val) {
+	JS2DATA(val);
+	delete data;
+}
+int js_dice_selfdata_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst this_val, JSAtom prop) {
+	JS2DATA(this_val);
+	if (data && desc) {
+		string key{ js_AtomtoGBK(ctx, prop) };
+		if ((*data)->data.to_dict()->count(key)) {
+			desc->flags = JS_PROP_NORMAL;
+			desc->value = js_toValue(ctx, (*data)->data.to_obj().get(key));
+			desc->getter = JS_UNDEFINED;
+			desc->setter = JS_UNDEFINED;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+int js_dice_selfdata_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
+	JS2DATA(this_val);
+	if (data) {
+		auto str = js_AtomtoGBK(ctx, atom);
+		(*data)->data.to_obj().reset(str);
+		(*data)->save();
+		return TRUE;
+	}
+	return FALSE;
+}
+int js_dice_selfdata_define(JSContext* ctx, JSValueConst this_obj,
+	JSAtom prop, JSValueConst val,
+	JSValueConst getter, JSValueConst setter,
+	int flags) {
+	JS2DATA(this_obj);
+	if (data) {
+		auto str = js_AtomtoGBK(ctx, prop);
+		(*data)->data.to_obj().set(str, js_toAttr(ctx, val));
+		(*data)->save();
+		return TRUE;
+	}
+	return FALSE;
+}
+int js_dice_selfdata_set(JSContext* ctx, JSValueConst obj, JSAtom atom, JSValueConst value, JSValueConst receiver, int flags) {
+	JS2DATA(obj);
+	if (data) {
+		auto str = js_AtomtoGBK(ctx, atom);
+		(*data)->data.to_obj().set(str, js_toAttr(ctx, value));
+		(*data)->save();
+		return TRUE;
+	}
+	return FALSE;
+}
+QJSDEF(selfdata_append) {
+	JS2DATA(this_val);
+	if (data) {
+		return TRUE;
+	}
+	return FALSE;
 }
 
 bool js_call_event(AttrObject eve, const AttrVar& action) {

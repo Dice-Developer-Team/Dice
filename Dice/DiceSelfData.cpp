@@ -8,6 +8,7 @@ SelfData::SelfData(const std::filesystem::path& p) :pathFile(p) {
 	mkDir(p.parent_path());
 	if (p.extension() == ".json")type = Json;
 	else if (p.extension() == ".toml")type = Toml;
+	else if (p.extension() == ".yaml"|| p.extension() == ".yml")type = Yaml;
 	if (std::filesystem::exists(pathFile = p)) {
 		switch (type) {
 		case Json:
@@ -18,6 +19,9 @@ SelfData::SelfData(const std::filesystem::path& p) :pathFile(p) {
 			break;
 		case Toml:
 			if (std::ifstream fs{ pathFile })data = AttrVar::parse_toml(fs);
+			break;
+		case Yaml:
+			data = AttrVar::parse_yaml(pathFile);
 			break;
 		default:
 			break;
@@ -39,6 +43,9 @@ void SelfData::save() {
 			if (data.is_table())fs << data.to_obj().to_toml();
 			else fs << data.to_json();
 		}
+		break;
+	case Yaml:
+		if (std::ofstream fs{ pathFile })fs << data.to_yaml();
 		break;
 	default:
 		break;

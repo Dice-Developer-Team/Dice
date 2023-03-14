@@ -24,6 +24,7 @@
 #pragma once
 #include "fifo_json.hpp"
 #include "toml.hpp"
+#include "DiceYaml.h"
 using std::string;
 template<typename T>
 using ptr = std::shared_ptr<T>;
@@ -127,6 +128,7 @@ public:
 	AttrVar(long long n) :type(AttrType::ID), id(n) {}
 	AttrVar(const fifo_json&);
 	AttrVar(const toml::node&);
+	AttrVar(const YAML::Node&);
 	AttrVar(const AttrObject& vars) :type(AttrType::Table), table(vars) {}
 	explicit AttrVar(const AttrVars& vars) :type(AttrType::Table), table(vars) {}
 	void des() {
@@ -163,12 +165,14 @@ public:
 	ByteS to_bytes()const;
 	static AttrVar parse(const string& s);
 	static AttrVar parse_toml(std::ifstream& s);
+	static AttrVar parse_yaml(std::filesystem::path& s);
 	string print()const;
 	bool str_empty()const;
 	AttrObject to_obj()const;
 	std::shared_ptr<AttrVars> to_dict()const;
 	std::shared_ptr<VarArray> to_list()const;
 	fifo_json to_json()const;
+	YAML::Node to_yaml()const;
 
 	using CMPR = bool(AttrVar::*)(const AttrVar&)const;
 	bool is_null()const { return type == AttrType::Nil; }

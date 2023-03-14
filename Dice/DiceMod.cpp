@@ -34,7 +34,7 @@
 #include "DiceSelfData.h"
 #include "RandomGenerator.h"
 #include "DDAPI.h"
-#include "yaml-cpp/yaml.h"
+#include "DiceYaml.h"
 #include <regex>
 
 std::shared_ptr<DiceModManager> fmt;

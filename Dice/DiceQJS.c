@@ -30,7 +30,7 @@ JSClassExoticMethods js_dice_context_methods = {
 	.get_own_property = js_dice_context_get_own,
 	.get_own_property_names = js_dice_context_get_keys,
 	.delete_property = js_dice_context_delete,
-	//.get_property = js_dice_context_get,
+	.define_own_property = js_dice_context_define,
 };
 JSClassDef js_dice_context_class = {
 	"Context",
@@ -42,6 +42,21 @@ const JSCFunctionListEntry js_dice_context_proto_funcs[4] = {
 	JS_CFUNC_DEF("format",2,js_dice_context_format),
 	JS_CFUNC_DEF("echo",2,js_dice_context_echo),
 	JS_CFUNC_DEF("inc",2,js_dice_context_inc),
+};
+JSClassID js_dice_selfdata_id;
+JSClassExoticMethods js_dice_selfdata_methods = {
+	.get_own_property = js_dice_selfdata_get_own,
+	.delete_property = js_dice_selfdata_delete,
+	.define_own_property = js_dice_selfdata_define,
+	.set_property = js_dice_selfdata_set,
+};
+JSClassDef js_dice_selfdata_class = {
+	"SelfData",
+	.finalizer = js_dice_selfdata_finalizer,
+	.exotic = &js_dice_selfdata_methods,
+};
+const JSCFunctionListEntry js_dice_selfdata_proto_funcs[1] = {
+	JS_CFUNC_DEF("append",2,js_dice_selfdata_append),
 };
 /*
 static int js_dicemaid_init(JSContext* ctx, JSModuleDef* m) {

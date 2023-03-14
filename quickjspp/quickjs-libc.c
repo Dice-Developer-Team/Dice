@@ -50,6 +50,7 @@
   #define pclose _pclose
 #else
   #include <dirent.h>
+#define __USE_GNU
   #include <unistd.h>
   #include <sys/time.h>
 #include <dlfcn.h>
@@ -63,7 +64,7 @@ typedef sig_t sighandler_t;
 #include <crt_externs.h>
 #define environ (*_NSGetEnviron())
 #endif
-#elif !defined(environ)
+#elif !defined(environ) /* __APPLE__ */
 #define environ _environ
 #endif /* __APPLE__ */
 

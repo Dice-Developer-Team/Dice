@@ -310,7 +310,7 @@ R"( //私骰作成 即可成为我的主人~
 	}
 	js_global_init();
 #ifdef DICE_PYTHON
-	if (console["EnablePython"])py = make_unique<PyGlobal>();
+	if (console["EnablePython"])py.reset(new PyGlobal());
 #endif //DICE_PYTHON
 	loadData();
 	//初始化黑名单
@@ -1063,7 +1063,7 @@ void global_exit() {
 	fmt.reset();
 	js_global_end();
 #ifdef DICE_PYTHON
-	if (py)py = {};
+	if (py)py.reset();
 #endif
 	sessions.clear();
 	PList.clear();

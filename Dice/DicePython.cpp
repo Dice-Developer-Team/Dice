@@ -774,10 +774,11 @@ PyGlobal::PyGlobal() {
 	}
 	//Py_SetProgramName(L"DiceMaid");
 	try {
-		Py_Initialize();
-		if (PyImport_AppendInittab(DiceModuleName, PyInit_DiceMaid)) {
+		static auto import_dice = PyImport_AppendInittab(DiceModuleName, PyInit_DiceMaid);
+		if (import_dice) {
 			console.log("Ô¤ÔØdicemaidÄ£¿éÊ§°Ü!", 0b1000);
 		}
+		if (!Py_IsInitialized())Py_Initialize();
 		PyRun_SimpleString("import sys");
 		PyRun_SimpleString(("sys.path.append('" + (DiceDir / "plugin").u8string() + "/')").c_str());
 		PyRun_SimpleString(("sys.path.append('" + (dirExe / "Diceki" / "py").u8string() + "/')").c_str());
@@ -879,9 +880,11 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrObject& action) {
 	}
 }
 bool py_call_event(AttrObject eve, const AttrVar& action) {
-	if (!Enabled || !py)return false;
-	string script{ action.to_str() };
-	bool isFile{ action.is_character() && fmt->has_py(script) };
-	return isFile ? py->runFile(fmt->py_path(script), eve) : py->execString(script, eve);
+	if (Enabled && py) {
+		string script{ action.to_str() };
+		bool isFile{ action.is_character() && fmt->has_py(script) };
+		return isFile ? py->runFile(fmt->py_path(script), eve) : py->execString(script, eve);
+	}
+	return false;
 }
 #endif // #ifdef DICE_PYTHON
