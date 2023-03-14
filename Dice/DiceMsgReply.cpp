@@ -1,5 +1,6 @@
 #include "DiceMod.h"
 #include "DiceLua.h"
+#include "DiceJS.h"
 #include "DicePython.h"
 #include "CardDeck.h"
 #include "RandomGenerator.h"
@@ -551,10 +552,16 @@ bool DiceTriggerLimit::check(DiceEvent* msg, chat_locks& lock_list)const {
 
 enumap_ci DiceMsgReply::sType{ "Nor","Order","Reply","Both", };
 enumap_ci DiceMsgReply::sMode{ "Match", "Prefix", "Search", "Regex" };
-enumap_ci DiceMsgReply::sEcho{ "Text", "Deck", "Lua", "Py" };
+enumap_ci DiceMsgReply::sEcho{ "Text", "Deck", "Lua", "JS", "Py" };
 std::array<string, 4> strType{ "无","指令","回复","同时" };
 enumap<string> strMode{ "完全", "前缀", "模糊", "正则" };
-enumap<string> strEcho{ "纯文本", "牌堆（多选一）", "Lua", "Python" };
+enumap<string> strEcho{ "纯文本", "牌堆（多选一）", "Lua", "JavaScript",
+#ifdef DICE_PYTHON
+"Python" };
+#else
+"Python（不支持）" };
+#endif // DICE_PYTHON
+
 ptr<DiceMsgReply> DiceMsgReply::set_order(const string& key, const AttrVars& order) {
 	auto reply{ std::make_shared<DiceMsgReply>() };
 	reply->title = key;
@@ -572,7 +579,7 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 	if (!limit.check(msg, lock_list))return false;
 	if (type == Type::Reply) {
 		if (!msg->isCalled && (chon < 0 ||
-			(!chon && (msg->pGrp->isset("禁用回复") || msg->pGrp->isset("认真模式")))))
+			(!chon && (msg->pGrp->isset("禁用回复") || msg->pGrp->isset("strict")))))
 			return false;
 	}
 	else {	//type == Type::Order
@@ -596,10 +603,16 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 		lua_msg_call(msg, text.to_obj());
 		return true;
 	}
+	else if (echo == Echo::JavaScript) {
+		js_msg_call(msg, text.to_obj());
+		return true;
+	}
+#ifdef DICE_PYTHON
 	else if (echo == Echo::Python && py) {
 		py->call_reply(msg, text.to_obj());
 		return true;
 	}
+#endif //DICE_PYTHON
 	return false;
 }
 string DiceMsgReply::show()const {
@@ -624,7 +637,9 @@ string DiceMsgReply::print()const {
 		+ "\n" + sEcho[(int)echo] + "=" + show_ans();
 }
 string DiceMsgReply::show_ans()const {
-	if (echo == DiceMsgReply::Echo::Lua || echo == DiceMsgReply::Echo::Python) {
+	if (echo == DiceMsgReply::Echo::Lua
+		|| echo == DiceMsgReply::Echo::JavaScript
+		|| echo == DiceMsgReply::Echo::Python) {
 		auto tab{ text.to_obj() };
 		return tab.has("script") ? tab.get_str("script")
 			: tab.get_str("func");
@@ -660,15 +675,19 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 		}
 		else if (answer.is_function()) {
 			echo = Echo::Lua;
-			text = AttrVar(AttrVars{ {"lang","lua"},{"script",answer} });
+			text = AttrVars{ {"lang","lua"},{"script",answer} };
 		}
 		else if (AttrVars& tab{ *answer.to_dict() }; tab.count("lua")) {
 			echo = Echo::Lua;
-			text = AttrVar(AttrVars{ {"lang","lua"},{"script",tab["lua"]} });
+			text = AttrVars{ {"lang","lua"},{"script",tab["lua"]} };
+		}
+		else if (tab.count("js")) {
+			echo = Echo::JavaScript;
+			text = AttrVars{ {"lang","js"},{"script",tab["js"]} };
 		}
 		else if (tab.count("py")) {
 			echo = Echo::Python;
-			text = AttrVar(AttrVars{ {"lang","py"},{"script",tab["py"]} });
+			text = AttrVars{ {"lang","py"},{"script",tab["py"]} };
 		}
 		else if (auto v{ answer.to_list() }) {
 			deck = {};
@@ -710,6 +729,7 @@ void DiceMsgReply::readJson(const fifo_json& j) {
 		if (j.count("answer")) {
 			if (echo == Echo::Deck)deck = UTF8toGBK(j["answer"].get<vector<string>>());
 			else if (echo == Echo::Lua)text = AttrVar(AttrVars{ {"lang","lua"},{"script",UTF8toGBK(j["answer"].get<string>())} });
+			else if (echo == Echo::JavaScript)text = AttrVar(AttrVars{ {"lang","js"},{"script",UTF8toGBK(j["answer"].get<string>())} });
 			else if (echo == Echo::Python)text = AttrVar(AttrVars{ {"lang","py"},{"script",UTF8toGBK(j["answer"].get<string>())} });
 			else text = j["answer"];
 		}

@@ -24,6 +24,7 @@
 #pragma once
 #include "fifo_json.hpp"
 #include "toml.hpp"
+#include "DiceYaml.h"
 using std::string;
 template<typename T>
 using ptr = std::shared_ptr<T>;
@@ -80,6 +81,7 @@ public:
 	bool is(const string& key)const;
 	bool is_empty(const string& key)const;
 	bool is_table(const string& key)const;
+	size_t size()const { return dict->size(); }
 	AttrVar index(const string& key)const;
 	AttrVar get(const string& key, ptr<AttrVar> val = {})const;
 	string get_str(const string& key)const;
@@ -92,6 +94,7 @@ public:
 	ptr<AttrVars> get_dict(const string& key)const;
 	ptr<VarArray> get_list(const string& key)const;
 	int inc(const string& key)const;
+	int inc(const string& key, int i)const;
 	void add(const string& key, const AttrVar&)const;
 	AttrObject& merge(const AttrVars& other);
 	fifo_json to_json()const;
@@ -125,6 +128,7 @@ public:
 	AttrVar(long long n) :type(AttrType::ID), id(n) {}
 	AttrVar(const fifo_json&);
 	AttrVar(const toml::node&);
+	AttrVar(const YAML::Node&);
 	AttrVar(const AttrObject& vars) :type(AttrType::Table), table(vars) {}
 	explicit AttrVar(const AttrVars& vars) :type(AttrType::Table), table(vars) {}
 	void des() {
@@ -153,6 +157,7 @@ public:
 	bool operator==(const char* other)const;
 	AttrVar& operator++();
 	AttrVar operator+(const AttrVar& other);
+	AttrVar& operator+=(const AttrVar& other) { return *this = *this + other; }
 	int to_int()const;
 	long long to_ll()const;
 	double to_num()const;
@@ -160,12 +165,14 @@ public:
 	ByteS to_bytes()const;
 	static AttrVar parse(const string& s);
 	static AttrVar parse_toml(std::ifstream& s);
+	static AttrVar parse_yaml(std::filesystem::path& s);
 	string print()const;
 	bool str_empty()const;
 	AttrObject to_obj()const;
 	std::shared_ptr<AttrVars> to_dict()const;
 	std::shared_ptr<VarArray> to_list()const;
 	fifo_json to_json()const;
+	YAML::Node to_yaml()const;
 
 	using CMPR = bool(AttrVar::*)(const AttrVar&)const;
 	bool is_null()const { return type == AttrType::Nil; }

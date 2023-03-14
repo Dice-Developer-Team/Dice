@@ -4,7 +4,10 @@
   "dependencies": [
     "lua",
     "yaml-cpp",
-    "python3",
+    {
+      "name": "python3",
+      "platform" : "!android"
+    },
     "openssl",
     {
       "name": "libgit2",

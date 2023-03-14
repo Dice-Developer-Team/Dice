@@ -4,7 +4,8 @@
 #include <string>
 #include <aws/core/Aws.h>
 
-extern Aws::SDKOptions options;
+void aws_init();
+void aws_shutdown();
 // 上传文件至S3, 采用S3-accelerate
 // 成功时返回"SUCCESS", 否则返回错误信息
 std::string put_s3_object(const Aws::String& s3_bucket_name,

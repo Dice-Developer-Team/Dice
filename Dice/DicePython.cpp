@@ -1,7 +1,8 @@
+#include "DicePython.h"
+#ifdef DICE_PYTHON
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include <stdio.h>
-#include "DicePython.h"
 #include "DiceConsole.h"
 #include "EncodingConvert.h"
 #include "DiceAttrVar.h"
@@ -52,7 +53,7 @@ AttrVar py_to_attr(PyObject* o) {
 	if (Py_IS_TYPE(o, &PyBool_Type))return bool(Py_IsTrue(o));
 	else if (Py_IS_TYPE(o, &PyLong_Type)) {
 		auto i{ PyLong_AsLongLong(o) };
-		return (i > 10000000 || i < -100000000) ? i : (int)i;
+		return (i == (int)i) ? (int)i : i;
 	}
 	else if (Py_IS_TYPE(o, &PyFloat_Type))return PyFloat_AsDouble(o);
 	else if (Py_IS_TYPE(o, &PyUnicode_Type))return UtoGBK(PyUnicode_AsUnicode(o));
@@ -197,11 +198,21 @@ static PyObject* pyContext_format(PyObject* self, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "s", &msg)) {
 		return nullptr;
 	}
-	return PyUnicode_FromString(GBKtoUTF8(fmt->format(UTF8toGBK(msg), obj, true)).c_str());
+	return PyUnicode_FromString(GBKtoUTF8(fmt->format(UTF8toGBK(msg), obj)).c_str());
+}
+static PyObject* pyContext_inc(PyObject* self, PyObject* args) {
+	AttrObject& obj{ ((PyContextObject*)self)->obj };
+	const char* field = empty;
+	int cnt = 0;
+	if (!PyArg_ParseTuple(args, "s|i", &field, &cnt)) {
+		return nullptr;
+	}
+	return PyLong_FromSsize_t(obj.inc(UTF8toGBK(field, cnt)));
 }
 static PyMethodDef ContextMethods[] = {
 	{"echo", pyContext_echo, METH_VARARGS, "echo message"},
 	{"format", pyContext_format, METH_VARARGS, "format text"},
+	{"inc", pyContext_inc, METH_VARARGS, "attr auto increase"},
 	{"__getattr__", PyContext_getattro, METH_VARARGS, "get Context item"},
 	{NULL, NULL, 0, NULL},
 };
@@ -317,7 +328,7 @@ static PyObject* py_log(PyObject* self, PyObject* args) {
 	}
 	return Py_BuildValue("");
 }
-static PyObject* py_getSelfID(PyObject* self) {
+static PyObject* py_getDiceID(PyObject* self) {
 	return PyLong_FromLongLong(console.DiceMaid);
 }
 static PyObject* py_getDiceDir(PyObject* self) {
@@ -566,8 +577,7 @@ static PyObject* py_getUserAttr(PyObject*, PyObject* args, PyObject* keys) {
 	}
 	if (item.empty()) return py_newContext(getUser(uid).confs);
 	if (auto val{ getUserItem(uid,item) }; !val.is_null())return py_build_attr(val);
-	else if (sub) return sub;
-	return Py_BuildValue("");
+	else return sub ? sub : Py_BuildValue("");
 }
 static PyObject* py_setUserAttr(PyObject*, PyObject* args) {
 	long long id = 0;
@@ -581,7 +591,18 @@ static PyObject* py_setUserAttr(PyObject*, PyObject* args) {
 	string item{ UtoGBK(attr) };
 	if (item[0] == '&')item = fmt->format(item);
 	if (item.empty())return 0;
-	if (item.find("nn#") == 0) {
+	if (item == "trust") {
+		int trust{ (int)PyLong_AsLongLong(val) };
+		User& user{ getUser(id) };
+		if (trust < 5 && trust >= 0 && user.nTrust < 5) {
+			user.trust(trust);
+		}
+		else {
+			PyErr_SetString(PyExc_ValueError, "User trust invalid");
+			return NULL;
+		}
+	}
+	else if (item.find("nn#") == 0) {
 		long long gid{ 0 };
 		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
 			gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
@@ -658,9 +679,9 @@ static PyObject* py_sendMsg(PyObject* self, PyObject* args, PyObject* keys) {
 	AttrObject chat;
 	if (Py_IS_TYPE(msg, &PyUnicode_Type)) {
 		chat = py_to_obj(msg);
+		AddMsgToQueue(fmt->format(chat.get_str("fwdMsg"), chat), chatInfo{ chat.get_ll("uid") ,chat.get_ll("gid") ,chat.get_ll("chid") });
 	}
 	else {
-		chat["fwdMsg"] = py_to_gbstring(msg);
 		if (!gid && !uid) {
 			PyErr_SetString(PyExc_ValueError, "chat id can't be zero");
 			return NULL;
@@ -668,8 +689,8 @@ static PyObject* py_sendMsg(PyObject* self, PyObject* args, PyObject* keys) {
 		if (uid)chat["uid"] = uid;
 		if (gid)chat["gid"] = gid;
 		if (chid)chat["chid"] = chid;
+		AddMsgToQueue(fmt->format(py_to_gbstring(msg), chat), { uid,gid,chid });
 	}
-	AddMsgToQueue(fmt->format(chat.get_str("fwdMsg"), chat), { uid,gid,chid });
 	return Py_BuildValue("");
 }
 static PyObject* py_eventMsg(PyObject* self, PyObject* args, PyObject* keys) {
@@ -702,7 +723,7 @@ static PyObject* py_eventMsg(PyObject* self, PyObject* args, PyObject* keys) {
 #define REG(name) #name,(PyCFunction)py_##name
 static PyMethodDef DiceMethods[] = {
 	{REG(log), METH_VARARGS, "output log to command&notice"},
-	{REG(getSelfID), METH_NOARGS, "return dicemaid account"},
+	{REG(getDiceID), METH_NOARGS, "return dicemaid account"},
 	{REG(getDiceDir), METH_NOARGS, "return Dice data dir"},
 	{REG(getSelfData), METH_VARARGS, "return selfdata by filename"},
 	{REG(getGroupAttr), METH_VARARGS | METH_KEYWORDS, NULL},
@@ -751,12 +772,13 @@ PyGlobal::PyGlobal() {
 		Py_SetPythonHome(dirExe.wstring().c_str());
 		Py_SetPath((dirExe / "python310.zip").wstring().c_str());
 	}
-	if (PyImport_AppendInittab(DiceModuleName, PyInit_DiceMaid)) {
-		console.log("预载dicemaid模块失败!", 0b1000);
-	}
 	//Py_SetProgramName(L"DiceMaid");
 	try {
-		Py_Initialize();
+		static auto import_dice = PyImport_AppendInittab(DiceModuleName, PyInit_DiceMaid);
+		if (import_dice) {
+			console.log("预载dicemaid模块失败!", 0b1000);
+		}
+		if (!Py_IsInitialized())Py_Initialize();
 		PyRun_SimpleString("import sys");
 		PyRun_SimpleString(("sys.path.append('" + (DiceDir / "plugin").u8string() + "/')").c_str());
 		PyRun_SimpleString(("sys.path.append('" + (dirExe / "Diceki" / "py").u8string() + "/')").c_str());
@@ -768,7 +790,8 @@ PyGlobal::PyGlobal() {
 	console.log("Python.Initialized", 0);
 }
 PyGlobal::~PyGlobal() {
-	Py_Finalize();
+	if(Py_IsInitialized())Py_Finalize();
+	console.log("Python.Finalized", 0);
 }
 int PyGlobal::runFile(const std::filesystem::path& p) {
 	return 0;
@@ -832,6 +855,8 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrObject& action) {
 				console.log(getMsg("self") + "运行" + pyScript + "异常!" + py_print_error(), 0b10);
 				PyErr_Clear();
 				fclose(fp);
+				msg->set("lang", "Python");
+				msg->reply(getMsg("strScriptRunErr"));
 				return false;
 			}
 			fclose(fp);
@@ -840,6 +865,8 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrObject& action) {
 			if (auto res{ PyRun_String(GBKtoUTF8(pyScript).c_str(), Py_file_input, dict, locals) };!res) {
 				console.log(getMsg("self") + "运行python语句异常!" + py_print_error(), 0b10);
 				PyErr_Clear();
+				msg->set("lang", "Python");
+				msg->reply(getMsg("strScriptRunErr"));
 				return false;
 			}
 		}
@@ -847,12 +874,17 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrObject& action) {
 	}
 	catch (std::exception& e) {
 		console.log(getMsg("self") + "运行python脚本异常!" + e.what(), 0b10);
+		msg->set("lang", "Python");
+		msg->reply(getMsg("strScriptRunErr"));
 		return false;
 	}
 }
 bool py_call_event(AttrObject eve, const AttrVar& action) {
-	if (!Enabled || !py)return false;
-	string script{ action.to_str() };
-	bool isFile{ action.is_character() && fmt->has_py(script) };
-	return isFile ? py->runFile(fmt->py_path(script), eve) : py->execString(script, eve);
+	if (Enabled && py) {
+		string script{ action.to_str() };
+		bool isFile{ action.is_character() && fmt->has_py(script) };
+		return isFile ? py->runFile(fmt->py_path(script), eve) : py->execString(script, eve);
+	}
+	return false;
 }
+#endif // #ifdef DICE_PYTHON

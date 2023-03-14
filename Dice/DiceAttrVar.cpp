@@ -104,6 +104,12 @@ int AttrObject::inc(const string& key)const {
 	else dict->emplace(key, 1);
 	return 1;
 }
+int AttrObject::inc(const string& key, int i)const {
+	if (key.empty())return 0;
+	if (dict->count(key))return (dict->at(key) += i).to_int();
+	else dict->emplace(key, i);
+	return 1;
+}
 void AttrObject::add(const string& key, const AttrVar& val)const {
 	if (key.empty())return;
 	(*dict)[key] = (*dict)[key] + val;
@@ -445,6 +451,14 @@ AttrVar AttrVar::parse_toml(std::ifstream& s) {
 		return {};
 	}
 }
+AttrVar AttrVar::parse_yaml(std::filesystem::path& p) {
+	try {
+		return YAML::LoadFile(getNativePathString(p));
+	}
+	catch (std::exception& err) {
+		return {};
+	}
+}
 string AttrVar::print()const {
 	switch (type) {
 	case AttrType::Nil:
@@ -707,13 +721,13 @@ AttrVar::AttrVar(const toml::node& t) {
 		new(&text)string(UTF8toGBK(string(*t.as_string())));
 		break;
 	case toml::node_type::integer:
-		if (int64_t num{ *t.as_integer() }; num > 10000000 || num < -10000000) {
-			type = AttrType::ID;
-			id = static_cast<long long>(num);
+		if (int64_t num{ *t.as_integer() }; num == (int)num) {
+			type = AttrType::Integer;
+			attr = (int)num;
 		}
 		else {
-			type = AttrType::Integer;
-			attr = static_cast<long long>(num);
+			type = AttrType::ID;
+			id = static_cast<long long>(num);
 		}
 		break;
 	case toml::node_type::floating_point:
@@ -758,6 +772,94 @@ toml::table AttrObject::to_toml()const {
 		}
 	}
 	return tab;
+}
+AttrVar::AttrVar(const YAML::Node& y) {
+	if (y.IsScalar()) {
+		if (auto as_bool = YAML::as_if<bool, std::optional<bool>>(y)();as_bool.has_value()) {
+			type = AttrType::Boolean;
+			bit = as_bool.value();
+		}
+		else if (auto as_int = YAML::as_if<long long, std::optional<long long>>(y)(); as_int.has_value()) {
+			long long num = as_int.value();
+			if (num == (int)num) {
+				type = AttrType::Integer;
+				attr = (int)num;
+			}
+			else {
+				type = AttrType::ID;
+				attr = num;
+			}
+		}
+		else if (auto as_d = YAML::as_if<double, std::optional<double>>(y)(); as_d.has_value()) {
+			type = AttrType::Number;
+			number = as_d.value();
+		}
+		else if (auto as_s = YAML::as_if<string, std::optional<string>>(y)(); as_s.has_value()) {
+			type = AttrType::Text;
+			new(&text)string(UTF8toGBK(as_s.value()));
+		}
+	}
+	else if (y.IsMap()) {
+		type = AttrType::Table; {
+			new(&table)AttrObject();
+			unordered_set<string> idxs;
+			if (y["1"]) {
+				table.list = std::make_shared<VarArray>();
+				int idx{ 1 };
+				string strI{ "1" };
+				do {
+					table.list->push_back(y[strI]);
+					idxs.insert(strI);
+				} while (y[strI = to_string(++idx)]);
+			}
+			for (auto& it : y) {
+				if (idxs.count(it.first.Scalar()))continue;
+				table.dict->emplace(UTF8toGBK(it.first.Scalar()), it.second);
+			}
+		}
+	}
+	else if (y.IsSequence()) {
+		type = AttrType::Table;
+		VarArray list;
+		for (YAML::Node it : y) {
+			list.push_back(it);
+		}
+		new(&table)AttrObject(list);
+	}
+}
+YAML::Node AttrVar::to_yaml()const {
+	YAML::Node yaml;
+	switch (type) {
+	case AttrType::Boolean:
+		yaml = bit;
+		break;
+	case AttrType::Integer:
+		yaml = attr;
+		break;
+	case AttrType::Number:
+		yaml = number;
+		break;
+	case AttrType::Text:
+		yaml = GBKtoUTF8(text);
+		break;
+	case AttrType::ID:
+		yaml = id;
+		break;
+	case AttrType::Table:
+		for (auto& [k, v] : *table.to_dict()) {
+			yaml[GBKtoUTF8(k)] = v.to_yaml();
+		}
+		if (table.to_list()) {
+			int i=0;
+			for (auto& v : *table.to_list()) {
+				yaml[GBKtoUTF8(i++)] = v.to_yaml();
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	return yaml;
 }
 string to_string(const AttrVar& var) {
 	return var.to_str();

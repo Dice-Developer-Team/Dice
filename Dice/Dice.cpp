@@ -55,6 +55,7 @@
 #include "EncodingConvert.h"
 #include "DiceManager.h"
 #include "DiceSelfData.h"
+#include "DiceJS.h"
 #include "DicePython.h"
 
 #ifdef _WIN32
@@ -130,7 +131,7 @@ void loadData(){
 	}
 	catch (const std::exception& e)
 	{
-		logList << "读取数据时遇到意外错误，程序可能无法正常运行。请尝试清空配置后重试。" << e.what();
+		logList << "读取数据时遇到意外错误，程序可能无法正常运行。请排除异常文件后重试。" << e.what();
 		console.log(logList.show(), 1, printSTNow());
 	}
 }
@@ -242,7 +243,7 @@ EVE_Enable(eventEnable){
 		console.log("错误: 加载libcurl失败！", 1);
 	}
 #else
-	Aws::InitAPI(options);
+	aws_init();
 #endif
 	std::string RootDir = DD::getRootDir();
 	if (RootDir.empty()) {	
@@ -307,7 +308,10 @@ R"( //私骰作成 即可成为我的主人~
 	catch (const std::exception& e) {
 		console.log(string("读取/conf/CustomMsg.json失败!") + e.what(), 1, printSTNow());
 	}
-	if (console["EnablePython"])py = make_unique<PyGlobal>();
+	js_global_init();
+#ifdef DICE_PYTHON
+	if (console["EnablePython"])py.reset(new PyGlobal());
+#endif //DICE_PYTHON
 	loadData();
 	//初始化黑名单
 	blacklist = make_unique<DDBlackManager>();
@@ -892,11 +896,9 @@ EVE_GroupInvited(eventGroupInvited)
 		}
 		if (isBlocked)return 1;
 		const string strNow = printSTNow();
-		string strMsg = "收到" + printUser(fromUID) + "的入群邀请:" +
-			DD::printGroupInfo(fromGID);
+		string strMsg = "收到" + printUser(fromUID) + "的入群邀请:" + DD::printGroupInfo(fromGID);
 		if (ExceptGroups.count(fromGID)) {
-			strMsg += "\n已忽略（默认协议无效）";
-			console.log(strMsg, 0b10, strNow);
+			console.log(strMsg + "\n已忽略（默认协议无效）", 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 3);
 		}
 		else if (blacklist->get_group_danger(fromGID)){
@@ -1059,7 +1061,10 @@ void global_exit() {
 	sch.end();
 	censor = {};
 	fmt.reset();
-	py = {};
+	js_global_end();
+#ifdef DICE_PYTHON
+	if (py)py.reset();
+#endif
 	sessions.clear();
 	PList.clear();
 	ChatList.clear();
@@ -1070,7 +1075,7 @@ void global_exit() {
 #ifndef _WIN32
 	curl_global_cleanup();
 #else
-	Aws::ShutdownAPI(options);
+	aws_shutdown();
 #endif
 	threads.exit();
 }

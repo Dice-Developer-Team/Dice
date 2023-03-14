@@ -15,7 +15,8 @@
 #include "DiceStatic.hpp"
 #include <memory>
 #include <ctime>
-using namespace std;
+using namespace std; 
+static bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
 AttrVar idx_at(AttrObject& eve) {
 	if (eve.has("at"))return eve["at"];
@@ -1256,6 +1257,13 @@ int DiceEvent::BasicOrder()
 							}
 							trigger->text = AttrVar(AttrVars{ {"lang","lua"},{"script",readRest()} });
 						}
+						else if (trigger->echo == DiceMsgReply::Echo::JavaScript) {
+							if (trusted < 5) {
+								replyMsg("strNotMaster");
+								return -1;
+							}
+							trigger->text = AttrVar(AttrVars{ {"lang","js"},{"script",readRest()} });
+						}
 						else if (trigger->echo == DiceMsgReply::Echo::Python) {
 							if (trusted < 5) {
 								replyMsg("strNotMaster");
@@ -2493,7 +2501,7 @@ int DiceEvent::InnerOrder() {
 				return 1;
 			}
 			long long llTarget = stoll(strTarget);
-			if (trustedQQ(llTarget) >= trusted && !console.is_self(fromChat.uid) && fromChat.uid != llTarget) {
+			if ((trustedQQ(llTarget) >= trusted && !console.is_self(fromChat.uid) && fromChat.uid != llTarget) || isVirtual) {
 				replyMsg("strUserTrustDenied");
 				return 1;
 			}
@@ -3923,7 +3931,7 @@ int DiceEvent::InnerOrder() {
 		string strAttr;
 		if (pc) {	//调用角色卡属性或表达式
 			while (intMsgCnt < len && !isspace(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
-				if (isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))
+				if (is_digit(strMsg[intMsgCnt])
 					|| strMsg[intMsgCnt] == 'a'
 					|| strMsg[intMsgCnt] == '+' || strMsg[intMsgCnt] == '-'
 					|| strMsg[intMsgCnt] == '*' || strMsg[intMsgCnt] == '/') {
@@ -4317,6 +4325,7 @@ bool DiceEvent::DiceFilter()
 	while (isspace(static_cast<unsigned char>(strMsg[0])))
 		strMsg.erase(strMsg.begin());
 	init(strMsg);
+	bool isSummoned = false;
 	bool isOtherCalled = false;
 	string strAt{ CQ_AT + to_string(console.DiceMaid) + "]" };
 	size_t r{ 0 };
@@ -4327,11 +4336,11 @@ bool DiceEvent::DiceFilter()
 		}
 		else if (strTarget == to_string(console.DiceMaid))
 		{
-			isCalled = true;
+			isCalled = isSummoned = true;
 		}
 		else if (User& self{ getUser(console.DiceMaid) }; self.isset("tinyID") && self.confs["tinyID"] == strTarget)
 		{
-			isCalled = true;
+			isCalled = isSummoned = true;
 		}
 		else {
 			isOtherCalled = true;
@@ -4342,7 +4351,7 @@ bool DiceEvent::DiceFilter()
 	}
 	string strSummon{ getMsg("strSummonWord") };
 	if (!strSummon.empty() && strMsg.find(strSummon) == 0) {
-		isCalled = true;
+		isCalled = isSummoned = true;
 		if(isChannel())strMsg = strMsg.substr(strSummon.length());
 	}
 	init2(strMsg);
@@ -4395,7 +4404,7 @@ bool DiceEvent::DiceFilter()
 		}
 		return true;
 	}
-	if (isCalled && (strMsg.empty() || strMsg == strSummon))replyMsg("strSummonEmpty");
+	if (isSummoned && (strMsg.empty() || strMsg == strSummon))replyMsg("strSummonEmpty");
 	if (isCalled) {
 		WordCensor();
 	}
@@ -4465,18 +4474,35 @@ void DiceEvent::readSkipColon() {
 	readSkipSpace();
 	while (intMsgCnt < strMsg.length() && (strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '='))intMsgCnt++;
 }
+string DiceEvent::readDigit(bool isForce)
+{
+	string strMum;
+	if (isForce)while (intMsgCnt < strMsg.length() && !is_digit(strMsg[intMsgCnt]))
+	{
+		if (strMsg[intMsgCnt] < 0)intMsgCnt++;
+		intMsgCnt++;
+	}
+	else while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
+	while (intMsgCnt < strMsg.length() && is_digit(strMsg[intMsgCnt]))
+	{
+		strMum += strMsg[intMsgCnt];
+		intMsgCnt++;
+	}
+	if (intMsgCnt < strMsg.length() && strMsg[intMsgCnt] == ']')intMsgCnt++;
+	return strMum;
+}
 
 int DiceEvent::readNum(int& num)
 {
 	string strNum;
-	while (intMsgCnt < strMsg.length() && !isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])) && strMsg[intMsgCnt] != '-')intMsgCnt++;
+	while (intMsgCnt < strMsg.length() && !is_digit(strMsg[intMsgCnt]) && strMsg[intMsgCnt] != '-')intMsgCnt++;
 	if (strMsg[intMsgCnt] == '-')
 	{
 		strNum += '-';
 		intMsgCnt++;
 	}
 	if (intMsgCnt >= strMsg.length())return -1;
-	while (intMsgCnt < strMsg.length() && isdigit(static_cast<unsigned char>(strMsg[intMsgCnt])))
+	while (intMsgCnt < strMsg.length() && is_digit(strMsg[intMsgCnt]))
 	{
 		strNum += strMsg[intMsgCnt];
 		intMsgCnt++;
@@ -4485,6 +4511,29 @@ int DiceEvent::readNum(int& num)
 	if (strNum.empty() || strNum == "-")return -3;
 	num = stoi(strNum);
 	return 0;
+}
+string DiceEvent::readAttrName()
+{
+	while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
+	const auto intBegin = intMsgCnt;
+	int intEnd = intBegin;
+	const auto len = strMsg.length();
+	while (intMsgCnt < len && !is_digit(strMsg[intMsgCnt])
+		&& strMsg[intMsgCnt] != '=' && strMsg[intMsgCnt] != ':'
+		&& strMsg[intMsgCnt] != '+' && strMsg[intMsgCnt] != '-' && strMsg[intMsgCnt] != '*'
+		&& strMsg[intMsgCnt] != '/')
+	{
+		if (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || (!isspace(
+			static_cast<unsigned char>(strMsg[intEnd]))))intEnd = intMsgCnt;
+		if (strMsg[intMsgCnt] < 0)intMsgCnt += 2;
+		else intMsgCnt++;
+	}
+	if (intMsgCnt == strLowerMessage.length() && strLowerMessage.find(' ', intBegin) != string::npos)
+	{
+		intMsgCnt = strLowerMessage.find(' ', intBegin);
+	}
+	else if (isspace(static_cast<unsigned char>(strMsg[intEnd])))intMsgCnt = intEnd;
+	return strMsg.substr(intBegin, intMsgCnt - intBegin);
 }
 string DiceEvent::readFileName(){
 	while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
@@ -4525,6 +4574,27 @@ int DiceEvent::readChat(chatInfo& ct, bool isReroll)
 	}
 	if (isReroll)intMsgCnt = intFormor;
 	return -1;
+}
+int DiceEvent::readClock(Clock& cc)
+{
+	const string strHour = readDigit();
+	if (strHour.empty())return -1;
+	const unsigned short nHour = stoi(strHour);
+	if (nHour > 23)return -2;
+	cc.first = nHour;
+	if (strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '.')intMsgCnt++;
+	if (strMsg.substr(intMsgCnt, 2) == "：")intMsgCnt += 2;
+	readSkipSpace();
+	if (intMsgCnt >= strMsg.length() || !is_digit(strMsg[intMsgCnt]))
+	{
+		cc.second = 0;
+		return 0;
+	}
+	const string strMin = readDigit();
+	const unsigned short nMin = stoi(strMin);
+	if (nMin > 59)return -2;
+	cc.second = nMin;
+	return 0;
 }
 
 string DiceEvent::readItem()
