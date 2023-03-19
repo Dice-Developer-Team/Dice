@@ -237,16 +237,21 @@ void js_global_end() {
 QJSDEF(log) {
 	string info{ js_toGBK(ctx, argv[0]) };
 	int note_lv{ 0 };
-	for (int idx = argc; idx > 1; --idx) {
-		int type{ 0 };
-		if (JS_ToInt32(ctx, &type, argv[idx]))
-			return JS_EXCEPTION;
-		if (type >= 0 && type <10) {
-			note_lv |= (1 << type);
+	int type{ 0 };
+	for (int idx = 1; idx < argc; ++idx) {
+		if (!JS_ToInt32(ctx, &type, argv[idx])) {
+			if (type >= 0 && type < 10) {
+				note_lv |= (1 << type);
+			}
 		}
+		else if (JS_IsString(argv[idx])) {
+			console.log(fmt->format(info), js_toNativeString(ctx, argv[idx]));
+			return JS_TRUE;
+		}
+		else return JS_EXCEPTION;
 	}
 	console.log(fmt->format(info), note_lv);
-	return JS_UNDEFINED;
+	return JS_TRUE;
 }
 QJSDEF(getDiceID) {
 	return JS_NewInt64(ctx, (int64_t)console.DiceMaid);
@@ -467,7 +472,7 @@ QJSDEF(getUserToday) {
 		if (item.empty()) return js_newDiceContext(ctx,today->get(uid));
 		else if (item == "jrrp")
 			return JS_NewInt32(ctx, (int32_t)today->getJrrp(uid));
-		else if (AttrVar * p{ today->get_if(uid, item) })
+		else if (auto p{ today->get_if(uid, item) })
 			return js_toValue(ctx, *p);
 	}
 	JS_ThrowSyntaxError(ctx, "uid can't be 0");

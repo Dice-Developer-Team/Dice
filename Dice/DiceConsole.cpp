@@ -210,7 +210,13 @@ int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 	if (!Cnt)DD::debugMsg(note);
 	else DD::debugLog(note);
 	return Cnt;
-} 
+}
+int Console::log(const std::string& msg, const std::string& file) {
+	DD::debugLog(msg);
+	ofstream fout(DiceDir / "audit" / ("log_" + file + ".txt"),
+		ios::out | ios::app);
+	fout << printSTNow() << "\t" << printLine(msg) << std::endl;
+}
 
 void Console::newMaster(long long uid) {
 	master = uid;

@@ -106,7 +106,7 @@ jobs:
           mono: 'mono'
           dll_sfx: macos.aarch64
           
-    runs-on: 	macos-11
+    runs-on: 	macos-latest
     
     steps:
     - uses: actions/checkout@v3

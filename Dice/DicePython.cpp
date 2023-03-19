@@ -646,7 +646,7 @@ static PyObject* py_getUserToday(PyObject*, PyObject* args, PyObject* keys) {
 	if (item.empty()) return py_newContext(today->get(uid));
 	else if (item == "jrrp")
 		return PyLong_FromSsize_t(today->getJrrp(uid));
-	else if (AttrVar * p{ today->get_if(uid, item) })
+	else if (auto p{ today->get_if(uid, item) })
 		return py_build_attr(*p);
 	else if (sub) return sub;
 	return Py_BuildValue("");

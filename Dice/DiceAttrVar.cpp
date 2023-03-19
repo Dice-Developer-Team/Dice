@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -24,7 +24,6 @@
 #include "DiceAttrVar.h"
 #include "StrExtern.hpp"
 #include "DiceFile.hpp"
-using std::to_string;
 
 ByteS::ByteS(std::ifstream& fin) {
 	len = fread<size_t>(fin);
@@ -442,22 +441,6 @@ AttrVar AttrVar::parse(const string& s) {
 		else return stoll(s);
 	}
 	return s;
-}
-AttrVar AttrVar::parse_toml(std::ifstream& s) {
-	try	{
-		return toml::parse(s);
-	}
-	catch (const toml::parse_error& err){
-		return {};
-	}
-}
-AttrVar AttrVar::parse_yaml(std::filesystem::path& p) {
-	try {
-		return YAML::LoadFile(getNativePathString(p));
-	}
-	catch (std::exception& err) {
-		return {};
-	}
 }
 string AttrVar::print()const {
 	switch (type) {

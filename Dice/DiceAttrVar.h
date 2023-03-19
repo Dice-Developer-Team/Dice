@@ -164,8 +164,6 @@ public:
 	string to_str()const;
 	ByteS to_bytes()const;
 	static AttrVar parse(const string& s);
-	static AttrVar parse_toml(std::ifstream& s);
-	static AttrVar parse_yaml(std::filesystem::path& s);
 	string print()const;
 	bool str_empty()const;
 	AttrObject to_obj()const;

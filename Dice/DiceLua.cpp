@@ -482,10 +482,15 @@ LUADEF(log) {
 	if (info.empty())return 0;
 	int note_lv{ 0 };
 	for (int idx = lua_gettop(L); idx > 1; --idx) {
-		auto type{ lua_to_int(L,idx) };
-		if (type < 0 || type > 9)continue;
-		else{
-			note_lv |= (1 << type);
+		if (lua_isinteger(L, idx)) {
+			auto type{ lua_to_int(L,idx) };
+			if (type < 0 || type > 9)continue;
+			else {
+				note_lv |= (1 << type);
+			}
+		}
+		else if (lua_isstring(L, idx)) {
+			console.log(fmt->format(info), lua_to_native_string(L, idx));
 		}
 	}
 	console.log(fmt->format(info), note_lv);
@@ -760,7 +765,7 @@ LUADEF(getUserToday) {
 	}
 	else if (item == "jrrp")
 		lua_pushnumber(L, today->getJrrp(uid));
-	else if (AttrVar* p{ today->get_if(uid, item) })
+	else if (auto p{ today->get_if(uid, item) })
 		lua_push_attr(L, *p);
 	else if (top == 3) {
 		lua_pushnil(L);
@@ -1253,7 +1258,7 @@ void DiceModManager::loadPlugin(ResList& res) {
 		if ((pathFile.extension() != ".lua")) {
 			if (pathFile.extension() != ".toml")continue;
 			if (ifstream fs{ pathFile }) try {
-				auto tab{ AttrVar::parse_toml(fs).to_obj() };
+				auto tab{ AttrVar(toml::parse(fs)).to_obj() };
 				if (auto items{ tab.get_dict("reply") })for (auto& [key, val] : *items) {
 					ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
 					reply->title = key;
@@ -1327,7 +1332,7 @@ void DiceMod::loadLua() {
 		if (file.extension() != ".lua") {
 			if (file.extension() != ".toml")continue;
 			if (ifstream fs{ file }) try{
-				auto tab{ AttrVar::parse_toml(fs).to_obj()};
+				auto tab{ AttrVar(toml::parse(fs)).to_obj()};
 				if (auto items{ tab.get_dict("reply") })for (auto& [key, val] : *items) {
 					ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
 					reply->title = key;
