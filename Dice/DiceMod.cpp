@@ -1032,7 +1032,7 @@ void DiceMod::loadDir() {
 				}
 				else if (p.extension() == ".js") {
 					string script_name{ cut_stem(p,dirScript) };
-					js_scripts[script_name] = p.u8string();
+					js_scripts[script_name] = getNativePathString(p);
 				}
 				else if (p.extension() == ".py") {
 					string script_name{ cut_stem(p,dirScript) };

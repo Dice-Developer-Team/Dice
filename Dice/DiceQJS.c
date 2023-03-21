@@ -14,6 +14,7 @@ double js_toDouble(JSContext* ctx, JSValueConst val) {
 #define JS_DICEDEF(name,len) JS_CFUNC_DEF(#name,2,js_dice_##name)
 const JSCFunctionListEntry js_dice_funcs[] = {
 	JS_DICEDEF(log,2),
+	JS_DICEDEF(loadJS,1),
 	JS_DICEDEF(getDiceID,0),
 	JS_DICEDEF(getDiceDir,0),
 	JS_DICEDEF(eventMsg,3),

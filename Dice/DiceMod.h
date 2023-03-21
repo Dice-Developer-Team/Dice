@@ -122,6 +122,7 @@ private:
 	dict<DiceSpeech>speech;
 	//native path of .lua
 	dict_ci<string>lua_scripts;
+	//native path of .js
 	dict_ci<string>js_scripts;
 	//utf8 path of .py
 	dict_ci<string>py_scripts;

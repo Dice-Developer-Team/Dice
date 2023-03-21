@@ -609,7 +609,7 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 	}
 #ifdef DICE_PYTHON
 	else if (echo == Echo::Python && py) {
-		py->call_reply(msg, text.to_obj());
+		if(py)py->call_reply(msg, text.to_obj());
 		return true;
 	}
 #endif //DICE_PYTHON

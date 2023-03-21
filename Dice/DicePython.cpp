@@ -317,16 +317,16 @@ AttrObject py_to_obj(PyObject* o) {
 
 static PyObject* py_log(PyObject* self, PyObject* args) {
 	int lv[10] = { -1 };
-	if (PyObject* info{ nullptr }; !PyArg_ParseTuple(args, "U|iiiiiiiiii", &info, lv, lv + 1, lv + 2, lv + 3, lv + 4, lv + 5, lv + 6, lv + 7, lv + 8, lv + 9))return NULL;
-	else {
+	if (PyObject* info{ nullptr }; PyArg_ParseTuple(args, "U|iiiiiiiiii", &info, lv, lv + 1, lv + 2, lv + 3, lv + 4, lv + 5, lv + 6, lv + 7, lv + 8, lv + 9)) {
 		int note_lv{ 0 };
-		for (int i = 0; i < 10;++i) {
+		for (int i = 0; i < 10; ++i) {
 			if (lv[i] < 0 || lv[i] > 9)continue;
 			else note_lv |= (1 << lv[i]);
 		}
 		console.log(py_to_gbstring(info), note_lv);
+		return Py_BuildValue("");
 	}
-	return Py_BuildValue("");
+	else return NULL;
 }
 static PyObject* py_getDiceID(PyObject* self) {
 	return PyLong_FromLongLong(console.DiceMaid);

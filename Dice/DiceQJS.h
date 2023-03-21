@@ -9,6 +9,7 @@ extern "C" {
 #define QJSDEF(name) JSValue js_dice_##name(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv)
 #endif
 	QJSDEF(log);
+	QJSDEF(loadJS);
 	QJSDEF(getDiceID);
 	QJSDEF(getDiceDir);
 	QJSDEF(eventMsg);
@@ -19,17 +20,14 @@ extern "C" {
 	QJSDEF(setUserAttr);
 	QJSDEF(getUserToday);
 	QJSDEF(setUserToday);
-	extern const JSCFunctionListEntry js_dice_funcs[11];
+	extern const JSCFunctionListEntry js_dice_funcs[12];
 	extern JSClassID js_dice_context_id;
 	extern JSClassDef js_dice_context_class;
 	void js_dice_context_finalizer(JSRuntime* rt, JSValue val);
 	int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst obj, JSAtom prop);
 	int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen, JSValueConst obj);
 	int js_dice_context_delete(JSContext* ctx, JSValue obj, JSAtom atom);
-	int js_dice_context_define(JSContext* ctx, JSValueConst this_obj,
-		JSAtom prop, JSValueConst val,
-		JSValueConst getter, JSValueConst setter,
-		int flags);
+	int js_dice_context_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags);
 	QJSDEF(context_get);
 	QJSDEF(context_format);
 	QJSDEF(context_echo);

@@ -99,9 +99,7 @@ AttrVar js_toAttr(JSContext* ctx, JSValue val) {
 				for (uint32_t i = 0; i < len; ++i) {
 					auto prop = JS_AtomToValue(ctx, tab[i].atom);
 					if (JS_IsString(prop)) {
-						auto str = JS_ToCString(ctx, prop);
-						obj.set(UTF8toGBK(str), js_toAttr(ctx, JS_GetProperty(ctx, val, prop)));
-						JS_FreeCString(ctx, str);
+						obj.set(js_toGBK(ctx, prop), js_toAttr(ctx, JS_GetProperty(ctx, val, prop)));
 					}
 					JS_FreeValue(ctx, prop);
 				}
@@ -252,6 +250,34 @@ QJSDEF(log) {
 	}
 	console.log(fmt->format(info), note_lv);
 	return JS_TRUE;
+}
+QJSDEF(loadJS) {
+	if (argc > 0) {
+		string nameJS{ js_toNativeString(ctx,argv[0]) };
+		std::filesystem::path pathFile{ nameJS };
+		if (fmt->has_js(nameJS)) {
+			pathFile = fmt->js_path(nameJS);
+		}
+		else {
+			if (pathFile.extension() != ".js")pathFile = nameJS + ".js";
+			if (pathFile.is_relative())pathFile = dirExe / "Diceki" / "js" / pathFile;
+		}
+		size_t buf_len{ 0 };
+		if (uint8_t * buf{ js_load_file(ctx, &buf_len, pathFile.string().c_str()) }) {
+			auto ret = JS_EvalThis(ctx, this_val, (char*)buf, buf_len, nameJS.c_str(),
+				JS_EVAL_TYPE_MODULE);
+			js_free(ctx, buf);
+			return ret;
+		}
+		else {
+			JS_ThrowReferenceError(ctx, "could not load '%s'", pathFile.u8string().c_str());
+			return JS_EXCEPTION;
+		}
+	}
+	else {
+		JS_ThrowTypeError(ctx, "undefined js file");
+		return JS_EXCEPTION;
+	}
 }
 QJSDEF(getDiceID) {
 	return JS_NewInt64(ctx, (int64_t)console.DiceMaid);
@@ -545,10 +571,7 @@ int js_dice_context_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
 	}
 	return FALSE;
 }
-int js_dice_context_define(JSContext* ctx, JSValueConst this_obj,
-	JSAtom prop, JSValueConst val,
-	JSValueConst getter, JSValueConst setter,
-	int flags) {
+int js_dice_context_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags) {
 	JS2OBJ(this_obj);
 	if (obj) {
 		auto str = js_AtomtoGBK(ctx, prop);
@@ -583,7 +606,7 @@ QJSDEF(context_echo) {
 	if (argc > 0) {
 		string msg{ js_toGBK(ctx, argv[0]) };
 		bool isRaw = argc > 1 ? JS_ToBool(ctx, argv[1]) : false;
-		reply(*obj, UTF8toGBK(msg), !isRaw);
+		reply(*obj, msg, !isRaw);
 		return JS_TRUE;
 	}
 	else {

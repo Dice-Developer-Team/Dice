@@ -478,22 +478,22 @@ int luaopen_SelfData(lua_State* L) {
 #define LUADEF(name) int lua_dice_##name(lua_State* L)
  //输出日志
 LUADEF(log) {
-	string info{ lua_to_gbstring(L, 1) };
-	if (info.empty())return 0;
-	int note_lv{ 0 };
-	for (int idx = lua_gettop(L); idx > 1; --idx) {
-		if (lua_isinteger(L, idx)) {
-			auto type{ lua_to_int(L,idx) };
-			if (type < 0 || type > 9)continue;
-			else {
-				note_lv |= (1 << type);
+	if (string info{ lua_to_gbstring(L, 1) }; !info.empty()) {
+		int note_lv{ 0 };
+		for (int idx = lua_gettop(L); idx > 1; --idx) {
+			if (lua_isinteger(L, idx)) {
+				auto type{ lua_to_int(L,idx) };
+				if (type < 0 || type > 9)continue;
+				else {
+					note_lv |= (1 << type);
+				}
+			}
+			else if (lua_isstring(L, idx)) {
+				console.log(fmt->format(info), lua_to_native_string(L, idx));
 			}
 		}
-		else if (lua_isstring(L, idx)) {
-			console.log(fmt->format(info), lua_to_native_string(L, idx));
-		}
+		console.log(fmt->format(info), note_lv);
 	}
-	console.log(fmt->format(info), note_lv);
 	return 0;
 }
  //加载其他lua脚本
