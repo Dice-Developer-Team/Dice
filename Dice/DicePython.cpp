@@ -314,8 +314,10 @@ AttrObject py_to_obj(PyObject* o) {
 	}
 	return {};
 }
-
-static PyObject* py_log(PyObject* self, PyObject* args) {
+#define PYDEF(name) static PyObject* py_##name(PyObject* self)
+#define PYDEFARG(name) static PyObject* py_##name(PyObject* self, PyObject* args)
+#define PYDEFKEY(name) static PyObject* py_##name(PyObject* self, PyObject* args, PyObject* keys)
+PYDEFARG(log) {
 	int lv[10] = { -1 };
 	if (PyObject* info{ nullptr }; PyArg_ParseTuple(args, "U|iiiiiiiiii", &info, lv, lv + 1, lv + 2, lv + 3, lv + 4, lv + 5, lv + 6, lv + 7, lv + 8, lv + 9)) {
 		int note_lv{ 0 };
@@ -328,10 +330,10 @@ static PyObject* py_log(PyObject* self, PyObject* args) {
 	}
 	else return NULL;
 }
-static PyObject* py_getDiceID(PyObject* self) {
+PYDEF(getDiceID) {
 	return PyLong_FromLongLong(console.DiceMaid);
 }
-static PyObject* py_getDiceDir(PyObject* self) {
+PYDEF(getDiceDir) {
 	auto dir{ DiceDir.wstring() };
 	return PyUnicode_FromUnicode(dir.c_str(), (Py_ssize_t)dir.length());
 }
@@ -439,7 +441,7 @@ static PyTypeObject PySelfData_Type = {
 	nullptr,                                           /* tp_alloc */
 	PySelfData_new,                                     /* tp_new */
 };
-static PyObject* py_getSelfData(PyObject* self, PyObject* args) {
+PYDEFARG(getSelfData) {
 	if (PyObject* s{ nullptr }; PyArg_ParseTuple(args, "U", &s)){
 		auto file = py_to_native_string(s);
 		if (!selfdata_byFile.count(file)) {
@@ -455,7 +457,7 @@ static PyObject* py_getSelfData(PyObject* self, PyObject* args) {
 	}
 	return NULL;
 }
-static PyObject* py_getGroupAttr(PyObject*, PyObject* args, PyObject* keys) {
+PYDEFKEY(getGroupAttr) {
 	static const char* kwlist[] = { "id","attr","sub", NULL };
 	PyObject *id{ nullptr }, *sub{ nullptr };
 	auto attr = wempty;
@@ -525,7 +527,7 @@ static PyObject* py_getGroupAttr(PyObject*, PyObject* args, PyObject* keys) {
 	else if (sub) return sub;
 	return Py_BuildValue("");
 }
-static PyObject* py_setGroupAttr(PyObject*, PyObject* args) {
+PYDEFARG(setGroupAttr) {
 	long long id = 0;
 	auto attr = wempty;
 	PyObject* val{ nullptr };
@@ -552,7 +554,7 @@ static PyObject* py_setGroupAttr(PyObject*, PyObject* args) {
 	else grp.set(item, py_to_attr(val));
 	return Py_BuildValue("");
 }
-static PyObject* py_getUserAttr(PyObject*, PyObject* args, PyObject* keys) {
+PYDEFKEY(getUserAttr) {
 	static const char* kwlist[] = { "id","attr","sub", NULL };
 	PyObject* id{ nullptr }, * sub{ nullptr };
 	auto attr = wempty;
@@ -579,7 +581,7 @@ static PyObject* py_getUserAttr(PyObject*, PyObject* args, PyObject* keys) {
 	if (auto val{ getUserItem(uid,item) }; !val.is_null())return py_build_attr(val);
 	else return sub ? sub : Py_BuildValue("");
 }
-static PyObject* py_setUserAttr(PyObject*, PyObject* args) {
+PYDEFARG(setUserAttr) {
 	long long id = 0;
 	auto attr = wempty;
 	PyObject* val{ nullptr };
@@ -620,7 +622,7 @@ static PyObject* py_setUserAttr(PyObject*, PyObject* args) {
 	else getUser(id).setConf(item, py_to_attr(val));
 	return Py_BuildValue("");
 }
-static PyObject* py_getUserToday(PyObject*, PyObject* args, PyObject* keys) {
+PYDEFKEY(getUserToday) {
 	static const char* kwlist[] = { "id","attr","sub", NULL };
 	PyObject* id{ nullptr }, * sub{ nullptr };
 	auto attr = wempty;
@@ -651,7 +653,7 @@ static PyObject* py_getUserToday(PyObject*, PyObject* args, PyObject* keys) {
 	else if (sub) return sub;
 	return Py_BuildValue("");
 }
-static PyObject* py_setUserToday(PyObject*, PyObject* args) {
+PYDEFARG(setUserToday) {
 	long long id = 0;
 	auto attr = wempty;
 	PyObject* val{ nullptr };
@@ -670,7 +672,7 @@ static PyObject* py_setUserToday(PyObject*, PyObject* args) {
 		today->set(id, item, py_to_attr(val));
 	return Py_BuildValue("");
 }
-static PyObject* py_sendMsg(PyObject* self, PyObject* args, PyObject* keys) {
+PYDEFKEY(sendMsg) {
 	PyObject* msg = nullptr;
 	long long uid = 0, gid = 0, chid = 0;
 	static const char* kwlist[] = { "msg","uid","gid","chid", NULL };
@@ -693,7 +695,7 @@ static PyObject* py_sendMsg(PyObject* self, PyObject* args, PyObject* keys) {
 	}
 	return Py_BuildValue("");
 }
-static PyObject* py_eventMsg(PyObject* self, PyObject* args, PyObject* keys) {
+PYDEFKEY(eventMsg) {
 	PyObject* msg = nullptr;
 	long long uid = 0, gid = 0, chid = 0;
 	static const char* kwlist[] = { "msg","uid","gid","chid", NULL };
@@ -764,9 +766,13 @@ PyMODINIT_FUNC PyInit_DiceMaid(){
 	return mod;
 }
 PyGlobal::PyGlobal() {
-	if (std::filesystem::exists(dirExe / "bin" / "python3.dll") || std::filesystem::exists(dirExe / "bin" / "python3.so")) {
-		Py_SetPythonHome((dirExe / "bin").wstring().c_str());
-		Py_SetPath((dirExe / "bin" / "python310.zip").wstring().c_str());
+	if (std::filesystem::path dirPy{ dirExe / "bin" };
+		std::filesystem::exists(dirPy / "python3.dll")
+		|| std::filesystem::exists(dirPy / "python3.so")
+		|| std::filesystem::exists(dirPy = dirExe / "py310")
+		|| std::filesystem::exists(dirPy = dirExe / "python")) {
+		Py_SetPythonHome(dirPy.wstring().c_str());
+		Py_SetPath((dirPy / "python310.zip").wstring().c_str());
 	}
 	else if (std::filesystem::exists(dirExe / "python3.dll")) {
 		Py_SetPythonHome(dirExe.wstring().c_str());

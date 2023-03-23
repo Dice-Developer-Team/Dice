@@ -30,6 +30,16 @@ string js_toNativeString(JSContext* ctx, JSValue val) {
 	JS_FreeCString(ctx, s);
 	return ret;
 }
+string js_NativeToGBK(JSContext* ctx, JSValue val) {
+	auto s{ JS_ToCString(ctx, val) };
+#ifdef _WIN32
+	string ret{ s };
+#else
+	string ret{ UTF8toGBK(s) };
+#endif
+	JS_FreeCString(ctx, s);
+	return ret;
+}
 string js_AtomtoGBK(JSContext* ctx, JSAtom val) {
 	auto s{ JS_AtomToCString(ctx, val) };
 	string ret{ UTF8toGBK(s) };
@@ -67,7 +77,7 @@ js_context::~js_context() {
 AttrVar js_toAttr(JSContext* ctx, JSValue val) {
 	switch (auto tag{ JS_VALUE_GET_TAG(val) }) {
 	case JS_TAG_BOOL:
-		return bool(JS_ToBool(ctx, val));
+		return JS_VALUE_GET_INT(val) != 0;
 		break;
 	case JS_TAG_INT:
 		return JS_VALUE_GET_INT(val);
@@ -171,7 +181,7 @@ string js_context::getException() {
 	auto err{ js_toGBK(ctx, e) };
 	if (JS_IsNull(e) || JS_IsUndefined(e)) goto Free;
 	if (JSValue stack = JS_GetPropertyStr(ctx, e, "stack"); !JS_IsException(stack)) {
-		err += "\n" + js_toGBK(ctx, stack);
+		err += "\n" + js_NativeToGBK(ctx, stack);
 	}
 Free:
 	JS_FreeValue(ctx, e);
@@ -194,7 +204,7 @@ JSValue js_context::evalString(const std::string& s, const string& title) {
 }
 JSValue js_context::evalStringLocal(const std::string& s, const string& title, const AttrObject& context) {
 	string exp{ GBKtoUTF8(s) };
-	return JS_EvalThis(ctx, js_newDiceContext(ctx, context), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
+	return JS_EvalThis(ctx, js_newDiceContext(ctx, context), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_MODULE);
 }
 JSValue js_context::evalFile(const std::string& s) {
 	size_t buf_len{ 0 };
@@ -210,7 +220,7 @@ JSValue js_context::evalFileLocal(const std::string& s, const AttrObject& contex
 	size_t buf_len{ 0 };
 	if (uint8_t * buf{ js_load_file(ctx, &buf_len, s.c_str()) }) {
 		auto ret = JS_EvalThis(ctx, js_newDiceContext(ctx,context), (char*)buf, buf_len, s.c_str(),
-			JS_EVAL_TYPE_GLOBAL);
+			JS_EVAL_TYPE_MODULE);
 		js_free(ctx, buf);
 		return ret;
 	}

@@ -46,6 +46,8 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 include(CheckCSourceCompiles)
+add_compile_definitions(CONFIG_BIGNUM)
+add_compile_definitions(JS_STRICT_NAN_BOXING)
 
 list(APPEND CMAKE_REQUIRED_LIBRARIES "-Wl,-Bsymbolic-functions -Wl,-Bsymbolic")
 	
@@ -112,7 +114,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL Android)
     target_include_directories(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/libiconv/${ANDROID_ABI}/include)
     target_link_libraries(w4123.Dice PRIVATE ${CMAKE_SOURCE_DIR}/libiconv/${ANDROID_ABI}/lib/libiconv.a)
 else()
-    find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+    find_package(Python3 COMPONENTS Development REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE Python3::Python)
 endif()
 
