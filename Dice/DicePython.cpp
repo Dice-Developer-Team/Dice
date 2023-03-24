@@ -796,8 +796,8 @@ PyGlobal::PyGlobal() {
 	console.log("Python.Initialized", 0);
 }
 PyGlobal::~PyGlobal() {
-	if(Py_IsInitialized())Py_Finalize();
-	console.log("Python.Finalized", 0);
+	//if(Py_IsInitialized())Py_Finalize();
+	//console.log("Python.Finalized", 0);
 }
 int PyGlobal::runFile(const std::filesystem::path& p) {
 	return 0;
@@ -848,13 +848,13 @@ AttrVar PyGlobal::evalString(const std::string& s, const AttrObject& context) {
 	}
 	return {};
 }
-bool PyGlobal::call_reply(DiceEvent* msg, const AttrObject& action) {
+bool PyGlobal::call_reply(DiceEvent* msg, const AttrVar& action) {
 	try {
 		PyObject* mainModule = PyImport_ImportModule("__main__");
 		PyObject* dict = PyModule_GetDict(mainModule);
 		PyObject* locals = PyDict_New();
 		PyDict_SetItem(locals, PyUnicode_FromString("msg"), py_newContext(*msg));
-		string pyScript{ action.get_str("script") };
+		string pyScript{ action };
 		if (fmt->has_py(pyScript)) {
 			FILE* fp{ fopen(fmt->py_path(pyScript).c_str(),"r") };
 			if (auto res{ PyRun_File(fp, fmt->py_path(pyScript).c_str(), Py_file_input, dict, locals) }; !res) {

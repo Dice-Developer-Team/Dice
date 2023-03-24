@@ -60,6 +60,15 @@ void AttrObject::set(const string& key)const {
 void AttrObject::reset(const string& key)const {
 	dict->erase(key);
 }
+vector<string> AttrObject::to_deck()const {
+	vector<string> deck;
+	if (list) {
+		for (auto& it : *list) {
+			deck.emplace_back(it.to_str());
+		}
+	}
+	return deck;
+}
 AttrVar& AttrObject::at(const string& key)const {
 	return (*dict)[key];
 }

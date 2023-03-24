@@ -554,7 +554,7 @@ const dict_ci<> HelpDoc = {
 {"窥屏可能","无"},
 {"其他插件","【未设置】"},
 {"姐妹骰","{list_dice_sister}"},
-{"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2022 String.Empty\nGithub@Dice-Developer-Team"},
+{"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2023 String.Empty\nGithub@Dice-Developer-Team"},
 {"指令",R"(指令前接at可以指定骰娘响应，如
 {at:self}.bot on
 请.help对应指令 获取详细信息，如.help r

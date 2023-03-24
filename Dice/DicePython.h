@@ -37,7 +37,7 @@ public:
 	int runString(const std::string&);
 	bool execString(const std::string&, const AttrObject& = {});
 	AttrVar evalString(const std::string& , const AttrObject& = {});
-	bool call_reply(DiceEvent* , const AttrObject&);
+	bool call_reply(DiceEvent* , const AttrVar&);
 };
 extern std::unique_ptr<PyGlobal> py; 
 bool py_call_event(AttrObject eve, const AttrVar& py);

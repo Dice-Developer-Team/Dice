@@ -44,4 +44,4 @@ JSValue js_toValue(JSContext*, const AttrVar& var);
 void js_global_init();
 void js_global_end();
 bool js_call_event(AttrObject, const AttrVar&); 
-void js_msg_call(DiceEvent*, const AttrObject&);
+void js_msg_call(DiceEvent*, const AttrVar&);

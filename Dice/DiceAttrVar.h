@@ -63,9 +63,15 @@ public:
 	AttrObject() :dict(std::make_shared<AttrVars>()) {}
 	AttrObject(const AttrVars& vars) :dict(std::make_shared<AttrVars>(vars)) {}
 	explicit AttrObject(const VarArray& vars) :dict(std::make_shared<AttrVars>()), list(std::make_shared<VarArray>(vars)) {}
+	template<class T>
+	AttrObject(const std::vector<T>& vars) :dict(std::make_shared<AttrVars>()), list(std::make_shared<VarArray>()) {
+		for (auto& it : vars)list->emplace_back(it);
+	}
 	AttrObject(const AttrObject& other) :dict(other.dict), list(other.list) {}
 	const ptr<AttrVars>& to_dict()const { return dict; }
 	const ptr<VarArray>& to_list()const { return list; }
+	std::vector<string> to_deck()const;
+	const ptr<VarArray>& new_list() { return list = std::make_shared<VarArray>(); }
 	AttrVars* operator->()const {
 		return dict.get();
 	}

@@ -223,18 +223,13 @@ AttrVars lua_to_dict(lua_State* L, int idx = -1) {
 }
 
 //为msg直接调用lua语句
-bool lua_msg_call(DiceEvent* msg, const AttrObject& lua) {
-	//enum class LuaType { String, File, File_Func, Chunk};
-	//LuaType typeLua{ LuaType::String };
-	string luaFile{ lua.get_str("file") };
-	if (AttrVar luaScript{ lua.get("script") }) {
-		if (luaFile.empty() && luaScript.is_character() && fmt->has_lua(luaScript)) {
-			luaFile = fmt->lua_path(luaScript);
-		}
-		else {
-			lua["func"] = luaScript;
-		}
+bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
+	string luaFile{ lua.is_table() ? lua.to_obj().get_str("file") : "" };
+	AttrVar luaFunc;
+	if (luaFile.empty() && lua.is_character() && fmt->has_lua(lua)) {
+		luaFile = fmt->lua_path(lua);
 	}
+	else luaFunc = lua.is_table() ? lua.to_obj()["func"] : lua;
 	LuaState L{ luaFile };
 	if (!L)return false;
 	lua_push_Context(L, *msg);
@@ -246,7 +241,8 @@ bool lua_msg_call(DiceEvent* msg, const AttrObject& lua) {
 #else
 		string fileGBK(UTF8toGBK(luaFile, true));
 #endif
-		if (!lua.has("func")) {
+		if (!luaFunc) {
+			//执行文件
 			if (lua_pcall(L, 0, 2, 0)) {
 				string pErrorMsg = lua_to_gbstring_from_native(L, -1);
 				console.log(getMsg("strSelfName") + "运行" + fileGBK + "失败:" + pErrorMsg, 0b10);
@@ -255,6 +251,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrObject& lua) {
 				return 0;
 			}
 		}
+		//加载文件，执行全局函数
 		else if (lua_pcall(L, 0, 0, 0)) {
 			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
 			console.log(getMsg("strSelfName") + "运行" + fileGBK + "失败:" + pErrorMsg, 0b10);
@@ -262,21 +259,21 @@ bool lua_msg_call(DiceEvent* msg, const AttrObject& lua) {
 			msg->reply(getMsg("strScriptRunErr"));
 			return 0;
 		}
-		else if (lua["func"].is_character()) {
-			string func{ lua.get_str("func") };
-			lua_getglobal(L, func.c_str());
+		else {
+			lua_getglobal(L, luaFunc.to_str().c_str());
 			lua_push_Context(L, *msg);
 			if (lua_pcall(L, 1, 2, 0)) {
 				string pErrorMsg = lua_to_gbstring_from_native(L, -1);
-				console.log(getMsg("strSelfName") + "调用" + fileGBK + "函数" + func + "失败!\n" + pErrorMsg, 0b10);
+				console.log(getMsg("strSelfName") + "调用" + fileGBK + "函数" + luaFunc.to_str() + "失败!\n" + pErrorMsg, 0b10);
 				msg->set("lang", "Lua");
 				msg->reply(getMsg("strScriptRunErr"));
 				return false;
 			}
 		}
 	}
-	if (lua["func"].is_function()) {
-		ByteS bytes{ lua["func"].to_bytes() };
+	//执行函数字节码
+	if (luaFunc.is_function()) {
+		ByteS bytes{ lua.to_bytes() };
 		if (bytes.isUTF8)UTF8Luas.insert(L);
 		if (lua_load(L, lua_reader, &bytes, msg->get_str("reply_title").c_str(), "bt")
 			|| (lua_push_Context(L, *msg), lua_pcall(L, 1, 2, 0))) {
@@ -287,8 +284,9 @@ bool lua_msg_call(DiceEvent* msg, const AttrObject& lua) {
 			return false;
 		}
 	}
+	//执行语句
 	else if (luaFile.empty() &&
-		(luaL_loadstring(L, lua.get_str("func").c_str()) || lua_pcall(L, 0, 2, 0))) {
+		(luaL_loadstring(L, lua.to_str().c_str()) || lua_pcall(L, 0, 2, 0))) {
 		string pErrorMsg = lua_to_gbstring_from_native(L, -1);
 		console.log(getMsg("strSelfName") + "调用" + msg->get_str("reply_title") + "Lua代码失败!\n" + pErrorMsg, 0b10);
 		msg->set("lang", "Lua");
@@ -1297,7 +1295,14 @@ void DiceModManager::loadPlugin(ResList& res) {
 						plugin_reply[key] = reply;
 					}
 					else {
-						plugin_reply[key] = DiceMsgReply::set_order(key, { {"file",file},{"func",val} });
+						AttrObject ans;
+						plugin_reply[key] = DiceMsgReply::set_order(key, AttrVars{
+							{ "lua", AttrObject{
+								AttrVars{
+								{"file",file}, {"func",val},
+								}
+							}}
+							});
 					}
 				}
 			}
@@ -1344,7 +1349,7 @@ void DiceMod::loadLua() {
 				}
 			}
 			catch (std::exception& e) {
-				console.log("读取" + file.string() + "失败!" + e.what(), 0);
+				console.log("读取" + UTF8toGBK(file.u8string()) + "失败!" + e.what(), 0);
 			}
 			continue;
 		}

@@ -568,7 +568,7 @@ ptr<DiceMsgReply> DiceMsgReply::set_order(const string& key, const AttrVars& ord
 	reply->type = DiceMsgReply::Type::Order;
 	reply->keyMatch[1] = std::make_unique<vector<string>>(vector<string>{fmt->format(key)});
 	reply->echo = DiceMsgReply::Echo::Lua;
-	reply->text = AttrVar(order);
+	reply->answer = order;
 	return reply;
 }
 bool DiceMsgReply::exec(DiceEvent* msg) {
@@ -592,24 +592,24 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 	}
 
 	if (echo == Echo::Text) {
-		msg->reply(text.to_str());
+		msg->reply(answer.get_str("text"));
 		return true;
 	}
 	else if (echo == Echo::Deck) {
-		msg->reply(CardDeck::drawCard(deck, true));
+		msg->reply(CardDeck::drawCard(answer.to_deck(), true));
 		return true;
 	}
 	else if (echo == Echo::Lua) {
-		lua_msg_call(msg, text.to_obj());
+		lua_msg_call(msg, answer.get("lua"));
 		return true;
 	}
 	else if (echo == Echo::JavaScript) {
-		js_msg_call(msg, text.to_obj());
+		js_msg_call(msg, answer.get("js"));
 		return true;
 	}
 #ifdef DICE_PYTHON
 	else if (echo == Echo::Python && py) {
-		if(py)py->call_reply(msg, text.to_obj());
+		if(py)py->call_reply(msg, answer.get("py"));
 		return true;
 	}
 #endif //DICE_PYTHON
@@ -637,15 +637,24 @@ string DiceMsgReply::print()const {
 		+ "\n" + sEcho[(int)echo] + "=" + show_ans();
 }
 string DiceMsgReply::show_ans()const {
-	if (echo == DiceMsgReply::Echo::Lua
-		|| echo == DiceMsgReply::Echo::JavaScript
-		|| echo == DiceMsgReply::Echo::Python) {
-		auto tab{ text.to_obj() };
-		return tab.has("script") ? tab.get_str("script")
-			: tab.get_str("func");
+	switch (echo) {
+	case DiceMsgReply::Echo::Text:
+		return answer.get_str("text");
+		break;
+	case DiceMsgReply::Echo::Deck:
+		return listDeck(*answer.to_list());
+		break;
+	case DiceMsgReply::Echo::Lua:
+		return answer.get_str("lua");
+		break;
+	case DiceMsgReply::Echo::JavaScript:
+		return answer.get_str("js");
+		break;
+	case DiceMsgReply::Echo::Python:
+		return answer.get_str("py");
+		break;
 	}
-	return echo == DiceMsgReply::Echo::Deck ? listDeck(deck)
-		: text.to_str();
+	return {};
 }
 
 void DiceMsgReply::from_obj(AttrObject obj) {
@@ -668,31 +677,32 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 	if (obj.has("type"))type = (Type)sType[obj.get_str("type")];
 	if (obj.has("limit"))limit.parse(obj["limit"]);
 	if (obj.has("echo")) {
-		AttrVar& answer{ obj["echo"] };
-		if (answer.is_character()) {
+		AttrVar& ans{ obj["echo"] };
+		if (ans.is_character()) {
 			echo = Echo::Text;
-			text = answer;
+			answer.set("text", ans);
 		}
-		else if (answer.is_function()) {
+		else if (ans.is_function()) {
 			echo = Echo::Lua;
-			text = AttrVars{ {"lang","lua"},{"script",answer} };
+			answer.set("lua", ans);
 		}
-		else if (AttrVars& tab{ *answer.to_dict() }; tab.count("lua")) {
+		else if (auto tab{ ans.to_obj() }; tab.has("lua")) {
 			echo = Echo::Lua;
-			text = AttrVars{ {"lang","lua"},{"script",tab["lua"]} };
+			answer = tab;
 		}
-		else if (tab.count("js")) {
+		else if (tab.has("js")) {
 			echo = Echo::JavaScript;
-			text = AttrVars{ {"lang","js"},{"script",tab["js"]} };
+			answer = tab;
+			console.log("js_script:" + answer.get_str("script"), 0);
 		}
-		else if (tab.count("py")) {
+		else if (tab.has("py")) {
 			echo = Echo::Python;
-			text = AttrVars{ {"lang","py"},{"script",tab["py"]} };
+			answer = tab;
 		}
 		else if (auto v{ answer.to_list() }) {
-			deck = {};
+			auto li{ answer.new_list() };
 			for (auto& item : *v) {
-				deck.push_back(item.to_str());
+				li->push_back(item.to_str());
 			}
 		}
 	}
@@ -727,11 +737,11 @@ void DiceMsgReply::readJson(const fifo_json& j) {
 		if (j.count("limit"))limit.parse(UTF8toGBK(j["limit"].get<string>()));
 		if (j.count("echo"))echo = (Echo)sEcho[j["echo"].get<string>()];
 		if (j.count("answer")) {
-			if (echo == Echo::Deck)deck = UTF8toGBK(j["answer"].get<vector<string>>());
-			else if (echo == Echo::Lua)text = AttrVar(AttrVars{ {"lang","lua"},{"script",UTF8toGBK(j["answer"].get<string>())} });
-			else if (echo == Echo::JavaScript)text = AttrVar(AttrVars{ {"lang","js"},{"script",UTF8toGBK(j["answer"].get<string>())} });
-			else if (echo == Echo::Python)text = AttrVar(AttrVars{ {"lang","py"},{"script",UTF8toGBK(j["answer"].get<string>())} });
-			else text = j["answer"];
+			if (echo == Echo::Deck)answer = AttrVar(j["answer"]).to_obj();
+			else if (echo == Echo::Lua)answer.set("lua", j["answer"]);
+			else if (echo == Echo::JavaScript)answer.set("js", j["answer"]);
+			else if (echo == Echo::Python)answer.set("py", j["answer"]);
+			else answer.set("text", j["answer"]);
 		}
 	}
 	catch (std::exception& e) {
@@ -747,9 +757,31 @@ fifo_json DiceMsgReply::writeJson()const {
 	if (keyMatch[2])j["search"] = GBKtoUTF8(*keyMatch[2]);
 	if (keyMatch[3])j["regex"] = GBKtoUTF8(*keyMatch[3]);
 	if (!limit.empty())j["limit"] = GBKtoUTF8(limit.print());
-	if (echo == Echo::Deck)j["answer"] = GBKtoUTF8(deck);
-	else if (echo == Echo::Text)j["answer"] = GBKtoUTF8(text.to_str());
-	else j["answer"] = GBKtoUTF8(text.to_obj().get_str("script"));
+	if (echo == Echo::Deck)j["answer"] = answer.to_json();
+	else if (echo == Echo::Text)j["answer"] = answer["text"];
+	else if (echo == Echo::Lua)j["answer"] = answer["lua"];
+	else if (echo == Echo::JavaScript)j["answer"] = answer["js"];
+	else if (echo == Echo::Python)j["answer"] = answer["py"];
+	return j;
+}
+fifo_json DiceMsgReply::to_line()const {
+	fifo_json j;
+	j["name"] = GBKtoUTF8(title);
+	j["keyword"] = GBKtoUTF8(keyMatch[0] ? listItem(*keyMatch[0]) :
+		keyMatch[1] ? listItem(*keyMatch[1]) :
+		keyMatch[2] ? listItem(*keyMatch[2]) :
+		keyMatch[3] ? listItem(*keyMatch[3]) : "");
+	j["type"] = sType[(int)type];
+	j["mode"] = keyMatch[0] ? "Match" :
+		keyMatch[1] ? "Prefix" :
+		keyMatch[2] ? "Search" : "Regex";
+	if (!limit.empty())j["limit"] = GBKtoUTF8(limit.print());
+	j["echo"] = sEcho[(int)echo];
+	if (echo == Echo::Deck)j["answer"] = answer.to_json();
+	else if (echo == Echo::Text)j["answer"] = GBKtoUTF8(answer.get_str("text"));
+	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(answer.get_str("lua"));
+	else if (echo == Echo::JavaScript)j["answer"] = GBKtoUTF8(answer.get_str("js"));
+	else if (echo == Echo::Python)j["answer"] = GBKtoUTF8(answer.get_str("py"));
 	return j;
 }
 

@@ -43,8 +43,7 @@ public:
 	Type type{ Type::Reply };
 	Echo echo{ Echo::Deck };
 	DiceTriggerLimit limit;
-	AttrVar text;
-	std::vector<string> deck;
+	AttrObject answer;
 	static ptr<DiceMsgReply> set_order(const string& key, const AttrVars&);
 	string show()const;
 	string show_ans()const;
@@ -53,6 +52,7 @@ public:
 	void from_obj(AttrObject);
 	void readJson(const fifo_json&);
 	fifo_json writeJson()const;
+	fifo_json to_line()const;
 };
 
 class DiceReplyUnit {

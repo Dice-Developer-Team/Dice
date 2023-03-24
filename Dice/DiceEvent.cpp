@@ -1244,10 +1244,11 @@ int DiceEvent::BasicOrder()
 				else if (DiceMsgReply::sEcho.count(attr)) {	//Echo=Reply
 					trigger->echo = (DiceMsgReply::Echo)DiceMsgReply::sEcho[attr];
 					if (trigger->echo == DiceMsgReply::Echo::Deck) {
+						VarArray deck;
 						while (intMsgCnt < strMsg.length()) {
-							string item = readItem();
-							if (!item.empty())trigger->deck.push_back(item);
+							deck.push_back(readItem());
 						}
+						trigger->answer = AttrObject(deck);
 					}
 					else {
 						if (trigger->echo == DiceMsgReply::Echo::Lua) {
@@ -1255,23 +1256,23 @@ int DiceEvent::BasicOrder()
 								replyMsg("strNotMaster");
 								return -1;
 							}
-							trigger->text = AttrVar(AttrVars{ {"lang","lua"},{"script",readRest()} });
+							trigger->answer = AttrVars{ {"lua",readRest()} };
 						}
 						else if (trigger->echo == DiceMsgReply::Echo::JavaScript) {
 							if (trusted < 5) {
 								replyMsg("strNotMaster");
 								return -1;
 							}
-							trigger->text = AttrVar(AttrVars{ {"lang","js"},{"script",readRest()} });
+							trigger->answer = AttrVars{ {"js",readRest()} };
 						}
 						else if (trigger->echo == DiceMsgReply::Echo::Python) {
 							if (trusted < 5) {
 								replyMsg("strNotMaster");
 								return -1;
 							}
-							trigger->text = AttrVar(AttrVars{ {"lang","py"},{"script",readRest()} });
+							trigger->answer = AttrVars{ {"py",readRest()} };
 						}
-						else trigger->text = readRest();
+						else trigger->answer.set("text", readRest());
 					}
 					break;
 				}
@@ -1337,14 +1338,14 @@ int DiceEvent::BasicOrder()
 				return -1;
 			}
 		}
-		readItems(rep->deck);
-		if (rep->deck.empty()) {
-			fmt->del_reply(rep->title);
-			replyMsg("strReplyDel");
-		}
-		else {
+		if (vector<string> deck; readItems(deck)) {
+			rep->answer = deck;
 			fmt->set_reply(rep->title, rep);
 			replyMsg("strReplySet");
+		}
+		else {
+			fmt->del_reply(rep->title);
+			replyMsg("strReplyDel");
 		}
 		return 1;
 	}

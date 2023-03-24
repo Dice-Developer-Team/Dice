@@ -725,8 +725,8 @@ bool js_call_event(AttrObject eve, const AttrVar& action) {
 	}
 	return true;
 }
-void js_msg_call(DiceEvent* msg, const AttrObject& js) {
-	string jScript{ js.get_str("script") };
+void js_msg_call(DiceEvent* msg, const AttrVar& js) {
+	string jScript{ js };
 	js_context ctx;
 	ctx.setContext("msg", *msg);
 	JSValue ret = 0;
