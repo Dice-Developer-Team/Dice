@@ -1,9 +1,8 @@
 #pragma once
-
 /**
  * 黑名单明细
  * 更数据库式的管理
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 
 #include <string>
@@ -107,7 +106,7 @@ public:
 	unordered_map<long long, short> mQQDanger;
 	unordered_map<long long, short> mGroupDanger;
 	[[nodiscard]] short get_group_danger(long long) const;
-	[[nodiscard]] short get_qq_danger(long long) const;
+	[[nodiscard]] short get_user_danger(long long) const;
 	void isban(DiceEvent*);
 	string list_group_warning(long long);
 	string list_qq_warning(long long);

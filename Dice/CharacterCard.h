@@ -2,7 +2,7 @@
 
 /*
  * Íæ¼ÒÈËÎï¿¨
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 
 #include <fstream>
@@ -195,7 +195,7 @@ public:
 			if (sRef.count(key))return "";
 			return getExp(key);
 		}
-		int intCnt = 0, lp, rp;
+		size_t intCnt = 0, lp, rp;
 		while ((lp = exp.find('[', intCnt)) != std::string::npos && (rp = exp.find(']', lp)) != std::string::npos)
 		{
 			string strProp = exp.substr(lp + 1, rp - lp - 1);

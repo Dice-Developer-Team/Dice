@@ -59,6 +59,9 @@ AttrVar getUserItem(long long uid, const string& item) {
 	else if (item == "trust") {
 		return trustedQQ(uid);
 	}
+	else if (item == "danger") {
+		return blacklist->get_user_danger(uid);
+	}
 	else if (item == "isDiceMaid") {
 		return DD::isDiceMaid(uid);
 	}

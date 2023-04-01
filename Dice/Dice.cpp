@@ -23,14 +23,12 @@
  */
 #define UNICODE
 #include <string>
-#include <iostream>
 #include <map>
 #include <set>
 #include <fstream>
 #include <algorithm>
 #include <ctime>
 #include <mutex>
-#include <unordered_map>
 #include <exception>
 #include <stdexcept>
 
@@ -527,7 +525,7 @@ bool eve_GroupAdd(Chat& grp) {
 				if (DD::isGroupAdmin(fromGID, each, false))
 				{
 					max_trust |= (1 << trustedQQ(each));
-					if (blacklist->get_qq_danger(each) > 1)
+					if (blacklist->get_user_danger(each) > 1)
 					{
 						strMsg += ",发现黑名单管理员" + printUser(each);
 						if (grp.isset("免黑")) {
@@ -553,11 +551,11 @@ bool eve_GroupAdd(Chat& grp) {
 						ave_trust += (gsize.currSize - 10) * trustedQQ(each) / 10;
 					}
 				}
-				else if (blacklist->get_qq_danger(each) > 1)
+				else if (blacklist->get_user_danger(each) > 1)
 				{
 					//max_trust |= 1;
 					blacks << printUser(each);
-					if (blacklist->get_qq_danger(each)) 
+					if (blacklist->get_user_danger(each)) 
 					{
 						AddMsgToQueue(blacklist->list_self_qq_warning(each), { 0,fromGID });
 					}
@@ -701,7 +699,7 @@ EVE_DiscussMsg(eventDiscussMsg)
 		return 1;
 	}
 	Chat& grp = chat(fromDiscuss);
-	if (blacklist->get_qq_danger(fromUID) && console["AutoClearBlack"])
+	if (blacklist->get_user_danger(fromUID) && console["AutoClearBlack"])
 	{
 		const string strMsg = "发现黑名单用户" + printUser(fromUID) + "，自动执行退群";
 		console.log(printChat(grp) + strMsg, 0b10, printSTNow());
@@ -731,7 +729,7 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 			AddMsgToQueue(strip(fmt->format(grp.update().confs.get_str("入群欢迎"), eve, false)),
 				{ 0,fromGID });
 		}
-		if (blacklist->get_qq_danger(fromUID))
+		if (blacklist->get_user_danger(fromUID))
 		{
 			const string strNow = printSTNow();
 			string strNote = printGroup(fromGID) + "发现" + getMsg("strSelfName") + "的黑名单用户" + printUser(
@@ -905,7 +903,7 @@ EVE_GroupInvited(eventGroupInvited)
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 2);
 		}
-		else if (blacklist->get_qq_danger(fromUID)){
+		else if (blacklist->get_user_danger(fromUID)){
 			strMsg += "\n已拒绝（黑名单用户）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 2);
@@ -970,7 +968,7 @@ EVE_FriendRequest(eventFriendRequest) {
 	}
 	if (isBlocked)return 1;
 	string strMsg = "好友添加请求，来自 " + printUser(fromUID) + ":" + message;
-	if (blacklist->get_qq_danger(fromUID)) {
+	if (blacklist->get_user_danger(fromUID)) {
 		strMsg += "\n已拒绝（用户在黑名单中）";
 		DD::answerFriendRequest(fromUID, 2, "");
 		console.log(strMsg, 0b10, printSTNow());

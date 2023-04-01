@@ -673,6 +673,35 @@ struct help_sorter {
 		return _Left < _Right;
 	}
 };
+string DiceModManager::prev_help(const string& key, AttrObject context) const {
+	if (const auto it = global_helpdoc.find(key); it != global_helpdoc.end()) {
+		return it->second;
+	}
+	else if (auto keys = querier.search(key); !keys.empty()) {
+		if (keys.size() == 1) {
+			auto word{ *keys.begin() };
+			context.set("redirect_key", word);
+			context.set("redirect_res", global_helpdoc.at(word));
+			return getMsg("strHelpRedirect", context);
+		}
+		else {
+			std::priority_queue<string, vector<string>, help_sorter> qKey;
+			for (auto& key : keys) {
+				qKey.emplace(".help " + key);
+			}
+			ShowList res;
+			while (!qKey.empty()) {
+				res << qKey.top();
+				qKey.pop();
+				if (res.size() > 20)break;
+			}
+			context.set("res", res.show("\n"));
+			return getMsg("strHelpSuggestion", context);
+		}
+	}
+	else return getMsg("strHelpNotFound", context);
+	return {};
+}
 
 void DiceModManager::_help(DiceEvent* job) {
 	if (job->is_empty("help_word")) {
@@ -712,10 +741,9 @@ void DiceModManager::_help(DiceEvent* job) {
 }
 
 void DiceModManager::set_help(const string& key, const string& val){
-	CustomHelp[key] = val;
-	saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
 	if (!global_helpdoc.count(key))querier.insert(key);
-	global_helpdoc[key] = val;
+	global_helpdoc[key] = CustomHelp[key] = (val == "NULL") ? "" : val;
+	saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
 }
 void DiceModManager::rm_help(const string& key){
 	if(CustomHelp.erase(key)){
@@ -1229,14 +1257,14 @@ void DiceModManager::build() {
 		unordered_set<string> cycle;
 		for (auto& [id, eve] : global_events) {
 			eve["id"] = id;
-			auto trigger{ eve.get_dict("trigger") };
-			if (trigger->count("cycle")) {
+			auto trigger{ eve.get_obj("trigger") };
+			if (trigger.has("cycle")) {
 				if (!cycle_events.count(id)) {
 					call_cycle_event(id);
 				}
 				cycle.insert(id);
 			}
-			if (trigger->count("clock")) {
+			if (trigger.has("clock")) {
 				auto& clock{ trigger->at("clock") };
 				if (auto list{ clock.to_list() }) {
 					for (auto& clc : *list) {
@@ -1247,7 +1275,7 @@ void DiceModManager::build() {
 					clock_events.emplace(parse_clock(clock), id);
 				}
 			}
-			if (trigger->count("hook")) {
+			if (trigger.has("hook")) {
 				string nameEvent{ trigger->at("hook").to_str() };
 				hook_events.emplace(nameEvent, eve);
 			}

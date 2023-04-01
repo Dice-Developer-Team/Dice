@@ -147,11 +147,11 @@ public:
         std::string ret;
         try
         {
-            nlohmann::json j = nlohmann::json::object();
+            fifo_json j = fifo_json::object();
             j["code"] = 0;
             j["msg"] = "ok";
             j["count"] = fmt->custom_reply.size();
-			j["data"] = nlohmann::json::array();
+			j["data"] = fifo_json::array();
             for (const auto& [key, val] : fmt->custom_reply) {
                 j["data"].push_back(val->to_line());
             }
@@ -176,7 +176,7 @@ public:
         try 
         {
             auto data = server->getPostData(conn);
-            nlohmann::json j = nlohmann::json::parse(data);
+            fifo_json j = fifo_json::parse(data);
             if (j["action"] == "set")
             {
                 for(const auto& item: j["data"])

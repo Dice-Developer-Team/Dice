@@ -232,7 +232,7 @@ void clear_group(AttrObject& job) {
 				set<long long> MemberList{ DD::getGroupMemberList(id) };
 				AttrVar authSelf;
 				for (auto eachQQ : MemberList) {
-					if (blacklist->get_qq_danger(eachQQ) > 1) {
+					if (blacklist->get_user_danger(eachQQ) > 1) {
 						if (authSelf.is_null())authSelf = DD::getGroupAuth(id, console.DiceMaid, 1);
 						if (auto authBlack{ DD::getGroupAuth(id, eachQQ, 1) }; authSelf.more(authBlack)) {
 							continue;

@@ -598,7 +598,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 		ResList res;
 		std::set<long long> uids{ DD::getFriendQQList() };
 		for(long long uid: uids){
-			if (blacklist->get_qq_danger(uid))
+			if (blacklist->get_user_danger(uid))
 				res << printUser(uid);
 		}
 		if (res.empty())
@@ -1071,7 +1071,7 @@ int DiceEvent::BasicOrder()
 		set("ignored", true);
 		return 0;
 	}
-	if (blacklist->get_qq_danger(fromChat.uid) || (!isPrivate() && blacklist->get_group_danger(fromChat.gid))){
+	if (blacklist->get_user_danger(fromChat.uid) || (!isPrivate() && blacklist->get_group_danger(fromChat.gid))){
 		set("ignored", true);
 		return 0;
 	}
@@ -1384,6 +1384,9 @@ int DiceEvent::BasicOrder()
 		string& key{ (at("key") = readUntilSpace()).text };
 		string strHelp = readRest();
 		if (strHelp.empty()){
+			reply(fmt->prev_help(key),false);
+		}
+		else if (strHelp == "reset") {
 			fmt->rm_help(key);
 			replyMsg("strHlpReset");
 		}
@@ -1391,7 +1394,6 @@ int DiceEvent::BasicOrder()
 			fmt->set_help(key, strHelp);
 			replyMsg("strHlpSet");
 		}
-		
 		return true;
 	}
 	if (strLowerMessage.substr(intMsgCnt, 4) == "help")
@@ -1899,7 +1901,7 @@ int DiceEvent::InnerOrder() {
 					if (dayDive > dayMax)dayMax = dayDive;
 					if (dayDive > 30)++cntDiver;
 				}
-				if (blacklist->get_qq_danger(each) > 1) {
+				if (blacklist->get_user_danger(each) > 1) {
 					sBlackQQ << printUser(each);
 				}
 				if (UserList.count(each))++cntUser;
@@ -4387,7 +4389,7 @@ bool DiceEvent::DiceFilter()
 											  || blacklist->get_group_danger(fromChat.gid))) {
 		isDisabled = true;
 	}
-	if (blacklist->get_qq_danger(fromChat.uid))isDisabled = true;
+	if (blacklist->get_user_danger(fromChat.uid))isDisabled = true;
 	if (isDisabled)return console["DisabledBlock"];
 	if (!is("order_off") && (fmt->listen_order(this) || InnerOrder())) {
 		if (!isVirtual && !is("ignored")) {
@@ -4638,7 +4640,7 @@ void reply(AttrObject& msg, string strReply, bool isFormat) {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	if(isFormat)strReply = fmt->format(strReply, msg);
-	if (console["ReferMsgReply"] && msg["msgid"])strReply = "[CQ:reply,id=" + msg.get_str("msgid") + "]" + strReply;
+	if (console["ReferMsgReply"] && msg.get_int("msgid"))strReply = "[CQ:reply,id=" + msg.get_str("msgid") + "]" + strReply;
 	long long uid{ msg.get_ll("uid") };
 	long long gid{ msg.get_ll("gid") };
 	long long chid{ msg.get_ll("chid") };
@@ -4649,7 +4651,7 @@ void MsgNote(AttrObject& msg, string strReply, int note_lv) {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	strReply = fmt->format(strReply, msg);
-	if (console["ReferMsgReply"] && msg["msgid"])strReply = "[CQ:reply,id=" + msg.get_str("msgid") + "]" + strReply;
+	if (console["ReferMsgReply"] && msg.get_int("msgid"))strReply = "[CQ:reply,id=" + msg.get_str("msgid") + "]" + strReply;
 	long long uid{ msg.get_ll("uid") };
 	long long gid{ msg.get_ll("gid") };
 	long long chid{ msg.get_ll("chid") };

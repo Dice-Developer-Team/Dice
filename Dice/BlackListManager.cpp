@@ -1,7 +1,7 @@
 /**
  * 黑名单明细
  * 更数据库式的管理
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 #include <mutex>
 #include <thread>
@@ -33,7 +33,7 @@ int isReliable(long long uid)
 		if (trustedQQ(mDiceList[uid]) > 2)return trustedQQ(mDiceList[uid]) - 1;
 		if (console["BelieveDiceList"] || mDiceList[uid] == uid)return 1;
 	}
-	if (blacklist->get_qq_danger(uid))return -1;
+	if (blacklist->get_user_danger(uid))return -1;
 	return 0;
 }
 
@@ -905,7 +905,7 @@ short DDBlackManager::get_group_danger(long long id) const
 	return 0;
 }
 
-short DDBlackManager::get_qq_danger(long long id) const
+short DDBlackManager::get_user_danger(long long id) const
 {
 	if (auto it = mQQDanger.find(id); it != mQQDanger.end())
 		return it->second;
@@ -1066,7 +1066,7 @@ void DDBlackManager::add_black_group(long long llgroup, DiceEvent* msg)
 		mark.danger = 2;
 		mark.type = "other";
 	}
-	if (mark.danger < get_qq_danger(llgroup))
+	if (mark.danger < get_user_danger(llgroup))
 	{
 		msg->reply(getMsg("strSelfName") + "已拉黑群" + to_string(llgroup) + "！");
 		return;
@@ -1092,7 +1092,7 @@ void DDBlackManager::add_black_qq(long long llqq, DiceEvent* msg)
 		mark.danger = 2;
 		mark.type = "other";
 	}
-	if (mark.danger < get_qq_danger(llqq))
+	if (mark.danger < get_user_danger(llqq))
 	{
 		msg->reply(getMsg("strSelfName") + "已拉黑用户" + printUser(llqq) + "！");
 		return;
@@ -1192,7 +1192,7 @@ void DDBlackManager::verify(const fifo_json& pJson, long long operatorQQ)
     if (index < 0)
 	{
         //发送者或当事人任一有黑名单
-        if (credit < 0 || get_qq_danger(mark.DiceMaid) || get_qq_danger(mark.masterID))return;
+        if (credit < 0 || get_user_danger(mark.DiceMaid) || get_user_danger(mark.masterID))return;
         if (!mark.isType())return;
         //无云端确认记录且不受信任
         if (is_cloud < 0 || is_cloud == 1) 

@@ -200,6 +200,7 @@ public:
 
 	fifo_dict_ci<size_t>cntHelp;
 	[[nodiscard]] string get_help(const string&, AttrObject = {}) const;
+	[[nodiscard]] string prev_help(const string&, AttrObject = {}) const;
 	void _help(DiceEvent*);
 	void set_help(const string&, const string&);
 	void rm_help(const string&);

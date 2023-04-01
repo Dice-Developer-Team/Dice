@@ -693,7 +693,6 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 		else if (tab.has("js")) {
 			echo = Echo::JavaScript;
 			answer = tab;
-			console.log("js_script:" + answer.get_str("script"), 0);
 		}
 		else if (tab.has("py")) {
 			echo = Echo::Python;

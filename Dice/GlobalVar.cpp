@@ -495,6 +495,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+641:SelfData支持yaml
 640:支持调用JavaScript
 639:支持reply调用python
 638:webui模块调序
@@ -548,8 +549,7 @@ const dict_ci<> HelpDoc = {
 窥屏可能：{窥屏可能}
 其他插件：{其他插件}{姐妹骰}
 骰娘用户群:{骰娘用户群}
-私骰分享群：192499947
-开发交流群：1029435374)"},
+骰娘交流分享群：1029435374)"},
 {"骰娘用户群","【未设置】"},
 {"窥屏可能","无"},
 {"其他插件","【未设置】"},
