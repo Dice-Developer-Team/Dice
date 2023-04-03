@@ -596,7 +596,7 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 		return true;
 	}
 	else if (echo == Echo::Deck) {
-		msg->reply(CardDeck::drawCard(answer.to_deck(), true));
+		msg->reply(CardDeck::drawOne(answer.to_deck()));
 		return true;
 	}
 	else if (echo == Echo::Lua) {

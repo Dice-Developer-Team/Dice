@@ -211,7 +211,7 @@ int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 	else DD::debugLog(note);
 	return Cnt;
 }
-int Console::log(const std::string& msg, const std::string& file) {
+void Console::log(const std::string& msg, const std::string& file) {
 	DD::debugLog(msg);
 	ofstream fout(DiceDir / "audit" / ("log_" + file + ".txt"),
 		ios::out | ios::app);
