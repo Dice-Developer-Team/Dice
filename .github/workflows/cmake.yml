@@ -208,7 +208,7 @@ jobs:
           mono: 'mono'
           dll_sfx: linux.arm
         
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     
     steps:
     - uses: actions/checkout@v3
@@ -230,8 +230,8 @@ jobs:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ matrix.triplet }}-20221219
-        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20221219
+        key: ${{ runner.os }}-${{ matrix.triplet }}-20230404
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20230404
         
     - name: Setup Vcpkg
       shell: bash
@@ -300,7 +300,7 @@ jobs:
           mono: 'mono'
           dll_sfx: android.aarch64
         
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     
     steps:
     - uses: actions/checkout@v3
@@ -319,8 +319,8 @@ jobs:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ matrix.triplet }}-20221219
-        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20221219
+        key: ${{ runner.os }}-${{ matrix.triplet }}-20230404
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20230404
         
     - name: Setup Vcpkg
       shell: bash
