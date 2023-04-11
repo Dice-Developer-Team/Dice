@@ -90,7 +90,7 @@ public:
 	//AttrVar& get(long long uid, const string& key) { return UserInfo[uid].to_dict()[key]; }
 	std::optional<AttrVar> get_if(long long qq, const string& key) {
 		if (UserInfo.count(qq) && UserInfo[qq].has(key))
-			return &UserInfo[qq].at(key);
+			return UserInfo[qq].at(key);
 		else return std::nullopt;
 	}
 	int getJrrp(long long qq);

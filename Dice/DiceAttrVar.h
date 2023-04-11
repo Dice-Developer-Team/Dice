@@ -124,7 +124,7 @@ public:
 	};
 	AttrVar() {}
 	AttrVar(const AttrVar& other);
-	AttrVar(bool b) :type(AttrType::Boolean), bit(b) {}
+	explicit AttrVar(bool b) :type(AttrType::Boolean), bit(b) {}
 	AttrVar(int n) :type(AttrType::Integer), attr(n) {}
 	AttrVar(double n) :type(AttrType::Number), number(n) {}
 	AttrVar(const char* s) :type(AttrType::Text), text(s) {}
