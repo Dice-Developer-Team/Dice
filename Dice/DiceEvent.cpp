@@ -3815,7 +3815,8 @@ int DiceEvent::InnerOrder() {
 			}
 			return 1;
 		}
-		auto pc = getPlayer(fromChat.uid)[fromChat.gid];
+		auto& pl = getPlayer(fromChat.uid);
+		PC pc = pl[fromChat.gid];
 		if (strLowerMessage.substr(intMsgCnt, 4) == "show") {
 			intMsgCnt += 4;
 			readSkipSpace();
@@ -3836,9 +3837,38 @@ int DiceEvent::InnerOrder() {
 			}
 			return 1;
 		}
-		bool isDetail = false;
-		bool isModify = false;
-		bool hasError = false;
+		if (size_t pos = strMsg.find("::", intMsgCnt); pos != string::npos
+			//|| (pos = strMsg.find("的", intMsgCnt)) != string::npos
+			) {
+			string name{ strip(filter_CQcode(strMsg.substr(intMsgCnt,pos - intMsgCnt), fromChat.gid)) };
+			intMsgCnt = pos + 2;
+			if (!name.empty()) {
+				if (!pl.count(name)) {
+					string type{ pc->Attr.get_str("__Type") };
+					switch (pl.emptyCard(name, fromChat.gid, type)) {
+					case 0:
+						if (!pl.count(fromChat.gid)) {
+							pl.changeCard(name, fromChat.gid);
+						}
+						break;
+					case -1:
+						replyMsg("strPcCardFull");
+						return 1;
+					case -6:
+						replyMsg("strPcNameInvalid");
+						return 1;
+					default:
+						replyMsg("strUnknownErr");
+						return 1;
+					}
+				}
+				pc = pl[name];
+				set("pc", name);
+			}
+		}
+		ShowList changes;
+		ShowList rolls;
+		ShowList errs;
 		//循环录入
 		while (intMsgCnt != strLowerMessage.length()) {
 			readSkipSpace();
@@ -3856,8 +3886,8 @@ int DiceEvent::InnerOrder() {
 				continue;
 			}
 			//读取属性名
-			string strSkillName = readAttrName();
-			if (strSkillName.empty()) {
+			string strAttr = readAttrName();
+			if (strAttr.empty()) {
 				readSkipSpace();
 				while (strMsg[intMsgCnt] == '=' || strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '+' ||
 			           strMsg[intMsgCnt] == '-' || strMsg[intMsgCnt] == '*' || strMsg[intMsgCnt] == '/'){
@@ -3866,62 +3896,65 @@ int DiceEvent::InnerOrder() {
 				readDigit(false);
 				continue;
 			}
-			strSkillName = pc->standard(strSkillName);
+			strAttr = pc->standard(strAttr);
 			while (strLowerMessage[intMsgCnt] ==
 				'=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
 			//判定数值修改
 			if ((strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+')) {
-				isDetail = true;
-				isModify = true;
-				AttrVar nVal{ pc->get(strSkillName)};
+				AttrVar nVal{ pc->get(strAttr)};
 				RD Mod(nVal.to_str() + readDice());
-				if (Mod.Roll()) {
-					replyMsg("strValueErr");
-					return 1;
-				}
-				else {
-					strReply += "\n" + strSkillName + "：" + Mod.FormCompleteString();
-					pc->set(strSkillName, Mod.intTotal);
+				if (!Mod.Roll()) {
+					changes << strAttr + ": " + Mod.FormCompleteString();
+					pc->set(strAttr, Mod.intTotal);
 					while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
 						'|')intMsgCnt++;
 					inc("cnt");
 				}
+				else
+					errs << strAttr + ": 表达式出错";
 				continue;
 			}
 			//判定录入文本
 			else if (!isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
 				&& !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
 				if (string strVal{ trustedQQ(fromChat.uid) > 0 ? readUntilSpace() : filter_CQcode(readUntilSpace()) };
-					pc->set(strSkillName, strVal)) {
-					hasError = true;
-					replyMsg("strPcTextTooLong");
-					break;
+					!pc->set(strAttr, strVal)) {
+					inc("cnt");
 				}
 				else
-					inc("cnt");
+					errs << strAttr + ": 文本过长";
 				continue;
 			}
 			//录入纯数值
 			string strSkillVal = readDigit();
-			if (strSkillName.empty() || strSkillVal.empty() || strSkillVal.length() > 5) {
-				hasError = true;
-				replyMsg("strPropErr");
+			if (strSkillVal.empty()) {
+				errs << strAttr + ": 属性为空";
 				break;
 			}
-			int intSkillVal = stoi(strSkillVal);
-			if (!pc->set(strSkillName, intSkillVal)) inc("cnt");
+			else if (strAttr.empty()) {
+				errs << strSkillVal + "无属性名";
+			}
+			else if (strSkillVal.length() > 9) {
+				errs << strAttr + ": 数值过大";
+				break;
+			}
+			else {
+				int intSkillVal = stoi(strSkillVal);
+				if (!pc->set(strAttr, intSkillVal)) inc("cnt");
+			}
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')
 				intMsgCnt++;
 		}
-		if (isModify) {
-			set("change", strReply);
+		if (!changes.empty()) {
+			set("change", changes.show("\n"));
 			replyMsg("strStModify");
 		}
 		else if (has("cnt")) {
 			replyMsg("strSetPropSuccess");
 		}
-		else if (!hasError) {
-			replyHelp("st");
+		if (!errs.empty()) {
+			set("err", errs.show("\n"));
+			replyMsg("strStErr");
 		}
 		return 1;
 	}

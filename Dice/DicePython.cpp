@@ -796,7 +796,8 @@ PyGlobal::PyGlobal() {
 	console.log("Python.Initialized", 0);
 }
 PyGlobal::~PyGlobal() {
-	//if(Py_IsInitialized())Py_Finalize();
+	if(Py_IsInitialized())Py_Finalize();
+	console.log("Python.Finalized", 0);
 }
 int PyGlobal::runFile(const std::filesystem::path& p) {
 	return 0;

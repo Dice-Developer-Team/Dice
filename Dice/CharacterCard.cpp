@@ -153,7 +153,7 @@ AttrVar CharaCard::get(string key)const {
 int CharaCard::set(string key, const AttrVar& val) {
 	if (key.empty())return -1;
 	if (key == "__Name")return -8;
-	if (val.is_text()&&val.to_str().length()>256)return -11;
+	if (val.is_text() && val.to_str().length() > 256)return -11;
 	key = standard(key);
 	if (getTemplet().defaultSkill.count(key) && val == getTemplet().defaultSkill.at(key)){
 		if (Attr.has(key)) Attr.reset(key);
@@ -417,12 +417,24 @@ PC Player::getCard(const string& name, long long group)
 	if (mGroupIndex.count(0))return mCardList[mGroupIndex[0]];
 	return mCardList[0];
 }
-int Player::newCard(string& s, long long group)
+int Player::emptyCard(const string& s, long long group, const string& type)
 {
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
 	//人物卡数量上限
 	if (mCardList.size() > 16)return -1;
-	string type = "COC7";
+	//无效模板不再报错
+	if (mNameIndex.count(s))return -4;
+	if (s.find("=") != string::npos)return -6;
+	mCardList.emplace(++indexMax, std::make_shared<CharaCard>(s, type));
+	PC card{ mCardList[indexMax] };
+	mNameIndex[s] = indexMax;
+	return 0;
+}
+int Player::newCard(string& s, long long group, string type)
+{
+	std::lock_guard<std::mutex> lock_queue(cardMutex);
+	//人物卡数量上限
+	if (mCardList.size() > 16)return -1;
 	s = strip(s);
 	std::stack<string> vOption;
 	int Cnt = s.rfind(':');

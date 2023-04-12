@@ -168,8 +168,8 @@ const dict_ci<string> PlainMsg
 	{"strReplyKeyEmpty","{nick}请输入回复关键词×"},
 	{"strReplyKeyNotFound","{self}未找到回复关键词{key}×"},
 	{"strScriptRunErr","{self}似乎出了点问题，请{nick}耐心等待（{lang}脚本运行出错）" },
-	{"strStModify","{self}已记录{pc}的属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
-	{"strStDetail","{self}已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
+	{"strStModify","{self}已记录{pc}的{cnt}条属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
+	{"strStDetail","{self}已设置{pc}的属性："},		//存在掷骰时，使用此文本
 	{"strStValEmpty","{self}未记录{attr}原值×"},		
 	{"strBlackQQAddNotice","{nick}，你已被{self}加入黑名单，详情请联系Master:{print:master}"},				
 	{"strBlackQQAddNoticeReason","{nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{print:master}"},
@@ -337,7 +337,7 @@ const dict_ci<string> PlainMsg
 	{"strNameDel", "{self}已删除{old_nick}在当前窗口的称呼√" },
 	{"strNameClr", "{self}已清空{old_nick}的所有称呼√" },
 	{"strUnknownPropErr", "未设定{attr}成功率，请先.st {attr} 技能值 或查看.help rc×"},
-	{"strPropErr", "请{pc}认真输入属性哦~"},
+	{"strPropErr", "{pc}的属性录入存在异常，请遵守规范:\n{err}"},
 	{"strSetPropSuccess", "已为{pc}录入{cnt}条属性√"},
 	{"strPropCleared", "已清空{char}的所有属性√"},
 	{"strRuleReset", "已重置默认规则√"},
@@ -473,7 +473,7 @@ const dict_ci<string> GlobalComment{
 	{"strHelpNotFound", "help未找到近似词条"},
 	{"strHelpRedirect", "help找到唯一近似词条"},
 	{"strHelpSuggestion", "help找到多条近似词条"},
-	{"strHlpMsg", "help指令裸参数回执"},
+	{"strHlpMsg", "help无参裸指令回执"},
 	//
 	{"strRollCriticalSuccess", "检定大成功"}, 
 	{"strRollExtremeSuccess", "检定极难成功"},
@@ -495,6 +495,8 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+643:rc支持跨角色卡调用
+642:优化helpdoc
 641:SelfData支持yaml
 640:支持调用JavaScript
 639:支持reply调用python
@@ -513,7 +515,6 @@ const dict_ci<> HelpDoc = {
 626:前缀匹配记录后缀
 625:支持welcome转义
 624:支持mod远程安装/详细信息
-623:优化mod热插拔
 622:支持手动时差
 621:扩展代理事件及ex接口
 620:留档每日数据，新增每日清算事件
@@ -549,7 +550,7 @@ const dict_ci<> HelpDoc = {
 骰娘交流分享群：928626681)"},
 {"骰娘用户群","【未设置】"},
 {"窥屏可能","无"},
-{"其他插件","【未设置】"},
+{"其他插件","【未知】"},
 {"姐妹骰","{list_dice_sister}"},
 {"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2023 String.Empty\nGithub@Dice-Developer-Team"},
 {"指令",R"(指令前接at可以指定骰娘响应，如

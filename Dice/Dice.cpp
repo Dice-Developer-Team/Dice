@@ -462,6 +462,7 @@ R"( //私骰作成 即可成为我的主人~
 	{
 		console.log(std::string("刷新软件包缓存失败：") + e.what(), 0);
 	}
+	isIniting.clear();
 	fmt->call_hook_event(AttrVars{ {{"Event","StartUp"}} });
 }
 
@@ -1075,6 +1076,7 @@ void global_exit() {
 	aws_shutdown();
 #endif
 	threads.exit();
+	DD::debugLog("Dice.Exit");
 }
 
 EVE_Disable(eventDisable)

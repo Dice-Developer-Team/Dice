@@ -348,7 +348,8 @@ public:
 		return mNameIndex.count(name);
 	}
 
-	int newCard(string& s, long long group = 0);
+	int emptyCard(const string& s, long long group, const string& type);
+	int newCard(string& s, long long group = 0, string type = "COC7");
 
 	int buildCard(string& name, bool isClear, long long group = 0);
 

@@ -31,7 +31,6 @@
 #include <Windows.h>
 #endif
 #include <map>
-#include <memory>
 #include <unordered_map>
 #include "STLExtern.hpp"
 #include "DiceExtensionManager.h"
