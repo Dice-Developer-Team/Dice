@@ -791,15 +791,15 @@ LUADEF(getPlayerCardAttr) {
 	long long group{ lua_to_int_or_zero(L, 2) };
 	string key{ lua_to_gbstring(L, 3) };
 	if (!plQQ || key.empty())return 0;
-	CharaCard& pc = getPlayer(plQQ)[group];
-	if (pc.Attr.has(key)) {
-		lua_push_attr(L, pc.Attr.get(key));
+	PC pc = getPlayer(plQQ)[group];
+	if (pc->Attr.has(key)) {
+		lua_push_attr(L, pc->Attr.get(key));
 	}
-	else if (key = pc.standard(key); pc.Attr.has(key)) {
-		lua_push_attr(L, pc.Attr.get(key));
+	else if (key = pc->standard(key); pc->Attr.has(key)) {
+		lua_push_attr(L, pc->Attr.get(key));
 	}
-	else if (pc.Attr.has("&" + key)) {
-		lua_push_string(L, pc.Attr.get_str("&" + key));
+	else if (pc->Attr.has("&" + key)) {
+		lua_push_string(L, pc->Attr.get_str("&" + key));
 	}
 	else {
 		lua_pushnil(L);
@@ -812,7 +812,7 @@ LUADEF(getPlayerCard) {
 	if (!plQQ)return 0;
 	long long group{ lua_to_int_or_zero(L, 2) };
 	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
-	*p = &getPlayer(plQQ)[group].Attr;
+	*p = &getPlayer(plQQ)[group]->Attr;
 	luaL_setmetatable(L, "Actor");
 	return 1;
 }
@@ -822,14 +822,14 @@ LUADEF(setPlayerCardAttr) {
 	string item{ lua_to_gbstring(L, 3) };
 	if (!plQQ || item.empty())return 0;
 	//参数4为空则视为删除,__Name除外
-	CharaCard& pc = getPlayer(plQQ)[group];
+	auto pc = getPlayer(plQQ)[group];
 	if (item == "__Name") {
-		getPlayer(plQQ).renameCard(pc.getName(), lua_to_gbstring(L, 4));
+		getPlayer(plQQ).renameCard(pc->getName(), lua_to_gbstring(L, 4));
 	}
 	else if (lua_isnoneornil(L, 4)) {
-		pc.erase(item); 
+		pc->erase(item);
 	}
-	else pc.set(item, lua_to_attr(L, 4));
+	else pc->set(item, lua_to_attr(L, 4));
 	return 0;
 }
 

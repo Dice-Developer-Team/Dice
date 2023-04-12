@@ -1,6 +1,6 @@
 /*
  * 玩家人物卡
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 #include "CharacterCard.h"
 
@@ -268,8 +268,10 @@ void CharaCard::clear() {
 	string strAttrRest;
 	for (const auto& [key,val] : *Attr.to_dict()) {
 		if (sDefault.count(key) || key[0] == '_'
-			|| (!isWhole && val.type == AttrVar::AttrType::Text))continue;
-		strAttrRest += key + ":" + val.to_str() + (val.type == AttrVar::AttrType::Text ? "\t" : " ");
+			|| (isWhole && val.type == AttrVar::AttrType::Number))continue;
+		strAttrRest += key + ":" + val.to_str() + (val.type == AttrVar::AttrType::Number 
+			? " " 
+			: (val.type == AttrVar::AttrType::Text ? "\t" : "\n"));
 	}
 	Res << strAttrRest;
 	return Res.show();
@@ -389,22 +391,134 @@ int Player::renameCard(const string& name, const string& name_new) 	{
 	if (name_new.find(":") != string::npos)return -6;
 	const int i = mNameIndex[name_new] = mNameIndex[name];
 	mNameIndex.erase(name);
-	mCardList[i].setName(name_new);
+	mCardList[i]->setName(name_new);
 	return 0;
 }
-CharaCard& Player::getCard(const string& name, long long group)
+int Player::copyCard(const string& name1, const string& name2, long long group)
+{
+	if (name1.empty() || name2.empty())return -3;
+	//不存在则新建人物卡
+	if (!mNameIndex.count(name1))
+	{
+		std::lock_guard<std::mutex> lock_queue(cardMutex);
+		//人物卡数量上限
+		if (mCardList.size() > 16)return -1;
+		if (name1.find(":") != string::npos)return -6;
+		mCardList[++indexMax]->setName(name1);
+		mNameIndex[name1] = indexMax;
+	}
+	*(*this)[name1] << *(*this)[name2];
+	return 0;
+}
+PC Player::getCard(const string& name, long long group)
 {
 	if (!name.empty() && mNameIndex.count(name))return mCardList[mNameIndex[name]];
 	if (mGroupIndex.count(group))return mCardList[mGroupIndex[group]];
 	if (mGroupIndex.count(0))return mCardList[mGroupIndex[0]];
 	return mCardList[0];
 }
+int Player::newCard(string& s, long long group)
+{
+	std::lock_guard<std::mutex> lock_queue(cardMutex);
+	//人物卡数量上限
+	if (mCardList.size() > 16)return -1;
+	string type = "COC7";
+	s = strip(s);
+	std::stack<string> vOption;
+	int Cnt = s.rfind(':');
+	if (Cnt != string::npos)
+	{
+		type = s.substr(0, Cnt);
+		s.erase(s.begin(), s.begin() + Cnt + 1);
+		if (type == "COC")type = "COC7";
+	}
+	else if (CharaCard::mCardTemplet.count(s))
+	{
+		type = s;
+		s.clear();
+	}
+	while ((Cnt = type.rfind(':')) != string::npos)
+	{
+		vOption.push(type.substr(Cnt + 1));
+		type.erase(type.begin() + Cnt, type.end());
+	}
+	//无效模板不再报错
+	//if (!getmCardTemplet().count(type))return -2;
+	if (mNameIndex.count(s))return -4;
+	if (s.find("=") != string::npos)return -6;
+	mCardList.emplace(++indexMax, std::make_shared<CharaCard>(s, type));
+	PC card{ mCardList[indexMax] };
+	// CardTemp& temp = mCardTemplet[type];
+	while (!vOption.empty())
+	{
+		string para = vOption.top();
+		vOption.pop();
+		card->build(para);
+		if (card->getName().empty())
+		{
+			std::vector<string> list = CharaCard::mCardTemplet[type].mBuildOption[para].vNameList;
+			while (!list.empty())
+			{
+				s = CardDeck::draw(list[0]);
+				if (mNameIndex.count(s))list.erase(list.begin());
+				else
+				{
+					card->setName(s);
+					break;
+				}
+			}
+		}
+	}
+	if (card->getName().empty())
+	{
+		std::vector<string> list = CharaCard::mCardTemplet[type].mBuildOption["_default"].vNameList;
+		while (!list.empty())
+		{
+			s = CardDeck::draw(list[0]);
+			if (mNameIndex.count(s))list.erase(list.begin());
+			else
+			{
+				card->setName(s);
+				break;
+			}
+		}
+		if (card->getName().empty())card->setName(to_string(indexMax + 1));
+	}
+	s = card->getName();
+	mNameIndex[s] = indexMax;
+	mGroupIndex[group] = indexMax;
+	return 0;
+}
+int Player::buildCard(string& name, bool isClear, long long group)
+{
+	string strName = name;
+	string strType;
+	if (name.find(":") != string::npos)
+	{
+		strName = strip(name.substr(name.rfind(":") + 1));
+		strType = name.substr(0, name.rfind(":"));
+	}
+	//不存在则新建人物卡
+	if (!strName.empty() && !mNameIndex.count(strName))
+	{
+		if (const int res = newCard(name, group))return res;
+		name = getCard(strName, group)->getName();
+		(*this)[name]->buildv();
+	}
+	else
+	{
+		name = getCard(strName, group)->getName();
+		if (isClear)(*this)[name]->clear();
+		(*this)[name]->buildv(strType);
+	}
+	return 0;
+}
 string Player::listCard() {
 	ResList Res;
 	for (auto& [idx, pc] : mCardList) {
-		Res << "[" + to_string(idx) + "]<" + pc.Attr.get_str("__Type") + ">" + pc.getName();
+		Res << "[" + to_string(idx) + "]<" + pc->Attr.get_str("__Type") + ">" + pc->getName();
 	}
-	Res << "default:" + (*this)[0].getName();
+	Res << "default:" + (*this)[0]->getName();
 	return Res.show();
 }
 
@@ -418,10 +532,14 @@ void Player::writeb(std::ofstream& fout) const
 void Player::readb(std::ifstream& fin)
 {
 	indexMax = fread<short>(fin);
-	fread(fin, mCardList);
-	for (const auto& card : mCardList)
-	{
-		if(!card.second.getName().empty())mNameIndex[card.second.getName()] = card.first;
+	if (short len = fread<short>(fin); len > 0) while (len--) {
+		auto idx = fread<unsigned short>(fin);
+		PC card = std::make_shared<CharaCard>();
+		card->readb(fin);
+		if (auto name{ card->getName() }; !name.empty()) {
+			mCardList[idx] = card;
+			mNameIndex[name] = idx;
+		}
 	}
 	fread<unsigned long long, unsigned short>(fin, mGroupIndex);
 }
@@ -431,7 +549,7 @@ AttrVar idx_pc(AttrObject& eve){
 	if (!eve.has("uid"))return {};
 	long long uid{ eve.get_ll("uid") };
 	long long gid{ eve.get_ll("gid") };
-	if (PList.count(uid) && PList[uid][gid].getName() != "角色卡")
-		return eve["pc"] = PList[uid][gid].getName();
+	if (PList.count(uid) && PList[uid][gid]->getName() != "角色卡")
+		return eve["pc"] = PList[uid][gid]->getName();
 	return idx_nick(eve);
 }

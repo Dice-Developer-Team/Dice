@@ -1068,11 +1068,11 @@ int DiceEvent::BasicOrder()
 		return 1;
 	}
 	else if (!isPrivate() && pGrp->isset("协议无效")){
-		set("ignored", true);
+		set("ignored");
 		return 0;
 	}
 	if (blacklist->get_user_danger(fromChat.uid) || (!isPrivate() && blacklist->get_group_danger(fromChat.gid))){
-		set("ignored", true);
+		set("ignored");
 		return 0;
 	}
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot"){
@@ -2219,7 +2219,7 @@ int DiceEvent::InnerOrder() {
 		}
 		intMsgCnt += 4;
 		if (strMsg[intMsgCnt] == 'h' && isspace(static_cast<unsigned char>(strMsg[intMsgCnt + 1]))) {
-			set("hidden",true);
+			set("hidden");
 			++intMsgCnt;
 		}
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
@@ -2228,7 +2228,7 @@ int DiceEvent::InnerOrder() {
 		vector<string>* TempDeck = nullptr;
 		string& key{ (at("deck_name") = readAttrName()).text };
 		while (!key.empty() && key[0] == '_') {
-			set("hidden",true);
+			set("hidden");
 			key.erase(key.begin());
 		}
 		if (key.empty()) {
@@ -2752,7 +2752,7 @@ int DiceEvent::InnerOrder() {
 		}
 		const int intDefaultDice = stoi(strDice);
 		if (PList.count(fromChat.uid)) {
-			PList[fromChat.uid][fromChat.gid].set("__DefaultDice", intDefaultDice);
+			PList[fromChat.uid][fromChat.gid]->set("__DefaultDice", intDefaultDice);
 			replyMsg("strSetDefaultDice");
 			return 1;
 		}
@@ -2898,12 +2898,12 @@ int DiceEvent::InnerOrder() {
 	}
 	string& strAttr{ (at("attr") = readAttrName()).text};
 	string strCurrentValue{ readDigit(false) };
-	CharaCard* pc{ PList.count(fromChat.uid) ? &getPlayer(fromChat.uid)[fromChat.gid] : nullptr };
+	PC pc{ PList.count(fromChat.uid) ? getPlayer(fromChat.uid)[fromChat.gid] : std::make_shared<CharaCard>()};
 	int intVal{ 0 };
 		//获取技能原值
 		if (strCurrentValue.empty()) {
 			if (pc && !strAttr.empty() && (pc->stored(strAttr))) {
-				intVal = getPlayer(fromChat.uid)[fromChat.gid].get(strAttr).to_int();
+				intVal = pc->get(strAttr).to_int();
 			}
 			else {
 				replyMsg("strEnValEmpty");
@@ -3174,10 +3174,10 @@ int DiceEvent::InnerOrder() {
 		}
 		if (strOption == "show") {
 			string strName = readRest();
-			CharaCard& pc{ pl.getCard(strName, fromChat.gid) };
-			set("char",pc.getName());
-			set("type",pc.Attr.get_str("__Type"));
-			set("show",pc.show(true));
+			auto pc{ pl.getCard(strName, fromChat.gid) };
+			set("char",pc->getName());
+			set("type",pc->Attr.get_str("__Type"));
+			set("show",pc->show(true));
 			replyMsg("strPcCardShow");
 			return 1;
 		}
@@ -3185,8 +3185,8 @@ int DiceEvent::InnerOrder() {
 			string& strPC{ (at("char") = strip(filter_CQcode(readRest(), fromChat.gid))).text};
 			switch (pl.newCard(strPC, fromChat.gid)) {
 			case 0:
-				set("type",pl[fromChat.gid].Attr.get_str("__Type"));
-				set("show",pl[fromChat.gid].show(true));
+				set("type",pl[fromChat.gid]->Attr.get_str("__Type"));
+				set("show",pl[fromChat.gid]->show(true));
 				if (is_empty("show"))replyMsg("strPcNewEmptyCard");
 				else replyMsg("strPcNewCardShow");
 				break;
@@ -3209,7 +3209,7 @@ int DiceEvent::InnerOrder() {
 			string& strPC{ (at("char") = strip(filter_CQcode(readRest(), fromChat.gid))).text};
 			switch (pl.buildCard(strPC, false, fromChat.gid)) {
 			case 0:
-				set("show",pl[strPC].show(true));
+				set("show",pl[strPC]->show(true));
 				replyMsg("strPcCardBuild");
 				break;
 			case -1:
@@ -3234,7 +3234,7 @@ int DiceEvent::InnerOrder() {
 		}
 		if (strOption == "nn") {
 			string& strPC{ (at("new_name") = strip(filter_CQcode(readRest(),fromChat.gid))).text};
-			set("old_name",pl[fromChat.gid].getName());
+			set("old_name",pl[fromChat.gid]->getName());
 			switch (pl.renameCard(get_str("old_name"), strPC)) {
 			case 0:
 				replyMsg("strPcCardRename");
@@ -3274,7 +3274,7 @@ int DiceEvent::InnerOrder() {
 		}
 		if (strOption == "redo") {
 			pl.buildCard((at("char") = strip(readRest())).text, true, fromChat.gid);
-			set("show",pl[get_str("char")].show(true));
+			set("show",pl[get_str("char")]->show(true));
 			replyMsg("strPcCardRedo");
 			return 1;
 		}
@@ -3288,7 +3288,7 @@ int DiceEvent::InnerOrder() {
 			string& strPC1{ (at("char1") = strName.substr(0, strName.find('='))).text};
 			set("char2",(strPC1.length() + 1 < strName.length())
 				? strip(strName.substr(strPC1.length() + 1))
-				: pl[fromChat.gid].getName());
+				: pl[fromChat.gid]->getName());
 			switch (pl.copyCard(strPC1, get_str("char2"), fromChat.gid)) {
 			case 0:
 				replyMsg("strPcCardCpy");
@@ -3309,21 +3309,21 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "stat") {
-			CharaCard& pc{ pl[fromChat.gid] };
+			auto pc{ pl[fromChat.gid] };
 			bool isEmpty{ true };
 			ResList res;
-			int intFace{ pc.available("__DefaultDice")
-				? pc.call(string("__DefaultDice"))
+			int intFace{ pc->available("__DefaultDice")
+				? pc->call(string("__DefaultDice"))
 				: getUser(fromChat.uid).getConf("默认骰",100) };
 			string strFace{ to_string(intFace) };
 			string keyStatCnt{ "__StatD" + strFace + "Cnt" };	//掷骰次数
-			if (intFace <= 100 && pc.available(keyStatCnt)) {
-				int cntRoll{ pc.Attr.get_int(keyStatCnt) };	
+			if (intFace <= 100 && pc->available(keyStatCnt)) {
+				int cntRoll{ pc->Attr.get_int(keyStatCnt) };
 				if (cntRoll > 0) {
 					isEmpty = false;
 					res << "D" + strFace + "统计次数: " + to_string(cntRoll);
-					int sumRes{ pc.Attr.get_int("__StatD" + strFace + "Sum") };		//点数和
-					int sumResSqr{ pc.Attr.get_int("__StatD" + strFace + "SqrSum") };	//点数平方和
+					int sumRes{ pc->Attr.get_int("__StatD" + strFace + "Sum") };		//点数和
+					int sumResSqr{ pc->Attr.get_int("__StatD" + strFace + "SqrSum") };	//点数平方和
 					DiceEst stat{ intFace,cntRoll,sumRes,sumResSqr };
 					if (stat.estMean > 0)
 						res << "均值[期望]: " + toString(stat.estMean, 2, true) + " [" + toString(stat.expMean) + "]";
@@ -3337,19 +3337,19 @@ int DiceEvent::InnerOrder() {
 				}
 			}
 			string keyRcCnt{ "__StatRcCnt" };	//rc/sc检定次数
-			if (pc.available(keyRcCnt)) {
-				int cntRc{ pc.Attr.get_int("__StatRcCnt") };
+			if (pc->available(keyRcCnt)) {
+				int cntRc{ pc->Attr.get_int("__StatRcCnt") };
 				if (cntRc > 0) {
 					isEmpty = false;
-					int sumRcSuc{ pc.Attr.get_int("__StatRcSumSuc") };//实际成功数
+					int sumRcSuc{ pc->Attr.get_int("__StatRcSumSuc") };//实际成功数
 					res << "检定成功统计: " + to_string(sumRcSuc) + "/" + to_string(cntRc);
-					int sumRcRate{ pc.Attr.get_int("__StatRcSumRate") };//总成功率
+					int sumRcRate{ pc->Attr.get_int("__StatRcSumRate") };//总成功率
 					res << "成功率[期望]: " + toString((double)sumRcSuc / cntRc * 100) + "% [" + toString((double)sumRcRate / cntRc) + "%]";
-					double cnt5{ pc.Attr.get_num("__StatRcCnt5") }, cnt96{ pc.Attr.get_num("__StatRcCnt96") };
-					res << "5- | 96+ 出现率: " + (cnt5 ? toString(cnt5 / cntRc * 100) + "%(" + pc.Attr.get_str("__StatRcCnt5") + ")" : "0%")
-						+ " | " + (cnt96 ? toString(cnt96 / cntRc * 100) + "%(" + pc.Attr.get_str("__StatRcCnt96") + ")" : "0%");
-					if(pc.available("__StatRcCnt1")|| pc.available("__StatRcCnt100"))
-						res << "1 | 100 出现数: " + pc.Attr.get_str("__StatRcCnt1") + " | " + pc.Attr.get_str("__StatRcCnt100");
+					double cnt5{ pc->Attr.get_num("__StatRcCnt5") }, cnt96{ pc->Attr.get_num("__StatRcCnt96") };
+					res << "5- | 96+ 出现率: " + (cnt5 ? toString(cnt5 / cntRc * 100) + "%(" + pc->Attr.get_str("__StatRcCnt5") + ")" : "0%")
+						+ " | " + (cnt96 ? toString(cnt96 / cntRc * 100) + "%(" + pc->Attr.get_str("__StatRcCnt96") + ")" : "0%");
+					if(pc->available("__StatRcCnt1")|| pc->available("__StatRcCnt100"))
+						res << "1 | 100 出现数: " + pc->Attr.get_str("__StatRcCnt1") + " | " + pc->Attr.get_str("__StatRcCnt100");
 				}
 			}
 			if (isEmpty) {
@@ -3369,26 +3369,26 @@ int DiceEvent::InnerOrder() {
 		if (strOption == "type") {
 			if ((at("new_type") = strip(readRest())).str_empty()) {
 				set("attr","模板类");
-				set("val",pl[fromChat.gid].Attr.get_str("__Type"));
+				set("val",pl[fromChat.gid]->Attr.get_str("__Type"));
 				replyMsg("strProp");
 			}
 			else {
-				pl[fromChat.gid].setType(get_str("new_type"));
+				pl[fromChat.gid]->setType(get_str("new_type"));
 				replyMsg("strPcTempChange");
 			}
 			return 1;
 		}
 		else if (strOption == "temp") {
-			CardTemp& temp{ pl[fromChat.gid].getTemplet()};
+			CardTemp& temp{ pl[fromChat.gid]->getTemplet()};
 			reply(temp.show());
 			return 1;
 		}
 		else if (strOption == "tojson") {
 			string strName = readRest();
-			CharaCard& pc{ pl.getCard(strName, fromChat.gid) };
-			set("char", pc.getName());
-			set("type", pc.Attr.get_str("__Type"));
-			set("show", UTF8toGBK(pc.Attr.to_json().dump()));
+			auto pc{ pl.getCard(strName, fromChat.gid) };
+			set("char", pc->getName());
+			set("type", pc->Attr.get_str("__Type"));
+			set("show", UTF8toGBK(pc->Attr.to_json().dump()));
 			replyMsg("strPcCardShow");
 			return 1;
 		}
@@ -3410,7 +3410,7 @@ int DiceEvent::InnerOrder() {
 			++intMsgCnt;
 		}
 		else if (readSkipSpace(); strMsg[intMsgCnt] == '_') {
-			set("hidden",true);
+			set("hidden");
 			++intMsgCnt;
 		}
 		readSkipSpace();
@@ -3438,7 +3438,7 @@ int DiceEvent::InnerOrder() {
 		bool isAutomatic = false;
 		//D100且有角色卡时计入统计
 		bool isStatic = PList.count(fromChat.uid);
-		CharaCard* pc{ isStatic ? &PList[fromChat.uid][fromChat.gid] : nullptr };
+		PC pc{ isStatic ? PList[fromChat.uid][fromChat.gid] : std::make_shared<CharaCard>()};
 		if ((strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') && strLowerMessage[intMsgCnt - 1] != ' ') {
 			isStatic = false;
 			strMainDice = strLowerMessage[intMsgCnt];
@@ -3447,7 +3447,7 @@ int DiceEvent::InnerOrder() {
 		}
 		readSkipSpace();
 		if (strMsg[intMsgCnt] == '_') {
-			set("hidden",true);
+			set("hidden");
 			++intMsgCnt;
 		}
 		if (strMsg.length() == intMsgCnt) {
@@ -3455,6 +3455,29 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		string& attr{ (at("attr") = readAttrName()).text };
+		if (pc) {
+			if (strMsg[intMsgCnt] == ':') {
+				if(PList[fromChat.uid].count(attr)){
+					while (strMsg[intMsgCnt] == ':')++intMsgCnt;
+					pc = PList[fromChat.uid][attr];
+					set("pc", pc->getName());
+					attr = readAttrName();
+				}
+				else {
+					set("char", attr);
+					replyMsg("strPcNameNotExist");
+				}
+			}
+			else if (size_t pos{ attr.find("的") }; pos != string::npos 
+				|| (pos = attr.find("::")) != string::npos) {
+				string strGenitive = attr.substr(0, pos);
+				if (PList[fromChat.uid].count(strGenitive)) {
+					pc = PList[fromChat.uid][strGenitive];
+					set("pc", pc->getName());
+					attr = attr.substr(pos + 2);
+				}
+			}
+		}
 		if (attr.find("自动成功") == 0) {
 			strDifficulty = attr.substr(0, 8);
 			attr = attr.substr(8);
@@ -3471,7 +3494,6 @@ int DiceEvent::InnerOrder() {
 		else {
 			if (SkillNameReplace.count(attr))attr = SkillNameReplace[attr];
 		}
-		DD::debugLog("attr:" + get_str("attr"));
 		if (strLowerMessage[intMsgCnt] == '*' && isdigit(strLowerMessage[intMsgCnt + 1])) {
 			++intMsgCnt;
 			readNum(intSkillMultiple);
@@ -3682,10 +3704,10 @@ int DiceEvent::InnerOrder() {
 		}
 		string attr = "理智";
 		int intSan = 0;
-		CharaCard* pc{ nullptr };
+		PC pc;
 		if (readNum(intSan)) {
 			if (PList.count(fromChat.uid)
-				&& (pc = &getPlayer(fromChat.uid)[fromChat.gid])->available(attr)) {
+				&& (pc = getPlayer(fromChat.uid)[fromChat.gid])->available(attr)) {
 				intSan = pc->call(attr);
 			}
 			else {
@@ -3768,8 +3790,8 @@ int DiceEvent::InnerOrder() {
 				replyMsg("strPcNotExistErr");
 				return 1;
 			}
-			getPlayer(fromChat.uid)[fromChat.gid].clear();
-			set("char",getPlayer(fromChat.uid)[fromChat.gid].getName());
+			getPlayer(fromChat.uid)[fromChat.gid]->clear();
+			set("char",getPlayer(fromChat.uid)[fromChat.gid]->getName());
 			replyMsg("strPropCleared");
 			return 1;
 		}
@@ -3785,7 +3807,7 @@ int DiceEvent::InnerOrder() {
 				intMsgCnt++;
 			}
 			set("attr",readAttrName());
-			if (getPlayer(fromChat.uid)[fromChat.gid].erase(at("attr").text)) {
+			if (getPlayer(fromChat.uid)[fromChat.gid]->erase(at("attr").text)) {
 				replyMsg("strPropDeleted");
 			}
 			else {
@@ -3793,20 +3815,19 @@ int DiceEvent::InnerOrder() {
 			}
 			return 1;
 		}
-		CharaCard& pc = getPlayer(fromChat.uid)[fromChat.gid];
+		auto pc = getPlayer(fromChat.uid)[fromChat.gid];
 		if (strLowerMessage.substr(intMsgCnt, 4) == "show") {
 			intMsgCnt += 4;
-			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
-				intMsgCnt++;
+			readSkipSpace();
 			set("attr",readAttrName());
-			if (at("attr").str_empty()) {
-				set("char",pc.getName());
-				set("type",pc.Attr.get_str("__Type"));
-				set("show",pc.show(false));
+			if (get_str("attr").empty()) {
+				set("char",pc->getName());
+				set("type",pc->Attr.get_str("__Type"));
+				set("show",pc->show(false));
 				replyMsg("strPropList");
 				return 1;
 			}
-			if (string val; pc.show(get_str("attr"), val) > -1) {
+			if (string val; pc->show(get_str("attr"), val) > -1) {
 				set("val",val);
 				replyMsg("strProp");
 			}
@@ -3827,7 +3848,7 @@ int DiceEvent::InnerOrder() {
 				if (at("attr").str_empty()) {
 					continue;
 				}
-				if (pc.set(get_str("attr"), readExp())) {
+				if (pc->set(get_str("attr"), readExp())) {
 					replyMsg("strPcTextTooLong");
 					set("error");
 				}
@@ -3845,14 +3866,14 @@ int DiceEvent::InnerOrder() {
 				readDigit(false);
 				continue;
 			}
-			strSkillName = pc.standard(strSkillName);
+			strSkillName = pc->standard(strSkillName);
 			while (strLowerMessage[intMsgCnt] ==
 				'=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
 			//判定数值修改
 			if ((strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+')) {
 				isDetail = true;
 				isModify = true;
-				AttrVar nVal{ pc.get(strSkillName)};
+				AttrVar nVal{ pc->get(strSkillName)};
 				RD Mod(nVal.to_str() + readDice());
 				if (Mod.Roll()) {
 					replyMsg("strValueErr");
@@ -3860,7 +3881,7 @@ int DiceEvent::InnerOrder() {
 				}
 				else {
 					strReply += "\n" + strSkillName + "：" + Mod.FormCompleteString();
-					pc.set(strSkillName, Mod.intTotal);
+					pc->set(strSkillName, Mod.intTotal);
 					while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
 						'|')intMsgCnt++;
 					inc("cnt");
@@ -3871,7 +3892,7 @@ int DiceEvent::InnerOrder() {
 			else if (!isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
 				&& !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
 				if (string strVal{ trustedQQ(fromChat.uid) > 0 ? readUntilSpace() : filter_CQcode(readUntilSpace()) };
-					pc.set(strSkillName, strVal)) {
+					pc->set(strSkillName, strVal)) {
 					hasError = true;
 					replyMsg("strPcTextTooLong");
 					break;
@@ -3888,7 +3909,7 @@ int DiceEvent::InnerOrder() {
 				break;
 			}
 			int intSkillVal = stoi(strSkillVal);
-			if (!pc.set(strSkillName, intSkillVal)) inc("cnt");
+			if (!pc->set(strSkillName, intSkillVal)) inc("cnt");
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')
 				intMsgCnt++;
 		}
@@ -3928,7 +3949,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		if (!fromChat.gid)isHidden = false;
-		CharaCard* pc{ PList.count(fromChat.uid) ? &getPlayer(fromChat.uid)[fromChat.gid] : nullptr };
+		PC pc{ PList.count(fromChat.uid) ? getPlayer(fromChat.uid)[fromChat.gid] : std::make_shared<CharaCard>()};
 		string strMainDice;
 		string& strReason{ (at("reason") = "").text};
 		string strAttr;
@@ -4120,8 +4141,7 @@ int DiceEvent::InnerOrder() {
 		return 1;
 	}
 	else if (strLowerMessage[intMsgCnt] == 'r' || strLowerMessage[intMsgCnt] == 'h') {
-		if (strLowerMessage[intMsgCnt] == 'h')
-			set("hidden",true);
+		if (strLowerMessage[intMsgCnt] == 'h')set("hidden");
 		intMsgCnt += 1;
 		bool boolDetail = true;
 		if (strMsg[intMsgCnt] == 's') {
@@ -4129,14 +4149,13 @@ int DiceEvent::InnerOrder() {
 			intMsgCnt++;
 		}
 		if (strLowerMessage[intMsgCnt] == 'h') {
-			set("hidden",true);
+			set("hidden");
 			intMsgCnt += 1;
 		}
-		if (!fromChat.gid)set("hidden",false);
-		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
-			intMsgCnt++;
+		if (!fromChat.gid)reset("hidden");
+		readSkipSpace();
 		string strMainDice;
-		CharaCard* pc{ PList.count(fromChat.uid) ? &getPlayer(fromChat.uid)[fromChat.gid] : nullptr };
+		PC pc{ PList.count(fromChat.uid) ? getPlayer(fromChat.uid)[fromChat.gid] : std::make_shared<CharaCard>() };
 		string& strReason{ (at("reason") = strMsg.substr(intMsgCnt)).text};
 		if (strReason.empty()) {
 			string key{ "__DefaultDiceExp" };
@@ -4361,36 +4380,34 @@ bool DiceEvent::DiceFilter()
 	strLowerMessage = toLower(strMsg);
 	trusted = trustedQQ(fromChat.uid);
 	fwdMsg();
-	if (isOtherCalled && !isCalled)return false;
 	if (isPrivate()) isCalled = true;
-	if (!(at("order_off") = isDisabled 
-		= ((console["DisabledGlobal"] && (trusted < 4 || !isCalled))
+	else if (isOtherCalled && !isCalled)return false;
+	if (!(isDisabled = ( (console["DisabledGlobal"] && (trusted < 4 || !isCalled))
 			|| groupset(fromChat.gid, "协议无效") > 0))
 		&& !(isCalled && console["DisabledListenAt"])) {
-		if (int chon{ isChannel() && pGrp ? pGrp->getChConf(fromChat.chid,"order",0) : 0 }) {
+		if (int chon{ (isChannel() && pGrp) ? pGrp->getChConf(fromChat.chid,"order",0) : 0 }) {
 			set("order_off",chon < 0);
 		}
-		else {
-			set("order_off",groupset(fromChat.gid, "停用指令") > 0);
+		else if (pGrp && pGrp->isset("停用指令")) {
+			set("order_off");
 		}
 	}
 	if (BasicOrder()) {
-		if (!isVirtual) {
+		if (!isVirtual && !is("ignored")) {
 			AddFrq(*this);
 			getUser(fromChat.uid).update((time_t)get_ll("time"));
-			if (!isPrivate())chat(fromChat.gid).update((time_t)get_ll("time"));
+			if (pGrp)pGrp->update((time_t)get_ll("time"));
 		}
 		return 1;
 	}
-	else if (is("ignored"))return 1;
+	else if (is("ignored"))return 0;
 	if (isCalled)set("called");
 	if (!isPrivate() && ((console["CheckGroupLicense"] > 0 && pGrp->isset("未审核"))
-											  || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")) 
-											  || blacklist->get_group_danger(fromChat.gid))) {
+		|| (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")) 
+		|| blacklist->get_group_danger(fromChat.gid))) {
 		isDisabled = true;
 	}
-	if (blacklist->get_user_danger(fromChat.uid))isDisabled = true;
-	if (isDisabled)return console["DisabledBlock"];
+	if (isDisabled |= (blacklist->get_user_danger(fromChat.uid) > 0))return console["DisabledBlock"];
 	if (!is("order_off") && (fmt->listen_order(this) || InnerOrder())) {
 		if (!isVirtual && !is("ignored")) {
 			AddFrq(*this);

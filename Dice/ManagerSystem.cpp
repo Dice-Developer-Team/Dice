@@ -591,10 +591,8 @@ void Chat::readb(std::ifstream& fin)
 	inviter = confs.get_ll("inviter");
 	if (confs.has("tCreated"))tCreated = confs.get_ll("tCreated");
 }
-int groupset(long long id, const string& st)
-{
-	if (!ChatList.count(id))return -1;
-	return ChatList[id].isset(st);
+int groupset(long long id, const string& st){
+	return ChatList.count(id) ? ChatList[id].isset(st) : -1;
 }
 
 string printChat(Chat& grp)

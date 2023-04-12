@@ -559,6 +559,17 @@ void fwrite(ofstream& fout, const std::map<T1, T2>&m)
 	}
 }
 template <typename T1, typename T2>
+void fwrite(ofstream& fout, const std::map<T1, std::shared_ptr<T2>>& m)
+{
+	const auto len = static_cast<short>(m.size());
+	fwrite(fout, len);
+	for (const auto& it : m)
+	{
+		fwrite(fout, it.first);
+		fwrite(fout, *it.second);
+	}
+}
+template <typename T1, typename T2>
 void fwrite(ofstream& fout, const std::unordered_map<T1, T2>& m)
 {
 	const auto len = static_cast<short>(m.size());
