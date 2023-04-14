@@ -3468,8 +3468,7 @@ int DiceEvent::InnerOrder() {
 					replyMsg("strPcNameNotExist");
 				}
 			}
-			else if (size_t pos{ attr.find("µÄ") }; pos != string::npos 
-				|| (pos = attr.find("::")) != string::npos) {
+			else if (size_t pos{ attr.find("µÄ") }; pos != string::npos) {
 				string strGenitive = attr.substr(0, pos);
 				if (PList[fromChat.uid].count(strGenitive)) {
 					pc = PList[fromChat.uid][strGenitive];
@@ -3820,15 +3819,36 @@ int DiceEvent::InnerOrder() {
 		if (strLowerMessage.substr(intMsgCnt, 4) == "show") {
 			intMsgCnt += 4;
 			readSkipSpace();
-			set("attr",readAttrName());
-			if (get_str("attr").empty()) {
+			string& attr = (at("attr") = readAttrName()).text;
+			DD::debugLog("attr:" + attr);
+			if (strMsg[intMsgCnt] == ':') {
+				if (PList[fromChat.uid].count(attr)) {
+					while (strMsg[intMsgCnt] == ':')++intMsgCnt;
+					pc = PList[fromChat.uid][attr];
+					set("pc", pc->getName());
+					attr = readAttrName();
+				}
+				else {
+					set("char", attr);
+					replyMsg("strPcNameNotExist");
+				}
+			}
+			else if (size_t pos{ attr.find("µÄ") }; pos != string::npos) {
+				string strGenitive = attr.substr(0, pos);
+				if (PList[fromChat.uid].count(strGenitive)) {
+					pc = PList[fromChat.uid][strGenitive];
+					set("pc", pc->getName());
+					attr = attr.substr(pos + 2);
+				}
+			}
+			if (attr.empty()) {
 				set("char",pc->getName());
 				set("type",pc->Attr.get_str("__Type"));
 				set("show",pc->show(false));
 				replyMsg("strPropList");
 				return 1;
 			}
-			if (string val; pc->show(get_str("attr"), val) > -1) {
+			else if (string val; pc->show(attr, val) > -1) {
 				set("val",val);
 				replyMsg("strProp");
 			}

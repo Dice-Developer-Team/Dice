@@ -165,7 +165,7 @@ const dict_ci<string> PlainMsg
 	{"strReplyShow","{self}的关键词条目{key}为:{show}"},
 	{"strReplyList","{self}的回复触发词共有:{res}"},
 	{"strReplyDel","{self}已移除回复关键词条目{key}√"},
-	{"strReplyKeyEmpty","{nick}请输入回复关键词×"},
+	{"strReplyKeyEmpty","{nick}请输入回复触发词×"},
 	{"strReplyKeyNotFound","{self}未找到回复关键词{key}×"},
 	{"strScriptRunErr","{self}似乎出了点问题，请{nick}耐心等待（{lang}脚本运行出错）" },
 	{"strStModify","{self}已记录{pc}的{cnt}条属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本

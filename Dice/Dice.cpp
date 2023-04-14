@@ -1076,7 +1076,6 @@ void global_exit() {
 	aws_shutdown();
 #endif
 	threads.exit();
-	DD::debugLog("Dice.Exit");
 }
 
 EVE_Disable(eventDisable)

@@ -811,8 +811,8 @@ LUADEF(getPlayerCard) {
 	long long plQQ{ lua_to_int_or_zero(L, 1) };
 	if (!plQQ)return 0;
 	long long group{ lua_to_int_or_zero(L, 2) };
-	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
-	*p = &getPlayer(plQQ)[group]->Attr;
+	PC* p{ (PC*)lua_newuserdata(L, sizeof(PC)) };
+	new(p) PC(getPlayer(plQQ)[group]);
 	luaL_setmetatable(L, "Actor");
 	return 1;
 }
@@ -1044,35 +1044,40 @@ int luaopen_Context(lua_State* L) {
 int Actor_index(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	string key{ lua_to_gbstring(L, 2) };
-	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Actor") };
-	if (vars.has(key)) {
-		lua_push_attr(L, vars.get(key));
+	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
+	if (pc->available(key)) {
+		lua_push_attr(L, pc->get(key));
 		return 1;
 	}
 	return 0;
 }
 int Actor_newindex(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
-	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Actor") };
+	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
 	string key{ lua_to_gbstring(L, 2) };
 	if (key == "__Name") {
 		return 0;
 	}
 	else if (lua_gettop(L) < 3) {
-		vars.reset(key);
+		pc->erase(key);
 	}
 	else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {
-		vars.reset(key);
+		pc->erase(key);
 	}
 	else {
-		vars["__Update"] = (long long)time(nullptr);
-		vars.set(key,val);
+		pc->set(key,val);
 	}
+	return 0;
+}
+int Actor_gc(lua_State* L) {
+	PC* pc{ (PC*)luaL_checkudata(L, 1, "Actor") };
+	pc->~shared_ptr();
 	return 0;
 }
 static const luaL_Reg Actor_funcs[] = {
 	{"__index", Actor_index},
 	{"__newindex", Actor_newindex},
+	{"__gc", Actor_gc},
 	{NULL, NULL}
 };
 int luaopen_Actor(lua_State* L) {
