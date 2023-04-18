@@ -2356,7 +2356,7 @@ int DiceEvent::InnerOrder() {
 				return 1;
 			}
 		}
-		set("res",to_string(today->getJrrp(fromChat.uid)));
+		set("res",today->getJrrp(fromChat.uid));
 		replyMsg("strJrrp");
 		return 1;
 	}

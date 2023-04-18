@@ -762,7 +762,7 @@ LUADEF(getUserToday) {
 		return 1;
 	}
 	else if (item == "jrrp")
-		lua_pushnumber(L, today->getJrrp(uid));
+		lua_push_attr(L, today->getJrrp(uid));
 	else if (auto p{ today->get_if(uid, item) })
 		lua_push_attr(L, *p);
 	else if (top == 3) {
@@ -861,8 +861,7 @@ LUADEF(drawDeck) {
 		}
 	}
 	if (CardDeck::findDeck(nameDeck)) {
-		vector<string>& deck = CardDeck::mPublicDeck[nameDeck];
-		lua_push_string(L, CardDeck::draw(deck[RandomGenerator::Randint(0, deck.size() - 1)]));
+		lua_push_string(L, CardDeck::drawOne(CardDeck::mPublicDeck[nameDeck]));
 	}
 	else {
 		lua_push_string(L, "{" + nameDeck + "}");

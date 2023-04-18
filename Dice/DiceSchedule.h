@@ -93,7 +93,7 @@ public:
 			return UserInfo[qq].at(key);
 		else return std::nullopt;
 	}
-	int getJrrp(long long qq);
+	AttrVar getJrrp(long long);
 	size_t cntUser() { return UserInfo.size(); }
 	void daily_clear();
 };
