@@ -5,6 +5,7 @@
 #include "DiceEvent.h"
 #include "DiceMod.h"
 #include "DiceSelfData.h"
+#include "CharacterCard.h"
 #include "DDAPI.h"
 #define countof(x) (sizeof(x) / sizeof((x)[0]))
 
@@ -56,19 +57,28 @@ js_context::js_context() : ctx(JS_NewContext(rt)) {
 	js_init_module_os(ctx, "os");
 	auto global = JS_GetGlobalObject(ctx);
 	JS_SetPropertyFunctionList(ctx, global, js_dice_funcs, countof(js_dice_funcs));
-	JS_FreeValue(ctx, global);
+	//Context
 	JSValue pro_context = JS_NewObject(ctx);
 	JS_SetPropertyFunctionList(ctx, pro_context, js_dice_context_proto_funcs,
 		countof(js_dice_context_proto_funcs));
 	JS_SetClassProto(ctx, js_dice_context_id, pro_context);
+	JS_FreeValue(ctx, pro_context);
+	//SelfData
 	JSValue pro_selfdata = JS_NewObject(ctx);
 	JS_SetPropertyFunctionList(ctx, pro_selfdata, js_dice_selfdata_proto_funcs,
 		countof(js_dice_selfdata_proto_funcs));
 	auto selfdata_ctor = JS_NewCFunction2(ctx, js_dice_selfdata_constructor, "SelfData", 1,
 		JS_CFUNC_constructor, 0);
+	JS_SetPropertyStr(ctx, global, "SelfData", selfdata_ctor);
 	JS_SetConstructor(ctx, selfdata_ctor, pro_selfdata);
 	JS_SetClassProto(ctx, js_dice_selfdata_id, pro_selfdata);
-	JS_SetPropertyStr(ctx, global, "SelfData", selfdata_ctor);
+	JS_FreeValue(ctx, pro_selfdata);
+	//Actor
+	JSValue pro_actor = JS_NewObject(ctx);
+	JS_SetPropertyFunctionList(ctx, pro_actor, js_dice_actor_proto_funcs,
+		countof(js_dice_actor_proto_funcs));
+	JS_SetClassProto(ctx, js_dice_actor_id, pro_actor);
+	//JS_FreeValue(ctx, pro_actor);
 	JS_FreeValue(ctx, global);
 }
 js_context::~js_context() {
@@ -129,7 +139,7 @@ AttrVar js_toAttr(JSContext* ctx, JSValue val) {
 	}
 	return {};
 }
-JSValue js_toValue(JSContext* ctx, const AttrVar& var) {
+JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 	switch (var.type) {
 	case AttrVar::AttrType::Boolean:
 		return JS_NewBool(ctx, var.bit);
@@ -149,11 +159,11 @@ JSValue js_toValue(JSContext* ctx, const AttrVar& var) {
 			if (var.table.to_list()) {
 				uint32_t idx{ 0 };
 				for (auto& val : *var.table.to_list()) {
-					JS_SetPropertyUint32(ctx, dict, idx++, js_toValue(ctx, val));
+					JS_SetPropertyUint32(ctx, dict, idx++, js_newAttr(ctx, val));
 				}
 			}
 			for (auto& [key, val] : *var.table.to_dict()) {
-				JS_SetPropertyStr(ctx, dict, GBKtoUTF8(key).c_str(), js_toValue(ctx, val));
+				JS_SetPropertyStr(ctx, dict, GBKtoUTF8(key).c_str(), js_newAttr(ctx, val));
 			}
 			return dict;
 		}
@@ -161,7 +171,7 @@ JSValue js_toValue(JSContext* ctx, const AttrVar& var) {
 			auto ary = JS_NewArray(ctx);
 			uint32_t idx{ 0 };
 			for (auto& val : *var.table.to_list()) {
-				JS_SetPropertyUint32(ctx, ary, idx++, js_toValue(ctx, val));
+				JS_SetPropertyUint32(ctx, ary, idx++, js_newAttr(ctx, val));
 			}
 			return ary;
 		}
@@ -189,8 +199,7 @@ Free:
 }
 JSValue js_newDiceContext(JSContext* ctx, const AttrObject& context) {
 	auto obj = JS_NewObjectClass(ctx, js_dice_context_id);
-	AttrObject* vars = new AttrObject(context);
-	JS_SetOpaque(obj, vars);
+	JS_SetOpaque(obj, new AttrObject(context));
 	return obj;
 }
 void js_context::setContext(const std::string& name, const AttrObject& context) {
@@ -236,6 +245,8 @@ void js_global_init() {
 	JS_NewClass(rt, js_dice_context_id, &js_dice_context_class);
 	JS_NewClassID(&js_dice_selfdata_id);
 	JS_NewClass(rt, js_dice_selfdata_id, &js_dice_selfdata_class);
+	JS_NewClassID(&js_dice_actor_id);
+	JS_NewClass(rt, js_dice_actor_id, &js_dice_actor_class);
 }
 void js_global_end() {
 	js_std_free_handlers(rt);
@@ -295,6 +306,18 @@ QJSDEF(getDiceID) {
 QJSDEF(getDiceDir) {
 	return JS_NewString(ctx, DiceDir.u8string().c_str());;
 }
+QJSDEF(getSelfData) {
+	string file{ js_toGBK(ctx, argv[0])};
+	if (!selfdata_byFile.count(file)) {
+		auto& data{ selfdata_byFile[file] = std::make_shared<SelfData>(DiceDir / "selfdata" / file) };
+		if (string name{ cut_stem(file) }; !selfdata_byStem.count(name)) {
+			selfdata_byStem[name] = data;
+		}
+	}
+	auto data = JS_NewObjectClass(ctx, js_dice_selfdata_id);
+	JS_SetOpaque(data, new ptr<SelfData>(selfdata_byFile[file]));
+	return data;
+}
 QJSDEF(eventMsg) {
 	AttrObject eve;
 	if (JS_IsObject(argv[0])) {
@@ -349,7 +372,7 @@ QJSDEF(getGroupAttr) {
 		}
 		auto items{ JS_NewArray(ctx) };
 		for (auto& [gid, data] : ChatList) {
-			if (data.confs.has(item))JS_SetPropertyInt64(ctx, items, (int64_t)gid, js_toValue(ctx, data.confs.get(item)));
+			if (data.confs.has(item))JS_SetPropertyInt64(ctx, items, (int64_t)gid, js_newAttr(ctx, data.confs.get(item)));
 		}
 		return items;
 	}
@@ -398,7 +421,7 @@ QJSDEF(getGroupAttr) {
 			}
 			return items;
 		}
-		if (auto val{ getGroupItem(gid,item) }; !val.is_null())return js_toValue(ctx, val);
+		if (auto val{ getGroupItem(gid,item) }; !val.is_null())return js_newAttr(ctx, val);
 		else return argv[2];
 	}
 	JS_ThrowSyntaxError(ctx, "gid can't be 0");
@@ -441,13 +464,13 @@ QJSDEF(getUserAttr) {
 		}
 		auto items{ JS_NewArray(ctx) };
 		for (auto& [id, data] : UserList) {
-			if (data.confs.has(item))JS_SetPropertyInt64(ctx, items, (int64_t)id, js_toValue(ctx, data.confs.get(item)));
+			if (data.confs.has(item))JS_SetPropertyInt64(ctx, items, (int64_t)id, js_newAttr(ctx, data.confs.get(item)));
 		}
 		return items;
 	}
 	if (long long uid{ js_toBigInt(ctx,argv[0]) }) {
 		if (item.empty()) return js_newDiceContext(ctx, getUser(uid).confs);
-		if (auto val{ getUserItem(uid,item) }; !val.is_null())return js_toValue(ctx, val);
+		if (auto val{ getUserItem(uid,item) }; !val.is_null())return js_newAttr(ctx, val);
 		else return argv[2];
 	}
 	JS_ThrowSyntaxError(ctx, "uid can't be 0");
@@ -500,16 +523,16 @@ QJSDEF(getUserToday) {
 		}
 		auto items{ JS_NewArray(ctx) };
 		for (auto& [uid, data] : today->getUserInfo()) {
-			if (data.has(item))JS_SetPropertyInt64(ctx, items, (int64_t)uid, js_toValue(ctx, data.get(item)));
+			if (data.has(item))JS_SetPropertyInt64(ctx, items, (int64_t)uid, js_newAttr(ctx, data.get(item)));
 		}
 		return items;
 	}
 	if (long long uid{ js_toBigInt(ctx,argv[0]) }) {
 		if (item.empty()) return js_newDiceContext(ctx,today->get(uid));
 		else if (item == "jrrp")
-			return JS_NewInt32(ctx, (int32_t)today->getJrrp(uid));
+			return js_newAttr(ctx, today->getJrrp(uid));
 		else if (auto p{ today->get_if(uid, item) })
-			return js_toValue(ctx, *p);
+			return js_newAttr(ctx, *p);
 	}
 	JS_ThrowSyntaxError(ctx, "uid can't be 0");
 	return JS_EXCEPTION;
@@ -532,7 +555,28 @@ QJSDEF(setUserToday) {
 	else today->set(uid, item, {});
 	return JS_TRUE;
 }
-
+QJSDEF(getPlayerCard) {
+	auto obj = JS_NewObjectClass(ctx, js_dice_actor_id);
+	long long uid = js_toBigInt(ctx, argv[0]);
+	if (uid && PList.count(uid)) {
+		auto& pl{ getPlayer(uid) };
+		if (auto type = JS_VALUE_GET_TAG(argv[1]); type == JS_TAG_STRING) {
+			JS_SetOpaque(obj, new PC(pl[js_toGBK(ctx, argv[1])]));
+		}
+		else if (type == JS_TAG_BIG_INT) {
+			JS_SetOpaque(obj, new PC(pl[js_toBigInt(ctx, argv[1])]));
+		}
+		else if (JS_IsUndefined(argv[1])) {
+			JS_SetOpaque(obj, new PC(pl[0]));
+		}
+		else {
+			JS_ThrowTypeError(ctx, "#2 must be string or int!");
+		}
+	}
+	else JS_SetOpaque(obj, new PC(std::make_shared<CharaCard>()));
+	return obj;
+}
+//Context
 void js_dice_context_finalizer(JSRuntime* rt, JSValue val) {
 	JS2OBJ(val);
 	delete obj;
@@ -543,7 +587,7 @@ int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueC
 		string key{ js_AtomtoGBK(ctx, prop) };
 		if (obj->has(key)) {
 			desc->flags = JS_PROP_NORMAL;
-			desc->value = js_toValue(ctx, obj->get(key));
+			desc->value = js_newAttr(ctx, obj->get(key));
 			desc->getter = JS_UNDEFINED;
 			desc->setter = JS_UNDEFINED;
 			return TRUE;
@@ -594,11 +638,11 @@ QJSDEF(context_get) {
 	JS2OBJ(this_val);
 	if (argc > 0) {
 		string key{ js_toGBK(ctx, argv[0]) };
-		return obj->has(key) ? js_toValue(ctx, obj->get(key))
+		return obj->has(key) ? js_newAttr(ctx, obj->get(key))
 			: (argc > 1 ? argv[1] : JS_UNDEFINED);
 	}
 	else {
-		return js_toValue(ctx, *obj);
+		return js_newAttr(ctx, *obj);
 	}
 }
 QJSDEF(context_format) {
@@ -628,7 +672,7 @@ QJSDEF(context_inc) {
 	JS2OBJ(this_val);
 	if (argc > 0) {
 		string key{ js_toGBK(ctx, argv[0]) };
-		return obj->inc(key) ? js_toValue(ctx, obj->get(key))
+		return obj->inc(key) ? js_newAttr(ctx, obj->get(key))
 			: (argc > 1 ? argv[1] : JS_UNDEFINED);
 		return argc > 1 ? obj->inc(key, js_toInt(ctx, argv[1])) : obj->inc(key);
 	}
@@ -637,6 +681,7 @@ QJSDEF(context_inc) {
 		return JS_EXCEPTION;
 	}
 }
+//SelfData
 QJSDEF(selfdata_constructor) {
 	if (argc > 0) {
 		string file{ js_toNativeString(ctx, argv[0]) };
@@ -664,7 +709,7 @@ int js_dice_selfdata_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValue
 		string key{ js_AtomtoGBK(ctx, prop) };
 		if ((*data)->data.to_dict()->count(key)) {
 			desc->flags = JS_PROP_NORMAL;
-			desc->value = js_toValue(ctx, (*data)->data.to_obj().get(key));
+			desc->value = js_newAttr(ctx, (*data)->data.to_obj().get(key));
 			desc->getter = JS_UNDEFINED;
 			desc->setter = JS_UNDEFINED;
 			return TRUE;
@@ -711,6 +756,81 @@ QJSDEF(selfdata_append) {
 		return TRUE;
 	}
 	return FALSE;
+}
+
+//Actor
+void js_dice_actor_finalizer(JSRuntime* rt, JSValue val) {
+	JS2PC(val);
+	delete &pc;
+}
+int js_dice_actor_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst this_val, JSAtom prop) {
+	JS2PC(this_val);
+	string key{ js_AtomtoGBK(ctx, prop) };
+	if (desc && pc->available(key)) {
+		desc->flags = JS_PROP_NORMAL;
+		desc->value = js_newAttr(ctx, pc->get(key));
+		desc->getter = JS_UNDEFINED;
+		desc->setter = JS_UNDEFINED;
+		return TRUE;
+	}
+	return FALSE;
+}
+int js_dice_actor_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen, JSValueConst this_val) {
+	JS2PC(this_val);
+	if ((*plen = pc->Attr->size()) > 0) {
+		JSPropertyEnum* tab = (JSPropertyEnum*)js_malloc(ctx, sizeof(JSPropertyEnum) * (*plen));
+		for (const auto& [key, val] : *pc->Attr.to_dict()) {
+			if (auto atom = JS_NewAtom(ctx, GBKtoUTF8(key).c_str());
+				atom != JS_ATOM_NULL) {
+				tab[*plen].atom = atom;
+				tab[*plen].is_enumerable = FALSE;
+			}
+			else {
+				js_free_prop_enum(ctx, tab, *plen);
+				*plen = 0;
+				return -1;
+			}
+		}
+		js_free_prop_enum(ctx, tab, *plen);
+		ptab = &tab;
+	}
+	return 0;
+}
+int js_dice_actor_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
+	JS2PC(this_val);
+	return pc->erase(js_AtomtoGBK(ctx, atom));
+}
+int js_dice_actor_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags) {
+	JS2PC(this_obj);
+	switch (pc->set(js_AtomtoGBK(ctx, prop), js_toAttr(ctx, val))) {
+	case -11:
+		JS_ThrowRangeError(ctx, "input string is too long.");
+		break;
+	case -8:
+		JS_ThrowTypeError(ctx, "__Name cannot be modified.");
+		break;
+	default:
+		return TRUE;
+	}
+	return FALSE;
+}
+QJSDEF(actor_rollDice) {
+	JS2PC(this_val);
+	auto res = JS_NewObject(ctx);
+	if (JS_IsString(argv[0])) {
+		RD rd{ js_toGBK(ctx,argv[0]) };
+		JS_SetPropertyStr(ctx, res, "expr", js_newGBK(ctx, rd.strDice));
+		if (int_errno err = rd.Roll(); !err) {
+			JS_SetPropertyStr(ctx, res, "sum", JS_NewInt32(ctx, (int32_t)rd.intTotal));
+			JS_SetPropertyStr(ctx, res, "expansion", JS_NewString(ctx, rd.FormCompleteString().c_str()));
+		}
+		else {
+			JS_SetPropertyStr(ctx, res, "expr", argv[0]);
+			JS_SetPropertyStr(ctx, res, "error", JS_NewInt32(ctx, (int32_t)err));
+		}
+	}
+	else JS_ThrowTypeError(ctx, "dice expression must be string!");
+	return res;
 }
 
 bool js_call_event(AttrObject eve, const AttrVar& action) {

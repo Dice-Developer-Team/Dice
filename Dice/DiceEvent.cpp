@@ -3820,7 +3820,6 @@ int DiceEvent::InnerOrder() {
 			intMsgCnt += 4;
 			readSkipSpace();
 			string& attr = (at("attr") = readAttrName()).text;
-			DD::debugLog("attr:" + attr);
 			if (strMsg[intMsgCnt] == ':') {
 				if (PList[fromChat.uid].count(attr)) {
 					while (strMsg[intMsgCnt] == ':')++intMsgCnt;

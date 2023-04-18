@@ -983,7 +983,6 @@ int Context_add(lua_State* L) {
 	return 0;
 }
 int Context_index(lua_State* L) {
-	if (lua_gettop(L) < 2)return 0;
 	string key{ lua_to_gbstring(L, 2) };
 	if (key == "echo") {
 		lua_pushcfunction(L, Msg_echo);
@@ -1040,18 +1039,39 @@ int luaopen_Context(lua_State* L) {
 	return 1;
 }
 //metatable Actor
+int Actor_rollDice(lua_State* L) {
+	string exp{ lua_to_gbstring(L, 2) };
+	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
+	RD rd{ exp };
+	lua_newtable(L);
+	lua_push_string(L, rd.strDice);
+	lua_set_field(L, -2, "expr");
+	if (int_errno err = rd.Roll(); !err) {
+		lua_pushinteger(L, rd.intTotal);
+		lua_set_field(L, -2, "sum");
+		lua_push_string(L, rd.FormCompleteString());
+		lua_set_field(L, -2, "expansion");
+	}
+	else {
+		lua_pushinteger(L, err);
+		lua_set_field(L, -2, "error");
+	}
+	return 1;
+}
 int Actor_index(lua_State* L) {
-	if (lua_gettop(L) < 2)return 0;
 	string key{ lua_to_gbstring(L, 2) };
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
-	if (pc->available(key)) {
+	if (key == "rollDice") {
+		lua_pushcfunction(L, Actor_rollDice);
+		return 1;
+	}
+	else if (pc->available(key)) {
 		lua_push_attr(L, pc->get(key));
 		return 1;
 	}
 	return 0;
 }
 int Actor_newindex(lua_State* L) {
-	if (lua_gettop(L) < 2)return 0;
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
 	string key{ lua_to_gbstring(L, 2) };
 	if (key == "__Name") {

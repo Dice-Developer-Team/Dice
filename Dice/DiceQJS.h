@@ -3,6 +3,8 @@
 extern "C" {
 #endif
 #include "quickjs-libc.h"
+	long long js_toBigInt(JSContext* ctx, JSValueConst);
+	double js_toDouble(JSContext* ctx, JSValueConst);
 #ifdef _MSC_VER
 #define QJSDEF(name) __declspec(dllexport) JSValue js_dice_##name(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv)
 #else
@@ -12,6 +14,7 @@ extern "C" {
 	QJSDEF(loadJS);
 	QJSDEF(getDiceID);
 	QJSDEF(getDiceDir);
+	QJSDEF(getSelfData);
 	QJSDEF(eventMsg);
 	QJSDEF(sendMsg);
 	QJSDEF(getGroupAttr);
@@ -20,7 +23,8 @@ extern "C" {
 	QJSDEF(setUserAttr);
 	QJSDEF(getUserToday);
 	QJSDEF(setUserToday);
-	extern const JSCFunctionListEntry js_dice_funcs[12];
+	QJSDEF(getPlayerCard);
+	extern const JSCFunctionListEntry js_dice_funcs[14];
 	extern JSClassID js_dice_context_id;
 	extern JSClassDef js_dice_context_class;
 	void js_dice_context_finalizer(JSRuntime* rt, JSValue val);
@@ -43,8 +47,15 @@ extern "C" {
 	int js_dice_selfdata_set(JSContext* ctx, JSValueConst obj, JSAtom atom, JSValueConst value, JSValueConst receiver, int flags);
 	QJSDEF(selfdata_append);
 	extern const JSCFunctionListEntry js_dice_selfdata_proto_funcs[1];
-	long long js_toBigInt(JSContext* ctx, JSValueConst);
-	double js_toDouble(JSContext* ctx, JSValueConst);
+	extern JSClassID js_dice_actor_id;
+	extern JSClassDef js_dice_actor_class;
+	void js_dice_actor_finalizer(JSRuntime* rt, JSValue val);
+	int js_dice_actor_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst obj, JSAtom prop);
+	int js_dice_actor_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen, JSValueConst obj);
+	int js_dice_actor_delete(JSContext* ctx, JSValue obj, JSAtom atom);
+	int js_dice_actor_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags);
+	extern const JSCFunctionListEntry js_dice_actor_proto_funcs[1];
+	QJSDEF(actor_rollDice);
 #ifndef FALSE
 #define FALSE               0
 #endif
@@ -54,5 +65,6 @@ extern "C" {
 #ifdef __cplusplus
 #define JS2OBJ(val) AttrObject* obj = (AttrObject*)JS_GetOpaque(val, js_dice_context_id)
 #define JS2DATA(val) ptr<SelfData>* data = (ptr<SelfData>*)JS_GetOpaque(val, js_dice_selfdata_id)
+#define JS2PC(val) PC& pc = *(PC*)JS_GetOpaque(val, js_dice_actor_id)
 }
 #endif

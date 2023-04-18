@@ -17,6 +17,7 @@ const JSCFunctionListEntry js_dice_funcs[] = {
 	JS_DICEDEF(loadJS,1),
 	JS_DICEDEF(getDiceID,0),
 	JS_DICEDEF(getDiceDir,0),
+	JS_DICEDEF(getSelfData,1),
 	JS_DICEDEF(eventMsg,3),
 	JS_DICEDEF(sendMsg,3),
 	JS_DICEDEF(getGroupAttr,3),
@@ -25,6 +26,7 @@ const JSCFunctionListEntry js_dice_funcs[] = {
 	JS_DICEDEF(setUserAttr,3),
 	JS_DICEDEF(getUserToday,3),
 	JS_DICEDEF(setUserToday,3),
+	JS_DICEDEF(getPlayerCard,2),
 };
 JSClassID js_dice_context_id;
 JSClassExoticMethods js_dice_context_methods = {
@@ -38,7 +40,7 @@ JSClassDef js_dice_context_class = {
 	.finalizer = js_dice_context_finalizer,
 	.exotic = &js_dice_context_methods,
 }; 
-const JSCFunctionListEntry js_dice_context_proto_funcs[4] = {
+const JSCFunctionListEntry js_dice_context_proto_funcs[] = {
 	JS_CFUNC_DEF("get",2,js_dice_context_get),
 	JS_CFUNC_DEF("format",2,js_dice_context_format),
 	JS_CFUNC_DEF("echo",2,js_dice_context_echo),
@@ -56,8 +58,23 @@ JSClassDef js_dice_selfdata_class = {
 	.finalizer = js_dice_selfdata_finalizer,
 	.exotic = &js_dice_selfdata_methods,
 };
-const JSCFunctionListEntry js_dice_selfdata_proto_funcs[1] = {
+const JSCFunctionListEntry js_dice_selfdata_proto_funcs[] = {
 	JS_CFUNC_DEF("append",2,js_dice_selfdata_append),
+};
+JSClassID js_dice_actor_id;
+JSClassExoticMethods js_dice_actor_methods = {
+	.get_own_property = js_dice_actor_get_own,
+	.get_own_property_names = js_dice_actor_get_keys,
+	.delete_property = js_dice_actor_delete,
+	.define_own_property = js_dice_actor_define,
+};
+JSClassDef js_dice_actor_class = {
+	"Actor",
+	.finalizer = js_dice_actor_finalizer,
+	.exotic = &js_dice_actor_methods,
+}; 
+const JSCFunctionListEntry js_dice_actor_proto_funcs[] = {
+	JS_CFUNC_DEF("rollDice",1,js_dice_actor_rollDice),
 };
 /*
 static int js_dicemaid_init(JSContext* ctx, JSModuleDef* m) {

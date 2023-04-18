@@ -40,7 +40,7 @@ public:
 	JSValue evalFile(const std::string& s);
 	JSValue evalFileLocal(const std::string& s, const AttrObject& context);
 };
-JSValue js_toValue(JSContext*, const AttrVar& var);
+JSValue js_newAttr(JSContext*, const AttrVar& var);
 void js_global_init();
 void js_global_end();
 bool js_call_event(AttrObject, const AttrVar&); 
