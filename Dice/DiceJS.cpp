@@ -798,7 +798,8 @@ int js_dice_actor_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen
 }
 int js_dice_actor_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
 	JS2PC(this_val);
-	return pc->erase(js_AtomtoGBK(ctx, atom));
+	string attr{ js_AtomtoGBK(ctx, atom) };
+	return pc->erase(attr);
 }
 int js_dice_actor_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags) {
 	JS2PC(this_obj);
@@ -818,14 +819,14 @@ QJSDEF(actor_rollDice) {
 	JS2PC(this_val);
 	auto res = JS_NewObject(ctx);
 	if (JS_IsString(argv[0])) {
-		RD rd{ js_toGBK(ctx,argv[0]) };
+		int diceFace{ pc->get("__DefaultDice").to_int() };
+		RD rd{ js_toGBK(ctx,argv[0]), diceFace ? diceFace : 100 };
 		JS_SetPropertyStr(ctx, res, "expr", js_newGBK(ctx, rd.strDice));
 		if (int_errno err = rd.Roll(); !err) {
 			JS_SetPropertyStr(ctx, res, "sum", JS_NewInt32(ctx, (int32_t)rd.intTotal));
 			JS_SetPropertyStr(ctx, res, "expansion", JS_NewString(ctx, rd.FormCompleteString().c_str()));
 		}
 		else {
-			JS_SetPropertyStr(ctx, res, "expr", argv[0]);
 			JS_SetPropertyStr(ctx, res, "error", JS_NewInt32(ctx, (int32_t)err));
 		}
 	}

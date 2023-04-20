@@ -1042,7 +1042,8 @@ int luaopen_Context(lua_State* L) {
 int Actor_rollDice(lua_State* L) {
 	string exp{ lua_to_gbstring(L, 2) };
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
-	RD rd{ exp };
+	int diceFace{ pc->get("__DefaultDice").to_int() };
+	RD rd{ exp, diceFace ? diceFace : 100 };
 	lua_newtable(L);
 	lua_push_string(L, rd.strDice);
 	lua_set_field(L, -2, "expr");

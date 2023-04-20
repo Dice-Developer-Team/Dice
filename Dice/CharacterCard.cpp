@@ -121,7 +121,7 @@ string CardTemp::show() {
 }
 
 CardTemp& CharaCard::getTemplet()const{
-	if (string type{Attr.get_str("__Type")};
+	if (string type{ Attr.get_str("__Type") };
 		!type.empty() && mCardTemplet.count(type))return mCardTemplet[type]; 
 	return mCardTemplet["BRP"];
 	
@@ -281,18 +281,21 @@ bool CharaCard::erase(string& key, bool isExp)
 {
 	if (Attr.has(key)) {
 		Attr.reset(key);
-		return true;
+		goto Update;
 	}
 	key = standard(key);
 	if (Attr.has(key)) {
 		Attr.reset(key);
-		return true;
+		goto Update;
 	}
 	else if (Attr.has("&" + key)) {
 		Attr.reset("&" + key);
-		return true;
+		goto Update;
 	}
 	return false;
+Update:
+	update();
+	return true;
 }
 void CharaCard::writeb(std::ofstream& fout) const {
 	fwrite(fout, string("Name"));
