@@ -495,6 +495,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+644:定义脚本内角色卡Actor类型
 643:rc支持跨角色卡调用
 642:优化helpdoc
 641:SelfData支持yaml
@@ -524,7 +525,6 @@ const dict_ci<> HelpDoc = {
 616:转义&case支持取用户/群配置
 615:支持自定义数据读写
 614:更新reply:limit:lock
-613:更新lua交互机制
 612:新增mod代理事件
 610:新增mod定时事件
 609:新增mod循环事件

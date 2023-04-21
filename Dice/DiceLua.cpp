@@ -808,13 +808,19 @@ LUADEF(getPlayerCardAttr) {
 	return 1;
 }
 LUADEF(getPlayerCard) {
-	long long plQQ{ lua_to_int_or_zero(L, 1) };
-	if (!plQQ)return 0;
-	long long group{ lua_to_int_or_zero(L, 2) };
-	PC* p{ (PC*)lua_newuserdata(L, sizeof(PC)) };
-	new(p) PC(getPlayer(plQQ)[group]);
-	luaL_setmetatable(L, "Actor");
-	return 1;
+	if (long long uid{ lua_to_int_or_zero(L, 1) }) {
+		PC* p{ (PC*)lua_newuserdata(L, sizeof(PC)) };
+		if (lua_type(L, 2) == LUA_TSTRING) {
+			new(p) PC(getPlayer(uid)[lua_to_gbstring(L, 2)]);
+		}
+		else {
+			long long gid{ lua_to_int_or_zero(L, 1) };
+			new(p) PC(getPlayer(uid)[gid]);
+		}
+		luaL_setmetatable(L, "Actor");
+		return 1;
+	}
+	return 0;
 }
 LUADEF(setPlayerCardAttr) {
 	long long plQQ{ lua_to_int_or_zero(L, 1) };
@@ -1039,6 +1045,42 @@ int luaopen_Context(lua_State* L) {
 	return 1;
 }
 //metatable Actor
+int Actor_set(lua_State* L) {
+	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
+	if (lua_isstring(L, 2)) {
+		string key{ lua_to_gbstring(L, 2) };
+		if (key == "__Name") {
+			return 0;
+		}
+		else if (lua_gettop(L) < 3) {
+			lua_pushinteger(L, pc->erase(key));
+		}
+		else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {
+			lua_pushinteger(L, pc->erase(key));
+		}
+		else {
+			lua_pushinteger(L, 0 == pc->set(key, val));
+		}
+	}
+	else if (lua_istable(L, 2)) {
+		int cnt = 0;
+		lua_pushnil(L);
+		lua_settop(L, 3);
+		while (lua_next(L, 2)) {
+			if (lua_type(L, 3) == LUA_TNUMBER) {
+				if (string attr{ lua_to_gbstring(L, 4) }; attr != "__Name"
+					&& pc->erase(attr))++cnt;
+			}
+			else {
+				if (string attr{ lua_to_gbstring(L, 3) }; attr != "__Name"
+					&& 0 == pc->set(attr, lua_to_attr(L, 4)))++cnt;
+			}
+			lua_pop(L, 1);
+		}
+		lua_pushinteger(L, cnt);
+	}
+	return 1;
+}
 int Actor_rollDice(lua_State* L) {
 	string exp{ lua_to_gbstring(L, 2) };
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
@@ -1062,7 +1104,11 @@ int Actor_rollDice(lua_State* L) {
 int Actor_index(lua_State* L) {
 	string key{ lua_to_gbstring(L, 2) };
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
-	if (key == "rollDice") {
+	if (key == "set") {
+		lua_pushcfunction(L, Actor_set);
+		return 1;
+	}
+	else if (key == "rollDice") {
 		lua_pushcfunction(L, Actor_rollDice);
 		return 1;
 	}

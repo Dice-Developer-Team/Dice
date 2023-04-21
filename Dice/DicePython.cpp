@@ -69,7 +69,7 @@ AttrVar py_to_attr(PyObject* o) {
 			PyObject* val = nullptr;
 			for (int i = 0; i < len; ++i) {
 				item = PySequence_GetItem(items, i);
-				PyArg_ParseTuple(item, "uo", key, val);
+				PyArg_ParseTuple(item, "uO", key, val);
 				tab[UtoGBK(key)] = py_to_attr(val);
 				Py_DECREF(item);
 			}
@@ -280,7 +280,7 @@ AttrObject py_to_obj(PyObject* o) {
 			PyObject* val = nullptr;
 			for (int i = 0; i < len; ++i) {
 				item = PySequence_GetItem(items, i);
-				PyArg_ParseTuple(item, "so", key, val);
+				PyArg_ParseTuple(item, "sO", key, val);
 				tab[UTF8toGBK(key)] = py_to_attr(val);
 				Py_DECREF(item);
 			}
@@ -726,23 +726,24 @@ PyObject* PyActor_set(PyObject* self, PyObject* args) {
 	PyObject* item{ nullptr }, * val{ nullptr };
 	if (PyArg_ParseTuple(args, "O|O", &item, &val) && pc) {
 		if (Py_IS_TYPE(item, &PyUnicode_Type) && val) {
-			pc->set(py_to_gbstring(item), py_to_attr(val));
+			return pc->set(py_to_gbstring(item), py_to_attr(val))
+				? Py_BuildValue("") :PyLong_FromSize_t(1);
 		}
 		else if (Py_IS_TYPE(item, &PyDict_Type)) {
-			int len = PyMapping_Length(item);
-			if (auto items{ PyMapping_Items(item) }; items && len) {
-				PyObject* item = nullptr;
-				const char* key = empty;
-				PyObject* val = nullptr;
+			size_t cnt = 0;
+			if (int len = PyMapping_Length(item)) {
+				auto items{ PyMapping_Items(item) };
+				auto key = wempty;
 				for (int i = 0; i < len; ++i) {
 					item = PySequence_GetItem(items, i);
-					PyArg_ParseTuple(item, "so", &key, &val);
-					pc->set(UTF8toGBK(key), py_to_attr(val));
+					PyArg_ParseTuple(item, "sO", &key, &val);
+					if(!pc->set(UtoGBK(key), py_to_attr(val)))++cnt;
 					Py_DECREF(item);
 				}
+				Py_DECREF(items);
 			}
+			return PyLong_FromSize_t(cnt);
 		}
-		return Py_BuildValue("");
 	}
 	return NULL;
 }
