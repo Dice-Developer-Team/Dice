@@ -893,3 +893,14 @@ void js_msg_call(DiceEvent* msg, const AttrVar& js) {
 	}
 	if(ret)JS_FreeValue(ctx, ret);
 }
+
+AttrVar js_eval_simple(const std::string& exp) {
+	static js_context ctx;
+	if (JSValue ret{ ctx.evalString(exp, "simple formula") }; !JS_IsException(ret)) {
+		return js_toAttr(ctx, ret);
+	}
+	else {
+		console.log(getMsg("strSelfName") + "º∆À„js”Ôæ‰" + exp + " ß∞‹!\n" + ctx.getException(), 0b10);
+		return {};
+	}
+}

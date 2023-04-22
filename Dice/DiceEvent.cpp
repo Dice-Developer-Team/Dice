@@ -3702,7 +3702,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		string attr = "理智";
-		int intSan = 0;
+		int intSan = 0, sanLoss = 0;
 		PC pc;
 		if (readNum(intSan)) {
 			if (PList.count(fromChat.uid)
@@ -3730,12 +3730,7 @@ int DiceEvent::InnerOrder() {
 				return 1;
 			}
 		}
-		RD rdSuc(strSanCostSuc);
-		RD rdFail(strSanCostFail);
-		if (rdSuc.Roll() != 0 || rdFail.Roll() != 0) {
-			replyMsg("strSanCostInvalid");
-			return 1;
-		}
+		std::optional<RD> rdLoss;
 		if (intSan <= 0) {
 			replyMsg("strSanInvalid");
 			return 1;
@@ -3746,35 +3741,41 @@ int DiceEvent::InnerOrder() {
 			pc->cntRollStat(intTmpRollRes, 100);
 			pc->cntRcStat(intTmpRollRes, intSan);
 		}
-		string& strRes{ (at("res") = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(intSan) + " ").text};
+		string& strRes{ (at("res") = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(intSan)).text};
 		//调用房规
 		int intRule = fromChat.gid
 			? chat(fromChat.gid).getConf("rc房规", console["DefaultCOCRoomRule"])
 			: getUser(fromChat.uid).getConf("rc房规", console["DefaultCOCRoomRule"]);
-		switch (RollSuccessLevel(intTmpRollRes, intSan, intRule)) {
+		int res = RollSuccessLevel(intTmpRollRes, intSan, intRule);
+		switch (res) {
 		case 5:
 		case 4:
 		case 3:
 		case 2:
-			strRes += getMsg("strSuccess");
-			set("change",rdSuc.FormCompleteString());
-			intSan = max(0, intSan - rdSuc.intTotal);
-			break;
+			rdLoss = RD(strSanCostSuc);
 		case 1:
-			strRes += getMsg("strFailure");
-			set("change",rdFail.FormCompleteString());
-			intSan = max(0, intSan - rdFail.intTotal);
+			rdLoss = RD(strSanCostFail);
+			if (rdLoss->Roll() != 0) {
+				replyMsg("strSanCostInvalid");
+				return 1;
+			}
+			set("change", rdLoss->FormShortString());
 			break;
 		case 0:
-			strRes += getMsg("strFumble");
-			rdFail.Max();
-			set("change",rdFail.strDice + "最大值=" + to_string(rdFail.intTotal));
-			intSan = max(0, intSan - rdFail.intTotal);
+			rdLoss = RD(strSanCostFail);
+			if (rdLoss->Max() != 0) {
+				replyMsg("strSanCostInvalid");
+				return 1;
+			}
+			set("change","Max{" + rdLoss->strDice + "}=" + to_string(rdLoss->intTotal));
 			break;
 		}
-		set("final",to_string(intSan));
+		set("loss", sanLoss = rdLoss->intTotal);
+		intSan = max(0, intSan - sanLoss);
+		set("rank", res);
+		set("final",intSan);
 		if (pc)pc->set(attr, intSan);
-		replyMsg("strSanRollRes");
+		replyMsg("strSanityRoll");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "st") {

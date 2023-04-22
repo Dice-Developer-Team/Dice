@@ -274,7 +274,7 @@ const dict_ci<string> PlainMsg
 	{"strRollRegularSuccess", "成功"},
 	{"strRollFailure", "失败"},
 	{"strRollFumble", "大失败！"},
-	{"strFumble", "大失败!"}, //多轮检定用，请控制长度
+	{"strFumble", "大失败！"}, //多轮检定用，请控制长度
 	{"strFailure", "失败"},
 	{"strSuccess", "成功"},
 	{"strHardSuccess", "困难成功"},
@@ -291,8 +291,7 @@ const dict_ci<string> PlainMsg
 	{"strCharacterCannotBeZero", "人物作成次数不能为零!请输入1-10之间的数字!"},
 	{"strCharacterTooBig", "人物作成次数过多!请输入1-10之间的数字!"},
 	{"strCharacterInvalid", "人物作成次数无效!请输入1-10之间的数字!"},
-	{"strSanRoll", "{pc}的San Check：\n{res}"},
-	{"strSanRollRes", "{strSanRoll}\n{pc}的San值减少{change}点,当前剩余{final}点"},
+	{"strSanityRoll", "{pc}的San Check：\n{res} {grade:rank?2={strSuccess}&1={strFailure}&0={strFumble}}\n{case:loss?0=理智没有损失√&else=San值减少{change}->剩余{final}}" },
 	{"strSanCostInvalid", "{pc}输入SC表达式不正确,格式为成功扣San/失败扣San,如1/1d6!"},
 	{"strSanInvalid", "San值输入不正确,请{pc}输入1-99范围内的整数!"},
 	{"strSanEmpty", "未设定San值，请{pc}先.st san 或查看.help sc×"},
@@ -482,7 +481,7 @@ const dict_ci<string> GlobalComment{
 	{"strRollFailure", "检定失败"},
 	{"strRollFumble", "检定大失败"},
 	//
-	{"strSanRollRes", ".sc指令回执"},
+	{"strSanityRoll", ".sc指令回执"},
 	{"strSelfCall", "自称，多用于回执"},
 	{"strSelfName", "名称，用于自我展示场合"},
 	{"strSelfNick", "用户对自己的昵称，用于扩展指令"},
@@ -495,6 +494,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+645:重定义.sc回执
 644:定义脚本内角色卡Actor类型
 643:rc支持跨角色卡调用
 642:优化helpdoc
@@ -519,7 +519,6 @@ const dict_ci<> HelpDoc = {
 622:支持手动时差
 621:扩展代理事件及ex接口
 620:留档每日数据，新增每日清算事件
-619:统一reply与order格式
 618:支持reply(Order形式)覆盖指令
 617:更新grade分档转义
 616:转义&case支持取用户/群配置

@@ -45,3 +45,5 @@ void js_global_init();
 void js_global_end();
 bool js_call_event(AttrObject, const AttrVar&); 
 void js_msg_call(DiceEvent*, const AttrVar&);
+AttrVar js_simple_eval(const std::string&);
+AttrVar js_context_eval(const std::string&, const AttrObject& context);
