@@ -1,7 +1,7 @@
 #include "DiceQJS.h"
 #define countof(x) (sizeof(x) / sizeof((x)[0]))
 
-long long js_toBigInt(JSContext* ctx, JSValueConst val) {
+long long js_toLongLong(JSContext* ctx, JSValueConst val) {
 	int64_t num = 0;
 	JS_ToInt64(ctx, &num, val);
 	return (long long)num;
@@ -74,6 +74,7 @@ JSClassDef js_dice_actor_class = {
 	.exotic = &js_dice_actor_methods,
 }; 
 const JSCFunctionListEntry js_dice_actor_proto_funcs[] = {
+	JS_CFUNC_DEF("set",2,js_dice_actor_set),
 	JS_CFUNC_DEF("rollDice",1,js_dice_actor_rollDice),
 };
 /*

@@ -1049,10 +1049,7 @@ int Actor_set(lua_State* L) {
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
 	if (lua_isstring(L, 2)) {
 		string key{ lua_to_gbstring(L, 2) };
-		if (key == "__Name") {
-			return 0;
-		}
-		else if (lua_gettop(L) < 3) {
+		if (lua_gettop(L) < 3) {
 			lua_pushinteger(L, pc->erase(key));
 		}
 		else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {
@@ -1068,12 +1065,10 @@ int Actor_set(lua_State* L) {
 		lua_settop(L, 3);
 		while (lua_next(L, 2)) {
 			if (lua_type(L, 3) == LUA_TNUMBER) {
-				if (string attr{ lua_to_gbstring(L, 4) }; attr != "__Name"
-					&& pc->erase(attr))++cnt;
+				if (pc->erase(lua_to_gbstring(L, 4)))++cnt;
 			}
 			else {
-				if (string attr{ lua_to_gbstring(L, 3) }; attr != "__Name"
-					&& 0 == pc->set(attr, lua_to_attr(L, 4)))++cnt;
+				if (0 == pc->set(lua_to_gbstring(L, 3), lua_to_attr(L, 4)))++cnt;
 			}
 			lua_pop(L, 1);
 		}
@@ -1121,10 +1116,7 @@ int Actor_index(lua_State* L) {
 int Actor_newindex(lua_State* L) {
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
 	string key{ lua_to_gbstring(L, 2) };
-	if (key == "__Name") {
-		return 0;
-	}
-	else if (lua_gettop(L) < 3) {
+	if (lua_gettop(L) < 3) {
 		pc->erase(key);
 	}
 	else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {

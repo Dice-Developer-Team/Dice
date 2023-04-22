@@ -3,7 +3,7 @@
 extern "C" {
 #endif
 #include "quickjs-libc.h"
-	long long js_toBigInt(JSContext* ctx, JSValueConst);
+	long long js_toLongLong(JSContext* ctx, JSValueConst);
 	double js_toDouble(JSContext* ctx, JSValueConst);
 #ifdef _MSC_VER
 #define QJSDEF(name) __declspec(dllexport) JSValue js_dice_##name(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv)
@@ -54,7 +54,8 @@ extern "C" {
 	int js_dice_actor_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen, JSValueConst obj);
 	int js_dice_actor_delete(JSContext* ctx, JSValue obj, JSAtom atom);
 	int js_dice_actor_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags);
-	extern const JSCFunctionListEntry js_dice_actor_proto_funcs[1];
+	extern const JSCFunctionListEntry js_dice_actor_proto_funcs[2];
+	QJSDEF(actor_set);
 	QJSDEF(actor_rollDice);
 #ifndef FALSE
 #define FALSE               0

@@ -751,6 +751,10 @@ PyObject* PyActor_set(PyObject* self, PyObject* args) {
 static PyObject* PyActor_rollDice(PyObject* self, PyObject* args) {
 	auto res = PyDict_New();
 	PC& pc{ ((PyActorObject*)self)->p };
+	PyObject* arg = PyTuple_GetItem(args, 1);
+	string exp{ Py_IS_TYPE(arg, &PyUnicode_Type) ? py_args_to_gbstring(args)
+		: pc->available("__DefaultDiceExp") ? pc->get("__DefaultDiceExp").to_str()
+		: "D" };
 	int diceFace{ pc->get("__DefaultDice").to_int() };
 	RD rd{ py_args_to_gbstring(args), diceFace ? diceFace : 100 };
 	PyDict_SetItem(res, PyUnicode_FromString("expr"), py_from_gbstring(rd.strDice));
