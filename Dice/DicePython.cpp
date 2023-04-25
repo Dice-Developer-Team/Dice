@@ -741,7 +741,7 @@ int PyActor_setattr(PyObject* self, char* attr, PyObject* val) {
 }
 PyObject* PyActor_getattro(PyObject* self, PyObject* attr) {
 	PY2PC(self);
-	if (!attr && pc)return py_build_attr(pc->Attr);
+	if (!attr && pc)return py_build_attr(*pc);
 	string key{ py_to_gbstring(attr) };
 	return pc ? py_build_attr(pc->get(key)) : Py_BuildValue("");
 }
@@ -753,7 +753,7 @@ int PyActor_setattro(PyObject* self, PyObject* attr, PyObject* val) {
 }
 static Py_ssize_t pyActor_size(PyObject* self) {
 	PY2PC(self);
-	return pc ? (Py_ssize_t)pc->Attr->size() : 0;
+	return pc ? (Py_ssize_t)pc->size() : 0;
 }
 PyObject* PyActor_set(PyObject* self, PyObject* args) {
 	PY2PC(self);

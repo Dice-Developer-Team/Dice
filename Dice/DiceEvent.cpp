@@ -3178,7 +3178,7 @@ int DiceEvent::InnerOrder() {
 			string strName = readRest();
 			auto pc{ pl.getCard(strName, fromChat.gid) };
 			set("char",pc->getName());
-			set("type",pc->Attr.get_str("__Type"));
+			set("type",pc->get_str("__Type"));
 			set("show",pc->show(true));
 			replyMsg("strPcCardShow");
 			return 1;
@@ -3187,7 +3187,7 @@ int DiceEvent::InnerOrder() {
 			string& strPC{ (at("char") = strip(filter_CQcode(readRest(), fromChat.gid))).text};
 			switch (pl.newCard(strPC, fromChat.gid)) {
 			case 0:
-				set("type",pl[fromChat.gid]->Attr.get_str("__Type"));
+				set("type",pl[fromChat.gid]->get_str("__Type"));
 				set("show",pl[fromChat.gid]->show(true));
 				if (is_empty("show"))replyMsg("strPcNewEmptyCard");
 				else replyMsg("strPcNewCardShow");
@@ -3320,12 +3320,12 @@ int DiceEvent::InnerOrder() {
 			string strFace{ to_string(intFace) };
 			string keyStatCnt{ "__StatD" + strFace + "Cnt" };	//掷骰次数
 			if (intFace <= 100 && pc->available(keyStatCnt)) {
-				int cntRoll{ pc->Attr.get_int(keyStatCnt) };
+				int cntRoll{ pc->get_int(keyStatCnt) };
 				if (cntRoll > 0) {
 					isEmpty = false;
 					res << "D" + strFace + "统计次数: " + to_string(cntRoll);
-					int sumRes{ pc->Attr.get_int("__StatD" + strFace + "Sum") };		//点数和
-					int sumResSqr{ pc->Attr.get_int("__StatD" + strFace + "SqrSum") };	//点数平方和
+					int sumRes{ pc->get_int("__StatD" + strFace + "Sum") };		//点数和
+					int sumResSqr{ pc->get_int("__StatD" + strFace + "SqrSum") };	//点数平方和
 					DiceEst stat{ intFace,cntRoll,sumRes,sumResSqr };
 					if (stat.estMean > 0)
 						res << "均值[期望]: " + toString(stat.estMean, 2, true) + " [" + toString(stat.expMean) + "]";
@@ -3340,18 +3340,18 @@ int DiceEvent::InnerOrder() {
 			}
 			string keyRcCnt{ "__StatRcCnt" };	//rc/sc检定次数
 			if (pc->available(keyRcCnt)) {
-				int cntRc{ pc->Attr.get_int("__StatRcCnt") };
+				int cntRc{ pc->get_int("__StatRcCnt") };
 				if (cntRc > 0) {
 					isEmpty = false;
-					int sumRcSuc{ pc->Attr.get_int("__StatRcSumSuc") };//实际成功数
+					int sumRcSuc{ pc->get_int("__StatRcSumSuc") };//实际成功数
 					res << "检定成功统计: " + to_string(sumRcSuc) + "/" + to_string(cntRc);
-					int sumRcRate{ pc->Attr.get_int("__StatRcSumRate") };//总成功率
+					int sumRcRate{ pc->get_int("__StatRcSumRate") };//总成功率
 					res << "成功率[期望]: " + toString((double)sumRcSuc / cntRc * 100) + "% [" + toString((double)sumRcRate / cntRc) + "%]";
-					double cnt5{ pc->Attr.get_num("__StatRcCnt5") }, cnt96{ pc->Attr.get_num("__StatRcCnt96") };
-					res << "5- | 96+ 出现率: " + (cnt5 ? toString(cnt5 / cntRc * 100) + "%(" + pc->Attr.get_str("__StatRcCnt5") + ")" : "0%")
-						+ " | " + (cnt96 ? toString(cnt96 / cntRc * 100) + "%(" + pc->Attr.get_str("__StatRcCnt96") + ")" : "0%");
+					double cnt5{ pc->get_num("__StatRcCnt5") }, cnt96{ pc->get_num("__StatRcCnt96") };
+					res << "5- | 96+ 出现率: " + (cnt5 ? toString(cnt5 / cntRc * 100) + "%(" + pc->get_str("__StatRcCnt5") + ")" : "0%")
+						+ " | " + (cnt96 ? toString(cnt96 / cntRc * 100) + "%(" + pc->get_str("__StatRcCnt96") + ")" : "0%");
 					if(pc->available("__StatRcCnt1")|| pc->available("__StatRcCnt100"))
-						res << "1 | 100 出现数: " + pc->Attr.get_str("__StatRcCnt1") + " | " + pc->Attr.get_str("__StatRcCnt100");
+						res << "1 | 100 出现数: " + pc->get_str("__StatRcCnt1") + " | " + pc->get_str("__StatRcCnt100");
 				}
 			}
 			if (isEmpty) {
@@ -3371,7 +3371,7 @@ int DiceEvent::InnerOrder() {
 		if (strOption == "type") {
 			if ((at("new_type") = strip(readRest())).str_empty()) {
 				set("attr","模板类");
-				set("val",pl[fromChat.gid]->Attr.get_str("__Type"));
+				set("val",pl[fromChat.gid]->get_str("__Type"));
 				replyMsg("strProp");
 			}
 			else {
@@ -3389,8 +3389,8 @@ int DiceEvent::InnerOrder() {
 			string strName = readRest();
 			auto pc{ pl.getCard(strName, fromChat.gid) };
 			set("char", pc->getName());
-			set("type", pc->Attr.get_str("__Type"));
-			set("show", UTF8toGBK(pc->Attr.to_json().dump()));
+			set("type", pc->get_str("__Type"));
+			set("show", UTF8toGBK(pc->to_json().dump()));
 			replyMsg("strPcCardShow");
 			return 1;
 		}
@@ -3842,7 +3842,7 @@ int DiceEvent::InnerOrder() {
 			}
 			if (attr.empty()) {
 				set("char",pc->getName());
-				set("type",pc->Attr.get_str("__Type"));
+				set("type",pc->get_str("__Type"));
 				set("show",pc->show(false));
 				replyMsg("strPropList");
 				return 1;
@@ -3863,7 +3863,7 @@ int DiceEvent::InnerOrder() {
 			intMsgCnt = pos + 2;
 			if (!name.empty()) {
 				if (!pl.count(name)) {
-					string type{ pc->Attr.get_str("__Type") };
+					string type{ pc->get_str("__Type") };
 					switch (pl.emptyCard(name, fromChat.gid, type)) {
 					case 0:
 						if (!pl.count(fromChat.gid)) {

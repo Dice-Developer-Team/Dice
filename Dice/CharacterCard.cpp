@@ -122,13 +122,13 @@ string CardTemp::show() {
 }
 
 CardTemp& CharaCard::getTemplet()const{
-	if (string type{ Attr.get_str("__Type") };
+	if (string type{ get_str("__Type") };
 		!type.empty() && mCardTemplet.count(type))return mCardTemplet[type]; 
 	return mCardTemplet["BRP"];
 }
 
 void CharaCard::update() {
-	Attr["__Update"] = (long long)time(nullptr);
+	(*dict)["__Update"] = (long long)time(nullptr);
 }
 void CharaCard::setName(const string& strName) {
 	Attr["__Name"] = Name = strName;
@@ -137,11 +137,11 @@ void CharaCard::setType(const string& strType) {
 	Attr["__Type"] = strType;
 }
 AttrVar CharaCard::get(string key)const {
-	if (Attr.has(key) || Attr.has(key = standard(key)))return Attr.get(key);
+	if (has(key) || has(key = standard(key)))return at(key);
 	if (auto& temp{ getTemplet() };temp.defaultSkill.count(key))return getTemplet().defaultSkill.find(key)->second;
 	if (getTemplet().mAutoFill.count(key)){
-		Attr.set(key, cal(getTemplet().mAutoFill.find(key)->second));
-		return Attr.get(key);
+		Attr[key] = cal(getTemplet().mAutoFill.find(key)->second);
+		return at(key);
 	}
 	if (getTemplet().mVariable.count(key)){
 		return cal(getTemplet().mVariable.find(key)->second);
@@ -154,19 +154,19 @@ int CharaCard::set(string key, const AttrVar& val) {
 	if (val.is_text() && val.to_str().length() > 256)return -11;
 	key = standard(key);
 	if (getTemplet().defaultSkill.count(key) && val == getTemplet().defaultSkill.at(key)){
-		if (Attr.has(key)) Attr.reset(key);
+		if (has(key)) dict->erase(key);
 		else return -1;
 	}
 	else {
-		Attr.set(key, val);
+		Attr[key] = val;
 	}
 	update();
 	return 0;
 }
 
 int CharaCard::show(string key, string& val) const {
-	if (Attr.has(key) || Attr.has(key = standard(key))) {
-		val = Attr.print(key);
+	if (has(key) || has(key = standard(key))) {
+		val = print(key);
 		return 0;
 	}
 	else if (getTemplet().defaultSkill.count(key)) {
@@ -177,13 +177,13 @@ int CharaCard::show(string key, string& val) const {
 }
 
 int CharaCard::call(string key)const {
-	if (Attr.has(key))return Attr.get_int(key);
+	if (has(key))return get_int(key);
 	key = standard(key);
-	if (Attr.has(key))return Attr.get_int(key);
+	if (has(key))return get_int(key);
 	if (auto& templet{ getTemplet() }; templet.mAutoFill.count(key))
 	{
-		Attr.set(key, cal(templet.mAutoFill.find(key)->second));
-		return Attr.get_int(key);
+		Attr[key] = cal(templet.mAutoFill.find(key)->second);
+		return get_int(key);
 	}
 	else if (templet.mVariable.count(key))
 	{
@@ -193,8 +193,8 @@ int CharaCard::call(string key)const {
 	return 0;
 }
 bool CharaCard::available(const string& strKey) const {
-	if (Attr.has(strKey))return true;
-	if (string key{ standard(strKey) }; Attr.has(key) || Attr.has("&" + key))return true;
+	if (has(strKey))return true;
+	if (string key{ standard(strKey) }; has(key) || has("&" + key))return true;
 	else {
 		auto& temp{ getTemplet() };
 		return temp.mAutoFill.count(key) || temp.mVariable.count(key)
@@ -203,16 +203,16 @@ bool CharaCard::available(const string& strKey) const {
 }
 
 //求key对应掷骰表达式
-string CharaCard::getExp(string& key, std::set<string> sRef){
+string CharaCard::getExp(string& key, std::unordered_set<string> sRef){
 	sRef.insert(key);
 	key = standard(key);
 	auto& temp{ getTemplet() };
-	auto val = Attr->find("&" + key);
-	if (val != Attr->end())return escape(val->second.to_str(), sRef);
+	auto val = dict->find("&" + key);
+	if (val != dict->end())return escape(val->second.to_str(), sRef);
 	auto exp = temp.mExpression.find(key);
 	if (exp != temp.mExpression.end()) return escape(exp->second, sRef);
-	val = Attr->find(key);
-	if (val != Attr->end())return escape(val->second.to_str(), sRef);
+	val = dict->find(key);
+	if (val != dict->end())return escape(val->second.to_str(), sRef);
 	exp = temp.mVariable.find(key);
 	if (exp != temp.mVariable.end())return to_string(cal(exp->second));
 	if (auto def{ temp.defaultSkill.find(key) };
@@ -241,7 +241,7 @@ void CharaCard::buildv(string para)
 }
 
 void CharaCard::clear() {
-	Attr = AttrObject{ {{"__Type",Attr["__Type"]},{"__Name",Attr["__Name"]}} };
+	dict = std::make_shared<AttrVars>(AttrVars{{"__Type",Attr["__Type"]},{"__Name",Attr["__Name"]}} );
 }
 [[nodiscard]] string CharaCard::show(bool isWhole) const {
 	std::set<string> sDefault;
@@ -260,7 +260,7 @@ void CharaCard::clear() {
 		Res << subList.show();
 	}
 	string strAttrRest;
-	for (const auto& [key,val] : *Attr.to_dict()) {
+	for (const auto& [key,val] : *dict) {
 		if (sDefault.count(key) || key[0] == '_'
 			|| (isWhole && val.type == AttrVar::Type::Number))continue;
 		strAttrRest += key + ":" + val.print() + (val.type == AttrVar::Type::Number 
@@ -273,17 +273,17 @@ void CharaCard::clear() {
 
 bool CharaCard::erase(string& key)
 {
-	if (Attr.has(key)) {
-		Attr.reset(key);
+	if (has(key)) {
+		reset(key);
 		goto Update;
 	}
 	key = standard(key);
-	if (Attr.has(key)) {
-		Attr.reset(key);
+	if (has(key)) {
+		reset(key);
 		goto Update;
 	}
-	else if (Attr.has("&" + key)) {
-		Attr.reset("&" + key);
+	else if (has("&" + key)) {
+		reset("&" + key);
 		goto Update;
 	}
 	return false;
@@ -294,10 +294,8 @@ Update:
 void CharaCard::writeb(std::ofstream& fout) const {
 	fwrite(fout, string("Name"));
 	fwrite(fout, Name);
-	if (!Attr.empty()) {
-		fwrite(fout, string("Attrs"));
-		Attr.writeb(fout);
-	}
+	fwrite(fout, string("Attrs"));
+	AttrObject::writeb(fout);
 	fwrite(fout, string("END"));
 }
 void CharaCard::readb(std::ifstream& fin) {
@@ -311,32 +309,32 @@ void CharaCard::readb(std::ifstream& fin) {
 			Attr["__Type"] = fread<string>(fin);
 			break;
 		case 3:
-			Attr.readb(fin);
+			AttrObject::readb(fin);
 			break;
 		case 11: {
-			std::map<string, short>TempAttr;
+			std::unordered_map<string, short>TempAttr;
 			fread(fin, TempAttr);
 			TempAttr.erase("");
 			for (auto& [key, val] : TempAttr) {
-				Attr.set(key, val);
+				AttrObject::set(key, val);
 			}
 		}
 			break;
 		case 21: {
-			std::map<string, string>TempExp;
+			std::unordered_map<string, string>TempExp;
 			fread(fin, TempExp);
 			TempExp.erase("");
 			for (auto& [key, val] : TempExp) {
-				Attr.set("&" + key, val);
+				AttrObject::set("&" + key, val);
 			}
 		}
 			break;
 		case 102: {
-			std::map<string, string>TempInfo;
+			std::unordered_map<string, string>TempInfo;
 			fread(fin, TempInfo);
 			TempInfo.erase("");
 			for (auto& [key, val] : TempInfo) {
-				Attr.set(key, val);
+				AttrObject::set(key, val);
 			}
 		}
 			break;
@@ -348,7 +346,7 @@ void CharaCard::readb(std::ifstream& fin) {
 		}
 		tag = fread<string>(fin);
 	}
-	Name = Attr.get_str("__Name");
+	Name = get_str("__Name");
 }
 
 void CharaCard::cntRollStat(int die, int face) {
@@ -358,23 +356,24 @@ void CharaCard::cntRollStat(int die, int face) {
 	string keyStatSum{ "__StatD" + strFace + "Sum" };	//掷骰点数和
 	string keyStatSqr{ "__StatD" + strFace + "SqrSum" };	//掷骰点数平方和
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
-	Attr.inc(keyStatCnt);
-	Attr.inc(keyStatSum, die);
-	Attr.inc(keyStatSqr, die * die);
+	inc(keyStatCnt);
+	inc(keyStatSum, die);
+	inc(keyStatSqr, die * die);
 	update();
 }
 void CharaCard::cntRcStat(int die, int rate) {
 	if (rate <= 0 || rate >= 100 || die <= 0 || die > 100)return;
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
-	Attr.inc("__StatRcCnt");
-	if(die <= rate)Attr.inc("__StatRcSumSuc");	//实际成功数
-	if (die == 1)Attr.inc("__StatRcCnt1");	//统计出1
-	if (die <= 5)Attr.inc("__StatRcCnt5");	//统计出1-5
-	if (die >= 96)Attr.inc("__StatRcCnt96");	//统计出96-100
-	if (die == 100)Attr.inc("__StatRcCnt100");	//统计出100
-	Attr["__StatRcSumRate"] = Attr.get_int("__StatRcSumRate") + rate;	//总成功率
+	inc("__StatRcCnt");
+	if(die <= rate)inc("__StatRcSumSuc");	//实际成功数
+	if (die == 1)inc("__StatRcCnt1");	//统计出1
+	if (die <= 5)inc("__StatRcCnt5");	//统计出1-5
+	if (die >= 96)inc("__StatRcCnt96");	//统计出96-100
+	if (die == 100)inc("__StatRcCnt100");	//统计出100
+	Attr["__StatRcSumRate"] = get_int("__StatRcSumRate") + rate;	//总成功率
 	update();
 }
+unordered_map<long long, Player> PList;
 
 Player& getPlayer(long long uid)
 {
@@ -525,7 +524,7 @@ int Player::buildCard(string& name, bool isClear, long long group)
 string Player::listCard() {
 	ResList Res;
 	for (auto& [idx, pc] : mCardList) {
-		Res << "[" + to_string(idx) + "]<" + pc->Attr.get_str("__Type") + ">" + pc->getName();
+		Res << "[" + to_string(idx) + "]<" + pc->get_str("__Type") + ">" + pc->getName();
 	}
 	Res << "default:" + (*this)[0]->getName();
 	return Res.show();

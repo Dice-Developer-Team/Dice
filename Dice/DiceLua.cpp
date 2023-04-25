@@ -894,14 +894,14 @@ LUADEF(getPlayerCardAttr) {
 	string key{ lua_to_gbstring(L, 3) };
 	if (!plQQ || key.empty())return 0;
 	PC pc = getPlayer(plQQ)[group];
-	if (pc->Attr.has(key)) {
-		lua_push_attr(L, pc->Attr.get(key));
+	if (pc->has(key)) {
+		lua_push_attr(L, pc->get(key));
 	}
-	else if (key = pc->standard(key); pc->Attr.has(key)) {
-		lua_push_attr(L, pc->Attr.get(key));
+	else if (key = pc->standard(key); pc->has(key)) {
+		lua_push_attr(L, pc->get(key));
 	}
-	else if (pc->Attr.has("&" + key)) {
-		lua_push_string(L, pc->Attr.get_str("&" + key));
+	else if (pc->has("&" + key)) {
+		lua_push_string(L, pc->get_str("&" + key));
 	}
 	else {
 		lua_pushnil(L);

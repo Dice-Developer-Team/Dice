@@ -69,13 +69,13 @@ using AttrSet = ptr<fifo_set<AttrIndex>>;
 
 template<>
 struct std::hash<AttrIndex> {
-	_NODISCARD size_t operator()(const AttrIndex& _Keyval) const noexcept {
+	size_t operator()(const AttrIndex& _Keyval) const noexcept {
 		return hash<HashedVar>()(_Keyval.val);
 	}
 };
 template<>
 struct std::equal_to<AttrIndex> {
-	_NODISCARD constexpr bool operator()(const AttrIndex& _Left, const AttrIndex& _Right) const {
+	constexpr bool operator()(const AttrIndex& _Left, const AttrIndex& _Right) const {
 		return _Left.val == _Right.val;
 	}
 };

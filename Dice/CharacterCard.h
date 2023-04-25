@@ -146,7 +146,7 @@ public:
 };
 
 struct lua_State;
-class CharaCard
+class CharaCard: public AttrObject
 {
 private:
 	string Name = "角色卡";
@@ -158,36 +158,26 @@ public:
 	void setName(const string&);
 	void setType(const string&);
 	void update();
-	//string Type = "COC7";
-	AttrObject Attr{ {
-		{"__Type",AttrVar("COC7")},
-		{"__Update",AttrVar((long long)time(nullptr))},
-	} };
-	//map<string, string, less_ci> Info{  };
-	//map<string, string, less_ci> DiceExp{};
-
-	CharaCard() = default;
+#define Attr (*dict)
+	CharaCard(){
+		(*dict)["__Type"] = "COC7";
+		(*dict)["__Update"] = (long long)time(nullptr);
+	}
 	CharaCard(const CharaCard& pc){
 		Name = pc.Name;
-		Attr = pc.Attr;
-	}
-	CharaCard& operator=(const CharaCard& pc)
-	{
-		Name = pc.Name;
-		Attr = pc.Attr;
-		return *this;
+		dict = std::make_shared<AttrVars>(*pc.dict);
 	}
 
 	CharaCard(const string& name, const string& type = "COC7") : Name(name)
 	{
-		Attr["__Name"] = name;
+		(*dict)["__Name"] = name;
 		setType(type);
 	}
 
 	int call(string key)const;
 
 	//表达式转义
-	string escape(string exp, const set<string>& sRef)
+	string escape(string exp, const unordered_set<string>& sRef)
 	{
 		if (exp[0] == '&')
 		{
@@ -208,12 +198,11 @@ public:
 	}
 
 	//求key对应掷骰表达式
-	string getExp(string& key, set<string> sRef = {});
+	string getExp(string& key, unordered_set<string> sRef = {});
 
-	bool countExp(const string& key)
-	{
-		return (Attr.has(key) && Attr.at(key).type == AttrVar::Type::Text)
-			|| (Attr.has("&" + key))
+	bool countExp(const string& key){
+		return (has(key) && key[0] == '&')
+			|| (has("&" + key))
 			|| getTemplet().mExpression.count(key);
 	}
 
@@ -247,14 +236,14 @@ public:
 			//exp
 			if (it2.first[0] == '&')
 			{
-				if (Attr.has(it2.first))continue;
-				Attr.set(it2.first, it2.second);
+				if (has(it2.first))continue;
+				set(it2.first, it2.second);
 			}
 				//attr
 			else
 			{
-				if (Attr.has(it2.first))continue;
-				Attr.set(it2.first, cal(it2.second));
+				if (has(it2.first))continue;
+				AttrObject::set(it2.first, cal(it2.second));
 			}
 		}
 	}
@@ -285,18 +274,16 @@ public:
 	bool stored(string& key) const
 	{
 		key = standard(key);
-		return Attr.has(key) || getTemplet().mAutoFill.count(key) || getTemplet().defaultSkill.count(key);
+		return has(key) || getTemplet().mAutoFill.count(key) || getTemplet().defaultSkill.count(key);
 	}
 
 	void cntRollStat(int die, int face);
 
 	void cntRcStat(int die, int rate);
 
-	void operator<<(const CharaCard& card)
-	{
-		const string name = Name;
-		*this = card;
-		Attr["__Name"] = Name = name;
+	void operator<<(const CharaCard& card){
+		dict = std::make_shared<AttrVars>(*card.dict);
+		AttrObject::set("__Name", Name);
 	}
 
 	void writeb(std::ofstream& fout) const;
@@ -426,7 +413,7 @@ public:
 	void readb(std::ifstream& fin);
 };
 
-inline map<long long, Player> PList;
+extern unordered_map<long long, Player> PList;
 
 Player& getPlayer(long long qq);
 

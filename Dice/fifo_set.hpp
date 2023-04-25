@@ -43,10 +43,10 @@ class fifo_const_iter {
 public:
     size_t idx;
     explicit fifo_const_iter(const _Base* ref, size_t i = 0) :con(ref), idx(i) {}
-    _NODISCARD const value_type& operator*()const {
+     const value_type& operator*()const {
         return con->in(idx);
     }
-    _NODISCARD const value_type* operator->() {
+     const value_type* operator->() {
         return &con->in(idx);
     }
     bool operator!=(const const_iterator& other)const {
@@ -71,10 +71,10 @@ public:
     using pointer = value_type*;
     using reference = const value_type&;
     explicit fifo_set_iter(_Base* ref = nullptr, size_t i = 0) :con(ref), idx(i) {}
-    _NODISCARD reference operator*() {
+    reference operator*() {
         return con->in(idx);
     }
-    _NODISCARD pointer operator->()const {
+    pointer operator->()const {
         return &(const_cast<reference>(con->in(idx)));
     }
     bool operator==(const iterator& other)const {

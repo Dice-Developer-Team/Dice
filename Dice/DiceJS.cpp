@@ -890,10 +890,10 @@ int js_dice_actor_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueCon
 }
 int js_dice_actor_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen, JSValueConst this_val) {
 	JS2PC(this_val);
-	if ((*plen = pc->Attr->size() - 3) > 0) {
+	if ((*plen = pc->size() - 3) > 0) {
 		JSPropertyEnum* tab = (JSPropertyEnum*)js_malloc(ctx, sizeof(JSPropertyEnum) * (*plen));
 		int i = 0;
-		for (const auto& [key, val] : *pc->Attr.to_dict()) {
+		for (const auto& [key, val] : *pc->to_dict()) {
 			if (prop_desc.count(key)) {
 				continue;
 			}
