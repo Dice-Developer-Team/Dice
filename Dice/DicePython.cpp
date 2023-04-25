@@ -50,6 +50,18 @@ PyObject* py_from_gbstring(const string& strGBK) {
 	return PyUnicode_FromUnicode(s.c_str(), s.length());
 #endif
 }
+AttrIndex py_to_hashable(PyObject* o) {
+	if (o) {
+		if (Py_IS_TYPE(o, &PyLong_Type)) {
+			auto i{ PyLong_AsLongLong(o) };
+			return (i == (int)i) ? (int)i : i;
+		}
+		else if (Py_IS_TYPE(o, &PyUnicode_Type))return UtoGBK(PyUnicode_AsUnicode(o));
+		else if (Py_IS_TYPE(o, &PyFloat_Type))return PyFloat_AsDouble(o);
+		else if (Py_IS_TYPE(o, &PyBool_Type))return Py_IsTrue(o);
+	}
+	return 0;
+}
 AttrVar py_to_attr(PyObject* o) {
 	if (!o)return {};
 	else if (Py_IS_TYPE(o, &PyBool_Type))return bool(Py_IsTrue(o));
@@ -100,25 +112,39 @@ AttrVar py_to_attr(PyObject* o) {
 		}
 		return AttrObject(ary);
 	}
+	else if (Py_IS_TYPE(o, &PySet_Type)) {
+		fifo_set<AttrIndex> set;
+		if (auto len = PySet_Size(o)) {
+			DD::debugLog("set.size:" + to_string(len));
+			PyObject* tmp = PySet_New(o);
+			while (len--) {
+				auto item = PySet_Pop(tmp);
+				set.emplace(py_to_hashable(item));
+				Py_DECREF(item);
+			}
+			Py_DECREF(tmp);
+		}
+		return set;
+	}
 	console.log("py type: " + string(o->ob_type->tp_name), 0);
 	return {};
 }
 PyObject* py_build_attr(const AttrVar& var) {
 	switch (var.type){
-	case AttrVar::AttrType::Boolean:
+	case AttrVar::Type::Boolean:
 		if (var.bit) Py_RETURN_TRUE;
 		else Py_RETURN_FALSE;
 		break;
-	case AttrVar::AttrType::Integer:
+	case AttrVar::Type::Integer:
 		return PyLong_FromSsize_t(var.attr);
 		break;
-	case AttrVar::AttrType::Number:
+	case AttrVar::Type::Number:
 		return PyFloat_FromDouble(var.number);
 		break;
-	case AttrVar::AttrType::Text:
+	case AttrVar::Type::Text:
 		return PyUnicode_FromString(GBKtoUTF8(var.text).c_str());
 		break;
-	case AttrVar::AttrType::Table:
+	case AttrVar::Type::Table:
 		if (!var.table.to_dict()->empty()) {
 			auto dict = PyDict_New();
 			if (var.table.to_list()) {
@@ -141,10 +167,18 @@ PyObject* py_build_attr(const AttrVar& var) {
 			return ary;
 		}
 		break;
-	case AttrVar::AttrType::ID:
+	case AttrVar::Type::ID:
 		return PyLong_FromLongLong(var.id);
 		break;
-	case AttrVar::AttrType::Nil:
+	case AttrVar::Type::Set: {
+		auto set = PySet_New(nullptr);
+		for (auto& elem : *var.flags) {
+			PySet_Add(set, py_build_attr(AttrVar(elem.val)));
+		}
+		return set;
+	}
+		break;
+	case AttrVar::Type::Nil:
 	default:
 		break;
 	}
@@ -736,7 +770,7 @@ PyObject* PyActor_set(PyObject* self, PyObject* args) {
 				auto key = wempty;
 				for (int i = 0; i < len; ++i) {
 					item = PySequence_GetItem(items, i);
-					PyArg_ParseTuple(item, "sO", &key, &val);
+					PyArg_ParseTuple(item, "uO", &key, &val);
 					if(!pc->set(UtoGBK(key), py_to_attr(val)))++cnt;
 					Py_DECREF(item);
 				}
@@ -946,8 +980,9 @@ PyGlobal::PyGlobal() {
 	if (std::filesystem::path dirPy{ dirExe / "bin" };
 		std::filesystem::exists(dirPy / "python3.dll")
 		|| std::filesystem::exists(dirPy / "python3.so")
-		|| std::filesystem::exists(dirPy = dirExe / "py310")
-		|| std::filesystem::exists(dirPy = dirExe / "python")) {
+		|| std::filesystem::exists(dirPy = dirExe / "python")
+		|| std::filesystem::exists(dirPy = dirExe / "python310")
+		|| std::filesystem::exists(dirPy = dirExe / "py310")) {
 		Py_SetPythonHome(dirPy.wstring().c_str());
 		Py_SetPath((dirPy / "python310.zip").wstring().c_str());
 	}

@@ -516,9 +516,8 @@ int DDBlackManager::find(const DDBlackMark& mark)
     if (mark.fromUID.first)
 	{
         unordered_set<unsigned int> sQQRange = sQQEmpty;
-        for (auto& [key, id] : multi_range(mQQIndex, mark.fromUID.first)) 
-		{
-            if (Enabled)console.log("匹配用户记录" + to_string(id), 0);
+        for (auto& [key, id] : multi_range(mQQIndex, mark.fromUID.first)) {
+            if (Enabled)console.log("匹配不良记录" + to_string(id), 0);
             sQQRange.insert(id);
         }
         if (sQQRange.empty())return -1;

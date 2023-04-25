@@ -32,7 +32,7 @@ AttrVar idx_gAuth(AttrObject& eve) {
 	return {};
 }
 
-AttrIndexs MsgIndexs{
+AttrGetters MsgIndexs{
 	{"nick", idx_nick},
 	{"pc", idx_pc},
 	{"at", idx_at},
@@ -81,8 +81,10 @@ void DiceEvent::formatReply() {
 }
 
 void DiceEvent::reply(const std::string& msgReply, bool isFormat) {
-	strReply = msgReply;
-	reply(isFormat);
+	if (!msgReply.empty()) {
+		strReply = msgReply;
+		reply(isFormat);
+	}
 }
 
 void DiceEvent::reply(bool isFormat) {
@@ -3803,9 +3805,6 @@ int DiceEvent::InnerOrder() {
 			intMsgCnt += 3;
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
-			if (strMsg[intMsgCnt] == '&') {
-				intMsgCnt++;
-			}
 			set("attr",readAttrName());
 			if (getPlayer(fromChat.uid)[fromChat.gid]->erase(at("attr").text)) {
 				replyMsg("strPropDeleted");
@@ -4022,7 +4021,7 @@ int DiceEvent::InnerOrder() {
 					if (pc->available(strAttr)) {
 						auto attr{ pc->get(strAttr) };
 						strMainDice += pc->getExp(strAttr);
-						if (!pc->available("&" + strAttr) && pc->get(strAttr).type == AttrVar::AttrType::Integer)strMainDice += 'a';
+						if (!pc->available("&" + strAttr) && pc->get(strAttr).type == AttrVar::Type::Integer)strMainDice += 'a';
 					}
 					else {
 						strReason = strAttr;

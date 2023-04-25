@@ -71,7 +71,6 @@ string lua_to_native_string(lua_State* L, int idx = -1) {
 #endif
 }
 
-
 void lua_push_string(lua_State* L, const string& str) {
 	lua_pushstring(L, UTF8Luas.count(L) ? GBKtoUTF8(str).c_str() : str.c_str());
 }
@@ -126,22 +125,22 @@ ByteS lua_to_chunk(lua_State* L, int idx = -1) {
 }
 void lua_push_attr(lua_State* L, const AttrVar& attr) {
 	switch (attr.type) {
-	case AttrVar::AttrType::Boolean:
+	case AttrVar::Type::Boolean:
 		lua_pushboolean(L, attr.bit);
 		break;
-	case AttrVar::AttrType::Integer:
+	case AttrVar::Type::Integer:
 		lua_pushinteger(L, attr.attr);
 		break;
-	case AttrVar::AttrType::ID:
+	case AttrVar::Type::ID:
 		lua_pushinteger(L, attr.id);
 		break;
-	case AttrVar::AttrType::Number:
+	case AttrVar::Type::Number:
 		lua_pushnumber(L, attr.number);
 		break;
-	case AttrVar::AttrType::Text:
+	case AttrVar::Type::Text:
 		lua_push_string(L, attr.text);
 		break;
-	case AttrVar::AttrType::Table:
+	case AttrVar::Type::Table:
 		lua_newtable(L);
 		if (unordered_set<string> idxs; !attr.table.dict->empty() || attr.table.list) {
 			if (attr.table.list) {
@@ -159,7 +158,13 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 			}
 		}
 		break;
-	case AttrVar::AttrType::Nil:
+	case AttrVar::Type::Set: {
+		AttrSet** p{ (AttrSet**)lua_newuserdata(L, sizeof(AttrSet*)) };
+		*p = new AttrSet(attr.flags);
+		luaL_setmetatable(L, "Set");
+	}
+		break;
+	case AttrVar::Type::Nil:
 	default:
 		lua_pushnil(L);
 		break;
@@ -185,7 +190,7 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 	case LUA_TFUNCTION:
 		return lua_to_chunk(L, idx);
 		break;
-	case LUA_TTABLE:
+	case LUA_TTABLE: {
 		AttrObject tab;
 		if (idx < 0)idx = lua_gettop(L) + idx + 1;
 		lua_pushnil(L);
@@ -204,6 +209,12 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 			lua_pop(L, 1);
 		}
 		return tab;
+	}
+		break;
+	case LUA_TUSERDATA:
+		if (auto p = luaL_testudata(L, idx, "Set")) {
+			return **(AttrSet**)p;
+		}
 		break;
 	}
 	return {};
@@ -295,25 +306,25 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 	}
 	if (lua_gettop(L)) {
 		if (!lua_isnoneornil(L, 1)) {
-			if (!lua_isstring(L, 1)) {
+			if (lua_isstring(L, 1)) {
+				msg->reply(lua_to_gbstring(L, 1));
+			}
+			else {
 				console.log(getMsg("strSelfName") + "调用" + msg->get_str("reply_title") + "脚本返回值格式错误(" + LuaTypes[lua_type(L, 1)] + ")!", 0b10);
 				msg->set("lang", "Lua");
 				msg->reply(getMsg("strScriptRunErr"));
 				return false;
 			}
-			else if (!((*msg)["msg_reply"] = lua_to_gbstring(L, 1)).str_empty()) {
-				msg->reply(msg->get_str("msg_reply"));
-			}
 		}
 		if (!lua_isnoneornil(L, 2)) {
-			if (!lua_isstring(L, 2)) {
-				console.log(getMsg("strSelfName") + "调用" + msg->get_str("reply_title") + "脚本返回值格式错误("+ LuaTypes[lua_type(L, 2)] + ")!", 1);
+			if (lua_isstring(L, 2)) {
+				msg->replyHidden(lua_to_gbstring(L, 2));
+			}
+			else {
+				console.log(getMsg("strSelfName") + "调用" + msg->get_str("reply_title") + "脚本返回值格式错误(" + LuaTypes[lua_type(L, 2)] + ")!", 1);
 				msg->set("lang", "Lua");
 				msg->reply(getMsg("strScriptRunErr"));
 				return false;
-			}
-			else if (!((*msg)["msg_hidden"] = lua_to_gbstring(L, 2)).str_empty()) {
-				msg->replyHidden(msg->get_str("msg_hidden"));
 			}
 		}
 	}
@@ -384,6 +395,97 @@ bool lua_call_task(const AttrVars& task) {
 		return false;
 	}
 	return true;
+}
+
+#define LUA2SET(L) AttrSet& set{ **(AttrSet**)luaL_checkudata(L, 1, "Set") }
+int lua_Set_in(lua_State* L) {
+	LUA2SET(L);
+	if (lua_type(L, 2) == LUA_TSTRING) {
+		string key{ lua_to_gbstring(L, 2) };
+		lua_pushboolean(L, set->count(key));
+	}
+	else if (lua_isnumber(L, 2)) {
+		double num{ lua_tonumber(L,2) };
+		lua_pushboolean(L, set->count(num));
+	}
+	return 1;
+}
+int lua_Set_remove(lua_State* L) {
+	LUA2SET(L);
+	bool has_key{ false };
+	if (lua_type(L, 2) == LUA_TSTRING) {
+		string key{ lua_to_gbstring(L, 2) };
+		if (has_key = set->count(key)) {
+			set->erase(key);
+		}
+	}
+	else if (lua_isnumber(L, 2)) {
+		double key{ lua_tonumber(L,2) };
+		if (has_key = set->count(key)) {
+			set->erase(key);
+		}
+	}
+	lua_pushboolean(L, has_key);
+	return 1;
+}
+int lua_Set_len(lua_State* L) {
+	LUA2SET(L);
+	lua_pushinteger(L, (lua_Integer)set->size());
+	return 1;
+}
+int lua_Set_index(lua_State* L) {
+	LUA2SET(L);
+	if (lua_type(L, 2) == LUA_TSTRING) {
+		string key{ lua_to_gbstring(L, 2) };
+		if (key == "in")lua_pushcfunction(L, lua_Set_in);
+		else if (key == "remove")lua_pushcfunction(L, lua_Set_remove);
+		else lua_pushboolean(L, set->count(key));
+	}
+	else if (lua_isnumber(L, 2)) {
+		double num{ lua_tonumber(L,2) };
+		lua_pushboolean(L, set->count(num));
+	}
+	return 1;
+}
+int lua_Set_gc(lua_State* L) {
+	LUA2SET(L);
+	delete &set;
+	return 0;
+}
+int lua_Set_tostring(lua_State* L) {
+	LUA2SET(L);
+	lua_push_string(L, AttrVar(*set).to_str());
+	return 1;
+}
+int lua_Set_totable(lua_State* L) {
+	LUA2SET(L);
+	lua_newtable(L);
+	int idx{ 0 };
+	for (auto& val : *set) {
+		lua_push_attr(L, AttrVar(val.val));
+		lua_seti(L, -2, ++idx);
+	}
+	return 1;
+}
+int lua_Set_new(lua_State* L) {
+	AttrSet** p{ (AttrSet**)lua_newuserdata(L, sizeof(AttrSet*)) };
+	*p = new AttrSet(std::make_shared<fifo_set<AttrIndex>>());
+	luaL_setmetatable(L, "Set");
+	return 1;
+}
+static const luaL_Reg lua_Set_funcs[] = {
+	{"__index", lua_Set_index},
+	{"__gc", lua_Set_totable},
+	{"__tostring", lua_Set_tostring},
+	{"__totable", lua_Set_totable},
+	{"__len", lua_Set_len},
+	{"new", lua_Set_new},
+	{NULL, NULL}
+};
+int luaopen_Set(lua_State* L) {
+	luaL_newmetatable(L, "Set");
+	luaL_setfuncs(L, lua_Set_funcs, 0);
+	return 1;
 }
 
 int selfData_get(lua_State* L) {
@@ -1065,7 +1167,7 @@ int Actor_set(lua_State* L) {
 		lua_settop(L, 3);
 		while (lua_next(L, 2)) {
 			if (lua_type(L, 3) == LUA_TNUMBER) {
-				if (pc->erase(lua_to_gbstring(L, 4)))++cnt;
+				if (string attr{ lua_to_gbstring(L, 4) }; pc->erase(attr))++cnt;
 			}
 			else {
 				if (0 == pc->set(lua_to_gbstring(L, 3), lua_to_attr(L, 4)))++cnt;
@@ -1107,11 +1209,8 @@ int Actor_index(lua_State* L) {
 		lua_pushcfunction(L, Actor_rollDice);
 		return 1;
 	}
-	else if (pc->available(key)) {
-		lua_push_attr(L, pc->get(key));
-		return 1;
-	}
-	return 0;
+	lua_push_attr(L, pc->get(key));
+	return 1;
 }
 int Actor_newindex(lua_State* L) {
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
@@ -1248,6 +1347,7 @@ void LuaState::regist() {
 	}
 	static const luaL_Reg Dicelibs[] = {
 		{"Context", luaopen_Context},
+		{"Set", luaopen_Set},
 		{"SelfData", luaopen_SelfData},
 		{"Actor", luaopen_Actor},
 		{"http", luaopen_http},

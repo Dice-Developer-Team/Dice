@@ -141,19 +141,19 @@ AttrVar js_toAttr(JSContext* ctx, JSValue val) {
 }
 JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 	switch (var.type) {
-	case AttrVar::AttrType::Boolean:
+	case AttrVar::Type::Boolean:
 		return JS_NewBool(ctx, var.bit);
 		break;
-	case AttrVar::AttrType::Integer:
+	case AttrVar::Type::Integer:
 		return JS_NewInt32(ctx, (int32_t)var.attr);
 		break;
-	case AttrVar::AttrType::Number:
+	case AttrVar::Type::Number:
 		return JS_NewFloat64(ctx, var.number);
 		break;
-	case AttrVar::AttrType::Text:
+	case AttrVar::Type::Text:
 		return JS_NewString(ctx, GBKtoUTF8(var.text).c_str());
 		break;
-	case AttrVar::AttrType::Table:
+	case AttrVar::Type::Table:
 		if (!var.table.to_dict()->empty()) {
 			auto dict = JS_NewObject(ctx);
 			if (var.table.to_list()) {
@@ -176,11 +176,11 @@ JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 			return ary;
 		}
 		break;
-	case AttrVar::AttrType::ID:
+	case AttrVar::Type::ID:
 		return JS_NewInt64(ctx, (int64_t)var.id);
 		break;
-	case AttrVar::AttrType::Function:
-	case AttrVar::AttrType::Nil:
+	case AttrVar::Type::Function:
+	case AttrVar::Type::Nil:
 	default:
 		break;
 	}
@@ -586,7 +586,7 @@ int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueC
 	if (obj && desc) {
 		string key{ js_AtomtoGBK(ctx, prop) };
 		if (obj->has(key)) {
-			desc->flags = JS_PROP_NORMAL;
+			desc->flags = JS_PROP_C_W_E;
 			desc->value = js_newAttr(ctx, obj->get(key));
 			desc->getter = JS_UNDEFINED;
 			desc->setter = JS_UNDEFINED;
@@ -600,11 +600,13 @@ int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* pl
 	if (!obj)return -1;
 	if ((*plen = obj->size()) > 0) {
 		JSPropertyEnum* tab = (JSPropertyEnum*)js_malloc(ctx, sizeof(JSPropertyEnum) * (*plen));
+		int i = 0;
 		for (const auto& [key, val] : *obj->to_dict()) {
 			if (auto atom = JS_NewAtom(ctx, GBKtoUTF8(key).c_str());
 				atom != JS_ATOM_NULL) {
-				tab[*plen].atom = atom;
-				tab[*plen].is_enumerable = FALSE;
+				DD::debugLog("newAtom:" + js_AtomtoGBK(ctx, atom) + "#" + to_string(atom));
+				tab[i++].atom = atom;
+				tab[i++].is_enumerable = TRUE;
 			}
 			else {
 				js_free_prop_enum(ctx, tab, *plen);
@@ -612,8 +614,7 @@ int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* pl
 				return -1;
 			}
 		}
-		js_free_prop_enum(ctx, tab, *plen);
-		ptab = &tab;
+		*ptab = tab;
 	}
 	return 0;
 }
@@ -708,7 +709,7 @@ int js_dice_selfdata_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValue
 	if (data && desc) {
 		string key{ js_AtomtoGBK(ctx, prop) };
 		if ((*data)->data.to_dict()->count(key)) {
-			desc->flags = JS_PROP_NORMAL;
+			desc->flags = JS_PROP_C_W_E;
 			desc->value = js_newAttr(ctx, (*data)->data.to_obj().get(key));
 			desc->getter = JS_UNDEFINED;
 			desc->setter = JS_UNDEFINED;
@@ -759,6 +760,11 @@ QJSDEF(selfdata_append) {
 }
 
 //Actor
+const dict<int> prop_desc{
+	{"__Name",JS_PROP_NORMAL},
+	{"__Type",JS_PROP_CONFIGURABLE|JS_PROP_WRITABLE },
+	{"__Update",JS_PROP_ENUMERABLE},
+};
 void js_dice_actor_finalizer(JSRuntime* rt, JSValue val) {
 	JS2PC(val);
 	delete &pc;
@@ -766,8 +772,10 @@ void js_dice_actor_finalizer(JSRuntime* rt, JSValue val) {
 int js_dice_actor_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst this_val, JSAtom prop) {
 	JS2PC(this_val);
 	string key{ js_AtomtoGBK(ctx, prop) };
+	DD::debugLog("actor_get:");
+	DD::debugLog(key);
 	if (desc && pc && pc->available(key)) {
-		desc->flags = JS_PROP_NORMAL;
+		desc->flags = (prop_desc.count(key)) ? prop_desc.at(key) : JS_PROP_C_W_E;
 		desc->value = js_newAttr(ctx, pc->get(key));
 		desc->getter = JS_UNDEFINED;
 		desc->setter = JS_UNDEFINED;
@@ -777,13 +785,18 @@ int js_dice_actor_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueCon
 }
 int js_dice_actor_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen, JSValueConst this_val) {
 	JS2PC(this_val);
-	if ((*plen = pc->Attr->size()) > 0) {
+	if ((*plen = pc->Attr->size() - 3) > 0) {
 		JSPropertyEnum* tab = (JSPropertyEnum*)js_malloc(ctx, sizeof(JSPropertyEnum) * (*plen));
+		int i = 0;
 		for (const auto& [key, val] : *pc->Attr.to_dict()) {
-			if (auto atom = JS_NewAtom(ctx, GBKtoUTF8(key).c_str());
+			if (prop_desc.count(key)) {
+				continue;
+			}
+			else if (auto atom = JS_NewAtom(ctx, GBKtoUTF8(key).c_str());
 				atom != JS_ATOM_NULL) {
-				tab[*plen].atom = atom;
-				tab[*plen].is_enumerable = FALSE;
+				DD::debugLog("newAtom:" + key + "#" + to_string(atom));
+				tab[i++].atom = atom;
+				tab[i++].is_enumerable = TRUE;
 			}
 			else {
 				js_free_prop_enum(ctx, tab, *plen);
@@ -791,8 +804,7 @@ int js_dice_actor_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen
 				return -1;
 			}
 		}
-		js_free_prop_enum(ctx, tab, *plen);
-		ptab = &tab;
+		*ptab = tab;
 	}
 	return 0;
 }
@@ -825,9 +837,7 @@ QJSDEF(actor_set) {
 		uint32_t len = 0;
 		int32_t cnt = 0;
 		if (!JS_GetOwnPropertyNames(ctx, &tab, &len, argv[0], JS_GPN_ENUM_ONLY | JS_GPN_STRING_MASK)) {
-			DD::debugLog("JS_GetOwnPropertyNames:" + to_string(len));
 			for (uint32_t i = 0; i < len; ++i) {
-				DD::debugLog("JS_GetProperty:" + js_AtomtoGBK(ctx, tab[i].atom));
 				if (0 == pc->set(js_AtomtoGBK(ctx, tab[i].atom), js_toAttr(ctx, JS_GetProperty(ctx, argv[0], tab[i].atom))))++cnt;
 			}
 			js_free_prop_enum(ctx, tab, len);

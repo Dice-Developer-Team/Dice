@@ -22,13 +22,11 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #define UNICODE
-#include <string>
 #include <map>
 #include <set>
 #include <fstream>
 #include <algorithm>
 #include <ctime>
-#include <mutex>
 #include <exception>
 #include <stdexcept>
 

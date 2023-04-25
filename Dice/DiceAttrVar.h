@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -22,9 +22,11 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <variant>
 #include "fifo_json.hpp"
 #include "toml.hpp"
 #include "DiceYaml.h"
+#include "fifo_set.hpp"
 using std::string;
 template<typename T>
 using ptr = std::shared_ptr<T>;
@@ -52,6 +54,32 @@ class AttrVar;
 using AttrVars = fifo_dict<AttrVar>;
 using VarArray = std::vector<AttrVar>;
 class lua_State;
+using HashedVar = std::variant<double, string>;
+struct AttrIndex {
+	HashedVar val;
+	AttrIndex(int i):val(double(i)){}
+	AttrIndex(long long num) :val(double(num)) {}
+	AttrIndex(double num) :val(num) {}
+	AttrIndex(const string& s) :val(s) {}
+	fifo_json to_json()const;
+};
+fifo_json to_json(const fifo_set<AttrIndex>& vars);
+toml::array to_toml(const fifo_set<AttrIndex>& vars);
+using AttrSet = ptr<fifo_set<AttrIndex>>;
+
+template<>
+struct std::hash<AttrIndex> {
+	_NODISCARD size_t operator()(const AttrIndex& _Keyval) const noexcept {
+		return hash<HashedVar>()(_Keyval.val);
+	}
+};
+template<>
+struct std::equal_to<AttrIndex> {
+	_NODISCARD constexpr bool operator()(const AttrIndex& _Left, const AttrIndex& _Right) const {
+		return _Left.val == _Right.val;
+	}
+};
+
 class AttrObject {
 protected:
 	ptr<AttrVars>dict;
@@ -111,8 +139,8 @@ public:
 
 class AttrVar {
 public:
-	enum class AttrType { Nil, Boolean, Integer, Number, Text, Table, Function, ID };
-	AttrType type{ 0 };
+	enum class Type { Nil, Boolean, Integer, Number, Text, Table, Function, ID, Set	};
+	Type type{ 0 };
 	union {
 		bool bit;		//1
 		int attr{ 0 };		//2
@@ -121,27 +149,32 @@ public:
 		AttrObject table;		//5
 		ByteS chunk;		//6
 		long long id;		//7
+		AttrSet flags;
 	};
 	AttrVar() {}
 	AttrVar(const AttrVar& other);
-	explicit AttrVar(bool b) :type(AttrType::Boolean), bit(b) {}
-	AttrVar(int n) :type(AttrType::Integer), attr(n) {}
-	AttrVar(double n) :type(AttrType::Number), number(n) {}
-	AttrVar(const char* s) :type(AttrType::Text), text(s) {}
-	AttrVar(const string& s) :type(AttrType::Text), text(s) {}
-	AttrVar(const char* s,size_t len) :type(AttrType::Function), chunk(s,len) {}
-	AttrVar(ByteS&& fun) :type(AttrType::Function), chunk(fun) {}
-	AttrVar(long long n) :type(AttrType::ID), id(n) {}
+	explicit AttrVar(bool b) :type(Type::Boolean), bit(b) {}
+	AttrVar(int n) :type(Type::Integer), attr(n) {}
+	AttrVar(double n) :type(Type::Number), number(n) {}
+	AttrVar(const char* s) :type(Type::Text), text(s) {}
+	AttrVar(const string& s) :type(Type::Text), text(s) {}
+	AttrVar(const char* s,size_t len) :type(Type::Function), chunk(s,len) {}
+	AttrVar(ByteS&& fun) :type(Type::Function), chunk(fun) {}
+	AttrVar(long long n) :type(Type::ID), id(n) {}
+	AttrVar(const fifo_set<AttrIndex>& s) :type(Type::Set), flags(std::make_shared<fifo_set<AttrIndex>>(s)) {}
+	AttrVar(const AttrSet& s) :type(Type::Set), flags(s) {}
+	AttrVar(const HashedVar& vars);
 	AttrVar(const fifo_json&);
 	AttrVar(const toml::node&);
 	AttrVar(const YAML::Node&);
-	AttrVar(const AttrObject& vars) :type(AttrType::Table), table(vars) {}
-	explicit AttrVar(const AttrVars& vars) :type(AttrType::Table), table(vars) {}
+	AttrVar(const AttrObject& vars) :type(Type::Table), table(vars) {}
+	explicit AttrVar(const AttrVars& vars) :type(Type::Table), table(vars) {}
 	void des() {
-		if (type == AttrType::Text)text.~string();
-		else if (type == AttrType::Table)table.~AttrObject();
-		else if (type == AttrType::Function)chunk.~ByteS();
-		type = AttrType::Nil;
+		if (type == Type::Text)text.~string();
+		else if (type == Type::Table)table.~AttrObject();
+		else if (type == Type::Set)flags.~AttrSet();
+		else if (type == Type::Function)chunk.~ByteS();
+		type = Type::Nil;
 	}
 	~AttrVar() {
 		des();
@@ -179,14 +212,14 @@ public:
 	YAML::Node to_yaml()const;
 
 	using CMPR = bool(AttrVar::*)(const AttrVar&)const;
-	bool is_null()const { return type == AttrType::Nil; }
-	bool is_boolean()const { return type == AttrType::Boolean; }
+	bool is_null()const { return type == Type::Nil; }
+	bool is_boolean()const { return type == Type::Boolean; }
 	bool is_true()const { return operator bool(); }
 	bool is_numberic()const;
-	bool is_text()const { return type == AttrType::Text; }
-	bool is_character()const { return type != AttrType::Nil && type != AttrType::Boolean && type != AttrType::Table && type != AttrType::Function; }
-	bool is_table()const { return type == AttrType::Table; }
-	bool is_function()const { return type == AttrType::Function; }
+	bool is_text()const { return type == Type::Text; }
+	bool is_character()const { return type != Type::Nil && type != Type::Boolean && type != Type::Table && type != Type::Function && type != Type::Set; }
+	bool is_table()const { return type == Type::Table; }
+	bool is_function()const { return type == Type::Function; }
 	bool equal(const AttrVar&)const;
 	bool operator==(const AttrVar& other)const { return equal(other); }
 	bool not_equal(const AttrVar&)const;
@@ -209,5 +242,5 @@ void from_json(const fifo_json& j, AttrVars&);
 string showAttrCMPR(AttrVar::CMPR);
 
 using AttrObjects = std::unordered_map<string, AttrObject>;
-using AttrIndex = AttrVar(*)(AttrObject&);
-using AttrIndexs = std::unordered_map<string, AttrIndex>;
+using AttrGetter = AttrVar(*)(AttrObject&);
+using AttrGetters = std::unordered_map<string, AttrGetter>;

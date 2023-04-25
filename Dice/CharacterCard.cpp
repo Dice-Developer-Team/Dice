@@ -3,6 +3,7 @@
  * Copyright (C) 2019-2023 String.Empty
  */
 #include "CharacterCard.h"
+#include "DDAPI.h"
 
 /**
  * 错误返回值
@@ -124,7 +125,6 @@ CardTemp& CharaCard::getTemplet()const{
 	if (string type{ Attr.get_str("__Type") };
 		!type.empty() && mCardTemplet.count(type))return mCardTemplet[type]; 
 	return mCardTemplet["BRP"];
-	
 }
 
 void CharaCard::update() {
@@ -137,9 +137,7 @@ void CharaCard::setType(const string& strType) {
 	Attr["__Type"] = strType;
 }
 AttrVar CharaCard::get(string key)const {
-	if (Attr.has(key)) return Attr.get(key);
-	key = standard(key);
-	if (Attr.has(key)) return Attr.get(key);
+	if (Attr.has(key) || Attr.has(key = standard(key)))return Attr.get(key);
 	if (auto& temp{ getTemplet() };temp.defaultSkill.count(key))return getTemplet().defaultSkill.find(key)->second;
 	if (getTemplet().mAutoFill.count(key)){
 		Attr.set(key, cal(getTemplet().mAutoFill.find(key)->second));
@@ -167,13 +165,8 @@ int CharaCard::set(string key, const AttrVar& val) {
 }
 
 int CharaCard::show(string key, string& val) const {
-	if (Attr.has(key)) {
-		val = Attr.get_str(key);
-		return 0;
-	}
-	key = standard(key);
-	if (Attr.has(key)) {
-		val = Attr.get_str(key);
+	if (Attr.has(key) || Attr.has(key = standard(key))) {
+		val = Attr.print(key);
 		return 0;
 	}
 	else if (getTemplet().defaultSkill.count(key)) {
@@ -201,11 +194,12 @@ int CharaCard::call(string key)const {
 }
 bool CharaCard::available(const string& strKey) const {
 	if (Attr.has(strKey))return true;
-	string key{ standard(strKey) };
-	auto& temp{ getTemplet() };
-	return Attr.has(key) || Attr.has("&" + key)
-		|| temp.mAutoFill.count(key) || temp.mVariable.count(key)
-		|| temp.defaultSkill.count(key);
+	if (string key{ standard(strKey) }; Attr.has(key) || Attr.has("&" + key))return true;
+	else {
+		auto& temp{ getTemplet() };
+		return temp.mAutoFill.count(key) || temp.mVariable.count(key)
+			|| temp.defaultSkill.count(key);
+	}
 }
 
 //求key对应掷骰表达式
@@ -259,7 +253,7 @@ void CharaCard::clear() {
 			if (!show(it, strVal)) {
 				sDefault.insert(it);
 				if (it[0] == '&')subList << it + "=" + strVal;
-				//else if (Attr.at(it).type == AttrVar::AttrType::Text)subList << it + ":" + strVal;
+				//else if (Attr.at(it).type == AttrVar::Type::Text)subList << it + ":" + strVal;
 				else subList << it + ":" + strVal;
 			}
 		}
@@ -268,16 +262,16 @@ void CharaCard::clear() {
 	string strAttrRest;
 	for (const auto& [key,val] : *Attr.to_dict()) {
 		if (sDefault.count(key) || key[0] == '_'
-			|| (isWhole && val.type == AttrVar::AttrType::Number))continue;
-		strAttrRest += key + ":" + val.to_str() + (val.type == AttrVar::AttrType::Number 
+			|| (isWhole && val.type == AttrVar::Type::Number))continue;
+		strAttrRest += key + ":" + val.print() + (val.type == AttrVar::Type::Number 
 			? " " 
-			: (val.type == AttrVar::AttrType::Text ? "\t" : "\n"));
+			: (val.type == AttrVar::Type::Text ? "\t" : "\n"));
 	}
 	Res << strAttrRest;
 	return Res.show();
 }
 
-bool CharaCard::erase(string& key, bool isExp)
+bool CharaCard::erase(string& key)
 {
 	if (Attr.has(key)) {
 		Attr.reset(key);
@@ -364,20 +358,20 @@ void CharaCard::cntRollStat(int die, int face) {
 	string keyStatSum{ "__StatD" + strFace + "Sum" };	//掷骰点数和
 	string keyStatSqr{ "__StatD" + strFace + "SqrSum" };	//掷骰点数平方和
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
-	Attr.set(keyStatCnt,Attr.get_int(keyStatCnt) + 1);
-	Attr.set(keyStatSum,Attr.get_int(keyStatSum) + die);
-	Attr.set(keyStatSqr,Attr.get_int(keyStatSqr) + die * die);
+	Attr.inc(keyStatCnt);
+	Attr.inc(keyStatSum, die);
+	Attr.inc(keyStatSqr, die * die);
 	update();
 }
 void CharaCard::cntRcStat(int die, int rate) {
 	if (rate <= 0 || rate >= 100 || die <= 0 || die > 100)return;
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
-	Attr["__StatRcCnt"] = Attr["__StatRcCnt"].to_int() + 1;
-	if(die <= rate)Attr["__StatRcSumSuc"] = Attr.get_int("__StatRcSumSuc") + 1;	//实际成功数
-	if (die == 1)Attr["__StatRcCnt1"] = Attr.get_int("__StatRcCnt1") + 1;	//统计出1
-	if (die <= 5)Attr["__StatRcCnt5"] = Attr.get_int("__StatRcCnt5") + 1;	//统计出1-5
-	if (die >= 96)Attr["__StatRcCnt96"] = Attr.get_int("__StatRcCnt96") + 1;	//统计出96-100
-	if (die == 100)Attr["__StatRcCnt100"] = Attr.get_int("__StatRcCnt100") + 1;	//统计出100
+	Attr.inc("__StatRcCnt");
+	if(die <= rate)Attr.inc("__StatRcSumSuc");	//实际成功数
+	if (die == 1)Attr.inc("__StatRcCnt1");	//统计出1
+	if (die <= 5)Attr.inc("__StatRcCnt5");	//统计出1-5
+	if (die >= 96)Attr.inc("__StatRcCnt96");	//统计出96-100
+	if (die == 100)Attr.inc("__StatRcCnt100");	//统计出100
 	Attr["__StatRcSumRate"] = Attr.get_int("__StatRcSumRate") + rate;	//总成功率
 	update();
 }

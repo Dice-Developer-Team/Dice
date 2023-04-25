@@ -17,7 +17,7 @@
 
 using std::shared_ptr;
 
-extern AttrIndexs MsgIndexs;
+extern AttrGetters MsgIndexs;
 
 /*
 class DiceJob : public DiceJobDetail {

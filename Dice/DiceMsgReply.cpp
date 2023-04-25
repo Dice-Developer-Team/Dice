@@ -251,10 +251,10 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 	return *this;
 }
 DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
-	if (var.type == AttrVar::AttrType::Text) {
+	if (var.type == AttrVar::Type::Text) {
 		return parse(var.to_str());
 	}
-	else if (var.type != AttrVar::AttrType::Table) {
+	else if (var.type != AttrVar::Type::Table) {
 		return *this;
 	}
 	new(this)DiceTriggerLimit();
@@ -579,7 +579,7 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 	if (!limit.check(msg, lock_list))return false;
 	if (type == Type::Reply) {
 		if (!msg->isCalled && (chon < 0 ||
-			(!chon && (msg->pGrp->isset("禁用回复") || msg->pGrp->isset("strict")))))
+			(!chon && (msg->pGrp->isset("禁用回复")))))
 			return false;
 	}
 	else {	//type == Type::Order

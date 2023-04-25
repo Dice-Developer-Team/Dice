@@ -212,7 +212,7 @@ public:
 
 	bool countExp(const string& key)
 	{
-		return (Attr.has(key) && Attr.at(key).type == AttrVar::AttrType::Text)
+		return (Attr.has(key) && Attr.at(key).type == AttrVar::Type::Text)
 			|| (Attr.has("&" + key))
 			|| getTemplet().mExpression.count(key);
 	}
@@ -272,7 +272,7 @@ public:
 
 	int set(string key, const AttrVar& val);
 
-	bool erase(string& key, bool isExp = false);
+	bool erase(string& key);
 	void clear();
 
 	int show(string key, string& val) const;
