@@ -41,6 +41,29 @@ string js_NativeToGBK(JSContext* ctx, JSValue val) {
 	JS_FreeCString(ctx, s);
 	return ret;
 }
+AttrIndex js_toAttrIndex(JSContext* ctx, JSValue val) {
+	if (JS_IsNumber(val)) {
+		double key{ js_toDouble(ctx,val) };
+		return key;
+	}
+	else {
+		string key{ js_toGBK(ctx, val) };
+		return key;
+	}
+}
+AttrIndex js_AtomToIndex(JSContext* ctx, JSAtom atom) {
+	auto val = JS_AtomToValue(ctx, atom);
+	if(JS_IsNumber(val)){
+		double key{ js_toDouble(ctx,val) };
+		JS_FreeValue(ctx, val);
+		return key;
+	}
+	else {
+		string key{ js_toGBK(ctx, val) };
+		JS_FreeValue(ctx, val);
+		return key;
+	}
+}
 string js_AtomtoGBK(JSContext* ctx, JSAtom val) {
 	auto s{ JS_AtomToCString(ctx, val) };
 	string ret{ UTF8toGBK(s) };
@@ -57,6 +80,14 @@ js_context::js_context() : ctx(JS_NewContext(rt)) {
 	js_init_module_os(ctx, "os");
 	auto global = JS_GetGlobalObject(ctx);
 	JS_SetPropertyFunctionList(ctx, global, js_dice_funcs, countof(js_dice_funcs));
+	//Set
+	JSValue pro_set = JS_NewObject(ctx);
+	auto set_ctor = JS_NewCFunction2(ctx, js_dice_Set_constructor, "Set", 0,
+		JS_CFUNC_constructor, 0);
+	JS_SetPropertyStr(ctx, global, "Set", set_ctor);
+	JS_SetConstructor(ctx, set_ctor, pro_set);
+	JS_SetClassProto(ctx, js_dice_Set_id, pro_set);
+	JS_FreeValue(ctx, pro_set);
 	//Context
 	JSValue pro_context = JS_NewObject(ctx);
 	JS_SetPropertyFunctionList(ctx, pro_context, js_dice_context_proto_funcs,
@@ -106,6 +137,9 @@ AttrVar js_toAttr(JSContext* ctx, JSValue val) {
 	case JS_TAG_OBJECT:
 		if (void* p{ nullptr }; JS_GetClassID(val, &p) == js_dice_context_id) {
 			return *(AttrObject*)p;
+		}
+		else if (void* p{ nullptr }; JS_GetClassID(val, &p) == js_dice_Set_id) {
+			return *(AttrSet*)p;
 		}
 		else if (JS_IsArray(ctx, val)) {
 			VarArray ary;
@@ -179,6 +213,13 @@ JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 	case AttrVar::Type::ID:
 		return JS_NewInt64(ctx, (int64_t)var.id);
 		break;
+	case AttrVar::Type::Set:
+		if (auto obj = JS_NewObjectClass(ctx, js_dice_Set_id)) {
+			AttrSet* p = new AttrSet(var.flags);
+			JS_SetOpaque(obj, p);
+			return obj;
+		}
+		break;
 	case AttrVar::Type::Function:
 	case AttrVar::Type::Nil:
 	default:
@@ -241,6 +282,8 @@ void js_global_init() {
 	js_std_init_handlers(rt);
 	/* loader for ES6 modules */
 	JS_SetModuleLoaderFunc(rt, NULL, js_module_loader, NULL);
+	JS_NewClassID(&js_dice_Set_id);
+	JS_NewClass(rt, js_dice_Set_id, &js_dice_Set_class);
 	JS_NewClassID(&js_dice_context_id);
 	JS_NewClass(rt, js_dice_context_id, &js_dice_context_class);
 	JS_NewClassID(&js_dice_selfdata_id);
@@ -251,6 +294,70 @@ void js_global_init() {
 void js_global_end() {
 	js_std_free_handlers(rt);
 	JS_FreeRuntime(rt);
+}
+QJSDEF(Set_constructor) {
+	auto obj = JS_NewObjectClass(ctx, js_dice_Set_id);
+	AttrSet* p = new AttrSet(std::make_shared<fifo_set<AttrIndex>>());
+	JS_SetOpaque(obj, p);
+	for (int idx = 0; idx < argc; ++idx) {
+		(*p)->insert(js_toAttrIndex(ctx, argv[idx]));
+	}
+	return obj;
+}
+void js_dice_Set_finalizer(JSRuntime* rt, JSValue val) {
+	JS2SET(val);
+	delete &set;
+}
+QJSDEF(Set_in) {
+	JS2SET(this_val);
+	return set->count(js_toAttrIndex(ctx, argv[0])) ? JS_TRUE : JS_FALSE;
+}
+QJSDEF(Set_add) {
+	JS2SET(this_val);
+	return set->insert(js_toAttrIndex(ctx, argv[0])).second ? JS_TRUE : JS_FALSE;
+}
+QJSDEF(Set_toArray) {
+	JS2SET(this_val);
+	auto items = JS_NewArray(ctx);
+	int64_t i = 0;
+	for (auto& elem : *set) {
+		JS_SetPropertyInt64(ctx, items, i++, js_newAttr(ctx, AttrVar(elem.val)));
+	}
+	return items;
+}
+int js_dice_Set_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst obj, JSAtom prop) {
+	JS2SET(obj);
+	if (desc) {
+		string key{ js_AtomtoGBK(ctx, prop) };
+		if (key == "add") {
+			desc->flags = JS_PROP_NORMAL;
+			desc->value = JS_NewCFunction(ctx, js_dice_Set_add, "add", 1);
+		}
+		else if (key == "in") {
+			desc->flags = JS_PROP_NORMAL;
+			desc->value = JS_NewCFunction(ctx, js_dice_Set_in, "in", 1);
+		}
+		else if (key == "toArray") {
+			desc->flags = JS_PROP_NORMAL;
+			desc->value = JS_NewCFunction(ctx, js_dice_Set_toArray, "toArray", 0);
+		}
+		else if (set->count(key)) {
+			desc->flags = JS_PROP_ENUMERABLE;
+			desc->value = JS_TRUE;
+		}
+		else {
+			desc->flags = JS_PROP_NORMAL;
+			desc->value = JS_FALSE;
+		}
+		desc->getter = JS_UNDEFINED;
+		desc->setter = JS_UNDEFINED;
+		return TRUE;
+	}
+	return FALSE;
+}
+int js_dice_Set_delete(JSContext* ctx, JSValue obj, JSAtom atom) {
+	JS2SET(obj);
+	return set->erase(js_AtomToIndex(ctx, atom)) != set->end() ? JS_TRUE : JS_FALSE;
 }
 
 QJSDEF(log) {
@@ -772,8 +879,6 @@ void js_dice_actor_finalizer(JSRuntime* rt, JSValue val) {
 int js_dice_actor_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst this_val, JSAtom prop) {
 	JS2PC(this_val);
 	string key{ js_AtomtoGBK(ctx, prop) };
-	DD::debugLog("actor_get:");
-	DD::debugLog(key);
 	if (desc && pc && pc->available(key)) {
 		desc->flags = (prop_desc.count(key)) ? prop_desc.at(key) : JS_PROP_C_W_E;
 		desc->value = js_newAttr(ctx, pc->get(key));

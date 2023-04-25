@@ -148,8 +148,8 @@ public:
         if (auto it{ _Base::index.find(p) }; it != _Base::index.end()) {
             return { iterator(this, it->second), false };
         }
-        _Base::orders.emplace(_Base::inc_end, p.first);
-        _Base::index.emplace(p.first, _Base::inc_end);
+        _Base::orders.emplace(_Base::inc_end, p);
+        _Base::index.emplace(p, _Base::inc_end);
         return { iterator(this, ++_Base::inc_end), true };
     }
     iterator emplace(const _Kty& key) {

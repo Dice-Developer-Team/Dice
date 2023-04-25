@@ -11,7 +11,17 @@ double js_toDouble(JSContext* ctx, JSValueConst val) {
 	JS_ToFloat64(ctx, &num, val);
 	return num;
 }
-#define JS_DICEDEF(name,len) JS_CFUNC_DEF(#name,2,js_dice_##name)
+JSClassID js_dice_Set_id;
+JSClassExoticMethods js_dice_Set_methods = {
+	.get_own_property = js_dice_Set_get_own,
+	.delete_property = js_dice_Set_delete,
+};
+JSClassDef js_dice_Set_class = {
+	"Set",
+	.finalizer = js_dice_Set_finalizer,
+	.exotic = &js_dice_Set_methods,
+};
+#define JS_DICEDEF(name,len) JS_CFUNC_DEF(#name,len,js_dice_##name)
 const JSCFunctionListEntry js_dice_funcs[] = {
 	JS_DICEDEF(log,2),
 	JS_DICEDEF(loadJS,1),
