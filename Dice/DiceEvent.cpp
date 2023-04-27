@@ -3725,7 +3725,7 @@ int DiceEvent::InnerOrder() {
 				return 1;
 			}
 		}
-		for (const auto& character : SanCost.substr(SanCost.find('/') + 1)) {
+		for (const auto& character : strSanCostFail) {
 			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character !=
 				'+' && character != '-') {
 				replyMsg("strSanCostInvalid");
@@ -3755,6 +3755,12 @@ int DiceEvent::InnerOrder() {
 		case 3:
 		case 2:
 			rdLoss = RD(strSanCostSuc);
+			if (rdLoss->Roll() != 0) {
+				replyMsg("strSanCostInvalid");
+				return 1;
+			}
+			set("change", rdLoss->FormShortString());
+			break;
 		case 1:
 			rdLoss = RD(strSanCostFail);
 			if (rdLoss->Roll() != 0) {
