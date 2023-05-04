@@ -757,10 +757,10 @@ fifo_json DiceMsgReply::writeJson()const {
 	if (keyMatch[3])j["regex"] = GBKtoUTF8(*keyMatch[3]);
 	if (!limit.empty())j["limit"] = GBKtoUTF8(limit.print());
 	if (echo == Echo::Deck)j["answer"] = answer.to_json();
-	else if (echo == Echo::Text)j["answer"] = answer["text"];
-	else if (echo == Echo::Lua)j["answer"] = answer["lua"];
-	else if (echo == Echo::JavaScript)j["answer"] = answer["js"];
-	else if (echo == Echo::Python)j["answer"] = answer["py"];
+	else if (echo == Echo::Text)j["answer"] = GBKtoUTF8(answer["text"]);
+	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(answer["lua"]);
+	else if (echo == Echo::JavaScript)j["answer"] = GBKtoUTF8(answer["js"]);
+	else if (echo == Echo::Python)j["answer"] = GBKtoUTF8(answer["py"]);
 	return j;
 }
 fifo_json DiceMsgReply::to_line()const {
