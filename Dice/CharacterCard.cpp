@@ -151,7 +151,7 @@ AttrVar CharaCard::get(string key)const {
 int CharaCard::set(string key, const AttrVar& val) {
 	if (key.empty())return -1;
 	if (key == "__Name")return -8;
-	if (val.is_text() && val.to_str().length() > 256)return -11;
+	if (val.is_text() && val.text.length() > 256)return -11;
 	key = standard(key);
 	if (getTemplet().defaultSkill.count(key) && val == getTemplet().defaultSkill.at(key)){
 		if (has(key)) dict->erase(key);

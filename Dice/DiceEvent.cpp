@@ -4213,7 +4213,7 @@ int DiceEvent::InnerOrder() {
 		if (!fromChat.gid)reset("hidden");
 		readSkipSpace();
 		string strMainDice;
-		PC pc{ PList.count(fromChat.uid) ? getPlayer(fromChat.uid)[fromChat.gid] : std::make_shared<CharaCard>() };
+		PC pc{ PList.count(fromChat.uid) ? getPlayer(fromChat.uid)[fromChat.gid] : PC() };
 		string& strReason{ (at("reason") = strMsg.substr(intMsgCnt)).text};
 		if (strReason.empty()) {
 			string key{ "__DefaultDiceExp" };
