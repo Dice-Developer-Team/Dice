@@ -75,22 +75,20 @@ struct DeckInfo {
 };
 
 class DiceSession{
-	//数值表
-	AttrObject attrs;
 	//旁观者
-	unordered_set<long long> sOB;
+	AttrSet obs;
 	//日志
 	LogInfo logger;
 	//牌堆
-	map<string, DeckInfo, less_ci> decks;
+	dict_ci<DeckInfo> decks;
 public:
+	//数值表
+	AttrObject attrs;
 	//native filename
 	const string name;
 	unordered_set<chatInfo> windows;
-	//设置
-	AttrVars conf;
 
-	DiceSession(const string& s) : name(s) {
+	DiceSession(const string& s) : name(s),obs(std::make_shared<fifo_set<AttrIndex>>()) {
 		tUpdate = tCreate = time(nullptr);
 	}
 	friend class DiceSessionManager;
@@ -116,13 +114,13 @@ public:
 		save();
 		return *this;
 	}
-	void setConf(const string& key, const AttrVar& val) {
-		conf[key] = val;
+	void setAttr(const string& key, const AttrVar& val) {
+		attrs.set(key, val);
 		update();
 	}
-	void rmConf(const string& key) {
-		if (conf.count(key)) {
-			conf.erase(key);
+	void rmAttr(const string& key) {
+		if (attrs.has(key)) {
+			attrs.reset(key);
 			update();
 		}
 	}
@@ -138,11 +136,10 @@ public:
 	void ob_exit(DiceEvent*);
 	void ob_list(DiceEvent*) const;
 	void ob_clr(DiceEvent*);
-	[[nodiscard]] unordered_set<long long> get_ob() const { return sOB; }
+	[[nodiscard]] AttrSet get_ob() const { return obs; }
 
-	DiceSession& clear_ob()
-	{
-		sOB.clear();
+	DiceSession& clear_ob(){
+		obs->clear();
 		return *this;
 	}
 	
@@ -155,7 +152,7 @@ public:
 	[[nodiscard]] bool is_logging() const { return logger.isLogging; }
 
 	//deck指令
-	map<string, DeckInfo, less_ci>& get_deck() { return decks; }
+	dict_ci<DeckInfo>& get_deck() { return decks; }
 	DeckInfo& get_deck(const string& key) { return decks[key]; }
 	void deck_set(DiceEvent*);
 	string deck_draw(const string&);

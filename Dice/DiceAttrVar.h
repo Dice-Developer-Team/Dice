@@ -61,6 +61,7 @@ struct AttrIndex {
 	AttrIndex(long long num) :val(double(num)) {}
 	AttrIndex(double num) :val(num) {}
 	AttrIndex(const string& s) :val(s) {}
+	double to_double()const;
 	fifo_json to_json()const;
 };
 fifo_json to_json(const fifo_set<AttrIndex>& vars);
@@ -127,6 +128,7 @@ public:
 	AttrObject get_obj(const string& key)const;
 	ptr<AttrVars> get_dict(const string& key)const;
 	ptr<VarArray> get_list(const string& key)const;
+	AttrSet get_set(const string& key)const;
 	int inc(const string& key)const;
 	int inc(const string& key, int i)const;
 	void add(const string& key, const AttrVar&)const;
@@ -206,8 +208,9 @@ public:
 	string print()const;
 	bool str_empty()const;
 	AttrObject to_obj()const;
-	std::shared_ptr<AttrVars> to_dict()const;
-	std::shared_ptr<VarArray> to_list()const;
+	ptr<AttrVars> to_dict()const;
+	ptr<VarArray> to_list()const;
+	AttrSet to_set()const;
 	fifo_json to_json()const;
 	YAML::Node to_yaml()const;
 

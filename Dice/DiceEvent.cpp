@@ -132,9 +132,9 @@ void DiceEvent::replyHidden() {
 		AddMsgToQueue(strReply, fromChat.uid);
 	}
 	if (session) {
-		for (auto qq : session->get_ob()) {
-			if (qq != fromChat.uid) {
-				AddMsgToQueue(strReply, qq);
+		for (auto& qq : *session->get_ob()) {
+			if (qq.to_double() != fromChat.uid) {
+				AddMsgToQueue(strReply, (long long)qq.to_double());
 			}
 		}
 	}
@@ -2804,7 +2804,7 @@ int DiceEvent::InnerOrder() {
 		s->get_deck().erase("__Ank");
 		if (string strTitle{ strMsg.substr(intMsgCnt,strMsg.find('+') - intMsgCnt) }; !strTitle.empty()) {
 			intMsgCnt += strTitle.length();
-			s->setConf("AkFork", at("fork") = strTitle);
+			s->setAttr("AkFork", at("fork") = strTitle);
 		}
 		if (intMsgCnt == strMsg.length()) {
 			replyMsg("strAkForkNew");
@@ -2820,7 +2820,7 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strAkAddEmpty");
 			return 1;
 		}
-		set("fork",s->conf["AkFork"]);
+		set("fork",s->attrs["AkFork"]);
 		ResList list;
 		list.order();
 		for (auto& val : deck) {
@@ -2839,7 +2839,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		deck.erase(deck.begin() + nNo - 1);
-		set("fork",s->conf["AkFork"]);
+		set("fork",s->attrs["AkFork"]);
 		ResList list;
 		list.order();
 		for (auto& val : deck) {
@@ -2851,8 +2851,8 @@ int DiceEvent::InnerOrder() {
 	}
 	else if (sign == '=' || action == "get") {
 		if (DeckInfo& deck{ s->get_deck("__Ank") }; !deck.meta.empty()) {
-			set("fork",s->conf["AkFork"]);
-			s->rmConf("AkFork");
+			set("fork",s->attrs["AkFork"]);
+			s->rmAttr("AkFork");
 			size_t res{ (size_t)RandomGenerator::Randint(0,deck.meta.size() - 1) };
 			set("get",to_string(res + 1) + ". " + deck.meta[res]);
 			ResList list;
@@ -2871,7 +2871,7 @@ int DiceEvent::InnerOrder() {
 	}
 	else if (action == "show") {
 		std::vector<string>& deck{ s->get_deck("__Ank").meta };
-		set("fork",s->conf["AkFork"]);
+		set("fork",s->attrs["AkFork"]);
 		ResList list;
 		list.order();
 		for (auto& val : deck) {
@@ -2882,8 +2882,8 @@ int DiceEvent::InnerOrder() {
 	}
 	else if (action == "clr") {
 		s->get_deck().erase("__Ank");
-		set("fork",s->conf["AkFork"]);
-		s->rmConf("AkFork");
+		set("fork",s->attrs["AkFork"]);
+		s->rmAttr("AkFork");
 		replyMsg("strAkClr");
 		s->save();
 	}
@@ -3095,10 +3095,10 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strPermissionDeniedErr");
 			return 1;
 		}
-		set("option","½ûÓÃob");
+		string& option { (at("option") = "½ûÓÃob").text };
 		if (strOption == "off") {
-			if (groupset(fromChat.gid, get_str("option")) < 1) {
-				chat(fromChat.gid).set(get_str("option"));
+			if (groupset(fromChat.gid, option) < 1) {
+				chat(fromChat.gid).set(option);
 				if (auto s{ sessions.get_if(fromChat)})
 					s->clear_ob();
 				replyMsg("strObOff");
@@ -3109,8 +3109,8 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "on") {
-			if (groupset(fromChat.gid, get_str("option")) > 0) {
-				chat(fromChat.gid).reset(get_str("option"));
+			if (groupset(fromChat.gid, option) > 0) {
+				chat(fromChat.gid).reset(option);
 				replyMsg("strObOn");
 			}
 			else {
@@ -3118,7 +3118,7 @@ int DiceEvent::InnerOrder() {
 			}
 			return 1;
 		}
-		if (groupset(fromChat.gid, get_str("option")) > 0) {
+		if (groupset(fromChat.gid, option) > 0) {
 			replyMsg("strObOffAlready");
 			return 1;
 		}

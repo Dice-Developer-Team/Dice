@@ -20,6 +20,8 @@ using std::multimap;
 using std::string;
 using std::to_string;
 using nlohmann::fifo_map;
+template<typename T>
+using ptr = std::shared_ptr<T>;
 inline string toLower(string s) {
 	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return tolower(c); });
 	return s;

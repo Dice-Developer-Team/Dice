@@ -1,7 +1,7 @@
 #pragma once
 /*
  * ×ÊÔ´Ä£¿é
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 
 #include <utility>
@@ -16,8 +16,6 @@
 #include "DiceGit.h"
 #endif //ANDROID
 using std::variant;
-template<typename T>
-using ptr = std::shared_ptr<T>;
 namespace fs = std::filesystem;
 
 class DiceEvent;

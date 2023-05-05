@@ -106,6 +106,9 @@ ptr<AttrVars> AttrObject::get_dict(const string& key)const {
 ptr<VarArray> AttrObject::get_list(const string& key)const {
 	return dict->count(key) ? dict->at(key).to_list() : ptr<VarArray>();
 }
+AttrSet AttrObject::get_set(const string& key)const {
+	return dict->count(key) ? dict->at(key).to_set() : AttrSet();
+}
 int AttrObject::inc(const string& key)const {
 	if (key.empty())return 0;
 	if (dict->count(key))return (++dict->at(key)).to_int();
@@ -537,14 +540,18 @@ AttrObject AttrVar::to_obj()const {
 	if (type != Type::Table)return {};
 	return table;
 }
-std::shared_ptr<AttrVars> AttrVar::to_dict()const {
+ptr<AttrVars> AttrVar::to_dict()const {
 	if (type != Type::Table)return {};
 	return table.to_dict();
 }
 
-std::shared_ptr<VarArray> AttrVar::to_list()const {
+ptr<VarArray> AttrVar::to_list()const {
 	if (type != Type::Table)return {};
 	return table.to_list();
+}
+AttrSet AttrVar::to_set()const {
+	if (type != Type::Set)return {};
+	return flags;
 }
 
 
@@ -924,9 +931,14 @@ YAML::Node AttrVar::to_yaml()const {
 string to_string(const AttrVar& var) {
 	return var.to_str();
 }
+double AttrIndex::to_double() const {
+	return std::holds_alternative<double>(val) ? get<double>(val) : 0;
+}
 fifo_json AttrIndex::to_json() const{
 	if (std::holds_alternative<double>(val)) {
-		return get<double>(val);
+		double num{ get<double>(val) };
+		if (num == (long long)num)return (long long)num;
+		else return num;
 	}
 	else if (std::holds_alternative<string>(val)) {
 		return GBKtoUTF8(get<string>(val));

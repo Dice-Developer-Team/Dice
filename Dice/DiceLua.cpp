@@ -173,7 +173,7 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 	switch (lua_type(L, idx)) {
 	case LUA_TBOOLEAN:
-		return (bool)lua_toboolean(L, idx);
+		return AttrVar((bool)lua_toboolean(L, idx));
 		break;
 	case LUA_TNUMBER:
 		if (lua_isinteger(L, idx)) {

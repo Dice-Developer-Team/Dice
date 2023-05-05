@@ -51,13 +51,13 @@ bool DiceSession::table_clr(const string& tab)
 
 void DiceSession::ob_enter(DiceEvent* msg)
 {
-	if (sOB.count(msg->fromChat.uid))
+	if (obs->count(msg->fromChat.uid))
 	{
 		msg->replyMsg("strObEnterAlready");
 	}
 	else
 	{
-		sOB.insert(msg->fromChat.uid);
+		obs->insert(msg->fromChat.uid);
 		msg->replyMsg("strObEnter");
 		update();
 	}
@@ -65,9 +65,9 @@ void DiceSession::ob_enter(DiceEvent* msg)
 
 void DiceSession::ob_exit(DiceEvent* msg)
 {
-	if (sOB.count(msg->fromChat.uid))
+	if (obs->count(msg->fromChat.uid))
 	{
-		sOB.erase(msg->fromChat.uid);
+		obs->erase(msg->fromChat.uid);
 		msg->replyMsg("strObExit");
 	}
 	else
@@ -79,13 +79,12 @@ void DiceSession::ob_exit(DiceEvent* msg)
 
 void DiceSession::ob_list(DiceEvent* msg) const
 {
-	if (sOB.empty())msg->replyMsg("strObListEmpty");
+	if (obs->empty())msg->replyMsg("strObListEmpty");
 	else
 	{
 		ResList res;
-		for (auto uid : sOB)
-		{
-			res << printUser(uid);
+		for (auto& uid : *obs){
+			res << printUser((long long)uid.to_double());
 		}
 		msg->reply(getMsg("strObList") + res.linebreak().show());
 	}
@@ -93,10 +92,10 @@ void DiceSession::ob_list(DiceEvent* msg) const
 
 void DiceSession::ob_clr(DiceEvent* msg)
 {
-	if (sOB.empty())msg->replyMsg("strObListEmpty");
+	if (obs->empty())msg->replyMsg("strObListEmpty");
 	else
 	{
-		sOB.clear();
+		obs->clear();
 		msg->replyMsg("strObListClr");
 	}
 	update();
@@ -585,14 +584,7 @@ void DiceSession::save() const
 	std::filesystem::create_directories(DiceDir / "user" / "session", ec);
 	std::filesystem::path fpFile{ DiceDir / "user" / "session" / (name + ".json") };
 	fifo_json jData;
-	if (!conf.empty()) {
-		fifo_json& jConf{ jData["conf"] };
-		for (auto& [key, val] : conf) {
-			jConf[GBKtoUTF8(key)] = val.to_json();
-		}
-	}
-	if (!sOB.empty())jData["observer"] = sOB;
-	if (!attrs.empty())jData["tables"] = attrs.to_json();
+	if (!obs->empty())jData["observer"] = to_json(*obs);
 	if (logger.tStart || !logger.fileLog.empty()) {
 		fifo_json jLog;
 		jLog["start"] = logger.tStart;
@@ -613,6 +605,7 @@ void DiceSession::save() const
 		}
 		jData["decks"] = jDecks;
 	}
+	if (!attrs.empty())jData["data"] = attrs.to_json();
 	std::lock_guard<std::mutex> lock(exSessionSave);
 	if (jData.empty()) {
 		remove(fpFile);
@@ -637,15 +630,14 @@ void DiceSessionManager::end(chatInfo ct){
 		remove(DiceDir / "user" / "session" / (session->name + ".json"));
 	}
 }
-
-const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
+//const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
 
 shared_ptr<Session> DiceSessionManager::get(const chatInfo& ct) {
 	if (const auto here{ ct.locate() }; SessionByChat.count(here)) 
 		return SessionByChat[here];
 	else {
-		string name{ ct.chid ? "ch" + to_string(ct.chid)
-			: ct.gid ? "g" + to_string(ct.gid)
+		string name{ ct.gid ? "g" + to_string(ct.gid) +
+			(ct.chid ? "_ch" + to_string(ct.chid) : "")
 			: "usr" + to_string(ct.uid) };
 		while (SessionByName.count(name)) {
 			name += '+';
@@ -690,12 +682,7 @@ int DiceSessionManager::load() {
 					pSession->windows.insert(chatInfo::from_json(ct));
 				}
 			}
-			if (j.count("conf")) {
-				fifo_json& jConf{ j["conf"] };
-				for (auto& it : jConf.items()) {
-					pSession->conf.emplace(UTF8toGBK(it.key()), it.value());
-				}
-			}
+			if (j.count("conf")) pSession->attrs = AttrVar(j["conf"]).to_obj();
 			if (j.count("log")) {
 				fifo_json& jLog = j["log"];
 				jLog["start"].get_to(pSession->logger.tStart);
@@ -738,8 +725,17 @@ int DiceSessionManager::load() {
 					}
 				}
 			}
-			if (j.count("observer")) j["observer"].get_to(pSession->sOB);
-			if (j.count("tables"))pSession->attrs = AttrVar(j["tables"]).to_obj();
+			
+			if (j.count("tables"))for (auto& it : j["tables"].items()) {
+				pSession->attrs.set(UTF8toGBK(it.key()), it.value());
+			}
+			if (j.count("data"))for (auto& it : j["data"].items()) {
+				pSession->attrs.set(UTF8toGBK(it.key()), it.value());
+			}
+			if (j.count("observer"))for (auto& it : j["observer"]) {
+				pSession->obs->emplace(it.get<long long>());
+			}
+			pSession->attrs.set("obs", pSession->obs);
 		}
 		catch (std::exception& e) {
 			console.log("读取session文件" + UTF8toGBK(filename.u8string()) + "出错!" + e.what(), 1);
