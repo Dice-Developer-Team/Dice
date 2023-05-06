@@ -34,8 +34,6 @@ public:
 		return (*dict)[key];
 	}
 
-	bool isBlock = false;
-
 	bool isPrivate()const;
 	bool isChannel()const;
 	bool isFromMaster()const;
@@ -202,8 +200,7 @@ public:
 		const int intBegin = intMsgCnt;
 		while (intMsgCnt != strMsg.length())
 		{
-			if (inBracket)
-			{
+			if (inBracket){
 				if (strMsg[intMsgCnt] == ']')inBracket = false;
 				intMsgCnt++;
 				continue;

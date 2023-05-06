@@ -80,11 +80,25 @@ void lua_push_raw_string(lua_State* L, const string& str) {
 void lua_set_field(lua_State* L, int idx, const string& str) {
 	lua_setfield(L, idx, UTF8Luas.count(L) ? GBKtoUTF8(str).c_str() : str.c_str());
 }
+AttrIndex lua_to_index(lua_State* L, int idx){
+	if (lua_type(L, idx) == LUA_TSTRING) {
+		return lua_to_gbstring(L, idx);
+	}
+	else if (lua_isnumber(L, idx)) {
+		return lua_tonumber(L, idx);
+	}
+	return lua_to_gbstring(L, idx);
+}
 
 void lua_push_Context(lua_State* L, AttrObject& vars) {
 	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
 	*p = &vars;
 	luaL_setmetatable(L, "Context");
+}
+void lua_push_GameTable(lua_State* L, const ptr<Session>& p) {
+	ptr<Session>* u{ (ptr<Session>*)lua_newuserdata(L, sizeof(ptr<Session>)) };
+	new(u) ptr<Session>(p);
+	luaL_setmetatable(L, "GameTable");
 }
 
 static int lua_writer(lua_State* L, const void* b, size_t size, void* B) {
@@ -123,6 +137,11 @@ ByteS lua_to_chunk(lua_State* L, int idx = -1) {
 	b.isUTF8 = UTF8Luas.count(L);
 	return b;
 }
+void lua_push_Set(lua_State* L, const AttrSet& flags) {
+	AttrSet** p{ (AttrSet**)lua_newuserdata(L, sizeof(AttrSet*)) };
+	*p = new AttrSet(flags);
+	luaL_setmetatable(L, "Set");
+}
 void lua_push_attr(lua_State* L, const AttrVar& attr) {
 	switch (attr.type) {
 	case AttrVar::Type::Boolean:
@@ -158,11 +177,8 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 			}
 		}
 		break;
-	case AttrVar::Type::Set: {
-		AttrSet** p{ (AttrSet**)lua_newuserdata(L, sizeof(AttrSet*)) };
-		*p = new AttrSet(attr.flags);
-		luaL_setmetatable(L, "Set");
-	}
+	case AttrVar::Type::Set:
+		lua_push_Set(L, attr.flags);
 		break;
 	case AttrVar::Type::Nil:
 	default:
@@ -400,32 +416,20 @@ bool lua_call_task(const AttrVars& task) {
 #define LUA2SET(L) AttrSet& set{ **(AttrSet**)luaL_checkudata(L, 1, "Set") }
 int lua_Set_in(lua_State* L) {
 	LUA2SET(L);
-	if (lua_type(L, 2) == LUA_TSTRING) {
-		string key{ lua_to_gbstring(L, 2) };
-		lua_pushboolean(L, set->count(key));
-	}
-	else if (lua_isnumber(L, 2)) {
-		double num{ lua_tonumber(L,2) };
-		lua_pushboolean(L, set->count(num));
-	}
+	auto key{ lua_to_index(L,2) };
+	lua_pushboolean(L, set->count(key));
+	return 1;
+}
+int lua_Set_add(lua_State* L) {
+	LUA2SET(L);
+	auto key{ lua_to_index(L,2) };
+	lua_pushboolean(L, set->insert(key).second);
 	return 1;
 }
 int lua_Set_remove(lua_State* L) {
 	LUA2SET(L);
-	bool has_key{ false };
-	if (lua_type(L, 2) == LUA_TSTRING) {
-		string key{ lua_to_gbstring(L, 2) };
-		if (has_key = set->count(key)) {
-			set->erase(key);
-		}
-	}
-	else if (lua_isnumber(L, 2)) {
-		double key{ lua_tonumber(L,2) };
-		if (has_key = set->count(key)) {
-			set->erase(key);
-		}
-	}
-	lua_pushboolean(L, has_key);
+	auto key{ lua_to_index(L,2) };
+	lua_pushboolean(L, set->erase(key) != set->end());
 	return 1;
 }
 int lua_Set_len(lua_State* L) {
@@ -433,12 +437,24 @@ int lua_Set_len(lua_State* L) {
 	lua_pushinteger(L, (lua_Integer)set->size());
 	return 1;
 }
+int lua_Set_totable(lua_State* L) {
+	LUA2SET(L);
+	lua_newtable(L);
+	int idx{ 0 };
+	for (auto& val : *set) {
+		lua_push_attr(L, AttrVar(val.val));
+		lua_seti(L, -2, ++idx);
+	}
+	return 1;
+}
 int lua_Set_index(lua_State* L) {
 	LUA2SET(L);
 	if (lua_type(L, 2) == LUA_TSTRING) {
 		string key{ lua_to_gbstring(L, 2) };
 		if (key == "in")lua_pushcfunction(L, lua_Set_in);
+		else if (key == "add")lua_pushcfunction(L, lua_Set_add);
 		else if (key == "remove")lua_pushcfunction(L, lua_Set_remove);
+		else if (key == "totable")lua_pushcfunction(L, lua_Set_totable);
 		else lua_pushboolean(L, set->count(key));
 	}
 	else if (lua_isnumber(L, 2)) {
@@ -457,16 +473,6 @@ int lua_Set_tostring(lua_State* L) {
 	lua_push_string(L, AttrVar(*set).to_str());
 	return 1;
 }
-int lua_Set_totable(lua_State* L) {
-	LUA2SET(L);
-	lua_newtable(L);
-	int idx{ 0 };
-	for (auto& val : *set) {
-		lua_push_attr(L, AttrVar(val.val));
-		lua_seti(L, -2, ++idx);
-	}
-	return 1;
-}
 int lua_Set_new(lua_State* L) {
 	AttrSet** p{ (AttrSet**)lua_newuserdata(L, sizeof(AttrSet*)) };
 	*p = new AttrSet(std::make_shared<fifo_set<AttrIndex>>());
@@ -477,7 +483,7 @@ static const luaL_Reg lua_Set_funcs[] = {
 	{"__index", lua_Set_index},
 	{"__gc", lua_Set_totable},
 	{"__tostring", lua_Set_tostring},
-	{"__totable", lua_Set_totable},
+	//{"__totable", lua_Set_totable},
 	{"__len", lua_Set_len},
 	{"new", lua_Set_new},
 	{NULL, NULL}
@@ -1117,6 +1123,12 @@ int Context_index(lua_State* L) {
 		lua_push_Context(L, chat(vars.get_ll("gid")).confs);
 		return 1;
 	}
+	else if (key == "game") {
+		if (auto game = sessions.get_if(vars)) {
+			lua_push_GameTable(L, game);
+			return 1;
+		}
+	}
 	else if (auto val{ getContextItem(vars,key) }) {
 		lua_push_attr(L, val);
 		return 1;
@@ -1146,6 +1158,82 @@ int luaopen_Context(lua_State* L) {
 	luaL_setfuncs(L, Context_funcs, 0);
 	return 1;
 }
+//metatable GameTable
+#define LUA2GAME(idx) ptr<Session>& game{*(ptr<Session>*)luaL_checkudata(L, idx, "GameTable")}
+int GameTable_set(lua_State* L) {
+	LUA2GAME(1);
+	if (lua_isstring(L, 2)) {
+		string key{ lua_to_gbstring(L, 2) };
+		if (lua_gettop(L) < 3) {
+			game->rmAttr(key);
+		}
+		else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {
+			game->rmAttr(key);
+		}
+		else game->setAttr(key, val);
+	}
+	else if (lua_istable(L, 2)) {
+		int cnt = 0;
+		lua_pushnil(L);
+		lua_settop(L, 3);
+		while (lua_next(L, 2)) {
+			if (lua_type(L, 3) == LUA_TNUMBER) {
+				game->rmAttr(lua_to_gbstring(L, 4));
+			}
+			else {
+				game->setAttr(lua_to_gbstring(L, 3), lua_to_attr(L, 4));
+			}
+			lua_pop(L, 1);
+		}
+		lua_pushinteger(L, cnt);
+	}
+	return 0;
+}
+int GameTable_index(lua_State* L) {
+	string key{ lua_to_gbstring(L, 2) };
+	LUA2GAME(1);
+	if (key == "set") {
+		lua_pushcfunction(L, GameTable_set);
+		return 1;
+	}
+	else if (key == "obs") {
+		lua_push_Set(L, game->get_ob());
+		return 1;
+	}
+	lua_push_attr(L, game->getAttr(key));
+	return 1;
+}
+int GameTable_newindex(lua_State* L) {
+	LUA2GAME(1);
+	string key{ lua_to_gbstring(L, 2) };
+	if (lua_gettop(L) < 3) {
+		game->rmAttr(key);
+	}
+	else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {
+		game->rmAttr(key);
+	}
+	else {
+		game->setAttr(key, val);
+	}
+	return 0;
+}
+int GameTable_gc(lua_State* L) {
+	LUA2GAME(1);
+	game.~shared_ptr();
+	return 0;
+}
+static const luaL_Reg GameTable_funcs[] = {
+	{"__index", GameTable_index},
+	{"__newindex", GameTable_newindex},
+	{"__gc", GameTable_gc},
+	{NULL, NULL}
+};
+int luaopen_GameTable(lua_State* L) {
+	luaL_newmetatable(L, "GameTable");
+	luaL_setfuncs(L, GameTable_funcs, 0);
+	return 1;
+}
+
 //metatable Actor
 int Actor_set(lua_State* L) {
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
@@ -1346,8 +1434,9 @@ void LuaState::regist() {
 		lua_register(state, lib->name, lib->func);
 	}
 	static const luaL_Reg Dicelibs[] = {
-		{"Context", luaopen_Context},
 		{"Set", luaopen_Set},
+		{"Context", luaopen_Context},
+		{"GameTable", luaopen_GameTable},
 		{"SelfData", luaopen_SelfData},
 		{"Actor", luaopen_Actor},
 		{"http", luaopen_http},

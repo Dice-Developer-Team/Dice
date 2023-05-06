@@ -28,6 +28,7 @@
 #define DICE_MSG_SEND
 #include "fifo_json.hpp"
 
+class AttrObject;
 enum class msgtype : int { Private = 0, Group = 1, Discuss = 2, ChannelPrivate = 3, Channel = 4};
 struct chatInfo {
 	long long uid{ 0 };
@@ -36,6 +37,7 @@ struct chatInfo {
 	msgtype type{ 0 };
 	chatInfo() {}
 	chatInfo(long long, long long = 0, long long = 0);
+	chatInfo(const AttrObject&);
 	bool operator<(const chatInfo&)const;
 	bool operator==(const chatInfo&)const;
 	operator bool()const { return uid || gid || chid; }

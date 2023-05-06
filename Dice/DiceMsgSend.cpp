@@ -41,6 +41,11 @@ chatInfo::chatInfo(long long u, long long g, long long c) :uid(u), gid(g), chid(
 		else type = msgtype::Private;
 	}
 }
+chatInfo::chatInfo(const AttrObject& obj):uid(obj.get_ll("uid")), chid(obj.get_ll("chid")) {
+	type = (gid = obj.get_ll("gid"))
+		? chid ? msgtype::ChannelPrivate : msgtype::Private
+		: chid ? msgtype::Channel : msgtype::Group;
+}
 bool chatInfo::operator<(const chatInfo& other)const {
 	return type == other.type
 		? uid == other.uid

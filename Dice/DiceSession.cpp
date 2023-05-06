@@ -735,7 +735,6 @@ int DiceSessionManager::load() {
 			if (j.count("observer"))for (auto& it : j["observer"]) {
 				pSession->obs->emplace(it.get<long long>());
 			}
-			pSession->attrs.set("obs", pSession->obs);
 		}
 		catch (std::exception& e) {
 			console.log("读取session文件" + UTF8toGBK(filename.u8string()) + "出错!" + e.what(), 1);

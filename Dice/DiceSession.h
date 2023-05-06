@@ -114,6 +114,9 @@ public:
 		save();
 		return *this;
 	}
+	AttrVar getAttr(const string& key) {
+		return attrs.get(key);
+	}
 	void setAttr(const string& key, const AttrVar& val) {
 		attrs.set(key, val);
 		update();
