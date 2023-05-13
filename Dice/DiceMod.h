@@ -9,6 +9,7 @@
 #include <regex>
 #include "yaml-cpp/node/node.h"
 #include "SHKQuerier.h"
+#include "DiceRule.h"
 #include "DiceSchedule.h"
 #include "DiceMsgReply.h"
 #include "GlobalVar.h"
@@ -116,8 +117,9 @@ public:
 	string desc()const;
 	string detail()const;
 private:
-	dict<>helpdoc;
-	dict<DiceSpeech>speech;
+	dict_ci<DiceRule> rules;
+	dict_ci<>helpdoc;
+	dict_ci<DiceSpeech>speech;
 	//native path of .lua
 	dict_ci<string>lua_scripts;
 	//native path of .js

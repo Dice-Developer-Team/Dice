@@ -50,16 +50,6 @@ bool readFile(const std::filesystem::path& p, std::basic_string<Char, Trait, All
 	return true;
 }
 
-template <typename Map1, typename Map2>
-size_t map_merge(Map1& m1, const Map2& m2){
-	size_t t{ 0 };
-	for (auto& [k,v] : m2)	{
-		m1[k] = v;
-		++t;
-	}
-	return t;
-}
-
 template <typename TKey, typename TVal>
 TVal get(const map<TKey, TVal>& m, TKey key, TVal def)
 {

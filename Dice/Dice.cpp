@@ -22,11 +22,7 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #define UNICODE
-#include <map>
-#include <set>
-#include <fstream>
 #include <algorithm>
-#include <ctime>
 #include <exception>
 #include <stdexcept>
 
@@ -36,7 +32,6 @@
 #include "DDAPI.h"
 #include "ManagerSystem.h"
 #include "DiceMod.h"
-#include "DiceMsgSend.h"
 #include "MsgFormat.h"
 #include "DiceCloud.h"
 #include "CardDeck.h"
@@ -898,7 +893,7 @@ EVE_GroupInvited(eventGroupInvited)
 			DD::answerGroupInvited(fromGID, 3);
 		}
 		else if (blacklist->get_group_danger(fromGID)){
-			strMsg += "\n已拒绝（黑名单群）";
+			strMsg += "\n（黑名单群×）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 2);
 		}
@@ -1057,6 +1052,7 @@ void global_exit() {
 	sch.end();
 	censor = {};
 	fmt.reset();
+	ruleset.reset();
 	js_global_end();
 #ifdef DICE_PYTHON
 	if (py)py.reset();

@@ -64,7 +64,7 @@ template <class Map>
 int readJMap(const fifo_json& j, Map& mapTmp)
 {
 	int intCnt = 0;
-	for (auto it = j.cbegin(); it != j.cend(); ++it)
+	for (auto& it : j.items())
 	{
 		std::string key = UTF8toGBK(it.key());
 		it.value().get_to(mapTmp[key]);

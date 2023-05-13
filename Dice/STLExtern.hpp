@@ -22,6 +22,17 @@ using std::to_string;
 using nlohmann::fifo_map;
 template<typename T>
 using ptr = std::shared_ptr<T>;
+
+template <typename Map1, typename Map2>
+size_t map_merge(Map1& m1, const Map2& m2) {
+	size_t t{ 0 };
+	for (auto& [k, v] : m2) {
+		m1[k] = v;
+		++t;
+	}
+	return t;
+}
+
 inline string toLower(string s) {
 	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return tolower(c); });
 	return s;

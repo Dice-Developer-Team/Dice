@@ -1027,28 +1027,16 @@ void DiceMod::loadDir() {
 			for (auto& p : fSpeech) {
 				try {
 					YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) };
-					if (!yaml.IsMap()) {
-						continue;
-					}
-					for (auto it : yaml) {
-						speech[UTF8toGBK(it.first.Scalar())] = it.second;
+					if (yaml.IsMap()) {
+						for (auto it : yaml) {
+							speech[UTF8toGBK(it.first.Scalar())] = it.second;
+						}
 					}
 				}
 				catch (std::exception& e) {
-					console.log(getNativePathString(cut_relative(p, pathDir)) + "解析错误!" + e.what(), 0b10);
+					console.log(UTF8toGBK(cut_relative(p, pathDir).u8string()) + "解析错误!" + e.what(), 0b10);
 				}
 			}
-		}
-		if (fs::exists(pathDir / "image")) {
-			std::filesystem::copy(pathDir / "image", dirExe / "data" / "image",
-				std::filesystem::copy_options::recursive |
-				(Enabled ? std::filesystem::copy_options::update_existing : std::filesystem::copy_options::overwrite_existing));
-			cntImage = cntDirFile(pathDir / "image");
-		}
-		if (fs::exists(pathDir / "audio")) {
-			std::filesystem::copy(pathDir / "audio", dirExe / "data" / "record",
-				std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
-			cntAudio = cntDirFile(pathDir / "audio");
 		}
 		if (auto dirScript{ pathDir / "script" }; fs::exists(dirScript)) {
 			vector<std::filesystem::path> fScripts;
@@ -1072,6 +1060,36 @@ void DiceMod::loadDir() {
 		listDir(pathDir / "reply", luaFiles, true);
 		listDir(pathDir / "event", luaFiles, true);
 		loadLua();
+		if (fs::exists(pathDir / "rulebook")) {
+			if(vector<std::filesystem::path> fSpeech; listDir(pathDir / "rulebook", fSpeech, true))
+			for (auto& p : fSpeech) {
+				try {
+					YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) };
+					if (yaml.IsMap()) {
+						string rulename{ UTF8toGBK(yaml["rule"].Scalar()) };
+						auto& rule{ rules[rulename]};
+						if(yaml["manual"])for (auto it : yaml["manual"]) {
+							rule.manual[UTF8toGBK(it.first.Scalar())] = UTF8toGBK(it.second.Scalar());
+						}
+					}
+					else console.log(UTF8toGBK(cut_relative(p, pathDir).u8string()) + "yaml格式不为对象!", 0b10);
+				}
+				catch (std::exception& e) {
+					console.log(UTF8toGBK(cut_relative(p, pathDir).u8string()) + "解析错误!" + e.what(), 0b10);
+				}
+			}
+		}
+		if (fs::exists(pathDir / "image")) {
+			std::filesystem::copy(pathDir / "image", dirExe / "data" / "image",
+				std::filesystem::copy_options::recursive |
+				(Enabled ? std::filesystem::copy_options::update_existing : std::filesystem::copy_options::overwrite_existing));
+			cntImage = cntDirFile(pathDir / "image");
+		}
+		if (fs::exists(pathDir / "audio")) {
+			std::filesystem::copy(pathDir / "audio", dirExe / "data" / "record",
+				std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+			cntAudio = cntDirFile(pathDir / "audio");
+		}
 	}
 	loaded = true;
 }
@@ -1221,6 +1239,7 @@ void DiceModManager::build() {
 	global_py_scripts.clear();
 	global_events.clear();
 	final_reply = {};
+	auto rules_new = std::make_shared<DiceRuleSet>();
 	//merge mod
 	for (auto& mod : modOrder) {
 		if (!mod->active || !mod->loaded)continue;
@@ -1229,10 +1248,13 @@ void DiceModManager::build() {
 		map_merge(global_py_scripts, mod->py_scripts);
 		cntSpeech += map_merge(global_speech, mod->speech);
 		cntHelp += map_merge(global_helpdoc, mod->helpdoc);
+		rules_new->merge(mod->rules);
 		map_merge(final_reply.items, mod->reply_list);
 		map_merge(global_events, mod->events);
 	}
 	//merge custom
+	if (rules_new->build())resLog << "注册规则集 " + to_string(rules_new->rules.size()) + " 部";
+	ruleset.swap(rules_new);
 	if (cntSpeech += map_merge(global_speech, EditedMsg))
 		resLog << "注册speech " + to_string(cntSpeech) + " 项";
 	if (cntHelp += map_merge(global_helpdoc, CustomHelp))
