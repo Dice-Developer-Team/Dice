@@ -2127,16 +2127,19 @@ int DiceEvent::InnerOrder() {
 			string strSearch = strMsg.substr(intMsgCnt);
 			for (auto& n : strSearch)
 				n = toupper(static_cast<unsigned char>(n));
-			string strReturn;
-			if (getUser(fromChat.uid).isset("默认规则") && strSearch.find(':') == string::npos &&
-				GetRule::get(getUser(fromChat.uid).confs.get_str("默认规则"), strSearch, strReturn)) {
-				reply(strReturn);
+			if (auto pSession{ sessions.get_if(fromChat) }; pSession && pSession->attrs.has("rule")
+				&& GetRule::get(pSession->attrs.get_str("rule"), strSearch, strReply)) {
+				reply();
 			}
-			else if (GetRule::analyze(strSearch, strReturn)) {
-				reply(strReturn);
+			else if (getUser(fromChat.uid).isset("默认规则") && strSearch.find(':') == string::npos &&
+				GetRule::get(getUser(fromChat.uid).confs.get_str("默认规则"), strSearch, strReply)) {
+				reply();
+			}
+			else if (GetRule::analyze(strSearch, strReply)) {
+				reply();
 			}
 			else {
-				reply(getMsg("strRuleErr") + strReturn);
+				reply(getMsg("strRuleErr") + strReply);
 			}
 		}
 		return 1;

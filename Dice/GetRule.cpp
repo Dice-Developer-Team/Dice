@@ -77,6 +77,10 @@ namespace GetRule
 				return true;
 			}
 		}
+		else if (auto entry{ ruleset->getManual(name) }) {
+			des = *entry;
+			return true;
+		}
 		const string ruleName = GBKtoUTF8(rule);
 		const string itemName = GBKtoUTF8(name);
 

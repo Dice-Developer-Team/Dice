@@ -494,6 +494,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+647:支持自定义规则集
 646:支持集合Set读写
 645:重定义.sc回执
 644:定义脚本内角色卡Actor类型

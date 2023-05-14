@@ -6,12 +6,20 @@ class DiceRule {
 	dict_ci<> manual;
 	friend class DiceRuleSet;
 	friend class DiceMod;
+	void clear() {
+		subrules.clear();
+	}
 public:
 	ptr<DiceRule> meta;
+	dict_ci<ptr<DiceRule>> subrules;
 	void merge(const DiceRule& other);
+	std::optional<string> traceManual(const string&);
+	std::optional<string> searchManual(const string&);
+	std::optional<string> getOwnManual(const string&);
 	std::optional<string> getManual(const string&);
 };
 class DiceRuleSet {
+	//ptr<DiceRule> root{ std::make_shared<DiceRule>() };
 public:
 	dict_ci<ptr<DiceRule>> rules;
 	multidict_ci<> manual_index;
@@ -19,6 +27,9 @@ public:
 	size_t build();
 	void clear() {
 		manual_index.clear();
+		for (auto& [name, rule] : rules) {
+			rule->clear();
+		}
 		rules.clear();
 	}
 	bool has_rule(const string& name)const { return rules.count(name); }

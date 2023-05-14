@@ -4,9 +4,25 @@ ptr<DiceRuleSet> ruleset{ std::make_shared<DiceRuleSet>() };
 void DiceRule::merge(const DiceRule& other) {
 	map_merge(manual, other.manual);
 }
+std::optional<string> DiceRule::traceManual(const string& key) {
+	if (manual.count(key))return manual.at(key);
+	else if (meta)return meta->traceManual(key);
+	return {};
+}
+std::optional<string> DiceRule::searchManual(const string& key) {
+	for (auto& [name, sub] : subrules) {
+		if (auto item{ sub->searchManual(key) })return item;
+	}
+	return {};
+}
+std::optional<string> DiceRule::getOwnManual(const string& key) {
+	if (manual.count(key))return manual.at(key);
+	return {};
+}
 std::optional<string> DiceRule::getManual(const string& key) {
 	if (manual.count(key))return manual.at(key);
-	else if(meta)return meta->getManual(key);
+	else if (auto item{ searchManual(key) })return item;
+	else if (meta)return meta->traceManual(key);
 	return {};
 }
 void DiceRuleSet::merge(const dict_ci<DiceRule>& m) {
@@ -21,6 +37,7 @@ size_t DiceRuleSet::build() {
 			string parent{ rulename.substr(0,pos) };
 			if (rules.count(parent)){
 				book->meta = rules[parent];
+				rules[parent]->subrules[rulename] = book;
 				break;
 			}
 		} while ((pos = rulename.rfind('-', pos - 1)) != string::npos);
@@ -36,12 +53,12 @@ std::optional<string> DiceRuleSet::getManual(const string& key)const {
 	}
 	else if (auto cnt = manual_index.count(key)) {
 		if (cnt == 1) {
-			return rules.at(manual_index.find(key)->second)->getManual(key);
+			if (auto rule{ get_rule(manual_index.find(key)->second)})return rule->getOwnManual(key);
 		}
 		else {
 			ShowList li;
-			for (auto& [k, rule] : multi_range(manual_index, key)) {
-				if (auto item{ rules.at(rule)->getManual(key) })li << rule + ":" + key + "\n" + *item;
+			for (auto& [k, rulename] : multi_range(manual_index, key)) {
+				if (auto rule{ get_rule(rulename) })li << rulename + ":" + key + "\n" + rule->getOwnManual(key).value_or("[DATA EXPUNGED]");
 			}
 			return li.show("\f");
 		}
