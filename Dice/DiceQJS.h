@@ -53,6 +53,14 @@ extern "C" {
 	int js_dice_selfdata_set(JSContext* ctx, JSValueConst obj, JSAtom atom, JSValueConst value, JSValueConst receiver, int flags);
 	QJSDEF(selfdata_append);
 	extern const JSCFunctionListEntry js_dice_selfdata_proto_funcs[1];
+	extern JSClassID js_dice_GameTable_id;
+	extern JSClassDef js_dice_GameTable_class;
+	void js_dice_GameTable_finalizer(JSRuntime* rt, JSValue val);
+	int js_dice_GameTable_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst obj, JSAtom prop);
+	int js_dice_GameTable_delete(JSContext* ctx, JSValue obj, JSAtom atom);
+	int js_dice_GameTable_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags);
+	extern const JSCFunctionListEntry js_dice_GameTable_proto_funcs[1];
+	QJSDEF(GameTable_message);
 	extern JSClassID js_dice_actor_id;
 	extern JSClassDef js_dice_actor_class;
 	void js_dice_actor_finalizer(JSRuntime* rt, JSValue val);
@@ -73,6 +81,7 @@ extern "C" {
 #define JS2SET(val) AttrSet& set = *(AttrSet*)JS_GetOpaque(val, js_dice_Set_id)
 #define JS2OBJ(val) AttrObject* obj = (AttrObject*)JS_GetOpaque(val, js_dice_context_id)
 #define JS2DATA(val) ptr<SelfData>* data = (ptr<SelfData>*)JS_GetOpaque(val, js_dice_selfdata_id)
+#define JS2GAME(val) ptr<DiceSession>& game = *(ptr<DiceSession>*)JS_GetOpaque(val, js_dice_GameTable_id)
 #define JS2PC(val) PC& pc = *(PC*)JS_GetOpaque(val, js_dice_actor_id)
 }
 #endif

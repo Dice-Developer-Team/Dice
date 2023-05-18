@@ -1,10 +1,12 @@
 #include <memory>
 #include "filesystem.hpp"
+#include "DiceMsgSend.h"
 #include "DiceJS.h"
 #include "DiceQJS.h"
 #include "DiceEvent.h"
 #include "DiceMod.h"
 #include "DiceSelfData.h"
+#include "DiceSession.h"
 #include "CharacterCard.h"
 #include "DDAPI.h"
 #define countof(x) (sizeof(x) / sizeof((x)[0]))
@@ -104,6 +106,11 @@ js_context::js_context() : ctx(JS_NewContext(rt)) {
 	JS_SetConstructor(ctx, selfdata_ctor, pro_selfdata);
 	JS_SetClassProto(ctx, js_dice_selfdata_id, pro_selfdata);
 	JS_FreeValue(ctx, pro_selfdata);
+	//GameTable
+	JSValue pro_game = JS_NewObject(ctx);
+	JS_SetPropertyFunctionList(ctx, pro_game, js_dice_GameTable_proto_funcs,
+		countof(js_dice_GameTable_proto_funcs));
+	JS_SetClassProto(ctx, js_dice_GameTable_id, pro_game);
 	//Actor
 	JSValue pro_actor = JS_NewObject(ctx);
 	JS_SetPropertyFunctionList(ctx, pro_actor, js_dice_actor_proto_funcs,
@@ -243,6 +250,11 @@ JSValue js_newDiceContext(JSContext* ctx, const AttrObject& context) {
 	JS_SetOpaque(obj, new AttrObject(context));
 	return obj;
 }
+JSValue js_newGameTable(JSContext* ctx, const ptr<DiceSession>& p) {
+	auto obj = JS_NewObjectClass(ctx, js_dice_GameTable_id);
+	JS_SetOpaque(obj, new ptr<DiceSession>(p));
+	return obj;
+}
 void js_context::setContext(const std::string& name, const AttrObject& context) {
 	auto global = JS_GetGlobalObject(ctx);
 	JS_SetPropertyStr(ctx, global, name.c_str(), js_newDiceContext(ctx, context));
@@ -288,12 +300,20 @@ void js_global_init() {
 	JS_NewClass(rt, js_dice_context_id, &js_dice_context_class);
 	JS_NewClassID(&js_dice_selfdata_id);
 	JS_NewClass(rt, js_dice_selfdata_id, &js_dice_selfdata_class);
+	JS_NewClassID(&js_dice_GameTable_id);
+	JS_NewClass(rt, js_dice_GameTable_id, &js_dice_GameTable_class);
 	JS_NewClassID(&js_dice_actor_id);
 	JS_NewClass(rt, js_dice_actor_id, &js_dice_actor_class);
 }
 void js_global_end() {
 	js_std_free_handlers(rt);
 	JS_FreeRuntime(rt);
+}
+JSValue js_newSet(JSContext* ctx, const AttrSet& set) {
+	auto obj = JS_NewObjectClass(ctx, js_dice_Set_id);
+	AttrSet* p = new AttrSet(set);
+	JS_SetOpaque(obj, p);
+	return obj;
 }
 QJSDEF(Set_constructor) {
 	auto obj = JS_NewObjectClass(ctx, js_dice_Set_id);
@@ -692,15 +712,28 @@ int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueC
 	JS2OBJ(this_val);
 	if (obj && desc) {
 		string key{ js_AtomtoGBK(ctx, prop) };
-		if (obj->has(key)) {
-			desc->flags = JS_PROP_C_W_E;
-			desc->value = js_newAttr(ctx, obj->get(key));
-			desc->getter = JS_UNDEFINED;
-			desc->setter = JS_UNDEFINED;
-			return TRUE;
+		if (key == "user" && obj->has("uid")) {
+			desc->value = js_newDiceContext(ctx, getUser(obj->get_ll("uid")).confs);
 		}
+		else if ((key == "grp" || key == "group") && obj->has("gid")) {
+			desc->value = js_newDiceContext(ctx, chat(obj->get_ll("gid")).confs);
+		}
+		else if (key == "game") {
+			if (auto game = sessions.get_if(*obj)) {
+				desc->value = js_newGameTable(ctx, game);
+			}
+			else return FALSE;
+		}
+		else if (obj->has(key)) {
+			desc->value = js_newAttr(ctx, obj->get(key));
+		}
+		else return FALSE;
 	}
-	return FALSE;
+	else return FALSE;
+	desc->flags = JS_PROP_C_W_E;
+	desc->getter = JS_UNDEFINED;
+	desc->setter = JS_UNDEFINED;
+	return TRUE;
 }
 int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen, JSValueConst this_val) {
 	JS2OBJ(this_val);
@@ -865,7 +898,59 @@ QJSDEF(selfdata_append) {
 	}
 	return FALSE;
 }
-
+//GameTable
+void js_dice_GameTable_finalizer(JSRuntime* rt, JSValue val) {
+	JS2GAME(val);
+	delete &game;
+}
+int js_dice_GameTable_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst obj, JSAtom prop) {
+	JS2GAME(obj);
+	if (game) {
+		auto key = js_AtomtoGBK(ctx, prop);
+		if (key == "Obs") {
+			desc->value = js_newSet(ctx, game->get_ob());
+			desc->flags = JS_PROP_NORMAL;
+			desc->getter = JS_UNDEFINED;
+			desc->setter = JS_UNDEFINED;
+			return TRUE;
+		}
+		else if (game->attrs.has(key)) {
+			desc->value = js_newAttr(ctx, game->attrs.get(key));
+		}
+		else return FALSE;
+	}
+	else return FALSE;
+	desc->flags = JS_PROP_C_W_E;
+	desc->getter = JS_UNDEFINED;
+	desc->setter = JS_UNDEFINED;
+	return TRUE;
+}
+int js_dice_GameTable_delete(JSContext* ctx, JSValue obj, JSAtom atom) {
+	JS2GAME(obj);
+	if (game) {
+		auto str = js_AtomtoGBK(ctx, atom);
+		game->rmAttr(str);
+		return TRUE;
+	}
+	return FALSE;
+}
+int js_dice_GameTable_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags) {
+	JS2GAME(this_obj);
+	if (game) {
+		auto str = js_AtomtoGBK(ctx, prop);
+		game->setAttr(str, js_toAttr(ctx, val));
+		return TRUE;
+	}
+	return FALSE;
+}
+QJSDEF(GameTable_message) {
+	JS2GAME(this_val);
+	if (string msg{ js_toGBK(ctx,argv[0]) }; !msg.empty()) {
+		AddMsgToQueue(msg, *game->windows.begin());
+		return JS_TRUE;
+	}
+	return JS_FALSE;
+}
 //Actor
 const dict<int> prop_desc{
 	{"__Name",JS_PROP_NORMAL},

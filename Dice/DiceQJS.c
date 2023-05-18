@@ -71,6 +71,20 @@ JSClassDef js_dice_selfdata_class = {
 const JSCFunctionListEntry js_dice_selfdata_proto_funcs[] = {
 	JS_CFUNC_DEF("append",2,js_dice_selfdata_append),
 };
+JSClassID js_dice_GameTable_id;
+JSClassExoticMethods js_dice_GameTable_methods = {
+	.get_own_property = js_dice_GameTable_get_own,
+	.delete_property = js_dice_GameTable_delete,
+	.define_own_property = js_dice_GameTable_define,
+};
+JSClassDef js_dice_GameTable_class = {
+	"GameTable",
+	.finalizer = js_dice_GameTable_finalizer,
+	.exotic = &js_dice_GameTable_methods,
+};
+const JSCFunctionListEntry js_dice_GameTable_proto_funcs[] = {
+	JS_CFUNC_DEF("message",1,js_dice_GameTable_message),
+};
 JSClassID js_dice_actor_id;
 JSClassExoticMethods js_dice_actor_methods = {
 	.get_own_property = js_dice_actor_get_own,

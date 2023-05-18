@@ -1196,7 +1196,7 @@ int GameTable_index(lua_State* L) {
 		lua_pushcfunction(L, GameTable_set);
 		return 1;
 	}
-	else if (key == "obs") {
+	else if (key == "Obs") {
 		lua_push_Set(L, game->get_ob());
 		return 1;
 	}
