@@ -86,7 +86,7 @@ public:
 	AttrObject attrs;
 	//native filename
 	const string name;
-	fifo_set<chatInfo> windows;
+	fifo_set<chatInfo> areas;
 
 	DiceSession(const string& s) : name(s),obs(std::make_shared<fifo_set<AttrIndex>>()) {
 		tUpdate = tCreate = time(nullptr);

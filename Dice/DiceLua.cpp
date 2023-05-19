@@ -100,6 +100,11 @@ void lua_push_GameTable(lua_State* L, const ptr<Session>& p) {
 	new(u) ptr<Session>(p);
 	luaL_setmetatable(L, "GameTable");
 }
+void lua_push_Actor(lua_State* L, const PC& pc) {
+	PC* p{ (PC*)lua_newuserdata(L, sizeof(PC)) };
+	new(p) PC(pc);
+	luaL_setmetatable(L, "Actor");
+}
 
 static int lua_writer(lua_State* L, const void* b, size_t size, void* B) {
 	ByteS* buffer{ (ByteS*)B };
@@ -917,15 +922,13 @@ LUADEF(getPlayerCardAttr) {
 }
 LUADEF(getPlayerCard) {
 	if (long long uid{ lua_to_int_or_zero(L, 1) }) {
-		PC* p{ (PC*)lua_newuserdata(L, sizeof(PC)) };
 		if (lua_type(L, 2) == LUA_TSTRING) {
-			new(p) PC(getPlayer(uid)[lua_to_gbstring(L, 2)]);
+			lua_push_Actor(L, getPlayer(uid)[lua_to_gbstring(L, 2)]);
 		}
 		else {
 			long long gid{ lua_to_int_or_zero(L, 1) };
-			new(p) PC(getPlayer(uid)[gid]);
+			lua_push_Actor(L, getPlayer(uid)[gid]);
 		}
-		luaL_setmetatable(L, "Actor");
 		return 1;
 	}
 	return 0;
@@ -1123,6 +1126,10 @@ int Context_index(lua_State* L) {
 		lua_push_Context(L, chat(vars.get_ll("gid")).confs);
 		return 1;
 	}
+	else if (key == "pc" && vars.has("uid")) {
+		lua_push_Actor(L, getPlayer(vars.get_ll("uid"))[vars.get_ll("gid")]);
+		return 1;
+	}
 	else if (key == "game") {
 		if (auto game = sessions.get_if(vars)) {
 			lua_push_GameTable(L, game);
@@ -1189,11 +1196,21 @@ int GameTable_set(lua_State* L) {
 	}
 	return 0;
 }
+int GameTable_message(lua_State* L) {
+	LUA2GAME(1);
+	string msg{ lua_to_gbstring(L,2) };
+	AddMsgToQueue(msg, *game->areas.begin());
+	return 0;
+}
 int GameTable_index(lua_State* L) {
 	string key{ lua_to_gbstring(L, 2) };
 	LUA2GAME(1);
 	if (key == "set") {
 		lua_pushcfunction(L, GameTable_set);
+		return 1;
+	}
+	else if (key == "message") {
+		lua_pushcfunction(L, GameTable_message);
 		return 1;
 	}
 	else if (key == "Obs") {

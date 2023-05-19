@@ -113,7 +113,7 @@ void DiceSession::log_new(DiceEvent* msg) {
 	logger.isLogging = true;
 	//先发消息后插入
 	msg->replyMsg("strLogNew");
-	for (const auto& ct : windows) {
+	for (const auto& ct : areas) {
 		LogList.insert(ct);
 	}
 	update();
@@ -136,7 +136,7 @@ void DiceSession::log_on(DiceEvent* msg) {
 	(*msg)["log_name"] = logger.name;
 	logger.isLogging = true;
 	msg->replyMsg("strLogOn");
-	for (const auto& ct : windows) {
+	for (const auto& ct : areas) {
 		LogList.insert(ct);
 	}
 	update();
@@ -152,7 +152,7 @@ void DiceSession::log_off(DiceEvent* msg) {
 	}
 	logger.isLogging = false;
 	//先擦除后发消息
-	for (const auto& ct : windows) {
+	for (const auto& ct : areas) {
 		LogList.erase(ct);
 	}
 	msg->replyMsg("strLogOff");
@@ -163,7 +163,7 @@ void DiceSession::log_end(DiceEvent* msg) {
 		msg->replyMsg("strLogNullErr");
 		return;
 	}
-	for (const auto& ct : windows) {
+	for (const auto& ct : areas) {
 		LogList.erase(ct);
 	}
 	logger.isLogging = false;
@@ -612,7 +612,7 @@ void DiceSession::save() const
 		return;
 	}
 	auto& jChat{ jData["chats"] = fifo_json::array() };
-	for (const auto& chat : windows) {
+	for (const auto& chat : areas) {
 		jChat.push_back(to_json(chat));
 	}
 	jData["create_time"] = tCreate;
@@ -625,7 +625,7 @@ void DiceSessionManager::end(chatInfo ct){
 	if (!session)return;
 	std::unique_lock<std::shared_mutex> lock(sessionMutex);
 	SessionByName.erase(session->name);
-	if (session->windows.erase(ct); session->windows.empty()) {
+	if (session->areas.erase(ct); session->areas.empty()) {
 		SessionByChat.erase(ct);
 		remove(DiceDir / "user" / "session" / (session->name + ".json"));
 	}
@@ -644,7 +644,7 @@ shared_ptr<Session> DiceSessionManager::get(const chatInfo& ct) {
 		}
 		std::unique_lock<std::shared_mutex> lock(sessionMutex);
 		auto ptr{ std::make_shared<Session>(name)};
-		ptr->windows.insert(here);
+		ptr->areas.insert(here);
 		SessionByName[name] = ptr;
 		SessionByChat[here] = ptr;
 		return ptr;
@@ -669,17 +669,17 @@ int DiceSessionManager::load() {
 			if (j.count("room")) {
 				if (j["room"].is_number()) {
 					long long id{ j["room"] };
-					pSession->windows.insert(id > 0 ? chatInfo{ 0, id } : chatInfo{ ~id });
+					pSession->areas.insert(id > 0 ? chatInfo{ 0, id } : chatInfo{ ~id });
 				}
 				else if (j["room"].is_array()) {
 					for (auto& ct : j["room"]) {
-						pSession->windows.insert(chatInfo::from_json(ct));
+						pSession->areas.insert(chatInfo::from_json(ct));
 					}
 				}
 			}
 			if (j.count("chats")) {
 				for (auto& ct : j["chats"]) {
-					pSession->windows.insert(chatInfo::from_json(ct));
+					pSession->areas.insert(chatInfo::from_json(ct));
 				}
 			}
 			if (j.count("conf")) pSession->attrs = AttrVar(j["conf"]).to_obj();
@@ -694,14 +694,14 @@ int DiceSessionManager::load() {
 				pSession->logger.update();
 				pSession->logger.pathLog = DiceDir / pSession->logger.dirLog / GBKtoLocal(pSession->logger.fileLog);
 				if (pSession->logger.isLogging) {
-					for (const auto& chat : pSession->windows) {
+					for (const auto& chat : pSession->areas) {
 						LogList.insert(chat);
 					}
 				}
 			}
 			if (j.count("link")) {
 				fifo_json& jLink = j["link"];
-				const auto& ct{ *pSession->windows.begin() };
+				const auto& ct{ *pSession->areas.begin() };
 				long long gid{ jLink["target"] };
 				LinkInfo& link{ linker.LinkList[ct] = {jLink["linking"],
 					jLink["type"],
@@ -740,7 +740,7 @@ int DiceSessionManager::load() {
 			console.log("读取session文件" + UTF8toGBK(filename.u8string()) + "出错!" + e.what(), 1);
 		}
 		SessionByName[UTF8toGBK(filename.u8string())] = pSession;
-		for (const auto& chat : pSession->windows) {
+		for (const auto& chat : pSession->areas) {
 			SessionByChat[chat] = pSession;
 		}
 		if (isUpdated)pSession->save();

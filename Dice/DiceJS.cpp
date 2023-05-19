@@ -706,28 +706,28 @@ QJSDEF(getPlayerCard) {
 //Context
 void js_dice_context_finalizer(JSRuntime* rt, JSValue val) {
 	JS2OBJ(val);
-	delete obj;
+	delete &obj;
 }
 int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst this_val, JSAtom prop) {
 	JS2OBJ(this_val);
-	if (obj && desc) {
+	if (desc) {
 		string key{ js_AtomtoGBK(ctx, prop) };
-		if (key == "user" && obj->has("uid")) {
-			desc->value = js_newDiceContext(ctx, getUser(obj->get_ll("uid")).confs);
+		if (key == "user" && obj.has("uid")) {
+			desc->value = js_newDiceContext(ctx, getUser(obj.get_ll("uid")).confs);
 		}
-		else if ((key == "grp" || key == "group") && obj->has("gid")) {
-			desc->value = js_newDiceContext(ctx, chat(obj->get_ll("gid")).confs);
+		else if ((key == "grp" || key == "group") && obj.has("gid")) {
+			desc->value = js_newDiceContext(ctx, chat(obj.get_ll("gid")).confs);
+		}
+		else if (key == "pc" && obj.has("uid")) {
+			desc->value = js_newDiceContext(ctx, chat(obj.get_ll("gid")).confs);
 		}
 		else if (key == "game") {
-			if (auto game = sessions.get_if(*obj)) {
+			if (auto game = sessions.get_if(obj)) {
 				desc->value = js_newGameTable(ctx, game);
 			}
 			else return FALSE;
 		}
-		else if (obj->has(key)) {
-			desc->value = js_newAttr(ctx, obj->get(key));
-		}
-		else return FALSE;
+		else if (JS_IsUndefined(desc->value = js_newAttr(ctx, getContextItem(obj, key)))) return FALSE;
 	}
 	else return FALSE;
 	desc->flags = JS_PROP_C_W_E;
@@ -737,11 +737,10 @@ int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueC
 }
 int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen, JSValueConst this_val) {
 	JS2OBJ(this_val);
-	if (!obj)return -1;
 	if ((*plen = obj->size()) > 0) {
 		JSPropertyEnum* tab = (JSPropertyEnum*)js_malloc(ctx, sizeof(JSPropertyEnum) * (*plen));
 		int i = 0;
-		for (const auto& [key, val] : *obj->to_dict()) {
+		for (const auto& [key, val] : *obj.to_dict()) {
 			if (auto atom = JS_NewAtom(ctx, GBKtoUTF8(key).c_str());
 				atom != JS_ATOM_NULL) {
 				DD::debugLog("newAtom:" + js_AtomtoGBK(ctx, atom) + "#" + to_string(atom));
@@ -760,36 +759,32 @@ int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* pl
 }
 int js_dice_context_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
 	JS2OBJ(this_val);
-	if (obj) {
-		obj->reset(js_AtomtoGBK(ctx, atom));
-		return TRUE;
-	}
-	return FALSE;
+	obj.reset(js_AtomtoGBK(ctx, atom));
+	return TRUE;
 }
 int js_dice_context_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags) {
 	JS2OBJ(this_obj);
-	if (obj) {
-		auto str = js_AtomtoGBK(ctx, prop);
-		obj->set(str, js_toAttr(ctx, val));
-		return TRUE;
-	}
-	return FALSE;
+	auto str = js_AtomtoGBK(ctx, prop);
+	obj.set(str, js_toAttr(ctx, val));
+	return TRUE;
 }
 QJSDEF(context_get) {
 	JS2OBJ(this_val);
 	if (argc > 0) {
 		string key{ js_toGBK(ctx, argv[0]) };
-		return obj->has(key) ? js_newAttr(ctx, obj->get(key))
-			: (argc > 1 ? argv[1] : JS_UNDEFINED);
+		if (auto item{ getContextItem(obj,key) }) {
+			return js_newAttr(ctx, item);
+		}
+		return argc > 1 ? argv[1] : JS_UNDEFINED;
 	}
 	else {
-		return js_newAttr(ctx, *obj);
+		return js_newAttr(ctx, obj);
 	}
 }
 QJSDEF(context_format) {
 	JS2OBJ(this_val);
 	if (argc > 0) {
-		return js_newGBK(ctx, fmt->format(js_toGBK(ctx, argv[0]), *obj));
+		return js_newGBK(ctx, fmt->format(js_toGBK(ctx, argv[0]), obj));
 	}
 	else {
 		JS_ThrowTypeError(ctx, "undefined field");
@@ -801,7 +796,7 @@ QJSDEF(context_echo) {
 	if (argc > 0) {
 		string msg{ js_toGBK(ctx, argv[0]) };
 		bool isRaw = argc > 1 ? JS_ToBool(ctx, argv[1]) : false;
-		reply(*obj, msg, !isRaw);
+		reply(obj, msg, !isRaw);
 		return JS_TRUE;
 	}
 	else {
@@ -813,9 +808,9 @@ QJSDEF(context_inc) {
 	JS2OBJ(this_val);
 	if (argc > 0) {
 		string key{ js_toGBK(ctx, argv[0]) };
-		return obj->inc(key) ? js_newAttr(ctx, obj->get(key))
+		return obj.inc(key) ? js_newAttr(ctx, obj.get(key))
 			: (argc > 1 ? argv[1] : JS_UNDEFINED);
-		return argc > 1 ? obj->inc(key, js_toInt(ctx, argv[1])) : obj->inc(key);
+		return argc > 1 ? obj.inc(key, js_toInt(ctx, argv[1])) : obj.inc(key);
 	}
 	else {
 		JS_ThrowTypeError(ctx, "undefined field");
@@ -842,15 +837,15 @@ QJSDEF(selfdata_constructor) {
 }
 void js_dice_selfdata_finalizer(JSRuntime* rt, JSValue val) {
 	JS2DATA(val);
-	delete data;
+	delete &data;
 }
 int js_dice_selfdata_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst this_val, JSAtom prop) {
 	JS2DATA(this_val);
 	if (data && desc) {
 		string key{ js_AtomtoGBK(ctx, prop) };
-		if ((*data)->data.to_dict()->count(key)) {
+		if (data->data.to_dict()->count(key)) {
 			desc->flags = JS_PROP_C_W_E;
-			desc->value = js_newAttr(ctx, (*data)->data.to_obj().get(key));
+			desc->value = js_newAttr(ctx, data->data.to_obj().get(key));
 			desc->getter = JS_UNDEFINED;
 			desc->setter = JS_UNDEFINED;
 			return TRUE;
@@ -862,8 +857,8 @@ int js_dice_selfdata_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
 	JS2DATA(this_val);
 	if (data) {
 		auto str = js_AtomtoGBK(ctx, atom);
-		(*data)->data.to_obj().reset(str);
-		(*data)->save();
+		data->data.to_obj().reset(str);
+		data->save();
 		return TRUE;
 	}
 	return FALSE;
@@ -875,8 +870,8 @@ int js_dice_selfdata_define(JSContext* ctx, JSValueConst this_obj,
 	JS2DATA(this_obj);
 	if (data) {
 		auto str = js_AtomtoGBK(ctx, prop);
-		(*data)->data.to_obj().set(str, js_toAttr(ctx, val));
-		(*data)->save();
+		data->data.to_obj().set(str, js_toAttr(ctx, val));
+		data->save();
 		return TRUE;
 	}
 	return FALSE;
@@ -885,8 +880,8 @@ int js_dice_selfdata_set(JSContext* ctx, JSValueConst obj, JSAtom atom, JSValueC
 	JS2DATA(obj);
 	if (data) {
 		auto str = js_AtomtoGBK(ctx, atom);
-		(*data)->data.to_obj().set(str, js_toAttr(ctx, value));
-		(*data)->save();
+		data->data.to_obj().set(str, js_toAttr(ctx, value));
+		data->save();
 		return TRUE;
 	}
 	return FALSE;
@@ -946,7 +941,7 @@ int js_dice_GameTable_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop,
 QJSDEF(GameTable_message) {
 	JS2GAME(this_val);
 	if (string msg{ js_toGBK(ctx,argv[0]) }; !msg.empty()) {
-		AddMsgToQueue(msg, *game->windows.begin());
+		AddMsgToQueue(msg, *game->areas.begin());
 		return JS_TRUE;
 	}
 	return JS_FALSE;

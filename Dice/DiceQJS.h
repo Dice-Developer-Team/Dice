@@ -79,8 +79,8 @@ extern "C" {
 #endif
 #ifdef __cplusplus
 #define JS2SET(val) AttrSet& set = *(AttrSet*)JS_GetOpaque(val, js_dice_Set_id)
-#define JS2OBJ(val) AttrObject* obj = (AttrObject*)JS_GetOpaque(val, js_dice_context_id)
-#define JS2DATA(val) ptr<SelfData>* data = (ptr<SelfData>*)JS_GetOpaque(val, js_dice_selfdata_id)
+#define JS2OBJ(val) AttrObject& obj = *(AttrObject*)JS_GetOpaque(val, js_dice_context_id)
+#define JS2DATA(val) ptr<SelfData>& data = *(ptr<SelfData>*)JS_GetOpaque(val, js_dice_selfdata_id)
 #define JS2GAME(val) ptr<DiceSession>& game = *(ptr<DiceSession>*)JS_GetOpaque(val, js_dice_GameTable_id)
 #define JS2PC(val) PC& pc = *(PC*)JS_GetOpaque(val, js_dice_actor_id)
 }

@@ -7,6 +7,7 @@
 #include "EncodingConvert.h"
 #include "DiceAttrVar.h"
 #include "DiceSelfData.h"
+#include "DiceSession.h"
 #include "CharacterCard.h"
 #include "DiceMod.h"
 #include "DDAPI.h"
@@ -185,6 +186,246 @@ PyObject* py_build_attr(const AttrVar& var) {
 	return Py_BuildValue("");
 }
 
+//PyActor
+typedef struct {
+PyObject_HEAD
+	PC p;
+} PyActorObject;
+#define PY2PC(self) PC& pc{((PyActorObject*)self)->p}
+static PyObject* PyActor_new(PyTypeObject* tp, PyObject* args, PyObject* kwds) {
+	static const char* kwlist[] = { "name","type", NULL };
+	auto n = wempty, t = wempty;
+	if (PyArg_ParseTuple(args, "u|u", &n, &t)) {
+		PyActorObject* self = (PyActorObject*)tp->tp_alloc(tp, 0);
+		Py_INCREF(self);
+		string name{ UtoGBK(n) };
+		new(&self->p) PC(t[0]
+			? std::make_shared<CharaCard>(name, UtoGBK(t))
+			: std::make_shared<CharaCard>(name));
+		return (PyObject*)self;
+	}
+	else return NULL;
+}
+PyObject* py_newActor(const PC& obj);
+void PyActor_dealloc(PyObject* o) {
+	delete& ((PyActorObject*)o)->p;
+	Py_TYPE(o)->tp_free(o);
+}
+PyObject* PyActor_getattr(PyObject* self, char* attr) {
+	PY2PC(self);
+	return pc ? py_build_attr(pc->get(UTF8toGBK(attr))) : Py_BuildValue("");
+}
+int PyActor_setattr(PyObject* self, char* attr, PyObject* val) {
+	PY2PC(self);
+	if (pc)pc->set(UTF8toGBK(attr), py_to_attr(val));
+	return 0;
+}
+PyObject* PyActor_getattro(PyObject* self, PyObject* attr) {
+	PY2PC(self);
+	if (!attr && pc)return py_build_attr(*pc);
+	string key{ py_to_gbstring(attr) };
+	return pc ? py_build_attr(pc->get(key)) : Py_BuildValue("");
+}
+int PyActor_setattro(PyObject* self, PyObject* attr, PyObject* val) {
+	PY2PC(self);
+	string key{ py_to_gbstring(attr) };
+	if (pc)pc->set(key, py_to_attr(val));
+	return 0;
+}
+static Py_ssize_t pyActor_size(PyObject* self) {
+	PY2PC(self);
+	return pc ? (Py_ssize_t)pc->size() : 0;
+}
+PyObject* PyActor_set(PyObject* self, PyObject* args) {
+	PY2PC(self);
+	PyObject* item{ nullptr }, * val{ nullptr };
+	if (PyArg_ParseTuple(args, "O|O", &item, &val) && pc) {
+		if (Py_IS_TYPE(item, &PyUnicode_Type) && val) {
+			return pc->set(py_to_gbstring(item), py_to_attr(val))
+				? Py_BuildValue("") : PyLong_FromSize_t(1);
+		}
+		else if (Py_IS_TYPE(item, &PyDict_Type)) {
+			size_t cnt = 0;
+			if (int len = PyMapping_Length(item)) {
+				auto items{ PyMapping_Items(item) };
+				auto key = wempty;
+				for (int i = 0; i < len; ++i) {
+					item = PySequence_GetItem(items, i);
+					PyArg_ParseTuple(item, "uO", &key, &val);
+					if (!pc->set(UtoGBK(key), py_to_attr(val)))++cnt;
+					Py_DECREF(item);
+				}
+				Py_DECREF(items);
+			}
+			return PyLong_FromSize_t(cnt);
+		}
+	}
+	return NULL;
+}
+static PyObject* PyActor_rollDice(PyObject* self, PyObject* args) {
+	auto res = PyDict_New();
+	PY2PC(self);
+	PyObject* arg = PyTuple_GetItem(args, 0);
+	string exp{ (arg && Py_IS_TYPE(arg, &PyUnicode_Type)) ? py_to_gbstring(arg)
+		: pc->available("__DefaultDiceExp") ? pc->get("__DefaultDiceExp").to_str()
+		: "D" };
+	int diceFace{ pc->get("__DefaultDice").to_int() };
+	RD rd{ py_args_to_gbstring(args), diceFace ? diceFace : 100 };
+	PyDict_SetItem(res, PyUnicode_FromString("expr"), py_from_gbstring(rd.strDice));
+	if (int_errno err = rd.Roll(); !err) {
+		PyDict_SetItem(res, PyUnicode_FromString("sum"), PyLong_FromSsize_t(rd.intTotal));
+		PyDict_SetItem(res, PyUnicode_FromString("expansion"), py_from_gbstring(rd.FormCompleteString()));
+	}
+	else {
+		PyDict_SetItem(res, PyUnicode_FromString("error"), PyLong_FromSsize_t((int32_t)err));
+	}
+	return res;
+}
+static PyMethodDef ActorMethods[] = {
+	{"set", PyActor_set, METH_VARARGS, "set PC attr"},
+	{"get", PyActor_getattro, METH_VARARGS, "get PC item"},
+	{"__getattr__", PyActor_getattro, METH_VARARGS, "get PC item"},
+	{"rollDice", PyActor_rollDice, METH_VARARGS, "PC roll dice expression"},
+	{NULL, NULL, 0, NULL},
+};
+static PyMappingMethods ActorMappingMethods = {
+	pyActor_size, PyActor_getattro, PyActor_setattro,
+};
+PyObject* PyActor_str(PyObject* self) {
+	PY2PC(self);
+	return py_from_gbstring(pc->getName());
+}
+static PyTypeObject PyActor_Type = {
+	PyVarObject_HEAD_INIT(nullptr, 0)
+	"dicemaid.Actor",                                 /* tp_name */
+	sizeof(PyActorObject),                            /* tp_basicsize */
+	0,                                                 /* tp_itemsize */
+	PyActor_dealloc,                      /* tp_dealloc */
+	0,                                           /* tp_print */
+	nullptr,                                 /* tp_getattr */
+	PyActor_setattr,                                 /* tp_setattr */
+	nullptr,                                           /* tp_reserved */
+	nullptr,                                           /* tp_repr */
+	nullptr,                                            /* tp_as_number */
+	nullptr,                                           /* tp_as_sequence */
+	&ActorMappingMethods,                             /* tp_as_mapping */
+	nullptr,                                           /* tp_hash  */
+	nullptr,                                           /* tp_call */
+	PyActor_str,                                          /* tp_str */
+	nullptr,                                           /* tp_getattro */
+	nullptr,                                          /* tp_setattro */
+	nullptr,                                           /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT,						          /* tp_flags */
+	PyDoc_STR("Dice Player Card."),                 /* tp_doc */
+	nullptr,                                           /* tp_traverse */
+	nullptr,                                           /* tp_clear */
+	nullptr,                                           /* tp_richcompare */
+	0,                                                 /* tp_weaklistoffset */
+	nullptr,                                           /* tp_iter */
+	nullptr,                                           /* tp_iternext */
+	ActorMethods,                                    /* tp_methods */
+	nullptr,                                    /* tp_members */
+	nullptr,                                          /* tp_getset */
+	nullptr,                                           /* tp_base */
+	nullptr,                                           /* tp_dict */
+	nullptr,                                           /* tp_descr_get */
+	nullptr,                                           /* tp_descr_set */
+	0,                                                 /* tp_dictoffset */
+	nullptr,                                           /* tp_init */
+	nullptr,                                           /* tp_alloc */
+	PyActor_new,                                     /* tp_new */
+};
+PyObject* py_newActor(const PC& obj) {
+	PyActorObject* pc = (PyActorObject*)PyActor_Type.tp_alloc(&PyActor_Type, 0);
+	Py_INCREF(pc);
+	new(&pc->p) PC(obj);
+	return (PyObject*)pc;
+}
+//PyGameTable
+typedef struct {
+PyObject_HEAD
+	ptr<DiceSession> p;
+} PyGameTableObject;
+#define PY2GAME(self) ptr<DiceSession>& game{((PyGameTableObject*)self)->p}
+void PyGameTable_dealloc(PyObject* o) {
+	delete& ((PyGameTableObject*)o)->p;
+	Py_TYPE(o)->tp_free(o);
+}
+int PyGameTable_setattr(PyObject* self, char* attr, PyObject* val) {
+	PY2GAME(self);
+	if (game)game->attrs.set(UTF8toGBK(attr), py_to_attr(val));
+	return 0;
+}
+static Py_ssize_t pyGameTable_size(PyObject* self) {
+	PY2GAME(self);
+	return game ? (Py_ssize_t)game->attrs.size() : 0;
+}
+PyObject* PyGameTable_getattro(PyObject* self, PyObject* attr) {
+	PY2GAME(self);
+	string key{ py_to_gbstring(attr) };
+	return game ? py_build_attr(game->attrs.get(key)) : Py_BuildValue("");
+}
+int PyGameTable_setattro(PyObject* self, PyObject* attr, PyObject* val) {
+	PY2GAME(self);
+	string key{ py_to_gbstring(attr) };
+	if (game)game->attrs.set(key, py_to_attr(val));
+	return 0;
+}
+static PyMappingMethods PyGameTableMappingMethods = {
+	pyGameTable_size, PyGameTable_getattro, PyGameTable_setattro,
+};
+static PyMethodDef PyGameTableMethods[] = {
+	{"get", PyGameTable_getattro, METH_VARARGS, "get Game item"},
+	{"__getattr__", PyGameTable_getattro, METH_VARARGS, "get Game item"},
+	{NULL, NULL, 0, NULL},
+};
+static PyTypeObject PyGameTable_Type = {
+	PyVarObject_HEAD_INIT(nullptr, 0)
+	"dicemaid.GameTable",                                 /* tp_name */
+	sizeof(PyGameTableObject),                            /* tp_basicsize */
+	0,                                                 /* tp_itemsize */
+	PyGameTable_dealloc,                      /* tp_dealloc */
+	0,                                           /* tp_print */
+	nullptr,                                 /* tp_getattr */
+	PyGameTable_setattr,                                 /* tp_setattr */
+	nullptr,                                           /* tp_reserved */
+	nullptr,                                           /* tp_repr */
+	nullptr,                                            /* tp_as_number */
+	nullptr,                                           /* tp_as_sequence */
+	&PyGameTableMappingMethods,                             /* tp_as_mapping */
+	nullptr,                                           /* tp_hash  */
+	nullptr,                                           /* tp_call */
+	nullptr,                                          /* tp_str */
+	nullptr,                                           /* tp_getattro */
+	nullptr,                                          /* tp_setattro */
+	nullptr,                                           /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT,						          /* tp_flags */
+	PyDoc_STR("Dice Game Table."),                 /* tp_doc */
+	nullptr,                                           /* tp_traverse */
+	nullptr,                                           /* tp_clear */
+	nullptr,                                           /* tp_richcompare */
+	0,                                                 /* tp_weaklistoffset */
+	nullptr,                                           /* tp_iter */
+	nullptr,                                           /* tp_iternext */
+	PyGameTableMethods,                                    /* tp_methods */
+	nullptr,                                    /* tp_members */
+	nullptr,                                          /* tp_getset */
+	nullptr,                                           /* tp_base */
+	nullptr,                                           /* tp_dict */
+	nullptr,                                           /* tp_descr_get */
+	nullptr,                                           /* tp_descr_set */
+	0,                                                 /* tp_dictoffset */
+	nullptr,                                           /* tp_init */
+	nullptr,                                           /* tp_alloc */
+	nullptr,                                     /* tp_new */
+};
+PyObject* py_newGame(const ptr<DiceSession>& obj) {
+	PyGameTableObject* game = (PyGameTableObject*)PyGameTable_Type.tp_alloc(&PyGameTable_Type, 0);
+	Py_INCREF(game);
+	new(&game->p) ptr<DiceSession>(obj);
+	return (PyObject*)game;
+}
+//PyContext
 typedef struct{
 	PyObject_HEAD
 	AttrObject obj;
@@ -198,10 +439,7 @@ void PyContext_dealloc(PyObject* o) {
 	delete& ((PyContextObject*)o)->obj;
 	Py_TYPE(o)->tp_free(o);
 }
-PyObject* PyContext_getattr(PyObject* self, char* attr) {
-	AttrObject& obj{ ((PyContextObject*)self)->obj };
-	return py_build_attr(getContextItem(obj, UTF8toGBK(attr)));
-}
+PyObject* py_newContext(const AttrObject& obj);
 int PyContext_setattr(PyObject* self, char* attr, PyObject* val) {
 	AttrObject& obj{ ((PyContextObject*)self)->obj };
 	obj.set(UTF8toGBK(attr), py_to_attr(val));
@@ -210,7 +448,22 @@ int PyContext_setattr(PyObject* self, char* attr, PyObject* val) {
 PyObject* PyContext_getattro(PyObject* self, PyObject* attr) {
 	AttrObject& obj{ ((PyContextObject*)self)->obj };
 	string key{ py_to_gbstring(attr) };
-	return py_build_attr(obj.get(key));
+	//console.log("PyContext_getattro:" + key, 0);
+	if (key == "user" && obj.has("uid")) {
+		return py_newContext(getUser(obj.get_ll("uid")).confs);
+	}
+	else if ((key == "grp" || key == "group") && obj.has("gid")) {
+		return py_newContext(chat(obj.get_ll("gid")).confs);
+	}
+	else if (key == "pc" && obj.has("uid")) {
+		return py_newActor(getPlayer(obj.get_ll("uid"))[obj.get_ll("gid")]);
+	}
+	else if (key == "game") {
+		if (auto game = sessions.get_if(obj)) {
+			return py_newGame(game);
+		}
+	}
+	return py_build_attr(getContextItem(obj, key));
 }
 int PyContext_setattro(PyObject* self, PyObject* attr, PyObject* val) {
 	AttrObject& obj{ ((PyContextObject*)self)->obj };
@@ -266,7 +519,7 @@ static PyTypeObject PyContextType = {
 	0,                                                 /* tp_itemsize */
 	PyContext_dealloc,                      /* tp_dealloc */
 	0,                                           /* tp_print */
-	nullptr,                                 /* tp_getattr */
+	nullptr,		                                 /* tp_getattr */
 	PyContext_setattr,                                 /* tp_setattr */
 	nullptr,                                           /* tp_reserved */
 	nullptr,                                           /* tp_repr */
@@ -301,6 +554,7 @@ static PyTypeObject PyContextType = {
 };
 PyObject* py_newContext(const AttrObject& obj) {
 	PyContextObject* context = (PyContextObject*)PyContextType.tp_alloc(&PyContextType, 0);
+	Py_INCREF(context);
 	new(&context->obj) AttrObject(obj);
 	return (PyObject*)context;
 }
@@ -708,149 +962,6 @@ PYDEFARG(setUserToday) {
 		today->set(id, item, py_to_attr(val));
 	return Py_BuildValue("");
 }
-typedef struct {
-	PyObject_HEAD
-	PC p;
-} PyActorObject;
-#define PY2PC(self) PC pc{((PyActorObject*)self)->p}
-static PyObject* PyActor_new(PyTypeObject* tp, PyObject* args, PyObject* kwds) {
-	static const char* kwlist[] = { "name","type", NULL }; 
-	auto n = wempty, t = wempty;
-	if (PyArg_ParseTuple(args, "u|u", &n, &t)) {
-		PyActorObject* self = (PyActorObject*)tp->tp_alloc(tp, 0);
-		string name{ UtoGBK(n) };
-		new(&self->p) PC(t[0]
-			? std::make_shared<CharaCard>(name, UtoGBK(t))
-			: std::make_shared<CharaCard>(name));
-		return (PyObject*)self;
-	}
-	else return NULL;
-}
-void PyActor_dealloc(PyObject* o) {
-	delete& ((PyActorObject*)o)->p;
-	Py_TYPE(o)->tp_free(o);
-}
-PyObject* PyActor_getattr(PyObject* self, char* attr) {
-	PY2PC(self);
-	return pc ? py_build_attr(pc->get(UTF8toGBK(attr))) : Py_BuildValue("");
-}
-int PyActor_setattr(PyObject* self, char* attr, PyObject* val) {
-	PY2PC(self);
-	if(pc)pc->set(UTF8toGBK(attr), py_to_attr(val));
-	return 0;
-}
-PyObject* PyActor_getattro(PyObject* self, PyObject* attr) {
-	PY2PC(self);
-	if (!attr && pc)return py_build_attr(*pc);
-	string key{ py_to_gbstring(attr) };
-	return pc ? py_build_attr(pc->get(key)) : Py_BuildValue("");
-}
-int PyActor_setattro(PyObject* self, PyObject* attr, PyObject* val) {
-	PY2PC(self);
-	string key{ py_to_gbstring(attr) };
-	if (pc)pc->set(key, py_to_attr(val));
-	return 0;
-}
-static Py_ssize_t pyActor_size(PyObject* self) {
-	PY2PC(self);
-	return pc ? (Py_ssize_t)pc->size() : 0;
-}
-PyObject* PyActor_set(PyObject* self, PyObject* args) {
-	PY2PC(self);
-	PyObject* item{ nullptr }, * val{ nullptr };
-	if (PyArg_ParseTuple(args, "O|O", &item, &val) && pc) {
-		if (Py_IS_TYPE(item, &PyUnicode_Type) && val) {
-			return pc->set(py_to_gbstring(item), py_to_attr(val))
-				? Py_BuildValue("") :PyLong_FromSize_t(1);
-		}
-		else if (Py_IS_TYPE(item, &PyDict_Type)) {
-			size_t cnt = 0;
-			if (int len = PyMapping_Length(item)) {
-				auto items{ PyMapping_Items(item) };
-				auto key = wempty;
-				for (int i = 0; i < len; ++i) {
-					item = PySequence_GetItem(items, i);
-					PyArg_ParseTuple(item, "uO", &key, &val);
-					if(!pc->set(UtoGBK(key), py_to_attr(val)))++cnt;
-					Py_DECREF(item);
-				}
-				Py_DECREF(items);
-			}
-			return PyLong_FromSize_t(cnt);
-		}
-	}
-	return NULL;
-}
-
-static PyObject* PyActor_rollDice(PyObject* self, PyObject* args) {
-	auto res = PyDict_New();
-	PC& pc{ ((PyActorObject*)self)->p };
-	PyObject* arg = PyTuple_GetItem(args, 1);
-	string exp{ Py_IS_TYPE(arg, &PyUnicode_Type) ? py_args_to_gbstring(args)
-		: pc->available("__DefaultDiceExp") ? pc->get("__DefaultDiceExp").to_str()
-		: "D" };
-	int diceFace{ pc->get("__DefaultDice").to_int() };
-	RD rd{ py_args_to_gbstring(args), diceFace ? diceFace : 100 };
-	PyDict_SetItem(res, PyUnicode_FromString("expr"), py_from_gbstring(rd.strDice));
-	if (int_errno err = rd.Roll(); !err) {
-		PyDict_SetItem(res, PyUnicode_FromString("sum"), PyLong_FromSsize_t(rd.intTotal));
-		PyDict_SetItem(res, PyUnicode_FromString("expansion"), py_from_gbstring(rd.FormCompleteString()));
-	}
-	else {
-		PyDict_SetItem(res, PyUnicode_FromString("error"), PyLong_FromSsize_t((int32_t)err));
-	}
-	return res;
-}
-static PyMethodDef ActorMethods[] = {
-	{"set", PyActor_set, METH_VARARGS, "set PC attr"},
-	{"get", PyActor_getattro, METH_VARARGS, "get PC item"},
-	{"__getattr__", PyActor_getattro, METH_VARARGS, "get PC item"},
-	{"rollDice", PyActor_rollDice, METH_VARARGS, "PC roll dice expression"},
-	{NULL, NULL, 0, NULL},
-};
-static PyMappingMethods ActorMappingMethods = {
-	pyActor_size, PyActor_getattro, PyActor_setattro,
-};
-static PyTypeObject PyActor_Type = {
-	PyVarObject_HEAD_INIT(nullptr, 0)
-	"dicemaid.Actor",                                 /* tp_name */
-	sizeof(PyActorObject),                            /* tp_basicsize */
-	0,                                                 /* tp_itemsize */
-	PyActor_dealloc,                      /* tp_dealloc */
-	0,                                           /* tp_print */
-	nullptr,                                 /* tp_getattr */
-	PyActor_setattr,                                 /* tp_setattr */
-	nullptr,                                           /* tp_reserved */
-	nullptr,                                           /* tp_repr */
-	nullptr,                                            /* tp_as_number */
-	nullptr,                                           /* tp_as_sequence */
-	&ActorMappingMethods,                             /* tp_as_mapping */
-	nullptr,                                           /* tp_hash  */
-	nullptr,                                           /* tp_call */
-	nullptr,                                          /* tp_str */
-	nullptr,                                           /* tp_getattro */
-	nullptr,                                          /* tp_setattro */
-	nullptr,                                           /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT,						          /* tp_flags */
-	PyDoc_STR("Dice Player Card."),                 /* tp_doc */
-	nullptr,                                           /* tp_traverse */
-	nullptr,                                           /* tp_clear */
-	nullptr,                                           /* tp_richcompare */
-	0,                                                 /* tp_weaklistoffset */
-	nullptr,                                           /* tp_iter */
-	nullptr,                                           /* tp_iternext */
-	ActorMethods,                                    /* tp_methods */
-	nullptr,                                    /* tp_members */
-	nullptr,                                          /* tp_getset */
-	nullptr,                                           /* tp_base */
-	nullptr,                                           /* tp_dict */
-	nullptr,                                           /* tp_descr_get */
-	nullptr,                                           /* tp_descr_set */
-	0,                                                 /* tp_dictoffset */
-	nullptr,                                           /* tp_init */
-	nullptr,                                           /* tp_alloc */
-	PyActor_new,                                     /* tp_new */
-};
 PYDEFKEY(getPlayerCard) {
 	static const char* kwlist[] = { "uid","gid","name", NULL };
 	long long uid = 0, gid = 0;
@@ -858,18 +969,15 @@ PYDEFKEY(getPlayerCard) {
 	if (!PyArg_ParseTupleAndKeywords(args, keys, "L|LO", (char**)kwlist, &uid, &gid, &name))return NULL;
 	if (uid) {
 		Player& pl{ getPlayer(uid) };
-		auto pc = (PyActorObject*)PyActor_Type.tp_alloc(&PyActor_Type, 0);
-		Py_INCREF(pc);
 		if (gid) {
-			new(&pc->p) PC(pl[gid]);
+			return py_newActor(pl[gid]);
 		}
 		else if (name[0]) {
-			new(&pc->p) PC(pl[UtoGBK(name)]);
+			return py_newActor(pl[UtoGBK(name)]);
 		}
 		else {
-			new(&pc->p) PC(pl[0]);
+			return py_newActor(pl[0]);
 		}
-		return (PyObject*)pc;
 	}
 	PyErr_SetString(PyExc_ValueError, "uid cannot be zero");
 	return NULL;
@@ -961,6 +1069,13 @@ PyMODINIT_FUNC PyInit_DiceMaid(){
 		PyModule_AddObject(mod, "Actor", (PyObject*)&PyActor_Type) < 0) {
 		console.log("×¢²ádicemaid.ActorÊ§°Ü!", 0b1000);
 		Py_DECREF(&PyActor_Type);
+		Py_DECREF(mod);
+		return NULL;
+	}
+	else if (PyType_Ready(&PyGameTable_Type) ||
+		PyModule_AddObject(mod, "GameTable", (PyObject*)&PyGameTable_Type) < 0) {
+		console.log("×¢²ádicemaid.GameTableÊ§°Ü!", 0b1000);
+		Py_DECREF(&PyGameTable_Type);
 		Py_DECREF(mod);
 		return NULL;
 	}

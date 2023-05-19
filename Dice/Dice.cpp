@@ -1096,6 +1096,5 @@ EVE_Menu(eventGlobalSwitch) {
 		MessageBoxA(nullptr, "骰娘已全局静默√", "全局开关", MB_OK | MB_ICONINFORMATION);
 #endif
 	}
-
 	return 0;
 }
