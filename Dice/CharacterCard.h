@@ -46,6 +46,7 @@ inline unordered_map<string, short> mCardTag = {
 	{"Name", 1},
 	{"Type", 2},
 	{"Attrs", 3},
+	{"Lock", 103},
 	{"Attr", 11},	//older
 	{"DiceExp", 21},
 	{"Note", 101},	//older
@@ -144,16 +145,31 @@ public:
 	}
 	string show();
 };
+extern unordered_map<int, string> PlayerErrors;
 
 struct lua_State;
 class CharaCard: public AttrObject
 {
 private:
 	string Name = "½ÇÉ«¿¨";
+	unordered_set<string> locks;
 	std::mutex cardMutex;
 public:
 	static fifo_dict_ci<CardTemp> mCardTemplet;
 	CardTemp& getTemplet()const;
+	bool locked(const string& key)const { return locks.count(key); }
+	bool lock(const string& key) {
+		std::lock_guard<std::mutex> lock_queue(cardMutex);
+		if(key.empty() || locks.count(key))return false;
+		locks.insert(key);
+		return true;
+	}
+	bool unlock(const string& key) {
+		std::lock_guard<std::mutex> lock_queue(cardMutex);
+		if (key.empty() || !locks.count(key))return false;
+		locks.erase(key);
+		return true;
+	}
 	const string& getName()const { return Name; }
 	void setName(const string&);
 	void setType(const string&);
@@ -239,7 +255,7 @@ public:
 				if (has(it2.first))continue;
 				set(it2.first, it2.second);
 			}
-				//attr
+			//attr
 			else
 			{
 				if (has(it2.first))continue;
@@ -352,28 +368,7 @@ public:
 		return 0;
 	}
 
-	int removeCard(const string& name)
-	{
-		std::lock_guard<std::mutex> lock_queue(cardMutex);
-		if (!mNameIndex.count(name))return -5;
-		if (!mNameIndex[name])return -7;
-		auto it = mGroupIndex.cbegin();
-		while (it != mGroupIndex.cend())
-		{
-			if (it->second == mNameIndex[name])
-			{
-				it = mGroupIndex.erase(it);
-			}
-			else
-			{
-				++it;
-			}
-		}
-		mCardList.erase(mNameIndex[name]);
-		while (!mCardList.count(indexMax))indexMax--;
-		mNameIndex.erase(name);
-		return 0;
-	}
+	int removeCard(const string& name);
 
 	int renameCard(const string& name, const string& name_new);
 

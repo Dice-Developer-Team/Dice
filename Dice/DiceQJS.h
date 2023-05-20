@@ -68,9 +68,12 @@ extern "C" {
 	int js_dice_actor_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen, JSValueConst obj);
 	int js_dice_actor_delete(JSContext* ctx, JSValue obj, JSAtom atom);
 	int js_dice_actor_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags);
-	extern const JSCFunctionListEntry js_dice_actor_proto_funcs[2];
+	extern const JSCFunctionListEntry js_dice_actor_proto_funcs[5];
 	QJSDEF(actor_set);
 	QJSDEF(actor_rollDice);
+	QJSDEF(actor_locked);
+	QJSDEF(actor_lock);
+	QJSDEF(actor_unlock);
 #ifndef FALSE
 #define FALSE               0
 #endif

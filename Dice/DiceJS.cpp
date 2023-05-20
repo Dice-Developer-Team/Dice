@@ -979,7 +979,6 @@ int js_dice_actor_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen
 			}
 			else if (auto atom = JS_NewAtom(ctx, GBKtoUTF8(key).c_str());
 				atom != JS_ATOM_NULL) {
-				DD::debugLog("newAtom:" + key + "#" + to_string(atom));
 				tab[i++].atom = atom;
 				tab[i++].is_enumerable = TRUE;
 			}
@@ -1048,6 +1047,21 @@ QJSDEF(actor_rollDice) {
 		JS_SetPropertyStr(ctx, res, "error", JS_NewInt32(ctx, (int32_t)err));
 	}
 	return res;
+}
+QJSDEF(actor_locked) {
+	JS2PC(this_val);
+	string key{ js_toGBK(ctx, argv[0]) };
+	return JS_NewBool(ctx, pc->locked(key));
+}
+QJSDEF(actor_lock) {
+	JS2PC(this_val);
+	string key{ js_toGBK(ctx, argv[0]) };
+	return JS_NewBool(ctx, pc->lock(key));
+}
+QJSDEF(actor_unlock) {
+	JS2PC(this_val);
+	string key{ js_toGBK(ctx, argv[0]) };
+	return JS_NewBool(ctx, pc->unlock(key));
 }
 
 bool js_call_event(AttrObject eve, const AttrVar& action) {

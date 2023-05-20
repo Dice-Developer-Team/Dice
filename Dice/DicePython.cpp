@@ -281,11 +281,32 @@ static PyObject* PyActor_rollDice(PyObject* self, PyObject* args) {
 	}
 	return res;
 }
+PyObject* PyActor_locked(PyObject* self, PyObject* args) {
+	PY2PC(self);
+	string key{ py_args_to_gbstring(args) };
+	if (pc->locked(key)) Py_RETURN_TRUE;
+	else Py_RETURN_FALSE;
+}
+PyObject* PyActor_lock(PyObject* self, PyObject* args) {
+	PY2PC(self);
+	string key{ py_args_to_gbstring(args) };
+	if (pc->lock(key)) Py_RETURN_TRUE;
+	else Py_RETURN_FALSE;
+}
+PyObject* PyActor_unlock(PyObject* self, PyObject* args) {
+	PY2PC(self);
+	string key{ py_args_to_gbstring(args) };
+	if (pc->unlock(key)) Py_RETURN_TRUE;
+	else Py_RETURN_FALSE;
+}
 static PyMethodDef ActorMethods[] = {
 	{"set", PyActor_set, METH_VARARGS, "set PC attr"},
 	{"get", PyActor_getattro, METH_VARARGS, "get PC item"},
 	{"__getattr__", PyActor_getattro, METH_VARARGS, "get PC item"},
 	{"rollDice", PyActor_rollDice, METH_VARARGS, "PC roll dice expression"},
+	{"locked", PyActor_locked, METH_VARARGS, "check lock state"},
+	{"lock", PyActor_lock, METH_VARARGS, "add lock"},
+	{"unlock", PyActor_unlock, METH_VARARGS, "remove lock"},
 	{NULL, NULL, 0, NULL},
 };
 static PyMappingMethods ActorMappingMethods = {

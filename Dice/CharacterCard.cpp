@@ -16,7 +16,23 @@
  * -7:PcInitDelErr 删除初始卡
  * -8:PcNameSetErr 卡名非法更改
  * -11:PcTextTooLong 文本过长
+ * -21:PcLockKill 删除锁定
+ * -22:PcLockName 名称锁定
+ * -23:PcLockWrite 禁止写入/修改
+ * -24:PcLockRead 禁止查看
  */
+unordered_map<int, string> PlayerErrors{
+	{-1,"strPcCardFull"},
+	{-3,"strPCNameEmpty"},
+	{-4,"strPCNameExist"},
+	{-5,"strPcNameNotExist"},
+	{-6,"strPCNameInvalid"},
+	{-7,"strPcInitDelErr"},
+	{-21,"strPCLockedKill"},
+	{-22,"strPCLockedName"},
+	{-23,"strPCLockedWrite"},
+	{-24,"strPCLockedRead"},
+};
 
 fifo_dict_ci<CardTemp> CharaCard::mCardTemplet{
 	{
@@ -296,6 +312,10 @@ void CharaCard::writeb(std::ofstream& fout) const {
 	fwrite(fout, Name);
 	fwrite(fout, string("Attrs"));
 	AttrObject::writeb(fout);
+	if (!locks.empty()) {
+		fwrite(fout, string("Lock"));
+		fwrite(fout, locks);
+	}
 	fwrite(fout, string("END"));
 }
 void CharaCard::readb(std::ifstream& fin) {
@@ -323,16 +343,17 @@ void CharaCard::readb(std::ifstream& fin) {
 		case 21: {
 			std::unordered_map<string, string>TempExp;
 			fread(fin, TempExp);
-			TempExp.erase("");
 			for (auto& [key, val] : TempExp) {
 				AttrObject::set("&" + key, val);
 			}
 		}
 			break;
+		case 103:
+			fread(fin, locks);
+			break;
 		case 102: {
 			std::unordered_map<string, string>TempInfo;
 			fread(fin, TempInfo);
-			TempInfo.erase("");
 			for (auto& [key, val] : TempInfo) {
 				AttrObject::set(key, val);
 			}
@@ -380,12 +401,37 @@ Player& getPlayer(long long uid)
 	if (!PList.count(uid))PList[uid] = {};
 	return PList[uid];
 }
+int Player::removeCard(const string& name){
+	std::lock_guard<std::mutex> lock_queue(cardMutex);
+	if (!mNameIndex.count(name))return -5;
+	const auto id = mNameIndex[name];
+	if (!id)return -7;
+	if (auto pc = mCardList[id]; pc->locked("q")) return -21;
+	auto it = mGroupIndex.cbegin();
+	while (it != mGroupIndex.cend())
+	{
+		if (it->second == id)
+		{
+			it = mGroupIndex.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+	mCardList.erase(mNameIndex[name]);
+	while (!mCardList.count(indexMax))indexMax--;
+	mNameIndex.erase(name);
+	return 0;
+}
 int Player::renameCard(const string& name, const string& name_new) 	{
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
 	if (name_new.empty())return -3;
 	if (mNameIndex.count(name_new))return -4;
 	if (name_new.find(":") != string::npos)return -6;
-	const int i = mNameIndex[name_new] = mNameIndex[name];
+	const int i = mNameIndex[name];
+	if (mCardList[i]->locked("n"))return -22;
+	mNameIndex[name_new] = mNameIndex[name];
 	mNameIndex.erase(name);
 	mCardList[i]->setName(name_new);
 	return 0;

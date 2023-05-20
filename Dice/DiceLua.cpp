@@ -1252,8 +1252,9 @@ int luaopen_GameTable(lua_State* L) {
 }
 
 //metatable Actor
+#define LUA2PC(idx) PC& pc{*(PC*)luaL_checkudata(L, idx, "Actor")}
 int Actor_set(lua_State* L) {
-	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
+	LUA2PC(1);
 	if (lua_isstring(L, 2)) {
 		string key{ lua_to_gbstring(L, 2) };
 		if (lua_gettop(L) < 3) {
@@ -1285,7 +1286,7 @@ int Actor_set(lua_State* L) {
 }
 int Actor_rollDice(lua_State* L) {
 	string exp{ lua_to_gbstring(L, 2) };
-	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
+	LUA2PC(1);
 	int diceFace{ pc->get("__DefaultDice").to_int() };
 	RD rd{ exp, diceFace ? diceFace : 100 };
 	lua_newtable(L);
@@ -1303,15 +1304,36 @@ int Actor_rollDice(lua_State* L) {
 	}
 	return 1;
 }
+int Actor_locked(lua_State* L) {
+	string key{ lua_to_gbstring(L, 2) };
+	LUA2PC(1);
+	lua_pushboolean(L, pc->locked(key));
+	return 1;
+}
+int Actor_lock(lua_State* L) {
+	string key{ lua_to_gbstring(L, 2) };
+	LUA2PC(1);
+	lua_pushboolean(L, pc->lock(key));
+	return 1;
+}
+int Actor_unlock(lua_State* L) {
+	string key{ lua_to_gbstring(L, 2) };
+	LUA2PC(1);
+	lua_pushboolean(L, pc->unlock(key));
+	return 1;
+}
+const dict<lua_CFunction> Lua_ActorMethods = {
+	{"set",Actor_set},
+	{"rollDice",Actor_rollDice},
+	{"locked",Actor_locked},
+	{"lock",Actor_lock},
+	{"unlock",Actor_unlock},
+};
 int Actor_index(lua_State* L) {
 	string key{ lua_to_gbstring(L, 2) };
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
-	if (key == "set") {
-		lua_pushcfunction(L, Actor_set);
-		return 1;
-	}
-	else if (key == "rollDice") {
-		lua_pushcfunction(L, Actor_rollDice);
+	if (Lua_ActorMethods.count(key)) {
+		lua_pushcfunction(L, Lua_ActorMethods.at(key));
 		return 1;
 	}
 	lua_push_attr(L, pc->get(key));

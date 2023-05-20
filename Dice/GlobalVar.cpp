@@ -147,8 +147,11 @@ const dict_ci<string> PlainMsg
 	{"strPcNameNotExist","{self}未记录{nick}名为「{char}」角色卡×"},
 	{"strPcNameInvalid","非法的角色卡名（存在冒号）×"},
 	{"strPcInitDelErr","{nick}的初始卡不可删除×"},
-	{"strPcNoteTooLong","备注长度不能超过255×"},
 	{"strPcTextTooLong","文本长度不能超过255×"},
+	{"strPcLockedKill","{self}已锁定{pc}，不可删除×" },
+	{"strPcLockedName","{self}已锁定{pc}，不可改名×" },
+	{"strPcLockedWrite","{self}已锁定{pc}，不可主动写入×" },
+	{"strPcLockedRead","{self}已锁定{pc}，不予查看属性×" },
 	{"strSetDefaultDice","{self}已将{pc}的默认骰设置为D{default}√"},
 	{"strCOCBuild","{pc}的调查员作成:{res}"},
 	{"strDNDBuild","{pc}的英雄作成:{res}"},
@@ -494,6 +497,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+648:角色卡锁定功能
 647:支持自定义规则集
 646:支持集合Set读写
 645:重定义.sc回执

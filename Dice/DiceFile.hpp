@@ -148,6 +148,14 @@ fifo_map<T1, T2> fread(ifstream& fin) {
 	return dir;
 }
 // 读取二进制文件——std::set重载
+template <typename T>
+void fread(ifstream& fin, std::unordered_set<T>& s){
+	short len = fread<short>(fin);
+	if (len > 0)while (len--){
+		const T item = fread<T>(fin);
+		s.insert(item);
+	}
+}
 template <typename T, bool isLib>
 std::set<T> fread(ifstream& fin)
 {
@@ -582,7 +590,16 @@ void fwrite(ofstream& fout, const nlohmann::fifo_map<T1, T2>& m)
 	}
 }
 
-
+template <typename T>
+void fwrite(ofstream& fout, const std::unordered_set<T>& s)
+{
+	const auto len = static_cast<size_t>(s.size());
+	fwrite(fout, len);
+	for (const auto& it : s)
+	{
+		fwrite(fout, it);
+	}
+}
 template <typename T>
 void fwrite(ofstream& fout, const std::set<T>& s)
 {

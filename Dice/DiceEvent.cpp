@@ -3159,25 +3159,20 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		Player& pl = getPlayer(fromChat.uid);
+		int resno = 0;
 		if (strOption == "tag") {
 			set("char",readRest());
-			switch (pl.changeCard(get_str("char"), fromChat.gid)) {
+			switch (resno = pl.changeCard(get_str("char"), fromChat.gid)) {
 			case 1:
 				replyMsg("strPcCardReset");
+				return 1;
 				break;
 			case 0:
 				replyMsg("strPcCardSet");
 				break;
-			case -5:
-				replyMsg("strPcNameNotExist");
-				break;
-			default:
-				replyMsg("strUnknownErr");
-				break;
 			}
-			return 1;
 		}
-		if (strOption == "show") {
+		else if (strOption == "show") {
 			string strName = readRest();
 			auto pc{ pl.getCard(strName, fromChat.gid) };
 			set("char",pc->getName());
@@ -3186,134 +3181,56 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strPcCardShow");
 			return 1;
 		}
-		if (strOption == "new") {
+		else if (strOption == "new") {
 			string& strPC{ (at("char") = strip(filter_CQcode(readRest(), fromChat.gid))).text};
-			switch (pl.newCard(strPC, fromChat.gid)) {
-			case 0:
-				set("type",pl[fromChat.gid]->get_str("__Type"));
-				set("show",pl[fromChat.gid]->show(true));
+			if (!(resno = pl.newCard(strPC, fromChat.gid))) {
+				set("type", pl[fromChat.gid]->get_str("__Type"));
+				set("show", pl[fromChat.gid]->show(true));
 				if (is_empty("show"))replyMsg("strPcNewEmptyCard");
 				else replyMsg("strPcNewCardShow");
-				break;
-			case -1:
-				replyMsg("strPcCardFull");
-				break;
-			case -4:
-				replyMsg("strPcNameExist");
-				break;
-			case -6:
-				replyMsg("strPcNameInvalid");
-				break;
-			default:
-				replyMsg("strUnknownErr");
-				break;
 			}
-			return 1;
 		}
-		if (strOption == "build") {
+		else if (strOption == "build") {
 			string& strPC{ (at("char") = strip(filter_CQcode(readRest(), fromChat.gid))).text};
-			switch (pl.buildCard(strPC, false, fromChat.gid)) {
-			case 0:
-				set("show",pl[strPC]->show(true));
+			if (!(resno = pl.buildCard(strPC, false, fromChat.gid))) {
+				set("show", pl[strPC]->show(true));
 				replyMsg("strPcCardBuild");
-				break;
-			case -1:
-				replyMsg("strPcCardFull");
-				break;
-			case -2:
-				replyMsg("strPcTempInvalid");
-				break;
-			case -6:
-				replyMsg("strPCNameInvalid");
-				break;
-			default:
-				replyMsg("strUnknownErr");
-				break;
 			}
-			return 1;
 		}
-		if (strOption == "list") {
+		else if (strOption == "list") {
 			set("show",pl.listCard());
 			replyMsg("strPcCardList");
 			return 1;
 		}
-		if (strOption == "nn") {
+		else if (strOption == "nn") {
 			string& strPC{ (at("new_name") = strip(filter_CQcode(readRest(),fromChat.gid))).text};
 			set("old_name",pl[fromChat.gid]->getName());
-			switch (pl.renameCard(get_str("old_name"), strPC)) {
-			case 0:
-				replyMsg("strPcCardRename");
-				break;
-			case -3:
-				replyMsg("strPCNameEmpty");
-				break;
-			case -4:
-				replyMsg("strPCNameExist");
-				break;
-			case -6:
-				replyMsg("strPCNameInvalid");
-				break;
-			default:
-				replyMsg("strUnknownErr");
-				break;
-			}
-			return 1;
+			if (!(resno = pl.renameCard(get_str("old_name"), strPC)))replyMsg("strPcCardRename");
 		}
-		if (strOption == "del") {
+		else if (strOption == "del") {
 			set("char",strip(readRest()));
-			switch (pl.removeCard(get_str("char"))) {
-			case 0:
-				replyMsg("strPcCardDel");
-				break;
-			case -5:
-				replyMsg("strPcNameNotExist");
-				break;
-			case -7:
-				replyMsg("strPcInitDelErr");
-				break;
-			default:
-				replyMsg("strUnknownErr");
-				break;
-			}
-			return 1;
+			if (!(resno = pl.removeCard(get_str("char"))))replyMsg("strPcCardDel");
 		}
-		if (strOption == "redo") {
+		else if (strOption == "redo") {
 			pl.buildCard((at("char") = strip(readRest())).text, true, fromChat.gid);
 			set("show",pl[get_str("char")]->show(true));
 			replyMsg("strPcCardRedo");
 			return 1;
 		}
-		if (strOption == "grp") {
+		else if (strOption == "grp") {
 			set("show",pl.listMap());
 			replyMsg("strPcGroupList");
 			return 1;
 		}
-		if (strOption == "cpy") {
+		else if (strOption == "cpy") {
 			string strName = strip(filter_CQcode(readRest(), fromChat.gid));
 			string& strPC1{ (at("char1") = strName.substr(0, strName.find('='))).text};
 			set("char2",(strPC1.length() + 1 < strName.length())
 				? strip(strName.substr(strPC1.length() + 1))
 				: pl[fromChat.gid]->getName());
-			switch (pl.copyCard(strPC1, get_str("char2"), fromChat.gid)) {
-			case 0:
-				replyMsg("strPcCardCpy");
-				break;
-			case -1:
-				replyMsg("strPcCardFull");
-				break;
-			case -3:
-				replyMsg("strPcNameEmpty");
-				break;
-			case -6:
-				replyMsg("strPcNameInvalid");
-				break;
-			default:
-				replyMsg("strUnknownErr");
-				break;
-			}
-			return 1;
+			if (!(resno = pl.copyCard(strPC1, get_str("char2"), fromChat.gid)))replyMsg("strPcCardCpy");
 		}
-		if (strOption == "stat") {
+		else if (strOption == "stat") {
 			auto pc{ pl[fromChat.gid] };
 			bool isEmpty{ true };
 			ResList res;
@@ -3366,12 +3283,12 @@ int DiceEvent::InnerOrder() {
 			}
 			return 1;
 		}
-		if (strOption == "clr") {
+		else if (strOption == "clr") {
 			PList.erase(fromChat.uid);
 			replyMsg("strPcClr");
 			return 1;
 		}
-		if (strOption == "type") {
+		else if (strOption == "type") {
 			if ((at("new_type") = strip(readRest())).str_empty()) {
 				set("attr","Ä£°åÀà");
 				set("val",pl[fromChat.gid]->get_str("__Type"));
@@ -3397,7 +3314,8 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strPcCardShow");
 			return 1;
 		}
-		replyHelp("pc");
+		else replyHelp("pc");
+		if (resno) replyMsg(PlayerErrors.count(resno) ? PlayerErrors.at(resno) : "strUnknownErr");
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 2) == "ra" || strLowerMessage.substr(intMsgCnt, 2) == "rc") {
@@ -3801,9 +3719,15 @@ int DiceEvent::InnerOrder() {
 				replyMsg("strPcNotExistErr");
 				return 1;
 			}
-			getPlayer(fromChat.uid)[fromChat.gid]->clear();
-			set("char",getPlayer(fromChat.uid)[fromChat.gid]->getName());
-			replyMsg("strPropCleared");
+			auto pc = getPlayer(fromChat.uid)[fromChat.gid];
+			if (!pc->locked("w")) {
+				pc->clear();
+				set("char", getPlayer(fromChat.uid)[fromChat.gid]->getName());
+				replyMsg("strPropCleared");
+			}
+			else {
+				replyMsg("strPcLockedWrite");
+			}
 			return 1;
 		}
 		if (strLowerMessage.substr(intMsgCnt, 3) == "del") {
@@ -3815,7 +3739,11 @@ int DiceEvent::InnerOrder() {
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 				intMsgCnt++;
 			set("attr",readAttrName());
-			if (getPlayer(fromChat.uid)[fromChat.gid]->erase(at("attr").text)) {
+			auto pc = getPlayer(fromChat.uid)[fromChat.gid];
+			if (pc->locked("w")) {
+				replyMsg("strPcLockedWrite");
+			}
+			else if (pc->erase(at("attr").text)) {
 				replyMsg("strPropDeleted");
 			}
 			else {
@@ -3832,7 +3760,7 @@ int DiceEvent::InnerOrder() {
 			if (strMsg[intMsgCnt] == ':') {
 				if (PList[fromChat.uid].count(attr)) {
 					while (strMsg[intMsgCnt] == ':')++intMsgCnt;
-					pc = PList[fromChat.uid][attr];
+					pc = pl[attr];
 					set("pc", pc->getName());
 					attr = readAttrName();
 				}
@@ -3849,12 +3777,14 @@ int DiceEvent::InnerOrder() {
 					attr = attr.substr(pos + 2);
 				}
 			}
-			if (attr.empty()) {
+			if (pc->locked("r")) {
+				replyMsg("strPcLockedRead");
+			}
+			else if (attr.empty()) {
 				set("char",pc->getName());
 				set("type",pc->get_str("__Type"));
 				set("show",pc->show(false));
 				replyMsg("strPropList");
-				return 1;
 			}
 			else if (string val; pc->show(attr, val) > -1) {
 				set("val",val);
@@ -3893,6 +3823,10 @@ int DiceEvent::InnerOrder() {
 				pc = pl[name];
 				set("pc", name);
 			}
+		}
+		if (pc->locked("w")) {
+			replyMsg("strPcLockedWrite");
+			return 1;
 		}
 		ShowList changes;
 		ShowList rolls;

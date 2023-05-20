@@ -100,6 +100,9 @@ JSClassDef js_dice_actor_class = {
 const JSCFunctionListEntry js_dice_actor_proto_funcs[] = {
 	JS_CFUNC_DEF("set",2,js_dice_actor_set),
 	JS_CFUNC_DEF("rollDice",1,js_dice_actor_rollDice),
+	JS_CFUNC_DEF("locked",1,js_dice_actor_locked),
+	JS_CFUNC_DEF("lock",1,js_dice_actor_lock),
+	JS_CFUNC_DEF("unlock",1,js_dice_actor_unlock),
 };
 /*
 static int js_dicemaid_init(JSContext* ctx, JSModuleDef* m) {
