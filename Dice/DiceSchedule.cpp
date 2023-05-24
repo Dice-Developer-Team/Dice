@@ -237,7 +237,9 @@ void DiceToday::set(long long qq, const string& key, const AttrVar& val) {
 	save();
 }
 
+std::mutex mtDailySave;
 void DiceToday::save() {
+	std::unique_lock<std::mutex> lock(mtDailySave);
 	fifo_json jFile;
 	try {
 		jFile["date"] = { stToday.tm_year + 1900,stToday.tm_mon + 1,stToday.tm_mday };

@@ -902,7 +902,21 @@ int js_dice_GameTable_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValu
 	JS2GAME(obj);
 	if (game) {
 		auto key = js_AtomtoGBK(ctx, prop);
-		if (key == "Obs") {
+		if (key == "gms") {
+			desc->value = js_newSet(ctx, game->get_gm());
+			desc->flags = JS_PROP_NORMAL;
+			desc->getter = JS_UNDEFINED;
+			desc->setter = JS_UNDEFINED;
+			return TRUE;
+		}
+		else if (key == "pls") {
+			desc->value = js_newSet(ctx, game->get_pl());
+			desc->flags = JS_PROP_NORMAL;
+			desc->getter = JS_UNDEFINED;
+			desc->setter = JS_UNDEFINED;
+			return TRUE;
+		}
+		else if (key == "obs") {
 			desc->value = js_newSet(ctx, game->get_ob());
 			desc->flags = JS_PROP_NORMAL;
 			desc->getter = JS_UNDEFINED;

@@ -88,6 +88,19 @@ const dict_ci<string> PlainMsg
 	{"strLogUpSuccess","{self}已完成日志上传√\n请访问 {log_url} 以查看记录"},
 	{"strLogUpFailure","{self}上传日志文件失败，正在第{retry}次重传{log_file}…{ret}"},
 	{"strLogUpFailureEnd","很遗憾，{self}无法成功上传日志文件×\n{ret}\n如需获取可联系Master:{print:master}\n文件名:{log_file}"},
+	{"strGameMastered","{self}已接受{nick}为本桌游戏管理员√"},
+	{"strGameMasterList","本桌游戏管理员有:\n{items}"},
+	{"strGameMasterDenied","抱歉，GM权限不能交给{nick}×"},
+	{"strGameJoined","{self}已接受{nick}的玩家报名√"},
+	{"strGamePlayerAlready","{nick}已经上桌啦！"},
+	{"strGamePlayerCall","{items}"},
+	{"strGameKicked","{self}已将{at:{tid}}踢下桌√"},
+	{"strGameKickNotPlayer","{nick}要踢走的{tid}不在桌上×"},
+	{"strGameExited","玩家{nick}已退出游戏√"},
+	{"strGameNotJoined","玩家{nick}并未参与本场游戏!"},
+	{"strGameNotMaster","请{nick}让本场GM进行此操作×"},
+	{"strGameItemSet","{self}已将本场游戏的{set_item}设置为{set_val}√"},
+	{"strGameItemEmpty","请{nick}输入待设置的项目×"},
 	{"strGMTableShow","{self}记录的{table_name}列表: {res}"},
 	{"strGMTableClr","{self}已清除{table_name}表√"},
 	{"strGMTableItemDel","{self}已移除{table_name}表的项目{table_item}√"},
@@ -302,7 +315,6 @@ const dict_ci<string> PlainMsg
 	{"strLongInsane", "{pc}的疯狂发作-总结症状:\n{res}" },
 	{"strSuccessRateErr", "这成功率还需要检定吗？"},
 	{"strGroupIDInvalid", "无效的群号!"},
-	{"strSendErr", "消息发送失败!"},
 	{"strSendSuccess", "命令执行成功√"},
 	{"strActionEmpty", "动作不能为空×"},
 	{"strMEDisabledErr", "管理员已在此群中禁用.me命令!"},
@@ -682,6 +694,15 @@ Type=[回复性质](Reply/Order)
 `dicemaid:off` Dice!骰娘不触发
 )" },
 {"回复列表","{strSelfName}的回复触发词列表:{list_reply_deck}"},
+{"game",R"(游戏模式：
+`.game master` 登记为GM
+`.game set 属性=值` 游戏设置
+例: `.game set rule=COC7`
+`.game call` at全体玩家
+`.game join` 登记为玩家
+`.game kick 玩家ID` 将玩家踢出游戏
+`.game exit` 退出游戏
+)"},
 {"旁观","&ob"},
 {"旁观模式","&ob"},
 {"ob",R"(旁观模式：.ob (join/exit/list/clr/on/off)

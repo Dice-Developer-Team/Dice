@@ -62,6 +62,8 @@ struct AttrIndex {
 	AttrIndex(double num) :val(num) {}
 	AttrIndex(const string& s) :val(s) {}
 	double to_double()const;
+	bool is_str()const { return std::holds_alternative<string>(val); }
+	string to_string()const;
 	fifo_json to_json()const;
 };
 fifo_json to_json(const fifo_set<AttrIndex>& vars);

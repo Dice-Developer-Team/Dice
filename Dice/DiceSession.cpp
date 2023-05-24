@@ -21,6 +21,13 @@ unordered_set<chatInfo>LogList;
 
 const std::filesystem::path LogInfo::dirLog{ std::filesystem::path("user") / "log" };
 
+bool DiceSession::hasAttr(const string& key) {
+	return attrs.has(key);
+}
+AttrVar DiceSession::getAttr(const string& key) {
+	return attrs.get(key);
+}
+
 bool DiceSession::table_del(const string& tab, const string& item) {
 	if (!attrs.has(tab) || !attrs.get_obj(tab).has(item))return false;
 	attrs.get_obj(tab).reset(item);
@@ -65,9 +72,7 @@ void DiceSession::ob_enter(DiceEvent* msg)
 
 void DiceSession::ob_exit(DiceEvent* msg)
 {
-	if (obs->count(msg->fromChat.uid))
-	{
-		obs->erase(msg->fromChat.uid);
+	if (del_ob(msg->fromChat.uid)){
 		msg->replyMsg("strObExit");
 	}
 	else
@@ -584,6 +589,8 @@ void DiceSession::save() const
 	std::filesystem::create_directories(DiceDir / "user" / "session", ec);
 	std::filesystem::path fpFile{ DiceDir / "user" / "session" / (name + ".json") };
 	fifo_json jData;
+	if (!master->empty())jData["master"] = to_json(*master);
+	if (!player->empty())jData["player"] = to_json(*player);
 	if (!obs->empty())jData["observer"] = to_json(*obs);
 	if (logger.tStart || !logger.fileLog.empty()) {
 		fifo_json jLog;
@@ -731,6 +738,12 @@ int DiceSessionManager::load() {
 			}
 			if (j.count("data"))for (auto& it : j["data"].items()) {
 				pSession->attrs.set(UTF8toGBK(it.key()), it.value());
+			}
+			if (j.count("master"))for (auto& it : j["master"]) {
+				pSession->master->emplace(it.get<long long>());
+			}
+			if (j.count("player"))for (auto& it : j["player"]) {
+				pSession->player->emplace(it.get<long long>());
 			}
 			if (j.count("observer"))for (auto& it : j["observer"]) {
 				pSession->obs->emplace(it.get<long long>());

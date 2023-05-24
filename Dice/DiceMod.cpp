@@ -704,20 +704,20 @@ string DiceModManager::prev_help(const string& key, AttrObject context) const {
 }
 
 void DiceModManager::_help(DiceEvent* job) {
-	if (job->is_empty("help_word")) {
+	string word{ job->get_str("help_word") };
+	if (word.empty()) {
 		job->reply(getMsg("strBotHeader") + Dice_Short_Ver + "\n" + getMsg("strHlpMsg"));
 		return;
 	}
-	else if (const auto it = global_helpdoc.find(job->get_str("help_word"));
+	else if (const auto it = global_helpdoc.find(word);
 		it != global_helpdoc.end()) {
 		job->reply(format(it->second, *job, true, global_helpdoc));
 	}
-	else if (auto keys = querier.search(job->get_str("help_word"));!keys.empty()) {
+	else if (auto keys = querier.search(word);!keys.empty()) {
 		if (keys.size() == 1) {
 			auto word{ *keys.begin() };
 			job->set("redirect_key", word);
 			job->set("redirect_res", get_help(word, *job));
-			console.log("½üËÆÆ¥Åä" + word + ":"+job->get_str("redirect_res"), 0);
 			job->replyMsg("strHelpRedirect");
 		}
 		else {
@@ -736,8 +736,8 @@ void DiceModManager::_help(DiceEvent* job) {
 		}
 	}
 	else job->replyMsg("strHelpNotFound");
-	cntHelp[job->get_str("help_word")] += 1;
-	saveJMap(DiceDir / "user" / "HelpStatic.json",cntHelp);
+	cntHelp[word] += 1;
+	saveJMap(DiceDir / "user" / "HelpStatic.json", cntHelp);
 }
 
 void DiceModManager::set_help(const string& key, const string& val){

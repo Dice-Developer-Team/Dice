@@ -75,12 +75,17 @@ struct DeckInfo {
 };
 
 class DiceSession{
+	//管理员
+	AttrSet master;
+	//玩家
+	AttrSet player;
 	//旁观者
 	AttrSet obs;
 	//日志
 	LogInfo logger;
 	//牌堆
 	dict_ci<DeckInfo> decks;
+	void save() const;
 public:
 	//数值表
 	AttrObject attrs;
@@ -88,7 +93,10 @@ public:
 	const string name;
 	fifo_set<chatInfo> areas;
 
-	DiceSession(const string& s) : name(s),obs(std::make_shared<fifo_set<AttrIndex>>()) {
+	DiceSession(const string& s) : name(s),
+		master(std::make_shared<fifo_set<AttrIndex>>()),
+		player(std::make_shared<fifo_set<AttrIndex>>()),
+		obs(std::make_shared<fifo_set<AttrIndex>>()) {
 		tUpdate = tCreate = time(nullptr);
 	}
 	friend class DiceSessionManager;
@@ -114,9 +122,8 @@ public:
 		save();
 		return *this;
 	}
-	AttrVar getAttr(const string& key) {
-		return attrs.get(key);
-	}
+	bool hasAttr(const string& key);
+	AttrVar getAttr(const string& key);
 	void setAttr(const string& key, const AttrVar& val) {
 		attrs.set(key, val);
 		update();
@@ -126,6 +133,39 @@ public:
 			attrs.reset(key);
 			update();
 		}
+	}
+
+	[[nodiscard]] AttrSet get_gm() const { return master; }
+	[[nodiscard]] bool is_gm(long long uid) const { return master->count(uid); }
+	void add_gm(long long uid) {
+		master->emplace(uid);
+		update();
+	}
+	bool del_gm(long long uid) {
+		if (master->count(uid))master->erase(uid);
+		else return false;
+		update();
+		return true;
+	}
+	[[nodiscard]] AttrSet get_pl() const { return player; }
+	[[nodiscard]] bool is_pl(long long uid) const { return player->count(uid); }
+	bool add_pl(long long uid) {
+		if (!player->count(uid))player->emplace(uid);
+		else return false;
+		update();
+		return true;
+	}
+	bool del_pl(long long uid) {
+		if (player->count(uid))player->erase(uid);
+		else return false;
+		update();
+		return true;
+	}
+	bool del_ob(long long uid) {
+		if (obs->count(uid))obs->erase(uid);
+		else return false;
+		update();
+		return true;
 	}
 
 	[[nodiscard]] bool table_count(const string& key) const { return attrs.has(key); }
@@ -166,8 +206,6 @@ public:
 	void deck_clr(DiceEvent*);
 	void deck_new(DiceEvent*);
 	[[nodiscard]] bool has_deck(const string& key) const { return decks.count(key); }
-
-	void save() const;
 };
 
 using Session = DiceSession;

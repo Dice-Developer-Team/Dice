@@ -307,6 +307,14 @@ std::string listID(const Con& list, const string& sepa = "|") {
 	return res.show(sepa);
 }
 template<class Con>
+std::string listIndex(const Con& list, const string& sepa = "\n") {
+	ShowList res;
+	for (auto id : list) {
+		res << id.to_string();
+	}
+	return res.show(sepa);
+}
+template<class Con>
 std::string listItem(const Con& list, const string& sepa = "|") {
 	ShowList res;
 	for (auto id : list) {

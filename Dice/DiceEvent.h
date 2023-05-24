@@ -19,12 +19,14 @@
 
 using std::string;
 
+class DiceSession;
 //打包待处理消息
 class DiceEvent : public AttrObject {
 public:
 	chatInfo fromChat;
 	string strLowerMessage;
 	Chat* pGrp = nullptr;
+	ptr<DiceSession> thisGame;
 	string& strMsg;
 	string strReply;
 	std::wsmatch msgMatch;
@@ -74,6 +76,7 @@ public:
 
 private:
 	bool isDisabled = false;
+	std::optional<string> getGameRule();
 	bool canRoomHost();
 
 	int getGroupTrust(long long group = 0);

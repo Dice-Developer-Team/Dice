@@ -1213,7 +1213,15 @@ int GameTable_index(lua_State* L) {
 		lua_pushcfunction(L, GameTable_message);
 		return 1;
 	}
-	else if (key == "Obs") {
+	else if (key == "gms") {
+		lua_push_Set(L, game->get_gm());
+		return 1;
+	}
+	else if (key == "pls") {
+		lua_push_Set(L, game->get_pl());
+		return 1;
+	}
+	else if (key == "obs") {
 		lua_push_Set(L, game->get_ob());
 		return 1;
 	}

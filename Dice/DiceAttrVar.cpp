@@ -931,10 +931,13 @@ YAML::Node AttrVar::to_yaml()const {
 string to_string(const AttrVar& var) {
 	return var.to_str();
 }
-double AttrIndex::to_double() const {
+double AttrIndex::to_double()const {
 	return std::holds_alternative<double>(val) ? get<double>(val) : 0;
 }
-fifo_json AttrIndex::to_json() const{
+string AttrIndex::to_string()const {
+	return std::holds_alternative<string>(val) ? get<string>(val) : toString(get<double>(val));
+}
+fifo_json AttrIndex::to_json()const {
 	if (std::holds_alternative<double>(val)) {
 		double num{ get<double>(val) };
 		if (num == (long long)num)return (long long)num;

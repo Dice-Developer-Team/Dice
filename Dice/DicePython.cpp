@@ -130,6 +130,18 @@ AttrVar py_to_attr(PyObject* o) {
 	console.log("py type: " + string(o->ob_type->tp_name), 0);
 	return {};
 }
+PyObject* py_build_Set(const fifo_set<AttrIndex>& s){
+	auto set = PySet_New(nullptr);
+	for (auto& elem : s) {
+		if (elem.is_str())
+			PySet_Add(set, PyUnicode_FromString(elem.to_string().c_str()));
+		else if (auto num{ elem.to_double() }; num == (Py_ssize_t)num) {
+			PySet_Add(set, PyLong_FromSsize_t((Py_ssize_t)num));
+		}
+		else PySet_Add(set, PyFloat_FromDouble(num));
+	}
+	return set;
+}
 PyObject* py_build_attr(const AttrVar& var) {
 	switch (var.type){
 	case AttrVar::Type::Boolean:
@@ -171,13 +183,8 @@ PyObject* py_build_attr(const AttrVar& var) {
 	case AttrVar::Type::ID:
 		return PyLong_FromLongLong(var.id);
 		break;
-	case AttrVar::Type::Set: {
-		auto set = PySet_New(nullptr);
-		for (auto& elem : *var.flags) {
-			PySet_Add(set, py_build_attr(AttrVar(elem.val)));
-		}
-		return set;
-	}
+	case AttrVar::Type::Set:
+		return py_build_Set(*var.flags);
 		break;
 	case AttrVar::Type::Nil:
 	default:
@@ -384,7 +391,7 @@ static Py_ssize_t pyGameTable_size(PyObject* self) {
 PyObject* PyGameTable_getattro(PyObject* self, PyObject* attr) {
 	PY2GAME(self);
 	string key{ py_to_gbstring(attr) };
-	return game ? py_build_attr(game->attrs.get(key)) : Py_BuildValue("");
+	return game ? py_build_attr(game->attrs.get(key)) : NULL;
 }
 int PyGameTable_setattro(PyObject* self, PyObject* attr, PyObject* val) {
 	PY2GAME(self);
@@ -399,6 +406,14 @@ static PyMethodDef PyGameTableMethods[] = {
 	{"get", PyGameTable_getattro, METH_VARARGS, "get Game item"},
 	{"__getattr__", PyGameTable_getattro, METH_VARARGS, "get Game item"},
 	{NULL, NULL, 0, NULL},
+};
+PyObject* PyGameTable_get_gms(PyObject* self, void*) {
+	PY2GAME(self);
+	return py_build_Set(*game->get_gm());
+}
+static PyGetSetDef PyGameTableGetSets[] = {
+	{"gms", PyGameTable_get_gms, nullptr, "Game Masters", nullptr},
+	{NULL, NULL, NULL, NULL, NULL},
 };
 static PyTypeObject PyGameTable_Type = {
 	PyVarObject_HEAD_INIT(nullptr, 0)
@@ -430,7 +445,7 @@ static PyTypeObject PyGameTable_Type = {
 	nullptr,                                           /* tp_iternext */
 	PyGameTableMethods,                                    /* tp_methods */
 	nullptr,                                    /* tp_members */
-	nullptr,                                          /* tp_getset */
+	PyGameTableGetSets,                                          /* tp_getset */
 	nullptr,                                           /* tp_base */
 	nullptr,                                           /* tp_dict */
 	nullptr,                                           /* tp_descr_get */

@@ -132,9 +132,14 @@ void DiceEvent::replyHidden() {
 		AddMsgToQueue(strReply, fromChat.uid);
 	}
 	if (session) {
-		for (auto& qq : *session->get_ob()) {
-			if (qq.to_double() != fromChat.uid) {
-				AddMsgToQueue(strReply, (long long)qq.to_double());
+		for (auto& id : *session->get_gm()) {
+			if (id.to_double() != fromChat.uid) {
+				AddMsgToQueue(strReply, (long long)id.to_double());
+			}
+		}
+		for (auto& id : *session->get_ob()) {
+			if (id.to_double() != fromChat.uid) {
+				AddMsgToQueue(strReply, (long long)id.to_double());
 			}
 		}
 	}
@@ -1146,6 +1151,96 @@ int DiceEvent::BasicOrder()
 		}
 		return 1;
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "game") {
+		intMsgCnt += 4;
+		string action{ readPara() };
+		if(!thisGame)thisGame = sessions.get(fromChat);
+		if (action == "join") {
+			if (thisGame->add_pl(fromChat.uid)) {
+				replyMsg("strGameJoined");
+			}
+			else {
+				replyMsg("strGamePlayerAlready");
+			}
+		}
+		else if (action == "call") {
+			if (thisGame->is_gm(fromChat.uid)) {
+				ShowList res;
+				for (auto& uid : *thisGame->get_pl()) {
+					res << "[CQ:at,id=" + uid.to_string() + "]";
+				}
+				set("items", res.show("\n"));
+				replyMsg("strGamePlayerCall");
+			}
+			else {
+				replyMsg("strGameNotMaster");
+			}
+		}
+		else if (action == "set") {
+			if (thisGame->is_gm(fromChat.uid)) {
+				auto [strItem, strVal] = readini(strMsg.substr(intMsgCnt));
+				if (!strItem.empty()) {
+					set("set_item", strItem);
+					AttrVar& val{ at("set_val") = strVal.empty() ? AttrVar() : AttrVar::parse(strVal) };
+					thisGame->setAttr(strItem, val);
+					replyMsg("strGameItemSet");
+				}
+				else {
+					replyMsg("strGameItemEmpty");
+				}
+			}
+			else {
+				replyMsg("strGameNotMaster");
+			}
+		}
+		else if (action == "exit") {
+			if (thisGame->del_pl(fromChat.uid)) {
+				replyMsg("strGameExited");
+			}
+			else if (thisGame->del_gm(fromChat.uid)) {
+				replyMsg("strGameExited");
+			}
+			else {
+				replyMsg("strGameNotJoined");
+			}
+		}
+		else if (action == "kick") {
+			if (thisGame->is_gm(fromChat.uid)) {
+				auto target_id{ readID() };
+				set("tid", target_id ? AttrVar(target_id) : "");
+				if (thisGame->del_pl(target_id) || thisGame->del_ob(target_id)) {
+					replyMsg("strGameKicked");
+				}
+				else {
+					replyMsg("strGameKickNotPlayer");
+				}
+			}
+			else {
+				replyMsg("strGameNotMaster");
+			}
+		}
+		else if (action == "master") {
+			auto gms{ thisGame->get_gm() };
+			if (!thisGame->is_gm(fromChat.uid)) {
+				if (gms->empty() ? canRoomHost() : DD::isGroupAdmin(fromChat.gid, fromChat.uid, false)) {
+					thisGame->add_gm(fromChat.uid);
+					replyMsg("strGameMastered");
+				}
+				else {
+					replyMsg("strGameMasterDenied");
+				}
+			}
+			else {
+				ShowList res;
+				for (auto& uid : *gms) {
+					res << "[CQ:at,id=" + uid.to_string() + "]";
+				}
+				set("items", res.show("\n"));
+				replyMsg("strGameMasterList");
+			}
+		}
+		else replyHelp("game");
+	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "reply") {
 		intMsgCnt += 5;
 		if (strMsg.length() == intMsgCnt) {
@@ -1526,7 +1621,11 @@ int DiceEvent::InnerOrder() {
 		intMsgCnt += 6;
 		string action{ readPara() };
 		if (action == "show") {
-			if (isPrivate()) {
+			if ((thisGame || (thisGame = sessions.get_if(fromChat)))
+				&& thisGame->attrs.has("rr_rc")) {
+				set("rule", thisGame->getAttr("rr_rc"));
+			}
+			else if (isPrivate()) {
 				if (User& user{ getUser(fromChat.uid) }; user.isset("rc房规"))
 				set("rule", user.confs["rc房规"]);
 			}
@@ -1543,7 +1642,11 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		else if (action == "clr") {
-			if (isPrivate())getUser(fromChat.uid).rmConf("rc房规");
+			if ((thisGame || (thisGame = sessions.get_if(fromChat)))
+				&& thisGame->attrs.has("rr_rc")) {
+				thisGame->rmAttr("rr_rc");
+			}
+			else if (isPrivate())getUser(fromChat.uid).rmConf("rc房规");
 			else chat(fromChat.gid).reset("rc房规");
 			replyMsg("strDefaultCOCClr");
 			return 1;
@@ -1699,11 +1802,11 @@ int DiceEvent::InnerOrder() {
 #endif
 		}
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "admin") {
+	else if (string pref5{ strLowerMessage.substr(intMsgCnt, 5) }; pref5 == "admin") {
 		intMsgCnt += 5;
 		return AdminEvent(readPara());
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "cloud") {
+	else if (pref5 == "cloud") {
 		intMsgCnt += 5;
 		string strOpt = readPara();
 		if (trusted < 4) {
@@ -1722,17 +1825,17 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd") {
+	else if (pref5 == "coc7d" || strLowerMessage.substr(intMsgCnt, 4) == "cocd") {
 		set("res", COC7D());
 		replyMsg("strCOCBuild");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "coc6d") {
+	else if (pref5 == "coc6d") {
 		set("res", COC6D());
 		replyMsg("strCOCBuild");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "group") {
+	else if (pref5 == "group") {
 		intMsgCnt += 5;
 		long long llGroup(fromChat.gid);
 		readSkipSpace();
@@ -2099,7 +2202,7 @@ int DiceEvent::InnerOrder() {
 		}
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 5) == "rules") {
+	else if (pref5 == "rules") {
 		intMsgCnt += 5;
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
@@ -2127,8 +2230,7 @@ int DiceEvent::InnerOrder() {
 			string strSearch = strMsg.substr(intMsgCnt);
 			for (auto& n : strSearch)
 				n = toupper(static_cast<unsigned char>(n));
-			if (auto pSession{ sessions.get_if(fromChat) }; pSession && pSession->attrs.has("rule")
-				&& GetRule::get(pSession->attrs.get_str("rule"), strSearch, strReply)) {
+			if (auto rule{ getGameRule() }; GetRule::get(*rule, strSearch, strReply)) {
 				reply();
 			}
 			else if (getUser(fromChat.uid).isset("默认规则") && strSearch.find(':') == string::npos &&
@@ -2144,7 +2246,7 @@ int DiceEvent::InnerOrder() {
 		}
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "coc6") {
+	else if (string pref4{ strLowerMessage.substr(intMsgCnt, 4) }; pref4 == "coc6") {
 		intMsgCnt += 4;
 		if (strLowerMessage[intMsgCnt] == 's')
 			intMsgCnt++;
@@ -2172,7 +2274,7 @@ int DiceEvent::InnerOrder() {
 		replyMsg("strCOCBuild");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "deck") {
+	else if (pref4 == "deck") {
 		if (trusted < 4 && console["DisabledDeck"]) {
 			replyMsg("strDisabledDeckGlobal");
 			return 1;
@@ -2212,7 +2314,7 @@ int DiceEvent::InnerOrder() {
 		}
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "draw") {
+	else if (pref4 == "draw") {
 		if (trusted < 4 && console["DisabledDraw"]) {
 			replyMsg("strDisabledDrawGlobal");
 			return 1;
@@ -2287,7 +2389,7 @@ int DiceEvent::InnerOrder() {
 		}
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "init") {
+	else if (pref4 == "init") {
 		intMsgCnt += 4;
 		set("table_name","先攻");
 		string strCmd = readPara();
@@ -2316,7 +2418,7 @@ int DiceEvent::InnerOrder() {
 		}
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "jrrp") {
+	else if (pref4 == "jrrp") {
 		if (console["DisabledJrrp"]) {
 			reply("&strDisabledJrrpGlobal");
 			return 1;
@@ -2365,7 +2467,7 @@ int DiceEvent::InnerOrder() {
 		replyMsg("strJrrp");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "link") {
+	else if (pref4 == "link") {
 		intMsgCnt += 4;
 		if (trusted < 3) {
 			replyMsg("strNotAdmin");
@@ -2393,7 +2495,7 @@ int DiceEvent::InnerOrder() {
 		}
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "name") {
+	else if (pref4 == "name") {
 		intMsgCnt += 4;
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
@@ -2419,7 +2521,7 @@ int DiceEvent::InnerOrder() {
 		replyMsg("strNameGenerator");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "send") {
+	else if (pref4 == "send") {
 		intMsgCnt += 4;
 		readSkipSpace();
 		if (strMsg.length() == intMsgCnt) {
@@ -2483,7 +2585,7 @@ int DiceEvent::InnerOrder() {
 		replyMsg("strSendMasterMsg");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "user") {
+	else if (pref4 == "user") {
 		intMsgCnt += 4;
 		string strOption = readPara();
 		if (strOption.empty())return 0;
@@ -2599,7 +2701,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "coc") {
+	else if (string pref3{ strLowerMessage.substr(intMsgCnt, 3) }; pref3 == "coc") {
 		intMsgCnt += 3;
 		if (strLowerMessage[intMsgCnt] == '7')
 			intMsgCnt++;
@@ -2625,7 +2727,7 @@ int DiceEvent::InnerOrder() {
 		replyMsg("strCOCBuild");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "dnd") {
+	else if (pref3 == "dnd") {
 		intMsgCnt += 3;
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
@@ -2647,7 +2749,7 @@ int DiceEvent::InnerOrder() {
 		replyMsg("strDNDBuild");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "log") {
+	else if (pref3 == "log") {
 		intMsgCnt += 3;
 		string strPara = readPara();
 		if (strPara.empty()) {
@@ -2670,7 +2772,7 @@ int DiceEvent::InnerOrder() {
 		}
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "mod") {
+	else if (pref3 == "mod") {
 	if (trusted < 4) {
 		replyMsg("strNotAdmin");
 		return 1;
@@ -2731,7 +2833,7 @@ int DiceEvent::InnerOrder() {
 	else replyHelp("mod");
 	return 1;
 }
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "nnn") {
+	else if (pref3 == "nnn") {
 		intMsgCnt += 3;
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
@@ -2743,7 +2845,7 @@ int DiceEvent::InnerOrder() {
 		replyMsg("strNameSet");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "set") {
+	else if (pref3 == "set") {
 		intMsgCnt += 3;
 		readSkipSpace();
 		string& strDice{ (at("default") = readDigit()).text};
@@ -2768,7 +2870,7 @@ int DiceEvent::InnerOrder() {
 		replyMsg("strSetDefaultDice");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 3) == "str" && trusted > 3) {
+	else if (pref3 == "str" && trusted > 3) {
 		string strName;
 		while (!isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && intMsgCnt != strLowerMessage.length()
 			   ) {
@@ -2792,7 +2894,7 @@ int DiceEvent::InnerOrder() {
 		}
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "ak") {
+	else if (string pref2{ strLowerMessage.substr(intMsgCnt, 2) }; pref2 == "ak") {
 	intMsgCnt += 2;
 	readSkipSpace();
 	if (intMsgCnt == strMsg.length()) {
@@ -2831,7 +2933,7 @@ int DiceEvent::InnerOrder() {
 		}
 		set("li",list.linebreak().show());
 		replyMsg("strAkAdd");
-		s->save();
+		s->update();
 	}
 	else if (sign == '-' || action == "del") {
 		if (sign == '-')++intMsgCnt;
@@ -2850,7 +2952,7 @@ int DiceEvent::InnerOrder() {
 		}
 		set("li",list.linebreak().show());
 		replyMsg("strAkDel");
-		s->save();
+		s->update();
 	}
 	else if (sign == '=' || action == "get") {
 		if (DeckInfo& deck{ s->get_deck("__Ank") }; !deck.meta.empty()) {
@@ -2870,7 +2972,7 @@ int DiceEvent::InnerOrder() {
 		else {
 			replyMsg("strAkOptEmptyErr");
 		}
-		s->save();
+		s->update();
 	}
 	else if (action == "show") {
 		std::vector<string>& deck{ s->get_deck("__Ank").meta };
@@ -2888,12 +2990,12 @@ int DiceEvent::InnerOrder() {
 		set("fork",s->attrs["AkFork"]);
 		s->rmAttr("AkFork");
 		replyMsg("strAkClr");
-		s->save();
+		s->update();
 	}
 	if(strReply.empty())replyHelp("ak");
 	return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "en") {
+	else if (pref2 == "en") {
 	intMsgCnt += 2;
 	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 		intMsgCnt++;
@@ -2974,12 +3076,12 @@ int DiceEvent::InnerOrder() {
 		if (pc)pc->set(strAttr, intVal);
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "li") {
+	else if (pref2 == "li") {
 		LongInsane(*this);
 		replyMsg("strLongInsane");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "me") {
+	else if (pref2 == "me") {
 		if (trusted < 4 && console["DisabledMe"]) {
 			replyMsg("strDisabledMeGlobal");
 			return 1;
@@ -3047,7 +3149,7 @@ int DiceEvent::InnerOrder() {
 		trusted > 4 ? reply(strAction, false) : reply(idx_pc(*this).to_str() + strAction, false);
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "nn") {
+	else if (pref2 == "nn") {
 		intMsgCnt += 2;
 		readSkipSpace();
 		if (intMsgCnt == strMsg.length()) {
@@ -3081,7 +3183,7 @@ int DiceEvent::InnerOrder() {
 		}
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "ob") {
+	else if (pref2 == "ob") {
 		if (isPrivate()) {
 			replyHelp("ob");
 			return 1;
@@ -3151,7 +3253,7 @@ int DiceEvent::InnerOrder() {
 		}
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "pc") {
+	else if (pref2 == "pc") {
 		intMsgCnt += 2;
 		string strOption = readPara();
 		if (strOption.empty()) {
@@ -3318,7 +3420,7 @@ int DiceEvent::InnerOrder() {
 		if (resno) replyMsg(PlayerErrors.count(resno) ? PlayerErrors.at(resno) : "strUnknownErr");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "ra" || strLowerMessage.substr(intMsgCnt, 2) == "rc") {
+	else if (pref2 == "ra" || pref2 == "rc") {
 		intMsgCnt += 2;
 		if (strMsg.length() == intMsgCnt) {
 			replyHelp("rc");
@@ -3555,7 +3657,7 @@ int DiceEvent::InnerOrder() {
 			reply();
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "ri") {
+	else if (pref2 == "ri") {
 		if (isPrivate()) {
 			replyHelp("ri");
 			return 1;
@@ -3611,7 +3713,7 @@ int DiceEvent::InnerOrder() {
 		replyMsg("strRollInit");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "sc") {
+	else if (pref2 == "sc") {
 		intMsgCnt += 2;
 		string SanCost = readUntilSpace();
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
@@ -3707,7 +3809,7 @@ int DiceEvent::InnerOrder() {
 		replyMsg("strSanityRoll");
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "st") {
+	else if (pref2 == "st") {
 		intMsgCnt += 2;
 		readSkipSpace();
 		if (intMsgCnt == strLowerMessage.length()) {
@@ -3920,7 +4022,7 @@ int DiceEvent::InnerOrder() {
 		}
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 2) == "ti") {
+	else if (pref2 == "ti") {
 		TempInsane(*this);
 		replyMsg("strTempInsane");
 		return 1;
@@ -4469,11 +4571,17 @@ void DiceEvent::virtualCall() {
 	isCalled = true;
 	DiceFilter();
 }
+std::optional<string> DiceEvent::getGameRule() {
+	if (thisGame || (thisGame = sessions.get_if(fromChat))) {
+		return thisGame->attrs.get_str("rule");
+	}
+	return {};
+}
 bool DiceEvent::canRoomHost() {
 	if (!has("canRoomHost")) {
-		return bool(at("canRoomHost") = trusted > 3
+		set("canRoomHost",bool(trusted > 3
 			|| isChannel() || isPrivate()
-			|| DD::isGroupAdmin(fromChat.gid, fromChat.uid, true) || pGrp->inviter == fromChat.uid);
+			|| DD::isGroupAdmin(fromChat.gid, fromChat.uid, true) || pGrp->inviter == fromChat.uid));
 	}
 	return is("canRoomHost");
 }
