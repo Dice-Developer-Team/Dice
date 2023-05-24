@@ -20,8 +20,7 @@ using std::to_string;
 
 bool isNumeric(const string& s) {
     bool hasDot{ false };
-    size_t len{ s.length() };
-    for (size_t i = 0; i < len; i++) {
+    if (size_t len{ s.length() })for (size_t i = 0; i < len; i++) {
         if (isdigit(s[i]))continue;
         if ((s[i] == '+' || s[i] == '-') && 0 == i)continue;
         if (s[i] == '.' && !hasDot && i != i - 1) {
@@ -30,6 +29,7 @@ bool isNumeric(const string& s) {
         }
         return false;
     }
+    else return false;
     return true;
 }
 

@@ -9,10 +9,8 @@
 #include <regex>
 #include "yaml-cpp/node/node.h"
 #include "SHKQuerier.h"
-#include "DiceRule.h"
-#include "DiceSchedule.h"
-#include "DiceMsgReply.h"
 #include "GlobalVar.h"
+#include "DiceRule.h"
 #ifndef __ANDROID__
 #include "DiceGit.h"
 #endif //ANDROID

@@ -50,7 +50,7 @@ const dict_ci<string> PlainMsg
 	{"strCallUser", "用户"},
 	{"strSummonWord", ""},
 	{"strSummonEmpty", "召唤{self}，{nick}有何事么？"},
-	{"strModList", "{self}的模块加载列表:{li}"},
+	{"strModList", "{self}的记忆体列表:{li}"},
 	{"strModOn", "已令{self}人格激活记忆体「{mod}」√"},
 	{"strModOnAlready", "{self}的记忆体「{mod}」已激活！"},
 	{"strModOff", "已将记忆体「{mod}」弹出{self}人格√"},
@@ -97,9 +97,10 @@ const dict_ci<string> PlainMsg
 	{"strGameKicked","{self}已将{at:{tid}}踢下桌√"},
 	{"strGameKickNotPlayer","{nick}要踢走的{tid}不在桌上×"},
 	{"strGameExited","玩家{nick}已退出游戏√"},
-	{"strGameNotJoined","玩家{nick}并未参与本场游戏!"},
-	{"strGameNotMaster","请{nick}让本场GM进行此操作×"},
-	{"strGameItemSet","{self}已将本场游戏的{set_item}设置为{set_val}√"},
+	{"strGameNotJoined","嗯？{nick}原来有在桌上吗？"},
+	{"strGameNotMaster","请{nick}让本桌GM进行此操作×"},
+	{"strGameItemSet","{self}已将本桌游戏的{set_item}设置为{set_val}√"},
+	{"strGameItemShow","本桌游戏的{set_item}为{set_val}√"},
 	{"strGameItemEmpty","请{nick}输入待设置的项目×"},
 	{"strGMTableShow","{self}记录的{table_name}列表: {res}"},
 	{"strGMTableClr","{self}已清除{table_name}表√"},
@@ -509,6 +510,8 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+650:规则集专属指令
+649:.game 功能
 648:角色卡锁定功能
 647:支持自定义规则集
 646:支持集合Set读写
@@ -632,7 +635,7 @@ mod按序读取，且从后向前覆盖)"},
 .ak show 查看分歧选项
 .ak clr 清除本轮分歧)"},
 {"log",R"(跑团日志记录.log
-`.log new 日志名` 另开日志并开始记录
+`.log new 日志名` 新开日志并开始记录
 `.log on` 继续记录
 `.log off` 暂停记录
 `.log end` 完成记录并发送日志文件
@@ -698,6 +701,7 @@ Type=[回复性质](Reply/Order)
 `.game master` 登记为GM
 `.game set 属性=值` 游戏设置
 例: `.game set rule=COC7`
+`.game set 属性` 查看游戏设置
 `.game call` at全体玩家
 `.game join` 登记为玩家
 `.game kick 玩家ID` 将玩家踢出游戏

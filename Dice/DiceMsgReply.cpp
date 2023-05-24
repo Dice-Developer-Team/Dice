@@ -550,10 +550,10 @@ bool DiceTriggerLimit::check(DiceEvent* msg, chat_locks& lock_list)const {
 	return true;
 }
 
-enumap_ci DiceMsgReply::sType{ "Nor","Order","Reply","Both", };
+enumap_ci DiceMsgReply::sType{ "Nor","Order","Reply","Both","Game", };
 enumap_ci DiceMsgReply::sMode{ "Match", "Prefix", "Search", "Regex" };
 enumap_ci DiceMsgReply::sEcho{ "Text", "Deck", "Lua", "JS", "Py" };
-std::array<string, 4> strType{ "无","指令","回复","同时" };
+std::array<string, 5> strType{ "无","指令","回复","同时","游戏" };
 enumap<string> strMode{ "完全", "前缀", "模糊", "正则" };
 enumap<string> strEcho{ "纯文本", "牌堆（多选一）", "Lua", "JavaScript",
 #ifdef DICE_PYTHON

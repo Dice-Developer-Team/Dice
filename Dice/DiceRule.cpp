@@ -3,6 +3,7 @@ ptr<DiceRuleSet> ruleset{ std::make_shared<DiceRuleSet>() };
 
 void DiceRule::merge(const DiceRule& other) {
 	map_merge(manual, other.manual);
+	map_merge(orders.items, other.orders.items);
 }
 std::optional<string> DiceRule::traceManual(const string& key) {
 	if (manual.count(key))return manual.at(key);
@@ -25,6 +26,14 @@ std::optional<string> DiceRule::getManual(const string& key) {
 	else if (meta)return meta->traceManual(key);
 	return {};
 }
+bool DiceRule::listen_order(DiceEvent* eve) {
+	if (orders.listen(eve, 0b100))return true;
+	/*else for (auto& [name, sub] : subrules) {
+		if (sub->listen_order(eve))return true;
+	}*/
+	if (meta)return meta->listen_order(eve);
+	return false;
+}
 void DiceRuleSet::merge(const dict_ci<DiceRule>& m) {
 	for (auto& [name, book] : m) {
 		if (!rules.count(name))rules.emplace(name, std::make_shared<DiceRule>());
@@ -44,6 +53,7 @@ size_t DiceRuleSet::build() {
 		for (auto& [key, doc] : book->manual) {
 			manual_index.emplace(key, rulename);
 		}
+		book->orders.build();
 	}
 	return rules.size();
 }

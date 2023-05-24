@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <optional>
-#include "STLExtern.hpp"
+#include "DiceMsgReply.h"
 class DiceRule {
 	dict_ci<> manual;
 	friend class DiceRuleSet;
@@ -12,11 +12,13 @@ class DiceRule {
 public:
 	ptr<DiceRule> meta;
 	dict_ci<ptr<DiceRule>> subrules;
+	DiceReplyUnit orders;
 	void merge(const DiceRule& other);
 	std::optional<string> traceManual(const string&);
 	std::optional<string> searchManual(const string&);
 	std::optional<string> getOwnManual(const string&);
 	std::optional<string> getManual(const string&);
+	bool listen_order(DiceEvent*);
 };
 class DiceRuleSet {
 	//ptr<DiceRule> root{ std::make_shared<DiceRule>() };

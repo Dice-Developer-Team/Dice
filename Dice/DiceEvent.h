@@ -3,7 +3,7 @@
 /*
  * 消息处理
  * Copyright (C) 2018-2021 w4123
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 #ifndef DICE_EVENT
 #define DICE_EVENT
@@ -12,10 +12,8 @@
 #include <utility>
 #include <string>
 #include <regex>
-#include "GlobalVar.h"
-#include "MsgMonitor.h"
-#include "DiceSchedule.h"
 #include "DiceMsgSend.h"
+#include "ManagerSystem.h"
 
 using std::string;
 
@@ -65,8 +63,7 @@ public:
 	int MasterSet();
 	int BasicOrder();
 	int InnerOrder();
-	//int CustomOrder();
-	//int CustomReply();
+	bool monitorFrq();
 	//判断是否响应
 	bool DiceFilter();
 	bool WordCensor();

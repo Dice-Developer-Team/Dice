@@ -4,7 +4,7 @@
 #include "MsgFormat.h"
 #include "DiceCensor.h"
 #include "DiceMod.h"
-#include "ManagerSystem.h"
+#include "MsgMonitor.h"
 #include "BlackListManager.h"
 #include "CharacterCard.h"
 #include "DiceSession.h"
@@ -1181,9 +1181,15 @@ int DiceEvent::BasicOrder()
 				auto [strItem, strVal] = readini(strMsg.substr(intMsgCnt));
 				if (!strItem.empty()) {
 					set("set_item", strItem);
-					AttrVar& val{ at("set_val") = strVal.empty() ? AttrVar() : AttrVar::parse(strVal) };
-					thisGame->setAttr(strItem, val);
-					replyMsg("strGameItemSet");
+					if (!strVal.empty()) {
+						AttrVar& val{ at("set_val") = AttrVar::parse(strVal) };
+						thisGame->setAttr(strItem, val);
+						replyMsg("strGameItemSet");
+					}
+					else {
+						set("set_val", thisGame->getAttr(strItem));
+						replyMsg("strGameItemShow");
+					}
 				}
 				else {
 					replyMsg("strGameItemEmpty");
@@ -1194,10 +1200,7 @@ int DiceEvent::BasicOrder()
 			}
 		}
 		else if (action == "exit") {
-			if (thisGame->del_pl(fromChat.uid)) {
-				replyMsg("strGameExited");
-			}
-			else if (thisGame->del_gm(fromChat.uid)) {
+			if (thisGame->del_pl(fromChat.uid) || thisGame->del_gm(fromChat.uid)) {
 				replyMsg("strGameExited");
 			}
 			else {
@@ -4437,7 +4440,14 @@ int DiceEvent::InnerOrder() {
 	}
 	return 0;
 }
-
+bool DiceEvent::monitorFrq() {
+	if (!isVirtual && !is("ignored")) {
+		AddFrq(*this);
+		getUser(fromChat.uid).update((time_t)get_ll("time"));
+		if (pGrp)pGrp->update((time_t)get_ll("time"));
+	}
+	return true;
+}
 //ÅÐ¶ÏÊÇ·ñÏìÓ¦
 bool DiceEvent::DiceFilter()
 {
@@ -4490,12 +4500,7 @@ bool DiceEvent::DiceFilter()
 		}
 	}
 	if (BasicOrder()) {
-		if (!isVirtual && !is("ignored")) {
-			AddFrq(*this);
-			getUser(fromChat.uid).update((time_t)get_ll("time"));
-			if (pGrp)pGrp->update((time_t)get_ll("time"));
-		}
-		return 1;
+		return monitorFrq();
 	}
 	else if (is("ignored"))return 0;
 	if (isCalled)set("called");
@@ -4506,20 +4511,15 @@ bool DiceEvent::DiceFilter()
 	}
 	if (isDisabled |= (blacklist->get_user_danger(fromChat.uid) > 0))return console["DisabledBlock"];
 	if (!is("order_off") && (fmt->listen_order(this) || InnerOrder())) {
-		if (!isVirtual && !is("ignored")) {
-			AddFrq(*this);
-			getUser(fromChat.uid).update((time_t)get_ll("time"));
-			if (pGrp)pGrp->update((time_t)get_ll("time"));
-		}
-		return true;
+		return monitorFrq();
+	}
+	if (auto ruleName{ getGameRule() }; ruleName && !thisGame->attrs.is("pause")
+		&& (thisGame->is_gm(fromChat.uid) || thisGame->is_pl(fromChat.uid))
+		&& ruleset->get_rule(*ruleName)->listen_order(this)) {
+		return monitorFrq();
 	}
 	if (fmt->listen_reply(this)) {
-		if (!isVirtual && !is("ignored")) {
-			AddFrq(*this);
-			getUser(fromChat.uid).update((time_t)get_ll("time"));
-			if (pGrp)pGrp->update((time_t)get_ll("time"));
-		}
-		return true;
+		return monitorFrq();
 	}
 	if (isSummoned && (strMsg.empty() || strMsg == strSummon))replyMsg("strSummonEmpty");
 	if (isCalled) {

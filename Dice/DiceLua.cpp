@@ -1261,6 +1261,11 @@ int luaopen_GameTable(lua_State* L) {
 
 //metatable Actor
 #define LUA2PC(idx) PC& pc{*(PC*)luaL_checkudata(L, idx, "Actor")}
+int Actor_get(lua_State* L) {
+	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
+	if (string key{ lua_to_gbstring(L, 2) }; !key.empty())lua_push_attr(L, pc->get(key));
+	return 1;
+}
 int Actor_set(lua_State* L) {
 	LUA2PC(1);
 	if (lua_isstring(L, 2)) {
@@ -1331,6 +1336,7 @@ int Actor_unlock(lua_State* L) {
 	return 1;
 }
 const dict<lua_CFunction> Lua_ActorMethods = {
+	{"get",Actor_get},
 	{"set",Actor_set},
 	{"rollDice",Actor_rollDice},
 	{"locked",Actor_locked},
@@ -1640,8 +1646,14 @@ void DiceMod::loadLua() {
 				if (auto items{ tab.get_dict("reply") })for (auto& [key, val] : *items) {
 					ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
 					reply->title = key;
-					reply->from_obj(val.to_obj());
-					reply_list[key] = reply;
+					auto item{ val.to_obj() };
+					reply->from_obj(item);
+					if (item.has("rule")) {
+						rules[item.get_str("rule")].orders.add(key, reply);
+					}
+					else {
+						reply_list[key] = reply;
+					}
 				}
 				if (auto items{ tab.get_dict("event") })for (auto& [key, val] : *items) {
 					events[key] = val.to_obj();
@@ -1672,8 +1684,14 @@ void DiceMod::loadLua() {
 				for (auto& [key, val] : lua_to_dict(L)) {
 					ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
 					reply->title = key;
-					reply->from_obj(val.to_obj());
-					reply_list[key] = reply;
+					auto item{ val.to_obj() };
+					reply->from_obj(item);
+					if (item.has("rule")) {
+						rules[item.get_str("rule")].orders.add(key, reply);
+					}
+					else {
+						reply_list[key] = reply;
+					}
 				}
 			}
 			lua_pop(L, 1);
