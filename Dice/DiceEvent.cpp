@@ -3328,12 +3328,11 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		else if (strOption == "cpy") {
-			string strName = strip(filter_CQcode(readRest(), fromChat.gid));
-			string& strPC1{ (at("char1") = strName.substr(0, strName.find('='))).text};
-			set("char2",(strPC1.length() + 1 < strName.length())
-				? strip(strName.substr(strPC1.length() + 1))
-				: pl[fromChat.gid]->getName());
-			if (!(resno = pl.copyCard(strPC1, get_str("char2"), fromChat.gid)))replyMsg("strPcCardCpy");
+			auto [namePC1, namePC2] = readini(strip(filter_CQcode(readRest(), fromChat.gid)));
+			set("char1", namePC1);
+			set("char2", namePC2 = namePC2.empty() ? pl[fromChat.gid]->getName() : strip(namePC2));
+			if (!(resno = pl.copyCard(namePC1, namePC2, fromChat.gid)))replyMsg("strPcCardCpy");
+			else if (resno == -5)set("char", namePC2);
 		}
 		else if (strOption == "stat") {
 			auto pc{ pl[fromChat.gid] };

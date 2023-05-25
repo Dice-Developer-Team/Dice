@@ -1,6 +1,6 @@
 /*
  * 后台系统
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -10,7 +10,6 @@
 #include "filesystem.hpp"
 #include "ManagerSystem.h"
 
-#include "CardDeck.h"
 #include "CharacterCard.h"
 #include "GlobalVar.h"
 #include "DDAPI.h"
@@ -19,6 +18,7 @@
 #include "DiceSelfData.h"
 #include "DiceCensor.h"
 #include "DiceMod.h"
+#include "BlackListManager.h"
 
 std::filesystem::path dirExe;
 std::filesystem::path DiceDir("DiceData");

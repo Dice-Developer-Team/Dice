@@ -309,7 +309,7 @@ PyObject* PyActor_unlock(PyObject* self, PyObject* args) {
 static PyMethodDef ActorMethods[] = {
 	{"set", PyActor_set, METH_VARARGS, "set PC attr"},
 	{"get", PyActor_getattro, METH_VARARGS, "get PC item"},
-	{"__getattr__", PyActor_getattro, METH_VARARGS, "get PC item"},
+	//{"__getattr__", PyActor_getattro, METH_VARARGS, "get PC item"},
 	{"rollDice", PyActor_rollDice, METH_VARARGS, "PC roll dice expression"},
 	{"locked", PyActor_locked, METH_VARARGS, "check lock state"},
 	{"lock", PyActor_lock, METH_VARARGS, "add lock"},
@@ -411,8 +411,18 @@ PyObject* PyGameTable_get_gms(PyObject* self, void*) {
 	PY2GAME(self);
 	return py_build_Set(*game->get_gm());
 }
+PyObject* PyGameTable_get_pls(PyObject* self, void*) {
+	PY2GAME(self);
+	return py_build_Set(*game->get_pl());
+}
+PyObject* PyGameTable_get_obs(PyObject* self, void*) {
+	PY2GAME(self);
+	return py_build_Set(*game->get_ob());
+}
 static PyGetSetDef PyGameTableGetSets[] = {
 	{"gms", PyGameTable_get_gms, nullptr, "Game Masters", nullptr},
+	{"pls", PyGameTable_get_pls, nullptr, "Game Players", nullptr},
+	{"obs", PyGameTable_get_obs, nullptr, "Game Observers", nullptr},
 	{NULL, NULL, NULL, NULL, NULL},
 };
 static PyTypeObject PyGameTable_Type = {

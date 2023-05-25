@@ -440,13 +440,15 @@ int Player::copyCard(const string& name1, const string& name2, long long group)
 {
 	if (name1.empty() || name2.empty())return -3;
 	//不存在则新建人物卡
-	if (!mNameIndex.count(name1))
-	{
+	if (!mNameIndex.count(name2)){
+		return -5;
+	}
+	else if (!mNameIndex.count(name1)){
 		std::lock_guard<std::mutex> lock_queue(cardMutex);
 		//人物卡数量上限
 		if (mCardList.size() > 16)return -1;
 		if (name1.find(":") != string::npos)return -6;
-		mCardList[++indexMax]->setName(name1);
+		mCardList.emplace(++indexMax, std::make_shared<CharaCard>(name1));
 		mNameIndex[name1] = indexMax;
 	}
 	*(*this)[name1] << *(*this)[name2];
