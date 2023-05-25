@@ -152,9 +152,9 @@ void AttrObject::readb(std::ifstream& fs) {
 	while (len--) {
 		(*dict)[fread<string>(fs)].readb(fs);
 	}
-	if (string strI{ "0" }; dict->count(strI)) {
+	if (string strI{ "0" }; dict->count(strI) || dict->count(strI = "1")) {
 		list = std::make_shared<VarArray>();
-		int idx{ 0 };
+		int idx{ strI == "0" ? 0 : 1 };
 		do {
 			list->push_back(dict->at(strI));
 			dict->erase(strI);
@@ -856,14 +856,14 @@ AttrVar::AttrVar(const YAML::Node& y) {
 		type = Type::Table; {
 			new(&table)AttrObject();
 			unordered_set<string> idxs;
-			if (y["1"]) {
+			string strIdx{ "0" };
+			if (y[strIdx] || y[strIdx = "1"]) {
 				table.list = std::make_shared<VarArray>();
 				int idx{ 1 };
-				string strI{ "1" };
 				do {
-					table.list->push_back(y[strI]);
-					idxs.insert(strI);
-				} while (y[strI = to_string(++idx)]);
+					table.list->push_back(y[strIdx]);
+					idxs.insert(strIdx);
+				} while (y[strIdx = to_string(++idx)]);
 			}
 			for (auto& it : y) {
 				if (idxs.count(it.first.Scalar()))continue;

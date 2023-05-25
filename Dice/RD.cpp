@@ -33,6 +33,326 @@ string to_circled(int num, int c) {
 	if (num < c)return to_string(num);
 	return string{ char(0xA2),char(0xD8 + num) };
 }
+int_errno RD::RollDice(std::string dice, const ptr<DiceSession>& game) const
+{
+	const bool boolNegative = *(vboolNegative.end() - 1);
+	int intDivider = 1;
+	while (dice.find_last_of('/') != std::string::npos)
+	{
+		const int intXPosition = dice.find_last_of('/');
+		std::string strRate = dice.substr(intXPosition + 1);
+		RD Rate(strRate);
+		if (!Rate.Roll() && Rate.intTotal) intDivider *= Rate.intTotal;
+		else return Input_Err;
+		dice = dice.substr(0, dice.find_last_of('/'));
+	}
+	int intMultiplier = 1;
+	while (dice.find_last_of('X') != std::string::npos)
+	{
+		const int intXPosition = dice.find_last_of('X');
+		std::string strRate = dice.substr(intXPosition + 1);
+		RD Rate(strRate);
+		if (Rate.Roll() == 0) intMultiplier *= Rate.intTotal;
+		else return Input_Err;
+		dice = dice.substr(0, dice.find_last_of('X'));
+	}
+	vintDivider.push_back(intDivider);
+	vintMultiplier.push_back(intMultiplier);
+	if (dice.find('a') != std::string::npos)
+	{
+		std::string strDiceCnt = dice.substr(0, dice.find('a'));
+		for (auto i : strDiceCnt)
+			if (!isdigit(static_cast<unsigned char>(i)))
+				return Input_Err;
+		if (strDiceCnt.length() > 4)
+			return DiceTooBig_Err;
+		int intDiceCnt = stoi(strDiceCnt);
+		if (intDiceCnt == 0)
+			return ZeroDice_Err;
+		if (boolNegative)intDiceCnt = -intDiceCnt;
+		intWWCnt += intDiceCnt;
+		//AddVal
+		std::string strAddVal = dice.substr(dice.find('a') + 1);
+		if (strAddVal.length() > 2)
+			return AddDiceVal_Err;
+		for (auto i : strAddVal)
+			if (!isdigit(static_cast<unsigned char>(i)))
+				return Input_Err;
+		if (!strAddVal.empty()) {
+			intWWAdd = stoi(strAddVal);
+			if (intWWAdd < 5 || intWWAdd > 11)
+				return AddDiceVal_Err;
+		}
+		vboolNegative.erase(vboolNegative.end() - 1);
+		return 0;
+	}
+	if (dice[dice.length() - 1] == 'F')
+	{
+		vBnP.push_back(Fudge_Dice);
+		std::string strDiceNum;
+		if (dice[dice.length() - 2] == 'D')
+			strDiceNum = dice.substr(0, dice.length() - 2);
+		else
+			strDiceNum = dice.substr(0, dice.length() - 1);
+		for (auto Element : strDiceNum)
+		{
+			if (!isdigit(static_cast<unsigned char>(Element)))
+			{
+				return Value_Err;
+			}
+		}
+		if (strDiceNum.length() > 2)
+			return DiceTooBig_Err;
+		int intDiceNum = stoi(strDiceNum);
+		if (intDiceNum == 0)
+			return ZeroDice_Err;
+		std::vector<int> vintTmpRes;
+		int intSum = 0;
+		while (intDiceNum--)
+		{
+			int intTmpSum = RandomGenerator::Randint(0, 2) - 1;
+			vintTmpRes.push_back(intTmpSum);
+			intSum += intTmpSum;
+		}
+		vvintRes.push_back(vintTmpRes);
+		vintRes.push_back(intSum);
+		if (boolNegative)
+			intTotal -= intSum;
+		else
+			intTotal += intSum;
+		return 0;
+	}
+	if (dice[0] == 'P')
+	{
+		vBnP.push_back(P_Dice);
+		if (dice.length() > 2)
+			return DiceTooBig_Err;
+		for (size_t i = 1; i != dice.length(); i++)
+			if (!isdigit(static_cast<unsigned char>(dice[i])))
+				return Input_Err;
+		int intPNum = stoi(dice.substr(1).empty() ? "1" : dice.substr(1));
+		if (dice.length() == 1)
+			intPNum = 1;
+		if (intPNum == 0)
+			return Value_Err;
+		std::vector<int> vintTmpRes;
+		vintTmpRes.push_back(game ? game->roll(100) : RandomGenerator::Randint(1, 100));
+		while (intPNum--)
+		{
+			int intTmpRollRes = RandomGenerator::Randint(1, 10);
+			if (vintTmpRes[0] % 10 == 0)
+				vintTmpRes.push_back(intTmpRollRes);
+			else
+				vintTmpRes.push_back(intTmpRollRes - 1);
+		}
+		int intTmpD100 = vintTmpRes[0];
+		for (size_t i = 1; i != vintTmpRes.size(); i++)
+		{
+			if (vintTmpRes[i] > intTmpD100 / 10)
+				intTmpD100 = vintTmpRes[i] * 10 + intTmpD100 % 10;
+		}
+		if (boolNegative)
+			intTotal -= intTmpD100;
+		else
+			intTotal += intTmpD100;
+		vintRes.push_back(intTmpD100);
+		vvintRes.push_back(vintTmpRes);
+		return 0;
+	}
+	if (dice[0] == 'B')
+	{
+		vBnP.push_back(B_Dice);
+		if (dice.length() > 2)
+			return DiceTooBig_Err;
+		for (size_t i = 1; i != dice.length(); i++)
+			if (!isdigit(static_cast<unsigned char>(dice[i])))
+				return Input_Err;
+		int intBNum = stoi(dice.substr(1).empty() ? "1" : dice.substr(1));
+		if (dice.length() == 1)
+			intBNum = 1;
+		if (intBNum == 0)
+			return Value_Err;
+		std::vector<int> vintTmpRes;
+		vintTmpRes.push_back(game ? game->roll(100) : RandomGenerator::Randint(1, 100));
+		while (intBNum--)
+		{
+			int intTmpRollRes = RandomGenerator::Randint(1, 10);
+			if (vintTmpRes[0] % 10 == 0)
+				vintTmpRes.push_back(intTmpRollRes);
+			else
+				vintTmpRes.push_back(intTmpRollRes - 1);
+		}
+		int intTmpD100 = vintTmpRes[0];
+		for (size_t i = 1; i != vintTmpRes.size(); i++)
+		{
+			if (vintTmpRes[i] < intTmpD100 / 10)
+				intTmpD100 = vintTmpRes[i] * 10 + intTmpD100 % 10;
+		}
+		if (boolNegative)
+			intTotal -= intTmpD100;
+		else
+			intTotal += intTmpD100;
+		vintRes.push_back(intTmpD100);
+		vvintRes.push_back(vintTmpRes);
+		return 0;
+	}
+	vBnP.push_back(Normal_Dice);
+	if (dice[0] == 'X')
+	{
+		return Input_Err;
+	}
+	bool boolContainD = false;
+	bool boolContainK = false;
+	for (auto& i : dice)
+	{
+		i = toupper(static_cast<unsigned char>(i));
+		if (!isdigit(static_cast<unsigned char>(i)))
+		{
+			if (i == 'D')
+			{
+				if (boolContainD)
+					return Input_Err;
+				boolContainD = true;
+			}
+			else if (i == 'K')
+			{
+				if (!boolContainD || boolContainK)
+					return Input_Err;
+				boolContainK = true;
+			}
+			else
+				return Input_Err;
+		}
+	}
+
+	if (!boolContainD)
+	{
+		if (dice.length() > 5 || dice.length() == 0)
+			return Value_Err;
+		const int intTmpRes = stoi(dice);
+		if (boolNegative)
+			intTotal -= intTmpRes * intMultiplier / intDivider;
+		else
+			intTotal += intTmpRes * intMultiplier / intDivider;
+		vintRes.push_back(intTmpRes * intMultiplier / intDivider);
+		vvintRes.push_back(std::vector<int>{intTmpRes});
+		return 0;
+	}
+	if (!boolContainK)
+	{
+		if (dice.substr(0, dice.find('D')).length() > 3)
+			return DiceTooBig_Err;
+		if (dice.substr(dice.find('D') + 1).length() > 4)
+			return TypeTooBig_Err;
+		int intDiceCnt = dice.substr(0, dice.find('D')).length() == 0 ? 1 : stoi(dice.substr(0, dice.find('D')));
+		const int intDiceType = stoi(dice.substr(dice.find('D') + 1));
+		if (intDiceCnt == 0)
+			return ZeroDice_Err;
+		if (intDiceType == 0)
+			return ZeroType_Err;
+		std::vector<int> vintTmpRes;
+		int intTmpRes = 0;
+		if (game && intDiceCnt < 10 && game->roulette.count(intDiceType)) {
+			auto& rou{ game->roulette[intDiceType] };
+			while (intDiceCnt--) {
+				int intTmpResOnce = rou.roll();
+				vintTmpRes.push_back(intTmpResOnce);
+				intTmpRes += intTmpResOnce;
+			}
+			game->update();
+		}
+		else while (intDiceCnt--)
+		{
+			int intTmpResOnce = RandomGenerator::Randint(1, intDiceType);
+			vintTmpRes.push_back(intTmpResOnce);
+			intTmpRes += intTmpResOnce;
+		}
+		if (boolNegative)
+			intTotal -= intTmpRes * intMultiplier / intDivider;
+		else
+			intTotal += intTmpRes * intMultiplier / intDivider;
+		if (vintTmpRes.size() > 20)sort(vintTmpRes.begin(), vintTmpRes.end());
+		vvintRes.push_back(vintTmpRes);
+		vintRes.push_back(intTmpRes * intMultiplier / intDivider);
+		return 0;
+	}
+	if (dice.substr(dice.find('K') + 1).length() > 3)
+		return Value_Err;
+	const int intKNum = stoi(dice.substr(dice.find('K') + 1));
+	dice = dice.substr(0, dice.find('K'));
+	if (dice.substr(0, dice.find('D')).length() > 3 || (dice.substr(0, dice.find('D')).length() == 3 && dice.
+		substr(0, dice.find('D')) != "100"))
+		return DiceTooBig_Err;
+	if (dice.substr(dice.find('D') + 1).length() > 4)
+		return TypeTooBig_Err;
+	int intDiceCnt = dice.substr(0, dice.find('D')).length() == 0 ? 1 : stoi(dice.substr(0, dice.find('D')));
+	const int intDiceType = stoi(dice.substr(dice.find('D') + 1));
+	if (intKNum <= 0 || intDiceCnt == 0)
+		return ZeroDice_Err;
+	if (intKNum > intDiceCnt)
+		return Value_Err;
+	if (intDiceType == 0)
+		return ZeroType_Err;
+	std::vector<int> vintTmpRes;
+	while (intDiceCnt--)
+	{
+		int intTmpResOnce = RandomGenerator::Randint(1, intDiceType);
+		if (vintTmpRes.size() != static_cast<size_t>(intKNum))
+			vintTmpRes.push_back(intTmpResOnce);
+		else if (intTmpResOnce > *std::min_element(vintTmpRes.begin(), vintTmpRes.end()))
+			vintTmpRes[std::distance(vintTmpRes.begin(), std::min_element(vintTmpRes.begin(), vintTmpRes.end()))] =
+			intTmpResOnce;
+	}
+	int intTmpRes = std::accumulate(vintTmpRes.begin(), vintTmpRes.end(), 0);
+	if (boolNegative)
+		intTotal -= intTmpRes * intMultiplier / intDivider;
+	else
+		intTotal += intTmpRes * intMultiplier / intDivider;
+	vintRes.push_back(intTmpRes);
+	if (vintTmpRes.size() > 20)sort(vintTmpRes.begin(), vintTmpRes.end());
+	vvintRes.push_back(vintTmpRes);
+	return 0;
+}
+int_errno RD::Roll(ptr<DiceSession> game) const
+{
+	intTotal = 0;
+	vvintRes.clear();
+	vboolNegative.clear();
+	vintMultiplier.clear();
+	vintRes.clear();
+	vBnP.clear();
+	std::string dice = strDice;
+	int intReadDiceLoc = 0;
+	if (dice[0] == '-')
+	{
+		vboolNegative.push_back(true);
+		intReadDiceLoc = 1;
+	}
+	else
+		vboolNegative.push_back(false);
+	if (dice[dice.length() - 1] == '+' || dice[dice.length() - 1] == '-' || dice[dice.length() - 1] == 'X' || dice[
+		dice.length() - 1] == '/') return Input_Err;
+	while (dice.find('+', intReadDiceLoc) != std::string::npos
+		|| dice.find('-', intReadDiceLoc) != std::string::npos)	{
+		const int intSymbolPosition = dice.find('+', intReadDiceLoc) < dice.find('-', intReadDiceLoc)
+			? dice.find('+', intReadDiceLoc)
+			: dice.find('-', intReadDiceLoc);
+		if (const int intRDRes = RollDice(dice.substr(intReadDiceLoc, intSymbolPosition - intReadDiceLoc), game); intRDRes != 0)
+			return intRDRes;
+		intReadDiceLoc = intSymbolPosition + 1;
+		if (dice[intSymbolPosition] == '+')
+			vboolNegative.push_back(false);
+		else
+			vboolNegative.push_back(true);
+	}
+	if (const int intFinalRDRes = RollDice(dice.substr(intReadDiceLoc), game))
+		return intFinalRDRes;
+	if (intWWCnt) {
+		if (const int intWWRes = RollWW())
+			return intWWRes;
+	}
+	return 0;
+}
 
 void init(string& msg)
 {

@@ -94,6 +94,7 @@ const dict_ci<string> PlainMsg
 	{"strGameJoined","{self}已接受{nick}的玩家报名√"},
 	{"strGamePlayerAlready","{nick}已经上桌啦！"},
 	{"strGamePlayerCall","{items}"},
+	{"strGamePlayerEmpty","{self}还没看到有玩家上桌哦~"},
 	{"strGameKicked","{self}已将{at:{tid}}踢下桌√"},
 	{"strGameKickNotPlayer","{nick}要踢走的{tid}不在桌上×"},
 	{"strGameExited","玩家{nick}已退出游戏√"},
@@ -102,6 +103,12 @@ const dict_ci<string> PlainMsg
 	{"strGameItemSet","{self}已将本桌游戏的{set_item}设置为{set_val}√"},
 	{"strGameItemShow","本桌游戏的{set_item}为{set_val}√"},
 	{"strGameItemEmpty","请{nick}输入待设置的项目×"},
+	{"strGameRouletteSet","{self}已为{face}面骰启用轮盘骰√"},
+	{"strGameRouletteTooBig","这么大……{nick}丢得完吗？"},
+	{"strGameRouletteHistory","{self}本轮轮盘骰记录如下:\n{hist}"},
+	{"strGameRouletteEmpty","{self}并未在本桌用过轮盘骰×"},
+	{"strGameRouletteClear","{self}已清空桌上轮盘骰√"},
+	{"strGameRouletteReset","{self}已复原桌上轮盘骰√"},
 	{"strGMTableShow","{self}记录的{table_name}列表: {res}"},
 	{"strGMTableClr","{self}已清除{table_name}表√"},
 	{"strGMTableItemDel","{self}已移除{table_name}表的项目{table_item}√"},
@@ -300,15 +307,14 @@ const dict_ci<string> PlainMsg
 	{"strNumCannotBeZero", "无意义的数目！莫要消遣于我!"},
 	{"strDeckNotFound", "是说{deck_name}？{self}没听说过的牌堆名呢……"},
 	{"strDeckEmpty", "{self}已经一张也不剩了！"},
-	{"strNameNumTooBig", "生成数量过多!请输入1-10之间的数字!"},
-	{"strNameNumCannotBeZero", "生成数量不能为零!请输入1-10之间的数字!"},
-	//{"strSetInvalid", "无效的默认骰!请输入1-9999之间的数字!"},
-	{"strSetTooBig", "这面数……让我丢个球啊!请输入1-9999之间的数字!"},
-	{"strSetCannotBeZero", "默认骰不能为零!请输入1-9999之间的数字!"},
+	{"strNameNumTooBig", "想取多少个名字啊!请{nick}输入1-10之间的数字!"},
+	{"strNameNumCannotBeZero", "让{self}取0个名字？请{nick}输入1-10之间的数字!"},
+	{"strSetTooBig", "这面数……让我丢个球啊!请{nick}输入1-9999之间的数字!"},
+	{"strSetCannotBeZero", "默认骰不能为零!请{nick}输入1-9999之间的数字!"},
 	{"strCharacterCannotBeZero", "人物作成次数不能为零!请输入1-10之间的数字!"},
 	{"strCharacterTooBig", "人物作成次数过多!请输入1-10之间的数字!"},
 	{"strCharacterInvalid", "人物作成次数无效!请输入1-10之间的数字!"},
-	{"strSanityRoll", "{pc}的San Check：\n{res} {grade:rank?2={strSuccess}&1={strFailure}&0={strFumble}}\n{case:loss?0=理智没有损失√&else=San值减少{change}->剩余{final}}" },
+	{"strSanityRoll", "{pc}的San Check：\n{res} {grade:rank?2={strSuccess}&1={strFailure}&0={strFumble}}\n{case:loss?0=无理智损失√&else=理智减少{change}->剩余{final}}" },
 	{"strSanCostInvalid", "{pc}输入SC表达式不正确,格式为成功扣San/失败扣San,如1/1d6!"},
 	{"strSanInvalid", "San值输入不正确,请{pc}输入1-99范围内的整数!"},
 	{"strSanEmpty", "未设定San值，请{pc}先.st san 或查看.help sc×"},
@@ -510,6 +516,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+651:局内轮盘骰
 650:规则集专属指令
 649:.game 功能
 648:角色卡锁定功能
@@ -522,7 +529,6 @@ const dict_ci<> HelpDoc = {
 641:SelfData支持yaml
 640:支持调用JavaScript
 639:支持reply调用python
-638:webui模块调序
 637:模块资源远程访问
 636:支持toml读写
 635:webui可自定义化
@@ -535,23 +541,18 @@ const dict_ci<> HelpDoc = {
 628:支持mod更新
 627:更新认主口令
 626:前缀匹配记录后缀
-625:支持welcome转义
 624:支持mod远程安装/详细信息
 622:支持手动时差
 621:扩展代理事件及ex接口
-620:留档每日数据，新增每日清算事件
 618:支持reply(Order形式)覆盖指令
 617:更新grade分档转义
-616:转义&case支持取用户/群配置
 615:支持自定义数据读写
-614:更新reply:limit:lock
 612:新增mod代理事件
 610:新增mod定时事件
 609:新增mod循环事件
 608:新增.mod指令
 593:reply新增触发限制
 589:ak安科安价指令
-585:WebUI
 581:角色掷骰统计
 569:.rc/.draw暗骰暗抽
 567:敏感词检测
@@ -706,7 +707,15 @@ Type=[回复性质](Reply/Order)
 `.game join` 登记为玩家
 `.game kick 玩家ID` 将玩家踢出游戏
 `.game exit` 退出游戏
-)"},
+`.game rou 100` 设置(百面)轮盘骰，详见.help roulette)"},
+{"roulette",R"(轮盘骰roulette
+设置轮盘骰后，游戏内进行对应面数的掷骰时，每次将擦除掷出点数，直至所有点数都被掷出后重置
+`.game rou 100` 设置(百面)轮盘骰
+`.game rou 20*5` 设置20面轮盘骰，每个点数重复5次（总数不超过100）
+`.game rou hist` 查看当轮记录
+`.game rou clr` 清空轮盘骰
+`.game rou reset` 还原轮盘骰
+)" },
 {"旁观","&ob"},
 {"旁观模式","&ob"},
 {"ob",R"(旁观模式：.ob (join/exit/list/clr/on/off)

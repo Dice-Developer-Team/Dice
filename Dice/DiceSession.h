@@ -73,6 +73,20 @@ struct DeckInfo {
 	void reset();
 	string draw();
 };
+struct DiceRoulette {
+	//面数*
+	size_t face{ 0 };
+	size_t copy{ 0 };
+	//剩余牌
+	vector<size_t> pool;
+	size_t sizRes{ 0 };
+	DiceRoulette(){}
+	DiceRoulette(size_t f, size_t c = 1);
+	DiceRoulette(size_t f, size_t c, vector<size_t>& p, size_t r) :face(f), copy(c), pool(p), sizRes(r) {};
+	void reset();
+	size_t roll();
+	string hist();
+};
 
 class DiceSession{
 	//管理员
@@ -92,6 +106,8 @@ public:
 	//native filename
 	const string name;
 	fifo_set<chatInfo> areas;
+	fifo_map<size_t, DiceRoulette> roulette;
+	size_t roll(size_t face);
 
 	DiceSession(const string& s) : name(s),
 		master(std::make_shared<fifo_set<AttrIndex>>()),
@@ -161,6 +177,7 @@ public:
 		update();
 		return true;
 	}
+	bool is_part(long long uid) const { return player->count(uid) || master->count(uid); }
 	bool del_ob(long long uid) {
 		if (obs->count(uid))obs->erase(uid);
 		else return false;

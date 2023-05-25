@@ -21,6 +21,14 @@ unordered_set<chatInfo>LogList;
 
 const std::filesystem::path LogInfo::dirLog{ std::filesystem::path("user") / "log" };
 
+size_t DiceSession::roll(size_t face) {
+	if (roulette.count(face)) {
+		auto res = roulette[face].roll();
+		update();
+		return res;
+	} 
+	return RandomGenerator::Randint(1, face);
+}
 bool DiceSession::hasAttr(const string& key) {
 	return attrs.has(key);
 }
@@ -358,6 +366,33 @@ string DeckInfo::draw() {
 	idxs[sizRes] = res;
 	return CardDeck::draw(meta[res]);
 }
+DiceRoulette::DiceRoulette(size_t f, size_t c) :face(f), copy(c) {
+	pool.reserve(sizRes = face * copy);
+	for (size_t idx = 1; idx <= face; ++idx) {
+		for (size_t cnt = 0; cnt < copy; ++cnt) {
+			pool.push_back(idx);
+		}
+	}
+}
+void DiceRoulette::reset() {
+	sizRes = pool.size();
+}
+size_t DiceRoulette::roll() {
+	if (!sizRes)sizRes = pool.size();
+	size_t idx = RandomGenerator::Randint(0, --sizRes);
+	size_t die = pool[idx];
+	pool[idx] = pool[sizRes];
+	pool[sizRes] = die;
+	return die;
+}
+string DiceRoulette::hist() {
+	ShowList his;
+	size_t begin = face * copy;
+	while (begin > sizRes) {
+		his << to_string(pool[--begin]);
+	}
+	return his.show(" ");
+}
 
 void DiceSession::deck_set(DiceEvent* msg) {
 	const string key{ (msg->at("deck_name") = msg->readAttrName()).to_str() };
@@ -612,6 +647,17 @@ void DiceSession::save() const
 		}
 		jData["decks"] = jDecks;
 	}
+	if (!roulette.empty()) {
+		fifo_json jDecks;
+		for (auto& [face, rou] : roulette) {
+			jDecks[to_string(face)] = {
+				{"copy",rou.copy},
+				{"pool",rou.pool},
+				{"rest",rou.sizRes}
+			};
+		}
+		jData["roulette"] = jDecks;
+	}
 	if (!attrs.empty())jData["data"] = attrs.to_json();
 	std::lock_guard<std::mutex> lock(exSessionSave);
 	if (jData.empty()) {
@@ -715,24 +761,25 @@ int DiceSessionManager::load() {
 					(gid > 0) ? chatInfo{0,gid} : chatInfo{~gid} } };
 				isUpdated = true;
 			}
-			if (j.count("decks")) {
-				fifo_json& jDecks = j["decks"];
-				for (auto it = jDecks.cbegin(); it != jDecks.cend(); ++it) {
-					if (it.value()["meta"].empty())continue;
-					std::string key = UTF8toGBK(it.key());
-					auto& deck{ pSession->decks[key] };
-					deck.meta = UTF8toGBK(it.value()["meta"].get<vector<string>>());
-					if (it.value().count("rest")) {
-						it.value()["rest"].get_to(pSession->decks[key].idxs);
-						pSession->decks[key].sizRes = pSession->decks[key].idxs.size();
-					}
-					else {
-						it.value()["idxs"].get_to(pSession->decks[key].idxs);
-						it.value()["size"].get_to(pSession->decks[key].sizRes);
-					}
+			if (j.count("decks")) for (auto& it : j["decks"].items()) {
+				if (it.value()["meta"].empty())continue;
+				std::string key = UTF8toGBK(it.key());
+				auto& deck{ pSession->decks[key] };
+				deck.meta = UTF8toGBK(it.value()["meta"].get<vector<string>>());
+				if (it.value().count("rest")) {
+					it.value()["rest"].get_to(pSession->decks[key].idxs);
+					pSession->decks[key].sizRes = pSession->decks[key].idxs.size();
+				}
+				else {
+					it.value()["idxs"].get_to(pSession->decks[key].idxs);
+					it.value()["size"].get_to(pSession->decks[key].sizRes);
 				}
 			}
-			
+			if(j.count("roulette"))for (auto& it : j["roulette"].items()) {
+				size_t face = stoi(it.key());
+				pSession->roulette.emplace(face, DiceRoulette(face, it.value()["copy"],
+					it.value()["pool"].get<vector<size_t>>(), it.value()["rest"]));
+			}
 			if (j.count("tables"))for (auto& it : j["tables"].items()) {
 				pSession->attrs.set(UTF8toGBK(it.key()), it.value());
 			}

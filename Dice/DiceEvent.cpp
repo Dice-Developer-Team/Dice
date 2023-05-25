@@ -57,6 +57,7 @@ DiceEvent::DiceEvent(const AttrVars& var, const chatInfo& ct)
 	if (fromChat.gid) {
 		pGrp = &chat(fromChat.gid);
 	}
+	thisGame = sessions.get_if(fromChat);
 }
 DiceEvent::DiceEvent(const AttrObject& var)
 	:AttrObject(var), strMsg(at("fromMsg").text) {
@@ -64,6 +65,7 @@ DiceEvent::DiceEvent(const AttrObject& var)
 	if (fromChat.gid) {
 		pGrp = &chat(fromChat.gid);
 	}
+	thisGame = sessions.get_if(fromChat);
 }
 bool DiceEvent::isPrivate()const {
 	return !fromChat.gid;
@@ -1151,99 +1153,6 @@ int DiceEvent::BasicOrder()
 		}
 		return 1;
 	}
-	else if (strLowerMessage.substr(intMsgCnt, 4) == "game") {
-		intMsgCnt += 4;
-		string action{ readPara() };
-		if(!thisGame)thisGame = sessions.get(fromChat);
-		if (action == "join") {
-			if (thisGame->add_pl(fromChat.uid)) {
-				replyMsg("strGameJoined");
-			}
-			else {
-				replyMsg("strGamePlayerAlready");
-			}
-		}
-		else if (action == "call") {
-			if (thisGame->is_gm(fromChat.uid)) {
-				ShowList res;
-				for (auto& uid : *thisGame->get_pl()) {
-					res << "[CQ:at,id=" + uid.to_string() + "]";
-				}
-				set("items", res.show("\n"));
-				replyMsg("strGamePlayerCall");
-			}
-			else {
-				replyMsg("strGameNotMaster");
-			}
-		}
-		else if (action == "set") {
-			if (thisGame->is_gm(fromChat.uid)) {
-				auto [strItem, strVal] = readini(strMsg.substr(intMsgCnt));
-				if (!strItem.empty()) {
-					set("set_item", strItem);
-					if (!strVal.empty()) {
-						AttrVar& val{ at("set_val") = AttrVar::parse(strVal) };
-						thisGame->setAttr(strItem, val);
-						replyMsg("strGameItemSet");
-					}
-					else {
-						set("set_val", thisGame->getAttr(strItem));
-						replyMsg("strGameItemShow");
-					}
-				}
-				else {
-					replyMsg("strGameItemEmpty");
-				}
-			}
-			else {
-				replyMsg("strGameNotMaster");
-			}
-		}
-		else if (action == "exit") {
-			if (thisGame->del_pl(fromChat.uid) || thisGame->del_gm(fromChat.uid)) {
-				replyMsg("strGameExited");
-			}
-			else {
-				replyMsg("strGameNotJoined");
-			}
-		}
-		else if (action == "kick") {
-			if (thisGame->is_gm(fromChat.uid)) {
-				auto target_id{ readID() };
-				set("tid", target_id ? AttrVar(target_id) : "");
-				if (thisGame->del_pl(target_id) || thisGame->del_ob(target_id)) {
-					replyMsg("strGameKicked");
-				}
-				else {
-					replyMsg("strGameKickNotPlayer");
-				}
-			}
-			else {
-				replyMsg("strGameNotMaster");
-			}
-		}
-		else if (action == "master") {
-			auto gms{ thisGame->get_gm() };
-			if (!thisGame->is_gm(fromChat.uid)) {
-				if (gms->empty() ? canRoomHost() : DD::isGroupAdmin(fromChat.gid, fromChat.uid, false)) {
-					thisGame->add_gm(fromChat.uid);
-					replyMsg("strGameMastered");
-				}
-				else {
-					replyMsg("strGameMasterDenied");
-				}
-			}
-			else {
-				ShowList res;
-				for (auto& uid : *gms) {
-					res << "[CQ:at,id=" + uid.to_string() + "]";
-				}
-				set("items", res.show("\n"));
-				replyMsg("strGameMasterList");
-			}
-		}
-		else replyHelp("game");
-	}
 	else if (strLowerMessage.substr(intMsgCnt, 5) == "reply") {
 		intMsgCnt += 5;
 		if (strMsg.length() == intMsgCnt) {
@@ -1545,6 +1454,174 @@ int DiceEvent::BasicOrder()
 		fmt->_help(this);
 		return true;
 	}
+	else if (strLowerMessage.substr(intMsgCnt, 4) == "game") {
+		intMsgCnt += 4;
+		string action{ readPara() };
+		if (!thisGame)thisGame = sessions.get(fromChat);
+		if (action == "join") {
+			if (thisGame->add_pl(fromChat.uid)) {
+				replyMsg("strGameJoined");
+			}
+			else {
+				replyMsg("strGamePlayerAlready");
+			}
+		}
+		else if (action == "call") {
+			if (thisGame->is_gm(fromChat.uid)) {
+				if (auto pls{ thisGame->get_pl() }; !pls->empty()) {
+					ShowList res;
+					for (auto& uid : *pls) {
+						res << "[CQ:at,id=" + uid.to_string() + "]";
+					}
+					set("items", res.show("\n"));
+					replyMsg("strGamePlayerCall");
+				}
+				else {
+					replyMsg("strGamePlayerEmpty");
+				}
+			}
+			else {
+				replyMsg("strGameNotMaster");
+			}
+		}
+		else if (action == "set") {
+			if (thisGame->is_gm(fromChat.uid)) {
+				auto [strItem, strVal] = readini(strMsg.substr(intMsgCnt));
+				if (!strItem.empty()) {
+					set("set_item", strItem);
+					if (!strVal.empty()) {
+						AttrVar& val{ at("set_val") = AttrVar::parse(strVal) };
+						thisGame->setAttr(strItem, val);
+						replyMsg("strGameItemSet");
+					}
+					else {
+						set("set_val", print(thisGame->getAttr(strItem)));
+						replyMsg("strGameItemShow");
+					}
+				}
+				else {
+					replyMsg("strGameItemEmpty");
+				}
+			}
+			else {
+				replyMsg("strGameNotMaster");
+			}
+		}
+		else if (action == "exit") {
+			if (thisGame->del_pl(fromChat.uid) || thisGame->del_gm(fromChat.uid)) {
+				replyMsg("strGameExited");
+			}
+			else {
+				replyMsg("strGameNotJoined");
+			}
+		}
+		else if (action == "kick") {
+			if (thisGame->is_gm(fromChat.uid)) {
+				auto target_id{ readID() };
+				set("tid", target_id ? AttrVar(target_id) : "");
+				if (thisGame->del_pl(target_id) || thisGame->del_ob(target_id)) {
+					replyMsg("strGameKicked");
+				}
+				else {
+					replyMsg("strGameKickNotPlayer");
+				}
+			}
+			else {
+				replyMsg("strGameNotMaster");
+			}
+		}
+		else if (action == "master") {
+			auto gms{ thisGame->get_gm() };
+			if (!thisGame->is_gm(fromChat.uid)) {
+				if (gms->empty() ? canRoomHost() : DD::isGroupAdmin(fromChat.gid, fromChat.uid, false)) {
+					thisGame->add_gm(fromChat.uid);
+					replyMsg("strGameMastered");
+				}
+				else {
+					replyMsg("strGameMasterDenied");
+				}
+			}
+			else {
+				ShowList res;
+				for (auto& uid : *gms) {
+					res << "[CQ:at,id=" + uid.to_string() + "]";
+				}
+				set("items", res.show("\n"));
+				replyMsg("strGameMasterList");
+			}
+		}
+		else if (action == "rou") {
+			readSkipSpace();
+			if (isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
+				if (thisGame->is_gm(fromChat.uid)) {
+					if (int nFace = 100; !readNum(nFace) && nFace <= 100) {
+						set("face", nFace);
+						if (int nCopy = 1; '*' == strMsg[intMsgCnt] && !readNum(nCopy)) {
+							if (nCopy <= 0) {
+								replyMsg("strZeroDiceErr");
+								return 1;
+							}
+							else if (nFace * nCopy > 100) {
+								replyMsg("strGameRouletteTooBig");
+								return 1;
+							}
+							else {
+								thisGame->roulette[nFace] = DiceRoulette((size_t)nFace, (size_t)nCopy);
+								thisGame->update();
+							}
+						}
+						else {
+							thisGame->roulette[nFace] = DiceRoulette((size_t)nFace);
+							thisGame->update();
+						}
+						replyMsg("strGameRouletteSet");
+					}
+					else {
+						replyMsg("strGameRouletteTooBig");
+					}
+				}
+				else {
+					replyMsg("strGameNotMaster");
+				}
+			}
+			else if ((action = readPara()) == "hist") {
+				if (auto& rous{ thisGame->roulette }; !rous.empty()) {
+					ShowList hist;
+					for (auto& [face, rou] : rous) {
+						hist << "D" + to_string(face) + "=" + rou.hist();
+					}
+					set("hist", hist.show("\n"));
+					replyMsg("strGameRouletteHistory");
+				}
+				else {
+					replyMsg("strGameRouletteEmpty");
+				}
+			}
+			else if ((action = readPara()) == "reset") {
+				if (thisGame->is_gm(fromChat.uid)) {
+					for (auto& [n, rou] : thisGame->roulette) {
+						rou.reset();
+					}
+					replyMsg("strGameRouletteReset");
+				}
+				else {
+					replyMsg("strGameNotMaster");
+				}
+			}
+			else if (action == "clr") {
+				if (thisGame->is_gm(fromChat.uid)) {
+					thisGame->roulette.clear();
+					replyMsg("strGameRouletteClear");
+				}
+				else {
+					replyMsg("strGameNotMaster");
+				}
+			}
+			else replyHelp("roulette");
+		}
+		else replyHelp("game");
+		return 1;
+	}
 	return 0;
 }
 
@@ -1645,7 +1722,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		else if (action == "clr") {
-			if ((thisGame || (thisGame = sessions.get_if(fromChat)))
+			if (thisGame
 				&& thisGame->attrs.has("rr_rc")) {
 				thisGame->rmAttr("rr_rc");
 			}
@@ -2288,32 +2365,32 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		string strPara = readPara();
-		if (auto s{ sessions.get_if(fromChat) }; strPara == "show") {
-			if (s)s->deck_show(this);
+		if ( strPara == "show") {
+			if (thisGame)thisGame->deck_show(this);
 			else replyMsg("strDeckListEmpty");
 		}
 		else if (!canRoomHost()  && !trusted) {
 			replyMsg("strWhiteQQDenied");
 		}
 		else if (strPara == "new") {
-			if (!s)s = sessions.get(fromChat);
-			s->deck_new(this);
+			if (!thisGame)thisGame = sessions.get(fromChat);
+			thisGame->deck_new(this);
 		}
 		else if (strPara == "set") {
-			if (!s)s = sessions.get(fromChat);
-			s->deck_set(this);
+			if (!thisGame)thisGame = sessions.get(fromChat);
+			thisGame->deck_set(this);
 		}
-		else if (!s) {
+		else if (!thisGame) {
 			replyMsg("strDeckListEmpty");
 		}
 		else if (strPara == "reset") {
-			s->deck_reset(this);
+			thisGame->deck_reset(this);
 		}
 		else if (strPara == "del") {
-			s->deck_del(this);
+			thisGame->deck_del(this);
 		}
 		else if (strPara == "clr") {
-			s->deck_clr(this);
+			thisGame->deck_clr(this);
 		}
 		return 1;
 	}
@@ -2346,8 +2423,8 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		else {
-			if (auto s{ sessions.get_if(fromChat) }; s && s->has_deck(key)) {
-				s->_draw(this);
+			if (thisGame && thisGame->has_deck(key)) {
+				thisGame->_draw(this);
 				return 1;
 			}
 			else if (CardDeck::findDeck(key) == 0) {
@@ -2399,24 +2476,24 @@ int DiceEvent::InnerOrder() {
 		if (strCmd.empty()|| isPrivate()) {
 			replyHelp("init");
 		}
-		else if (auto s{ sessions.get_if(fromChat) }; !s || !s->table_count("先攻")) {
+		else if (!thisGame || !thisGame->table_count("先攻")) {
 			replyMsg("strGMTableNotExist");
 		}
 		else if (strCmd == "show" || strCmd == "list") {
-			set("res",s->table_prior_show("先攻"));
+			set("res", thisGame->table_prior_show("先攻"));
 			replyMsg("strGMTableShow");
 		}
 		else if (strCmd == "del") {
 			set("table_item",readRest());
 			if (is_empty("table_item"))
 				replyMsg("strGMTableItemEmpty");
-			else if (s->table_del("先攻", get_str("table_item")))
+			else if (thisGame->table_del("先攻", get_str("table_item")))
 				replyMsg("strGMTableItemDel");
 			else
 				replyMsg("strGMTableItemNotFound");
 		}
 		else if (strCmd == "clr") {
-			s->table_clr("先攻");
+			thisGame->table_clr("先攻");
 			replyMsg("strGMTableClr");
 		}
 		return 1;
@@ -3043,7 +3120,7 @@ int DiceEvent::InnerOrder() {
 			else strEnSuc = strEnChange;
 		}
 		if (strAttr.empty())strAttr = getMsg("strEnDefaultName");
-		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
+		const int intTmpRollRes = (thisGame && thisGame->is_part(fromChat.uid)) ? thisGame->roll(100) : RandomGenerator::Randint(1, 100);
 		//成长检定仅计入掷骰统计，不计入检定统计
 		if (pc)pc->cntRollStat(intTmpRollRes, 100);
 		string& res{ (at("res") = "1D100=" + to_string(intTmpRollRes) + "/" + to_string(intVal) + " ").text};
@@ -3207,8 +3284,7 @@ int DiceEvent::InnerOrder() {
 		if (strOption == "off") {
 			if (groupset(fromChat.gid, option) < 1) {
 				chat(fromChat.gid).set(option);
-				if (auto s{ sessions.get_if(fromChat)})
-					s->clear_ob();
+				if (thisGame)thisGame->clear_ob();
 				replyMsg("strObOff");
 			}
 			else {
@@ -3230,26 +3306,25 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strObOffAlready");
 			return 1;
 		}
-		auto s{ sessions.get_if(fromChat) };
 		if (strOption == "join") {
 			sessions.get(fromChat)->ob_enter(this);
 		}
-		else if (!s) {
+		else if (!thisGame) {
 			replyMsg("strObListEmpty");
 		}
 		else if (strOption == "list") {
-			s->ob_list(this);
+			thisGame->ob_list(this);
 		}
 		else if (strOption == "clr") {
 			if (canRoomHost()) {
-				s->ob_clr(this);
+				thisGame->ob_clr(this);
 			}
 			else {
 				replyMsg("strPermissionDeniedErr");
 			}
 		}
 		else if (strOption == "exit") {
-			s->ob_exit(this);
+			thisGame->ob_exit(this);
 		}
 		else {
 			replyHelp("ob");
@@ -3465,6 +3540,7 @@ int DiceEvent::InnerOrder() {
 		bool isAutomatic = false;
 		//D100且有角色卡时计入统计
 		bool isStatic = PList.count(fromChat.uid);
+		bool isRoulette = thisGame && thisGame->is_part(fromChat.uid) && thisGame->roulette.count(100);
 		PC pc{ isStatic ? PList[fromChat.uid][fromChat.gid] : std::make_shared<CharaCard>()};
 		if ((strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') && strLowerMessage[intMsgCnt - 1] != ' ') {
 			isStatic = false;
@@ -3592,7 +3668,7 @@ int DiceEvent::InnerOrder() {
 		ResList Res;
 		string strAns;
 		if (intTurnCnt == 1) {
-			rdMainDice.Roll();
+			isRoulette ? rdMainDice.Roll(thisGame) : rdMainDice.Roll();
 			if (isStatic) {
 				pc->cntRollStat(rdMainDice.intTotal, 100);
 				pc->cntRcStat(rdMainDice.intTotal, intFianlSkillVal);
@@ -3622,7 +3698,7 @@ int DiceEvent::InnerOrder() {
 		else {
 			Res.dot("\n");
 			while (intTurnCnt--) {
-				rdMainDice.Roll();
+				isRoulette ? rdMainDice.Roll(thisGame) : rdMainDice.Roll();
 				if (isStatic) {
 					pc->cntRollStat(rdMainDice.intTotal, 100);
 					pc->cntRcStat(rdMainDice.intTotal, intFianlSkillVal);
@@ -3762,7 +3838,8 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strSanInvalid");
 			return 1;
 		}
-		const int intTmpRollRes = RandomGenerator::Randint(1, 100);
+		const int intTmpRollRes = (thisGame && thisGame->is_part(fromChat.uid) && thisGame->roulette.count(100))
+			? thisGame->roll(100) : RandomGenerator::Randint(1, 100);
 		//理智检定计入统计
 		if (pc) {
 			pc->cntRollStat(intTmpRollRes, 100);
@@ -4338,7 +4415,7 @@ int DiceEvent::InnerOrder() {
 			strMainDice = pc->getExp(strReason);
 		}
 		RD rdMainDice(strMainDice, intDefaultDice);
-		const int intFirstTimeRes = rdMainDice.Roll();
+		const int intFirstTimeRes = thisGame && thisGame->is_part(fromChat.uid) ? rdMainDice.Roll(thisGame) : rdMainDice.Roll();
 		switch (intFirstTimeRes) {
 		case 0: break;
 		case Value_Err:
@@ -4513,7 +4590,7 @@ bool DiceEvent::DiceFilter()
 		return monitorFrq();
 	}
 	if (auto ruleName{ getGameRule() }; ruleName && !thisGame->attrs.is("pause")
-		&& (thisGame->is_gm(fromChat.uid) || thisGame->is_pl(fromChat.uid))
+		&& (thisGame->is_part(fromChat.uid))
 		&& ruleset->get_rule(*ruleName)->listen_order(this)) {
 		return monitorFrq();
 	}
