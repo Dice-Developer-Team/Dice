@@ -8,23 +8,23 @@ void DiceRule::merge(const DiceRule& other) {
 std::optional<string> DiceRule::traceManual(const string& key) {
 	if (manual.count(key))return manual.at(key);
 	else if (meta)return meta->traceManual(key);
-	return {};
+	return std::nullopt;
 }
 std::optional<string> DiceRule::searchManual(const string& key) {
 	for (auto& [name, sub] : subrules) {
 		if (auto item{ sub->searchManual(key) })return item;
 	}
-	return {};
+	return std::nullopt;
 }
 std::optional<string> DiceRule::getOwnManual(const string& key) {
 	if (manual.count(key))return manual.at(key);
-	return {};
+	return std::nullopt;
 }
 std::optional<string> DiceRule::getManual(const string& key) {
 	if (manual.count(key))return manual.at(key);
 	else if (auto item{ searchManual(key) })return item;
 	else if (meta)return meta->traceManual(key);
-	return {};
+	return std::nullopt;
 }
 bool DiceRule::listen_order(DiceEvent* eve) {
 	if (orders.listen(eve, 0b100))return true;
@@ -73,8 +73,5 @@ std::optional<string> DiceRuleSet::getManual(const string& key)const {
 			return li.show("\f");
 		}
 	}
-	return {};
-}
-std::optional<string> DiceRuleSet::getManual(const string& key, const string& rule)const {
-
+	return std::nullopt;
 }

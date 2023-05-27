@@ -243,7 +243,7 @@ public:
 	int load();
 	void save();
 	void clear() { SessionByName.clear(); SessionByChat.clear(); linker = {}; }
-	shared_ptr<Session> get(const chatInfo& ct);
+	shared_ptr<Session> get(chatInfo);
 	shared_ptr<Session> newGame(const string& name, const chatInfo& ct);
 	shared_ptr<Session> get_if(const chatInfo& ct)const {
 		auto chat{ ct.locate() };

@@ -156,7 +156,7 @@ void DiceEvent::logEcho(){
 			+ forward_filter(strReply) };
 		AddMsgToQueue(strFwd, sessions.linker.get_aim(here).first);
 	}
-	if ((thisGame || (thisGame = sessions.get_if(here))) && thisGame->is_logging()
+	if (thisGame && thisGame->is_logging()
 		&& strLowerMessage.find(".log") != 0) {
 		ofstream logout(thisGame->log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time")) << endl
@@ -173,7 +173,7 @@ void DiceEvent::fwdMsg(){
 		strFwd += forward_filter(strMsg);
 		AddMsgToQueue(strFwd, sessions.linker.get_aim(here).first);
 	}
-	if ((thisGame || (thisGame = sessions.get_if(here))) && thisGame->is_logging()
+	if (thisGame && thisGame->is_logging()
 		&& strLowerMessage.find(".log") != 0) {
 		ofstream logout(thisGame->log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(idx_pc(*this).to_str()) + "(" + to_string(fromChat.uid) + ") " + printTTime((time_t)get_ll("time")) << endl
@@ -1611,7 +1611,7 @@ int DiceEvent::BasicOrder()
 			else {
 				ShowList res;
 				for (auto& uid : *gms) {
-					res << "[CQ:at,id=" + uid.to_string() + "]";
+					res << printUser((long long)uid.to_double());
 				}
 				set("items", res.show("\n"));
 				replyMsg("strGameMasterList");
@@ -4095,7 +4095,7 @@ int DiceEvent::InnerOrder() {
 				else inc("cnt");
 				continue;
 			}
-			//读取属性名
+			//读取Attr
 			string strAttr = readAttrName();
 			if (strAttr.empty()) {
 				readSkipSpace();
@@ -4656,9 +4656,13 @@ bool DiceEvent::DiceFilter()
 	if (!is("order_off") && (fmt->listen_order(this) || InnerOrder())) {
 		return monitorFrq();
 	}
-	if (auto ruleName{ getGameRule() }; ruleName && !thisGame->attrs.is("pause")
+	if (auto ruleName{ getGameRule() }; ruleName
 		&& (thisGame->is_part(fromChat.uid))
-		&& ruleset->get_rule(*ruleName)->listen_order(this)) {
+		&& ruleset->has_rule(*ruleName) && ruleset->get_rule(*ruleName)->listen_order(this)) {
+		return monitorFrq();
+	}
+	else if (thisGame && (thisGame->is_part(fromChat.uid))
+		&& fmt->listen_game(this)) {
 		return monitorFrq();
 	}
 	if (fmt->listen_reply(this)) {
@@ -4715,10 +4719,10 @@ void DiceEvent::virtualCall() {
 	DiceFilter();
 }
 std::optional<string> DiceEvent::getGameRule() {
-	if (thisGame || (thisGame = sessions.get_if(fromChat))) {
+	if (thisGame && thisGame->attrs.has("rule")) {
 		return thisGame->attrs.get_str("rule");
 	}
-	return {};
+	return std::nullopt;
 }
 bool DiceEvent::canRoomHost() {
 	if (!has("canRoomHost")) {

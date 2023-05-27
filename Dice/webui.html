@@ -1323,9 +1323,9 @@ layui.use(['form', 'table','soulTable'], function(){ //亦可加载特定模块�
   });
   }
   get_mod_source($("#mod-source-url").val());
-  form.on('submit(mod-source-get)', function(data){
-	get_mod_source(data.field.url);
-	return false;
+	form.on('submit(mod-source-get)', function (data) {
+		get_mod_source($("#mod-source-url").val());
+		return false;
   });
 
     table.on('tool(mod-source-table)', function (obj) { //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"

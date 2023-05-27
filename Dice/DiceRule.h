@@ -37,6 +37,6 @@ public:
 	bool has_rule(const string& name)const { return rules.count(name); }
 	ptr<DiceRule> get_rule(const string& name)const { return rules.count(name) ? rules.at(name) : ptr<DiceRule>(); }
 	std::optional<string> getManual(const string&)const;
-	std::optional<string> getManual(const string&, const string&)const;
+	//std::optional<string> getManual(const string&, const string&)const;
 };
 extern ptr<DiceRuleSet> ruleset;

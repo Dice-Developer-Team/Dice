@@ -210,6 +210,7 @@ public:
 
 	bool listen_order(DiceEvent* msg) { return final_reply.listen(msg, 1); }
 	bool listen_reply(DiceEvent* msg) { return final_reply.listen(msg, 2); }
+	bool listen_game(DiceEvent* msg) { return final_reply.listen(msg, 4); }
 	string list_reply(int type)const;
 	void set_reply(const string&, ptr<DiceMsgReply> reply);
 	bool del_reply(const string&);

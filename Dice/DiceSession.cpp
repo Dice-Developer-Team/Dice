@@ -16,7 +16,8 @@
 #include "DiceMod.h"
 
 DiceSessionManager sessions;
-std::shared_mutex sessionMutex;
+std::recursive_mutex sessionMutex;
+#define LOCK_REC(ex) std::lock_guard<std::recursive_mutex> lock(ex) 
 unordered_set<chatInfo>LogList;
 
 const std::filesystem::path LogInfo::dirLog{ std::filesystem::path("user") / "log" };
@@ -709,23 +710,26 @@ void DiceSession::save() const
 }
 
 void DiceSessionManager::open(const ptr<Session>& game, chatInfo ct) {
-	std::unique_lock<std::shared_mutex> lock(sessionMutex);
+	LOCK_REC(sessionMutex);
 	if (auto session{ get_if(ct = ct.locate()) }) {
 		session->areas.erase(ct);
+		session->update();
 	}
 	SessionByChat[ct] = game;
 	game->areas.insert(ct);
+	game->update();
 }
 void DiceSessionManager::close(chatInfo ct) {
 	if (auto session{ get_if(ct = ct.locate()) }) {
-		std::unique_lock<std::shared_mutex> lock(sessionMutex);
+		LOCK_REC(sessionMutex);
 		SessionByChat.erase(ct);
+		session->update();
 	}
 }
 void DiceSessionManager::over(chatInfo ct){
 	auto session{ get_if(ct = ct.locate()) };
 	if (!session)return;
-	std::unique_lock<std::shared_mutex> lock(sessionMutex);
+	LOCK_REC(sessionMutex);
 	SessionByName.erase(session->name);
 	for (auto& it:session->areas) {
 		SessionByChat.erase(it);
@@ -735,7 +739,7 @@ void DiceSessionManager::over(chatInfo ct){
 //const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
 
 shared_ptr<Session> DiceSessionManager::newGame(const string& name, const chatInfo& ct) {
-	std::unique_lock<std::shared_mutex> lock(sessionMutex);
+	LOCK_REC(sessionMutex);
 	string g_name{ name + "#" + to_string(++inc) };
 	while (SessionByName.count(g_name)) {
 		g_name = name + "#" + to_string(++inc);
@@ -746,25 +750,27 @@ shared_ptr<Session> DiceSessionManager::newGame(const string& name, const chatIn
 	ptr->add_gm(ct.uid);
 	SessionByName[g_name] = ptr;
 	if (SessionByChat.count(here))SessionByChat[here]->areas.erase(here);
+	if (LogList.count(here)) LogList.erase(here);
 	SessionByChat[here] = ptr;
+	save();
 	return ptr;
 }
-shared_ptr<Session> DiceSessionManager::get(const chatInfo& ct) {
-	if (const auto here{ ct.locate() }; SessionByChat.count(here)) 
-		return SessionByChat[here];
+shared_ptr<Session> DiceSessionManager::get(chatInfo ct) {
+	if (SessionByChat.count(ct = ct.locate()))
+		return SessionByChat[ct];
 	else {
 		string name{ ct.gid ? "g" + to_string(ct.gid) +
 			(ct.chid ? "_ch" + to_string(ct.chid) : "")
 			: "usr" + to_string(ct.uid) };
-		std::unique_lock<std::shared_mutex> lock(sessionMutex);
+		LOCK_REC(sessionMutex);
 		if (!SessionByName.count(name)) {
 			auto ptr{ std::make_shared<Session>(name) };
-			ptr->areas.insert(here);
+			ptr->areas.insert(ct);
 			SessionByName[name] = ptr;
-			SessionByChat[here] = ptr;
+			SessionByChat[ct] = ptr;
 			return ptr;
 		}
-		else return SessionByChat[here] = SessionByName[name];
+		else return SessionByChat[ct] = SessionByName[name];
 	}
 }
 int DiceSessionManager::load() {
@@ -772,7 +778,7 @@ int DiceSessionManager::load() {
 		AttrObject cfg = AttrVar(toml::parse(ifstream(fileGM))).to_obj();
 		inc = cfg.get_int("inc");
 	}
-	std::unique_lock<std::shared_mutex> lock(sessionMutex);
+	LOCK_REC(sessionMutex);
 	vector<std::filesystem::path> sFile;
 	int cnt = listDir(DiceDir / "user" / "session", sFile);
 	if (cnt > 0)for (auto& filename : sFile) {
