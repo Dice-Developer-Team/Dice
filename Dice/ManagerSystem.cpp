@@ -306,7 +306,7 @@ int clearUser() {
 	}
 	for (auto uid : UserDelete) {
 		UserList.erase(uid);
-		if (sessions.has_session(uid))sessions.end(uid);
+		if (sessions.has_session(uid))sessions.over(uid);
 	}
 	return UserDelete.size();
 }
@@ -324,7 +324,7 @@ int clearGroup() {
 	}
 	for (auto id : GrpDelete) {
 		ChatList.erase(id);
-		if (sessions.has_session({ 0,id }))sessions.end({ 0,id });
+		if (sessions.has_session({ 0,id }))sessions.over({ 0,id });
 	}
 	return GrpDelete.size();
 }

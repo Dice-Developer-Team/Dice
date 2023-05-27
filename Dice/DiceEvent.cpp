@@ -123,9 +123,8 @@ void DiceEvent::replyHidden() {
 		strReply.erase(strReply.begin());
 	formatReply();
 	auto here{ fromChat.locate() };
-	auto session{ sessions.get_if(here) };
-	if (session && session->is_logging()) {
-		ofstream logout(session->log_path(), ios::out | ios::app);
+	if (thisGame && thisGame->is_logging()) {
+		ofstream logout(thisGame->log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time")) << endl
 			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
 	}
@@ -133,13 +132,13 @@ void DiceEvent::replyHidden() {
 	if (!pGrp || !pGrp->isset("RhÃ¤÷»")) {
 		AddMsgToQueue(strReply, fromChat.uid);
 	}
-	if (session) {
-		for (auto& id : *session->get_gm()) {
+	if (thisGame) {
+		for (auto& id : *thisGame->get_gm()) {
 			if (id.to_double() != fromChat.uid) {
 				AddMsgToQueue(strReply, (long long)id.to_double());
 			}
 		}
-		for (auto& id : *session->get_ob()) {
+		for (auto& id : *thisGame->get_ob()) {
 			if (id.to_double() != fromChat.uid) {
 				AddMsgToQueue(strReply, (long long)id.to_double());
 			}
@@ -157,9 +156,9 @@ void DiceEvent::logEcho(){
 			+ forward_filter(strReply) };
 		AddMsgToQueue(strFwd, sessions.linker.get_aim(here).first);
 	}
-	if (auto session{sessions.get_if(here)}; session && session->is_logging()
+	if ((thisGame || (thisGame = sessions.get_if(here))) && thisGame->is_logging()
 		&& strLowerMessage.find(".log") != 0) {
-		ofstream logout(session->log_path(), ios::out | ios::app);
+		ofstream logout(thisGame->log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time")) << endl
 			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
 	}
@@ -1457,6 +1456,74 @@ int DiceEvent::BasicOrder()
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "game") {
 		intMsgCnt += 4;
 		string action{ readPara() };
+		if (action == "new") {
+			if (canRoomHost()) {
+				set("game_id", sessions.newGame(readFileName(), fromChat)->name);
+				replyMsg("strGameNew");
+			}
+			else {
+				replyMsg("strGameMasterDenied");
+			}
+			return 1;
+		}
+		else if (action == "over") {
+			if (thisGame) {
+				if (thisGame->is_gm(fromChat.uid) || DD::isGroupAdmin(fromChat.gid, fromChat.uid, false)) {
+					if (thisGame->is_logging())thisGame->log_end(this);
+					set("game_id", thisGame->name);
+					sessions.over(fromChat);
+					replyMsg("strGameOver");
+				}
+				else {
+					replyMsg("strGameNotMaster");
+				}
+			}
+			else {
+				replyMsg("strGameVoidHere");
+			}
+			return 1;
+		}
+		else if (action == "open") {
+			string& name{ (at("game_id") = readFileName()).text };
+			if (auto game{ sessions.getByName(name) }) {
+				if (game->is_gm(fromChat.uid)) {
+					sessions.open(game, fromChat);
+					replyMsg("strGameAreaOpen");
+				}
+				else {
+					replyMsg("strGameNotMaster");
+				}
+			}
+			else {
+				replyMsg("strGameNotExit");
+			}
+			return 1;
+		}
+		else if (action == "close") {
+			if (thisGame) {
+				if (thisGame->is_gm(fromChat.uid) || DD::isGroupAdmin(fromChat.gid, fromChat.uid, false)) {
+					set("game_id", thisGame->name);
+					sessions.close(fromChat);
+					replyMsg("strGameAreaClosed");
+				}
+				else {
+					replyMsg("strGameNotMaster");
+				}
+			}
+			else {
+				replyMsg("strGameVoidHere");
+			}
+			return 1;
+		}
+		else if (action == "state") {
+			if (thisGame) {
+				reply(thisGame->show(), false);
+			}
+			else {
+				replyMsg("strGameVoidHere");
+			}
+			return 1;
+		}
 		if (!thisGame)thisGame = sessions.get(fromChat);
 		if (action == "join") {
 			if (thisGame->add_pl(fromChat.uid)) {

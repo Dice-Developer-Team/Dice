@@ -392,6 +392,7 @@ public:
 	PC operator[](long long id)
 	{
 		if (mGroupIndex.count(id))return mCardList[mGroupIndex[id]];
+		if (mCardList.count(id))return mCardList[mGroupIndex[id]];
 		if (mGroupIndex.count(0))return mCardList[mGroupIndex[0]];
 		return mCardList[0];
 	}

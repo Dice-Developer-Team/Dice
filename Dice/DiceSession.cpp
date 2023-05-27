@@ -29,6 +29,41 @@ size_t DiceSession::roll(size_t face) {
 	} 
 	return RandomGenerator::Randint(1, face);
 }
+string DiceSession::show()const {
+	ShowList li;
+	li << "桌号: " + name;
+	if (attrs.has("rule"))li << "规则: " + attrs.get_str("rule");
+	if (is_logging())li << "日志记录中";
+	if (!master->empty()) {
+		ShowList sub;
+		for (auto& id : *master) {
+			sub << printUser((long long)id.to_double());
+		}
+		li << "GM: " + sub.show(" & ");
+	}
+	if (!player->empty()) {
+		string sub{ "PL:" };
+		for (auto& id : *player) {
+			sub += "\n" + printUser((long long)id.to_double());
+		}
+		li << sub;
+	}
+	if (!obs->empty()) {
+		string sub{ "OB:" };
+		for (auto& id : *obs) {
+			sub += "\n" + printUser((long long)id.to_double());
+		}
+		li << sub;
+	}
+	if (!roulette.empty()) {
+		ShowList faces;
+		for (auto& [face, rou] : roulette) {
+			faces << to_string(face);
+		}
+		li << "轮盘骰: D" + faces.show("/");
+	}
+	return li.show("\n");
+}
 bool DiceSession::hasAttr(const string& key) {
 	return attrs.has(key);
 }
@@ -673,18 +708,47 @@ void DiceSession::save() const
 	fwriteJson(fpFile, jData, 1);
 }
 
-void DiceSessionManager::end(chatInfo ct){
+void DiceSessionManager::open(const ptr<Session>& game, chatInfo ct) {
+	std::unique_lock<std::shared_mutex> lock(sessionMutex);
+	if (auto session{ get_if(ct = ct.locate()) }) {
+		session->areas.erase(ct);
+	}
+	SessionByChat[ct] = game;
+	game->areas.insert(ct);
+}
+void DiceSessionManager::close(chatInfo ct) {
+	if (auto session{ get_if(ct = ct.locate()) }) {
+		std::unique_lock<std::shared_mutex> lock(sessionMutex);
+		SessionByChat.erase(ct);
+	}
+}
+void DiceSessionManager::over(chatInfo ct){
 	auto session{ get_if(ct = ct.locate()) };
 	if (!session)return;
 	std::unique_lock<std::shared_mutex> lock(sessionMutex);
 	SessionByName.erase(session->name);
-	if (session->areas.erase(ct); session->areas.empty()) {
-		SessionByChat.erase(ct);
-		remove(DiceDir / "user" / "session" / (session->name + ".json"));
+	for (auto& it:session->areas) {
+		SessionByChat.erase(it);
 	}
+	remove(DiceDir / "user" / "session" / (session->name + ".json"));
 }
 //const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
 
+shared_ptr<Session> DiceSessionManager::newGame(const string& name, const chatInfo& ct) {
+	std::unique_lock<std::shared_mutex> lock(sessionMutex);
+	string g_name{ name + "#" + to_string(++inc) };
+	while (SessionByName.count(g_name)) {
+		g_name = name + "#" + to_string(++inc);
+	}
+	auto ptr{ std::make_shared<Session>(g_name) };
+	const auto here{ ct.locate() };
+	ptr->areas.insert(here);
+	ptr->add_gm(ct.uid);
+	SessionByName[g_name] = ptr;
+	if (SessionByChat.count(here))SessionByChat[here]->areas.erase(here);
+	SessionByChat[here] = ptr;
+	return ptr;
+}
 shared_ptr<Session> DiceSessionManager::get(const chatInfo& ct) {
 	if (const auto here{ ct.locate() }; SessionByChat.count(here)) 
 		return SessionByChat[here];
@@ -692,19 +756,22 @@ shared_ptr<Session> DiceSessionManager::get(const chatInfo& ct) {
 		string name{ ct.gid ? "g" + to_string(ct.gid) +
 			(ct.chid ? "_ch" + to_string(ct.chid) : "")
 			: "usr" + to_string(ct.uid) };
-		while (SessionByName.count(name)) {
-			name += '+';
-		}
 		std::unique_lock<std::shared_mutex> lock(sessionMutex);
-		auto ptr{ std::make_shared<Session>(name)};
-		ptr->areas.insert(here);
-		SessionByName[name] = ptr;
-		SessionByChat[here] = ptr;
-		return ptr;
+		if (!SessionByName.count(name)) {
+			auto ptr{ std::make_shared<Session>(name) };
+			ptr->areas.insert(here);
+			SessionByName[name] = ptr;
+			SessionByChat[here] = ptr;
+			return ptr;
+		}
+		else return SessionByChat[here] = SessionByName[name];
 	}
 }
 int DiceSessionManager::load() {
-	string strLog;
+	if (auto fileGM{ DiceDir / "user" / "GameTable.toml" };std::filesystem::exists(fileGM)) {
+		AttrObject cfg = AttrVar(toml::parse(ifstream(fileGM))).to_obj();
+		inc = cfg.get_int("inc");
+	}
 	std::unique_lock<std::shared_mutex> lock(sessionMutex);
 	vector<std::filesystem::path> sFile;
 	int cnt = listDir(DiceDir / "user" / "session", sFile);
@@ -813,4 +880,10 @@ int DiceSessionManager::load() {
 			+ string(e.what()), 0b1000, printSTNow());
 	}
 	return cnt;
+}
+void DiceSessionManager::save() {
+	if (std::ofstream fs{ DiceDir / "user" / "GameTable.toml" }) {
+		AttrObject cfg = AttrVars{ { "inc",inc } };
+		fs << cfg.to_toml();
+	}
 }

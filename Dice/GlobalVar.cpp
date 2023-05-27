@@ -88,6 +88,8 @@ const dict_ci<string> PlainMsg
 	{"strLogUpSuccess","{self}已完成日志上传√\n请访问 {log_url} 以查看记录"},
 	{"strLogUpFailure","{self}上传日志文件失败，正在第{retry}次重传{log_file}…{ret}"},
 	{"strLogUpFailureEnd","很遗憾，{self}无法成功上传日志文件×\n{ret}\n如需获取可联系Master:{print:master}\n文件名:{log_file}"},
+	{"strGameNew","{self}创建新游戏「{game_id}」成功√"},
+	{"strGameOver","游戏「{game_id}」已终结√"},
 	{"strGameMastered","{self}已接受{nick}为本桌游戏管理员√"},
 	{"strGameMasterList","本桌游戏管理员有:\n{items}"},
 	{"strGameMasterDenied","抱歉，GM权限不能交给{nick}×"},
@@ -99,10 +101,14 @@ const dict_ci<string> PlainMsg
 	{"strGameKickNotPlayer","{nick}要踢走的{tid}不在桌上×"},
 	{"strGameExited","玩家{nick}已退出游戏√"},
 	{"strGameNotJoined","嗯？{nick}原来有在桌上吗？"},
-	{"strGameNotMaster","请{nick}让本桌GM进行此操作×"},
+	{"strGameNotMaster","请{nick}让这桌的GM进行此操作×"},
+	{"strGameVoidHere","{self}连桌布还没铺上，{nick}就要动桌子么？"},
+	{"strGameNotExit","{self}不记得有一桌叫{game_id}的游戏了×"},
 	{"strGameItemSet","{self}已将本桌游戏的{set_item}设置为{set_val}√"},
 	{"strGameItemShow","本桌游戏的{set_item}为{set_val}√"},
 	{"strGameItemEmpty","请{nick}输入待设置的项目×"},
+	{"strGameAreaOpen","{self}已在此展开「{game_id}」游戏领域√"},
+	{"strGameAreaClosed","游戏领域关闭，{nick}可用.game open {game_id} 重新展开√"},
 	{"strGameRouletteSet","{self}已为{face}面骰启用轮盘骰√"},
 	{"strGameRouletteTooBig","这么大……{nick}丢得完吗？"},
 	{"strGameRouletteHistory","{self}本轮轮盘骰记录如下:\n{hist}"},
@@ -516,6 +522,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+652:game new/over/open/close/state
 651:局内轮盘骰
 650:规则集专属指令
 649:.game 功能
@@ -699,6 +706,8 @@ Type=[回复性质](Reply/Order)
 )" },
 {"回复列表","{strSelfName}的回复触发词列表:{list_reply_deck}"},
 {"game",R"(游戏模式：
+`.game new 桌名` 创建游戏并命名（可省略）
+`.game over` 销毁当前游戏
 `.game master` 登记为GM
 `.game set 属性=值` 游戏设置
 例: `.game set rule=COC7`
@@ -707,6 +716,8 @@ Type=[回复性质](Reply/Order)
 `.game join` 登记为玩家
 `.game kick 玩家ID` 将玩家踢出游戏
 `.game exit` 退出游戏
+`.game open 桌号` 将当前窗口加入指定游戏
+`.game close` 关闭当前游戏
 `.game rou 100` 设置(百面)轮盘骰，详见.help roulette)"},
 {"roulette",R"(轮盘骰roulette
 设置轮盘骰后，游戏内进行对应面数的掷骰时，每次将擦除掷出点数，直至所有点数都被掷出后重置

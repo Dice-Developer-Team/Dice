@@ -292,7 +292,7 @@ void clear_group(AttrObject& job) {
 	if (!GrpDelete.empty()) {
 		for (const auto& id : GrpDelete) {
 			ChatList.erase(id);
-			if (sessions.has_session({ 0,id }))sessions.end({ 0,id });
+			if (sessions.has_session({ 0,id }))sessions.over({ 0,id });
 		}
 		MsgNote(job, "清查群聊时回收不活跃记录" + to_string(GrpDelete.size()) + "条", 0b1);
 	}

@@ -138,6 +138,7 @@ public:
 		save();
 		return *this;
 	}
+	string show()const;
 	bool hasAttr(const string& key);
 	AttrVar getAttr(const string& key);
 	void setAttr(const string& key, const AttrVar& val) {
@@ -231,6 +232,7 @@ class DiceSessionManager {
 	dict_ci<shared_ptr<Session>> SessionByName;
 	//聊天窗口对Session，允许多对一
 	unordered_map<chatInfo, shared_ptr<Session>> SessionByChat;
+	int inc = 0;
 public:
 	DiceChatLink linker;
 	[[nodiscard]] bool is_linking(const chatInfo& ct) {
@@ -239,16 +241,22 @@ public:
 	}
 
 	int load();
+	void save();
 	void clear() { SessionByName.clear(); SessionByChat.clear(); linker = {}; }
 	shared_ptr<Session> get(const chatInfo& ct);
-	shared_ptr<Session> get_if(const chatInfo& ct) {
+	shared_ptr<Session> newGame(const string& name, const chatInfo& ct);
+	shared_ptr<Session> get_if(const chatInfo& ct)const {
 		auto chat{ ct.locate() };
-		return chat && SessionByChat.count(chat) ? SessionByChat[chat] : shared_ptr<Session>();
+		return chat && SessionByChat.count(chat) ? SessionByChat.at(chat) : shared_ptr<Session>();
+	}
+	shared_ptr<Session> getByName(const string& name)const {
+		return SessionByName.count(name) ? SessionByName.at(name) : ptr<Session>();
 	}
 	bool has_session(const chatInfo& ct)const {
 		return SessionByChat.count(ct.locate());
 	}
-	void end(chatInfo ct);
-
+	void open(const ptr<Session>& game, chatInfo ct);
+	void close(chatInfo ct);
+	void over(chatInfo ct);
 };
 extern DiceSessionManager sessions;
