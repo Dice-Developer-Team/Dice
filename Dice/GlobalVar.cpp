@@ -553,7 +553,6 @@ const dict_ci<> HelpDoc = {
 621:扩展代理事件及ex接口
 618:支持reply(Order形式)覆盖指令
 617:更新grade分档转义
-615:支持自定义数据读写
 612:新增mod代理事件
 610:新增mod定时事件
 609:新增mod循环事件
@@ -706,14 +705,15 @@ Type=[回复性质](Reply/Order)
 )" },
 {"回复列表","{strSelfName}的回复触发词列表:{list_reply_deck}"},
 {"game",R"(游戏模式：
-`.game new 桌名` 创建游戏并命名（可省略）
-`.game over` 销毁当前游戏
+`.game new 桌名` 创建游戏（命名可省略）
+`.game over` 销毁本桌游戏
+`.game state` 查看本桌状态
 `.game master` 登记为GM
 `.game set 属性=值` 游戏设置
 例: `.game set rule=COC7`
-`.game set 属性` 查看游戏设置
-`.game call` at全体玩家
-`.game join` 登记为玩家
+`.game set 属性` 查看设置
+`.game call` at玩家
+`.game join` 玩家登记
 `.game kick 玩家ID` 将玩家踢出游戏
 `.game exit` 退出游戏
 `.game open 桌号` 将当前窗口加入指定游戏

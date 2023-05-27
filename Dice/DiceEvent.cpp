@@ -173,9 +173,9 @@ void DiceEvent::fwdMsg(){
 		strFwd += forward_filter(strMsg);
 		AddMsgToQueue(strFwd, sessions.linker.get_aim(here).first);
 	}
-	if (auto session{ sessions.get_if(here) }; session && session->is_logging()
+	if ((thisGame || (thisGame = sessions.get_if(here))) && thisGame->is_logging()
 		&& strLowerMessage.find(".log") != 0) {
-		ofstream logout(session->log_path(), ios::out | ios::app);
+		ofstream logout(thisGame->log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(idx_pc(*this).to_str()) + "(" + to_string(fromChat.uid) + ") " + printTTime((time_t)get_ll("time")) << endl
 			<< GBKtoUTF8(filter_CQcode(strMsg, fromChat.gid)) << endl << endl;
 	}
@@ -2432,7 +2432,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		string strPara = readPara();
-		if ( strPara == "show") {
+		if (strPara == "show") {
 			if (thisGame)thisGame->deck_show(this);
 			else replyMsg("strDeckListEmpty");
 		}

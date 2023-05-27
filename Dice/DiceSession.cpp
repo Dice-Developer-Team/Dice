@@ -33,7 +33,7 @@ string DiceSession::show()const {
 	ShowList li;
 	li << "桌号: " + name;
 	if (attrs.has("rule"))li << "规则: " + attrs.get_str("rule");
-	if (is_logging())li << "日志记录中";
+	if (is_logging())li << "日志记录中:" + logger.name;
 	if (!master->empty()) {
 		ShowList sub;
 		for (auto& id : *master) {
@@ -782,7 +782,8 @@ int DiceSessionManager::load() {
 			--cnt;
 			continue;
 		}
-		auto pSession(std::make_shared<Session>(filename.stem().string()));
+		string name{ UTF8toGBK(filename.stem().u8string()) };
+		auto pSession(std::make_shared<Session>(name));
 		bool isUpdated{ false };
 		try {
 			pSession->create(j["create_time"]).update(j["update_time"]);
@@ -866,7 +867,7 @@ int DiceSessionManager::load() {
 		catch (std::exception& e) {
 			console.log("读取session文件" + UTF8toGBK(filename.u8string()) + "出错!" + e.what(), 1);
 		}
-		SessionByName[UTF8toGBK(filename.u8string())] = pSession;
+		SessionByName[name] = pSession;
 		for (const auto& chat : pSession->areas) {
 			SessionByChat[chat] = pSession;
 		}
