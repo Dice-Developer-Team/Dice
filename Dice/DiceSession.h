@@ -178,6 +178,7 @@ public:
 		update();
 		return true;
 	}
+	bool is_simple() const { return player->empty() && master->empty(); }
 	bool is_part(long long uid) const { return player->count(uid) || master->count(uid); }
 	bool del_ob(long long uid) {
 		if (obs->count(uid))obs->erase(uid);

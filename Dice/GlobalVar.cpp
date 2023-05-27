@@ -167,7 +167,7 @@ const dict_ci<string> PlainMsg
 	{"strPcStatEmpty","{pc}在{self}处还没有检定被记录的样子×"},
 	{"strPcNotExistErr","{self}无{nick}的角色卡记录，无法删除×"},
 	{"strPcCardFull","{nick}在{self}处的角色卡已达上限，请先清理多余角色卡×"},
-	{"strPcTempChange","{self}已将{pc}的模板切换为{new_type}×"},
+	{"strPcTempChange","{self}已将{pc}的模板切换为{new_type}√"},
 	{"strPcTempInvalid","{self}无法识别的角色卡模板×"},
 	{"strPcNameEmpty","名称不能为空×"},
 	{"strPcNameExist","{self}已记录过同名「{char}」×"},

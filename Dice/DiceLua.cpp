@@ -486,7 +486,7 @@ int lua_Set_new(lua_State* L) {
 }
 static const luaL_Reg lua_Set_funcs[] = {
 	{"__index", lua_Set_index},
-	{"__gc", lua_Set_totable},
+	{"__gc", lua_Set_gc},
 	{"__tostring", lua_Set_tostring},
 	//{"__totable", lua_Set_totable},
 	{"__len", lua_Set_len},
@@ -926,7 +926,7 @@ LUADEF(getPlayerCard) {
 			lua_push_Actor(L, getPlayer(uid)[lua_to_gbstring(L, 2)]);
 		}
 		else {
-			long long gid{ lua_to_int_or_zero(L, 1) };
+			long long gid{ lua_to_int_or_zero(L, 2) };
 			lua_push_Actor(L, getPlayer(uid)[gid]);
 		}
 		return 1;

@@ -157,7 +157,8 @@ void DiceEvent::logEcho(){
 		AddMsgToQueue(strFwd, sessions.linker.get_aim(here).first);
 	}
 	if (thisGame && thisGame->is_logging()
-		&& strLowerMessage.find(".log") != 0) {
+		&& strLowerMessage.find(".log") != 0
+		&& (thisGame->is_simple() || thisGame->is_part(fromChat.uid))) {
 		ofstream logout(thisGame->log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time")) << endl
 			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
@@ -174,7 +175,8 @@ void DiceEvent::fwdMsg(){
 		AddMsgToQueue(strFwd, sessions.linker.get_aim(here).first);
 	}
 	if (thisGame && thisGame->is_logging()
-		&& strLowerMessage.find(".log") != 0) {
+		&& strLowerMessage.find(".log") != 0
+		&& (thisGame->is_simple() || thisGame->is_part(fromChat.uid))) {
 		ofstream logout(thisGame->log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(idx_pc(*this).to_str()) + "(" + to_string(fromChat.uid) + ") " + printTTime((time_t)get_ll("time")) << endl
 			<< GBKtoUTF8(filter_CQcode(strMsg, fromChat.gid)) << endl << endl;
@@ -3905,7 +3907,7 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strSanInvalid");
 			return 1;
 		}
-		const int intTmpRollRes = (thisGame && thisGame->is_part(fromChat.uid) && thisGame->roulette.count(100))
+		const int intTmpRollRes = (thisGame && thisGame->is_part(fromChat.uid))
 			? thisGame->roll(100) : RandomGenerator::Randint(1, 100);
 		//理智检定计入统计
 		if (pc) {
@@ -4482,7 +4484,7 @@ int DiceEvent::InnerOrder() {
 			strMainDice = pc->getExp(strReason);
 		}
 		RD rdMainDice(strMainDice, intDefaultDice);
-		const int intFirstTimeRes = thisGame && thisGame->is_part(fromChat.uid) ? rdMainDice.Roll(thisGame) : rdMainDice.Roll();
+		const int intFirstTimeRes = (thisGame && thisGame->is_part(fromChat.uid)) ? rdMainDice.Roll(thisGame) : rdMainDice.Roll();
 		switch (intFirstTimeRes) {
 		case 0: break;
 		case Value_Err:
