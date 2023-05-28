@@ -907,11 +907,11 @@ string DiceModManager::js_path(const string& name)const {
 	}
 	return {};
 }
-string DiceModManager::py_path(const string& name)const {
+std::optional<std::filesystem::path> DiceModManager::py_path(const string& name)const {
 	if (auto it{ global_py_scripts.find(name) }; it != global_py_scripts.end()) {
 		return it->second;
 	}
-	return {};
+	return std::nullopt;
 }
 
 #ifndef __ANDROID__
@@ -1052,8 +1052,7 @@ void DiceMod::loadDir() {
 				}
 				else if (p.extension() == ".py") {
 					string script_name{ cut_stem(p,dirScript) };
-					string strPath{ p.u8string() };
-					py_scripts[script_name] = strPath;
+					py_scripts[script_name] = p;
 				}
 			}
 		}

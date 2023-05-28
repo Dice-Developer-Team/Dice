@@ -33,7 +33,7 @@ public:
 	PyGlobal();
 	~PyGlobal();
 	int runFile(const std::filesystem::path&);
-	bool runFile(const std::string& s, const AttrObject& context);
+	bool runFile(const std::filesystem::path& s, const AttrObject& context);
 	int runString(const std::string&);
 	bool execString(const std::string&, const AttrObject& = {});
 	AttrVar evalString(const std::string& , const AttrObject& = {});

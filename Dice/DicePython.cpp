@@ -138,6 +138,9 @@ PyObject* py_build_Set(const fifo_set<AttrIndex>& s){
 		else if (auto num{ elem.to_double() }; num == (Py_ssize_t)num) {
 			PySet_Add(set, PyLong_FromSsize_t((Py_ssize_t)num));
 		}
+		else if (num == (long long)num) {
+			PySet_Add(set, PyLong_FromLongLong((long long)num));
+		}
 		else PySet_Add(set, PyFloat_FromDouble(num));
 	}
 	return set;
@@ -1175,18 +1178,20 @@ PyGlobal::~PyGlobal() {
 int PyGlobal::runFile(const std::filesystem::path& p) {
 	return 0;
 }
-bool PyGlobal::runFile(const std::string& s, const AttrObject& context) {
-	FILE* fp{ fopen(s.c_str(),"r") };
-	PyObject* mainModule = PyImport_ImportModule("__main__");
-	PyObject* global = PyModule_GetDict(mainModule);
-	auto res{ PyRun_File(fp, s.c_str(), Py_file_input, global, py_newContext(context)) };
-	fclose(fp);
-	if (!res) {
-		console.log(getMsg("self") + "运行" + s + "异常!" + py_print_error(), 0b10);
-		PyErr_Clear();
-		return false;
+bool PyGlobal::runFile(const std::filesystem::path& p, const AttrObject& context) {
+	if (FILE* fp{ fopen(p.string().c_str(),"r")}) {
+		PyObject* mainModule = PyImport_ImportModule("__main__");
+		PyObject* global = PyModule_GetDict(mainModule);
+		auto res{ PyRun_File(fp, p.u8string().c_str(), Py_file_input, global, py_newContext(context))};
+		fclose(fp);
+		if (!res) {
+			console.log(getMsg("self") + "运行" + UTF8toGBK(p.u8string()) + "异常!" + py_print_error(), 0b10);
+			PyErr_Clear();
+			return false;
+		}
+		return true;
 	}
-	return true;
+	return false;
 }
 int PyGlobal::runString(const std::string& s) {
 	return PyRun_SimpleString(GBKtoUTF8(s).c_str());
@@ -1228,21 +1233,28 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrVar& action) {
 		PyObject* locals = PyDict_New();
 		PyDict_SetItem(locals, PyUnicode_FromString("msg"), py_newContext(*msg));
 		string pyScript{ action };
-		if (fmt->has_py(pyScript)) {
-			FILE* fp{ fopen(fmt->py_path(pyScript).c_str(),"r") };
-			if (auto res{ PyRun_File(fp, fmt->py_path(pyScript).c_str(), Py_file_input, dict, locals) }; !res) {
-				console.log(getMsg("self") + "运行" + pyScript + "异常!" + py_print_error(), 0b10);
-				PyErr_Clear();
-				fclose(fp);
-				msg->set("lang", "Python");
-				msg->reply(getMsg("strScriptRunErr"));
-				return false;
+		if (auto file{ fmt->py_path(pyScript)}) {
+			if (FILE* fp{ fopen(file->string().c_str(),"r") }) {
+				if (auto res{ PyRun_File(fp, file->u8string().c_str(), Py_file_input, dict, locals) }; !res) {
+					fclose(fp);
+					console.log(getMsg("self") + "运行" + pyScript + "异常!\n" + py_print_error(), 0b10);
+					PyErr_Clear();
+				}
+				else {
+					fclose(fp);
+					return true;
+				}
 			}
-			fclose(fp);
+			else {
+				console.log(getMsg("self") + "读取" + UTF8toGBK(file->u8string()) + "失败！", 0b10);
+			}
+			msg->set("lang", "Python");
+			msg->reply(getMsg("strScriptRunErr"));
+			return false;
 		}
 		else {
-			if (auto res{ PyRun_String(GBKtoUTF8(pyScript).c_str(), Py_file_input, dict, locals) };!res) {
-				console.log(getMsg("self") + "运行python语句异常!" + py_print_error(), 0b10);
+			if (auto res{ PyRun_String(GBKtoUTF8(pyScript).c_str(), Py_eval_input, dict, locals) };!res) {
+				console.log(getMsg("self") + "运行python语句异常!\n" + py_print_error(), 0b10);
 				PyErr_Clear();
 				msg->set("lang", "Python");
 				msg->reply(getMsg("strScriptRunErr"));
@@ -1262,7 +1274,7 @@ bool py_call_event(AttrObject eve, const AttrVar& action) {
 	if (Enabled && py) {
 		string script{ action.to_str() };
 		bool isFile{ action.is_character() && fmt->has_py(script) };
-		return isFile ? py->runFile(fmt->py_path(script), eve) : py->execString(script, eve);
+		return isFile ? py->runFile(*fmt->py_path(script), eve) : py->execString(script, eve);
 	}
 	return false;
 }

@@ -1082,7 +1082,7 @@ bool js_call_event(AttrObject eve, const AttrVar& action) {
 	string title{ eve.has("hook") ? eve.get_str("hook") : eve.get_str("Event") };
 	string script{ action.to_str() };
 	bool isFile{ action.is_character() && fmt->has_js(script) };
-	if (auto ret = isFile ? js_event_pool[title].evalFileLocal(fmt->py_path(script), eve) 
+	if (auto ret = isFile ? js_event_pool[title].evalFileLocal(fmt->js_path(script), eve) 
 		: js_event_pool[title].evalStringLocal(script, title, eve);
 		JS_IsException(ret)) {
 		console.log(getMsg("strSelfName") + "ÊÂ¼þ¡¸" + title + "¡¹Ö´ÐÐjsÊ§°Ü!\n" + js_event_pool[title].getException(), 0b10);

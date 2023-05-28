@@ -122,8 +122,8 @@ private:
 	dict_ci<string>lua_scripts;
 	//native path of .js
 	dict_ci<string>js_scripts;
-	//utf8 path of .py
-	dict_ci<string>py_scripts;
+	//path of .py
+	dict_ci<std::filesystem::path>py_scripts;
 	vector<fs::path>luaFiles;
 	dict<ptr<DiceMsgReply>>reply_list;
 	AttrObjects events;
@@ -149,7 +149,7 @@ class DiceModManager {
 	DiceReplyUnit final_reply;
 	dict_ci<string> global_lua_scripts;
 	dict_ci<string> global_js_scripts;
-	dict_ci<string> global_py_scripts;
+	dict_ci<std::filesystem::path> global_py_scripts;
 	dict_ci<AttrVars> taskcall;
 	AttrObjects global_events; //events by id
 	//Event
@@ -224,7 +224,7 @@ public:
 	bool has_py(const string& name)const { return global_py_scripts.count(name); }
 	string lua_path(const string& name)const;
 	string js_path(const string& name)const;
-	string py_path(const string& name)const;
+	std::optional<std::filesystem::path> py_path(const string& name)const;
 
 	void loadPlugin(ResList& res);
 	int load(ResList&);
