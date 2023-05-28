@@ -24,7 +24,7 @@ string py_print_error() {
 	PyErr_Fetch(&ptype, &val, &tb);
 	PyErr_NormalizeException(&ptype, &val, &tb);
 	if (tb)PyException_SetTraceback(val, tb);
-	return PyUnicode_AsUTF8(PyObject_Str(val));
+	return UTF8toGBK(PyUnicode_AsUTF8(PyObject_Str(val)));
 }
 string py_to_gbstring(PyObject* o) {
 	return Py_IS_TYPE(o, &PyUnicode_Type) ? UtoGBK(PyUnicode_AsUnicode(o))
@@ -1136,6 +1136,7 @@ PyMODINIT_FUNC PyInit_DiceMaid(){
 		return NULL;
 	}
 	Py_INCREF(&PyContextType);
+	Py_INCREF(&PyGameTable_Type);
 	Py_INCREF(&PyActor_Type);
 	Py_INCREF(&PySelfData_Type);
 	return mod;
@@ -1171,9 +1172,46 @@ PyGlobal::PyGlobal() {
 	}
 	console.log("Python.Initialized", 0);
 }
+dict<std::pair<PyObject*, std::filesystem::file_time_type>> Py_FileScripts;
+dict<PyObject*> Py_StringScripts;
 PyGlobal::~PyGlobal() {
+	for (auto& [p, s] : Py_FileScripts) {
+		Py_INCREF(s.first);
+	}
+	for (auto& [s, o] : Py_StringScripts) {
+		Py_INCREF(o);
+	}
 	if(Py_IsInitialized())Py_Finalize();
 	console.log("Python.Finalized", 0);
+}
+PyObject* Py_CompileScript(string& name) {
+	if (auto p{ fmt->py_path(name) }) {
+		auto lstWrite{ std::filesystem::last_write_time(*p) };
+		if (Py_FileScripts.count(name) && Py_FileScripts[name].second == lstWrite) {
+			return Py_FileScripts[name].first;
+		}
+		else if (auto script{ readFile(*p) }) {
+			auto res{ Py_CompileString(script->c_str(), p->u8string().c_str(), Py_file_input) };
+			Py_FileScripts[name] = { res,lstWrite };
+			name = UTF8toGBK(p->u8string());
+			if (!res) {
+				console.log(getMsg("self") + "±àÒë" + UTF8toGBK(p->u8string()) + "Ê§°Ü: " + py_print_error(), 0b10);
+				PyErr_Clear();
+			}
+			return res;
+		}
+	}
+	else if (Py_StringScripts.count(name)) {
+		return Py_StringScripts[name];
+	}
+	else if (auto res{ Py_CompileString(GBKtoUTF8(name).c_str(), "<eval>", Py_eval_input) }) {
+		return Py_StringScripts[name] = res;
+	}
+	else {
+		console.log(getMsg("self") + "±àÒëpythonÓï¾äÊ§°Ü: " + py_print_error(), 0b10);
+		PyErr_Clear();
+	}
+	return nullptr;
 }
 int PyGlobal::runFile(const std::filesystem::path& p) {
 	return 0;
@@ -1229,46 +1267,28 @@ AttrVar PyGlobal::evalString(const std::string& s, const AttrObject& context) {
 bool PyGlobal::call_reply(DiceEvent* msg, const AttrVar& action) {
 	try {
 		PyObject* mainModule = PyImport_ImportModule("__main__");
-		PyObject* dict = PyModule_GetDict(mainModule);
+		PyObject* global = PyModule_GetDict(mainModule);
 		PyObject* locals = PyDict_New();
 		PyDict_SetItem(locals, PyUnicode_FromString("msg"), py_newContext(*msg));
 		string pyScript{ action };
-		if (auto file{ fmt->py_path(pyScript)}) {
-			if (FILE* fp{ fopen(file->string().c_str(),"r") }) {
-				if (auto res{ PyRun_File(fp, file->u8string().c_str(), Py_file_input, dict, locals) }; !res) {
-					fclose(fp);
-					console.log(getMsg("self") + "ÔËÐÐ" + pyScript + "Òì³£!\n" + py_print_error(), 0b10);
-					PyErr_Clear();
-				}
-				else {
-					fclose(fp);
-					return true;
-				}
+		if (auto co{ Py_CompileScript(pyScript) }) {
+			if (PyEval_EvalCode(co, global, locals)) {
+				return true;
 			}
 			else {
-				console.log(getMsg("self") + "¶ÁÈ¡" + UTF8toGBK(file->u8string()) + "Ê§°Ü£¡", 0b10);
-			}
-			msg->set("lang", "Python");
-			msg->reply(getMsg("strScriptRunErr"));
-			return false;
-		}
-		else {
-			if (auto res{ PyRun_String(GBKtoUTF8(pyScript).c_str(), Py_eval_input, dict, locals) };!res) {
-				console.log(getMsg("self") + "ÔËÐÐpythonÓï¾äÒì³£!\n" + py_print_error(), 0b10);
+				console.log(getMsg("self") + "Ö´ÐÐ" + pyScript + "³ö´í£¡\n" + py_print_error(), 0b10);
 				PyErr_Clear();
 				msg->set("lang", "Python");
 				msg->reply(getMsg("strScriptRunErr"));
-				return false;
 			}
 		}
-		return true;
 	}
 	catch (std::exception& e) {
 		console.log(getMsg("self") + "ÔËÐÐpython½Å±¾Òì³£!" + e.what(), 0b10);
 		msg->set("lang", "Python");
 		msg->reply(getMsg("strScriptRunErr"));
-		return false;
 	}
+	return false;
 }
 bool py_call_event(AttrObject eve, const AttrVar& action) {
 	if (Enabled && py) {

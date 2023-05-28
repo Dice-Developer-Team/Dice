@@ -3,7 +3,7 @@
 /*
  * ÎÄ¼þ¶ÁÐ´
  * Copyright (C) 2018-2021 w4123
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 
 #include <fstream>
@@ -49,6 +49,8 @@ bool readFile(const std::filesystem::path& p, std::basic_string<Char, Trait, All
 	str = buffer.str();
 	return true;
 }
+
+std::optional<std::string> readFile(const std::filesystem::path& p);
 
 template <typename TKey, typename TVal>
 TVal get(const map<TKey, TVal>& m, TKey key, TVal def)
