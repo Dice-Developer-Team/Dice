@@ -50,7 +50,7 @@ JSClassDef js_dice_context_class = {
 	.finalizer = js_dice_context_finalizer,
 	.exotic = &js_dice_context_methods,
 }; 
-const JSCFunctionListEntry js_dice_context_proto_funcs[] = {
+const JSCFunctionListEntry js_dice_Context_proto_funcs[] = {
 	JS_CFUNC_DEF("get",2,js_dice_context_get),
 	JS_CFUNC_DEF("format",2,js_dice_context_format),
 	JS_CFUNC_DEF("echo",2,js_dice_context_echo),

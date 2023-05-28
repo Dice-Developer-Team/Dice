@@ -89,13 +89,11 @@ js_context::js_context() : ctx(JS_NewContext(rt)) {
 	JS_SetPropertyStr(ctx, global, "Set", set_ctor);
 	JS_SetConstructor(ctx, set_ctor, pro_set);
 	JS_SetClassProto(ctx, js_dice_Set_id, pro_set);
-	JS_FreeValue(ctx, pro_set);
 	//Context
 	JSValue pro_context = JS_NewObject(ctx);
-	JS_SetPropertyFunctionList(ctx, pro_context, js_dice_context_proto_funcs,
-		countof(js_dice_context_proto_funcs));
+	JS_SetPropertyFunctionList(ctx, pro_context, js_dice_Context_proto_funcs,
+		countof(js_dice_Context_proto_funcs));
 	JS_SetClassProto(ctx, js_dice_context_id, pro_context);
-	JS_FreeValue(ctx, pro_context);
 	//SelfData
 	JSValue pro_selfdata = JS_NewObject(ctx);
 	JS_SetPropertyFunctionList(ctx, pro_selfdata, js_dice_selfdata_proto_funcs,
@@ -105,7 +103,6 @@ js_context::js_context() : ctx(JS_NewContext(rt)) {
 	JS_SetPropertyStr(ctx, global, "SelfData", selfdata_ctor);
 	JS_SetConstructor(ctx, selfdata_ctor, pro_selfdata);
 	JS_SetClassProto(ctx, js_dice_selfdata_id, pro_selfdata);
-	JS_FreeValue(ctx, pro_selfdata);
 	//GameTable
 	JSValue pro_game = JS_NewObject(ctx);
 	JS_SetPropertyFunctionList(ctx, pro_game, js_dice_GameTable_proto_funcs,
@@ -116,7 +113,6 @@ js_context::js_context() : ctx(JS_NewContext(rt)) {
 	JS_SetPropertyFunctionList(ctx, pro_actor, js_dice_actor_proto_funcs,
 		countof(js_dice_actor_proto_funcs));
 	JS_SetClassProto(ctx, js_dice_actor_id, pro_actor);
-	//JS_FreeValue(ctx, pro_actor);
 	JS_FreeValue(ctx, global);
 }
 js_context::~js_context() {
@@ -239,7 +235,7 @@ string js_context::getException() {
 	auto err{ js_toGBK(ctx, e) };
 	if (JS_IsNull(e) || JS_IsUndefined(e)) goto Free;
 	if (JSValue stack = JS_GetPropertyStr(ctx, e, "stack"); !JS_IsException(stack)) {
-		err += "\n" + js_NativeToGBK(ctx, stack);
+		err += "\n" + js_toGBK(ctx, stack);
 	}
 Free:
 	JS_FreeValue(ctx, e);
@@ -255,6 +251,11 @@ JSValue js_newGameTable(JSContext* ctx, const ptr<DiceSession>& p) {
 	JS_SetOpaque(obj, new ptr<DiceSession>(p));
 	return obj;
 }
+JSValue js_newActor(JSContext* ctx, const PC& p) {
+	auto obj = JS_NewObjectClass(ctx, js_dice_actor_id);
+	JS_SetOpaque(obj, new PC(p));
+	return obj;
+}
 void js_context::setContext(const std::string& name, const AttrObject& context) {
 	auto global = JS_GetGlobalObject(ctx);
 	JS_SetPropertyStr(ctx, global, name.c_str(), js_newDiceContext(ctx, context));
@@ -268,10 +269,10 @@ JSValue js_context::evalStringLocal(const std::string& s, const string& title, c
 	string exp{ GBKtoUTF8(s) };
 	return JS_EvalThis(ctx, js_newDiceContext(ctx, context), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_MODULE);
 }
-JSValue js_context::evalFile(const std::string& s) {
+JSValue js_context::evalFile(const std::filesystem::path& p) {
 	size_t buf_len{ 0 };
-	if (uint8_t * buf{ js_load_file(ctx, &buf_len, s.c_str()) }) {
-		auto ret = JS_Eval(ctx, (char*)buf, buf_len, s.c_str(),
+	if (uint8_t * buf{ js_load_file(ctx, &buf_len, p.string().c_str())}) {
+		auto ret = JS_Eval(ctx, (char*)buf, buf_len, p.u8string().c_str(),
 			JS_EVAL_TYPE_GLOBAL);
 		js_free(ctx, buf);
 		return ret;
@@ -683,25 +684,24 @@ QJSDEF(setUserToday) {
 	return JS_TRUE;
 }
 QJSDEF(getPlayerCard) {
-	auto obj = JS_NewObjectClass(ctx, js_dice_actor_id);
 	long long uid = js_toLongLong(ctx, argv[0]);
 	if (uid && PList.count(uid)) {
 		auto& pl{ getPlayer(uid) };
 		if (auto type = JS_VALUE_GET_TAG(argv[1]); type == JS_TAG_STRING) {
-			JS_SetOpaque(obj, new PC(pl[js_toGBK(ctx, argv[1])]));
+			return js_newActor(ctx, pl[js_toGBK(ctx, argv[1])]);
 		}
 		else if (JS_IsNumber(argv[1])) {
-			JS_SetOpaque(obj, new PC(pl[js_toLongLong(ctx, argv[1])]));
+			return js_newActor(ctx, pl[js_toLongLong(ctx, argv[1])]);
 		}
 		else if (JS_IsUndefined(argv[1])) {
-			JS_SetOpaque(obj, new PC(pl[0]));
+			return js_newActor(ctx, pl[0]);
 		}
 		else {
 			JS_ThrowTypeError(ctx, "#2 must be string or int!");
 		}
 	}
-	else JS_SetOpaque(obj, new PC(std::make_shared<CharaCard>()));
-	return obj;
+	else JS_ThrowTypeError(ctx, "#1 invalid user id!");
+	return NULL;
 }
 //Context
 void js_dice_context_finalizer(JSRuntime* rt, JSValue val) {
@@ -719,7 +719,7 @@ int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueC
 			desc->value = js_newDiceContext(ctx, chat(obj.get_ll("gid")).confs);
 		}
 		else if (key == "pc" && obj.has("uid")) {
-			desc->value = js_newDiceContext(ctx, chat(obj.get_ll("gid")).confs);
+			desc->value = js_newActor(ctx, getPlayer(obj.get_ll("uid"))[obj.get_ll("gid")]);
 		}
 		else if (key == "game") {
 			if (auto game = sessions.get_if(obj)) {
@@ -727,7 +727,10 @@ int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueC
 			}
 			else return FALSE;
 		}
-		else if (JS_IsUndefined(desc->value = js_newAttr(ctx, getContextItem(obj, key)))) return FALSE;
+		else if (auto val{ getContextItem(obj, key) }) {
+			desc->value = js_newAttr(ctx, val);
+		}
+		else return FALSE;
 	}
 	else return FALSE;
 	desc->flags = JS_PROP_C_W_E;

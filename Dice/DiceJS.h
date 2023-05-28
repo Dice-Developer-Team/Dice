@@ -37,7 +37,7 @@ public:
 	void setContext(const std::string&, const AttrObject& context);
 	JSValue evalString(const std::string& s, const string& title);
 	JSValue evalStringLocal(const std::string& s, const string& title, const AttrObject& context);
-	JSValue evalFile(const std::string& s);
+	JSValue evalFile(const std::filesystem::path&);
 	JSValue evalFileLocal(const std::string& s, const AttrObject& context);
 };
 JSValue js_newAttr(JSContext*, const AttrVar& var);

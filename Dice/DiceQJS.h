@@ -31,6 +31,7 @@ extern "C" {
 	QJSDEF(getUserToday);
 	QJSDEF(setUserToday);
 	QJSDEF(getPlayerCard);
+	//Context
 	extern JSClassID js_dice_context_id;
 	extern JSClassDef js_dice_context_class;
 	void js_dice_context_finalizer(JSRuntime* rt, JSValue val);
@@ -42,7 +43,7 @@ extern "C" {
 	QJSDEF(context_format);
 	QJSDEF(context_echo);
 	QJSDEF(context_inc);
-	extern const JSCFunctionListEntry js_dice_context_proto_funcs[4];
+	extern const JSCFunctionListEntry js_dice_Context_proto_funcs[4];
 	extern JSClassID js_dice_selfdata_id;
 	extern JSClassDef js_dice_selfdata_class;
 	QJSDEF(selfdata_constructor);
@@ -53,6 +54,7 @@ extern "C" {
 	int js_dice_selfdata_set(JSContext* ctx, JSValueConst obj, JSAtom atom, JSValueConst value, JSValueConst receiver, int flags);
 	QJSDEF(selfdata_append);
 	extern const JSCFunctionListEntry js_dice_selfdata_proto_funcs[1];
+	//GameTable
 	extern JSClassID js_dice_GameTable_id;
 	extern JSClassDef js_dice_GameTable_class;
 	void js_dice_GameTable_finalizer(JSRuntime* rt, JSValue val);
@@ -61,6 +63,7 @@ extern "C" {
 	int js_dice_GameTable_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags);
 	extern const JSCFunctionListEntry js_dice_GameTable_proto_funcs[1];
 	QJSDEF(GameTable_message);
+	//Actor
 	extern JSClassID js_dice_actor_id;
 	extern JSClassDef js_dice_actor_class;
 	void js_dice_actor_finalizer(JSRuntime* rt, JSValue val);
