@@ -1193,9 +1193,8 @@ PyObject* Py_CompileScript(string& name) {
 		else if (auto script{ readFile(*p) }) {
 			auto res{ Py_CompileString(script->c_str(), p->u8string().c_str(), Py_file_input) };
 			Py_FileScripts[name] = { res,lstWrite };
-			name = UTF8toGBK(p->u8string());
 			if (!res) {
-				console.log(getMsg("self") + "±àÒë" + UTF8toGBK(p->u8string()) + "Ê§°Ü: " + py_print_error(), 0b10);
+				console.log(getMsg("self") + "±àÒë" + (name = UTF8toGBK(p->u8string())) + "Ê§°Ü: " + py_print_error(), 0b10);
 				PyErr_Clear();
 			}
 			return res;
@@ -1265,18 +1264,20 @@ AttrVar PyGlobal::evalString(const std::string& s, const AttrObject& context) {
 	return {};
 }
 bool PyGlobal::call_reply(DiceEvent* msg, const AttrVar& action) {
+	string pyScript{ action };
 	try {
-		PyObject* mainModule = PyImport_ImportModule("__main__");
-		PyObject* global = PyModule_GetDict(mainModule);
-		PyObject* locals = PyDict_New();
-		PyDict_SetItem(locals, PyUnicode_FromString("msg"), py_newContext(*msg));
-		string pyScript{ action };
 		if (auto co{ Py_CompileScript(pyScript) }) {
+			PyObject* mainModule = PyImport_ImportModule("__main__");
+			PyObject* global = PyModule_GetDict(mainModule);
+			PyObject* locals = PyDict_New();
+			PyDict_SetItem(locals, PyUnicode_FromString("msg"), py_newContext(*msg));
 			if (PyEval_EvalCode(co, global, locals)) {
+				Py_DECREF(locals);
 				return true;
 			}
 			else {
-				console.log(getMsg("self") + "Ö´ÐÐ" + pyScript + "³ö´í£¡\n" + py_print_error(), 0b10);
+				Py_DECREF(locals);
+				console.log(getMsg("self") + "ÔËÐÐ" + pyScript + "³ö´í£¡\n" + py_print_error(), 0b10);
 				PyErr_Clear();
 				msg->set("lang", "Python");
 				msg->reply(getMsg("strScriptRunErr"));

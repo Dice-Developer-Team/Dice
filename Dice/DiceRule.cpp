@@ -1,9 +1,10 @@
-#include "DiceRule.h"
+#include "DiceMod.h"
 ptr<DiceRuleSet> ruleset{ std::make_shared<DiceRuleSet>() };
 
 void DiceRule::merge(const DiceRule& other) {
 	map_merge(manual, other.manual);
 	map_merge(orders.items, other.orders.items);
+	map_merge(cassettes, other.cassettes);
 }
 std::optional<string> DiceRule::traceManual(const string& key) {
 	if (manual.count(key))return manual.at(key);
@@ -32,6 +33,13 @@ bool DiceRule::listen_order(DiceEvent* eve) {
 		if (sub->listen_order(eve))return true;
 	}*/
 	if (meta)return meta->listen_order(eve);
+	return false;
+}
+bool DiceRule::listen_cassette(const string& tape, DiceEvent* eve)const{
+	if (auto t{ cassettes.find(tape) }; t != cassettes.end() && t->second) {
+		call_event(*eve, t->second);
+		return eve->is("blocked");
+	}
 	return false;
 }
 void DiceRuleSet::merge(const dict_ci<DiceRule>& m) {

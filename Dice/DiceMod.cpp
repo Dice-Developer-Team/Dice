@@ -773,22 +773,12 @@ void DiceModManager::call_cycle_event(const string& id) {
 	if (auto trigger{ eve.get_dict("trigger") }; trigger->count("cycle")) {
 		sch.add_job_for(parse_seconds(trigger->at("cycle")), eve);
 	}
-	if (eve["action"].is_function()) {
-		lua_call_event(eve, eve["action"]);
-	}
-	else if (auto action{ eve.get_dict("action") }; action->count("lua")) {
-		lua_call_event(eve, action->at("lua"));
-	}
+	if (auto action{ eve.get_dict("action") })call_event(eve, action);
 }
 void DiceModManager::call_clock_event(const string& id) {
 	if (id.empty() || !global_events.count(id))return;
 	AttrObject eve{ global_events[id] };
-	auto action{ eve["action"] };
-	if (!action)return;
-	else if (action.is_table() && action.to_dict()->count("lua")) {
-		action = action.to_dict()->at("lua");
-	}
-	lua_call_event(eve, action);
+	if (auto action{ eve.get_dict("action") })call_event(eve, action);
 }
 bool DiceModManager::call_hook_event(AttrObject eve) {
 	string hookEvent{ eve.has("hook") ? eve.get_str("hook") : eve.get_str("Event") };
@@ -811,13 +801,7 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 				}
 #endif //DICE_PYTHON
 			}
-			else {
-				if (action->count("lua"))lua_call_event(eve, action->at("lua"));
-				if (action->count("js"))js_call_event(eve, action->at("js"));
-#ifdef DICE_PYTHON
-				if (action->count("py"))py_call_event(eve, action->at("py"));
-#endif //DICE_PYTHON
-			}
+			else call_event(eve, action);
 		}
 	}
 	return eve.is("blocked");
@@ -1067,8 +1051,11 @@ void DiceMod::loadDir() {
 					if (yaml.IsMap()) {
 						string rulename{ UTF8toGBK(yaml["rule"].Scalar()) };
 						auto& rule{ rules[rulename]};
-						if(yaml["manual"])for (auto it : yaml["manual"]) {
+						if (yaml["manual"])for (auto it : yaml["manual"]) {
 							rule.manual[UTF8toGBK(it.first.Scalar())] = UTF8toGBK(it.second.Scalar());
+						}
+						if (yaml["cassette"])for (auto it : yaml["cassette"]) {
+							rule.cassettes[UTF8toGBK(it.first.Scalar())] = AttrVar(it.second).to_dict();
 						}
 					}
 					else console.log(UTF8toGBK(cut_relative(p, pathDir).u8string()) + "yaml格式不为对象!", 0b10);
@@ -1086,7 +1073,7 @@ void DiceMod::loadDir() {
 		}
 		if (fs::exists(pathDir / "audio")) {
 			std::filesystem::copy(pathDir / "audio", dirExe / "data" / "record",
-				std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
+				(Enabled ? std::filesystem::copy_options::update_existing : std::filesystem::copy_options::overwrite_existing));
 			cntAudio = cntDirFile(pathDir / "audio");
 		}
 	}
@@ -1330,4 +1317,11 @@ void DiceModManager::save() {
 	else {
 		remove(DiceDir / "conf" / "ModList.json");
 	}
+}
+void call_event(AttrObject eve, const ptr<AttrVars>& action) {
+	if (action->count("lua"))lua_call_event(eve, action->at("lua"));
+	if (action->count("js"))js_call_event(eve, action->at("js"));
+#ifdef DICE_PYTHON
+	if (action->count("py"))py_call_event(eve, action->at("py"));
+#endif //DICE_PYTHON
 }

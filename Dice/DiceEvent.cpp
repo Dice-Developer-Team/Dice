@@ -4660,7 +4660,9 @@ bool DiceEvent::DiceFilter()
 	}
 	if (auto ruleName{ getGameRule() }; ruleName
 		&& (thisGame->is_part(fromChat.uid))
-		&& ruleset->has_rule(*ruleName) && ruleset->get_rule(*ruleName)->listen_order(this)) {
+		&& ruleset->has_rule(*ruleName)
+		&& ((thisGame->attrs.has("tape") && ruleset->get_rule(*ruleName)->listen_cassette(thisGame->attrs.get_str("tape"), this))
+			|| ruleset->get_rule(*ruleName)->listen_order(this))) {
 		return monitorFrq();
 	}
 	else if (thisGame && (thisGame->is_part(fromChat.uid))
@@ -4728,7 +4730,7 @@ std::optional<string> DiceEvent::getGameRule() {
 }
 bool DiceEvent::canRoomHost() {
 	if (!has("canRoomHost")) {
-		set("canRoomHost",bool(trusted > 3
+		set("canRoomHost",AttrVar(trusted > 3
 			|| isChannel() || isPrivate()
 			|| DD::isGroupAdmin(fromChat.gid, fromChat.uid, true) || pGrp->inviter == fromChat.uid));
 	}

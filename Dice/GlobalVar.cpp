@@ -522,6 +522,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+653:游戏卡带机制
 652:game new/over/open/close/state
 651:局内轮盘骰
 650:规则集专属指令

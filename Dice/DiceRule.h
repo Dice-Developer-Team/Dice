@@ -9,6 +9,7 @@ class DiceRule {
 	void clear() {
 		subrules.clear();
 	}
+	dict_ci<ptr<AttrVars>> cassettes;
 public:
 	ptr<DiceRule> meta;
 	dict_ci<ptr<DiceRule>> subrules;
@@ -19,6 +20,7 @@ public:
 	std::optional<string> getOwnManual(const string&);
 	std::optional<string> getManual(const string&);
 	bool listen_order(DiceEvent*);
+	bool listen_cassette(const string&, DiceEvent*)const;
 };
 class DiceRuleSet {
 	//ptr<DiceRule> root{ std::make_shared<DiceRule>() };

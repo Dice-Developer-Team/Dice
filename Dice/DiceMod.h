@@ -235,3 +235,4 @@ public:
 };
 
 extern std::shared_ptr<DiceModManager> fmt;
+void call_event(AttrObject eve, const ptr<AttrVars>& action);
