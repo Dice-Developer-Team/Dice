@@ -701,7 +701,7 @@ QJSDEF(getPlayerCard) {
 		}
 	}
 	else JS_ThrowTypeError(ctx, "#1 invalid user id!");
-	return NULL;
+	return JS_EXCEPTION;
 }
 //Context
 void js_dice_context_finalizer(JSRuntime* rt, JSValue val) {

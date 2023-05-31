@@ -1,7 +1,7 @@
 /**
  * 会话管理
  * 抽象于聊天窗口的单位
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 #include <shared_mutex>
 #include "filesystem.hpp"
@@ -775,8 +775,10 @@ shared_ptr<Session> DiceSessionManager::get(chatInfo ct) {
 }
 int DiceSessionManager::load() {
 	if (auto fileGM{ DiceDir / "user" / "GameTable.toml" };std::filesystem::exists(fileGM)) {
-		AttrObject cfg = AttrVar(toml::parse(ifstream(fileGM))).to_obj();
-		inc = cfg.get_int("inc");
+		if (ifstream ifs{ fileGM }) {
+			AttrObject cfg = AttrVar(toml::parse(ifs)).to_obj();
+			inc = cfg.get_int("inc");
+		}
 	}
 	LOCK_REC(sessionMutex);
 	vector<std::filesystem::path> sFile;

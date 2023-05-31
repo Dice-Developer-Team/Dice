@@ -457,6 +457,7 @@ ByteS AttrVar::to_bytes()const {
 	case Type::Number:
 	case Type::ID:
 	case Type::Table:
+	case Type::Set:
 		return {};
 		break;
 	}

@@ -82,7 +82,7 @@ struct DiceRoulette {
 	size_t sizRes{ 0 };
 	DiceRoulette(){}
 	DiceRoulette(size_t f, size_t c = 1);
-	DiceRoulette(size_t f, size_t c, vector<size_t>& p, size_t r) :face(f), copy(c), pool(p), sizRes(r) {};
+	DiceRoulette(size_t f, size_t c, const vector<size_t>& p, size_t r) :face(f), copy(c), pool(p), sizRes(r) {};
 	void reset();
 	size_t roll();
 	string hist();
