@@ -732,7 +732,7 @@ LUADEF(getGroupConf) {
 		else if (subitem == "lst") {
 			for (auto uid : DD::getGroupMemberList(id)) {
 				if (auto lst{ DD::getGroupLastMsg(id, uid) }) {
-					lua_pushnumber(L, lst);
+					lua_pushinteger(L, lst);
 				}
 				else lua_pushboolean(L, false);
 				lua_set_field(L, -2, to_string(uid));
@@ -741,7 +741,7 @@ LUADEF(getGroupConf) {
 		else if (subitem == "auth") {
 			for (auto uid : DD::getGroupMemberList(id)) {
 				if (auto auth{ DD::getGroupAuth(id, uid, 0) }) {
-					lua_pushnumber(L, auth);
+					lua_pushinteger(L, (lua_Integer)auth);
 				}
 				else lua_pushboolean(L, false);
 				lua_set_field(L, -2, to_string(uid));
@@ -954,7 +954,7 @@ LUADEF(setPlayerCardAttr) {
 LUADEF(ranint) {
 	int l{ (int)lua_to_int(L, 1) };
 	int r{ (int)lua_to_int(L, 2) };
-	lua_pushnumber(L, RandomGenerator::Randint(l,r));
+	lua_pushinteger(L, (lua_Integer)RandomGenerator::Randint(l,r));
 	return 1;
 }
 //Ïß³ÌµÈ´ý
