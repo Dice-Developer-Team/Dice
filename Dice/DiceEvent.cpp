@@ -4682,36 +4682,36 @@ bool DiceEvent::WordCensor() {
 	//信任小于4的用户进行敏感词检测
 	if (trusted < 4) {
 		vector<string>sens_words;
-		switch (int danger = censor.search(strMsg, sens_words) - 1) {
-		case 3:
-			if (trusted < danger++) {
+		if (int danger = censor.search(strMsg, sens_words)) {
+			set("hook", "WordCensored");
+			set("danger", danger);
+			if (fmt->call_hook_event(*this)) {
+				return is("break");
+			}
+			else if (danger < 2 || trusted > danger) {
+				console.log("提醒:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName")
+					+ "发送了含敏感词消息(" + listItem(sens_words) + "):\n" + strMsg, 1,
+					printTTime((time_t)get_ll("time")));
+			}
+			else if (danger > 3) {
 				console.log("警告:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName") + "发送了含敏感词消息:\n" + strMsg, 0b1000,
-							printTTime((time_t)get_ll("time")));
+					printTTime((time_t)get_ll("time")));
 				replyMsg("strCensorDanger");
 				return 1;
 			}
-		case 2:
-			if (trusted < danger++) {
+			else if (danger == 3) {
 				console.log("警告:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName")
 					+ "发送了含敏感词消息(" + listItem(sens_words) + "):\n" + strMsg, 0b10, printTTime((time_t)get_ll("time")));
 				replyMsg("strCensorWarning");
-				break;
+				return 1;
 			}
-		case 1:
-			if (trusted < danger++) {
+			else if (danger == 2) {
 				console.log("提醒:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName")
-					+ "发送了含敏感词消息("	+ listItem(sens_words) + "):\n" + strMsg, 0b10,
-							printTTime((time_t)get_ll("time")));
+					+ "发送了含敏感词消息(" + listItem(sens_words) + "):\n" + strMsg, 0b10,
+					printTTime((time_t)get_ll("time")));
 				replyMsg("strCensorCaution");
-				break;
+				return 1;
 			}
-		case 0:
-			console.log("提醒:" + printUser(fromChat.uid) + "对" + getMsg("strSelfName")
-				+ "发送了含敏感词消息(" + listItem(sens_words) +"):\n" + strMsg, 1,
-						printTTime((time_t)get_ll("time")));
-			break;
-		default:
-			break;
 		}
 	}
 	return false;
