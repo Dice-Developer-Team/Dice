@@ -595,6 +595,7 @@ const dict_ci<> HelpDoc = {
 .mod 模块操作)"
 "\f"
 R"([第二页]跑团指令
+.game 游戏领域
 .rules 规则速查
 .r 掷骰
 .log 日志记录
