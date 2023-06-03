@@ -1155,7 +1155,7 @@ PyGlobal::PyGlobal() {
 		Py_SetPythonHome(dirExe.wstring().c_str());
 		Py_SetPath((dirExe / "python310.zip").wstring().c_str());
 	}
-	//Py_SetProgramName(L"DiceMaid");
+	Py_SetProgramName(L"DiceMaid");
 	try {
 		static auto import_dice = PyImport_AppendInittab(DiceModuleName, PyInit_DiceMaid);
 		if (import_dice) {

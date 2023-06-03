@@ -21,10 +21,6 @@
       "features": [ "s3" ]
     },
     {
-      "name": "openssl",
-      "platform" : "!windows"
-    },
-    {
       "name": "curl",
       "platform" : "!windows",
       "default-features": false,
