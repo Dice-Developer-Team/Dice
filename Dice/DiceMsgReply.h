@@ -2,6 +2,7 @@
 #include "STLExtern.hpp"
 #include "SHKTrie.h"
 #include "DiceAttrVar.h"
+#include "DiceSchedule.h"
 #include <list>
 #include <regex>
 using std::unordered_multimap;
@@ -34,7 +35,7 @@ public:
 class DiceMsgReply {
 public:
 	string title;
-	enum class Type { Nor, Order, Reply, Both };   //决定受控制的开关类型
+	enum class Type { Nor, Order, Reply, Both, Game };   //决定受控制的开关类型
 	static enumap_ci sType;
 	std::unique_ptr<vector<string>>keyMatch[4];
 	static enumap_ci sMode;
@@ -43,8 +44,7 @@ public:
 	Type type{ Type::Reply };
 	Echo echo{ Echo::Deck };
 	DiceTriggerLimit limit;
-	AttrVar text;
-	std::vector<string> deck;
+	AttrObject answer;
 	static ptr<DiceMsgReply> set_order(const string& key, const AttrVars&);
 	string show()const;
 	string show_ans()const;
@@ -53,6 +53,7 @@ public:
 	void from_obj(AttrObject);
 	void readJson(const fifo_json&);
 	fifo_json writeJson()const;
+	fifo_json to_line()const;
 };
 
 class DiceReplyUnit {

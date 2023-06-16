@@ -3,7 +3,7 @@
 /*
  * 消息处理
  * Copyright (C) 2018-2021 w4123
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 #ifndef DICE_EVENT
 #define DICE_EVENT
@@ -12,19 +12,19 @@
 #include <utility>
 #include <string>
 #include <regex>
-#include "GlobalVar.h"
-#include "MsgMonitor.h"
-#include "DiceSchedule.h"
 #include "DiceMsgSend.h"
+#include "ManagerSystem.h"
 
 using std::string;
 
+class DiceSession;
 //打包待处理消息
 class DiceEvent : public AttrObject {
 public:
 	chatInfo fromChat;
 	string strLowerMessage;
 	Chat* pGrp = nullptr;
+	ptr<DiceSession> thisGame;
 	string& strMsg;
 	string strReply;
 	std::wsmatch msgMatch;
@@ -33,8 +33,6 @@ public:
 	AttrVar& operator[](const char* key) {
 		return (*dict)[key];
 	}
-
-	bool isBlock = false;
 
 	bool isPrivate()const;
 	bool isChannel()const;
@@ -65,8 +63,7 @@ public:
 	int MasterSet();
 	int BasicOrder();
 	int InnerOrder();
-	//int CustomOrder();
-	//int CustomReply();
+	bool monitorFrq();
 	//判断是否响应
 	bool DiceFilter();
 	bool WordCensor();
@@ -76,6 +73,7 @@ public:
 
 private:
 	bool isDisabled = false;
+	std::optional<string> getGameRule();
 	bool canRoomHost();
 
 	int getGroupTrust(long long group = 0);
@@ -202,8 +200,7 @@ public:
 		const int intBegin = intMsgCnt;
 		while (intMsgCnt != strMsg.length())
 		{
-			if (inBracket)
-			{
+			if (inBracket){
 				if (strMsg[intMsgCnt] == ']')inBracket = false;
 				intMsgCnt++;
 				continue;

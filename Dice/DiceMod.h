@@ -1,7 +1,7 @@
 #pragma once
 /*
  * ×ÊÔ´Ä£¿é
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 
 #include <utility>
@@ -9,15 +9,12 @@
 #include <regex>
 #include "yaml-cpp/node/node.h"
 #include "SHKQuerier.h"
-#include "DiceSchedule.h"
-#include "DiceMsgReply.h"
 #include "GlobalVar.h"
+#include "DiceRule.h"
 #ifndef __ANDROID__
 #include "DiceGit.h"
 #endif //ANDROID
 using std::variant;
-template<typename T>
-using ptr = std::shared_ptr<T>;
 namespace fs = std::filesystem;
 
 class DiceEvent;
@@ -118,13 +115,15 @@ public:
 	string desc()const;
 	string detail()const;
 private:
-	dict<>helpdoc;
-	dict<DiceSpeech>speech;
+	dict_ci<DiceRule> rules;
+	dict_ci<>helpdoc;
+	dict_ci<DiceSpeech>speech;
 	//native path of .lua
 	dict_ci<string>lua_scripts;
+	//native path of .js
 	dict_ci<string>js_scripts;
-	//utf8 path of .py
-	dict_ci<string>py_scripts;
+	//path of .py
+	dict_ci<std::filesystem::path>py_scripts;
 	vector<fs::path>luaFiles;
 	dict<ptr<DiceMsgReply>>reply_list;
 	AttrObjects events;
@@ -150,7 +149,7 @@ class DiceModManager {
 	DiceReplyUnit final_reply;
 	dict_ci<string> global_lua_scripts;
 	dict_ci<string> global_js_scripts;
-	dict_ci<string> global_py_scripts;
+	dict_ci<std::filesystem::path> global_py_scripts;
 	dict_ci<AttrVars> taskcall;
 	AttrObjects global_events; //events by id
 	//Event
@@ -199,6 +198,7 @@ public:
 
 	fifo_dict_ci<size_t>cntHelp;
 	[[nodiscard]] string get_help(const string&, AttrObject = {}) const;
+	[[nodiscard]] string prev_help(const string&, AttrObject = {}) const;
 	void _help(DiceEvent*);
 	void set_help(const string&, const string&);
 	void rm_help(const string&);
@@ -210,6 +210,7 @@ public:
 
 	bool listen_order(DiceEvent* msg) { return final_reply.listen(msg, 1); }
 	bool listen_reply(DiceEvent* msg) { return final_reply.listen(msg, 2); }
+	bool listen_game(DiceEvent* msg) { return final_reply.listen(msg, 4); }
 	string list_reply(int type)const;
 	void set_reply(const string&, ptr<DiceMsgReply> reply);
 	bool del_reply(const string&);
@@ -223,7 +224,7 @@ public:
 	bool has_py(const string& name)const { return global_py_scripts.count(name); }
 	string lua_path(const string& name)const;
 	string js_path(const string& name)const;
-	string py_path(const string& name)const;
+	std::optional<std::filesystem::path> py_path(const string& name)const;
 
 	void loadPlugin(ResList& res);
 	int load(ResList&);
@@ -234,3 +235,4 @@ public:
 };
 
 extern std::shared_ptr<DiceModManager> fmt;
+void call_event(AttrObject eve, const ptr<AttrVars>& action);

@@ -1,7 +1,7 @@
 /**
  * 会话管理
  * 抽象于聊天窗口的单位
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 #include <shared_mutex>
 #include "filesystem.hpp"
@@ -16,10 +16,61 @@
 #include "DiceMod.h"
 
 DiceSessionManager sessions;
-std::shared_mutex sessionMutex;
+std::recursive_mutex sessionMutex;
+#define LOCK_REC(ex) std::lock_guard<std::recursive_mutex> lock(ex) 
 unordered_set<chatInfo>LogList;
 
 const std::filesystem::path LogInfo::dirLog{ std::filesystem::path("user") / "log" };
+
+size_t DiceSession::roll(size_t face) {
+	if (roulette.count(face)) {
+		auto res = roulette[face].roll();
+		update();
+		return res;
+	} 
+	return RandomGenerator::Randint(1, face);
+}
+string DiceSession::show()const {
+	ShowList li;
+	li << "桌号: " + name;
+	if (attrs.has("rule"))li << "规则: " + attrs.get_str("rule");
+	if (is_logging())li << "日志记录中:" + logger.name;
+	if (!master->empty()) {
+		ShowList sub;
+		for (auto& id : *master) {
+			sub << printUser((long long)id.to_double());
+		}
+		li << "GM: " + sub.show(" & ");
+	}
+	if (!player->empty()) {
+		string sub{ "PL:" };
+		for (auto& id : *player) {
+			sub += "\n" + printUser((long long)id.to_double());
+		}
+		li << sub;
+	}
+	if (!obs->empty()) {
+		string sub{ "OB:" };
+		for (auto& id : *obs) {
+			sub += "\n" + printUser((long long)id.to_double());
+		}
+		li << sub;
+	}
+	if (!roulette.empty()) {
+		ShowList faces;
+		for (auto& [face, rou] : roulette) {
+			faces << to_string(face);
+		}
+		li << "轮盘骰: D" + faces.show("/");
+	}
+	return li.show("\n");
+}
+bool DiceSession::hasAttr(const string& key) {
+	return attrs.has(key);
+}
+AttrVar DiceSession::getAttr(const string& key) {
+	return attrs.get(key);
+}
 
 bool DiceSession::table_del(const string& tab, const string& item) {
 	if (!attrs.has(tab) || !attrs.get_obj(tab).has(item))return false;
@@ -51,13 +102,13 @@ bool DiceSession::table_clr(const string& tab)
 
 void DiceSession::ob_enter(DiceEvent* msg)
 {
-	if (sOB.count(msg->fromChat.uid))
+	if (obs->count(msg->fromChat.uid))
 	{
 		msg->replyMsg("strObEnterAlready");
 	}
 	else
 	{
-		sOB.insert(msg->fromChat.uid);
+		obs->insert(msg->fromChat.uid);
 		msg->replyMsg("strObEnter");
 		update();
 	}
@@ -65,9 +116,7 @@ void DiceSession::ob_enter(DiceEvent* msg)
 
 void DiceSession::ob_exit(DiceEvent* msg)
 {
-	if (sOB.count(msg->fromChat.uid))
-	{
-		sOB.erase(msg->fromChat.uid);
+	if (del_ob(msg->fromChat.uid)){
 		msg->replyMsg("strObExit");
 	}
 	else
@@ -79,13 +128,12 @@ void DiceSession::ob_exit(DiceEvent* msg)
 
 void DiceSession::ob_list(DiceEvent* msg) const
 {
-	if (sOB.empty())msg->replyMsg("strObListEmpty");
+	if (obs->empty())msg->replyMsg("strObListEmpty");
 	else
 	{
 		ResList res;
-		for (auto uid : sOB)
-		{
-			res << printUser(uid);
+		for (auto& uid : *obs){
+			res << printUser((long long)uid.to_double());
 		}
 		msg->reply(getMsg("strObList") + res.linebreak().show());
 	}
@@ -93,10 +141,10 @@ void DiceSession::ob_list(DiceEvent* msg) const
 
 void DiceSession::ob_clr(DiceEvent* msg)
 {
-	if (sOB.empty())msg->replyMsg("strObListEmpty");
+	if (obs->empty())msg->replyMsg("strObListEmpty");
 	else
 	{
-		sOB.clear();
+		obs->clear();
 		msg->replyMsg("strObListClr");
 	}
 	update();
@@ -114,7 +162,7 @@ void DiceSession::log_new(DiceEvent* msg) {
 	logger.isLogging = true;
 	//先发消息后插入
 	msg->replyMsg("strLogNew");
-	for (const auto& ct : windows) {
+	for (const auto& ct : areas) {
 		LogList.insert(ct);
 	}
 	update();
@@ -137,7 +185,7 @@ void DiceSession::log_on(DiceEvent* msg) {
 	(*msg)["log_name"] = logger.name;
 	logger.isLogging = true;
 	msg->replyMsg("strLogOn");
-	for (const auto& ct : windows) {
+	for (const auto& ct : areas) {
 		LogList.insert(ct);
 	}
 	update();
@@ -153,7 +201,7 @@ void DiceSession::log_off(DiceEvent* msg) {
 	}
 	logger.isLogging = false;
 	//先擦除后发消息
-	for (const auto& ct : windows) {
+	for (const auto& ct : areas) {
 		LogList.erase(ct);
 	}
 	msg->replyMsg("strLogOff");
@@ -164,7 +212,7 @@ void DiceSession::log_end(DiceEvent* msg) {
 		msg->replyMsg("strLogNullErr");
 		return;
 	}
-	for (const auto& ct : windows) {
+	for (const auto& ct : areas) {
 		LogList.erase(ct);
 	}
 	logger.isLogging = false;
@@ -353,6 +401,33 @@ string DeckInfo::draw() {
 	idxs[idx] = idxs[sizRes];
 	idxs[sizRes] = res;
 	return CardDeck::draw(meta[res]);
+}
+DiceRoulette::DiceRoulette(size_t f, size_t c) :face(f), copy(c) {
+	pool.reserve(sizRes = face * copy);
+	for (size_t idx = 1; idx <= face; ++idx) {
+		for (size_t cnt = 0; cnt < copy; ++cnt) {
+			pool.push_back(idx);
+		}
+	}
+}
+void DiceRoulette::reset() {
+	sizRes = pool.size();
+}
+size_t DiceRoulette::roll() {
+	if (!sizRes)sizRes = pool.size();
+	size_t idx = RandomGenerator::Randint(0, --sizRes);
+	size_t die = pool[idx];
+	pool[idx] = pool[sizRes];
+	pool[sizRes] = die;
+	return die;
+}
+string DiceRoulette::hist() {
+	ShowList his;
+	size_t begin = face * copy;
+	while (begin > sizRes) {
+		his << to_string(pool[--begin]);
+	}
+	return his.show(" ");
 }
 
 void DiceSession::deck_set(DiceEvent* msg) {
@@ -585,14 +660,9 @@ void DiceSession::save() const
 	std::filesystem::create_directories(DiceDir / "user" / "session", ec);
 	std::filesystem::path fpFile{ DiceDir / "user" / "session" / (name + ".json") };
 	fifo_json jData;
-	if (!conf.empty()) {
-		fifo_json& jConf{ jData["conf"] };
-		for (auto& [key, val] : conf) {
-			jConf[GBKtoUTF8(key)] = val.to_json();
-		}
-	}
-	if (!sOB.empty())jData["observer"] = sOB;
-	if (!attrs.empty())jData["tables"] = attrs.to_json();
+	if (!master->empty())jData["master"] = to_json(*master);
+	if (!player->empty())jData["player"] = to_json(*player);
+	if (!obs->empty())jData["observer"] = to_json(*obs);
 	if (logger.tStart || !logger.fileLog.empty()) {
 		fifo_json jLog;
 		jLog["start"] = logger.tStart;
@@ -613,13 +683,25 @@ void DiceSession::save() const
 		}
 		jData["decks"] = jDecks;
 	}
+	if (!roulette.empty()) {
+		fifo_json jDecks;
+		for (auto& [face, rou] : roulette) {
+			jDecks[to_string(face)] = {
+				{"copy",rou.copy},
+				{"pool",rou.pool},
+				{"rest",rou.sizRes}
+			};
+		}
+		jData["roulette"] = jDecks;
+	}
+	if (!attrs.empty())jData["data"] = attrs.to_json();
 	std::lock_guard<std::mutex> lock(exSessionSave);
 	if (jData.empty()) {
 		remove(fpFile);
 		return;
 	}
 	auto& jChat{ jData["chats"] = fifo_json::array() };
-	for (const auto& chat : windows) {
+	for (const auto& chat : areas) {
 		jChat.push_back(to_json(chat));
 	}
 	jData["create_time"] = tCreate;
@@ -627,40 +709,78 @@ void DiceSession::save() const
 	fwriteJson(fpFile, jData, 1);
 }
 
-void DiceSessionManager::end(chatInfo ct){
-	auto session{ get_if(ct = ct.locate()) };
-	if (!session)return;
-	std::unique_lock<std::shared_mutex> lock(sessionMutex);
-	SessionByName.erase(session->name);
-	if (session->windows.erase(ct); session->windows.empty()) {
+void DiceSessionManager::open(const ptr<Session>& game, chatInfo ct) {
+	LOCK_REC(sessionMutex);
+	if (auto session{ get_if(ct = ct.locate()) }) {
+		session->areas.erase(ct);
+		session->update();
+	}
+	SessionByChat[ct] = game;
+	game->areas.insert(ct);
+	game->update();
+}
+void DiceSessionManager::close(chatInfo ct) {
+	if (auto session{ get_if(ct = ct.locate()) }) {
+		LOCK_REC(sessionMutex);
 		SessionByChat.erase(ct);
-		remove(DiceDir / "user" / "session" / (session->name + ".json"));
+		session->update();
 	}
 }
+void DiceSessionManager::over(chatInfo ct){
+	auto session{ get_if(ct = ct.locate()) };
+	if (!session)return;
+	LOCK_REC(sessionMutex);
+	SessionByName.erase(session->name);
+	for (auto& it:session->areas) {
+		SessionByChat.erase(it);
+	}
+	remove(DiceDir / "user" / "session" / (session->name + ".json"));
+}
+//const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
 
-const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
-
-shared_ptr<Session> DiceSessionManager::get(const chatInfo& ct) {
-	if (const auto here{ ct.locate() }; SessionByChat.count(here)) 
-		return SessionByChat[here];
+shared_ptr<Session> DiceSessionManager::newGame(const string& name, const chatInfo& ct) {
+	LOCK_REC(sessionMutex);
+	string g_name{ name + "#" + to_string(++inc) };
+	while (SessionByName.count(g_name)) {
+		g_name = name + "#" + to_string(++inc);
+	}
+	auto ptr{ std::make_shared<Session>(g_name) };
+	const auto here{ ct.locate() };
+	ptr->areas.insert(here);
+	ptr->add_gm(ct.uid);
+	SessionByName[g_name] = ptr;
+	if (SessionByChat.count(here))SessionByChat[here]->areas.erase(here);
+	if (LogList.count(here)) LogList.erase(here);
+	SessionByChat[here] = ptr;
+	save();
+	return ptr;
+}
+shared_ptr<Session> DiceSessionManager::get(chatInfo ct) {
+	if (SessionByChat.count(ct = ct.locate()))
+		return SessionByChat[ct];
 	else {
-		string name{ ct.chid ? "ch" + to_string(ct.chid)
-			: ct.gid ? "g" + to_string(ct.gid)
+		string name{ ct.gid ? "g" + to_string(ct.gid) +
+			(ct.chid ? "_ch" + to_string(ct.chid) : "")
 			: "usr" + to_string(ct.uid) };
-		while (SessionByName.count(name)) {
-			name += '+';
+		LOCK_REC(sessionMutex);
+		if (!SessionByName.count(name)) {
+			auto ptr{ std::make_shared<Session>(name) };
+			ptr->areas.insert(ct);
+			SessionByName[name] = ptr;
+			SessionByChat[ct] = ptr;
+			return ptr;
 		}
-		std::unique_lock<std::shared_mutex> lock(sessionMutex);
-		auto ptr{ std::make_shared<Session>(name)};
-		ptr->windows.insert(here);
-		SessionByName[name] = ptr;
-		SessionByChat[here] = ptr;
-		return ptr;
+		else return SessionByChat[ct] = SessionByName[name];
 	}
 }
 int DiceSessionManager::load() {
-	string strLog;
-	std::unique_lock<std::shared_mutex> lock(sessionMutex);
+	if (auto fileGM{ DiceDir / "user" / "GameTable.toml" };std::filesystem::exists(fileGM)) {
+		if (ifstream ifs{ fileGM }) {
+			AttrObject cfg = AttrVar(toml::parse(ifs)).to_obj();
+			inc = cfg.get_int("inc");
+		}
+	}
+	LOCK_REC(sessionMutex);
 	vector<std::filesystem::path> sFile;
 	int cnt = listDir(DiceDir / "user" / "session", sFile);
 	if (cnt > 0)for (auto& filename : sFile) {
@@ -670,32 +790,28 @@ int DiceSessionManager::load() {
 			--cnt;
 			continue;
 		}
-		auto pSession(std::make_shared<Session>(filename.stem().string()));
+		string name{ UTF8toGBK(filename.stem().u8string()) };
+		auto pSession(std::make_shared<Session>(name));
 		bool isUpdated{ false };
 		try {
 			pSession->create(j["create_time"]).update(j["update_time"]);
 			if (j.count("room")) {
 				if (j["room"].is_number()) {
 					long long id{ j["room"] };
-					pSession->windows.insert(id > 0 ? chatInfo{ 0, id } : chatInfo{ ~id });
+					pSession->areas.insert(id > 0 ? chatInfo{ 0, id } : chatInfo{ ~id });
 				}
 				else if (j["room"].is_array()) {
 					for (auto& ct : j["room"]) {
-						pSession->windows.insert(chatInfo::from_json(ct));
+						pSession->areas.insert(chatInfo::from_json(ct));
 					}
 				}
 			}
 			if (j.count("chats")) {
 				for (auto& ct : j["chats"]) {
-					pSession->windows.insert(chatInfo::from_json(ct));
+					pSession->areas.insert(chatInfo::from_json(ct));
 				}
 			}
-			if (j.count("conf")) {
-				fifo_json& jConf{ j["conf"] };
-				for (auto& it : jConf.items()) {
-					pSession->conf.emplace(UTF8toGBK(it.key()), it.value());
-				}
-			}
+			if (j.count("conf")) pSession->attrs = AttrVar(j["conf"]).to_obj();
 			if (j.count("log")) {
 				fifo_json& jLog = j["log"];
 				jLog["start"].get_to(pSession->logger.tStart);
@@ -707,45 +823,60 @@ int DiceSessionManager::load() {
 				pSession->logger.update();
 				pSession->logger.pathLog = DiceDir / pSession->logger.dirLog / GBKtoLocal(pSession->logger.fileLog);
 				if (pSession->logger.isLogging) {
-					for (const auto& chat : pSession->windows) {
+					for (const auto& chat : pSession->areas) {
 						LogList.insert(chat);
 					}
 				}
 			}
 			if (j.count("link")) {
 				fifo_json& jLink = j["link"];
-				const auto& ct{ *pSession->windows.begin() };
+				const auto& ct{ *pSession->areas.begin() };
 				long long gid{ jLink["target"] };
 				LinkInfo& link{ linker.LinkList[ct] = {jLink["linking"],
 					jLink["type"],
 					(gid > 0) ? chatInfo{0,gid} : chatInfo{~gid} } };
 				isUpdated = true;
 			}
-			if (j.count("decks")) {
-				fifo_json& jDecks = j["decks"];
-				for (auto it = jDecks.cbegin(); it != jDecks.cend(); ++it) {
-					if (it.value()["meta"].empty())continue;
-					std::string key = UTF8toGBK(it.key());
-					auto& deck{ pSession->decks[key] };
-					deck.meta = UTF8toGBK(it.value()["meta"].get<vector<string>>());
-					if (it.value().count("rest")) {
-						it.value()["rest"].get_to(pSession->decks[key].idxs);
-						pSession->decks[key].sizRes = pSession->decks[key].idxs.size();
-					}
-					else {
-						it.value()["idxs"].get_to(pSession->decks[key].idxs);
-						it.value()["size"].get_to(pSession->decks[key].sizRes);
-					}
+			if (j.count("decks")) for (auto& it : j["decks"].items()) {
+				if (it.value()["meta"].empty())continue;
+				std::string key = UTF8toGBK(it.key());
+				auto& deck{ pSession->decks[key] };
+				deck.meta = UTF8toGBK(it.value()["meta"].get<vector<string>>());
+				if (it.value().count("rest")) {
+					it.value()["rest"].get_to(pSession->decks[key].idxs);
+					pSession->decks[key].sizRes = pSession->decks[key].idxs.size();
+				}
+				else {
+					it.value()["idxs"].get_to(pSession->decks[key].idxs);
+					it.value()["size"].get_to(pSession->decks[key].sizRes);
 				}
 			}
-			if (j.count("observer")) j["observer"].get_to(pSession->sOB);
-			if (j.count("tables"))pSession->attrs = AttrVar(j["tables"]).to_obj();
+			if(j.count("roulette"))for (auto& it : j["roulette"].items()) {
+				size_t face = stoi(it.key());
+				pSession->roulette.emplace(face, DiceRoulette(face, it.value()["copy"],
+					it.value()["pool"].get<vector<size_t>>(), it.value()["rest"]));
+			}
+			if (j.count("tables"))for (auto& it : j["tables"].items()) {
+				pSession->attrs.set(UTF8toGBK(it.key()), it.value());
+			}
+			if (j.count("data"))for (auto& it : j["data"].items()) {
+				pSession->attrs.set(UTF8toGBK(it.key()), it.value());
+			}
+			if (j.count("master"))for (auto& it : j["master"]) {
+				pSession->master->emplace(it.get<long long>());
+			}
+			if (j.count("player"))for (auto& it : j["player"]) {
+				pSession->player->emplace(it.get<long long>());
+			}
+			if (j.count("observer"))for (auto& it : j["observer"]) {
+				pSession->obs->emplace(it.get<long long>());
+			}
 		}
 		catch (std::exception& e) {
 			console.log("读取session文件" + UTF8toGBK(filename.u8string()) + "出错!" + e.what(), 1);
 		}
-		SessionByName[UTF8toGBK(filename.u8string())] = pSession;
-		for (const auto& chat : pSession->windows) {
+		SessionByName[name] = pSession;
+		for (const auto& chat : pSession->areas) {
 			SessionByChat[chat] = pSession;
 		}
 		if (isUpdated)pSession->save();
@@ -758,4 +889,10 @@ int DiceSessionManager::load() {
 			+ string(e.what()), 0b1000, printSTNow());
 	}
 	return cnt;
+}
+void DiceSessionManager::save() {
+	if (std::ofstream fs{ DiceDir / "user" / "GameTable.toml" }) {
+		AttrObject cfg = AttrVars{ { "inc",inc } };
+		fs << cfg.to_toml();
+	}
 }

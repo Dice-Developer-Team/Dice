@@ -112,3 +112,12 @@ std::string listDeck(const std::vector<std::string>& v)
 	}
 	return list.show();
 }
+std::string listDeck(const VarArray& v)
+{
+	ResList list;
+	list.setDot(" | ", "\n| ");
+	for (auto& val : v) {
+		list << val;
+	}
+	return list.show();
+}

@@ -2,7 +2,7 @@
 
 /*
  * 玩家人物卡
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 
 #include <fstream>
@@ -46,6 +46,7 @@ inline unordered_map<string, short> mCardTag = {
 	{"Name", 1},
 	{"Type", 2},
 	{"Attrs", 3},
+	{"Lock", 103},
 	{"Attr", 11},	//older
 	{"DiceExp", 21},
 	{"Note", 101},	//older
@@ -144,50 +145,55 @@ public:
 	}
 	string show();
 };
+extern unordered_map<int, string> PlayerErrors;
 
 struct lua_State;
-class CharaCard
+class CharaCard: public AttrObject
 {
 private:
 	string Name = "角色卡";
+	unordered_set<string> locks;
 	std::mutex cardMutex;
 public:
 	static fifo_dict_ci<CardTemp> mCardTemplet;
 	CardTemp& getTemplet()const;
+	bool locked(const string& key)const { return locks.count(key); }
+	bool lock(const string& key) {
+		std::lock_guard<std::mutex> lock_queue(cardMutex);
+		if(key.empty() || locks.count(key))return false;
+		locks.insert(key);
+		return true;
+	}
+	bool unlock(const string& key) {
+		std::lock_guard<std::mutex> lock_queue(cardMutex);
+		if (key.empty() || !locks.count(key))return false;
+		locks.erase(key);
+		return true;
+	}
 	const string& getName()const { return Name; }
 	void setName(const string&);
 	void setType(const string&);
 	void update();
-	//string Type = "COC7";
-	AttrObject Attr{ {
-		{"__Type",AttrVar("COC7")},
-		{"__Update",AttrVar((long long)time(nullptr))},
-	} };
-	//map<string, string, less_ci> Info{  };
-	//map<string, string, less_ci> DiceExp{};
-
-	CharaCard() = default;
+#define Attr (*dict)
+	CharaCard(){
+		(*dict)["__Type"] = "COC7";
+		(*dict)["__Update"] = (long long)time(nullptr);
+	}
 	CharaCard(const CharaCard& pc){
 		Name = pc.Name;
-		Attr = pc.Attr;
-	}
-	CharaCard& operator=(const CharaCard& pc)
-	{
-		Name = pc.Name;
-		Attr = pc.Attr;
-		return *this;
+		dict = std::make_shared<AttrVars>(*pc.dict);
 	}
 
 	CharaCard(const string& name, const string& type = "COC7") : Name(name)
 	{
-		Attr["__Name"] = name;
+		(*dict)["__Name"] = name;
 		setType(type);
 	}
 
 	int call(string key)const;
 
 	//表达式转义
-	string escape(string exp, const set<string>& sRef)
+	string escape(string exp, const unordered_set<string>& sRef)
 	{
 		if (exp[0] == '&')
 		{
@@ -195,7 +201,7 @@ public:
 			if (sRef.count(key))return "";
 			return getExp(key);
 		}
-		int intCnt = 0, lp, rp;
+		size_t intCnt = 0, lp, rp;
 		while ((lp = exp.find('[', intCnt)) != std::string::npos && (rp = exp.find(']', lp)) != std::string::npos)
 		{
 			string strProp = exp.substr(lp + 1, rp - lp - 1);
@@ -208,12 +214,11 @@ public:
 	}
 
 	//求key对应掷骰表达式
-	string getExp(string& key, set<string> sRef = {});
+	string getExp(string& key, unordered_set<string> sRef = {});
 
-	bool countExp(const string& key)
-	{
-		return (Attr.has(key) && Attr.at(key).type == AttrVar::AttrType::Text)
-			|| (Attr.has("&" + key))
+	bool countExp(const string& key){
+		return (has(key) && key[0] == '&')
+			|| (has("&" + key))
 			|| getTemplet().mExpression.count(key);
 	}
 
@@ -247,14 +252,14 @@ public:
 			//exp
 			if (it2.first[0] == '&')
 			{
-				if (Attr.has(it2.first))continue;
-				Attr.set(it2.first, it2.second);
+				if (has(it2.first))continue;
+				set(it2.first, it2.second);
 			}
-				//attr
+			//attr
 			else
 			{
-				if (Attr.has(it2.first))continue;
-				Attr.set(it2.first, cal(it2.second));
+				if (has(it2.first))continue;
+				AttrObject::set(it2.first, cal(it2.second));
 			}
 		}
 	}
@@ -272,7 +277,7 @@ public:
 
 	int set(string key, const AttrVar& val);
 
-	bool erase(string& key, bool isExp = false);
+	bool erase(string& key);
 	void clear();
 
 	int show(string key, string& val) const;
@@ -285,37 +290,36 @@ public:
 	bool stored(string& key) const
 	{
 		key = standard(key);
-		return Attr.has(key) || getTemplet().mAutoFill.count(key) || getTemplet().defaultSkill.count(key);
+		return has(key) || getTemplet().mAutoFill.count(key) || getTemplet().defaultSkill.count(key);
 	}
 
 	void cntRollStat(int die, int face);
 
 	void cntRcStat(int die, int rate);
 
-	void operator<<(const CharaCard& card)
-	{
-		const string name = Name;
-		*this = card;
-		Attr["__Name"] = Name = name;
+	void operator<<(const CharaCard& card){
+		dict = std::make_shared<AttrVars>(*card.dict);
+		AttrObject::set("__Name", Name);
 	}
 
 	void writeb(std::ofstream& fout) const;
 
 	void readb(std::ifstream& fin);
 };
+using PC = std::shared_ptr<CharaCard>;
 
 class Player
 {
 private:
 	short indexMax = 0;
-	map<unsigned short, CharaCard> mCardList;
-	map<string, unsigned short> mNameIndex;
-	map<unsigned long long, unsigned short> mGroupIndex{{0, 0}};
+	map<unsigned short, PC> mCardList;
+	dict_ci<unsigned short> mNameIndex;
+	unordered_map<unsigned long long, unsigned short> mGroupIndex{{0, 0}};
 	// 人物卡互斥
 	std::mutex cardMutex;
 public:
 	Player() {
-		mCardList[0] = { "角色卡" };
+		mCardList[0] = std::make_shared<CharaCard>( "角色卡" );
 	}
 
 	Player(const Player& pl)
@@ -347,103 +351,10 @@ public:
 		return mNameIndex.count(name);
 	}
 
-	int newCard(string& s, long long group = 0)
-	{
-		std::lock_guard<std::mutex> lock_queue(cardMutex);
-		//人物卡数量上限
-		if (mCardList.size() > 16)return -1;
-		string type = "COC7";
-		s = strip(s);
-		std::stack<string> vOption;
-		int Cnt = s.rfind(':');
-		if (Cnt != string::npos)
-		{
-			type = s.substr(0, Cnt);
-			s.erase(s.begin(), s.begin() + Cnt + 1);
-			if (type == "COC")type = "COC7";
-		}
-		else if (CharaCard::mCardTemplet.count(s))
-		{
-			type = s;
-			s.clear();
-		}
-		while ((Cnt = type.rfind(':')) != string::npos)
-		{
-			vOption.push(type.substr(Cnt + 1));
-			type.erase(type.begin() + Cnt, type.end());
-		}
-		//无效模板不再报错
-		//if (!getmCardTemplet().count(type))return -2;
-		if (mNameIndex.count(s))return -4;
-		if (s.find("=") != string::npos)return -6;
-		mCardList.emplace(++indexMax, CharaCard{ s, type });
-		CharaCard& card = mCardList[indexMax];
-		// CardTemp& temp = mCardTemplet[type];
-		while (!vOption.empty())
-		{
-			string para = vOption.top();
-			vOption.pop();
-			card.build(para);
-			if (card.getName().empty())
-			{
-				std::vector<string> list = CharaCard::mCardTemplet[type].mBuildOption[para].vNameList;
-				while (!list.empty())
-				{
-					s = CardDeck::draw(list[0]);
-					if (mNameIndex.count(s))list.erase(list.begin());
-					else
-					{
-						card.setName(s);
-						break;
-					}
-				}
-			}
-		}
-		if (card.getName().empty())
-		{
-			std::vector<string> list = CharaCard::mCardTemplet[type].mBuildOption["_default"].vNameList;
-			while (!list.empty())
-			{
-				s = CardDeck::draw(list[0]);
-				if (mNameIndex.count(s))list.erase(list.begin());
-				else
-				{
-					card.setName(s);
-					break;
-				}
-			}
-			if (card.getName().empty())card.setName(to_string(indexMax + 1));
-		}
-		s = card.getName();
-		mNameIndex[s] = indexMax;
-		mGroupIndex[group] = indexMax;
-		return 0;
-	}
+	int emptyCard(const string& s, long long group, const string& type);
+	int newCard(string& s, long long group = 0, string type = "COC7");
 
-	int buildCard(string& name, bool isClear, long long group = 0)
-	{
-		string strName = name;
-		string strType;
-		if (name.find(":") != string::npos)
-		{
-			strName = strip(name.substr(name.rfind(":") + 1));
-			strType = name.substr(0, name.rfind(":"));
-		}
-		//不存在则新建人物卡
-		if (!strName.empty() && !mNameIndex.count(strName))
-		{
-			if (const int res = newCard(name, group))return res;
-			name = getCard(strName, group).getName();
-			(*this)[name].buildv();
-		}
-		else
-		{
-			name = getCard(strName, group).getName();
-			if (isClear)(*this)[name].clear();
-			(*this)[name].buildv(strType);
-		}
-		return 0;
-	}
+	int buildCard(string& name, bool isClear, long long group = 0);
 
 	int changeCard(const string& name, long long group)
 	{
@@ -457,47 +368,11 @@ public:
 		return 0;
 	}
 
-	int removeCard(const string& name)
-	{
-		std::lock_guard<std::mutex> lock_queue(cardMutex);
-		if (!mNameIndex.count(name))return -5;
-		if (!mNameIndex[name])return -7;
-		auto it = mGroupIndex.cbegin();
-		while (it != mGroupIndex.cend())
-		{
-			if (it->second == mNameIndex[name])
-			{
-				it = mGroupIndex.erase(it);
-			}
-			else
-			{
-				++it;
-			}
-		}
-		mCardList.erase(mNameIndex[name]);
-		while (!mCardList.count(indexMax))indexMax--;
-		mNameIndex.erase(name);
-		return 0;
-	}
+	int removeCard(const string& name);
 
 	int renameCard(const string& name, const string& name_new);
 
-	int copyCard(const string& name1, const string& name2, long long group = 0)
-	{
-		if (name1.empty() || name2.empty())return -3;
-		//不存在则新建人物卡
-		if (!mNameIndex.count(name1))
-		{
-			std::lock_guard<std::mutex> lock_queue(cardMutex);
-			//人物卡数量上限
-			if (mCardList.size() > 16)return -1;
-			if (name1.find(":") != string::npos)return -6;
-			mCardList[++indexMax].setName(name1);
-			mNameIndex[name1] = indexMax;
-		}
-		(*this)[name1] << (*this)[name2];
-		return 0;
-	}
+	int copyCard(const string& name1, const string& name2, long long group = 0);
 
 	string listCard();
 
@@ -506,22 +381,23 @@ public:
 		ResList Res;
 		for (const auto& it : mGroupIndex)
 		{
-			if (!it.first)Res << "default:" + mCardList[it.second].getName();
-			else Res << "(" + to_string(it.first) + ")" + mCardList[it.second].getName();
+			if (!it.first)Res << "default:" + mCardList[it.second]->getName();
+			else Res << "(" + to_string(it.first) + ")" + mCardList[it.second]->getName();
 		}
 		return Res.show();
 	}
 
-	CharaCard& getCard(const string& name, long long group = 0);
+	PC getCard(const string& name, long long group = 0);
 
-	CharaCard& operator[](long long id)
+	PC operator[](long long id)
 	{
 		if (mGroupIndex.count(id))return mCardList[mGroupIndex[id]];
+		if (mCardList.count(id))return mCardList[id];
 		if (mGroupIndex.count(0))return mCardList[mGroupIndex[0]];
 		return mCardList[0];
 	}
 
-	CharaCard& operator[](const string& name)
+	PC operator[](const string& name)
 	{
 		if (mNameIndex.count(name))return mCardList[mNameIndex[name]];
 		if (mGroupIndex.count(0))return mCardList[mGroupIndex[0]];
@@ -533,7 +409,7 @@ public:
 	void readb(std::ifstream& fin);
 };
 
-inline map<long long, Player> PList;
+extern unordered_map<long long, Player> PList;
 
 Player& getPlayer(long long qq);
 

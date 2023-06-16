@@ -19,7 +19,7 @@
 
 // Aws SDK设置
 Aws::SDKOptions options;
-std::shared_ptr<Aws::Auth::AnonymousAWSCredentialsProvider> awsCredProvider;
+std::shared_ptr<Aws::Auth::AnonymousAWSCredentialsProvider> awsCredProvider{ std::make_shared<Aws::Auth::AnonymousAWSCredentialsProvider>() };
 std::shared_ptr<Aws::S3::S3EndpointProvider> awsEProvider;
 // 判断文件是否存在
 bool file_exists(const std::string& file_name)
@@ -29,10 +29,10 @@ bool file_exists(const std::string& file_name)
 }
 void aws_init() {
 	Aws::InitAPI(options);
-	awsCredProvider = std::make_shared<Aws::Auth::AnonymousAWSCredentialsProvider>();
 	awsEProvider = Aws::MakeShared<Aws::S3::S3EndpointProvider>(Aws::S3::S3Client::ALLOCATION_TAG);
 }
 void aws_shutdown() {
+	awsEProvider.reset();
 	Aws::ShutdownAPI(options); 
 }
 // 上传文件至S3, 采用S3-accelerate

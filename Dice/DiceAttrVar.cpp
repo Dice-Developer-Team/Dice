@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -24,7 +24,6 @@
 #include "DiceAttrVar.h"
 #include "StrExtern.hpp"
 #include "DiceFile.hpp"
-using std::to_string;
 
 ByteS::ByteS(std::ifstream& fin) {
 	len = fread<size_t>(fin);
@@ -37,8 +36,8 @@ bool AttrObject::is(const string& key)const {
 bool AttrObject::is_empty(const string& key)const {
 	auto it{ dict->find(key) };
 	return (it == dict->end())
-		|| (it->second.type == AttrVar::AttrType::Text && it->second.text.empty())
-		|| (it->second.type == AttrVar::AttrType::Table && it->second.table.empty());
+		|| (it->second.type == AttrVar::Type::Text && it->second.text.empty())
+		|| (it->second.type == AttrVar::Type::Table && it->second.table.empty());
 }
 bool AttrObject::is_table(const string& key)const {
 	return dict->count(key) && dict->at(key).is_table();
@@ -60,6 +59,15 @@ void AttrObject::set(const string& key)const {
 }
 void AttrObject::reset(const string& key)const {
 	dict->erase(key);
+}
+vector<string> AttrObject::to_deck()const {
+	vector<string> deck;
+	if (list) {
+		for (auto& it : *list) {
+			deck.emplace_back(it.to_str());
+		}
+	}
+	return deck;
 }
 AttrVar& AttrObject::at(const string& key)const {
 	return (*dict)[key];
@@ -97,6 +105,9 @@ ptr<AttrVars> AttrObject::get_dict(const string& key)const {
 }
 ptr<VarArray> AttrObject::get_list(const string& key)const {
 	return dict->count(key) ? dict->at(key).to_list() : ptr<VarArray>();
+}
+AttrSet AttrObject::get_set(const string& key)const {
+	return dict->count(key) ? dict->at(key).to_set() : AttrSet();
 }
 int AttrObject::inc(const string& key)const {
 	if (key.empty())return 0;
@@ -141,9 +152,9 @@ void AttrObject::readb(std::ifstream& fs) {
 	while (len--) {
 		(*dict)[fread<string>(fs)].readb(fs);
 	}
-	if (string strI{ "1" }; dict->count(strI)) {
+	if (string strI{ "0" }; dict->count(strI) || dict->count(strI = "1")) {
 		list = std::make_shared<VarArray>();
-		int idx{ 1 };
+		int idx{ strI == "0" ? 0 : 1 };
 		do {
 			list->push_back(dict->at(strI));
 			dict->erase(strI);
@@ -154,35 +165,59 @@ bool AttrObject::operator<(const AttrObject other)const { return dict < other.di
 
 AttrVar::AttrVar(const AttrVar& other) :type(other.type) {
 	switch (type) {
-	case AttrType::Boolean:
+	case Type::Boolean:
 		bit = other.bit;
 		break;
-	case AttrType::Integer:
+	case Type::Integer:
 		attr = other.attr;
 		break;
-	case AttrType::Number:
+	case Type::Number:
 		number = other.number;
 		break;
-	case AttrType::Text:
+	case Type::Text:
 		new(&text)string(other.text);
 		break;
-	case AttrType::Table:
+	case Type::Table:
 		new(&table)AttrObject(other.table);
 		break;
-	case AttrType::Function:
+	case Type::Function:
 		new(&chunk)ByteS(other.chunk);
 		break;
-	case AttrType::ID:
+	case Type::ID:
 		id = other.id;
 		break;
-	case AttrType::Nil:
+	case Type::Set:
+		new(&flags) AttrSet(other.flags);
+		break;
+	case Type::Nil:
 	default:
 		break;
 	}
 }
+AttrVar::AttrVar(const HashedVar& vars) {
+	if (std::holds_alternative<double>(vars)) {
+		auto num = std::get<double>(vars);
+		if ((int)num == num) {
+			type = Type::Integer;
+			attr = (int)num;
+		}
+		else if ((long long)num == num) {
+			type = Type::ID;
+			id = (long long)num;
+		}
+		else {
+			type = Type::Number;
+			number = num;
+		}
+	}
+	else if (std::holds_alternative<string>(vars)) {
+		type = Type::Text;
+		new(&text)string(std::get<string>(vars));
+	}
+}
 AttrVar::operator bool()const {
-	return type != AttrType::Nil
-		&& (type != AttrType::Boolean || bit == true);
+	return type != Type::Nil
+		&& (type != Type::Boolean || bit == true);
 }
 AttrVar& AttrVar::operator=(const AttrVar& other) {
 	this->~AttrVar();
@@ -191,69 +226,69 @@ AttrVar& AttrVar::operator=(const AttrVar& other) {
 }
 AttrVar& AttrVar::operator=(bool other) {
 	des();
-	type = AttrType::Boolean;
+	type = Type::Boolean;
 	bit = other;
 	return *this;
 }
 AttrVar& AttrVar::operator=(int other) {
 	des();
-	type = AttrType::Integer;
+	type = Type::Integer;
 	attr = other;
 	return *this;
 }
 AttrVar& AttrVar::operator=(double other) {
 	des();
-	type = AttrType::Number;
+	type = Type::Number;
 	number = other;
 	return *this;
 }
 AttrVar& AttrVar::operator=(const string& other) {
 	des();
-	type = AttrType::Text;
+	type = Type::Text;
 	new(&text)string(other);
 	return *this;
 }
 AttrVar& AttrVar::operator=(const char* other) {
 	des();
-	type = AttrType::Text;
+	type = Type::Text;
 	new(&text)string(other);
 	return *this;
 }
 AttrVar& AttrVar::operator=(long long other) {
 	des();
-	type = AttrType::ID;
+	type = Type::ID;
 	id = other;
 	return *this;
 }
 /*
 bool AttrVar::operator==(const long long other)const {
-	return (type == AttrType::ID && id == other)
-		|| (type == AttrType::Integer && attr == other)
-		|| (type == AttrType::Number && number == other);
+	return (type == Type::ID && id == other)
+		|| (type == Type::Integer && attr == other)
+		|| (type == Type::Number && number == other);
 }
 */
 bool AttrVar::operator==(const string& other)const {
-	return (type == AttrType::Text && text == other);
+	return (type == Type::Text && text == other);
 }
 bool AttrVar::operator==(const char* other)const {
-	return (type == AttrType::Text && text == other);
+	return (type == Type::Text && text == other);
 }
 AttrVar& AttrVar::operator++() {
 	switch (type) {
-	case AttrType::Nil:
-		type = AttrType::Integer;
+	case Type::Nil:
+		type = Type::Integer;
 		attr = 1;
 		break;
-	case AttrType::Boolean:
+	case Type::Boolean:
 		bit = true;
 		break;
-	case AttrType::Integer:
+	case Type::Integer:
 		++attr;
 		break;
-	case AttrType::ID:
+	case Type::ID:
 		++id;
 		break;
-	case AttrType::Number:
+	case Type::Number:
 		++number;
 		break;
 	default:
@@ -262,7 +297,7 @@ AttrVar& AttrVar::operator++() {
 	return *this;
 }
 AttrVar AttrVar::operator+(const AttrVar& other) {
-	if (type == AttrType::Text && other.type == AttrType::Text)
+	if (type == Type::Text && other.type == Type::Text)
 		return text + other.text;
 	else if (is_numberic() && other.is_numberic()) {
 		double sum{ to_num() + other.to_num() };
@@ -274,22 +309,22 @@ AttrVar AttrVar::operator+(const AttrVar& other) {
 
 int AttrVar::to_int()const {
 	switch (type) {
-	case AttrType::Nil:
+	case Type::Nil:
 		return 0;
 		break;
-	case AttrType::Boolean:
+	case Type::Boolean:
 		return bit;
 		break;
-	case AttrType::Integer:
+	case Type::Integer:
 		return attr;
 		break;
-	case AttrType::ID:
+	case Type::ID:
 		return (int)id;
 		break;
-	case AttrType::Number:
+	case Type::Number:
 		return number;
 		break;
-	case AttrType::Text:
+	case Type::Text:
 		try {
 			return stoi(text);
 		}
@@ -304,22 +339,22 @@ int AttrVar::to_int()const {
 }
 long long AttrVar::to_ll()const {
 	switch (type) {
-	case AttrType::Nil:
+	case Type::Nil:
 		return 0;
 		break;
-	case AttrType::Boolean:
+	case Type::Boolean:
 		return bit;
 		break;
-	case AttrType::Integer:
+	case Type::Integer:
 		return attr;
 		break;
-	case AttrType::ID:
+	case Type::ID:
 		return id;
 		break;
-	case AttrType::Number:
+	case Type::Number:
 		return number;
 		break;
-	case AttrType::Text:
+	case Type::Text:
 		try {
 			return stoll(text);
 		}
@@ -334,22 +369,22 @@ long long AttrVar::to_ll()const {
 }
 double AttrVar::to_num()const {
 	switch (type) {
-	case AttrType::Nil:
+	case Type::Nil:
 		return 0;
 		break;
-	case AttrType::Boolean:
+	case Type::Boolean:
 		return bit;
 		break;
-	case AttrType::Integer:
+	case Type::Integer:
 		return attr;
 		break;
-	case AttrType::ID:
+	case Type::ID:
 		return id;
 		break;
-	case AttrType::Number:
+	case Type::Number:
 		return number;
 		break;
-	case AttrType::Text:
+	case Type::Text:
 		try {
 			return stod(text);
 		}
@@ -364,29 +399,42 @@ double AttrVar::to_num()const {
 }
 string AttrVar::to_str()const {
 	switch (type) {
-	case AttrType::Nil:
+	case Type::Nil:
 		return {};
 		break;
-	case AttrType::Boolean:
+	case Type::Boolean:
 		return to_string(bit);
 		break;
-	case AttrType::Integer:
+	case Type::Integer:
 		return to_string(attr);
 		break;
-	case AttrType::Number:
+	case Type::Number:
 		return toString(number);
 		break;
-	case AttrType::Text:
+	case Type::Text:
 		return text;
 		break;
-	case AttrType::Table: 
+	case Type::Table: 
 		return UTF8toGBK(to_json().dump());
 		break;
-	case AttrType::Function:
+	case Type::Function:
 		return {};
 		break;
-	case AttrType::ID:
+	case Type::ID:
 		return to_string(id);
+		break;
+	case Type::Set: {
+		ShowList li;
+		for (auto& elem : *flags) {
+			if (std::holds_alternative<double>(elem.val)) {
+				li << toString(get<double>(elem.val));
+			}
+			else if (std::holds_alternative<string>(elem.val)) {
+				li << "'" + get<string>(elem.val) + "'";
+			}
+		}
+		return "{" + li.show(",") + "}";
+	}
 		break;
 	default:
 		return {};
@@ -395,20 +443,21 @@ string AttrVar::to_str()const {
 }
 ByteS AttrVar::to_bytes()const {
 	switch (type) {
-	case AttrType::Text:
+	case Type::Text:
 		return { text.c_str(),text.length()};
 		break;
-	case AttrType::Function:
+	case Type::Function:
 		return chunk;
 		break;
-	case AttrType::Nil:
+	case Type::Nil:
 		return {};
 		break;
-	case AttrType::Boolean:
-	case AttrType::Integer:
-	case AttrType::Number:
-	case AttrType::ID:
-	case AttrType::Table:
+	case Type::Boolean:
+	case Type::Integer:
+	case Type::Number:
+	case Type::ID:
+	case Type::Table:
+	case Type::Set:
 		return {};
 		break;
 	}
@@ -443,81 +492,82 @@ AttrVar AttrVar::parse(const string& s) {
 	}
 	return s;
 }
-AttrVar AttrVar::parse_toml(std::ifstream& s) {
-	try	{
-		return toml::parse(s);
-	}
-	catch (const toml::parse_error& err){
-		return {};
-	}
-}
-AttrVar AttrVar::parse_yaml(std::filesystem::path& p) {
-	try {
-		return YAML::LoadFile(getNativePathString(p));
-	}
-	catch (std::exception& err) {
-		return {};
-	}
-}
 string AttrVar::print()const {
 	switch (type) {
-	case AttrType::Nil:
+	case Type::Nil:
 		return "null";
 		break;
-	case AttrType::Boolean:
+	case Type::Boolean:
 		return bit ? "true" : "false";
 		break;
-	case AttrType::Integer:
+	case Type::Integer:
 		return to_string(attr);
 		break;
-	case AttrType::Number:
+	case Type::Number:
 		return toString(number);
 		break;
-	case AttrType::Text:
+	case Type::Text:
 		return text;
 		break;
-	case AttrType::Table:
+	case Type::Table:
 		return UTF8toGBK(to_json().dump());
 		break;
-	case AttrType::ID:
+	case Type::ID:
 		return to_string(id);
 		break;
-	case AttrType::Function:
+	case Type::Set: {
+		ShowList li;
+		for (auto& elem : *flags) {
+			if (std::holds_alternative<double>(elem.val)) {
+				li << toString(get<double>(elem.val));
+			}
+			else if (std::holds_alternative<string>(elem.val)) {
+				li << get<string>(elem.val);
+			}
+		}
+		return "{" + li.show(",") + "}";
+	}
+		break;
+	case Type::Function:
 		return "Function#" + to_string(chunk.len);
 		break;
 	}
 	return {};
 }
 bool AttrVar::str_empty()const{
-	return type == AttrType::Text && text.empty();
+	return type == Type::Text && text.empty();
 }
 AttrObject AttrVar::to_obj()const {
-	if (type != AttrType::Table)return {};
+	if (type != Type::Table)return {};
 	return table;
 }
-std::shared_ptr<AttrVars> AttrVar::to_dict()const {
-	if (type != AttrType::Table)return {};
+ptr<AttrVars> AttrVar::to_dict()const {
+	if (type != Type::Table)return {};
 	return table.to_dict();
 }
 
-std::shared_ptr<VarArray> AttrVar::to_list()const {
-	if (type != AttrType::Table)return {};
+ptr<VarArray> AttrVar::to_list()const {
+	if (type != Type::Table)return {};
 	return table.to_list();
+}
+AttrSet AttrVar::to_set()const {
+	if (type != Type::Set)return {};
+	return flags;
 }
 
 
 bool AttrVar::is_numberic()const {
 	switch (type) {
-	case AttrType::Nil:
+	case Type::Nil:
 		return false;
 		break;
-	case AttrType::Boolean:
-	case AttrType::Integer:
-	case AttrType::ID:
-	case AttrType::Number:
+	case Type::Boolean:
+	case Type::Integer:
+	case Type::ID:
+	case Type::Number:
 		return true; 
 		break;
-	case AttrType::Text:
+	case Type::Text:
 		return isNumeric(text);
 		break;
 	default:
@@ -526,14 +576,14 @@ bool AttrVar::is_numberic()const {
 	return false;
 }
 bool AttrVar::equal(const AttrVar& other)const{
-	if (other.type == AttrType::Nil) {
+	if (other.type == Type::Nil) {
 		return is_null();
 	}
-	else if (other.type == AttrType::Boolean) {
+	else if (other.type == Type::Boolean) {
 		return is_true() == other.is_true();
 	}
-	else if (other.type == AttrType::Text) {
-		if(type == AttrType::Text)return text == other.text;
+	else if (other.type == Type::Text) {
+		if(type == Type::Text)return text == other.text;
 		else return to_str() == other.text;
 	}
 	else if (other.is_numberic() && is_numberic()) {
@@ -542,14 +592,14 @@ bool AttrVar::equal(const AttrVar& other)const{
 	return false;
 }
 bool AttrVar::not_equal(const AttrVar& other)const {
-	if (other.type == AttrType::Nil) {
+	if (other.type == Type::Nil) {
 		return !is_null();
 	}
-	else if (other.type == AttrType::Boolean) {
+	else if (other.type == Type::Boolean) {
 		return is_true() != other.is_true();
 	}
-	else if (other.type == AttrType::Text) {
-		if (type == AttrType::Text)return text != other.text;
+	else if (other.type == Type::Text) {
+		if (type == Type::Text)return text != other.text;
 		else return to_str() != other.text;
 	}
 	else if (other.is_numberic() && is_numberic()) {
@@ -573,16 +623,16 @@ bool AttrVar::equal_or_less(const AttrVar& other)const {
 AttrVar::AttrVar(const fifo_json& j) {
 	switch (j.type()) {
 	case fifo_json::value_t::null:
-		type = AttrType::Nil;
+		type = Type::Nil;
 		break;
 	case fifo_json::value_t::object:
-		type = AttrType::Table; {
+		type = Type::Table; {
 			new(&table)AttrObject();
 			unordered_set<string> idxs;
-			if (j.count("1")) {
+			if (j.count("0")) {
 				table.list = std::make_shared<VarArray>();
-				int idx{ 1 };
-				string strI{ "1" };
+				int idx{ 0 };
+				string strI{ "0" };
 				do {
 					table.list->push_back(j[strI]);
 					idxs.insert(strI);
@@ -595,7 +645,7 @@ AttrVar::AttrVar(const fifo_json& j) {
 		}
 		break;
 	case fifo_json::value_t::array:
-		type = AttrType::Table; {
+		type = Type::Table; {
 			new(&table)AttrObject();
 			table.list = std::make_shared<VarArray>();
 			for (auto& it : j) {
@@ -604,26 +654,26 @@ AttrVar::AttrVar(const fifo_json& j) {
 		}
 		break;
 	case fifo_json::value_t::string:
-		type = AttrType::Text;
+		type = Type::Text;
 		new(&text)string(UTF8toGBK(j.get<string>()));
 		break;
 	case fifo_json::value_t::boolean:
-		type = AttrType::Boolean;
+		type = Type::Boolean;
 		j.get_to(bit);
 		break;
 	case fifo_json::value_t::number_integer:
 	case fifo_json::value_t::number_unsigned:
 		if (long long num{ j.get<long long>() }; num > 10000000 || num < -10000000) {
-			type = AttrType::ID;
+			type = Type::ID;
 			id = num;
 		}
 		else {
-			type = AttrType::Integer;
+			type = Type::Integer;
 			j.get_to(attr);
 		}
 		break;
 	case fifo_json::value_t::number_float:
-		type = AttrType::Number;
+		type = Type::Number;
 		j.get_to(number);
 		break;
 	case fifo_json::value_t::binary:
@@ -633,28 +683,30 @@ AttrVar::AttrVar(const fifo_json& j) {
 }
 fifo_json AttrVar::to_json()const {
 	switch (type) {
-	case AttrType::Nil:
+	case Type::Nil:
 		return fifo_json();
 		break;
-	case AttrType::Boolean:
+	case Type::Boolean:
 		return bit;
 		break;
-	case AttrType::Integer:
+	case Type::Integer:
 		return attr;
 		break;
-	case AttrType::Number:
+	case Type::Number:
 		return number;
 		break;
-	case AttrType::Text:
+	case Type::Text:
 		return GBKtoUTF8(text);
 		break;
-	case AttrType::ID:
+	case Type::ID:
 		return id;
 		break;
-	case AttrType::Table:
+	case Type::Table:
 		return table.to_json();
 		break;
-	case AttrType::Function:
+	case Type::Set:
+		return ::to_json(*flags);
+	case Type::Function:
 		return {};
 	}
 	return {};
@@ -685,17 +737,16 @@ fifo_json AttrObject::to_json()const {
 AttrVar::AttrVar(const toml::node& t) {
 	switch (t.type()){
 	case toml::node_type::none:
-		type = AttrType::Nil;
+		type = Type::Nil;
 		break;
 	case toml::node_type::table:
-		type = AttrType::Table; {
+		type = Type::Table; {
 			new(&table)AttrObject();
 			auto tab{ t.as_table() };
 			unordered_set<string> idxs;
-			if (tab->contains("1")) {
+			if (string strI{ "0" }; tab->contains(strI)) {
 				table.list = std::make_shared<VarArray>();
-				int idx{ 1 };
-				string strI{ "1" };
+				int idx{ 0 };
 				do {
 					table.list->push_back(AttrVar(*(*tab)[strI].node()));
 					idxs.insert(strI);
@@ -708,7 +759,7 @@ AttrVar::AttrVar(const toml::node& t) {
 		}
 		break;
 	case toml::node_type::array:
-		type = AttrType::Table; {
+		type = Type::Table; {
 			new(&table)AttrObject();
 			table.list = std::make_shared<VarArray>();
 			for (auto& it : *t.as_array()) {
@@ -717,25 +768,25 @@ AttrVar::AttrVar(const toml::node& t) {
 		}
 		break;
 	case toml::node_type::string:
-		type = AttrType::Text;
+		type = Type::Text;
 		new(&text)string(UTF8toGBK(string(*t.as_string())));
 		break;
 	case toml::node_type::integer:
 		if (int64_t num{ *t.as_integer() }; num == (int)num) {
-			type = AttrType::Integer;
+			type = Type::Integer;
 			attr = (int)num;
 		}
 		else {
-			type = AttrType::ID;
+			type = Type::ID;
 			id = static_cast<long long>(num);
 		}
 		break;
 	case toml::node_type::floating_point:
-		type = AttrType::Number;
+		type = Type::Number;
 		number = double(*t.as_floating_point());
 		break;
 	case toml::node_type::boolean:
-		type = AttrType::Boolean;
+		type = Type::Boolean;
 		bit = t.as_boolean();
 		break;
 	case toml::node_type::date:
@@ -749,23 +800,26 @@ toml::table AttrObject::to_toml()const {
 	toml::table tab;
 	for (auto& [key, val] : *dict) {
 		if (val)switch (val.type) {
-		case AttrVar::AttrType::Boolean:
+		case AttrVar::Type::Boolean:
 			tab.insert(GBKtoUTF8(key), val.bit);
 			break;
-		case AttrVar::AttrType::Integer:
+		case AttrVar::Type::Integer:
 			tab.insert(GBKtoUTF8(key), val.attr);
 			break;
-		case AttrVar::AttrType::Number:
+		case AttrVar::Type::Number:
 			tab.insert(GBKtoUTF8(key), val.number);
 			break;
-		case AttrVar::AttrType::Text:
+		case AttrVar::Type::Text:
 			tab.insert(GBKtoUTF8(key), GBKtoUTF8(val.text));
 			break;
-		case AttrVar::AttrType::ID:
+		case AttrVar::Type::ID:
 			tab.insert(GBKtoUTF8(key), val.id);
 			break;
-		case AttrVar::AttrType::Table:
+		case AttrVar::Type::Table:
 			tab.insert(GBKtoUTF8(key), val.table.to_toml());
+			break;
+		case AttrVar::Type::Set:
+			tab.insert(GBKtoUTF8(key), ::to_toml(*val.flags));
 			break;
 		default:
 			break;
@@ -776,41 +830,41 @@ toml::table AttrObject::to_toml()const {
 AttrVar::AttrVar(const YAML::Node& y) {
 	if (y.IsScalar()) {
 		if (auto as_bool = YAML::as_if<bool, std::optional<bool>>(y)();as_bool.has_value()) {
-			type = AttrType::Boolean;
+			type = Type::Boolean;
 			bit = as_bool.value();
 		}
 		else if (auto as_int = YAML::as_if<long long, std::optional<long long>>(y)(); as_int.has_value()) {
 			long long num = as_int.value();
 			if (num == (int)num) {
-				type = AttrType::Integer;
+				type = Type::Integer;
 				attr = (int)num;
 			}
 			else {
-				type = AttrType::ID;
+				type = Type::ID;
 				attr = num;
 			}
 		}
 		else if (auto as_d = YAML::as_if<double, std::optional<double>>(y)(); as_d.has_value()) {
-			type = AttrType::Number;
+			type = Type::Number;
 			number = as_d.value();
 		}
 		else if (auto as_s = YAML::as_if<string, std::optional<string>>(y)(); as_s.has_value()) {
-			type = AttrType::Text;
+			type = Type::Text;
 			new(&text)string(UTF8toGBK(as_s.value()));
 		}
 	}
 	else if (y.IsMap()) {
-		type = AttrType::Table; {
+		type = Type::Table; {
 			new(&table)AttrObject();
 			unordered_set<string> idxs;
-			if (y["1"]) {
+			string strIdx{ "0" };
+			if (y[strIdx] || y[strIdx = "1"]) {
 				table.list = std::make_shared<VarArray>();
 				int idx{ 1 };
-				string strI{ "1" };
 				do {
-					table.list->push_back(y[strI]);
-					idxs.insert(strI);
-				} while (y[strI = to_string(++idx)]);
+					table.list->push_back(y[strIdx]);
+					idxs.insert(strIdx);
+				} while (y[strIdx = to_string(++idx)]);
 			}
 			for (auto& it : y) {
 				if (idxs.count(it.first.Scalar()))continue;
@@ -819,7 +873,7 @@ AttrVar::AttrVar(const YAML::Node& y) {
 		}
 	}
 	else if (y.IsSequence()) {
-		type = AttrType::Table;
+		type = Type::Table;
 		VarArray list;
 		for (YAML::Node it : y) {
 			list.push_back(it);
@@ -830,31 +884,45 @@ AttrVar::AttrVar(const YAML::Node& y) {
 YAML::Node AttrVar::to_yaml()const {
 	YAML::Node yaml;
 	switch (type) {
-	case AttrType::Boolean:
+	case Type::Boolean:
 		yaml = bit;
 		break;
-	case AttrType::Integer:
+	case Type::Integer:
 		yaml = attr;
 		break;
-	case AttrType::Number:
+	case Type::Number:
 		yaml = number;
 		break;
-	case AttrType::Text:
+	case Type::Text:
 		yaml = GBKtoUTF8(text);
 		break;
-	case AttrType::ID:
+	case Type::ID:
 		yaml = id;
 		break;
-	case AttrType::Table:
+	case Type::Table:
 		for (auto& [k, v] : *table.to_dict()) {
 			yaml[GBKtoUTF8(k)] = v.to_yaml();
 		}
-		if (table.to_list()) {
-			int i=0;
-			for (auto& v : *table.to_list()) {
-				yaml[GBKtoUTF8(i++)] = v.to_yaml();
+		if (auto li{ table.to_list() }) {
+			int i = 0;
+			if (table.to_dict()->empty()) {
+				for (auto& v : *li) {
+					yaml[i++] = v.to_yaml();
+				}
+			}
+			else {
+				for (auto& v : *li) {
+					yaml[GBKtoUTF8(i++)] = v.to_yaml();
+				}
 			}
 		}
+		break;
+	case Type::Set:{
+		int i = 0;
+		for (auto& v : *flags) {
+			yaml[i++] = AttrVar(v.val).to_yaml();
+		}
+	}
 		break;
 	default:
 		break;
@@ -863,6 +931,42 @@ YAML::Node AttrVar::to_yaml()const {
 }
 string to_string(const AttrVar& var) {
 	return var.to_str();
+}
+double AttrIndex::to_double()const {
+	return std::holds_alternative<double>(val) ? get<double>(val) : 0;
+}
+string AttrIndex::to_string()const {
+	return std::holds_alternative<string>(val) ? get<string>(val) : toString(get<double>(val));
+}
+fifo_json AttrIndex::to_json()const {
+	if (std::holds_alternative<double>(val)) {
+		double num{ get<double>(val) };
+		if (num == (long long)num)return (long long)num;
+		else return num;
+	}
+	else if (std::holds_alternative<string>(val)) {
+		return GBKtoUTF8(get<string>(val));
+	}
+	return {};
+}
+fifo_json to_json(const fifo_set<AttrIndex>& vars) {
+	fifo_json j = fifo_json::array();
+	for (auto& val : vars) {
+		j.emplace_back(val.to_json());
+	}
+	return j;
+}
+toml::array to_toml(const fifo_set<AttrIndex>& vars) {
+	toml::array t;
+	for (auto& val : vars) {
+		if (std::holds_alternative<double>(val.val)) {
+			t.emplace_back(std::get<double>(val.val));
+		}
+		else if (std::holds_alternative<string>(val.val)) {
+			t.emplace_back(std::get<string>(val.val));
+		}
+	}
+	return t;
 }
 fifo_json to_json(const AttrVars& vars) {
 	fifo_json j;
@@ -879,78 +983,99 @@ void from_json(const fifo_json& j, AttrVars& vars) {
 
 void AttrVar::writeb(std::ofstream& fout) const {
 	switch (type) {
-	case AttrType::Nil:
+	case Type::Nil:
 		fwrite(fout, (char)0);
 		break;
-	case AttrType::Boolean:
+	case Type::Boolean:
 		fwrite(fout, (char)1);
 		fwrite(fout, bit);
 		break;
-	case AttrType::Integer:
+	case Type::Integer:
 		fwrite(fout, (char)2);
 		fwrite(fout, attr);
 		break;
-	case AttrType::Number:
+	case Type::Number:
 		fwrite(fout, (char)3);
 		fwrite(fout, number);
 		break;
-	case AttrType::Text:
+	case Type::Text:
 		fwrite(fout, (char)4);
 		fwrite(fout, text);
 		break;
-	case AttrType::Table:
+	case Type::Table:
 		fwrite(fout, (char)5);
 		table.writeb(fout);
 		break;
-	case AttrType::Function:
+	case Type::Function:
 		fwrite(fout, (char)6);
 		fwrite(fout, chunk.len);
 		fout.write(chunk.bytes, chunk.len);
 		break;
-	case AttrType::ID:
+	case Type::ID:
 		fwrite(fout, (char)7);
 		fwrite(fout, id);
+		break;
+	case Type::Set:
+		fwrite(fout, (char)8);
+		fwrite(fout, flags->size());
+		for (auto& elem : *flags) {
+			AttrVar(elem.val).writeb(fout);
+		}
 		break;
 	}
 }
 void AttrVar::readb(std::ifstream& fin) {
+	des();
 	char tag{ fread<char>(fin) };
 	switch (tag){
 	case 1:
-		des();
-		type = AttrType::Boolean;
+		type = Type::Boolean;
 		bit = fread<bool>(fin);
 		break;
 	case 2:
-		des();
-		type = AttrType::Integer;
+		type = Type::Integer;
 		attr = fread<int>(fin);
 		break;
 	case 3:
-		des();
-		type = AttrType::Number;
+		type = Type::Number;
 		number = fread<double>(fin);
 		break;
 	case 4:
-		des();
-		type = AttrType::Text;
+		type = Type::Text;
 		new(&text) string(fread<string>(fin));
 		break;
 	case 5:
-		des();
-		type = AttrType::Table;
+		type = Type::Table;
 		new(&table) AttrObject();
 		table.readb(fin);
 		break;
 	case 6:
-		des();
-		type = AttrType::Function;
+		type = Type::Function;
 		new(&chunk) ByteS(fin);
 		break;
 	case 7:
-		des();
-		type = AttrType::ID;
+		type = Type::ID;
 		id = fread<long long>(fin);
+		break;
+	case 8:
+		type = Type::Set;
+		new(&flags) AttrSet(std::make_shared<fifo_set<AttrIndex>>());
+		if (size_t cnt = fread<size_t>(fin)) {
+			while (cnt--) {
+				if (char tag{ fread<char>(fin) }; tag == 2) {
+					flags->emplace((double)fread<int>(fin));
+				}
+				else if (tag == 3) {
+					flags->emplace(fread<double>(fin));
+				}
+				else if (tag == 4) {
+					flags->emplace(fread<string>(fin));
+				}
+				else if (tag == 7) {
+					flags->emplace((double)fread<long long>(fin));
+				}
+			}
+		}
 		break;
 	case 0:
 	default:

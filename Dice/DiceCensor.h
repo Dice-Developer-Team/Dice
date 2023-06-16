@@ -17,7 +17,7 @@ public:
 		Critical,		//仅占位，不启用
 	};
 	dict_ci<Level> words;
-	fifo_dict_ci<Level> CustomWords;
+	dict_ci<Level> CustomWords;
 	Level get_level(const string&);
 	void insert(const string& word, Level);
 	void add_word(const string& word, Level);

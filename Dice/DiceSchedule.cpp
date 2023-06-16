@@ -176,13 +176,13 @@ void DiceScheduler::start() {
 void DiceScheduler::end() {
 }
 
-int DiceToday::getJrrp(long long uid) {
+AttrVar DiceToday::getJrrp(long long uid) {
 	if (UserInfo.count(uid) && UserInfo[uid].has("jrrp"))
-		return UserInfo[uid]["jrrp"].to_int();
+		return UserInfo[uid]["jrrp"];
 	string frmdata = "QQ=" + to_string(console.DiceMaid) + "&v=20190114" + "&QueryQQ=" + to_string(uid);
 	string res;
 	if (Network::POST("http://api.kokona.tech:5555/jrrp", frmdata, "", res)) {
-		return (UserInfo[uid]["jrrp"] = stoi(res)).to_int();
+		return UserInfo[uid]["jrrp"] = stoi(res);
 	}
 	else {
 		if (!UserInfo[uid].has("jrrp_local")) {
@@ -191,7 +191,7 @@ int DiceToday::getJrrp(long long uid) {
 				AttrVars{ {"res", res} }
 			), 0);
 		}
-		return (UserInfo[uid]["jrrp_local"]).to_int();
+		return UserInfo[uid]["jrrp_local"];
 	}
 }
 
@@ -237,7 +237,9 @@ void DiceToday::set(long long qq, const string& key, const AttrVar& val) {
 	save();
 }
 
+std::mutex mtDailySave;
 void DiceToday::save() {
+	std::unique_lock<std::mutex> lock(mtDailySave);
 	fifo_json jFile;
 	try {
 		jFile["date"] = { stToday.tm_year + 1900,stToday.tm_mon + 1,stToday.tm_mday };

@@ -18,10 +18,10 @@ SelfData::SelfData(const std::filesystem::path& p) :pathFile(p) {
 			if (std::ifstream fs{ pathFile })data.readb(fs);
 			break;
 		case Toml:
-			if (std::ifstream fs{ pathFile })data = AttrVar::parse_toml(fs);
+			if (std::ifstream fs{ pathFile })data = toml::parse(fs);
 			break;
 		case Yaml:
-			data = AttrVar::parse_yaml(pathFile);
+			data = YAML::LoadFile(getNativePathString(pathFile));
 			break;
 		default:
 			break;

@@ -18,6 +18,7 @@ namespace CardDeck
 	extern fifo_dict_ci<std::vector<std::string>> mExternPublicDeck;
 	int findDeck(std::string strDeckName);
 	std::string drawCard(std::vector<std::string>& TempDeck, bool boolBack = false);
+	std::string drawOne(const std::vector<std::string>& TempDeck);
 	std::string draw(std::string strDeckName);
 };
 #endif /*CARD_DECK*/

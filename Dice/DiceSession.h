@@ -73,24 +73,46 @@ struct DeckInfo {
 	void reset();
 	string draw();
 };
+struct DiceRoulette {
+	//面数*
+	size_t face{ 0 };
+	size_t copy{ 0 };
+	//剩余牌
+	vector<size_t> pool;
+	size_t sizRes{ 0 };
+	DiceRoulette(){}
+	DiceRoulette(size_t f, size_t c = 1);
+	DiceRoulette(size_t f, size_t c, const vector<size_t>& p, size_t r) :face(f), copy(c), pool(p), sizRes(r) {};
+	void reset();
+	size_t roll();
+	string hist();
+};
 
 class DiceSession{
-	//数值表
-	AttrObject attrs;
+	//管理员
+	AttrSet master;
+	//玩家
+	AttrSet player;
 	//旁观者
-	unordered_set<long long> sOB;
+	AttrSet obs;
 	//日志
 	LogInfo logger;
 	//牌堆
-	map<string, DeckInfo, less_ci> decks;
+	dict_ci<DeckInfo> decks;
+	void save() const;
 public:
+	//数值表
+	AttrObject attrs;
 	//native filename
 	const string name;
-	unordered_set<chatInfo> windows;
-	//设置
-	AttrVars conf;
+	fifo_set<chatInfo> areas;
+	fifo_map<size_t, DiceRoulette> roulette;
+	size_t roll(size_t face);
 
-	DiceSession(const string& s) : name(s) {
+	DiceSession(const string& s) : name(s),
+		master(std::make_shared<fifo_set<AttrIndex>>()),
+		player(std::make_shared<fifo_set<AttrIndex>>()),
+		obs(std::make_shared<fifo_set<AttrIndex>>()) {
 		tUpdate = tCreate = time(nullptr);
 	}
 	friend class DiceSessionManager;
@@ -116,15 +138,53 @@ public:
 		save();
 		return *this;
 	}
-	void setConf(const string& key, const AttrVar& val) {
-		conf[key] = val;
+	string show()const;
+	bool hasAttr(const string& key);
+	AttrVar getAttr(const string& key);
+	void setAttr(const string& key, const AttrVar& val) {
+		attrs.set(key, val);
 		update();
 	}
-	void rmConf(const string& key) {
-		if (conf.count(key)) {
-			conf.erase(key);
+	void rmAttr(const string& key) {
+		if (attrs.has(key)) {
+			attrs.reset(key);
 			update();
 		}
+	}
+
+	[[nodiscard]] AttrSet get_gm() const { return master; }
+	[[nodiscard]] bool is_gm(long long uid) const { return master->count(uid); }
+	void add_gm(long long uid) {
+		master->emplace(uid);
+		update();
+	}
+	bool del_gm(long long uid) {
+		if (master->count(uid))master->erase(uid);
+		else return false;
+		update();
+		return true;
+	}
+	[[nodiscard]] AttrSet get_pl() const { return player; }
+	[[nodiscard]] bool is_pl(long long uid) const { return player->count(uid); }
+	bool add_pl(long long uid) {
+		if (!player->count(uid))player->emplace(uid);
+		else return false;
+		update();
+		return true;
+	}
+	bool del_pl(long long uid) {
+		if (player->count(uid))player->erase(uid);
+		else return false;
+		update();
+		return true;
+	}
+	bool is_simple() const { return player->empty() && master->empty(); }
+	bool is_part(long long uid) const { return player->count(uid) || master->count(uid); }
+	bool del_ob(long long uid) {
+		if (obs->count(uid))obs->erase(uid);
+		else return false;
+		update();
+		return true;
 	}
 
 	[[nodiscard]] bool table_count(const string& key) const { return attrs.has(key); }
@@ -138,11 +198,10 @@ public:
 	void ob_exit(DiceEvent*);
 	void ob_list(DiceEvent*) const;
 	void ob_clr(DiceEvent*);
-	[[nodiscard]] unordered_set<long long> get_ob() const { return sOB; }
+	[[nodiscard]] AttrSet get_ob() const { return obs; }
 
-	DiceSession& clear_ob()
-	{
-		sOB.clear();
+	DiceSession& clear_ob(){
+		obs->clear();
 		return *this;
 	}
 	
@@ -155,7 +214,7 @@ public:
 	[[nodiscard]] bool is_logging() const { return logger.isLogging; }
 
 	//deck指令
-	map<string, DeckInfo, less_ci>& get_deck() { return decks; }
+	dict_ci<DeckInfo>& get_deck() { return decks; }
 	DeckInfo& get_deck(const string& key) { return decks[key]; }
 	void deck_set(DiceEvent*);
 	string deck_draw(const string&);
@@ -166,8 +225,6 @@ public:
 	void deck_clr(DiceEvent*);
 	void deck_new(DiceEvent*);
 	[[nodiscard]] bool has_deck(const string& key) const { return decks.count(key); }
-
-	void save() const;
 };
 
 using Session = DiceSession;
@@ -176,6 +233,7 @@ class DiceSessionManager {
 	dict_ci<shared_ptr<Session>> SessionByName;
 	//聊天窗口对Session，允许多对一
 	unordered_map<chatInfo, shared_ptr<Session>> SessionByChat;
+	int inc = 0;
 public:
 	DiceChatLink linker;
 	[[nodiscard]] bool is_linking(const chatInfo& ct) {
@@ -184,16 +242,22 @@ public:
 	}
 
 	int load();
+	void save();
 	void clear() { SessionByName.clear(); SessionByChat.clear(); linker = {}; }
-	shared_ptr<Session> get(const chatInfo& ct);
-	shared_ptr<Session> get_if(const chatInfo& ct) {
+	shared_ptr<Session> get(chatInfo);
+	shared_ptr<Session> newGame(const string& name, const chatInfo& ct);
+	shared_ptr<Session> get_if(const chatInfo& ct)const {
 		auto chat{ ct.locate() };
-		return chat && SessionByChat.count(chat) ? SessionByChat[chat] : shared_ptr<Session>();
+		return chat && SessionByChat.count(chat) ? SessionByChat.at(chat) : shared_ptr<Session>();
+	}
+	shared_ptr<Session> getByName(const string& name)const {
+		return SessionByName.count(name) ? SessionByName.at(name) : ptr<Session>();
 	}
 	bool has_session(const chatInfo& ct)const {
 		return SessionByChat.count(ct.locate());
 	}
-	void end(chatInfo ct);
-
+	void open(const ptr<Session>& game, chatInfo ct);
+	void close(chatInfo ct);
+	void over(chatInfo ct);
 };
 extern DiceSessionManager sessions;

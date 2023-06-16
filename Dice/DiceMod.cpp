@@ -673,22 +673,51 @@ struct help_sorter {
 		return _Left < _Right;
 	}
 };
+string DiceModManager::prev_help(const string& key, AttrObject context) const {
+	if (const auto it = global_helpdoc.find(key); it != global_helpdoc.end()) {
+		return it->second;
+	}
+	else if (auto keys = querier.search(key); !keys.empty()) {
+		if (keys.size() == 1) {
+			auto word{ *keys.begin() };
+			context.set("redirect_key", word);
+			context.set("redirect_res", global_helpdoc.at(word));
+			return getMsg("strHelpRedirect", context);
+		}
+		else {
+			std::priority_queue<string, vector<string>, help_sorter> qKey;
+			for (auto& key : keys) {
+				qKey.emplace(".help " + key);
+			}
+			ShowList res;
+			while (!qKey.empty()) {
+				res << qKey.top();
+				qKey.pop();
+				if (res.size() > 20)break;
+			}
+			context.set("res", res.show("\n"));
+			return getMsg("strHelpSuggestion", context);
+		}
+	}
+	else return getMsg("strHelpNotFound", context);
+	return {};
+}
 
 void DiceModManager::_help(DiceEvent* job) {
-	if (job->is_empty("help_word")) {
+	string word{ job->get_str("help_word") };
+	if (word.empty()) {
 		job->reply(getMsg("strBotHeader") + Dice_Short_Ver + "\n" + getMsg("strHlpMsg"));
 		return;
 	}
-	else if (const auto it = global_helpdoc.find(job->get_str("help_word"));
+	else if (const auto it = global_helpdoc.find(word);
 		it != global_helpdoc.end()) {
 		job->reply(format(it->second, *job, true, global_helpdoc));
 	}
-	else if (auto keys = querier.search(job->get_str("help_word"));!keys.empty()) {
+	else if (auto keys = querier.search(word);!keys.empty()) {
 		if (keys.size() == 1) {
 			auto word{ *keys.begin() };
 			job->set("redirect_key", word);
 			job->set("redirect_res", get_help(word, *job));
-			console.log("近似匹配" + word + ":"+job->get_str("redirect_res"), 0);
 			job->replyMsg("strHelpRedirect");
 		}
 		else {
@@ -707,15 +736,14 @@ void DiceModManager::_help(DiceEvent* job) {
 		}
 	}
 	else job->replyMsg("strHelpNotFound");
-	cntHelp[job->get_str("help_word")] += 1;
-	saveJMap(DiceDir / "user" / "HelpStatic.json",cntHelp);
+	cntHelp[word] += 1;
+	saveJMap(DiceDir / "user" / "HelpStatic.json", cntHelp);
 }
 
 void DiceModManager::set_help(const string& key, const string& val){
-	CustomHelp[key] = val;
-	saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
 	if (!global_helpdoc.count(key))querier.insert(key);
-	global_helpdoc[key] = val;
+	global_helpdoc[key] = CustomHelp[key] = (val == "NULL") ? "" : val;
+	saveJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp);
 }
 void DiceModManager::rm_help(const string& key){
 	if(CustomHelp.erase(key)){
@@ -745,22 +773,12 @@ void DiceModManager::call_cycle_event(const string& id) {
 	if (auto trigger{ eve.get_dict("trigger") }; trigger->count("cycle")) {
 		sch.add_job_for(parse_seconds(trigger->at("cycle")), eve);
 	}
-	if (eve["action"].is_function()) {
-		lua_call_event(eve, eve["action"]);
-	}
-	else if (auto action{ eve.get_dict("action") }; action->count("lua")) {
-		lua_call_event(eve, action->at("lua"));
-	}
+	if (auto action{ eve.get_dict("action") })call_event(eve, action);
 }
 void DiceModManager::call_clock_event(const string& id) {
 	if (id.empty() || !global_events.count(id))return;
 	AttrObject eve{ global_events[id] };
-	auto action{ eve["action"] };
-	if (!action)return;
-	else if (action.is_table() && action.to_dict()->count("lua")) {
-		action = action.to_dict()->at("lua");
-	}
-	lua_call_event(eve, action);
+	if (auto action{ eve.get_dict("action") })call_event(eve, action);
 }
 bool DiceModManager::call_hook_event(AttrObject eve) {
 	string hookEvent{ eve.has("hook") ? eve.get_str("hook") : eve.get_str("Event") };
@@ -783,13 +801,7 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 				}
 #endif //DICE_PYTHON
 			}
-			else {
-				if (action->count("lua"))lua_call_event(eve, action->at("lua"));
-				if (action->count("js"))js_call_event(eve, action->at("js"));
-#ifdef DICE_PYTHON
-				if (action->count("py"))py_call_event(eve, action->at("py"));
-#endif //DICE_PYTHON
-			}
+			else call_event(eve, action);
 		}
 	}
 	return eve.is("blocked");
@@ -879,11 +891,11 @@ string DiceModManager::js_path(const string& name)const {
 	}
 	return {};
 }
-string DiceModManager::py_path(const string& name)const {
+std::optional<std::filesystem::path> DiceModManager::py_path(const string& name)const {
 	if (auto it{ global_py_scripts.find(name) }; it != global_py_scripts.end()) {
 		return it->second;
 	}
-	return {};
+	return std::nullopt;
 }
 
 #ifndef __ANDROID__
@@ -999,28 +1011,16 @@ void DiceMod::loadDir() {
 			for (auto& p : fSpeech) {
 				try {
 					YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) };
-					if (!yaml.IsMap()) {
-						continue;
-					}
-					for (auto it : yaml) {
-						speech[UTF8toGBK(it.first.Scalar())] = it.second;
+					if (yaml.IsMap()) {
+						for (auto it : yaml) {
+							speech[UTF8toGBK(it.first.Scalar())] = it.second;
+						}
 					}
 				}
 				catch (std::exception& e) {
-					console.log(getNativePathString(cut_relative(p, pathDir)) + "解析错误!" + e.what(), 0b10);
+					console.log(UTF8toGBK(cut_relative(p, pathDir).u8string()) + "解析错误!" + e.what(), 0b10);
 				}
 			}
-		}
-		if (fs::exists(pathDir / "image")) {
-			std::filesystem::copy(pathDir / "image", dirExe / "data" / "image",
-				std::filesystem::copy_options::recursive |
-				(Enabled ? std::filesystem::copy_options::update_existing : std::filesystem::copy_options::overwrite_existing));
-			cntImage = cntDirFile(pathDir / "image");
-		}
-		if (fs::exists(pathDir / "audio")) {
-			std::filesystem::copy(pathDir / "audio", dirExe / "data" / "record",
-				std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
-			cntAudio = cntDirFile(pathDir / "audio");
 		}
 		if (auto dirScript{ pathDir / "script" }; fs::exists(dirScript)) {
 			vector<std::filesystem::path> fScripts;
@@ -1032,18 +1032,50 @@ void DiceMod::loadDir() {
 				}
 				else if (p.extension() == ".js") {
 					string script_name{ cut_stem(p,dirScript) };
-					js_scripts[script_name] = p.u8string();
+					js_scripts[script_name] = getNativePathString(p);
 				}
 				else if (p.extension() == ".py") {
 					string script_name{ cut_stem(p,dirScript) };
-					string strPath{ p.u8string() };
-					py_scripts[script_name] = strPath;
+					py_scripts[script_name] = p;
 				}
 			}
 		}
 		listDir(pathDir / "reply", luaFiles, true);
 		listDir(pathDir / "event", luaFiles, true);
 		loadLua();
+		if (fs::exists(pathDir / "rulebook")) {
+			if(vector<std::filesystem::path> fSpeech; listDir(pathDir / "rulebook", fSpeech, true))
+			for (auto& p : fSpeech) {
+				try {
+					YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) };
+					if (yaml.IsMap()) {
+						string rulename{ UTF8toGBK(yaml["rule"].Scalar()) };
+						auto& rule{ rules[rulename]};
+						if (yaml["manual"])for (auto it : yaml["manual"]) {
+							rule.manual[UTF8toGBK(it.first.Scalar())] = UTF8toGBK(it.second.Scalar());
+						}
+						if (yaml["cassette"])for (auto it : yaml["cassette"]) {
+							rule.cassettes[UTF8toGBK(it.first.Scalar())] = AttrVar(it.second).to_dict();
+						}
+					}
+					else console.log(UTF8toGBK(cut_relative(p, pathDir).u8string()) + "yaml格式不为对象!", 0b10);
+				}
+				catch (std::exception& e) {
+					console.log(UTF8toGBK(cut_relative(p, pathDir).u8string()) + "解析错误!" + e.what(), 0b10);
+				}
+			}
+		}
+		if (fs::exists(pathDir / "image")) {
+			std::filesystem::copy(pathDir / "image", dirExe / "data" / "image",
+				std::filesystem::copy_options::recursive |
+				(Enabled ? std::filesystem::copy_options::update_existing : std::filesystem::copy_options::overwrite_existing));
+			cntImage = cntDirFile(pathDir / "image");
+		}
+		if (fs::exists(pathDir / "audio")) {
+			std::filesystem::copy(pathDir / "audio", dirExe / "data" / "record",
+				(Enabled ? std::filesystem::copy_options::update_existing : std::filesystem::copy_options::overwrite_existing));
+			cntAudio = cntDirFile(pathDir / "audio");
+		}
 	}
 	loaded = true;
 }
@@ -1150,7 +1182,7 @@ int DiceModManager::load(ResList& resLog){
 				ptr<DiceMsgReply> reply{ custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;
 				reply->keyMatch[0] = std::make_unique<vector<string>>(vector<string>{ key });
-				reply->deck = deck;
+				reply->answer = deck;
 			}
 		}
 		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck) > 0) {
@@ -1159,7 +1191,7 @@ int DiceModManager::load(ResList& resLog){
 				ptr<DiceMsgReply> reply{ custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;
 				reply->keyMatch[3] = std::make_unique<vector<string>>(vector<string>{ key });
-				reply->deck = deck;
+				reply->answer = deck;
 			}
 		}
 		if(!custom_reply.empty())save_reply();
@@ -1193,6 +1225,7 @@ void DiceModManager::build() {
 	global_py_scripts.clear();
 	global_events.clear();
 	final_reply = {};
+	auto rules_new = std::make_shared<DiceRuleSet>();
 	//merge mod
 	for (auto& mod : modOrder) {
 		if (!mod->active || !mod->loaded)continue;
@@ -1201,10 +1234,13 @@ void DiceModManager::build() {
 		map_merge(global_py_scripts, mod->py_scripts);
 		cntSpeech += map_merge(global_speech, mod->speech);
 		cntHelp += map_merge(global_helpdoc, mod->helpdoc);
+		rules_new->merge(mod->rules);
 		map_merge(final_reply.items, mod->reply_list);
 		map_merge(global_events, mod->events);
 	}
 	//merge custom
+	if (rules_new->build())resLog << "注册规则集 " + to_string(rules_new->rules.size()) + " 部";
+	ruleset.swap(rules_new);
 	if (cntSpeech += map_merge(global_speech, EditedMsg))
 		resLog << "注册speech " + to_string(cntSpeech) + " 项";
 	if (cntHelp += map_merge(global_helpdoc, CustomHelp))
@@ -1229,14 +1265,14 @@ void DiceModManager::build() {
 		unordered_set<string> cycle;
 		for (auto& [id, eve] : global_events) {
 			eve["id"] = id;
-			auto trigger{ eve.get_dict("trigger") };
-			if (trigger->count("cycle")) {
+			auto trigger{ eve.get_obj("trigger") };
+			if (trigger.has("cycle")) {
 				if (!cycle_events.count(id)) {
 					call_cycle_event(id);
 				}
 				cycle.insert(id);
 			}
-			if (trigger->count("clock")) {
+			if (trigger.has("clock")) {
 				auto& clock{ trigger->at("clock") };
 				if (auto list{ clock.to_list() }) {
 					for (auto& clc : *list) {
@@ -1247,7 +1283,7 @@ void DiceModManager::build() {
 					clock_events.emplace(parse_clock(clock), id);
 				}
 			}
-			if (trigger->count("hook")) {
+			if (trigger.has("hook")) {
 				string nameEvent{ trigger->at("hook").to_str() };
 				hook_events.emplace(nameEvent, eve);
 			}
@@ -1281,4 +1317,11 @@ void DiceModManager::save() {
 	else {
 		remove(DiceDir / "conf" / "ModList.json");
 	}
+}
+void call_event(AttrObject eve, const ptr<AttrVars>& action) {
+	if (action->count("lua"))lua_call_event(eve, action->at("lua"));
+	if (action->count("js"))js_call_event(eve, action->at("js"));
+#ifdef DICE_PYTHON
+	if (action->count("py"))py_call_event(eve, action->at("py"));
+#endif //DICE_PYTHON
 }

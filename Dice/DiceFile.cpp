@@ -62,6 +62,15 @@ int clrDir(const std::string& dir, const std::unordered_set<std::string>& except
 	return nCnt;*/
 }
 
+std::optional<std::string> readFile(const std::filesystem::path& p) {
+	if (std::ifstream fs{ p }) {
+		std::stringstream buffer;
+		buffer << fs.rdbuf();
+		return buffer.str();
+	}
+	return std::nullopt;
+}
+
 string printLine(string s)
 {
 	while (s.find('\t') != std::string::npos)s.replace(s.find('\t'), 1, "\\t");

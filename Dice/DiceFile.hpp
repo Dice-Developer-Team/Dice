@@ -3,7 +3,7 @@
 /*
  * 文件读写
  * Copyright (C) 2018-2021 w4123
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 
 #include <fstream>
@@ -50,15 +50,7 @@ bool readFile(const std::filesystem::path& p, std::basic_string<Char, Trait, All
 	return true;
 }
 
-template <typename Map1, typename Map2>
-size_t map_merge(Map1& m1, const Map2& m2){
-	size_t t{ 0 };
-	for (auto& [k,v] : m2)	{
-		m1[k] = v;
-		++t;
-	}
-	return t;
-}
+std::optional<std::string> readFile(const std::filesystem::path& p);
 
 template <typename TKey, typename TVal>
 TVal get(const map<TKey, TVal>& m, TKey key, TVal def)
@@ -158,6 +150,14 @@ fifo_map<T1, T2> fread(ifstream& fin) {
 	return dir;
 }
 // 读取二进制文件——std::set重载
+template <typename T>
+void fread(ifstream& fin, std::unordered_set<T>& s){
+	short len = fread<short>(fin);
+	if (len > 0)while (len--){
+		const T item = fread<T>(fin);
+		s.insert(item);
+	}
+}
 template <typename T, bool isLib>
 std::set<T> fread(ifstream& fin)
 {
@@ -559,6 +559,17 @@ void fwrite(ofstream& fout, const std::map<T1, T2>&m)
 	}
 }
 template <typename T1, typename T2>
+void fwrite(ofstream& fout, const std::map<T1, std::shared_ptr<T2>>& m)
+{
+	const auto len = static_cast<short>(m.size());
+	fwrite(fout, len);
+	for (const auto& it : m)
+	{
+		fwrite(fout, it.first);
+		fwrite(fout, *it.second);
+	}
+}
+template <typename T1, typename T2>
 void fwrite(ofstream& fout, const std::unordered_map<T1, T2>& m)
 {
 	const auto len = static_cast<short>(m.size());
@@ -581,7 +592,16 @@ void fwrite(ofstream& fout, const nlohmann::fifo_map<T1, T2>& m)
 	}
 }
 
-
+template <typename T>
+void fwrite(ofstream& fout, const std::unordered_set<T>& s)
+{
+	const auto len = static_cast<size_t>(s.size());
+	fwrite(fout, len);
+	for (const auto& it : s)
+	{
+		fwrite(fout, it);
+	}
+}
 template <typename T>
 void fwrite(ofstream& fout, const std::set<T>& s)
 {

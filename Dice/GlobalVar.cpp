@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -50,7 +50,7 @@ const dict_ci<string> PlainMsg
 	{"strCallUser", "用户"},
 	{"strSummonWord", ""},
 	{"strSummonEmpty", "召唤{self}，{nick}有何事么？"},
-	{"strModList", "{self}的模块加载列表:{li}"},
+	{"strModList", "{self}的记忆体列表:{li}"},
 	{"strModOn", "已令{self}人格激活记忆体「{mod}」√"},
 	{"strModOnAlready", "{self}的记忆体「{mod}」已激活！"},
 	{"strModOff", "已将记忆体「{mod}」弹出{self}人格√"},
@@ -88,6 +88,33 @@ const dict_ci<string> PlainMsg
 	{"strLogUpSuccess","{self}已完成日志上传√\n请访问 {log_url} 以查看记录"},
 	{"strLogUpFailure","{self}上传日志文件失败，正在第{retry}次重传{log_file}…{ret}"},
 	{"strLogUpFailureEnd","很遗憾，{self}无法成功上传日志文件×\n{ret}\n如需获取可联系Master:{print:master}\n文件名:{log_file}"},
+	{"strGameNew","{self}创建新游戏「{game_id}」成功√"},
+	{"strGameOver","游戏「{game_id}」已终结√"},
+	{"strGameMastered","{self}已接受{nick}为本桌游戏管理员√"},
+	{"strGameMasterList","本桌游戏管理员有:\n{items}"},
+	{"strGameMasterDenied","抱歉，GM权限不能交给{nick}×"},
+	{"strGameJoined","{self}已接受{nick}的玩家报名√"},
+	{"strGamePlayerAlready","{nick}已经上桌啦！"},
+	{"strGamePlayerCall","{items}"},
+	{"strGamePlayerEmpty","{self}还没看到有玩家上桌哦~"},
+	{"strGameKicked","{self}已将{at:{tid}}踢下桌√"},
+	{"strGameKickNotPlayer","{nick}要踢走的{tid}不在桌上×"},
+	{"strGameExited","玩家{nick}已退出游戏√"},
+	{"strGameNotJoined","嗯？{nick}原来有在桌上吗？"},
+	{"strGameNotMaster","请{nick}让这桌的GM进行此操作×"},
+	{"strGameVoidHere","{self}连桌布还没铺上，{nick}就要动桌子么？"},
+	{"strGameNotExit","{self}不记得有一桌叫{game_id}的游戏了×"},
+	{"strGameItemSet","{self}已将本桌游戏的{set_item}设置为{set_val}√"},
+	{"strGameItemShow","本桌游戏的{set_item}为{set_val}√"},
+	{"strGameItemEmpty","请{nick}输入待设置的项目×"},
+	{"strGameAreaOpen","{self}已在此展开「{game_id}」游戏领域√"},
+	{"strGameAreaClosed","游戏领域关闭，{nick}可用.game open {game_id} 重新展开√"},
+	{"strGameRouletteSet","{self}已为{face}面骰启用轮盘骰√"},
+	{"strGameRouletteTooBig","这么大……{nick}丢得完吗？"},
+	{"strGameRouletteHistory","{self}本轮轮盘骰记录如下:\n{hist}"},
+	{"strGameRouletteEmpty","{self}并未在本桌用过轮盘骰×"},
+	{"strGameRouletteClear","{self}已清空桌上轮盘骰√"},
+	{"strGameRouletteReset","{self}已复原桌上轮盘骰√"},
 	{"strGMTableShow","{self}记录的{table_name}列表: {res}"},
 	{"strGMTableClr","{self}已清除{table_name}表√"},
 	{"strGMTableItemDel","{self}已移除{table_name}表的项目{table_item}√"},
@@ -140,15 +167,18 @@ const dict_ci<string> PlainMsg
 	{"strPcStatEmpty","{pc}在{self}处还没有检定被记录的样子×"},
 	{"strPcNotExistErr","{self}无{nick}的角色卡记录，无法删除×"},
 	{"strPcCardFull","{nick}在{self}处的角色卡已达上限，请先清理多余角色卡×"},
-	{"strPcTempChange","{self}已将{pc}的模板切换为{new_type}×"},
+	{"strPcTempChange","{self}已将{pc}的模板切换为{new_type}√"},
 	{"strPcTempInvalid","{self}无法识别的角色卡模板×"},
 	{"strPcNameEmpty","名称不能为空×"},
-	{"strPcNameExist","{nick}已存在同名卡×"},
-	{"strPcNameNotExist","{nick}无该名称角色卡×"},
+	{"strPcNameExist","{self}已记录过同名「{char}」×"},
+	{"strPcNameNotExist","{self}未记录{nick}名为「{char}」角色卡×"},
 	{"strPcNameInvalid","非法的角色卡名（存在冒号）×"},
 	{"strPcInitDelErr","{nick}的初始卡不可删除×"},
-	{"strPcNoteTooLong","备注长度不能超过255×"},
 	{"strPcTextTooLong","文本长度不能超过255×"},
+	{"strPcLockedKill","{self}已锁定{pc}，不可删除×" },
+	{"strPcLockedName","{self}已锁定{pc}，不可改名×" },
+	{"strPcLockedWrite","{self}已锁定{pc}，不可主动写入×" },
+	{"strPcLockedRead","{self}已锁定{pc}，不予查看属性×" },
 	{"strSetDefaultDice","{self}已将{pc}的默认骰设置为D{default}√"},
 	{"strCOCBuild","{pc}的调查员作成:{res}"},
 	{"strDNDBuild","{pc}的英雄作成:{res}"},
@@ -165,11 +195,11 @@ const dict_ci<string> PlainMsg
 	{"strReplyShow","{self}的关键词条目{key}为:{show}"},
 	{"strReplyList","{self}的回复触发词共有:{res}"},
 	{"strReplyDel","{self}已移除回复关键词条目{key}√"},
-	{"strReplyKeyEmpty","{nick}请输入回复关键词×"},
+	{"strReplyKeyEmpty","{nick}请输入回复触发词×"},
 	{"strReplyKeyNotFound","{self}未找到回复关键词{key}×"},
 	{"strScriptRunErr","{self}似乎出了点问题，请{nick}耐心等待（{lang}脚本运行出错）" },
-	{"strStModify","{self}已记录{pc}的属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
-	{"strStDetail","{self}已设置{pc}的属性："},		//存在掷骰时，使用此文本(暂时无用)
+	{"strStModify","{self}已记录{pc}的{cnt}条属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
+	{"strStDetail","{self}已设置{pc}的属性："},		//存在掷骰时，使用此文本
 	{"strStValEmpty","{self}未记录{attr}原值×"},		
 	{"strBlackQQAddNotice","{nick}，你已被{self}加入黑名单，详情请联系Master:{print:master}"},				
 	{"strBlackQQAddNoticeReason","{nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{print:master}"},
@@ -274,7 +304,7 @@ const dict_ci<string> PlainMsg
 	{"strRollRegularSuccess", "成功"},
 	{"strRollFailure", "失败"},
 	{"strRollFumble", "大失败！"},
-	{"strFumble", "大失败!"}, //多轮检定用，请控制长度
+	{"strFumble", "大失败！"}, //多轮检定用，请控制长度
 	{"strFailure", "失败"},
 	{"strSuccess", "成功"},
 	{"strHardSuccess", "困难成功"},
@@ -283,16 +313,14 @@ const dict_ci<string> PlainMsg
 	{"strNumCannotBeZero", "无意义的数目！莫要消遣于我!"},
 	{"strDeckNotFound", "是说{deck_name}？{self}没听说过的牌堆名呢……"},
 	{"strDeckEmpty", "{self}已经一张也不剩了！"},
-	{"strNameNumTooBig", "生成数量过多!请输入1-10之间的数字!"},
-	{"strNameNumCannotBeZero", "生成数量不能为零!请输入1-10之间的数字!"},
-	//{"strSetInvalid", "无效的默认骰!请输入1-9999之间的数字!"},
-	{"strSetTooBig", "这面数……让我丢个球啊!请输入1-9999之间的数字!"},
-	{"strSetCannotBeZero", "默认骰不能为零!请输入1-9999之间的数字!"},
+	{"strNameNumTooBig", "想取多少个名字啊!请{nick}输入1-10之间的数字!"},
+	{"strNameNumCannotBeZero", "让{self}取0个名字？请{nick}输入1-10之间的数字!"},
+	{"strSetTooBig", "这面数……让我丢个球啊!请{nick}输入1-9999之间的数字!"},
+	{"strSetCannotBeZero", "默认骰不能为零!请{nick}输入1-9999之间的数字!"},
 	{"strCharacterCannotBeZero", "人物作成次数不能为零!请输入1-10之间的数字!"},
 	{"strCharacterTooBig", "人物作成次数过多!请输入1-10之间的数字!"},
 	{"strCharacterInvalid", "人物作成次数无效!请输入1-10之间的数字!"},
-	{"strSanRoll", "{pc}的San Check：\n{res}"},
-	{"strSanRollRes", "{strSanRoll}\n{pc}的San值减少{change}点,当前剩余{final}点"},
+	{"strSanityRoll", "{pc}的San Check：\n{res} {grade:rank?2={strSuccess}&1={strFailure}&0={strFumble}}\n{case:loss?0=无理智损失√&else=理智减少{change}->剩余{final}}" },
 	{"strSanCostInvalid", "{pc}输入SC表达式不正确,格式为成功扣San/失败扣San,如1/1d6!"},
 	{"strSanInvalid", "San值输入不正确,请{pc}输入1-99范围内的整数!"},
 	{"strSanEmpty", "未设定San值，请{pc}先.st san 或查看.help sc×"},
@@ -300,7 +328,6 @@ const dict_ci<string> PlainMsg
 	{"strLongInsane", "{pc}的疯狂发作-总结症状:\n{res}" },
 	{"strSuccessRateErr", "这成功率还需要检定吗？"},
 	{"strGroupIDInvalid", "无效的群号!"},
-	{"strSendErr", "消息发送失败!"},
 	{"strSendSuccess", "命令执行成功√"},
 	{"strActionEmpty", "动作不能为空×"},
 	{"strMEDisabledErr", "管理员已在此群中禁用.me命令!"},
@@ -337,7 +364,7 @@ const dict_ci<string> PlainMsg
 	{"strNameDel", "{self}已删除{old_nick}在当前窗口的称呼√" },
 	{"strNameClr", "{self}已清空{old_nick}的所有称呼√" },
 	{"strUnknownPropErr", "未设定{attr}成功率，请先.st {attr} 技能值 或查看.help rc×"},
-	{"strPropErr", "请{pc}认真输入属性哦~"},
+	{"strPropErr", "{pc}的属性录入存在异常，请遵守规范:\n{err}"},
 	{"strSetPropSuccess", "已为{pc}录入{cnt}条属性√"},
 	{"strPropCleared", "已清空{char}的所有属性√"},
 	{"strRuleReset", "已重置默认规则√"},
@@ -473,7 +500,7 @@ const dict_ci<string> GlobalComment{
 	{"strHelpNotFound", "help未找到近似词条"},
 	{"strHelpRedirect", "help找到唯一近似词条"},
 	{"strHelpSuggestion", "help找到多条近似词条"},
-	{"strHlpMsg", "help指令裸参数回执"},
+	{"strHlpMsg", "help无参裸指令回执"},
 	//
 	{"strRollCriticalSuccess", "检定大成功"}, 
 	{"strRollExtremeSuccess", "检定极难成功"},
@@ -482,7 +509,7 @@ const dict_ci<string> GlobalComment{
 	{"strRollFailure", "检定失败"},
 	{"strRollFumble", "检定大失败"},
 	//
-	{"strSanRollRes", ".sc指令回执"},
+	{"strSanityRoll", ".sc指令回执"},
 	{"strSelfCall", "自称，多用于回执"},
 	{"strSelfName", "名称，用于自我展示场合"},
 	{"strSelfNick", "用户对自己的昵称，用于扩展指令"},
@@ -495,9 +522,21 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+653:游戏卡带机制
+652:game new/over/open/close/state
+651:局内轮盘骰
+650:规则集专属指令
+649:.game 功能
+648:角色卡锁定功能
+647:支持自定义规则集
+646:支持集合Set读写
+645:重定义.sc回执
+644:定义脚本内角色卡Actor类型
+643:rc支持跨角色卡调用
+642:优化helpdoc
+641:SelfData支持yaml
 640:支持调用JavaScript
 639:支持reply调用python
-638:webui模块调序
 637:模块资源远程访问
 636:支持toml读写
 635:webui可自定义化
@@ -505,37 +544,24 @@ const dict_ci<> HelpDoc = {
 633:format新增wait，花括号嵌套优化
 632:format新增ran
 631:WebUI新增mod页
-630:修复初始认主
 629:恢复远程更新
 628:支持mod更新
 627:更新认主口令
 626:前缀匹配记录后缀
-625:支持welcome转义
 624:支持mod远程安装/详细信息
-623:优化mod热插拔
 622:支持手动时差
 621:扩展代理事件及ex接口
-620:留档每日数据，新增每日清算事件
-619:统一reply与order格式
 618:支持reply(Order形式)覆盖指令
 617:更新grade分档转义
-616:转义&case支持取用户/群配置
-615:支持自定义数据读写
-614:更新reply:limit:lock
-613:更新lua交互机制
 612:新增mod代理事件
-611:更新WebUI自定义回执
 610:新增mod定时事件
 609:新增mod循环事件
 608:新增.mod指令
-607:修改.nn语法
 593:reply新增触发限制
 589:ak安科安价指令
-585:WebUI
 581:角色掷骰统计
 569:.rc/.draw暗骰暗抽
 567:敏感词检测
-566:.help查询建议
 565:.log日志记录)"},
 {"协议","0.本协议是Dice!默认服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已得到群内事先同意并认可协议，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
 {"链接","Dice!论坛: https://kokona.tech\nDice!手册: https://v2docs.kokona.tech\n支持Shiki: https://afdian.net/@dice_shiki"},
@@ -548,13 +574,12 @@ const dict_ci<> HelpDoc = {
 窥屏可能：{窥屏可能}
 其他插件：{其他插件}{姐妹骰}
 骰娘用户群:{骰娘用户群}
-私骰分享群：192499947
-开发交流群：1029435374)"},
+骰娘交流分享群：928626681)"},
 {"骰娘用户群","【未设置】"},
 {"窥屏可能","无"},
-{"其他插件","【未设置】"},
+{"其他插件","【未知】"},
 {"姐妹骰","{list_dice_sister}"},
-{"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2022 String.Empty\nGithub@Dice-Developer-Team"},
+{"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2023 String.Empty\nGithub@Dice-Developer-Team"},
 {"指令",R"(指令前接at可以指定骰娘响应，如
 {at:self}.bot on
 请.help对应指令 获取详细信息，如.help r
@@ -569,6 +594,7 @@ const dict_ci<> HelpDoc = {
 .mod 模块操作)"
 "\f"
 R"([第二页]跑团指令
+.game 游戏领域
 .rules 规则速查
 .r 掷骰
 .log 日志记录
@@ -617,7 +643,7 @@ mod按序读取，且从后向前覆盖)"},
 .ak show 查看分歧选项
 .ak clr 清除本轮分歧)"},
 {"log",R"(跑团日志记录.log
-`.log new 日志名` 另开日志并开始记录
+`.log new 日志名` 新开日志并开始记录
 `.log on` 继续记录
 `.log off` 暂停记录
 `.log end` 完成记录并发送日志文件
@@ -633,11 +659,10 @@ mod按序读取，且从后向前覆盖)"},
 `.deck new 牌堆名=[卡面1](...|[卡面n])` //自定义牌堆
 例:
 .deck new 俄罗斯轮盘=有弹|::5::无弹 //::张数::卡面
-*实例可以操作抽牌洗牌*
+*实例抽牌不会放回直到抽空，可以操作抽牌洗牌*
 *每个群至多保存10个实例*
-*使用.draw时，牌堆实例优先级高于同名公共对象*
-*从实例抽牌不会放回直到抽空*
-*除show外其他群内操作需要用户信任或管理权限*)"},
+*.draw时，牌堆实例优先级高于同名公共对象*
+*除show外其他群内操作需要GM权限*)"},
 {"退群","&dismiss"},
 {"退群指令","&dismiss"},
 {"dismiss","该指令需要群管理员权限，使用后即退出群聊\n!dismiss [目标QQ(完整或末四位)]指名退群\n!dismiss无视内置黑名单和静默状态，只要插件开启总是有效"},
@@ -679,6 +704,29 @@ Type=[回复性质](Reply/Order)
 `dicemaid:off` Dice!骰娘不触发
 )" },
 {"回复列表","{strSelfName}的回复触发词列表:{list_reply_deck}"},
+{"game",R"(游戏模式：
+`.game new 桌名` 创建游戏（命名可省略）
+`.game over` 销毁本桌游戏
+`.game state` 查看本桌状态
+`.game master` 登记为GM
+`.game set 属性=值` 游戏设置
+例: `.game set rule=COC7`
+`.game set 属性` 查看设置
+`.game call` at玩家
+`.game join` 玩家登记
+`.game kick 玩家ID` 将玩家踢出游戏
+`.game exit` 退出游戏
+`.game open 桌号` 将当前窗口加入指定游戏
+`.game close` 关闭当前游戏
+`.game rou 100` 设置(百面)轮盘骰，详见.help roulette)"},
+{"roulette",R"(轮盘骰roulette
+设置轮盘骰后，游戏内进行对应面数的掷骰时，每次将擦除掷出点数，直至所有点数都被掷出后重置
+`.game rou 100` 设置(百面)轮盘骰
+`.game rou 20*5` 设置20面轮盘骰，每个点数重复5次（总数不超过100）
+`.game rou hist` 查看当轮记录
+`.game rou clr` 清空轮盘骰
+`.game rou reset` 还原轮盘骰
+)" },
 {"旁观","&ob"},
 {"旁观模式","&ob"},
 {"ob",R"(旁观模式：.ob (join/exit/list/clr/on/off)
@@ -857,9 +905,9 @@ Type=[回复性质](Reply/Order)
 .link start 开启上次关闭的链接
 .link close 关闭链接
 [转发方向]:to=转发本窗口消息到对象窗口;from=转发对象窗口消息到本窗口;with=双向转发
-[对象窗口]:群/讨论组=[群号];私聊窗口=q[uid号]
-例:.link with q1605271653 //建立双向私聊链接
-.link from 928626681 //接收目标群的消息转发
+[对象窗口]:群/讨论组=g[群号];私聊窗口=u[账号]
+例:.link with u1605271653 //建立双向私聊链接
+.link from g928626681 //接收目标群的消息转发
 .link state 查看当前链接状态
 .link list 列出全部窗口的链接
 每个窗口为起点只能链接一个对象)"},

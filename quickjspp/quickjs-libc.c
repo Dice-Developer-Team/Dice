@@ -64,8 +64,8 @@ typedef sig_t sighandler_t;
 #include <crt_externs.h>
 #define environ (*_NSGetEnviron())
 #endif
-#elif !defined(environ) /* __APPLE__ */
-#define environ _environ
+#elif !defined(environ) /* !__APPLE__ */
+extern char** environ;
 #endif /* __APPLE__ */
 
 #endif

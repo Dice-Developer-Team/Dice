@@ -9,6 +9,7 @@
  */
 
 #include <mutex>
+#include <optional>
 #include "DiceMsgSend.h"
 #include "json.hpp"
 #include "DiceEvent.h"
@@ -16,7 +17,7 @@
 
 using std::shared_ptr;
 
-extern AttrIndexs MsgIndexs;
+extern AttrGetters MsgIndexs;
 
 /*
 class DiceJob : public DiceJobDetail {
@@ -87,12 +88,12 @@ public:
 	AttrVar& get(const string& key) { return UserInfo[0].at(key); }
 	AttrObject& get(long long uid) { return UserInfo[uid]; }
 	//AttrVar& get(long long uid, const string& key) { return UserInfo[uid].to_dict()[key]; }
-	AttrVar* get_if(long long qq, const string& key) {
+	std::optional<AttrVar> get_if(long long qq, const string& key) {
 		if (UserInfo.count(qq) && UserInfo[qq].has(key))
-			return &UserInfo[qq].at(key);
-		else return nullptr;
+			return UserInfo[qq].at(key);
+		else return std::nullopt;
 	}
-	int getJrrp(long long qq);
+	AttrVar getJrrp(long long);
 	size_t cntUser() { return UserInfo.size(); }
 	void daily_clear();
 };

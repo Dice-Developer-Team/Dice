@@ -232,7 +232,7 @@ void clear_group(AttrObject& job) {
 				set<long long> MemberList{ DD::getGroupMemberList(id) };
 				AttrVar authSelf;
 				for (auto eachQQ : MemberList) {
-					if (blacklist->get_qq_danger(eachQQ) > 1) {
+					if (blacklist->get_user_danger(eachQQ) > 1) {
 						if (authSelf.is_null())authSelf = DD::getGroupAuth(id, console.DiceMaid, 1);
 						if (auto authBlack{ DD::getGroupAuth(id, eachQQ, 1) }; authSelf.more(authBlack)) {
 							continue;
@@ -292,7 +292,7 @@ void clear_group(AttrObject& job) {
 	if (!GrpDelete.empty()) {
 		for (const auto& id : GrpDelete) {
 			ChatList.erase(id);
-			if (sessions.has_session({ 0,id }))sessions.end({ 0,id });
+			if (sessions.has_session({ 0,id }))sessions.over({ 0,id });
 		}
 		MsgNote(job, "清查群聊时回收不活跃记录" + to_string(GrpDelete.size()) + "条", 0b1);
 	}

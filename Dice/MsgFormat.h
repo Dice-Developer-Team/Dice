@@ -141,6 +141,7 @@ std::string listKey(T& m){
 }
 
 std::string listDeck(const std::vector<std::string>& v);
+std::string listDeck(const VarArray& v);
 
 std::string to_binary(int b);
 std::string strip(std::string);

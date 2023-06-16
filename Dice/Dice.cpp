@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -22,18 +22,9 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #define UNICODE
-#include <string>
-#include <iostream>
-#include <map>
-#include <set>
-#include <fstream>
 #include <algorithm>
-#include <ctime>
-#include <mutex>
-#include <unordered_map>
 #include <exception>
 #include <stdexcept>
-#include "filesystem.hpp"
 
 #include "DiceFile.hpp"
 #include "Jsonio.h"
@@ -41,7 +32,6 @@
 #include "DDAPI.h"
 #include "ManagerSystem.h"
 #include "DiceMod.h"
-#include "DiceMsgSend.h"
 #include "MsgFormat.h"
 #include "DiceCloud.h"
 #include "CardDeck.h"
@@ -465,6 +455,7 @@ R"( //私骰作成 即可成为我的主人~
 	{
 		console.log(std::string("刷新软件包缓存失败：") + e.what(), 0);
 	}
+	isIniting.clear();
 	fmt->call_hook_event(AttrVars{ {{"Event","StartUp"}} });
 }
 
@@ -528,7 +519,7 @@ bool eve_GroupAdd(Chat& grp) {
 				if (DD::isGroupAdmin(fromGID, each, false))
 				{
 					max_trust |= (1 << trustedQQ(each));
-					if (blacklist->get_qq_danger(each) > 1)
+					if (blacklist->get_user_danger(each) > 1)
 					{
 						strMsg += ",发现黑名单管理员" + printUser(each);
 						if (grp.isset("免黑")) {
@@ -554,11 +545,11 @@ bool eve_GroupAdd(Chat& grp) {
 						ave_trust += (gsize.currSize - 10) * trustedQQ(each) / 10;
 					}
 				}
-				else if (blacklist->get_qq_danger(each) > 1)
+				else if (blacklist->get_user_danger(each) > 1)
 				{
 					//max_trust |= 1;
 					blacks << printUser(each);
-					if (blacklist->get_qq_danger(each)) 
+					if (blacklist->get_user_danger(each)) 
 					{
 						AddMsgToQueue(blacklist->list_self_qq_warning(each), { 0,fromGID });
 					}
@@ -702,7 +693,7 @@ EVE_DiscussMsg(eventDiscussMsg)
 		return 1;
 	}
 	Chat& grp = chat(fromDiscuss);
-	if (blacklist->get_qq_danger(fromUID) && console["AutoClearBlack"])
+	if (blacklist->get_user_danger(fromUID) && console["AutoClearBlack"])
 	{
 		const string strMsg = "发现黑名单用户" + printUser(fromUID) + "，自动执行退群";
 		console.log(printChat(grp) + strMsg, 0b10, printSTNow());
@@ -732,7 +723,7 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 			AddMsgToQueue(strip(fmt->format(grp.update().confs.get_str("入群欢迎"), eve, false)),
 				{ 0,fromGID });
 		}
-		if (blacklist->get_qq_danger(fromUID))
+		if (blacklist->get_user_danger(fromUID))
 		{
 			const string strNow = printSTNow();
 			string strNote = printGroup(fromGID) + "发现" + getMsg("strSelfName") + "的黑名单用户" + printUser(
@@ -902,11 +893,11 @@ EVE_GroupInvited(eventGroupInvited)
 			DD::answerGroupInvited(fromGID, 3);
 		}
 		else if (blacklist->get_group_danger(fromGID)){
-			strMsg += "\n已拒绝（黑名单群）";
+			strMsg += "\n（黑名单群×）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 2);
 		}
-		else if (blacklist->get_qq_danger(fromUID)){
+		else if (blacklist->get_user_danger(fromUID)){
 			strMsg += "\n已拒绝（黑名单用户）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 2);
@@ -971,7 +962,7 @@ EVE_FriendRequest(eventFriendRequest) {
 	}
 	if (isBlocked)return 1;
 	string strMsg = "好友添加请求，来自 " + printUser(fromUID) + ":" + message;
-	if (blacklist->get_qq_danger(fromUID)) {
+	if (blacklist->get_user_danger(fromUID)) {
 		strMsg += "\n已拒绝（用户在黑名单中）";
 		DD::answerFriendRequest(fromUID, 2, "");
 		console.log(strMsg, 0b10, printSTNow());
@@ -1061,6 +1052,7 @@ void global_exit() {
 	sch.end();
 	censor = {};
 	fmt.reset();
+	ruleset.reset();
 	js_global_end();
 #ifdef DICE_PYTHON
 	if (py)py.reset();
@@ -1104,6 +1096,5 @@ EVE_Menu(eventGlobalSwitch) {
 		MessageBoxA(nullptr, "骰娘已全局静默√", "全局开关", MB_OK | MB_ICONINFORMATION);
 #endif
 	}
-
 	return 0;
 }

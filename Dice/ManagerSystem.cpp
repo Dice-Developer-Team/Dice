@@ -1,6 +1,6 @@
 /*
  * 后台系统
- * Copyright (C) 2019-2020 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -10,7 +10,6 @@
 #include "filesystem.hpp"
 #include "ManagerSystem.h"
 
-#include "CardDeck.h"
 #include "CharacterCard.h"
 #include "GlobalVar.h"
 #include "DDAPI.h"
@@ -19,6 +18,7 @@
 #include "DiceSelfData.h"
 #include "DiceCensor.h"
 #include "DiceMod.h"
+#include "BlackListManager.h"
 
 std::filesystem::path dirExe;
 std::filesystem::path DiceDir("DiceData");
@@ -58,6 +58,9 @@ AttrVar getUserItem(long long uid, const string& item) {
 	}
 	else if (item == "trust") {
 		return trustedQQ(uid);
+	}
+	else if (item == "danger") {
+		return blacklist->get_user_danger(uid);
 	}
 	else if (item == "isDiceMaid") {
 		return DD::isDiceMaid(uid);
@@ -303,7 +306,7 @@ int clearUser() {
 	}
 	for (auto uid : UserDelete) {
 		UserList.erase(uid);
-		if (sessions.has_session(uid))sessions.end(uid);
+		if (sessions.has_session(uid))sessions.over(uid);
 	}
 	return UserDelete.size();
 }
@@ -321,7 +324,7 @@ int clearGroup() {
 	}
 	for (auto id : GrpDelete) {
 		ChatList.erase(id);
-		if (sessions.has_session({ 0,id }))sessions.end({ 0,id });
+		if (sessions.has_session({ 0,id }))sessions.over({ 0,id });
 	}
 	return GrpDelete.size();
 }
@@ -588,10 +591,8 @@ void Chat::readb(std::ifstream& fin)
 	inviter = confs.get_ll("inviter");
 	if (confs.has("tCreated"))tCreated = confs.get_ll("tCreated");
 }
-int groupset(long long id, const string& st)
-{
-	if (!ChatList.count(id))return -1;
-	return ChatList[id].isset(st);
+int groupset(long long id, const string& st){
+	return ChatList.count(id) ? ChatList[id].isset(st) : -1;
 }
 
 string printChat(Chat& grp)

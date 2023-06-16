@@ -7,7 +7,8 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123ËÝä§
+ * Copyright (C) 2018-2021 w4123ËÝä§
+ * Copyright (C) 2019-2023 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -23,6 +24,7 @@
 #include <string>
 #include <cstring>
 #include "DDAPI.h"
+#include "DiceRule.h"
 #include "GetRule.h"
 #include "GlobalVar.h"
 #include "EncodingConvert.h"
@@ -62,8 +64,23 @@ namespace GetRule
 		return get("", rawStr, des);
 	}
 
-	bool get(const std::string& rule, const std::string& name, std::string& des)
-	{
+	bool get(const std::string& rule, const std::string& name, std::string& des){
+		if (rule.empty()) {
+			if (auto entry{ ruleset->getManual(name) }) {
+				des = *entry;
+				return true;
+			}
+		}
+		else if (auto rulebook{ ruleset->get_rule(rule) }) {
+			if (auto entry{ rulebook->getManual(name) }) {
+				des = *entry;
+				return true;
+			}
+		}
+		else if (auto entry{ ruleset->getManual(name) }) {
+			des = *entry;
+			return true;
+		}
 		const string ruleName = GBKtoUTF8(rule);
 		const string itemName = GBKtoUTF8(name);
 

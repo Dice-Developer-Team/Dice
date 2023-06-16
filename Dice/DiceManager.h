@@ -147,26 +147,13 @@ public:
         std::string ret;
         try
         {
-            nlohmann::json j = nlohmann::json::object();
+            fifo_json j = fifo_json::object();
             j["code"] = 0;
             j["msg"] = "ok";
             j["count"] = fmt->custom_reply.size();
-			j["data"] = nlohmann::json::array();
+			j["data"] = fifo_json::array();
             for (const auto& [key, val] : fmt->custom_reply) {
-                j["data"].push_back({ {"name", GBKtoUTF8(key)} ,
-                    {"keyword", GBKtoUTF8(val->keyMatch[0] ? listItem(*val->keyMatch[0]) :
-                        val->keyMatch[1] ? listItem(*val->keyMatch[1]) :
-                        val->keyMatch[2] ? listItem(*val->keyMatch[2]) :
-                        val->keyMatch[3] ? listItem(*val->keyMatch[3]) : "")},
-                    {"type", GBKtoUTF8(DiceMsgReply::sType[(int)val->type])},
-                    {"mode", val->keyMatch[0] ? "Match" :
-                        val->keyMatch[1] ? "Prefix" :
-                        val->keyMatch[2] ? "Search" : "Regex"},
-                    {"limit", GBKtoUTF8(val->limit.print())},
-                    {"echo", GBKtoUTF8(DiceMsgReply::sEcho[(int)val->echo])},
-                    {"answer", GBKtoUTF8(val->echo == DiceMsgReply::Echo::Deck ? listItem(val->deck)
-                        : val->echo == DiceMsgReply::Echo::Text ? val->text.to_str()
-                        : val->text.to_obj().get_str("script"))} });
+                j["data"].push_back(val->to_line());
             }
             ret = j.dump();
         }
@@ -189,7 +176,7 @@ public:
         try 
         {
             auto data = server->getPostData(conn);
-            nlohmann::json j = nlohmann::json::parse(data);
+            fifo_json j = fifo_json::parse(data);
             if (j["action"] == "set")
             {
                 for(const auto& item: j["data"])
@@ -466,9 +453,11 @@ public:
             if (string url; server->getParam(conn, "url", url)) {
                 if (!Network::GET(url, ret)) {
                     j["code"] = -1;
-                    j["msg"] = GBKtoUTF8(ret);
+                    j["msg"] = "success";
+                    j["data"] = 
                     ret = j.dump();
                 }
+                else console.log(UTF8toGBK(ret),0);
             }
             else {
                 j["code"] = -1;

@@ -1,7 +1,7 @@
 #pragma once
 /**
  * ×Ö·û´®¸¨Öúº¯Êý
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 
 #include <string>
@@ -25,6 +25,7 @@ template<typename F>
 typename std::enable_if_t<std::is_floating_point_v<F>, string>
 toString(F num, unsigned short scale = 2, bool align = false) 
 {
+    if (num == (long long)num)return to_string((long long)num);
     string strNum{ to_string(num) };
     size_t dot(strNum.find('.') + scale + 1);
     if (align)return strNum.substr(0, dot);

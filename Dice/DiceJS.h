@@ -37,11 +37,13 @@ public:
 	void setContext(const std::string&, const AttrObject& context);
 	JSValue evalString(const std::string& s, const string& title);
 	JSValue evalStringLocal(const std::string& s, const string& title, const AttrObject& context);
-	JSValue evalFile(const std::string& s);
+	JSValue evalFile(const std::filesystem::path&);
 	JSValue evalFileLocal(const std::string& s, const AttrObject& context);
 };
-JSValue js_toValue(JSContext*, const AttrVar& var);
+JSValue js_newAttr(JSContext*, const AttrVar& var);
 void js_global_init();
 void js_global_end();
 bool js_call_event(AttrObject, const AttrVar&); 
-void js_msg_call(DiceEvent*, const AttrObject&);
+void js_msg_call(DiceEvent*, const AttrVar&);
+AttrVar js_simple_eval(const std::string&);
+AttrVar js_context_eval(const std::string&, const AttrObject& context);
