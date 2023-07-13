@@ -1166,7 +1166,7 @@ layui.use(['form', 'table','soulTable'], function(){ //亦可加载特定模块�
 
   form.on('submit(addCustomReplyForm)', function(data){
 	layer.close(addCustomReplyFormIndex);
-	if(data.field.echo == "Deck"){data.field.answer = data.field.answer.split("|");}
+    if (data.field.echo == "Deck") { data.field.answer = data.field.answer.split("|").map(s => s.trim());}
 	$.post("/api/customreply", JSON.stringify({action: "set", data: [data.field]}))
 	.done(function(data) {
 	  if (data.code == 0) {
@@ -1226,7 +1226,7 @@ layui.use(['form', 'table','soulTable'], function(){ //亦可加载特定模块�
 
   table.on('edit(custom-reply-table)', function(obj) { 
 	obj.data.answer = obj.data.answer.replace(/<br>/g,"\n").replace(/\{br\}/g,"\n");
-	if(obj.data.echo == "Deck"){obj.data.answer = obj.data.answer.split("|");}
+    if (obj.data.echo == "Deck") { obj.data.answer = obj.data.answer.split("|").map(s => s.trim());}
 	$.post("/api/customreply", JSON.stringify({action: "set", data: [obj.data]}))
 	.done(function(data) {
 	  if (data.code == 0) {

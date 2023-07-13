@@ -24,7 +24,6 @@
 #include "CQTools.h"
 #include <cctype>
 #include "RD.h"
-#include "RDConstant.h"
 #include "MsgFormat.h"
 using namespace std;
 

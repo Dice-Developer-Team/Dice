@@ -629,10 +629,9 @@ AttrVar::AttrVar(const fifo_json& j) {
 		type = Type::Table; {
 			new(&table)AttrObject();
 			unordered_set<string> idxs;
-			if (j.count("0")) {
+			if (string strI{ "0" }; j.count(strI)) {
 				table.list = std::make_shared<VarArray>();
 				int idx{ 0 };
-				string strI{ "0" };
 				do {
 					table.list->push_back(j[strI]);
 					idxs.insert(strI);

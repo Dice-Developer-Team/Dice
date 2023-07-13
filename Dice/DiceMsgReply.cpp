@@ -776,7 +776,7 @@ fifo_json DiceMsgReply::to_line()const {
 		keyMatch[2] ? "Search" : "Regex";
 	if (!limit.empty())j["limit"] = GBKtoUTF8(limit.print());
 	j["echo"] = sEcho[(int)echo];
-	if (echo == Echo::Deck)j["answer"] = answer.to_json();
+	if (echo == Echo::Deck) j["answer"] = GBKtoUTF8(listDeck(*answer.to_list()));
 	else if (echo == Echo::Text)j["answer"] = GBKtoUTF8(answer.get_str("text"));
 	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(answer.get_str("lua"));
 	else if (echo == Echo::JavaScript)j["answer"] = GBKtoUTF8(answer.get_str("js"));
