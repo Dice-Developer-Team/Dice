@@ -31,9 +31,9 @@ public:
 	size_t build();
 	void clear() {
 		manual_index.clear();
-		for (auto& [name, rule] : rules) {
+		/*for (auto& [name, rule] : rules) {
 			rule->clear();
-		}
+		}*/
 		rules.clear();
 	}
 	bool has_rule(const string& name)const { return rules.count(name); }

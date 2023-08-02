@@ -451,13 +451,15 @@ public:
         try {
             nlohmann::json j = nlohmann::json::object();
             if (string url; server->getParam(conn, "url", url)) {
-                if (!Network::GET(url, ret)) {
-                    j["code"] = -1;
-                    j["msg"] = "success";
-                    j["data"] = 
-                    ret = j.dump();
+                if (Network::GET(url, ret)) {
+                    j["code"] = 0;
+                    j["msg"] = UTF8toGBK(ret);
                 }
-                else console.log(UTF8toGBK(ret),0);
+                else {
+                    j["code"] = -1;
+                    j["msg"] = UTF8toGBK(ret);
+                    console.log(UTF8toGBK(ret), 0);
+                }
             }
             else {
                 j["code"] = -1;
