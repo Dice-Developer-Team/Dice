@@ -333,9 +333,6 @@ void Console::loadNotice()
 			console.log(string("½âÎö/conf/NoticeList.json³ö´í:") + e.what(), 1);
 		}
 	}
-	if (NoticeList.empty() && loadFile(DiceDir / "conf" / "NoticeList.txt", NoticeList) < 1){
-		NoticeList[{ 0, 928626681 }] = 0b100000;
-	}
 }
 
 void Console::saveNotice() const
@@ -345,9 +342,11 @@ void Console::saveNotice() const
 	if (!fout)return;
 	fifo_json jList = fifo_json::array();
 	for (auto& [chat, lv] : NoticeList) {
-		fifo_json j = to_json(chat);
-		j["type"] = lv;
-		jList.push_back(j);
+		if (lv) {
+			fifo_json j = to_json(chat);
+			j["type"] = lv;
+			jList.push_back(j);
+		}
 	}
 	fout << jList.dump();
 }

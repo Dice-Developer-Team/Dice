@@ -119,6 +119,7 @@ public:
 	bool is_empty(const string& key)const;
 	bool is_table(const string& key)const;
 	size_t size()const { return dict->size(); }
+	size_t length()const { return list?list->size() : dict->size(); }
 	AttrVar index(const string& key)const;
 	AttrVar get(const string& key, ptr<AttrVar> val = {})const;
 	string get_str(const string& key)const;
@@ -208,6 +209,7 @@ public:
 	ByteS to_bytes()const;
 	static AttrVar parse(const string& s);
 	string print()const;
+	size_t len()const;
 	bool str_empty()const;
 	AttrObject to_obj()const;
 	ptr<AttrVars> to_dict()const;

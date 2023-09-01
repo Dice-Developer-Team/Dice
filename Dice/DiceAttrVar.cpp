@@ -534,6 +534,20 @@ string AttrVar::print()const {
 	}
 	return {};
 }
+size_t AttrVar::len()const {
+	switch (type) {
+	case Type::Text:
+		return text.length();
+		break;
+	case Type::Table:
+		table.size();
+		break;
+	case Type::Set:
+		return flags->size();
+		break;
+	}
+	return 0;
+}
 bool AttrVar::str_empty()const{
 	return type == Type::Text && text.empty();
 }

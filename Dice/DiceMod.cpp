@@ -387,8 +387,8 @@ void DiceModManager::turn_over(size_t idx) {
 	save();
 	build();
 }
-static enumap<string> methods{ "var","print","help","sample","case","vary","grade","at","ran","wait","py" };
-enum class FmtMethod { Var, Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait, Py};
+static enumap<string> methods{ "var","print","help","sample","case","vary","grade","at","ran","wait","py","len" };
+enum class FmtMethod { Var, Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait, Py, Len};
 struct ParseNode {
 	string leaf;
 	size_t pos;
@@ -576,6 +576,9 @@ public:
 #ifdef DICE_PYTHON
 							if (py)val = py->evalString(format_token(para, it), context);
 #endif //DICE_PYTHON
+							break;
+						case FmtMethod::Len:
+							val = int(getContextItem(context, format_token(para, it), isTrust).len());
 							break;
 						default:
 							break;
