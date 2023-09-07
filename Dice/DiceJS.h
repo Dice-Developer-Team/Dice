@@ -34,6 +34,7 @@ public:
 	~js_context();
 	operator JSContext* () { return ctx; }
 	string getException();
+	AttrVar getValue(JSValue);
 	void setContext(const std::string&, const AttrObject& context);
 	JSValue evalString(const std::string& s, const string& title);
 	JSValue evalStringLocal(const std::string& s, const string& title, const AttrObject& context);

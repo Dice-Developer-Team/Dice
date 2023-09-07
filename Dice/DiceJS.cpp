@@ -241,6 +241,9 @@ Free:
 	JS_FreeValue(ctx, e);
 	return err;
 }
+AttrVar js_context::getValue(JSValue val) {
+	return js_toAttr(ctx, val);
+}
 JSValue js_newDiceContext(JSContext* ctx, const AttrObject& context) {
 	auto obj = JS_NewObjectClass(ctx, js_dice_context_id);
 	JS_SetOpaque(obj, new AttrObject(context));
@@ -267,7 +270,7 @@ JSValue js_context::evalString(const std::string& s, const string& title) {
 }
 JSValue js_context::evalStringLocal(const std::string& s, const string& title, const AttrObject& context) {
 	string exp{ GBKtoUTF8(s) };
-	return JS_EvalThis(ctx, js_newDiceContext(ctx, context), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_MODULE);
+	return JS_EvalThis(ctx, js_newDiceContext(ctx, context), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
 }
 JSValue js_context::evalFile(const std::filesystem::path& p) {
 	size_t buf_len{ 0 };
@@ -289,6 +292,7 @@ JSValue js_context::evalFileLocal(const std::string& s, const AttrObject& contex
 	}
 	return JS_EXCEPTION;
 }
+std::unique_ptr<js_context> js_main;
 dict<js_context> js_event_pool;
 void js_global_init() {
 	rt = JS_NewRuntime();
@@ -305,6 +309,7 @@ void js_global_init() {
 	JS_NewClass(rt, js_dice_GameTable_id, &js_dice_GameTable_class);
 	JS_NewClassID(&js_dice_actor_id);
 	JS_NewClass(rt, js_dice_actor_id, &js_dice_actor_class);
+	js_main = std::make_unique<js_context>();
 }
 void js_global_end() {
 	js_std_free_handlers(rt);
@@ -1079,6 +1084,17 @@ QJSDEF(actor_unlock) {
 	JS2PC(this_val);
 	string key{ js_toGBK(ctx, argv[0]) };
 	return JS_NewBool(ctx, pc->unlock(key));
+}
+
+AttrVar js_context_eval(const std::string& s, const AttrObject& context) {
+	if (auto ret{ js_main->evalStringLocal(s, "<eval>", context) }; !JS_IsException(ret)) {
+		console.log("Ö´ÐÐÓï¾ä³É¹¦:" + js_main->getValue(ret).print(), 0);
+		return js_main->getValue(ret);
+	}
+	else {
+		console.log(getMsg("strSelfName") + "Ö´ÐÐjsÓï¾äÊ§°Ü:\n" + s + "\n" + js_main->getException() , 0b10);
+	}
+	return {};
 }
 
 bool js_call_event(AttrObject eve, const AttrVar& action) {

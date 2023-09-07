@@ -387,8 +387,8 @@ void DiceModManager::turn_over(size_t idx) {
 	save();
 	build();
 }
-static enumap<string> methods{ "var","print","help","sample","case","vary","grade","at","ran","wait","py","len" };
-enum class FmtMethod { Var, Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait, Py, Len};
+static enumap<string> methods{ "var","print","help","sample","case","vary","grade","at","ran","wait","js","py","len" };
+enum class FmtMethod { Var, Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait, JS, Py, Len};
 struct ParseNode {
 	string leaf;
 	size_t pos;
@@ -571,6 +571,9 @@ public:
 							if (long long ms{ AttrVar::parse(format_token(para, it)).to_ll() }; 0 < ms && ms < 600000)
 								std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 							val.des();
+							break;
+						case FmtMethod::JS:
+							val = js_context_eval(format_token(para, it), context);
 							break;
 						case FmtMethod::Py:
 #ifdef DICE_PYTHON
