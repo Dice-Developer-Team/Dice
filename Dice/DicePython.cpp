@@ -1146,14 +1146,14 @@ PyGlobal::PyGlobal() {
 		std::filesystem::exists(dirPy / "python3.dll")
 		|| std::filesystem::exists(dirPy / "python3.so")
 		|| std::filesystem::exists(dirPy = dirExe / "python")
-		|| std::filesystem::exists(dirPy = dirExe / "python310")
-		|| std::filesystem::exists(dirPy = dirExe / "py310")) {
+		|| std::filesystem::exists(dirPy = dirExe / "python311")
+		|| std::filesystem::exists(dirPy = dirExe / "py311")) {
 		Py_SetPythonHome(dirPy.wstring().c_str());
-		Py_SetPath((dirPy / "python310.zip").wstring().c_str());
+		Py_SetPath((dirPy / "python311.zip").wstring().c_str());
 	}
 	else if (std::filesystem::exists(dirExe / "python3.dll")) {
 		Py_SetPythonHome(dirExe.wstring().c_str());
-		Py_SetPath((dirExe / "python310.zip").wstring().c_str());
+		Py_SetPath((dirExe / "python311.zip").wstring().c_str());
 	}
 	Py_SetProgramName(L"DiceMaid");
 	try {
