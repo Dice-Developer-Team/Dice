@@ -88,7 +88,7 @@ void loadData(){
 	try	{
 		std::error_code ec;
 		std::filesystem::create_directory(DiceDir, ec);
-		loadDir(loadXML<CardTemp, fifo_cmpr_ci>, DiceDir / "CardTemp", CharaCard::mCardTemplet, logList, true);
+		loadDir(loadCardTemp, DiceDir / "CardTemp", CharaCard::mCardTemplet, logList, true);
 		loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList);
 		map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
 		//∂¡»°∞Ô÷˙Œƒµµ

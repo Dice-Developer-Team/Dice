@@ -857,7 +857,7 @@ void DiceReplyUnit::build() {
 		if (reply->keyMatch[2]) {
 			for (auto& word : *reply->keyMatch[2]) {
 				search_items[word] = reply;
-				gSearcher.add(convert_a2w(fmt->format(word).c_str()), word);
+				gSearcher.add(convert_a2w(fmt->format(word).to_str().c_str()), word);
 			}
 		}
 		if (reply->keyMatch[3]) {
@@ -896,7 +896,7 @@ void DiceReplyUnit::insert(const string& key, ptr<DiceMsgReply> reply) {
 	if (reply->keyMatch[2]) {
 		for (auto& word : *reply->keyMatch[2]) {
 			search_items[word] = reply;
-			gSearcher.add(convert_a2w(fmt->format(word).c_str()), word);
+			gSearcher.add(convert_a2w(fmt->format(word).to_str().c_str()), word);
 		}
 		gSearcher.make_fail();
 	}

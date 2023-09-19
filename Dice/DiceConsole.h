@@ -17,7 +17,6 @@
 #include <array>
 #include <CivetServer.h>
 #include "STLExtern.hpp"
-#include "DiceXMLTree.h"
 #include "DiceFile.hpp"
 #include "MsgFormat.h"
 #include "DiceMsgSend.h"

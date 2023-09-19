@@ -189,7 +189,7 @@ public:
 	void uninstall(const string& name);
 	bool reorder(size_t, size_t);
 
-	string format(const string&, AttrObject = {},
+	AttrVar format(const string&, const AttrObject& = {},
 		bool isTrust = true,
 		const dict_ci<string>& = {}) const;
 	string msg_get(const string& key)const;

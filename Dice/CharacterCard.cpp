@@ -4,6 +4,34 @@
  */
 #include "CharacterCard.h"
 #include "DDAPI.h"
+#include "DiceJS.h"
+#include "DiceMod.h"
+
+AttrVar AttrShape::init(const CharaCard* pc) {
+	if (textType == TextType::JavaScript) {
+		return js_context_eval(defVal, *pc);
+	}
+	else if (textType == TextType::Format && !defVal.is_null()) {
+		if (auto exp{ fmt->format(defVal,*pc) }; exp.is_text()) {
+			return pc->cal(exp);
+		}
+		else return exp;
+	}
+	else {
+		return defVal;
+	}
+	return {};
+}
+ /**
+  * 错误返回值
+  * 3:大于上限
+  * 2:小于下限
+  * 1:浮点数规整
+  * -1:类型无法匹配
+  */
+int AttrShape::check(AttrVar& val) {
+	return 0;
+}
 
 /**
  * 错误返回值
@@ -37,95 +65,127 @@ unordered_map<int, string> PlayerErrors{
 fifo_dict_ci<CardTemp> CharaCard::mCardTemplet{
 	{
 		"COC7", CardTemp{
-			"COC7", SkillNameReplace, BasicCOC7, AutoFillCOC7, mVariableCOC7, ExpressionCOC7,
+			"COC7", SkillNameReplace, BasicCOC7, mVariableCOC7, ExpressionCOC7,
 			SkillDefaultVal, {
-				{"_default", CardBuild({BuildCOC7},  {"{随机姓名}"}, {})},
+				{"_default", CardBuild({BuildCOC7},  {"{随机姓名}"})},
 				{
 					"bg", CardBuild({
 										{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
 										{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
 										{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
-									}, {"{随机姓名}"}, {})
+									}, {"{随机姓名}"})
 				}
 			}
 		}
 	},
 	{"BRP", {
-			"BRP", {}, {}, {}, {}, {}, {
+			"BRP", {}, {}, {}, {}, {
 				{"__DefaultDice",100}
 			}, {
-				{"_default", CardBuild({},  {"{随机姓名}"}, {})},
+				{"_default", CardBuild({},  {"{随机姓名}"})},
 				{
 					"bg", CardBuild({
 										{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
 										{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
 										{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
-									}, {"{随机姓名}"}, {})
+									}, {"{随机姓名}"})
 				}
 			}
 	}},
 	{"DND", {
-			"DND", {}, {}, {}, {}, {}, {
+			"DND", {}, {}, {}, {}, {
 				{"__DefaultDice",20}
 			}, {
-				{"_default", CardBuild({}, {"{随机姓名}"}, {})},
+				{"_default", CardBuild({}, {"{随机姓名}"})},
 				{
 					"bg", CardBuild({
 										{"性别", "{性别}"},
-									},  {"{随机姓名}"}, {})
+									},  {"{随机姓名}"})
 				}
 			}
 	}},
 };
 
-
-void CardTemp::readt(const DDOM& d) 	{
-	for (const auto& node : d.vChild) 		{
-		switch (mTempletTag[node.tag]) 			{
-		case 2:
-			type = node.strValue;
-			break;
-		case 20:
-			readini(node.strValue, replaceName);
-			break;
-		case 31:
-			vBasicList.clear();
-			for (const auto& sub : node.vChild) 				{
-				vBasicList.push_back(getLines(sub.strValue));
-			}
-			break;
-		case 22:
-			readini(node.strValue, mAutoFill);
-			break;
-		case 23:
-			readini(node.strValue, mVariable);
-			break;
-		case 21:
-			readini(node.strValue, mExpression);
-			break;
-		case 12:
-			readini(node.strValue, defaultSkill);
-			break;
-		case 41:
-			for (const auto& sub : node.vChild) 				{
-				mBuildOption[sub.strValue] = CardBuild(sub);
-			}
-			break;
-		case 102:
-		default:
-			break;
+#define Text2GBK(s) (s ? (isUTF8 ? UTF8toGBK(s) :s) : "")
+CardBuild::CardBuild(const tinyxml2::XMLElement* d) {
+	for (auto elem = d->FirstChildElement(); elem; elem = elem->NextSiblingElement()) {
+		if (elem->Name() == string("Name")) {
+			vNameList = getLines(elem->GetText());
+		}
+		else if (elem->Name() == string("generate")) {
+			readini(elem->GetText(), vBuildList);
 		}
 	}
+}
+int loadCardTemp(const std::filesystem::path& fpPath, fifo_dict_ci<CardTemp>& m) {
+	tinyxml2::XMLDocument doc;
+	if (auto err{ doc.LoadFile(fpPath.string().c_str()) }; tinyxml2::XML_SUCCESS == err) {
+		bool isUTF8(false);
+		if (auto declar{ doc.FirstChild()->ToDeclaration() }) {
+			isUTF8 = string(declar->Value()).find("UTF-8") != string::npos;
+		}
+		if (auto root{ doc.FirstChildElement() }) {
+			if (auto tp_name{ root->Attribute("name") }) {
+				auto& tp{ m[Text2GBK(tp_name)] };
+				for (auto elem = root->FirstChildElement(); elem; elem = elem->NextSiblingElement()) {
+					if (string tag{ elem->Name()}; tag == "alias") {
+						if (auto text{ elem->GetText() })readini(Text2GBK(text), tp.replaceName);
+					}
+					else if (tag == "basic") {
+						tp.vBasicList.clear();
+						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
+							if (auto text{ kid->GetText() })tp.vBasicList.push_back(getLines(Text2GBK(text)));
+						}
+					}
+					else if (tag == "init") {
+						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
+							if (auto name{ kid->Attribute("name") }) {
+								auto& shape{ tp.AttrShapes[Text2GBK(name)] };
+								if (auto exp{ kid->GetText() }) {
+									string s{ Text2GBK(exp) };
+									if (auto text{ kid->Attribute("text") }) {
+										if (auto lower{ toLower(text) }; lower == "format") {
+											shape.textType = AttrShape::TextType::Format;
+											shape.defVal = s;
+										}
+										else if (lower == "javascript") {
+											shape.textType = AttrShape::TextType::JavaScript;
+											shape.defVal = s;
+										}
+										else shape.defVal = AttrVar::parse(s);
+									}
+								}
+							}
+						}
+					}
+					else if (tag == "diceexp") {
+						if (auto text{ elem->GetText() })readini(Text2GBK(text), tp.mExpression);
+					}
+					else if (tag == "build") {
+						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
+							if (auto opt{ kid->Attribute("name") })tp.mBuildOption[Text2GBK(opt)] = CardBuild(kid);
+						}
+					}
+				}
+				return 1;
+			}
+		}
+	}
+	else {
+		console.log("读取" + fpPath.string() + "失败:" + doc.ErrorStr(), 0);
+		return -1;
+	}
+	return 0;
 }
 
 string CardTemp::show() {
 	ResList res;
-	if (!mVariable.empty()) {
-		ResList resVar;
-		for (const auto& [key, val] : mVariable) {
+	if (!AttrShapes.empty()) {
+		ShowList resVar;
+		for (const auto& [key, val] : AttrShapes) {
 			resVar << key;
 		}
-		res << "动态变量:" + resVar.show();
+		res << "预设属性:" + resVar.show("/");
 	}
 	if (!mExpression.empty()) {
 		ResList resExp;
@@ -152,15 +212,11 @@ void CharaCard::setName(const string& strName) {
 void CharaCard::setType(const string& strType) {
 	Attr["__Type"] = strType;
 }
-AttrVar CharaCard::get(string key)const {
-	if (has(key) || has(key = standard(key)))return at(key);
-	if (auto& temp{ getTemplet() };temp.defaultSkill.count(key))return getTemplet().defaultSkill.find(key)->second;
-	if (getTemplet().mAutoFill.count(key)){
-		Attr[key] = cal(getTemplet().mAutoFill.find(key)->second);
-		return at(key);
-	}
-	if (getTemplet().mVariable.count(key)){
-		return cal(getTemplet().mVariable.find(key)->second);
+AttrVar CharaCard::get(const string& key)const {
+	if (dict->count(key))return at(key);
+	if (auto& temp{ getTemplet() }; temp.canGet(key)) {
+		console.log("从模板获取属性:" + key, 0);
+		return temp.AttrShapes.at(key).init(this);
 	}
 	return {};
 }
@@ -169,7 +225,7 @@ int CharaCard::set(string key, const AttrVar& val) {
 	if (key == "__Name")return -8;
 	if (val.is_text() && val.text.length() > 256)return -11;
 	key = standard(key);
-	if (getTemplet().defaultSkill.count(key) && val == getTemplet().defaultSkill.at(key)){
+	if (getTemplet().equalDefault(key, val)){
 		if (has(key)) dict->erase(key);
 		else return -1;
 	}
@@ -180,41 +236,29 @@ int CharaCard::set(string key, const AttrVar& val) {
 	return 0;
 }
 
-int CharaCard::show(string key, string& val) const {
+string CharaCard::print(const string& key)const {
+	if (dict->count(key))return dict->at(key).print();
+	if (auto temp{ getTemplet() }; temp.canGet(key)) {
+		return temp.AttrShapes.at(key).init(this).to_str();
+	}
+	return {};
+}
+std::optional<string> CharaCard::show(string key) const {
 	if (has(key) || has(key = standard(key))) {
-		val = print(key);
-		return 0;
+		return print(key);
 	}
-	else if (getTemplet().defaultSkill.count(key)) {
-		val = to_string(getTemplet().defaultSkill[key]);
-		return 0;
-	}
-	return -1;
+	return std::nullopt;
 }
 
-int CharaCard::call(string key)const {
-	if (has(key))return get_int(key);
-	key = standard(key);
-	if (has(key))return get_int(key);
-	if (auto& templet{ getTemplet() }; templet.mAutoFill.count(key))
-	{
-		Attr[key] = cal(templet.mAutoFill.find(key)->second);
-		return get_int(key);
-	}
-	else if (templet.mVariable.count(key))
-	{
-		return cal(templet.mVariable.find(key)->second);
-	}
-	else if (templet.defaultSkill.count(key))return templet.defaultSkill.find(key)->second;
-	return 0;
+bool CharaCard::has(const string& key)const {
+	return (dict->count(key) && !dict->at(key).is_null())
+		|| getTemplet().canGet(key);
 }
 bool CharaCard::available(const string& strKey) const {
 	if (has(strKey))return true;
 	if (string key{ standard(strKey) }; has(key) || has("&" + key))return true;
 	else {
-		auto& temp{ getTemplet() };
-		return temp.mAutoFill.count(key) || temp.mVariable.count(key)
-			|| temp.defaultSkill.count(key);
+		return getTemplet().canGet(key);
 	}
 }
 
@@ -225,15 +269,24 @@ string CharaCard::getExp(string& key, std::unordered_set<string> sRef){
 	auto& temp{ getTemplet() };
 	auto val = dict->find("&" + key);
 	if (val != dict->end())return escape(val->second.to_str(), sRef);
-	auto exp = temp.mExpression.find(key);
-	if (exp != temp.mExpression.end()) return escape(exp->second, sRef);
+	if (auto exp = temp.mExpression.find(key); exp != temp.mExpression.end()) return escape(exp->second, sRef);
 	val = dict->find(key);
 	if (val != dict->end())return escape(val->second.to_str(), sRef);
-	exp = temp.mVariable.find(key);
-	if (exp != temp.mVariable.end())return to_string(cal(exp->second));
-	if (auto def{ temp.defaultSkill.find(key) };
-		def != temp.defaultSkill.end())return to_string(def->second);
+	if (auto exp = temp.AttrShapes.find(key); exp != temp.AttrShapes.end())return to_string(exp->second.init(this));
 	return "0";
+}
+int CharaCard::cal(string exp)const {
+	if (exp[0] == '&'){
+		string key = exp.substr(1);
+		return get(key).to_int();
+	}
+	size_t r = 0, l = 0;
+	while ((r = exp.find(')')) != string::npos && (l = exp.rfind('(', r)) != string::npos) {
+		exp.replace(l, r + 1, to_string(cal(exp.substr(l + 1, r - l - 1))));
+	}
+	const RD Res(exp);
+	Res.Roll();
+	return Res.intTotal;
 }
 
 void CharaCard::buildv(string para)
@@ -264,13 +317,11 @@ void CharaCard::clear() {
 	ResList Res;
 	for (const auto& list : getTemplet().vBasicList) {
 		ResList subList;
-		string strVal;
 		for (const auto& it : list) {
-			if (!show(it, strVal)) {
+			if (auto val{ show(it) }) {
 				sDefault.insert(it);
-				if (it[0] == '&')subList << it + "=" + strVal;
-				//else if (Attr.at(it).type == AttrVar::Type::Text)subList << it + ":" + strVal;
-				else subList << it + ":" + strVal;
+				if (it[0] == '&')subList << it + "=" + *val;
+				else subList << it + ":" + *val;
 			}
 		}
 		Res << subList.show();

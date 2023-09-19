@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <cstdio>
 #include "fifo_map.hpp"
-#include "DiceXMLTree.h"
+#include "tinyxml2.h"
 #include "StrExtern.hpp"
 #include "DiceMsgSend.h"
 #include "MsgFormat.h"
@@ -388,18 +388,6 @@ int loadINI(const std::filesystem::path& fpPath, std::map<std::string, C>& m)
 }
 
 bool rdbuf(const std::filesystem::path& fpPath, string& s);
-
-//读取伪xml
-template <class C, class Sorter, std::string(C::* U)() = &C::getName>
-int loadXML(const std::filesystem::path& fpPath, nlohmann::fifo_map<string, C, Sorter>& m)
-{
-	string s;
-	if (!rdbuf(fpPath, s))return -1;
-	DDOM xml(s);
-	C obj(xml);
-	m[obj.getName()].readt(xml);
-	return 1;
-}
 
 //遍历文件夹
 int listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& files, bool isSub = false);

@@ -38,7 +38,7 @@ class TrieG {
 public:
 	TrieG(){}
 	void clear() { root = {}; }
-	void add(const _String s, const Val& val) {
+	void add(const _String& s, const Val& val) {
 		Node* p = &root;
 		for (_Char ch : s) {
 			//if (!p->next.count(ch)) {

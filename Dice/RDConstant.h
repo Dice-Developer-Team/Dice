@@ -122,11 +122,6 @@ inline std::vector<std::vector<std::string>> BasicCOC7 = {
 	{"身体状态", "精神状态"},
 	{"DB", "闪避", "护甲"}
 };
-inline std::unordered_set<std::string> InfoCOC7 = {
-	"职业", "性别", "住地", "出身", "时代",
-	"身体状态", "精神状态",
-	"个人描述", "思想信念", "重要之人", "意义非凡之地", "宝贵之物", "特质", "特点", "伤口疤痕", "恐惧躁狂"
-};
 inline std::vector<std::pair<std::string, std::string>> BuildCOC7 = {
 	{"力量", "3D6*5"},
 	{"体质", "3D6*5"},
@@ -137,14 +132,16 @@ inline std::vector<std::pair<std::string, std::string>> BuildCOC7 = {
 	{"意志", "3D6*5"},
 	{"教育", "2D6*5+30"},
 	{"幸运", "3D6*5"},
-	{"生命", "[体质体型和]/10"},
-	{"魔法", "[意志]/5"},
 };
 inline fifo_dict_ci<std::string> mVariableCOC7 = {
 	{"灵感", "&智力"},
 	{"知识", "&教育"},
-	{"体质体型和", "[体质]+[体型]"},
 	{"取悦", "&魅惑"},
+	{"生命", "({体质}+{体型})/10"},
+	{"理智", "&意志"},
+	{"魔法", "{意志}/5"},
+	{"母语", "&教育"},
+	{"闪避", "{敏捷}/2"}
 };
 static fifo_dict_ci<std::string> ExpressionCOC7 = {
 	{"__DefaultDiceExp", "1D"},
@@ -267,13 +264,6 @@ static fifo_dict_ci<std::string> ExpressionCOC7 = {
 	{"阔剑地雷", "6D6"},
 	{"火焰喷射器", "2D6"},
 	{"轻型反坦克炮", "8D10"}
-};
-inline fifo_dict_ci<std::string> AutoFillCOC7 = {
-	{"生命", "[体质体型和]/10"},
-	{"理智", "&意志"},
-	{"魔法", "[意志]/5"},
-	{"母语", "&教育"},
-	{"闪避", "[敏捷]/2"}
 };
 static fifo_dict_ci<int> SkillDefaultVal = {
 	{"__DefaultDice", 100},

@@ -10,10 +10,11 @@
 #include <vector>
 #include <stack>
 #include <mutex>
+#include <mutex>
 #include "CQTools.h"
 #include "RDConstant.h"
 #include "RD.h"
-#include "DiceXMLTree.h"
+#include "tinyxml2.h"
 #include "DiceFile.hpp"
 #include "ManagerSystem.h"
 #include "MsgFormat.h"
@@ -25,23 +26,9 @@ using std::string;
 using std::to_string;
 using std::vector;
 using std::map;
+using xml = tinyxml2::XMLDocument;
+class CharaCard;
 
-constexpr short NOT_FOUND = -32767;
-
-inline unordered_map<string, short> mTempletTag = {
-	{"name", 1},
-	{"type", 2},
-	{"alias", 20},
-	{"basic", 31},
-	{"info", 102},
-	{"autofill", 22},
-	{"variable", 23},
-	{"diceexp", 21},
-	{"default", 12},
-	{"build", 41},
-	{"generate", 24},
-	{"note", 101},
-};
 inline unordered_map<string, short> mCardTag = {
 	{"Name", 1},
 	{"Type", 2},
@@ -54,14 +41,31 @@ inline unordered_map<string, short> mCardTag = {
 	{"End", 255}
 };
 
+class AttrShape {
+public:
+	enum class DataType : unsigned char { Any, Nature, Int, };
+	enum class TextType : unsigned char { Plain, Format, JavaScript, };
+	AttrShape() = default;
+	AttrShape(int i) :defVal(i) {}
+	AttrShape(const string& s):defVal(s){}
+	AttrShape(const string& s, TextType tt) :defVal(s), textType(tt){}
+	DataType type{ DataType::Any };
+	string title;
+	TextType textType{ TextType::Plain };
+	AttrVar defVal;
+	AttrVar init(const CharaCard*);
+	int check(AttrVar& val);
+	bool equalDefault(const AttrVar& val)const { return TextType::Plain == textType && val == defVal; }
+};
+
 //生成模板
 class CardBuild
 {
 public:
 	CardBuild() = default;
 
-	CardBuild(const vector<std::pair<string, string>>& attr, const vector<string>& name, const vector<string>& note):
-		vBuildList(attr), vNameList(name), vNoteList(note)
+	CardBuild(const vector<std::pair<string, string>>& attr, const vector<string>& name):
+		vBuildList(attr), vNameList(name)
 	{
 	}
 
@@ -69,28 +73,8 @@ public:
 	vector<std::pair<string, string>> vBuildList = {};
 	//随机姓名
 	vector<string> vNameList = {};
-	//Note生成
-	vector<string> vNoteList = {};
 
-	CardBuild(const DDOM& d)
-	{
-		for (const auto& sub : d.vChild)
-		{
-			switch (mTempletTag[sub.tag])
-			{
-			case 1:
-				vNameList = getLines(sub.strValue);
-				break;
-			case 24:
-				readini(sub.strValue, vBuildList);
-				break;
-			case 101:
-				vNoteList = getLines(sub.strValue);
-				break;
-			default: break;
-			}
-		}
-	}
+	CardBuild(const tinyxml2::XMLElement* d);
 };
 
 class CardTemp
@@ -100,38 +84,36 @@ public:
 	fifo_dict_ci<> replaceName = {};
 	//作成时生成
 	vector<vector<string>> vBasicList = {};
-	//调用时生成
-	fifo_dict_ci<> mAutoFill = {};
-	//动态引用
-	fifo_dict_ci<> mVariable = {};
+	//元表
+	fifo_dict_ci<AttrShape> AttrShapes;
 	//表达式
 	fifo_dict_ci<> mExpression = {};
-	//默认值
-	fifo_dict_ci<int> defaultSkill = {};
 	//生成参数
 	fifo_dict_ci<CardBuild> mBuildOption = {};
 	CardTemp() = default;
 
 	CardTemp(const string& type, const fifo_dict_ci<>& replace, vector<vector<string>> basic,
-		const fifo_dict_ci<>& autofill, const fifo_dict_ci<>& dynamic, const fifo_dict_ci<>& exp,
-		const fifo_dict_ci<int>& skill, const fifo_dict_ci<CardBuild>& option) : type(type),
+		const fifo_dict_ci<>& dynamic, const fifo_dict_ci<>& exp,
+		const fifo_dict_ci<int>& def_skill, const fifo_dict_ci<CardBuild>& option) : type(type),
 			                                                            replaceName(replace), 
 		                                                                vBasicList(basic), 
-		                                                                mAutoFill(autofill), 
-		                                                                mVariable(dynamic), 
 		                                                                mExpression(exp), 
-		                                                                defaultSkill(skill), 
 		                                                                mBuildOption(option)
 	{
+		for (auto& [attr, exp] : dynamic) {
+			AttrShapes[attr] = AttrShape(exp, AttrShape::TextType::Format);
+		}
+		for (auto& [attr, val] : def_skill) {
+			AttrShapes[attr] = val;
+		}
 	}
+	bool equalDefault(const string& attr, const AttrVar& val)const { return AttrShapes.count(attr) && AttrShapes.at(attr).equalDefault(val); }
 
-	CardTemp(const DDOM& d)
-	{
-		readt(d);
+	//CardTemp(const xml* d) { }
+
+	bool canGet(const string& attr)const {
+		return AttrShapes.count(attr) && !AttrShapes.at(attr).defVal.is_null();
 	}
-
-	void readt(const DDOM& d);
-
 	string getName()
 	{
 		return type;
@@ -144,7 +126,8 @@ public:
 		return type + "[" + strItem + "]";
 	}
 	string show();
-};
+}; 
+int loadCardTemp(const std::filesystem::path& fpPath, fifo_dict_ci<CardTemp>& m);
 extern unordered_map<int, string> PlayerErrors;
 
 struct lua_State;
@@ -190,7 +173,7 @@ public:
 		setType(type);
 	}
 
-	int call(string key)const;
+	//int call(string key)const;
 
 	//表达式转义
 	string escape(string exp, const unordered_set<string>& sRef)
@@ -223,25 +206,7 @@ public:
 	}
 
 	//计算表达式
-	int cal(string exp)const
-	{
-		if (exp[0] == '&')
-		{
-			string key = exp.substr(1);
-			return call(key);
-		}
-		int intCnt = 0, lp, rp;
-		while ((lp = exp.find('[', intCnt)) != std::string::npos && (rp = exp.find(']', lp)) != std::string::npos)
-		{
-			string strProp = exp.substr(lp + 1, rp - lp - 1);
-			const short val = call(strProp);
-			exp.replace(exp.begin() + lp, exp.begin() + rp + 1, std::to_string(val));
-			intCnt = lp + std::to_string(val).length();
-		}
-		const RD Res(exp);
-		Res.Roll();
-		return Res.intTotal;
-	}
+	int cal(string exp)const;
 
 	void build(const string& para = "")
 	{
@@ -269,28 +234,29 @@ public:
 
 	[[nodiscard]] string standard(const string& key) const
 	{
-		if (getTemplet().replaceName.count(key))return getTemplet().replaceName.find(key)->second;
+		if (auto temp{ getTemplet() }; temp.replaceName.count(key))return temp.replaceName.find(key)->second;
 		return key;
 	}
 
-	AttrVar get(string key)const;
+	AttrVar get(const string& key)const;
 
 	int set(string key, const AttrVar& val);
 
 	bool erase(string& key);
 	void clear();
 
-	int show(string key, string& val) const;
+	std::optional<string> show(string key) const;
+	string print(const string& key)const;
 
 	[[nodiscard]] string show(bool isWhole) const;
 
+	bool has(const string& key)const;
 	//can get attr by card or temp
 	bool available(const string& key) const;
 
-	bool stored(string& key) const
-	{
+	bool stored(string& key) const{
 		key = standard(key);
-		return has(key) || getTemplet().mAutoFill.count(key) || getTemplet().defaultSkill.count(key);
+		return has(key) || getTemplet().canGet(key);
 	}
 
 	void cntRollStat(int die, int face);

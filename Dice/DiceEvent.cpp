@@ -3483,7 +3483,7 @@ int DiceEvent::InnerOrder() {
 			bool isEmpty{ true };
 			ResList res;
 			int intFace{ pc->available("__DefaultDice")
-				? pc->call(string("__DefaultDice"))
+				? pc->get("__DefaultDice").to_int()
 				: getUser(fromChat.uid).getConf("默认骰",100) };
 			string strFace{ to_string(intFace) };
 			string keyStatCnt{ "__StatD" + strFace + "Cnt" };	//掷骰次数
@@ -3688,7 +3688,7 @@ int DiceEvent::InnerOrder() {
 		int intSkillVal;
 		if (strSkillVal.empty()) {
 			if (pc && pc->available(attr)) {
-				intSkillVal = pc->call(attr);
+				intSkillVal = pc->get(attr).to_int();
 			}
 			else {
 				if (!pc && SkillNameReplace.count(attr)) {
@@ -3879,7 +3879,7 @@ int DiceEvent::InnerOrder() {
 		if (readNum(intSan)) {
 			if (PList.count(fromChat.uid)
 				&& (pc = getPlayer(fromChat.uid)[fromChat.gid])->available(attr)) {
-				intSan = pc->call(attr);
+				intSan = pc->get(attr).to_int();
 			}
 			else {
 				replyMsg("strSanEmpty");
@@ -4036,8 +4036,8 @@ int DiceEvent::InnerOrder() {
 				set("show",pc->show(false));
 				replyMsg("strPropList");
 			}
-			else if (string val; pc->show(attr, val) > -1) {
-				set("val",val);
+			else if (auto val{ pc->show(attr) }) {
+				set("val",*val);
 				replyMsg("strProp");
 			}
 			else {
@@ -4212,7 +4212,6 @@ int DiceEvent::InnerOrder() {
 				else {
 					strAttr = readAttrName();
 					if (pc->available(strAttr)) {
-						auto attr{ pc->get(strAttr) };
 						strMainDice += pc->getExp(strAttr);
 						if (!pc->available("&" + strAttr) && pc->get(strAttr).type == AttrVar::Type::Integer)strMainDice += 'a';
 					}
@@ -4425,7 +4424,7 @@ int DiceEvent::InnerOrder() {
 		}
 		int intTurnCnt = 1;
 		const int intDefaultDice = (pc && pc->available("__DefaultDice"))
-			? pc->call("__DefaultDice")
+			? pc->get("__DefaultDice").to_int()
 			: getUser(fromChat.uid).getConf("默认骰", 100);
 		if (strMainDice.find('#') != string::npos) {
 			string& turn{ (at("turn") = strMainDice.substr(0, strMainDice.find('#'))).text };

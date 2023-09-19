@@ -288,7 +288,7 @@ int clearUser() {
 	time_t userline{ tNow - console["InactiveUserLine"] * (time_t)86400 };
 	bool isClearInactive{ console["InactiveUserLine"] > 0 };
 	for (const auto& [uid, user] : UserList) {
-		if (user.nTrust > 0)continue;
+		if (user.nTrust > 0 || console.is_self(uid))continue;
 		if (user.empty()) {
 			UserDelete.push_back(uid);
 		}

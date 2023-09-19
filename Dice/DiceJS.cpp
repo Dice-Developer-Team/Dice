@@ -1031,7 +1031,7 @@ int js_dice_actor_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSV
 	default:
 		return TRUE;
 	}
-	return FALSE;
+	return -1;
 }
 QJSDEF(actor_set) {
 	JS2PC(this_val);
@@ -1088,7 +1088,6 @@ QJSDEF(actor_unlock) {
 
 AttrVar js_context_eval(const std::string& s, const AttrObject& context) {
 	if (auto ret{ js_main->evalStringLocal(s, "<eval>", context) }; !JS_IsException(ret)) {
-		console.log("Ö´ÐÐÓï¾ä³É¹¦:" + js_main->getValue(ret).print(), 0);
 		return js_main->getValue(ret);
 	}
 	else {

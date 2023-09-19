@@ -522,6 +522,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+654:重做角色卡模板
 653:游戏卡带机制
 652:game new/over/open/close/state
 651:局内轮盘骰
@@ -553,9 +554,6 @@ const dict_ci<> HelpDoc = {
 621:扩展代理事件及ex接口
 618:支持reply(Order形式)覆盖指令
 617:更新grade分档转义
-612:新增mod代理事件
-610:新增mod定时事件
-609:新增mod循环事件
 608:新增.mod指令
 593:reply新增触发限制
 589:ak安科安价指令

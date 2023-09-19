@@ -404,6 +404,7 @@ class Parser {
 	bool isTrust{ true };
 	dict_ci<string> dict;
 	shared_ptr<ParseNode> root;
+	AttrVar res;
 public:
 	Parser(const string& s, const AttrObject& obj, bool t = true, const dict_ci<string>& con = {})
 		:root(std::make_shared<ParseNode>(s, 0, char(0xAA))), context(obj), isTrust(t), dict(con) {
@@ -451,7 +452,7 @@ public:
 			exp.replace(lastL, lastR - lastL + 1, chSign);
 			lastR = (preL = lastL) + 1;
 		}
-		if(root->first_kid)format_token(exp, root);
+		if(root->first_kid)res = format_token(exp, root);
 	}
 	AttrVar format_token(string& s, shared_ptr<ParseNode> it) {
 		char chSign[3]{ char(0xAA),char(0xAA),'\0' };
@@ -605,20 +606,23 @@ public:
 	operator string() {
 		return root->leaf;
 	}
+	operator AttrVar() {
+		return res;
+	}
 };
 
-string DiceModManager::format(const string& s, AttrObject context, bool isTrust, const dict_ci<string>& dict) const {
+AttrVar DiceModManager::format(const string& s, const AttrObject& context, bool isTrust, const dict_ci<string>& dict) const {
 	//直接重定向
 	if (s[0] == '&') {
 		const string key = s.substr(1);
 		if (auto val{ getContextItem(context, key, isTrust) }) {
-			return val.print();
+			return val;
 		}
 		else if (const auto it = dict.find(key); it != dict.end()) {
 			return format(it->second, context, isTrust, dict);
 		}
 		else if (const auto it = global_speech.find(key); it != global_speech.end()) {
-			return fmt->format(it->second.express(), context, isTrust, dict);
+			return format(it->second.express(), context, isTrust, dict);
 		}
 	}
 	if (s.find('{') == string::npos)return s;

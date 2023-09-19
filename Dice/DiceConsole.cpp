@@ -38,6 +38,7 @@
 #endif	
 #include "DDAPI.h"
 #include "yaml-cpp/yaml.h"
+#include "tinyxml2.h"
 
 using namespace std;
 
@@ -261,25 +262,24 @@ bool Console::load() {
 				git_user = yaml["git"]["user"].as<string>();
 				git_pw = yaml["git"]["password"].as<string>();
 			}
-		} catch (std::exception& e) {
+		}
+		catch (std::exception& e) {
 			DD::debugLog("/conf/console.yaml¶ÁÈ¡Ê§°Ü!" + string(e.what()));
 		}
 	}
-	else if (string s; !rdbuf(DiceDir / "conf" / "console.xml", s))return false;
-	else {
-		DDOM xml(s);
-		for (auto& node : xml.vChild) {
-			if (node.tag == "master")master = stoll(node.strValue);
-			else if (node.tag == "clock")
-				for (auto& child : node.vChild) {
+	else if (tinyxml2::XMLDocument doc; tinyxml2::XML_SUCCESS == doc.LoadFile((DiceDir / "conf" / "console.xml").string().c_str())){
+		for (auto node = doc.FirstChildElement()->FirstChildElement(); node; node = node->NextSiblingElement()) {
+			if (node->Name() == "master")master = stoll(node->GetText());
+			else if (node->Name() == "clock")
+				for (auto child = node->FirstChildElement(); child;child = child->NextSiblingElement()) {
 					mWorkClock.insert({
-						scanClock(child.strValue), child.tag
+						scanClock(child->GetText()), child->Name()
 						});
 				}
-			else if (node.tag == "conf")
-				for (auto& child : node.vChild) {
+			else if (node->Name() == "conf")
+				for (auto child = node->FirstChildElement(); child; child = child->NextSiblingElement()) {
 					std::pair<string, int> conf;
-					readini(child.strValue, conf);
+					readini(string(child->GetText()), conf);
 					if (intDefault.count(conf.first))intConf.insert(conf);
 				}
 		}
