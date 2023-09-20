@@ -269,14 +269,14 @@ bool Console::load() {
 	}
 	else if (tinyxml2::XMLDocument doc; tinyxml2::XML_SUCCESS == doc.LoadFile((DiceDir / "conf" / "console.xml").string().c_str())){
 		for (auto node = doc.FirstChildElement()->FirstChildElement(); node; node = node->NextSiblingElement()) {
-			if (node->Name() == "master")master = stoll(node->GetText());
-			else if (node->Name() == "clock")
-				for (auto child = node->FirstChildElement(); child;child = child->NextSiblingElement()) {
+			if (string tag{ node->Name() }; tag == "master")master = stoll(node->GetText());
+			else if (tag == "clock")
+				for (auto child = node->FirstChildElement(); child; child = child->NextSiblingElement()) {
 					mWorkClock.insert({
 						scanClock(child->GetText()), child->Name()
 						});
 				}
-			else if (node->Name() == "conf")
+			else if (tag == "conf")
 				for (auto child = node->FirstChildElement(); child; child = child->NextSiblingElement()) {
 					std::pair<string, int> conf;
 					readini(string(child->GetText()), conf);

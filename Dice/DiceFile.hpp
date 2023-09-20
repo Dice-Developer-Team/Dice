@@ -173,7 +173,7 @@ std::set<T> fread(ifstream& fin)
 }
 
 template <typename T1, typename T2>
-void readini(string& line, std::pair<T1, T2>& p, char delim = '=')
+void readini(const string& line, std::pair<T1, T2>& p, char delim = '=')
 {
 	const size_t pos = line.find(delim);
 	if (pos == std::string::npos)return;
