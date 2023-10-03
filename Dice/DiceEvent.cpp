@@ -108,7 +108,7 @@ void DiceEvent::replyMsg(const std::string& key) {
 }
 void DiceEvent::replyHelp(const std::string& key) {
 	if (isVirtual && fromChat.uid == console.DiceMaid && isPrivate())return;
-	strReply = fmt->get_help(key);
+	strReply = fmt->get_help(key, *this);
 	logEcho();
 	if (console["ReferMsgReply"] && get_ll("msgid"))strReply = "[CQ:reply,id=" + get_str("msgid") + "]" + strReply;
 	AddMsgToQueue(strReply, fromChat);
