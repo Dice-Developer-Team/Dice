@@ -145,7 +145,7 @@ public:
 class AttrVar {
 public:
 	enum class Type { Nil, Boolean, Integer, Number, Text, Table, Function, ID, Set	};
-	Type type{ 0 };
+	Type type{ Type::Nil };
 	union {
 		bool bit;		//1
 		int attr{ 0 };		//2
@@ -158,6 +158,10 @@ public:
 	};
 	AttrVar() {}
 	AttrVar(const AttrVar& other);
+	template<typename T>
+	AttrVar(const std::optional<T>& p) {
+		if (p) new(this)AttrVar(*p);
+	}
 	explicit AttrVar(bool b) :type(Type::Boolean), bit(b) {}
 	AttrVar(int n) :type(Type::Integer), attr(n) {}
 	AttrVar(double n) :type(Type::Number), number(n) {}

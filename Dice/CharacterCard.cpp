@@ -11,7 +11,7 @@ AttrVar AttrShape::init(const CharaCard* pc) {
 	if (textType == TextType::JavaScript) {
 		return js_context_eval(defVal, *pc);
 	}
-	else if (textType == TextType::Format && !defVal.is_null()) {
+	else if (textType == TextType::Dicexp && !defVal.is_null()) {
 		if (auto exp{ fmt->format(defVal,*pc) }; exp.is_text()) {
 			return pc->cal(exp);
 		}
@@ -61,12 +61,12 @@ unordered_map<int, string> PlayerErrors{
 	{-23,"strPCLockedWrite"},
 	{-24,"strPCLockedRead"},
 };
-
-fifo_dict_ci<CardTemp> CharaCard::mCardTemplet{
-	{
-		"COC7", CardTemp{
+extern CardTemp ModelBRP{ "BRP", fifo_dict_ci<>{}, std::vector<std::vector<std::string>>{}, fifo_dict_ci<>{}, fifo_dict_ci<>{}, fifo_dict_ci<int>{
+				{"__DefaultDice",100}
+			}, fifo_dict_ci<CardBuild>{} };
+extern CardTemp ModelCOC7{
 			"COC7", SkillNameReplace, BasicCOC7, mVariableCOC7, ExpressionCOC7,
-			SkillDefaultVal, {
+			SkillDefaultVal, fifo_dict_ci<CardBuild>{
 				{"_default", CardBuild({BuildCOC7},  {"{随机姓名}"})},
 				{
 					"bg", CardBuild({
@@ -74,36 +74,11 @@ fifo_dict_ci<CardTemp> CharaCard::mCardTemplet{
 										{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
 										{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
 									}, {"{随机姓名}"})
-				}
-			}
-		}
-	},
-	{"BRP", {
-			"BRP", {}, {}, {}, {}, {
-				{"__DefaultDice",100}
-			}, {
-				{"_default", CardBuild({},  {"{随机姓名}"})},
-				{
-					"bg", CardBuild({
-										{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
-										{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
-										{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
-									}, {"{随机姓名}"})
-				}
-			}
-	}},
-	{"DND", {
-			"DND", {}, {}, {}, {}, {
-				{"__DefaultDice",20}
-			}, {
-				{"_default", CardBuild({}, {"{随机姓名}"})},
-				{
-					"bg", CardBuild({
-										{"性别", "{性别}"},
-									},  {"{随机姓名}"})
-				}
-			}
-	}},
+				},
+			} };
+dict_ci<ptr<CardTemp>> CardModels{ 
+	{"BRP", std::make_shared<CardTemp>(ModelBRP),},
+	{"COC7", std::make_shared<CardTemp>(ModelCOC7),},
 };
 
 #define Text2GBK(s) (s ? (isUTF8 ? UTF8toGBK(s) :s) : "")
@@ -117,7 +92,7 @@ CardBuild::CardBuild(const tinyxml2::XMLElement* d) {
 		}
 	}
 }
-int loadCardTemp(const std::filesystem::path& fpPath, fifo_dict_ci<CardTemp>& m) {
+int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 	tinyxml2::XMLDocument doc;
 	if (auto err{ doc.LoadFile(fpPath.string().c_str()) }; tinyxml2::XML_SUCCESS == err) {
 		bool isUTF8(false);
@@ -144,8 +119,8 @@ int loadCardTemp(const std::filesystem::path& fpPath, fifo_dict_ci<CardTemp>& m)
 								if (auto exp{ kid->GetText() }) {
 									string s{ Text2GBK(exp) };
 									if (auto text{ kid->Attribute("text") }) {
-										if (auto lower{ toLower(text) }; lower == "format") {
-											shape.textType = AttrShape::TextType::Format;
+										if (auto lower{ toLower(text) }; lower == "dicexp") {
+											shape.textType = AttrShape::TextType::Dicexp;
 											shape.defVal = s;
 										}
 										else if (lower == "javascript") {
@@ -178,6 +153,11 @@ int loadCardTemp(const std::filesystem::path& fpPath, fifo_dict_ci<CardTemp>& m)
 	return 0;
 }
 
+CardTemp& CardTemp::merge(const CardTemp& other) {
+	if (type.empty())type = other.type;
+	map_merge(AttrShapes, other.AttrShapes);
+	return *this;
+}
 string CardTemp::show() {
 	ResList res;
 	if (!AttrShapes.empty()) {
@@ -197,10 +177,10 @@ string CardTemp::show() {
 	return "pc模板:" + type + res.show();
 }
 
-CardTemp& CharaCard::getTemplet()const{
+ptr<CardTemp> CharaCard::getTemplet()const{
 	if (string type{ get_str("__Type") };
-		!type.empty() && mCardTemplet.count(type))return mCardTemplet[type]; 
-	return mCardTemplet["BRP"];
+		!type.empty() && CardModels.count(type))return CardModels[type]; 
+	return CardModels["BRP"];
 }
 
 void CharaCard::update() {
@@ -214,9 +194,8 @@ void CharaCard::setType(const string& strType) {
 }
 AttrVar CharaCard::get(const string& key)const {
 	if (dict->count(key))return at(key);
-	if (auto& temp{ getTemplet() }; temp.canGet(key)) {
-		console.log("从模板获取属性:" + key, 0);
-		return temp.AttrShapes.at(key).init(this);
+	if (auto& temp{ getTemplet() }; temp->canGet(key)) {
+		return temp->AttrShapes.at(key).init(this);
 	}
 	return {};
 }
@@ -225,7 +204,7 @@ int CharaCard::set(string key, const AttrVar& val) {
 	if (key == "__Name")return -8;
 	if (val.is_text() && val.text.length() > 256)return -11;
 	key = standard(key);
-	if (getTemplet().equalDefault(key, val)){
+	if (getTemplet()->equalDefault(key, val)){
 		if (has(key)) dict->erase(key);
 		else return -1;
 	}
@@ -238,27 +217,27 @@ int CharaCard::set(string key, const AttrVar& val) {
 
 string CharaCard::print(const string& key)const {
 	if (dict->count(key))return dict->at(key).print();
-	if (auto temp{ getTemplet() }; temp.canGet(key)) {
-		return temp.AttrShapes.at(key).init(this).to_str();
+	if (auto temp{ getTemplet() }; temp->canGet(key)) {
+		return temp->AttrShapes.at(key).init(this).print();
 	}
 	return {};
 }
 std::optional<string> CharaCard::show(string key) const {
 	if (has(key) || has(key = standard(key))) {
-		return print(key);
+		if (auto res{ get(key) }; !res.is_null())return res.print();
 	}
 	return std::nullopt;
 }
 
 bool CharaCard::has(const string& key)const {
 	return (dict->count(key) && !dict->at(key).is_null())
-		|| getTemplet().canGet(key);
+		|| getTemplet()->canGet(key);
 }
 bool CharaCard::available(const string& strKey) const {
 	if (has(strKey))return true;
 	if (string key{ standard(strKey) }; has(key) || has("&" + key))return true;
 	else {
-		return getTemplet().canGet(key);
+		return getTemplet()->canGet(key);
 	}
 }
 
@@ -269,24 +248,35 @@ string CharaCard::getExp(string& key, std::unordered_set<string> sRef){
 	auto& temp{ getTemplet() };
 	auto val = dict->find("&" + key);
 	if (val != dict->end())return escape(val->second.to_str(), sRef);
-	if (auto exp = temp.mExpression.find(key); exp != temp.mExpression.end()) return escape(exp->second, sRef);
+	if (auto exp = temp->mExpression.find(key); exp != temp->mExpression.end()) return escape(exp->second, sRef);
 	val = dict->find(key);
 	if (val != dict->end())return escape(val->second.to_str(), sRef);
-	if (auto exp = temp.AttrShapes.find(key); exp != temp.AttrShapes.end())return to_string(exp->second.init(this));
+	if (auto exp = temp->AttrShapes.find(key); exp != temp->AttrShapes.end())return to_string(exp->second.init(this));
 	return "0";
 }
-int CharaCard::cal(string exp)const {
+bool CharaCard::countExp(const string& key)const {
+	return (key[0] == '&' && has(key))
+		|| (has("&" + key))
+		|| getTemplet()->mExpression.count(key);
+}
+std::optional<int> CharaCard::cal(string exp)const {
 	if (exp[0] == '&'){
-		string key = exp.substr(1);
-		return get(key).to_int();
+		if (auto res{ get(exp.substr(1)) };res.is_numberic()) {
+			return res.to_int();
+		}
 	}
-	size_t r = 0, l = 0;
-	while ((r = exp.find(')')) != string::npos && (l = exp.rfind('(', r)) != string::npos) {
-		exp.replace(l, r + 1, to_string(cal(exp.substr(l + 1, r - l - 1))));
+	else {
+		size_t r = 0, l = 0;
+		while ((r = exp.find(')')) != string::npos && (l = exp.rfind('(', r)) != string::npos) {
+			if (auto res{ cal(exp.substr(l + 1, r - l - 1)) })
+				exp.replace(l, r + 1, to_string(*res));
+			else return std::nullopt;
+		}
+		if (const RD Res(exp); !Res.Roll()) {
+			return Res.intTotal;
+		}
 	}
-	const RD Res(exp);
-	Res.Roll();
-	return Res.intTotal;
+	return std::nullopt;
 }
 
 void CharaCard::buildv(string para)
@@ -315,7 +305,7 @@ void CharaCard::clear() {
 [[nodiscard]] string CharaCard::show(bool isWhole) const {
 	std::set<string> sDefault;
 	ResList Res;
-	for (const auto& list : getTemplet().vBasicList) {
+	for (const auto& list : getTemplet()->vBasicList) {
 		ResList subList;
 		for (const auto& it : list) {
 			if (auto val{ show(it) }) {
@@ -539,7 +529,7 @@ int Player::newCard(string& s, long long group, string type)
 		s.erase(s.begin(), s.begin() + Cnt + 1);
 		if (type == "COC")type = "COC7";
 	}
-	else if (CharaCard::mCardTemplet.count(s))
+	else if (CardModels.count(s))
 	{
 		type = s;
 		s.clear();
@@ -550,12 +540,12 @@ int Player::newCard(string& s, long long group, string type)
 		type.erase(type.begin() + Cnt, type.end());
 	}
 	//无效模板不再报错
-	//if (!getmCardTemplet().count(type))return -2;
+	//if (!getCardModels().count(type))return -2;
 	if (mNameIndex.count(s))return -4;
 	if (s.find("=") != string::npos)return -6;
 	mCardList.emplace(++indexMax, std::make_shared<CharaCard>(s, type));
 	PC card{ mCardList[indexMax] };
-	// CardTemp& temp = mCardTemplet[type];
+	// CardTemp& temp = CardModels[type];
 	while (!vOption.empty())
 	{
 		string para = vOption.top();
@@ -563,7 +553,7 @@ int Player::newCard(string& s, long long group, string type)
 		card->build(para);
 		if (card->getName().empty())
 		{
-			std::vector<string> list = CharaCard::mCardTemplet[type].mBuildOption[para].vNameList;
+			std::vector<string> list = CardModels[type]->mBuildOption[para].vNameList;
 			while (!list.empty())
 			{
 				s = CardDeck::draw(list[0]);
@@ -578,7 +568,7 @@ int Player::newCard(string& s, long long group, string type)
 	}
 	if (card->getName().empty())
 	{
-		std::vector<string> list = CharaCard::mCardTemplet[type].mBuildOption["_default"].vNameList;
+		std::vector<string> list = CardModels[type]->mBuildOption["_default"].vNameList;
 		while (!list.empty())
 		{
 			s = CardDeck::draw(list[0]);

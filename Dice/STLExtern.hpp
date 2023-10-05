@@ -109,6 +109,7 @@ public:
 	{}
 	bool operator()(const string & lhs, const string & rhs) const
 	{
+		if (lhs == rhs)return false;
 		// look up timestamps for both keys
 		const auto timestamp_lhs = m_keys->find(toLower(lhs));
 		const auto timestamp_rhs = m_keys->find(toLower(rhs));

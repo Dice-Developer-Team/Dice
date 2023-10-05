@@ -44,7 +44,7 @@ inline unordered_map<string, short> mCardTag = {
 class AttrShape {
 public:
 	enum class DataType : unsigned char { Any, Nature, Int, };
-	enum class TextType : unsigned char { Plain, Format, JavaScript, };
+	enum class TextType : unsigned char { Plain, Dicexp, JavaScript, };
 	AttrShape() = default;
 	AttrShape(int i) :defVal(i) {}
 	AttrShape(const string& s):defVal(s){}
@@ -94,19 +94,20 @@ public:
 
 	CardTemp(const string& type, const fifo_dict_ci<>& replace, vector<vector<string>> basic,
 		const fifo_dict_ci<>& dynamic, const fifo_dict_ci<>& exp,
-		const fifo_dict_ci<int>& def_skill, const fifo_dict_ci<CardBuild>& option) : type(type),
+		const fifo_dict_ci<int>& def_skill, const fifo_dict_ci<CardBuild>& option = {}) : type(type),
 			                                                            replaceName(replace), 
 		                                                                vBasicList(basic), 
 		                                                                mExpression(exp), 
 		                                                                mBuildOption(option)
 	{
 		for (auto& [attr, exp] : dynamic) {
-			AttrShapes[attr] = AttrShape(exp, AttrShape::TextType::Format);
+			AttrShapes[attr] = AttrShape(exp, AttrShape::TextType::Dicexp);
 		}
 		for (auto& [attr, val] : def_skill) {
 			AttrShapes[attr] = val;
 		}
 	}
+	CardTemp& merge(const CardTemp& other);
 	bool equalDefault(const string& attr, const AttrVar& val)const { return AttrShapes.count(attr) && AttrShapes.at(attr).equalDefault(val); }
 
 	//CardTemp(const xml* d) { }
@@ -127,7 +128,11 @@ public:
 	}
 	string show();
 }; 
-int loadCardTemp(const std::filesystem::path& fpPath, fifo_dict_ci<CardTemp>& m);
+extern CardTemp ModelBRP;
+extern CardTemp ModelCOC7;
+extern dict_ci<ptr<CardTemp>> CardModels;
+int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m);
+
 extern unordered_map<int, string> PlayerErrors;
 
 struct lua_State;
@@ -138,8 +143,7 @@ private:
 	unordered_set<string> locks;
 	std::mutex cardMutex;
 public:
-	static fifo_dict_ci<CardTemp> mCardTemplet;
-	CardTemp& getTemplet()const;
+	ptr<CardTemp> getTemplet()const;
 	bool locked(const string& key)const { return locks.count(key); }
 	bool lock(const string& key) {
 		std::lock_guard<std::mutex> lock_queue(cardMutex);
@@ -199,19 +203,15 @@ public:
 	//求key对应掷骰表达式
 	string getExp(string& key, unordered_set<string> sRef = {});
 
-	bool countExp(const string& key){
-		return (has(key) && key[0] == '&')
-			|| (has("&" + key))
-			|| getTemplet().mExpression.count(key);
-	}
+	bool countExp(const string& key)const;
 
 	//计算表达式
-	int cal(string exp)const;
+	std::optional<int> cal(string exp)const;
 
 	void build(const string& para = "")
 	{
-		const auto it = getTemplet().mBuildOption.find(para);
-		if (it == getTemplet().mBuildOption.end())return;
+		const auto it = getTemplet()->mBuildOption.find(para);
+		if (it == getTemplet()->mBuildOption.end())return;
 		CardBuild build = it->second;
 		for (auto& it2 : build.vBuildList) {
 			//exp
@@ -234,7 +234,7 @@ public:
 
 	[[nodiscard]] string standard(const string& key) const
 	{
-		if (auto temp{ getTemplet() }; temp.replaceName.count(key))return temp.replaceName.find(key)->second;
+		if (auto temp{ getTemplet() }; temp->replaceName.count(key))return temp->replaceName.find(key)->second;
 		return key;
 	}
 
@@ -256,7 +256,7 @@ public:
 
 	bool stored(string& key) const{
 		key = standard(key);
-		return has(key) || getTemplet().canGet(key);
+		return has(key) || getTemplet()->canGet(key);
 	}
 
 	void cntRollStat(int die, int face);

@@ -14,6 +14,7 @@
 #ifndef __ANDROID__
 #include "DiceGit.h"
 #endif //ANDROID
+#include "CharacterCard.h"
 using std::variant;
 namespace fs = std::filesystem;
 
@@ -116,6 +117,7 @@ public:
 	string detail()const;
 private:
 	dict_ci<DiceRule> rules;
+	dict_ci<CardTemp> card_models;
 	dict_ci<>helpdoc;
 	dict_ci<DiceSpeech>speech;
 	//native path of .lua

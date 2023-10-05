@@ -3549,8 +3549,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		else if (strOption == "temp") {
-			CardTemp& temp{ pl[fromChat.gid]->getTemplet()};
-			reply(temp.show());
+			reply(pl[fromChat.gid]->getTemplet()->show());
 			return 1;
 		}
 		else if (strOption == "tojson") {

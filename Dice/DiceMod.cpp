@@ -942,6 +942,8 @@ string DiceMod::desc()const {
 }
 string DiceMod::detail()const {
 	ShowList li;
+	if (!rules.empty())li << "- 规则集: " + to_string(rules.size()) + " 部";
+	if (!card_models.empty())li << "- 角色卡: " + to_string(card_models.size()) + " 版";
 	if (!events.empty())li << "- 事件: " + to_string(events.size()) + "条";
 	if (!reply_list.empty())li << "- 回复: " + to_string(reply_list.size()) + "项";
 	if (!lua_scripts.empty())li << "- lua脚本: " + to_string(lua_scripts.size()) + "份";
@@ -1053,18 +1055,17 @@ void DiceMod::loadDir() {
 		listDir(pathDir / "reply", luaFiles, true);
 		listDir(pathDir / "event", luaFiles, true);
 		loadLua();
-		if (fs::exists(pathDir / "rulebook")) {
-			if(vector<std::filesystem::path> fSpeech; listDir(pathDir / "rulebook", fSpeech, true))
+		if (auto dirRule{ pathDir / "rulebook" }; fs::exists(dirRule)) {
+			if(vector<std::filesystem::path> fSpeech; listDir(dirRule, fSpeech))
 			for (auto& p : fSpeech) {
 				try {
-					YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) };
-					if (yaml.IsMap()) {
+					if (YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) }; yaml.IsMap()) {
 						string rulename{ UTF8toGBK(yaml["rule"].Scalar()) };
 						auto& rule{ rules[rulename]};
 						if (yaml["manual"])for (auto it : yaml["manual"]) {
 							rule.manual[UTF8toGBK(it.first.Scalar())] = UTF8toGBK(it.second.Scalar());
 						}
-						if (yaml["cassette"])for (auto it : yaml["cassette"]) {
+						if (yaml["tape"])for (auto it : yaml["tape"]) {
 							rule.cassettes[UTF8toGBK(it.first.Scalar())] = AttrVar(it.second).to_dict();
 						}
 					}
@@ -1074,6 +1075,12 @@ void DiceMod::loadDir() {
 					console.log(UTF8toGBK(cut_relative(p, pathDir).u8string()) + "解析错误!" + e.what(), 0b10);
 				}
 			}
+		}
+		if (auto dirModel{ pathDir / "model" }; fs::exists(dirModel)) {
+			if (vector<std::filesystem::path> fModels; listDir(dirModel, fModels, true))
+				for (auto& p : fModels) {
+					loadCardTemp(p, card_models);
+				}
 		}
 		if (fs::exists(pathDir / "image")) {
 			std::filesystem::copy(pathDir / "image", dirExe / "data" / "image",
@@ -1226,7 +1233,7 @@ void DiceModManager::initCloud() {
 void DiceModManager::build() {
 	isIniting = true; 
 	ShowList resLog;
-	size_t cntSpeech{ 0 }, cntHelp{ 0 };
+	size_t cntSpeech{ 0 }, cntHelp{ 0 }, cntModel{ 0 };
 	//init
 	map_merge(global_speech = transpeech, GlobalMsg);
 	global_helpdoc = HelpDoc;
@@ -1236,6 +1243,10 @@ void DiceModManager::build() {
 	global_events.clear();
 	final_reply = {};
 	auto rules_new = std::make_shared<DiceRuleSet>();
+	dict_ci<ptr<CardTemp>> models{
+	{"BRP", std::make_shared<CardTemp>(ModelBRP),},
+	{"COC7", std::make_shared<CardTemp>(ModelCOC7),},
+	};
 	//merge mod
 	for (auto& mod : modOrder) {
 		if (!mod->active || !mod->loaded)continue;
@@ -1247,10 +1258,21 @@ void DiceModManager::build() {
 		rules_new->merge(mod->rules);
 		map_merge(final_reply.items, mod->reply_list);
 		map_merge(global_events, mod->events);
+		for (auto& [name, model] : mod->card_models) {
+			if (models.count(name)) {
+				models[name]->merge(model);
+			}
+			else {
+				models[name] = std::make_shared<CardTemp>(model);
+			}
+			++cntModel;
+		}
 	}
 	//merge custom
 	if (rules_new->build())resLog << "注册规则集 " + to_string(rules_new->rules.size()) + " 部";
 	ruleset.swap(rules_new);
+	if (cntModel)resLog << "注册角色卡模板 " + to_string(rules_new->rules.size()) + " 版";
+	if (cntModel || CardModels.size() > 2)CardModels.swap(models);
 	if (cntSpeech += map_merge(global_speech, EditedMsg))
 		resLog << "注册speech " + to_string(cntSpeech) + " 项";
 	if (cntHelp += map_merge(global_helpdoc, CustomHelp))
