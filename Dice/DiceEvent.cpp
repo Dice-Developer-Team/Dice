@@ -969,7 +969,7 @@ int DiceEvent::BasicOrder()
 			{"hook","GroupAuthorize"},
 			{"aimGroup",to_string(pGrp->ID)},
 			{"AttachInfo",strInfo},
-			{"aim_gid",fromChat.gid},
+			{"aim_gid",pGrp->ID},
 			})))return 1;
 		if (trusted > 0)
 		{
@@ -4629,7 +4629,7 @@ bool DiceEvent::DiceFilter()
 	}
 	init2(strMsg);
 	strLowerMessage = toLower(strMsg);
-	trusted = trustedQQ(fromChat.uid);
+	trusted = isVirtual ? 255 : trustedQQ(fromChat.uid);
 	fwdMsg();
 	if (isPrivate()) isCalled = true;
 	else if (isOtherCalled && !isCalled)return false;
