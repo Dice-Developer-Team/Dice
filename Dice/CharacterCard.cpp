@@ -61,10 +61,10 @@ unordered_map<int, string> PlayerErrors{
 	{-23,"strPCLockedWrite"},
 	{-24,"strPCLockedRead"},
 };
-extern CardTemp ModelBRP{ "BRP", fifo_dict_ci<>{}, std::vector<std::vector<std::string>>{}, fifo_dict_ci<>{}, fifo_dict_ci<>{}, fifo_dict_ci<int>{
+CardTemp ModelBRP{ "BRP", fifo_dict_ci<>{}, std::vector<std::vector<std::string>>{}, fifo_dict_ci<>{}, fifo_dict_ci<>{}, fifo_dict_ci<int>{
 				{"__DefaultDice",100}
 			}, fifo_dict_ci<CardBuild>{} };
-extern CardTemp ModelCOC7{
+CardTemp ModelCOC7{
 			"COC7", SkillNameReplace, BasicCOC7, mVariableCOC7, ExpressionCOC7,
 			SkillDefaultVal, fifo_dict_ci<CardBuild>{
 				{"_default", CardBuild({BuildCOC7},  {"{Ëæ»úÐÕÃû}"})},
@@ -194,7 +194,7 @@ void CharaCard::setType(const string& strType) {
 }
 AttrVar CharaCard::get(const string& key)const {
 	if (dict->count(key))return at(key);
-	if (auto& temp{ getTemplet() }; temp->canGet(key)) {
+	if (auto temp{ getTemplet() }; temp->canGet(key)) {
 		return temp->AttrShapes.at(key).init(this);
 	}
 	return {};
@@ -245,7 +245,7 @@ bool CharaCard::available(const string& strKey) const {
 string CharaCard::getExp(string& key, std::unordered_set<string> sRef){
 	sRef.insert(key);
 	key = standard(key);
-	auto& temp{ getTemplet() };
+	auto temp{ getTemplet() };
 	auto val = dict->find("&" + key);
 	if (val != dict->end())return escape(val->second.to_str(), sRef);
 	if (auto exp = temp->mExpression.find(key); exp != temp->mExpression.end()) return escape(exp->second, sRef);
