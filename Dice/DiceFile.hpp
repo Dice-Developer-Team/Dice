@@ -317,22 +317,6 @@ int loadFile(const std::filesystem::path& fpPath, nlohmann::fifo_map<T1, T2>& ma
 	return -1;
 }
 
-template <typename T1, typename T2>
-void loadFile(const std::filesystem::path& fpPath, std::multimap<T1, T2>& mapTmp)
-{
-	std::ifstream fin(fpPath);
-	if (fin)
-	{
-		T1 key;
-		T2 Val;
-		while (fin >> key >> Val)
-		{
-			mapTmp.insert({key, Val});
-		}
-	}
-	fin.close();
-}
-
 template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
 int loadBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
 {
@@ -370,21 +354,6 @@ int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 	}
 	fin.close();
 	return Cnt;
-}
-
-template <class C>
-int loadINI(const std::filesystem::path& fpPath, std::map<std::string, C>& m)
-{
-	std::ifstream fin(fpPath, std::ios::in | std::ios::binary);
-	if (!fin)return -1;
-	std::string s, name;
-	C val;
-	getline(fin, s);
-	readini(fin, name);
-	val.readi(fin);
-	m[name] = val;
-	fin.close();
-	return 1;
 }
 
 bool rdbuf(const std::filesystem::path& fpPath, string& s);

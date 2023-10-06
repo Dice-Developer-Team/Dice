@@ -139,9 +139,9 @@ class DiceModManager {
 	dict_ci<ptr<DiceMod>> modList;
 	vector<ptr<DiceMod>> modOrder;
 	vector<string> sourceList = {
-		"https://raw.sevencdn.com/Dice-Developer-Team/DiceModIndex/main/",
-		"https://raw.githubusercontent.com/Dice-Developer-Team/DiceModIndex/main/",
+		"https://ghproxy.com/https://raw.githubusercontent.com/Dice-Developer-Team/DiceModIndex/main/index",
 		"https://gitee.com/diceki/DiceModIndex/raw/main/",
+		//"https://raw.sevencdn.com/Dice-Developer-Team/DiceModIndex/main/index",
 	};
 	//custom
 	dict_ci<ptr<DiceMsgReply>> plugin_reply;

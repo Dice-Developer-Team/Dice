@@ -453,12 +453,12 @@ public:
             if (string url; server->getParam(conn, "url", url)) {
                 if (Network::GET(url, ret)) {
                     j["code"] = 0;
-                    j["msg"] = UTF8toGBK(ret);
+                    j["msg"] = ret;
                 }
                 else {
                     j["code"] = -1;
-                    j["msg"] = UTF8toGBK(ret);
-                    console.log(UTF8toGBK(ret), 0);
+                    j["msg"] = GBKtoUTF8(ret);
+                    console.log(ret, 0);
                 }
             }
             else {
