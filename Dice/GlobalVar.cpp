@@ -49,7 +49,7 @@ const dict_ci<string> PlainMsg
 	{"stranger","陌生人"},			//{nick}无法获取非空昵称时的称呼
 	{"strCallUser", "用户"},
 	{"strSummonWord", ""},
-	{"strSummonEmpty", "召唤{self}，{nick}有何事么？"},
+	{"strSummonEmpty", "召唤{self}，{nick}有何事？"},
 	{"strModList", "{self}的记忆体列表:{li}"},
 	{"strModOn", "已令{self}人格激活记忆体「{mod}」√"},
 	{"strModOnAlready", "{self}的记忆体「{mod}」已激活！"},
@@ -339,7 +339,7 @@ const dict_ci<string> PlainMsg
 	{"strHELPDisabledErr", "管理员已在此群中禁用.help命令!"},
 	{"strNameDelEmpty", "{nick}未设置名称,无法删除!"},
 	{"strValueErr", "掷骰表达式输入错误!"},
-	{"strInputErr", "命令或掷骰表达式输入错误!"},
+	{"strInputErr", "命令或掷骰表达式输入错误:{dice_exp}"},
 	{"strUnknownErr", "发生了未知错误!"},
 	{"strUnableToGetErrorMsg", "无法获取错误信息!"},
 	{"strDiceTooBigErr", "{self}被你扔出的骰子淹没了×（骰数过多）"},

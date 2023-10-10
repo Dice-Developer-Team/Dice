@@ -7,6 +7,25 @@
 #include "DiceJS.h"
 #include "DiceMod.h"
 
+#define Text2GBK(s) (s ? (isUTF8 ? UTF8toGBK(s) :s) : "")
+AttrShape::AttrShape(const tinyxml2::XMLElement* node, bool isUTF8) {
+	if (auto exp{ node->GetText() }) {
+		string s{ Text2GBK(exp) };
+		if (auto text{ node->Attribute("text") }) {
+			if (auto lower{ toLower(text) }; lower == "dicexp") {
+				textType = AttrShape::TextType::Dicexp;
+				defVal = s;
+				return;
+			}
+			else if (lower == "javascript") {
+				textType = AttrShape::TextType::JavaScript;
+				defVal = s;
+				return;
+			}
+		}
+		defVal = AttrVar::parse(s);
+	}
+}
 AttrVar AttrShape::init(const CharaCard* pc) {
 	if (textType == TextType::JavaScript) {
 		return js_context_eval(defVal, *pc);
@@ -17,10 +36,7 @@ AttrVar AttrShape::init(const CharaCard* pc) {
 		}
 		else return exp;
 	}
-	else {
-		return defVal;
-	}
-	return {};
+	return defVal;
 }
  /**
   * 错误返回值
@@ -63,32 +79,37 @@ unordered_map<int, string> PlayerErrors{
 };
 CardTemp ModelBRP{ "BRP", fifo_dict_ci<>{}, std::vector<std::vector<std::string>>{}, fifo_dict_ci<>{}, fifo_dict_ci<>{}, fifo_dict_ci<int>{
 				{"__DefaultDice",100}
-			}, fifo_dict_ci<CardBuild>{} };
-CardTemp ModelCOC7{
-			"COC7", SkillNameReplace, BasicCOC7, mVariableCOC7, ExpressionCOC7,
-			SkillDefaultVal, fifo_dict_ci<CardBuild>{
-				{"_default", CardBuild({BuildCOC7},  {"{随机姓名}"})},
-				{
-					"bg", CardBuild({
-										{"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
+			}};
+std::vector<std::pair<std::string, std::string>> BuildCOC7 = {
+	{"__Name", "{随机姓名}"},
+	{"力量", "3D6*5"},
+	{"体质", "3D6*5"},
+	{"体型", "2D6*5+30"},
+	{"敏捷", "3D6*5"},
+	{"外貌", "3D6*5"},
+	{"智力", "2D6*5+30"},
+	{"意志", "3D6*5"},
+	{"教育", "2D6*5+30"},
+	{"幸运", "3D6*5"},
+};
+std::vector<std::pair<std::string, std::string>> COC7_BG{ {"性别", "{性别}"}, {"年龄", "7D6+8"}, {"职业", "{调查员职业}"}, {"个人描述", "{个人描述}"},
 										{"重要之人", "{重要之人}"}, {"思想信念", "{思想信念}"}, {"意义非凡之地", "{意义非凡之地}"},
-										{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"}
-									}, {"{随机姓名}"})
-				},
+										{"宝贵之物", "{宝贵之物}"}, {"特质", "{调查员特点}"},
+};
+CardTemp ModelCOC7{ "COC7", SkillNameReplace, BasicCOC7, mVariableCOC7, ExpressionCOC7,
+			SkillDefaultVal, dict_ci<CardPreset>{
+				{"pc", CardPreset{BuildCOC7}},
+				{"bg", CardPreset{COC7_BG}},
 			} };
 dict_ci<ptr<CardTemp>> CardModels{ 
 	{"BRP", std::make_shared<CardTemp>(ModelBRP),},
 	{"COC7", std::make_shared<CardTemp>(ModelCOC7),},
 };
 
-#define Text2GBK(s) (s ? (isUTF8 ? UTF8toGBK(s) :s) : "")
-CardBuild::CardBuild(const tinyxml2::XMLElement* d) {
+CardPreset::CardPreset(const tinyxml2::XMLElement* d, bool isUTF8) {
 	for (auto elem = d->FirstChildElement(); elem; elem = elem->NextSiblingElement()) {
-		if (elem->Name() == string("Name")) {
-			vNameList = getLines(elem->GetText());
-		}
-		else if (elem->Name() == string("generate")) {
-			readini(elem->GetText(), vBuildList);
+		if (auto name{ elem->Attribute("name") }) {
+			shapes[Text2GBK(name)] = { elem,isUTF8 };
 		}
 	}
 }
@@ -115,30 +136,16 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 					else if (tag == "init") {
 						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
 							if (auto name{ kid->Attribute("name") }) {
-								auto& shape{ tp.AttrShapes[Text2GBK(name)] };
-								if (auto exp{ kid->GetText() }) {
-									string s{ Text2GBK(exp) };
-									if (auto text{ kid->Attribute("text") }) {
-										if (auto lower{ toLower(text) }; lower == "dicexp") {
-											shape.textType = AttrShape::TextType::Dicexp;
-											shape.defVal = s;
-										}
-										else if (lower == "javascript") {
-											shape.textType = AttrShape::TextType::JavaScript;
-											shape.defVal = s;
-										}
-										else shape.defVal = AttrVar::parse(s);
-									}
-								}
+								tp.AttrShapes[Text2GBK(name)] = { kid,isUTF8 };
 							}
 						}
 					}
 					else if (tag == "diceexp") {
 						if (auto text{ elem->GetText() })readini(Text2GBK(text), tp.mExpression);
 					}
-					else if (tag == "build") {
+					else if (tag == "presets") {
 						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
-							if (auto opt{ kid->Attribute("name") })tp.mBuildOption[Text2GBK(opt)] = CardBuild(kid);
+							if (auto opt{ kid->Attribute("name") })tp.presets[Text2GBK(opt)] = CardPreset(kid, isUTF8);
 						}
 					}
 				}
@@ -156,6 +163,9 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 CardTemp& CardTemp::merge(const CardTemp& other) {
 	if (type.empty())type = other.type;
 	map_merge(AttrShapes, other.AttrShapes);
+	for (auto& [opt, preset] : other.presets) {
+		map_merge(presets[opt].shapes, preset.shapes);
+	}
 	return *this;
 }
 string CardTemp::show() {
@@ -178,9 +188,13 @@ string CardTemp::show() {
 }
 
 ptr<CardTemp> CharaCard::getTemplet()const{
-	if (string type{ get_str("__Type") };
-		!type.empty() && CardModels.count(type))return CardModels[type]; 
-	return CardModels["BRP"];
+	thread_local ptr<CardTemp> temp;
+	if (!temp) {
+		if (string type{ get_str("__Type") };
+			!type.empty() && CardModels.count(type))return temp = CardModels[type];
+		return temp = CardModels["BRP"];
+	}
+	return temp;
 }
 
 void CharaCard::update() {
@@ -233,25 +247,17 @@ bool CharaCard::has(const string& key)const {
 	return (dict->count(key) && !dict->at(key).is_null())
 		|| getTemplet()->canGet(key);
 }
-bool CharaCard::available(const string& strKey) const {
-	if (has(strKey))return true;
-	if (string key{ standard(strKey) }; has(key) || has("&" + key))return true;
-	else {
-		return getTemplet()->canGet(key);
-	}
-}
 
 //求key对应掷骰表达式
 string CharaCard::getExp(string& key, std::unordered_set<string> sRef){
-	sRef.insert(key);
-	key = standard(key);
+	sRef.insert(key = standard(key));
 	auto temp{ getTemplet() };
 	auto val = dict->find("&" + key);
 	if (val != dict->end())return escape(val->second.to_str(), sRef);
 	if (auto exp = temp->mExpression.find(key); exp != temp->mExpression.end()) return escape(exp->second, sRef);
-	val = dict->find(key);
-	if (val != dict->end())return escape(val->second.to_str(), sRef);
-	if (auto exp = temp->AttrShapes.find(key); exp != temp->AttrShapes.end())return to_string(exp->second.init(this));
+	if ((val = dict->find(key)) != dict->end())return escape(val->second.to_str(), sRef);
+	if (auto exp = temp->AttrShapes.find("&" + key); exp != temp->AttrShapes.end())return escape(exp->second.init(this).to_str(), sRef);
+	else if (auto exp = temp->AttrShapes.find(key); exp != temp->AttrShapes.end())return escape(exp->second.init(this).to_str(), sRef);
 	return "0";
 }
 bool CharaCard::countExp(const string& key)const {
@@ -282,15 +288,15 @@ std::optional<int> CharaCard::cal(string exp)const {
 void CharaCard::buildv(string para)
 {
 	std::stack<string> vOption;
-	int Cnt;
-	vOption.push("_default");
+	int Cnt = 0;
 	while ((Cnt = para.rfind(':')) != string::npos)
 	{
 		vOption.push(para.substr(Cnt + 1));
 		para.erase(para.begin() + Cnt, para.end());
 	}
 	if (!para.empty())vOption.push(para);
-	while (!vOption.empty())
+	if (vOption.empty())build("pc");
+	else while (!vOption.empty())
 	{
 		const string para2 = vOption.top();
 		vOption.pop();
@@ -545,39 +551,19 @@ int Player::newCard(string& s, long long group, string type)
 	if (s.find("=") != string::npos)return -6;
 	mCardList.emplace(++indexMax, std::make_shared<CharaCard>(s, type));
 	PC card{ mCardList[indexMax] };
-	// CardTemp& temp = CardModels[type];
+	auto temp{ card->getTemplet()};
 	while (!vOption.empty())
 	{
 		string para = vOption.top();
 		vOption.pop();
 		card->build(para);
-		if (card->getName().empty())
-		{
-			std::vector<string> list = CardModels[type]->mBuildOption[para].vNameList;
-			while (!list.empty())
-			{
-				s = CardDeck::draw(list[0]);
-				if (mNameIndex.count(s))list.erase(list.begin());
-				else
-				{
-					card->setName(s);
-					break;
-				}
-			}
+		if (card->getName().empty() && temp->presets.count(para) && temp->presets[para].shapes.count("__Name")) {
+			if (!mNameIndex.count(s = temp->presets[para].shapes["__Name"].init(card.get())))card->setName(s);
 		}
 	}
-	if (card->getName().empty())
-	{
-		std::vector<string> list = CardModels[type]->mBuildOption["_default"].vNameList;
-		while (!list.empty())
-		{
-			s = CardDeck::draw(list[0]);
-			if (mNameIndex.count(s))list.erase(list.begin());
-			else
-			{
-				card->setName(s);
-				break;
-			}
+	if (card->getName().empty()){
+		if (temp->presets.count("pc") && temp->presets["pc"].shapes.count("__Name")) {
+			if (!mNameIndex.count(s = temp->presets["pc"].shapes["__Name"].init(card.get())))card->setName(s);
 		}
 		if (card->getName().empty())card->setName(to_string(indexMax + 1));
 	}
@@ -602,11 +588,12 @@ int Player::buildCard(string& name, bool isClear, long long group)
 		name = getCard(strName, group)->getName();
 		(*this)[name]->buildv();
 	}
-	else
-	{
-		name = getCard(strName, group)->getName();
-		if (isClear)(*this)[name]->clear();
-		(*this)[name]->buildv(strType);
+	else{
+		auto pc{ getCard(strName, group) };
+		name = pc->getName();
+		if (isClear)pc->clear();
+		pc->buildv(strType);
+		if (const auto idx = mNameIndex[name]; idx != mGroupIndex[group])mGroupIndex[group] = idx;
 	}
 	return 0;
 }

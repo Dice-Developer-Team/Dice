@@ -46,6 +46,7 @@ public:
 	enum class DataType : unsigned char { Any, Nature, Int, };
 	enum class TextType : unsigned char { Plain, Dicexp, JavaScript, };
 	AttrShape() = default;
+	AttrShape(const tinyxml2::XMLElement* node, bool isUTF8);
 	AttrShape(int i) :defVal(i) {}
 	AttrShape(const string& s):defVal(s){}
 	AttrShape(const string& s, TextType tt) :defVal(s), textType(tt){}
@@ -57,24 +58,18 @@ public:
 	int check(AttrVar& val);
 	bool equalDefault(const AttrVar& val)const { return TextType::Plain == textType && val == defVal; }
 };
+using Shapes = dict_ci<AttrShape>;
 
-//生成模板
-class CardBuild
-{
+class CardPreset {
 public:
-	CardBuild() = default;
-
-	CardBuild(const vector<std::pair<string, string>>& attr, const vector<string>& name):
-		vBuildList(attr), vNameList(name)
-	{
+	fifo_dict_ci<AttrShape> shapes;
+	CardPreset() = default;
+	CardPreset(const std::vector<std::pair<std::string, std::string>>& v) {
+		for (auto& [key, val] : v) {
+			shapes[key] = { val, AttrShape::TextType::Dicexp };
+		}
 	}
-
-	//属性生成
-	vector<std::pair<string, string>> vBuildList = {};
-	//随机姓名
-	vector<string> vNameList = {};
-
-	CardBuild(const tinyxml2::XMLElement* d);
+	CardPreset(const tinyxml2::XMLElement* d, bool isUTF8);
 };
 
 class CardTemp
@@ -89,16 +84,16 @@ public:
 	//表达式
 	fifo_dict_ci<> mExpression = {};
 	//生成参数
-	fifo_dict_ci<CardBuild> mBuildOption = {};
+	dict_ci<CardPreset> presets = {};
 	CardTemp() = default;
 
 	CardTemp(const string& type, const fifo_dict_ci<>& replace, vector<vector<string>> basic,
 		const fifo_dict_ci<>& dynamic, const fifo_dict_ci<>& exp,
-		const fifo_dict_ci<int>& def_skill, const fifo_dict_ci<CardBuild>& option = {}) : type(type),
+		const fifo_dict_ci<int>& def_skill, const dict_ci<CardPreset>& option = {}) : type(type),
 			                                                            replaceName(replace), 
 		                                                                vBasicList(basic), 
 		                                                                mExpression(exp), 
-		                                                                mBuildOption(option)
+		presets(option)
 	{
 		for (auto& [attr, exp] : dynamic) {
 			AttrShapes[attr] = AttrShape(exp, AttrShape::TextType::Dicexp);
@@ -115,14 +110,11 @@ public:
 	bool canGet(const string& attr)const {
 		return AttrShapes.count(attr) && !AttrShapes.at(attr).defVal.is_null();
 	}
-	string getName()
-	{
-		return type;
-	}
+	string getName() { return type; }
 
 	string showItem()
 	{
-		const string strItem = listKey(mBuildOption);
+		const string strItem = listKey(presets);
 		if (strItem.empty())return type;
 		return type + "[" + strItem + "]";
 	}
@@ -189,7 +181,7 @@ public:
 			return getExp(key);
 		}
 		size_t intCnt = 0, lp, rp;
-		while ((lp = exp.find('[', intCnt)) != std::string::npos && (rp = exp.find(']', lp)) != std::string::npos)
+		while ((lp = exp.find('{', intCnt)) != std::string::npos && (rp = exp.find('}', lp)) != std::string::npos)
 		{
 			string strProp = exp.substr(lp + 1, rp - lp - 1);
 			if (sRef.count(strProp))return "";
@@ -208,23 +200,13 @@ public:
 	//计算表达式
 	std::optional<int> cal(string exp)const;
 
-	void build(const string& para = "")
+	void build(const string& para)
 	{
-		const auto it = getTemplet()->mBuildOption.find(para);
-		if (it == getTemplet()->mBuildOption.end())return;
-		CardBuild build = it->second;
-		for (auto& it2 : build.vBuildList) {
-			//exp
-			if (it2.first[0] == '&')
-			{
-				if (has(it2.first))continue;
-				set(it2.first, it2.second);
-			}
-			//attr
-			else
-			{
-				if (has(it2.first))continue;
-				AttrObject::set(it2.first, cal(it2.second));
+		if (const auto it = getTemplet()->presets.find(para);
+			it != getTemplet()->presets.end()) {
+			auto& preset = it->second;
+			for (auto& [attr, shape] : preset.shapes) {
+				if (!dict->count(attr) || dict->at(attr).is_null())set(attr, shape.init(this));
 			}
 		}
 	}
@@ -252,7 +234,7 @@ public:
 
 	bool has(const string& key)const;
 	//can get attr by card or temp
-	bool available(const string& key) const;
+	//bool available(const string& key) const;
 
 	bool stored(string& key) const{
 		key = standard(key);

@@ -277,7 +277,7 @@ static PyObject* PyActor_rollDice(PyObject* self, PyObject* args) {
 	PY2PC(self);
 	PyObject* arg = PyTuple_GetItem(args, 0);
 	string exp{ (arg && Py_IS_TYPE(arg, &PyUnicode_Type)) ? py_to_gbstring(arg)
-		: pc->available("__DefaultDiceExp") ? pc->get("__DefaultDiceExp").to_str()
+		: pc->has("__DefaultDiceExp") ? pc->get("__DefaultDiceExp").to_str()
 		: "D" };
 	int diceFace{ pc->get("__DefaultDice").to_int() };
 	RD rd{ py_args_to_gbstring(args), diceFace ? diceFace : 100 };

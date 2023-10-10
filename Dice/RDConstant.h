@@ -122,17 +122,6 @@ inline std::vector<std::vector<std::string>> BasicCOC7 = {
 	{"身体状态", "精神状态"},
 	{"DB", "闪避", "护甲"}
 };
-inline std::vector<std::pair<std::string, std::string>> BuildCOC7 = {
-	{"力量", "3D6*5"},
-	{"体质", "3D6*5"},
-	{"体型", "2D6*5+30"},
-	{"敏捷", "3D6*5"},
-	{"外貌", "3D6*5"},
-	{"智力", "2D6*5+30"},
-	{"意志", "3D6*5"},
-	{"教育", "2D6*5+30"},
-	{"幸运", "3D6*5"},
-};
 inline fifo_dict_ci<std::string> mVariableCOC7 = {
 	{"灵感", "&智力"},
 	{"知识", "&教育"},

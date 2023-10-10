@@ -113,6 +113,36 @@ void DiceEvent::replyHelp(const std::string& key) {
 	if (console["ReferMsgReply"] && get_ll("msgid"))strReply = "[CQ:reply,id=" + get_str("msgid") + "]" + strReply;
 	AddMsgToQueue(strReply, fromChat);
 }
+void DiceEvent::replyRollDiceErr(int err, const RD& rd) {
+	switch (err) {
+	case 0: break;
+	case Value_Err:
+		replyMsg("strValueErr");
+		break;
+	case Input_Err:
+		set("dice_exp", rd.strDice);
+		replyMsg("strInputErr");
+		break;
+	case ZeroDice_Err:
+		replyMsg("strZeroDiceErr");
+		break;
+	case ZeroType_Err:
+		replyMsg("strZeroTypeErr");
+		break;
+	case DiceTooBig_Err:
+		replyMsg("strDiceTooBigErr");
+		break;
+	case TypeTooBig_Err:
+		replyMsg("strTypeTooBigErr");
+		break;
+	case AddDiceVal_Err:
+		replyMsg("strAddDiceValErr");
+		break;
+	default:
+		replyMsg("strUnknownErr");
+		break;
+	}
+}
 
 void DiceEvent::replyHidden(const std::string& msgReply) {
 	strReply = msgReply;
@@ -3482,12 +3512,12 @@ int DiceEvent::InnerOrder() {
 			auto pc{ pl[fromChat.gid] };
 			bool isEmpty{ true };
 			ResList res;
-			int intFace{ pc->available("__DefaultDice")
+			int intFace{ pc->has("__DefaultDice")
 				? pc->get("__DefaultDice").to_int()
 				: getUser(fromChat.uid).getConf("默认骰",100) };
 			string strFace{ to_string(intFace) };
 			string keyStatCnt{ "__StatD" + strFace + "Cnt" };	//掷骰次数
-			if (intFace <= 100 && pc->available(keyStatCnt)) {
+			if (intFace <= 100 && pc->has(keyStatCnt)) {
 				int cntRoll{ pc->get_int(keyStatCnt) };
 				if (cntRoll > 0) {
 					isEmpty = false;
@@ -3507,7 +3537,7 @@ int DiceEvent::InnerOrder() {
 				}
 			}
 			string keyRcCnt{ "__StatRcCnt" };	//rc/sc检定次数
-			if (pc->available(keyRcCnt)) {
+			if (pc->has(keyRcCnt)) {
 				int cntRc{ pc->get_int("__StatRcCnt") };
 				if (cntRc > 0) {
 					isEmpty = false;
@@ -3518,7 +3548,7 @@ int DiceEvent::InnerOrder() {
 					double cnt5{ pc->get_num("__StatRcCnt5") }, cnt96{ pc->get_num("__StatRcCnt96") };
 					res << "5- | 96+ 出现率: " + (cnt5 ? toString(cnt5 / cntRc * 100) + "%(" + pc->get_str("__StatRcCnt5") + ")" : "0%")
 						+ " | " + (cnt96 ? toString(cnt96 / cntRc * 100) + "%(" + pc->get_str("__StatRcCnt96") + ")" : "0%");
-					if(pc->available("__StatRcCnt1")|| pc->available("__StatRcCnt100"))
+					if(pc->has("__StatRcCnt1")|| pc->has("__StatRcCnt100"))
 						res << "1 | 100 出现数: " + pc->get_str("__StatRcCnt1") + " | " + pc->get_str("__StatRcCnt100");
 				}
 			}
@@ -3686,7 +3716,7 @@ int DiceEvent::InnerOrder() {
 		set("reason",readRest());
 		int intSkillVal;
 		if (strSkillVal.empty()) {
-			if (pc && pc->available(attr)) {
+			if (pc && pc->has(attr)) {
 				intSkillVal = pc->get(attr).to_int();
 			}
 			else {
@@ -3821,37 +3851,8 @@ int DiceEvent::InnerOrder() {
 			set("char",idx_pc(*this));
 		}
 		RD initdice(strinit, 20);
-		const int intFirstTimeRes = initdice.Roll();
-		if (intFirstTimeRes == Value_Err) {
-			replyMsg("strValueErr");
-			return 1;
-		}
-		if (intFirstTimeRes == Input_Err) {
-			replyMsg("strInputErr");
-			return 1;
-		}
-		if (intFirstTimeRes == ZeroDice_Err) {
-			replyMsg("strZeroDiceErr");
-			return 1;
-		}
-		if (intFirstTimeRes == ZeroType_Err) {
-			replyMsg("strZeroTypeErr");
-			return 1;
-		}
-		if (intFirstTimeRes == DiceTooBig_Err) {
-			replyMsg("strDiceTooBigErr");
-			return 1;
-		}
-		if (intFirstTimeRes == TypeTooBig_Err) {
-			replyMsg("strTypeTooBigErr");
-			return 1;
-		}
-		if (intFirstTimeRes == AddDiceVal_Err) {
-			replyMsg("strAddDiceValErr");
-			return 1;
-		}
-		if (intFirstTimeRes != 0) {
-			replyMsg("strUnknownErr");
+		if (const auto intFirstTimeRes = initdice.Roll()) {
+			replyRollDiceErr(intFirstTimeRes, initdice);
 			return 1;
 		}
 		sessions.get(fromChat)->table_add("先攻", initdice.intTotal, get_str("char"));
@@ -3877,7 +3878,7 @@ int DiceEvent::InnerOrder() {
 		PC pc;
 		if (readNum(intSan)) {
 			if (PList.count(fromChat.uid)
-				&& (pc = getPlayer(fromChat.uid)[fromChat.gid])->available(attr)) {
+				&& (pc = getPlayer(fromChat.uid)[fromChat.gid])->has(attr)) {
 				intSan = pc->get(attr).to_int();
 			}
 			else {
@@ -4210,9 +4211,9 @@ int DiceEvent::InnerOrder() {
 				}
 				else {
 					strAttr = readAttrName();
-					if (pc->available(strAttr)) {
+					if (pc->countExp(strAttr)) {
 						strMainDice += pc->getExp(strAttr);
-						if (!pc->available("&" + strAttr) && pc->get(strAttr).type == AttrVar::Type::Integer)strMainDice += 'a';
+						if (!pc->has("&" + strAttr) && pc->get(strAttr).type == AttrVar::Type::Integer)strMainDice += 'a';
 					}
 					else {
 						strReason = strAttr;
@@ -4233,38 +4234,8 @@ int DiceEvent::InnerOrder() {
 				strTurnCnt = "1";
 			strMainDice = strMainDice.substr(pos + 1);
 			RD rdTurnCnt(strTurnCnt, intDefaultDice);
-			const int intRdTurnCntRes = rdTurnCnt.Roll();
-			if (intRdTurnCntRes != 0) {
-				if (intRdTurnCntRes == Value_Err) {
-					replyMsg("strValueErr");
-					return 1;
-				}
-				if (intRdTurnCntRes == Input_Err) {
-					replyMsg("strInputErr");
-					return 1;
-				}
-				if (intRdTurnCntRes == ZeroDice_Err) {
-					replyMsg("strZeroDiceErr");
-					return 1;
-				}
-				if (intRdTurnCntRes == ZeroType_Err) {
-					replyMsg("strZeroTypeErr");
-					return 1;
-				}
-				if (intRdTurnCntRes == DiceTooBig_Err) {
-					replyMsg("strDiceTooBigErr");
-					return 1;
-				}
-				if (intRdTurnCntRes == TypeTooBig_Err) {
-					replyMsg("strTypeTooBigErr");
-					return 1;
-				}
-				if (intRdTurnCntRes == AddDiceVal_Err) {
-					replyMsg("strAddDiceValErr");
-					return 1;
-				}
-				replyMsg("strUnknownErr");
-				return 1;
+			if (const int intRdTurnCntRes = rdTurnCnt.Roll(); intRdTurnCntRes != 0) {
+				replyRollDiceErr(intRdTurnCntRes, rdTurnCnt);
 			}
 			if (rdTurnCnt.intTotal > 10) {
 				replyMsg("strRollTimeExceeded");
@@ -4300,39 +4271,8 @@ int DiceEvent::InnerOrder() {
 		if (boolAdda10)
 			strMainDice.insert(strFirstDice.length(), "a10");
 		RD rdMainDice(strMainDice, intDefaultDice);
-
-		const int intFirstTimeRes = rdMainDice.Roll();
-		if (intFirstTimeRes != 0) {
-			if (intFirstTimeRes == Value_Err) {
-				replyMsg("strValueErr");
-				return 1;
-			}
-			if (intFirstTimeRes == Input_Err) {
-				replyMsg("strInputErr");
-				return 1;
-			}
-			if (intFirstTimeRes == ZeroDice_Err) {
-				replyMsg("strZeroDiceErr");
-				return 1;
-			}
-			if (intFirstTimeRes == ZeroType_Err) {
-				replyMsg("strZeroTypeErr");
-				return 1;
-			}
-			if (intFirstTimeRes == DiceTooBig_Err) {
-				replyMsg("strDiceTooBigErr");
-				return 1;
-			}
-			if (intFirstTimeRes == TypeTooBig_Err) {
-				replyMsg("strTypeTooBigErr");
-				return 1;
-			}
-			if (intFirstTimeRes == AddDiceVal_Err) {
-				replyMsg("strAddDiceValErr");
-				return 1;
-			}
-			replyMsg("strUnknownErr");
-			return 1;
+		if (const int intFirstTimeRes = rdMainDice.Roll(); intFirstTimeRes != 0) {
+			replyRollDiceErr(intFirstTimeRes, rdMainDice);
 		}
 		if (!boolDetail && intTurnCnt != 1) {
 			if (strReason.empty())strReply = getMsg("strRollMuiltDice");
@@ -4400,11 +4340,8 @@ int DiceEvent::InnerOrder() {
 		string strMainDice;
 		PC pc{ PList.count(fromChat.uid) ? getPlayer(fromChat.uid)[fromChat.gid] : PC() };
 		string& strReason{ (at("reason") = strMsg.substr(intMsgCnt)).text};
-		if (strReason.empty()) {
-			string key{ "__DefaultDiceExp" };
-			if (pc && pc->countExp(key)) {
-				strMainDice = pc->getExp(key);
-			}
+		if (static string key{ "__DefaultDiceExp" }; strReason.empty() && pc && pc->countExp(key)) {
+			strMainDice = pc->getExp(key);
 		}
 		else if (pc && pc->countExp(strReason)) {
 			strMainDice = pc->getExp(strReason);
@@ -4422,7 +4359,7 @@ int DiceEvent::InnerOrder() {
 			else strMainDice.clear();
 		}
 		int intTurnCnt = 1;
-		const int intDefaultDice = (pc && pc->available("__DefaultDice"))
+		const int intDefaultDice = (pc && pc->has("__DefaultDice"))
 			? pc->get("__DefaultDice").to_int()
 			: getUser(fromChat.uid).getConf("默认骰", 100);
 		if (strMainDice.find('#') != string::npos) {
@@ -4431,33 +4368,8 @@ int DiceEvent::InnerOrder() {
 				turn = "1";
 			strMainDice = strMainDice.substr(strMainDice.find('#') + 1);
 			RD rdTurnCnt(turn, intDefaultDice);
-			const int intRdTurnCntRes = rdTurnCnt.Roll();
-			switch (intRdTurnCntRes) {
-			case 0: break;
-			case Value_Err:
-				replyMsg("strValueErr");
-				return 1;
-			case Input_Err:
-				replyMsg("strInputErr");
-				return 1;
-			case ZeroDice_Err:
-				replyMsg("strZeroDiceErr");
-				return 1;
-			case ZeroType_Err:
-				replyMsg("strZeroTypeErr");
-				return 1;
-			case DiceTooBig_Err:
-				replyMsg("strDiceTooBigErr");
-				return 1;
-			case TypeTooBig_Err:
-				replyMsg("strTypeTooBigErr");
-				return 1;
-			case AddDiceVal_Err:
-				replyMsg("strAddDiceValErr");
-				return 1;
-			default:
-				replyMsg("strUnknownErr");
-				return 1;
+			if (const int intRdTurnCntRes = rdTurnCnt.Roll()) {
+				replyRollDiceErr(intRdTurnCntRes, rdTurnCnt);
 			}
 			if (rdTurnCnt.intTotal > 10) {
 				replyMsg("strRollTimeExceeded");
@@ -4482,32 +4394,8 @@ int DiceEvent::InnerOrder() {
 			strMainDice = pc->getExp(strReason);
 		}
 		RD rdMainDice(strMainDice, intDefaultDice);
-		const int intFirstTimeRes = (thisGame && thisGame->is_part(fromChat.uid)) ? rdMainDice.Roll(thisGame) : rdMainDice.Roll();
-		switch (intFirstTimeRes) {
-		case 0: break;
-		case Value_Err:
-			replyMsg("strValueErr");
-			return 1;
-		case Input_Err:
-			replyMsg("strInputErr");
-			return 1;
-		case ZeroDice_Err:
-			replyMsg("strZeroDiceErr");
-			return 1;
-		case ZeroType_Err:
-			replyMsg("strZeroTypeErr");
-			return 1;
-		case DiceTooBig_Err:
-			replyMsg("strDiceTooBigErr");
-			return 1;
-		case TypeTooBig_Err:
-			replyMsg("strTypeTooBigErr");
-			return 1;
-		case AddDiceVal_Err:
-			replyMsg("strAddDiceValErr");
-			return 1;
-		default:
-			replyMsg("strUnknownErr");
+		if (const int intFirstTimeRes = (thisGame && thisGame->is_part(fromChat.uid)) ? rdMainDice.Roll(thisGame) : rdMainDice.Roll()) {
+			replyRollDiceErr(intFirstTimeRes, rdMainDice);
 			return 1;
 		}
 		set("dice_exp",rdMainDice.strDice);

@@ -16,6 +16,7 @@
 #include "ManagerSystem.h"
 
 using std::string;
+class RD;
 
 class DiceSession;
 //打包待处理消息
@@ -47,7 +48,7 @@ public:
 	void reply(bool isFormat = true);
 	void replyMsg(const std::string& key);
 	void replyHelp(const std::string& key);
-
+	void replyRollDiceErr(int, const RD&);
 	void replyHidden();
 
 	//通知
