@@ -81,22 +81,22 @@ public:
 	vector<vector<string>> vBasicList = {};
 	//元表
 	fifo_dict_ci<AttrShape> AttrShapes;
-	//表达式
-	fifo_dict_ci<> mExpression = {};
 	//生成参数
 	dict_ci<CardPreset> presets = {};
 	CardTemp() = default;
 
 	CardTemp(const string& type, const fifo_dict_ci<>& replace, vector<vector<string>> basic,
-		const fifo_dict_ci<>& dynamic, const fifo_dict_ci<>& exp,
+		const fifo_dict_ci<>& dynamic, const fifo_dict_ci<>& exps,
 		const fifo_dict_ci<int>& def_skill, const dict_ci<CardPreset>& option = {}) : type(type),
 			                                                            replaceName(replace), 
 		                                                                vBasicList(basic), 
-		                                                                mExpression(exp), 
 		presets(option)
 	{
 		for (auto& [attr, exp] : dynamic) {
 			AttrShapes[attr] = AttrShape(exp, AttrShape::TextType::Dicexp);
+		}
+		for (auto& [attr, exp] : exps) {
+			AttrShapes["&" + attr] = AttrShape(exp, AttrShape::TextType::Plain);
 		}
 		for (auto& [attr, val] : def_skill) {
 			AttrShapes[attr] = val;

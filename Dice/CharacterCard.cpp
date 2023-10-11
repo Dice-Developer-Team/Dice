@@ -140,9 +140,6 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 							}
 						}
 					}
-					else if (tag == "diceexp") {
-						if (auto text{ elem->GetText() })readini(Text2GBK(text), tp.mExpression);
-					}
 					else if (tag == "presets") {
 						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
 							if (auto opt{ kid->Attribute("name") })tp.presets[Text2GBK(opt)] = CardPreset(kid, isUTF8);
@@ -176,13 +173,6 @@ string CardTemp::show() {
 			resVar << key;
 		}
 		res << "预设属性:" + resVar.show("/");
-	}
-	if (!mExpression.empty()) {
-		ResList resExp;
-		for (const auto& [key, val] : mExpression) {
-			resExp << key;
-		}
-		res << "掷骰公式:" + resExp.show();
 	}
 	return "pc模板:" + type + res.show();
 }
@@ -254,16 +244,14 @@ string CharaCard::getExp(string& key, std::unordered_set<string> sRef){
 	auto temp{ getTemplet() };
 	auto val = dict->find("&" + key);
 	if (val != dict->end())return escape(val->second.to_str(), sRef);
-	if (auto exp = temp->mExpression.find(key); exp != temp->mExpression.end()) return escape(exp->second, sRef);
-	if ((val = dict->find(key)) != dict->end())return escape(val->second.to_str(), sRef);
-	if (auto exp = temp->AttrShapes.find("&" + key); exp != temp->AttrShapes.end())return escape(exp->second.init(this).to_str(), sRef);
+	else if ((val = dict->find(key)) != dict->end())return escape(val->second.to_str(), sRef);
+	else if (auto exp = temp->AttrShapes.find("&" + key); exp != temp->AttrShapes.end())return escape(exp->second.init(this).to_str(), sRef);
 	else if (auto exp = temp->AttrShapes.find(key); exp != temp->AttrShapes.end())return escape(exp->second.init(this).to_str(), sRef);
 	return "0";
 }
 bool CharaCard::countExp(const string& key)const {
-	return (key[0] == '&' && has(key))
-		|| (has("&" + key))
-		|| getTemplet()->mExpression.count(key);
+	return key[0] == '&' ? (has(key) || getTemplet()->canGet(key))
+		: (has("&" + key) || getTemplet()->canGet("&" + key));
 }
 std::optional<int> CharaCard::cal(string exp)const {
 	if (exp[0] == '&'){
