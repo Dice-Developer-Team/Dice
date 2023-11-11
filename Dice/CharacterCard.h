@@ -76,7 +76,7 @@ class CardTemp
 {
 public:
 	string type;
-	fifo_dict_ci<> replaceName = {};
+	dict_ci<> replaceName = {};
 	//作成时生成
 	vector<vector<string>> vBasicList = {};
 	//元表
@@ -85,9 +85,9 @@ public:
 	dict_ci<CardPreset> presets = {};
 	CardTemp() = default;
 
-	CardTemp(const string& type, const fifo_dict_ci<>& replace, vector<vector<string>> basic,
-		const fifo_dict_ci<>& dynamic, const fifo_dict_ci<>& exps,
-		const fifo_dict_ci<int>& def_skill, const dict_ci<CardPreset>& option = {}) : type(type),
+	CardTemp(const string& type, const dict_ci<>& replace, vector<vector<string>> basic,
+		const dict_ci<>& dynamic, const dict_ci<>& exps,
+		const dict_ci<int>& def_skill, const dict_ci<CardPreset>& option = {}) : type(type),
 			                                                            replaceName(replace), 
 		                                                                vBasicList(basic), 
 		presets(option)

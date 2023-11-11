@@ -198,8 +198,8 @@ std::pair<T1, T2> readini(const string& line, char delim = '='){
 
 void readini(ifstream& fin, std::string& s);
 
-template <typename T1, typename T2, class Sorter>
-void readini(string s, fifo_map<T1, T2, Sorter>& m)
+template <typename T1, typename T2, class Hasher, class Equal>
+void readini(string s, unordered_map<T1, T2, Hasher, Equal>& m)
 {
 	std::pair<T1, T2> p;
 	string line;

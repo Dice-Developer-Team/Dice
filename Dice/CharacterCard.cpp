@@ -77,7 +77,7 @@ unordered_map<int, string> PlayerErrors{
 	{-23,"strPCLockedWrite"},
 	{-24,"strPCLockedRead"},
 };
-CardTemp ModelBRP{ "BRP", fifo_dict_ci<>{}, std::vector<std::vector<std::string>>{}, fifo_dict_ci<>{}, fifo_dict_ci<>{}, fifo_dict_ci<int>{
+CardTemp ModelBRP{ "BRP", dict_ci<>{}, std::vector<std::vector<std::string>>{}, dict_ci<>{}, dict_ci<>{}, dict_ci<int>{
 				{"__DefaultDice",100}
 			}};
 std::vector<std::pair<std::string, std::string>> BuildCOC7 = {

@@ -52,7 +52,7 @@
 
 typedef int int_errno;
 
-inline fifo_dict_ci<std::string> SkillNameReplace = {
+inline dict_ci<std::string> SkillNameReplace = {
 	{"str", "力量"},
 	{"dex", "敏捷"},
 	{"pow", "意志"},
@@ -95,6 +95,9 @@ inline fifo_dict_ci<std::string> SkillNameReplace = {
 	{"步/散", "步枪/霰弹枪"},
 	{"图书馆", "图书馆使用"},
 	{"机修", "机械维修"},
+	{"重型操作", "操作重型机械"},
+	{"重型机械", "操作重型机械"},
+	{"重型", "操作重型机械"},
 	{"电器维修", "电气维修"},
 	{"cm", "克苏鲁神话"},
 	{"克苏鲁", "克苏鲁神话"},
@@ -113,7 +116,7 @@ inline fifo_dict_ci<std::string> SkillNameReplace = {
 	{"飞行器", "飞行器驾驶"},
 	{"驾驶飞行器", "飞行器驾驶"},
 	{"驾驶：飞行器", "飞行器驾驶"},
-	{"驾驶(飞行器)", "飞行器驾驶"}
+	{"驾驶(飞行器)", "飞行器驾驶"},
 };
 inline std::vector<std::vector<std::string>> BasicCOC7 = {
 	{"职业", "年龄", "性别", "住地", "出身", "时代"},
@@ -122,7 +125,7 @@ inline std::vector<std::vector<std::string>> BasicCOC7 = {
 	{"身体状态", "精神状态"},
 	{"DB", "闪避", "护甲"}
 };
-inline fifo_dict_ci<std::string> mVariableCOC7 = {
+inline dict_ci<std::string> mVariableCOC7 = {
 	{"灵感", "&智力"},
 	{"知识", "&教育"},
 	{"取悦", "&魅惑"},
@@ -132,7 +135,7 @@ inline fifo_dict_ci<std::string> mVariableCOC7 = {
 	{"母语", "&教育"},
 	{"闪避", "{敏捷}/2"}
 };
-static fifo_dict_ci<std::string> ExpressionCOC7 = {
+inline dict_ci<std::string> ExpressionCOC7 = {
 	{"__DefaultDiceExp", "1D"},
 	{"医学回复", "1D3"},
 	{"精神分析回复", "1D3"},
@@ -254,7 +257,7 @@ static fifo_dict_ci<std::string> ExpressionCOC7 = {
 	{"火焰喷射器", "2D6"},
 	{"轻型反坦克炮", "8D10"}
 };
-static fifo_dict_ci<int> SkillDefaultVal = {
+inline dict_ci<int> SkillDefaultVal = {
 	{"__DefaultDice", 100},
 	{"会计", 5},
 	{"人类学", 1},
@@ -264,6 +267,7 @@ static fifo_dict_ci<int> SkillDefaultVal = {
 	{"摄影", 5},
 	{"表演", 5},
 	{"伪造", 5},
+	{"伪造文书", 5},
 	{"文学", 5},
 	{"书法", 5},
 	{"乐理", 5},
