@@ -24,19 +24,12 @@ std::filesystem::path DiceDir("DiceData");
 
 const map<string, short> mChatConf{
 	//0-群管理员，2-信任2级，3-信任3级，4-管理员，5-系统操作
-	{"忽略", 4},
-	{"拦截消息", 0},
 	{"停用指令", 0},
 	{"禁用回复", 0},
 	{"禁用jrrp", 0},
 	{"禁用draw", 0},
 	{"禁用help", 0},
 	{"禁用ob", 0},
-	{"许可使用", 1},
-	{"未审核", 1},
-	{"免清", 2},
-	{"免黑", 4},
-	{"协议无效", 3},
 };
 
 User& getUser(long long uid){

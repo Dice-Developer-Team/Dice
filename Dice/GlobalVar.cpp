@@ -124,8 +124,8 @@ const dict_ci<string> PlainMsg
 	{"strUserTrustDenied","{nick}在{self}处无权访问对方的权限×"},
 	{"strUserTrustIllegal","将目标权限修改为{trust}是非法的×"},
 	{"strUserNotFound","{self}无{user}的用户记录"},
-	{"strGroupAuthorized","A roll to the table turns to a dice fumble!\nDice Roller {strSelfName}√\n本群已授权许可，请尽情使用本骰娘√\n请遵守协议使用，服务结束后使用.dismiss送出!" },
-	{"strGroupLicenseDeny","本群未获{self}许可使用，自动在群内静默。\n请先/help协议 阅读并同意协议后向运营方申请许可使用，\n否则请管理员使用!dismiss送出{self}\n可按以下格式填写并发送申请:\n!authorize 申请用途:[ **请写入理由** ] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[ **请写入指令** ]，用后使用[ **请写入指令** ]送出群" },
+	{"strGroupAuthorized","A roll to the table turns to a dice fumble!\nDice Roller {strSelfName}√\n本群已授权许可，请尽情使用本骰娘√" },
+	{"strGroupLicenseDeny","本群未获{self}许可使用，自动在群内静默。\n请先/help协议 阅读并同意协议后向运营方申请许可使用，\n可按以下格式填写并发送申请:\n!authorize 申请用途:[ **请写入理由** ] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议" },
 	{"strGroupLicenseApply","此群未通过自助授权×\n许可申请已发送√" },
 	{"strGroupSetOn","现已开启{self}在此群的“{option}”选项√"},			//群内开关和遥控开关通用此文本
 	{"strGroupSetOnAlready","{self}已在此群设置了{option}！"},			
@@ -259,8 +259,6 @@ const dict_ci<string> PlainMsg
 	{"strLinkNotFound","{self}找不到{nick}的对象×"},
 	{"strNotMaster","你不是{self}的master！你想做什么？"},
 	{"strNotAdmin","你不是{self}的管理员×"},
-	{"strAdminDismiss","{strDismiss}"},					//管理员指令退群的回执
-	{"strDismiss",""},						//.dismiss退群前的回执
 	{"strHlpSet","已为{key}设置词条√"},
 	{"strHlpReset","已清除{key}的词条√"},
 	{"strHlpNameEmpty","Master想要自定义什么词条呀？"},
@@ -391,29 +389,13 @@ const dict_ci<string> PlainMsg
 	{
 		"strAddGroup",
 		R"(欢迎选择{strSelfName}的免费掷骰服务！
-请使用.dismiss QQ号（或后四位） 使{self}退群退讨论组
-.bot on/off QQ号（或后四位） //开启或关闭指令
-.reply on/off 启用/禁用回复 //禁用或启用回复
 /help协议 确认服务协议
 /help指令 查看指令列表
 /help设定 确认骰娘设定
 /help链接 查看源码文档
 邀请入群默认视为同意服务协议，知晓禁言或移出的后果)"
 	}, 
-	{ "strNewMaster","试问，你就是{strSelfName}的Master√\n请认真阅读当前版本Master手册以及用户手册。请注意版本号对应: https://v2docs.kokona.tech\f{strSelfName}默认开启对群移出、禁言、刷屏事件的监听，如要关闭请手动调整；\n请注意云黑系统默认开启，如无需此功能请关闭CloudBlackShare；" },
-	{ "strNewMasterPublic",R"({strSelfName}以公骰模式认主：
-自动开启BelieveDiceList响应来自骰娘列表的warning；
-已开启自动通过非黑名单好友申请；
-已开启黑名单自动清理，拉黑时及每日定时会自动清理与黑名单用户的共同群聊，黑名单用户群权限不低于自己时自动退群；
-已开启拉黑群时连带邀请人；
-已启用send功能接收用户发送的消息；)" },
-	{ "strNewMasterPrivate",R"({strSelfName}以私骰模式认主：
-默认拒绝陌生人的群邀请，只同意来自管理员、受信任用户的邀请；
-默认拒绝陌生人的好友邀请，如要同意请开启AllowStranger；
-已开启黑名单自动清理，拉黑时及每日定时会自动清理与黑名单用户的共同群聊，黑名单用户群权限高于自己时自动退群；
-.me功能默认不可用，需要手动开启；
-切换公用请使用.admin public，但不会初始化相应设置；
-可在.master delete后使用.master public来重新初始化；)" },
+	{ "strNewMaster","试问，你就是{strSelfName}的Master√\n请认真阅读当前版本Master手册以及用户手册。请注意版本号对应: https://v2docs.kokona.tech\f{strSelfName}" },
 	{"strSelfCall", "&strSelfName"},
 	{"strSelfName", "" },
 	{"strSelfNick", "&strSelfName" },
@@ -441,7 +423,6 @@ const dict_ci<string> GlobalComment{
 	{"strAddFriend", "通过申请后发送给好友的迎新词"},
 	{"strAddFriendWhiteQQ", "通过受信任用户好友后的迎新词"},
 	{"strAddGroup", "自身入群时群内发送的入场词"},
-	{"strAdminDismiss", "dismiss指令由管理使用时的退场词，默认一致"},
 	{"strAdminOptionEmpty", "admin指令参数为空"},
 	{"stranger", "昵称空白或无法获取时的代称"},
 	{"strBlackGroup", "识别到黑名单群的退场词"},
@@ -463,8 +444,6 @@ const dict_ci<string> GlobalComment{
 	{"strDeckNew", "deck指令定义牌堆实例"},
 	{"strDeckSet", "deck指令设置公共牌堆为实例"},
 	//
-	{"strDismiss", "dismiss指令退场词"},
-	{"strDismissPrivate", "dismiss指令私聊且对象不明的回执"},
 	{"strDNDBuild", "dnd指令回执"},
 	{"strDrawCard", "draw指令回执"},
 	{"strDrawHidden", "draw暗抽时的公屏回执"},
@@ -551,7 +530,17 @@ const dict_ci<> HelpDoc = {
 569:.rc/.draw暗骰暗抽
 567:敏感词检测
 565:.log日志记录)"},
-{"协议","0.本协议是Dice!默认服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已得到群内事先同意并认可协议，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
+{"协议",R"(0.本协议是Dice!默认服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。
+1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议。
+2.不允许刷屏掷骰等对骰娘的不友善行为。
+3.骰娘默认邀请行为已得到群内事先同意并认可协议，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。
+4.禁止将骰娘用于赌博及其他违法犯罪行为。
+5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务
+6.由于技术及资金等原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。
+7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。
+8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。
+9.骰娘提供掷骰服务是完全免费的，欢迎自愿投食。
+10.本服务最终解释权归服务提供方所有。)"},
 {"链接","Dice!论坛: https://kokona.tech\nDice!手册: https://v2docs.kokona.tech\n支持Shiki: https://afdian.net/@dice_shiki"},
 {"设定",R"(Master：{print:master}
 群内使用：{case:self.Private?else=白名单制，需预申请&0={case:self.CheckGroupLicense?2=审核制，需申请后使用&1=审核制，入新群需申请&else=黑名单制，自由使用}}
@@ -572,7 +561,6 @@ const dict_ci<> HelpDoc = {
 {at:self}.bot on
 请/help对应指令 获取详细信息，如/help r
 控制指令:
-.dismiss 退群
 .bot 版本信息
 .bot on/off 启用/停用指令
 .reply on/off 启用/禁用回复
@@ -608,7 +596,6 @@ R"([第三页]其他指令
 .ak 安科/安价
 .jrrp 今日人品
 .welcome 入群欢迎
-.me 第三人称动作
 为了避免未预料到的指令误判，请尽可能在参数之间使用空格)"
 "\f"
 R"({help:扩展指令})"},
@@ -651,9 +638,6 @@ mod按序读取，且从后向前覆盖)"},
 *每个群至多保存10个实例*
 *.draw时，牌堆实例优先级高于同名公共对象*
 *除show外其他群内操作需要GM权限*)"},
-{"退群","&dismiss"},
-{"退群指令","&dismiss"},
-{"dismiss","该指令需要群管理员权限，使用后即退出群聊\n!dismiss [目标QQ(完整或末四位)]指名退群\n!dismiss无视内置黑名单和静默状态，只要插件开启总是有效"},
 {"授权许可","&authoize"},
 {"authorize","授权许可(非信任用户使用时转为向管理申请许可)\n!authorize (+[群号]) ([申请理由])\n群内原地发送可省略群号，无法自动授权时会连同理由发给管理\n默认格式为:!authorize 申请用途:[ **请写入理由** ] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[ **请写入指令** ]，用后使用[ **请写入指令** ]送出群"},
 {"开关","&bot"},
@@ -845,12 +829,6 @@ Type=[回复性质](Reply/Order)
 固定10面骰，每有一个骰子点数达到加骰参数，则加骰一次，最后计算点数达到8的骰子数
 其中5≤加骰参数≤10
 具体用法请参考相关游戏规则)"},
-	{"第三人称", "&me"},
-	{"第三人称动作", "&me"},
-	{
-		"me",
-		"第三人称动作：.me([群号])[动作].me 笑出了声\t//仅限群聊使用\n.me 941980833 抱群主\t//仅限私聊使用，此命令可伪装成骰子在群里说话\n.me off\t//群内禁用.me\n.me on\t//群内启用.me"
-	},
 	{"今日人品", "&jrrp"},
 	{
 		"jrrp",
