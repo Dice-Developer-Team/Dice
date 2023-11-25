@@ -58,7 +58,6 @@ namespace api {
 	void sendPrivateMsg(long long uid, const string& msg) {	}
 	void sendGroupMsg(long long gid, const string& msg) {
 		if (!msg.empty()) {
-			printLog("sendGroupMsg:" + msg);
 			linker->send(json{
 				{"action","send_group_msg"},
 				{"params",{

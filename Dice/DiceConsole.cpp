@@ -42,7 +42,7 @@
 using namespace std;
 
 const fifo_dict_ci<int>Console::intDefault{
-{"DisabledGlobal",0},{"DisabledBlock",0},
+{"DisabledGlobal",0},
 {"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
 {"Private",0},{"CheckGroupLicense",0},
 {"DisableStrangerChat",1},{"ListenSpam",1},
@@ -62,7 +62,6 @@ const fifo_dict_ci<int>Console::intDefault{
 };
 const std::unordered_map<std::string,string>Console::confComment{
 	{"DisabledGlobal","全局停用指令，对trust4不起效"},
-	{"DisabledBlock","框架多插件时，关闭状态开启拦截，阻止其他插件处理消息"},
 	{"DisabledJrrp","全局禁用.jrrp，对trust4+不起效"},
 	{"DisabledDeck","全局禁用.deck，对trust4+不起效"},
 	{"DisabledDraw","全局禁用.draw，对trust4+不起效"},

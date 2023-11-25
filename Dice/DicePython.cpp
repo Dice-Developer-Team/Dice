@@ -936,18 +936,6 @@ PYDEFARG(setUserAttr) {
 			return NULL;
 		}
 	}
-	else if (item.find("nn#") == 0) {
-		long long gid{ 0 };
-		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
-			gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
-		}
-		if (!val) {
-			getUser(id).rmNick(gid);
-		}
-		else {
-			getUser(id).setNick(gid, py_to_attr(val));
-		}
-	}
 	else if (!val) {
 		getUser(id).rmConf(item);
 	}

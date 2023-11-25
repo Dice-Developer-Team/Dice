@@ -317,7 +317,6 @@ const dict_ci<string> PlainMsg
 	{"strDisabledDrawGlobal", "{self}恕不提供.draw服务×"},
 	{"strDisabledSendGlobal", "{self}恕不提供.send服务×"},
 	{"strHELPDisabledErr", "管理员已在此群中禁用/help命令!"},
-	{"strNameDelEmpty", "{nick}未设置名称,无法删除!"},
 	{"strValueErr", "掷骰表达式输入错误!"},
 	{"strInputErr", "命令或掷骰表达式输入错误:{dice_exp}"},
 	{"strUnknownErr", "发生了未知错误!"},
@@ -341,8 +340,7 @@ const dict_ci<string> PlainMsg
 	{"strSelfPermissionErr", "{self}权限不够无能为力呢×"},
 	{"strNameTooLongErr", "称呼过长×(最多50字节)"},
 	{"strNameSet", "{self}已将{old_nick}改称为{new_nick}√"},
-	{"strNameDel", "{self}已删除{old_nick}在当前窗口的称呼√" },
-	{"strNameClr", "{self}已清空{old_nick}的所有称呼√" },
+	{"strNameDel", "{self}已删除{old_nick}的称呼√" },
 	{"strUnknownPropErr", "未设定{attr}成功率，请先.st {attr} 技能值 或查看/help rc×"},
 	{"strPropErr", "{pc}的属性录入存在异常，请遵守规范:\n{err}"},
 	{"strSetPropSuccess", "已为{pc}录入{cnt}条属性√"},
@@ -545,21 +543,18 @@ const dict_ci<> HelpDoc = {
 {"指令",R"(指令前接at可以指定骰娘响应，如
 {at:self}.bot on
 请/help对应指令 获取详细信息，如/help r
-控制指令:
+互动指令:
+.nn 设置称呼
 .bot 版本信息
-.bot on/off 启用/停用指令
-.reply on/off 启用/禁用回复
 .group 群管
-.authorize 授权许可
 .send 向后台发送消息
 .mod 模块操作)"
 "\f"
 R"([第二页]跑团指令
 .game 游戏领域
-.rules 规则速查
 .r 掷骰
+.rules 规则速查
 .log 日志记录
-.ob 旁观模式
 .set 设置默认骰
 .coc COC人物作成
 .dnd DND人物作成
@@ -574,7 +569,6 @@ R"([第二页]跑团指令
 .ww 骰池)"
 "\f"
 R"([第三页]其他指令
-.nn 设置称呼
 .draw 抽牌
 .deck 牌堆实例
 .name 随机姓名

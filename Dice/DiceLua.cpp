@@ -823,18 +823,6 @@ LUADEF(setUserConf) {
 		if (user.nTrust > 4)return 0;
 		user.trust(trust);
 	}
-	else if (item.find("nn#") == 0) {
-		long long gid{ 0 };
-		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
-			gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
-		}
-		if (lua_isnoneornil(L, 3)) {
-			getUser(uid).rmNick(gid);
-		}
-		else {
-			getUser(uid).setNick(gid, lua_to_u8string(L, 3));
-		}
-	}
 	else if (lua_isnoneornil(L, 3)) {
 		if(UserList.count(uid))getUser(uid).rmConf(item);
 	}

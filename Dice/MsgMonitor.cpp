@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2019 String.Empty
- * ÏûÏ¢ÆµÂÊ¼àÌı
+ * Copyright (C) 2019-2023 String.Empty
+ * æ¶ˆæ¯é¢‘ç‡ç›‘å¬
  */
 #include <set>
 #include <queue>
@@ -82,21 +82,21 @@ FrqMonitor::FrqMonitor(DiceEvent& msg) : fromUID(msg.fromChat.uid), fromTime(msg
 		if ((!console["ListenSpam"] || trustedQQ(fromUID) > 1) && fromUID != console.DiceMaid)return;
 		if (mFrequence[fromUID] > 60 && mWarnLevel[fromUID] < 60 && fromUID) {
 			mWarnLevel[fromUID] = mFrequence[fromUID];
-			const std::string strMsg = "ÌáĞÑ£º\n" + (msg.fromChat.gid ? printChat(msg.fromChat) : "Ë½ÁÄ´°¿Ú") +
-				"¼à²âµ½" + printUser(fromUID) + "¸ßÆµ·¢ËÍÖ¸Áî´ï" + to_string(mCntOrder[fromUID])
+			const std::string strMsg = "æé†’ï¼š\n" + (msg.fromChat.gid ? printChat(msg.fromChat) : "ç§èŠçª—å£") +
+				"ç›‘æµ‹åˆ°" + printUser(fromUID) + "é«˜é¢‘å‘é€æŒ‡ä»¤è¾¾" + to_string(mCntOrder[fromUID])
 				+ (mCntOrder[fromUID] > 18 ? "/5min"
 				   : (mCntOrder[fromUID] > 8 ? "/min" : "/30s"))
-				+ "\n×î½üÖ¸Áî: " + msg.get_str("fromMsg");
+				+ "\næœ€è¿‘æŒ‡ä»¤: " + msg.get_str("fromMsg");
 			if (fromUID != console.DiceMaid)AddMsgToQueue(getMsg("strSpamFirstWarning",msg), msg.fromChat);
 			console.log(strMsg, 1, printSTNow());
 		}
 		else if (mFrequence[fromUID] > 120 && mWarnLevel[fromUID] < 120 && fromUID) {
 			mWarnLevel[fromUID] = mFrequence[fromUID];
-			const std::string strMsg = "¾¯¸æ£º\n" + (msg.fromChat.gid ? printChat(msg.fromChat) : "Ë½ÁÄ´°¿Ú") +
-				printUser(fromUID) + "¸ßÆµ·¢ËÍÖ¸Áî´ï" + to_string(mCntOrder[fromUID])
+			const std::string strMsg = "è­¦å‘Šï¼š\n" + (msg.fromChat.gid ? printChat(msg.fromChat) : "ç§èŠçª—å£") +
+				printUser(fromUID) + "é«˜é¢‘å‘é€æŒ‡ä»¤è¾¾" + to_string(mCntOrder[fromUID])
 				+ (mCntOrder[fromUID] > 36 ? "/5min"
 				   : (mCntOrder[fromUID] > 15 ? "/min" : "/30s"))
-				+ "\n×î½üÖ¸Áî: " + msg.get_str("fromMsg");
+				+ "\næœ€è¿‘æŒ‡ä»¤: " + msg.get_str("fromMsg");
 			if (fromUID != console.DiceMaid)AddMsgToQueue(getMsg("strSpamFinalWarning", msg), msg.fromChat);
 			console.log(strMsg, 0b10, printSTNow());
 		}
@@ -107,17 +107,17 @@ FrqMonitor::FrqMonitor(DiceEvent& msg) : fromUID(msg.fromChat.uid), fromTime(msg
 				+ (mCntOrder[fromUID] > 60 ? "/5min"
 				   : (mCntOrder[fromUID] > 25 ? "/min" : "/30s"));
 			if (!fromUID) {
-				console.log("¾¯¸æ£º" + getMsg("strSelfName") + "¸ßÆµ´¦ÀíĞéÄâÖ¸Áî´ï" + strFrq
-							+ "\n×î½üÖ¸Áî: " + msg.get_str("fromMsg"), 0b1000, strNow);
+				console.log("è­¦å‘Šï¼š" + getMsg("strSelfName") + "é«˜é¢‘å¤„ç†è™šæ‹ŸæŒ‡ä»¤è¾¾" + strFrq
+							+ "\næœ€è¿‘æŒ‡ä»¤: " + msg.get_str("fromMsg"), 0b1000, strNow);
 				return;
 			}
-			std::string strNote = (msg.fromChat.gid ? printChat(msg.fromChat) : "Ë½ÁÄ´°¿Ú") + "¼à²âµ½" +
-				printUser(fromUID) + "¶Ô" + printUser(console.DiceMaid) + "¸ßÆµ·¢ËÍÖ¸Áî´ï" + strFrq
-				+ "\n×î½üÖ¸Áî: " + msg.get_str("fromMsg");
+			std::string strNote = (msg.fromChat.gid ? printChat(msg.fromChat) : "ç§èŠçª—å£") + "ç›‘æµ‹åˆ°" +
+				printUser(fromUID) + "å¯¹" + printUser(console.DiceMaid) + "é«˜é¢‘å‘é€æŒ‡ä»¤è¾¾" + strFrq
+				+ "\næœ€è¿‘æŒ‡ä»¤: " + msg.get_str("fromMsg");
 			if (fromUID == console.DiceMaid) {
 				console.set("ListenSelfEcho", 0);
 				console.set("ListenGroupEcho", 0);
-				console.log(strNote + "\nÒÑÇ¿ÖÆÍ£Ö¹½ÓÊÕ»ØÒô", 0b1000, strNow);
+				console.log(strNote + "\nå·²å¼ºåˆ¶åœæ­¢æ¥æ”¶å›éŸ³", 0b1000, strNow);
 			}
 			else {
 				//DDBlackMarkFactory mark{ fromUID, 0 };
@@ -142,11 +142,11 @@ EVE_Status_EX(statusFrq)
 {
 	if (!Enabled)
 	{
-		eve.data = "×¼±¸ÖĞ";
+		eve.data = "å‡†å¤‡ä¸­";
 		eve.color_gray();
 		return;
 	}
-	//Æ½»¬µ½·ÖÖÓµÄÆµ¶È
+	//å¹³æ»‘åˆ°åˆ†é’Ÿçš„é¢‘åº¦
 	const int intFrq = FrqMonitor::getFrqTotal();
 	//long long llDuration = time(nullptr) - llStartTime;
 	if (intFrq < 0)

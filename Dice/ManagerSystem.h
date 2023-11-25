@@ -51,7 +51,6 @@ public:
 	User(){}
 
 	AttrObject confs;
-	unordered_map<long long, string> strNick{};
 	std::mutex ex_user;
 
 	User& id(long long qq)
@@ -91,30 +90,15 @@ public:
 		return def;
 	}
 
-	bool getNick(string& nick, long long group = 0) const;
-	void setNick(long long group, string val)
-	{
+	string getNick() const { return confs.get_str("nn"); }
+	void setNick(const string& val)	{
 		std::lock_guard<std::mutex> lock_queue(ex_user);
-		strNick[group] = std::move(val);
+		confs.set("nn", val);
 	}
 
-	bool rmNick(long long group)
-	{
-		std::lock_guard<std::mutex> lock_queue(ex_user);
-		if (auto it = strNick.find(group); it != strNick.end() || (it = strNick.find(0)) != strNick.end())
-		{
-			strNick.erase(it);
-			return true;
-		}
-		else if (strNick.size() == 1) {
-			strNick.clear();
-			return true;
-		}
-		return false;
-	}
 	void clrNick(){
 		std::lock_guard<std::mutex> lock_queue(ex_user);
-		strNick.clear();
+		confs.reset("nn");
 	}
 
 	void writeb(std::ofstream& fout);

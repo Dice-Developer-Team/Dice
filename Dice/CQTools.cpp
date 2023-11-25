@@ -5,7 +5,7 @@
 
 using namespace std;
 
-//´úÂëÀ´Ô´ÓÚÍøÂç
+//ä»£ç æ¥æºäºç½‘ç»œ
 static const string base64_chars =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	"abcdefghijklmnopqrstuvwxyz"

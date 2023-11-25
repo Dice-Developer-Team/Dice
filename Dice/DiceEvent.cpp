@@ -88,15 +88,13 @@ void DiceEvent::reply(const std::string& msgReply, bool isFormat) {
 }
 
 void DiceEvent::reply(bool isFormat) {
-	if (isVirtual && isPrivate())return;
+	if (isVirtual && fromChat.uid == console.DiceMaid && isPrivate())return;
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	if (isFormat)
 		formatReply();
 	logEcho();
 	//if (console["ReferMsgReply"] && get_ll("msgid"))strReply = "[CQ:reply,id=" + get_str("msgid") + "]" + strReply;
-	api::printLog("msg reply:" + strReply);
-	api::printLog("type:" + to_string((int)fromChat.type));
 	AddMsgToQueue(strReply, fromChat);
 }
 void DiceEvent::replyMsg(const std::string& key) {
@@ -110,7 +108,7 @@ void DiceEvent::replyHelp(const std::string& key) {
 	if (isVirtual && fromChat.uid == console.DiceMaid && isPrivate())return;
 	strReply = fmt->get_help(key, *this);
 	logEcho();
-	if (console["ReferMsgReply"] && get_ll("msgid"))strReply = "[CQ:reply,id=" + get_str("msgid") + "]" + strReply;
+	//if (console["ReferMsgReply"] && get_ll("msgid"))strReply = "[CQ:reply,id=" + get_str("msgid") + "]" + strReply;
 	AddMsgToQueue(strReply, fromChat);
 }
 void DiceEvent::replyRollDiceErr(int err, const RD& rd) {
@@ -2142,7 +2140,6 @@ int DiceEvent::InnerOrder() {
 			ResList rep;
 			rep << "信任级别：" + to_string(trusted)
 				<< "和{nick}的第一印象大约是在" + printDate(user.tCreated)
-				<< (!(user.strNick.empty()) ? "正记录{nick}的" + to_string(user.strNick.size()) + "个称呼" : "没有记录{nick}的称呼")
 				<< ((PList.count(fromChat.uid)) ? "这里有{nick}的" + to_string(PList[fromChat.uid].size()) + "张角色卡" : "无角色卡记录");
 			reply("{user}" + rep.show());
 			return 1;
@@ -2388,7 +2385,7 @@ int DiceEvent::InnerOrder() {
 		string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("随机姓名_" + type)) ? "随机姓名_" + type : "随机姓名";
 		set("old_nick",idx_nick(*this));
 		set("new_nick",strip(CardDeck::drawCard(CardDeck::mPublicDeck[strDeckName], true)));
-		getUser(fromChat.uid).setNick(fromChat.gid, get_str("new_nick"));
+		getUser(fromChat.uid).setNick(get_str("new_nick"));
 		replyMsg("strNameSet");
 		return 1;
 	}
@@ -2644,20 +2641,12 @@ int DiceEvent::InnerOrder() {
 		if (strNN.empty()) {
 			replyHelp("nn");
 		}
-		else if(strNN == "del") {
-			if (getUser(fromChat.uid).rmNick(fromChat.gid)) {
-				replyMsg("strNameDel");
-			}
-			else {
-				replyMsg("strNameDelEmpty");
-			}
-		}
-		else if (strNN == "clr") {
+		else if(strNN == "del" || strNN == "clr") {
 			getUser(fromChat.uid).clrNick();
-			replyMsg("strNameClr");
+			replyMsg("strNameDel");
 		}
 		else {
-			getUser(fromChat.uid).setNick(fromChat.gid, strNN);
+			getUser(fromChat.uid).setNick(strNN);
 			replyMsg("strNameSet");
 		}
 		return 1;
@@ -3781,7 +3770,6 @@ bool DiceEvent::monitorFrq() {
 }
 //判断是否响应
 void DiceEvent::DiceFilter(){
-	api::printLog("msg filter");
 	while (isspace(static_cast<unsigned char>(strMsg[0])))
 		strMsg.erase(strMsg.begin());
 	init(strMsg);
@@ -3790,12 +3778,10 @@ void DiceEvent::DiceFilter(){
 	strLowerMessage = toLower(strMsg);
 	trusted = isVirtual ? 255 : trustedQQ(fromChat.uid);
 	fwdMsg();
-	api::printLog("BasicOrder");
 	if (BasicOrder()) {
 		return;
 	}
 	else if (is("ignored"))return;
-	api::printLog("listen_order");
 	if (fmt->listen_order(this) || InnerOrder()) {
 		return;
 	}
@@ -3810,7 +3796,6 @@ void DiceEvent::DiceFilter(){
 		&& fmt->listen_game(this)) {
 		return;
 	}
-	api::printLog("listen_reply");
 	if (fmt->listen_reply(this)) {
 		return;
 	}

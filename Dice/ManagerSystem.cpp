@@ -29,7 +29,6 @@ const map<string, short> mChatConf{
 	{"禁用jrrp", 0},
 	{"禁用draw", 0},
 	{"禁用help", 0},
-	{"禁用ob", 0},
 };
 
 User& getUser(long long uid){
@@ -61,17 +60,6 @@ AttrVar getUserItem(long long uid, const string& item) {
 		User& user{ getUser(uid) };
 		if (item == "firstCreate") return (long long)user.tCreated;
 		else  if (item == "lastUpdate") return (long long)user.updated();
-		else if (item == "nn") {
-			if (string nick; user.getNick(nick))return nick;
-		}
-		else if (item.find("nn#") == 0) {
-			string nick;
-			long long gid{ 0 };
-			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
-				gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
-			}
-			if (user.getNick(nick, gid))return nick;
-		}
 		else if (user.isset(item)) {
 			return user.confs.get(item);
 		}
@@ -144,7 +132,7 @@ AttrVar getContextItem(AttrObject context, string item, bool isTrust) {
 }
 
 [[nodiscard]] bool User::empty() const {
-	return (!nTrust) && (!updated()) && confs.empty() && strNick.empty();
+	return (!nTrust) && (!updated()) && confs.empty();
 }
 void User::setConf(const string& key, const AttrVar& val)
 {
@@ -159,20 +147,6 @@ void User::rmConf(const string& key)
 	std::lock_guard<std::mutex> lock_queue(ex_user);
 	confs.reset(key);
 }
-
-bool User::getNick(string& nick, long long group) const
-{
-	if (auto it = strNick.find(group); it != strNick.end() 
-		|| (it = strNick.find(0)) != strNick.end())
-	{
-		nick = it->second;
-		return true;
-	}
-	else if (strNick.size() == 1) {
-		nick = strNick.begin()->second;
-	}
-	return false;
-}
 void User::writeb(std::ofstream& fout)
 {
 	std::lock_guard<std::mutex> lock_queue(ex_user);
@@ -183,10 +157,6 @@ void User::writeb(std::ofstream& fout)
 	if (!confs.empty()) {
 		fwrite(fout, string("Conf"));
 		confs.writeb(fout);
-	}
-	if (!strNick.empty()) {
-		fwrite(fout, string("Nick"));
-		fwrite(fout, strNick);
 	}
 	fwrite(fout, string("END"));
 }
@@ -204,7 +174,6 @@ void User::old_readb(std::ifstream& fin)
 	for (auto& [key, val] : strConf) {
 		confs.set(key, val);
 	}
-	fread(fin, strNick);
 }
 void User::readb(std::ifstream& fin)
 {
@@ -213,7 +182,6 @@ void User::readb(std::ifstream& fin)
 	while ((tag = fread<string>(fin)) != "END") {
 		if (tag == "ID")ID = fread<long long>(fin);
 		else if (tag == "Conf")confs.readb(fin);
-		else if (tag == "Nick")fread(fin, strNick);
 	}
 	nTrust = confs.get_int("trust");
 	if (confs.has("tCreated"))tCreated = confs.get_ll("tCreated");
@@ -282,7 +250,7 @@ string getName(long long uid, long long GroupID){
 
 	// nn
 	string nick;
-	if (UserList.count(uid) && getUser(uid).getNick(nick, GroupID)) return nick;
+	if (UserList.count(uid) && !(nick = getUser(uid).getNick()).empty()) return nick;
 
 	// GroupCard
 	/*

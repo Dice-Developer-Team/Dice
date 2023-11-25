@@ -10,34 +10,34 @@ namespace Zip
 
     class Unzipper
     {
-        // zip´íÎó
+        // zipé”™è¯¯
         zip_error_t error;
 
-        // ´íÎóĞÅÏ¢/ÎÄ¼ş»º´æ
+        // é”™è¯¯ä¿¡æ¯/æ–‡ä»¶ç¼“å­˜
         char buf[256];
 
-        // Ô­zipÎÄ¼ş×Ö½Ú
+        // åŸzipæ–‡ä»¶å­—èŠ‚
         std::string src;
 
-        // Ä¿±êÎÄ¼ş¼Ğ
+        // ç›®æ ‡æ–‡ä»¶å¤¹
         fs::path destFolder;
 
-        // zipÎÄ¼ş½á¹¹
+        // zipæ–‡ä»¶ç»“æ„
         zip_t* zip = nullptr;
 
     public:
         Unzipper(const std::string& src, const fs::path& destFolder) : src(src), destFolder(destFolder)
         {
-            // ³õÊ¼»¯zip_error
+            // åˆå§‹åŒ–zip_error
             zip_error_init(&error);
 
-            // ´´½¨zip_source
+            // åˆ›å»ºzip_source
             zip_source_t* source = zip_source_buffer_create(this->src.c_str(), this->src.size() * sizeof(char), 0, &error);
             if (error.zip_err != ZIP_ER_OK)
             {
                 throw ZipExtractionFailedException(zip_error_strerror(&error));
             }
-            // ´ò¿ªzip
+            // æ‰“å¼€zip
             zip = zip_open_from_source(source, ZIP_RDONLY, &error);
             if (error.zip_err != ZIP_ER_OK)
             {
@@ -46,29 +46,29 @@ namespace Zip
         }
         ~Unzipper()
         {
-            // Èç¹ûÒÑ¾­´ò¿ªzip£¬ÊÍ·ÅÄÚ´æ²¢Å×ÆúÒ»ÇĞ¸ü¸Ä
+            // å¦‚æœå·²ç»æ‰“å¼€zipï¼Œé‡Šæ”¾å†…å­˜å¹¶æŠ›å¼ƒä¸€åˆ‡æ›´æ”¹
             if(zip) zip_discard(zip);
 
-            // ÊÍ·Åzip_error
+            // é‡Šæ”¾zip_error
             zip_error_fini(&error);
         }
 
         void extractAll()
         {
-            // Ã¶¾ÙËùÓĞÎÄ¼ş
+            // æšä¸¾æ‰€æœ‰æ–‡ä»¶
             for (int i = 0; i != zip_get_num_entries(zip, 0); i++)
             {
-                // ³õÊ¼»¯ÎÄ¼şĞÅÏ¢½á¹¹Ìå
+                // åˆå§‹åŒ–æ–‡ä»¶ä¿¡æ¯ç»“æ„ä½“
                 zip_stat_t stat;
                 zip_stat_init(&stat);
 
-                // »ñÈ¡ĞÅÏ¢
+                // è·å–ä¿¡æ¯
                 if (zip_stat_index(zip, i, 0, &stat) == -1)
                 {
                     throw ZipExtractionFailedException(zip_strerror(zip));
                 }
 
-                // ĞèÒªÎÄ¼şÃû³ÆºÍ´óĞ¡
+                // éœ€è¦æ–‡ä»¶åç§°å’Œå¤§å°
                 if(!(stat.valid & ZIP_STAT_NAME))
                 {
                     throw ZipExtractionFailedException("Failed to get file name");
@@ -85,7 +85,7 @@ namespace Zip
                     throw ZipExtractionFailedException("Failed to get file name");
                 }
 
-                // Èç¹ûÊÇÎÄ¼ş¼ĞÔò´´½¨£¬È»ºóÌøµ½ÏÂ¸öÎÄ¼ş
+                // å¦‚æœæ˜¯æ–‡ä»¶å¤¹åˆ™åˆ›å»ºï¼Œç„¶åè·³åˆ°ä¸‹ä¸ªæ–‡ä»¶
                 if (name[name.length() - 1] == '/')
                 {
                     std::error_code ec;
@@ -96,7 +96,7 @@ namespace Zip
                 fs::path path = destFolder / name;
                 std::error_code ec;
                 fs::create_directories(path.parent_path(), ec);
-                // ´ò¿ªÊä³öÎÄ¼ş
+                // æ‰“å¼€è¾“å‡ºæ–‡ä»¶
                 std::ofstream f(path, std::ios::out | std::ios::trunc | std::ios::binary);
 
                 if (!f)
@@ -104,14 +104,14 @@ namespace Zip
                     throw std::runtime_error("Failed to open file for writing");
                 }
 
-                // ´ò¿ªÑ¹ËõÎÄ¼ş
+                // æ‰“å¼€å‹ç¼©æ–‡ä»¶
                 zip_file* file = zip_fopen_index(zip, i, 0);
                 if (!file)
                 {
                     throw ZipExtractionFailedException(zip_strerror(zip));
                 }
 
-                // ½âÑ¹²¢Ğ´ÈëÎÄ¼ş
+                // è§£å‹å¹¶å†™å…¥æ–‡ä»¶
                 zip_uint64_t written_size = 0;
                 while (stat.size != written_size)
                 {
