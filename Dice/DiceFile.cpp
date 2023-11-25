@@ -1,5 +1,5 @@
 /*
- * ÎÄ¼þ¶ÁÐ´
+ * æ–‡ä»¶è¯»å†™
  * Copyright (C) 2019-2020 String.Empty
  */
 #include <fstream>
@@ -45,7 +45,7 @@ int clrDir(const std::string& dir, const std::unordered_set<std::string>& except
 	/* int nCnt = 0;
 	_finddata_t file;
 	long lf = _findfirst((dir + "*").c_str(), &file);
-	//ÊäÈëÎÄ¼þ¼ÐÂ·¾¶
+	//è¾“å…¥æ–‡ä»¶å¤¹è·¯å¾„
 	if (lf < 0) {
 		return -1;
 	}
@@ -192,10 +192,10 @@ size_t cntDirFile(const std::filesystem::path& dir) {
 	return err ? 0 : nFile;
 }
 
-// »ñÈ¡±¾µØ±àÂë¸ñÊ½µÄÎÄ¼þÃû
-// ÔÚWindowsÉÏ²»ÄÜÖ±½Óµ÷ÓÃstring(), ÒòÎªÎÄ¼þÃû¿ÉÄÜÎÞ·¨×ª»»Îª±¾µØANSI±àÂë£¬µ¼ÖÂÒì³£Å×³ö
-// Ê¹ÓÃ8.3ÎÄ¼þÃûÈÆ¹ý´ËÎÊÌâ
-// ÔÚWindowsÉÏ£¬Èç¹ûÎÄ¼þ²»´æÔÚÔòÎÞ·¨Õý³£»ñÈ¡¶ÌÂ·¾¶£¬»á³¢ÊÔ·µ»ØANSI±àÂëµÄ³¤Â·¾¶
+// èŽ·å–æœ¬åœ°ç¼–ç æ ¼å¼çš„æ–‡ä»¶å
+// åœ¨Windowsä¸Šä¸èƒ½ç›´æŽ¥è°ƒç”¨string(), å› ä¸ºæ–‡ä»¶åå¯èƒ½æ— æ³•è½¬æ¢ä¸ºæœ¬åœ°ANSIç¼–ç ï¼Œå¯¼è‡´å¼‚å¸¸æŠ›å‡º
+// ä½¿ç”¨8.3æ–‡ä»¶åç»•è¿‡æ­¤é—®é¢˜
+// åœ¨Windowsä¸Šï¼Œå¦‚æžœæ–‡ä»¶ä¸å­˜åœ¨åˆ™æ— æ³•æ­£å¸¸èŽ·å–çŸ­è·¯å¾„ï¼Œä¼šå°è¯•è¿”å›žANSIç¼–ç çš„é•¿è·¯å¾„
 std::string getNativePathString(const std::filesystem::path& fpPath)
 {
 #ifdef _WIN32
@@ -225,7 +225,7 @@ string cut_stem(std::filesystem::path branch, const std::filesystem::path& main)
 	while ((branch = branch.parent_path()) != main && !branch.empty()) {
 		p = branch.filename().u8string() + "." + p;
 	}
-	return UTF8toGBK(p);
+	return p;
 }
 std::filesystem::path cut_relative(std::filesystem::path branch, const std::filesystem::path& main) {
 	std::filesystem::path p{ branch.filename() };

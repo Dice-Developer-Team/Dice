@@ -10,21 +10,21 @@
 #include "DiceSession.h"
 #include "CharacterCard.h"
 #include "DiceMod.h"
-#include "DDAPI.h"
+#include "OneBotAPI.h"
 std::unique_ptr<PyGlobal> py;
 constexpr auto DiceModuleName = "dicemaid";
 const char* empty = "";
 const wchar_t* wempty = L"";
-string py_args_to_gbstring(PyObject* o) {
-	auto s = wempty;
-	return (o && PyArg_ParseTuple(o, "u", &s)) ? UtoGBK(s) : empty;
+string py_args_to_u8string(PyObject* o) {
+	auto s = empty;
+	return (o && PyArg_ParseTuple(o, "s", &s)) ? s : empty;
 }
 string py_print_error() {
 	PyObject* ptype{ nullptr }, * val{ nullptr }, * tb{ nullptr };
 	PyErr_Fetch(&ptype, &val, &tb);
 	PyErr_NormalizeException(&ptype, &val, &tb);
 	if (tb)PyException_SetTraceback(val, tb);
-	return UTF8toGBK(PyUnicode_AsUTF8(PyObject_Str(val)));
+	return PyUnicode_AsUTF8(PyObject_Str(val));
 }
 string py_to_gbstring(PyObject* o) {
 	return Py_IS_TYPE(o, &PyUnicode_Type) ? UtoGBK(PyUnicode_AsUnicode(o))
@@ -72,7 +72,7 @@ AttrVar py_to_attr(PyObject* o) {
 	}
 	else if (Py_IS_TYPE(o, &PyFloat_Type))return PyFloat_AsDouble(o);
 	else if (Py_IS_TYPE(o, &PyUnicode_Type))return UtoGBK(PyUnicode_AsUnicode(o));
-	else if (Py_IS_TYPE(o, &PyBytes_Type))return UTF8toGBK(PyBytes_AsString(o));
+	else if (Py_IS_TYPE(o, &PyBytes_Type))return PyBytes_AsString(o);
 	else if (Py_IS_TYPE(o, &PyDict_Type)) {
 		AttrVars tab;
 		int len = PyMapping_Length(o);
@@ -116,7 +116,7 @@ AttrVar py_to_attr(PyObject* o) {
 	else if (Py_IS_TYPE(o, &PySet_Type)) {
 		fifo_set<AttrIndex> set;
 		if (auto len = PySet_Size(o)) {
-			DD::debugLog("set.size:" + to_string(len));
+			api::printLog("set.size:" + to_string(len));
 			PyObject* tmp = PySet_New(o);
 			while (len--) {
 				auto item = PySet_Pop(tmp);
@@ -158,7 +158,7 @@ PyObject* py_build_attr(const AttrVar& var) {
 		return PyFloat_FromDouble(var.number);
 		break;
 	case AttrVar::Type::Text:
-		return PyUnicode_FromString(GBKtoUTF8(var.text).c_str());
+		return PyUnicode_FromString(var.text.c_str());
 		break;
 	case AttrVar::Type::Table:
 		if (!var.table.to_dict()->empty()) {
@@ -223,11 +223,11 @@ void PyActor_dealloc(PyObject* o) {
 }
 PyObject* PyActor_getattr(PyObject* self, char* attr) {
 	PY2PC(self);
-	return pc ? py_build_attr(pc->get(UTF8toGBK(attr))) : Py_BuildValue("");
+	return pc ? py_build_attr(pc->get(attr)) : Py_BuildValue("");
 }
 int PyActor_setattr(PyObject* self, char* attr, PyObject* val) {
 	PY2PC(self);
-	if (pc)pc->set(UTF8toGBK(attr), py_to_attr(val));
+	if (pc)pc->set(attr, py_to_attr(val));
 	return 0;
 }
 PyObject* PyActor_getattro(PyObject* self, PyObject* attr) {
@@ -280,7 +280,7 @@ static PyObject* PyActor_rollDice(PyObject* self, PyObject* args) {
 		: pc->has("__DefaultDiceExp") ? pc->get("__DefaultDiceExp").to_str()
 		: "D" };
 	int diceFace{ pc->get("__DefaultDice").to_int() };
-	RD rd{ py_args_to_gbstring(args), diceFace ? diceFace : 100 };
+	RD rd{ py_args_to_u8string(args), diceFace ? diceFace : 100 };
 	PyDict_SetItem(res, PyUnicode_FromString("expr"), py_from_gbstring(rd.strDice));
 	if (int_errno err = rd.Roll(); !err) {
 		PyDict_SetItem(res, PyUnicode_FromString("sum"), PyLong_FromSsize_t(rd.intTotal));
@@ -293,19 +293,19 @@ static PyObject* PyActor_rollDice(PyObject* self, PyObject* args) {
 }
 PyObject* PyActor_locked(PyObject* self, PyObject* args) {
 	PY2PC(self);
-	string key{ py_args_to_gbstring(args) };
+	string key{ py_args_to_u8string(args) };
 	if (pc->locked(key)) Py_RETURN_TRUE;
 	else Py_RETURN_FALSE;
 }
 PyObject* PyActor_lock(PyObject* self, PyObject* args) {
 	PY2PC(self);
-	string key{ py_args_to_gbstring(args) };
+	string key{ py_args_to_u8string(args) };
 	if (pc->lock(key)) Py_RETURN_TRUE;
 	else Py_RETURN_FALSE;
 }
 PyObject* PyActor_unlock(PyObject* self, PyObject* args) {
 	PY2PC(self);
-	string key{ py_args_to_gbstring(args) };
+	string key{ py_args_to_u8string(args) };
 	if (pc->unlock(key)) Py_RETURN_TRUE;
 	else Py_RETURN_FALSE;
 }
@@ -384,7 +384,7 @@ void PyGameTable_dealloc(PyObject* o) {
 }
 int PyGameTable_setattr(PyObject* self, char* attr, PyObject* val) {
 	PY2GAME(self);
-	if (game)game->attrs.set(UTF8toGBK(attr), py_to_attr(val));
+	if (game)game->attrs.set(attr, py_to_attr(val));
 	return 0;
 }
 static Py_ssize_t pyGameTable_size(PyObject* self) {
@@ -491,7 +491,7 @@ void PyContext_dealloc(PyObject* o) {
 PyObject* py_newContext(const AttrObject& obj);
 int PyContext_setattr(PyObject* self, char* attr, PyObject* val) {
 	AttrObject& obj{ ((PyContextObject*)self)->obj };
-	obj.set(UTF8toGBK(attr), py_to_attr(val));
+	obj.set(attr, py_to_attr(val));
 	return 0;
 }
 PyObject* PyContext_getattro(PyObject* self, PyObject* attr) {
@@ -527,7 +527,7 @@ static PyObject* pyContext_echo(PyObject* self, PyObject* args) {
 	if(!PyArg_ParseTuple(args, "s|p", &msg, &isRaw)) {
 		return nullptr;
 	}
-	reply(obj, UTF8toGBK(msg), !isRaw);
+	reply(obj, msg, !isRaw);
 	return Py_BuildValue("");
 }
 static PyObject* pyContext_format(PyObject* self, PyObject* args) {
@@ -536,7 +536,7 @@ static PyObject* pyContext_format(PyObject* self, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "s", &msg)) {
 		return nullptr;
 	}
-	return PyUnicode_FromString(GBKtoUTF8(fmt->format(UTF8toGBK(msg), obj)).c_str());
+	return PyUnicode_FromString(fmt->format(msg, obj).to_str().c_str());
 }
 static PyObject* pyContext_inc(PyObject* self, PyObject* args) {
 	AttrObject& obj{ ((PyContextObject*)self)->obj };
@@ -545,7 +545,7 @@ static PyObject* pyContext_inc(PyObject* self, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "s|i", &field, &cnt)) {
 		return nullptr;
 	}
-	return PyLong_FromSsize_t(obj.inc(UTF8toGBK(field, cnt)));
+	return PyLong_FromSsize_t(obj.inc(field, cnt));
 }
 static PyMethodDef ContextMethods[] = {
 	{"echo", pyContext_echo, METH_VARARGS, "echo message"},
@@ -618,7 +618,7 @@ AttrObject py_to_obj(PyObject* o) {
 			for (int i = 0; i < len; ++i) {
 				item = PySequence_GetItem(items, i);
 				PyArg_ParseTuple(item, "sO", key, val);
-				tab[UTF8toGBK(key)] = py_to_attr(val);
+				tab[key] = py_to_attr(val);
 				Py_DECREF(item);
 			}
 		}
@@ -692,11 +692,11 @@ void PySelfData_dealloc(PyObject* o) {
 }
 PyObject* PySelfData_getattr(PyObject* self, char* attr) {
 	auto& data{ ((PySelfDataObject*)self)->p->data };
-	return data.is_table() ? py_build_attr(data.table.get(UTF8toGBK(attr))) : Py_BuildValue("");
+	return data.is_table() ? py_build_attr(data.table.get(attr)) : Py_BuildValue("");
 }
 int PySelfData_setattr(PyObject* self, char* attr, PyObject* val) {
 	auto& data{ ((PySelfDataObject*)self)->p->data };
-	if (data.is_table())data.table.set(UTF8toGBK(attr), py_to_attr(val));
+	if (data.is_table())data.table.set(attr), py_to_attr(val);
 	return 0;
 }
 PyObject* PySelfData_getattro(PyObject* self, PyObject* attr) {
@@ -820,6 +820,7 @@ PYDEFKEY(getGroupAttr) {
 		return NULL;
 	}
 	if (item.empty()) return py_newContext(chat(gid).confs);
+	/*
 	else if (item == "members") {
 		if (Py_IS_TYPE(sub, &PyUnicode_Type)) {
 			string subitem{ py_to_gbstring(sub)};
@@ -861,7 +862,7 @@ PYDEFKEY(getGroupAttr) {
 			PySet_Add(items, PyLong_FromLongLong(uid));
 		}
 		return items;
-	}
+	}*/
 	if (auto val{ getGroupItem(gid,item) }; !val.is_null())return py_build_attr(val);
 	else if (sub) return sub;
 	return Py_BuildValue("");
@@ -879,15 +880,7 @@ PYDEFARG(setGroupAttr) {
 	if (item[0] == '&')item = fmt->format(item);
 	if (item.empty())return 0;
 	Chat& grp{ chat(id) };
-	if (item.find("card#") == 0) {
-		long long uid{ 0 };
-		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
-			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
-		}
-		string card{ py_to_gbstring(val) };
-		DD::setGroupCard(id, uid, card);
-	}
-	else if (!val) {
+	if (!val) {
 		grp.reset(item);
 	}
 	else grp.set(item, py_to_attr(val));
@@ -1100,37 +1093,37 @@ static PyMethodDef DiceMethods[] = {
 }; 
 static PyModuleDef DiceMaidDef = {
 	PyModuleDef_HEAD_INIT,
-	DiceModuleName,   //µº≥ˆµƒƒ£øÈ√˚≥∆
-	"Python interface for Dice function",      //ƒ£øÈŒƒµµ£¨ø…“‘Œ™NULL
-	-1,       //“ª∞„Œ™-1
-	DiceMethods //PyMethodDef¿‡–Õ£¨µº≥ˆ∑Ω∑®
+	DiceModuleName,   //ÂØºÂá∫ÁöÑÊ®°ÂùóÂêçÁß∞
+	"Python interface for Dice function",      //Ê®°ÂùóÊñáÊ°£ÔºåÂèØ‰ª•‰∏∫NULL
+	-1,       //‰∏ÄËà¨‰∏∫-1
+	DiceMethods //PyMethodDefÁ±ªÂûãÔºåÂØºÂá∫ÊñπÊ≥ï
 }; 
 PyMODINIT_FUNC PyInit_DiceMaid(){
 	auto mod = PyModule_Create(&DiceMaidDef);
 	if (PyType_Ready(&PyContextType) || 
 		PyModule_AddObject(mod, "Context", (PyObject*)&PyContextType) < 0) {
-		console.log("◊¢≤·dicemaid.Context ß∞‹!", 0b1000);
+		console.log("Ê≥®ÂÜådicemaid.ContextÂ§±Ë¥•!", 0b1000);
 		Py_DECREF(&PyContextType);
 		Py_DECREF(mod);
 		return NULL;
 	}
 	else if (PyType_Ready(&PyActor_Type) ||
 		PyModule_AddObject(mod, "Actor", (PyObject*)&PyActor_Type) < 0) {
-		console.log("◊¢≤·dicemaid.Actor ß∞‹!", 0b1000);
+		console.log("Ê≥®ÂÜådicemaid.ActorÂ§±Ë¥•!", 0b1000);
 		Py_DECREF(&PyActor_Type);
 		Py_DECREF(mod);
 		return NULL;
 	}
 	else if (PyType_Ready(&PyGameTable_Type) ||
 		PyModule_AddObject(mod, "GameTable", (PyObject*)&PyGameTable_Type) < 0) {
-		console.log("◊¢≤·dicemaid.GameTable ß∞‹!", 0b1000);
+		console.log("Ê≥®ÂÜådicemaid.GameTableÂ§±Ë¥•!", 0b1000);
 		Py_DECREF(&PyGameTable_Type);
 		Py_DECREF(mod);
 		return NULL;
 	}
 	else if (PyType_Ready(&PySelfData_Type) || 
 		PyModule_AddObject(mod, "SelfData", (PyObject*)&PySelfData_Type) < 0) {
-		console.log("◊¢≤·dicemaid.SelfData ß∞‹!", 0b1000);
+		console.log("Ê≥®ÂÜådicemaid.SelfDataÂ§±Ë¥•!", 0b1000);
 		Py_DECREF(&PySelfData_Type);
 		Py_DECREF(mod);
 		return NULL;
@@ -1159,7 +1152,7 @@ PyGlobal::PyGlobal() {
 	try {
 		static auto import_dice = PyImport_AppendInittab(DiceModuleName, PyInit_DiceMaid);
 		if (import_dice) {
-			console.log("‘§‘ÿdicemaidƒ£øÈ ß∞‹!", 0b1000);
+			console.log("È¢ÑËΩΩdicemaidÊ®°ÂùóÂ§±Ë¥•!", 0b1000);
 		}
 		if (!Py_IsInitialized())Py_Initialize();
 		PyRun_SimpleString("import sys");
@@ -1168,7 +1161,7 @@ PyGlobal::PyGlobal() {
 		PyRun_SimpleString("from dicemaid import *");
 	}
 	catch (std::exception& e) {
-		console.log("python≥ı ºªØ ß∞‹" + string(e.what()), 0b1);
+		console.log("pythonÂàùÂßãÂåñÂ§±Ë¥•" + string(e.what()), 0b1);
 	}
 	console.log("Python.Initialized", 0);
 }
@@ -1194,7 +1187,7 @@ PyObject* Py_CompileScript(string& name) {
 			auto res{ Py_CompileString(script->c_str(), p->u8string().c_str(), Py_file_input) };
 			Py_FileScripts[name] = { res,lstWrite };
 			if (!res) {
-				console.log(getMsg("self") + "±‡“Î" + (name = UTF8toGBK(p->u8string())) + " ß∞‹: " + py_print_error(), 0b10);
+				console.log(getMsg("self") + "ÁºñËØë" + (name = p->u8string()) + "Â§±Ë¥•: " + py_print_error(), 0b10);
 				PyErr_Clear();
 			}
 			return res;
@@ -1203,11 +1196,11 @@ PyObject* Py_CompileScript(string& name) {
 	else if (Py_StringScripts.count(name)) {
 		return Py_StringScripts[name];
 	}
-	else if (auto res{ Py_CompileString(GBKtoUTF8(name).c_str(), "<eval>", Py_eval_input) }) {
+	else if (auto res{ Py_CompileString(name.c_str(), "<eval>", Py_eval_input) }) {
 		return Py_StringScripts[name] = res;
 	}
 	else {
-		console.log(getMsg("self") + "±‡“Îpython”Ôæ‰ ß∞‹: " + py_print_error(), 0b10);
+		console.log(getMsg("self") + "ÁºñËØëpythonËØ≠Âè•Â§±Ë¥•: " + py_print_error(), 0b10);
 		PyErr_Clear();
 	}
 	return nullptr;
@@ -1222,7 +1215,7 @@ bool PyGlobal::runFile(const std::filesystem::path& p, const AttrObject& context
 		auto res{ PyRun_File(fp, p.u8string().c_str(), Py_file_input, global, py_newContext(context))};
 		fclose(fp);
 		if (!res) {
-			console.log(getMsg("self") + "‘À––" + UTF8toGBK(p.u8string()) + "“Ï≥£!" + py_print_error(), 0b10);
+			console.log(getMsg("self") + "ËøêË°å" + p.u8string() + "ÂºÇÂ∏∏!" + py_print_error(), 0b10);
 			PyErr_Clear();
 			return false;
 		}
@@ -1231,20 +1224,20 @@ bool PyGlobal::runFile(const std::filesystem::path& p, const AttrObject& context
 	return false;
 }
 int PyGlobal::runString(const std::string& s) {
-	return PyRun_SimpleString(GBKtoUTF8(s).c_str());
+	return PyRun_SimpleString(s.c_str());
 }
 bool PyGlobal::execString(const std::string& s, const AttrObject& context) {
 	try {
 		PyObject* mainModule = PyImport_ImportModule("__main__");
 		PyObject* dict = PyModule_GetDict(mainModule);
-		if (auto ret{ PyRun_String(GBKtoUTF8(s).c_str(), Py_eval_input, dict, py_newContext(context)) }; !ret) {
-			console.log(getMsg("self") + "‘ÀÀ„python”Ôæ‰“Ï≥£!" + py_print_error(), 0b10);
+		if (auto ret{ PyRun_String(s.c_str(), Py_eval_input, dict, py_newContext(context)) }; !ret) {
+			console.log(getMsg("self") + "ËøêÁÆópythonËØ≠Âè•ÂºÇÂ∏∏!" + py_print_error(), 0b10);
 			PyErr_Clear();
 		}
 		return true;
 	}
 	catch (std::exception& e) {
-		console.log(getMsg("self") + "‘À––pythonΩ≈±æ“Ï≥£!" + e.what(), 0b10);
+		console.log(getMsg("self") + "ËøêË°åpythonËÑöÊú¨ÂºÇÂ∏∏!" + e.what(), 0b10);
 	}
 	return false;
 }
@@ -1252,14 +1245,14 @@ AttrVar PyGlobal::evalString(const std::string& s, const AttrObject& context) {
 	try {
 		PyObject* mainModule = PyImport_ImportModule("__main__");
 		PyObject* dict = PyModule_GetDict(mainModule);
-		if (auto ret{ PyRun_String(GBKtoUTF8(s).c_str(), Py_eval_input, dict, py_newContext(context)) }; !ret) {
-			console.log(getMsg("self") + "‘ÀÀ„python”Ôæ‰“Ï≥£!" + py_print_error(), 0b10);
+		if (auto ret{ PyRun_String(s.c_str(), Py_eval_input, dict, py_newContext(context)) }; !ret) {
+			console.log(getMsg("self") + "ËøêÁÆópythonËØ≠Âè•ÂºÇÂ∏∏!" + py_print_error(), 0b10);
 			PyErr_Clear();
 		}
 		else return py_to_attr(ret);
 	}
 	catch (std::exception& e) {
-		console.log(getMsg("self") + "‘À––pythonΩ≈±æ“Ï≥£!" + e.what(), 0b10);
+		console.log(getMsg("self") + "ËøêË°åpythonËÑöÊú¨ÂºÇÂ∏∏!" + e.what(), 0b10);
 	}
 	return {};
 }
@@ -1277,7 +1270,7 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrVar& action) {
 			}
 			else {
 				Py_DECREF(locals);
-				console.log(getMsg("self") + "‘À––" + pyScript + "≥ˆ¥Ì£°\n" + py_print_error(), 0b10);
+				console.log(getMsg("self") + "ËøêË°å" + pyScript + "Âá∫ÈîôÔºÅ\n" + py_print_error(), 0b10);
 				PyErr_Clear();
 				msg->set("lang", "Python");
 				msg->reply(getMsg("strScriptRunErr"));
@@ -1285,7 +1278,7 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrVar& action) {
 		}
 	}
 	catch (std::exception& e) {
-		console.log(getMsg("self") + "‘À––pythonΩ≈±æ“Ï≥£!" + e.what(), 0b10);
+		console.log(getMsg("self") + "ËøêË°åpythonËÑöÊú¨ÂºÇÂ∏∏!" + e.what(), 0b10);
 		msg->set("lang", "Python");
 		msg->reply(getMsg("strScriptRunErr"));
 	}

@@ -21,14 +21,14 @@ class DiceTableMaster;
 struct LogInfo{
 	static const std::filesystem::path dirLog;
 	bool isLogging{ false };
-	//´´½¨Ê±¼ä£¬Îª0Ôò²»´æÔÚ
+	//åˆ›å»ºæ—¶é—´ï¼Œä¸º0åˆ™ä¸å­˜åœ¨
 	time_t tStart{ 0 };
 	time_t tLastMsg{ 0 };
 	//filestem, gbk
 	string name;
 	//filepath, gbk
 	string fileLog;
-	//Â·¾¶²»±£´æ£¬³õÊ¼»¯Ê±Éú³É
+	//è·¯å¾„ä¸ä¿å­˜ï¼Œåˆå§‹åŒ–æ—¶ç”Ÿæˆ
 	std::filesystem::path pathLog;
 	void update() {
 		tLastMsg = time(nullptr);
@@ -38,19 +38,19 @@ struct LogInfo{
 struct LinkInfo {
 	bool isLinking{ false };
 	string typeLink;
-	//¶ÔÏó´°¿Ú£¬Îª0Ôò²»´æÔÚ
+	//å¯¹è±¡çª—å£ï¼Œä¸º0åˆ™ä¸å­˜åœ¨
 	chatInfo target{ 0 };
 };
 class DiceChatLink {
 	unordered_map<chatInfo, LinkInfo>LinkList;
-	//½ûÖ¹ÇÅ½ÓµÈ»¨ÉÚ²Ù×÷
+	//ç¦æ­¢æ¡¥æ¥ç­‰èŠ±å“¨æ“ä½œ
 	unordered_map<chatInfo, pair<chatInfo, bool>>LinkFromChat;
 public:
 	friend class DiceSessionManager;
 	pair<chatInfo, bool> get_aim(chatInfo ct)const {
 		return LinkFromChat.count(ct = ct.locate()) ? LinkFromChat.find(ct)->second : pair<chatInfo, bool>();
 	}
-	//linkÖ¸Áî
+	//linkæŒ‡ä»¤
 	void build(DiceEvent*);
 	void start(DiceEvent*);
 	string show(const chatInfo& ct);
@@ -62,9 +62,9 @@ public:
 };
 
 struct DeckInfo {
-	//Ôª±í
+	//å…ƒè¡¨
 	vector<string> meta;
-	//Ê£ÓàÅÆ
+	//å‰©ä½™ç‰Œ
 	vector<size_t> idxs;
 	size_t sizRes{ 0 };
 	DeckInfo() = default;
@@ -74,10 +74,10 @@ struct DeckInfo {
 	string draw();
 };
 struct DiceRoulette {
-	//ÃæÊı*
+	//é¢æ•°*
 	size_t face{ 0 };
 	size_t copy{ 0 };
-	//Ê£ÓàÅÆ
+	//å‰©ä½™ç‰Œ
 	vector<size_t> pool;
 	size_t sizRes{ 0 };
 	DiceRoulette(){}
@@ -89,19 +89,19 @@ struct DiceRoulette {
 };
 
 class DiceSession{
-	//¹ÜÀíÔ±
+	//ç®¡ç†å‘˜
 	AttrSet master;
-	//Íæ¼Ò
+	//ç©å®¶
 	AttrSet player;
-	//ÅÔ¹ÛÕß
+	//æ—è§‚è€…
 	AttrSet obs;
-	//ÈÕÖ¾
+	//æ—¥å¿—
 	LogInfo logger;
-	//ÅÆ¶Ñ
+	//ç‰Œå †
 	dict_ci<DeckInfo> decks;
 	void save() const;
 public:
-	//ÊıÖµ±í
+	//æ•°å€¼è¡¨
 	AttrObject attrs;
 	//native filename
 	const string name;
@@ -117,9 +117,9 @@ public:
 	}
 	friend class DiceSessionManager;
 
-	//¼ÇÂ¼´´½¨Ê±¼ä
+	//è®°å½•åˆ›å»ºæ—¶é—´
 	time_t tCreate;
-	//×îºó¸üĞÂÊ±¼ä
+	//æœ€åæ›´æ–°æ—¶é—´
 	time_t tUpdate;
 
 	DiceSession& create(time_t tt) {
@@ -193,7 +193,7 @@ public:
 	[[nodiscard]] string table_prior_show(const string& key) const;
 	bool table_clr(const string& key);
 
-	//ÅÔ¹ÛÖ¸Áî
+	//æ—è§‚æŒ‡ä»¤
 	void ob_enter(DiceEvent*);
 	void ob_exit(DiceEvent*);
 	void ob_list(DiceEvent*) const;
@@ -205,7 +205,7 @@ public:
 		return *this;
 	}
 	
-	//logÖ¸Áî
+	//logæŒ‡ä»¤
 	void log_new(DiceEvent*);
 	void log_on(DiceEvent*);
 	void log_off(DiceEvent*);
@@ -213,7 +213,7 @@ public:
 	[[nodiscard]] std::filesystem::path log_path()const;
 	[[nodiscard]] bool is_logging() const { return logger.isLogging; }
 
-	//deckÖ¸Áî
+	//deckæŒ‡ä»¤
 	dict_ci<DeckInfo>& get_deck() { return decks; }
 	DeckInfo& get_deck(const string& key) { return decks[key]; }
 	void deck_set(DiceEvent*);
@@ -231,7 +231,7 @@ using Session = DiceSession;
 
 class DiceSessionManager {
 	dict_ci<shared_ptr<Session>> SessionByName;
-	//ÁÄÌì´°¿Ú¶ÔSession£¬ÔÊĞí¶à¶ÔÒ»
+	//èŠå¤©çª—å£å¯¹Sessionï¼Œå…è®¸å¤šå¯¹ä¸€
 	unordered_map<chatInfo, shared_ptr<Session>> SessionByChat;
 	int inc = 0;
 public:

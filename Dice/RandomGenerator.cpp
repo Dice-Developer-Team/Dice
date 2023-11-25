@@ -31,12 +31,12 @@
 #include <x86intrin.h>
 #endif
 #endif
-constexpr const char digit_chars[]{"0123456789"};
-constexpr const char hex_chars[]{"0123456789abcdef"};
-constexpr const char alpha_chars[]{"abcdefghijklmnopqrstuvwxyz"};
+constexpr const char digit_chars[]{ "0123456789" };
+constexpr const char hex_chars[]{ "0123456789abcdef" };
+constexpr const char alpha_chars[]{ "abcdefghijklmnopqrstuvwxyz" };
 constexpr const char alnum_chars[]{ "abcdefghijklmnopqrstuvwxyz0123456789" };
-constexpr const char base64_chars[]{"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
-constexpr const char base64url_chars[]{"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"};
+constexpr const char base64_chars[]{ "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" };
+constexpr const char base64url_chars[]{ "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_" };
 
 namespace RandomGenerator
 {

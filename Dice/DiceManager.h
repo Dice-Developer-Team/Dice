@@ -11,11 +11,12 @@
 #include "MsgMonitor.h"
 #include "CQTools.h"
 #include "CardDeck.h"
+#include "DiceNetwork.h"
 
 // init in EventEnable
 inline std::filesystem::path WebUIPasswordPath;
 
-// ÉèÖÃWebUIÃÜÂë
+// è®¾ç½®WebUIå¯†ç 
 bool setPassword(const std::string& password);
 
 class AuthHandler: public CivetAuthHandler

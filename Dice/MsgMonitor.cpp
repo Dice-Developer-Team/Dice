@@ -7,7 +7,7 @@
 #include <mutex>
 #include "MsgMonitor.h"
 #include "DiceSchedule.h"
-#include "DDAPI.h"
+#include "OneBotAPI.h"
 
 std::atomic<unsigned int> FrqMonitor::sumFrqTotal = 0;
 std::map<long long, int> FrqMonitor::mFrequence = {};
@@ -119,13 +119,10 @@ FrqMonitor::FrqMonitor(DiceEvent& msg) : fromUID(msg.fromChat.uid), fromTime(msg
 				console.set("ListenGroupEcho", 0);
 				console.log(strNote + "\n已强制停止接收回音", 0b1000, strNow);
 			}
-			else if (DD::getDiceSisters().count(fromUID)) {
-				console.log(strNote, 0b1000, strNow);
-			}
 			else {
-				DDBlackMarkFactory mark{ fromUID, 0 };
-				mark.sign().type("spam").time(strNow).note(strNow + " " + strNote);
-				blacklist->create(mark.product());
+				//DDBlackMarkFactory mark{ fromUID, 0 };
+				//mark.sign().type("spam").time(strNow).note(strNow + " " + strNote);
+				//blacklist->create(mark.product());
 			}
 		}
 	}

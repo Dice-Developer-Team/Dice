@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123À›‰ß
+ * Copyright (C) 2018-2021 w4123Ê∫ØÊ¥Ñ
  * Copyright (C) 2019-2023 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -415,7 +415,7 @@ string AttrVar::to_str()const {
 		return text;
 		break;
 	case Type::Table: 
-		return UTF8toGBK(to_json().dump());
+		return to_json().dump();
 		break;
 	case Type::Function:
 		return {};
@@ -510,7 +510,7 @@ string AttrVar::print()const {
 		return text;
 		break;
 	case Type::Table:
-		return UTF8toGBK(to_json().dump());
+		return to_json().dump();
 		break;
 	case Type::ID:
 		return to_string(id);
@@ -653,7 +653,7 @@ AttrVar::AttrVar(const fifo_json& j) {
 			}
 			for (auto& it : j.items()) {
 				if (idxs.count(it.key()))continue;
-				if (!it.value().is_null())table.dict->emplace(UTF8toGBK(it.key()), it.value());
+				if (!it.value().is_null())table.dict->emplace(it.key(), it.value());
 			}
 		}
 		break;
@@ -668,7 +668,7 @@ AttrVar::AttrVar(const fifo_json& j) {
 		break;
 	case fifo_json::value_t::string:
 		type = Type::Text;
-		new(&text)string(UTF8toGBK(j.get<string>()));
+		new(&text)string(j.get<string>());
 		break;
 	case fifo_json::value_t::boolean:
 		type = Type::Boolean;
@@ -709,7 +709,7 @@ fifo_json AttrVar::to_json()const {
 		return number;
 		break;
 	case Type::Text:
-		return GBKtoUTF8(text);
+		return text;
 		break;
 	case Type::ID:
 		return id;
@@ -735,7 +735,7 @@ fifo_json AttrObject::to_json()const {
 	else {
 		fifo_json j = fifo_json::object();
 		for (auto& [key, val] : *dict) {
-			if (val)j[GBKtoUTF8(key)] = val.to_json();
+			if (val)j[key] = val.to_json();
 		}
 		if (list) {
 			int idx{ 0 };
@@ -767,7 +767,7 @@ AttrVar::AttrVar(const toml::node& t) {
 			}
 			for (auto& [key,val] : *tab) {
 				if (idxs.count(string(key.str())))continue;
-				table.dict->emplace(UTF8toGBK(string(key.str())), val);
+				table.dict->emplace(string(key.str()), val);
 			}
 		}
 		break;
@@ -782,7 +782,7 @@ AttrVar::AttrVar(const toml::node& t) {
 		break;
 	case toml::node_type::string:
 		type = Type::Text;
-		new(&text)string(UTF8toGBK(string(*t.as_string())));
+		new(&text)string(string(*t.as_string()));
 		break;
 	case toml::node_type::integer:
 		if (int64_t num{ *t.as_integer() }; num == (int)num) {
@@ -814,25 +814,25 @@ toml::table AttrObject::to_toml()const {
 	for (auto& [key, val] : *dict) {
 		if (val)switch (val.type) {
 		case AttrVar::Type::Boolean:
-			tab.insert(GBKtoUTF8(key), val.bit);
+			tab.insert(key, val.bit);
 			break;
 		case AttrVar::Type::Integer:
-			tab.insert(GBKtoUTF8(key), val.attr);
+			tab.insert(key, val.attr);
 			break;
 		case AttrVar::Type::Number:
-			tab.insert(GBKtoUTF8(key), val.number);
+			tab.insert(key, val.number);
 			break;
 		case AttrVar::Type::Text:
-			tab.insert(GBKtoUTF8(key), GBKtoUTF8(val.text));
+			tab.insert(key, val.text);
 			break;
 		case AttrVar::Type::ID:
-			tab.insert(GBKtoUTF8(key), val.id);
+			tab.insert(key, val.id);
 			break;
 		case AttrVar::Type::Table:
-			tab.insert(GBKtoUTF8(key), val.table.to_toml());
+			tab.insert(key, val.table.to_toml());
 			break;
 		case AttrVar::Type::Set:
-			tab.insert(GBKtoUTF8(key), ::to_toml(*val.flags));
+			tab.insert(key, ::to_toml(*val.flags));
 			break;
 		default:
 			break;
@@ -863,7 +863,7 @@ AttrVar::AttrVar(const YAML::Node& y) {
 		}
 		else if (auto as_s = YAML::as_if<string, std::optional<string>>(y)(); as_s.has_value()) {
 			type = Type::Text;
-			new(&text)string(UTF8toGBK(as_s.value()));
+			new(&text)string(as_s.value());
 		}
 	}
 	else if (y.IsMap()) {
@@ -881,7 +881,7 @@ AttrVar::AttrVar(const YAML::Node& y) {
 			}
 			for (auto& it : y) {
 				if (idxs.count(it.first.Scalar()))continue;
-				table.dict->emplace(UTF8toGBK(it.first.Scalar()), it.second);
+				table.dict->emplace(it.first.Scalar(), it.second);
 			}
 		}
 	}
@@ -907,14 +907,14 @@ YAML::Node AttrVar::to_yaml()const {
 		yaml = number;
 		break;
 	case Type::Text:
-		yaml = GBKtoUTF8(text);
+		yaml = text;
 		break;
 	case Type::ID:
 		yaml = id;
 		break;
 	case Type::Table:
 		for (auto& [k, v] : *table.to_dict()) {
-			yaml[GBKtoUTF8(k)] = v.to_yaml();
+			yaml[k] = v.to_yaml();
 		}
 		if (auto li{ table.to_list() }) {
 			int i = 0;
@@ -925,7 +925,7 @@ YAML::Node AttrVar::to_yaml()const {
 			}
 			else {
 				for (auto& v : *li) {
-					yaml[GBKtoUTF8(i++)] = v.to_yaml();
+					yaml[i++] = v.to_yaml();
 				}
 			}
 		}
@@ -958,7 +958,7 @@ fifo_json AttrIndex::to_json()const {
 		else return num;
 	}
 	else if (std::holds_alternative<string>(val)) {
-		return GBKtoUTF8(get<string>(val));
+		return get<string>(val);
 	}
 	return {};
 }
@@ -984,13 +984,13 @@ toml::array to_toml(const fifo_set<AttrIndex>& vars) {
 fifo_json to_json(const AttrVars& vars) {
 	fifo_json j;
 	for (auto& [key, val] : vars) {
-		j[GBKtoUTF8(key)] = val.to_json();
+		j[key] = val.to_json();
 	}
 	return j;
 }
 void from_json(const fifo_json& j, AttrVars& vars) {
 	for (auto& [key, val] : j.items()) {
-		vars[UTF8toGBK(key)] = AttrVar(val);
+		vars[key] = AttrVar(val);
 	}
 }
 
@@ -1098,22 +1098,22 @@ void AttrVar::readb(std::ifstream& fin) {
 
 string showAttrCMPR(AttrVar::CMPR cmpr) {
 	if (cmpr == &AttrVar::equal) {
-		return "µ»”⁄";
+		return "Á≠â‰∫é";
 	}
 	else if (cmpr == &AttrVar::not_equal) {
-		return "≤ªµ»”⁄";
+		return "‰∏çÁ≠â‰∫é";
 	}
 	else if (cmpr == &AttrVar::equal_or_more) {
-		return "≤ªµÕ”⁄";
+		return "‰∏ç‰Ωé‰∫é";
 	}
 	else if(cmpr == &AttrVar::equal_or_less) {
-		return "≤ª∏ﬂ”⁄";
+		return "‰∏çÈ´ò‰∫é";
 	}
 	else if(cmpr == &AttrVar::more) {
-		return "∏ﬂ”⁄";
+		return "È´ò‰∫é";
 	}
 	else if (cmpr == &AttrVar::less) {
-		return "µÕ”⁄";
+		return "‰Ωé‰∫é";
 	}
 	return {};
 }

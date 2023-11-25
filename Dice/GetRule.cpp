@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123ËÝä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2023 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -23,7 +23,7 @@
  */
 #include <string>
 #include <cstring>
-#include "DDAPI.h"
+#include "OneBotAPI.h"
 #include "DiceRule.h"
 #include "GetRule.h"
 #include "GlobalVar.h"
@@ -81,10 +81,10 @@ namespace GetRule
 			des = *entry;
 			return true;
 		}
-		const string ruleName = GBKtoUTF8(rule);
-		const string itemName = GBKtoUTF8(name);
+		const string ruleName = rule;
+		const string itemName = name;
 
-		string data = "Name=" + UrlEncode(itemName) + "&QQ=" + to_string(DD::getLoginID()) + "&v=20190114";
+		string data = "Name=" + UrlEncode(itemName) + "&QQ=" + to_string(console.DiceMaid) + "&v=20190114";
 		if (!ruleName.empty())
 		{
 			data += "&Type=Rules-" + UrlEncode(ruleName);
@@ -100,7 +100,7 @@ namespace GetRule
 		delete[] frmdata;
 		if (reqRes)
 		{
-			des = UTF8toGBK(temp);
+			des = temp;
 			return true;
 		}
 		if (temp == getMsg("strRequestNoResponse"))

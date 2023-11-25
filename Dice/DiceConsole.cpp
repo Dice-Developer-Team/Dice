@@ -30,13 +30,12 @@
 #include "DiceNetwork.h"
 #include "DiceCloud.h"
 #include "Jsonio.h"
-#include "BlackListManager.h"
 #include "DiceSchedule.h"
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif	
-#include "DDAPI.h"
+#include "OneBotAPI.h"
 #include "yaml-cpp/yaml.h"
 #include "tinyxml2.h"
 
@@ -208,12 +207,10 @@ int Console::log(const std::string& strMsg, int note_lv, const string& strTime)
 			if(strTime.empty())this_thread::sleep_for(chrono::milliseconds(console["SendIntervalIdle"]));
 		}
 	}
-	if (!Cnt)DD::debugMsg(note);
-	else DD::debugLog(note);
+	api::printLog(note);
 	return Cnt;
 }
 void Console::log(const std::string& msg, const std::string& file) {
-	DD::debugLog(msg);
 	ofstream fout(DiceDir / "audit" / ("log_" + file + ".txt"),
 		ios::out | ios::app);
 	fout << printSTNow() << "\t" << printLine(msg) << std::endl;
@@ -264,7 +261,7 @@ bool Console::load() {
 			}
 		}
 		catch (std::exception& e) {
-			DD::debugLog("/conf/console.yaml读取失败!" + string(e.what()));
+			api::printLog("/conf/console.yaml读取失败!" + string(e.what()));
 		}
 	}
 	else if (tinyxml2::XMLDocument doc; tinyxml2::XML_SUCCESS == doc.LoadFile((DiceDir / "conf" / "console.xml").string().c_str())){
@@ -429,7 +426,7 @@ std::string printSTime(const tm st)
 	//打印用户昵称QQ
 	string printUser(long long llqq)
 	{
-		string nick = DD::getQQNick(llqq);
+		string nick = api::getUserNick(llqq);
 		if (nick.empty())return getMsg("stranger") + "[" + to_string(llqq) + "]";
 		return nick + "(" + to_string(llqq) + ")";
 	}
@@ -438,7 +435,7 @@ std::string printSTime(const tm st)
 	{
 		if (!llgroup)return "私聊";
 		if (ChatList.count(llgroup))return printChat(ChatList[llgroup]);
-		if (string name{ DD::getGroupName(llgroup) };!name.empty())return "[" + name + "](" + to_string(llgroup) + ")";
+		//if (string name{ DD::getGroupName(llgroup) };!name.empty())return "[" + name + "](" + to_string(llgroup) + ")";
 		return "群(" + to_string(llgroup) + ")";
 	}
 	//打印聊天窗口
@@ -450,8 +447,6 @@ std::string printSTime(const tm st)
 			return printUser(ct.uid);
 		case msgtype::Group:
 			return printGroup(ct.gid);
-		case msgtype::Discuss:
-			return "讨论组(" + to_string(ct.gid) + ")";
 		case msgtype::Channel: //Warning:Temporary
 			return "频道(" + to_string(ct.gid) + ")";
 		default:
@@ -459,16 +454,6 @@ std::string printSTime(const tm st)
 		}
 		return "";
 	}
-//获取骰娘列表
-void getDiceList()
-{
-}
-//获取骰娘列表
-void getExceptGroup() {
-	std::string list;
-	if (Network::GET("http://shiki.stringempty.xyz/DiceCloud/except_group.json", list))
-		readJson(list, ExceptGroups);
-}
 
 
 bool operator==(const tm& st, const Clock clock)

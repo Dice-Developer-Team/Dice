@@ -1,6 +1,6 @@
 #pragma once
 
-// Json信息获取以及写入
+// Json淇℃伅鑾峰彇浠ュ強鍐欏叆
 
 #include <fstream>
 #include <map>
@@ -10,45 +10,10 @@
 #include "EncodingConvert.h"
 #include "fifo_json.hpp"
 
-class JsonList
-{
-	std::vector<std::string> vRes;
-public:
-	std::string dump()
-	{
-		if (vRes.empty())return "{}";
-		if (vRes.size() == 1)return vRes[0];
-		std::string s;
-		for (auto it = vRes.begin(); it != vRes.end(); ++it)
-		{
-			if (it == vRes.begin())s = "[\n" + *it;
-			else s += ",\n" + *it;
-		}
-		s += "\n]";
-		return s;
-	}
-
-	JsonList& operator<<(std::string s)
-	{
-		vRes.push_back(s);
-		return *this;
-	}
-
-	[[nodiscard]] bool empty() const
-	{
-		return vRes.empty();
-	}
-
-	[[nodiscard]] size_t size() const
-	{
-		return vRes.size();
-	}
-};
-
 template <typename T>
 std::enable_if_t<!std::is_arithmetic_v<T>, T> readJKey(const std::string& strJson)
 {
-	return UTF8toGBK(strJson);
+	return strJson;
 }
 
 template <typename T>
@@ -66,9 +31,9 @@ int readJMap(const fifo_json& j, Map& mapTmp)
 	int intCnt = 0;
 	for (auto& it : j.items())
 	{
-		std::string key = UTF8toGBK(it.key());
+		std::string key = it.key();
 		it.value().get_to(mapTmp[key]);
-		mapTmp[key] = UTF8toGBK(mapTmp[key]);
+		mapTmp[key] = mapTmp[key];
 		intCnt++;
 	}
 	return intCnt;
@@ -141,7 +106,7 @@ template <class C>
 		fifo_json j;
 		for (auto& [key,val] : mapTmp)
 		{
-			j[GBKtoUTF8(key)] = GBKtoUTF8(val);
+			j[key] = val;
 		}
 		fout << j.dump(2);
 		fout.close();
@@ -161,7 +126,7 @@ void saveJMap(const std::filesystem::path& fpLoc, const C& mapTmp)
 		fifo_json j;
 		for (auto& [key,val] : mapTmp)
 		{
-			j[GBKtoUTF8(key)] = GBKtoUTF8(val);
+			j[key] = val;
 		}
 		fout << j.dump(2);
 		fout.close();

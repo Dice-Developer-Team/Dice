@@ -24,7 +24,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
-#include "DDAPI.h"
+#include "OneBotAPI.h"
 #include "DiceMsgSend.h"
 #include "MsgFormat.h"
 #include "GlobalVar.h"
@@ -133,16 +133,15 @@ void SendMsg()
 			}
 			if (msg.target.type == msgtype::Private)
 			{
-				if (console["DisableStrangerChat"] && !DD::isFriend(msg.target.uid, true))continue;
-				DD::sendPrivateMsg(msg.target.uid, msg.msg);
+				api::sendPrivateMsg(msg.target.uid, msg.msg);
 			}
 			else if (msg.target.type == msgtype::Group)
 			{
-				DD::sendGroupMsg(msg.target.gid, msg.msg);
+				api::sendGroupMsg(msg.target.gid, msg.msg);
 			}
 			else if (msg.target.type == msgtype::Channel)
 			{
-				DD::sendChannelMsg(msg.target.gid, msg.target.chid, msg.msg);
+				api::sendChannelMsg(msg.target.gid, msg.target.chid, msg.msg);
 			}
 		}
 		if (msgQueue.size() > 2)this_thread::sleep_for(chrono::milliseconds(console["SendIntervalBusy"]));

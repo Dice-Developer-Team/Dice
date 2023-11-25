@@ -164,19 +164,19 @@ string printDuringTime(long long seconds)
         return "N/A";
     }
     else if (seconds < 60) {
-        return std::to_string(seconds) + "Ãë";
+        return std::to_string(seconds) + "ç§’";
     }
     int mins = int(seconds / 60);
     seconds = seconds % 60;
     if (mins < 60) {
-        return std::to_string(mins) + "·Ö" + std::to_string(seconds) + "Ãë";
+        return std::to_string(mins) + "åˆ†" + std::to_string(seconds) + "ç§’";
     }
     int hours = mins / 60;
     mins = mins % 60;
     if (hours < 24) {
-        return std::to_string(hours) + "Ð¡Ê±" + std::to_string(mins) + "·Ö" + std::to_string(seconds) + "Ãë";
+        return std::to_string(hours) + "å°æ—¶" + std::to_string(mins) + "åˆ†" + std::to_string(seconds) + "ç§’";
     }
     int days = hours / 24;
     hours = hours % 24;
-    return std::to_string(days) + "Ìì" + std::to_string(hours) + "Ð¡Ê±" + std::to_string(mins) + "·Ö" + std::to_string(seconds) + "Ãë";
+    return std::to_string(days) + "å¤©" + std::to_string(hours) + "å°æ—¶" + std::to_string(mins) + "åˆ†" + std::to_string(seconds) + "ç§’";
 }

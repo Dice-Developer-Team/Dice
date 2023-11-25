@@ -1,8 +1,8 @@
 /*
- * ×Ô¶¨ÒåÈİÆ÷
+ * è‡ªå®šä¹‰å®¹å™¨
  * Copyright (C) 2019-2022 String.Empty
- * 2022/08/18 Ìí¼Ógrad_map
- * 2022/09/07 Ìí¼Ófifo_map&fifo_cmpr_ci
+ * 2022/08/18 æ·»åŠ grad_map
+ * 2022/09/07 æ·»åŠ fifo_map&fifo_cmpr_ci
  */
 #pragma once
 #include <string>
@@ -325,7 +325,7 @@ std::string listItem(const Con& list, const string& sepa = "|") {
 }
 
 
-//°´ÓÅÏÈ¼¶Êä³öÏîÄ¿
+//æŒ‰ä¼˜å…ˆçº§è¾“å‡ºé¡¹ç›®
 template<typename Elem>
 class PriorList{
 	std::priority_queue<std::pair<Elem, string>> qItem;

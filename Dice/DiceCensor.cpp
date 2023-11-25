@@ -24,17 +24,17 @@ int load_words(const std::filesystem::path& path, Censor& cens) {
 		if (word.empty())break;
 		if (word[0] == '#') {
 			word = word.substr(1);
-			//注释敏感等级
+			//娉ㄩ噴鏁忔劅绛夌骇
 			if (sens.count(word)) {
 				danger = (Censor::Level)sens[word];
 			}
-			//注释文件编码
+			//娉ㄩ噴鏂囦欢缂栫爜
 			else if (word == "UTF8") {
 				isUTF8 = true;
 			}
 		}
 		else {
-			if (isUTF8)word = UTF8toGBK(word);
+			if (!isUTF8)word = LocaltoUTF8(word);
 			cens.insert(word, danger);
 			cnt++;
 		}
@@ -53,11 +53,11 @@ void Censor::add_word(const string& word, Level danger = Level::Warning) {
 }
 bool Censor::rm_word(const string& word) {
 	if (!CustomWords.count(word)) {
-		//无可移除
+		//鏃犲彲绉婚櫎
 		if (!words.count(word)) {
 			return false;
 		}
-		//无自定义，但词库包含
+		//鏃犺嚜瀹氫箟锛屼絾璇嶅簱鍖呭惈
 		else {
 			words[word] = Level::Ignore;
 			CustomWords[word] = Level::Ignore;

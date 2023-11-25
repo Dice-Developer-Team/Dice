@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123ËÝä§
+ * Copyright (C) 2018-2019 w4123æº¯æ´„
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -107,7 +107,7 @@ bool checkUTF8(std::ifstream& fin) {
 	}
 	return cntUTF8;
 }
-// ÏÖÔÚÊÇGBKÁË
+// çŽ°åœ¨æ˜¯GBKäº†
 std::string GBKtoUTF8(const std::string& strGBK, bool isTrial)
 {
 	if (isTrial && checkUTF8(strGBK))return strGBK;
@@ -140,15 +140,22 @@ std::string LocaltoGBK(const std::string& str) {
 	return ConvertEncoding<char>(str, "utf-8", "gb18030");
 #endif
 }
-
-std::vector<std::string> GBKtoUTF8(const std::vector<std::string>& strGBK)
-{
-	std::vector<std::string> vOutUTF8;
-	std::transform(strGBK.begin(), strGBK.end(), std::back_inserter(vOutUTF8), [](const std::string& s) { return GBKtoUTF8(s); });
-	return vOutUTF8;
+std::string UTF8toLocal(const std::string& str) {
+#ifdef _WIN32
+	return UTF8toGBK(str);
+#else
+	return str;
+#endif
+}
+std::string LocaltoUTF8(const std::string& str) {
+#ifdef _WIN32
+	return GBKtoUTF8(str);
+#else
+	return str;
+#endif
 }
 
-// ÊÂÊµÉÏÊÇGB18030
+// äº‹å®žä¸Šæ˜¯GB18030
 std::string UTF8toGBK(const std::string& strUTF8, bool isTrial)
 {
 	if (isTrial && !checkUTF8(strUTF8))return strUTF8;
@@ -168,12 +175,6 @@ std::string UTF8toGBK(const std::string& strUTF8, bool isTrial)
 #endif
 }
 
-std::vector<std::string> UTF8toGBK(const std::vector<std::string>& vUTF8)
-{
-	std::vector<std::string> vOutGBK;
-	std::transform(vUTF8.begin(), vUTF8.end(), std::back_inserter(vOutGBK), [](const std::string& s) { return UTF8toGBK(s); });
-	return vOutGBK;
-}
 std::string UtoGBK(const wchar_t* strUTF16){
 #ifdef _WIN32
 	const int GBKlen = WideCharToMultiByte(CP_GBK, 0, strUTF16, -1, nullptr, 0, nullptr, nullptr);

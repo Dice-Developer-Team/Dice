@@ -1,6 +1,6 @@
 /*
- * ´ÊÌõ²éÑ¯Æ÷
- * »ùÓÚµ¹ÅÅÊµÏÖ¶Ô´ı²éÑ¯´ÊÌõµÄÏàËÆÆ¥Åä
+ * è¯æ¡æŸ¥è¯¢å™¨
+ * åŸºäºå€’æ’å®ç°å¯¹å¾…æŸ¥è¯¢è¯æ¡çš„ç›¸ä¼¼åŒ¹é…
  * Copyright (C) 2020-2022 String.Empty
  */
 #pragma once
@@ -17,7 +17,7 @@ using std::unordered_map;
 using std::unordered_set;
 
 struct WordNode {
-	//¸Ã½ÚµãµÄ·Ö´Ê£¬Á¬ĞøÊı×Ö¡¢Á¬Ğø×ÖÄ¸»ò¿í×Ö·ûµ¥×Ö
+	//è¯¥èŠ‚ç‚¹çš„åˆ†è¯ï¼Œè¿ç»­æ•°å­—ã€è¿ç»­å­—æ¯æˆ–å®½å­—ç¬¦å•å­—
 	//string word;
 	unordered_set<string>keys;
 	unordered_map<u16string, unordered_set<string>>next;
@@ -77,9 +77,9 @@ public:
 		unordered_set<string> sInter;
 		const WordNode* last_word = nullptr;
 		for (const auto& word : words) {
-			//ÎŞ¸Ã´Ê£¬ÂÔ¹ı
+			//æ— è¯¥è¯ï¼Œç•¥è¿‡
 			if (!word_list.count(word))continue;
-			//¼ì²éÁ¬×º
+			//æ£€æŸ¥è¿ç¼€
 			if (last_word && last_word->next.find(word) != last_word->next.end()) {
 				for (const auto& w : last_word->next.find(word)->second) {
 					if (res.count(w))sInter.insert(w);

@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  */
 
 #ifndef Dice_Console
@@ -68,7 +68,7 @@ public:
 
 	static const fifo_dict_ci<int> intDefault;
 	static const std::unordered_map<std::string, string> confComment;
-	//Í¨ÖªÁĞ±í 1-ÈÕ³£»î¶¯/2-ÌáĞÑÊÂ¼ş/4-½ÓÊÕÏûÏ¢/8-¾¯¸æÄÚÈİ/16-ÓÃ»§ÍÆËÍ/32-÷»Äï¹ã²¥
+	//é€šçŸ¥åˆ—è¡¨ 1-æ—¥å¸¸æ´»åŠ¨/2-æé†’äº‹ä»¶/4-æ¥æ”¶æ¶ˆæ¯/8-è­¦å‘Šå†…å®¹/16-ç”¨æˆ·æ¨é€/32-éª°å¨˜å¹¿æ’­
 	int log(const std::string& msg, int lv, const std::string& strTime = "");
 	void log(const std::string& msg, const std::string& file);
 	operator long long() const { return master; }
@@ -119,13 +119,7 @@ private:
 	fifo_map<chatInfo, int> NoticeList{};
 };
 extern Console console;
-
-extern std::set<long long> ExceptGroups;
-void getExceptGroup();
-	//÷»ÄïÁĞ±í
-	extern std::map<long long, long long> mDiceList;
-	//»ñÈ¡÷»ÄïÁĞ±í
-	void getDiceList();
+void dice_init();
 
 	struct fromMsg
 	{
@@ -139,9 +133,9 @@ void getExceptGroup();
 		};
 	};
 
-	//³ÌĞòÆô¶¯Ê±¼ä
+	//ç¨‹åºå¯åŠ¨æ—¶é—´
 	extern long long llStartTime;
-	//µ±Ç°Ê±¼ä
+	//å½“å‰æ—¶é—´
 	extern tm stNow;
 	std::string printClock(std::pair<int, int> clock);
 	std::string printSTime(tm st);
@@ -160,7 +154,7 @@ public:
 	ThreadFactory() {}
 
 	int rear = 0;
-	std::array<std::thread, 6> vTh;
+	std::array<std::thread, 5> vTh;
 
 	void operator()(void (*func)()) {
 		std::thread th{ [func]() {try { func(); } catch (...) { return; }} };

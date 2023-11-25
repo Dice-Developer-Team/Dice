@@ -1,6 +1,6 @@
 /**
- * »á»°¹ÜÀí
- * ³éÏóÓÚÁÄÌì´°¿ÚµÄµ¥Î»
+ * ä¼šè¯ç®¡ç†
+ * æŠ½è±¡äºèŠå¤©çª—å£çš„å•ä½
  * Copyright (C) 2019-2023 String.Empty
  */
 #include <shared_mutex>
@@ -12,7 +12,7 @@
 #include "DiceEvent.h"
 #include "CardDeck.h"
 #include "RandomGenerator.h"
-#include "DDAPI.h"
+#include "OneBotAPI.h"
 #include "DiceMod.h"
 
 DiceSessionManager sessions;
@@ -32,9 +32,9 @@ size_t DiceSession::roll(size_t face) {
 }
 string DiceSession::show()const {
 	ShowList li;
-	li << "×ÀºÅ: " + name;
-	if (attrs.has("rule"))li << "¹æÔò: " + attrs.get_str("rule");
-	if (is_logging())li << "ÈÕÖ¾¼ÇÂ¼ÖĞ:" + logger.name;
+	li << "æ¡Œå·: " + name;
+	if (attrs.has("rule"))li << "è§„åˆ™: " + attrs.get_str("rule");
+	if (is_logging())li << "æ—¥å¿—è®°å½•ä¸­:" + logger.name;
 	if (!master->empty()) {
 		ShowList sub;
 		for (auto& id : *master) {
@@ -61,7 +61,7 @@ string DiceSession::show()const {
 		for (auto& [face, rou] : roulette) {
 			faces << to_string(face);
 		}
-		li << "ÂÖÅÌ÷»: D" + faces.show("/");
+		li << "è½®ç›˜éª°: D" + faces.show("/");
 	}
 	return li.show("\n");
 }
@@ -160,7 +160,7 @@ void DiceSession::log_new(DiceEvent* msg) {
 	logger.fileLog = name + "_" + nameLog + ".txt";
 	logger.pathLog = DiceDir / logger.dirLog / GBKtoLocal(logger.fileLog);
 	logger.isLogging = true;
-	//ÏÈ·¢ÏûÏ¢ºó²åÈë
+	//å…ˆå‘æ¶ˆæ¯åæ’å…¥
 	msg->replyMsg("strLogNew");
 	for (const auto& ct : areas) {
 		LogList.insert(ct);
@@ -200,7 +200,7 @@ void DiceSession::log_off(DiceEvent* msg) {
 		return;
 	}
 	logger.isLogging = false;
-	//ÏÈ²Á³ıºó·¢ÏûÏ¢
+	//å…ˆæ“¦é™¤åå‘æ¶ˆæ¯
 	for (const auto& ct : areas) {
 		LogList.erase(ct);
 	}
@@ -283,7 +283,7 @@ void DiceChatLink::build(DiceEvent* msg) {
 	}
 	else {
 		LinkInfo& link{ LinkList[here] };
-		//ÖØÖÃÒÑ´æÔÚµÄÁ´½Ó
+		//é‡ç½®å·²å­˜åœ¨çš„é“¾æ¥
 		LinkFromChat.erase(link.target);
 		link = { true ,msg->get_str("option"),target };
 		LinkFromChat[here] = { target ,link.typeLink != "from" };
@@ -321,18 +321,18 @@ dict<> prep{
 		{"with","<->"},
 };
 string DiceChatLink::show(const chatInfo& here) {
-	string info{ "[ÎŞ]" };
+	string info{ "[æ— ]" };
 	if (LinkList.count(here)) {
 		const auto& link{ LinkList[here] };
 		info = printChat(here) + prep[link.typeLink] + printChat(link.target)
-			+ (link.isLinking ? "¡Ì" : "¡Á");
+			+ (link.isLinking ? "âˆš" : "Ã—");
 	}
 	else if (!LinkFromChat.count(here)) {
 		return info;
 	}
 	if (auto link{ LinkList.find(LinkFromChat[here].first) }; link != LinkList.end()) {
 		return printChat(LinkFromChat[here].first) + prep[link->second.typeLink] + printChat(here)
-			+ (link->second.isLinking ? "¡Ì" : "¡Á");
+			+ (link->second.isLinking ? "âˆš" : "Ã—");
 	}
 	return info;
 }
@@ -340,7 +340,7 @@ string DiceChatLink::list() {
 	ShowList li;
 	for (auto& [here,link]:LinkList) {
 		li << printChat(here) + prep[link.typeLink] + printChat(link.target)
-			+ (link.isLinking ? "¡Ì" : "¡Á");
+			+ (link.isLinking ? "âˆš" : "Ã—");
 	}
 	return li.show("\n");
 }
@@ -444,20 +444,10 @@ void DiceSession::deck_set(DiceEvent* msg) {
 	}
 	else {
 		vector<string> DeckSet = {};
-		if ((strCiteDeck == "Èº³ÉÔ±" || (strCiteDeck == "member" && !(strCiteDeck = "Èº³ÉÔ±").str_empty())) && !msg->isPrivate()) {
-			
-			if (auto list{ DD::getGroupMemberList(msg->fromChat.gid) }; list.empty()) {
-				msg->reply("Èº³ÉÔ±ÁĞ±í»ñÈ¡Ê§°Ü¡Á");
-			}
-			else for (auto each : list) {
-				DeckSet.push_back(printUser(each));
-			}
-			decks[key] = DeckSet;
-		}
-		else if (strCiteDeck == "range") {
+		if (strCiteDeck == "range") {
 			string strL = msg->readDigit();
 			string strR = msg->readDigit();
-			string strStep = msg->readDigit();	//²½³¤£¬²»Ö§³Ö·´Ïò
+			string strStep = msg->readDigit();	//æ­¥é•¿ï¼Œä¸æ”¯æŒåå‘
 			if (strL.empty()) {
 				msg->replyMsg("strRangeEmpty");
 				return;
@@ -561,7 +551,7 @@ void DiceSession::_draw(DiceEvent* msg) {
 	case -1: break;
 	case -2:
 		msg->replyMsg("strParaIllegal");
-		console.log("ÌáĞÑ:" + printUser(msg->fromChat.uid) + "¶Ô" + getMsg("strSelfName") + "Ê¹ÓÃÁË·Ç·¨Ö¸Áî²ÎÊı\n" + msg->strMsg, 1,
+		console.log("æé†’:" + printUser(msg->fromChat.uid) + "å¯¹" + getMsg("strSelfName") + "ä½¿ç”¨äº†éæ³•æŒ‡ä»¤å‚æ•°\n" + msg->strMsg, 1,
 					printSTNow());
 		return;
 	}
@@ -591,7 +581,7 @@ void DiceSession::deck_show(DiceEvent* msg) {
 		return;
 	}
 	const string& strDeckName{ ((*msg)["deck_name"] = msg->readAttrName()).text };
-	//Ä¬ÈÏÁĞ³öËùÓĞÅÆ¶Ñ
+	//é»˜è®¤åˆ—å‡ºæ‰€æœ‰ç‰Œå †
 	if (strDeckName.empty()) {
 		ResList res;
 		for (auto& [key, val] : decks) {
@@ -667,16 +657,16 @@ void DiceSession::save() const
 		fifo_json jLog;
 		jLog["start"] = logger.tStart;
 		jLog["lastMsg"] = logger.tLastMsg;
-		jLog["name"] = GBKtoUTF8(logger.name);
-		jLog["file"] = GBKtoUTF8(logger.fileLog);
+		jLog["name"] = logger.name;
+		jLog["file"] = logger.fileLog;
 		jLog["logging"] = logger.isLogging;
 		jData["log"] = jLog;
 	}
 	if (!decks.empty()) {
 		fifo_json jDecks;
 		for (auto& [key,deck]:decks) {
-			jDecks[GBKtoUTF8(key)] = {
-				{"meta",GBKtoUTF8(deck.meta)},
+			jDecks[key] = {
+				{"meta",deck.meta},
 				{"idxs",deck.idxs},
 				{"size",deck.sizRes}
 			};
@@ -790,7 +780,7 @@ int DiceSessionManager::load() {
 			--cnt;
 			continue;
 		}
-		string name{ UTF8toGBK(filename.stem().u8string()) };
+		string name{ filename.stem().u8string() };
 		auto pSession(std::make_shared<Session>(name));
 		bool isUpdated{ false };
 		try {
@@ -816,9 +806,9 @@ int DiceSessionManager::load() {
 				fifo_json& jLog = j["log"];
 				jLog["start"].get_to(pSession->logger.tStart);
 				jLog["lastMsg"].get_to(pSession->logger.tLastMsg);
-				if (jLog.count("name"))pSession->logger.name = UTF8toGBK(jLog["name"].get<string>());
+				if (jLog.count("name"))pSession->logger.name = jLog["name"].get<string>();
 				else pSession->logger.name = to_string(pSession->logger.tStart);
-				pSession->logger.fileLog = UTF8toGBK(jLog["file"].get<string>());
+				jLog["file"].get_to(pSession->logger.fileLog);
 				jLog["logging"].get_to(pSession->logger.isLogging);
 				pSession->logger.update();
 				pSession->logger.pathLog = DiceDir / pSession->logger.dirLog / GBKtoLocal(pSession->logger.fileLog);
@@ -839,9 +829,9 @@ int DiceSessionManager::load() {
 			}
 			if (j.count("decks")) for (auto& it : j["decks"].items()) {
 				if (it.value()["meta"].empty())continue;
-				std::string key = UTF8toGBK(it.key());
+				std::string key = it.key();
 				auto& deck{ pSession->decks[key] };
-				deck.meta = UTF8toGBK(it.value()["meta"].get<vector<string>>());
+				it.value()["meta"].get_to(deck.meta);
 				if (it.value().count("rest")) {
 					it.value()["rest"].get_to(pSession->decks[key].idxs);
 					pSession->decks[key].sizRes = pSession->decks[key].idxs.size();
@@ -857,10 +847,10 @@ int DiceSessionManager::load() {
 					it.value()["pool"].get<vector<size_t>>(), it.value()["rest"]));
 			}
 			if (j.count("tables"))for (auto& it : j["tables"].items()) {
-				pSession->attrs.set(UTF8toGBK(it.key()), it.value());
+				pSession->attrs.set(it.key(), it.value());
 			}
 			if (j.count("data"))for (auto& it : j["data"].items()) {
-				pSession->attrs.set(UTF8toGBK(it.key()), it.value());
+				pSession->attrs.set(it.key(), it.value());
 			}
 			if (j.count("master"))for (auto& it : j["master"]) {
 				pSession->master->emplace(it.get<long long>());
@@ -873,7 +863,7 @@ int DiceSessionManager::load() {
 			}
 		}
 		catch (std::exception& e) {
-			console.log("¶ÁÈ¡sessionÎÄ¼ş" + UTF8toGBK(filename.u8string()) + "³ö´í!" + e.what(), 1);
+			console.log("è¯»å–sessionæ–‡ä»¶" + filename.u8string() + "å‡ºé”™!" + e.what(), 1);
 		}
 		SessionByName[name] = pSession;
 		for (const auto& chat : pSession->areas) {
@@ -885,7 +875,7 @@ int DiceSessionManager::load() {
 		linker.load();
 	}
 	catch (const std::exception& e) {
-		console.log("¶ÁÈ¡link¼ÇÂ¼Ê±Óöµ½ÒâÍâ´íÎó£¬Çë³¢ÊÔÅÅ³ı/conf/LinkList.jsonÖĞµÄÒì³£!"
+		console.log("è¯»å–linkè®°å½•æ—¶é‡åˆ°æ„å¤–é”™è¯¯ï¼Œè¯·å°è¯•æ’é™¤/conf/LinkList.jsonä¸­çš„å¼‚å¸¸!"
 			+ string(e.what()), 0b1000, printSTNow());
 	}
 	return cnt;

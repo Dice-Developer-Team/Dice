@@ -1,9 +1,9 @@
 #pragma once
 
 /*
- * ºóÌ¨ÏµÍ³
- * Copyright (C) 2019-2022 String.Empty
- * ¿ØÖÆÇåÀíÓÃ»§/ÈºÁÄ¼ÇÂ¼£¬ÇåÀíÍ¼Æ¬£¬¼à¿ØÏµÍ³
+ * åå°ç³»ç»Ÿ
+ * Copyright (C) 2019-2023 String.Empty
+ * æ§åˆ¶æ¸…ç†ç”¨æˆ·/ç¾¤èŠè®°å½•ï¼Œæ¸…ç†å›¾ç‰‡ï¼Œç›‘æ§ç³»ç»Ÿ
  */
 
 #include <set>
@@ -34,17 +34,17 @@ constexpr auto CQ_FACE = "[CQ:face,id=";
 constexpr auto CQ_POKE = "[CQ:poke,id=";
 constexpr auto CQ_FILE = "[CQ:file,";
 
-//¼ÓÔØÊı¾İ
+//åŠ è½½æ•°æ®
 void loadData();
-//±£´æÊı¾İ
+//ä¿å­˜æ•°æ®
 void dataBackUp();
 
-//ÓÃ»§¼ÇÂ¼
+//ç”¨æˆ·è®°å½•
 class User
 {
 public:
 	long long ID = 0;
-	//1-Ë½ÓÃĞÅÈÎ£¬2-À­ºÚ»íÃâ£¬3-¼ÓºÚÍËÈº£¬4-ºóÌ¨¹ÜÀí£¬5-Master
+	//1-ç§ç”¨ä¿¡ä»»ï¼Œ2-æ‹‰é»‘è±å…ï¼Œ3-åŠ é»‘é€€ç¾¤ï¼Œ4-åå°ç®¡ç†ï¼Œ5-Master
 	int nTrust = 0;
 	time_t tCreated = time(nullptr);
 
@@ -143,7 +143,7 @@ string forward_filter(const string&, long long fromGID = 0);
 
 extern const map<string, short> mChatConf;
 
-//ÈºÁÄ¼ÇÂ¼
+//ç¾¤èŠè®°å½•
 class Chat
 {
 public:
@@ -270,7 +270,7 @@ DWORD getRamPort();
 
 __int64 compareFileTime(const FILETIME& ft1, const FILETIME& ft2);
 
-//WIN CPUÊ¹ÓÃÇé¿ö
+//WIN CPUä½¿ç”¨æƒ…å†µ
 long long getWinCpuUsage();
 
 long long getProcessCpu();

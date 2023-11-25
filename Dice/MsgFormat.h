@@ -9,8 +9,8 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2018-2021 w4123婧磩
+ * Copyright (C) 2019-2023 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -105,7 +105,7 @@ public:
 	}
 };
 
-//按属性名输出项目
+//鎸夊睘鎬у悕杈撳嚭椤圭洰
 class AttrList {
 	std::unordered_map<string, string> mItem;
 	std::vector<string> vKey;

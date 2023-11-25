@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * ÏûÏ¢´¦Àí
+ * æ¶ˆæ¯å¤„ç†
  * Copyright (C) 2018-2021 w4123
  * Copyright (C) 2019-2023 String.Empty
  */
@@ -19,7 +19,7 @@ using std::string;
 class RD;
 
 class DiceSession;
-//´ò°ü´ı´¦ÀíÏûÏ¢
+//æ‰“åŒ…å¾…å¤„ç†æ¶ˆæ¯
 class DiceEvent : public AttrObject {
 public:
 	chatInfo fromChat;
@@ -51,13 +51,13 @@ public:
 	void replyRollDiceErr(int, const RD&);
 	void replyHidden();
 
-	//Í¨Öª
+	//é€šçŸ¥
 	void note(std::string strMsg, int note_lv = 0b1);
 
-	//´òÓ¡ÏûÏ¢À´Ô´
+	//æ‰“å°æ¶ˆæ¯æ¥æº
 	std::string printFrom();
 
-	//×ª·¢ÏûÏ¢
+	//è½¬å‘æ¶ˆæ¯
 	void fwdMsg();
 	void logEcho();
 	int AdminEvent(const string& strOption);
@@ -65,15 +65,14 @@ public:
 	int BasicOrder();
 	int InnerOrder();
 	bool monitorFrq();
-	//ÅĞ¶ÏÊÇ·ñÏìÓ¦
-	bool DiceFilter();
+	//åˆ¤æ–­æ˜¯å¦å“åº”
+	void DiceFilter();
 	bool WordCensor();
 	void virtualCall();
 	short trusted = 0;
-	bool isCalled = false;
+	bool isCalled = true;
 
 private:
-	bool isDisabled = false;
 	std::optional<string> getGameRule();
 	bool canRoomHost();
 
@@ -81,7 +80,7 @@ private:
 public:
 	bool isVirtual = false;
 	unsigned int intMsgCnt = 0;
-	//Ìø¹ı¿Õ¸ñ
+	//è·³è¿‡ç©ºæ ¼
 	void readSkipSpace()
 	{
 		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
@@ -101,7 +100,7 @@ public:
 		return strPara;
 	}
 
-	//¶ÁÈ¡ÖÁ·Ç¿Õ¸ñ¿Õ°×·û
+	//è¯»å–è‡³éç©ºæ ¼ç©ºç™½ç¬¦
 	string readUntilTab()
 	{
 		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
@@ -124,7 +123,7 @@ public:
 		return strMsg.substr(intMsgCnt);
 	}
 
-	//¶ÁÈ¡²ÎÊı(Í³Ò»Ğ¡Ğ´)
+	//è¯»å–å‚æ•°(ç»Ÿä¸€å°å†™)
 	string readPara()
 	{
 		string strPara;
@@ -141,12 +140,12 @@ public:
 		return strPara;
 	}
 
-	//¶ÁÈ¡Êı×Ö
+	//è¯»å–æ•°å­—
 	string readDigit(bool isForce = true);
 
-	//¶ÁÈ¡Êı×Ö²¢´æÈëÕûĞÍ
+	//è¯»å–æ•°å­—å¹¶å­˜å…¥æ•´å‹
 	int readNum(int&);
-	//¶ÁÈ¡ÈººÅ
+	//è¯»å–ç¾¤å·
 	long long readID()
 	{
 		const string strGroup = readDigit();
@@ -154,7 +153,7 @@ public:
 		return stoll(strGroup);
 	}
 
-	//ÊÇ·ñ¿É¿´×öÖÀ÷»±í´ïÊ½
+	//æ˜¯å¦å¯çœ‹åšæ·éª°è¡¨è¾¾å¼
 	bool isRollDice()
 	{
 		readSkipSpace();
@@ -171,7 +170,7 @@ public:
 		return false;
 	}
 
-	//¶ÁÈ¡ÖÀ÷»±í´ïÊ½
+	//è¯»å–æ·éª°è¡¨è¾¾å¼
 	string readDice()
 	{
 		string strDice;
@@ -192,7 +191,7 @@ public:
 		return strDice;
 	}
 
-	//¶ÁÈ¡º¬×ªÒåµÄ±í´ïÊ½
+	//è¯»å–å«è½¬ä¹‰çš„è¡¨è¾¾å¼
 	string readExp()
 	{
 		bool inBracket = false;
@@ -229,7 +228,7 @@ public:
 		return strMsg.substr(intBegin, intMsgCnt - intBegin);
 	}
 
-	//¶ÁÈ¡µ½Ã°ºÅ»òµÈºÅÍ£Ö¹µÄÎÄ±¾
+	//è¯»å–åˆ°å†’å·æˆ–ç­‰å·åœæ­¢çš„æ–‡æœ¬
 	string readToColon()
 	{
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
@@ -247,7 +246,7 @@ public:
 		return strMsg.substr(intBegin, intMsgCnt - intBegin);
 	}
 
-	//¶ÁÈ¡´óĞ¡Ğ´²»Ãô¸ĞµÄ¼¼ÄÜÃû
+	//è¯»å–å¤§å°å†™ä¸æ•æ„Ÿçš„æŠ€èƒ½å
 	string readAttrName();
 	string readFileName();
 	//
@@ -255,7 +254,7 @@ public:
 
 	int readClock(Clock& cc);
 
-	//¶ÁÈ¡·ÖÏî
+	//è¯»å–åˆ†é¡¹
 	string readItem();
 	int readItems(vector<string>&);
 };

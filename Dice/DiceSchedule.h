@@ -1,11 +1,11 @@
 #pragma once
 /*
  * Copyright (C) 2019-2022 String.Empty
- * ´¦Àí¶¨Ê±ÊÂ¼ş
- * ´¦Àí²»ÄÜ¼´Ê±Íê³ÉµÄÖ¸Áî
- * 2022/1/13: ÀäÈ´¼ÆÊ±
- * 2022/2/05: ½ñÈÕÊı¾İÀàĞÍÀ©Õ¹
- * 2022/8/08: »¥³âËø
+ * å¤„ç†å®šæ—¶äº‹ä»¶
+ * å¤„ç†ä¸èƒ½å³æ—¶å®Œæˆçš„æŒ‡ä»¤
+ * 2022/1/13: å†·å´è®¡æ—¶
+ * 2022/2/05: ä»Šæ—¥æ•°æ®ç±»å‹æ‰©å±•
+ * 2022/8/08: äº’æ–¥é”
  */
 
 #include <mutex>
@@ -48,7 +48,7 @@ struct CDConfig {
 };
 
 class DiceScheduler {
-	//ÊÂ¼şÀäÈ´ÆÚ
+	//äº‹ä»¶å†·å´æœŸ
 	unordered_map<string, time_t> untilJobs;
 	unordered_map<chatInfo, unordered_map<string, time_t>> cd_timer;
 public:
@@ -69,7 +69,7 @@ inline DiceScheduler sch;
 
 typedef void (*cmd)(AttrObject&);
 
-//½ñÈÕ¼ÇÂ¼
+//ä»Šæ—¥è®°å½•
 class DiceToday {
 	tm stToday;
 	unordered_map<long long, AttrObject>UserInfo;

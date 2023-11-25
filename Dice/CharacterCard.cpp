@@ -1,16 +1,16 @@
 /*
- * Íæ¼ÒÈËÎï¿¨
+ * ç©å®¶äººç‰©å¡
  * Copyright (C) 2019-2023 String.Empty
  */
 #include "CharacterCard.h"
-#include "DDAPI.h"
+#include "OneBotAPI.h"
 #include "DiceJS.h"
 #include "DiceMod.h"
 
-#define Text2GBK(s) (s ? (isUTF8 ? UTF8toGBK(s) :s) : "")
+#define Text2UTF8(s) (s ? (isUTF8 ? s : GBKtoUTF8(s)) : "")
 AttrShape::AttrShape(const tinyxml2::XMLElement* node, bool isUTF8) {
 	if (auto exp{ node->GetText() }) {
-		string s{ Text2GBK(exp) };
+		string s{ Text2UTF8(exp) };
 		if (auto text{ node->Attribute("text") }) {
 			if (auto lower{ toLower(text) }; lower == "dicexp") {
 				textType = AttrShape::TextType::Dicexp;
@@ -39,31 +39,31 @@ AttrVar AttrShape::init(const CharaCard* pc) {
 	return defVal;
 }
  /**
-  * ´íÎó·µ»ØÖµ
-  * 3:´óÓÚÉÏÏŞ
-  * 2:Ğ¡ÓÚÏÂÏŞ
-  * 1:¸¡µãÊı¹æÕû
-  * -1:ÀàĞÍÎŞ·¨Æ¥Åä
+  * é”™è¯¯è¿”å›å€¼
+  * 3:å¤§äºä¸Šé™
+  * 2:å°äºä¸‹é™
+  * 1:æµ®ç‚¹æ•°è§„æ•´
+  * -1:ç±»å‹æ— æ³•åŒ¹é…
   */
 int AttrShape::check(AttrVar& val) {
 	return 0;
 }
 
 /**
- * ´íÎó·µ»ØÖµ
- * -1:PcCardFull ½ÇÉ«¿¨ÒÑÂú
- * -2:PcTempInvalid Ä£°åÎŞĞ§£¨ÒÑÆúÓÃ£©
- * -3:PcNameEmpty ¿¨ÃûÎª¿Õ
- * -4:PCNameExist ¿¨ÃûÒÑ´æÔÚ
- * -5:PcNameNotExist ¿¨Ãû²»´æÔÚ
- * -6:PCNameInvalid ¿¨ÃûÎŞĞ§
- * -7:PcInitDelErr É¾³ı³õÊ¼¿¨
- * -8:PcNameSetErr ¿¨Ãû·Ç·¨¸ü¸Ä
- * -11:PcTextTooLong ÎÄ±¾¹ı³¤
- * -21:PcLockKill É¾³ıËø¶¨
- * -22:PcLockName Ãû³ÆËø¶¨
- * -23:PcLockWrite ½ûÖ¹Ğ´Èë/ĞŞ¸Ä
- * -24:PcLockRead ½ûÖ¹²é¿´
+ * é”™è¯¯è¿”å›å€¼
+ * -1:PcCardFull è§’è‰²å¡å·²æ»¡
+ * -2:PcTempInvalid æ¨¡æ¿æ— æ•ˆï¼ˆå·²å¼ƒç”¨ï¼‰
+ * -3:PcNameEmpty å¡åä¸ºç©º
+ * -4:PCNameExist å¡åå·²å­˜åœ¨
+ * -5:PcNameNotExist å¡åä¸å­˜åœ¨
+ * -6:PCNameInvalid å¡åæ— æ•ˆ
+ * -7:PcInitDelErr åˆ é™¤åˆå§‹å¡
+ * -8:PcNameSetErr å¡åéæ³•æ›´æ”¹
+ * -11:PcTextTooLong æ–‡æœ¬è¿‡é•¿
+ * -21:PcLockKill åˆ é™¤é”å®š
+ * -22:PcLockName åç§°é”å®š
+ * -23:PcLockWrite ç¦æ­¢å†™å…¥/ä¿®æ”¹
+ * -24:PcLockRead ç¦æ­¢æŸ¥çœ‹
  */
 unordered_map<int, string> PlayerErrors{
 	{-1,"strPcCardFull"},
@@ -81,20 +81,20 @@ CardTemp ModelBRP{ "BRP", dict_ci<>{}, std::vector<std::vector<std::string>>{}, 
 				{"__DefaultDice",100}
 			}};
 std::vector<std::pair<std::string, std::string>> BuildCOC7 = {
-	{"__Name", "{Ëæ»úĞÕÃû}"},
-	{"Á¦Á¿", "3D6*5"},
-	{"ÌåÖÊ", "3D6*5"},
-	{"ÌåĞÍ", "2D6*5+30"},
-	{"Ãô½İ", "3D6*5"},
-	{"ÍâÃ²", "3D6*5"},
-	{"ÖÇÁ¦", "2D6*5+30"},
-	{"ÒâÖ¾", "3D6*5"},
-	{"½ÌÓı", "2D6*5+30"},
-	{"ĞÒÔË", "3D6*5"},
+	{"__Name", "{éšæœºå§“å}"},
+	{"åŠ›é‡", "3D6*5"},
+	{"ä½“è´¨", "3D6*5"},
+	{"ä½“å‹", "2D6*5+30"},
+	{"æ•æ·", "3D6*5"},
+	{"å¤–è²Œ", "3D6*5"},
+	{"æ™ºåŠ›", "2D6*5+30"},
+	{"æ„å¿—", "3D6*5"},
+	{"æ•™è‚²", "2D6*5+30"},
+	{"å¹¸è¿", "3D6*5"},
 };
-std::vector<std::pair<std::string, std::string>> COC7_BG{ {"ĞÔ±ğ", "{ĞÔ±ğ}"}, {"ÄêÁä", "7D6+8"}, {"Ö°Òµ", "{µ÷²éÔ±Ö°Òµ}"}, {"¸öÈËÃèÊö", "{¸öÈËÃèÊö}"},
-										{"ÖØÒªÖ®ÈË", "{ÖØÒªÖ®ÈË}"}, {"Ë¼ÏëĞÅÄî", "{Ë¼ÏëĞÅÄî}"}, {"ÒâÒå·Ç·²Ö®µØ", "{ÒâÒå·Ç·²Ö®µØ}"},
-										{"±¦¹óÖ®Îï", "{±¦¹óÖ®Îï}"}, {"ÌØÖÊ", "{µ÷²éÔ±ÌØµã}"},
+std::vector<std::pair<std::string, std::string>> COC7_BG{ {"æ€§åˆ«", "{æ€§åˆ«}"}, {"å¹´é¾„", "7D6+8"}, {"èŒä¸š", "{è°ƒæŸ¥å‘˜èŒä¸š}"}, {"ä¸ªäººæè¿°", "{ä¸ªäººæè¿°}"},
+										{"é‡è¦ä¹‹äºº", "{é‡è¦ä¹‹äºº}"}, {"æ€æƒ³ä¿¡å¿µ", "{æ€æƒ³ä¿¡å¿µ}"}, {"æ„ä¹‰éå‡¡ä¹‹åœ°", "{æ„ä¹‰éå‡¡ä¹‹åœ°}"},
+										{"å®è´µä¹‹ç‰©", "{å®è´µä¹‹ç‰©}"}, {"ç‰¹è´¨", "{è°ƒæŸ¥å‘˜ç‰¹ç‚¹}"},
 };
 CardTemp ModelCOC7{ "COC7", SkillNameReplace, BasicCOC7, mVariableCOC7, ExpressionCOC7,
 			SkillDefaultVal, dict_ci<CardPreset>{
@@ -109,7 +109,7 @@ dict_ci<ptr<CardTemp>> CardModels{
 CardPreset::CardPreset(const tinyxml2::XMLElement* d, bool isUTF8) {
 	for (auto elem = d->FirstChildElement(); elem; elem = elem->NextSiblingElement()) {
 		if (auto name{ elem->Attribute("name") }) {
-			shapes[Text2GBK(name)] = { elem,isUTF8 };
+			shapes[Text2UTF8(name)] = { elem,isUTF8 };
 		}
 	}
 }
@@ -122,27 +122,27 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 		}
 		if (auto root{ doc.FirstChildElement() }) {
 			if (auto tp_name{ root->Attribute("name") }) {
-				auto& tp{ m[Text2GBK(tp_name)] };
+				auto& tp{ m[Text2UTF8(tp_name)] };
 				for (auto elem = root->FirstChildElement(); elem; elem = elem->NextSiblingElement()) {
 					if (string tag{ elem->Name()}; tag == "alias") {
-						if (auto text{ elem->GetText() })readini(Text2GBK(text), tp.replaceName);
+						if (auto text{ elem->GetText() })readini(Text2UTF8(text), tp.replaceName);
 					}
 					else if (tag == "basic") {
 						tp.vBasicList.clear();
 						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
-							if (auto text{ kid->GetText() })tp.vBasicList.push_back(getLines(Text2GBK(text)));
+							if (auto text{ kid->GetText() })tp.vBasicList.push_back(getLines(Text2UTF8(text)));
 						}
 					}
 					else if (tag == "init") {
 						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
 							if (auto name{ kid->Attribute("name") }) {
-								tp.AttrShapes[Text2GBK(name)] = { kid,isUTF8 };
+								tp.AttrShapes[Text2UTF8(name)] = { kid,isUTF8 };
 							}
 						}
 					}
 					else if (tag == "presets") {
 						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
-							if (auto opt{ kid->Attribute("name") })tp.presets[Text2GBK(opt)] = CardPreset(kid, isUTF8);
+							if (auto opt{ kid->Attribute("name") })tp.presets[Text2UTF8(opt)] = CardPreset(kid, isUTF8);
 						}
 					}
 				}
@@ -151,7 +151,7 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 		}
 	}
 	else {
-		console.log("¶ÁÈ¡" + fpPath.string() + "Ê§°Ü:" + doc.ErrorStr(), 0);
+		console.log("è¯»å–" + fpPath.string() + "å¤±è´¥:" + doc.ErrorStr(), 0);
 		return -1;
 	}
 	return 0;
@@ -172,9 +172,9 @@ string CardTemp::show() {
 		for (const auto& [key, val] : AttrShapes) {
 			resVar << key;
 		}
-		res << "Ô¤ÉèÊôĞÔ:" + resVar.show("/");
+		res << "é¢„è®¾å±æ€§:" + resVar.show("/");
 	}
-	return "pcÄ£°å:" + type + res.show();
+	return "pcæ¨¡æ¿:" + type + res.show();
 }
 
 ptr<CardTemp> CharaCard::getTemplet()const{
@@ -238,7 +238,7 @@ bool CharaCard::has(const string& key)const {
 		|| getTemplet()->canGet(key);
 }
 
-//Çókey¶ÔÓ¦ÖÀ÷»±í´ïÊ½
+//æ±‚keyå¯¹åº”æ·éª°è¡¨è¾¾å¼
 string CharaCard::getExp(string& key, std::unordered_set<string> sRef){
 	sRef.insert(key = standard(key));
 	auto temp{ getTemplet() };
@@ -408,9 +408,9 @@ void CharaCard::readb(std::ifstream& fin) {
 void CharaCard::cntRollStat(int die, int face) {
 	if (face <= 0 || die <= 0)return;
 	string strFace{ to_string(face) };
-	string keyStatCnt{ "__StatD" + strFace + "Cnt" };	//ÖÀ÷»´ÎÊı
-	string keyStatSum{ "__StatD" + strFace + "Sum" };	//ÖÀ÷»µãÊıºÍ
-	string keyStatSqr{ "__StatD" + strFace + "SqrSum" };	//ÖÀ÷»µãÊıÆ½·½ºÍ
+	string keyStatCnt{ "__StatD" + strFace + "Cnt" };	//æ·éª°æ¬¡æ•°
+	string keyStatSum{ "__StatD" + strFace + "Sum" };	//æ·éª°ç‚¹æ•°å’Œ
+	string keyStatSqr{ "__StatD" + strFace + "SqrSum" };	//æ·éª°ç‚¹æ•°å¹³æ–¹å’Œ
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
 	inc(keyStatCnt);
 	inc(keyStatSum, die);
@@ -421,12 +421,12 @@ void CharaCard::cntRcStat(int die, int rate) {
 	if (rate <= 0 || rate >= 100 || die <= 0 || die > 100)return;
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
 	inc("__StatRcCnt");
-	if(die <= rate)inc("__StatRcSumSuc");	//Êµ¼Ê³É¹¦Êı
-	if (die == 1)inc("__StatRcCnt1");	//Í³¼Æ³ö1
-	if (die <= 5)inc("__StatRcCnt5");	//Í³¼Æ³ö1-5
-	if (die >= 96)inc("__StatRcCnt96");	//Í³¼Æ³ö96-100
-	if (die == 100)inc("__StatRcCnt100");	//Í³¼Æ³ö100
-	Attr["__StatRcSumRate"] = get_int("__StatRcSumRate") + rate;	//×Ü³É¹¦ÂÊ
+	if(die <= rate)inc("__StatRcSumSuc");	//å®é™…æˆåŠŸæ•°
+	if (die == 1)inc("__StatRcCnt1");	//ç»Ÿè®¡å‡º1
+	if (die <= 5)inc("__StatRcCnt5");	//ç»Ÿè®¡å‡º1-5
+	if (die >= 96)inc("__StatRcCnt96");	//ç»Ÿè®¡å‡º96-100
+	if (die == 100)inc("__StatRcCnt100");	//ç»Ÿè®¡å‡º100
+	Attr["__StatRcSumRate"] = get_int("__StatRcSumRate") + rate;	//æ€»æˆåŠŸç‡
 	update();
 }
 unordered_map<long long, Player> PList;
@@ -474,13 +474,13 @@ int Player::renameCard(const string& name, const string& name_new) 	{
 int Player::copyCard(const string& name1, const string& name2, long long group)
 {
 	if (name1.empty() || name2.empty())return -3;
-	//²»´æÔÚÔòĞÂ½¨ÈËÎï¿¨
+	//ä¸å­˜åœ¨åˆ™æ–°å»ºäººç‰©å¡
 	if (!mNameIndex.count(name2)){
 		return -5;
 	}
 	else if (!mNameIndex.count(name1)){
 		std::lock_guard<std::mutex> lock_queue(cardMutex);
-		//ÈËÎï¿¨ÊıÁ¿ÉÏÏŞ
+		//äººç‰©å¡æ•°é‡ä¸Šé™
 		if (mCardList.size() > 16)return -1;
 		if (name1.find(":") != string::npos)return -6;
 		mCardList.emplace(++indexMax, std::make_shared<CharaCard>(name1));
@@ -499,9 +499,9 @@ PC Player::getCard(const string& name, long long group)
 int Player::emptyCard(const string& s, long long group, const string& type)
 {
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
-	//ÈËÎï¿¨ÊıÁ¿ÉÏÏŞ
+	//äººç‰©å¡æ•°é‡ä¸Šé™
 	if (mCardList.size() > 16)return -1;
-	//ÎŞĞ§Ä£°å²»ÔÙ±¨´í
+	//æ— æ•ˆæ¨¡æ¿ä¸å†æŠ¥é”™
 	if (mNameIndex.count(s))return -4;
 	if (s.find("=") != string::npos)return -6;
 	mCardList.emplace(++indexMax, std::make_shared<CharaCard>(s, type));
@@ -512,7 +512,7 @@ int Player::emptyCard(const string& s, long long group, const string& type)
 int Player::newCard(string& s, long long group, string type)
 {
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
-	//ÈËÎï¿¨ÊıÁ¿ÉÏÏŞ
+	//äººç‰©å¡æ•°é‡ä¸Šé™
 	if (mCardList.size() > 16)return -1;
 	s = strip(s);
 	std::stack<string> vOption;
@@ -533,7 +533,7 @@ int Player::newCard(string& s, long long group, string type)
 		vOption.push(type.substr(Cnt + 1));
 		type.erase(type.begin() + Cnt, type.end());
 	}
-	//ÎŞĞ§Ä£°å²»ÔÙ±¨´í
+	//æ— æ•ˆæ¨¡æ¿ä¸å†æŠ¥é”™
 	//if (!getCardModels().count(type))return -2;
 	if (mNameIndex.count(s))return -4;
 	if (s.find("=") != string::npos)return -6;
@@ -569,7 +569,7 @@ int Player::buildCard(string& name, bool isClear, long long group)
 		strName = strip(name.substr(name.rfind(":") + 1));
 		strType = name.substr(0, name.rfind(":"));
 	}
-	//²»´æÔÚÔòĞÂ½¨ÈËÎï¿¨
+	//ä¸å­˜åœ¨åˆ™æ–°å»ºäººç‰©å¡
 	if (!strName.empty() && !mNameIndex.count(strName))
 	{
 		if (const int res = newCard(name, group))return res;
@@ -621,7 +621,7 @@ AttrVar idx_pc(AttrObject& eve){
 	if (!eve.has("uid"))return {};
 	long long uid{ eve.get_ll("uid") };
 	long long gid{ eve.get_ll("gid") };
-	if (PList.count(uid) && PList[uid][gid]->getName() != "½ÇÉ«¿¨")
+	if (PList.count(uid) && PList[uid][gid]->getName() != "è§’è‰²å¡")
 		return eve["pc"] = PList[uid][gid]->getName();
 	return idx_nick(eve);
 }

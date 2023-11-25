@@ -15,12 +15,8 @@
       "platform" : "!android"
     },
     "civetweb",
-    {
-      "name": "aws-sdk-cpp",
-      "platform" : "windows",
-      "default-features": false,
-      "features": [ "s3" ]
-    },
+    "libuv",
+    "libwebsockets",
     {
       "name": "curl",
       "platform" : "!windows",

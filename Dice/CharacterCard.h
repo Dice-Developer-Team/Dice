@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Íæ¼ÒÈËÎï¿¨
+ * ç©å®¶äººç‰©å¡
  * Copyright (C) 2019-2023 String.Empty
  */
 
@@ -77,11 +77,11 @@ class CardTemp
 public:
 	string type;
 	dict_ci<> replaceName = {};
-	//×÷³ÉÊ±Éú³É
+	//ä½œæˆæ—¶ç”Ÿæˆ
 	vector<vector<string>> vBasicList = {};
-	//Ôª±í
+	//å…ƒè¡¨
 	fifo_dict_ci<AttrShape> AttrShapes;
-	//Éú³É²ÎÊı
+	//ç”Ÿæˆå‚æ•°
 	dict_ci<CardPreset> presets = {};
 	CardTemp() = default;
 
@@ -131,7 +131,7 @@ struct lua_State;
 class CharaCard: public AttrObject
 {
 private:
-	string Name = "½ÇÉ«¿¨";
+	string Name = "è§’è‰²å¡";
 	unordered_set<string> locks;
 	std::mutex cardMutex;
 public:
@@ -171,7 +171,7 @@ public:
 
 	//int call(string key)const;
 
-	//±í´ïÊ½×ªÒå
+	//è¡¨è¾¾å¼è½¬ä¹‰
 	string escape(string exp, const unordered_set<string>& sRef)
 	{
 		if (exp[0] == '&')
@@ -192,12 +192,12 @@ public:
 		return exp;
 	}
 
-	//Çókey¶ÔÓ¦ÖÀ÷»±í´ïÊ½
+	//æ±‚keyå¯¹åº”æ·éª°è¡¨è¾¾å¼
 	string getExp(string& key, unordered_set<string> sRef = {});
 
 	bool countExp(const string& key)const;
 
-	//¼ÆËã±í´ïÊ½
+	//è®¡ç®—è¡¨è¾¾å¼
 	std::optional<int> cal(string exp)const;
 
 	void build(const string& para)
@@ -211,7 +211,7 @@ public:
 		}
 	}
 
-	//½âÎöÉú³É²ÎÊı
+	//è§£æç”Ÿæˆå‚æ•°
 	void buildv(string para = "");
 
 	[[nodiscard]] string standard(const string& key) const
@@ -263,11 +263,11 @@ private:
 	map<unsigned short, PC> mCardList;
 	dict_ci<unsigned short> mNameIndex;
 	unordered_map<unsigned long long, unsigned short> mGroupIndex{{0, 0}};
-	// ÈËÎï¿¨»¥³â
+	// äººç‰©å¡äº’æ–¥
 	std::mutex cardMutex;
 public:
 	Player() {
-		mCardList[0] = std::make_shared<CharaCard>( "½ÇÉ«¿¨" );
+		mCardList[0] = std::make_shared<CharaCard>( "è§’è‰²å¡" );
 	}
 
 	Player(const Player& pl)

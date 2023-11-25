@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123Ëİä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2023 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -28,8 +28,7 @@
 
 #include "DiceFile.hpp"
 #include "Jsonio.h"
-#include "QQEvent.h"
-#include "DDAPI.h"
+#include "OneBotAPI.h"
 #include "ManagerSystem.h"
 #include "DiceMod.h"
 #include "MsgFormat.h"
@@ -49,7 +48,6 @@
 #include "DicePython.h"
 
 #ifdef _WIN32
-#include "S3PutObject.h"
 #include "resource.h"
 #else
 #include <curl/curl.h>
@@ -68,7 +66,6 @@ unordered_map<long long, User> UserList{};
 unordered_map<long long, long long> TinyList{}; 
 unordered_map<long long, Chat> ChatList;
 ThreadFactory threads;
-std::filesystem::path fpFileLoc;
 std::unique_ptr<CivetServer> ManagerServer;
 BasicInfoApiHandler h_basicinfoapi;
 CustomMsgApiHandler h_msgapi;
@@ -82,7 +79,7 @@ AuthHandler auth_handler;
 
 string msgInit;
 
-//¼ÓÔØÊı¾İ
+//åŠ è½½æ•°æ®
 void loadData(){
 	ResList logList;
 	try	{
@@ -90,10 +87,10 @@ void loadData(){
 		std::filesystem::create_directory(DiceDir, ec);
 		loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList);
 		map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
-		//¶ÁÈ¡°ïÖúÎÄµµ
+		//è¯»å–å¸®åŠ©æ–‡æ¡£
 		fmt->clear();
 		fmt->load(logList);
-		//¶ÁÈ¡Ãô¸Ğ´Ê¿â
+		//è¯»å–æ•æ„Ÿè¯åº“
 		loadDir(load_words, DiceDir / "conf" / "censor", censor, logList, true);
 		loadJMap(DiceDir / "conf" / "CustomCensor.json", censor.CustomWords);
 		censor.build();
@@ -105,122 +102,122 @@ void loadData(){
 					const auto p{ file.path() };
 					auto& data{ selfdata_byFile[getNativePathString(p.filename())]
 						= make_shared<SelfData>(p) };
-					if (string file{ UTF8toGBK(p.stem().u8string()) }; !selfdata_byStem.count(file)) {
+					if (string file{ p.stem().u8string() }; !selfdata_byStem.count(file)) {
 						selfdata_byStem[file] = data;
 					}
 				}
 			}
-			DD::debugLog("Ô¤¼ÓÔØselfdata" + to_string(selfdata_byStem.size()) + "·İ");
+			api::printLog("é¢„åŠ è½½selfdata" + to_string(selfdata_byStem.size()) + "ä»½");
 		}
 		if (!logList.empty())
 		{
-			logList << "À©Õ¹ÅäÖÃ¶ÁÈ¡Íê±Ï¡Ì";
+			logList << "æ‰©å±•é…ç½®è¯»å–å®Œæ¯•âˆš";
 			console.log(logList.show(), 1, printSTNow());
 		}
 	}
 	catch (const std::exception& e)
 	{
-		logList << "¶ÁÈ¡Êı¾İÊ±Óöµ½ÒâÍâ´íÎó£¬³ÌĞò¿ÉÄÜÎŞ·¨Õı³£ÔËĞĞ¡£ÇëÅÅ³ıÒì³£ÎÄ¼şºóÖØÊÔ¡£" << e.what();
+		logList << "è¯»å–æ•°æ®æ—¶é‡åˆ°æ„å¤–é”™è¯¯ï¼Œç¨‹åºå¯èƒ½æ— æ³•æ­£å¸¸è¿è¡Œã€‚è¯·æ’é™¤å¼‚å¸¸æ–‡ä»¶åé‡è¯•ã€‚" << e.what();
 		console.log(logList.show(), 1, printSTNow());
 	}
 }
 
-//³õÊ¼»¯ÓÃ»§Êı¾İ
+//åˆå§‹åŒ–ç”¨æˆ·æ•°æ®
 void readUserData(){
 	std::error_code ec;
 	fs::path dir{ DiceDir / "user" };
 	ResList log;
 	try {
-		//¶ÁÈ¡ÓÃ»§¼ÇÂ¼
+		//è¯»å–ç”¨æˆ·è®°å½•
 		if (int cnt{ loadBFile(dir / "UserConf.dat", UserList) }; cnt > 0) {
 			fs::copy(dir / "UserConf.dat", dir / "UserConf.bak",
 				fs::copy_options::overwrite_existing, ec);
-			log << "¶ÁÈ¡ÓÃ»§¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "è¯»å–ç”¨æˆ·è®°å½•" + to_string(cnt) + "æ¡";
 		}
 		else if (fs::exists(dir / "UserConf.bak")) {
 			cnt = loadBFile(dir / "UserConf.bak", UserList);
-			if (cnt > 0)log << "»Ö¸´ÓÃ»§¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			if (cnt > 0)log << "æ¢å¤ç”¨æˆ·è®°å½•" + to_string(cnt) + "æ¡";
 		}
 		else {
 			cnt = loadBFile<long long, User, &User::old_readb>(dir / "UserConf.RDconf", UserList);
 			loadFile(dir / "UserList.txt", UserList);
-			if (cnt > 0)log << "Ç¨ÒÆÓÃ»§¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			if (cnt > 0)log << "è¿ç§»ç”¨æˆ·è®°å½•" + to_string(cnt) + "æ¡";
 		}
 		//for QQ Channel
 		if (User& self{ getUser(console.DiceMaid) }; !self.confs.get_ll("tinyID")) {
-			if (long long tiny{ DD::getTinyID() }) {
-				DD::debugMsg("»ñÈ¡·ÖÉíID:" + to_string(tiny));
+			if (long long tiny{ api::getTinyID() }) {
+				api::printLog("è·å–åˆ†èº«ID:" + to_string(tiny));
 				self.setConf("tinyID", tiny);
 			}
 		}
 	}
 	catch (const std::exception& e) {
-		console.log(string("¶ÁÈ¡ÓÃ»§¼ÇÂ¼Ê±Óöµ½ÒâÍâ´íÎó£¬Çë³¢ÊÔÉ¾³ıUserConf.datÆôÓÃ±¸·İ.bakÎÄ¼ş!")
+		console.log(string("è¯»å–ç”¨æˆ·è®°å½•æ—¶é‡åˆ°æ„å¤–é”™è¯¯ï¼Œè¯·å°è¯•åˆ é™¤UserConf.datå¯ç”¨å¤‡ä»½.bakæ–‡ä»¶!")
 			+ e.what(), 0b1000, printSTNow());
 	}
 	try {
-		//¶ÁÈ¡½ÇÉ«¼ÇÂ¼
+		//è¯»å–è§’è‰²è®°å½•
 		if (int cnt{ loadBFile(dir / "PlayerCards.RDconf", PList) }; cnt > 0) {
 			fs::copy(dir / "PlayerCards.RDconf", dir / "PlayerCards.bak",
 				fs::copy_options::overwrite_existing, ec);
-			log << "¶ÁÈ¡Íæ¼Ò¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "è¯»å–ç©å®¶è®°å½•" + to_string(cnt) + "æ¡";
 		}
 		else if (fs::exists(dir / "PlayerCards.bak")) {
 			cnt = loadBFile(dir / "PlayerCards.bak", PList);
-			if (cnt > 0)log << "»Ö¸´Íæ¼Ò¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			if (cnt > 0)log << "æ¢å¤ç©å®¶è®°å½•" + to_string(cnt) + "æ¡";
 		}
 		for (const auto& pl : PList) {
 			if (!UserList.count(pl.first))getUser(pl.first);
 		}
 	}
 	catch (const std::exception& e)	{
-		console.log("¶ÁÈ¡Íæ¼Ò¼ÇÂ¼Ê±Óöµ½ÒâÍâ´íÎó£¬Çë³¢ÊÔÉ¾³ıPlayerCards.RDconfÆôÓÃ±¸·İ.bakÎÄ¼ş!"
+		console.log("è¯»å–ç©å®¶è®°å½•æ—¶é‡åˆ°æ„å¤–é”™è¯¯ï¼Œè¯·å°è¯•åˆ é™¤PlayerCards.RDconfå¯ç”¨å¤‡ä»½.bakæ–‡ä»¶!"
 			+ string(e.what()), 0b1000, printSTNow());
 	}
 	try {
-		//¶ÁÈ¡ÈºÁÄ¼ÇÂ¼
+		//è¯»å–ç¾¤èŠè®°å½•
 		if (int cnt{ loadBFile(dir / "ChatConf.dat", ChatList) }; cnt > 0) {
 			fs::copy(dir / "ChatConf.dat", dir / "ChatConf.bak",
 				fs::copy_options::overwrite_existing, ec);
-			log << "¶ÁÈ¡ÈºÁÄ¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "è¯»å–ç¾¤èŠè®°å½•" + to_string(cnt) + "æ¡";
 		}
 		else if (fs::exists(dir / "ChatConf.bak")) {
 			cnt = loadBFile(dir / "ChatConf.bak", ChatList);
-			if (cnt > 0)log << "»Ö¸´ÈºÁÄ¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			if (cnt > 0)log << "æ¢å¤ç¾¤èŠè®°å½•" + to_string(cnt) + "æ¡";
 		}
 		else {
 			cnt = loadBFile(dir / "ChatConf.RDconf", ChatList);
 			loadFile(dir / "ChatList.txt", ChatList);
-			if (cnt > 0)log << "Ç¨ÒÆÈºÁÄ¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			if (cnt > 0)log << "è¿ç§»ç¾¤èŠè®°å½•" + to_string(cnt) + "æ¡";
 		}
 	}
 	catch (const std::exception& e)	{
-		console.log("¶ÁÈ¡ÈºÁÄ¼ÇÂ¼Ê±Óöµ½ÒâÍâ´íÎó£¬Çë³¢ÊÔÉ¾³ıChatConf.datÆôÓÃ±¸·İ.bakÎÄ¼ş!"
+		console.log("è¯»å–ç¾¤èŠè®°å½•æ—¶é‡åˆ°æ„å¤–é”™è¯¯ï¼Œè¯·å°è¯•åˆ é™¤ChatConf.datå¯ç”¨å¤‡ä»½.bakæ–‡ä»¶!"
 			+ string(e.what()), 0b1000, printSTNow());
 	}
-	//¶ÁÈ¡·¿¼ä¼ÇÂ¼
+	//è¯»å–æˆ¿é—´è®°å½•
 	sessions.load();
 	if (!log.empty()) {
-		log << "ÓÃ»§Êı¾İ¶ÁÈ¡Íê±Ï";
+		log << "ç”¨æˆ·æ•°æ®è¯»å–å®Œæ¯•";
 		console.log(log.show(), 0b1, printSTNow());
 	}
 }
 
-//±¸·İÊı¾İ
+//å¤‡ä»½æ•°æ®
 void dataBackUp()
 {
 	std::error_code ec;
 	std::filesystem::create_directory(DiceDir / "conf", ec);
 	std::filesystem::create_directory(DiceDir / "user", ec);
 	std::filesystem::create_directory(DiceDir / "audit", ec);
-	//±¸·İÁĞ±í
+	//å¤‡ä»½åˆ—è¡¨
 	saveBFile(DiceDir / "user" / "UserConf.dat", UserList);
 	saveBFile(DiceDir / "user" / "PlayerCards.RDconf", PList);
 	saveBFile(DiceDir / "user" / "ChatConf.dat", ChatList);
 }
 
 atomic_flag isIniting = ATOMIC_FLAG_INIT;
-EVE_Enable(eventEnable){
+void dice_init() {
 	if (isIniting.test_and_set())return;
 	if (Enabled)return;
 	clock_t clockStart = clock();
@@ -229,27 +226,12 @@ EVE_Enable(eventEnable){
 	err = curl_global_init(CURL_GLOBAL_DEFAULT);
 	if (err != CURLE_OK)
 	{
-		console.log("´íÎó: ¼ÓÔØlibcurlÊ§°Ü£¡", 1);
+		console.log("é”™è¯¯: åŠ è½½libcurlå¤±è´¥ï¼", 1);
 	}
-#else
-	aws_init();
 #endif
-	std::string RootDir = DD::getRootDir();
-	if (RootDir.empty()) {	
-#ifdef _WIN32
-		char path[MAX_PATH];
-		GetModuleFileNameA(nullptr, path, MAX_PATH);
-		dirExe = std::filesystem::path(path).parent_path();
-#endif
-	}
-	else 
-	{
-		dirExe = RootDir;
-	}
-	Dice_Full_Ver_On = Dice_Full_Ver + " on\n" + DD::getDriVer();
-	DD::debugLog(Dice_Full_Ver_On);
+	Dice_Full_Ver_On = Dice_Full_Ver + " for\n" + api::getApiVer();
+	api::printLog(Dice_Full_Ver_On);
 
-	console.DiceMaid = DD::getLoginID();
 	DiceDir = dirExe / ("Dice" + to_string(console.DiceMaid));
 	if (!exists(DiceDir)) {
 		filesystem::path DiceDirOld(dirExe / "DiceData");
@@ -262,85 +244,49 @@ EVE_Enable(eventEnable){
 	std::filesystem::create_directory(DiceDir / "audit", ec);
 	std::filesystem::create_directory(DiceDir / "mod", ec);
 	std::filesystem::create_directory(DiceDir / "plugin", ec);
-	fpFileLoc = DiceDir / "com.w4123.dice";
-	{
-		std::unique_lock lock(GlobalMsgMutex);
-		string& strSelfName{ GlobalMsg["strSelfName"] = DD::getLoginNick() };
-		if (strSelfName.empty()){
-			strSelfName = "÷»Äï[" + toString(console.DiceMaid % 10000, 4) + "]";
-		}
-	}
-	if (!console.load()){
-		console.setClock({ 11, 45 }, "clear");
-		console.loadNotice();
-	}
+	console.load();
 	if (!console) {
-		msgInit = R"(»¶Ó­Ê¹ÓÃDice!ÖÀ÷»»úÆ÷ÈË£¡
-Çë·¢ËÍ.master )"
-+ (console.authkey_pub = RandomGenerator::genKey(8)) + " //¹«÷»×÷³É »ò\n.master "
-+ (console.authkey_pri = RandomGenerator::genKey(8)) + 
-R"( //Ë½÷»×÷³É ¼´¿É³ÉÎªÎÒµÄÖ÷ÈË~
-¿É·¢ËÍ.help²é¿´°ïÖú
-·¢ËÍ.system gui¿ªÆôDiceMaidºóÌ¨Ãæ°å
-²Î¿¼ÎÄµµ²Î¿´.helpÁ´½Ó)";
-		DD::debugMsg(msgInit);
+		msgInit = R"(æ¬¢è¿ä½¿ç”¨Dice!æ·éª°æœºå™¨äººï¼
+å¯å‘é€.helpæŸ¥çœ‹å¸®åŠ©
+å‘é€.system guiå¼€å¯DiceMaidåå°é¢æ¿
+å‚è€ƒæ–‡æ¡£å‚çœ‹.helpé“¾æ¥)";
+		api::printLog(msgInit);
 	}
-	DD::debugLog("DiceConsole.load");
+	api::printLog("DiceConsole.load");
 	fmt = make_unique<DiceModManager>();
 	try {
 		std::unique_lock lock(GlobalMsgMutex);
-		if (loadJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg) >= 0
-			|| loadJMap(fpFileLoc / "CustomMsg.json", EditedMsg) > 0) {
+		if (loadJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg) >= 0) {
 			map_merge(GlobalMsg, EditedMsg);
 		}
 	}
 	catch (const std::exception& e) {
-		console.log(string("¶ÁÈ¡/conf/CustomMsg.jsonÊ§°Ü!") + e.what(), 1, printSTNow());
+		console.log(string("è¯»å–/conf/CustomMsg.jsonå¤±è´¥!") + e.what(), 1, printSTNow());
 	}
 	js_global_init();
 #ifdef DICE_PYTHON
 	if (console["EnablePython"])py.reset(new PyGlobal());
 #endif //DICE_PYTHON
 	loadData();
-	//³õÊ¼»¯ºÚÃûµ¥
-	blacklist = make_unique<DDBlackManager>();
-	if (auto cnt = blacklist->loadJson(DiceDir / "conf" / "BlackList.json");cnt < 0)
-	{
-		blacklist->loadJson(fpFileLoc / "BlackMarks.json");
-		cnt = blacklist->loadHistory(fpFileLoc);
-		if (cnt) {
-			blacklist->saveJson(DiceDir / "conf" / "BlackList.json");
-			console.log("³õÊ¼»¯²»Á¼¼ÇÂ¼" + to_string(cnt) + "Ìõ", 1);
-		}
-	}
-	else {
-		DD::debugLog("¶ÁÈ¡²»Á¼¼ÇÂ¼" + to_string(cnt) + "Ìõ");
-		if ((cnt = blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true)) > 0)
-			DD::debugLog("¶ÁÈ¡ÍâÔ´²»Á¼¼ÇÂ¼" + to_string(cnt) + "Ìõ");
-	}
-	//¶ÁÈ¡ÓÃ»§Êı¾İ
+	//åˆå§‹åŒ–é»‘åå•
+	//è¯»å–ç”¨æˆ·æ•°æ®
 	readUserData();
-	//¶ÁÈ¡µ±ÈÕÊı¾İ
+	//è¯»å–å½“æ—¥æ•°æ®
 	today = make_unique<DiceToday>();
-	set<long long> grps{ DD::getGroupIDList() };
-	for (auto gid : grps){
-		if (auto grp{ chat(gid).group().reset("Î´½ø").reset("ÒÑÍË").set("ÒÑÈëÈº") };
-			!grp.isset("lastMsg"))grp.setLst(-1);
-	}
-	// È·±£Ïß³ÌÖ´ĞĞ½áÊø
+	// ç¡®ä¿çº¿ç¨‹æ‰§è¡Œç»“æŸ
 	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
 
-	DD::debugLog("Dice.webUIInit");
+	api::printLog("Dice.webUIInit");
 	WebUIPasswordPath = DiceDir / "conf" / "WebUIPassword.digest";
 	if (!std::filesystem::exists(WebUIPasswordPath, ec) || std::filesystem::is_empty(WebUIPasswordPath, ec))
 	{		
 		setPassword("password");
 	}
 
-	// ³õÊ¼»¯·şÎñÆ÷
+	// åˆå§‹åŒ–æœåŠ¡å™¨
 	mg_init_library(0);
 
-	// ¶ÁÈ¡»·¾³±äÁ¿
+	// è¯»å–ç¯å¢ƒå˜é‡
 	bool AllowInternetAccess = console["WebUIAllowInternetAccess"];
 	int Port = console["WebUIPort"];
 
@@ -366,20 +312,18 @@ R"( //Ë½÷»×÷³É ¼´¿É³ÉÎªÎÒµÄÖ÷ÈË~
 	{
 		;
 	}
-	ExtensionManagerInstance = std::make_unique<ExtensionManager>();
 
-	DD::debugLog("Dice.threadInit");
+	api::printLog("Dice.threadInit");
 	Enabled = true;
 	threads(SendMsg);
 	threads(ConsoleTimer);
-	threads(warningHandler);
 	threads(frqHandler);
 	sch.start();
 
-	console.log(getMsg("strSelfName") + "³õÊ¼»¯Íê³É£¬ÓÃÊ±" + to_string(clock() - clockStart) + "ºÁÃë", 0b1,
+	console.log(getMsg("strSelfName") + "åˆå§‹åŒ–å®Œæˆï¼Œç”¨æ—¶" + to_string(clock() - clockStart) + "æ¯«ç§’", 0b1,
 		printSTNow());
 	llStartTime = time(nullptr);
-	DD::debugLog("Dice.WebInit");
+	api::printLog("Dice.WebInit");
 	if (console["EnableWebUI"]) {
 		try {
 			const std::string port_option = std::string(AllowInternetAccess ? "0.0.0.0" : "127.0.0.1") + ":" + std::to_string(Port);
@@ -391,12 +335,12 @@ R"( //Ë½÷»×÷³É ¼´¿É³ÉÎªÎÒµÄÖ÷ÈË~
 			if (HRSRC hRsrcInfo = FindResource(hDllModule, MAKEINTRESOURCE(ID_ADMIN_HTML), TEXT("FILE"))) {
 				DWORD dwSize = SizeofResource(hDllModule, hRsrcInfo);
 				if (HGLOBAL hGlobal = LoadResource(hDllModule, hRsrcInfo)) {
-					LPVOID pBuffer = LockResource(hGlobal);  // Ëø¶¨×ÊÔ´
+					LPVOID pBuffer = LockResource(hGlobal);  // é”å®šèµ„æº
 					char* pByte = new char[dwSize + 1];
 					fs::create_directories(DiceDir / "webui");
 					ofstream fweb{ DiceDir / "webui" / "index.html" };
 					fweb.write((const char*)pBuffer, dwSize);
-					FreeResource(hGlobal);// ÊÍ·Å×ÊÔ´
+					FreeResource(hGlobal);// é‡Šæ”¾èµ„æº
 				}
 			}
 #else
@@ -406,7 +350,7 @@ R"( //Ë½÷»×÷³É ¼´¿É³ÉÎªÎÒµÄÖ÷ÈË~
 				fweb.write(html.c_str(), html.length());
 			}
 			else if (!fs::exists(DiceDir / "webui" / "index.html")) {
-				console.log("»ñÈ¡webuiÒ³ÃæÊ§°Ü!Ïà¹Ø¹¦ÄÜÎŞ·¨Ê¹ÓÃ!", 0b10);
+				console.log("è·å–webuié¡µé¢å¤±è´¥!ç›¸å…³åŠŸèƒ½æ— æ³•ä½¿ç”¨!", 0b10);
 			}
 #endif
 			ManagerServer->addHandler("/api/basicinfo", h_basicinfoapi);
@@ -422,631 +366,28 @@ R"( //Ë½÷»×÷³É ¼´¿É³ÉÎªÎÒµÄÖ÷ÈË~
 
 			if (ports.empty())
 			{
-				console.log("Dice! WebUI Æô¶¯Ê§°Ü£¡¶Ë¿ÚÒÑ±»Ê¹ÓÃ£¿", 0b1);
+				console.log("Dice! WebUI å¯åŠ¨å¤±è´¥ï¼ç«¯å£å·²è¢«ä½¿ç”¨ï¼Ÿ", 0b1);
 			}
 			else
 			{
-				console.log("Dice! WebUI ÕıÓÚ¶Ë¿Ú" + std::to_string(ports[0])
-					+ "ÔËĞĞ£¬±¾µØ¿ÉÍ¨¹ıä¯ÀÀÆ÷·ÃÎÊhttp://localhost:" + std::to_string(ports[0])
-					+ "\nÄ¬ÈÏÓÃ»§ÃûÎªadminÃÜÂëÎªpassword£¬ÏêÏ¸½Ì³ÌÇë²é¿´ https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming", 0b1);
+				console.log("Dice! WebUI æ­£äºç«¯å£" + std::to_string(ports[0])
+					+ "è¿è¡Œï¼Œæœ¬åœ°å¯é€šè¿‡æµè§ˆå™¨è®¿é—®http://localhost:" + std::to_string(ports[0])
+					+ "\né»˜è®¤ç”¨æˆ·åä¸ºadminå¯†ç ä¸ºpasswordï¼Œè¯¦ç»†æ•™ç¨‹è¯·æŸ¥çœ‹ https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming", 0b1);
 			}
 		}
 		catch (const CivetException& e)
 		{
-			console.log("Dice! WebUI Æô¶¯Ê§°Ü£¡¶Ë¿ÚÒÑ±»Ê¹ÓÃ£¿", 0b1);
+			console.log("Dice! WebUI å¯åŠ¨å¤±è´¥ï¼ç«¯å£å·²è¢«ä½¿ç”¨ï¼Ÿ", 0b1);
 		}
-	}
-	//÷»ÄïÍøÂç
-	getDiceList();
-	getExceptGroup();
-	try
-	{
-		ExtensionManagerInstance->refreshIndex();
-		if (auto cnt{ ExtensionManagerInstance->getUpgradableCount() }) {
-			console.log("ÒÑ³É¹¦Ë¢ĞÂÈí¼ş°ü»º´æ£º" + to_string(ExtensionManagerInstance->getIndexCount()) + "¸öÍØÕ¹¿ÉÓÃ£¬"
-				+ to_string(cnt) + "¸ö¿ÉÉı¼¶", 0b1);
-		}
-		else {
-			console.log("ÒÑ³É¹¦Ë¢ĞÂÈí¼ş°ü»º´æ£º" + to_string(ExtensionManagerInstance->getIndexCount()) + "¸öÍØÕ¹¿ÉÓÃ", 0);
-		}
-	}
-	catch (const std::exception& e)
-	{
-		console.log(std::string("Ë¢ĞÂÈí¼ş°ü»º´æÊ§°Ü£º") + e.what(), 0);
 	}
 	isIniting.clear();
 	fmt->call_hook_event(AttrVars{ {{"Event","StartUp"}} });
 }
 
-mutex GroupAddMutex;
-bool eve_GroupAdd(Chat& grp) {
-	{
-		unique_lock<std::mutex> lock_queue(GroupAddMutex);
-		if (!grp.isset("ÒÑÈëÈº"))grp.set("ÒÑÈëÈº").reset("Î´½ø").reset("ÒÑÍË");
-		else return false;
-		if (ChatList.size() == 1 && !console)DD::sendGroupMsg(grp.ID, msgInit);
-	}
-	long long fromGID = grp.ID;
-	if (grp.Name.empty())
-		grp.set("Name", grp.Name = DD::getGroupName(fromGID));
-	GroupSize_t gsize(DD::getGroupSize(fromGID));
-	if (console["GroupInvalidSize"] > 0 && grp.confs.empty() && gsize.currSize > (size_t)console["GroupInvalidSize"]) {
-		grp.set("Ğ­ÒéÎŞĞ§");
-	}
-	if (!console["ListenGroupAdd"] || grp.isset("ºöÂÔ"))return 0;
-	string strNow = printSTNow();
-	string strMsg(getMsg("strSelfName"));
-	AttrObject eve{ {
-		{"Event","GroupAdd"},
-		{"gid",fromGID},
-	} };
-	try 
-	{
-		strMsg += "ĞÂ¼ÓÈë:" + DD::printGroupInfo(grp.ID);
-		if (blacklist->get_group_danger(fromGID)) 
-		{
-			grp.leave(blacklist->list_group_warning(fromGID));
-			strMsg += "ÎªºÚÃûµ¥Èº£¬ÒÑÍËÈº";
-			console.log(strMsg, 0b10, printSTNow());
-			return true;
-		}
-		if (grp.isset("Ğí¿ÉÊ¹ÓÃ"))strMsg += "£¨ÒÑ»ñÊ¹ÓÃĞí¿É£©";
-		else if(grp.isset("Ğ­ÒéÎŞĞ§"))strMsg += "£¨ÒÑ±ê¼ÇĞ­ÒéÎŞĞ§£©";
-		if (grp.inviter) {
-			strMsg += ",ÑûÇëÕß" + printUser(grp.inviter);
-		}
-		int max_trust = 0;
-		float ave_trust(0);
-		//int max_danger = 0;
-		long long ownerQQ = 0;
-		ResList blacks;
-		std::set<long long> list = DD::getGroupMemberList(fromGID);
-		if (list.empty()){
-			strMsg += "£¬ÈºÔ±Ãûµ¥Î´¼ÓÔØ£»";
-		}
-		else 
-		{
-			size_t cntUser{ 0 }, cntMember{ 0 }, cntDiceMaid{ 0 };
-			for (auto& each : list) 
-			{
-				if (each == console.DiceMaid)continue;
-				cntMember++;
-				if (UserList.count(each)) {
-					cntUser++;
-					ave_trust += getUser(each).nTrust;
-				}
-				if (DD::isGroupAdmin(fromGID, each, false))
-				{
-					max_trust |= (1 << trustedQQ(each));
-					if (blacklist->get_user_danger(each) > 1)
-					{
-						strMsg += ",·¢ÏÖºÚÃûµ¥¹ÜÀíÔ±" + printUser(each);
-						if (grp.isset("ÃâºÚ")) {
-							strMsg += "£¨ÈºÃâºÚ£©";
-						}
-						else
-						{
-							DD::sendGroupMsg(fromGID, blacklist->list_qq_warning(each));
-							grp.leave("·¢ÏÖºÚÃûµ¥¹ÜÀíÔ±" + printUser(each) + "½«Ô¤·ÀĞÔÍËÈº");
-							strMsg += "£¬ÒÑÍËÈº";
-							console.log(strMsg, 0b10, strNow);
-							return true;
-						}
-					}
-					if (DD::isGroupOwner(fromGID, each, false))
-					{
-						ownerQQ = each;
-						ave_trust += (gsize.currSize - 1) * trustedQQ(each);
-						strMsg += "£¬ÈºÖ÷" + printUser(each) + "£»";
-					}
-					else
-					{
-						ave_trust += (gsize.currSize - 10) * trustedQQ(each) / 10;
-					}
-				}
-				else if (blacklist->get_user_danger(each) > 1)
-				{
-					//max_trust |= 1;
-					blacks << printUser(each);
-					if (blacklist->get_user_danger(each)) 
-					{
-						AddMsgToQueue(blacklist->list_self_qq_warning(each), { 0,fromGID });
-					}
-				}
-				if (DD::isDiceMaid(each)) {
-					++cntDiceMaid;
-				}
-			}
-			if (!grp.inviter && list.size() <= 2 && ownerQQ){
-				grp.inviter = ownerQQ;
-				strMsg += "ÑûÇëÕß" + printUser(ownerQQ);
-			}
-			if (!cntMember) 
-			{
-				strMsg += "£¬ÈºÔ±Ãûµ¥Î´¼ÓÔØ£»";
-			}
-			else 
-			{
-				ave_trust /= cntMember;
-				strMsg += "\nÓÃ»§Å¨¶È" + to_string(cntUser * 100 / cntMember) + "% (" + to_string(cntUser) + "/" + to_string(cntMember) + "), ĞÅÈÎ¶È" + toString(ave_trust);
-			}
-			if (cntDiceMaid) 			{
-				strMsg += "\n¿ÉÊ¶±ğÍ¬ÏµDice!" + to_string(cntDiceMaid) + "Î»";
-			}
-		}
-		if (!blacks.empty())
-		{
-			string strNote = "\n·¢ÏÖºÚÃûµ¥ÈºÔ±" + blacks.show();
-			strMsg += strNote;
-		}
-		if (fmt->call_hook_event(eve)) {
-			console.log(strMsg, 1, strNow);
-			return 0;
-		}
-		if (console["Private"] && !grp.isset("Ğí¿ÉÊ¹ÓÃ"))
-		{	
-			//±ÜÃâĞ¡ÈºÈÆ¹ıÑûÇëÃ»¼ÓÉÏ°×Ãûµ¥
-			if (max_trust > 1 || ave_trust > 0.5)
-			{
-				grp.set("Ğí¿ÉÊ¹ÓÃ");
-				strMsg += "\nÒÑ×Ô¶¯×·¼ÓÊ¹ÓÃĞí¿É";
-			}
-			else if(!grp.isset("Ğ­ÒéÎŞĞ§"))
-			{
-				strMsg += "\nÎŞĞí¿ÉÊ¹ÓÃ£¬ÒÑÍËÈº";
-				console.log(strMsg, 1, strNow);
-				grp.leave(getMsg("strPreserve"));
-				return true;
-			}
-		}
-		if (!blacks.empty())console.log(strMsg, 0b10, strNow);
-		else console.log(strMsg, 1, strNow);
-	}
-	catch (...)
-	{
-		console.log(strMsg + "\nÈº" + to_string(fromGID) + "ĞÅÏ¢»ñÈ¡Ê§°Ü£¡", 0b1, printSTNow());
-		return true;
-	}
-	if (grp.isset("Ğ­ÒéÎŞĞ§"))return 0;
-	if (string selfIntro{ getMsg("strAddGroup", AttrVars{{"gid",fromGID}}) };
-		!selfIntro.empty()) {
-		this_thread::sleep_for(2s);
-		AddMsgToQueue(selfIntro, { 0,fromGID, 0 });
-	}
-	if (console["CheckGroupLicense"] && !grp.isset("Ğí¿ÉÊ¹ÓÃ"))	{
-		grp.set("Î´ÉóºË");
-		this_thread::sleep_for(2s);
-		AddMsgToQueue(getMsg("strGroupLicenseDeny"), { 0,fromGID, 0 });
-	}
-	return false;
-}
-
-//´¦Àí÷»×ÓÖ¸Áî
-
-EVE_PrivateMsg(eventPrivateMsg)
-{
-	if (!Enabled)return 0;
-	if (fromUID == console.DiceMaid && !console["ListenSelfEcho"])return 0;
-	else if (console["DisableStrangerChat"] && !DD::isFriend(fromUID, true))return 0;
-	shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
-		AttrVars{ { "Event", "Message" },
-			{ "fromMsg", message },
-			{ "uid", fromUID },
-			{ "time",(long long)time(nullptr)},
-		}, chatInfo{ fromUID,0,0 }));
-	return Msg->DiceFilter() || fmt->call_hook_event(Msg->merge({
-		{"hook","WhisperIgnored"},
-		}));
-}
-
-EVE_GroupMsg(eventGroupMsg)
-{
-	if (!Enabled)return 0;
-	Chat& grp = chat(fromGID).group();
-	if (fromUID == console.DiceMaid && !console["ListenGroupEcho"])return 0;
-	if (!grp.isset("ÒÑÈëÈº") && grp.getLst())eve_GroupAdd(grp);
-	if (!grp.isset("ºöÂÔ"))	{
-		shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
-			AttrVars({ { "Event", "Message" },
-				{ "fromMsg", message },
-				{ "msgid",msgId },
-				{ "uid",fromUID },
-				{ "gid",fromGID },
-				{ "time",(long long)time(nullptr)},
-				}), chatInfo{ fromUID,fromGID,0 }));
-		return Msg->DiceFilter();
-	}
-	return grp.setLst(time(nullptr)).isset("À¹½ØÏûÏ¢");
-}
-EVE_ChannelMsg(eventChannelMsg)
-{
-	if (!Enabled)return 0;
-	Chat& grp = chat(fromGID).channel();
-	if (fromUID == console.DiceMaid && !console["ListenChannelEcho"])return 0;
-	//if (!grp.isset("ºöÂÔ"))
-	{
-		shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
-			AttrVars({ { "Event","Message"},
-				{ "fromMsg", message },
-				{ "msgid", msgId },
-				{ "uid", fromUID },
-				{ "gid", fromGID },
-				{ "chid", fromChID },
-				{ "time",(long long)time(nullptr)}
-				}), chatInfo{ fromUID,fromGID,fromChID }));
-		return Msg->DiceFilter();
-	}
-	//return grp.isset("À¹½ØÏûÏ¢");
-	return false;
-}
-
-EVE_DiscussMsg(eventDiscussMsg)
-{
-	if (!Enabled)return 0;
-	//time_t tNow = time(NULL);
-	if (console["LeaveDiscuss"])
-	{
-		DD::sendDiscussMsg(fromDiscuss, getMsg("strLeaveDiscuss"));
-		this_thread::sleep_for(1000ms);
-		DD::setDiscussLeave(fromDiscuss);
-		return 1;
-	}
-	Chat& grp = chat(fromDiscuss);
-	if (blacklist->get_user_danger(fromUID) && console["AutoClearBlack"])
-	{
-		const string strMsg = "·¢ÏÖºÚÃûµ¥ÓÃ»§" + printUser(fromUID) + "£¬×Ô¶¯Ö´ĞĞÍËÈº";
-		console.log(printChat(grp) + strMsg, 0b10, printSTNow());
-		grp.leave(strMsg);
-		return 1;
-	}
-	shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
-		AttrVars({ { "Event", "Message"},
-			{ "fromMsg", message },
-			{ "uid", fromUID },
-			{ "gid", fromDiscuss }
-			}), chatInfo{ fromUID,fromDiscuss,0 }));
-	return Msg->DiceFilter() || grp.isset("À¹½ØÏûÏ¢");
-}
-
-EVE_GroupMemberIncrease(eventGroupMemberAdd)
-{
-	if (!Enabled)return 0;
-	Chat& grp = chat(fromGID);
-	if (grp.isset("ºöÂÔ"))return 0;
-	if (fromUID != console.DiceMaid){
-		if (chat(fromGID).confs.has("ÈëÈº»¶Ó­")){
-			AttrObject eve{ {{ "Event","GroupWelcome"},
-				{"gid",fromGID},
-				{"uid",fromUID},
-			} };
-			AddMsgToQueue(strip(fmt->format(grp.update().confs.get_str("ÈëÈº»¶Ó­"), eve, false)),
-				{ 0,fromGID });
-		}
-		if (blacklist->get_user_danger(fromUID))
-		{
-			const string strNow = printSTNow();
-			string strNote = printGroup(fromGID) + "·¢ÏÖ" + getMsg("strSelfName") + "µÄºÚÃûµ¥ÓÃ»§" + printUser(
-				fromUID) + "ÈëÈº";
-			AddMsgToQueue(blacklist->list_self_qq_warning(fromUID), { 0,fromGID });
-			if (grp.isset("ÃâÇå"))strNote += "£¨ÈºÃâÇå£©";
-			else if (grp.isset("ÃâºÚ"))strNote += "£¨ÈºÃâºÚ£©";
-			else if (grp.isset("Ğ­ÒéÎŞĞ§"))strNote += "£¨ÈºĞ­ÒéÎŞĞ§£©";
-			else if (DD::isGroupAdmin(fromGID, console.DiceMaid, false))strNote += "£¨ÈºÄÚÓĞÈ¨ÏŞ£©";
-			else if (console["LeaveBlackQQ"])
-			{
-				strNote += "£¨ÒÑÍËÈº£©";
-				grp.leave("·¢ÏÖºÚÃûµ¥ÓÃ»§" + printUser(fromUID) + "ÈëÈº,½«Ô¤·ÀĞÔÍËÈº");
-			}
-			console.log(strNote, 0b10, strNow);
-		}
-	}
-	else{
-		if (!grp.inviter)grp.inviter = operatorQQ;
-		{
-			unique_lock<std::mutex> lock_queue(GroupAddMutex);
-			if (grp.isset("ÒÑÈëÈº"))return 0;
-		}
-		return eve_GroupAdd(grp);
-	}
-	return 0;
-}
-
-EVE_GroupMemberKicked(eventGroupMemberKicked){
-	if (!Enabled || !fromUID)return 0;
-	Chat& grp = chat(fromGID);
-	if (beingOperateQQ == console.DiceMaid){
-		grp.reset("ÒÑÈëÈº").rmLst();
-		if (!console || grp.isset("ºöÂÔ"))return 0;
-		string strNow = printSTime(stNow);
-		string strNote = printUser(fromUID) + "½«" + printUser(beingOperateQQ) + "ÒÆ³öÁË" + printChat(grp);
-		console.log(strNote, 0b1000, strNow);
-		if (!console["ListenGroupKick"] || trustedQQ(fromUID) > 1 || grp.isset("ÃâºÚ") || grp.isset("Ğ­ÒéÎŞĞ§") || ExceptGroups.count(fromGID)) return 0;
-		AttrObject eve{ {
-			{"Event","GroupKicked"},
-			{"uid",fromUID},
-			{"gid",fromGID},
-		} };
-		if (fmt->call_hook_event(eve))return 1;
-		DDBlackMarkFactory mark{fromUID, fromGID};
-		mark.sign().type("kick").time(strNow).note(strNow + " " + strNote).comment(getMsg("strSelfCall") + "Ô­Éú¼ÇÂ¼");
-		if (grp.inviter && trustedQQ(grp.inviter) < 2)
-		{
-			strNote += ";ÈëÈºÑûÇëÕß£º" + printUser(grp.inviter);
-			if (console["KickedBanInviter"])mark.inviter(grp.inviter).note(strNow + " " + strNote);
-		}
-		grp.reset("Ğí¿ÉÊ¹ÓÃ").reset("ÃâÇå");
-		blacklist->create(mark.product());
-	}
-	else if (mDiceList.count(beingOperateQQ) && console["ListenGroupKick"])
-	{
-		if (!console || grp.isset("ºöÂÔ"))return 0;
-		string strNow = printSTime(stNow);
-		string strNote = printUser(fromUID) + "½«" + printUser(beingOperateQQ) + "ÒÆ³öÁË" + printChat(grp);
-		console.log(strNote, 0b1000, strNow);
-		if (trustedQQ(fromUID) > 1 || grp.isset("ÃâºÚ") || grp.isset("Ğ­ÒéÎŞĞ§") || ExceptGroups.count(fromGID)) return 0;
-		DDBlackMarkFactory mark{fromUID, fromGID};
-		mark.type("kick").time(strNow).note(strNow + " " + strNote).DiceMaid(beingOperateQQ).master(mDiceList[beingOperateQQ]).comment(strNow + " " + printUser(console.DiceMaid) + "Ä¿»÷");
-		grp.reset("Ğí¿ÉÊ¹ÓÃ").reset("ÃâÇå");
-		blacklist->create(mark.product());
-	}
-	return 0;
-}
-
-EVE_GroupBan(eventGroupBan)
-{
-	if (!Enabled) return 0;
-	Chat& grp = chat(fromGID);
-	if (grp.isset("ºöÂÔ") || (beingOperateQQ != console.DiceMaid && !mDiceList.count(beingOperateQQ)) || !console["ListenGroupBan"])return 0;
-	if (!duration || !duration[0])
-	{
-		if (beingOperateQQ == console.DiceMaid)
-		{
-			console.log(getMsg("self") + "ÔÚ" + printGroup(fromGID) + "ÖĞ±»½â³ı½ûÑÔ", 0b10, printSTNow());
-			return 1;
-		}
-	}
-	else
-	{
-		string strNow = printSTNow();
-		long long llOwner = 0;
-		string strNote = "ÔÚ" + printGroup(fromGID) + "ÖĞ," + printUser(beingOperateQQ) + "±»" + printUser(operatorQQ) + "½ûÑÔ" + duration;
-		if (!console["ListenGroupBan"] || trustedQQ(operatorQQ) > 1 || grp.isset("ÃâºÚ") || grp.isset("Ğ­ÒéÎŞĞ§") || ExceptGroups.count(fromGID)) 
-		{
-			console.log(strNote, 0b10, strNow);
-			return 1;
-		}
-		AttrObject eve{ {
-			{"Event","GroupBanned"},
-			{"uid",operatorQQ},
-			{"gid",fromGID},
-			{"duration",duration},
-		} };
-		if (fmt->call_hook_event(eve))return 1;
-		DDBlackMarkFactory mark{operatorQQ, fromGID};
-		mark.type("ban").time(strNow).note(strNow + " " + strNote);
-		if (mDiceList.count(operatorQQ))mark.fromUID(0);
-		if (beingOperateQQ == console.DiceMaid) {
-			if (!console)return 0;
-			mark.sign().comment(getMsg("strSelfCall") + "Ô­Éú¼ÇÂ¼");
-		}
-		else{
-			mark.DiceMaid(beingOperateQQ).master(mDiceList[beingOperateQQ]).comment(strNow + " " + printUser(console.DiceMaid) + "Ä¿»÷");
-		}
-		//Í³¼ÆÈºÄÚ¹ÜÀí
-		int intAuthCnt = 0;
-		string strAuthList;
-		for (auto admin : DD::getGroupAdminList(fromGID))
-		{
-			if (DD::isGroupOwner(fromGID, admin, false)) {
-				llOwner = admin;
-			}
-			else 
-			{
-				strAuthList += '\n' + printUser(admin);
-				intAuthCnt++;
-			}
-		}
-		strAuthList = "£»ÈºÖ÷" + printUser(llOwner) + ",ÁíÓĞ¹ÜÀíÔ±" + to_string(intAuthCnt) + "Ãû" + strAuthList;
-		mark.note(strNow + " " + strNote);
-		if (grp.inviter && beingOperateQQ == console.DiceMaid && trustedQQ(grp.inviter) < 2)
-		{
-			strNote += ";ÈëÈºÑûÇëÕß£º" + printUser(grp.inviter);
-			if (console["BannedBanInviter"])mark.inviter(grp.inviter);
-			mark.note(strNow + " " + strNote);
-		}
-		grp.reset("ÃâÇå").reset("Ğí¿ÉÊ¹ÓÃ").leave();
-		console.log(strNote + strAuthList, 0b1000, strNow);
-		blacklist->create(mark.product());
-		return 1;
-	}
-	return 0;
-}
-
-EVE_GroupInvited(eventGroupInvited)
-{
-	if (!Enabled) return 0;
-	if (!console["ListenGroupRequest"])return 0;
-	if (groupset(fromGID, "ºöÂÔ") < 1)
-	{
-		this_thread::sleep_for(3s);
-		AttrObject eve{ {
-			{"Event","GroupRequest"},
-			{"uid",fromUID},
-			{"gid",fromGID},
-		} };
-		bool isBlocked{ fmt->call_hook_event(eve) };
-		if (eve.has("approval")) {
-			if (eve.is("approval")) {
-				chat(fromGID).inviter = fromUID;
-				DD::answerFriendRequest(fromUID, 1);
-			}
-			else {
-				DD::answerFriendRequest(fromUID, 2);
-			}
-		}
-		if (isBlocked)return 1;
-		const string strNow = printSTNow();
-		string strMsg = "ÊÕµ½" + printUser(fromUID) + "µÄÈëÈºÑûÇë:" + DD::printGroupInfo(fromGID);
-		if (ExceptGroups.count(fromGID)) {
-			console.log(strMsg + "\nÒÑºöÂÔ£¨Ä¬ÈÏĞ­ÒéÎŞĞ§£©", 0b10, strNow);
-			DD::answerGroupInvited(fromGID, 3);
-		}
-		else if (blacklist->get_group_danger(fromGID)){
-			strMsg += "\n£¨ºÚÃûµ¥Èº¡Á£©";
-			console.log(strMsg, 0b10, strNow);
-			DD::answerGroupInvited(fromGID, 2);
-		}
-		else if (blacklist->get_user_danger(fromUID)){
-			strMsg += "\nÒÑ¾Ü¾ø£¨ºÚÃûµ¥ÓÃ»§£©";
-			console.log(strMsg, 0b10, strNow);
-			DD::answerGroupInvited(fromGID, 2);
-		}
-		else if (Chat& grp = chat(fromGID).group(); grp.isset("Ğí¿ÉÊ¹ÓÃ")) {
-			grp.setLst(0);
-			grp.inviter = fromUID;
-			strMsg += "\nÒÑÍ¬Òâ£¨ÒÑĞí¿ÉÊ¹ÓÃ£©";
-			console.log(strMsg, 1, strNow);
-			DD::answerGroupInvited(fromGID, 1);
-		}
-		else if (trustedQQ(fromUID))
-		{
-			grp.set("Ğí¿ÉÊ¹ÓÃ").reset("Î´ÉóºË").reset("Ğ­ÒéÎŞĞ§");
-			grp.inviter = fromUID;
-			strMsg += "\nÒÑÍ¬Òâ£¨ĞÅÈÎÓÃ»§£©";
-			console.log(strMsg, 1, strNow);
-			DD::answerGroupInvited(fromGID, 1);
-		}
-		else if (grp.isset("Ğ­ÒéÎŞĞ§")) {
-			strMsg += "\nÒÑºöÂÔ£¨Ğ­ÒéÎŞĞ§£©";
-			console.log(strMsg, 0b10, strNow);
-			DD::answerGroupInvited(fromGID, 3);
-		}
-		else if (console["GroupInvalidSize"] > 0 && DD::getGroupSize(grp.ID).currSize > (size_t)console["GroupInvalidSize"]) {
-			grp.set("Ğ­ÒéÎŞĞ§");
-			console.log(strMsg + "\nÒÑºöÂÔ£¨Èº¹æÄ£³¬±ê£©", 0b10, strNow);
-			DD::answerGroupInvited(fromGID, 3);
-		}
-		else if (console && console["Private"])
-		{
-			AddMsgToQueue(getMsg("strPreserve"), fromUID);
-			strMsg += "\nÒÑ¾Ü¾ø£¨Ë½ÓÃÄ£Ê½£©";
-			console.log(strMsg, 1, strNow);
-			DD::answerGroupInvited(fromGID, 2);
-		}
-		else {
-			grp.setLst(0);
-			grp.inviter = fromUID;
-			strMsg += "ÒÑÍ¬Òâ";
-			this_thread::sleep_for(2s);
-			console.log(strMsg, 1, strNow);
-			DD::answerGroupInvited(fromGID, true);
-		}
-		return 1;
-	}
-	return 0;
-}
-EVE_FriendRequest(eventFriendRequest) {
-	if (!Enabled) return 0;
-	if (!console["ListenFriendRequest"])return 0;
-	this_thread::sleep_for(3s);
-	AttrObject eve{{
-		{"Event","FriendRequest"},
-		{"fromMsg",message},
-		{"uid",fromUID},
-	} };
-	bool isBlocked{ fmt->call_hook_event(eve) };
-	if (eve.has("approval")) {
-		DD::answerFriendRequest(fromUID, eve.is("approval") ? 1 : 2,
-			fmt->format(eve.get_str("msg_reply"), eve));
-	}
-	if (isBlocked)return 1;
-	string strMsg = "ºÃÓÑÌí¼ÓÇëÇó£¬À´×Ô " + printUser(fromUID) + ":" + message;
-	if (blacklist->get_user_danger(fromUID)) {
-		strMsg += "\nÒÑ¾Ü¾ø£¨ÓÃ»§ÔÚºÚÃûµ¥ÖĞ£©";
-		DD::answerFriendRequest(fromUID, 2, "");
-		console.log(strMsg, 0b10, printSTNow());
-	}
-	else if (trustedQQ(fromUID)) {
-		strMsg += "\nÒÑÍ¬Òâ£¨ÊÜĞÅÈÎÓÃ»§£©";
-		DD::answerFriendRequest(fromUID, 1, getMsg("strAddFriendWhiteQQ", eve));
-		console.log(strMsg, 1, printSTNow());
-	}
-	else if (console["AllowStranger"] < 2 && !UserList.count(fromUID)) {
-		strMsg += "\nÒÑ¾Ü¾ø£¨ÎŞÓÃ»§¼ÇÂ¼£©";
-		DD::answerFriendRequest(fromUID, 2, getMsg("strFriendDenyNotUser"));
-		console.log(strMsg, 1, printSTNow());
-	}
-	else if (console["AllowStranger"] < 1) {
-		strMsg += "\nÒÑ¾Ü¾ø£¨·ÇĞÅÈÎÓÃ»§£©";
-		DD::answerFriendRequest(fromUID, 2, getMsg("strFriendDenyNoTrust"));
-		console.log(strMsg, 1, printSTNow());
-	}
-	else {
-		strMsg += "\nÒÑÍ¬Òâ";
-		DD::answerFriendRequest(fromUID, 1, getMsg("strAddFriend",eve));
-		console.log(strMsg, 1, printSTNow());
-	}
-	return 1;
-}
-EVE_FriendAdded(eventFriendAdd) {
-	if (!Enabled) return 0;
-	if (!console["ListenFriendAdd"])return 0;
-	this_thread::sleep_for(3s);
-	AttrObject eve{ {
-		{"Event","FriendAdd"},
-		{"uid",fromUID},
-	} };
-	if(fmt->call_hook_event(eve))return 1;
-	(trustedQQ(fromUID) > 0 && !getMsg("strAddFriendWhiteQQ", eve).empty())
-		? AddMsgToQueue(getMsg("strAddFriendWhiteQQ", eve), fromUID)
-		: AddMsgToQueue(getMsg("strAddFriend", eve), fromUID);
-	return 0;
-}
-EVE_Extra(eventExtra) {
-	if (!Enabled) return 0;
-	try {
-		AttrObject eve{ AttrObject(fifo_json::parse(jsonData)) };
-		if (fmt->call_hook_event(eve))return 1;
-	}
-	catch (std::exception& e) {
-		DD::debugLog("eventExtra´¦ÀíÒì³£!" + string(e.what()));
-	}
-	return 0;
-}
-
-EVE_Menu(eventMasterMode)
-{
-	if (!Enabled) return 0;
-	if (console) {
-		console.killMaster();
-#ifdef _WIN32
-		MessageBoxA(nullptr, "masterÒÑÇå³ı", "¹Ø±ÕMasterÄ£Ê½", MB_OK | MB_ICONINFORMATION);
-#endif
-	}
-	else {
-#ifdef _WIN32
-		MessageBoxA(nullptr, "MasterÄ£Ê½ÒÑ²»ÔÙÁíÉè¿ª¹Ø£¬ÇëÊ¹ÓÃ¿ÚÁî»òÔÚUI½çÃæÖ±½ÓÈÏÖ÷", "MasterÄ£Ê½ÒÑÆúÓÃ", MB_OK | MB_ICONINFORMATION);
-#endif
-	}
-	return 0;
-}
-
-#ifdef _WIN32
-#include <shellapi.h>
-EVE_Menu(eventGUI)
-{
-	if (!Enabled) return 0;
-	auto port{ ManagerServer->getListeningPorts()[0] };
-	ShellExecute(nullptr, TEXT("open"), (TEXT("http://127.0.0.1:") + std::to_wstring(port)).c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
-	return 1;
-}
-#endif
-
 void global_exit() {
 	Enabled = false;
 	mg_exit_library();
 	ManagerServer = nullptr;
-	ExtensionManagerInstance = nullptr;
 	dataBackUp();
 	sch.end();
 	censor = {};
@@ -1062,38 +403,8 @@ void global_exit() {
 	UserList.clear();
 	console.reset();
 	EditedMsg.clear();
-	blacklist.reset();
 #ifndef _WIN32
 	curl_global_cleanup();
-#else
-	aws_shutdown();
 #endif
 	threads.exit();
-}
-
-EVE_Disable(eventDisable)
-{
-	global_exit();
-}
-
-EVE_Exit(eventExit)
-{
-	if (Enabled)global_exit();
-}
-
-EVE_Menu(eventGlobalSwitch) {
-	if (!Enabled) return 0;
-	if (console["DisabledGlobal"]) {
-		console.set("DisabledGlobal", 0);
-#ifdef _WIN32
-		MessageBoxA(nullptr, "÷»ÄïÒÑ½áÊø¾²Ä¬¡Ì", "È«¾Ö¿ª¹Ø", MB_OK | MB_ICONINFORMATION);
-#endif
-	}
-	else {
-		console.set("DisabledGlobal", 1);
-#ifdef _WIN32
-		MessageBoxA(nullptr, "÷»ÄïÒÑÈ«¾Ö¾²Ä¬¡Ì", "È«¾Ö¿ª¹Ø", MB_OK | MB_ICONINFORMATION);
-#endif
-	}
-	return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * ∫ÛÃ®œµÕ≥
+ * ÂêéÂè∞Á≥ªÁªü
  * Copyright (C) 2019-2023 String.Empty
  */
 #ifdef _WIN32
@@ -12,33 +12,32 @@
 
 #include "CharacterCard.h"
 #include "GlobalVar.h"
-#include "DDAPI.h"
+#include "OneBotAPI.h"
 #include "CQTools.h"
 #include "DiceSession.h"
 #include "DiceSelfData.h"
 #include "DiceCensor.h"
 #include "DiceMod.h"
-#include "BlackListManager.h"
 
 std::filesystem::path dirExe;
 std::filesystem::path DiceDir("DiceData");
 
 const map<string, short> mChatConf{
-	//0-»∫π‹¿Ì‘±£¨2-–≈»Œ2º∂£¨3-–≈»Œ3º∂£¨4-π‹¿Ì‘±£¨5-œµÕ≥≤Ÿ◊˜
-	{"∫ˆ¬‘", 4},
-	{"¿πΩÿœ˚œ¢", 0},
-	{"Õ£”√÷∏¡Ó", 0},
-	{"Ω˚”√ªÿ∏¥", 0},
-	{"Ω˚”√jrrp", 0},
-	{"Ω˚”√draw", 0},
-	{"Ω˚”√me", 0},
-	{"Ω˚”√help", 0},
-	{"Ω˚”√ob", 0},
-	{"–Ìø… π”√", 1},
-	{"Œ¥…Û∫À", 1},
-	{"√‚«Â", 2},
-	{"√‚∫⁄", 4},
-	{"–≠“ÈŒﬁ–ß", 3},
+	//0-Áæ§ÁÆ°ÁêÜÂëòÔºå2-‰ø°‰ªª2Á∫ßÔºå3-‰ø°‰ªª3Á∫ßÔºå4-ÁÆ°ÁêÜÂëòÔºå5-Á≥ªÁªüÊìç‰Ωú
+	{"ÂøΩÁï•", 4},
+	{"Êã¶Êà™Ê∂àÊÅØ", 0},
+	{"ÂÅúÁî®Êåá‰ª§", 0},
+	{"Á¶ÅÁî®ÂõûÂ§ç", 0},
+	{"Á¶ÅÁî®jrrp", 0},
+	{"Á¶ÅÁî®draw", 0},
+	{"Á¶ÅÁî®me", 0},
+	{"Á¶ÅÁî®help", 0},
+	{"Á¶ÅÁî®ob", 0},
+	{"ËÆ∏ÂèØ‰ΩøÁî®", 1},
+	{"Êú™ÂÆ°Ê†∏", 1},
+	{"ÂÖçÊ∏Ö", 2},
+	{"ÂÖçÈªë", 4},
+	{"ÂçèËÆÆÊó†Êïà", 3},
 };
 
 User& getUser(long long uid){
@@ -50,7 +49,7 @@ AttrVar getUserItem(long long uid, const string& item) {
 	if (!uid)return {};
 	if (TinyList.count(uid))uid = TinyList[uid];
 	if (item == "name") {
-		if (string name{ DD::getQQNick(uid) }; !name.empty())
+		if (string name{ api::getUserNick(uid) }; !name.empty())
 			return name;
 	}
 	else if (item == "nick") {
@@ -58,12 +57,6 @@ AttrVar getUserItem(long long uid, const string& item) {
 	}
 	else if (item == "trust") {
 		return trustedQQ(uid);
-	}
-	else if (item == "danger") {
-		return blacklist->get_user_danger(uid);
-	}
-	else if (item == "isDiceMaid") {
-		return DD::isDiceMaid(uid);
 	}
 	else if (item.find("nick#") == 0) {
 		long long gid{ 0 };
@@ -91,51 +84,14 @@ AttrVar getUserItem(long long uid, const string& item) {
 			return user.confs.get(item);
 		}
 	}
-	if (item == "gender") {
-		string ret;
-		if (string data{ fifo_json{
-			{ "action","getGender" },
-			{ "sid",console.DiceMaid },
-			{ "uid",uid },
-		}.dump() }; DD::getExtra(data, ret)) {
-			return fifo_json::parse(ret, nullptr, false);
-		}
-	}
 	return {};
 }
 AttrVar getGroupItem(long long id, const string& item) {
 	if (!id)return {};
-	if (item == "size") {
-		return (int)DD::getGroupSize(id).currSize;
-	}
-	else if (item == "maxsize") {
-		return (int)DD::getGroupSize(id).maxSize;
-	}
-	else if (item.find("card#") == 0) {
-		long long uid{ 0 };
-		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
-			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
-		}
-		if (string card{ DD::getGroupNick(id, uid) }; !card.empty())return card;
-	}
-	else if (item.find("auth#") == 0) {
-		long long uid{ 0 };
-		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
-			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
-		}
-		if (int auth{ DD::getGroupAuth(id, uid, 0) }; auth)return auth;
-	}
-	else if (item.find("lst#") == 0) {
-		long long uid{ 0 };
-		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
-			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
-		}
-		return DD::getGroupLastMsg(id, uid);
-	}
-	else if (ChatList.count(id)) {
+	if (ChatList.count(id)) {
 		Chat& grp{ chat(id) };
 		if (item == "name") {
-			if (string name{ DD::getGroupName(id) };!name.empty())return grp.Name = name;
+			return grp.Name;
 		}
 		else if (item == "firstCreate") {
 			return (long long)grp.tCreated;
@@ -146,9 +102,6 @@ AttrVar getGroupItem(long long id, const string& item) {
 		else if (grp.confs.has(item)) {
 			return grp.confs.get(item);
 		}
-	}
-	else if (item == "name") {
-		if (string name{ DD::getGroupName(id) }; !name.empty())return name;
 	}
 	return {};
 }
@@ -316,7 +269,7 @@ int clearGroup() {
 	time_t tNow{ time(nullptr) };
 	time_t grpline{ tNow - console["InactiveGroupLine"] * (time_t)86400 };
 	for (const auto& [id, grp] : ChatList) {
-		if (grp.is_except() || grp.isset("√‚«Â") || grp.isset("∫ˆ¬‘"))continue;
+		if (grp.is_except() || grp.isset("ÂÖçÊ∏Ö") || grp.isset("ÂøΩÁï•"))continue;
 		time_t tLast{ grp.updated() };
 		if (auto s{ sessions.get_if({ 0,id }) })
 			tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
@@ -340,6 +293,7 @@ string getName(long long uid, long long GroupID){
 	if (UserList.count(uid) && getUser(uid).getNick(nick, GroupID)) return nick;
 
 	// GroupCard
+	/*
 	if (GroupID){
 		if (auto& card{ skipCards[GroupID][uid] };
 				time(nullptr) < card.first){
@@ -354,7 +308,7 @@ string getName(long long uid, long long GroupID){
 			card = { time(nullptr) + 600 ,nick };
 		}
 		if (!nick.empty()) return nick;
-	}
+	}*/
 
 	// QQNick
 	if (auto& card{ skipCards[0][uid] };
@@ -363,7 +317,7 @@ string getName(long long uid, long long GroupID){
 	}
 	else {
 		vector<string>kw;
-		nick = strip(msg_decode(nick = DD::getQQNick(uid)));
+		nick = strip(msg_decode(nick = api::getUserNick(uid)));
 		if (censor.search(nick, kw) > trustedQQ(uid)) {
 			nick = getMsg("stranger") + "(" + to_string(uid) + ")";
 		}
@@ -387,12 +341,12 @@ string filter_CQcode(const string& raw, long long fromGID){
 	size_t posL(0), posR(0);
 	while ((posL = msg.find(CQ_AT)) != string::npos)
 	{
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if ((posR = msg.find(']', posL)) != string::npos)
 		{
 			std::string_view stvQQ(msg);
 			stvQQ = stvQQ.substr(posL + 10, posR - posL - 10);
-			//ºÏ≤ÈQQ∫≈∏Ò Ω
+			//Ê£ÄÊü•QQÂè∑Ê†ºÂºè
 			bool isDig = true;
 			for (auto ch: stvQQ) 
 			{
@@ -402,14 +356,14 @@ string filter_CQcode(const string& raw, long long fromGID){
 					break;
 				}
 			}
-			//◊™“Â
+			//ËΩ¨‰πâ
 			if (isDig && posR - posL < 29) 
 			{
 				msg.replace(posL, posR - posL + 1, "@" + getName(stoll(string(stvQQ)), fromGID));
 			}
 			else if (stvQQ == "all") 
 			{
-				msg.replace(posL, posR - posL + 1, "@»´ÃÂ≥…‘±");
+				msg.replace(posL, posR - posL + 1, "@ÂÖ®‰ΩìÊàêÂëò");
 			}
 			else
 			{
@@ -419,30 +373,30 @@ string filter_CQcode(const string& raw, long long fromGID){
 		else return msg;
 	}
 	while ((posL = msg.find(CQ_IMAGE)) != string::npos) {
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if ((posR = msg.find(']', posL)) != string::npos) {
-			msg.replace(posL + 1, posR - posL - 1, "Õº∆¨");
+			msg.replace(posL + 1, posR - posL - 1, "ÂõæÁâá");
 		}
 		else return msg;
 	}
 	while ((posL = msg.find(CQ_FACE)) != string::npos) {
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if ((posR = msg.find(']', posL)) != string::npos) {
-			msg.replace(posL + 1, posR - posL - 1, "±Ì«È");
+			msg.replace(posL + 1, posR - posL - 1, "Ë°®ÊÉÖ");
 		}
 		else return msg;
 	}
 	while ((posL = msg.find(CQ_POKE)) != string::npos) {
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if ((posR = msg.find(']', posL)) != string::npos) {
-			msg.replace(posL + 1, 11, "¥¡“ª¥¡");
+			msg.replace(posL + 1, 11, "Êà≥‰∏ÄÊà≥");
 		}
 		else return msg;
 	}
 	while ((posL = msg.find(CQ_FILE)) != string::npos) {
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if ((posR = msg.find(']', posL)) != string::npos) {
-			msg.replace(posL + 1, posR - posL - 1, "Œƒº˛");
+			msg.replace(posL + 1, posR - posL - 1, "Êñá‰ª∂");
 		}
 		else return msg;
 	}
@@ -461,12 +415,12 @@ string forward_filter(const string& raw, long long fromGID) {
 	size_t posL(0);
 	while ((posL = msg.find(CQ_AT)) != string::npos)
 	{
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if (size_t posR = msg.find(']', posL); posR != string::npos)
 		{
 			std::string_view stvQQ(msg);
 			stvQQ = stvQQ.substr(posL + 10, posR - posL - 10);
-			//ºÏ≤ÈQQ∫≈∏Ò Ω
+			//Ê£ÄÊü•QQÂè∑Ê†ºÂºè
 			bool isDig = true;
 			for (auto ch : stvQQ)
 			{
@@ -476,14 +430,14 @@ string forward_filter(const string& raw, long long fromGID) {
 					break;
 				}
 			}
-			//◊™“Â
+			//ËΩ¨‰πâ
 			if (isDig && posR - posL < 29)
 			{
 				msg.replace(posL, posR - posL + 1, "@" + getName(stoll(string(stvQQ)), fromGID));
 			}
 			else if (stvQQ == "all")
 			{
-				msg.replace(posL, posR - posL + 1, "@»´ÃÂ≥…‘±");
+				msg.replace(posL, posR - posL + 1, "@ÂÖ®‰ΩìÊàêÂëò");
 			}
 			else
 			{
@@ -493,9 +447,9 @@ string forward_filter(const string& raw, long long fromGID) {
 		else return msg;
 	}
 	while ((posL = msg.find(CQ_POKE)) != string::npos) {
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if (size_t posR = msg.find(']', posL); posR != string::npos) {
-			msg.replace(posL + 1, 11, "¥¡“ª¥¡");
+			msg.replace(posL + 1, 11, "Êà≥‰∏ÄÊà≥");
 		}
 		else return msg;
 	}
@@ -509,22 +463,21 @@ Chat& chat(long long id)
 }
 Chat& Chat::id(long long grp) {
 	ID = grp;
-	Name = DD::getGroupName(grp);
 	if (!Enabled)return *this;
 	return *this;
 }
 
 void Chat::leave(const string& msg) {
 	if (!msg.empty()) {
-		if (isGroup)DD::sendGroupMsg(ID, msg);
-		else DD::sendDiscussMsg(ID, msg);
+		if (isGroup)api::sendGroupMsg(ID, msg);
+		//else DD::sendDiscussMsg(ID, msg);
 		std::this_thread::sleep_for(500ms);
 	}
-	isGroup ? DD::setGroupLeave(ID) : DD::setDiscussLeave(ID);
-	reset("“—»Î»∫").rmLst();
+	//DD::setGroupLeave(ID);
+	rmLst();
 }
 bool Chat::is_except()const {
-	return confs.has("√‚∫⁄") || confs.has("–≠“ÈŒﬁ–ß");
+	return confs.has("ÂÖçÈªë") || confs.has("ÂçèËÆÆÊó†Êïà");
 }
 void Chat::writeb(std::ofstream& fout)
 {
@@ -595,13 +548,12 @@ int groupset(long long id, const string& st){
 	return ChatList.count(id) ? ChatList[id].isset(st) : -1;
 }
 
-string printChat(Chat& grp)
-{
-	string name{ DD::getGroupName(grp.ID) };
-	if (!name.empty())return "[" + name + "](" + to_string(grp.ID) + ")";
+string printChat(Chat& grp){
+	//string name{ DD::getGroupName(grp.ID) };
+	//if (!name.empty())return "[" + name + "](" + to_string(grp.ID) + ")";
 	if (!grp.Name.empty())return "[" + grp.Name + "](" + to_string(grp.ID) + ")";
-	if (grp.isGroup) return "»∫(" + to_string(grp.ID) + ")";
-	return "Ã÷¬€◊È(" + to_string(grp.ID) + ")";
+	if (grp.isGroup) return "Áæ§(" + to_string(grp.ID) + ")";
+	return "ËÆ®ËÆ∫ÁªÑ(" + to_string(grp.ID) + ")";
 }
 
 #ifdef _WIN32
@@ -672,10 +624,10 @@ long long getProcessCpu()
 	return (ullKernelTime + ullUserTime) / (iCpuNum * 10);
 }
 
-//ªÒ»°ø’œ–”≤≈Ã(«ß∑÷±»)
+//Ëé∑ÂèñÁ©∫Èó≤Á°¨Áõò(ÂçÉÂàÜÊØî)
 long long getDiskUsage(double& mbFreeBytes, double& mbTotalBytes){
-	/*int sizStr = GetLogicalDriveStrings(0, NULL);//ªÒµ√±æµÿÀ˘”–≈Ã∑˚¥Ê‘⁄Drive ˝◊È÷–
-	char* chsDrive = new char[sizStr];//≥ı ºªØ ˝◊È”√“‘¥Ê¥¢≈Ã∑˚–≈œ¢
+	/*int sizStr = GetLogicalDriveStrings(0, NULL);//Ëé∑ÂæóÊú¨Âú∞ÊâÄÊúâÁõòÁ¨¶Â≠òÂú®DriveÊï∞ÁªÑ‰∏≠
+	char* chsDrive = new char[sizStr];//ÂàùÂßãÂåñÊï∞ÁªÑÁî®‰ª•Â≠òÂÇ®ÁõòÁ¨¶‰ø°ÊÅØ
 	GetLogicalDriveStrings(sizStr, chsDrive);
 	int DType;
 	int si = 0;*/
@@ -688,10 +640,10 @@ long long getDiskUsage(double& mbFreeBytes, double& mbTotalBytes){
 		(PULARGE_INTEGER)&i64FreeBytesToCaller,
 		(PULARGE_INTEGER)&i64TotalBytes,
 		(PULARGE_INTEGER)&i64FreeBytes);
-	//GetDiskFreeSpaceEx∫Ø ˝£¨ø…“‘ªÒ»°«˝∂Ø∆˜¥≈≈Ãµƒø’º‰◊¥Ã¨,∫Ø ˝∑µªÿµƒ «∏ˆBOOL¿‡–Õ ˝æ›
+	//GetDiskFreeSpaceExÂáΩÊï∞ÔºåÂèØ‰ª•Ëé∑ÂèñÈ©±Âä®Âô®Á£ÅÁõòÁöÑÁ©∫Èó¥Áä∂ÊÄÅ,ÂáΩÊï∞ËøîÂõûÁöÑÊòØ‰∏™BOOLÁ±ªÂûãÊï∞ÊçÆ
 	if (fResult) {
-		mbTotalBytes = i64TotalBytes * 1000 / 1024 / 1024 / 1024 / 1000.0;//¥≈≈Ã◊‹»›¡ø
-		mbFreeBytes = i64FreeBytesToCaller * 1000 / 1024 / 1024 / 1024 / 1000.0;//¥≈≈Ã £”‡ø’º‰
+		mbTotalBytes = i64TotalBytes * 1000 / 1024 / 1024 / 1024 / 1000.0;//Á£ÅÁõòÊÄªÂÆπÈáè
+		mbFreeBytes = i64FreeBytesToCaller * 1000 / 1024 / 1024 / 1024 / 1000.0;//Á£ÅÁõòÂâ©‰ΩôÁ©∫Èó¥
 		return 1000 - 1000 * i64FreeBytesToCaller / i64TotalBytes;
 	}
 	return 0;

@@ -8,7 +8,7 @@
 #include "DiceSelfData.h"
 #include "DiceSession.h"
 #include "CharacterCard.h"
-#include "DDAPI.h"
+#include "OneBotAPI.h"
 #define countof(x) (sizeof(x) / sizeof((x)[0]))
 
 JSRuntime* rt{ nullptr };
@@ -17,9 +17,9 @@ int js_toInt(JSContext* ctx, JSValueConst val) {
 	JS_ToInt32(ctx, &num, val);
 	return (int)num;
 }
-string js_toGBK(JSContext* ctx, JSValue val) {
+string js_toUTF8(JSContext* ctx, JSValue val) {
 	auto s{ JS_ToCString(ctx, val) };
-	string ret{ UTF8toGBK(s) };
+	string ret{ s };
 	JS_FreeCString(ctx, s);
 	return ret;
 }
@@ -49,7 +49,7 @@ AttrIndex js_toAttrIndex(JSContext* ctx, JSValue val) {
 		return key;
 	}
 	else {
-		string key{ js_toGBK(ctx, val) };
+		string key{ js_toUTF8(ctx, val) };
 		return key;
 	}
 }
@@ -61,19 +61,19 @@ AttrIndex js_AtomToIndex(JSContext* ctx, JSAtom atom) {
 		return key;
 	}
 	else {
-		string key{ js_toGBK(ctx, val) };
+		string key{ js_toUTF8(ctx, val) };
 		JS_FreeValue(ctx, val);
 		return key;
 	}
 }
-string js_AtomtoGBK(JSContext* ctx, JSAtom val) {
+string js_AtomtoUTF8(JSContext* ctx, JSAtom val) {
 	auto s{ JS_AtomToCString(ctx, val) };
-	string ret{ UTF8toGBK(s) };
+	string ret{ s };
 	JS_FreeCString(ctx, s);
 	return ret;
 }
-JSValue js_newGBK(JSContext* ctx, const string& val) {
-	return JS_NewString(ctx, GBKtoUTF8(val).c_str());
+JSValue js_newUTF8(JSContext* ctx, const string& val) {
+	return JS_NewString(ctx, val.c_str());
 }
 js_context::js_context() : ctx(JS_NewContext(rt)) {
 	js_std_add_helpers(ctx, 0, NULL);
@@ -135,7 +135,7 @@ AttrVar js_toAttr(JSContext* ctx, JSValue val) {
 		else return d;
 		break;
 	case JS_TAG_STRING:
-		return js_toGBK(ctx, val);
+		return js_toUTF8(ctx, val);
 		break;
 	case JS_TAG_OBJECT:
 		if (void* p{ nullptr }; JS_GetClassID(val, &p) == js_dice_context_id) {
@@ -158,7 +158,7 @@ AttrVar js_toAttr(JSContext* ctx, JSValue val) {
 			uint32_t len = 0;
 			if (!JS_GetOwnPropertyNames(ctx, &tab, &len, val, JS_GPN_ENUM_ONLY | JS_GPN_STRING_MASK)) {
 				for (uint32_t i = 0; i < len; ++i) {
-					obj.set(js_AtomtoGBK(ctx, tab[i].atom), js_toAttr(ctx, JS_GetProperty(ctx, val, tab[i].atom)));
+					obj.set(js_AtomtoUTF8(ctx, tab[i].atom), js_toAttr(ctx, JS_GetProperty(ctx, val, tab[i].atom)));
 				}
 				js_free_prop_enum(ctx, tab, len);
 			}
@@ -188,7 +188,7 @@ JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 		return JS_NewFloat64(ctx, var.number);
 		break;
 	case AttrVar::Type::Text:
-		return JS_NewString(ctx, GBKtoUTF8(var.text).c_str());
+		return JS_NewString(ctx, var.text.c_str());
 		break;
 	case AttrVar::Type::Table:
 		if (!var.table.to_dict()->empty()) {
@@ -200,7 +200,7 @@ JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 				}
 			}
 			for (auto& [key, val] : *var.table.to_dict()) {
-				JS_SetPropertyStr(ctx, dict, GBKtoUTF8(key).c_str(), js_newAttr(ctx, val));
+				JS_SetPropertyStr(ctx, dict, key.c_str(), js_newAttr(ctx, val));
 			}
 			return dict;
 		}
@@ -232,10 +232,10 @@ JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 }
 string js_context::getException() {
 	auto e{ JS_GetException(ctx) };
-	auto err{ js_toGBK(ctx, e) };
+	auto err{ js_toUTF8(ctx, e) };
 	if (JS_IsNull(e) || JS_IsUndefined(e)) goto Free;
 	if (JSValue stack = JS_GetPropertyStr(ctx, e, "stack"); !JS_IsException(stack)) {
-		err += "\n" + js_toGBK(ctx, stack);
+		err += "\n" + js_toUTF8(ctx, stack);
 	}
 Free:
 	JS_FreeValue(ctx, e);
@@ -265,12 +265,10 @@ void js_context::setContext(const std::string& name, const AttrObject& context) 
 	JS_FreeValue(ctx, global);
 }
 JSValue js_context::evalString(const std::string& s, const string& title) {
-	string exp{ GBKtoUTF8(s) };
-	return JS_Eval(ctx, exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
+	return JS_Eval(ctx, s.c_str(), s.length(), title.c_str(), JS_EVAL_TYPE_GLOBAL);
 }
 JSValue js_context::evalStringLocal(const std::string& s, const string& title, const AttrObject& context) {
-	string exp{ GBKtoUTF8(s) };
-	return JS_EvalThis(ctx, js_newDiceContext(ctx, context), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
+	return JS_EvalThis(ctx, js_newDiceContext(ctx, context), s.c_str(), s.length(), title.c_str(), JS_EVAL_TYPE_GLOBAL);
 }
 JSValue js_context::evalFile(const std::filesystem::path& p) {
 	size_t buf_len{ 0 };
@@ -354,7 +352,7 @@ QJSDEF(Set_toArray) {
 int js_dice_Set_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst obj, JSAtom prop) {
 	JS2SET(obj);
 	if (desc) {
-		string key{ js_AtomtoGBK(ctx, prop) };
+		string key{ js_AtomtoUTF8(ctx, prop) };
 		if (key == "add") {
 			desc->flags = JS_PROP_NORMAL;
 			desc->value = JS_NewCFunction(ctx, js_dice_Set_add, "add", 1);
@@ -387,7 +385,7 @@ int js_dice_Set_delete(JSContext* ctx, JSValue obj, JSAtom atom) {
 }
 
 QJSDEF(log) {
-	string info{ js_toGBK(ctx, argv[0]) };
+	string info{ js_toUTF8(ctx, argv[0]) };
 	int note_lv{ 0 };
 	int type{ 0 };
 	for (int idx = 1; idx < argc; ++idx) {
@@ -440,7 +438,7 @@ QJSDEF(getDiceDir) {
 	return JS_NewString(ctx, DiceDir.u8string().c_str());;
 }
 QJSDEF(getSelfData) {
-	string file{ js_toGBK(ctx, argv[0])};
+	string file{ js_toUTF8(ctx, argv[0])};
 	if (!selfdata_byFile.count(file)) {
 		auto& data{ selfdata_byFile[file] = std::make_shared<SelfData>(DiceDir / "selfdata" / file) };
 		if (string name{ cut_stem(file) }; !selfdata_byStem.count(name)) {
@@ -461,7 +459,7 @@ QJSDEF(eventMsg) {
 			JS_ThrowSyntaxError(ctx, "uid can't be 0");
 			return JS_EXCEPTION;
 		}
-		string fromMsg{ js_toGBK(ctx, argv[0]) };
+		string fromMsg{ js_toUTF8(ctx, argv[0]) };
 		long long gid{ JS_IsUndefined(argv[1]) ? 0 : js_toLongLong(ctx, argv[1]) },
 			uid{ JS_IsUndefined(argv[2]) ? 0 : js_toLongLong(ctx, argv[2]) };
 		eve = gid
@@ -488,7 +486,7 @@ QJSDEF(sendMsg) {
 			JS_ThrowSyntaxError(ctx, "gid and uid are both 0 is invalid");
 			return JS_EXCEPTION;
 		}
-		string msg{ js_toGBK(ctx, argv[0]) };
+		string msg{ js_toUTF8(ctx, argv[0]) };
 		if (uid)chat.set("uid", uid);
 		if (gid)chat.set("gid", gid);
 		AddMsgToQueue(fmt->format(msg, chat), { uid,gid,0 });
@@ -496,7 +494,7 @@ QJSDEF(sendMsg) {
 	return JS_TRUE;
 }
 QJSDEF(getGroupAttr) {
-	string item{ js_toGBK(ctx, argv[1]) };
+	string item{ js_toUTF8(ctx, argv[1]) };
 	if (item[0] == '&')item = fmt->format(item);
 	if (JS_IsUndefined(argv[0])) {
 		if (item.empty()) {
@@ -511,6 +509,7 @@ QJSDEF(getGroupAttr) {
 	}
 	if (long long gid{ js_toLongLong(ctx,argv[0]) }) {
 		if (item.empty()) return js_newDiceContext(ctx, chat(gid).confs);
+		/*
 		else if (item == "members") {
 			auto items{ JS_NewArray(ctx) };
 			uint32_t i = 0;
@@ -521,10 +520,10 @@ QJSDEF(getGroupAttr) {
 				return items;
 			}
 			else {
-				string subitem{ js_toGBK(ctx, argv[2]) };
+				string subitem{ js_toUTF8(ctx, argv[2]) };
 				if (subitem == "card") {
 					for (auto uid : DD::getGroupMemberList(gid)) {
-						JS_SetPropertyUint32(ctx, items, uid, js_newGBK(ctx, DD::getGroupNick(gid, uid)));
+						JS_SetPropertyUint32(ctx, items, uid, js_newUTF8(ctx, DD::getGroupNick(gid, uid)));
 					}
 				}
 				else if (subitem == "lst") {
@@ -553,7 +552,7 @@ QJSDEF(getGroupAttr) {
 				JS_SetPropertyUint32(ctx, items, i++, JS_NewInt64(ctx, (int64_t)uid));
 			}
 			return items;
-		}
+		}*/
 		if (auto val{ getGroupItem(gid,item) }; !val.is_null())return js_newAttr(ctx, val);
 		else return argv[2];
 	}
@@ -565,7 +564,7 @@ QJSDEF(setGroupAttr) {
 		JS_ThrowSyntaxError(ctx, "uid can't be 0");
 		return JS_EXCEPTION;
 	}
-	string item{ js_toGBK(ctx, argv[1]) };
+	string item{ js_toUTF8(ctx, argv[1]) };
 	if (item[0] == '&')item = fmt->format(item);
 	if (item.empty()) {
 		JS_ThrowSyntaxError(ctx, "prop can't be empty");
@@ -573,22 +572,14 @@ QJSDEF(setGroupAttr) {
 	}
 	long long gid = js_toLongLong(ctx, argv[0]);
 	Chat& grp{ chat(gid) };
-	if (item.find("card#") == 0) {
-		long long uid{ 0 };
-		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
-			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
-		}
-		string card{ js_toGBK(ctx, argv[2]) };
-		DD::setGroupCard(gid, uid, card);
-	}
-	else if (!JS_IsUndefined(argv[2])) {
+	if (!JS_IsUndefined(argv[2])) {
 		grp.set(item, js_toAttr(ctx, argv[2]));
 	}
 	else grp.reset(item);
 	return JS_TRUE;
 }
 QJSDEF(getUserAttr) {
-	string item{ js_toGBK(ctx, argv[1]) };
+	string item{ js_toUTF8(ctx, argv[1]) };
 	if (item[0] == '&')item = fmt->format(item);
 	if (JS_IsUndefined(argv[0])) {
 		if (item.empty()) {
@@ -615,7 +606,7 @@ QJSDEF(setUserAttr) {
 		return JS_EXCEPTION;
 	}
 	long long uid = js_toLongLong(ctx, argv[0]);
-	string item{ js_toGBK(ctx, argv[1]) };
+	string item{ js_toUTF8(ctx, argv[1]) };
 	if (item[0] == '&')item = fmt->format(item);
 	if (item.empty()) {
 		JS_ThrowSyntaxError(ctx, "prop can't be empty");
@@ -647,7 +638,7 @@ QJSDEF(setUserAttr) {
 	return JS_TRUE;
 }
 QJSDEF(getUserToday) {
-	string item{ js_toGBK(ctx, argv[1]) };
+	string item{ js_toUTF8(ctx, argv[1]) };
 	if (item[0] == '&')item = fmt->format(item);
 	if (JS_IsUndefined(argv[0])) {
 		if (item.empty()) {
@@ -676,7 +667,7 @@ QJSDEF(setUserToday) {
 		return JS_EXCEPTION;
 	}
 	long long uid = js_toLongLong(ctx, argv[0]);
-	string item{ js_toGBK(ctx, argv[1]) };
+	string item{ js_toUTF8(ctx, argv[1]) };
 	if (item[0] == '&')item = fmt->format(item);
 	if (item.empty()) {
 		JS_ThrowSyntaxError(ctx, "prop can't be empty");
@@ -693,7 +684,7 @@ QJSDEF(getPlayerCard) {
 	if (uid && PList.count(uid)) {
 		auto& pl{ getPlayer(uid) };
 		if (auto type = JS_VALUE_GET_TAG(argv[1]); type == JS_TAG_STRING) {
-			return js_newActor(ctx, pl[js_toGBK(ctx, argv[1])]);
+			return js_newActor(ctx, pl[js_toUTF8(ctx, argv[1])]);
 		}
 		else if (JS_IsNumber(argv[1])) {
 			return js_newActor(ctx, pl[js_toLongLong(ctx, argv[1])]);
@@ -716,7 +707,7 @@ void js_dice_context_finalizer(JSRuntime* rt, JSValue val) {
 int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst this_val, JSAtom prop) {
 	JS2OBJ(this_val);
 	if (desc) {
-		string key{ js_AtomtoGBK(ctx, prop) };
+		string key{ js_AtomtoUTF8(ctx, prop) };
 		if (key == "user" && obj.has("uid")) {
 			desc->value = js_newDiceContext(ctx, getUser(obj.get_ll("uid")).confs);
 		}
@@ -749,9 +740,9 @@ int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* pl
 		JSPropertyEnum* tab = (JSPropertyEnum*)js_malloc(ctx, sizeof(JSPropertyEnum) * (*plen));
 		int i = 0;
 		for (const auto& [key, val] : *obj.to_dict()) {
-			if (auto atom = JS_NewAtom(ctx, GBKtoUTF8(key).c_str());
+			if (auto atom = JS_NewAtom(ctx, key.c_str());
 				atom != JS_ATOM_NULL) {
-				DD::debugLog("newAtom:" + js_AtomtoGBK(ctx, atom) + "#" + to_string(atom));
+				api::printLog("newAtom:" + js_AtomtoUTF8(ctx, atom) + "#" + to_string(atom));
 				tab[i++].atom = atom;
 				tab[i++].is_enumerable = TRUE;
 			}
@@ -767,19 +758,19 @@ int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* pl
 }
 int js_dice_context_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
 	JS2OBJ(this_val);
-	obj.reset(js_AtomtoGBK(ctx, atom));
+	obj.reset(js_AtomtoUTF8(ctx, atom));
 	return TRUE;
 }
 int js_dice_context_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags) {
 	JS2OBJ(this_obj);
-	auto str = js_AtomtoGBK(ctx, prop);
+	auto str = js_AtomtoUTF8(ctx, prop);
 	obj.set(str, js_toAttr(ctx, val));
 	return TRUE;
 }
 QJSDEF(context_get) {
 	JS2OBJ(this_val);
 	if (argc > 0) {
-		string key{ js_toGBK(ctx, argv[0]) };
+		string key{ js_toUTF8(ctx, argv[0]) };
 		if (auto item{ getContextItem(obj,key) }) {
 			return js_newAttr(ctx, item);
 		}
@@ -792,7 +783,7 @@ QJSDEF(context_get) {
 QJSDEF(context_format) {
 	JS2OBJ(this_val);
 	if (argc > 0) {
-		return js_newGBK(ctx, fmt->format(js_toGBK(ctx, argv[0]), obj));
+		return js_newUTF8(ctx, fmt->format(js_toUTF8(ctx, argv[0]), obj));
 	}
 	else {
 		JS_ThrowTypeError(ctx, "undefined field");
@@ -802,7 +793,7 @@ QJSDEF(context_format) {
 QJSDEF(context_echo) {
 	JS2OBJ(this_val);
 	if (argc > 0) {
-		string msg{ js_toGBK(ctx, argv[0]) };
+		string msg{ js_toUTF8(ctx, argv[0]) };
 		bool isRaw = argc > 1 ? JS_ToBool(ctx, argv[1]) : false;
 		reply(obj, msg, !isRaw);
 		return JS_TRUE;
@@ -815,7 +806,7 @@ QJSDEF(context_echo) {
 QJSDEF(context_inc) {
 	JS2OBJ(this_val);
 	if (argc > 0) {
-		string key{ js_toGBK(ctx, argv[0]) };
+		string key{ js_toUTF8(ctx, argv[0]) };
 		return obj.inc(key) ? js_newAttr(ctx, obj.get(key))
 			: (argc > 1 ? argv[1] : JS_UNDEFINED);
 		return argc > 1 ? obj.inc(key, js_toInt(ctx, argv[1])) : obj.inc(key);
@@ -850,7 +841,7 @@ void js_dice_selfdata_finalizer(JSRuntime* rt, JSValue val) {
 int js_dice_selfdata_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst this_val, JSAtom prop) {
 	JS2DATA(this_val);
 	if (data && desc) {
-		string key{ js_AtomtoGBK(ctx, prop) };
+		string key{ js_AtomtoUTF8(ctx, prop) };
 		if (data->data.to_dict()->count(key)) {
 			desc->flags = JS_PROP_C_W_E;
 			desc->value = js_newAttr(ctx, data->data.to_obj().get(key));
@@ -864,7 +855,7 @@ int js_dice_selfdata_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValue
 int js_dice_selfdata_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
 	JS2DATA(this_val);
 	if (data) {
-		auto str = js_AtomtoGBK(ctx, atom);
+		auto str = js_AtomtoUTF8(ctx, atom);
 		data->data.to_obj().reset(str);
 		data->save();
 		return TRUE;
@@ -877,7 +868,7 @@ int js_dice_selfdata_define(JSContext* ctx, JSValueConst this_obj,
 	int flags) {
 	JS2DATA(this_obj);
 	if (data) {
-		auto str = js_AtomtoGBK(ctx, prop);
+		auto str = js_AtomtoUTF8(ctx, prop);
 		data->data.to_obj().set(str, js_toAttr(ctx, val));
 		data->save();
 		return TRUE;
@@ -887,7 +878,7 @@ int js_dice_selfdata_define(JSContext* ctx, JSValueConst this_obj,
 int js_dice_selfdata_set(JSContext* ctx, JSValueConst obj, JSAtom atom, JSValueConst value, JSValueConst receiver, int flags) {
 	JS2DATA(obj);
 	if (data) {
-		auto str = js_AtomtoGBK(ctx, atom);
+		auto str = js_AtomtoUTF8(ctx, atom);
 		data->data.to_obj().set(str, js_toAttr(ctx, value));
 		data->save();
 		return TRUE;
@@ -909,7 +900,7 @@ void js_dice_GameTable_finalizer(JSRuntime* rt, JSValue val) {
 int js_dice_GameTable_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst obj, JSAtom prop) {
 	JS2GAME(obj);
 	if (game) {
-		auto key = js_AtomtoGBK(ctx, prop);
+		auto key = js_AtomtoUTF8(ctx, prop);
 		if (key == "gms") {
 			desc->value = js_newSet(ctx, game->get_gm());
 			desc->flags = JS_PROP_NORMAL;
@@ -945,7 +936,7 @@ int js_dice_GameTable_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValu
 int js_dice_GameTable_delete(JSContext* ctx, JSValue obj, JSAtom atom) {
 	JS2GAME(obj);
 	if (game) {
-		auto str = js_AtomtoGBK(ctx, atom);
+		auto str = js_AtomtoUTF8(ctx, atom);
 		game->rmAttr(str);
 		return TRUE;
 	}
@@ -954,7 +945,7 @@ int js_dice_GameTable_delete(JSContext* ctx, JSValue obj, JSAtom atom) {
 int js_dice_GameTable_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags) {
 	JS2GAME(this_obj);
 	if (game) {
-		auto str = js_AtomtoGBK(ctx, prop);
+		auto str = js_AtomtoUTF8(ctx, prop);
 		game->setAttr(str, js_toAttr(ctx, val));
 		return TRUE;
 	}
@@ -962,7 +953,7 @@ int js_dice_GameTable_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop,
 }
 QJSDEF(GameTable_message) {
 	JS2GAME(this_val);
-	if (string msg{ js_toGBK(ctx,argv[0]) }; !msg.empty()) {
+	if (string msg{ js_toUTF8(ctx,argv[0]) }; !msg.empty()) {
 		AddMsgToQueue(msg, *game->areas.begin());
 		return JS_TRUE;
 	}
@@ -980,7 +971,7 @@ void js_dice_actor_finalizer(JSRuntime* rt, JSValue val) {
 }
 int js_dice_actor_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst this_val, JSAtom prop) {
 	JS2PC(this_val);
-	string key{ js_AtomtoGBK(ctx, prop) };
+	string key{ js_AtomtoUTF8(ctx, prop) };
 	if (desc && pc && pc->has(key)) {
 		desc->flags = (prop_desc.count(key)) ? prop_desc.at(key) : JS_PROP_C_W_E;
 		desc->value = js_newAttr(ctx, pc->get(key));
@@ -999,7 +990,7 @@ int js_dice_actor_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen
 			if (prop_desc.count(key)) {
 				continue;
 			}
-			else if (auto atom = JS_NewAtom(ctx, GBKtoUTF8(key).c_str());
+			else if (auto atom = JS_NewAtom(ctx, key.c_str());
 				atom != JS_ATOM_NULL) {
 				tab[i++].atom = atom;
 				tab[i++].is_enumerable = TRUE;
@@ -1016,12 +1007,12 @@ int js_dice_actor_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen
 }
 int js_dice_actor_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
 	JS2PC(this_val);
-	string attr{ js_AtomtoGBK(ctx, atom) };
+	string attr{ js_AtomtoUTF8(ctx, atom) };
 	return pc->erase(attr);
 }
 int js_dice_actor_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags) {
 	JS2PC(this_obj);
-	switch (pc->set(js_AtomtoGBK(ctx, prop), js_toAttr(ctx, val))) {
+	switch (pc->set(js_AtomtoUTF8(ctx, prop), js_toAttr(ctx, val))) {
 	case -11:
 		JS_ThrowRangeError(ctx, "input string is too long.");
 		break;
@@ -1036,7 +1027,7 @@ int js_dice_actor_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSV
 QJSDEF(actor_set) {
 	JS2PC(this_val);
 	if (JS_IsString(argv[0])) {
-		if (0 == pc->set(js_toGBK(ctx, argv[0]), js_toAttr(ctx, argv[1])))return JS_NewInt32(ctx, 1);
+		if (0 == pc->set(js_toUTF8(ctx, argv[0]), js_toAttr(ctx, argv[1])))return JS_NewInt32(ctx, 1);
 	}
 	else if (JS_IsObject(argv[0])) {
 		JSPropertyEnum* tab{ nullptr };
@@ -1044,7 +1035,7 @@ QJSDEF(actor_set) {
 		int32_t cnt = 0;
 		if (!JS_GetOwnPropertyNames(ctx, &tab, &len, argv[0], JS_GPN_ENUM_ONLY | JS_GPN_STRING_MASK)) {
 			for (uint32_t i = 0; i < len; ++i) {
-				if (0 == pc->set(js_AtomtoGBK(ctx, tab[i].atom), js_toAttr(ctx, JS_GetProperty(ctx, argv[0], tab[i].atom))))++cnt;
+				if (0 == pc->set(js_AtomtoUTF8(ctx, tab[i].atom), js_toAttr(ctx, JS_GetProperty(ctx, argv[0], tab[i].atom))))++cnt;
 			}
 			js_free_prop_enum(ctx, tab, len);
 		}
@@ -1055,12 +1046,12 @@ QJSDEF(actor_set) {
 QJSDEF(actor_rollDice) {
 	JS2PC(this_val);
 	auto res = JS_NewObject(ctx);
-	string exp{ JS_ToBool(ctx,argv[0]) ? js_toGBK(ctx,argv[0])
+	string exp{ JS_ToBool(ctx,argv[0]) ? js_toUTF8(ctx,argv[0])
 		: pc->has("__DefaultDiceExp") ? pc->get("__DefaultDiceExp").to_str()
 		: "D" };
 	int diceFace{ pc->get("__DefaultDice").to_int() };
 	RD rd{ exp, diceFace ? diceFace : 100 };
-	JS_SetPropertyStr(ctx, res, "expr", js_newGBK(ctx, rd.strDice));
+	JS_SetPropertyStr(ctx, res, "expr", js_newUTF8(ctx, rd.strDice));
 	if (int_errno err = rd.Roll(); !err) {
 		JS_SetPropertyStr(ctx, res, "sum", JS_NewInt32(ctx, (int32_t)rd.intTotal));
 		JS_SetPropertyStr(ctx, res, "expansion", JS_NewString(ctx, rd.FormCompleteString().c_str()));
@@ -1072,17 +1063,17 @@ QJSDEF(actor_rollDice) {
 }
 QJSDEF(actor_locked) {
 	JS2PC(this_val);
-	string key{ js_toGBK(ctx, argv[0]) };
+	string key{ js_toUTF8(ctx, argv[0]) };
 	return JS_NewBool(ctx, pc->locked(key));
 }
 QJSDEF(actor_lock) {
 	JS2PC(this_val);
-	string key{ js_toGBK(ctx, argv[0]) };
+	string key{ js_toUTF8(ctx, argv[0]) };
 	return JS_NewBool(ctx, pc->lock(key));
 }
 QJSDEF(actor_unlock) {
 	JS2PC(this_val);
-	string key{ js_toGBK(ctx, argv[0]) };
+	string key{ js_toUTF8(ctx, argv[0]) };
 	return JS_NewBool(ctx, pc->unlock(key));
 }
 
@@ -1091,7 +1082,7 @@ AttrVar js_context_eval(const std::string& s, const AttrObject& context) {
 		return js_main->getValue(ret);
 	}
 	else {
-		console.log(getMsg("strSelfName") + "÷¥––js”Ôæ‰ ß∞‹:\n" + s + "\n" + js_main->getException() , 0b10);
+		console.log(getMsg("strSelfName") + "ÊâßË°åjsËØ≠Âè•Â§±Ë¥•:\n" + s + "\n" + js_main->getException() , 0b10);
 	}
 	return {};
 }
@@ -1103,7 +1094,7 @@ bool js_call_event(AttrObject eve, const AttrVar& action) {
 	if (auto ret = isFile ? js_event_pool[title].evalFileLocal(fmt->js_path(script), eve) 
 		: js_event_pool[title].evalStringLocal(script, title, eve);
 		JS_IsException(ret)) {
-		console.log(getMsg("strSelfName") + " ¬º˛°∏" + title + "°π÷¥––js ß∞‹!\n" + js_event_pool[title].getException(), 0b10);
+		console.log(getMsg("strSelfName") + "‰∫ã‰ª∂„Äå" + title + "„ÄçÊâßË°åjsÂ§±Ë¥•!\n" + js_event_pool[title].getException(), 0b10);
 		return false;
 	}
 	return true;
@@ -1115,7 +1106,7 @@ void js_msg_call(DiceEvent* msg, const AttrVar& js) {
 	JSValue ret = 0;
 	if (fmt->has_js(jScript)) {
 		if (JS_IsException(ret = ctx.evalFile(fmt->js_path(jScript)))) {
-			console.log(getMsg("strSelfName") + "‘À––" + jScript + " ß∞‹!\n" + ctx.getException(), 0b10);
+			console.log(getMsg("strSelfName") + "ËøêË°å" + jScript + "Â§±Ë¥•!\n" + ctx.getException(), 0b10);
 			msg->set("lang", "JavaScript");
 			msg->reply(getMsg("strScriptRunErr"));
 		}
@@ -1124,7 +1115,7 @@ void js_msg_call(DiceEvent* msg, const AttrVar& js) {
 	}
 	else if (!jScript.empty()) {
 		if (JS_IsException(ret = ctx.evalString(jScript, msg->get_str("reply_title")))) {
-			console.log(getMsg("strSelfName") + "œÏ”¶°∏" + msg->get_str("reply_title") + "°πjs”Ôæ‰ ß∞‹!\n" + ctx.getException(), 0b10);
+			console.log(getMsg("strSelfName") + "ÂìçÂ∫î„Äå" + msg->get_str("reply_title") + "„ÄçjsËØ≠Âè•Â§±Ë¥•!\n" + ctx.getException(), 0b10);
 			msg->set("lang", "JavaScript");
 			msg->reply(getMsg("strScriptRunErr"));
 		}
@@ -1141,7 +1132,7 @@ AttrVar js_eval_simple(const std::string& exp) {
 		return js_toAttr(ctx, ret);
 	}
 	else {
-		console.log(getMsg("strSelfName") + "º∆À„js”Ôæ‰" + exp + " ß∞‹!\n" + ctx.getException(), 0b10);
+		console.log(getMsg("strSelfName") + "ËÆ°ÁÆójsËØ≠Âè•" + exp + "Â§±Ë¥•!\n" + ctx.getException(), 0b10);
 		return {};
 	}
 }

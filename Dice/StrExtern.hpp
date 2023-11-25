@@ -1,6 +1,6 @@
 #pragma once
 /**
- * ×Ö·û´®¸¨Öúº¯Êý
+ * å­—ç¬¦ä¸²è¾…åŠ©å‡½æ•°
  * Copyright (C) 2019-2023 String.Empty
  */
 
