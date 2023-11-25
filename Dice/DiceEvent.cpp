@@ -180,12 +180,6 @@ void DiceEvent::logEcho(){
 	if (!isPrivate()
 		&& (isChannel() ? console["ListenChannelEcho"] : console["ListenGroupEcho"]))return;
 	auto here{ fromChat.locate() };
-	if (sessions.is_linking(here)
-		&& strLowerMessage.find(".link") != 0) {
-		string strFwd{ getMsg("strSelfCall") + ":"
-			+ forward_filter(strReply) };
-		AddMsgToQueue(strFwd, sessions.linker.get_aim(here).first);
-	}
 	if (thisGame && thisGame->is_logging()
 		&& strLowerMessage.find(".log") != 0
 		&& (thisGame->is_simple() || thisGame->is_part(fromChat.uid))) {
@@ -196,14 +190,6 @@ void DiceEvent::logEcho(){
 }
 void DiceEvent::fwdMsg(){
 	auto here{ fromChat.locate() };
-	if (sessions.is_linking(here)
-		&& fromChat.uid != console.DiceMaid
-		&& strLowerMessage.find(".link") != 0){
-		string strFwd;
-		if (trusted < 5)strFwd += printFrom();
-		strFwd += forward_filter(strMsg);
-		AddMsgToQueue(strFwd, sessions.linker.get_aim(here).first);
-	}
 	if (thisGame && thisGame->is_logging()
 		&& strLowerMessage.find(".log") != 0
 		&& (thisGame->is_simple() || thisGame->is_part(fromChat.uid))) {
@@ -2054,34 +2040,6 @@ int DiceEvent::InnerOrder() {
 		}
 		set("res",today->getJrrp(fromChat.uid));
 		replyMsg("strJrrp");
-		return 1;
-	}
-	else if (pref4 == "link") {
-		intMsgCnt += 4;
-		if (trusted < 3) {
-			replyMsg("strNotAdmin");
-			return true;
-		}
-		set("option",readPara());
-		if (at("option") == "close") {
-			sessions.linker.close(this);
-		}
-		else if (at("option") == "start") {
-			sessions.linker.start(this);
-		}
-		else if (at("option") == "with" || at("option") == "from" || at("option") == "to") {
-			sessions.linker.build(this);
-		}
-		else if (at("option") == "list") {
-			set("link_list",sessions.linker.list());
-			replyMsg("strLinkList");
-		}
-		else if (at("option") == "state") {
-			sessions.linker.show(this);
-		}
-		else {
-			replyHelp("link");
-		}
 		return 1;
 	}
 	else if (pref4 == "name") {

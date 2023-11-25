@@ -35,32 +35,6 @@ struct LogInfo{
 	}
 };
 
-struct LinkInfo {
-	bool isLinking{ false };
-	string typeLink;
-	//对象窗口，为0则不存在
-	chatInfo target{ 0 };
-};
-class DiceChatLink {
-	unordered_map<chatInfo, LinkInfo>LinkList;
-	//禁止桥接等花哨操作
-	unordered_map<chatInfo, pair<chatInfo, bool>>LinkFromChat;
-public:
-	friend class DiceSessionManager;
-	pair<chatInfo, bool> get_aim(chatInfo ct)const {
-		return LinkFromChat.count(ct = ct.locate()) ? LinkFromChat.find(ct)->second : pair<chatInfo, bool>();
-	}
-	//link指令
-	void build(DiceEvent*);
-	void start(DiceEvent*);
-	string show(const chatInfo& ct);
-	string list();
-	void show(DiceEvent*);
-	void close(DiceEvent*);
-	void load();
-	void save();
-};
-
 struct DeckInfo {
 	//元表
 	vector<string> meta;
@@ -235,15 +209,10 @@ class DiceSessionManager {
 	unordered_map<chatInfo, shared_ptr<Session>> SessionByChat;
 	int inc = 0;
 public:
-	DiceChatLink linker;
-	[[nodiscard]] bool is_linking(const chatInfo& ct) {
-		auto chat{ ct.locate() };
-		return chat && linker.LinkFromChat.count(chat) && linker.LinkFromChat[chat].second;
-	}
 
 	int load();
 	void save();
-	void clear() { SessionByName.clear(); SessionByChat.clear(); linker = {}; }
+	void clear() { SessionByName.clear(); SessionByChat.clear(); }
 	shared_ptr<Session> get(chatInfo);
 	shared_ptr<Session> newGame(const string& name, const chatInfo& ct);
 	shared_ptr<Session> get_if(const chatInfo& ct)const {

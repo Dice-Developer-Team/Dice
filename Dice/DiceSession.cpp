@@ -234,141 +234,12 @@ void DiceSession::log_end(DiceEvent* msg) {
 std::filesystem::path DiceSession::log_path()const {
 	return logger.pathLog; 
 }
-
-void DiceChatLink::load() {
-	if (fifo_json jFile{ freadJson(DiceDir / "conf" / "LinkList.json") }; !jFile.is_null()){
-		for (auto& jLink : jFile) {
-			LinkInfo& link{ LinkList[chatInfo::from_json(jLink["origin"])]
-				= { jLink["linking"], jLink["type"],
-				chatInfo::from_json(jLink["target"]) } };
-		}
-	}
-	else if (!LinkList.empty())save();
-	for (auto& [ct,link] : LinkList) {
-		if (link.isLinking) {
-			LinkFromChat[ct] = { link.target ,link.typeLink != "from" };
-			LinkFromChat[link.target] = { ct ,link.typeLink != "to" };
-		}
-	}
-}
-void DiceChatLink::save() {
-	if (LinkList.empty()) {
-		remove(DiceDir / "conf" / "LinkList.json");
-		return;
-	}
-	fifo_json jFile = fifo_json::array();
-	for (auto& [ct, linker] : LinkList) {
-		fifo_json jLink;
-		jLink["type"] = linker.typeLink;
-		jLink["origin"] = to_json(ct);
-		jLink["target"] = to_json(linker.target);
-		jLink["linking"] = linker.isLinking;
-		jFile.push_back(jLink);
-	}
-	fwriteJson(DiceDir / "conf" / "LinkList.json", jFile, 1);
-}
-void DiceChatLink::build(DiceEvent* msg) {
-	auto here{ msg->fromChat.locate() };
-	chatInfo target;
-	if (msg->readChat(target)) {
-		msg->replyMsg("strLinkNotFound");
-		return;
-	}
-	else if (target.gid && !ChatList.count(target.gid)) {
-		msg->replyMsg("strLinkNotFound");
-		return;
-	}
-	if (LinkFromChat.count(target)) {
-		msg->replyMsg("strLinkBusy");
-	}
-	else {
-		LinkInfo& link{ LinkList[here] };
-		//重置已存在的链接
-		LinkFromChat.erase(link.target);
-		link = { true ,msg->get_str("option"),target };
-		LinkFromChat[here] = { target ,link.typeLink != "from" };
-		LinkFromChat[target] = { here ,link.typeLink != "to" };
-		msg->set("target", printChat(target));
-		msg->replyMsg("strLinked");
-		save();
-	}
-}
-void DiceChatLink::start(DiceEvent* msg) {
-	auto here{ msg->fromChat.locate() };
-	if (LinkList.count(here)) {
-		if (LinkFromChat.count(here)) {
-			msg->replyMsg("strLinkingAlready");
-		}
-		else if (LinkInfo& link{ LinkList[here] }; LinkFromChat.count(link.target)) {
-			msg->replyMsg("strLinkBusy");
-		}
-		else {
-			LinkFromChat[here] = { link.target ,link.typeLink != "from" };
-			LinkFromChat[link.target] = { here ,link.typeLink != "to" };
-			link.isLinking = true;
-			msg->set("target", printChat(link.target));
-			msg->replyMsg("strLinked");
-			save();
-		}
-	}
-	else {
-		msg->replyMsg("strLinkNotFound");
-	}
-}
+/*
 dict<> prep{
 		{"to","->"},
 		{"from","<-"},
 		{"with","<->"},
-};
-string DiceChatLink::show(const chatInfo& here) {
-	string info{ "[无]" };
-	if (LinkList.count(here)) {
-		const auto& link{ LinkList[here] };
-		info = printChat(here) + prep[link.typeLink] + printChat(link.target)
-			+ (link.isLinking ? "√" : "×");
-	}
-	else if (!LinkFromChat.count(here)) {
-		return info;
-	}
-	if (auto link{ LinkList.find(LinkFromChat[here].first) }; link != LinkList.end()) {
-		return printChat(LinkFromChat[here].first) + prep[link->second.typeLink] + printChat(here)
-			+ (link->second.isLinking ? "√" : "×");
-	}
-	return info;
-}
-string DiceChatLink::list() {
-	ShowList li;
-	for (auto& [here,link]:LinkList) {
-		li << printChat(here) + prep[link.typeLink] + printChat(link.target)
-			+ (link.isLinking ? "√" : "×");
-	}
-	return li.show("\n");
-}
-void DiceChatLink::show(DiceEvent* msg) {
-	auto here{ msg->fromChat.locate() };
-	if (LinkFromChat.count(here) || LinkList.count(here)) {
-		msg->set("link_info", show(here));
-		msg->replyMsg("strLinkState");
-	}
-	else {
-		msg->replyMsg("strLinkNotFound");
-	}
-}
-void DiceChatLink::close(DiceEvent* msg) {
-	auto here{ msg->fromChat.locate() };
-	if (auto link{ LinkFromChat.find(here) }; link != LinkFromChat.end()) {
-		auto there{ link->second.first };
-		if(LinkList.count(here))LinkList[here].isLinking = false;
-		else if (LinkList.count(there))LinkList[there].isLinking = false;
-		LinkFromChat.erase(link);
-		LinkFromChat.erase(there);
-		msg->replyMsg("strLinkClose");
-		save();
-	}
-	else {
-		msg->replyMsg("strLinkCloseAlready");
-	}
-}
+};*/
 
 DeckInfo::DeckInfo(const vector<string>& deck) :meta(deck) {
 	init();
@@ -818,15 +689,6 @@ int DiceSessionManager::load() {
 					}
 				}
 			}
-			if (j.count("link")) {
-				fifo_json& jLink = j["link"];
-				const auto& ct{ *pSession->areas.begin() };
-				long long gid{ jLink["target"] };
-				LinkInfo& link{ linker.LinkList[ct] = {jLink["linking"],
-					jLink["type"],
-					(gid > 0) ? chatInfo{0,gid} : chatInfo{~gid} } };
-				isUpdated = true;
-			}
 			if (j.count("decks")) for (auto& it : j["decks"].items()) {
 				if (it.value()["meta"].empty())continue;
 				std::string key = it.key();
@@ -870,13 +732,6 @@ int DiceSessionManager::load() {
 			SessionByChat[chat] = pSession;
 		}
 		if (isUpdated)pSession->save();
-	}
-	try {
-		linker.load();
-	}
-	catch (const std::exception& e) {
-		console.log("读取link记录时遇到意外错误，请尝试排除/conf/LinkList.json中的异常!"
-			+ string(e.what()), 0b1000, printSTNow());
 	}
 	return cnt;
 }
