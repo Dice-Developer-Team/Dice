@@ -138,11 +138,6 @@ void readUserData(){
 			cnt = loadBFile(dir / "UserConf.bak", UserList);
 			if (cnt > 0)log << "恢复用户记录" + to_string(cnt) + "条";
 		}
-		else {
-			cnt = loadBFile<long long, User, &User::old_readb>(dir / "UserConf.RDconf", UserList);
-			loadFile(dir / "UserList.txt", UserList);
-			if (cnt > 0)log << "迁移用户记录" + to_string(cnt) + "条";
-		}
 		//for QQ Channel
 		if (User& self{ getUser(console.DiceMaid) }; !self.confs.get_ll("tinyID")) {
 			if (long long tiny{ api::getTinyID() }) {
@@ -185,11 +180,6 @@ void readUserData(){
 			cnt = loadBFile(dir / "ChatConf.bak", ChatList);
 			if (cnt > 0)log << "恢复群聊记录" + to_string(cnt) + "条";
 		}
-		else {
-			cnt = loadBFile(dir / "ChatConf.RDconf", ChatList);
-			loadFile(dir / "ChatList.txt", ChatList);
-			if (cnt > 0)log << "迁移群聊记录" + to_string(cnt) + "条";
-		}
 	}
 	catch (const std::exception& e)	{
 		console.log("读取群聊记录时遇到意外错误，请尝试删除ChatConf.dat启用备份.bak文件!"
@@ -229,7 +219,7 @@ void dice_init() {
 		console.log("错误: 加载libcurl失败！", 1);
 	}
 #endif
-	Dice_Full_Ver_On = Dice_Full_Ver + " for\n" + api::getApiVer();
+	Dice_Full_Ver_On = Dice_Full_Ver + " for " + api::getApiVer();
 	api::printLog(Dice_Full_Ver_On);
 
 	DiceDir = dirExe / ("Dice" + to_string(console.DiceMaid));

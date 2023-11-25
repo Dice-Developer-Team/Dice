@@ -42,7 +42,7 @@
 using namespace std;
 
 const fifo_dict_ci<int>Console::intDefault{
-{"DisabledGlobal",0},{"DisabledBlock",0},{"DisabledListenAt",1},
+{"DisabledGlobal",0},{"DisabledBlock",0},
 {"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
 {"Private",0},{"CheckGroupLicense",0},
 {"DisableStrangerChat",1},{"ListenSpam",1},
@@ -63,17 +63,12 @@ const fifo_dict_ci<int>Console::intDefault{
 const std::unordered_map<std::string,string>Console::confComment{
 	{"DisabledGlobal","全局停用指令，对trust4不起效"},
 	{"DisabledBlock","框架多插件时，关闭状态开启拦截，阻止其他插件处理消息"},
-	{"DisabledListenAt","关闭状态下，自身被at时也响应"},
 	{"DisabledJrrp","全局禁用.jrrp，对trust4+不起效"},
 	{"DisabledDeck","全局禁用.deck，对trust4+不起效"},
 	{"DisabledDraw","全局禁用.draw，对trust4+不起效"},
 	{"DisabledSend","全局禁用.send，对trust4+不起效"},
 	{"Private","私用模式：1-群无许可使用自动退出;0-关闭"},
 	{"CheckGroupLicense","公用审核模式：2-任何群必须许可使用;1-新加群须许可使用;0-关闭"},
-	{"ListenGroupRequest","监听加群邀请"},
-	{"ListenGroupAdd","监听入群事件"},
-	{"ListenFriendRequest","监听好友申请"},
-	{"ListenFriendAdd","监听好友添加事件"},
 	{"AllowStranger","2-允许任何人;1-需要有使用记录;0-仅允许信任用户"},
 	{"DisableStrangerChat","开启后不处理非好友私聊消息"},
 	{"AutoClearBlack","自动清查黑名单"},
@@ -199,10 +194,6 @@ void Console::newMaster(long long uid) {
 	master = uid;
 	if (trustedQQ(uid) < 5)getUser(uid).trust(5);
 	if (!intConf["Private"]) {
-		if (!intConf.count("BelieveDiceList"))intConf["BelieveDiceList"] = 1;
-		if (!intConf.count("LeaveBlackQQ"))intConf["LeaveBlackQQ"] = 1;
-		if (!intConf.count("BannedBanInviter"))intConf["BannedBanInviter"] = 1;
-		if (!intConf.count("KickedBanInviter"))intConf["KickedBanInviter"] = 1;
 		if (!intConf.count("AllowStranger"))intConf["AllowStranger"] = 2;
 	}
 	setNotice({ uid, 0,0 }, 0b111111);

@@ -52,7 +52,7 @@ namespace api {
 		if (flog)flog << log << std::endl;
 	}
 	string getApiVer() {
-		return "Gensokyo Api Ver 0.1.0(1)";
+		return "Gensokyo";
 	}
 	long long getTinyID() { return 0; }
 	void sendPrivateMsg(long long uid, const string& msg) {	}

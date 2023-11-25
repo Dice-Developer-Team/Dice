@@ -535,18 +535,12 @@ const dict_ci<> HelpDoc = {
 {"链接","Dice!论坛: https://kokona.tech\nDice!手册: https://v2docs.kokona.tech\n支持Shiki: https://afdian.net/@dice_shiki"},
 {"设定",R"(Master：{print:master}
 群内使用：{case:self.Private?else=白名单制，需预申请&0={case:self.CheckGroupLicense?2=审核制，需申请后使用&1=审核制，入新群需申请&else=黑名单制，自由使用}}
-好友申请：{case:self.AllowStanger?2=允许任何人&1=需要使用记录&else=仅白名单}
-移出反制：{case:self.ListenGroupKicked?0=无&else=拉黑{case:self.KickedBanInviter?1=连带邀请人}}
-禁言反制：{case:self.ListenGroupBanned?0=无&else=拉黑{case:self.BannedBanInviter?1=连带邀请人}}
-刷屏反制：{case:self.ListenSpam?0=关闭&else=开启}
-窥屏可能：{窥屏可能}
-其他插件：{其他插件}{姐妹骰}
+刷屏监测：{case:self.ListenSpam?0=关闭&else=开启}
+其他插件：{其他插件}
 骰娘用户群:{骰娘用户群}
 骰娘交流分享群：928626681)"},
 {"骰娘用户群","【未设置】"},
-{"窥屏可能","无"},
 {"其他插件","【未知】"},
-{"姐妹骰","{list_dice_sister}"},
 {"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2023 String.Empty\nGithub@Dice-Developer-Team"},
 {"指令",R"(指令前接at可以指定骰娘响应，如
 {at:self}.bot on
