@@ -30,7 +30,6 @@ const map<string, short> mChatConf{
 	{"禁用回复", 0},
 	{"禁用jrrp", 0},
 	{"禁用draw", 0},
-	{"禁用me", 0},
 	{"禁用help", 0},
 	{"禁用ob", 0},
 	{"许可使用", 1},

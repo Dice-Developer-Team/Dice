@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2023 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -43,7 +43,7 @@ using namespace std;
 
 const fifo_dict_ci<int>Console::intDefault{
 {"DisabledGlobal",0},{"DisabledBlock",0},{"DisabledListenAt",1},
-{"DisabledMe",1},{"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
+{"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
 {"Private",0},{"CheckGroupLicense",0},
 {"ListenGroupRequest",1},{"ListenGroupAdd",1},
 {"ListenFriendRequest",1},{"ListenFriendAdd",1},{"AllowStranger",1},
