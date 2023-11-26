@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2019 w4123Ëİä§
+ * Copyright (C) 2018-2019 w4123æº¯æ´„
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -76,7 +76,7 @@ chatInfo chatInfo::from_json(const fifo_json& chat) {
 	return chatInfo{ uid,gid,chid };
 }
 
-// ÏûÏ¢·¢ËÍ´æ´¢½á¹¹Ìå
+// æ¶ˆæ¯å‘é€å­˜å‚¨ç»“æ„ä½“
 struct msg_t
 {
 	string msg;
@@ -88,10 +88,10 @@ struct msg_t
 	}
 };
 
-// ÏûÏ¢·¢ËÍ¶ÓÁĞ
+// æ¶ˆæ¯å‘é€é˜Ÿåˆ—
 std::queue<msg_t> msgQueue;
 
-// ÏûÏ¢·¢ËÍ¶ÓÁĞËø
+// æ¶ˆæ¯å‘é€é˜Ÿåˆ—é”
 mutex msgQueueMutex;
 
 void AddMsgToQueue(const string& msg, long long target_id)

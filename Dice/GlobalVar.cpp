@@ -356,23 +356,18 @@ const dict_ci<string> PlainMsg
 	{"strPropList", "{nick}的{char}属性列表为：{show}"},
 	{"strStErr", "格式错误:请参考/help st获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
-	{"strLeaveDiscuss", "{self}现不支持讨论组服务，即将退出"},
-	{"strLeaveNoPower", "{self}未获得群管理，即将退群"},
-	{"strLeaveUnused", "{self}已经在这里被放置{day}天啦，马上就会离开这里了"},
 	{"strGlobalOff", "{self}休假中，暂停服务×"},
 	{"strPreserve", "{self}私有私用，勿扰勿怪\n如需申请许可请发送!authorize +[群号] 申请用途:[ **请写入理由** ] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[ **请写入指令** ]，用后使用[ **请写入指令** ]送出群"},
 	{"strJrrp", "{nick}今天的人品值是: {res}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{res}"},
 	{ "strFriendDenyNotUser", "很遗憾，你没有对{self}使用指令的记录" },
 	{ "strFriendDenyNoTrust", "很遗憾，你不是{self}信任的用户，如需使用可联系{print:master}" },
-	{"strAddFriendWhiteQQ", "{strAddFriend}"}, //白名单用户添加好友时回复此句
 	{
 		"strAddFriend",
 		R"(欢迎选择{strSelfName}的免费掷骰服务！
 /help协议 确认服务协议
 /help指令 查看指令列表
 /help设定 确认骰娘设定
-/help链接 查看源码文档
 使用服务默认已经同意服务协议)"
 	}, //同意添加好友时额外发送的语句
 	{
@@ -381,7 +376,6 @@ const dict_ci<string> PlainMsg
 /help协议 确认服务协议
 /help指令 查看指令列表
 /help设定 确认骰娘设定
-/help链接 查看源码文档
 邀请入群默认视为同意服务协议，知晓禁言或移出的后果)"
 	}, 
 	{ "strNewMaster","试问，你就是{strSelfName}的Master√\n请认真阅读当前版本Master手册以及用户手册。请注意版本号对应: https://v2docs.kokona.tech\f{strSelfName}" },
@@ -394,9 +388,7 @@ const dict_ci<string> PlainMsg
 	{"strHlpMsg", R"(请使用
 /help协议 确认服务协议
 /help指令 查看指令列表
-/help群管 查看群管指令
 /help设定 确认骰娘设定
-/help链接 查看源码文档
 官方论坛: kokona点tech
 Dice!众筹计划: afdian@suhuiw4123)"
 	}
@@ -530,7 +522,7 @@ const dict_ci<> HelpDoc = {
 8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。
 9.骰娘提供掷骰服务是完全免费的，欢迎自愿投食。
 10.本服务最终解释权归服务提供方所有。)"},
-{"链接","Dice!论坛: https://kokona.tech\nDice!手册: https://v2docs.kokona.tech\n支持Shiki: https://afdian.net/@dice_shiki"},
+{"链接","Dice!论坛: https://kokona.tech\nDice!手册: https://v2docs.kokona.tech\n支持Shiki: https://afdian@dice_shiki"},
 {"设定",R"(Master：{print:master}
 群内使用：{case:self.Private?else=白名单制，需预申请&0={case:self.CheckGroupLicense?2=审核制，需申请后使用&1=审核制，入新群需申请&else=黑名单制，自由使用}}
 刷屏监测：{case:self.ListenSpam?0=关闭&else=开启}
@@ -544,21 +536,17 @@ const dict_ci<> HelpDoc = {
 {at:self}.bot on
 请/help对应指令 获取详细信息，如/help r
 互动指令:
-.nn 设置称呼
+/nn 设置称呼
 .bot 版本信息
-.group 群管
 .send 向后台发送消息
-.mod 模块操作)"
-"\f"
-R"([第二页]跑团指令
+跑团指令
 .game 游戏领域
-.r 掷骰
+/r 掷骰
 .rules 规则速查
-.log 日志记录
 .set 设置默认骰
 .coc COC人物作成
 .dnd DND人物作成
-.st 属性记录
+.st 角色属性记录
 .pc 角色卡记录
 .rc 检定
 .setcoc 设置rc房规
@@ -566,9 +554,8 @@ R"([第二页]跑团指令
 .en 成长/增强检定
 .ri 先攻
 .init 先攻列表
-.ww 骰池)"
-"\f"
-R"([第三页]其他指令
+.ww 骰池
+其他指令
 .draw 抽牌
 .deck 牌堆实例
 .name 随机姓名
@@ -825,25 +812,6 @@ Type=[回复性质](Reply/Order)
 .welcome show //查看欢迎词
 无论指令是否停用，只要有欢迎词时有人入群，都会响应)"
 	},
-	{"group", "&群管"},
-	{
-		"群管",
-		R"(群管指令.group(群管理员限定)
-.group state //查看在群内对骰娘的设置
-.group pause/restart //群全体禁言/全体解除禁言
-.group card [at/用户QQ] [名片] //设置群员名片
-.group title [at/用户QQ] [头衔] //设置群员头衔
-.group diver //查看潜水成员
-.group +/-[群管词条] //为群加减设置，需要对应权限
-例:.group +禁用回复 //关闭本群自定义回复
-群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/拦截消息/许可使用/免清/免黑)"
-	},
-	{ "groups_list", "&取群列表" },
-	{ "取群列表", R"(取群列表.groups list(管理限定)
-.groups list idle //按闲置天数降序列出群
-.groups list size //按群规模降序列出群
-.groups list [群管词条] //列出带有词条的群
-群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/拦截消息/许可使用/免清/免黑)" },
 	{ "敏感词检测","&censor" },
 	{"censor",R"(敏感词检测.admin censor
 .admin censor +([触发等级])=[敏感词0](|[敏感词1]...) //添加敏感词

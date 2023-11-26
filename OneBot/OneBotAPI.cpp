@@ -487,7 +487,6 @@ void OneBot_Event(fifo_json& j) {
 					}
 					//群聊
 					else if (j["message_type"] == "group") {
-						api::printLog("group msg:" + msg);
 						ptr<DiceEvent> Msg(std::make_shared<DiceEvent>(
 							AttrObject({ { "Event", "Message" },
 								{ "fromMsg", msg },
