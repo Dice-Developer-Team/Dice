@@ -139,7 +139,8 @@ class DiceModManager {
 	dict_ci<ptr<DiceMod>> modList;
 	vector<ptr<DiceMod>> modOrder;
 	vector<string> sourceList = {
-		"https://ghproxy.com/https://raw.githubusercontent.com/Dice-Developer-Team/DiceModIndex/main/index",
+		"https://raw.gitmirror.com/Dice-Developer-Team/DiceModIndex/main/index",
+		"https://mirror.ghproxy.com/https://raw.githubusercontent.com/Dice-Developer-Team/DiceModIndex/main/index",
 		"https://gitee.com/diceki/DiceModIndex/raw/main/",
 		//"https://raw.sevencdn.com/Dice-Developer-Team/DiceModIndex/main/index",
 	};
