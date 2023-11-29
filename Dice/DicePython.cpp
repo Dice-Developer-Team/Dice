@@ -14,7 +14,7 @@
 std::unique_ptr<PyGlobal> py;
 constexpr auto DiceModuleName = "dicemaid";
 const char* empty = "";
-const wchar_t* wempty = L"";
+//const wchar_t* wempty = L"";
 string py_args_to_u8string(PyObject* o) {
 	auto s = empty;
 	return (o && PyArg_ParseTuple(o, "s", &s)) ? s : empty;
@@ -57,7 +57,7 @@ AttrIndex py_to_hashable(PyObject* o) {
 			auto i{ PyLong_AsLongLong(o) };
 			return (i == (int)i) ? (int)i : i;
 		}
-		else if (Py_IS_TYPE(o, &PyUnicode_Type))return UtoGBK(PyUnicode_AsUnicode(o));
+		else if (Py_IS_TYPE(o, &PyUnicode_Type))return PyUnicode_AsUTF8(o);
 		else if (Py_IS_TYPE(o, &PyFloat_Type))return PyFloat_AsDouble(o);
 		else if (Py_IS_TYPE(o, &PyBool_Type))return Py_IsTrue(o);
 	}
@@ -71,19 +71,19 @@ AttrVar py_to_attr(PyObject* o) {
 		return (i == (int)i) ? (int)i : i;
 	}
 	else if (Py_IS_TYPE(o, &PyFloat_Type))return PyFloat_AsDouble(o);
-	else if (Py_IS_TYPE(o, &PyUnicode_Type))return UtoGBK(PyUnicode_AsUnicode(o));
+	else if (Py_IS_TYPE(o, &PyUnicode_Type))return PyUnicode_AsUTF8(o);
 	else if (Py_IS_TYPE(o, &PyBytes_Type))return PyBytes_AsString(o);
 	else if (Py_IS_TYPE(o, &PyDict_Type)) {
 		AttrVars tab;
 		int len = PyMapping_Length(o);
 		if (auto items{ PyMapping_Items(o) };items && len) {
 			PyObject* item = nullptr;
-			auto key = wempty;
+			auto key = empty;
 			PyObject* val = nullptr;
 			for (int i = 0; i < len; ++i) {
 				item = PySequence_GetItem(items, i);
-				PyArg_ParseTuple(item, "uO", key, val);
-				tab[UtoGBK(key)] = py_to_attr(val);
+				PyArg_ParseTuple(item, "sO", key, val);
+				tab[key] = py_to_attr(val);
 				Py_DECREF(item);
 			}
 		}
@@ -126,6 +126,72 @@ AttrVar py_to_attr(PyObject* o) {
 			Py_DECREF(tmp);
 		}
 		return set;
+	}
+	console.log("py type: " + string(o->ob_type->tp_name), 0);
+	return {};
+}
+fifo_json py_to_json(PyObject* o) {
+	if (!o)return {};
+	else if (Py_IS_TYPE(o, &PyBool_Type))return bool(Py_IsTrue(o));
+	else if (Py_IS_TYPE(o, &PyLong_Type)) {
+		return PyLong_AsLongLong(o);
+	}
+	else if (Py_IS_TYPE(o, &PyFloat_Type))return PyFloat_AsDouble(o);
+	else if (Py_IS_TYPE(o, &PyUnicode_Type))return PyUnicode_AsUTF8(o);
+	else if (Py_IS_TYPE(o, &PyBytes_Type))return PyBytes_AsString(o);
+	else if (Py_IS_TYPE(o, &PyDict_Type)) {
+		fifo_json obj = fifo_json::object();
+		int len = PyMapping_Length(o);
+		if (auto items{ PyMapping_Items(o) }; items && len) {
+			PyObject* item = nullptr;
+			auto key = empty;
+			PyObject* val = nullptr;
+			for (int i = 0; i < len; ++i) {
+				item = PySequence_GetItem(items, i);
+				PyArg_ParseTuple(item, "sO", key, val);
+				obj.emplace(key,py_to_json(val));
+				Py_DECREF(item);
+			}
+		}
+		return obj;
+	}
+	else if (Py_IS_TYPE(o, &PyList_Type)) {
+		fifo_json ary = fifo_json::array();
+		if (auto len = PySequence_Size(o)) {
+			PyObject* item = nullptr;
+			for (int i = 0; i < len; ++i) {
+				item = PySequence_GetItem(o, i);
+				ary.emplace_back(py_to_attr(item));
+				Py_DECREF(item);
+			}
+		}
+		return ary;
+	}
+	else if (Py_IS_TYPE(o, &PyTuple_Type)) {
+		fifo_json ary = fifo_json::array();
+		if (auto len = PyTuple_Size(o)) {
+			PyObject* item = nullptr;
+			for (int i = 0; i < len; ++i) {
+				item = PyTuple_GetItem(o, i);
+				ary.emplace_back(py_to_attr(item));
+				Py_DECREF(item);
+			}
+		}
+		return ary;
+	}
+	else if (Py_IS_TYPE(o, &PySet_Type)) {
+		fifo_json ary = fifo_json::array();
+		if (auto len = PySet_Size(o)) {
+			api::printLog("set.size:" + to_string(len));
+			PyObject* tmp = PySet_New(o);
+			while (len--) {
+				auto item = PySet_Pop(tmp);
+				ary.emplace_back(py_to_json(item));
+				Py_DECREF(item);
+			}
+			Py_DECREF(tmp);
+		}
+		return ary;
 	}
 	console.log("py type: " + string(o->ob_type->tp_name), 0);
 	return {};
@@ -204,14 +270,13 @@ PyObject_HEAD
 #define PY2PC(self) PC& pc{((PyActorObject*)self)->p}
 static PyObject* PyActor_new(PyTypeObject* tp, PyObject* args, PyObject* kwds) {
 	static const char* kwlist[] = { "name","type", NULL };
-	auto n = wempty, t = wempty;
-	if (PyArg_ParseTuple(args, "u|u", &n, &t)) {
+	auto n = empty, t = empty;
+	if (PyArg_ParseTuple(args, "s|s", &n, &t)) {
 		PyActorObject* self = (PyActorObject*)tp->tp_alloc(tp, 0);
 		Py_INCREF(self);
-		string name{ UtoGBK(n) };
 		new(&self->p) PC(t[0]
-			? std::make_shared<CharaCard>(name, UtoGBK(t))
-			: std::make_shared<CharaCard>(name));
+			? std::make_shared<CharaCard>(n, t)
+			: std::make_shared<CharaCard>(n));
 		return (PyObject*)self;
 	}
 	else return NULL;
@@ -258,11 +323,11 @@ PyObject* PyActor_set(PyObject* self, PyObject* args) {
 			size_t cnt = 0;
 			if (int len = PyMapping_Length(item)) {
 				auto items{ PyMapping_Items(item) };
-				auto key = wempty;
+				auto key = empty;
 				for (int i = 0; i < len; ++i) {
 					item = PySequence_GetItem(items, i);
-					PyArg_ParseTuple(item, "uO", &key, &val);
-					if (!pc->set(UtoGBK(key), py_to_attr(val)))++cnt;
+					PyArg_ParseTuple(item, "sO", &key, &val);
+					if (!pc->set(key, py_to_attr(val)))++cnt;
 					Py_DECREF(item);
 				}
 				Py_DECREF(items);
@@ -799,10 +864,10 @@ PYDEFARG(getSelfData) {
 PYDEFKEY(getGroupAttr) {
 	static const char* kwlist[] = { "id","attr","sub", NULL };
 	PyObject *id{ nullptr }, *sub{ nullptr };
-	auto attr = wempty;
-	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OuO", (char**)kwlist, &id, &attr, &sub))return NULL;
+	auto attr = empty;
+	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OsO", (char**)kwlist, &id, &attr, &sub))return NULL;
 	string item;
-	if (attr && (item = UtoGBK(attr))[0] == '&')item = fmt->format(item);
+	if (attr && (item = attr)[0] == '&')item = fmt->format(item);
 	if (!id) {
 		if (item.empty()) {
 			PyErr_SetString(PyExc_TypeError,"neither id and attr is none/empty");
@@ -869,14 +934,14 @@ PYDEFKEY(getGroupAttr) {
 }
 PYDEFARG(setGroupAttr) {
 	long long id = 0;
-	auto attr = wempty;
+	auto attr = empty;
 	PyObject* val{ nullptr };
-	if (!PyArg_ParseTuple(args, "Lu|O", &id, &attr, &val))return NULL;
+	if (!PyArg_ParseTuple(args, "Ls|O", &id, &attr, &val))return NULL;
 	if (!id) {
 		PyErr_SetString(PyExc_ValueError, "group id can't be zero");
 		return NULL;
 	}
-	string item{ UtoGBK(attr) };
+	string item{ attr };
 	if (item[0] == '&')item = fmt->format(item);
 	if (item.empty())return 0;
 	Chat& grp{ chat(id) };
@@ -889,10 +954,10 @@ PYDEFARG(setGroupAttr) {
 PYDEFKEY(getUserAttr) {
 	static const char* kwlist[] = { "id","attr","sub", NULL };
 	PyObject* id{ nullptr }, * sub{ nullptr };
-	auto attr = wempty;
-	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OuO", (char**)kwlist, &id, &attr, &sub))return NULL;
+	auto attr = empty;
+	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OsO", (char**)kwlist, &id, &attr, &sub))return NULL;
 	string item;
-	if (attr && (item = UtoGBK(attr))[0] == '&')item = fmt->format(item);
+	if (attr && (item = attr)[0] == '&')item = fmt->format(item);
 	if (!id) {
 		if (item.empty()) {
 			PyErr_SetString(PyExc_TypeError, "neither id and attr is none/empty");
@@ -915,14 +980,14 @@ PYDEFKEY(getUserAttr) {
 }
 PYDEFARG(setUserAttr) {
 	long long id = 0;
-	auto attr = wempty;
+	auto attr = empty;
 	PyObject* val{ nullptr };
-	if (!PyArg_ParseTuple(args, "Lu|O", &id, &attr, &val))return NULL;
+	if (!PyArg_ParseTuple(args, "Ls|O", &id, &attr, &val))return NULL;
 	if (!id) {
 		PyErr_SetString(PyExc_ValueError, "User id can't be zero");
 		return NULL;
 	}
-	string item{ UtoGBK(attr) };
+	string item{ attr };
 	if (item[0] == '&')item = fmt->format(item);
 	if (item.empty())return 0;
 	if (item == "trust") {
@@ -945,10 +1010,10 @@ PYDEFARG(setUserAttr) {
 PYDEFKEY(getUserToday) {
 	static const char* kwlist[] = { "id","attr","sub", NULL };
 	PyObject* id{ nullptr }, * sub{ nullptr };
-	auto attr = wempty;
-	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OuO", (char**)kwlist, &id, &attr, &sub))return NULL;
+	auto attr = empty;
+	if (!PyArg_ParseTupleAndKeywords(args, keys, "|OsO", (char**)kwlist, &id, &attr, &sub))return NULL;
 	string item;
-	if (attr && (item = UtoGBK(attr))[0] == '&')item = fmt->format(item);
+	if (attr && (item = attr)[0] == '&')item = fmt->format(item);
 	if (!id) {
 		if (item.empty()) {
 			PyErr_SetString(PyExc_TypeError, "neither id and attr is none/empty");
@@ -975,14 +1040,14 @@ PYDEFKEY(getUserToday) {
 }
 PYDEFARG(setUserToday) {
 	long long id = 0;
-	auto attr = wempty;
+	auto attr = empty;
 	PyObject* val{ nullptr };
-	if (!PyArg_ParseTuple(args, "Lu|O", &id, &attr, &val))return NULL;
+	if (!PyArg_ParseTuple(args, "Ls|O", &id, &attr, &val))return NULL;
 	if (!id) {
 		PyErr_SetString(PyExc_ValueError, "User id can't be zero");
 		return NULL;
 	}
-	string item{ UtoGBK(attr) };
+	string item{ attr };
 	if (item[0] == '&')item = fmt->format(item);
 	if (item.empty())return 0;
 	else if (!val) {
@@ -995,7 +1060,7 @@ PYDEFARG(setUserToday) {
 PYDEFKEY(getPlayerCard) {
 	static const char* kwlist[] = { "uid","gid","name", NULL };
 	long long uid = 0, gid = 0;
-	auto name = wempty;
+	auto name = empty;
 	if (!PyArg_ParseTupleAndKeywords(args, keys, "L|LO", (char**)kwlist, &uid, &gid, &name))return NULL;
 	if (uid) {
 		Player& pl{ getPlayer(uid) };
@@ -1003,7 +1068,7 @@ PYDEFKEY(getPlayerCard) {
 			return py_newActor(pl[gid]);
 		}
 		else if (name[0]) {
-			return py_newActor(pl[UtoGBK(name)]);
+			return py_newActor(pl[name]);
 		}
 		else {
 			return py_newActor(pl[0]);
@@ -1062,6 +1127,22 @@ PYDEFKEY(eventMsg) {
 	th.detach();
 	return Py_BuildValue("");
 }
+PYDEFARG(callOneBot) {
+	if (PyObject* s{ nullptr }; PyArg_ParseTuple(args, "U", &s)) {
+		auto file = py_to_native_string(s);
+		if (!selfdata_byFile.count(file)) {
+			auto& data{ selfdata_byFile[file] = std::make_shared<SelfData>(DiceDir / "selfdata" / file) };
+			if (string name{ cut_stem(file) }; !selfdata_byStem.count(name)) {
+				selfdata_byStem[name] = data;
+			}
+		}
+		auto data = (PySelfDataObject*)PySelfData_Type.tp_alloc(&PySelfData_Type, 0);
+		Py_INCREF(data);
+		new(&data->p) ptr<SelfData>(selfdata_byStem[file]);
+		return (PyObject*)data;
+	}
+	return NULL;
+}
 #define REG(name) #name,(PyCFunction)py_##name
 static PyMethodDef DiceMethods[] = {
 	{REG(log), METH_VARARGS, "output log to command&notice"},
@@ -1077,6 +1158,7 @@ static PyMethodDef DiceMethods[] = {
 	{REG(getPlayerCard), METH_VARARGS | METH_KEYWORDS, "return player card by uid and gid/name"},
 	{REG(sendMsg), METH_VARARGS | METH_KEYWORDS, NULL},
 	{REG(eventMsg), METH_VARARGS | METH_KEYWORDS, NULL},
+	{REG(callOneBot), METH_VARARGS, "call OneBot api directly"},
 	{NULL, NULL, 0, NULL}
 }; 
 static PyModuleDef DiceMaidDef = {

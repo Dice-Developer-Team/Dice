@@ -16,7 +16,7 @@ extern "C" {
 	void js_dice_Set_finalizer(JSRuntime* rt, JSValue val);
 	int js_dice_Set_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst obj, JSAtom prop);
 	int js_dice_Set_delete(JSContext* ctx, JSValue obj, JSAtom atom);
-	extern const JSCFunctionListEntry js_dice_funcs[14];
+	extern const JSCFunctionListEntry js_dice_funcs[15];
 	QJSDEF(log);
 	QJSDEF(loadJS);
 	QJSDEF(getDiceID);
@@ -31,6 +31,7 @@ extern "C" {
 	QJSDEF(getUserToday);
 	QJSDEF(setUserToday);
 	QJSDEF(getPlayerCard);
+	QJSDEF(callOneBot);
 	//Context
 	extern JSClassID js_dice_context_id;
 	extern JSClassDef js_dice_context_class;

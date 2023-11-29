@@ -70,7 +70,7 @@ public:
 	bool WordCensor();
 	void virtualCall();
 	short trusted = 0;
-	bool isCalled = true;
+	//bool isCalled = true;
 
 private:
 	std::optional<string> getGameRule();

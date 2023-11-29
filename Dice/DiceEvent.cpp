@@ -711,53 +711,13 @@ int DiceEvent::MasterSet()
 
 int DiceEvent::BasicOrder()
 {
-	if (strMsg[0] != '.')return 0;
+	if (strMsg[0] != '/')return 0;
 	intMsgCnt++;
 	while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 		intMsgCnt++;
 	//指令匹配
 	if (console["DebugMode"])console.log("listen:" + strMsg, 0, printSTNow());
-	if (strLowerMessage.substr(intMsgCnt, 9) == "authorize")
-	{
-		intMsgCnt += 9;
-		readSkipSpace();
-		if (isPrivate() || strMsg[intMsgCnt] == '+')
-		{
-			long long llTarget = readID();
-			if (llTarget)
-			{
-				pGrp = &chat(llTarget);
-			}
-			else
-			{
-				replyMsg("strGroupIDEmpty");
-				return 1;
-			}
-		}
-		if (pGrp->isset("许可使用") && !pGrp->isset("未审核") && !pGrp->isset("协议无效"))return 0;
-		string strInfo = readRest();
-		if (fmt->call_hook_event(merge({
-			{"hook","GroupAuthorize"},
-			{"aimGroup",to_string(pGrp->ID)},
-			{"AttachInfo",strInfo},
-			{"aim_gid",pGrp->ID},
-			})))return 1;
-		if (trusted > 0)
-		{
-			pGrp->set("许可使用").reset("未审核").reset("协议无效");
-			note("已授权" + printGroup(pGrp->ID) + "许可使用", 1);
-			AddMsgToQueue(getMsg("strGroupAuthorized", *this), { 0,pGrp->ID });
-		}
-		else
-		{
-			if (!console["CheckGroupLicense"] && !console["Private"] && !isCalled)return 0;
-			if (strInfo.empty())console.log(printUser(fromChat.uid) + "申请" + printGroup(pGrp->ID) + "许可使用", 0b10, printSTNow());
-			else console.log(printUser(fromChat.uid) + "申请" + printGroup(pGrp->ID) + "许可使用；附言：" + strInfo, 0b100, printSTNow());
-			replyMsg("strGroupLicenseApply");
-		}
-		return 1;
-	}
-	else if (strLowerMessage.substr(intMsgCnt, 6) == "master")
+	if (strLowerMessage.substr(intMsgCnt, 6) == "master")
 	{
 		intMsgCnt += 6;
 		if (!console)
@@ -777,9 +737,6 @@ int DiceEvent::BasicOrder()
 		}
 		else if (trusted > 4 || isFromMaster()) {
 			return MasterSet();
-		}
-		else {
-			if (isCalled)replyMsg("strNotMaster");
 		}
 		return 1;
 	}
@@ -1333,7 +1290,7 @@ int DiceEvent::BasicOrder()
 }
 
 int DiceEvent::InnerOrder() {
-	if (strMsg[0] != '.')return 0;
+	if (strMsg[0] != '/')return 0;
 	if (WordCensor()) {
 		return 1;
 	}
@@ -3843,7 +3800,6 @@ bool DiceEvent::WordCensor() {
 
 void DiceEvent::virtualCall() {
 	isVirtual = true;
-	isCalled = true;
 	DiceFilter();
 }
 std::optional<string> DiceEvent::getGameRule() {

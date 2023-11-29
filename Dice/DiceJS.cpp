@@ -33,12 +33,12 @@ string js_toNativeString(JSContext* ctx, JSValue val) {
 	JS_FreeCString(ctx, s);
 	return ret;
 }
-string js_NativeToGBK(JSContext* ctx, JSValue val) {
+string js_NativeToUTF8(JSContext* ctx, JSValue val) {
 	auto s{ JS_ToCString(ctx, val) };
 #ifdef _WIN32
-	string ret{ s };
+	string ret{ GBKtoUTF8(s) };
 #else
-	string ret{ UTF8toGBK(s) };
+	string ret{ s };
 #endif
 	JS_FreeCString(ctx, s);
 	return ret;
@@ -176,6 +176,64 @@ AttrVar js_toAttr(JSContext* ctx, JSValue val) {
 	}
 	return {};
 }
+fifo_json js_toJson(JSContext* ctx, JSValue val) {
+	switch (auto tag{ JS_VALUE_GET_TAG(val) }) {
+	case JS_TAG_BOOL:
+		return JS_VALUE_GET_INT(val) != 0;
+		break;
+	case JS_TAG_INT:
+		return JS_VALUE_GET_INT(val);
+		break;
+	case JS_TAG_BIG_INT:
+		return js_toLongLong(ctx, val);
+		break;
+	case JS_TAG_BIG_FLOAT:
+	case JS_TAG_FLOAT64:
+		if (auto d = js_toDouble(ctx, val); d == (long long)d)return (long long)d;
+		else return d;
+		break;
+	case JS_TAG_STRING:
+		return js_toUTF8(ctx, val);
+		break;
+	case JS_TAG_OBJECT:
+		if (void* p{ nullptr }; JS_GetClassID(val, &p) == js_dice_context_id) {
+			return ((AttrObject*)p)->to_json();
+		}
+		//else if (void* p{ nullptr }; JS_GetClassID(val, &p) == js_dice_Set_id) {
+		//	return *(AttrSet*)p;
+		//}
+		else if (JS_IsArray(ctx, val)) {
+			fifo_json ary = fifo_json::array();
+			auto p = JS_VALUE_GET_OBJ(val);
+			auto len = (uint32_t)JS_VALUE_GET_INT(JS_GetPropertyStr(ctx, val, "length"));
+			for (uint32_t i = 0; i < len; i++)
+				ary.emplace_back(js_toJson(ctx, JS_GetPropertyUint32(ctx, val, i)));
+			return ary;
+		}
+		else {
+			fifo_json obj = fifo_json::object();
+			JSPropertyEnum* tab{ nullptr };
+			uint32_t len = 0;
+			if (!JS_GetOwnPropertyNames(ctx, &tab, &len, val, JS_GPN_ENUM_ONLY | JS_GPN_STRING_MASK)) {
+				for (uint32_t i = 0; i < len; ++i) {
+					obj.emplace(js_AtomtoUTF8(ctx, tab[i].atom), js_toJson(ctx, JS_GetProperty(ctx, val, tab[i].atom)));
+				}
+				js_free_prop_enum(ctx, tab, len);
+			}
+			return obj;
+		}
+		break;
+	case JS_TAG_UNINITIALIZED:
+	case JS_TAG_NULL:
+	case JS_TAG_EXCEPTION:
+	case JS_TAG_UNDEFINED:
+		return nullptr;
+	default:
+		console.log("js_value_tag:" + to_string(JS_VALUE_GET_TAG(val)), 0);
+		return nullptr;
+	}
+	return nullptr;
+}
 JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 	switch (var.type) {
 	case AttrVar::Type::Boolean:
@@ -226,6 +284,47 @@ JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 	case AttrVar::Type::Function:
 	case AttrVar::Type::Nil:
 	default:
+		break;
+	}
+	return JS_UNDEFINED;
+}
+JSValue js_newJson(JSContext* ctx, const fifo_json& j) {
+	switch (j.type()) {
+	case fifo_json::value_t::boolean:
+		return JS_NewBool(ctx, j);
+		break;
+	case fifo_json::value_t::number_integer:
+		return JS_NewInt64(ctx, j);
+		break;
+	case fifo_json::value_t::number_unsigned:
+		return JS_NewInt64(ctx, j.get<uint64_t>());
+		break;
+	case fifo_json::value_t::number_float:
+		return JS_NewFloat64(ctx, j);
+		break;
+	case fifo_json::value_t::string:
+		return JS_NewString(ctx, j.get<string>().c_str());
+		break;
+	case fifo_json::value_t::array: {
+		auto ary = JS_NewArray(ctx);
+		uint32_t idx{ 0 };
+		for (auto& val : j) {
+			JS_SetPropertyUint32(ctx, ary, idx++, js_newJson(ctx, val));
+		}
+		return ary;
+		break;
+	}
+	case fifo_json::value_t::object: {
+		auto dict = JS_NewObject(ctx);
+		for (auto& item : j.items()) {
+			JS_SetPropertyStr(ctx, dict, item.key().c_str(), js_newJson(ctx, item.value()));
+		}
+		return dict;
+		break;
+	}
+	case fifo_json::value_t::null:
+	default:
+		return JS_UNDEFINED;
 		break;
 	}
 	return JS_UNDEFINED;
@@ -685,6 +784,26 @@ QJSDEF(getPlayerCard) {
 		}
 	}
 	else JS_ThrowTypeError(ctx, "#1 invalid user id!");
+	return JS_EXCEPTION;
+}
+QJSDEF(callOneBot) {
+	fifo_json param = js_toJson(ctx, argv[0]);
+	if (!param.is_null() && !param.empty()) {
+		try {
+			if (param.count("echo") && !param["echo"].is_null()) {
+				if (auto ret{ api::getExtra(param) }; !ret.is_null()) {
+					return ret;
+				}
+			}
+			else {
+				api::pushExtra(param);
+				return JS_TRUE;
+			}
+		}
+		catch (std::exception& e) {
+			console.log("callOneBot抛出异常!" + string(e.what()), 0b10);
+		}
+	}
 	return JS_EXCEPTION;
 }
 //Context

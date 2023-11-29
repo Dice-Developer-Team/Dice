@@ -91,10 +91,8 @@ namespace api {
 	void pushExtra(const fifo_json& para){
 		linker->send(para);
 	}
-	bool getExtra(const fifo_json& para, string& ret) {
-		if (auto res{ linker->get_data(para) }) {
-		}
-		return false;
+	fifo_json getExtra(const fifo_json& para) {
+		return linker->get_data(para);
 	}
 }
 /*

@@ -37,6 +37,7 @@ const JSCFunctionListEntry js_dice_funcs[] = {
 	JS_DICEDEF(getUserToday,3),
 	JS_DICEDEF(setUserToday,3),
 	JS_DICEDEF(getPlayerCard,2),
+	JS_DICEDEF(callOneBot,1),
 };
 JSClassID js_dice_context_id;
 JSClassExoticMethods js_dice_context_methods = {

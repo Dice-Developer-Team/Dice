@@ -125,8 +125,6 @@ const dict_ci<string> PlainMsg
 	{"strUserTrustIllegal","将目标权限修改为{trust}是非法的×"},
 	{"strUserNotFound","{self}无{user}的用户记录"},
 	{"strGroupAuthorized","A roll to the table turns to a dice fumble!\nDice Roller {strSelfName}√\n本群已授权许可，请尽情使用本骰娘√" },
-	{"strGroupLicenseDeny","本群未获{self}许可使用，自动在群内静默。\n请先/help协议 阅读并同意协议后向运营方申请许可使用，\n可按以下格式填写并发送申请:\n!authorize 申请用途:[ **请写入理由** ] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议" },
-	{"strGroupLicenseApply","此群未通过自助授权×\n许可申请已发送√" },
 	{"strGroupSetOn","现已开启{self}在此群的“{option}”选项√"},			//群内开关和遥控开关通用此文本
 	{"strGroupSetOnAlready","{self}已在此群设置了{option}！"},			
 	{"strGroupSetOff","现已关闭{self}在此群的“{option}”选项√"},			
@@ -357,7 +355,6 @@ const dict_ci<string> PlainMsg
 	{"strStErr", "格式错误:请参考/help st获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
 	{"strGlobalOff", "{self}休假中，暂停服务×"},
-	{"strPreserve", "{self}私有私用，勿扰勿怪\n如需申请许可请发送!authorize +[群号] 申请用途:[ **请写入理由** ] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[ **请写入指令** ]，用后使用[ **请写入指令** ]送出群"},
 	{"strJrrp", "{nick}今天的人品值是: {res}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{res}"},
 	{ "strFriendDenyNotUser", "很遗憾，你没有对{self}使用指令的记录" },
@@ -438,7 +435,6 @@ const dict_ci<string> GlobalComment{
 	{"strFumble", "多轮检定大失败"},
 	{"strGlobalOff", "全局静默时对私聊指令或开启指令的回执"},
 	//
-	{"strGroupAuthorized", "!authorize+群号授权成功后在目标群的回执"},
 	{"strGroupBan", "group ban禁言群员的回执"},
 	{"strGroupCardSet", "group card修改群名片的回执"},
 	//
@@ -604,8 +600,6 @@ mod按序读取，且从后向前覆盖)"},
 *每个群至多保存10个实例*
 *.draw时，牌堆实例优先级高于同名公共对象*
 *除show外其他群内操作需要GM权限*)"},
-{"授权许可","&authoize"},
-{"authorize","授权许可(非信任用户使用时转为向管理申请许可)\n!authorize (+[群号]) ([申请理由])\n群内原地发送可省略群号，无法自动授权时会连同理由发给管理\n默认格式为:!authorize 申请用途:[ **请写入理由** ] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[ **请写入指令** ]，用后使用[ **请写入指令** ]送出群"},
 {"开关","&bot"},
 {"bot",".bot on/off开启/静默骰子（限群管理）\n.bot无视静默状态，只要插件开启且不在黑名单总是有效"},
 {"规则速查","&rules"},

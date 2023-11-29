@@ -557,20 +557,10 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 	//limit
 	chat_locks lock_list;
 	if (!limit.check(msg, lock_list))return false;
-	if (type == Type::Reply) {
-		if (!msg->isCalled && (chon < 0 ||
-			(!chon && (msg->pGrp->isset("禁用回复")))))
-			return false;
-	}
-	else {	//type == Type::Order
-		if (!msg->isCalled && (chon < 0 ||
-			(!chon && msg->pGrp->isset("停用指令"))))
-			return false;
-	}
+	if (chon < 0)return false;
 	if (msg->WordCensor()) {
 		return true;
 	}
-
 	if (echo == Echo::Text) {
 		msg->reply(answer.get_str("text"));
 		return true;

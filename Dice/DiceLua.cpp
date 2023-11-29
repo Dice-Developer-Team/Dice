@@ -72,7 +72,7 @@ string lua_to_native_string(lua_State* L, int idx = -1) {
 }
 
 void lua_push_string(lua_State* L, const string& str) {
-	lua_pushstring(L, UTF8Luas.count(L) ? GBKtoUTF8(str).c_str() : str.c_str());
+	lua_pushstring(L, UTF8Luas.count(L) ? str.c_str() : UTF8toGBK(str).c_str());
 }
 void lua_push_raw_string(lua_State* L, const string& str) {
 	lua_pushstring(L, str.c_str());
@@ -191,6 +191,41 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 		break;
 	}
 }
+void lua_push_json(lua_State* L, const fifo_json& j) {
+	switch (j.type()){
+	case fifo_json::value_t::boolean:
+		lua_pushboolean(L,j);
+		break;
+	case fifo_json::value_t::number_integer:
+	case fifo_json::value_t::number_unsigned:
+	case fifo_json::value_t::number_float:
+		lua_pushnumber(L, j);
+		break;
+	case fifo_json::value_t::string:
+		lua_push_string(L, j);
+		break;
+	case fifo_json::value_t::array: {
+		lua_newtable(L);
+		int idx{ 0 };
+		for (auto& val : j) {
+			lua_push_json(L, val);
+			lua_seti(L, -2, ++idx);
+		}
+		break; 
+	}
+	case fifo_json::value_t::object:
+		lua_newtable(L);
+		for (auto& item : j.items()) {
+			lua_push_json(L, item.value());
+			lua_set_field(L, -2, item.key());
+		}
+		break;
+	case fifo_json::value_t::null:
+	default:
+		lua_pushnil(L);
+		break;
+	}
+}
 AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 	switch (lua_type(L, idx)) {
 	case LUA_TBOOLEAN:
@@ -239,6 +274,56 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 		break;
 	}
 	return {};
+}
+fifo_json lua_to_json(lua_State* L, int idx = -1) {
+	switch (lua_type(L, idx)) {
+	case LUA_TBOOLEAN:
+		return (bool)lua_toboolean(L, idx);
+		break;
+	case LUA_TNUMBER:
+		if (lua_isinteger(L, idx)) {
+			return lua_tointeger(L, idx);
+		}
+		else {
+			return lua_tonumber(L, idx);
+		}
+		break;
+	case LUA_TSTRING:
+		return lua_to_u8string(L, idx);
+		break;
+	case LUA_TTABLE: {
+		fifo_json obj = fifo_json::object();
+		fifo_json ary = fifo_json::array();
+		if (idx < 0)idx = lua_gettop(L) + idx + 1;
+		lua_pushnil(L);
+		while (lua_next(L, idx)) {
+			if (lua_type(L, -2) == LUA_TNUMBER) {
+				ary.emplace_back(lua_to_json(L, -1));
+			}
+			else {
+				obj.emplace(lua_to_u8string(L, -2), lua_to_json(L, -1));
+			}
+			lua_pop(L, 1);
+		}
+		if (obj.empty() && !ary.empty())return ary;
+		else {
+			if (!ary.empty()) {
+				int i = 0;
+				for (auto& item : ary) {
+					obj.emplace(to_string(++i), item);
+				}
+			}
+			return obj;
+		}
+	}
+				   break;
+	case LUA_TUSERDATA:
+		if (auto p = luaL_testudata(L, idx, "Set")) {
+			return AttrVar(**(AttrSet**)p);
+		}
+		break;
+	}
+	return fifo_json();
 }
 
 AttrVars lua_to_dict(lua_State* L, int idx = -1) {
@@ -1008,7 +1093,29 @@ LUADEF(eventMsg) {
 	th.detach();
 	return 0;
 }
-LUADEF(askExtra) {
+LUADEF(callOneBot) {
+	fifo_json para = lua_to_json(L, 1);
+	if (!para.is_null() && !para.empty()) {
+		try {
+			if (para.count("echo") && !para["echo"].is_null()) {
+				if (auto ret{ api::getExtra(para) };!ret.is_null()) {
+					lua_push_json(L,ret);
+					return 1;
+				}
+			}
+			else {
+				api::pushExtra(para);
+				lua_pushboolean(L, true);
+				return 1;
+			}
+		}
+		catch (std::exception& e) {
+			console.log("callOneBot抛出异常!" + string(e.what()), 0b10);
+		}
+	}
+	return 0;
+}
+LUADEF(pushExtra) {
 	string data;	//utf-8
 	if (lua_istable(L, 1)) {
 		data = to_json(lua_to_dict(L, 1)).dump();
@@ -1018,10 +1125,8 @@ LUADEF(askExtra) {
 	}
 	if (data.empty())return 0;
 	try {
-		if (string ret; api::getExtra(data, ret)) {
-			lua_push_attr(L, AttrVar(fifo_json::parse(ret)));
-			return 1;
-		}
+		api::pushExtra(data);
+		lua_pushboolean(L, true);
 	}
 	catch (std::exception& e) {
 		console.log("askExtra抛出异常!" + string(e.what()), 0b10);
@@ -1459,7 +1564,7 @@ void LuaState::regist() {
 		REGIST(drawDeck)
 		REGIST(sendMsg)
 		REGIST(eventMsg)
-		REGIST(askExtra)
+		REGIST(callOneBot)
 		{nullptr, nullptr},
 	};
 	for (const luaL_Reg* lib = DiceFucs; lib->func; lib++) {

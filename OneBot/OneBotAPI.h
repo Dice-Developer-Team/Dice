@@ -13,5 +13,5 @@ namespace api {
 	void sendGroupMsg(long long gid, const string& msg);
 	void sendChannelMsg(long long gid, long long chid, const string& msg);
 	void pushExtra(const fifo_json& para);
-	bool getExtra(const fifo_json& para, string& ret);
+	fifo_json getExtra(const fifo_json& para);
 }

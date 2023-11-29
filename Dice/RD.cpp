@@ -367,10 +367,10 @@ void init2(string& msg)
 	if (msg.substr(0, 2) == "。" || msg.substr(0, 2) == "！" || msg.substr(0, 2) == "．")
 	{
 		msg.erase(msg.begin());
-		msg[0] = '.';
+		msg[0] = '/';
 	}
-	if (msg[0] == '!' || msg[0] == '/')
-		msg[0] = '.';
+	if (msg[0] == '!' || msg[0] == '.')
+		msg[0] = '/';
 	int posFF(0);
 	while ((posFF = msg.find('\f'))!= string::npos) {
 		msg[posFF] = '\v';
