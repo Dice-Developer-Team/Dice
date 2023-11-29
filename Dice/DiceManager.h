@@ -44,10 +44,10 @@ public:
             j["code"] = 0;
             j["msg"] = "ok";
 			j["data"] = nlohmann::json::object();
-            j["data"]["version"] = GBKtoUTF8(Dice_Full_Ver);
+            j["data"]["version"] = Dice_Full_Ver;
             j["data"]["qq"] = console.DiceMaid;
-            j["data"]["nick"] = GBKtoUTF8(getMsg("strSelfName"));
-            j["data"]["running_time"] = GBKtoUTF8(printDuringTime(time(nullptr) - llStartTime));
+            j["data"]["nick"] = getMsg("strSelfName");
+            j["data"]["running_time"] = printDuringTime(time(nullptr) - llStartTime);
             j["data"]["cmd_count"] = std::to_string(FrqMonitor::sumFrqTotal.load());
             j["data"]["cmd_count_today"] = today->get("frq").to_str();
             ret = j.dump();
@@ -56,7 +56,7 @@ public:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
 
@@ -82,7 +82,7 @@ public:
 			j["data"] = nlohmann::json::array();
             for (const auto& [key,val] : GlobalMsg)
             {
-                j["data"].push_back({{"name", GBKtoUTF8(key)}, {"value", GBKtoUTF8(val)}, {"remark", GBKtoUTF8(getComment(key))}});
+                j["data"].push_back({{"name", key}, {"value", val}, {"remark", getComment(key)}});
             }
             ret = j.dump();
         }
@@ -90,7 +90,7 @@ public:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
 
@@ -110,13 +110,13 @@ public:
             {
                 std::unique_lock lock(GlobalMsgMutex);
                 for(const auto& item: j["data"]){
-                    GlobalMsg[UTF8toGBK(item["name"].get<std::string>())] = UTF8toGBK(item["value"].get<std::string>());
-                    EditedMsg[UTF8toGBK(item["name"].get<std::string>())] = UTF8toGBK(item["value"].get<std::string>());
+                    GlobalMsg[item["name"]] = item["value"];
+                    EditedMsg[item["name"]] = item["value"];
                 }
                 saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
             }
             else if (j["action"].get<std::string>() == "reset") {
-                fmt->msg_reset(UTF8toGBK(j["data"]["name"].get<std::string>()));
+                fmt->msg_reset(j["data"]["name"]);
             }
             else
             {
@@ -131,7 +131,7 @@ public:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
         mg_send_http_ok(conn, "application/json", ret.length());
@@ -162,7 +162,7 @@ public:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
 
@@ -183,7 +183,7 @@ public:
                 for(const auto& item: j["data"])
                 {   
                     ptr<DiceMsgReply> trigger{ std::make_shared<DiceMsgReply>() };
-                    trigger->title = UTF8toGBK(item["name"].get<std::string>());
+                    trigger->title = item["name"];
                     trigger->readJson(item);
                     fmt->set_reply(trigger->title, trigger);
                 }
@@ -192,7 +192,7 @@ public:
             {
                 for(const auto& item: j["data"])
                 {
-                    fmt->del_reply(UTF8toGBK(item["name"].get<std::string>()));
+                    fmt->del_reply(item["name"]);
                 }
             }
             else
@@ -208,7 +208,7 @@ public:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
         mg_send_http_ok(conn, "application/json", ret.length());
@@ -230,11 +230,11 @@ public:
             j["count"] = fmt->modOrder.size();
             j["data"] = nlohmann::json::array();
             for (const auto& mod : fmt->modOrder) {
-                j["data"].push_back({ {"name", GBKtoUTF8(mod->name)} ,
-                    {"title", GBKtoUTF8(mod->title.empty() ? mod->name : mod->title)},
-                    {"ver", GBKtoUTF8(mod->ver.exp)},
-                    {"author", GBKtoUTF8(mod->author)},
-                    {"brief", GBKtoUTF8(mod->brief)},
+                j["data"].push_back({ {"name", mod->name} ,
+                    {"title", mod->title.empty() ? mod->name : mod->title},
+                    {"ver", mod->ver.exp},
+                    {"author", mod->author},
+                    {"brief", mod->brief},
                     {"active", mod->active},
                     });
             }
@@ -244,7 +244,7 @@ public:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
 
@@ -264,7 +264,7 @@ public:
             }
             else if(j["action"] == "delete") {
                 for (const auto& item : j["data"]) {
-                    fmt->uninstall(UTF8toGBK(item["name"].get<std::string>()));
+                    fmt->uninstall(item["name"]);
                 }
             }
             else if (j["action"] == "reorder") {
@@ -272,7 +272,7 @@ public:
                 if(!fmt->reorder(oldIdx,newIndex))throw std::runtime_error("Invalid Index");
             }
             else if (j["action"] == "install") {
-                string name{ UTF8toGBK(j["data"]["name"].get<std::string>()) };
+                string name{ j["data"]["name"] };
 #ifndef __ANDROID__
                 if (j["data"].count("repo") && fmt->mod_clone(name, j["data"]["repo"]))goto Success;
 #endif
@@ -293,7 +293,7 @@ Success:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
         mg_send_http_ok(conn, "application/json", ret.length());
@@ -318,9 +318,9 @@ public:
             {
                 const int value = console[item.first.c_str()];
                 j["data"].push_back({
-                    {"name", GBKtoUTF8(item.first)},
+                    {"name", item.first},
                     {"value", value},
-                    {"remark", GBKtoUTF8(console.confComment.find(item.first)->second)},
+                    {"remark", console.confComment.find(item.first)->second},
                     });
             }
             j["count"] = j["data"].size();
@@ -330,7 +330,7 @@ public:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
         mg_send_http_ok(conn, "application/json", ret.length());
@@ -349,7 +349,7 @@ public:
             {
                 for(const auto& item: j["data"])
                 {
-                    console.set(UTF8toGBK(item["name"].get<std::string>()), item["value"].get<int>());
+                    console.set(item["name"], item["value"].get<int>());
                 }
             } 
             else
@@ -365,7 +365,7 @@ public:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
         mg_send_http_ok(conn, "application/json", ret.length());
@@ -394,7 +394,7 @@ public:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
         mg_send_http_ok(conn, "application/json", ret.length());
@@ -435,7 +435,7 @@ public:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
         mg_send_http_ok(conn, "application/json", ret.length());
@@ -455,10 +455,11 @@ public:
                 if (Network::GET(url, ret)) {
                     j["code"] = 0;
                     j["msg"] = ret;
+                    console.log("getUrl:" + ret,0);
                 }
                 else {
                     j["code"] = -1;
-                    j["msg"] = GBKtoUTF8(ret);
+                    j["msg"] = LocaltoUTF8(ret);
                     console.log(ret, 0);
                 }
             }
@@ -472,7 +473,7 @@ public:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
 
@@ -490,7 +491,7 @@ public:
             if (!Network::POST(j["url"], j["content"], j.count("header") ? j["header"] : "Content-Type: application/json", ret)) {
                 nlohmann::json j2 = nlohmann::json::object();
                 j2["code"] = -1;
-                j2["msg"] = GBKtoUTF8(ret);
+                j2["msg"] = ret;
                 ret = j2.dump();
             }
         }
@@ -498,7 +499,7 @@ public:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
         mg_send_http_ok(conn, "application/json", ret.length());
@@ -538,7 +539,7 @@ public:
         {
             nlohmann::json j = nlohmann::json::object();
             j["code"] = -1;
-            j["msg"] = GBKtoUTF8(e.what());
+            j["msg"] = e.what();
             ret = j.dump();
         }
         mg_send_http_ok(conn, "application/json", ret.length());

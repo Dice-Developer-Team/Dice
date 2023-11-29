@@ -46,7 +46,7 @@ public:
 	enum class DataType : unsigned char { Any, Nature, Int, };
 	enum class TextType : unsigned char { Plain, Dicexp, JavaScript, };
 	AttrShape() = default;
-	AttrShape(const tinyxml2::XMLElement* node, bool isUTF8);
+	AttrShape(const tinyxml2::XMLElement* node);
 	AttrShape(int i) :defVal(i) {}
 	AttrShape(const string& s):defVal(s){}
 	AttrShape(const string& s, TextType tt) :defVal(s), textType(tt){}
@@ -69,7 +69,7 @@ public:
 			shapes[key] = { val, AttrShape::TextType::Dicexp };
 		}
 	}
-	CardPreset(const tinyxml2::XMLElement* d, bool isUTF8);
+	CardPreset(const tinyxml2::XMLElement* d);
 };
 
 class CardTemp

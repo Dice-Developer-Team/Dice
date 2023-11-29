@@ -7,23 +7,22 @@
 #include "DiceJS.h"
 #include "DiceMod.h"
 
-#define Text2UTF8(s) (s ? (isUTF8 ? s : GBKtoUTF8(s)) : "")
-AttrShape::AttrShape(const tinyxml2::XMLElement* node, bool isUTF8) {
+//#define TextOrEmpty(s) (s ? s : "")
+AttrShape::AttrShape(const tinyxml2::XMLElement* node) {
 	if (auto exp{ node->GetText() }) {
-		string s{ Text2UTF8(exp) };
 		if (auto text{ node->Attribute("text") }) {
 			if (auto lower{ toLower(text) }; lower == "dicexp") {
 				textType = AttrShape::TextType::Dicexp;
-				defVal = s;
+				defVal = exp;
 				return;
 			}
 			else if (lower == "javascript") {
 				textType = AttrShape::TextType::JavaScript;
-				defVal = s;
+				defVal = exp;
 				return;
 			}
 		}
-		defVal = AttrVar::parse(s);
+		defVal = AttrVar::parse(exp);
 	}
 }
 AttrVar AttrShape::init(const CharaCard* pc) {
@@ -106,43 +105,39 @@ dict_ci<ptr<CardTemp>> CardModels{
 	{"COC7", std::make_shared<CardTemp>(ModelCOC7),},
 };
 
-CardPreset::CardPreset(const tinyxml2::XMLElement* d, bool isUTF8) {
+CardPreset::CardPreset(const tinyxml2::XMLElement* d) {
 	for (auto elem = d->FirstChildElement(); elem; elem = elem->NextSiblingElement()) {
 		if (auto name{ elem->Attribute("name") }) {
-			shapes[Text2UTF8(name)] = { elem,isUTF8 };
+			shapes[name] = elem;
 		}
 	}
 }
 int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 	tinyxml2::XMLDocument doc;
 	if (auto err{ doc.LoadFile(fpPath.string().c_str()) }; tinyxml2::XML_SUCCESS == err) {
-		bool isUTF8(false);
-		if (auto declar{ doc.FirstChild()->ToDeclaration() }) {
-			isUTF8 = string(declar->Value()).find("UTF-8") != string::npos;
-		}
 		if (auto root{ doc.FirstChildElement() }) {
 			if (auto tp_name{ root->Attribute("name") }) {
-				auto& tp{ m[Text2UTF8(tp_name)] };
+				auto& tp{ m[tp_name] };
 				for (auto elem = root->FirstChildElement(); elem; elem = elem->NextSiblingElement()) {
 					if (string tag{ elem->Name()}; tag == "alias") {
-						if (auto text{ elem->GetText() })readini(Text2UTF8(text), tp.replaceName);
+						if (auto text{ elem->GetText() })readini(text, tp.replaceName);
 					}
 					else if (tag == "basic") {
 						tp.vBasicList.clear();
 						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
-							if (auto text{ kid->GetText() })tp.vBasicList.push_back(getLines(Text2UTF8(text)));
+							if (auto text{ kid->GetText() })tp.vBasicList.push_back(getLines(text));
 						}
 					}
 					else if (tag == "init") {
 						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
 							if (auto name{ kid->Attribute("name") }) {
-								tp.AttrShapes[Text2UTF8(name)] = { kid,isUTF8 };
+								tp.AttrShapes[name] = kid;
 							}
 						}
 					}
 					else if (tag == "presets") {
 						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
-							if (auto opt{ kid->Attribute("name") })tp.presets[Text2UTF8(opt)] = CardPreset(kid, isUTF8);
+							if (auto opt{ kid->Attribute("name") })tp.presets[opt] = CardPreset(kid);
 						}
 					}
 				}
