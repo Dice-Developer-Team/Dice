@@ -106,7 +106,7 @@ const dict_ci<string> PlainMsg
 	{"strGameItemShow","本桌游戏的{set_item}为{set_val}√"},
 	{"strGameItemEmpty","请{nick}输入待设置的项目×"},
 	{"strGameAreaOpen","{self}已在此展开「{game_id}」游戏领域√"},
-	{"strGameAreaClosed","游戏领域关闭，{nick}可用.game open {game_id} 重新展开√"},
+	{"strGameAreaClosed","游戏领域关闭，{nick}可用/game open {game_id} 重新展开√"},
 	{"strGameRouletteSet","{self}已为{face}面骰启用轮盘骰√"},
 	{"strGameRouletteTooBig","这么大……{nick}丢得完吗？"},
 	{"strGameRouletteHistory","{self}本轮轮盘骰记录如下:\n{hist}"},
@@ -135,11 +135,6 @@ const dict_ci<string> PlainMsg
 	{"strGroupSetDenied","{nick}在{self}处设置{option}的权限不足×"},
 	{"strGroupSetInvalid","{nick}尝试设置无效的群词条{option}×"},
 	{"strGroupSetNotExist","{self}无{option}此选项×"},
-	{"strGroupWholeUnban","{self}已关闭全局禁言√"},
-	{"strGroupWholeBan","{self}已开启全局禁言√"},
-	{"strGroupWholeBanErr","{self}开启全局禁言失败×"},
-	{"strGroupUnban","{self}裁定:{member}解除禁言√"},
-	{"strGroupBan","{self}裁定:{member}禁言{res}分钟√"},
 	{"strGroupNotFound","{self}无群{group_id}记录×"},
 	{"strGroupNot","{group}不是群！"},
 	{"strGroupNotIn","{self}当前不在{group}内×"},
@@ -197,11 +192,6 @@ const dict_ci<string> PlainMsg
 	{"strStModify","{self}已记录{pc}的{cnt}条属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
 	{"strStDetail","{self}已设置{pc}的属性："},		//存在掷骰时，使用此文本
 	{"strStValEmpty","{self}未记录{attr}原值×"},		
-	{"strBlackQQAddNotice","{nick}，你已被{self}加入黑名单，详情请联系Master:{print:master}"},				
-	{"strBlackQQAddNoticeReason","{nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{print:master}"},
-	{"strBlackQQDelNotice","{nick}，你已被{self}移出黑名单，现在可以继续使用了"},
-	{"strWhiteQQAddNotice","{user_nick}，您已获得{self}的信任，请尽情使用{self}√"},
-	{"strWhiteQQDenied","你不是{self}的信任用户×"},
 	{"strDeckNew","{self}已为{nick}自定义新牌堆<{deck_name}>√"},
 	{"strDeckSet","{nick}已用<{deck_name}>创建{self}的牌堆实例√"},
 	{"strDeckSetRename","{nick}已用<{deck_cited}>创建{self}的牌堆实例{deck_name}√"},
@@ -235,7 +225,7 @@ const dict_ci<string> PlainMsg
 	{"strEnRollFailure","{strEnRoll}\n{pc}的{attr}变化{change}点，当前为{final}点"},
 	{"strEnRollSuccess","{strEnRoll}\n{pc}的{attr}增加{change}点，当前为{final}点"},
 	{"strEnDefaultName","属性或技能"},//默认文本
-	{"strEnValEmpty", "未对{self}设定待成长属性值，请先.st {attr} 属性值 或查看/help en×"},
+	{"strEnValEmpty", "未对{self}设定待成长属性值，请先/st {attr} 属性值 或查看/help en×"},
 	{"strEnValInvalid", "{attr}值输入不正确,请输入1-99范围内的整数!"},
 	{"strSendMsg","{self}已将消息送出√"},//Master定向发送的回执
 	{"strSendMasterMsg","消息{self}已发送给Master√"},//向Master发送的回执
@@ -304,7 +294,7 @@ const dict_ci<string> PlainMsg
 	{"strSanityRoll", "{pc}的San Check：\n{res} {grade:rank?2={strSuccess}&1={strFailure}&0={strFumble}}\n{case:loss?0=无理智损失√&else=理智减少{change}->剩余{final}}" },
 	{"strSanCostInvalid", "{pc}输入SC表达式不正确,格式为成功扣San/失败扣San,如1/1d6!"},
 	{"strSanInvalid", "San值输入不正确,请{pc}输入1-99范围内的整数!"},
-	{"strSanEmpty", "未设定San值，请{pc}先.st san 或查看/help sc×"},
+	{"strSanEmpty", "未设定San值，请{pc}先/st san 或查看/help sc×"},
 	{"strTempInsane", "{pc}的疯狂发作-临时症状:\n{res}" },
 	{"strLongInsane", "{pc}的疯狂发作-总结症状:\n{res}" },
 	{"strSuccessRateErr", "这成功率还需要检定吗？"},
@@ -335,11 +325,10 @@ const dict_ci<string> PlainMsg
 	{"strWelcomeMsgUpdateNotice", "{self}已更新本群的入群欢迎词√"},
 	{"strWelcomeMsgEmpty", "{self}当前未记录入群欢迎词" },
 	{"strPermissionDeniedErr", "请让群内管理对{self}发送该指令×"},
-	{"strSelfPermissionErr", "{self}权限不够无能为力呢×"},
 	{"strNameTooLongErr", "称呼过长×(最多50字节)"},
 	{"strNameSet", "{self}已将{old_nick}改称为{new_nick}√"},
 	{"strNameDel", "{self}已删除{old_nick}的称呼√" },
-	{"strUnknownPropErr", "未设定{attr}成功率，请先.st {attr} 技能值 或查看/help rc×"},
+	{"strUnknownPropErr", "未设定{attr}成功率，请先/st {attr} 技能值 或查看/help rc×"},
 	{"strPropErr", "{pc}的属性录入存在异常，请遵守规范:\n{err}"},
 	{"strSetPropSuccess", "已为{pc}录入{cnt}条属性√"},
 	{"strPropCleared", "已清空{char}的所有属性√"},
@@ -352,8 +341,8 @@ const dict_ci<string> PlainMsg
 	{"strRuleNotFound", "{self}未找到对应的规则信息×"},
 	{"strProp", "{pc}的{attr}为{val}"},
 	{"strPropList", "{nick}的{char}属性列表为：{show}"},
-	{"strStErr", "格式错误:请参考/help st获取.st命令的使用方法"},
-	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
+	{"strStErr", "格式错误:请参考/help st获取/st命令的使用方法"},
+	{"strRulesFormatErr", "格式错误:正确格式为/rules [规则名称:]规则条目 如/rules COC7:力量"},
 	{"strGlobalOff", "{self}休假中，暂停服务×"},
 	{"strJrrp", "{nick}今天的人品值是: {res}"},
 	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{res}"},
@@ -435,12 +424,6 @@ const dict_ci<string> GlobalComment{
 	{"strFumble", "多轮检定大失败"},
 	{"strGlobalOff", "全局静默时对私聊指令或开启指令的回执"},
 	//
-	{"strGroupBan", "group ban禁言群员的回执"},
-	{"strGroupCardSet", "group card修改群名片的回执"},
-	//
-	{"strGroupUnBan", "group ban解除群员禁言的回执"},
-	//
-	{"strHardSuccess", "多轮检定困难成功"},
 	{"strHardSuccess", "多轮检定困难成功"},
 	{"strHelpDisabledErr", "group+禁用help后群内help回执"},
 	{"strHelpNotFound", "help未找到近似词条"},
@@ -455,7 +438,7 @@ const dict_ci<string> GlobalComment{
 	{"strRollFailure", "检定失败"},
 	{"strRollFumble", "检定大失败"},
 	//
-	{"strSanityRoll", ".sc指令回执"},
+	{"strSanityRoll", "/sc指令回执"},
 	{"strSelfCall", "自称，多用于回执"},
 	{"strSelfName", "名称，用于自我展示场合"},
 	{"strSelfNick", "用户对自己的昵称，用于扩展指令"},
@@ -473,11 +456,11 @@ const dict_ci<> HelpDoc = {
 652:game new/over/open/close/state
 651:局内轮盘骰
 650:规则集专属指令
-649:.game 功能
+649:/game 功能
 648:角色卡锁定功能
 647:支持自定义规则集
 646:支持集合Set读写
-645:重定义.sc回执
+645:重定义/sc回执
 644:定义脚本内角色卡Actor类型
 643:rc支持跨角色卡调用
 642:优化helpdoc
@@ -531,33 +514,31 @@ const dict_ci<> HelpDoc = {
 {"指令",R"(指令前接at可以指定骰娘响应，如
 {at:self}.bot on
 请/help对应指令 获取详细信息，如/help r
+跑团指令
+/game 游戏领域
+/r 掷骰
+/rules 规则速查
+/set 设置默认骰
+/coc COC人物作成
+/dnd DND人物作成
+/st 角色属性记录
+/pc 角色卡记录
+.rc 检定
+/setcoc 设置rc房规
+/sc 理智检定
+/en 成长/增强检定
+/ri 先攻
+/init 先攻列表
+/ww 骰池
 互动指令:
 /nn 设置称呼
-.bot 版本信息
-.send 向后台发送消息
-跑团指令
-.game 游戏领域
-/r 掷骰
-.rules 规则速查
-.set 设置默认骰
-.coc COC人物作成
-.dnd DND人物作成
-.st 角色属性记录
-.pc 角色卡记录
-.rc 检定
-.setcoc 设置rc房规
-.sc 理智检定
-.en 成长/增强检定
-.ri 先攻
-.init 先攻列表
-.ww 骰池
 其他指令
-.draw 抽牌
-.deck 牌堆实例
-.name 随机姓名
-.ak 安科/安价
-.jrrp 今日人品
-.welcome 入群欢迎
+/bot 版本信息
+/draw 抽牌
+/deck 牌堆实例
+/name 随机姓名
+/ak 安科/安价
+/jrrp 今日人品
 为了避免未预料到的指令误判，请尽可能在参数之间使用空格)"
 "\f"
 R"({help:扩展指令})"},
@@ -572,13 +553,13 @@ Master拥有最高权限，且可以调整任意信任)"},
 `.mod detail 模块名` 指定模块详细信息
 `.mod delete 模块名` 卸载指定模块
 mod按序读取，且从后向前覆盖)"},
-{"ak",R"(安科+安价指令.ak
-.ak#[标题]或.ak new [标题] 新建分歧并设置标题（可为空）
-.ak+[选项]或.ak add [选项] 为本轮分歧添加新选项，用|分隔可一次添加多个选项
-.ak-[选项序号]或.ak del [选项序号] 移除指定序号的选项
-.ak= 或.ak get 均等随机抽取一个选项并结束本轮分歧
-.ak show 查看分歧选项
-.ak clr 清除本轮分歧)"},
+{"ak",R"(安科+安价指令/ak
+/ak#[标题]或/ak new [标题] 新建分歧并设置标题（可为空）
+/ak+[选项]或/ak add [选项] 为本轮分歧添加新选项，用|分隔可一次添加多个选项
+/ak-[选项序号]或/ak del [选项序号] 移除指定序号的选项
+/ak= 或/ak get 均等随机抽取一个选项并结束本轮分歧
+/ak show 查看分歧选项
+/ak clr 清除本轮分歧)"},
 {"log",R"(跑团日志记录.log
 `.log new 日志名` 新开日志并开始记录
 `.log on` 继续记录
@@ -601,13 +582,13 @@ mod按序读取，且从后向前覆盖)"},
 *.draw时，牌堆实例优先级高于同名公共对象*
 *除show外其他群内操作需要GM权限*)"},
 {"开关","&bot"},
-{"bot",".bot on/off开启/静默骰子（限群管理）\n.bot无视静默状态，只要插件开启且不在黑名单总是有效"},
+{"bot",".bot on/off开启/静默骰子（限群管理）\n/bot无视静默状态，只要插件开启且不在黑名单总是有效"},
 {"规则速查","&rules"},
 {"规则","&rules"},
-{"rules","规则速查：.rules ([规则]):[待查词条] 或.rules set [规则]\n.rules 跳跃 //复数规则有相同词条时，择一返回\n.rules COC：大失败 //coc默认搜寻coc7的词条,dnd默认搜寻3r\n.rules dnd：语言\n.rules set dnd //设置后优先查询dnd同名词条，无参数则清除设置"},
+{"rules","规则速查：/rules ([规则]):[待查词条] 或/rules set [规则]\n/rules 跳跃 //复数规则有相同词条时，择一返回\n/rules COC:大失败 //coc默认搜寻coc7的词条,dnd默认搜寻3r\n/rules dnd:语言\n/rules set dnd //设置后优先查询dnd同名词条，无参数则清除设置"},
 {"掷骰","&r"},
 {"rd","&r"},
-{"r","掷骰：.r [掷骰表达式] ([掷骰原因]) [掷骰表达式]：([掷骰轮数]#)[骰子个数]d骰子面数(p[惩罚骰个数])(k[取点数最大的骰子数])不带参数时视为掷一个默认骰\n合法参数要求掷骰轮数1-10，奖惩骰个数1-9，个数范围1-100，面数范围1-1000\n.r3#d\t//3轮掷骰\n.rh心理学 暗骰\n.rs1D10+1D6+3 沙鹰伤害\t//rs省略单个骰子的点数，直接给结果"},
+{"r","掷骰：.r [掷骰表达式] ([掷骰原因]) [掷骰表达式]：([掷骰轮数]#)[骰子个数]d骰子面数(p[惩罚骰个数])(k[取点数最大的骰子数])不带参数时视为掷一个默认骰\n合法参数要求掷骰轮数1-10，奖惩骰个数1-9，个数范围1-100，面数范围1-1000\n/r3#d\t//3轮掷骰\n/rh心理学 暗骰\n/rs1D10+1D6+3 沙鹰伤害\t//rs省略单个骰子的点数，直接给结果"},
 {"暗骰","群聊限定，掷骰指令后接h视为暗骰，结果将私发本人和群内ob的用户\n为了保证发送成功，请加骰娘好友"},
 {"reply",R"(自定义回复：.reply
 .reply on/off 开启/关闭群内回复
@@ -637,92 +618,81 @@ Type=[回复性质](Reply/Order)
 )" },
 {"回复列表","{strSelfName}的回复触发词列表:{list_reply_deck}"},
 {"game",R"(游戏模式：
-`.game new 桌名` 创建游戏（命名可省略）
-`.game over` 销毁本桌游戏
-`.game state` 查看本桌状态
-`.game master` 登记为GM
-`.game set 属性=值` 游戏设置
-例: `.game set rule=COC7`
-`.game set 属性` 查看设置
-`.game call` at玩家
-`.game join` 玩家登记
-`.game kick 玩家ID` 将玩家踢出游戏
-`.game exit` 退出游戏
-`.game open 桌号` 将当前窗口加入指定游戏
-`.game close` 关闭当前游戏
-`.game rou 100` 设置(百面)轮盘骰，详见/help roulette)"},
+`/game new 桌名` 创建游戏（命名可省略）
+`/game over` 销毁本桌游戏
+`/game state` 查看本桌状态
+`/game master` 登记为GM
+`/game set 属性=值` 游戏设置
+例: `/game set rule=COC7`
+`/game set 属性` 查看设置
+`/game call` at玩家
+`/game join` 玩家登记
+`/game kick 玩家ID` 将玩家踢出游戏
+`/game exit` 退出游戏
+`/game open 桌号` 将当前窗口加入指定游戏
+`/game close` 关闭当前游戏
+`/game rou 100` 设置(百面)轮盘骰，详见/help roulette)"},
 {"roulette",R"(轮盘骰roulette
 设置轮盘骰后，游戏内进行对应面数的掷骰时，每次将擦除掷出点数，直至所有点数都被掷出后重置
-`.game rou 100` 设置(百面)轮盘骰
-`.game rou 20*5` 设置20面轮盘骰，每个点数重复5次（总数不超过100）
-`.game rou hist` 查看当轮记录
-`.game rou clr` 清空轮盘骰
-`.game rou reset` 还原轮盘骰
+`/game rou 100` 设置(百面)轮盘骰
+`/game rou 20*5` 设置20面轮盘骰，每个点数重复5次（总数不超过100）
+`/game rou hist` 查看当轮记录
+`/game rou clr` 清空轮盘骰
+`/game rou reset` 还原轮盘骰
 )" },
-{"旁观","&ob"},
-{"旁观模式","&ob"},
-{"ob",R"(旁观模式：.ob (join/exit/list/clr/on/off)
-.ob join //加入旁观，可以看到房内暗骰结果
-.ob exit //退出旁观模式
-.ob list //查看群内旁观者
-.ob clr //清除所有旁观者
-.ob on //全群允许旁观模式
-.ob off //禁用旁观模式
-暗骰与旁观私聊无效)"},
 {"默认骰","&set"},
-{"set","当表达式中‘D’之后没有接面数时，视为投掷默认骰\n.set20 将默认骰设置为20\n.set 不带参数视为将默认骰重置为默认的100\n若所用规则判定掷骰形如2D6，推荐使用.st &=2D6"},
+{"set","当表达式中‘D’之后没有接面数时，视为投掷默认骰\n/set20 将默认骰设置为20\n/set 不带参数视为将默认骰重置为默认的100\n若所用规则判定掷骰形如2D6，推荐使用/st &=2D6"},
 {"个位骰","个位骰有十面，为0~9十个数字，百面骰的结果为十位骰与个位骰之和（但00+0时视为100）"},
 {"十位骰","十位骰有十面，为00~90十个数字，百面骰的结果为十位骰与个位骰之和（但00+0时视为100）"},
 {"奖励骰","&奖励/惩罚骰"},
 {"惩罚骰","&奖励/惩罚骰"},
 {"奖惩骰","&奖励/惩罚骰"},
-{"奖励/惩罚骰","COC中奖励/惩罚骰是额外投掷的十位骰，最终结果选用点数更低/更高的结果（不出现大失败的情况下等价于更小/更大的十位骰）\n.rb2 2个奖励骰\nrcp 射击 1个惩罚骰"},
+{"奖励/惩罚骰","COC中奖励/惩罚骰是额外投掷的十位骰，最终结果选用点数更低/更高的结果（不出现大失败的情况下等价于更小/更大的十位骰）\n/rb2 2个奖励骰\nrcp 射击 1个惩罚骰"},
 {"随机姓名","&name"},
-{"name","随机姓名：.name (cn/jp/en)([生成数量])\n.name 10\t//默认4类名称随机生成\n.name en\t//后接cn/jp/en/enzh则限定生成中文/日文/英文/英文中译名\n名称生成个数范围1-10"},
+{"name","随机姓名：/name (cn/jp/en)([生成数量])\n/name 10\t//默认4类名称随机生成\n/name en\t//后接cn/jp/en/enzh则限定生成中文/日文/英文/英文中译名\n名称生成个数范围1-10"},
 {"设置昵称","&nn"},
 {"昵称","&nn"},
-{"nn","设置群内称呼：.nn [昵称] / .nn / .nnn(cn/jp/en) \n.nn kp\t//昵称前的./！等符号会被自动忽略\n.nn del\t//删除当前窗口称呼\n.nn clr\t//删除所有记录的称呼\n.nnn\t//从随机姓名牌堆设置随机称呼\n.nnn jp\t/从指定子牌堆随机昵称\n私聊.nn视为操作全局称呼\n该称呼用于\\{nick\\}的显示，优先级：群内称呼>全局称呼>群名片>QQ昵称\n无角色卡或未命名时也用于显示\\{pc\\}"},
-{"人物作成","该版本人物作成支持COC7(.coc、.draw调查员背景/英雄天赋)、COC6(.coc6、.draw煤气灯)、DND(.dnd)、AMGC(.draw AMGC)"},
-{"coc","克苏鲁的呼唤(COC)人物作成：.coc([7/6])(d)([生成数量])\n.coc 10\t//默认生成7版人物\n.coc6d\t//接d为详细作成，一次只能作成一个\n仅用作骰点法人物作成，可应用变体规则，参考.rules创建调查员的其他选项"},
-{"dnd","龙与地下城(DND)人物作成：.dnd([生成数量])\n.dnd 5\t//仅作参考，可自行应用变体规则"},
+{"nn","设置群内称呼：.nn [昵称] / .nn / .nnn(cn/jp/en) \n/nn kp\t//昵称前的./！等符号会被自动忽略\n/nn del\t//删除当前窗口称呼\n/nn clr\t//删除所有记录的称呼\n/nnn\t//从随机姓名牌堆设置随机称呼\n/nnn jp\t/从指定子牌堆随机昵称\n私聊.nn视为操作全局称呼\n该称呼用于\\{nick\\}的显示，优先级：群内称呼>全局称呼>群名片>QQ昵称\n无角色卡或未命名时也用于显示\\{pc\\}"},
+{"人物作成","该版本人物作成支持COC7(/coc、.draw调查员背景/英雄天赋)、COC6(/coc6、.draw煤气灯)、DND(/dnd)、AMGC(.draw AMGC)"},
+{"coc","克苏鲁的呼唤(COC)人物作成：/coc([7/6])(d)([生成数量])\n/coc 10\t//默认生成7版人物\n/coc6d\t//接d为详细作成，一次只能作成一个\n仅用作骰点法人物作成，可应用变体规则，参考/rules创建调查员的其他选项"},
+{"dnd","龙与地下城(DND)人物作成：/dnd([生成数量])\n/dnd 5\t//仅作参考，可自行应用变体规则"},
 {"属性记录","&st"},
-{"st","属性记录：.st (del/clr/show) ([属性名]:[属性值])\n用户默认所有群使用同一张卡，pl如需多开请使用.pc指令切卡\n.st力量:50 体质:55 体型:65 敏捷:45 外貌:70 智力:75 意志:35 教育:65 幸运:75\n.st hp-1 后接+/-时视为从原值上变化\n.st san+1d6 修改属性时可使用掷骰表达式\n.st del kp裁决\t//删除已保存的属性\n.st clr\t//清空当前卡\n.st show 灵感\t//查看指定属性\n.st show\t//无参数时查看所有属性，请使用只st加点过技能的半自动人物卡！\n部分COC属性会被视为同义词，如智力/灵感、理智/san、侦查/侦察"},
+{"st","属性记录：/st (del/clr/show) ([属性名]:[属性值])\n用户默认所有群使用同一张卡，pl如需多开请使用/pc指令切卡\n/st 力量:50 体质:55 体型:65 敏捷:45 外貌:70 智力:75 意志:35 教育:65 幸运:75\n/st hp-1 后接+/-时视为从原值上变化\n/st san+1d6 修改属性时可使用掷骰表达式\n/st del kp裁决\t//删除已保存的属性\n/st clr\t//清空当前卡\n/st show 灵感\t//查看指定属性\n/st show\t//无参数时查看所有属性，请使用只st加点过技能的半自动人物卡！\n部分COC属性会被视为同义词，如智力/灵感、理智/san、侦查/侦察"},
 {"角色卡","&pc"},
-{"pc",R"(角色卡：.pc 
-.pc new ([模板]:([生成参数]:))([卡名]) 
+{"pc",R"(角色卡：/pc 
+/pc new ([模板]:([生成参数]:))([卡名]) 
 完全省略参数将生成一张COC7模板的随机姓名卡
-.pc tag ([卡名]) //为当前群绑定指定卡，为空则解绑使用默认卡
+/pc tag ([卡名]) //为当前群绑定指定卡，为空则解绑使用默认卡
 所有群默认使用私聊绑定卡，未绑定则使用0号卡
-.pc show ([卡名]) //展示指定卡所有记录的属性，为空则展示当前卡
-.pc nn [新卡名] //重命名当前卡，不允许重名
-.pc type [模板] //将切换当前卡模板
-.pc cpy [卡名1]=[卡名2] //将后者属性复制给前者
-.pc del [卡名] //删除指定卡
-.pc list //列出全部角色卡
-.pc grp //列出各群绑定卡
-.pc build ([生成参数]:)(卡名) //根据模板填充生成属性（COC7为9项主属性）
-.pc stat //查看当前角色卡骰点统计
-.pc redo ([生成参数]:)(卡名) //清空原有属性后重新生成
-.pc clr //销毁全部角色卡记录
+/pc show ([卡名]) //展示指定卡所有记录的属性，为空则展示当前卡
+/pc nn [新卡名] //重命名当前卡，不允许重名
+/pc type [模板] //将切换当前卡模板
+/pc cpy [卡名1]=[卡名2] //将后者属性复制给前者
+/pc del [卡名] //删除指定卡
+/pc list //列出全部角色卡
+/pc grp //列出各群绑定卡
+/pc build ([生成参数]:)(卡名) //根据模板填充生成属性（COC7为9项主属性）
+/pc stat //查看当前角色卡骰点统计
+/pc redo ([生成参数]:)(卡名) //清空原有属性后重新生成
+/pc clr //销毁全部角色卡记录
 //掷骰统计以角色卡为单位，每名用户最多可同时保存16张角色卡
 )"
 	},
-	{"rc", "&rc/ra"},
-	{"ra", "&rc/ra"},
-	{"检定", "&rc/ra"},
+	{"ra", "&rc"},
+	{"检定", "&rc"},
 	{
-		"rc/ra",
-		"检定指令：.rc/ra (_)([检定次数]#)([难度])[属性名]( [成功率])\n角色卡设置了属性时，可省略成功率\n.rc体质*5\t//允许使用+-*/，但顺序要求为乘法>加减>除法\n.rc 困难幸运\t//技能名开头的困难和极难会被视为关键词\n.rc _心理学50\t//暗骰结果仅本人及旁观者可见\n.rc 敏捷-10\t//修正后成功率必须在1-1000内\n.rcp 手枪\t//奖惩骰至多9个\n默认以规则书判定，大成功大失败的房规由.setcoc设置"
+		"rc",
+		"检定指令：.rc (_)([检定次数]#)([难度])[属性名]( [成功率])\n角色卡设置了属性时，可省略成功率\n/rc体质*5\t//允许使用+-*/，但顺序要求为乘法>加减>除法\n/rc 困难幸运\t//技能名开头的困难和极难会被视为关键词\n/rc _心理学50\t//暗骰结果仅本人及旁观者可见\n/rc 敏捷-10\t//修正后成功率必须在1-1000内\n/rcp 手枪\t//奖惩骰至多9个\n默认以规则书判定，大成功大失败的房规由/setcoc设置"
 	},
 	{
 		"房规",
-		"Dice!目前只为COC7检定提供房规，指令为.setcoc:{setcoc}"
+		"Dice!目前只为COC7检定提供房规，指令为/setcoc:{setcoc}"
 	},
 	{
 		"setcoc",
-		R"(为当前群或讨论组设置COC房规，如.setcoc 1,当前参数0-6
-`.setcoc show`查看当前房规
-`.setcoc clr`清除当前房规
+		R"(为当前房间设置COC房规，如/setcoc 1,当前参数0-6
+`/setcoc show` 查看当前房规
+`/setcoc clr` 清除当前房规
 0 规则书
 出1大成功
 不满50出96 - 100大失败，满50出100大失败
@@ -753,25 +723,25 @@ Type=[回复性质](Reply/Order)
 	{"理智检定", "&sc"},
 	{
 		"sc",
-		"San Check指令：.sc[成功损失]/[失败损失] ([当前san值])\n已经.st了理智/san时，可省略最后的参数\n.sc0/1 70\n.sc1d10/1d100 直面外神\n大失败自动失去最大值\n当调用角色卡san时，san会自动更新为sc后的剩余值\n程序上可以损失负数的san，也就是可以用.sc-1d6/-1d6来回复san，但请避免这种奇怪操作"
+		"San Check指令：/sc[成功损失]/[失败损失] ([当前san值])\n已经/st了san值时，可省略最后的参数\n/sc 0/1 70\n/sc 1d10/1d100 直面外神\n大失败自动失去最大值\n当调用角色卡san时，san会自动更新为sc后的剩余值\n程序上可以损失负数的san，也就是可以用/sc-1d6/-1d6来回复san，但请避免这种奇怪操作"
 	},
 	{"ti", "&ti/li"},
 	{"li", "&ti/li"},
 	{"疯狂症状", "&ti/li"},
-	{"ti/li", "疯狂症状：\n.ti 临时疯狂症状\n.li 总结疯狂症状\n适用coc7版规则，6版请自行用百面骰配合查表\n具体适用哪项参见.rules 疯狂发作"},
+	{"ti/li", "疯狂症状：\n/ti 临时疯狂症状\n/li 总结疯狂症状\n适用coc7版规则，6版请自行用百面骰配合查表\n具体适用哪项参见/rules 疯狂发作"},
 	{"成长检定", "&en"},
 	{"增强检定", "&en"},
 	{
 		"en",
-		"成长检定：.en [技能名称]([技能值])(([失败成长值]/)[成功成长值])\n已经.st时，可省略最后的参数\n.en 教育 60 +1D10 教育增强\t//后接成功时成长值\n.en 幸运 +1D3/1D10幸运成长\t//调用人物卡属性时，成长后的值会自动更新\n可变成长值必须以加减号开头，不限制加减"
+		"成长检定：/en [技能名称]([技能值])(([失败成长值]/)[成功成长值])\n已经/st时，可省略技能值\n/en 教育 60 +1D10 教育增强\t//后接成功时成长值\n/en 幸运 +1D3/1D10 幸运成长\t//调用人物卡属性时，成长后的值会自动更新\n可变成长值必须以加减号开头，不限制加减"
 	},
 	{"抽牌", "&draw"},
 	{
 		"draw",
-		R"(抽牌：.draw [牌堆名称] ([抽牌数量])	
-.draw _[牌堆名称] ([抽牌数量])	//暗抽，结果私聊发送
-.drawh [牌堆名称] ([抽牌数量])	//暗抽，参数h后必须留空格
-.draw _狼人杀	//抽牌结果通过私聊获取，可ob
+		R"(抽牌：/draw [牌堆名称] ([抽牌数量])	
+/draw _[牌堆名称] ([抽牌数量])	//暗抽，结果私聊发送
+/drawh [牌堆名称] ([抽牌数量])	//暗抽，参数h后必须留空格
+/draw _狼人杀	//抽牌结果通过私聊获取
 *牌堆名称优先调用牌堆实例，如未设置则从同名公共牌堆生成临时实例
 *抽到的牌不放回，牌堆抽空后无法继续
 *查看{self}已安装牌堆，可/help 全牌堆列表或/help 扩展牌堆)"
@@ -780,30 +750,30 @@ Type=[回复性质](Reply/Order)
 	{ "全牌堆列表","{list_all_deck}" },
 	{ "扩展指令","{list_extern_order}" },
 	{"先攻", "&ri"},
-	{"ri", "先攻（群聊限定）：.ri([加值])([昵称])\n.ri -1 某pc\t//自动记入先攻列表\n.ri +5 boss"},
+	{"ri", "先攻（群聊限定）：/ri([加值])([昵称])\n/ri -1 某pc\t//自动记入先攻列表\n/ri +5 boss"},
 	{"先攻列表", "&init"},
-	{"init", "先攻列表：\n.init list\t//查看先攻列表\n.init clr\t//清除先攻列表\n.init del [项目名]\t//从先攻列表移除项目"},
+	{"init", "先攻列表：\n/init list\t//查看先攻列表\n/init clr\t//清除先攻列表\n/init del [项目名]\t//从先攻列表移除项目"},
 	{"骰池", "&ww"},
-	{"ww", R"(骰池：.w(w) [骰子个数]a[加骰参数]
-.w会直接给出结果而.ww会给出每个骰子的点数
+	{"ww", R"(骰池：/w(w) [骰子个数]a[加骰参数]
+/w会直接给出结果而/ww会给出每个骰子的点数
 固定10面骰，每有一个骰子点数达到加骰参数，则加骰一次，最后计算点数达到8的骰子数
 其中5≤加骰参数≤10
 具体用法请参考相关游戏规则)"},
 	{"今日人品", "&jrrp"},
 	{
 		"jrrp",
-		"今日人品：.jrrp\n.jrrp off\t//群内禁用jrrp\n.jrrp on\t//群内启用jrrp\n一天一个人品值\n2.3.5版本后随机值为均匀分布\n骰娘只负责从溯洄的服务器搬运结果，请勿无能狂怒\n如何发配所有人的命运，只有孕育万千骰娘生机之母，萌妹吃鱼之神，正五棱双角锥体对的监护人，一切诡秘的窥见者，时空舞台外的逆流者，永转的命运之轮——溯洄本体掌握"
+		"今日人品：.jrrp\n/jrrp off\t//群内禁用jrrp\n/jrrp on\t//群内启用jrrp\n一天一个人品值\n2.3.5版本后随机值为均匀分布\n骰娘只负责从溯洄的服务器搬运结果，请勿无能狂怒\n如何发配所有人的命运，只有孕育万千骰娘生机之母，萌妹吃鱼之神，正五棱双角锥体对的监护人，一切诡秘的窥见者，时空舞台外的逆流者，永转的命运之轮——溯洄本体掌握"
 	},
 	{"send", "发送消息：.send 想对Master说的话\n如果用来调戏Master请做好心理准备"},
 	{"入群欢迎", "&welcome"},
 	{"入群欢迎词", "&welcome"},
 	{
 		"welcome",
-		R"(入群欢迎词：.welcome
-.welcome \{at}欢迎\{nick}入群~	//设置欢迎词
+		R"(入群欢迎词：/welcome
+/welcome \{at}欢迎\{nick}入群~	//设置欢迎词
 //\{at}视为at入群者，\{nick}会替换为新人的昵称，更多转义见手册
-.welcome clr //清空欢迎词
-.welcome show //查看欢迎词
+/welcome clr //清空欢迎词
+/welcome show //查看欢迎词
 无论指令是否停用，只要有欢迎词时有人入群，都会响应)"
 	},
 	{ "敏感词检测","&censor" },
@@ -852,7 +822,7 @@ Danger //警告用户且拒绝指令，并在3级窗口警告
 	{"隐者正位", "隐藏的事实，个别的行动，倾听他人的意见，享受孤独，有益的警戒，年长者，避开危险，祖父，乡间生活。"},
 	{"隐者逆位", "憎恨孤独，自卑，担心，幼稚思想，过于慎重导致失败，偏差，不宜旅行。"},
 	{"命运之轮正位", "关键性的事件，有新的机会，因的潮流，环境的变化，幸运的开端，状况好转，问题解决，幸运之神降临。"},
-	{"命运之轮逆位", "挫折，计划泡汤，障碍，无法修正方向，往坏处发展，恶性循环，中断。"},
+	{"命运之轮逆位", "连续的不幸，挫折，计划泡汤，障碍，无法修正方向，往坏处发展，恶性循环，中断。"},
 	{"正义正位", "公正、中立、诚实、心胸坦荡、表里如一、身兼二职、追求合理化、协调者、与法律有关、光明正大的交往、感情和睦。"},
 	{"正义逆位", "失衡、偏见、纷扰、诉讼、独断专行、问心有愧、无法两全、表里不一、男女性格不合、情感波折、无视社会道德的恋情。"},
 	{"倒吊人正位", "接受考验、行动受限、牺牲、不畏艰辛、不受利诱、有失必有得、吸取经验教训、浴火重生、广泛学习、奉献的爱。"},

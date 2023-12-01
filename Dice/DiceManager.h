@@ -455,12 +455,11 @@ public:
                 if (Network::GET(url, ret)) {
                     j["code"] = 0;
                     j["msg"] = ret;
-                    console.log("getUrl:" + ret,0);
                 }
                 else {
                     j["code"] = -1;
                     j["msg"] = LocaltoUTF8(ret);
-                    console.log(ret, 0);
+                    console.log(j["msg"], 0);
                 }
             }
             else {

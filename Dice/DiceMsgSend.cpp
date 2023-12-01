@@ -131,7 +131,7 @@ void SendMsg()
 				AddMsgToQueue(msg.msg.substr(pos + 1), msg.target);
 				msg.msg = msg.msg.substr(0, pos);
 			}
-			if (msg.target.type == msgtype::Private)
+			if (msg.target.type == msgtype::Private || msg.target.type == msgtype::ChannelPrivate)
 			{
 				api::sendPrivateMsg(msg.target.uid, msg.msg);
 			}

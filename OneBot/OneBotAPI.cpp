@@ -55,9 +55,21 @@ namespace api {
 		return "Gensokyo";
 	}
 	long long getTinyID() { return 0; }
-	void sendPrivateMsg(long long uid, const string& msg) {	}
+	void sendPrivateMsg(long long uid, const string& msg) {
+		if (!msg.empty()) {
+			api::printLog(">>" + msg);
+			linker->send(json{
+				{"action","send_private_msg"},
+				{"params",{
+					{"user_id",uid},
+					{"message",msg},
+				}}, }
+			);
+		}
+	}
 	void sendGroupMsg(long long gid, const string& msg) {
 		if (!msg.empty()) {
+			api::printLog(">>" + msg);
 			linker->send(json{
 				{"action","send_group_msg"},
 				{"params",{
@@ -69,11 +81,12 @@ namespace api {
 	}
 	void sendChannelMsg(long long gid, long long chid, const string& msg) {
 		if (!msg.empty()) {
+			api::printLog(">>" + msg);
 			linker->send(json{
 				{"action","send_guild_channel_msg"},
 				{"params",{
-					{"guild_id",to_string(gid)},
-					{"channel_id",to_string(chid)},
+					{"guild_id",gid},
+					{"channel_id",chid},
 					{"message",msg},
 				}}, }
 			);
@@ -470,8 +483,8 @@ void OneBot_Event(fifo_json& j) {
 					Msg->DiceFilter();
 				}
 				else {
-					int msgId{ j["message_id"].get<int>() };
-					long long uid = j["user_id"].get<long long>();
+					int msgId{ j["message_id"] };
+					long long uid = j["user_id"];
 					//私聊
 					if (j["message_type"] == "private") {
 						ptr<DiceEvent> Msg(std::make_shared<DiceEvent>(
