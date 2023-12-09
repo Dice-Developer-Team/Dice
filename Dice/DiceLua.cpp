@@ -1300,6 +1300,7 @@ int Actor_set(lua_State* L) {
 int Actor_rollDice(lua_State* L) {
 	string exp{ lua_to_gbstring(L, 2) };
 	LUA2PC(1);
+	if (exp.empty())exp = pc->get("__DefaultDiceExp");
 	int diceFace{ pc->get("__DefaultDice").to_int() };
 	RD rd{ exp, diceFace ? diceFace : 100 };
 	lua_newtable(L);
