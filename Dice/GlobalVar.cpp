@@ -374,7 +374,6 @@ const dict_ci<string> PlainMsg
 	{"strHlpMsg", R"(请使用
 /help协议 确认服务协议
 /help指令 查看指令列表
-/help设定 确认骰娘设定
 官方论坛: kokona点tech
 Dice!众筹计划: afdian@suhuiw4123)"
 	}
@@ -480,7 +479,6 @@ const dict_ci<> HelpDoc = {
 626:前缀匹配记录后缀
 624:支持mod远程安装/详细信息
 622:支持手动时差
-621:扩展代理事件及ex接口
 618:支持reply(Order形式)覆盖指令
 617:更新grade分档转义
 608:新增.mod指令
@@ -502,9 +500,7 @@ const dict_ci<> HelpDoc = {
 9.骰娘提供掷骰服务是完全免费的，欢迎自愿投食。
 10.本服务最终解释权归服务提供方所有。)"},
 {"链接","Dice!论坛: https://kokona.tech\nDice!手册: https://v2docs.kokona.tech\n支持Shiki: https://afdian@dice_shiki"},
-{"设定",R"(Master：{print:master}
-群内使用：{case:self.Private?else=白名单制，需预申请&0={case:self.CheckGroupLicense?2=审核制，需申请后使用&1=审核制，入新群需申请&else=黑名单制，自由使用}}
-刷屏监测：{case:self.ListenSpam?0=关闭&else=开启}
+{"设定",R"(刷屏监测：{case:self.ListenSpam?0=关闭&else=开启}
 其他插件：{其他插件}
 骰娘用户群:{骰娘用户群}
 骰娘交流分享群：928626681)"},
