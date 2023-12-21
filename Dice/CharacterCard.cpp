@@ -9,6 +9,9 @@
 
 //#define TextOrEmpty(s) (s ? s : "")
 AttrShape::AttrShape(const tinyxml2::XMLElement* node) {
+	if (auto text{ node->Attribute("alias") }) {
+		alias = split(text, "|");
+	}
 	if (auto exp{ node->GetText() }) {
 		if (auto text{ node->Attribute("text") }) {
 			if (auto lower{ toLower(text) }; lower == "dicexp") {
@@ -131,7 +134,11 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 					else if (tag == "init") {
 						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
 							if (auto name{ kid->Attribute("name") }) {
-								tp.AttrShapes[name] = kid;
+								string attr{ name };
+								auto& shape{ tp.AttrShapes[attr] = kid };
+								if (!shape.alias.empty())for (auto& key : shape.alias) {
+									tp.replaceName[key] = attr;
+								}
 							}
 						}
 					}

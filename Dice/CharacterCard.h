@@ -52,6 +52,7 @@ public:
 	AttrShape(const string& s, TextType tt) :defVal(s), textType(tt){}
 	DataType type{ DataType::Any };
 	string title;
+	vector<string> alias;
 	TextType textType{ TextType::Plain };
 	AttrVar defVal;
 	AttrVar init(const CharaCard*);
