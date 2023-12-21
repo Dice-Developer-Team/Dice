@@ -9,6 +9,9 @@
 
 #define Text2GBK(s) (s ? (isUTF8 ? UTF8toGBK(s) :s) : "")
 AttrShape::AttrShape(const tinyxml2::XMLElement* node, bool isUTF8) {
+	if (auto text{ node->Attribute("alias") }) {
+		alias = split(Text2GBK(text), "|");
+	}
 	if (auto exp{ node->GetText() }) {
 		string s{ Text2GBK(exp) };
 		if (auto text{ node->Attribute("text") }) {
@@ -124,10 +127,7 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 			if (auto tp_name{ root->Attribute("name") }) {
 				auto& tp{ m[Text2GBK(tp_name)] };
 				for (auto elem = root->FirstChildElement(); elem; elem = elem->NextSiblingElement()) {
-					if (string tag{ elem->Name()}; tag == "alias") {
-						if (auto text{ elem->GetText() })readini(Text2GBK(text), tp.replaceName);
-					}
-					else if (tag == "basic") {
+					if (string tag{ elem->Name()}; tag == "basic") {
 						tp.vBasicList.clear();
 						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
 							if (auto text{ kid->GetText() })tp.vBasicList.push_back(getLines(Text2GBK(text)));
@@ -136,7 +136,11 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 					else if (tag == "init") {
 						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
 							if (auto name{ kid->Attribute("name") }) {
-								tp.AttrShapes[Text2GBK(name)] = { kid,isUTF8 };
+								string attr{ Text2GBK(name) };
+								auto& shape{ tp.AttrShapes[attr] = { kid,isUTF8 } };
+								if (!shape.alias.empty())for (auto& key : shape.alias) {
+									tp.replaceName[key] = attr;
+								}
 							}
 						}
 					}
