@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -202,7 +202,7 @@ void readUserData(){
 	sessions.load();
 	if (!log.empty()) {
 		log << "用户数据读取完毕";
-		console.log(log.show(), 0b1, printSTNow());
+		DD::debugLog(printSTNow() + log.show());
 	}
 }
 
@@ -424,11 +424,11 @@ R"( //私骰作成 即可成为我的主人~
 			{
 				console.log("Dice! WebUI 启动失败！端口已被使用？", 0b1);
 			}
-			else
-			{
-				console.log("Dice! WebUI 正于端口" + std::to_string(ports[0])
+			else {
+				string note{ "Dice! WebUI 正于端口" + std::to_string(ports[0])
 					+ "运行，本地可通过浏览器访问http://localhost:" + std::to_string(ports[0])
-					+ "\n默认用户名为admin密码为password，详细教程请查看 https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming", 0b1);
+					+ "\n默认用户名为admin密码为password，详细教程请查看 https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming" };
+				console ? DD::debugLog(note) : console.log(note, 0b1);
 			}
 		}
 		catch (const CivetException& e)
@@ -439,21 +439,6 @@ R"( //私骰作成 即可成为我的主人~
 	//骰娘网络
 	getDiceList();
 	getExceptGroup();
-	try
-	{
-		ExtensionManagerInstance->refreshIndex();
-		if (auto cnt{ ExtensionManagerInstance->getUpgradableCount() }) {
-			console.log("已成功刷新软件包缓存：" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用，"
-				+ to_string(cnt) + "个可升级", 0b1);
-		}
-		else {
-			console.log("已成功刷新软件包缓存：" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用", 0);
-		}
-	}
-	catch (const std::exception& e)
-	{
-		console.log(std::string("刷新软件包缓存失败：") + e.what(), 0);
-	}
 	isIniting.clear();
 	fmt->call_hook_event(AttrVars{ {{"Event","StartUp"}} });
 }

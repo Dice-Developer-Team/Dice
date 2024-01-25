@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -77,8 +77,8 @@ const dict_ci<string> PlainMsg
 	{"strAkGet","#{fork}{li}\n\n{self}的选择：{get}"},
 	{"strAkShow","{self}的当前分歧:{fork} {li}"},
 	{"strAkClr","{self}已清除本轮分歧{fork}√"},
-	{"strLogNew","{self}已新开记录日志{log_name}√\n请适时用.log off暂停或.log end完成记录"},
-	{"strLogOn","{self}开始日志记录{log_name}√\n可使用.log off暂停记录"},
+	{"strLogNew","{self}已新开记录日志「{log_name}」√\n请适时用.log off暂停或.log end完成记录"},
+	{"strLogOn","{self}开始日志记录「{log_name}」√\n可使用.log off暂停记录"},
 	{"strLogOnAlready","{self}正在记录中！"},
 	{"strLogOff","{self}已暂停日志记录√\n可使用.log on恢复记录"},
 	{"strLogOffAlready","{self}已经暂停记录！"},
@@ -576,7 +576,7 @@ const dict_ci<> HelpDoc = {
 {"窥屏可能","无"},
 {"其他插件","【未知】"},
 {"姐妹骰","{list_dice_sister}"},
-{"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2023 String.Empty\nGithub@Dice-Developer-Team"},
+{"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2024 String.Empty\nGithub@Dice-Developer-Team"},
 {"指令",R"(指令前接at可以指定骰娘响应，如
 {at:self}.bot on
 请.help对应指令 获取详细信息，如.help r
@@ -589,8 +589,7 @@ const dict_ci<> HelpDoc = {
 .authorize 授权许可
 .send 向后台发送消息
 .mod 模块操作)"
-"\f"
-R"([第二页]跑团指令
+R"(跑团指令
 .game 游戏领域
 .rules 规则速查
 .r 掷骰
@@ -608,8 +607,7 @@ R"([第二页]跑团指令
 .ri 先攻
 .init 先攻列表
 .ww 骰池)"
-"\f"
-R"([第三页]其他指令
+R"(其他指令
 .nn 设置称呼
 .draw 抽牌
 .deck 牌堆实例
@@ -617,10 +615,8 @@ R"([第三页]其他指令
 .ak 安科/安价
 .jrrp 今日人品
 .welcome 入群欢迎
-.me 第三人称动作
-为了避免未预料到的指令误判，请尽可能在参数之间使用空格)"
-"\f"
-R"({help:扩展指令})"},
+为了避免未预料到的指令误判，请尽可能在参数之间使用空格
+更多个性化指令参见.help 扩展指令)"},
 {"master",R"(当前Master:{print:master}
 Master拥有最高权限，且可以调整任意信任)"},
 {"mod",R"(模块指令.mod

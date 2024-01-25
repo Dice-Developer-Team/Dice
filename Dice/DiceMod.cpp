@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -1326,7 +1326,8 @@ void DiceModManager::build() {
 	}
 	if (!resLog.empty()) {
 		resLog << "Ä£¿é¼ÓÔØÍê±Ï¡Ì";
-		console.log(getMsg("strSelfName") + "\n" + resLog.show("\n"), 1, printSTNow());
+		Enabled ? console.log(getMsg("strSelfName") + "\n" + resLog.show("\n"), 1, printSTNow())
+			: DD::debugLog(resLog.show("\n"));
 	}
 	isIniting = false;
 }
