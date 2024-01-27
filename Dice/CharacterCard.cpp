@@ -29,12 +29,12 @@ AttrShape::AttrShape(const tinyxml2::XMLElement* node, bool isUTF8) {
 		defVal = AttrVar::parse(s);
 	}
 }
-AttrVar AttrShape::init(const CharaCard* pc) {
+AttrVar AttrShape::init(CharaCard* pc) {
 	if (textType == TextType::JavaScript) {
-		return js_context_eval(defVal, *pc);
+		return js_context_eval(defVal, pc->shared_from_this());
 	}
 	else if (textType == TextType::Dicexp && !defVal.is_null()) {
-		if (auto exp{ fmt->format(defVal,*pc) }; exp.is_text()) {
+		if (auto exp{ fmt->format(defVal, pc->shared_from_this()) }; exp.is_text()) {
 			return pc->cal(exp);
 		}
 		else return exp;
@@ -192,16 +192,16 @@ ptr<CardTemp> CharaCard::getTemplet()const{
 }
 
 void CharaCard::update() {
-	(*dict)["__Update"] = (long long)time(nullptr);
+	dict["__Update"] = (long long)time(nullptr);
 }
 void CharaCard::setName(const string& strName) {
-	Attr["__Name"] = Name = strName;
+	dict["__Name"] = Name = strName;
 }
 void CharaCard::setType(const string& strType) {
-	Attr["__Type"] = strType;
+	dict["__Type"] = strType;
 }
-AttrVar CharaCard::get(const string& key)const {
-	if (dict->count(key))return at(key);
+AttrVar CharaCard::get(const string& key){
+	if (dict.count(key))return dict.at(key);
 	if (auto temp{ getTemplet() }; temp->canGet(key)) {
 		return temp->AttrShapes.at(key).init(this);
 	}
@@ -213,24 +213,24 @@ int CharaCard::set(string key, const AttrVar& val) {
 	if (val.is_text() && val.text.length() > 256)return -11;
 	key = standard(key);
 	if (getTemplet()->equalDefault(key, val)){
-		if (has(key)) dict->erase(key);
+		if (has(key)) dict.erase(key);
 		else return -1;
 	}
 	else {
-		Attr[key] = val;
+		dict[key] = val;
 	}
 	update();
 	return 0;
 }
 
-string CharaCard::print(const string& key)const {
-	if (dict->count(key))return dict->at(key).print();
+string CharaCard::print(const string& key){
+	if (dict.count(key))return dict.at(key).print();
 	if (auto temp{ getTemplet() }; temp->canGet(key)) {
 		return temp->AttrShapes.at(key).init(this).print();
 	}
 	return {};
 }
-std::optional<string> CharaCard::show(string key) const {
+std::optional<string> CharaCard::show(string key) {
 	if (has(key) || has(key = standard(key))) {
 		if (auto res{ get(key) }; !res.is_null())return res.print();
 	}
@@ -238,7 +238,7 @@ std::optional<string> CharaCard::show(string key) const {
 }
 
 bool CharaCard::has(const string& key)const {
-	return (dict->count(key) && !dict->at(key).is_null())
+	return (dict.count(key) && !dict.at(key).is_null())
 		|| getTemplet()->canGet(key);
 }
 
@@ -246,9 +246,9 @@ bool CharaCard::has(const string& key)const {
 string CharaCard::getExp(string& key, std::unordered_set<string> sRef){
 	sRef.insert(key = standard(key));
 	auto temp{ getTemplet() };
-	auto val = dict->find("&" + key);
-	if (val != dict->end())return escape(val->second.to_str(), sRef);
-	else if ((val = dict->find(key)) != dict->end())return escape(val->second.to_str(), sRef);
+	auto val = dict.find("&" + key);
+	if (val != dict.end())return escape(val->second.to_str(), sRef);
+	else if ((val = dict.find(key)) != dict.end())return escape(val->second.to_str(), sRef);
 	else if (auto exp = temp->AttrShapes.find("&" + key); exp != temp->AttrShapes.end())return escape(exp->second.init(this).to_str(), sRef);
 	else if (auto exp = temp->AttrShapes.find(key); exp != temp->AttrShapes.end())return escape(exp->second.init(this).to_str(), sRef);
 	return "0";
@@ -257,7 +257,7 @@ bool CharaCard::countExp(const string& key)const {
 	return key[0] == '&' ? (has(key) || getTemplet()->canGet(key))
 		: (has("&" + key) || getTemplet()->canGet("&" + key));
 }
-std::optional<int> CharaCard::cal(string exp)const {
+std::optional<int> CharaCard::cal(string exp){
 	if (exp[0] == '&'){
 		if (auto res{ get(exp.substr(1)) };res.is_numberic()) {
 			return res.to_int();
@@ -298,9 +298,9 @@ void CharaCard::buildv(string para)
 }
 
 void CharaCard::clear() {
-	dict = std::make_shared<AttrVars>(AttrVars{{"__Type",Attr["__Type"]},{"__Name",Attr["__Name"]}} );
+	dict = AttrVars{{"__Type",dict["__Type"]},{"__Name",dict["__Name"]}};
 }
-[[nodiscard]] string CharaCard::show(bool isWhole) const {
+[[nodiscard]] string CharaCard::show(bool isWhole){
 	std::set<string> sDefault;
 	ResList Res;
 	for (const auto& list : getTemplet()->vBasicList) {
@@ -315,7 +315,7 @@ void CharaCard::clear() {
 		Res << subList.show();
 	}
 	string strAttrRest;
-	for (const auto& [key,val] : *dict) {
+	for (const auto& [key,val] : dict) {
 		if (sDefault.count(key) || key[0] == '_'
 			|| (isWhole && val.type == AttrVar::Type::Number))continue;
 		strAttrRest += key + ":" + val.print() + (val.type == AttrVar::Type::Number 
@@ -350,7 +350,7 @@ void CharaCard::writeb(std::ofstream& fout) const {
 	fwrite(fout, string("Name"));
 	fwrite(fout, Name);
 	fwrite(fout, string("Attrs"));
-	AttrObject::writeb(fout);
+	AnysTable::writeb(fout);
 	if (!locks.empty()) {
 		fwrite(fout, string("Lock"));
 		fwrite(fout, locks);
@@ -365,17 +365,16 @@ void CharaCard::readb(std::ifstream& fin) {
 			setName(fread<string>(fin));
 			break;
 		case 2:
-			Attr["__Type"] = fread<string>(fin);
+			dict["__Type"] = fread<string>(fin);
 			break;
 		case 3:
-			AttrObject::readb(fin);
+			AnysTable::readb(fin);
 			break;
 		case 11: {
 			std::unordered_map<string, short>TempAttr;
 			fread(fin, TempAttr);
-			TempAttr.erase("");
 			for (auto& [key, val] : TempAttr) {
-				AttrObject::set(key, val);
+				AnysTable::set(key, val);
 			}
 		}
 			break;
@@ -383,7 +382,7 @@ void CharaCard::readb(std::ifstream& fin) {
 			std::unordered_map<string, string>TempExp;
 			fread(fin, TempExp);
 			for (auto& [key, val] : TempExp) {
-				AttrObject::set("&" + key, val);
+				AnysTable::set("&" + key, val);
 			}
 		}
 			break;
@@ -394,12 +393,12 @@ void CharaCard::readb(std::ifstream& fin) {
 			std::unordered_map<string, string>TempInfo;
 			fread(fin, TempInfo);
 			for (auto& [key, val] : TempInfo) {
-				AttrObject::set(key, val);
+				AnysTable::set(key, val);
 			}
 		}
 			break;
 		case 101:
-			Attr["note"] = fread<string>(fin);
+			dict["note"] = fread<string>(fin);
 			break;
 		default:
 			break;
@@ -430,7 +429,7 @@ void CharaCard::cntRcStat(int die, int rate) {
 	if (die <= 5)inc("__StatRcCnt5");	//统计出1-5
 	if (die >= 96)inc("__StatRcCnt96");	//统计出96-100
 	if (die == 100)inc("__StatRcCnt100");	//统计出100
-	Attr["__StatRcSumRate"] = get_int("__StatRcSumRate") + rate;	//总成功率
+	dict["__StatRcSumRate"] = get_int("__StatRcSumRate") + rate;	//总成功率
 	update();
 }
 unordered_map<long long, Player> PList;
@@ -620,12 +619,12 @@ void Player::readb(std::ifstream& fin)
 	fread<unsigned long long, unsigned short>(fin, mGroupIndex);
 }
 
-AttrVar idx_pc(AttrObject& eve){
-	if (eve.has("pc"))return eve["pc"];
-	if (!eve.has("uid"))return {};
-	long long uid{ eve.get_ll("uid") };
-	long long gid{ eve.get_ll("gid") };
+AttrVar idx_pc(const AttrObject& eve){
+	if (eve->has("pc"))return eve->at("pc");
+	if (!eve->has("uid"))return {};
+	long long uid{ eve->get_ll("uid") };
+	long long gid{ eve->get_ll("gid") };
 	if (PList.count(uid) && PList[uid][gid]->getName() != "角色卡")
-		return eve["pc"] = PList[uid][gid]->getName();
+		return eve->at("pc") = PList[uid][gid]->getName();
 	return idx_nick(eve);
 }

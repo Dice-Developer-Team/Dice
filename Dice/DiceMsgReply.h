@@ -44,7 +44,7 @@ public:
 	Type type{ Type::Reply };
 	Echo echo{ Echo::Deck };
 	DiceTriggerLimit limit;
-	AttrObject answer;
+	AnysTable answer;
 	static ptr<DiceMsgReply> set_order(const string& key, const AttrVars&);
 	string show()const;
 	string show_ans()const;

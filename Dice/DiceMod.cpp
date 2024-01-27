@@ -406,7 +406,7 @@ class Parser {
 	shared_ptr<ParseNode> root;
 	AttrVar res;
 public:
-	Parser(const string& s, const AttrObject& obj, bool t = true, const dict_ci<string>& con = {})
+	Parser(const string& s, AttrObject obj, bool t = true, const dict_ci<string>& con = {})
 		:root(std::make_shared<ParseNode>(s, 0, char(0xAA))), context(obj), isTrust(t), dict(con) {
 		string& exp{ root->leaf };
 		auto parent{ root };
@@ -466,9 +466,9 @@ public:
 				if (key == "{" || key == "}") {
 					val = key;
 				}
-				else if (context.has(key)) {
-					if (key == "res")val = fmt->format(context.print(key), context, isTrust, dict);
-					else val = context.print(key);
+				else if (context->has(key)) {
+					if (key == "res")val = fmt->format(context->print(key), context, isTrust, dict);
+					else val = context->print(key);
 				}
 				else if (AttrVar res{ getContextItem(context, key, isTrust) }) {
 					val = res;
@@ -490,13 +490,13 @@ public:
 							if (posQ < posE) {
 								auto [field, exp] = readini<string, string>(para, '?');
 								field = format_token(field, it);
-								context.set(field, val = (exp[0] == char(0xAA)) ? format_token(exp, it) : AttrVar::parse(exp));
+								context->set(field, val = (exp[0] == char(0xAA)) ? format_token(exp, it) : AttrVar::parse(exp));
 							}
 							else {
 								auto exps{ splitPairs(para,'=','&') };
 								for (auto& [field, exp] : exps) {
-									if (exp.empty())context.set(field);
-									else context.set(field, (exp[0] == char(0xAA)) ? format_token(exp, it) : AttrVar::parse(exp));
+									if (exp.empty())context->set(field);
+									else context->set(field, (exp[0] == char(0xAA)) ? format_token(exp, it) : AttrVar::parse(exp));
 								}
 								val.des();
 							}
@@ -516,18 +516,18 @@ public:
 							else if (!para.empty()) {
 								val = "[CQ:at,qq=" + para + "]";
 							}
-							else if (context.has("uid")) {
-								val = "[CQ:at,qq=" + context.get_str("uid") + "]";
+							else if (context->has("uid")) {
+								val = "[CQ:at,qq=" + context->get_str("uid") + "]";
 							}
 							else val.des();
 							break;
 						case FmtMethod::Print:
 							if (auto paras{ splitPairs(para,'=','&') }; paras.count("uid")) {
-								if (isTrust && paras["uid"].empty())val = printUser(context.get_ll("uid"));
+								if (isTrust && paras["uid"].empty())val = printUser(context->get_ll("uid"));
 								else val = printUser(AttrVar(paras["uid"]).to_ll());
 							}
 							else if (paras.count("gid")) {
-								if (isTrust && paras["gid"].empty())val = printGroup(context.get_ll("gid"));
+								if (isTrust && paras["gid"].empty())val = printGroup(context->get_ll("gid"));
 								else val = printGroup(AttrVar(paras["gid"]).to_ll());
 							}
 							else if (paras.count("master")) {
@@ -658,7 +658,7 @@ void DiceModManager::msg_edit(const string& key, const string& val){
 	saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
 }
 
-string DiceModManager::get_help(const string& key, AttrObject context) const{
+string DiceModManager::get_help(const string& key, const AttrObject& context) const{
 	if (const auto it = global_helpdoc.find(key); it != global_helpdoc.end()){
 		return format(it->second, context, true, global_helpdoc);
 	}
@@ -683,15 +683,15 @@ struct help_sorter {
 		return _Left < _Right;
 	}
 };
-string DiceModManager::prev_help(const string& key, AttrObject context) const {
+string DiceModManager::prev_help(const string& key, const AttrObject& context) const {
 	if (const auto it = global_helpdoc.find(key); it != global_helpdoc.end()) {
 		return it->second;
 	}
 	else if (auto keys = querier.search(key); !keys.empty()) {
 		if (keys.size() == 1) {
 			auto word{ *keys.begin() };
-			context.set("redirect_key", word);
-			context.set("redirect_res", global_helpdoc.at(word));
+			context->set("redirect_key", word);
+			context->set("redirect_res", global_helpdoc.at(word));
 			return getMsg("strHelpRedirect", context);
 		}
 		else {
@@ -705,7 +705,7 @@ string DiceModManager::prev_help(const string& key, AttrObject context) const {
 				qKey.pop();
 				if (res.size() > 20)break;
 			}
-			context.set("res", res.show("\n"));
+			context->set("res", res.show("\n"));
 			return getMsg("strHelpSuggestion", context);
 		}
 	}
@@ -764,15 +764,15 @@ void DiceModManager::rm_help(const string& key){
 
 time_t parse_seconds(const AttrVar& time) {
 	if (time.is_numberic())return time.to_int();
-	if (AttrObject t{ time.to_obj() }; !t.empty())
-		return t.get_ll("second") + t.get_ll("minute") * 60 + t.get_ll("hour") * 3600 + t.get_ll("day") * 86400;
+	if (auto t{ time.to_obj() }; !t->empty())
+		return t->get_ll("second") + t->get_ll("minute") * 60 + t->get_ll("hour") * 3600 + t->get_ll("day") * 86400;
 	return 0;
 }
 Clock parse_clock(const AttrVar& time) {
 	Clock clock{ 0,0 };
-	if (AttrObject t{ time.to_obj() }; !t.empty()) {
-		clock.first = t.get_int("hour");
-		clock.second = t.get_int("minute");
+	if (auto t{ time.to_obj() }; !t->empty()) {
+		clock.first = t->get_int("hour");
+		clock.second = t->get_int("minute");
 	}
 	return clock;
 }
@@ -780,32 +780,32 @@ Clock parse_clock(const AttrVar& time) {
 void DiceModManager::call_cycle_event(const string& id) {
 	if (id.empty() || !global_events.count(id))return;
 	AttrObject eve{ global_events[id] };
-	if (auto trigger{ eve.get_dict("trigger") }; trigger->count("cycle")) {
+	if (auto trigger{ eve->get_obj("trigger") }; trigger->has("cycle")) {
 		sch.add_job_for(parse_seconds(trigger->at("cycle")), eve);
 	}
-	if (auto action{ eve.get_dict("action") })call_event(eve, action);
+	if (auto action{ eve->get_obj("action") })call_event(eve, action);
 }
 void DiceModManager::call_clock_event(const string& id) {
 	if (id.empty() || !global_events.count(id))return;
 	AttrObject eve{ global_events[id] };
-	if (auto action{ eve.get_dict("action") })call_event(eve, action);
+	if (auto action{ eve->get_obj("action") })call_event(eve, action);
 }
 bool DiceModManager::call_hook_event(AttrObject eve) {
-	string hookEvent{ eve.has("hook") ? eve.get_str("hook") : eve.get_str("Event") };
+	string hookEvent{ eve->has("hook") ? eve->get_str("hook") : eve->get_str("Event") };
 	if (hookEvent.empty())return false;
 	for (auto& [id, hook] : multi_range(hook_events, hookEvent)) {
-		if (auto action{ hook["action"].to_dict()}) {
+		if (auto action{ hook.at("action").to_obj()}) {
 			if (hookEvent == "StartUp" || hookEvent == "DayEnd" || hookEvent == "DayNew") {
-				if (action->count("lua")) {
+				if (action->has("lua")) {
 					std::thread th(lua_call_event, eve, action->at("lua"));
 					th.detach();
 				}
-				if (action->count("js")) {
+				if (action->has("js")) {
 					std::thread th(js_call_event, eve, action->at("js"));
 					th.detach();
 				}
 #ifdef DICE_PYTHON
-				if (action->count("py")) {
+				if (action->has("py")) {
 					std::thread th(py_call_event, eve, action->at("py"));
 					th.detach();
 				}
@@ -814,7 +814,7 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 			else call_event(eve, action);
 		}
 	}
-	return eve.is("blocked");
+	return eve->is("blocked");
 }
 
 string DiceModManager::list_reply(int type)const {
@@ -1066,7 +1066,7 @@ void DiceMod::loadDir() {
 							rule.manual[UTF8toGBK(it.first.Scalar())] = UTF8toGBK(it.second.Scalar());
 						}
 						if (yaml["tape"])for (auto it : yaml["tape"]) {
-							rule.cassettes[UTF8toGBK(it.first.Scalar())] = AttrVar(it.second).to_dict();
+							rule.cassettes[UTF8toGBK(it.first.Scalar())] = AttrVar(it.second).to_obj();
 						}
 					}
 					else console.log(UTF8toGBK(cut_relative(p, pathDir).u8string()) + "yaml格式不为对象!", 0b10);
@@ -1300,13 +1300,13 @@ void DiceModManager::build() {
 		for (auto& [id, eve] : global_events) {
 			eve["id"] = id;
 			auto trigger{ eve.get_obj("trigger") };
-			if (trigger.has("cycle")) {
+			if (trigger->has("cycle")) {
 				if (!cycle_events.count(id)) {
 					call_cycle_event(id);
 				}
 				cycle.insert(id);
 			}
-			if (trigger.has("clock")) {
+			if (trigger->has("clock")) {
 				auto& clock{ trigger->at("clock") };
 				if (auto list{ clock.to_list() }) {
 					for (auto& clc : *list) {
@@ -1317,7 +1317,7 @@ void DiceModManager::build() {
 					clock_events.emplace(parse_clock(clock), id);
 				}
 			}
-			if (trigger.has("hook")) {
+			if (trigger->has("hook")) {
 				string nameEvent{ trigger->at("hook").to_str() };
 				hook_events.emplace(nameEvent, eve);
 			}
@@ -1353,10 +1353,10 @@ void DiceModManager::save() {
 		remove(DiceDir / "conf" / "ModList.json");
 	}
 }
-void call_event(AttrObject eve, const ptr<AttrVars>& action) {
-	if (action->count("lua"))lua_call_event(eve, action->at("lua"));
-	if (action->count("js"))js_call_event(eve, action->at("js"));
+void call_event(AttrObject eve, const AttrObject& action) {
+	if (action->has("lua"))lua_call_event(eve, action->at("lua"));
+	if (action->has("js"))js_call_event(eve, action->at("js"));
 #ifdef DICE_PYTHON
-	if (action->count("py"))py_call_event(eve, action->at("py"));
+	if (action->has("py"))py_call_event(eve, action->at("py"));
 #endif //DICE_PYTHON
 }

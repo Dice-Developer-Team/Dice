@@ -128,7 +128,7 @@ private:
 	dict_ci<std::filesystem::path>py_scripts;
 	vector<fs::path>luaFiles;
 	dict<ptr<DiceMsgReply>>reply_list;
-	AttrObjects events;
+	dict<AnysTable> events;
 	size_t cntImage{ 0 };
 	size_t cntAudio{ 0 };
 };
@@ -154,10 +154,10 @@ class DiceModManager {
 	dict_ci<string> global_js_scripts;
 	dict_ci<std::filesystem::path> global_py_scripts;
 	dict_ci<AttrVars> taskcall;
-	AttrObjects global_events; //events by id
+	dict<AnysTable> global_events; //events by id
 	//Event
 	unordered_set<string> cycle_events; //重载时唯一性检查
-	multidict_ci<AttrObject> hook_events;
+	multidict_ci<AnysTable> hook_events;
 
 	WordQuerier querier;
 	friend class DiceMod;
@@ -192,7 +192,7 @@ public:
 	void uninstall(const string& name);
 	bool reorder(size_t, size_t);
 
-	AttrVar format(const string&, const AttrObject& = {},
+	AttrVar format(const string&, const AttrObject & = {},
 		bool isTrust = true,
 		const dict_ci<string>& = {}) const;
 	string msg_get(const string& key)const;
@@ -200,8 +200,8 @@ public:
 	void msg_edit(const string& key, const string& val);
 
 	fifo_dict_ci<size_t>cntHelp;
-	[[nodiscard]] string get_help(const string&, AttrObject = {}) const;
-	[[nodiscard]] string prev_help(const string&, AttrObject = {}) const;
+	[[nodiscard]] string get_help(const string&, const AttrObject & = {}) const;
+	[[nodiscard]] string prev_help(const string&, const AttrObject& = {}) const;
 	void _help(DiceEvent*);
 	void set_help(const string&, const string&);
 	void rm_help(const string&);
@@ -238,4 +238,4 @@ public:
 };
 
 extern std::shared_ptr<DiceModManager> fmt;
-void call_event(AttrObject eve, const ptr<AttrVars>& action);
+void call_event(AttrObject eve, const AttrObject& action);

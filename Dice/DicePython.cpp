@@ -161,23 +161,23 @@ PyObject* py_build_attr(const AttrVar& var) {
 		return PyUnicode_FromString(GBKtoUTF8(var.text).c_str());
 		break;
 	case AttrVar::Type::Table:
-		if (!var.table.to_dict()->empty()) {
+		if (!var.table->empty()) {
 			auto dict = PyDict_New();
-			if (var.table.to_list()) {
+			if (var.table->to_list()) {
 				long idx{ 0 };
-				for (auto& val : *var.table.to_list()) {
+				for (auto& val : *var.table->to_list()) {
 					PyDict_SetItem(dict, PyLong_FromLong(idx++), py_build_attr(val));
 				}
 			}
-			for (auto& [key, val] : *var.table.to_dict()) {
+			for (auto& [key, val] : var.table->as_dict()) {
 				PyDict_SetItem(dict, py_from_gbstring(key), py_build_attr(val));
 			}
 			return dict;
 		}
-		else if (var.table.to_list()) {
-			auto ary = PyList_New(var.table.to_list()->size());
+		else if (var.table->to_list()) {
+			auto ary = PyList_New(var.table->to_list()->size());
 			Py_ssize_t i{ 0 };
-			for (auto& val : *var.table.to_list()) {
+			for (auto& val : *var.table->to_list()) {
 				PyList_SetItem(ary, i++, py_build_attr(val));
 			}
 			return ary;
@@ -384,22 +384,22 @@ void PyGameTable_dealloc(PyObject* o) {
 }
 int PyGameTable_setattr(PyObject* self, char* attr, PyObject* val) {
 	PY2GAME(self);
-	if (game)game->attrs.set(UTF8toGBK(attr), py_to_attr(val));
+	if (game)game->set(UTF8toGBK(attr), py_to_attr(val));
 	return 0;
 }
 static Py_ssize_t pyGameTable_size(PyObject* self) {
 	PY2GAME(self);
-	return game ? (Py_ssize_t)game->attrs.size() : 0;
+	return game ? (Py_ssize_t)game->size() : 0;
 }
 PyObject* PyGameTable_getattro(PyObject* self, PyObject* attr) {
 	PY2GAME(self);
 	string key{ py_to_gbstring(attr) };
-	return game ? py_build_attr(game->attrs.get(key)) : NULL;
+	return game ? py_build_attr(game->get(key)) : NULL;
 }
 int PyGameTable_setattro(PyObject* self, PyObject* attr, PyObject* val) {
 	PY2GAME(self);
 	string key{ py_to_gbstring(attr) };
-	if (game)game->attrs.set(key, py_to_attr(val));
+	if (game)game->set(key, py_to_attr(val));
 	return 0;
 }
 static PyMappingMethods PyGameTableMappingMethods = {
@@ -491,24 +491,24 @@ void PyContext_dealloc(PyObject* o) {
 PyObject* py_newContext(const AttrObject& obj);
 int PyContext_setattr(PyObject* self, char* attr, PyObject* val) {
 	AttrObject& obj{ ((PyContextObject*)self)->obj };
-	obj.set(UTF8toGBK(attr), py_to_attr(val));
+	obj->set(UTF8toGBK(attr), py_to_attr(val));
 	return 0;
 }
 PyObject* PyContext_getattro(PyObject* self, PyObject* attr) {
 	AttrObject& obj{ ((PyContextObject*)self)->obj };
 	string key{ py_to_gbstring(attr) };
 	//console.log("PyContext_getattro:" + key, 0);
-	if (key == "user" && obj.has("uid")) {
-		return py_newContext(getUser(obj.get_ll("uid")).confs);
+	if (key == "user" && obj->has("uid")) {
+		return py_newContext(getUser(obj->get_ll("uid")).shared_from_this());
 	}
-	else if ((key == "grp" || key == "group") && obj.has("gid")) {
-		return py_newContext(chat(obj.get_ll("gid")).confs);
+	else if ((key == "grp" || key == "group") && obj->has("gid")) {
+		return py_newContext(chat(obj->get_ll("gid")).shared_from_this());
 	}
-	else if (key == "pc" && obj.has("uid")) {
-		return py_newActor(getPlayer(obj.get_ll("uid"))[obj.get_ll("gid")]);
+	else if (key == "pc" && obj->has("uid")) {
+		return py_newActor(getPlayer(obj->get_ll("uid"))[obj->get_ll("gid")]);
 	}
 	else if (key == "game") {
-		if (auto game = sessions.get_if(obj)) {
+		if (auto game = sessions.get_if(*obj)) {
 			return py_newGame(game);
 		}
 	}
@@ -517,7 +517,7 @@ PyObject* PyContext_getattro(PyObject* self, PyObject* attr) {
 int PyContext_setattro(PyObject* self, PyObject* attr, PyObject* val) {
 	AttrObject& obj{ ((PyContextObject*)self)->obj };
 	string key{ py_to_gbstring(attr) };
-	obj.set(key, py_to_attr(val));
+	obj->set(key, py_to_attr(val));
 	return 0;
 }
 static PyObject* pyContext_echo(PyObject* self, PyObject* args) {
@@ -545,7 +545,7 @@ static PyObject* pyContext_inc(PyObject* self, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "s|i", &field, &cnt)) {
 		return nullptr;
 	}
-	return PyLong_FromSsize_t(obj.inc(UTF8toGBK(field, cnt)));
+	return PyLong_FromSsize_t(obj->inc(UTF8toGBK(field, cnt)));
 }
 static PyMethodDef ContextMethods[] = {
 	{"echo", pyContext_echo, METH_VARARGS, "echo message"},
@@ -692,23 +692,23 @@ void PySelfData_dealloc(PyObject* o) {
 }
 PyObject* PySelfData_getattr(PyObject* self, char* attr) {
 	auto& data{ ((PySelfDataObject*)self)->p->data };
-	return data.is_table() ? py_build_attr(data.table.get(UTF8toGBK(attr))) : Py_BuildValue("");
+	return data.is_table() ? py_build_attr(data.table->get(UTF8toGBK(attr))) : Py_BuildValue("");
 }
 int PySelfData_setattr(PyObject* self, char* attr, PyObject* val) {
 	auto& data{ ((PySelfDataObject*)self)->p->data };
-	if (data.is_table())data.table.set(UTF8toGBK(attr), py_to_attr(val));
+	if (data.is_table())data.table->set(UTF8toGBK(attr), py_to_attr(val));
 	return 0;
 }
 PyObject* PySelfData_getattro(PyObject* self, PyObject* attr) {
 	auto& data{ ((PySelfDataObject*)self)->p };
 	if (!attr)return py_build_attr(data->data);
 	string key{ py_to_gbstring(attr) };
-	return data && data->data.is_table() ? py_build_attr(data->data.table.get(key)) : Py_BuildValue("");
+	return data && data->data.is_table() ? py_build_attr(data->data.table->get(key)) : Py_BuildValue("");
 }
 int PySelfData_setattro(PyObject* self, PyObject* attr, PyObject* val) {
 	auto& data{ ((PySelfDataObject*)self)->p->data };
 	string key{ py_to_gbstring(attr) };
-	if (data.is_table())data.table.set(key, py_to_attr(val));
+	if (data.is_table())data.table->set(key, py_to_attr(val));
 	return 0;
 }
 static Py_ssize_t pySelfData_size(PyObject* self) {
@@ -720,7 +720,7 @@ PyObject* PySelfData_set(PyObject* self, PyObject* args) {
 	PyObject* item{ nullptr }, * val{ nullptr };
 	if (PyArg_ParseTuple(args, "O|O", &item, &val)) {
 		if (Py_IS_TYPE(item, &PyUnicode_Type) && data->data.is_table()) {
-			data->data.table.set(py_to_gbstring(item), py_to_attr(val));
+			data->data.table->set(py_to_gbstring(item), py_to_attr(val));
 			data->save();
 		}
 		else if (!val) {
@@ -810,7 +810,7 @@ PYDEFKEY(getGroupAttr) {
 		}
 		auto items{ PyDict_New() };
 		for (auto& [gid, data] : ChatList) {
-			if (data.confs.has(item))PyDict_SetItem(items, PyLong_FromLongLong(gid), py_build_attr(data.confs.get(item)));
+			if (data->has(item))PyDict_SetItem(items, PyLong_FromLongLong(gid), py_build_attr(data->get(item)));
 		}
 		return items;
 	}
@@ -819,7 +819,7 @@ PYDEFKEY(getGroupAttr) {
 		PyErr_SetString(PyExc_ValueError, "group id can't be zero");
 		return NULL;
 	}
-	if (item.empty()) return py_newContext(chat(gid).confs);
+	if (item.empty()) return py_newContext(chat(gid).shared_from_this());
 	else if (item == "members") {
 		if (Py_IS_TYPE(sub, &PyUnicode_Type)) {
 			string subitem{ py_to_gbstring(sub)};
@@ -907,7 +907,7 @@ PYDEFKEY(getUserAttr) {
 		}
 		auto items{ PyDict_New() };
 		for (auto& [uid, data] : UserList) {
-			if (data.confs.has(item))PyDict_SetItem(items, PyLong_FromLongLong(uid), py_build_attr(data.confs.get(item)));
+			if (data->has(item))PyDict_SetItem(items, PyLong_FromLongLong(uid), py_build_attr(data->get(item)));
 		}
 		return items;
 	}
@@ -916,7 +916,7 @@ PYDEFKEY(getUserAttr) {
 		PyErr_SetString(PyExc_ValueError, "uid can't be zero");
 		return NULL;
 	}
-	if (item.empty()) return py_newContext(getUser(uid).confs);
+	if (item.empty()) return py_newContext(getUser(uid).shared_from_this());
 	if (auto val{ getUserItem(uid,item) }; !val.is_null())return py_build_attr(val);
 	else return sub ? sub : Py_BuildValue("");
 }
@@ -975,7 +975,7 @@ PYDEFKEY(getUserToday) {
 		}
 		auto items{ PyDict_New() };
 		for (auto& [uid, data] : today->getUserInfo()) {
-			if (data.has(item))PyDict_SetItem(items, PyLong_FromLongLong(uid), py_build_attr(data.get(item)));
+			if (data->has(item))PyDict_SetItem(items, PyLong_FromLongLong(uid), py_build_attr(data->get(item)));
 		}
 		return items;
 	}
@@ -1040,16 +1040,16 @@ PYDEFKEY(sendMsg) {
 	AttrObject chat;
 	if (Py_IS_TYPE(msg, &PyUnicode_Type)) {
 		chat = py_to_obj(msg);
-		AddMsgToQueue(fmt->format(chat.get_str("fwdMsg"), chat), chatInfo{ chat.get_ll("uid") ,chat.get_ll("gid") ,chat.get_ll("chid") });
+		AddMsgToQueue(fmt->format(chat->get_str("fwdMsg"), chat), chatInfo{ chat->get_ll("uid") ,chat->get_ll("gid") ,chat->get_ll("chid") });
 	}
 	else {
 		if (!gid && !uid) {
 			PyErr_SetString(PyExc_ValueError, "chat id can't be zero");
 			return NULL;
 		}
-		if (uid)chat["uid"] = uid;
-		if (gid)chat["gid"] = gid;
-		if (chid)chat["chid"] = chid;
+		if (uid)chat->at("uid") = uid;
+		if (gid)chat->at("gid") = gid;
+		if (chid)chat->at("chid") = chid;
 		AddMsgToQueue(fmt->format(py_to_gbstring(msg), chat), { uid,gid,chid });
 	}
 	return Py_BuildValue("");
@@ -1071,11 +1071,11 @@ PYDEFKEY(eventMsg) {
 	else {
 		string fromMsg{ py_to_gbstring(msg)};
 		eve = gid
-			? AttrVars{ {"fromMsg",fromMsg},{"gid",gid}, {"uid", uid} }
-		: AttrVars{ {"fromMsg",fromMsg}, {"uid", uid} };
+			? AnysTable{ { {"fromMsg",fromMsg},{"gid",gid}, {"uid", uid} } }
+		: AnysTable{ { {"fromMsg",fromMsg}, {"uid", uid} } };
 	}
 	std::thread th([=]() {
-		DiceEvent msg(eve);
+		DiceEvent msg(*eve);
 		msg.virtualCall();
 		});
 	th.detach();

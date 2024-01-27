@@ -43,29 +43,29 @@ string parse_vary(const AttrVars& raw, fifo_dict_ci<pair<AttrVar::CMPR, AttrVar>
 		}
 		else {
 			auto& tab{ exp.table };
-			if (tab.has("equal")) {
-				vary[var] = { &AttrVar::equal,tab["equal"] };
-				vars << var + "=" + tab.print("equal");
+			if (tab->has("equal")) {
+				vary[var] = { &AttrVar::equal,tab->get("equal") };
+				vars << var + "=" + tab->print("equal");
 			}
-			else if (tab.has("neq")) {
-				vary[var] = { &AttrVar::not_equal , tab["neq"] };
-				vars << var + "=" + tab.print("neq") + "!";
+			else if (tab->has("neq")) {
+				vary[var] = { &AttrVar::not_equal , tab->get("neq") };
+				vars << var + "=" + tab->print("neq") + "!";
 			}
-			else if (tab.has("at_least")) {
-				vary[var] = { &AttrVar::equal_or_more , tab["at_least"] };
-				vars << var + "=" + tab.print("at_least") + "+";
+			else if (tab->has("at_least")) {
+				vary[var] = { &AttrVar::equal_or_more , tab->get("at_least") };
+				vars << var + "=" + tab->print("at_least") + "+";
 			}
-			else if (tab.has("at_most")) {
-				vary[var] = { &AttrVar::equal_or_less , tab["at_most"] };
-				vars << var + "=" + tab.print("at_most") + "-";
+			else if (tab->has("at_most")) {
+				vary[var] = { &AttrVar::equal_or_less , tab->get("at_most") };
+				vars << var + "=" + tab->print("at_most") + "-";
 			}
-			else if (tab.has("more")) {
-				vary[var] = { &AttrVar::more , tab["more"] };
-				vars << var + "=" + tab.print("more") + "++";
+			else if (tab->has("more")) {
+				vary[var] = { &AttrVar::more , tab->get("more") };
+				vars << var + "=" + tab->print("more") + "++";
 			}
-			else if (tab.has("less")) {
-				vary[var] = { &AttrVar::less , tab["less"] };
-				vars << var + "=" + tab.print("less") + "--";
+			else if (tab->has("less")) {
+				vary[var] = { &AttrVar::less , tab->get("less") };
+				vars << var + "=" + tab->print("less") + "--";
 			}
 		}
 	}
@@ -260,7 +260,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 	new(this)DiceTriggerLimit();
 	ShowList limits;
 	ShowList notes;
-	for (auto& [key, item] : *var.to_dict()) {
+	for (auto& [key, item] : **var.to_dict()) {
 		if (key == "prob") {
 			if (int prob{ item.to_int() }) {
 				limits << "prob:" + to_string(prob);
@@ -273,9 +273,9 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			}
 			else if (!item.is_table())continue;
 			AttrObject& tab{ item.table };
-			if (tab.has("nor")) {
+			if (tab->has("nor")) {
 				user_id_negative = true;
-				auto id{ tab.get("nor") };
+				auto id{ tab->get("nor") };
 				if (id.is_numberic()) {
 					user_id = { item.to_ll() };
 				}
@@ -283,7 +283,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 					user_id.emplace(i.to_ll());
 				}
 			}
-			else for (auto& id : *tab.to_list()) {
+			else for (auto& id : *tab->to_list()) {
 				user_id.emplace(id.to_ll());
 			}
 			if (!user_id.empty()) {
@@ -297,9 +297,9 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			}
 			else if (!item.is_table())continue;
 			AttrObject& tab{ item.table };
-			if (tab.has("nor")) {
+			if (tab->has("nor")) {
 				grp_id_negative = true;
-				auto id{ tab.get("nor") };
+				auto id{ tab->get("nor") };
 				if (id.is_numberic()) {
 					grp_id = { item.to_ll() };
 				}
@@ -307,7 +307,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 					grp_id.emplace(i.to_ll());
 				}
 			}
-			else if (tab.to_list())for (auto& id : *tab.to_list()) {
+			else if (tab->to_list())for (auto& id : *tab->to_list()) {
 				grp_id.emplace(id.to_ll());
 			}
 			if (!grp_id.empty()) {
@@ -328,7 +328,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 				if (auto v{ item.to_list() }) {
 					cd_timer.emplace_back(type, name, (time_t)v->begin()->to_ll());
 				}
-				for (auto& [subkey, value] : *item.to_dict()) {
+				for (auto& [subkey, value] : **item.to_dict()) {
 					if (CDConfig::eType.count(subkey)) {
 						type = (CDType)CDConfig::eType[subkey];
 						if (value.is_numberic()) {
@@ -338,7 +338,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 						if (auto v{ value.to_list() }) {
 							cd_timer.emplace_back(type, name, (time_t)v->begin()->to_ll());
 						}
-						if (value.is_table())for (auto& [name, ct] : *value.to_dict()) {
+						if (value.is_table())for (auto& [name, ct] : **value.to_dict()) {
 							cd_timer.emplace_back(type, name, (time_t)ct.to_ll());
 						}
 						continue;
@@ -371,7 +371,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 				if (auto v{ item.to_list() }) {
 					today_cnt.emplace_back(type, name, (time_t)v->begin()->to_ll());
 				}
-				for (auto& [subkey, value] : *item.to_dict()) {
+				for (auto& [subkey, value] : **item.to_dict()) {
 					if (CDConfig::eType.count(subkey)) {
 						type = (CDType)CDConfig::eType[subkey];
 						if (value.is_numberic()) {
@@ -381,7 +381,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 						if (auto v{ value.to_list() }) {
 							today_cnt.emplace_back(type, name, (time_t)v->begin()->to_ll());
 						}
-						if (value.is_table())for (auto& [name, ct] : *value.to_dict()) {
+						if (value.is_table())for (auto& [name, ct] : **value.to_dict()) {
 							today_cnt.emplace_back(type, name, (time_t)ct.to_ll());
 						}
 						continue;
@@ -419,7 +419,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 						locks.emplace_back(type, k.to_str(), 1);
 					}
 				}
-				for (auto& [subkey, value] : *item.to_dict()) {
+				for (auto& [subkey, value] : **item.to_dict()) {
 					if (CDConfig::eType.count(subkey)) {
 						type = (CDType)CDConfig::eType[subkey];
 						if (value.is_character()) {
@@ -446,36 +446,36 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 		}
 		else if (key == "user_var") {
 			if (!item.is_table())continue;
-			string code{ parse_vary(*item.to_dict(), user_vary) };
-			if (user_vary.empty())continue;
-			limits << "user_var:" + code;
-			ShowList vars;
-			for (auto& [key, cmpr] : user_vary) {
-				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
+			if (string code{ parse_vary(**item.to_dict(), user_vary) }; !user_vary.empty()) {
+				limits << "user_var:" + code;
+				ShowList vars;
+				for (auto& [key, cmpr] : user_vary) {
+					vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
+				}
+				notes << "- 用户触发阈值: " + vars.show();
 			}
-			notes << "- 用户触发阈值: " + vars.show();
 		}
 		else if (key == "grp_var") {
 			if (!item.is_table())continue;
-			string code{ parse_vary(*item.to_dict(), grp_vary) };
-			if (code.empty())continue;
-			limits << "grp_var:" + code;
-			ShowList vars;
-			for (auto& [key, cmpr] : grp_vary) {
-				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
+			if (string code{ parse_vary(**item.to_dict(), grp_vary) }; !code.empty()) {
+				limits << "grp_var:" + code;
+				ShowList vars;
+				for (auto& [key, cmpr] : grp_vary) {
+					vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
+				}
+				notes << "- 群聊触发阈值: " + vars.show();
 			}
-			notes << "- 群聊触发阈值: " + vars.show();
 		}
 		else if (key == "self_var") {
 			if (!item.is_table())continue;
-			string code{ parse_vary(*item.to_dict(), self_vary) };
-			if (code.empty())continue;
-			limits << "self_var:" + code;
-			ShowList vars;
-			for (auto& [key, cmpr] : self_vary) {
-				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
+			if (string code{ parse_vary(**item.to_dict(), self_vary) }; !code.empty()) {
+				limits << "self_var:" + code;
+				ShowList vars;
+				for (auto& [key, cmpr] : self_vary) {
+					vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
+				}
+				notes << "- 自身触发阈值: " + vars.show();
 			}
-			notes << "- 自身触发阈值: " + vars.show();
 		}
 		else if (key == "dicemaid") {
 			string val{ item.to_str() };
@@ -579,12 +579,12 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 	if (!limit.check(msg, lock_list))return false;
 	if (type == Type::Reply) {
 		if (!msg->isCalled && (chon < 0 ||
-			(!chon && (msg->pGrp->isset("禁用回复")))))
+			(!chon && (msg->pGrp->is("禁用回复")))))
 			return false;
 	}
 	else {	//type == Type::Order
 		if (!msg->isCalled && (chon < 0 ||
-			(!chon && msg->pGrp->isset("停用指令"))))
+			(!chon && msg->pGrp->is("停用指令"))))
 			return false;
 	}
 	if (msg->WordCensor()) {
@@ -658,8 +658,8 @@ string DiceMsgReply::show_ans()const {
 }
 
 void DiceMsgReply::from_obj(AttrObject obj) {
-	if (obj.is_table("keyword")) {
-		for (auto& [match, word] : *obj.get_dict("keyword")) {
+	if (obj->is_table("keyword")) {
+		for (auto& [match, word] : **obj->get_dict("keyword")) {
 			if (!sMode.count(match))continue;
 			if (word.is_character()) {
 				keyMatch[sMode[match]] = std::make_unique<vector<string>>(vector<string>{ word.to_str() });
@@ -674,10 +674,10 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 			}
 		}
 	}
-	if (obj.has("type"))type = (Type)sType[obj.get_str("type")];
-	if (obj.has("limit"))limit.parse(obj["limit"]);
-	if (obj.has("echo")) {
-		AttrVar& ans{ obj["echo"] };
+	if (obj->has("type"))type = (Type)sType[obj->get_str("type")];
+	if (obj->has("limit"))limit.parse(obj->at("limit"));
+	if (obj->has("echo")) {
+		AttrVar& ans{ obj->at("echo") };
 		if (ans.is_character()) {
 			echo = Echo::Text;
 			answer.set("text", ans);
@@ -686,17 +686,17 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 			echo = Echo::Lua;
 			answer.set("lua", ans);
 		}
-		else if (auto tab{ ans.to_obj() }; tab.has("lua")) {
+		else if (auto tab{ ans.to_obj() }; tab->has("lua")) {
 			echo = Echo::Lua;
-			answer = tab;
+			answer = *tab;
 		}
-		else if (tab.has("js")) {
+		else if (tab->has("js")) {
 			echo = Echo::JavaScript;
-			answer = tab;
+			answer = *tab;
 		}
-		else if (tab.has("py")) {
+		else if (tab->has("py")) {
 			echo = Echo::Python;
-			answer = tab;
+			answer = *tab;
 		}
 		else if (auto v{ answer.to_list() }) {
 			auto li{ answer.new_list() };
@@ -736,7 +736,7 @@ void DiceMsgReply::readJson(const fifo_json& j) {
 		if (j.count("limit"))limit.parse(UTF8toGBK(j["limit"].get<string>()));
 		if (j.count("echo"))echo = (Echo)sEcho[j["echo"].get<string>()];
 		if (j.count("answer")) {
-			if (echo == Echo::Deck)answer = AttrVar(j["answer"]).to_obj();
+			if (echo == Echo::Deck)from_json(j["answer"], answer.as_dict());
 			else if (echo == Echo::Lua)answer.set("lua", j["answer"]);
 			else if (echo == Echo::JavaScript)answer.set("js", j["answer"]);
 			else if (echo == Echo::Python)answer.set("py", j["answer"]);
@@ -757,10 +757,10 @@ fifo_json DiceMsgReply::writeJson()const {
 	if (keyMatch[3])j["regex"] = GBKtoUTF8(*keyMatch[3]);
 	if (!limit.empty())j["limit"] = GBKtoUTF8(limit.print());
 	if (echo == Echo::Deck)j["answer"] = answer.to_json();
-	else if (echo == Echo::Text)j["answer"] = GBKtoUTF8(answer["text"]);
-	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(answer["lua"]);
-	else if (echo == Echo::JavaScript)j["answer"] = GBKtoUTF8(answer["js"]);
-	else if (echo == Echo::Python)j["answer"] = GBKtoUTF8(answer["py"]);
+	else if (echo == Echo::Text)j["answer"] = GBKtoUTF8(answer.get_str("text"));
+	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(answer.get_str("lua"));
+	else if (echo == Echo::JavaScript)j["answer"] = GBKtoUTF8(answer.get_str("js"));
+	else if (echo == Echo::Python)j["answer"] = GBKtoUTF8(answer.get_str("py"));
 	return j;
 }
 fifo_json DiceMsgReply::to_line()const {

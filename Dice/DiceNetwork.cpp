@@ -8,6 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2019 w4123ËÝä§
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -174,7 +175,7 @@ namespace Network
 			}
 			if (dwRetCode != 200)
 			{
-				des = getMsg("strRequestRetCodeErr", AttrVars{ {"error", std::to_string(dwRetCode)} });
+				des = getMsg("strRequestRetCodeErr", AnysTable{ {"error", std::to_string(dwRetCode)} });
 				goto InternetClose;
 			}
 			DWORD preRcvCnt;
@@ -318,7 +319,7 @@ InternetClose:
 			}
 			if (dwRetCode != 200)
 			{
-				des = getMsg("strRequestRetCodeErr", AttrVars{ {"error", std::to_string(dwRetCode)} });
+				des = getMsg("strRequestRetCodeErr", AnysTable{ {"error", std::to_string(dwRetCode)} });
 				InternetCloseHandle(hRequest);
 				InternetCloseHandle(hConnect);
 				InternetCloseHandle(hInternet);

@@ -1,7 +1,7 @@
 /**
  * 黑名单明细
  * 更数据库式的管理
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 #include <mutex>
 #include <thread>
@@ -23,7 +23,7 @@ using Manager = DDBlackManager;
 using Factory = DDBlackMarkFactory;
 
 //判断信任
-int isReliable(long long uid)
+static int isReliable(long long uid)
 {
 	if (!uid)return 0;
 	if (uid == console)return 255;
@@ -46,14 +46,14 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 	for (auto& [id, grp] : ChatList)
 	{
 		int authSelf;
-		if (!grp.getLst() || grp.isset("忽略") || !grp.isGroup
+		if (!grp->getLst() || grp->is("忽略")
 			|| !(authSelf = DD::getGroupAuth(id, console.DiceMaid, 0)))continue;
-		if (DD::isGroupMember(grp.ID, llQQ, false))	{
+		if (DD::isGroupMember(grp->ID, llQQ, false))	{
 			strNotice = printGroup(id);
-			if (grp.isset("协议无效")) {
+			if (grp->is("协议无效")) {
 				strNotice += "群协议无效";
 			}
-			else if (grp.isset("免黑")) {
+			else if (grp->is("免黑")) {
 				if (mark.isSource(console.DiceMaid) && !mark.isType("local"))DD::sendGroupMsg(id, mark.warning());
 				strNotice += "群免黑";
 			}
@@ -68,11 +68,11 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 			else if (authSelf > authBlack)
 			{
 				DD::sendGroupMsg(id, mark.warning());
-				grp.leave("发现新增黑名单管理员" + printUser(llQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
+				grp->leave("发现新增黑名单管理员" + printUser(llQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
 				strNotice += "对方群权限较高，已退群";
 				this_thread::sleep_for(1s);
 			}
-			else if (grp.isset("免清"))
+			else if (grp->is("免清"))
 			{
 				if (mark.isSource(console.DiceMaid) && !mark.isType("local"))AddMsgToQueue(
 					mark.warning(), { 0, id });
@@ -81,7 +81,7 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 			else if (console["LeaveBlackQQ"])
 			{
 				DD::sendGroupMsg(id, mark.warning());
-				grp.leave("发现新增黑名单成员" + printUser(llQQ) + "（同等群权限）\n" + getMsg("strSelfName") + "将预防性退群");
+				grp->leave("发现新增黑名单成员" + printUser(llQQ) + "（同等群权限）\n" + getMsg("strSelfName") + "将预防性退群");
 				strNotice += "已退群";
 				this_thread::sleep_for(1s);
 			}
@@ -846,7 +846,7 @@ void DDBlackManager::reset_qq_danger(long long llqq)
 		if (Enabled)
 		{
 			if (!isLoadingExtern)console.log("已消除" + printUser(llqq) + "的危险等级", 0b10, printSTNow());
-			if (UserList.count(llqq))AddMsgToQueue(getMsg("strBlackQQDelNotice", AttrVars{ {"uid",llqq}, {"user_nick", getName(llqq)}}), llqq);
+			if (UserList.count(llqq))AddMsgToQueue(getMsg("strBlackQQDelNotice", std::make_shared<AnysTable>(AttrVars{ {"uid",llqq}, {"user_nick", getName(llqq)}})), llqq);
 		}
 	}
 }
@@ -885,10 +885,10 @@ bool DDBlackManager::up_qq_danger(long long llqq, DDBlackMark& mark)
 	{
 		if (!mQQDanger.count(llqq) && UserList.count(llqq) && mark.danger == 2)
 			mark.note.empty()
-			? AddMsgToQueue(getMsg("strBlackQQAddNotice", AttrVars{ {"uid",llqq}, {"user_nick", getName(llqq)}}), llqq)
-				: AddMsgToQueue(getMsg("strBlackQQAddNoticeReason", AttrVars{
+			? AddMsgToQueue(getMsg("strBlackQQAddNotice", std::make_shared<AnysTable>(AttrVars{ {"uid",llqq}, {"user_nick", getName(llqq)}})), llqq)
+				: AddMsgToQueue(getMsg("strBlackQQAddNoticeReason", std::make_shared<AnysTable>(AttrVars{
 										   {"uid",llqq}, {"reason", mark.note}, {"user_nick", getName(llqq)}
-				                       }), llqq);
+				                       })), llqq);
 		if (!isLoadingExtern) {
 			console.log(getMsg("strSelfName") + "已将" + printUser(llqq) + "危险等级提升至" + to_string(mark.danger), 0b10,
 						printSTNow());

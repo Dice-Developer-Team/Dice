@@ -8,6 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2019 w4123ËÝä§
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -41,7 +42,7 @@ chatInfo::chatInfo(long long u, long long g, long long c) :uid(u), gid(g), chid(
 		else type = msgtype::Private;
 	}
 }
-chatInfo::chatInfo(const AttrObject& obj):uid(obj.get_ll("uid")), chid(obj.get_ll("chid")) {
+chatInfo::chatInfo(const AnysTable& obj):uid(obj.get_ll("uid")), chid(obj.get_ll("chid")) {
 	type = (gid = obj.get_ll("gid"))
 		? chid ? msgtype::ChannelPrivate : msgtype::Private
 		: chid ? msgtype::Channel : msgtype::Group;

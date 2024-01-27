@@ -18,17 +18,17 @@
 using namespace std; 
 static bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
-AttrVar idx_at(AttrObject& eve) {
-	if (eve.has("at"))return eve["at"];
-	if (!eve.has("uid"))return {};
-	return eve["at"] = eve.has("gid")
-		? AttrVar("[CQ:at,qq=" + eve.get_str("uid") + "]")
+AttrVar idx_at(const AttrObject& eve) {
+	if (eve->has("at"))return eve->at("at");
+	if (!eve->has("uid"))return {};
+	return eve->at("at") = eve->has("gid")
+		? AttrVar("[CQ:at,qq=" + eve->get_str("uid") + "]")
 		: idx_nick(eve);
 }
-AttrVar idx_gAuth(AttrObject& eve) {
-	if (!eve.has("uid")|| !eve.has("gid"))return {};
-	if (int auth{ DD::getGroupAuth(eve.get_ll("gid"),eve.get_ll("uid"),0) })
-		return eve["grpAuth"] = auth;
+AttrVar idx_gAuth(const AttrObject& eve) {
+	if (!eve->has("uid")|| !eve->has("gid"))return {};
+	if (int auth{ DD::getGroupAuth(eve->get_ll("gid"),eve->get_ll("uid"),0) })
+		return eve->at("grpAuth") = auth;
 	return {};
 }
 
@@ -37,30 +37,30 @@ AttrGetters MsgIndexs{
 	{"pc", idx_pc},
 	{"at", idx_at},
 	{"@", idx_at},
-	{"gender",  [](AttrObject& vars) {
-		return vars.has("uid") ? vars["gender"] = getUserItem(vars.get_ll("uid"),"gender") : AttrVar();
+	{"gender",  [](const AttrObject& vars) {
+		return vars->has("uid") ? vars->at("gender") = getUserItem(vars->get_ll("uid"),"gender") : AttrVar();
 	}},
 	{"grpAuth", idx_gAuth},
-	{"fromUser", [](AttrObject& vars) {
-		return vars.has("uid") ? vars["fromUser"] = vars.get_str("uid") : "";
+	{"fromUser", [](const AttrObject& vars) {
+		return vars->has("uid") ? vars->at("fromUser") = vars->get_str("uid") : "";
 	}},
-	{"fromQQ", [](AttrObject& vars) {
-		return vars.has("uid") ? vars["fromQQ"] = vars.get_str("uid") : "";
+	{"fromQQ", [](const AttrObject& vars) {
+		return vars->has("uid") ? vars->at("fromQQ") = vars->get_str("uid") : "";
 	}},
-	{"fromGroup", [](AttrObject& vars) {
-		return vars.has("gid") ? vars["fromGroup"] = vars.get_str("gid") : "";
+	{"fromGroup", [](const AttrObject& vars) {
+		return vars->has("gid") ? vars->at("fromGroup") = vars->get_str("gid") : "";
 	}},
 };
 
 DiceEvent::DiceEvent(const AttrVars& var, const chatInfo& ct)
-	:AttrObject(var), strMsg(at("fromMsg").text), fromChat(ct) {
+	:AnysTable(var), strMsg(at("fromMsg").text), fromChat(ct) {
 	if (fromChat.gid) {
 		pGrp = &chat(fromChat.gid);
 	}
 	thisGame = sessions.get_if(fromChat);
 }
-DiceEvent::DiceEvent(const AttrObject& var)
-	:AttrObject(var), strMsg(at("fromMsg").text) {
+DiceEvent::DiceEvent(const AnysTable& var)
+	:AnysTable(var), strMsg(at("fromMsg").text) {
 	fromChat = { get_ll("uid") ,get_ll("gid") ,get_ll("chid") };
 	if (fromChat.gid) {
 		pGrp = &chat(fromChat.gid);
@@ -159,7 +159,7 @@ void DiceEvent::replyHidden() {
 			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
 	}
 	strReply = "在" + printChat(fromChat) + "中 " + forward_filter(strReply);
-	if (!pGrp || !pGrp->isset("Rh盲骰")) {
+	if (!pGrp || !pGrp->is("Rh盲骰")) {
 		AddMsgToQueue(strReply, fromChat.uid);
 	}
 	if (thisGame) {
@@ -695,12 +695,12 @@ int DiceEvent::AdminEvent(const string& strOption){
 		for (auto& [id, grp] : ChatList)
 		{
 			string strGroup;
-			if (grp.isset("许可使用") || grp.isset("免清") || grp.isset("免黑"))
+			if (grp->is("许可使用") || grp->is("免清") || grp->is("免黑"))
 			{
-				strGroup = printChat(grp);
-				if (grp.isset("许可使用"))strGroup += "-许可使用";
-				if (grp.isset("免清"))strGroup += "-免清";
-				if (grp.isset("免黑"))strGroup += "-免黑";
+				strGroup = grp->print();
+				if (grp->is("许可使用"))strGroup += "-许可使用";
+				if (grp->is("免清"))strGroup += "-免清";
+				if (grp->is("免黑"))strGroup += "-免黑";
 				res << strGroup;
 			}
 		}
@@ -795,7 +795,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 				strReply = "当前白名单用户列表：";
 				for (auto& [uid, user] : UserList)
 				{
-					if (user.nTrust)strReply += "\n" + printUser(uid) + ":" + to_string(user.nTrust);
+					if (user->nTrust)strReply += "\n" + printUser(uid) + ":" + to_string(user->nTrust);
 				}
 				reply();
 				return 1;
@@ -960,7 +960,7 @@ int DiceEvent::MasterSet()
 		ResList list;
 		for (const auto& [uid, user] : UserList)
 		{
-			if (user.nTrust > 3)list << printUser(uid);
+			if (user->nTrust > 3)list << printUser(uid);
 		}
 		reply(getMsg("strSelfName") + "的管理权限拥有者共" + to_string(list.size()) + "位：" + list.show());
 		return 1;
@@ -993,7 +993,7 @@ int DiceEvent::BasicOrder()
 				return 1;
 			}
 		}
-		if (pGrp->isset("许可使用") && !pGrp->isset("未审核") && !pGrp->isset("协议无效"))return 0;
+		if (pGrp->is("许可使用") && !pGrp->is("未审核") && !pGrp->is("协议无效"))return 0;
 		string strInfo = readRest();
 		if (fmt->call_hook_event(merge({
 			{"hook","GroupAuthorize"},
@@ -1060,14 +1060,14 @@ int DiceEvent::BasicOrder()
 				pGrp->leave(getMsg("strAdminDismiss", *this));
 				return 1;
 			}
-			if (pGrp->isset("协议无效") && !isTarget)return 0;
+			if (pGrp->is("协议无效") && !isTarget)return 0;
 			if (canRoomHost())
 			{
 				pGrp->leave(getMsg("strDismiss"));
 			}
 			else
 			{
-				if (!isCalled && (pGrp->isset("停用指令") || DD::getGroupSize(fromChat.gid).currSize > 200))AddMsgToQueue(getMsg("strPermissionDeniedErr", *this), fromChat.uid);
+				if (!isCalled && (pGrp->is("停用指令") || DD::getGroupSize(fromChat.gid).currSize > 200))AddMsgToQueue(getMsg("strPermissionDeniedErr", *this), fromChat.uid);
 				else replyMsg("strPermissionDeniedErr");
 			}
 			return 1;
@@ -1107,7 +1107,7 @@ int DiceEvent::BasicOrder()
 		}
 		return 1;
 	}
-	else if (!isPrivate() && pGrp->isset("协议无效")){
+	else if (!isPrivate() && pGrp->is("协议无效")){
 		set("ignored");
 		return 0;
 	}
@@ -1124,7 +1124,7 @@ int DiceEvent::BasicOrder()
 		{
 			if (Command == "on" && !isPrivate())
 			{
-				if ((console["CheckGroupLicense"] && pGrp->isset("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")))
+				if ((console["CheckGroupLicense"] && pGrp->is("未审核")) || (console["CheckGroupLicense"] == 2 && !pGrp->is("许可使用")))
 					replyMsg("strGroupLicenseDeny");
 				else {
 					if (canRoomHost())
@@ -1153,7 +1153,7 @@ int DiceEvent::BasicOrder()
 				{
 					if (groupset(fromChat.gid, "停用指令"))
 					{
-						if (!isCalled && QQNum.empty() && pGrp->isGroup && DD::getGroupSize(fromChat.gid).currSize > 200)AddMsgToQueue(getMsg("strBotOffAlready", *this), fromChat.uid);
+						if (!isCalled && QQNum.empty() && DD::getGroupSize(fromChat.gid).currSize > 200)AddMsgToQueue(getMsg("strBotOffAlready", *this), fromChat.uid);
 						else replyMsg("strBotOffAlready");
 					}
 					else 
@@ -1168,11 +1168,11 @@ int DiceEvent::BasicOrder()
 					else replyMsg("strPermissionDeniedErr");
 				}
 			}
-			else if (!Command.empty() && !isCalled && pGrp->isset("停用指令"))
+			else if (!Command.empty() && !isCalled && pGrp->is("停用指令"))
 			{
 				return 0;
 			}
-			else if (!isPrivate() && pGrp->isset("停用指令") && DD::getGroupSize(fromChat.gid).currSize > 500 && !isCalled)
+			else if (!isPrivate() && pGrp->is("停用指令") && DD::getGroupSize(fromChat.gid).currSize > 500 && !isCalled)
 			{
 				AddMsgToQueue(getMsg("strBotHeader") + Dice_Full_Ver_On + getMsg("strBotMsg"), fromChat.uid);
 			}
@@ -1194,7 +1194,7 @@ int DiceEvent::BasicOrder()
 		string action{ readPara() };
 		if (action == "on" && fromChat.gid) {
 			const string& option{ (at("option") = "禁用回复").text };
-			if (!chat(fromChat.gid).isset(option)) {
+			if (!chat(fromChat.gid).is(option)) {
 				replyMsg("strGroupSetOffAlready");
 			}
 			else if (trusted > 0 || canRoomHost()) {
@@ -1208,7 +1208,7 @@ int DiceEvent::BasicOrder()
 		}
 		else if (action == "off" && fromChat.gid) {
 			const string& option{ (at("option") = "禁用回复").text };
-			if (chat(fromChat.gid).isset(option)) {
+			if (chat(fromChat.gid).is(option)) {
 				replyMsg("strGroupSetOnAlready");
 			}
 			else if (trusted > 0 || canRoomHost()) {
@@ -1288,7 +1288,7 @@ int DiceEvent::BasicOrder()
 						while (intMsgCnt < strMsg.length()) {
 							deck.push_back(readItem());
 						}
-						trigger->answer = AttrObject(deck);
+						trigger->answer = AnysTable(deck);
 					}
 					else {
 						if (trigger->echo == DiceMsgReply::Echo::Lua) {
@@ -1590,7 +1590,7 @@ int DiceEvent::BasicOrder()
 					set("set_item", strItem);
 					if (!strVal.empty()) {
 						AttrVar& val{ at("set_val") = AttrVar::parse(strVal) };
-						thisGame->setAttr(strItem, val);
+						thisGame->set(strItem, val);
 						replyMsg("strGameItemSet");
 					}
 					else {
@@ -1744,7 +1744,7 @@ int DiceEvent::InnerOrder() {
 		if (canRoomHost()) {
 			string strWelcomeMsg = strMsg.substr(intMsgCnt);
 			if (strWelcomeMsg == "clr") {
-				if (chat(fromChat.gid).isset("入群欢迎")) {
+				if (chat(fromChat.gid).is("入群欢迎")) {
 					chat(fromChat.gid).reset("入群欢迎");
 					replyMsg("strWelcomeMsgClearNotice");
 				}
@@ -1753,7 +1753,7 @@ int DiceEvent::InnerOrder() {
 				}
 			}
 			else if (strWelcomeMsg == "show") {
-				string strWelcome{ chat(fromChat.gid).confs.get_str("入群欢迎") };
+				string strWelcome{ chat(fromChat.gid).get_str("入群欢迎") };
 				if (strWelcome.empty())replyMsg("strWelcomeMsgEmpty");
 				else reply(strWelcome, false);	//转义有注入风险
 			}
@@ -1801,15 +1801,15 @@ int DiceEvent::InnerOrder() {
 		string action{ readPara() };
 		if (action == "show") {
 			if ((thisGame || (thisGame = sessions.get_if(fromChat)))
-				&& thisGame->attrs.has("rr_rc")) {
+				&& thisGame->has("rr_rc")) {
 				set("rule", thisGame->getAttr("rr_rc"));
 			}
 			else if (isPrivate()) {
-				if (User& user{ getUser(fromChat.uid) }; user.isset("rc房规"))
-				set("rule", user.confs["rc房规"]);
+				if (User& user{ getUser(fromChat.uid) }; user.is("rc房规"))
+				set("rule", user.get("rc房规"));
 			}
-			else if (pGrp->isset("rc房规")) {
-				set("rule", pGrp->confs["rc房规"]);
+			else if (pGrp->is("rc房规")) {
+				set("rule", pGrp->get("rc房规"));
 			}
 			if (has("rule")) {
 				replyMsg("strDefaultCOCShow");
@@ -1822,8 +1822,8 @@ int DiceEvent::InnerOrder() {
 		}
 		else if (action == "clr") {
 			if (thisGame
-				&& thisGame->attrs.has("rr_rc")) {
-				thisGame->rmAttr("rr_rc");
+				&& thisGame->has("rr_rc")) {
+				thisGame->reset("rr_rc");
 			}
 			else if (isPrivate())getUser(fromChat.uid).rmConf("rc房规");
 			else chat(fromChat.gid).reset("rc房规");
@@ -2040,8 +2040,8 @@ int DiceEvent::InnerOrder() {
 				int Cnt = 0;
 				if (isSet) {
 					for (auto& [id, grp] : ChatList) {
-						if (grp.isset(strOption))continue;
-						grp.set(strOption);
+						if (grp->is(strOption))continue;
+						grp->set(strOption);
 						Cnt++;
 					}
 					set("cnt", Cnt);
@@ -2049,8 +2049,8 @@ int DiceEvent::InnerOrder() {
 				}
 				else {
 					for (auto& [id, grp] : ChatList) {
-						if (!grp.isset(strOption))continue;
-						grp.reset(strOption);
+						if (!grp->is(strOption))continue;
+						grp->reset(strOption);
 						Cnt++;
 					}
 					set("cnt", Cnt);
@@ -2100,7 +2100,7 @@ int DiceEvent::InnerOrder() {
 							replyMsg("strGroupSetOnAlready");
 						}
 					}
-					else if (grp.isset(get_str("option"))) {
+					else if (grp.is(get_str("option"))) {
 						++cntSet;
 						chat(llGroup).reset(get_str("option"));
 					}
@@ -2135,11 +2135,11 @@ int DiceEvent::InnerOrder() {
 			res << "记录创建：" + printDate(grp.tCreated);
 			res << "最后记录：" + printDate(grp.updated());
 			if (grp.inviter)res << "邀请者：" + printUser(grp.inviter);
-			res << string("入群欢迎：") + (grp.isset("入群欢迎") ? "已设置" : "无");
+			res << string("入群欢迎：") + (grp.is("入群欢迎") ? "已设置" : "无");
 			reply(getMsg("strSelfName") + res.show());
 			return 1;
 		}
-		if (!grp.isGroup || (fromChat.gid == llGroup && isPrivate())) {
+		if (fromChat.gid == llGroup && isPrivate()) {
 			replyMsg("strGroupNot");
 			return 1;
 		}
@@ -2153,7 +2153,7 @@ int DiceEvent::InnerOrder() {
 				return 1;
 			}
 			if (ChatList.count(llGroup)) {
-				reply(UTF8toGBK(chat(llGroup).confs.to_json().dump()), false);
+				reply(UTF8toGBK(chat(llGroup).to_json().dump()), false);
 			}
 			else {
 				reply("{self}无" + printGroup(llGroup) + "的群聊记录×");
@@ -2412,8 +2412,8 @@ int DiceEvent::InnerOrder() {
 			if (auto rule{ getGameRule() }; GetRule::get(*rule, strSearch, strReply)) {
 				reply();
 			}
-			else if (getUser(fromChat.uid).isset("默认规则") && strSearch.find(':') == string::npos &&
-				GetRule::get(getUser(fromChat.uid).confs.get_str("默认规则"), strSearch, strReply)) {
+			else if (getUser(fromChat.uid).is("默认规则") && strSearch.find(':') == string::npos &&
+				GetRule::get(getUser(fromChat.uid).get_str("默认规则"), strSearch, strReply)) {
 				reply();
 			}
 			else if (GetRule::analyze(strSearch, strReply)) {
@@ -2575,7 +2575,7 @@ int DiceEvent::InnerOrder() {
 		if (strCmd.empty()|| isPrivate()) {
 			replyHelp("init");
 		}
-		else if (!thisGame || !thisGame->table_count("先攻")) {
+		else if (!thisGame || !thisGame->has("先攻")) {
 			replyMsg("strGMTableNotExist");
 		}
 		else if (strCmd == "show" || strCmd == "list") {
@@ -2718,7 +2718,7 @@ int DiceEvent::InnerOrder() {
 				}
 				else {
 					AddMsgToQueue(fmt->format(strFwd, ct.gid ?
-						AttrVars{ {"gid",ct.gid}} : AttrVars{ {"uid",ct.uid} }), ct);
+						AnysTable{ {"gid",ct.gid}} : AnysTable{ {"uid",ct.uid} }), ct);
 					replyMsg("strSendMsg");
 				}
 				return 1;
@@ -2824,7 +2824,7 @@ int DiceEvent::InnerOrder() {
 			long long target{ readID() };
 			if (!target)target = fromChat.uid;
 			if(UserList.count(target)){
-				reply(UTF8toGBK(getUser(target).confs.to_json().dump()), false);
+				reply(UTF8toGBK(getUser(target).to_json().dump()), false);
 			}
 			else {
 				reply("{self}无" + printUser(target) + "的用户记录×");
@@ -3088,7 +3088,7 @@ int DiceEvent::InnerOrder() {
 		s->get_deck().erase("__Ank");
 		if (string strTitle{ strMsg.substr(intMsgCnt,strMsg.find('+') - intMsgCnt) }; !strTitle.empty()) {
 			intMsgCnt += strTitle.length();
-			s->setAttr("AkFork", at("fork") = strTitle);
+			s->set("AkFork", at("fork") = strTitle);
 		}
 		if (intMsgCnt == strMsg.length()) {
 			replyMsg("strAkForkNew");
@@ -3104,7 +3104,7 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strAkAddEmpty");
 			return 1;
 		}
-		set("fork",s->attrs["AkFork"]);
+		set("fork",s->at("AkFork"));
 		ResList list;
 		list.order();
 		for (auto& val : deck) {
@@ -3123,7 +3123,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		deck.erase(deck.begin() + nNo - 1);
-		set("fork",s->attrs["AkFork"]);
+		set("fork",s->get("AkFork"));
 		ResList list;
 		list.order();
 		for (auto& val : deck) {
@@ -3135,8 +3135,8 @@ int DiceEvent::InnerOrder() {
 	}
 	else if (sign == '=' || action == "get") {
 		if (DeckInfo& deck{ s->get_deck("__Ank") }; !deck.meta.empty()) {
-			set("fork",s->attrs["AkFork"]);
-			s->rmAttr("AkFork");
+			set("fork",s->at("AkFork"));
+			s->reset("AkFork");
 			size_t res{ (size_t)RandomGenerator::Randint(0,deck.meta.size() - 1) };
 			set("get",to_string(res + 1) + ". " + deck.meta[res]);
 			ResList list;
@@ -3155,7 +3155,7 @@ int DiceEvent::InnerOrder() {
 	}
 	else if (action == "show") {
 		std::vector<string>& deck{ s->get_deck("__Ank").meta };
-		set("fork",s->attrs["AkFork"]);
+		set("fork",s->at("AkFork"));
 		ResList list;
 		list.order();
 		for (auto& val : deck) {
@@ -3166,8 +3166,8 @@ int DiceEvent::InnerOrder() {
 	}
 	else if (action == "clr") {
 		s->get_deck().erase("__Ank");
-		set("fork",s->attrs["AkFork"]);
-		s->rmAttr("AkFork");
+		set("fork",s->at("AkFork"));
+		s->reset("AkFork");
 		replyMsg("strAkClr");
 		s->update();
 	}
@@ -4498,7 +4498,7 @@ bool DiceEvent::DiceFilter()
 		{
 			isCalled = isSummoned = true;
 		}
-		else if (User& self{ getUser(console.DiceMaid) }; self.isset("tinyID") && self.confs["tinyID"] == strTarget)
+		else if (User& self{ getUser(console.DiceMaid) }; self.has("tinyID") && self.get_str("tinyID") == strTarget)
 		{
 			isCalled = isSummoned = true;
 		}
@@ -4526,7 +4526,7 @@ bool DiceEvent::DiceFilter()
 		if (int chon{ (isChannel() && pGrp) ? pGrp->getChConf(fromChat.chid,"order",0) : 0 }) {
 			set("order_off",chon < 0);
 		}
-		else if (pGrp && pGrp->isset("停用指令")) {
+		else if (pGrp && pGrp->is("停用指令")) {
 			set("order_off");
 		}
 	}
@@ -4535,8 +4535,8 @@ bool DiceEvent::DiceFilter()
 	}
 	else if (is("ignored"))return 0;
 	if (isCalled)set("called");
-	if (!isPrivate() && ((console["CheckGroupLicense"] > 0 && pGrp->isset("未审核"))
-		|| (console["CheckGroupLicense"] == 2 && !pGrp->isset("许可使用")) 
+	if (!isPrivate() && ((console["CheckGroupLicense"] > 0 && pGrp->is("未审核"))
+		|| (console["CheckGroupLicense"] == 2 && !pGrp->is("许可使用")) 
 		|| blacklist->get_group_danger(fromChat.gid))) {
 		isDisabled = true;
 	}
@@ -4547,7 +4547,7 @@ bool DiceEvent::DiceFilter()
 	if (auto ruleName{ getGameRule() }; ruleName
 		&& (thisGame->is_part(fromChat.uid))
 		&& ruleset->has_rule(*ruleName)
-		&& ((thisGame->attrs.has("tape") && ruleset->get_rule(*ruleName)->listen_cassette(thisGame->attrs.get_str("tape"), this))
+		&& ((thisGame->has("tape") && ruleset->get_rule(*ruleName)->listen_cassette(thisGame->get_str("tape"), this))
 			|| ruleset->get_rule(*ruleName)->listen_order(this))) {
 		return monitorFrq();
 	}
@@ -4609,8 +4609,8 @@ void DiceEvent::virtualCall() {
 	DiceFilter();
 }
 std::optional<string> DiceEvent::getGameRule() {
-	if (thisGame && thisGame->attrs.has("rule")) {
-		return thisGame->attrs.get_str("rule");
+	if (thisGame && thisGame->has("rule")) {
+		return thisGame->get_str("rule");
 	}
 	return std::nullopt;
 }
@@ -4797,10 +4797,10 @@ void reply(AttrObject& msg, string strReply, bool isFormat) {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	if(isFormat)strReply = fmt->format(strReply, msg);
-	if (console["ReferMsgReply"] && msg.get_int("msgid"))strReply = "[CQ:reply,id=" + msg.get_str("msgid") + "]" + strReply;
-	long long uid{ msg.get_ll("uid") };
-	long long gid{ msg.get_ll("gid") };
-	long long chid{ msg.get_ll("chid") };
+	if (console["ReferMsgReply"] && msg->get_int("msgid"))strReply = "[CQ:reply,id=" + msg->get_str("msgid") + "]" + strReply;
+	long long uid{ msg->get_ll("uid") };
+	long long gid{ msg->get_ll("gid") };
+	long long chid{ msg->get_ll("chid") };
 	if (uid || gid || chid)
 		AddMsgToQueue(strReply, chatInfo{ uid,gid,chid });
 }
@@ -4808,10 +4808,10 @@ void MsgNote(AttrObject& msg, string strReply, int note_lv) {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	strReply = fmt->format(strReply, msg);
-	if (console["ReferMsgReply"] && msg.get_int("msgid"))strReply = "[CQ:reply,id=" + msg.get_str("msgid") + "]" + strReply;
-	long long uid{ msg.get_ll("uid") };
-	long long gid{ msg.get_ll("gid") };
-	long long chid{ msg.get_ll("chid") };
+	if (console["ReferMsgReply"] && msg->get_int("msgid"))strReply = "[CQ:reply,id=" + msg->get_str("msgid") + "]" + strReply;
+	long long uid{ msg->get_ll("uid") };
+	long long gid{ msg->get_ll("gid") };
+	long long chid{ msg->get_ll("chid") };
 	if (uid || gid || chid)
 		AddMsgToQueue(strReply, chatInfo{ uid,gid,chid });
 	strReply = getName(uid) + strReply;

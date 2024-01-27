@@ -522,8 +522,8 @@ std::string COC6(int);
 std::string COC7D();
 std::string COC7(int);
 std::string DND(int);
-class AttrObject;
-void LongInsane(AttrObject&);
-void TempInsane(AttrObject&);
+class AnysTable;
+void LongInsane(AnysTable&);
+void TempInsane(AnysTable&);
 int RollSuccessLevel(int, int, int);
 #endif /*DICE_RD*/

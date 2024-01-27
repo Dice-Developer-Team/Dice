@@ -9,7 +9,7 @@ class DiceRule {
 	void clear() {
 		subrules.clear();
 	}
-	dict_ci<ptr<AttrVars>> cassettes;
+	dict_ci<AttrObject> cassettes;
 public:
 	ptr<DiceRule> meta;
 	dict_ci<ptr<DiceRule>> subrules;

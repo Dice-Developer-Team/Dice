@@ -55,7 +55,7 @@ public:
 	vector<string> alias;
 	TextType textType{ TextType::Plain };
 	AttrVar defVal;
-	AttrVar init(const CharaCard*);
+	AttrVar init(CharaCard*);
 	int check(AttrVar& val);
 	bool equalDefault(const AttrVar& val)const { return TextType::Plain == textType && val == defVal; }
 };
@@ -129,7 +129,7 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m);
 extern unordered_map<int, string> PlayerErrors;
 
 struct lua_State;
-class CharaCard: public AttrObject
+class CharaCard: public AnysTable
 {
 private:
 	string Name = "角色卡";
@@ -154,19 +154,18 @@ public:
 	void setName(const string&);
 	void setType(const string&);
 	void update();
-#define Attr (*dict)
 	CharaCard(){
-		(*dict)["__Type"] = "COC7";
-		(*dict)["__Update"] = (long long)time(nullptr);
+		dict["__Type"] = "COC7";
+		dict["__Update"] = (long long)time(nullptr);
 	}
 	CharaCard(const CharaCard& pc){
 		Name = pc.Name;
-		dict = std::make_shared<AttrVars>(*pc.dict);
+		dict = pc.dict;
 	}
 
 	CharaCard(const string& name, const string& type = "COC7") : Name(name)
 	{
-		(*dict)["__Name"] = name;
+		dict["__Name"] = name;
 		setType(type);
 	}
 
@@ -199,7 +198,7 @@ public:
 	bool countExp(const string& key)const;
 
 	//计算表达式
-	std::optional<int> cal(string exp)const;
+	std::optional<int> cal(string exp);
 
 	void build(const string& para)
 	{
@@ -207,7 +206,7 @@ public:
 			it != getTemplet()->presets.end()) {
 			auto& preset = it->second;
 			for (auto& [attr, shape] : preset.shapes) {
-				if (!dict->count(attr) || dict->at(attr).is_null())set(attr, shape.init(this));
+				if (!dict.count(attr) || dict.at(attr).is_null())set(attr, shape.init(this));
 			}
 		}
 	}
@@ -221,17 +220,17 @@ public:
 		return key;
 	}
 
-	AttrVar get(const string& key)const;
+	AttrVar get(const string& key);
 
 	int set(string key, const AttrVar& val);
 
 	bool erase(string& key);
 	void clear();
 
-	std::optional<string> show(string key) const;
-	string print(const string& key)const;
+	std::optional<string> show(string key);
+	string print(const string& key);
 
-	[[nodiscard]] string show(bool isWhole) const;
+	[[nodiscard]] string show(bool isWhole);
 
 	bool has(const string& key)const;
 	//can get attr by card or temp
@@ -247,8 +246,8 @@ public:
 	void cntRcStat(int die, int rate);
 
 	void operator<<(const CharaCard& card){
-		dict = std::make_shared<AttrVars>(*card.dict);
-		AttrObject::set("__Name", Name);
+		dict = card.dict;
+		dict["__Name"] = Name;
 	}
 
 	void writeb(std::ofstream& fout) const;
@@ -362,4 +361,4 @@ extern unordered_map<long long, Player> PList;
 
 Player& getPlayer(long long qq);
 
-AttrVar idx_pc(AttrObject&);
+AttrVar idx_pc(const AttrObject&);

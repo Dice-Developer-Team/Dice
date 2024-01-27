@@ -318,22 +318,27 @@ int loadFile(const std::filesystem::path& fpPath, nlohmann::fifo_map<T1, T2>& ma
 }
 
 template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
-int loadBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
+int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, std::shared_ptr<C>>& m)
 {
 	std::ifstream fin(fpPath, std::ios::in | std::ios::binary);
 	if (!fin)return -1;
-	const int len = fread<int>(fin);
 	int Cnt = 0;
-	T key;
-	while (fin.peek() != EOF && len > Cnt++)
-	{
-		key = fread<T>(fin);
-		m[key] = fread<C>(fin);
+	try {
+		const int len = fread<int>(fin);
+		T key;
+		while (fin.peek() != EOF && len > Cnt++)
+		{
+			key = fread<T>(fin);
+			m.emplace(key, std::make_shared<C>(key));
+			((*m[key]).*U)(fin);
+		}
+	}
+	catch (...) {
+
 	}
 	fin.close();
 	return Cnt;
 }
-
 template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
 int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 {
@@ -657,7 +662,7 @@ void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 }
 
 template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
-void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
+void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, std::shared_ptr<C>>& m)
 {
 	if (clrEmpty(fpPath, m))return;
 	std::ofstream fout(fpPath, ios::out | ios::trunc | ios::binary);
@@ -666,7 +671,7 @@ void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 	for (auto& [key, val] : m)
 	{
 		fwrite(fout, key);
-		fwrite(fout, val);
+		val->writeb(fout);
 	}
 	fout.close();
 }

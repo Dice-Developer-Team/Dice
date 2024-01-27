@@ -40,7 +40,7 @@ void SelfData::save() {
 		break;
 	case Toml:
 		if (std::ofstream fs{ pathFile }) {
-			if (data.is_table())fs << data.to_obj().to_toml();
+			if (data.is_table())fs << data.to_obj()->to_toml();
 			else fs << data.to_json();
 		}
 		break;

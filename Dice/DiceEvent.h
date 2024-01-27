@@ -20,7 +20,7 @@ class RD;
 
 class DiceSession;
 //打包待处理消息
-class DiceEvent : public AttrObject {
+class DiceEvent : public AnysTable {
 public:
 	chatInfo fromChat;
 	string strLowerMessage;
@@ -30,10 +30,7 @@ public:
 	string strReply;
 	std::wsmatch msgMatch;
 	DiceEvent(const AttrVars& var, const chatInfo& ct);
-	DiceEvent(const AttrObject& var);
-	AttrVar& operator[](const char* key) {
-		return (*dict)[key];
-	}
+	DiceEvent(const AnysTable& var);
 
 	bool isPrivate()const;
 	bool isChannel()const;

@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * CoJSright (C) 2018-2021 w4123ËÝä§
- * CoJSright (C) 2019-2023 String.Empty
+ * CoJSright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -44,7 +44,7 @@ public:
 JSValue js_newAttr(JSContext*, const AttrVar& var);
 void js_global_init();
 void js_global_end();
-bool js_call_event(AttrObject, const AttrVar&); 
+bool js_call_event(const AttrObject&, const AttrVar&);
 void js_msg_call(DiceEvent*, const AttrVar&);
 AttrVar js_simple_eval(const std::string&);
 AttrVar js_context_eval(const std::string&, const AttrObject& context);

@@ -437,7 +437,7 @@ std::string printSTime(const tm st)
 	string printGroup(long long llgroup)
 	{
 		if (!llgroup)return "к╫ад";
-		if (ChatList.count(llgroup))return printChat(ChatList[llgroup]);
+		if (ChatList.count(llgroup))return ChatList[llgroup]->print();
 		if (string name{ DD::getGroupName(llgroup) };!name.empty())return "[" + name + "](" + to_string(llgroup) + ")";
 		return "х╨(" + to_string(llgroup) + ")";
 	}

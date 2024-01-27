@@ -150,11 +150,6 @@ ifstream& operator>>(ifstream& fin, User& user) {
 	return fin;
 }
 
-ifstream& operator>>(ifstream& fin, Chat& grp) {
-	fin >> grp.ID >> grp.isGroup >> grp.inviter >> grp.tCreated >> tUpdated;
-	return fin;
-}
-
 template <typename T>
 int _listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& files)
 {

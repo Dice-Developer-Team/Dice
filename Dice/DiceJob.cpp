@@ -53,7 +53,7 @@ inline PROCESSENTRY32 getProcess(int pid) {
 
 void frame_restart(AttrObject& job) {
 #ifdef _WIN32
-	if (!job.get_ll("uid")) {
+	if (!job->get_ll("uid")) {
 		if (console["AutoFrameRemake"] <= 0) {
 			sch.add_job_for(60 * 60, job);
 			return;
@@ -153,7 +153,7 @@ void auto_save(AttrObject& job) {
 //被引用的图片列表
 void clear_image(AttrObject& job) {
 	return;
-	if (!job.has("uid")) {
+	if (!job->has("uid")) {
 		if (sch.is_job_cold("clrimage"))return;
 		if (console["AutoClearImage"] <= 0) {
 			sch.add_job_for(60 * 60, job);
@@ -173,16 +173,16 @@ void clear_group(AttrObject& job) {
 	ResList res;
 	vector<long long> GrpDelete;
 	time_t grpline{ console["InactiveGroupLine"] > 0 ? (tNow - console["InactiveGroupLine"] * (time_t)86400) : 0 };
-	if (string mode{ job.get_str("clear_mode") };mode == "unpower") {
+	if (string mode{ job->get_str("clear_mode") };mode == "unpower") {
 		for (auto& [id, grp] : ChatList) {
-			if (grp.isset("忽略") || !grp.getLst() || grp.isset("免清") || grp.isset("协议无效"))continue;
-			if (grp.isGroup && !DD::isGroupAdmin(id, console.DiceMaid, true)) {
+			if (grp->is("忽略") || !grp->getLst() || grp->is("免清") || grp->is("协议无效"))continue;
+			if (!DD::isGroupAdmin(id, console.DiceMaid, true)) {
 				res << printGroup(id);
-				time_t tLast{ grp.updated() };
+				time_t tLast{ grp->updated() };
 				if (auto s{ sessions.get_if({ 0,id }) })
 					tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 				if (tLast < grpline)GrpDelete.push_back(id);
-				grp.leave(getMsg("strLeaveNoPower"));
+				grp->leave(getMsg("strLeaveNoPower"));
 				intCnt++;
 				if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"])break;
 				this_thread::sleep_for(3s);
@@ -191,23 +191,23 @@ void clear_group(AttrObject& job) {
 		MsgNote(job, "筛除{strSelfName}非群管群聊" + to_string(intCnt) + "个:" + res.show(), 0b10);
 	}
 	else if (!mode.empty() && isdigit(static_cast<unsigned char>(mode[0]))) {
-		int intDayLim{ job.get_int("clear_mode") };
+		int intDayLim{ job->get_int("clear_mode") };
 		time_t tNow{ time(nullptr) };
 		for (auto& [id, grp] : ChatList) {
-			if (grp.isset("忽略") || grp.isset("免清") || grp.isset("协议无效"))continue;
-			time_t tLast{ grp.getLst() };
+			if (grp->is("忽略") || grp->is("免清") || grp->is("协议无效"))continue;
+			time_t tLast{ grp->getLst() };
 			if (auto s{ sessions.get_if({ 0,id }) };s && s->tUpdate > tLast)
 				tLast = s->tUpdate;
 			if (tNow - 86400LL * intDayLim < tLast)continue;
 			if (long long tLMT{ DD::getGroupLastMsg(id, console.DiceMaid) };
-				tLMT > tLast)grp.setLst(tLast = tLMT);
+				tLMT > tLast)grp->setLst(tLast = tLMT);
 			if (tLast <= 0)continue;
-			if (tLast < grpline && !grp.isset("免黑"))GrpDelete.push_back(id);
+			if (tLast < grpline && !grp->is("免黑"))GrpDelete.push_back(id);
 			int intDay{ int((tNow - tLast) / 86400) };
 			if (intDay > intDayLim) {
-				job["day"] = to_string(intDay);
+				job->at("day") = to_string(intDay);
 				res << printGroup(id) + ":" + to_string(intDay) + "天\n";
-				grp.leave(getMsg("strLeaveUnused", job));
+				grp->leave(getMsg("strLeaveUnused", job));
 				intCnt++;
 				if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"])break;
 				this_thread::sleep_for(3s);
@@ -219,8 +219,8 @@ void clear_group(AttrObject& job) {
 		try {
 			set<long long> grps{ DD::getGroupIDList() };
 			for (auto id : grps) {
-				Chat& grp = chat(id).group().name(DD::getGroupName(id));
-				if (grp.isset("忽略") || grp.isset("免清") || grp.isset("免黑") || grp.isset("协议无效"))continue;
+				Chat& grp = chat(id).name(DD::getGroupName(id));
+				if (grp.is("忽略") || grp.is("免清") || grp.is("免黑") || grp.is("协议无效"))continue;
 				if (blacklist->get_group_danger(id)) {
 					time_t tLast{ grp.updated() };
 					if (auto s{ sessions.get_if({ 0,id }) })
@@ -264,23 +264,23 @@ void clear_group(AttrObject& job) {
 		if (intCnt) {
 			MsgNote(job, "已按{strSelfName}黑名单清查群聊" + to_string(intCnt) + "个：" + res.show(), 0b10);
 		}
-		else if (job.has("uid")) {
+		else if (job->has("uid")) {
 			reply(job, getMsg("strSelfName") + "按黑名单未发现待清查群聊");
 		}
 	}
 	else if (mode == "preserve") {
 		for (auto& [id, grp] : ChatList) {
-			if (grp.isset("忽略") || !grp.getLst() || grp.isset("许可使用") || grp.isset("免清") || grp.isset("协议无效"))continue;
-			if (grp.isGroup && DD::isGroupAdmin(id, console, false)) {
-				grp.set("许可使用");
+			if (grp->is("忽略") || !grp->getLst() || grp->is("许可使用") || grp->is("免清") || grp->is("协议无效"))continue;
+			if (DD::isGroupAdmin(id, console, false)) {
+				grp->set("许可使用");
 				continue;
 			}
-			time_t tLast{ grp.updated() };
+			time_t tLast{ grp->updated() };
 			if (auto s{ sessions.get_if({ 0,id }) })
 				tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 			if (tLast < grpline)GrpDelete.push_back(id);
-			res << printChat(grp);
-			grp.leave(getMsg("strPreserve"));
+			res << printChat(*grp);
+			grp->leave(getMsg("strPreserve"));
 			intCnt++;
 			if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"])break;
 			this_thread::sleep_for(3s);
@@ -299,15 +299,15 @@ void clear_group(AttrObject& job) {
 }
 void list_group(AttrObject& job) {
 	console.log("遍历群列表", 0, printSTNow());
-	string mode{ job.get_str("list_mode") };
+	string mode{ job->get_str("list_mode") };
 	if (mode.empty()) {
 		reply(job, fmt->get_help("groups_list"));
 	}
 	if (mChatConf.count(mode)) {
 		ResList res;
 		for (auto& [id, grp] : ChatList) {
-			if (grp.isset(mode)) {
-				res << printChat(grp);
+			if (grp->is(mode)) {
+				res << printChat(*grp);
 			}
 		}
 		reply(job, "{self}含词条" + mode + "群记录" + to_string(res.size()) + "条" + res.head(":").show());
@@ -316,13 +316,11 @@ void list_group(AttrObject& job) {
 		std::priority_queue<std::pair<time_t, string>> qDiver;
 		time_t tNow = time(NULL);
 		for (auto& [id, grp] : ChatList) {
-			//if (grp.isGroup && !grps.empty() && !grps.count(id))grp.rmLst();
-			if (!grp.getLst())continue;
-			time_t tLast{ grp.updated() };
-			if (grp.isGroup) {
-				if (long long tLMT{ DD::getGroupLastMsg(grp.ID, console.DiceMaid) };
-					tLMT > 0 && tLMT > tLast)tLast = tLMT;
-			}
+			//if (grp->isGroup && !grps.empty() && !grps.count(id))grp->rmLst();
+			if (!grp->getLst())continue;
+			time_t tLast{ grp->updated() };
+			if (long long tLMT{ DD::getGroupLastMsg(grp->ID, console.DiceMaid) };
+				tLMT > 0 && tLMT > tLast)tLast = tLMT;
 			if (!tLast)continue;
 			int intDay{ int((tNow - tLast) / 86400) };
 			qDiver.emplace(intDay, printGroup(id));
@@ -340,11 +338,11 @@ void list_group(AttrObject& job) {
 		}
 		reply(job, "{self}所在闲置群列表:" + res.show(1));
 	}
-	else if (job["list_mode"] == "size") {
+	else if (job->at("list_mode") == "size") {
 		std::priority_queue<std::pair<time_t, string>> qSize;
 		time_t tNow = time(NULL);
 		for (auto& [id, grp] : ChatList) {
-			if (!grp.getLst() || !grp.isGroup)continue;
+			if (!grp->getLst())continue;
 			GroupSize_t size(DD::getGroupSize(id));
 			if (!size.currSize)continue;
 			qSize.emplace(size.currSize, DD::printGroupInfo(id));
@@ -394,7 +392,7 @@ void dice_update(AttrObject& job) {
 		reply(job, "{self}获取版本信息时出错: \n" + ret);
 		return;
 	}
-	string ver{ job.get_str("ver")};
+	string ver{ job->get_str("ver")};
 	if (ver.empty())ver = isDev ? "dev" : "release";
 	try {
 		fifo_json jInfo(fifo_json::parse(ret));
@@ -420,7 +418,7 @@ void dice_update(AttrObject& job) {
 			reply(job, "{self}未发现更新{ver}版本");
 		}
 	} catch (std::exception& e) {
-		job.set("err", e.what());
+		job->set("err", e.what());
 		reply(job, "{self}获取更新失败！{err}");
 	}
 }
@@ -452,7 +450,7 @@ void dice_cloudblack(AttrObject& job) {
 		break;
 	}
 	if (isSuccess) {
-		if (job["uid"])MsgNote(job, "同步云不良记录成功，" + getMsg("self") + "开始读取", 1);
+		if (job->has("uid"))MsgNote(job, "同步云不良记录成功，" + getMsg("self") + "开始读取", 1);
 		blacklist->loadJson(DiceDir / "conf" / "CloudBlackList.json", true);
 	}
 	if (console["CloudBlackShare"])
@@ -460,15 +458,15 @@ void dice_cloudblack(AttrObject& job) {
 }
 
 void log_put(AttrObject& job) {
-	int cntExec{ job.get_int("retry") };
+	int cntExec{ job->get_int("retry") };
 	if (!cntExec) {
-		DD::debugLog("发送log文件:" + job.get_str("log_path"));
-		if ((!job.get_ll("gid") || !DD::uploadGroupFile(job.get_ll("gid"), job.get_str("log_path")))
-			&& job.get_ll("uid")) {
-			DD::sendFriendFile(job.get_ll("uid"), job.get_str("log_path"));
+		DD::debugLog("发送log文件:" + job->get_str("log_path"));
+		if ((!job->get_ll("gid") || !DD::uploadGroupFile(job->get_ll("gid"), job->get_str("log_path")))
+			&& job->get_ll("uid")) {
+			DD::sendFriendFile(job->get_ll("uid"), job->get_str("log_path"));
 		}
 	}
-	string nameLog{ Base64urlEncode(job.get_str("log_file")) };
+	string nameLog{ Base64urlEncode(job->get_str("log_file")) };
 #ifndef _WIN32
 	auto curl = curl_easy_init();
 	curl_slist* headers = NULL;
@@ -481,7 +479,7 @@ void log_put(AttrObject& job) {
 		CURLFORM_END);
 	curl_formadd(&pFormPost, &pLastElem,
 		CURLFORM_COPYNAME, "file",
-		CURLFORM_FILE, job.get_str("log_path").c_str(),
+		CURLFORM_FILE, job->get_str("log_path").c_str(),
 		CURLFORM_FILENAME, nameLog.c_str(),
 		CURLFORM_END); 
 	curl_easy_setopt(curl, CURLOPT_URL, "http://dicelogger.s3.ap-southeast-1.amazonaws.com");
@@ -490,26 +488,26 @@ void log_put(AttrObject& job) {
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Network::curlWriteToString);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ret);
 	auto res = curl_easy_perform(curl);
-	if (res != CURLE_OK)job.set("ret", curl_easy_strerror(res));
+	if (res != CURLE_OK)job->set("ret", curl_easy_strerror(res));
 	curl_formfree(pFormPost);
 	curl_easy_cleanup(curl);
 	if (res == CURLE_OK) {
 #else
-	job["ret"] = put_s3_object("dicelogger",
+	job->at("ret") = put_s3_object("dicelogger",
 		nameLog.c_str(),
-		GBKtoLocal(job.get_str("log_path")).c_str(),
+		GBKtoLocal(job->get_str("log_path")).c_str(),
 		"ap-southeast-1");
-	if (job["ret"] == "SUCCESS") {
+	if (job->at("ret") == "SUCCESS") {
 #endif //_Win32
-		job["log_file"] = nameLog;
-		job["log_url"] = "https://logpainter.kokona.tech/?s3=" + nameLog;
+		job->at("log_file") = nameLog;
+		job->at("log_url") = "https://logpainter.kokona.tech/?s3=" + nameLog;
 		reply(job, "{strLogUpSuccess}");
 	}
 	else if (++cntExec > 2) {
 		reply(job, "{strLogUpFailureEnd}");
 	}
 	else {
-		job.inc("retry");
+		job->inc("retry");
 		reply(job, "{strLogUpFailure}");
 		console.log(getMsg("strLogUpFailure", job), 1);
 		sch.add_job_for(2 * 60, job);

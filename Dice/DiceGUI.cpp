@@ -732,7 +732,7 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 						MessageBox(m_hwnd, TEXT("信任等级无效!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
 						return 0;
 					}
-					UserList[uid].trust(trustlevel);
+					UserList[uid]->trust(trustlevel);
 
 					if (ret == -1)
 					{
@@ -942,7 +942,7 @@ LRESULT DiceGUI::CreateMasterPage()
 	for (const auto& item : UserList)
 	{
 		const string qq = to_string(item.first);
-		const string trust = to_string(item.second.nTrust);
+		const string trust = to_string(item.second->nTrust);
 		const string nick = nicknameMp[item.first];
 		ListViewUserTrust.AddTextRow({qq, nick, trust}, index);
 		index++;
@@ -1149,7 +1149,7 @@ int WINAPI GUIMain()
 	time_t tLimit{ time(NULL) - (time_t)86400 * 7 };
 	for (const auto& item : UserList)
 	{
-		if (LoadActiveUser && item.second.updated() < tLimit)continue;
+		if (LoadActiveUser && item.second->updated() < tLimit)continue;
 		if (FriendMp.count(item.first) || LoadStranger) {
 			nicknameMp[item.first] = DD::getQQNick(item.first);
 		}

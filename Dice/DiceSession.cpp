@@ -33,7 +33,7 @@ size_t DiceSession::roll(size_t face) {
 string DiceSession::show()const {
 	ShowList li;
 	li << "桌号: " + name;
-	if (attrs.has("rule"))li << "规则: " + attrs.get_str("rule");
+	if (has("rule"))li << "规则: " + get_str("rule");
 	if (is_logging())li << "日志记录中:" + logger.name;
 	if (!master->empty()) {
 		ShowList sub;
@@ -66,34 +66,34 @@ string DiceSession::show()const {
 	return li.show("\n");
 }
 bool DiceSession::hasAttr(const string& key) {
-	return attrs.has(key);
+	return has(key);
 }
 AttrVar DiceSession::getAttr(const string& key) {
-	return attrs.get(key);
+	return get(key);
 }
 
 bool DiceSession::table_del(const string& tab, const string& item) {
-	if (!attrs.has(tab) || !attrs.get_obj(tab).has(item))return false;
-	attrs.get_obj(tab).reset(item);
+	if (!has(tab) || !get_obj(tab)->has(item))return false;
+	get_obj(tab)->reset(item);
 	update();
 	return true;
 }
 
 bool DiceSession::table_add(const string& tab, int prior, const string& item) {
-	if (!attrs.has(tab))attrs.set(tab, AttrObject());
-	attrs.get_obj(tab).set(item,prior);
+	if (!has(tab))set(tab, AttrObject());
+	get_obj(tab)->set(item,prior);
 	update();
 	return true;
 }
 
 string DiceSession::table_prior_show(const string& tab) const{
-	return attrs.is_table(tab) ? PriorList<AttrVar>(*attrs.get_dict(tab)).show() : "";
+	return is_table(tab) ? PriorList<AttrVar>(**get_dict(tab)).show() : "";
 }
 
 bool DiceSession::table_clr(const string& tab)
 {
-	if (attrs.has(tab)){
-		attrs.reset(tab);
+	if (has(tab)){
+		reset(tab);
 		update();
 		return true;
 	}
@@ -538,7 +538,7 @@ void DiceSession::deck_new(DiceEvent* msg) {
 }
 string DiceSession::deck_draw(const string& key) {
 	if (decks.count(key)) {
-		if (!decks[key].sizRes)return getMsg("strDeckRestEmpty", AttrVars{ {"deck_name",key} });
+		if (!decks[key].sizRes)return getMsg("strDeckRestEmpty", AnysTable{ {"deck_name",key} });
 		return decks[key].draw();
 	}
 	else if (CardDeck::mPublicDeck.count(key)) {
@@ -660,9 +660,9 @@ void DiceSession::save() const
 	std::filesystem::create_directories(DiceDir / "user" / "session", ec);
 	std::filesystem::path fpFile{ DiceDir / "user" / "session" / (name + ".json") };
 	fifo_json jData;
-	if (!master->empty())jData["master"] = to_json(*master);
-	if (!player->empty())jData["player"] = to_json(*player);
-	if (!obs->empty())jData["observer"] = to_json(*obs);
+	if (!master->empty())jData["master"] = ::to_json(*master);
+	if (!player->empty())jData["player"] = ::to_json(*player);
+	if (!obs->empty())jData["observer"] = ::to_json(*obs);
 	if (logger.tStart || !logger.fileLog.empty()) {
 		fifo_json jLog;
 		jLog["start"] = logger.tStart;
@@ -694,7 +694,7 @@ void DiceSession::save() const
 		}
 		jData["roulette"] = jDecks;
 	}
-	if (!attrs.empty())jData["data"] = attrs.to_json();
+	if (!empty())jData["data"] = to_json();
 	std::lock_guard<std::mutex> lock(exSessionSave);
 	if (jData.empty()) {
 		remove(fpFile);
@@ -702,7 +702,7 @@ void DiceSession::save() const
 	}
 	auto& jChat{ jData["chats"] = fifo_json::array() };
 	for (const auto& chat : areas) {
-		jChat.push_back(to_json(chat));
+		jChat.push_back(::to_json(chat));
 	}
 	jData["create_time"] = tCreate;
 	jData["update_time"] = tUpdate;
@@ -777,7 +777,7 @@ int DiceSessionManager::load() {
 	if (auto fileGM{ DiceDir / "user" / "GameTable.toml" };std::filesystem::exists(fileGM)) {
 		if (ifstream ifs{ fileGM }) {
 			AttrObject cfg = AttrVar(toml::parse(ifs)).to_obj();
-			inc = cfg.get_int("inc");
+			inc = cfg->get_int("inc");
 		}
 	}
 	LOCK_REC(sessionMutex);
@@ -811,7 +811,7 @@ int DiceSessionManager::load() {
 					pSession->areas.insert(chatInfo::from_json(ct));
 				}
 			}
-			if (j.count("conf")) pSession->attrs = AttrVar(j["conf"]).to_obj();
+			if (j.count("conf")) from_json(j["conf"], pSession->dict);
 			if (j.count("log")) {
 				fifo_json& jLog = j["log"];
 				jLog["start"].get_to(pSession->logger.tStart);
@@ -857,10 +857,10 @@ int DiceSessionManager::load() {
 					it.value()["pool"].get<vector<size_t>>(), it.value()["rest"]));
 			}
 			if (j.count("tables"))for (auto& it : j["tables"].items()) {
-				pSession->attrs.set(UTF8toGBK(it.key()), it.value());
+				pSession->set(UTF8toGBK(it.key()), it.value());
 			}
 			if (j.count("data"))for (auto& it : j["data"].items()) {
-				pSession->attrs.set(UTF8toGBK(it.key()), it.value());
+				pSession->set(UTF8toGBK(it.key()), it.value());
 			}
 			if (j.count("master"))for (auto& it : j["master"]) {
 				pSession->master->emplace(it.get<long long>());
@@ -893,6 +893,6 @@ int DiceSessionManager::load() {
 void DiceSessionManager::save() {
 	if (std::ofstream fs{ DiceDir / "user" / "GameTable.toml" }) {
 		AttrObject cfg = AttrVars{ { "inc",inc } };
-		fs << cfg.to_toml();
+		fs << cfg->to_toml();
 	}
 }

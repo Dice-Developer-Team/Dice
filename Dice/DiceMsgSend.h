@@ -10,7 +10,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -28,7 +28,7 @@
 #define DICE_MSG_SEND
 #include "fifo_json.hpp"
 
-class AttrObject;
+class AnysTable;
 enum class msgtype : int { Private = 0, Group = 1, Discuss = 2, ChannelPrivate = 3, Channel = 4};
 struct chatInfo {
 	long long uid{ 0 };
@@ -37,7 +37,7 @@ struct chatInfo {
 	msgtype type{ 0 };
 	chatInfo() {}
 	chatInfo(long long, long long = 0, long long = 0);
-	chatInfo(const AttrObject&);
+	chatInfo(const AnysTable&);
 	bool operator<(const chatInfo&)const;
 	bool operator==(const chatInfo&)const;
 	operator bool()const { return uid || gid || chid; }

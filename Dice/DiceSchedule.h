@@ -82,15 +82,15 @@ public:
 	void load();
 	void save();
 	void set(long long qq, const string& key, const AttrVar& val);
-	void inc(const string& key) { UserInfo[0].inc(key); save(); }
+	void inc(const string& key) { UserInfo[0]->inc(key); save(); }
 	//void inc(long long qq, const string& key, int cnt = 1) { cntUser[qq][key] += cnt; save(); }
 	unordered_map<long long, AttrObject>& getUserInfo() { return UserInfo; }
-	AttrVar& get(const string& key) { return UserInfo[0].at(key); }
+	AttrVar& get(const string& key) { return UserInfo[0]->at(key); }
 	AttrObject& get(long long uid) { return UserInfo[uid]; }
 	//AttrVar& get(long long uid, const string& key) { return UserInfo[uid].to_dict()[key]; }
 	std::optional<AttrVar> get_if(long long qq, const string& key) {
-		if (UserInfo.count(qq) && UserInfo[qq].has(key))
-			return UserInfo[qq].at(key);
+		if (UserInfo.count(qq) && UserInfo[qq]->has(key))
+			return UserInfo[qq]->at(key);
 		else return std::nullopt;
 	}
 	AttrVar getJrrp(long long);

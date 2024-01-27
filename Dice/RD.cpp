@@ -669,7 +669,7 @@ string DND(int intNum)
 	return strOutput;
 }
 
-void TempInsane(AttrObject& vars) {
+void TempInsane(AnysTable& vars) {
 	const int intSymRes = RandomGenerator::Randint(1, 10);
 	vars["res"] = "1D10=" + to_string(intSymRes) + "\n֢״: " + TempInsanity[intSymRes];
 	vars["dur"] = "1D10=" + to_string(RandomGenerator::Randint(1, 10));
@@ -685,7 +685,7 @@ void TempInsane(AttrObject& vars) {
 	}
 }
 
-void LongInsane(AttrObject& vars) {
+void LongInsane(AnysTable& vars) {
 	const int intSymRes = RandomGenerator::Randint(1, 10);
 	vars["res"] = "1D10=" + to_string(intSymRes) + "\n֢״: " + LongInsanity[intSymRes];
 	vars["dur"] = "1D10=" + to_string(RandomGenerator::Randint(1, 10));

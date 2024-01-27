@@ -42,13 +42,13 @@ std::priority_queue<waited_job, std::deque<waited_job>,std::greater<waited_job>>
 std::mutex mtJobWaited;
 
 void exec(AttrObject& job) {
-	if (job.has("cmd")) {
-		if (auto it = mCommand.find(job.get_str("cmd")); it != mCommand.end()) {
+	if (job->has("cmd")) {
+		if (auto it = mCommand.find(job->get_str("cmd")); it != mCommand.end()) {
 			it->second(job);
 		}
 	}
-	else if (job.has("id")) {
-		fmt->call_cycle_event(job.get_str("id"));
+	else if (job->has("id")) {
+		fmt->call_cycle_event(job->get_str("id"));
 	}
 }
 void jobHandle() {
@@ -98,7 +98,7 @@ void DiceScheduler::push_job(const char* job_name, bool isSelf, const AttrVars& 
 	{
 		std::unique_lock<std::mutex> lock_queue(mtQueueJob);
 		AttrObject obj{ vars };
-		obj["cmd"] = job_name;
+		obj->at("cmd") = job_name;
 		queueJob.emplace(obj);
 	}
 	//cvJob.notify_one();
@@ -177,18 +177,18 @@ void DiceScheduler::end() {
 }
 
 AttrVar DiceToday::getJrrp(long long uid) {
-	if (UserInfo.count(uid) && UserInfo[uid].has("jrrp"))
+	if (UserInfo.count(uid) && UserInfo[uid]->has("jrrp"))
 		return UserInfo[uid]["jrrp"];
 	string frmdata = "QQ=" + to_string(console.DiceMaid) + "&v=20190114" + "&QueryQQ=" + to_string(uid);
 	string res;
 	if (Network::POST("http://api.kokona.tech:5555/jrrp", frmdata, "", res)) {
-		return UserInfo[uid]["jrrp"] = stoi(res);
+		return UserInfo[uid]->at("jrrp") = stoi(res);
 	}
 	else {
-		if (!UserInfo[uid].has("jrrp_local")) {
-			UserInfo[uid]["jrrp_local"] = RandomGenerator::Randint(1, 100);
+		if (!UserInfo[uid]->has("jrrp_local")) {
+			UserInfo[uid]->at("jrrp_local") = RandomGenerator::Randint(1, 100);
 			console.log(getMsg("strJrrpErr",
-				AttrVars{ {"res", res} }
+				AnysTable{ {"res", res} }
 			), 0);
 		}
 		return UserInfo[uid]["jrrp_local"];
@@ -205,7 +205,7 @@ void DiceToday::daily_clear() {
 	localtime_r(&tt, &newDay);
 #endif
 	if (stToday.tm_mday != newDay.tm_mday) {
-		fmt->call_hook_event(AttrVars{ {
+		fmt->call_hook_event(AnysTable{ {
 			{"Event","DayEnd"},
 			{"year",stToday.tm_year + 1900},
 			{"month",stToday.tm_mon + 1},
@@ -219,7 +219,7 @@ void DiceToday::daily_clear() {
 		UserInfo.clear();
 		pathFile = DiceDir / "user" / "daily" /
 			("daily_" + printDate() + ".json");
-		fmt->call_hook_event(AttrVars{ {
+		fmt->call_hook_event(AnysTable{ {
 			{"Event","DayNew"},
 			{"year",newDay.tm_year + 1900},
 			{"month",newDay.tm_mon + 1},
@@ -229,9 +229,9 @@ void DiceToday::daily_clear() {
 }
 void DiceToday::set(long long qq, const string& key, const AttrVar& val) {
 	if (val)
-		UserInfo[qq].set(key, val);
-	else if (UserInfo.count(qq) && UserInfo[qq].has(key)) {
-		UserInfo[qq].reset(key);
+		UserInfo[qq]->set(key, val);
+	else if (UserInfo.count(qq) && UserInfo[qq]->has(key)) {
+		UserInfo[qq]->reset(key);
 	}
 	else return;
 	save();
@@ -246,7 +246,7 @@ void DiceToday::save() {
 		if (!UserInfo.empty()) {
 			fifo_json& jCnt{ jFile["user"] = fifo_json::object() };
 			for (auto& [id, user] : UserInfo) {
-				jCnt[to_string(id)] = user.to_json();
+				jCnt[to_string(id)] = user->to_json();
 			}
 		}
 		if (!counter.empty()) {

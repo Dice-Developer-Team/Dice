@@ -150,7 +150,7 @@ AttrVar js_toAttr(JSContext* ctx, JSValue val) {
 			auto len = (uint32_t)JS_VALUE_GET_INT(JS_GetPropertyStr(ctx, val, "length"));
 			for (uint32_t i = 0; i < len; i++)
 				ary.emplace_back(js_toAttr(ctx, JS_GetPropertyUint32(ctx,val,i)));
-			return AttrObject(ary);
+			return AnysTable(ary);
 		}
 		else {
 			AttrObject obj;
@@ -158,7 +158,7 @@ AttrVar js_toAttr(JSContext* ctx, JSValue val) {
 			uint32_t len = 0;
 			if (!JS_GetOwnPropertyNames(ctx, &tab, &len, val, JS_GPN_ENUM_ONLY | JS_GPN_STRING_MASK)) {
 				for (uint32_t i = 0; i < len; ++i) {
-					obj.set(js_AtomtoGBK(ctx, tab[i].atom), js_toAttr(ctx, JS_GetProperty(ctx, val, tab[i].atom)));
+					obj->set(js_AtomtoGBK(ctx, tab[i].atom), js_toAttr(ctx, JS_GetProperty(ctx, val, tab[i].atom)));
 				}
 				js_free_prop_enum(ctx, tab, len);
 			}
@@ -191,23 +191,23 @@ JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 		return JS_NewString(ctx, GBKtoUTF8(var.text).c_str());
 		break;
 	case AttrVar::Type::Table:
-		if (!var.table.to_dict()->empty()) {
+		if (!var.table->as_dict().empty()) {
 			auto dict = JS_NewObject(ctx);
-			if (var.table.to_list()) {
+			if (var.table->to_list()) {
 				uint32_t idx{ 0 };
-				for (auto& val : *var.table.to_list()) {
+				for (auto& val : *var.table->to_list()) {
 					JS_SetPropertyUint32(ctx, dict, idx++, js_newAttr(ctx, val));
 				}
 			}
-			for (auto& [key, val] : *var.table.to_dict()) {
+			for (auto& [key, val] : var.table->as_dict()) {
 				JS_SetPropertyStr(ctx, dict, GBKtoUTF8(key).c_str(), js_newAttr(ctx, val));
 			}
 			return dict;
 		}
-		else if (var.table.to_list()) {
+		else if (var.table->to_list()) {
 			auto ary = JS_NewArray(ctx);
 			uint32_t idx{ 0 };
-			for (auto& val : *var.table.to_list()) {
+			for (auto& val : *var.table->to_list()) {
 				JS_SetPropertyUint32(ctx, ary, idx++, js_newAttr(ctx, val));
 			}
 			return ary;
@@ -465,11 +465,11 @@ QJSDEF(eventMsg) {
 		long long gid{ JS_IsUndefined(argv[1]) ? 0 : js_toLongLong(ctx, argv[1]) },
 			uid{ JS_IsUndefined(argv[2]) ? 0 : js_toLongLong(ctx, argv[2]) };
 		eve = gid
-			? AttrVars{ {"fromMsg",fromMsg},{"gid",gid}, {"uid", uid} }
-		: AttrVars{ {"fromMsg",fromMsg}, {"uid", uid} };
+			? AnysTable{ {{"fromMsg",fromMsg},{"gid",gid}, {"uid", uid}} }
+		: AnysTable{ {{"fromMsg",fromMsg}, {"uid", uid}} };
 	}
 	std::thread th([=]() {
-		DiceEvent(eve).virtualCall();
+		DiceEvent(*eve.p).virtualCall();
 		});
 	th.detach();
 	return JS_TRUE;
@@ -478,8 +478,8 @@ QJSDEF(sendMsg) {
 	AttrObject chat;
 	if (JS_IsObject(argv[0])) {
 		chat = js_toAttr(ctx, argv[0]).to_obj();
-		AddMsgToQueue(fmt->format(chat.get_str("fwdMsg"), chat),
-			chatInfo{ chat.get_ll("uid") ,chat.get_ll("gid") ,chat.get_ll("chid") });
+		AddMsgToQueue(fmt->format(chat->get_str("fwdMsg"), chat),
+			chatInfo{ chat->get_ll("uid") ,chat->get_ll("gid") ,chat->get_ll("chid") });
 	}
 	else {
 		long long gid{ JS_IsUndefined(argv[1]) ? 0 : js_toLongLong(ctx, argv[1]) },
@@ -489,8 +489,8 @@ QJSDEF(sendMsg) {
 			return JS_EXCEPTION;
 		}
 		string msg{ js_toGBK(ctx, argv[0]) };
-		if (uid)chat.set("uid", uid);
-		if (gid)chat.set("gid", gid);
+		if (uid)chat->set("uid", uid);
+		if (gid)chat->set("gid", gid);
 		AddMsgToQueue(fmt->format(msg, chat), { uid,gid,0 });
 	}
 	return JS_TRUE;
@@ -505,12 +505,12 @@ QJSDEF(getGroupAttr) {
 		}
 		auto items{ JS_NewArray(ctx) };
 		for (auto& [gid, data] : ChatList) {
-			if (data.confs.has(item))JS_SetPropertyInt64(ctx, items, (int64_t)gid, js_newAttr(ctx, data.confs.get(item)));
+			if (data->has(item))JS_SetPropertyInt64(ctx, items, (int64_t)gid, js_newAttr(ctx, data->get(item)));
 		}
 		return items;
 	}
 	if (long long gid{ js_toLongLong(ctx,argv[0]) }) {
-		if (item.empty()) return js_newDiceContext(ctx, chat(gid).confs);
+		if (item.empty()) return js_newDiceContext(ctx, chat(gid).shared_from_this());
 		else if (item == "members") {
 			auto items{ JS_NewArray(ctx) };
 			uint32_t i = 0;
@@ -597,12 +597,12 @@ QJSDEF(getUserAttr) {
 		}
 		auto items{ JS_NewArray(ctx) };
 		for (auto& [id, data] : UserList) {
-			if (data.confs.has(item))JS_SetPropertyInt64(ctx, items, (int64_t)id, js_newAttr(ctx, data.confs.get(item)));
+			if (data->has(item))JS_SetPropertyInt64(ctx, items, (int64_t)id, js_newAttr(ctx, data->get(item)));
 		}
 		return items;
 	}
 	if (long long uid{ js_toLongLong(ctx,argv[0]) }) {
-		if (item.empty()) return js_newDiceContext(ctx, getUser(uid).confs);
+		if (item.empty()) return js_newDiceContext(ctx, getUser(uid).shared_from_this());
 		if (auto val{ getUserItem(uid,item) }; !val.is_null())return js_newAttr(ctx, val);
 		else return argv[2];
 	}
@@ -656,7 +656,7 @@ QJSDEF(getUserToday) {
 		}
 		auto items{ JS_NewArray(ctx) };
 		for (auto& [uid, data] : today->getUserInfo()) {
-			if (data.has(item))JS_SetPropertyInt64(ctx, items, (int64_t)uid, js_newAttr(ctx, data.get(item)));
+			if (data->has(item))JS_SetPropertyInt64(ctx, items, (int64_t)uid, js_newAttr(ctx, data->get(item)));
 		}
 		return items;
 	}
@@ -717,17 +717,17 @@ int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueC
 	JS2OBJ(this_val);
 	if (desc) {
 		string key{ js_AtomtoGBK(ctx, prop) };
-		if (key == "user" && obj.has("uid")) {
-			desc->value = js_newDiceContext(ctx, getUser(obj.get_ll("uid")).confs);
+		if (key == "user" && obj->has("uid")) {
+			desc->value = js_newDiceContext(ctx, getUser(obj->get_ll("uid")).shared_from_this());
 		}
-		else if ((key == "grp" || key == "group") && obj.has("gid")) {
-			desc->value = js_newDiceContext(ctx, chat(obj.get_ll("gid")).confs);
+		else if ((key == "grp" || key == "group") && obj->has("gid")) {
+			desc->value = js_newDiceContext(ctx, chat(obj->get_ll("gid")).shared_from_this());
 		}
-		else if (key == "pc" && obj.has("uid")) {
-			desc->value = js_newActor(ctx, getPlayer(obj.get_ll("uid"))[obj.get_ll("gid")]);
+		else if (key == "pc" && obj->has("uid")) {
+			desc->value = js_newActor(ctx, getPlayer(obj->get_ll("uid"))[obj->get_ll("gid")]);
 		}
 		else if (key == "game") {
-			if (auto game = sessions.get_if(obj)) {
+			if (auto game = sessions.get_if(*obj)) {
 				desc->value = js_newGameTable(ctx, game);
 			}
 			else return FALSE;
@@ -748,7 +748,7 @@ int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* pl
 	if ((*plen = obj->size()) > 0) {
 		JSPropertyEnum* tab = (JSPropertyEnum*)js_malloc(ctx, sizeof(JSPropertyEnum) * (*plen));
 		int i = 0;
-		for (const auto& [key, val] : *obj.to_dict()) {
+		for (const auto& [key, val] : obj->as_dict()) {
 			if (auto atom = JS_NewAtom(ctx, GBKtoUTF8(key).c_str());
 				atom != JS_ATOM_NULL) {
 				DD::debugLog("newAtom:" + js_AtomtoGBK(ctx, atom) + "#" + to_string(atom));
@@ -767,13 +767,13 @@ int js_dice_context_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* pl
 }
 int js_dice_context_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
 	JS2OBJ(this_val);
-	obj.reset(js_AtomtoGBK(ctx, atom));
+	obj->reset(js_AtomtoGBK(ctx, atom));
 	return TRUE;
 }
 int js_dice_context_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop, JSValueConst val, JSValueConst getter, JSValueConst setter, int flags) {
 	JS2OBJ(this_obj);
 	auto str = js_AtomtoGBK(ctx, prop);
-	obj.set(str, js_toAttr(ctx, val));
+	obj->set(str, js_toAttr(ctx, val));
 	return TRUE;
 }
 QJSDEF(context_get) {
@@ -816,9 +816,9 @@ QJSDEF(context_inc) {
 	JS2OBJ(this_val);
 	if (argc > 0) {
 		string key{ js_toGBK(ctx, argv[0]) };
-		return obj.inc(key) ? js_newAttr(ctx, obj.get(key))
+		return obj->inc(key) ? js_newAttr(ctx, obj->get(key))
 			: (argc > 1 ? argv[1] : JS_UNDEFINED);
-		return argc > 1 ? obj.inc(key, js_toInt(ctx, argv[1])) : obj.inc(key);
+		return argc > 1 ? obj->inc(key, js_toInt(ctx, argv[1])) : obj->inc(key);
 	}
 	else {
 		JS_ThrowTypeError(ctx, "undefined field");
@@ -851,9 +851,9 @@ int js_dice_selfdata_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValue
 	JS2DATA(this_val);
 	if (data && desc) {
 		string key{ js_AtomtoGBK(ctx, prop) };
-		if (data->data.to_dict()->count(key)) {
+		if (data->data.to_obj()->has(key)) {
 			desc->flags = JS_PROP_C_W_E;
-			desc->value = js_newAttr(ctx, data->data.to_obj().get(key));
+			desc->value = js_newAttr(ctx, data->data.to_obj()->get(key));
 			desc->getter = JS_UNDEFINED;
 			desc->setter = JS_UNDEFINED;
 			return TRUE;
@@ -865,7 +865,7 @@ int js_dice_selfdata_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
 	JS2DATA(this_val);
 	if (data) {
 		auto str = js_AtomtoGBK(ctx, atom);
-		data->data.to_obj().reset(str);
+		data->data.to_obj()->reset(str);
 		data->save();
 		return TRUE;
 	}
@@ -878,7 +878,7 @@ int js_dice_selfdata_define(JSContext* ctx, JSValueConst this_obj,
 	JS2DATA(this_obj);
 	if (data) {
 		auto str = js_AtomtoGBK(ctx, prop);
-		data->data.to_obj().set(str, js_toAttr(ctx, val));
+		data->data.to_obj()->set(str, js_toAttr(ctx, val));
 		data->save();
 		return TRUE;
 	}
@@ -888,7 +888,7 @@ int js_dice_selfdata_set(JSContext* ctx, JSValueConst obj, JSAtom atom, JSValueC
 	JS2DATA(obj);
 	if (data) {
 		auto str = js_AtomtoGBK(ctx, atom);
-		data->data.to_obj().set(str, js_toAttr(ctx, value));
+		data->data.to_obj()->set(str, js_toAttr(ctx, value));
 		data->save();
 		return TRUE;
 	}
@@ -931,8 +931,8 @@ int js_dice_GameTable_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValu
 			desc->setter = JS_UNDEFINED;
 			return TRUE;
 		}
-		else if (game->attrs.has(key)) {
-			desc->value = js_newAttr(ctx, game->attrs.get(key));
+		else if (game->has(key)) {
+			desc->value = js_newAttr(ctx, game->get(key));
 		}
 		else return FALSE;
 	}
@@ -946,7 +946,7 @@ int js_dice_GameTable_delete(JSContext* ctx, JSValue obj, JSAtom atom) {
 	JS2GAME(obj);
 	if (game) {
 		auto str = js_AtomtoGBK(ctx, atom);
-		game->rmAttr(str);
+		game->reset(str);
 		return TRUE;
 	}
 	return FALSE;
@@ -955,7 +955,7 @@ int js_dice_GameTable_define(JSContext* ctx, JSValueConst this_obj, JSAtom prop,
 	JS2GAME(this_obj);
 	if (game) {
 		auto str = js_AtomtoGBK(ctx, prop);
-		game->setAttr(str, js_toAttr(ctx, val));
+		game->set(str, js_toAttr(ctx, val));
 		return TRUE;
 	}
 	return FALSE;
@@ -995,7 +995,7 @@ int js_dice_actor_get_keys(JSContext* ctx, JSPropertyEnum** ptab, uint32_t* plen
 	if ((*plen = pc->size() - 3) > 0) {
 		JSPropertyEnum* tab = (JSPropertyEnum*)js_malloc(ctx, sizeof(JSPropertyEnum) * (*plen));
 		int i = 0;
-		for (const auto& [key, val] : *pc->to_dict()) {
+		for (const auto& [key, val] : pc->as_dict()) {
 			if (prop_desc.count(key)) {
 				continue;
 			}
@@ -1096,8 +1096,8 @@ AttrVar js_context_eval(const std::string& s, const AttrObject& context) {
 	return {};
 }
 
-bool js_call_event(AttrObject eve, const AttrVar& action) {
-	string title{ eve.has("hook") ? eve.get_str("hook") : eve.get_str("Event") };
+bool js_call_event(const AttrObject& eve, const AttrVar& action) {
+	string title{ eve->has("hook") ? eve->get_str("hook") : eve->get_str("Event") };
 	string script{ action.to_str() };
 	bool isFile{ action.is_character() && fmt->has_js(script) };
 	if (auto ret = isFile ? js_event_pool[title].evalFileLocal(fmt->js_path(script), eve) 

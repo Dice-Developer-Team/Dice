@@ -88,7 +88,7 @@ struct DiceRoulette {
 	string hist();
 };
 
-class DiceSession{
+class DiceSession: public AnysTable{
 	//管理员
 	AttrSet master;
 	//玩家
@@ -101,8 +101,6 @@ class DiceSession{
 	dict_ci<DeckInfo> decks;
 	void save() const;
 public:
-	//数值表
-	AttrObject attrs;
 	//native filename
 	const string name;
 	fifo_set<chatInfo> areas;
@@ -132,8 +130,7 @@ public:
 		return *this;
 	}
 
-	DiceSession& update()
-	{
+	DiceSession& update(){
 		tUpdate = time(nullptr);
 		save();
 		return *this;
@@ -141,13 +138,16 @@ public:
 	string show()const;
 	bool hasAttr(const string& key);
 	AttrVar getAttr(const string& key);
-	void setAttr(const string& key, const AttrVar& val) {
-		attrs.set(key, val);
-		update();
+	void set(const string& key, const AttrVar& val){
+		if (!key.empty()) {
+			if (val.is_null())dict.erase(key);
+			else dict[key] = val;
+			update();
+		}
 	}
-	void rmAttr(const string& key) {
-		if (attrs.has(key)) {
-			attrs.reset(key);
+	void reset(const string& key){
+		if (dict.count(key)) {
+			dict.erase(key);
 			update();
 		}
 	}
@@ -187,7 +187,6 @@ public:
 		return true;
 	}
 
-	[[nodiscard]] bool table_count(const string& key) const { return attrs.has(key); }
 	bool table_del(const string&, const string&);
 	bool table_add(const string&, int, const string&);
 	[[nodiscard]] string table_prior_show(const string& key) const;
