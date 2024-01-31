@@ -1,7 +1,7 @@
 #pragma once
 /*
  * ×ÊÔ´Ä£¿é
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 
 #include <utility>
@@ -200,7 +200,7 @@ public:
 	void msg_edit(const string& key, const string& val);
 
 	fifo_dict_ci<size_t>cntHelp;
-	[[nodiscard]] string get_help(const string&, const AttrObject & = {}) const;
+	[[nodiscard]] string get_help(const string&, const AttrObject& = {}) const;
 	[[nodiscard]] string prev_help(const string&, const AttrObject& = {}) const;
 	void _help(DiceEvent*);
 	void set_help(const string&, const string&);

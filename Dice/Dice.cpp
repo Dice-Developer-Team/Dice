@@ -295,10 +295,15 @@ R"( //私骰作成 即可成为我的主人~
 	catch (const std::exception& e) {
 		console.log(string("读取/conf/CustomMsg.json失败!") + e.what(), 1, printSTNow());
 	}
-	js_global_init();
+	try {
+		js_global_init();
 #ifdef DICE_PYTHON
-	if (console["EnablePython"])py.reset(new PyGlobal());
+		if (console["EnablePython"])py = make_unique<PyGlobal>();
 #endif //DICE_PYTHON
+	}
+	catch (const std::exception& e) {
+		console.log(string("初始化js/python环境失败!") + e.what(), 1, printSTNow());
+	}
 	loadData();
 	//初始化黑名单
 	blacklist = make_unique<DDBlackManager>();
@@ -314,11 +319,12 @@ R"( //私骰作成 即可成为我的主人~
 	else {
 		DD::debugLog("读取不良记录" + to_string(cnt) + "条");
 		if ((cnt = blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true)) > 0)
-			DD::debugLog("读取外源不良记录" + to_string(cnt) + "条");
+			DD::debugLog("合并外源不良记录" + to_string(cnt) + "条");
 	}
 	//读取用户数据
 	readUserData();
 	//读取当日数据
+	DD::debugLog("Dice.loadToday");
 	today = make_unique<DiceToday>();
 	set<long long> grps{ DD::getGroupIDList() };
 	for (auto gid : grps){

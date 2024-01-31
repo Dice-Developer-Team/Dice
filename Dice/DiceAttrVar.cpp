@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -64,7 +64,7 @@ void AnysTable::set(int i, const AttrVar& val) {
 			return;
 		}
 		else if (list->size() > i) {
-			list->at(i) = val;
+			(*list)[i] = val;
 			return;
 		}
 	}
@@ -572,12 +572,12 @@ bool AttrVar::str_empty()const{
 	return type == Type::Text && text.empty();
 }
 AttrObject AttrVar::to_obj()const {
-	if (type != Type::Table)return table;
+	if (type == Type::Table)return table;
 	return {};
 }
 std::optional<AttrVars*> AttrVar::to_dict()const {
-	if (type != Type::Table)return {};
-	return &table->as_dict();
+	if (type == Type::Table)return &table->as_dict(); 
+	return {};
 }
 
 ptr<VarArray> AttrVar::to_list()const {
@@ -661,7 +661,7 @@ AttrVar::AttrVar(const fifo_json& j) {
 		break;
 	case fifo_json::value_t::object:
 		type = Type::Table; {
-			new(&table)AnysTable();
+			new(&table)AttrObject(AnysTable());
 			unordered_set<string> idxs;
 			if (string strI{ "0" }; j.count(strI)) {
 				table->list = std::make_shared<VarArray>();

@@ -2,7 +2,7 @@
 
 /*
  * Íæ¼ÒÈËÎï¿¨
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 
 #include <fstream>
@@ -216,7 +216,9 @@ public:
 
 	[[nodiscard]] string standard(const string& key) const
 	{
-		if (auto temp{ getTemplet() }; temp->replaceName.count(key))return temp->replaceName.find(key)->second;
+		if (auto temp{ getTemplet() };
+			!key.empty() && temp->replaceName.count(key))
+			return temp->replaceName.find(key)->second;
 		return key;
 	}
 

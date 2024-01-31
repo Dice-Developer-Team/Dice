@@ -1,6 +1,6 @@
 /*
  * 后台系统
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -171,6 +171,7 @@ AttrVar getSelfItem(string item) {
 	return var;
 }
 AttrVar getContextItem(const AttrObject& context, string item, bool isTrust) {
+	if (!context)return {};
 	if (item.empty())return context;
 	AttrVar var;
 	if (item[0] == '&')item = fmt->format(item, context);
@@ -199,7 +200,7 @@ AttrVar getContextItem(const AttrObject& context, string item, bool isTrust) {
 }
 
 [[nodiscard]] bool User::empty() const {
-	return (!nTrust) && (!updated()) && empty() && strNick.empty();
+	return (!nTrust) && (!updated()) && dict.empty() && strNick.empty();
 }
 void User::setConf(const string& key, const AttrVar& val)
 {
@@ -590,6 +591,18 @@ int groupset(long long id, const string& st){
 	return ChatList.count(id) ? ChatList[id]->is(st) : -1;
 }
 
+Chat& Chat::update() {
+	dict["tUpdated"] = (long long)time(nullptr);
+	return *this;
+}
+Chat& Chat::update(time_t tt) {
+	dict["tUpdated"] = (long long)tt;
+	return *this;
+}
+Chat& Chat::setLst(time_t t) {
+	dict["lastMsg"] = (long long)t;
+	return *this;
+}
 string Chat::print(){
 	if (string name{ DD::getGroupName(ID) }; !name.empty())Name = name;
 	if (!Name.empty())return "[" + Name + "](" + to_string(ID) + ")";

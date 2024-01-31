@@ -229,11 +229,15 @@ void DiceToday::daily_clear() {
 }
 void DiceToday::set(long long qq, const string& key, const AttrVar& val) {
 	if (val)
-		UserInfo[qq]->set(key, val);
+		get(qq)->set(key, val);
 	else if (UserInfo.count(qq) && UserInfo[qq]->has(key)) {
-		UserInfo[qq]->reset(key);
+		get(qq)->reset(key);
 	}
 	else return;
+	save();
+}
+void DiceToday::inc(const string& key) {
+	get(0)->inc(key);
 	save();
 }
 

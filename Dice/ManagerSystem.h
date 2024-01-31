@@ -2,7 +2,7 @@
 
 /*
  * 后台系统
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  * 控制清理用户/群聊记录，清理图片，监控系统
  */
 
@@ -59,7 +59,7 @@ public:
 	}
 
 	User& update(time_t tt) {
-		dict.at("tUpdated") = (long long)tt;
+		dict["tUpdated"] = (long long)tt;
 		return *this;
 	}
 	time_t updated()const { return get_ll("tUpdated"); }
@@ -147,7 +147,7 @@ public:
 	//Chat& id(long long grp);
 	time_t getLst()const { return (time_t)get_ll("lastMsg"); }
 	void rmLst() { reset("lastMsg"); }
-	Chat& setLst(time_t t) { dict.at("lastMsg") = (long long)t; return *this; }
+	Chat& setLst(time_t t);
 
 	Chat& name(string s)
 	{
@@ -162,14 +162,8 @@ public:
 		return *this;
 	}
 
-	Chat& update(){
-		at("tUpdated") = (long long)time(nullptr);
-		return *this;
-	}
-	Chat& update(time_t tt)	{
-		at("tUpdated") = (long long)tt;
-		return *this;
-	}
+	Chat& update();
+	Chat& update(time_t tt);
 	time_t updated()const { return get_ll("tUpdated"); }
 
 	Chat& set(const string& item){

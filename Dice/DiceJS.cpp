@@ -980,8 +980,8 @@ void js_dice_actor_finalizer(JSRuntime* rt, JSValue val) {
 }
 int js_dice_actor_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst this_val, JSAtom prop) {
 	JS2PC(this_val);
-	string key{ js_AtomtoGBK(ctx, prop) };
-	if (desc && pc && pc->has(key)) {
+	if (string key{ js_AtomtoGBK(ctx, prop) }; 
+		desc && pc && pc->has(key = pc->standard(key))) {
 		desc->flags = (prop_desc.count(key)) ? prop_desc.at(key) : JS_PROP_C_W_E;
 		desc->value = js_newAttr(ctx, pc->get(key));
 		desc->getter = JS_UNDEFINED;

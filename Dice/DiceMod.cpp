@@ -466,7 +466,7 @@ public:
 				if (key == "{" || key == "}") {
 					val = key;
 				}
-				else if (context->has(key)) {
+				else if (context && context->has(key)) {
 					if (key == "res")val = fmt->format(context->print(key), context, isTrust, dict);
 					else val = context->print(key);
 				}

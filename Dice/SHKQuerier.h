@@ -1,7 +1,7 @@
 /*
  * 词条查询器
  * 基于倒排实现对待查询词条的相似匹配
- * Copyright (C) 2020-2022 String.Empty
+ * Copyright (C) 2020-2024 String.Empty
  */
 #pragma once
 #include <cstring>
@@ -33,14 +33,14 @@ public:
 		u16string word;
 		for (size_t pos = 0; pos < title.length(); pos++) {
 			auto ch{ title[pos] };
-			if (isspace(ch) || dot.find(ch) != u16string::npos) { //ignore and cut off
+			if (iswspace(ch) || dot.find(ch) != u16string::npos) { //ignore and cut off
 				if (!word.empty()) {
 					res.push_back(word);
 					word.clear();
 				}
 			}
 			else {
-				if (!isalnum(ch)) {// cut off
+				if (!iswalnum(ch)) {// cut off
 					if (!word.empty()) {
 						res.push_back(word);
 						word.clear();
@@ -49,7 +49,7 @@ public:
 					continue;
 				}
 				if (!word.empty()
-					&& isdigit(title[pos]) != isdigit(word[0])) {
+					&& iswdigit(title[pos]) != iswdigit(word[0])) {
 					res.push_back(word);
 					word.clear();
 					continue;

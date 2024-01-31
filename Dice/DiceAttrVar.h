@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -85,13 +85,15 @@ struct std::equal_to<AttrIndex> {
 
 class AnysTable;
 struct AttrObject {
-	ptr<AnysTable> p;
+	mutable ptr<AnysTable> p;
 	AttrObject(const ptr<AnysTable>& ptr = {}) :p(ptr) {}
 	AttrObject(const AnysTable& vars) :p(std::make_shared<AnysTable>(vars)) {}
-	AnysTable* const operator->()const {
+	AnysTable* const operator->() const{
+		if (!p)p = std::make_shared<AnysTable>();
 		return p.get();
 	}
 	AnysTable& operator*()const {
+		if (!p)p = std::make_shared<AnysTable>();
 		return *p.get();
 	}
 	operator bool()const { return bool(p); }

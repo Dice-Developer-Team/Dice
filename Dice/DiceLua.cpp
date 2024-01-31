@@ -1290,7 +1290,9 @@ int luaopen_GameTable(lua_State* L) {
 #define LUA2PC(idx) PC& pc{*(PC*)luaL_checkudata(L, idx, "Actor")}
 int Actor_get(lua_State* L) {
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
-	if (string key{ lua_to_gbstring(L, 2) }; !key.empty())lua_push_attr(L, pc->get(key));
+	if (string key{ lua_to_gbstring(L, 2) };
+		!(key = pc->standard(key)).empty())
+		lua_push_attr(L, pc->get(key));
 	return 1;
 }
 int Actor_set(lua_State* L) {
@@ -1378,7 +1380,7 @@ int Actor_index(lua_State* L) {
 		lua_pushcfunction(L, Lua_ActorMethods.at(key));
 		return 1;
 	}
-	lua_push_attr(L, pc->get(key));
+	lua_push_attr(L, pc->get(pc->standard(key)));
 	return 1;
 }
 int Actor_newindex(lua_State* L) {

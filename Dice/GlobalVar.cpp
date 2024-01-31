@@ -553,7 +553,6 @@ const dict_ci<> HelpDoc = {
 622:支持手动时差
 618:支持reply(Order形式)覆盖指令
 617:更新grade分档转义
-608:新增.mod指令
 593:reply新增触发限制
 589:ak安科安价指令
 581:角色掷骰统计
