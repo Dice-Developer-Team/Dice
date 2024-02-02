@@ -139,9 +139,15 @@ AttrVar js_toAttr(JSContext* ctx, JSValue val) {
 		break;
 	case JS_TAG_OBJECT:
 		if (void* p{ nullptr }; JS_GetClassID(val, &p) == js_dice_context_id) {
-			return *(AttrObject*)p;
+			return *(ptr<AnysTable>*)p;
 		}
-		else if (void* p{ nullptr }; JS_GetClassID(val, &p) == js_dice_Set_id) {
+		else if (JSClassID jid{ JS_GetClassID(val, &p) }; jid == js_dice_actor_id) {
+			return *(PC*)p;
+		}
+		else if (jid == js_dice_GameTable_id) {
+			return *(ptr<Session>*)p;
+		}
+		else if (jid == js_dice_Set_id) {
 			return *(AttrSet*)p;
 		}
 		else if (JS_IsArray(ctx, val)) {
@@ -176,6 +182,21 @@ AttrVar js_toAttr(JSContext* ctx, JSValue val) {
 	}
 	return {};
 }
+static JSValue js_newDiceContext(JSContext* ctx, const ptr<AnysTable>& context) {
+	auto obj = JS_NewObjectClass(ctx, js_dice_context_id);
+	JS_SetOpaque(obj, new ptr<AnysTable>(context));
+	return obj;
+}
+static JSValue js_newGameTable(JSContext* ctx, const ptr<DiceSession>& p) {
+	auto obj = JS_NewObjectClass(ctx, js_dice_GameTable_id);
+	JS_SetOpaque(obj, new ptr<DiceSession>(p));
+	return obj;
+}
+static JSValue js_newActor(JSContext* ctx, const PC& p) {
+	auto obj = JS_NewObjectClass(ctx, js_dice_actor_id);
+	JS_SetOpaque(obj, new PC(p));
+	return obj;
+}
 JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 	switch (var.type) {
 	case AttrVar::Type::Boolean:
@@ -191,7 +212,16 @@ JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 		return JS_NewString(ctx, GBKtoUTF8(var.text).c_str());
 		break;
 	case AttrVar::Type::Table:
-		if (!var.table->as_dict().empty()) {
+		if (auto t{ var.table->getType() }; t == AnysTable::MetaType::Context) {
+			return js_newDiceContext(ctx, var.table.p);
+		}
+		else if (t == AnysTable::MetaType::Actor) {
+			return js_newActor(ctx, std::static_pointer_cast<CharaCard>(var.table.p));
+		}
+		else if (t == AnysTable::MetaType::Game) {
+			return js_newGameTable(ctx, std::static_pointer_cast<Session>(var.table.p));
+		}
+		else if (!var.table->as_dict().empty()) {
 			auto dict = JS_NewObject(ctx);
 			if (var.table->to_list()) {
 				uint32_t idx{ 0 };
@@ -244,24 +274,9 @@ Free:
 AttrVar js_context::getValue(JSValue val) {
 	return js_toAttr(ctx, val);
 }
-JSValue js_newDiceContext(JSContext* ctx, const AttrObject& context) {
-	auto obj = JS_NewObjectClass(ctx, js_dice_context_id);
-	JS_SetOpaque(obj, new AttrObject(context));
-	return obj;
-}
-JSValue js_newGameTable(JSContext* ctx, const ptr<DiceSession>& p) {
-	auto obj = JS_NewObjectClass(ctx, js_dice_GameTable_id);
-	JS_SetOpaque(obj, new ptr<DiceSession>(p));
-	return obj;
-}
-JSValue js_newActor(JSContext* ctx, const PC& p) {
-	auto obj = JS_NewObjectClass(ctx, js_dice_actor_id);
-	JS_SetOpaque(obj, new PC(p));
-	return obj;
-}
 void js_context::setContext(const std::string& name, const AttrObject& context) {
 	auto global = JS_GetGlobalObject(ctx);
-	JS_SetPropertyStr(ctx, global, name.c_str(), js_newDiceContext(ctx, context));
+	JS_SetPropertyStr(ctx, global, name.c_str(), js_newDiceContext(ctx, context.p));
 	JS_FreeValue(ctx, global);
 }
 JSValue js_context::evalString(const std::string& s, const string& title) {
@@ -270,7 +285,7 @@ JSValue js_context::evalString(const std::string& s, const string& title) {
 }
 JSValue js_context::evalStringLocal(const std::string& s, const string& title, const AttrObject& context) {
 	string exp{ GBKtoUTF8(s) };
-	return JS_EvalThis(ctx, js_newDiceContext(ctx, context), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
+	return JS_EvalThis(ctx, js_newDiceContext(ctx, context.p), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
 }
 JSValue js_context::evalFile(const std::filesystem::path& p) {
 	size_t buf_len{ 0 };
@@ -285,7 +300,7 @@ JSValue js_context::evalFile(const std::filesystem::path& p) {
 JSValue js_context::evalFileLocal(const std::string& s, const AttrObject& context) {
 	size_t buf_len{ 0 };
 	if (uint8_t * buf{ js_load_file(ctx, &buf_len, s.c_str()) }) {
-		auto ret = JS_EvalThis(ctx, js_newDiceContext(ctx,context), (char*)buf, buf_len, s.c_str(),
+		auto ret = JS_EvalThis(ctx, js_newDiceContext(ctx, context.p), (char*)buf, buf_len, s.c_str(),
 			JS_EVAL_TYPE_MODULE);
 		js_free(ctx, buf);
 		return ret;
@@ -661,7 +676,7 @@ QJSDEF(getUserToday) {
 		return items;
 	}
 	if (long long uid{ js_toLongLong(ctx,argv[0]) }) {
-		if (item.empty()) return js_newDiceContext(ctx,today->get(uid));
+		if (item.empty()) return js_newDiceContext(ctx, today->get(uid).p);
 		else if (item == "jrrp")
 			return js_newAttr(ctx, today->getJrrp(uid));
 		else if (auto p{ today->get_if(uid, item) })
@@ -722,9 +737,6 @@ int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueC
 		}
 		else if ((key == "grp" || key == "group") && obj->has("gid")) {
 			desc->value = js_newDiceContext(ctx, chat(obj->get_ll("gid")).shared_from_this());
-		}
-		else if (key == "pc" && obj->has("uid")) {
-			desc->value = js_newActor(ctx, getPlayer(obj->get_ll("uid"))[obj->get_ll("gid")]);
 		}
 		else if (key == "game") {
 			if (auto game = sessions.get_if(*obj)) {

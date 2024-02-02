@@ -97,6 +97,8 @@ struct AttrObject {
 		return *p.get();
 	}
 	operator bool()const { return bool(p); }
+	template<class C>
+	C* as()const{ return dynamic_cast<C*>(p.get()) }
 };
 class AttrVar {
 public:
@@ -134,6 +136,8 @@ public:
 	AttrVar(const YAML::Node&);
 	AttrVar(const AnysTable& vars) :type(Type::Table), table(vars) {}
 	AttrVar(const AttrObject& vars) :type(Type::Table), table(vars) {}
+	template<class C>
+	AttrVar(const ptr<C>& p) : type(Type::Table), table(std::static_pointer_cast<AnysTable>(p)) {}
 	explicit AttrVar(const AttrVars& vars) :type(Type::Table), table(std::make_shared<AnysTable>(vars)) {}
 	void des() {
 		if (type == Type::Text)text.~string();
@@ -217,6 +221,8 @@ protected:
 	friend AttrVar lua_to_attr(lua_State*, int);
 	friend void lua_push_attr(lua_State*, const AttrVar&);
 public:
+	enum class MetaType{ Table, Context, Actor, Game };
+	virtual MetaType getType()const { return MetaType::Table; }
 	AnysTable() {}
 	AnysTable(const AttrVars& vars) :dict(vars) {}
 	explicit AnysTable(const VarArray& vars) :list(std::make_shared<VarArray>(vars)) {}
@@ -249,7 +255,7 @@ public:
 	size_t size()const { return dict.size(); }
 	size_t length()const { return list ? list->size() : dict.size(); }
 	AttrVar index(const string& key)const;
-	AttrVar get(const string& key, ptr<AttrVar> val = {})const;
+	AttrVar get(const string& key, const AttrVar& val = {})const;
 	string get_str(const string& key)const;
 	string get_str(const string& key, const string& val)const;
 	string print(const string& key)const;

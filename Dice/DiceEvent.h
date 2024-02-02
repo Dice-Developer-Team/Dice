@@ -3,7 +3,7 @@
 /*
  * 消息处理
  * Copyright (C) 2018-2021 w4123
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 #ifndef DICE_EVENT
 #define DICE_EVENT
@@ -256,7 +256,7 @@ public:
 	string readItem();
 	int readItems(vector<string>&);
 };
-void reply(AttrObject&, string, bool isFormat = true);
-void MsgNote(AttrObject&, string, int);
+void reply(const AttrObject&, string, bool isFormat = true);
+void MsgNote(const AttrObject&, string, int);
 
 #endif /*DICE_EVENT*/

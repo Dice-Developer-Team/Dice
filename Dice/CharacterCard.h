@@ -136,11 +136,12 @@ private:
 	unordered_set<string> locks;
 	std::mutex cardMutex;
 public:
+	MetaType getType()const override{ return MetaType::Actor; }
 	ptr<CardTemp> getTemplet()const;
 	bool locked(const string& key)const { return locks.count(key); }
 	bool lock(const string& key) {
 		std::lock_guard<std::mutex> lock_queue(cardMutex);
-		if(key.empty() || locks.count(key))return false;
+		if (key.empty() || locks.count(key))return false;
 		locks.insert(key);
 		return true;
 	}

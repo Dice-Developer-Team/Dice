@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 
 #ifndef Dice_Console
@@ -44,7 +44,7 @@ public:
 
 	friend void ConsoleTimer();
 	friend class DiceEvent;
-	friend void MsgNote(AttrObject&, string, int);
+	friend void MsgNote(const AttrObject&, string, int);
 	//DiceSens DSens;
 	static const enumap<string> mClockEvent;
 

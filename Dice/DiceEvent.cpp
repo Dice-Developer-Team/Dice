@@ -37,6 +37,11 @@ AttrGetters MsgIndexs{
 	{"pc", idx_pc},
 	{"at", idx_at},
 	{"@", idx_at},
+	{"char",  [](const AttrObject& obj) {
+		return obj->has("uid") ?
+			obj->at("char") = AttrVar(getPlayer(obj->get_ll("uid"))[obj->get_ll("gid")])
+			: AttrVar();
+	}},
 	{"gender",  [](const AttrObject& vars) {
 		return vars->has("uid") ? vars->at("gender") = getUserItem(vars->get_ll("uid"),"gender") : AttrVar();
 	}},
@@ -145,8 +150,10 @@ void DiceEvent::replyRollDiceErr(int err, const RD& rd) {
 }
 
 void DiceEvent::replyHidden(const std::string& msgReply) {
-	strReply = msgReply;
-	replyHidden();
+	if (!msgReply.empty()) {
+		strReply = msgReply;
+		replyHidden();
+	}
 }
 void DiceEvent::replyHidden() {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
@@ -1296,23 +1303,23 @@ int DiceEvent::BasicOrder()
 								replyMsg("strNotMaster");
 								return -1;
 							}
-							trigger->answer = AttrVars{ {"lua",readRest()} };
+							trigger->answer = AnysTable{ {"lua",readRest()} };
 						}
 						else if (trigger->echo == DiceMsgReply::Echo::JavaScript) {
 							if (trusted < 5) {
 								replyMsg("strNotMaster");
 								return -1;
 							}
-							trigger->answer = AttrVars{ {"js",readRest()} };
+							trigger->answer = AnysTable{ {"js",readRest()} };
 						}
 						else if (trigger->echo == DiceMsgReply::Echo::Python) {
 							if (trusted < 5) {
 								replyMsg("strNotMaster");
 								return -1;
 							}
-							trigger->answer = AttrVars{ {"py",readRest()} };
+							trigger->answer = AnysTable{ {"py",readRest()} };
 						}
-						else trigger->answer.set("text", readRest());
+						else trigger->answer->set("text", readRest());
 					}
 					break;
 				}
@@ -1379,7 +1386,7 @@ int DiceEvent::BasicOrder()
 			}
 		}
 		if (vector<string> deck; readItems(deck)) {
-			rep->answer = deck;
+			rep->answer = AnysTable(deck);
 			fmt->set_reply(rep->title, rep);
 			replyMsg("strReplySet");
 		}
@@ -4793,7 +4800,7 @@ std::string DiceEvent::printFrom()
 	return strFwd;
 }
 
-void reply(AttrObject& msg, string strReply, bool isFormat) {
+void reply(const AttrObject& msg, string strReply, bool isFormat) {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	if(isFormat)strReply = fmt->format(strReply, msg);
@@ -4804,7 +4811,7 @@ void reply(AttrObject& msg, string strReply, bool isFormat) {
 	if (uid || gid || chid)
 		AddMsgToQueue(strReply, chatInfo{ uid,gid,chid });
 }
-void MsgNote(AttrObject& msg, string strReply, int note_lv) {
+void MsgNote(const AttrObject& msg, string strReply, int note_lv) {
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	strReply = fmt->format(strReply, msg);

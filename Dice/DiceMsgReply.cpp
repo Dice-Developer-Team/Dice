@@ -1,3 +1,26 @@
+/*
+ *  _______     ________    ________    ________    __
+ * |   __  \   |__    __|  |   _____|  |   _____|  |  |
+ * |  |  |  |     |  |     |  |        |  |_____   |  |
+ * |  |  |  |     |  |     |  |        |   _____|  |__|
+ * |  |__|  |   __|  |__   |  |_____   |  |_____    __
+ * |_______/   |________|  |________|  |________|  |__|
+ *
+ * Dice! QQ Dice Robot for TRPG
+ * Copyright (C) 2018-2021 w4123ËÝä§
+ * Copyright (C) 2019-2024 String.Empty
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this
+ * program. If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "DiceMod.h"
 #include "DiceLua.h"
 #include "DiceJS.h"
@@ -568,7 +591,7 @@ ptr<DiceMsgReply> DiceMsgReply::set_order(const string& key, const AttrVars& ord
 	reply->type = DiceMsgReply::Type::Order;
 	reply->keyMatch[1] = std::make_unique<vector<string>>(vector<string>{fmt->format(key)});
 	reply->echo = DiceMsgReply::Echo::Lua;
-	reply->answer = order;
+	reply->answer = AnysTable(order);
 	return reply;
 }
 bool DiceMsgReply::exec(DiceEvent* msg) {
@@ -592,24 +615,24 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 	}
 
 	if (echo == Echo::Text) {
-		msg->reply(answer.get_str("text"));
+		msg->reply(answer->get_str("text"));
 		return true;
 	}
 	else if (echo == Echo::Deck) {
-		msg->reply(CardDeck::drawOne(answer.to_deck()));
+		msg->reply(CardDeck::drawOne(answer->to_deck()));
 		return true;
 	}
 	else if (echo == Echo::Lua) {
-		lua_msg_call(msg, answer.get("lua"));
+		lua_msg_call(msg, answer->get("lua"));
 		return true;
 	}
 	else if (echo == Echo::JavaScript) {
-		js_msg_call(msg, answer.get("js"));
+		js_msg_call(msg, answer->get("js"));
 		return true;
 	}
 #ifdef DICE_PYTHON
 	else if (echo == Echo::Python && py) {
-		if(py)py->call_reply(msg, answer.get("py"));
+		if(py)py->call_reply(msg, answer->get("py"));
 		return true;
 	}
 #endif //DICE_PYTHON
@@ -639,19 +662,19 @@ string DiceMsgReply::print()const {
 string DiceMsgReply::show_ans()const {
 	switch (echo) {
 	case DiceMsgReply::Echo::Text:
-		return answer.get_str("text");
+		return answer->get_str("text");
 		break;
 	case DiceMsgReply::Echo::Deck:
-		return listDeck(*answer.to_list());
+		return listDeck(*answer->to_list());
 		break;
 	case DiceMsgReply::Echo::Lua:
-		return answer.get_str("lua");
+		return answer->get_str("lua");
 		break;
 	case DiceMsgReply::Echo::JavaScript:
-		return answer.get_str("js");
+		return answer->get_str("js");
 		break;
 	case DiceMsgReply::Echo::Python:
-		return answer.get_str("py");
+		return answer->get_str("py");
 		break;
 	}
 	return {};
@@ -680,11 +703,11 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 		AttrVar& ans{ obj->at("echo") };
 		if (ans.is_character()) {
 			echo = Echo::Text;
-			answer.set("text", ans);
+			answer->set("text", ans);
 		}
 		else if (ans.is_function()) {
 			echo = Echo::Lua;
-			answer.set("lua", ans);
+			answer->set("lua", ans);
 		}
 		else if (auto tab{ ans.to_obj() }; tab->has("lua")) {
 			echo = Echo::Lua;
@@ -698,8 +721,8 @@ void DiceMsgReply::from_obj(AttrObject obj) {
 			echo = Echo::Python;
 			answer = *tab;
 		}
-		else if (auto v{ answer.to_list() }) {
-			auto li{ answer.new_list() };
+		else if (auto v{ answer->to_list() }) {
+			auto li{ answer->new_list() };
 			for (auto& item : *v) {
 				li->push_back(item.to_str());
 			}
@@ -736,11 +759,11 @@ void DiceMsgReply::readJson(const fifo_json& j) {
 		if (j.count("limit"))limit.parse(UTF8toGBK(j["limit"].get<string>()));
 		if (j.count("echo"))echo = (Echo)sEcho[j["echo"].get<string>()];
 		if (j.count("answer")) {
-			if (echo == Echo::Deck)from_json(j["answer"], answer.as_dict());
-			else if (echo == Echo::Lua)answer.set("lua", j["answer"]);
-			else if (echo == Echo::JavaScript)answer.set("js", j["answer"]);
-			else if (echo == Echo::Python)answer.set("py", j["answer"]);
-			else answer.set("text", j["answer"]);
+			if (echo == Echo::Deck)from_json(j["answer"], answer->as_dict());
+			else if (echo == Echo::Lua)answer->set("lua", j["answer"]);
+			else if (echo == Echo::JavaScript)answer->set("js", j["answer"]);
+			else if (echo == Echo::Python)answer->set("py", j["answer"]);
+			else answer->set("text", j["answer"]);
 		}
 	}
 	catch (std::exception& e) {
@@ -756,11 +779,11 @@ fifo_json DiceMsgReply::writeJson()const {
 	if (keyMatch[2])j["search"] = GBKtoUTF8(*keyMatch[2]);
 	if (keyMatch[3])j["regex"] = GBKtoUTF8(*keyMatch[3]);
 	if (!limit.empty())j["limit"] = GBKtoUTF8(limit.print());
-	if (echo == Echo::Deck)j["answer"] = answer.to_json();
-	else if (echo == Echo::Text)j["answer"] = GBKtoUTF8(answer.get_str("text"));
-	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(answer.get_str("lua"));
-	else if (echo == Echo::JavaScript)j["answer"] = GBKtoUTF8(answer.get_str("js"));
-	else if (echo == Echo::Python)j["answer"] = GBKtoUTF8(answer.get_str("py"));
+	if (echo == Echo::Deck)j["answer"] = answer->to_json();
+	else if (echo == Echo::Text)j["answer"] = GBKtoUTF8(answer->get_str("text"));
+	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(answer->get_str("lua"));
+	else if (echo == Echo::JavaScript)j["answer"] = GBKtoUTF8(answer->get_str("js"));
+	else if (echo == Echo::Python)j["answer"] = GBKtoUTF8(answer->get_str("py"));
 	return j;
 }
 fifo_json DiceMsgReply::to_line()const {
@@ -776,11 +799,11 @@ fifo_json DiceMsgReply::to_line()const {
 		keyMatch[2] ? "Search" : "Regex";
 	if (!limit.empty())j["limit"] = GBKtoUTF8(limit.print());
 	j["echo"] = sEcho[(int)echo];
-	if (echo == Echo::Deck) j["answer"] = GBKtoUTF8(listDeck(*answer.to_list()));
-	else if (echo == Echo::Text)j["answer"] = GBKtoUTF8(answer.get_str("text"));
-	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(answer.get_str("lua"));
-	else if (echo == Echo::JavaScript)j["answer"] = GBKtoUTF8(answer.get_str("js"));
-	else if (echo == Echo::Python)j["answer"] = GBKtoUTF8(answer.get_str("py"));
+	if (echo == Echo::Deck) j["answer"] = GBKtoUTF8(listDeck(*answer->to_list()));
+	else if (echo == Echo::Text)j["answer"] = GBKtoUTF8(answer->get_str("text"));
+	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(answer->get_str("lua"));
+	else if (echo == Echo::JavaScript)j["answer"] = GBKtoUTF8(answer->get_str("js"));
+	else if (echo == Echo::Python)j["answer"] = GBKtoUTF8(answer->get_str("py"));
 	return j;
 }
 

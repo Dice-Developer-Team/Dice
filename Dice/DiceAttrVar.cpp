@@ -95,9 +95,9 @@ const AttrVar& AnysTable::at(const string& key)const {
 AttrVar& AnysTable::operator[](const char* key){
 	return dict[key];
 }
-AttrVar AnysTable::get(const string& key, ptr<AttrVar> val)const {
+AttrVar AnysTable::get(const string& key, const AttrVar& val)const {
 	return dict.count(key) ? dict.at(key)
-		: val ? *val : AttrVar();
+		: val;
 }
 string AnysTable::get_str(const string& key)const {
 	return dict.count(key) ? dict.at(key).to_str() : "";
@@ -198,7 +198,7 @@ AttrVar::AttrVar(const AttrVar& other) :type(other.type) {
 		new(&text)string(other.text);
 		break;
 	case Type::Table:
-		new(&table)AttrObject(other.table);
+		new(&table) AttrObject(other.table);
 		break;
 	case Type::Function:
 		new(&chunk)ByteS(other.chunk);
@@ -661,7 +661,7 @@ AttrVar::AttrVar(const fifo_json& j) {
 		break;
 	case fifo_json::value_t::object:
 		type = Type::Table; {
-			new(&table)AttrObject(AnysTable());
+			new(&table) AttrObject(AnysTable());
 			unordered_set<string> idxs;
 			if (string strI{ "0" }; j.count(strI)) {
 				table->list = std::make_shared<VarArray>();
@@ -679,7 +679,7 @@ AttrVar::AttrVar(const fifo_json& j) {
 		break;
 	case fifo_json::value_t::array:
 		type = Type::Table; {
-			new(&table)AnysTable();
+			new(&table) AttrObject(AnysTable());
 			table->list = std::make_shared<VarArray>();
 			for (auto& it : j) {
 				table->list->push_back(it);
@@ -774,7 +774,7 @@ AttrVar::AttrVar(const toml::node& t) {
 		break;
 	case toml::node_type::table:
 		type = Type::Table; {
-			new(&table)AnysTable();
+			new(&table) AttrObject(AnysTable());
 			auto tab{ t.as_table() };
 			unordered_set<string> idxs;
 			if (string strI{ "0" }; tab->contains(strI)) {
@@ -785,15 +785,16 @@ AttrVar::AttrVar(const toml::node& t) {
 					idxs.insert(strI);
 				} while (tab->contains(strI = to_string(++idx)));
 			}
-			for (auto& [key,val] : *tab) {
-				if (idxs.count(string(key.str())))continue;
-				table->dict.emplace(UTF8toGBK(string(key.str())), val);
+			for (auto& [key, val] : *tab) {
+				if (string k{ UTF8toGBK(string(key.str())) };
+					!idxs.count(k))
+				table->dict[k] = val;
 			}
 		}
 		break;
 	case toml::node_type::array:
 		type = Type::Table; {
-			new(&table)AnysTable();
+			new(&table) AttrObject(AnysTable());
 			table->list = std::make_shared<VarArray>();
 			for (auto& it : *t.as_array()) {
 				table->list->push_back(it);
@@ -888,7 +889,7 @@ AttrVar::AttrVar(const YAML::Node& y) {
 	}
 	else if (y.IsMap()) {
 		type = Type::Table; {
-			new(&table)AnysTable();
+			new(&table) AttrObject(AnysTable());
 			unordered_set<string> idxs;
 			string strIdx{ "0" };
 			if (y[strIdx] || y[strIdx = "1"]) {
@@ -911,7 +912,7 @@ AttrVar::AttrVar(const YAML::Node& y) {
 		for (YAML::Node it : y) {
 			list.push_back(it);
 		}
-		new(&table)AnysTable(list);
+		new(&table) AttrObject(AnysTable(list));
 	}
 }
 YAML::Node AttrVar::to_yaml()const {
@@ -1079,7 +1080,7 @@ void AttrVar::readb(std::ifstream& fin) {
 		break;
 	case 5:
 		type = Type::Table;
-		new(&table) AnysTable();
+		new(&table) AttrObject(AnysTable());
 		table->readb(fin);
 		break;
 	case 6:

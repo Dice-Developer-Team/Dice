@@ -115,7 +115,8 @@ void loadData(){
 		if (!logList.empty())
 		{
 			logList << "扩展配置读取完毕√";
-			console.log(logList.show(), 1, printSTNow());
+			Enabled ? console.log(logList.show(), 1, printSTNow())
+				: DD::debugLog(logList.show());
 		}
 	}
 	catch (const std::exception& e)
@@ -645,7 +646,7 @@ EVE_GroupMsg(eventGroupMsg)
 				}), chatInfo{ fromUID,fromGID,0 }));
 		return Msg->DiceFilter();
 	}
-	return grp.setLst(time(nullptr)).is("拦截消息");
+	return 0;
 }
 EVE_ChannelMsg(eventChannelMsg)
 {

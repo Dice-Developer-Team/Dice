@@ -90,9 +90,9 @@ AttrIndex lua_to_index(lua_State* L, int idx){
 	return lua_to_gbstring(L, idx);
 }
 
-void lua_push_Context(lua_State* L, const AttrObject& obj) {
-	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
-	new(p) AttrObject(obj);
+void lua_push_Context(lua_State* L, const ptr<AnysTable>& obj) {
+	ptr<AnysTable>* p{ (ptr<AnysTable>*)lua_newuserdata(L, sizeof(ptr<AnysTable>)) };
+	new(p) ptr<AnysTable>(obj);
 	luaL_setmetatable(L, "Context");
 }
 #define LUA2OBJ(idx) AttrObject& obj{*(AttrObject*)luaL_checkudata(L, idx, "Context")}
@@ -166,20 +166,31 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 		lua_push_string(L, attr.text);
 		break;
 	case AttrVar::Type::Table:
-		lua_newtable(L);
-		if (unordered_set<string> idxs; !attr.table->dict.empty() || attr.table->list) {
-			if (attr.table->list) {
-				int idx{ 0 };
-				for (auto& val : *attr.table->list) {
-					lua_push_attr(L, val);
-					lua_seti(L, -2, ++idx);
-					idxs.insert(to_string(idx));
+		if (auto t{ attr.table->getType() };t == AnysTable::MetaType::Context) {
+			lua_push_Context(L, attr.table.p);
+		}
+		else if (t == AnysTable::MetaType::Actor) {
+			lua_push_Actor(L, std::static_pointer_cast<CharaCard>(attr.table.p));
+		}
+		else if (t == AnysTable::MetaType::Game) {
+			lua_push_GameTable(L, std::static_pointer_cast<Session>(attr.table.p));
+		}
+		else {
+			lua_newtable(L);
+			if (unordered_set<string> idxs; !attr.table->dict.empty() || attr.table->list) {
+				if (attr.table->list) {
+					int idx{ 0 };
+					for (auto& val : *attr.table->list) {
+						lua_push_attr(L, val);
+						lua_seti(L, -2, ++idx);
+						idxs.insert(to_string(idx));
+					}
 				}
-			}
-			for (auto& [key, val] : attr.table->dict) {
-				if (idxs.count(key))continue;
-				val ? lua_push_attr(L, val) : lua_pushnil(L);
-				lua_set_field(L, -2, key.c_str());
+				for (auto& [key, val] : attr.table->dict) {
+					if (idxs.count(key))continue;
+					val ? lua_push_attr(L, val) : lua_pushnil(L);
+					lua_set_field(L, -2, key.c_str());
+				}
 			}
 		}
 		break;
@@ -234,8 +245,25 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 	}
 		break;
 	case LUA_TUSERDATA:
-		if (auto p = luaL_testudata(L, idx, "Set")) {
-			return **(AttrSet**)p;
+		try {
+			if (auto p = luaL_testudata(L, idx, "Set")) {
+				return **(AttrSet**)p;
+			}
+			else {
+				auto tab = (ptr<AnysTable>*)lua_touserdata(L, idx);
+				if (auto meta{ (*tab)->getType() };meta == AnysTable::MetaType::Context) {
+					return *tab;
+				}
+				else if (meta == AnysTable::MetaType::Actor) {
+					return *(ptr<CharaCard>*)tab;
+				}
+				else if (meta == AnysTable::MetaType::Game) {
+					return *(ptr<Session>*)tab;
+				}
+			}
+		}
+		catch (std::exception& e) {
+			DD::debugLog(string("lua_touserdataÒì³£:") + e.what());
 		}
 		break;
 	}
@@ -371,7 +399,7 @@ bool lua_call_event(AttrObject eve, const AttrVar& lua) {
 	bool isFile{ lua.is_character() && fmt->has_lua(luas) };
 	LuaState L{ fmt->lua_path(luas) };
 	if (!L)return false;
-	lua_push_Context(L, eve);
+	lua_push_Context(L, eve.p);
 	lua_setglobal(L, "event");
 	if (isFile) {
 		if (lua_pcall(L, 0, 2, 0)) {
@@ -885,7 +913,7 @@ LUADEF(getUserToday) {
 	}
 	long long uid{ lua_to_int_or_zero(L, 1) };
 	if (item.empty()) {
-		lua_push_Context(L, today->get(uid));
+		lua_push_Context(L, today->get(uid).p);
 		return 1;
 	}
 	else if (item == "jrrp")
@@ -1140,10 +1168,6 @@ int Context_index(lua_State* L) {
 		lua_push_Context(L, chat(obj->get_ll("gid")).shared_from_this());
 		return 1;
 	}
-	else if (key == "pc" && obj->has("uid")) {
-		lua_push_Actor(L, getPlayer(obj->get_ll("uid"))[obj->get_ll("gid")]);
-		return 1;
-	}
 	else if (key == "game") {
 		if (auto game = sessions.get_if(*obj)) {
 			lua_push_GameTable(L, game);
@@ -1169,15 +1193,9 @@ int Context_newindex(lua_State* L) {
 	return 0;
 }
 int Context_gc(lua_State* L) {
-	if (lua_gettop(L) < 2)return 0;
 	LUA2OBJ(1);
-	string key{ fmt->format(lua_to_gbstring(L, 2), obj) };
-	if (lua_isnoneornil(L, 3)) {
-		obj->reset(key);
-	}
-	else {
-		obj->set(key, lua_to_attr(L, 3));
-	}
+	//delete& obj;
+	obj.~AttrObject();
 	return 0;
 }
 static const luaL_Reg Context_funcs[] = {

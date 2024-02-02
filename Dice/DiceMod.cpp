@@ -1201,7 +1201,7 @@ int DiceModManager::load(ResList& resLog){
 				ptr<DiceMsgReply> reply{ custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;
 				reply->keyMatch[0] = std::make_unique<vector<string>>(vector<string>{ key });
-				reply->answer = deck;
+				reply->answer = AnysTable(deck);
 			}
 		}
 		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck) > 0) {
@@ -1210,7 +1210,7 @@ int DiceModManager::load(ResList& resLog){
 				ptr<DiceMsgReply> reply{ custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;
 				reply->keyMatch[3] = std::make_unique<vector<string>>(vector<string>{ key });
-				reply->answer = deck;
+				reply->answer = AnysTable(deck);
 			}
 		}
 		if(!custom_reply.empty())save_reply();

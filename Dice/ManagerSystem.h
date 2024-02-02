@@ -1,11 +1,28 @@
-#pragma once
-
 /*
- * 后台系统
+ *  _______     ________    ________    ________    __
+ * |   __  \   |__    __|  |   _____|  |   _____|  |  |
+ * |  |  |  |     |  |     |  |        |  |_____   |  |
+ * |  |  |  |     |  |     |  |        |   _____|  |__|
+ * |  |__|  |   __|  |__   |  |_____   |  |_____    __
+ * |_______/   |________|  |________|  |________|  |__|
+ *
+ * Dice! QQ Dice Robot for TRPG
+ * 后台用户管理，系统监控
+ * Copyright (C) 2018-2021 w4123溯洄
  * Copyright (C) 2019-2024 String.Empty
- * 控制清理用户/群聊记录，清理图片，监控系统
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this
+ * program. If not, see <http://www.gnu.org/licenses/>.
  */
-
+#pragma once 
 #include <set>
 #include <map>
 #include <utility>
@@ -43,6 +60,7 @@ void dataBackUp();
 class User :public AnysTable
 {
 public:
+	MetaType getType()const override { return MetaType::Context; }
 	long long ID = 0;
 	//1-私用信任，2-拉黑豁免，3-加黑退群，4-后台管理，5-Master
 	int nTrust = 0;
@@ -135,6 +153,7 @@ extern const map<string, short> mChatConf;
 class Chat :public AnysTable
 {
 public:
+	MetaType getType()const override { return MetaType::Context; }
 	long long inviter = 0;
 	long long ID = 0;
 	string Name = "";

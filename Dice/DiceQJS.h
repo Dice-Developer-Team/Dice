@@ -1,3 +1,26 @@
+/*
+ *  _______     ________    ________    ________    __
+ * |   __  \   |__    __|  |   _____|  |   _____|  |  |
+ * |  |  |  |     |  |     |  |        |  |_____   |  |
+ * |  |  |  |     |  |     |  |        |   _____|  |__|
+ * |  |__|  |   __|  |__   |  |_____   |  |_____    __
+ * |_______/   |________|  |________|  |________|  |__|
+ *
+ * Dice! QQ Dice Robot for TRPG
+ * Copyright (C) 2018-2021 w4123ËÝä§
+ * Copyright (C) 2019-2024 String.Empty
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this
+ * program. If not, see <http://www.gnu.org/licenses/>.
+ */
 #pragma once
 #ifdef __cplusplus
 extern "C" {
@@ -85,7 +108,7 @@ extern "C" {
 #endif
 #ifdef __cplusplus
 #define JS2SET(val) AttrSet& set = *(AttrSet*)JS_GetOpaque(val, js_dice_Set_id)
-#define JS2OBJ(val) AttrObject& obj = *(AttrObject*)JS_GetOpaque(val, js_dice_context_id)
+#define JS2OBJ(val) ptr<AnysTable>& obj = *(ptr<AnysTable>*)JS_GetOpaque(val, js_dice_context_id)
 #define JS2DATA(val) ptr<SelfData>& data = *(ptr<SelfData>*)JS_GetOpaque(val, js_dice_selfdata_id)
 #define JS2GAME(val) ptr<DiceSession>& game = *(ptr<DiceSession>*)JS_GetOpaque(val, js_dice_GameTable_id)
 #define JS2PC(val) PC& pc = *(PC*)JS_GetOpaque(val, js_dice_actor_id)
