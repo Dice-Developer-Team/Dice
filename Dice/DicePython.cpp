@@ -151,6 +151,7 @@ PyObject* py_build_attr(const AttrVar& var) {
 			}
 			return ary;
 		}
+		else return PyDict_New();
 		break;
 	case AttrVar::Type::ID:
 		return PyLong_FromLongLong(var.id);
@@ -466,17 +467,6 @@ PyObject* PyContext_getattro(PyObject* self, PyObject* attr) {
 	PY2TAB(self);
 	string key{ py_to_gbstring(attr) };
 	//console.log("PyContext_getattro:" + key, 0);
-	if (key == "user" && obj->has("uid")) {
-		return py_newContext(getUser(obj->get_ll("uid")).shared_from_this());
-	}
-	else if ((key == "grp" || key == "group") && obj->has("gid")) {
-		return py_newContext(chat(obj->get_ll("gid")).shared_from_this());
-	}
-	else if (key == "game") {
-		if (auto game = sessions.get_if(*obj)) {
-			return py_newGame(game);
-		}
-	}
 	return py_build_attr(getContextItem(obj, key));
 }
 int PyContext_setattro(PyObject* self, PyObject* attr, PyObject* val) {

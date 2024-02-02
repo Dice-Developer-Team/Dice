@@ -235,7 +235,7 @@ public:
 
 	[[nodiscard]] string show(bool isWhole);
 
-	bool has(const string& key)const;
+	bool has(const string& key)const override;
 	//can get attr by card or temp
 	//bool available(const string& key) const;
 

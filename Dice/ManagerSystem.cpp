@@ -234,6 +234,54 @@ void User::rmConf(const string& key)
 	reset(key);
 }
 
+bool User::has(const string& key)const {
+	static std::unordered_set<string> items{ "name", "nick", "nn", "trust", "danger", "isDiceMaid" };
+	return (dict.count(key) && !dict.at(key).is_null())
+		|| items.count(key);
+}
+AttrVar User::get(const string& item, const AttrVar& val)const {
+	if (!item.empty()) {
+		if (auto it{ dict.find(item) }; it != dict.end()) {
+			return it->second;
+		}
+		if (item == "name") {
+			if (string name{ DD::getQQNick(ID) }; !name.empty())
+				return name;
+		}
+		else if (item == "nick") {
+			return getName(ID);
+		}
+		else if (item == "trust") {
+			return ID == console ? 256
+				: ID == console.DiceMaid ? 255
+				: nTrust;
+		}
+		else if (item == "danger") {
+			return blacklist->get_user_danger(ID);
+		}
+		else if (item.find("nick#") == 0) {
+			long long gid{ 0 };
+			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+				gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+			}
+			return getName(ID, gid);
+		}
+		else if (item == "nn") {
+			if (string nick; getNick(nick))return nick;
+		}
+		else if (item.find("nn#") == 0) {
+			long long gid{ 0 };
+			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+				gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+			}
+			if (string nick; getNick(nick, gid))return nick;
+		}
+		else if (item == "isDiceMaid") {
+			return DD::isDiceMaid(ID);
+		}
+	}
+	return val;
+}
 bool User::getNick(string& nick, long long group) const
 {
 	if (auto it = strNick.find(group); it != strNick.end() 
@@ -529,6 +577,55 @@ Chat& chat(long long id)
 	return *ChatList[id];
 }
 
+bool Chat::has(const string& key)const {
+	static std::unordered_set<string> items{ "name", "size", "maxsize", "firstCreate", "lastUpdate" };
+	return (dict.count(key) && !dict.at(key).is_null())
+		|| items.count(key);
+}
+AttrVar Chat::get(const string& item, const AttrVar& val)const {
+	if (!item.empty()) {
+		if (auto it{ dict.find(item) }; it != dict.end()) {
+			return it->second;
+		}
+		if (item == "name") {
+			if (string name{ DD::getGroupName(ID) }; !name.empty())return Name = name;
+		}
+		else if (item == "size") {
+			return (int)DD::getGroupSize(ID).currSize;
+		}
+		else if (item == "maxsize") {
+			return (int)DD::getGroupSize(ID).maxSize;
+		}
+		else if (item == "firstCreate") {
+			return (long long)tCreated;
+		}
+		else if (item == "lastUpdate") {
+			return (long long)updated();
+		}
+		else if (item.find("card#") == 0) {
+			long long uid{ 0 };
+			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+				uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+			}
+			if (string card{ DD::getGroupNick(ID, uid) }; !card.empty())return card;
+		}
+		else if (item.find("auth#") == 0) {
+			long long uid{ 0 };
+			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+				uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+			}
+			if (int auth{ DD::getGroupAuth(ID, uid, 0) }; auth)return auth;
+		}
+		else if (item.find("lst#") == 0) {
+			long long uid{ 0 };
+			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+				uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+			}
+			return DD::getGroupLastMsg(ID, uid);
+		}
+	}
+	return val;
+}
 void Chat::leave(const string& msg) {
 	if (!msg.empty()) {
 		DD::sendGroupMsg(ID, msg);

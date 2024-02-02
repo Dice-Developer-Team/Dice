@@ -18,14 +18,14 @@
 using namespace std; 
 static bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
-AttrVar idx_at(const AttrObject& eve) {
+static AttrVar idx_at(const AttrObject& eve) {
 	if (eve->has("at"))return eve->at("at");
 	if (!eve->has("uid"))return {};
 	return eve->at("at") = eve->has("gid")
 		? AttrVar("[CQ:at,qq=" + eve->get_str("uid") + "]")
 		: idx_nick(eve);
 }
-AttrVar idx_gAuth(const AttrObject& eve) {
+static AttrVar idx_gAuth(const AttrObject& eve) {
 	if (!eve->has("uid")|| !eve->has("gid"))return {};
 	if (int auth{ DD::getGroupAuth(eve->get_ll("gid"),eve->get_ll("uid"),0) })
 		return eve->at("grpAuth") = auth;
@@ -37,23 +37,44 @@ AttrGetters MsgIndexs{
 	{"pc", idx_pc},
 	{"at", idx_at},
 	{"@", idx_at},
-	{"char",  [](const AttrObject& obj) {
-		return obj->has("uid") ?
-			obj->at("char") = AttrVar(getPlayer(obj->get_ll("uid"))[obj->get_ll("gid")])
-			: AttrVar();
-	}},
-	{"gender",  [](const AttrObject& vars) {
-		return vars->has("uid") ? vars->at("gender") = getUserItem(vars->get_ll("uid"),"gender") : AttrVar();
-	}},
-	{"grpAuth", idx_gAuth},
 	{"fromUser", [](const AttrObject& vars) {
 		return vars->has("uid") ? vars->at("fromUser") = vars->get_str("uid") : "";
 	}},
 	{"fromQQ", [](const AttrObject& vars) {
 		return vars->has("uid") ? vars->at("fromQQ") = vars->get_str("uid") : "";
 	}},
+	{"user", [](const AttrObject& obj) {
+		return obj->has("uid") ?
+			obj->at("user") = getUser(obj->get_ll("uid")).shared_from_this()
+			: AttrVar();
+	}},
+	{"char", [](const AttrObject& obj) {
+		return obj->has("uid") ?
+			obj->at("char") = getPlayer(obj->get_ll("uid"))[obj->get_ll("gid")]
+			: AttrVar();
+	}},
+	{"gender", [](const AttrObject& vars) {
+		return vars->has("uid") ? vars->at("gender") = getUserItem(vars->get_ll("uid"),"gender") : AttrVar();
+	}},
 	{"fromGroup", [](const AttrObject& vars) {
 		return vars->has("gid") ? vars->at("fromGroup") = vars->get_str("gid") : "";
+	}},
+	{"grp", [](const AttrObject& obj) {
+		return obj->has("gid") ?
+			obj->at("grp") = chat(obj->get_ll("gid")).shared_from_this()
+			: AttrVar();
+	}},
+	{"group", [](const AttrObject& obj) {
+		return obj->has("gid") ?
+			obj->at("group") = chat(obj->get_ll("gid")).shared_from_this()
+			: AttrVar();
+	}},
+	{"grpAuth", idx_gAuth},
+	{"game", [](const AttrObject& obj) {
+		if (AttrVar game{sessions.get_if(*obj)}) {
+			return obj->at("game") = game;
+		}
+		return AttrVar();
 	}},
 };
 
@@ -1601,7 +1622,7 @@ int DiceEvent::BasicOrder()
 						replyMsg("strGameItemSet");
 					}
 					else {
-						set("set_val", print(thisGame->getAttr(strItem)));
+						set("set_val", print(thisGame->get(strItem)));
 						replyMsg("strGameItemShow");
 					}
 				}
@@ -1809,7 +1830,7 @@ int DiceEvent::InnerOrder() {
 		if (action == "show") {
 			if ((thisGame || (thisGame = sessions.get_if(fromChat)))
 				&& thisGame->has("rr_rc")) {
-				set("rule", thisGame->getAttr("rr_rc"));
+				set("rule", thisGame->get("rr_rc"));
 			}
 			else if (isPrivate()) {
 				if (User& user{ getUser(fromChat.uid) }; user.is("rc·¿¹æ"))

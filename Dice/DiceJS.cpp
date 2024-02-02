@@ -242,6 +242,7 @@ JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 			}
 			return ary;
 		}
+		else return JS_NewObject(ctx);
 		break;
 	case AttrVar::Type::ID:
 		return JS_NewInt64(ctx, (int64_t)var.id);
@@ -732,19 +733,7 @@ int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueC
 	JS2OBJ(this_val);
 	if (desc) {
 		string key{ js_AtomtoGBK(ctx, prop) };
-		if (key == "user" && obj->has("uid")) {
-			desc->value = js_newDiceContext(ctx, getUser(obj->get_ll("uid")).shared_from_this());
-		}
-		else if ((key == "grp" || key == "group") && obj->has("gid")) {
-			desc->value = js_newDiceContext(ctx, chat(obj->get_ll("gid")).shared_from_this());
-		}
-		else if (key == "game") {
-			if (auto game = sessions.get_if(*obj)) {
-				desc->value = js_newGameTable(ctx, game);
-			}
-			else return FALSE;
-		}
-		else if (auto val{ getContextItem(obj, key) }) {
+		if (auto val{ getContextItem(obj, key) }) {
 			desc->value = js_newAttr(ctx, val);
 		}
 		else return FALSE;

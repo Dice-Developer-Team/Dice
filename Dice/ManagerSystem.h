@@ -69,6 +69,8 @@ public:
 	explicit User(long long id): ID(id){}
 	unordered_map<long long, string> strNick{};
 	std::mutex ex_user;
+	bool has(const string& key)const override;
+	AttrVar get(const string& key, const AttrVar& val = {})const override;
 
 	User& create(time_t tt)
 	{
@@ -156,13 +158,15 @@ public:
 	MetaType getType()const override { return MetaType::Context; }
 	long long inviter = 0;
 	long long ID = 0;
-	string Name = "";
+	mutable string Name = "";
 	time_t tCreated = time(nullptr);
 
 	explicit Chat(long long id):ID(id) {}
 
 	map<long long, AnysTable>ChConf;
 
+	bool has(const string& key)const override;
+	AttrVar get(const string& key, const AttrVar& val = {})const override;
 	//Chat& id(long long grp);
 	time_t getLst()const { return (time_t)get_ll("lastMsg"); }
 	void rmLst() { reset("lastMsg"); }

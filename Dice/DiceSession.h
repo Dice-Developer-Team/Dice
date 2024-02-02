@@ -1,3 +1,27 @@
+/*
+ *  _______     ________    ________    ________    __
+ * |   __  \   |__    __|  |   _____|  |   _____|  |  |
+ * |  |  |  |     |  |     |  |        |  |_____   |  |
+ * |  |  |  |     |  |     |  |        |   _____|  |__|
+ * |  |__|  |   __|  |__   |  |_____   |  |_____    __
+ * |_______/   |________|  |________|  |________|  |__|
+ *
+ * Dice! QQ Dice Robot for TRPG
+ * ”Œœ∑ª·ª∞
+ * Copyright (C) 2018-2021 w4123À›‰ß
+ * Copyright (C) 2019-2024 String.Empty
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this
+ * program. If not, see <http://www.gnu.org/licenses/>.
+ */
 #pragma once
 #include <unordered_set>
 #include "filesystem.hpp"
@@ -101,6 +125,7 @@ class DiceSession: public AnysTable{
 	dict_ci<DeckInfo> decks;
 	void save() const;
 public:
+	MetaType getType()const override { return MetaType::Game; }
 	//native filename
 	const string name;
 	fifo_set<chatInfo> areas;
@@ -136,8 +161,8 @@ public:
 		return *this;
 	}
 	string show()const;
-	bool hasAttr(const string& key);
-	AttrVar getAttr(const string& key);
+	bool has(const string& key)const override;
+	AttrVar get(const string& key, const AttrVar& val = {})const override;
 	void set(const string& key, const AttrVar& val){
 		if (!key.empty()) {
 			if (val.is_null())dict.erase(key);
@@ -245,10 +270,7 @@ public:
 	void clear() { SessionByName.clear(); SessionByChat.clear(); linker = {}; }
 	shared_ptr<Session> get(chatInfo);
 	shared_ptr<Session> newGame(const string& name, const chatInfo& ct);
-	shared_ptr<Session> get_if(const chatInfo& ct)const {
-		auto chat{ ct.locate() };
-		return chat && SessionByChat.count(chat) ? SessionByChat.at(chat) : shared_ptr<Session>();
-	}
+	shared_ptr<Session> get_if(chatInfo ct)const;
 	shared_ptr<Session> getByName(const string& name)const {
 		return SessionByName.count(name) ? SessionByName.at(name) : ptr<Session>();
 	}

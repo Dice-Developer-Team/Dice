@@ -1160,21 +1160,7 @@ int Context_index(lua_State* L) {
 		return 1;
 	}
 	LUA2OBJ(1);
-	if (key == "user" && obj->has("uid")) {
-		lua_push_Context(L, getUser(obj->get_ll("uid")).shared_from_this());
-		return 1;
-	}
-	else if((key == "grp" || key == "group") && obj->has("gid")) {
-		lua_push_Context(L, chat(obj->get_ll("gid")).shared_from_this());
-		return 1;
-	}
-	else if (key == "game") {
-		if (auto game = sessions.get_if(*obj)) {
-			lua_push_GameTable(L, game);
-			return 1;
-		}
-	}
-	else if (auto val{ getContextItem(obj, key) }) {
+	if (auto val{ getContextItem(obj, key) }) {
 		lua_push_attr(L, val);
 		return 1;
 	}
@@ -1258,25 +1244,12 @@ int GameTable_index(lua_State* L) {
 		lua_pushcfunction(L, GameTable_message);
 		return 1;
 	}
-	else if (key == "gms") {
-		lua_push_Set(L, game->get_gm());
-		return 1;
-	}
-	else if (key == "pls") {
-		lua_push_Set(L, game->get_pl());
-		return 1;
-	}
-	else if (key == "obs") {
-		lua_push_Set(L, game->get_ob());
-		return 1;
-	}
-	lua_push_attr(L, game->getAttr(key));
+	lua_push_attr(L, game->get(key));
 	return 1;
 }
 int GameTable_newindex(lua_State* L) {
 	LUA2GAME(1);
-	string key{ lua_to_gbstring(L, 2) };
-	if (lua_gettop(L) < 3) {
+	if (string key{ lua_to_gbstring(L, 2) }; lua_gettop(L) < 3) {
 		game->reset(key);
 	}
 	else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {

@@ -34,15 +34,13 @@ using namespace std;
 
 chatInfo::chatInfo(long long u, long long g, long long c) :uid(u), gid(g), chid(c) {
 	if (gid) {
-		if (chid)type = msgtype::Channel;
-		else type = msgtype::Group;
+		type = chid ? msgtype::Channel : msgtype::Group;
 	}
 	else {
-		if (chid)type = msgtype::ChannelPrivate;
-		else type = msgtype::Private;
+		type = chid ? msgtype::ChannelPrivate : msgtype::Private;
 	}
 }
-chatInfo::chatInfo(const AnysTable& obj):uid(obj.get_ll("uid")), chid(obj.get_ll("chid")) {
+chatInfo::chatInfo(const AnysTable& obj):uid(obj.get_ll("uid")), gid(obj.get_ll("gid")), chid(obj.get_ll("chid")) {
 	type = (gid = obj.get_ll("gid"))
 		? chid ? msgtype::ChannelPrivate : msgtype::Private
 		: chid ? msgtype::Channel : msgtype::Group;

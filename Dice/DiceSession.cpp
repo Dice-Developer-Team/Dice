@@ -1,7 +1,7 @@
 /**
  * 会话管理
  * 抽象于聊天窗口的单位
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 #include <shared_mutex>
 #include "filesystem.hpp"
@@ -22,6 +22,31 @@ unordered_set<chatInfo>LogList;
 
 const std::filesystem::path LogInfo::dirLog{ std::filesystem::path("user") / "log" };
 
+bool DiceSession::has(const string& key)const {
+	static std::unordered_set<string> items{ "name", "gms", "pls", "obs" };
+	return (dict.count(key) && !dict.at(key).is_null())
+		|| items.count(key);
+}
+AttrVar DiceSession::get(const string& item, const AttrVar& val)const {
+	if (!item.empty()) {
+		if (auto it{ dict.find(item) }; it != dict.end()) {
+			return it->second;
+		}
+		if (item == "name") {
+			return name;
+		}
+		else if (item == "gms") {
+			return get_gm();
+		}
+		else if (item == "pls") {
+			return get_pl();
+		}
+		else if (item == "obs") {
+			return get_ob();
+		}
+	}
+	return val;
+}
 size_t DiceSession::roll(size_t face) {
 	if (roulette.count(face)) {
 		auto res = roulette[face].roll();
@@ -64,12 +89,6 @@ string DiceSession::show()const {
 		li << "轮盘骰: D" + faces.show("/");
 	}
 	return li.show("\n");
-}
-bool DiceSession::hasAttr(const string& key) {
-	return has(key);
-}
-AttrVar DiceSession::getAttr(const string& key) {
-	return get(key);
 }
 
 bool DiceSession::table_del(const string& tab, const string& item) {
@@ -772,6 +791,10 @@ shared_ptr<Session> DiceSessionManager::get(chatInfo ct) {
 		}
 		else return SessionByChat[ct] = SessionByName[name];
 	}
+}
+shared_ptr<Session> DiceSessionManager::get_if(chatInfo ct)const {
+	ct = ct.locate();
+	return ct && SessionByChat.count(ct) ? SessionByChat.at(ct) : shared_ptr<Session>();
 }
 int DiceSessionManager::load() {
 	if (auto fileGM{ DiceDir / "user" / "GameTable.toml" };std::filesystem::exists(fileGM)) {
