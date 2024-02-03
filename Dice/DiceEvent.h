@@ -25,7 +25,7 @@ public:
 	chatInfo fromChat;
 	string strLowerMessage;
 	Chat* pGrp = nullptr;
-	ptr<DiceSession> thisGame;
+	ptr<DiceSession> thisGame();
 	string& strMsg;
 	string strReply;
 	std::wsmatch msgMatch;

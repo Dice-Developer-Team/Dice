@@ -435,7 +435,7 @@ string AttrVar::to_str()const {
 		return text;
 		break;
 	case Type::Table: 
-		return UTF8toGBK(to_json().dump());
+		return table->print();
 		break;
 	case Type::Function:
 		return {};
@@ -512,6 +512,9 @@ AttrVar AttrVar::parse(const string& s) {
 	}
 	return s;
 }
+string AnysTable::print()const {
+	return UTF8toGBK(to_json().dump());
+}
 string AttrVar::print()const {
 	switch (type) {
 	case Type::Nil:
@@ -530,7 +533,7 @@ string AttrVar::print()const {
 		return text;
 		break;
 	case Type::Table:
-		return UTF8toGBK(to_json().dump());
+		return table->print();
 		break;
 	case Type::ID:
 		return to_string(id);

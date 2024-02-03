@@ -254,6 +254,7 @@ public:
 	bool operator<(const AnysTable other)const;
 	//bool operator<(const AnysTable& other)const { return dict < other.dict; }
 	bool empty()const;
+	virtual string print()const;
 	virtual bool has(const string& key)const;
 	void set(const string& key, const AttrVar& val);
 	void set(const string& key);
