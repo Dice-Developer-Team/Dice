@@ -23,8 +23,6 @@
  */
 #define UNICODE
 #include <algorithm>
-#include <exception>
-#include <stdexcept>
 
 #include "DiceFile.hpp"
 #include "Jsonio.h"
@@ -457,8 +455,8 @@ bool eve_GroupAdd(Chat& grp) {
 		if (ChatList.size() == 1 && !console)DD::sendGroupMsg(grp.ID, msgInit);
 	}
 	long long fromGID = grp.ID;
-	if (grp.Name.empty())
-		grp.set("Name", grp.Name = DD::getGroupName(fromGID));
+	if (grp.get_str("name").empty())
+		grp.name(DD::getGroupName(fromGID));
 	GroupSize_t gsize(DD::getGroupSize(fromGID));
 	if (console["GroupInvalidSize"] > 0 && grp.empty() && gsize.currSize > (size_t)console["GroupInvalidSize"]) {
 		grp.set("协议无效");
@@ -548,7 +546,7 @@ bool eve_GroupAdd(Chat& grp) {
 				}
 			}
 			if (!grp.inviter && list.size() <= 2 && ownerQQ){
-				grp.inviter = ownerQQ;
+				grp.invited(ownerQQ);
 				strMsg += "邀请者" + printUser(ownerQQ);
 			}
 			if (!cntMember) 
@@ -732,7 +730,7 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 		}
 	}
 	else{
-		if (!grp.inviter)grp.inviter = operatorQQ;
+		if (!grp.inviter)grp.invited(operatorQQ);
 		{
 			unique_lock<std::mutex> lock_queue(GroupAddMutex);
 			if (grp.is("已入群"))return 0;
@@ -868,7 +866,7 @@ EVE_GroupInvited(eventGroupInvited)
 		bool isBlocked{ fmt->call_hook_event(eve) };
 		if (eve->has("approval")) {
 			if (eve->is("approval")) {
-				chat(fromGID).inviter = fromUID;
+				chat(fromGID).invited(fromUID);
 				DD::answerFriendRequest(fromUID, 1);
 			}
 			else {
@@ -894,7 +892,7 @@ EVE_GroupInvited(eventGroupInvited)
 		}
 		else if (Chat& grp = chat(fromGID); grp.is("许可使用")) {
 			grp.setLst(0);
-			grp.inviter = fromUID;
+			grp.invited(fromUID);
 			strMsg += "\n已同意（已许可使用）";
 			console.log(strMsg, 1, strNow);
 			DD::answerGroupInvited(fromGID, 1);
@@ -902,7 +900,7 @@ EVE_GroupInvited(eventGroupInvited)
 		else if (trustedQQ(fromUID))
 		{
 			grp.set("许可使用").reset("未审核").reset("协议无效");
-			grp.inviter = fromUID;
+			grp.invited(fromUID);
 			strMsg += "\n已同意（信任用户）";
 			console.log(strMsg, 1, strNow);
 			DD::answerGroupInvited(fromGID, 1);
@@ -926,7 +924,7 @@ EVE_GroupInvited(eventGroupInvited)
 		}
 		else {
 			grp.setLst(0);
-			grp.inviter = fromUID;
+			grp.invited(fromUID);
 			strMsg += "已同意";
 			this_thread::sleep_for(2s);
 			console.log(strMsg, 1, strNow);

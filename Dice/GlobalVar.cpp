@@ -198,9 +198,9 @@ const dict_ci<string> PlainMsg
 	{"strReplyKeyEmpty","{nick}请输入回复触发词×"},
 	{"strReplyKeyNotFound","{self}未找到回复关键词{key}×"},
 	{"strScriptRunErr","{self}似乎出了点问题，请{nick}耐心等待（{lang}脚本运行出错）" },
-	{"strStModify","{self}已记录{pc}的{cnt}条属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
-	{"strStDetail","{self}已设置{pc}的属性："},		//存在掷骰时，使用此文本
-	{"strStValEmpty","{self}未记录{attr}原值×"},		
+	//{"strStModify","{self}已记录{pc}的{cnt}条属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
+	{"strStDetail","{self}已设置{pc}的{cnt}条属性:\n{detail}"},		//存在掷骰时，使用此文本
+	//{"strStValEmpty","{self}未记录{attr}原值×"},		
 	{"strBlackQQAddNotice","{nick}，你已被{self}加入黑名单，详情请联系Master:{print:master}"},				
 	{"strBlackQQAddNoticeReason","{nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{print:master}"},
 	{"strBlackQQDelNotice","{nick}，你已被{self}移出黑名单，现在可以继续使用了"},
@@ -376,7 +376,7 @@ const dict_ci<string> PlainMsg
 	{"strRuleNotFound", "{self}未找到对应的规则信息×"},
 	{"strProp", "{pc}的{attr}为{val}"},
 	{"strPropList", "{nick}的{char}属性列表为：{show}"},
-	{"strStErr", "格式错误:请参考.help st获取.st命令的使用方法"},
+	//{"strStErr", "格式错误:请参考.help st获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
 	{"strLeaveDiscuss", "{self}现不支持讨论组服务，即将退出"},
 	{"strLeaveNoPower", "{self}未获得群管理，即将退群"},
@@ -883,14 +883,14 @@ Type=[回复性质](Reply/Order)
 .group diver //查看潜水成员
 .group +/-[群管词条] //为群加减设置，需要对应权限
 例:.group +禁用回复 //关闭本群自定义回复
-群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/拦截消息/许可使用/免清/免黑)"
+群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/许可使用/免清/免黑)"
 	},
 	{ "groups_list", "&取群列表" },
 	{ "取群列表", R"(取群列表.groups list(管理限定)
 .groups list idle //按闲置天数降序列出群
 .groups list size //按群规模降序列出群
 .groups list [群管词条] //列出带有词条的群
-群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/拦截消息/许可使用/免清/免黑)" },
+群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/许可使用/免清/免黑)" },
 	{"消息链接","&link"},
 	{"link",R"(消息链接.link
 .link [转发方向] [对象窗口] 建立本窗口与对象窗口的转发

@@ -144,11 +144,6 @@ std::ifstream& operator>>(std::ifstream& fin, chatInfo& ct)
 	else ct.gid = id;
 	return fin;
 }
-long long tUpdated{ 0 };
-ifstream& operator>>(ifstream& fin, User& user) {
-	fin >> user.ID >> user.nTrust >> user.tCreated >> tUpdated;
-	return fin;
-}
 
 template <typename T>
 int _listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& files)

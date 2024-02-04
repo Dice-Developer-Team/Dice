@@ -709,13 +709,13 @@ QJSDEF(getPlayerCard) {
 	if (uid && PList.count(uid)) {
 		auto& pl{ getPlayer(uid) };
 		if (auto type = JS_VALUE_GET_TAG(argv[1]); type == JS_TAG_STRING) {
-			return js_newActor(ctx, pl[js_toGBK(ctx, argv[1])]);
+			return js_newActor(ctx, pl.getCard(js_toGBK(ctx, argv[1])));
 		}
 		else if (JS_IsNumber(argv[1])) {
 			return js_newActor(ctx, pl[js_toLongLong(ctx, argv[1])]);
 		}
 		else if (JS_IsUndefined(argv[1])) {
-			return js_newActor(ctx, pl[0]);
+			return js_newActor(ctx, pl[0ll]);
 		}
 		else {
 			JS_ThrowTypeError(ctx, "#2 must be string or int!");

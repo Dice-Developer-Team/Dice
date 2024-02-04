@@ -153,7 +153,10 @@ AttrVar getGroupItem(long long id, const string& item) {
 	else if (ChatList.count(id)) {
 		Chat& grp{ chat(id) };
 		if (item == "name") {
-			if (string name{ DD::getGroupName(id) };!name.empty())return grp.Name = name;
+			if (string name{ DD::getGroupName(id) }; !name.empty()) {
+				grp.name(name);
+				return name;
+			}
 		}
 		else if (item == "firstCreate") {
 			return (long long)grp.tCreated;
@@ -282,6 +285,10 @@ AttrVar User::get(const string& item, const AttrVar& val)const {
 	}
 	return val;
 }
+User& User::trust(int n) {
+	dict["trust"] = nTrust = n;
+	return *this;
+}
 bool User::getNick(string& nick, long long group) const
 {
 	if (auto it = strNick.find(group); it != strNick.end() 
@@ -295,16 +302,12 @@ bool User::getNick(string& nick, long long group) const
 	}
 	return false;
 }
-void User::writeb(std::ofstream& fout)
+void User::writeb(std::ofstream& fout) const
 {
 	std::lock_guard<std::mutex> lock_queue(ex_user);
-	set("trust", (int)nTrust);
-	set("tCreated", (long long)tCreated);
-	fwrite(fout, string("ID"));
-	fwrite(fout, ID);
 	if (!empty()) {
 		fwrite(fout, string("Conf"));
-		writeb(fout);
+		AnysTable::writeb(fout);
 	}
 	if (!strNick.empty()) {
 		fwrite(fout, string("Nick"));
@@ -315,7 +318,7 @@ void User::writeb(std::ofstream& fout)
 void User::old_readb(std::ifstream& fin)
 {
 	std::lock_guard<std::mutex> lock_queue(ex_user);
-	ID = fread<long long>(fin);
+	fread<long long>(fin);
 	map<string, int> intConf;
 	fread(fin, intConf);
 	for (auto& [key, val] : intConf) {
@@ -333,8 +336,7 @@ void User::readb(std::ifstream& fin)
 	std::lock_guard<std::mutex> lock_queue(ex_user);
 	string tag;
 	while ((tag = fread<string>(fin)) != "END") {
-		if (tag == "ID")ID = fread<long long>(fin);
-		else if (tag == "Conf")readb(fin);
+		if (tag == "Conf")readb(fin);
 		else if (tag == "Nick")fread(fin, strNick);
 	}
 	nTrust = get_int("trust");
@@ -626,6 +628,10 @@ AttrVar Chat::get(const string& item, const AttrVar& val)const {
 	}
 	return val;
 }
+Chat& Chat::name(const string& s){
+	if (!s.empty())at("name") = Name = s;
+	return *this;
+}
 void Chat::leave(const string& msg) {
 	if (!msg.empty()) {
 		DD::sendGroupMsg(ID, msg);
@@ -637,11 +643,8 @@ void Chat::leave(const string& msg) {
 bool Chat::is_except()const {
 	return has("免黑") || has("协议无效");
 }
-void Chat::writeb(std::ofstream& fout)
-{
-	dict["Name"] = Name;
-	dict["inviter"] = (long long)inviter;
-	dict["tCreated"] = (long long)tCreated;
+void Chat::writeb(std::ofstream& fout) const{
+	//dict["inviter"] = (long long)inviter;
 	fwrite(fout, ID);
 	if (!Name.empty())
 	{
@@ -651,7 +654,7 @@ void Chat::writeb(std::ofstream& fout)
 	if (!empty())
 	{
 		fwrite(fout, static_cast<short>(10));
-		writeb(fout);
+		AnysTable::writeb(fout);
 	}
 	if (!ChConf.empty())
 	{
@@ -662,9 +665,8 @@ void Chat::writeb(std::ofstream& fout)
 }
 void Chat::readb(std::ifstream& fin)
 {
-	ID = fread<long long>(fin);
+	fread<long long>(fin);
 	short tag = fread<short>(fin);
-	AttrVars conf;
 	while (tag != -1)
 	{
 		switch (tag)
@@ -718,10 +720,13 @@ Chat& Chat::setLst(time_t t) {
 	dict["lastMsg"] = (long long)t;
 	return *this;
 }
-string Chat::print(){
+string Chat::print()const{
 	if (string name{ DD::getGroupName(ID) }; !name.empty())Name = name;
 	if (!Name.empty())return "[" + Name + "](" + to_string(ID) + ")";
 	return "群(" + to_string(ID) + ")";
+}
+void Chat::invited(long long id) {
+	set("inviter", inviter = id);
 }
 
 #ifdef _WIN32

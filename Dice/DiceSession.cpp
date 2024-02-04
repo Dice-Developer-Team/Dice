@@ -99,7 +99,7 @@ bool DiceSession::table_del(const string& tab, const string& item) {
 }
 
 bool DiceSession::table_add(const string& tab, int prior, const string& item) {
-	if (!has(tab))set(tab, AttrObject());
+	if (!dict.count(tab))set(tab, AnysTable());
 	get_obj(tab)->set(item,prior);
 	update();
 	return true;
@@ -109,10 +109,9 @@ string DiceSession::table_prior_show(const string& tab) const{
 	return is_table(tab) ? PriorList<AttrVar>(**get_dict(tab)).show() : "";
 }
 
-bool DiceSession::table_clr(const string& tab)
-{
-	if (has(tab)){
-		reset(tab);
+bool DiceSession::table_clr(const string& tab){
+	if (dict.count(tab)){
+		dict.erase(tab);
 		update();
 		return true;
 	}

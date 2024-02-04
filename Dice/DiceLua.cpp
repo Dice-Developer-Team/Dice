@@ -965,7 +965,7 @@ LUADEF(getPlayerCardAttr) {
 LUADEF(getPlayerCard) {
 	if (long long uid{ lua_to_int_or_zero(L, 1) }) {
 		if (lua_type(L, 2) == LUA_TSTRING) {
-			lua_push_Actor(L, getPlayer(uid)[lua_to_gbstring(L, 2)]);
+			lua_push_Actor(L, getPlayer(uid).getCard(lua_to_gbstring(L, 2)));
 		}
 		else {
 			long long gid{ lua_to_int_or_zero(L, 2) };

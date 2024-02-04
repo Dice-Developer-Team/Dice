@@ -1,6 +1,6 @@
 /*
  * 玩家人物卡
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 #include "CharacterCard.h"
 #include "DDAPI.h"
@@ -200,10 +200,10 @@ void CharaCard::setName(const string& strName) {
 void CharaCard::setType(const string& strType) {
 	dict["__Type"] = strType;
 }
-AttrVar CharaCard::get(const string& key){
+AttrVar CharaCard::get(const string& key, const AttrVar& val)const{
 	if (dict.count(key))return dict.at(key);
 	if (auto temp{ getTemplet() }; temp->canGet(key)) {
-		return temp->AttrShapes.at(key).init(this);
+		return temp->AttrShapes.at(key).init(const_cast<CharaCard*>(this));
 	}
 	return {};
 }
@@ -240,6 +240,9 @@ std::optional<string> CharaCard::show(string key) {
 bool CharaCard::has(const string& key)const {
 	return (dict.count(key) && !dict.at(key).is_null())
 		|| getTemplet()->canGet(key);
+}
+bool CharaCard::hasAttr(string& key) const {
+	return dict.count(key) || dict.count(standard(key));
 }
 
 //求key对应掷骰表达式
@@ -326,23 +329,14 @@ void CharaCard::clear() {
 	return Res.show();
 }
 
-bool CharaCard::erase(string& key)
-{
-	if (has(key)) {
-		reset(key);
-		goto Update;
+bool CharaCard::erase(string& key) {
+	if (dict.count(key) || dict.count(key = standard(key))) {
+		dict.erase(key);
 	}
-	key = standard(key);
-	if (has(key)) {
-		reset(key);
-		goto Update;
+	else if (dict.count("&" + key)) {
+		dict.erase("&" + key);
 	}
-	else if (has("&" + key)) {
-		reset("&" + key);
-		goto Update;
-	}
-	return false;
-Update:
+	else return false;
 	update();
 	return true;
 }
@@ -489,7 +483,7 @@ int Player::copyCard(const string& name1, const string& name2, long long group)
 		mCardList.emplace(++indexMax, std::make_shared<CharaCard>(name1));
 		mNameIndex[name1] = indexMax;
 	}
-	*(*this)[name1] << *(*this)[name2];
+	*getCard(name1) << *getCard(name2);
 	return 0;
 }
 PC Player::getCard(const string& name, long long group)
@@ -497,7 +491,18 @@ PC Player::getCard(const string& name, long long group)
 	if (!name.empty() && mNameIndex.count(name))return mCardList[mNameIndex[name]];
 	if (mGroupIndex.count(group))return mCardList[mGroupIndex[group]];
 	if (mGroupIndex.count(0))return mCardList[mGroupIndex[0]];
-	return mCardList[0];
+	return mCardList.begin()->second;
+}
+PC Player::getCardByID(long long id)const {
+	if (mGroupIndex.count(id))return mCardList.at(mGroupIndex.at(id));
+	if (mCardList.count(id))return mCardList.at(id);
+	if (mGroupIndex.count(0))return mCardList.at(mGroupIndex.at(0));
+	return mCardList.begin()->second;
+}
+PC Player::operator[](const string& name)const {
+	if (mNameIndex.count(name))return mCardList.at(mNameIndex.at(name));
+	if (mGroupIndex.count(0))return mCardList.at(mGroupIndex.at(0));
+	return mCardList.begin()->second;
 }
 int Player::emptyCard(const string& s, long long group, const string& type)
 {
@@ -576,8 +581,8 @@ int Player::buildCard(string& name, bool isClear, long long group)
 	if (!strName.empty() && !mNameIndex.count(strName))
 	{
 		if (const int res = newCard(name, group))return res;
-		name = getCard(strName, group)->getName();
-		(*this)[name]->buildv();
+		//PC pc{ getCard(strName, group) };
+		getCard(strName, group)->buildv();
 	}
 	else{
 		auto pc{ getCard(strName, group) };
@@ -588,12 +593,12 @@ int Player::buildCard(string& name, bool isClear, long long group)
 	}
 	return 0;
 }
-string Player::listCard() {
+string Player::listCard() const{
 	ResList Res;
 	for (auto& [idx, pc] : mCardList) {
 		Res << "[" + to_string(idx) + "]<" + pc->get_str("__Type") + ">" + pc->getName();
 	}
-	Res << "default:" + (*this)[0]->getName();
+	Res << "default:" + getCardByID(0)->getName();
 	return Res.show();
 }
 

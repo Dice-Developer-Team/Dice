@@ -140,35 +140,34 @@ void DiceEvent::replyHelp(const std::string& key) {
 	if (console["ReferMsgReply"] && get_ll("msgid"))strReply = "[CQ:reply,id=" + get_str("msgid") + "]" + strReply;
 	AddMsgToQueue(strReply, fromChat);
 }
+static unordered_map<int, string>RollDiceErr{
+	{ Value_Err, "strValueErr" },
+	{ Input_Err, "strInputErr" },
+	{ ZeroDice_Err, "strZeroDiceErr" },
+	{ ZeroType_Err, "strZeroTypeErr" },
+	{ DiceTooBig_Err, "strDiceTooBigErr" },
+	{ TypeTooBig_Err, "strTypeTooBigErr" },
+	{ AddDiceVal_Err, "strAddDiceValErr" },
+};
 void DiceEvent::replyRollDiceErr(int err, const RD& rd) {
 	switch (err) {
 	case 0: break;
 	case Value_Err:
-		replyMsg("strValueErr");
 		break;
 	case Input_Err:
 		set("dice_exp", rd.strDice);
-		replyMsg("strInputErr");
 		break;
 	case ZeroDice_Err:
-		replyMsg("strZeroDiceErr");
-		break;
 	case ZeroType_Err:
-		replyMsg("strZeroTypeErr");
-		break;
 	case DiceTooBig_Err:
-		replyMsg("strDiceTooBigErr");
-		break;
 	case TypeTooBig_Err:
-		replyMsg("strTypeTooBigErr");
-		break;
 	case AddDiceVal_Err:
-		replyMsg("strAddDiceValErr");
 		break;
 	default:
 		replyMsg("strUnknownErr");
-		break;
+		return;
 	}
+	replyMsg(RollDiceErr[err]);
 }
 
 void DiceEvent::replyHidden(const std::string& msgReply) {
@@ -236,7 +235,7 @@ void DiceEvent::fwdMsg(){
 	}
 	if (auto game{ thisGame() }; game && game->is_logging()
 		&& strLowerMessage.find(".log") != 0
-		&& game->is_simple() || game->is_part(fromChat.uid)) {
+		&& (game->is_simple() || game->is_part(fromChat.uid))) {
 		ofstream logout(game->log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(idx_pc(*this).to_str()) + "(" + std::to_string(fromChat.uid) + ") " + printTTime((time_t)get_ll("time")) << endl
 			<< GBKtoUTF8(filter_CQcode(strMsg, fromChat.gid)) << endl << endl;
@@ -3221,7 +3220,7 @@ int DiceEvent::InnerOrder() {
 	int intVal{ 0 };
 		//获取技能原值
 		if (strCurrentValue.empty()) {
-			if (pc && !strAttr.empty() && (pc->stored(strAttr))) {
+			if (pc && !strAttr.empty() && (pc->has(strAttr))) {
 				intVal = pc->get(strAttr).to_int();
 			}
 			else {
@@ -3505,7 +3504,7 @@ int DiceEvent::InnerOrder() {
 		else if (strOption == "build") {
 			string strPC{ strip(filter_CQcode(readRest(), fromChat.gid))};
 			if (!(resno = pl.buildCard(strPC, false, fromChat.gid))) {
-				set("show", pl[strPC]->show(true));
+				set("show", pl.getCard(strPC)->show(true));
 				replyMsg("strPcCardBuild");
 			}
 		}
@@ -4115,28 +4114,42 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strPcLockedWrite");
 			return 1;
 		}
-		ShowList changes;
-		ShowList rolls;
-		ShowList errs;
+		//ShowList changes;
+		//ShowList rolls;
+		//ShowList errs;
+		AttrObject logs;
+		set("cnt", 0);
 		//循环录入
 		while (intMsgCnt != strLowerMessage.length()) {
 			readSkipSpace();
+			AttrObject trans;
+			string attr_name;
+			string attr_new;
 			//判定录入表达式
 			if (strMsg[intMsgCnt] == '&') {
-				set("attr",readToColon()); 
-				if (at("attr").str_empty()) {
-					continue;
+				if (!(attr_name = readToColon()).empty()) {
+					if (pc->set(get_str("attr"), attr_new = readExp())) {
+						set("detailed");
+						trans = AnysTable{ {
+							{"attr", attr_name},
+							{"action", "!"},
+							{"reason", getMsg("strPcTextTooLong")},
+						} };
+					}
+					else {
+						trans = AnysTable{{
+							{"attr", attr_name},
+							{"action", "="},
+							{"new", attr_new},
+						} };
+						inc("cnt");
+					}
+					logs->set(attr_name, trans);
 				}
-				if (pc->set(get_str("attr"), readExp())) {
-					replyMsg("strPcTextTooLong");
-					set("error");
-				}
-				else inc("cnt");
 				continue;
 			}
 			//读取Attr
-			string strAttr = readAttrName();
-			if (strAttr.empty()) {
+			if ((attr_name = readAttrName()).empty()) {
 				readSkipSpace();
 				while (strMsg[intMsgCnt] == '=' || strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '+' ||
 			           strMsg[intMsgCnt] == '-' || strMsg[intMsgCnt] == '*' || strMsg[intMsgCnt] == '/'){
@@ -4145,66 +4158,111 @@ int DiceEvent::InnerOrder() {
 				readDigit(false);
 				continue;
 			}
-			strAttr = pc->standard(strAttr);
+			if (pc->hasAttr(attr_name))trans->set("old", pc->get(attr_name));
+			trans->set("attr", attr_name);
 			while (strLowerMessage[intMsgCnt] ==
 				'=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
 			//判定数值修改
 			if ((strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+')) {
-				AttrVar nVal{ pc->get(strAttr)};
-				RD Mod(nVal.to_str() + readDice());
-				if (!Mod.Roll()) {
-					changes << strAttr + ": " + Mod.FormCompleteString();
-					pc->set(strAttr, Mod.intTotal);
+				AttrVar& attr_old{ trans->at("old") = pc->get(attr_name) };
+				RD Mod(attr_old.to_str() + readDice());
+				if (int eno{ Mod.Roll() }; !eno) {
+					trans->set("action", "+=");
+					trans->set("expr", Mod.FormCompleteString());
+					set("detailed");
+					trans->set("new", Mod.intTotal);
+					pc->set(attr_name, Mod.intTotal);
 					while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] ==
 						'|')intMsgCnt++;
 					inc("cnt");
 				}
-				else
-					errs << strAttr + ": 表达式出错";
+				else {
+					set("detailed");
+					trans->set("action", "!");
+					trans->set("reason", RollDiceErr.count(eno)
+						? getMsg(RollDiceErr[eno]) : getMsg("strUnknownErr"));
+				}
+				logs->set(attr_name, trans);
 				continue;
 			}
 			//判定录入文本
-			else if (!isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
+			else if (strLowerMessage.length() != intMsgCnt
+				&& !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
 				&& !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
 				if (string strVal{ trustedQQ(fromChat.uid) > 0 ? readUntilSpace() : filter_CQcode(readUntilSpace()) };
-					!pc->set(strAttr, strVal)) {
+					!pc->set(attr_name, strVal)) {
+					trans->set("action", trans->has("old")
+						? (set("detailed"), "->") : ":");
+					trans->set("new", strVal);
 					inc("cnt");
 				}
-				else
-					errs << strAttr + ": 文本过长";
+				else {
+					set("detailed");
+					trans->set("action", "!");
+					trans->set("reason", getMsg("strPcTextTooLong"));
+				}
+				logs->set(attr_name, trans);
 				continue;
 			}
 			//录入纯数值
 			string strSkillVal = readDigit();
-			if (strSkillVal.empty()) {
-				errs << strAttr + ": 属性为空";
-				break;
+			if (attr_name.empty()) {
+				continue;
 			}
-			else if (strAttr.empty()) {
-				errs << strSkillVal + "无属性名";
+			else if (strSkillVal.empty()) {
+				set("detailed");
+				trans->set("action", "!");
+				trans->set("reason", "Input Empty");
+				logs->set(attr_name, trans);
+				break;
 			}
 			else if (strSkillVal.length() > 9) {
-				errs << strAttr + ": 数值过大";
+				set("detailed");
+				trans->set("action", "!");
+				trans->set("reason", "数值过大");
+				logs->set(attr_name, trans);
 				break;
 			}
-			else {
-				int intSkillVal = stoi(strSkillVal);
-				if (!pc->set(strAttr, intSkillVal)) inc("cnt");
+			else{
+				if (int intSkillVal = stoi(strSkillVal); trans->get("old") != intSkillVal
+					&& !pc->set(attr_name, intSkillVal)) {
+					inc("cnt");
+					trans->set("action", trans->has("old")
+						? (set("detailed"), "->") : ":");
+					trans->set("new", intSkillVal);
+					logs->set(attr_name, trans);
+				}
 			}
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')
 				intMsgCnt++;
 		}
-		if (!changes.empty()) {
-			set("change", changes.show("\n"));
-			replyMsg("strStModify");
+		if (is("detailed")) {
+			ShowList res;
+			for (auto& [attr, trans] : logs->as_dict()) {
+				auto tx{ trans.to_obj() };
+				if (auto ax{ tx->get_str("action") }; ax == ":") {
+					res << attr + ": " + tx->get_str("new");
+				}
+				else if (ax == "->") {
+					res << attr + ": " + tx->get_str("old") + "->" + tx->get_str("new");
+				}
+				else if (ax == "+=") {
+					res << attr + "=" + tx->get_str("expr");
+				}
+				else if (ax == "=") {
+					res << attr + "=" + tx->get_str("new");
+				}
+				else if (ax == "!") {
+					res << attr + "≠ " + tx->get_str("reason");
+				}
+			}
+			set("detail", res.show("\n"));
+			replyMsg("strStDetail");
 		}
-		else if (has("cnt")) {
+		else if (get_int("cnt")) {
 			replyMsg("strSetPropSuccess");
 		}
-		if (!errs.empty()) {
-			set("err", errs.show("\n"));
-			replyMsg("strStErr");
-		}
+		else replyHelp("st");
 		return 1;
 	}
 	else if (pref2 == "ti") {
@@ -4490,7 +4548,7 @@ int DiceEvent::InnerOrder() {
 					}
 					dices << strForm;
 				}
-				set("res",dices.dot(", ").line(7).show());
+				set("res",dices.dot(", ").line(8).show());
 			}
 			else {
 				if (isStatic)pc->cntRollStat(rdMainDice.intTotal, intDefaultDice);
@@ -4583,17 +4641,18 @@ bool DiceEvent::DiceFilter()
 	if (!is("order_off") && (fmt->listen_order(this) || InnerOrder())) {
 		return monitorFrq();
 	}
-	auto game{ thisGame() };
-	if (auto ruleName{ getGameRule() }; ruleName
-		&& (game->is_part(fromChat.uid))
-		&& ruleset->has_rule(*ruleName)
-		&& (game->has("tape") && ruleset->get_rule(*ruleName)->listen_cassette(game->get_str("tape"), this))
-			|| ruleset->get_rule(*ruleName)->listen_order(this)) {
-		return monitorFrq();
-	}
-	else if (game && game->is_part(fromChat.uid)
-		&& fmt->listen_game(this)) {
-		return monitorFrq();
+	if (auto game{ thisGame() }) {
+		if (auto ruleName{ getGameRule() }; ruleName
+			&& (game->is_part(fromChat.uid))
+			&& ruleset->has_rule(*ruleName)
+			&& ((game->has("tape") && ruleset->get_rule(*ruleName)->listen_cassette(game->get_str("tape"), this))
+				|| ruleset->get_rule(*ruleName)->listen_order(this))) {
+			return monitorFrq();
+		}
+		else if (game->is_part(fromChat.uid)
+			&& fmt->listen_game(this)) {
+			return monitorFrq();
+		}
 	}
 	if (fmt->listen_reply(this)) {
 		return monitorFrq();
@@ -4649,7 +4708,7 @@ void DiceEvent::virtualCall() {
 	DiceFilter();
 }
 std::optional<string> DiceEvent::getGameRule() {
-	if (auto game{ thisGame() }; game->has("rule")) {
+	if (auto game{ thisGame() }; game && game->has("rule")) {
 		return game->get_str("rule");
 	}
 	return std::nullopt;

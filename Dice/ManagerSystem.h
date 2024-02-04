@@ -61,22 +61,22 @@ class User :public AnysTable
 {
 public:
 	MetaType getType()const override { return MetaType::Context; }
-	long long ID = 0;
+	const long long ID = 0;
 	//1-私用信任，2-拉黑豁免，3-加黑退群，4-后台管理，5-Master
 	int nTrust = 0;
 	time_t tCreated = time(nullptr);
 
 	explicit User(long long id): ID(id){}
 	unordered_map<long long, string> strNick{};
-	std::mutex ex_user;
+	mutable std::mutex ex_user;
 	bool has(const string& key)const override;
 	AttrVar get(const string& key, const AttrVar& val = {})const override;
 
-	User& create(time_t tt)
+	/*User& create(time_t tt)
 	{
-		if (tt < tCreated)tCreated = tt;
+		if (tt < tCreated)at("tCreated") = long long(tCreated = tt);
 		return *this;
-	}
+	}*/
 
 	User& update(time_t tt) {
 		dict["tUpdated"] = (long long)tt;
@@ -84,12 +84,7 @@ public:
 	}
 	time_t updated()const { return get_ll("tUpdated"); }
 
-	User& trust(int n)
-	{
-		nTrust = n;
-		dict["trust"] = n;
-		return *this;
-	}
+	User& trust(int n);
 
 	[[nodiscard]] bool empty() const;
 
@@ -126,7 +121,7 @@ public:
 		strNick.clear();
 	}
 
-	void writeb(std::ofstream& fout);
+	void writeb(std::ofstream& fout) const;
 
 	void old_readb(std::ifstream& fin);
 	void readb(std::ifstream& fin);
@@ -152,18 +147,17 @@ string forward_filter(const string&, long long fromGID = 0);
 extern const map<string, short> mChatConf;
 
 //群聊记录
-class Chat :public AnysTable
-{
+class Chat :public AnysTable {
+	mutable string Name;
 public:
 	MetaType getType()const override { return MetaType::Context; }
+	const long long ID = 0;
 	long long inviter = 0;
-	long long ID = 0;
-	mutable string Name = "";
 	time_t tCreated = time(nullptr);
 
 	explicit Chat(long long id):ID(id) {}
 
-	map<long long, AnysTable>ChConf;
+	unordered_map<long long, AnysTable>ChConf;
 
 	bool has(const string& key)const override;
 	AttrVar get(const string& key, const AttrVar& val = {})const override;
@@ -172,18 +166,10 @@ public:
 	void rmLst() { reset("lastMsg"); }
 	Chat& setLst(time_t t);
 
-	Chat& name(string s)
-	{
-		Name = std::move(s);
-		return *this;
-	}
-	string print();
+	Chat& name(const string& s);
+	string print()const override;
 
-	Chat& create(time_t tt)
-	{
-		if (tt < tCreated)tCreated = tt;
-		return *this;
-	}
+	//Chat& create(time_t tt);
 
 	Chat& update();
 	Chat& update(time_t tt);
@@ -207,6 +193,7 @@ public:
 		update();
 		return *this;
 	}
+	void invited(long long id);
 	int getConf(const string& key, int def = 0) {
 		if (has(key))return get_int(key);
 		return def;
@@ -234,7 +221,7 @@ public:
 		return res.dot("+").show();
 	}
 
-	void writeb(std::ofstream& fout);
+	void writeb(std::ofstream& fout) const;
 
 	void readb(std::ifstream& fin);
 };

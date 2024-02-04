@@ -258,10 +258,7 @@ public:
 	//can get attr by card or temp
 	//bool available(const string& key) const;
 
-	bool stored(string& key) const{
-		key = standard(key);
-		return has(key) || getTemplet()->canGet(key);
-	}
+	bool hasAttr(string& key) const;
 
 	void cntRollStat(int die, int face);
 
@@ -344,7 +341,7 @@ public:
 
 	int copyCard(const string& name1, const string& name2, long long group = 0);
 
-	string listCard();
+	string listCard() const;
 
 	string listMap()
 	{
@@ -359,20 +356,12 @@ public:
 
 	PC getCard(const string& name, long long group = 0);
 
-	PC operator[](long long id)
-	{
-		if (mGroupIndex.count(id))return mCardList[mGroupIndex[id]];
-		if (mCardList.count(id))return mCardList[id];
-		if (mGroupIndex.count(0))return mCardList[mGroupIndex[0]];
-		return mCardList[0];
+	PC getCardByID(long long id) const;
+	PC operator[](long long id) const {
+		return getCardByID(id);
 	}
 
-	PC operator[](const string& name)
-	{
-		if (mNameIndex.count(name))return mCardList[mNameIndex[name]];
-		if (mGroupIndex.count(0))return mCardList[mGroupIndex[0]];
-		return mCardList[0];
-	}
+	PC operator[](const string& name) const;
 
 	void writeb(std::ofstream& fout) const;
 

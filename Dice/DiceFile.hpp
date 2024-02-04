@@ -462,14 +462,6 @@ void fprint(std::ofstream& fout, C obj)
 	obj.save(fout);
 }
 
-template <typename T1, typename T2>
-void fprint(std::ofstream& fout, std::pair<T1, T2> t)
-{
-	fprint(fout, t.first);
-	fout << "\t";
-	fprint(fout, t.second);
-}
-
 template <typename T>
 bool clrEmpty(const std::filesystem::path& fpPath, const T& tmp)
 {
@@ -501,6 +493,10 @@ void fwrite(ofstream& fout, const C& obj)
 {
 	obj.writeb(fout);
 }
+template <class C, void(C::* U)(std::ofstream&) const = &C::writeb>
+void fwrite(ofstream& fout, const std::shared_ptr<C>& obj){
+	obj->writeb(fout);
+}
 
 template <class C, void(C::* U)(std::ofstream&) = &C::writeb>
 void fwrite(ofstream& fout, C& obj)
@@ -518,17 +514,6 @@ void fwrite(ofstream& fout, const std::map<T1, T2>&m)
 	{
 		fwrite(fout, it.first);
 		fwrite(fout, it.second);
-	}
-}
-template <typename T1, typename T2>
-void fwrite(ofstream& fout, const std::map<T1, std::shared_ptr<T2>>& m)
-{
-	const auto len = static_cast<short>(m.size());
-	fwrite(fout, len);
-	for (const auto& it : m)
-	{
-		fwrite(fout, it.first);
-		fwrite(fout, *it.second);
 	}
 }
 template <typename T1, typename T2>
@@ -617,36 +602,6 @@ void saveFile(const std::filesystem::path& fpPath, const unordered_map<TKey, TVa
 }
 
 template <typename T, class C, void(C::* U)(std::ofstream&) const = &C::writeb>
-void saveBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
-{
-	if (clrEmpty(fpPath, m))return;
-	std::ofstream fout(fpPath, ios::out | ios::trunc | ios::binary);
-	const int len = m.size();
-	fwrite<int>(fout, len);
-	for (auto& [key,val] : m)
-	{
-		fwrite(fout, key);
-		fwrite(fout, val);
-	}
-	fout.close();
-}
-
-template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
-void saveBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
-{
-	if (clrEmpty(fpPath, m))return;
-	std::ofstream fout(fpPath, ios::out | ios::trunc | ios::binary);
-	const int len = m.size();
-	fwrite<int>(fout, len);
-	for (auto& [key, val] : m)
-	{
-		fwrite(fout, key);
-		fwrite(fout, val);
-	}
-	fout.close();
-}
-
-template <typename T, class C, void(C::* U)(std::ofstream&) const = &C::writeb>
 void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 {
 	if (clrEmpty(fpPath, m))return;
@@ -661,7 +616,7 @@ void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 	fout.close();
 }
 
-template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
+template <typename T, class C, void(C::* U)(std::ofstream&) const = &C::writeb>
 void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, std::shared_ptr<C>>& m)
 {
 	if (clrEmpty(fpPath, m))return;
@@ -674,21 +629,6 @@ void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, std::s
 		val->writeb(fout);
 	}
 	fout.close();
-}
-
-//∂¡»°Œ±xml
-template <class C, std::string(C::* U)() = &C::writet>
-void saveXML(const std::string& strPath, C& obj)
-{
-	std::ofstream fout(strPath);
-	fout << obj.writet();
-}
-
-template <class C, std::string(C::* U)() = &C::writet>
-void saveXML(const std::filesystem::path& fpPath, C& obj)
-{
-	std::ofstream fout(fpPath);
-	fout << obj.writet();
 }
 
 std::string getNativePathString(const std::filesystem::path& fpPath);
