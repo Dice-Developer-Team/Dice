@@ -282,7 +282,15 @@ R"( //私骰作成 即可成为我的主人~
 参考文档参看.help链接)";
 		DD::debugMsg(msgInit);
 	}
-	DD::debugLog("DiceConsole.load");
+	try {
+		js_global_init();
+#ifdef DICE_PYTHON
+		if (console["EnablePython"])py = make_unique<PyGlobal>();
+#endif //DICE_PYTHON
+	}
+	catch (const std::exception& e) {
+		console.log(string("初始化js/python环境失败!") + e.what(), 1, printSTNow());
+	}
 	fmt = make_unique<DiceModManager>();
 	try {
 		std::unique_lock lock(GlobalMsgMutex);
@@ -293,15 +301,6 @@ R"( //私骰作成 即可成为我的主人~
 	}
 	catch (const std::exception& e) {
 		console.log(string("读取/conf/CustomMsg.json失败!") + e.what(), 1, printSTNow());
-	}
-	try {
-		js_global_init();
-#ifdef DICE_PYTHON
-		if (console["EnablePython"])py = make_unique<PyGlobal>();
-#endif //DICE_PYTHON
-	}
-	catch (const std::exception& e) {
-		console.log(string("初始化js/python环境失败!") + e.what(), 1, printSTNow());
 	}
 	loadData();
 	//初始化黑名单

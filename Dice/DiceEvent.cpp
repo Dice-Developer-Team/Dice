@@ -1661,9 +1661,9 @@ int DiceEvent::BasicOrder()
 		}
 		else if (action == "master") {
 			auto gms{ game->get_gm() };
-			if (game->is_gm(fromChat.uid)) {
+			if (!gms->count(fromChat.uid)) {
 				if (gms->empty() ? canRoomHost() : DD::isGroupAdmin(fromChat.gid, fromChat.uid, false)) {
-					auto game{ thisGame() }; game->add_gm(fromChat.uid);
+					game->add_gm(fromChat.uid);
 					replyMsg("strGameMastered");
 				}
 				else {

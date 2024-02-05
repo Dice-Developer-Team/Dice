@@ -23,11 +23,8 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <fstream>
 #include <utility>
-#include <vector>
 #include <stack>
-#include <mutex>
 #include <mutex>
 #include "CQTools.h"
 #include "RDConstant.h"
@@ -38,7 +35,7 @@
 #include "MsgFormat.h"
 #include "CardDeck.h"
 #include "DiceEvent.h"
-#include "DiceAttrVar.h"
+#include "DiceJS.h"
 
 using std::string;
 using std::to_string;
@@ -46,6 +43,7 @@ using std::vector;
 using std::map;
 using xml = tinyxml2::XMLDocument;
 class CharaCard;
+class CardTemp;
 
 inline unordered_map<string, short> mCardTag = {
 	{"Name", 1},
@@ -69,11 +67,11 @@ public:
 	AttrShape(const string& s):defVal(s){}
 	AttrShape(const string& s, TextType tt) :defVal(s), textType(tt){}
 	DataType type{ DataType::Any };
-	string title;
+	//string title;
 	vector<string> alias;
 	TextType textType{ TextType::Plain };
 	AttrVar defVal;
-	AttrVar init(CharaCard*);
+	AttrVar init(ptr<CardTemp>, CharaCard*);
 	int check(AttrVar& val);
 	bool equalDefault(const AttrVar& val)const { return TextType::Plain == textType && val == defVal; }
 };
@@ -99,17 +97,21 @@ public:
 	//作成时生成
 	vector<vector<string>> vBasicList = {};
 	//元表
-	fifo_dict_ci<AttrShape> AttrShapes;
+	dict_ci<AttrShape> AttrShapes;
 	//生成参数
 	dict_ci<CardPreset> presets = {};
+	//
+	string script;
+	ptr<js_context> js_ctx;
 	CardTemp() = default;
 
 	CardTemp(const string& type, const dict_ci<>& replace, vector<vector<string>> basic,
 		const dict_ci<>& dynamic, const dict_ci<>& exps,
-		const dict_ci<int>& def_skill, const dict_ci<CardPreset>& option = {}) : type(type),
+		const dict_ci<int>& def_skill, const dict_ci<CardPreset>& option = {},
+		const string& s = {}) : type(type),
 			                                                            replaceName(replace), 
 		                                                                vBasicList(basic), 
-		presets(option)
+		presets(option),script(s)
 	{
 		for (auto& [attr, exp] : dynamic) {
 			AttrShapes[attr] = AttrShape(exp, AttrShape::TextType::Dicexp);
@@ -122,6 +124,7 @@ public:
 		}
 	}
 	CardTemp& merge(const CardTemp& other);
+	void init();
 	bool equalDefault(const string& attr, const AttrVar& val)const { return AttrShapes.count(attr) && AttrShapes.at(attr).equalDefault(val); }
 
 	//CardTemp(const xml* d) { }
@@ -220,16 +223,7 @@ public:
 	//计算表达式
 	std::optional<int> cal(string exp);
 
-	void build(const string& para)
-	{
-		if (const auto it = getTemplet()->presets.find(para);
-			it != getTemplet()->presets.end()) {
-			auto& preset = it->second;
-			for (auto& [attr, shape] : preset.shapes) {
-				if (!dict.count(attr) || dict.at(attr).is_null())set(attr, shape.init(this));
-			}
-		}
-	}
+	void build(const string& para);
 
 	//解析生成参数
 	void buildv(string para = "");

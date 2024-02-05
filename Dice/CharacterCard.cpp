@@ -4,6 +4,7 @@
  */
 #include "CharacterCard.h"
 #include "DDAPI.h"
+#include "quickjs.h"
 #include "DiceJS.h"
 #include "DiceMod.h"
 
@@ -29,9 +30,13 @@ AttrShape::AttrShape(const tinyxml2::XMLElement* node, bool isUTF8) {
 		defVal = AttrVar::parse(s);
 	}
 }
-AttrVar AttrShape::init(CharaCard* pc) {
+AttrVar AttrShape::init(ptr<CardTemp> temp, CharaCard* pc) {
 	if (textType == TextType::JavaScript) {
-		return js_context_eval(defVal, pc->shared_from_this());
+		if (auto ret = temp->js_ctx->evalStringLocal(defVal, temp->type, pc->shared_from_this());
+			!JS_IsException(ret)) {
+			return temp->js_ctx->getValue(ret);
+		}
+		else console.log("生成<" + temp->type + ">属性时执行js失败!\n" + temp->js_ctx->getException(), 0b10);
 	}
 	else if (textType == TextType::Dicexp && !defVal.is_null()) {
 		if (auto exp{ fmt->format(defVal, pc->shared_from_this()) }; exp.is_text()) {
@@ -149,6 +154,9 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 							if (auto opt{ kid->Attribute("name") })tp.presets[Text2GBK(opt)] = CardPreset(kid, isUTF8);
 						}
 					}
+					else if (tag == "script") {
+						tp.script = Text2GBK(elem->GetText());
+					}
 				}
 				return 1;
 			}
@@ -164,10 +172,20 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 CardTemp& CardTemp::merge(const CardTemp& other) {
 	if (type.empty())type = other.type;
 	map_merge(AttrShapes, other.AttrShapes);
+	if (!other.script.empty())script += "\n" + other.script;
 	for (auto& [opt, preset] : other.presets) {
 		map_merge(presets[opt].shapes, preset.shapes);
 	}
 	return *this;
+}
+void CardTemp::init() {
+	js_ctx = std::make_shared<js_context>();
+	if (!script.empty()) {
+		if (auto ret{ js_ctx->evalString(script, "model.init") };
+			JS_IsException(ret)) {
+			console.log("初始化<" + type + ">js脚本失败!\n" + js_ctx->getException(), 0b10);
+		}
+	}
 }
 string CardTemp::show() {
 	ResList res;
@@ -203,7 +221,7 @@ void CharaCard::setType(const string& strType) {
 AttrVar CharaCard::get(const string& key, const AttrVar& val)const{
 	if (dict.count(key))return dict.at(key);
 	if (auto temp{ getTemplet() }; temp->canGet(key)) {
-		return temp->AttrShapes.at(key).init(const_cast<CharaCard*>(this));
+		return temp->AttrShapes.at(key).init(temp, const_cast<CharaCard*>(this));
 	}
 	return {};
 }
@@ -226,7 +244,7 @@ int CharaCard::set(string key, const AttrVar& val) {
 string CharaCard::print(const string& key){
 	if (dict.count(key))return dict.at(key).print();
 	if (auto temp{ getTemplet() }; temp->canGet(key)) {
-		return temp->AttrShapes.at(key).init(this).print();
+		return temp->AttrShapes.at(key).init(temp, this).print();
 	}
 	return {};
 }
@@ -252,8 +270,8 @@ string CharaCard::getExp(string& key, std::unordered_set<string> sRef){
 	auto val = dict.find("&" + key);
 	if (val != dict.end())return escape(val->second.to_str(), sRef);
 	else if ((val = dict.find(key)) != dict.end())return escape(val->second.to_str(), sRef);
-	else if (auto exp = temp->AttrShapes.find("&" + key); exp != temp->AttrShapes.end())return escape(exp->second.init(this).to_str(), sRef);
-	else if (auto exp = temp->AttrShapes.find(key); exp != temp->AttrShapes.end())return escape(exp->second.init(this).to_str(), sRef);
+	else if (auto exp = temp->AttrShapes.find("&" + key); exp != temp->AttrShapes.end())return escape(exp->second.init(temp, this).to_str(), sRef);
+	else if (auto exp = temp->AttrShapes.find(key); exp != temp->AttrShapes.end())return escape(exp->second.init(temp, this).to_str(), sRef);
 	return "0";
 }
 bool CharaCard::countExp(const string& key)const {
@@ -280,6 +298,17 @@ std::optional<int> CharaCard::cal(string exp){
 	return std::nullopt;
 }
 
+void CharaCard::build(const string& para)
+{
+	auto tmp{ getTemplet() };
+	if (const auto it = tmp->presets.find(para);
+		it != tmp->presets.end()) {
+		auto& preset = it->second;
+		for (auto& [attr, shape] : preset.shapes) {
+			if (!dict.count(attr) || dict.at(attr).is_null())set(attr, shape.init(tmp, this));
+		}
+	}
+}
 void CharaCard::buildv(string para)
 {
 	std::stack<string> vOption;
@@ -554,12 +583,12 @@ int Player::newCard(string& s, long long group, string type)
 		vOption.pop();
 		card->build(para);
 		if (card->getName().empty() && temp->presets.count(para) && temp->presets[para].shapes.count("__Name")) {
-			if (!mNameIndex.count(s = temp->presets[para].shapes["__Name"].init(card.get())))card->setName(s);
+			if (!mNameIndex.count(s = temp->presets[para].shapes["__Name"].init(temp, card.get())))card->setName(s);
 		}
 	}
 	if (card->getName().empty()){
 		if (temp->presets.count("pc") && temp->presets["pc"].shapes.count("__Name")) {
-			if (!mNameIndex.count(s = temp->presets["pc"].shapes["__Name"].init(card.get())))card->setName(s);
+			if (!mNameIndex.count(s = temp->presets["pc"].shapes["__Name"].init(temp, card.get())))card->setName(s);
 		}
 		if (card->getName().empty())card->setName(to_string(indexMax + 1));
 	}

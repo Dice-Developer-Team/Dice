@@ -1274,6 +1274,9 @@ void DiceModManager::build() {
 	if (rules_new->build())resLog << "注册规则集 " + to_string(rules_new->rules.size()) + " 部";
 	ruleset.swap(rules_new);
 	if (cntModel)resLog << "注册角色卡模板 " + to_string(rules_new->rules.size()) + " 版";
+	for (auto& [name, model] : models) {
+		model->init();
+	}
 	if (cntModel || CardModels.size() > 2)CardModels.swap(models);
 	if (cntSpeech += map_merge(global_speech, EditedMsg))
 		resLog << "注册speech " + to_string(cntSpeech) + " 项";
