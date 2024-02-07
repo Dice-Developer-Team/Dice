@@ -163,7 +163,7 @@ public:
 	string show()const;
 	bool has(const string& key)const override;
 	AttrVar get(const string& key, const AttrVar& val = {})const override;
-	void set(const string& key, const AttrVar& val){
+	void set(const string& key, const AttrVar& val) override {
 		if (!key.empty()) {
 			if (val.is_null())dict.erase(key);
 			else dict[key] = val;

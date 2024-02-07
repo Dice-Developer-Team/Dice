@@ -26,9 +26,7 @@
 
 #ifndef DICE_MSG_FORMAT
 #define DICE_MSG_FORMAT
-#include <string>
 #include <map>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include "STLExtern.hpp"

@@ -26,7 +26,6 @@
 #include <Windows.h>
 #endif
 #include "GlobalVar.h"
-#include "MsgFormat.h"
 #include "DiceExtensionManager.h"
 #include "DiceMod.h"
 
@@ -102,7 +101,7 @@ const dict_ci<string> PlainMsg
 	{"strGameExited","玩家{nick}已退出游戏√"},
 	{"strGameNotJoined","嗯？{nick}原来有在桌上吗？"},
 	{"strGameNotMaster","请{nick}让这桌的GM进行此操作×"},
-	{"strGameVoidHere","{self}连桌布还没铺上，{nick}就要动桌子么？"},
+	{"strGameVoidHere","{self}连桌布还没铺上，{nick}就要动桌子么？(请先.game new 新建游戏)"},
 	{"strGameNotExit","{self}不记得有一桌叫{game_id}的游戏了×"},
 	{"strGameItemSet","{self}已将本桌游戏的{set_item}设置为{set_val}√"},
 	{"strGameItemShow","本桌游戏的{set_item}为{set_val}√"},
@@ -671,8 +670,8 @@ mod按序读取，且从后向前覆盖)"},
 {"r","掷骰：.r [掷骰表达式] ([掷骰原因]) [掷骰表达式]：([掷骰轮数]#)[骰子个数]d骰子面数(p[惩罚骰个数])(k[取点数最大的骰子数])不带参数时视为掷一个默认骰\n合法参数要求掷骰轮数1-10，奖惩骰个数1-9，个数范围1-100，面数范围1-1000\n.r3#d\t//3轮掷骰\n.rh心理学 暗骰\n.rs1D10+1D6+3 沙鹰伤害\t//rs省略单个骰子的点数，直接给结果"},
 {"暗骰","群聊限定，掷骰指令后接h视为暗骰，结果将私发本人和群内ob的用户\n为了保证发送成功，请加骰娘好友"},
 {"reply",R"(自定义回复：.reply
-.reply on/off 开启/关闭群内回复
-回复触发顺序：指令->完全Match->前缀Prefix->模糊Search->正则Regex
+.reply on/off 开/关群内回复
+触发顺序：指令->回复 完全Match->前缀Prefix->模糊Search->正则Regex
 //以下操作回复指令仅admin可用
 .reply set
 Type=[回复性质](Reply/Order)
@@ -885,14 +884,14 @@ Type=[回复性质](Reply/Order)
 .group diver //查看潜水成员
 .group +/-[群管词条] //为群加减设置，需要对应权限
 例:.group +禁用回复 //关闭本群自定义回复
-群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/许可使用/免清/免黑)"
+群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/许可使用/免清/免黑)"
 	},
 	{ "groups_list", "&取群列表" },
 	{ "取群列表", R"(取群列表.groups list(管理限定)
 .groups list idle //按闲置天数降序列出群
 .groups list size //按群规模降序列出群
 .groups list [群管词条] //列出带有词条的群
-群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/许可使用/免清/免黑)" },
+群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/许可使用/免清/免黑)" },
 	{"消息链接","&link"},
 	{"link",R"(消息链接.link
 .link [转发方向] [对象窗口] 建立本窗口与对象窗口的转发
@@ -920,7 +919,7 @@ Type=[回复性质](Reply/Order)
 Ignore //无视
 Notice //仅在0级窗口通知
 Caution //提醒用户，并在1级窗口提醒
-Warning //【默认等级】警告用户，并在1级窗口提醒
+Warning //【默认】警告用户，并在1级窗口提醒
 Danger //警告用户且拒绝指令，并在3级窗口警告
 *请避免为纯字母/数字的敏感词设置较高触发等级，这些字符存在误匹配图片码的可能性
 # 词库批量加载方式见手册)" },

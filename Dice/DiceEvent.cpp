@@ -3412,11 +3412,20 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strPermissionDeniedErr");
 			return 1;
 		}
-		string& option { (at("option") = "½ûÓÃob").text };
-		if (strOption == "off") {
-			if (groupset(fromChat.gid, option) < 1) {
-				chat(fromChat.gid).set(option);
-				if (auto game{ thisGame() })game->clear_ob();
+		auto game{ thisGame() };
+		if (strOption == "join") {
+			if (!game || !game->is("no_ob")) {
+				sessions.get(fromChat)->ob_enter(this);
+			}
+			else replyMsg("strObOffAlready");
+			return 1;
+		}
+		else if (!game) {
+			replyMsg("strGameVoidHere");
+		}
+		else if (strOption == "off") {
+			if (!game->is("no_ob")) {
+				game->set("no_ob", true);
 				replyMsg("strObOff");
 			}
 			else {
@@ -3425,24 +3434,14 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		if (strOption == "on") {
-			if (groupset(fromChat.gid, option) > 0) {
-				chat(fromChat.gid).reset(option);
+			if (game->is("no_ob")) {
+				game->reset("no_ob");
 				replyMsg("strObOn");
 			}
 			else {
 				replyMsg("strObOnAlready");
 			}
 			return 1;
-		}
-		if (groupset(fromChat.gid, option) > 0) {
-			replyMsg("strObOffAlready");
-			return 1;
-		}
-		if (strOption == "join") {
-			sessions.get(fromChat)->ob_enter(this);
-		}
-		else if (auto game{ thisGame() }; !game) {
-			replyMsg("strObListEmpty");
 		}
 		else if (strOption == "list") {
 			auto game{ thisGame() }; game->ob_list(this);

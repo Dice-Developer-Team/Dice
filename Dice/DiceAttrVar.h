@@ -256,7 +256,7 @@ public:
 	bool empty()const;
 	virtual string print()const;
 	virtual bool has(const string& key)const;
-	void set(const string& key, const AttrVar& val);
+	virtual void set(const string& key, const AttrVar& val);
 	void set(const string& key);
 	void set(int i, const AttrVar& val);
 	void reset(const string& key);
