@@ -8,6 +8,10 @@
 #include "DiceJS.h"
 #include "DiceMod.h"
 
+static dict_ci<trigger_time> trigger_names{
+	{ "after_update",trigger_time::AfterUpdate },
+};
+
 #define Text2GBK(s) (s ? (isUTF8 ? UTF8toGBK(s) :s) : "")
 AttrShape::AttrShape(const tinyxml2::XMLElement* node, bool isUTF8) {
 	if (auto text{ node->Attribute("alias") }) {
@@ -138,7 +142,7 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 							if (auto text{ kid->GetText() })tp.vBasicList.push_back(getLines(Text2GBK(text)));
 						}
 					}
-					else if (tag == "init") {
+					else if (tag == "property") {
 						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
 							if (auto name{ kid->Attribute("name") }) {
 								string attr{ Text2GBK(name) };
@@ -156,6 +160,15 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 					}
 					else if (tag == "script") {
 						tp.script = Text2GBK(elem->GetText());
+						for (auto kid = elem->FirstChildElement(); kid; kid = kid->NextSiblingElement()) {
+							if (auto name{ kid->Attribute("name") }; name && string(kid->Name()) == "trigger") {
+								string trigger_name{ Text2GBK(name) };
+								//auto& trigger{ tp.triggers[trigger_name] };
+								tp.triggers.emplace(trigger_name, CardTrigger{ trigger_name,
+									trigger_names[Text2GBK(kid->Attribute("time"))],
+									Text2GBK(kid->GetText()) });
+							}
+						}
 					}
 				}
 				return 1;
@@ -176,6 +189,7 @@ CardTemp& CardTemp::merge(const CardTemp& other) {
 	for (auto& [opt, preset] : other.presets) {
 		map_merge(presets[opt].shapes, preset.shapes);
 	}
+	map_merge(triggers, other.triggers);
 	return *this;
 }
 void CardTemp::init() {
@@ -185,6 +199,9 @@ void CardTemp::init() {
 			JS_IsException(ret)) {
 			console.log("初始化<" + type + ">js脚本失败!\n" + js_ctx->getException(), 0b10);
 		}
+	}
+	if (!triggers.empty())for (auto& [name, trigger] : triggers) {
+		triggers_by_time.emplace(trigger.time, trigger);
 	}
 }
 string CardTemp::show() {
@@ -197,6 +214,14 @@ string CardTemp::show() {
 		res << "预设属性:" + resVar.show("/");
 	}
 	return "pc模板:" + type + res.show();
+}
+void CardTemp::after_update(const ptr<AnysTable>& eve) {
+	for (auto& [t, trigger] : multi_range(triggers_by_time, trigger_time::AfterUpdate)) {
+		if (auto ret = js_ctx->evalStringLocal(trigger.script, trigger.name, eve);
+			JS_IsException(ret)) {
+			console.log("执行<" + type + ">after_update触发器" + trigger.name + "失败!\n" + js_ctx->getException(), 0b10);
+		}
+	}
 }
 
 ptr<CardTemp> CharaCard::getTemplet()const{
@@ -260,7 +285,7 @@ bool CharaCard::has(const string& key)const {
 		|| getTemplet()->canGet(key);
 }
 bool CharaCard::hasAttr(string& key) const {
-	return dict.count(key) || dict.count(standard(key));
+	return dict.count(key) || dict.count(key = standard(key));
 }
 
 //求key对应掷骰表达式
@@ -630,7 +655,6 @@ string Player::listCard() const{
 	Res << "default:" + getCardByID(0)->getName();
 	return Res.show();
 }
-
 
 void Player::writeb(std::ofstream& fout) const
 {

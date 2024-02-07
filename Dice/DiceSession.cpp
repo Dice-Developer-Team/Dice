@@ -91,11 +91,21 @@ string DiceSession::show()const {
 	return li.show("\n");
 }
 
+bool DiceSession::del_pl(long long uid) {
+	if (player->count(uid)) {
+		player->erase(uid);
+		update();
+		return true;
+	}
+	else return false;
+}
 bool DiceSession::table_del(const string& tab, const string& item) {
-	if (!has(tab) || !get_obj(tab)->has(item))return false;
-	get_obj(tab)->reset(item);
-	update();
-	return true;
+	if (has(tab) && get_obj(tab)->has(item)) {
+		get_obj(tab)->reset(item);
+		update();
+		return true;
+	}
+	return false;
 }
 
 bool DiceSession::table_add(const string& tab, int prior, const string& item) {
@@ -757,6 +767,17 @@ void DiceSessionManager::over(chatInfo ct){
 //const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
 
 shared_ptr<Session> DiceSessionManager::newGame(const string& name, const chatInfo& ct) {
+	string rule{ "COC7" };
+	if (auto r{ name.rfind("-") };r != string::npos) {
+		string prefix;
+		do {
+			if (ruleset->has_rule(prefix = name.substr(0, r))) {
+				rule = prefix;
+				break;
+			}
+			else r = name.rfind("-", r - 1);
+		} while (r != string::npos);
+	}
 	LOCK_REC(sessionMutex);
 	string g_name{ name + "#" + to_string(++inc) };
 	while (SessionByName.count(g_name)) {
@@ -765,6 +786,7 @@ shared_ptr<Session> DiceSessionManager::newGame(const string& name, const chatIn
 	auto ptr{ std::make_shared<Session>(g_name) };
 	const auto here{ ct.locate() };
 	ptr->areas.insert(here);
+	ptr->at("rule") = rule;
 	ptr->add_gm(ct.uid);
 	SessionByName[g_name] = ptr;
 	if (SessionByChat.count(here))SessionByChat[here]->areas.erase(here);
@@ -873,16 +895,17 @@ int DiceSessionManager::load() {
 					it.value()["size"].get_to(pSession->decks[key].sizRes);
 				}
 			}
-			if(j.count("roulette"))for (auto& it : j["roulette"].items()) {
+			if (j.count("roulette"))for (auto& it : j["roulette"].items()) {
 				size_t face = stoi(it.key());
 				pSession->roulette.emplace(face, DiceRoulette(face, it.value()["copy"],
 					it.value()["pool"].get<vector<size_t>>(), it.value()["rest"]));
 			}
 			if (j.count("tables"))for (auto& it : j["tables"].items()) {
-				pSession->set(UTF8toGBK(it.key()), it.value());
+				pSession->at(UTF8toGBK(it.key())) = it.value();
+				isUpdated = true;
 			}
 			if (j.count("data"))for (auto& it : j["data"].items()) {
-				pSession->set(UTF8toGBK(it.key()), it.value());
+				pSession->at(UTF8toGBK(it.key())) = it.value();
 			}
 			if (j.count("master"))for (auto& it : j["master"]) {
 				pSession->master->emplace(it.get<long long>());

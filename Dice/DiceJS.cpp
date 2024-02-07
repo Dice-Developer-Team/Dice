@@ -275,18 +275,18 @@ Free:
 AttrVar js_context::getValue(JSValue val) {
 	return js_toAttr(ctx, val);
 }
-void js_context::setContext(const std::string& name, const AttrObject& context) {
+void js_context::setContext(const std::string& name, const ptr<AnysTable>& context) {
 	auto global = JS_GetGlobalObject(ctx);
-	JS_SetPropertyStr(ctx, global, name.c_str(), js_newDiceContext(ctx, context.p));
+	JS_SetPropertyStr(ctx, global, name.c_str(), js_newDiceContext(ctx, context));
 	JS_FreeValue(ctx, global);
 }
 JSValue js_context::evalString(const std::string& s, const string& title) {
 	string exp{ GBKtoUTF8(s) };
 	return JS_Eval(ctx, exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
 }
-JSValue js_context::evalStringLocal(const std::string& s, const string& title, const AttrObject& context) {
+JSValue js_context::evalStringLocal(const std::string& s, const string& title, const ptr<AnysTable>& context) {
 	string exp{ GBKtoUTF8(s) };
-	return JS_EvalThis(ctx, js_newDiceContext(ctx, context.p), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
+	return JS_EvalThis(ctx, js_newDiceContext(ctx, context), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
 }
 JSValue js_context::evalFile(const std::filesystem::path& p) {
 	size_t buf_len{ 0 };
@@ -298,10 +298,10 @@ JSValue js_context::evalFile(const std::filesystem::path& p) {
 	}
 	return JS_EXCEPTION;
 }
-JSValue js_context::evalFileLocal(const std::string& s, const AttrObject& context) {
+JSValue js_context::evalFileLocal(const std::string& s, const ptr<AnysTable>& context) {
 	size_t buf_len{ 0 };
 	if (uint8_t * buf{ js_load_file(ctx, &buf_len, s.c_str()) }) {
-		auto ret = JS_EvalThis(ctx, js_newDiceContext(ctx, context.p), (char*)buf, buf_len, s.c_str(),
+		auto ret = JS_EvalThis(ctx, js_newDiceContext(ctx, context), (char*)buf, buf_len, s.c_str(),
 			JS_EVAL_TYPE_MODULE);
 		js_free(ctx, buf);
 		return ret;
@@ -1087,7 +1087,7 @@ QJSDEF(actor_unlock) {
 	return JS_NewBool(ctx, pc->unlock(key));
 }
 
-AttrVar js_context_eval(const std::string& s, const AttrObject& context) {
+AttrVar js_context_eval(const std::string& s, const ptr<AnysTable>& context) {
 	if (auto ret{ js_main->evalStringLocal(s, "<eval>", context) }; !JS_IsException(ret)) {
 		return js_main->getValue(ret);
 	}
@@ -1097,7 +1097,7 @@ AttrVar js_context_eval(const std::string& s, const AttrObject& context) {
 	return {};
 }
 
-bool js_call_event(const AttrObject& eve, const AttrVar& action) {
+bool js_call_event(const ptr<AnysTable>& eve, const AttrVar& action) {
 	string title{ eve->has("hook") ? eve->get_str("hook") : eve->get_str("Event") };
 	string script{ action.to_str() };
 	bool isFile{ action.is_character() && fmt->has_js(script) };
@@ -1112,7 +1112,7 @@ bool js_call_event(const AttrObject& eve, const AttrVar& action) {
 void js_msg_call(DiceEvent* msg, const AttrVar& js) {
 	string jScript{ js };
 	js_context ctx;
-	ctx.setContext("msg", *msg);
+	ctx.setContext("msg", msg->shared_from_this());
 	JSValue ret = 0;
 	if (fmt->has_js(jScript)) {
 		if (JS_IsException(ret = ctx.evalFile(fmt->js_path(jScript)))) {

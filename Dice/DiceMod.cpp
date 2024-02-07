@@ -574,7 +574,7 @@ public:
 							val.des();
 							break;
 						case FmtMethod::JS:
-							val = js_context_eval(format_token(para, it), context);
+							val = js_context_eval(format_token(para, it), context.p);
 							break;
 						case FmtMethod::Py:
 #ifdef DICE_PYTHON
@@ -801,7 +801,7 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 					th.detach();
 				}
 				if (action->has("js")) {
-					std::thread th(js_call_event, eve, action->at("js"));
+					std::thread th(js_call_event, eve.p, action->at("js"));
 					th.detach();
 				}
 #ifdef DICE_PYTHON
@@ -1273,7 +1273,7 @@ void DiceModManager::build() {
 	//merge custom
 	if (rules_new->build())resLog << "×¢²á¹æÔò¼¯ " + to_string(rules_new->rules.size()) + " ²¿";
 	ruleset.swap(rules_new);
-	if (cntModel)resLog << "×¢²á½ÇÉ«¿¨Ä£°å " + to_string(rules_new->rules.size()) + " °æ";
+	if (cntModel)resLog << "×¢²á½ÇÉ«¿¨Ä£°å " + to_string(cntModel) + " °æ";
 	for (auto& [name, model] : models) {
 		model->init();
 	}
@@ -1358,7 +1358,7 @@ void DiceModManager::save() {
 }
 void call_event(AttrObject eve, const AttrObject& action) {
 	if (action->has("lua"))lua_call_event(eve, action->at("lua"));
-	if (action->has("js"))js_call_event(eve, action->at("js"));
+	if (action->has("js"))js_call_event(eve.p, action->at("js"));
 #ifdef DICE_PYTHON
 	if (action->has("py"))py_call_event(eve, action->at("py"));
 #endif //DICE_PYTHON

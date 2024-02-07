@@ -4263,6 +4263,10 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strSetPropSuccess");
 		}
 		else replyHelp("st");
+		if (get_int("cnt")) {
+			set("trans", logs);
+			pc->getTemplet()->after_update(shared_from_this());
+		}
 		return 1;
 	}
 	else if (pref2 == "ti") {

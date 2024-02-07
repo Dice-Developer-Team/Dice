@@ -45,6 +45,7 @@ using xml = tinyxml2::XMLDocument;
 class CharaCard;
 class CardTemp;
 
+enum class trigger_time { AfterUpdate };
 inline unordered_map<string, short> mCardTag = {
 	{"Name", 1},
 	{"Type", 2},
@@ -71,7 +72,7 @@ public:
 	vector<string> alias;
 	TextType textType{ TextType::Plain };
 	AttrVar defVal;
-	AttrVar init(ptr<CardTemp>, CharaCard*);
+	AttrVar init(ptr<CardTemp>, CharaCard*); 
 	int check(AttrVar& val);
 	bool equalDefault(const AttrVar& val)const { return TextType::Plain == textType && val == defVal; }
 };
@@ -88,7 +89,11 @@ public:
 	}
 	CardPreset(const tinyxml2::XMLElement* d, bool isUTF8);
 };
-
+struct CardTrigger {
+	string name;
+	trigger_time time;
+	string script;
+};
 class CardTemp
 {
 public:
@@ -101,8 +106,10 @@ public:
 	//生成参数
 	dict_ci<CardPreset> presets = {};
 	//
-	string script;
 	ptr<js_context> js_ctx;
+	string script;
+	multimap<trigger_time, CardTrigger> triggers_by_time;
+	fifo_dict_ci<CardTrigger> triggers;
 	CardTemp() = default;
 
 	CardTemp(const string& type, const dict_ci<>& replace, vector<vector<string>> basic,
@@ -125,6 +132,7 @@ public:
 	}
 	CardTemp& merge(const CardTemp& other);
 	void init();
+	void after_update(const ptr<AnysTable>&);
 	bool equalDefault(const string& attr, const AttrVar& val)const { return AttrShapes.count(attr) && AttrShapes.at(attr).equalDefault(val); }
 
 	//CardTemp(const xml* d) { }

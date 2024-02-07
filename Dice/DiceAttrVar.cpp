@@ -491,10 +491,10 @@ AttrVar AttrVar::parse(const string& s) {
 			return AttrVar();
 			break;
 		case 1:
-			return true;
+			return AttrVar(true);
 			break;
 		case 2:
-			return false;
+			return AttrVar(false);
 			break;
 		default:
 			break;

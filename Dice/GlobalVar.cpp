@@ -522,6 +522,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+655:st优化且增加触发时点
 654:重做角色卡模板
 653:游戏卡带机制
 652:game new/over/open/close/state
@@ -697,7 +698,8 @@ Type=[回复性质](Reply/Order)
 )" },
 {"回复列表","{strSelfName}的回复触发词列表:{list_reply_deck}"},
 {"game",R"(游戏模式：
-`.game new 桌名` 创建游戏（命名可省略）
+`.game new 桌名` 创建游戏（桌名可省略，前缀以`规则:`可以指定应用规则）
+例: `.game new DND:`
 `.game over` 销毁本桌游戏
 `.game state` 查看本桌状态
 `.game master` 登记为GM

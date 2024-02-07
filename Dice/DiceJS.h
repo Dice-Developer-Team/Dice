@@ -35,16 +35,16 @@ public:
 	operator JSContext* () { return ctx; }
 	string getException();
 	AttrVar getValue(JSValue);
-	void setContext(const std::string&, const AttrObject& context);
+	void setContext(const std::string&, const ptr<AnysTable>& context);
 	JSValue evalString(const std::string& s, const string& title);
-	JSValue evalStringLocal(const std::string& s, const string& title, const AttrObject& context);
+	JSValue evalStringLocal(const std::string& s, const string& title, const ptr<AnysTable>& context);
 	JSValue evalFile(const std::filesystem::path&);
-	JSValue evalFileLocal(const std::string& s, const AttrObject& context);
+	JSValue evalFileLocal(const std::string& s, const ptr<AnysTable>& context);
 };
 JSValue js_newAttr(JSContext*, const AttrVar& var);
 void js_global_init();
 void js_global_end();
-bool js_call_event(const AttrObject&, const AttrVar&);
+bool js_call_event(const ptr<AnysTable>&, const AttrVar&);
 void js_msg_call(DiceEvent*, const AttrVar&);
 AttrVar js_simple_eval(const std::string&);
-AttrVar js_context_eval(const std::string&, const AttrObject& context);
+AttrVar js_context_eval(const std::string&, const ptr<AnysTable>& context);

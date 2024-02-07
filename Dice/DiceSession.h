@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * ÓÎÏ·»á»°
+ * Game Session
  * Copyright (C) 2018-2021 w4123ËÝä§
  * Copyright (C) 2019-2024 String.Empty
  *
@@ -197,12 +197,7 @@ public:
 		update();
 		return true;
 	}
-	bool del_pl(long long uid) {
-		if (player->count(uid))player->erase(uid);
-		else return false;
-		update();
-		return true;
-	}
+	bool del_pl(long long uid);
 	bool is_simple() const { return player->empty() && master->empty(); }
 	bool is_part(long long uid) const { return player->count(uid) || master->count(uid); }
 	bool del_ob(long long uid) {
