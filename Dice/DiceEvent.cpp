@@ -3907,7 +3907,7 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strSanCostInvalid");
 			return 1;
 		}
-		string attr = "理智";
+		static const string attr = "理智";
 		int intSan = 0, sanLoss = 0;
 		PC pc;
 		if (readNum(intSan)) {
@@ -3984,11 +3984,23 @@ int DiceEvent::InnerOrder() {
 			set("change","Max{" + rdLoss->strDice + "}=" + std::to_string(rdLoss->intTotal));
 			break;
 		}
+		AttrObject trans{ AnysTable{{
+			{ "attr",attr },
+			{ "action","+=" },
+			{ "old",intSan },
+		}} };
 		set("loss", sanLoss = rdLoss->intTotal);
 		intSan = max(0, intSan - sanLoss);
-		set("rank", res);
+		trans->set("new", intSan);
 		set("final",intSan);
-		if (pc)pc->set(attr, intSan);
+		set("rank", res);
+		if (pc && sanLoss){
+			pc->set(attr, intSan);
+			set("trans", AnysTable{ AttrVars{
+				{ attr,trans },
+				}});
+			pc->getTemplet()->after_update(shared_from_this());
+		}
 		replyMsg("strSanityRoll");
 		return 1;
 	}
@@ -4123,10 +4135,10 @@ int DiceEvent::InnerOrder() {
 			readSkipSpace();
 			AttrObject trans;
 			string attr_name;
-			string attr_new;
 			//判定录入表达式
 			if (strMsg[intMsgCnt] == '&') {
 				if (!(attr_name = readToColon()).empty()) {
+					string attr_new;
 					if (pc->set(get_str("attr"), attr_new = readExp())) {
 						set("detailed");
 						trans = AnysTable{ {
@@ -4218,7 +4230,7 @@ int DiceEvent::InnerOrder() {
 			else if (strSkillVal.length() > 9) {
 				set("detailed");
 				trans->set("action", "!");
-				trans->set("reason", "数值过大");
+				trans->set("reason", "Too Big");
 				logs->set(attr_name, trans);
 				break;
 			}

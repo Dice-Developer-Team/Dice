@@ -7,6 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
+ * JavaScript Interface
  * CoJSright (C) 2018-2021 w4123ËÝä§
  * CoJSright (C) 2019-2024 String.Empty
  *
@@ -22,13 +23,15 @@
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <mutex>
 #include "DiceAttrVar.h"
 class JSRuntime;
 class JSContext;
 typedef uint64_t JSValue;
 class DiceEvent;
 class js_context {
-	JSContext* ctx;
+	JSContext* ctx; 
+	std::recursive_mutex ex_eval;
 public:
 	js_context();
 	~js_context();

@@ -1,9 +1,10 @@
 /*
  * ÷»ÄïÍøÂç
- * Copyright (C) 2019 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 #include <cstring>
 #include "filesystem.hpp"
+#include "StrExtern.hpp"
 #include "DiceCloud.h"
 #include "GlobalVar.h"
 #include "EncodingConvert.h"

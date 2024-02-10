@@ -794,7 +794,7 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 	string hookEvent{ eve->has("hook") ? eve->get_str("hook") : eve->get_str("Event") };
 	if (hookEvent.empty())return false;
 	for (auto& [id, hook] : multi_range(hook_events, hookEvent)) {
-		if (auto action{ hook.at("action").to_obj()}) {
+		if (auto action{ hook->get_obj("action")}) {
 			if (hookEvent == "StartUp" || hookEvent == "DayEnd" || hookEvent == "DayNew") {
 				if (action->has("lua")) {
 					std::thread th(lua_call_event, eve, action->at("lua"));
@@ -1233,7 +1233,7 @@ void DiceModManager::initCloud() {
 	}
 }
 void DiceModManager::build() {
-	isIniting = true; 
+	isIniting = true;
 	ShowList resLog;
 	size_t cntSpeech{ 0 }, cntHelp{ 0 }, cntModel{ 0 };
 	//init
@@ -1301,8 +1301,8 @@ void DiceModManager::build() {
 		hook_events.clear();
 		unordered_set<string> cycle;
 		for (auto& [id, eve] : global_events) {
-			eve["id"] = id;
-			auto trigger{ eve.get_obj("trigger") };
+			eve->at("id") = id;
+			auto trigger{ eve->get_obj("trigger") };
 			if (trigger->has("cycle")) {
 				if (!cycle_events.count(id)) {
 					call_cycle_event(id);
@@ -1321,7 +1321,7 @@ void DiceModManager::build() {
 				}
 			}
 			if (trigger->has("hook")) {
-				string nameEvent{ trigger->at("hook").to_str() };
+				string nameEvent{ trigger->get_str("hook") };
 				hook_events.emplace(nameEvent, eve);
 			}
 		}

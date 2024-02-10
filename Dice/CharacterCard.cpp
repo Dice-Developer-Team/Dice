@@ -245,10 +245,15 @@ void CharaCard::setType(const string& strType) {
 }
 AttrVar CharaCard::get(const string& key, const AttrVar& val)const{
 	if (dict.count(key))return dict.at(key);
-	if (auto temp{ getTemplet() }; temp->canGet(key)) {
-		return temp->AttrShapes.at(key).init(temp, const_cast<CharaCard*>(this));
+	string attr{ standard(key) };
+	auto temp{ getTemplet() };
+	if (temp->replaceName.count(key)) {
+		return dict.at(attr);
 	}
-	return {};
+	if (temp->canGet(attr)) {
+		return temp->AttrShapes.at(attr).init(temp, const_cast<CharaCard*>(this));
+	}
+	return val;
 }
 int CharaCard::set(string key, const AttrVar& val) {
 	if (key.empty())return -1;
@@ -256,7 +261,7 @@ int CharaCard::set(string key, const AttrVar& val) {
 	if (val.is_text() && val.text.length() > 256)return -11;
 	key = standard(key);
 	if (getTemplet()->equalDefault(key, val)){
-		if (has(key)) dict.erase(key);
+		if (dict.count(key)) dict.erase(key);
 		else return -1;
 	}
 	else {

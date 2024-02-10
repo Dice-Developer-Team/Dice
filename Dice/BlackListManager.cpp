@@ -557,7 +557,7 @@ DDBlackMark& DDBlackMark::operator<<(const DDBlackMark& mark)
         time = mark.time;
     }
     if (note != mark.note &&
-        (note.empty() || count_char(note, '?') > count_char(mark.note, '?') || note.length() < mark.note.length())
+        (note.empty() || note.length() < mark.note.length())
         )
 	{
         note = mark.note;
@@ -667,7 +667,7 @@ bool DDBlackManager::update(DDBlackMark& mark, unsigned int id, int credit = 5)
         if (mark.time.length() == 19)mTimeIndex.emplace(old_mark.time, id);
     }
     if (old_mark.note != mark.note &&
-        (old_mark.note.empty() || count_char(old_mark.note, '?') > count_char(mark.note, '?') || old_mark.note.length()
+        (old_mark.note.empty() || old_mark.note.length()
 			< mark.note.length())
         )
 	{

@@ -1613,7 +1613,8 @@ void DiceModManager::loadPlugin(ResList& res) {
 					err << "msg_orderÀàÐÍ´íÎó(" + string(LuaTypes[lua_type(L, -1)]) + "):" + file;
 					continue;
 				}
-				for (auto& [key, val] : lua_to_table(L).as_dict()) {
+				auto orders{ lua_to_table(L) };
+				for (auto& [key, val] : orders.as_dict()) {
 					if (val.is_table()) {
 						ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
 						reply->title = key;

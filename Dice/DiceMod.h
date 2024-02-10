@@ -154,10 +154,10 @@ class DiceModManager {
 	dict_ci<string> global_js_scripts;
 	dict_ci<std::filesystem::path> global_py_scripts;
 	dict_ci<AttrVars> taskcall;
-	dict<AnysTable> global_events; //events by id
+	dict<AttrObject> global_events; //events by id
 	//Event
 	unordered_set<string> cycle_events; //重载时唯一性检查
-	multidict_ci<AnysTable> hook_events;
+	multidict_ci<AttrObject> hook_events;
 
 	WordQuerier querier;
 	friend class DiceMod;

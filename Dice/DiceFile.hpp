@@ -3,23 +3,19 @@
 /*
  * ÎÄ¼þ¶ÁÐ´
  * Copyright (C) 2018-2021 w4123
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <cstdio>
-#include <vector>
-#include <map>
 #include <set>
 #include "filesystem.hpp"
 #include <functional>
 #include <unordered_set>
-#include <unordered_map>
 #include <cstdio>
-#include "fifo_map.hpp"
 #include "tinyxml2.h"
-#include "StrExtern.hpp"
 #include "DiceMsgSend.h"
 #include "MsgFormat.h"
 #include "EncodingConvert.h"
@@ -320,45 +316,32 @@ int loadFile(const std::filesystem::path& fpPath, nlohmann::fifo_map<T1, T2>& ma
 template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
 int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, std::shared_ptr<C>>& m)
 {
-	std::ifstream fin(fpPath, std::ios::in | std::ios::binary);
-	if (!fin)return -1;
-	int Cnt = 0;
-	try {
+	if (std::ifstream fin{ fpPath, std::ios::in | std::ios::binary }) {
+		int Cnt = 0;
 		const int len = fread<int>(fin);
-		T key;
-		while (fin.peek() != EOF && len > Cnt++)
-		{
-			key = fread<T>(fin);
-			m.emplace(key, std::make_shared<C>(key));
-			((*m[key]).*U)(fin);
+		while (fin.peek() != EOF && len > Cnt++){
+			auto key = fread<T>(fin);
+			auto val{ std::make_shared<C>(key) };
+			((*val).*U)(fin);
+			m.emplace(key, val);
 		}
-	}
-	catch (...) {
-
-	}
-	fin.close();
-	return Cnt;
+		return Cnt;
+	} 
+	return -1;
 }
 template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
-int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
-{
-	std::ifstream fin(fpPath, std::ios::in | std::ios::binary);
-	if (!fin)return -1;
-	int Cnt = 0;
-	try{
+int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m){
+	if (std::ifstream fin{ fpPath, std::ios::in | std::ios::binary }) {
+		int Cnt = 0;
 		const int len = fread<int>(fin);
-		T key;
-		while (fin.peek() != EOF && len > Cnt++)
-		{
-			key = fread<T>(fin);
+		while (fin.peek() != EOF && len > Cnt++){
+			auto key = fread<T>(fin);
 			(m[key].*U)(fin);
 		}
+		fin.close();
+		return Cnt;
 	}
-	catch (...) {
-
-	}
-	fin.close();
-	return Cnt;
+	return -1;
 }
 
 bool rdbuf(const std::filesystem::path& fpPath, string& s);

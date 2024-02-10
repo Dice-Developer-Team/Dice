@@ -282,14 +282,17 @@ void js_context::setContext(const std::string& name, const ptr<AnysTable>& conte
 }
 JSValue js_context::evalString(const std::string& s, const string& title) {
 	string exp{ GBKtoUTF8(s) };
+	std::lock_guard<std::recursive_mutex> lock(ex_eval);
 	return JS_Eval(ctx, exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
 }
 JSValue js_context::evalStringLocal(const std::string& s, const string& title, const ptr<AnysTable>& context) {
 	string exp{ GBKtoUTF8(s) };
+	std::lock_guard<std::recursive_mutex> lock(ex_eval);
 	return JS_EvalThis(ctx, js_newDiceContext(ctx, context), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
 }
 JSValue js_context::evalFile(const std::filesystem::path& p) {
 	size_t buf_len{ 0 };
+	std::lock_guard<std::recursive_mutex> lock(ex_eval);
 	if (uint8_t * buf{ js_load_file(ctx, &buf_len, p.string().c_str())}) {
 		auto ret = JS_Eval(ctx, (char*)buf, buf_len, p.u8string().c_str(),
 			JS_EVAL_TYPE_GLOBAL);
@@ -300,6 +303,7 @@ JSValue js_context::evalFile(const std::filesystem::path& p) {
 }
 JSValue js_context::evalFileLocal(const std::string& s, const ptr<AnysTable>& context) {
 	size_t buf_len{ 0 };
+	std::lock_guard<std::recursive_mutex> lock(ex_eval);
 	if (uint8_t * buf{ js_load_file(ctx, &buf_len, s.c_str()) }) {
 		auto ret = JS_EvalThis(ctx, js_newDiceContext(ctx, context), (char*)buf, buf_len, s.c_str(),
 			JS_EVAL_TYPE_MODULE);

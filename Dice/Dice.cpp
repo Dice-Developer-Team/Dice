@@ -88,10 +88,10 @@ void loadData(){
 		std::filesystem::create_directory(DiceDir, ec);
 		loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList);
 		map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
-		//读取帮助文档
+		//ModManger
 		fmt->clear();
 		fmt->load(logList);
-		//读取敏感词库
+		//Censor word
 		loadDir(load_words, DiceDir / "conf" / "censor", censor, logList, true);
 		loadJMap(DiceDir / "conf" / "CustomCensor.json", censor.CustomWords);
 		censor.build();
@@ -322,7 +322,6 @@ R"( //私骰作成 即可成为我的主人~
 	//读取用户数据
 	readUserData();
 	//读取当日数据
-	DD::debugLog("Dice.loadToday");
 	today = make_unique<DiceToday>();
 	set<long long> grps{ DD::getGroupIDList() };
 	for (auto gid : grps){

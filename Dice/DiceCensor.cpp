@@ -2,7 +2,7 @@
 #include "SHKTrie.h"
 #include "DiceFile.hpp"
 #include "Jsonio.h"
-#include "STLExtern.hpp"
+#include "StrExtern.hpp"
 #include "DiceConsole.h"
 #include "EncodingConvert.h"
 #include <bitset>

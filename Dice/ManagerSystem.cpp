@@ -336,8 +336,9 @@ void User::readb(std::ifstream& fin)
 	std::lock_guard<std::mutex> lock_queue(ex_user);
 	string tag;
 	while ((tag = fread<string>(fin)) != "END") {
-		if (tag == "Conf")readb(fin);
+		if (tag == "Conf")AnysTable::readb(fin);
 		else if (tag == "Nick")fread(fin, strNick);
+		else if (tag == "ID")fread<long long>(fin); //ignored
 	}
 	nTrust = get_int("trust");
 	if (has("tCreated"))tCreated = get_ll("tCreated");
@@ -690,7 +691,7 @@ void Chat::readb(std::ifstream& fin)
 			}
 			break;
 		case 10:
-			readb(fin);
+			AnysTable::readb(fin);
 			break;
 		case 20:
 			fread(fin, ChConf);
