@@ -254,9 +254,9 @@ void DiceSession::log_end(DiceEvent* msg) {
 	msg->replyMsg("strLogEnd");
 	update();
 	msg->set("hook","LogEnd");
-	if (!fmt->call_hook_event(*msg)) {
+	if (!fmt->call_hook_event(msg->shared_from_this())) {
 		msg->set("cmd", "uplog");
-		sch.push_job(*msg);
+		sch.push_job(msg->shared_from_this());
 	}
 }
 std::filesystem::path DiceSession::log_path()const {

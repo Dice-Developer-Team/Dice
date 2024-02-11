@@ -209,7 +209,7 @@ public:
 	void call_cycle_event(const string&);
 	void call_clock_event(const string&);
 	//return if event is blocked
-	bool call_hook_event(AttrObject);
+	bool call_hook_event(const AttrObject&);
 
 	bool listen_order(DiceEvent* msg) { return final_reply.listen(msg, 1); }
 	bool listen_reply(DiceEvent* msg) { return final_reply.listen(msg, 2); }
@@ -238,4 +238,4 @@ public:
 };
 
 extern std::shared_ptr<DiceModManager> fmt;
-void call_event(AttrObject eve, const AttrObject& action);
+void call_event(const ptr<AnysTable>& eve, const AttrObject& action);

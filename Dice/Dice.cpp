@@ -304,20 +304,25 @@ R"( //私骰作成 即可成为我的主人~
 	}
 	loadData();
 	//初始化黑名单
-	blacklist = make_unique<DDBlackManager>();
-	if (auto cnt = blacklist->loadJson(DiceDir / "conf" / "BlackList.json");cnt < 0)
-	{
-		blacklist->loadJson(fpFileLoc / "BlackMarks.json");
-		cnt = blacklist->loadHistory(fpFileLoc);
-		if (cnt) {
-			blacklist->saveJson(DiceDir / "conf" / "BlackList.json");
-			console.log("初始化不良记录" + to_string(cnt) + "条", 1);
+	try {
+		blacklist = make_unique<DDBlackManager>();
+		if (auto cnt = blacklist->loadJson(DiceDir / "conf" / "BlackList.json"); cnt < 0)
+		{
+			blacklist->loadJson(fpFileLoc / "BlackMarks.json");
+			cnt = blacklist->loadHistory(fpFileLoc);
+			if (cnt) {
+				blacklist->saveJson(DiceDir / "conf" / "BlackList.json");
+				console.log("初始化不良记录" + to_string(cnt) + "条", 1);
+			}
+		}
+		else {
+			DD::debugLog("读取不良记录" + to_string(cnt) + "条");
+			if ((cnt = blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true)) > 0)
+				DD::debugLog("合并外源不良记录" + to_string(cnt) + "条");
 		}
 	}
-	else {
-		DD::debugLog("读取不良记录" + to_string(cnt) + "条");
-		if ((cnt = blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true)) > 0)
-			DD::debugLog("合并外源不良记录" + to_string(cnt) + "条");
+	catch (const std::exception& e) {
+		console.log(string("读取/conf/BlackList.json失败!") + e.what(), 1, printSTNow());
 	}
 	//读取用户数据
 	readUserData();
@@ -441,7 +446,7 @@ R"( //私骰作成 即可成为我的主人~
 	getDiceList();
 	getExceptGroup();
 	isIniting.clear();
-	fmt->call_hook_event(AnysTable{ AttrVars {{"Event","StartUp"}} });
+	fmt->call_hook_event(std::make_shared<AnysTable>( AttrVars{{"Event","StartUp"}} ));
 }
 
 mutex GroupAddMutex;
@@ -622,7 +627,7 @@ EVE_PrivateMsg(eventPrivateMsg)
 		}, chatInfo{ fromUID,0,0 }));
 	return Msg->DiceFilter() || fmt->call_hook_event(Msg->merge({
 		{"hook","WhisperIgnored"},
-		}));
+		}).shared_from_this());
 }
 
 EVE_GroupMsg(eventGroupMsg)

@@ -11,5 +11,5 @@
 class Lua_State;
 class DiceEvent;
 bool lua_msg_call(DiceEvent*, const AttrVar&);
-bool lua_call_event(AttrObject eve, const AttrVar&);
+bool lua_call_event(const ptr<AnysTable>& eve, const AttrVar&);
 bool lua_call_task(const AttrVars&);

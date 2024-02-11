@@ -1099,11 +1099,11 @@ PYDEFKEY(eventMsg) {
 			? AnysTable{ { {"fromMsg",fromMsg},{"gid",gid}, {"uid", uid} } }
 		: AnysTable{ { {"fromMsg",fromMsg}, {"uid", uid} } };
 	}
-	std::thread th([=]() {
-		DiceEvent msg(*eve);
-		msg.virtualCall();
-		});
-	th.detach();
+	//std::thread th([=]() {
+		shared_ptr<DiceEvent> e{ std::make_shared<DiceEvent>(*eve.p) };
+		e->virtualCall();
+	//	});
+	//th.detach();
 	return Py_BuildValue("");
 }
 #define REG(name) #name,(PyCFunction)py_##name

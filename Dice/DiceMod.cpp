@@ -783,21 +783,21 @@ void DiceModManager::call_cycle_event(const string& id) {
 	if (auto trigger{ eve->get_obj("trigger") }; trigger->has("cycle")) {
 		sch.add_job_for(parse_seconds(trigger->at("cycle")), eve);
 	}
-	if (auto action{ eve->get_obj("action") })call_event(eve, action);
+	if (auto action{ eve->get_obj("action") })call_event(eve.p, action);
 }
 void DiceModManager::call_clock_event(const string& id) {
 	if (id.empty() || !global_events.count(id))return;
 	AttrObject eve{ global_events[id] };
-	if (auto action{ eve->get_obj("action") })call_event(eve, action);
+	if (auto action{ eve->get_obj("action") })call_event(eve.p, action);
 }
-bool DiceModManager::call_hook_event(AttrObject eve) {
+bool DiceModManager::call_hook_event(const AttrObject& eve) {
 	string hookEvent{ eve->has("hook") ? eve->get_str("hook") : eve->get_str("Event") };
 	if (hookEvent.empty())return false;
 	for (auto& [id, hook] : multi_range(hook_events, hookEvent)) {
 		if (auto action{ hook->get_obj("action")}) {
 			if (hookEvent == "StartUp" || hookEvent == "DayEnd" || hookEvent == "DayNew") {
 				if (action->has("lua")) {
-					std::thread th(lua_call_event, eve, action->at("lua"));
+					std::thread th(lua_call_event, eve.p, action->at("lua"));
 					th.detach();
 				}
 				if (action->has("js")) {
@@ -806,12 +806,12 @@ bool DiceModManager::call_hook_event(AttrObject eve) {
 				}
 #ifdef DICE_PYTHON
 				if (action->has("py")) {
-					std::thread th(py_call_event, eve, action->at("py"));
+					std::thread th(py_call_event, eve.p, action->at("py"));
 					th.detach();
 				}
 #endif //DICE_PYTHON
 			}
-			else call_event(eve, action);
+			else call_event(eve.p, action);
 		}
 	}
 	return eve->is("blocked");
@@ -1356,9 +1356,9 @@ void DiceModManager::save() {
 		remove(DiceDir / "conf" / "ModList.json");
 	}
 }
-void call_event(AttrObject eve, const AttrObject& action) {
+void call_event(const ptr<AnysTable>& eve, const AttrObject& action) {
 	if (action->has("lua"))lua_call_event(eve, action->at("lua"));
-	if (action->has("js"))js_call_event(eve.p, action->at("js"));
+	if (action->has("js"))js_call_event(eve, action->at("js"));
 #ifdef DICE_PYTHON
 	if (action->has("py"))py_call_event(eve, action->at("py"));
 #endif //DICE_PYTHON

@@ -488,10 +488,11 @@ QJSDEF(eventMsg) {
 			? AnysTable{ {{"fromMsg",fromMsg},{"gid",gid}, {"uid", uid}} }
 		: AnysTable{ {{"fromMsg",fromMsg}, {"uid", uid}} };
 	}
-	std::thread th([=]() {
-		DiceEvent(*eve.p).virtualCall();
-		});
-	th.detach();
+	//std::thread th([=]() {
+		shared_ptr<DiceEvent> msg{ std::make_shared<DiceEvent>(*eve.p) };
+		msg->virtualCall();
+	//	});
+	//th.detach();
 	return JS_TRUE;
 }
 QJSDEF(sendMsg) {

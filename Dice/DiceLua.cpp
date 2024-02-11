@@ -393,13 +393,13 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 	}
 	return true;
 }
-bool lua_call_event(AttrObject eve, const AttrVar& lua) {
+bool lua_call_event(const ptr<AnysTable>& eve, const AttrVar& lua) {
 	if (!Enabled)return false;
 	string luas{ lua.to_str() };
 	bool isFile{ lua.is_character() && fmt->has_lua(luas) };
 	LuaState L{ fmt->lua_path(luas) };
 	if (!L)return false;
-	lua_push_Context(L, eve.p);
+	lua_push_Context(L, eve);
 	lua_setglobal(L, "event");
 	if (isFile) {
 		if (lua_pcall(L, 0, 2, 0)) {
@@ -1064,11 +1064,11 @@ LUADEF(eventMsg) {
 			? AttrVars{ {"fromMsg",fromMsg},{"gid",fromGID}, {"uid", fromUID} }
 			: AttrVars{ {"fromMsg",fromMsg}, {"uid", fromUID} };
 	}
-	std::thread th([=]() {
-		DiceEvent msg(eve);
-		msg.virtualCall();
-	});
-	th.detach();
+	//std::thread th([=]() {
+		shared_ptr<DiceEvent> msg{ std::make_shared<DiceEvent>(eve) };
+		msg->virtualCall();
+	//});
+	//th.detach();
 	return 0;
 }
 LUADEF(askExtra) {
