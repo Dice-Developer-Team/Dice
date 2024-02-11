@@ -303,7 +303,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 	if (luaFile.empty() && lua.is_character() && fmt->has_lua(lua)) {
 		luaFile = fmt->lua_path(lua);
 	}
-	else luaFunc = lua.is_table() ? lua.to_obj()["func"] : lua;
+	else luaFunc = lua.is_table() ? lua.to_obj()->get("func") : lua;
 	LuaState L{ luaFile };
 	if (!L)return false;
 	lua_push_Context(L, msg->shared_from_this());
@@ -1578,6 +1578,7 @@ void DiceModManager::loadPlugin(ResList& res) {
 	int cntTask{ 0 };
 	plugin_reply.clear();
 	taskcall.clear();
+	AnysTable lua_tab;
 	for (const auto& pathFile : files) {
 		if ((pathFile.extension() != ".lua")) {
 			if (pathFile.extension() != ".toml")continue;
@@ -1613,6 +1614,7 @@ void DiceModManager::loadPlugin(ResList& res) {
 					err << "msg_orderÀàÐÍ´íÎó(" + string(LuaTypes[lua_type(L, -1)]) + "):" + file;
 					continue;
 				}
+				lua_tab.set("file", file);
 				auto orders{ lua_to_table(L) };
 				for (auto& [key, val] : orders.as_dict()) {
 					if (val.is_table()) {
@@ -1622,13 +1624,9 @@ void DiceModManager::loadPlugin(ResList& res) {
 						plugin_reply[key] = reply;
 					}
 					else {
-						AttrObject ans;
+						lua_tab.set("func", val);
 						plugin_reply[key] = DiceMsgReply::set_order(key, AttrVars{
-							{ "lua", AttrObject{
-								AttrVars{
-								{"file",file}, {"func",val},
-								}
-							}}
+							{ "lua", lua_tab }
 							});
 					}
 				}

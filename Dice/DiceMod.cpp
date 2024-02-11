@@ -143,7 +143,7 @@ bool DiceModManager::mod_dlpkg(const string& name, const string& pkg, string& de
 			fs::copy(desc, pathJson);
 		}
 		else {
-			des = "\npkg解压无文件" + name + ".json";
+			des = "\npkg don't exist " + name + ".json";
 			return false;
 		}
 	}
