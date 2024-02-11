@@ -102,7 +102,7 @@ const dict_ci<string> PlainMsg
 	{"strGameNotJoined","嗯？{nick}原来有在桌上吗？"},
 	{"strGameNotMaster","请{nick}让这桌的GM进行此操作×"},
 	{"strGameVoidHere","{self}连桌布还没铺上，{nick}就要动桌子么？(请先.game new 新建游戏)"},
-	{"strGameNotExit","{self}不记得有一桌叫{game_id}的游戏了×"},
+	{"strGameNotExist","{self}不记得有一桌叫{game_id}的游戏了×"},
 	{"strGameItemSet","{self}已将本桌游戏的{set_item}设置为{set_val}√"},
 	{"strGameItemShow","本桌游戏的{set_item}为{set_val}√"},
 	{"strGameItemEmpty","请{nick}输入待设置的项目×"},

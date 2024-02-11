@@ -779,7 +779,7 @@ Clock parse_clock(const AttrVar& time) {
 
 void DiceModManager::call_cycle_event(const string& id) {
 	if (id.empty() || !global_events.count(id))return;
-	AttrObject eve{ global_events[id] };
+	AttrObject& eve{ global_events[id] };
 	if (auto trigger{ eve->get_obj("trigger") }; trigger->has("cycle")) {
 		sch.add_job_for(parse_seconds(trigger->at("cycle")), eve);
 	}
@@ -787,7 +787,7 @@ void DiceModManager::call_cycle_event(const string& id) {
 }
 void DiceModManager::call_clock_event(const string& id) {
 	if (id.empty() || !global_events.count(id))return;
-	AttrObject eve{ global_events[id] };
+	AttrObject& eve{ global_events[id] };
 	if (auto action{ eve->get_obj("action") })call_event(eve.p, action);
 }
 bool DiceModManager::call_hook_event(const AttrObject& eve) {

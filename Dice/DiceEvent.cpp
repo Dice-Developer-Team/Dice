@@ -1516,9 +1516,11 @@ int DiceEvent::BasicOrder()
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 4) == "game") {
 		intMsgCnt += 4;
-		auto game{ thisGame() };
 		string action{ readPara() };
-		if (action == "new") {
+		if (action.empty()) {
+			replyHelp("game");
+		}
+		else if (action == "new") {
 			if (canRoomHost()) {
 				set("game_id", sessions.newGame(readFileName(), fromChat)->name);
 				replyMsg("strGameNew");
@@ -1528,26 +1530,9 @@ int DiceEvent::BasicOrder()
 			}
 			return 1;
 		}
-		else if (action == "over") {
-			if (game) {
-				if (game->is_gm(fromChat.uid) || DD::isGroupAdmin(fromChat.gid, fromChat.uid, false)) {
-					if (game->is_logging())game->log_end(this);
-					set("game_id", game->name);
-					sessions.over(fromChat);
-					replyMsg("strGameOver");
-				}
-				else {
-					replyMsg("strGameNotMaster");
-				}
-			}
-			else {
-				replyMsg("strGameVoidHere");
-			}
-			return 1;
-		}
 		else if (action == "open") {
 			string& name{ (at("game_id") = readFileName()).text };
-			if (game = sessions.getByName(name)) {
+			if (auto game = sessions.getByName(name)) {
 				if (game->is_gm(fromChat.uid)) {
 					sessions.open(game, fromChat);
 					replyMsg("strGameAreaOpen");
@@ -1557,37 +1542,63 @@ int DiceEvent::BasicOrder()
 				}
 			}
 			else {
-				replyMsg("strGameNotExit");
+				replyMsg("strGameNotExist");
 			}
 			return 1;
 		}
-		else if (action == "close") {
-			if (game) {
-				if (game->is_gm(fromChat.uid) || DD::isGroupAdmin(fromChat.gid, fromChat.uid, false)) {
-					set("game_id", game->name);
-					sessions.close(fromChat);
-					replyMsg("strGameAreaClosed");
+		else if (auto game{ thisGame() }; action == "master") {
+			if (!game)game = sessions.get(fromChat);
+			auto gms{ game->get_gm() };
+			if (!gms->count(fromChat.uid)) {
+				if (gms->empty() ? canRoomHost() : DD::isGroupAdmin(fromChat.gid, fromChat.uid, false)) {
+					game->add_gm(fromChat.uid);
+					replyMsg("strGameMastered");
 				}
 				else {
-					replyMsg("strGameNotMaster");
+					replyMsg("strGameMasterDenied");
 				}
 			}
 			else {
-				replyMsg("strGameVoidHere");
+				ShowList res;
+				for (auto& uid : *gms) {
+					res << printUser((long long)uid.to_double());
+				}
+				set("items", res.show("\n"));
+				replyMsg("strGameMasterList");
 			}
+		}
+		else if (!game) {
+			replyMsg("strGameVoidHere");
 			return 1;
 		}
 		else if (action == "state") {
-			if (game) {
-				reply(game->show(), false);
-			}
-			else {
-				replyMsg("strGameVoidHere");
-			}
+			reply(game->show(), false);
 			return 1;
 		}
-		if (auto game{ thisGame() }; !game)game = sessions.get(fromChat);
-		if (action == "join") {
+		else if (action == "set") {
+			if (game->is_gm(fromChat.uid)) {
+				auto [strItem, strVal] = readini(strMsg.substr(intMsgCnt));
+				if (!strItem.empty()) {
+					set("set_item", strItem);
+					if (!strVal.empty()) {
+						AttrVar& val{ at("set_val") = AttrVar::parse(strVal) };
+						game->set(strItem, val);
+						replyMsg("strGameItemSet");
+					}
+					else {
+						set("set_val", print(game->get(strItem)));
+						replyMsg("strGameItemShow");
+					}
+				}
+				else {
+					replyMsg("strGameItemEmpty");
+				}
+			}
+			else {
+				replyMsg("strGameNotMaster");
+			}
+		}
+		else if (action == "join") {
 			if (game->add_pl(fromChat.uid)) {
 				replyMsg("strGameJoined");
 			}
@@ -1613,28 +1624,28 @@ int DiceEvent::BasicOrder()
 				replyMsg("strGameNotMaster");
 			}
 		}
-		else if (action == "set") {
-			if (game->is_gm(fromChat.uid)) {
-				auto [strItem, strVal] = readini(strMsg.substr(intMsgCnt));
-				if (!strItem.empty()) {
-					set("set_item", strItem);
-					if (!strVal.empty()) {
-						AttrVar& val{ at("set_val") = AttrVar::parse(strVal) };
-						game->set(strItem, val);
-						replyMsg("strGameItemSet");
-					}
-					else {
-						set("set_val", print(game->get(strItem)));
-						replyMsg("strGameItemShow");
-					}
-				}
-				else {
-					replyMsg("strGameItemEmpty");
-				}
-			}
-			else {
-				replyMsg("strGameNotMaster");
-			}
+		else if (action == "close") {
+		if (game->is_gm(fromChat.uid) || DD::isGroupAdmin(fromChat.gid, fromChat.uid, false)) {
+			set("game_id", game->name);
+			sessions.close(fromChat);
+			replyMsg("strGameAreaClosed");
+		}
+		else {
+			replyMsg("strGameNotMaster");
+		}
+		return 1;
+		}
+		else if (action == "over") {
+		if (game->is_gm(fromChat.uid) || DD::isGroupAdmin(fromChat.gid, fromChat.uid, false)) {
+			if (game->is_logging())game->log_end(this);
+			set("game_id", game->name);
+			sessions.over(fromChat);
+			replyMsg("strGameOver");
+		}
+		else {
+			replyMsg("strGameNotMaster");
+		}
+		return 1;
 		}
 		else if (action == "exit") {
 			if (game->del_pl(fromChat.uid) || game->del_gm(fromChat.uid)) {
@@ -1659,30 +1670,10 @@ int DiceEvent::BasicOrder()
 				replyMsg("strGameNotMaster");
 			}
 		}
-		else if (action == "master") {
-			auto gms{ game->get_gm() };
-			if (!gms->count(fromChat.uid)) {
-				if (gms->empty() ? canRoomHost() : DD::isGroupAdmin(fromChat.gid, fromChat.uid, false)) {
-					game->add_gm(fromChat.uid);
-					replyMsg("strGameMastered");
-				}
-				else {
-					replyMsg("strGameMasterDenied");
-				}
-			}
-			else {
-				ShowList res;
-				for (auto& uid : *gms) {
-					res << printUser((long long)uid.to_double());
-				}
-				set("items", res.show("\n"));
-				replyMsg("strGameMasterList");
-			}
-		}
 		else if (action == "rou") {
 			readSkipSpace();
 			if (isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
-				if (auto game{ thisGame() }; game->is_gm(fromChat.uid)) {
+				if (game->is_gm(fromChat.uid)) {
 					if (int nFace = 100; !readNum(nFace) && nFace <= 100) {
 						set("face", nFace);
 						if (int nCopy = 1; '*' == strMsg[intMsgCnt] && !readNum(nCopy)) {
