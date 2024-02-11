@@ -119,15 +119,6 @@ string DiceSession::table_prior_show(const string& tab) const{
 	return is_table(tab) ? PriorList<AttrVar>(**get_dict(tab)).show() : "";
 }
 
-bool DiceSession::table_clr(const string& tab){
-	if (dict.count(tab)){
-		dict.erase(tab);
-		update();
-		return true;
-	}
-	return false;
-}
-
 void DiceSession::ob_enter(DiceEvent* msg)
 {
 	if (obs->count(msg->fromChat.uid))

@@ -610,6 +610,9 @@ public:
 		return res;
 	}
 };
+const std::string getMsg(const std::string& key, const AttrObject& maptmp) {
+	return fmt->format(fmt->msg_get(key), maptmp);
+}
 
 AttrVar DiceModManager::format(const string& s, const AttrObject& context, bool isTrust, const dict_ci<string>& dict) const {
 	//直接重定向

@@ -26,8 +26,6 @@
 #include <Windows.h>
 #endif
 #include "GlobalVar.h"
-#include "DiceExtensionManager.h"
-#include "DiceMod.h"
 
 bool Enabled = false;
 
@@ -639,6 +637,7 @@ mod按序读取，且从后向前覆盖)"},
 `.log on` 继续记录
 `.log off` 暂停记录
 `.log end` 完成记录并发送日志文件
+本桌有登记gm或pl时（见.game）记录gm和pl的发言，否则记录所有人发言
 日志名须作为文件名合法，省略则使用创建时间戳。上传有失败风险，届时请.send {self}后台索取)"},
 {"deck",R"(牌堆实例.deck
 `.deck set (牌堆名=)公共牌堆名` //从公共牌堆创建实例
@@ -975,9 +974,6 @@ Danger //警告用户且拒绝指令，并在3级窗口警告
 	{"世界逆位", "未完成、失败、准备不足、盲目接受、一时不顺利、半途而废、精神颓废、饱和状态、合谋、态度不够融洽、感情受挫。"},
 };
 
-const std::string getMsg(const std::string& key, const AttrObject& maptmp){
-	return fmt->format(fmt->msg_get(key), maptmp);
-}
 const std::string getComment(const std::string& key) {
 	if (auto it{ GlobalComment.find(key) };it!= GlobalComment.end())return it->second;
 	return {};

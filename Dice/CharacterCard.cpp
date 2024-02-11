@@ -489,7 +489,7 @@ unordered_map<long long, Player> PList;
 
 Player& getPlayer(long long uid)
 {
-	if (!PList.count(uid))PList[uid] = {};
+	//if (!PList.count(uid))PList[uid] = {};
 	return PList[uid];
 }
 int Player::removeCard(const string& name){

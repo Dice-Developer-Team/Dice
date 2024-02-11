@@ -1546,8 +1546,8 @@ int DiceEvent::BasicOrder()
 			}
 			return 1;
 		}
-		else if (auto game{ thisGame() }; action == "master") {
-			if (!game)game = sessions.get(fromChat);
+		else if ( action == "master") {
+			auto game = sessions.get(fromChat);
 			auto gms{ game->get_gm() };
 			if (!gms->count(fromChat.uid)) {
 				if (gms->empty() ? canRoomHost() : DD::isGroupAdmin(fromChat.gid, fromChat.uid, false)) {
@@ -1567,7 +1567,7 @@ int DiceEvent::BasicOrder()
 				replyMsg("strGameMasterList");
 			}
 		}
-		else if (!game) {
+		else if (auto game{ thisGame() }; !game) {
 			replyMsg("strGameVoidHere");
 			return 1;
 		}
@@ -2545,7 +2545,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		else {
-			if (auto game{ thisGame() }; game->has_deck(key)) {
+			if (auto game{ thisGame() }; game && game->has_deck(key)) {
 				game->_draw(this);
 				return 1;
 			}
@@ -2615,7 +2615,7 @@ int DiceEvent::InnerOrder() {
 				replyMsg("strGMTableItemNotFound");
 		}
 		else if (strCmd == "clr") {
-			auto game{ thisGame() }; game->table_clr("ÏÈ¹¥");
+			game->reset("ÏÈ¹¥");
 			replyMsg("strGMTableClr");
 		}
 		return 1;
@@ -3435,18 +3435,18 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		else if (strOption == "list") {
-			auto game{ thisGame() }; game->ob_list(this);
+			game->ob_list(this);
 		}
 		else if (strOption == "clr") {
-			if (canRoomHost()) {
-				auto game{ thisGame() }; game->ob_clr(this);
+			if (canRoomHost() || game->is_gm(fromChat.uid)) {
+				game->ob_clr(this);
 			}
 			else {
-				replyMsg("strPermissionDeniedErr");
+				replyMsg("strGameNotMaster");
 			}
 		}
 		else if (strOption == "exit") {
-			auto game{ thisGame() }; game->ob_exit(this);
+			game->ob_exit(this);
 		}
 		else {
 			replyHelp("ob");
@@ -4044,7 +4044,7 @@ int DiceEvent::InnerOrder() {
 		if (strLowerMessage.substr(intMsgCnt, 4) == "show") {
 			intMsgCnt += 4;
 			readSkipSpace();
-			string& attr = (at("attr") = readAttrName()).text;
+			string attr{ readAttrName() };
 			if (strMsg[intMsgCnt] == ':') {
 				if (PList[fromChat.uid].count(attr)) {
 					while (strMsg[intMsgCnt] == ':')++intMsgCnt;
@@ -4065,6 +4065,7 @@ int DiceEvent::InnerOrder() {
 					attr = attr.substr(pos + 2);
 				}
 			}
+			set("attr", attr);
 			if (pc->locked("r")) {
 				replyMsg("strPcLockedRead");
 			}

@@ -210,7 +210,6 @@ public:
 	bool table_del(const string&, const string&);
 	bool table_add(const string&, int, const string&);
 	[[nodiscard]] string table_prior_show(const string& key) const;
-	bool table_clr(const string& key);
 
 	//≈‘π€÷∏¡Ó
 	void ob_enter(DiceEvent*);
