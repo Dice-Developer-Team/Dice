@@ -15,7 +15,7 @@ static dict_ci<trigger_time> trigger_names{
 #define Text2GBK(s) (s ? (isUTF8 ? UTF8toGBK(s) :s) : "")
 AttrShape::AttrShape(const tinyxml2::XMLElement* node, bool isUTF8) {
 	if (auto text{ node->Attribute("alias") }) {
-		alias = split(Text2GBK(text), "|");
+		alias = split(Text2GBK(text), "/");
 	}
 	if (auto exp{ node->GetText() }) {
 		string s{ Text2GBK(exp) };
@@ -185,6 +185,7 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 CardTemp& CardTemp::merge(const CardTemp& other) {
 	if (type.empty())type = other.type;
 	map_merge(AttrShapes, other.AttrShapes);
+	map_merge(replaceName, other.replaceName);
 	if (!other.script.empty())script += "\n" + other.script;
 	for (auto& [opt, preset] : other.presets) {
 		map_merge(presets[opt].shapes, preset.shapes);
@@ -245,9 +246,9 @@ void CharaCard::setType(const string& strType) {
 }
 AttrVar CharaCard::get(const string& key, const AttrVar& val)const{
 	if (dict.count(key))return dict.at(key);
-	string attr{ standard(key) };
 	auto temp{ getTemplet() };
-	if (temp->replaceName.count(key)) {
+	string attr{ standard(key) };
+	if (dict.count(attr)) {
 		return dict.at(attr);
 	}
 	if (temp->canGet(attr)) {
@@ -279,7 +280,7 @@ string CharaCard::print(const string& key){
 	return {};
 }
 std::optional<string> CharaCard::show(string key) {
-	if (has(key) || has(key = standard(key))) {
+	if (dict.count(key) || has(key = standard(key))) {
 		if (auto res{ get(key) }; !res.is_null())return res.print();
 	}
 	return std::nullopt;
@@ -537,7 +538,7 @@ int Player::copyCard(const string& name1, const string& name2, long long group)
 	else if (!mNameIndex.count(name1)){
 		std::lock_guard<std::mutex> lock_queue(cardMutex);
 		//人物卡数量上限
-		if (mCardList.size() > 16)return -1;
+		if (mCardList.size() > 32)return -1;
 		if (name1.find(":") != string::npos)return -6;
 		mCardList.emplace(++indexMax, std::make_shared<CharaCard>(name1));
 		mNameIndex[name1] = indexMax;
