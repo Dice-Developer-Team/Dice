@@ -13,10 +13,12 @@ jobs:
         include:
         - type: Win32
           triplet: x86-windows-static
+          triplet_prefix: x86-windows
           mono: ''
           dll_sfx: windows.i386
         - type: x64
           triplet: x64-windows-static
+          triplet_prefix: x64-windows
           mono: ''
           dll_sfx: windows.amd64
           
@@ -47,7 +49,23 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: bootstrap-vcpkg.bat
-      
+    
+    - name: Package Clear
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: vcpkg-cmake-config_${{ matrix.triplet_prefix }}
+        package-type: nuget
+        min-versions-to-keep: 1
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Package Clear All
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: '*'
+        package-type: nuget
+        min-versions-to-keep: 1
+        token: ${{ secrets.GITHUB_TOKEN }}
+
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name
