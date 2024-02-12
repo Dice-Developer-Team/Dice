@@ -197,6 +197,39 @@ static JSValue js_newActor(JSContext* ctx, const PC& p) {
 	JS_SetOpaque(obj, new PC(p));
 	return obj;
 }
+static JSValue js_NewTable(JSContext* ctx, const ptr<AnysTable>& tab) {
+	if (auto t{ tab->getType() }; t == AnysTable::MetaType::Context) {
+		return js_newDiceContext(ctx, tab);
+	}
+	else if (t == AnysTable::MetaType::Actor) {
+		return js_newActor(ctx, std::static_pointer_cast<CharaCard>(tab));
+	}
+	else if (t == AnysTable::MetaType::Game) {
+		return js_newGameTable(ctx, std::static_pointer_cast<Session>(tab));
+	}
+	else if (!tab->as_dict().empty()) {
+		auto dict = JS_NewObject(ctx);
+		if (tab->to_list()) {
+			uint32_t idx{ 0 };
+			for (auto& val : *tab->to_list()) {
+				JS_SetPropertyUint32(ctx, dict, idx++, js_newAttr(ctx, val));
+			}
+		}
+		for (auto& [key, val] : tab->as_dict()) {
+			JS_SetPropertyStr(ctx, dict, GBKtoUTF8(key).c_str(), js_newAttr(ctx, val));
+		}
+		return dict;
+	}
+	else if (tab->to_list()) {
+		auto ary = JS_NewArray(ctx);
+		uint32_t idx{ 0 };
+		for (auto& val : *tab->to_list()) {
+			JS_SetPropertyUint32(ctx, ary, idx++, js_newAttr(ctx, val));
+		}
+		return ary;
+	}
+	else return JS_NewObject(ctx);
+}
 JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 	switch (var.type) {
 	case AttrVar::Type::Boolean:
@@ -212,37 +245,7 @@ JSValue js_newAttr(JSContext* ctx, const AttrVar& var) {
 		return JS_NewString(ctx, GBKtoUTF8(var.text).c_str());
 		break;
 	case AttrVar::Type::Table:
-		if (auto t{ var.table->getType() }; t == AnysTable::MetaType::Context) {
-			return js_newDiceContext(ctx, var.table.p);
-		}
-		else if (t == AnysTable::MetaType::Actor) {
-			return js_newActor(ctx, std::static_pointer_cast<CharaCard>(var.table.p));
-		}
-		else if (t == AnysTable::MetaType::Game) {
-			return js_newGameTable(ctx, std::static_pointer_cast<Session>(var.table.p));
-		}
-		else if (!var.table->as_dict().empty()) {
-			auto dict = JS_NewObject(ctx);
-			if (var.table->to_list()) {
-				uint32_t idx{ 0 };
-				for (auto& val : *var.table->to_list()) {
-					JS_SetPropertyUint32(ctx, dict, idx++, js_newAttr(ctx, val));
-				}
-			}
-			for (auto& [key, val] : var.table->as_dict()) {
-				JS_SetPropertyStr(ctx, dict, GBKtoUTF8(key).c_str(), js_newAttr(ctx, val));
-			}
-			return dict;
-		}
-		else if (var.table->to_list()) {
-			auto ary = JS_NewArray(ctx);
-			uint32_t idx{ 0 };
-			for (auto& val : *var.table->to_list()) {
-				JS_SetPropertyUint32(ctx, ary, idx++, js_newAttr(ctx, val));
-			}
-			return ary;
-		}
-		else return JS_NewObject(ctx);
+		return js_NewTable(ctx, var.table.p);
 		break;
 	case AttrVar::Type::ID:
 		return JS_NewInt64(ctx, (int64_t)var.id);
@@ -288,7 +291,7 @@ JSValue js_context::evalString(const std::string& s, const string& title) {
 JSValue js_context::evalStringLocal(const std::string& s, const string& title, const ptr<AnysTable>& context) {
 	string exp{ GBKtoUTF8(s) };
 	std::lock_guard<std::recursive_mutex> lock(ex_eval);
-	return JS_EvalThis(ctx, js_newDiceContext(ctx, context), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
+	return JS_EvalThis(ctx, js_NewTable(ctx, context), exp.c_str(), exp.length(), GBKtoUTF8(title).c_str(), JS_EVAL_TYPE_GLOBAL);
 }
 JSValue js_context::evalFile(const std::filesystem::path& p) {
 	size_t buf_len{ 0 };
@@ -305,7 +308,7 @@ JSValue js_context::evalFileLocal(const std::string& s, const ptr<AnysTable>& co
 	size_t buf_len{ 0 };
 	std::lock_guard<std::recursive_mutex> lock(ex_eval);
 	if (uint8_t * buf{ js_load_file(ctx, &buf_len, s.c_str()) }) {
-		auto ret = JS_EvalThis(ctx, js_newDiceContext(ctx, context), (char*)buf, buf_len, s.c_str(),
+		auto ret = JS_EvalThis(ctx, js_NewTable(ctx, context), (char*)buf, buf_len, s.c_str(),
 			JS_EVAL_TYPE_MODULE);
 		js_free(ctx, buf);
 		return ret;
@@ -987,7 +990,8 @@ void js_dice_actor_finalizer(JSRuntime* rt, JSValue val) {
 int js_dice_actor_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst this_val, JSAtom prop) {
 	JS2PC(this_val);
 	if (string key{ js_AtomtoGBK(ctx, prop) }; 
-		desc && pc && pc->has(key = pc->standard(key))) {
+		desc && pc
+		&& (pc->hasAttr(key) || pc->getTemplet()->canGet(key))) {
 		desc->flags = (prop_desc.count(key)) ? prop_desc.at(key) : JS_PROP_C_W_E;
 		desc->value = js_newAttr(ctx, pc->get(key));
 		desc->getter = JS_UNDEFINED;

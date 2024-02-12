@@ -236,13 +236,7 @@ public:
 	//解析生成参数
 	void buildv(string para = "");
 
-	[[nodiscard]] string standard(const string& key) const
-	{
-		if (auto temp{ getTemplet() };
-			!key.empty() && temp->replaceName.count(key))
-			return temp->replaceName.find(key)->second;
-		return key;
-	}
+	[[nodiscard]] string standard(const string& key) const;
 
 	AttrVar get(const string& key, const AttrVar& val = {})const override;
 
@@ -251,7 +245,8 @@ public:
 	bool erase(string& key);
 	void clear();
 
-	std::optional<string> show(string key);
+	[[nodiscard]] std::optional<string> show(string& key);
+	[[nodiscard]] std::optional<string> show(const string& key);
 	string print(const string& key);
 
 	[[nodiscard]] string show(bool isWhole);

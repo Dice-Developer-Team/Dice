@@ -286,6 +286,6 @@ public:
 	void writeb(std::ofstream&)const;
 	void readb(std::ifstream&);
 };
-//using AnysTables = std::unordered_map<string, AnysTable>;
+void from_json(const fifo_json& j, AnysTable&);
 using AttrGetter = AttrVar(*)(const AttrObject&);
 using AttrGetters = std::unordered_map<string, AttrGetter>;

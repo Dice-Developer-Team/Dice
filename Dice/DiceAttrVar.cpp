@@ -657,37 +657,38 @@ bool AttrVar::equal_or_less(const AttrVar& other)const {
 	return is_numberic() && to_num() <= other.to_num();
 }
 
+void from_json(const fifo_json& j, AnysTable& tab){
+	if (j.is_object()) {
+		unordered_set<string> idxs;
+		if (string strI{ "0" }; j.count(strI)) {
+			tab.new_list();
+			int idx{ 0 };
+			do {
+				tab.to_list()->push_back(j[strI]);
+				idxs.insert(strI);
+			} while (j.count(strI = to_string(++idx)));
+		}
+		for (auto& it : j.items()) {
+			if (idxs.count(it.key()))continue;
+			if (!it.value().is_null())tab.set(UTF8toGBK(it.key()), it.value());
+		}
+	}
+	else if (j.is_array()) {
+		tab.new_list();
+		for (auto& it : j) {
+			tab.to_list()->push_back(it);
+		}
+	}
+}
 AttrVar::AttrVar(const fifo_json& j) {
 	switch (j.type()) {
 	case fifo_json::value_t::null:
 		type = Type::Nil;
 		break;
 	case fifo_json::value_t::object:
-		type = Type::Table; {
-			new(&table) AttrObject(AnysTable());
-			unordered_set<string> idxs;
-			if (string strI{ "0" }; j.count(strI)) {
-				table->list = std::make_shared<VarArray>();
-				int idx{ 0 };
-				do {
-					table->list->push_back(j[strI]);
-					idxs.insert(strI);
-				} while (j.count(strI = to_string(++idx)));
-			}
-			for (auto& it : j.items()) {
-				if (idxs.count(it.key()))continue;
-				if (!it.value().is_null())table->dict.emplace(UTF8toGBK(it.key()), it.value());
-			}
-		}
-		break;
 	case fifo_json::value_t::array:
-		type = Type::Table; {
-			new(&table) AttrObject(AnysTable());
-			table->list = std::make_shared<VarArray>();
-			for (auto& it : j) {
-				table->list->push_back(it);
-			}
-		}
+		type = Type::Table;
+		new(&table) AttrObject(AnysTable(j));
 		break;
 	case fifo_json::value_t::string:
 		type = Type::Text;

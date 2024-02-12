@@ -192,7 +192,7 @@ void PyActor_dealloc(PyObject* o) {
 }
 PyObject* PyActor_getattr(PyObject* self, char* attr) {
 	PY2PC(self);
-	return pc ? py_build_attr(pc->get(pc->standard(UTF8toGBK(attr)))) : Py_BuildValue("");
+	return pc ? py_build_attr(pc->get(UTF8toGBK(attr))) : Py_BuildValue("");
 }
 int PyActor_setattr(PyObject* self, char* attr, PyObject* val) {
 	PY2PC(self);
@@ -203,7 +203,7 @@ PyObject* PyActor_getattro(PyObject* self, PyObject* attr) {
 	PY2PC(self);
 	if (!attr && pc)return py_build_attr(*pc);
 	string key{ py_to_gbstring(attr) };
-	return pc ? py_build_attr(pc->get(pc->standard(key))) : Py_BuildValue("");
+	return pc ? py_build_attr(pc->get(key)) : Py_BuildValue("");
 }
 int PyActor_setattro(PyObject* self, PyObject* attr, PyObject* val) {
 	PY2PC(self);

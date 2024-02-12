@@ -4065,7 +4065,6 @@ int DiceEvent::InnerOrder() {
 					attr = attr.substr(pos + 2);
 				}
 			}
-			set("attr", attr);
 			if (pc->locked("r")) {
 				replyMsg("strPcLockedRead");
 			}
@@ -4076,10 +4075,12 @@ int DiceEvent::InnerOrder() {
 				replyMsg("strPropList");
 			}
 			else if (auto val{ pc->show(attr) }) {
+				set("attr", attr);
 				set("val",*val);
 				replyMsg("strProp");
 			}
 			else {
+				set("attr", attr);
 				replyMsg("strPropNotFound");
 			}
 			return 1;

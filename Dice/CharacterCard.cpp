@@ -279,16 +279,32 @@ string CharaCard::print(const string& key){
 	}
 	return {};
 }
-std::optional<string> CharaCard::show(string key) {
+std::optional<string> CharaCard::show(string& key) {
 	if (dict.count(key) || has(key = standard(key))) {
 		if (auto res{ get(key) }; !res.is_null())return res.print();
 	}
 	return std::nullopt;
 }
+std::optional<string> CharaCard::show(const string& key) {
+	if (dict.count(key) || has(standard(key))) {
+		if (auto res{ get(key) }; !res.is_null())return res.print();
+	}
+	return std::nullopt;
+}
 
+[[nodiscard]] string CharaCard::standard(const string& key) const {
+	if (auto temp{ getTemplet() };
+		!key.empty() && temp->replaceName.count(key)) {
+		return temp->replaceName.find(key)->second;
+	}
+	return key;
+}
 bool CharaCard::has(const string& key)const {
-	return (dict.count(key) && !dict.at(key).is_null())
-		|| getTemplet()->canGet(key);
+	if (dict.count(key))return true;
+	if (string attr{ standard(key) }; dict.count(attr)) {
+		return !dict.at(attr).is_null();
+	}
+	else return getTemplet()->canGet(attr);
 }
 bool CharaCard::hasAttr(string& key) const {
 	return dict.count(key) || dict.count(key = standard(key));
