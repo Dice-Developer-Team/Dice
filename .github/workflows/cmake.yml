@@ -53,15 +53,7 @@ jobs:
     - name: Package Clear
       uses: actions/delete-package-versions@v4
       with:
-        package-name: vcpkg-cmake-config_${{ matrix.triplet_prefix }}
-        package-type: nuget
-        min-versions-to-keep: 1
-        token: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Package Clear All
-      uses: actions/delete-package-versions@v4
-      with:
-        package-name: '*'
+        package-name: vcpkg-cmake-config_x64-windows
         package-type: nuget
         min-versions-to-keep: 1
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -241,6 +233,14 @@ jobs:
     - name: Install Cross Compiler
       run: sudo apt-get update && sudo apt-get install ${{ matrix.apt }}
       
+    - name: Package Clear
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: openssl_${{ matrix.triplet }}
+        package-type: nuget
+        min-versions-to-keep: 1
+        token: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Cache
       uses: actions/cache@v3
       id: cache

@@ -98,7 +98,7 @@ struct AttrObject {
 	}
 	operator bool()const { return bool(p); }
 	template<class C>
-	C* as()const{ return dynamic_cast<C*>(p.get()) }
+	C* as()const { return dynamic_cast<C*>(p.get()); }
 };
 class AttrVar {
 public:
