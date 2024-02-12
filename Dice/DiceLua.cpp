@@ -597,7 +597,7 @@ int SelfData_newindex(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
 	string key{ lua_to_gbstring(L, 2) };
-	if (file.data.is_null())file.data = AttrVars();
+	if (file.data.is_null())file.data = AnysTable();
 	else if (!file.data.is_table())return 0;
 	if (std::lock_guard<std::mutex> lock(file.exWrite); lua_isnoneornil(L,3)) {
 		file.data.table->reset(key);

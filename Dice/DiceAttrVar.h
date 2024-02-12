@@ -30,7 +30,7 @@
 using std::string;
 template<typename T>
 using ptr = std::shared_ptr<T>;
-template<typename T>
+template<typename T = std::string>
 using fifo_dict = nlohmann::fifo_map<std::string, T>;
 
 struct ByteS {
@@ -168,7 +168,7 @@ public:
 	AttrVar& operator=(const string& other);
 	AttrVar& operator=(const char* other);
 	AttrVar& operator=(const long long other);
-	AttrVar& operator=(const fifo_json& other) { new(this)AttrVar(other); return *this; };
+	//AttrVar& operator=(const fifo_json& other) { new(this)AttrVar(other); return *this; };
 	template<typename T>
 	bool operator!=(const T other)const { return !(*this == other); }
 	//bool operator==(const long long other)const;
@@ -281,11 +281,11 @@ public:
 	int inc(const string& key, int i);
 	void add(const string& key, const AttrVar&);
 	AnysTable& merge(const AttrVars& other);
+	void from_json(const fifo_json&);
 	fifo_json to_json()const;
 	toml::table to_toml()const;
 	void writeb(std::ofstream&)const;
 	void readb(std::ifstream&);
 };
-void from_json(const fifo_json& j, AnysTable&);
 using AttrGetter = AttrVar(*)(const AttrObject&);
 using AttrGetters = std::unordered_map<string, AttrGetter>;

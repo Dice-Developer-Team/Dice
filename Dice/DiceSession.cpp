@@ -892,11 +892,11 @@ int DiceSessionManager::load() {
 					it.value()["pool"].get<vector<size_t>>(), it.value()["rest"]));
 			}
 			if (j.count("tables"))for (auto& it : j["tables"].items()) {
-				pSession->at(UTF8toGBK(it.key())) = it.value();
+				pSession->set(UTF8toGBK(it.key()), it.value());
 				isUpdated = true;
 			}
 			if (j.count("data"))for (auto& it : j["data"].items()) {
-				pSession->at(UTF8toGBK(it.key())) = it.value();
+				pSession->set(UTF8toGBK(it.key()), it.value());
 			}
 			if (j.count("master"))for (auto& it : j["master"]) {
 				pSession->master->emplace(it.get<long long>());

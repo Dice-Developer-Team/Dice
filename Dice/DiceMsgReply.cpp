@@ -759,7 +759,7 @@ void DiceMsgReply::readJson(const fifo_json& j) {
 		if (j.count("limit"))limit.parse(UTF8toGBK(j["limit"].get<string>()));
 		if (j.count("echo"))echo = (Echo)sEcho[j["echo"].get<string>()];
 		if (j.count("answer")) {
-			if (echo == Echo::Deck)from_json(j["answer"], *answer);
+			if (echo == Echo::Deck)answer->from_json(j["answer"]);
 			else if (echo == Echo::Lua)answer->set("lua", j["answer"]);
 			else if (echo == Echo::JavaScript)answer->set("js", j["answer"]);
 			else if (echo == Echo::Python)answer->set("py", j["answer"]);

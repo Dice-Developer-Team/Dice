@@ -158,7 +158,7 @@ void AnysTable::writeb(std::ofstream& fout) const {
 		int idx{ 0 };
 		for (auto& val : *list) {
 			++idx;
-			if (val)vars[to_string(idx)] = val.to_json();
+			if (val)vars[to_string(idx)] = AttrVar(val.to_json());
 		}
 	}
 	fwrite(fout, vars);
@@ -657,26 +657,26 @@ bool AttrVar::equal_or_less(const AttrVar& other)const {
 	return is_numberic() && to_num() <= other.to_num();
 }
 
-void from_json(const fifo_json& j, AnysTable& tab){
+void AnysTable::from_json(const fifo_json& j){
 	if (j.is_object()) {
 		unordered_set<string> idxs;
 		if (string strI{ "0" }; j.count(strI)) {
-			tab.new_list();
+			new_list();
 			int idx{ 0 };
 			do {
-				tab.to_list()->push_back(j[strI]);
+				list->push_back(j[strI]);
 				idxs.insert(strI);
 			} while (j.count(strI = to_string(++idx)));
 		}
 		for (auto& it : j.items()) {
 			if (idxs.count(it.key()))continue;
-			if (!it.value().is_null())tab.set(UTF8toGBK(it.key()), it.value());
+			if (!it.value().is_null())set(UTF8toGBK(it.key()), it.value());
 		}
 	}
 	else if (j.is_array()) {
-		tab.new_list();
+		new_list();
 		for (auto& it : j) {
-			tab.to_list()->push_back(it);
+			list->push_back(it);
 		}
 	}
 }
