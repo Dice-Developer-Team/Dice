@@ -178,7 +178,7 @@ void DiceScheduler::end() {
 
 AttrVar DiceToday::getJrrp(long long uid) {
 	if (UserInfo.count(uid) && UserInfo[uid]->has("jrrp"))
-		return UserInfo[uid]["jrrp"];
+		return UserInfo[uid]->get("jrrp");
 	string frmdata = "QQ=" + to_string(console.DiceMaid) + "&v=20190114" + "&QueryQQ=" + to_string(uid);
 	string res;
 	if (Network::POST("http://api.kokona.tech:5555/jrrp", frmdata, "", res)) {
@@ -191,7 +191,7 @@ AttrVar DiceToday::getJrrp(long long uid) {
 				AnysTable{ {"res", res} }
 			), 0);
 		}
-		return UserInfo[uid]["jrrp_local"];
+		return UserInfo[uid]->get("jrrp_local");
 	}
 }
 

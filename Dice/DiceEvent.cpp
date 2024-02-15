@@ -71,7 +71,7 @@ AttrGetters MsgIndexs{
 	}},
 	{"grpAuth", idx_gAuth},
 	{"game", [](const AttrObject& obj) {
-		if (AttrVar game{sessions.get_if(*obj)}) {
+		if (AttrVar game{ sessions.get_if(*obj)} ) {
 			return obj->at("game") = game;
 		}
 		return AttrVar();
@@ -4059,8 +4059,8 @@ int DiceEvent::InnerOrder() {
 			}
 			else if (size_t pos{ attr.find("的") }; pos != string::npos) {
 				string strGenitive = attr.substr(0, pos);
-				if (PList[fromChat.uid].count(strGenitive)) {
-					pc = PList[fromChat.uid][strGenitive];
+				if (pl.count(strGenitive)) {
+					pc = pl[strGenitive];
 					set("pc", pc->getName());
 					attr = attr.substr(pos + 2);
 				}
@@ -4168,8 +4168,8 @@ int DiceEvent::InnerOrder() {
 				'=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
 			//判定数值修改
 			if ((strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+')) {
-				AttrVar& attr_old{ trans->at("old") = pc->get(attr_name) };
-				RD Mod(attr_old.to_str() + readDice());
+				trans->at("old") = pc->get(attr_name);
+				RD Mod(trans->get_str("old") + readDice());
 				if (int eno{ Mod.Roll() }; !eno) {
 					trans->set("action", "+=");
 					trans->set("expr", Mod.FormCompleteString());
