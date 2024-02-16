@@ -113,8 +113,7 @@ void loadData(){
 		if (!logList.empty())
 		{
 			logList << "扩展配置读取完毕√";
-			Enabled ? console.log(logList.show(), 1, printSTNow())
-				: DD::debugLog(logList.show());
+			console.log(logList.show(), int(Enabled), printSTNow());
 		}
 	}
 	catch (const std::exception& e)
@@ -434,7 +433,7 @@ R"( //私骰作成 即可成为我的主人~
 				string note{ "Dice! WebUI 正于端口" + std::to_string(ports[0])
 					+ "运行，本地可通过浏览器访问http://localhost:" + std::to_string(ports[0])
 					+ "\n默认用户名为admin密码为password，详细教程请查看 https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming" };
-				console ? DD::debugLog(note) : console.log(note, 0b1);
+				console.log(note, 0b1);
 			}
 		}
 		catch (const CivetException& e)

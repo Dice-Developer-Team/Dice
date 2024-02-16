@@ -49,7 +49,7 @@ bool readFile(const std::filesystem::path& p, std::basic_string<Char, Trait, All
 std::optional<std::string> readFile(const std::filesystem::path& p);
 
 template <typename TKey, typename TVal>
-TVal get(const map<TKey, TVal>& m, TKey key, TVal def)
+TVal get(const std::unordered_map<TKey, TVal>& m, TKey key, TVal def)
 {
 	return (m.count(key) ? m.at(key) : def);
 	/*auto it = m.find(key);

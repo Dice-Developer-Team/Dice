@@ -42,7 +42,7 @@
 std::filesystem::path dirExe;
 std::filesystem::path DiceDir("DiceData");
 
-const map<string, short> mChatConf{
+const dict<short> mChatConf{
 	//0-群管理员，2-信任2级，3-信任3级，4-管理员，5-系统操作
 	{"忽略", 4},
 	{"停用指令", 0},

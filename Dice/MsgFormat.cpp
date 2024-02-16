@@ -30,9 +30,7 @@
 #include "CardDeck.h"
 using std::string;
 
-std::unordered_map<string, GobalTex> strFuncs{
-	{"master_QQ",print_master},
-	{"master_ID",print_master},
+std::unordered_map<string, GlobalTex> strFuncs{
 	{"list_extern_deck",list_extern_deck},
 	{"list_all_deck",list_deck},
 	{"list_reply_deck",[]() {return fmt->list_reply(2); }},

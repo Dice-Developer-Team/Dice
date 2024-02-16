@@ -33,8 +33,8 @@
 #include "DiceAttrVar.h"
 using std::string;
 
-typedef string(*GobalTex)();
-extern std::unordered_map<string, GobalTex> strFuncs;
+typedef string(*GlobalTex)();
+extern std::unordered_map<string, GlobalTex> strFuncs;
 
 class ResList
 {

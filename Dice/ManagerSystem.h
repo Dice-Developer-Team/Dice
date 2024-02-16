@@ -144,7 +144,7 @@ string filter_CQcode(const string&, long long fromGID = 0);
 //forward msg
 string forward_filter(const string&, long long fromGID = 0);
 
-extern const map<string, short> mChatConf;
+extern const dict<short> mChatConf;
 
 //ÈºÁÄ¼ÇÂ¼
 class Chat :public AnysTable {

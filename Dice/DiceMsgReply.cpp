@@ -841,10 +841,9 @@ bool DiceReplyUnit::listen(DiceEvent* msg, int type) {
 			auto reply{ items[title] };
 			if (!(type & (int)reply->type))continue;
 			// libstdc++ 使用了递归式 dfs 匹配正则表达式
-			// 递归层级很多，非常容易爆栈
 			// 然而，每个 Java Thread 在32位 Linux 下默认大小为320K，600字符的匹配即会爆栈
 			// 64位下还好，默认是1M，1800字符会爆栈
-			// 这里强制限制输入为400字符，以避免此问题
+			// char limit 400
 			// @seealso https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86164
 
 			// 未来优化：预先构建regex并使用std::regex::optimize

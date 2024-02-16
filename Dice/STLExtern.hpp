@@ -165,14 +165,14 @@ public:
 		valElse = val;
 		return *this;
 	}
-	TVal& get_else() {
+	const TVal& get_else() const{
 		return valElse;
 	}
 	grad_map& set_step(TKey key, const TVal& val) {
 		grades[key] = val;
 		return *this;
 	}
-	TVal& operator[](TKey key) {
+	const TVal& operator[](TKey key) const{
 		if (auto it{ grades.upper_bound(key) }; it != grades.begin()) {
 			return (--it)->second;
 		}

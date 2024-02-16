@@ -21,6 +21,7 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+#include <regex>
 #include "DiceMod.h"
 #include "GlobalVar.h"
 #include "ManagerSystem.h"
@@ -35,7 +36,7 @@
 #include "RandomGenerator.h"
 #include "DDAPI.h"
 #include "DiceYaml.h"
-#include <regex>
+#include "DiceFormatter.h"
 
 std::shared_ptr<DiceModManager> fmt;
 
@@ -61,7 +62,7 @@ string DiceSpeech::express()const {
 	return {};
 }
 
-dict_ci<DiceSpeech> transpeech{
+static dict_ci<DiceSpeech> transpeech{
 	{ "br", "\n" },
 	{ "sp"," " },
 	{ "amp","&" },
@@ -387,229 +388,6 @@ void DiceModManager::turn_over(size_t idx) {
 	save();
 	build();
 }
-static enumap<string> methods{ "var","print","help","sample","case","vary","grade","at","ran","wait","js","py","len" };
-enum class FmtMethod { Var, Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait, JS, Py, Len};
-struct ParseNode {
-	string leaf;
-	size_t pos;
-	char token;
-	ParseNode(const string& s, size_t p, char t) :leaf(s), pos(p), token(t) {}
-	shared_ptr<ParseNode> next;
-	shared_ptr<ParseNode> first_kid;
-	//shared_ptr<ParseNode> last_kid;
-};
-class Parser {
-	//string exp;
-	AttrObject context;
-	bool isTrust{ true };
-	dict_ci<string> dict;
-	shared_ptr<ParseNode> root;
-	AttrVar res;
-public:
-	Parser(const string& s, AttrObject obj, bool t = true, const dict_ci<string>& con = {})
-		:root(std::make_shared<ParseNode>(s, 0, char(0xAA))), context(obj), isTrust(t), dict(con) {
-		string& exp{ root->leaf };
-		auto parent{ root };
-		char chSign[3]{ char(0xAA),char(0xAA),'\0' };
-		size_t preL{ 0 }, lastL{ 0 }, lastR{ 0 }; 
-		while ((lastR = exp.find('}', ++lastR)) != string::npos
-			&& (lastL = exp.rfind('{', lastR)) != string::npos) {
-			string key;
-			//括号前加‘\’表示该括号内容不转义
-			if (exp[lastR - 1] == '\\') {
-				lastL = lastR - 1;
-				key = "}";
-			}
-			else if (lastL > 0 && exp[lastL - 1] == '\\') {
-				lastR = lastL--;
-				key = "{";
-			}
-			else key = exp.substr(lastL + 1, lastR - lastL - 1);
-			auto node{ std::make_shared<ParseNode>(key,lastL,++chSign[1]) };
-			if (!root->first_kid){
-				parent = root->first_kid = node;
-			}
-			else if (lastL >= preL) {
-				parent = parent->next = node;
-			}
-			else if (lastL < root->first_kid->pos) {
-				node->first_kid = root->first_kid;
-				parent = root->first_kid = node;
-			}
-			else {
-				parent = root->first_kid;
-				while (parent->next) {
-					if (parent->next->pos < lastL) {
-						parent = parent->next;
-					}
-					else {
-						node->first_kid = parent->next;
-						parent = parent->next = node;
-						break;
-					}
-				}
-			}
-			exp.replace(lastL, lastR - lastL + 1, chSign);
-			lastR = (preL = lastL) + 1;
-		}
-		if(root->first_kid)res = format_token(exp, root);
-	}
-	AttrVar format_token(string& s, shared_ptr<ParseNode> it) {
-		char chSign[3]{ char(0xAA),char(0xAA),'\0' };
-		size_t pos{ 0 };
-		it = it->first_kid;
-		while (it) {
-			chSign[1] = it->token;
-			if ((pos = s.find(chSign)) != string::npos) {
-				string& key{ it->leaf };
-				AttrVar val{ "{" + key + "}" };
-				if (key == "{" || key == "}") {
-					val = key;
-				}
-				else if (context && context->has(key)) {
-					if (key == "res")val = fmt->format(context->print(key), context, isTrust, dict);
-					else val = context->print(key);
-				}
-				else if (AttrVar res{ getContextItem(context, key, isTrust) }) {
-					val = res;
-				}
-				else if (auto cit = dict.find(key); cit != dict.end()) {
-					val = fmt->format(cit->second, context, isTrust, dict);
-				}
-				//语境优先于全局
-				else if (auto sp = fmt->global_speech.find(key); sp != fmt->global_speech.end()) {
-					val = fmt->format(sp->second.express(), context, isTrust, dict);
-					if (!isTrust && val == "\f")val = "\f> ";
-				}
-				else if (size_t colon{ key.find(':') }; colon != string::npos) {
-					string method{ key.substr(0,colon) };
-					string para{ key.substr(colon + 1) };
-					if (methods.count(method))switch ((FmtMethod)methods[method]) {
-						case FmtMethod::Var:{
-							auto posQ = para.find('?'), posE = para.find('=');
-							if (posQ < posE) {
-								auto [field, exp] = readini<string, string>(para, '?');
-								field = format_token(field, it);
-								context->set(field, val = (exp[0] == char(0xAA)) ? format_token(exp, it) : AttrVar::parse(exp));
-							}
-							else {
-								auto exps{ splitPairs(para,'=','&') };
-								for (auto& [field, exp] : exps) {
-									if (exp.empty())context->set(field);
-									else context->set(field, (exp[0] == char(0xAA)) ? format_token(exp, it) : AttrVar::parse(exp));
-								}
-								val.des();
-							}
-						} break;
-						case FmtMethod::Help:
-							val = fmt->get_help(format_token(para, it).to_str(), context);
-							break;
-						case FmtMethod::Sample:
-							if (vector<string> samples{ split(para,"|") }; samples.empty())val.des();
-							else
-								val = format_token(samples[(size_t)RandomGenerator::Randint(0, samples.size() - 1)], it);
-							break;
-						case FmtMethod::At:
-							if (format_token(para, it) == "self") {
-								val = "[CQ:at,qq=" + to_string(console.DiceMaid) + "]";
-							}
-							else if (!para.empty()) {
-								val = "[CQ:at,qq=" + para + "]";
-							}
-							else if (context->has("uid")) {
-								val = "[CQ:at,qq=" + context->get_str("uid") + "]";
-							}
-							else val.des();
-							break;
-						case FmtMethod::Print:
-							if (auto paras{ splitPairs(para,'=','&') }; paras.count("uid")) {
-								if (isTrust && paras["uid"].empty())val = printUser(context->get_ll("uid"));
-								else val = printUser(AttrVar(paras["uid"]).to_ll());
-							}
-							else if (paras.count("gid")) {
-								if (isTrust && paras["gid"].empty())val = printGroup(context->get_ll("gid"));
-								else val = printGroup(AttrVar(paras["gid"]).to_ll());
-							}
-							else if (paras.count("master")) {
-								val = console ? printUser(console) : "[无主]";
-							}
-							else val.des();
-							break;
-						case FmtMethod::Case:
-						case FmtMethod::Vary: {
-							auto [item, strVary] = readini<string, string>(para, '?');
-							auto paras{ splitPairs(strVary,'=','&') };
-							auto itemVal{ getContextItem(context, format_token(item, it), isTrust) };
-							if (auto i{ paras.find(itemVal.print()) }; i != paras.end()
-								|| (i = paras.find("else")) != paras.end()) {
-								val = format_token(i->second, it);
-							}
-							else val.des();
-						}break;
-						case FmtMethod::Grade: {
-							auto [item, strVary] = readini<string, string>(para, '?');
-							auto paras{ splitPairs(strVary,'=','&') };
-							auto itemVal{ getContextItem(context, format_token(item, it), isTrust) };
-							grad_map<double, string>grade;
-							for (auto& [step, value] : paras) {
-								if (step == "else")grade.set_else(value);
-								else if (isNumeric(step))
-									grade.set_step(stod(step), value);
-								else if (auto stepVal{ getContextItem(context,step, isTrust) }; stepVal.is_numberic())
-									grade.set_step(stepVal.to_num(), value);
-							}
-							val = format_token(itemVal.is_numberic() ? grade[itemVal.to_num()] : grade.get_else(), it);
-						}break;
-						case FmtMethod::Ran: {
-							auto [min, max] = readini<string, string>(para, '~');
-							int l = AttrVar::parse(format_token(min, it)).to_int(),
-								r = AttrVar::parse(format_token(max, it)).to_int();
-							val = (l == r) ? to_string(l)
-								: (l < r) ? to_string(RandomGenerator::Randint(l, r))
-								: to_string(RandomGenerator::Randint(r, l));
-						}break;
-						case FmtMethod::Wait:
-							if (long long ms{ AttrVar::parse(format_token(para, it)).to_ll() }; 0 < ms && ms < 600000)
-								std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-							val.des();
-							break;
-						case FmtMethod::JS:
-							val = js_context_eval(format_token(para, it), context.p);
-							break;
-						case FmtMethod::Py:
-#ifdef DICE_PYTHON
-							if (py)val = py->evalString(format_token(para, it), context);
-#endif //DICE_PYTHON
-							break;
-						case FmtMethod::Len:
-							val = int(getContextItem(context, format_token(para, it), isTrust).len());
-							break;
-						default:
-							break;
-						}
-				}
-				else if (auto func = strFuncs.find(key); func != strFuncs.end()) {
-					val = func->second();
-				}
-				if (s == chSign) {
-					s = val;
-					return val;
-				}
-				else if (val.is_null()) s.erase(pos, 2);
-				else s.replace(pos, 2, val.print());
-			}
-			format_token(s, it);
-			it = it->next;
-		}
-		return s;
-	}
-	operator string() {
-		return root->leaf;
-	}
-	operator AttrVar() {
-		return res;
-	}
-};
 const std::string getMsg(const std::string& key, const AttrObject& maptmp) {
 	return fmt->format(fmt->msg_get(key), maptmp);
 }
@@ -629,7 +407,7 @@ AttrVar DiceModManager::format(const string& s, const AttrObject& context, bool 
 		}
 	}
 	if (s.find('{') == string::npos)return s;
-	return Parser(s, context, isTrust, dict);
+	return formatMsg(s, context, isTrust, dict);
 }
 std::shared_mutex GlobalMsgMutex;
 string DiceModManager::msg_get(const string& key)const {
