@@ -168,7 +168,7 @@ public:
 		if (auto i{ cases.find(res.print()) }; i != cases.end()) {
 			return i->second->concat(context, isTrust, global);
 		}
-		return other ? other->concat(context, isTrust, global) : leaf;
+		return other ? other->concat(context, isTrust, global) : AttrVar();
 	}
 };
 class MarkGradeNode : public MarkNode {
@@ -189,7 +189,7 @@ public:
 		}
 		else if (auto grade{ grades.get_else() })
 			return grade->concat(context, isTrust, global);
-		return leaf;
+		return AttrVar();
 	}
 };
 class MarkJSNode : public MarkNode {

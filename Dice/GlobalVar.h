@@ -10,7 +10,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -30,7 +30,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif
-#include <map>
 #include "STLExtern.hpp"
 #include "DiceExtensionManager.h"
 #include "DiceAttrVar.h"
@@ -40,7 +39,7 @@
  * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
  * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
  */
-constexpr unsigned short Dice_Build = 656u;
+constexpr unsigned short Dice_Build = 657u;
 inline const std::string Dice_Ver_Without_Build = "2.7.0beta7";
 constexpr auto DiceRequestHeader = "Dice/2.7.0";
 inline const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";

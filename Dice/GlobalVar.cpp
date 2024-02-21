@@ -765,7 +765,7 @@ Type=[回复性质](Reply/Order)
 .pc stat //查看当前角色卡骰点统计
 .pc redo ([生成参数]:)(卡名) //清空原有属性后重新生成
 .pc clr //销毁全部角色卡记录
-//掷骰统计以角色卡为单位，每名用户最多可同时保存16张角色卡
+//掷骰统计以角色卡为单位，每名用户最多可同时保存32张角色卡
 )"
 	},
 	{"rc", "&rc/ra"},
@@ -879,8 +879,8 @@ Type=[回复性质](Reply/Order)
 		R"(群管指令.group(群管理员限定)
 .group state //查看在群内对骰娘的设置
 .group pause/restart //群全体禁言/全体解除禁言
-.group card [at/用户QQ] [名片] //设置群员名片
-.group title [at/用户QQ] [头衔] //设置群员头衔
+.group card [at/用户ID] [名片] //设置群员名片
+.group title [at/用户ID] [头衔] //设置群员头衔
 .group diver //查看潜水成员
 .group +/-[群管词条] //为群加减设置，需要对应权限
 例:.group +禁用回复 //关闭本群自定义回复

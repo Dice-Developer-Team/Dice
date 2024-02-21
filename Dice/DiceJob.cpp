@@ -239,18 +239,18 @@ void clear_group(AttrObject& job) {
 						}
 						else if (authSelf.less(authBlack)) {
 							if (grp.updated() < grpline)GrpDelete.push_back(id);
-							res << printChat(grp) + "：" + printUser(eachQQ) + "对方群权限较高";
+							res << grp.print() + "：" + printUser(eachQQ) + "对方群权限较高";
 							grp.leave("发现黑名单管理员" + printUser(eachQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
 							intCnt++;
 							break;
 						}
 						else if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"]) {
 							if(intCnt == console["GroupClearLimit"])res << "*单次清退已达上限*";
-							res << printChat(grp) + "：" + printUser(eachQQ);
+							res << grp.print() + "：" + printUser(eachQQ);
 						}
 						else if (console["LeaveBlackQQ"]) {
 							if (grp.updated() < grpline)GrpDelete.push_back(id);
-							res << printChat(grp) + "：" + printUser(eachQQ);
+							res << grp.print() + "：" + printUser(eachQQ);
 							grp.leave("发现黑名单成员" + printUser(eachQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
 							intCnt++;
 							break;

@@ -226,13 +226,9 @@ void CardTemp::after_update(const ptr<AnysTable>& eve) {
 }
 
 ptr<CardTemp> CharaCard::getTemplet()const{
-	thread_local ptr<CardTemp> temp;
-	if (!temp) {
-		if (string type{ get_str("__Type") };
-			!type.empty() && CardModels.count(type))return temp = CardModels[type];
-		return temp = CardModels["BRP"];
-	}
-	return temp;
+	if (string type{ get_str("__Type") };
+		!type.empty() && CardModels.count(type))return CardModels[type];
+	return CardModels["BRP"];
 }
 
 void CharaCard::update() {

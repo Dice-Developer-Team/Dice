@@ -4049,6 +4049,7 @@ int DiceEvent::InnerOrder() {
 				if (PList[fromChat.uid].count(attr)) {
 					while (strMsg[intMsgCnt] == ':')++intMsgCnt;
 					pc = pl[attr];
+					set("char", pc);
 					set("pc", pc->getName());
 					attr = readAttrName();
 				}
@@ -4061,6 +4062,7 @@ int DiceEvent::InnerOrder() {
 				string strGenitive = attr.substr(0, pos);
 				if (pl.count(strGenitive)) {
 					pc = pl[strGenitive];
+					set("char", pc);
 					set("pc", pc->getName());
 					attr = attr.substr(pos + 2);
 				}
@@ -4111,6 +4113,7 @@ int DiceEvent::InnerOrder() {
 					}
 				}
 				pc = pl[name];
+				set("char", pc);
 				set("pc", name);
 			}
 		}

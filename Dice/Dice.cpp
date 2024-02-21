@@ -685,7 +685,7 @@ EVE_DiscussMsg(eventDiscussMsg)
 	if (blacklist->get_user_danger(fromUID) && console["AutoClearBlack"])
 	{
 		const string strMsg = "发现黑名单用户" + printUser(fromUID) + "，自动执行退群";
-		console.log(printChat(grp) + strMsg, 0b10, printSTNow());
+		console.log(grp.print() + strMsg, 0b10, printSTNow());
 		grp.leave(strMsg);
 		return 1;
 	}
@@ -749,7 +749,7 @@ EVE_GroupMemberKicked(eventGroupMemberKicked){
 		grp.reset("已入群").rmLst();
 		if (!console || grp.is("忽略"))return 0;
 		string strNow = printSTime(stNow);
-		string strNote = printUser(fromUID) + "将" + printUser(beingOperateQQ) + "移出了" + printChat(grp);
+		string strNote = printUser(fromUID) + "将" + printUser(beingOperateQQ) + "移出了" + grp.print();
 		console.log(strNote, 0b1000, strNow);
 		if (!console["ListenGroupKick"] || trustedQQ(fromUID) > 1 || grp.is("免黑") || grp.is("协议无效") || ExceptGroups.count(fromGID)) return 0;
 		AttrObject eve{ AnysTable{{
@@ -772,7 +772,7 @@ EVE_GroupMemberKicked(eventGroupMemberKicked){
 	{
 		if (!console || grp.is("忽略"))return 0;
 		string strNow = printSTime(stNow);
-		string strNote = printUser(fromUID) + "将" + printUser(beingOperateQQ) + "移出了" + printChat(grp);
+		string strNote = printUser(fromUID) + "将" + printUser(beingOperateQQ) + "移出了" + grp.print();
 		console.log(strNote, 0b1000, strNow);
 		if (trustedQQ(fromUID) > 1 || grp.is("免黑") || grp.is("协议无效") || ExceptGroups.count(fromGID)) return 0;
 		DDBlackMarkFactory mark{fromUID, fromGID};
@@ -792,7 +792,7 @@ EVE_GroupBan(eventGroupBan)
 	{
 		if (beingOperateQQ == console.DiceMaid)
 		{
-			console.log(getMsg("self") + "在" + printGroup(fromGID) + "中被解除禁言", 0b10, printSTNow());
+			console.log(getMsg("self") + "在" + grp.print() + "中被解除禁言", 0b10, printSTNow());
 			return 1;
 		}
 	}
@@ -800,7 +800,7 @@ EVE_GroupBan(eventGroupBan)
 	{
 		string strNow = printSTNow();
 		long long llOwner = 0;
-		string strNote = "在" + printGroup(fromGID) + "中," + printUser(beingOperateQQ) + "被" + printUser(operatorQQ) + "禁言" + duration;
+		string strNote = "在" + grp.print() + "中," + printUser(beingOperateQQ) + "被" + printUser(operatorQQ) + "禁言" + duration;
 		if (!console["ListenGroupBan"] || trustedQQ(operatorQQ) > 1 || grp.is("免黑") || grp.is("协议无效") || ExceptGroups.count(fromGID)) 
 		{
 			console.log(strNote, 0b10, strNow);
