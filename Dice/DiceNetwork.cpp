@@ -175,7 +175,7 @@ namespace Network
 			}
 			if (dwRetCode != 200)
 			{
-				des = getMsg("strRequestRetCodeErr", AnysTable{ {"error", std::to_string(dwRetCode)} });
+				des = getMsg("strRequestRetCodeErr", AnysTable{ AttrVars{{"error", std::to_string(dwRetCode)}}});
 				goto InternetClose;
 			}
 			DWORD preRcvCnt;
@@ -319,7 +319,7 @@ InternetClose:
 			}
 			if (dwRetCode != 200)
 			{
-				des = getMsg("strRequestRetCodeErr", AnysTable{ {"error", std::to_string(dwRetCode)} });
+				des = getMsg("strRequestRetCodeErr", AnysTable{ AttrVars{{"error", std::to_string(dwRetCode)} } });
 				InternetCloseHandle(hRequest);
 				InternetCloseHandle(hConnect);
 				InternetCloseHandle(hInternet);

@@ -1110,8 +1110,7 @@ void DiceModManager::build() {
 	}
 	if (!resLog.empty()) {
 		resLog << "Ä£¿é¼ÓÔØÍê±Ï¡Ì";
-		Enabled ? console.log(getMsg("strSelfName") + "\n" + resLog.show("\n"), 1, printSTNow())
-			: DD::debugLog(resLog.show("\n"));
+		console.log(getMsg("strSelfName") + "\n" + resLog.show("\n"), int(Enabled), printSTNow());
 	}
 	isIniting = false;
 }
