@@ -130,7 +130,7 @@ public:
 	}
 	AttrVar format(const AttrObject& context, bool isTrust = true, const dict_ci<string>& global = {})const override {
 		int l = min->concat(context, isTrust, global).to_int(), r = max->concat(context, isTrust, global).to_int();
-		return l < r ? AttrVar(RandomGenerator::Randint(l, r)) : leaf;
+		return l < r ? AttrVar(RandomGenerator::Randint(l, r)) : AttrVar();
 	}
 };
 class MarkHelpNode : public MarkNode {

@@ -568,6 +568,8 @@ size_t AttrVar::len()const {
 	case Type::Set:
 		return flags->size();
 		break;
+	default:
+		break;
 	}
 	return 0;
 }
