@@ -25,7 +25,7 @@ public:
 			if (!isTrust && val == "\f")val = "\f> ";
 			return val;
 		}
-		return "{" + leaf + "}";
+		return {};
 	}
 };
 class MarkGlobalIndexNode : public MarkNode {

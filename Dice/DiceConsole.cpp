@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -43,7 +43,7 @@
 using namespace std;
 
 const fifo_dict_ci<int>Console::intDefault{
-{"DisabledGlobal",0},{"DisabledBlock",0},{"DisabledListenAt",1},
+{"DisabledGlobal",0},{"DisabledListenAt",1},
 {"DisabledMe",1},{"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
 {"Private",0},{"CheckGroupLicense",0},
 {"ListenGroupRequest",1},{"ListenGroupAdd",1},
@@ -72,7 +72,6 @@ const fifo_dict_ci<int>Console::intDefault{
 };
 const std::unordered_map<std::string,string>Console::confComment{
 	{"DisabledGlobal","全局停用指令，对trust4不起效"},
-	{"DisabledBlock","框架多插件时，关闭状态开启拦截，阻止其他插件处理消息"},
 	{"DisabledListenAt","关闭状态下，自身被at时也响应"},
 	{"DisabledMe","全局禁用.me，对trust4+不起效"},
 	{"DisabledJrrp","全局禁用.jrrp，对trust4+不起效"},

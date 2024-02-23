@@ -3485,8 +3485,10 @@ int DiceEvent::InnerOrder() {
 		else if (strOption == "new") {
 			string strPC{ strip(filter_CQcode(readRest(), fromChat.gid)) };
 			if (!(resno = pl.newCard(strPC, fromChat.gid))) {
-				set("type", pl[fromChat.gid]->get_str("__Type"));
-				set("show", pl[fromChat.gid]->show(true));
+				auto pc = pl[fromChat.gid];
+				set("type", pc->get_str("__Type"));
+				set("show", pc->show(true));
+				set("char", pc->getName());
 				if (is_empty("show"))replyMsg("strPcNewEmptyCard");
 				else replyMsg("strPcNewCardShow");
 			}
@@ -3513,7 +3515,8 @@ int DiceEvent::InnerOrder() {
 			if (!(resno = pl.removeCard(get_str("char"))))replyMsg("strPcCardDel");
 		}
 		else if (strOption == "redo") {
-			pl.buildCard(strip(readRest()), true, fromChat.gid);
+			string strPC{ strip(filter_CQcode(readRest(), fromChat.gid)) };
+			pl.buildCard(strPC, true, fromChat.gid);
 			auto pc{ pl[fromChat.gid] };
 			set("char", pc);
 			set("show", pc->show(true));
@@ -4648,7 +4651,7 @@ bool DiceEvent::DiceFilter()
 		|| blacklist->get_group_danger(fromChat.gid))) {
 		isDisabled = true;
 	}
-	if (isDisabled |= (blacklist->get_user_danger(fromChat.uid) > 0))return console["DisabledBlock"];
+	if (isDisabled || blacklist->get_user_danger(fromChat.uid) > 0)return 1;
 	if (!is("order_off") && (fmt->listen_order(this) || InnerOrder())) {
 		return monitorFrq();
 	}
