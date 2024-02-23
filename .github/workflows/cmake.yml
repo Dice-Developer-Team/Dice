@@ -53,7 +53,7 @@ jobs:
     - name: Package Clear
       uses: actions/delete-package-versions@v4
       with:
-        package-name: aws-c-s3_${{ matrix.triplet }}
+        package-name: aws-c-common_${{ matrix.triplet }}
         package-type: nuget
         min-versions-to-keep: 1
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -148,7 +148,7 @@ jobs:
     - name: Package Clear
       uses: actions/delete-package-versions@v4
       with:
-        package-name: aws-c-s3_${{ matrix.triplet }}
+        package-name: aws-c-common_${{ matrix.triplet }}
         package-type: nuget
         min-versions-to-keep: 0
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -261,7 +261,7 @@ jobs:
     - name: Package Clear
       uses: actions/delete-package-versions@v4
       with:
-        package-name: aws-c-s3_${{ matrix.triplet }}
+        package-name: aws-c-common_${{ matrix.triplet }}
         package-type: nuget
         min-versions-to-keep: 0
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -354,14 +354,6 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
-
-    - name: Package Clear
-      uses: actions/delete-package-versions@v4
-      with:
-        package-name: aws-c-s3_${{ matrix.triplet }}-static
-        package-type: nuget
-        min-versions-to-keep: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
