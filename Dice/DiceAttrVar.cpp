@@ -183,6 +183,8 @@ void AnysTable::readb(std::ifstream& fs) {
 }
 bool AnysTable::operator<(const AnysTable other)const { return dict < other.dict; }
 
+AttrObject::AttrObject(const AttrVars& vars) :p(std::make_shared<AnysTable>(vars)) {}
+
 AttrVar::AttrVar(const AttrVar& other) :type(other.type) {
 	switch (type) {
 	case Type::Boolean:

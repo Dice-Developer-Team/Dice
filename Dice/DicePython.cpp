@@ -1096,8 +1096,8 @@ PYDEFKEY(eventMsg) {
 	else {
 		string fromMsg{ py_to_gbstring(msg)};
 		eve = gid
-			? AnysTable{ { {"fromMsg",fromMsg},{"gid",gid}, {"uid", uid} } }
-		: AnysTable{ { {"fromMsg",fromMsg}, {"uid", uid} } };
+			? AttrVars{ { {"fromMsg",fromMsg},{"gid",gid}, {"uid", uid} } }
+		: AttrVars{ { {"fromMsg",fromMsg}, {"uid", uid} } };
 	}
 	//std::thread th([=]() {
 		shared_ptr<DiceEvent> e{ std::make_shared<DiceEvent>(*eve.p) };

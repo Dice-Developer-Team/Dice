@@ -188,7 +188,7 @@ AttrVar DiceToday::getJrrp(long long uid) {
 		if (!UserInfo[uid]->has("jrrp_local")) {
 			UserInfo[uid]->at("jrrp_local") = RandomGenerator::Randint(1, 100);
 			console.log(getMsg("strJrrpErr",
-				AnysTable{ {"res", res} }
+				AttrVars{ {"res", res} }
 			), 0);
 		}
 		return UserInfo[uid]->get("jrrp_local");

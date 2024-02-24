@@ -557,7 +557,7 @@ void DiceSession::deck_new(DiceEvent* msg) {
 }
 string DiceSession::deck_draw(const string& key) {
 	if (decks.count(key)) {
-		if (!decks[key].sizRes)return getMsg("strDeckRestEmpty", AnysTable{ {"deck_name",key} });
+		if (!decks[key].sizRes)return getMsg("strDeckRestEmpty", AttrVars{ {"deck_name",key} });
 		return decks[key].draw();
 	}
 	else if (CardDeck::mPublicDeck.count(key)) {

@@ -82,7 +82,7 @@ struct msg_t
 	chatInfo target{};
 	msg_t() = default;
 
-	msg_t(string msg, chatInfo ct) : msg(move(msg)),target(ct)
+	msg_t(const string& s, chatInfo ct) : msg(s),target(ct)
 	{
 	}
 };

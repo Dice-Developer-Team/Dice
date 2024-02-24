@@ -1325,21 +1325,21 @@ int DiceEvent::BasicOrder()
 								replyMsg("strNotMaster");
 								return -1;
 							}
-							trigger->answer = AnysTable{ {"lua",readRest()} };
+							trigger->answer = AttrVars{ {"lua",readRest()} };
 						}
 						else if (trigger->echo == DiceMsgReply::Echo::JavaScript) {
 							if (trusted < 5) {
 								replyMsg("strNotMaster");
 								return -1;
 							}
-							trigger->answer = AnysTable{ {"js",readRest()} };
+							trigger->answer = AttrVars{ {"js",readRest()} };
 						}
 						else if (trigger->echo == DiceMsgReply::Echo::Python) {
 							if (trusted < 5) {
 								replyMsg("strNotMaster");
 								return -1;
 							}
-							trigger->answer = AnysTable{ {"py",readRest()} };
+							trigger->answer = AttrVars{ {"py",readRest()} };
 						}
 						else trigger->answer->set("text", readRest());
 					}
@@ -2741,7 +2741,7 @@ int DiceEvent::InnerOrder() {
 				}
 				else {
 					AddMsgToQueue(fmt->format(strFwd, ct.gid ?
-						AnysTable{ {"gid",ct.gid}} : AnysTable{ {"uid",ct.uid} }), ct);
+						AttrVars{ {"gid",ct.gid}} : AttrVars{ {"uid",ct.uid} }), ct);
 					replyMsg("strSendMsg");
 				}
 				return 1;

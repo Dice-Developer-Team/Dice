@@ -598,7 +598,7 @@ bool eve_GroupAdd(Chat& grp) {
 		return true;
 	}
 	if (grp.is("协议无效"))return 0;
-	if (string selfIntro{ getMsg("strAddGroup", AnysTable{AttrVars{{"gid",fromGID}}}) };
+	if (string selfIntro{ getMsg("strAddGroup", AttrVars{{"gid",fromGID}}) };
 		!selfIntro.empty()) {
 		this_thread::sleep_for(2s);
 		AddMsgToQueue(selfIntro, { 0,fromGID, 0 });

@@ -86,6 +86,7 @@ struct AttrObject {
 	mutable ptr<AnysTable> p;
 	AttrObject(const ptr<AnysTable>& ptr = {}) :p(ptr) {}
 	AttrObject(const AnysTable& vars) :p(std::make_shared<AnysTable>(vars)) {}
+	AttrObject(const AttrVars& vars);
 	AnysTable* const operator->() const{
 		if (!p)p = std::make_shared<AnysTable>();
 		return p.get();
