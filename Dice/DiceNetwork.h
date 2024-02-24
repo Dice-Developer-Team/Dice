@@ -10,7 +10,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -38,10 +38,10 @@ namespace Network
 	// @param postContent 编码后的数据
 	// @param contentType 数据类型，可为空
 	// @param des 存储返回数据
-	bool POST(const string& url, const string& postContent, const string& contentType, std::string& des);
+	bool POST(const std::string& url, const std::string& postContent, const std::string& contentType, std::string& des);
 	// 发出一个HTTP GET 请求
 	// @param url 
 	// @param des 存储返回数据
-	bool GET(const string& url, std::string& des);
+	bool GET(const std::string& url, std::string& des);
 }
 #endif /*DICE_NETWORK*/

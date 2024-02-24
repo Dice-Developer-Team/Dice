@@ -35,6 +35,8 @@
 #include "DiceSelfData.h"
 #include "RandomGenerator.h"
 #include "DDAPI.h"
+#include "DiceZip.h"
+#include "DiceNetwork.h"
 #include "DiceYaml.h"
 #include "DiceFormatter.h"
 

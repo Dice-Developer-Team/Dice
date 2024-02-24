@@ -21,14 +21,13 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <string>
 #include <cstring>
 #include "DDAPI.h"
 #include "DiceRule.h"
 #include "GetRule.h"
-#include "GlobalVar.h"
 #include "EncodingConvert.h"
 #include "DiceNetwork.h"
+#include "DiceMod.h"
 
 
 using namespace std;

@@ -10,11 +10,11 @@
 #include <unordered_set>
 #include "BlackListManager.h"
 #include "Jsonio.h"
-#include "STLExtern.hpp"
 #include "DDAPI.h"
 #include "DiceEvent.h"
 #include "DiceConsole.h"
 #include "DiceNetwork.h"
+#include "DiceMod.h"
 
 using namespace std;
 

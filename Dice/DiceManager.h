@@ -4,6 +4,7 @@
 #include <json.hpp>
 #include "Jsonio.h"
 #include "GlobalVar.h"
+#include "DiceNetwork.h"
 #include "EncodingConvert.h"
 #include "DiceConsole.h"
 #include "DiceSchedule.h"

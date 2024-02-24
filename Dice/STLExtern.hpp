@@ -1,8 +1,8 @@
 /*
- * 自定义容器
- * Copyright (C) 2019-2022 String.Empty
- * 2022/08/18 添加grad_map
- * 2022/09/07 添加fifo_map&fifo_cmpr_ci
+ * STL container extern
+ * Copyright (C) 2019-2024 String.Empty
+ * 2022/08/18 add grad_map
+ * 2022/09/07 add fifo_map&fifo_cmpr_ci
  */
 #pragma once
 #include <string>

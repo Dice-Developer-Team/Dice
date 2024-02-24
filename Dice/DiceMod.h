@@ -239,3 +239,4 @@ public:
 
 extern std::shared_ptr<DiceModManager> fmt;
 void call_event(const ptr<AnysTable>& eve, const AttrObject& action);
+const std::string getMsg(const std::string& key, const AttrObject& tmp = {});

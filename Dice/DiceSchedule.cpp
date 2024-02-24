@@ -187,7 +187,7 @@ AttrVar DiceToday::getJrrp(long long uid) {
 	else {
 		if (!UserInfo[uid]->has("jrrp_local")) {
 			UserInfo[uid]->at("jrrp_local") = RandomGenerator::Randint(1, 100);
-			console.log(getMsg("strJrrpErr",
+			console.log(fmt->format("JRRP获取失败! 错误信息: \n{res}",
 				AttrVars{ {"res", res} }
 			), 0);
 		}

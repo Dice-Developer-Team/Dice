@@ -371,7 +371,6 @@ R"( //私骰作成 即可成为我的主人~
 	{
 		;
 	}
-	ExtensionManagerInstance = std::make_unique<ExtensionManager>();
 
 	DD::debugLog("Dice.threadInit");
 	Enabled = true;
@@ -1037,7 +1036,6 @@ void global_exit() {
 	Enabled = false;
 	mg_exit_library();
 	ManagerServer = nullptr;
-	ExtensionManagerInstance = nullptr;
 	dataBackUp();
 	sch.end();
 	censor = {};

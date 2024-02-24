@@ -1,5 +1,4 @@
 #pragma once
-
 /*
  *  _______     ________    ________    ________    __
  * |   __  \   |__    __|  |   _____|  |   _____|  |  |
@@ -30,14 +29,13 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif
+#include <shared_mutex>
 #include "STLExtern.hpp"
-#include "DiceExtensionManager.h"
-#include "DiceAttrVar.h"
 
 /*
- * 版本信息
- * 请勿修改Dice_Build, Dice_Ver_Without_Build，DiceRequestHeader以及Dice_Ver常量
- * 请修改Dice_Short_Ver或Dice_Full_Ver常量以达到版本自定义
+ * Dice Version
+ * Please Do not modify Dice_Build, Dice_Ver_Without_Build, DiceRequestHeader or Dice_Ver
+ * To costum version info, please modify const Dice_Short_Ver or Dice_Full_Ver
  */
 constexpr unsigned short Dice_Build = 657u;
 inline const std::string Dice_Ver_Without_Build = "2.7.0beta7";
@@ -74,15 +72,12 @@ inline const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER";
 extern HMODULE hDllModule;
 #endif 
 
-extern std::unique_ptr<ExtensionManager> ExtensionManagerInstance;
-
-// 应用是否被启用
+// if is enabled
 extern bool Enabled;
 
 // Dice最完整的版本字符串
 extern std::string Dice_Full_Ver_On;
 
-// 可执行文件位置
 //extern std::string strModulePath;
 
 // 消息发送线程是否正在运行
@@ -100,7 +95,6 @@ extern const dict_ci<string> GlobalComment;
 extern const dict_ci<string> HelpDoc;
 // 修改后的帮助文档
 extern fifo_dict_ci<string> CustomHelp;
-const std::string getMsg(const std::string& key, const AttrObject& tmp = {});
 const std::string getComment(const std::string& key);
 
 #endif /*DICE_GLOBAL_VAR*/

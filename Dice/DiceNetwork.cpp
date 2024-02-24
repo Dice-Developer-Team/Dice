@@ -32,10 +32,10 @@
 
 #include <string>
 #include <regex>
-#include "GlobalVar.h"
 #include "MsgFormat.h"
 #include "DiceNetwork.h"
 #include "StrExtern.hpp"
+#include "DiceMod.h"
 
 namespace Network
 {

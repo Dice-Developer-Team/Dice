@@ -1,4 +1,5 @@
 #include <lua.hpp>  
+#include "DiceNetwork.h"
 #include "ManagerSystem.h"
 #include "DiceEvent.h"
 #include "RandomGenerator.h"

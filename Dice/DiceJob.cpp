@@ -22,6 +22,7 @@
 #include "DiceNetwork.h"
 #include "DiceSession.h"
 #include "DiceEvent.h"
+#include "DiceZip.h"
 #pragma warning(disable:28159)
 
 using namespace std;

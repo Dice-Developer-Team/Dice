@@ -21,17 +21,13 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#endif
 #include "GlobalVar.h"
 
 bool Enabled = false;
 
 std::string Dice_Full_Ver_On;
 
-std::unique_ptr<ExtensionManager> ExtensionManagerInstance;
+//std::unique_ptr<ExtensionManager> ExtensionManagerInstance;
 
 #ifdef _WIN32
 HMODULE hDllModule = nullptr;
@@ -53,7 +49,7 @@ const dict_ci<string> PlainMsg
 	{"strModOff", "已将记忆体「{mod}」弹出{self}人格√"},
 	{"strModOffAlready", "{self}的记忆体「{mod}」已停用！"},
 	{"strModReload", "已为{self}人格重铸记忆体「{mod}」√"},
-	{"strModDelete", "已将记忆体「{mod}」从{self}的人格排空√"},
+	{"strModDelete", "已将记忆体「{mod}」排出{self}的人格√"},
 	{"strModNameEmpty", "请{nick}输入模块名！"},
 	{"strModDescLocal", "{self}已植入模块:{mod_desc}"},
 	{"strModDescCloud", "{self}已获取源模块信息:{mod_desc}"},
@@ -275,13 +271,13 @@ const dict_ci<string> PlainMsg
 	{"strMeOff", "成功在这里禁用{self}的.me命令√"},
 	{"strMeOnAlready", "在这里{self}的.me命令没有被禁用!"},
 	{"strMeOffAlready", "在这里{self}的.me命令已经被禁用!"},
-	{"strObOn", "成功在这里启用{self}的旁观模式√"},
-	{"strObOff", "成功在这里禁用{self}的旁观模式√"},
-	{"strObOnAlready", "在这里{self}的旁观模式没有被禁用!"},
-	{"strObOffAlready", "在这里{self}的旁观模式已经被禁用!"},
-	{"strObList", "当前{self}的旁观者有:"},
-	{"strObListEmpty", "当前{self}暂无旁观者"},
-	{"strObListClr", "{self}成功删除所有旁观者√"},
+	{"strObOn", "{self}已在本桌启用旁观√"},
+	{"strObOff", "{self}已在本桌禁用旁观√"},
+	{"strObOnAlready", "在本桌{self}未禁用旁观!"},
+	{"strObOffAlready", "在本桌{self}已禁用旁观!"},
+	{"strObList", "本桌{self}的旁观者有:"},
+	{"strObListEmpty", "本桌{self}暂无旁观者"},
+	{"strObListClr", "{self}已清空旁观者√"},
 	{"strObEnter", "{nick}成功加入{self}的旁观√"},
 	{"strObExit", "{nick}成功退出{self}的旁观√"},
 	{"strObEnterAlready", "{nick}已经处于{self}的旁观模式!"},
@@ -328,11 +324,11 @@ const dict_ci<string> PlainMsg
 	{"strSendSuccess", "命令执行成功√"},
 	{"strActionEmpty", "动作不能为空×"},
 	{"strMEDisabledErr", "管理员已在此群中禁用.me命令!"},
-	{"strDisabledMeGlobal", "{self}恕不提供.me服务×"},
-	{"strDisabledJrrpGlobal", "{self}恕不提供.jrrp服务×"},
-	{"strDisabledDeckGlobal", "{self}恕不提供.deck服务×"},
-	{"strDisabledDrawGlobal", "{self}恕不提供.draw服务×"},
-	{"strDisabledSendGlobal", "{self}恕不提供.send服务×"},
+	{"strDisabledMeGlobal", "恕{self}不提供.me服务×"},
+	{"strDisabledJrrpGlobal", "恕{self}不提供.jrrp服务×"},
+	{"strDisabledDeckGlobal", "恕{self}不提供.deck服务×"},
+	{"strDisabledDrawGlobal", "恕{self}不提供.draw服务×"},
+	{"strDisabledSendGlobal", "恕{self}不提供.send服务×"},
 	{"strHELPDisabledErr", "管理员已在此群中禁用.help命令!"},
 	{"strNameDelEmpty", "{nick}未设置名称,无法删除!"},
 	{"strValueErr", "掷骰表达式输入错误!"},
@@ -381,7 +377,6 @@ const dict_ci<string> PlainMsg
 	{"strGlobalOff", "{self}休假中，暂停服务×"},
 	{"strPreserve", "{self}私有私用，勿扰勿怪\n如需申请许可请发送!authorize +[群号] 申请用途:[ **请写入理由** ] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[ **请写入指令** ]，用后使用[ **请写入指令** ]送出群"},
 	{"strJrrp", "{nick}今天的人品值是: {res}"},
-	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{res}"},
 	{ "strFriendDenyNotUser", "很遗憾，你没有对{self}使用指令的记录" },
 	{ "strFriendDenyNoTrust", "很遗憾，你不是{self}信任的用户，如需使用可联系{print:master}" },
 	{"strAddFriendWhiteQQ", "{strAddFriend}"}, //白名单用户添加好友时回复此句
@@ -723,12 +718,11 @@ Type=[回复性质](Reply/Order)
 {"旁观","&ob"},
 {"旁观模式","&ob"},
 {"ob",R"(旁观模式：.ob (join/exit/list/clr/on/off)
-.ob join //加入旁观，可以看到房内暗骰结果
+.ob join //加入旁观，可以看到本桌暗骰结果
 .ob exit //退出旁观模式
-.ob list //查看群内旁观者
+.ob list //查看本桌旁观者
 .ob clr //清除所有旁观者
-.ob on //全群允许旁观模式
-.ob off //禁用旁观模式
+.ob on/off //本桌开/关旁观模式
 暗骰与旁观私聊无效)"},
 {"默认骰","&set"},
 {"set","当表达式中‘D’之后没有接面数时，视为投掷默认骰\n.set20 将默认骰设置为20\n.set 不带参数视为将默认骰重置为默认的100\n若所用规则判定掷骰形如2D6，推荐使用.st &=2D6"},
@@ -750,20 +744,20 @@ Type=[回复性质](Reply/Order)
 {"st","属性记录：.st (del/clr/show) ([属性名]:[属性值])\n用户默认所有群使用同一张卡，pl如需多开请使用.pc指令切卡\n.st力量:50 体质:55 体型:65 敏捷:45 外貌:70 智力:75 意志:35 教育:65 幸运:75\n.st hp-1 后接+/-时视为从原值上变化\n.st san+1d6 修改属性时可使用掷骰表达式\n.st del kp裁决\t//删除已保存的属性\n.st clr\t//清空当前卡\n.st show 灵感\t//查看指定属性\n.st show\t//无参数时查看所有属性，请使用只st加点过技能的半自动人物卡！\n部分COC属性会被视为同义词，如智力/灵感、理智/san、侦查/侦察"},
 {"角色卡","&pc"},
 {"pc",R"(角色卡：.pc 
-.pc new ([模板]:([生成参数]:))([卡名]) 
-完全省略参数将生成一张COC7模板的随机姓名卡
-.pc tag ([卡名]) //为当前群绑定指定卡，为空则解绑使用默认卡
+.pc new (模板:(生成参数:))(卡名) 
+例: `.pc new 卡特` //完全省略参数将生成一张COC7模板的随机姓名卡
+.pc tag (卡名) //为当前群绑定指定卡，为空则解绑使用默认卡
 所有群默认使用私聊绑定卡，未绑定则使用0号卡
-.pc show ([卡名]) //展示指定卡所有记录的属性，为空则展示当前卡
-.pc nn [新卡名] //重命名当前卡，不允许重名
-.pc type [模板] //将切换当前卡模板
-.pc cpy [卡名1]=[卡名2] //将后者属性复制给前者
-.pc del [卡名] //删除指定卡
+.pc show (卡名) //展示指定卡所有记录的属性，为空则展示当前卡
+.pc nn 新卡名 //重命名当前卡，不允许重名
+.pc type 模板 //将切换当前卡模板
+.pc cpy 卡名1=卡名2 //将后者属性复制给前者
+.pc del 卡名 //删除指定卡
 .pc list //列出全部角色卡
 .pc grp //列出各群绑定卡
-.pc build ([生成参数]:)(卡名) //根据模板填充生成属性（COC7为9项主属性）
+.pc build (生成参数:)(卡名) //根据模板填充生成属性（COC7为9项主属性）
 .pc stat //查看当前角色卡骰点统计
-.pc redo ([生成参数]:)(卡名) //清空原有属性后重新生成
+.pc redo (生成参数:)(卡名) //清空原有属性后重新生成
 .pc clr //销毁全部角色卡记录
 //掷骰统计以角色卡为单位，每名用户最多可同时保存32张角色卡
 )"

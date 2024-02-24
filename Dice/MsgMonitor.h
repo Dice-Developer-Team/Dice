@@ -20,9 +20,9 @@ public:
 	static const long long earlierTime = 60;
 	static const long long earliestTime = 300;
 	//ÆµÂÊ¼ÇÂ¼
-	static std::map<long long, int>mFrequence;
-	static std::map<long long, int>mWarnLevel;
-	static std::map<long long, int>mCntOrder;
+	static std::unordered_map<long long, int>mFrequence;
+	static std::unordered_map<long long, int>mWarnLevel;
+	static std::unordered_map<long long, int>mCntOrder;
 	static std::atomic<unsigned int> sumFrqTotal;
 	static int getFrqTotal();
 	long long fromUID = 0;
