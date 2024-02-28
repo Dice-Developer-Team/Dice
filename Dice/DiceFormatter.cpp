@@ -6,8 +6,9 @@
 ptr<MarkNode> buildFormatter(const std::string_view& exp);
 
 class MarkReference : public MarkNode {
+	bool isTrial;
 public:
-	MarkReference(const std::string_view& s) :MarkNode(s) {}
+	MarkReference(const std::string_view& s, bool trial = false) :MarkNode(s), isTrial(trial) {}
 	AttrVar format(const AttrObject& context, bool isTrust = true, const dict_ci<string>& global = {})const override {
 		if (context && context->has(leaf)) {
 			if (leaf == "res")return fmt->format(context->print(leaf), context, isTrust, global);
@@ -25,7 +26,7 @@ public:
 			if (!isTrust && val == "\f")val = "\f> ";
 			return val;
 		}
-		return {};
+		return isTrial ? "{" + leaf + "}" : AttrVar();
 	}
 };
 class MarkGlobalIndexNode : public MarkNode {
@@ -323,7 +324,7 @@ ptr<MarkNode> buildFormatter(const std::string_view& exp) {
 			cur = &(*cur)->next;
 			continue;
 		}
-		*cur = std::static_pointer_cast<MarkNode>(std::make_shared<MarkReference>(field));
+		*cur = std::static_pointer_cast<MarkNode>(std::make_shared<MarkReference>(field, true));
 		cur = &(*cur)->next;
 	}
 	if (preR < exp.length())*cur = std::make_shared<MarkNode>(exp.substr(preR));

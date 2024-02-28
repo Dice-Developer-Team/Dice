@@ -53,7 +53,7 @@ jobs:
     - name: Package Clear
       uses: actions/delete-package-versions@v4
       with:
-        package-name: aws-sdk-cpp_${{ matrix.triplet }}
+        package-name: aws-c-event-stream_${{ matrix.triplet }}
         package-type: nuget
         min-versions-to-keep: 1
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -148,7 +148,7 @@ jobs:
     - name: Package Clear
       uses: actions/delete-package-versions@v4
       with:
-        package-name: aws-sdk-cpp_${{ matrix.triplet }}
+        package-name: aws-c-event-stream_${{ matrix.triplet }}
         package-type: nuget
         min-versions-to-keep: 0
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -261,7 +261,7 @@ jobs:
     - name: Package Clear
       uses: actions/delete-package-versions@v4
       with:
-        package-name: aws-sdk-cpp_${{ matrix.triplet }}
+        package-name: aws-c-event-stream_${{ matrix.triplet }}
         package-type: nuget
         min-versions-to-keep: 0
         token: ${{ secrets.GITHUB_TOKEN }}

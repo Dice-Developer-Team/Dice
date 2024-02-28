@@ -25,6 +25,7 @@
 
 bool Enabled = false;
 
+std::string Dice_Short_Ver = "Dice! by ËÝä§ & Shiki Ver " + Dice_Ver;
 std::string Dice_Full_Ver_On;
 
 //std::unique_ptr<ExtensionManager> ExtensionManagerInstance;

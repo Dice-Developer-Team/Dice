@@ -172,14 +172,17 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 		return;
 	}
 	for (auto& url : sourceList) {
-		if (!Network::GET(url + name, desc)) {
+		if (!Network::GET(url + name + "/descriptor.json", desc)) {
 			msg.set("err", msg.get_str("err") + "\n访问" + url + name + "失败:" + desc);
 			continue;
 		}
 		try {
 			if (desc.find("404") == 0)continue;
 			fifo_json j = fifo_json::parse(desc);
-			//todo: dice_build check
+			if (j.count("dice_build") && j["dice_build"] > Dice_Build) {
+				msg.set("err", msg.get_str("err") + "\nDice版本不满足要求(" + to_string(j["dice_build"]) + "):" + url);
+				continue;
+			}
 #ifndef __ANDROID__
 			if (j.count("repo") && !j["repo"].empty()) {
 				string repo{ j["repo"] };

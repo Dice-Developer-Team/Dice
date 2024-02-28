@@ -41,7 +41,7 @@ constexpr unsigned short Dice_Build = 657u;
 inline const std::string Dice_Ver_Without_Build = "2.7.0beta7";
 constexpr auto DiceRequestHeader = "Dice/2.7.0";
 inline const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
-inline const std::string Dice_Short_Ver = "Dice! by ËÝä§ & Shiki Ver " + Dice_Ver;
+extern std::string Dice_Short_Ver;
 constexpr bool isDev = true;
 
 #ifdef __clang__
