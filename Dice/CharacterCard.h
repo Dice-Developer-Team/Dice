@@ -98,6 +98,9 @@ class CardTemp
 {
 public:
 	string type;
+	//alias of model
+	vector<string> alias;
+	//alias of attr
 	dict_ci<> replaceName = {};
 	//作成时生成
 	vector<vector<string>> vBasicList = {};
@@ -186,7 +189,7 @@ public:
 	void setType(const string&);
 	void update();
 	CharaCard(){
-		dict["__Type"] = "COC7";
+		setType("COC7");
 		dict["__Update"] = (long long)time(nullptr);
 	}
 	CharaCard(const CharaCard& pc){

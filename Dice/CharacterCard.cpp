@@ -89,9 +89,6 @@ unordered_map<int, string> PlayerErrors{
 	{-23,"strPCLockedWrite"},
 	{-24,"strPCLockedRead"},
 };
-CardTemp ModelBRP{ "BRP", dict_ci<>{}, std::vector<std::vector<std::string>>{}, dict_ci<>{}, dict_ci<>{}, dict_ci<int>{
-				{"__DefaultDice",100}
-			}};
 std::vector<std::pair<std::string, std::string>> BuildCOC7 = {
 	{"__Name", "{随机姓名}"},
 	{"力量", "3D6*5"},
@@ -114,7 +111,6 @@ CardTemp ModelCOC7{ "COC7", SkillNameReplace, BasicCOC7, mVariableCOC7, Expressi
 				{"bg", CardPreset{COC7_BG}},
 			} };
 dict_ci<ptr<CardTemp>> CardModels{ 
-	{"BRP", std::make_shared<CardTemp>(ModelBRP),},
 	{"COC7", std::make_shared<CardTemp>(ModelCOC7),},
 };
 
@@ -134,7 +130,12 @@ int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m) {
 		}
 		if (auto root{ doc.FirstChildElement() }) {
 			if (auto tp_name{ root->Attribute("name") }) {
-				auto& tp{ m[Text2GBK(tp_name)] };
+				string model_name{ Text2GBK(tp_name) };
+				auto& tp{ m[model_name] };
+				tp.type = model_name;
+				if (auto raw_alias{ root->Attribute("alias") }) {
+					tp.alias = split(Text2GBK(raw_alias), "/");
+				}
 				for (auto elem = root->FirstChildElement(); elem; elem = elem->NextSiblingElement()) {
 					if (string tag{ elem->Name()}; tag == "basic") {
 						tp.vBasicList.clear();
@@ -228,7 +229,7 @@ void CardTemp::after_update(const ptr<AnysTable>& eve) {
 ptr<CardTemp> CharaCard::getTemplet()const{
 	if (string type{ get_str("__Type") };
 		!type.empty() && CardModels.count(type))return CardModels[type];
-	return CardModels["BRP"];
+	return CardModels["COC"];
 }
 
 void CharaCard::update() {
@@ -601,7 +602,6 @@ int Player::newCard(string& s, long long group, string type)
 	{
 		type = s.substr(0, Cnt);
 		s.erase(s.begin(), s.begin() + Cnt + 1);
-		if (type == "COC")type = "COC7";
 	}
 	else if (CardModels.count(s))
 	{

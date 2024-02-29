@@ -708,7 +708,7 @@ repo(std::make_shared<DiceRepo>(pathDir, url)) {
 		fs::copy_file(pathDir / "descriptor.json", pathJson, fs::copy_options::overwrite_existing);
 		string reason;
 		if (!loadDesc(reason)) {
-			console.log(getMsg("strSelfNick") + "安装安装「" + mod + "」失败:" + reason, 0);
+			console.log(getMsg("strSelfNick") + "安装「" + mod + "」失败:" + reason, 0);
 		}
 	}
 }
@@ -863,10 +863,16 @@ void DiceMod::loadDir() {
 			}
 		}
 		if (auto dirModel{ pathDir / "model" }; fs::exists(dirModel)) {
-			if (vector<std::filesystem::path> fModels; listDir(dirModel, fModels, true))
+			if (vector<std::filesystem::path> fModels; listDir(dirModel, fModels, true)) {
 				for (auto& p : fModels) {
 					loadCardTemp(p, card_models);
 				}
+				for (auto& [name, model] : card_models) {
+					for (auto& a : model.alias) {
+						model_alias[a] = name;
+					}
+				}
+			}
 		}
 		if (fs::exists(pathDir / "image")) {
 			std::filesystem::create_directories(dirExe / "data" / "image");
@@ -1032,10 +1038,12 @@ void DiceModManager::build() {
 	final_reply = {};
 	auto rules_new = std::make_shared<DiceRuleSet>();
 	dict_ci<ptr<CardTemp>> models{
-	{"BRP", std::make_shared<CardTemp>(ModelBRP),},
 	{"COC7", std::make_shared<CardTemp>(ModelCOC7),},
 	};
 	//merge mod
+	dict_ci<> model_alias{
+		{"COC","COC7"},
+	};
 	for (auto& mod : modOrder) {
 		if (!mod->active || !mod->loaded)continue;
 		map_merge(global_lua_scripts, mod->lua_scripts);
@@ -1055,6 +1063,7 @@ void DiceModManager::build() {
 			}
 			++cntModel;
 		}
+		map_merge(model_alias, mod->model_alias);
 	}
 	//merge custom
 	if (rules_new->build())resLog << "注册规则集 " + to_string(rules_new->rules.size()) + " 部";
@@ -1064,6 +1073,9 @@ void DiceModManager::build() {
 		model->init();
 	}
 	if (cntModel || CardModels.size() > 2)CardModels.swap(models);
+	for (auto& [alias, name] : model_alias) {
+		CardModels[alias] = CardModels[name];
+	}
 	if (cntSpeech += map_merge(global_speech, EditedMsg))
 		resLog << "注册speech " + to_string(cntSpeech) + " 项";
 	if (cntHelp += map_merge(global_helpdoc, CustomHelp))

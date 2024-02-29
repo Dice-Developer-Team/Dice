@@ -515,6 +515,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+657:角色卡模板支持别名
 656:重做文本转义
 655:st优化且增加触发时点
 654:重做角色卡模板

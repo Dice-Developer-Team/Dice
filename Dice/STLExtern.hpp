@@ -97,6 +97,7 @@ template<typename T = std::string>
 using dict_ci = std::unordered_map<string, T, hash_ci, equal_ci>;
 template<typename T = std::string>
 using multidict_ci = std::unordered_multimap<string, T, hash_ci, equal_ci>;
+//using uset_ci = std::unordered_set<string, hash_ci, equal_ci>;
 
 class fifo_cmpr_ci {
 public:

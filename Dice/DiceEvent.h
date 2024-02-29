@@ -22,6 +22,7 @@ class DiceSession;
 //打包待处理消息
 class DiceEvent : public AnysTable {
 public:
+	MetaType getType()const override { return MetaType::Context; }
 	chatInfo fromChat;
 	string strLowerMessage;
 	Chat* pGrp = nullptr;

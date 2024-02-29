@@ -118,7 +118,8 @@ public:
 private:
 	dict_ci<DiceRule> rules;
 	dict_ci<CardTemp> card_models;
-	dict_ci<>helpdoc;
+	dict_ci<> model_alias;
+	dict_ci<> helpdoc;
 	dict_ci<DiceSpeech>speech;
 	//native path of .lua
 	dict_ci<string>lua_scripts;
