@@ -26,7 +26,7 @@ public:
 			if (!isTrust && val == "\f")val = "\f> ";
 			return val;
 		}
-		return isTrial ? "{" + leaf + "}" : AttrVar();
+		return isTrial ? AttrVar("{" + leaf + "}") : AttrVar();
 	}
 };
 class MarkGlobalIndexNode : public MarkNode {
@@ -139,7 +139,6 @@ public:
 	MarkHelpNode(const std::string_view& s) :MarkNode(s) {}
 	AttrVar format(const AttrObject& context, bool isTrust = true, const dict_ci<string>& global = {})const override {
 		return fmt->get_help(leaf, context);
-		return "{" + leaf + "}";
 	}
 };
 class MarkWaitNode : public MarkNode {

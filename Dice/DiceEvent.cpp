@@ -3382,7 +3382,9 @@ int DiceEvent::InnerOrder() {
 		else if (strOption == "build") {
 			string strPC{ strip(filter_CQcode(readRest(), fromChat.gid))};
 			if (!(resno = pl.buildCard(strPC, false, fromChat.gid))) {
-				set("show", pl.getCard(strPC)->show(true));
+				auto pc = pl.getCard(strPC);
+				set("show", pc->show(true));
+				set("char", pc->getName());
 				replyMsg("strPcCardBuild");
 			}
 		}
