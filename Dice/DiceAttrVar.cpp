@@ -326,6 +326,8 @@ AttrVar AttrVar::operator+(const AttrVar& other) {
 		return (sum == (int)sum) ? (int)sum :
 			((sum == (long long)sum) ? (long long)sum : sum);
 	}
+	else if (type == Type::Text || other.type == Type::Text)
+		return to_str() + other.to_str();
 	return other ? AttrVar() : *this;
 }
 

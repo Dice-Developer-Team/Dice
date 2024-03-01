@@ -3378,6 +3378,9 @@ int DiceEvent::InnerOrder() {
 				if (is_empty("show"))replyMsg("strPcNewEmptyCard");
 				else replyMsg("strPcNewCardShow");
 			}
+			else {
+				set("char", strPC);
+			}
 		}
 		else if (strOption == "build") {
 			string strPC{ strip(filter_CQcode(readRest(), fromChat.gid))};
@@ -3386,6 +3389,9 @@ int DiceEvent::InnerOrder() {
 				set("show", pc->show(true));
 				set("char", pc->getName());
 				replyMsg("strPcCardBuild");
+			}
+			else {
+				set("char", strPC);
 			}
 		}
 		else if (strOption == "list") {
@@ -3397,6 +3403,7 @@ int DiceEvent::InnerOrder() {
 			string& strPC{ (at("new_name") = strip(filter_CQcode(readRest(),fromChat.gid))).text};
 			set("old_name",pl[fromChat.gid]->getName());
 			if (!(resno = pl.renameCard(get_str("old_name"), strPC)))replyMsg("strPcCardRename");
+			else set("char", strPC);
 		}
 		else if (strOption == "del") {
 			set("char",strip(readRest()));
