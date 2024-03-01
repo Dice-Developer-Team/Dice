@@ -741,7 +741,6 @@ int js_dice_context_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueC
 	JS2OBJ(this_val);
 	if (desc) {
 		string key{ js_AtomtoGBK(ctx, prop) };
-		console.log("context get:" + key);
 		if (auto val{ getContextItem(obj, key) }) {
 			desc->value = js_newAttr(ctx, val);
 			desc->flags = JS_PROP_C_W_E;

@@ -895,9 +895,7 @@ int DiceSessionManager::load() {
 				pSession->set(UTF8toGBK(it.key()), it.value());
 				isUpdated = true;
 			}
-			if (j.count("data"))for (auto& it : j["data"].items()) {
-				pSession->set(UTF8toGBK(it.key()), it.value());
-			}
+			if (j.count("data"))from_json(j["data"], pSession->as_dict());
 			if (j.count("master"))for (auto& it : j["master"]) {
 				pSession->master->emplace(it.get<long long>());
 			}
