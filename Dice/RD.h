@@ -393,7 +393,7 @@ public:
 				bool isCnt = false;
 				if (i->size() >= 100)isCnt = true;
 				if (vvintRes.size() != 1 && i->size() != (*i)[0] + 1)
-					strReturnString.append("{ ");
+					strReturnString += "\\{";
 				int intWWPos = 0;
 				while (true)
 				{
@@ -401,7 +401,7 @@ public:
 					{
 						strReturnString += isCnt ? "\n¼Ó÷»" + std::to_string((*i)[intWWPos]) + "£º" : "+";
 					}
-					strReturnString.append("{");
+					strReturnString += "\\{";
 					if (isCnt)
 					{
 						int Cnt[11] = {0};

@@ -943,19 +943,16 @@ LUADEF(getPlayerCardAttr) {
 	if (int argc{ lua_gettop(L) }; argc > 4)lua_settop(L, 4);
 	else if (argc == 3)lua_pushnil(L);
 	else if (argc < 3)return 0;
-	long long plQQ{ lua_to_int_or_zero(L, 1) };
+	long long uid{ lua_to_int_or_zero(L, 1) };
 	long long group{ lua_to_int_or_zero(L, 2) };
 	string key{ lua_to_gbstring(L, 3) };
-	if (!plQQ || key.empty())return 0;
-	PC pc = getPlayer(plQQ)[group];
-	if (pc->has(key)) {
-		lua_push_attr(L, pc->get(key));
-	}
-	else if (key = pc->standard(key); pc->has(key)) {
+	if (!uid || key.empty())return 0;
+	PC pc = getPlayer(uid)[group];
+	if (auto val{ pc->get(key) };!val.is_null()) {
 		lua_push_attr(L, pc->get(key));
 	}
 	else if (pc->has("&" + key)) {
-		lua_push_string(L, pc->get_str("&" + key));
+		lua_push_string(L, pc->get("&" + key).to_str());
 	}
 	else {
 		lua_pushnil(L);
