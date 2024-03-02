@@ -37,35 +37,13 @@
  * Please Do not modify Dice_Build, Dice_Ver_Without_Build, DiceRequestHeader or Dice_Ver
  * To costum version info, please modify const Dice_Short_Ver or Dice_Full_Ver
  */
-constexpr unsigned short Dice_Build = 657u;
+constexpr unsigned short Dice_Build = 658u;
 inline const std::string Dice_Ver_Without_Build = "2.7.0beta7";
 constexpr auto DiceRequestHeader = "Dice/2.7.0";
 inline const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 extern std::string Dice_Short_Ver;
 constexpr bool isDev = true;
-
-#ifdef __clang__
-
-#ifdef _MSC_VER
-inline const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + std::to_string(__clang_major__) + "." + std::to_string(__clang_minor__) + "." + std::to_string(__clang_patchlevel__) + " with MSVC " + std::to_string(_MSC_VER) + " " + __DATE__ + " " + __TIME__;
-#elif defined(__GNUC__)
-inline const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + std::to_string(__clang_major__) + "." + std::to_string(__clang_minor__) + "." + std::to_string(__clang_patchlevel__) +  " with GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__;
-#else
-inline const std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + std::to_string(__clang_major__) + "." + std::to_string(__clang_minor__) + "." + std::to_string(__clang_patchlevel__);
-#endif
-
-#else
-
-#ifdef _MSC_VER
-inline const std::string Dice_Full_Ver = std::string(Dice_Short_Ver) + "[MSVC " + std::to_string(_MSC_VER) + " " + __DATE__ +
-	" " + __TIME__ + "]";
-#elif defined(__GNUC__)
-inline const std::string Dice_Full_Ver = Dice_Short_Ver + " [GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__;
-#else
-inline const std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER";
-#endif
-
-#endif
+extern std::string Dice_Full_Ver;
 
 #ifdef _WIN32
 // DLL hModule

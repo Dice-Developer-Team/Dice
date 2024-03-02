@@ -108,7 +108,7 @@ void loadData(){
 					}
 				}
 			}
-			DD::debugLog("预加载selfdata" + to_string(selfdata_byStem.size()) + "份");
+			if (selfdata_byStem.size())DD::debugLog("预加载selfdata" + to_string(selfdata_byStem.size()) + "份");
 		}
 		if (!logList.empty())
 		{
@@ -887,14 +887,14 @@ EVE_GroupInvited(eventGroupInvited)
 			DD::answerGroupInvited(fromGID, 2);
 		}
 		else if (blacklist->get_user_danger(fromUID)){
-			strMsg += "\n已拒绝（黑名单用户）";
+			strMsg += "\n（黑名单用户×）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 2);
 		}
 		else if (Chat& grp = chat(fromGID); grp.is("许可使用")) {
 			grp.setLst(0);
 			grp.invited(fromUID);
-			strMsg += "\n已同意（已许可使用）";
+			strMsg += "\n（已许可使用√）";
 			console.log(strMsg, 1, strNow);
 			DD::answerGroupInvited(fromGID, 1);
 		}
@@ -902,7 +902,7 @@ EVE_GroupInvited(eventGroupInvited)
 		{
 			grp.set("许可使用").reset("未审核").reset("协议无效");
 			grp.invited(fromUID);
-			strMsg += "\n已同意（信任用户）";
+			strMsg += "\n（信任用户√）";
 			console.log(strMsg, 1, strNow);
 			DD::answerGroupInvited(fromGID, 1);
 		}

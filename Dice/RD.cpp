@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -647,23 +647,23 @@ string COC6(int intNum)
 
 string DND(int intNum)
 {
-	string strOutput;
+	string strOutput = "力量/体质/敏捷/智力/感知/魅力";
 	const RD rdDND("4D6K3");
-	string strDNDName[6] = {"力量", "体质", "敏捷", "智力", "感知", "魅力"};
-	const bool boolAddSpace = intNum != 1;
 	int intAllTotal = 0;
-	while (intNum--)
-	{
+	std::priority_queue<int> pool;
+	while (intNum--){
 		strOutput += "\n";
-		for (int i = 0; i <= 5; i++)
-		{
+		for (int i = 0; i <= 5; i++){
 			rdDND.Roll();
-			strOutput += strDNDName[i] + ":" + to_string(rdDND.intTotal) + " ";
-			if (rdDND.intTotal < 10 && boolAddSpace)
-				strOutput += "  ";
+			pool.emplace(rdDND.intTotal);
 			intAllTotal += rdDND.intTotal;
 		}
-		strOutput += "共计:" + to_string(intAllTotal);
+		while (!pool.empty()) {
+			if (pool.top() < 10)strOutput += ' ';
+			strOutput += to_string(pool.top()) + " /";
+			pool.pop();
+		}
+		strOutput += "总计" + to_string(intAllTotal);
 		intAllTotal = 0;
 	}
 	return strOutput;

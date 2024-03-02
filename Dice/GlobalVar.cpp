@@ -27,6 +27,27 @@ bool Enabled = false;
 
 std::string Dice_Short_Ver = "Dice! by 溯洄 & Shiki Ver " + Dice_Ver;
 std::string Dice_Full_Ver_On;
+#ifdef __clang__
+
+#ifdef _MSC_VER
+std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + std::to_string(__clang_major__) + "." + std::to_string(__clang_minor__) + "." + std::to_string(__clang_patchlevel__) + " with MSVC " + std::to_string(_MSC_VER) + " " + __DATE__ + " " + __TIME__;
+#elif defined(__GNUC__)
+std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + std::to_string(__clang_major__) + "." + std::to_string(__clang_minor__) + "." + std::to_string(__clang_patchlevel__) + " with GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__;
+#else
+std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + std::to_string(__clang_major__) + "." + std::to_string(__clang_minor__) + "." + std::to_string(__clang_patchlevel__);
+#endif
+
+#else
+#ifdef _MSC_VER
+std::string Dice_Full_Ver = std::string(Dice_Short_Ver) + "[MSVC " + std::to_string(_MSC_VER) + " " + __DATE__ +
+" " + __TIME__ + "]";
+#elif defined(__GNUC__)
+std::string Dice_Full_Ver = Dice_Short_Ver + " [GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__;
+#else
+std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER";
+#endif
+
+#endif
 
 //std::unique_ptr<ExtensionManager> ExtensionManagerInstance;
 
@@ -175,7 +196,7 @@ const dict_ci<string> PlainMsg
 	{"strPcLockedRead","{self}已锁定{pc}，不予查看属性×" },
 	{"strSetDefaultDice","{self}已将{pc}的默认骰设置为D{default}√"},
 	{"strCOCBuild","{pc}的调查员作成:{res}"},
-	{"strDNDBuild","{pc}的英雄作成:{res}"},
+	{"strDNDBuild","{pc}的冒险者作成:{res}"},
 	{"strCensorCaution","提醒：{nick}的指令包含敏感词，{self}已上报"},
 	{"strCensorWarning","警告：{nick}的指令包含敏感词，{self}已记录并上报！"},
 	{"strCensorDanger","警告：{nick}的指令包含敏感词，{self}拒绝指令并已上报！"},
@@ -515,6 +536,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+658:重写.dnd展示
 657:角色卡模板支持别名
 656:重做文本转义
 655:st优化且增加触发时点
@@ -530,7 +552,6 @@ const dict_ci<> HelpDoc = {
 645:重定义.sc回执
 644:定义脚本内角色卡Actor类型
 643:rc支持跨角色卡调用
-642:优化helpdoc
 641:SelfData支持yaml
 640:支持调用JavaScript
 639:支持reply调用python
@@ -740,7 +761,7 @@ Type=[回复性质](Reply/Order)
 {"nn","设置群内称呼：.nn [昵称] / .nn / .nnn(cn/jp/en) \n.nn kp\t//昵称前的./！等符号会被自动忽略\n.nn del\t//删除当前窗口称呼\n.nn clr\t//删除所有记录的称呼\n.nnn\t//从随机姓名牌堆设置随机称呼\n.nnn jp\t/从指定子牌堆随机昵称\n私聊.nn视为操作全局称呼\n该称呼用于\\{nick\\}的显示，优先级：群内称呼>全局称呼>群名片>QQ昵称\n无角色卡或未命名时也用于显示\\{pc\\}"},
 {"人物作成","该版本人物作成支持COC7(.coc、.draw调查员背景/英雄天赋)、COC6(.coc6、.draw煤气灯)、DND(.dnd)、AMGC(.draw AMGC)"},
 {"coc","克苏鲁的呼唤(COC)人物作成：.coc([7/6])(d)([生成数量])\n.coc 10\t//默认生成7版人物\n.coc6d\t//接d为详细作成，一次只能作成一个\n仅用作骰点法人物作成，可应用变体规则，参考.rules创建调查员的其他选项"},
-{"dnd","龙与地下城(DND)人物作成：.dnd([生成数量])\n.dnd 5\t//仅作参考，可自行应用变体规则"},
+{"dnd","龙与地下城(DND)人物作成：.dnd (生成数量)\n例`.dnd 5` //生成6维降序排列，仅作参考，可自行应用变体规则"},
 {"属性记录","&st"},
 {"st","属性记录：.st (del/clr/show) ([属性名]:[属性值])\n用户默认所有群使用同一张卡，pl如需多开请使用.pc指令切卡\n.st力量:50 体质:55 体型:65 敏捷:45 外貌:70 智力:75 意志:35 教育:65 幸运:75\n.st hp-1 后接+/-时视为从原值上变化\n.st san+1d6 修改属性时可使用掷骰表达式\n.st del kp裁决\t//删除已保存的属性\n.st clr\t//清空当前卡\n.st show 灵感\t//查看指定属性\n.st show\t//无参数时查看所有属性，请使用只st加点过技能的半自动人物卡！\n部分COC属性会被视为同义词，如智力/灵感、理智/san、侦查/侦察"},
 {"角色卡","&pc"},
