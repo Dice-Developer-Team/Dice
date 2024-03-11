@@ -647,7 +647,7 @@ string COC6(int intNum)
 
 string DND(int intNum)
 {
-	string strOutput = "力量/体质/敏捷/智力/感知/魅力";
+	string strOutput;
 	const RD rdDND("4D6K3");
 	int intAllTotal = 0;
 	std::priority_queue<int> pool;

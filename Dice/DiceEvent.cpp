@@ -217,7 +217,7 @@ void DiceEvent::logEcho(){
 	}
 	if (auto game{ thisGame() }; game && game->is_logging()
 		&& strLowerMessage.find(".log") != 0
-		&& (game->is_simple() || game->is_part(fromChat.uid))) {
+		&& game->is_part(fromChat.uid)) {
 		ofstream logout(game->log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + std::to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time")) << endl
 			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
@@ -235,7 +235,7 @@ void DiceEvent::fwdMsg(){
 	}
 	if (auto game{ thisGame() }; game && game->is_logging()
 		&& strLowerMessage.find(".log") != 0
-		&& (game->is_simple() || game->is_part(fromChat.uid))) {
+		&& game->is_part(fromChat.uid)) {
 		ofstream logout(game->log_path(), ios::out | ios::app);
 		logout << GBKtoUTF8(idx_pc(*this).to_str()) + "(" + std::to_string(fromChat.uid) + ") " + printTTime((time_t)get_ll("time")) << endl
 			<< GBKtoUTF8(filter_CQcode(strMsg, fromChat.gid)) << endl << endl;
@@ -3129,7 +3129,7 @@ int DiceEvent::InnerOrder() {
 		}
 		if (strAttr.empty())strAttr = getMsg("strEnDefaultName");
 		auto game{ thisGame() };
-		const int intTmpRollRes = ( game && game->is_part(fromChat.uid)) ? game->roll(100) : RandomGenerator::Randint(1, 100);
+		const int intTmpRollRes = (game && game->is_part(fromChat.uid)) ? game->roll(100) : RandomGenerator::Randint(1, 100);
 		//成长检定仅计入掷骰统计，不计入检定统计
 		if (pc)pc->cntRollStat(intTmpRollRes, 100);
 		string& res{ (at("res") = "1D100=" + std::to_string(intTmpRollRes) + "/" + std::to_string(intVal) + " ").text};
@@ -4546,9 +4546,6 @@ bool DiceEvent::DiceFilter()
 		isDisabled = true;
 	}
 	if (isDisabled || blacklist->get_user_danger(fromChat.uid) > 0)return 1;
-	if (!is("order_off") && (fmt->listen_order(this) || InnerOrder())) {
-		return monitorFrq();
-	}
 	if (auto game{ thisGame() }) {
 		if (auto ruleName{ getGameRule() }; ruleName
 			&& (game->is_part(fromChat.uid))
@@ -4561,6 +4558,9 @@ bool DiceEvent::DiceFilter()
 			&& fmt->listen_game(this)) {
 			return monitorFrq();
 		}
+	}
+	if (!is("order_off") && (fmt->listen_order(this) || InnerOrder())) {
+		return monitorFrq();
 	}
 	if (fmt->listen_reply(this)) {
 		return monitorFrq();

@@ -196,7 +196,7 @@ const dict_ci<string> PlainMsg
 	{"strPcLockedRead","{self}已锁定{pc}，不予查看属性×" },
 	{"strSetDefaultDice","{self}已将{pc}的默认骰设置为D{default}√"},
 	{"strCOCBuild","{pc}的调查员作成:{res}"},
-	{"strDNDBuild","{pc}的冒险者作成:{res}"},
+	{"strDNDBuild","为{pc}的冒险者生成随机六维（降序）:{res}"},
 	{"strCensorCaution","提醒：{nick}的指令包含敏感词，{self}已上报"},
 	{"strCensorWarning","警告：{nick}的指令包含敏感词，{self}已记录并上报！"},
 	{"strCensorDanger","警告：{nick}的指令包含敏感词，{self}拒绝指令并已上报！"},
@@ -214,7 +214,7 @@ const dict_ci<string> PlainMsg
 	{"strReplyKeyNotFound","{self}未找到回复关键词{key}×"},
 	{"strScriptRunErr","{self}似乎出了点问题，请{nick}耐心等待（{lang}脚本运行出错）" },
 	//{"strStModify","{self}已记录{pc}的{cnt}条属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
-	{"strStDetail","{self}已设置{pc}的{cnt}条属性:\n{detail}"},		//存在掷骰时，使用此文本
+	{"strStDetail","{self}已编辑{pc}的{cnt}条属性:\n{detail}"},		//存在掷骰时，使用此文本
 	//{"strStValEmpty","{self}未记录{attr}原值×"},		
 	{"strBlackQQAddNotice","{nick}，你已被{self}加入黑名单，详情请联系Master:{print:master}"},				
 	{"strBlackQQAddNoticeReason","{nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{print:master}"},
