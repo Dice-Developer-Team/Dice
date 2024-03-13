@@ -41,7 +41,9 @@ class DiceTriggerLimit {
 	bool grp_id_negative{ false };
 	vector<CDConfig>locks;
 	vector<CDConfig>cd_timer;
+	string cd_notice;
 	vector<CDConfig>today_cnt;
+	string daylimit_notice;
 	fifo_dict_ci<pair<AttrVar::CMPR, AttrVar>>self_vary;
 	fifo_dict_ci<pair<AttrVar::CMPR, AttrVar>>user_vary;
 	fifo_dict_ci<pair<AttrVar::CMPR, AttrVar>>grp_vary;

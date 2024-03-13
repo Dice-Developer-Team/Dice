@@ -37,8 +37,8 @@
  * Please Do not modify Dice_Build, Dice_Ver_Without_Build, DiceRequestHeader or Dice_Ver
  * To costum version info, please modify const Dice_Short_Ver or Dice_Full_Ver
  */
-constexpr unsigned short Dice_Build = 658u;
-inline const std::string Dice_Ver_Without_Build = "2.7.0beta7";
+constexpr unsigned short Dice_Build = 659u;
+inline const std::string Dice_Ver_Without_Build = "2.7.0beta8";
 constexpr auto DiceRequestHeader = "Dice/2.7.0";
 inline const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 extern std::string Dice_Short_Ver;

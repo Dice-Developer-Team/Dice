@@ -536,6 +536,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+659:reply支持冷却/限额回复
 658:重写.dnd展示
 657:角色卡模板支持别名
 656:重做文本转义

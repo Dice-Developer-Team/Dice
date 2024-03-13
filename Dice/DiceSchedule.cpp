@@ -131,21 +131,21 @@ void DiceScheduler::refresh_cold(const char* cmd, time_t until) {
 
 
 std::mutex mtCDQuery;
-bool DiceScheduler::cnt_cd(const vector<CDQuest>& cd_list, const vector<CDQuest>& cnt_list){
+int DiceScheduler::cnt_cd(const vector<CDQuest>& cd_list, const vector<CDQuest>& cnt_list){
 	std::unique_lock<std::mutex> lock_queue(mtCDQuery);
 	time_t tNow{ time(nullptr) };
 	for (auto& quest : cd_list) {
 		if (cd_timer.count(quest.chat)
 			&& cd_timer[quest.chat].count(quest.key)
 			&& cd_timer[quest.chat][quest.key] > tNow) {
-			return false;
+			return -1;
 		}
 	}
 	for (auto& quest : cnt_list) {
 		if (today->counter.count(quest.chat)
 			&& today->counter[quest.chat].count(quest.key)
 			&& today->counter[quest.chat][quest.key] >= quest.cd) {
-			return false;
+			return -2;
 		}
 	}
 	for (auto& quest : cd_list) {
@@ -157,7 +157,7 @@ bool DiceScheduler::cnt_cd(const vector<CDQuest>& cd_list, const vector<CDQuest>
 		}
 		today->save();
 	}
-	return true;
+	return 0;
 }
 
 void DiceScheduler::start() {

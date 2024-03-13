@@ -4311,7 +4311,6 @@ int DiceEvent::InnerOrder() {
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				rdMainDice.Roll();
 				set("res",boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString());
-				console.log(rdMainDice.FormCompleteString());
 				strReply = getMsg(strReason.empty() ? "strRollDice" : "strRollDiceReason");
 				if (!is("hidden")) {
 					reply();

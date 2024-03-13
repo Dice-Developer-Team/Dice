@@ -63,7 +63,8 @@ public:
 	void add_job_until(time_t, const char*);
 	bool is_job_cold(const char*);
 	void refresh_cold(const char*, time_t);
-	bool cnt_cd(const vector<CDQuest>&, const vector<CDQuest>&);
+	//0:success -1:colding -2:limited
+	int cnt_cd(const vector<CDQuest>&, const vector<CDQuest>&);
 };
 inline DiceScheduler sch;
 
