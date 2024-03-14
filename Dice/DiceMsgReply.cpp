@@ -233,7 +233,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 					: cd_type == CDType::User ? "用户" : "全局") + key + "计" + to_string(val) + "次";
 			}
 			if (!sub.empty()) {
-				if (!cd_notice.empty()) {
+				if (!daylimit_notice.empty()) {
 					sub << "@echo=" + daylimit_notice;
 					subnotes << "限额回复: " + daylimit_notice;
 				}
@@ -444,7 +444,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 						subnotes << (it.type == CDType::Chat ? "窗口"
 							: it.type == CDType::User ? "用户" : "全局") + it.key + "计" + to_string(it.cd) + "次";
 					}
-					if (!cd_notice.empty()) {
+					if (!daylimit_notice.empty()) {
 						sub << "@echo=" + daylimit_notice;
 						subnotes << "限额回复: " + daylimit_notice;
 					}
