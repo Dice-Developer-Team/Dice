@@ -164,10 +164,12 @@ struct lua_State;
 class CharaCard: public AnysTable
 {
 private:
+	size_t id = 0;
 	string Name = "½ÇÉ«¿¨";
 	unordered_set<string> locks;
 	std::mutex cardMutex;
 public:
+	size_t getID()const { return id; }
 	MetaType getType()const override{ return MetaType::Actor; }
 	ptr<CardTemp> getTemplet()const;
 	bool locked(const string& key)const { return locks.count(key); }
@@ -188,16 +190,17 @@ public:
 	void setName(const string&);
 	void setType(const string&);
 	void update();
-	CharaCard(){
+	CharaCard(size_t i) :id(i) {
 		setType("COC7");
 		dict["__Update"] = (long long)time(nullptr);
 	}
 	CharaCard(const CharaCard& pc){
+		id = pc.id;
 		Name = pc.Name;
 		dict = pc.dict;
 	}
 
-	CharaCard(const string& name, const string& type = "COC7") : Name(name)
+	CharaCard(const string& name, size_t i, const string& type = "COC7") : Name(name), id(i)
 	{
 		dict["__Name"] = name;
 		setType(type);
@@ -280,28 +283,31 @@ class Player
 private:
 	short indexMax = 0;
 	map<unsigned short, PC> mCardList;
-	dict_ci<unsigned short> mNameIndex;
-	unordered_map<unsigned long long, unsigned short> mGroupIndex{{0, 0}};
+	dict_ci<PC> NameList;
+	unordered_map<unsigned long long, PC> mGroupCard;
 	// ÈËÎï¿¨»¥³â
 	std::mutex cardMutex;
 public:
 	Player() {
-		mCardList[0] = std::make_shared<CharaCard>( "½ÇÉ«¿¨" );
+		mCardList[0] = std::make_shared<CharaCard>("½ÇÉ«¿¨", 0);
 	}
 
 	Player(const Player& pl)
 	{
-		*this = pl;
+		indexMax = pl.indexMax;
+		mCardList = pl.mCardList;
+		NameList = pl.NameList;
+		mGroupCard = pl.mGroupCard;
 	}
 
-	Player& operator=(const Player& pl)
+	/*Player& operator=(const Player& pl)
 	{
 		indexMax = pl.indexMax;
 		mCardList = pl.mCardList;
-		mNameIndex = pl.mNameIndex;
-		mGroupIndex = pl.mGroupIndex;
+		NameList = pl.NameList;
+		mGroupCard = pl.mGroupCard;
 		return *this;
-	}
+	}*/
 
 	[[nodiscard]] size_t size() const
 	{
@@ -310,12 +316,12 @@ public:
 
 	[[nodiscard]] bool count(long long group) const
 	{
-		return mGroupIndex.count(group);
+		return mGroupCard.count(group);
 	}
 
 	[[nodiscard]] bool count(const string& name) const
 	{
-		return mNameIndex.count(name);
+		return NameList.count(name);
 	}
 
 	int emptyCard(const string& s, long long group, const string& type);
@@ -323,17 +329,7 @@ public:
 
 	int buildCard(string& name, bool isClear, long long group = 0);
 
-	int changeCard(const string& name, long long group)
-	{
-		if (name.empty())
-		{
-			mGroupIndex.erase(group);
-			return 1;
-		}
-		if (!mNameIndex.count(name))return -5;
-		mGroupIndex[group] = mNameIndex[name];
-		return 0;
-	}
+	int changeCard(const string& name, long long group);
 
 	int removeCard(const string& name);
 
@@ -346,10 +342,10 @@ public:
 	string listMap()
 	{
 		ResList Res;
-		for (const auto& it : mGroupIndex)
+		for (const auto& [gid,pc] : mGroupCard)
 		{
-			if (!it.first)Res << "default:" + mCardList[it.second]->getName();
-			else Res << "(" + to_string(it.first) + ")" + mCardList[it.second]->getName();
+			if (!gid)Res << "default:" + pc->getName();
+			else Res << "(" + to_string(gid) + ")" + pc->getName();
 		}
 		return Res.show();
 	}

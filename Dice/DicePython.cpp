@@ -180,8 +180,8 @@ static PyObject* PyActor_new(PyTypeObject* tp, PyObject* args, PyObject* kwds) {
 		Py_INCREF(self);
 		string name{ UtoGBK(n) };
 		new(&self->p) PC(t[0]
-			? std::make_shared<CharaCard>(name, UtoGBK(t))
-			: std::make_shared<CharaCard>(name));
+			? std::make_shared<CharaCard>(name, 0, UtoGBK(t))
+			: std::make_shared<CharaCard>(name, 0));
 		return (PyObject*)self;
 	}
 	else return NULL;

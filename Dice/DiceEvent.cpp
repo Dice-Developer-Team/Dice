@@ -3093,7 +3093,7 @@ int DiceEvent::InnerOrder() {
 	}
 	string& strAttr{ (at("attr") = readAttrName()).text};
 	string strCurrentValue{ readDigit(false) };
-	PC pc{ PList.count(fromChat.uid) ? getPlayer(fromChat.uid)[fromChat.gid] : std::make_shared<CharaCard>()};
+	PC pc{ PList.count(fromChat.uid) ? getPlayer(fromChat.uid)[fromChat.gid] : std::make_shared<CharaCard>(0)};
 	int intVal{ 0 };
 		//获取技能原值
 		if (strCurrentValue.empty()) {
@@ -3562,7 +3562,7 @@ int DiceEvent::InnerOrder() {
 		bool isStatic = PList.count(fromChat.uid);
 		auto game{ thisGame() };
 		bool isRoulette = game && game->is_part(fromChat.uid) && game->roulette.count(100);
-		PC pc{ isStatic ? PList[fromChat.uid][fromChat.gid] : std::make_shared<CharaCard>()};
+		PC pc{ isStatic ? PList[fromChat.uid][fromChat.gid] : std::make_shared<CharaCard>(0)};
 		if ((strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') && strLowerMessage[intMsgCnt - 1] != ' ') {
 			isStatic = false;
 			strMainDice = strLowerMessage[intMsgCnt];
@@ -4196,7 +4196,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		if (!fromChat.gid)isHidden = false;
-		PC pc{ PList.count(fromChat.uid) ? getPlayer(fromChat.uid)[fromChat.gid] : std::make_shared<CharaCard>()};
+		PC pc{ PList.count(fromChat.uid) ? getPlayer(fromChat.uid)[fromChat.gid] : std::make_shared<CharaCard>(0)};
 		string strMainDice;
 		string& strReason{ (at("reason") = "").text};
 		string strAttr;
