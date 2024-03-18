@@ -4019,11 +4019,8 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strPcLockedWrite");
 			return 1;
 		}
-		//ShowList changes;
-		//ShowList rolls;
-		//ShowList errs;
 		AttrObject logs;
-		set("cnt", 0);
+		//set("cnt", 0);
 		//Ñ­»·Â¼Èë
 		while (intMsgCnt != strLowerMessage.length()) {
 			readSkipSpace();
@@ -4137,6 +4134,7 @@ int DiceEvent::InnerOrder() {
 					trans->set("new", intSkillVal);
 					logs->set(attr_name, trans);
 				}
+				else inc("cnt", 0);
 			}
 			while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '|')
 				intMsgCnt++;

@@ -130,16 +130,24 @@ AttrSet AnysTable::get_set(const string& key)const {
 	return dict.count(key) ? dict.at(key).to_set() : AttrSet();
 }
 int AnysTable::inc(const string& key){
-	if (key.empty())return 0;
-	if (dict.count(key))return (++dict.at(key)).to_int();
-	else dict.emplace(key, 1);
-	return 1;
+	if (!key.empty()) {
+		if (dict.count(key))return (++dict.at(key)).to_int();
+		else {
+			dict.emplace(key, 1);
+			return 1;
+		}
+	}
+	return 0;
 }
 int AnysTable::inc(const string& key, int i){
-	if (key.empty())return 0;
-	if (dict.count(key))return (dict.at(key) += i).to_int();
-	else dict.emplace(key, i);
-	return 1;
+	if (key.empty()) {
+		if (dict.count(key))return (dict.at(key) += i).to_int();
+		else {
+			dict.emplace(key, i);
+			return 1;
+		}
+	}
+	return 0;
 }
 void AnysTable::add(const string& key, const AttrVar& val){
 	if (key.empty())return;

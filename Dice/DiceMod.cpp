@@ -548,13 +548,13 @@ void DiceModManager::rm_help(const string& key){
 	}
 }
 
-time_t parse_seconds(const AttrVar& time) {
+static time_t parse_seconds(const AttrVar& time) {
 	if (time.is_numberic())return time.to_int();
 	if (auto t{ time.to_obj() }; !t->empty())
 		return t->get_ll("second") + t->get_ll("minute") * 60 + t->get_ll("hour") * 3600 + t->get_ll("day") * 86400;
 	return 0;
 }
-Clock parse_clock(const AttrVar& time) {
+static Clock parse_clock(const AttrVar& time) {
 	Clock clock{ 0,0 };
 	if (auto t{ time.to_obj() }; !t->empty()) {
 		clock.first = t->get_int("hour");
@@ -910,10 +910,12 @@ int DiceModManager::load(ResList& resLog){
 		for (auto& j : jFile) {
 			if (!j.count("name"))continue;
 			string modName{ UTF8toGBK(j["name"].get<string>()) };
-			auto mod{ std::make_shared<DiceMod>(DiceMod{ modName,modOrder.size(),
-				j.count("active") ? bool(j["active"]) : true}) };
-			modList[modName] = mod;
-			modOrder.push_back(mod);
+			if (!modList.count(modName)) {
+				auto mod{ std::make_shared<DiceMod>(DiceMod{ modName,modOrder.size(),
+					j.count("active") ? bool(j["active"]) : true}) };
+				modList[modName] = mod;
+				modOrder.push_back(mod);
+			}
 		}
 	}
 	//∂¡»°mod
