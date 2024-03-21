@@ -202,8 +202,8 @@ AttrVar getContextItem(const AttrObject& context, string item, bool isTrust) {
 		if (MsgIndexs.count(item))return MsgIndexs[item](context);
 		if (item.find(':') <= item.find('.'))return var;
 		if (!(sub = splitOnce(item)).empty()) {
-			if (context->has(sub) && context->is_table(sub))
-				return getContextItem(context->get_obj(sub), item);
+			if (auto sub_tab{ getContextItem(context,sub,isTrust) }; sub_tab.is_table())
+				return getContextItem(sub_tab.to_obj(), item);
 			if (sub == "user")return getUserItem(context->get_ll("uid"), item);
 			if (isTrust && (sub == "grp" || sub == "group"))return getGroupItem(context->get_ll("gid"), item);
 		}

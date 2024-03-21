@@ -23,7 +23,7 @@ unordered_set<chatInfo>LogList;
 const std::filesystem::path LogInfo::dirLog{ std::filesystem::path("user") / "log" };
 
 bool DiceSession::has(const string& key)const {
-	static std::unordered_set<string> items{ "name", "gms", "pls", "obs" };
+	static std::unordered_set<string> items{ "name", "gms", "pls", "obs", "log_name", "log_file" };
 	return (dict.count(key) && !dict.at(key).is_null())
 		|| items.count(key);
 }
@@ -43,6 +43,12 @@ AttrVar DiceSession::get(const string& item, const AttrVar& val)const {
 		}
 		else if (item == "obs") {
 			return get_ob();
+		}
+		else if (item == "log_name") {
+			return logger.name;
+		}
+		else if (item == "log_file") {
+			return logger.fileLog;
 		}
 	}
 	return val;
