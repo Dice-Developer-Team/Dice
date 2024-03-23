@@ -684,16 +684,18 @@ string Player::listCard() const{
 	return Res.show();
 }
 
-void Player::writeb(std::ofstream& fout) const
-{
+void Player::writeb(std::ofstream& fout) const {
+	std::lock_guard<std::mutex> lock_queue(cardMutex);
 	fwrite(fout, indexMax);
 	fwrite(fout, mCardList);
-	const auto len = static_cast<short>(mGroupCard.size());
-	fwrite(fout, len);
-	for (const auto& [gid,pc] : mGroupCard)
-	{
-		fwrite(fout, gid);
-		fwrite(fout, pc->getID());
+	if (const auto len = static_cast<short>(mGroupCard.size()); len != 1 || mGroupCard.begin()->second->getID() != 0) {
+		//console.log("存入pc群索引" + to_string(len) + "条");
+		fwrite(fout, len);
+		for (const auto& [gid, pc] : mGroupCard)
+		{
+			fwrite(fout, gid);
+			fwrite(fout, unsigned short(pc ? pc->getID() : 0));
+		}
 	}
 }
 void Player::readb(std::ifstream& fin)
@@ -708,9 +710,14 @@ void Player::readb(std::ifstream& fin)
 			NameList[name] = card;
 		}
 	}
-	if (short len = fread<short>(fin); len > 0) while (len--) {
-		unsigned long long gid = fread<unsigned long long>(fin);
-		mGroupCard[gid] = mCardList[fread<unsigned short>(fin)];
+	if (short len = fread<short>(fin); len > 0){
+		//console.log("读取pc群索引" + to_string(len) + "条");
+		while (len--) {
+			unsigned long long gid = fread<unsigned long long>(fin);
+			unsigned short pcid = fread<unsigned short>(fin);
+			//console.log("pc:" + to_string(pcid) + " gid:" + to_string(gid));
+			if(mCardList.count(pcid))mGroupCard[gid] = mCardList[pcid];
+		}
 	}
 }
 

@@ -164,7 +164,7 @@ struct lua_State;
 class CharaCard: public AnysTable
 {
 private:
-	size_t id = 0;
+	const size_t id = 0;
 	string Name = "½ÇÉ«¿¨";
 	unordered_set<string> locks;
 	std::mutex cardMutex;
@@ -194,9 +194,7 @@ public:
 		setType("COC7");
 		dict["__Update"] = (long long)time(nullptr);
 	}
-	CharaCard(const CharaCard& pc){
-		id = pc.id;
-		Name = pc.Name;
+	CharaCard(const CharaCard& pc) :id(pc.id), Name(pc.Name) {
 		dict = pc.dict;
 	}
 
@@ -286,7 +284,7 @@ private:
 	dict_ci<PC> NameList;
 	unordered_map<unsigned long long, PC> mGroupCard;
 	// ÈËÎï¿¨»¥³â
-	std::mutex cardMutex;
+	mutable std::mutex cardMutex;
 public:
 	Player() {
 		mCardList[0] = std::make_shared<CharaCard>("½ÇÉ«¿¨", 0);

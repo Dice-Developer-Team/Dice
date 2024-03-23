@@ -4,6 +4,25 @@
 #include "DicePython.h"
 #include "DDAPI.h"
 ptr<MarkNode> buildFormatter(const std::string_view& exp);
+vector<ptr<MarkNode>> MarkNode::split() {
+	ptr<MarkNode> root = buildFormatter(leaf);
+	vector<ptr<MarkNode>> res{ root };
+	ptr<MarkNode> p = root;
+	while (p) {
+		if (typeid(*p) == typeid(MarkNode)) {
+			if (auto pos{ p->leaf.find('|') }; pos != string::npos) {
+				ptr<MarkNode> next = std::make_shared<MarkNode>(p->leaf.substr(pos + 1));
+				res.push_back(next);
+				p->leaf = p->leaf.substr(0, pos);
+				next->next.swap(p->next);
+				p = next;
+				continue;
+			}
+		}
+		p = p->next;
+	}
+	return res;
+}
 
 class MarkReference : public MarkNode {
 	bool isTrial;
@@ -80,11 +99,7 @@ public:
 class MarkSampleNode : public MarkNode {
 	vector<ptr<MarkNode>> samples;
 public:
-	MarkSampleNode(const std::string& s) :MarkNode(s){
-		for (auto& item : split(s, "|")) {
-			samples.emplace_back(buildFormatter(item));
-		}
-	}
+	MarkSampleNode(const std::string& s) :MarkNode(s), samples(split()) {}
 	AttrVar format(const AttrObject& context, bool isTrust = true, const dict_ci<string>& global = {})const override {
 		if (!samples.empty()) {
 			return samples[(size_t)RandomGenerator::Randint(0, samples.size() - 1)]->concat(context, isTrust, global);

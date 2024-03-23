@@ -37,6 +37,7 @@ public:
 		return next ? format(ctx, isTrust, global) + next->concat(ctx).to_str()
 			: format(ctx, isTrust, global);
 	}
+	vector<ptr<MarkNode>> split();
 };
 
 //ptr<MarkNode> buildFormatter(const std::string_view&); 
