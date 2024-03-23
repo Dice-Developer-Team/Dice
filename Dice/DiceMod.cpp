@@ -473,7 +473,7 @@ string DiceModManager::prev_help(const string& key, const AttrObject& context) c
 	if (const auto it = global_helpdoc.find(key); it != global_helpdoc.end()) {
 		return it->second;
 	}
-	else if (auto keys = querier.search(key); !keys.empty()) {
+	else if (auto keys{ querier.search(key) }; !keys.empty()) {
 		if (keys.size() == 1) {
 			auto word{ *keys.begin() };
 			context->set("redirect_key", word);
@@ -486,10 +486,9 @@ string DiceModManager::prev_help(const string& key, const AttrObject& context) c
 				qKey.emplace(".help " + key);
 			}
 			ShowList res;
-			while (!qKey.empty()) {
+			while (!qKey.empty() && res.size() <= 20) {
 				res << qKey.top();
 				qKey.pop();
-				if (res.size() > 20)break;
 			}
 			context->set("res", res.show("\n"));
 			return getMsg("strHelpSuggestion", context);

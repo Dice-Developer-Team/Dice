@@ -33,14 +33,14 @@ public:
 		u16string word;
 		for (size_t pos = 0; pos < title.length(); pos++) {
 			auto ch{ title[pos] };
-			if (iswspace(ch) || dot.find(ch) != u16string::npos) { //ignore and cut off
+			if (isspace((int)ch) || dot.find(ch) != u16string::npos) { //ignore and cut off
 				if (!word.empty()) {
 					res.push_back(word);
 					word.clear();
 				}
 			}
 			else {
-				if (!iswalnum(ch)) {// cut off
+				if (!isalnum((int)ch)) {// cut off
 					if (!word.empty()) {
 						res.push_back(word);
 						word.clear();
