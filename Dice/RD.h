@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -393,7 +393,7 @@ public:
 				bool isCnt = false;
 				if (i->size() >= 100)isCnt = true;
 				if (vvintRes.size() != 1 && i->size() != (*i)[0] + 1)
-					strReturnString.append("{ ");
+					strReturnString += "\\{";
 				int intWWPos = 0;
 				while (true)
 				{
@@ -401,7 +401,7 @@ public:
 					{
 						strReturnString += isCnt ? "\n¼Ó÷»" + std::to_string((*i)[intWWPos]) + "£º" : "+";
 					}
-					strReturnString.append("{");
+					strReturnString += "\\{";
 					if (isCnt)
 					{
 						int Cnt[11] = {0};
@@ -522,8 +522,8 @@ std::string COC6(int);
 std::string COC7D();
 std::string COC7(int);
 std::string DND(int);
-class AttrObject;
-void LongInsane(AttrObject&);
-void TempInsane(AttrObject&);
+class AnysTable;
+void LongInsane(AnysTable&);
+void TempInsane(AnysTable&);
 int RollSuccessLevel(int, int, int);
 #endif /*DICE_RD*/

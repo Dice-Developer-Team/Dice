@@ -28,9 +28,6 @@ void dice_cloudblack(AttrObject& job);
 void log_put(AttrObject& job); 
 void global_exit();
 
-
-string print_master();
-
 string list_deck();
 string list_extern_deck();
 string list_order_ex();

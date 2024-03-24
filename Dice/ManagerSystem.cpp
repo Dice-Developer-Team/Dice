@@ -1,6 +1,25 @@
-/*
- * 后台系统
- * Copyright (C) 2019-2023 String.Empty
+ /*
+ *  _______     ________    ________    ________    __
+ * |   __  \   |__    __|  |   _____|  |   _____|  |  |
+ * |  |  |  |     |  |     |  |        |  |_____   |  |
+ * |  |  |  |     |  |     |  |        |   _____|  |__|
+ * |  |__|  |   __|  |__   |  |_____   |  |_____    __
+ * |_______/   |________|  |________|  |________|  |__|
+ *
+ * Dice! QQ Dice Robot for TRPG
+ * Copyright (C) 2018-2021 w4123溯洄
+ * Copyright (C) 2019-2024 String.Empty
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this
+ * program. If not, see <http://www.gnu.org/licenses/>.
  */
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -23,10 +42,9 @@
 std::filesystem::path dirExe;
 std::filesystem::path DiceDir("DiceData");
 
-const map<string, short> mChatConf{
+const dict<short> mChatConf{
 	//0-群管理员，2-信任2级，3-信任3级，4-管理员，5-系统操作
 	{"忽略", 4},
-	{"拦截消息", 0},
 	{"停用指令", 0},
 	{"禁用回复", 0},
 	{"禁用jrrp", 0},
@@ -43,8 +61,8 @@ const map<string, short> mChatConf{
 
 User& getUser(long long uid){
 	if (TinyList.count(uid))uid = TinyList[uid];
-	if (!UserList.count(uid))UserList[uid].id(uid);
-	return UserList[uid];
+	if (!UserList.count(uid))UserList.emplace(uid,std::make_shared<User>(uid));
+	return *UserList[uid];
 }
 AttrVar getUserItem(long long uid, const string& item) {
 	if (!uid)return {};
@@ -87,8 +105,8 @@ AttrVar getUserItem(long long uid, const string& item) {
 			}
 			if (user.getNick(nick, gid))return nick;
 		}
-		else if (user.isset(item)) {
-			return user.confs.get(item);
+		else if (user.is(item)) {
+			return user.get(item);
 		}
 	}
 	if (item == "gender") {
@@ -135,7 +153,10 @@ AttrVar getGroupItem(long long id, const string& item) {
 	else if (ChatList.count(id)) {
 		Chat& grp{ chat(id) };
 		if (item == "name") {
-			if (string name{ DD::getGroupName(id) };!name.empty())return grp.Name = name;
+			if (string name{ DD::getGroupName(id) }; !name.empty()) {
+				grp.name(name);
+				return name;
+			}
 		}
 		else if (item == "firstCreate") {
 			return (long long)grp.tCreated;
@@ -143,8 +164,8 @@ AttrVar getGroupItem(long long id, const string& item) {
 		else if (item == "lastUpdate") {
 			return (long long)grp.updated();
 		}
-		else if (grp.confs.has(item)) {
-			return grp.confs.get(item);
+		else if (grp.has(item)) {
+			return grp.get(item);
 		}
 	}
 	else if (item == "name") {
@@ -162,7 +183,7 @@ AttrVar getSelfItem(string item) {
 		while (!(sub = splitOnce(item)).empty()) {
 			file += sub;
 			if (selfdata_byStem.count(file)
-				&& !(var = selfdata_byStem[file]->data.to_obj().index(item)).is_null()) {
+				&& !(var = selfdata_byStem[file]->data.to_obj()->index(item)).is_null()) {
 				return var;
 			}
 			file += ".";
@@ -170,20 +191,21 @@ AttrVar getSelfItem(string item) {
 	}
 	return var;
 }
-AttrVar getContextItem(AttrObject context, string item, bool isTrust) {
+AttrVar getContextItem(const AttrObject& context, string item, bool isTrust) {
+	if (!context)return {};
 	if (item.empty())return context;
 	AttrVar var;
 	if (item[0] == '&')item = fmt->format(item, context);
 	string sub;
-	if (!context.empty()) {
-		if (context.has(item))return context.get(item);
+	if (!context->empty()) {
+		if (context->has(item))return context->get(item);
 		if (MsgIndexs.count(item))return MsgIndexs[item](context);
 		if (item.find(':') <= item.find('.'))return var;
 		if (!(sub = splitOnce(item)).empty()) {
-			if (context.has(sub) && context.is_table(sub))
-				return getContextItem(context.get_obj(sub), item);
-			if (sub == "user")return getUserItem(context.get_ll("uid"), item);
-			if (isTrust && (sub == "grp" || sub == "group"))return getGroupItem(context.get_ll("gid"), item);
+			if (auto sub_tab{ getContextItem(context,sub,isTrust) }; sub_tab.is_table())
+				return getContextItem(sub_tab.to_obj(), item);
+			if (sub == "user")return getUserItem(context->get_ll("uid"), item);
+			if (isTrust && (sub == "grp" || sub == "group"))return getGroupItem(context->get_ll("gid"), item);
 		}
 	}
 	if (isTrust) {
@@ -192,29 +214,81 @@ AttrVar getContextItem(AttrObject context, string item, bool isTrust) {
 			return item.empty() ? AttrVar(getMsg("strSelfCall")) : getSelfItem(item);
 		}
 		else if (selfdata_byStem.count(sub)) {
-			var = selfdata_byStem[sub]->data.to_obj().index(item);
+			var = selfdata_byStem[sub]->data.to_obj()->index(item);
 		}
 	}
 	return var;
 }
 
 [[nodiscard]] bool User::empty() const {
-	return (!nTrust) && (!updated()) && confs.empty() && strNick.empty();
+	return (!nTrust) && (!updated()) && dict.empty() && strNick.empty();
 }
 void User::setConf(const string& key, const AttrVar& val)
 {
 	if (key.empty())return;
 	std::lock_guard<std::mutex> lock_queue(ex_user);
-	if (val)confs.set(key, val);
-	else confs.reset(key);
+	if (val)set(key, val);
+	else reset(key);
 }
 void User::rmConf(const string& key)
 {
 	if (key.empty())return;
 	std::lock_guard<std::mutex> lock_queue(ex_user);
-	confs.reset(key);
+	reset(key);
 }
 
+bool User::has(const string& key)const {
+	static std::unordered_set<string> items{ "name", "nick", "nn", "trust", "danger", "isDiceMaid" };
+	return (dict.count(key) && !dict.at(key).is_null())
+		|| items.count(key);
+}
+AttrVar User::get(const string& item, const AttrVar& val)const {
+	if (!item.empty()) {
+		if (auto it{ dict.find(item) }; it != dict.end()) {
+			return it->second;
+		}
+		if (item == "name") {
+			if (string name{ DD::getQQNick(ID) }; !name.empty())
+				return name;
+		}
+		else if (item == "nick") {
+			return getName(ID);
+		}
+		else if (item == "trust") {
+			return ID == console ? 256
+				: ID == console.DiceMaid ? 255
+				: nTrust;
+		}
+		else if (item == "danger") {
+			return blacklist->get_user_danger(ID);
+		}
+		else if (item.find("nick#") == 0) {
+			long long gid{ 0 };
+			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+				gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+			}
+			return getName(ID, gid);
+		}
+		else if (item == "nn") {
+			if (string nick; getNick(nick))return nick;
+		}
+		else if (item.find("nn#") == 0) {
+			long long gid{ 0 };
+			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+				gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+			}
+			if (string nick; getNick(nick, gid))return nick;
+		}
+		else if (item == "isDiceMaid") {
+			return DD::isDiceMaid(ID);
+		}
+	}
+	return val;
+}
+User& User::trust(int n) {
+	dict["trust"] = nTrust = n;
+	return *this;
+}
 bool User::getNick(string& nick, long long group) const
 {
 	if (auto it = strNick.find(group); it != strNick.end() 
@@ -228,16 +302,12 @@ bool User::getNick(string& nick, long long group) const
 	}
 	return false;
 }
-void User::writeb(std::ofstream& fout)
+void User::writeb(std::ofstream& fout) const
 {
 	std::lock_guard<std::mutex> lock_queue(ex_user);
-	confs.set("trust", (int)nTrust);
-	confs.set("tCreated", (long long)tCreated);
-	fwrite(fout, string("ID"));
-	fwrite(fout, ID);
-	if (!confs.empty()) {
+	if (!empty()) {
 		fwrite(fout, string("Conf"));
-		confs.writeb(fout);
+		AnysTable::writeb(fout);
 	}
 	if (!strNick.empty()) {
 		fwrite(fout, string("Nick"));
@@ -248,16 +318,16 @@ void User::writeb(std::ofstream& fout)
 void User::old_readb(std::ifstream& fin)
 {
 	std::lock_guard<std::mutex> lock_queue(ex_user);
-	ID = fread<long long>(fin);
+	fread<long long>(fin);
 	map<string, int> intConf;
 	fread(fin, intConf);
 	for (auto& [key, val] : intConf) {
-		confs.set(key, val);
+		set(key, val);
 	}
 	map<string, string> strConf;
 	fread(fin, strConf);
 	for (auto& [key, val] : strConf) {
-		confs.set(key, val);
+		set(key, val);
 	}
 	fread(fin, strNick);
 }
@@ -266,20 +336,20 @@ void User::readb(std::ifstream& fin)
 	std::lock_guard<std::mutex> lock_queue(ex_user);
 	string tag;
 	while ((tag = fread<string>(fin)) != "END") {
-		if (tag == "ID")ID = fread<long long>(fin);
-		else if (tag == "Conf")confs.readb(fin);
+		if (tag == "Conf")AnysTable::readb(fin);
 		else if (tag == "Nick")fread(fin, strNick);
+		else if (tag == "ID")fread<long long>(fin); //ignored
 	}
-	nTrust = confs.get_int("trust");
-	if (confs.has("tCreated"))tCreated = confs.get_ll("tCreated");
-	if (confs.has("tinyID"))TinyList.emplace(confs.get_ll("tinyID"), ID);
+	nTrust = get_int("trust");
+	if (has("tCreated"))tCreated = get_ll("tCreated");
+	if (has("tinyID"))TinyList.emplace(get_ll("tinyID"), ID);
 }
 int trustedQQ(long long uid){
 	if (TinyList.count(uid))uid = TinyList[uid];
 	if (uid == console)return 256;
 	if (uid == console.DiceMaid)return 255;
 	else if (!UserList.count(uid))return 0;
-	else return UserList[uid].nTrust;
+	else return UserList[uid]->nTrust;
 }
 
 int clearUser() {
@@ -288,13 +358,13 @@ int clearUser() {
 	time_t userline{ tNow - console["InactiveUserLine"] * (time_t)86400 };
 	bool isClearInactive{ console["InactiveUserLine"] > 0 };
 	for (const auto& [uid, user] : UserList) {
-		if (user.nTrust > 0)continue;
-		if (user.empty()) {
+		if (user->nTrust > 0 || console.is_self(uid))continue;
+		if (user->empty()) {
 			UserDelete.push_back(uid);
 		}
 		else if (isClearInactive) {
-			time_t tLast{ user.updated() };
-			if (!tLast)tLast = user.tCreated;
+			time_t tLast{ user->updated() };
+			if (!tLast)tLast = user->tCreated;
 			if (auto s{ sessions.get_if({ uid }) })
 				tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 			if (tLast >= userline)continue;
@@ -316,8 +386,8 @@ int clearGroup() {
 	time_t tNow{ time(nullptr) };
 	time_t grpline{ tNow - console["InactiveGroupLine"] * (time_t)86400 };
 	for (const auto& [id, grp] : ChatList) {
-		if (grp.is_except() || grp.isset("免清") || grp.isset("忽略"))continue;
-		time_t tLast{ grp.updated() };
+		if (grp->is_except() || grp->is("免清") || grp->is("忽略"))continue;
+		time_t tLast{ grp->updated() };
 		if (auto s{ sessions.get_if({ 0,id }) })
 			tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
 		if (tLast && tLast < grpline)GrpDelete.push_back(id);
@@ -374,12 +444,12 @@ string getName(long long uid, long long GroupID){
 	// Unknown
 	return (UserList.count(uid) ? getMsg("strCallUser") : getMsg("stranger")) + "(" + to_string(uid) + ")";
 }
-AttrVar idx_nick(AttrObject& eve) {
-	if (eve.has("nick"))return eve["nick"];
-	if (!eve.has("uid"))return {};
-	long long uid{ eve.get_ll("uid") };
-	long long gid{ eve.get_ll("gid") };
-	return eve["nick"] = getName(uid, gid);
+AttrVar idx_nick(const AttrObject& eve) {
+	if (eve->has("nick"))return eve->get("nick");
+	if (!eve->has("uid"))return {};
+	long long uid{ eve->get_ll("uid") };
+	long long gid{ eve->get_ll("gid") };
+	return eve->at("nick") = getName(uid, gid);
 }
 
 string filter_CQcode(const string& raw, long long fromGID){
@@ -504,43 +574,88 @@ string forward_filter(const string& raw, long long fromGID) {
 
 Chat& chat(long long id)
 {
-	if (!ChatList.count(id))ChatList[id].id(id);
-	return ChatList[id];
-}
-Chat& Chat::id(long long grp) {
-	ID = grp;
-	Name = DD::getGroupName(grp);
-	if (!Enabled)return *this;
-	return *this;
+	if (!ChatList.count(id)) {
+		ChatList.emplace(id, std::make_shared<Chat>(id));
+	}
+	return *ChatList[id];
 }
 
+bool Chat::has(const string& key)const {
+	static std::unordered_set<string> items{ "name", "size", "maxsize", "firstCreate", "lastUpdate" };
+	return (dict.count(key) && !dict.at(key).is_null())
+		|| items.count(key);
+}
+AttrVar Chat::get(const string& item, const AttrVar& val)const {
+	if (!item.empty()) {
+		if (auto it{ dict.find(item) }; it != dict.end()) {
+			return it->second;
+		}
+		if (item == "name") {
+			if (string name{ DD::getGroupName(ID) }; !name.empty())return Name = name;
+		}
+		else if (item == "size") {
+			return (int)DD::getGroupSize(ID).currSize;
+		}
+		else if (item == "maxsize") {
+			return (int)DD::getGroupSize(ID).maxSize;
+		}
+		else if (item == "firstCreate") {
+			return (long long)tCreated;
+		}
+		else if (item == "lastUpdate") {
+			return (long long)updated();
+		}
+		else if (item.find("card#") == 0) {
+			long long uid{ 0 };
+			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+				uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+			}
+			if (string card{ DD::getGroupNick(ID, uid) }; !card.empty())return card;
+		}
+		else if (item.find("auth#") == 0) {
+			long long uid{ 0 };
+			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+				uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+			}
+			if (int auth{ DD::getGroupAuth(ID, uid, 0) }; auth)return auth;
+		}
+		else if (item.find("lst#") == 0) {
+			long long uid{ 0 };
+			if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
+				uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
+			}
+			return DD::getGroupLastMsg(ID, uid);
+		}
+	}
+	return val;
+}
+Chat& Chat::name(const string& s){
+	if (!s.empty())at("name") = Name = s;
+	return *this;
+}
 void Chat::leave(const string& msg) {
 	if (!msg.empty()) {
-		if (isGroup)DD::sendGroupMsg(ID, msg);
-		else DD::sendDiscussMsg(ID, msg);
+		DD::sendGroupMsg(ID, msg);
 		std::this_thread::sleep_for(500ms);
 	}
-	isGroup ? DD::setGroupLeave(ID) : DD::setDiscussLeave(ID);
+	DD::setGroupLeave(ID);
 	reset("已入群").rmLst();
 }
 bool Chat::is_except()const {
-	return confs.has("免黑") || confs.has("协议无效");
+	return has("免黑") || has("协议无效");
 }
-void Chat::writeb(std::ofstream& fout)
-{
-	confs["Name"] = Name;
-	confs["inviter"] = (long long)inviter;
-	confs["tCreated"] = (long long)tCreated;
+void Chat::writeb(std::ofstream& fout) const{
+	//dict["inviter"] = (long long)inviter;
 	fwrite(fout, ID);
 	if (!Name.empty())
 	{
 		fwrite(fout, static_cast<short>(0));
 		fwrite(fout, Name);
 	}
-	if (!confs.empty())
+	if (!empty())
 	{
 		fwrite(fout, static_cast<short>(10));
-		confs.writeb(fout);
+		AnysTable::writeb(fout);
 	}
 	if (!ChConf.empty())
 	{
@@ -551,9 +666,8 @@ void Chat::writeb(std::ofstream& fout)
 }
 void Chat::readb(std::ifstream& fin)
 {
-	ID = fread<long long>(fin);
+	fread<long long>(fin);
 	short tag = fread<short>(fin);
-	AttrVars conf;
 	while (tag != -1)
 	{
 		switch (tag)
@@ -563,21 +677,21 @@ void Chat::readb(std::ifstream& fin)
 			break;
 		case 1:
 			for (auto& key : fread<string, true>(fin)) {
-				confs.set(key, true);
+				set(key, true);
 			}
 			break;
 		case 2:
 			for (auto& [key, val] : fread<string, int>(fin)) {
-				confs.set(key, val);
+				set(key, val);
 			}
 			break;
 		case 3:
 			for (auto& [key, val] : fread<string, string>(fin)) {
-				confs.set(key, val);
+				set(key, val);
 			}
 			break;
 		case 10:
-			confs.readb(fin);
+			AnysTable::readb(fin);
 			break;
 		case 20:
 			fread(fin, ChConf);
@@ -587,21 +701,33 @@ void Chat::readb(std::ifstream& fin)
 		}
 		tag = fread<short>(fin);
 	}
-	if (confs.has("Name"))Name = confs.get_str("Name");
-	inviter = confs.get_ll("inviter");
-	if (confs.has("tCreated"))tCreated = confs.get_ll("tCreated");
+	if (has("Name"))Name = get_str("Name");
+	inviter = get_ll("inviter");
+	if (has("tCreated"))tCreated = get_ll("tCreated");
 }
 int groupset(long long id, const string& st){
-	return ChatList.count(id) ? ChatList[id].isset(st) : -1;
+	return ChatList.count(id) ? ChatList[id]->is(st) : -1;
 }
 
-string printChat(Chat& grp)
-{
-	string name{ DD::getGroupName(grp.ID) };
-	if (!name.empty())return "[" + name + "](" + to_string(grp.ID) + ")";
-	if (!grp.Name.empty())return "[" + grp.Name + "](" + to_string(grp.ID) + ")";
-	if (grp.isGroup) return "群(" + to_string(grp.ID) + ")";
-	return "讨论组(" + to_string(grp.ID) + ")";
+Chat& Chat::update() {
+	dict["tUpdated"] = (long long)time(nullptr);
+	return *this;
+}
+Chat& Chat::update(time_t tt) {
+	dict["tUpdated"] = (long long)tt;
+	return *this;
+}
+Chat& Chat::setLst(time_t t) {
+	dict["lastMsg"] = (long long)t;
+	return *this;
+}
+string Chat::print()const{
+	if (string name{ DD::getGroupName(ID) }; !name.empty())Name = name;
+	if (!Name.empty())return "[" + Name + "](" + to_string(ID) + ")";
+	return "群(" + to_string(ID) + ")";
+}
+void Chat::invited(long long id) {
+	set("inviter", inviter = id);
 }
 
 #ifdef _WIN32

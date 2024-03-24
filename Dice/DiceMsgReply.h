@@ -1,3 +1,26 @@
+/*
+ *  _______     ________    ________    ________    __
+ * |   __  \   |__    __|  |   _____|  |   _____|  |  |
+ * |  |  |  |     |  |     |  |        |  |_____   |  |
+ * |  |  |  |     |  |     |  |        |   _____|  |__|
+ * |  |__|  |   __|  |__   |  |_____   |  |_____    __
+ * |_______/   |________|  |________|  |________|  |__|
+ *
+ * Dice! QQ Dice Robot for TRPG
+ * Copyright (C) 2018-2021 w4123ËÝä§
+ * Copyright (C) 2019-2024 String.Empty
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this
+ * program. If not, see <http://www.gnu.org/licenses/>.
+ */
 #pragma once
 #include "STLExtern.hpp"
 #include "SHKTrie.h"
@@ -18,7 +41,9 @@ class DiceTriggerLimit {
 	bool grp_id_negative{ false };
 	vector<CDConfig>locks;
 	vector<CDConfig>cd_timer;
+	string cd_notice;
 	vector<CDConfig>today_cnt;
+	string daylimit_notice;
 	fifo_dict_ci<pair<AttrVar::CMPR, AttrVar>>self_vary;
 	fifo_dict_ci<pair<AttrVar::CMPR, AttrVar>>user_vary;
 	fifo_dict_ci<pair<AttrVar::CMPR, AttrVar>>grp_vary;

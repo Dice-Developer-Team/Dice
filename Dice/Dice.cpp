@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -23,8 +23,6 @@
  */
 #define UNICODE
 #include <algorithm>
-#include <exception>
-#include <stdexcept>
 
 #include "DiceFile.hpp"
 #include "Jsonio.h"
@@ -64,9 +62,9 @@
 
 using namespace std;
 
-unordered_map<long long, User> UserList{};
+unordered_map<long long, ptr<User>> UserList{};
 unordered_map<long long, long long> TinyList{}; 
-unordered_map<long long, Chat> ChatList;
+unordered_map<long long, ptr<Chat>> ChatList;
 ThreadFactory threads;
 std::filesystem::path fpFileLoc;
 std::unique_ptr<CivetServer> ManagerServer;
@@ -88,13 +86,12 @@ void loadData(){
 	try	{
 		std::error_code ec;
 		std::filesystem::create_directory(DiceDir, ec);
-		loadDir(loadXML<CardTemp, fifo_cmpr_ci>, DiceDir / "CardTemp", CharaCard::mCardTemplet, logList, true);
 		loadDir(loadJMap, DiceDir / "PublicDeck", CardDeck::mExternPublicDeck, logList);
 		map_merge(CardDeck::mPublicDeck, CardDeck::mExternPublicDeck);
-		//读取帮助文档
+		//ModManger
 		fmt->clear();
 		fmt->load(logList);
-		//读取敏感词库
+		//Censor word
 		loadDir(load_words, DiceDir / "conf" / "censor", censor, logList, true);
 		loadJMap(DiceDir / "conf" / "CustomCensor.json", censor.CustomWords);
 		censor.build();
@@ -111,12 +108,12 @@ void loadData(){
 					}
 				}
 			}
-			DD::debugLog("预加载selfdata" + to_string(selfdata_byStem.size()) + "份");
+			if (selfdata_byStem.size())DD::debugLog("预加载selfdata" + to_string(selfdata_byStem.size()) + "份");
 		}
 		if (!logList.empty())
 		{
 			logList << "扩展配置读取完毕√";
-			console.log(logList.show(), 1, printSTNow());
+			console.log(logList.show(), int(Enabled), printSTNow());
 		}
 	}
 	catch (const std::exception& e)
@@ -144,11 +141,10 @@ void readUserData(){
 		}
 		else {
 			cnt = loadBFile<long long, User, &User::old_readb>(dir / "UserConf.RDconf", UserList);
-			loadFile(dir / "UserList.txt", UserList);
 			if (cnt > 0)log << "迁移用户记录" + to_string(cnt) + "条";
 		}
 		//for QQ Channel
-		if (User& self{ getUser(console.DiceMaid) }; !self.confs.get_ll("tinyID")) {
+		if (User& self{ getUser(console.DiceMaid) }; !self.get_ll("tinyID")) {
 			if (long long tiny{ DD::getTinyID() }) {
 				DD::debugMsg("获取分身ID:" + to_string(tiny));
 				self.setConf("tinyID", tiny);
@@ -191,7 +187,6 @@ void readUserData(){
 		}
 		else {
 			cnt = loadBFile(dir / "ChatConf.RDconf", ChatList);
-			loadFile(dir / "ChatList.txt", ChatList);
 			if (cnt > 0)log << "迁移群聊记录" + to_string(cnt) + "条";
 		}
 	}
@@ -203,7 +198,7 @@ void readUserData(){
 	sessions.load();
 	if (!log.empty()) {
 		log << "用户数据读取完毕";
-		console.log(log.show(), 0b1, printSTNow());
+		DD::debugLog(printSTNow() + log.show());
 	}
 }
 
@@ -286,7 +281,15 @@ R"( //私骰作成 即可成为我的主人~
 参考文档参看.help链接)";
 		DD::debugMsg(msgInit);
 	}
-	DD::debugLog("DiceConsole.load");
+	try {
+		js_global_init();
+#ifdef DICE_PYTHON
+		if (console["EnablePython"])py = make_unique<PyGlobal>();
+#endif //DICE_PYTHON
+	}
+	catch (const std::exception& e) {
+		console.log(string("初始化js/python环境失败!") + e.what(), 1, printSTNow());
+	}
 	fmt = make_unique<DiceModManager>();
 	try {
 		std::unique_lock lock(GlobalMsgMutex);
@@ -298,26 +301,27 @@ R"( //私骰作成 即可成为我的主人~
 	catch (const std::exception& e) {
 		console.log(string("读取/conf/CustomMsg.json失败!") + e.what(), 1, printSTNow());
 	}
-	js_global_init();
-#ifdef DICE_PYTHON
-	if (console["EnablePython"])py.reset(new PyGlobal());
-#endif //DICE_PYTHON
 	loadData();
 	//初始化黑名单
-	blacklist = make_unique<DDBlackManager>();
-	if (auto cnt = blacklist->loadJson(DiceDir / "conf" / "BlackList.json");cnt < 0)
-	{
-		blacklist->loadJson(fpFileLoc / "BlackMarks.json");
-		cnt = blacklist->loadHistory(fpFileLoc);
-		if (cnt) {
-			blacklist->saveJson(DiceDir / "conf" / "BlackList.json");
-			console.log("初始化不良记录" + to_string(cnt) + "条", 1);
+	try {
+		blacklist = make_unique<DDBlackManager>();
+		if (auto cnt = blacklist->loadJson(DiceDir / "conf" / "BlackList.json"); cnt < 0)
+		{
+			blacklist->loadJson(fpFileLoc / "BlackMarks.json");
+			cnt = blacklist->loadHistory(fpFileLoc);
+			if (cnt) {
+				blacklist->saveJson(DiceDir / "conf" / "BlackList.json");
+				console.log("初始化不良记录" + to_string(cnt) + "条", 1);
+			}
+		}
+		else {
+			DD::debugLog("读取不良记录" + to_string(cnt) + "条");
+			if ((cnt = blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true)) > 0)
+				DD::debugLog("合并外源不良记录" + to_string(cnt) + "条");
 		}
 	}
-	else {
-		DD::debugLog("读取不良记录" + to_string(cnt) + "条");
-		if ((cnt = blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true)) > 0)
-			DD::debugLog("读取外源不良记录" + to_string(cnt) + "条");
+	catch (const std::exception& e) {
+		console.log(string("读取/conf/BlackList.json失败!") + e.what(), 1, printSTNow());
 	}
 	//读取用户数据
 	readUserData();
@@ -325,8 +329,8 @@ R"( //私骰作成 即可成为我的主人~
 	today = make_unique<DiceToday>();
 	set<long long> grps{ DD::getGroupIDList() };
 	for (auto gid : grps){
-		if (auto grp{ chat(gid).group().reset("未进").reset("已退").set("已入群") };
-			!grp.isset("lastMsg"))grp.setLst(-1);
+		if (auto grp{ chat(gid).reset("未进").reset("已退").set("已入群") };
+			!grp.is("lastMsg"))grp.setLst(-1);
 	}
 	// 确保线程执行结束
 	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
@@ -367,7 +371,6 @@ R"( //私骰作成 即可成为我的主人~
 	{
 		;
 	}
-	ExtensionManagerInstance = std::make_unique<ExtensionManager>();
 
 	DD::debugLog("Dice.threadInit");
 	Enabled = true;
@@ -425,11 +428,11 @@ R"( //私骰作成 即可成为我的主人~
 			{
 				console.log("Dice! WebUI 启动失败！端口已被使用？", 0b1);
 			}
-			else
-			{
-				console.log("Dice! WebUI 正于端口" + std::to_string(ports[0])
+			else {
+				string note{ "Dice! WebUI 正于端口" + std::to_string(ports[0])
 					+ "运行，本地可通过浏览器访问http://localhost:" + std::to_string(ports[0])
-					+ "\n默认用户名为admin密码为password，详细教程请查看 https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming", 0b1);
+					+ "\n默认用户名为admin密码为password，详细教程请查看 https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming" };
+				console.log(note, 0b1);
 			}
 		}
 		catch (const CivetException& e)
@@ -440,47 +443,32 @@ R"( //私骰作成 即可成为我的主人~
 	//骰娘网络
 	getDiceList();
 	getExceptGroup();
-	try
-	{
-		ExtensionManagerInstance->refreshIndex();
-		if (auto cnt{ ExtensionManagerInstance->getUpgradableCount() }) {
-			console.log("已成功刷新软件包缓存：" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用，"
-				+ to_string(cnt) + "个可升级", 0b1);
-		}
-		else {
-			console.log("已成功刷新软件包缓存：" + to_string(ExtensionManagerInstance->getIndexCount()) + "个拓展可用", 0);
-		}
-	}
-	catch (const std::exception& e)
-	{
-		console.log(std::string("刷新软件包缓存失败：") + e.what(), 0);
-	}
 	isIniting.clear();
-	fmt->call_hook_event(AttrVars{ {{"Event","StartUp"}} });
+	fmt->call_hook_event(std::make_shared<AnysTable>( AttrVars{{"Event","StartUp"}} ));
 }
 
 mutex GroupAddMutex;
 bool eve_GroupAdd(Chat& grp) {
 	{
 		unique_lock<std::mutex> lock_queue(GroupAddMutex);
-		if (!grp.isset("已入群"))grp.set("已入群").reset("未进").reset("已退");
+		if (!grp.is("已入群"))grp.set("已入群").reset("未进").reset("已退");
 		else return false;
 		if (ChatList.size() == 1 && !console)DD::sendGroupMsg(grp.ID, msgInit);
 	}
 	long long fromGID = grp.ID;
-	if (grp.Name.empty())
-		grp.set("Name", grp.Name = DD::getGroupName(fromGID));
+	if (grp.get_str("name").empty())
+		grp.name(DD::getGroupName(fromGID));
 	GroupSize_t gsize(DD::getGroupSize(fromGID));
-	if (console["GroupInvalidSize"] > 0 && grp.confs.empty() && gsize.currSize > (size_t)console["GroupInvalidSize"]) {
+	if (console["GroupInvalidSize"] > 0 && grp.empty() && gsize.currSize > (size_t)console["GroupInvalidSize"]) {
 		grp.set("协议无效");
 	}
-	if (!console["ListenGroupAdd"] || grp.isset("忽略"))return 0;
+	if (!console["ListenGroupAdd"] || grp.is("忽略"))return 0;
 	string strNow = printSTNow();
 	string strMsg(getMsg("strSelfName"));
-	AttrObject eve{ {
+	AttrObject eve{ AnysTable{{
 		{"Event","GroupAdd"},
 		{"gid",fromGID},
-	} };
+	}} };
 	try 
 	{
 		strMsg += "新加入:" + DD::printGroupInfo(grp.ID);
@@ -491,8 +479,8 @@ bool eve_GroupAdd(Chat& grp) {
 			console.log(strMsg, 0b10, printSTNow());
 			return true;
 		}
-		if (grp.isset("许可使用"))strMsg += "（已获使用许可）";
-		else if(grp.isset("协议无效"))strMsg += "（已标记协议无效）";
+		if (grp.is("许可使用"))strMsg += "（已获使用许可）";
+		else if(grp.is("协议无效"))strMsg += "（已标记协议无效）";
 		if (grp.inviter) {
 			strMsg += ",邀请者" + printUser(grp.inviter);
 		}
@@ -522,7 +510,7 @@ bool eve_GroupAdd(Chat& grp) {
 					if (blacklist->get_user_danger(each) > 1)
 					{
 						strMsg += ",发现黑名单管理员" + printUser(each);
-						if (grp.isset("免黑")) {
+						if (grp.is("免黑")) {
 							strMsg += "（群免黑）";
 						}
 						else
@@ -559,7 +547,7 @@ bool eve_GroupAdd(Chat& grp) {
 				}
 			}
 			if (!grp.inviter && list.size() <= 2 && ownerQQ){
-				grp.inviter = ownerQQ;
+				grp.invited(ownerQQ);
 				strMsg += "邀请者" + printUser(ownerQQ);
 			}
 			if (!cntMember) 
@@ -584,7 +572,7 @@ bool eve_GroupAdd(Chat& grp) {
 			console.log(strMsg, 1, strNow);
 			return 0;
 		}
-		if (console["Private"] && !grp.isset("许可使用"))
+		if (console["Private"] && !grp.is("许可使用"))
 		{	
 			//避免小群绕过邀请没加上白名单
 			if (max_trust > 1 || ave_trust > 0.5)
@@ -592,7 +580,7 @@ bool eve_GroupAdd(Chat& grp) {
 				grp.set("许可使用");
 				strMsg += "\n已自动追加使用许可";
 			}
-			else if(!grp.isset("协议无效"))
+			else if(!grp.is("协议无效"))
 			{
 				strMsg += "\n无许可使用，已退群";
 				console.log(strMsg, 1, strNow);
@@ -608,13 +596,13 @@ bool eve_GroupAdd(Chat& grp) {
 		console.log(strMsg + "\n群" + to_string(fromGID) + "信息获取失败！", 0b1, printSTNow());
 		return true;
 	}
-	if (grp.isset("协议无效"))return 0;
+	if (grp.is("协议无效"))return 0;
 	if (string selfIntro{ getMsg("strAddGroup", AttrVars{{"gid",fromGID}}) };
 		!selfIntro.empty()) {
 		this_thread::sleep_for(2s);
 		AddMsgToQueue(selfIntro, { 0,fromGID, 0 });
 	}
-	if (console["CheckGroupLicense"] && !grp.isset("许可使用"))	{
+	if (console["CheckGroupLicense"] && !grp.is("许可使用"))	{
 		grp.set("未审核");
 		this_thread::sleep_for(2s);
 		AddMsgToQueue(getMsg("strGroupLicenseDeny"), { 0,fromGID, 0 });
@@ -637,16 +625,16 @@ EVE_PrivateMsg(eventPrivateMsg)
 		}, chatInfo{ fromUID,0,0 }));
 	return Msg->DiceFilter() || fmt->call_hook_event(Msg->merge({
 		{"hook","WhisperIgnored"},
-		}));
+		}).shared_from_this());
 }
 
 EVE_GroupMsg(eventGroupMsg)
 {
 	if (!Enabled)return 0;
-	Chat& grp = chat(fromGID).group();
+	Chat& grp = chat(fromGID);
 	if (fromUID == console.DiceMaid && !console["ListenGroupEcho"])return 0;
-	if (!grp.isset("已入群") && grp.getLst())eve_GroupAdd(grp);
-	if (!grp.isset("忽略"))	{
+	if (!grp.is("已入群") && grp.getLst())eve_GroupAdd(grp);
+	if (!grp.is("忽略"))	{
 		shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
 			AttrVars({ { "Event", "Message" },
 				{ "fromMsg", message },
@@ -657,14 +645,14 @@ EVE_GroupMsg(eventGroupMsg)
 				}), chatInfo{ fromUID,fromGID,0 }));
 		return Msg->DiceFilter();
 	}
-	return grp.setLst(time(nullptr)).isset("拦截消息");
+	return 0;
 }
 EVE_ChannelMsg(eventChannelMsg)
 {
 	if (!Enabled)return 0;
-	Chat& grp = chat(fromGID).channel();
+	Chat& grp = chat(fromGID);
 	if (fromUID == console.DiceMaid && !console["ListenChannelEcho"])return 0;
-	//if (!grp.isset("忽略"))
+	//if (!grp.is("忽略"))
 	{
 		shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
 			AttrVars({ { "Event","Message"},
@@ -677,7 +665,7 @@ EVE_ChannelMsg(eventChannelMsg)
 				}), chatInfo{ fromUID,fromGID,fromChID }));
 		return Msg->DiceFilter();
 	}
-	//return grp.isset("拦截消息");
+	//return grp.is("拦截消息");
 	return false;
 }
 
@@ -696,7 +684,7 @@ EVE_DiscussMsg(eventDiscussMsg)
 	if (blacklist->get_user_danger(fromUID) && console["AutoClearBlack"])
 	{
 		const string strMsg = "发现黑名单用户" + printUser(fromUID) + "，自动执行退群";
-		console.log(printChat(grp) + strMsg, 0b10, printSTNow());
+		console.log(grp.print() + strMsg, 0b10, printSTNow());
 		grp.leave(strMsg);
 		return 1;
 	}
@@ -706,21 +694,22 @@ EVE_DiscussMsg(eventDiscussMsg)
 			{ "uid", fromUID },
 			{ "gid", fromDiscuss }
 			}), chatInfo{ fromUID,fromDiscuss,0 }));
-	return Msg->DiceFilter() || grp.isset("拦截消息");
+	return Msg->DiceFilter() || grp.is("拦截消息");
 }
 
 EVE_GroupMemberIncrease(eventGroupMemberAdd)
 {
 	if (!Enabled)return 0;
 	Chat& grp = chat(fromGID);
-	if (grp.isset("忽略"))return 0;
+	if (grp.is("忽略"))return 0;
 	if (fromUID != console.DiceMaid){
-		if (chat(fromGID).confs.has("入群欢迎")){
-			AttrObject eve{ {{ "Event","GroupWelcome"},
+		if (chat(fromGID).has("入群欢迎")){
+			AttrObject eve{ AnysTable{{
+				{ "Event","GroupWelcome"},
 				{"gid",fromGID},
 				{"uid",fromUID},
-			} };
-			AddMsgToQueue(strip(fmt->format(grp.update().confs.get_str("入群欢迎"), eve, false)),
+			}} };
+			AddMsgToQueue(strip(fmt->format(grp.update().get_str("入群欢迎"), eve, false)),
 				{ 0,fromGID });
 		}
 		if (blacklist->get_user_danger(fromUID))
@@ -729,9 +718,9 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 			string strNote = printGroup(fromGID) + "发现" + getMsg("strSelfName") + "的黑名单用户" + printUser(
 				fromUID) + "入群";
 			AddMsgToQueue(blacklist->list_self_qq_warning(fromUID), { 0,fromGID });
-			if (grp.isset("免清"))strNote += "（群免清）";
-			else if (grp.isset("免黑"))strNote += "（群免黑）";
-			else if (grp.isset("协议无效"))strNote += "（群协议无效）";
+			if (grp.is("免清"))strNote += "（群免清）";
+			else if (grp.is("免黑"))strNote += "（群免黑）";
+			else if (grp.is("协议无效"))strNote += "（群协议无效）";
 			else if (DD::isGroupAdmin(fromGID, console.DiceMaid, false))strNote += "（群内有权限）";
 			else if (console["LeaveBlackQQ"])
 			{
@@ -742,10 +731,10 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 		}
 	}
 	else{
-		if (!grp.inviter)grp.inviter = operatorQQ;
+		if (!grp.inviter)grp.invited(operatorQQ);
 		{
 			unique_lock<std::mutex> lock_queue(GroupAddMutex);
-			if (grp.isset("已入群"))return 0;
+			if (grp.is("已入群"))return 0;
 		}
 		return eve_GroupAdd(grp);
 	}
@@ -757,16 +746,16 @@ EVE_GroupMemberKicked(eventGroupMemberKicked){
 	Chat& grp = chat(fromGID);
 	if (beingOperateQQ == console.DiceMaid){
 		grp.reset("已入群").rmLst();
-		if (!console || grp.isset("忽略"))return 0;
+		if (!console || grp.is("忽略"))return 0;
 		string strNow = printSTime(stNow);
-		string strNote = printUser(fromUID) + "将" + printUser(beingOperateQQ) + "移出了" + printChat(grp);
+		string strNote = printUser(fromUID) + "将" + printUser(beingOperateQQ) + "移出了" + grp.print();
 		console.log(strNote, 0b1000, strNow);
-		if (!console["ListenGroupKick"] || trustedQQ(fromUID) > 1 || grp.isset("免黑") || grp.isset("协议无效") || ExceptGroups.count(fromGID)) return 0;
-		AttrObject eve{ {
+		if (!console["ListenGroupKick"] || trustedQQ(fromUID) > 1 || grp.is("免黑") || grp.is("协议无效") || ExceptGroups.count(fromGID)) return 0;
+		AttrObject eve{ AnysTable{{
 			{"Event","GroupKicked"},
 			{"uid",fromUID},
 			{"gid",fromGID},
-		} };
+		}} };
 		if (fmt->call_hook_event(eve))return 1;
 		DDBlackMarkFactory mark{fromUID, fromGID};
 		mark.sign().type("kick").time(strNow).note(strNow + " " + strNote).comment(getMsg("strSelfCall") + "原生记录");
@@ -780,11 +769,11 @@ EVE_GroupMemberKicked(eventGroupMemberKicked){
 	}
 	else if (mDiceList.count(beingOperateQQ) && console["ListenGroupKick"])
 	{
-		if (!console || grp.isset("忽略"))return 0;
+		if (!console || grp.is("忽略"))return 0;
 		string strNow = printSTime(stNow);
-		string strNote = printUser(fromUID) + "将" + printUser(beingOperateQQ) + "移出了" + printChat(grp);
+		string strNote = printUser(fromUID) + "将" + printUser(beingOperateQQ) + "移出了" + grp.print();
 		console.log(strNote, 0b1000, strNow);
-		if (trustedQQ(fromUID) > 1 || grp.isset("免黑") || grp.isset("协议无效") || ExceptGroups.count(fromGID)) return 0;
+		if (trustedQQ(fromUID) > 1 || grp.is("免黑") || grp.is("协议无效") || ExceptGroups.count(fromGID)) return 0;
 		DDBlackMarkFactory mark{fromUID, fromGID};
 		mark.type("kick").time(strNow).note(strNow + " " + strNote).DiceMaid(beingOperateQQ).master(mDiceList[beingOperateQQ]).comment(strNow + " " + printUser(console.DiceMaid) + "目击");
 		grp.reset("许可使用").reset("免清");
@@ -797,12 +786,12 @@ EVE_GroupBan(eventGroupBan)
 {
 	if (!Enabled) return 0;
 	Chat& grp = chat(fromGID);
-	if (grp.isset("忽略") || (beingOperateQQ != console.DiceMaid && !mDiceList.count(beingOperateQQ)) || !console["ListenGroupBan"])return 0;
+	if (grp.is("忽略") || (beingOperateQQ != console.DiceMaid && !mDiceList.count(beingOperateQQ)) || !console["ListenGroupBan"])return 0;
 	if (!duration || !duration[0])
 	{
 		if (beingOperateQQ == console.DiceMaid)
 		{
-			console.log(getMsg("self") + "在" + printGroup(fromGID) + "中被解除禁言", 0b10, printSTNow());
+			console.log(getMsg("self") + "在" + grp.print() + "中被解除禁言", 0b10, printSTNow());
 			return 1;
 		}
 	}
@@ -810,18 +799,18 @@ EVE_GroupBan(eventGroupBan)
 	{
 		string strNow = printSTNow();
 		long long llOwner = 0;
-		string strNote = "在" + printGroup(fromGID) + "中," + printUser(beingOperateQQ) + "被" + printUser(operatorQQ) + "禁言" + duration;
-		if (!console["ListenGroupBan"] || trustedQQ(operatorQQ) > 1 || grp.isset("免黑") || grp.isset("协议无效") || ExceptGroups.count(fromGID)) 
+		string strNote = "在" + grp.print() + "中," + printUser(beingOperateQQ) + "被" + printUser(operatorQQ) + "禁言" + duration;
+		if (!console["ListenGroupBan"] || trustedQQ(operatorQQ) > 1 || grp.is("免黑") || grp.is("协议无效") || ExceptGroups.count(fromGID)) 
 		{
 			console.log(strNote, 0b10, strNow);
 			return 1;
 		}
-		AttrObject eve{ {
+		AttrObject eve{ AnysTable{{
 			{"Event","GroupBanned"},
 			{"uid",operatorQQ},
 			{"gid",fromGID},
 			{"duration",duration},
-		} };
+		}} };
 		if (fmt->call_hook_event(eve))return 1;
 		DDBlackMarkFactory mark{operatorQQ, fromGID};
 		mark.type("ban").time(strNow).note(strNow + " " + strNote);
@@ -870,15 +859,15 @@ EVE_GroupInvited(eventGroupInvited)
 	if (groupset(fromGID, "忽略") < 1)
 	{
 		this_thread::sleep_for(3s);
-		AttrObject eve{ {
+		AttrObject eve{ AnysTable{ {
 			{"Event","GroupRequest"},
 			{"uid",fromUID},
 			{"gid",fromGID},
-		} };
+		}} };
 		bool isBlocked{ fmt->call_hook_event(eve) };
-		if (eve.has("approval")) {
-			if (eve.is("approval")) {
-				chat(fromGID).inviter = fromUID;
+		if (eve->has("approval")) {
+			if (eve->is("approval")) {
+				chat(fromGID).invited(fromUID);
 				DD::answerFriendRequest(fromUID, 1);
 			}
 			else {
@@ -898,26 +887,26 @@ EVE_GroupInvited(eventGroupInvited)
 			DD::answerGroupInvited(fromGID, 2);
 		}
 		else if (blacklist->get_user_danger(fromUID)){
-			strMsg += "\n已拒绝（黑名单用户）";
+			strMsg += "\n（黑名单用户×）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 2);
 		}
-		else if (Chat& grp = chat(fromGID).group(); grp.isset("许可使用")) {
+		else if (Chat& grp = chat(fromGID); grp.is("许可使用")) {
 			grp.setLst(0);
-			grp.inviter = fromUID;
-			strMsg += "\n已同意（已许可使用）";
+			grp.invited(fromUID);
+			strMsg += "\n（已许可使用√）";
 			console.log(strMsg, 1, strNow);
 			DD::answerGroupInvited(fromGID, 1);
 		}
 		else if (trustedQQ(fromUID))
 		{
 			grp.set("许可使用").reset("未审核").reset("协议无效");
-			grp.inviter = fromUID;
-			strMsg += "\n已同意（信任用户）";
+			grp.invited(fromUID);
+			strMsg += "\n（信任用户√）";
 			console.log(strMsg, 1, strNow);
 			DD::answerGroupInvited(fromGID, 1);
 		}
-		else if (grp.isset("协议无效")) {
+		else if (grp.is("协议无效")) {
 			strMsg += "\n已忽略（协议无效）";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 3);
@@ -936,7 +925,7 @@ EVE_GroupInvited(eventGroupInvited)
 		}
 		else {
 			grp.setLst(0);
-			grp.inviter = fromUID;
+			grp.invited(fromUID);
 			strMsg += "已同意";
 			this_thread::sleep_for(2s);
 			console.log(strMsg, 1, strNow);
@@ -950,15 +939,15 @@ EVE_FriendRequest(eventFriendRequest) {
 	if (!Enabled) return 0;
 	if (!console["ListenFriendRequest"])return 0;
 	this_thread::sleep_for(3s);
-	AttrObject eve{{
+	AttrObject eve{ AnysTable{{
 		{"Event","FriendRequest"},
 		{"fromMsg",message},
 		{"uid",fromUID},
-	} };
+	}} };
 	bool isBlocked{ fmt->call_hook_event(eve) };
-	if (eve.has("approval")) {
-		DD::answerFriendRequest(fromUID, eve.is("approval") ? 1 : 2,
-			fmt->format(eve.get_str("msg_reply"), eve));
+	if (eve->has("approval")) {
+		DD::answerFriendRequest(fromUID, eve->is("approval") ? 1 : 2,
+			fmt->format(eve->get_str("msg_reply"), eve));
 	}
 	if (isBlocked)return 1;
 	string strMsg = "好友添加请求，来自 " + printUser(fromUID) + ":" + message;
@@ -993,10 +982,10 @@ EVE_FriendAdded(eventFriendAdd) {
 	if (!Enabled) return 0;
 	if (!console["ListenFriendAdd"])return 0;
 	this_thread::sleep_for(3s);
-	AttrObject eve{ {
+	AttrObject eve{ AnysTable{{
 		{"Event","FriendAdd"},
 		{"uid",fromUID},
-	} };
+	}} };
 	if(fmt->call_hook_event(eve))return 1;
 	(trustedQQ(fromUID) > 0 && !getMsg("strAddFriendWhiteQQ", eve).empty())
 		? AddMsgToQueue(getMsg("strAddFriendWhiteQQ", eve), fromUID)
@@ -1006,7 +995,7 @@ EVE_FriendAdded(eventFriendAdd) {
 EVE_Extra(eventExtra) {
 	if (!Enabled) return 0;
 	try {
-		AttrObject eve{ AttrObject(fifo_json::parse(jsonData)) };
+		AttrObject eve{ AnysTable(fifo_json::parse(jsonData)) };
 		if (fmt->call_hook_event(eve))return 1;
 	}
 	catch (std::exception& e) {
@@ -1047,7 +1036,6 @@ void global_exit() {
 	Enabled = false;
 	mg_exit_library();
 	ManagerServer = nullptr;
-	ExtensionManagerInstance = nullptr;
 	dataBackUp();
 	sch.end();
 	censor = {};

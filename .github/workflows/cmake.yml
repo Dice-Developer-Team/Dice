@@ -13,10 +13,12 @@ jobs:
         include:
         - type: Win32
           triplet: x86-windows-static
+          triplet_prefix: x86-windows
           mono: ''
           dll_sfx: windows.i386
         - type: x64
           triplet: x64-windows-static
+          triplet_prefix: x64-windows
           mono: ''
           dll_sfx: windows.amd64
           
@@ -39,15 +41,15 @@ jobs:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: ${{github.workspace}}\vcpkg\vcpkg.exe
         # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ matrix.triplet }}-20230603
-        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20230603
+        key: ${{ runner.os }}-${{ matrix.triplet }}-20231006
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20231006
 
     - name: Setup Vcpkg
       shell: cmd
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: bootstrap-vcpkg.bat
-      
+
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name
@@ -125,15 +127,15 @@ jobs:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ matrix.triplet }}-20230506
-        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20230506
+        key: ${{ runner.os }}-${{ matrix.triplet }}-20231006
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20231006
         
     - name: Setup Vcpkg
       shell: bash
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
-      
+
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name
@@ -222,7 +224,7 @@ jobs:
       
     - name: Install Cross Compiler
       run: sudo apt-get update && sudo apt-get install ${{ matrix.apt }}
-      
+
     - name: Cache
       uses: actions/cache@v3
       id: cache
@@ -230,15 +232,15 @@ jobs:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ matrix.triplet }}-20230506
-        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20230506
+        key: ${{ runner.os }}-${{ matrix.triplet }}-20231006
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20231006
         
     - name: Setup Vcpkg
       shell: bash
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
-      
+
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name
@@ -319,15 +321,15 @@ jobs:
         # A list of files, directories, and wildcard patterns to cache and restore
         path: ${{github.workspace}}/vcpkg/vcpkg
         # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ matrix.triplet }}-20230404
-        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20230404
+        key: ${{ runner.os }}-${{ matrix.triplet }}-20231006
+        restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20231006
         
     - name: Setup Vcpkg
       shell: bash
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
-      
+
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name

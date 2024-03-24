@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -30,37 +30,54 @@ ByteS::ByteS(std::ifstream& fin) {
 	bytes = new char[len + 1];
 	fin.read(bytes, len);
 }
-bool AttrObject::is(const string& key)const {
-	return dict->count(key) ? bool(dict->at(key)) : false;
+bool AnysTable::is(const string& key)const {
+	return dict.count(key) ? bool(dict.at(key)) : false;
 }
-bool AttrObject::is_empty(const string& key)const {
-	auto it{ dict->find(key) };
-	return (it == dict->end())
+bool AnysTable::is_empty(const string& key)const {
+	auto it{ dict.find(key) };
+	return (it == dict.end())
 		|| (it->second.type == AttrVar::Type::Text && it->second.text.empty())
-		|| (it->second.type == AttrVar::Type::Table && it->second.table.empty());
+		|| (it->second.type == AttrVar::Type::Table && it->second.table->empty());
 }
-bool AttrObject::is_table(const string& key)const {
-	return dict->count(key) && dict->at(key).is_table();
+bool AnysTable::is_table(const string& key)const {
+	return dict.count(key) && dict.at(key).is_table();
 }
-bool AttrObject::empty()const {
-	return dict->empty() && (!list || list->empty());
+bool AnysTable::empty()const {
+	return dict.empty() && (!list || list->empty());
 }
-bool AttrObject::has(const string& key)const {
-	return dict->count(key) && !dict->at(key).is_null();
+bool AnysTable::has(const string& key)const {
+	return dict.count(key) && !dict.at(key).is_null();
 }
-void AttrObject::set(const string& key, const AttrVar& val)const {
-	if (key.empty())return;
-	if (val.is_null())dict->erase(key);
-	else (*dict)[key] = val;
+void AnysTable::set(const string& key, const AttrVar& val){
+	if (!key.empty()) {
+		if (val.is_null())dict.erase(key);
+		else dict[key] = val;
+	}
 }
-void AttrObject::set(const string& key)const {
-	if (key.empty())return;
-	(*dict)[key] = true;
+void AnysTable::set(const string& key){
+	if (!key.empty())dict[key] = true;
 }
-void AttrObject::reset(const string& key)const {
-	dict->erase(key);
+void AnysTable::set(int i, const AttrVar& val) {
+	if (list) {
+		if (list->size() == i) {
+			list->emplace_back(val);
+			return;
+		}
+		else if (list->size() > i) {
+			(*list)[i] = val;
+			return;
+		}
+	}
+	else if (i == 0) {
+		list = std::make_shared<VarArray>(VarArray{ val });
+		return;
+	}
+	set(to_string(i), val);
 }
-vector<string> AttrObject::to_deck()const {
+void AnysTable::reset(const string& key){
+	dict.erase(key);
+}
+vector<string> AnysTable::to_deck()const {
 	vector<string> deck;
 	if (list) {
 		for (auto& it : *list) {
@@ -69,99 +86,112 @@ vector<string> AttrObject::to_deck()const {
 	}
 	return deck;
 }
-AttrVar& AttrObject::at(const string& key)const {
-	return (*dict)[key];
+AttrVar& AnysTable::at(const string& key){
+	return dict[key];
 }
-AttrVar& AttrObject::operator[](const char* key)const {
-	return (*dict)[key];
+const AttrVar& AnysTable::at(const string& key)const {
+	return dict.at(key);
 }
-AttrVar AttrObject::get(const string& key, ptr<AttrVar> val)const {
-	return dict->count(key) ? dict->at(key)
-		: val ? *val : AttrVar();
+AttrVar& AnysTable::operator[](const char* key){
+	return dict[key];
 }
-string AttrObject::get_str(const string& key)const {
-	return dict->count(key) ? dict->at(key).to_str() : "";
+AttrVar AnysTable::get(const string& key, const AttrVar& val)const {
+	return dict.count(key) ? dict.at(key)
+		: val;
 }
-string AttrObject::get_str(const string& key, const string& val)const {
-	return dict->count(key) ? dict->at(key).to_str() : val;
+string AnysTable::get_str(const string& key)const {
+	return dict.count(key) ? dict.at(key).to_str() : "";
 }
-string AttrObject::print(const string& key)const {
-	return dict->count(key) ? dict->at(key).print() : "";
+string AnysTable::get_str(const string& key, const string& val)const {
+	return dict.count(key) ? dict.at(key).to_str() : val;
 }
-int AttrObject::get_int(const string& key)const {
-	return dict->count(key) ? dict->at(key).to_int() : 0;
+string AnysTable::print(const string& key)const {
+	return dict.count(key) ? dict.at(key).print() : "";
 }
-long long AttrObject::get_ll(const string& key)const {
-	return dict->count(key) ? dict->at(key).to_ll() : 0;
+int AnysTable::get_int(const string& key)const {
+	return dict.count(key) ? dict.at(key).to_int() : 0;
 }
-double AttrObject::get_num(const string& key)const {
-	return dict->count(key) ? dict->at(key).to_num() : 0;
+long long AnysTable::get_ll(const string& key)const {
+	return dict.count(key) ? dict.at(key).to_ll() : 0;
 }
-AttrObject AttrObject::get_obj(const string& key)const {
-	return dict->count(key) ? dict->at(key).to_obj() : AttrObject();
+double AnysTable::get_num(const string& key)const {
+	return dict.count(key) ? dict.at(key).to_num() : 0;
 }
-ptr<AttrVars> AttrObject::get_dict(const string& key)const {
-	return dict->count(key) ? dict->at(key).to_dict() : ptr<AttrVars>();
+AttrObject AnysTable::get_obj(const string& key)const {
+	return dict.count(key) ? dict.at(key).to_obj() : ptr<AnysTable>();
 }
-ptr<VarArray> AttrObject::get_list(const string& key)const {
-	return dict->count(key) ? dict->at(key).to_list() : ptr<VarArray>();
+std::optional<AttrVars*> AnysTable::get_dict(const string& key)const {
+	return dict.count(key) ? dict.at(key).to_dict() : std::nullopt;
 }
-AttrSet AttrObject::get_set(const string& key)const {
-	return dict->count(key) ? dict->at(key).to_set() : AttrSet();
+ptr<VarArray> AnysTable::get_list(const string& key)const {
+	return dict.count(key) ? dict.at(key).to_list() : ptr<VarArray>();
 }
-int AttrObject::inc(const string& key)const {
-	if (key.empty())return 0;
-	if (dict->count(key))return (++dict->at(key)).to_int();
-	else dict->emplace(key, 1);
-	return 1;
+AttrSet AnysTable::get_set(const string& key)const {
+	return dict.count(key) ? dict.at(key).to_set() : AttrSet();
 }
-int AttrObject::inc(const string& key, int i)const {
-	if (key.empty())return 0;
-	if (dict->count(key))return (dict->at(key) += i).to_int();
-	else dict->emplace(key, i);
-	return 1;
+int AnysTable::inc(const string& key){
+	if (!key.empty()) {
+		if (dict.count(key))return (++dict.at(key)).to_int();
+		else {
+			dict.emplace(key, 1);
+			return 1;
+		}
+	}
+	return 0;
 }
-void AttrObject::add(const string& key, const AttrVar& val)const {
+int AnysTable::inc(const string& key, int i){
+	if (key.empty()) {
+		if (dict.count(key))return (dict.at(key) += i).to_int();
+		else {
+			dict.emplace(key, i);
+			return 1;
+		}
+	}
+	return 0;
+}
+void AnysTable::add(const string& key, const AttrVar& val){
 	if (key.empty())return;
-	(*dict)[key] = (*dict)[key] + val;
+	dict[key] = dict[key] + val;
 }
-AttrObject& AttrObject::merge(const AttrVars& other) {
+AnysTable& AnysTable::merge(const AttrVars& other) {
 	for (const auto& [key, val] : other) {
-		(*dict)[key] = val;
+		dict[key] = val;
 	}
 	return *this;
 }
 
-void AttrObject::writeb(std::ofstream& fout) const {
-	AttrVars vars{ *dict };
+void AnysTable::writeb(std::ofstream& fout) const {
+	AttrVars vars{ dict };
 	if (list) {
 		int idx{ 0 };
 		for (auto& val : *list) {
 			++idx;
-			if (val)vars[to_string(idx)] = val.to_json();
+			if (val)vars[to_string(idx)] = AttrVar(val.to_json());
 		}
 	}
 	fwrite(fout, vars);
 }
-void AttrObject::readb(std::ifstream& fs) {
+void AnysTable::readb(std::ifstream& fs) {
 	short len = fread<short>(fs);
 	if (len < 0)return;
 	if (!fs.peek()) {
 		fs.ignore(2);
 	}
 	while (len--) {
-		(*dict)[fread<string>(fs)].readb(fs);
+		dict[fread<string>(fs)].readb(fs);
 	}
-	if (string strI{ "0" }; dict->count(strI) || dict->count(strI = "1")) {
+	if (string strI{ "0" }; dict.count(strI) || dict.count(strI = "1")) {
 		list = std::make_shared<VarArray>();
 		int idx{ strI == "0" ? 0 : 1 };
 		do {
-			list->push_back(dict->at(strI));
-			dict->erase(strI);
-		} while (dict->count(strI = to_string(++idx)));
+			list->push_back(dict.at(strI));
+			dict.erase(strI);
+		} while (dict.count(strI = to_string(++idx)));
 	}
 }
-bool AttrObject::operator<(const AttrObject other)const { return dict < other.dict; }
+bool AnysTable::operator<(const AnysTable other)const { return dict < other.dict; }
+
+AttrObject::AttrObject(const AttrVars& vars) :p(std::make_shared<AnysTable>(vars)) {}
 
 AttrVar::AttrVar(const AttrVar& other) :type(other.type) {
 	switch (type) {
@@ -178,7 +208,7 @@ AttrVar::AttrVar(const AttrVar& other) :type(other.type) {
 		new(&text)string(other.text);
 		break;
 	case Type::Table:
-		new(&table)AttrObject(other.table);
+		new(&table) AttrObject(other.table);
 		break;
 	case Type::Function:
 		new(&chunk)ByteS(other.chunk);
@@ -304,6 +334,8 @@ AttrVar AttrVar::operator+(const AttrVar& other) {
 		return (sum == (int)sum) ? (int)sum :
 			((sum == (long long)sum) ? (long long)sum : sum);
 	}
+	else if (type == Type::Text || other.type == Type::Text)
+		return to_str() + other.to_str();
 	return other ? AttrVar() : *this;
 }
 
@@ -415,7 +447,7 @@ string AttrVar::to_str()const {
 		return text;
 		break;
 	case Type::Table: 
-		return UTF8toGBK(to_json().dump());
+		return table->print();
 		break;
 	case Type::Function:
 		return {};
@@ -471,10 +503,10 @@ AttrVar AttrVar::parse(const string& s) {
 			return AttrVar();
 			break;
 		case 1:
-			return true;
+			return AttrVar(true);
 			break;
 		case 2:
-			return false;
+			return AttrVar(false);
 			break;
 		default:
 			break;
@@ -491,6 +523,9 @@ AttrVar AttrVar::parse(const string& s) {
 		else return stoll(s);
 	}
 	return s;
+}
+string AnysTable::print()const {
+	return UTF8toGBK(to_json().dump());
 }
 string AttrVar::print()const {
 	switch (type) {
@@ -510,7 +545,7 @@ string AttrVar::print()const {
 		return text;
 		break;
 	case Type::Table:
-		return UTF8toGBK(to_json().dump());
+		return table->print();
 		break;
 	case Type::ID:
 		return to_string(id);
@@ -534,21 +569,37 @@ string AttrVar::print()const {
 	}
 	return {};
 }
+size_t AttrVar::len()const {
+	switch (type) {
+	case Type::Text:
+		return text.length();
+		break;
+	case Type::Table:
+		table->size();
+		break;
+	case Type::Set:
+		return flags->size();
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 bool AttrVar::str_empty()const{
 	return type == Type::Text && text.empty();
 }
 AttrObject AttrVar::to_obj()const {
-	if (type != Type::Table)return {};
-	return table;
+	if (type == Type::Table)return table;
+	return {};
 }
-ptr<AttrVars> AttrVar::to_dict()const {
-	if (type != Type::Table)return {};
-	return table.to_dict();
+std::optional<AttrVars*> AttrVar::to_dict()const {
+	if (type == Type::Table)return &table->as_dict(); 
+	return {};
 }
 
 ptr<VarArray> AttrVar::to_list()const {
 	if (type != Type::Table)return {};
-	return table.to_list();
+	return table->to_list();
 }
 AttrSet AttrVar::to_set()const {
 	if (type != Type::Set)return {};
@@ -620,38 +671,38 @@ bool AttrVar::equal_or_less(const AttrVar& other)const {
 	return is_numberic() && to_num() <= other.to_num();
 }
 
+void AnysTable::from_json(const fifo_json& j){
+	if (j.is_object()) {
+		unordered_set<string> idxs;
+		if (string strI{ "0" }; j.count(strI)) {
+			new_list();
+			int idx{ 0 };
+			do {
+				list->push_back(j[strI]);
+				idxs.insert(strI);
+			} while (j.count(strI = to_string(++idx)));
+		}
+		for (auto& it : j.items()) {
+			if (idxs.count(it.key()))continue;
+			if (!it.value().is_null())set(UTF8toGBK(it.key()), it.value());
+		}
+	}
+	else if (j.is_array()) {
+		new_list();
+		for (auto& it : j) {
+			list->push_back(it);
+		}
+	}
+}
 AttrVar::AttrVar(const fifo_json& j) {
 	switch (j.type()) {
 	case fifo_json::value_t::null:
 		type = Type::Nil;
 		break;
 	case fifo_json::value_t::object:
-		type = Type::Table; {
-			new(&table)AttrObject();
-			unordered_set<string> idxs;
-			if (j.count("0")) {
-				table.list = std::make_shared<VarArray>();
-				int idx{ 0 };
-				string strI{ "0" };
-				do {
-					table.list->push_back(j[strI]);
-					idxs.insert(strI);
-				} while (j.count(strI = to_string(++idx)));
-			}
-			for (auto& it : j.items()) {
-				if (idxs.count(it.key()))continue;
-				if (!it.value().is_null())table.dict->emplace(UTF8toGBK(it.key()), it.value());
-			}
-		}
-		break;
 	case fifo_json::value_t::array:
-		type = Type::Table; {
-			new(&table)AttrObject();
-			table.list = std::make_shared<VarArray>();
-			for (auto& it : j) {
-				table.list->push_back(it);
-			}
-		}
+		type = Type::Table;
+		new(&table) AttrObject(AnysTable(j));
 		break;
 	case fifo_json::value_t::string:
 		type = Type::Text;
@@ -702,7 +753,7 @@ fifo_json AttrVar::to_json()const {
 		return id;
 		break;
 	case Type::Table:
-		return table.to_json();
+		return table->to_json();
 		break;
 	case Type::Set:
 		return ::to_json(*flags);
@@ -711,8 +762,8 @@ fifo_json AttrVar::to_json()const {
 	}
 	return {};
 }
-fifo_json AttrObject::to_json()const {
-	if (dict->empty() && list) {
+fifo_json AnysTable::to_json()const {
+	if (dict.empty() && list) {
 		fifo_json j = fifo_json::array();
 		for (auto& val : *list) {
 			j.push_back(val ? val.to_json() : fifo_json());
@@ -721,7 +772,7 @@ fifo_json AttrObject::to_json()const {
 	}
 	else {
 		fifo_json j = fifo_json::object();
-		for (auto& [key, val] : *dict) {
+		for (auto& [key, val] : dict) {
 			if (val)j[GBKtoUTF8(key)] = val.to_json();
 		}
 		if (list) {
@@ -741,29 +792,30 @@ AttrVar::AttrVar(const toml::node& t) {
 		break;
 	case toml::node_type::table:
 		type = Type::Table; {
-			new(&table)AttrObject();
+			new(&table) AttrObject(AnysTable());
 			auto tab{ t.as_table() };
 			unordered_set<string> idxs;
 			if (string strI{ "0" }; tab->contains(strI)) {
-				table.list = std::make_shared<VarArray>();
+				table->list = std::make_shared<VarArray>();
 				int idx{ 0 };
 				do {
-					table.list->push_back(AttrVar(*(*tab)[strI].node()));
+					table->list->push_back(AttrVar(*(*tab)[strI].node()));
 					idxs.insert(strI);
 				} while (tab->contains(strI = to_string(++idx)));
 			}
-			for (auto& [key,val] : *tab) {
-				if (idxs.count(string(key.str())))continue;
-				table.dict->emplace(UTF8toGBK(string(key.str())), val);
+			for (auto& [key, val] : *tab) {
+				if (string k{ UTF8toGBK(string(key.str())) };
+					!idxs.count(k))
+				table->dict[k] = val;
 			}
 		}
 		break;
 	case toml::node_type::array:
 		type = Type::Table; {
-			new(&table)AttrObject();
-			table.list = std::make_shared<VarArray>();
+			new(&table) AttrObject(AnysTable());
+			table->list = std::make_shared<VarArray>();
 			for (auto& it : *t.as_array()) {
-				table.list->push_back(it);
+				table->list->push_back(it);
 			}
 		}
 		break;
@@ -796,9 +848,9 @@ AttrVar::AttrVar(const toml::node& t) {
 		break; //Todo:parse time
 	}
 }
-toml::table AttrObject::to_toml()const {
+toml::table AnysTable::to_toml()const {
 	toml::table tab;
-	for (auto& [key, val] : *dict) {
+	for (auto& [key, val] : dict) {
 		if (val)switch (val.type) {
 		case AttrVar::Type::Boolean:
 			tab.insert(GBKtoUTF8(key), val.bit);
@@ -816,7 +868,7 @@ toml::table AttrObject::to_toml()const {
 			tab.insert(GBKtoUTF8(key), val.id);
 			break;
 		case AttrVar::Type::Table:
-			tab.insert(GBKtoUTF8(key), val.table.to_toml());
+			tab.insert(GBKtoUTF8(key), val.table->to_toml());
 			break;
 		case AttrVar::Type::Set:
 			tab.insert(GBKtoUTF8(key), ::to_toml(*val.flags));
@@ -855,20 +907,20 @@ AttrVar::AttrVar(const YAML::Node& y) {
 	}
 	else if (y.IsMap()) {
 		type = Type::Table; {
-			new(&table)AttrObject();
+			new(&table) AttrObject(AnysTable());
 			unordered_set<string> idxs;
 			string strIdx{ "0" };
 			if (y[strIdx] || y[strIdx = "1"]) {
-				table.list = std::make_shared<VarArray>();
+				table->list = std::make_shared<VarArray>();
 				int idx{ 1 };
 				do {
-					table.list->push_back(y[strIdx]);
+					table->list->push_back(y[strIdx]);
 					idxs.insert(strIdx);
 				} while (y[strIdx = to_string(++idx)]);
 			}
 			for (auto& it : y) {
 				if (idxs.count(it.first.Scalar()))continue;
-				table.dict->emplace(UTF8toGBK(it.first.Scalar()), it.second);
+				table->dict.emplace(UTF8toGBK(it.first.Scalar()), it.second);
 			}
 		}
 	}
@@ -878,7 +930,7 @@ AttrVar::AttrVar(const YAML::Node& y) {
 		for (YAML::Node it : y) {
 			list.push_back(it);
 		}
-		new(&table)AttrObject(list);
+		new(&table) AttrObject(AnysTable(list));
 	}
 }
 YAML::Node AttrVar::to_yaml()const {
@@ -900,12 +952,12 @@ YAML::Node AttrVar::to_yaml()const {
 		yaml = id;
 		break;
 	case Type::Table:
-		for (auto& [k, v] : *table.to_dict()) {
+		for (auto& [k, v] : table->as_dict()) {
 			yaml[GBKtoUTF8(k)] = v.to_yaml();
 		}
-		if (auto li{ table.to_list() }) {
+		if (auto li{ table->to_list() }) {
 			int i = 0;
-			if (table.to_dict()->empty()) {
+			if (!yaml.IsMap()) {
 				for (auto& v : *li) {
 					yaml[i++] = v.to_yaml();
 				}
@@ -1004,7 +1056,7 @@ void AttrVar::writeb(std::ofstream& fout) const {
 		break;
 	case Type::Table:
 		fwrite(fout, (char)5);
-		table.writeb(fout);
+		table->writeb(fout);
 		break;
 	case Type::Function:
 		fwrite(fout, (char)6);
@@ -1046,8 +1098,8 @@ void AttrVar::readb(std::ifstream& fin) {
 		break;
 	case 5:
 		type = Type::Table;
-		new(&table) AttrObject();
-		table.readb(fin);
+		new(&table) AttrObject(AnysTable());
+		table->readb(fin);
 		break;
 	case 6:
 		type = Type::Function;
@@ -1105,14 +1157,14 @@ string showAttrCMPR(AttrVar::CMPR cmpr) {
 	return {};
 }
 
-AttrVar AttrObject::index(const string& key)const {
-	if (dict->count(key))return dict->at(key);
+AttrVar AnysTable::index(const string& key)const {
+	if (dict.count(key))return dict.at(key);
 	AttrVar var;
 	size_t dot{ 0 };
 	while ((dot = key.find('.', ++dot)) != string::npos) {
 		string sub{ key.substr(0,dot) };
-		if (dict->count(sub) && dict->at(sub).is_table()
-			&& (var = dict->at(sub).table.index(key.substr(dot + 1)))) {
+		if (dict.count(sub) && dict.at(sub).is_table()
+			&& (var = dict.at(sub).table->index(key.substr(dot + 1)))) {
 			break;
 		}
 	}

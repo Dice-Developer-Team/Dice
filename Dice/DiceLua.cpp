@@ -1,4 +1,5 @@
 #include <lua.hpp>  
+#include "DiceNetwork.h"
 #include "ManagerSystem.h"
 #include "DiceEvent.h"
 #include "RandomGenerator.h"
@@ -90,11 +91,12 @@ AttrIndex lua_to_index(lua_State* L, int idx){
 	return lua_to_gbstring(L, idx);
 }
 
-void lua_push_Context(lua_State* L, AttrObject& vars) {
-	AttrObject** p{ (AttrObject**)lua_newuserdata(L, sizeof(AttrObject*)) };
-	*p = &vars;
+void lua_push_Context(lua_State* L, const ptr<AnysTable>& obj) {
+	ptr<AnysTable>* p{ (ptr<AnysTable>*)lua_newuserdata(L, sizeof(ptr<AnysTable>)) };
+	new(p) ptr<AnysTable>(obj);
 	luaL_setmetatable(L, "Context");
 }
+#define LUA2OBJ(idx) AttrObject& obj{*(AttrObject*)luaL_checkudata(L, idx, "Context")}
 void lua_push_GameTable(lua_State* L, const ptr<Session>& p) {
 	ptr<Session>* u{ (ptr<Session>*)lua_newuserdata(L, sizeof(ptr<Session>)) };
 	new(u) ptr<Session>(p);
@@ -165,20 +167,31 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 		lua_push_string(L, attr.text);
 		break;
 	case AttrVar::Type::Table:
-		lua_newtable(L);
-		if (unordered_set<string> idxs; !attr.table.dict->empty() || attr.table.list) {
-			if (attr.table.list) {
-				int idx{ 0 };
-				for (auto& val : *attr.table.list) {
-					lua_push_attr(L, val);
-					lua_seti(L, -2, ++idx);
-					idxs.insert(to_string(idx));
+		if (auto t{ attr.table->getType() };t == AnysTable::MetaType::Context) {
+			lua_push_Context(L, attr.table.p);
+		}
+		else if (t == AnysTable::MetaType::Actor) {
+			lua_push_Actor(L, std::static_pointer_cast<CharaCard>(attr.table.p));
+		}
+		else if (t == AnysTable::MetaType::Game) {
+			lua_push_GameTable(L, std::static_pointer_cast<Session>(attr.table.p));
+		}
+		else {
+			lua_newtable(L);
+			if (unordered_set<string> idxs; !attr.table->dict.empty() || attr.table->list) {
+				if (attr.table->list) {
+					int idx{ 0 };
+					for (auto& val : *attr.table->list) {
+						lua_push_attr(L, val);
+						lua_seti(L, -2, ++idx);
+						idxs.insert(to_string(idx));
+					}
 				}
-			}
-			for (auto& [key, val] : *attr.table.dict) {
-				if (idxs.count(key))continue;
-				val ? lua_push_attr(L, val) : lua_pushnil(L);
-				lua_set_field(L, -2, key.c_str());
+				for (auto& [key, val] : attr.table->dict) {
+					if (idxs.count(key))continue;
+					val ? lua_push_attr(L, val) : lua_pushnil(L);
+					lua_set_field(L, -2, key.c_str());
+				}
 			}
 		}
 		break;
@@ -217,15 +230,15 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 		lua_pushnil(L);
 		while (lua_next(L, idx)) {
 			if (lua_type(L, -2) == LUA_TNUMBER) {
-				if (!tab.list)tab.list = std::make_shared<VarArray>();
+				if (!tab->list)tab->list = std::make_shared<VarArray>();
 				size_t idx{ (size_t)lua_tointeger(L,-2) };
-				while (idx > tab.list->size() + 1) {
-					tab.list->push_back({});
+				while (idx > tab->list->size() + 1) {
+					tab->list->push_back({});
 				}
-				tab.list->push_back(lua_to_attr(L, -1));
+				tab->list->push_back(lua_to_attr(L, -1));
 			}
 			else {
-				tab.dict->emplace(lua_to_gbstring(L, -2), lua_to_attr(L, -1));
+				tab->dict.emplace(lua_to_gbstring(L, -2), lua_to_attr(L, -1));
 			}
 			lua_pop(L, 1);
 		}
@@ -233,22 +246,52 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 	}
 		break;
 	case LUA_TUSERDATA:
-		if (auto p = luaL_testudata(L, idx, "Set")) {
-			return **(AttrSet**)p;
+		try {
+			if (auto p = luaL_testudata(L, idx, "Set")) {
+				return **(AttrSet**)p;
+			}
+			else {
+				auto tab = (ptr<AnysTable>*)lua_touserdata(L, idx);
+				if (auto meta{ (*tab)->getType() };meta == AnysTable::MetaType::Context) {
+					return *tab;
+				}
+				else if (meta == AnysTable::MetaType::Actor) {
+					return *(ptr<CharaCard>*)tab;
+				}
+				else if (meta == AnysTable::MetaType::Game) {
+					return *(ptr<Session>*)tab;
+				}
+			}
+		}
+		catch (std::exception& e) {
+			DD::debugLog(string("lua_touserdata异常:") + e.what());
 		}
 		break;
 	}
 	return {};
 }
 
+AnysTable lua_to_table(lua_State* L, int idx = -1) {
+	AnysTable tab;
+	if (idx < 0)idx = lua_gettop(L) + idx + 1;
+	lua_pushnil(L);
+	while (lua_next(L, idx)) {
+		if (lua_isstring(L, -2) && !lua_isnil(L, -1)) {
+			tab.set(lua_to_gbstring(L, -2),lua_to_attr(L, -1));
+		}
+		else {
+			tab.set(lua_to_int(L, -2) - 1, lua_to_attr(L, -1));
+		}
+		lua_pop(L, 1);
+	}
+	return tab;
+}
 AttrVars lua_to_dict(lua_State* L, int idx = -1) {
 	AttrVars tab;
 	if (idx < 0)idx = lua_gettop(L) + idx + 1;
 	lua_pushnil(L);
 	while (lua_next(L, idx)) {
-		if (lua_isstring(L, -2) && !lua_isnil(L, -1)) {
-			tab[lua_to_gbstring(L, -2)] = lua_to_attr(L, -1);
-		}
+		tab[lua_to_gbstring(L, -2)] = lua_to_attr(L, -1);
 		lua_pop(L, 1);
 	}
 	return tab;
@@ -256,15 +299,15 @@ AttrVars lua_to_dict(lua_State* L, int idx = -1) {
 
 //为msg直接调用lua语句
 bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
-	string luaFile{ lua.is_table() ? lua.to_obj().get_str("file") : "" };
+	string luaFile{ lua.is_table() ? lua.to_obj()->get_str("file") : "" };
 	AttrVar luaFunc;
 	if (luaFile.empty() && lua.is_character() && fmt->has_lua(lua)) {
 		luaFile = fmt->lua_path(lua);
 	}
-	else luaFunc = lua.is_table() ? lua.to_obj()["func"] : lua;
+	else luaFunc = lua.is_table() ? lua.to_obj()->get("func") : lua;
 	LuaState L{ luaFile };
 	if (!L)return false;
-	lua_push_Context(L, *msg);
+	lua_push_Context(L, msg->shared_from_this());
 	lua_setglobal(L, "msg");
 	if (!luaFile.empty()) {
 #ifdef _WIN32
@@ -293,7 +336,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 		}
 		else {
 			lua_getglobal(L, luaFunc.to_str().c_str());
-			lua_push_Context(L, *msg);
+			lua_push_Context(L, msg->shared_from_this());
 			if (lua_pcall(L, 1, 2, 0)) {
 				string pErrorMsg = lua_to_gbstring_from_native(L, -1);
 				console.log(getMsg("strSelfName") + "调用" + fileGBK + "函数" + luaFunc.to_str() + "失败!\n" + pErrorMsg, 0b10);
@@ -308,7 +351,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 		ByteS bytes{ lua.to_bytes() };
 		if (bytes.isUTF8)UTF8Luas.insert(L);
 		if (lua_load(L, lua_reader, &bytes, msg->get_str("reply_title").c_str(), "bt")
-			|| (lua_push_Context(L, *msg), lua_pcall(L, 1, 2, 0))) {
+			|| (lua_push_Context(L, msg->shared_from_this()), lua_pcall(L, 1, 2, 0))) {
 			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
 			console.log(getMsg("strSelfName") + "运行Lua字节码" + msg->get_str("reply_title") + "失败!\n" + pErrorMsg, 0b10);
 			msg->set("lang", "Lua");
@@ -351,7 +394,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 	}
 	return true;
 }
-bool lua_call_event(AttrObject eve, const AttrVar& lua) {
+bool lua_call_event(const ptr<AnysTable>& eve, const AttrVar& lua) {
 	if (!Enabled)return false;
 	string luas{ lua.to_str() };
 	bool isFile{ lua.is_character() && fmt->has_lua(luas) };
@@ -369,7 +412,7 @@ bool lua_call_event(AttrObject eve, const AttrVar& lua) {
 	else if (lua.is_function()) {
 		ByteS bytes{ lua.to_bytes() };
 		if (bytes.isUTF8)UTF8Luas.insert(L);
-		if (lua_load(L, lua_reader, (void*)&bytes, eve.get_str("Type").c_str(), "bt")
+		if (lua_load(L, lua_reader, (void*)&bytes, eve->get_str("Type").c_str(), "bt")
 			|| lua_pcall(L, 0, 2, 0)) {
 			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
 			console.log(getMsg("strSelfName") + "调用事件lua失败!\n" + pErrorMsg, 0b10);
@@ -507,8 +550,8 @@ int selfData_get(lua_State* L) {
 	}
 	else if(file.data.is_table()){
 		string key{ lua_to_gbstring(L, 2) };
-		if (file.data.table.has(key)) {
-			lua_push_attr(L, file.data.table.get(key));
+		if (file.data.table->has(key)) {
+			lua_push_attr(L, file.data.table->get(key));
 			return 1;
 		}
 		else if (lua_gettop(L) > 2) {
@@ -527,9 +570,9 @@ int selfData_set(lua_State* L) {
 	else if (std::lock_guard<std::mutex> lock(file.exWrite); lua_isstring(L, 2) && file.data.is_table()) {
 		string key{ lua_to_gbstring(L, 2) };
 		if (lua_isnoneornil(L, 3)) {
-			file.data.table.reset(key);
+			file.data.table->reset(key);
 		}
-		else file.data.table.set(key, lua_to_attr(L, 3));
+		else file.data.table->set(key, lua_to_attr(L, 3));
 	}
 	else return 0;
 	file.save();
@@ -545,8 +588,8 @@ int SelfData_index(lua_State* L) {
 	else if (key == "set") {
 		lua_pushcfunction(L, selfData_set);
 	}
-	else if (file.data.is_table() && file.data.table.has(key)) {
-		lua_push_attr(L, file.data.table.get(key));
+	else if (file.data.is_table() && file.data.table->has(key)) {
+		lua_push_attr(L, file.data.table->get(key));
 	}
 	else return 0;
 	return 1;
@@ -555,13 +598,13 @@ int SelfData_newindex(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
 	string key{ lua_to_gbstring(L, 2) };
-	if (file.data.is_null())file.data = AttrVars();
+	if (file.data.is_null())file.data = AnysTable();
 	else if (!file.data.is_table())return 0;
 	if (std::lock_guard<std::mutex> lock(file.exWrite); lua_isnoneornil(L,3)) {
-		file.data.table.reset(key);
+		file.data.table->reset(key);
 	}
 	else {
-		file.data.table.set(key, lua_to_attr(L, 3));
+		file.data.table->set(key, lua_to_attr(L, 3));
 	}
 	file.save();
 	return 0;
@@ -700,8 +743,8 @@ LUADEF(getGroupConf) {
 		if (item.empty())return 0;
 		lua_newtable(L);
 		for (auto& [id, data] : ChatList) {
-			if (data.confs.has(item)) {
-				lua_push_attr(L, data.confs.get(item));
+			if (data->has(item)) {
+				lua_push_attr(L, data->get(item));
 				lua_set_field(L, -2, to_string(id));
 			}
 		}
@@ -710,7 +753,7 @@ LUADEF(getGroupConf) {
 	long long id{ lua_to_int_or_zero(L, 1) };
 	if (!id)return 0;
 	if (item.empty()) {
-		lua_push_Context(L, chat(id).confs);
+		lua_push_Context(L, chat(id).shared_from_this());
 		return 1;
 	}
 	else if (item == "members") {
@@ -797,8 +840,8 @@ LUADEF(getUserConf) {
 		if (item.empty())return 0;
 		lua_newtable(L);
 		for (auto& [uid, data] : UserList) {
-			if (data.isset(item)) {
-				lua_push_attr(L, data.confs.get(item));
+			if (data->has(item)) {
+				lua_push_attr(L, data->get(item));
 				lua_set_field(L, -2, to_string(uid));
 			}
 		}
@@ -807,7 +850,7 @@ LUADEF(getUserConf) {
 	long long uid{ lua_to_int_or_zero(L, 1) };
 	if (!uid)return 0;
 	if (UserList.count(uid) && item.empty()) {
-		lua_push_Context(L, getUser(uid).confs);
+		lua_push_Context(L, getUser(uid).shared_from_this());
 		return 1;
 	}
 	auto val{ getUserItem(uid,item) };
@@ -862,8 +905,8 @@ LUADEF(getUserToday) {
 		if (item.empty())return 0;
 		lua_newtable(L);
 		for (auto& [uid, data] : today->getUserInfo()) {
-			if (data.has(item) && uid) {
-				lua_push_attr(L,data.get(item));
+			if (data->has(item) && uid) {
+				lua_push_attr(L,data->get(item));
 				lua_set_field(L, -2, to_string(uid));
 			}
 		}
@@ -871,7 +914,7 @@ LUADEF(getUserToday) {
 	}
 	long long uid{ lua_to_int_or_zero(L, 1) };
 	if (item.empty()) {
-		lua_push_Context(L, today->get(uid));
+		lua_push_Context(L, today->get(uid).p);
 		return 1;
 	}
 	else if (item == "jrrp")
@@ -900,19 +943,16 @@ LUADEF(getPlayerCardAttr) {
 	if (int argc{ lua_gettop(L) }; argc > 4)lua_settop(L, 4);
 	else if (argc == 3)lua_pushnil(L);
 	else if (argc < 3)return 0;
-	long long plQQ{ lua_to_int_or_zero(L, 1) };
+	long long uid{ lua_to_int_or_zero(L, 1) };
 	long long group{ lua_to_int_or_zero(L, 2) };
 	string key{ lua_to_gbstring(L, 3) };
-	if (!plQQ || key.empty())return 0;
-	PC pc = getPlayer(plQQ)[group];
-	if (pc->has(key)) {
-		lua_push_attr(L, pc->get(key));
-	}
-	else if (key = pc->standard(key); pc->has(key)) {
+	if (!uid || key.empty())return 0;
+	PC pc = getPlayer(uid)[group];
+	if (auto val{ pc->get(key) };!val.is_null()) {
 		lua_push_attr(L, pc->get(key));
 	}
 	else if (pc->has("&" + key)) {
-		lua_push_string(L, pc->get_str("&" + key));
+		lua_push_string(L, pc->get("&" + key).to_str());
 	}
 	else {
 		lua_pushnil(L);
@@ -923,7 +963,7 @@ LUADEF(getPlayerCardAttr) {
 LUADEF(getPlayerCard) {
 	if (long long uid{ lua_to_int_or_zero(L, 1) }) {
 		if (lua_type(L, 2) == LUA_TSTRING) {
-			lua_push_Actor(L, getPlayer(uid)[lua_to_gbstring(L, 2)]);
+			lua_push_Actor(L, getPlayer(uid).getCard(lua_to_gbstring(L, 2)));
 		}
 		else {
 			long long gid{ lua_to_int_or_zero(L, 2) };
@@ -991,28 +1031,28 @@ LUADEF(sendMsg) {
 	if (top < 1)return 0;
 	AttrObject chat;
 	if (lua_istable(L, 1)) {
-		chat = lua_to_dict(L, 1);
+		chat = lua_to_table(L, 1);
 	}
 	else {
-		chat["fwdMsg"] = lua_to_gbstring(L, 1);
+		chat->at("fwdMsg") = lua_to_gbstring(L, 1);
 		if (top < 2)return 0;
-		chat["gid"] = lua_to_int_or_zero(L, 2);
-		if (top >= 3)chat["uid"] = lua_to_int_or_zero(L, 3);
-		if (top >= 4)chat["chid"] = lua_to_int_or_zero(L, 4);
+		chat->at("gid") = lua_to_int_or_zero(L, 2);
+		if (top >= 3)chat->at("uid") = lua_to_int_or_zero(L, 3);
+		if (top >= 4)chat->at("chid") = lua_to_int_or_zero(L, 4);
 	}
-	if (!chat.get_ll("gid") && !chat.get_ll("uid"))return 0;
-	msgtype type{ chat.get_ll("gid") ? msgtype::Group
+	if (!chat->get_ll("gid") && !chat->get_ll("uid"))return 0;
+	msgtype type{ chat->get_ll("gid") ? msgtype::Group
 		: msgtype::Private };
-	AddMsgToQueue(fmt->format(chat.get_str("fwdMsg"), chat),
-		{ chat.get_ll("uid"),chat.get_ll("gid"),chat.get_ll("chid") });
+	AddMsgToQueue(fmt->format(chat->get_str("fwdMsg"), chat),
+		{ chat->get_ll("uid"),chat->get_ll("gid"),chat->get_ll("chid") });
 	return 0;
 }
 LUADEF(eventMsg) {
 	int top{ lua_gettop(L) };
 	if (top < 1)return 0;
-	AttrVars eve;
+	AnysTable eve;
 	if (lua_istable(L, 1)) {
-		eve = lua_to_dict(L, 1);
+		eve = lua_to_table(L, 1);
 	}
 	else {
 		string fromMsg{ lua_to_gbstring(L, 1) };
@@ -1022,17 +1062,17 @@ LUADEF(eventMsg) {
 			? AttrVars{ {"fromMsg",fromMsg},{"gid",fromGID}, {"uid", fromUID} }
 			: AttrVars{ {"fromMsg",fromMsg}, {"uid", fromUID} };
 	}
-	std::thread th([=]() {
-		DiceEvent msg(eve);
-		msg.virtualCall();
-	});
-	th.detach();
+	//std::thread th([=]() {
+		shared_ptr<DiceEvent> msg{ std::make_shared<DiceEvent>(eve) };
+		msg->virtualCall();
+	//});
+	//th.detach();
 	return 0;
 }
 LUADEF(askExtra) {
 	string data;	//utf-8
 	if (lua_istable(L, 1)) {
-		data = to_json(lua_to_dict(L, 1)).dump();
+		data = to_json(lua_to_table(L, 1)).dump();
 	}
 	else {
 		data = lua_to_raw_string(L, 1);
@@ -1051,17 +1091,17 @@ LUADEF(askExtra) {
 }
 
 int Msg_echo(lua_State* L) {
-	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
+	LUA2OBJ(1);
 	string msg{ lua_to_gbstring(L, 2) };
-	if (lua_isboolean(L, 3))reply(vars, msg, !lua_toboolean(L,3));
-	else reply(vars, msg);
+	if (lua_isboolean(L, 3))reply(obj, msg, !lua_toboolean(L,3));
+	else reply(obj, msg);
 	return 0;
 }
 
 int Context_format(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
-	AttrObject vars{ lua_isuserdata(L,1) ? **(AttrObject**)luaL_checkudata(L, 1, "Context")
-		: lua_istable(L, 1) ? lua_to_dict(L,1)
+	AttrObject vars{ lua_isuserdata(L,1) ? *(AttrObject*)luaL_checkudata(L, 1, "Context")
+		: lua_istable(L, 1) ? AnysTable(lua_to_table(L,1))
 		: AttrObject{} };
 	string msg{ lua_to_gbstring(L, 2) };
 	lua_push_string(L, fmt->format(msg, vars));
@@ -1069,7 +1109,7 @@ int Context_format(lua_State* L) {
 }
 int Context_get(lua_State* L) {
 	AttrObject obj{ lua_isuserdata(L,1) ? **(AttrObject**)luaL_checkudata(L, 1, "Context")
-		: lua_istable(L, 1) ? lua_to_dict(L,1)
+		: lua_istable(L, 1) ? AnysTable(lua_to_table(L,1))
 		: AttrObject{} };
 	if (lua_isnoneornil(L, 2)) {
 		lua_push_attr(L, obj);
@@ -1089,13 +1129,13 @@ int Context_get(lua_State* L) {
 }
 int Context_add(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
-	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
-	string key{ fmt->format(lua_to_gbstring(L, 2), vars) };
+	LUA2OBJ(1);
+	string key{ fmt->format(lua_to_gbstring(L, 2), obj) };
 	if (lua_isnoneornil(L, 3)) {
-		vars.inc(key);
+		obj->inc(key);
 	}
 	else {
-		vars.add(key, lua_to_attr(L, 3));
+		obj->add(key, lua_to_attr(L, 3));
 	}
 	return 0;
 }
@@ -1117,26 +1157,8 @@ int Context_index(lua_State* L) {
 		lua_pushcfunction(L, Context_add);
 		return 1;
 	}
-	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
-	if (key == "user" && vars.has("uid")) {
-		lua_push_Context(L, getUser(vars.get_ll("uid")).confs);
-		return 1;
-	}
-	else if((key == "grp" || key == "group") && vars.has("gid")) {
-		lua_push_Context(L, chat(vars.get_ll("gid")).confs);
-		return 1;
-	}
-	else if (key == "pc" && vars.has("uid")) {
-		lua_push_Actor(L, getPlayer(vars.get_ll("uid"))[vars.get_ll("gid")]);
-		return 1;
-	}
-	else if (key == "game") {
-		if (auto game = sessions.get_if(vars)) {
-			lua_push_GameTable(L, game);
-			return 1;
-		}
-	}
-	else if (auto val{ getContextItem(vars,key) }) {
+	LUA2OBJ(1);
+	if (auto val{ getContextItem(obj, key) }) {
 		lua_push_attr(L, val);
 		return 1;
 	}
@@ -1144,19 +1166,26 @@ int Context_index(lua_State* L) {
 }
 int Context_newindex(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
-	AttrObject& vars{ **(AttrObject**)luaL_checkudata(L, 1, "Context") };
-	string key{ fmt->format(lua_to_gbstring(L, 2), vars) };
+	LUA2OBJ(1);
+	string key{ fmt->format(lua_to_gbstring(L, 2), obj) };
 	if (lua_isnoneornil(L, 3)) {
-		vars.reset(key);
+		obj->reset(key);
 	}
 	else {
-		vars.set(key, lua_to_attr(L, 3));
+		obj->set(key, lua_to_attr(L, 3));
 	}
+	return 0;
+}
+int Context_gc(lua_State* L) {
+	LUA2OBJ(1);
+	//delete& obj;
+	obj.~AttrObject();
 	return 0;
 }
 static const luaL_Reg Context_funcs[] = {
 	{"__index", Context_index},
 	{"__newindex", Context_newindex},
+	{"__gc", Context_gc},
 	//{"format", Context_format},
 	{NULL, NULL}
 };
@@ -1172,12 +1201,12 @@ int GameTable_set(lua_State* L) {
 	if (lua_isstring(L, 2)) {
 		string key{ lua_to_gbstring(L, 2) };
 		if (lua_gettop(L) < 3) {
-			game->rmAttr(key);
+			game->reset(key);
 		}
 		else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {
-			game->rmAttr(key);
+			game->reset(key);
 		}
-		else game->setAttr(key, val);
+		else game->set(key, val);
 	}
 	else if (lua_istable(L, 2)) {
 		int cnt = 0;
@@ -1185,10 +1214,10 @@ int GameTable_set(lua_State* L) {
 		lua_settop(L, 3);
 		while (lua_next(L, 2)) {
 			if (lua_type(L, 3) == LUA_TNUMBER) {
-				game->rmAttr(lua_to_gbstring(L, 4));
+				game->reset(lua_to_gbstring(L, 4));
 			}
 			else {
-				game->setAttr(lua_to_gbstring(L, 3), lua_to_attr(L, 4));
+				game->set(lua_to_gbstring(L, 3), lua_to_attr(L, 4));
 			}
 			lua_pop(L, 1);
 		}
@@ -1213,32 +1242,19 @@ int GameTable_index(lua_State* L) {
 		lua_pushcfunction(L, GameTable_message);
 		return 1;
 	}
-	else if (key == "gms") {
-		lua_push_Set(L, game->get_gm());
-		return 1;
-	}
-	else if (key == "pls") {
-		lua_push_Set(L, game->get_pl());
-		return 1;
-	}
-	else if (key == "obs") {
-		lua_push_Set(L, game->get_ob());
-		return 1;
-	}
-	lua_push_attr(L, game->getAttr(key));
+	lua_push_attr(L, game->get(key));
 	return 1;
 }
 int GameTable_newindex(lua_State* L) {
 	LUA2GAME(1);
-	string key{ lua_to_gbstring(L, 2) };
-	if (lua_gettop(L) < 3) {
-		game->rmAttr(key);
+	if (string key{ lua_to_gbstring(L, 2) }; lua_gettop(L) < 3) {
+		game->reset(key);
 	}
 	else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {
-		game->rmAttr(key);
+		game->reset(key);
 	}
 	else {
-		game->setAttr(key, val);
+		game->set(key, val);
 	}
 	return 0;
 }
@@ -1263,7 +1279,8 @@ int luaopen_GameTable(lua_State* L) {
 #define LUA2PC(idx) PC& pc{*(PC*)luaL_checkudata(L, idx, "Actor")}
 int Actor_get(lua_State* L) {
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
-	if (string key{ lua_to_gbstring(L, 2) }; !key.empty())lua_push_attr(L, pc->get(key));
+	if (string key{ lua_to_gbstring(L, 2) };!key.empty())
+		lua_push_attr(L, pc->get(key));
 	return 1;
 }
 int Actor_set(lua_State* L) {
@@ -1300,6 +1317,7 @@ int Actor_set(lua_State* L) {
 int Actor_rollDice(lua_State* L) {
 	string exp{ lua_to_gbstring(L, 2) };
 	LUA2PC(1);
+	if (exp.empty())exp = pc->get("__DefaultDiceExp");
 	int diceFace{ pc->get("__DefaultDice").to_int() };
 	RD rd{ exp, diceFace ? diceFace : 100 };
 	lua_newtable(L);
@@ -1403,7 +1421,7 @@ int httpGet(lua_State* L) {
 int httpPost(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	string url{ lua_tostring(L,1) };
-	string content{ lua_istable(L,2) ? to_json(lua_to_dict(L,2)).dump() : lua_to_raw_string(L,2) };
+	string content{ lua_istable(L,2) ? to_json(lua_to_table(L,2)).dump() : lua_to_raw_string(L,2) };
 	if (url.empty() || content.empty()) {
 		return 0;
 	}
@@ -1557,12 +1575,13 @@ void DiceModManager::loadPlugin(ResList& res) {
 	int cntTask{ 0 };
 	plugin_reply.clear();
 	taskcall.clear();
+	AnysTable lua_tab;
 	for (const auto& pathFile : files) {
 		if ((pathFile.extension() != ".lua")) {
 			if (pathFile.extension() != ".toml")continue;
 			if (ifstream fs{ pathFile }) try {
 				auto tab{ AttrVar(toml::parse(fs)).to_obj() };
-				if (auto items{ tab.get_dict("reply") })for (auto& [key, val] : *items) {
+				if (auto items{ tab->get_dict("reply") })for (auto& [key, val] : **items) {
 					ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
 					reply->title = key;
 					reply->from_obj(val.to_obj());
@@ -1592,7 +1611,9 @@ void DiceModManager::loadPlugin(ResList& res) {
 					err << "msg_order类型错误(" + string(LuaTypes[lua_type(L, -1)]) + "):" + file;
 					continue;
 				}
-				for (auto& [key, val] : lua_to_dict(L)) {
+				lua_tab.set("file", file);
+				auto orders{ lua_to_table(L) };
+				for (auto& [key, val] : orders.as_dict()) {
 					if (val.is_table()) {
 						ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
 						reply->title = key;
@@ -1600,13 +1621,9 @@ void DiceModManager::loadPlugin(ResList& res) {
 						plugin_reply[key] = reply;
 					}
 					else {
-						AttrObject ans;
+						lua_tab.set("func", val);
 						plugin_reply[key] = DiceMsgReply::set_order(key, AttrVars{
-							{ "lua", AttrObject{
-								AttrVars{
-								{"file",file}, {"func",val},
-								}
-							}}
+							{ "lua", lua_tab }
 							});
 					}
 				}
@@ -1618,7 +1635,7 @@ void DiceModManager::loadPlugin(ResList& res) {
 					err << "task_kill类型错误(" + string(LuaTypes[lua_type(L, -1)]) + "):" + file;
 					continue;
 				}
-				for (auto& [key, val] : lua_to_dict(L)) {
+				for (auto& [key, val] : lua_to_table(L).as_dict()) {
 					taskcall[key] = { {"file",file},{"func",val} };
 					++cntTask;
 				}
@@ -1643,20 +1660,20 @@ void DiceMod::loadLua() {
 			if (file.extension() != ".toml")continue;
 			if (ifstream fs{ file }) try{
 				auto tab{ AttrVar(toml::parse(fs)).to_obj()};
-				if (auto items{ tab.get_dict("reply") })for (auto& [key, val] : *items) {
+				if (auto items{ tab->get_dict("reply") })for (auto& [key, val] : **items) {
 					ptr<DiceMsgReply> reply{ std::make_shared<DiceMsgReply>() };
 					reply->title = key;
 					auto item{ val.to_obj() };
 					reply->from_obj(item);
-					if (item.has("rule")) {
-						rules[item.get_str("rule")].orders.add(key, reply);
+					if (item->has("rule")) {
+						rules[item->get_str("rule")].orders.add(key, reply);
 					}
 					else {
 						reply_list[key] = reply;
 					}
 				}
-				if (auto items{ tab.get_dict("event") })for (auto& [key, val] : *items) {
-					events[key] = val.to_obj();
+				if (auto items{ tab->get_dict("event") })for (auto& [key, val] : **items) {
+					events[key] = *val.to_obj();
 				}
 			}
 			catch (std::exception& e) {
@@ -1686,8 +1703,8 @@ void DiceMod::loadLua() {
 					reply->title = key;
 					auto item{ val.to_obj() };
 					reply->from_obj(item);
-					if (item.has("rule")) {
-						rules[item.get_str("rule")].orders.add(key, reply);
+					if (item->has("rule")) {
+						rules[item->get_str("rule")].orders.add(key, reply);
 					}
 					else {
 						reply_list[key] = reply;
@@ -1702,7 +1719,7 @@ void DiceMod::loadLua() {
 					continue;
 				}
 				for (auto& [key, val] : lua_to_dict(L)) {
-					events[key] = val.to_obj();
+					events[key] = *val.to_obj();
 				}
 			}
 		}

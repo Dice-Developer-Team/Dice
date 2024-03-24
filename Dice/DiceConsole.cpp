@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -32,17 +32,19 @@
 #include "Jsonio.h"
 #include "BlackListManager.h"
 #include "DiceSchedule.h"
+#include "DiceMod.h"
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif	
 #include "DDAPI.h"
 #include "yaml-cpp/yaml.h"
+#include "tinyxml2.h"
 
 using namespace std;
 
 const fifo_dict_ci<int>Console::intDefault{
-{"DisabledGlobal",0},{"DisabledBlock",0},{"DisabledListenAt",1},
+{"DisabledGlobal",0},{"DisabledListenAt",1},
 {"DisabledMe",1},{"DisabledJrrp",0},{"DisabledDeck",1},{"DisabledDraw",0},{"DisabledSend",0},
 {"Private",0},{"CheckGroupLicense",0},
 {"ListenGroupRequest",1},{"ListenGroupAdd",1},
@@ -71,7 +73,6 @@ const fifo_dict_ci<int>Console::intDefault{
 };
 const std::unordered_map<std::string,string>Console::confComment{
 	{"DisabledGlobal","全局停用指令，对trust4不起效"},
-	{"DisabledBlock","框架多插件时，关闭状态开启拦截，阻止其他插件处理消息"},
 	{"DisabledListenAt","关闭状态下，自身被at时也响应"},
 	{"DisabledMe","全局禁用.me，对trust4+不起效"},
 	{"DisabledJrrp","全局禁用.jrrp，对trust4+不起效"},
@@ -261,25 +262,24 @@ bool Console::load() {
 				git_user = yaml["git"]["user"].as<string>();
 				git_pw = yaml["git"]["password"].as<string>();
 			}
-		} catch (std::exception& e) {
+		}
+		catch (std::exception& e) {
 			DD::debugLog("/conf/console.yaml读取失败!" + string(e.what()));
 		}
 	}
-	else if (string s; !rdbuf(DiceDir / "conf" / "console.xml", s))return false;
-	else {
-		DDOM xml(s);
-		for (auto& node : xml.vChild) {
-			if (node.tag == "master")master = stoll(node.strValue);
-			else if (node.tag == "clock")
-				for (auto& child : node.vChild) {
+	else if (tinyxml2::XMLDocument doc; tinyxml2::XML_SUCCESS == doc.LoadFile((DiceDir / "conf" / "console.xml").string().c_str())){
+		for (auto node = doc.FirstChildElement()->FirstChildElement(); node; node = node->NextSiblingElement()) {
+			if (string tag{ node->Name() }; tag == "master")master = stoll(node->GetText());
+			else if (tag == "clock")
+				for (auto child = node->FirstChildElement(); child; child = child->NextSiblingElement()) {
 					mWorkClock.insert({
-						scanClock(child.strValue), child.tag
+						scanClock(child->GetText()), child->Name()
 						});
 				}
-			else if (node.tag == "conf")
-				for (auto& child : node.vChild) {
+			else if (tag == "conf")
+				for (auto child = node->FirstChildElement(); child; child = child->NextSiblingElement()) {
 					std::pair<string, int> conf;
-					readini(child.strValue, conf);
+					readini(string(child->GetText()), conf);
 					if (intDefault.count(conf.first))intConf.insert(conf);
 				}
 		}
@@ -333,9 +333,6 @@ void Console::loadNotice()
 			console.log(string("解析/conf/NoticeList.json出错:") + e.what(), 1);
 		}
 	}
-	if (NoticeList.empty() && loadFile(DiceDir / "conf" / "NoticeList.txt", NoticeList) < 1){
-		NoticeList[{ 0, 928626681 }] = 0b100000;
-	}
 }
 
 void Console::saveNotice() const
@@ -345,9 +342,11 @@ void Console::saveNotice() const
 	if (!fout)return;
 	fifo_json jList = fifo_json::array();
 	for (auto& [chat, lv] : NoticeList) {
-		fifo_json j = to_json(chat);
-		j["type"] = lv;
-		jList.push_back(j);
+		if (lv) {
+			fifo_json j = to_json(chat);
+			j["type"] = lv;
+			jList.push_back(j);
+		}
 	}
 	fout << jList.dump();
 }
@@ -438,7 +437,7 @@ std::string printSTime(const tm st)
 	string printGroup(long long llgroup)
 	{
 		if (!llgroup)return "私聊";
-		if (ChatList.count(llgroup))return printChat(ChatList[llgroup]);
+		if (ChatList.count(llgroup))return ChatList[llgroup]->print();
 		if (string name{ DD::getGroupName(llgroup) };!name.empty())return "[" + name + "](" + to_string(llgroup) + ")";
 		return "群(" + to_string(llgroup) + ")";
 	}

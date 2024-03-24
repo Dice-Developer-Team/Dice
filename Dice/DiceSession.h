@@ -1,3 +1,27 @@
+/*
+ *  _______     ________    ________    ________    __
+ * |   __  \   |__    __|  |   _____|  |   _____|  |  |
+ * |  |  |  |     |  |     |  |        |  |_____   |  |
+ * |  |  |  |     |  |     |  |        |   _____|  |__|
+ * |  |__|  |   __|  |__   |  |_____   |  |_____    __
+ * |_______/   |________|  |________|  |________|  |__|
+ *
+ * Dice! QQ Dice Robot for TRPG
+ * Game Session
+ * Copyright (C) 2018-2021 w4123溯洄
+ * Copyright (C) 2019-2024 String.Empty
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this
+ * program. If not, see <http://www.gnu.org/licenses/>.
+ */
 #pragma once
 #include <unordered_set>
 #include "filesystem.hpp"
@@ -88,7 +112,7 @@ struct DiceRoulette {
 	string hist();
 };
 
-class DiceSession{
+class DiceSession: public AnysTable{
 	//管理员
 	AttrSet master;
 	//玩家
@@ -101,8 +125,7 @@ class DiceSession{
 	dict_ci<DeckInfo> decks;
 	void save() const;
 public:
-	//数值表
-	AttrObject attrs;
+	MetaType getType()const override { return MetaType::Game; }
 	//native filename
 	const string name;
 	fifo_set<chatInfo> areas;
@@ -132,22 +155,24 @@ public:
 		return *this;
 	}
 
-	DiceSession& update()
-	{
+	DiceSession& update(){
 		tUpdate = time(nullptr);
 		save();
 		return *this;
 	}
 	string show()const;
-	bool hasAttr(const string& key);
-	AttrVar getAttr(const string& key);
-	void setAttr(const string& key, const AttrVar& val) {
-		attrs.set(key, val);
-		update();
+	bool has(const string& key)const override;
+	AttrVar get(const string& key, const AttrVar& val = {})const override;
+	void set(const string& key, const AttrVar& val) override {
+		if (!key.empty()) {
+			if (val.is_null())dict.erase(key);
+			else dict[key] = val;
+			update();
+		}
 	}
-	void rmAttr(const string& key) {
-		if (attrs.has(key)) {
-			attrs.reset(key);
+	void reset(const string& key){
+		if (dict.count(key)) {
+			dict.erase(key);
 			update();
 		}
 	}
@@ -172,14 +197,9 @@ public:
 		update();
 		return true;
 	}
-	bool del_pl(long long uid) {
-		if (player->count(uid))player->erase(uid);
-		else return false;
-		update();
-		return true;
-	}
+	bool del_pl(long long uid);
 	bool is_simple() const { return player->empty() && master->empty(); }
-	bool is_part(long long uid) const { return player->count(uid) || master->count(uid); }
+	bool is_part(long long uid) const { return is_simple() || player->count(uid) || master->count(uid); }
 	bool del_ob(long long uid) {
 		if (obs->count(uid))obs->erase(uid);
 		else return false;
@@ -187,11 +207,9 @@ public:
 		return true;
 	}
 
-	[[nodiscard]] bool table_count(const string& key) const { return attrs.has(key); }
 	bool table_del(const string&, const string&);
 	bool table_add(const string&, int, const string&);
 	[[nodiscard]] string table_prior_show(const string& key) const;
-	bool table_clr(const string& key);
 
 	//旁观指令
 	void ob_enter(DiceEvent*);
@@ -246,10 +264,7 @@ public:
 	void clear() { SessionByName.clear(); SessionByChat.clear(); linker = {}; }
 	shared_ptr<Session> get(chatInfo);
 	shared_ptr<Session> newGame(const string& name, const chatInfo& ct);
-	shared_ptr<Session> get_if(const chatInfo& ct)const {
-		auto chat{ ct.locate() };
-		return chat && SessionByChat.count(chat) ? SessionByChat.at(chat) : shared_ptr<Session>();
-	}
+	shared_ptr<Session> get_if(chatInfo ct)const;
 	shared_ptr<Session> getByName(const string& name)const {
 		return SessionByName.count(name) ? SessionByName.at(name) : ptr<Session>();
 	}

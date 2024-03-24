@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
   <title>{{= d.nick }}的Dice WebUI</title>
-  <link rel="stylesheet" href="https://unpkg.com/layui@2.6.8/dist/css/layui.css">
-  <link rel="stylesheet" href="https://unpkg.com/layui-soul-table@1.5.13/soulTable.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/layui@2.6.8/dist/css/layui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/layui-soul-table@1.5.13/soulTable.css">
   <style>
 	  .layui-layout-admin .layui-layout-left,
 	  .layui-layout-admin .layui-body,
@@ -133,7 +133,7 @@
 					<div class="layui-form-item">
 						<label class="layui-form-label" style="width: 50px">远程库</label>
 						<div class="layui-input-inline" style="width: 70%">
-							<input name="url" id="mod-source-url" value="https://raw.sevencdn.com/Dice-Developer-Team/DiceModIndex/main/index" autocomplete="on" class="layui-input">
+							<input name="url" id="mod-source-url" value="https://raw.gitmirror.com/Dice-Developer-Team/DiceModIndex/main/index" autocomplete="on" class="layui-input">
 						</div>
 						<button class="layui-btn layui-btn-warm" lay-submit lay-filter="mod-source-get">访问资源</button>
 					</div>
@@ -481,14 +481,6 @@
 						<p>reply limit新增lock项</p>
 						<p>支持reply页echo项直接存入lua函数</p>
 						<p>修复匿名log的文件名错误</p>
-					</div>
-				</li>
-				<li class="layui-timeline-item">
-					<i class="layui-icon layui-timeline-axis">&#xe63f;</i>
-					<div class="layui-timeline-content layui-text">
-						<h3 class="layui-timeline-title">2022年8月8日 版本2.6.5beta2(614)</h3>
-						<p>reply limit新增lock项</p>
-						<p>支持reply页echo项直接存入lua函数</p>
 					</div>
 				</li>
 				<li class="layui-timeline-item">
@@ -909,8 +901,8 @@
   </div>
 </form>
   
-<script src="https://unpkg.com/layui@2.6.8/dist/layui.js"></script>
-<script src="https://unpkg.com/layui-soul-table@1.5.13/ext/soulTable.slim.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/layui@2.6.8/dist/layui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/layui-soul-table@1.5.13/ext/soulTable.slim.js"></script>
 <script> 
 //加载模块 
 layui.use(['form', 'table','soulTable'], function(){ //亦可加载特定模块：layui.use(['layer', 'laydate', function(){
@@ -1166,7 +1158,7 @@ layui.use(['form', 'table','soulTable'], function(){ //亦可加载特定模块�
 
   form.on('submit(addCustomReplyForm)', function(data){
 	layer.close(addCustomReplyFormIndex);
-	if(data.field.echo == "Deck"){data.field.answer = data.field.answer.split("|");}
+    if (data.field.echo == "Deck") { data.field.answer = data.field.answer.split("|").map(s => s.trim());}
 	$.post("/api/customreply", JSON.stringify({action: "set", data: [data.field]}))
 	.done(function(data) {
 	  if (data.code == 0) {
@@ -1226,7 +1218,7 @@ layui.use(['form', 'table','soulTable'], function(){ //亦可加载特定模块�
 
   table.on('edit(custom-reply-table)', function(obj) { 
 	obj.data.answer = obj.data.answer.replace(/<br>/g,"\n").replace(/\{br\}/g,"\n");
-	if(obj.data.echo == "Deck"){obj.data.answer = obj.data.answer.split("|");}
+    if (obj.data.echo == "Deck") { obj.data.answer = obj.data.answer.split("|").map(s => s.trim());}
 	$.post("/api/customreply", JSON.stringify({action: "set", data: [obj.data]}))
 	.done(function(data) {
 	  if (data.code == 0) {

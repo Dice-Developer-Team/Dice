@@ -8,6 +8,7 @@
       "name": "python3",
       "platform" : "!android"
     },
+    "tinyxml2",
     "openssl",
     {
       "name": "libgit2",

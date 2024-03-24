@@ -1,7 +1,7 @@
 /**
  * 会话管理
  * 抽象于聊天窗口的单位
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 #include <shared_mutex>
 #include "filesystem.hpp"
@@ -22,6 +22,37 @@ unordered_set<chatInfo>LogList;
 
 const std::filesystem::path LogInfo::dirLog{ std::filesystem::path("user") / "log" };
 
+bool DiceSession::has(const string& key)const {
+	static std::unordered_set<string> items{ "name", "gms", "pls", "obs", "log_name", "log_file" };
+	return (dict.count(key) && !dict.at(key).is_null())
+		|| items.count(key);
+}
+AttrVar DiceSession::get(const string& item, const AttrVar& val)const {
+	if (!item.empty()) {
+		if (auto it{ dict.find(item) }; it != dict.end()) {
+			return it->second;
+		}
+		if (item == "name") {
+			return name;
+		}
+		else if (item == "gms") {
+			return get_gm();
+		}
+		else if (item == "pls") {
+			return get_pl();
+		}
+		else if (item == "obs") {
+			return get_ob();
+		}
+		else if (item == "log_name") {
+			return logger.name;
+		}
+		else if (item == "log_file") {
+			return logger.fileLog;
+		}
+	}
+	return val;
+}
 size_t DiceSession::roll(size_t face) {
 	if (roulette.count(face)) {
 		auto res = roulette[face].roll();
@@ -33,7 +64,7 @@ size_t DiceSession::roll(size_t face) {
 string DiceSession::show()const {
 	ShowList li;
 	li << "桌号: " + name;
-	if (attrs.has("rule"))li << "规则: " + attrs.get_str("rule");
+	if (has("rule"))li << "规则: " + get_str("rule");
 	if (is_logging())li << "日志记录中:" + logger.name;
 	if (!master->empty()) {
 		ShowList sub;
@@ -65,39 +96,33 @@ string DiceSession::show()const {
 	}
 	return li.show("\n");
 }
-bool DiceSession::hasAttr(const string& key) {
-	return attrs.has(key);
-}
-AttrVar DiceSession::getAttr(const string& key) {
-	return attrs.get(key);
-}
 
+bool DiceSession::del_pl(long long uid) {
+	if (player->count(uid)) {
+		player->erase(uid);
+		update();
+		return true;
+	}
+	else return false;
+}
 bool DiceSession::table_del(const string& tab, const string& item) {
-	if (!attrs.has(tab) || !attrs.get_obj(tab).has(item))return false;
-	attrs.get_obj(tab).reset(item);
-	update();
-	return true;
+	if (has(tab) && get_obj(tab)->has(item)) {
+		get_obj(tab)->reset(item);
+		update();
+		return true;
+	}
+	return false;
 }
 
 bool DiceSession::table_add(const string& tab, int prior, const string& item) {
-	if (!attrs.has(tab))attrs.set(tab, AttrObject());
-	attrs.get_obj(tab).set(item,prior);
+	if (!dict.count(tab))set(tab, AnysTable());
+	get_obj(tab)->set(item,prior);
 	update();
 	return true;
 }
 
 string DiceSession::table_prior_show(const string& tab) const{
-	return attrs.is_table(tab) ? PriorList<AttrVar>(*attrs.get_dict(tab)).show() : "";
-}
-
-bool DiceSession::table_clr(const string& tab)
-{
-	if (attrs.has(tab)){
-		attrs.reset(tab);
-		update();
-		return true;
-	}
-	return false;
+	return is_table(tab) ? PriorList<AttrVar>(**get_dict(tab)).show() : "";
 }
 
 void DiceSession::ob_enter(DiceEvent* msg)
@@ -226,9 +251,9 @@ void DiceSession::log_end(DiceEvent* msg) {
 	msg->replyMsg("strLogEnd");
 	update();
 	msg->set("hook","LogEnd");
-	if (!fmt->call_hook_event(*msg)) {
+	if (!fmt->call_hook_event(msg->shared_from_this())) {
 		msg->set("cmd", "uplog");
-		sch.push_job(*msg);
+		sch.push_job(msg->shared_from_this());
 	}
 }
 std::filesystem::path DiceSession::log_path()const {
@@ -660,9 +685,9 @@ void DiceSession::save() const
 	std::filesystem::create_directories(DiceDir / "user" / "session", ec);
 	std::filesystem::path fpFile{ DiceDir / "user" / "session" / (name + ".json") };
 	fifo_json jData;
-	if (!master->empty())jData["master"] = to_json(*master);
-	if (!player->empty())jData["player"] = to_json(*player);
-	if (!obs->empty())jData["observer"] = to_json(*obs);
+	if (!master->empty())jData["master"] = ::to_json(*master);
+	if (!player->empty())jData["player"] = ::to_json(*player);
+	if (!obs->empty())jData["observer"] = ::to_json(*obs);
 	if (logger.tStart || !logger.fileLog.empty()) {
 		fifo_json jLog;
 		jLog["start"] = logger.tStart;
@@ -694,7 +719,7 @@ void DiceSession::save() const
 		}
 		jData["roulette"] = jDecks;
 	}
-	if (!attrs.empty())jData["data"] = attrs.to_json();
+	if (!empty())jData["data"] = to_json();
 	std::lock_guard<std::mutex> lock(exSessionSave);
 	if (jData.empty()) {
 		remove(fpFile);
@@ -702,7 +727,7 @@ void DiceSession::save() const
 	}
 	auto& jChat{ jData["chats"] = fifo_json::array() };
 	for (const auto& chat : areas) {
-		jChat.push_back(to_json(chat));
+		jChat.push_back(::to_json(chat));
 	}
 	jData["create_time"] = tCreate;
 	jData["update_time"] = tUpdate;
@@ -739,6 +764,17 @@ void DiceSessionManager::over(chatInfo ct){
 //const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
 
 shared_ptr<Session> DiceSessionManager::newGame(const string& name, const chatInfo& ct) {
+	string rule{ "COC7" };
+	if (auto r{ name.rfind("-") };r != string::npos) {
+		string prefix;
+		do {
+			if (ruleset->has_rule(prefix = name.substr(0, r))) {
+				rule = prefix;
+				break;
+			}
+			else r = name.rfind("-", r - 1);
+		} while (r != string::npos);
+	}
 	LOCK_REC(sessionMutex);
 	string g_name{ name + "#" + to_string(++inc) };
 	while (SessionByName.count(g_name)) {
@@ -747,6 +783,7 @@ shared_ptr<Session> DiceSessionManager::newGame(const string& name, const chatIn
 	auto ptr{ std::make_shared<Session>(g_name) };
 	const auto here{ ct.locate() };
 	ptr->areas.insert(here);
+	ptr->at("rule") = rule;
 	ptr->add_gm(ct.uid);
 	SessionByName[g_name] = ptr;
 	if (SessionByChat.count(here))SessionByChat[here]->areas.erase(here);
@@ -773,11 +810,15 @@ shared_ptr<Session> DiceSessionManager::get(chatInfo ct) {
 		else return SessionByChat[ct] = SessionByName[name];
 	}
 }
+shared_ptr<Session> DiceSessionManager::get_if(chatInfo ct)const {
+	ct = ct.locate();
+	return ct && SessionByChat.count(ct) ? SessionByChat.at(ct) : shared_ptr<Session>();
+}
 int DiceSessionManager::load() {
 	if (auto fileGM{ DiceDir / "user" / "GameTable.toml" };std::filesystem::exists(fileGM)) {
 		if (ifstream ifs{ fileGM }) {
 			AttrObject cfg = AttrVar(toml::parse(ifs)).to_obj();
-			inc = cfg.get_int("inc");
+			inc = cfg->get_int("inc");
 		}
 	}
 	LOCK_REC(sessionMutex);
@@ -811,7 +852,7 @@ int DiceSessionManager::load() {
 					pSession->areas.insert(chatInfo::from_json(ct));
 				}
 			}
-			if (j.count("conf")) pSession->attrs = AttrVar(j["conf"]).to_obj();
+			if (j.count("conf")) from_json(j["conf"], pSession->dict);
 			if (j.count("log")) {
 				fifo_json& jLog = j["log"];
 				jLog["start"].get_to(pSession->logger.tStart);
@@ -851,17 +892,16 @@ int DiceSessionManager::load() {
 					it.value()["size"].get_to(pSession->decks[key].sizRes);
 				}
 			}
-			if(j.count("roulette"))for (auto& it : j["roulette"].items()) {
+			if (j.count("roulette"))for (auto& it : j["roulette"].items()) {
 				size_t face = stoi(it.key());
 				pSession->roulette.emplace(face, DiceRoulette(face, it.value()["copy"],
 					it.value()["pool"].get<vector<size_t>>(), it.value()["rest"]));
 			}
 			if (j.count("tables"))for (auto& it : j["tables"].items()) {
-				pSession->attrs.set(UTF8toGBK(it.key()), it.value());
+				pSession->set(UTF8toGBK(it.key()), it.value());
+				isUpdated = true;
 			}
-			if (j.count("data"))for (auto& it : j["data"].items()) {
-				pSession->attrs.set(UTF8toGBK(it.key()), it.value());
-			}
+			if (j.count("data"))from_json(j["data"], pSession->as_dict());
 			if (j.count("master"))for (auto& it : j["master"]) {
 				pSession->master->emplace(it.get<long long>());
 			}
@@ -893,6 +933,6 @@ int DiceSessionManager::load() {
 void DiceSessionManager::save() {
 	if (std::ofstream fs{ DiceDir / "user" / "GameTable.toml" }) {
 		AttrObject cfg = AttrVars{ { "inc",inc } };
-		fs << cfg.to_toml();
+		fs << cfg->to_toml();
 	}
 }

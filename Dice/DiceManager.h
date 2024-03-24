@@ -4,6 +4,7 @@
 #include <json.hpp>
 #include "Jsonio.h"
 #include "GlobalVar.h"
+#include "DiceNetwork.h"
 #include "EncodingConvert.h"
 #include "DiceConsole.h"
 #include "DiceSchedule.h"
@@ -451,13 +452,15 @@ public:
         try {
             nlohmann::json j = nlohmann::json::object();
             if (string url; server->getParam(conn, "url", url)) {
-                if (!Network::GET(url, ret)) {
-                    j["code"] = -1;
-                    j["msg"] = "success";
-                    j["data"] = 
-                    ret = j.dump();
+                if (Network::GET(url, ret)) {
+                    j["code"] = 0;
+                    j["msg"] = ret;
                 }
-                else console.log(UTF8toGBK(ret),0);
+                else {
+                    j["code"] = -1;
+                    j["msg"] = GBKtoUTF8(ret);
+                    console.log(ret, 0);
+                }
             }
             else {
                 j["code"] = -1;

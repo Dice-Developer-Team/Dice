@@ -3,7 +3,7 @@
 /*
  * 消息处理
  * Copyright (C) 2018-2021 w4123
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 #ifndef DICE_EVENT
 #define DICE_EVENT
@@ -16,23 +16,22 @@
 #include "ManagerSystem.h"
 
 using std::string;
+class RD;
 
 class DiceSession;
 //打包待处理消息
-class DiceEvent : public AttrObject {
+class DiceEvent : public AnysTable {
 public:
+	MetaType getType()const override { return MetaType::Context; }
 	chatInfo fromChat;
 	string strLowerMessage;
 	Chat* pGrp = nullptr;
-	ptr<DiceSession> thisGame;
+	ptr<DiceSession> thisGame();
 	string& strMsg;
 	string strReply;
 	std::wsmatch msgMatch;
 	DiceEvent(const AttrVars& var, const chatInfo& ct);
-	DiceEvent(const AttrObject& var);
-	AttrVar& operator[](const char* key) {
-		return (*dict)[key];
-	}
+	DiceEvent(const AnysTable& var);
 
 	bool isPrivate()const;
 	bool isChannel()const;
@@ -47,7 +46,7 @@ public:
 	void reply(bool isFormat = true);
 	void replyMsg(const std::string& key);
 	void replyHelp(const std::string& key);
-
+	void replyRollDiceErr(int, const RD&);
 	void replyHidden();
 
 	//通知
@@ -258,7 +257,7 @@ public:
 	string readItem();
 	int readItems(vector<string>&);
 };
-void reply(AttrObject&, string, bool isFormat = true);
-void MsgNote(AttrObject&, string, int);
+void reply(const AttrObject&, string, bool isFormat = true);
+void MsgNote(const AttrObject&, string, int);
 
 #endif /*DICE_EVENT*/

@@ -1,8 +1,8 @@
 /*
- * 自定义容器
- * Copyright (C) 2019-2022 String.Empty
- * 2022/08/18 添加grad_map
- * 2022/09/07 添加fifo_map&fifo_cmpr_ci
+ * STL container extern
+ * Copyright (C) 2019-2024 String.Empty
+ * 2022/08/18 add grad_map
+ * 2022/09/07 add fifo_map&fifo_cmpr_ci
  */
 #pragma once
 #include <string>
@@ -97,6 +97,7 @@ template<typename T = std::string>
 using dict_ci = std::unordered_map<string, T, hash_ci, equal_ci>;
 template<typename T = std::string>
 using multidict_ci = std::unordered_multimap<string, T, hash_ci, equal_ci>;
+//using uset_ci = std::unordered_set<string, hash_ci, equal_ci>;
 
 class fifo_cmpr_ci {
 public:
@@ -109,6 +110,7 @@ public:
 	{}
 	bool operator()(const string & lhs, const string & rhs) const
 	{
+		if (lhs == rhs)return false;
 		// look up timestamps for both keys
 		const auto timestamp_lhs = m_keys->find(toLower(lhs));
 		const auto timestamp_rhs = m_keys->find(toLower(rhs));
@@ -164,14 +166,14 @@ public:
 		valElse = val;
 		return *this;
 	}
-	TVal& get_else() {
+	const TVal& get_else() const{
 		return valElse;
 	}
 	grad_map& set_step(TKey key, const TVal& val) {
 		grades[key] = val;
 		return *this;
 	}
-	TVal& operator[](TKey key) {
+	const TVal& operator[](TKey key) const{
 		if (auto it{ grades.upper_bound(key) }; it != grades.begin()) {
 			return (--it)->second;
 		}

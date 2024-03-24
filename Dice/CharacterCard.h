@@ -1,47 +1,51 @@
-#pragma once
-
 /*
- * 玩家人物卡
- * Copyright (C) 2019-2023 String.Empty
+ *  _______     ________    ________    ________    __
+ * |   __  \   |__    __|  |   _____|  |   _____|  |  |
+ * |  |  |  |     |  |     |  |        |  |_____   |  |
+ * |  |  |  |     |  |     |  |        |   _____|  |__|
+ * |  |__|  |   __|  |__   |  |_____   |  |_____    __
+ * |_______/   |________|  |________|  |________|  |__|
+ *
+ * Dice! QQ Dice Robot for TRPG
+ * Player & Character Card
+ * Copyright (C) 2018-2021 w4123溯洄
+ * Copyright (C) 2019-2024 String.Empty
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this
+ * program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <fstream>
+#pragma once
 #include <utility>
-#include <vector>
 #include <stack>
 #include <mutex>
 #include "CQTools.h"
 #include "RDConstant.h"
 #include "RD.h"
-#include "DiceXMLTree.h"
+#include "tinyxml2.h"
 #include "DiceFile.hpp"
 #include "ManagerSystem.h"
 #include "MsgFormat.h"
 #include "CardDeck.h"
 #include "DiceEvent.h"
-#include "DiceAttrVar.h"
+#include "DiceJS.h"
 
 using std::string;
 using std::to_string;
 using std::vector;
 using std::map;
+using xml = tinyxml2::XMLDocument;
+class CharaCard;
+class CardTemp;
 
-constexpr short NOT_FOUND = -32767;
-
-inline unordered_map<string, short> mTempletTag = {
-	{"name", 1},
-	{"type", 2},
-	{"alias", 20},
-	{"basic", 31},
-	{"info", 102},
-	{"autofill", 22},
-	{"variable", 23},
-	{"diceexp", 21},
-	{"default", 12},
-	{"build", 41},
-	{"generate", 24},
-	{"note", 101},
-};
+enum class trigger_time { AfterUpdate };
 inline unordered_map<string, short> mCardTag = {
 	{"Name", 1},
 	{"Type", 2},
@@ -54,113 +58,124 @@ inline unordered_map<string, short> mCardTag = {
 	{"End", 255}
 };
 
-//生成模板
-class CardBuild
-{
+class AttrShape {
 public:
-	CardBuild() = default;
+	enum class DataType : unsigned char { Any, Nature, Int, };
+	enum class TextType : unsigned char { Plain, Dicexp, JavaScript, };
+	AttrShape() = default;
+	AttrShape(const tinyxml2::XMLElement* node, bool isUTF8);
+	AttrShape(int i) :defVal(i) {}
+	AttrShape(const string& s):defVal(s){}
+	AttrShape(const string& s, TextType tt) :defVal(s), textType(tt){}
+	DataType type{ DataType::Any };
+	//string title;
+	vector<string> alias;
+	TextType textType{ TextType::Plain };
+	AttrVar defVal;
+	AttrVar init(ptr<CardTemp>, CharaCard*); 
+	int check(AttrVar& val);
+	bool equalDefault(const AttrVar& val)const { return TextType::Plain == textType && val == defVal; }
+};
+using Shapes = dict_ci<AttrShape>;
 
-	CardBuild(const vector<std::pair<string, string>>& attr, const vector<string>& name, const vector<string>& note):
-		vBuildList(attr), vNameList(name), vNoteList(note)
-	{
-	}
-
-	//属性生成
-	vector<std::pair<string, string>> vBuildList = {};
-	//随机姓名
-	vector<string> vNameList = {};
-	//Note生成
-	vector<string> vNoteList = {};
-
-	CardBuild(const DDOM& d)
-	{
-		for (const auto& sub : d.vChild)
-		{
-			switch (mTempletTag[sub.tag])
-			{
-			case 1:
-				vNameList = getLines(sub.strValue);
-				break;
-			case 24:
-				readini(sub.strValue, vBuildList);
-				break;
-			case 101:
-				vNoteList = getLines(sub.strValue);
-				break;
-			default: break;
-			}
+class CardPreset {
+public:
+	fifo_dict_ci<AttrShape> shapes;
+	CardPreset() = default;
+	CardPreset(const std::vector<std::pair<std::string, std::string>>& v) {
+		for (auto& [key, val] : v) {
+			shapes[key] = { val, AttrShape::TextType::Dicexp };
 		}
 	}
+	CardPreset(const tinyxml2::XMLElement* d, bool isUTF8);
 };
-
+struct CardTrigger {
+	string name;
+	trigger_time time;
+	string script;
+};
 class CardTemp
 {
 public:
 	string type;
-	fifo_dict_ci<> replaceName = {};
+	//alias of model
+	vector<string> alias;
+	//alias of attr
+	dict_ci<> replaceName = {};
 	//作成时生成
 	vector<vector<string>> vBasicList = {};
-	//调用时生成
-	fifo_dict_ci<> mAutoFill = {};
-	//动态引用
-	fifo_dict_ci<> mVariable = {};
-	//表达式
-	fifo_dict_ci<> mExpression = {};
-	//默认值
-	fifo_dict_ci<int> defaultSkill = {};
+	//元表
+	dict_ci<AttrShape> AttrShapes;
 	//生成参数
-	fifo_dict_ci<CardBuild> mBuildOption = {};
+	dict_ci<CardPreset> presets = {};
+	//
+	ptr<js_context> js_ctx;
+	string script;
+	multimap<trigger_time, CardTrigger> triggers_by_time;
+	fifo_dict_ci<CardTrigger> triggers;
 	CardTemp() = default;
 
-	CardTemp(const string& type, const fifo_dict_ci<>& replace, vector<vector<string>> basic,
-		const fifo_dict_ci<>& autofill, const fifo_dict_ci<>& dynamic, const fifo_dict_ci<>& exp,
-		const fifo_dict_ci<int>& skill, const fifo_dict_ci<CardBuild>& option) : type(type),
+	CardTemp(const string& type, const dict_ci<>& replace, vector<vector<string>> basic,
+		const dict_ci<>& dynamic, const dict_ci<>& exps,
+		const dict_ci<int>& def_skill, const dict_ci<CardPreset>& option = {},
+		const string& s = {}) : type(type),
 			                                                            replaceName(replace), 
 		                                                                vBasicList(basic), 
-		                                                                mAutoFill(autofill), 
-		                                                                mVariable(dynamic), 
-		                                                                mExpression(exp), 
-		                                                                defaultSkill(skill), 
-		                                                                mBuildOption(option)
+		presets(option),script(s)
 	{
+		for (auto& [attr, exp] : dynamic) {
+			AttrShapes[attr] = AttrShape(exp, AttrShape::TextType::Dicexp);
+		}
+		for (auto& [attr, exp] : exps) {
+			AttrShapes["&" + attr] = AttrShape(exp, AttrShape::TextType::Plain);
+		}
+		for (auto& [attr, val] : def_skill) {
+			AttrShapes[attr] = val;
+		}
 	}
+	CardTemp& merge(const CardTemp& other);
+	void init();
+	void after_update(const ptr<AnysTable>&);
+	bool equalDefault(const string& attr, const AttrVar& val)const { return AttrShapes.count(attr) && AttrShapes.at(attr).equalDefault(val); }
 
-	CardTemp(const DDOM& d)
-	{
-		readt(d);
+	//CardTemp(const xml* d) { }
+
+	bool canGet(const string& attr)const {
+		return AttrShapes.count(attr) && !AttrShapes.at(attr).defVal.is_null();
 	}
-
-	void readt(const DDOM& d);
-
-	string getName()
-	{
-		return type;
-	}
+	string getName() { return type; }
 
 	string showItem()
 	{
-		const string strItem = listKey(mBuildOption);
+		const string strItem = listKey(presets);
 		if (strItem.empty())return type;
 		return type + "[" + strItem + "]";
 	}
 	string show();
-};
+}; 
+extern CardTemp ModelBRP;
+extern CardTemp ModelCOC7;
+extern dict_ci<ptr<CardTemp>> CardModels;
+int loadCardTemp(const std::filesystem::path& fpPath, dict_ci<CardTemp>& m);
+
 extern unordered_map<int, string> PlayerErrors;
 
 struct lua_State;
-class CharaCard: public AttrObject
+class CharaCard: public AnysTable
 {
 private:
+	const size_t id = 0;
 	string Name = "角色卡";
 	unordered_set<string> locks;
 	std::mutex cardMutex;
 public:
-	static fifo_dict_ci<CardTemp> mCardTemplet;
-	CardTemp& getTemplet()const;
+	size_t getID()const { return id; }
+	MetaType getType()const override{ return MetaType::Actor; }
+	ptr<CardTemp> getTemplet()const;
 	bool locked(const string& key)const { return locks.count(key); }
 	bool lock(const string& key) {
 		std::lock_guard<std::mutex> lock_queue(cardMutex);
-		if(key.empty() || locks.count(key))return false;
+		if (key.empty() || locks.count(key))return false;
 		locks.insert(key);
 		return true;
 	}
@@ -171,26 +186,25 @@ public:
 		return true;
 	}
 	const string& getName()const { return Name; }
+	string print()const override{ return Name; }
 	void setName(const string&);
 	void setType(const string&);
 	void update();
-#define Attr (*dict)
-	CharaCard(){
-		(*dict)["__Type"] = "COC7";
-		(*dict)["__Update"] = (long long)time(nullptr);
+	CharaCard(size_t i) :id(i) {
+		setType("COC7");
+		dict["__Update"] = (long long)time(nullptr);
 	}
-	CharaCard(const CharaCard& pc){
-		Name = pc.Name;
-		dict = std::make_shared<AttrVars>(*pc.dict);
+	CharaCard(const CharaCard& pc) :id(pc.id), Name(pc.Name) {
+		dict = pc.dict;
 	}
 
-	CharaCard(const string& name, const string& type = "COC7") : Name(name)
+	CharaCard(const string& name, size_t i, const string& type = "COC7") : Name(name), id(i)
 	{
-		(*dict)["__Name"] = name;
+		dict["__Name"] = name;
 		setType(type);
 	}
 
-	int call(string key)const;
+	//int call(string key)const;
 
 	//表达式转义
 	string escape(string exp, const unordered_set<string>& sRef)
@@ -202,7 +216,7 @@ public:
 			return getExp(key);
 		}
 		size_t intCnt = 0, lp, rp;
-		while ((lp = exp.find('[', intCnt)) != std::string::npos && (rp = exp.find(']', lp)) != std::string::npos)
+		while ((lp = exp.find('{', intCnt)) != std::string::npos && (rp = exp.find('}', lp)) != std::string::npos)
 		{
 			string strProp = exp.substr(lp + 1, rp - lp - 1);
 			if (sRef.count(strProp))return "";
@@ -216,90 +230,44 @@ public:
 	//求key对应掷骰表达式
 	string getExp(string& key, unordered_set<string> sRef = {});
 
-	bool countExp(const string& key){
-		return (has(key) && key[0] == '&')
-			|| (has("&" + key))
-			|| getTemplet().mExpression.count(key);
-	}
+	bool countExp(const string& key)const;
 
 	//计算表达式
-	int cal(string exp)const
-	{
-		if (exp[0] == '&')
-		{
-			string key = exp.substr(1);
-			return call(key);
-		}
-		int intCnt = 0, lp, rp;
-		while ((lp = exp.find('[', intCnt)) != std::string::npos && (rp = exp.find(']', lp)) != std::string::npos)
-		{
-			string strProp = exp.substr(lp + 1, rp - lp - 1);
-			const short val = call(strProp);
-			exp.replace(exp.begin() + lp, exp.begin() + rp + 1, std::to_string(val));
-			intCnt = lp + std::to_string(val).length();
-		}
-		const RD Res(exp);
-		Res.Roll();
-		return Res.intTotal;
-	}
+	std::optional<int> cal(string exp);
 
-	void build(const string& para = "")
-	{
-		const auto it = getTemplet().mBuildOption.find(para);
-		if (it == getTemplet().mBuildOption.end())return;
-		CardBuild build = it->second;
-		for (auto& it2 : build.vBuildList) {
-			//exp
-			if (it2.first[0] == '&')
-			{
-				if (has(it2.first))continue;
-				set(it2.first, it2.second);
-			}
-			//attr
-			else
-			{
-				if (has(it2.first))continue;
-				AttrObject::set(it2.first, cal(it2.second));
-			}
-		}
-	}
+	void build(const string& para);
 
 	//解析生成参数
 	void buildv(string para = "");
 
-	[[nodiscard]] string standard(const string& key) const
-	{
-		if (getTemplet().replaceName.count(key))return getTemplet().replaceName.find(key)->second;
-		return key;
-	}
+	[[nodiscard]] string standard(const string& key) const;
 
-	AttrVar get(string key)const;
+	AttrVar get(const string& key, const AttrVar& val = {})const override;
 
 	int set(string key, const AttrVar& val);
 
 	bool erase(string& key);
 	void clear();
 
-	int show(string key, string& val) const;
+	[[nodiscard]] std::optional<string> show(string& key);
+	[[nodiscard]] std::optional<string> show(const string& key);
+	string print(const string& key);
 
-	[[nodiscard]] string show(bool isWhole) const;
+	[[nodiscard]] string show(bool isWhole);
 
+	bool has(const string& key)const override;
 	//can get attr by card or temp
-	bool available(const string& key) const;
+	//bool available(const string& key) const;
 
-	bool stored(string& key) const
-	{
-		key = standard(key);
-		return has(key) || getTemplet().mAutoFill.count(key) || getTemplet().defaultSkill.count(key);
-	}
+	bool hasAttr(string& key) const;
 
 	void cntRollStat(int die, int face);
 
 	void cntRcStat(int die, int rate);
 
 	void operator<<(const CharaCard& card){
-		dict = std::make_shared<AttrVars>(*card.dict);
-		AttrObject::set("__Name", Name);
+		dict = card.dict;
+		dict["__Name"] = Name;
 	}
 
 	void writeb(std::ofstream& fout) const;
@@ -313,28 +281,31 @@ class Player
 private:
 	short indexMax = 0;
 	map<unsigned short, PC> mCardList;
-	dict_ci<unsigned short> mNameIndex;
-	unordered_map<unsigned long long, unsigned short> mGroupIndex{{0, 0}};
+	dict_ci<PC> NameList;
+	unordered_map<unsigned long long, PC> mGroupCard;
 	// 人物卡互斥
-	std::mutex cardMutex;
+	mutable std::mutex cardMutex;
 public:
 	Player() {
-		mCardList[0] = std::make_shared<CharaCard>( "角色卡" );
+		mCardList[0] = std::make_shared<CharaCard>("角色卡", 0);
 	}
 
 	Player(const Player& pl)
 	{
-		*this = pl;
+		indexMax = pl.indexMax;
+		mCardList = pl.mCardList;
+		NameList = pl.NameList;
+		mGroupCard = pl.mGroupCard;
 	}
 
-	Player& operator=(const Player& pl)
+	/*Player& operator=(const Player& pl)
 	{
 		indexMax = pl.indexMax;
 		mCardList = pl.mCardList;
-		mNameIndex = pl.mNameIndex;
-		mGroupIndex = pl.mGroupIndex;
+		NameList = pl.NameList;
+		mGroupCard = pl.mGroupCard;
 		return *this;
-	}
+	}*/
 
 	[[nodiscard]] size_t size() const
 	{
@@ -343,12 +314,12 @@ public:
 
 	[[nodiscard]] bool count(long long group) const
 	{
-		return mGroupIndex.count(group);
+		return mGroupCard.count(group);
 	}
 
 	[[nodiscard]] bool count(const string& name) const
 	{
-		return mNameIndex.count(name);
+		return NameList.count(name);
 	}
 
 	int emptyCard(const string& s, long long group, const string& type);
@@ -356,17 +327,7 @@ public:
 
 	int buildCard(string& name, bool isClear, long long group = 0);
 
-	int changeCard(const string& name, long long group)
-	{
-		if (name.empty())
-		{
-			mGroupIndex.erase(group);
-			return 1;
-		}
-		if (!mNameIndex.count(name))return -5;
-		mGroupIndex[group] = mNameIndex[name];
-		return 0;
-	}
+	int changeCard(const string& name, long long group);
 
 	int removeCard(const string& name);
 
@@ -374,35 +335,27 @@ public:
 
 	int copyCard(const string& name1, const string& name2, long long group = 0);
 
-	string listCard();
+	string listCard() const;
 
 	string listMap()
 	{
 		ResList Res;
-		for (const auto& it : mGroupIndex)
+		for (const auto& [gid,pc] : mGroupCard)
 		{
-			if (!it.first)Res << "default:" + mCardList[it.second]->getName();
-			else Res << "(" + to_string(it.first) + ")" + mCardList[it.second]->getName();
+			if (!gid)Res << "default:" + pc->getName();
+			else Res << "(" + to_string(gid) + ")" + pc->getName();
 		}
 		return Res.show();
 	}
 
 	PC getCard(const string& name, long long group = 0);
 
-	PC operator[](long long id)
-	{
-		if (mGroupIndex.count(id))return mCardList[mGroupIndex[id]];
-		if (mCardList.count(id))return mCardList[id];
-		if (mGroupIndex.count(0))return mCardList[mGroupIndex[0]];
-		return mCardList[0];
+	PC getCardByID(long long id) const;
+	PC operator[](long long id) const {
+		return getCardByID(id);
 	}
 
-	PC operator[](const string& name)
-	{
-		if (mNameIndex.count(name))return mCardList[mNameIndex[name]];
-		if (mGroupIndex.count(0))return mCardList[mGroupIndex[0]];
-		return mCardList[0];
-	}
+	PC operator[](const string& name) const;
 
 	void writeb(std::ofstream& fout) const;
 
@@ -413,4 +366,4 @@ extern unordered_map<long long, Player> PList;
 
 Player& getPlayer(long long qq);
 
-AttrVar idx_pc(AttrObject&);
+AttrVar idx_pc(const AttrObject&);

@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  *  _______     ________    ________    ________    __
  * |   __  \   |__    __|  |   _____|  |   _____|  |  |
@@ -9,7 +7,8 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123溯洄
+ * Msg Formatter
+ * Copyright (C) 2018-2021 w4123 Suhui
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -23,25 +22,23 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
+#include "DiceAttrVar.h"
+#include "STLExtern.hpp"
+//Plain Node
+class MarkNode {
+protected:
+	string leaf;
+public:
+	ptr<MarkNode> next;
+	MarkNode(const std::string_view& s) :leaf(s){}
+	virtual AttrVar format(const AttrObject& ctx, bool = true, const dict_ci<>& = {})const { return AttrVar::parse(leaf); }
+	AttrVar concat(const AttrObject& ctx, bool isTrust = true, const dict_ci<string>& global = {})const {
+		return next ? format(ctx, isTrust, global) + next->concat(ctx).to_str()
+			: format(ctx, isTrust, global);
+	}
+	vector<ptr<MarkNode>> split();
+};
 
-#ifndef DICE_NETWORK
-#define DICE_NETWORK
-#include <string>
-
-namespace Network
-{
-#ifndef _Win32
-	size_t curlWriteToString(void* contents, size_t size, size_t nmemb, std::string* s);
-#endif //  Win32
-	// 发出一个HTTP POST 请求
-	// @param url 
-	// @param postContent 编码后的数据
-	// @param contentType 数据类型，可为空
-	// @param des 存储返回数据
-	bool POST(const std::string& url, const std::string& postContent, const std::string& contentType, std::string& des);
-	// 发出一个HTTP GET 请求
-	// @param url 
-	// @param des 存储返回数据
-	bool GET(const std::string& url, std::string& des);
-}
-#endif /*DICE_NETWORK*/
+//ptr<MarkNode> buildFormatter(const std::string_view&); 
+AttrVar formatMsg(const string& s, const AttrObject& ctx, bool isTrust = true, const dict_ci<string>& global = {});

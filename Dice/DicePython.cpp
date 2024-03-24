@@ -1,3 +1,26 @@
+/*
+ *  _______     ________    ________    ________    __
+ * |   __  \   |__    __|  |   _____|  |   _____|  |  |
+ * |  |  |  |     |  |     |  |        |  |_____   |  |
+ * |  |  |  |     |  |     |  |        |   _____|  |__|
+ * |  |__|  |   __|  |__   |  |_____   |  |_____    __
+ * |_______/   |________|  |________|  |________|  |__|
+ *
+ * Dice! QQ Dice Robot for TRPG
+ * Copyright (C) 2018-2021 w4123ËÝä§
+ * Copyright (C) 2019-2024 String.Empty
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this
+ * program. If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "DicePython.h"
 #ifdef DICE_PYTHON
 #define PY_SSIZE_T_CLEAN
@@ -38,6 +61,7 @@ string py_to_native_string(PyObject* o) {
 	return Py_IS_TYPE(o, &PyUnicode_Type) ? PyUnicode_AsUTF8(o) : empty;
 #endif
 }
+AttrVar py_to_attr(PyObject* o);
 PyObject* py_from_gbstring(const string& strGBK) {
 #ifdef _WIN32
 	const int len = MultiByteToWideChar(54936, 0, strGBK.c_str(), -1, nullptr, 0);
@@ -63,73 +87,6 @@ AttrIndex py_to_hashable(PyObject* o) {
 	}
 	return 0;
 }
-AttrVar py_to_attr(PyObject* o) {
-	if (!o)return {};
-	else if (Py_IS_TYPE(o, &PyBool_Type))return bool(Py_IsTrue(o));
-	else if (Py_IS_TYPE(o, &PyLong_Type)) {
-		auto i{ PyLong_AsLongLong(o) };
-		return (i == (int)i) ? (int)i : i;
-	}
-	else if (Py_IS_TYPE(o, &PyFloat_Type))return PyFloat_AsDouble(o);
-	else if (Py_IS_TYPE(o, &PyUnicode_Type))return UtoGBK(PyUnicode_AsUnicode(o));
-	else if (Py_IS_TYPE(o, &PyBytes_Type))return UTF8toGBK(PyBytes_AsString(o));
-	else if (Py_IS_TYPE(o, &PyDict_Type)) {
-		AttrVars tab;
-		int len = PyMapping_Length(o);
-		if (auto items{ PyMapping_Items(o) };items && len) {
-			PyObject* item = nullptr;
-			auto key = wempty;
-			PyObject* val = nullptr;
-			for (int i = 0; i < len; ++i) {
-				item = PySequence_GetItem(items, i);
-				PyArg_ParseTuple(item, "uO", key, val);
-				tab[UtoGBK(key)] = py_to_attr(val);
-				Py_DECREF(item);
-			}
-		}
-		return AttrObject(tab);
-	}
-	else if (Py_IS_TYPE(o, &PyList_Type)) {
-		VarArray ary;
-		if (auto len = PySequence_Size(o)) {
-			PyObject* item = nullptr;
-			for (int i = 0; i < len; ++i) {
-				item = PySequence_GetItem(o, i);
-				ary.emplace_back(py_to_attr(item));
-				Py_DECREF(item);
-			}
-		}
-		return AttrObject(ary);
-	}
-	else if (Py_IS_TYPE(o, &PyTuple_Type)) {
-		VarArray ary;
-		if (auto len = PyTuple_Size(o)) {
-			PyObject* item = nullptr;
-			for (int i = 0; i < len; ++i) {
-				item = PyTuple_GetItem(o, i);
-				ary.emplace_back(py_to_attr(item));
-				Py_DECREF(item);
-			}
-		}
-		return AttrObject(ary);
-	}
-	else if (Py_IS_TYPE(o, &PySet_Type)) {
-		fifo_set<AttrIndex> set;
-		if (auto len = PySet_Size(o)) {
-			DD::debugLog("set.size:" + to_string(len));
-			PyObject* tmp = PySet_New(o);
-			while (len--) {
-				auto item = PySet_Pop(tmp);
-				set.emplace(py_to_hashable(item));
-				Py_DECREF(item);
-			}
-			Py_DECREF(tmp);
-		}
-		return set;
-	}
-	console.log("py type: " + string(o->ob_type->tp_name), 0);
-	return {};
-}
 PyObject* py_build_Set(const fifo_set<AttrIndex>& s){
 	auto set = PySet_New(nullptr);
 	for (auto& elem : s) {
@@ -145,6 +102,9 @@ PyObject* py_build_Set(const fifo_set<AttrIndex>& s){
 	}
 	return set;
 }
+PyObject* py_newContext(const AttrObject& obj);
+PyObject* py_newActor(const PC& obj);
+PyObject* py_newGame(const ptr<DiceSession>& obj);
 PyObject* py_build_attr(const AttrVar& var) {
 	switch (var.type){
 	case AttrVar::Type::Boolean:
@@ -161,27 +121,37 @@ PyObject* py_build_attr(const AttrVar& var) {
 		return PyUnicode_FromString(GBKtoUTF8(var.text).c_str());
 		break;
 	case AttrVar::Type::Table:
-		if (!var.table.to_dict()->empty()) {
+		if (auto t{ var.table->getType() }; t == AnysTable::MetaType::Context) {
+			return py_newContext(var.table);
+		}
+		else if (t == AnysTable::MetaType::Actor) {
+			return py_newActor(std::static_pointer_cast<CharaCard>(var.table.p));
+		}
+		else if (t == AnysTable::MetaType::Game) {
+			return py_newGame(std::static_pointer_cast<Session>(var.table.p));
+		}
+		else if (!var.table->empty()) {
 			auto dict = PyDict_New();
-			if (var.table.to_list()) {
+			if (var.table->to_list()) {
 				long idx{ 0 };
-				for (auto& val : *var.table.to_list()) {
+				for (auto& val : *var.table->to_list()) {
 					PyDict_SetItem(dict, PyLong_FromLong(idx++), py_build_attr(val));
 				}
 			}
-			for (auto& [key, val] : *var.table.to_dict()) {
+			for (auto& [key, val] : var.table->as_dict()) {
 				PyDict_SetItem(dict, py_from_gbstring(key), py_build_attr(val));
 			}
 			return dict;
 		}
-		else if (var.table.to_list()) {
-			auto ary = PyList_New(var.table.to_list()->size());
+		else if (var.table->to_list()) {
+			auto ary = PyList_New(var.table->to_list()->size());
 			Py_ssize_t i{ 0 };
-			for (auto& val : *var.table.to_list()) {
+			for (auto& val : *var.table->to_list()) {
 				PyList_SetItem(ary, i++, py_build_attr(val));
 			}
 			return ary;
 		}
+		else return PyDict_New();
 		break;
 	case AttrVar::Type::ID:
 		return PyLong_FromLongLong(var.id);
@@ -210,13 +180,12 @@ static PyObject* PyActor_new(PyTypeObject* tp, PyObject* args, PyObject* kwds) {
 		Py_INCREF(self);
 		string name{ UtoGBK(n) };
 		new(&self->p) PC(t[0]
-			? std::make_shared<CharaCard>(name, UtoGBK(t))
-			: std::make_shared<CharaCard>(name));
+			? std::make_shared<CharaCard>(name, 0, UtoGBK(t))
+			: std::make_shared<CharaCard>(name, 0));
 		return (PyObject*)self;
 	}
 	else return NULL;
 }
-PyObject* py_newActor(const PC& obj);
 void PyActor_dealloc(PyObject* o) {
 	delete& ((PyActorObject*)o)->p;
 	Py_TYPE(o)->tp_free(o);
@@ -277,7 +246,7 @@ static PyObject* PyActor_rollDice(PyObject* self, PyObject* args) {
 	PY2PC(self);
 	PyObject* arg = PyTuple_GetItem(args, 0);
 	string exp{ (arg && Py_IS_TYPE(arg, &PyUnicode_Type)) ? py_to_gbstring(arg)
-		: pc->available("__DefaultDiceExp") ? pc->get("__DefaultDiceExp").to_str()
+		: pc->has("__DefaultDiceExp") ? pc->get("__DefaultDiceExp").to_str()
 		: "D" };
 	int diceFace{ pc->get("__DefaultDice").to_int() };
 	RD rd{ py_args_to_gbstring(args), diceFace ? diceFace : 100 };
@@ -374,32 +343,32 @@ PyObject* py_newActor(const PC& obj) {
 }
 //PyGameTable
 typedef struct {
-PyObject_HEAD
-	ptr<DiceSession> p;
+	PyObject_HEAD
+		ptr<DiceSession> p;
 } PyGameTableObject;
-#define PY2GAME(self) ptr<DiceSession>& game{((PyGameTableObject*)self)->p}
+#define PY2GAME(self) ptr<DiceSession>& game{ ((PyGameTableObject*)self)->p }
 void PyGameTable_dealloc(PyObject* o) {
 	delete& ((PyGameTableObject*)o)->p;
 	Py_TYPE(o)->tp_free(o);
 }
 int PyGameTable_setattr(PyObject* self, char* attr, PyObject* val) {
 	PY2GAME(self);
-	if (game)game->attrs.set(UTF8toGBK(attr), py_to_attr(val));
+	if (game)game->set(UTF8toGBK(attr), py_to_attr(val));
 	return 0;
 }
 static Py_ssize_t pyGameTable_size(PyObject* self) {
 	PY2GAME(self);
-	return game ? (Py_ssize_t)game->attrs.size() : 0;
+	return game ? (Py_ssize_t)game->size() : 0;
 }
 PyObject* PyGameTable_getattro(PyObject* self, PyObject* attr) {
 	PY2GAME(self);
 	string key{ py_to_gbstring(attr) };
-	return game ? py_build_attr(game->attrs.get(key)) : NULL;
+	return game ? py_build_attr(game->get(key)) : NULL;
 }
 int PyGameTable_setattro(PyObject* self, PyObject* attr, PyObject* val) {
 	PY2GAME(self);
 	string key{ py_to_gbstring(attr) };
-	if (game)game->attrs.set(key, py_to_attr(val));
+	if (game)game->set(key, py_to_attr(val));
 	return 0;
 }
 static PyMappingMethods PyGameTableMappingMethods = {
@@ -475,10 +444,11 @@ PyObject* py_newGame(const ptr<DiceSession>& obj) {
 	return (PyObject*)game;
 }
 //PyContext
-typedef struct{
+typedef struct {
 	PyObject_HEAD
-	AttrObject obj;
+	ptr<AnysTable> obj;
 } PyContextObject;
+#define PY2TAB(self) ptr<AnysTable>& obj{ ((PyContextObject*)self)->obj }
 static PyObject* PyContext_new(PyTypeObject* tp, PyObject* args, PyObject* kwds) {
 	PyContextObject* self = (PyContextObject*)tp->tp_alloc(tp, 0);
 	new(&self->obj) AttrObject();
@@ -488,40 +458,25 @@ void PyContext_dealloc(PyObject* o) {
 	delete& ((PyContextObject*)o)->obj;
 	Py_TYPE(o)->tp_free(o);
 }
-PyObject* py_newContext(const AttrObject& obj);
 int PyContext_setattr(PyObject* self, char* attr, PyObject* val) {
-	AttrObject& obj{ ((PyContextObject*)self)->obj };
-	obj.set(UTF8toGBK(attr), py_to_attr(val));
+	PY2TAB(self);
+	obj->set(UTF8toGBK(attr), py_to_attr(val));
 	return 0;
 }
 PyObject* PyContext_getattro(PyObject* self, PyObject* attr) {
-	AttrObject& obj{ ((PyContextObject*)self)->obj };
+	PY2TAB(self);
 	string key{ py_to_gbstring(attr) };
 	//console.log("PyContext_getattro:" + key, 0);
-	if (key == "user" && obj.has("uid")) {
-		return py_newContext(getUser(obj.get_ll("uid")).confs);
-	}
-	else if ((key == "grp" || key == "group") && obj.has("gid")) {
-		return py_newContext(chat(obj.get_ll("gid")).confs);
-	}
-	else if (key == "pc" && obj.has("uid")) {
-		return py_newActor(getPlayer(obj.get_ll("uid"))[obj.get_ll("gid")]);
-	}
-	else if (key == "game") {
-		if (auto game = sessions.get_if(obj)) {
-			return py_newGame(game);
-		}
-	}
 	return py_build_attr(getContextItem(obj, key));
 }
 int PyContext_setattro(PyObject* self, PyObject* attr, PyObject* val) {
-	AttrObject& obj{ ((PyContextObject*)self)->obj };
+	PY2TAB(self);
 	string key{ py_to_gbstring(attr) };
-	obj.set(key, py_to_attr(val));
+	obj->set(key, py_to_attr(val));
 	return 0;
 }
 static PyObject* pyContext_echo(PyObject* self, PyObject* args) {
-	AttrObject& obj{ ((PyContextObject*)self)->obj };
+	PY2TAB(self);
 	const char* msg = empty;
 	bool isRaw = false;
 	if(!PyArg_ParseTuple(args, "s|p", &msg, &isRaw)) {
@@ -531,7 +486,7 @@ static PyObject* pyContext_echo(PyObject* self, PyObject* args) {
 	return Py_BuildValue("");
 }
 static PyObject* pyContext_format(PyObject* self, PyObject* args) {
-	AttrObject& obj{ ((PyContextObject*)self)->obj };
+	PY2TAB(self);
 	const char* msg = empty;
 	if (!PyArg_ParseTuple(args, "s", &msg)) {
 		return nullptr;
@@ -539,13 +494,13 @@ static PyObject* pyContext_format(PyObject* self, PyObject* args) {
 	return PyUnicode_FromString(GBKtoUTF8(fmt->format(UTF8toGBK(msg), obj)).c_str());
 }
 static PyObject* pyContext_inc(PyObject* self, PyObject* args) {
-	AttrObject& obj{ ((PyContextObject*)self)->obj };
+	PY2TAB(self);
 	const char* field = empty;
 	int cnt = 0;
 	if (!PyArg_ParseTuple(args, "s|i", &field, &cnt)) {
 		return nullptr;
 	}
-	return PyLong_FromSsize_t(obj.inc(UTF8toGBK(field, cnt)));
+	return PyLong_FromSsize_t(obj->inc(UTF8toGBK(field, cnt)));
 }
 static PyMethodDef ContextMethods[] = {
 	{"echo", pyContext_echo, METH_VARARGS, "echo message"},
@@ -555,7 +510,7 @@ static PyMethodDef ContextMethods[] = {
 	{NULL, NULL, 0, NULL},
 };
 static Py_ssize_t pyContext_size(PyObject* self) {
-	AttrObject& obj{ ((PyContextObject*)self)->obj };
+	PY2TAB(self);
 	return (Py_ssize_t)obj->size();
 }
 static PyMappingMethods ContextMappingMethods = {
@@ -604,8 +559,78 @@ static PyTypeObject PyContextType = {
 PyObject* py_newContext(const AttrObject& obj) {
 	PyContextObject* context = (PyContextObject*)PyContextType.tp_alloc(&PyContextType, 0);
 	Py_INCREF(context);
-	new(&context->obj) AttrObject(obj);
+	new(&context->obj) ptr<AnysTable>(obj.p);
 	return (PyObject*)context;
+}
+AttrVar py_to_attr(PyObject* o) {
+	if (!o)return {};
+	else if (Py_IS_TYPE(o, &PyBool_Type))return bool(Py_IsTrue(o));
+	else if (Py_IS_TYPE(o, &PyLong_Type)) {
+		auto i{ PyLong_AsLongLong(o) };
+		return (i == (int)i) ? (int)i : i;
+	}
+	else if (Py_IS_TYPE(o, &PyFloat_Type))return PyFloat_AsDouble(o);
+	else if (Py_IS_TYPE(o, &PyUnicode_Type))return UtoGBK(PyUnicode_AsUnicode(o));
+	else if (Py_IS_TYPE(o, &PyBytes_Type))return UTF8toGBK(PyBytes_AsString(o));
+	else if (Py_IS_TYPE(o, &PyDict_Type)) {
+		AttrVars tab;
+		int len = PyMapping_Length(o);
+		if (auto items{ PyMapping_Items(o) }; items && len) {
+			PyObject* item = nullptr;
+			auto key = wempty;
+			PyObject* val = nullptr;
+			for (int i = 0; i < len; ++i) {
+				item = PySequence_GetItem(items, i);
+				PyArg_ParseTuple(item, "uO", key, val);
+				tab[UtoGBK(key)] = py_to_attr(val);
+				Py_DECREF(item);
+			}
+		}
+		return AttrObject(tab);
+	}
+	else if (Py_IS_TYPE(o, &PyList_Type)) {
+		VarArray ary;
+		if (auto len = PySequence_Size(o)) {
+			PyObject* item = nullptr;
+			for (int i = 0; i < len; ++i) {
+				item = PySequence_GetItem(o, i);
+				ary.emplace_back(py_to_attr(item));
+				Py_DECREF(item);
+			}
+		}
+		return AttrObject(ary);
+	}
+	else if (Py_IS_TYPE(o, &PyTuple_Type)) {
+		VarArray ary;
+		if (auto len = PyTuple_Size(o)) {
+			PyObject* item = nullptr;
+			for (int i = 0; i < len; ++i) {
+				item = PyTuple_GetItem(o, i);
+				ary.emplace_back(py_to_attr(item));
+				Py_DECREF(item);
+			}
+		}
+		return AttrObject(ary);
+	}
+	else if (Py_IS_TYPE(o, &PySet_Type)) {
+		fifo_set<AttrIndex> set;
+		if (auto len = PySet_Size(o)) {
+			DD::debugLog("set.size:" + to_string(len));
+			PyObject* tmp = PySet_New(o);
+			while (len--) {
+				auto item = PySet_Pop(tmp);
+				set.emplace(py_to_hashable(item));
+				Py_DECREF(item);
+			}
+			Py_DECREF(tmp);
+		}
+		return set;
+	}
+	else if (Py_IS_TYPE(o, &PyContext_Type))return ((PyContextObject*)o)->obj;
+	else if (Py_IS_TYPE(o, &PyActor_Type))return ((PyActorObject*)o)->p;
+	else if (Py_IS_TYPE(o, &PyGameTable_Type))return ((PyGameTableObject*)o)->p;
+	console.log("py type: " + string(o->ob_type->tp_name), 0);
+	return {};
 }
 AttrObject py_to_obj(PyObject* o) {
 	if (Py_IS_TYPE(o, &PyDict_Type)) {
@@ -648,9 +673,9 @@ AttrObject py_to_obj(PyObject* o) {
 		}
 		return AttrObject(ary);
 	}
-	else if (Py_IS_TYPE(o, &PyContextType)) {
-		return ((PyContextObject*)o)->obj;
-	}
+	else if (Py_IS_TYPE(o, &PyContextType))return ((PyContextObject*)o)->obj;
+	else if (Py_IS_TYPE(o, &PyActor_Type))return ((PyActorObject*)o)->p;
+	else if (Py_IS_TYPE(o, &PyGameTable_Type))return ((PyGameTableObject*)o)->p;
 	return {};
 }
 #define PYDEF(name) static PyObject* py_##name(PyObject* self)
@@ -692,23 +717,23 @@ void PySelfData_dealloc(PyObject* o) {
 }
 PyObject* PySelfData_getattr(PyObject* self, char* attr) {
 	auto& data{ ((PySelfDataObject*)self)->p->data };
-	return data.is_table() ? py_build_attr(data.table.get(UTF8toGBK(attr))) : Py_BuildValue("");
+	return data.is_table() ? py_build_attr(data.table->get(UTF8toGBK(attr))) : Py_BuildValue("");
 }
 int PySelfData_setattr(PyObject* self, char* attr, PyObject* val) {
 	auto& data{ ((PySelfDataObject*)self)->p->data };
-	if (data.is_table())data.table.set(UTF8toGBK(attr), py_to_attr(val));
+	if (data.is_table())data.table->set(UTF8toGBK(attr), py_to_attr(val));
 	return 0;
 }
 PyObject* PySelfData_getattro(PyObject* self, PyObject* attr) {
 	auto& data{ ((PySelfDataObject*)self)->p };
 	if (!attr)return py_build_attr(data->data);
 	string key{ py_to_gbstring(attr) };
-	return data && data->data.is_table() ? py_build_attr(data->data.table.get(key)) : Py_BuildValue("");
+	return data && data->data.is_table() ? py_build_attr(data->data.table->get(key)) : Py_BuildValue("");
 }
 int PySelfData_setattro(PyObject* self, PyObject* attr, PyObject* val) {
 	auto& data{ ((PySelfDataObject*)self)->p->data };
 	string key{ py_to_gbstring(attr) };
-	if (data.is_table())data.table.set(key, py_to_attr(val));
+	if (data.is_table())data.table->set(key, py_to_attr(val));
 	return 0;
 }
 static Py_ssize_t pySelfData_size(PyObject* self) {
@@ -720,7 +745,7 @@ PyObject* PySelfData_set(PyObject* self, PyObject* args) {
 	PyObject* item{ nullptr }, * val{ nullptr };
 	if (PyArg_ParseTuple(args, "O|O", &item, &val)) {
 		if (Py_IS_TYPE(item, &PyUnicode_Type) && data->data.is_table()) {
-			data->data.table.set(py_to_gbstring(item), py_to_attr(val));
+			data->data.table->set(py_to_gbstring(item), py_to_attr(val));
 			data->save();
 		}
 		else if (!val) {
@@ -810,7 +835,7 @@ PYDEFKEY(getGroupAttr) {
 		}
 		auto items{ PyDict_New() };
 		for (auto& [gid, data] : ChatList) {
-			if (data.confs.has(item))PyDict_SetItem(items, PyLong_FromLongLong(gid), py_build_attr(data.confs.get(item)));
+			if (data->has(item))PyDict_SetItem(items, PyLong_FromLongLong(gid), py_build_attr(data->get(item)));
 		}
 		return items;
 	}
@@ -819,7 +844,7 @@ PYDEFKEY(getGroupAttr) {
 		PyErr_SetString(PyExc_ValueError, "group id can't be zero");
 		return NULL;
 	}
-	if (item.empty()) return py_newContext(chat(gid).confs);
+	if (item.empty()) return py_newContext(chat(gid).shared_from_this());
 	else if (item == "members") {
 		if (Py_IS_TYPE(sub, &PyUnicode_Type)) {
 			string subitem{ py_to_gbstring(sub)};
@@ -907,7 +932,7 @@ PYDEFKEY(getUserAttr) {
 		}
 		auto items{ PyDict_New() };
 		for (auto& [uid, data] : UserList) {
-			if (data.confs.has(item))PyDict_SetItem(items, PyLong_FromLongLong(uid), py_build_attr(data.confs.get(item)));
+			if (data->has(item))PyDict_SetItem(items, PyLong_FromLongLong(uid), py_build_attr(data->get(item)));
 		}
 		return items;
 	}
@@ -916,7 +941,7 @@ PYDEFKEY(getUserAttr) {
 		PyErr_SetString(PyExc_ValueError, "uid can't be zero");
 		return NULL;
 	}
-	if (item.empty()) return py_newContext(getUser(uid).confs);
+	if (item.empty()) return py_newContext(getUser(uid).shared_from_this());
 	if (auto val{ getUserItem(uid,item) }; !val.is_null())return py_build_attr(val);
 	else return sub ? sub : Py_BuildValue("");
 }
@@ -975,7 +1000,7 @@ PYDEFKEY(getUserToday) {
 		}
 		auto items{ PyDict_New() };
 		for (auto& [uid, data] : today->getUserInfo()) {
-			if (data.has(item))PyDict_SetItem(items, PyLong_FromLongLong(uid), py_build_attr(data.get(item)));
+			if (data->has(item))PyDict_SetItem(items, PyLong_FromLongLong(uid), py_build_attr(data->get(item)));
 		}
 		return items;
 	}
@@ -1040,16 +1065,16 @@ PYDEFKEY(sendMsg) {
 	AttrObject chat;
 	if (Py_IS_TYPE(msg, &PyUnicode_Type)) {
 		chat = py_to_obj(msg);
-		AddMsgToQueue(fmt->format(chat.get_str("fwdMsg"), chat), chatInfo{ chat.get_ll("uid") ,chat.get_ll("gid") ,chat.get_ll("chid") });
+		AddMsgToQueue(fmt->format(chat->get_str("fwdMsg"), chat), chatInfo{ chat->get_ll("uid") ,chat->get_ll("gid") ,chat->get_ll("chid") });
 	}
 	else {
 		if (!gid && !uid) {
 			PyErr_SetString(PyExc_ValueError, "chat id can't be zero");
 			return NULL;
 		}
-		if (uid)chat["uid"] = uid;
-		if (gid)chat["gid"] = gid;
-		if (chid)chat["chid"] = chid;
+		if (uid)chat->at("uid") = uid;
+		if (gid)chat->at("gid") = gid;
+		if (chid)chat->at("chid") = chid;
 		AddMsgToQueue(fmt->format(py_to_gbstring(msg), chat), { uid,gid,chid });
 	}
 	return Py_BuildValue("");
@@ -1071,14 +1096,14 @@ PYDEFKEY(eventMsg) {
 	else {
 		string fromMsg{ py_to_gbstring(msg)};
 		eve = gid
-			? AttrVars{ {"fromMsg",fromMsg},{"gid",gid}, {"uid", uid} }
-		: AttrVars{ {"fromMsg",fromMsg}, {"uid", uid} };
+			? AttrVars{ { {"fromMsg",fromMsg},{"gid",gid}, {"uid", uid} } }
+		: AttrVars{ { {"fromMsg",fromMsg}, {"uid", uid} } };
 	}
-	std::thread th([=]() {
-		DiceEvent msg(eve);
-		msg.virtualCall();
-		});
-	th.detach();
+	//std::thread th([=]() {
+		shared_ptr<DiceEvent> e{ std::make_shared<DiceEvent>(*eve.p) };
+		e->virtualCall();
+	//	});
+	//th.detach();
 	return Py_BuildValue("");
 }
 #define REG(name) #name,(PyCFunction)py_##name
@@ -1146,14 +1171,14 @@ PyGlobal::PyGlobal() {
 		std::filesystem::exists(dirPy / "python3.dll")
 		|| std::filesystem::exists(dirPy / "python3.so")
 		|| std::filesystem::exists(dirPy = dirExe / "python")
-		|| std::filesystem::exists(dirPy = dirExe / "python310")
-		|| std::filesystem::exists(dirPy = dirExe / "py310")) {
+		|| std::filesystem::exists(dirPy = dirExe / "python311")
+		|| std::filesystem::exists(dirPy = dirExe / "py311")) {
 		Py_SetPythonHome(dirPy.wstring().c_str());
-		Py_SetPath((dirPy / "python310.zip").wstring().c_str());
+		Py_SetPath((dirPy / "python311.zip").wstring().c_str());
 	}
 	else if (std::filesystem::exists(dirExe / "python3.dll")) {
 		Py_SetPythonHome(dirExe.wstring().c_str());
-		Py_SetPath((dirExe / "python310.zip").wstring().c_str());
+		Py_SetPath((dirExe / "python311.zip").wstring().c_str());
 	}
 	Py_SetProgramName(L"DiceMaid");
 	try {
@@ -1291,7 +1316,7 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrVar& action) {
 	}
 	return false;
 }
-bool py_call_event(AttrObject eve, const AttrVar& action) {
+bool py_call_event(const AttrObject& eve, const AttrVar& action) {
 	if (Enabled && py) {
 		string script{ action.to_str() };
 		bool isFile{ action.is_character() && fmt->has_py(script) };

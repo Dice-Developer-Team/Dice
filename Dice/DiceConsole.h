@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (C) 2019-2021 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 
 #ifndef Dice_Console
@@ -17,7 +17,6 @@
 #include <array>
 #include <CivetServer.h>
 #include "STLExtern.hpp"
-#include "DiceXMLTree.h"
 #include "DiceFile.hpp"
 #include "MsgFormat.h"
 #include "DiceMsgSend.h"
@@ -45,7 +44,7 @@ public:
 
 	friend void ConsoleTimer();
 	friend class DiceEvent;
-	friend void MsgNote(AttrObject&, string, int);
+	friend void MsgNote(const AttrObject&, string, int);
 	//DiceSens DSens;
 	static const enumap<string> mClockEvent;
 
@@ -70,7 +69,7 @@ public:
 	static const fifo_dict_ci<int> intDefault;
 	static const std::unordered_map<std::string, string> confComment;
 	//通知列表 1-日常活动/2-提醒事件/4-接收消息/8-警告内容/16-用户推送/32-骰娘广播
-	int log(const std::string& msg, int lv, const std::string& strTime = "");
+	int log(const std::string& msg, int lv = 0, const std::string& strTime = "");
 	void log(const std::string& msg, const std::string& file);
 	operator long long() const { return master; }
 	void newMaster(long long);

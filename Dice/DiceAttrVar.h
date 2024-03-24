@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123ËÝä§
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -30,8 +30,6 @@
 using std::string;
 template<typename T>
 using ptr = std::shared_ptr<T>;
-template<typename T>
-using fifo_dict = nlohmann::fifo_map<std::string, T>;
 
 struct ByteS {
 	char* bytes{ nullptr };
@@ -83,68 +81,28 @@ struct std::equal_to<AttrIndex> {
 	}
 };
 
-class AttrObject {
-protected:
-	ptr<AttrVars>dict;
-	ptr<VarArray>list;
-	friend class AttrVar;
-	friend AttrVar lua_to_attr(lua_State*, int);
-	friend void lua_push_attr(lua_State*, const AttrVar&);
-public:
-	AttrObject() :dict(std::make_shared<AttrVars>()) {}
-	AttrObject(const AttrVars& vars) :dict(std::make_shared<AttrVars>(vars)) {}
-	explicit AttrObject(const VarArray& vars) :dict(std::make_shared<AttrVars>()), list(std::make_shared<VarArray>(vars)) {}
-	template<class T>
-	AttrObject(const std::vector<T>& vars) :dict(std::make_shared<AttrVars>()), list(std::make_shared<VarArray>()) {
-		for (auto& it : vars)list->emplace_back(it);
+class AnysTable;
+struct AttrObject {
+	mutable ptr<AnysTable> p;
+	AttrObject(const ptr<AnysTable>& ptr = {}) :p(ptr) {}
+	AttrObject(const AnysTable& vars) :p(std::make_shared<AnysTable>(vars)) {}
+	AttrObject(const AttrVars& vars);
+	AnysTable* const operator->() const{
+		if (!p)p = std::make_shared<AnysTable>();
+		return p.get();
 	}
-	AttrObject(const AttrObject& other) :dict(other.dict), list(other.list) {}
-	const ptr<AttrVars>& to_dict()const { return dict; }
-	const ptr<VarArray>& to_list()const { return list; }
-	std::vector<string> to_deck()const;
-	const ptr<VarArray>& new_list() { return list = std::make_shared<VarArray>(); }
-	AttrVars* operator->()const {
-		return dict.get();
+	AnysTable& operator*()const {
+		if (!p)p = std::make_shared<AnysTable>();
+		return *p.get();
 	}
-	AttrVar& at(const string& key)const;
-	AttrVar& operator[](const char* key)const;
-	bool operator<(const AttrObject other)const;
-	//bool operator<(const AttrObject& other)const { return dict < other.dict; }
-	bool empty()const;
-	bool has(const string& key)const;
-	void set(const string& key, const AttrVar& val)const;
-	void set(const string& key)const;
-	void reset(const string& key)const;
-	bool is(const string& key)const;
-	bool is_empty(const string& key)const;
-	bool is_table(const string& key)const;
-	size_t size()const { return dict->size(); }
-	AttrVar index(const string& key)const;
-	AttrVar get(const string& key, ptr<AttrVar> val = {})const;
-	string get_str(const string& key)const;
-	string get_str(const string& key, const string& val)const;
-	string print(const string& key)const;
-	int get_int(const string& key)const;
-	long long get_ll(const string& key)const;
-	double get_num(const string& key)const;
-	AttrObject get_obj(const string& key)const;
-	ptr<AttrVars> get_dict(const string& key)const;
-	ptr<VarArray> get_list(const string& key)const;
-	AttrSet get_set(const string& key)const;
-	int inc(const string& key)const;
-	int inc(const string& key, int i)const;
-	void add(const string& key, const AttrVar&)const;
-	AttrObject& merge(const AttrVars& other);
-	fifo_json to_json()const;
-	toml::table to_toml()const;
-	void writeb(std::ofstream&)const;
-	void readb(std::ifstream&);
+	operator bool()const { return bool(p); }
+	template<class C>
+	C* as()const { return dynamic_cast<C*>(p.get()); }
 };
-
 class AttrVar {
 public:
 	enum class Type { Nil, Boolean, Integer, Number, Text, Table, Function, ID, Set	};
-	Type type{ 0 };
+	Type type{ Type::Nil };
 	union {
 		bool bit;		//1
 		int attr{ 0 };		//2
@@ -157,6 +115,10 @@ public:
 	};
 	AttrVar() {}
 	AttrVar(const AttrVar& other);
+	template<typename T>
+	AttrVar(const std::optional<T>& p) {
+		if (p) new(this)AttrVar(*p);
+	}
 	explicit AttrVar(bool b) :type(Type::Boolean), bit(b) {}
 	AttrVar(int n) :type(Type::Integer), attr(n) {}
 	AttrVar(double n) :type(Type::Number), number(n) {}
@@ -171,8 +133,21 @@ public:
 	AttrVar(const fifo_json&);
 	AttrVar(const toml::node&);
 	AttrVar(const YAML::Node&);
-	AttrVar(const AttrObject& vars) :type(Type::Table), table(vars) {}
-	explicit AttrVar(const AttrVars& vars) :type(Type::Table), table(vars) {}
+	AttrVar(const AnysTable& vars) :type(Type::Table), table(vars) {}
+	AttrVar(const AttrObject& obj){
+		if (obj) {
+			type = Type::Table;
+			new(&table) AttrObject(obj);
+		}
+	}
+	template<class C>
+	AttrVar(const ptr<C>& p) {
+		if (p) {
+			type = Type::Table;
+			new(&table) AttrObject(std::static_pointer_cast<AnysTable>(p));
+		}
+	}
+	explicit AttrVar(const AttrVars& vars) :type(Type::Table), table(std::make_shared<AnysTable>(vars)) {}
 	void des() {
 		if (type == Type::Text)text.~string();
 		else if (type == Type::Table)table.~AttrObject();
@@ -192,7 +167,7 @@ public:
 	AttrVar& operator=(const string& other);
 	AttrVar& operator=(const char* other);
 	AttrVar& operator=(const long long other);
-	AttrVar& operator=(const fifo_json& other) { new(this)AttrVar(other); return *this; };
+	//AttrVar& operator=(const fifo_json& other) { new(this)AttrVar(other); return *this; };
 	template<typename T>
 	bool operator!=(const T other)const { return !(*this == other); }
 	//bool operator==(const long long other)const;
@@ -208,9 +183,10 @@ public:
 	ByteS to_bytes()const;
 	static AttrVar parse(const string& s);
 	string print()const;
+	size_t len()const;
 	bool str_empty()const;
 	AttrObject to_obj()const;
-	ptr<AttrVars> to_dict()const;
+	std::optional<AttrVars*> to_dict()const;
 	ptr<VarArray> to_list()const;
 	AttrSet to_set()const;
 	fifo_json to_json()const;
@@ -246,6 +222,69 @@ fifo_json to_json(const AttrVars& vars);
 void from_json(const fifo_json& j, AttrVars&);
 string showAttrCMPR(AttrVar::CMPR);
 
-using AttrObjects = std::unordered_map<string, AttrObject>;
-using AttrGetter = AttrVar(*)(AttrObject&);
+class AnysTable: public std::enable_shared_from_this<AnysTable> {
+protected:
+	AttrVars dict;
+	ptr<VarArray>list;
+	friend class AttrVar;
+	friend AttrVar lua_to_attr(lua_State*, int);
+	friend void lua_push_attr(lua_State*, const AttrVar&);
+public:
+	enum class MetaType{ Table, Context, Actor, Game };
+	virtual MetaType getType()const { return MetaType::Table; }
+	AnysTable() {}
+	AnysTable(const AttrVars& vars) :dict(vars) {}
+	explicit AnysTable(const VarArray& vars) :list(std::make_shared<VarArray>(vars)) {}
+	template<class T>
+	AnysTable(const std::vector<T>& vars) : list(std::make_shared<VarArray>()) {
+		for (auto& it : vars)list->emplace_back(it);
+	}
+	AnysTable(const AnysTable& other) :dict(other.dict), list(other.list) {}
+	AttrVars& as_dict() { return dict; }
+	const ptr<VarArray>& to_list()const { return list; }
+	std::vector<string> to_deck()const;
+	const ptr<VarArray>& new_list() { return list = std::make_shared<VarArray>(); }
+	AttrVars* operator->() {
+		return &dict;
+	}
+	AttrVar& at(const string& key);
+	const AttrVar& at(const string& key)const;
+	AttrVar& operator[](const char* key);
+	bool operator<(const AnysTable other)const;
+	//bool operator<(const AnysTable& other)const { return dict < other.dict; }
+	bool empty()const;
+	virtual string print()const;
+	virtual bool has(const string& key)const;
+	virtual void set(const string& key, const AttrVar& val);
+	void set(const string& key);
+	void set(int i, const AttrVar& val);
+	void reset(const string& key);
+	[[nodiscard]] bool is(const string& key)const;
+	bool is_empty(const string& key)const;
+	bool is_table(const string& key)const;
+	size_t size()const { return dict.size(); }
+	size_t length()const { return list ? list->size() : dict.size(); }
+	AttrVar index(const string& key)const;
+	virtual AttrVar get(const string& key, const AttrVar& val = {})const;
+	string get_str(const string& key)const;
+	string get_str(const string& key, const string& val)const;
+	string print(const string& key)const;
+	int get_int(const string& key)const;
+	long long get_ll(const string& key)const;
+	double get_num(const string& key)const;
+	AttrObject get_obj(const string& key)const;
+	std::optional<AttrVars*> get_dict(const string& key)const;
+	ptr<VarArray> get_list(const string& key)const;
+	AttrSet get_set(const string& key)const;
+	int inc(const string& key);
+	int inc(const string& key, int i);
+	void add(const string& key, const AttrVar&);
+	AnysTable& merge(const AttrVars& other);
+	void from_json(const fifo_json&);
+	fifo_json to_json()const;
+	toml::table to_toml()const;
+	void writeb(std::ofstream&)const;
+	void readb(std::ifstream&);
+};
+using AttrGetter = AttrVar(*)(const AttrObject&);
 using AttrGetters = std::unordered_map<string, AttrGetter>;

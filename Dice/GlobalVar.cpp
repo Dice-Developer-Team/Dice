@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -21,20 +21,35 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#endif
 #include "GlobalVar.h"
-#include "MsgFormat.h"
-#include "DiceExtensionManager.h"
-#include "DiceMod.h"
 
 bool Enabled = false;
 
+std::string Dice_Short_Ver = "Dice! by 溯洄 & Shiki Ver " + Dice_Ver;
 std::string Dice_Full_Ver_On;
+#ifdef __clang__
 
-std::unique_ptr<ExtensionManager> ExtensionManagerInstance;
+#ifdef _MSC_VER
+std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + std::to_string(__clang_major__) + "." + std::to_string(__clang_minor__) + "." + std::to_string(__clang_patchlevel__) + " with MSVC " + std::to_string(_MSC_VER) + " " + __DATE__ + " " + __TIME__;
+#elif defined(__GNUC__)
+std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + std::to_string(__clang_major__) + "." + std::to_string(__clang_minor__) + "." + std::to_string(__clang_patchlevel__) + " with GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__;
+#else
+std::string Dice_Full_Ver = Dice_Short_Ver + " [CLANG " + std::to_string(__clang_major__) + "." + std::to_string(__clang_minor__) + "." + std::to_string(__clang_patchlevel__);
+#endif
+
+#else
+#ifdef _MSC_VER
+std::string Dice_Full_Ver = std::string(Dice_Short_Ver) + "[MSVC " + std::to_string(_MSC_VER) + " " + __DATE__ +
+" " + __TIME__ + "]";
+#elif defined(__GNUC__)
+std::string Dice_Full_Ver = Dice_Short_Ver + " [GNUC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + " " + __DATE__ + " " + __TIME__;
+#else
+std::string Dice_Full_Ver = Dice_Short_Ver + " [UNKNOWN COMPILER";
+#endif
+
+#endif
+
+//std::unique_ptr<ExtensionManager> ExtensionManagerInstance;
 
 #ifdef _WIN32
 HMODULE hDllModule = nullptr;
@@ -49,14 +64,14 @@ const dict_ci<string> PlainMsg
 	{"stranger","陌生人"},			//{nick}无法获取非空昵称时的称呼
 	{"strCallUser", "用户"},
 	{"strSummonWord", ""},
-	{"strSummonEmpty", "召唤{self}，{nick}有何事么？"},
+	{"strSummonEmpty", "召唤{self}，{nick}有何事？"},
 	{"strModList", "{self}的记忆体列表:{li}"},
 	{"strModOn", "已令{self}人格激活记忆体「{mod}」√"},
 	{"strModOnAlready", "{self}的记忆体「{mod}」已激活！"},
 	{"strModOff", "已将记忆体「{mod}」弹出{self}人格√"},
 	{"strModOffAlready", "{self}的记忆体「{mod}」已停用！"},
 	{"strModReload", "已为{self}人格重铸记忆体「{mod}」√"},
-	{"strModDelete", "已将记忆体「{mod}」从{self}的人格排空√"},
+	{"strModDelete", "已将记忆体「{mod}」排出{self}的人格√"},
 	{"strModNameEmpty", "请{nick}输入模块名！"},
 	{"strModDescLocal", "{self}已植入模块:{mod_desc}"},
 	{"strModDescCloud", "{self}已获取源模块信息:{mod_desc}"},
@@ -77,13 +92,13 @@ const dict_ci<string> PlainMsg
 	{"strAkGet","#{fork}{li}\n\n{self}的选择：{get}"},
 	{"strAkShow","{self}的当前分歧:{fork} {li}"},
 	{"strAkClr","{self}已清除本轮分歧{fork}√"},
-	{"strLogNew","{self}已新开记录日志{log_name}√\n请适时用.log off暂停或.log end完成记录"},
-	{"strLogOn","{self}开始日志记录{log_name}√\n可使用.log off暂停记录"},
-	{"strLogOnAlready","{self}正在记录中！"},
-	{"strLogOff","{self}已暂停日志记录√\n可使用.log on恢复记录"},
-	{"strLogOffAlready","{self}已经暂停记录！"},
+	{"strLogNew","{self}已新开记录日志「{game.log_name}」√\n请适时用.log off暂停或.log end完成记录"},
+	{"strLogOn","{self}开始日志记录「{game.log_name}」√\n可使用.log off暂停记录"},
+	{"strLogOnAlready","{self}正在记录「{game.log_name}」中！"},
+	{"strLogOff","{self}已暂停日志「{game.log_name}」记录√\n可使用.log on恢复记录"},
+	{"strLogOffAlready","{self}已经暂停「{game.log_name}」记录！"},
 	{"strLogEnd","{self}已完成日志记录√\n正在上传日志文件{log_file}"},
-	{"strLogEndEmpty","{self}已结束记录√\n本次无日志产生"},
+	{"strLogEndEmpty","{self}已结束「{game.log_name}」记录√\n本次无日志产生"},
 	{"strLogNullErr","{self}无日志记录或已结束！"},
 	{"strLogUpSuccess","{self}已完成日志上传√\n请访问 {log_url} 以查看记录"},
 	{"strLogUpFailure","{self}上传日志文件失败，正在第{retry}次重传{log_file}…{ret}"},
@@ -102,8 +117,8 @@ const dict_ci<string> PlainMsg
 	{"strGameExited","玩家{nick}已退出游戏√"},
 	{"strGameNotJoined","嗯？{nick}原来有在桌上吗？"},
 	{"strGameNotMaster","请{nick}让这桌的GM进行此操作×"},
-	{"strGameVoidHere","{self}连桌布还没铺上，{nick}就要动桌子么？"},
-	{"strGameNotExit","{self}不记得有一桌叫{game_id}的游戏了×"},
+	{"strGameVoidHere","{self}连桌布还没铺上，{nick}就要动桌子么？(请先.game new 新建游戏)"},
+	{"strGameNotExist","{self}不记得有一桌叫{game_id}的游戏了×"},
 	{"strGameItemSet","{self}已将本桌游戏的{set_item}设置为{set_val}√"},
 	{"strGameItemShow","本桌游戏的{set_item}为{set_val}√"},
 	{"strGameItemEmpty","请{nick}输入待设置的项目×"},
@@ -181,7 +196,7 @@ const dict_ci<string> PlainMsg
 	{"strPcLockedRead","{self}已锁定{pc}，不予查看属性×" },
 	{"strSetDefaultDice","{self}已将{pc}的默认骰设置为D{default}√"},
 	{"strCOCBuild","{pc}的调查员作成:{res}"},
-	{"strDNDBuild","{pc}的英雄作成:{res}"},
+	{"strDNDBuild","为{pc}的冒险者生成随机六维（降序）:{res}"},
 	{"strCensorCaution","提醒：{nick}的指令包含敏感词，{self}已上报"},
 	{"strCensorWarning","警告：{nick}的指令包含敏感词，{self}已记录并上报！"},
 	{"strCensorDanger","警告：{nick}的指令包含敏感词，{self}拒绝指令并已上报！"},
@@ -198,9 +213,9 @@ const dict_ci<string> PlainMsg
 	{"strReplyKeyEmpty","{nick}请输入回复触发词×"},
 	{"strReplyKeyNotFound","{self}未找到回复关键词{key}×"},
 	{"strScriptRunErr","{self}似乎出了点问题，请{nick}耐心等待（{lang}脚本运行出错）" },
-	{"strStModify","{self}已记录{pc}的{cnt}条属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
-	{"strStDetail","{self}已设置{pc}的属性："},		//存在掷骰时，使用此文本
-	{"strStValEmpty","{self}未记录{attr}原值×"},		
+	//{"strStModify","{self}已记录{pc}的{cnt}条属性变化:\n{change}"},		//存在技能值变化情况时，优先使用此文本
+	{"strStDetail","{self}已编辑{pc}的{cnt}条属性:\n{detail}"},		//存在掷骰时，使用此文本
+	//{"strStValEmpty","{self}未记录{attr}原值×"},		
 	{"strBlackQQAddNotice","{nick}，你已被{self}加入黑名单，详情请联系Master:{print:master}"},				
 	{"strBlackQQAddNoticeReason","{nick}，由于{reason}，你已被{self}加入黑名单，申诉解封请联系管理员。Master:{print:master}"},
 	{"strBlackQQDelNotice","{nick}，你已被{self}移出黑名单，现在可以继续使用了"},
@@ -278,13 +293,13 @@ const dict_ci<string> PlainMsg
 	{"strMeOff", "成功在这里禁用{self}的.me命令√"},
 	{"strMeOnAlready", "在这里{self}的.me命令没有被禁用!"},
 	{"strMeOffAlready", "在这里{self}的.me命令已经被禁用!"},
-	{"strObOn", "成功在这里启用{self}的旁观模式√"},
-	{"strObOff", "成功在这里禁用{self}的旁观模式√"},
-	{"strObOnAlready", "在这里{self}的旁观模式没有被禁用!"},
-	{"strObOffAlready", "在这里{self}的旁观模式已经被禁用!"},
-	{"strObList", "当前{self}的旁观者有:"},
-	{"strObListEmpty", "当前{self}暂无旁观者"},
-	{"strObListClr", "{self}成功删除所有旁观者√"},
+	{"strObOn", "{self}已在本桌启用旁观√"},
+	{"strObOff", "{self}已在本桌禁用旁观√"},
+	{"strObOnAlready", "在本桌{self}未禁用旁观!"},
+	{"strObOffAlready", "在本桌{self}已禁用旁观!"},
+	{"strObList", "本桌{self}的旁观者有:"},
+	{"strObListEmpty", "本桌{self}暂无旁观者"},
+	{"strObListClr", "{self}已清空旁观者√"},
 	{"strObEnter", "{nick}成功加入{self}的旁观√"},
 	{"strObExit", "{nick}成功退出{self}的旁观√"},
 	{"strObEnterAlready", "{nick}已经处于{self}的旁观模式!"},
@@ -331,15 +346,15 @@ const dict_ci<string> PlainMsg
 	{"strSendSuccess", "命令执行成功√"},
 	{"strActionEmpty", "动作不能为空×"},
 	{"strMEDisabledErr", "管理员已在此群中禁用.me命令!"},
-	{"strDisabledMeGlobal", "{self}恕不提供.me服务×"},
-	{"strDisabledJrrpGlobal", "{self}恕不提供.jrrp服务×"},
-	{"strDisabledDeckGlobal", "{self}恕不提供.deck服务×"},
-	{"strDisabledDrawGlobal", "{self}恕不提供.draw服务×"},
-	{"strDisabledSendGlobal", "{self}恕不提供.send服务×"},
+	{"strDisabledMeGlobal", "恕{self}不提供.me服务×"},
+	{"strDisabledJrrpGlobal", "恕{self}不提供.jrrp服务×"},
+	{"strDisabledDeckGlobal", "恕{self}不提供.deck服务×"},
+	{"strDisabledDrawGlobal", "恕{self}不提供.draw服务×"},
+	{"strDisabledSendGlobal", "恕{self}不提供.send服务×"},
 	{"strHELPDisabledErr", "管理员已在此群中禁用.help命令!"},
 	{"strNameDelEmpty", "{nick}未设置名称,无法删除!"},
 	{"strValueErr", "掷骰表达式输入错误!"},
-	{"strInputErr", "命令或掷骰表达式输入错误!"},
+	{"strInputErr", "命令或掷骰表达式输入错误:{dice_exp}"},
 	{"strUnknownErr", "发生了未知错误!"},
 	{"strUnableToGetErrorMsg", "无法获取错误信息!"},
 	{"strDiceTooBigErr", "{self}被你扔出的骰子淹没了×（骰数过多）"},
@@ -376,7 +391,7 @@ const dict_ci<string> PlainMsg
 	{"strRuleNotFound", "{self}未找到对应的规则信息×"},
 	{"strProp", "{pc}的{attr}为{val}"},
 	{"strPropList", "{nick}的{char}属性列表为：{show}"},
-	{"strStErr", "格式错误:请参考.help st获取.st命令的使用方法"},
+	//{"strStErr", "格式错误:请参考.help st获取.st命令的使用方法"},
 	{"strRulesFormatErr", "格式错误:正确格式为.rules[规则名称:]规则条目 如.rules COC7:力量"},
 	{"strLeaveDiscuss", "{self}现不支持讨论组服务，即将退出"},
 	{"strLeaveNoPower", "{self}未获得群管理，即将退群"},
@@ -384,7 +399,6 @@ const dict_ci<string> PlainMsg
 	{"strGlobalOff", "{self}休假中，暂停服务×"},
 	{"strPreserve", "{self}私有私用，勿扰勿怪\n如需申请许可请发送!authorize +[群号] 申请用途:[ **请写入理由** ] 我已了解Dice!基本用法，仔细阅读并保证遵守{strSelfName}的用户协议，如需停用指令使用[ **请写入指令** ]，用后使用[ **请写入指令** ]送出群"},
 	{"strJrrp", "{nick}今天的人品值是: {res}"},
-	{"strJrrpErr", "JRRP获取失败! 错误信息: \n{res}"},
 	{ "strFriendDenyNotUser", "很遗憾，你没有对{self}使用指令的记录" },
 	{ "strFriendDenyNoTrust", "很遗憾，你不是{self}信任的用户，如需使用可联系{print:master}" },
 	{"strAddFriendWhiteQQ", "{strAddFriend}"}, //白名单用户添加好友时回复此句
@@ -522,6 +536,13 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+660:优化sample嵌套
+659:reply支持冷却/限额回复
+658:重写.dnd展示
+657:角色卡模板支持别名
+656:重做文本转义
+655:st优化且增加触发时点
+654:重做角色卡模板
 653:游戏卡带机制
 652:game new/over/open/close/state
 651:局内轮盘骰
@@ -533,7 +554,6 @@ const dict_ci<> HelpDoc = {
 645:重定义.sc回执
 644:定义脚本内角色卡Actor类型
 643:rc支持跨角色卡调用
-642:优化helpdoc
 641:SelfData支持yaml
 640:支持调用JavaScript
 639:支持reply调用python
@@ -550,19 +570,11 @@ const dict_ci<> HelpDoc = {
 626:前缀匹配记录后缀
 624:支持mod远程安装/详细信息
 622:支持手动时差
-621:扩展代理事件及ex接口
 618:支持reply(Order形式)覆盖指令
 617:更新grade分档转义
-612:新增mod代理事件
-610:新增mod定时事件
-609:新增mod循环事件
-608:新增.mod指令
 593:reply新增触发限制
 589:ak安科安价指令
-581:角色掷骰统计
-569:.rc/.draw暗骰暗抽
-567:敏感词检测
-565:.log日志记录)"},
+581:角色掷骰统计)"},
 {"协议","0.本协议是Dice!默认服务协议。如果你看到了这句话，意味着Master应用默认协议，请注意。\n1.邀请骰娘、使用掷骰服务和在群内阅读此协议视为同意并承诺遵守此协议，否则请使用.dismiss移出骰娘。\n2.不允许禁言、移出骰娘或刷屏掷骰等对骰娘的不友善行为，这些行为将会提高骰娘被制裁的风险。开关骰娘响应请使用.bot on/off。\n3.骰娘默认邀请行为已得到群内事先同意并认可协议，因而会自动同意群邀请。因擅自邀请而使骰娘遭遇不友善行为时，邀请者因未履行预见义务而将承担连带责任。\n4.禁止将骰娘用于赌博及其他违法犯罪行为。\n5.对于设置敏感昵称等无法预见但有可能招致言论审查的行为，骰娘可能会出于自我保护而拒绝提供服务\n6.由于技术以及资金原因，我们无法保证机器人100%的时间稳定运行，可能不定时停机维护或遭遇冻结，但是相应情况会及时通过各种渠道进行通知，敬请谅解。临时停机的骰娘不会有任何响应，故而不会影响群内活动，此状态下仍然禁止不友善行为。\n7.对于违反协议的行为，骰娘将视情况终止对用户和所在群提供服务，并将不良记录共享给其他服务提供方。黑名单相关事宜可以与服务提供方协商，但最终裁定权在服务提供方。\n8.本协议内容随时有可能改动。请注意帮助信息、签名、空间、官方群等处的骰娘动态。\n9.骰娘提供掷骰服务是完全免费的，欢迎投食。\n10.本服务最终解释权归服务提供方所有。"},
 {"链接","Dice!论坛: https://kokona.tech\nDice!手册: https://v2docs.kokona.tech\n支持Shiki: https://afdian.net/@dice_shiki"},
 {"设定",R"(Master：{print:master}
@@ -579,7 +591,7 @@ const dict_ci<> HelpDoc = {
 {"窥屏可能","无"},
 {"其他插件","【未知】"},
 {"姐妹骰","{list_dice_sister}"},
-{"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2023 String.Empty\nGithub@Dice-Developer-Team"},
+{"作者","Copyright (C) 2018-2021 w4123溯洄\nCopyright (C) 2019-2024 String.Empty\nGithub@Dice-Developer-Team"},
 {"指令",R"(指令前接at可以指定骰娘响应，如
 {at:self}.bot on
 请.help对应指令 获取详细信息，如.help r
@@ -592,8 +604,7 @@ const dict_ci<> HelpDoc = {
 .authorize 授权许可
 .send 向后台发送消息
 .mod 模块操作)"
-"\f"
-R"([第二页]跑团指令
+R"(跑团指令
 .game 游戏领域
 .rules 规则速查
 .r 掷骰
@@ -611,8 +622,7 @@ R"([第二页]跑团指令
 .ri 先攻
 .init 先攻列表
 .ww 骰池)"
-"\f"
-R"([第三页]其他指令
+R"(其他指令
 .nn 设置称呼
 .draw 抽牌
 .deck 牌堆实例
@@ -620,10 +630,8 @@ R"([第三页]其他指令
 .ak 安科/安价
 .jrrp 今日人品
 .welcome 入群欢迎
-.me 第三人称动作
-为了避免未预料到的指令误判，请尽可能在参数之间使用空格)"
-"\f"
-R"({help:扩展指令})"},
+为了避免未预料到的指令误判，请尽可能在参数之间使用空格
+更多个性化指令参见.help 扩展指令)"},
 {"master",R"(当前Master:{print:master}
 Master拥有最高权限，且可以调整任意信任)"},
 {"mod",R"(模块指令.mod
@@ -631,9 +639,9 @@ Master拥有最高权限，且可以调整任意信任)"},
 `.mod list` 查看已加载mod列表
 `.mod on 模块名` 启用指定模块
 `.mod off 模块名` 停用指定模块
+`.mod del 模块名` 卸载指定模块
 `.mod info 模块名` 指定模块简介信息
 `.mod detail 模块名` 指定模块详细信息
-`.mod delete 模块名` 卸载指定模块
 mod按序读取，且从后向前覆盖)"},
 {"ak",R"(安科+安价指令.ak
 .ak#[标题]或.ak new [标题] 新建分歧并设置标题（可为空）
@@ -647,6 +655,7 @@ mod按序读取，且从后向前覆盖)"},
 `.log on` 继续记录
 `.log off` 暂停记录
 `.log end` 完成记录并发送日志文件
+本桌有登记gm或pl时（见.game）记录gm和pl的发言，否则记录所有人发言
 日志名须作为文件名合法，省略则使用创建时间戳。上传有失败风险，届时请.send {self}后台索取)"},
 {"deck",R"(牌堆实例.deck
 `.deck set (牌堆名=)公共牌堆名` //从公共牌堆创建实例
@@ -678,8 +687,8 @@ mod按序读取，且从后向前覆盖)"},
 {"r","掷骰：.r [掷骰表达式] ([掷骰原因]) [掷骰表达式]：([掷骰轮数]#)[骰子个数]d骰子面数(p[惩罚骰个数])(k[取点数最大的骰子数])不带参数时视为掷一个默认骰\n合法参数要求掷骰轮数1-10，奖惩骰个数1-9，个数范围1-100，面数范围1-1000\n.r3#d\t//3轮掷骰\n.rh心理学 暗骰\n.rs1D10+1D6+3 沙鹰伤害\t//rs省略单个骰子的点数，直接给结果"},
 {"暗骰","群聊限定，掷骰指令后接h视为暗骰，结果将私发本人和群内ob的用户\n为了保证发送成功，请加骰娘好友"},
 {"reply",R"(自定义回复：.reply
-.reply on/off 开启/关闭群内回复
-回复触发顺序：指令->完全Match->前缀Prefix->模糊Search->正则Regex
+.reply on/off 开/关群内回复
+触发顺序：指令->回复 完全Match->前缀Prefix->模糊Search->正则Regex
 //以下操作回复指令仅admin可用
 .reply set
 Type=[回复性质](Reply/Order)
@@ -705,7 +714,8 @@ Type=[回复性质](Reply/Order)
 )" },
 {"回复列表","{strSelfName}的回复触发词列表:{list_reply_deck}"},
 {"game",R"(游戏模式：
-`.game new 桌名` 创建游戏（命名可省略）
+`.game new 桌名` 创建游戏（桌名可省略，前缀以`规则:`可以指定应用规则）
+例: `.game new DND:`
 `.game over` 销毁本桌游戏
 `.game state` 查看本桌状态
 `.game master` 登记为GM
@@ -730,12 +740,11 @@ Type=[回复性质](Reply/Order)
 {"旁观","&ob"},
 {"旁观模式","&ob"},
 {"ob",R"(旁观模式：.ob (join/exit/list/clr/on/off)
-.ob join //加入旁观，可以看到房内暗骰结果
+.ob join //加入旁观，可以看到本桌暗骰结果
 .ob exit //退出旁观模式
-.ob list //查看群内旁观者
+.ob list //查看本桌旁观者
 .ob clr //清除所有旁观者
-.ob on //全群允许旁观模式
-.ob off //禁用旁观模式
+.ob on/off //本桌开/关旁观模式
 暗骰与旁观私聊无效)"},
 {"默认骰","&set"},
 {"set","当表达式中‘D’之后没有接面数时，视为投掷默认骰\n.set20 将默认骰设置为20\n.set 不带参数视为将默认骰重置为默认的100\n若所用规则判定掷骰形如2D6，推荐使用.st &=2D6"},
@@ -752,27 +761,36 @@ Type=[回复性质](Reply/Order)
 {"nn","设置群内称呼：.nn [昵称] / .nn / .nnn(cn/jp/en) \n.nn kp\t//昵称前的./！等符号会被自动忽略\n.nn del\t//删除当前窗口称呼\n.nn clr\t//删除所有记录的称呼\n.nnn\t//从随机姓名牌堆设置随机称呼\n.nnn jp\t/从指定子牌堆随机昵称\n私聊.nn视为操作全局称呼\n该称呼用于\\{nick\\}的显示，优先级：群内称呼>全局称呼>群名片>QQ昵称\n无角色卡或未命名时也用于显示\\{pc\\}"},
 {"人物作成","该版本人物作成支持COC7(.coc、.draw调查员背景/英雄天赋)、COC6(.coc6、.draw煤气灯)、DND(.dnd)、AMGC(.draw AMGC)"},
 {"coc","克苏鲁的呼唤(COC)人物作成：.coc([7/6])(d)([生成数量])\n.coc 10\t//默认生成7版人物\n.coc6d\t//接d为详细作成，一次只能作成一个\n仅用作骰点法人物作成，可应用变体规则，参考.rules创建调查员的其他选项"},
-{"dnd","龙与地下城(DND)人物作成：.dnd([生成数量])\n.dnd 5\t//仅作参考，可自行应用变体规则"},
+{"dnd","龙与地下城(DND)人物作成：.dnd (生成数量)\n例`.dnd 5` //生成6维降序排列，仅作参考，可自行应用变体规则"},
 {"属性记录","&st"},
-{"st","属性记录：.st (del/clr/show) ([属性名]:[属性值])\n用户默认所有群使用同一张卡，pl如需多开请使用.pc指令切卡\n.st力量:50 体质:55 体型:65 敏捷:45 外貌:70 智力:75 意志:35 教育:65 幸运:75\n.st hp-1 后接+/-时视为从原值上变化\n.st san+1d6 修改属性时可使用掷骰表达式\n.st del kp裁决\t//删除已保存的属性\n.st clr\t//清空当前卡\n.st show 灵感\t//查看指定属性\n.st show\t//无参数时查看所有属性，请使用只st加点过技能的半自动人物卡！\n部分COC属性会被视为同义词，如智力/灵感、理智/san、侦查/侦察"},
+{"st",R"(属性记录：.st (del/clr/show) ([属性名]:[属性值])
+pl默认所有群使用同一张卡，如需多开请使用.pc指令切卡
+.st 力量:50 体质:55 体型:65 敏捷:45 外貌:70 智力:75 意志:35 教育:65 幸运:75
+.st hp-1 后接+/-时视为从原值上变化
+.st san+1d6 修改属性时可使用掷骰表达式
+.st del kp裁决 //删除已保存的属性
+.st clr //清空当前卡
+.st show 灵感 //查看指定属性，无参数时查看所有属性
+部分属性会被视为同义词，如理智/san、侦查/侦察
+若.st后属性未发生变化也会返回本词条)"},
 {"角色卡","&pc"},
 {"pc",R"(角色卡：.pc 
-.pc new ([模板]:([生成参数]:))([卡名]) 
-完全省略参数将生成一张COC7模板的随机姓名卡
-.pc tag ([卡名]) //为当前群绑定指定卡，为空则解绑使用默认卡
+.pc new (模板:(生成参数:))(卡名) 
+例: `.pc new 卡特` //完全省略参数将生成一张COC7模板的随机姓名卡
+.pc tag (卡名) //为当前群绑定指定卡，为空则解绑使用默认卡
 所有群默认使用私聊绑定卡，未绑定则使用0号卡
-.pc show ([卡名]) //展示指定卡所有记录的属性，为空则展示当前卡
-.pc nn [新卡名] //重命名当前卡，不允许重名
-.pc type [模板] //将切换当前卡模板
-.pc cpy [卡名1]=[卡名2] //将后者属性复制给前者
-.pc del [卡名] //删除指定卡
+.pc show (卡名) //展示指定卡所有记录的属性，为空则展示当前卡
+.pc nn 新卡名 //重命名当前卡，不允许重名
+.pc type 模板 //将切换当前卡模板
+.pc cpy 卡名1=卡名2 //将后者属性复制给前者
+.pc del 卡名 //删除指定卡
 .pc list //列出全部角色卡
 .pc grp //列出各群绑定卡
-.pc build ([生成参数]:)(卡名) //根据模板填充生成属性（COC7为9项主属性）
+.pc build (生成参数:)(卡名) //根据模板填充生成属性（COC7为9项主属性）
 .pc stat //查看当前角色卡骰点统计
-.pc redo ([生成参数]:)(卡名) //清空原有属性后重新生成
+.pc redo (生成参数:)(卡名) //清空原有属性后重新生成
 .pc clr //销毁全部角色卡记录
-//掷骰统计以角色卡为单位，每名用户最多可同时保存16张角色卡
+//掷骰统计以角色卡为单位，每名用户最多可同时保存32张角色卡
 )"
 	},
 	{"rc", "&rc/ra"},
@@ -886,19 +904,19 @@ Type=[回复性质](Reply/Order)
 		R"(群管指令.group(群管理员限定)
 .group state //查看在群内对骰娘的设置
 .group pause/restart //群全体禁言/全体解除禁言
-.group card [at/用户QQ] [名片] //设置群员名片
-.group title [at/用户QQ] [头衔] //设置群员头衔
+.group card [at/用户ID] [名片] //设置群员名片
+.group title [at/用户ID] [头衔] //设置群员头衔
 .group diver //查看潜水成员
 .group +/-[群管词条] //为群加减设置，需要对应权限
 例:.group +禁用回复 //关闭本群自定义回复
-群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/拦截消息/许可使用/免清/免黑)"
+群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/许可使用/免清/免黑)"
 	},
 	{ "groups_list", "&取群列表" },
 	{ "取群列表", R"(取群列表.groups list(管理限定)
 .groups list idle //按闲置天数降序列出群
 .groups list size //按群规模降序列出群
 .groups list [群管词条] //列出带有词条的群
-群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/禁用ob/拦截消息/许可使用/免清/免黑)" },
+群管词条:停用指令/禁用回复/禁用jrrp/禁用draw/禁用me/禁用help/许可使用/免清/免黑)" },
 	{"消息链接","&link"},
 	{"link",R"(消息链接.link
 .link [转发方向] [对象窗口] 建立本窗口与对象窗口的转发
@@ -926,7 +944,7 @@ Type=[回复性质](Reply/Order)
 Ignore //无视
 Notice //仅在0级窗口通知
 Caution //提醒用户，并在1级窗口提醒
-Warning //【默认等级】警告用户，并在1级窗口提醒
+Warning //【默认】警告用户，并在1级窗口提醒
 Danger //警告用户且拒绝指令，并在3级窗口警告
 *请避免为纯字母/数字的敏感词设置较高触发等级，这些字符存在误匹配图片码的可能性
 # 词库批量加载方式见手册)" },
@@ -982,9 +1000,6 @@ Danger //警告用户且拒绝指令，并在3级窗口警告
 	{"世界逆位", "未完成、失败、准备不足、盲目接受、一时不顺利、半途而废、精神颓废、饱和状态、合谋、态度不够融洽、感情受挫。"},
 };
 
-const std::string getMsg(const std::string& key, AttrObject maptmp){
-	return fmt->format(fmt->msg_get(key), maptmp);
-}
 const std::string getComment(const std::string& key) {
 	if (auto it{ GlobalComment.find(key) };it!= GlobalComment.end())return it->second;
 	return {};

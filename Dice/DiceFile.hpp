@@ -3,23 +3,19 @@
 /*
  * 文件读写
  * Copyright (C) 2018-2021 w4123
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <cstdio>
-#include <vector>
-#include <map>
 #include <set>
 #include "filesystem.hpp"
 #include <functional>
 #include <unordered_set>
-#include <unordered_map>
 #include <cstdio>
-#include "fifo_map.hpp"
-#include "DiceXMLTree.h"
-#include "StrExtern.hpp"
+#include "tinyxml2.h"
 #include "DiceMsgSend.h"
 #include "MsgFormat.h"
 #include "EncodingConvert.h"
@@ -53,7 +49,7 @@ bool readFile(const std::filesystem::path& p, std::basic_string<Char, Trait, All
 std::optional<std::string> readFile(const std::filesystem::path& p);
 
 template <typename TKey, typename TVal>
-TVal get(const map<TKey, TVal>& m, TKey key, TVal def)
+TVal get(const std::unordered_map<TKey, TVal>& m, TKey key, TVal def)
 {
 	return (m.count(key) ? m.at(key) : def);
 	/*auto it = m.find(key);
@@ -173,7 +169,7 @@ std::set<T> fread(ifstream& fin)
 }
 
 template <typename T1, typename T2>
-void readini(string& line, std::pair<T1, T2>& p, char delim = '=')
+void readini(const string& line, std::pair<T1, T2>& p, char delim = '=')
 {
 	const size_t pos = line.find(delim);
 	if (pos == std::string::npos)return;
@@ -198,8 +194,8 @@ std::pair<T1, T2> readini(const string& line, char delim = '='){
 
 void readini(ifstream& fin, std::string& s);
 
-template <typename T1, typename T2, class Sorter>
-void readini(string s, fifo_map<T1, T2, Sorter>& m)
+template <typename T1, typename T2, class Hasher, class Equal>
+void readini(string s, unordered_map<T1, T2, Hasher, Equal>& m)
 {
 	std::pair<T1, T2> p;
 	string line;
@@ -317,89 +313,38 @@ int loadFile(const std::filesystem::path& fpPath, nlohmann::fifo_map<T1, T2>& ma
 	return -1;
 }
 
-template <typename T1, typename T2>
-void loadFile(const std::filesystem::path& fpPath, std::multimap<T1, T2>& mapTmp)
-{
-	std::ifstream fin(fpPath);
-	if (fin)
-	{
-		T1 key;
-		T2 Val;
-		while (fin >> key >> Val)
-		{
-			mapTmp.insert({key, Val});
-		}
-	}
-	fin.close();
-}
-
 template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
-int loadBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
+int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, std::shared_ptr<C>>& m)
 {
-	std::ifstream fin(fpPath, std::ios::in | std::ios::binary);
-	if (!fin)return -1;
-	const int len = fread<int>(fin);
-	int Cnt = 0;
-	T key;
-	while (fin.peek() != EOF && len > Cnt++)
-	{
-		key = fread<T>(fin);
-		m[key] = fread<C>(fin);
-	}
-	fin.close();
-	return Cnt;
-}
-
-template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
-int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
-{
-	std::ifstream fin(fpPath, std::ios::in | std::ios::binary);
-	if (!fin)return -1;
-	int Cnt = 0;
-	try{
+	if (std::ifstream fin{ fpPath, std::ios::in | std::ios::binary }) {
+		int Cnt = 0;
 		const int len = fread<int>(fin);
-		T key;
-		while (fin.peek() != EOF && len > Cnt++)
-		{
-			key = fread<T>(fin);
+		while (fin.peek() != EOF && len > Cnt++){
+			auto key = fread<T>(fin);
+			auto val{ std::make_shared<C>(key) };
+			((*val).*U)(fin);
+			m.emplace(key, val);
+		}
+		return Cnt;
+	} 
+	return -1;
+}
+template <typename T, class C, void(C::* U)(std::ifstream&) = &C::readb>
+int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m){
+	if (std::ifstream fin{ fpPath, std::ios::in | std::ios::binary }) {
+		int Cnt = 0;
+		const int len = fread<int>(fin);
+		while (fin.peek() != EOF && len > Cnt++){
+			auto key = fread<T>(fin);
 			(m[key].*U)(fin);
 		}
+		fin.close();
+		return Cnt;
 	}
-	catch (...) {
-
-	}
-	fin.close();
-	return Cnt;
-}
-
-template <class C>
-int loadINI(const std::filesystem::path& fpPath, std::map<std::string, C>& m)
-{
-	std::ifstream fin(fpPath, std::ios::in | std::ios::binary);
-	if (!fin)return -1;
-	std::string s, name;
-	C val;
-	getline(fin, s);
-	readini(fin, name);
-	val.readi(fin);
-	m[name] = val;
-	fin.close();
-	return 1;
+	return -1;
 }
 
 bool rdbuf(const std::filesystem::path& fpPath, string& s);
-
-//读取伪xml
-template <class C, class Sorter, std::string(C::* U)() = &C::getName>
-int loadXML(const std::filesystem::path& fpPath, nlohmann::fifo_map<string, C, Sorter>& m)
-{
-	string s;
-	if (!rdbuf(fpPath, s))return -1;
-	DDOM xml(s);
-	C obj(xml);
-	m[obj.getName()].readt(xml);
-	return 1;
-}
 
 //遍历文件夹
 int listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& files, bool isSub = false);
@@ -444,34 +389,6 @@ int loadDir(int (*load)(const std::filesystem::path&, T&), const std::filesystem
 	{
 		if (_loadDir<std::filesystem::directory_iterator>(load, fpDir, tmp, intFile, intFailure, intItem, files) == -1)
 			return 0;
-		// 加载 Dice Extension Packages
-		std::error_code err;
-		for (const auto& p : std::filesystem::directory_iterator(fpDir, err))
-		{
-			if (std::filesystem::is_directory(p.status()) && std::filesystem::exists(p.path() / ".info.json"))
-			{
-				try 
-				{
-					ifstream i(p.path() / ".info.json");
-					if (!i)
-					{
-						throw std::runtime_error("Cannot open package file");
-					}
-					nlohmann::json j;
-					i >> j;
-					ExtensionInfo info;
-					j.get_to(info);
-					ExtensionManagerInstance->addInstalledPackage(info, p.path());
-				}
-				catch (const std::exception& e)
-				{
-					continue;
-				}
-				if (_loadDir<std::filesystem::directory_iterator>(load, p.path(), tmp, intFile, intFailure, intItem, files) == -1)
-					return 0;
-			}
-		}
-		if(err) return 0;
 	}
 
 	if (!intFile)return 0;
@@ -498,14 +415,6 @@ template <class C, void(C::* U)(std::ofstream&) = &C::save>
 void fprint(std::ofstream& fout, C obj)
 {
 	obj.save(fout);
-}
-
-template <typename T1, typename T2>
-void fprint(std::ofstream& fout, std::pair<T1, T2> t)
-{
-	fprint(fout, t.first);
-	fout << "\t";
-	fprint(fout, t.second);
 }
 
 template <typename T>
@@ -539,6 +448,10 @@ void fwrite(ofstream& fout, const C& obj)
 {
 	obj.writeb(fout);
 }
+template <class C, void(C::* U)(std::ofstream&) const = &C::writeb>
+void fwrite(ofstream& fout, const std::shared_ptr<C>& obj){
+	obj->writeb(fout);
+}
 
 template <class C, void(C::* U)(std::ofstream&) = &C::writeb>
 void fwrite(ofstream& fout, C& obj)
@@ -556,17 +469,6 @@ void fwrite(ofstream& fout, const std::map<T1, T2>&m)
 	{
 		fwrite(fout, it.first);
 		fwrite(fout, it.second);
-	}
-}
-template <typename T1, typename T2>
-void fwrite(ofstream& fout, const std::map<T1, std::shared_ptr<T2>>& m)
-{
-	const auto len = static_cast<short>(m.size());
-	fwrite(fout, len);
-	for (const auto& it : m)
-	{
-		fwrite(fout, it.first);
-		fwrite(fout, *it.second);
 	}
 }
 template <typename T1, typename T2>
@@ -655,22 +557,7 @@ void saveFile(const std::filesystem::path& fpPath, const unordered_map<TKey, TVa
 }
 
 template <typename T, class C, void(C::* U)(std::ofstream&) const = &C::writeb>
-void saveBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
-{
-	if (clrEmpty(fpPath, m))return;
-	std::ofstream fout(fpPath, ios::out | ios::trunc | ios::binary);
-	const int len = m.size();
-	fwrite<int>(fout, len);
-	for (auto& [key,val] : m)
-	{
-		fwrite(fout, key);
-		fwrite(fout, val);
-	}
-	fout.close();
-}
-
-template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
-void saveBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
+void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 {
 	if (clrEmpty(fpPath, m))return;
 	std::ofstream fout(fpPath, ios::out | ios::trunc | ios::binary);
@@ -685,7 +572,7 @@ void saveBFile(const std::filesystem::path& fpPath, std::map<T, C>& m)
 }
 
 template <typename T, class C, void(C::* U)(std::ofstream&) const = &C::writeb>
-void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
+void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, std::shared_ptr<C>>& m)
 {
 	if (clrEmpty(fpPath, m))return;
 	std::ofstream fout(fpPath, ios::out | ios::trunc | ios::binary);
@@ -694,39 +581,9 @@ void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
 	for (auto& [key, val] : m)
 	{
 		fwrite(fout, key);
-		fwrite(fout, val);
+		val->writeb(fout);
 	}
 	fout.close();
-}
-
-template <typename T, class C, void(C::* U)(std::ofstream&) = &C::writeb>
-void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m)
-{
-	if (clrEmpty(fpPath, m))return;
-	std::ofstream fout(fpPath, ios::out | ios::trunc | ios::binary);
-	const int len = m.size();
-	fwrite<int>(fout, len);
-	for (auto& [key, val] : m)
-	{
-		fwrite(fout, key);
-		fwrite(fout, val);
-	}
-	fout.close();
-}
-
-//读取伪xml
-template <class C, std::string(C::* U)() = &C::writet>
-void saveXML(const std::string& strPath, C& obj)
-{
-	std::ofstream fout(strPath);
-	fout << obj.writet();
-}
-
-template <class C, std::string(C::* U)() = &C::writet>
-void saveXML(const std::filesystem::path& fpPath, C& obj)
-{
-	std::ofstream fout(fpPath);
-	fout << obj.writet();
 }
 
 std::string getNativePathString(const std::filesystem::path& fpPath);

@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -21,6 +21,7 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+#include <regex>
 #include "DiceMod.h"
 #include "GlobalVar.h"
 #include "ManagerSystem.h"
@@ -34,8 +35,10 @@
 #include "DiceSelfData.h"
 #include "RandomGenerator.h"
 #include "DDAPI.h"
+#include "DiceZip.h"
+#include "DiceNetwork.h"
 #include "DiceYaml.h"
-#include <regex>
+#include "DiceFormatter.h"
 
 std::shared_ptr<DiceModManager> fmt;
 
@@ -61,7 +64,7 @@ string DiceSpeech::express()const {
 	return {};
 }
 
-dict_ci<DiceSpeech> transpeech{
+static dict_ci<DiceSpeech> transpeech{
 	{ "br", "\n" },
 	{ "sp"," " },
 	{ "amp","&" },
@@ -143,7 +146,7 @@ bool DiceModManager::mod_dlpkg(const string& name, const string& pkg, string& de
 			fs::copy(desc, pathJson);
 		}
 		else {
-			des = "\npkg解压无文件" + name + ".json";
+			des = "\npkg don't exist " + name + ".json";
 			return false;
 		}
 	}
@@ -169,14 +172,17 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 		return;
 	}
 	for (auto& url : sourceList) {
-		if (!Network::GET(url + name, desc)) {
+		if (!Network::GET(url + name + "/descriptor.json", desc)) {
 			msg.set("err", msg.get_str("err") + "\n访问" + url + name + "失败:" + desc);
 			continue;
 		}
 		try {
 			if (desc.find("404") == 0)continue;
 			fifo_json j = fifo_json::parse(desc);
-			//todo: dice_build check
+			if (j.count("dice_build") && j["dice_build"] > Dice_Build) {
+				msg.set("err", msg.get_str("err") + "\nDice版本不满足要求(" + to_string(j["dice_build"]) + "):" + url);
+				continue;
+			}
 #ifndef __ANDROID__
 			if (j.count("repo") && !j["repo"].empty()) {
 				string repo{ j["repo"] };
@@ -387,236 +393,26 @@ void DiceModManager::turn_over(size_t idx) {
 	save();
 	build();
 }
-static enumap<string> methods{ "var","print","help","sample","case","vary","grade","at","ran","wait","py" };
-enum class FmtMethod { Var, Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait, Py};
-struct ParseNode {
-	string leaf;
-	size_t pos;
-	char token;
-	ParseNode(const string& s, size_t p, char t) :leaf(s), pos(p), token(t) {}
-	shared_ptr<ParseNode> next;
-	shared_ptr<ParseNode> first_kid;
-	//shared_ptr<ParseNode> last_kid;
-};
-class Parser {
-	//string exp;
-	AttrObject context;
-	bool isTrust{ true };
-	dict_ci<string> dict;
-	shared_ptr<ParseNode> root;
-public:
-	Parser(const string& s, const AttrObject& obj, bool t = true, const dict_ci<string>& con = {})
-		:root(std::make_shared<ParseNode>(s, 0, char(0xAA))), context(obj), isTrust(t), dict(con) {
-		string& exp{ root->leaf };
-		auto parent{ root };
-		char chSign[3]{ char(0xAA),char(0xAA),'\0' };
-		size_t preL{ 0 }, lastL{ 0 }, lastR{ 0 }; 
-		while ((lastR = exp.find('}', ++lastR)) != string::npos
-			&& (lastL = exp.rfind('{', lastR)) != string::npos) {
-			string key;
-			//括号前加‘\’表示该括号内容不转义
-			if (exp[lastR - 1] == '\\') {
-				lastL = lastR - 1;
-				key = "}";
-			}
-			else if (lastL > 0 && exp[lastL - 1] == '\\') {
-				lastR = lastL--;
-				key = "{";
-			}
-			else key = exp.substr(lastL + 1, lastR - lastL - 1);
-			auto node{ std::make_shared<ParseNode>(key,lastL,++chSign[1]) };
-			if (!root->first_kid){
-				parent = root->first_kid = node;
-			}
-			else if (lastL >= preL) {
-				parent = parent->next = node;
-			}
-			else if (lastL < root->first_kid->pos) {
-				node->first_kid = root->first_kid;
-				parent = root->first_kid = node;
-			}
-			else {
-				parent = root->first_kid;
-				while (parent->next) {
-					if (parent->next->pos < lastL) {
-						parent = parent->next;
-					}
-					else {
-						node->first_kid = parent->next;
-						parent = parent->next = node;
-						break;
-					}
-				}
-			}
-			exp.replace(lastL, lastR - lastL + 1, chSign);
-			lastR = (preL = lastL) + 1;
-		}
-		if(root->first_kid)format_token(exp, root);
-	}
-	AttrVar format_token(string& s, shared_ptr<ParseNode> it) {
-		char chSign[3]{ char(0xAA),char(0xAA),'\0' };
-		size_t pos{ 0 };
-		it = it->first_kid;
-		while (it) {
-			chSign[1] = it->token;
-			if ((pos = s.find(chSign)) != string::npos) {
-				string& key{ it->leaf };
-				AttrVar val{ "{" + key + "}" };
-				if (key == "{" || key == "}") {
-					val = key;
-				}
-				else if (context.has(key)) {
-					if (key == "res")val = fmt->format(context.print(key), context, isTrust, dict);
-					else val = context.print(key);
-				}
-				else if (AttrVar res{ getContextItem(context, key, isTrust) }) {
-					val = res;
-				}
-				else if (auto cit = dict.find(key); cit != dict.end()) {
-					val = fmt->format(cit->second, context, isTrust, dict);
-				}
-				//语境优先于全局
-				else if (auto sp = fmt->global_speech.find(key); sp != fmt->global_speech.end()) {
-					val = fmt->format(sp->second.express(), context, isTrust, dict);
-					if (!isTrust && val == "\f")val = "\f> ";
-				}
-				else if (size_t colon{ key.find(':') }; colon != string::npos) {
-					string method{ key.substr(0,colon) };
-					string para{ key.substr(colon + 1) };
-					if (methods.count(method))switch ((FmtMethod)methods[method]) {
-						case FmtMethod::Var:{
-							auto posQ = para.find('?'), posE = para.find('=');
-							if (posQ < posE) {
-								auto [field, exp] = readini<string, string>(para, '?');
-								field = format_token(field, it);
-								context.set(field, val = (exp[0] == char(0xAA)) ? format_token(exp, it) : AttrVar::parse(exp));
-							}
-							else {
-								auto exps{ splitPairs(para,'=','&') };
-								for (auto& [field, exp] : exps) {
-									if (exp.empty())context.set(field);
-									else context.set(field, (exp[0] == char(0xAA)) ? format_token(exp, it) : AttrVar::parse(exp));
-								}
-								val.des();
-							}
-						} break;
-						case FmtMethod::Help:
-							val = fmt->get_help(format_token(para, it).to_str(), context);
-							break;
-						case FmtMethod::Sample:
-							if (vector<string> samples{ split(para,"|") }; samples.empty())val.des();
-							else
-								val = format_token(samples[(size_t)RandomGenerator::Randint(0, samples.size() - 1)], it);
-							break;
-						case FmtMethod::At:
-							if (format_token(para, it) == "self") {
-								val = "[CQ:at,qq=" + to_string(console.DiceMaid) + "]";
-							}
-							else if (!para.empty()) {
-								val = "[CQ:at,qq=" + para + "]";
-							}
-							else if (context.has("uid")) {
-								val = "[CQ:at,qq=" + context.get_str("uid") + "]";
-							}
-							else val.des();
-							break;
-						case FmtMethod::Print:
-							if (auto paras{ splitPairs(para,'=','&') }; paras.count("uid")) {
-								if (isTrust && paras["uid"].empty())val = printUser(context.get_ll("uid"));
-								else val = printUser(AttrVar(paras["uid"]).to_ll());
-							}
-							else if (paras.count("gid")) {
-								if (isTrust && paras["gid"].empty())val = printGroup(context.get_ll("gid"));
-								else val = printGroup(AttrVar(paras["gid"]).to_ll());
-							}
-							else if (paras.count("master")) {
-								val = console ? printUser(console) : "[无主]";
-							}
-							else val.des();
-							break;
-						case FmtMethod::Case:
-						case FmtMethod::Vary: {
-							auto [item, strVary] = readini<string, string>(para, '?');
-							auto paras{ splitPairs(strVary,'=','&') };
-							auto itemVal{ getContextItem(context, format_token(item, it), isTrust) };
-							if (auto i{ paras.find(itemVal.print()) }; i != paras.end()
-								|| (i = paras.find("else")) != paras.end()) {
-								val = format_token(i->second, it);
-							}
-							else val.des();
-						}break;
-						case FmtMethod::Grade: {
-							auto [item, strVary] = readini<string, string>(para, '?');
-							auto paras{ splitPairs(strVary,'=','&') };
-							auto itemVal{ getContextItem(context, format_token(item, it), isTrust) };
-							grad_map<double, string>grade;
-							for (auto& [step, value] : paras) {
-								if (step == "else")grade.set_else(value);
-								else if (isNumeric(step))
-									grade.set_step(stod(step), value);
-								else if (auto stepVal{ getContextItem(context,step, isTrust) }; stepVal.is_numberic())
-									grade.set_step(stepVal.to_num(), value);
-							}
-							val = format_token(itemVal.is_numberic() ? grade[itemVal.to_num()] : grade.get_else(), it);
-						}break;
-						case FmtMethod::Ran: {
-							auto [min, max] = readini<string, string>(para, '~');
-							int l = AttrVar::parse(format_token(min, it)).to_int(),
-								r = AttrVar::parse(format_token(max, it)).to_int();
-							val = (l == r) ? to_string(l)
-								: (l < r) ? to_string(RandomGenerator::Randint(l, r))
-								: to_string(RandomGenerator::Randint(r, l));
-						}break;
-						case FmtMethod::Wait:
-							if (long long ms{ AttrVar::parse(format_token(para, it)).to_ll() }; 0 < ms && ms < 600000)
-								std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-							val.des();
-							break;
-						case FmtMethod::Py:
-#ifdef DICE_PYTHON
-							if (py)val = py->evalString(format_token(para, it), context);
-#endif //DICE_PYTHON
-							break;
-						default:
-							break;
-						}
-				}
-				else if (auto func = strFuncs.find(key); func != strFuncs.end()) {
-					val = func->second();
-				}
-				if (s == chSign) {
-					s = val;
-					return val;
-				}
-				else if (val.is_null()) s.erase(pos, 2);
-				else s.replace(pos, 2, val.print());
-			}
-			format_token(s, it);
-			it = it->next;
-		}
-		return s;
-	}
-	operator string() {
-		return root->leaf;
-	}
-};
+const std::string getMsg(const std::string& key, const AttrObject& maptmp) {
+	return fmt->format(fmt->msg_get(key), maptmp);
+}
 
-string DiceModManager::format(const string& s, AttrObject context, bool isTrust, const dict_ci<string>& dict) const {
+AttrVar DiceModManager::format(const string& s, const AttrObject& context, bool isTrust, const dict_ci<string>& dict) const {
 	//直接重定向
 	if (s[0] == '&') {
 		const string key = s.substr(1);
 		if (auto val{ getContextItem(context, key, isTrust) }) {
-			return val.print();
+			return val;
 		}
 		else if (const auto it = dict.find(key); it != dict.end()) {
 			return format(it->second, context, isTrust, dict);
 		}
 		else if (const auto it = global_speech.find(key); it != global_speech.end()) {
-			return fmt->format(it->second.express(), context, isTrust, dict);
+			return format(it->second.express(), context, isTrust, dict);
 		}
 	}
 	if (s.find('{') == string::npos)return s;
-	return Parser(s, context, isTrust, dict);
+	return formatMsg(s, context, isTrust, dict);
 }
 std::shared_mutex GlobalMsgMutex;
 string DiceModManager::msg_get(const string& key)const {
@@ -648,7 +444,7 @@ void DiceModManager::msg_edit(const string& key, const string& val){
 	saveJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg);
 }
 
-string DiceModManager::get_help(const string& key, AttrObject context) const{
+string DiceModManager::get_help(const string& key, const AttrObject& context) const{
 	if (const auto it = global_helpdoc.find(key); it != global_helpdoc.end()){
 		return format(it->second, context, true, global_helpdoc);
 	}
@@ -673,15 +469,15 @@ struct help_sorter {
 		return _Left < _Right;
 	}
 };
-string DiceModManager::prev_help(const string& key, AttrObject context) const {
+string DiceModManager::prev_help(const string& key, const AttrObject& context) const {
 	if (const auto it = global_helpdoc.find(key); it != global_helpdoc.end()) {
 		return it->second;
 	}
-	else if (auto keys = querier.search(key); !keys.empty()) {
+	else if (auto keys{ querier.search(key) }; !keys.empty()) {
 		if (keys.size() == 1) {
 			auto word{ *keys.begin() };
-			context.set("redirect_key", word);
-			context.set("redirect_res", global_helpdoc.at(word));
+			context->set("redirect_key", word);
+			context->set("redirect_res", global_helpdoc.at(word));
 			return getMsg("strHelpRedirect", context);
 		}
 		else {
@@ -690,12 +486,11 @@ string DiceModManager::prev_help(const string& key, AttrObject context) const {
 				qKey.emplace(".help " + key);
 			}
 			ShowList res;
-			while (!qKey.empty()) {
+			while (!qKey.empty() && res.size() <= 20) {
 				res << qKey.top();
 				qKey.pop();
-				if (res.size() > 20)break;
 			}
-			context.set("res", res.show("\n"));
+			context->set("res", res.show("\n"));
 			return getMsg("strHelpSuggestion", context);
 		}
 	}
@@ -752,59 +547,59 @@ void DiceModManager::rm_help(const string& key){
 	}
 }
 
-time_t parse_seconds(const AttrVar& time) {
+static time_t parse_seconds(const AttrVar& time) {
 	if (time.is_numberic())return time.to_int();
-	if (AttrObject t{ time.to_obj() }; !t.empty())
-		return t.get_ll("second") + t.get_ll("minute") * 60 + t.get_ll("hour") * 3600 + t.get_ll("day") * 86400;
+	if (auto t{ time.to_obj() }; !t->empty())
+		return t->get_ll("second") + t->get_ll("minute") * 60 + t->get_ll("hour") * 3600 + t->get_ll("day") * 86400;
 	return 0;
 }
-Clock parse_clock(const AttrVar& time) {
+static Clock parse_clock(const AttrVar& time) {
 	Clock clock{ 0,0 };
-	if (AttrObject t{ time.to_obj() }; !t.empty()) {
-		clock.first = t.get_int("hour");
-		clock.second = t.get_int("minute");
+	if (auto t{ time.to_obj() }; !t->empty()) {
+		clock.first = t->get_int("hour");
+		clock.second = t->get_int("minute");
 	}
 	return clock;
 }
 
 void DiceModManager::call_cycle_event(const string& id) {
 	if (id.empty() || !global_events.count(id))return;
-	AttrObject eve{ global_events[id] };
-	if (auto trigger{ eve.get_dict("trigger") }; trigger->count("cycle")) {
+	AttrObject& eve{ global_events[id] };
+	if (auto trigger{ eve->get_obj("trigger") }; trigger->has("cycle")) {
 		sch.add_job_for(parse_seconds(trigger->at("cycle")), eve);
 	}
-	if (auto action{ eve.get_dict("action") })call_event(eve, action);
+	if (auto action{ eve->get_obj("action") })call_event(eve.p, action);
 }
 void DiceModManager::call_clock_event(const string& id) {
 	if (id.empty() || !global_events.count(id))return;
-	AttrObject eve{ global_events[id] };
-	if (auto action{ eve.get_dict("action") })call_event(eve, action);
+	AttrObject& eve{ global_events[id] };
+	if (auto action{ eve->get_obj("action") })call_event(eve.p, action);
 }
-bool DiceModManager::call_hook_event(AttrObject eve) {
-	string hookEvent{ eve.has("hook") ? eve.get_str("hook") : eve.get_str("Event") };
+bool DiceModManager::call_hook_event(const AttrObject& eve) {
+	string hookEvent{ eve->has("hook") ? eve->get_str("hook") : eve->get_str("Event") };
 	if (hookEvent.empty())return false;
 	for (auto& [id, hook] : multi_range(hook_events, hookEvent)) {
-		if (auto action{ hook["action"].to_dict()}) {
+		if (auto action{ hook->get_obj("action")}) {
 			if (hookEvent == "StartUp" || hookEvent == "DayEnd" || hookEvent == "DayNew") {
-				if (action->count("lua")) {
-					std::thread th(lua_call_event, eve, action->at("lua"));
+				if (action->has("lua")) {
+					std::thread th(lua_call_event, eve.p, action->at("lua"));
 					th.detach();
 				}
-				if (action->count("js")) {
-					std::thread th(js_call_event, eve, action->at("js"));
+				if (action->has("js")) {
+					std::thread th(js_call_event, eve.p, action->at("js"));
 					th.detach();
 				}
 #ifdef DICE_PYTHON
-				if (action->count("py")) {
-					std::thread th(py_call_event, eve, action->at("py"));
+				if (action->has("py")) {
+					std::thread th(py_call_event, eve.p, action->at("py"));
 					th.detach();
 				}
 #endif //DICE_PYTHON
 			}
-			else call_event(eve, action);
+			else call_event(eve.p, action);
 		}
 	}
-	return eve.is("blocked");
+	return eve->is("blocked");
 }
 
 string DiceModManager::list_reply(int type)const {
@@ -912,7 +707,7 @@ repo(std::make_shared<DiceRepo>(pathDir, url)) {
 		fs::copy_file(pathDir / "descriptor.json", pathJson, fs::copy_options::overwrite_existing);
 		string reason;
 		if (!loadDesc(reason)) {
-			console.log(getMsg("strSelfNick") + "安装安装「" + mod + "」失败:" + reason, 0);
+			console.log(getMsg("strSelfNick") + "安装「" + mod + "」失败:" + reason, 0);
 		}
 	}
 }
@@ -932,6 +727,8 @@ string DiceMod::desc()const {
 }
 string DiceMod::detail()const {
 	ShowList li;
+	if (!rules.empty())li << "- 规则集: " + to_string(rules.size()) + " 部";
+	if (!card_models.empty())li << "- 角色卡: " + to_string(card_models.size()) + " 版";
 	if (!events.empty())li << "- 事件: " + to_string(events.size()) + "条";
 	if (!reply_list.empty())li << "- 回复: " + to_string(reply_list.size()) + "项";
 	if (!lua_scripts.empty())li << "- lua脚本: " + to_string(lua_scripts.size()) + "份";
@@ -1043,19 +840,18 @@ void DiceMod::loadDir() {
 		listDir(pathDir / "reply", luaFiles, true);
 		listDir(pathDir / "event", luaFiles, true);
 		loadLua();
-		if (fs::exists(pathDir / "rulebook")) {
-			if(vector<std::filesystem::path> fSpeech; listDir(pathDir / "rulebook", fSpeech, true))
+		if (auto dirRule{ pathDir / "rulebook" }; fs::exists(dirRule)) {
+			if(vector<std::filesystem::path> fSpeech; listDir(dirRule, fSpeech))
 			for (auto& p : fSpeech) {
 				try {
-					YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) };
-					if (yaml.IsMap()) {
+					if (YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) }; yaml.IsMap()) {
 						string rulename{ UTF8toGBK(yaml["rule"].Scalar()) };
 						auto& rule{ rules[rulename]};
 						if (yaml["manual"])for (auto it : yaml["manual"]) {
 							rule.manual[UTF8toGBK(it.first.Scalar())] = UTF8toGBK(it.second.Scalar());
 						}
-						if (yaml["cassette"])for (auto it : yaml["cassette"]) {
-							rule.cassettes[UTF8toGBK(it.first.Scalar())] = AttrVar(it.second).to_dict();
+						if (yaml["tape"])for (auto it : yaml["tape"]) {
+							rule.cassettes[UTF8toGBK(it.first.Scalar())] = AttrVar(it.second).to_obj();
 						}
 					}
 					else console.log(UTF8toGBK(cut_relative(p, pathDir).u8string()) + "yaml格式不为对象!", 0b10);
@@ -1065,13 +861,27 @@ void DiceMod::loadDir() {
 				}
 			}
 		}
+		if (auto dirModel{ pathDir / "model" }; fs::exists(dirModel)) {
+			if (vector<std::filesystem::path> fModels; listDir(dirModel, fModels, true)) {
+				for (auto& p : fModels) {
+					loadCardTemp(p, card_models);
+				}
+				for (auto& [name, model] : card_models) {
+					for (auto& a : model.alias) {
+						model_alias[a] = name;
+					}
+				}
+			}
+		}
 		if (fs::exists(pathDir / "image")) {
+			std::filesystem::create_directories(dirExe / "data" / "image");
 			std::filesystem::copy(pathDir / "image", dirExe / "data" / "image",
 				std::filesystem::copy_options::recursive |
 				(Enabled ? std::filesystem::copy_options::update_existing : std::filesystem::copy_options::overwrite_existing));
 			cntImage = cntDirFile(pathDir / "image");
 		}
 		if (fs::exists(pathDir / "audio")) {
+			std::filesystem::create_directories(dirExe / "data" / "record");
 			std::filesystem::copy(pathDir / "audio", dirExe / "data" / "record",
 				(Enabled ? std::filesystem::copy_options::update_existing : std::filesystem::copy_options::overwrite_existing));
 			cntAudio = cntDirFile(pathDir / "audio");
@@ -1099,10 +909,12 @@ int DiceModManager::load(ResList& resLog){
 		for (auto& j : jFile) {
 			if (!j.count("name"))continue;
 			string modName{ UTF8toGBK(j["name"].get<string>()) };
-			auto mod{ std::make_shared<DiceMod>(DiceMod{ modName,modOrder.size(),
-				j.count("active") ? bool(j["active"]) : true}) };
-			modList[modName] = mod;
-			modOrder.push_back(mod);
+			if (!modList.count(modName)) {
+				auto mod{ std::make_shared<DiceMod>(DiceMod{ modName,modOrder.size(),
+					j.count("active") ? bool(j["active"]) : true}) };
+				modList[modName] = mod;
+				modOrder.push_back(mod);
+			}
 		}
 	}
 	//读取mod
@@ -1182,7 +994,7 @@ int DiceModManager::load(ResList& resLog){
 				ptr<DiceMsgReply> reply{ custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;
 				reply->keyMatch[0] = std::make_unique<vector<string>>(vector<string>{ key });
-				reply->answer = deck;
+				reply->answer = AnysTable(deck);
 			}
 		}
 		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck) > 0) {
@@ -1191,7 +1003,7 @@ int DiceModManager::load(ResList& resLog){
 				ptr<DiceMsgReply> reply{ custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;
 				reply->keyMatch[3] = std::make_unique<vector<string>>(vector<string>{ key });
-				reply->answer = deck;
+				reply->answer = AnysTable(deck);
 			}
 		}
 		if(!custom_reply.empty())save_reply();
@@ -1214,9 +1026,9 @@ void DiceModManager::initCloud() {
 	}
 }
 void DiceModManager::build() {
-	isIniting = true; 
+	isIniting = true;
 	ShowList resLog;
-	size_t cntSpeech{ 0 }, cntHelp{ 0 };
+	size_t cntSpeech{ 0 }, cntHelp{ 0 }, cntModel{ 0 };
 	//init
 	map_merge(global_speech = transpeech, GlobalMsg);
 	global_helpdoc = HelpDoc;
@@ -1226,7 +1038,13 @@ void DiceModManager::build() {
 	global_events.clear();
 	final_reply = {};
 	auto rules_new = std::make_shared<DiceRuleSet>();
+	dict_ci<ptr<CardTemp>> models{
+	{"COC7", std::make_shared<CardTemp>(ModelCOC7),},
+	};
 	//merge mod
+	dict_ci<> model_alias{
+		{"COC","COC7"},
+	};
 	for (auto& mod : modOrder) {
 		if (!mod->active || !mod->loaded)continue;
 		map_merge(global_lua_scripts, mod->lua_scripts);
@@ -1237,10 +1055,28 @@ void DiceModManager::build() {
 		rules_new->merge(mod->rules);
 		map_merge(final_reply.items, mod->reply_list);
 		map_merge(global_events, mod->events);
+		for (auto& [name, model] : mod->card_models) {
+			if (models.count(name)) {
+				models[name]->merge(model);
+			}
+			else {
+				models[name] = std::make_shared<CardTemp>(model);
+			}
+			++cntModel;
+		}
+		map_merge(model_alias, mod->model_alias);
 	}
 	//merge custom
 	if (rules_new->build())resLog << "注册规则集 " + to_string(rules_new->rules.size()) + " 部";
 	ruleset.swap(rules_new);
+	if (cntModel)resLog << "注册角色卡模板 " + to_string(cntModel) + " 版";
+	for (auto& [name, model] : models) {
+		model->init();
+	}
+	if (cntModel || CardModels.size() > 2)CardModels.swap(models);
+	for (auto& [alias, name] : model_alias) {
+		CardModels[alias] = CardModels[name];
+	}
 	if (cntSpeech += map_merge(global_speech, EditedMsg))
 		resLog << "注册speech " + to_string(cntSpeech) + " 项";
 	if (cntHelp += map_merge(global_helpdoc, CustomHelp))
@@ -1264,15 +1100,15 @@ void DiceModManager::build() {
 		hook_events.clear();
 		unordered_set<string> cycle;
 		for (auto& [id, eve] : global_events) {
-			eve["id"] = id;
-			auto trigger{ eve.get_obj("trigger") };
-			if (trigger.has("cycle")) {
+			eve->at("id") = id;
+			auto trigger{ eve->get_obj("trigger") };
+			if (trigger->has("cycle")) {
 				if (!cycle_events.count(id)) {
 					call_cycle_event(id);
 				}
 				cycle.insert(id);
 			}
-			if (trigger.has("clock")) {
+			if (trigger->has("clock")) {
 				auto& clock{ trigger->at("clock") };
 				if (auto list{ clock.to_list() }) {
 					for (auto& clc : *list) {
@@ -1283,8 +1119,8 @@ void DiceModManager::build() {
 					clock_events.emplace(parse_clock(clock), id);
 				}
 			}
-			if (trigger.has("hook")) {
-				string nameEvent{ trigger->at("hook").to_str() };
+			if (trigger->has("hook")) {
+				string nameEvent{ trigger->get_str("hook") };
 				hook_events.emplace(nameEvent, eve);
 			}
 		}
@@ -1292,7 +1128,7 @@ void DiceModManager::build() {
 	}
 	if (!resLog.empty()) {
 		resLog << "模块加载完毕√";
-		console.log(getMsg("strSelfName") + "\n" + resLog.show("\n"), 1, printSTNow());
+		console.log(getMsg("strSelfName") + "\n" + resLog.show("\n"), int(Enabled), printSTNow());
 	}
 	isIniting = false;
 }
@@ -1318,10 +1154,10 @@ void DiceModManager::save() {
 		remove(DiceDir / "conf" / "ModList.json");
 	}
 }
-void call_event(AttrObject eve, const ptr<AttrVars>& action) {
-	if (action->count("lua"))lua_call_event(eve, action->at("lua"));
-	if (action->count("js"))js_call_event(eve, action->at("js"));
+void call_event(const ptr<AnysTable>& eve, const AttrObject& action) {
+	if (action->has("lua"))lua_call_event(eve, action->at("lua"));
+	if (action->has("js"))js_call_event(eve, action->at("js"));
 #ifdef DICE_PYTHON
-	if (action->count("py"))py_call_event(eve, action->at("py"));
+	if (action->has("py"))py_call_event(eve, action->at("py"));
 #endif //DICE_PYTHON
 }

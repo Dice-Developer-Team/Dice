@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2019 String.Empty
- * ÏûÏ¢ÆµÂÊ¼àÌý
+ * Copyright (C) 2019--2024 String.Empty
+ * Msg Frquency Monitor
  */
 #include <set>
 #include <queue>
@@ -8,11 +8,12 @@
 #include "MsgMonitor.h"
 #include "DiceSchedule.h"
 #include "DDAPI.h"
+#include "DiceMod.h"
 
 std::atomic<unsigned int> FrqMonitor::sumFrqTotal = 0;
-std::map<long long, int> FrqMonitor::mFrequence = {};
-std::map<long long, int> FrqMonitor::mCntOrder = {};
-std::map<long long, int> FrqMonitor::mWarnLevel = {};
+std::unordered_map<long long, int> FrqMonitor::mFrequence = {};
+std::unordered_map<long long, int> FrqMonitor::mCntOrder = {};
+std::unordered_map<long long, int> FrqMonitor::mWarnLevel = {};
 
 std::queue<FrqMonitor*> EarlyMsgQueue;
 std::queue<FrqMonitor*> EarlierMsgQueue;
@@ -30,7 +31,7 @@ void AddFrq(DiceEvent& msg)
 	EarlyMsgQueue.push(newFrq);
 	FrqMonitor::sumFrqTotal++;
 	today->inc("frq");
-	today->set(msg.fromChat.uid, "frq", today->get(msg.fromChat.uid).get_int("frq") + 1);
+	today->set(msg.fromChat.uid, "frq", today->get(msg.fromChat.uid)->get_int("frq") + 1);
 }
 
 void frqHandler()

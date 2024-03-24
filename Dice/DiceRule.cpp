@@ -37,7 +37,7 @@ bool DiceRule::listen_order(DiceEvent* eve) {
 }
 bool DiceRule::listen_cassette(const string& tape, DiceEvent* eve)const{
 	if (auto t{ cassettes.find(tape) }; t != cassettes.end() && t->second) {
-		call_event(*eve, t->second);
+		call_event(eve->shared_from_this(), t->second);
 		return eve->is("blocked");
 	}
 	return false;

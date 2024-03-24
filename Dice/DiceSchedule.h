@@ -1,6 +1,6 @@
 #pragma once
 /*
- * Copyright (C) 2019-2022 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  * 处理定时事件
  * 处理不能即时完成的指令
  * 2022/1/13: 冷却计时
@@ -63,7 +63,8 @@ public:
 	void add_job_until(time_t, const char*);
 	bool is_job_cold(const char*);
 	void refresh_cold(const char*, time_t);
-	bool cnt_cd(const vector<CDQuest>&, const vector<CDQuest>&);
+	//0:success -1:colding -2:limited
+	int cnt_cd(const vector<CDQuest>&, const vector<CDQuest>&);
 };
 inline DiceScheduler sch;
 
@@ -82,15 +83,18 @@ public:
 	void load();
 	void save();
 	void set(long long qq, const string& key, const AttrVar& val);
-	void inc(const string& key) { UserInfo[0].inc(key); save(); }
+	void inc(const string& key);
 	//void inc(long long qq, const string& key, int cnt = 1) { cntUser[qq][key] += cnt; save(); }
 	unordered_map<long long, AttrObject>& getUserInfo() { return UserInfo; }
-	AttrVar& get(const string& key) { return UserInfo[0].at(key); }
-	AttrObject& get(long long uid) { return UserInfo[uid]; }
+	AttrVar& get(const string& key) { return get(0)->at(key); }
+	AttrObject& get(long long uid) {
+		if (!UserInfo.count(uid))UserInfo.emplace(uid, AnysTable());
+		return UserInfo[uid];
+	}
 	//AttrVar& get(long long uid, const string& key) { return UserInfo[uid].to_dict()[key]; }
 	std::optional<AttrVar> get_if(long long qq, const string& key) {
-		if (UserInfo.count(qq) && UserInfo[qq].has(key))
-			return UserInfo[qq].at(key);
+		if (UserInfo.count(qq) && UserInfo[qq]->has(key))
+			return UserInfo[qq]->at(key);
 		else return std::nullopt;
 	}
 	AttrVar getJrrp(long long);
