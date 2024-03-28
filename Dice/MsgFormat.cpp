@@ -112,10 +112,9 @@ std::string listDeck(const std::vector<std::string>& v)
 }
 std::string listDeck(const VarArray& v)
 {
-	ResList list;
-	list.setDot(" | ", "\n| ");
+	ShowList list;
 	for (auto& val : v) {
 		list << val;
 	}
-	return list.show();
+	return list.show("\n|");
 }
