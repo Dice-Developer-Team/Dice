@@ -962,6 +962,16 @@ int DiceModManager::load(ResList& resLog){
 			}
 		}
 	}
+	//custom_msg
+	try {
+		std::unique_lock lock(GlobalMsgMutex);
+		if (loadJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg) >= 0) {
+			map_merge(GlobalMsg, EditedMsg);
+		}
+	}
+	catch (const std::exception& e) {
+		console.log(string("∂¡»°/conf/CustomMsg.json ß∞‹!") + e.what(), 1, printSTNow());
+	}
 	//custom_help
 	if (loadJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp) == -1)
 		resLog << "Ω‚Œˆ/conf/CustomHelp.json ß∞‹£°";
