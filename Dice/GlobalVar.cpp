@@ -716,6 +716,7 @@ Type=[回复性质](Reply/Order)
 {"game",R"(游戏模式：
 `.game new 桌名` 创建游戏（桌名可省略，前缀以`规则:`可以指定应用规则）
 例: `.game new DND:`
+创建者自动视为GM
 `.game over` 销毁本桌游戏
 `.game state` 查看本桌状态
 `.game master` 登记为GM

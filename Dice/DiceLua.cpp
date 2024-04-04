@@ -1108,7 +1108,7 @@ int Context_format(lua_State* L) {
 	return 1;
 }
 int Context_get(lua_State* L) {
-	AttrObject obj{ lua_isuserdata(L,1) ? **(AttrObject**)luaL_checkudata(L, 1, "Context")
+	AttrObject obj{ lua_isuserdata(L,1) ? *(AttrObject*)luaL_checkudata(L, 1, "Context")
 		: lua_istable(L, 1) ? AnysTable(lua_to_table(L,1))
 		: AttrObject{} };
 	if (lua_isnoneornil(L, 2)) {
