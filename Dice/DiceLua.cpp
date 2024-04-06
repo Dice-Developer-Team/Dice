@@ -609,7 +609,7 @@ int SelfData_newindex(lua_State* L) {
 	file.save();
 	return 0;
 }
-int SelfData_totable(lua_State* L) {
+static int SelfData_totable(lua_State* L) {
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
 	lua_push_attr(L, file.data);
 	return 1;
@@ -620,7 +620,7 @@ static const luaL_Reg SelfData_funcs[] = {
 	{"__totable", SelfData_totable},
 	{NULL, NULL}
 };
-int luaopen_SelfData(lua_State* L) {
+static int luaopen_SelfData(lua_State* L) {
 	luaL_newmetatable(L, "SelfData");
 	luaL_setfuncs(L, SelfData_funcs, 0);
 	return 1;
@@ -629,7 +629,7 @@ int luaopen_SelfData(lua_State* L) {
 /**
  * 供lua调用的函数
  */
-#define LUADEF(name) int lua_dice_##name(lua_State* L)
+#define LUADEF(name) static int lua_dice_##name(lua_State* L)
  //输出日志
 LUADEF(log) {
 	if (string info{ lua_to_gbstring(L, 1) }; !info.empty()) {

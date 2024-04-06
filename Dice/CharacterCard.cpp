@@ -34,7 +34,7 @@ AttrShape::AttrShape(const tinyxml2::XMLElement* node, bool isUTF8) {
 		defVal = AttrVar::parse(s);
 	}
 }
-AttrVar AttrShape::init(ptr<CardTemp> temp, CharaCard* pc) {
+AttrVar AttrShape::init(ptr<CardTemp> temp, CharaCard* pc) const {
 	if (textType == TextType::JavaScript) {
 		if (auto ret = temp->js_ctx->evalStringLocal(defVal, temp->type, pc->shared_from_this());
 			!JS_IsException(ret)) {
@@ -217,7 +217,7 @@ string CardTemp::show() {
 	}
 	return "pcÄ£°å:" + type + res.show();
 }
-void CardTemp::after_update(const ptr<AnysTable>& eve) {
+void CardTemp::after_update(const ptr<AnysTable>& eve) const {
 	for (auto& [t, trigger] : multi_range(triggers_by_time, trigger_time::AfterUpdate)) {
 		if (auto ret = js_ctx->evalStringLocal(trigger.script, trigger.name, eve);
 			JS_IsException(ret)) {
@@ -377,7 +377,7 @@ void CharaCard::clear() {
 	dict = AttrVars{{"__Type",dict["__Type"]},{"__Name",dict["__Name"]}};
 }
 [[nodiscard]] string CharaCard::show(bool isWhole){
-	std::set<string> sDefault;
+	std::unordered_set<string> sDefault;
 	ResList Res;
 	for (const auto& list : getTemplet()->vBasicList) {
 		ResList subList;
