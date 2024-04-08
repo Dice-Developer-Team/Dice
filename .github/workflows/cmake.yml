@@ -252,6 +252,9 @@ jobs:
         -name "GitHub"
         -username "Dice-Developer-Team"
         -password "${{ secrets.GITHUB_TOKEN }}"
+    
+    - name: Automake
+      run: sudo apt-get install autoconf automake autoconf-archive
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable

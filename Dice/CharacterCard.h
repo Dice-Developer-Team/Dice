@@ -161,12 +161,12 @@ struct lua_State;
 class CharaCard: public AnysTable
 {
 private:
-	const size_t id = 0;
+	const unsigned short id = 0;
 	string Name = "½ÇÉ«¿¨";
 	unordered_set<string> locks;
 	std::mutex cardMutex;
 public:
-	size_t getID()const { return id; }
+	unsigned short getID()const { return id; }
 	MetaType getType()const override{ return MetaType::Actor; }
 	ptr<CardTemp> getTemplet()const;
 	bool locked(const string& key)const { return locks.count(key); }

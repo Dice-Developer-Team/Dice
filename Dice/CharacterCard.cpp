@@ -693,7 +693,7 @@ void Player::writeb(std::ofstream& fout) const {
 		for (const auto& [gid, pc] : mGroupCard)
 		{
 			fwrite(fout, gid);
-			fwrite(fout, unsigned short(pc ? pc->getID() : 0));
+			fwrite(fout, pc ? pc->getID() : (unsigned short)0);
 		}
 	}
 	else fwrite(fout, (short)0);
