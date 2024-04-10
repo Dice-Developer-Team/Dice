@@ -512,15 +512,11 @@ AttrVar AttrVar::parse(const string& s) {
 			break;
 		}
 	}
-	if (s.find_first_of("\"[{") == 0) {
+	if (s.find_first_of("\"[{") == 0 || isNumeric(s)) {
 		try {
 			return fifo_json::parse(s);
-		}catch(...){}
-	}
-	if (isNumeric(s)) {
-		if (s.find('.') != string::npos)return stod(s);
-		else if (s.length() < 10)return stoi(s);
-		else return stoll(s);
+		}
+		catch (...) {}
 	}
 	return s;
 }

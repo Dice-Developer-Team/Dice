@@ -72,7 +72,7 @@ public:
 	vector<string> alias;
 	TextType textType{ TextType::Plain };
 	AttrVar defVal;
-	AttrVar init(ptr<CardTemp>, CharaCard*); 
+	AttrVar init(ptr<CardTemp>, CharaCard*) const; 
 	int check(AttrVar& val);
 	bool equalDefault(const AttrVar& val)const { return TextType::Plain == textType && val == defVal; }
 };
@@ -118,10 +118,7 @@ public:
 	CardTemp(const string& type, const dict_ci<>& replace, vector<vector<string>> basic,
 		const dict_ci<>& dynamic, const dict_ci<>& exps,
 		const dict_ci<int>& def_skill, const dict_ci<CardPreset>& option = {},
-		const string& s = {}) : type(type),
-			                                                            replaceName(replace), 
-		                                                                vBasicList(basic), 
-		presets(option),script(s)
+		const string& s = {}) : type(type), replaceName(replace), vBasicList(basic), presets(option), script(s)
 	{
 		for (auto& [attr, exp] : dynamic) {
 			AttrShapes[attr] = AttrShape(exp, AttrShape::TextType::Dicexp);
@@ -135,7 +132,7 @@ public:
 	}
 	CardTemp& merge(const CardTemp& other);
 	void init();
-	void after_update(const ptr<AnysTable>&);
+	void after_update(const ptr<AnysTable>&) const;
 	bool equalDefault(const string& attr, const AttrVar& val)const { return AttrShapes.count(attr) && AttrShapes.at(attr).equalDefault(val); }
 
 	//CardTemp(const xml* d) { }
@@ -143,7 +140,7 @@ public:
 	bool canGet(const string& attr)const {
 		return AttrShapes.count(attr) && !AttrShapes.at(attr).defVal.is_null();
 	}
-	string getName() { return type; }
+	string getName() const { return type; }
 
 	string showItem()
 	{
@@ -164,12 +161,12 @@ struct lua_State;
 class CharaCard: public AnysTable
 {
 private:
-	const size_t id = 0;
+	const unsigned short id = 0;
 	string Name = "½ÇÉ«¿¨";
 	unordered_set<string> locks;
 	std::mutex cardMutex;
 public:
-	size_t getID()const { return id; }
+	unsigned short getID()const { return id; }
 	MetaType getType()const override{ return MetaType::Actor; }
 	ptr<CardTemp> getTemplet()const;
 	bool locked(const string& key)const { return locks.count(key); }

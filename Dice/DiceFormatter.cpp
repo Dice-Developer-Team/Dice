@@ -228,7 +228,7 @@ public:
 static enumap<string> methods{ "var","print","help","sample","case","vary","grade","at","ran","wait","js","py","len" };
 enum class FmtMethod { Var, Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait, JS, Py, Len };
 //Formatter
-size_t find_close_brace(const std::string_view& s, size_t pos) {
+static size_t find_close_brace(const std::string_view& s, size_t pos) {
 	int diff = 1;
 	while (pos < s.length()) {
 		if (s[pos] == '{' && s[pos - 1] != '\\') {
@@ -346,8 +346,10 @@ ptr<MarkNode> buildFormatter(const std::string_view& exp) {
 }
 
 static dict<ptr<MarkNode>> formatters;
+static std::mutex exFormatter;
 AttrVar formatMsg(const string& s, const AttrObject& ctx, bool isTrust, const dict_ci<string>& global) {
 	if (s.find('{') == string::npos)return s;
+	std::lock_guard<std::mutex> lock{ exFormatter };
 	if (!formatters.count(s)) {
 		formatters.emplace(s, buildFormatter(s));
 	}

@@ -291,16 +291,6 @@ R"( //私骰作成 即可成为我的主人~
 		console.log(string("初始化js/python环境失败!") + e.what(), 1, printSTNow());
 	}
 	fmt = make_unique<DiceModManager>();
-	try {
-		std::unique_lock lock(GlobalMsgMutex);
-		if (loadJMap(DiceDir / "conf" / "CustomMsg.json", EditedMsg) >= 0
-			|| loadJMap(fpFileLoc / "CustomMsg.json", EditedMsg) > 0) {
-			map_merge(GlobalMsg, EditedMsg);
-		}
-	}
-	catch (const std::exception& e) {
-		console.log(string("读取/conf/CustomMsg.json失败!") + e.what(), 1, printSTNow());
-	}
 	loadData();
 	//初始化黑名单
 	try {

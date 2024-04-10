@@ -71,7 +71,7 @@ AttrVar getUserItem(long long uid, const string& item) {
 		if (string name{ DD::getQQNick(uid) }; !name.empty())
 			return name;
 	}
-	else if (item == "nick") {
+	if (item == "nick") {
 		return getName(uid);
 	}
 	else if (item == "trust") {
