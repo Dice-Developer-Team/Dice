@@ -262,26 +262,6 @@ jobs:
     - name: Automake
       run: sudo apt-get install autoconf automake autoconf-archive
       
-    - name: CMake Install packages
-      # Use a bash shell so we can use the same syntax for environment variable
-      # access regardless of the host operating system
-      shell: bash
-      working-directory: ${{github.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
-      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: CC=gcc-8 CXX=g++-8 vcpkg install 
-
-    - name: Soft-link all libs
-      # Use a bash shell so we can use the same syntax for environment variable
-      # access regardless of the host operating system
-      shell: bash
-      working-directory: ${{github.workspace}}/vcpkg_installed
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
-      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: ln -s ${{ matrix.triplet }}/* . && echo "Link Success."
-
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
       # access regardless of the host operating system
@@ -290,7 +270,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run:  CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DDLL_SUFFIX=.${{matrix.dll_sfx}} -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/triplets -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_PREFIX_PATH=${{ matrix.path }}
+      run:  CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} vcpkg install && ln -s ${{github.workspace}}/${{ matrix.triplet }}/* ${{github.workspace}}/. && echo "Link Success." && CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DDLL_SUFFIX=.${{matrix.dll_sfx}} -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/triplets -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_PREFIX_PATH=${{ matrix.path }}
 
     - name: Build
       working-directory: ${{github.workspace}}/build
@@ -370,14 +350,15 @@ jobs:
         -name "GitHub"
         -username "Dice-Developer-Team"
         -password "${{ secrets.GITHUB_TOKEN }}"
+
+    - name: Automake
+      run: sudo apt-get install autoconf automake autoconf-archive
+      
     - name: CMake Install packages
       # Use a bash shell so we can use the same syntax for environment variable
       # access regardless of the host operating system
       shell: bash
       working-directory: ${{github.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
-      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: vcpkg install 
 
     - name: Soft-link all libs
@@ -385,9 +366,6 @@ jobs:
       # access regardless of the host operating system
       shell: bash
       working-directory: ${{github.workspace}}/vcpkg_installed
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
-      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: ln -s ${{ matrix.triplet }}/* . && echo "Link Success."
 
     - name: Configure CMake
