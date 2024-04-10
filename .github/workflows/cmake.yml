@@ -270,7 +270,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run:  CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} vcpkg install && ln -s ${{github.workspace}}/${{ matrix.triplet }}/* ${{github.workspace}}/. && echo "Link Success." && CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DDLL_SUFFIX=.${{matrix.dll_sfx}} -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/triplets -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_PREFIX_PATH=${{ matrix.path }}
+      run:  sudo CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} vcpkg install && sudo ln -s ${{github.workspace}}/${{ matrix.triplet }}/* ${{github.workspace}}/. && echo "Link Success." && sudo CC=${{ matrix.cc }} CXX=${{ matrix.cxx }} cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DDLL_SUFFIX=.${{matrix.dll_sfx}} -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/triplets -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DCMAKE_PREFIX_PATH=${{ matrix.path }}
 
     - name: Build
       working-directory: ${{github.workspace}}/build
