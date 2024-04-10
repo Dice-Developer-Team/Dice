@@ -240,6 +240,12 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
+      
+    - name: Setup Vcpkg PATH
+      shell: bash
+      if: steps.cache.outputs.cache-hit != 'true'
+      working-directory: ${{github.workspace}}/
+      run: export PATH=$PATH:${{github.workspace}}/vcpkg
 
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
@@ -260,11 +266,11 @@ jobs:
       # Use a bash shell so we can use the same syntax for environment variable
       # access regardless of the host operating system
       shell: bash
-      working-directory: ${{github.workspace}}/
+      working-directory: ${{github.workspace}}/build
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: ./vcpkg/vcpkg install 
+      run: vcpkg install 
 
     - name: Soft-link all libs
       # Use a bash shell so we can use the same syntax for environment variable
