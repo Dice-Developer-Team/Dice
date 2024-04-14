@@ -3440,21 +3440,21 @@ int DiceEvent::InnerOrder() {
 			string strFace{ std::to_string(intFace) };
 			string keyStatCnt{ "__StatD" + strFace + "Cnt" };	//掷骰次数
 			if (intFace <= 100 && pc->has(keyStatCnt)) {
-				int cntRoll{ pc->get_int(keyStatCnt) };
-				if (cntRoll > 0) {
-					isEmpty = false;
-					res << "D" + strFace + "统计次数: " + std::to_string(cntRoll);
+				if (int cntRoll{ pc->get_int(keyStatCnt) }; cntRoll > 0) {
 					int sumRes{ pc->get_int("__StatD" + strFace + "Sum") };		//点数和
 					int sumResSqr{ pc->get_int("__StatD" + strFace + "SqrSum") };	//点数平方和
 					DiceEst stat{ intFace,cntRoll,sumRes,sumResSqr };
-					if (stat.estMean > 0)
-						res << "均值[期望]: " + toString(stat.estMean, 2, true) + " [" + toString(stat.expMean) + "]";
-					if (stat.pNormDist) {
-						if (stat.pNormDist < 0.5)res << "低于" + toString(100 - stat.pNormDist * 100, 2) + "%的用户";
-						else res << "高于" + toString(stat.pNormDist * 100, 2) + "%的用户";
-					}
-					if (stat.estStd > 0) {
-						res << "标准差[期望]: " + toString(stat.estStd, 2) + " [" + toString(stat.expStd) + "]";
+					if (stat.estMean > 0){
+						isEmpty = false;
+						res << "D" + strFace + "统计次数: " + std::to_string(cntRoll);
+						res << "均值: " + toString(stat.estMean, 2, true) + " [期望 " + toString(stat.expMean) + "]";
+						if (stat.pNormDist) {
+							if (stat.pNormDist < 0.5)res << "低于" + toString(100 - stat.pNormDist * 100, 2) + "%的用户";
+							else res << "高于" + toString(stat.pNormDist * 100, 2) + "%的用户";
+						}
+						if (stat.estStd > 0) {
+							res << "标准差: " + toString(stat.estStd, 2) + " [期望 " + toString(stat.expStd) + "]";
+						}
 					}
 				}
 			}
@@ -3464,9 +3464,8 @@ int DiceEvent::InnerOrder() {
 				if (cntRc > 0) {
 					isEmpty = false;
 					int sumRcSuc{ pc->get_int("__StatRcSumSuc") };//实际成功数
-					res << "检定成功统计: " + std::to_string(sumRcSuc) + "/" + std::to_string(cntRc);
 					int sumRcRate{ pc->get_int("__StatRcSumRate") };//总成功率
-					res << "成功率[期望]: " + toString((double)sumRcSuc / cntRc * 100) + "% [" + toString((double)sumRcRate / cntRc) + "%]";
+					res << "检定成功率: " + std::to_string(sumRcSuc) + "/" + std::to_string(cntRc) + "=" + toString((double)sumRcSuc / cntRc * 100) + "% [期望" + toString((double)sumRcRate / cntRc) + "%]";
 					double cnt5{ pc->get_num("__StatRcCnt5") }, cnt96{ pc->get_num("__StatRcCnt96") };
 					res << "5- | 96+ 出现率: " + (cnt5 ? toString(cnt5 / cntRc * 100) + "%(" + pc->get_str("__StatRcCnt5") + ")" : "0%")
 						+ " | " + (cnt96 ? toString(cnt96 / cntRc * 100) + "%(" + pc->get_str("__StatRcCnt96") + ")" : "0%");

@@ -140,11 +140,11 @@ int AnysTable::inc(const string& key){
 	return 0;
 }
 int AnysTable::inc(const string& key, int i){
-	if (key.empty()) {
+	if (!key.empty()) {
 		if (dict.count(key))return (dict.at(key) += i).to_int();
 		else {
 			dict.emplace(key, i);
-			return 1;
+			return i;
 		}
 	}
 	return 0;
@@ -336,7 +336,9 @@ AttrVar AttrVar::operator+(const AttrVar& other) {
 	}
 	else if (type == Type::Text || other.type == Type::Text)
 		return to_str() + other.to_str();
-	return other ? AttrVar() : *this;
+	else if (is_null() && other)
+		return other;
+	return *this;
 }
 
 int AttrVar::to_int()const {
