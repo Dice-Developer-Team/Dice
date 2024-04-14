@@ -338,6 +338,12 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/vcpkg
       run: ./bootstrap-vcpkg.sh
+      
+    - name: Setup Vcpkg PATH
+      shell: bash
+      if: steps.cache.outputs.cache-hit != 'true'
+      working-directory: ${{github.workspace}}/
+      run: export PATH=$PATH:${{github.workspace}}/vcpkg
 
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
@@ -351,27 +357,14 @@ jobs:
         -username "Dice-Developer-Team"
         -password "${{ secrets.GITHUB_TOKEN }}"
 
-    - name: Automake
+    - name: Install Automake
       run: sudo apt-get install autoconf automake autoconf-archive
-      
-    - name: CMake Install packages
-      # Use a bash shell so we can use the same syntax for environment variable
-      # access regardless of the host operating system
-      shell: bash
-      working-directory: ${{github.workspace}}/build
-      run: vcpkg install 
 
-    - name: Soft-link all libs
-      # Use a bash shell so we can use the same syntax for environment variable
-      # access regardless of the host operating system
-      shell: bash
-      working-directory: ${{github.workspace}}/vcpkg_installed
-      run: ln -s ${{ matrix.triplet }}/* . && echo "Link Success."
 
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DDLL_SUFFIX=.${{matrix.dll_sfx}} -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DANDROID_ABI="${{ matrix.abi }}" -DCMAKE_SYSTEM_NAME=ANDROID -DANDROID_PLATFORM=21 -DCMAKE_SYSTEM_VERSION=21
+      run: sudo vcpkg install && sudo cp -r ${{github.workspace}}/vcpkg_installed/${{ matrix.triplet }}/* ${{github.workspace}}/vcpkg_installed/ && cp -r ${{github.workspace}}/vcpkg_installed ${{github.workspace}}/build && echo "Copy Success." && cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DDLL_SUFFIX=.${{matrix.dll_sfx}} -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DANDROID_ABI="${{ matrix.abi }}" -DCMAKE_SYSTEM_NAME=ANDROID -DANDROID_PLATFORM=21 -DCMAKE_SYSTEM_VERSION=21
 
     - name: Build
       working-directory: ${{github.workspace}}/build
