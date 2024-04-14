@@ -536,6 +536,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+661:优化game指令触发机制
 660:优化sample嵌套
 659:reply支持冷却/限额回复
 658:重写.dnd展示
