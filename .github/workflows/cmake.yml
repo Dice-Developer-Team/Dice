@@ -259,6 +259,9 @@ jobs:
         -username "Dice-Developer-Team"
         -password "${{ secrets.GITHUB_TOKEN }}"
     
+    - name: Add linux-headers
+      run: sudo apt install linux-libc-dev
+    
     - name: Automake
       run: sudo apt-get install autoconf automake autoconf-archive
       

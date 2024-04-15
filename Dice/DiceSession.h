@@ -199,7 +199,7 @@ public:
 	}
 	bool del_pl(long long uid);
 	bool is_simple() const { return player->empty() && master->empty(); }
-	bool is_part(long long uid) const { return is_simple() || player->count(uid) || master->count(uid); }
+	bool is_part(long long uid) const { return is_simple() || player->count(uid) || master->count(uid) || is("auto_join"); }
 	bool del_ob(long long uid) {
 		if (obs->count(uid))obs->erase(uid);
 		else return false;
