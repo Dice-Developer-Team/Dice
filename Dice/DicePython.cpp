@@ -84,7 +84,7 @@ static AttrIndex py_to_hashable(PyObject* o) {
 		}
 		else if (t == &PyUnicode_Type)return UtoGBK(PyUnicode_AsUnicode(o));
 		else if (t == &PyFloat_Type)return PyFloat_AsDouble(o);
-		else if (t == &PyBool_Type)return Py_IsTrue(o);
+		else if (t == &PyBool_Type)return PyObject_TypeCheck(o);
 	}
 	return 0;
 }
@@ -564,7 +564,7 @@ PyObject* py_newContext(const AttrObject& obj) {
 }
 AttrVar py_to_attr(PyObject* o) {
 	if (!o)return {};
-	else if (auto t{ Py_TYPE(o) }; t == &PyBool_Type)return bool(Py_IsTrue(o));
+	else if (auto t{ Py_TYPE(o) }; t == &PyBool_Type)return bool(PyObject_TypeCheck(o));
 	else if (t == &PyLong_Type) {
 		auto i{ PyLong_AsLongLong(o) };
 		return (i == (int)i) ? (int)i : i;
