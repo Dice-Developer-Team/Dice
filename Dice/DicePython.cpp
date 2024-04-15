@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123Ëİä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -57,9 +57,9 @@ static string py_to_gbstring(PyObject* o) {
 }
 static string py_to_native_string(PyObject* o) {
 #ifdef _WIN32
-	return Py_IS_TYPE(o, &PyUnicode_Type) ? UtoGBK(PyUnicode_AsUnicode(o)) : empty;
+	return PyObject_TypeCheck(o, &PyUnicode_Type) ? UtoGBK(PyUnicode_AsUnicode(o)) : empty;
 #else
-	return Py_IS_TYPE(o, &PyUnicode_Type) ? PyUnicode_AsUTF8(o) : empty;
+	return PyObject_TypeCheck(o, &PyUnicode_Type) ? PyUnicode_AsUTF8(o) : empty;
 #endif
 }
 AttrVar py_to_attr(PyObject* o);
@@ -744,7 +744,7 @@ static PyObject* PySelfData_set(PyObject* self, PyObject* args) {
 	auto data{ ((PySelfDataObject*)self)->p };
 	PyObject* item{ nullptr }, * val{ nullptr };
 	if (PyArg_ParseTuple(args, "O|O", &item, &val)) {
-		if (Py_IS_TYPE(item, &PyUnicode_Type) && data->data.is_table()) {
+		if (PyObject_TypeCheck(item, &PyUnicode_Type) && data->data.is_table()) {
 			data->data.table->set(py_to_gbstring(item), py_to_attr(val));
 			data->save();
 		}
@@ -846,7 +846,7 @@ PYDEFKEY(getGroupAttr) {
 	}
 	if (item.empty()) return py_newContext(chat(gid).shared_from_this());
 	else if (item == "members") {
-		if (Py_IS_TYPE(sub, &PyUnicode_Type)) {
+		if (PyObject_TypeCheck(sub, &PyUnicode_Type)) {
 			string subitem{ py_to_gbstring(sub)};
 			auto items{ PyDict_New() };
 			if (subitem == "card") {
@@ -1063,7 +1063,7 @@ PYDEFKEY(sendMsg) {
 	/* Parse arguments */
 	if (!PyArg_ParseTupleAndKeywords(args, keys, "O|LLL", (char**)kwlist, &msg, &uid, &gid, &chid))return NULL;
 	AttrObject chat;
-	if (Py_IS_TYPE(msg, &PyUnicode_Type)) {
+	if (PyObject_TypeCheck(msg, &PyUnicode_Type)) {
 		chat = py_to_obj(msg);
 		AddMsgToQueue(fmt->format(chat->get_str("fwdMsg"), chat), chatInfo{ chat->get_ll("uid") ,chat->get_ll("gid") ,chat->get_ll("chid") });
 	}
@@ -1090,7 +1090,7 @@ PYDEFKEY(eventMsg) {
 		return NULL;
 	}
 	AttrObject eve;
-	if (Py_IS_TYPE(msg, &PyUnicode_Type)) {
+	if (PyObject_TypeCheck(msg, &PyUnicode_Type)) {
 		eve = py_to_obj(msg);
 	}
 	else {
@@ -1125,37 +1125,37 @@ static PyMethodDef DiceMethods[] = {
 }; 
 static PyModuleDef DiceMaidDef = {
 	PyModuleDef_HEAD_INIT,
-	DiceModuleName,   //µ¼³öµÄÄ£¿éÃû³Æ
-	"Python interface for Dice function",      //Ä£¿éÎÄµµ£¬¿ÉÒÔÎªNULL
-	-1,       //Ò»°ãÎª-1
-	DiceMethods //PyMethodDefÀàĞÍ£¬µ¼³ö·½·¨
+	DiceModuleName,   //å¯¼å‡ºçš„æ¨¡å—åç§°
+	"Python interface for Dice function",      //æ¨¡å—æ–‡æ¡£ï¼Œå¯ä»¥ä¸ºNULL
+	-1,       //ä¸€èˆ¬ä¸º-1
+	DiceMethods //PyMethodDefç±»å‹ï¼Œå¯¼å‡ºæ–¹æ³•
 }; 
 PyMODINIT_FUNC PyInit_DiceMaid(){
 	auto mod = PyModule_Create(&DiceMaidDef);
 	if (PyType_Ready(&PyContextType) || 
 		PyModule_AddObject(mod, "Context", (PyObject*)&PyContextType) < 0) {
-		console.log("×¢²ádicemaid.ContextÊ§°Ü!", 0b1000);
+		console.log("æ³¨å†Œdicemaid.Contextå¤±è´¥!", 0b1000);
 		Py_DECREF(&PyContextType);
 		Py_DECREF(mod);
 		return NULL;
 	}
 	else if (PyType_Ready(&PyActor_Type) ||
 		PyModule_AddObject(mod, "Actor", (PyObject*)&PyActor_Type) < 0) {
-		console.log("×¢²ádicemaid.ActorÊ§°Ü!", 0b1000);
+		console.log("æ³¨å†Œdicemaid.Actorå¤±è´¥!", 0b1000);
 		Py_DECREF(&PyActor_Type);
 		Py_DECREF(mod);
 		return NULL;
 	}
 	else if (PyType_Ready(&PyGameTable_Type) ||
 		PyModule_AddObject(mod, "GameTable", (PyObject*)&PyGameTable_Type) < 0) {
-		console.log("×¢²ádicemaid.GameTableÊ§°Ü!", 0b1000);
+		console.log("æ³¨å†Œdicemaid.GameTableå¤±è´¥!", 0b1000);
 		Py_DECREF(&PyGameTable_Type);
 		Py_DECREF(mod);
 		return NULL;
 	}
 	else if (PyType_Ready(&PySelfData_Type) || 
 		PyModule_AddObject(mod, "SelfData", (PyObject*)&PySelfData_Type) < 0) {
-		console.log("×¢²ádicemaid.SelfDataÊ§°Ü!", 0b1000);
+		console.log("æ³¨å†Œdicemaid.SelfDataå¤±è´¥!", 0b1000);
 		Py_DECREF(&PySelfData_Type);
 		Py_DECREF(mod);
 		return NULL;
@@ -1184,7 +1184,7 @@ PyGlobal::PyGlobal() {
 	try {
 		static auto import_dice = PyImport_AppendInittab(DiceModuleName, PyInit_DiceMaid);
 		if (import_dice) {
-			console.log("Ô¤ÔØdicemaidÄ£¿éÊ§°Ü!", 0b1000);
+			console.log("é¢„è½½dicemaidæ¨¡å—å¤±è´¥!", 0b1000);
 		}
 		if (!Py_IsInitialized())Py_Initialize();
 		PyRun_SimpleString("import sys");
@@ -1193,7 +1193,7 @@ PyGlobal::PyGlobal() {
 		PyRun_SimpleString("from dicemaid import *");
 	}
 	catch (std::exception& e) {
-		console.log("python³õÊ¼»¯Ê§°Ü" + string(e.what()), 0b1);
+		console.log("pythonåˆå§‹åŒ–å¤±è´¥" + string(e.what()), 0b1);
 	}
 	console.log("Python.Initialized", 0);
 }
@@ -1219,7 +1219,7 @@ static PyObject* Py_CompileScript(string& name) {
 			auto res{ Py_CompileString(script->c_str(), p->u8string().c_str(), Py_file_input) };
 			Py_FileScripts[name] = { res,lstWrite };
 			if (!res) {
-				console.log(getMsg("self") + "±àÒë" + (name = UTF8toGBK(p->u8string())) + "Ê§°Ü: " + py_print_error(), 0b10);
+				console.log(getMsg("self") + "ç¼–è¯‘" + (name = UTF8toGBK(p->u8string())) + "å¤±è´¥: " + py_print_error(), 0b10);
 				PyErr_Clear();
 			}
 			return res;
@@ -1232,7 +1232,7 @@ static PyObject* Py_CompileScript(string& name) {
 		return Py_StringScripts[name] = res;
 	}
 	else {
-		console.log(getMsg("self") + "±àÒëpythonÓï¾äÊ§°Ü: " + py_print_error(), 0b10);
+		console.log(getMsg("self") + "ç¼–è¯‘pythonè¯­å¥å¤±è´¥: " + py_print_error(), 0b10);
 		PyErr_Clear();
 	}
 	return nullptr;
@@ -1247,7 +1247,7 @@ bool PyGlobal::runFile(const std::filesystem::path& p, const AttrObject& context
 		auto res{ PyRun_File(fp, p.u8string().c_str(), Py_file_input, global, py_newContext(context))};
 		fclose(fp);
 		if (!res) {
-			console.log(getMsg("self") + "ÔËĞĞ" + UTF8toGBK(p.u8string()) + "Òì³£!" + py_print_error(), 0b10);
+			console.log(getMsg("self") + "è¿è¡Œ" + UTF8toGBK(p.u8string()) + "å¼‚å¸¸!" + py_print_error(), 0b10);
 			PyErr_Clear();
 			return false;
 		}
@@ -1263,13 +1263,13 @@ bool PyGlobal::execString(const std::string& s, const AttrObject& context) {
 		PyObject* mainModule = PyImport_ImportModule("__main__");
 		PyObject* dict = PyModule_GetDict(mainModule);
 		if (auto ret{ PyRun_String(GBKtoUTF8(s).c_str(), Py_eval_input, dict, py_newContext(context)) }; !ret) {
-			console.log(getMsg("self") + "ÔËËãpythonÓï¾äÒì³£!" + py_print_error(), 0b10);
+			console.log(getMsg("self") + "è¿ç®—pythonè¯­å¥å¼‚å¸¸!" + py_print_error(), 0b10);
 			PyErr_Clear();
 		}
 		return true;
 	}
 	catch (std::exception& e) {
-		console.log(getMsg("self") + "ÔËĞĞpython½Å±¾Òì³£!" + e.what(), 0b10);
+		console.log(getMsg("self") + "è¿è¡Œpythonè„šæœ¬å¼‚å¸¸!" + e.what(), 0b10);
 	}
 	return false;
 }
@@ -1278,13 +1278,13 @@ AttrVar PyGlobal::evalString(const std::string& s, const AttrObject& context) {
 		PyObject* mainModule = PyImport_ImportModule("__main__");
 		PyObject* dict = PyModule_GetDict(mainModule);
 		if (auto ret{ PyRun_String(GBKtoUTF8(s).c_str(), Py_eval_input, dict, py_newContext(context)) }; !ret) {
-			console.log(getMsg("self") + "ÔËËãpythonÓï¾äÒì³£!" + py_print_error(), 0b10);
+			console.log(getMsg("self") + "è¿ç®—pythonè¯­å¥å¼‚å¸¸!" + py_print_error(), 0b10);
 			PyErr_Clear();
 		}
 		else return py_to_attr(ret);
 	}
 	catch (std::exception& e) {
-		console.log(getMsg("self") + "ÔËĞĞpython½Å±¾Òì³£!" + e.what(), 0b10);
+		console.log(getMsg("self") + "è¿è¡Œpythonè„šæœ¬å¼‚å¸¸!" + e.what(), 0b10);
 	}
 	return {};
 }
@@ -1302,7 +1302,7 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrVar& action) {
 			}
 			else {
 				Py_DECREF(locals);
-				console.log(getMsg("self") + "ÔËĞĞ" + pyScript + "³ö´í£¡\n" + py_print_error(), 0b10);
+				console.log(getMsg("self") + "è¿è¡Œ" + pyScript + "å‡ºé”™ï¼\n" + py_print_error(), 0b10);
 				PyErr_Clear();
 				msg->set("lang", "Python");
 				msg->reply(getMsg("strScriptRunErr"));
@@ -1310,7 +1310,7 @@ bool PyGlobal::call_reply(DiceEvent* msg, const AttrVar& action) {
 		}
 	}
 	catch (std::exception& e) {
-		console.log(getMsg("self") + "ÔËĞĞpython½Å±¾Òì³£!" + e.what(), 0b10);
+		console.log(getMsg("self") + "è¿è¡Œpythonè„šæœ¬å¼‚å¸¸!" + e.what(), 0b10);
 		msg->set("lang", "Python");
 		msg->reply(getMsg("strScriptRunErr"));
 	}
