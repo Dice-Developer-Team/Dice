@@ -349,9 +349,11 @@ static dict<ptr<MarkNode>> formatters;
 static std::mutex exFormatter;
 AttrVar formatMsg(const string& s, const AttrObject& ctx, bool isTrust, const dict_ci<string>& global) {
 	if (s.find('{') == string::npos)return s;
-	std::lock_guard<std::mutex> lock{ exFormatter };
-	if (!formatters.count(s)) {
-		formatters.emplace(s, buildFormatter(s));
+	else {
+		std::lock_guard<std::mutex> lock{ exFormatter };
+		if (!formatters.count(s)) {
+			formatters.emplace(s, buildFormatter(s));
+		}
 	}
 	return formatters.at(s)->concat(ctx, isTrust, global);
 }
