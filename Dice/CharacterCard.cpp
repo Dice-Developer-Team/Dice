@@ -374,7 +374,12 @@ void CharaCard::buildv(string para)
 }
 
 void CharaCard::clear() {
-	dict = AttrVars{{"__Type",dict["__Type"]},{"__Name",dict["__Name"]}};
+	std::lock_guard<std::mutex> lock_queue(cardMutex);
+	string type = dict["__Type"];
+	dict.clear();
+	dict["__Name"] = Name;
+	dict["__Type"] = type;
+	update();
 }
 [[nodiscard]] string CharaCard::show(bool isWhole){
 	std::unordered_set<string> sDefault;

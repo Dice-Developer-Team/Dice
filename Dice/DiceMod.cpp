@@ -637,7 +637,7 @@ bool DiceModManager::del_reply(const string& key) {
 	return false;
 }
 void DiceModManager::save_reply() {
-	fifo_json j = fifo_json::object();
+	fifo_json j;
 	for (const auto& [word, reply] : custom_reply) {
 		j[GBKtoUTF8(word)] = reply->writeJson();
 	}
@@ -1147,12 +1147,12 @@ void DiceModManager::clear(){
 	modList.clear();
 	selfdata_byFile.clear();
 	selfdata_byStem.clear();
-}
+}  
 
 void DiceModManager::save() {
 	fifo_json jFile = fifo_json::array();
 	for (auto& mod : modOrder) {
-		fifo_json j = fifo_json::object();
+		fifo_json j;
 		j["name"] = GBKtoUTF8(mod->name);
 		j["active"] = mod->active;
 		jFile.push_back(j);

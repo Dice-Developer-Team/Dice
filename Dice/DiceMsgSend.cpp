@@ -60,7 +60,7 @@ bool chatInfo::operator==(const chatInfo& other)const {
 		&& chid == other.chid;
 }
 fifo_json to_json(const chatInfo& chat) {
-	fifo_json j = fifo_json::object();
+	fifo_json j;
 	if (chat.chid)j["chid"] = chat.chid;
 	if (chat.gid)j["gid"] = chat.gid;
 	if (chat.uid)j["uid"] = chat.uid;

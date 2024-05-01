@@ -188,6 +188,7 @@ public:
 	void setType(const string&);
 	void update();
 	CharaCard(size_t i) :id(i) {
+		dict["__Name"] = to_string(id);
 		setType("COC7");
 		dict["__Update"] = (long long)time(nullptr);
 	}
