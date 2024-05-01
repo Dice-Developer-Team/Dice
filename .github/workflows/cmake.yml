@@ -84,7 +84,7 @@ jobs:
       run: ctest -C $BUILD_TYPE
       
     - name: Upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         # Artifact name
         name: ${{ matrix.triplet }}
@@ -147,6 +147,9 @@ jobs:
         -name "GitHub"
         -username "Dice-Developer-Team"
         -password "${{ secrets.GITHUB_TOKEN }}"
+    
+    - name: Automake
+      run: brew install autoconf automake autoconf-archive
 
     - name: Configure CMake
       working-directory: ${{github.workspace}}/build
@@ -167,7 +170,7 @@ jobs:
       run: ctest -C $BUILD_TYPE
       
     - name: Upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         # Artifact name
         name: ${{ matrix.triplet }}
@@ -254,7 +257,7 @@ jobs:
         -password "${{ secrets.GITHUB_TOKEN }}"
     
     - name: Add linux-headers
-      run: sudo apt install linux-libc-dev
+      run: sudo apt-get install linux-libc-dev
     
     - name: Automake
       run: sudo apt-get install autoconf automake autoconf-archive
@@ -283,7 +286,7 @@ jobs:
       run: ctest -C $BUILD_TYPE
     
     - name: Upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         # Artifact name
         name: ${{ matrix.triplet }}
@@ -367,7 +370,7 @@ jobs:
       run: ctest -C $BUILD_TYPE
       
     - name: Upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         # Artifact name
         name: ${{ matrix.triplet }}

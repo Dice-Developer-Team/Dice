@@ -4725,7 +4725,7 @@ string DiceEvent::readXDY()
 		strDice += strMsg[intMsgCnt];
 		intMsgCnt++;
 	}
-	if (!isNumeric(strDice))return strDice; 
+	if (!isNumeric(strDice) || isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))return strDice;
 	else intMsgCnt -= strDice.length();
 	return {};
 }

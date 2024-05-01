@@ -56,10 +56,11 @@ static string py_to_gbstring(PyObject* o) {
 		: empty;
 }
 static string py_to_native_string(PyObject* o) {
+	auto t{ Py_TYPE(o) };
 #ifdef _WIN32
-	return Py_IS_TYPE(o, &PyUnicode_Type) ? UtoGBK(PyUnicode_AsUnicode(o)) : empty;
+	return t == &PyUnicode_Type ? UtoGBK(PyUnicode_AsUnicode(o)) : empty;
 #else
-	return Py_IS_TYPE(o, &PyUnicode_Type) ? PyUnicode_AsUTF8(o) : empty;
+	return t == &PyUnicode_Type ? PyUnicode_AsUTF8(o) : empty;
 #endif
 }
 AttrVar py_to_attr(PyObject* o);
@@ -564,7 +565,7 @@ PyObject* py_newContext(const AttrObject& obj) {
 }
 AttrVar py_to_attr(PyObject* o) {
 	if (!o)return {};
-	else if (auto t{ Py_TYPE(o) }; t == &PyBool_Type)return bool(Py_IsTrue(o));
+	else if (auto t{ Py_TYPE(o) }; t == &PyBool_Type)return bool(PyObject_IsTrue(o));
 	else if (t == &PyLong_Type) {
 		auto i{ PyLong_AsLongLong(o) };
 		return (i == (int)i) ? (int)i : i;
@@ -744,7 +745,7 @@ static PyObject* PySelfData_set(PyObject* self, PyObject* args) {
 	auto data{ ((PySelfDataObject*)self)->p };
 	PyObject* item{ nullptr }, * val{ nullptr };
 	if (PyArg_ParseTuple(args, "O|O", &item, &val)) {
-		if (Py_IS_TYPE(item, &PyUnicode_Type) && data->data.is_table()) {
+		if (auto t{ Py_TYPE(item) }; t != &PyUnicode_Type && data->data.is_table()) {
 			data->data.table->set(py_to_gbstring(item), py_to_attr(val));
 			data->save();
 		}
@@ -846,7 +847,7 @@ PYDEFKEY(getGroupAttr) {
 	}
 	if (item.empty()) return py_newContext(chat(gid).shared_from_this());
 	else if (item == "members") {
-		if (Py_IS_TYPE(sub, &PyUnicode_Type)) {
+		if (auto t{ Py_TYPE(sub) }; t == &PyUnicode_Type) {
 			string subitem{ py_to_gbstring(sub)};
 			auto items{ PyDict_New() };
 			if (subitem == "card") {
@@ -1063,7 +1064,7 @@ PYDEFKEY(sendMsg) {
 	/* Parse arguments */
 	if (!PyArg_ParseTupleAndKeywords(args, keys, "O|LLL", (char**)kwlist, &msg, &uid, &gid, &chid))return NULL;
 	AttrObject chat;
-	if (Py_IS_TYPE(msg, &PyUnicode_Type)) {
+	if (auto t{ Py_TYPE(msg) }; t != &PyUnicode_Type) {
 		chat = py_to_obj(msg);
 		AddMsgToQueue(fmt->format(chat->get_str("fwdMsg"), chat), chatInfo{ chat->get_ll("uid") ,chat->get_ll("gid") ,chat->get_ll("chid") });
 	}
@@ -1090,7 +1091,7 @@ PYDEFKEY(eventMsg) {
 		return NULL;
 	}
 	AttrObject eve;
-	if (Py_IS_TYPE(msg, &PyUnicode_Type)) {
+	if (auto t{ Py_TYPE(msg) }; t != &PyUnicode_Type) {
 		eve = py_to_obj(msg);
 	}
 	else {
