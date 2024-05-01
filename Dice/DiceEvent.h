@@ -170,25 +170,8 @@ public:
 	}
 
 	//读取掷骰表达式
-	string readDice()
-	{
-		string strDice;
-		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' ||
-			strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
-			|| strLowerMessage[intMsgCnt] == 'd' || strLowerMessage[intMsgCnt] == 'k'
-			|| strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b'
-			|| strLowerMessage[intMsgCnt] == 'f'
-			|| strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-'
-			|| strLowerMessage[intMsgCnt] == 'a'
-			|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*' || strMsg[intMsgCnt] == '/'
-			|| strLowerMessage[intMsgCnt] == '#')
-		{
-			strDice += strMsg[intMsgCnt];
-			intMsgCnt++;
-		}
-		return strDice;
-	}
+	string readXDY();
+	string readDice();
 
 	//读取含转义的表达式
 	string readExp()

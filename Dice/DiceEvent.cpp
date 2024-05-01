@@ -151,7 +151,7 @@ static unordered_map<int, string>RollDiceErr{
 };
 void DiceEvent::replyRollDiceErr(int err, const RD& rd) {
 	switch (err) {
-	case 0: break;
+	case 0: return;
 	case Value_Err:
 		break;
 	case Input_Err:
@@ -1558,7 +1558,7 @@ int DiceEvent::BasicOrder()
 		}
 		else if (action == "rou") {
 			readSkipSpace();
-			if (isdigit(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
+			if (is_digit(strMsg[intMsgCnt])) {
 				if (game->is_gm(fromChat.uid)) {
 					if (int nFace = 100; !readNum(nFace) && nFace <= 100) {
 						set("face", nFace);
@@ -2219,7 +2219,7 @@ int DiceEvent::InnerOrder() {
 			}
 			long long llMemberQQ = stoll(QQNum);
 			set("member",getName(llMemberQQ, llGroup));
-			string strMainDice = readDice();
+			string strMainDice = readXDY();
 			if (strMainDice.empty()) {
 				replyMsg("strValueErr");
 				return -1;
@@ -2340,7 +2340,7 @@ int DiceEvent::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strNum;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+		while (is_digit(strLowerMessage[intMsgCnt])) {
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
@@ -2495,13 +2495,16 @@ int DiceEvent::InnerOrder() {
 			set("table_item",readRest());
 			if (is_empty("table_item"))
 				replyMsg("strGMTableItemEmpty");
-			else if (auto game{ thisGame() }; game->table_del("先攻", get_str("table_item")))
+			else if (game->table_del("先攻", get_str("table_item"))) {
+				game->table_del("init_exp", get_str("table_item"));
 				replyMsg("strGMTableItemDel");
+			}
 			else
 				replyMsg("strGMTableItemNotFound");
 		}
 		else if (strCmd == "clr") {
 			game->reset("先攻");
+			game->reset("init_exp");
 			replyMsg("strGMTableClr");
 		}
 		return 1;
@@ -2798,7 +2801,7 @@ int DiceEvent::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strNum;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+		while (is_digit(strLowerMessage[intMsgCnt])) {
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
@@ -2820,7 +2823,7 @@ int DiceEvent::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
 		string strNum;
-		while (isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
+		while (is_digit(strLowerMessage[intMsgCnt])) {
 			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
@@ -3539,7 +3542,7 @@ int DiceEvent::InnerOrder() {
 			string strTurnCnt = strMsg.substr(intMsgCnt, strMsg.find('#') - intMsgCnt);
 			//#能否识别有效
 			if (strTurnCnt.empty())intMsgCnt++;
-			else if ((strTurnCnt.length() == 1 && isdigit(static_cast<unsigned char>(strTurnCnt[0]))) || strTurnCnt ==
+			else if ((strTurnCnt.length() == 1 && is_digit(strTurnCnt[0])) || strTurnCnt ==
 					 "10") {
 				intMsgCnt += strTurnCnt.length() + 1;
 				intTurnCnt = stoi(strTurnCnt);
@@ -3766,19 +3769,51 @@ int DiceEvent::InnerOrder() {
 			strinit += readDice();
 		}
 		else if (isRollDice()) {
-			strinit = readDice();
+			if((strinit = readXDY()).empty())strinit = "D20";
 		}
-		set("char",strip(readRest()));
-		if (is_empty("char")) {
-			set("char",idx_pc(*this));
-		}
+		string name{ strip(readRest()) };
 		RD initdice(strinit, 20);
 		if (const auto intFirstTimeRes = initdice.Roll()) {
 			replyRollDiceErr(intFirstTimeRes, initdice);
 			return 1;
 		}
-		sessions.get(fromChat)->table_add("先攻", initdice.intTotal, get_str("char"));
-		set("res",initdice.FormCompleteString());
+		auto game{ sessions.get(fromChat) };
+		if (size_t pos{ name.find('#') }; pos == string::npos) {
+			set("char", name.empty() ? name = idx_pc(*this) : name);
+			game->table_add("先攻", initdice.intTotal, name);
+			game->table_add("init_exp", initdice.strDice, name);
+			set("res", initdice.FormCompleteString());
+		}
+		else {
+			string strTurnCnt = name.substr(0, pos);
+			set("char", name = name.substr(pos + 1));
+			int cntInit = 1;
+			ShowList res;
+			if (!strTurnCnt.empty()) {
+				RD rdTurnCnt(strTurnCnt, 20);
+				if (const int intRdTurnCntRes = rdTurnCnt.Roll(); intRdTurnCntRes != 0) {
+					replyRollDiceErr(intRdTurnCntRes, rdTurnCnt);
+					return 1;
+				}
+				else if (rdTurnCnt.intTotal > 10) {
+					replyMsg("strRollTimeExceeded");
+					return 1;
+				}
+				else if (rdTurnCnt.intTotal <= 0) {
+					replyMsg("strRollTimeErr");
+					return 1;
+				}
+				cntInit = rdTurnCnt.intTotal;
+			}
+			game->table_add("init_exp", initdice.strDice, name);
+			int no = 0;
+			do {
+				res << to_string(++no) + ". " + initdice.FormCompleteString();
+				game->table_add("先攻", initdice.intTotal, name + to_string(no));
+				initdice.Roll();
+			} while (no < cntInit);
+			set("res", "\n" + res.show("\n"));
+		}
 		replyMsg("strRollInit");
 		return 1;
 	}
@@ -3811,14 +3846,14 @@ int DiceEvent::InnerOrder() {
 		string strSanCostSuc = SanCost.substr(0, SanCost.find('/'));
 		string strSanCostFail = SanCost.substr(SanCost.find('/') + 1);
 		for (const auto& character : strSanCostSuc) {
-			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character !=
+			if (!is_digit(character) && character != 'D' && character != 'd' && character !=
 				'+' && character != '-') {
 				replyMsg("strSanCostInvalid");
 				return 1;
 			}
 		}
 		for (const auto& character : strSanCostFail) {
-			if (!isdigit(static_cast<unsigned char>(character)) && character != 'D' && character != 'd' && character !=
+			if (!is_digit(character) && character != 'D' && character != 'd' && character !=
 				'+' && character != '-') {
 				replyMsg("strSanCostInvalid");
 				return 1;
@@ -4088,7 +4123,7 @@ int DiceEvent::InnerOrder() {
 			}
 			//判定录入文本
 			else if (strLowerMessage.length() != intMsgCnt
-				&& !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
+				&& !is_digit(strLowerMessage[intMsgCnt])
 				&& !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
 				if (string strVal{ trustedQQ(fromChat.uid) > 0 ? readUntilSpace() : filter_CQcode(readUntilSpace()) };
 					!pc->set(attr_name, strVal)) {
@@ -4158,6 +4193,7 @@ int DiceEvent::InnerOrder() {
 					res << attr + "≠ " + tx->get_str("reason");
 				}
 			}
+			if (!is("cnt"))set("cnt", 0);
 			set("detail", res.show("\n"));
 			replyMsg("strStDetail");
 		}
@@ -4237,12 +4273,13 @@ int DiceEvent::InnerOrder() {
 			RD rdTurnCnt(strTurnCnt, intDefaultDice);
 			if (const int intRdTurnCntRes = rdTurnCnt.Roll(); intRdTurnCntRes != 0) {
 				replyRollDiceErr(intRdTurnCntRes, rdTurnCnt);
+				return 1;
 			}
-			if (rdTurnCnt.intTotal > 10) {
+			else if (rdTurnCnt.intTotal > 10) {
 				replyMsg("strRollTimeExceeded");
 				return 1;
 			}
-			if (rdTurnCnt.intTotal <= 0) {
+			else if (rdTurnCnt.intTotal <= 0) {
 				replyMsg("strRollTimeErr");
 				return 1;
 			}
@@ -4264,7 +4301,7 @@ int DiceEvent::InnerOrder() {
 										   : strFirstDice.find('*'));
 		bool boolAdda10 = true;
 		for (auto i : strFirstDice) {
-			if (!isdigit(static_cast<unsigned char>(i))) {
+			if (!is_digit(i)) {
 				boolAdda10 = false;
 				break;
 			}
@@ -4674,6 +4711,42 @@ int DiceEvent::readNum(int& num)
 	if (strNum.empty() || strNum == "-")return -3;
 	num = stoi(strNum);
 	return 0;
+}
+string DiceEvent::readXDY()
+{
+	string strDice;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+	while (is_digit(strLowerMessage[intMsgCnt])
+		|| strLowerMessage[intMsgCnt] == 'd' || strLowerMessage[intMsgCnt] == 'k'
+		|| strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b'
+		|| strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-'
+		|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*' || strMsg[intMsgCnt] == '/')
+	{
+		strDice += strMsg[intMsgCnt];
+		intMsgCnt++;
+	}
+	if (!isNumeric(strDice))return strDice; 
+	else intMsgCnt -= strDice.length();
+	return {};
+}
+string DiceEvent::readDice()
+{
+	string strDice;
+	while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) || strLowerMessage[intMsgCnt] == '=' ||
+		strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
+	while (is_digit(strLowerMessage[intMsgCnt])
+		|| strLowerMessage[intMsgCnt] == 'd' || strLowerMessage[intMsgCnt] == 'k'
+		|| strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b'
+		|| strLowerMessage[intMsgCnt] == 'f'
+		|| strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-'
+		|| strLowerMessage[intMsgCnt] == 'a'
+		|| strLowerMessage[intMsgCnt] == 'x' || strLowerMessage[intMsgCnt] == '*' || strMsg[intMsgCnt] == '/'
+		|| strLowerMessage[intMsgCnt] == '#')
+	{
+		strDice += strMsg[intMsgCnt];
+		intMsgCnt++;
+	}
+	return strDice;
 }
 string DiceEvent::readAttrName()
 {

@@ -536,6 +536,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+662:先攻批量生成
 661:优化game指令触发机制
 660:优化sample嵌套
 659:reply支持冷却/限额回复
@@ -868,7 +869,7 @@ pl默认所有群使用同一张卡，如需多开请使用.pc指令切卡
 	{ "全牌堆列表","{list_all_deck}" },
 	{ "扩展指令","{list_extern_order}" },
 	{"先攻", "&ri"},
-	{"ri", "先攻（群聊限定）：.ri([加值])([昵称])\n.ri -1 某pc\t//自动记入先攻列表\n.ri +5 boss"},
+	{"ri", "先攻（群聊限定）：.ri([加值])([昵称])\n.ri-1 某pc //自动记入先攻列表\n.ri+5 3#木乃伊 //生成复数先攻值"},
 	{"先攻列表", "&init"},
 	{"init", "先攻列表：\n.init list\t//查看先攻列表\n.init clr\t//清除先攻列表\n.init del [项目名]\t//从先攻列表移除项目"},
 	{"骰池", "&ww"},

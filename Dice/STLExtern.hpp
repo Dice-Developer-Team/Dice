@@ -348,7 +348,7 @@ public:
 		{
 			auto [prior, item] = qItem.top();
 			qItem.pop();
-			res += "\n" + to_string(++index) + "." + item + ":" + to_string(prior);
+			res += "\n" + to_string(++index) + "." + item + ": " + to_string(prior);
 		}
 		return res;
 	}

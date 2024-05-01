@@ -114,7 +114,7 @@ bool DiceSession::table_del(const string& tab, const string& item) {
 	return false;
 }
 
-bool DiceSession::table_add(const string& tab, int prior, const string& item) {
+bool DiceSession::table_add(const string& tab, const AttrVar& prior, const string& item) {
 	if (!dict.count(tab))set(tab, AnysTable());
 	get_obj(tab)->set(item,prior);
 	update();
