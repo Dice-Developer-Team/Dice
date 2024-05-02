@@ -29,7 +29,7 @@ bool file_exists(const std::string& file_name)
 }
 void aws_init() {
 	Aws::InitAPI(options);
-	awsEProvider = Aws::MakeShared<Aws::S3::S3EndpointProvider>(Aws::S3::S3Client::ALLOCATION_TAG);
+	awsEProvider = Aws::MakeShared<Aws::S3::S3EndpointProvider>("S3Client");
 }
 void aws_shutdown() {
 	awsEProvider.reset();

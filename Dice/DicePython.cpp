@@ -85,7 +85,7 @@ static AttrIndex py_to_hashable(PyObject* o) {
 		}
 		else if (t == &PyUnicode_Type)return UtoGBK(PyUnicode_AsUnicode(o));
 		else if (t == &PyFloat_Type)return PyFloat_AsDouble(o);
-		else if (t == &PyBool_Type)return Py_IsTrue(o);
+		else if (t == &PyBool_Type)return PyObject_IsTrue(o);
 	}
 	return 0;
 }
@@ -1168,35 +1168,43 @@ PyMODINIT_FUNC PyInit_DiceMaid(){
 	return mod;
 }
 PyGlobal::PyGlobal() {
+	PyStatus status;
+	PyConfig config;
+	PyConfig_InitPythonConfig(&config);
 	if (std::filesystem::path dirPy{ dirExe / "bin" };
 		std::filesystem::exists(dirPy / "python3.dll")
 		|| std::filesystem::exists(dirPy / "python3.so")
 		|| std::filesystem::exists(dirPy = dirExe / "python")
 		|| std::filesystem::exists(dirPy = dirExe / "python311")
-		|| std::filesystem::exists(dirPy = dirExe / "py311")) {
-		Py_SetPythonHome(dirPy.wstring().c_str());
-		Py_SetPath((dirPy / "python311.zip").wstring().c_str());
+		|| std::filesystem::exists(dirPy = dirExe / "py311")
+		|| std::filesystem::exists((dirPy = dirExe) / "python3.dll")) {
+		//Py_SetPythonHome(dirPy.wstring().c_str());
+		PyConfig_SetString(&config, &config.home, dirPy.wstring().c_str());
+		//Py_SetPath((dirPy / "python311.zip").wstring().c_str());
+		PyWideStringList_Append(&config.module_search_paths, (dirPy / "python311.zip").wstring().c_str());
 	}
-	else if (std::filesystem::exists(dirExe / "python3.dll")) {
-		Py_SetPythonHome(dirExe.wstring().c_str());
-		Py_SetPath((dirExe / "python311.zip").wstring().c_str());
-	}
+	status = PyConfig_Read(&config);
 	Py_SetProgramName(L"DiceMaid");
 	try {
 		static auto import_dice = PyImport_AppendInittab(DiceModuleName, PyInit_DiceMaid);
 		if (import_dice) {
 			console.log("‘§‘ÿdicemaidƒ£øÈ ß∞‹!", 0b1000);
 		}
-		if (!Py_IsInitialized())Py_Initialize();
-		PyRun_SimpleString("import sys");
-		PyRun_SimpleString(("sys.path.append('" + (DiceDir / "plugin").u8string() + "/')").c_str());
-		PyRun_SimpleString(("sys.path.append('" + (dirExe / "Diceki" / "py").u8string() + "/')").c_str());
-		PyRun_SimpleString("from dicemaid import *");
+		PyWideStringList_Append(&config.module_search_paths, ((DiceDir / "plugin").wstring() + L"/").c_str());
+		PyWideStringList_Append(&config.module_search_paths, ((dirExe / "Diceki" / "py").wstring() + L"/").c_str());
+		config.module_search_paths_set = 1;
+		if (!Py_IsInitialized()){//Py_Initialize();
+			status = Py_InitializeFromConfig(&config);
+			PyRun_SimpleString("import sys");
+			PyRun_SimpleString("from dicemaid import *");
+		}
 	}
 	catch (std::exception& e) {
-		console.log("python≥ı ºªØ ß∞‹" + string(e.what()), 0b1);
+		console.log("python≥ı ºªØ ß∞‹:" + string(e.what()), 0b1);
 	}
-	console.log("Python.Initialized", 0);
+	if (PyStatus_Exception(status))console.log("python≥ı ºªØ ß∞‹:" + string(status.err_msg), 0b1);
+	else console.log("Python.Initialized", 0);
+	PyConfig_Clear(&config);
 }
 dict<std::pair<PyObject*, std::filesystem::file_time_type>> Py_FileScripts;
 dict<PyObject*> Py_StringScripts;
