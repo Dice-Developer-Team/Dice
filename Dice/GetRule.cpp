@@ -104,7 +104,7 @@ namespace GetRule
 		}
 		if (temp == getMsg("strRequestNoResponse"))
 		{
-			des = getMsg("strRuleNotFound");
+			des = getMsg("strRuleNotFound", AttrVars{ {"item",itemName } });
 		}
 		else
 		{

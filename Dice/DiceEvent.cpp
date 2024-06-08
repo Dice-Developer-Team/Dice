@@ -74,7 +74,7 @@ AttrGetters MsgIndexs{
 		if (AttrVar game{ sessions.get_if(*obj)} ) {
 			return obj->at("game") = game;
 		}
-		return AttrVar();
+		else return game;
 	}},
 };
 
@@ -2289,50 +2289,6 @@ int DiceEvent::InnerOrder() {
 		}
 		return 1;
 	}
-	else if (pref5 == "rules") {
-		intMsgCnt += 5;
-		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
-			intMsgCnt++;
-		if (strMsg.length() == intMsgCnt) {
-			replyHelp("rules");
-			return 1;
-		}
-		if (strLowerMessage.substr(intMsgCnt, 3) == "set") {
-			intMsgCnt += 3;
-			while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == ':')
-				intMsgCnt++;
-			string strDefaultRule = strMsg.substr(intMsgCnt);
-			if (strDefaultRule.empty()) {
-				getUser(fromChat.uid).rmConf("默认规则");
-				replyMsg("strRuleReset");
-			}
-			else {
-				for (auto& n : strDefaultRule)
-					n = toupper(static_cast<unsigned char>(n));
-				getUser(fromChat.uid).setConf("默认规则", strDefaultRule);
-				replyMsg("strRuleSet");
-			}
-		}
-		else {
-			string strSearch = strMsg.substr(intMsgCnt);
-			for (auto& n : strSearch)
-				n = toupper(static_cast<unsigned char>(n));
-			if (auto rule{ getGameRule() }; GetRule::get(*rule, strSearch, strReply)) {
-				reply();
-			}
-			else if (getUser(fromChat.uid).is("默认规则") && strSearch.find(':') == string::npos &&
-				GetRule::get(getUser(fromChat.uid).get_str("默认规则"), strSearch, strReply)) {
-				reply();
-			}
-			else if (GetRule::analyze(strSearch, strReply)) {
-				reply();
-			}
-			else {
-				reply(getMsg("strRuleErr") + strReply);
-			}
-		}
-		return 1;
-	}
 	else if (string pref4{ strLowerMessage.substr(intMsgCnt, 4) }; pref4 == "coc6") {
 		intMsgCnt += 4;
 		if (strLowerMessage[intMsgCnt] == 's')
@@ -2611,6 +2567,54 @@ int DiceEvent::InnerOrder() {
 		set("res",Res.dot("、").show());
 		replyMsg("strNameGenerator");
 		return 1;
+	}
+	else if (pref4 == "rule") {
+	intMsgCnt += 4;
+	while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
+		intMsgCnt++;
+	if (strMsg.length() == intMsgCnt) {
+		replyHelp("rule");
+		return 1;
+	}
+	if (strLowerMessage.substr(intMsgCnt, 3) == "set") {
+		intMsgCnt += 3;
+		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == ':')
+			intMsgCnt++;
+		string strDefaultRule = strMsg.substr(intMsgCnt);
+		auto game{ thisGame() };
+		if (strDefaultRule.empty()) {
+			if (game)game->reset("rule");
+			else getUser(fromChat.uid).rmConf("默认规则");
+			replyMsg("strRuleReset");
+		}
+		else {
+			set("rule", strDefaultRule);
+			if (game)game->set("rule", strDefaultRule);
+			else getUser(fromChat.uid).setConf("默认规则", strDefaultRule);
+			replyMsg("strRuleSet");
+		}
+	}
+	else if (strLowerMessage[intMsgCnt] == 's') {
+		++intMsgCnt;
+		string strSearch = readRest();
+		for (auto& n : strSearch)
+			n = toupper(static_cast<unsigned char>(n));
+		if (auto rule{ getGameRule() }; GetRule::get(*rule, strSearch, strReply)) {
+			reply();
+		}
+		else if (getUser(fromChat.uid).is("默认规则") && strSearch.find(':') == string::npos &&
+			GetRule::get(getUser(fromChat.uid).get_str("默认规则"), strSearch, strReply)) {
+			reply();
+		}
+		else if (GetRule::analyze(strSearch, strReply)) {
+			reply();
+		}
+		else {
+			reply(getMsg("strRuleErr") + strReply);
+		}
+	}
+	else replyHelp("rule");
+	return 1;
 	}
 	else if (pref4 == "send") {
 		intMsgCnt += 4;
