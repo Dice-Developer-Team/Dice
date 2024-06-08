@@ -4064,7 +4064,7 @@ int DiceEvent::InnerOrder() {
 			if (strMsg[intMsgCnt] == '&') {
 				if (!(attr_name = readToColon()).empty()) {
 					string attr_new;
-					if (pc->set(get_str("attr"), attr_new = readExp())) {
+					if (pc->set(attr_name, attr_new = readExp())) {
 						set("detailed");
 						trans = AnysTable{ {
 							{"attr", attr_name},
