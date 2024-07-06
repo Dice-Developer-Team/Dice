@@ -598,7 +598,7 @@ int Player::emptyCard(const string& s, long long group, const string& type)
 {
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
 	//人物卡数量上限
-	if (mCardList.size() > 16)return -1;
+	if (mCardList.size() > 32)return -1;
 	//无效模板不再报错
 	if (NameList.count(s))return -4;
 	if (s.find("=") != string::npos)return -6;
@@ -611,7 +611,7 @@ int Player::newCard(string& s, long long group, string type)
 {
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
 	//人物卡数量上限
-	if (mCardList.size() > 16)return -1;
+	if (mCardList.size() > 32)return -1;
 	s = strip(s);
 	std::stack<string> vOption;
 	int Cnt = s.rfind(':');
