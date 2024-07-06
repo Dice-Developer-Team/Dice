@@ -1419,7 +1419,8 @@ int DiceEvent::BasicOrder()
 		else if (action == "open") {
 			string& name{ (at("game_id") = readFileName()).text };
 			if (auto game = sessions.getByName(name)) {
-				if (game->is_gm(fromChat.uid)) {
+				if (game->is_gm(fromChat.uid)
+					|| (isPrivate() && game->is_pl(fromChat.uid))) {
 					sessions.open(game, fromChat);
 					replyMsg("strGameAreaOpen");
 				}
