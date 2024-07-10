@@ -992,8 +992,8 @@ int DiceEvent::BasicOrder()
 	else if (strLowerMessage.substr(intMsgCnt, 7) == "warning")
 	{
 		intMsgCnt += 7;
-		string strWarning = readRest();
-		AddWarning(strWarning, fromChat.uid, fromChat.gid);
+		set("strWarning", readRest());
+		AddWarning(shared_from_this());
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 6) == "master")

@@ -98,21 +98,21 @@ void checkGroupWithBlackQQ(const DDBlackMark& mark, long long llQQ)
 }
 
 // warning处理队列
-std::queue<fromMsg> warningQueue;
+std::queue<ptr<AnysTable>> warningQueue;
 // 消息发送队列锁
 mutex warningMutex;
 
 bool isLoadingExtern = false;
 
-void AddWarning(const string& msg, long long DiceQQ, long long fromGID)
+void AddWarning(const ptr<AnysTable>& warning)
 {
 	lock_guard<std::mutex> lock_queue(warningMutex);
-	warningQueue.emplace(msg, DiceQQ, fromGID);
+	warningQueue.emplace(warning);
 }
 
 void warningHandler()
 {
-	fromMsg warning;
+	ptr<AnysTable> warning;
 	while (Enabled)
 	{
 		if (!warningQueue.empty())
@@ -122,28 +122,33 @@ void warningHandler()
 				warning = warningQueue.front();
 				warningQueue.pop();
 			}
-			if (warning.strMsg.empty())continue;
-			if (warning.fromUID)console.log("接收来自" + printUser(warning.fromUID) + "的warning:" + warning.strMsg, 0,
-			                               printSTNow());
-			try
-			{
-				fifo_json j = fifo_json::parse(GBKtoUTF8(warning.strMsg));
-				if (j.is_array())
+			string strWarning{ warning->get_str("strWarning") };
+			if (!strWarning.empty()) {
+				long long uid = warning->get_ll("uid");
+				if (uid)console.log("接收来自" + printUser(uid) + "的warning:" + strWarning, 0,
+					printSTNow());
+				try
 				{
-					for (auto& it : j)
+					fifo_json j = fifo_json::parse(GBKtoUTF8(strWarning));
+					warning->set("hook", "BlackInfoWarned");
+					if (j.is_array())
 					{
-						blacklist->verify(it, warning.fromUID);
+						for (auto& it : j){
+							warning->set("warning", it);
+							if (!fmt->call_hook_event(warning))blacklist->verify(it, uid);
+						}
 					}
+					else
+					{
+						warning->set("warning", j);
+						if (!fmt->call_hook_event(warning))blacklist->verify(j, uid);
+					}
+					std::this_thread::sleep_for(100ms);
 				}
-				else
+				catch (...)
 				{
-					blacklist->verify(j, warning.fromUID);
+					console.log("warning解析失败×", 0);
 				}
-				std::this_thread::sleep_for(100ms);
-			}
-			catch (...)
-			{
-				console.log("warning解析失败×", 0);
 			}
 		}
 		else std::this_thread::sleep_for(200ms);

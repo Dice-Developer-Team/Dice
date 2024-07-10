@@ -2,29 +2,13 @@
 /**
  * 黑名单明细
  * 更数据库式的管理
- * Copyright (C) 2019-2023 String.Empty
+ * Copyright (C) 2019-2024 String.Empty
  */
 
-#include <string>
 #include <utility>
-#include <vector>
-#include <map>
-#include <set>
-#include <memory>
-#include <unordered_map>
-#include <unordered_set>
-#include "filesystem.hpp"
-#include "fifo_json.hpp"
+#include "DiceAttrVar.h"
 
 using std::pair;
-using std::string;
-using std::to_string;
-using std::vector;
-using std::map;
-using std::multimap;
-using std::set;
-using std::unordered_map;
-using std::unordered_set;
 
 class DiceEvent;
 
@@ -199,5 +183,5 @@ public:
 	}
 };
 
-void AddWarning(const std::string& msg, long long DiceQQ, long long fromGID);
+void AddWarning(const ptr<AnysTable>& warning);
 void warningHandler();
