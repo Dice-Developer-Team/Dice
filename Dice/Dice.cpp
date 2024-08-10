@@ -135,13 +135,16 @@ void readUserData(){
 				fs::copy_options::overwrite_existing, ec);
 			log << "读取用户记录" + to_string(cnt) + "条";
 		}
-		else if (fs::exists(dir / "UserConf.bak")) {
-			cnt = loadBFile(dir / "UserConf.bak", UserList);
-			if (cnt > 0)log << "恢复用户记录" + to_string(cnt) + "条";
+		else if (fs::exists(dir / "UserConf.dat.bak")
+			&& (cnt = loadBFile(dir / "UserConf.dat.bak", UserList)) > 0) {
+			log << "恢复用户记录" + to_string(cnt) + "条";
 		}
-		else {
-			cnt = loadBFile<long long, User, &User::old_readb>(dir / "UserConf.RDconf", UserList);
-			if (cnt > 0)log << "迁移用户记录" + to_string(cnt) + "条";
+		else if (fs::exists(dir / "UserConf.bak")
+			&& (cnt = loadBFile(dir / "UserConf.bak", UserList)) > 0) {
+			log << "恢复用户记录" + to_string(cnt) + "条";
+		}
+		else if ((cnt = loadBFile<long long, User, &User::old_readb>(dir / "UserConf.RDconf", UserList)) > 0) {
+			log << "迁移用户记录" + to_string(cnt) + "条";
 		}
 		//for QQ Channel
 		if (User& self{ getUser(console.DiceMaid) }; !self.get_ll("tinyID")) {
@@ -162,9 +165,13 @@ void readUserData(){
 				fs::copy_options::overwrite_existing, ec);
 			log << "读取玩家记录" + to_string(cnt) + "条";
 		}
-		else if (fs::exists(dir / "PlayerCards.bak")) {
-			cnt = loadBFile(dir / "PlayerCards.bak", PList);
-			if (cnt > 0)log << "恢复玩家记录" + to_string(cnt) + "条";
+		else if (fs::exists(dir / "PlayerCards.RDconf.bak")
+			&& (cnt = loadBFile(dir / "PlayerCards.RDconf.bak", PList)) > 0) {
+			log << "恢复玩家记录" + to_string(cnt) + "条";
+		}
+		else if (fs::exists(dir / "PlayerCards.bak")
+			&& (cnt = loadBFile(dir / "PlayerCards.bak", PList)) > 0) {
+			log << "恢复玩家记录" + to_string(cnt) + "条";
 		}
 		for (const auto& pl : PList) {
 			if (!UserList.count(pl.first))getUser(pl.first);
@@ -181,13 +188,16 @@ void readUserData(){
 				fs::copy_options::overwrite_existing, ec);
 			log << "读取群聊记录" + to_string(cnt) + "条";
 		}
-		else if (fs::exists(dir / "ChatConf.bak")) {
-			cnt = loadBFile(dir / "ChatConf.bak", ChatList);
-			if (cnt > 0)log << "恢复群聊记录" + to_string(cnt) + "条";
+		else if (fs::exists(dir / "ChatConf.dat.bak")
+			&& (cnt = loadBFile(dir / "ChatConf.dat.bak", ChatList)) > 0) {
+			log << "恢复群聊记录" + to_string(cnt) + "条";
 		}
-		else {
-			cnt = loadBFile(dir / "ChatConf.RDconf", ChatList);
-			if (cnt > 0)log << "迁移群聊记录" + to_string(cnt) + "条";
+		else if (fs::exists(dir / "ChatConf.bak")
+			&& (cnt = loadBFile(dir / "ChatConf.bak", ChatList)) > 0) {
+			log << "恢复群聊记录" + to_string(cnt) + "条";
+		}
+		else if ((cnt = loadBFile(dir / "ChatConf.RDconf", ChatList)) > 0) {
+			log << "迁移群聊记录" + to_string(cnt) + "条";
 		}
 	}
 	catch (const std::exception& e)	{
@@ -207,12 +217,19 @@ void dataBackUp()
 {
 	std::error_code ec;
 	std::filesystem::create_directory(DiceDir / "conf", ec);
-	std::filesystem::create_directory(DiceDir / "user", ec);
+	static auto dirUser{ DiceDir / "user" };
+	std::filesystem::create_directory(dirUser, ec);
 	std::filesystem::create_directory(DiceDir / "audit", ec);
 	//备份列表
-	saveBFile(DiceDir / "user" / "UserConf.dat", UserList);
-	saveBFile(DiceDir / "user" / "PlayerCards.RDconf", PList);
-	saveBFile(DiceDir / "user" / "ChatConf.dat", ChatList);
+	static auto pathUser{ dirUser / "UserConf.dat" };
+	fs::copy_file(pathUser, dirUser / "UserConf.dat.bak", fs::copy_options::update_existing);
+	saveBFile(pathUser, UserList);
+	static auto pathPlayer{ dirUser / "PlayerCards.RDconf" };
+	fs::copy_file(pathPlayer, dirUser / "PlayerCards.RDconf.bak", fs::copy_options::update_existing);
+	saveBFile(pathPlayer, PList);
+	static auto pathChat{ dirUser / "ChatConf.dat" };
+	fs::copy_file(pathChat, dirUser / "ChatConf.dat.bak", fs::copy_options::update_existing);
+	saveBFile(pathChat, ChatList);
 }
 
 atomic_flag isIniting = ATOMIC_FLAG_INIT;

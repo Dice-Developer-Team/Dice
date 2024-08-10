@@ -9,6 +9,9 @@
 #include "DiceAttrVar.h"
 
 using std::pair;
+using std::unordered_set;
+using std::unordered_map;
+using std::multimap;
 
 class DiceEvent;
 
@@ -64,7 +67,7 @@ public:
 
 class DDBlackManager
 {
-	vector<DDBlackMark> vBlackList;
+	std::vector<DDBlackMark> vBlackList;
 	//‘∆∂À±‡∫≈”≥…‰±Ì
 	unordered_map<int, unsigned int> mCloud;
 	unordered_set<unsigned int> sIDEmpty;

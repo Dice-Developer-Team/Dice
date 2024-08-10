@@ -3354,6 +3354,14 @@ int DiceEvent::InnerOrder() {
 			replyHelp("pc");
 			return 1;
 		}
+		else if (strOption == "clr") {
+			if (PList.count(fromChat.uid)) {
+				PList.erase(fromChat.uid);
+				replyMsg("strPcClr");
+			}
+			else replyMsg("strPcNotExistErr");
+			return 1;
+		}
 		Player& pl = getPlayer(fromChat.uid);
 		int resno = 0;
 		if (strOption == "tag") {
@@ -3488,11 +3496,6 @@ int DiceEvent::InnerOrder() {
 				set("stat",res.show());
 				replyMsg("strPcStatShow");
 			}
-			return 1;
-		}
-		else if (strOption == "clr") {
-			PList.erase(fromChat.uid);
-			replyMsg("strPcClr");
 			return 1;
 		}
 		else if (strOption == "type") {
