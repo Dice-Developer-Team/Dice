@@ -39,7 +39,7 @@ public:
 		else if (auto cit = global.find(leaf); cit != global.end()) {
 			return fmt->format(cit->second, context, isTrust, global);
 		}
-		//Óï¾³ÓÅÏÈÓÚÈ«¾Ö
+		//è¯­å¢ƒä¼˜å…ˆäºå…¨å±€
 		else if (auto sp = fmt->global_speech.find(leaf); sp != fmt->global_speech.end()) {
 			val = fmt->format(sp->second.express(), context, isTrust, global);
 			if (!isTrust && val == "\f")val = "\f> ";
@@ -88,7 +88,7 @@ public:
 			else if (isTrust)return printGroup(AttrVar(paras.at("gid")).to_ll());
 		}
 		else if (paras.count("master")) {
-			return console ? printUser(console) : "[ÎŞÖ÷]";
+			return console ? printUser(console) : "[æ— ä¸»]";
 		}
 		else if (paras.count("self")) {
 			return printUser(console.DiceMaid);
@@ -248,7 +248,7 @@ ptr<MarkNode> buildFormatter(const std::string_view& exp) {
 	while ((lastL = exp.find('{', lastR)) != string::npos
 		&& (lastR = find_close_brace(exp, lastL + 1)) != string::npos) {
 		std::string_view field;
-		//À¨ºÅÇ°¼Ó¡®\¡¯±íÊ¾¸ÃÀ¨ºÅÄÚÈİ²»×ªÒå
+		//æ‹¬å·å‰åŠ â€˜\â€™è¡¨ç¤ºè¯¥æ‹¬å·å†…å®¹ä¸è½¬ä¹‰
 		if (exp[lastR - 1] == '\\') {
 			lastL = lastR - 1;
 			field = exp.substr(lastR, 1);

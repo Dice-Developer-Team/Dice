@@ -17,11 +17,11 @@
 #undef GetMessage
 #endif
 
-// Aws SDKÉèÖÃ
+// Aws SDKè®¾ç½®
 Aws::SDKOptions options;
 std::shared_ptr<Aws::Auth::AnonymousAWSCredentialsProvider> awsCredProvider{ std::make_shared<Aws::Auth::AnonymousAWSCredentialsProvider>() };
 std::shared_ptr<Aws::S3::S3EndpointProvider> awsEProvider;
-// ÅĞ¶ÏÎÄ¼şÊÇ·ñ´æÔÚ
+// åˆ¤æ–­æ–‡ä»¶æ˜¯å¦å­˜åœ¨
 bool file_exists(const std::string& file_name)
 {
 	std::error_code ec;
@@ -35,8 +35,8 @@ void aws_shutdown() {
 	awsEProvider.reset();
 	Aws::ShutdownAPI(options); 
 }
-// ÉÏ´«ÎÄ¼şÖÁS3, ²ÉÓÃS3-accelerate
-// ³É¹¦Ê±·µ»Ø"SUCCESS", ·ñÔò·µ»Ø´íÎóĞÅÏ¢
+// ä¸Šä¼ æ–‡ä»¶è‡³S3, é‡‡ç”¨S3-accelerate
+// æˆåŠŸæ—¶è¿”å›"SUCCESS", å¦åˆ™è¿”å›é”™è¯¯ä¿¡æ¯
 std::string put_s3_object(const Aws::String& s3_bucket_name,
 	const Aws::String& s3_object_name,
 	const std::string& file_name,

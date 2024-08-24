@@ -326,7 +326,7 @@ std::string listItem(const Con& list, const string& sepa = "|") {
 }
 
 
-//按优先级输出项目
+//鎸変紭鍏堢骇杈撳嚭椤圭洰
 template<typename Elem>
 class PriorList{
 	std::priority_queue<std::pair<Elem, string>> qItem;

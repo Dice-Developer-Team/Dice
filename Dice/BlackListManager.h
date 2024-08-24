@@ -1,7 +1,7 @@
 #pragma once
 /**
- * ºÚÃûµ¥Ã÷Ï¸
- * ¸üÊı¾İ¿âÊ½µÄ¹ÜÀí
+ * é»‘åå•æ˜ç»†
+ * æ›´æ•°æ®åº“å¼çš„ç®¡ç†
  * Copyright (C) 2019-2024 String.Empty
  */
 
@@ -19,7 +19,7 @@ enum class BlackID { fromGID, fromUID, inviterQQ, ownerQQ };
 
 class DDBlackMark
 {
-	//²»Á¼¼ÇÂ¼ÀàĞÍ:null,kick,ban,spam,other,ruler,local,extern;Ã¶¾ÙÖ®ÍâÒ»ÂÉ·Ç·¨
+	//ä¸è‰¯è®°å½•ç±»å‹:null,kick,ban,spam,other,ruler,local,extern;æšä¸¾ä¹‹å¤–ä¸€å¾‹éæ³•
 	string type = "null";
 	string time;
 	//fromGID,fromUID,inviterQQ,ownerQQ
@@ -31,13 +31,13 @@ class DDBlackMark
 	//
 	long long DiceMaid = 0;
 	long long masterID = 0;
-	//Î£ÏÕµÈ¼¶
+	//å±é™©ç­‰çº§
 	short danger = 0;
-	//Î¨Ò»ÔÆ¶Ë±àºÅ£¨0±íÊ¾²»¶ÔÓ¦ÔÆ¶Ë£©
+	//å”¯ä¸€äº‘ç«¯ç¼–å·ï¼ˆ0è¡¨ç¤ºä¸å¯¹åº”äº‘ç«¯ï¼‰
 	int wid = 0;
-	//ËµÃ÷
+	//è¯´æ˜
 	string note;
-	//¸½¼Ó±¸×¢
+	//é™„åŠ å¤‡æ³¨
 	string comment{};
 	void erase();
 	void upload();
@@ -48,12 +48,12 @@ public:
 	DDBlackMark(const string&);
 	friend class DDBlackManager;
 	friend class DDBlackMarkFactory;
-	//warningÎÄ±¾Éú³É
+	//warningæ–‡æœ¬ç”Ÿæˆ
 	[[nodiscard]] string printJson(int tab) const;
 	[[nodiscard]] string warning() const;
 	[[nodiscard]] string getData() const;
 	void fill_note();
-	//ÊÇ·ñºÏ·¨¹¹Ôì
+	//æ˜¯å¦åˆæ³•æ„é€ 
 	bool isValid = false;
 	bool isClear = false;
 	[[nodiscard]] bool isType() const;
@@ -68,17 +68,17 @@ public:
 class DDBlackManager
 {
 	std::vector<DDBlackMark> vBlackList;
-	//ÔÆ¶Ë±àºÅÓ³Éä±í
+	//äº‘ç«¯ç¼–å·æ˜ å°„è¡¨
 	unordered_map<int, unsigned int> mCloud;
 	unordered_set<unsigned int> sIDEmpty;
-	//¿ÉÖØ¸´Ó³Éä±í
+	//å¯é‡å¤æ˜ å°„è¡¨
 	multimap<string, unsigned int> mTimeIndex;
 	unordered_set<unsigned int> sTimeEmpty;
 	unordered_set<unsigned int> sGroupEmpty;
 	unordered_set<unsigned int> sQQEmpty;
-	//·¢ÏÖËùÖ¸ÏàÍ¬µÄ¼ÇÂ¼
+	//å‘ç°æ‰€æŒ‡ç›¸åŒçš„è®°å½•
 	int find(const DDBlackMark&);
-	//¸üĞÂ¼ÇÂ¼
+	//æ›´æ–°è®°å½•
 	bool insert(DDBlackMark&);
 	bool update(DDBlackMark&, unsigned int, int);
 	void reset_group_danger(long long);
@@ -89,7 +89,7 @@ class DDBlackManager
 public:
 	multimap<long long, unsigned int> mGroupIndex;
 	multimap<long long, unsigned int> mQQIndex;
-	//Î´×¢ÏúºÚÃûµ¥µÄÎ£ÏÕµÈ¼¶
+	//æœªæ³¨é”€é»‘åå•çš„å±é™©ç­‰çº§
 	unordered_map<long long, short> mQQDanger;
 	unordered_map<long long, short> mGroupDanger;
 	[[nodiscard]] short get_group_danger(long long) const;
@@ -105,9 +105,9 @@ public:
 	void rm_black_qq(long long, DiceEvent*);
 	void verify(const fifo_json&, long long);
 	void create(DDBlackMark&);
-	//¶ÁÈ¡json¸ñÊ½ºÚÃûµ¥¼ÇÂ¼
+	//è¯»å–jsonæ ¼å¼é»‘åå•è®°å½•
 	int loadJson(const std::filesystem::path& fpPath, bool isExtern = false);
-	//¶ÁÈ¡¾É°æ±¾ºÚÃûµ¥ÁĞ±í
+	//è¯»å–æ—§ç‰ˆæœ¬é»‘åå•åˆ—è¡¨
 	int loadHistory(const std::filesystem::path& fpLoc);
 	void saveJson(const std::filesystem::path& fpPath) const;
 };

@@ -22,11 +22,11 @@ namespace QQ {
 #endif
 
 /*
-初始化事件，加载api并获取QQ
+鍒濆鍖栦簨浠讹紝鍔犺浇api骞惰幏鍙朡Q
 */
 #define EVE_Startup(Name) QQEVENT(void, Name, 12)(void* initApi, long long botQQ)
 /*
-启用Dice
+鍚敤Dice
 */
 #define EVE_Enable(Name) QQEVENT(void, Name, 0)()
 #define EVE_Disable(Name) QQEVENT(void, Name, 0)()
@@ -43,8 +43,8 @@ namespace QQ {
 #define EVE_FriendAdded(Name) QQEVENT(int, Name, 8)(long long fromUID)
 #define EVE_Extra(Name) QQEVENT(int, Name, 4)(const char* jsonData)
 
-//菜单，待设置
+//鑿滃崟锛屽緟璁剧疆
 #define EVE_Menu(Name) QQEVENT(int, Name, 0)()
-//悬浮窗，暂时无用
+//鎮诞绐楋紝鏆傛椂鏃犵敤
 //#define EVE_Status_EX(Name) QQEVENT(const char*, Name, 0)()
 }

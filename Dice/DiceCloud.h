@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * ÷»ÄïÍøÂç
+ * Dice Cloud
  * Copyright (C) 2019-2021 String.Empty
  */
 

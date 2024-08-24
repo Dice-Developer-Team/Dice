@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2019 String.Empty
- * 消息频率监听
+ * 娑堟伅棰戠巼鐩戝惉
  */
 #pragma once
 #include <map>
@@ -19,7 +19,7 @@ public:
 	static const long long earlyTime = 30;
 	static const long long earlierTime = 60;
 	static const long long earliestTime = 300;
-	//频率记录
+	//棰戠巼璁板綍
 	static std::unordered_map<long long, int>mFrequence;
 	static std::unordered_map<long long, int>mWarnLevel;
 	static std::unordered_map<long long, int>mCntOrder;

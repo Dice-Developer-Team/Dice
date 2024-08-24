@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123À›‰ß
+ * Copyright (C) 2018-2021 w4123Ê∫ØÊ¥Ñ
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -36,7 +36,7 @@ bool AnysTable::is(const string& key)const {
 bool AnysTable::is_empty(const string& key)const {
 	auto it{ dict.find(key) };
 	return (it == dict.end())
-		|| (it->second.type == AttrVar::Type::Text && it->second.text.empty())
+		|| (it->second.type == AttrVar::Type::U8String && it->second.text.empty())
 		|| (it->second.type == AttrVar::Type::Table && it->second.table->empty());
 }
 bool AnysTable::is_table(const string& key)const {
@@ -189,6 +189,24 @@ void AnysTable::readb(std::ifstream& fs) {
 		} while (dict.count(strI = to_string(++idx)));
 	}
 }
+void AnysTable::readgb(std::ifstream& fs) {
+	short len = fread<short>(fs);
+	if (len < 0)return;
+	if (!fs.peek()) {
+		fs.ignore(2);
+	}
+	while (len--) {
+		dict[GBKtoUTF8(fread<string>(fs))].readb(fs);
+	}
+	if (string strI{ "0" }; dict.count(strI) || dict.count(strI = "1")) {
+		list = std::make_shared<VarArray>();
+		int idx{ strI == "0" ? 0 : 1 };
+		do {
+			list->push_back(dict.at(strI));
+			dict.erase(strI);
+		} while (dict.count(strI = to_string(++idx)));
+	}
+}
 bool AnysTable::operator<(const AnysTable other)const { return dict < other.dict; }
 
 AttrObject::AttrObject(const AttrVars& vars) :p(std::make_shared<AnysTable>(vars)) {}
@@ -204,7 +222,7 @@ AttrVar::AttrVar(const AttrVar& other) :type(other.type) {
 	case Type::Number:
 		number = other.number;
 		break;
-	case Type::Text:
+	case Type::U8String:
 		new(&text)string(other.text);
 		break;
 	case Type::Table:
@@ -241,7 +259,7 @@ AttrVar::AttrVar(const HashedVar& vars) {
 		}
 	}
 	else if (std::holds_alternative<string>(vars)) {
-		type = Type::Text;
+		type = Type::U8String;
 		new(&text)string(std::get<string>(vars));
 	}
 }
@@ -274,13 +292,13 @@ AttrVar& AttrVar::operator=(double other) {
 }
 AttrVar& AttrVar::operator=(const string& other) {
 	des();
-	type = Type::Text;
+	type = Type::U8String;
 	new(&text)string(other);
 	return *this;
 }
 AttrVar& AttrVar::operator=(const char* other) {
 	des();
-	type = Type::Text;
+	type = Type::U8String;
 	new(&text)string(other);
 	return *this;
 }
@@ -298,10 +316,10 @@ bool AttrVar::operator==(const long long other)const {
 }
 */
 bool AttrVar::operator==(const string& other)const {
-	return (type == Type::Text && text == other);
+	return (type == Type::U8String && text == other);
 }
 bool AttrVar::operator==(const char* other)const {
-	return (type == Type::Text && text == other);
+	return (type == Type::U8String && text == other);
 }
 AttrVar& AttrVar::operator++() {
 	switch (type) {
@@ -327,14 +345,14 @@ AttrVar& AttrVar::operator++() {
 	return *this;
 }
 AttrVar AttrVar::operator+(const AttrVar& other) {
-	if (type == Type::Text && other.type == Type::Text)
+	if (type == Type::U8String && other.type == Type::U8String)
 		return text + other.text;
 	else if (is_numberic() && other.is_numberic()) {
 		double sum{ to_num() + other.to_num() };
 		return (sum == (int)sum) ? (int)sum :
 			((sum == (long long)sum) ? (long long)sum : sum);
 	}
-	else if (type == Type::Text || other.type == Type::Text)
+	else if (type == Type::U8String || other.type == Type::U8String)
 		return to_str() + other.to_str();
 	else if (is_null() && other)
 		return other;
@@ -358,7 +376,8 @@ int AttrVar::to_int()const {
 	case Type::Number:
 		return number;
 		break;
-	case Type::Text:
+	case Type::GBString:
+	case Type::U8String:
 		try {
 			return stoi(text);
 		}
@@ -388,7 +407,8 @@ long long AttrVar::to_ll()const {
 	case Type::Number:
 		return number;
 		break;
-	case Type::Text:
+	case Type::GBString:
+	case Type::U8String:
 		try {
 			return stoll(text);
 		}
@@ -418,7 +438,8 @@ double AttrVar::to_num()const {
 	case Type::Number:
 		return number;
 		break;
-	case Type::Text:
+	case Type::GBString:
+	case Type::U8String:
 		try {
 			return stod(text);
 		}
@@ -445,7 +466,8 @@ string AttrVar::to_str()const {
 	case Type::Number:
 		return toString(number);
 		break;
-	case Type::Text:
+	case Type::GBString:
+	case Type::U8String:
 		return text;
 		break;
 	case Type::Table: 
@@ -477,7 +499,8 @@ string AttrVar::to_str()const {
 }
 ByteS AttrVar::to_bytes()const {
 	switch (type) {
-	case Type::Text:
+	case Type::GBString:
+	case Type::U8String:
 		return { text.c_str(),text.length()};
 		break;
 	case Type::Function:
@@ -523,7 +546,7 @@ AttrVar AttrVar::parse(const string& s) {
 	return s;
 }
 string AnysTable::print()const {
-	return UTF8toGBK(to_json().dump());
+	return to_json().dump();
 }
 string AttrVar::print()const {
 	switch (type) {
@@ -539,7 +562,8 @@ string AttrVar::print()const {
 	case Type::Number:
 		return toString(number);
 		break;
-	case Type::Text:
+	case Type::GBString:
+	case Type::U8String:
 		return text;
 		break;
 	case Type::Table:
@@ -569,7 +593,8 @@ string AttrVar::print()const {
 }
 size_t AttrVar::len()const {
 	switch (type) {
-	case Type::Text:
+	case Type::GBString:
+	case Type::U8String:
 		return text.length();
 		break;
 	case Type::Table:
@@ -584,7 +609,7 @@ size_t AttrVar::len()const {
 	return 0;
 }
 bool AttrVar::str_empty()const{
-	return type == Type::Text && text.empty();
+	return type == Type::U8String && text.empty();
 }
 AttrObject AttrVar::to_obj()const {
 	if (type == Type::Table)return table;
@@ -616,7 +641,8 @@ bool AttrVar::is_numberic()const {
 	case Type::Number:
 		return true; 
 		break;
-	case Type::Text:
+	case Type::GBString:
+	case Type::U8String:
 		return isNumeric(text);
 		break;
 	default:
@@ -631,8 +657,8 @@ bool AttrVar::equal(const AttrVar& other)const{
 	else if (other.type == Type::Boolean) {
 		return is_true() == other.is_true();
 	}
-	else if (other.type == Type::Text) {
-		if(type == Type::Text)return text == other.text;
+	else if (other.type == Type::U8String) {
+		if(type == Type::U8String)return text == other.text;
 		else return to_str() == other.text;
 	}
 	else if (other.is_numberic() && is_numberic()) {
@@ -647,8 +673,8 @@ bool AttrVar::not_equal(const AttrVar& other)const {
 	else if (other.type == Type::Boolean) {
 		return is_true() != other.is_true();
 	}
-	else if (other.type == Type::Text) {
-		if (type == Type::Text)return text != other.text;
+	else if (other.type == Type::U8String) {
+		if (type == Type::U8String)return text != other.text;
 		else return to_str() != other.text;
 	}
 	else if (other.is_numberic() && is_numberic()) {
@@ -682,7 +708,7 @@ void AnysTable::from_json(const fifo_json& j){
 		}
 		for (auto& it : j.items()) {
 			if (idxs.count(it.key()))continue;
-			if (!it.value().is_null())set(UTF8toGBK(it.key()), it.value());
+			if (!it.value().is_null())set(it.key(), it.value());
 		}
 	}
 	else if (j.is_array()) {
@@ -703,8 +729,8 @@ AttrVar::AttrVar(const fifo_json& j) {
 		new(&table) AttrObject(AnysTable(j));
 		break;
 	case fifo_json::value_t::string:
-		type = Type::Text;
-		new(&text)string(UTF8toGBK(j.get<string>()));
+		type = Type::U8String;
+		new(&text)string(j);
 		break;
 	case fifo_json::value_t::boolean:
 		type = Type::Boolean;
@@ -744,8 +770,11 @@ fifo_json AttrVar::to_json()const {
 	case Type::Number:
 		return number;
 		break;
-	case Type::Text:
+	case Type::GBString:
 		return GBKtoUTF8(text);
+		break;
+	case Type::U8String:
+		return text;
 		break;
 	case Type::ID:
 		return id;
@@ -771,7 +800,7 @@ fifo_json AnysTable::to_json()const {
 	else {
 		fifo_json j = fifo_json::object();
 		for (auto& [key, val] : dict) {
-			if (val)j[GBKtoUTF8(key)] = val.to_json();
+			if (val)j[key] = val.to_json();
 		}
 		if (list) {
 			int idx{ 0 };
@@ -802,7 +831,7 @@ AttrVar::AttrVar(const toml::node& t) {
 				} while (tab->contains(strI = to_string(++idx)));
 			}
 			for (auto& [key, val] : *tab) {
-				if (string k{ UTF8toGBK(string(key.str())) };
+				if (string k{ key.str() };
 					!idxs.count(k))
 				table->dict[k] = val;
 			}
@@ -818,8 +847,8 @@ AttrVar::AttrVar(const toml::node& t) {
 		}
 		break;
 	case toml::node_type::string:
-		type = Type::Text;
-		new(&text)string(UTF8toGBK(string(*t.as_string())));
+		type = Type::U8String;
+		new(&text)string(*t.as_string());
 		break;
 	case toml::node_type::integer:
 		if (int64_t num{ *t.as_integer() }; num == (int)num) {
@@ -851,25 +880,28 @@ toml::table AnysTable::to_toml()const {
 	for (auto& [key, val] : dict) {
 		if (val)switch (val.type) {
 		case AttrVar::Type::Boolean:
-			tab.insert(GBKtoUTF8(key), val.bit);
+			tab.insert(key, val.bit);
 			break;
 		case AttrVar::Type::Integer:
-			tab.insert(GBKtoUTF8(key), val.attr);
+			tab.insert(key, val.attr);
 			break;
 		case AttrVar::Type::Number:
-			tab.insert(GBKtoUTF8(key), val.number);
+			tab.insert(key, val.number);
 			break;
-		case AttrVar::Type::Text:
-			tab.insert(GBKtoUTF8(key), GBKtoUTF8(val.text));
+		case AttrVar::Type::U8String:
+			tab.insert(key, val.text);
+			break;
+		case AttrVar::Type::GBString:
+			tab.insert(key, GBKtoUTF8(val.text));
 			break;
 		case AttrVar::Type::ID:
-			tab.insert(GBKtoUTF8(key), val.id);
+			tab.insert(key, val.id);
 			break;
 		case AttrVar::Type::Table:
-			tab.insert(GBKtoUTF8(key), val.table->to_toml());
+			tab.insert(key, val.table->to_toml());
 			break;
 		case AttrVar::Type::Set:
-			tab.insert(GBKtoUTF8(key), ::to_toml(*val.flags));
+			tab.insert(key, ::to_toml(*val.flags));
 			break;
 		default:
 			break;
@@ -899,8 +931,8 @@ AttrVar::AttrVar(const YAML::Node& y) {
 			number = as_d.value();
 		}
 		else if (auto as_s = YAML::as_if<string, std::optional<string>>(y)(); as_s.has_value()) {
-			type = Type::Text;
-			new(&text)string(UTF8toGBK(as_s.value()));
+			type = Type::U8String;
+			new(&text)string(as_s.value());
 		}
 	}
 	else if (y.IsMap()) {
@@ -918,7 +950,7 @@ AttrVar::AttrVar(const YAML::Node& y) {
 			}
 			for (auto& it : y) {
 				if (idxs.count(it.first.Scalar()))continue;
-				table->dict.emplace(UTF8toGBK(it.first.Scalar()), it.second);
+				table->dict.emplace(it.first.Scalar(), it.second);
 			}
 		}
 	}
@@ -943,7 +975,10 @@ YAML::Node AttrVar::to_yaml()const {
 	case Type::Number:
 		yaml = number;
 		break;
-	case Type::Text:
+	case Type::U8String:
+		yaml = text;
+		break;
+	case Type::GBString:
 		yaml = GBKtoUTF8(text);
 		break;
 	case Type::ID:
@@ -951,7 +986,7 @@ YAML::Node AttrVar::to_yaml()const {
 		break;
 	case Type::Table:
 		for (auto& [k, v] : table->as_dict()) {
-			yaml[GBKtoUTF8(k)] = v.to_yaml();
+			yaml[k] = v.to_yaml();
 		}
 		if (auto li{ table->to_list() }) {
 			int i = 0;
@@ -962,7 +997,7 @@ YAML::Node AttrVar::to_yaml()const {
 			}
 			else {
 				for (auto& v : *li) {
-					yaml[GBKtoUTF8(i++)] = v.to_yaml();
+					yaml[to_string(i++)] = v.to_yaml();
 				}
 			}
 		}
@@ -995,7 +1030,7 @@ fifo_json AttrIndex::to_json()const {
 		else return num;
 	}
 	else if (std::holds_alternative<string>(val)) {
-		return GBKtoUTF8(get<string>(val));
+		return get<string>(val);
 	}
 	return {};
 }
@@ -1021,13 +1056,13 @@ toml::array to_toml(const fifo_set<AttrIndex>& vars) {
 fifo_json to_json(const AttrVars& vars) {
 	fifo_json j;
 	for (auto& [key, val] : vars) {
-		j[GBKtoUTF8(key)] = val.to_json();
+		j[key] = val.to_json();
 	}
 	return j;
 }
 void from_json(const fifo_json& j, AttrVars& vars) {
 	for (auto& [key, val] : j.items()) {
-		vars[UTF8toGBK(key)] = AttrVar(val);
+		vars[key] = AttrVar(val);
 	}
 }
 
@@ -1048,12 +1083,16 @@ void AttrVar::writeb(std::ofstream& fout) const {
 		fwrite(fout, (char)3);
 		fwrite(fout, number);
 		break;
-	case Type::Text:
+	case Type::U8String:
+		fwrite(fout, (char)20);
+		fwrite(fout, text);
+		break;
+	case Type::GBString:
 		fwrite(fout, (char)4);
 		fwrite(fout, text);
 		break;
 	case Type::Table:
-		fwrite(fout, (char)5);
+		fwrite(fout, (char)21);
 		table->writeb(fout);
 		break;
 	case Type::Function:
@@ -1091,10 +1130,19 @@ void AttrVar::readb(std::ifstream& fin) {
 		number = fread<double>(fin);
 		break;
 	case 4:
-		type = Type::Text;
+		type = Type::U8String;
+		new(&text) string(GBKtoUTF8(fread<string>(fin)));
+		break;
+	case 12:
+		type = Type::U8String;
 		new(&text) string(fread<string>(fin));
 		break;
 	case 5:
+		type = Type::Table;
+		new(&table) AttrObject(AnysTable());
+		table->readb(fin);
+		break;
+	case 21:
 		type = Type::Table;
 		new(&table) AttrObject(AnysTable());
 		table->readb(fin);
@@ -1118,11 +1166,14 @@ void AttrVar::readb(std::ifstream& fin) {
 				else if (tag == 3) {
 					flags->emplace(fread<double>(fin));
 				}
-				else if (tag == 4) {
+				else if (tag == 20) {
 					flags->emplace(fread<string>(fin));
 				}
 				else if (tag == 7) {
 					flags->emplace((double)fread<long long>(fin));
+				}
+				else if (tag == 4) {
+					flags->emplace(GBKtoUTF8(fread<string>(fin)));
 				}
 			}
 		}
@@ -1135,22 +1186,22 @@ void AttrVar::readb(std::ifstream& fin) {
 
 string showAttrCMPR(AttrVar::CMPR cmpr) {
 	if (cmpr == &AttrVar::equal) {
-		return "µ»”⁄";
+		return "Á≠â‰∫é";
 	}
 	else if (cmpr == &AttrVar::not_equal) {
-		return "≤ªµ»”⁄";
+		return "‰∏çÁ≠â‰∫é";
 	}
 	else if (cmpr == &AttrVar::equal_or_more) {
-		return "≤ªµÕ”⁄";
+		return "‰∏ç‰Ωé‰∫é";
 	}
 	else if(cmpr == &AttrVar::equal_or_less) {
-		return "≤ª∏ﬂ”⁄";
+		return "‰∏çÈ´ò‰∫é";
 	}
 	else if(cmpr == &AttrVar::more) {
-		return "∏ﬂ”⁄";
+		return "È´ò‰∫é";
 	}
 	else if (cmpr == &AttrVar::less) {
-		return "µÕ”⁄";
+		return "‰Ωé‰∫é";
 	}
 	return {};
 }

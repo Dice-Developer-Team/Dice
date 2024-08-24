@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123Ëİä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -60,11 +60,11 @@ public:
 class DiceMsgReply {
 public:
 	string title;
-	enum class Type { Nor, Order, Reply, Both, Game };   //¾ö¶¨ÊÜ¿ØÖÆµÄ¿ª¹ØÀàĞÍ
+	enum class Type { Nor, Order, Reply, Both, Game };   //å†³å®šå—æ§åˆ¶çš„å¼€å…³ç±»å‹
 	static enumap_ci sType;
 	std::unique_ptr<vector<string>>keyMatch[4];
 	static enumap_ci sMode;
-	enum class Echo { Text, Deck, Lua, JavaScript, Python};    //»Ø¸´ĞÎÊ½
+	enum class Echo { Text, Deck, Lua, JavaScript, Python};    //å›å¤å½¢å¼
 	static enumap_ci sEcho;
 	Type type{ Type::Reply };
 	Echo echo{ Echo::Deck };

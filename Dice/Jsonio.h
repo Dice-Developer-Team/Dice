@@ -1,13 +1,12 @@
 #pragma once
 
-// Json信息获取以及写入
+// Json io
 
 #include <fstream>
 #include <map>
 #include <vector>
 #include <set>
 #include "filesystem.hpp"
-#include "EncodingConvert.h"
 #include "fifo_json.hpp"
 
 class JsonList
@@ -48,7 +47,7 @@ public:
 template <typename T>
 std::enable_if_t<!std::is_arithmetic_v<T>, T> readJKey(const std::string& strJson)
 {
-	return UTF8toGBK(strJson);
+	return strJson;
 }
 
 template <typename T>
@@ -66,9 +65,9 @@ int readJMap(const fifo_json& j, Map& mapTmp)
 	int intCnt = 0;
 	for (auto& it : j.items())
 	{
-		std::string key = UTF8toGBK(it.key());
+		std::string key = it.key();
 		it.value().get_to(mapTmp[key]);
-		mapTmp[key] = UTF8toGBK(mapTmp[key]);
+		mapTmp[key] = mapTmp[key];
 		intCnt++;
 	}
 	return intCnt;
@@ -104,7 +103,7 @@ void saveJMap(const std::filesystem::path& fpLoc, const C& mapTmp)
 			fifo_json j;
 			for (auto& [key, val] : mapTmp)
 			{
-				j[GBKtoUTF8(key)] = GBKtoUTF8(val);
+				j[key] = val;
 			}
 			fout << j.dump(2);
 			fout.close();

@@ -8,7 +8,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123Ëİä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -53,25 +53,25 @@ extern HMODULE hDllModule;
 // if is enabled
 extern bool Enabled;
 
-// Dice×îÍêÕûµÄ°æ±¾×Ö·û´®
+// Diceæœ€å®Œæ•´çš„ç‰ˆæœ¬å­—ç¬¦ä¸²
 extern std::string Dice_Full_Ver_On;
 
 //extern std::string strModulePath;
 
-// ÏûÏ¢·¢ËÍÏß³ÌÊÇ·ñÕıÔÚÔËĞĞ
+// æ¶ˆæ¯å‘é€çº¿ç¨‹æ˜¯å¦æ­£åœ¨è¿è¡Œ
 extern bool msgSendThreadRunning;
 
-// »Ø¸´ĞÅÏ¢, ´ËÄÚÈİ¿ÉÒÔÍ¨¹ıCustomMsg¹¦ÄÜĞŞ¸Ä¶øÎŞĞèĞŞ¸ÄÔ´´úÂë
+// å›å¤ä¿¡æ¯, æ­¤å†…å®¹å¯ä»¥é€šè¿‡CustomMsgåŠŸèƒ½ä¿®æ”¹è€Œæ— éœ€ä¿®æ”¹æºä»£ç 
 extern std::shared_mutex GlobalMsgMutex;
 extern dict_ci<string> GlobalMsg;
 extern const dict_ci<string> PlainMsg;
-// ĞŞ¸ÄºóµÄGlobalÓï¾ä
+// ä¿®æ”¹åçš„Globalè¯­å¥
 extern fifo_dict_ci<string> EditedMsg;
-// Óï¾ä×¢ÊÍ
+// è¯­å¥æ³¨é‡Š
 extern const dict_ci<string> GlobalComment;
-// °ïÖúÎÄµµ
+// å¸®åŠ©æ–‡æ¡£
 extern const dict_ci<string> HelpDoc;
-// ĞŞ¸ÄºóµÄ°ïÖúÎÄµµ
+// ä¿®æ”¹åçš„å¸®åŠ©æ–‡æ¡£
 extern fifo_dict_ci<string> CustomHelp;
 const std::string getComment(const std::string& key);
 

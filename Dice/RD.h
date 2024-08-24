@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123Ëİä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -370,7 +370,7 @@ public:
 					strReturnString.append(")");
 				if (vintMultiplier[idx] != 1)
 				{
-					strReturnString += "¡Á" + std::to_string(vintMultiplier[idx]);
+					strReturnString += "Ã—" + std::to_string(vintMultiplier[idx]);
 				}
 				if (vintDivider[idx] != 1)
 				{
@@ -399,7 +399,7 @@ public:
 				{
 					if (intWWPos)
 					{
-						strReturnString += isCnt ? "\n¼Ó÷»" + std::to_string((*i)[intWWPos]) + "£º" : "+";
+						strReturnString += isCnt ? "\nåŠ éª°" + std::to_string((*i)[intWWPos]) + "ï¼š" : "+";
 					}
 					strReturnString += "\\{";
 					if (isCnt)
@@ -441,7 +441,7 @@ public:
 			else
 			{
 				strReturnString.append(std::to_string((*i)[0]));
-				strReturnString.append(vBnP[idx] == B_Dice ? "[½±Àø÷»:" : "[³Í·£÷»:");
+				strReturnString.append(vBnP[idx] == B_Dice ? "[å¥–åŠ±éª°:" : "[æƒ©ç½šéª°:");
 				for (auto it = i->begin() + 1; it != i->end(); ++it)
 				{
 					strReturnString.append(std::to_string(*it) + ((it == i->end() - 1) ? "" : " "));

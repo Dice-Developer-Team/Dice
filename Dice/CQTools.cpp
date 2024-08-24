@@ -5,7 +5,7 @@
 
 using namespace std;
 
-//代码来源于网络
+//code from Internet
 static const string base64_chars =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	"abcdefghijklmnopqrstuvwxyz"

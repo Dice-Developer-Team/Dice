@@ -1,5 +1,5 @@
 /*
- * ×ÖµäÊ÷
+ * å­—å…¸æ ‘
  * Copyright (C) 2019-2022 String.Empty
  */
 #pragma once
@@ -80,7 +80,7 @@ public:
 		add(key, val);
 		make_fail();
 	}
-	//Ç°×ºÆ¥Åä
+	//å‰ç¼€åŒ¹é…
 	shared_ptr<Val> match_head(const _String& s)const {
 		const Node* p = &root;
 		const Node* leaf{ nullptr };
@@ -118,7 +118,7 @@ public:
 		}
 		return res.size();
 	}
-	//ÈÎÒâÎ»ÖÃ×Ö´®Æ¥Åä£¬²»ÖØ¸´¼ÇÂ¼
+	//ä»»æ„ä½ç½®å­—ä¸²åŒ¹é…ï¼Œä¸é‡å¤è®°å½•
 	bool search(const _String& s, vector<Val>& res, bool(* _Filter)(_Char) = [](_Char) {return false; })const {
 		unordered_set<Val> words;
 		const Node* p = &root;

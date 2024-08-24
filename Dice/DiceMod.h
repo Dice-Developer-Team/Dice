@@ -1,6 +1,6 @@
 #pragma once
 /*
- * ×ÊÔ´Ä£¿é
+ * èµ„æºæ¨¡å—
  * Copyright (C) 2019-2024 String.Empty
  */
 
@@ -40,7 +40,7 @@ struct Version {
 			if (match.size() > 4 && match[4].length())build = stoi(match[4].str());
 		}
 		catch (std::exception& e) {
-			console.log("mod°æ±¾ÕıÔòÆ¥ÅäÊ§°Ü!" + string(e.what()), 1);
+			console.log("modç‰ˆæœ¬æ­£åˆ™åŒ¹é…å¤±è´¥!" + string(e.what()), 1);
 		}
 	}
 	bool operator<(const Version& other)const {
@@ -54,7 +54,7 @@ struct Version {
 class DiceEventTrigger {
 	enum class Mode { Nil, Clock, Cycle, Trigger };
 	enum class ActType { Nil, Lua };
-	//½öÖ§³Ölua
+	//ä»…æ”¯æŒlua
 	ActType type{ ActType::Nil };
 	string script;
 public:
@@ -157,7 +157,7 @@ class DiceModManager {
 	dict_ci<AttrVars> taskcall;
 	dict<AttrObject> global_events; //events by id
 	//Event
-	unordered_set<string> cycle_events; //ÖØÔØÊ±Î¨Ò»ĞÔ¼ì²é
+	unordered_set<string> cycle_events; //é‡è½½æ—¶å”¯ä¸€æ€§æ£€æŸ¥
 	multidict_ci<AttrObject> hook_events;
 
 	WordQuerier querier;

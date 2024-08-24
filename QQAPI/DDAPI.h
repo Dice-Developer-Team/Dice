@@ -7,16 +7,16 @@ inline long long loginID{ 0 };
 
 struct GroupSize_t
 {
-    unsigned int currSize = 0;
-    unsigned int maxSize = 0;
+	unsigned int currSize = 0;
+	unsigned int maxSize = 0;
 	std::string tostring() const
-    {
+	{
 		return std::to_string(currSize) + "/" + std::to_string(maxSize);
 	}
 };
 
 using api_list = std::unordered_map<std::string, void*>;
-//DiceDriver½Ó¿Ú
+//DiceDriver Interface
 namespace DD {
 	const std::string& getDriVer();
 	bool reload();

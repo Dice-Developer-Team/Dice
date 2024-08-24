@@ -1,9 +1,9 @@
 #pragma once
 /**
- * 供脚本调用的自定义数据类
- * 2022/8/17 扩展SelfData到全局范围应用
- * 2022/12/10 支持toml读写
- * 2023/3/14 支持toml读写
+ * 渚涜剼鏈皟鐢ㄧ殑鑷畾涔夋暟鎹被
+ * 2022/8/17 鎵╁睍SelfData鍒板叏灞�鑼冨洿搴旂敤
+ * 2022/12/10 鏀寔toml璇诲啓
+ * 2023/3/14 鏀寔toml璇诲啓
  */
 #include <mutex>
 #include <filesystem>
@@ -21,5 +21,5 @@ public:
 };
 //filename stem by native charset
 extern dict<ptr<SelfData>> selfdata_byFile;
-//filename stem by gbk charset
+//filename stem by utf8 charset
 extern dict<ptr<SelfData>> selfdata_byStem;

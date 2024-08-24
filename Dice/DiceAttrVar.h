@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123ËÝä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -101,7 +101,7 @@ struct AttrObject {
 };
 class AttrVar {
 public:
-	enum class Type { Nil, Boolean, Integer, Number, Text, Table, Function, ID, Set	};
+	enum class Type { Nil, Boolean, Integer, Number, GBString, GBTable, Function, ID, Set, U8String = 20, Table = 21 };
 	Type type{ Type::Nil };
 	union {
 		bool bit;		//1
@@ -122,8 +122,8 @@ public:
 	explicit AttrVar(bool b) :type(Type::Boolean), bit(b) {}
 	AttrVar(int n) :type(Type::Integer), attr(n) {}
 	AttrVar(double n) :type(Type::Number), number(n) {}
-	AttrVar(const char* s) :type(Type::Text), text(s) {}
-	AttrVar(const string& s) :type(Type::Text), text(s) {}
+	AttrVar(const char* s) :type(Type::U8String), text(s) {}
+	AttrVar(const string& s) :type(Type::U8String), text(s) {}
 	AttrVar(const char* s,size_t len) :type(Type::Function), chunk(s,len) {}
 	AttrVar(ByteS&& fun) :type(Type::Function), chunk(fun) {}
 	AttrVar(long long n) :type(Type::ID), id(n) {}
@@ -149,7 +149,7 @@ public:
 	}
 	explicit AttrVar(const AttrVars& vars) :type(Type::Table), table(std::make_shared<AnysTable>(vars)) {}
 	void des() {
-		if (type == Type::Text)text.~string();
+		if (type == Type::U8String)text.~string();
 		else if (type == Type::Table)table.~AttrObject();
 		else if (type == Type::Set)flags.~AttrSet();
 		else if (type == Type::Function)chunk.~ByteS();
@@ -197,7 +197,7 @@ public:
 	bool is_boolean()const { return type == Type::Boolean; }
 	bool is_true()const { return operator bool(); }
 	bool is_numberic()const;
-	bool is_text()const { return type == Type::Text; }
+	bool is_text()const { return type == Type::U8String; }
 	bool is_character()const { return type != Type::Nil && type != Type::Boolean && type != Type::Table && type != Type::Function && type != Type::Set; }
 	bool is_table()const { return type == Type::Table; }
 	bool is_function()const { return type == Type::Function; }
@@ -252,7 +252,7 @@ public:
 	AttrVar& operator[](const char* key);
 	bool operator<(const AnysTable other)const;
 	//bool operator<(const AnysTable& other)const { return dict < other.dict; }
-	bool empty()const;
+	virtual bool empty()const;
 	virtual string print()const;
 	virtual bool has(const string& key)const;
 	virtual void set(const string& key, const AttrVar& val);
@@ -285,6 +285,7 @@ public:
 	toml::table to_toml()const;
 	void writeb(std::ofstream&)const;
 	void readb(std::ifstream&);
+	void readgb(std::ifstream&);
 };
 using AttrGetter = AttrVar(*)(const AttrObject&);
 using AttrGetters = std::unordered_map<string, AttrGetter>;

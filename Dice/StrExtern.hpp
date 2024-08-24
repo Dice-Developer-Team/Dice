@@ -1,7 +1,7 @@
 #pragma once
 /**
- * ×Ö·û´®¸¨Öúº¯Êý
- * Copyright (C) 2019-2023 String.Empty
+ * String helper
+ * Copyright (C) 2019-2024 String.Empty
  */
 
 #include <string>
@@ -16,6 +16,7 @@ using std::to_string;
 using std::vector;
 
 #define CP_GBK (936)
+
 constexpr auto space_char{ " \t\r\n" };
 
 bool isNumeric(const string&);
@@ -69,7 +70,7 @@ void splitID(const string& str , Con& list) {
 #endif
 }
 
-string convert_w2a(const char16_t* wch);
+string convert_w2a(const char16_t* wch, unsigned int = 65001);
 
 u16string convert_a2w(const char* ch);
 

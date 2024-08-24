@@ -5,16 +5,16 @@
 
 namespace Zip
 {
-    // ZipÌáÈ¡Ê§°ÜÒì³£
+    // Zipæå–å¤±è´¥å¼‚å¸¸
     class ZipExtractionFailedException : public std::runtime_error
     {
     public:
         ZipExtractionFailedException(const std::string& what) : std::runtime_error("Failed to extract zip: " + what) {}
     };
 
-    // ÌáÈ¡Ò»¸öZipÎÄ¼ş
-    // @param src ÄÚ´æÖĞµÄzipÎÄ¼ş×Ö½ÚÁ÷
-    // @param destFolder Ä¿±êÎÄ¼ş¼Ğ, ÇëÏÈ±£Ö¤´ËÎÄ¼ş¼Ğ´æÔÚ
+    // æå–ä¸€ä¸ªZipæ–‡ä»¶
+    // @param src å†…å­˜ä¸­çš„zipæ–‡ä»¶å­—èŠ‚æµ
+    // @param destFolder ç›®æ ‡æ–‡ä»¶å¤¹, è¯·å…ˆä¿è¯æ­¤æ–‡ä»¶å¤¹å­˜åœ¨
     // @throws ZipExtractionFailedException
     void extractZip(const std::string& src, const std::filesystem::path& destFolder);
 }

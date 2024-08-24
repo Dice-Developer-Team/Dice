@@ -37,7 +37,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     	set(CMAKE_SHARED_LINKER_FLAGS "-static-libstdc++ ${CMAKE_SHARED_LINKER_FLAGS}")
     endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS "/source-charset:GBK /execution-charset:GBK ${CMAKE_CXX_FLAGS} /EHsc-")
+    set(CMAKE_CXX_FLAGS "/source-charset:utf-8 /execution-charset:utf-8 ${CMAKE_CXX_FLAGS} /EHsc-")
     string(REGEX MATCH static IS_STATIC ${VCPKG_TARGET_TRIPLET})
     if(IS_STATIC STREQUAL static)
         set_property(TARGET ${PROJECT_NAME} PROPERTY

@@ -1,5 +1,5 @@
 /*
- * ÷»ÄïÍøÂç
+ * éª°å¨˜ç½‘ç»œ
  * Copyright (C) 2019-2024 String.Empty
  */
 #include <cstring>
@@ -29,7 +29,7 @@ namespace Cloud
 {
 	void heartbeat()
 	{
-		static const string strVer = GBKtoUTF8(string(Dice_Ver));
+		static const string strVer = Dice_Ver;
 		const string data = "&masterID=" + to_string(console) + "&Ver=" +
 			strVer + "&isGlobalOn=" + to_string(!console["DisabledGlobal"]) + "&isPublic=" +
 			to_string(!console["Private"]) + "&isVisible=" + to_string(console["CloudVisible"]);
@@ -54,7 +54,7 @@ namespace Cloud
 		std::string strVerInfo;
 		if (!Network::GET("http://shiki.stringempty.xyz/DiceVer/update", strVerInfo))
 		{
-			msg->reply("{self}»ñÈ¡°æ±¾ĞÅÏ¢Ê±Óöµ½´íÎó: \n" + strVerInfo);
+			msg->reply("{self}è·å–ç‰ˆæœ¬ä¿¡æ¯æ—¶é‡åˆ°é”™è¯¯: \n" + strVerInfo);
 			return -1;
 		}
 		try
@@ -64,23 +64,23 @@ namespace Cloud
 			if (nBuild > Dice_Build)
 			{
 				msg->note(
-					"·¢ÏÖDice!µÄ·¢²¼°æ¸üĞÂ:" + jInfo["release"]["ver"].get<string>() + "(" + to_string(nBuild) + ")\n¸üĞÂËµÃ÷£º" +
-					UTF8toGBK(jInfo["release"]["changelog"].get<string>()), 1);
+					"å‘ç°Dice!çš„å‘å¸ƒç‰ˆæ›´æ–°:" + jInfo["release"]["ver"].get<string>() + "(" + to_string(nBuild) + ")\næ›´æ–°è¯´æ˜ï¼š" +
+					jInfo["release"]["changelog"].get<string>(), 1);
 				return 1;
 			}
 			if (nBuild = jInfo["dev"]["build"]; nBuild > Dice_Build)
 			{
 				msg->note(
-					"·¢ÏÖDice!µÄ¿ª·¢°æ¸üĞÂ:" + jInfo["dev"]["ver"].get<string>() + "(" + to_string(nBuild) + ")\n¸üĞÂËµÃ÷£º" +
-					UTF8toGBK(jInfo["dev"]["changelog"].get<string>()), 1);
+					"å‘ç°Dice!çš„å¼€å‘ç‰ˆæ›´æ–°:" + jInfo["dev"]["ver"].get<string>() + "(" + to_string(nBuild) + ")\næ›´æ–°è¯´æ˜ï¼š" +
+					jInfo["dev"]["changelog"].get<string>(), 1);
 				return 2;
 			}
-			msg->reply("Î´·¢ÏÖ°æ±¾¸üĞÂ¡£");
+			msg->reply("æœªå‘ç°ç‰ˆæœ¬æ›´æ–°ã€‚");
 			return 0;
 		}
 		catch (std::exception& e){
 			msg->set("err", e.what());
-			msg->reply("{self}»ñÈ¡¸üĞÂÊ§°Ü£¡{err}");
+			msg->reply("{self}è·å–æ›´æ–°å¤±è´¥ï¼{err}");
 			return -2;
 		}
 		return 0;

@@ -93,7 +93,7 @@ namespace DD {
 		return CALLGET(DiceUploadBlack, DiceMaid, fromUID, fromGID, type, info) :-2;
 	}
 	bool updateDice(const std::string& ver, std::string& ret) {
-		ret = "¸üĞÂ½Ó¿Ú²»´æÔÚ";
+		ret = "æ›´æ–°æ¥å£ä¸å­˜åœ¨";
 		return CALLGET(DiceUpdate, ver, ret) :false;
 	}
 	long long getTinyID() {
@@ -160,7 +160,7 @@ namespace DD {
 		return CALLGET(GetGroupName, loginID, aimGroup) :"";
 	}
 	std::string getGroupNick(long long aimGroup, long long aimQQ) {
-		return CALLGET(GetGroupNick, loginID, aimGroup, aimQQ) :"ÈºÔ±";
+		return CALLGET(GetGroupNick, loginID, aimGroup, aimQQ) :"ç¾¤å‘˜";
 	}
 	long long getGroupLastMsg(long long aimGroup, long long aimQQ) {
 		return CALLGET(GetGroupLastMsg, loginID, aimGroup, aimQQ) :-1;

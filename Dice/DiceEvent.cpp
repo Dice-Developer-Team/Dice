@@ -183,12 +183,11 @@ void DiceEvent::replyHidden() {
 	auto here{ fromChat.locate() };
 	auto game{ thisGame() };
 	if (game && game->is_logging()) {
-		ofstream logout(game->log_path(), ios::out | ios::app);
-		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + std::to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time")) << endl
-			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
+		game->log_app(getMsg("strSelfName") + "(" + std::to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time"))
+			+ "\n" + filter_CQcode(strReply, fromChat.gid) + "\n\n");
 	}
-	strReply = "ÔÚ" + printChat(fromChat) + "ÖĞ " + forward_filter(strReply);
-	if (!pGrp || !pGrp->is("RhÃ¤÷»")) {
+	strReply = "åœ¨" + printChat(fromChat) + "ä¸­ " + forward_filter(strReply);
+	if (!pGrp || !pGrp->is("Rhç›²éª°")) {
 		AddMsgToQueue(strReply, fromChat.uid);
 	}
 	if (game) {
@@ -218,9 +217,8 @@ void DiceEvent::logEcho(){
 	if (auto game{ thisGame() }; game && game->is_logging()
 		&& strLowerMessage.find(".log") != 0
 		&& game->is_part(fromChat.uid)) {
-		ofstream logout(game->log_path(), ios::out | ios::app);
-		logout << GBKtoUTF8(getMsg("strSelfName")) + "(" + std::to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time")) << endl
-			<< GBKtoUTF8(filter_CQcode(strReply, fromChat.gid)) << endl << endl;
+		game->log_app(getMsg("strSelfName") + "(" + std::to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time"))
+			+ "\n" + filter_CQcode(strReply, fromChat.gid) + "\n\n");
 	}
 }
 void DiceEvent::fwdMsg(){
@@ -236,9 +234,8 @@ void DiceEvent::fwdMsg(){
 	if (auto game{ thisGame() }; game && game->is_logging()
 		&& strLowerMessage.find(".log") != 0
 		&& game->is_part(fromChat.uid)) {
-		ofstream logout(game->log_path(), ios::out | ios::app);
-		logout << GBKtoUTF8(idx_pc(*this).to_str()) + "(" + std::to_string(fromChat.uid) + ") " + printTTime((time_t)get_ll("time")) << endl
-			<< GBKtoUTF8(filter_CQcode(strMsg, fromChat.gid)) << endl << endl;
+		game->log_app(idx_pc(*this).to_str() + "(" + std::to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time"))
+			+ "\n" + filter_CQcode(strMsg, fromChat.gid) + "\n\n");
 	}
 }
 
@@ -269,23 +266,23 @@ int DiceEvent::AdminEvent(const string& strOption){
 		ResList res;
 		res << "Servant:" + printUser(console.DiceMaid)
 			<< "Master:" + printUser(console)
-			<< (console["Private"] ? "Ë½ÓÃÄ£Ê½" : "¹«ÓÃÄ£Ê½");
-		if (console["LeaveDiscuss"])res << "½ûÓÃÌÖÂÛ×é";
-		if (console["DisabledGlobal"])res << "È«¾Ö¾²Ä¬ÖĞ";
-		if (console["DisabledMe"])res << "È«¾Ö½ûÓÃ.me";
-		if (console["DisabledJrrp"])res << "È«¾Ö½ûÓÃ.jrrp";
-		if (console["DisabledDraw"])res << "È«¾Ö½ûÓÃ.draw";
-		if (console["DisabledSend"])res << "È«¾Ö½ûÓÃ.send";
+			<< (console["Private"] ? "ç§ç”¨æ¨¡å¼" : "å…¬ç”¨æ¨¡å¼");
+		if (console["LeaveDiscuss"])res << "ç¦ç”¨è®¨è®ºç»„";
+		if (console["DisabledGlobal"])res << "å…¨å±€é™é»˜ä¸­";
+		if (console["DisabledMe"])res << "å…¨å±€ç¦ç”¨.me";
+		if (console["DisabledJrrp"])res << "å…¨å±€ç¦ç”¨.jrrp";
+		if (console["DisabledDraw"])res << "å…¨å±€ç¦ç”¨.draw";
+		if (console["DisabledSend"])res << "å…¨å±€ç¦ç”¨.send";
 		if (trusted > 3)
-			res << "ËùÔÚÈºÁÄÊı£º" + std::to_string(DD::getGroupIDList().size())
-			<< "Èº¼ÇÂ¼Êı£º" + std::to_string(ChatList.size())
-			<< "ºÃÓÑÊı£º" + std::to_string(DD::getFriendQQList().size())
-			<< "ÓÃ»§¼ÇÂ¼Êı£º" + std::to_string(UserList.size())
-			<< "½ñÈÕÓÃ»§Á¿£º" + std::to_string(today->cntUser())
-			<< (!PList.empty() ? "½ÇÉ«¿¨¼ÇÂ¼Êı£º" + std::to_string(PList.size()) : "")
-			<< "ºÚÃûµ¥ÓÃ»§Êı£º" + std::to_string(blacklist->mQQDanger.size())
-			<< "ºÚÃûµ¥ÈºÊı£º" + std::to_string(blacklist->mGroupDanger.size())
-			<< (censor.size() ? "Ãô¸Ğ´Ê¿â¹æÄ££º" + std::to_string(censor.size()) : "")
+			res << "æ‰€åœ¨ç¾¤èŠæ•°ï¼š" + std::to_string(DD::getGroupIDList().size())
+			<< "ç¾¤è®°å½•æ•°ï¼š" + std::to_string(ChatList.size())
+			<< "å¥½å‹æ•°ï¼š" + std::to_string(DD::getFriendQQList().size())
+			<< "ç”¨æˆ·è®°å½•æ•°ï¼š" + std::to_string(UserList.size())
+			<< "ä»Šæ—¥ç”¨æˆ·é‡ï¼š" + std::to_string(today->cntUser())
+			<< (!PList.empty() ? "è§’è‰²å¡è®°å½•æ•°ï¼š" + std::to_string(PList.size()) : "")
+			<< "é»‘åå•ç”¨æˆ·æ•°ï¼š" + std::to_string(blacklist->mQQDanger.size())
+			<< "é»‘åå•ç¾¤æ•°ï¼š" + std::to_string(blacklist->mGroupDanger.size())
+			<< (censor.size() ? "æ•æ„Ÿè¯åº“è§„æ¨¡ï¼š" + std::to_string(censor.size()) : "")
 			<< console.listClock().dot("\t").show();
 		reply(res.show(), false);
 		return 1;
@@ -302,20 +299,20 @@ int DiceEvent::AdminEvent(const string& strOption){
 		{
 		case 0:
 			console.set(it->first, intSet);
-			note("ÒÑ½«" + getMsg("strSelfName") + "µÄ" + it->first + "ÉèÖÃÎª" + std::to_string(intSet), 0b10);
+			note("å·²å°†" + getMsg("strSelfName") + "çš„" + it->first + "è®¾ç½®ä¸º" + std::to_string(intSet), 0b10);
 			break;
 		case -1:
-			reply(getMsg("strSelfName") + "¸ÃÏîÎª" + std::to_string(console[strOption.c_str()]));
+			reply(getMsg("strSelfName") + "è¯¥é¡¹ä¸º" + std::to_string(console[strOption.c_str()]));
 			break;
 		case -2:
-			reply("{nick}ÉèÖÃ²ÎÊı³¬³ö·¶Î§¡Á");
+			reply("{nick}è®¾ç½®å‚æ•°è¶…å‡ºèŒƒå›´Ã—");
 			break;
 		}
 		return 1;
 	}
 	if (strOption == "delete")
 	{
-		note("ÒÑ¾­·ÅÆú¹ÜÀíÔ±È¨ÏŞ¡Ì", 0b100);
+		note("å·²ç»æ”¾å¼ƒç®¡ç†å‘˜æƒé™âˆš", 0b100);
 		getUser(fromChat.uid).trust(3);
 		console.NoticeList.erase({ fromChat.uid, 0,0 });
 		return 1;
@@ -325,11 +322,11 @@ int DiceEvent::AdminEvent(const string& strOption){
 		if (console["DisabledGlobal"])
 		{
 			console.set("DisabledGlobal", 0);
-			note("ÒÑÈ«¾Ö¿ªÆô" + getMsg("strSelfName"), 3);
+			note("å·²å…¨å±€å¼€å¯" + getMsg("strSelfName"), 3);
 		}
 		else
 		{
-			reply(getMsg("strSelfName") + "²»ÔÚ¾²Ä¬ÖĞ£¡");
+			reply(getMsg("strSelfName") + "ä¸åœ¨é™é»˜ä¸­ï¼");
 		}
 		return 1;
 	}
@@ -337,19 +334,19 @@ int DiceEvent::AdminEvent(const string& strOption){
 	{
 		if (console["DisabledGlobal"])
 		{
-			reply(getMsg("strSelfName") + "ÒÑ¾­¾²Ä¬£¡");
+			reply(getMsg("strSelfName") + "å·²ç»é™é»˜ï¼");
 		}
 		else
 		{
 			console.set("DisabledGlobal", 1);
-			note("ÒÑÈ«¾Ö¹Ø±Õ" + getMsg("strSelfName"), 0b10);
+			note("å·²å…¨å±€å…³é—­" + getMsg("strSelfName"), 0b10);
 		}
 		return 1;
 	}
 	if (strOption == "dicelist")
 	{
 		getDiceList();
-		strReply = "µ±Ç°÷»ÄïÁĞ±í£º";
+		strReply = "å½“å‰éª°å¨˜åˆ—è¡¨ï¼š";
 		for (auto& [diceQQ, masterQQ] : mDiceList)
 		{
 			strReply += "\n" + printUser(diceQQ);
@@ -373,10 +370,10 @@ int DiceEvent::AdminEvent(const string& strOption){
 				}
 			}
 			if (res.empty()) {
-				reply("{nick}Î´ÊäÈë´ıÌí¼ÓÃô¸Ğ´Ê£¡");
+				reply("{nick}æœªè¾“å…¥å¾…æ·»åŠ æ•æ„Ÿè¯ï¼");
 			}
 			else {
-				note("ÒÑÌí¼Ó{danger_level}¼¶Ãô¸Ğ´Ê" + std::to_string(res.size()) + "¸ö:" + res.show(), 1);
+				note("å·²æ·»åŠ {danger_level}çº§æ•æ„Ÿè¯" + std::to_string(res.size()) + "ä¸ª:" + res.show(), 1);
 			}
 		}
 		else if (strMsg[intMsgCnt] == '-') {
@@ -392,13 +389,13 @@ int DiceEvent::AdminEvent(const string& strOption){
 				}
 			}
 			if (res.empty()) {
-				reply("{nick}Î´ÊäÈë´ıÒÆ³ıÃô¸Ğ´Ê£¡");
+				reply("{nick}æœªè¾“å…¥å¾…ç§»é™¤æ•æ„Ÿè¯ï¼");
 			}
 			else {
-				note("ÒÑÒÆ³ıÃô¸Ğ´Ê" + std::to_string(res.size()) + "¸ö:" + res.show(), 1);
+				note("å·²ç§»é™¤æ•æ„Ÿè¯" + std::to_string(res.size()) + "ä¸ª:" + res.show(), 1);
 			}
 			if (!resErr.empty())
-				reply("{nick}ÒÆ³ı²»´æÔÚÃô¸Ğ´Ê" + std::to_string(resErr.size()) + "¸ö:" + resErr.show());
+				reply("{nick}ç§»é™¤ä¸å­˜åœ¨æ•æ„Ÿè¯" + std::to_string(resErr.size()) + "ä¸ª:" + resErr.show());
 		}
 		else
 			replyHelp("censor");
@@ -408,12 +405,12 @@ int DiceEvent::AdminEvent(const string& strOption){
 	{
 		if (console["Private"])
 		{
-			reply(getMsg("strSelfName") + "ÒÑ³ÉÎªË½ÓÃ÷»Äï£¡");
+			reply(getMsg("strSelfName") + "å·²æˆä¸ºç§ç”¨éª°å¨˜ï¼");
 		}
 		else
 		{
 			console.set("Private", 1);
-			note("ÒÑ½«" + getMsg("strSelfName") + "±äÎªË½ÓÃ¡Ì", 0b10);
+			note("å·²å°†" + getMsg("strSelfName") + "å˜ä¸ºç§ç”¨âˆš", 0b10);
 		}
 		return 1;
 	}
@@ -422,11 +419,11 @@ int DiceEvent::AdminEvent(const string& strOption){
 		if (console["Private"])
 		{
 			console.set("Private", 0);
-			note("ÒÑ½«" + getMsg("strSelfName") + "±äÎª¹«ÓÃ¡Ì", 0b10);
+			note("å·²å°†" + getMsg("strSelfName") + "å˜ä¸ºå…¬ç”¨âˆš", 0b10);
 		}
 		else
 		{
-			reply(getMsg("strSelfName") + "ÒÑ³ÉÎª¹«ÓÃ÷»Äï£¡");
+			reply(getMsg("strSelfName") + "å·²æˆä¸ºå…¬ç”¨éª°å¨˜ï¼");
 		}
 		return 1;
 	}
@@ -446,7 +443,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 		string strType = readPara();
 		if (strType.empty())
 		{
-			reply(getMsg("strSelfName") + "µÄ¶¨Ê±ÁĞ±í£º" + console.listClock().show());
+			reply(getMsg("strSelfName") + "çš„å®šæ—¶åˆ—è¡¨ï¼š" + console.listClock().show());
 			return 1;
 		}
 		Clock cc{0, 0};
@@ -456,13 +453,13 @@ int DiceEvent::AdminEvent(const string& strOption){
 			if (isErase)
 			{
 				if (console.rmClock(cc, strType))reply(
-					getMsg("strSelfName") + "ÎŞ´Ë¶¨Ê±ÏîÄ¿");
-				else note("ÒÑÒÆ³ı" + getMsg("strSelfName") + "ÔÚ" + printClock(cc) + "µÄ¶¨Ê±" + strType, 0b10);
+					getMsg("strSelfName") + "æ— æ­¤å®šæ—¶é¡¹ç›®");
+				else note("å·²ç§»é™¤" + getMsg("strSelfName") + "åœ¨" + printClock(cc) + "çš„å®šæ—¶" + strType, 0b10);
 			}
 			else
 			{
 				console.setClock(cc, strType);
-				note("ÒÑÉèÖÃ" + getMsg("strSelfName") + "ÔÚ" + printClock(cc) + "µÄ¶¨Ê±" + strType, 0b10);
+				note("å·²è®¾ç½®" + getMsg("strSelfName") + "åœ¨" + printClock(cc) + "çš„å®šæ—¶" + strType, 0b10);
 			}
 			break;
 		case -1:
@@ -488,7 +485,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 		if (chatInfo cTarget; readChat(cTarget))
 		{
 			ResList list = console.listNotice();
-			reply("µ±Ç°Í¨Öª´°¿Ú" + std::to_string(list.size()) + "¸ö£º" + list.show());
+			reply("å½“å‰é€šçŸ¥çª—å£" + std::to_string(list.size()) + "ä¸ªï¼š" + list.show());
 			return 1;
 		}
 		else
@@ -496,7 +493,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 			if (boolErase)
 			{
 				console.rmNotice(cTarget);
-				note("ÒÑ½«" + getMsg("strSelfName") + "µÄÍ¨Öª´°¿Ú" + printChat(cTarget) + "ÒÆ³ı", 0b1);
+				note("å·²å°†" + getMsg("strSelfName") + "çš„é€šçŸ¥çª—å£" + printChat(cTarget) + "ç§»é™¤", 0b1);
 				return 1;
 			}
 			readSkipSpace();
@@ -520,7 +517,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 				if (intAdd)console.addNotice(cTarget, intAdd);
 				if (intReduce)console.redNotice(cTarget, intReduce);
 				if (intAdd | intReduce)note(
-					"ÒÑ½«" + getMsg("strSelfName") + "¶Ô´°¿Ú" + printChat(cTarget) + "Í¨Öª¼¶±ğµ÷ÕûÎª" + to_binary(
+					"å·²å°†" + getMsg("strSelfName") + "å¯¹çª—å£" + printChat(cTarget) + "é€šçŸ¥çº§åˆ«è°ƒæ•´ä¸º" + to_binary(
 						console.showNotice(cTarget)), 0b1);
 				else replyMsg("strParaIllegal");
 				return 1;
@@ -535,10 +532,10 @@ int DiceEvent::AdminEvent(const string& strOption){
 					return 1;
 				}
 				console.setNotice(cTarget, intLV);
-				note("ÒÑ½«" + getMsg("strSelfName") + "¶Ô´°¿Ú" + printChat(cTarget) + "Í¨Öª¼¶±ğµ÷ÕûÎª" + std::to_string(intLV), 0b1);
+				note("å·²å°†" + getMsg("strSelfName") + "å¯¹çª—å£" + printChat(cTarget) + "é€šçŸ¥çº§åˆ«è°ƒæ•´ä¸º" + std::to_string(intLV), 0b1);
 				break;
 			case -1:
-				reply("´°¿Ú" + printChat(cTarget) + "ÔÚ" + getMsg("strSelfName") + "´¦µÄÍ¨Öª¼¶±ğÎª£º" + to_binary(
+				reply("çª—å£" + printChat(cTarget) + "åœ¨" + getMsg("strSelfName") + "å¤„çš„é€šçŸ¥çº§åˆ«ä¸ºï¼š" + to_binary(
 					console.showNotice(cTarget)));
 				break;
 			case -2:
@@ -558,11 +555,11 @@ int DiceEvent::AdminEvent(const string& strOption){
 		}
 		if (res.empty())
 		{
-			reply("ºÃÓÑÁĞ±íÄÚÎŞºÚÃûµ¥ÓÃ»§¡Ì", false);
+			reply("å¥½å‹åˆ—è¡¨å†…æ— é»‘åå•ç”¨æˆ·âˆš", false);
 		}
 		else
 		{
-			reply("ºÃÓÑÁĞ±íÄÚºÚÃûµ¥ÓÃ»§£º" + res.show(), false);
+			reply("å¥½å‹åˆ—è¡¨å†…é»‘åå•ç”¨æˆ·ï¼š" + res.show(), false);
 		}
 		return 1;
 	}
@@ -580,28 +577,28 @@ int DiceEvent::AdminEvent(const string& strOption){
 			long long llGroup = stoll(strGroup);
 			if (isErase)
 			{
-				if (groupset(llGroup, "Ğí¿ÉÊ¹ÓÃ") > 0 || groupset(llGroup, "ÃâÇå") > 0)
+				if (groupset(llGroup, "è®¸å¯ä½¿ç”¨") > 0 || groupset(llGroup, "å…æ¸…") > 0)
 				{
-					chat(llGroup).reset("Ğí¿ÉÊ¹ÓÃ").reset("ÃâÇå");
-					note("ÒÑÒÆ³ı" + printGroup(llGroup) + "ÔÚ" + getMsg("strSelfName") + "µÄÊ¹ÓÃĞí¿É");
+					chat(llGroup).reset("è®¸å¯ä½¿ç”¨").reset("å…æ¸…");
+					note("å·²ç§»é™¤" + printGroup(llGroup) + "åœ¨" + getMsg("strSelfName") + "çš„ä½¿ç”¨è®¸å¯");
 				}
 				else
 				{
-					reply("¸ÃÈºÎ´ÓµÓĞ" + getMsg("strSelfName") + "µÄÊ¹ÓÃĞí¿É£¡");
+					reply("è¯¥ç¾¤æœªæ‹¥æœ‰" + getMsg("strSelfName") + "çš„ä½¿ç”¨è®¸å¯ï¼");
 				}
 			}
 			else
 			{
-				if (groupset(llGroup, "Ğí¿ÉÊ¹ÓÃ") > 0)
+				if (groupset(llGroup, "è®¸å¯ä½¿ç”¨") > 0)
 				{
-					reply("¸ÃÈºÒÑÓµÓĞ" + getMsg("strSelfName") + "µÄÊ¹ÓÃĞí¿É£¡");
+					reply("è¯¥ç¾¤å·²æ‹¥æœ‰" + getMsg("strSelfName") + "çš„ä½¿ç”¨è®¸å¯ï¼");
 				}
 				else
 				{
-					chat(llGroup).set("Ğí¿ÉÊ¹ÓÃ").reset("Î´ÉóºË");
+					chat(llGroup).set("è®¸å¯ä½¿ç”¨").reset("æœªå®¡æ ¸");
 					if (chat(llGroup).getLst())AddMsgToQueue(
 						getMsg("strAuthorized"), { 0,llGroup });
-					note("ÒÑÌí¼Ó" + printGroup(llGroup) + "ÔÚ" + getMsg("strSelfName") + "µÄÊ¹ÓÃĞí¿É");
+					note("å·²æ·»åŠ " + printGroup(llGroup) + "åœ¨" + getMsg("strSelfName") + "çš„ä½¿ç”¨è®¸å¯");
 				}
 			}
 			return 1;
@@ -610,21 +607,21 @@ int DiceEvent::AdminEvent(const string& strOption){
 		for (auto& [id, grp] : ChatList)
 		{
 			string strGroup;
-			if (grp->is("Ğí¿ÉÊ¹ÓÃ") || grp->is("ÃâÇå") || grp->is("ÃâºÚ"))
+			if (grp->is("è®¸å¯ä½¿ç”¨") || grp->is("å…æ¸…") || grp->is("å…é»‘"))
 			{
 				strGroup = grp->print();
-				if (grp->is("Ğí¿ÉÊ¹ÓÃ"))strGroup += "-Ğí¿ÉÊ¹ÓÃ";
-				if (grp->is("ÃâÇå"))strGroup += "-ÃâÇå";
-				if (grp->is("ÃâºÚ"))strGroup += "-ÃâºÚ";
+				if (grp->is("è®¸å¯ä½¿ç”¨"))strGroup += "-è®¸å¯ä½¿ç”¨";
+				if (grp->is("å…æ¸…"))strGroup += "-å…æ¸…";
+				if (grp->is("å…é»‘"))strGroup += "-å…é»‘";
 				res << strGroup;
 			}
 		}
-		reply("µ±Ç°°×Ãûµ¥Èº" + std::to_string(res.size()) + "¸ö£º" + res.show());
+		reply("å½“å‰ç™½åå•ç¾¤" + std::to_string(res.size()) + "ä¸ªï¼š" + res.show());
 		return 1;
 	}
 	if (strOption == "frq")
 	{
-		reply("µ±Ç°×ÜÖ¸ÁîÆµ¶È" + std::to_string(FrqMonitor::getFrqTotal()));
+		reply("å½“å‰æ€»æŒ‡ä»¤é¢‘åº¦" + std::to_string(FrqMonitor::getFrqTotal()));
 		return 1;
 	}
 	else 
@@ -642,8 +639,8 @@ int DiceEvent::AdminEvent(const string& strOption){
 		{
 			if (ChatList.count(llTargetID))
 			{
-				note("ÒÑÁî" + getMsg("strSelfName") + "ÍË³ö" + printChat(chat(llTargetID)), 0b10);
-				chat(llTargetID).reset("ÃâÇå").leave();
+				note("å·²ä»¤" + getMsg("strSelfName") + "é€€å‡º" + printChat(chat(llTargetID)), 0b10);
+				chat(llTargetID).reset("å…æ¸…").leave();
 			}
 			else
 			{
@@ -655,12 +652,12 @@ int DiceEvent::AdminEvent(const string& strOption){
 		{
 			if (ChatList.count(llTargetID))
 			{
-				if (groupset(llTargetID, "Í£ÓÃÖ¸Áî") > 0)
+				if (groupset(llTargetID, "åœç”¨æŒ‡ä»¤") > 0)
 				{
-					chat(llTargetID).reset("Í£ÓÃÖ¸Áî");
-					note("ÒÑÁî" + getMsg("strSelfName") + "ÔÚ" + printGroup(llTargetID) + "ÆôÓÃÖ¸Áî¡Ì");
+					chat(llTargetID).reset("åœç”¨æŒ‡ä»¤");
+					note("å·²ä»¤" + getMsg("strSelfName") + "åœ¨" + printGroup(llTargetID) + "å¯ç”¨æŒ‡ä»¤âˆš");
 				}
-				else reply(getMsg("strSelfName") + "ÒÑÔÚ¸ÃÈºÆôÓÃÖ¸Áî!");
+				else reply(getMsg("strSelfName") + "å·²åœ¨è¯¥ç¾¤å¯ç”¨æŒ‡ä»¤!");
 			}
 			else
 			{
@@ -669,12 +666,12 @@ int DiceEvent::AdminEvent(const string& strOption){
 		}
 		else if (strOption == "botoff")
 		{
-			if (groupset(llTargetID, "Í£ÓÃÖ¸Áî") < 1)
+			if (groupset(llTargetID, "åœç”¨æŒ‡ä»¤") < 1)
 			{
-				chat(llTargetID).set("Í£ÓÃÖ¸Áî");
-				note("ÒÑÁî" + getMsg("strSelfName") + "ÔÚ" + printGroup(llTargetID) + "Í£ÓÃÖ¸Áî¡Ì", 0b1);
+				chat(llTargetID).set("åœç”¨æŒ‡ä»¤");
+				note("å·²ä»¤" + getMsg("strSelfName") + "åœ¨" + printGroup(llTargetID) + "åœç”¨æŒ‡ä»¤âˆš", 0b1);
 			}
-			else reply(getMsg("strSelfName") + "ÒÑÔÚ¸ÃÈºÍ£ÓÃÖ¸Áî!");
+			else reply(getMsg("strSelfName") + "å·²åœ¨è¯¥ç¾¤åœç”¨æŒ‡ä»¤!");
 			return 1;
 		}
 		else if (strOption == "blackgroup")
@@ -707,7 +704,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 		{
 			if (llTargetID == 0)
 			{
-				strReply = "µ±Ç°°×Ãûµ¥ÓÃ»§ÁĞ±í£º";
+				strReply = "å½“å‰ç™½åå•ç”¨æˆ·åˆ—è¡¨ï¼š";
 				for (auto& [uid, user] : UserList)
 				{
 					if (user->nTrust)strReply += "\n" + printUser(uid) + ":" + std::to_string(user->nTrust);
@@ -728,24 +725,24 @@ int DiceEvent::AdminEvent(const string& strOption){
 						else 
 						{
 							getUser(llTargetID).trust(0);
-							note("ÒÑÊÕ»Ø" + getMsg("strSelfName") + "¶Ô" + printUser(llTargetID) + "µÄĞÅÈÎ¡Ì", 0b1);
+							note("å·²æ”¶å›" + getMsg("strSelfName") + "å¯¹" + printUser(llTargetID) + "çš„ä¿¡ä»»âˆš", 0b1);
 						}
 					}
 					else
 					{
-						reply(printUser(llTargetID) + "²¢²»ÔÚ" + getMsg("strSelfName") + "µÄ°×Ãûµ¥£¡");
+						reply(printUser(llTargetID) + "å¹¶ä¸åœ¨" + getMsg("strSelfName") + "çš„ç™½åå•ï¼");
 					}
 				}
 				else 
 				{
 					if (trustedQQ(llTargetID))
 					{
-						reply(printUser(llTargetID) + "ÒÑ¼ÓÈë" + getMsg("strSelfName") + "µÄ°×Ãûµ¥!");
+						reply(printUser(llTargetID) + "å·²åŠ å…¥" + getMsg("strSelfName") + "çš„ç™½åå•!");
 					}
 					else
 					{
 						getUser(llTargetID).trust(1);
-						note("ÒÑÌí¼Ó" + getMsg("strSelfName") + "¶Ô" + printUser(llTargetID) + "µÄĞÅÈÎ¡Ì", 0b1);
+						note("å·²æ·»åŠ " + getMsg("strSelfName") + "å¯¹" + printUser(llTargetID) + "çš„ä¿¡ä»»âˆš", 0b1);
 						set("user_nick", getName(llTargetID));
 						AddMsgToQueue(getMsg("strWhiteQQAddNotice", *this), llTargetID);
 					}
@@ -808,7 +805,7 @@ int DiceEvent::MasterSet()
 			replyMsg("strNotMaster");
 			return 1;
 		}
-		reply("Äã²»ÔÙÊÇ" + getMsg("strSelfName") + "µÄMaster£¡");
+		reply("ä½ ä¸å†æ˜¯" + getMsg("strSelfName") + "çš„Masterï¼");
 		console.killMaster();
 		return 1;
 	}
@@ -822,12 +819,12 @@ int DiceEvent::MasterSet()
 		const string strMaster = readDigit();
 		if (strMaster.empty() || stoll(strMaster) == console)
 		{
-			reply("Master²»ÒªÏûÇ²{strSelfCall}!");
+			reply("Masterä¸è¦æ¶ˆé£{strSelfCall}!");
 		}
 		else
 		{
 			console.newMaster(stoll(strMaster));
-			note("ÒÑ½«Master×ªÈÃ¸ø" + printUser(console));
+			note("å·²å°†Masterè½¬è®©ç»™" + printUser(console));
 		}
 		return 1;
 	}
@@ -848,26 +845,26 @@ int DiceEvent::MasterSet()
 			{
 				if (trustedQQ(llAdmin) > 3)
 				{
-					note("ÒÑÊÕ»Ø" + printUser(llAdmin) + "¶Ô" + getMsg("strSelfName") + "µÄ¹ÜÀíÈ¨ÏŞ¡Ì", 0b100);
+					note("å·²æ”¶å›" + printUser(llAdmin) + "å¯¹" + getMsg("strSelfName") + "çš„ç®¡ç†æƒé™âˆš", 0b100);
 					console.rmNotice({ llAdmin,0,0 });
 					getUser(llAdmin).trust(0);
 				}
 				else
 				{
-					reply("¸ÃÓÃ»§ÎŞ¹ÜÀíÈ¨ÏŞ£¡");
+					reply("è¯¥ç”¨æˆ·æ— ç®¡ç†æƒé™ï¼");
 				}
 			}
 			else
 			{
 				if (trustedQQ(llAdmin) > 3)
 				{
-					reply("¸ÃÓÃ»§ÒÑÓĞ¹ÜÀíÈ¨ÏŞ£¡");
+					reply("è¯¥ç”¨æˆ·å·²æœ‰ç®¡ç†æƒé™ï¼");
 				}
 				else
 				{
 					getUser(llAdmin).trust(4);
 					console.addNotice({ llAdmin,0,0 }, 0b1110);
-					note("ÒÑÌí¼Ó" + printUser(llAdmin) + "¶Ô" + getMsg("strSelfName") + "µÄ¹ÜÀíÈ¨ÏŞ¡Ì", 0b100);
+					note("å·²æ·»åŠ " + printUser(llAdmin) + "å¯¹" + getMsg("strSelfName") + "çš„ç®¡ç†æƒé™âˆš", 0b100);
 				}
 			}
 			return 1;
@@ -877,7 +874,7 @@ int DiceEvent::MasterSet()
 		{
 			if (user->nTrust > 3)list << printUser(uid);
 		}
-		reply(getMsg("strSelfName") + "µÄ¹ÜÀíÈ¨ÏŞÓµÓĞÕß¹²" + std::to_string(list.size()) + "Î»£º" + list.show());
+		reply(getMsg("strSelfName") + "çš„ç®¡ç†æƒé™æ‹¥æœ‰è€…å…±" + std::to_string(list.size()) + "ä½ï¼š" + list.show());
 		return 1;
 	}
 	return AdminEvent(strOption);
@@ -889,7 +886,7 @@ int DiceEvent::BasicOrder()
 	intMsgCnt++;
 	while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 		intMsgCnt++;
-	//Ö¸ÁîÆ¥Åä
+	//æŒ‡ä»¤åŒ¹é…
 	if (console["DebugMode"])console.log("listen:" + strMsg, 0, printSTNow());
 	if (strLowerMessage.substr(intMsgCnt, 9) == "authorize")
 	{
@@ -908,7 +905,7 @@ int DiceEvent::BasicOrder()
 				return 1;
 			}
 		}
-		if (pGrp->is("Ğí¿ÉÊ¹ÓÃ") && !pGrp->is("Î´ÉóºË") && !pGrp->is("Ğ­ÒéÎŞĞ§"))return 0;
+		if (pGrp->is("è®¸å¯ä½¿ç”¨") && !pGrp->is("æœªå®¡æ ¸") && !pGrp->is("åè®®æ— æ•ˆ"))return 0;
 		string strInfo = readRest();
 		if (fmt->call_hook_event(merge({
 			{"hook","GroupAuthorize"},
@@ -918,15 +915,15 @@ int DiceEvent::BasicOrder()
 			})))return 1;
 		if (trusted > 0)
 		{
-			pGrp->set("Ğí¿ÉÊ¹ÓÃ").reset("Î´ÉóºË").reset("Ğ­ÒéÎŞĞ§");
-			note("ÒÑÊÚÈ¨" + printGroup(pGrp->ID) + "Ğí¿ÉÊ¹ÓÃ", 1);
+			pGrp->set("è®¸å¯ä½¿ç”¨").reset("æœªå®¡æ ¸").reset("åè®®æ— æ•ˆ");
+			note("å·²æˆæƒ" + printGroup(pGrp->ID) + "è®¸å¯ä½¿ç”¨", 1);
 			AddMsgToQueue(getMsg("strGroupAuthorized", *this), { 0,pGrp->ID });
 		}
 		else
 		{
 			if (!console["CheckGroupLicense"] && !console["Private"] && !isCalled)return 0;
-			if (strInfo.empty())console.log(printUser(fromChat.uid) + "ÉêÇë" + printGroup(pGrp->ID) + "Ğí¿ÉÊ¹ÓÃ", 0b10, printSTNow());
-			else console.log(printUser(fromChat.uid) + "ÉêÇë" + printGroup(pGrp->ID) + "Ğí¿ÉÊ¹ÓÃ£»¸½ÑÔ£º" + strInfo, 0b100, printSTNow());
+			if (strInfo.empty())console.log(printUser(fromChat.uid) + "ç”³è¯·" + printGroup(pGrp->ID) + "è®¸å¯ä½¿ç”¨", 0b10, printSTNow());
+			else console.log(printUser(fromChat.uid) + "ç”³è¯·" + printGroup(pGrp->ID) + "è®¸å¯ä½¿ç”¨ï¼›é™„è¨€ï¼š" + strInfo, 0b100, printSTNow());
 			replyMsg("strGroupLicenseApply");
 		}
 		return 1;
@@ -975,14 +972,14 @@ int DiceEvent::BasicOrder()
 				pGrp->leave(getMsg("strAdminDismiss", *this));
 				return 1;
 			}
-			if (pGrp->is("Ğ­ÒéÎŞĞ§") && !isTarget)return 0;
+			if (pGrp->is("åè®®æ— æ•ˆ") && !isTarget)return 0;
 			if (canRoomHost())
 			{
 				pGrp->leave(getMsg("strDismiss"));
 			}
 			else
 			{
-				if (!isCalled && (pGrp->is("Í£ÓÃÖ¸Áî") || DD::getGroupSize(fromChat.gid).currSize > 200))AddMsgToQueue(getMsg("strPermissionDeniedErr", *this), fromChat.uid);
+				if (!isCalled && (pGrp->is("åœç”¨æŒ‡ä»¤") || DD::getGroupSize(fromChat.gid).currSize > 200))AddMsgToQueue(getMsg("strPermissionDeniedErr", *this), fromChat.uid);
 				else replyMsg("strPermissionDeniedErr");
 			}
 			return 1;
@@ -1011,7 +1008,7 @@ int DiceEvent::BasicOrder()
 				console.newMaster(fromChat.uid);
 			}
 			else {
-				reply("Çë{nick}ÒÔ{strSelfCall}³õÊ¼»¯Ê±Ìá¹©µÄ¿ÚÁîÍê³ÉÈÏÖ÷£¡");
+				reply("è¯·{nick}ä»¥{strSelfCall}åˆå§‹åŒ–æ—¶æä¾›çš„å£ä»¤å®Œæˆè®¤ä¸»ï¼");
 			}
 		}
 		else if (trusted > 4 || isFromMaster()) {
@@ -1022,7 +1019,7 @@ int DiceEvent::BasicOrder()
 		}
 		return 1;
 	}
-	else if (!isPrivate() && pGrp->is("Ğ­ÒéÎŞĞ§")){
+	else if (!isPrivate() && pGrp->is("åè®®æ— æ•ˆ")){
 		set("ignored");
 		return 0;
 	}
@@ -1039,14 +1036,14 @@ int DiceEvent::BasicOrder()
 		{
 			if (Command == "on" && !isPrivate())
 			{
-				if ((console["CheckGroupLicense"] && pGrp->is("Î´ÉóºË")) || (console["CheckGroupLicense"] == 2 && !pGrp->is("Ğí¿ÉÊ¹ÓÃ")))
+				if ((console["CheckGroupLicense"] && pGrp->is("æœªå®¡æ ¸")) || (console["CheckGroupLicense"] == 2 && !pGrp->is("è®¸å¯ä½¿ç”¨")))
 					replyMsg("strGroupLicenseDeny");
 				else {
 					if (canRoomHost())
 					{
-						if (groupset(fromChat.gid, "Í£ÓÃÖ¸Áî") > 0)
+						if (groupset(fromChat.gid, "åœç”¨æŒ‡ä»¤") > 0)
 						{
-							chat(fromChat.gid).reset("Í£ÓÃÖ¸Áî");
+							chat(fromChat.gid).reset("åœç”¨æŒ‡ä»¤");
 							replyMsg("strBotOn");
 						}
 						else
@@ -1056,7 +1053,7 @@ int DiceEvent::BasicOrder()
 					}
 					else
 					{
-						if (groupset(fromChat.gid, "Í£ÓÃÖ¸Áî") > 0 && DD::getGroupSize(fromChat.gid).currSize > 200)AddMsgToQueue(
+						if (groupset(fromChat.gid, "åœç”¨æŒ‡ä»¤") > 0 && DD::getGroupSize(fromChat.gid).currSize > 200)AddMsgToQueue(
 							getMsg("strPermissionDeniedErr", *this), fromChat.uid);
 						else replyMsg("strPermissionDeniedErr");
 					}
@@ -1066,28 +1063,28 @@ int DiceEvent::BasicOrder()
 			{
 				if (canRoomHost())
 				{
-					if (groupset(fromChat.gid, "Í£ÓÃÖ¸Áî"))
+					if (groupset(fromChat.gid, "åœç”¨æŒ‡ä»¤"))
 					{
 						if (!isCalled && QQNum.empty() && DD::getGroupSize(fromChat.gid).currSize > 200)AddMsgToQueue(getMsg("strBotOffAlready", *this), fromChat.uid);
 						else replyMsg("strBotOffAlready");
 					}
 					else 
 					{
-						chat(fromChat.gid).set("Í£ÓÃÖ¸Áî");
+						chat(fromChat.gid).set("åœç”¨æŒ‡ä»¤");
 						replyMsg("strBotOff");
 					}
 				}
 				else
 				{
-					if (groupset(fromChat.gid, "Í£ÓÃÖ¸Áî"))AddMsgToQueue(getMsg("strPermissionDeniedErr", *this), fromChat.uid);
+					if (groupset(fromChat.gid, "åœç”¨æŒ‡ä»¤"))AddMsgToQueue(getMsg("strPermissionDeniedErr", *this), fromChat.uid);
 					else replyMsg("strPermissionDeniedErr");
 				}
 			}
-			else if (!Command.empty() && !isCalled && pGrp->is("Í£ÓÃÖ¸Áî"))
+			else if (!Command.empty() && !isCalled && pGrp->is("åœç”¨æŒ‡ä»¤"))
 			{
 				return 0;
 			}
-			else if (!isPrivate() && pGrp->is("Í£ÓÃÖ¸Áî") && DD::getGroupSize(fromChat.gid).currSize > 500 && !isCalled)
+			else if (!isPrivate() && pGrp->is("åœç”¨æŒ‡ä»¤") && DD::getGroupSize(fromChat.gid).currSize > 500 && !isCalled)
 			{
 				AddMsgToQueue(getMsg("strBotHeader") + Dice_Full_Ver_On + getMsg("strBotMsg"), fromChat.uid);
 			}
@@ -1108,7 +1105,7 @@ int DiceEvent::BasicOrder()
 		unsigned int intMsgTmpCnt{ intMsgCnt };
 		string action{ readPara() };
 		if (action == "on" && fromChat.gid) {
-			const string& option{ (at("option") = "½ûÓÃ»Ø¸´").text };
+			const string& option{ (at("option") = "ç¦ç”¨å›å¤").text };
 			if (!chat(fromChat.gid).is(option)) {
 				replyMsg("strGroupSetOffAlready");
 			}
@@ -1122,7 +1119,7 @@ int DiceEvent::BasicOrder()
 			return 1;
 		}
 		else if (action == "off" && fromChat.gid) {
-			const string& option{ (at("option") = "½ûÓÃ»Ø¸´").text };
+			const string& option{ (at("option") = "ç¦ç”¨å›å¤").text };
 			if (chat(fromChat.gid).is(option)) {
 				replyMsg("strGroupSetOnAlready");
 			}
@@ -1364,7 +1361,7 @@ int DiceEvent::BasicOrder()
 				replyMsg("strPermissionDeniedErr");
 				return 1;
 			}
-			set("option", "½ûÓÃhelp");
+			set("option", "ç¦ç”¨help");
 			if (at("help_word") == "off")
 			{
 				if (groupset(fromChat.gid, get_str("option")) < 1)
@@ -1654,8 +1651,8 @@ int DiceEvent::InnerOrder() {
 		if (canRoomHost()) {
 			string strWelcomeMsg = strMsg.substr(intMsgCnt);
 			if (strWelcomeMsg == "clr") {
-				if (chat(fromChat.gid).is("ÈëÈº»¶Ó­")) {
-					chat(fromChat.gid).reset("ÈëÈº»¶Ó­");
+				if (chat(fromChat.gid).is("å…¥ç¾¤æ¬¢è¿")) {
+					chat(fromChat.gid).reset("å…¥ç¾¤æ¬¢è¿");
 					replyMsg("strWelcomeMsgClearNotice");
 				}
 				else {
@@ -1663,16 +1660,16 @@ int DiceEvent::InnerOrder() {
 				}
 			}
 			else if (strWelcomeMsg == "show") {
-				string strWelcome{ chat(fromChat.gid).get_str("ÈëÈº»¶Ó­") };
+				string strWelcome{ chat(fromChat.gid).get_str("å…¥ç¾¤æ¬¢è¿") };
 				if (strWelcome.empty())replyMsg("strWelcomeMsgEmpty");
-				else reply(strWelcome, false);	//×ªÒåÓĞ×¢Èë·çÏÕ
+				else reply(strWelcome, false);	//è½¬ä¹‰æœ‰æ³¨å…¥é£é™©
 			}
 			else if (readPara() == "set") {
-				chat(fromChat.gid).set("ÈëÈº»¶Ó­", strip(readRest()));
+				chat(fromChat.gid).set("å…¥ç¾¤æ¬¢è¿", strip(readRest()));
 				replyMsg("strWelcomeMsgUpdateNotice");
 			}
 			else {
-				chat(fromChat.gid).set("ÈëÈº»¶Ó­", strWelcomeMsg);
+				chat(fromChat.gid).set("å…¥ç¾¤æ¬¢è¿", strWelcomeMsg);
 				replyMsg("strWelcomeMsgUpdateNotice");
 			}
 		}
@@ -1698,7 +1695,7 @@ int DiceEvent::InnerOrder() {
 				replyMsg("strNotMaster");
 				return 1;
 			}
-			note("ÒÑÇåÀí¹ıÆÚÈº¼ÇÂ¼" + std::to_string(clearGroup()) + "Ìõ", 0b10);
+			note("å·²æ¸…ç†è¿‡æœŸç¾¤è®°å½•" + std::to_string(clearGroup()) + "æ¡", 0b10);
 			return 1;
 		}
 	}
@@ -1715,11 +1712,11 @@ int DiceEvent::InnerOrder() {
 				set("rule", game->get("rr_rc"));
 			}
 			else if (isPrivate()) {
-				if (User& user{ getUser(fromChat.uid) }; user.is("rc·¿¹æ"))
-				set("rule", user.get("rc·¿¹æ"));
+				if (User& user{ getUser(fromChat.uid) }; user.is("rcæˆ¿è§„"))
+				set("rule", user.get("rcæˆ¿è§„"));
 			}
-			else if (pGrp->is("rc·¿¹æ")) {
-				set("rule", pGrp->get("rc·¿¹æ"));
+			else if (pGrp->is("rcæˆ¿è§„")) {
+				set("rule", pGrp->get("rcæˆ¿è§„"));
 			}
 			if (has("rule")) {
 				replyMsg("strDefaultCOCShow");
@@ -1734,8 +1731,8 @@ int DiceEvent::InnerOrder() {
 			if (auto game{ thisGame() }; game && game->has("rr_rc")) {
 				game->reset("rr_rc");
 			}
-			else if (isPrivate())getUser(fromChat.uid).rmConf("rc·¿¹æ");
-			else chat(fromChat.gid).reset("rc·¿¹æ");
+			else if (isPrivate())getUser(fromChat.uid).rmConf("rcæˆ¿è§„");
+			else chat(fromChat.gid).reset("rcæˆ¿è§„");
 			replyMsg("strDefaultCOCClr");
 			return 1;
 		}
@@ -1751,32 +1748,32 @@ int DiceEvent::InnerOrder() {
 		int intRule = stoi(strRule);
 		switch (intRule) {
 		case 0:
-			reply(getMsg("strDefaultCOCSet") + "0 ¹æÔòÊé\n³ö1´ó³É¹¦\n²»Âú50³ö96-100´óÊ§°Ü£¬Âú50³ö100´óÊ§°Ü");
+			reply(getMsg("strDefaultCOCSet") + "0 è§„åˆ™ä¹¦\nå‡º1å¤§æˆåŠŸ\nä¸æ»¡50å‡º96-100å¤§å¤±è´¥ï¼Œæ»¡50å‡º100å¤§å¤±è´¥");
 			break;
 		case 1:
-			reply(getMsg("strDefaultCOCSet") + "1\n²»Âú50³ö1´ó³É¹¦£¬Âú50³ö1-5´ó³É¹¦\n²»Âú50³ö96-100´óÊ§°Ü£¬Âú50³ö100´óÊ§°Ü");
+			reply(getMsg("strDefaultCOCSet") + "1\nä¸æ»¡50å‡º1å¤§æˆåŠŸï¼Œæ»¡50å‡º1-5å¤§æˆåŠŸ\nä¸æ»¡50å‡º96-100å¤§å¤±è´¥ï¼Œæ»¡50å‡º100å¤§å¤±è´¥");
 			break;
 		case 2:
-			reply(getMsg("strDefaultCOCSet") + "2\n³ö1-5ÇÒ<=³É¹¦ÂÊ´ó³É¹¦\n³ö100»ò³ö96-99ÇÒ>³É¹¦ÂÊ´óÊ§°Ü");
+			reply(getMsg("strDefaultCOCSet") + "2\nå‡º1-5ä¸”<=æˆåŠŸç‡å¤§æˆåŠŸ\nå‡º100æˆ–å‡º96-99ä¸”>æˆåŠŸç‡å¤§å¤±è´¥");
 			break;
 		case 3:
-			reply(getMsg("strDefaultCOCSet") + "3\n³ö1-5´ó³É¹¦\n³ö96-100´óÊ§°Ü");
+			reply(getMsg("strDefaultCOCSet") + "3\nå‡º1-5å¤§æˆåŠŸ\nå‡º96-100å¤§å¤±è´¥");
 			break;
 		case 4:
-			reply(getMsg("strDefaultCOCSet") + "4\n³ö1-5ÇÒ<=Ê®·ÖÖ®Ò»´ó³É¹¦\n²»Âú50³ö>=96+Ê®·ÖÖ®Ò»´óÊ§°Ü£¬Âú50³ö100´óÊ§°Ü");
+			reply(getMsg("strDefaultCOCSet") + "4\nå‡º1-5ä¸”<=ååˆ†ä¹‹ä¸€å¤§æˆåŠŸ\nä¸æ»¡50å‡º>=96+ååˆ†ä¹‹ä¸€å¤§å¤±è´¥ï¼Œæ»¡50å‡º100å¤§å¤±è´¥");
 			break;
 		case 5:
-			reply(getMsg("strDefaultCOCSet") + "5\n³ö1-2ÇÒ<Îå·ÖÖ®Ò»´ó³É¹¦\n²»Âú50³ö96-100´óÊ§°Ü£¬Âú50³ö99-100´óÊ§°Ü");
+			reply(getMsg("strDefaultCOCSet") + "5\nå‡º1-2ä¸”<äº”åˆ†ä¹‹ä¸€å¤§æˆåŠŸ\nä¸æ»¡50å‡º96-100å¤§å¤±è´¥ï¼Œæ»¡50å‡º99-100å¤§å¤±è´¥");
 			break;
 		case 6:
-			reply(getMsg("strDefaultCOCSet") + "6\nÂÌÉ«Èı½ÇÖŞ\n³ö1»ò³ö¸öÎ»Ê®Î»ÏàÍ¬ÇÒ<=³É¹¦ÂÊ´ó³É¹¦\n³ö100»ò³ö¸öÎ»Ê®Î»ÏàÍ¬ÇÒ>³É¹¦ÂÊ´óÊ§°Ü");
+			reply(getMsg("strDefaultCOCSet") + "6\nç»¿è‰²ä¸‰è§’æ´²\nå‡º1æˆ–å‡ºä¸ªä½åä½ç›¸åŒä¸”<=æˆåŠŸç‡å¤§æˆåŠŸ\nå‡º100æˆ–å‡ºä¸ªä½åä½ç›¸åŒä¸”>æˆåŠŸç‡å¤§å¤±è´¥");
 			break;
 		default:
 			replyMsg("strDefaultCOCNotFound");
 			return 1;
 		}
-		if (isPrivate())getUser(fromChat.uid).setConf("rc·¿¹æ", intRule); 
-		else chat(fromChat.gid).set("rc·¿¹æ", intRule);
+		if (isPrivate())getUser(fromChat.uid).setConf("rcæˆ¿è§„", intRule); 
+		else chat(fromChat.gid).set("rcæˆ¿è§„", intRule);
 		return 1;
 	}
 	else if (strLowerMessage.substr(intMsgCnt, 6) == "system") {
@@ -1788,7 +1785,7 @@ int DiceEvent::InnerOrder() {
 		string strOption = readPara();
 #ifdef _WIN32
 		if (strOption == "gui") {
-			reply("Dice! GUIÒÑÍ£Ö¹¸üĞÂ£¬Çë¿¼ÂÇÊ¹ÓÃDice! WebUI https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming");
+			reply("Dice! GUIå·²åœæ­¢æ›´æ–°ï¼Œè¯·è€ƒè™‘ä½¿ç”¨Dice! WebUI https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming");
 			thread th(GUIMain);
 			th.detach();
 			return 1;
@@ -1796,12 +1793,12 @@ int DiceEvent::InnerOrder() {
 #endif
 		if (strOption == "save") {
 			dataBackUp();
-			note("ÒÑÊÖ¶¯±£´æ{self}µÄÊı¾İ¡Ì", 0b1);
+			note("å·²æ‰‹åŠ¨ä¿å­˜{self}çš„æ•°æ®âˆš", 0b1);
 			return 1;
 		}
 		if (strOption == "load") {
 			loadData();
-			note("ÒÑÊÖ¶¯¼ÓÔØ{self}µÄÅäÖÃ¡Ì", 0b1);
+			note("å·²æ‰‹åŠ¨åŠ è½½{self}çš„é…ç½®âˆš", 0b1);
 			return 1;
 		}
 		if (strOption == "state")
@@ -1817,20 +1814,20 @@ int DiceEvent::InnerOrder() {
 			long long milDisk(getDiskUsage(mbFreeBytes, mbTotalBytes));
 #endif
 			ResList res;
-			res << "±¾µØÊ±¼ä:" + printSTime(stNow)
+			res << "æœ¬åœ°æ—¶é—´:" + printSTime(stNow)
 #ifdef _WIN32
-				<< "ÄÚ´æÕ¼ÓÃ:" + std::to_string(getRamPort()) + "%"
-				<< "CPUÕ¼ÓÃ:" + toString(getWinCpuUsage() / 10.0) + "%"
-				<< "Ó²ÅÌÕ¼ÓÃ:" + toString(milDisk / 10.0) + "%(¿ÕÓà:" + toString(mbFreeBytes) + "GB/ " + toString(mbTotalBytes) + "GB)"
+				<< "å†…å­˜å ç”¨:" + std::to_string(getRamPort()) + "%"
+				<< "CPUå ç”¨:" + toString(getWinCpuUsage() / 10.0) + "%"
+				<< "ç¡¬ç›˜å ç”¨:" + toString(milDisk / 10.0) + "%(ç©ºä½™:" + toString(mbFreeBytes) + "GB/ " + toString(mbTotalBytes) + "GB)"
 #endif
-				<< "ÔËĞĞÊ±³¤:" + printDuringTime(time(nullptr) - llStartTime)
-				<< "½ñÈÕÖ¸ÁîÁ¿:" + today->get("frq").to_str()
-				<< "Æô¶¯ºóÖ¸ÁîÁ¿:" + std::to_string(FrqMonitor::sumFrqTotal);
+				<< "è¿è¡Œæ—¶é•¿:" + printDuringTime(time(nullptr) - llStartTime)
+				<< "ä»Šæ—¥æŒ‡ä»¤é‡:" + today->get("frq").to_str()
+				<< "å¯åŠ¨åæŒ‡ä»¤é‡:" + std::to_string(FrqMonitor::sumFrqTotal);
 			reply(res.show());
 			return 1;
 		}
 		if (strOption == "clrimg") {
-			reply("·Ç¿áQ¿ò¼Ü²»ĞèÒª´Ë¹¦ÄÜ");
+			reply("éé…·Qæ¡†æ¶ä¸éœ€è¦æ­¤åŠŸèƒ½");
 			return -1;
 		}
 		else if (strOption == "reload") {
@@ -1872,7 +1869,7 @@ int DiceEvent::InnerOrder() {
 			system(R"(taskkill /f /fi "username eq %username%" /im explorer.exe)");
 			system(R"(start %SystemRoot%\explorer.exe)");
 			this_thread::sleep_for(3s);
-			note("ÒÑÖØÆô×ÊÔ´¹ÜÀíÆ÷¡Ì\nµ±Ç°ÄÚ´æÕ¼ÓÃ£º" + std::to_string(getRamPort()) + "%");
+			note("å·²é‡å¯èµ„æºç®¡ç†å™¨âˆš\nå½“å‰å†…å­˜å ç”¨ï¼š" + std::to_string(getRamPort()) + "%");
 #endif
 		}
 		else if (strOption == "cmd")
@@ -1885,7 +1882,7 @@ int DiceEvent::InnerOrder() {
 			}
 			string strCMD = readRest() + "\ntimeout /t 10";
 			system(strCMD.c_str());
-			reply("ÒÑÆô¶¯ÃüÁîĞĞ¡Ì");
+			reply("å·²å¯åŠ¨å‘½ä»¤è¡Œâˆš");
 			return 1;
 #endif
 		}
@@ -2001,7 +1998,7 @@ int DiceEvent::InnerOrder() {
 						if (groupset(llGroup, get_str("option")) < 1) {
 							chat(llGroup).set(get_str("option"));
 							++cntSet;
-							if (at("option") == "Ğí¿ÉÊ¹ÓÃ") {
+							if (at("option") == "è®¸å¯ä½¿ç”¨") {
 								AddMsgToQueue(getMsg("strGroupAuthorized", *this), { 0, fromChat.uid });
 							}
 						}
@@ -2039,12 +2036,12 @@ int DiceEvent::InnerOrder() {
 		}
 		else if (Command == "state") {
 			ResList res;
-			res << "ÔÚ{group}£º";
+			res << "åœ¨{group}ï¼š";
 			res << grp.listBoolConf();
-			res << "¼ÇÂ¼´´½¨£º" + printDate(grp.tCreated);
-			res << "×îºó¼ÇÂ¼£º" + printDate(grp.updated());
-			if (grp.inviter)res << "ÑûÇëÕß£º" + printUser(grp.inviter);
-			res << string("ÈëÈº»¶Ó­£º") + (grp.is("ÈëÈº»¶Ó­") ? "ÒÑÉèÖÃ" : "ÎŞ");
+			res << "è®°å½•åˆ›å»ºï¼š" + printDate(grp.tCreated);
+			res << "æœ€åè®°å½•ï¼š" + printDate(grp.updated());
+			if (grp.inviter)res << "é‚€è¯·è€…ï¼š" + printUser(grp.inviter);
+			res << string("å…¥ç¾¤æ¬¢è¿ï¼š") + (grp.is("å…¥ç¾¤æ¬¢è¿") ? "å·²è®¾ç½®" : "æ— ");
 			reply(getMsg("strSelfName") + res.show());
 			return 1;
 		}
@@ -2062,10 +2059,10 @@ int DiceEvent::InnerOrder() {
 				return 1;
 			}
 			if (ChatList.count(llGroup)) {
-				reply(UTF8toGBK(chat(llGroup).to_json().dump()), false);
+				reply(chat(llGroup).to_json().dump(), false);
 			}
 			else {
-				reply("{self}ÎŞ" + printGroup(llGroup) + "µÄÈºÁÄ¼ÇÂ¼¡Á");
+				reply("{self}æ— " + printGroup(llGroup) + "çš„ç¾¤èŠè®°å½•Ã—");
 			}
 			return 1;
 		}
@@ -2084,7 +2081,7 @@ int DiceEvent::InnerOrder() {
 			int cntSize(0);
 			std::set<long long> list{ DD::getGroupMemberList(llGroup) };
 			if (list.empty()) {
-				reply("{self}¼ÓÔØ³ÉÔ±ÁĞ±íÊ§°Ü£¡");
+				reply("{self}åŠ è½½æˆå‘˜åˆ—è¡¨å¤±è´¥ï¼");
 				return 1;
 			}
 			for (auto each : list) {
@@ -2102,15 +2099,15 @@ int DiceEvent::InnerOrder() {
 				++cntSize;
 			}
 			ResList res;
-			res << "ÔÚ{group}ÄÚ"
-				<< "{self}ÓÃ»§Õ¼±È: " + std::to_string(cntUser * 100 / (cntSize)) + "%"
-				<< (cntDice ? "Í¬Ïµ÷»Äï: " + std::to_string(cntDice) : "")
-				<< (cntDiver ? "30ÌìÇ±Ë®ÈºÔ±: " + std::to_string(cntDiver) : "");
+			res << "åœ¨{group}å†…"
+				<< "{self}ç”¨æˆ·å æ¯”: " + std::to_string(cntUser * 100 / (cntSize)) + "%"
+				<< (cntDice ? "åŒç³»éª°å¨˜: " + std::to_string(cntDice) : "")
+				<< (cntDiver ? "30å¤©æ½œæ°´ç¾¤å‘˜: " + std::to_string(cntDiver) : "");
 			if (!sBlackQQ.empty()) {
 				if (sBlackQQ.size() > 8)
-					res << getMsg("strSelfName") + "µÄºÚÃûµ¥³ÉÔ±" + std::to_string(sBlackQQ.size()) + "Ãû";
+					res << getMsg("strSelfName") + "çš„é»‘åå•æˆå‘˜" + std::to_string(sBlackQQ.size()) + "å";
 				else {
-					res << getMsg("strSelfName") + "µÄºÚÃûµ¥³ÉÔ±:{blackqq}";
+					res << getMsg("strSelfName") + "çš„é»‘åå•æˆå‘˜:{blackqq}";
 					set("blackqq", sBlackQQ.show());
 				}
 			}
@@ -2137,23 +2134,23 @@ int DiceEvent::InnerOrder() {
 				++cntSize;
 			}
 			if (!cntSize) {
-				reply("{self}¼ÓÔØ³ÉÔ±ÁĞ±íÊ§°Ü£¡");
+				reply("{self}åŠ è½½æˆå‘˜åˆ—è¡¨å¤±è´¥ï¼");
 				return 1;
 			}
 			else if (qDiver.empty()) {
-				reply("{self}Î´·¢ÏÖÇ±Ë®Èº³ÉÔ±£¡");
+				reply("{self}æœªå‘ç°æ½œæ°´ç¾¤æˆå‘˜ï¼");
 				return 1;
 			}
 			int intCnt(0);
 			ResList res;
 			while (!qDiver.empty()) {
 				res << (bForKick ? qDiver.top().second
-						: (qDiver.top().second + std::to_string(qDiver.top().first) + "Ìì"));
+						: (qDiver.top().second + std::to_string(qDiver.top().first) + "å¤©"));
 				if (++intCnt > 15 && intCnt > cntSize / 80)break;
 				qDiver.pop();
 			}
 			bForKick ? reply("(.group " + std::to_string(llGroup) + " kick " + res.show(1))
-				: reply("Ç±Ë®³ÉÔ±ÁĞ±í:" + res.show(1));
+				: reply("æ½œæ°´æˆå‘˜åˆ—è¡¨:" + res.show(1));
 			return 1;
 		}
 		if (bool isAdmin = DD::isGroupAdmin(llGroup, fromChat.uid, true); Command == "pause") {
@@ -2225,7 +2222,7 @@ int DiceEvent::InnerOrder() {
 				replyMsg("strValueErr");
 				return -1;
 			}
-			const int intDefaultDice = getUser(fromChat.uid).getConf("Ä¬ÈÏ÷»", 100);
+			const int intDefaultDice = getUser(fromChat.uid).getConf("é»˜è®¤éª°", 100);
 			RD rdMainDice(strMainDice, intDefaultDice);
 			rdMainDice.Roll();
 			int intDuration{ rdMainDice.intTotal };
@@ -2263,9 +2260,9 @@ int DiceEvent::InnerOrder() {
 				else resNotFound << printUser(llMemberQQ);
 			} while ((llMemberQQ = readID()));
 			strReply = getMsg("strSelfName");
-			if (!resKicked.empty())strReply += "ÒÑÒÆ³öÈºÔ±£º" + resKicked.show() + "\n";
-			if (!resDenied.empty())strReply += "ÒÆ³öÊ§°Ü£º" + resDenied.show() + "\n";
-			if (!resNotFound.empty())strReply += "ÕÒ²»µ½¶ÔÏó£º" + resNotFound.show();
+			if (!resKicked.empty())strReply += "å·²ç§»å‡ºç¾¤å‘˜ï¼š" + resKicked.show() + "\n";
+			if (!resDenied.empty())strReply += "ç§»å‡ºå¤±è´¥ï¼š" + resDenied.show() + "\n";
+			if (!resNotFound.empty())strReply += "æ‰¾ä¸åˆ°å¯¹è±¡ï¼š" + resNotFound.show();
 			reply();
 			return 1;
 		}
@@ -2364,8 +2361,8 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strDisabledDrawGlobal");
 			return 1;
 		}
-		set("option","½ûÓÃdraw");
-		if (!isPrivate() && groupset(fromChat.gid, "½ûÓÃdraw") > 0) {
+		set("option","ç¦ç”¨draw");
+		if (!isPrivate() && groupset(fromChat.gid, "ç¦ç”¨draw") > 0) {
 			replyMsg("strGroupSetOnAlready");
 			return 1;
 		}
@@ -2411,7 +2408,7 @@ int DiceEvent::InnerOrder() {
 		case -1: break;
 		case -2:
 			replyMsg("strParaIllegal");
-			console.log("ÌáĞÑ:" + printUser(fromChat.uid) + "¶Ô" + getMsg("strSelfName") + "Ê¹ÓÃÁË·Ç·¨Ö¸Áî²ÎÊı\n" + strMsg, 1,
+			console.log("æé†’:" + printUser(fromChat.uid) + "å¯¹" + getMsg("strSelfName") + "ä½¿ç”¨äº†éæ³•æŒ‡ä»¤å‚æ•°\n" + strMsg, 1,
 						printSTNow());
 			return 1;
 		}
@@ -2436,23 +2433,23 @@ int DiceEvent::InnerOrder() {
 	}
 	else if (pref4 == "init") {
 		intMsgCnt += 4;
-		set("table_name","ÏÈ¹¥");
+		set("table_name","å…ˆæ”»");
 		string strCmd = readPara();
 		if (strCmd.empty()|| isPrivate()) {
 			replyHelp("init");
 		}
-		else if (auto game{ thisGame() }; !game || !game->has("ÏÈ¹¥")) {
+		else if (auto game{ thisGame() }; !game || !game->has("å…ˆæ”»")) {
 			replyMsg("strGMTableNotExist");
 		}
 		else if (strCmd == "show" || strCmd == "list") {
-			set("res", game->table_prior_show("ÏÈ¹¥"));
+			set("res", game->table_prior_show("å…ˆæ”»"));
 			replyMsg("strGMTableShow");
 		}
 		else if (strCmd == "del") {
 			set("table_item",readRest());
 			if (is_empty("table_item"))
 				replyMsg("strGMTableItemEmpty");
-			else if (game->table_del("ÏÈ¹¥", get_str("table_item"))) {
+			else if (game->table_del("å…ˆæ”»", get_str("table_item"))) {
 				game->table_del("init_exp", get_str("table_item"));
 				replyMsg("strGMTableItemDel");
 			}
@@ -2460,7 +2457,7 @@ int DiceEvent::InnerOrder() {
 				replyMsg("strGMTableItemNotFound");
 		}
 		else if (strCmd == "clr") {
-			game->reset("ÏÈ¹¥");
+			game->reset("å…ˆæ”»");
 			game->reset("init_exp");
 			replyMsg("strGMTableClr");
 		}
@@ -2478,12 +2475,12 @@ int DiceEvent::InnerOrder() {
 		if (!isPrivate()) {
 			if (Command == "on") {
 				if (canRoomHost()) {
-					if (groupset(fromChat.gid, "½ûÓÃjrrp") > 0) {
-						chat(fromChat.gid).reset("½ûÓÃjrrp");
-						reply("³É¹¦ÔÚ±¾ÈºÖĞÆôÓÃJRRP!");
+					if (groupset(fromChat.gid, "ç¦ç”¨jrrp") > 0) {
+						chat(fromChat.gid).reset("ç¦ç”¨jrrp");
+						reply("æˆåŠŸåœ¨æœ¬ç¾¤ä¸­å¯ç”¨JRRP!");
 					}
 					else {
-						reply("ÔÚ±¾ÈºÖĞJRRPÃ»ÓĞ±»½ûÓÃ!");
+						reply("åœ¨æœ¬ç¾¤ä¸­JRRPæ²¡æœ‰è¢«ç¦ç”¨!");
 					}
 				}
 				else {
@@ -2493,12 +2490,12 @@ int DiceEvent::InnerOrder() {
 			}
 			if (Command == "off") {
 				if (canRoomHost()) {
-					if (groupset(fromChat.gid, "½ûÓÃjrrp") < 1) {
-						chat(fromChat.gid).set("½ûÓÃjrrp");
-						reply("³É¹¦ÔÚ±¾ÈºÖĞ½ûÓÃJRRP!");
+					if (groupset(fromChat.gid, "ç¦ç”¨jrrp") < 1) {
+						chat(fromChat.gid).set("ç¦ç”¨jrrp");
+						reply("æˆåŠŸåœ¨æœ¬ç¾¤ä¸­ç¦ç”¨JRRP!");
 					}
 					else {
-						reply("ÔÚ±¾ÈºÖĞJRRPÃ»ÓĞ±»ÆôÓÃ!");
+						reply("åœ¨æœ¬ç¾¤ä¸­JRRPæ²¡æœ‰è¢«å¯ç”¨!");
 					}
 				}
 				else {
@@ -2506,8 +2503,8 @@ int DiceEvent::InnerOrder() {
 				}
 				return 1;
 			}
-			if (groupset(fromChat.gid, "½ûÓÃjrrp") > 0) {
-				reply("ÔÚ±¾ÈºÖĞJRRP¹¦ÄÜÒÑ±»½ûÓÃ");
+			if (groupset(fromChat.gid, "ç¦ç”¨jrrp") > 0) {
+				reply("åœ¨æœ¬ç¾¤ä¸­JRRPåŠŸèƒ½å·²è¢«ç¦ç”¨");
 				return 1;
 			}
 		}
@@ -2559,13 +2556,13 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strNameNumCannotBeZero");
 			return 1;
 		}
-		string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("Ëæ»úĞÕÃû_" + type)) ? "Ëæ»úĞÕÃû_" + type : "Ëæ»úĞÕÃû";
+		string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("éšæœºå§“å_" + type)) ? "éšæœºå§“å_" + type : "éšæœºå§“å";
 		vector<string> TempDeck(CardDeck::mPublicDeck[strDeckName]);
 		ResList Res;
 		while (intNum--) {
 			Res << CardDeck::drawCard(TempDeck, true);
 		}
-		set("res",Res.dot("¡¢").show());
+		set("res",Res.dot("ã€").show());
 		replyMsg("strNameGenerator");
 		return 1;
 	}
@@ -2585,13 +2582,13 @@ int DiceEvent::InnerOrder() {
 		auto game{ thisGame() };
 		if (strDefaultRule.empty()) {
 			if (game)game->reset("rule");
-			else getUser(fromChat.uid).rmConf("Ä¬ÈÏ¹æÔò");
+			else getUser(fromChat.uid).rmConf("é»˜è®¤è§„åˆ™");
 			replyMsg("strRuleReset");
 		}
 		else {
 			set("rule", strDefaultRule);
 			if (game)game->set("rule", strDefaultRule);
-			else getUser(fromChat.uid).setConf("Ä¬ÈÏ¹æÔò", strDefaultRule);
+			else getUser(fromChat.uid).setConf("é»˜è®¤è§„åˆ™", strDefaultRule);
 			replyMsg("strRuleSet");
 		}
 	}
@@ -2603,8 +2600,8 @@ int DiceEvent::InnerOrder() {
 		if (auto rule{ getGameRule() }; GetRule::get(*rule, strSearch, strReply)) {
 			reply();
 		}
-		else if (getUser(fromChat.uid).is("Ä¬ÈÏ¹æÔò") && strSearch.find(':') == string::npos &&
-			GetRule::get(getUser(fromChat.uid).get_str("Ä¬ÈÏ¹æÔò"), strSearch, strReply)) {
+		else if (getUser(fromChat.uid).is("é»˜è®¤è§„åˆ™") && strSearch.find(':') == string::npos &&
+			GetRule::get(getUser(fromChat.uid).get_str("é»˜è®¤è§„åˆ™"), strSearch, strReply)) {
 			reply();
 		}
 		else if (GetRule::analyze(strSearch, strReply)) {
@@ -2624,7 +2621,7 @@ int DiceEvent::InnerOrder() {
 			replyHelp("send");
 			return 1;
 		}
-		//ÏÈ¿¼ÂÇMaster´ø²ÎÊıÏòÖ¸¶¨Ä¿±ê·¢ËÍ
+		//å…ˆè€ƒè™‘Masterå¸¦å‚æ•°å‘æŒ‡å®šç›®æ ‡å‘é€
 		if (trusted > 2) {
 			chatInfo ct;
 			if (!readChat(ct, true)) {
@@ -2689,10 +2686,10 @@ int DiceEvent::InnerOrder() {
 			User& user = getUser(fromChat.uid);
 			set("user",printUser(fromChat.uid));
 			ResList rep;
-			rep << "ĞÅÈÎ¼¶±ğ£º" + std::to_string(trusted)
-				<< "ºÍ{nick}µÄµÚÒ»Ó¡Ïó´óÔ¼ÊÇÔÚ" + printDate(user.tCreated)
-				<< (!(user.strNick.empty()) ? "Õı¼ÇÂ¼{nick}µÄ" + std::to_string(user.strNick.size()) + "¸ö³Æºô" : "Ã»ÓĞ¼ÇÂ¼{nick}µÄ³Æºô")
-				<< ((PList.count(fromChat.uid)) ? "ÕâÀïÓĞ{nick}µÄ" + std::to_string(PList[fromChat.uid].size()) + "ÕÅ½ÇÉ«¿¨" : "ÎŞ½ÇÉ«¿¨¼ÇÂ¼");
+			rep << "ä¿¡ä»»çº§åˆ«ï¼š" + std::to_string(trusted)
+				<< "å’Œ{nick}çš„ç¬¬ä¸€å°è±¡å¤§çº¦æ˜¯åœ¨" + printDate(user.tCreated)
+				<< (!(user.strNick.empty()) ? "æ­£è®°å½•{nick}çš„" + std::to_string(user.strNick.size()) + "ä¸ªç§°å‘¼" : "æ²¡æœ‰è®°å½•{nick}çš„ç§°å‘¼")
+				<< ((PList.count(fromChat.uid)) ? "è¿™é‡Œæœ‰{nick}çš„" + std::to_string(PList[fromChat.uid].size()) + "å¼ è§’è‰²å¡" : "æ— è§’è‰²å¡è®°å½•");
 			reply("{user}" + rep.show());
 			return 1;
 		}
@@ -2741,10 +2738,10 @@ int DiceEvent::InnerOrder() {
 			long long target{ readID() };
 			if (!target)target = fromChat.uid;
 			if(UserList.count(target)){
-				reply(UTF8toGBK(getUser(target).to_json().dump()), false);
+				reply(getUser(target).to_json().dump(), false);
 			}
 			else {
-				reply("{self}ÎŞ" + printUser(target) + "µÄÓÃ»§¼ÇÂ¼¡Á");
+				reply("{self}æ— " + printUser(target) + "çš„ç”¨æˆ·è®°å½•Ã—");
 			}
 			return 1;
 		}
@@ -2784,7 +2781,7 @@ int DiceEvent::InnerOrder() {
 				return 1;
 			}
 			UserList.erase(llTarget);
-			reply("ÒÑÄ¨³ı{user}µÄÓÃ»§¼ÇÂ¼");
+			reply("å·²æŠ¹é™¤{user}çš„ç”¨æˆ·è®°å½•");
 			return 1;
 		}
 		if (strOption == "clr") {
@@ -2793,7 +2790,7 @@ int DiceEvent::InnerOrder() {
 				return 1;
 			}
 			int cnt = clearUser();
-			note("ÒÑÇåÀíÎŞĞ§»ò¹ıÆÚÓÃ»§¼ÇÂ¼" + std::to_string(cnt) + "Ìõ", 0b10);
+			note("å·²æ¸…ç†æ— æ•ˆæˆ–è¿‡æœŸç”¨æˆ·è®°å½•" + std::to_string(cnt) + "æ¡", 0b10);
 			return 1;
 		}
 	}
@@ -2934,7 +2931,7 @@ int DiceEvent::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
 		string type = readPara();
-		string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("Ëæ»úĞÕÃû_" + type)) ? "Ëæ»úĞÕÃû_" + type : "Ëæ»úĞÕÃû";
+		string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("éšæœºå§“å_" + type)) ? "éšæœºå§“å_" + type : "éšæœºå§“å";
 		set("old_nick",idx_nick(*this));
 		set("new_nick",strip(CardDeck::drawCard(CardDeck::mPublicDeck[strDeckName], true)));
 		getUser(fromChat.uid).setNick(fromChat.gid, get_str("new_nick"));
@@ -2960,9 +2957,9 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		else if (intDefaultDice == 100)
-			getUser(fromChat.uid).rmConf("Ä¬ÈÏ÷»");
+			getUser(fromChat.uid).rmConf("é»˜è®¤éª°");
 		else
-			getUser(fromChat.uid).setConf("Ä¬ÈÏ÷»", intDefaultDice);
+			getUser(fromChat.uid).setConf("é»˜è®¤éª°", intDefaultDice);
 		replyMsg("strSetDefaultDice");
 		return 1;
 	}
@@ -2981,12 +2978,12 @@ int DiceEvent::InnerOrder() {
 		string strMessage = strMsg.substr(intMsgCnt);
 		if (strMessage == "reset") {
 			fmt->msg_reset(strName);
-			note("ÒÑÖØÖÃ" + strName + "µÄ×Ô¶¨Òå¡£", 0b1);
+			note("å·²é‡ç½®" + strName + "çš„è‡ªå®šä¹‰ã€‚", 0b1);
 		}
 		else {
 			if (strMessage == "NULL")strMessage = "";
 			fmt->msg_edit(strName, strMessage);
-			note("ÒÑ×Ô¶¨Òå" + strName + "µÄÎÄ±¾", 0b1);
+			note("å·²è‡ªå®šä¹‰" + strName + "çš„æ–‡æœ¬", 0b1);
 		}
 		return 1;
 	}
@@ -3103,7 +3100,7 @@ int DiceEvent::InnerOrder() {
 	string strCurrentValue{ readDigit(false) };
 	PC pc{ PList.count(fromChat.uid) ? getPlayer(fromChat.uid)[fromChat.gid] : std::make_shared<CharaCard>(0)};
 	int intVal{ 0 };
-		//»ñÈ¡¼¼ÄÜÔ­Öµ
+		//è·å–æŠ€èƒ½åŸå€¼
 		if (strCurrentValue.empty()) {
 			if (pc && !strAttr.empty() && (pc->has(strAttr))) {
 				intVal = pc->get(strAttr).to_int();
@@ -3121,14 +3118,14 @@ int DiceEvent::InnerOrder() {
 			intVal = stoi(strCurrentValue);
 		}
 		readSkipSpace();
-		//¿É±ä³É³¤Öµ±í´ïÊ½
+		//å¯å˜æˆé•¿å€¼è¡¨è¾¾å¼
 		string strEnChange;
 		string strEnFail;
 		string strEnSuc = "1D10";
-		//ÒÔ¼Ó¼õºÅ×ö¿ªÍ·È·±£Óë¼¼ÄÜÖµÏàÇø·Ö
+		//ä»¥åŠ å‡å·åšå¼€å¤´ç¡®ä¿ä¸æŠ€èƒ½å€¼ç›¸åŒºåˆ†
 		if (strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') {
 			strEnChange = strLowerMessage.substr(intMsgCnt, strMsg.find(' ', intMsgCnt) - intMsgCnt);
-			//Ã»ÓĞ'/'Ê±Ä¬ÈÏ³É¹¦±ä»¯Öµ
+			//æ²¡æœ‰'/'æ—¶é»˜è®¤æˆåŠŸå˜åŒ–å€¼
 			if (strEnChange.find('/') != std::string::npos) {
 				strEnFail = strEnChange.substr(0, strEnChange.find('/'));
 				strEnSuc = strEnChange.substr(strEnChange.find('/') + 1);
@@ -3138,7 +3135,7 @@ int DiceEvent::InnerOrder() {
 		if (strAttr.empty())strAttr = getMsg("strEnDefaultName");
 		auto game{ thisGame() };
 		const int intTmpRollRes = (game && game->is_part(fromChat.uid)) ? game->roll(100) : RandomGenerator::Randint(1, 100);
-		//³É³¤¼ì¶¨½ö¼ÆÈëÖÀ÷»Í³¼Æ£¬²»¼ÆÈë¼ì¶¨Í³¼Æ
+		//æˆé•¿æ£€å®šä»…è®¡å…¥æ·éª°ç»Ÿè®¡ï¼Œä¸è®¡å…¥æ£€å®šç»Ÿè®¡
 		if (pc)pc->cntRollStat(intTmpRollRes, 100);
 		string& res{ (at("res") = "1D100=" + std::to_string(intTmpRollRes) + "/" + std::to_string(intVal) + " ").text};
 		if (intTmpRollRes <= intVal && intTmpRollRes <= 95) {
@@ -3193,7 +3190,7 @@ int DiceEvent::InnerOrder() {
 				return 1;
 			}
 			const long long llGroupID = stoll(strGroupID);
-			if ((groupset(llGroupID, "Í£ÓÃÖ¸Áî") || groupset(llGroupID, "½ûÓÃme")) && trusted < 5) {
+			if ((groupset(llGroupID, "åœç”¨æŒ‡ä»¤") || groupset(llGroupID, "ç¦ç”¨me")) && trusted < 5) {
 				replyMsg("strMEDisabledErr");
 				return 1;
 			}
@@ -3215,8 +3212,8 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		if (strAction == "off") {
-			if (groupset(fromChat.gid, "½ûÓÃme") < 1) {
-				chat(fromChat.gid).set("½ûÓÃme");
+			if (groupset(fromChat.gid, "ç¦ç”¨me") < 1) {
+				chat(fromChat.gid).set("ç¦ç”¨me");
 				replyMsg("strMeOff");
 			}
 			else {
@@ -3225,8 +3222,8 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		if (strAction == "on") {
-			if (groupset(fromChat.gid, "½ûÓÃme") > 0) {
-				chat(fromChat.gid).reset("½ûÓÃme");
+			if (groupset(fromChat.gid, "ç¦ç”¨me") > 0) {
+				chat(fromChat.gid).reset("ç¦ç”¨me");
 				replyMsg("strMeOn");
 			}
 			else {
@@ -3234,7 +3231,7 @@ int DiceEvent::InnerOrder() {
 			}
 			return 1;
 		}
-		if (groupset(fromChat.gid, "½ûÓÃme")) {
+		if (groupset(fromChat.gid, "ç¦ç”¨me")) {
 			replyMsg("strMEDisabledErr");
 			return 1;
 		}
@@ -3452,41 +3449,41 @@ int DiceEvent::InnerOrder() {
 			ResList res;
 			int intFace{ pc->has("__DefaultDice")
 				? pc->get("__DefaultDice").to_int()
-				: getUser(fromChat.uid).getConf("Ä¬ÈÏ÷»",100) };
+				: getUser(fromChat.uid).getConf("é»˜è®¤éª°",100) };
 			string strFace{ std::to_string(intFace) };
-			string keyStatCnt{ "__StatD" + strFace + "Cnt" };	//ÖÀ÷»´ÎÊı
+			string keyStatCnt{ "__StatD" + strFace + "Cnt" };	//æ·éª°æ¬¡æ•°
 			if (intFace <= 100 && pc->has(keyStatCnt)) {
 				if (int cntRoll{ pc->get_int(keyStatCnt) }; cntRoll > 0) {
-					int sumRes{ pc->get_int("__StatD" + strFace + "Sum") };		//µãÊıºÍ
-					int sumResSqr{ pc->get_int("__StatD" + strFace + "SqrSum") };	//µãÊıÆ½·½ºÍ
+					int sumRes{ pc->get_int("__StatD" + strFace + "Sum") };		//ç‚¹æ•°å’Œ
+					int sumResSqr{ pc->get_int("__StatD" + strFace + "SqrSum") };	//ç‚¹æ•°å¹³æ–¹å’Œ
 					DiceEst stat{ intFace,cntRoll,sumRes,sumResSqr };
 					if (stat.estMean > 0){
 						isEmpty = false;
-						res << "D" + strFace + "Í³¼Æ´ÎÊı: " + std::to_string(cntRoll);
-						res << "¾ùÖµ: " + toString(stat.estMean, 2, true) + " [ÆÚÍû " + toString(stat.expMean) + "]";
+						res << "D" + strFace + "ç»Ÿè®¡æ¬¡æ•°: " + std::to_string(cntRoll);
+						res << "å‡å€¼: " + toString(stat.estMean, 2, true) + " [æœŸæœ› " + toString(stat.expMean) + "]";
 						if (stat.pNormDist) {
-							if (stat.pNormDist < 0.5)res << "µÍÓÚ" + toString(100 - stat.pNormDist * 100, 2) + "%µÄÓÃ»§";
-							else res << "¸ßÓÚ" + toString(stat.pNormDist * 100, 2) + "%µÄÓÃ»§";
+							if (stat.pNormDist < 0.5)res << "ä½äº" + toString(100 - stat.pNormDist * 100, 2) + "%çš„ç”¨æˆ·";
+							else res << "é«˜äº" + toString(stat.pNormDist * 100, 2) + "%çš„ç”¨æˆ·";
 						}
 						if (stat.estStd > 0) {
-							res << "±ê×¼²î: " + toString(stat.estStd, 2) + " [ÆÚÍû " + toString(stat.expStd) + "]";
+							res << "æ ‡å‡†å·®: " + toString(stat.estStd, 2) + " [æœŸæœ› " + toString(stat.expStd) + "]";
 						}
 					}
 				}
 			}
-			string keyRcCnt{ "__StatRcCnt" };	//rc/sc¼ì¶¨´ÎÊı
+			string keyRcCnt{ "__StatRcCnt" };	//rc/scæ£€å®šæ¬¡æ•°
 			if (pc->has(keyRcCnt)) {
 				int cntRc{ pc->get_int("__StatRcCnt") };
 				if (cntRc > 0) {
 					isEmpty = false;
-					int sumRcSuc{ pc->get_int("__StatRcSumSuc") };//Êµ¼Ê³É¹¦Êı
-					int sumRcRate{ pc->get_int("__StatRcSumRate") };//×Ü³É¹¦ÂÊ
-					res << "¼ì¶¨³É¹¦ÂÊ: " + std::to_string(sumRcSuc) + "/" + std::to_string(cntRc) + "=" + toString((double)sumRcSuc / cntRc * 100) + "% [ÆÚÍû" + toString((double)sumRcRate / cntRc) + "%]";
+					int sumRcSuc{ pc->get_int("__StatRcSumSuc") };//å®é™…æˆåŠŸæ•°
+					int sumRcRate{ pc->get_int("__StatRcSumRate") };//æ€»æˆåŠŸç‡
+					res << "æ£€å®šæˆåŠŸç‡: " + std::to_string(sumRcSuc) + "/" + std::to_string(cntRc) + "=" + toString((double)sumRcSuc / cntRc * 100) + "% [æœŸæœ›" + toString((double)sumRcRate / cntRc) + "%]";
 					double cnt5{ pc->get_num("__StatRcCnt5") }, cnt96{ pc->get_num("__StatRcCnt96") };
-					res << "5- | 96+ ³öÏÖÂÊ: " + (cnt5 ? toString(cnt5 / cntRc * 100) + "%(" + pc->get_str("__StatRcCnt5") + ")" : "0%")
+					res << "5- | 96+ å‡ºç°ç‡: " + (cnt5 ? toString(cnt5 / cntRc * 100) + "%(" + pc->get_str("__StatRcCnt5") + ")" : "0%")
 						+ " | " + (cnt96 ? toString(cnt96 / cntRc * 100) + "%(" + pc->get_str("__StatRcCnt96") + ")" : "0%");
 					if(pc->has("__StatRcCnt1")|| pc->has("__StatRcCnt100"))
-						res << "1 | 100 ³öÏÖÊı: " + pc->get_str("__StatRcCnt1") + " | " + pc->get_str("__StatRcCnt100");
+						res << "1 | 100 å‡ºç°æ•°: " + pc->get_str("__StatRcCnt1") + " | " + pc->get_str("__StatRcCnt100");
 				}
 			}
 			if (isEmpty) {
@@ -3500,7 +3497,7 @@ int DiceEvent::InnerOrder() {
 		}
 		else if (strOption == "type") {
 			if ((at("new_type") = strip(readRest())).str_empty()) {
-				set("attr","Ä£°åÀà");
+				set("attr","æ¨¡æ¿ç±»");
 				set("val",pl[fromChat.gid]->get_str("__Type"));
 				replyMsg("strProp");
 			}
@@ -3519,7 +3516,7 @@ int DiceEvent::InnerOrder() {
 			auto pc{ pl.getCard(strName, fromChat.gid) };
 			set("char", pc);
 			set("type", pc->get_str("__Type"));
-			set("show", UTF8toGBK(pc->to_json().dump()));
+			set("show", pc->to_json().dump());
 			replyMsg("strPcCardShow");
 			return 1;
 		}
@@ -3534,8 +3531,8 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		int intRule = isPrivate()
-			? getUser(fromChat.uid).getConf("rc·¿¹æ", console["DefaultCOCRoomRule"])
-			: chat(fromChat.gid).getConf("rc·¿¹æ", console["DefaultCOCRoomRule"]);
+			? getUser(fromChat.uid).getConf("rcæˆ¿è§„", console["DefaultCOCRoomRule"])
+			: chat(fromChat.gid).getConf("rcæˆ¿è§„", console["DefaultCOCRoomRule"]);
 		int intTurnCnt = 1;
 		if (strMsg[intMsgCnt] == 'h' && isspace(static_cast<unsigned char>(strMsg[intMsgCnt + 1]))) {
 			set("hidden");
@@ -3548,7 +3545,7 @@ int DiceEvent::InnerOrder() {
 		readSkipSpace();
 		if (strMsg.find('#') != string::npos) {
 			string strTurnCnt = strMsg.substr(intMsgCnt, strMsg.find('#') - intMsgCnt);
-			//#ÄÜ·ñÊ¶±ğÓĞĞ§
+			//#èƒ½å¦è¯†åˆ«æœ‰æ•ˆ
 			if (strTurnCnt.empty())intMsgCnt++;
 			else if ((strTurnCnt.length() == 1 && is_digit(strTurnCnt[0])) || strTurnCnt ==
 					 "10") {
@@ -3558,17 +3555,17 @@ int DiceEvent::InnerOrder() {
 		}
 		string strMainDice = "D100";
 		string strSkillModify;
-		//À§ÄÑµÈ¼¶
+		//å›°éš¾ç­‰çº§
 		string strDifficulty;
 		int intDifficulty = 1;
 		int intSkillModify = 0;
-		//³ËÊı
+		//ä¹˜æ•°
 		int intSkillMultiple = 1;
-		//³ıÊı
+		//é™¤æ•°
 		int intSkillDivisor = 1;
-		//×Ô¶¯³É¹¦
+		//è‡ªåŠ¨æˆåŠŸ
 		bool isAutomatic = false;
-		//D100ÇÒÓĞ½ÇÉ«¿¨Ê±¼ÆÈëÍ³¼Æ
+		//D100ä¸”æœ‰è§’è‰²å¡æ—¶è®¡å…¥ç»Ÿè®¡
 		bool isStatic = PList.count(fromChat.uid);
 		auto game{ thisGame() };
 		bool isRoulette = game && game->is_part(fromChat.uid) && game->roulette.count(100);
@@ -3602,7 +3599,7 @@ int DiceEvent::InnerOrder() {
 					replyMsg("strPcNameNotExist");
 				}
 			}
-			else if (size_t pos{ attr.find("µÄ") }; pos != string::npos) {
+			else if (size_t pos{ attr.find("çš„") }; pos != string::npos) {
 				string strGenitive = attr.substr(0, pos);
 				if (PList[fromChat.uid].count(strGenitive)) {
 					pc = PList[fromChat.uid][strGenitive];
@@ -3611,14 +3608,14 @@ int DiceEvent::InnerOrder() {
 				}
 			}
 		}
-		if (attr.find("×Ô¶¯³É¹¦") == 0) {
+		if (attr.find("è‡ªåŠ¨æˆåŠŸ") == 0) {
 			strDifficulty = attr.substr(0, 8);
 			attr = attr.substr(8);
 			isAutomatic = true;
 		}
-		if (attr.find("À§ÄÑ") == 0 || attr.find("¼«ÄÑ") == 0) {
+		if (attr.find("å›°éš¾") == 0 || attr.find("æéš¾") == 0) {
 			strDifficulty += attr.substr(0, 4);
-			intDifficulty = (attr.substr(0, 4) == "À§ÄÑ") ? 2 : 5;
+			intDifficulty = (attr.substr(0, 4) == "å›°éš¾") ? 2 : 5;
 			attr = attr.substr(4);
 		}
 		if (pc) {
@@ -3672,7 +3669,7 @@ int DiceEvent::InnerOrder() {
 		else {
 			intSkillVal = stoi(strSkillVal);
 		}
-		//×îÖÕ³É¹¦ÂÊ¼ÆÈë¼ì¶¨Í³¼Æ
+		//æœ€ç»ˆæˆåŠŸç‡è®¡å…¥æ£€å®šç»Ÿè®¡
 		int intFianlSkillVal = (intSkillVal * intSkillMultiple + intSkillModify) / intSkillDivisor / intDifficulty;
 		if (intFianlSkillVal < 0 || intFianlSkillVal > 1000) {
 			replyMsg("strSuccessRateErr");
@@ -3689,7 +3686,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		set("attr", strDifficulty + attr + (
-			(intSkillMultiple != 1) ? "¡Á" + std::to_string(intSkillMultiple) : "") + strSkillModify + ((intSkillDivisor != 1)
+			(intSkillMultiple != 1) ? "Ã—" + std::to_string(intSkillMultiple) : "") + strSkillModify + ((intSkillDivisor != 1)
 				? "/" + std::to_string(intSkillDivisor)
 				: ""));
 		if (is_empty("reason")) {
@@ -3788,7 +3785,7 @@ int DiceEvent::InnerOrder() {
 		auto game{ sessions.get(fromChat) };
 		if (size_t pos{ name.find('#') }; pos == string::npos) {
 			set("char", name.empty() ? name = idx_pc(*this) : name);
-			game->table_add("ÏÈ¹¥", initdice.intTotal, name);
+			game->table_add("å…ˆæ”»", initdice.intTotal, name);
 			game->table_add("init_exp", initdice.strDice, name);
 			set("res", initdice.FormCompleteString());
 		}
@@ -3817,7 +3814,7 @@ int DiceEvent::InnerOrder() {
 			int no = 0;
 			do {
 				res << to_string(++no) + ". " + initdice.FormCompleteString();
-				game->table_add("ÏÈ¹¥", initdice.intTotal, name + to_string(no));
+				game->table_add("å…ˆæ”»", initdice.intTotal, name + to_string(no));
 				initdice.Roll();
 			} while (no < cntInit);
 			set("res", "\n" + res.show("\n"));
@@ -3838,7 +3835,7 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strSanCostInvalid");
 			return 1;
 		}
-		static const string attr = "ÀíÖÇ";
+		static const string attr = "ç†æ™º";
 		int intSan = 0, sanLoss = 0;
 		PC pc;
 		if (readNum(intSan)) {
@@ -3875,16 +3872,16 @@ int DiceEvent::InnerOrder() {
 		auto game{ thisGame() };
 		const int intTmpRollRes = (game && game->is_part(fromChat.uid))
 			?  game->roll(100) : RandomGenerator::Randint(1, 100);
-		//ÀíÖÇ¼ì¶¨¼ÆÈëÍ³¼Æ
+		//ç†æ™ºæ£€å®šè®¡å…¥ç»Ÿè®¡
 		if (pc) {
 			pc->cntRollStat(intTmpRollRes, 100);
 			pc->cntRcStat(intTmpRollRes, intSan);
 		}
 		string& strRes{ (at("res") = "1D100=" + std::to_string(intTmpRollRes) + "/" + std::to_string(intSan)).text};
-		//µ÷ÓÃ·¿¹æ
+		//è°ƒç”¨æˆ¿è§„
 		int intRule = fromChat.gid
-			? chat(fromChat.gid).getConf("rc·¿¹æ", console["DefaultCOCRoomRule"])
-			: getUser(fromChat.uid).getConf("rc·¿¹æ", console["DefaultCOCRoomRule"]);
+			? chat(fromChat.gid).getConf("rcæˆ¿è§„", console["DefaultCOCRoomRule"])
+			: getUser(fromChat.uid).getConf("rcæˆ¿è§„", console["DefaultCOCRoomRule"]);
 		int res = RollSuccessLevel(intTmpRollRes, intSan, intRule);
 		switch (res) {
 		case 5:
@@ -3998,7 +3995,7 @@ int DiceEvent::InnerOrder() {
 					replyMsg("strPcNameNotExist");
 				}
 			}
-			else if (size_t pos{ attr.find("µÄ") }; pos != string::npos) {
+			else if (size_t pos{ attr.find("çš„") }; pos != string::npos) {
 				string strGenitive = attr.substr(0, pos);
 				if (pl.count(strGenitive)) {
 					pc = pl[strGenitive];
@@ -4028,7 +4025,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		if (size_t pos = strMsg.find("::", intMsgCnt); pos != string::npos
-			//|| (pos = strMsg.find("µÄ", intMsgCnt)) != string::npos
+			//|| (pos = strMsg.find("çš„", intMsgCnt)) != string::npos
 			) {
 			string name{ strip(filter_CQcode(strMsg.substr(intMsgCnt,pos - intMsgCnt), fromChat.gid)) };
 			intMsgCnt = pos + 2;
@@ -4063,12 +4060,12 @@ int DiceEvent::InnerOrder() {
 		}
 		AttrObject logs;
 		//set("cnt", 0);
-		//Ñ­»·Â¼Èë
+		//å¾ªç¯å½•å…¥
 		while (intMsgCnt != strLowerMessage.length()) {
 			readSkipSpace();
 			AttrObject trans;
 			string attr_name;
-			//ÅĞ¶¨Â¼Èë±í´ïÊ½
+			//åˆ¤å®šå½•å…¥è¡¨è¾¾å¼
 			if (strMsg[intMsgCnt] == '&') {
 				if (!(attr_name = readToColon()).empty()) {
 					string attr_new;
@@ -4092,7 +4089,7 @@ int DiceEvent::InnerOrder() {
 				}
 				continue;
 			}
-			//¶ÁÈ¡Attr
+			//è¯»å–Attr
 			if ((attr_name = readAttrName()).empty()) {
 				readSkipSpace();
 				while (strMsg[intMsgCnt] == '=' || strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '+' ||
@@ -4106,7 +4103,7 @@ int DiceEvent::InnerOrder() {
 			trans->set("attr", attr_name);
 			while (strLowerMessage[intMsgCnt] ==
 				'=' || strLowerMessage[intMsgCnt] == ':')intMsgCnt++;
-			//ÅĞ¶¨ÊıÖµĞŞ¸Ä
+			//åˆ¤å®šæ•°å€¼ä¿®æ”¹
 			if ((strLowerMessage[intMsgCnt] == '-' || strLowerMessage[intMsgCnt] == '+')) {
 				trans->at("old") = pc->get(attr_name);
 				RD Mod(trans->get_str("old") + readDice());
@@ -4129,7 +4126,7 @@ int DiceEvent::InnerOrder() {
 				logs->set(attr_name, trans);
 				continue;
 			}
-			//ÅĞ¶¨Â¼ÈëÎÄ±¾
+			//åˆ¤å®šå½•å…¥æ–‡æœ¬
 			else if (strLowerMessage.length() != intMsgCnt
 				&& !is_digit(strLowerMessage[intMsgCnt])
 				&& !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))) {
@@ -4148,7 +4145,7 @@ int DiceEvent::InnerOrder() {
 				logs->set(attr_name, trans);
 				continue;
 			}
-			//Â¼Èë´¿ÊıÖµ
+			//å½•å…¥çº¯æ•°å€¼
 			string strSkillVal = readDigit();
 			if (attr_name.empty()) {
 				continue;
@@ -4198,7 +4195,7 @@ int DiceEvent::InnerOrder() {
 					res << attr + "=" + tx->get_str("new");
 				}
 				else if (ax == "!") {
-					res << attr + "¡Ù " + tx->get_str("reason");
+					res << attr + "â‰  " + tx->get_str("reason");
 				}
 			}
 			if (!is("cnt"))set("cnt", 0);
@@ -4243,7 +4240,7 @@ int DiceEvent::InnerOrder() {
 		string strMainDice;
 		string& strReason{ (at("reason") = "").text};
 		string strAttr;
-		if (pc) {	//µ÷ÓÃ½ÇÉ«¿¨ÊôĞÔ»ò±í´ïÊ½
+		if (pc) {	//è°ƒç”¨è§’è‰²å¡å±æ€§æˆ–è¡¨è¾¾å¼
 			while (intMsgCnt < len && !isspace(static_cast<unsigned char>(strMsg[intMsgCnt]))) {
 				if (is_digit(strMsg[intMsgCnt])
 					|| strMsg[intMsgCnt] == 'a'
@@ -4267,12 +4264,12 @@ int DiceEvent::InnerOrder() {
 			}
 		}
 		else {
-			strMainDice = readDice(); 	//wwµÄ±í´ïÊ½¿ÉÒÔÊÇ´¿Êı×Ö
+			strMainDice = readDice(); 	//wwçš„è¡¨è¾¾å¼å¯ä»¥æ˜¯çº¯æ•°å­—
 		}
 		strReason += readRest();
 		int intTurnCnt = 1;
-		const int intDefaultDice = getUser(fromChat.uid).getConf("Ä¬ÈÏ÷»", 100);
-		//´¦Àí.ww[´ÎÊı]#[±í´ïÊ½]
+		const int intDefaultDice = getUser(fromChat.uid).getConf("é»˜è®¤éª°", 100);
+		//å¤„ç†.ww[æ¬¡æ•°]#[è¡¨è¾¾å¼]
 		if (size_t pos{ strMainDice.find('#') }; pos != string::npos) {
 			string strTurnCnt = strMainDice.substr(0, pos);
 			if (strTurnCnt.empty())
@@ -4326,7 +4323,7 @@ int DiceEvent::InnerOrder() {
 			vector<int> vintExVal;
 			string& strRes{ (at("res") = "{ ").text};
 			while (intTurnCnt--) {
-				// ´Ë´¦·µ»ØÖµÎŞÓÃ
+				// æ­¤å¤„è¿”å›å€¼æ— ç”¨
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				rdMainDice.Roll();
 				strRes += std::to_string(rdMainDice.intTotal);
@@ -4334,7 +4331,7 @@ int DiceEvent::InnerOrder() {
 			}
 			strRes += " }";
 			if (!vintExVal.empty()) {
-				strRes += ",¼«Öµ: ";
+				strRes += ",æå€¼: ";
 				for (auto it = vintExVal.cbegin(); it != vintExVal.cend(); ++it) {
 					strRes += std::to_string(*it);
 					if (it != vintExVal.cend() - 1)strRes += ",";
@@ -4349,7 +4346,7 @@ int DiceEvent::InnerOrder() {
 		}
 		else {
 			while (intTurnCnt--) {
-				// ´Ë´¦·µ»ØÖµÎŞÓÃ
+				// æ­¤å¤„è¿”å›å€¼æ— ç”¨
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				rdMainDice.Roll();
 				set("res",boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString());
@@ -4405,7 +4402,7 @@ int DiceEvent::InnerOrder() {
 		int intTurnCnt = 1;
 		const int intDefaultDice = (pc && pc->has("__DefaultDice"))
 			? pc->get("__DefaultDice").to_int()
-			: getUser(fromChat.uid).getConf("Ä¬ÈÏ÷»", 100);
+			: getUser(fromChat.uid).getConf("é»˜è®¤éª°", 100);
 		if (strMainDice.find('#') != string::npos) {
 			string& turn{ (at("turn") = strMainDice.substr(0, strMainDice.find('#'))).text };
 			if (turn.empty())
@@ -4445,7 +4442,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		set("dice_exp",rdMainDice.strDice);
-		//½öÍ³¼ÆÓëÄ¬ÈÏ÷»Ò»ÖÂµÄÖÀ÷»
+		//ä»…ç»Ÿè®¡ä¸é»˜è®¤éª°ä¸€è‡´çš„æ·éª°
 		bool isStatic{ intDefaultDice <= 100 && pc && rdMainDice.strDice == ("D" + std::to_string(intDefaultDice)) };
 		string strType = (intTurnCnt != 1
 						  ? (is_empty("reason") ? "strRollMultiDice" : "strRollMultiDiceReason")
@@ -4454,7 +4451,7 @@ int DiceEvent::InnerOrder() {
 			vector<int> vintExVal;
 			string& res{ (at("res") = "{ ").text};
 			while (intTurnCnt--) {
-				// ´Ë´¦·µ»ØÖµÎŞÓÃ
+				// æ­¤å¤„è¿”å›å€¼æ— ç”¨
 				// ReSharper disable once CppExpressionWithoutSideEffects
 				rdMainDice.Roll();
 				if (isStatic)pc->cntRollStat(rdMainDice.intTotal, intDefaultDice);
@@ -4467,7 +4464,7 @@ int DiceEvent::InnerOrder() {
 			}
 			res += " }";
 			if (!vintExVal.empty()) {
-				res += ",¼«Öµ: ";
+				res += ",æå€¼: ";
 				for (auto it = vintExVal.cbegin(); it != vintExVal.cend(); ++it) {
 					res += std::to_string(*it);
 					if (it != vintExVal.cend() - 1)
@@ -4525,7 +4522,7 @@ bool DiceEvent::monitorFrq() {
 	}
 	return true;
 }
-//ÅĞ¶ÏÊÇ·ñÏìÓ¦
+//åˆ¤æ–­æ˜¯å¦å“åº”
 bool DiceEvent::DiceFilter()
 {
 	while (isspace(static_cast<unsigned char>(strMsg[0])))
@@ -4567,12 +4564,12 @@ bool DiceEvent::DiceFilter()
 	if (isPrivate()) isCalled = true;
 	else if (isOtherCalled && !isCalled)return false;
 	if (!(isDisabled = ( (console["DisabledGlobal"] && (trusted < 4 || !isCalled))
-			|| groupset(fromChat.gid, "Ğ­ÒéÎŞĞ§") > 0))
+			|| groupset(fromChat.gid, "åè®®æ— æ•ˆ") > 0))
 		&& !(isCalled && console["DisabledListenAt"])) {
 		if (int chon{ (isChannel() && pGrp) ? pGrp->getChConf(fromChat.chid,"order",0) : 0 }) {
 			set("order_off",chon < 0);
 		}
-		else if (pGrp && pGrp->is("Í£ÓÃÖ¸Áî")) {
+		else if (pGrp && pGrp->is("åœç”¨æŒ‡ä»¤")) {
 			set("order_off");
 		}
 	}
@@ -4581,8 +4578,8 @@ bool DiceEvent::DiceFilter()
 	}
 	else if (is("ignored"))return 0;
 	if (isCalled)set("called");
-	if (!isPrivate() && ((console["CheckGroupLicense"] > 0 && pGrp->is("Î´ÉóºË"))
-		|| (console["CheckGroupLicense"] == 2 && !pGrp->is("Ğí¿ÉÊ¹ÓÃ")) 
+	if (!isPrivate() && ((console["CheckGroupLicense"] > 0 && pGrp->is("æœªå®¡æ ¸"))
+		|| (console["CheckGroupLicense"] == 2 && !pGrp->is("è®¸å¯ä½¿ç”¨")) 
 		|| blacklist->get_group_danger(fromChat.gid))) {
 		isDisabled = true;
 	}
@@ -4613,7 +4610,7 @@ bool DiceEvent::DiceFilter()
 	return false;
 }
 bool DiceEvent::WordCensor() {
-	//ĞÅÈÎĞ¡ÓÚ4µÄÓÃ»§½øĞĞÃô¸Ğ´Ê¼ì²â
+	//ä¿¡ä»»å°äº4çš„ç”¨æˆ·è¿›è¡Œæ•æ„Ÿè¯æ£€æµ‹
 	if (trusted < 4) {
 		vector<string>sens_words;
 		if (int danger = censor.search(strMsg, sens_words)) {
@@ -4623,25 +4620,25 @@ bool DiceEvent::WordCensor() {
 				return is("break");
 			}
 			else if (danger < 2 || trusted > danger) {
-				console.log("ÌáĞÑ:" + printUser(fromChat.uid) + "¶Ô" + getMsg("strSelfName")
-					+ "·¢ËÍÁËº¬Ãô¸Ğ´ÊÏûÏ¢(" + listItem(sens_words) + "):\n" + strMsg, 1,
+				console.log("æé†’:" + printUser(fromChat.uid) + "å¯¹" + getMsg("strSelfName")
+					+ "å‘é€äº†å«æ•æ„Ÿè¯æ¶ˆæ¯(" + listItem(sens_words) + "):\n" + strMsg, 1,
 					printTTime((time_t)get_ll("time")));
 			}
 			else if (danger > 3) {
-				console.log("¾¯¸æ:" + printUser(fromChat.uid) + "¶Ô" + getMsg("strSelfName") + "·¢ËÍÁËº¬Ãô¸Ğ´ÊÏûÏ¢:\n" + strMsg, 0b1000,
+				console.log("è­¦å‘Š:" + printUser(fromChat.uid) + "å¯¹" + getMsg("strSelfName") + "å‘é€äº†å«æ•æ„Ÿè¯æ¶ˆæ¯:\n" + strMsg, 0b1000,
 					printTTime((time_t)get_ll("time")));
 				replyMsg("strCensorDanger");
 				return 1;
 			}
 			else if (danger == 3) {
-				console.log("¾¯¸æ:" + printUser(fromChat.uid) + "¶Ô" + getMsg("strSelfName")
-					+ "·¢ËÍÁËº¬Ãô¸Ğ´ÊÏûÏ¢(" + listItem(sens_words) + "):\n" + strMsg, 0b10, printTTime((time_t)get_ll("time")));
+				console.log("è­¦å‘Š:" + printUser(fromChat.uid) + "å¯¹" + getMsg("strSelfName")
+					+ "å‘é€äº†å«æ•æ„Ÿè¯æ¶ˆæ¯(" + listItem(sens_words) + "):\n" + strMsg, 0b10, printTTime((time_t)get_ll("time")));
 				replyMsg("strCensorWarning");
 				return 1;
 			}
 			else if (danger == 2) {
-				console.log("ÌáĞÑ:" + printUser(fromChat.uid) + "¶Ô" + getMsg("strSelfName")
-					+ "·¢ËÍÁËº¬Ãô¸Ğ´ÊÏûÏ¢(" + listItem(sens_words) + "):\n" + strMsg, 0b10,
+				console.log("æé†’:" + printUser(fromChat.uid) + "å¯¹" + getMsg("strSelfName")
+					+ "å‘é€äº†å«æ•æ„Ÿè¯æ¶ˆæ¯(" + listItem(sens_words) + "):\n" + strMsg, 0b10,
 					printTTime((time_t)get_ll("time")));
 				replyMsg("strCensorCaution");
 				return 1;
@@ -4827,7 +4824,7 @@ int DiceEvent::readClock(Clock& cc)
 	if (nHour > 23)return -2;
 	cc.first = nHour;
 	if (strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '.')intMsgCnt++;
-	if (strMsg.substr(intMsgCnt, 2) == "£º")intMsgCnt += 2;
+	if (strMsg.substr(intMsgCnt, 2) == "ï¼š")intMsgCnt += 2;
 	readSkipSpace();
 	if (intMsgCnt >= strMsg.length() || !is_digit(strMsg[intMsgCnt]))
 	{
@@ -4871,8 +4868,8 @@ std::string DiceEvent::printFrom()
 {
 	std::string strFwd;
 	if (!isPrivate())strFwd += isChannel()
-		? ("[ÆµµÀ:" + std::to_string(fromChat.gid) + "]")
-		: ("[Èº:" + std::to_string(fromChat.gid) + "]");
+		? ("[é¢‘é“:" + std::to_string(fromChat.gid) + "]")
+		: ("[ç¾¤:" + std::to_string(fromChat.gid) + "]");
 	strFwd += getName(fromChat.uid, fromChat.gid) + "(" + std::to_string(fromChat.uid) + "):";
 	return strFwd;
 }

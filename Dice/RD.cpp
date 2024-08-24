@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123Ëİä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -364,7 +364,7 @@ void init2(string& msg)
 		msg.erase(msg.begin());
 	while (!msg.empty() && isspace(static_cast<unsigned char>(msg[msg.length() - 1])))
 		msg.erase(msg.end() - 1);
-	if (msg.substr(0, 2) == "¡£" || msg.substr(0, 2) == "£¡" || msg.substr(0, 2) == "£®")
+	if (msg.substr(0, 2) == "ã€‚" || msg.substr(0, 2) == "ï¼" || msg.substr(0, 2) == "ï¼")
 	{
 		msg.erase(msg.begin());
 		msg[0] = '.';
@@ -383,70 +383,70 @@ string COC7D()
 	RD rd3D6("3D6");
 	RD rd2D6p6("2D6+6");
 	strMAns += '\n';
-	strMAns += "Á¦Á¿STR=3D6*5=";
+	strMAns += "åŠ›é‡STR=3D6*5=";
 	rd3D6.Roll();
 	const int STR = rd3D6.intTotal * 5;
 
 	strMAns += to_string(STR) + "/" + to_string(STR / 2) + "/" + to_string(STR / 5);
 	strMAns += '\n';
-	strMAns += "ÌåÖÊCON=3D6*5=";
+	strMAns += "ä½“è´¨CON=3D6*5=";
 	rd3D6.Roll();
 	const int CON = rd3D6.intTotal * 5;
 
 	strMAns += to_string(CON) + "/" + to_string(CON / 2) + "/" + to_string(CON / 5);
 	strMAns += '\n';
-	strMAns += "ÌåĞÍSIZ=(2D6+6)*5=";
+	strMAns += "ä½“å‹SIZ=(2D6+6)*5=";
 	rd2D6p6.Roll();
 	const int SIZ = rd2D6p6.intTotal * 5;
 
 	strMAns += to_string(SIZ) + "/" + to_string(SIZ / 2) + "/" + to_string(SIZ / 5);
 	strMAns += '\n';
-	strMAns += "Ãô½İDEX=3D6*5=";
+	strMAns += "æ•æ·DEX=3D6*5=";
 	rd3D6.Roll();
 	const int DEX = rd3D6.intTotal * 5;
 
 	strMAns += to_string(DEX) + "/" + to_string(DEX / 2) + "/" + to_string(DEX / 5);
 	strMAns += '\n';
-	strMAns += "ÍâÃ²APP=3D6*5=";
+	strMAns += "å¤–è²ŒAPP=3D6*5=";
 	rd3D6.Roll();
 	const int APP = rd3D6.intTotal * 5;
 
 	strMAns += to_string(APP) + "/" + to_string(APP / 2) + "/" + to_string(APP / 5);
 	strMAns += '\n';
-	strMAns += "ÖÇÁ¦INT=(2D6+6)*5=";
+	strMAns += "æ™ºåŠ›INT=(2D6+6)*5=";
 	rd2D6p6.Roll();
 	const int INT = rd2D6p6.intTotal * 5;
 
 	strMAns += to_string(INT) + "/" + to_string(INT / 2) + "/" + to_string(INT / 5);
 	strMAns += '\n';
-	strMAns += "ÒâÖ¾POW=3D6*5=";
+	strMAns += "æ„å¿—POW=3D6*5=";
 	rd3D6.Roll();
 	const int POW = rd3D6.intTotal * 5;
 
 	strMAns += to_string(POW) + "/" + to_string(POW / 2) + "/" + to_string(POW / 5);
 	strMAns += '\n';
-	strMAns += "½ÌÓıEDU=(2D6+6)*5=";
+	strMAns += "æ•™è‚²EDU=(2D6+6)*5=";
 	rd2D6p6.Roll();
 	const int EDU = rd2D6p6.intTotal * 5;
 
 	strMAns += to_string(EDU) + "/" + to_string(EDU / 2) + "/" + to_string(EDU / 5);
 	strMAns += '\n';
-	strMAns += "ĞÒÔËLUCK=3D6*5=";
+	strMAns += "å¹¸è¿LUCK=3D6*5=";
 	rd3D6.Roll();
 	const int LUCK = rd3D6.intTotal * 5;
 	strMAns += to_string(LUCK);
 
 	strMAns += '\n';
-	strMAns += "¹²¼Æ:" + to_string(STR + CON + SIZ + APP + POW + EDU + DEX + INT) + "/" + to_string(
+	strMAns += "å…±è®¡:" + to_string(STR + CON + SIZ + APP + POW + EDU + DEX + INT) + "/" + to_string(
 		STR + CON + SIZ + APP + POW + EDU + DEX + INT + LUCK);
 
-	strMAns += "\nÀíÖÇSAN=POW=";
+	strMAns += "\nç†æ™ºSAN=POW=";
 	const int SAN = POW;
 	strMAns += to_string(SAN);
-	strMAns += "\nÉúÃüÖµHP=(SIZ+CON)/10=";
+	strMAns += "\nç”Ÿå‘½å€¼HP=(SIZ+CON)/10=";
 	const int HP = (SIZ + CON) / 10;
 	strMAns += to_string(HP);
-	strMAns += "\nÄ§·¨ÖµMP=POW/5=";
+	strMAns += "\né­”æ³•å€¼MP=POW/5=";
 	const int MP = POW / 5;
 	strMAns += to_string(MP);
 	string DB;
@@ -478,10 +478,10 @@ string COC7D()
 	}
 	else
 	{
-		DB = "¼ÆËã´íÎó!";
+		DB = "è®¡ç®—é”™è¯¯!";
 		build = -10;
 	}
-	strMAns += "\nÉËº¦½±ÀøDB=" + DB + "\nÌå¸ñ=" + (build == -10 ? "¼ÆËã´íÎó" : to_string(build));
+	strMAns += "\nä¼¤å®³å¥–åŠ±DB=" + DB + "\nä½“æ ¼=" + (build == -10 ? "è®¡ç®—é”™è¯¯" : to_string(build));
 	int MOV;
 	if (DEX < SIZ && STR < SIZ)
 		MOV = 7;
@@ -489,7 +489,7 @@ string COC7D()
 		MOV = 9;
 	else
 		MOV = 8;
-	strMAns += "\nÒÆ¶¯Á¦MOV=" + to_string(MOV);
+	strMAns += "\nç§»åŠ¨åŠ›MOV=" + to_string(MOV);
 	return strMAns;
 }
 
@@ -501,64 +501,64 @@ string COC6D()
 	RD rd3D6p3("3D6+3");
 	RD rd1D10("1D10");
 	strMAns += '\n';
-	strMAns += "Á¦Á¿STR=3D6=";
+	strMAns += "åŠ›é‡STR=3D6=";
 	rd3D6.Roll();
 	const int STR = rd3D6.intTotal;
 	strMAns += to_string(STR);
 	strMAns += '\n';
 
-	strMAns += "ÌåÖÊCON=3D6=";
+	strMAns += "ä½“è´¨CON=3D6=";
 	rd3D6.Roll();
 	const int CON = rd3D6.intTotal;
 	strMAns += to_string(CON);
 	strMAns += '\n';
 
-	strMAns += "ÌåĞÍSIZ=2D6+6=";
+	strMAns += "ä½“å‹SIZ=2D6+6=";
 	rd2D6p6.Roll();
 	const int SIZ = rd2D6p6.intTotal;
 	strMAns += to_string(SIZ);
 	strMAns += '\n';
 
-	strMAns += "Ãô½İDEX=3D6=";
+	strMAns += "æ•æ·DEX=3D6=";
 	rd3D6.Roll();
 	const int DEX = rd3D6.intTotal;
 	strMAns += to_string(DEX);
 	strMAns += '\n';
 
-	strMAns += "ÍâÃ²APP=3D6=";
+	strMAns += "å¤–è²ŒAPP=3D6=";
 	rd3D6.Roll();
 	const int APP = rd3D6.intTotal;
 	strMAns += to_string(APP);
 	strMAns += '\n';
 
-	strMAns += "ÖÇÁ¦INT=2D6+6=";
+	strMAns += "æ™ºåŠ›INT=2D6+6=";
 	rd2D6p6.Roll();
 	const int INT = rd2D6p6.intTotal;
 	strMAns += to_string(INT);
 	strMAns += '\n';
 
-	strMAns += "ÒâÖ¾POW=3D6=";
+	strMAns += "æ„å¿—POW=3D6=";
 	rd3D6.Roll();
 	const int POW = rd3D6.intTotal;
 	strMAns += to_string(POW);
 	strMAns += '\n';
 
-	strMAns += "½ÌÓıEDU=3D6+3=";
+	strMAns += "æ•™è‚²EDU=3D6+3=";
 	rd3D6p3.Roll();
 	const int EDU = rd3D6p3.intTotal;
 	strMAns += to_string(EDU);
 	strMAns += '\n';
-	strMAns += "¹²¼Æ:" + to_string(STR + CON + SIZ + APP + POW + EDU + DEX + INT);
+	strMAns += "å…±è®¡:" + to_string(STR + CON + SIZ + APP + POW + EDU + DEX + INT);
 	const int SAN = POW * 5;
 	const int IDEA = INT * 5;
 	const int LUCK = POW * 5;
 	const int KNOW = EDU * 5;
 	const int HP = static_cast<int>(ceil((static_cast<double>(CON) + SIZ) / 2.0));
 	const int MP = POW;
-	strMAns += "\nÀíÖÇSAN=POW*5=" + to_string(SAN) + "\nÁé¸ĞIDEA=INT*5=" + to_string(IDEA) + "\nĞÒÔËLUCK=POW*5=" +
-		to_string(LUCK) + "\nÖªÊ¶KNOW=EDU*5=" + to_string(KNOW);
-	strMAns += "\nÉúÃüÖµHP=(CON+SIZ)/2=" + to_string(HP) + "\nÄ§·¨ÖµMP=POW=" + to_string(MP);
-	strMAns += "\nÉËº¦½±ÀøDB=";
+	strMAns += "\nç†æ™ºSAN=POW*5=" + to_string(SAN) + "\nçµæ„ŸIDEA=INT*5=" + to_string(IDEA) + "\nå¹¸è¿LUCK=POW*5=" +
+		to_string(LUCK) + "\nçŸ¥è¯†KNOW=EDU*5=" + to_string(KNOW);
+	strMAns += "\nç”Ÿå‘½å€¼HP=(CON+SIZ)/2=" + to_string(HP) + "\né­”æ³•å€¼MP=POW=" + to_string(MP);
+	strMAns += "\nä¼¤å®³å¥–åŠ±DB=";
 	string DB;
 	if (STR + SIZ >= 2 && STR + SIZ <= 12)
 	{
@@ -582,11 +582,11 @@ string COC6D()
 	}
 	else
 	{
-		DB = "¼ÆËã´íÎó!";
+		DB = "è®¡ç®—é”™è¯¯!";
 	}
 	strMAns += DB;
 	strMAns += "\n";
-	strMAns += "×Ê²ú=1D10=";
+	strMAns += "èµ„äº§=1D10=";
 	rd1D10.Roll();
 	const int PRO = rd1D10.intTotal;
 	strMAns += to_string(PRO);
@@ -596,7 +596,7 @@ string COC6D()
 string COC7(int intNum)
 {
 	string strMAns;
-	string strProperty[] = {"Á¦Á¿", "ÌåÖÊ", "ÌåĞÍ", "Ãô½İ", "ÍâÃ²", "ÖÇÁ¦", "ÒâÖ¾", "½ÌÓı", "ĞÒÔË"};
+	string strProperty[] = {"åŠ›é‡", "ä½“è´¨", "ä½“å‹", "æ•æ·", "å¤–è²Œ", "æ™ºåŠ›", "æ„å¿—", "æ•™è‚²", "å¹¸è¿"};
 	string strRoll[] = {"3D6", "3D6", "2D6+6", "3D6", "3D6", "2D6+6", "3D6", "2D6+6", "3D6"};
 	int intAllTotal = 0;
 	int intLuc = 0;
@@ -611,7 +611,7 @@ string COC7(int intNum)
 			intAllTotal += rdCOC.intTotal * 5;
 			intLuc = rdCOC.intTotal * 5;
 		}
-		strMAns += "¹²¼Æ:" + to_string(intAllTotal - intLuc) + "/" + to_string(intAllTotal);
+		strMAns += "å…±è®¡:" + to_string(intAllTotal - intLuc) + "/" + to_string(intAllTotal);
 		intAllTotal = 0;
 	}
 	return strMAns;
@@ -620,7 +620,7 @@ string COC7(int intNum)
 string COC6(int intNum)
 {
 	string strMAns;
-	string strProperty[] = {"Á¦Á¿", "ÌåÖÊ", "ÌåĞÍ", "Ãô½İ", "ÍâÃ²", "ÖÇÁ¦", "ÒâÖ¾", "½ÌÓı", "×Ê²ú"};
+	string strProperty[] = {"åŠ›é‡", "ä½“è´¨", "ä½“å‹", "æ•æ·", "å¤–è²Œ", "æ™ºåŠ›", "æ„å¿—", "æ•™è‚²", "èµ„äº§"};
 	string strRoll[] = {"3D6", "3D6", "2D6+6", "3D6", "3D6", "2D6+6", "3D6", "3D6+3", "1D10"};
 	const bool boolAddSpace = intNum != 1;
 	int intAllTotal = 0;
@@ -636,7 +636,7 @@ string COC6(int intNum)
 				strMAns += "  ";
 			intAllTotal += rdCOC.intTotal;
 		}
-		strMAns += "¹²¼Æ:" + to_string(intAllTotal);
+		strMAns += "å…±è®¡:" + to_string(intAllTotal);
 		intAllTotal = 0;
 		RD rdCOC(strRoll[8]);
 		rdCOC.Roll();
@@ -663,7 +663,7 @@ string DND(int intNum)
 			strOutput += to_string(pool.top()) + " /";
 			pool.pop();
 		}
-		strOutput += "×Ü¼Æ" + to_string(intAllTotal);
+		strOutput += "æ€»è®¡" + to_string(intAllTotal);
 		intAllTotal = 0;
 	}
 	return strOutput;
@@ -671,7 +671,7 @@ string DND(int intNum)
 
 void TempInsane(AnysTable& vars) {
 	const int intSymRes = RandomGenerator::Randint(1, 10);
-	vars["res"] = "1D10=" + to_string(intSymRes) + "\nÖ¢×´: " + TempInsanity[intSymRes];
+	vars["res"] = "1D10=" + to_string(intSymRes) + "\nç—‡çŠ¶: " + TempInsanity[intSymRes];
 	vars["dur"] = "1D10=" + to_string(RandomGenerator::Randint(1, 10));
 	if (intSymRes == 9) {
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
@@ -687,7 +687,7 @@ void TempInsane(AnysTable& vars) {
 
 void LongInsane(AnysTable& vars) {
 	const int intSymRes = RandomGenerator::Randint(1, 10);
-	vars["res"] = "1D10=" + to_string(intSymRes) + "\nÖ¢×´: " + LongInsanity[intSymRes];
+	vars["res"] = "1D10=" + to_string(intSymRes) + "\nç—‡çŠ¶: " + LongInsanity[intSymRes];
 	vars["dur"] = "1D10=" + to_string(RandomGenerator::Randint(1, 10));
 	if (intSymRes == 9) {
 		const int intDetailSymRes = RandomGenerator::Randint(1, 100);
@@ -701,8 +701,8 @@ void LongInsane(AnysTable& vars) {
 	}
 }
 
-//³É¹¦µÈ¼¶
-//0-´óÊ§°Ü£¬1-Ê§°Ü£¬2-³É¹¦£¬3-À§ÄÑ³É¹¦£¬4-¼«ÄÑ³É¹¦£¬5-´ó³É¹¦
+//æˆåŠŸç­‰çº§
+//0-å¤§å¤±è´¥ï¼Œ1-å¤±è´¥ï¼Œ2-æˆåŠŸï¼Œ3-å›°éš¾æˆåŠŸï¼Œ4-æéš¾æˆåŠŸï¼Œ5-å¤§æˆåŠŸ
 int RollSuccessLevel(int res, int rate, int rule)
 {
 	switch (rule)

@@ -1,6 +1,6 @@
 /**
- * lua脚本嵌入
- * 用于自定义前缀指令等
+ * lua script extern
+ * for orders e.t.c.
  * Copyright (C) 2019-2024 String.Empty
  */
 #pragma once

@@ -99,31 +99,31 @@ fifo_dict<> splitPairs(const string& s, char delim, char br) {
     return dict;
 }
 
-string convert_w2a(const char16_t* wch)
+string convert_w2a(const char16_t* wch, UINT cp)
 {
 #ifdef _WIN32
-	const int len = WideCharToMultiByte(CP_GBK, 0, (const wchar_t*)wch, -1, nullptr, 0, nullptr, nullptr);
+	const int len = WideCharToMultiByte(cp, 0, (const wchar_t*)wch, -1, nullptr, 0, nullptr, nullptr);
 	char* m_char = new char[len];
-	WideCharToMultiByte(CP_GBK, 0, (const wchar_t*)wch, -1, m_char, len, nullptr, nullptr);
+	WideCharToMultiByte(cp, 0, (const wchar_t*)wch, -1, m_char, len, nullptr, nullptr);
 	std::string str(m_char);
 	delete[] m_char;
 	return str;
 #else
-	return ConvertEncoding<char, char16_t>(wch, "utf-16le", "gb18030");
+	return ConvertEncoding<char, char16_t>(wch, "utf-16le", "utf-8");
 #endif
 }
 
 u16string convert_a2w(const char* ch)
 {
 #ifdef _WIN32
-    const int len = MultiByteToWideChar(CP_GBK, 0, ch, -1, nullptr, 0);
+    const int len = MultiByteToWideChar(CP_UTF8, 0, ch, -1, nullptr, 0);
     wchar_t* m_char = new wchar_t[len];
-    MultiByteToWideChar(CP_GBK, 0, ch, -1, m_char, len);
+    MultiByteToWideChar(CP_UTF8, 0, ch, -1, m_char, len);
     std::u16string wstr((char16_t*)m_char);
     delete[] m_char;
     return wstr;
 #else
-	return ConvertEncoding<char16_t, char>(ch, "gb18030", "utf-16le");
+	return ConvertEncoding<char16_t, char>(ch, "utf-8", "utf-16le");
 #endif
 }
  
@@ -143,7 +143,7 @@ wstring convert_a2realw(const char* ch)
 #if WCHAR_MAX == 0xFFFF || WCHAR_MAX == 0x7FFF
 	return (const wchar_t*)convert_a2w(ch).c_str();
 #elif WCHAR_MAX == 0xFFFFFFFF || WCHAR_MAX == 0x7FFFFFFF 
-	return ConvertEncoding<wchar_t, char>(ch, "gb18030", "utf-32le");
+	return ConvertEncoding<wchar_t, char>(ch, "utf-8", "utf-32le");
 #else
 #error Unsupported WCHAR length
 #endif
@@ -152,9 +152,9 @@ wstring convert_a2realw(const char* ch)
 
 size_t wstrlen(const char* ch) {
 #ifdef _WIN32
-    return MultiByteToWideChar(CP_GBK, 0, ch, -1, nullptr, 0);
+    return MultiByteToWideChar(CP_UTF8, 0, ch, -1, nullptr, 0);
 #else
-	return ConvertEncoding<char16_t, char>(ch, "gb18030", "utf-16le").length();
+	return ConvertEncoding<char16_t, char>(ch, "utf-8", "utf-16le").length();
 #endif
 }
 
@@ -164,19 +164,19 @@ string printDuringTime(long long seconds)
         return "N/A";
     }
     else if (seconds < 60) {
-        return std::to_string(seconds) + "Ãë";
+        return std::to_string(seconds) + "ç§’";
     }
     int mins = int(seconds / 60);
     seconds = seconds % 60;
     if (mins < 60) {
-        return std::to_string(mins) + "·Ö" + std::to_string(seconds) + "Ãë";
+        return std::to_string(mins) + "åˆ†" + std::to_string(seconds) + "ç§’";
     }
     int hours = mins / 60;
     mins = mins % 60;
     if (hours < 24) {
-        return std::to_string(hours) + "Ð¡Ê±" + std::to_string(mins) + "·Ö" + std::to_string(seconds) + "Ãë";
+        return std::to_string(hours) + "å°æ—¶" + std::to_string(mins) + "åˆ†" + std::to_string(seconds) + "ç§’";
     }
     int days = hours / 24;
     hours = hours % 24;
-    return std::to_string(days) + "Ìì" + std::to_string(hours) + "Ð¡Ê±" + std::to_string(mins) + "·Ö" + std::to_string(seconds) + "Ãë";
+    return std::to_string(days) + "å¤©" + std::to_string(hours) + "å°æ—¶" + std::to_string(mins) + "åˆ†" + std::to_string(seconds) + "ç§’";
 }

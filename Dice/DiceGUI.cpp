@@ -103,8 +103,8 @@ protected:
 	HWND m_hwnd;
 };
 
-// »ù´¡ListViewÀà
-// Ê¹ÓÃÖ®Ç°±ØĞëÏÈµ÷ÓÃInitCommonControl/InitCommonControlEx
+// åŸºç¡€ListViewç±»
+// ä½¿ç”¨ä¹‹å‰å¿…é¡»å…ˆè°ƒç”¨InitCommonControl/InitCommonControlEx
 class BasicListView
 {
 public:
@@ -150,7 +150,7 @@ public:
 		return ListView_InsertColumn(hwnd, isubItem, &lvC);
 	}
 
-	// ´ø¿í¶È
+	// å¸¦å®½åº¦
 	void AddAllTextColumn(const std::vector<std::pair<std::string, int>>& texts)
 	{
 		for (const auto& item : texts)
@@ -211,7 +211,7 @@ public:
 		ListView_SetItemText(hwnd, index, subindex, reinterpret_cast<wchar_t*>(const_cast<char16_t*>(wstrText.c_str())));
 	}
 
-	// ³¤¶È×î³¤Îª1000
+	// é•¿åº¦æœ€é•¿ä¸º1000
 	[[nodiscard]] std::string GetItemText(int index, int subindex = 0)
 	{
 		wchar_t buffer[1000];
@@ -243,7 +243,7 @@ protected:
 	HWND hwnd;
 };
 
-// »ù´¡EditÀà
+// åŸºç¡€Editç±»
 class BasicEdit
 {
 public:
@@ -305,7 +305,7 @@ protected:
 	HWND hwnd;
 };
 
-// »ù´¡ButtonÀà
+// åŸºç¡€Buttonç±»
 class BasicButton
 {
 public:
@@ -355,7 +355,7 @@ protected:
 	HWND hwnd;
 };
 
-// »ù´¡StaticÀà
+// åŸºç¡€Staticç±»
 class BasicStatic
 {
 public:
@@ -559,37 +559,37 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			TCITEM tie;
 			// Tab 0
 			tie.mask = TCIF_TEXT;
-			tie.pszText = const_cast<wchar_t*>(TEXT("×Ô¶¨Òå»Ø¸´"));
+			tie.pszText = const_cast<wchar_t*>(TEXT("è‡ªå®šä¹‰å›å¤"));
 			if (TabCtrl_InsertItem(Tab, 0, &tie) == -1)
 			{
 				DestroyWindow(Tab);
 				return -1;
 			}
 			// Tab 1
-			tie.pszText = const_cast<wchar_t*>(TEXT("MasterÉèÖÃ"));
+			tie.pszText = const_cast<wchar_t*>(TEXT("Masterè®¾ç½®"));
 			if (TabCtrl_InsertItem(Tab, 1, &tie) == -1)
 			{
 				DestroyWindow(Tab);
 				return -1;
 			}
 			// Tab 2
-			tie.pszText = const_cast<wchar_t*>(TEXT("¹ØÓÚ"));
+			tie.pszText = const_cast<wchar_t*>(TEXT("å…³äº"));
 			if (TabCtrl_InsertItem(Tab, 2, &tie) == -1)
 			{
 				DestroyWindow(Tab);
 				return -1;
 			}
 
-			// Ìí¼Ó×ÖÌå/Í¼Æ¬µÈ
+			// æ·»åŠ å­—ä½“/å›¾ç‰‡ç­‰
 			Fonts["Yahei14"] = CreateFont(14, 0, 0, 0, FW_DONTCARE, FALSE,
 			                               FALSE, FALSE, GB2312_CHARSET, OUT_DEFAULT_PRECIS,
-			                               CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE | DEFAULT_PITCH, TEXT("Î¢ÈíÑÅºÚ"));
+			                               CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE | DEFAULT_PITCH, TEXT("å¾®è½¯é›…é»‘"));
 			Fonts["Yahei18"] = CreateFont(18, 0, 0, 0, FW_DONTCARE, FALSE,
 			                               FALSE, FALSE, GB2312_CHARSET, OUT_DEFAULT_PRECIS,
-			                               CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE | DEFAULT_PITCH, TEXT("Î¢ÈíÑÅºÚ"));
+			                               CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE | DEFAULT_PITCH, TEXT("å¾®è½¯é›…é»‘"));
 			Fonts["Yahei22"] = CreateFont(22, 0, 0, 0, FW_DONTCARE, FALSE,
 			                               FALSE, FALSE, GB2312_CHARSET, OUT_DEFAULT_PRECIS,
-			                               CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE | DEFAULT_PITCH, TEXT("Î¢ÈíÑÅºÚ"));
+			                               CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE | DEFAULT_PITCH, TEXT("å¾®è½¯é›…é»‘"));
 
 			SendMessage(m_hwnd, WM_SETFONT, (WPARAM)Fonts["Yahei14"], 1);
 			SendMessage(Tab, WM_SETFONT, (WPARAM)Fonts["Yahei18"], 1);
@@ -603,7 +603,7 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return 0;
 		}
 	case WM_CLOSE:
-		if (MessageBox(m_hwnd, TEXT("Î´µã»÷±£´æ/ÉèÖÃµÄÏîÄ¿²»»á±»±£´æ£¬È·ÈÏÍË³ö?"), TEXT("Dice! GUI"), MB_OKCANCEL) == IDOK)
+		if (MessageBox(m_hwnd, TEXT("æœªç‚¹å‡»ä¿å­˜/è®¾ç½®çš„é¡¹ç›®ä¸ä¼šè¢«ä¿å­˜ï¼Œç¡®è®¤é€€å‡º?"), TEXT("Dice! GUI"), MB_OKCANCEL) == IDOK)
 		{
 			DestroyWindow(m_hwnd);
 		}
@@ -658,19 +658,19 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					if (str == "0") {
 						if (console) {
 							console.killMaster();
-							StaticMasterLabel.SetText("MasterÄ£Ê½ÒÑ¹Ø±Õ");
-							MessageBox(nullptr, TEXT("MasterÄ£Ê½ÒÑ¹Ø±Õ¡Ì\nmasterÒÑÇå³ı"), TEXT("MasterÄ£Ê½ÇĞ»»"), MB_OK | MB_ICONINFORMATION);
+							StaticMasterLabel.SetText("Masteræ¨¡å¼å·²å…³é—­");
+							MessageBox(nullptr, TEXT("Masteræ¨¡å¼å·²å…³é—­âˆš\nmasterå·²æ¸…é™¤"), TEXT("Masteræ¨¡å¼åˆ‡æ¢"), MB_OK | MB_ICONINFORMATION);
 						}
 						return 0;
 					}
 
 					if (str.length() < 5 || str.length() > 17)
 					{
-						MessageBox(m_hwnd, TEXT("QQºÅÎŞĞ§!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
+						MessageBox(m_hwnd, TEXT("QQå·æ— æ•ˆ!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
 						return 0;
 					}
 					long long uid = std::stoll(str);
-					StaticMasterLabel.SetText("µ±Ç°µÄMasterÎª" + to_string(uid) + "(ÉèÖÃQQÎª0ÒÔ¹Ø±ÕMasterÄ£Ê½)");
+					StaticMasterLabel.SetText("å½“å‰çš„Masterä¸º" + to_string(uid) + "(è®¾ç½®QQä¸º0ä»¥å…³é—­Masteræ¨¡å¼)");
 					if (console)
 					{
 						if (console != uid)
@@ -680,7 +680,7 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 						}
 					}
 					else {
-						MessageBox(nullptr, reinterpret_cast<wchar_t*>(const_cast<char16_t*>(convert_a2w(console["Private"] ? getMsg("strNewMasterPrivate").c_str() : getMsg("strNewMasterPublic").c_str()).c_str())), TEXT("MasterÄ£Ê½³õÊ¼»¯"), MB_OK | MB_ICONINFORMATION);
+						MessageBox(nullptr, reinterpret_cast<wchar_t*>(const_cast<char16_t*>(convert_a2w(console["Private"] ? getMsg("strNewMasterPrivate").c_str() : getMsg("strNewMasterPublic").c_str()).c_str())), TEXT("Masteræ¨¡å¼åˆå§‹åŒ–"), MB_OK | MB_ICONINFORMATION);
 						console.newMaster(uid);
 					}
 				}
@@ -691,14 +691,14 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					while (str.length() > 1 && str[0] == '0')str.erase(str.begin());
 					if (str.length() < 5 || str.length() > 17)
 					{
-						MessageBox(m_hwnd, TEXT("QQºÅÎŞĞ§!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
+						MessageBox(m_hwnd, TEXT("QQå·æ— æ•ˆ!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
 						return 0;
 					}
 					long long uid = std::stoll(str);
 					int ret = ListViewUserTrust.GetItemIndexByText(str);
 					if (ret == -1 && !UserList.count(uid))
 					{
-						MessageBox(m_hwnd, TEXT("ÕÒ²»µ½´ËÓÃ»§"), TEXT("Dice GUI!"), MB_OK | MB_ICONWARNING);
+						MessageBox(m_hwnd, TEXT("æ‰¾ä¸åˆ°æ­¤ç”¨æˆ·"), TEXT("Dice GUI!"), MB_OK | MB_ICONWARNING);
 					}
 					else
 					{
@@ -714,7 +714,7 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					while (str.length() > 1 && str[0] == '0')str.erase(str.begin());
 					if (str.length() < 5 || str.length() > 17)
 					{
-						MessageBox(m_hwnd, TEXT("QQºÅÎŞĞ§!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
+						MessageBox(m_hwnd, TEXT("QQå·æ— æ•ˆ!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
 						return 0;
 					}
 					long long uid = std::stoll(str);
@@ -723,13 +723,13 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					string trust = EditUserTrustLevel.GetText();
 					if (trust.length() != 1)
 					{
-						MessageBox(m_hwnd, TEXT("ĞÅÈÎµÈ¼¶ÎŞĞ§!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
+						MessageBox(m_hwnd, TEXT("ä¿¡ä»»ç­‰çº§æ— æ•ˆ!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
 						return 0;
 					}
 					int trustlevel = std::stoi(trust);
 					if (trustlevel < 0 || trustlevel > 5)
 					{
-						MessageBox(m_hwnd, TEXT("ĞÅÈÎµÈ¼¶ÎŞĞ§!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
+						MessageBox(m_hwnd, TEXT("ä¿¡ä»»ç­‰çº§æ— æ•ˆ!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
 						return 0;
 					}
 					UserList[uid]->trust(trustlevel);
@@ -754,7 +754,7 @@ LRESULT DiceGUI::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					while (valstr.length() > 1 && valstr[0] == '0')valstr.erase(valstr.begin());
 					if (valstr.length() == 0 || valstr.length() > 9)
 					{
-						MessageBox(m_hwnd, TEXT("ÊôĞÔÖµÎŞĞ§!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
+						MessageBox(m_hwnd, TEXT("å±æ€§å€¼æ— æ•ˆ!"), TEXT("Dice! GUI"), MB_OK | MB_ICONWARNING);
 						return 0;
 					}
 					int val = std::stoi(valstr);
@@ -870,15 +870,15 @@ LRESULT DiceGUI::CreateCustomMsgPage()
 	RECT rcClient;
 	GetClientRect(m_hwnd, &rcClient);
 
-	ButtonSaveCustomMsg.Create(TEXT("±£´æ"), WS_CHILD | WS_VISIBLE, 0,
+	ButtonSaveCustomMsg.Create(TEXT("ä¿å­˜"), WS_CHILD | WS_VISIBLE, 0,
 	                           80, rcClient.bottom - 70, 70, 30, m_hwnd, reinterpret_cast<HMENU>(IDB_BUTTON_SAVE));
 
-	EditCustomMsg.Create(TEXT("ÇëË«»÷ÁĞ±íÖĞµÄÏîÄ¿"),
+	EditCustomMsg.Create(TEXT("è¯·åŒå‡»åˆ—è¡¨ä¸­çš„é¡¹ç›®"),
 	                     WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | WS_BORDER, 0,
 	                     300, rcClient.bottom - 80, rcClient.right - rcClient.left - 320, 60, m_hwnd, reinterpret_cast<HMENU>(ID_EDIT));
 
 
-	StaticMainLabel.Create(TEXT("»¶Ó­À´µ½Dice!×Ô¶¨Òå»Ø¸´ĞŞ¸ÄÃæ°å\r\nÇëË«»÷ÓÒ²à±êÌâ£¬ÔÚÏÂ·½¸ü¸ÄÎÄ±¾\r\n¸ü¸ÄÎÄ±¾ºóÇëµã»÷±£´æ\r\nÃ¿¸öÎÄ±¾ĞŞ¸Äºó¾ùĞèµã»÷Ò»´Î"),
+	StaticMainLabel.Create(TEXT("æ¬¢è¿æ¥åˆ°Dice!è‡ªå®šä¹‰å›å¤ä¿®æ”¹é¢æ¿\r\nè¯·åŒå‡»å³ä¾§æ ‡é¢˜ï¼Œåœ¨ä¸‹æ–¹æ›´æ”¹æ–‡æœ¬\r\næ›´æ”¹æ–‡æœ¬åè¯·ç‚¹å‡»ä¿å­˜\r\næ¯ä¸ªæ–‡æœ¬ä¿®æ”¹åå‡éœ€ç‚¹å‡»ä¸€æ¬¡"),
 	                       WS_CHILD | WS_VISIBLE, 0,
 	                       25, 40, 230, 200, m_hwnd, reinterpret_cast<HMENU>(ID_MAINLABEL));
 
@@ -893,7 +893,7 @@ LRESULT DiceGUI::CreateCustomMsgPage()
 	ListViewCustomMsg.SetExtendedListViewStyle(
 		LVS_EX_DOUBLEBUFFER | LVS_EX_AUTOSIZECOLUMNS | LVS_EX_TWOCLICKACTIVATE | LVS_EX_UNDERLINEHOT);
 
-	ListViewCustomMsg.AddAllTextColumn(std::vector<std::pair<std::string, int>>{ {"±êÌâ", 150}, { "ÄÚÈİ", 500 }, { "±¸×¢", 150 } });
+	ListViewCustomMsg.AddAllTextColumn(std::vector<std::pair<std::string, int>>{ {"æ ‡é¢˜", 150}, { "å†…å®¹", 500 }, { "å¤‡æ³¨", 150 } });
 	int index = 0;
 	std::shared_lock lock(GlobalMsgMutex);
 	for (const auto& item : GlobalMsg)
@@ -913,12 +913,12 @@ LRESULT DiceGUI::CreateMasterPage()
 {
 	RECT rcClient;
 	GetClientRect(m_hwnd, &rcClient);
-	ButtonMaster.Create(TEXT("ÉèÖÃMaster"),
+	ButtonMaster.Create(TEXT("è®¾ç½®Master"),
 	                    WS_CHILD | WS_VISIBLE, 0, rcClient.right - 180, 40, 140, 30,
 	                    m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_BUTTONMASTER));
 
 	StaticMasterLabel.Create(
-		reinterpret_cast<wchar_t*>(const_cast<char16_t*>(convert_a2w(!console ? "MasterÄ£Ê½ÒÑ¹Ø±Õ" : ("µ±Ç°µÄMasterÎª" + to_string(console) + "(ÉèÖÃQQÎª0ÒÔ¹Ø±ÕMasterÄ£Ê½)").c_str()).c_str())),
+		reinterpret_cast<wchar_t*>(const_cast<char16_t*>(convert_a2w(!console ? "Masteræ¨¡å¼å·²å…³é—­" : ("å½“å‰çš„Masterä¸º" + to_string(console) + "(è®¾ç½®QQä¸º0ä»¥å…³é—­Masteræ¨¡å¼)").c_str()).c_str())),
 		WS_CHILD | WS_VISIBLE | SS_CENTERIMAGE, 0, 30, 40, 450, 30,
 		m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_LABELMASTER));
 
@@ -937,7 +937,7 @@ LRESULT DiceGUI::CreateMasterPage()
 	                         reinterpret_cast<HMENU>(ID_MASTER_LISTVIEWUSERTRUST));
 	ListViewUserTrust.SetExtendedListViewStyle(
 		LVS_EX_DOUBLEBUFFER | LVS_EX_AUTOSIZECOLUMNS | LVS_EX_TWOCLICKACTIVATE | LVS_EX_UNDERLINEHOT);
-	ListViewUserTrust.AddAllTextColumn({"QQ", "êÇ³Æ", "ĞÅÈÎµÈ¼¶"});
+	ListViewUserTrust.AddAllTextColumn({"QQ", "æ˜µç§°", "ä¿¡ä»»ç­‰çº§"});
 	int index = 0;
 	for (const auto& item : UserList)
 	{
@@ -952,16 +952,16 @@ LRESULT DiceGUI::CreateMasterPage()
 	EditUserTrustID.Create(nullptr, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_NUMBER, 0,
 	                       30, 90, 200, 30, m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_EDITUSERTRUSTID));
 
-	ButtonUserRemove.Create(TEXT("ÒÆ³ı"), WS_CHILD | WS_VISIBLE, 0, 240, 90, 80, 30, m_hwnd,
+	ButtonUserRemove.Create(TEXT("ç§»é™¤"), WS_CHILD | WS_VISIBLE, 0, 240, 90, 80, 30, m_hwnd,
 	                        reinterpret_cast<HMENU>(ID_MASTER_BUTTONUSERTRUSTREMOVE));
 
-	StaticUserTrustLabel.Create(TEXT("ĞÅÈÎµÈ¼¶:"), WS_CHILD | WS_VISIBLE | SS_CENTER | SS_CENTERIMAGE, 0,
+	StaticUserTrustLabel.Create(TEXT("ä¿¡ä»»ç­‰çº§:"), WS_CHILD | WS_VISIBLE | SS_CENTER | SS_CENTERIMAGE, 0,
 	                            330, 90, 60, 30, m_hwnd);
 
 	EditUserTrustLevel.Create(TEXT("0"), WS_CHILD | WS_VISIBLE | WS_BORDER | ES_NUMBER, 0,
 	                          400, 90, 40, 30, m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_EDITUSERTRUSTLEVEL));
 
-	ButtonUserTrustLevelSet.Create(TEXT("ÉèÖÃ"), WS_CHILD | WS_VISIBLE, 0, 450, 90, 80, 30, m_hwnd,
+	ButtonUserTrustLevelSet.Create(TEXT("è®¾ç½®"), WS_CHILD | WS_VISIBLE, 0, 450, 90, 80, 30, m_hwnd,
 	                               reinterpret_cast<HMENU>(ID_MASTER_BUTTONUSERTRUSTSET));
 
 	ListViewConfig.Create(nullptr, WS_CHILD | LVS_REPORT | WS_VISIBLE | WS_BORDER | LVS_SINGLESEL,
@@ -971,7 +971,7 @@ LRESULT DiceGUI::CreateMasterPage()
 	ListViewConfig.SetExtendedListViewStyle(
 		LVS_EX_DOUBLEBUFFER | LVS_EX_AUTOSIZECOLUMNS | LVS_EX_TWOCLICKACTIVATE | LVS_EX_UNDERLINEHOT);
 
-	ListViewConfig.AddAllTextColumn({"ÏîÄ¿", "Öµ"});
+	ListViewConfig.AddAllTextColumn({"é¡¹ç›®", "å€¼"});
 	int index1 = 0;
 	for (const auto& item : console.intDefault)
 	{
@@ -980,19 +980,19 @@ LRESULT DiceGUI::CreateMasterPage()
 		index1++;
 	}
 
-	StaticCurrentSettingLabel.Create(TEXT("µ±Ç°ÏîÄ¿:"), WS_CHILD | WS_VISIBLE | SS_CENTER | SS_CENTERIMAGE, 0,
+	StaticCurrentSettingLabel.Create(TEXT("å½“å‰é¡¹ç›®:"), WS_CHILD | WS_VISIBLE | SS_CENTER | SS_CENTERIMAGE, 0,
 	                                 550, 90, 60, 30, m_hwnd);
 
-	StaticCurrentConfigLabel.Create(TEXT("ÎŞ"), WS_CHILD | WS_VISIBLE | SS_CENTERIMAGE, 0,
+	StaticCurrentConfigLabel.Create(TEXT("æ— "), WS_CHILD | WS_VISIBLE | SS_CENTERIMAGE, 0,
 	                                620, 90, 150, 30, m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_STATICCURRENTCONFIGLABEL));
 
-	StaticValueLabel.Create(TEXT("Öµ:"), WS_CHILD | WS_VISIBLE | SS_CENTER | SS_CENTERIMAGE, 0,
+	StaticValueLabel.Create(TEXT("å€¼:"), WS_CHILD | WS_VISIBLE | SS_CENTER | SS_CENTERIMAGE, 0,
 	                        780, 90, 40, 30, m_hwnd);
 
 	EditConfigValue.Create(TEXT("0"), WS_CHILD | WS_VISIBLE | ES_NUMBER | WS_BORDER, 0,
 	                       830, 90, 100, 30, m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_EDITCONFIGVALUE));
 
-	ButtonConfigSet.Create(TEXT("ÉèÖÃ"), WS_CHILD | WS_VISIBLE, 0,
+	ButtonConfigSet.Create(TEXT("è®¾ç½®"), WS_CHILD | WS_VISIBLE, 0,
 	                       940, 90, rcClient.right - rcClient.left - 980, 30, m_hwnd, reinterpret_cast<HMENU>(ID_MASTER_BUTTONCONFIGSET));
 
 	HFONT Yahei18 = Fonts["Yahei18"];
@@ -1020,22 +1020,22 @@ LRESULT DiceGUI::CreateAboutPage()
 	StaticVersionInfo.Create(reinterpret_cast<wchar_t*>(const_cast<char16_t*>(convert_a2w(Dice_Full_Ver_On.c_str()).c_str())), WS_CHILD | WS_VISIBLE, 0,
 	                         40, 350, 300, 50, m_hwnd);
 
-	StaticAuthorInfo.Create(TEXT("Ö÷Òª×÷Õß: Ëİä§ Shiki\r\n±¾³ÌĞòÓÚAGPLv3Ğ­ÒéÏÂ¿ªÔ´"), WS_CHILD | WS_VISIBLE, 0,
+	StaticAuthorInfo.Create(TEXT("ä¸»è¦ä½œè€…: æº¯æ´„ Shiki\r\næœ¬ç¨‹åºäºAGPLv3åè®®ä¸‹å¼€æº"), WS_CHILD | WS_VISIBLE, 0,
 	                        40, 400, 300, 50, m_hwnd);
 
-	StaticSupportLabel.Create(TEXT("Èç¹ûÄúÏ²»¶´ËÓ¦ÓÃ, Äú¿ÉÒÔ¿¼ÂÇ:"), WS_CHILD | WS_VISIBLE | SS_CENTERIMAGE, 0,
+	StaticSupportLabel.Create(TEXT("å¦‚æœæ‚¨å–œæ¬¢æ­¤åº”ç”¨, æ‚¨å¯ä»¥è€ƒè™‘:"), WS_CHILD | WS_VISIBLE | SS_CENTERIMAGE, 0,
 	                          40, 440, 200, 30, m_hwnd);
 
-	ButtonSupport.Create(TEXT("ÔŞÖúÎÒÃÇ"), WS_CHILD | WS_VISIBLE, 0,
+	ButtonSupport.Create(TEXT("èµåŠ©æˆ‘ä»¬"), WS_CHILD | WS_VISIBLE, 0,
 	                     260, 440, 80, 30, m_hwnd, reinterpret_cast<HMENU>(ID_ABOUT_BUTTONSUPPORT));
 
-	ButtonDocument.Create(TEXT("·ÃÎÊÎÄµµ"), WS_CHILD | WS_VISIBLE, 0,
+	ButtonDocument.Create(TEXT("è®¿é—®æ–‡æ¡£"), WS_CHILD | WS_VISIBLE, 0,
 	                      40, 480, 80, 30, m_hwnd, reinterpret_cast<HMENU>(ID_ABOUT_BUTTONDOCUMENT));
 
-	ButtonGithub.Create(TEXT("·ÃÎÊÔ´Âë"), WS_CHILD | WS_VISIBLE, 0,
+	ButtonGithub.Create(TEXT("è®¿é—®æºç "), WS_CHILD | WS_VISIBLE, 0,
 	                    150, 480, 80, 30, m_hwnd, reinterpret_cast<HMENU>(ID_ABOUT_BUTTONGITHUB));
 
-	ButtonQQGroup.Create(TEXT("¼Ó¹Ù·½Èº"), WS_CHILD | WS_VISIBLE, 0,
+	ButtonQQGroup.Create(TEXT("åŠ å®˜æ–¹ç¾¤"), WS_CHILD | WS_VISIBLE, 0,
 	                     260, 480, 80, 30, m_hwnd, reinterpret_cast<HMENU>(ID_ABOUT_BUTTONQQGROUP));
 
 	auto hBitmap = static_cast<HBITMAP>(LoadImage(hDllModule, MAKEINTRESOURCE(ID_BITMAP_DICELOGO), IMAGE_BITMAP, 0,
@@ -1099,42 +1099,43 @@ LRESULT DiceGUI::ShowAboutPage(bool Show)
 
 int WINAPI GUIMain()
 {
-	// hDllModule²»Ó¦Îª¿Õ
+	// hDllModuleä¸åº”ä¸ºç©º
 	assert(hDllModule);
 
 	auto port{ ManagerServer->getListeningPorts()[0] };
-	// Dice GUIÒÑ±»ÆúÓÃ£¬ÌáÊ¾Ç¨ÒÆ
-	if(MessageBox(nullptr, TEXT("Dice! GUIÒÑ±»ÆúÓÃ£¬ÇëÊ¹ÓÃDice! WebUI¡£°´È·ÈÏ¼ü¼ÌĞøÊ¹ÓÃGUI£¬°´È¡Ïû¼ü´ò¿ªWebUI¡£"), TEXT("Dice! GUI"), MB_OKCANCEL) == IDCANCEL)
+	// Dice GUIå·²è¢«å¼ƒç”¨ï¼Œæç¤ºè¿ç§»
+	if(MessageBox(nullptr, TEXT("Dice! GUIå·²è¢«å¼ƒç”¨ï¼Œè¯·ä½¿ç”¨Dice! WebUIã€‚æŒ‰ç¡®è®¤é”®ç»§ç»­ä½¿ç”¨GUIï¼ŒæŒ‰å–æ¶ˆé”®æ‰“å¼€WebUIã€‚"), TEXT("Dice! GUI"), MB_OKCANCEL) == IDCANCEL)
 	{
 		ShellExecute(nullptr, TEXT("open"), (TEXT("http://127.0.0.1:") + std::to_wstring(port)).c_str(), nullptr, nullptr, SW_SHOWDEFAULT);
+		return 0;
 	}
 
-	// ³õÊ¼»¯CommonControl
+	// åˆå§‹åŒ–CommonControl
 	INITCOMMONCONTROLSEX icex; // Structure for control initialization.
 	icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
 	icex.dwICC = ICC_STANDARD_CLASSES | ICC_TAB_CLASSES | ICC_LISTVIEW_CLASSES | ICC_PROGRESS_CLASS;
 	InitCommonControlsEx(&icex);
 
-	// Nickname´æ´¢½á¹¹
+	// Nicknameå­˜å‚¨ç»“æ„
 	std::unordered_map<long long, string> nicknameMp;
 
 	bool LoadStranger = true;
-	//ÓÃ»§¼ÇÂ¼¹ı¶àÊ±£¬½ö¼ÓÔØ»îÔ¾ÓÃ»§
+	//ç”¨æˆ·è®°å½•è¿‡å¤šæ—¶ï¼Œä»…åŠ è½½æ´»è·ƒç”¨æˆ·
 	bool LoadActiveUser = false;
 	
 	if (UserList.size() > 1000)
 	{
 		LoadActiveUser = true;
 		LoadStranger = false;
-		MessageBox(nullptr, TEXT("ÓÃ»§ÊıÁ¿³¬¹ı1000£¬½ö¼ÓÔØÖÜ»îÔ¾ÓÃ»§, Ìø¹ı·ÇºÃÓÑÓÃ»§êÇ³Æ¼ÓÔØ"), TEXT("Dice! GUI"), MB_OK);
+		MessageBox(nullptr, TEXT("ç”¨æˆ·æ•°é‡è¶…è¿‡1000ï¼Œä»…åŠ è½½å‘¨æ´»è·ƒç”¨æˆ·, è·³è¿‡éå¥½å‹ç”¨æˆ·æ˜µç§°åŠ è½½"), TEXT("Dice! GUI"), MB_OK);
 	}
 	else if (UserList.size() > 100)
 	{
 		LoadStranger = false;
-		MessageBox(nullptr, TEXT("ÓÃ»§ÊıÁ¿³¬¹ı100, Ìø¹ı·ÇºÃÓÑÓÃ»§êÇ³Æ¼ÓÔØ"), TEXT("Dice! GUI"), MB_OK);
+		MessageBox(nullptr, TEXT("ç”¨æˆ·æ•°é‡è¶…è¿‡100, è·³è¿‡éå¥½å‹ç”¨æˆ·æ˜µç§°åŠ è½½"), TEXT("Dice! GUI"), MB_OK);
 	}
 
-	// ½ø¶ÈÌõ
+	// è¿›åº¦æ¡
 	HWND progress = CreateWindow(PROGRESS_CLASS, nullptr,
 		WS_VISIBLE | WS_OVERLAPPED | WS_CAPTION | WS_BORDER | PBS_SMOOTHREVERSE | PBS_SMOOTH
 		, CW_USEDEFAULT, CW_USEDEFAULT, 200, 50, nullptr, nullptr, hDllModule, nullptr);
@@ -1145,7 +1146,7 @@ int WINAPI GUIMain()
 
 	const std::set<long long> FriendMp{ DD::getFriendQQList() };
 
-	// »ñÈ¡Nickname
+	// è·å–Nickname
 	time_t tLimit{ time(NULL) - (time_t)86400 * 7 };
 	for (const auto& item : UserList)
 	{
@@ -1163,7 +1164,7 @@ int WINAPI GUIMain()
 	}
 	DestroyWindow(progress);
 	
-	// Ö÷GUI
+	// ä¸»GUI
 	DiceGUI MainWindow(std::move(nicknameMp));
 
 	if (!MainWindow.Create(TEXT("Dice! GUI"), WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_BORDER | WS_CLIPSIBLINGS, 0,

@@ -6,8 +6,8 @@
 
 void aws_init();
 void aws_shutdown();
-// 上传文件至S3, 采用S3-accelerate
-// 成功时返回"SUCCESS", 否则返回错误信息
+// upload file to S3 by S3-accelerate
+// return "SUCCESS" or error info
 std::string put_s3_object(const Aws::String& s3_bucket_name,
 	const Aws::String& s3_object_name,
 	const std::string& file_name,

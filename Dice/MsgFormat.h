@@ -9,7 +9,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123溯洄
+ * Copyright (C) 2018-2021 w4123婧磩
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -103,7 +103,7 @@ public:
 	}
 };
 
-//按属性名输出项目
+//鎸夊睘鎬у悕杈撳嚭椤圭洰
 class AttrList {
 	std::unordered_map<string, string> mItem;
 	std::vector<string> vKey;

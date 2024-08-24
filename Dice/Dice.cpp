@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123Ëİä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -80,7 +80,7 @@ AuthHandler auth_handler;
 
 string msgInit;
 
-//¼ÓÔØÊı¾İ
+//åŠ è½½æ•°æ®
 void loadData(){
 	ResList logList;
 	try	{
@@ -103,116 +103,116 @@ void loadData(){
 					const auto p{ file.path() };
 					auto& data{ selfdata_byFile[getNativePathString(p.filename())]
 						= make_shared<SelfData>(p) };
-					if (string file{ UTF8toGBK(p.stem().u8string()) }; !selfdata_byStem.count(file)) {
+					if (string file{ p.stem().u8string() }; !selfdata_byStem.count(file)) {
 						selfdata_byStem[file] = data;
 					}
 				}
 			}
-			if (selfdata_byStem.size())DD::debugLog("Ô¤¼ÓÔØselfdata" + to_string(selfdata_byStem.size()) + "·İ");
+			if (selfdata_byStem.size())DD::debugLog("é¢„åŠ è½½selfdata" + to_string(selfdata_byStem.size()) + "ä»½");
 		}
 		if (!logList.empty())
 		{
-			logList << "À©Õ¹ÅäÖÃ¶ÁÈ¡Íê±Ï¡Ì";
+			logList << "æ‰©å±•é…ç½®è¯»å–å®Œæ¯•âˆš";
 			console.log(logList.show(), int(Enabled), printSTNow());
 		}
 	}
 	catch (const std::exception& e)
 	{
-		logList << "¶ÁÈ¡Êı¾İÊ±Óöµ½ÒâÍâ´íÎó£¬³ÌĞò¿ÉÄÜÎŞ·¨Õı³£ÔËĞĞ¡£ÇëÅÅ³ıÒì³£ÎÄ¼şºóÖØÊÔ¡£" << e.what();
+		logList << "è¯»å–æ•°æ®æ—¶é‡åˆ°æ„å¤–é”™è¯¯ï¼Œç¨‹åºå¯èƒ½æ— æ³•æ­£å¸¸è¿è¡Œã€‚è¯·æ’é™¤å¼‚å¸¸æ–‡ä»¶åé‡è¯•ã€‚" << e.what();
 		console.log(logList.show(), 1, printSTNow());
 	}
 }
 
-//³õÊ¼»¯ÓÃ»§Êı¾İ
+//åˆå§‹åŒ–ç”¨æˆ·æ•°æ®
 void readUserData(){
 	std::error_code ec;
 	fs::path dir{ DiceDir / "user" };
 	ResList log;
 	try {
-		//¶ÁÈ¡ÓÃ»§¼ÇÂ¼
+		//è¯»å–ç”¨æˆ·è®°å½•
 		if (int cnt{ loadBFile(dir / "UserConf.dat", UserList) }; cnt > 0) {
 			fs::copy(dir / "UserConf.dat", dir / "UserConf.bak",
 				fs::copy_options::overwrite_existing, ec);
-			log << "¶ÁÈ¡ÓÃ»§¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "è¯»å–ç”¨æˆ·è®°å½•" + to_string(cnt) + "æ¡";
 		}
 		else if (fs::exists(dir / "UserConf.dat.bak")
 			&& (cnt = loadBFile(dir / "UserConf.dat.bak", UserList)) > 0) {
-			log << "»Ö¸´ÓÃ»§¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "æ¢å¤ç”¨æˆ·è®°å½•" + to_string(cnt) + "æ¡";
 		}
 		else if (fs::exists(dir / "UserConf.bak")
 			&& (cnt = loadBFile(dir / "UserConf.bak", UserList)) > 0) {
-			log << "»Ö¸´ÓÃ»§¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "æ¢å¤ç”¨æˆ·è®°å½•" + to_string(cnt) + "æ¡";
 		}
 		else if ((cnt = loadBFile<long long, User, &User::old_readb>(dir / "UserConf.RDconf", UserList)) > 0) {
-			log << "Ç¨ÒÆÓÃ»§¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "è¿ç§»ç”¨æˆ·è®°å½•" + to_string(cnt) + "æ¡";
 		}
 		//for QQ Channel
 		if (User& self{ getUser(console.DiceMaid) }; !self.get_ll("tinyID")) {
 			if (long long tiny{ DD::getTinyID() }) {
-				DD::debugMsg("»ñÈ¡·ÖÉíID:" + to_string(tiny));
+				DD::debugMsg("è·å–åˆ†èº«ID:" + to_string(tiny));
 				self.setConf("tinyID", tiny);
 			}
 		}
 	}
 	catch (const std::exception& e) {
-		console.log(string("¶ÁÈ¡ÓÃ»§¼ÇÂ¼Ê±Óöµ½ÒâÍâ´íÎó£¬Çë³¢ÊÔÉ¾³ıUserConf.datÆôÓÃ±¸·İ.bakÎÄ¼ş!")
+		console.log(string("è¯»å–ç”¨æˆ·è®°å½•æ—¶é‡åˆ°æ„å¤–é”™è¯¯ï¼Œè¯·å°è¯•åˆ é™¤UserConf.datå¯ç”¨å¤‡ä»½.bakæ–‡ä»¶!")
 			+ e.what(), 0b1000, printSTNow());
 	}
 	try {
-		//¶ÁÈ¡½ÇÉ«¼ÇÂ¼
+		//è¯»å–è§’è‰²è®°å½•
 		if (int cnt{ loadBFile(dir / "PlayerCards.RDconf", PList) }; cnt > 0) {
 			fs::copy(dir / "PlayerCards.RDconf", dir / "PlayerCards.bak",
 				fs::copy_options::overwrite_existing, ec);
-			log << "¶ÁÈ¡Íæ¼Ò¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "è¯»å–ç©å®¶è®°å½•" + to_string(cnt) + "æ¡";
 		}
 		else if (fs::exists(dir / "PlayerCards.RDconf.bak")
 			&& (cnt = loadBFile(dir / "PlayerCards.RDconf.bak", PList)) > 0) {
-			log << "»Ö¸´Íæ¼Ò¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "æ¢å¤ç©å®¶è®°å½•" + to_string(cnt) + "æ¡";
 		}
 		else if (fs::exists(dir / "PlayerCards.bak")
 			&& (cnt = loadBFile(dir / "PlayerCards.bak", PList)) > 0) {
-			log << "»Ö¸´Íæ¼Ò¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "æ¢å¤ç©å®¶è®°å½•" + to_string(cnt) + "æ¡";
 		}
 		for (const auto& pl : PList) {
 			if (!UserList.count(pl.first))getUser(pl.first);
 		}
 	}
 	catch (const std::exception& e)	{
-		console.log("¶ÁÈ¡Íæ¼Ò¼ÇÂ¼Ê±Óöµ½ÒâÍâ´íÎó£¬Çë³¢ÊÔÉ¾³ıPlayerCards.RDconfÆôÓÃ±¸·İ.bakÎÄ¼ş!"
+		console.log("è¯»å–ç©å®¶è®°å½•æ—¶é‡åˆ°æ„å¤–é”™è¯¯ï¼Œè¯·å°è¯•åˆ é™¤PlayerCards.RDconfå¯ç”¨å¤‡ä»½.bakæ–‡ä»¶!"
 			+ string(e.what()), 0b1000, printSTNow());
 	}
 	try {
-		//¶ÁÈ¡ÈºÁÄ¼ÇÂ¼
+		//è¯»å–ç¾¤èŠè®°å½•
 		if (int cnt{ loadBFile(dir / "ChatConf.dat", ChatList) }; cnt > 0) {
 			fs::copy(dir / "ChatConf.dat", dir / "ChatConf.bak",
 				fs::copy_options::overwrite_existing, ec);
-			log << "¶ÁÈ¡ÈºÁÄ¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "è¯»å–ç¾¤èŠè®°å½•" + to_string(cnt) + "æ¡";
 		}
 		else if (fs::exists(dir / "ChatConf.dat.bak")
 			&& (cnt = loadBFile(dir / "ChatConf.dat.bak", ChatList)) > 0) {
-			log << "»Ö¸´ÈºÁÄ¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "æ¢å¤ç¾¤èŠè®°å½•" + to_string(cnt) + "æ¡";
 		}
 		else if (fs::exists(dir / "ChatConf.bak")
 			&& (cnt = loadBFile(dir / "ChatConf.bak", ChatList)) > 0) {
-			log << "»Ö¸´ÈºÁÄ¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "æ¢å¤ç¾¤èŠè®°å½•" + to_string(cnt) + "æ¡";
 		}
 		else if ((cnt = loadBFile(dir / "ChatConf.RDconf", ChatList)) > 0) {
-			log << "Ç¨ÒÆÈºÁÄ¼ÇÂ¼" + to_string(cnt) + "Ìõ";
+			log << "è¿ç§»ç¾¤èŠè®°å½•" + to_string(cnt) + "æ¡";
 		}
 	}
 	catch (const std::exception& e)	{
-		console.log("¶ÁÈ¡ÈºÁÄ¼ÇÂ¼Ê±Óöµ½ÒâÍâ´íÎó£¬Çë³¢ÊÔÉ¾³ıChatConf.datÆôÓÃ±¸·İ.bakÎÄ¼ş!"
+		console.log("è¯»å–ç¾¤èŠè®°å½•æ—¶é‡åˆ°æ„å¤–é”™è¯¯ï¼Œè¯·å°è¯•åˆ é™¤ChatConf.datå¯ç”¨å¤‡ä»½.bakæ–‡ä»¶!"
 			+ string(e.what()), 0b1000, printSTNow());
 	}
-	//¶ÁÈ¡·¿¼ä¼ÇÂ¼
+	//è¯»å–æˆ¿é—´è®°å½•
 	sessions.load();
 	if (!log.empty()) {
-		log << "ÓÃ»§Êı¾İ¶ÁÈ¡Íê±Ï";
+		log << "ç”¨æˆ·æ•°æ®è¯»å–å®Œæ¯•";
 		DD::debugLog(printSTNow() + log.show());
 	}
 }
 
-//±¸·İÊı¾İ
+//å¤‡ä»½æ•°æ®
 void dataBackUp()
 {
 	std::error_code ec;
@@ -220,7 +220,7 @@ void dataBackUp()
 	static auto dirUser{ DiceDir / "user" };
 	std::filesystem::create_directory(dirUser, ec);
 	std::filesystem::create_directory(DiceDir / "audit", ec);
-	//±¸·İÁĞ±í
+	//å¤‡ä»½åˆ—è¡¨
 	static auto pathUser{ dirUser / "UserConf.dat" };
 	fs::copy_file(pathUser, dirUser / "UserConf.dat.bak", fs::copy_options::update_existing);
 	saveBFile(pathUser, UserList);
@@ -242,7 +242,7 @@ EVE_Enable(eventEnable){
 	err = curl_global_init(CURL_GLOBAL_DEFAULT);
 	if (err != CURLE_OK)
 	{
-		console.log("´íÎó: ¼ÓÔØlibcurlÊ§°Ü£¡", 1);
+		console.log("é”™è¯¯: åŠ è½½libcurlå¤±è´¥ï¼", 1);
 	}
 #else
 	aws_init();
@@ -280,7 +280,7 @@ EVE_Enable(eventEnable){
 		std::unique_lock lock(GlobalMsgMutex);
 		string& strSelfName{ GlobalMsg["strSelfName"] = DD::getLoginNick() };
 		if (strSelfName.empty()){
-			strSelfName = "÷»Äï[" + toString(console.DiceMaid % 10000, 4) + "]";
+			strSelfName = "éª°å¨˜[" + toString(console.DiceMaid % 10000, 4) + "]";
 		}
 	}
 	if (!console.load()){
@@ -288,14 +288,14 @@ EVE_Enable(eventEnable){
 		console.loadNotice();
 	}
 	if (!console) {
-		msgInit = R"(»¶Ó­Ê¹ÓÃDice!ÖÀ÷»»úÆ÷ÈË£¡
-Çë·¢ËÍ.master )"
-+ (console.authkey_pub = RandomGenerator::genKey(8)) + " //¹«÷»×÷³É »ò\n.master "
+		msgInit = R"(æ¬¢è¿ä½¿ç”¨Dice!æ·éª°æœºå™¨äººï¼
+è¯·å‘é€.master )"
++ (console.authkey_pub = RandomGenerator::genKey(8)) + " //å…¬éª°ä½œæˆ æˆ–\n.master "
 + (console.authkey_pri = RandomGenerator::genKey(8)) + 
-R"( //Ë½÷»×÷³É ¼´¿É³ÉÎªÎÒµÄÖ÷ÈË~
-¿É·¢ËÍ.help²é¿´°ïÖú
-·¢ËÍ.system gui¿ªÆôDiceMaidºóÌ¨Ãæ°å
-²Î¿¼ÎÄµµ²Î¿´.helpÁ´½Ó)";
+R"( //ç§éª°ä½œæˆ å³å¯æˆä¸ºæˆ‘çš„ä¸»äºº~
+å¯å‘é€.helpæŸ¥çœ‹å¸®åŠ©
+å‘é€.system guiå¼€å¯DiceMaidåå°é¢æ¿
+å‚è€ƒæ–‡æ¡£å‚çœ‹.helpé“¾æ¥)";
 		DD::debugMsg(msgInit);
 	}
 	try {
@@ -305,11 +305,11 @@ R"( //Ë½÷»×÷³É ¼´¿É³ÉÎªÎÒµÄÖ÷ÈË~
 #endif //DICE_PYTHON
 	}
 	catch (const std::exception& e) {
-		console.log(string("³õÊ¼»¯js/python»·¾³Ê§°Ü!") + e.what(), 1, printSTNow());
+		console.log(string("åˆå§‹åŒ–js/pythonç¯å¢ƒå¤±è´¥!") + e.what(), 1, printSTNow());
 	}
 	fmt = make_unique<DiceModManager>();
 	loadData();
-	//³õÊ¼»¯ºÚÃûµ¥
+	//åˆå§‹åŒ–é»‘åå•
 	try {
 		blacklist = make_unique<DDBlackManager>();
 		if (auto cnt = blacklist->loadJson(DiceDir / "conf" / "BlackList.json"); cnt < 0)
@@ -318,28 +318,28 @@ R"( //Ë½÷»×÷³É ¼´¿É³ÉÎªÎÒµÄÖ÷ÈË~
 			cnt = blacklist->loadHistory(fpFileLoc);
 			if (cnt) {
 				blacklist->saveJson(DiceDir / "conf" / "BlackList.json");
-				console.log("³õÊ¼»¯²»Á¼¼ÇÂ¼" + to_string(cnt) + "Ìõ", 1);
+				console.log("åˆå§‹åŒ–ä¸è‰¯è®°å½•" + to_string(cnt) + "æ¡", 1);
 			}
 		}
 		else {
-			DD::debugLog("¶ÁÈ¡²»Á¼¼ÇÂ¼" + to_string(cnt) + "Ìõ");
+			DD::debugLog("è¯»å–ä¸è‰¯è®°å½•" + to_string(cnt) + "æ¡");
 			if ((cnt = blacklist->loadJson(DiceDir / "conf" / "BlackListEx.json", true)) > 0)
-				DD::debugLog("ºÏ²¢ÍâÔ´²»Á¼¼ÇÂ¼" + to_string(cnt) + "Ìõ");
+				DD::debugLog("åˆå¹¶å¤–æºä¸è‰¯è®°å½•" + to_string(cnt) + "æ¡");
 		}
 	}
 	catch (const std::exception& e) {
-		console.log(string("¶ÁÈ¡/conf/BlackList.jsonÊ§°Ü!") + e.what(), 1, printSTNow());
+		console.log(string("è¯»å–/conf/BlackList.jsonå¤±è´¥!") + e.what(), 1, printSTNow());
 	}
-	//¶ÁÈ¡ÓÃ»§Êı¾İ
+	//è¯»å–ç”¨æˆ·æ•°æ®
 	readUserData();
-	//¶ÁÈ¡µ±ÈÕÊı¾İ
+	//è¯»å–å½“æ—¥æ•°æ®
 	today = make_unique<DiceToday>();
 	set<long long> grps{ DD::getGroupIDList() };
 	for (auto gid : grps){
-		if (auto grp{ chat(gid).reset("Î´½ø").reset("ÒÑÍË").set("ÒÑÈëÈº") };
+		if (auto grp{ chat(gid).reset("æœªè¿›").reset("å·²é€€").set("å·²å…¥ç¾¤") };
 			!grp.is("lastMsg"))grp.setLst(-1);
 	}
-	// È·±£Ïß³ÌÖ´ĞĞ½áÊø
+	// ç¡®ä¿çº¿ç¨‹æ‰§è¡Œç»“æŸ
 	while (msgSendThreadRunning)this_thread::sleep_for(10ms);
 
 	DD::debugLog("Dice.webUIInit");
@@ -349,10 +349,10 @@ R"( //Ë½÷»×÷³É ¼´¿É³ÉÎªÎÒµÄÖ÷ÈË~
 		setPassword("password");
 	}
 
-	// ³õÊ¼»¯·şÎñÆ÷
+	// åˆå§‹åŒ–æœåŠ¡å™¨
 	mg_init_library(0);
 
-	// ¶ÁÈ¡»·¾³±äÁ¿
+	// è¯»å–ç¯å¢ƒå˜é‡
 	bool AllowInternetAccess = console["WebUIAllowInternetAccess"];
 	int Port = console["WebUIPort"];
 
@@ -387,7 +387,7 @@ R"( //Ë½÷»×÷³É ¼´¿É³ÉÎªÎÒµÄÖ÷ÈË~
 	threads(frqHandler);
 	sch.start();
 
-	console.log(getMsg("strSelfName") + "³õÊ¼»¯Íê³É£¬ÓÃÊ±" + to_string(clock() - clockStart) + "ºÁÃë", 0b1,
+	console.log(getMsg("strSelfName") + "åˆå§‹åŒ–å®Œæˆï¼Œç”¨æ—¶" + to_string(clock() - clockStart) + "æ¯«ç§’", 0b1,
 		printSTNow());
 	llStartTime = time(nullptr);
 	DD::debugLog("Dice.WebInit");
@@ -402,12 +402,12 @@ R"( //Ë½÷»×÷³É ¼´¿É³ÉÎªÎÒµÄÖ÷ÈË~
 			if (HRSRC hRsrcInfo = FindResource(hDllModule, MAKEINTRESOURCE(ID_ADMIN_HTML), TEXT("FILE"))) {
 				DWORD dwSize = SizeofResource(hDllModule, hRsrcInfo);
 				if (HGLOBAL hGlobal = LoadResource(hDllModule, hRsrcInfo)) {
-					LPVOID pBuffer = LockResource(hGlobal);  // Ëø¶¨×ÊÔ´
+					LPVOID pBuffer = LockResource(hGlobal);  // é”å®šèµ„æº
 					char* pByte = new char[dwSize + 1];
 					fs::create_directories(DiceDir / "webui");
 					ofstream fweb{ DiceDir / "webui" / "index.html" };
 					fweb.write((const char*)pBuffer, dwSize);
-					FreeResource(hGlobal);// ÊÍ·Å×ÊÔ´
+					FreeResource(hGlobal);// é‡Šæ”¾èµ„æº
 				}
 			}
 #else
@@ -417,7 +417,7 @@ R"( //Ë½÷»×÷³É ¼´¿É³ÉÎªÎÒµÄÖ÷ÈË~
 				fweb.write(html.c_str(), html.length());
 			}
 			else if (!fs::exists(DiceDir / "webui" / "index.html")) {
-				console.log("»ñÈ¡webuiÒ³ÃæÊ§°Ü!Ïà¹Ø¹¦ÄÜÎŞ·¨Ê¹ÓÃ!", 0b10);
+				console.log("è·å–webuié¡µé¢å¤±è´¥!ç›¸å…³åŠŸèƒ½æ— æ³•ä½¿ç”¨!", 0b10);
 			}
 #endif
 			ManagerServer->addHandler("/api/basicinfo", h_basicinfoapi);
@@ -433,21 +433,21 @@ R"( //Ë½÷»×÷³É ¼´¿É³ÉÎªÎÒµÄÖ÷ÈË~
 
 			if (ports.empty())
 			{
-				console.log("Dice! WebUI Æô¶¯Ê§°Ü£¡¶Ë¿ÚÒÑ±»Ê¹ÓÃ£¿", 0b1);
+				console.log("Dice! WebUI å¯åŠ¨å¤±è´¥ï¼ç«¯å£å·²è¢«ä½¿ç”¨ï¼Ÿ", 0b1);
 			}
 			else {
-				string note{ "Dice! WebUI ÕıÓÚ¶Ë¿Ú" + std::to_string(ports[0])
-					+ "ÔËĞĞ£¬±¾µØ¿ÉÍ¨¹ıä¯ÀÀÆ÷·ÃÎÊhttp://localhost:" + std::to_string(ports[0])
-					+ "\nÄ¬ÈÏÓÃ»§ÃûÎªadminÃÜÂëÎªpassword£¬ÏêÏ¸½Ì³ÌÇë²é¿´ https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming" };
+				string note{ "Dice! WebUI æ­£äºç«¯å£" + std::to_string(ports[0])
+					+ "è¿è¡Œï¼Œæœ¬åœ°å¯é€šè¿‡æµè§ˆå™¨è®¿é—®http://localhost:" + std::to_string(ports[0])
+					+ "\né»˜è®¤ç”¨æˆ·åä¸ºadminå¯†ç ä¸ºpasswordï¼Œè¯¦ç»†æ•™ç¨‹è¯·æŸ¥çœ‹ https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming" };
 				console.log(note, 0b1);
 			}
 		}
 		catch (const CivetException& e)
 		{
-			console.log("Dice! WebUI Æô¶¯Ê§°Ü£¡¶Ë¿ÚÒÑ±»Ê¹ÓÃ£¿", 0b1);
+			console.log("Dice! WebUI å¯åŠ¨å¤±è´¥ï¼ç«¯å£å·²è¢«ä½¿ç”¨ï¼Ÿ", 0b1);
 		}
 	}
-	//÷»ÄïÍøÂç
+	//éª°å¨˜ç½‘ç»œ
 	getDiceList();
 	getExceptGroup();
 	isIniting.clear();
@@ -458,7 +458,7 @@ mutex GroupAddMutex;
 bool eve_GroupAdd(Chat& grp) {
 	{
 		unique_lock<std::mutex> lock_queue(GroupAddMutex);
-		if (!grp.is("ÒÑÈëÈº"))grp.set("ÒÑÈëÈº").reset("Î´½ø").reset("ÒÑÍË");
+		if (!grp.is("å·²å…¥ç¾¤"))grp.set("å·²å…¥ç¾¤").reset("æœªè¿›").reset("å·²é€€");
 		else return false;
 		if (ChatList.size() == 1 && !console)DD::sendGroupMsg(grp.ID, msgInit);
 	}
@@ -467,9 +467,9 @@ bool eve_GroupAdd(Chat& grp) {
 		grp.name(DD::getGroupName(fromGID));
 	GroupSize_t gsize(DD::getGroupSize(fromGID));
 	if (console["GroupInvalidSize"] > 0 && grp.empty() && gsize.currSize > (size_t)console["GroupInvalidSize"]) {
-		grp.set("Ğ­ÒéÎŞĞ§");
+		grp.set("åè®®æ— æ•ˆ");
 	}
-	if (!console["ListenGroupAdd"] || grp.is("ºöÂÔ"))return 0;
+	if (!console["ListenGroupAdd"] || grp.is("å¿½ç•¥"))return 0;
 	string strNow = printSTNow();
 	string strMsg(getMsg("strSelfName"));
 	AttrObject eve{ AnysTable{{
@@ -478,18 +478,18 @@ bool eve_GroupAdd(Chat& grp) {
 	}} };
 	try 
 	{
-		strMsg += "ĞÂ¼ÓÈë:" + DD::printGroupInfo(grp.ID);
+		strMsg += "æ–°åŠ å…¥:" + DD::printGroupInfo(grp.ID);
 		if (blacklist->get_group_danger(fromGID)) 
 		{
 			grp.leave(blacklist->list_group_warning(fromGID));
-			strMsg += "ÎªºÚÃûµ¥Èº£¬ÒÑÍËÈº";
+			strMsg += "ä¸ºé»‘åå•ç¾¤ï¼Œå·²é€€ç¾¤";
 			console.log(strMsg, 0b10, printSTNow());
 			return true;
 		}
-		if (grp.is("Ğí¿ÉÊ¹ÓÃ"))strMsg += "£¨ÒÑ»ñÊ¹ÓÃĞí¿É£©";
-		else if(grp.is("Ğ­ÒéÎŞĞ§"))strMsg += "£¨ÒÑ±ê¼ÇĞ­ÒéÎŞĞ§£©";
+		if (grp.is("è®¸å¯ä½¿ç”¨"))strMsg += "ï¼ˆå·²è·ä½¿ç”¨è®¸å¯ï¼‰";
+		else if(grp.is("åè®®æ— æ•ˆ"))strMsg += "ï¼ˆå·²æ ‡è®°åè®®æ— æ•ˆï¼‰";
 		if (grp.inviter) {
-			strMsg += ",ÑûÇëÕß" + printUser(grp.inviter);
+			strMsg += ",é‚€è¯·è€…" + printUser(grp.inviter);
 		}
 		int max_trust = 0;
 		float ave_trust(0);
@@ -498,7 +498,7 @@ bool eve_GroupAdd(Chat& grp) {
 		ResList blacks;
 		std::set<long long> list = DD::getGroupMemberList(fromGID);
 		if (list.empty()){
-			strMsg += "£¬ÈºÔ±Ãûµ¥Î´¼ÓÔØ£»";
+			strMsg += "ï¼Œç¾¤å‘˜åå•æœªåŠ è½½ï¼›";
 		}
 		else 
 		{
@@ -516,15 +516,15 @@ bool eve_GroupAdd(Chat& grp) {
 					max_trust |= (1 << trustedQQ(each));
 					if (blacklist->get_user_danger(each) > 1)
 					{
-						strMsg += ",·¢ÏÖºÚÃûµ¥¹ÜÀíÔ±" + printUser(each);
-						if (grp.is("ÃâºÚ")) {
-							strMsg += "£¨ÈºÃâºÚ£©";
+						strMsg += ",å‘ç°é»‘åå•ç®¡ç†å‘˜" + printUser(each);
+						if (grp.is("å…é»‘")) {
+							strMsg += "ï¼ˆç¾¤å…é»‘ï¼‰";
 						}
 						else
 						{
 							DD::sendGroupMsg(fromGID, blacklist->list_qq_warning(each));
-							grp.leave("·¢ÏÖºÚÃûµ¥¹ÜÀíÔ±" + printUser(each) + "½«Ô¤·ÀĞÔÍËÈº");
-							strMsg += "£¬ÒÑÍËÈº";
+							grp.leave("å‘ç°é»‘åå•ç®¡ç†å‘˜" + printUser(each) + "å°†é¢„é˜²æ€§é€€ç¾¤");
+							strMsg += "ï¼Œå·²é€€ç¾¤";
 							console.log(strMsg, 0b10, strNow);
 							return true;
 						}
@@ -533,7 +533,7 @@ bool eve_GroupAdd(Chat& grp) {
 					{
 						ownerQQ = each;
 						ave_trust += (gsize.currSize - 1) * trustedQQ(each);
-						strMsg += "£¬ÈºÖ÷" + printUser(each) + "£»";
+						strMsg += "ï¼Œç¾¤ä¸»" + printUser(each) + "ï¼›";
 					}
 					else
 					{
@@ -555,41 +555,41 @@ bool eve_GroupAdd(Chat& grp) {
 			}
 			if (!grp.inviter && list.size() <= 2 && ownerQQ){
 				grp.invited(ownerQQ);
-				strMsg += "ÑûÇëÕß" + printUser(ownerQQ);
+				strMsg += "é‚€è¯·è€…" + printUser(ownerQQ);
 			}
 			if (!cntMember) 
 			{
-				strMsg += "£¬ÈºÔ±Ãûµ¥Î´¼ÓÔØ£»";
+				strMsg += "ï¼Œç¾¤å‘˜åå•æœªåŠ è½½ï¼›";
 			}
 			else 
 			{
 				ave_trust /= cntMember;
-				strMsg += "\nÓÃ»§Å¨¶È" + to_string(cntUser * 100 / cntMember) + "% (" + to_string(cntUser) + "/" + to_string(cntMember) + "), ĞÅÈÎ¶È" + toString(ave_trust);
+				strMsg += "\nç”¨æˆ·æµ“åº¦" + to_string(cntUser * 100 / cntMember) + "% (" + to_string(cntUser) + "/" + to_string(cntMember) + "), ä¿¡ä»»åº¦" + toString(ave_trust);
 			}
 			if (cntDiceMaid) 			{
-				strMsg += "\n¿ÉÊ¶±ğÍ¬ÏµDice!" + to_string(cntDiceMaid) + "Î»";
+				strMsg += "\nå¯è¯†åˆ«åŒç³»Dice!" + to_string(cntDiceMaid) + "ä½";
 			}
 		}
 		if (!blacks.empty())
 		{
-			string strNote = "\n·¢ÏÖºÚÃûµ¥ÈºÔ±" + blacks.show();
+			string strNote = "\nå‘ç°é»‘åå•ç¾¤å‘˜" + blacks.show();
 			strMsg += strNote;
 		}
 		if (fmt->call_hook_event(eve)) {
 			console.log(strMsg, 1, strNow);
 			return 0;
 		}
-		if (console["Private"] && !grp.is("Ğí¿ÉÊ¹ÓÃ"))
+		if (console["Private"] && !grp.is("è®¸å¯ä½¿ç”¨"))
 		{	
-			//±ÜÃâĞ¡ÈºÈÆ¹ıÑûÇëÃ»¼ÓÉÏ°×Ãûµ¥
+			//é¿å…å°ç¾¤ç»•è¿‡é‚€è¯·æ²¡åŠ ä¸Šç™½åå•
 			if (max_trust > 1 || ave_trust > 0.5)
 			{
-				grp.set("Ğí¿ÉÊ¹ÓÃ");
-				strMsg += "\nÒÑ×Ô¶¯×·¼ÓÊ¹ÓÃĞí¿É";
+				grp.set("è®¸å¯ä½¿ç”¨");
+				strMsg += "\nå·²è‡ªåŠ¨è¿½åŠ ä½¿ç”¨è®¸å¯";
 			}
-			else if(!grp.is("Ğ­ÒéÎŞĞ§"))
+			else if(!grp.is("åè®®æ— æ•ˆ"))
 			{
-				strMsg += "\nÎŞĞí¿ÉÊ¹ÓÃ£¬ÒÑÍËÈº";
+				strMsg += "\næ— è®¸å¯ä½¿ç”¨ï¼Œå·²é€€ç¾¤";
 				console.log(strMsg, 1, strNow);
 				grp.leave(getMsg("strPreserve"));
 				return true;
@@ -600,24 +600,24 @@ bool eve_GroupAdd(Chat& grp) {
 	}
 	catch (...)
 	{
-		console.log(strMsg + "\nÈº" + to_string(fromGID) + "ĞÅÏ¢»ñÈ¡Ê§°Ü£¡", 0b1, printSTNow());
+		console.log(strMsg + "\nç¾¤" + to_string(fromGID) + "ä¿¡æ¯è·å–å¤±è´¥ï¼", 0b1, printSTNow());
 		return true;
 	}
-	if (grp.is("Ğ­ÒéÎŞĞ§"))return 0;
+	if (grp.is("åè®®æ— æ•ˆ"))return 0;
 	if (string selfIntro{ getMsg("strAddGroup", AttrVars{{"gid",fromGID}}) };
 		!selfIntro.empty()) {
 		this_thread::sleep_for(2s);
 		AddMsgToQueue(selfIntro, { 0,fromGID, 0 });
 	}
-	if (console["CheckGroupLicense"] && !grp.is("Ğí¿ÉÊ¹ÓÃ"))	{
-		grp.set("Î´ÉóºË");
+	if (console["CheckGroupLicense"] && !grp.is("è®¸å¯ä½¿ç”¨"))	{
+		grp.set("æœªå®¡æ ¸");
 		this_thread::sleep_for(2s);
 		AddMsgToQueue(getMsg("strGroupLicenseDeny"), { 0,fromGID, 0 });
 	}
 	return false;
 }
 
-//´¦Àí÷»×ÓÖ¸Áî
+//å¤„ç†éª°å­æŒ‡ä»¤
 
 EVE_PrivateMsg(eventPrivateMsg)
 {
@@ -640,8 +640,8 @@ EVE_GroupMsg(eventGroupMsg)
 	if (!Enabled)return 0;
 	Chat& grp = chat(fromGID);
 	if (fromUID == console.DiceMaid && !console["ListenGroupEcho"])return 0;
-	if (!grp.is("ÒÑÈëÈº") && grp.getLst())eve_GroupAdd(grp);
-	if (!grp.is("ºöÂÔ"))	{
+	if (!grp.is("å·²å…¥ç¾¤") && grp.getLst())eve_GroupAdd(grp);
+	if (!grp.is("å¿½ç•¥"))	{
 		shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
 			AttrVars({ { "Event", "Message" },
 				{ "fromMsg", message },
@@ -659,7 +659,7 @@ EVE_ChannelMsg(eventChannelMsg)
 	if (!Enabled)return 0;
 	Chat& grp = chat(fromGID);
 	if (fromUID == console.DiceMaid && !console["ListenChannelEcho"])return 0;
-	//if (!grp.is("ºöÂÔ"))
+	//if (!grp.is("å¿½ç•¥"))
 	{
 		shared_ptr<DiceEvent> Msg(make_shared<DiceEvent>(
 			AttrVars({ { "Event","Message"},
@@ -672,7 +672,7 @@ EVE_ChannelMsg(eventChannelMsg)
 				}), chatInfo{ fromUID,fromGID,fromChID }));
 		return Msg->DiceFilter();
 	}
-	//return grp.is("À¹½ØÏûÏ¢");
+	//return grp.is("æ‹¦æˆªæ¶ˆæ¯");
 	return false;
 }
 
@@ -690,7 +690,7 @@ EVE_DiscussMsg(eventDiscussMsg)
 	Chat& grp = chat(fromDiscuss);
 	if (blacklist->get_user_danger(fromUID) && console["AutoClearBlack"])
 	{
-		const string strMsg = "·¢ÏÖºÚÃûµ¥ÓÃ»§" + printUser(fromUID) + "£¬×Ô¶¯Ö´ĞĞÍËÈº";
+		const string strMsg = "å‘ç°é»‘åå•ç”¨æˆ·" + printUser(fromUID) + "ï¼Œè‡ªåŠ¨æ‰§è¡Œé€€ç¾¤";
 		console.log(grp.print() + strMsg, 0b10, printSTNow());
 		grp.leave(strMsg);
 		return 1;
@@ -701,38 +701,38 @@ EVE_DiscussMsg(eventDiscussMsg)
 			{ "uid", fromUID },
 			{ "gid", fromDiscuss }
 			}), chatInfo{ fromUID,fromDiscuss,0 }));
-	return Msg->DiceFilter() || grp.is("À¹½ØÏûÏ¢");
+	return Msg->DiceFilter() || grp.is("æ‹¦æˆªæ¶ˆæ¯");
 }
 
 EVE_GroupMemberIncrease(eventGroupMemberAdd)
 {
 	if (!Enabled)return 0;
 	Chat& grp = chat(fromGID);
-	if (grp.is("ºöÂÔ"))return 0;
+	if (grp.is("å¿½ç•¥"))return 0;
 	if (fromUID != console.DiceMaid){
-		if (chat(fromGID).has("ÈëÈº»¶Ó­")){
+		if (chat(fromGID).has("å…¥ç¾¤æ¬¢è¿")){
 			AttrObject eve{ AnysTable{{
 				{ "Event","GroupWelcome"},
 				{"gid",fromGID},
 				{"uid",fromUID},
 			}} };
-			AddMsgToQueue(strip(fmt->format(grp.update().get_str("ÈëÈº»¶Ó­"), eve, false)),
+			AddMsgToQueue(strip(fmt->format(grp.update().get_str("å…¥ç¾¤æ¬¢è¿"), eve, false)),
 				{ 0,fromGID });
 		}
 		if (blacklist->get_user_danger(fromUID))
 		{
 			const string strNow = printSTNow();
-			string strNote = printGroup(fromGID) + "·¢ÏÖ" + getMsg("strSelfName") + "µÄºÚÃûµ¥ÓÃ»§" + printUser(
-				fromUID) + "ÈëÈº";
+			string strNote = printGroup(fromGID) + "å‘ç°" + getMsg("strSelfName") + "çš„é»‘åå•ç”¨æˆ·" + printUser(
+				fromUID) + "å…¥ç¾¤";
 			AddMsgToQueue(blacklist->list_self_qq_warning(fromUID), { 0,fromGID });
-			if (grp.is("ÃâÇå"))strNote += "£¨ÈºÃâÇå£©";
-			else if (grp.is("ÃâºÚ"))strNote += "£¨ÈºÃâºÚ£©";
-			else if (grp.is("Ğ­ÒéÎŞĞ§"))strNote += "£¨ÈºĞ­ÒéÎŞĞ§£©";
-			else if (DD::isGroupAdmin(fromGID, console.DiceMaid, false))strNote += "£¨ÈºÄÚÓĞÈ¨ÏŞ£©";
+			if (grp.is("å…æ¸…"))strNote += "ï¼ˆç¾¤å…æ¸…ï¼‰";
+			else if (grp.is("å…é»‘"))strNote += "ï¼ˆç¾¤å…é»‘ï¼‰";
+			else if (grp.is("åè®®æ— æ•ˆ"))strNote += "ï¼ˆç¾¤åè®®æ— æ•ˆï¼‰";
+			else if (DD::isGroupAdmin(fromGID, console.DiceMaid, false))strNote += "ï¼ˆç¾¤å†…æœ‰æƒé™ï¼‰";
 			else if (console["LeaveBlackQQ"])
 			{
-				strNote += "£¨ÒÑÍËÈº£©";
-				grp.leave("·¢ÏÖºÚÃûµ¥ÓÃ»§" + printUser(fromUID) + "ÈëÈº,½«Ô¤·ÀĞÔÍËÈº");
+				strNote += "ï¼ˆå·²é€€ç¾¤ï¼‰";
+				grp.leave("å‘ç°é»‘åå•ç”¨æˆ·" + printUser(fromUID) + "å…¥ç¾¤,å°†é¢„é˜²æ€§é€€ç¾¤");
 			}
 			console.log(strNote, 0b10, strNow);
 		}
@@ -741,7 +741,7 @@ EVE_GroupMemberIncrease(eventGroupMemberAdd)
 		if (!grp.inviter)grp.invited(operatorQQ);
 		{
 			unique_lock<std::mutex> lock_queue(GroupAddMutex);
-			if (grp.is("ÒÑÈëÈº"))return 0;
+			if (grp.is("å·²å…¥ç¾¤"))return 0;
 		}
 		return eve_GroupAdd(grp);
 	}
@@ -752,12 +752,12 @@ EVE_GroupMemberKicked(eventGroupMemberKicked){
 	if (!Enabled || !fromUID)return 0;
 	Chat& grp = chat(fromGID);
 	if (beingOperateQQ == console.DiceMaid){
-		grp.reset("ÒÑÈëÈº").rmLst();
-		if (!console || grp.is("ºöÂÔ"))return 0;
+		grp.reset("å·²å…¥ç¾¤").rmLst();
+		if (!console || grp.is("å¿½ç•¥"))return 0;
 		string strNow = printSTime(stNow);
-		string strNote = printUser(fromUID) + "½«" + printUser(beingOperateQQ) + "ÒÆ³öÁË" + grp.print();
+		string strNote = printUser(fromUID) + "å°†" + printUser(beingOperateQQ) + "ç§»å‡ºäº†" + grp.print();
 		console.log(strNote, 0b1000, strNow);
-		if (!console["ListenGroupKick"] || trustedQQ(fromUID) > 1 || grp.is("ÃâºÚ") || grp.is("Ğ­ÒéÎŞĞ§") || ExceptGroups.count(fromGID)) return 0;
+		if (!console["ListenGroupKick"] || trustedQQ(fromUID) > 1 || grp.is("å…é»‘") || grp.is("åè®®æ— æ•ˆ") || ExceptGroups.count(fromGID)) return 0;
 		AttrObject eve{ AnysTable{{
 			{"Event","GroupKicked"},
 			{"uid",fromUID},
@@ -765,25 +765,25 @@ EVE_GroupMemberKicked(eventGroupMemberKicked){
 		}} };
 		if (fmt->call_hook_event(eve))return 1;
 		DDBlackMarkFactory mark{fromUID, fromGID};
-		mark.sign().type("kick").time(strNow).note(strNow + " " + strNote).comment(getMsg("strSelfCall") + "Ô­Éú¼ÇÂ¼");
+		mark.sign().type("kick").time(strNow).note(strNow + " " + strNote).comment(getMsg("strSelfCall") + "åŸç”Ÿè®°å½•");
 		if (grp.inviter && trustedQQ(grp.inviter) < 2)
 		{
-			strNote += ";ÈëÈºÑûÇëÕß£º" + printUser(grp.inviter);
+			strNote += ";å…¥ç¾¤é‚€è¯·è€…ï¼š" + printUser(grp.inviter);
 			if (console["KickedBanInviter"])mark.inviter(grp.inviter).note(strNow + " " + strNote);
 		}
-		grp.reset("Ğí¿ÉÊ¹ÓÃ").reset("ÃâÇå");
+		grp.reset("è®¸å¯ä½¿ç”¨").reset("å…æ¸…");
 		blacklist->create(mark.product());
 	}
 	else if (mDiceList.count(beingOperateQQ) && console["ListenGroupKick"])
 	{
-		if (!console || grp.is("ºöÂÔ"))return 0;
+		if (!console || grp.is("å¿½ç•¥"))return 0;
 		string strNow = printSTime(stNow);
-		string strNote = printUser(fromUID) + "½«" + printUser(beingOperateQQ) + "ÒÆ³öÁË" + grp.print();
+		string strNote = printUser(fromUID) + "å°†" + printUser(beingOperateQQ) + "ç§»å‡ºäº†" + grp.print();
 		console.log(strNote, 0b1000, strNow);
-		if (trustedQQ(fromUID) > 1 || grp.is("ÃâºÚ") || grp.is("Ğ­ÒéÎŞĞ§") || ExceptGroups.count(fromGID)) return 0;
+		if (trustedQQ(fromUID) > 1 || grp.is("å…é»‘") || grp.is("åè®®æ— æ•ˆ") || ExceptGroups.count(fromGID)) return 0;
 		DDBlackMarkFactory mark{fromUID, fromGID};
-		mark.type("kick").time(strNow).note(strNow + " " + strNote).DiceMaid(beingOperateQQ).master(mDiceList[beingOperateQQ]).comment(strNow + " " + printUser(console.DiceMaid) + "Ä¿»÷");
-		grp.reset("Ğí¿ÉÊ¹ÓÃ").reset("ÃâÇå");
+		mark.type("kick").time(strNow).note(strNow + " " + strNote).DiceMaid(beingOperateQQ).master(mDiceList[beingOperateQQ]).comment(strNow + " " + printUser(console.DiceMaid) + "ç›®å‡»");
+		grp.reset("è®¸å¯ä½¿ç”¨").reset("å…æ¸…");
 		blacklist->create(mark.product());
 	}
 	return 0;
@@ -793,12 +793,12 @@ EVE_GroupBan(eventGroupBan)
 {
 	if (!Enabled) return 0;
 	Chat& grp = chat(fromGID);
-	if (grp.is("ºöÂÔ") || (beingOperateQQ != console.DiceMaid && !mDiceList.count(beingOperateQQ)) || !console["ListenGroupBan"])return 0;
+	if (grp.is("å¿½ç•¥") || (beingOperateQQ != console.DiceMaid && !mDiceList.count(beingOperateQQ)) || !console["ListenGroupBan"])return 0;
 	if (!duration || !duration[0])
 	{
 		if (beingOperateQQ == console.DiceMaid)
 		{
-			console.log(getMsg("self") + "ÔÚ" + grp.print() + "ÖĞ±»½â³ı½ûÑÔ", 0b10, printSTNow());
+			console.log(getMsg("self") + "åœ¨" + grp.print() + "ä¸­è¢«è§£é™¤ç¦è¨€", 0b10, printSTNow());
 			return 1;
 		}
 	}
@@ -806,8 +806,8 @@ EVE_GroupBan(eventGroupBan)
 	{
 		string strNow = printSTNow();
 		long long llOwner = 0;
-		string strNote = "ÔÚ" + grp.print() + "ÖĞ," + printUser(beingOperateQQ) + "±»" + printUser(operatorQQ) + "½ûÑÔ" + duration;
-		if (!console["ListenGroupBan"] || trustedQQ(operatorQQ) > 1 || grp.is("ÃâºÚ") || grp.is("Ğ­ÒéÎŞĞ§") || ExceptGroups.count(fromGID)) 
+		string strNote = "åœ¨" + grp.print() + "ä¸­," + printUser(beingOperateQQ) + "è¢«" + printUser(operatorQQ) + "ç¦è¨€" + duration;
+		if (!console["ListenGroupBan"] || trustedQQ(operatorQQ) > 1 || grp.is("å…é»‘") || grp.is("åè®®æ— æ•ˆ") || ExceptGroups.count(fromGID)) 
 		{
 			console.log(strNote, 0b10, strNow);
 			return 1;
@@ -824,12 +824,12 @@ EVE_GroupBan(eventGroupBan)
 		if (mDiceList.count(operatorQQ))mark.fromUID(0);
 		if (beingOperateQQ == console.DiceMaid) {
 			if (!console)return 0;
-			mark.sign().comment(getMsg("strSelfCall") + "Ô­Éú¼ÇÂ¼");
+			mark.sign().comment(getMsg("strSelfCall") + "åŸç”Ÿè®°å½•");
 		}
 		else{
-			mark.DiceMaid(beingOperateQQ).master(mDiceList[beingOperateQQ]).comment(strNow + " " + printUser(console.DiceMaid) + "Ä¿»÷");
+			mark.DiceMaid(beingOperateQQ).master(mDiceList[beingOperateQQ]).comment(strNow + " " + printUser(console.DiceMaid) + "ç›®å‡»");
 		}
-		//Í³¼ÆÈºÄÚ¹ÜÀí
+		//ç»Ÿè®¡ç¾¤å†…ç®¡ç†
 		int intAuthCnt = 0;
 		string strAuthList;
 		for (auto admin : DD::getGroupAdminList(fromGID))
@@ -843,15 +843,15 @@ EVE_GroupBan(eventGroupBan)
 				intAuthCnt++;
 			}
 		}
-		strAuthList = "£»ÈºÖ÷" + printUser(llOwner) + ",ÁíÓĞ¹ÜÀíÔ±" + to_string(intAuthCnt) + "Ãû" + strAuthList;
+		strAuthList = "ï¼›ç¾¤ä¸»" + printUser(llOwner) + ",å¦æœ‰ç®¡ç†å‘˜" + to_string(intAuthCnt) + "å" + strAuthList;
 		mark.note(strNow + " " + strNote);
 		if (grp.inviter && beingOperateQQ == console.DiceMaid && trustedQQ(grp.inviter) < 2)
 		{
-			strNote += ";ÈëÈºÑûÇëÕß£º" + printUser(grp.inviter);
+			strNote += ";å…¥ç¾¤é‚€è¯·è€…ï¼š" + printUser(grp.inviter);
 			if (console["BannedBanInviter"])mark.inviter(grp.inviter);
 			mark.note(strNow + " " + strNote);
 		}
-		grp.reset("ÃâÇå").reset("Ğí¿ÉÊ¹ÓÃ").leave();
+		grp.reset("å…æ¸…").reset("è®¸å¯ä½¿ç”¨").leave();
 		console.log(strNote + strAuthList, 0b1000, strNow);
 		blacklist->create(mark.product());
 		return 1;
@@ -863,7 +863,7 @@ EVE_GroupInvited(eventGroupInvited)
 {
 	if (!Enabled) return 0;
 	if (!console["ListenGroupRequest"])return 0;
-	if (groupset(fromGID, "ºöÂÔ") < 1)
+	if (groupset(fromGID, "å¿½ç•¥") < 1)
 	{
 		this_thread::sleep_for(3s);
 		AttrObject eve{ AnysTable{ {
@@ -883,57 +883,57 @@ EVE_GroupInvited(eventGroupInvited)
 		}
 		if (isBlocked)return 1;
 		const string strNow = printSTNow();
-		string strMsg = "ÊÕµ½" + printUser(fromUID) + "µÄÈëÈºÑûÇë:" + DD::printGroupInfo(fromGID);
+		string strMsg = "æ”¶åˆ°" + printUser(fromUID) + "çš„å…¥ç¾¤é‚€è¯·:" + DD::printGroupInfo(fromGID);
 		if (ExceptGroups.count(fromGID)) {
-			console.log(strMsg + "\nÒÑºöÂÔ£¨Ä¬ÈÏĞ­ÒéÎŞĞ§£©", 0b10, strNow);
+			console.log(strMsg + "\nå·²å¿½ç•¥ï¼ˆé»˜è®¤åè®®æ— æ•ˆï¼‰", 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 3);
 		}
 		else if (blacklist->get_group_danger(fromGID)){
-			strMsg += "\n£¨ºÚÃûµ¥Èº¡Á£©";
+			strMsg += "\nï¼ˆé»‘åå•ç¾¤Ã—ï¼‰";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 2);
 		}
 		else if (blacklist->get_user_danger(fromUID)){
-			strMsg += "\n£¨ºÚÃûµ¥ÓÃ»§¡Á£©";
+			strMsg += "\nï¼ˆé»‘åå•ç”¨æˆ·Ã—ï¼‰";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 2);
 		}
-		else if (Chat& grp = chat(fromGID); grp.is("Ğí¿ÉÊ¹ÓÃ")) {
+		else if (Chat& grp = chat(fromGID); grp.is("è®¸å¯ä½¿ç”¨")) {
 			grp.setLst(0);
 			grp.invited(fromUID);
-			strMsg += "\n£¨ÒÑĞí¿ÉÊ¹ÓÃ¡Ì£©";
+			strMsg += "\nï¼ˆå·²è®¸å¯ä½¿ç”¨âˆšï¼‰";
 			console.log(strMsg, 1, strNow);
 			DD::answerGroupInvited(fromGID, 1);
 		}
 		else if (trustedQQ(fromUID))
 		{
-			grp.set("Ğí¿ÉÊ¹ÓÃ").reset("Î´ÉóºË").reset("Ğ­ÒéÎŞĞ§");
+			grp.set("è®¸å¯ä½¿ç”¨").reset("æœªå®¡æ ¸").reset("åè®®æ— æ•ˆ");
 			grp.invited(fromUID);
-			strMsg += "\n£¨ĞÅÈÎÓÃ»§¡Ì£©";
+			strMsg += "\nï¼ˆä¿¡ä»»ç”¨æˆ·âˆšï¼‰";
 			console.log(strMsg, 1, strNow);
 			DD::answerGroupInvited(fromGID, 1);
 		}
-		else if (grp.is("Ğ­ÒéÎŞĞ§")) {
-			strMsg += "\nÒÑºöÂÔ£¨Ğ­ÒéÎŞĞ§£©";
+		else if (grp.is("åè®®æ— æ•ˆ")) {
+			strMsg += "\nå·²å¿½ç•¥ï¼ˆåè®®æ— æ•ˆï¼‰";
 			console.log(strMsg, 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 3);
 		}
 		else if (console["GroupInvalidSize"] > 0 && DD::getGroupSize(grp.ID).currSize > (size_t)console["GroupInvalidSize"]) {
-			grp.set("Ğ­ÒéÎŞĞ§");
-			console.log(strMsg + "\nÒÑºöÂÔ£¨Èº¹æÄ£³¬±ê£©", 0b10, strNow);
+			grp.set("åè®®æ— æ•ˆ");
+			console.log(strMsg + "\nå·²å¿½ç•¥ï¼ˆç¾¤è§„æ¨¡è¶…æ ‡ï¼‰", 0b10, strNow);
 			DD::answerGroupInvited(fromGID, 3);
 		}
 		else if (console && console["Private"])
 		{
 			AddMsgToQueue(getMsg("strPreserve"), fromUID);
-			strMsg += "\nÒÑ¾Ü¾ø£¨Ë½ÓÃÄ£Ê½£©";
+			strMsg += "\nå·²æ‹’ç»ï¼ˆç§ç”¨æ¨¡å¼ï¼‰";
 			console.log(strMsg, 1, strNow);
 			DD::answerGroupInvited(fromGID, 2);
 		}
 		else {
 			grp.setLst(0);
 			grp.invited(fromUID);
-			strMsg += "ÒÑÍ¬Òâ";
+			strMsg += "å·²åŒæ„";
 			this_thread::sleep_for(2s);
 			console.log(strMsg, 1, strNow);
 			DD::answerGroupInvited(fromGID, true);
@@ -957,29 +957,29 @@ EVE_FriendRequest(eventFriendRequest) {
 			fmt->format(eve->get_str("msg_reply"), eve));
 	}
 	if (isBlocked)return 1;
-	string strMsg = "ºÃÓÑÌí¼ÓÇëÇó£¬À´×Ô " + printUser(fromUID) + ":" + message;
+	string strMsg = "å¥½å‹æ·»åŠ è¯·æ±‚ï¼Œæ¥è‡ª " + printUser(fromUID) + ":" + message;
 	if (blacklist->get_user_danger(fromUID)) {
-		strMsg += "\nÒÑ¾Ü¾ø£¨ÓÃ»§ÔÚºÚÃûµ¥ÖĞ£©";
+		strMsg += "\nå·²æ‹’ç»ï¼ˆç”¨æˆ·åœ¨é»‘åå•ä¸­ï¼‰";
 		DD::answerFriendRequest(fromUID, 2, "");
 		console.log(strMsg, 0b10, printSTNow());
 	}
 	else if (trustedQQ(fromUID)) {
-		strMsg += "\nÒÑÍ¬Òâ£¨ÊÜĞÅÈÎÓÃ»§£©";
+		strMsg += "\nå·²åŒæ„ï¼ˆå—ä¿¡ä»»ç”¨æˆ·ï¼‰";
 		DD::answerFriendRequest(fromUID, 1, getMsg("strAddFriendWhiteQQ", eve));
 		console.log(strMsg, 1, printSTNow());
 	}
 	else if (console["AllowStranger"] < 2 && !UserList.count(fromUID)) {
-		strMsg += "\nÒÑ¾Ü¾ø£¨ÎŞÓÃ»§¼ÇÂ¼£©";
+		strMsg += "\nå·²æ‹’ç»ï¼ˆæ— ç”¨æˆ·è®°å½•ï¼‰";
 		DD::answerFriendRequest(fromUID, 2, getMsg("strFriendDenyNotUser"));
 		console.log(strMsg, 1, printSTNow());
 	}
 	else if (console["AllowStranger"] < 1) {
-		strMsg += "\nÒÑ¾Ü¾ø£¨·ÇĞÅÈÎÓÃ»§£©";
+		strMsg += "\nå·²æ‹’ç»ï¼ˆéä¿¡ä»»ç”¨æˆ·ï¼‰";
 		DD::answerFriendRequest(fromUID, 2, getMsg("strFriendDenyNoTrust"));
 		console.log(strMsg, 1, printSTNow());
 	}
 	else {
-		strMsg += "\nÒÑÍ¬Òâ";
+		strMsg += "\nå·²åŒæ„";
 		DD::answerFriendRequest(fromUID, 1, getMsg("strAddFriend",eve));
 		console.log(strMsg, 1, printSTNow());
 	}
@@ -1006,7 +1006,7 @@ EVE_Extra(eventExtra) {
 		if (fmt->call_hook_event(eve))return 1;
 	}
 	catch (std::exception& e) {
-		DD::debugLog("eventExtra´¦ÀíÒì³£!" + string(e.what()));
+		DD::debugLog("eventExtraå¤„ç†å¼‚å¸¸!" + string(e.what()));
 	}
 	return 0;
 }
@@ -1017,12 +1017,12 @@ EVE_Menu(eventMasterMode)
 	if (console) {
 		console.killMaster();
 #ifdef _WIN32
-		MessageBoxA(nullptr, "masterÒÑÇå³ı", "¹Ø±ÕMasterÄ£Ê½", MB_OK | MB_ICONINFORMATION);
+		MessageBoxA(nullptr, "masterå·²æ¸…é™¤", "å…³é—­Masteræ¨¡å¼", MB_OK | MB_ICONINFORMATION);
 #endif
 	}
 	else {
 #ifdef _WIN32
-		MessageBoxA(nullptr, "MasterÄ£Ê½ÒÑ²»ÔÙÁíÉè¿ª¹Ø£¬ÇëÊ¹ÓÃ¿ÚÁî»òÔÚUI½çÃæÖ±½ÓÈÏÖ÷", "MasterÄ£Ê½ÒÑÆúÓÃ", MB_OK | MB_ICONINFORMATION);
+		MessageBoxA(nullptr, "Masteræ¨¡å¼å·²ä¸å†å¦è®¾å¼€å…³ï¼Œè¯·ä½¿ç”¨å£ä»¤æˆ–åœ¨UIç•Œé¢ç›´æ¥è®¤ä¸»", "Masteræ¨¡å¼å·²å¼ƒç”¨", MB_OK | MB_ICONINFORMATION);
 #endif
 	}
 	return 0;
@@ -1082,13 +1082,13 @@ EVE_Menu(eventGlobalSwitch) {
 	if (console["DisabledGlobal"]) {
 		console.set("DisabledGlobal", 0);
 #ifdef _WIN32
-		MessageBoxA(nullptr, "÷»ÄïÒÑ½áÊø¾²Ä¬¡Ì", "È«¾Ö¿ª¹Ø", MB_OK | MB_ICONINFORMATION);
+		MessageBoxA(nullptr, "éª°å¨˜å·²ç»“æŸé™é»˜âˆš", "å…¨å±€å¼€å…³", MB_OK | MB_ICONINFORMATION);
 #endif
 	}
 	else {
 		console.set("DisabledGlobal", 1);
 #ifdef _WIN32
-		MessageBoxA(nullptr, "÷»ÄïÒÑÈ«¾Ö¾²Ä¬¡Ì", "È«¾Ö¿ª¹Ø", MB_OK | MB_ICONINFORMATION);
+		MessageBoxA(nullptr, "éª°å¨˜å·²å…¨å±€é™é»˜âˆš", "å…¨å±€å¼€å…³", MB_OK | MB_ICONINFORMATION);
 #endif
 	}
 	return 0;

@@ -7,8 +7,8 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * ºóÌ¨ÓÃ»§¹ÜÀí£¬ÏµÍ³¼à¿Ø
- * Copyright (C) 2018-2021 w4123Ëİä§
+ * åå°ç”¨æˆ·ç®¡ç†ï¼Œç³»ç»Ÿç›‘æ§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -51,18 +51,18 @@ constexpr auto CQ_FACE = "[CQ:face,id=";
 constexpr auto CQ_POKE = "[CQ:poke,id=";
 constexpr auto CQ_FILE = "[CQ:file,";
 
-//¼ÓÔØÊı¾İ
+//åŠ è½½æ•°æ®
 void loadData();
-//±£´æÊı¾İ
+//ä¿å­˜æ•°æ®
 void dataBackUp();
 
-//ÓÃ»§¼ÇÂ¼
+//ç”¨æˆ·è®°å½•
 class User :public AnysTable
 {
 public:
 	MetaType getType()const override { return MetaType::Context; }
 	const long long ID = 0;
-	//1-Ë½ÓÃĞÅÈÎ£¬2-À­ºÚ»íÃâ£¬3-¼ÓºÚÍËÈº£¬4-ºóÌ¨¹ÜÀí£¬5-Master
+	//1-ç§ç”¨ä¿¡ä»»ï¼Œ2-æ‹‰é»‘è±å…ï¼Œ3-åŠ é»‘é€€ç¾¤ï¼Œ4-åå°ç®¡ç†ï¼Œ5-Master
 	int nTrust = 0;
 	time_t tCreated = time(nullptr);
 
@@ -146,7 +146,7 @@ string forward_filter(const string&, long long fromGID = 0);
 
 extern const dict<short> mChatConf;
 
-//ÈºÁÄ¼ÇÂ¼
+//ç¾¤èŠè®°å½•
 class Chat :public AnysTable {
 	mutable string Name;
 public:
@@ -244,7 +244,7 @@ DWORD getRamPort();
 
 __int64 compareFileTime(const FILETIME& ft1, const FILETIME& ft2);
 
-//WIN CPUÊ¹ÓÃÇé¿ö
+//WIN CPUä½¿ç”¨æƒ…å†µ
 long long getWinCpuUsage();
 
 long long getProcessCpu();

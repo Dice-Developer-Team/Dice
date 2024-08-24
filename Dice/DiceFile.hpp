@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * ÎÄ¼ş¶ÁĞ´
+ * æ–‡ä»¶è¯»å†™
  * Copyright (C) 2018-2021 w4123
  * Copyright (C) 2019-2024 String.Empty
  */
@@ -80,7 +80,7 @@ bool fscan(std::ifstream& fin, C& obj)
 	return false;
 }
 
-// ¶ÁÈ¡¶ş½øÖÆÎÄ¼ş¡ª¡ª»ù´¡ÀàĞÍÖØÔØ
+// è¯»å–äºŒè¿›åˆ¶æ–‡ä»¶â€”â€”åŸºç¡€ç±»å‹é‡è½½
 template <typename T>
 std::enable_if_t<std::is_fundamental_v<T>, T> fread(ifstream& fin)
 {
@@ -89,7 +89,7 @@ std::enable_if_t<std::is_fundamental_v<T>, T> fread(ifstream& fin)
 	return t;
 }
 
-// ¶ÁÈ¡¶ş½øÖÆÎÄ¼ş¡ª¡ªstd::stringÖØÔØ
+// è¯»å–äºŒè¿›åˆ¶æ–‡ä»¶â€”â€”std::stringé‡è½½
 template <typename T>
 std::enable_if_t<std::is_same_v<T, std::string>, T> fread(ifstream& fin)
 {
@@ -101,7 +101,7 @@ std::enable_if_t<std::is_same_v<T, std::string>, T> fread(ifstream& fin)
 	return s;
 }
 
-// ¶ÁÈ¡¶ş½øÖÆÎÄ¼ş¡ª¡ªº¬readbº¯ÊıÀàÖØÔØ
+// è¯»å–äºŒè¿›åˆ¶æ–‡ä»¶â€”â€”å«readbå‡½æ•°ç±»é‡è½½
 template <class C, void(C::* U)(std::ifstream&) = &C::readb>
 C fread(ifstream& fin)
 {
@@ -145,7 +145,7 @@ fifo_map<T1, T2> fread(ifstream& fin) {
 	}
 	return dir;
 }
-// ¶ÁÈ¡¶ş½øÖÆÎÄ¼ş¡ª¡ªstd::setÖØÔØ
+// è¯»å–äºŒè¿›åˆ¶æ–‡ä»¶â€”â€”std::seté‡è½½
 template <typename T>
 void fread(ifstream& fin, std::unordered_set<T>& s){
 	short len = fread<short>(fin);
@@ -346,7 +346,7 @@ int loadBFile(const std::filesystem::path& fpPath, std::unordered_map<T, C>& m){
 
 bool rdbuf(const std::filesystem::path& fpPath, string& s);
 
-//±éÀúÎÄ¼ş¼Ğ
+//éå†æ–‡ä»¶å¤¹
 int listDir(const std::filesystem::path& dir, vector<std::filesystem::path>& files, bool isSub = false);
 size_t cntDirFile(const std::filesystem::path& dir);
 
@@ -363,7 +363,7 @@ int _loadDir(int (*load)(const std::filesystem::path&, T2&), const std::filesyst
 			const int Cnt = load(p, tmp);
 			if (Cnt < 0)
 			{
-				failureFiles.push_back(UTF8toGBK(p.path().filename().u8string()));
+				failureFiles.push_back(p.path().filename().u8string());
 				intFailure++;
 			}
 			else intItem += Cnt;
@@ -373,7 +373,7 @@ int _loadDir(int (*load)(const std::filesystem::path&, T2&), const std::filesyst
 	return 0;
 }
 
-//¶ÁÈ¡ÎÄ¼ş¼Ğ
+//è¯»å–æ–‡ä»¶å¤¹
 template <typename T>
 int loadDir(int (*load)(const std::filesystem::path&, T&), const std::filesystem::path& fpDir, T& tmp, ResList& logList,
             bool isSubdir = false)
@@ -392,10 +392,10 @@ int loadDir(int (*load)(const std::filesystem::path&, T&), const std::filesystem
 	}
 
 	if (!intFile)return 0;
-	logList << "¶ÁÈ¡" + UTF8toGBK(fpDir.filename().u8string()) + "/ÖĞµÄ" + std::to_string(intFile) + "¸öÎÄ¼ş, ¹²" + std::to_string(intItem) + "¸öÌõÄ¿";
+	logList << "è¯»å–" + fpDir.filename().u8string() + "/ä¸­çš„" + std::to_string(intFile) + "ä¸ªæ–‡ä»¶, å…±" + std::to_string(intItem) + "ä¸ªæ¡ç›®";
 	if (intFailure)
 	{
-		logList << "¶ÁÈ¡Ê§°Ü" + std::to_string(intFailure) + "¸ö:";
+		logList << "è¯»å–å¤±è´¥" + std::to_string(intFailure) + "ä¸ª:";
 		for (auto& it : files)
 		{
 			logList << it;

@@ -7,7 +7,7 @@
  * |_______/  |________| |________| |________| |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123Ëİä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -58,11 +58,11 @@ const fifo_dict_ci<int>Console::intDefault{
 {"SystemAlarmCPU",90},{"SystemAlarmRAM",90},{"SystemAlarmDisk",90},
 {"TimeZoneLag",0},
 {"SendIntervalIdle",500},{"SendIntervalBusy",100},
-//×Ô¶¯±£´æÊÂ¼ş¼ä¸ô[min],×Ô¶¯Í¼Æ¬ÇåÀí¼ä¸ô[h],×Ô¶¯ÖØÆô¿ò¼Ü¼ä¸ô[h]
+//è‡ªåŠ¨ä¿å­˜äº‹ä»¶é—´éš”[min],è‡ªåŠ¨å›¾ç‰‡æ¸…ç†é—´éš”[h],è‡ªåŠ¨é‡å¯æ¡†æ¶é—´éš”[h]
 {"AutoSaveInterval",5},/*{"AutoClearImage",0},{"AutoFrameRemake",0},*/
-//ÓÃ»§¼ÇÂ¼ÇåÀíÆÚÏŞ[Day],Èº¼ÇÂ¼ÇåÀíÆÚÏŞ[Day]
+//ç”¨æˆ·è®°å½•æ¸…ç†æœŸé™[Day],ç¾¤è®°å½•æ¸…ç†æœŸé™[Day]
 {"InactiveUserLine",360},{"InactiveGroupLine",360},
-//½ÓÊÕÈºÄÚ»ØÒôÏûÏ¢£¬½ÓÊÜÆµµÀÄÚ»ØÒôÏûÏ¢£¬½ÓÊÜ×Ô¼ºË½ÁÄÏûÏ¢
+//æ¥æ”¶ç¾¤å†…å›éŸ³æ¶ˆæ¯ï¼Œæ¥å—é¢‘é“å†…å›éŸ³æ¶ˆæ¯ï¼Œæ¥å—è‡ªå·±ç§èŠæ¶ˆæ¯
 {"ListenGroupEcho",0},{"ListenChannelEcho",1},{"ListenSelfEcho",0},
 {"ReferMsgReply",0},
 {"EnableWebUI",1},{"WebUIAllowInternetAccess",0},
@@ -72,52 +72,52 @@ const fifo_dict_ci<int>Console::intDefault{
 {"DefaultCOCRoomRule",0},
 };
 const std::unordered_map<std::string,string>Console::confComment{
-	{"DisabledGlobal","È«¾ÖÍ£ÓÃÖ¸Áî£¬¶Ôtrust4²»ÆğĞ§"},
-	{"DisabledListenAt","¹Ø±Õ×´Ì¬ÏÂ£¬×ÔÉí±»atÊ±Ò²ÏìÓ¦"},
-	{"DisabledMe","È«¾Ö½ûÓÃ.me£¬¶Ôtrust4+²»ÆğĞ§"},
-	{"DisabledJrrp","È«¾Ö½ûÓÃ.jrrp£¬¶Ôtrust4+²»ÆğĞ§"},
-	{"DisabledDeck","È«¾Ö½ûÓÃ.deck£¬¶Ôtrust4+²»ÆğĞ§"},
-	{"DisabledDraw","È«¾Ö½ûÓÃ.draw£¬¶Ôtrust4+²»ÆğĞ§"},
-	{"DisabledSend","È«¾Ö½ûÓÃ.send£¬¶Ôtrust4+²»ÆğĞ§"},
-	{"Private","Ë½ÓÃÄ£Ê½£º1-ÈºÎŞĞí¿ÉÊ¹ÓÃ×Ô¶¯ÍË³ö;0-¹Ø±Õ"},
-	{"CheckGroupLicense","¹«ÓÃÉóºËÄ£Ê½£º2-ÈÎºÎÈº±ØĞëĞí¿ÉÊ¹ÓÃ;1-ĞÂ¼ÓÈºĞëĞí¿ÉÊ¹ÓÃ;0-¹Ø±Õ"},
-	{"ListenGroupRequest","¼àÌı¼ÓÈºÑûÇë"},
-	{"ListenGroupAdd","¼àÌıÈëÈºÊÂ¼ş"},
-	{"ListenFriendRequest","¼àÌıºÃÓÑÉêÇë"},
-	{"ListenFriendAdd","¼àÌıºÃÓÑÌí¼ÓÊÂ¼ş"},
-	{"AllowStranger","2-ÔÊĞíÈÎºÎÈË;1-ĞèÒªÓĞÊ¹ÓÃ¼ÇÂ¼;0-½öÔÊĞíĞÅÈÎÓÃ»§"},
-	{"DisableStrangerChat","¿ªÆôºó²»´¦Àí·ÇºÃÓÑË½ÁÄÏûÏ¢"},
-	{"AutoClearBlack","×Ô¶¯Çå²éºÚÃûµ¥"},
-	{"LeaveBlackQQ","ÓëºÚÃûµ¥ÓÃ»§ÈºÈ¨ÏŞÍ¬¼¶ÊÇ·ñÍËÈº"},
-	{"ListenGroupKick","¼àÌıÈº±»ÌßÊÂ¼ş"},
-	{"ListenGroupBan","¼àÌıÈº½ûÑÔÊÂ¼ş"},
-	{"ListenSpam","¼àÌıÖ¸ÁîË¢ÆÁ"},
-	{"BannedBanInviter","±»ÌßÊÂ¼şÁ¬´øÑûÇëÈË"},
-	{"KickedBanInviter","½ûÑÔÊÂ¼şÁ¬´øÑûÇëÈË"},
-	{"GroupInvalidSize","³¬¹ı¸ÃÈËÊıµÄÈº×Ô¶¯Ğ­ÒéÎŞĞ§"},
-	{"GroupClearLimit","µ¥´ÎÇåÈºÉÏÏŞ"},
-	{"CloudBlackShare","ÔÆ¶ËÍ¬²½ºÚÃûµ¥"},
-	{"BelieveDiceList","ĞÅÈÎ÷»Äï£¨ÒÑÍ£ÓÃ£©"},
-	{"CloudVisible","ÊÇ·ñÔÊĞíDiceĞÅÏ¢¿É±»²éÑ¯"},
-	{"SystemAlarmCPU","ÒıÆğ¾¯±¨µÄCPUÕ¼ÓÃ°Ù·Ö±È(1~100ÉúĞ§)"},
-	{"SystemAlarmRAM","ÒıÆğ¾¯±¨µÄÄÚ´æÕ¼ÓÃ°Ù·Ö±È(1~100ÉúĞ§)"},
-	{"SystemAlarmDisk","ÒıÆğ¾¯±¨µÄ´ÅÅÌÕ¼ÓÃ°Ù·Ö±È(1~100ÉúĞ§)"},
-	{"TimeZoneLag","Ïà¶Ô±¾»úÊ±ÇøÆ«ÒÆ[h]"},
-	{"SendIntervalIdle","¶ÓÁĞ¿ÕÏĞÊ±ÏûÏ¢·¢ËÍ¼ä¸ô[ms]"},
-	{"SendIntervalBusy","¶ÓÁĞ·±Ã¦Ê±ÏûÏ¢·¢ËÍ¼ä¸ô[ms]"},
-	{"AutoSaveInterval","×Ô¶¯±£´æÊÂ¼ş¼ä¸ô[min]"},
-	{"InactiveUserLine","ÓÃ»§¼ÇÂ¼ÇåÀíÆÚÏŞ[Day]"},
-	{"InactiveGroupLine","Èº¼ÇÂ¼ÇåÀíÆÚÏŞ[Day]"},
-	{"ListenGroupEcho","½ÓÊÕÈºÄÚ»ØÒôÏûÏ¢£¬ĞèÒª¿ò¼ÜÖ§³Ö"},
-	{"ListenChannelEcho","½ÓÊÜÆµµÀÄÚ»ØÒôÏûÏ¢£¬ĞèÒª¿ò¼ÜÖ§³Ö"},
-	{"ListenSelfEcho","½ÓÊÜ×Ô¼ºË½ÁÄÏûÏ¢£¬ĞèÒª¿ò¼ÜÖ§³Ö"},
-	{"ReferMsgReply","ÏìÓ¦ÏûÏ¢Ê±»Ø¸´¸ÃÏûÏ¢£¬ĞèÒª¿ò¼ÜÖ§³Ö"},
-	{"EnableWebUI","ÊÇ·ñÆôÓÃWebUI£¬ÖØÆôÉúĞ§"},
-	{"WebUIAllowInternetAccess","ÊÇ·ñÔÊĞíÔ¶³Ì·ÃÎÊWebUI£¨¶Ë¿ÚĞë¶ÔÍâ¿ª·Å£©ÖØÆôÉúĞ§"},
-	{"WebUIPort","¹Ì¶¨WebUI¶Ë¿Ú£¬ÖØÆôÉúĞ§"},
-	{"EnablePython","ÊÇ·ñÆôÓÃPython£¬ÖØÆôÉúĞ§"},
-	{"DebugMode","µ÷ÊÔÄ£Ê½£º½«ËùÓĞ½ÓÊÜµÄÖ¸ÁîĞ´ÈëÎÄ¼ş"},
-	{"DefaultCOCRoomRule","Î´ÉèÖÃrc·¿¹æÊ±µ÷ÓÃµÄ¼ì¶¨¹æÔò"},
+	{"DisabledGlobal","å…¨å±€åœç”¨æŒ‡ä»¤ï¼Œå¯¹trust4ä¸èµ·æ•ˆ"},
+	{"DisabledListenAt","å…³é—­çŠ¶æ€ä¸‹ï¼Œè‡ªèº«è¢«atæ—¶ä¹Ÿå“åº”"},
+	{"DisabledMe","å…¨å±€ç¦ç”¨.meï¼Œå¯¹trust4+ä¸èµ·æ•ˆ"},
+	{"DisabledJrrp","å…¨å±€ç¦ç”¨.jrrpï¼Œå¯¹trust4+ä¸èµ·æ•ˆ"},
+	{"DisabledDeck","å…¨å±€ç¦ç”¨.deckï¼Œå¯¹trust4+ä¸èµ·æ•ˆ"},
+	{"DisabledDraw","å…¨å±€ç¦ç”¨.drawï¼Œå¯¹trust4+ä¸èµ·æ•ˆ"},
+	{"DisabledSend","å…¨å±€ç¦ç”¨.sendï¼Œå¯¹trust4+ä¸èµ·æ•ˆ"},
+	{"Private","ç§ç”¨æ¨¡å¼ï¼š1-ç¾¤æ— è®¸å¯ä½¿ç”¨è‡ªåŠ¨é€€å‡º;0-å…³é—­"},
+	{"CheckGroupLicense","å…¬ç”¨å®¡æ ¸æ¨¡å¼ï¼š2-ä»»ä½•ç¾¤å¿…é¡»è®¸å¯ä½¿ç”¨;1-æ–°åŠ ç¾¤é¡»è®¸å¯ä½¿ç”¨;0-å…³é—­"},
+	{"ListenGroupRequest","ç›‘å¬åŠ ç¾¤é‚€è¯·"},
+	{"ListenGroupAdd","ç›‘å¬å…¥ç¾¤äº‹ä»¶"},
+	{"ListenFriendRequest","ç›‘å¬å¥½å‹ç”³è¯·"},
+	{"ListenFriendAdd","ç›‘å¬å¥½å‹æ·»åŠ äº‹ä»¶"},
+	{"AllowStranger","2-å…è®¸ä»»ä½•äºº;1-éœ€è¦æœ‰ä½¿ç”¨è®°å½•;0-ä»…å…è®¸ä¿¡ä»»ç”¨æˆ·"},
+	{"DisableStrangerChat","å¼€å¯åä¸å¤„ç†éå¥½å‹ç§èŠæ¶ˆæ¯"},
+	{"AutoClearBlack","è‡ªåŠ¨æ¸…æŸ¥é»‘åå•"},
+	{"LeaveBlackQQ","ä¸é»‘åå•ç”¨æˆ·ç¾¤æƒé™åŒçº§æ˜¯å¦é€€ç¾¤"},
+	{"ListenGroupKick","ç›‘å¬ç¾¤è¢«è¸¢äº‹ä»¶"},
+	{"ListenGroupBan","ç›‘å¬ç¾¤ç¦è¨€äº‹ä»¶"},
+	{"ListenSpam","ç›‘å¬æŒ‡ä»¤åˆ·å±"},
+	{"BannedBanInviter","è¢«è¸¢äº‹ä»¶è¿å¸¦é‚€è¯·äºº"},
+	{"KickedBanInviter","ç¦è¨€äº‹ä»¶è¿å¸¦é‚€è¯·äºº"},
+	{"GroupInvalidSize","è¶…è¿‡è¯¥äººæ•°çš„ç¾¤è‡ªåŠ¨åè®®æ— æ•ˆ"},
+	{"GroupClearLimit","å•æ¬¡æ¸…ç¾¤ä¸Šé™"},
+	{"CloudBlackShare","äº‘ç«¯åŒæ­¥é»‘åå•"},
+	{"BelieveDiceList","ä¿¡ä»»éª°å¨˜ï¼ˆå·²åœç”¨ï¼‰"},
+	{"CloudVisible","æ˜¯å¦å…è®¸Diceä¿¡æ¯å¯è¢«æŸ¥è¯¢"},
+	{"SystemAlarmCPU","å¼•èµ·è­¦æŠ¥çš„CPUå ç”¨ç™¾åˆ†æ¯”(1~100ç”Ÿæ•ˆ)"},
+	{"SystemAlarmRAM","å¼•èµ·è­¦æŠ¥çš„å†…å­˜å ç”¨ç™¾åˆ†æ¯”(1~100ç”Ÿæ•ˆ)"},
+	{"SystemAlarmDisk","å¼•èµ·è­¦æŠ¥çš„ç£ç›˜å ç”¨ç™¾åˆ†æ¯”(1~100ç”Ÿæ•ˆ)"},
+	{"TimeZoneLag","ç›¸å¯¹æœ¬æœºæ—¶åŒºåç§»[h]"},
+	{"SendIntervalIdle","é˜Ÿåˆ—ç©ºé—²æ—¶æ¶ˆæ¯å‘é€é—´éš”[ms]"},
+	{"SendIntervalBusy","é˜Ÿåˆ—ç¹å¿™æ—¶æ¶ˆæ¯å‘é€é—´éš”[ms]"},
+	{"AutoSaveInterval","è‡ªåŠ¨ä¿å­˜äº‹ä»¶é—´éš”[min]"},
+	{"InactiveUserLine","ç”¨æˆ·è®°å½•æ¸…ç†æœŸé™[Day]"},
+	{"InactiveGroupLine","ç¾¤è®°å½•æ¸…ç†æœŸé™[Day]"},
+	{"ListenGroupEcho","æ¥æ”¶ç¾¤å†…å›éŸ³æ¶ˆæ¯ï¼Œéœ€è¦æ¡†æ¶æ”¯æŒ"},
+	{"ListenChannelEcho","æ¥å—é¢‘é“å†…å›éŸ³æ¶ˆæ¯ï¼Œéœ€è¦æ¡†æ¶æ”¯æŒ"},
+	{"ListenSelfEcho","æ¥å—è‡ªå·±ç§èŠæ¶ˆæ¯ï¼Œéœ€è¦æ¡†æ¶æ”¯æŒ"},
+	{"ReferMsgReply","å“åº”æ¶ˆæ¯æ—¶å›å¤è¯¥æ¶ˆæ¯ï¼Œéœ€è¦æ¡†æ¶æ”¯æŒ"},
+	{"EnableWebUI","æ˜¯å¦å¯ç”¨WebUIï¼Œé‡å¯ç”Ÿæ•ˆ"},
+	{"WebUIAllowInternetAccess","æ˜¯å¦å…è®¸è¿œç¨‹è®¿é—®WebUIï¼ˆç«¯å£é¡»å¯¹å¤–å¼€æ”¾ï¼‰é‡å¯ç”Ÿæ•ˆ"},
+	{"WebUIPort","å›ºå®šWebUIç«¯å£ï¼Œé‡å¯ç”Ÿæ•ˆ"},
+	{"EnablePython","æ˜¯å¦å¯ç”¨Pythonï¼Œé‡å¯ç”Ÿæ•ˆ"},
+	{"DebugMode","è°ƒè¯•æ¨¡å¼ï¼šå°†æ‰€æœ‰æ¥å—çš„æŒ‡ä»¤å†™å…¥æ–‡ä»¶"},
+	{"DefaultCOCRoomRule","æœªè®¾ç½®rcæˆ¿è§„æ—¶è°ƒç”¨çš„æ£€å®šè§„åˆ™"},
 };
 const enumap<string> Console::mClockEvent{ "off", "on", "save", "clear" };
 
@@ -264,7 +264,7 @@ bool Console::load() {
 			}
 		}
 		catch (std::exception& e) {
-			DD::debugLog("/conf/console.yaml¶ÁÈ¡Ê§°Ü!" + string(e.what()));
+			DD::debugLog("/conf/console.yamlè¯»å–å¤±è´¥!" + string(e.what()));
 		}
 	}
 	else if (tinyxml2::XMLDocument doc; tinyxml2::XML_SUCCESS == doc.LoadFile((DiceDir / "conf" / "console.xml").string().c_str())){
@@ -330,7 +330,7 @@ void Console::loadNotice()
 			return;
 		}
 		catch (const std::exception& e) {
-			console.log(string("½âÎö/conf/NoticeList.json³ö´í:") + e.what(), 1);
+			console.log(string("è§£æ/conf/NoticeList.jsonå‡ºé”™:") + e.what(), 1);
 		}
 	}
 }
@@ -354,15 +354,15 @@ void Console::saveNotice() const
 Console console;
 
 //DiceModManager modules{};
-//³ıÍâÈºÁĞ±í
+//é™¤å¤–ç¾¤åˆ—è¡¨
 std::set<long long> ExceptGroups;
-//÷»ÄïÁĞ±í
+//éª°å¨˜åˆ—è¡¨
 std::map<long long, long long> mDiceList;
 
-//³ÌĞòÆô¶¯Ê±¼ä
+//ç¨‹åºå¯åŠ¨æ—¶é—´
 long long llStartTime = time(nullptr);
 
-//µ±Ç°Ê±¼ä
+//å½“å‰æ—¶é—´
 tm stNow{};
 
 std::string printSTNow(){
@@ -404,9 +404,9 @@ std::string printDate(time_t tt)
 	return to_string(t.tm_year + 1900) + "-" + to_string(t.tm_mon + 1) + "-" + to_string(t.tm_mday);
 }
 
-//ÉÏ°àÊ±¼ä
+//ä¸Šç­æ—¶é—´
 std::pair<int, int> ClockToWork = {24, 0};
-//ÏÂ°àÊ±¼ä
+//ä¸‹ç­æ—¶é—´
 std::pair<int, int> ClockOffWork = {24, 0};
 
 string printClock(std::pair<int, int> clock)
@@ -426,22 +426,22 @@ std::string printSTime(const tm st)
 			st.tm_min < 10 ? "0" : "") + to_string(st.tm_min) + ":" + (st.tm_sec < 10 ? "0" : "") +
 		to_string(st.tm_sec);
 }
-	//´òÓ¡ÓÃ»§êÇ³ÆQQ
+	//æ‰“å°ç”¨æˆ·æ˜µç§°QQ
 	string printUser(long long llqq)
 	{
 		string nick = DD::getQQNick(llqq);
 		if (nick.empty())return getMsg("stranger") + "[" + to_string(llqq) + "]";
 		return nick + "(" + to_string(llqq) + ")";
 	}
-	//´òÓ¡QQÈººÅ
+	//æ‰“å°QQç¾¤å·
 	string printGroup(long long llgroup)
 	{
-		if (!llgroup)return "Ë½ÁÄ";
+		if (!llgroup)return "ç§èŠ";
 		if (ChatList.count(llgroup))return ChatList[llgroup]->print();
 		if (string name{ DD::getGroupName(llgroup) };!name.empty())return "[" + name + "](" + to_string(llgroup) + ")";
-		return "Èº(" + to_string(llgroup) + ")";
+		return "ç¾¤(" + to_string(llgroup) + ")";
 	}
-	//´òÓ¡ÁÄÌì´°¿Ú
+	//æ‰“å°èŠå¤©çª—å£
 	string printChat(chatInfo ct)
 	{
 		switch (ct.type)
@@ -451,19 +451,19 @@ std::string printSTime(const tm st)
 		case msgtype::Group:
 			return printGroup(ct.gid);
 		case msgtype::Discuss:
-			return "ÌÖÂÛ×é(" + to_string(ct.gid) + ")";
+			return "è®¨è®ºç»„(" + to_string(ct.gid) + ")";
 		case msgtype::Channel: //Warning:Temporary
-			return "ÆµµÀ(" + to_string(ct.gid) + ")";
+			return "é¢‘é“(" + to_string(ct.gid) + ")";
 		default:
 			break;
 		}
 		return "";
 	}
-//»ñÈ¡÷»ÄïÁĞ±í
+//è·å–éª°å¨˜åˆ—è¡¨
 void getDiceList()
 {
 }
-//»ñÈ¡÷»ÄïÁĞ±í
+//è·å–éª°å¨˜åˆ—è¡¨
 void getExceptGroup() {
 	std::string list;
 	if (Network::GET("http://shiki.stringempty.xyz/DiceCloud/except_group.json", list))

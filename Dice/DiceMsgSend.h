@@ -9,7 +9,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123Ëİä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -57,18 +57,18 @@ struct std::hash<chatInfo> {
 std::ifstream& operator>>(std::ifstream& fin, msgtype& t);
 std::ifstream& operator>>(std::ifstream& fin, chatInfo& ct);
 /*
- *  ¼ÓËø²¢½«ÏûÏ¢´æÈëÏûÏ¢·¢ËÍ¶ÓÁĞ
+ *  åŠ é”å¹¶å°†æ¶ˆæ¯å­˜å…¥æ¶ˆæ¯å‘é€é˜Ÿåˆ—
  *  Param:
- *  const std::string& msg ÏûÏ¢ÄÚÈİ×Ö·û´®
- *  long long target_id Ä¿±êID(QQ,ÈººÅ»òÌÖÂÛ×éuin)
- *  MsgType msg_type ÏûÏ¢ÀàĞÍ
+ *  const std::string& msg æ¶ˆæ¯å†…å®¹å­—ç¬¦ä¸²
+ *  long long target_id ç›®æ ‡ID(QQ,ç¾¤å·æˆ–è®¨è®ºç»„uin)
+ *  MsgType msg_type æ¶ˆæ¯ç±»å‹
  */
 void AddMsgToQueue(const std::string& msg, long long target_id);
 void AddMsgToQueue(const std::string& msg, chatInfo ct);
 
 /*
- * ÏûÏ¢·¢ËÍÏß³Ìº¯Êı
- * ×¢Òâ: ÇĞÎğÔÚÖ÷Ïß³ÌÖĞµ÷ÓÃ´Ëº¯Êı, ´Ëº¯Êı½öÓÃÓÚ³õÊ¼»¯ÏûÏ¢·¢ËÍÏß³Ì
+ * æ¶ˆæ¯å‘é€çº¿ç¨‹å‡½æ•°
+ * æ³¨æ„: åˆ‡å‹¿åœ¨ä¸»çº¿ç¨‹ä¸­è°ƒç”¨æ­¤å‡½æ•°, æ­¤å‡½æ•°ä»…ç”¨äºåˆå§‹åŒ–æ¶ˆæ¯å‘é€çº¿ç¨‹
  */
 void SendMsg();
 #endif /*DICE_MSG_SEND*/

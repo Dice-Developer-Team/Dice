@@ -1,18 +1,18 @@
 #pragma once
 #include <string>
 
-//base64±àÂë
+//base64ç¼–ç 
 std::string base64_encode(const std::string& decode_string);
 
-//base64½âÂë
+//base64è§£ç 
 std::string base64_decode(const std::string& encoded_string);
 
-//Ìæ»»
+//æ›¿æ¢
 std::string& msg_replace(std::string& s, const std::string& old, const std::string& n);
 
-//CQcode±àÂë
+//CQcodeç¼–ç 
 std::string& msg_encode(std::string& s, bool isCQ = false);
 
-//CQcode½âÂë
+//CQcodeè§£ç 
 std::string& msg_decode(std::string& s, bool isCQ = false);
 

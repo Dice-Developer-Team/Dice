@@ -6,16 +6,16 @@
 
 bool setPassword(const std::string& password)
 {
-    // mg_modify_passwords_file似乎只接受ascii路径而不是其他函数的utf-8路径
-    // anyway, try both
-    if (!mg_modify_passwords_file(WebUIPasswordPath.u8string().c_str(), "DiceWebUI", "admin", password.c_str()))
-    {
-        std::error_code ec;
-        if (!std::filesystem::exists(WebUIPasswordPath, ec))
-        {
-            ofstream(WebUIPasswordPath).close();
-        }
-        return mg_modify_passwords_file(getNativePathString(WebUIPasswordPath).c_str(), "DiceWebUI", "admin", password.c_str());
-    }
-    return true; 
+	// mg_modify_passwords_file浼间箮鍙帴鍙梐scii璺緞鑰屼笉鏄叾浠栧嚱鏁扮殑utf-8璺緞
+	// anyway, try both
+	if (!mg_modify_passwords_file(WebUIPasswordPath.u8string().c_str(), "DiceWebUI", "admin", password.c_str()))
+	{
+		std::error_code ec;
+		if (!std::filesystem::exists(WebUIPasswordPath, ec))
+		{
+			ofstream(WebUIPasswordPath).close();
+		}
+		return mg_modify_passwords_file(getNativePathString(WebUIPasswordPath).c_str(), "DiceWebUI", "admin", password.c_str());
+	}
+	return true; 
 }

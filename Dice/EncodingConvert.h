@@ -9,7 +9,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123ËÝä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -44,9 +44,12 @@ template <typename T,
 	T GBKtoUTF8(const T& TGBK) {
 	return TGBK;
 }
+std::string LocaltoGBK(const std::string& str);
 std::string GBKtoLocal(const std::string& strGBK);
 std::string LocaltoGBK(const std::string& str);
 std::string GBKtoUTF8(const std::string& strGBK, bool isTrial = false);
+std::string UTF8toGBK(const std::string& strUTF8, bool isTrial = false);
+/*
 std::vector<std::string> GBKtoUTF8(const std::vector<std::string>& strGBK);
 template <typename K, typename V>
 std::unordered_map<K, V> GBKtoUTF8(const std::unordered_map<K, V>& TGBK) {
@@ -64,7 +67,6 @@ template <typename T,
 	T UTF8toGBK(const T& TUTF8) {
 	return TUTF8;
 }
-std::string UTF8toGBK(const std::string& strUTF8, bool isTrial = false);
 std::vector<std::string> UTF8toGBK(const std::vector<std::string>& strUTF8);
 template <typename K, typename V>
 std::unordered_map<K, V> UTF8toGBK(const std::unordered_map<K, V>& TUTF8) {
@@ -74,9 +76,10 @@ std::unordered_map<K, V> UTF8toGBK(const std::unordered_map<K, V>& TUTF8) {
 	}
 	return TGBK;
 }
-
+*/
 std::string UtoGBK(const wchar_t*);
 std::string UtoNative(const wchar_t*);
+std::wstring UTF8toU(const std::string&);
 
 std::string UrlEncode(const std::string& str);
 std::string UrlDecode(const std::string& str);

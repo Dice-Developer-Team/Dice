@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123Ëİä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -43,15 +43,15 @@
 std::shared_ptr<DiceModManager> fmt;
 
 DiceSpeech::DiceSpeech(const YAML::Node& yaml) {
-	if (yaml.IsScalar())speech = UTF8toGBK(yaml.Scalar());
+	if (yaml.IsScalar())speech = yaml.Scalar();
 	else if (yaml.IsSequence()) {
-		speech = UTF8toGBK(yaml.as<vector<string>>());
+		speech = yaml.as<vector<string>>();
 	}
 }
 DiceSpeech::DiceSpeech(const fifo_json& j) {
-	if (j.is_string())speech = UTF8toGBK(j.get<string>());
+	if (j.is_string())speech = j.get<string>();
 	else if (j.is_array()) {
-		speech = UTF8toGBK(j.get<vector<string>>());
+		speech = j.get<vector<string>>();
 	}
 }
 string DiceSpeech::express()const {
@@ -92,8 +92,8 @@ string DiceModManager::list_mod()const {
 			+ (mod->title.empty() || mod->title == mod->name ? mod->name
 				: (mod->title + "/" + mod->name))
 			+ (mod->active
-				? (mod->loaded ? " ¡Ì" : " ?")
-				: " ¡Á");
+				? (mod->loaded ? " âˆš" : " ?")
+				: " Ã—");
 	}
 	return list.show();
 }
@@ -135,7 +135,7 @@ bool DiceModManager::mod_clone(const string& name, const string& repo) {
 #endif
 bool DiceModManager::mod_dlpkg(const string& name, const string& pkg, string& des) {
 	if (!Network::GET(pkg, des)) {
-		des = "\nÏÂÔØÊ§°Ü(" + pkg + "):" + des;
+		des = "\nä¸‹è½½å¤±è´¥(" + pkg + "):" + des;
 		return false;
 	}
 	std::error_code ec1;
@@ -173,14 +173,14 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 	}
 	for (auto& url : sourceList) {
 		if (!Network::GET(url + name + "/descriptor.json", desc)) {
-			msg.set("err", msg.get_str("err") + "\n·ÃÎÊ" + url + name + "Ê§°Ü:" + desc);
+			msg.set("err", msg.get_str("err") + "\nè®¿é—®" + url + name + "å¤±è´¥:" + desc);
 			continue;
 		}
 		try {
 			if (desc.find("404") == 0)continue;
 			fifo_json j = fifo_json::parse(desc);
 			if (j.count("dice_build") && j["dice_build"] > Dice_Build) {
-				msg.set("err", msg.get_str("err") + "\nDice°æ±¾²»Âú×ãÒªÇó(" + to_string(j["dice_build"]) + "):" + url);
+				msg.set("err", msg.get_str("err") + "\nDiceç‰ˆæœ¬ä¸æ»¡è¶³è¦æ±‚(" + to_string(j["dice_build"]) + "):" + url);
 				continue;
 			}
 #ifndef __ANDROID__
@@ -192,7 +192,7 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 					return;
 				}
 				else {
-					msg.set("err", msg.get_str("err") + "\ngit cloneÊ§°Ü:" + repo);
+					msg.set("err", msg.get_str("err") + "\ngit cloneå¤±è´¥:" + repo);
 					continue;
 				}
 			}
@@ -206,14 +206,14 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 				}
 				else msg.set("err", msg.get_str("err") + des);
 			}
-			msg.set("err", msg.get_str("err") + "\nÎ´Ğ´³ömodµØÖ·(repo/pkg):" + url + name);
+			msg.set("err", msg.get_str("err") + "\næœªå†™å‡ºmodåœ°å€(repo/pkg):" + url + name);
 		}
 		catch (std::exception& e) {
-			console.log("°²×°" + url + name + "Ê§°Ü:" + e.what(), 0b01);
+			console.log("å®‰è£…" + url + name + "å¤±è´¥:" + e.what(), 0b01);
 			msg.set("err", msg.get_str("err") + "\n" + url + name + ":" + e.what());
 		}
 	}
-	if (!msg.has("err"))msg.set("err", "\nÎ´ÕÒµ½ModÔ´");
+	if (!msg.has("err"))msg.set("err", "\næœªæ‰¾åˆ°Modæº");
 	msg.replyMsg("strModInstallErr");
 }
 void DiceModManager::mod_reinstall(DiceEvent& msg) {
@@ -225,7 +225,7 @@ void DiceModManager::mod_reinstall(DiceEvent& msg) {
 	msg.set("ex_ver", mod->ver.exp);
 	for (auto& url : sourceList) {
 		if (!Network::GET(url + name, desc)) {
-			msg.set("err", msg.get_str("err") + "\n·ÃÎÊ" + url + name + "Ê§°Ü:" + desc);
+			msg.set("err", msg.get_str("err") + "\nè®¿é—®" + url + name + "å¤±è´¥:" + desc);
 			continue;
 		}
 		try {
@@ -241,7 +241,7 @@ void DiceModManager::mod_reinstall(DiceEvent& msg) {
 				modList[name] = mod;
 				modOrder[idx] = mod;
 				if (!mod->loaded) {
-					msg.set("err", msg.get_str("err") + "\ngit cloneÊ§°Ü:" + repo);
+					msg.set("err", msg.get_str("err") + "\ngit cloneå¤±è´¥:" + repo);
 					continue;
 				}
 				save();
@@ -255,14 +255,14 @@ void DiceModManager::mod_reinstall(DiceEvent& msg) {
 				string pkg{ j["pkg"] };
 				std::string des;
 				if (!Network::GET(pkg, des)) {
-					msg.set("err", msg.get_str("err") + "\nÏÂÔØÊ§°Ü(" + pkg + "):" + des);
+					msg.set("err", msg.get_str("err") + "\nä¸‹è½½å¤±è´¥(" + pkg + "):" + des);
 					continue;
 				}
 				fs::remove_all(DiceDir / "mod" / name, ec1);
 				Zip::extractZip(des, DiceDir / "mod");
 				auto pathJson{ DiceDir / "mod" / (name + ".json") };
 				if (!fs::exists(pathJson)) {
-					msg.set("err", msg.get_str("err") + "\npkg½âÑ¹ÎŞÎÄ¼ş" + name + ".json");
+					msg.set("err", msg.get_str("err") + "\npkgè§£å‹æ— æ–‡ä»¶" + name + ".json");
 					continue;
 				}
 				string err;
@@ -278,13 +278,13 @@ void DiceModManager::mod_reinstall(DiceEvent& msg) {
 					continue;
 				}
 			}
-			msg.set("err", msg.get_str("err") + "\nÎ´Ğ´³ömodµØÖ·(repo/pkg):" + url + name);
+			msg.set("err", msg.get_str("err") + "\næœªå†™å‡ºmodåœ°å€(repo/pkg):" + url + name);
 		} catch (std::exception& e) {
-			console.log("°²×°" + url + name + "Ê§°Ü:" + e.what(), 0b01);
+			console.log("å®‰è£…" + url + name + "å¤±è´¥:" + e.what(), 0b01);
 			msg.set("err", msg.get_str("err") + "\n" + url + name + ":" + e.what());
 		}
 	}
-	if (!msg.has("err"))msg.set("err", "\nÎ´ÕÒµ½ModÔ´");
+	if (!msg.has("err"))msg.set("err", "\næœªæ‰¾åˆ°Modæº");
 	msg.replyMsg("strModInstallErr");
 }
 void DiceModManager::mod_update(DiceEvent& msg) {
@@ -312,8 +312,8 @@ void DiceModManager::mod_update(DiceEvent& msg) {
 	string desc;
 	for (auto& url : sourceList) {
 		if (!Network::GET(url + name, desc)) {
-			console.log("·ÃÎÊ" + url + name + "Ê§°Ü:" + desc, 0);
-			msg.set("err", msg.get_str("err") + "\n·ÃÎÊ" + url + name + "Ê§°Ü:" + desc);
+			console.log("è®¿é—®" + url + name + "å¤±è´¥:" + desc, 0);
+			msg.set("err", msg.get_str("err") + "\nè®¿é—®" + url + name + "å¤±è´¥:" + desc);
 			continue;
 		}
 		try {
@@ -323,7 +323,7 @@ void DiceModManager::mod_update(DiceEvent& msg) {
 			if (mod->ver < ver) {
 				string pkg{ j["pkg"] };
 				if (!Network::GET(pkg, des)) {
-					msg.set("err", msg.get_str("err") + "\nÏÂÔØÊ§°Ü(" + pkg + "):" + des);
+					msg.set("err", msg.get_str("err") + "\nä¸‹è½½å¤±è´¥(" + pkg + "):" + des);
 					continue;
 				}
 				std::error_code ec1;
@@ -331,7 +331,7 @@ void DiceModManager::mod_update(DiceEvent& msg) {
 				Zip::extractZip(des, DiceDir / "mod");
 				auto pathJson{ DiceDir / "mod" / (name + ".json") };
 				if (!fs::exists(pathJson)) {
-					msg.set("err", msg.get_str("err") + "\npkg½âÑ¹ÎŞÎÄ¼ş" + name + ".json");
+					msg.set("err", msg.get_str("err") + "\npkgè§£å‹æ— æ–‡ä»¶" + name + ".json");
 					continue;
 				}
 				string err;
@@ -347,14 +347,14 @@ void DiceModManager::mod_update(DiceEvent& msg) {
 				}
 			}
 			else {
-				msg.set("err", "ÎŞ¸üĞÂÓÚ" + mod->ver.exp + "µÄ°æ±¾!");
+				msg.set("err", "æ— æ›´æ–°äº" + mod->ver.exp + "çš„ç‰ˆæœ¬!");
 			}
 		} catch (std::exception& e) {
-			console.log("°²×°" + url + name + "Ê§°Ü:" + e.what(), 0b01);
+			console.log("å®‰è£…" + url + name + "å¤±è´¥:" + e.what(), 0b01);
 			msg.set("err", msg.get_str("err") + "\n" + url + name + ":" + e.what());
 		}
 	}
-	if (!msg.has("err"))msg.set("err", "\nÎ´ÕÒµ½ModÔ´");
+	if (!msg.has("err"))msg.set("err", "\næœªæ‰¾åˆ°Modæº");
 	msg.replyMsg("strModInstallErr");
 }
 
@@ -398,7 +398,7 @@ const std::string getMsg(const std::string& key, const AttrObject& maptmp) {
 }
 
 AttrVar DiceModManager::format(const string& s, const AttrObject& context, bool isTrust, const dict_ci<string>& dict) const {
-	//Ö±½ÓÖØ¶¨Ïò
+	//ç›´æ¥é‡å®šå‘
 	if (s[0] == '&') {
 		const string key = s.substr(1);
 		if (auto val{ getContextItem(context, key, isTrust) }) {
@@ -617,10 +617,10 @@ string DiceModManager::list_reply(int type)const {
 	for (const auto& [key, reply] : final_reply.regex_items) {
 		if (type & (int)reply->type)listRegex << key;
 	}
-	if (!listMatch.empty())listTotal << "[ÍêÈ«Æ¥Åä] " + listMatch.dot(" | ").show();
-	if (!listPrefix.empty())listTotal << "[Ç°×ºÆ¥Åä] " + listPrefix.dot(" | ").show();
-	if (!listSearch.empty())listTotal << "[Ä£ºıÆ¥Åä] " + listSearch.dot(" | ").show();
-	if (!listRegex.empty())listTotal << "[ÕıÔòÆ¥Åä] " + listRegex.dot(" | ").show();
+	if (!listMatch.empty())listTotal << "[å®Œå…¨åŒ¹é…] " + listMatch.dot(" | ").show();
+	if (!listPrefix.empty())listTotal << "[å‰ç¼€åŒ¹é…] " + listPrefix.dot(" | ").show();
+	if (!listSearch.empty())listTotal << "[æ¨¡ç³ŠåŒ¹é…] " + listSearch.dot(" | ").show();
+	if (!listRegex.empty())listTotal << "[æ­£åˆ™åŒ¹é…] " + listRegex.dot(" | ").show();
 	return "\n" + ((listTotal.size() > 1 && listTotal.length() > 256)
 		? listTotal.show("\f") : listTotal.show("\n"));
 }
@@ -639,7 +639,7 @@ bool DiceModManager::del_reply(const string& key) {
 void DiceModManager::save_reply() {
 	fifo_json j;
 	for (const auto& [word, reply] : custom_reply) {
-		j[GBKtoUTF8(word)] = reply->writeJson();
+		j[word] = reply->writeJson();
 	}
 	if (j.empty()) std::filesystem::remove(DiceDir / "conf" / "CustomMsgReply.json");
 	else fwriteJson(DiceDir / "conf" / "CustomMsgReply.json", j, 0);
@@ -697,17 +697,17 @@ std::optional<std::filesystem::path> DiceModManager::py_path(const string& name)
 DiceMod::DiceMod(const string& mod, size_t i, const string& url) :name(mod), index(i), pathDir(DiceDir / "mod" / mod),
 repo(std::make_shared<DiceRepo>(pathDir, url)) {
 	if (!fs::exists(pathDir)) {
-		console.log(getMsg("strSelfNick") + "°²×°mod¡¸" + mod + "¡¹²Ö¿âÊ§°Ü£¡", 0);
+		console.log(getMsg("strSelfNick") + "å®‰è£…modã€Œ" + mod + "ã€ä»“åº“å¤±è´¥ï¼", 0);
 	}
 	else if (!fs::exists(pathDir / "descriptor.json")) {
-		console.log(getMsg("strSelfNick") + "°²×°mod¡¸" + mod + "¡¹Òì³£:ÕÒ²»µ½descriptor.json", 1);
+		console.log(getMsg("strSelfNick") + "å®‰è£…modã€Œ" + mod + "ã€å¼‚å¸¸:æ‰¾ä¸åˆ°descriptor.json", 1);
 	}
 	else {
 		pathJson = DiceDir / "mod" / (mod + ".json");
 		fs::copy_file(pathDir / "descriptor.json", pathJson, fs::copy_options::overwrite_existing);
 		string reason;
 		if (!loadDesc(reason)) {
-			console.log(getMsg("strSelfNick") + "°²×°¡¸" + mod + "¡¹Ê§°Ü:" + reason, 0);
+			console.log(getMsg("strSelfNick") + "å®‰è£…ã€Œ" + mod + "ã€å¤±è´¥:" + reason, 0);
 		}
 	}
 }
@@ -720,36 +720,36 @@ void DiceMod::remote(const string& url) {
 string DiceMod::desc()const {
 	ShowList li;
 	li << "[" + to_string(index) + "]" + (title.empty() ? name : title);
-	if (!ver.exp.empty())li << "- °æ±¾: " + ver.exp;
-	if (!author.empty())li << "- ×÷Õß: " + author;
-	if (!brief.empty())li << "- ¼ò½é: " + brief;
+	if (!ver.exp.empty())li << "- ç‰ˆæœ¬: " + ver.exp;
+	if (!author.empty())li << "- ä½œè€…: " + author;
+	if (!brief.empty())li << "- ç®€ä»‹: " + brief;
 	return li.show("\n");
 }
 string DiceMod::detail()const {
 	ShowList li;
-	if (!rules.empty())li << "- ¹æÔò¼¯: " + to_string(rules.size()) + " ²¿";
-	if (!card_models.empty())li << "- ½ÇÉ«¿¨: " + to_string(card_models.size()) + " °æ";
-	if (!events.empty())li << "- ÊÂ¼ş: " + to_string(events.size()) + "Ìõ";
-	if (!reply_list.empty())li << "- »Ø¸´: " + to_string(reply_list.size()) + "Ïî";
-	if (!lua_scripts.empty())li << "- lua½Å±¾: " + to_string(lua_scripts.size()) + "·İ";
-	if (!js_scripts.empty())li << "- js½Å±¾: " + to_string(js_scripts.size()) + "·İ";
-	if (!py_scripts.empty())li << "- py½Å±¾: " + to_string(py_scripts.size()) + "·İ";
-	if (!helpdoc.empty())li << "- °ïÖú: " + to_string(helpdoc.size()) + "Ìõ";
-	if (!speech.empty())li << "- Ì¨´Ê: " + to_string(speech.size()) + "Ïî";
-	if (cntImage)li << "- Í¼Ïñ: " + to_string(cntImage) + "·İ";
-	if (cntAudio)li << "- ÒôÆµ: " + to_string(cntAudio) + "·İ";
+	if (!rules.empty())li << "- è§„åˆ™é›†: " + to_string(rules.size()) + " éƒ¨";
+	if (!card_models.empty())li << "- è§’è‰²å¡: " + to_string(card_models.size()) + " ç‰ˆ";
+	if (!events.empty())li << "- äº‹ä»¶: " + to_string(events.size()) + "æ¡";
+	if (!reply_list.empty())li << "- å›å¤: " + to_string(reply_list.size()) + "é¡¹";
+	if (!lua_scripts.empty())li << "- luaè„šæœ¬: " + to_string(lua_scripts.size()) + "ä»½";
+	if (!js_scripts.empty())li << "- jsè„šæœ¬: " + to_string(js_scripts.size()) + "ä»½";
+	if (!py_scripts.empty())li << "- pyè„šæœ¬: " + to_string(py_scripts.size()) + "ä»½";
+	if (!helpdoc.empty())li << "- å¸®åŠ©: " + to_string(helpdoc.size()) + "æ¡";
+	if (!speech.empty())li << "- å°è¯: " + to_string(speech.size()) + "é¡¹";
+	if (cntImage)li << "- å›¾åƒ: " + to_string(cntImage) + "ä»½";
+	if (cntAudio)li << "- éŸ³é¢‘: " + to_string(cntAudio) + "ä»½";
 	return desc() + "\n" + li.show("\n");
 }
 bool DiceMod::loadDesc(string& cb) {
 	try {
 		fifo_json j = freadJson(pathJson);
 		if (j.is_null()) {
-			cb = "(Î´¶ÁÈ¡µ½json)";
+			cb = "(æœªè¯»å–åˆ°json)";
 			return false;
 		}
 		if (j.count("dice_build")) {
 			if (j["dice_build"] > Dice_Build) {
-				cb = "(Dice!buildµÍÓÚËùĞè" + to_string(j["dice_build"].get<int>()) + ")";
+				cb = "(Dice!buildä½äºæ‰€éœ€" + to_string(j["dice_build"].get<int>()) + ")";
 				return false;
 			}
 		}
@@ -765,31 +765,31 @@ bool DiceMod::loadDesc(string& cb) {
 				}
 			}
 			if (!fault.empty()) {
-				cb = "(È±ÉÙÇ°ÖÃmod:" + fault.show() + ")";
+				cb = "(ç¼ºå°‘å‰ç½®mod:" + fault.show() + ")";
 				return false;
 			}
 			else if (!post.empty()) {
-				console.log("¾¯¸æ£º" + name
-					+ "ÓëÇ°ÖÃmod[" + post.show() + "]Ë³Ğòµ¹ÖÃ", 1);
+				console.log("è­¦å‘Šï¼š" + name
+					+ "ä¸å‰ç½®mod[" + post.show() + "]é¡ºåºå€’ç½®", 1);
 			}
 		}
-		if (j.count("title"))title = UTF8toGBK(j["title"].get<string>());
-		else if (j.count("mod"))title = UTF8toGBK(j["mod"].get<string>());
-		if (j.count("ver"))ver = UTF8toGBK(j["ver"].get<string>());
-		if (j.count("author"))author = UTF8toGBK(j["author"].get<string>());
-		if (j.count("brief"))brief = UTF8toGBK(j["brief"].get<string>());
+		if (j.count("title"))title = j["title"];
+		else if (j.count("mod"))title = j["mod"];
+		if (j.count("ver"))ver = j["ver"].get<string>();
+		if (j.count("author"))author = j["author"];
+		if (j.count("brief"))brief = j["brief"];
 		if (j.count("helpdoc")) {
 			readJMap(j["helpdoc"], helpdoc);
 		}
 		if (j.count("speech")) {
 			for (auto& it : j["speech"].items()) {
-				speech[UTF8toGBK(it.key())] = it.value();
+				speech[it.key()] = it.value();
 			}
 		}
 		loadDir();
 	}
 	catch (fifo_json::exception& e) {
-		cb = "(json½âÎö´íÎó)";
+		cb = "(jsonè§£æé”™è¯¯)";
 		return false;
 	}
 	return true;
@@ -810,12 +810,12 @@ void DiceMod::loadDir() {
 					YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) };
 					if (yaml.IsMap()) {
 						for (auto it : yaml) {
-							speech[UTF8toGBK(it.first.Scalar())] = it.second;
+							speech[it.first.Scalar()] = it.second;
 						}
 					}
 				}
 				catch (std::exception& e) {
-					console.log(UTF8toGBK(cut_relative(p, pathDir).u8string()) + "½âÎö´íÎó!" + e.what(), 0b10);
+					console.log(cut_relative(p, pathDir).u8string() + "è§£æé”™è¯¯!" + e.what(), 0b10);
 				}
 			}
 		}
@@ -845,19 +845,19 @@ void DiceMod::loadDir() {
 			for (auto& p : fSpeech) {
 				try {
 					if (YAML::Node yaml{ YAML::LoadFile(getNativePathString(p)) }; yaml.IsMap()) {
-						string rulename{ UTF8toGBK(yaml["rule"].Scalar()) };
+						string rulename{ yaml["rule"].Scalar() };
 						auto& rule{ rules[rulename]};
 						if (yaml["manual"])for (auto it : yaml["manual"]) {
-							rule.manual[UTF8toGBK(it.first.Scalar())] = UTF8toGBK(it.second.Scalar());
+							rule.manual[it.first.Scalar()] = it.second.Scalar();
 						}
 						if (yaml["tape"])for (auto it : yaml["tape"]) {
-							rule.cassettes[UTF8toGBK(it.first.Scalar())] = AttrVar(it.second).to_obj();
+							rule.cassettes[it.first.Scalar()] = AttrVar(it.second).to_obj();
 						}
 					}
-					else console.log(UTF8toGBK(cut_relative(p, pathDir).u8string()) + "yaml¸ñÊ½²»Îª¶ÔÏó!", 0b10);
+					else console.log(cut_relative(p, pathDir).u8string() + "yamlæ ¼å¼ä¸ä¸ºå¯¹è±¡!", 0b10);
 				}
 				catch (std::exception& e) {
-					console.log(UTF8toGBK(cut_relative(p, pathDir).u8string()) + "½âÎö´íÎó!" + e.what(), 0b10);
+					console.log(cut_relative(p, pathDir).u8string() + "è§£æé”™è¯¯!" + e.what(), 0b10);
 				}
 			}
 		}
@@ -903,12 +903,12 @@ bool DiceMod::reload(string& cb) {
 	return loadDesc(cb);
 }
 int DiceModManager::load(ResList& resLog){
-	//¶ÁÈ¡mod¹ÜÀíÎÄ¼ş
+	//è¯»å–modç®¡ç†æ–‡ä»¶
 	auto jFile{ freadJson(DiceDir / "conf" / "ModList.json") };
 	if (!jFile.empty()) {
 		for (auto& j : jFile) {
 			if (!j.count("name"))continue;
-			string modName{ UTF8toGBK(j["name"].get<string>()) };
+			string modName{ j["name"] };
 			if (!modList.count(modName)) {
 				auto mod{ std::make_shared<DiceMod>(DiceMod{ modName,modOrder.size(),
 					j.count("active") ? bool(j["active"]) : true}) };
@@ -917,7 +917,7 @@ int DiceModManager::load(ResList& resLog){
 			}
 		}
 	}
-	//¶ÁÈ¡mod
+	//è¯»å–mod
 	vector<std::filesystem::path> ModFile;
 	vector<string> sModErr;
 	auto dirMod{ DiceDir / "mod" };
@@ -925,7 +925,7 @@ int DiceModManager::load(ResList& resLog){
 		bool newMod{ false };
 		for (auto& pathMod : ModFile) {
 			if (pathMod.extension() != ".json")continue;
-			if (string modName{ UTF8toGBK(pathMod.stem().u8string()) }; modList.count(modName)) {
+			if (string modName{ pathMod.stem().u8string() }; modList.count(modName)) {
 				auto mod{ modList[modName] };
 				mod->file(pathMod);
 			}
@@ -950,13 +950,13 @@ int DiceModManager::load(ResList& resLog){
 				else sModErr.push_back(mod->name + reason);
 			}
 			catch (fifo_json::exception& e) {
-				sModErr.push_back(mod->name + "(.json½âÎö´íÎó)");
+				sModErr.push_back(mod->name + "(.jsonè§£æé”™è¯¯)");
 				continue;
 			}
 		}
-		if (cntMod)resLog << "¶ÁÈ¡/mod/ÖĞµÄ" + std::to_string(cntMod) + "Ã¶mod";
+		if (cntMod)resLog << "è¯»å–/mod/ä¸­çš„" + std::to_string(cntMod) + "æšmod";
 		if (!sModErr.empty()) {
-			resLog << "¶ÁÈ¡Ê§°Ü" + std::to_string(sModErr.size()) + "Ïî:";
+			resLog << "è¯»å–å¤±è´¥" + std::to_string(sModErr.size()) + "é¡¹:";
 			for (auto& it : sModErr) {
 				resLog << it;
 			}
@@ -970,36 +970,36 @@ int DiceModManager::load(ResList& resLog){
 		}
 	}
 	catch (const std::exception& e) {
-		console.log(string("¶ÁÈ¡/conf/CustomMsg.jsonÊ§°Ü!") + e.what(), 1, printSTNow());
+		console.log(string("è¯»å–/conf/CustomMsg.jsonå¤±è´¥!") + e.what(), 1, printSTNow());
 	}
 	//custom_help
 	if (loadJMap(DiceDir / "conf" / "CustomHelp.json", CustomHelp) == -1)
-		resLog << "½âÎö/conf/CustomHelp.jsonÊ§°Ü£¡";
+		resLog << "è§£æ/conf/CustomHelp.jsonå¤±è´¥ï¼";
 	else if(!CustomHelp.empty())
-		resLog << "¶ÁÈ¡/conf/CustomHelp.jsonÖĞµÄ" + std::to_string(CustomHelp.size()) + "Ìõ°ïÖú´ÊÌõ";
+		resLog << "è¯»å–/conf/CustomHelp.jsonä¸­çš„" + std::to_string(CustomHelp.size()) + "æ¡å¸®åŠ©è¯æ¡";
 	loadJMap(DiceDir / "user" / "HelpStatic.json", cntHelp);
 	//custom_reply
 	loadPlugin(resLog);
 	if (fifo_json jFile = freadJson(DiceDir / "conf" / "CustomMsgReply.json"); !jFile.empty()) {
 		try {
 			for (auto& reply : jFile.items()) {
-				if (std::string key = UTF8toGBK(reply.key()); !key.empty()) {
+				if (std::string key = reply.key(); !key.empty()) {
 					ptr<DiceMsgReply> p{ custom_reply[key] = std::make_shared<DiceMsgReply>() };
 					p->title = key; 
 					p->readJson(reply.value());
 				}
 			}
-			resLog << "¶ÁÈ¡/conf/CustomMsgReply.jsonÖĞµÄ" + std::to_string(jFile.size()) + "Ìõ×Ô¶¨Òå»Ø¸´";
+			resLog << "è¯»å–/conf/CustomMsgReply.jsonä¸­çš„" + std::to_string(jFile.size()) + "æ¡è‡ªå®šä¹‰å›å¤";
 		}
 		catch (const std::exception& e) {
-			resLog << "½âÎö/conf/CustomMsgReply.json³ö´í:" << e.what();
+			resLog << "è§£æ/conf/CustomMsgReply.jsonå‡ºé”™:" << e.what();
 		}
 	}
 	else {
 		std::map<std::string, std::vector<std::string>, less_ci> mRegexReplyDeck;
 		std::map<std::string, std::vector<std::string>, less_ci> mReplyDeck;
 		if (loadJMap(DiceDir / "conf" / "CustomReply.json", mReplyDeck) > 0) {
-			resLog << "Ç¨ÒÆCustomReply" + to_string(mReplyDeck.size()) + "Ìõ";
+			resLog << "è¿ç§»CustomReply" + to_string(mReplyDeck.size()) + "æ¡";
 			for (auto& [key, deck] : mReplyDeck) {
 				ptr<DiceMsgReply> reply{ custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;
@@ -1008,7 +1008,7 @@ int DiceModManager::load(ResList& resLog){
 			}
 		}
 		if (loadJMap(DiceDir / "conf" / "CustomRegexReply.json", mRegexReplyDeck) > 0) {
-			resLog << "Ç¨ÒÆÕıÔòReply" + to_string(mRegexReplyDeck.size()) + "Ìõ";
+			resLog << "è¿ç§»æ­£åˆ™Reply" + to_string(mRegexReplyDeck.size()) + "æ¡";
 			for (auto& [key, deck] : mRegexReplyDeck) {
 				ptr<DiceMsgReply> reply{ custom_reply[key] = std::make_shared<DiceMsgReply>() };
 				reply->title = key;
@@ -1077,9 +1077,9 @@ void DiceModManager::build() {
 		map_merge(model_alias, mod->model_alias);
 	}
 	//merge custom
-	if (rules_new->build())resLog << "×¢²á¹æÔò¼¯ " + to_string(rules_new->rules.size()) + " ²¿";
+	if (rules_new->build())resLog << "æ³¨å†Œè§„åˆ™é›† " + to_string(rules_new->rules.size()) + " éƒ¨";
 	ruleset.swap(rules_new);
-	if (cntModel)resLog << "×¢²á½ÇÉ«¿¨Ä£°å " + to_string(cntModel) + " °æ";
+	if (cntModel)resLog << "æ³¨å†Œè§’è‰²å¡æ¨¡æ¿ " + to_string(cntModel) + " ç‰ˆ";
 	for (auto& [name, model] : models) {
 		model->init();
 	}
@@ -1088,9 +1088,9 @@ void DiceModManager::build() {
 		CardModels[alias] = CardModels[name];
 	}
 	if (cntSpeech += map_merge(global_speech, EditedMsg))
-		resLog << "×¢²áspeech " + to_string(cntSpeech) + " Ïî";
+		resLog << "æ³¨å†Œspeech " + to_string(cntSpeech) + " é¡¹";
 	if (cntHelp += map_merge(global_helpdoc, CustomHelp))
-		resLog << "×¢²áhelp " + to_string(cntHelp) + " Ïî";
+		resLog << "æ³¨å†Œhelp " + to_string(cntHelp) + " é¡¹";
 	querier = {};
 	for (const auto& [key, word] : global_helpdoc) {
 		querier.insert(key);
@@ -1098,14 +1098,14 @@ void DiceModManager::build() {
 	map_merge(final_reply.items, plugin_reply);
 	map_merge(final_reply.items, custom_reply);
 	if (!final_reply.items.empty()) {
-		resLog << "×¢²áreply " + to_string(final_reply.items.size()) + " Ïî";
+		resLog << "æ³¨å†Œreply " + to_string(final_reply.items.size()) + " é¡¹";
 		final_reply.build();
 	}
-	if (!global_lua_scripts.empty())resLog << "×¢²álua½Å±¾ " + to_string(global_lua_scripts.size()) + " ·İ";
-	if (!global_js_scripts.empty())resLog << "×¢²ájs½Å±¾ " + to_string(global_js_scripts.size()) + " ·İ";
-	if (!global_py_scripts.empty())resLog << "×¢²ápy½Å±¾ " + to_string(global_py_scripts.size()) + " ·İ";
+	if (!global_lua_scripts.empty())resLog << "æ³¨å†Œluaè„šæœ¬ " + to_string(global_lua_scripts.size()) + " ä»½";
+	if (!global_js_scripts.empty())resLog << "æ³¨å†Œjsè„šæœ¬ " + to_string(global_js_scripts.size()) + " ä»½";
+	if (!global_py_scripts.empty())resLog << "æ³¨å†Œpyè„šæœ¬ " + to_string(global_py_scripts.size()) + " ä»½";
 	if (!global_events.empty()) {
-		resLog << "×¢²áevent " + to_string(global_events.size()) + " Ïî";
+		resLog << "æ³¨å†Œevent " + to_string(global_events.size()) + " é¡¹";
 		clock_events.clear();
 		hook_events.clear();
 		unordered_set<string> cycle;
@@ -1137,7 +1137,7 @@ void DiceModManager::build() {
 		cycle_events.swap(cycle);
 	}
 	if (!resLog.empty()) {
-		resLog << "Ä£¿é¼ÓÔØÍê±Ï¡Ì";
+		resLog << "æ¨¡å—åŠ è½½å®Œæ¯•âˆš";
 		console.log(getMsg("strSelfName") + "\n" + resLog.show("\n"), int(Enabled), printSTNow());
 	}
 	isIniting = false;
@@ -1153,7 +1153,7 @@ void DiceModManager::save() {
 	fifo_json jFile = fifo_json::array();
 	for (auto& mod : modOrder) {
 		fifo_json j;
-		j["name"] = GBKtoUTF8(mod->name);
+		j["name"] = mod->name;
 		j["active"] = mod->active;
 		jFile.push_back(j);
 	}

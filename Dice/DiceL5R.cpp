@@ -27,7 +27,7 @@ std::string DiceL5R::roll()
 			iter->status = rolled;
 		}
 
-		result += "¡¾" + to_string(i++) + "¡¿";
+		result += "[" + to_string(i++) + "]";
 		if (iter->type == white)
 			result += symbolW[iter->result] + "(w)";
 		else
@@ -183,7 +183,7 @@ std::string DiceL5R::getResult()
 	{
 		if (iter->status == dropped) continue;
 
-		reply += "¡¾" + to_string(i++) + "¡¿";
+		reply += "[" + to_string(i++) + "]";
 		if (iter->type == white)
 			reply += symbolW[iter->result] + "(w)";
 		else

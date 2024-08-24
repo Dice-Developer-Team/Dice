@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Player & Character Card
- * Copyright (C) 2018-2021 w4123Ëİä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -63,7 +63,7 @@ public:
 	enum class DataType : unsigned char { Any, Nature, Int, };
 	enum class TextType : unsigned char { Plain, Dicexp, JavaScript, };
 	AttrShape() = default;
-	AttrShape(const tinyxml2::XMLElement* node, bool isUTF8);
+	AttrShape(const tinyxml2::XMLElement* node);
 	AttrShape(int i) :defVal(i) {}
 	AttrShape(const string& s):defVal(s){}
 	AttrShape(const string& s, TextType tt) :defVal(s), textType(tt){}
@@ -87,7 +87,7 @@ public:
 			shapes[key] = { val, AttrShape::TextType::Dicexp };
 		}
 	}
-	CardPreset(const tinyxml2::XMLElement* d, bool isUTF8);
+	CardPreset(const tinyxml2::XMLElement* d);
 };
 struct CardTrigger {
 	string name;
@@ -102,11 +102,11 @@ public:
 	vector<string> alias;
 	//alias of attr
 	dict_ci<> replaceName = {};
-	//×÷³ÉÊ±Éú³É
+	//ä½œæˆæ—¶ç”Ÿæˆ
 	vector<vector<string>> vBasicList = {};
-	//Ôª±í
+	//å…ƒè¡¨
 	dict_ci<AttrShape> AttrShapes;
-	//Éú³É²ÎÊı
+	//ç”Ÿæˆå‚æ•°
 	dict_ci<CardPreset> presets = {};
 	//
 	ptr<js_context> js_ctx;
@@ -162,7 +162,7 @@ class CharaCard: public AnysTable
 {
 private:
 	const unsigned short id = 0;
-	string Name = "½ÇÉ«¿¨";
+	string Name = "è§’è‰²å¡";
 	unordered_set<string> locks;
 	std::mutex cardMutex;
 public:
@@ -204,7 +204,7 @@ public:
 
 	//int call(string key)const;
 
-	//±í´ïÊ½×ªÒå
+	//è¡¨è¾¾å¼è½¬ä¹‰
 	string escape(string exp, const unordered_set<string>& sRef)
 	{
 		if (exp[0] == '&')
@@ -225,17 +225,17 @@ public:
 		return exp;
 	}
 
-	//Çókey¶ÔÓ¦ÖÀ÷»±í´ïÊ½
+	//æ±‚keyå¯¹åº”æ·éª°è¡¨è¾¾å¼
 	string getExp(string& key, unordered_set<string> sRef = {});
 
 	bool countExp(const string& key)const;
 
-	//¼ÆËã±í´ïÊ½
+	//è®¡ç®—è¡¨è¾¾å¼
 	std::optional<int> cal(string exp);
 
 	void build(const string& para);
 
-	//½âÎöÉú³É²ÎÊı
+	//è§£æç”Ÿæˆå‚æ•°
 	void buildv(string para = "");
 
 	[[nodiscard]] string standard(const string& key) const;
@@ -281,11 +281,11 @@ private:
 	map<unsigned short, PC> mCardList;
 	dict_ci<PC> NameList;
 	unordered_map<unsigned long long, PC> mGroupCard;
-	// ÈËÎï¿¨»¥³â
+	// äººç‰©å¡äº’æ–¥
 	mutable std::mutex cardMutex;
 public:
 	Player() {
-		mCardList[0] = std::make_shared<CharaCard>("½ÇÉ«¿¨", 0);
+		mCardList[0] = std::make_shared<CharaCard>("è§’è‰²å¡", 0);
 	}
 
 	Player(const Player& pl)

@@ -31,12 +31,12 @@ unordered_map<string, cmd> mCommand = {
 	{"uplog",log_put}
 };
 
-// ´ı´¦ÀíÈÎÎñ¶ÓÁĞ
+// å¾…å¤„ç†ä»»åŠ¡é˜Ÿåˆ—
 std::queue<AttrObject> queueJob;
 std::mutex mtQueueJob;
 //std::condition_variable cvJob;
 //std::condition_variable cvJobWaited;
-//ÑÓÊ±ÈÎÎñ¶ÓÁĞ
+//å»¶æ—¶ä»»åŠ¡é˜Ÿåˆ—
 using waited_job = pair<time_t, AttrObject>;
 std::priority_queue<waited_job, std::deque<waited_job>,std::greater<waited_job>> queueJobWaited;
 std::mutex mtJobWaited;
@@ -53,7 +53,7 @@ void exec(AttrObject& job) {
 }
 void jobHandle() {
 	while (Enabled) {
-		//¼àÌı×÷Òµ¶ÓÁĞ
+		//ç›‘å¬ä½œä¸šé˜Ÿåˆ—
 		{
 			std::unique_lock<std::mutex> lock_queue(mtQueueJob);
 			while (Enabled && !queueJob.empty()) {
@@ -71,7 +71,7 @@ void jobHandle() {
 }
 void jobWait() {
 	while (Enabled) {
-		//¼ì²é¶¨Ê±×÷Òµ
+		//æ£€æŸ¥å®šæ—¶ä½œä¸š
 		{
 			std::unique_lock<std::mutex> lock_queue(mtJobWaited);
 			while (Enabled && !queueJobWaited.empty() && queueJobWaited.top().first <= time(NULL)) {
@@ -84,7 +84,7 @@ void jobWait() {
 	}
 }
 
-//½«ÈÎÎñ¼ÓÈëÖ´ĞĞ¶ÓÁĞ
+//å°†ä»»åŠ¡åŠ å…¥æ‰§è¡Œé˜Ÿåˆ—
 void DiceScheduler::push_job(const AttrObject& job) {
 	if (!Enabled)return;
 	{
@@ -103,7 +103,7 @@ void DiceScheduler::push_job(const char* job_name, bool isSelf, const AttrVars& 
 	}
 	//cvJob.notify_one();
 }
-//½«ÈÎÎñ¼ÓÈëµÈ´ı¶ÓÁĞ
+//å°†ä»»åŠ¡åŠ å…¥ç­‰å¾…é˜Ÿåˆ—
 void DiceScheduler::add_job_for(unsigned int waited, const AttrObject& job) {
 	std::unique_lock<std::mutex> lock_queue(mtJobWaited);
 	queueJobWaited.emplace(time(nullptr) + waited, job);
@@ -187,7 +187,7 @@ AttrVar DiceToday::getJrrp(long long uid) {
 	else {
 		if (!UserInfo[uid]->has("jrrp_local")) {
 			UserInfo[uid]->at("jrrp_local") = RandomGenerator::Randint(1, 100);
-			console.log(fmt->format("JRRP»ñÈ¡Ê§°Ü! ´íÎóĞÅÏ¢: \n{res}",
+			console.log(fmt->format("JRRPè·å–å¤±è´¥! é”™è¯¯ä¿¡æ¯: \n{res}",
 				AttrVars{ {"res", res} }
 			), 0);
 		}
@@ -258,13 +258,13 @@ void DiceToday::save() {
 			for (auto& [chat, cnt_list] : counter) {
 				fifo_json j;
 				j["chat"] = to_json(chat);
-				j["cnt"] = GBKtoUTF8(cnt_list);
+				j["cnt"] = cnt_list;
 				jCnt.push_back(j);
 			}
 		}
 		fwriteJson(pathFile, jFile, 0);
 	} catch (std::exception& e) {
-		console.log("Ã¿ÈÕ¼ÇÂ¼±£´æÊ§°Ü:" + string(e.what()), 0b10);
+		console.log("æ¯æ—¥è®°å½•ä¿å­˜å¤±è´¥:" + string(e.what()), 0b10);
 	}
 }
 void DiceToday::load() {
@@ -301,7 +301,6 @@ void DiceToday::load() {
 			for (auto& j : jFile["cnt_list"]) {
 				chatInfo chat{ chatInfo::from_json(j["chat"]) };
 				if (j.count("cnt"))j["cnt"].get_to(counter[chat]);
-				counter[chat] = UTF8toGBK(counter[chat]);
 			}
 		}
 		if (jFile.count("global")) {
@@ -314,7 +313,7 @@ void DiceToday::load() {
 		}
 	}
 	catch (std::exception& e) {
-		console.log("½âÎöÃ¿ÈÕÊı¾İ´íÎó:" + string(e.what()), 0b10);
+		console.log("è§£ææ¯æ—¥æ•°æ®é”™è¯¯:" + string(e.what()), 0b10);
 	}
 }
 
@@ -333,7 +332,7 @@ string printTTime(time_t tt) {
 	return tm_buffer;
 }
 
-//¼òÒ×¼ÆÊ±Æ÷
+//ç®€æ˜“è®¡æ—¶å™¨
 tm stTmp{};
 void ConsoleTimer() 	{
 	Clock clockNow{ stNow.tm_hour,stNow.tm_min };
@@ -344,7 +343,7 @@ void ConsoleTimer() 	{
 #else
 		localtime_r(&tt, &stNow);
 #endif
-		//·ÖÖÓÊ±µã±ä¶¯
+		//åˆ†é’Ÿæ—¶ç‚¹å˜åŠ¨
 		if (stTmp.tm_min != stNow.tm_min) {
 			stTmp = stNow;
 			clockNow = { stNow.tm_hour, stNow.tm_min };
@@ -364,14 +363,14 @@ void ConsoleTimer() 	{
 					break;
 				case 2:
 					dataBackUp();
-					console.log(getMsg("strSelfName") + "¶¨Ê±±£´æÍê³É¡Ì", 1, printSTime(stTmp));
+					console.log(getMsg("strSelfName") + "å®šæ—¶ä¿å­˜å®Œæˆâˆš", 1, printSTime(stTmp));
 					break;
 				case 3:
 					if (int cnt{ clearGroup() }) {
-						console.log("ÒÑÇåÀí¹ıÆÚÈº¼ÇÂ¼" + to_string(cnt) + "Ìõ", 1, printSTime(stTmp));
+						console.log("å·²æ¸…ç†è¿‡æœŸç¾¤è®°å½•" + to_string(cnt) + "æ¡", 1, printSTime(stTmp));
 					}
 					if (int cnt{ clearUser() }) {
-						console.log("ÒÑÇåÀíÎŞĞ§»ò¹ıÆÚÓÃ»§¼ÇÂ¼" + to_string(cnt) + "Ìõ", 1, printSTime(stTmp));
+						console.log("å·²æ¸…ç†æ— æ•ˆæˆ–è¿‡æœŸç”¨æˆ·è®°å½•" + to_string(cnt) + "æ¡", 1, printSTime(stTmp));
 					}
 					break;
 				default:

@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123À›‰ß
+ * Copyright (C) 2018-2021 w4123Ê∫ØÊ¥Ñ
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -43,20 +43,20 @@ std::filesystem::path dirExe;
 std::filesystem::path DiceDir("DiceData");
 
 const dict<short> mChatConf{
-	//0-»∫π‹¿Ì‘±£¨2-–≈»Œ2º∂£¨3-–≈»Œ3º∂£¨4-π‹¿Ì‘±£¨5-œµÕ≥≤Ÿ◊˜
-	{"∫ˆ¬‘", 4},
-	{"Õ£”√÷∏¡Ó", 0},
-	{"Ω˚”√ªÿ∏¥", 0},
-	{"Ω˚”√jrrp", 0},
-	{"Ω˚”√draw", 0},
-	{"Ω˚”√me", 0},
-	{"Ω˚”√help", 0},
-	{"Ω˚”√ob", 0},
-	{"–Ìø… π”√", 1},
-	{"Œ¥…Û∫À", 1},
-	{"√‚«Â", 2},
-	{"√‚∫⁄", 4},
-	{"–≠“ÈŒﬁ–ß", 3},
+	//0-Áæ§ÁÆ°ÁêÜÂëòÔºå2-‰ø°‰ªª2Á∫ßÔºå3-‰ø°‰ªª3Á∫ßÔºå4-ÁÆ°ÁêÜÂëòÔºå5-Á≥ªÁªüÊìç‰Ωú
+	{"ÂøΩÁï•", 4},
+	{"ÂÅúÁî®Êåá‰ª§", 0},
+	{"Á¶ÅÁî®ÂõûÂ§ç", 0},
+	{"Á¶ÅÁî®jrrp", 0},
+	{"Á¶ÅÁî®draw", 0},
+	{"Á¶ÅÁî®me", 0},
+	{"Á¶ÅÁî®help", 0},
+	{"Á¶ÅÁî®ob", 0},
+	{"ËÆ∏ÂèØ‰ΩøÁî®", 1},
+	{"Êú™ÂÆ°Ê†∏", 1},
+	{"ÂÖçÊ∏Ö", 2},
+	{"ÂÖçÈªë", 4},
+	{"ÂçèËÆÆÊó†Êïà", 3},
 };
 
 User& getUser(long long uid){
@@ -192,7 +192,10 @@ AttrVar getSelfItem(string item) {
 	return var;
 }
 AttrVar getContextItem(const AttrObject& context, string item, bool isTrust) {
-	if (!context)return {};
+	if (!context) {
+		DD::debugLog("Context‰∏∫Á©∫ÔºÅ");
+		return {};
+	}
 	if (item.empty())return context;
 	AttrVar var;
 	if (item[0] == '&')item = fmt->format(item, context);
@@ -202,8 +205,9 @@ AttrVar getContextItem(const AttrObject& context, string item, bool isTrust) {
 		if (MsgIndexs.count(item))return MsgIndexs[item](context);
 		if (item.find(':') <= item.find('.'))return var;
 		if (!(sub = splitOnce(item)).empty()) {
-			if (auto sub_tab{ getContextItem(context,sub,isTrust) }; sub_tab.is_table())
+			if (auto sub_tab{ getContextItem(context,sub,isTrust) }; sub_tab.is_table()) {
 				return getContextItem(sub_tab.to_obj(), item);
+			}
 			if (sub == "user")return getUserItem(context->get_ll("uid"), item);
 			if (isTrust && (sub == "grp" || sub == "group"))return getGroupItem(context->get_ll("gid"), item);
 		}
@@ -386,7 +390,7 @@ int clearGroup() {
 	time_t tNow{ time(nullptr) };
 	time_t grpline{ tNow - console["InactiveGroupLine"] * (time_t)86400 };
 	for (const auto& [id, grp] : ChatList) {
-		if (grp->is_except() || grp->is("√‚«Â") || grp->is("∫ˆ¬‘"))continue;
+		if (grp->is_except() || grp->is("ÂÖçÊ∏Ö") || grp->is("ÂøΩÁï•"))continue;
 		time_t tLast{ grp->updated() };
 		if (auto s{ sessions.get_if({ 0,id }) })
 			tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
@@ -457,12 +461,12 @@ string filter_CQcode(const string& raw, long long fromGID){
 	size_t posL(0), posR(0);
 	while ((posL = msg.find(CQ_AT)) != string::npos)
 	{
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if ((posR = msg.find(']', posL)) != string::npos)
 		{
 			std::string_view stvQQ(msg);
 			stvQQ = stvQQ.substr(posL + 10, posR - posL - 10);
-			//ºÏ≤ÈQQ∫≈∏Ò Ω
+			//Ê£ÄÊü•QQÂè∑Ê†ºÂºè
 			bool isDig = true;
 			for (auto ch: stvQQ) 
 			{
@@ -472,14 +476,14 @@ string filter_CQcode(const string& raw, long long fromGID){
 					break;
 				}
 			}
-			//◊™“Â
+			//ËΩ¨‰πâ
 			if (isDig && posR - posL < 29) 
 			{
 				msg.replace(posL, posR - posL + 1, "@" + getName(stoll(string(stvQQ)), fromGID));
 			}
 			else if (stvQQ == "all") 
 			{
-				msg.replace(posL, posR - posL + 1, "@»´ÃÂ≥…‘±");
+				msg.replace(posL, posR - posL + 1, "@ÂÖ®‰ΩìÊàêÂëò");
 			}
 			else
 			{
@@ -489,30 +493,30 @@ string filter_CQcode(const string& raw, long long fromGID){
 		else return msg;
 	}
 	while ((posL = msg.find(CQ_IMAGE)) != string::npos) {
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if ((posR = msg.find(']', posL)) != string::npos) {
-			msg.replace(posL + 1, posR - posL - 1, "Õº∆¨");
+			msg.replace(posL + 1, posR - posL - 1, "ÂõæÁâá");
 		}
 		else return msg;
 	}
 	while ((posL = msg.find(CQ_FACE)) != string::npos) {
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if ((posR = msg.find(']', posL)) != string::npos) {
-			msg.replace(posL + 1, posR - posL - 1, "±Ì«È");
+			msg.replace(posL + 1, posR - posL - 1, "Ë°®ÊÉÖ");
 		}
 		else return msg;
 	}
 	while ((posL = msg.find(CQ_POKE)) != string::npos) {
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if ((posR = msg.find(']', posL)) != string::npos) {
-			msg.replace(posL + 1, 11, "¥¡“ª¥¡");
+			msg.replace(posL + 1, 11, "Êà≥‰∏ÄÊà≥");
 		}
 		else return msg;
 	}
 	while ((posL = msg.find(CQ_FILE)) != string::npos) {
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if ((posR = msg.find(']', posL)) != string::npos) {
-			msg.replace(posL + 1, posR - posL - 1, "Œƒº˛");
+			msg.replace(posL + 1, posR - posL - 1, "Êñá‰ª∂");
 		}
 		else return msg;
 	}
@@ -531,12 +535,12 @@ string forward_filter(const string& raw, long long fromGID) {
 	size_t posL(0);
 	while ((posL = msg.find(CQ_AT)) != string::npos)
 	{
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if (size_t posR = msg.find(']', posL); posR != string::npos)
 		{
 			std::string_view stvQQ(msg);
 			stvQQ = stvQQ.substr(posL + 10, posR - posL - 10);
-			//ºÏ≤ÈQQ∫≈∏Ò Ω
+			//Ê£ÄÊü•QQÂè∑Ê†ºÂºè
 			bool isDig = true;
 			for (auto ch : stvQQ)
 			{
@@ -546,14 +550,14 @@ string forward_filter(const string& raw, long long fromGID) {
 					break;
 				}
 			}
-			//◊™“Â
+			//ËΩ¨‰πâ
 			if (isDig && posR - posL < 29)
 			{
 				msg.replace(posL, posR - posL + 1, "@" + getName(stoll(string(stvQQ)), fromGID));
 			}
 			else if (stvQQ == "all")
 			{
-				msg.replace(posL, posR - posL + 1, "@»´ÃÂ≥…‘±");
+				msg.replace(posL, posR - posL + 1, "@ÂÖ®‰ΩìÊàêÂëò");
 			}
 			else
 			{
@@ -563,9 +567,9 @@ string forward_filter(const string& raw, long long fromGID) {
 		else return msg;
 	}
 	while ((posL = msg.find(CQ_POKE)) != string::npos) {
-		//ºÏ≤Èat∏Ò Ω
+		//Ê£ÄÊü•atÊ†ºÂºè
 		if (size_t posR = msg.find(']', posL); posR != string::npos) {
-			msg.replace(posL + 1, 11, "¥¡“ª¥¡");
+			msg.replace(posL + 1, 11, "Êà≥‰∏ÄÊà≥");
 		}
 		else return msg;
 	}
@@ -639,10 +643,10 @@ void Chat::leave(const string& msg) {
 		std::this_thread::sleep_for(500ms);
 	}
 	DD::setGroupLeave(ID);
-	reset("“—»Î»∫").rmLst();
+	reset("Â∑≤ÂÖ•Áæ§").rmLst();
 }
 bool Chat::is_except()const {
-	return has("√‚∫⁄") || has("–≠“ÈŒﬁ–ß");
+	return has("ÂÖçÈªë") || has("ÂçèËÆÆÊó†Êïà");
 }
 void Chat::writeb(std::ofstream& fout) const{
 	//dict["inviter"] = (long long)inviter;
@@ -724,7 +728,7 @@ Chat& Chat::setLst(time_t t) {
 string Chat::print()const{
 	if (string name{ DD::getGroupName(ID) }; !name.empty())Name = name;
 	if (!Name.empty())return "[" + Name + "](" + to_string(ID) + ")";
-	return "»∫(" + to_string(ID) + ")";
+	return "Áæ§(" + to_string(ID) + ")";
 }
 void Chat::invited(long long id) {
 	set("inviter", inviter = id);
@@ -798,10 +802,10 @@ long long getProcessCpu()
 	return (ullKernelTime + ullUserTime) / (iCpuNum * 10);
 }
 
-//ªÒ»°ø’œ–”≤≈Ã(«ß∑÷±»)
+//Ëé∑ÂèñÁ©∫Èó≤Á°¨Áõò(ÂçÉÂàÜÊØî)
 long long getDiskUsage(double& mbFreeBytes, double& mbTotalBytes){
-	/*int sizStr = GetLogicalDriveStrings(0, NULL);//ªÒµ√±æµÿÀ˘”–≈Ã∑˚¥Ê‘⁄Drive ˝◊È÷–
-	char* chsDrive = new char[sizStr];//≥ı ºªØ ˝◊È”√“‘¥Ê¥¢≈Ã∑˚–≈œ¢
+	/*int sizStr = GetLogicalDriveStrings(0, NULL);//Ëé∑ÂæóÊú¨Âú∞ÊâÄÊúâÁõòÁ¨¶Â≠òÂú®DriveÊï∞ÁªÑ‰∏≠
+	char* chsDrive = new char[sizStr];//ÂàùÂßãÂåñÊï∞ÁªÑÁî®‰ª•Â≠òÂÇ®ÁõòÁ¨¶‰ø°ÊÅØ
 	GetLogicalDriveStrings(sizStr, chsDrive);
 	int DType;
 	int si = 0;*/
@@ -814,10 +818,10 @@ long long getDiskUsage(double& mbFreeBytes, double& mbTotalBytes){
 		(PULARGE_INTEGER)&i64FreeBytesToCaller,
 		(PULARGE_INTEGER)&i64TotalBytes,
 		(PULARGE_INTEGER)&i64FreeBytes);
-	//GetDiskFreeSpaceEx∫Ø ˝£¨ø…“‘ªÒ»°«˝∂Ø∆˜¥≈≈Ãµƒø’º‰◊¥Ã¨,∫Ø ˝∑µªÿµƒ «∏ˆBOOL¿‡–Õ ˝æ›
+	//GetDiskFreeSpaceExÂáΩÊï∞ÔºåÂèØ‰ª•Ëé∑ÂèñÈ©±Âä®Âô®Á£ÅÁõòÁöÑÁ©∫Èó¥Áä∂ÊÄÅ,ÂáΩÊï∞ËøîÂõûÁöÑÊòØ‰∏™BOOLÁ±ªÂûãÊï∞ÊçÆ
 	if (fResult) {
-		mbTotalBytes = i64TotalBytes * 1000 / 1024 / 1024 / 1024 / 1000.0;//¥≈≈Ã◊‹»›¡ø
-		mbFreeBytes = i64FreeBytesToCaller * 1000 / 1024 / 1024 / 1024 / 1000.0;//¥≈≈Ã £”‡ø’º‰
+		mbTotalBytes = i64TotalBytes * 1000 / 1024 / 1024 / 1024 / 1000.0;//Á£ÅÁõòÊÄªÂÆπÈáè
+		mbFreeBytes = i64FreeBytesToCaller * 1000 / 1024 / 1024 / 1024 / 1000.0;//Á£ÅÁõòÂâ©‰ΩôÁ©∫Èó¥
 		return 1000 - 1000 * i64FreeBytesToCaller / i64TotalBytes;
 	}
 	return 0;

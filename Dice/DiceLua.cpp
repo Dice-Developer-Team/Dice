@@ -49,16 +49,28 @@ long long lua_to_int_or_zero(lua_State* L, int idx = -1) {
 string lua_to_raw_string(lua_State* L, int idx = -1) {
 	return luaL_checkstring(L, idx);
 }
+// Return utf-8 string
+string lua_to_u8string(lua_State* L, int idx = -1) {
+	return UTF8Luas.count(L)? luaL_checkstring(L, idx) : GBKtoUTF8(luaL_checkstring(L, idx), true);
+}
 // Return a GB18030 string
 string lua_to_gbstring(lua_State* L, int idx = -1) {
 	return UTF8toGBK(luaL_checkstring(L, idx), !UTF8Luas.count(L));
+}
+// Return utf-8 string
+string lua_to_u8string_from_native(lua_State* L, int idx = -1) {
+#ifdef _WIN32
+	return GBKtoUTF8(luaL_checkstring(L, idx));
+#else
+	return luaL_checkstring(L, idx);
+#endif
 }
 // Return a GB18030 string
 string lua_to_gbstring_from_native(lua_State* L, int idx = -1) {
 #ifdef _WIN32
 	return luaL_checkstring(L, idx);
 #else
-	return GBKtoUTF8(luaL_checkstring(L, idx));
+	return UTF8toGBK(luaL_checkstring(L, idx));
 #endif
 }
 
@@ -72,7 +84,10 @@ string lua_to_native_string(lua_State* L, int idx = -1) {
 #endif
 }
 
-void lua_push_string(lua_State* L, const string& str) {
+void lua_push_u8string(lua_State* L, const string& str) {
+	lua_pushstring(L, UTF8Luas.count(L) ? str.c_str() : UTF8toGBK(str).c_str());
+}
+void lua_push_gbstring(lua_State* L, const string& str) {
 	lua_pushstring(L, UTF8Luas.count(L) ? GBKtoUTF8(str).c_str() : str.c_str());
 }
 void lua_push_raw_string(lua_State* L, const string& str) {
@@ -163,8 +178,11 @@ void lua_push_attr(lua_State* L, const AttrVar& attr) {
 	case AttrVar::Type::Number:
 		lua_pushnumber(L, attr.number);
 		break;
-	case AttrVar::Type::Text:
-		lua_push_string(L, attr.text);
+	case AttrVar::Type::U8String:
+		lua_push_u8string(L, attr.text);
+		break;
+	case AttrVar::Type::GBString:
+		lua_push_gbstring(L, attr.text);
 		break;
 	case AttrVar::Type::Table:
 		if (auto t{ attr.table->getType() };t == AnysTable::MetaType::Context) {
@@ -264,7 +282,7 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 			}
 		}
 		catch (std::exception& e) {
-			DD::debugLog(string("lua_touserdata“Ï≥£:") + e.what());
+			DD::debugLog(string("lua_touserdataÂºÇÂ∏∏:") + e.what());
 		}
 		break;
 	}
@@ -297,7 +315,7 @@ AttrVars lua_to_dict(lua_State* L, int idx = -1) {
 	return tab;
 }
 
-//Œ™msg÷±Ω”µ˜”√lua”Ôæ‰
+//‰∏∫msgÁõ¥Êé•Ë∞ÉÁî®luaËØ≠Âè•
 bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 	string luaFile{ lua.is_table() ? lua.to_obj()->get_str("file") : "" };
 	AttrVar luaFunc;
@@ -311,25 +329,25 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 	lua_setglobal(L, "msg");
 	if (!luaFile.empty()) {
 #ifdef _WIN32
-		// ◊™ªªŒ™GB18030
-		string fileGBK(luaFile);
+		// ËΩ¨Êç¢‰∏∫UTF8
+		string filename(GBKtoUTF8(luaFile));
 #else
-		string fileGBK(UTF8toGBK(luaFile, true));
+		string filename(luaFile);
 #endif
 		if (!luaFunc) {
-			//÷¥––Œƒº˛
+			//ÊâßË°åÊñá‰ª∂
 			if (lua_pcall(L, 0, 2, 0)) {
 				string pErrorMsg = lua_to_gbstring_from_native(L, -1);
-				console.log(getMsg("strSelfName") + "‘À––" + fileGBK + " ß∞‹:" + pErrorMsg, 0b10);
+				console.log(getMsg("strSelfName") + "ËøêË°å" + filename + "Â§±Ë¥•:" + pErrorMsg, 0b10);
 				msg->set("lang", "Lua");
 				msg->reply(getMsg("strScriptRunErr"));
 				return 0;
 			}
 		}
-		//º”‘ÿŒƒº˛£¨÷¥––»´æ÷∫Ø ˝
+		//Âä†ËΩΩÊñá‰ª∂ÔºåÊâßË°åÂÖ®Â±ÄÂáΩÊï∞
 		else if (lua_pcall(L, 0, 0, 0)) {
 			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
-			console.log(getMsg("strSelfName") + "‘À––" + fileGBK + " ß∞‹:" + pErrorMsg, 0b10);
+			console.log(getMsg("strSelfName") + "ËøêË°å" + filename + "Â§±Ë¥•:" + pErrorMsg, 0b10);
 			msg->set("lang", "Lua");
 			msg->reply(getMsg("strScriptRunErr"));
 			return 0;
@@ -339,31 +357,31 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 			lua_push_Context(L, msg->shared_from_this());
 			if (lua_pcall(L, 1, 2, 0)) {
 				string pErrorMsg = lua_to_gbstring_from_native(L, -1);
-				console.log(getMsg("strSelfName") + "µ˜”√" + fileGBK + "∫Ø ˝" + luaFunc.to_str() + " ß∞‹!\n" + pErrorMsg, 0b10);
+				console.log(getMsg("strSelfName") + "Ë∞ÉÁî®" + filename + "ÂáΩÊï∞" + luaFunc.to_str() + "Â§±Ë¥•!\n" + pErrorMsg, 0b10);
 				msg->set("lang", "Lua");
 				msg->reply(getMsg("strScriptRunErr"));
 				return false;
 			}
 		}
 	}
-	//÷¥––∫Ø ˝◊÷Ω⁄¬Î
+	//ÊâßË°åÂáΩÊï∞Â≠óËäÇÁ†Å
 	if (luaFunc.is_function()) {
 		ByteS bytes{ lua.to_bytes() };
 		if (bytes.isUTF8)UTF8Luas.insert(L);
 		if (lua_load(L, lua_reader, &bytes, msg->get_str("reply_title").c_str(), "bt")
 			|| (lua_push_Context(L, msg->shared_from_this()), lua_pcall(L, 1, 2, 0))) {
 			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
-			console.log(getMsg("strSelfName") + "‘À––Lua◊÷Ω⁄¬Î" + msg->get_str("reply_title") + " ß∞‹!\n" + pErrorMsg, 0b10);
+			console.log(getMsg("strSelfName") + "ËøêË°åLuaÂ≠óËäÇÁ†Å" + msg->get_str("reply_title") + "Â§±Ë¥•!\n" + pErrorMsg, 0b10);
 			msg->set("lang", "Lua");
 			msg->reply(getMsg("strScriptRunErr"));
 			return false;
 		}
 	}
-	//÷¥––”Ôæ‰
+	//ÊâßË°åËØ≠Âè•
 	else if (luaFile.empty() &&
 		(luaL_loadstring(L, lua.to_str().c_str()) || lua_pcall(L, 0, 2, 0))) {
 		string pErrorMsg = lua_to_gbstring_from_native(L, -1);
-		console.log(getMsg("strSelfName") + "µ˜”√" + msg->get_str("reply_title") + "Lua¥˙¬Î ß∞‹!\n" + pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "Ë∞ÉÁî®" + msg->get_str("reply_title") + "Lua‰ª£Á†ÅÂ§±Ë¥•!\n" + pErrorMsg, 0b10);
 		msg->set("lang", "Lua");
 		msg->reply(getMsg("strScriptRunErr"));
 		return false;
@@ -374,7 +392,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 				msg->reply(lua_to_gbstring(L, 1));
 			}
 			else {
-				console.log(getMsg("strSelfName") + "µ˜”√" + msg->get_str("reply_title") + "Ω≈±æ∑µªÿ÷µ∏Ò Ω¥ÌŒÛ(" + LuaTypes[lua_type(L, 1)] + ")!", 0b10);
+				console.log(getMsg("strSelfName") + "Ë∞ÉÁî®" + msg->get_str("reply_title") + "ËÑöÊú¨ËøîÂõûÂÄºÊ†ºÂºèÈîôËØØ(" + LuaTypes[lua_type(L, 1)] + ")!", 0b10);
 				msg->set("lang", "Lua");
 				msg->reply(getMsg("strScriptRunErr"));
 				return false;
@@ -385,7 +403,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 				msg->replyHidden(lua_to_gbstring(L, 2));
 			}
 			else {
-				console.log(getMsg("strSelfName") + "µ˜”√" + msg->get_str("reply_title") + "Ω≈±æ∑µªÿ÷µ∏Ò Ω¥ÌŒÛ(" + LuaTypes[lua_type(L, 2)] + ")!", 1);
+				console.log(getMsg("strSelfName") + "Ë∞ÉÁî®" + msg->get_str("reply_title") + "ËÑöÊú¨ËøîÂõûÂÄºÊ†ºÂºèÈîôËØØ(" + LuaTypes[lua_type(L, 2)] + ")!", 1);
 				msg->set("lang", "Lua");
 				msg->reply(getMsg("strScriptRunErr"));
 				return false;
@@ -405,7 +423,7 @@ bool lua_call_event(const ptr<AnysTable>& eve, const AttrVar& lua) {
 	if (isFile) {
 		if (lua_pcall(L, 0, 2, 0)) {
 			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
-			console.log(getMsg("strSelfName") + "‘À––" + luas + " ß∞‹:" + pErrorMsg, 0b10);
+			console.log(getMsg("strSelfName") + "ËøêË°å" + luas + "Â§±Ë¥•:" + pErrorMsg, 0b10);
 			return 0;
 		}
 	}
@@ -415,13 +433,13 @@ bool lua_call_event(const ptr<AnysTable>& eve, const AttrVar& lua) {
 		if (lua_load(L, lua_reader, (void*)&bytes, eve->get_str("Type").c_str(), "bt")
 			|| lua_pcall(L, 0, 2, 0)) {
 			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
-			console.log(getMsg("strSelfName") + "µ˜”√ ¬º˛lua ß∞‹!\n" + pErrorMsg, 0b10);
+			console.log(getMsg("strSelfName") + "Ë∞ÉÁî®‰∫ã‰ª∂luaÂ§±Ë¥•!\n" + pErrorMsg, 0b10);
 			return false;
 		}
 	}
 	else if (luaL_loadstring(L, luas.c_str()) || lua_pcall(L, 0, 2, 0)) {
 		string pErrorMsg = lua_to_gbstring_from_native(L, -1);
-		console.log(getMsg("strSelfName") + "µ˜”√ ¬º˛lua ß∞‹!\n" + pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "Ë∞ÉÁî®‰∫ã‰ª∂luaÂ§±Ë¥•!\n" + pErrorMsg, 0b10);
 		return false;
 	}
 	return true;
@@ -430,7 +448,7 @@ bool lua_call_event(const ptr<AnysTable>& eve, const AttrVar& lua) {
 bool lua_call_task(const AttrVars& task) {
 	string file{ task.at("file").to_str() };
 #ifndef _WIN32
-	// ◊™ªªseparator
+	// ËΩ¨Êç¢separator
 	string fileStr(file);
 	for (auto& c : fileStr)
 	{
@@ -441,21 +459,21 @@ bool lua_call_task(const AttrVars& task) {
 	LuaState L(file);
 	if (!L)return false;
 #ifdef _WIN32
-	// ◊™ªªŒ™GB18030
+	// ËΩ¨Êç¢‰∏∫GB18030
 	string fileGB18030(file);
 #else
 	string fileGB18030(UTF8toGBK(file, true));
 #endif
 	if (lua_pcall(L, 0, 0, 0)) {
 		string pErrorMsg = lua_to_gbstring_from_native(L, -1);
-		console.log(getMsg("strSelfName") + "‘À––luaŒƒº˛" + fileGB18030 + " ß∞‹:" + pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "ËøêË°åluaÊñá‰ª∂" + fileGB18030 + "Â§±Ë¥•:" + pErrorMsg, 0b10);
 		return 0;
 	}
 	string func{ task.at("func").to_str() };
 	lua_getglobal(L, func.c_str());
 	if (lua_pcall(L, 0, 0, 0)) {
 		string pErrorMsg = lua_to_gbstring_from_native(L, -1);
-		console.log(getMsg("strSelfName") + "µ˜”√" + fileGB18030 + "∫Ø ˝" + func + " ß∞‹!\n" + pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "Ë∞ÉÁî®" + fileGB18030 + "ÂáΩÊï∞" + func + "Â§±Ë¥•!\n" + pErrorMsg, 0b10);
 		return false;
 	}
 	return true;
@@ -518,7 +536,7 @@ int lua_Set_gc(lua_State* L) {
 }
 int lua_Set_tostring(lua_State* L) {
 	LUA2SET(L);
-	lua_push_string(L, AttrVar(*set).to_str());
+	lua_push_u8string(L, AttrVar(*set).to_str());
 	return 1;
 }
 int lua_Set_new(lua_State* L) {
@@ -627,10 +645,10 @@ static int luaopen_SelfData(lua_State* L) {
 }
 
 /**
- * π©luaµ˜”√µƒ∫Ø ˝
+ * ‰æõluaË∞ÉÁî®ÁöÑÂáΩÊï∞
  */
 #define LUADEF(name) static int lua_dice_##name(lua_State* L)
- // ‰≥ˆ»’÷æ
+ //ËæìÂá∫Êó•Âøó
 LUADEF(log) {
 	if (string info{ lua_to_gbstring(L, 1) }; !info.empty()) {
 		int note_lv{ 0 };
@@ -650,11 +668,11 @@ LUADEF(log) {
 	}
 	return 0;
 }
- //º”‘ÿ∆‰À˚luaΩ≈±æ
+ //Âä†ËΩΩÂÖ∂‰ªñluaËÑöÊú¨
 LUADEF(loadLua) {
 	string nameLua{ lua_to_native_string(L, 1) };
 	if (nameLua.empty())return 0;
-#ifdef _WIN32 // ◊™ªªseparator
+#ifdef _WIN32 // ËΩ¨Êç¢separator
 	for (auto& c : nameLua)
 	{
 		if (c == '/') c = '\\';
@@ -680,7 +698,7 @@ LUADEF(loadLua) {
 	string strLua;
 	if (std::filesystem::exists(pathFile)) {
 		readFile(pathFile, strLua);
-		bool isStateUTF8{ (bool)UTF8Luas.count(L) }, isLuaUTF8{ checkUTF8(strLua) };	//¡ÓŒƒº˛º”‘ÿ»Îluaµƒ±‡¬Î±£≥÷“ª÷¬
+		bool isStateUTF8{ (bool)UTF8Luas.count(L) }, isLuaUTF8{ checkUTF8(strLua) };	//‰ª§Êñá‰ª∂Âä†ËΩΩÂÖ•luaÁöÑÁºñÁ†Å‰øùÊåÅ‰∏ÄËá¥
 		if (isStateUTF8 && !isLuaUTF8) {
 			strLua = GBKtoUTF8(strLua);
 		}
@@ -689,29 +707,29 @@ LUADEF(loadLua) {
 		}
 	}
 	else {
-		console.log("¥˝º”‘ÿLuaŒ¥’“µΩ:" + UTF8toGBK(pathFile.u8string()), 1);
+		console.log("ÂæÖÂä†ËΩΩLuaÊú™ÊâæÂà∞:" + UTF8toGBK(pathFile.u8string()), 1);
 		return 0;
 	}
 	if (luaL_loadstring(L, strLua.c_str())) {
 		string pErrorMsg = lua_to_gbstring_from_native(L, -1);
-		console.log(getMsg("strSelfName") + "∂¡»°" + UTF8toGBK(pathFile.u8string()) + " ß∞‹:"+ pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "ËØªÂèñ" + UTF8toGBK(pathFile.u8string()) + "Â§±Ë¥•:"+ pErrorMsg, 0b10);
 		return 0;
 	}
 	if (lua_pcall(L, 0, 1, 0)) {
 		string pErrorMsg = lua_to_gbstring_from_native(L, -1);
-		console.log(getMsg("strSelfName") + "‘À––" + UTF8toGBK(pathFile.u8string()) + " ß∞‹:"+ pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "ËøêË°å" + UTF8toGBK(pathFile.u8string()) + "Â§±Ë¥•:"+ pErrorMsg, 0b10);
 		return 0;
 	}
 	return 1;
 }
- //ªÒ»°DiceMaid
+ //Ëé∑ÂèñDiceMaid
 LUADEF(getDiceQQ) {
-	lua_push_string(L, to_string(console.DiceMaid));
+	lua_pushstring(L, to_string(console.DiceMaid).c_str());
 	return 1;
 }
-//ªÒ»°DiceDir¥Êµµƒø¬º
+//Ëé∑ÂèñDiceDirÂ≠òÊ°£ÁõÆÂΩï
 LUADEF(getDiceDir) {
-	lua_push_string(L, DiceDir.u8string());
+	lua_push_u8string(L, DiceDir.u8string());
 	return 1;
 }
 LUADEF(mkDirs) {
@@ -768,7 +786,7 @@ LUADEF(getGroupConf) {
 		}
 		else if (subitem == "card") {
 			for (auto uid : DD::getGroupMemberList(id)) {
-				lua_push_string(L, DD::getGroupNick(id, uid));
+				lua_push_u8string(L, DD::getGroupNick(id, uid));
 				lua_set_field(L, -2, to_string(uid));
 			}
 		}
@@ -952,7 +970,7 @@ LUADEF(getPlayerCardAttr) {
 		lua_push_attr(L, pc->get(key));
 	}
 	else if (pc->has("&" + key)) {
-		lua_push_string(L, pc->get("&" + key).to_str());
+		lua_push_u8string(L, pc->get("&" + key).to_str());
 	}
 	else {
 		lua_pushnil(L);
@@ -978,7 +996,7 @@ LUADEF(setPlayerCardAttr) {
 	long long group{ lua_to_int_or_zero(L, 2) };
 	string item{ lua_to_gbstring(L, 3) };
 	if (!plQQ || item.empty())return 0;
-	//≤Œ ˝4Œ™ø’‘Ú ”Œ™…æ≥˝,__Name≥˝Õ‚
+	//ÂèÇÊï∞4‰∏∫Á©∫ÂàôËßÜ‰∏∫Âà†Èô§,__NameÈô§Â§ñ
 	auto pc = getPlayer(plQQ)[group];
 	if (item == "__Name") {
 		getPlayer(plQQ).renameCard(pc->getName(), lua_to_gbstring(L, 4));
@@ -990,14 +1008,14 @@ LUADEF(setPlayerCardAttr) {
 	return 0;
 }
 
-//»°ÀÊª˙ ˝
+//ÂèñÈöèÊú∫Êï∞
 LUADEF(ranint) {
 	int l{ (int)lua_to_int(L, 1) };
 	int r{ (int)lua_to_int(L, 2) };
 	lua_pushinteger(L, (lua_Integer)RandomGenerator::Randint(l,r));
 	return 1;
 }
-//œﬂ≥Ãµ»¥˝
+//Á∫øÁ®ãÁ≠âÂæÖ
 LUADEF(sleepTime) {
 	int ms{ (int)lua_to_int(L, 1) };
 	if (ms <= 0)return 0;
@@ -1013,15 +1031,15 @@ LUADEF(drawDeck) {
 	if (fromGID || fromUID) {
 		chatInfo fromChat{ fromUID,fromGID };
 		if (auto s{ sessions.has_session(fromChat) }) {
-			lua_push_string(L, sessions.get_if(fromChat)->deck_draw(nameDeck));
+			lua_push_u8string(L, sessions.get_if(fromChat)->deck_draw(nameDeck));
 			return 1;
 		}
 	}
 	if (CardDeck::findDeck(nameDeck)) {
-		lua_push_string(L, CardDeck::drawOne(CardDeck::mPublicDeck[nameDeck]));
+		lua_push_u8string(L, CardDeck::drawOne(CardDeck::mPublicDeck[nameDeck]));
 	}
 	else {
-		lua_push_string(L, "{" + nameDeck + "}");
+		lua_push_u8string(L, "{" + nameDeck + "}");
 	}
 	return 1;
 }
@@ -1034,7 +1052,7 @@ LUADEF(sendMsg) {
 		chat = lua_to_table(L, 1);
 	}
 	else {
-		chat->at("fwdMsg") = lua_to_gbstring(L, 1);
+		chat->at("fwdMsg") = lua_to_u8string(L, 1);
 		if (top < 2)return 0;
 		chat->at("gid") = lua_to_int_or_zero(L, 2);
 		if (top >= 3)chat->at("uid") = lua_to_int_or_zero(L, 3);
@@ -1055,7 +1073,7 @@ LUADEF(eventMsg) {
 		eve = lua_to_table(L, 1);
 	}
 	else {
-		string fromMsg{ lua_to_gbstring(L, 1) };
+		string fromMsg{ lua_to_u8string(L, 1) };
 		long long fromGID{ lua_to_int_or_zero(L, 2) };
 		long long fromUID{ lua_to_int_or_zero(L, 3) };
 		eve = fromGID
@@ -1085,14 +1103,14 @@ LUADEF(askExtra) {
 		}
 	}
 	catch (std::exception& e) {
-		console.log("askExtra≈◊≥ˆ“Ï≥£!" + string(e.what()), 0b10);
+		console.log("askExtraÊäõÂá∫ÂºÇÂ∏∏!" + string(e.what()), 0b10);
 	}
 	return 0;
 }
 
 int Msg_echo(lua_State* L) {
 	LUA2OBJ(1);
-	string msg{ lua_to_gbstring(L, 2) };
+	string msg{ lua_to_u8string(L, 2) };
 	if (lua_isboolean(L, 3))reply(obj, msg, !lua_toboolean(L,3));
 	else reply(obj, msg);
 	return 0;
@@ -1103,8 +1121,8 @@ int Context_format(lua_State* L) {
 	AttrObject vars{ lua_isuserdata(L,1) ? *(AttrObject*)luaL_checkudata(L, 1, "Context")
 		: lua_istable(L, 1) ? AnysTable(lua_to_table(L,1))
 		: AttrObject{} };
-	string msg{ lua_to_gbstring(L, 2) };
-	lua_push_string(L, fmt->format(msg, vars));
+	string msg{ lua_to_u8string(L, 2) };
+	lua_push_u8string(L, fmt->format(msg, vars));
 	return 1;
 }
 int Context_get(lua_State* L) {
@@ -1115,7 +1133,7 @@ int Context_get(lua_State* L) {
 		lua_push_attr(L, obj);
 	}
 	else {
-		string key{ fmt->format(lua_to_gbstring(L, 2),obj) };
+		string key{ fmt->format(lua_to_u8string(L, 2),obj) };
 		if (auto val{ getContextItem(obj, key) }) {
 			lua_push_attr(L, val);
 		}
@@ -1130,7 +1148,7 @@ int Context_get(lua_State* L) {
 int Context_add(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	LUA2OBJ(1);
-	string key{ fmt->format(lua_to_gbstring(L, 2), obj) };
+	string key{ fmt->format(lua_to_u8string(L, 2), obj) };
 	if (lua_isnoneornil(L, 3)) {
 		obj->inc(key);
 	}
@@ -1140,7 +1158,7 @@ int Context_add(lua_State* L) {
 	return 0;
 }
 int Context_index(lua_State* L) {
-	string key{ lua_to_gbstring(L, 2) };
+	string key{ lua_to_u8string(L, 2) };
 	if (key == "echo") {
 		lua_pushcfunction(L, Msg_echo);
 		return 1;
@@ -1167,7 +1185,7 @@ int Context_index(lua_State* L) {
 int Context_newindex(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	LUA2OBJ(1);
-	string key{ fmt->format(lua_to_gbstring(L, 2), obj) };
+	string key{ fmt->format(lua_to_u8string(L, 2), obj) };
 	if (lua_isnoneornil(L, 3)) {
 		obj->reset(key);
 	}
@@ -1199,7 +1217,7 @@ int luaopen_Context(lua_State* L) {
 int GameTable_set(lua_State* L) {
 	LUA2GAME(1);
 	if (lua_isstring(L, 2)) {
-		string key{ lua_to_gbstring(L, 2) };
+		string key{ lua_to_u8string(L, 2) };
 		if (lua_gettop(L) < 3) {
 			game->reset(key);
 		}
@@ -1214,10 +1232,10 @@ int GameTable_set(lua_State* L) {
 		lua_settop(L, 3);
 		while (lua_next(L, 2)) {
 			if (lua_type(L, 3) == LUA_TNUMBER) {
-				game->reset(lua_to_gbstring(L, 4));
+				game->reset(lua_to_u8string(L, 4));
 			}
 			else {
-				game->set(lua_to_gbstring(L, 3), lua_to_attr(L, 4));
+				game->set(lua_to_u8string(L, 3), lua_to_attr(L, 4));
 			}
 			lua_pop(L, 1);
 		}
@@ -1227,12 +1245,12 @@ int GameTable_set(lua_State* L) {
 }
 int GameTable_message(lua_State* L) {
 	LUA2GAME(1);
-	string msg{ lua_to_gbstring(L,2) };
+	string msg{ lua_to_u8string(L,2) };
 	AddMsgToQueue(msg, *game->areas.begin());
 	return 0;
 }
 int GameTable_index(lua_State* L) {
-	string key{ lua_to_gbstring(L, 2) };
+	string key{ lua_to_u8string(L, 2) };
 	LUA2GAME(1);
 	if (key == "set") {
 		lua_pushcfunction(L, GameTable_set);
@@ -1247,7 +1265,7 @@ int GameTable_index(lua_State* L) {
 }
 int GameTable_newindex(lua_State* L) {
 	LUA2GAME(1);
-	if (string key{ lua_to_gbstring(L, 2) }; lua_gettop(L) < 3) {
+	if (string key{ lua_to_u8string(L, 2) }; lua_gettop(L) < 3) {
 		game->reset(key);
 	}
 	else if (AttrVar val{ lua_to_attr(L, 3) }; val.is_null()) {
@@ -1279,14 +1297,14 @@ int luaopen_GameTable(lua_State* L) {
 #define LUA2PC(idx) PC& pc{*(PC*)luaL_checkudata(L, idx, "Actor")}
 int Actor_get(lua_State* L) {
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
-	if (string key{ lua_to_gbstring(L, 2) };!key.empty())
+	if (string key{ lua_to_u8string(L, 2) };!key.empty())
 		lua_push_attr(L, pc->get(key));
 	return 1;
 }
 int Actor_set(lua_State* L) {
 	LUA2PC(1);
 	if (lua_isstring(L, 2)) {
-		string key{ lua_to_gbstring(L, 2) };
+		string key{ lua_to_u8string(L, 2) };
 		if (lua_gettop(L) < 3) {
 			lua_pushinteger(L, pc->erase(key));
 		}
@@ -1303,10 +1321,10 @@ int Actor_set(lua_State* L) {
 		lua_settop(L, 3);
 		while (lua_next(L, 2)) {
 			if (lua_type(L, 3) == LUA_TNUMBER) {
-				if (string attr{ lua_to_gbstring(L, 4) }; pc->erase(attr))++cnt;
+				if (string attr{ lua_to_u8string(L, 4) }; pc->erase(attr))++cnt;
 			}
 			else {
-				if (0 == pc->set(lua_to_gbstring(L, 3), lua_to_attr(L, 4)))++cnt;
+				if (0 == pc->set(lua_to_u8string(L, 3), lua_to_attr(L, 4)))++cnt;
 			}
 			lua_pop(L, 1);
 		}
@@ -1315,18 +1333,18 @@ int Actor_set(lua_State* L) {
 	return 1;
 }
 int Actor_rollDice(lua_State* L) {
-	string exp{ lua_to_gbstring(L, 2) };
+	string exp{ lua_to_u8string(L, 2) };
 	LUA2PC(1);
 	if (exp.empty())exp = pc->get("__DefaultDiceExp");
 	int diceFace{ pc->get("__DefaultDice").to_int() };
 	RD rd{ exp, diceFace ? diceFace : 100 };
 	lua_newtable(L);
-	lua_push_string(L, rd.strDice);
+	lua_push_u8string(L, rd.strDice);
 	lua_set_field(L, -2, "expr");
 	if (int_errno err = rd.Roll(); !err) {
 		lua_pushinteger(L, rd.intTotal);
 		lua_set_field(L, -2, "sum");
-		lua_push_string(L, rd.FormCompleteString());
+		lua_push_u8string(L, rd.FormCompleteString());
 		lua_set_field(L, -2, "expansion");
 	}
 	else {
@@ -1336,19 +1354,19 @@ int Actor_rollDice(lua_State* L) {
 	return 1;
 }
 int Actor_locked(lua_State* L) {
-	string key{ lua_to_gbstring(L, 2) };
+	string key{ lua_to_u8string(L, 2) };
 	LUA2PC(1);
 	lua_pushboolean(L, pc->locked(key));
 	return 1;
 }
 int Actor_lock(lua_State* L) {
-	string key{ lua_to_gbstring(L, 2) };
+	string key{ lua_to_u8string(L, 2) };
 	LUA2PC(1);
 	lua_pushboolean(L, pc->lock(key));
 	return 1;
 }
 int Actor_unlock(lua_State* L) {
-	string key{ lua_to_gbstring(L, 2) };
+	string key{ lua_to_u8string(L, 2) };
 	LUA2PC(1);
 	lua_pushboolean(L, pc->unlock(key));
 	return 1;
@@ -1362,7 +1380,7 @@ const dict<lua_CFunction> Lua_ActorMethods = {
 	{"unlock",Actor_unlock},
 };
 int Actor_index(lua_State* L) {
-	string key{ lua_to_gbstring(L, 2) };
+	string key{ lua_to_u8string(L, 2) };
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
 	if (Lua_ActorMethods.count(key)) {
 		lua_pushcfunction(L, Lua_ActorMethods.at(key));
@@ -1373,7 +1391,7 @@ int Actor_index(lua_State* L) {
 }
 int Actor_newindex(lua_State* L) {
 	PC& pc{ *(PC*)luaL_checkudata(L, 1, "Actor") };
-	string key{ lua_to_gbstring(L, 2) };
+	string key{ lua_to_u8string(L, 2) };
 	if (lua_gettop(L) < 3) {
 		pc->erase(key);
 	}
@@ -1414,7 +1432,7 @@ int httpGet(lua_State* L) {
 	}
 	else {
 		lua_pushboolean(L, false); 
-		lua_push_string(L, ret); 
+		lua_push_gbstring(L, ret); 
 	}
 	return 2;
 }
@@ -1447,7 +1465,7 @@ int httpPost(lua_State* L) {
 	}
 	else {
 		lua_pushboolean(L, false);
-		lua_push_string(L, ret);
+		lua_push_gbstring(L, ret);
 	}
 	return 2;
 }
@@ -1525,14 +1543,14 @@ void LuaState::regist() {
 		+ (dirExe / "Diceki" / "lua" / "?.lua").string() + ";Diceki/lua/?.lua;"
 		+ (dirExe / "Diceki" / "lua" / "?" / "init.lua").string() + ";"
 		+ lua_tostring(state, -1) };
-	lua_push_string(state, strPath.c_str());
+	lua_push_raw_string(state, strPath.c_str());
 	lua_setfield(state, -3, "path");
 	lua_pop(state, 1);
 	lua_getfield(state, -1, "cpath");
 	static string strCPath{ (dirExe / "Diceki" / "lua" / "?.dll").string() + ";Diceki/lua/?.dll;"
 		+ (dirExe / "Diceki" / "lib" / "?.dll").string() + ";"
 		+ lua_tostring(state, -1) };
-	lua_push_string(state, strCPath.c_str());
+	lua_push_raw_string(state, strCPath.c_str());
 	lua_setfield(state, -3, "cpath");
 	lua_pop(state, 2);
 }
@@ -1545,7 +1563,7 @@ LuaState::LuaState() {//:isValid(false) {
 }
 LuaState::LuaState(string file) {
 #ifndef _WIN32
-	// ◊™ªªseparator
+	// ËΩ¨Êç¢separator
 	for (auto& c : file) {
 		if (c == '\\') c = '/';
 	}
@@ -1554,8 +1572,8 @@ LuaState::LuaState(string file) {
 	if (!state)return;
 	if (!file.empty()) {
 		if (luaL_loadfile(state, file.c_str())) {
-			string pErrorMsg = lua_to_gbstring(state, -1);
-			console.log(getMsg("strSelfName") + "º”‘ÿ" + file + " ß∞‹:" + pErrorMsg, 0b10);
+			string pErrorMsg = lua_to_u8string(state, -1);
+			console.log(getMsg("strSelfName") + "Âä†ËΩΩ" + file + "Â§±Ë¥•:" + pErrorMsg, 0b10);
 			lua_close(state);
 			state = nullptr;
 			return;
@@ -1589,7 +1607,7 @@ void DiceModManager::loadPlugin(ResList& res) {
 				}
 			}
 			catch (std::exception& e) {
-				console.log("∂¡»°" + pathFile.string() + " ß∞‹!" + e.what(), 0);
+				console.log("ËØªÂèñ" + pathFile.u8string() + "Â§±Ë¥•!" + e.what(), 0);
 			}
 			continue;
 		}
@@ -1608,7 +1626,7 @@ void DiceModManager::loadPlugin(ResList& res) {
 			lua_getglobal(L, "msg_order");
 			if (!lua_isnoneornil(L, -1)) {
 				if (lua_type(L, -1) != LUA_TTABLE) {
-					err << "msg_order¿‡–Õ¥ÌŒÛ(" + string(LuaTypes[lua_type(L, -1)]) + "):" + file;
+					err << "msg_orderÁ±ªÂûãÈîôËØØ(" + string(LuaTypes[lua_type(L, -1)]) + "):" + file;
 					continue;
 				}
 				lua_tab.set("file", file);
@@ -1632,7 +1650,7 @@ void DiceModManager::loadPlugin(ResList& res) {
 			lua_getglobal(L, "task_call");
 			if (!lua_isnoneornil(L, -1)) {
 				if (lua_type(L, -1) != LUA_TTABLE) {
-					err << "task_kill¿‡–Õ¥ÌŒÛ(" + string(LuaTypes[lua_type(L, -1)]) + "):" + file;
+					err << "task_killÁ±ªÂûãÈîôËØØ(" + string(LuaTypes[lua_type(L, -1)]) + "):" + file;
 					continue;
 				}
 				for (auto& [key, val] : lua_to_table(L).as_dict()) {
@@ -1643,11 +1661,11 @@ void DiceModManager::loadPlugin(ResList& res) {
 			++cntPlugin;
 		}
 	}
-	res << "∂¡»°/plugin/÷–µƒ" + std::to_string(cntPlugin) + "∏ˆΩ≈±æ, π≤"
-		+ to_string(plugin_reply.size()) + "Ãı÷∏¡Ó"
-		+ (cntTask ? "£¨" + to_string(cntTask) + "œÓ»ŒŒÒ" : "");
+	res << "ËØªÂèñ/plugin/‰∏≠ÁöÑ" + std::to_string(cntPlugin) + "‰∏™ËÑöÊú¨, ÂÖ±"
+		+ to_string(plugin_reply.size()) + "Êù°Êåá‰ª§"
+		+ (cntTask ? "Ôºå" + to_string(cntTask) + "È°π‰ªªÂä°" : "");
 	if (!err.empty()) {
-		res << "pluginŒƒº˛∂¡»°¥ÌŒÛ" + to_string(err.size()) + "¥Œ:" + err.show("\n");
+		res << "pluginÊñá‰ª∂ËØªÂèñÈîôËØØ" + to_string(err.size()) + "Ê¨°:" + err.show("\n");
 	}
 }
 
@@ -1677,7 +1695,7 @@ void DiceMod::loadLua() {
 				}
 			}
 			catch (std::exception& e) {
-				console.log("∂¡»°" + UTF8toGBK(file.u8string()) + " ß∞‹!" + e.what(), 0);
+				console.log("ËØªÂèñ" + UTF8toGBK(file.u8string()) + "Â§±Ë¥•!" + e.what(), 0);
 			}
 			continue;
 		}
@@ -1686,7 +1704,7 @@ void DiceMod::loadLua() {
 		lua_newtable(L);
 		lua_setglobal(L, "event");
 		if (luaL_dofile(L, getNativePathString(file).c_str())) {
-			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+			string pErrorMsg = lua_to_u8string_from_native(L, -1);
 			err << pErrorMsg;
 			L.reboot();
 			continue;
@@ -1695,7 +1713,7 @@ void DiceMod::loadLua() {
 			lua_getglobal(L, "msg_reply");
 			if (!lua_isnoneornil(L, -1)) {
 				if (lua_type(L, -1) != LUA_TTABLE) {
-					err << "msg_reply ˝æ›∏Ò Ω¥ÌŒÛ(" + string(LuaTypes[lua_type(L, -1)]) + "):" + UTF8toGBK(file.filename().u8string());
+					err << "msg_replyÊï∞ÊçÆÊ†ºÂºèÈîôËØØ(" + string(LuaTypes[lua_type(L, -1)]) + "):" + file.filename().u8string();
 					continue;
 				}
 				for (auto& [key, val] : lua_to_dict(L)) {
@@ -1715,7 +1733,7 @@ void DiceMod::loadLua() {
 			lua_getglobal(L, "event");
 			if (!lua_isnoneornil(L, -1)) {
 				if (lua_type(L, -1) != LUA_TTABLE) {
-					err << "event ˝æ›∏Ò Ω¥ÌŒÛ(" + string(LuaTypes[lua_type(L, -1)]) + "):" + UTF8toGBK(file.filename().u8string());
+					err << "eventÊï∞ÊçÆÊ†ºÂºèÈîôËØØ(" + string(LuaTypes[lua_type(L, -1)]) + "):" + file.filename().u8string();
 					continue;
 				}
 				for (auto& [key, val] : lua_to_dict(L)) {
@@ -1725,6 +1743,6 @@ void DiceMod::loadLua() {
 		}
 	}
 	if (!err.empty()) {
-		console.log("mod∂¡»°¥ÌŒÛ:" + err.show("\n"), 1);
+		console.log("modËØªÂèñÈîôËØØ:" + err.show("\n"), 1);
 	}
 }

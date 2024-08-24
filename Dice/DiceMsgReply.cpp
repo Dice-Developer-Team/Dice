@@ -7,7 +7,7 @@
  * |_______/   |________|  |________|  |________|  |__|
  *
  * Dice! QQ Dice Robot for TRPG
- * Copyright (C) 2018-2021 w4123Ëİä§
+ * Copyright (C) 2018-2021 w4123æº¯æ´„
  * Copyright (C) 2019-2024 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
@@ -116,7 +116,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 				continue;
 			}
 			limits << "prob:" + to_string(prob);
-			notes << "- ÒÔ¸ÅÂÊ´¥·¢: " + to_string(prob) + "%";
+			notes << "- ä»¥æ¦‚ç‡è§¦å‘: " + to_string(prob) + "%";
 		}
 		else if (key == "user_id") {
 			size_t pos{ item.find_first_not_of(" ",colon + 1) };
@@ -125,7 +125,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			splitID(item.substr(pos), user_id);
 			if (!user_id.empty()) {
 				limits << (user_id_negative ? "user_id:!" : "user_id:") + listID(user_id);
-				notes << (user_id_negative ? "- ÒÔÏÂÓÃ»§²»´¥·¢: " : "- ½öÒÔÏÂÓÃ»§´¥·¢: ") + listID(user_id);
+				notes << (user_id_negative ? "- ä»¥ä¸‹ç”¨æˆ·ä¸è§¦å‘: " : "- ä»…ä»¥ä¸‹ç”¨æˆ·è§¦å‘: ") + listID(user_id);
 			}
 		}
 		else if (key == "grp_id") {
@@ -135,7 +135,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			splitID(item.substr(pos), grp_id);
 			if (!grp_id.empty()) {
 				limits << (grp_id_negative ? "grp_id:!" : "grp_id:") + listID(grp_id);
-				notes << (grp_id_negative ? "- ÒÔÏÂÈºÁÄ²»´¥·¢: " : "- ½öÒÔÏÂÈºÁÄ´¥·¢: ") + listID(grp_id);
+				notes << (grp_id_negative ? "- ä»¥ä¸‹ç¾¤èŠä¸è§¦å‘: " : "- ä»…ä»¥ä¸‹ç¾¤èŠè§¦å‘: ") + listID(grp_id);
 			}
 		}
 		else if (key == "lock") {
@@ -154,12 +154,12 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 				locks.emplace_back(cd_type, key, 1);
 				sub << key + ((key.empty() && cd_type == CDType::Chat) ? ""
 					: ("@" + CDConfig::eType[(size_t)cd_type]));
-				subnotes << (cd_type == CDType::Chat ? "´°¿ÚËø"
-					: cd_type == CDType::User ? "ÓÃ»§Ëø" : "È«¾ÖËø") + key;
+				subnotes << (cd_type == CDType::Chat ? "çª—å£é”"
+					: cd_type == CDType::User ? "ç”¨æˆ·é”" : "å…¨å±€é”") + key;
 			}
 			if (sub.empty())continue;
 			limits << "lock:" + sub.show("&");
-			notes << "- Í¬²½Ëø: " + subnotes.show();
+			notes << "- åŒæ­¥é”: " + subnotes.show();
 		}
 		else if (key == "cd") {
 			if (colon == string::npos)continue;
@@ -189,16 +189,16 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 				cds << key + ((key.empty() && cd_type == CDType::Chat) ? ""
 					: ("@" + CDConfig::eType[(size_t)cd_type] + "="))
 					+ to_string(val);
-				cdnotes << (cd_type == CDType::Chat ? "´°¿Ú"
-					: cd_type == CDType::User ? "ÓÃ»§" : "È«¾Ö") + key + "¼Æ" + to_string(val) + "Ãë";
+				cdnotes << (cd_type == CDType::Chat ? "çª—å£"
+					: cd_type == CDType::User ? "ç”¨æˆ·" : "å…¨å±€") + key + "è®¡" + to_string(val) + "ç§’";
 			}
 			if (!cds.empty()) {
 				if (!cd_notice.empty()) {
 					cds << "@echo=" + cd_notice;
-					cdnotes << "ÀäÈ´»Ø¸´: " + cd_notice;
+					cdnotes << "å†·å´å›å¤: " + cd_notice;
 				}
 				limits << "cd:" + cds.show("&");
-				notes << "- ÀäÈ´¼ÆÊ±: " + cdnotes.show("\n - ");
+				notes << "- å†·å´è®¡æ—¶: " + cdnotes.show("\n - ");
 			}
 		}
 		else if (key == "today") {
@@ -229,16 +229,16 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 				sub << key + ((key.empty() && cd_type == CDType::Chat) ? ""
 					: ("@" + CDConfig::eType[(size_t)cd_type] + "="))
 					+ to_string(val);
-				subnotes << (cd_type == CDType::Chat ? "´°¿Ú"
-					: cd_type == CDType::User ? "ÓÃ»§" : "È«¾Ö") + key + "¼Æ" + to_string(val) + "´Î";
+				subnotes << (cd_type == CDType::Chat ? "çª—å£"
+					: cd_type == CDType::User ? "ç”¨æˆ·" : "å…¨å±€") + key + "è®¡" + to_string(val) + "æ¬¡";
 			}
 			if (!sub.empty()) {
 				if (!daylimit_notice.empty()) {
 					sub << "@echo=" + daylimit_notice;
-					subnotes << "ÏŞ¶î»Ø¸´: " + daylimit_notice;
+					subnotes << "é™é¢å›å¤: " + daylimit_notice;
 				}
 				limits << "today:" + sub.show("&");
-				notes << "- µ±ÈÕ¼ÆÊı: " + subnotes.show("\n - ");
+				notes << "- å½“æ—¥è®¡æ•°: " + subnotes.show("\n - ");
 			}
 		}
 		else if (key == "user_var") {
@@ -251,7 +251,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			for (auto& [key, cmpr] : user_vary) {
 				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
 			}
-			notes << "- ÓÃ»§´¥·¢ãĞÖµ: " + vars.show();
+			notes << "- ç”¨æˆ·è§¦å‘é˜ˆå€¼: " + vars.show();
 		}
 		else if (key == "grp_var") {
 			if (colon == string::npos)continue;
@@ -263,7 +263,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			for (auto& [key, cmpr] : grp_vary) {
 				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
 			}
-			notes << "- ÈºÁÄ´¥·¢ãĞÖµ: " + vars.show();
+			notes << "- ç¾¤èŠè§¦å‘é˜ˆå€¼: " + vars.show();
 		}
 		else if (key == "self_var") {
 			if (colon == string::npos)continue;
@@ -275,7 +275,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			for (auto& [key, cmpr] : self_vary) {
 				vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
 			}
-			notes << "- ×ÔÉí´¥·¢ãĞÖµ: " + vars.show();
+			notes << "- è‡ªèº«è§¦å‘é˜ˆå€¼: " + vars.show();
 		}
 		else if (key == "dicemaid") {
 			if (colon == string::npos)continue;
@@ -283,7 +283,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 			if (Treat t{ LimitTreat[val] }; t != Treat::Ignore) {
 				to_dice = t;
 				limits << "dicemaid:" + LimitTreat[(size_t)t];
-				notes << (to_dice == Treat::Only ? "- Ê¶±ğDice÷»Äï: ²Å´¥·¢" : "- Ê¶±ğDice÷»Äï: ²»´¥·¢");
+				notes << (to_dice == Treat::Only ? "- è¯†åˆ«Diceéª°å¨˜: æ‰è§¦å‘" : "- è¯†åˆ«Diceéª°å¨˜: ä¸è§¦å‘");
 			}
 		}
 	}
@@ -292,7 +292,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const string& raw) {
 	return *this;
 }
 DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
-	if (var.type == AttrVar::Type::Text) {
+	if (var.type == AttrVar::Type::U8String) {
 		return parse(var.to_str());
 	}
 	else if (var.type == AttrVar::Type::Table) {
@@ -303,7 +303,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 			if (key == "prob") {
 				if (int prob{ item.to_int() }) {
 					limits << "prob:" + to_string(prob);
-					notes << "- ÒÔ¸ÅÂÊ´¥·¢: " + to_string(prob) + "%";
+					notes << "- ä»¥æ¦‚ç‡è§¦å‘: " + to_string(prob) + "%";
 				}
 			}
 			else if (key == "user_id") {
@@ -327,7 +327,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 				}
 				if (!user_id.empty()) {
 					limits << (user_id_negative ? "user_id:!" : "user_id:") + listID(user_id);
-					notes << (user_id_negative ? "- ²»´¥·¢ÓÃ»§Ãûµ¥: " : "- ½ö´¥·¢ÓÃ»§Ãûµ¥: ") + listID(user_id);
+					notes << (user_id_negative ? "- ä¸è§¦å‘ç”¨æˆ·åå•: " : "- ä»…è§¦å‘ç”¨æˆ·åå•: ") + listID(user_id);
 				}
 			}
 			else if (key == "grp_id") {
@@ -351,7 +351,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 				}
 				if (!grp_id.empty()) {
 					limits << (grp_id_negative ? "grp_id:!" : "grp_id:") + listID(grp_id);
-					notes << (grp_id_negative ? "- ²»´¥·¢ÈºÁÄÃûµ¥: " : "- ½ö´¥·¢ÈºÁÄÃûµ¥: ") + listID(grp_id);
+					notes << (grp_id_negative ? "- ä¸è§¦å‘ç¾¤èŠåå•: " : "- ä»…è§¦å‘ç¾¤èŠåå•: ") + listID(grp_id);
 				}
 			}
 			else if (key == "cd") {
@@ -394,15 +394,15 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 						cds << it.key + ((it.key.empty() && it.type == CDType::Chat) ? ""
 							: ("@" + CDConfig::eType[(size_t)it.type] + "="))
 							+ to_string(it.cd);
-						cdnotes << (it.type == CDType::Chat ? "´°¿Ú"
-							: it.type == CDType::User ? "ÓÃ»§" : "È«¾Ö") + it.key + "¼Æ" + to_string(it.cd) + "Ãë";
+						cdnotes << (it.type == CDType::Chat ? "çª—å£"
+							: it.type == CDType::User ? "ç”¨æˆ·" : "å…¨å±€") + it.key + "è®¡" + to_string(it.cd) + "ç§’";
 					}
 					if (!cd_notice.empty()) {
 						cds << "@echo=" + cd_notice;
-						cdnotes << "ÀäÈ´»Ø¸´: " + cd_notice;
+						cdnotes << "å†·å´å›å¤: " + cd_notice;
 					}
 					limits << "cd:" + cds.show("&");
-					notes << "- ÀäÈ´¼ÆÊ±: " + cdnotes.show("\n - ");
+					notes << "- å†·å´è®¡æ—¶: " + cdnotes.show("\n - ");
 				}
 			}
 			else if (key == "today") {
@@ -441,15 +441,15 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 						sub << it.key + ((it.key.empty() && it.type == CDType::Chat) ? ""
 							: ("@" + CDConfig::eType[(size_t)it.type] + "="))
 							+ to_string(it.cd);
-						subnotes << (it.type == CDType::Chat ? "´°¿Ú"
-							: it.type == CDType::User ? "ÓÃ»§" : "È«¾Ö") + it.key + "¼Æ" + to_string(it.cd) + "´Î";
+						subnotes << (it.type == CDType::Chat ? "çª—å£"
+							: it.type == CDType::User ? "ç”¨æˆ·" : "å…¨å±€") + it.key + "è®¡" + to_string(it.cd) + "æ¬¡";
 					}
 					if (!daylimit_notice.empty()) {
 						sub << "@echo=" + daylimit_notice;
-						subnotes << "ÏŞ¶î»Ø¸´: " + daylimit_notice;
+						subnotes << "é™é¢å›å¤: " + daylimit_notice;
 					}
 					limits << "today:" + sub.show("&");
-					notes << "- µ±ÈÕ¼ÆÊı: " + subnotes.show("\n - ");
+					notes << "- å½“æ—¥è®¡æ•°: " + subnotes.show("\n - ");
 				}
 			}
 			else if (key == "lock") {
@@ -488,11 +488,11 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 					for (auto& it : locks) {
 						sub << it.key + ((it.key.empty() && it.type == CDType::Chat) ? ""
 							: ("@" + CDConfig::eType[(size_t)it.type] + "="));
-						subnotes << (it.type == CDType::Chat ? "´°¿ÚËø"
-							: it.type == CDType::User ? "ÓÃ»§Ëø" : "È«¾ÖËø") + it.key;
+						subnotes << (it.type == CDType::Chat ? "çª—å£é”"
+							: it.type == CDType::User ? "ç”¨æˆ·é”" : "å…¨å±€é”") + it.key;
 					}
 					limits << "lock:" + sub.show("&");
-					notes << "- Í¬²½Ëø: " + subnotes.show();
+					notes << "- åŒæ­¥é”: " + subnotes.show();
 				}
 			}
 			else if (key == "user_var") {
@@ -503,7 +503,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 					for (auto& [key, cmpr] : user_vary) {
 						vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
 					}
-					notes << "- ÓÃ»§´¥·¢ãĞÖµ: " + vars.show();
+					notes << "- ç”¨æˆ·è§¦å‘é˜ˆå€¼: " + vars.show();
 				}
 			}
 			else if (key == "grp_var") {
@@ -514,7 +514,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 					for (auto& [key, cmpr] : grp_vary) {
 						vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
 					}
-					notes << "- ÈºÁÄ´¥·¢ãĞÖµ: " + vars.show();
+					notes << "- ç¾¤èŠè§¦å‘é˜ˆå€¼: " + vars.show();
 				}
 			}
 			else if (key == "self_var") {
@@ -525,7 +525,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 					for (auto& [key, cmpr] : self_vary) {
 						vars << key + showAttrCMPR(cmpr.first) + cmpr.second.print();
 					}
-					notes << "- ×ÔÉí´¥·¢ãĞÖµ: " + vars.show();
+					notes << "- è‡ªèº«è§¦å‘é˜ˆå€¼: " + vars.show();
 				}
 			}
 			else if (key == "dicemaid") {
@@ -533,7 +533,7 @@ DiceTriggerLimit& DiceTriggerLimit::parse(const AttrVar& var) {
 				if (Treat t{ LimitTreat[val] }; t != Treat::Ignore) {
 					to_dice = t;
 					limits << "dicemaid:" + LimitTreat[(size_t)t];
-					notes << (to_dice == Treat::Only ? "- Ê¶±ğDice÷»Äï: ²Å´¥·¢" : "- Ê¶±ğDice÷»Äï: ²»´¥·¢");
+					notes << (to_dice == Treat::Only ? "- è¯†åˆ«Diceéª°å¨˜: æ‰è§¦å‘" : "- è¯†åˆ«Diceéª°å¨˜: ä¸è§¦å‘");
 				}
 			}
 		}
@@ -575,7 +575,7 @@ bool DiceTriggerLimit::check(DiceEvent* msg, chat_locks& lock_list)const {
 	if (to_dice != Treat::Ignore && console.DiceMaid != msg->fromChat.uid) {
 		if (DD::isDiceMaid(msg->fromChat.uid) != (to_dice == Treat::Only))return false;
 	}
-	//ÀäÈ´ÓëÉÏÏŞ×îºó´¦Àí
+	//å†·å´ä¸ä¸Šé™æœ€åå¤„ç†
 	if (!cd_timer.empty() || !today_cnt.empty()) {
 		vector<CDQuest>timers;
 		vector<CDQuest>counters;
@@ -612,13 +612,13 @@ bool DiceTriggerLimit::check(DiceEvent* msg, chat_locks& lock_list)const {
 enumap_ci DiceMsgReply::sType{ "Nor","Order","Reply","Both","Game", };
 enumap_ci DiceMsgReply::sMode{ "Match", "Prefix", "Search", "Regex" };
 enumap_ci DiceMsgReply::sEcho{ "Text", "Deck", "Lua", "JS", "Py" };
-std::array<string, 5> strType{ "ÎŞ","Ö¸Áî","»Ø¸´","Í¬Ê±","ÓÎÏ·" };
-enumap<string> strMode{ "ÍêÈ«", "Ç°×º", "Ä£ºı", "ÕıÔò" };
-enumap<string> strEcho{ "´¿ÎÄ±¾", "ÅÆ¶Ñ£¨¶àÑ¡Ò»£©", "Lua", "JavaScript",
+std::array<string, 5> strType{ "æ— ","æŒ‡ä»¤","å›å¤","åŒæ—¶","æ¸¸æˆ" };
+enumap<string> strMode{ "å®Œå…¨", "å‰ç¼€", "æ¨¡ç³Š", "æ­£åˆ™" };
+enumap<string> strEcho{ "çº¯æ–‡æœ¬", "ç‰Œå †ï¼ˆå¤šé€‰ä¸€ï¼‰", "Lua", "JavaScript",
 #ifdef DICE_PYTHON
 "Python" };
 #else
-"Python£¨²»Ö§³Ö£©" };
+"Pythonï¼ˆä¸æ”¯æŒï¼‰" };
 #endif // DICE_PYTHON
 
 ptr<DiceMsgReply> DiceMsgReply::set_order(const string& key, const AttrVars& order) {
@@ -638,12 +638,12 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 	if (!limit.check(msg, lock_list))return false;
 	if (type == Type::Reply) {
 		if (!msg->isCalled && (chon < 0 ||
-			(!chon && (msg->pGrp->is("½ûÓÃ»Ø¸´")))))
+			(!chon && (msg->pGrp->is("ç¦ç”¨å›å¤")))))
 			return false;
 	}
 	else {	//type == Type::Order
 		if (!msg->isCalled && (chon < 0 ||
-			(!chon && msg->pGrp->is("Í£ÓÃÖ¸Áî"))))
+			(!chon && msg->pGrp->is("åœç”¨æŒ‡ä»¤"))))
 			return false;
 	}
 	if (msg->WordCensor()) {
@@ -675,15 +675,15 @@ bool DiceMsgReply::exec(DiceEvent* msg) {
 	return false;
 }
 string DiceMsgReply::show()const {
-	return "\n´¥·¢ĞÔÖÊ: " + strType[(int)type]
-		+ (limit.print().empty() ? "" : ("\nÏŞÖÆÌõ¼ş:\n" + limit.note()))
-		+ "\nÆ¥ÅäÄ£Ê½: "
-		+ (keyMatch[0] ? ("\n- ÍêÈ«Æ¥Åä: " + listDeck(*keyMatch[0])) : "")
-		+ (keyMatch[1] ? ("\n- Ç°×ºÆ¥Åä: " + listDeck(*keyMatch[1])) : "")
-		+ (keyMatch[2] ? ("\n- Ä£ºıÆ¥Åä: " + listDeck(*keyMatch[2])) : "")
-		+ (keyMatch[3] ? ("\n- ÕıÔòÆ¥Åä: " + listDeck(*keyMatch[3])) : "")
-		+ "\n»Ø¸´ĞÎÊ½: " + strEcho[(int)echo]
-		+ "\n»Ø¸´ÄÚÈİ: " + show_ans();
+	return "\nè§¦å‘æ€§è´¨: " + strType[(int)type]
+		+ (limit.print().empty() ? "" : ("\né™åˆ¶æ¡ä»¶:\n" + limit.note()))
+		+ "\nåŒ¹é…æ¨¡å¼: "
+		+ (keyMatch[0] ? ("\n- å®Œå…¨åŒ¹é…: " + listDeck(*keyMatch[0])) : "")
+		+ (keyMatch[1] ? ("\n- å‰ç¼€åŒ¹é…: " + listDeck(*keyMatch[1])) : "")
+		+ (keyMatch[2] ? ("\n- æ¨¡ç³ŠåŒ¹é…: " + listDeck(*keyMatch[2])) : "")
+		+ (keyMatch[3] ? ("\n- æ­£åˆ™åŒ¹é…: " + listDeck(*keyMatch[3])) : "")
+		+ "\nå›å¤å½¢å¼: " + strEcho[(int)echo]
+		+ "\nå›å¤å†…å®¹: " + show_ans();
 }
 string DiceMsgReply::print()const {
 	return (!title.empty() ? ("Title=" + title + "\n") : "")
@@ -771,28 +771,28 @@ void DiceMsgReply::readJson(const fifo_json& j) {
 		if (j.count("mode")) {
 			size_t mode{ sMode[j["mode"].get<string>()] };
 			string keyword{ j.count("keyword") ?
-				UTF8toGBK(j["keyword"].get<string>()) : title
+				j["keyword"] : title
 			};
 			keyMatch[mode] = std::make_unique<vector<string>>
 				(mode == 3 ? vector<string>{keyword} : getLines(keyword, '|'));
 		}
 		if (j.count("match")) {
-			keyMatch[0] = std::make_unique<vector<string>>(UTF8toGBK(j["match"].get<vector<string>>()));
+			keyMatch[0] = std::make_unique<vector<string>>(j["match"].get<vector<string>>());
 		}
 		if (j.count("prefix")) {
-			keyMatch[1] = std::make_unique<vector<string>>(UTF8toGBK(j["prefix"].get<vector<string>>()));
+			keyMatch[1] = std::make_unique<vector<string>>(j["prefix"].get<vector<string>>());
 		}
 		if (j.count("search")) {
-			keyMatch[2] = std::make_unique<vector<string>>(UTF8toGBK(j["search"].get<vector<string>>()));
+			keyMatch[2] = std::make_unique<vector<string>>(j["search"].get<vector<string>>());
 		}
 		if (j.count("regex")) {
-			keyMatch[3] = std::make_unique<vector<string>>(UTF8toGBK(j["regex"].get<vector<string>>()));
+			keyMatch[3] = std::make_unique<vector<string>>(j["regex"].get<vector<string>>());
 		}
 		if (!(keyMatch[0] || keyMatch[1] || keyMatch[2] || keyMatch[3])) {
 			int idx{ 0 };
 			keyMatch[0] = std::make_unique<vector<string>>(getLines(title, '|'));
 		}
-		if (j.count("limit"))limit.parse(UTF8toGBK(j["limit"].get<string>()));
+		if (j.count("limit"))limit.parse(j["limit"].get<string>());
 		if (j.count("echo"))echo = (Echo)sEcho[j["echo"].get<string>()];
 		if (j.count("answer")) {
 			if (echo == Echo::Deck)answer->from_json(j["answer"]);
@@ -803,43 +803,43 @@ void DiceMsgReply::readJson(const fifo_json& j) {
 		}
 	}
 	catch (std::exception& e) {
-		console.log(string("reply½âÎöjson´íÎó:") + e.what(), 0b1000);
+		console.log(string("replyè§£æjsoné”™è¯¯:") + e.what(), 0b1000);
 	}
 }
 fifo_json DiceMsgReply::writeJson()const {
 	fifo_json j;
 	j["type"] = sType[(int)type];
 	j["echo"] = sEcho[(int)echo];
-	if (keyMatch[0])j["match"] = GBKtoUTF8(*keyMatch[0]);
-	if (keyMatch[1])j["prefix"] = GBKtoUTF8(*keyMatch[1]);
-	if (keyMatch[2])j["search"] = GBKtoUTF8(*keyMatch[2]);
-	if (keyMatch[3])j["regex"] = GBKtoUTF8(*keyMatch[3]);
-	if (!limit.empty())j["limit"] = GBKtoUTF8(limit.print());
+	if (keyMatch[0])j["match"] = *keyMatch[0];
+	if (keyMatch[1])j["prefix"] = *keyMatch[1];
+	if (keyMatch[2])j["search"] = *keyMatch[2];
+	if (keyMatch[3])j["regex"] = *keyMatch[3];
+	if (!limit.empty())j["limit"] = limit.print();
 	if (echo == Echo::Deck)j["answer"] = answer->to_json();
-	else if (echo == Echo::Text)j["answer"] = GBKtoUTF8(answer->get_str("text"));
-	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(answer->get_str("lua"));
-	else if (echo == Echo::JavaScript)j["answer"] = GBKtoUTF8(answer->get_str("js"));
-	else if (echo == Echo::Python)j["answer"] = GBKtoUTF8(answer->get_str("py"));
+	else if (echo == Echo::Text)j["answer"] = answer->get_str("text");
+	else if (echo == Echo::Lua)j["answer"] = answer->get_str("lua");
+	else if (echo == Echo::JavaScript)j["answer"] = answer->get_str("js");
+	else if (echo == Echo::Python)j["answer"] = answer->get_str("py");
 	return j;
 }
 fifo_json DiceMsgReply::to_line()const {
 	fifo_json j;
-	j["name"] = GBKtoUTF8(title);
-	j["keyword"] = GBKtoUTF8(keyMatch[0] ? listItem(*keyMatch[0]) :
+	j["name"] = title;
+	j["keyword"] = keyMatch[0] ? listItem(*keyMatch[0]) :
 		keyMatch[1] ? listItem(*keyMatch[1]) :
 		keyMatch[2] ? listItem(*keyMatch[2]) :
-		keyMatch[3] ? listItem(*keyMatch[3]) : "");
+		keyMatch[3] ? listItem(*keyMatch[3]) : "";
 	j["type"] = sType[(int)type];
 	j["mode"] = keyMatch[0] ? "Match" :
 		keyMatch[1] ? "Prefix" :
 		keyMatch[2] ? "Search" : "Regex";
-	if (!limit.empty())j["limit"] = GBKtoUTF8(limit.print());
+	if (!limit.empty())j["limit"] = limit.print();
 	j["echo"] = sEcho[(int)echo];
-	if (echo == Echo::Deck) j["answer"] = GBKtoUTF8(listDeck(*answer->to_list()));
-	else if (echo == Echo::Text)j["answer"] = GBKtoUTF8(answer->get_str("text"));
-	else if (echo == Echo::Lua)j["answer"] = GBKtoUTF8(answer->get_str("lua"));
-	else if (echo == Echo::JavaScript)j["answer"] = GBKtoUTF8(answer->get_str("js"));
-	else if (echo == Echo::Python)j["answer"] = GBKtoUTF8(answer->get_str("py"));
+	if (echo == Echo::Deck) j["answer"] = listDeck(*answer->to_list());
+	else if (echo == Echo::Text)j["answer"] = answer->get_str("text");
+	else if (echo == Echo::Lua)j["answer"] = answer->get_str("lua");
+	else if (echo == Echo::JavaScript)j["answer"] = answer->get_str("js");
+	else if (echo == Echo::Python)j["answer"] = answer->get_str("py");
 	return j;
 }
 
@@ -860,7 +860,7 @@ bool DiceReplyUnit::listen(DiceEvent* msg, int type) {
 			sPrefix.pop();
 		}
 	}
-	//Ä£ºıÆ¥Åä½ûÖ¹×ÔÎÒ´¥·¢
+	//æ¨¡ç³ŠåŒ¹é…ç¦æ­¢è‡ªæˆ‘è§¦å‘
 	if (vector<string>vSearch; msg->fromChat.uid != console.DiceMaid
 		&& gSearcher.search(convert_a2w(strMsg.c_str()), vSearch)) {
 		for (const auto& word : vSearch) {
@@ -876,13 +876,13 @@ bool DiceReplyUnit::listen(DiceEvent* msg, int type) {
 			if (!items.count(title))continue;
 			auto reply{ items[title] };
 			if (!(type & (int)reply->type))continue;
-			// libstdc++ Ê¹ÓÃÁËµİ¹éÊ½ dfs Æ¥ÅäÕıÔò±í´ïÊ½
-			// È»¶ø£¬Ã¿¸ö Java Thread ÔÚ32Î» Linux ÏÂÄ¬ÈÏ´óĞ¡Îª320K£¬600×Ö·ûµÄÆ¥Åä¼´»á±¬Õ»
-			// 64Î»ÏÂ»¹ºÃ£¬Ä¬ÈÏÊÇ1M£¬1800×Ö·û»á±¬Õ»
+			// libstdc++ ä½¿ç”¨äº†é€’å½’å¼ dfs åŒ¹é…æ­£åˆ™è¡¨è¾¾å¼
+			// ç„¶è€Œï¼Œæ¯ä¸ª Java Thread åœ¨32ä½ Linux ä¸‹é»˜è®¤å¤§å°ä¸º320Kï¼Œ600å­—ç¬¦çš„åŒ¹é…å³ä¼šçˆ†æ ˆ
+			// 64ä½ä¸‹è¿˜å¥½ï¼Œé»˜è®¤æ˜¯1Mï¼Œ1800å­—ç¬¦ä¼šçˆ†æ ˆ
 			// char limit 400
 			// @seealso https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86164
 
-			// Î´À´ÓÅ»¯£ºÔ¤ÏÈ¹¹½¨regex²¢Ê¹ÓÃstd::regex::optimize
+			// æœªæ¥ä¼˜åŒ–ï¼šé¢„å…ˆæ„å»ºregexå¹¶ä½¿ç”¨std::regex::optimize
 			std::wstring LstrMsg = convert_a2realw(strMsg.c_str());
 			if (strMsg.length() <= 400 && std::regex_match(LstrMsg, msg->msgMatch, exp)) {
 				if (reply->exec(msg))isAns = true;
@@ -927,7 +927,7 @@ void DiceReplyUnit::build() {
 					regex_items[word] = reply;
 				}
 				catch (const std::regex_error& e) {
-					console.log("ÕıÔò¹Ø¼ü´Ê½âÎö´íÎó£¬±í´ïÊ½:\n" + word + "\n" + e.what(), 0b10);
+					console.log("æ­£åˆ™å…³é”®è¯è§£æé”™è¯¯ï¼Œè¡¨è¾¾å¼:\n" + word + "\n" + e.what(), 0b10);
 				}
 			}
 		}
@@ -967,7 +967,7 @@ void DiceReplyUnit::insert(const string& key, ptr<DiceMsgReply> reply) {
 				regex_items[word] = reply;
 			}
 			catch (const std::regex_error& e) {
-				console.log("ÕıÔò¹Ø¼ü´Ê½âÎö´íÎó£¬±í´ïÊ½:\n" + word + "\n" + e.what(), 0b10);
+				console.log("æ­£åˆ™å…³é”®è¯è§£æé”™è¯¯ï¼Œè¡¨è¾¾å¼:\n" + word + "\n" + e.what(), 0b10);
 			}
 		}
 	}
