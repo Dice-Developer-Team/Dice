@@ -545,16 +545,15 @@ int Player::removeCard(const string& name){
 	while (!mCardList.count(indexMax))indexMax--;
 	return 0;
 }
-int Player::renameCard(const string& name, const string& name_new) 	{
+int Player::renameCard(PC pc, const string& name_new) 	{
 	std::lock_guard<std::mutex> lock_queue(cardMutex);
 	if (name_new.empty())return -3;
 	if (NameList.count(name_new))return -4;
 	if (name_new.find(":") != string::npos)return -6;
-	auto pc{ NameList[name] };
 	const auto i = pc->getID();
 	if (pc->locked("n"))return -22;
 	NameList[name_new] = pc;
-	NameList.erase(name);
+	NameList.erase(pc->getName());
 	pc->setName(name_new);
 	return 0;
 }

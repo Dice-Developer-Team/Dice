@@ -3414,8 +3414,9 @@ int DiceEvent::InnerOrder() {
 		}
 		else if (strOption == "nn") {
 			string& strPC{ (at("new_name") = strip(filter_CQcode(readRest(),fromChat.gid))).text};
-			set("old_name",pl[fromChat.gid]->getName());
-			if (!(resno = pl.renameCard(get_str("old_name"), strPC)))replyMsg("strPcCardRename");
+			auto pc = pl[fromChat.gid];
+			set("old_name", pc->getName());
+			if (!(resno = pl.renameCard(pc, strPC)))replyMsg("strPcCardRename");
 			else set("char", strPC);
 		}
 		else if (strOption == "del") {

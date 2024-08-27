@@ -329,7 +329,7 @@ public:
 
 	int removeCard(const string& name);
 
-	int renameCard(const string& name, const string& name_new);
+	int renameCard(PC pc, const string& name_new);
 
 	int copyCard(const string& name1, const string& name2, long long group = 0);
 

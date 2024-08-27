@@ -98,12 +98,12 @@ void lua_set_field(lua_State* L, int idx, const string& str) {
 }
 AttrIndex lua_to_index(lua_State* L, int idx){
 	if (lua_type(L, idx) == LUA_TSTRING) {
-		return lua_to_gbstring(L, idx);
+		return lua_to_u8string(L, idx);
 	}
 	else if (lua_isnumber(L, idx)) {
 		return lua_tonumber(L, idx);
 	}
-	return lua_to_gbstring(L, idx);
+	return lua_to_u8string(L, idx);
 }
 
 void lua_push_Context(lua_State* L, const ptr<AnysTable>& obj) {
@@ -237,7 +237,7 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 		}
 		break;
 	case LUA_TSTRING:
-		return lua_to_gbstring(L, idx);
+		return lua_to_u8string(L, idx);
 		break;
 	case LUA_TFUNCTION:
 		return lua_to_chunk(L, idx);
@@ -256,7 +256,7 @@ AttrVar lua_to_attr(lua_State* L, int idx = -1) {
 				tab->list->push_back(lua_to_attr(L, -1));
 			}
 			else {
-				tab->dict.emplace(lua_to_gbstring(L, -2), lua_to_attr(L, -1));
+				tab->dict.emplace(lua_to_u8string(L, -2), lua_to_attr(L, -1));
 			}
 			lua_pop(L, 1);
 		}
@@ -295,7 +295,7 @@ AnysTable lua_to_table(lua_State* L, int idx = -1) {
 	lua_pushnil(L);
 	while (lua_next(L, idx)) {
 		if (lua_isstring(L, -2) && !lua_isnil(L, -1)) {
-			tab.set(lua_to_gbstring(L, -2),lua_to_attr(L, -1));
+			tab.set(lua_to_u8string(L, -2),lua_to_attr(L, -1));
 		}
 		else {
 			tab.set(lua_to_int(L, -2) - 1, lua_to_attr(L, -1));
@@ -309,7 +309,7 @@ AttrVars lua_to_dict(lua_State* L, int idx = -1) {
 	if (idx < 0)idx = lua_gettop(L) + idx + 1;
 	lua_pushnil(L);
 	while (lua_next(L, idx)) {
-		tab[lua_to_gbstring(L, -2)] = lua_to_attr(L, -1);
+		tab[lua_to_u8string(L, -2)] = lua_to_attr(L, -1);
 		lua_pop(L, 1);
 	}
 	return tab;
@@ -337,7 +337,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 		if (!luaFunc) {
 			//执行文件
 			if (lua_pcall(L, 0, 2, 0)) {
-				string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+				string pErrorMsg = lua_to_u8string_from_native(L, -1);
 				console.log(getMsg("strSelfName") + "运行" + filename + "失败:" + pErrorMsg, 0b10);
 				msg->set("lang", "Lua");
 				msg->reply(getMsg("strScriptRunErr"));
@@ -346,7 +346,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 		}
 		//加载文件，执行全局函数
 		else if (lua_pcall(L, 0, 0, 0)) {
-			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+			string pErrorMsg = lua_to_u8string_from_native(L, -1);
 			console.log(getMsg("strSelfName") + "运行" + filename + "失败:" + pErrorMsg, 0b10);
 			msg->set("lang", "Lua");
 			msg->reply(getMsg("strScriptRunErr"));
@@ -356,7 +356,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 			lua_getglobal(L, luaFunc.to_str().c_str());
 			lua_push_Context(L, msg->shared_from_this());
 			if (lua_pcall(L, 1, 2, 0)) {
-				string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+				string pErrorMsg = lua_to_u8string_from_native(L, -1);
 				console.log(getMsg("strSelfName") + "调用" + filename + "函数" + luaFunc.to_str() + "失败!\n" + pErrorMsg, 0b10);
 				msg->set("lang", "Lua");
 				msg->reply(getMsg("strScriptRunErr"));
@@ -370,7 +370,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 		if (bytes.isUTF8)UTF8Luas.insert(L);
 		if (lua_load(L, lua_reader, &bytes, msg->get_str("reply_title").c_str(), "bt")
 			|| (lua_push_Context(L, msg->shared_from_this()), lua_pcall(L, 1, 2, 0))) {
-			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+			string pErrorMsg = lua_to_u8string_from_native(L, -1);
 			console.log(getMsg("strSelfName") + "运行Lua字节码" + msg->get_str("reply_title") + "失败!\n" + pErrorMsg, 0b10);
 			msg->set("lang", "Lua");
 			msg->reply(getMsg("strScriptRunErr"));
@@ -380,7 +380,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 	//执行语句
 	else if (luaFile.empty() &&
 		(luaL_loadstring(L, lua.to_str().c_str()) || lua_pcall(L, 0, 2, 0))) {
-		string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+		string pErrorMsg = lua_to_u8string_from_native(L, -1);
 		console.log(getMsg("strSelfName") + "调用" + msg->get_str("reply_title") + "Lua代码失败!\n" + pErrorMsg, 0b10);
 		msg->set("lang", "Lua");
 		msg->reply(getMsg("strScriptRunErr"));
@@ -389,7 +389,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 	if (lua_gettop(L)) {
 		if (!lua_isnoneornil(L, 1)) {
 			if (lua_isstring(L, 1)) {
-				msg->reply(lua_to_gbstring(L, 1));
+				msg->reply(lua_to_u8string(L, 1));
 			}
 			else {
 				console.log(getMsg("strSelfName") + "调用" + msg->get_str("reply_title") + "脚本返回值格式错误(" + LuaTypes[lua_type(L, 1)] + ")!", 0b10);
@@ -400,7 +400,7 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 		}
 		if (!lua_isnoneornil(L, 2)) {
 			if (lua_isstring(L, 2)) {
-				msg->replyHidden(lua_to_gbstring(L, 2));
+				msg->replyHidden(lua_to_u8string(L, 2));
 			}
 			else {
 				console.log(getMsg("strSelfName") + "调用" + msg->get_str("reply_title") + "脚本返回值格式错误(" + LuaTypes[lua_type(L, 2)] + ")!", 1);
@@ -422,7 +422,7 @@ bool lua_call_event(const ptr<AnysTable>& eve, const AttrVar& lua) {
 	lua_setglobal(L, "event");
 	if (isFile) {
 		if (lua_pcall(L, 0, 2, 0)) {
-			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+			string pErrorMsg = lua_to_u8string_from_native(L, -1);
 			console.log(getMsg("strSelfName") + "运行" + luas + "失败:" + pErrorMsg, 0b10);
 			return 0;
 		}
@@ -432,13 +432,13 @@ bool lua_call_event(const ptr<AnysTable>& eve, const AttrVar& lua) {
 		if (bytes.isUTF8)UTF8Luas.insert(L);
 		if (lua_load(L, lua_reader, (void*)&bytes, eve->get_str("Type").c_str(), "bt")
 			|| lua_pcall(L, 0, 2, 0)) {
-			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+			string pErrorMsg = lua_to_u8string_from_native(L, -1);
 			console.log(getMsg("strSelfName") + "调用事件lua失败!\n" + pErrorMsg, 0b10);
 			return false;
 		}
 	}
 	else if (luaL_loadstring(L, luas.c_str()) || lua_pcall(L, 0, 2, 0)) {
-		string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+		string pErrorMsg = lua_to_u8string_from_native(L, -1);
 		console.log(getMsg("strSelfName") + "调用事件lua失败!\n" + pErrorMsg, 0b10);
 		return false;
 	}
@@ -465,14 +465,14 @@ bool lua_call_task(const AttrVars& task) {
 	string fileGB18030(UTF8toGBK(file, true));
 #endif
 	if (lua_pcall(L, 0, 0, 0)) {
-		string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+		string pErrorMsg = lua_to_u8string_from_native(L, -1);
 		console.log(getMsg("strSelfName") + "运行lua文件" + fileGB18030 + "失败:" + pErrorMsg, 0b10);
 		return 0;
 	}
 	string func{ task.at("func").to_str() };
 	lua_getglobal(L, func.c_str());
 	if (lua_pcall(L, 0, 0, 0)) {
-		string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+		string pErrorMsg = lua_to_u8string_from_native(L, -1);
 		console.log(getMsg("strSelfName") + "调用" + fileGB18030 + "函数" + func + "失败!\n" + pErrorMsg, 0b10);
 		return false;
 	}
@@ -516,7 +516,7 @@ int lua_Set_totable(lua_State* L) {
 int lua_Set_index(lua_State* L) {
 	LUA2SET(L);
 	if (lua_type(L, 2) == LUA_TSTRING) {
-		string key{ lua_to_gbstring(L, 2) };
+		string key{ lua_to_u8string(L, 2) };
 		if (key == "in")lua_pushcfunction(L, lua_Set_in);
 		else if (key == "add")lua_pushcfunction(L, lua_Set_add);
 		else if (key == "remove")lua_pushcfunction(L, lua_Set_remove);
@@ -567,7 +567,7 @@ int selfData_get(lua_State* L) {
 		return 1;
 	}
 	else if(file.data.is_table()){
-		string key{ lua_to_gbstring(L, 2) };
+		string key{ lua_to_u8string(L, 2) };
 		if (file.data.table->has(key)) {
 			lua_push_attr(L, file.data.table->get(key));
 			return 1;
@@ -586,7 +586,7 @@ int selfData_set(lua_State* L) {
 		file.data = lua_to_attr(L, 2);
 	}
 	else if (std::lock_guard<std::mutex> lock(file.exWrite); lua_isstring(L, 2) && file.data.is_table()) {
-		string key{ lua_to_gbstring(L, 2) };
+		string key{ lua_to_u8string(L, 2) };
 		if (lua_isnoneornil(L, 3)) {
 			file.data.table->reset(key);
 		}
@@ -599,7 +599,7 @@ int selfData_set(lua_State* L) {
 int SelfData_index(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
-	string key{ lua_to_gbstring(L, 2) };
+	string key{ lua_to_u8string(L, 2) };
 	if (key == "get") {
 		lua_pushcfunction(L, selfData_get);
 	}
@@ -615,7 +615,7 @@ int SelfData_index(lua_State* L) {
 int SelfData_newindex(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
-	string key{ lua_to_gbstring(L, 2) };
+	string key{ lua_to_u8string(L, 2) };
 	if (file.data.is_null())file.data = AnysTable();
 	else if (!file.data.is_table())return 0;
 	if (std::lock_guard<std::mutex> lock(file.exWrite); lua_isnoneornil(L,3)) {
@@ -650,7 +650,7 @@ static int luaopen_SelfData(lua_State* L) {
 #define LUADEF(name) static int lua_dice_##name(lua_State* L)
  //输出日志
 LUADEF(log) {
-	if (string info{ lua_to_gbstring(L, 1) }; !info.empty()) {
+	if (string info{ lua_to_u8string(L, 1) }; !info.empty()) {
 		int note_lv{ 0 };
 		for (int idx = lua_gettop(L); idx > 1; --idx) {
 			if (lua_isinteger(L, idx)) {
@@ -711,12 +711,12 @@ LUADEF(loadLua) {
 		return 0;
 	}
 	if (luaL_loadstring(L, strLua.c_str())) {
-		string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+		string pErrorMsg = lua_to_u8string_from_native(L, -1);
 		console.log(getMsg("strSelfName") + "读取" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
 		return 0;
 	}
 	if (lua_pcall(L, 0, 1, 0)) {
-		string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+		string pErrorMsg = lua_to_u8string_from_native(L, -1);
 		console.log(getMsg("strSelfName") + "运行" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
 		return 0;
 	}
@@ -755,7 +755,7 @@ LUADEF(getGroupConf) {
 	if (top < 1)return 0;
 	string item;
 	if (lua_isstring(L, 2)) {
-		if ((item = lua_to_gbstring(L, 2))[0] == '&')item = fmt->format(item);
+		if ((item = lua_to_u8string(L, 2))[0] == '&')item = fmt->format(item);
 	}
 	if (lua_isnil(L, 1)) {
 		if (item.empty())return 0;
@@ -827,7 +827,7 @@ LUADEF(getGroupConf) {
 }
 LUADEF(setGroupConf) {
 	long long id{ lua_to_int_or_zero(L, 1) };
-	string item{ lua_to_gbstring(L, 2) };
+	string item{ lua_to_u8string(L, 2) };
 	if (!id || item.empty())return 0;
 	if (item[0] == '&')item = fmt->format(item);
 	Chat& grp{ chat(id) };
@@ -836,7 +836,7 @@ LUADEF(setGroupConf) {
 		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
 			uid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
 		}
-		string card{ lua_to_gbstring(L, 3) };
+		string card{ lua_to_u8string(L, 3) };
 		DD::setGroupCard(id, uid, card);
 		return 0;
 	}
@@ -852,7 +852,7 @@ LUADEF(getUserConf) {
 	else if (top < 1)return 0;
 	string item;
 	if (lua_isstring(L, 2)) {
-		if ((item = lua_to_gbstring(L, 2))[0] == '&')item = fmt->format(item);
+		if ((item = lua_to_u8string(L, 2))[0] == '&')item = fmt->format(item);
 	}
 	if (lua_isnil(L, 1)) {
 		if (item.empty())return 0;
@@ -882,7 +882,7 @@ LUADEF(getUserConf) {
 LUADEF(setUserConf) {
 	long long uid{ lua_to_int_or_zero(L, 1) };
 	if (!uid)return 0;
-	string item{ lua_to_gbstring(L, 2) };
+	string item{ lua_to_u8string(L, 2) };
 	if (item.empty())return 0;
 	if (item[0] == '&')item = fmt->format(item);
 	if (item == "trust") {
@@ -902,7 +902,7 @@ LUADEF(setUserConf) {
 			getUser(uid).rmNick(gid);
 		}
 		else {
-			getUser(uid).setNick(gid, lua_to_gbstring(L, 3));
+			getUser(uid).setNick(gid, lua_to_u8string(L, 3));
 		}
 	}
 	else if (lua_isnoneornil(L, 3)) {
@@ -917,7 +917,7 @@ LUADEF(getUserToday) {
 	else if (top < 1)return 0;
 	string item;
 	if (lua_isstring(L, 2)) {
-		if ((item = lua_to_gbstring(L, 2))[0] == '&')item = fmt->format(item);
+		if ((item = lua_to_u8string(L, 2))[0] == '&')item = fmt->format(item);
 	}
 	if (lua_isnil(L, 1)) {
 		if (item.empty())return 0;
@@ -950,7 +950,7 @@ LUADEF(getUserToday) {
 }
 LUADEF(setUserToday) {
 	long long uid{ lua_to_int_or_zero(L, 1) };
-	string item{ lua_to_gbstring(L, 2) };
+	string item{ lua_to_u8string(L, 2) };
 	if (item.empty())return 0;
 	if (item[0] == '&')item = fmt->format(item);
 	today->set(uid, item, lua_to_attr(L, 3));
@@ -963,7 +963,7 @@ LUADEF(getPlayerCardAttr) {
 	else if (argc < 3)return 0;
 	long long uid{ lua_to_int_or_zero(L, 1) };
 	long long group{ lua_to_int_or_zero(L, 2) };
-	string key{ lua_to_gbstring(L, 3) };
+	string key{ lua_to_u8string(L, 3) };
 	if (!uid || key.empty())return 0;
 	PC pc = getPlayer(uid)[group];
 	if (auto val{ pc->get(key) };!val.is_null()) {
@@ -981,7 +981,7 @@ LUADEF(getPlayerCardAttr) {
 LUADEF(getPlayerCard) {
 	if (long long uid{ lua_to_int_or_zero(L, 1) }) {
 		if (lua_type(L, 2) == LUA_TSTRING) {
-			lua_push_Actor(L, getPlayer(uid).getCard(lua_to_gbstring(L, 2)));
+			lua_push_Actor(L, getPlayer(uid).getCard(lua_to_u8string(L, 2)));
 		}
 		else {
 			long long gid{ lua_to_int_or_zero(L, 2) };
@@ -994,12 +994,12 @@ LUADEF(getPlayerCard) {
 LUADEF(setPlayerCardAttr) {
 	long long plQQ{ lua_to_int_or_zero(L, 1) };
 	long long group{ lua_to_int_or_zero(L, 2) };
-	string item{ lua_to_gbstring(L, 3) };
+	string item{ lua_to_u8string(L, 3) };
 	if (!plQQ || item.empty())return 0;
 	//参数4为空则视为删除,__Name除外
 	auto pc = getPlayer(plQQ)[group];
 	if (item == "__Name") {
-		getPlayer(plQQ).renameCard(pc->getName(), lua_to_gbstring(L, 4));
+		getPlayer(plQQ).renameCard(pc, lua_to_u8string(L, 4));
 	}
 	else if (lua_isnoneornil(L, 4)) {
 		pc->erase(item);
@@ -1024,7 +1024,7 @@ LUADEF(sleepTime) {
 }
 
 LUADEF(drawDeck) {
-	string nameDeck{ lua_to_gbstring(L, 3) };
+	string nameDeck{ lua_to_u8string(L, 3) };
 	if (nameDeck.empty())return 0;
 	long long fromGID{ lua_to_int_or_zero(L, 1) };
 	long long fromUID{ lua_to_int_or_zero(L, 2) };
@@ -1618,7 +1618,7 @@ void DiceModManager::loadPlugin(ResList& res) {
 		lua_newtable(L);
 		lua_setglobal(L, "task_call");
 		if (luaL_dofile(L, file.c_str())) {
-			string pErrorMsg = lua_to_gbstring_from_native(L, -1);
+			string pErrorMsg = lua_to_u8string_from_native(L, -1);
 			err << pErrorMsg;
 			continue;
 		}

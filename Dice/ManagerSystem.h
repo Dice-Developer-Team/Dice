@@ -86,7 +86,7 @@ public:
 
 	User& trust(int n);
 
-	[[nodiscard]] bool empty() const;
+	[[nodiscard]] bool empty() const override;
 
 	void setConf(const string& key, const AttrVar& val);
 	void rmConf(const string& key);
