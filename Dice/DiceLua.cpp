@@ -459,21 +459,21 @@ bool lua_call_task(const AttrVars& task) {
 	LuaState L(file);
 	if (!L)return false;
 #ifdef _WIN32
-	// 转换为GB18030
-	string fileGB18030(file);
+	// 转换为UTF8
+	string filename(GBKtoUTF8(file));
 #else
-	string fileGB18030(UTF8toGBK(file, true));
+	string filename(luaFile);
 #endif
 	if (lua_pcall(L, 0, 0, 0)) {
 		string pErrorMsg = lua_to_u8string_from_native(L, -1);
-		console.log(getMsg("strSelfName") + "运行lua文件" + fileGB18030 + "失败:" + pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "运行lua文件" + filename + "失败:" + pErrorMsg, 0b10);
 		return 0;
 	}
 	string func{ task.at("func").to_str() };
 	lua_getglobal(L, func.c_str());
 	if (lua_pcall(L, 0, 0, 0)) {
 		string pErrorMsg = lua_to_u8string_from_native(L, -1);
-		console.log(getMsg("strSelfName") + "调用" + fileGB18030 + "函数" + func + "失败!\n" + pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "调用" + filename + "函数" + func + "失败!\n" + pErrorMsg, 0b10);
 		return false;
 	}
 	return true;
@@ -707,17 +707,17 @@ LUADEF(loadLua) {
 		}
 	}
 	else {
-		console.log("待加载Lua未找到:" + UTF8toGBK(pathFile.u8string()), 1);
+		console.log("待加载Lua未找到:" + pathFile.u8string(), 1);
 		return 0;
 	}
 	if (luaL_loadstring(L, strLua.c_str())) {
 		string pErrorMsg = lua_to_u8string_from_native(L, -1);
-		console.log(getMsg("strSelfName") + "读取" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "读取" + pathFile.u8string() + "失败:"+ pErrorMsg, 0b10);
 		return 0;
 	}
 	if (lua_pcall(L, 0, 1, 0)) {
 		string pErrorMsg = lua_to_u8string_from_native(L, -1);
-		console.log(getMsg("strSelfName") + "运行" + UTF8toGBK(pathFile.u8string()) + "失败:"+ pErrorMsg, 0b10);
+		console.log(getMsg("strSelfName") + "运行" + pathFile.u8string() + "失败:"+ pErrorMsg, 0b10);
 		return 0;
 	}
 	return 1;
@@ -1695,7 +1695,7 @@ void DiceMod::loadLua() {
 				}
 			}
 			catch (std::exception& e) {
-				console.log("读取" + UTF8toGBK(file.u8string()) + "失败!" + e.what(), 0);
+				console.log("读取" + file.u8string() + "失败!" + e.what(), 0);
 			}
 			continue;
 		}

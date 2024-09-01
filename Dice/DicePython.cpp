@@ -73,7 +73,7 @@ static AttrIndex py_to_hashable(PyObject* o) {
 			auto i{ PyLong_AsLongLong(o) };
 			return (i == (int)i) ? (int)i : i;
 		}
-		else if (t == &PyUnicode_Type)return PyUnicode_AsUTF8(o);
+		else if (t == &PyUnicode_Type)return string(PyUnicode_AsUTF8(o));
 		else if (t == &PyFloat_Type)return PyFloat_AsDouble(o);
 		else if (t == &PyBool_Type)return PyObject_IsTrue(o);
 	}
