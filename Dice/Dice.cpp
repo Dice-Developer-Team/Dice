@@ -222,13 +222,13 @@ void dataBackUp()
 	std::filesystem::create_directory(DiceDir / "audit", ec);
 	//备份列表
 	static auto pathUser{ dirUser / "UserConf.dat" };
-	fs::copy_file(pathUser, dirUser / "UserConf.dat.bak", fs::copy_options::update_existing);
+	if (fs::exists(pathUser))fs::copy_file(pathUser, dirUser / "UserConf.dat.bak", fs::copy_options::update_existing);
 	saveBFile(pathUser, UserList);
 	static auto pathPlayer{ dirUser / "PlayerCards.RDconf" };
-	fs::copy_file(pathPlayer, dirUser / "PlayerCards.RDconf.bak", fs::copy_options::update_existing);
+	if (fs::exists(pathPlayer))fs::copy_file(pathPlayer, dirUser / "PlayerCards.RDconf.bak", fs::copy_options::update_existing);
 	saveBFile(pathPlayer, PList);
 	static auto pathChat{ dirUser / "ChatConf.dat" };
-	fs::copy_file(pathChat, dirUser / "ChatConf.dat.bak", fs::copy_options::update_existing);
+	if (fs::exists(pathChat))fs::copy_file(pathChat, dirUser / "ChatConf.dat.bak", fs::copy_options::update_existing);
 	saveBFile(pathChat, ChatList);
 }
 
@@ -404,22 +404,31 @@ R"( //私骰作成 即可成为我的主人~
 				if (HGLOBAL hGlobal = LoadResource(hDllModule, hRsrcInfo)) {
 					LPVOID pBuffer = LockResource(hGlobal);  // 锁定资源
 					char* pByte = new char[dwSize + 1];
-					fs::create_directories(DiceDir / "webui");
-					ofstream fweb{ DiceDir / "webui" / "index.html" };
-					fweb.write((const char*)pBuffer, dwSize);
+					memcpy_s(pByte, dwSize, pBuffer, dwSize);
 					FreeResource(hGlobal);// 释放资源
+					fs::create_directories(DiceDir / "webui");
+					fstream fweb{ DiceDir / "webui" / "webui.html" }; 
+					std::stringstream buffer;
+					buffer << fweb.rdbuf();
+					string content = buffer.str();
+					if (content != pByte) {
+						fweb.write(pByte, dwSize);
+					}
+					delete[] pByte;
 				}
 			}
 #else
 			if (string html; Network::GET("https://raw.sevencdn.com/Dice-Developer-Team/Dice/newdev/Dice/webui.html", html)) {
 				fs::create_directories(DiceDir / "webui");
-				ofstream fweb{ DiceDir / "webui" / "index.html" };
+				ofstream fweb{ DiceDir / "webui" / "webui.html" };
 				fweb.write(html.c_str(), html.length());
 			}
 			else if (!fs::exists(DiceDir / "webui" / "index.html")) {
 				console.log("获取webui页面失败!相关功能无法使用!", 0b10);
 			}
 #endif
+			if (fs::exists(DiceDir / "webui" / "webui.html"))
+				fs::copy_file(DiceDir / "webui" / "webui.html", DiceDir / "webui" / "index.html", fs::copy_options::update_existing);
 			ManagerServer->addHandler("/api/basicinfo", h_basicinfoapi);
 			ManagerServer->addHandler("/api/custommsg", h_msgapi);
 			ManagerServer->addHandler("/api/adminconfig", h_config);

@@ -419,9 +419,9 @@ bool CharaCard::erase(string& key) {
 	return true;
 }
 void CharaCard::writeb(std::ofstream& fout) const {
-	fwrite(fout, string("Name"));
+	fwrite(fout, string("Tag"));
 	fwrite(fout, Name);
-	fwrite(fout, string("Attrs"));
+	fwrite(fout, string("Attr"));
 	AnysTable::writeb(fout);
 	if (!locks.empty()) {
 		fwrite(fout, string("Lock"));
@@ -433,22 +433,20 @@ void CharaCard::readb(std::ifstream& fin) {
 	string tag = fread<string>(fin);
 	while (tag != "END") {
 		switch (mCardTag[tag]) {
-		case 1:
+		case 4:
 			setName(fread<string>(fin));
+			break;
+		case 1:
+			setName(GBKtoUTF8(fread<string>(fin)));
 			break;
 		case 2:
 			dict["__Type"] = fread<string>(fin);
 			break;
-		case 3:
+		case 11:
 			AnysTable::readb(fin);
 			break;
-		case 11: {
-			std::unordered_map<string, short>TempAttr;
-			fread(fin, TempAttr);
-			for (auto& [key, val] : TempAttr) {
-				AnysTable::set(key, val);
-			}
-		}
+		case 3:
+			AnysTable::readgb(fin);
 			break;
 		case 21: {
 			std::unordered_map<string, string>TempExp;

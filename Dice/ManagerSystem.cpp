@@ -192,10 +192,7 @@ AttrVar getSelfItem(string item) {
 	return var;
 }
 AttrVar getContextItem(const AttrObject& context, string item, bool isTrust) {
-	if (!context) {
-		DD::debugLog("Context为空！");
-		return {};
-	}
+	if (!context)return {};
 	if (item.empty())return context;
 	AttrVar var;
 	if (item[0] == '&')item = fmt->format(item, context);
@@ -310,11 +307,11 @@ void User::writeb(std::ofstream& fout) const
 {
 	std::lock_guard<std::mutex> lock_queue(ex_user);
 	if (!empty()) {
-		fwrite(fout, string("Conf"));
+		fwrite(fout, string("Cfg"));
 		AnysTable::writeb(fout);
 	}
 	if (!strNick.empty()) {
-		fwrite(fout, string("Nick"));
+		fwrite(fout, string("NN"));
 		fwrite(fout, strNick);
 	}
 	fwrite(fout, string("END"));
@@ -340,8 +337,15 @@ void User::readb(std::ifstream& fin)
 	std::lock_guard<std::mutex> lock_queue(ex_user);
 	string tag;
 	while ((tag = fread<string>(fin)) != "END") {
-		if (tag == "Conf")AnysTable::readb(fin);
-		else if (tag == "Nick")fread(fin, strNick);
+		if (tag == "Cfg")AnysTable::readb(fin);
+		else if (tag == "Conf")AnysTable::readgb(fin);
+		else if (tag == "NN")fread(fin, strNick);
+		else if (tag == "Nick") {
+			if (short len = fread<short>(fin); len > 0) while (len--) {
+				long long key = fread<long long>(fin);
+				strNick[key] = GBKtoUTF8(fread<string>(fin));
+			}
+		}
 		else if (tag == "ID")fread<long long>(fin); //ignored
 	}
 	nTrust = get_int("trust");
@@ -653,17 +657,17 @@ void Chat::writeb(std::ofstream& fout) const{
 	fwrite(fout, ID);
 	if (!Name.empty())
 	{
-		fwrite(fout, static_cast<short>(0));
+		fwrite(fout, static_cast<short>(4));
 		fwrite(fout, Name);
 	}
 	if (!empty())
 	{
-		fwrite(fout, static_cast<short>(10));
+		fwrite(fout, static_cast<short>(11));
 		AnysTable::writeb(fout);
 	}
 	if (!ChConf.empty())
 	{
-		fwrite(fout, static_cast<short>(20));
+		fwrite(fout, static_cast<short>(21));
 		fwrite(fout, ChConf);
 	}
 	fwrite(fout, static_cast<short>(-1));
@@ -677,6 +681,9 @@ void Chat::readb(std::ifstream& fin)
 		switch (tag)
 		{
 		case 0:
+			Name = GBKtoUTF8(fread<string>(fin));
+			break;
+		case 4:
 			Name = fread<string>(fin);
 			break;
 		case 1:
@@ -694,11 +701,20 @@ void Chat::readb(std::ifstream& fin)
 				set(key, val);
 			}
 			break;
-		case 10:
+		case 11:
 			AnysTable::readb(fin);
 			break;
-		case 20:
+		case 10:
+			AnysTable::readgb(fin);
+			break;
+		case 21:
 			fread(fin, ChConf);
+			break;
+		case 20:
+			if (short len = fread<short>(fin); len > 0) while (len--) {
+				long long key = fread<long long>(fin);
+				ChConf[key].readgb(fin);
+			}
 			break;
 		default:
 			return;

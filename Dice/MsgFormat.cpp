@@ -46,9 +46,9 @@ string strip(std::string origin)
 		{
 			origin.erase(origin.begin());
 		}
-		else if (origin.substr(0, 2) == "！" || origin.substr(0, 2) == "。" || origin.substr(0, 2) == "．")
+		else if (auto dot{ origin.substr(0, 3) }; dot == "！" || dot == "。" || dot == "．")
 		{
-			origin.erase(origin.begin(), origin.begin() + 2);
+			origin.erase(origin.begin(), origin.begin() + 3);
 		}
 		else return origin;
 	}

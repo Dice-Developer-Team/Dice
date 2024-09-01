@@ -2978,12 +2978,12 @@ int DiceEvent::InnerOrder() {
 		string strMessage = strMsg.substr(intMsgCnt);
 		if (strMessage == "reset") {
 			fmt->msg_reset(strName);
-			note("已重置" + strName + "的自定义。", 0b1);
+			note("已重置" + strName + "的自定义√", 0b1);
 		}
 		else {
 			if (strMessage == "NULL")strMessage = "";
 			fmt->msg_edit(strName, strMessage);
-			note("已自定义" + strName + "的文本", 0b1);
+			note("已自定义" + strName + "的文本√", 0b1);
 		}
 		return 1;
 	}
@@ -3611,12 +3611,12 @@ int DiceEvent::InnerOrder() {
 		}
 		if (attr.find("自动成功") == 0) {
 			strDifficulty = attr.substr(0, 8);
-			attr = attr.substr(8);
+			attr = attr.substr(12);
 			isAutomatic = true;
 		}
 		if (attr.find("困难") == 0 || attr.find("极难") == 0) {
-			strDifficulty += attr.substr(0, 4);
-			intDifficulty = (attr.substr(0, 4) == "困难") ? 2 : 5;
+			strDifficulty += attr.substr(0, 6);
+			intDifficulty = (attr.substr(0, 6) == "困难") ? 2 : 5;
 			attr = attr.substr(4);
 		}
 		if (pc) {
@@ -4767,8 +4767,7 @@ string DiceEvent::readAttrName()
 	{
 		if (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || (!isspace(
 			static_cast<unsigned char>(strMsg[intEnd]))))intEnd = intMsgCnt;
-		if (strMsg[intMsgCnt] < 0)intMsgCnt += 2;
-		else intMsgCnt++;
+		intMsgCnt++;
 	}
 	if (intMsgCnt == strLowerMessage.length() && strLowerMessage.find(' ', intBegin) != string::npos)
 	{
@@ -4825,7 +4824,7 @@ int DiceEvent::readClock(Clock& cc)
 	if (nHour > 23)return -2;
 	cc.first = nHour;
 	if (strMsg[intMsgCnt] == ':' || strMsg[intMsgCnt] == '.')intMsgCnt++;
-	if (strMsg.substr(intMsgCnt, 2) == "：")intMsgCnt += 2;
+	if (strMsg.substr(intMsgCnt, 3) == "：")intMsgCnt += 3;
 	readSkipSpace();
 	if (intMsgCnt >= strMsg.length() || !is_digit(strMsg[intMsgCnt]))
 	{

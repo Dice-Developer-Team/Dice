@@ -771,7 +771,7 @@ void DiceMsgReply::readJson(const fifo_json& j) {
 		if (j.count("mode")) {
 			size_t mode{ sMode[j["mode"].get<string>()] };
 			string keyword{ j.count("keyword") ?
-				j["keyword"] : title
+				string(j["keyword"]) : title
 			};
 			keyMatch[mode] = std::make_unique<vector<string>>
 				(mode == 3 ? vector<string>{keyword} : getLines(keyword, '|'));

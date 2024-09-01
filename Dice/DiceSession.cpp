@@ -216,7 +216,7 @@ void DiceSession::log_on(DiceEvent* msg) {
 		msg->replyMsg("strLogOnAlready");
 		return;
 	}
-	(*msg)["log_name"] = logger.name;
+	msg->set("log_name", logger.name);
 	logger.isLogging = true;
 	msg->replyMsg("strLogOn");
 	for (const auto& ct : areas) {
@@ -255,8 +255,8 @@ void DiceSession::log_end(DiceEvent* msg) {
 		msg->replyMsg("strLogEndEmpty");
 		return;
 	}
-	(*msg)["log_file"] = logger.fileLog;
-	(*msg)["log_path"] = log_path().string();
+	msg->set("log_file", logger.fileLog);
+	msg->set("log_path", log_path().string());
 	msg->replyMsg("strLogEnd");
 	update();
 	msg->set("hook","LogEnd");

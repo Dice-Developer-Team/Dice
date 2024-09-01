@@ -47,11 +47,12 @@ class CardTemp;
 
 enum class trigger_time { AfterUpdate };
 inline unordered_map<string, short> mCardTag = {
-	{"Name", 1},
+	{"Name", 1},	//older
+	{"Tag", 4},
 	{"Type", 2},
-	{"Attrs", 3},
+	{"Attrs", 3},	//older
 	{"Lock", 103},
-	{"Attr", 11},	//older
+	{"Attr", 11},
 	{"DiceExp", 21},
 	{"Note", 101},	//older
 	{"Info", 102},	//older

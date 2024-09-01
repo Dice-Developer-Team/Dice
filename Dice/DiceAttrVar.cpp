@@ -24,6 +24,7 @@
 #include "DiceAttrVar.h"
 #include "StrExtern.hpp"
 #include "DiceFile.hpp"
+#include "DDAPI.h"
 
 ByteS::ByteS(std::ifstream& fin) {
 	len = fread<size_t>(fin);
@@ -166,45 +167,45 @@ void AnysTable::writeb(std::ofstream& fout) const {
 		int idx{ 0 };
 		for (auto& val : *list) {
 			++idx;
-			if (val)vars[to_string(idx)] = AttrVar(val.to_json());
+			if (val)vars[to_string(idx)] = val;
 		}
 	}
 	fwrite(fout, vars);
 }
 void AnysTable::readb(std::ifstream& fs) {
-	short len = fread<short>(fs);
-	if (len < 0)return;
-	if (!fs.peek()) {
-		fs.ignore(2);
-	}
-	while (len--) {
-		dict[fread<string>(fs)].readb(fs);
-	}
-	if (string strI{ "0" }; dict.count(strI) || dict.count(strI = "1")) {
-		list = std::make_shared<VarArray>();
-		int idx{ strI == "0" ? 0 : 1 };
-		do {
-			list->push_back(dict.at(strI));
-			dict.erase(strI);
-		} while (dict.count(strI = to_string(++idx)));
+	if (short len = fread<short>(fs); len > 0) {
+		if (!fs.peek()) {
+			fs.ignore(2);
+		}
+		while (len--) {
+			dict[fread<string>(fs)].readb(fs);
+		}
+		if (string strI{ "0" }; dict.count(strI) || dict.count(strI = "1")) {
+			list = std::make_shared<VarArray>();
+			int idx{ strI == "0" ? 0 : 1 };
+			do {
+				list->push_back(dict.at(strI));
+				dict.erase(strI);
+			} while (dict.count(strI = to_string(++idx)));
+		}
 	}
 }
 void AnysTable::readgb(std::ifstream& fs) {
-	short len = fread<short>(fs);
-	if (len < 0)return;
-	if (!fs.peek()) {
-		fs.ignore(2);
-	}
-	while (len--) {
-		dict[GBKtoUTF8(fread<string>(fs))].readb(fs);
-	}
-	if (string strI{ "0" }; dict.count(strI) || dict.count(strI = "1")) {
-		list = std::make_shared<VarArray>();
-		int idx{ strI == "0" ? 0 : 1 };
-		do {
-			list->push_back(dict.at(strI));
-			dict.erase(strI);
-		} while (dict.count(strI = to_string(++idx)));
+	if (short len = fread<short>(fs); len > 0) {
+		if (!fs.peek()) {
+			fs.ignore(2);
+		}
+		while (len--) {
+			dict[GBKtoUTF8(fread<string>(fs))].readb(fs);
+		}
+		if (string strI{ "0" }; dict.count(strI) || dict.count(strI = "1")) {
+			list = std::make_shared<VarArray>();
+			int idx{ strI == "0" ? 0 : 1 };
+			do {
+				list->push_back(dict.at(strI));
+				dict.erase(strI);
+			} while (dict.count(strI = to_string(++idx)));
+		}
 	}
 }
 bool AnysTable::operator<(const AnysTable other)const { return dict < other.dict; }
@@ -1115,48 +1116,41 @@ void AttrVar::writeb(std::ofstream& fout) const {
 }
 void AttrVar::readb(std::ifstream& fin) {
 	des();
-	char tag{ fread<char>(fin) };
+	Type tag{ Type(fread<char>(fin)) };
+	type = tag;
 	switch (tag){
-	case 1:
-		type = Type::Boolean;
+	case Type::Boolean:
 		bit = fread<bool>(fin);
 		break;
-	case 2:
-		type = Type::Integer;
+	case Type::Integer:
 		attr = fread<int>(fin);
 		break;
-	case 3:
-		type = Type::Number;
+	case Type::Number:
 		number = fread<double>(fin);
 		break;
-	case 4:
+	case Type::GBString:
 		type = Type::U8String;
 		new(&text) string(GBKtoUTF8(fread<string>(fin)));
 		break;
-	case 12:
-		type = Type::U8String;
+	case Type::U8String:
 		new(&text) string(fread<string>(fin));
 		break;
-	case 5:
-		type = Type::Table;
+	case Type::Table:
 		new(&table) AttrObject(AnysTable());
 		table->readb(fin);
 		break;
-	case 21:
+	case Type::GBTable:
 		type = Type::Table;
 		new(&table) AttrObject(AnysTable());
-		table->readb(fin);
+		table->readgb(fin);
 		break;
-	case 6:
-		type = Type::Function;
+	case Type::Function:
 		new(&chunk) ByteS(fin);
 		break;
-	case 7:
-		type = Type::ID;
+	case Type::ID:
 		id = fread<long long>(fin);
 		break;
-	case 8:
-		type = Type::Set;
+	case Type::Set:
 		new(&flags) AttrSet(std::make_shared<fifo_set<AttrIndex>>());
 		if (size_t cnt = fread<size_t>(fin)) {
 			while (cnt--) {
@@ -1178,8 +1172,7 @@ void AttrVar::readb(std::ifstream& fin) {
 			}
 		}
 		break;
-	case 0:
-	default:
+	case Type::Nil:
 		break;
 	}
 }

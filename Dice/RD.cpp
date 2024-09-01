@@ -30,7 +30,7 @@ using namespace std;
 string to_circled(int num, int c) {
 	if (num < 1 || num > 10)return "?";
 	if (num < c)return to_string(num);
-	return string{ char(0xA2),char(0xD8 + num) };
+	return string{ char(0xe2),char(0x91),char(0x9f + num) };
 }
 int_errno RD::RollDice(std::string dice, const ptr<DiceSession>& game) const
 {
@@ -364,10 +364,9 @@ void init2(string& msg)
 		msg.erase(msg.begin());
 	while (!msg.empty() && isspace(static_cast<unsigned char>(msg[msg.length() - 1])))
 		msg.erase(msg.end() - 1);
-	if (msg.substr(0, 2) == "。" || msg.substr(0, 2) == "！" || msg.substr(0, 2) == "．")
+	if (auto header{ msg.substr(0, 3) }; header == "。" || header == "！" || header == "．")
 	{
-		msg.erase(msg.begin());
-		msg[0] = '.';
+		msg.replace(0, 3, ".");
 	}
 	if (msg[0] == '!')
 		msg[0] = '.';
