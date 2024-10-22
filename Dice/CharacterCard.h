@@ -285,17 +285,9 @@ private:
 	// 人物卡互斥
 	mutable std::mutex cardMutex;
 public:
-	Player() {
-		mCardList[0] = std::make_shared<CharaCard>("角色卡", 0);
-	}
+	Player();
 
-	Player(const Player& pl)
-	{
-		indexMax = pl.indexMax;
-		mCardList = pl.mCardList;
-		NameList = pl.NameList;
-		mGroupCard = pl.mGroupCard;
-	}
+	Player(const Player& pl);
 
 	/*Player& operator=(const Player& pl)
 	{
@@ -347,7 +339,7 @@ public:
 		return Res.show();
 	}
 
-	PC getCard(const string& name, long long group = 0);
+	PC getCard(const string& name, long long group = 0) const;
 
 	PC getCardByID(long long id) const;
 	PC operator[](long long id) const {

@@ -887,7 +887,7 @@ int DiceEvent::BasicOrder()
 	while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 		intMsgCnt++;
 	//指令匹配
-	if (console["DebugMode"])console.log("listen:" + strMsg, 0, printSTNow());
+	if (console["DebugMode"])DD::debugLog(printSTNow() + " listen:" + strMsg);
 	if (strLowerMessage.substr(intMsgCnt, 9) == "authorize")
 	{
 		intMsgCnt += 9;
@@ -3398,9 +3398,9 @@ int DiceEvent::InnerOrder() {
 		else if (strOption == "build") {
 			string strPC{ strip(filter_CQcode(readRest(), fromChat.gid))};
 			if (!(resno = pl.buildCard(strPC, false, fromChat.gid))) {
-				auto pc = pl.getCard(strPC);
+				auto pc = pl[fromChat.gid];
 				set("show", pc->show(true));
-				set("char", pc->getName());
+				set("char", strPC);
 				replyMsg("strPcCardBuild");
 			}
 			else {
@@ -3610,14 +3610,14 @@ int DiceEvent::InnerOrder() {
 			}
 		}
 		if (attr.find("自动成功") == 0) {
-			strDifficulty = attr.substr(0, 8);
+			strDifficulty = attr.substr(0, 12);
 			attr = attr.substr(12);
 			isAutomatic = true;
 		}
 		if (attr.find("困难") == 0 || attr.find("极难") == 0) {
 			strDifficulty += attr.substr(0, 6);
 			intDifficulty = (attr.substr(0, 6) == "困难") ? 2 : 5;
-			attr = attr.substr(4);
+			attr = attr.substr(6);
 		}
 		if (pc) {
 			attr = pc->standard(attr);

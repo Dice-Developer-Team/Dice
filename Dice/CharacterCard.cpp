@@ -504,6 +504,17 @@ void CharaCard::cntRcStat(int die, int rate) {
 }
 unordered_map<long long, Player> PList;
 
+Player::Player() {
+	mGroupCard[0] = mCardList[0] = std::make_shared<CharaCard>("角色卡", (size_t)0);
+}
+
+Player::Player(const Player& pl)
+{
+	indexMax = pl.indexMax;
+	mCardList = pl.mCardList;
+	NameList = pl.NameList;
+	mGroupCard = pl.mGroupCard;
+}
 Player& getPlayer(long long uid)
 {
 	//if (!PList.count(uid))PList[uid] = {};
@@ -573,11 +584,11 @@ int Player::copyCard(const string& name1, const string& name2, long long group)
 	*getCard(name1) << *getCard(name2);
 	return 0;
 }
-PC Player::getCard(const string& name, long long group)
+PC Player::getCard(const string& name, long long group) const
 {
-	if (!name.empty() && NameList.count(name))return NameList[name];
-	if (mGroupCard.count(group))return mGroupCard[group];
-	if (mGroupCard.count(0))return mGroupCard[0];
+	if (!name.empty() && NameList.count(name))return NameList.at(name);
+	if (mGroupCard.count(group))return mGroupCard.at(group);
+	if (mGroupCard.count(0))return mGroupCard.at(0);
 	return mCardList.begin()->second;
 }
 PC Player::getCardByID(long long id)const {
