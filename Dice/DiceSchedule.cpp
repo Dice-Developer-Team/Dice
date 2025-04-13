@@ -57,11 +57,12 @@ void jobHandle() {
 		{
 			std::unique_lock<std::mutex> lock_queue(mtQueueJob);
 			while (Enabled && !queueJob.empty()) {
-				AttrObject job(queueJob.front());
+				AttrObject job{ queueJob.front() };
 				queueJob.pop();
-				lock_queue.unlock();
-				exec(job);
-				lock_queue.lock();
+				//lock_queue.unlock();
+				std::thread task{ exec,job };
+				task.detach();
+				//lock_queue.lock();
 				//cvJobWaited.notify_one();
 			}
 		}
@@ -73,7 +74,7 @@ void jobWait() {
 	while (Enabled) {
 		//检查定时作业
 		{
-			std::unique_lock<std::mutex> lock_queue(mtJobWaited);
+			std::lock_guard<std::mutex> lock_queue(mtJobWaited);
 			while (Enabled && !queueJobWaited.empty() && queueJobWaited.top().first <= time(NULL)) {
 				sch.push_job(queueJobWaited.top().second);
 				queueJobWaited.pop();
@@ -86,16 +87,14 @@ void jobWait() {
 
 //将任务加入执行队列
 void DiceScheduler::push_job(const AttrObject& job) {
-	if (!Enabled)return;
-	{
+	if (Enabled){
 		std::unique_lock<std::mutex> lock_queue(mtQueueJob);
-		queueJob.push(job); 
+		queueJob.emplace(job); 
 	}
 	//cvJob.notify_one();
 }
 void DiceScheduler::push_job(const char* job_name, bool isSelf, const AttrVars& vars) {
-	if (!Enabled)return; 
-	{
+	if (Enabled){
 		std::unique_lock<std::mutex> lock_queue(mtQueueJob);
 		AttrObject obj{ vars };
 		obj->at("cmd") = job_name;
@@ -132,7 +131,7 @@ void DiceScheduler::refresh_cold(const char* cmd, time_t until) {
 
 std::mutex mtCDQuery;
 int DiceScheduler::cnt_cd(const vector<CDQuest>& cd_list, const vector<CDQuest>& cnt_list){
-	std::unique_lock<std::mutex> lock_queue(mtCDQuery);
+	std::lock_guard<std::mutex> lock_queue(mtCDQuery);
 	time_t tNow{ time(nullptr) };
 	for (auto& quest : cd_list) {
 		if (cd_timer.count(quest.chat)
@@ -243,7 +242,7 @@ void DiceToday::inc(const string& key) {
 
 std::mutex mtDailySave;
 void DiceToday::save() {
-	std::unique_lock<std::mutex> lock(mtDailySave);
+	std::lock_guard<std::mutex> lock(mtDailySave);
 	fifo_json jFile;
 	try {
 		jFile["date"] = { stToday.tm_year + 1900,stToday.tm_mon + 1,stToday.tm_mday };

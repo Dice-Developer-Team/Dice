@@ -24,13 +24,118 @@
 #include "CQTools.h"
 #include <cctype>
 #include "RD.h"
-#include "MsgFormat.h"
 using namespace std;
 
 string to_circled(int num, int c) {
 	if (num < 1 || num > 10)return "?";
 	if (num < c)return to_string(num);
 	return string{ char(0xe2),char(0x91),char(0x9f + num) };
+}
+
+RD::RD(std::string dice, const int defaultDice)
+{
+	char ch = '\0';
+	const std::string strOpera("+-X/");
+	for (auto& i : dice)
+	{
+		if (i == '*' || i == 'x' || i == 'X')
+		{
+			if (strOpera.find(ch) != std::string::npos)
+			{
+				strDice.erase(--strDice.end());
+				break;
+			}
+			i = 'X';
+		}
+		if (i == '/')
+		{
+			if (strOpera.find(ch) != std::string::npos)
+			{
+				strDice.erase(--strDice.end());
+				break;
+			}
+		}
+		if (i == '+')
+		{
+			if (strOpera.find(ch) != std::string::npos)continue;
+		}
+		if (i == '-')
+		{
+			if (strOpera.find(ch) != std::string::npos)
+			{
+				if (ch == '+')
+				{
+					strDice[strDice.length() - 1] = '-';
+				}
+				else if (ch == '-')
+				{
+					strDice[strDice.length() - 1] = '+';
+				}
+				else if (ch == 'X' || ch == '/')
+				{
+					strDice.erase(--strDice.end());
+					break;
+				}
+				continue;
+			}
+		}
+		else if (i == 'a' || i == 'A')
+		{
+			i = tolower(static_cast<unsigned char>(i));
+		}
+		else
+		{
+			i = toupper(static_cast<unsigned char>(i));
+		}
+		ch = i;
+		strDice += i;
+	}
+	if (strDice.empty())
+		strDice.append("D" + (std::to_string(defaultDice)));
+	if (strDice[0] == 'a')strDice.insert(0, "1");
+	if (strDice[0] == 'D' && strDice[1] == 'F')
+		strDice.insert(0, "4");
+	if (strDice[0] == 'F')
+		strDice.insert(0, "4D");
+	while (strDice.find("XX") != std::string::npos) strDice.replace(strDice.find("XX"), 2, "X");
+	while (strDice.find("//") != std::string::npos) strDice.replace(strDice.find("//"), 2, "/");
+	for (size_t ReadCnt = 1; ReadCnt != strDice.length(); ReadCnt++)
+		if (strDice[ReadCnt] == 'F' && (isdigit(strDice[ReadCnt - 1]) || strDice[ReadCnt - 1] == '+' || strDice[
+			ReadCnt - 1] == '-'))
+			strDice.insert(ReadCnt, "D");
+			while (strDice.find("-a") != std::string::npos)
+				strDice.insert(strDice.find("-a") + 1, "1");
+			while (strDice.find("+a") != std::string::npos)
+				strDice.insert(strDice.find("+a") + 1, "1");
+			while (strDice.find("+DF") != std::string::npos)
+				strDice.insert(strDice.find("+DF") + 1, "4");
+			while (strDice.find("-DF") != std::string::npos)
+				strDice.insert(strDice.find("-DF") + 1, "4");
+			while (strDice.find("D+") != std::string::npos)
+				strDice.insert(strDice.find("D+") + 1,
+					std::to_string(defaultDice));
+			while (strDice.find("D-") != std::string::npos)
+				strDice.insert(strDice.find("D-") + 1,
+					std::to_string(defaultDice));
+			while (strDice.find("DX") != std::string::npos)
+				strDice.insert(strDice.find("DX") + 1,
+					std::to_string(defaultDice));
+			while (strDice.find("D/") != std::string::npos)
+				strDice.insert(strDice.find("D/") + 1,
+					std::to_string(defaultDice));
+			while (strDice.find("DK") != std::string::npos)
+				strDice.insert(strDice.find("DK") + 1,
+					std::to_string(defaultDice));
+			while (strDice.find("K+") != std::string::npos)
+				strDice.insert(strDice.find("K+") + 1, "1");
+			while (strDice.find("K-") != std::string::npos)
+				strDice.insert(strDice.find("K-") + 1, "1");
+			if (*(strDice.end() - 1) == 'D')
+				strDice.append(std::to_string(defaultDice));
+			if (*(strDice.end() - 1) == 'K')
+				strDice.append("1");
+			if (*strDice.begin() == '+')
+				strDice.erase(strDice.begin());
 }
 int_errno RD::RollDice(std::string dice, const ptr<DiceSession>& game) const
 {
@@ -57,34 +162,6 @@ int_errno RD::RollDice(std::string dice, const ptr<DiceSession>& game) const
 	}
 	vintDivider.push_back(intDivider);
 	vintMultiplier.push_back(intMultiplier);
-	if (dice.find('a') != std::string::npos)
-	{
-		std::string strDiceCnt = dice.substr(0, dice.find('a'));
-		for (auto i : strDiceCnt)
-			if (!isdigit(static_cast<unsigned char>(i)))
-				return Input_Err;
-		if (strDiceCnt.length() > 4)
-			return DiceTooBig_Err;
-		int intDiceCnt = stoi(strDiceCnt);
-		if (intDiceCnt == 0)
-			return ZeroDice_Err;
-		if (boolNegative)intDiceCnt = -intDiceCnt;
-		intWWCnt += intDiceCnt;
-		//AddVal
-		std::string strAddVal = dice.substr(dice.find('a') + 1);
-		if (strAddVal.length() > 2)
-			return AddDiceVal_Err;
-		for (auto i : strAddVal)
-			if (!isdigit(static_cast<unsigned char>(i)))
-				return Input_Err;
-		if (!strAddVal.empty()) {
-			intWWAdd = stoi(strAddVal);
-			if (intWWAdd < 5 || intWWAdd > 11)
-				return AddDiceVal_Err;
-		}
-		vboolNegative.erase(vboolNegative.end() - 1);
-		return 0;
-	}
 	if (dice[dice.length() - 1] == 'F')
 	{
 		vBnP.push_back(Fudge_Dice);
@@ -128,7 +205,7 @@ int_errno RD::RollDice(std::string dice, const ptr<DiceSession>& game) const
 			return DiceTooBig_Err;
 		for (size_t i = 1; i != dice.length(); i++)
 			if (!isdigit(static_cast<unsigned char>(dice[i])))
-				return Input_Err;
+				return DiceCnt_Err;
 		int intPNum = stoi(dice.substr(1).empty() ? "1" : dice.substr(1));
 		if (dice.length() == 1)
 			intPNum = 1;
@@ -165,7 +242,7 @@ int_errno RD::RollDice(std::string dice, const ptr<DiceSession>& game) const
 			return DiceTooBig_Err;
 		for (size_t i = 1; i != dice.length(); i++)
 			if (!isdigit(static_cast<unsigned char>(dice[i])))
-				return Input_Err;
+				return DiceCnt_Err;
 		int intBNum = stoi(dice.substr(1).empty() ? "1" : dice.substr(1));
 		if (dice.length() == 1)
 			intBNum = 1;
@@ -346,13 +423,322 @@ int_errno RD::Roll(ptr<DiceSession> game) const
 	}
 	if (const int intFinalRDRes = RollDice(dice.substr(intReadDiceLoc), game))
 		return intFinalRDRes;
-	if (intWWCnt) {
-		if (const int intWWRes = RollWW())
-			return intWWRes;
-	}
 	return 0;
 }
 
+std::string RD::FormStringSeparate() const
+{
+	std::string strReturnString;
+	unsigned int idx{ 0 };
+	for (auto i = vvintRes.begin(); i != vvintRes.end(); ++i)
+	{
+		strReturnString.append(vboolNegative[idx]
+			? "-"
+			: (idx ? "+" : ""));
+		if (vBnP[idx] == Normal_Dice)
+		{
+			if (i->size() != 1 && (vvintRes.size() != 1 || vintMultiplier[idx] != 1 ||
+				vintDivider[idx] != 1 || vboolNegative[idx]))
+				strReturnString.append("(");
+			for (auto j = i->begin(); j != i->end(); ++j)
+			{
+				if (j != i->begin())
+					strReturnString.append("+");
+				strReturnString.append(std::to_string(*j));
+			}
+			if (i->size() != 1 && (vvintRes.size() != 1 || vintMultiplier[idx] != 1 ||
+				vintDivider[idx] != 1 || vboolNegative[idx]))
+				strReturnString.append(")");
+			if (vintMultiplier[idx] != 1)
+			{
+				strReturnString += "×" + std::to_string(vintMultiplier[idx]);
+			}
+			if (vintDivider[idx] != 1)
+			{
+				strReturnString += "/" + std::to_string(vintDivider[idx]);
+			}
+		}
+		else if (vBnP[idx] == Fudge_Dice)
+		{
+			strReturnString.append("[");
+			for (auto j = i->begin(); j != i->end(); ++j)
+			{
+				strReturnString.append(*j == 1 ? "+" : *j == 0 ? "0" : "-");
+				if (j != i->end() - 1)
+					strReturnString.append(" ");
+			}
+			strReturnString.append("]");
+		}
+		else if (vBnP[idx] == WW_Dice)
+		{
+			bool isCnt = false;
+			if (i->size() >= 100)isCnt = true;
+			if (vvintRes.size() != 1 && i->size() != (*i)[0] + 1)
+				strReturnString += "\\{";
+			int intWWPos = 0;
+			while (true)
+			{
+				if (intWWPos)
+				{
+					strReturnString += isCnt ? "\n加骰" + std::to_string((*i)[intWWPos]) + "：" : "+";
+				}
+				strReturnString += "\\{";
+				if (isCnt)
+				{
+					int Cnt[11] = { 0 };
+					for (int a = intWWPos + 1; a <= intWWPos + (*i)[intWWPos]; a++)
+					{
+						Cnt[(*i)[a]]++;
+					}
+					for (int i2 = 1, c = 0; i2 <= 10; i2++)
+					{
+						if (Cnt[i2])
+						{
+							strReturnString.append("(" + to_circled(i2) + ":" + std::to_string(Cnt[i2]) + "),");
+							c++;
+							if (c % 3 == 1)strReturnString += '\n';
+						}
+					}
+					if (strReturnString[strReturnString.length() - 1] == '\n')strReturnString.pop_back();
+					if (strReturnString[strReturnString.length() - 1] == ',')strReturnString.pop_back();
+				}
+				else
+					for (int a = intWWPos + 1; a <= intWWPos + (*i)[intWWPos]; a++)
+					{
+						strReturnString.append(to_circled((*i)[a]));
+						if (a != intWWPos + (*i)[intWWPos])
+							strReturnString.append(",");
+					}
+				strReturnString.append("}");
+				intWWPos = intWWPos + (*i)[intWWPos] + 1;
+				if (intWWPos == i->size())
+				{
+					break;
+				}
+			}
+			if (vvintRes.size() != 1 && i->size() != (*i)[0] + 1)
+				strReturnString.append(" }");
+		}
+		else
+		{
+			strReturnString.append(std::to_string((*i)[0]));
+			strReturnString.append(vBnP[idx] == B_Dice ? "[奖励骰:" : "[惩罚骰:");
+			for (auto it = i->begin() + 1; it != i->end(); ++it)
+			{
+				strReturnString.append(std::to_string(*it) + ((it == i->end() - 1) ? "" : " "));
+			}
+			strReturnString.append("]");
+		}
+		++idx;
+	}
+	return strReturnString;
+}
+std::string RD::FormStringCombined() const
+{
+	std::string strReturnString;
+	for (auto i = vintRes.begin(); i != vintRes.end(); ++i)
+	{
+		strReturnString.append(
+			vboolNegative[distance(vintRes.begin(), i)] ? "-" : (i == vintRes.begin() ? "" : "+"));
+		if (*i < 0 && i != vintRes.begin())
+			strReturnString.append("(");
+		strReturnString.append(std::to_string(*i));
+		if (*i < 0 && i != vintRes.begin())
+			strReturnString.append(")");
+	}
+	return strReturnString;
+}
+std::string RD::FormCompleteString() const
+{
+	std::string strReturnString = strDice;
+	string strSeparated{ FormStringSeparate() };
+	if (strDice == strSeparated && vintRes.size() == 1)
+	{
+		return strDice;
+	}
+	if (strSeparated.length() > 256)
+	{
+		return FormShortString();
+	}
+	if (strDice != strSeparated)
+	{
+		strReturnString.append("=");
+		strReturnString.append(strSeparated);
+	}
+	string strCombined{ FormStringCombined() };
+	if (strSeparated != strCombined)
+	{
+		strReturnString.append("=");
+		strReturnString.append(strCombined);
+	}
+	if (strCombined != std::to_string(intTotal))
+	{
+		strReturnString.append("=");
+		strReturnString.append(std::to_string(intTotal));
+	}
+	return strReturnString;
+}
+std::string RD::FormShortString() const
+{
+	std::string strReturnString = strDice;
+	std::string stringCombined{ FormStringCombined() };
+	if (strDice != stringCombined) {
+		strReturnString.append("=");
+		strReturnString.append(stringCombined);
+	}
+	if (std::string strTotal{ std::to_string(intTotal) }; stringCombined != strTotal)
+	{
+		strReturnString.append("=");
+		strReturnString.append(strTotal);
+	}
+	return strReturnString;
+}
+
+DicePool::DicePool(const std::string& expr, const int target) :RD(expr, 10), nTarget(target) {
+	int intReadDiceLoc = 0;
+	if (strDice[0] == '-')
+	{
+		vboolNegative.push_back(true);
+		intReadDiceLoc = 1;
+	}
+	else
+		vboolNegative.push_back(false);
+	while (strDice.find('+', intReadDiceLoc) != std::string::npos
+		|| strDice.find('-', intReadDiceLoc) != std::string::npos) {
+		const int intSymbolPosition = strDice.find('+', intReadDiceLoc) < strDice.find('-', intReadDiceLoc)
+			? strDice.find('+', intReadDiceLoc)
+			: strDice.find('-', intReadDiceLoc);
+		if (const int intRDRes = cntDice(strDice.substr(intReadDiceLoc, intSymbolPosition - intReadDiceLoc)); intRDRes != 0) {
+			err = intRDRes;
+			break;
+		}
+		intReadDiceLoc = intSymbolPosition + 1;
+		if (strDice[intSymbolPosition] == '+')
+			vboolNegative.push_back(false);
+		else
+			vboolNegative.push_back(true);
+	}
+	if (const int intRDRes = cntDice(strDice.substr(intReadDiceLoc)))
+		err = intRDRes;
+}
+int_errno DicePool::cntDice(std::string& dice) {
+	std::string strDiceCnt = dice.substr(0, dice.find('a'));
+	for (auto i : strDiceCnt)
+		if (!isdigit(static_cast<unsigned char>(i)))
+			return DiceCnt_Err;
+	if (strDiceCnt.length() > 4)
+		return DiceTooBig_Err;
+	int intDiceCnt = stoi(strDiceCnt);
+	if (intDiceCnt == 0)
+		return ZeroDice_Err;
+	if (*(vboolNegative.end() - 1))nDiceCnt -= intDiceCnt;
+	else nDiceCnt += intDiceCnt;
+	//AddVal
+	std::string strAddVal = dice.substr(dice.find('a') + 1);
+	if (strAddVal.length() > 2)
+		return AddDiceVal_Err;
+	for (auto i : strAddVal)
+		if (!isdigit(static_cast<unsigned char>(i)))
+			return Input_Err;
+	if (!strAddVal.empty()) {
+		nDiceAdd = stoi(strAddVal);
+		if (nDiceAdd < 5 || nDiceAdd > 11)
+			return AddDiceVal_Err;
+	}
+	vboolNegative.erase(vboolNegative.end() - 1);
+	return 0;
+}
+int_errno DicePool::roll(ptr<DiceSession> game) const
+{
+	if (err) return err;
+	if (!nDiceCnt)return ZeroDice_Err;
+	intTotal = 0;
+	while (nDiceCnt != 0){
+		std::vector<int> vintTmpRes;
+		int intTmpRes = 0;
+		vintTmpRes.push_back(nDiceCnt);
+		int AddNum = 0;
+		int intCnt = nDiceCnt;
+		while (intCnt--)
+		{
+			int intTmpResOnce = RandomGenerator::Randint(1, 10);
+			vintTmpRes.push_back(intTmpResOnce);
+			if (intTmpResOnce >= nTarget)
+				intTmpRes++;
+			if (intTmpResOnce >= nDiceAdd)
+				AddNum++;
+		}
+		if (nDiceCnt > 10)sort(vintTmpRes.end() - nDiceCnt, vintTmpRes.end());
+		nDiceCnt = AddNum;
+		vvintRes.emplace_back(vintTmpRes);
+		vintRes.emplace_back(intTmpRes);
+		intTotal += intTmpRes;
+	}
+	//if (boolNegative)
+	//	nSuccess -= intTmpRes;
+	//else
+	//	nSuccess += intTmpRes;
+	//vBnP.insert(vBnP.begin(), WW_Dice);
+	//vboolNegative.insert(vboolNegative.begin(), boolNegative);
+	return 0;
+}
+std::string DicePool::FormStringSeparate() const
+{
+	std::string strReturnString;
+	unsigned int idx{ 0 };
+	for (auto i = vvintRes.begin(); i != vvintRes.end(); ++i)
+	{
+		if (idx)strReturnString.append("+");
+		bool isStatic{ i->size() >= 100 };
+		if (vvintRes.size() != 1 && i->size() != (*i)[0] + 1)
+			strReturnString += "\\{";
+		int intWWPos = 0;
+		while (true)
+		{
+			if (intWWPos)
+			{
+				strReturnString += isStatic ? "\n加骰" + std::to_string((*i)[intWWPos]) + "：" : "+";
+			}
+			strReturnString += "\\{";
+			if (isStatic)
+			{
+				int Cnt[11] = { 0 };
+				for (int a = intWWPos + 1; a <= intWWPos + (*i)[intWWPos]; a++)
+				{
+					Cnt[(*i)[a]]++;
+				}
+				for (int i2 = 1, c = 0; i2 <= 10; i2++)
+				{
+					if (Cnt[i2])
+					{
+						strReturnString.append("(" + to_circled(i2, nTarget) + ":" + std::to_string(Cnt[i2]) + "),");
+						c++;
+						if (c % 3 == 1)strReturnString += '\n';
+					}
+				}
+				if (strReturnString[strReturnString.length() - 1] == '\n')strReturnString.pop_back();
+				if (strReturnString[strReturnString.length() - 1] == ',')strReturnString.pop_back();
+			}
+			else
+				for (int a = intWWPos + 1; a <= intWWPos + (*i)[intWWPos]; a++)
+				{
+					strReturnString.append(to_circled((*i)[a], nTarget));
+					if (a != intWWPos + (*i)[intWWPos])
+						strReturnString.append(",");
+				}
+			strReturnString.append("}");
+			intWWPos = intWWPos + (*i)[intWWPos] + 1;
+			if (intWWPos == i->size())
+			{
+				break;
+			}
+		}
+		if (vvintRes.size() != 1 && i->size() != (*i)[0] + 1)
+			strReturnString.append(" }");
+		++idx;
+	}
+	return strReturnString;
+}
 void init(string& msg)
 {
 	msg_decode(msg);

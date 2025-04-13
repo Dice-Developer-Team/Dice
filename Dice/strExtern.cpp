@@ -99,7 +99,7 @@ fifo_dict<> splitPairs(const string& s, char delim, char br) {
     return dict;
 }
 
-string convert_w2a(const char16_t* wch, UINT cp)
+string convert_w2a(const char16_t* wch, unsigned int cp)
 {
 #ifdef _WIN32
 	const int len = WideCharToMultiByte(cp, 0, (const wchar_t*)wch, -1, nullptr, 0, nullptr, nullptr);

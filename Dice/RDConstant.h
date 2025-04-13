@@ -35,6 +35,7 @@
 #define DiceTooBig_Err (-5)
 #define TypeTooBig_Err (-6)
 #define AddDiceVal_Err (-7)
+#define DiceCnt_Err (-8)
 //Dice Type
 #define Normal_Dice 0
 #define B_Dice 1

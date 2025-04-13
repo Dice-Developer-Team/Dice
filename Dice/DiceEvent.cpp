@@ -148,6 +148,7 @@ static unordered_map<int, string>RollDiceErr{
 	{ DiceTooBig_Err, "strDiceTooBigErr" },
 	{ TypeTooBig_Err, "strTypeTooBigErr" },
 	{ AddDiceVal_Err, "strAddDiceValErr" },
+	{ DiceCnt_Err, "strDiceCntErr"},
 };
 void DiceEvent::replyRollDiceErr(int err, const RD& rd) {
 	switch (err) {
@@ -3366,10 +3367,14 @@ int DiceEvent::InnerOrder() {
 		Player& pl = getPlayer(fromChat.uid);
 		int resno = 0;
 		if (strOption == "tag") {
-			switch (resno = pl.changeCard(readRest(), fromChat.gid)) {
+			string tag{ readRest() };
+			switch (resno = pl.changeCard(tag, fromChat.gid)) {
 			case 1:
 				replyMsg("strPcCardReset");
 				return 1;
+				break;
+			case -5:
+				set("char", tag);
 				break;
 			case 0:
 				replyMsg("strPcCardSet");
@@ -4275,7 +4280,9 @@ int DiceEvent::InnerOrder() {
 		}
 		strReason += readRest();
 		int intTurnCnt = 1;
-		const int intDefaultDice = getUser(fromChat.uid).getConf("默认骰", 100);
+		const int intDefaultDice = (pc && pc->has("__DefaultDice"))
+			? pc->get_int("__DefaultDice")
+			: getUser(fromChat.uid).getConf("默认骰", 10);
 		//处理.ww[次数]#[表达式]
 		if (size_t pos{ strMainDice.find('#') }; pos != string::npos) {
 			string strTurnCnt = strMainDice.substr(0, pos);
@@ -4320,8 +4327,12 @@ int DiceEvent::InnerOrder() {
 		}
 		if (boolAdda10)
 			strMainDice.insert(strFirstDice.length(), "a10");
-		RD rdMainDice(strMainDice, intDefaultDice);
-		if (const int intFirstTimeRes = rdMainDice.Roll(); intFirstTimeRes != 0) {
+		auto game{ thisGame() };
+		const int nDicePoolTarget = (game && game->has("__DPTarget")) ? game->get_int("__DPTarget")
+			: (pc && pc->has("__DPTarget")) ? pc->get_int("__DPTarget")
+			: 8;
+		DicePool rdMainDice(strMainDice, nDicePoolTarget);
+		if (const int intFirstTimeRes = rdMainDice.roll(game); intFirstTimeRes != 0) {
 			replyRollDiceErr(intFirstTimeRes, rdMainDice);
 		}
 		if (!boolDetail && intTurnCnt != 1) {
@@ -4355,7 +4366,7 @@ int DiceEvent::InnerOrder() {
 			while (intTurnCnt--) {
 				// 此处返回值无用
 				// ReSharper disable once CppExpressionWithoutSideEffects
-				rdMainDice.Roll();
+				rdMainDice.roll(game);
 				set("res",boolDetail ? rdMainDice.FormCompleteString() : rdMainDice.FormShortString());
 				strReply = getMsg(strReason.empty() ? "strRollDice" : "strRollDiceReason");
 				if (!is("hidden")) {

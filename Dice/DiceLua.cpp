@@ -871,8 +871,8 @@ LUADEF(getUserConf) {
 		lua_push_Context(L, getUser(uid).shared_from_this());
 		return 1;
 	}
-	auto val{ getUserItem(uid,item) };
-	if (val)lua_push_attr(L, val);
+	if (auto val{ getUserItem(uid,item) };
+		!val.is_null())lua_push_attr(L, val);
 	else {
 		lua_pushnil(L);
 		lua_insert(L, 3);
@@ -937,7 +937,8 @@ LUADEF(getUserToday) {
 	}
 	else if (item == "jrrp")
 		lua_push_attr(L, today->getJrrp(uid));
-	else if (auto p{ today->get_if(uid, item) })
+	else if (auto p{ today->get_if(uid, item) };
+		p && !p->is_null())
 		lua_push_attr(L, *p);
 	else if (top == 3) {
 		lua_pushnil(L);

@@ -358,6 +358,7 @@ const dict_ci<string> PlainMsg
 	{"strUnknownErr", "发生了未知错误!"},
 	{"strUnableToGetErrorMsg", "无法获取错误信息!"},
 	{"strDiceTooBigErr", "{self}被你扔出的骰子淹没了×（骰数过多）"},
+	{"strDiceCntErr", "{self}看不懂要丢几颗骰子啦×（骰数非法）" },
 	{"strRequestRetCodeErr", "{self}访问服务器时出现错误! HTTP状态码: {error}"},
 	{"strRequestNoResponse", "服务器未返回任何信息×"},
 	{"strTypeTooBigErr", "哇!让{self}数数骰子有多少面先~1...2..."},
@@ -536,6 +537,8 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+666:变更内部字符编码
+665:webui依赖本地化
 664:新增监听BlackInfoWarned
 663:新增.rule set
 662:先攻批量生成
