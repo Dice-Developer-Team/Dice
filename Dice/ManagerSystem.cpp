@@ -222,7 +222,10 @@ AttrVar getContextItem(const AttrObject& context, string item, bool isTrust) {
 }
 
 [[nodiscard]] bool User::empty() const {
-	return (!nTrust) && (!updated()) && dict.empty() && strNick.empty();
+	return (!nTrust) && (!updated()) && dict.size() <= 1 && strNick.empty();
+}
+[[nodiscard]] bool Chat::empty() const {
+	return !updated() && dict.size() <= 1;
 }
 void User::setConf(const string& key, const AttrVar& val)
 {

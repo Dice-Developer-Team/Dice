@@ -64,9 +64,11 @@ public:
 	const long long ID = 0;
 	//1-私用信任，2-拉黑豁免，3-加黑退群，4-后台管理，5-Master
 	int nTrust = 0;
-	time_t tCreated = time(nullptr);
+	time_t tCreated = 0;
 
-	explicit User(long long id): ID(id){}
+	explicit User(long long id): ID(id){
+		dict["tCreated"] = tCreated = time(nullptr);
+	}
 	unordered_map<long long, string> strNick{};
 	mutable std::mutex ex_user;
 	bool has(const string& key)const override;
@@ -153,9 +155,11 @@ public:
 	MetaType getType()const override { return MetaType::Context; }
 	const long long ID = 0;
 	long long inviter = 0;
-	time_t tCreated = time(nullptr);
+	time_t tCreated = 0;
 
-	explicit Chat(long long id):ID(id) {}
+	explicit Chat(long long id):ID(id) {
+		dict["tCreated"] = tCreated = time(nullptr);
+	}
 
 	unordered_map<long long, AnysTable>ChConf;
 
@@ -194,6 +198,7 @@ public:
 		return *this;
 	}
 	void invited(long long id);
+	[[nodiscard]] bool empty() const override;
 	int getConf(const string& key, int def = 0) {
 		if (has(key))return get_int(key);
 		return def;

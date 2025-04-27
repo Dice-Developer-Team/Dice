@@ -414,7 +414,7 @@ int js_dice_Set_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValueConst
 }
 int js_dice_Set_delete(JSContext* ctx, JSValue obj, JSAtom atom) {
 	JS2SET(obj);
-	return set->erase(js_AtomToIndex(ctx, atom)) != set->end() ? JS_TRUE : JS_FALSE;
+	return set->erase(js_AtomToIndex(ctx, atom)) != set->end() ? TRUE : FALSE;
 }
 
 QJSDEF(log) {

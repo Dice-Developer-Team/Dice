@@ -442,7 +442,7 @@ const dict_ci<string> PlainMsg
 	{"strSelfName", "" },
 	{"strSelfNick", "&strSelfName" },
 	{"self", "&strSelfCall"},
-	{"strBotHeader", "试验型 " },
+	{"strBotHeader", "标准型 " },
 	{"strBotMsg", "\n使用.help 查看{self}帮助文档"},
 	{"strHlpMsg", R"(请使用.dismiss ID（或后四位） 使{self}退群退讨论组
 .bot on/off ID（或at或后四位） //开启或关闭指令
@@ -721,8 +721,8 @@ Type=[回复性质](Reply/Order)
 )" },
 {"回复列表","{strSelfName}的回复触发词列表:{list_reply_deck}"},
 {"game",R"(游戏模式：
-`.game new 桌名` 创建游戏（桌名可省略，前缀以`规则:`可以指定应用规则）
-例: `.game new DND:`
+`.game new 桌名` 创建游戏（桌名可省略，前缀以`规则-`可以指定应用规则）
+例: `.game new DND-`
 创建者自动视为GM
 `.game over` 销毁本桌游戏
 `.game state` 查看本桌状态

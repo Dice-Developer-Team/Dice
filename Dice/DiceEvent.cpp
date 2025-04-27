@@ -3623,7 +3623,7 @@ int DiceEvent::InnerOrder() {
 			attr = attr.substr(12);
 			isAutomatic = true;
 		}
-		if (attr.find("困难") == 0 || attr.find("极难") == 0) {
+		if (attr.find("困难") == 0 || attr.find("极难") == 0 || attr.find("极限") == 0) {
 			strDifficulty += attr.substr(0, 6);
 			intDifficulty = (attr.substr(0, 6) == "困难") ? 2 : 5;
 			attr = attr.substr(6);

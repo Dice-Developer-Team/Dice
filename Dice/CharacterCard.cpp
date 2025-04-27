@@ -724,13 +724,14 @@ void Player::readb(std::ifstream& fin)
 			NameList[name] = card;
 		}
 	}
-	if (short len = fread<short>(fin); len > 0){
+	if (short len = fread<short>(fin); len > 0) {
 		while (len--) {
 			unsigned long long gid = fread<unsigned long long>(fin);
 			unsigned short pcid = fread<unsigned short>(fin);
-			if(mCardList.count(pcid))mGroupCard[gid] = mCardList[pcid];
+			if (mCardList.count(pcid))mGroupCard[gid] = mCardList[pcid];
 		}
 	}
+	else if (!mCardList.empty())mGroupCard[0] = mCardList[0];
 }
 
 AttrVar idx_pc(const AttrObject& eve){

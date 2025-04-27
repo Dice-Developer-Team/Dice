@@ -44,7 +44,7 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
-ID_ADMIN_HTML           FILE                    "webui.html"
+// ID_ADMIN_HTML           FILE                    "webui.html"
 
 /////////////////////////////////////////////////////////////////////////////
 //

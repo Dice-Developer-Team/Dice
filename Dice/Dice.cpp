@@ -392,43 +392,36 @@ R"( //私骰作成 即可成为我的主人~
 	llStartTime = time(nullptr);
 	DD::debugLog("Dice.WebInit");
 	if (console["EnableWebUI"]) {
+		fs::path dirWebUI{ DiceDir / "webui" };
 		try {
 			const std::string port_option = std::string(AllowInternetAccess ? "0.0.0.0" : "127.0.0.1") + ":" + std::to_string(Port);
 
-			std::vector<std::string> mg_options = { "document_root", (DiceDir / "webui").u8string(), "listening_ports", port_option.c_str() };
+			std::vector<std::string> mg_options = { "document_root", dirWebUI.u8string(), "listening_ports", port_option.c_str() };
 
 			ManagerServer = std::make_unique<CivetServer>(mg_options);
-#ifdef _WIN32
-			if (HRSRC hRsrcInfo = FindResource(hDllModule, MAKEINTRESOURCE(ID_ADMIN_HTML), TEXT("FILE"))) {
-				DWORD dwSize = SizeofResource(hDllModule, hRsrcInfo);
-				if (HGLOBAL hGlobal = LoadResource(hDllModule, hRsrcInfo)) {
-					LPVOID pBuffer = LockResource(hGlobal);  // 锁定资源
-					char* pByte = new char[dwSize + 1];
-					memcpy_s(pByte, dwSize, pBuffer, dwSize);
-					FreeResource(hGlobal);// 释放资源
-					fs::create_directories(DiceDir / "webui");
-					fstream fweb{ DiceDir / "webui" / "webui.html" }; 
-					std::stringstream buffer;
-					buffer << fweb.rdbuf();
-					string content = buffer.str();
-					if (content != pByte) {
-						fweb.write(pByte, dwSize);
-					}
-					delete[] pByte;
-				}
+#ifndef __ANDROID__
+			if (!fs::exists(dirWebUI / ".git") && fs::exists(dirWebUI)) {
+				console.log("删除旧index.html");
+				fs::remove_all(dirWebUI);
+			}
+			if (!fs::exists(dirWebUI)) {
+				DiceRepo repo{ dirWebUI, "https://gitee.com/diceki/DiceWebUI.git" };
+			}
+			else {
+				DiceRepo repo{ dirWebUI };
+				string errinfo;
+				repo.update(errinfo);
 			}
 #else
 			if (string html; Network::GET("https://raw.sevencdn.com/Dice-Developer-Team/Dice/newdev/Dice/webui.html", html)) {
-				fs::create_directories(DiceDir / "webui");
-				ofstream fweb{ DiceDir / "webui" / "webui.html" };
+				fs::create_directories(dirWebUI);
+				ofstream fweb{ DiceDir / "webui" / "index.html" };
 				fweb.write(html.c_str(), html.length());
 			}
-			else if (!fs::exists(DiceDir / "webui" / "index.html")) {
+#endif
+			if (!fs::exists(DiceDir / "webui" / "index.html")) {
 				console.log("获取webui页面失败!相关功能无法使用!", 0b10);
 			}
-#endif
-			if (fs::exists(DiceDir / "webui" / "webui.html"))
-				fs::copy_file(DiceDir / "webui" / "webui.html", DiceDir / "webui" / "index.html", fs::copy_options::update_existing);
 			ManagerServer->addHandler("/api/basicinfo", h_basicinfoapi);
 			ManagerServer->addHandler("/api/custommsg", h_msgapi);
 			ManagerServer->addHandler("/api/adminconfig", h_config);
