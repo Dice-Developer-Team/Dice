@@ -66,8 +66,8 @@ public:
 	int nTrust = 0;
 	time_t tCreated = 0;
 
-	explicit User(long long id): ID(id){
-		dict["tCreated"] = tCreated = time(nullptr);
+	explicit User(long long id): ID(id), tCreated(time(nullptr)) {
+		dict["tCreated"] = (long long)tCreated;
 	}
 	unordered_map<long long, string> strNick{};
 	mutable std::mutex ex_user;
@@ -157,8 +157,8 @@ public:
 	long long inviter = 0;
 	time_t tCreated = 0;
 
-	explicit Chat(long long id):ID(id) {
-		dict["tCreated"] = tCreated = time(nullptr);
+	explicit Chat(long long id):ID(id), tCreated(time(nullptr)) {
+		dict["tCreated"] = (long long)tCreated;
 	}
 
 	unordered_map<long long, AnysTable>ChConf;
