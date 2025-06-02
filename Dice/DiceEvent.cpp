@@ -4326,7 +4326,7 @@ int DiceEvent::InnerOrder() {
 			}
 		}
 		if (boolAdda10)
-			strMainDice.insert(strFirstDice.length(), "a10");
+			strMainDice.insert(strFirstDice.length(), "D");
 		auto game{ thisGame() };
 		const int nDicePoolTarget = (game && game->has("__DPTarget")) ? game->get_int("__DPTarget")
 			: (pc && pc->has("__DPTarget")) ? pc->get_int("__DPTarget")
@@ -4334,6 +4334,7 @@ int DiceEvent::InnerOrder() {
 		DicePool rdMainDice(strMainDice, nDicePoolTarget);
 		if (const int intFirstTimeRes = rdMainDice.roll(game); intFirstTimeRes != 0) {
 			replyRollDiceErr(intFirstTimeRes, rdMainDice);
+			return 1;
 		}
 		if (!boolDetail && intTurnCnt != 1) {
 			if (strReason.empty())strReply = getMsg("strRollMuiltDice");

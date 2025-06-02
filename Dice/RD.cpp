@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2024 String.Empty
+ * Copyright (C) 2019-2025 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -540,11 +540,9 @@ std::string RD::FormStringCombined() const
 	{
 		strReturnString.append(
 			vboolNegative[distance(vintRes.begin(), i)] ? "-" : (i == vintRes.begin() ? "" : "+"));
-		if (*i < 0 && i != vintRes.begin())
-			strReturnString.append("(");
+		//if (*i < 0 && i != vintRes.begin()) strReturnString.append("(");
 		strReturnString.append(std::to_string(*i));
-		if (*i < 0 && i != vintRes.begin())
-			strReturnString.append(")");
+		//if (*i < 0 && i != vintRes.begin()) strReturnString.append(")");
 	}
 	return strReturnString;
 }
@@ -620,30 +618,40 @@ DicePool::DicePool(const std::string& expr, const int target) :RD(expr, 10), nTa
 	}
 	if (const int intRDRes = cntDice(strDice.substr(intReadDiceLoc)))
 		err = intRDRes;
+	vboolNegative.clear();
 }
 int_errno DicePool::cntDice(std::string& dice) {
-	std::string strDiceCnt = dice.substr(0, dice.find('a'));
+	std::string strDiceCnt = dice.substr(0, dice.find_first_not_of("0123456789"));
 	for (auto i : strDiceCnt)
 		if (!isdigit(static_cast<unsigned char>(i)))
 			return DiceCnt_Err;
 	if (strDiceCnt.length() > 4)
 		return DiceTooBig_Err;
 	int intDiceCnt = stoi(strDiceCnt);
-	if (intDiceCnt == 0)
-		return ZeroDice_Err;
-	if (*(vboolNegative.end() - 1))nDiceCnt -= intDiceCnt;
-	else nDiceCnt += intDiceCnt;
-	//AddVal
-	std::string strAddVal = dice.substr(dice.find('a') + 1);
-	if (strAddVal.length() > 2)
-		return AddDiceVal_Err;
-	for (auto i : strAddVal)
-		if (!isdigit(static_cast<unsigned char>(i)))
-			return Input_Err;
-	if (!strAddVal.empty()) {
-		nDiceAdd = stoi(strAddVal);
-		if (nDiceAdd < 5 || nDiceAdd > 11)
+	if (dice.length() == strDiceCnt.length()) {
+		if (*(vboolNegative.end() - 1))nExtraVal -= intDiceCnt;
+		else nExtraVal += intDiceCnt;
+	}
+	else {
+		if (intDiceCnt == 0)
+			return ZeroDice_Err;
+		if (*(vboolNegative.end() - 1))nDiceCnt -= intDiceCnt;
+		else nDiceCnt += intDiceCnt;
+		//AddVal
+		if (std::string strAddVal = dice.substr(strDiceCnt.size() + 1);
+			strAddVal.length() > 2) {
 			return AddDiceVal_Err;
+		}
+		else {
+			for (auto i : strAddVal)
+				if (!isdigit(static_cast<unsigned char>(i)))
+					return Input_Err;
+			if (!strAddVal.empty()) {
+				nDiceAdd = stoi(strAddVal);
+				if (nDiceAdd < 5 || nDiceAdd > 11)
+					return AddDiceVal_Err;
+			}
+		}
 	}
 	vboolNegative.erase(vboolNegative.end() - 1);
 	return 0;
@@ -652,13 +660,14 @@ int_errno DicePool::roll(ptr<DiceSession> game) const
 {
 	if (err) return err;
 	if (!nDiceCnt)return ZeroDice_Err;
-	intTotal = 0;
+	intTotal = nExtraVal;
 	while (nDiceCnt != 0){
 		std::vector<int> vintTmpRes;
 		int intTmpRes = 0;
 		vintTmpRes.push_back(nDiceCnt);
 		int AddNum = 0;
-		int intCnt = nDiceCnt;
+		bool isPos{ nDiceCnt > 0 };
+		int intCnt = isPos ? nDiceCnt : -nDiceCnt;
 		while (intCnt--)
 		{
 			int intTmpResOnce = RandomGenerator::Randint(1, 10);
@@ -669,17 +678,18 @@ int_errno DicePool::roll(ptr<DiceSession> game) const
 				AddNum++;
 		}
 		if (nDiceCnt > 10)sort(vintTmpRes.end() - nDiceCnt, vintTmpRes.end());
-		nDiceCnt = AddNum;
-		vvintRes.emplace_back(vintTmpRes);
-		vintRes.emplace_back(intTmpRes);
+		if (intTmpRes || vintRes.empty()) {
+			vboolNegative.emplace_back(!isPos);
+			vvintRes.emplace_back(vintTmpRes);
+			vintRes.emplace_back(intTmpRes);
+		}
+		nDiceCnt = isPos ? AddNum : -AddNum;
 		intTotal += intTmpRes;
 	}
-	//if (boolNegative)
-	//	nSuccess -= intTmpRes;
-	//else
-	//	nSuccess += intTmpRes;
-	//vBnP.insert(vBnP.begin(), WW_Dice);
-	//vboolNegative.insert(vboolNegative.begin(), boolNegative);
+	if (nExtraVal) {
+		vintRes.emplace_back(nExtraVal > 0 ? nExtraVal : -nExtraVal);
+		vboolNegative.emplace_back(nExtraVal < 0);
+	}
 	return 0;
 }
 std::string DicePool::FormStringSeparate() const
@@ -737,6 +747,10 @@ std::string DicePool::FormStringSeparate() const
 			strReturnString.append(" }");
 		++idx;
 	}
+	if (nExtraVal > 0) {
+		strReturnString += "+" + std::to_string(nExtraVal);
+	}
+	else if (nExtraVal < 0)strReturnString += std::to_string(nExtraVal);
 	return strReturnString;
 }
 void init(string& msg)

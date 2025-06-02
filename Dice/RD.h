@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2024 String.Empty
+ * Copyright (C) 2019-2025 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -213,6 +213,7 @@ class DicePool: public RD {
 	mutable int nDiceCnt{ 0 };
 	mutable int nDiceAdd{ 10 };
 	int nTarget = 8;
+	int nExtraVal = 0;
 	int_errno err = 0;
 	int_errno cntDice(std::string& dice);
 public:

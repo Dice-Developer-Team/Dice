@@ -57,7 +57,7 @@ bool DiceRepo::update(string& err) {
 		git_repository_head(&local_head, repo);
 		const char* branch_name{ nullptr };
 		if (git_branch_name(&branch_name, local_head)) {
-			console.log("git_branch_name:" + (err = git_lasterr()), 1);
+			console.log("git_branch_name:" + (err = git_lasterr()), 0);
 			goto Clean;
 		}
 		//string head{ git_reference_name(local_head) };
