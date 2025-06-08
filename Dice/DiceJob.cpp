@@ -475,7 +475,7 @@ void log_put(AttrObject job) {
 	curl_httppost* pFormPost = NULL;
 	curl_httppost* pLastElem = NULL;
 	curl_formadd(&pFormPost, &pLastElem,
-		CURLFORM_COPYNAME, "key",
+		curl_mime_name(), "key",
 		CURLFORM_COPYCONTENTS, nameLog.c_str(),
 		CURLFORM_END);
 	curl_formadd(&pFormPost, &pLastElem,

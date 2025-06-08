@@ -215,7 +215,7 @@ class DicePool: public RD {
 	int nTarget = 8;
 	int nExtraVal = 0;
 	int_errno err = 0;
-	int_errno cntDice(std::string& dice);
+	int_errno cntDice(const std::string_view& dice);
 public:
 	mutable int nSuccess = 0;
 	DicePool(const std::string& expr, const int target = 8);

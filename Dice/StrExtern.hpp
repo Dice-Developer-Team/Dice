@@ -5,6 +5,7 @@
  */
 
 #include <string>
+#include <string_view>
 #include <vector>
 #include <unordered_map>
 #include "STLExtern.hpp"
@@ -21,6 +22,7 @@ constexpr auto space_char{ " \t\r\n" };
 
 bool isNumeric(const string&);
 string toString(int num, unsigned short size = 0);
+int svtoi(const std::string_view& sv);
 
 template<typename F>
 typename std::enable_if_t<std::is_floating_point_v<F>, string>

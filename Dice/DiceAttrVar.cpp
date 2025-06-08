@@ -379,13 +379,10 @@ int AttrVar::to_int()const {
 		break;
 	case Type::GBString:
 	case Type::U8String:
-		try {
-			return stoi(text);
+		if (int i = 0;
+			std::from_chars(text.c_str(), text.c_str()+text.length(),i).ec == std::errc{}) {
+			return i;
 		}
-		catch (...) {
-			return 0;
-		}
-		break;
 	default:
 		return 0;
 		break;
@@ -410,13 +407,10 @@ long long AttrVar::to_ll()const {
 		break;
 	case Type::GBString:
 	case Type::U8String:
-		try {
-			return stoll(text);
+		if (long long i = 0;
+			std::from_chars(text.c_str(), text.c_str() + text.length(), i).ec == std::errc{}) {
+			return i;
 		}
-		catch (...) {
-			return 0;
-		}
-		break;
 	default:
 		return 0;
 		break;
@@ -441,13 +435,10 @@ double AttrVar::to_num()const {
 		break;
 	case Type::GBString:
 	case Type::U8String:
-		try {
-			return stod(text);
+		if (double num = 0;
+			std::from_chars(text.c_str(), text.c_str() + text.length(), num).ec == std::errc{}) {
+			return num;
 		}
-		catch (...) {
-			return 0;
-		}
-		break;
 	default:
 		return 0;
 		break;

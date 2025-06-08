@@ -1,8 +1,7 @@
-#include <string>
-#include <string_view>
 #include <sstream>
 #include <algorithm>
 #include <cwchar>
+#include <charconv>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -33,6 +32,11 @@ bool isNumeric(const string& s) {
     return true;
 }
 
+int svtoi(const string_view& sv) {
+    int i = 0;
+    std::from_chars(sv.data(), sv.data() + sv.size(), i);
+    return i;
+}
 string toString(int num, unsigned short size)
 {
 	string res = to_string(num);

@@ -24,6 +24,7 @@
 #include "CQTools.h"
 #include <cctype>
 #include "RD.h"
+#include "StrExtern.hpp"
 using namespace std;
 
 string to_circled(int num, int c) {
@@ -620,14 +621,14 @@ DicePool::DicePool(const std::string& expr, const int target) :RD(expr, 10), nTa
 		err = intRDRes;
 	vboolNegative.clear();
 }
-int_errno DicePool::cntDice(std::string& dice) {
-	std::string strDiceCnt = dice.substr(0, dice.find_first_not_of("0123456789"));
+int_errno DicePool::cntDice(const std::string_view& dice) {
+	string_view strDiceCnt{ dice.substr(0, dice.find_first_not_of("0123456789")) };
 	for (auto i : strDiceCnt)
 		if (!isdigit(static_cast<unsigned char>(i)))
 			return DiceCnt_Err;
 	if (strDiceCnt.length() > 4)
 		return DiceTooBig_Err;
-	int intDiceCnt = stoi(strDiceCnt);
+	int intDiceCnt{ svtoi(strDiceCnt) };
 	if (dice.length() == strDiceCnt.length()) {
 		if (*(vboolNegative.end() - 1))nExtraVal -= intDiceCnt;
 		else nExtraVal += intDiceCnt;
@@ -638,7 +639,7 @@ int_errno DicePool::cntDice(std::string& dice) {
 		if (*(vboolNegative.end() - 1))nDiceCnt -= intDiceCnt;
 		else nDiceCnt += intDiceCnt;
 		//AddVal
-		if (std::string strAddVal = dice.substr(strDiceCnt.size() + 1);
+		if (std::string_view strAddVal = dice.substr(strDiceCnt.size() + 1);
 			strAddVal.length() > 2) {
 			return AddDiceVal_Err;
 		}
@@ -647,7 +648,7 @@ int_errno DicePool::cntDice(std::string& dice) {
 				if (!isdigit(static_cast<unsigned char>(i)))
 					return Input_Err;
 			if (!strAddVal.empty()) {
-				nDiceAdd = stoi(strAddVal);
+				nDiceAdd = svtoi(strAddVal);
 				if (nDiceAdd < 5 || nDiceAdd > 11)
 					return AddDiceVal_Err;
 			}
