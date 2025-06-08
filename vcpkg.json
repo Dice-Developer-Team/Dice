@@ -11,8 +11,8 @@
     "tinyxml2",
     "openssl",
     {
-      "name": "libgit2",
-      "platform" : "!android"
+      "name": "unofficial-libgit2",
+      "platform" : "windows"
     },
     "civetweb",
     {

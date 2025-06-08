@@ -467,6 +467,8 @@ void log_put(AttrObject job) {
 #ifndef _WIN32
 	auto curl = curl_easy_init();
 	curl_slist* headers = NULL;
+	// 创建 MIME 对象
+	curl_mime* mime = curl_mime_init(curl);
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);// 创建第一个表单部分（对应旧代码中第一个 curl_formadd 的 "key" 部分）
 	curl_mimepart* keyPart = curl_mime_addpart(mime);
 	curl_mime_name(keyPart, "key"); // 设置字段名称为 "key"

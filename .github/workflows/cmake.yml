@@ -50,10 +50,6 @@ jobs:
       working-directory: ${{github.workspace}}/vcpkg
       run: bootstrap-vcpkg.bat
 
-    - name: Setup dependencies
-      working-directory: ${{github.workspace}}/vcpkg
-      run: .\vcpkg install unofficial-libgit2:${{ matrix.triplet }}
-
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name
@@ -230,7 +226,9 @@ jobs:
       run: cmake -E make_directory ${{github.workspace}}/build
       
     - name: Install Cross Compiler
-      run: sudo apt-get update && sudo apt-get install ${{ matrix.apt }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install ${{ matrix.apt }} linux-libc-dev autoconf automake autoconf-archive
 
     - name: Cache
       uses: actions/cache@v3
@@ -259,12 +257,6 @@ jobs:
         -name "GitHub"
         -username "Dice-Developer-Team"
         -password "${{ secrets.GITHUB_TOKEN }}"
-    
-    - name: Add linux-headers
-      run: sudo apt-get install linux-libc-dev
-    
-    - name: Automake
-      run: sudo apt-get install autoconf automake autoconf-archive
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
