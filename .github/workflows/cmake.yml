@@ -185,16 +185,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - apt: g++-8
-          cc: gcc-8
-          cxx: g++-8
+        - apt: g++-11
+          cc: gcc-11
+          cxx: g++-11
           triplet: x64-linux
           mono: 'mono'
           dll_sfx: linux.amd64
         - path: /usr/i686-linux-gnu
-          apt: g++-8-i686-linux-gnu
-          cc: i686-linux-gnu-gcc-8
-          cxx: i686-linux-gnu-g++-8
+          apt: g++-11-i686-linux-gnu
+          cc: i686-linux-gnu-gcc-11
+          cxx: i686-linux-gnu-g++-11
           triplet: x86-linux
           mono: 'mono'
           dll_sfx: linux.i386

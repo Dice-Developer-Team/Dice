@@ -33,7 +33,7 @@ int sendSelf(const string& msg) {
 	return 0;
 }
 
-void cq_exit(AttrObject& job) {
+void cq_exit(AttrObject job) {
 #ifdef _WIN32
 	MsgNote(job, "已令" + getMsg("self") + "在5秒后自杀", 1);
 	std::this_thread::sleep_for(5s);
@@ -52,7 +52,7 @@ inline PROCESSENTRY32 getProcess(int pid) {
 }
 #endif
 
-void frame_restart(AttrObject& job) {
+void frame_restart(AttrObject job) {
 #ifdef _WIN32
 	if (!job->get_ll("uid")) {
 		if (console["AutoFrameRemake"] <= 0) {
@@ -71,14 +71,14 @@ void frame_restart(AttrObject& job) {
 #endif
 }
 
-void frame_reload(AttrObject& job) {
+void frame_reload(AttrObject job) {
 	if (DD::reload())
 		MsgNote(job, "重载" + getMsg("self") + "完成√", 1);
 	else
 		MsgNote(job, "重载" + getMsg("self") + "失败×", 0b10);
 }
 
-void check_system(AttrObject& job) {
+void check_system(AttrObject job) {
 #ifdef _WIN32
 	static int perRAM(0), perLastRAM(0);
 	static double  perLastCPU(0), perLastDisk(0),
@@ -140,7 +140,7 @@ void check_system(AttrObject& job) {
 #endif
 }
 
-void auto_save(AttrObject& job) {
+void auto_save(AttrObject job) {
 	if (sch.is_job_cold("autosave"))return;
 	DD::debugLog(printSTNow() + " 自动保存");
 	dataBackUp();
@@ -152,7 +152,7 @@ void auto_save(AttrObject& job) {
 }
 
 //被引用的图片列表
-void clear_image(AttrObject& job) {
+void clear_image(AttrObject job) {
 	return;
 	if (!job->has("uid")) {
 		if (sch.is_job_cold("clrimage"))return;
@@ -168,7 +168,7 @@ void clear_image(AttrObject& job) {
 	}
 }
 
-void clear_group(AttrObject& job) {
+void clear_group(AttrObject job) {
 	console.log("开始清查群聊", 0, printSTNow());
 	int intCnt = 0;
 	ResList res;
@@ -298,7 +298,7 @@ void clear_group(AttrObject& job) {
 		MsgNote(job, "清查群聊时回收不活跃记录" + to_string(GrpDelete.size()) + "条", 0b1);
 	}
 }
-void list_group(AttrObject& job) {
+void list_group(AttrObject job) {
 	console.log("遍历群列表", 0, printSTNow());
 	string mode{ job->get_str("list_mode") };
 	if (mode.empty()) {
@@ -363,12 +363,12 @@ void list_group(AttrObject& job) {
 }
 
 //心跳检测
-void cloud_beat(AttrObject& job) {
+void cloud_beat(AttrObject job) {
 	Cloud::heartbeat();
 	sch.add_job_for(5 * 60, job);
 }
 
-void check_update(AttrObject& job) {
+void check_update(AttrObject job) {
 	string ret;
 	if (!Network::GET("http://shiki.stringempty.xyz/DiceVer/update", ret)) {
 		console.log("获取版本信息时出错: \n" + ret, 0);
@@ -387,7 +387,7 @@ void check_update(AttrObject& job) {
 	}
 	sch.add_job_for(72 * 60 * 60, "check_update");
 }
-void dice_update(AttrObject& job) {
+void dice_update(AttrObject job) {
 	string ret;
 	if (!Network::GET("http://shiki.stringempty.xyz/DiceVer/update", ret)) {
 		reply(job, "{self}获取版本信息时出错: \n" + ret);
@@ -425,7 +425,7 @@ void dice_update(AttrObject& job) {
 }
 
 //获取云不良记录
-void dice_cloudblack(AttrObject& job) {
+void dice_cloudblack(AttrObject job) {
 	bool isSuccess(false);
 	MsgNote(job, "开始获取云不良记录", 0);
 	string strURL("https://shiki.stringempty.xyz/blacklist/checked.json?" + to_string(time(nullptr)));
@@ -458,7 +458,7 @@ void dice_cloudblack(AttrObject& job) {
 		sch.add_job_for(24 * 60 * 60, "cloudblack");
 }
 
-void log_put(AttrObject& job) {
+void log_put(AttrObject job) {
 	int cntExec{ job->get_int("retry") };
 	if (!cntExec) {
 		DD::debugLog("发送log文件:" + job->get_str("log_path"));

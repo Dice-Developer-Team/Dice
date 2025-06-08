@@ -41,7 +41,7 @@ using waited_job = pair<time_t, AttrObject>;
 std::priority_queue<waited_job, std::deque<waited_job>,std::greater<waited_job>> queueJobWaited;
 std::mutex mtJobWaited;
 
-void exec(AttrObject& job) {
+void exec(const AttrObject& job) {
 	if (job->has("cmd")) {
 		if (auto it = mCommand.find(job->get_str("cmd")); it != mCommand.end()) {
 			it->second(job);

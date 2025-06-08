@@ -68,7 +68,7 @@ public:
 };
 inline DiceScheduler sch;
 
-typedef void (*cmd)(AttrObject&);
+typedef void (*cmd)(AttrObject);
 
 //今日记录
 class DiceToday {
