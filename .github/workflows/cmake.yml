@@ -50,6 +50,10 @@ jobs:
       working-directory: ${{github.workspace}}/vcpkg
       run: bootstrap-vcpkg.bat
 
+    - name: Setup dependencies
+      working-directory: ${{github.workspace}}/vcpkg
+      run: .\vcpkg install unofficial-libgit2:${{ matrix.triplet }}
+
     - name: 'Setup NuGet Credentials'
       shell: 'bash'
       # Replace <OWNER> with your organization name
@@ -295,7 +299,6 @@ jobs:
       
   build-android:
     env:
-      ANDROID_NDK: $ANDROID_NDK_HOME
       BUILD_TYPE: Release
       VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
     strategy:
@@ -332,7 +335,13 @@ jobs:
         # An explicit key for restoring and saving the cache
         key: ${{ runner.os }}-${{ matrix.triplet }}-20250608
         restore-keys:  ${{ runner.os }}-${{ matrix.triplet }}-20250608
-        
+    
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r28b
+        add-to-path: true
+    
     - name: Setup Vcpkg
       shell: bash
       if: steps.cache.outputs.cache-hit != 'true'

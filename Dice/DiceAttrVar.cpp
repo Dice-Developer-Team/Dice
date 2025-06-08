@@ -21,6 +21,7 @@
  * You should have received a copy of the GNU Affero General Public License along with this
  * program. If not, see <http://www.gnu.org/licenses/>.
  */
+#include <charconv>
 #include "DiceAttrVar.h"
 #include "StrExtern.hpp"
 #include "DiceFile.hpp"
@@ -380,7 +381,7 @@ int AttrVar::to_int()const {
 	case Type::GBString:
 	case Type::U8String:
 		if (int i = 0;
-			std::from_chars(text.c_str(), text.c_str()+text.length(),i).ec == std::errc{}) {
+			std::from_chars(text.c_str(), text.c_str() + text.length(), i).ec == std::errc{}) {
 			return i;
 		}
 	default:

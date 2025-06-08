@@ -467,26 +467,28 @@ void log_put(AttrObject job) {
 #ifndef _WIN32
 	auto curl = curl_easy_init();
 	curl_slist* headers = NULL;
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	curl_httppost* pFormPost = NULL;
-	curl_httppost* pLastElem = NULL;
-	curl_formadd(&pFormPost, &pLastElem,
-		curl_mime_name(), "key",
-		CURLFORM_COPYCONTENTS, nameLog.c_str(),
-		CURLFORM_END);
-	curl_formadd(&pFormPost, &pLastElem,
-		CURLFORM_COPYNAME, "file",
-		CURLFORM_FILE, job->get_str("log_path").c_str(),
-		CURLFORM_FILENAME, nameLog.c_str(),
-		CURLFORM_END); 
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);// 创建第一个表单部分（对应旧代码中第一个 curl_formadd 的 "key" 部分）
+	curl_mimepart* keyPart = curl_mime_addpart(mime);
+	curl_mime_name(keyPart, "key"); // 设置字段名称为 "key"
+	curl_mime_data(keyPart, nameLog.c_str(), CURL_ZERO_TERMINATED); // 设置字段内容，CURL_ZERO_TERMINATED 表示字符串以 '\0' 结尾
+
+	// 创建第二个表单部分（对应旧代码中第二个 curl_formadd 的 "file" 部分，用于文件上传）
+	curl_mimepart* filePart = curl_mime_addpart(mime);
+	curl_mime_name(filePart, "file"); // 设置字段名称为 "file"
+	curl_mime_filedata(filePart, job->get_str("log_path").c_str()); // 指定要上传的文件路径，文件名会自动从路径中提取，你也可以通过 curl_mime_filename 来显式设置文件名
+
+	// 如果需要显式设置文件名（比如和文件实际路径中的名称不同），可以使用下面这行代码
+	// curl_mime_filename(filePart, nameLog.c_str());
+
 	curl_easy_setopt(curl, CURLOPT_URL, "http://dicelogger.s3.ap-southeast-1.amazonaws.com");
-	curl_easy_setopt(curl, CURLOPT_HTTPPOST, pFormPost);
+	curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime); // 使用 CURLOPT_MIMEPOST 代替 CURLOPT_HTTPPOST 来设置 MIME 表单
 	string ret;
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Network::curlWriteToString);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ret);
 	auto res = curl_easy_perform(curl);
-	if (res != CURLE_OK)job->set("ret", curl_easy_strerror(res));
-	curl_formfree(pFormPost);
+	if (res != CURLE_OK)
+		job->set("ret", curl_easy_strerror(res));
+	curl_mime_free(mime); // 释放 MIME 对象，代替 curl_formfree
 	curl_easy_cleanup(curl);
 	if (res == CURLE_OK) {
 #else
