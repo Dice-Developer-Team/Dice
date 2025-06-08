@@ -58,7 +58,7 @@ public:
 	//转发消息
 	void fwdMsg();
 	void logEcho();
-	int AdminEvent(const string& strOption);
+	int AdminEvent(const std::string_view& strOption);
 	int MasterSet();
 	int BasicOrder();
 	int InnerOrder();
@@ -123,20 +123,19 @@ public:
 	}
 
 	//读取参数(统一小写)
-	string readPara()
+	std::string_view readPara()
 	{
-		string strPara;
 		while (intMsgCnt < strMsg.length() && isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))intMsgCnt++;
+		auto posBegin{ intMsgCnt };
 		while (intMsgCnt < strMsg.length() && !isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])) && !isdigit(static_cast<unsigned char>(strLowerMessage[intMsgCnt]))
 			&& (strLowerMessage[intMsgCnt] != '-') && (strLowerMessage[intMsgCnt] != '+') 
 			&& (strLowerMessage[intMsgCnt] != '[') && (strLowerMessage[intMsgCnt] != ']') 
 			&& (strLowerMessage[intMsgCnt] != '=') && (strLowerMessage[intMsgCnt] != ':')
 			&& (strLowerMessage[intMsgCnt] != '#')
 			&& intMsgCnt != strLowerMessage.length()) {
-			strPara += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
-		return strPara;
+		return std::string_view{ strLowerMessage.c_str() + posBegin,intMsgCnt - posBegin };
 	}
 
 	//读取数字

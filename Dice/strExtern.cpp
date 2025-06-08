@@ -34,7 +34,7 @@ bool isNumeric(const string& s) {
 
 int svtoi(const string_view& sv) {
     int i = 0;
-    std::from_chars(sv.data(), sv.data() + sv.size(), i);
+    std::from_chars(sv.data(), sv.data() + sv.size(), i, 10);
     return i;
 }
 string toString(int num, unsigned short size)

@@ -124,6 +124,7 @@ public:
 	AttrVar(double n) :type(Type::Number), number(n) {}
 	AttrVar(const char* s) :type(Type::U8String), text(s) {}
 	AttrVar(const string& s) :type(Type::U8String), text(s) {}
+	AttrVar(const std::string_view& s) :type(Type::U8String), text(s) {}
 	AttrVar(const char* s,size_t len) :type(Type::Function), chunk(s,len) {}
 	AttrVar(ByteS&& fun) :type(Type::Function), chunk(fun) {}
 	AttrVar(long long n) :type(Type::ID), id(n) {}

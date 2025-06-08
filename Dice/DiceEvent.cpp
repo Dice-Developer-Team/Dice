@@ -255,7 +255,7 @@ void DiceEvent::note(std::string strMsg, int note_lv)
 		AddMsgToQueue(note, ct);
 	}
 }
-int DiceEvent::AdminEvent(const string& strOption){
+int DiceEvent::AdminEvent(const string_view& strOption){
 	if (strOption == "isban")
 	{
 		set("target", readDigit());
@@ -293,7 +293,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 		replyMsg("strNotAdmin");
 		return -1;
 	}
-	if (auto it = Console::intDefault.find(strOption);it != Console::intDefault.end())
+	if (auto it = Console::intDefault.find(string(strOption));it != Console::intDefault.end())
 	{
 		int intSet = 0;
 		switch (readNum(intSet))
@@ -303,7 +303,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 			note("已将" + getMsg("strSelfName") + "的" + it->first + "设置为" + std::to_string(intSet), 0b10);
 			break;
 		case -1:
-			reply(getMsg("strSelfName") + "该项为" + std::to_string(console[strOption.c_str()]));
+			reply(getMsg("strSelfName") + "该项为" + std::to_string(console[string(strOption)]));
 			break;
 		case -2:
 			reply("{nick}设置参数超出范围×");
@@ -441,7 +441,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 		{
 			intMsgCnt++;
 		}
-		string strType = readPara();
+		string strType{ readPara() };
 		if (strType.empty())
 		{
 			reply(getMsg("strSelfName") + "的定时列表：" + console.listClock().show());
@@ -453,13 +453,13 @@ int DiceEvent::AdminEvent(const string& strOption){
 		case 0:
 			if (isErase)
 			{
-				if (console.rmClock(cc, strType))reply(
+				if (console.rmClock(cc, string(strType)))reply(
 					getMsg("strSelfName") + "无此定时项目");
 				else note("已移除" + getMsg("strSelfName") + "在" + printClock(cc) + "的定时" + strType, 0b10);
 			}
 			else
 			{
-				console.setClock(cc, strType);
+				console.setClock(cc, string(strType));
 				note("已设置" + getMsg("strSelfName") + "在" + printClock(cc) + "的定时" + strType, 0b10);
 			}
 			break;
@@ -786,7 +786,7 @@ int DiceEvent::AdminEvent(const string& strOption){
 
 int DiceEvent::MasterSet() 
 {
-	const std::string strOption = readPara();
+	const std::string_view strOption{ readPara() };
 	if (strOption.empty())
 	{
 		replyMsg("strAdminOptionEmpty");
@@ -1030,7 +1030,7 @@ int DiceEvent::BasicOrder()
 	}
 	if (strLowerMessage.substr(intMsgCnt, 3) == "bot"){
 		intMsgCnt += 3;
-		string Command = readPara();
+		string_view Command{ readPara() };
 		string QQNum = readDigit();
 		if (QQNum.empty() || QQNum == std::to_string(console.DiceMaid) 
 			|| (QQNum.length() == 4 && stoll(QQNum) == console.DiceMaid % 10000))
@@ -1685,7 +1685,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		intMsgCnt += 6;
-		string strOption = readPara();
+		string_view strOption{ readPara() };
 		if (strOption == "list") {
 			set("list_mode", readPara());
 			set("cmd", "lsgroup");
@@ -1783,7 +1783,7 @@ int DiceEvent::InnerOrder() {
 			replyMsg("strNotAdmin");
 			return -1;
 		}
-		string strOption = readPara();
+		string_view strOption{ readPara() };
 #ifdef _WIN32
 		if (strOption == "gui") {
 			reply("Dice! GUI已停止更新，请考虑使用Dice! WebUI https://forum.kokona.tech/d/721-dice-webui-shi-yong-shuo-ming");
@@ -1898,7 +1898,7 @@ int DiceEvent::InnerOrder() {
 	}
 	else if (pref5 == "cloud") {
 		intMsgCnt += 5;
-		string strOpt = readPara();
+		string_view strOpt{ readPara() };
 		if (trusted < 4) {
 			replyMsg("strNotAdmin");
 			return 1;
@@ -2033,7 +2033,7 @@ int DiceEvent::InnerOrder() {
 			return 1;
 		}
 		bool isInGroup{ fromChat.gid == llGroup || DD::isGroupMember(llGroup,console.DiceMaid,true) };
-		string Command = readPara();
+		string_view Command{ readPara() };
 		set("group",DD::printGroupInfo(llGroup));
 		if (Command.empty()) {
 			replyHelp("group");
@@ -2298,16 +2298,16 @@ int DiceEvent::InnerOrder() {
 			intMsgCnt++;
 		while (isspace(static_cast<unsigned char>(strLowerMessage[intMsgCnt])))
 			intMsgCnt++;
-		string strNum;
+		auto nBegin{ intMsgCnt };
 		while (is_digit(strLowerMessage[intMsgCnt])) {
-			strNum += strLowerMessage[intMsgCnt];
 			intMsgCnt++;
 		}
+		string_view strNum{ strMsg.c_str() + nBegin,intMsgCnt - nBegin };
 		if (strNum.length() > 2) {
 			replyMsg("strCharacterTooBig");
 			return 1;
 		}
-		const int intNum = stoi(strNum.empty() ? "1" : strNum);
+		const int intNum = strNum.empty() ? 1 : svtoi(strNum);
 		if (intNum > 10) {
 			replyMsg("strCharacterTooBig");
 			return 1;
@@ -2330,7 +2330,7 @@ int DiceEvent::InnerOrder() {
 			replyHelp("deck");
 			return 1;
 		}
-		string strPara = readPara();
+		string_view strPara{ readPara() };
 		if (strPara == "show") {
 			if (auto game{ thisGame() }) game->deck_show(this);
 			else replyMsg("strDeckListEmpty");
@@ -2439,18 +2439,18 @@ int DiceEvent::InnerOrder() {
 	else if (pref4 == "init") {
 		intMsgCnt += 4;
 		set("table_name","先攻");
-		string strCmd = readPara();
-		if (strCmd.empty()|| isPrivate()) {
+		string_view strOpt{ readPara() };
+		if (strOpt.empty()|| isPrivate()) {
 			replyHelp("init");
 		}
 		else if (auto game{ thisGame() }; !game || !game->has("先攻")) {
 			replyMsg("strGMTableNotExist");
 		}
-		else if (strCmd == "show" || strCmd == "list") {
+		else if (strOpt == "show" || strOpt == "list") {
 			set("res", game->table_prior_show("先攻"));
 			replyMsg("strGMTableShow");
 		}
-		else if (strCmd == "del") {
+		else if (strOpt == "del") {
 			set("table_item",readRest());
 			if (is_empty("table_item"))
 				replyMsg("strGMTableItemEmpty");
@@ -2461,7 +2461,7 @@ int DiceEvent::InnerOrder() {
 			else
 				replyMsg("strGMTableItemNotFound");
 		}
-		else if (strCmd == "clr") {
+		else if (strOpt == "clr") {
 			game->reset("先攻");
 			game->reset("init_exp");
 			replyMsg("strGMTableClr");
@@ -2550,7 +2550,7 @@ int DiceEvent::InnerOrder() {
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
 
-		string type = readPara();
+		string type{ readPara() };
 		string strNum = readDigit();
 		if (strNum.length() > 1 && strNum != "10") {
 			replyMsg("strNameNumTooBig");
@@ -2685,7 +2685,7 @@ int DiceEvent::InnerOrder() {
 	}
 	else if (pref4 == "user") {
 		intMsgCnt += 4;
-		string strOption = readPara();
+		string_view strOption{ readPara() };
 		if (strOption.empty())return 0;
 		if (strOption == "state") {
 			User& user = getUser(fromChat.uid);
@@ -2849,7 +2849,7 @@ int DiceEvent::InnerOrder() {
 	}
 	else if (pref3 == "log") {
 		intMsgCnt += 3;
-		string strPara = readPara();
+		string_view strPara{ readPara() };
 		if (strPara.empty()) {
 			replyHelp("log");
 		}
@@ -2876,7 +2876,7 @@ int DiceEvent::InnerOrder() {
 		return 1;
 	}
 	intMsgCnt += 3;
-	string strPara = readPara();
+	string_view strPara{ readPara() };
 	if (strPara.empty()) {
 		replyHelp("mod");
 	}
@@ -2935,7 +2935,7 @@ int DiceEvent::InnerOrder() {
 		intMsgCnt += 3;
 		while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))
 			intMsgCnt++;
-		string type = readPara();
+		string type{ readPara() };
 		string strDeckName = (!type.empty() && CardDeck::mPublicDeck.count("随机姓名_" + type)) ? "随机姓名_" + type : "随机姓名";
 		set("old_nick",idx_nick(*this));
 		set("new_nick",strip(CardDeck::drawCard(CardDeck::mPublicDeck[strDeckName], true)));
@@ -3351,7 +3351,7 @@ int DiceEvent::InnerOrder() {
 	}
 	else if (pref2 == "pc") {
 		intMsgCnt += 2;
-		string strOption = readPara();
+		string_view strOption{ readPara() };
 		if (strOption.empty()) {
 			replyHelp("pc");
 			return 1;
@@ -4718,22 +4718,20 @@ string DiceEvent::readDigit(bool isForce)
 
 int DiceEvent::readNum(int& num)
 {
-	string strNum;
 	while (intMsgCnt < strMsg.length() && !is_digit(strMsg[intMsgCnt]) && strMsg[intMsgCnt] != '-')intMsgCnt++;
+	auto posBegin{ intMsgCnt };
 	if (strMsg[intMsgCnt] == '-')
 	{
-		strNum += '-';
 		intMsgCnt++;
 	}
 	if (intMsgCnt >= strMsg.length())return -1;
 	while (intMsgCnt < strMsg.length() && is_digit(strMsg[intMsgCnt]))
 	{
-		strNum += strMsg[intMsgCnt];
 		intMsgCnt++;
 	}
-	if (strNum.length() > 9)return -2;
-	if (strNum.empty() || strNum == "-")return -3;
-	num = stoi(strNum);
+	if (intMsgCnt - posBegin > 9)return -2;
+	if (intMsgCnt == posBegin || strMsg[posBegin] == '-')return -3;
+	std::from_chars(strMsg.c_str() + posBegin, strMsg.c_str() + intMsgCnt, num, 10);
 	return 0;
 }
 string DiceEvent::readXDY()

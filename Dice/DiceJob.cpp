@@ -217,50 +217,46 @@ void clear_group(AttrObject job) {
 		MsgNote(job, "已筛除{strSelfName}潜水{clear_mode}天群聊" + to_string(intCnt) + "个√" + res.show(), 0b10);
 	}
 	else if (mode == "black") {
-		try {
-			set<long long> grps{ DD::getGroupIDList() };
-			for (auto id : grps) {
-				Chat& grp = chat(id).name(DD::getGroupName(id));
-				if (grp.is("忽略") || grp.is("免清") || grp.is("免黑") || grp.is("协议无效"))continue;
-				if (blacklist->get_group_danger(id)) {
-					time_t tLast{ grp.updated() };
-					if (auto s{ sessions.get_if({ 0,id }) })
-						tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
-					if (tLast < grpline)GrpDelete.push_back(id);
-					res << printGroup(id) + "：黑名单群";
-					grp.leave(getMsg("strBlackGroup"));
-				}
-				set<long long> MemberList{ DD::getGroupMemberList(id) };
-				AttrVar authSelf;
-				for (auto eachQQ : MemberList) {
-					if (blacklist->get_user_danger(eachQQ) > 1) {
-						if (authSelf.is_null())authSelf = DD::getGroupAuth(id, console.DiceMaid, 1);
-						if (auto authBlack{ DD::getGroupAuth(id, eachQQ, 1) }; authSelf.more(authBlack)) {
-							continue;
-						}
-						else if (authSelf.less(authBlack)) {
-							if (grp.updated() < grpline)GrpDelete.push_back(id);
-							res << grp.print() + "：" + printUser(eachQQ) + "对方群权限较高";
-							grp.leave("发现黑名单管理员" + printUser(eachQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
-							intCnt++;
-							break;
-						}
-						else if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"]) {
-							if(intCnt == console["GroupClearLimit"])res << "*单次清退已达上限*";
-							res << grp.print() + "：" + printUser(eachQQ);
-						}
-						else if (console["LeaveBlackQQ"]) {
-							if (grp.updated() < grpline)GrpDelete.push_back(id);
-							res << grp.print() + "：" + printUser(eachQQ);
-							grp.leave("发现黑名单成员" + printUser(eachQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
-							intCnt++;
-							break;
-						}
+		set<long long> grps{ DD::getGroupIDList() };
+		for (auto id : grps) {
+			Chat& grp = chat(id).name(DD::getGroupName(id));
+			if (grp.is("忽略") || grp.is("免清") || grp.is("免黑") || grp.is("协议无效"))continue;
+			if (blacklist->get_group_danger(id)) {
+				time_t tLast{ grp.updated() };
+				if (auto s{ sessions.get_if({ 0,id }) })
+					tLast = s->tUpdate > tLast ? s->tUpdate : tLast;
+				if (tLast < grpline)GrpDelete.push_back(id);
+				res << printGroup(id) + "：黑名单群";
+				grp.leave(getMsg("strBlackGroup"));
+			}
+			set<long long> MemberList{ DD::getGroupMemberList(id) };
+			AttrVar authSelf;
+			for (auto eachQQ : MemberList) {
+				if (blacklist->get_user_danger(eachQQ) > 1) {
+					if (authSelf.is_null())authSelf = DD::getGroupAuth(id, console.DiceMaid, 1);
+					if (auto authBlack{ DD::getGroupAuth(id, eachQQ, 1) }; authSelf.more(authBlack)) {
+						continue;
+					}
+					else if (authSelf.less(authBlack)) {
+						if (grp.updated() < grpline)GrpDelete.push_back(id);
+						res << grp.print() + "：" + printUser(eachQQ) + "对方群权限较高";
+						grp.leave("发现黑名单管理员" + printUser(eachQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
+						intCnt++;
+						break;
+					}
+					else if (console["GroupClearLimit"] > 0 && intCnt >= console["GroupClearLimit"]) {
+						if (intCnt == console["GroupClearLimit"])res << "*单次清退已达上限*";
+						res << grp.print() + "：" + printUser(eachQQ);
+					}
+					else if (console["LeaveBlackQQ"]) {
+						if (grp.updated() < grpline)GrpDelete.push_back(id);
+						res << grp.print() + "：" + printUser(eachQQ);
+						grp.leave("发现黑名单成员" + printUser(eachQQ) + "\n" + getMsg("strSelfName") + "将预防性退群");
+						intCnt++;
+						break;
 					}
 				}
 			}
-		} 		catch (...) {
-			console.log("提醒：" + getMsg("strSelfName") + "清查黑名单群聊时出错！", 0b10, printSTNow());
 		}
 		if (intCnt) {
 			MsgNote(job, "已按{strSelfName}黑名单清查群聊" + to_string(intCnt) + "个：" + res.show(), 0b10);
