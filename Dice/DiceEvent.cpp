@@ -15,6 +15,7 @@
 #include "DiceStatic.hpp"
 #include <memory>
 #include <ctime>
+#include <charconv>
 using namespace std; 
 static bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
