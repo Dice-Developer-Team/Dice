@@ -436,10 +436,8 @@ double AttrVar::to_num()const {
 		break;
 	case Type::GBString:
 	case Type::U8String:
-		if (double num = 0;
-			std::from_chars(text.c_str(), text.c_str() + text.length(), num).ec == std::errc{}) {
-			return num;
-		}
+		return std::strtod(text.c_str(), nullptr);
+		break;
 	default:
 		return 0;
 		break;

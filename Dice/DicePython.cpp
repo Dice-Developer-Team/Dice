@@ -59,7 +59,7 @@ static string py_to_native_string(PyObject* o) {
 	auto t{ Py_TYPE(o) };
 #ifdef _WIN32
 	Py_ssize_t l = 0;
-	return t == &PyUnicode_Type ? UtoGBK(PyUnicode_AsWideString(o, l)) : empty;
+	return t == &PyUnicode_Type ? UtoGBK(PyUnicode_AsWideCharString(o, l)) : empty;
 #else
 	return t == &PyUnicode_Type ? PyUnicode_AsUTF8(o) : empty;
 #endif
