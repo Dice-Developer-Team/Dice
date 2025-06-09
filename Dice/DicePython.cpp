@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2024 String.Empty
+ * Copyright (C) 2019-2025 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -58,7 +58,8 @@ static string py_to_string(PyObject* o) {
 static string py_to_native_string(PyObject* o) {
 	auto t{ Py_TYPE(o) };
 #ifdef _WIN32
-	return t == &PyUnicode_Type ? UtoGBK(PyUnicode_AsUnicode(o)) : empty;
+	Py_ssize_t l = 0;
+	return t == &PyUnicode_Type ? UtoGBK(PyUnicode_AsWideString(o, l)) : empty;
 #else
 	return t == &PyUnicode_Type ? PyUnicode_AsUTF8(o) : empty;
 #endif
@@ -1158,43 +1159,55 @@ PyMODINIT_FUNC PyInit_DiceMaid(){
 	return mod;
 }
 PyGlobal::PyGlobal() {
-	PyStatus status;
+	if (Py_IsInitialized())return;
+	PyStatus status; 
+	PyPreConfig preconfig;
+	PyPreConfig_InitIsolatedConfig(&preconfig);
+	preconfig.utf8_mode = 1;
+	//preconfig.legacy_windows_fs_encoding = 1;
+	if (PyStatus_Exception(status = Py_PreInitialize(&preconfig))) {
+		console.log("python预初始化失败:" + string(status.err_msg), 0b1);
+		return;
+	}
 	PyConfig config;
-	PyConfig_InitPythonConfig(&config);
+	PyConfig_InitIsolatedConfig(&config);
+	config._init_main = 0;
 	if (std::filesystem::path dirPy{ dirExe / "bin" };
 		std::filesystem::exists(dirPy / "python3.dll")
 		|| std::filesystem::exists(dirPy / "python3.so")
 		|| std::filesystem::exists(dirPy = dirExe / "python")
-		|| std::filesystem::exists(dirPy = dirExe / "python311")
-		|| std::filesystem::exists(dirPy = dirExe / "py311")
+		|| std::filesystem::exists(dirPy = dirExe / "python312")
+		|| std::filesystem::exists(dirPy = dirExe / "py312")
 		|| std::filesystem::exists((dirPy = dirExe) / "python3.dll")) {
 		//Py_SetPythonHome(dirPy.wstring().c_str());
 		PyConfig_SetString(&config, &config.home, dirPy.wstring().c_str());
 		//Py_SetProgramName(L"DiceMaid");
 		PyConfig_SetString(&config, &config.program_name, L"DiceMaid");
-		//Py_SetPath((dirPy / "python311.zip").wstring().c_str());
-		PyWideStringList_Append(&config.module_search_paths, (dirPy / "python311.zip").wstring().c_str());
+		PyWideStringList_Append(&config.module_search_paths, (dirPy / "python312.zip").wstring().c_str());
 	}
-	status = PyConfig_Read(&config);
 	try {
 		static auto import_dice = PyImport_AppendInittab(DiceModuleName, PyInit_DiceMaid);
 		if (import_dice) {
 			console.log("预载dicemaid模块失败!", 0b1000);
 		}
-		PyWideStringList_Append(&config.module_search_paths, ((DiceDir / "plugin").wstring() + L"/").c_str());
-		PyWideStringList_Append(&config.module_search_paths, ((dirExe / "Diceki" / "py").wstring() + L"/").c_str());
+		PyWideStringList_Append(&config.module_search_paths, ((DiceDir / "plugin").wstring()).c_str());
+		PyWideStringList_Append(&config.module_search_paths, ((dirExe / "Diceki" / "py").wstring()).c_str());
 		config.module_search_paths_set = 1;
-		if (!Py_IsInitialized()){//Py_Initialize();
-			status = Py_InitializeFromConfig(&config);
+		if (!PyStatus_Exception(status = PyConfig_Read(&config))) {
+			if (PyStatus_Exception(status = Py_InitializeFromConfig(&config)))
+				console.log("python初始化失败:" + string(status.err_msg), 0b1); 
+			else console.log("Python.Initialized", 0);
 			PyRun_SimpleString("import sys");
-			PyRun_SimpleString("from dicemaid import *");
+			//PyRun_SimpleString("from dicemaid import *"); 
+			status = _Py_InitializeMain();
+		}
+		else {
+			console.log("PyConfig_Read error:" + string(status.err_msg), 0b1);
 		}
 	}
 	catch (std::exception& e) {
 		console.log("python初始化失败:" + string(e.what()), 0b1);
 	}
-	if (PyStatus_Exception(status))console.log("python初始化失败:" + string(status.err_msg), 0b1);
-	else console.log("Python.Initialized", 0);
 	PyConfig_Clear(&config);
 }
 dict<std::pair<PyObject*, std::filesystem::file_time_type>> Py_FileScripts;
