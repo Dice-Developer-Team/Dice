@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2024 String.Empty
+ * Copyright (C) 2019-2025 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -437,7 +437,7 @@ double AttrVar::to_num()const {
 	case Type::GBString:
 	case Type::U8String:
 		if (double num = 0;
-			std::from_chars(text.c_str(), text.c_str() + text.length(), num).ec == std::errc{}) {
+			std::from_chars(text.c_str(), text.c_str() + text.length(), num, std::chars_format::general).ec == std::errc{}) {
 			return num;
 		}
 	default:

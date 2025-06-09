@@ -229,7 +229,7 @@ public:
 
 	//读取大小写不敏感的技能名
 	string readAttrName();
-	string readFileName();
+	std::string_view readFileName();
 	//
 	int readChat(chatInfo& ct, bool isReroll = false);
 

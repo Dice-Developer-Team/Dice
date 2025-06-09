@@ -4792,7 +4792,7 @@ string DiceEvent::readAttrName()
 	else if (isspace(static_cast<unsigned char>(strMsg[intEnd])))intMsgCnt = intEnd;
 	return strMsg.substr(intBegin, intMsgCnt - intBegin);
 }
-string DiceEvent::readFileName(){
+std::string_view DiceEvent::readFileName(){
 	while (isspace(static_cast<unsigned char>(strMsg[intMsgCnt])))intMsgCnt++;
 	const size_t intBegin{ intMsgCnt }, len{ strMsg.length() };
 	while (intMsgCnt < len
@@ -4802,7 +4802,7 @@ string DiceEvent::readFileName(){
 		&& strMsg[intMsgCnt] != '/' && strMsg[intMsgCnt] != '\\'){
 		intMsgCnt++;
 	}
-	return strMsg.substr(intBegin, intMsgCnt - intBegin);
+	return { strMsg.c_str() + intBegin, intMsgCnt - intBegin };
 }
 int DiceEvent::readChat(chatInfo& ct, bool isReroll)
 {

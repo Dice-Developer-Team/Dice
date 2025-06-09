@@ -772,7 +772,7 @@ void DiceSessionManager::over(chatInfo ct){
 }
 //const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
 
-shared_ptr<Session> DiceSessionManager::newGame(const string& name, const chatInfo& ct) {
+shared_ptr<Session> DiceSessionManager::newGame(const std::string_view& name, const chatInfo& ct) {
 	string rule{ "COC7" };
 	if (auto r{ name.rfind("-") };r != string::npos) {
 		string prefix;
@@ -785,9 +785,9 @@ shared_ptr<Session> DiceSessionManager::newGame(const string& name, const chatIn
 		} while (r != string::npos);
 	}
 	LOCK_REC(sessionMutex);
-	string g_name{ name + "#" + to_string(++inc) };
+	string g_name{ string(name) + "#" + to_string(++inc) };
 	while (SessionByName.count(g_name)) {
-		g_name = name + "#" + to_string(++inc);
+		g_name = string(name) + "#" + to_string(++inc);
 	}
 	auto ptr{ std::make_shared<Session>(g_name) };
 	const auto here{ ct.locate() };

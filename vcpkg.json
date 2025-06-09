@@ -2,6 +2,7 @@
   "name": "dice",
   "version-string": "2.7.0",
   "dependencies": [
+    "pkgconf",
     "lua",
     "yaml-cpp",
     {
@@ -11,8 +12,8 @@
     "tinyxml2",
     "openssl",
     {
-      "name": "unofficial-libgit2",
-      "platform" : "windows"
+      "name": "libgit2",
+      "platform" : "!android"
     },
     "civetweb",
     {

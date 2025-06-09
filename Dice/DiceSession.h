@@ -270,7 +270,7 @@ public:
 	void save();
 	void clear() { SessionByName.clear(); SessionByChat.clear(); linker = {}; }
 	shared_ptr<Session> get(chatInfo);
-	shared_ptr<Session> newGame(const string& name, const chatInfo& ct);
+	shared_ptr<Session> newGame(const std::string_view& name, const chatInfo& ct);
 	shared_ptr<Session> get_if(chatInfo ct)const;
 	shared_ptr<Session> getByName(const string& name)const {
 		return SessionByName.count(name) ? SessionByName.at(name) : ptr<Session>();
