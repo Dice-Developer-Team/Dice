@@ -192,7 +192,7 @@ void DiceSession::log_new(DiceEvent* msg) {
 	if (nameLog.empty())nameLog = to_string(logger.tStart);
 	msg->set("log_name", logger.name = nameLog);
 	logger.fileLog = name + "_" + nameLog + ".txt";
-	logger.pathLog = DiceDir / logger.dirLog / UTF8toU(logger.fileLog);
+	logger.pathLog = DiceDir / logger.dirLog / UTF8toPath(logger.fileLog);
 	logger.isLogging = true;
 	//先发消息后插入
 	msg->replyMsg("strLogNew");
@@ -210,7 +210,7 @@ void DiceSession::log_on(DiceEvent* msg) {
 		logger.tStart = time(nullptr);
 		logger.name = nameLog;
 		logger.fileLog = name + "_" + nameLog + ".txt";
-		logger.pathLog = DiceDir / logger.dirLog / UTF8toU(logger.fileLog);
+		logger.pathLog = DiceDir / logger.dirLog / UTF8toPath(logger.fileLog);
 	}
 	else if (logger.isLogging) {
 		msg->replyMsg("strLogOnAlready");
@@ -870,7 +870,7 @@ int DiceSessionManager::load() {
 				pSession->logger.fileLog = jLog["file"].get<string>();
 				jLog["logging"].get_to(pSession->logger.isLogging);
 				pSession->logger.update();
-				pSession->logger.pathLog = DiceDir / pSession->logger.dirLog / UTF8toU(pSession->logger.fileLog);
+				pSession->logger.pathLog = DiceDir / pSession->logger.dirLog / UTF8toPath(pSession->logger.fileLog);
 				if (pSession->logger.isLogging) {
 					for (const auto& chat : pSession->areas) {
 						LogList.insert(chat);

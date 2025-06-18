@@ -439,7 +439,7 @@ QJSDEF(log) {
 QJSDEF(loadJS) {
 	if (argc > 0) {
 		string nameJS{ js_toUTF8(ctx,argv[0]) };
-		std::filesystem::path pathFile{ UTF8toU(nameJS) };
+		std::filesystem::path pathFile{ UTF8toPath(nameJS) };
 		if (fmt->has_js(nameJS)) {
 			pathFile = fmt->js_path(nameJS);
 		}
