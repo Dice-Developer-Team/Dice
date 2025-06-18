@@ -210,6 +210,18 @@ std::string getNativePathString(const std::filesystem::path& fpPath)
 	return fpPath.string();
 #endif
 }
+std::filesystem::path UTF8toPath(const std::string& strUTF8) {
+#ifdef _WIN32
+	const int UTF16len = MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, nullptr, 0);
+	auto* const strUTF16 = new wchar_t[UTF16len];
+	MultiByteToWideChar(CP_UTF8, 0, strUTF8.c_str(), -1, strUTF16, UTF16len);
+	std::wstring wstrOut(strUTF16);
+	delete[] strUTF16;
+	return wstrOut;
+#else
+	return strUTF8;
+#endif
+}
 string cut_stem(std::filesystem::path branch, const std::filesystem::path& main) {
 	string p{ branch.stem().u8string()};
 	while ((branch = branch.parent_path()) != main && !branch.empty()) {

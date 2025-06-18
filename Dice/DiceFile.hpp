@@ -587,5 +587,6 @@ void saveBFile(const std::filesystem::path& fpPath, std::unordered_map<T, std::s
 }
 
 std::string getNativePathString(const std::filesystem::path& fpPath);
+std::filesystem::path UTF8toPath(const std::string&);
 std::string cut_stem(std::filesystem::path branch, const std::filesystem::path& main = {});
 std::filesystem::path cut_relative(std::filesystem::path branch, const std::filesystem::path& main = {});
