@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2024 String.Empty
+ * Copyright (C) 2019-2025 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -333,7 +333,7 @@ const dict_ci<string> PlainMsg
 	{"strSetTooBig", "这面数……让我丢个球啊!请{nick}输入1-9999之间的数字!"},
 	{"strSetCannotBeZero", "默认骰不能为零!请{nick}输入1-9999之间的数字!"},
 	{"strCharacterCannotBeZero", "人物作成次数不能为零!请输入1-10之间的数字!"},
-	{"strCharacterTooBig", "人物作成次数过多!请输入1-10之间的数字!"},
+	{"strBuildTooMany", "人物作成次数过多!请输入1-10之间的数字!"},
 	{"strCharacterInvalid", "人物作成次数无效!请输入1-10之间的数字!"},
 	{"strSanityRoll", "{pc}的San Check：\n{res} {grade:rank?2={strSuccess}&1={strFailure}&0={strFumble}}\n{case:loss?0=无理智损失√&else=理智减少{change}->剩余{final}}" },
 	{"strSanCostInvalid", "{pc}输入SC表达式不正确,格式为成功扣San/失败扣San,如1/1d6!"},
@@ -379,11 +379,11 @@ const dict_ci<string> PlainMsg
 	{"strNameSet", "{self}已将{old_nick}改称为{new_nick}√"},
 	{"strNameDel", "{self}已删除{old_nick}在当前窗口的称呼√" },
 	{"strNameClr", "{self}已清空{old_nick}的所有称呼√" },
-	{"strUnknownPropErr", "未设定{attr}成功率，请先.st {attr} 技能值 或查看.help rc×"},
+	{"strUnknownPropErr", "未设定{attr}成功率，请{pc}先.st {attr} 技能值 或查看.help rc×"},
 	{"strPropErr", "{pc}的属性录入存在异常，请遵守规范:\n{err}"},
-	{"strSetPropSuccess", "已为{pc}录入{cnt}条属性√"},
-	{"strPropCleared", "已清空{char}的所有属性√"},
-	{"strRuleReset", "已重置默认规则√"},
+	{"strSetPropSuccess", "{self}已为{pc}录入{cnt}条属性√"},
+	{"strPropCleared", "{self}已清空{char}的所有属性√"},
+	{"strRuleReset", "{self}已重置默认规则√"},
 	{"strRuleSet", "{self}已设置默认规则{rule}√"},
 	{"strRuleErr", "规则数据获取失败,具体信息:\n"},
 	{"strRulesFailedErr", "请求失败,{self}无法连接数据库×"},
@@ -451,8 +451,7 @@ const dict_ci<string> PlainMsg
 .help群管 查看群管指令
 .help设定 确认骰娘设定
 .help链接 查看源码文档
-官方论坛: https://forum.kokona.tech/
-Dice!众筹计划: https://afdian.net/@suhuiw4123)"
+官方论坛: https://forum.kokona.tech/)"
 	}
 };
 dict_ci<string> GlobalMsg{ PlainMsg };

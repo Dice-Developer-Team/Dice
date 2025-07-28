@@ -33,6 +33,7 @@
 
 # Directories for temporary file
 /.vs
+/.vscode
 /build
 /Dice/Release
 /Dice/Debug

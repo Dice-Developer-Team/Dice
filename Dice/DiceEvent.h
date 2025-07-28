@@ -3,7 +3,7 @@
 /*
  * 消息处理
  * Copyright (C) 2018-2021 w4123
- * Copyright (C) 2019-2024 String.Empty
+ * Copyright (C) 2019-2025 String.Empty
  */
 #ifndef DICE_EVENT
 #define DICE_EVENT
@@ -109,8 +109,7 @@ public:
 		while (intMsgCnt < len && (!isspace(static_cast<unsigned char>(strMsg[intMsgCnt])) || strMsg[intMsgCnt] == ' '))
 		{
 			if (strMsg[intMsgCnt] != ' ' || strMsg[intEnd] != ' ')intEnd = intMsgCnt;
-			if (intMsgCnt < len && strMsg[intMsgCnt] < 0)intMsgCnt += 2;
-			else intMsgCnt++;
+			intMsgCnt++;
 		}
 		if (strMsg[intEnd] == ' ')intMsgCnt = intEnd;
 		return strMsg.substr(intBegin, intMsgCnt - intBegin);

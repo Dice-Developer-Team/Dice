@@ -692,17 +692,18 @@ bool AttrVar::equal_or_less(const AttrVar& other)const {
 void AnysTable::from_json(const fifo_json& j){
 	if (j.is_object()) {
 		unordered_set<string> idxs;
-		if (string strI{ "0" }; j.count(strI)) {
+		fifo_json tab{j};
+		if (string strI{ "0" }; tab.count(strI)) {
 			new_list();
 			int idx{ 0 };
 			do {
-				list->push_back(j[strI]);
+				list->push_back(tab[strI]);
 				idxs.insert(strI);
-			} while (j.count(strI = to_string(++idx)));
+				tab.erase(strI);
+			} while (tab.count(strI = to_string(++idx)));
 		}
-		for (auto& it : j.items()) {
-			if (idxs.count(it.key()))continue;
-			if (!it.value().is_null())set(it.key(), it.value());
+		for (auto& it : tab.items()) {
+			if (!idxs.count(it.key()) && !it.value().is_null())set(it.key(), it.value());
 		}
 	}
 	else if (j.is_array()) {

@@ -1204,29 +1204,23 @@ int DiceEvent::BasicOrder()
 						}
 						trigger->answer = AnysTable(deck);
 					}
+					else if (trigger->echo == DiceMsgReply::Echo::Text) {
+						trigger->answer->set("text", readRest());
+					}
 					else {
+						if (trusted < 5) {
+							replyMsg("strNotMaster");
+							return -1;
+						}
 						if (trigger->echo == DiceMsgReply::Echo::Lua) {
-							if (trusted < 5) {
-								replyMsg("strNotMaster");
-								return -1;
-							}
 							trigger->answer = AttrVars{ {"lua",readRest()} };
 						}
 						else if (trigger->echo == DiceMsgReply::Echo::JavaScript) {
-							if (trusted < 5) {
-								replyMsg("strNotMaster");
-								return -1;
-							}
 							trigger->answer = AttrVars{ {"js",readRest()} };
 						}
 						else if (trigger->echo == DiceMsgReply::Echo::Python) {
-							if (trusted < 5) {
-								replyMsg("strNotMaster");
-								return -1;
-							}
 							trigger->answer = AttrVars{ {"py",readRest()} };
 						}
-						else trigger->answer->set("text", readRest());
 					}
 					break;
 				}
@@ -2305,12 +2299,12 @@ int DiceEvent::InnerOrder() {
 		}
 		string_view strNum{ strMsg.c_str() + nBegin,intMsgCnt - nBegin };
 		if (strNum.length() > 2) {
-			replyMsg("strCharacterTooBig");
+			replyMsg("strBuildTooMany");
 			return 1;
 		}
 		const int intNum = strNum.empty() ? 1 : svtoi(strNum);
 		if (intNum > 10) {
-			replyMsg("strCharacterTooBig");
+			replyMsg("strBuildTooMany");
 			return 1;
 		}
 		if (intNum == 0) {
@@ -2814,7 +2808,7 @@ int DiceEvent::InnerOrder() {
 			intMsgCnt++;
 		}
 		if (strNum.length() > 1 && strNum != "10") {
-			replyMsg("strCharacterTooBig");
+			replyMsg("strBuildTooMany");
 			return 1;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
@@ -2836,7 +2830,7 @@ int DiceEvent::InnerOrder() {
 			intMsgCnt++;
 		}
 		if (strNum.length() > 1 && strNum != "10") {
-			replyMsg("strCharacterTooBig");
+			replyMsg("strBuildTooMany");
 			return 1;
 		}
 		const int intNum = stoi(strNum.empty() ? "1" : strNum);
