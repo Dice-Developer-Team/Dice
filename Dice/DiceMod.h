@@ -1,7 +1,7 @@
 #pragma once
 /*
  * 资源模块
- * Copyright (C) 2019-2024 String.Empty
+ * Copyright (C) 2019-2025 String.Empty
  */
 
 #include <utility>
@@ -142,7 +142,7 @@ class DiceModManager {
 	vector<string> sourceList = {
 		"https://raw.gitmirror.com/Dice-Developer-Team/DiceModIndex/main/index",
 		"https://mirror.ghproxy.com/https://raw.githubusercontent.com/Dice-Developer-Team/DiceModIndex/main/index",
-		"https://gitee.com/diceki/DiceModIndex/raw/main/",
+		"https://gitee.com/diceki/DiceModIndex/raw/main/index",
 		//"https://raw.sevencdn.com/Dice-Developer-Team/DiceModIndex/main/index",
 	};
 	//custom

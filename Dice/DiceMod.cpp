@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2024 String.Empty
+ * Copyright (C) 2019-2025 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -172,39 +172,42 @@ void DiceModManager::mod_install(DiceEvent& msg) {
 		return;
 	}
 	for (auto& url : sourceList) {
-		if (!Network::GET(url + name + "/descriptor.json", desc)) {
-			msg.set("err", msg.get_str("err") + "\n访问" + url + name + "失败:" + desc);
+		if (!Network::GET(url, desc)) {
+			msg.set("err", msg.get_str("err") + "\n访问" + url + "失败:" + desc);
 			continue;
 		}
 		try {
 			if (desc.find("404") == 0)continue;
-			fifo_json j = fifo_json::parse(desc);
-			if (j.count("dice_build") && j["dice_build"] > Dice_Build) {
-				msg.set("err", msg.get_str("err") + "\nDice版本不满足要求(" + to_string(j["dice_build"]) + "):" + url);
-				continue;
-			}
+			fifo_json data = fifo_json::parse(desc);
+			fifo_json mods = data["data"];
+			for (auto j : mods) {
+				if (j.count("dice_build") && j["dice_build"] > Dice_Build) {
+					msg.set("err", msg.get_str("err") + "\nDice版本不满足要求(" + to_string(j["dice_build"]) + "):" + url);
+					break;
+				}
 #ifndef __ANDROID__
-			if (j.count("repo") && !j["repo"].empty()) {
-				string repo{ j["repo"] };
-				if (mod_clone(name, repo)) {
-					msg.set("mod_ver", modList[name]->ver.exp);
-					msg.replyMsg("strModInstalled");
-					return;
+				if (j.count("repo") && !j["repo"].empty()) {
+					string repo{ j["repo"] };
+					if (mod_clone(name, repo)) {
+						msg.set("mod_ver", modList[name]->ver.exp);
+						msg.replyMsg("strModInstalled");
+						return;
+					}
+					else {
+						msg.set("err", msg.get_str("err") + "\ngit clone失败:" + repo);
+						break;
+					}
 				}
-				else {
-					msg.set("err", msg.get_str("err") + "\ngit clone失败:" + repo);
-					continue;
-				}
-			}
 #endif //ANDROID
-			if (j.count("pkg")) {
-				string pkg{ j["pkg"] };
-				std::string des;
-				if (mod_dlpkg(name, pkg, des)) {
-					msg.set("mod_ver", des);
-					msg.replyMsg("strModInstalled");
+				if (j.count("pkg")) {
+					string pkg{ j["pkg"] };
+					std::string des;
+					if (mod_dlpkg(name, pkg, des)) {
+						msg.set("mod_ver", des);
+						msg.replyMsg("strModInstalled");
+					}
+					else msg.set("err", msg.get_str("err") + des);
 				}
-				else msg.set("err", msg.get_str("err") + des);
 			}
 			msg.set("err", msg.get_str("err") + "\n未写出mod地址(repo/pkg):" + url + name);
 		}
@@ -224,61 +227,64 @@ void DiceModManager::mod_reinstall(DiceEvent& msg) {
 	auto mod{ modList[name] };
 	msg.set("ex_ver", mod->ver.exp);
 	for (auto& url : sourceList) {
-		if (!Network::GET(url + name, desc)) {
+		if (!Network::GET(url, desc)) {
 			msg.set("err", msg.get_str("err") + "\n访问" + url + name + "失败:" + desc);
 			continue;
 		}
 		try {
-			fifo_json j = fifo_json::parse(desc);
 			//todo: dice_build check
+			fifo_json data = fifo_json::parse(desc);
+			fifo_json mods = data["data"];
+			for (auto j : mods) {
 #ifndef __ANDROID__
-			if (j.count("repo") && !j["repo"].empty()) {
-				string repo{ j["repo"] };
-				auto idx{ mod->index };
-				mod->free();
-				fs::remove_all(DiceDir / "mod" / name, ec1);
-				mod = std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),repo});
-				modList[name] = mod;
-				modOrder[idx] = mod;
-				if (!mod->loaded) {
-					msg.set("err", msg.get_str("err") + "\ngit clone失败:" + repo);
-					continue;
-				}
-				save();
-				build();
-				msg.set("mod_ver", mod->ver.exp);
-				msg.replyMsg("strModReinstalled");
-				return;
-			}
-#endif //ANDROID
-			if (j.count("pkg")) {
-				string pkg{ j["pkg"] };
-				std::string des;
-				if (!Network::GET(pkg, des)) {
-					msg.set("err", msg.get_str("err") + "\n下载失败(" + pkg + "):" + des);
-					continue;
-				}
-				fs::remove_all(DiceDir / "mod" / name, ec1);
-				Zip::extractZip(des, DiceDir / "mod");
-				auto pathJson{ DiceDir / "mod" / (name + ".json") };
-				if (!fs::exists(pathJson)) {
-					msg.set("err", msg.get_str("err") + "\npkg解压无文件" + name + ".json");
-					continue;
-				}
-				string err;
-				if (mod->loadDesc(err)) {
+				if (j["name"] == name && j.count("repo") && !j["repo"].empty()) {
+					string repo{ j["repo"] };
+					auto idx{ mod->index };
+					mod->free();
+					fs::remove_all(DiceDir / "mod" / name, ec1);
+					mod = std::make_shared<DiceMod>(DiceMod{ name,modOrder.size(),repo });
+					modList[name] = mod;
+					modOrder[idx] = mod;
+					if (!mod->loaded) {
+						msg.set("err", msg.get_str("err") + "\ngit clone失败:" + repo);
+						break;
+					}
 					save();
 					build();
 					msg.set("mod_ver", mod->ver.exp);
 					msg.replyMsg("strModReinstalled");
 					return;
 				}
-				else {
-					msg.set("err", msg.get_str("err") + "\n" + err + "(" + url + name + ")");
-					continue;
+#endif //ANDROID
+				if (j["name"] == name && j.count("pkg")) {
+					string pkg{ j["pkg"] };
+					std::string des;
+					if (!Network::GET(pkg, des)) {
+						msg.set("err", msg.get_str("err") + "\n下载失败(" + pkg + "):" + des);
+						break;
+					}
+					fs::remove_all(DiceDir / "mod" / name, ec1);
+					Zip::extractZip(des, DiceDir / "mod");
+					auto pathJson{ DiceDir / "mod" / (name + ".json") };
+					if (!fs::exists(pathJson)) {
+						msg.set("err", msg.get_str("err") + "\npkg解压无文件" + name + ".json");
+						continue;
+					}
+					string err;
+					if (mod->loadDesc(err)) {
+						save();
+						build();
+						msg.set("mod_ver", mod->ver.exp);
+						msg.replyMsg("strModReinstalled");
+						return;
+					}
+					else {
+						msg.set("err", msg.get_str("err") + "\n" + err + "(" + url + ")");
+						break;
+					}
 				}
 			}
-			msg.set("err", msg.get_str("err") + "\n未写出mod地址(repo/pkg):" + url + name);
+			msg.set("err", msg.get_str("err") + "\n未找到mod地址(repo/pkg):" + url);
 		} catch (std::exception& e) {
 			console.log("安装" + url + name + "失败:" + e.what(), 0b01);
 			msg.set("err", msg.get_str("err") + "\n" + url + name + ":" + e.what());
@@ -311,43 +317,46 @@ void DiceModManager::mod_update(DiceEvent& msg) {
 #endif //ANDROID
 	string desc;
 	for (auto& url : sourceList) {
-		if (!Network::GET(url + name, desc)) {
+		if (!Network::GET(url, desc)) {
 			console.log("访问" + url + name + "失败:" + desc, 0);
 			msg.set("err", msg.get_str("err") + "\n访问" + url + name + "失败:" + desc);
 			continue;
 		}
 		try {
-			fifo_json j = fifo_json::parse(desc);
-			if (!j.count("ver") || !j.count("pkg"))continue;
-			Version ver{ j["ver"] };
-			if (mod->ver < ver) {
-				string pkg{ j["pkg"] };
-				if (!Network::GET(pkg, des)) {
-					msg.set("err", msg.get_str("err") + "\n下载失败(" + pkg + "):" + des);
-					continue;
-				}
-				std::error_code ec1;
-				fs::remove_all(DiceDir / "mod" / name, ec1);
-				Zip::extractZip(des, DiceDir / "mod");
-				auto pathJson{ DiceDir / "mod" / (name + ".json") };
-				if (!fs::exists(pathJson)) {
-					msg.set("err", msg.get_str("err") + "\npkg解压无文件" + name + ".json");
-					continue;
-				}
-				string err;
-				if (mod->loadDesc(err)) {
-					build();
-					msg.set("mod_ver", mod->ver.exp);
-					msg.replyMsg("strModUpdated");
-					return;
+			fifo_json data = fifo_json::parse(desc);
+			fifo_json mods = data["data"];
+			for (auto j : mods) {
+				if (!j.count("ver") || !j.count("pkg") || j["name"] != name)continue;
+				Version ver{ j["ver"] };
+				if (mod->ver < ver) {
+					string pkg{ j["pkg"] };
+					if (!Network::GET(pkg, des)) {
+						msg.set("err", msg.get_str("err") + "\n下载失败(" + pkg + "):" + des);
+						continue;
+					}
+					std::error_code ec1;
+					fs::remove_all(DiceDir / "mod" / name, ec1);
+					Zip::extractZip(des, DiceDir / "mod");
+					auto pathJson{ DiceDir / "mod" / (name + ".json") };
+					if (!fs::exists(pathJson)) {
+						msg.set("err", msg.get_str("err") + "\npkg解压无文件" + name + ".json");
+						continue;
+					}
+					string err;
+					if (mod->loadDesc(err)) {
+						build();
+						msg.set("mod_ver", mod->ver.exp);
+						msg.replyMsg("strModUpdated");
+						return;
+					}
+					else {
+						msg.set("err", msg.get_str("err") + "\n" + err + "(" + url + name + ")");
+						continue;
+					}
 				}
 				else {
-					msg.set("err", msg.get_str("err") + "\n" + err + "(" + url + name + ")");
-					continue;
+					msg.set("err", "无更新于" + mod->ver.exp + "的版本!");
 				}
-			}
-			else {
-				msg.set("err", "无更新于" + mod->ver.exp + "的版本!");
 			}
 		} catch (std::exception& e) {
 			console.log("安装" + url + name + "失败:" + e.what(), 0b01);
