@@ -87,12 +87,31 @@ string splitOnce(string& str, const string& sep) {
     }
     return head;
 }
-fifo_dict<> splitPairs(const string& s, char delim, char br) {
+
+size_t find_close_brace(const std::string_view& s, size_t start = 0) {
+    int brace_count = 0;
+    for (size_t i = start; i < s.size(); ++i) {
+        if (s[i] == '{') {
+            brace_count++; 
+        }
+        else if (s[i] == '}') {
+            if (--brace_count == 0) {
+                return i;
+            }
+        }
+    }
+    return std::string::npos; // 如果没有找到匹配的右花括号，返回npos
+}
+
+fifo_dict<> splitPairs(string_view sv, char delim, char br) {
     fifo_dict<>dict;
-    string_view sv(s),line;
+    string_view line;
     size_t posDe{ 0 }, posBr{ 0 }, p{ 0 };
     while (posBr != string::npos) {
         posBr = sv.find(br);
+        if (auto l{ sv.rfind('{', posBr) };l < posBr) {
+            posBr = sv.find(br, find_close_brace(sv, l));
+        }
         line = sv.substr(p = sv.find_first_not_of(space_char, p), sv.find_last_not_of(space_char, posBr - 1) - p + 1);
         if ((posDe = line.find(delim)) != string::npos) {
             if(posDe)dict[string(line.substr(0, posDe))] = line.substr(posDe + 1);

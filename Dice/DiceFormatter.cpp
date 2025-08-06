@@ -172,7 +172,7 @@ class MarkCaseNode : public MarkNode {
 	ptr<MarkNode> other;
 public:
 	MarkCaseNode(const std::string_view& s) :MarkNode(s), field(s.substr(0,s.find('?'))) {
-		auto paras{ splitPairs(string(s.substr(s.find('?') + 1)),'=','&') };
+		auto paras{ splitPairs(s.substr(s.find('?') + 1),'=','&') };
 		for (auto& [key, val] : paras) {
 			if (key == "else")other = buildFormatter(val);
 			else cases[key] = buildFormatter(val);
@@ -191,8 +191,9 @@ class MarkGradeNode : public MarkNode {
 	grad_map<double, ptr<MarkNode>> grades;
 public:
 	MarkGradeNode(const std::string_view& s) :MarkNode(s), field(s.substr(0, s.find('?'))) {
-		auto paras{ splitPairs(string(s.substr(s.find('?') + 1)),'=','&') };
+		auto paras{ splitPairs(s.substr(s.find('?') + 1),'=','&') };
 		for (auto& [key, val] : paras) {
+			DD::debugLog("split=" + val);
 			if (key == "else")grades.set_else(buildFormatter(val));
 			else if (isNumeric(key))grades.set_step(stod(key), buildFormatter(val));
 		}
@@ -224,9 +225,27 @@ public:
 		return {};
 	}
 };
+class MarkLenNode : public MarkNode {
+	MarkReference field;
+public:
+	MarkLenNode(const std::string_view& s) :MarkNode(s), field(s) {}
+	AttrVar format(const AttrObject& context, bool isTrust = true, const dict_ci<string>& global = {})const override {
+		auto res{ field.concat(context, isTrust, global) };
+		return (long long)res.len();
+	}
+};
+class MarkExpiredNode : public MarkNode {
+	MarkReference field;
+public:
+	MarkExpiredNode(const std::string_view& s) :MarkNode(s), field(s) {}
+	AttrVar format(const AttrObject& context, bool isTrust = true, const dict_ci<string>& global = {})const override{
+		auto res{ field.concat(context, isTrust, global)};
+		return !res.is_numberic() || res.to_int() < time(nullptr);
+	}
+};
 
-static enumap<string> methods{ "var","print","help","sample","case","vary","grade","at","ran","wait","js","py","len" };
-enum class FmtMethod { Var, Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait, JS, Py, Len };
+static enumap<string> methods{ "var","print","help","sample","case","vary","grade","at","ran","wait","js","py","len","expired" };
+enum class FmtMethod { Var, Print, Help, Sample, Case, Vary, Grade, At, Ran, Wait, JS, Py, Len, Expired };
 //Formatter
 static size_t find_close_brace(const std::string_view& s, size_t pos) {
 	int diff = 1;
@@ -329,6 +348,16 @@ ptr<MarkNode> buildFormatter(const std::string_view& exp) {
 			}
 			else if (method == "py") {
 				*cur = std::static_pointer_cast<MarkNode>(std::make_shared<MarkPyNode>(para));
+				cur = &(*cur)->next;
+				continue;
+			}
+			else if (method == "len") {
+				*cur = std::static_pointer_cast<MarkNode>(std::make_shared<MarkLenNode>(para));
+				cur = &(*cur)->next;
+				continue;
+			}
+			else if (method == "expired") {
+				*cur = std::static_pointer_cast<MarkNode>(std::make_shared<MarkExpiredNode>(para));
 				cur = &(*cur)->next;
 				continue;
 			}
