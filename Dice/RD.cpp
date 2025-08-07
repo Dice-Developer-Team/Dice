@@ -1103,76 +1103,86 @@ void LongInsane(AnysTable& vars) {
 
 //成功等级
 //0-大失败，1-失败，2-成功，3-困难成功，4-极难成功，5-大成功
-int RollSuccessLevel(int res, int rate, int rule)
+SuccessLevel RollSuccessLevel(int res, int rate, int rule)
 {
 	switch (rule)
 	{
 	case 0:
-		if (res == 100)return 0;
-		if (res == 1)return 5;
-		if (res <= rate / 5)return 4;
-		if (res <= rate / 2)return 3;
-		if (res <= rate)return 2;
-		if (rate >= 50 || res < 96)return 1;
-		return 0;
+		if (res == 100)return SuccessLevel::Fumble;
+		if (res == 1)return SuccessLevel::Critical;
+		if (res <= rate / 5)return SuccessLevel::ExtremeSuccess;
+		if (res <= rate / 2)return SuccessLevel::HardSuccess;
+		if (res <= rate)return SuccessLevel::RegularSuccess;
+		if (rate >= 50 || res < 96)return SuccessLevel::Failure;
+		return SuccessLevel::Fumble;
 		break;
 	case 1:
-		if (res == 100)return 0;
-		if (res == 1 || (res <= 5 && rate >= 50))return 5;
-		if (res <= rate / 5)return 4;
-		if (res <= rate / 2)return 3;
-		if (res <= rate)return 2;
-		if (rate >= 50 || res < 96)return 1;
-		return 0;
+		if (res == 100)return SuccessLevel::Fumble;
+		if (res == 1 || (res <= 5 && rate >= 50))return SuccessLevel::Critical;
+		if (res <= rate / 5)return SuccessLevel::ExtremeSuccess;
+		if (res <= rate / 2)return SuccessLevel::HardSuccess;
+		if (res <= rate)return SuccessLevel::RegularSuccess;
+		if (rate >= 50 || res < 96)return SuccessLevel::Failure;
+		return SuccessLevel::Fumble;
 		break;
 	case 2:
-		if (res == 100)return 0;
-		if (res <= 5 && res <= rate)return 5;
-		if (res <= rate / 5)return 4;
-		if (res <= rate / 2)return 3;
-		if (res <= rate)return 2;
-		if (res < 96)return 1;
-		return 0;
+		if (res == 100)return SuccessLevel::Fumble;
+		if (res <= 5 && res <= rate)return SuccessLevel::Critical;
+		if (res <= rate / 5)return SuccessLevel::ExtremeSuccess;
+		if (res <= rate / 2)return SuccessLevel::HardSuccess;
+		if (res <= rate)return SuccessLevel::RegularSuccess;
+		if (res < 96)return SuccessLevel::Failure;
+		return SuccessLevel::Fumble;
 		break;
 	case 3:
-		if (res >= 96)return 0;
-		if (res <= 5)return 5;
-		if (res <= rate / 5)return 4;
-		if (res <= rate / 2)return 3;
-		if (res <= rate)return 2;
-		return 1;
+		if (res >= 96)return SuccessLevel::Fumble;
+		if (res <= 5)return SuccessLevel::Critical;
+		if (res <= rate / 5)return SuccessLevel::ExtremeSuccess;
+		if (res <= rate / 2)return SuccessLevel::HardSuccess;
+		if (res <= rate)return SuccessLevel::RegularSuccess;
+		return SuccessLevel::Failure;
 		break;
 	case 4:
-		if (res == 100)return 0;
-		if (res <= 5 && res <= rate / 10)return 5;
-		if (res <= rate / 5)return 4;
-		if (res <= rate / 2)return 3;
-		if (res <= rate)return 2;
-		if (rate >= 50 || res < 96 + rate / 10)return 1;
-		return 0;
+		if (res == 100)return SuccessLevel::Fumble;
+		if (res <= 5 && res <= rate / 10)return SuccessLevel::Critical;
+		if (res <= rate / 5)return SuccessLevel::ExtremeSuccess;
+		if (res <= rate / 2)return SuccessLevel::HardSuccess;
+		if (res <= rate)return SuccessLevel::RegularSuccess;
+		if (rate >= 50 || res < 96 + rate / 10)return SuccessLevel::Failure;
+		return SuccessLevel::Fumble;
 		break;
 	case 5:
-		if (res >= 99)return 0;
-		if (res <= 2 && res < rate / 10)return 5;
-		if (res <= rate / 5)return 4;
-		if (res <= rate / 2)return 3;
-		if (res <= rate)return 2;
-		if (rate >= 50 || res < 96)return 1;
-		return 0;
+		if (res >= 99)return SuccessLevel::Fumble;
+		if (res <= 2 && res < rate / 10)return SuccessLevel::Critical;
+		if (res <= rate / 5)return SuccessLevel::ExtremeSuccess;
+		if (res <= rate / 2)return SuccessLevel::HardSuccess;
+		if (res <= rate)return SuccessLevel::RegularSuccess;
+		if (rate >= 50 || res < 96)return SuccessLevel::Failure;
+		return SuccessLevel::Fumble;
 		break;
 	case 6:
 		if (res > rate) {
 			if (res == 100 || res % 11 == 0) {
-				return 0;
+				return SuccessLevel::Fumble;
 			}
-			return 1;
+			return SuccessLevel::Failure;
 		} else {
 			if (res == 1 || res % 11 == 0) {
-				return 5;
+				return SuccessLevel::Critical;
 			}
-			return 2;
+			return SuccessLevel::RegularSuccess;
 		}
 		break;
-	default: return -1;
+	case 7:
+		if (res >= 100)return SuccessLevel::Fumble;
+		else if (res >= 96) {
+			if ((90 - rate) / 20 + res >= 100)return SuccessLevel::Fumble;
+			else return SuccessLevel::Failure;
+		}
+		else if (res == 1 || res <= round(rate / 5))return SuccessLevel::ExtremeSuccess;
+		else if (res <= rate)return SuccessLevel::RegularSuccess;
+		else return SuccessLevel::Failure;
+		break;
 	}
+	return SuccessLevel::Failure;
 }

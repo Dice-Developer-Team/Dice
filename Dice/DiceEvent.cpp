@@ -1762,13 +1762,19 @@ int DiceEvent::InnerOrder() {
 			reply(getMsg("strDefaultCOCSet") + "5\n出1-2且<五分之一大成功\n不满50出96-100大失败，满50出99-100大失败");
 			break;
 		case 6:
-			reply(getMsg("strDefaultCOCSet") + "6\n绿色三角洲\n出1或出个位十位相同且<=成功率大成功\n出100或出个位十位相同且>成功率大失败");
+			reply(getMsg("strDefaultCOCSet") + "6-绿色三角洲\n出1或出个位十位相同且<=成功率大成功\n出100或出个位十位相同且>成功率大失败");
+			break;
+		case 7:
+			reply(getMsg("strDefaultCOCSet") + "7-BRP\n简单难度成功率翻倍，五分之一成功率特殊成功\n出96-100必定失败且视成功率判大失败");
 			break;
 		default:
 			replyMsg("strDefaultCOCNotFound");
 			return 1;
 		}
 		if (isPrivate())getUser(fromChat.uid).setConf("rc房规", intRule); 
+		else if (auto game{ thisGame() }) {
+			game->set("rr_rc", intRule);
+		}
 		else chat(fromChat.gid).set("rc房规", intRule);
 		return 1;
 	}
@@ -3535,8 +3541,9 @@ int DiceEvent::InnerOrder() {
 			replyHelp("rc");
 			return 1;
 		}
-		int intRule = isPrivate()
-			? getUser(fromChat.uid).getConf("rc房规", console["DefaultCOCRoomRule"])
+		auto game{ thisGame() };
+		int intRule = isPrivate() ? getUser(fromChat.uid).getConf("rc房规", console["DefaultCOCRoomRule"])
+			: (game && game->has("rr_rc")) ? game->get_int("rr_rc")
 			: chat(fromChat.gid).getConf("rc房规", console["DefaultCOCRoomRule"]);
 		int intTurnCnt = 1;
 		if (strMsg[intMsgCnt] == 'h' && isspace(static_cast<unsigned char>(strMsg[intMsgCnt + 1]))) {
@@ -3563,6 +3570,7 @@ int DiceEvent::InnerOrder() {
 		//困难等级
 		string strDifficulty;
 		int intDifficulty = 1;
+		int multiSuccess = 1;
 		int intSkillModify = 0;
 		//乘数
 		int intSkillMultiple = 1;
@@ -3572,7 +3580,6 @@ int DiceEvent::InnerOrder() {
 		bool isAutomatic = false;
 		//D100且有角色卡时计入统计
 		bool isStatic = PList.count(fromChat.uid);
-		auto game{ thisGame() };
 		bool isRoulette = game && game->is_part(fromChat.uid) && game->roulette.count(100);
 		PC pc{ isStatic ? PList[fromChat.uid][fromChat.gid] : std::make_shared<CharaCard>(0)};
 		if ((strLowerMessage[intMsgCnt] == 'p' || strLowerMessage[intMsgCnt] == 'b') && strLowerMessage[intMsgCnt - 1] != ' ') {
@@ -3618,9 +3625,16 @@ int DiceEvent::InnerOrder() {
 			attr = attr.substr(12);
 			isAutomatic = true;
 		}
-		if (attr.find("困难") == 0 || attr.find("极难") == 0 || attr.find("极限") == 0) {
-			strDifficulty += attr.substr(0, 6);
-			intDifficulty = (attr.substr(0, 6) == "困难") ? 2 : 5;
+		if (attr.find("困难") == 0 || attr.find("极难") == 0 || attr.find("极限") == 0
+			|| attr.find("简单") == 0) {
+			string adj{ attr.substr(0, 6) };
+			strDifficulty += adj;
+			if (adj != "简单") {
+				intDifficulty = (adj == "困难") ? 2 : 5;
+			}
+			else {
+				multiSuccess = 2;
+			}
 			attr = attr.substr(6);
 		}
 		if (pc) {
@@ -3675,7 +3689,7 @@ int DiceEvent::InnerOrder() {
 			intSkillVal = stoi(strSkillVal);
 		}
 		//最终成功率计入检定统计
-		int intFianlSkillVal = (intSkillVal * intSkillMultiple + intSkillModify) / intSkillDivisor / intDifficulty;
+		int intFianlSkillVal = (intSkillVal * intSkillMultiple + intSkillModify) * multiSuccess / intSkillDivisor / intDifficulty;
 		if (intFianlSkillVal < 0 || intFianlSkillVal > 1000) {
 			replyMsg("strSuccessRateErr");
 			return 1;
@@ -3707,23 +3721,22 @@ int DiceEvent::InnerOrder() {
 				pc->cntRcStat(rdMainDice.intTotal, intFianlSkillVal);
 			}
 			strAns = rdMainDice.FormCompleteString() + "/" + std::to_string(intFianlSkillVal) + " ";
-			int intRes = RollSuccessLevel(rdMainDice.intTotal, intFianlSkillVal, intRule);
+			auto intRes = RollSuccessLevel(rdMainDice.intTotal, intFianlSkillVal, intRule);
 			switch (intRes) {
-			case 0: strAns += getMsg("strRollFumble");
+			case SuccessLevel::Fumble: strAns += getMsg("strRollFumble");
 				break;
-			case 1: strAns += isAutomatic ? getMsg("strRollRegularSuccess") : getMsg("strRollFailure");
+			case SuccessLevel::Failure: strAns += isAutomatic ? getMsg("strRollRegularSuccess") : getMsg("strRollFailure");
 				break;
-			case 5: strAns += getMsg("strRollCriticalSuccess");
+			case SuccessLevel::Critical: strAns += getMsg("strRollCriticalSuccess");
 				break;
-			case 4: if (intDifficulty == 1) {
+			case SuccessLevel::ExtremeSuccess:
 				strAns += getMsg("strRollExtremeSuccess");
 				break;
-			}
-			case 3: if (intDifficulty == 1) {
+			case SuccessLevel::HardSuccess: if (multiSuccess == 1) {
 				strAns += getMsg("strRollHardSuccess");
 				break;
 			}
-			case 2: strAns += getMsg("strRollRegularSuccess");
+			case SuccessLevel::RegularSuccess: strAns += getMsg("strRollRegularSuccess");
 				break;
 			}
 			strReply += strAns;
@@ -3737,23 +3750,23 @@ int DiceEvent::InnerOrder() {
 					pc->cntRcStat(rdMainDice.intTotal, intFianlSkillVal);
 				}
 				strAns = rdMainDice.FormCompleteString() + "/" + std::to_string(intFianlSkillVal) + " ";
-				int intRes = RollSuccessLevel(rdMainDice.intTotal, intFianlSkillVal, intRule);
+				auto intRes = RollSuccessLevel(rdMainDice.intTotal, intFianlSkillVal, intRule);
 				switch (intRes) {
-				case 0: strAns += getMsg("strFumble");
+				case SuccessLevel::Fumble: strAns += getMsg("strFumble");
 					break;
-				case 1: strAns += isAutomatic ? getMsg("strSuccess") : getMsg("strFailure");
+				case SuccessLevel::Failure: strAns += isAutomatic ? getMsg("strSuccess") : getMsg("strFailure");
 					break;
-				case 5: strAns += getMsg("strCriticalSuccess");
+				case SuccessLevel::Critical: strAns += getMsg("strCriticalSuccess");
 					break;
-				case 4: if (intDifficulty == 1) {
+				case SuccessLevel::ExtremeSuccess: if (intDifficulty == 1) {
 					strAns += getMsg("strExtremeSuccess");
 					break;
 				}
-				case 3: if (intDifficulty == 1) {
+				case SuccessLevel::HardSuccess: if (intDifficulty == 1) {
 					strAns += getMsg("strHardSuccess");
 					break;
 				}
-				case 2: strAns += getMsg("strSuccess");
+				case SuccessLevel::RegularSuccess: strAns += getMsg("strSuccess");
 					break;
 				}
 				Res << strAns;
@@ -3887,20 +3900,9 @@ int DiceEvent::InnerOrder() {
 		int intRule = fromChat.gid
 			? chat(fromChat.gid).getConf("rc房规", console["DefaultCOCRoomRule"])
 			: getUser(fromChat.uid).getConf("rc房规", console["DefaultCOCRoomRule"]);
-		int res = RollSuccessLevel(intTmpRollRes, intSan, intRule);
+		auto res = RollSuccessLevel(intTmpRollRes, intSan, intRule);
 		switch (res) {
-		case 5:
-		case 4:
-		case 3:
-		case 2:
-			rdLoss = RD(strSanCostSuc);
-			if (rdLoss->Roll() != 0) {
-				replyMsg("strSanCostInvalid");
-				return 1;
-			}
-			set("change", rdLoss->FormShortString());
-			break;
-		case 1:
+		case SuccessLevel::Failure:
 			rdLoss = RD(strSanCostFail);
 			if (rdLoss->Roll() != 0) {
 				replyMsg("strSanCostInvalid");
@@ -3908,13 +3910,21 @@ int DiceEvent::InnerOrder() {
 			}
 			set("change", rdLoss->FormShortString());
 			break;
-		case 0:
+		case SuccessLevel::Fumble:
 			rdLoss = RD(strSanCostFail);
 			if (rdLoss->Max() != 0) {
 				replyMsg("strSanCostInvalid");
 				return 1;
 			}
 			set("change","Max{" + rdLoss->strDice + "}=" + std::to_string(rdLoss->intTotal));
+			break;
+		default:
+			rdLoss = RD(strSanCostSuc);
+			if (rdLoss->Roll() != 0) {
+				replyMsg("strSanCostInvalid");
+				return 1;
+			}
+			set("change", rdLoss->FormShortString());
 			break;
 		}
 		AttrObject trans{ AnysTable{{
@@ -3926,7 +3936,7 @@ int DiceEvent::InnerOrder() {
 		intSan = max(0, intSan - sanLoss);
 		trans->set("new", intSan);
 		set("final",intSan);
-		set("rank", res);
+		set("rank", int(res));
 		if (pc && sanLoss){
 			pc->set(attr, intSan);
 			set("trans", AnysTable{ AttrVars{

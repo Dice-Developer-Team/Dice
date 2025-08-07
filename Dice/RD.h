@@ -233,5 +233,6 @@ std::string DND(int);
 class AnysTable;
 void LongInsane(AnysTable&);
 void TempInsane(AnysTable&);
-int RollSuccessLevel(int, int, int);
+enum class SuccessLevel{ Fumble, Failure, RegularSuccess, HardSuccess, ExtremeSuccess, Critical};
+SuccessLevel RollSuccessLevel(int, int, int);
 #endif /*DICE_RD*/
