@@ -576,8 +576,8 @@ string DiceSession::deck_draw(const string& key) {
 		return decks[key].draw();
 	}
 	else if (CardDeck::mPublicDeck.count(key)) {
-		vector<string>& deck = CardDeck::mPublicDeck[key];
-		return CardDeck::draw(deck[RandomGenerator::Randint(0, deck.size() - 1)]);
+		const vector<string>& deck = CardDeck::mPublicDeck[key];
+		return CardDeck::drawOne(deck);
 	}
 	return "{key}";
 }
