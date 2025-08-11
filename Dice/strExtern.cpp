@@ -88,14 +88,22 @@ string splitOnce(string& str, const string& sep) {
     return head;
 }
 
-size_t find_close_brace(const std::string_view& s, size_t start = 0) {
+size_t find_close_brace(const std::string_view& s, size_t pos = 0) {
     int brace_count = 0;
-    for (size_t i = start; i < s.size(); ++i) {
-        if (s[i] == '{') {
-            brace_count++; 
+    if (pos < s.size()) {
+        for (size_t i = s.find('{'); i < pos; ++i) {
+            if (s[i] == '{') {
+                brace_count++;
+            }
+            else if (s[i] == '}' && (--brace_count < 0)) {
+                brace_count = 0;
+            }
         }
-        else if (s[i] == '}') {
-            if (--brace_count == 0) {
+        if(brace_count)for (size_t i = pos; i < s.size(); ++i) {
+            if (s[i] == '{') {
+                brace_count++;
+            }
+            else if (s[i] == '}' && (--brace_count == 0)) {
                 return i;
             }
         }
@@ -107,18 +115,19 @@ fifo_dict<> splitPairs(string_view sv, char delim, char br) {
     fifo_dict<>dict;
     string_view line;
     size_t posDe{ 0 }, posBr{ 0 }, p{ 0 };
-    while (posBr != string::npos) {
-        posBr = sv.find(br);
-        if (auto l{ sv.rfind('{', posBr) };l < posBr) {
-            posBr = sv.find(br, find_close_brace(sv, l));
-        }
-        line = sv.substr(p = sv.find_first_not_of(space_char, p), sv.find_last_not_of(space_char, posBr - 1) - p + 1);
+    do {
+        size_t nStart = 0;
+        do {
+            posBr = sv.find(br, nStart); 
+            if (auto l{ sv.rfind('{', posBr) }; l != string::npos) nStart = find_close_brace(sv, posBr);
+        } while (nStart != string::npos && nStart > posBr);
+        line = sv.substr(p = sv.find_first_not_of(space_char), sv.find_last_not_of(space_char, posBr - 1) - p + 1);
         if ((posDe = line.find(delim)) != string::npos) {
             if(posDe)dict[string(line.substr(0, posDe))] = line.substr(posDe + 1);
         }
         else dict[string(line)] = {};
         sv.remove_prefix(posBr + 1);
-    }
+    } while (posBr != string::npos);
     return dict;
 }
 

@@ -2,7 +2,7 @@
 #include "ManagerSystem.h"
 #include "DiceMod.h"
 #include "DicePython.h"
-#include "DDAPI.h"
+
 ptr<MarkNode> buildFormatter(const std::string_view& exp);
 vector<ptr<MarkNode>> MarkNode::split() {
 	ptr<MarkNode> root = buildFormatter(leaf);
@@ -193,7 +193,6 @@ public:
 	MarkGradeNode(const std::string_view& s) :MarkNode(s), field(s.substr(0, s.find('?'))) {
 		auto paras{ splitPairs(s.substr(s.find('?') + 1),'=','&') };
 		for (auto& [key, val] : paras) {
-			DD::debugLog("split=" + val);
 			if (key == "else")grades.set_else(buildFormatter(val));
 			else if (isNumeric(key))grades.set_step(stod(key), buildFormatter(val));
 		}
