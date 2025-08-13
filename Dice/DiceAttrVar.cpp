@@ -721,7 +721,8 @@ AttrVar::AttrVar(const fifo_json& j) {
 	case fifo_json::value_t::object:
 	case fifo_json::value_t::array:
 		type = Type::Table;
-		new(&table) AttrObject(AnysTable(j));
+		new(&table) AttrObject();
+		table->from_json(j);
 		break;
 	case fifo_json::value_t::string:
 		type = Type::U8String;
