@@ -521,11 +521,11 @@ int lua_Set_index(lua_State* L) {
 		else if (key == "add")lua_pushcfunction(L, lua_Set_add);
 		else if (key == "remove")lua_pushcfunction(L, lua_Set_remove);
 		else if (key == "totable")lua_pushcfunction(L, lua_Set_totable);
-		else lua_pushboolean(L, set->count(key));
+		else set->count(key) ? lua_pushboolean(L, true) : lua_pushnil(L);
 	}
 	else if (lua_isnumber(L, 2)) {
 		double num{ lua_tonumber(L,2) };
-		lua_pushboolean(L, set->count(num));
+		set->count(num) ? lua_pushboolean(L, true) : lua_pushnil(L);
 	}
 	return 1;
 }
