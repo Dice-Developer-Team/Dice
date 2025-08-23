@@ -1,7 +1,7 @@
 /**
  * 会话管理
  * 抽象于聊天窗口的单位
- * Copyright (C) 2019-2024 String.Empty
+ * Copyright (C) 2019-2025 String.Empty
  */
 #include <shared_mutex>
 #include "filesystem.hpp"
@@ -21,6 +21,12 @@ std::recursive_mutex sessionMutex;
 unordered_set<chatInfo>LogList;
 
 const std::filesystem::path LogInfo::dirLog{ std::filesystem::path("user") / "log" };
+DiceSession::DiceSession(const string& s) : name(s), filePath(DiceDir / "user" / "session" / UTF8toPath(s + ".json")),
+master(std::make_shared<fifo_set<AttrIndex>>()),
+player(std::make_shared<fifo_set<AttrIndex>>()),
+obs(std::make_shared<fifo_set<AttrIndex>>()) {
+	tUpdate = tCreate = time(nullptr);
+}
 void LogInfo::append(const string& s) {
 	std::lock_guard<std::mutex> lock{ ex };
 	std::ofstream logout(pathLog, ios::out | ios::app);
@@ -692,7 +698,6 @@ void DiceSession::save() const
 {
 	std::error_code ec;
 	std::filesystem::create_directories(DiceDir / "user" / "session", ec);
-	std::filesystem::path fpFile{ DiceDir / "user" / "session" / (name + ".json") };
 	fifo_json jData;
 	if (!master->empty())jData["master"] = ::to_json(*master);
 	if (!player->empty())jData["player"] = ::to_json(*player);
@@ -731,7 +736,7 @@ void DiceSession::save() const
 	if (!empty())jData["data"] = to_json();
 	std::lock_guard<std::mutex> lock(exSessionSave);
 	if (jData.empty()) {
-		remove(fpFile);
+		remove(filePath);
 		return;
 	}
 	auto& jChat{ jData["chats"] = fifo_json::array() };
@@ -740,7 +745,7 @@ void DiceSession::save() const
 	}
 	jData["create_time"] = tCreate;
 	jData["update_time"] = tUpdate;
-	fwriteJson(fpFile, jData, 1);
+	fwriteJson(filePath, jData, 1);
 }
 
 void DiceSessionManager::open(const ptr<Session>& game, chatInfo ct) {
@@ -768,7 +773,7 @@ void DiceSessionManager::over(chatInfo ct){
 	for (auto& it:session->areas) {
 		SessionByChat.erase(it);
 	}
-	remove(DiceDir / "user" / "session" / (session->name + ".json"));
+	remove(DiceDir / "user" / "session" / session->filePath);
 }
 //const enumap<string> mSMTag{"type", "room", "gm", "log", "player", "observer", "tables"};
 

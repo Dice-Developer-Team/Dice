@@ -9,7 +9,7 @@
  * Dice! QQ Dice Robot for TRPG
  * Game Session
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2024 String.Empty
+ * Copyright (C) 2019-2025 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -130,17 +130,13 @@ class DiceSession: public AnysTable{
 public:
 	MetaType getType()const override { return MetaType::Game; }
 	//native filename
-	const string name;
+	const std::string name;
+	const std::filesystem::path filePath;
 	fifo_set<chatInfo> areas;
 	fifo_map<size_t, DiceRoulette> roulette;
 	size_t roll(size_t face);
 
-	DiceSession(const string& s) : name(s),
-		master(std::make_shared<fifo_set<AttrIndex>>()),
-		player(std::make_shared<fifo_set<AttrIndex>>()),
-		obs(std::make_shared<fifo_set<AttrIndex>>()) {
-		tUpdate = tCreate = time(nullptr);
-	}
+	DiceSession(const string& s);
 	friend class DiceSessionManager;
 
 	//记录创建时间
