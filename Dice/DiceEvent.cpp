@@ -236,7 +236,7 @@ void DiceEvent::fwdMsg(){
 	if (auto game{ thisGame() }; game && game->is_logging()
 		&& strLowerMessage.find(".log") != 0
 		&& game->is_part(fromChat.uid)) {
-		game->log_app(idx_pc(*this).to_str() + "(" + std::to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time"))
+		game->log_app(idx_pc(*this).to_str() + "(" + std::to_string(fromChat.uid) + ") " + printTTime((time_t)get_ll("time"))
 			+ "\n" + filter_CQcode(strMsg, fromChat.gid) + "\n\n");
 	}
 }
@@ -3616,7 +3616,7 @@ int DiceEvent::InnerOrder() {
 				if (PList[fromChat.uid].count(strGenitive)) {
 					pc = PList[fromChat.uid][strGenitive];
 					set("pc", pc->getName());
-					attr = attr.substr(pos + 2);
+					attr = attr.substr(pos + 3);
 				}
 			}
 		}
@@ -4016,7 +4016,7 @@ int DiceEvent::InnerOrder() {
 					pc = pl[strGenitive];
 					set("char", pc);
 					set("pc", pc->getName());
-					attr = attr.substr(pos + 2);
+					attr = attr.substr(pos + 3);
 				}
 			}
 			if (pc->locked("r")) {

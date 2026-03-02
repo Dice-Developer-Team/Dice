@@ -35,6 +35,7 @@
 /.vs
 /.vscode
 /build
+/driver/build
 /Dice/Release
 /Dice/Debug
 /Dice/x64
