@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2025 String.Empty
+ * Copyright (C) 2019-2026 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -35,6 +35,15 @@
 #include "DiceMod.h"
 #include "DDAPI.h"
 std::unique_ptr<PyGlobal> py;
+namespace {
+	struct PyGilGuard {
+		PyGILState_STATE state;
+		PyGilGuard() : state(PyGILState_Ensure()) {}
+		~PyGilGuard() { PyGILState_Release(state); }
+		PyGilGuard(const PyGilGuard&) = delete;
+		PyGilGuard& operator=(const PyGilGuard&) = delete;
+	};
+}
 constexpr auto DiceModuleName = "dicemaid";
 const char* empty = "";
 const wchar_t* wempty = L"";
@@ -329,7 +338,6 @@ static PyTypeObject PyActor_Type = {
 };
 PyObject* py_newActor(const PC& obj) {
 	PyActorObject* pc = (PyActorObject*)PyActor_Type.tp_alloc(&PyActor_Type, 0);
-	Py_INCREF(pc);
 	new(&pc->p) PC(obj);
 	return (PyObject*)pc;
 }
@@ -431,7 +439,6 @@ static PyTypeObject PyGameTable_Type = {
 };
 PyObject* py_newGame(const ptr<DiceSession>& obj) {
 	PyGameTableObject* game = (PyGameTableObject*)PyGameTable_Type.tp_alloc(&PyGameTable_Type, 0);
-	Py_INCREF(game);
 	new(&game->p) ptr<DiceSession>(obj);
 	return (PyObject*)game;
 }
@@ -550,7 +557,6 @@ static PyTypeObject PyContextType = {
 };
 PyObject* py_newContext(const AttrObject& obj) {
 	PyContextObject* context = (PyContextObject*)PyContextType.tp_alloc(&PyContextType, 0);
-	Py_INCREF(context);
 	new(&context->obj) ptr<AnysTable>(obj.p);
 	return (PyObject*)context;
 }
@@ -807,7 +813,6 @@ PYDEFARG(getSelfData) {
 			}
 		}
 		auto data = (PySelfDataObject*)PySelfData_Type.tp_alloc(&PySelfData_Type, 0);
-		Py_INCREF(data);
 		new(&data->p) ptr<SelfData>(selfdata_byStem[file]);
 		return (PyObject*)data;
 	}
@@ -1172,18 +1177,44 @@ PyGlobal::PyGlobal() {
 	PyConfig config;
 	PyConfig_InitIsolatedConfig(&config);
 	config._init_main = 0;
-	if (std::filesystem::path dirPy{ dirExe / "bin" };
-		std::filesystem::exists(dirPy / "python3.dll")
-		|| std::filesystem::exists(dirPy / "python3.so")
-		|| std::filesystem::exists(dirPy = dirExe / "python")
-		|| std::filesystem::exists(dirPy = dirExe / "python312")
-		|| std::filesystem::exists(dirPy = dirExe / "py312")
-		|| std::filesystem::exists((dirPy = dirExe) / "python3.dll")) {
-		//Py_SetPythonHome(dirPy.wstring().c_str());
-		PyConfig_SetString(&config, &config.home, dirPy.wstring().c_str());
-		//Py_SetProgramName(L"DiceMaid");
-		PyConfig_SetString(&config, &config.program_name, L"DiceMaid");
-		PyWideStringList_Append(&config.module_search_paths, (dirPy / "python312.zip").wstring().c_str());
+	{
+		/* 优先选择真正包含 3.12 标准库的目录。
+		   旧布局的 bin/ 里可能只残留 Python 3.11 的 pyd、没有 python312.zip，
+		   若照旧按 python3.dll 探测会先命中 bin/，PYTHONHOME 指错后就报
+		   "failed to get the Python codec of the filesystem encoding"。 */
+		auto hasStdlib = [](const std::filesystem::path& d) {
+			std::error_code ec;
+			return std::filesystem::exists(d / "python312.zip", ec)
+				|| std::filesystem::exists(d / "Lib" / "encodings", ec);
+		};
+		std::filesystem::path dirPy;
+		for (const auto& cand : { dirExe / "python312", dirExe / "py312", dirExe / "python",
+								  dirExe / "bin", dirExe }) {
+			if (hasStdlib(cand)) { dirPy = cand; break; }
+		}
+		if (dirPy.empty()) {
+			// 找不到完整标准库时退回按 python3.dll 定位，保持对旧布局的兼容
+			dirPy = dirExe / "bin";
+			if (!std::filesystem::exists(dirPy / "python3.dll")
+				&& !std::filesystem::exists(dirPy / "python3.so")
+				&& !std::filesystem::exists(dirPy = dirExe / "python")
+				&& !std::filesystem::exists(dirPy = dirExe / "python312")
+				&& !std::filesystem::exists(dirPy = dirExe / "py312")
+				&& !std::filesystem::exists((dirPy = dirExe) / "python3.dll")) {
+				dirPy.clear();
+			}
+		}
+		if (!dirPy.empty()) {
+			//Py_SetPythonHome(dirPy.wstring().c_str());
+			PyConfig_SetString(&config, &config.home, dirPy.wstring().c_str());
+			//Py_SetProgramName(L"DiceMaid");
+			PyConfig_SetString(&config, &config.program_name, L"DiceMaid");
+			PyWideStringList_Append(&config.module_search_paths, (dirPy / "python312.zip").wstring().c_str());
+			console.log("Python home: " + dirPy.u8string(), 0);
+		}
+		else {
+			console.log("未找到可用的 Python 运行时目录，python 功能将不可用", 0b1000);
+		}
 	}
 	try {
 		static auto import_dice = PyImport_AppendInittab(DiceModuleName, PyInit_DiceMaid);
@@ -1194,16 +1225,26 @@ PyGlobal::PyGlobal() {
 		PyWideStringList_Append(&config.module_search_paths, ((dirExe / "Diceki" / "py").wstring()).c_str());
 		config.module_search_paths_set = 1;
 		if (!PyStatus_Exception(status = PyConfig_Read(&config))) {
-			if (PyStatus_Exception(status = Py_InitializeFromConfig(&config)))
-				console.log("python初始化失败:" + string(status.err_msg), 0b1); 
-			else console.log("Python.Initialized", 0);
-			PyRun_SimpleString("import sys");
-			//PyRun_SimpleString("from dicemaid import *"); 
-			status = _Py_InitializeMain();
+			if (!PyStatus_Exception(status = Py_InitializeFromConfig(&config))) {
+				if (!PyStatus_Exception(status = _Py_InitializeMain())) {
+					console.log("Python.Initialized", 0);
+					PyRun_SimpleString("import sys");
+					/* PyImport_AppendInittab 只是把模块登记到 inittab，
+					   真正的 PyInit_DiceMaid（内含 PyType_Ready）要等模块被导入时才执行。
+					   不导入则 PyContextType.tp_alloc 仍为 NULL，py_newContext 会调空指针。 */
+					if (PyObject* diceMod = PyImport_ImportModule(DiceModuleName)) {
+						Py_DECREF(diceMod);
+					}
+					else {
+						console.log("dicemaid 模块加载失败:" + py_print_error(), 0b1000);
+						PyErr_Clear();
+					}
+				}
+				else { console.log("Python主模块初始化失败:" + string(status.err_msg), 0b1); }
+			}
+			else { console.log("python初始化失败:" + string(status.err_msg), 0b1); }
 		}
-		else {
-			console.log("PyConfig_Read error:" + string(status.err_msg), 0b1);
-		}
+		else { console.log("PyConfig_Read error:" + string(status.err_msg), 0b1); }
 	}
 	catch (std::exception& e) {
 		console.log("python初始化失败:" + string(e.what()), 0b1);
@@ -1212,7 +1253,7 @@ PyGlobal::PyGlobal() {
 }
 dict<std::pair<PyObject*, std::filesystem::file_time_type>> Py_FileScripts;
 dict<PyObject*> Py_StringScripts;
-PyGlobal::~PyGlobal() {
+void PyGlobal::finalize() {
 	for (auto& [p, s] : Py_FileScripts) {
 		Py_INCREF(s.first);
 	}
@@ -1254,6 +1295,7 @@ int PyGlobal::runFile(const std::filesystem::path& p) {
 	return 0;
 }
 bool PyGlobal::runFile(const std::filesystem::path& p, const AttrObject& context) {
+	PyGilGuard gil;
 	if (FILE* fp{ fopen(p.string().c_str(),"r")}) {
 		PyObject* mainModule = PyImport_ImportModule("__main__");
 		PyObject* global = PyModule_GetDict(mainModule);
@@ -1269,9 +1311,11 @@ bool PyGlobal::runFile(const std::filesystem::path& p, const AttrObject& context
 	return false;
 }
 int PyGlobal::runString(const std::string& s) {
+	PyGilGuard gil;
 	return PyRun_SimpleString(s.c_str());
 }
 bool PyGlobal::execString(const std::string& s, const AttrObject& context) {
+	PyGilGuard gil;
 	try {
 		PyObject* mainModule = PyImport_ImportModule("__main__");
 		PyObject* dict = PyModule_GetDict(mainModule);
@@ -1279,7 +1323,10 @@ bool PyGlobal::execString(const std::string& s, const AttrObject& context) {
 			console.log(getMsg("self") + "运算python语句异常!" + py_print_error(), 0b10);
 			PyErr_Clear();
 		}
-		return true;
+		else {
+			Py_DECREF(ret);
+			return true;
+		}
 	}
 	catch (std::exception& e) {
 		console.log(getMsg("self") + "运行python脚本异常!" + e.what(), 0b10);
@@ -1287,6 +1334,7 @@ bool PyGlobal::execString(const std::string& s, const AttrObject& context) {
 	return false;
 }
 AttrVar PyGlobal::evalString(const std::string& s, const AttrObject& context) {
+	PyGilGuard gil;
 	try {
 		PyObject* mainModule = PyImport_ImportModule("__main__");
 		PyObject* dict = PyModule_GetDict(mainModule);
@@ -1294,7 +1342,11 @@ AttrVar PyGlobal::evalString(const std::string& s, const AttrObject& context) {
 			console.log(getMsg("self") + "运算python语句异常!" + py_print_error(), 0b10);
 			PyErr_Clear();
 		}
-		else return py_to_attr(ret);
+		else {
+			auto attr{ py_to_attr(ret) };
+			Py_DECREF(ret);
+			return attr;
+		}
 	}
 	catch (std::exception& e) {
 		console.log(getMsg("self") + "运行python脚本异常!" + e.what(), 0b10);
@@ -1302,6 +1354,7 @@ AttrVar PyGlobal::evalString(const std::string& s, const AttrObject& context) {
 	return {};
 }
 bool PyGlobal::call_reply(DiceEvent* msg, const AttrVar& action) {
+	PyGilGuard gil;
 	string pyScript{ action };
 	try {
 		if (auto co{ Py_CompileScript(pyScript) }) {

@@ -1052,7 +1052,9 @@ void global_exit() {
 	ruleset.reset();
 	js_global_end();
 #ifdef DICE_PYTHON
-	if (py)py.reset();
+	if (py) {
+		py->finalize();
+	}
 #endif
 	sessions.clear();
 	PList.clear();

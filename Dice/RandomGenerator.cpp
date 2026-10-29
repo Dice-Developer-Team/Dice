@@ -49,21 +49,12 @@ namespace RandomGenerator
 #endif	
 	}
 	
-#if defined(__i386__) || defined(__x86_64__)
 	int Randint(int lowest, int highest)
 	{
-		std::mt19937 gen(static_cast<unsigned int>(GetCycleCount()));
+		static std::mt19937 gen(static_cast<unsigned int>(GetCycleCount()));
 		std::uniform_int_distribution<int> dis(lowest, highest);
 		return dis(gen);
 	}
-#else
-	std::mt19937 gen(static_cast<unsigned int>(GetCycleCount()));
-	int Randint(int lowest, int highest)
-	{
-		std::uniform_int_distribution<int> dis(lowest, highest);
-		return dis(gen);
-	}
-#endif
 	std::string genKey(size_t len, Code mode) {
 		std::string res;
 		std::string charset;

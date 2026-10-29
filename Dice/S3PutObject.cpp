@@ -19,10 +19,10 @@
 
 // Aws SDK设置
 Aws::SDKOptions options;
-std::shared_ptr<Aws::Auth::AnonymousAWSCredentialsProvider> awsCredProvider{ std::make_shared<Aws::Auth::AnonymousAWSCredentialsProvider>() };
+std::shared_ptr<Aws::Auth::AnonymousAWSCredentialsProvider> awsCredProvider;
 std::shared_ptr<Aws::S3::S3EndpointProvider> awsEProvider;
 // 判断文件是否存在
-bool file_exists(const std::string& file_name)
+static bool file_exists(const std::string& file_name)
 {
 	std::error_code ec;
 	return std::filesystem::is_regular_file(file_name, ec);
@@ -30,6 +30,7 @@ bool file_exists(const std::string& file_name)
 void aws_init() {
 	Aws::InitAPI(options);
 	awsEProvider = Aws::MakeShared<Aws::S3::S3EndpointProvider>("S3Client");
+	awsCredProvider = std::make_shared<Aws::Auth::AnonymousAWSCredentialsProvider>();
 }
 void aws_shutdown() {
 	awsEProvider.reset();
