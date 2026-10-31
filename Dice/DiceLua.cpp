@@ -1,4 +1,5 @@
 #include <lua.hpp>  
+#include "DiceLua.h"
 #include "DiceNetwork.h"
 #include "ManagerSystem.h"
 #include "DiceEvent.h"
@@ -14,51 +15,42 @@
 unordered_set<lua_State*> UTF8Luas;
 const char* LuaTypes[]{ "nil","boolean","lightuserdata","number","string","table","function","userdata","thread","numtypes" };
 
-class LuaState {
-	lua_State* state;
-	//bool isValid;
-public:
-	LuaState(string file);
-	LuaState();
-	//operator bool()const { return isValid; }
-	operator lua_State* () { return state; }
-	~LuaState() {
-		if(state)lua_close(state);
-		UTF8Luas.erase(state);
-	}
-	void regist();
-	void reboot() {
-		lua_close(state);
-		state = luaL_newstate();
-		if (!state)return;
+LuaState::~LuaState() {
+	if(state)lua_close(state);
+	UTF8Luas.erase(state);
+}
+void LuaState::reboot() {
+	lua_close(state);
+	state = luaL_newstate();
+	if (state){
 		luaL_openlibs(state);
 		regist();
 	}
-};
-double lua_to_number(lua_State* L, int idx = -1) {
+}
+static double lua_to_number(lua_State* L, int idx = -1) {
 	return luaL_checknumber(L, idx);
 }
-long long lua_to_int(lua_State* L, int idx = -1) {
+static long long lua_to_int(lua_State* L, int idx = -1) {
 	return luaL_checkinteger(L, idx);
 }
-long long lua_to_int_or_zero(lua_State* L, int idx = -1) {
+static long long lua_to_int_or_zero(lua_State* L, int idx = -1) {
 	return lua_isnoneornil(L, idx) ? 0 : lua_tointeger(L, idx);
 }
 
 // Return string without convert
-string lua_to_raw_string(lua_State* L, int idx = -1) {
+static string lua_to_raw_string(lua_State* L, int idx = -1) {
 	return luaL_checkstring(L, idx);
 }
 // Return utf-8 string
-string lua_to_u8string(lua_State* L, int idx = -1) {
+static string lua_to_u8string(lua_State* L, int idx = -1) {
 	return UTF8Luas.count(L)? luaL_checkstring(L, idx) : GBKtoUTF8(luaL_checkstring(L, idx), true);
 }
 // Return a GB18030 string
-string lua_to_gbstring(lua_State* L, int idx = -1) {
+static string lua_to_gbstring(lua_State* L, int idx = -1) {
 	return UTF8toGBK(luaL_checkstring(L, idx), !UTF8Luas.count(L));
 }
 // Return utf-8 string
-string lua_to_u8string_from_native(lua_State* L, int idx = -1) {
+static string lua_to_u8string_from_native(lua_State* L, int idx = -1) {
 #ifdef _WIN32
 	return GBKtoUTF8(luaL_checkstring(L, idx));
 #else
@@ -66,7 +58,7 @@ string lua_to_u8string_from_native(lua_State* L, int idx = -1) {
 #endif
 }
 // Return a GB18030 string
-string lua_to_gbstring_from_native(lua_State* L, int idx = -1) {
+static string lua_to_gbstring_from_native(lua_State* L, int idx = -1) {
 #ifdef _WIN32
 	return luaL_checkstring(L, idx);
 #else
@@ -75,7 +67,7 @@ string lua_to_gbstring_from_native(lua_State* L, int idx = -1) {
 }
 
 // Return a GB18030 string on Windows and a UTF-8 string on other platforms
-string lua_to_native_string(lua_State* L, int idx = -1) {
+static string lua_to_native_string(lua_State* L, int idx = -1) {
 	const char* str{ luaL_checkstring(L, idx) };
 #ifdef _WIN32
 	return UTF8toGBK(str, !UTF8Luas.count(L));
@@ -1584,6 +1576,16 @@ LuaState::LuaState(string file) {
 	}
 	luaL_openlibs(state);
 	regist();
+}
+AttrVar LuaState::dostring(const string& cmd) {
+	if (!luaL_dostring(state, cmd.c_str())) {
+		return lua_to_attr(state);
+	}
+	else {
+		string pErrorMsg = lua_to_u8string_from_native(state, -1);
+		console.log(getMsg("strSelfName") + "调用Lua代码失败!\n" + pErrorMsg, 0b10);
+	}
+	return {};
 }
 
 void DiceModManager::loadPlugin(ResList& res) {
