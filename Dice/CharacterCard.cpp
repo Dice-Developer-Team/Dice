@@ -1,6 +1,6 @@
 /*
  * 玩家人物卡
- * Copyright (C) 2019-2024 String.Empty
+ * Copyright (C) 2019-2026 String.Empty
  */
 #include "CharacterCard.h"
 #include "DDAPI.h"
@@ -685,7 +685,9 @@ int Player::buildCard(string& name, bool isClear, long long group)
 		name = pc->getName();
 		if (isClear)pc->clear();
 		pc->buildv(strType);
-		if (NameList[name] != mGroupCard[group])mGroupCard[group] = pc;
+		// operator[] 会先插入一张空卡；若无默认卡会导致错判，
+		if (auto it{ mGroupCard.find(group) }; it == mGroupCard.end() || it->second != pc)
+			mGroupCard[group] = pc;
 	}
 	return 0;
 }
