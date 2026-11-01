@@ -201,9 +201,20 @@ static int PyActor_setattr(PyObject* self, char* attr, PyObject* val) {
 	if (pc)pc->set(attr, py_to_attr(val));
 	return 0;
 }
-static PyObject* PyActor_getattro(PyObject* self, PyObject* attr) {
+// 下标访问 actor['name']：只查角色卡字段
+static PyObject* PyActor_subscript(PyObject* self, PyObject* attr) {
 	PY2PC(self);
 	if (!attr && pc)return py_build_attr(*pc);
+	string key{ py_to_string(attr) };
+	return pc ? py_build_attr(pc->get(key)) : Py_BuildValue("");
+}
+/* 属性访问 actor.name：方法（rollDice/locked/lock/unlock）优先，
+   未命中再回退到角色卡字段；取不到返回 None。 */
+static PyObject* PyActor_getattro(PyObject* self, PyObject* attr) {
+	if (PyObject* res{ PyObject_GenericGetAttr(self, attr) }) return res;
+	if (!PyErr_ExceptionMatches(PyExc_AttributeError)) return nullptr;
+	PyErr_Clear();
+	PY2PC(self);
 	string key{ py_to_string(attr) };
 	return pc ? py_build_attr(pc->get(key)) : Py_BuildValue("");
 }
@@ -282,7 +293,6 @@ static PyObject* PyActor_unlock(PyObject* self, PyObject* args) {
 static PyMethodDef ActorMethods[] = {
 	{"set", PyActor_set, METH_VARARGS, "set PC attr"},
 	{"get", PyActor_getattro, METH_VARARGS, "get PC item"},
-	//{"__getattr__", PyActor_getattro, METH_VARARGS, "get PC item"},
 	{"rollDice", PyActor_rollDice, METH_VARARGS, "PC roll dice expression"},
 	{"locked", PyActor_locked, METH_VARARGS, "check lock state"},
 	{"lock", PyActor_lock, METH_VARARGS, "add lock"},
@@ -290,7 +300,7 @@ static PyMethodDef ActorMethods[] = {
 	{NULL, NULL, 0, NULL},
 };
 static PyMappingMethods ActorMappingMethods = {
-	pyActor_size, PyActor_getattro, PyActor_setattro,
+	pyActor_size, PyActor_subscript, PyActor_setattro,
 };
 static PyObject* PyActor_str(PyObject* self) {
 	PY2PC(self);
@@ -313,7 +323,7 @@ static PyTypeObject PyActor_Type = {
 	nullptr,                                           /* tp_hash  */
 	nullptr,                                           /* tp_call */
 	PyActor_str,                                          /* tp_str */
-	nullptr,                                           /* tp_getattro */
+	PyActor_getattro,                                  /* tp_getattro */
 	nullptr,                                          /* tp_setattro */
 	nullptr,                                           /* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT,						          /* tp_flags */
@@ -360,10 +370,20 @@ static Py_ssize_t pyGameTable_size(PyObject* self) {
 	PY2GAME(self);
 	return game ? (Py_ssize_t)game->size() : 0;
 }
-static PyObject* PyGameTable_getattro(PyObject* self, PyObject* attr) {
+// 下标访问 game['key']：只查牌桌数据
+static PyObject* PyGameTable_subscript(PyObject* self, PyObject* attr) {
 	PY2GAME(self);
 	string key{ py_to_string(attr) };
-	return game ? py_build_attr(game->get(key)) : NULL;
+	return game ? py_build_attr(game->get(key)) : Py_BuildValue("");
+}
+/* 属性访问 game.key：type 上的方法优先，未命中再回退到牌桌数据；取不到返回 None。 */
+static PyObject* PyGameTable_getattro(PyObject* self, PyObject* attr) {
+	if (PyObject* res{ PyObject_GenericGetAttr(self, attr) }) return res;
+	if (!PyErr_ExceptionMatches(PyExc_AttributeError)) return nullptr;
+	PyErr_Clear();
+	PY2GAME(self);
+	string key{ py_to_string(attr) };
+	return game ? py_build_attr(game->get(key)) : Py_BuildValue("");
 }
 static int PyGameTable_setattro(PyObject* self, PyObject* attr, PyObject* val) {
 	PY2GAME(self);
@@ -372,11 +392,10 @@ static int PyGameTable_setattro(PyObject* self, PyObject* attr, PyObject* val) {
 	return 0;
 }
 static PyMappingMethods PyGameTableMappingMethods = {
-	pyGameTable_size, PyGameTable_getattro, PyGameTable_setattro,
+	pyGameTable_size, PyGameTable_subscript, PyGameTable_setattro,
 };
 static PyMethodDef PyGameTableMethods[] = {
-	{"get", PyGameTable_getattro, METH_VARARGS, "get Game item"},
-	{"__getattr__", PyGameTable_getattro, METH_VARARGS, "get Game item"},
+	{"get", PyGameTable_subscript, METH_O, "get Game item"},
 	{NULL, NULL, 0, NULL},
 };
 static PyObject* PyGameTable_get_gms(PyObject* self, void*) {
@@ -414,7 +433,7 @@ static PyTypeObject PyGameTable_Type = {
 	nullptr,                                           /* tp_hash  */
 	nullptr,                                           /* tp_call */
 	nullptr,                                          /* tp_str */
-	nullptr,                                           /* tp_getattro */
+	PyGameTable_getattro,                              /* tp_getattro */
 	nullptr,                                          /* tp_setattro */
 	nullptr,                                           /* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT,						          /* tp_flags */
@@ -462,10 +481,20 @@ static int PyContext_setattr(PyObject* self, char* attr, PyObject* val) {
 	obj->set(attr, py_to_attr(val));
 	return 0;
 }
-static PyObject* PyContext_getattro(PyObject* self, PyObject* attr) {
+// 下标访问 msg['uid']：只查上下文表，保持原有语义
+static PyObject* PyContext_subscript(PyObject* self, PyObject* attr) {
 	PY2TAB(self);
 	string key{ py_to_string(attr) };
-	//console.log("PyContext_getattro:" + key, 0);
+	return py_build_attr(getContextItem(obj, key));
+}
+/* 属性访问 msg.uid：先走常规查找，type 上的方法（echo/format/inc）因此天然优先；
+   未命中再回退到上下文表。与下标访问一致，取不到就返回 None，不抛错。 */
+static PyObject* PyContext_getattro(PyObject* self, PyObject* attr) {
+	if (PyObject* res{ PyObject_GenericGetAttr(self, attr) }) return res;
+	if (!PyErr_ExceptionMatches(PyExc_AttributeError)) return nullptr;
+	PyErr_Clear();
+	PY2TAB(self);
+	string key{ py_to_string(attr) };
 	return py_build_attr(getContextItem(obj, key));
 }
 static int PyContext_setattro(PyObject* self, PyObject* attr, PyObject* val) {
@@ -505,7 +534,6 @@ static PyMethodDef ContextMethods[] = {
 	{"echo", pyContext_echo, METH_VARARGS, "echo message"},
 	{"format", pyContext_format, METH_VARARGS, "format text"},
 	{"inc", pyContext_inc, METH_VARARGS, "attr auto increase"},
-	{"__getattr__", PyContext_getattro, METH_VARARGS, "get Context item"},
 	{NULL, NULL, 0, NULL},
 };
 static Py_ssize_t pyContext_size(PyObject* self) {
@@ -513,7 +541,7 @@ static Py_ssize_t pyContext_size(PyObject* self) {
 	return (Py_ssize_t)obj->size();
 }
 static PyMappingMethods ContextMappingMethods = {
-	pyContext_size, PyContext_getattro, PyContext_setattro,
+	pyContext_size, PyContext_subscript, PyContext_setattro,
 };
 static PyTypeObject PyContextType = {
 	PyVarObject_HEAD_INIT(nullptr, 0)
@@ -532,7 +560,7 @@ static PyTypeObject PyContextType = {
 	nullptr,                                           /* tp_hash  */
 	nullptr,                                           /* tp_call */
 	nullptr,                                          /* tp_str */
-	nullptr,                                           /* tp_getattro */
+	PyContext_getattro,                                /* tp_getattro */
 	nullptr,                                          /* tp_setattro */
 	nullptr,                                           /* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,          /* tp_flags */
@@ -722,9 +750,19 @@ static int PySelfData_setattr(PyObject* self, char* attr, PyObject* val) {
 	if (data.is_table())data.table->set(attr, py_to_attr(val));
 	return 0;
 }
-static PyObject* PySelfData_getattro(PyObject* self, PyObject* attr) {
+// 下标访问 sd['key']：只查私有数据表
+static PyObject* PySelfData_subscript(PyObject* self, PyObject* attr) {
 	auto& data{ ((PySelfDataObject*)self)->p };
 	if (!attr)return py_build_attr(data->data);
+	string key{ py_to_string(attr) };
+	return data && data->data.is_table() ? py_build_attr(data->data.table->get(key)) : Py_BuildValue("");
+}
+/* 属性访问 sd.key：type 上的方法优先，未命中再回退到私有数据表；取不到返回 None。 */
+static PyObject* PySelfData_getattro(PyObject* self, PyObject* attr) {
+	if (PyObject* res{ PyObject_GenericGetAttr(self, attr) }) return res;
+	if (!PyErr_ExceptionMatches(PyExc_AttributeError)) return nullptr;
+	PyErr_Clear();
+	auto& data{ ((PySelfDataObject*)self)->p };
 	string key{ py_to_string(attr) };
 	return data && data->data.is_table() ? py_build_attr(data->data.table->get(key)) : Py_BuildValue("");
 }
@@ -756,12 +794,11 @@ static PyObject* PySelfData_set(PyObject* self, PyObject* args) {
 }
 static PyMethodDef SelfDataMethods[] = {
 	{"set", PySelfData_set, METH_VARARGS, "set SelfData item"},
-	{"get", PySelfData_getattro, METH_VARARGS, "get SelfData item"},
-	{"__getattr__", PySelfData_getattro, METH_VARARGS, "get SelfData item"},
+	{"get", PySelfData_subscript, METH_O, "get SelfData item"},
 	{NULL, NULL, 0, NULL},
 };
 static PyMappingMethods SelfDataMappingMethods = {
-	pySelfData_size, PySelfData_getattro, PySelfData_setattro,
+	pySelfData_size, PySelfData_subscript, PySelfData_setattro,
 };
 static PyTypeObject PySelfData_Type = {
 	PyVarObject_HEAD_INIT(nullptr, 0)
@@ -780,7 +817,7 @@ static PyTypeObject PySelfData_Type = {
 	nullptr,                                           /* tp_hash  */
 	nullptr,                                           /* tp_call */
 	nullptr,                                          /* tp_str */
-	nullptr,                                           /* tp_getattro */
+	PySelfData_getattro,                               /* tp_getattro */
 	nullptr,                                          /* tp_setattro */
 	nullptr,                                           /* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT,						          /* tp_flags */
@@ -1232,9 +1269,9 @@ PyGlobal::PyGlobal() {
 					/* PyImport_AppendInittab 只是把模块登记到 inittab，
 					   真正的 PyInit_DiceMaid（内含 PyType_Ready）要等模块被导入时才执行。
 					   不导入则 PyContextType.tp_alloc 仍为 NULL，py_newContext 会调空指针。 */
-					if (PyObject* diceMod = PyImport_ImportModule(DiceModuleName)) {
-						Py_DECREF(diceMod);
-					}
+			if (PyObject* diceMod = PyImport_ImportModule(DiceModuleName)) {
+				Py_DECREF(diceMod);
+			}
 					else {
 						console.log("dicemaid 模块加载失败:" + py_print_error(), 0b1000);
 						PyErr_Clear();
@@ -1250,10 +1287,23 @@ PyGlobal::PyGlobal() {
 		console.log("python初始化失败:" + string(e.what()), 0b1);
 	}
 	PyConfig_Clear(&config);
+	/* Py_Initialize 之后 GIL 归初始化线程（本线程）持有，此后不会自动释放。
+	   若不在这里主动释放，其他线程调用 PyGILState_Ensure（即 PyGilGuard）会永久阻塞：
+	   表现为 WebUI 的 py 模式、mod 的 py 回调线程挂死。
+	   释放后所有 Python 入口都必须自行加 PyGilGuard，本文件各入口已覆盖。 */
+	if (Py_IsInitialized()) {
+		PyEval_SaveThread();
+	}
 }
 dict<std::pair<PyObject*, std::filesystem::file_time_type>> Py_FileScripts;
 dict<PyObject*> Py_StringScripts;
 void PyGlobal::finalize() {
+	/* 初始化线程已在构造末尾 PyEval_SaveThread 释放 GIL，这里需重新取回。
+	   取回后刻意不 Release：紧随其后的 Py_Finalize 会销毁解释器与线程状态，
+	   之后再调用 PyGILState_Release 已无意义（进程即将退出）。 */
+	if (Py_IsInitialized()) {
+		PyGILState_Ensure();
+	}
 	for (auto& [p, s] : Py_FileScripts) {
 		Py_INCREF(s.first);
 	}
