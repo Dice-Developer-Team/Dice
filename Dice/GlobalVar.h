@@ -9,7 +9,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2025 String.Empty
+ * Copyright (C) 2019-2026 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -37,9 +37,9 @@
  * Please Do not modify Dice_Build, Dice_Ver_Without_Build, DiceRequestHeader or Dice_Ver
  * To costum version info, please modify const Dice_Short_Ver or Dice_Full_Ver
  */
-constexpr unsigned short Dice_Build = 668u;
-inline const std::string Dice_Ver_Without_Build = "2.7.1beta1";
-constexpr auto DiceRequestHeader = "Dice/2.7.1";
+constexpr unsigned short Dice_Build = 669u;
+inline const std::string Dice_Ver_Without_Build = "2.7.1";
+constexpr auto DiceRequestHeader = "Dice/2.7.1rc";
 inline const std::string Dice_Ver = Dice_Ver_Without_Build + "(" + std::to_string(Dice_Build) + ")";
 extern std::string Dice_Short_Ver;
 constexpr bool isDev = true;

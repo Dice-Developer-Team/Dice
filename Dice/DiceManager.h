@@ -44,7 +44,7 @@ public:
 			j["msg"] = "ok";
 			j["data"] = nlohmann::json::object();
 			j["data"]["version"] = Dice_Full_Ver;
-			j["data"]["qq"] = console.DiceMaid;
+			j["data"]["servant_id"] = console.DiceMaid;
 			j["data"]["nick"] = getMsg("strSelfName");
 			j["data"]["running_time"] = printDuringTime(time(nullptr) - llStartTime);
 			j["data"]["cmd_count"] = std::to_string(FrqMonitor::sumFrqTotal.load());
@@ -441,6 +441,10 @@ public:
 		mg_write(conn, ret.c_str(), ret.length());
 		return true;
 	}
+};
+
+class CommandRunner : public CivetHandler {
+	bool handlePost(CivetServer* server, struct mg_connection* conn);
 };
 
 class UrlApiHandler : public CivetHandler {

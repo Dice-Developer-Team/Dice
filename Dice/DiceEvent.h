@@ -78,6 +78,7 @@ private:
 	int getGroupTrust(long long group = 0);
 public:
 	bool isVirtual = false;
+	bool isPureVirtual()const;
 	unsigned int intMsgCnt = 0;
 	//跳过空格
 	void readSkipSpace()

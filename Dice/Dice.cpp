@@ -76,6 +76,7 @@ CustomReplyApiHandler h_customreply;
 ModListApiHandler h_modlist;
 WebUIPasswordHandler h_webuipassword;
 UrlApiHandler h_url;
+CommandRunner h_commander;
 AuthHandler auth_handler;
 
 string msgInit;
@@ -428,6 +429,7 @@ R"( //私骰作成 即可成为我的主人~
 			ManagerServer->addHandler("/api/master", h_master);
 			ManagerServer->addHandler("/api/customreply", h_customreply);
 			ManagerServer->addHandler("/api/mod/list", h_modlist);
+			ManagerServer->addHandler("/api/commander", h_commander);
 			ManagerServer->addHandler("/api/webuipassword", h_webuipassword);
 			ManagerServer->addHandler("/api/url", h_url);
 			ManagerServer->addAuthHandler("/", auth_handler);

@@ -101,6 +101,10 @@ bool DiceEvent::isPrivate()const {
 bool DiceEvent::isFromMaster()const {
 	return fromChat.uid == console;
 }
+//与真实聊天场景完全无关
+bool DiceEvent::isPureVirtual()const {
+	return isVirtual && isPrivate() && fromChat.uid == console.DiceMaid;
+}
 bool DiceEvent::isChannel()const {
 	return fromChat.chid;
 }
@@ -118,25 +122,25 @@ void DiceEvent::reply(const std::string& msgReply, bool isFormat) {
 }
 
 void DiceEvent::reply(bool isFormat) {
-	if (isVirtual && fromChat.uid == console.DiceMaid && isPrivate())return;
 	while (isspace(static_cast<unsigned char>(strReply[0])))
 		strReply.erase(strReply.begin());
 	if (isFormat)
 		formatReply();
+	if (isPureVirtual())return;
 	logEcho();
 	if (console["ReferMsgReply"] && get_ll("msgid"))strReply = "[CQ:reply,id=" + get_str("msgid") + "]" + strReply;
 	AddMsgToQueue(strReply, fromChat);
 }
 void DiceEvent::replyMsg(const std::string& key) {
-	if (isVirtual && fromChat.uid == console.DiceMaid && isPrivate())return;
 	strReply = getMsg(key, *this);
+	if (isPureVirtual())return;
 	logEcho();
 	if (console["ReferMsgReply"] && get_ll("msgid"))strReply = "[CQ:reply,id=" + get_str("msgid") + "]" + strReply;
 	AddMsgToQueue(strReply, fromChat);
 }
 void DiceEvent::replyHelp(const std::string& key) {
-	if (isVirtual && fromChat.uid == console.DiceMaid && isPrivate())return;
 	strReply = fmt->get_help(key, *this);
+	if (isPureVirtual())return;
 	logEcho();
 	if (console["ReferMsgReply"] && get_ll("msgid"))strReply = "[CQ:reply,id=" + get_str("msgid") + "]" + strReply;
 	AddMsgToQueue(strReply, fromChat);
@@ -188,6 +192,7 @@ void DiceEvent::replyHidden() {
 		game->log_app(getMsg("strSelfName") + "(" + std::to_string(console.DiceMaid) + ") " + printTTime((time_t)get_ll("time"))
 			+ "\n" + filter_CQcode(strReply, fromChat.gid) + "\n\n");
 	}
+	if (isPureVirtual())return;
 	strReply = "在" + printChat(fromChat) + "中 " + forward_filter(strReply);
 	if (!pGrp || !pGrp->is("Rh盲骰")) {
 		AddMsgToQueue(strReply, fromChat.uid);
@@ -211,7 +216,8 @@ void DiceEvent::logEcho(){
 		&& (isChannel() ? console["ListenChannelEcho"] : console["ListenGroupEcho"]))return;
 	auto here{ fromChat.locate() };
 	if (sessions.is_linking(here)
-		&& strLowerMessage.find(".link") != 0) {
+		&& strLowerMessage.find(".link") != 0
+		&& !isPureVirtual()) {
 		string strFwd{ getMsg("strSelfCall") + ":"
 			+ forward_filter(strReply) };
 		AddMsgToQueue(strFwd, sessions.linker.get_aim(here).first);
@@ -249,6 +255,7 @@ void DiceEvent::note(std::string strMsg, int note_lv)
 	fout << printSTNow() << "\t" << note_lv << "\t" << printLine(strMsg) << std::endl;
 	fout.close();
 	reply(strMsg);
+	if (isPureVirtual())return;
 	const string note = getName(fromChat.uid) + strMsg;
 	for (const auto& [ct, level] : console.NoticeList)
 	{
@@ -2694,7 +2701,7 @@ int DiceEvent::InnerOrder() {
 			ResList rep;
 			rep << "信任级别：" + std::to_string(trusted)
 				<< "和{nick}的第一印象大约是在" + printDate(user.tCreated)
-				<< (!(user.strNick.empty()) ? "正记录{nick}的" + std::to_string(user.strNick.size()) + "个称呼" : "没有记录{nick}的称呼")
+				<< (!(user.strNick.empty()) ? "正记录{nick}的" + std::to_string(user.strNick.size()) + "个称呼" : "未记录对{nick}的称呼")
 				<< ((PList.count(fromChat.uid)) ? "这里有{nick}的" + std::to_string(PList[fromChat.uid].size()) + "张角色卡" : "无角色卡记录");
 			reply("{user}" + rep.show());
 			return 1;
@@ -3408,8 +3415,7 @@ int DiceEvent::InnerOrder() {
 		else if (strOption == "build") {
 			string strPC{ strip(filter_CQcode(readRest(), fromChat.gid))};
 			if (!(resno = pl.buildCard(strPC, false, fromChat.gid))) {
-				auto pc = pl[fromChat.gid];
-				set("show", pc->show(true));
+				if (auto pc = pl[fromChat.gid])set("show", pc->show(true));
 				set("char", strPC);
 				replyMsg("strPcCardBuild");
 			}
@@ -3436,9 +3442,10 @@ int DiceEvent::InnerOrder() {
 		else if (strOption == "redo") {
 			string strPC{ strip(filter_CQcode(readRest(), fromChat.gid)) };
 			pl.buildCard(strPC, true, fromChat.gid);
-			auto pc{ pl[fromChat.gid] };
-			set("char", pc);
-			set("show", pc->show(true));
+			if (auto pc{ pl[fromChat.gid] }) {
+				set("char", pc);
+				set("show", pc->show(true));
+			}
 			replyMsg("strPcCardRedo");
 			return 1;
 		}

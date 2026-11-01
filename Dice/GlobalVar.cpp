@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2025 String.Empty
+ * Copyright (C) 2019-2026 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -424,7 +424,7 @@ const dict_ci<string> PlainMsg
 .help链接 查看源码文档
 邀请入群默认视为同意服务协议，知晓禁言或移出的后果)"
 	}, 
-	{ "strNewMaster","试问，你就是{strSelfName}的Master√\n请认真阅读当前版本Master手册以及用户手册。请注意版本号对应: https://v2docs.kokona.tech\f{strSelfName}默认开启对群移出、禁言、刷屏事件的监听，如要关闭请手动调整；\n请注意云黑系统默认开启，如无需此功能请关闭CloudBlackShare；" },
+	{ "strNewMaster","试问，你就是{strSelfName}的Master√\n请认真阅读当前版本Master手册以及用户手册。请注意版本号对应: https://v2docs.kokona.tech\f{strSelfName}默认开启对群移出、禁言、刷屏事件的监听，如要关闭请手动调整。" },
 	{ "strNewMasterPublic",R"({strSelfName}以公骰模式认主：
 自动开启BelieveDiceList响应来自骰娘列表的warning；
 已开启自动通过非黑名单好友申请；
@@ -442,7 +442,7 @@ const dict_ci<string> PlainMsg
 	{"strSelfName", "" },
 	{"strSelfNick", "&strSelfName" },
 	{"self", "&strSelfCall"},
-	{"strBotHeader", "试验型 " },
+	{"strBotHeader", "量产型 " },
 	{"strBotMsg", "\n使用.help 查看{self}帮助文档"},
 	{"strHlpMsg", R"(请使用.dismiss ID（或后四位） 使{self}退群退讨论组
 .bot on/off ID（或at或后四位） //开启或关闭指令
@@ -536,6 +536,7 @@ const dict_ci<string> GlobalComment{
 };
 const dict_ci<> HelpDoc = {
 {"更新",R"(
+669:webui后台指令
 668:支持BRP检定
 667:format新增len&expired
 666:变更内部字符编码

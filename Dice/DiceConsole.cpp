@@ -113,7 +113,7 @@ const std::unordered_map<std::string,string>Console::confComment{
 	{"ListenSelfEcho","接受自己私聊消息，需要框架支持"},
 	{"ReferMsgReply","响应消息时回复该消息，需要框架支持"},
 	{"EnableWebUI","是否启用WebUI，重启生效"},
-	{"WebUIAllowInternetAccess","是否允许远程访问WebUI（端口须对外开放）重启生效"},
+	{"WebUIAllowInternetAccess","允许远程访问WebUI（端口须对外开放，此时务必修改默认密码）重启生效"},
 	{"WebUIPort","指定使用的WebUI端口号，重启生效"},
 	{"EnablePython","是否启用Python，重启生效"},
 	{"DebugMode","调试模式：将所有接受的指令写入文件"},

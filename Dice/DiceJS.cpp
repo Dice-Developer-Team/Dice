@@ -1103,6 +1103,15 @@ QJSDEF(actor_unlock) {
 	return JS_NewBool(ctx, pc->unlock(key));
 }
 
+AttrVar js_simple_eval(const std::string& s) {
+	if (auto ret{ js_main->evalString(s, "<eval>") }; !JS_IsException(ret)) {
+		return js_main->getValue(ret);
+	}
+	else {
+		console.log(getMsg("strSelfName") + "执行js语句失败:\n" + s + "\n" + js_main->getException(), 0b10);
+	}
+	return {};
+}
 AttrVar js_context_eval(const std::string& s, const ptr<AnysTable>& context) {
 	if (auto ret{ js_main->evalStringLocal(s, "<eval>", context) }; !JS_IsException(ret)) {
 		return js_main->getValue(ret);
