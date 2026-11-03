@@ -597,6 +597,10 @@ void DiceSession::_draw(DiceEvent* msg) {
 			msg->replyMsg("strNumCannotBeZero");
 			return;
 		}
+		if (intCardNum < 0) {
+			msg->replyMsg("strParaIllegal");
+			return;
+		}
 		break;
 	case -1: break;
 	case -2:

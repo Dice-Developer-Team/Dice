@@ -2417,6 +2417,10 @@ int DiceEvent::InnerOrder() {
 				replyMsg("strNumCannotBeZero");
 				return 1;
 			}
+			if (intCardNum < 0) {
+				replyMsg("strParaIllegal");
+				return 1;
+			}
 			break;
 		case -1: break;
 		case -2:
@@ -3656,7 +3660,10 @@ int DiceEvent::InnerOrder() {
 		}
 		while ((strLowerMessage[intMsgCnt] == '+' || strLowerMessage[intMsgCnt] == '-') && isdigit(
 			strLowerMessage[intMsgCnt + 1])) {
-			if (!readNum(intSkillModify))strSkillModify = to_signed_string(intSkillModify);
+			if (int intModify = 0; !readNum(intModify)) {
+				intSkillModify += intModify;
+				strSkillModify = to_signed_string(intSkillModify);
+			}
 		}
 		if (strLowerMessage[intMsgCnt] == '/' && isdigit(strLowerMessage[intMsgCnt + 1])) {
 			intMsgCnt++;
@@ -4731,19 +4738,23 @@ string DiceEvent::readDigit(bool isForce)
 int DiceEvent::readNum(int& num)
 {
 	while (intMsgCnt < strMsg.length() && !is_digit(strMsg[intMsgCnt]) && strMsg[intMsgCnt] != '-')intMsgCnt++;
-	auto posBegin{ intMsgCnt };
-	if (strMsg[intMsgCnt] == '-')
-	{
-		intMsgCnt++;
-	}
+	const bool isNegative{ intMsgCnt < strMsg.length() && strMsg[intMsgCnt] == '-' };
+	if (isNegative)intMsgCnt++;
 	if (intMsgCnt >= strMsg.length())return -1;
+	auto posBegin{ intMsgCnt };
 	while (intMsgCnt < strMsg.length() && is_digit(strMsg[intMsgCnt]))
 	{
 		intMsgCnt++;
 	}
 	if (intMsgCnt - posBegin > 9)return -2;
-	if (intMsgCnt == posBegin || strMsg[posBegin] == '-')return -3;
+	if (intMsgCnt == posBegin)
+	{
+		//回退游标
+		if (isNegative)--intMsgCnt;
+		return -3;
+	}
 	std::from_chars(strMsg.c_str() + posBegin, strMsg.c_str() + intMsgCnt, num, 10);
+	if (isNegative)num = -num;
 	return 0;
 }
 string DiceEvent::readXDY()
