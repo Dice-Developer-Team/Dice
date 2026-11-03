@@ -867,9 +867,10 @@ int js_dice_selfdata_get_own(JSContext* ctx, JSPropertyDescriptor* desc, JSValue
 	JS2DATA(this_val);
 	if (data && desc) {
 		string key{ js_Atom2UTF(ctx, prop) };
-		if (data->data.to_obj()->has(key)) {
+		auto obj{ data->get_obj() };
+		if (obj && obj->has(key)) {
 			desc->flags = JS_PROP_C_W_E;
-			desc->value = js_newAttr(ctx, data->data.to_obj()->get(key));
+			desc->value = js_newAttr(ctx, obj->get(key));
 			desc->getter = JS_UNDEFINED;
 			desc->setter = JS_UNDEFINED;
 			return TRUE;
@@ -881,7 +882,9 @@ int js_dice_selfdata_delete(JSContext* ctx, JSValue this_val, JSAtom atom) {
 	JS2DATA(this_val);
 	if (data) {
 		auto str = js_Atom2UTF(ctx, atom);
-		data->data.to_obj()->reset(str);
+		auto obj{ data->get_obj() };
+		if (!obj)return FALSE;
+		obj->reset(str);
 		data->save();
 		return TRUE;
 	}
@@ -894,7 +897,9 @@ int js_dice_selfdata_define(JSContext* ctx, JSValueConst this_obj,
 	JS2DATA(this_obj);
 	if (data) {
 		auto str = js_Atom2UTF(ctx, prop);
-		data->data.to_obj()->set(str, js_toAttr(ctx, val));
+		auto obj{ data->get_obj() };
+		if (!obj)return FALSE;
+		obj->set(str, js_toAttr(ctx, val));
 		data->save();
 		return TRUE;
 	}
@@ -904,7 +909,9 @@ int js_dice_selfdata_set(JSContext* ctx, JSValueConst obj, JSAtom atom, JSValueC
 	JS2DATA(obj);
 	if (data) {
 		auto str = js_Atom2UTF(ctx, atom);
-		data->data.to_obj()->set(str, js_toAttr(ctx, value));
+		auto dataObj{ data->get_obj() };
+		if (!dataObj)return FALSE;
+		dataObj->set(str, js_toAttr(ctx, value));
 		data->save();
 		return TRUE;
 	}

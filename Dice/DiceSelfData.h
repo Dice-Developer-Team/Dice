@@ -17,6 +17,7 @@ public:
 	std::mutex exWrite;
 	SelfData(const std::filesystem::path& p);
 	AttrVar data;
+	AttrObject get_obj();
 	void save();
 };
 //filename stem by native charset

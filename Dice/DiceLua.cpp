@@ -12,20 +12,34 @@
 #include "Jsonio.h"
 #include "DiceSelfData.h"
 
-unordered_set<lua_State*> UTF8Luas;
 const char* LuaTypes[]{ "nil","boolean","lightuserdata","number","string","table","function","userdata","thread","numtypes" };
 
+std::mutex LuaState::statesMutex;
+std::unordered_map<lua_State*, LuaState*> LuaState::states;
+
 LuaState::~LuaState() {
-	if(state)lua_close(state);
-	UTF8Luas.erase(state);
+	if(state){
+		lua_close(state);
+		std::lock_guard lock(statesMutex);
+        states.erase(state);
+	}
 }
 void LuaState::reboot() {
-	lua_close(state);
-	state = luaL_newstate();
-	if (state){
+	lua_State* old{ state };
+	if (old)lua_close(old);
+	{
+		std::lock_guard lock(statesMutex);
+		states.erase(old);
+		if (state = luaL_newstate())states[state] = this;
+	}
+	if (state) {
 		luaL_openlibs(state);
 		regist();
 	}
+}
+static bool isGBK(lua_State* L) {
+	auto LS{ LuaState::from(L) };
+	return LS && !LS->isUTF8;
 }
 static double lua_to_number(lua_State* L, int idx = -1) {
 	return luaL_checknumber(L, idx);
@@ -43,11 +57,13 @@ static string lua_to_raw_string(lua_State* L, int idx = -1) {
 }
 // Return utf-8 string
 static string lua_to_u8string(lua_State* L, int idx = -1) {
-	return UTF8Luas.count(L)? luaL_checkstring(L, idx) : GBKtoUTF8(luaL_checkstring(L, idx), true);
+	auto LS{ LuaState::from(L) };
+	return LS && !LS->isUTF8 ? GBKtoUTF8(luaL_checkstring(L, idx), true) : luaL_checkstring(L, idx);
 }
 // Return a GB18030 string
 static string lua_to_gbstring(lua_State* L, int idx = -1) {
-	return UTF8toGBK(luaL_checkstring(L, idx), !UTF8Luas.count(L));
+	auto LS{ LuaState::from(L) };
+	return LS && !LS->isUTF8 ? luaL_checkstring(L, idx) : UTF8toGBK(luaL_checkstring(L, idx), true);
 }
 // Return utf-8 string
 static string lua_to_u8string_from_native(lua_State* L, int idx = -1) {
@@ -70,23 +86,23 @@ static string lua_to_gbstring_from_native(lua_State* L, int idx = -1) {
 static string lua_to_native_string(lua_State* L, int idx = -1) {
 	const char* str{ luaL_checkstring(L, idx) };
 #ifdef _WIN32
-	return UTF8toGBK(str, !UTF8Luas.count(L));
+	return UTF8toGBK(str, isGBK(L));
 #else
-	return GBKtoUTF8(str, UTF8Luas.count(L));
+	return GBKtoUTF8(str, !isGBK(L));
 #endif
 }
 
 void lua_push_u8string(lua_State* L, const string& str) {
-	lua_pushstring(L, UTF8Luas.count(L) ? str.c_str() : UTF8toGBK(str).c_str());
+	lua_pushstring(L, isGBK(L) ? UTF8toGBK(str).c_str() : str.c_str());
 }
 void lua_push_gbstring(lua_State* L, const string& str) {
-	lua_pushstring(L, UTF8Luas.count(L) ? GBKtoUTF8(str).c_str() : str.c_str());
+	lua_pushstring(L, isGBK(L) ? str.c_str() : GBKtoUTF8(str).c_str());
 }
 void lua_push_raw_string(lua_State* L, const string& str) {
 	lua_pushstring(L, str.c_str());
 }
 void lua_set_field(lua_State* L, int idx, const string& str) {
-	lua_setfield(L, idx, UTF8Luas.count(L) ? GBKtoUTF8(str).c_str() : str.c_str());
+	lua_setfield(L, idx, isGBK(L) ? GBKtoUTF8(str).c_str() : str.c_str());
 }
 AttrIndex lua_to_index(lua_State* L, int idx){
 	if (lua_type(L, idx) == LUA_TSTRING) {
@@ -148,7 +164,9 @@ ByteS lua_to_chunk(lua_State* L, int idx = -1) {
 		return {};
 	}
 	lua_pop(L, 1);
-	b.isUTF8 = UTF8Luas.count(L);
+	if(auto LS{ LuaState::from(L) }){
+		b.isUTF8 = LS->isUTF8;
+	}
 	return b;
 }
 void lua_push_Set(lua_State* L, const AttrSet& flags) {
@@ -336,6 +354,16 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 				return 0;
 			}
 		}
+		//匿名函数：文件只用于准备全局环境，函数体走字节码
+		else if (luaFunc.is_function()) {
+			if (lua_pcall(L, 0, 0, 0)) {
+				string pErrorMsg = lua_to_u8string_from_native(L, -1);
+				console.log(getMsg("strSelfName") + "运行" + filename + "失败:" + pErrorMsg, 0b10);
+				msg->set("lang", "Lua");
+				msg->reply(getMsg("strScriptRunErr"));
+				return 0;
+			}
+		}
 		//加载文件，执行全局函数
 		else if (lua_pcall(L, 0, 0, 0)) {
 			string pErrorMsg = lua_to_u8string_from_native(L, -1);
@@ -358,8 +386,8 @@ bool lua_msg_call(DiceEvent* msg, const AttrVar& lua) {
 	}
 	//执行函数字节码
 	if (luaFunc.is_function()) {
-		ByteS bytes{ lua.to_bytes() };
-		if (bytes.isUTF8)UTF8Luas.insert(L);
+		ByteS bytes{ luaFunc.to_bytes() };
+		if (!bytes.isUTF8)L.isUTF8 = false;
 		if (lua_load(L, lua_reader, &bytes, msg->get_str("reply_title").c_str(), "bt")
 			|| (lua_push_Context(L, msg->shared_from_this()), lua_pcall(L, 1, 2, 0))) {
 			string pErrorMsg = lua_to_u8string_from_native(L, -1);
@@ -421,7 +449,7 @@ bool lua_call_event(const ptr<AnysTable>& eve, const AttrVar& lua) {
 	}
 	else if (lua.is_function()) {
 		ByteS bytes{ lua.to_bytes() };
-		if (bytes.isUTF8)UTF8Luas.insert(L);
+		if (!bytes.isUTF8)L.isUTF8 = false;
 		if (lua_load(L, lua_reader, (void*)&bytes, eve->get_str("Type").c_str(), "bt")
 			|| lua_pcall(L, 0, 2, 0)) {
 			string pErrorMsg = lua_to_u8string_from_native(L, -1);
@@ -564,29 +592,39 @@ int selfData_get(lua_State* L) {
 			lua_push_attr(L, file.data.table->get(key));
 			return 1;
 		}
-		else if (lua_gettop(L) > 2) {
-			lua_pushnil(L);
-			lua_insert(L, 3);
-			return 1;
-		}
 	}
-	return 0;
+	if (lua_gettop(L) > 2) {
+		lua_pushvalue(L, 3);
+		return 1;
+	}
+	lua_pushnil(L);
+	return 1;
 }
 int selfData_set(lua_State* L) {
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
 	if (lua_istable(L, 2)) {
 		file.data = lua_to_attr(L, 2);
 	}
-	else if (std::lock_guard<std::mutex> lock(file.exWrite); lua_isstring(L, 2) && file.data.is_table()) {
-		string key{ lua_to_u8string(L, 2) };
-		if (lua_isnoneornil(L, 3)) {
-			file.data.table->reset(key);
+	else if (lua_isstring(L, 2)) {
+		{
+			std::lock_guard<std::mutex> lock(file.exWrite);
+			auto obj{ file.get_obj() };
+			if (!obj) {	// 数据为标量，不按 object 语义写入
+				lua_pushboolean(L, false);
+				return 1;
+			}
+			string key{ lua_to_u8string(L, 2) };
+			if (lua_isnoneornil(L, 3))obj->reset(key);
+			else obj->set(key, lua_to_attr(L, 3));
 		}
-		else file.data.table->set(key, lua_to_attr(L, 3));
 	}
-	else return 0;
+	else {
+		lua_pushboolean(L, false);
+		return 1;
+	}
 	file.save();
-	return 0;
+	lua_pushboolean(L, true);
+	return 1;
 }
 int SelfData_index(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
@@ -608,13 +646,12 @@ int SelfData_newindex(lua_State* L) {
 	if (lua_gettop(L) < 2)return 0;
 	SelfData& file{ **(SelfData**)luaL_checkudata(L, 1, "SelfData") };
 	string key{ lua_to_u8string(L, 2) };
-	if (file.data.is_null())file.data = AnysTable();
-	else if (!file.data.is_table())return 0;
-	if (std::lock_guard<std::mutex> lock(file.exWrite); lua_isnoneornil(L,3)) {
-		file.data.table->reset(key);
-	}
-	else {
-		file.data.table->set(key, lua_to_attr(L, 3));
+	{
+		std::lock_guard<std::mutex> lock(file.exWrite);
+		auto obj{ file.get_obj() };
+		if (!obj)return 0;	// 数据为标量，不按 object 语义写入
+		if (lua_isnoneornil(L, 3))obj->reset(key);
+		else obj->set(key, lua_to_attr(L, 3));
 	}
 	file.save();
 	return 0;
@@ -690,7 +727,7 @@ LUADEF(loadLua) {
 	string strLua;
 	if (std::filesystem::exists(pathFile)) {
 		readFile(pathFile, strLua);
-		bool isStateUTF8{ (bool)UTF8Luas.count(L) }, isLuaUTF8{ checkUTF8(strLua) };	//令文件加载入lua的编码保持一致
+		bool isStateUTF8{ !isGBK(L) }, isLuaUTF8{ checkUTF8(strLua) };	//令文件加载入lua的编码保持一致
 		if (isStateUTF8 && !isLuaUTF8) {
 			strLua = GBKtoUTF8(strLua);
 		}
@@ -1548,11 +1585,22 @@ void LuaState::regist() {
 	lua_pop(state, 2);
 }
 
-LuaState::LuaState() {//:isValid(false) {
-	state = luaL_newstate();
-	if (!state)return;
-	luaL_openlibs(state);
-	regist();
+LuaState::LuaState() {
+	if (state = luaL_newstate()){
+		{
+			std::lock_guard lock(statesMutex);
+			states[state] = this;
+		}
+		luaL_openlibs(state);
+		regist();
+	}
+}
+LuaState* LuaState::from(lua_State* L) {
+	std::lock_guard lock(statesMutex);
+	if (auto it{ states.find(L) }; it != states.end()) {
+		return it->second;
+	}
+	return nullptr;
 }
 LuaState::LuaState(string file) {
 #ifndef _WIN32
@@ -1563,16 +1611,23 @@ LuaState::LuaState(string file) {
 #endif
 	state = luaL_newstate();
 	if (!state)return;
+	{
+		std::lock_guard lock(statesMutex);
+		states[state] = this;
+	}
 	if (!file.empty()) {
 		if (luaL_loadfile(state, file.c_str())) {
 			string pErrorMsg = lua_to_u8string(state, -1);
 			console.log(getMsg("strSelfName") + "加载" + file + "失败:" + pErrorMsg, 0b10);
 			lua_close(state);
+			{
+				std::lock_guard lock(statesMutex);
+				states.erase(state);
+			}
 			state = nullptr;
 			return;
 		}
-		ifstream fs(file);
-		if (checkUTF8(fs))UTF8Luas.insert(state);
+		if (ifstream fs(file); !checkUTF8(fs))isUTF8 = false;
 	}
 	luaL_openlibs(state);
 	regist();
@@ -1674,7 +1729,6 @@ void DiceModManager::loadPlugin(ResList& res) {
 
 void DiceMod::loadLua() {
 	LuaState L;
-	UTF8Luas.insert(L);
 	ShowList err;
 	for (auto& file : luaFiles) {
 		if (file.extension() != ".lua") {

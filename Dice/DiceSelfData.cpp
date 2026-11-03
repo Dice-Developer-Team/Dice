@@ -50,3 +50,8 @@ void SelfData::save() {
 		break;
 	}
 }
+
+AttrObject SelfData::get_obj() {
+	if (data.is_null())data = AnysTable();
+	return data.is_table() ? data.to_obj() : AttrObject();
+}

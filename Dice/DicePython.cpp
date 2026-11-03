@@ -746,8 +746,11 @@ static PyObject* PySelfData_getattr(PyObject* self, char* attr) {
 	return data.is_table() ? py_build_attr(data.table->get(attr)) : Py_BuildValue("");
 }
 static int PySelfData_setattr(PyObject* self, char* attr, PyObject* val) {
-	auto& data{ ((PySelfDataObject*)self)->p->data };
-	if (data.is_table())data.table->set(attr, py_to_attr(val));
+	auto& data{ ((PySelfDataObject*)self)->p };
+	auto obj{ data->get_obj() };
+	if (!obj)return -1;
+	obj->set(attr, py_to_attr(val));
+	data->save();
 	return 0;
 }
 // 下标访问 sd['key']：只查私有数据表
