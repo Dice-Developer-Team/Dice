@@ -98,10 +98,10 @@ public:
 	}
 
 	bool getNick(string& nick, long long group = 0) const;
-	void setNick(long long group, string val)
+	void setNick(long long group, const string& val)
 	{
 		std::lock_guard<std::mutex> lock_queue(ex_user);
-		strNick[group] = std::move(val);
+		strNick[group] = val;
 	}
 
 	bool rmNick(long long group)

@@ -660,7 +660,7 @@ QJSDEF(setUserAttr) {
 		if (user.nTrust > 4)return JS_FALSE;
 		user.trust(trust);
 	}
-	else if (item.find("nn#") == 0) {
+	else if (item == "nn" || item.find("nn#") == 0) {
 		long long gid{ 0 };
 		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
 			gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
@@ -669,7 +669,7 @@ QJSDEF(setUserAttr) {
 			getUser(uid).rmNick(gid);
 		}
 		else {
-			getUser(uid).setNick(gid, js_toAttr(ctx, argv[2]));
+			getUser(uid).setNick(gid, js_toUTF8(ctx, argv[2]));
 		}
 	}
 	else if (JS_IsUndefined(argv[2])) {

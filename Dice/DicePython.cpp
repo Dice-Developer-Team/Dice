@@ -481,14 +481,22 @@ static int PyContext_setattr(PyObject* self, char* attr, PyObject* val) {
 	obj->set(attr, py_to_attr(val));
 	return 0;
 }
-// 下标访问 msg['uid']：只查上下文表，保持原有语义
+// 下标访问 msg['uid']：只查上下文表
 static PyObject* PyContext_subscript(PyObject* self, PyObject* attr) {
 	PY2TAB(self);
 	string key{ py_to_string(attr) };
-	return py_build_attr(getContextItem(obj, key));
+	AttrVar val{ getContextItem(obj, key) };
+	if (val.is_null()) {
+		/* 取不到时必须抛KeyError，不能返回None：
+		   事件py脚本以Context作locals，LOAD_NAME只有收到KeyError才会继续检索globals/builtins；
+		   若返回None，log/sendMsg等名字会被解析成None，调用时报"'NoneType' object is not callable"。
+		   不影响属性访问(msg.xxx)。 */
+		PyErr_SetObject(PyExc_KeyError, attr);
+		return nullptr;
+	}
+	return py_build_attr(val);
 }
-/* 属性访问 msg.uid：先走常规查找，type 上的方法（echo/format/inc）因此天然优先；
-   未命中再回退到上下文表。与下标访问一致，取不到就返回 None，不抛错。 */
+/* 属性访问：方法->上下文表。与下标访问一致，取不到返回 None，不抛错。 */
 static PyObject* PyContext_getattro(PyObject* self, PyObject* attr) {
 	if (PyObject* res{ PyObject_GenericGetAttr(self, attr) }) return res;
 	if (!PyErr_ExceptionMatches(PyExc_AttributeError)) return nullptr;
@@ -1005,7 +1013,7 @@ PYDEFARG(setUserAttr) {
 			return NULL;
 		}
 	}
-	else if (item.find("nn#") == 0) {
+	else if (item == "nn" || item.find("nn#") == 0) {
 		long long gid{ 0 };
 		if (size_t l{ item.find_first_of(chDigit) }; l != string::npos) {
 			gid = stoll(item.substr(l, item.find_first_not_of(chDigit, l) - l));
@@ -1272,9 +1280,13 @@ PyGlobal::PyGlobal() {
 					/* PyImport_AppendInittab 只是把模块登记到 inittab，
 					   真正的 PyInit_DiceMaid（内含 PyType_Ready）要等模块被导入时才执行。
 					   不导入则 PyContextType.tp_alloc 仍为 NULL，py_newContext 会调空指针。 */
-			if (PyObject* diceMod = PyImport_ImportModule(DiceModuleName)) {
-				Py_DECREF(diceMod);
-			}
+					if (PyObject* diceMod = PyImport_ImportModule(DiceModuleName)) {
+						Py_DECREF(diceMod);
+						if (PyRun_SimpleString("from dicemaid import *\n")) {
+							console.log("预置dicemaid函数到全局失败:" + py_print_error(), 0b1000);
+							PyErr_Clear();
+						}
+					}
 					else {
 						console.log("dicemaid 模块加载失败:" + py_print_error(), 0b1000);
 						PyErr_Clear();
