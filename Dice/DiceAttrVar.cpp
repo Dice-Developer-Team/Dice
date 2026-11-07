@@ -8,7 +8,7 @@
  *
  * Dice! QQ Dice Robot for TRPG
  * Copyright (C) 2018-2021 w4123溯洄
- * Copyright (C) 2019-2025 String.Empty
+ * Copyright (C) 2019-2026 String.Empty
  *
  * This program is free software: you can redistribute it and/or modify it under the terms
  * of the GNU Affero General Public License as published by the Free Software Foundation,
@@ -713,7 +713,29 @@ void AnysTable::from_json(const fifo_json& j){
 		}
 	}
 }
+// 集合标记：单键对象 {"$set":[标量...]}。元素全为标量才认定，其余形态按普通对象处理，
+// 避免用户数据中恰好存在 "$set" 键时被误吞。
+static const fifo_json* jsonSetArray(const fifo_json& j) {
+	if (!j.is_object() || j.size() != 1)return nullptr;
+	for (auto& [key, val] : j.items()) {
+		if (key != "$set" || !val.is_array())return nullptr;
+		for (auto& elem : val) {
+			if (!elem.is_string() && !elem.is_number())return nullptr;
+		}
+		return &val;
+	}
+	return nullptr;
+}
 AttrVar::AttrVar(const fifo_json& j) {
+	if (auto arr{ jsonSetArray(j) }) {
+		type = Type::Set;
+		new(&flags) AttrSet(std::make_shared<fifo_set<AttrIndex>>());
+		for (auto& elem : *arr) {
+			if (elem.is_string())flags->emplace(AttrIndex(elem.get<string>()));
+			else if (elem.is_number())flags->emplace(AttrIndex(elem.get<double>()));
+		}
+		return;
+	}
 	switch (j.type()) {
 	case fifo_json::value_t::null:
 		type = Type::Nil;
@@ -778,8 +800,12 @@ fifo_json AttrVar::to_json()const {
 	case Type::Table:
 		return table->to_json();
 		break;
-	case Type::Set:
-		return ::to_json(*flags);
+	case Type::Set: {
+		// 与 jsonSetArray 对称：显式标记，避免反序列化时退化为普通数组
+		fifo_json j = fifo_json::object();
+		j["$set"] = ::to_json(*flags);
+		return j;
+	}
 	case Type::GBTable:
 	case Type::Function:
 		return {};
@@ -809,12 +835,27 @@ fifo_json AnysTable::to_json()const {
 		return j;
 	}
 }
+// TOML 侧的集合标记：单键表 {"$set" = [...]}，与 JSON 同一套判别
+static const toml::array* tomlSetArray(const toml::node& t) {
+	auto tab{ t.as_table() };
+	if (!tab || tab->size() != 1)return nullptr;
+	return (*tab)["$set"].as_array();
+}
 AttrVar::AttrVar(const toml::node& t) {
 	switch (t.type()){
 	case toml::node_type::none:
 		type = Type::Nil;
 		break;
 	case toml::node_type::table:
+		if (auto arr{ tomlSetArray(t) }) {
+			type = Type::Set;
+			new(&flags) AttrSet(std::make_shared<fifo_set<AttrIndex>>());
+			for (auto& it : *arr) {
+				if (auto str{ it.value<string>() })flags->emplace(AttrIndex(*str));
+				else if (auto num{ it.value<double>() })flags->emplace(AttrIndex(*num));
+			}
+			break;
+		}
 		type = Type::Table; {
 			new(&table) AttrObject(AnysTable());
 			auto tab{ t.as_table() };
@@ -875,7 +916,7 @@ AttrVar::AttrVar(const toml::node& t) {
 toml::table AnysTable::to_toml()const {
 	toml::table tab;
 	for (auto& [key, val] : dict) {
-		if (val)switch (val.type) {
+		switch (val.type) {
 		case AttrVar::Type::Boolean:
 			tab.insert(key, val.bit);
 			break;
@@ -900,13 +941,43 @@ toml::table AnysTable::to_toml()const {
 		case AttrVar::Type::Set:
 			tab.insert(key, ::to_toml(*val.flags));
 			break;
-		default:
+		default:	// type == Nil
 			break;
 		}
 	}
 	return tab;
 }
 AttrVar::AttrVar(const YAML::Node& y) {
+	auto isSetTag{ [](const YAML::Node& node) {
+		// yaml-cpp 已把 !!set 展开为完整 URI，故不能比对 "!!set"
+		const string& tag{ node.Tag() };
+		return tag == "tag:yaml.org,2002:set" || tag == "!set";
+	} };
+	auto newSet{ [this]() {
+		type = Type::Set;
+		new(&flags) AttrSet(std::make_shared<fifo_set<AttrIndex>>());
+	} };
+	auto appendScalar{ [this](const YAML::Node& node) {
+		AttrVar elem(node);
+		switch (elem.type) {
+		case Type::U8String:flags->emplace(AttrIndex(elem.text)); break;
+		case Type::Integer:flags->emplace(AttrIndex(double(elem.attr))); break;
+		case Type::Number:flags->emplace(AttrIndex(elem.number)); break;
+		case Type::ID:flags->emplace(AttrIndex(double(elem.id))); break;
+		default:break;
+		}
+	} };
+	if (isSetTag(y)) {
+		// 原生标签形态：!!set 规范要求 mapping，实战中 sequence 也常见，两种都收
+		newSet();
+		if (y.IsSequence()) {
+			for (auto& it : y)appendScalar(it);
+		}
+		else if (y.IsMap()) {
+			for (auto& it : y)appendScalar(it.first);
+		}
+		return;
+	}
 	if (y.IsScalar()) {
 		if (auto as_bool = YAML::as_if<bool, std::optional<bool>>(y)();as_bool.has_value()) {
 			type = Type::Boolean;
@@ -920,7 +991,7 @@ AttrVar::AttrVar(const YAML::Node& y) {
 			}
 			else {
 				type = Type::ID;
-				attr = num;
+				id = num;
 			}
 		}
 		else if (auto as_d = YAML::as_if<double, std::optional<double>>(y)(); as_d.has_value()) {
@@ -933,6 +1004,14 @@ AttrVar::AttrVar(const YAML::Node& y) {
 		}
 	}
 	else if (y.IsMap()) {
+		if (y.size() == 1) {	// 与 JSON 同构的集合标记：{"$set":[...]}
+			if (auto it{ y.begin() };
+				it->first.IsScalar() && it->first.Scalar() == "$set" && it->second.IsSequence()) {
+				newSet();
+				for (auto& elem : it->second)appendScalar(elem);
+				return;
+			}
+		}
 		type = Type::Table; {
 			new(&table) AttrObject(AnysTable());
 			unordered_set<string> idxs;
@@ -982,8 +1061,10 @@ YAML::Node AttrVar::to_yaml()const {
 		yaml = id;
 		break;
 	case Type::Table:
-		for (auto& [k, v] : table->as_dict()) {
-			yaml[k] = v.to_yaml();
+		if (!table->as_dict().empty()) {
+			for (auto& [k, v] : table->as_dict()) {
+				yaml[k] = v.to_yaml();
+			}
 		}
 		if (auto li{ table->to_list() }) {
 			int i = 0;
@@ -1000,10 +1081,14 @@ YAML::Node AttrVar::to_yaml()const {
 		}
 		break;
 	case Type::Set:{
-		int i = 0;
+		// 本地标签 !set：本地标签不隐含节点形状约束，yaml-cpp 写出 !<!set>、读回 Tag()=="!set"，
+		// 读写自洽；标准标签 !!set/!!omap 因形状约束与本库的 verbatim 输出不再使用。
+		YAML::Node seq(YAML::NodeType::Sequence);
 		for (auto& v : *flags) {
-			yaml[i++] = AttrVar(v.val).to_yaml();
+			seq.push_back(AttrVar(v.val).to_yaml());
 		}
+		seq.SetTag("!set");
+		yaml = seq;
 	}
 		break;
 	default:
@@ -1038,16 +1123,29 @@ fifo_json to_json(const fifo_set<AttrIndex>& vars) {
 	}
 	return j;
 }
-toml::array to_toml(const fifo_set<AttrIndex>& vars) {
-	toml::array t;
+toml::table to_toml(const fifo_set<AttrIndex>& vars) {
+	// 与 JSON 同构：{"$set":[...]}。TOML 1.0 要求数组元素同质，故全数字时保留数字，
+	// 一旦出现字符串就整体转字符串（数字元素的类型信息在此有损）。
+	bool all_number{ true };
 	for (auto& val : vars) {
-		if (std::holds_alternative<double>(val.val)) {
-			t.emplace_back(std::get<double>(val.val));
-		}
-		else if (std::holds_alternative<string>(val.val)) {
-			t.emplace_back(std::get<string>(val.val));
+		if (!std::holds_alternative<double>(val.val)) {
+			all_number = false;
+			break;
 		}
 	}
+	toml::array arr;
+	for (auto& val : vars) {
+		if (std::holds_alternative<double>(val.val)) {
+			double num{ std::get<double>(val.val) };
+			if (all_number)arr.emplace_back(num);
+			else arr.emplace_back(toString(num));
+		}
+		else if (std::holds_alternative<string>(val.val)) {
+			arr.emplace_back(std::get<string>(val.val));
+		}
+	}
+	toml::table t;
+	t.insert("$set", std::move(arr));
 	return t;
 }
 fifo_json to_json(const AttrVars& vars) {

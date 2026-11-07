@@ -65,7 +65,7 @@ struct AttrIndex {
 	fifo_json to_json()const;
 };
 fifo_json to_json(const fifo_set<AttrIndex>& vars);
-toml::array to_toml(const fifo_set<AttrIndex>& vars);
+toml::table to_toml(const fifo_set<AttrIndex>& vars);
 using AttrSet = ptr<fifo_set<AttrIndex>>;
 
 template<>
